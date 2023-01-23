@@ -1,61 +1,86 @@
-# Update Note Summary - Version 0.6.131
+# Update Note Summary - Version 0.7.248
 
-Date: 2020-09-10
+Date: 2022-09-13
 
-## Updates since Version 0.6.130
+## Update notes
 
-- tellurics
-    - fix problem with pre-cleaning QC not making it to full QC rejection
-    - update obj_fit_tellu_db and obj_mk_tellu_db with table=None fix and
-      allow --test=True as an argument
+- NIRPS changes
 
-- polar
-    - hack fix suggesed by Chris for pol_spirou (when we get numpy linear
-      algebra exception)
+- badpix: added erode/dilate around large bad pixels
+- badpix: slighty update background calculation
+- flat: dealing with small number regions better
+- telluric: fix template binning incorrectly
+- fix for sqlite during install (not full tested with mini data yet)
+- fix for apero_processing (when 1 type of file on 1 night)
+- fix for s1d_recon being wrong by a blaze factor
+- polar: fix factor of 2
 
-- other
-    - deal with having only one file in large_image_median (crashed before)
-    - LEAKM_WSMOOTH should be an int (crashed cal_leak_master code)
-    - update object query list
+- change in wording "master" --> "reference" or "ref"
+    - "master night" --> "reference night"
+    - "master calibration" --> "reference calibration"
+
+- change database naming
+    - "index database (INDEX)" --> "file index database (FINDEX)"
+    - "object database (OBJECT)" --> "astrometric database (ASTROM)"
 
 
-## Still to do:
-    - polar code update
-    - Implement database instead of text/fits files for databases
-        - index.fits, log.fits, object database, calibDB, telluDB
-    - Blacklist odometer codes
-    - Move data to user files + download / host not from github
-    - move all fits-images to start in extension 1 (not 0)
-    - add option to set template for mk_tellu and fit_tellu from args
-    - create script to get custom config (larger list of constants)
-    - add plot modes 3 and 4
-        - `plot== 3` (all debug plots shown) and `plot==4`
-           (all debug plots saved) modes
-    - make code to check constants/keywords usage (function usage)
-    - separate warning messages into codes 10-000-00000 and 20-000-00000
-        - codes 20-000-00000 for trigger to catch
-    - go through all summary plots and decide which plots, write figure
-      captions, improve plots, write quality control description, decide which
-      header keys to print
-    - add all functions doc strings + display func for all functions
-    - make classes picklable and then switch from multiprocessing.pool to spawn
-    - NIRPS implementation of cal_wave onwards
-    - EA masks from templates
-    - skip table need to take into account blacklist/whitelist nights
+## Todo before 0.8
 
-## To do later:
-    - implement persistence correction
-    - CCF wrapper using weighting/sanitise/bisector etc?
-    - propagate uncertainies / flags for NaNs
-    - proper SNR calculation
-    - integrate CFHT outputs input drs
-    - write documentation
-    - write paper
+- 2018 flats (done by Etienne, just need processing?)
 
-## Known issues:
-    - Locking of files means using >5 cores slows down a lot (fix with database)
-        - if locking is big problem use only 1 core
-    - Weird residuals left in order_profile after dark_flat (loc)
-    - Calibrations switch over at different points from PM to AM calibrations
-        - should really only use "older"
-    - run.ini files with multiple sequences sometime loose middle sequence
+
+## TODO 0.8
+
+- need to "kill thermal" in blue end
+- propagate uncertainies
+- create OH lines s1d and add OH line s1d to CADC outputs
+- use LFC (and FP_HC, HC_FP) in wave solution
+- lbl into apero?
+- wave memory issue
+- drs test module (Thomas and Charles are working on this)
+- persistence corrections?
+- install apero with pip (Thomas)
+
+## Updates require to upgrade to >0.7.243  (if not resetting everything)
+
+1. Need to update calibration database column:
+	ALTER TABLE CALIB_setup_spirou_stable_07_DB  ADD COLUMN REFCAL int(11);
+	update CALIB_setup_spirou_stable_07_DB SET REFCAL = SUPERCAL;
+
+2. Need to reset telluric database (in apero_reset.py)
+
+3. Need to re-run all telluric hot star + telluric science onwards
+		in run.ini set RUN_XXX = True  and SKIP_XXX = False for tellu steps
+
+4. Need to update database.yaml
+    	INDEX --> FINDEX   (In MySQL and SQLITE sections)
+    	OBJECT --> ASTROM   (In MySQL and SQLITE sections)
+
+       	MYSQL:
+       	    ASTROM:
+    	        RESET: reset.object.csv   -->   reset.astrom.csv
+    	SQLITE3:
+    	    FINDEX:
+    	        NAME: index.db --> findex.db
+    	    ASTROM:
+    	        NAME: object.db --> astrom.db
+    	        RESET: reset.object.csv   -->   reset.astrom.csv
+
+5. Need to reset run direction (in apero_reset.py)
+
+6. Need to rename databases:
+    RENAME TABLE {old_table} TO {new_table}
+
+    old_table --> new_table
+
+    CALIB_{apero-profile)_DB    -->    calib_{apero-profile}_db
+    INDEX_{apero-profile)_DB    -->    findex_{apero-profile}_db
+    LANG_{apero-profile)_DB    -->    lang_{apero-profile}_db
+    LOG_{apero-profile)_DB    -->    log_{apero-profile}_db
+    OBJECT_{apero-profile)_DB    -->    astrom_{apero-profile}_db
+    REJECT_{apero-profile)_DB    -->    reject_{apero-profile}_db
+    TELLU_{apero-profile)_DB    -->    tellu_{apero-profile}_db
+
+
+
+

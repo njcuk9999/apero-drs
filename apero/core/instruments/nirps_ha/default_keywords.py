@@ -1,195 +1,375 @@
 """
-Default keywords for instrument
+Default keywords for NIRPS HA
 
 Created on 2019-01-17
 
 @author: cook
 """
-from apero.core.instruments.default.default_keywords import *
 from astropy import units as uu
+
+from apero.base import base
+from apero.core.instruments.default.default_keywords import *
 
 # Note: If variables are not showing up MUST CHECK __all__ definition
 #       in import * module
 __NAME__ = 'config.instruments.nirps_ha.default_keywords.py'
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 
 # -----------------------------------------------------------------------------
 # Required header keys (main fits file)
 # -----------------------------------------------------------------------------
-# define the HEADER key for acquisition time
-#     Note datatype must be a astropy.Time.format
-#     'jd', 'mjd', 'decimalyear', 'unix', 'cxcsec', 'gps', 'plot_date',
-#     'datetime', 'iso', 'isot', 'yday', 'datetime64', 'fits', 'byear',
-#     'jyear', 'byear_str', 'jyear_str'
-KW_ACQTIME = KW_ACQTIME.copy(__NAME__)
-KW_ACQTIME.set(key='MJDATE', datatype='mjd', dataformat=float,
-               comment='Modified Julian Date at start of observation')
+# Define the header key that uniquely identifies the file
+#     (i.e. an odometer code)
+KW_IDENTIFIER = KW_IDENTIFIER.copy(__NAME__)
+KW_IDENTIFIER.set(key='FILENAME',
+                  comment='filename anticipated by fitspipe server',
+                  group='raw')
 
-# define the MJ end date HEADER key
-KW_MJDEND = KW_MJDEND.copy(__NAME__)
-KW_MJDEND.set(key='MJDEND', datatype='mjd', dataformat=float,
-              comment='Modified Julian Date at end of observation')
+# define the MJ date HEADER key (only used for logging)
+KW_MJDATE = KW_MJDATE.copy(__NAME__)
+KW_MJDATE.set(key='MJD-OBS', datatype='mjd', dataformat=float,
+              comment='Observation Start (Modified Julian Date)',
+              combine_method='minimum', group='raw')
 
 # define the observation date HEADER key
 KW_DATE_OBS = KW_DATE_OBS.copy(__NAME__)
-KW_DATE_OBS.set(key='DATE-OBS', comment='Date at start of observation (UTC)')
-
-# define the observation time HEADER key
-KW_UTC_OBS = KW_UTC_OBS.copy(__NAME__)
-KW_UTC_OBS.set(key='UTC-OBS', comment='Time at start of observation (UTC)')
+KW_DATE_OBS.set(key='DATE-OBS', datatype='fits', dataformat=str,
+                comment='Observation Start (YYYY-MM-DDThh:mm:ss UTC)',
+                group='raw')
 
 # define the read noise HEADER key a.k.a sigdet (used to get value only)
 KW_RDNOISE = KW_RDNOISE.copy(__NAME__)
-KW_RDNOISE.set(key='RDNOISE', comment='Read noise (electrons)')
+KW_RDNOISE.set(key='HIERARCH ESO DET OUT1 RON',
+               comment='Read noise (electrons)', combine_method='flux',
+               group='raw')
 
 # define the gain HEADER key (used to get value only)
 KW_GAIN = KW_GAIN.copy(__NAME__)
-KW_GAIN.set(key='GAIN', comment='Amplifier gain (electrons/ADU)')
-
-# define the saturation limit HEADER key
-KW_SATURATE = KW_SATURATE.copy(__NAME__)
-KW_SATURATE.set(key='SATURATE', comment='Saturation value (ADU) ')
-
-# define the frame time HEADER key
-KW_FRMTIME = KW_FRMTIME.copy(__NAME__)
-KW_FRMTIME.set(key='FRMTIME', comment='[sec] Frame time, cadence of IR reads')
+# TODO: Change to HIERARCH ESO DET CHIP1 GAIN
+KW_GAIN.set(key='HIERARCH ESO DET OUT1 CONAD',
+            comment='[adu/e-] Conversion electrons to ADU',
+            combine_method='mean', group='raw')
 
 # define the exposure time HEADER key (used to get value only)
 KW_EXPTIME = KW_EXPTIME.copy(__NAME__)
-KW_EXPTIME.set(key='EXPTIME', unit=uu.s, comment='[sec] Integration time')
+KW_EXPTIME.set(key='EXPTIME', unit=uu.s,
+               comment='[sec] Integration time',
+               combine_method='sum', group='raw')
+
+# define the required exposure time HEADER key (used to get value only)
+# NIRPS-CHANGE: Do we have this for NIRPS?
+# TODO: For now set this to the actual exposure time
+KW_EXPREQ = KW_EXPREQ.copy(__NAME__)
+KW_EXPREQ.set(key='EXPTIME', unit=uu.s,
+              comment='[sec] Requested integration time',
+              combine_method='sum', group='raw')
 
 # define the observation type HEADER key
 KW_OBSTYPE = KW_OBSTYPE.copy(__NAME__)
-KW_OBSTYPE.set(key='OBSTYPE', comment='Observation / Exposure type')
+KW_OBSTYPE.set(key='HIERARCH ESO DPR TYPE',
+               comment='Observation / Exposure type', group='raw')
 
 # define the science fiber type HEADER key
-KW_CCAS = KW_CCAS.copy(__NAME__)
-KW_CCAS.set(key='SBCCAS_P',
-            comment='SPIRou Cassegrain Fiber Position (predefined)')
+# KW_CCAS = KW_CCAS.copy(__NAME__)
+# KW_CCAS.set(key='SBCCAS_P',
+#             comment='SPIRou Cassegrain Fiber Position (predefined)',
+#             group='raw')
 
 # define the reference fiber type HEADER key
-KW_CREF = KW_CREF.copy(__NAME__)
-KW_CREF.set(key='SBCREF_P',
-            comment='SPIRou Reference Fiber Position (predefined)')
+# KW_CREF = KW_CREF.copy(__NAME__)
+# KW_CREF.set(key='SBCREF_P',
+#             comment='SPIRou Reference Fiber Position (predefined)',
+#             group='raw')
 
 # define the calibration wheel position
-KW_CALIBWH = KW_CALIBWH.copy(__NAME__)
-KW_CALIBWH.set(key='SBCALI_P',
-               comment='SPIRou calibwh predefined position or angle')
+# KW_CALIBWH = KW_CALIBWH.copy(__NAME__)
+# KW_CALIBWH.set(key='SBCALI_P',
+#                comment='SPIRou calibwh predefined position or angle',
+#                group='raw')
 
 # define the target type (object/sky)
 KW_TARGET_TYPE = KW_TARGET_TYPE.copy(__NAME__)
-KW_TARGET_TYPE.set(key='TRG_TYPE', comment='target or sky object')
+KW_TARGET_TYPE.set(key='TRG_TYPE', comment='target or sky object', group='raw')
 
 # define the density HEADER key
-KW_CDEN = KW_CDEN.copy(__NAME__)
-KW_CDEN.set(key='SBCDEN_P', comment='SPIRou Calib-Reference density (0 to 3.3)')
+# KW_CDEN = KW_CDEN.copy(__NAME__)
+# KW_CDEN.set(key='SBCDEN_P',
+#             comment='SPIRou Calib-Reference density (0 to 3.3)', group='raw')
 
 # define polarisation HEADER key
-KW_CMMTSEQ = KW_CMMTSEQ.copy(__NAME__)
-KW_CMMTSEQ.set(key='CMMTSEQ')
+# KW_CMMTSEQ = KW_CMMTSEQ.copy(__NAME__)
+# KW_CMMTSEQ.set(key='CMMTSEQ', group='raw')
 
 # define the exposure number within sequence HEADER key
 KW_CMPLTEXP = KW_CMPLTEXP.copy(__NAME__)
-KW_CMPLTEXP.set(key='CMPLTEXP',
-                comment='Exposure number within the exposure sequence ')
+KW_CMPLTEXP.set(key='HIERARCH ESO TPL EXPNO',
+                comment='Exposure number within the exposure sequence ',
+                combine_method='1', group='raw')
 
 # define the total number of exposures HEADER key
 KW_NEXP = KW_NEXP.copy(__NAME__)
-KW_NEXP.set(key='NEXP', comment='Total number of exposures within the sequence')
+KW_NEXP.set(key='HIERARCH ESO TPL NEXP',
+            comment='Total number of exposures within the sequence',
+            combine_method='1', group='raw')
 
 # define the pi name HEADER key
 KW_PI_NAME = KW_PI_NAME.copy(__NAME__)
-KW_PI_NAME.set(key='PI_NAME', comment='The PI of the program')
+KW_PI_NAME.set(key='HIERARCH ESO OBS PI-COI NAME',
+               comment='The PI of the program', group='raw')
+
+# define the instrument HEADER key
+KW_INSTRUMENT = KW_INSTRUMENT.copy(__NAME__)
+KW_INSTRUMENT.set(key='INSTRUME', comment='Instrument Name', group='raw')
+
+# define the instrument mode header key
+KW_INST_MODE = KW_INST_MODE.copy(__NAME__)
+KW_INST_MODE.set(key='HIERARCH ESO INS MODE', comment='Instrument mode used',
+                 group='raw')
+
+# define the raw dprtype from the telescope
+KW_RAW_DPRTYPE = KW_RAW_DPRTYPE.copy(__NAME__)
+KW_RAW_DPRTYPE.set(key='HIERARCH ESO DPR TYPE', comment='Observation type',
+                   group='raw')
+
+# define the raw dpr category
+KW_RAW_DPRCATG = KW_RAW_DPRCATG.copy(__NAME__)
+KW_RAW_DPRCATG.set(key='HIERARCH ESO DPR CATG', comment='Observation category',
+                   group='raw')
 
 # -----------------------------------------------------------------------------
 # Required header keys (related to science object)
 # -----------------------------------------------------------------------------
 # define the observation ra HEADER key
 KW_OBJRA = KW_OBJRA.copy(__NAME__)
-KW_OBJRA.set(key='OBJRA', unit=uu.hourangle, comment='Target right ascension')
+KW_OBJRA.set(key='RA', unit=uu.deg, comment='Target right ascension',
+             group='raw')
 
 # define the observation dec HEADER key
 KW_OBJDEC = KW_OBJDEC.copy(__NAME__)
-KW_OBJDEC.set(key='OBJDEC', unit=uu.deg, comment='Target declination ')
+KW_OBJDEC.set(key='DEC', unit=uu.deg, comment='Target declination ',
+              group='raw')
 
 # define the observation name
 KW_OBJECTNAME = KW_OBJECTNAME.copy(__NAME__)
-KW_OBJECTNAME.set(key='OBJECT', comment='Target name')
+KW_OBJECTNAME.set(key='OBJECT', comment='Target name', group='raw')
+
+# define the observation name
+KW_OBJECTNAME2 = KW_OBJECTNAME2.copy(__NAME__)
+KW_OBJECTNAME2.set(key='HIERARCH ESO OBS TARG NAME', comment='OB target name',
+                   group='raw')
 
 # define the observation equinox HEADER key
 KW_OBJEQUIN = KW_OBJEQUIN.copy(__NAME__)
-KW_OBJEQUIN.set(key='OBJEQUIN', datatype='decimalyear',
-                comment='Target equinox ')
+KW_OBJEQUIN.set(key='EQUINOX', datatype='decimalyear',
+                comment='Target equinox ', group='raw')
 
 # define the observation proper motion in ra HEADER key
 KW_OBJRAPM = KW_OBJRAPM.copy(__NAME__)
 KW_OBJRAPM.set(key='OBJRAPM', unit=uu.arcsec / uu.yr,
-               comment='Target right ascension proper motion in as/yr ')
+               comment='Target right ascension proper motion in as/yr ',
+               group='raw')
 
 # define the observation proper motion in dec HEADER key
 KW_OBJDECPM = KW_OBJDECPM.copy(__NAME__)
 KW_OBJDECPM.set(key='OBJDECPM', unit=uu.arcsec / uu.yr,
-                comment='Target declination proper motion in as/yr')
+                comment='Target declination proper motion in as/yr',
+                group='raw')
 
 # define the airmass HEADER key
 KW_AIRMASS = KW_AIRMASS.copy(__NAME__)
-KW_AIRMASS.set(key='AIRMASS', comment='Airmass at start of observation')
+KW_AIRMASS.set(key='HIERARCH ESO TEL AIRM START',
+               comment='Airmass at start of observation',
+               group='raw')
 
 # define the weather tower temperature HEADER key
-KW_WEATHER_TOWER_TEMP = KW_WEATHER_TOWER_TEMP.copy(__NAME__)
-KW_WEATHER_TOWER_TEMP.set(key='TEMPERAT',
-                          comment='86 temp, air, weather tower deg C  ')
+# KW_WEATHER_TOWER_TEMP = KW_WEATHER_TOWER_TEMP.copy(__NAME__)
+# KW_WEATHER_TOWER_TEMP.set(key='TEMPERAT',
+#                           comment='86 temp, air, weather tower deg C  ',
+#                           group='raw')
 
 # define the cassegrain temperature HEADER key
-KW_CASS_TEMP = KW_CASS_TEMP.copy(__NAME__)
-KW_CASS_TEMP.set(key='SB_POL_T',
-                 comment='SPIRou tpolar temp at start of exp (deg C)  ')
+# KW_CASS_TEMP = KW_CASS_TEMP.copy(__NAME__)
+# KW_CASS_TEMP.set(key='SB_POL_T',
+#                  comment='SPIRou tpolar temp at start of exp (deg C)  ',
+#                  group='raw')
 
 # define the humidity HEADER key
-KW_HUMIDITY = KW_HUMIDITY.copy(__NAME__)
-KW_HUMIDITY.set(key='RELHUMID',
-                comment='87 relative humidity, weather tower % ')
-
-# define the object temperature HEADER key
-KW_OBJ_TEMP = KW_OBJ_TEMP.copy(__NAME__)
-KW_OBJ_TEMP.set(key='OBJTEMP', unit=uu.K)
+# KW_HUMIDITY = KW_HUMIDITY.copy(__NAME__)
+# KW_HUMIDITY.set(key='RELHUMID',
+#                 comment='87 relative humidity, weather tower % ', group='raw')
 
 # -----------------------------------------------------------------------------
 # Wanted header keys (related to science object)
 # -----------------------------------------------------------------------------
-# define the gaia id
-KW_GAIA_ID = KW_GAIA_ID.copy(__NAME__)
-KW_GAIA_ID.set(key='GAIA_ID')
-
 # define the parallax HEADER key
 KW_PLX = KW_PLX.copy(__NAME__)
-KW_PLX.set(key='OBJPLX', unit=uu.mas)
+KW_PLX.set(key='OBJPLX', unit=uu.mas, group='raw')
 
 # define the rv HEADER key
 KW_INPUTRV = KW_INPUTRV.copy(__NAME__)
-KW_INPUTRV.set(key='OBJRV', unit=uu.km / uu.s)
+KW_INPUTRV.set(key='OBJRV', unit=uu.km / uu.s, group='raw')
+
+# define the object temperature HEADER key
+KW_OBJ_TEMP = KW_OBJ_TEMP.copy(__NAME__)
+KW_OBJ_TEMP.set(key='OBJTEMP', unit=uu.K, group='raw')
+
+# -----------------------------------------------------------------------------
+# Object resolution keys
+# -----------------------------------------------------------------------------
+# the object name to be used by the drs (after preprocessing)
+KW_DRS_OBJNAME = KW_DRS_OBJNAME.copy(__NAME__)
+KW_DRS_OBJNAME.set(key='PP_OBJN',
+                   comment='cleaned object name to be used by the DRS',
+                   group='resolve', post_exclude=True)
+
+# the original name of the object name used by the drs
+KW_DRS_OBJNAME_S = KW_DRS_OBJNAME_S.copy(__NAME__)
+KW_DRS_OBJNAME_S.set(key='PP_OBJNS',
+                     comment='Original object name as in header',
+                     group='resolve', post_exclude=True)
+
+# the right ascension to be used by the drs (after preprocessing)
+KW_DRS_RA = KW_DRS_RA.copy(__NAME__)
+KW_DRS_RA.set(key='PP_RA', unit=uu.deg,
+              comment='The RA [in deg] used by the DRS',
+              group='resolve', post_exclude=True)
+
+# the source of the ra to be used by the drs (after preprocessing)
+KW_DRS_RA_S = KW_DRS_RA_S.copy(__NAME__)
+KW_DRS_RA_S.set(key='PP_RAS',
+                comment='Source of the ra used by the DRS',
+                group='resolve', post_exclude=True)
+
+# the declination to be used by the drs (after preprocessing)
+KW_DRS_DEC = KW_DRS_DEC.copy(__NAME__)
+KW_DRS_DEC.set(key='PP_DEC', unit=uu.deg,
+               comment='The dec [in deg] used by the DRS',
+               group='resolve', post_exclude=True)
+
+# the source of the dec to be used by the drs (after preprocessing)
+KW_DRS_DEC_S = KW_DRS_DEC_S.copy(__NAME__)
+KW_DRS_DEC_S.set(key='PP_DECS',
+                 comment='Source of the dec used by the DRS',
+                 group='resolve', post_exclude=True)
+
+# the proper motion in ra to be used by the drs (after preprocessing)
+KW_DRS_PMRA = KW_DRS_PMRA.copy(__NAME__)
+KW_DRS_PMRA.set(key='PP_PMRA', unit=uu.mas / uu.yr,
+                comment='The pmra [mas/yr] used by the DRS',
+                group='resolve', post_exclude=True)
+
+# the source of the pmra used by the drs (afer prepreocessing)
+KW_DRS_PMRA_S = KW_DRS_PMRA_S.copy(__NAME__)
+KW_DRS_PMRA_S.set(key='PP_PMRAS',
+                  comment='Source of the pmra used by the DRS',
+                  group='resolve', post_exclude=True)
+
+# the proper motion in dec to be used by the drs (after preprocessing)
+KW_DRS_PMDE = KW_DRS_PMDE.copy(__NAME__)
+KW_DRS_PMDE.set(key='PP_PMDE', unit=uu.mas / uu.yr,
+                comment='The pmdec [mas/yr] used by the DRS',
+                group='resolve', post_exclude=True)
+
+# the source of the pmde used by the drs (after preprocessing)
+KW_DRS_PMDE_S = KW_DRS_PMDE_S.copy(__NAME__)
+KW_DRS_PMDE_S.set(key='PP_PMDES',
+                  comment='Source of the pmde used by the DRS',
+                  group='resolve', post_exclude=True)
+
+# the parallax to be used by the drs (after preprocessing)
+KW_DRS_PLX = KW_DRS_PLX.copy(__NAME__)
+KW_DRS_PLX.set(key='PP_PLX', unit=uu.mas,
+               comment='The parallax [mas] used by the DRS',
+               group='resolve', post_exclude=True)
+
+# the source of the parallax used by the drs (after preprocessing)
+KW_DRS_PLX_S = KW_DRS_PLX_S.copy(__NAME__)
+KW_DRS_PLX_S.set(key='PP_PLXS',
+                 comment='Source of the plx used by the DRS',
+                 group='resolve', post_exclude=True)
+
+# the radial velocity to be used by the drs (after preprocessing)
+KW_DRS_RV = KW_DRS_RV.copy(__NAME__)
+KW_DRS_RV.set(key='PP_RV', unit=uu.km / uu.s,
+              comment='The RV [km/s] used by the DRS',
+              group='resolve', post_exclude=True)
+
+# the source of the radial velocity used by the drs (after preprocessing)
+KW_DRS_RV_S = KW_DRS_RV_S.copy(__NAME__)
+KW_DRS_RV_S.set(key='PP_RVS',
+                comment='Source of the rv used by the DRS',
+                group='resolve', post_exclude=True)
+
+# the epoch to be used by the drs (after preprocessing)
+KW_DRS_EPOCH = KW_DRS_EPOCH.copy(__NAME__)
+KW_DRS_EPOCH.set(key='PP_EPOCH', unit=uu.yr,
+                 comment='The Epoch used by the DRS',
+                 group='resolve', post_exclude=True)
+
+# the effective temperature to be used by the drs (after preprocessing)
+KW_DRS_TEFF = KW_DRS_TEFF.copy(__NAME__)
+KW_DRS_TEFF.set(key='PP_TEFF', unit=uu.K,
+                comment='The Teff [K] used by the DRS',
+                group='resolve', post_exclude=True)
+
+# the source of teff used by the drs (after preprocessing)
+KW_DRS_TEFF_S = KW_DRS_TEFF_S.copy(__NAME__)
+KW_DRS_TEFF_S.set(key='PP_TEFFS',
+                  comment='Source of the Teff used by the DRS',
+                  group='resolve', post_exclude=True)
+
+# the spectral type (if present) used by the drs (after preprocessing)
+KW_DRS_SPTYPE = KW_DRS_SPTYPE.copy(__NAME__)
+KW_DRS_SPTYPE.set(key='PP_SPT', unit=uu.K,
+                  comment='The SpT used by the DRS',
+                  group='resolve', post_exclude=True)
+
+# the source of spectral type (if present) used by the drs (after preprocessing)
+KW_DRS_SPTYPE_S = KW_DRS_SPTYPE_S.copy(__NAME__)
+KW_DRS_SPTYPE_S.set(key='PP_SPTS',
+                    comment='Source of the SpT used by the DRS',
+                    group='resolve', post_exclude=True)
+
+# The source of the DRS object data (after preprocessing)
+KW_DRS_DSOURCE = KW_DRS_DSOURCE.copy(__NAME__)
+KW_DRS_DSOURCE.set(key='PP_SRCE', unit=uu.K,
+                   comment='The source of DRS object data',
+                   group='resolve', post_exclude=True)
+
+# The date of the source of the DRS object data (after preprocessing)
+KW_DRS_DDATE = KW_DRS_DDATE.copy(__NAME__)
+KW_DRS_DDATE.set(key='PP_DDATE', unit=uu.K,
+                 comment='The date of source of DRS object data',
+                 group='resolve', post_exclude=True)
 
 # -----------------------------------------------------------------------------
 # Define general keywords
 # -----------------------------------------------------------------------------
 # DRS version
 KW_VERSION = KW_VERSION.copy(__NAME__)
-KW_VERSION.set(key='VERSION', comment='DRS version')
+KW_VERSION.set(key='VERSION', comment='APERO version', group='pp')
 
 KW_PPVERSION = KW_PPVERSION.copy(__NAME__)
-KW_PPVERSION.set(key='PVERSION', comment='DRS Pre-Processing version')
+KW_PPVERSION.set(key='PVERSION', comment='APERO Pre-Processing version',
+                 group='pp')
 
 # DRS process ID
 KW_PID = KW_PID.copy(__NAME__)
-KW_PID.set(key='DRSPID', comment='The process ID that outputted this file.')
+KW_PID.set(key='DRSPID', comment='The process ID that outputted this file.',
+           post_exclude=True, group='pp')
 
 # Processed date keyword
 KW_DRS_DATE_NOW = KW_DRS_DATE_NOW.copy(__NAME__)
-KW_DRS_DATE_NOW.set(key='DRSPDATE', comment='DRS Processed date')
+KW_DRS_DATE_NOW.set(key='DRSPDATE', comment='DRS Processed date',
+                    post_exclude=True, group='pp')
 
 # DRS version date keyword
 KW_DRS_DATE = KW_DRS_DATE.copy(__NAME__)
-KW_DRS_DATE.set(key='DRSVDATE', comment='DRS Release date')
+KW_DRS_DATE.set(key='DRSVDATE', comment='DRS Release date', group='pp')
 
 # root keys (for use below and in finding keys later)
 #     - must only be 2 characters long
@@ -199,60 +379,135 @@ root_hc = 'HC'
 
 # define the observation name
 KW_OBJNAME = KW_OBJNAME.copy(__NAME__)
-KW_OBJNAME.set(key='DRSOBJN', comment='Target name')
+KW_OBJNAME.set(key='DRSOBJN', comment='APERO-cleaned Target name',
+               group='ppraw')
 
 # Define the key to get the data fits file type
 KW_DPRTYPE = KW_DPRTYPE.copy(__NAME__)
-KW_DPRTYPE.set(key='DPRTYPE', comment='The type of file (from pre-process)')
+KW_DPRTYPE.set(key='DPRTYPE', comment='APERO-type of file (from pre-process)',
+               group='ppraw')
+
+# Define the key to get the drs mode
+KW_DRS_MODE = KW_DRS_MODE.copy(__NAME__)
+KW_DRS_MODE.set(key='DRSMODE', comment='APERO-mode (HA or HE)',
+                group='ppraw')
 
 # Define the mid exposure time
+# Note: must change INDEX_HEADER_KEYS data type definition if changing this
 KW_MID_OBS_TIME = KW_MID_OBS_TIME.copy(__NAME__)
-KW_MID_OBS_TIME.set(key='MJDMID', comment='Mid Observation time [mjd]',
-                    datatype='mjd', dataformat=float)
+KW_MID_OBS_TIME.set(key='MJDMID',
+                    comment='APERO calculated Mid Observation time [mjd]',
+                    datatype='mjd', dataformat=float,
+                    combine_method='mean', group='ppraw')
 
 # Define the method by which the MJD was calculated
 KW_MID_OBSTIME_METHOD = KW_MID_OBSTIME_METHOD.copy(__NAME__)
 KW_MID_OBSTIME_METHOD.set(key='MJDMIDMD',
-                          comment='Mid Observation time calc method')
+                          comment='Mid Observation time calc method',
+                          group='ppraw')
 
 # -----------------------------------------------------------------------------
 # Define DRS input keywords
 # -----------------------------------------------------------------------------
 # input files
 KW_INFILE1 = KW_INFILE1.copy(__NAME__)
-KW_INFILE1.set(key='INF1{0:03d}', comment='Input file used to create output')
+KW_INFILE1.set(key='INF1{0:03d}', comment='Input file used to create output',
+               post_exclude=True)
 KW_INFILE2 = KW_INFILE2.copy(__NAME__)
-KW_INFILE2.set(key='INF2{0:03d}', comment='Input file used to create output')
+KW_INFILE2.set(key='INF2{0:03d}', comment='Input file used to create output',
+               post_exclude=True)
 KW_INFILE3 = KW_INFILE3.copy(__NAME__)
-KW_INFILE3.set(key='INF3{0:03d}', comment='Input file used to create output')
+KW_INFILE3.set(key='INF3{0:03d}', comment='Input file used to create output',
+               post_exclude=True)
 
 # -----------------------------------------------------------------------------
 # Define database input keywords
 # -----------------------------------------------------------------------------
+# dark calibration file used
 KW_CDBDARK = KW_CDBDARK.copy(__NAME__)
-KW_CDBDARK.set(key='CDBDARK', comment='The calibration DARK file used')
+KW_CDBDARK.set(key='CDBDARK', comment='The cal DARK file for extract')
+# time of dark calibration file used
+KW_CDTDARK = KW_CDTDARK.copy(__NAME__)
+KW_CDTDARK.set(key='CDTDARK', comment='MJDMID of cal DARK file used')
+# bad pixel calibration file used
 KW_CDBBAD = KW_CDBBAD.copy(__NAME__)
-KW_CDBBAD.set(key='CDBBAD', comment='The calibration BADPIX file used')
+KW_CDBBAD.set(key='CDBBAD', comment='The cal BADPIX file for extract')
+# time of bad pixel calibration file used
+KW_CDTBAD = KW_CDTBAD.copy(__NAME__)
+KW_CDTBAD.set(key='CDTBAD', comment='MJDMID of cal BADPIX file used')
+# background calibration file used
 KW_CDBBACK = KW_CDBBACK.copy(__NAME__)
-KW_CDBBACK.set(key='CDBBACK', comment='The calibration BKGRDMAP file used')
+KW_CDBBACK.set(key='CDBBACK', comment='The cal BKGRDMAP file for extract')
+# time of background calibration file used
+KW_CDTBACK = KW_CDTBACK.copy(__NAME__)
+KW_CDTBACK.set(key='CDTBACK',
+               comment='MJDMID of cal BKGRDMAP file used')
+# order profile calibration file used
 KW_CDBORDP = KW_CDBORDP.copy(__NAME__)
-KW_CDBORDP.set(key='CDBORDP', comment='The calibration ORDER_PROFILE file used')
+KW_CDBORDP.set(key='CDBORDP', comment='The cal ORDER_PROFILE file used')
+# time of order profile calibration file used
+KW_CDTORDP = KW_CDTORDP.copy(__NAME__)
+KW_CDTORDP.set(key='CDTORDP', comment='MJDMID of cal ORDER_PROFILE file used')
+# localisation calibration file used
 KW_CDBLOCO = KW_CDBLOCO.copy(__NAME__)
-KW_CDBLOCO.set(key='CDBLOCO', comment='The calibration LOC file used')
+KW_CDBLOCO.set(key='CDBLOCO', comment='The cal LOC file used')
+# localisation calibration file used
+KW_CDTLOCO = KW_CDTLOCO.copy(__NAME__)
+KW_CDTLOCO.set(key='CDTLOCO', comment='MJDMID of cal LOC file used')
+# shape local calibration file used
 KW_CDBSHAPEL = KW_CDBSHAPEL.copy(__NAME__)
-KW_CDBSHAPEL.set(key='CDBSHAPL', comment='The calibration SHAPEL file used')
-KW_CDBSHAPEDX = KW_CDBSHAPEDX.copy(__NAME__)
-KW_CDBSHAPEDX.set(key='CDBSHAPX', comment='The calibration SHAPE DX file used')
+KW_CDBSHAPEL.set(key='CDBSHAPL', comment='The cal SHAPEL file used')
+# time of shape local calibration file used
+KW_CDTSHAPEL = KW_CDTSHAPEL.copy(__NAME__)
+KW_CDTSHAPEL.set(key='CDTSHAPL', comment='MJDMID of cal SHAPEL file used')
+# shape dy calibration file used
 KW_CDBSHAPEDY = KW_CDBSHAPEDY.copy(__NAME__)
-KW_CDBSHAPEDY.set(key='CDBSHAPY', comment='The calibration SHAPE DX file used')
+KW_CDBSHAPEDY.set(key='CDBSHAPY', comment='The cal SHAPE DX file used')
+# time of shape dy calibration file used
+KW_CDTSHAPEDY = KW_CDTSHAPEDY.copy(__NAME__)
+KW_CDTSHAPEDY.set(key='CDTSHAPY', comment='MJDMID of cal SHAPE DX file used')
+# shape dx calibration file used
+KW_CDBSHAPEDX = KW_CDBSHAPEDX.copy(__NAME__)
+KW_CDBSHAPEDX.set(key='CDBSHAPX', comment='The cal SHAPE DX file used')
+# time of shape dx calibration file used
+KW_CDTSHAPEDX = KW_CDTSHAPEDX.copy(__NAME__)
+KW_CDTSHAPEDX.set(key='CDTSHAPX', comment='MJDMID of cal SHAPE DX file used')
+# flat calibration file used
 KW_CDBFLAT = KW_CDBFLAT.copy(__NAME__)
-KW_CDBFLAT.set(key='CDBFLAT', comment='The calibration FLAT file used')
+KW_CDBFLAT.set(key='CDBFLAT', comment='The cal FLAT file used')
+# time of flat calibration file used
+KW_CDTFLAT = KW_CDBFLAT.copy(__NAME__)
+KW_CDTFLAT.set(key='CDTFLAT', comment='MJDMID of cal FLAT file used')
+# blaze calibration file used
 KW_CDBBLAZE = KW_CDBBLAZE.copy(__NAME__)
-KW_CDBBLAZE.set(key='CDBBLAZE', comment='The calibration BLAZE file used')
+KW_CDBBLAZE.set(key='CDBBLAZE', comment='The cal BLAZE file used')
+# time of blaze calibration file used
+KW_CDTBLAZE = KW_CDTBLAZE.copy(__NAME__)
+KW_CDTBLAZE.set(key='CDTBLAZE', comment='MJDMID of cal BLAZE file used')
+# wave solution calibration file used
 KW_CDBWAVE = KW_CDBWAVE.copy(__NAME__)
-KW_CDBWAVE.set(key='CDBWAVE', comment='The calibration WAVE file used')
+KW_CDBWAVE.set(key='CDBWAVE', comment='The cal WAVE file used')
+# time of wave solution calibration file used
+KW_CDTWAVE = KW_CDTWAVE.copy(__NAME__)
+KW_CDTWAVE.set(key='CDTWAVE', comment='MJDMID of cal WAVE file used')
+# thermal calibration file used
 KW_CDBTHERMAL = KW_CDBTHERMAL.copy(__NAME__)
-KW_CDBTHERMAL.set(key='CDBTHERM', comment='The calibration THERMAL file used')
+KW_CDBTHERMAL.set(key='CDBTHERM', comment='The cal THERMAL file used')
+# time of thermal calibration file used
+KW_CDTTHERMAL = KW_CDTTHERMAL.copy(__NAME__)
+KW_CDTTHERMAL.set(key='CDTTHERM', comment='MJDMID of cal THERMAL file used')
+# the leak reference calibration file used
+KW_CDBLEAKM = KW_CDBLEAKM.copy(__NAME__)
+KW_CDBLEAKM.set(key='CDBLEAKM', comment='The cal LEAKM file used')
+# time of the leak reference calibration file used
+KW_CDTLEAKM = KW_CDTLEAKM.copy(__NAME__)
+KW_CDTLEAKM.set(key='CDTLEAKM', comment='MJDMID of cal LEAK file used')
+# the ref leak reference calibration file used
+KW_CDBLEAKR = KW_CDBLEAKR.copy(__NAME__)
+KW_CDBLEAKR.set(key='CDBLEAKR', comment='The cal ref LEAKM file used')
+# time of the ref leak reference calibration file used
+KW_CDTLEAKR = KW_CDTLEAKR.copy(__NAME__)
+KW_CDTLEAKR.set(key='CDTLEAKR', comment='MJDMID of cal ref LEAK file used')
 
 # additional properties of calibration
 KW_C_FLIP = KW_C_FLIP.copy(__NAME__)
@@ -265,6 +520,11 @@ KW_C_FTYPE = KW_C_FTYPE.copy(__NAME__)
 KW_C_FTYPE.set(key='CAL_FTYP', comment='What this fiber was identified as')
 KW_FIBER = KW_FIBER.copy(__NAME__)
 KW_FIBER.set(key='FIBER', comment='The fiber name')
+
+# define the sky model used for sky correction
+KW_TDBSKY = KW_TDBSKY.copy(__NAME__)
+KW_TDBSKY.set(key='TDTSKYCO', comment='Sky model used for sky correction')
+
 # -----------------------------------------------------------------------------
 # Define DRS outputs keywords
 # -----------------------------------------------------------------------------
@@ -275,36 +535,74 @@ KW_OUTPUT.set(key='DRSOUTID', comment='DRS output identification code')
 # Define qc variables
 # -----------------------------------------------------------------------------
 KW_DRS_QC = KW_DRS_QC.copy(__NAME__)
-KW_DRS_QC.set(key='QCC_ALL', comment='All quality control passed')
+KW_DRS_QC.set(key='QCC_ALL', comment='All quality control passed',
+              post_exclude=True)
 KW_DRS_QC_VAL = KW_DRS_QC_VAL.copy(__NAME__)
-KW_DRS_QC_VAL.set(key='QCC{0:03d}V', comment='Quality control measured value')
+KW_DRS_QC_VAL.set(key='QCC{0:03d}V', comment='Quality control measured value',
+                  post_exclude=True)
 KW_DRS_QC_NAME = KW_DRS_QC_NAME.copy(__NAME__)
-KW_DRS_QC_NAME.set(key='QCC{0:03d}N', comment='Quality control parameter name')
+KW_DRS_QC_NAME.set(key='QCC{0:03d}N', comment='Quality control parameter name',
+                   post_exclude=True)
 KW_DRS_QC_LOGIC = KW_DRS_QC_LOGIC.copy(__NAME__)
-KW_DRS_QC_LOGIC.set(key='QCC{0:03d}L', comment='Quality control logic used')
+KW_DRS_QC_LOGIC.set(key='QCC{0:03d}L', comment='Quality control logic used',
+                    post_exclude=True)
 KW_DRS_QC_PASS = KW_DRS_QC_PASS.copy(__NAME__)
-KW_DRS_QC_PASS.set(key='QCC{0:03d}P', comment='Quality control param passed QC')
+KW_DRS_QC_PASS.set(key='QCC{0:03d}P', comment='Quality control param passed QC',
+                   post_exclude=True)
 
 # -----------------------------------------------------------------------------
 # Define preprocessing variables
 # -----------------------------------------------------------------------------
 # The shift in pixels so that image is at same location as engineering flat
 KW_PPSHIFTX = KW_PPSHIFTX.copy(__NAME__)
-KW_PPSHIFTX.set(key='DETOFFDX', comment='Pixel offset in x from readout lag')
-
+KW_PPSHIFTX.set(key='DETOFFDX', comment='Pixel offset in x from readout lag',
+                post_exclude=True)
+# The shift in pixels so that image is at same location as engineering flat
 KW_PPSHIFTY = KW_PPSHIFTY.copy(__NAME__)
-KW_PPSHIFTY.set(key='DETOFFDY', comment='Pixel offset in y from readout lag')
+KW_PPSHIFTY.set(key='DETOFFDY', comment='Pixel offset in y from readout lag',
+                post_exclude=True)
 
-# The number of sigma used to construct pp master mask
-KW_PPMSTR_NSIG = KW_PPMSTR_NSIG.copy(__NAME__)
-KW_PPMSTR_NSIG.set(key='PPMNSIG', comment='PP master mask nsig used')
+# the number of bad pixels found via the intercept (cosmic ray rejection)
+KW_PPC_NBAD_INTE = KW_PPC_NBAD_INTE.copy(__NAME__)
+KW_PPC_NBAD_INTE.set('NBADINTE', comment='No. bad px intercept cosmic reject',
+                     post_exclude=True)
 
-# Define the key to store the name of the pp master file used in pp (if used)
-KW_PPMSTR_FILE = KW_PPMSTR_FILE.copy(__NAME__)
-KW_PPMSTR_FILE.set(key='PPMFILE', comment='PP master mask file used')
+# the number of bad pixels found via the slope (cosmic ray rejection)
+KW_PPC_NBAD_SLOPE = KW_PPC_NBAD_SLOPE.copy(__NAME__)
+KW_PPC_NBAD_SLOPE.set('NBADSLOP', comment='No. bad px slope cosmic reject',
+                      post_exclude=True)
+
+# the number of bad pixels found with both intercept and slope (cosmic ray)
+KW_PPC_NBAD_BOTH = KW_PPC_NBAD_BOTH.copy(__NAME__)
+KW_PPC_NBAD_BOTH.set('NBADBOTH', comment='No. bad px both cosmic reject',
+                     post_exclude=True)
+
+# The number of sigma used to construct pp reference mask
+KW_PP_REF_NSIG = KW_PP_REF_NSIG.copy(__NAME__)
+KW_PP_REF_NSIG.set(key='PPMNSIG', comment='PP reference mask nsig used')
+
+# Define the key to store the name of the pp reference file used in pp (if used)
+KW_PP_REF_FILE = KW_PP_REF_FILE.copy(__NAME__)
+KW_PP_REF_FILE.set(key='PPMFILE', comment='PP reference mask file used')
+
+# Define the percentile stats for LED flat in pp (50th percentile)
+KW_PP_LED_FLAT_P50 = KW_PP_LED_FLAT_P50.copy(__NAME__)
+KW_PP_LED_FLAT_P50.set(key='PPLEDP50', comment='LED RMS 50th percentile')
+
+# Define the percentile stats for LED flat in pp (16th percentile)
+KW_PP_LED_FLAT_P16 = KW_PP_LED_FLAT_P16.copy(__NAME__)
+KW_PP_LED_FLAT_P16.set(key='PPLEDP16', comment='LED RMS 16th percentile')
+
+# Define the percentile stats for LED flat in pp (84th percentile)
+KW_PP_LED_FLAT_P84 = KW_PP_LED_FLAT_P84.copy(__NAME__)
+KW_PP_LED_FLAT_P84.set(key='PPLEDP84', comment='LED RMS 84th percentile')
+
+# Define the LED flat file used
+KW_PP_LED_FLAT_FILE = KW_PP_LED_FLAT_FILE.copy(__NAME__)
+KW_PP_LED_FLAT_FILE.set(key='PPLEDFIL', comment='LED flat file used')
 
 # -----------------------------------------------------------------------------
-# Define cal_dark variables
+# Define apero_dark variables
 # -----------------------------------------------------------------------------
 # The fraction of dead pixels in the dark (in %)
 KW_DARK_DEAD = KW_DARK_DEAD.copy(__NAME__)
@@ -335,7 +633,7 @@ KW_DARK_CUT = KW_DARK_CUT.copy(__NAME__)
 KW_DARK_CUT.set(key='DACUT', comment='Threshold of dark level retain [ADU/s]')
 
 # -----------------------------------------------------------------------------
-# Define cal_badpix variables
+# Define apero_badpix variables
 # -----------------------------------------------------------------------------
 # fraction of hot pixels
 KW_BHOT = KW_BHOT.copy(__NAME__)
@@ -381,6 +679,10 @@ KW_LOC_BCKGRD.set(key=root_loc + 'BCKGRD', comment='mean background [%]',
 KW_LOC_NBO = KW_LOC_NBO.copy(__NAME__)
 KW_LOC_NBO.set(key=root_loc + 'NBO', comment='nb orders localised',
                group='loc')
+
+# Polynomial type for localization
+KW_LOC_POLYT = KW_LOC_POLYT.copy(__NAME__)
+KW_LOC_POLYT.set(key='LOCPOLYT')
 
 # fit degree for order centers
 KW_LOC_DEG_C = KW_LOC_DEG_C.copy(__NAME__)
@@ -470,6 +772,10 @@ KW_EXT_TYPE.set(key='EXT_TYPE', comment='Extract type (E2DS or E2DSFF)')
 # SNR calculated in extraction process (per order)
 KW_EXT_SNR = KW_EXT_SNR.copy(__NAME__)
 KW_EXT_SNR.set(key='EXTSN{0:03d}', comment='Extract: S_N order center')
+
+# Number of orders used in extraction process
+KW_EXT_NBO = KW_EXT_NBO.copy(__NAME__)
+KW_EXT_NBO.set(key='EXT_NBO', comment='Extract: Number of orders used')
 
 # the start order for extraction
 KW_EXT_START = KW_EXT_START.copy(__NAME__)
@@ -570,66 +876,6 @@ KW_S1D_SMOOTH.set(key='S1DSMOOT', comment='Smoothing scale for s1d edge mask')
 KW_S1D_BLAZET = KW_S1D_BLAZET.copy(__NAME__)
 KW_S1D_BLAZET.set(key='S1DBLAZT', comment='Blaze threshold for s1d')
 
-# the Right Ascension used to calculate the BERV
-KW_BERVRA = KW_BERVRA.copy(__NAME__)
-KW_BERVRA.set(key='BC_RA', comment='Right Ascension used to calc. BERV')
-
-# the Declination used to calculate the BERV
-KW_BERVDEC = KW_BERVDEC.copy(__NAME__)
-KW_BERVDEC.set(key='BC_DEC', comment='Declination used to calc. BERV')
-
-# the Gaia ID used to identify KW_BERV_POS_SOURCE for BERV calculation
-KW_BERVGAIA_ID = KW_BERVGAIA_ID.copy(__NAME__)
-KW_BERVGAIA_ID.set(key='BC_GAIA', comment='The Gaia ID used for BERV params')
-
-# the OBJNAME used to identify KW_BERV_POS_SOURCE for BERV calculation
-KW_BERVOBJNAME = KW_BERVOBJNAME.copy(__NAME__)
-KW_BERVOBJNAME.set(key='BC_OBJNM', comment='The OBJNAME used for BERV params')
-
-# the epoch (jd) used to calculate the BERV
-KW_BERVEPOCH = KW_BERVEPOCH.copy(__NAME__)
-KW_BERVEPOCH.set(key='BC_EPOCH', comment='Epoch [JD] used to calc. BERV')
-
-# the pmra [mas/yr] used to calculate the BERV
-KW_BERVPMRA = KW_BERVPMRA.copy(__NAME__)
-KW_BERVPMRA.set(key='BC_PMRA', comment='PMRA [mas/yr] used to calc. BERV')
-
-# the pmde [mas/yr] used to calculate the BERV
-KW_BERVPMDE = KW_BERVPMDE.copy(__NAME__)
-KW_BERVPMDE.set(key='BC_PMDE', comment='PMDE [mas/yr] used to calc. BERV')
-
-# the parallax [mas] used to calculate the BERV
-KW_BERVPLX = KW_BERVPLX.copy(__NAME__)
-KW_BERVPLX.set(key='BC_PLX', comment='PLX [mas] used to calc. BERV')
-
-# the rv [km/s] used to calculate the BERV
-KW_BERVRV = KW_BERVRV.copy(__NAME__)
-KW_BERVRV.set(key='BC_RV', comment='RV [km/s] used to calc. BERV')
-
-# the source of the BERV star parameters (header or gaia)
-KW_BERV_POS_SOURCE = KW_BERV_POS_SOURCE.copy(__NAME__)
-KW_BERV_POS_SOURCE.set(key='BC_PSRCE', comment='Source of BERV star params')
-
-# the Gaia G mag (if present) for the gaia query
-KW_BERV_GAIA_GMAG = KW_BERV_GAIA_GMAG.copy(__NAME__)
-KW_BERV_GAIA_GMAG.set(key='BC_GMAG', comment='Gaia G mag for BERV calc.')
-
-# the Gaia BP mag (if present) for the gaia query
-KW_BERV_GAIA_BPMAG = KW_BERV_GAIA_BPMAG.copy(__NAME__)
-KW_BERV_GAIA_BPMAG.set(key='BC_BPMAG', comment='Gaia BP mag for BERV calc.')
-
-# the Gaia RP mag (if present) for the gaia query
-KW_BERV_GAIA_RPMAG = KW_BERV_GAIA_RPMAG.copy(__NAME__)
-KW_BERV_GAIA_RPMAG.set(key='BC_RPMAG', comment='Gaia RP mag for BERV calc.')
-
-# the Gaia G mag limit used for the gaia query
-KW_BERV_GAIA_MAGLIM = KW_BERV_GAIA_MAGLIM.copy(__NAME__)
-KW_BERV_GAIA_MAGLIM.set(key='BC_MAG_L', comment='Gaia mag lim for BERV calc.')
-
-# the Gaia parallax limit used the gaia query
-KW_BERV_GAIA_PLXLIM = KW_BERV_GAIA_PLXLIM.copy(__NAME__)
-KW_BERV_GAIA_PLXLIM.set(key='BC_PLX_L', comment='Gaia plx lim for BERV calc.')
-
 # the observatory latitude used to calculate the BERV
 KW_BERVLAT = KW_BERVLAT.copy(__NAME__)
 KW_BERVLAT.set(key='BC_LAT', comment='OBS Latitude [deg] used to calc. BERV')
@@ -649,7 +895,8 @@ KW_BERV.set(key='BERV', comment='Barycentric Velocity calc. in BERVSRCE [km/s]',
 
 # the Barycenter Julian date calculate with KW_BERVSOURCE
 KW_BJD = KW_BJD.copy(__NAME__)
-KW_BJD.set(key='BJD', comment='Barycentric Julian data calc. in BERVSRCE',
+KW_BJD.set(key='BJD',
+           comment='Barycentric Julian date mid exp calc. BERVSRCE',
            datatype=float)
 
 # the maximum BERV found across 1 year (with KW_BERVSOURCE)
@@ -674,7 +921,7 @@ KW_BERV_EST.set(key='BERV_EST', comment='Barycentric Velocity estimate [km/s]',
 
 # the Barycenter Julian date calculated with the estimate
 KW_BJD_EST = KW_BJD_EST.copy(__NAME__)
-KW_BJD_EST.set(key='BJD_EST', comment='Barycentric Julian data estimate',
+KW_BJD_EST.set(key='BJD_EST', comment='Barycentric Julian date estimate',
                datatype=float)
 
 # the maximum BERV found across 1 year (calculated with estimate)
@@ -718,15 +965,15 @@ KW_LEAK_NP_U = KW_LEAK_NP_U.copy(__NAME__)
 KW_LEAK_NP_U.set(key='LEAK_NPU', datatype=float,
                  comment='LEAK norm percentile used for leakage corr')
 
-# Define the e-width smoothing used for correcting leakage master
+# Define the e-width smoothing used for correcting leakage reference
 KW_LEAK_WSMOOTH = KW_LEAK_WSMOOTH.copy(__NAME__)
 KW_LEAK_WSMOOTH.set(key='LEAKMWSM', datatype=float,
-                    comment='LEAKM e-width smoothing used for leak master corr')
+                    comment='LEAKM e-width smoothing used for leak reference corr')
 
-# Define the kernel size used for correcting leakage master
+# Define the kernel size used for correcting leakage reference
 KW_LEAK_KERSIZE = KW_LEAK_KERSIZE.copy(__NAME__)
 KW_LEAK_KERSIZE.set(key='LEAKMKSZ', datatype=float,
-                    comment='LEAKM kernel size used for leak master corr')
+                    comment='LEAKM kernel size used for leak reference corr')
 
 # Define the lower bound percentile used for correcting leakage
 KW_LEAK_LP_U = KW_LEAK_LP_U.copy(__NAME__)
@@ -756,6 +1003,11 @@ KW_WAVE_DEG = KW_WAVE_DEG.copy(__NAME__)
 KW_WAVE_DEG.set(key='WAVEDEGN', comment='degree of wave polyn fit',
                 parent=None, group='wave')
 
+# wave polynomial type
+KW_WAVE_POLYT = KW_WAVE_POLYT.copy(__NAME__)
+KW_WAVE_POLYT.set(key='WAVEPOLY', comment='type of wave polynomial',
+                  parent=None, group='wave')
+
 # the wave file used
 KW_WAVEFILE = KW_WAVEFILE.copy(__NAME__)
 KW_WAVEFILE.set(key='WAVEFILE', comment='Wavelength solution file used',
@@ -776,10 +1028,38 @@ KW_WAVECOEFFS = KW_WAVECOEFFS.copy(__NAME__)
 KW_WAVECOEFFS.set(key='WAVE{0:04d}', comment='Wavelength coefficients',
                   parent=None, group='wave')
 
+# the wave echelle numbers
+KW_WAVE_ECHELLE = KW_WAVE_ECHELLE.copy(__NAME__)
+KW_WAVE_ECHELLE.set(key='WAVEEC{0:02d}', comment='Echelle order numbers',
+                    parent=None, group='wave')
+
 # the initial wave file used for wave solution
 KW_INIT_WAVE = KW_INIT_WAVE.copy(__NAME__)
 KW_INIT_WAVE.set(key='WAVEINIT', comment='Initial wavelength solution used',
                  parent=None, group='wave')
+
+# define the cavity width polynomial key
+KW_CAVITY_WIDTH = KW_CAVITY_WIDTH.copy(__NAME__)
+KW_CAVITY_WIDTH.set(key='WCAV{0:03d}', comment='Wave cavity polynomial',
+                    parent=None, group='wave')
+
+# define the cavity fit degree used
+KW_CAVITY_DEG = KW_CAVITY_DEG.copy(__NAME__)
+KW_CAVITY_DEG.set(key='WCAV_DEG', comment='Wave cavity fit degree',
+                  parent=None, group='wave')
+
+# define the cavity poly zero point (to be added on when using)
+KW_CAV_PEDESTAL = KW_CAV_PEDESTAL.copy(__NAME__)
+KW_CAV_PEDESTAL.set(key='WCAV_PED', comment='Wave cavity pedestal',
+                    parent=None, group='wave')
+
+# define the mean hc velocity calculated
+KW_WAVE_MEANHC = KW_WAVE_MEANHC.copy(__NAME__)
+KW_WAVE_MEANHC.set(key='WAVEMHC', comment='Wave mean hc velocity')
+
+# define the err on mean hc velocity calculated
+KW_WAVE_EMEANHC = KW_WAVE_EMEANHC.copy(__NAME__)
+KW_WAVE_EMEANHC.set(key='WAVEEMHC', comment='Wave error mean hc velocity')
 
 # -----------------------------------------------------------------------------
 # the fit degree for wave solution used
@@ -1255,6 +1535,78 @@ KW_WNT_NSIG_FIT.set(key='WNTNSIGF', comment='wave night sig clip fit cut used',
                     parent='WAVE_NIGHT_NSIG_FIT_CUT', group='wave')
 
 # -----------------------------------------------------------------------------
+# Define wave res (new) variables
+# -----------------------------------------------------------------------------
+# number of orders for the resolution map header
+KW_RESMAP_NBO = KW_RESMAP_NBO.copy(__NAME__)
+KW_RESMAP_NBO.set(key='RES_NBO', comment='Total number of orders',
+                  group='wave-res')
+
+# number of pixels in an order for the resolution map header
+KW_RESMAP_NBPIX = KW_RESMAP_NBPIX.copy(__NAME__)
+KW_RESMAP_NBPIX.set(key='RESNBPIX', comment='Total number of pixels per order')
+
+# current bin number for order direction for the resolution map header
+KW_RESMAP_BINORD = KW_RESMAP_BINORD.copy(__NAME__)
+KW_RESMAP_BINORD.set(key='RESCBINO', group='wave-res',
+                     comment='Current bin number for order direction')
+
+# total number of bins in order direction for the resolution map header
+KW_RESMAP_NBINORD = KW_RESMAP_NBINORD.copy(__NAME__)
+KW_RESMAP_NBINORD.set(key='RESNBINO', group='wave-res',
+                      comment='Total number bins in order direction')
+
+# current bin number in spatial direction for the resolution map header
+KW_RESMAP_BINPIX = KW_RESMAP_BINPIX.copy(__NAME__)
+KW_RESMAP_BINPIX.set(key='RESCBINP', group='wave-res',
+                     comment='Current bin number for spatial direction')
+
+# total number of bins in spatial direction for the resolution map header
+KW_RESMAP_NBINPIX = KW_RESMAP_NBINPIX.copy(__NAME__)
+KW_RESMAP_NBINPIX.set(key='RESNBINP', group='wave-res',
+                      comment='Total number bins in spatial direction')
+
+# First order used in this sector
+KW_RES_MAP_ORDLOW = KW_RES_MAP_ORDLOW.copy(__NAME__)
+KW_RES_MAP_ORDLOW.set(key='ORDSTART', group='wave-res',
+                      comment='First order used in this sector')
+
+# Last order used in this sector
+KW_RES_MAP_ORDHIGH = KW_RES_MAP_ORDHIGH.copy(__NAME__)
+KW_RES_MAP_ORDHIGH.set(key='ORDFINAL', group='wave-res',
+                       comment='Last order used in this sector')
+
+# First pixel used in this sector
+KW_RES_MAP_PIXLOW = KW_RES_MAP_PIXLOW.copy(__NAME__)
+KW_RES_MAP_PIXLOW.set(key='PIXSTART', group='wave-res',
+                      comment='First pixel used in this sector')
+
+# Last pixel used in this sector
+KW_RES_MAP_PIXHIGH = KW_RES_MAP_PIXHIGH.copy(__NAME__)
+KW_RES_MAP_PIXHIGH.set(key='PIXFINAL', group='wave-res',
+                       comment='Last pixel used in this sector')
+
+# FWHM from fit for this sector
+KW_RES_MAP_FWHM = KW_RES_MAP_FWHM.copy(__NAME__)
+KW_RES_MAP_FWHM.set(key='FIT_FWHM', group='wave-res',
+                    comment='FWHM from fit for this sector')
+
+# Amplitude from fit for this sector
+KW_RES_MAP_AMP = KW_RES_MAP_AMP.copy(__NAME__)
+KW_RES_MAP_AMP.set(key='FIT_AMP', group='wave-res',
+                   comment='Amplitude from fit for this sector')
+
+# Exponent from fit for this sector
+KW_RES_MAP_EXPO = KW_RES_MAP_EXPO.copy(__NAME__)
+KW_RES_MAP_EXPO.set(key='FIT_EXPO', group='wave-res',
+                    comment='Exponent from fit for this sector')
+
+# Measured effective resolution measured for this sector
+KW_RES_MAP_RESEFF = KW_RES_MAP_RESEFF.copy(__NAME__)
+KW_RES_MAP_RESEFF.set(key='RES_EFF', group='wave-res',
+                      comment='Measured effective resolution for this sector')
+
+# -----------------------------------------------------------------------------
 # Define telluric preclean variables
 # -----------------------------------------------------------------------------
 # Define the exponent of water key from telluric preclean process
@@ -1290,6 +1642,11 @@ KW_TELLUP_CCFP_OTHERS.set(key='TLPCPOTR', comment='CCF power of other species')
 KW_TELLUP_DO_PRECLEAN = KW_TELLUP_DO_PRECLEAN.copy(__NAME__)
 KW_TELLUP_DO_PRECLEAN.set(key='TLPDOCLN', comment='tellu preclean done',
                           parent='TELLUP_DO_PRECLEANING')
+
+# Define whether precleaning was done (tellu pre-cleaning)
+KW_TELLUP_DO_PRECLEAN = KW_TELLUP_DO_PRECLEAN.copy(__NAME__)
+KW_TELLUP_DO_PRECLEAN.set(key='TLPDOFRC', comment='tellu finite res corr done',
+                          parent='TELLUP_DO_FINITE_RES_CORR')
 
 # Define default water absorption used (tellu pre-cleaning)
 KW_TELLUP_DFLT_WATER = KW_TELLUP_DFLT_WATER.copy(__NAME__)
@@ -1406,6 +1763,18 @@ KW_TELLUP_WATER_BOUNDS.set(key='TLP_H2OB',
 KW_MKTELL_TEMP_FILE = KW_MKTELL_TEMP_FILE.copy(__NAME__)
 KW_MKTELL_TEMP_FILE.set(key='MKTTEMPF', comment='mktellu template file used')
 
+# the number of template files used
+KW_MKTELL_TEMPNUM = KW_MKTELL_TEMPNUM.copy(__NAME__)
+KW_MKTELL_TEMPNUM.set(key='MKTTEMPN', comment='mktellu template used for sed')
+
+# the hash for the template generation (unique)
+KW_MKTELL_TEMPHASH = KW_MKTELL_TEMPHASH.copy(__NAME__)
+KW_MKTELL_TEMPHASH.set(key='MKTTEMPH', comment='mktellu template unique hash')
+
+# the time the template was generated
+KW_MKTELL_TEMPTIME = KW_MKTELL_TEMPTIME.copy(__NAME__)
+KW_MKTELL_TEMPTIME.set(key='MKTTEMPT', comment='mktellu template create time')
+
 # The blaze percentile used for mktellu calculation
 KW_MKTELL_BLAZE_PRCT = KW_MKTELL_BLAZE_PRCT.copy(__NAME__)
 KW_MKTELL_BLAZE_PRCT.set(key='MKTBPRCT', comment='mktellu blaze percentile')
@@ -1445,6 +1814,21 @@ KW_MKTELL_TRANS_FIT_UPPER_BAD = KW_MKTELL_TRANS_FIT_UPPER_BAD.copy(__NAME__)
 KW_MKTELL_TRANS_FIT_UPPER_BAD.set(key='MKTTTMAX',
                                   comment='mktellu max transmission used',
                                   parent='MKTELLU_TRANS_FIT_UPPER_BAD')
+
+# The number of files used in the trans file model
+KW_MKMODEL_NFILES = KW_MKMODEL_NFILES.copy(__NAME__)
+KW_MKMODEL_NFILES.set(key='MKMNFILE',
+                      comment='mkmodel number of trans files')
+
+# The min number of files in the trans file model
+KW_MKMODEL_MIN_FILES = KW_MKMODEL_MIN_FILES.copy(__NAME__)
+KW_MKMODEL_MIN_FILES.set(key='MKMMFILE',
+                         comment='mkmodel min number of trans files')
+
+# The sigma cut for the trans file model
+KW_MKMODEL_SIGCUT = KW_MKMODEL_SIGCUT.copy(__NAME__)
+KW_MKMODEL_SIGCUT.set(key='MKMSIGMA',
+                      comment='mkmodel sigma cut for trans model')
 
 # -----------------------------------------------------------------------------
 # Define fit telluric variables
@@ -1519,6 +1903,19 @@ KW_FTELLU_RECON_LIM.set(key='FTTRCLIM',
 KW_FTELLU_TEMPLATE = KW_FTELLU_TEMPLATE.copy(__NAME__)
 KW_FTELLU_TEMPLATE.set(key='FTTTEMPL', comment='ftellu template used for sed')
 
+# the number of template files used
+KW_FTELLU_TEMPNUM = KW_FTELLU_TEMPNUM.copy(__NAME__)
+KW_FTELLU_TEMPNUM.set(key='FTTTEMPN',
+                      comment='ftellu number of files used for template')
+
+# the hash for the template generation (unique)
+KW_FTELLU_TEMPHASH = KW_FTELLU_TEMPHASH.copy(__NAME__)
+KW_FTELLU_TEMPHASH.set(key='FTTTEMPH', comment='ftellu template unique hash')
+
+# the hash for the template generation (unique)
+KW_FTELLU_TEMPTIME = KW_FTELLU_TEMPTIME.copy(__NAME__)
+KW_FTELLU_TEMPTIME.set(key='FTTTEMPT', comment='ftellu template create time')
+
 # Telluric principle component amplitudes (for use with 1D list)
 KW_FTELLU_AMP_PC = KW_FTELLU_AMP_PC.copy(__NAME__)
 KW_FTELLU_AMP_PC.set(key='AMPPC{0:03d}',
@@ -1546,6 +1943,22 @@ KW_FTELLU_TAU_REST.set(key='TAU_OTHE',
 # -----------------------------------------------------------------------------
 # Define make template variables
 # -----------------------------------------------------------------------------
+# store the number of files we had to create template
+KW_MKTEMP_NFILES = KW_MKTEMP_NFILES.copy(__NAME__)
+KW_MKTEMP_NFILES.set(key='MTPNFILO', comment='mktemplate num files orig')
+
+# store the number of files used to create template
+KW_MKTEMP_NFILES_USED = KW_MKTEMP_NFILES_USED.copy(__NAME__)
+KW_MKTEMP_NFILES_USED.set(key='MTPNFILU', comment='mktemplate num files used')
+
+# store a unique hash for this template (based on file name etc)
+KW_MKTEMP_HASH = KW_MKTEMP_HASH.copy(__NAME__)
+KW_MKTEMP_HASH.set(key='MTP_HASH', comment='unique hash id for template')
+
+# store time template was created
+KW_MKTEMP_TIME = KW_MKTEMP_TIME.copy(__NAME__)
+KW_MKTEMP_TIME.set(key='MTP_TIME', comment='time the template was created')
+
 # the snr order used for quality control cut in make template calculation
 KW_MKTEMP_SNR_ORDER = KW_MKTEMP_SNR_ORDER.copy(__NAME__)
 KW_MKTEMP_SNR_ORDER.set(key='MTPSNROD', comment='mktemplate snr order used')
@@ -1553,6 +1966,24 @@ KW_MKTEMP_SNR_ORDER.set(key='MTPSNROD', comment='mktemplate snr order used')
 # the snr threshold used for quality control cut in make template calculation
 KW_MKTEMP_SNR_THRES = KW_MKTEMP_SNR_THRES.copy(__NAME__)
 KW_MKTEMP_SNR_THRES.set(key='MTPSNRTH', comment='mktemplate snr threshold used')
+
+# the berv coverage calculated for this template calculation
+KW_MKTEMP_BERV_COV = KW_MKTEMP_BERV_COV.copy(__NAME__)
+KW_MKTEMP_BERV_COV.set('MTPBCOV', comment='mktemplate berv coverage km/s')
+
+# the minimum berv coverage allowed for this template calculation
+KW_MKTEMP_BERV_COV_MIN = KW_MKTEMP_BERV_COV_MIN.copy(__NAME__)
+KW_MKTEMP_BERV_COV_MIN.set('MTPBCMIN',
+                           comment='mktemplate min berv coverage used km/s')
+
+# the core snr used for this template calculation
+KW_MKTEMP_BERV_COV_SNR = KW_MKTEMP_BERV_COV_SNR.copy(__NAME__)
+KW_MKTEMP_BERV_COV_SNR.set('MTPBCSNR', comment='mktemplate berv cov snr used')
+
+# the resolution used for this template calculation
+KW_MKTEMP_BERV_COV_RES = KW_MKTEMP_BERV_COV_RES.copy(__NAME__)
+KW_MKTEMP_BERV_COV_RES.set('MTPBCRES',
+                           comment='mktemplate berv cov resolution used')
 
 # -----------------------------------------------------------------------------
 # Define ccf variables
@@ -1687,257 +2118,6 @@ KW_CCF_RV_TIMEDIFF.set(key='RV_WAVTD',
 KW_CCF_RV_WAVESRCE = KW_CCF_RV_WAVESRCE.copy(__NAME__)
 KW_CCF_RV_WAVESRCE.set(key='RV_WAVSR',
                        comment='RV wave file source used')
-
-# -----------------------------------------------------------------------------
-# Define polar variables
-# -----------------------------------------------------------------------------
-# define the Stokes paremeter: Q, U, V, or I
-KW_POL_STOKES = KW_POL_STOKES.copy(__NAME__)
-KW_POL_STOKES.set(key='STOKES', comment='POLAR Stokes paremeter: Q, U, V, or I')
-
-# define Number of exposures for polarimetry
-KW_POL_NEXP = KW_POL_NEXP.copy(__NAME__)
-KW_POL_NEXP.set(key='POLNEXP',
-                comment='POLAR Number of exposures for polarimetry')
-
-# defines the Polarimetry method
-KW_POL_METHOD = KW_POL_METHOD.copy(__NAME__)
-KW_POL_METHOD.set(key='POLMETHO', comment='POLAR Polarimetry method')
-
-# define the base file name exposure list
-KW_POL_FILES = KW_POL_FILES.copy(__NAME__)
-KW_POL_FILES.set(key='P_IN{0:02d}', comment='POLAR Base filename of')
-
-# define the exposure times of exposure list
-KW_POL_EXPS = KW_POL_EXPS.copy(__NAME__)
-KW_POL_EXPS.set(key='P_EX{0:02d}', comment='POLAR EXPTIME [s] of')
-
-# define the mjds at start for exposure list
-KW_POL_MJDS = KW_POL_MJDS.copy(__NAME__)
-KW_POL_MJDS.set(key='P_MJD{0:02d}', comment='POLAR MJD at start of')
-
-# define the mjdends at end for exposure list
-KW_POL_MJDENDS = KW_POL_MJDENDS.copy(__NAME__)
-KW_POL_MJDENDS.set(key='P_MJDE{0:02d}', comment='POLAR MJDEND at end of ')
-
-# define the bjds for exposure list
-KW_POL_BJDS = KW_POL_BJDS.copy(__NAME__)
-KW_POL_BJDS.set(key='P_BJD{0:02d}', comment='POLAR BJD for ')
-
-# define the bervs for exposure list
-KW_POL_BERVS = KW_POL_BERVS.copy(__NAME__)
-KW_POL_BERVS.set(key='P_BERV{0:02d}', comment='POLAR BERV for')
-
-# define the Total exposure time (sec)
-KW_POL_EXPTIME = KW_POL_EXPTIME.copy(__NAME__)
-KW_POL_EXPTIME.set(key='POLTTIME', comment='POLAR Total exposure time (sec)')
-
-# define the Elapsed time of observation (sec)
-KW_POL_ELAPTIME = KW_POL_ELAPTIME.copy(__NAME__)
-KW_POL_ELAPTIME.set(key='POLETIME',
-                    comment='POLAR Elapsed time of observation (sec)')
-
-# define the MJD at center of observation
-KW_POL_MJDCEN = KW_POL_MJDCEN.copy(__NAME__)
-KW_POL_MJDCEN.set(key='POLMJDC', comment='POLAR MJD at center of observation')
-
-# define the BJD at center of observation
-KW_POL_BJDCEN = KW_POL_BJDCEN.copy(__NAME__)
-KW_POL_BJDCEN.set(key='POLBJDC', comment='POLAR BJD at center of observation')
-
-# define the BERV at center of observation
-KW_POL_BERVCEN = KW_POL_BERVCEN.copy(__NAME__)
-KW_POL_BERVCEN.set(key='POLBERVC',
-                   comment='POLAR BERV at center of observation')
-
-# define the Mean BJD for polar sequence
-KW_POL_MEANBJD = KW_POL_MEANBJD.copy(__NAME__)
-KW_POL_MEANBJD.set(key='POLMNBJD', comment='POLAR Mean BJD for polar sequence')
-
-# define the minimum number of files used
-KW_USED_MIN_FILES = KW_USED_MIN_FILES.copy(__NAME__)
-KW_USED_MIN_FILES.set(key='POLMINFL', comment='POLAR Min no. files used')
-
-# define all possible fibers for polarimetry used
-KW_USED_VALID_FIBERS = KW_USED_VALID_FIBERS.copy(__NAME__)
-KW_USED_VALID_FIBERS.set(key='P_VFIB{0:02d}', comment='POLAR valid fibers used')
-
-# define all possible stokes parameters used
-KW_USED_VALID_STOKES = KW_USED_VALID_STOKES.copy(__NAME__)
-KW_USED_VALID_STOKES.set(key='P_VSTK{0:02d}', comment='POLAR valid stokes used')
-
-# define the continuum bin size used
-KW_USED_CONT_BINSIZE = KW_USED_CONT_BINSIZE.copy(__NAME__)
-KW_USED_CONT_BINSIZE.set(key='POLUCBIN',
-                         comment='POLAR continuum binsize used')
-
-# define the continuum overlap used
-KW_USED_CONT_OVERLAP = KW_USED_CONT_OVERLAP.copy(__NAME__)
-KW_USED_CONT_OVERLAP.set(key='POLUCOVL',
-                         comment='POLAR continuum overlap used')
-
-# define the LSD mask filename
-KW_POLAR_LSD_MASK = KW_POLAR_LSD_MASK.copy(__NAME__)
-KW_POLAR_LSD_MASK.set(key='PLSDMASK', comment='POLAR LSD mask filename')
-
-# define the Radial velocity (km/s) from gaussian fit from polar lsd
-KW_POLAR_LSD_FIT_RV = KW_POLAR_LSD_FIT_RV.copy(__NAME__)
-KW_POLAR_LSD_FIT_RV.set(key='PLSD_FRV',
-                        comment='POLAR LSD RV [km/s] from gaussfit')
-
-# define the Resolving power from gaussian fit from polar lsd
-KW_POLAR_LSD_FIT_RESOL = KW_POLAR_LSD_FIT_RESOL.copy(__NAME__)
-KW_POLAR_LSD_FIT_RESOL.set(key='PLSD_FRE',
-                           comment='POLAR LSD Resolving power from gaussfit')
-
-# define the Mean polarization of data in LSD
-KW_POLAR_LSD_MEANPOL = KW_POLAR_LSD_MEANPOL.copy(__NAME__)
-KW_POLAR_LSD_MEANPOL.set(key='PLSDMN_P',
-                         comment='POLAR LSD Mean polarization in data')
-
-# define the Std dev polarization of data in LSD
-KW_POLAR_LSD_STDPOL = KW_POLAR_LSD_STDPOL.copy(__NAME__)
-KW_POLAR_LSD_STDPOL.set(key='PLSDST_P',
-                        comment='POLAR LSD Std dev polarization of dataD')
-
-# define the Median polarization of data in LSD
-KW_POLAR_LSD_MEDPOL = KW_POLAR_LSD_MEDPOL.copy(__NAME__)
-KW_POLAR_LSD_MEDPOL.set(key='PLSDME_P',
-                        comment='POLAR LSD Median polarization of data')
-
-# define the Med abs dev polarization of data in LSD
-KW_POLAR_LSD_MEDABSDEV = KW_POLAR_LSD_MEDABSDEV.copy(__NAME__)
-KW_POLAR_LSD_MEDABSDEV.set(key='PLSDMADP',
-                           comment='POLAR LSD Med absdev polarization of data')
-
-# define the mean of pol LSD profile
-KW_POLAR_LSD_MEANSVQU = KW_POLAR_LSD_MEANSVQU.copy(__NAME__)
-KW_POLAR_LSD_MEANSVQU.set(key='PLSDMVQU',
-                          comment='POLAR LSD mean of pol LSD profile')
-
-# define the Std dev of pol LSD profile
-KW_POLAR_LSD_STDSVQU = KW_POLAR_LSD_STDSVQU.copy(__NAME__)
-KW_POLAR_LSD_STDSVQU.set(key='PLSDSVQU',
-                         comment='POLAR LSD Std dev of pol LSD profile')
-
-# define the Mean of null LSD profile
-KW_POLAR_LSD_MEANNULL = KW_POLAR_LSD_MEANNULL.copy(__NAME__)
-KW_POLAR_LSD_MEANNULL.set(key='PLSDMNUL',
-                          comment='POLAR LSD Mean of null LSD profile')
-
-# define the Std dev of null LSD profile
-KW_POLAR_LSD_STDNULL = KW_POLAR_LSD_STDNULL.copy(__NAME__)
-KW_POLAR_LSD_STDNULL.set(key='PLSDSNUL',
-                         comment='POLAR LSD Std dev of null LSD profile')
-
-# define the lsd column: Velocities (km/s)
-KW_POL_LSD_COL1 = KW_POL_LSD_COL1.copy(__NAME__)
-KW_POL_LSD_COL1.set(key='PLSDCOL1', comment='POLAR LSD COL: Velocities (km/s)')
-
-# define the lsd column: Stokes I LSD profile
-KW_POL_LSD_COL2 = KW_POL_LSD_COL2.copy(__NAME__)
-KW_POL_LSD_COL2.set(key='PLSDCOL2',
-                    comment='POLAR LSD COL: Stokes I LSD profile')
-
-# define the lsd column: Gaussian fit to Stokes I LSD profile
-KW_POL_LSD_COL3 = KW_POL_LSD_COL3.copy(__NAME__)
-KW_POL_LSD_COL3.set(key='PLSDCOL3',
-                    comment='POLAR LSD COL: Gaussfit to Stokes I LSD profile')
-
-# define the lsd column: Stokes V, U, or Q LSD profile
-KW_POL_LSD_COL4 = KW_POL_LSD_COL4.copy(__NAME__)
-KW_POL_LSD_COL4.set(key='PLSDCOL4',
-                    comment='POLAR LSD COL: Stokes V, U, or Q LSD profile')
-
-# define the lsd column: Null polarization LSD profile
-KW_POL_LSD_COL5 = KW_POL_LSD_COL5.copy(__NAME__)
-KW_POL_LSD_COL5.set(key='PLSDCOL5',
-                    comment='POLAR LSD COL: Null polarization LSD profile')
-
-# define the minimum line depth value used in LSD analysis
-KW_POLAR_LSD_MLDEPTH = KW_POLAR_LSD_MLDEPTH.copy(__NAME__)
-KW_POLAR_LSD_MLDEPTH.set(key='PLSDMLSP',
-                         comment='POLAR LSD minimum line depth used')
-
-# Define initial velocity value used in LSD analysis
-KW_POLAR_LSD_VINIT = KW_POLAR_LSD_VINIT.copy(__NAME__)
-KW_POLAR_LSD_VINIT.set(key='PLSD_V0',
-                       comment='POLAR LSD Initial velocity [km/s]')
-
-# Define final velocity value used in LSD analysis
-KW_POLAR_LSD_VFINAL = KW_POLAR_LSD_VFINAL.copy(__NAME__)
-KW_POLAR_LSD_VFINAL.set(key='PLSD_VF',
-                        comment='POLAR LSD Final velocity [km/s]')
-
-# Define whether stokesI was normalised by continuum
-KW_POLAR_LSD_NORM = KW_POLAR_LSD_NORM.copy(__NAME__)
-KW_POLAR_LSD_NORM.set(key='PLSDNCONT',
-                      comment='POLAR LSD whether stokesI norm by continuum')
-
-# define the bin size used for norm continuum
-KW_POLAR_LSD_NBIN1 = KW_POLAR_LSD_NBIN1.copy(__NAME__)
-KW_POLAR_LSD_NBIN1.set(key='PLSDNBIN',
-                       comment='POLAR LSD bin size used for norm continuum')
-
-# define the overlap used for norm continuum
-KW_POLAR_LSD_NLAP1 = KW_POLAR_LSD_NLAP1.copy(__NAME__)
-KW_POLAR_LSD_NLAP1.set(key='PLSDNLAP',
-                       comment='POLAR LSD overlap used for norm continuum')
-
-# define the sig clip used for norm continuum
-KW_POLAR_LSD_NSIG1 = KW_POLAR_LSD_NSIG1.copy(__NAME__)
-KW_POLAR_LSD_NSIG1.set(key='PLSDNSIG',
-                       comment='POLAR LSD sigclip used for norm continuum')
-
-# define the window size used for norm continuum
-KW_POLAR_LSD_NWIN1 = KW_POLAR_LSD_NWIN1.copy(__NAME__)
-KW_POLAR_LSD_NWIN1.set(key='PLSDNWIN',
-                       comment='POLAR LSD window size used for norm continuum')
-
-# define the mode used for norm continuum
-KW_POLAR_LSD_NMODE1 = KW_POLAR_LSD_NMODE1.copy(__NAME__)
-KW_POLAR_LSD_NMODE1.set(key='PLSDNMOD',
-                        comment='POLAR LSD mode used for norm continuum')
-
-# define whether a linear fit was used for norm continuum
-KW_POLAR_LSD_NLFIT1 = KW_POLAR_LSD_NLFIT1.copy(__NAME__)
-KW_POLAR_LSD_NLFIT1.set(key='PLSDNLFT',
-                        comment='POLAR LSD whether linfit used norm continuum')
-
-# define the Number of points for LSD profile
-KW_POLAR_LSD_NPOINTS = KW_POLAR_LSD_NPOINTS.copy(__NAME__)
-KW_POLAR_LSD_NORM.set(key='PLSD_NP',
-                      comment='POLAR LSD Number of points for LSD profile')
-
-# define the bin sized used in profile calc
-KW_POLAR_LSD_NBIN2 = KW_POLAR_LSD_NBIN2.copy(__NAME__)
-KW_POLAR_LSD_NBIN2.set(key='PLSDPBIN',
-                       comment='POLAR LSD bin size used for profile calc.')
-
-# define the overlap used in profile calc
-KW_POLAR_LSD_NLAP2 = KW_POLAR_LSD_NLAP2.copy(__NAME__)
-KW_POLAR_LSD_NLAP2.set(key='PLSDPLAP',
-                       comment='POLAR LSD overlap used for profile calc.')
-
-# define the sigma clip used in profile calc
-KW_POLAR_LSD_NSIG2 = KW_POLAR_LSD_NSIG2.copy(__NAME__)
-KW_POLAR_LSD_NSIG2.set(key='PLSDPSIG',
-                       comment='POLAR LSD sigclip used for profile calc.')
-
-# define the window size used in profile calc
-KW_POLAR_LSD_NWIN2 = KW_POLAR_LSD_NWIN2.copy(__NAME__)
-KW_POLAR_LSD_NWIN2.set(key='PLSDPWIN',
-                       comment='POLAR LSD window size used for profile calc.')
-
-# define the mode used in profile calc
-KW_POLAR_LSD_NMODE2 = KW_POLAR_LSD_NMODE2.copy(__NAME__)
-KW_POLAR_LSD_NMODE2.set(key='PLSDPMOD',
-                        comment='POLAR LSD mode used for profile calc.')
-
-# define whether a linear fit was used in profile calc
-KW_POLAR_LSD_NLFIT2 = KW_POLAR_LSD_NLFIT2.copy(__NAME__)
-KW_POLAR_LSD_NLFIT2.set(key='PLSDPLFT',
-                        comment='POLAR LSD whether linfit used profile calc.')
 
 # =============================================================================
 #  End of configuration file

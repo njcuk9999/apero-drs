@@ -1,66 +1,95 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
-
-# CODE DESCRIPTION HERE
+APERO background functionality
 
 Created on 2019-05-13 at 12:40
 
 @author: cook
 """
-import numpy as np
-import os
 import warnings
-from scipy.signal import convolve2d
+from typing import List, Optional
+
+import numpy as np
 from scipy.ndimage import map_coordinates as mapc
 from scipy.ndimage import zoom
+from scipy.signal import convolve2d
 
-from apero import core
-from apero.core import constants
 from apero import lang
+from apero.base import base
+from apero.core import constants
 from apero.core import math as mp
-from apero.core.core import drs_log
 from apero.core.core import drs_file
-from apero.core.core import drs_database
+from apero.core.core import drs_log
+from apero.core.utils import drs_recipe
 from apero.io import drs_fits
-
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'science.calib.background.py'
 __INSTRUMENT__ = 'None'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # get param dict
-ParamDict = constants.ParamDict
 DrsFitsFile = drs_file.DrsFitsFile
 # Get Logging function
 WLOG = drs_log.wlog
+# Get Recipe class
+DrsRecipe = drs_recipe.DrsRecipe
+# Get parameter class
+ParamDict = constants.ParamDict
 # Get the text types
-TextEntry = lang.drs_text.TextEntry
-TextDict = lang.drs_text.TextDict
+textentry = lang.textentry
 # alias pcheck
-pcheck = core.pcheck
+pcheck = constants.PCheck(wlog=WLOG)
 
 
 # =============================================================================
 # Define functions
 # =============================================================================
-def create_background_map(params, image, badpixmask, **kwargs):
+def create_background_map(params: ParamDict, image: np.ndarray,
+                          badpixmask: np.ndarray,
+                          bkgr_boxsize: Optional[int] = None,
+                          bkgr_percentage: Optional[float] = None,
+                          bkgr_mask_conv_size: Optional[int] = None,
+                          bkgr_n_bad: Optional[int] = None) -> np.ndarray:
+    """
+    Create background map mask
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param image: numpy (2D) array, the image to calculate the background from
+    :param badpixmask: numpy (2D) array, a map of bad pixels
+    :param bkgr_boxsize: int or None, optional, Width of the box to produce the
+                         background mask, if provided overrides
+                         params['BKGR_BOXSIZE']
+    :param bkgr_percentage: float or None, optional, the background percentile
+                            to compute minimum value (%), if provided overrides
+                            params['BKGR_PERCENTAGE']
+    :param bkgr_mask_conv_size: int or None, optional, size in pixels of to
+                                convolve tophat for the background mask, if
+                                provided overrides
+                                params['BKGR_MASK_CONVOLVE_SIZE']
+    :param bkgr_n_bad: int or None, optional, If a pixel has this or more
+                       "dark" neighbours, we consider it dark regardless of
+                       its initial value, overrides
+                       params['BKGR_N_BAD_NEIGHBOURS']
+
+    :return: numpy (2D) array, the background map (same shape as input image)
+    """
     func_name = __NAME__ + '.create_background_map()'
     # get constants
-    width = pcheck(params, 'BKGR_BOXSIZE', 'width', kwargs, func_name)
-    percent = pcheck(params, 'BKGR_PERCENTAGE', 'percent', kwargs, func_name)
-    csize = pcheck(params, 'BKGR_MASK_CONVOLVE_SIZE', 'csize', kwargs,
-                   func_name)
-    nbad = pcheck(params, 'BKGR_N_BAD_NEIGHBOURS', 'nbad', kwargs, func_name)
+    width = pcheck(params, 'BKGR_BOXSIZE', func=func_name,
+                   override=bkgr_boxsize)
+    percent = pcheck(params, 'BKGR_PERCENTAGE', func=func_name,
+                     override=bkgr_percentage)
+    csize = pcheck(params, 'BKGR_MASK_CONVOLVE_SIZE', func=func_name,
+                   override=bkgr_mask_conv_size)
+    nbad = pcheck(params, 'BKGR_N_BAD_NEIGHBOURS', func=func_name,
+                  override=bkgr_n_bad)
     # set image bad pixels to NaN
     image0 = np.array(image)
     badmask = np.array(badpixmask, dtype=bool)
@@ -88,7 +117,7 @@ def create_background_map(params, image, badpixmask, **kwargs):
             if yend > image0.shape[0] - 1:
                 yend = image0.shape[0] - 1
             # background estimate
-            backest_pix = np.nanpercentile(ribbon[ystart:yend], percent)
+            backest_pix = mp.nanpercentile(ribbon[ystart:yend], percent)
             backest[y_it, x_it: x_it + width] = backest_pix
     # the mask is the area that is below then Nth percentile threshold
     with warnings.catch_warnings(record=True) as _:
@@ -106,11 +135,23 @@ def create_background_map(params, image, badpixmask, **kwargs):
     return backmask
 
 
-def correct_local_background(params, image, **kwargs):
+def correct_local_background(params: ParamDict, image: np.ndarray,
+                             bkgr_ker_wx: Optional[int] = None,
+                             bkgr_ker_wy: Optional[int] = None,
+                             bkgr_ker_sig: Optional[int] = None) -> np.ndarray:
     """
     determine the scattering from an imput image. To speed up the code,
     do the following steps rather than a simple convolution with the
     scattering kernel.
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param image: np.array, image to correct local background
+    :param bkgr_ker_wx: int or None, optional, Background kernel width in
+                        x [pixels], overrides params['BKGR_KER_WX']
+    :param bkgr_ker_wy: int or None, optional, Background kernel width in
+                        y [pixels], overrides params['BKGR_KER_WX']
+    :param bkgr_ker_sig: int or None, optional, convolution kernel sigma range
+                        overrides params['BKGR_KER_SIG']
 
     Logical (slow) steps -->
 
@@ -133,24 +174,26 @@ def correct_local_background(params, image, **kwargs):
     gaussian. The kernel is smaller and the input image is also similarly
     smaller, so there is a N^2 gain.
     - Upscale the convolved image to the input dimensions
+
+    :returns: np.ndarray, the local background (scattered_light), same size
+              as input image
     """
     func_name = __NAME__ + '.correct_local_background()'
     # get constants from parameter dictionary
-    wx_ker = pcheck(params, 'BKGR_KER_WX', 'wx_ker', kwargs, func_name)
-    wy_ker = pcheck(params, 'BKGR_KER_WY', 'wy_ker', kwargs, func_name)
-    sig_ker = pcheck(params, 'BKGR_KER_SIG', 'sig_ker', kwargs, func_name)
+    wx_ker = pcheck(params, 'BKGR_KER_WX', func=func_name, override=bkgr_ker_wx)
+    wy_ker = pcheck(params, 'BKGR_KER_WY', func=func_name, override=bkgr_ker_wy)
+    sig_ker = pcheck(params, 'BKGR_KER_SIG', func=func_name,
+                     override=bkgr_ker_sig)
     # log process
-    WLOG(params, '', TextEntry('40-012-00010'))
-
+    WLOG(params, '', textentry('40-012-00010'))
     # Remove NaNs from image
     image1 = mp.nanpad(image)
-
     # size if input image
     sz = image1.shape
     # size of the smaller image. It is an integer divider of the input image
     # 4088 on an axis and wN_ker = 9 would lead to an 8x scale-down (8*511)
-    sz_small = [sz[0] // largest_divisor_below(sz[0], wy_ker),
-                sz[1] // largest_divisor_below(sz[1], wx_ker)]
+    sz_small = [sz[0] // mp.largest_divisor_below(sz[0], wy_ker),
+                sz[1] // mp.largest_divisor_below(sz[1], wx_ker)]
 
     # downsizing image prior to convolution
     # bins an image from its shape down to a smaller shape, say 4096x4096 to
@@ -188,47 +231,47 @@ def correct_local_background(params, image, **kwargs):
     return scattered_light
 
 
-def largest_divisor_below(n1, n2):
+def correction(recipe: DrsRecipe, params: ParamDict, infile: DrsFitsFile,
+               image: np.ndarray, bkgrdfile: str, return_map: bool = False,
+               bkgr_no_sub: Optional[bool] = None,
+               bkgr_boxsize: Optional[int] = None,
+               bkgr_ker_amp: Optional[int] = None) -> np.ndarray:
     """
-    finds the largest divisor of a large number below a certain limit
-    for 4088 and 9, we would get 8 (511*8 = 4088)
-    Useful to downsize images.
+    Background correct an image
 
-    :param n1:
-    :param n2:
-    :return:
+    :param recipe: DrsRecipe, used for producing the DEBUG output
+    :param params: ParamDict, parameter dictionary of constants
+    :param infile: DrsFitsFile, input file
+    :param image: np.ndarray, the input image
+    :param bkgrdfile: str, the background calibration absolute filename
+    :param return_map: bool, if True, return the full background image
+    :param bkgr_no_sub: bool or None, optional, whether to do the background
+                        measurement (True or False), overrides
+                        params['BKGR_NO_SUBTRACTION']
+    :param bkgr_boxsize: int, optional, width of the box to produce the
+                         background mask, overrides params['BKGR_BOXSIZE']
+    :param bkgr_ker_amp: int, optional, kernel amplitude , overrides
+                         params['BKGR_KER_AMP']
+
+    :return: numpy array, either the corrected image, or the full background
+             map (if return_map is True)
     """
-    for i in range(n2, 0, -1):
-        if n1 % i == 0:
-            return i
-    # if there is a problem return NaN
-    return np.nan
-
-
-def correction(recipe, params, infile, image, header, return_map=False,
-               **kwargs):
     func_name = __NAME__ + '.correction()'
     # get constants from params/kwargs
-    no_sub = pcheck(params, 'BKGR_NO_SUBTRACTION', 'no_sub', kwargs, func_name)
-    width = pcheck(params, 'BKGR_BOXSIZE', 'width', kwargs, func_name)
-    amp_ker = pcheck(params, 'BKGR_KER_AMP', 'amp_ker', kwargs, func_name)
-    # check kwargs for filename
-    filename = kwargs.get('filename', None)
-    # get calibDB
-    cdb = drs_database.get_full_database(params, 'calibration')
-    # get filename col
-    filecol = cdb.file_col
+    no_sub = pcheck(params, 'BKGR_NO_SUBTRACTION', 'no_sub', func=func_name,
+                    override=bkgr_no_sub)
+    width = pcheck(params, 'BKGR_BOXSIZE', 'width', func=func_name,
+                   override=bkgr_boxsize)
+    amp_ker = pcheck(params, 'BKGR_KER_AMP', 'amp_ker', func=func_name,
+                     override=bkgr_ker_amp)
     # deal with no correction needed
     if no_sub:
         background = np.zeros_like(image)
-        # get background file
-        params['BADPFILE'] = 'None'
-        params.set_source('BADPFILE', func_name)
         # if return map just return the bad pixel map
         if return_map:
-            return params, background
+            return background
         else:
-            return params, np.array(image)
+            return np.array(image)
     else:
         # ------------------------------------------------------------------
         # measure local background
@@ -237,25 +280,9 @@ def correction(recipe, params, infile, image, header, return_map=False,
         local_background_correction = scattered_light / amp_ker
         # correct the image for local background
         image1 = image - local_background_correction
-        # get file instance
-        backinst = core.get_file_definition('BKGRD_MAP', params['INSTRUMENT'],
-                                            kind='red')
-        # get calibration key
-        backkey = backinst.get_dbkey(func=func_name)
-        # --------------------------------------------------------------------
-        # get filename
-        if filename is not None:
-            bkgrdfile = filename
-        else:
-            # get background entries
-            bkgrdentries = drs_database.get_key_from_db(params, backkey, cdb,
-                                                        header, n_ent=1)
-            # get background map filename
-            bkgrdfilename = bkgrdentries[filecol][0]
-            bkgrdfile = os.path.join(params['DRS_CALIB_DB'], bkgrdfilename)
         # ------------------------------------------------------------------
         # log process
-        WLOG(params, '', TextEntry('40-012-00009', args=[bkgrdfile]))
+        WLOG(params, '', textentry('40-012-00009', args=[bkgrdfile]))
         # ------------------------------------------------------------------
         # get bad pixel file
         bkgrdimage = drs_fits.readfits(params, bkgrdfile)
@@ -274,47 +301,62 @@ def correction(recipe, params, infile, image, header, return_map=False,
         # x and y centers for each background calculation
         xc = np.arange(width, image2.shape[0], width)
         yc = np.arange(width, image2.shape[1], width)
+        # full background map
+        background_image_full = np.zeros_like(image2)
         # background map (binned-down for now)
         background_image = np.zeros((len(xc), len(yc)))
-        # loop around all boxes with centers xc and yc
-        # and find pixels within a given widths
-        # around these centers in the full image
-        for i_it in range(len(xc)):
-            for j_it in range(len(yc)):
-                xci, yci = xc[i_it], yc[j_it]
-                # get the pixels for this box
-                subframe = image2[xci - width:xci + width,
-                                  yci - width:yci + width]
-                subframe = subframe.ravel()
-                # get the (2*size)th minimum pixel
-                with warnings.catch_warnings(record=True) as _:
-                    # do not use the nanpercentile, just a median
-                    # as we masked non-background pixels with NaNs
-                    value = mp.nanmedian(subframe)
+        # iterate round the background image
+        for biteration in range(5):
+            image3 = np.array(image2) - background_image_full
+            # loop around all boxes with centers xc and yc
+            # and find pixels within a given widths
+            # around these centers in the full image
+            for i_it in range(len(xc)):
+                for j_it in range(len(yc)):
+                    xci, yci = xc[i_it], yc[j_it]
+                    # get the pixels for this box
+                    subframe = image3[xci - width:xci + width,
+                                      yci - width:yci + width]
+                    subframe = subframe.ravel()
+                    # get the (2*size)th minimum pixel
+                    with warnings.catch_warnings(record=True) as _:
+                        # do not use the nanpercentile, just a median
+                        # as we masked non-background pixels with NaNs
+                        value = mp.nanmedian(subframe)
+                    # if we have value use it in the background map
+                    if np.isfinite(value):
+                        background_image[i_it, j_it] = value
+                    # otherwise background is zero
+                    else:
+                        background_image[i_it, j_it] = 0.0
+            # ------------------------------------------------------------------
+            # define a mapping grid from size of background_image
+            #     (image1[0]/width) by (image1[1]/width)
+            # get shapes
+            gridshape = background_image.shape
+            imageshape = image3.shape
+            # get fractional positions of the full image
+            indices = np.indices(imageshape)
+            fypix = indices[0] / imageshape[0]
+            fxpix = indices[1] / imageshape[1]
+            # scalge fraction positions to size of background image
+            sypix = (gridshape[0] - 1) * fypix
+            sxpix = (gridshape[1] - 1) * fxpix
+            # coords for mapping
+            coords = np.array([sypix, sxpix])
 
-                if np.isfinite(value):
-                    background_image[i_it, j_it] = value
-                else:
-                    background_image[i_it, j_it] = 0.0
-        # ------------------------------------------------------------------
-        # define a mapping grid from size of background_image
-        #     (image1[0]/width) by (image1[1]/width)
-        # get shapes
-        gridshape = background_image.shape
-        imageshape = image2.shape
-        # get fractional positions of the full image
-        indices = np.indices(imageshape)
-        fypix = indices[0] / imageshape[0]
-        fxpix = indices[1] / imageshape[1]
-        # scalge fraction positions to size of background image
-        sypix = (gridshape[0] - 1) * fypix
-        sxpix = (gridshape[1] - 1) * fxpix
-        # coords for mapping
-        coords = np.array([sypix, sxpix])
-        # expand image onto the grid that matches the size of the input image
-        background_image_full = mapc(background_image, coords,
-                                     order=2, cval=np.nan, output=float,
-                                     mode='constant')
+            delta_background_full = mapc(background_image, coords,
+                                         order=2, cval=np.nan, output=float,
+                                         mode='constant')
+
+            brms = np.nanstd(delta_background_full)
+            msg = 'Background Iteration {0}: delta background rms={1:.3f}'
+            WLOG(params, '', msg.format(biteration, brms))
+            # expand image onto the grid that matches the size of the input
+            # image
+            background_image_full += mapc(background_image, coords,
+                                          order=2, cval=np.nan, output=float,
+                                          mode='constant')
         # ------------------------------------------------------------------
         # correct image
         corrected_image = image - background_image_full
@@ -324,20 +366,39 @@ def correction(recipe, params, infile, image, header, return_map=False,
                    local_background_correction, background_image_full,
                    background_image]
         # save debug file
-        debug_file(recipe, params, infile, dimages)
+        if params['DEBUG_BACKGROUND_FILE']:
+            debug_file(recipe, params, infile, dimages)
         # ------------------------------------------------------------------
         # if return map just return the bad pixel map
         if return_map:
-            return bkgrdfile, background_image_full
+            return background_image_full
         else:
-            return bkgrdfile, corrected_image
+            return corrected_image
 
 
-def debug_file(recipe, params, infile, dlist):
+def debug_file(recipe: DrsRecipe, params: ParamDict, infile: DrsFitsFile,
+               dlist: List[np.ndarray]):
+    """
+    Produce the background DEBUG file
+
+    :param recipe: DrsRecipe, the recipe that called this function
+    :param params: ParamDict, parameter dictionary of constants
+    :param infile: DrsFitsFile, the input file class
+    :param dlist: list of numpy array, the images for each extension:
+                  1. corrected image
+                  2. original image
+                  3. locally corrected image
+                  4. locally corrected NaN filled image
+                  5. Local Background image
+                  6. Global Background image
+                  7. Global binned background image
+
+    :return: None, writes debug file to disk
+    """
     # debug output
-    debug_back = recipe.outputs['DEBUG_BACK'].newcopy(recipe=recipe)
+    debug_back = recipe.outputs['DEBUG_BACK'].newcopy(params=params)
     # construct the filename from file instance
-    debug_back.construct_filename(params, infile=infile, check=False)
+    debug_back.construct_filename(infile=infile, check=False)
     # copy keys from input file
     debug_back.copy_original_keys(infile)
     # add version
@@ -347,13 +408,13 @@ def debug_file(recipe, params, infile, dlist):
     # add output tag
     debug_back.add_hkey('KW_OUTPUT', value=debug_back.name)
     # add extention info
-    kws1 = ['EXTDESC1', 'Corrected', 'Extension 1 description']
-    kws2 = ['EXTDESC2', 'Original', 'Extension 2 description']
-    kws3 = ['EXTDESC3', 'Locally corrected', 'Extension 3 description']
-    kws4 = ['EXTDESC4', 'LC NaN filled', 'Extension 4 description']
-    kws5 = ['EXTDESC5', 'Local Background', 'Extension 5 description']
-    kws6 = ['EXTDESC6', 'Global Background', 'Extension 6 description']
-    kws7 = ['EXTDESC7', 'Global binned background', 'Extension 7 description']
+    kws1 = ['EXTDESC1', 'CORRECTED', 'Corrected image']
+    kws2 = ['EXTDESC2', 'ORIGINAL', 'Original image']
+    kws3 = ['EXTDESC3', 'LOCAL_CORR', 'Locally corrected image']
+    kws4 = ['EXTDESC4', 'LC_NAN_FILLED', 'Locally corrected NaN filled image']
+    kws5 = ['EXTDESC5', 'LC_BKGRD', 'Local Background image']
+    kws6 = ['EXTDESC6', 'GLOB_BKGRD', 'Global Background image']
+    kws7 = ['EXTDESC7', 'GLOB_BINNED', 'Global binned background image']
     # add to hdict
     debug_back.add_hkey(key=kws1)
     debug_back.add_hkey(key=kws2)
@@ -365,9 +426,18 @@ def debug_file(recipe, params, infile, dlist):
     # add primage data to debug_back file
     debug_back.data = dlist[0]
     # print progress: saving file
-    WLOG(params, '', TextEntry('40-013-00025', args=debug_back.filename))
+    WLOG(params, '', textentry('40-013-00025', args=debug_back.filename))
+    # define name of extensions
+    name_list = ['CORRECTED', 'ORIGINAL', 'LOCAL_CORR',
+                 'LC_NAN_FILLED', 'LC_BKGRD', 'GLOB_BKGRD',
+                 'GLOB_BINNED']
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        dlist += [params.snapshot_table(recipe, drsfitsfile=debug_back)]
+        name_list += ['PARAM_TABLE']
     # write multiple to file
-    debug_back.write_multi(data_list=dlist[1:])
+    debug_back.write_multi(block_kind=recipe.out_block_str, name_list=name_list,
+                           data_list=dlist[1:], runstring=recipe.runstring)
 
 
 # =============================================================================

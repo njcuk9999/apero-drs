@@ -1,30 +1,39 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-spirouCore.py
-
-Logging related functions
+APERO logging functionality
 
 Created on 2017-10-11 at 10:59
 
 @author: cook
 
-Import rules: Only from spirouConfig and spirouCore
+Import rules:
+
+only from
+- apero.base.*
+- apero.core.core.drs_exceptions
+- apero.core.core.drs_misc
+- apero.core.core.drs_text
+- apero.core.math.*
+
+    do not import from core.core.drs_argument
+    do not import from core.core.drs_file
 
 Version 0.0.1
 """
-import numpy as np
 import os
 import sys
-import copy
 from time import sleep
-from astropy.table import Table
-from collections import OrderedDict
+from typing import Any, List, Optional, Tuple, Union
 
-from apero.core.instruments.default import pseudo_const
-from apero.core import constants
+import numpy as np
+
 from apero import lang
-from apero.lang import drs_exceptions
+from apero.base import base
+from apero.core import constants
+from apero.core.core import drs_exceptions
+from apero.core.core import drs_misc
+from apero.core.core import drs_text
 from apero.core.math import time
 
 # =============================================================================
@@ -33,65 +42,58 @@ from apero.core.math import time
 # Name of program
 __NAME__ = 'drs_log.py'
 __INSTRUMENT__ = 'None'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
 # Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # Get the parameter dictionary
 ParamDict = constants.ParamDict
 # Get the Config error
-DrsError = drs_exceptions.DrsError
-DrsWarning = drs_exceptions.DrsWarning
-TextError = drs_exceptions.TextError
-TextWarning = drs_exceptions.TextWarning
-ConfigError = drs_exceptions.ConfigError
-ConfigWarning = drs_exceptions.ConfigWarning
+DrsCodedException = drs_exceptions.DrsCodedException
+DrsCodedWarning = drs_exceptions.DrsCodedWarning
 # Get the text types
-TextEntry = lang.drs_text.TextEntry
-TextDict = lang.drs_text.TextDict
-HelpEntry = lang.drs_text.HelpEntry
-HelpText = lang.drs_text.HelpDict
+textentry = lang.textentry
 # get the default language
-DEFAULT_LANGUAGE = lang.drs_text.DEFAULT_LANGUAGE
+DEFAULT_LANGUAGE = base.DEFAULT_LANG
 # Get the Color dict
-Color = pseudo_const.Colors
-# define log format
-LOGFMT = Constants['DRS_LOG_FORMAT']
+Color = drs_misc.Colors()
 
 
 # =============================================================================
 # Define classes
 # =============================================================================
 class Logger:
-    def __init__(self, paramdict=None, instrument=None):
+    def __init__(self, paramdict: Union[ParamDict, None] = None):
         """
-        Construct logger (storage param dict here)
+        Construct logger class - for all the printing to screen and to log file
+        Normally used via the call and this class is only constructed once.
+
         :param paramdict:
         """
-        func_name = __NAME__ + '.Logger.__init__()'
+        # set class name
+        self.class_name = 'Logger'
+        # set function name
+        _ = drs_misc.display_func('__init__', __NAME__, self.class_name)
         # ---------------------------------------------------------------------
         # save the parameter dictionary for access to constants
         if paramdict is not None:
             self.pin = paramdict
-            self.instrument = paramdict.get('INSTRUMENT', None)
-            self.language = paramdict.get('LANGUAGE', 'ENG')
-        elif instrument is not None:
-            self.pin = constants.load(instrument)
-            self.instrument = instrument
-            self.language = paramdict['LANGUAGE']
         else:
             self.pin = constants.load()
-            self.language = 'ENG'
-            self.instrument = None
+        # noinspection PyBroadException
+        try:
+            self.language = base.IPARAMS['LANGUAGE']
+            self.instrument = base.IPARAMS['INSTRUMENT']
+        # re-try or get proper error
+        except Exception as _:
+            base.DPARAMS = base.load_database_yaml()
+            base.IPARAMS = base.load_install_yaml()
+            self.language = base.IPARAMS['LANGUAGE']
+            self.instrument = base.IPARAMS['INSTRUMENT']
         # load additional resources based on instrument/language
-        self.pconstant = constants.pload(self.instrument)
-        self.textdict = TextDict(self.instrument, self.language)
-        self.helptext = HelpText(self.instrument, self.language)
-        self.d_textdict = TextDict(self.instrument, DEFAULT_LANGUAGE)
-        self.d_helptext = HelpText(self.instrument, DEFAULT_LANGUAGE)
+        self.pconstant = constants.pload()
         # ---------------------------------------------------------------------
         # save output parameter dictionary for saving to file
         self.pout = ParamDict()
@@ -102,9 +104,55 @@ class Logger:
             self.pout[storekey[key]] = []
         self.pout['LOGGER_FULL'] = []
 
-    def __call__(self, params=None, key='', message=None, printonly=False,
-                 logonly=False, wrap=True, option=None, colour=None,
-                 raise_exception=True):
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # what to exclude from state
+        exclude = ['pconstant', 'textdict', 'helptext', 'd_textdict',
+                   'd_helptext']
+        # need a dictionary for pickle
+        state = dict()
+        for key, item in self.__dict__.items():
+            if key not in exclude:
+                state[key] = item
+        # return dictionary state
+        return state
+
+    def __setstate__(self, state):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+        # read attributes not in state
+        self.pconstant = constants.pload()
+
+    def __str__(self) -> str:
+        """
+        String representation of the logger
+        :return:
+        """
+        return 'Logger[{0}][{1}]'.format(self.instrument, self.language)
+
+    def __repr__(self) -> str:
+        """
+        String representation of the logger
+        :return:
+        """
+        return self.__str__()
+
+    def __call__(self, params: ParamDict = None, key: str = '',
+                 message: Union[str, None] = None,
+                 printonly: bool = False,
+                 logonly: bool = False, wrap: bool = True,
+                 option: str = None, colour: str = None,
+                 raise_exception: bool = True,
+                 sublevel: Optional[int] = None):
         """
         Function-like cal to instance of logger (i.e. WLOG)
         Parses a key (error/warning/info/graph), an option and a message to the
@@ -133,6 +181,9 @@ class Logger:
                        "red", "green", "blue", "yellow", "cyan", "magenta",
                        "black", "white"
         :param raise_exception: bool, If True exits if level is EXIT_LEVELS()
+        :param sublevel: int, required for giving levels sub level
+                         (can filter by this) sets the priority of the message
+                         (0 being the lowest, 9 being the highest)
 
         output to stdout/log is as follows:
 
@@ -142,7 +193,9 @@ class Logger:
 
         :return None:
         """
-        func_name = __NAME__ + '.Logger.__call__()'
+        # set function name
+        func_name = drs_misc.display_func('__call__', __NAME__,
+                                          self.class_name)
         # ---------------------------------------------------------------------
         # deal with debug mode. If DRS_DEBUG is zero do not print these
         #     messages
@@ -156,24 +209,29 @@ class Logger:
         if debug > 0 and (key == 'debug'):
             wrap = False
         # ---------------------------------------------------------------------
+        # deal with sub level
+        if sublevel is not None:
+            if sublevel <= 0:
+                sublevel = 0
+            elif sublevel > 10:
+                sublevel = 9
+        # ---------------------------------------------------------------------
         # get character length
         char_len = self.pconstant.CHARACTER_LOG_LENGTH()
         # ---------------------------------------------------------------------
-        # deal with message format (convert to TextEntry)
+        # deal with message format (convert to lang.Text)
         if message is None:
-            msg_obj = TextEntry('Unknown')
-        elif type(message) is str:
-            msg_obj = TextEntry(message)
-        elif type(message) is list:
-            msg_obj = TextEntry(message[0])
-            for msg in message[1:]:
-                msg_obj += TextEntry(msg)
-        elif type(message) is TextEntry:
+            msg_obj = textentry('Unknown')
+        elif isinstance(message, lang.Text):
             msg_obj = message
-        elif type(message) is HelpEntry:
-            msg_obj = message.convert(TextEntry)
+        elif isinstance(message, str):
+            msg_obj = textentry(message)
+        elif isinstance(message, list):
+            msg_obj = textentry(message[0])
+            for msg in message[1:]:
+                msg_obj += textentry(msg)
         else:
-            msg_obj = TextEntry('00-005-00001', args=[message])
+            msg_obj = textentry('00-005-00001', args=[message])
             key = 'error'
         # ---------------------------------------------------------------------
         # deal with no p and pid
@@ -182,26 +240,26 @@ class Logger:
             params['PID'] = None
             params.set_source('PID', func_name)
             # Cannot add this to language pack - no p defined!
-            wmsg = 'Undefined PID not recommended (params is None)'
-            DrsWarning(wmsg, level='warning')
+            DrsCodedWarning('10-005-00005', 'warning', func_name=func_name)
         # deal with no PID
         if 'PID' not in params:
             params['PID'] = None
             # Cannot add this to language pack - no p defined!
-            wmsg = 'Undefined PID not recommended (PID is missing)'
-            DrsWarning(wmsg, level='warning')
+            DrsCodedWarning('10-005-00006', 'warning', func_name=func_name)
         # deal with no instrument
         if 'INSTRUMENT' not in params:
-            params['INSTRUMENT'] = None
+            params['INSTRUMENT'] = base.IPARAMS['INSTRUMENT']
         # deal with no language
         if 'LANGUAGE' not in params:
-            params['LANGUAGE'] = 'ENG'
+            params['LANGUAGE'] = base.IPARAMS['LANGUAGE']
         # update pin and pconstant from p (selects instrument)
         self.update_param_dict(params)
         # ---------------------------------------------------------------------
         # deal with option
         if option is not None:
             option = option
+        elif 'RECIPE_SHORT' in params:
+            option = str(params.get('RECIPE_SHORT', ''))
         elif 'RECIPE' in params:
             option = str(params.get('RECIPE', ''))
         else:
@@ -210,7 +268,6 @@ class Logger:
         userprogram = str(params.get('DRS_USER_PROGRAM', None))
         if userprogram != 'None':
             option = userprogram
-
         # ---------------------------------------------------------------------
         # if key is '' then set it to all
         if len(key) == 0:
@@ -221,19 +278,19 @@ class Logger:
         # check that key is valid
         if key not in self.pconstant.LOG_TRIG_KEYS():
             eargs = [key, 'LOG_TRIG_KEYS()']
-            msg_obj += TextEntry('00-005-00002', args=eargs)
+            msg_obj += textentry('00-005-00002', args=eargs)
             key = 'error'
         if key not in self.pconstant.WRITE_LEVEL():
             eargs = [key, 'WRITE_LEVEL()']
-            msg_obj += TextEntry('00-005-00003', args=eargs)
+            msg_obj += textentry('00-005-00003', args=eargs)
             key = 'error'
         if key not in self.pconstant.COLOUREDLEVELS():
             eargs = [key, 'COLOUREDLEVELS()']
-            msg_obj += TextEntry('00-005-00004', args=eargs)
+            msg_obj += textentry('00-005-00004', args=eargs)
             key = 'error'
         if key not in self.pconstant.REPORT_KEYS():
             eargs = [key, 'REPORT_KEYS()']
-            msg_obj += TextEntry('00-005-00005', args=eargs)
+            msg_obj += textentry('00-005-00005', args=eargs)
             key = 'error'
         # loop around message (now all are lists)
         errors = []
@@ -243,18 +300,18 @@ class Logger:
         # Get the key code (default is a whitespace)
         code = self.pconstant.LOG_TRIG_KEYS().get(key, ' ')
         report = self.pconstant.REPORT_KEYS().get(key, False)
+        # deal with warn levels
+        code = self.pconstant.ADJUST_SUBLEVEL(code, sublevel)
         # special case of report
         if debug >= params['DEBUG_MODE_TEXTNAME_PRINT']:
             report = True
         # get messages
-        if type(message) is HelpEntry:
-            raw_message1 = msg_obj.get(self.helptext, report=report,
-                                       reportlevel=key)
+        if isinstance(msg_obj, lang.Text):
+            raw_messages1 = msg_obj.get_text(report=report, reportlevel=key)
         else:
-            raw_message1 = msg_obj.get(self.textdict, report=report,
-                                       reportlevel=key)
+            raw_messages1 = str(msg_obj)
         # split by '\n'
-        raw_messages1 = raw_message1.split('\n')
+        raw_messages1 = raw_messages1.split('\n')
         # ---------------------------------------------------------------------
         # deal with printing
         # ---------------------------------------------------------------------
@@ -271,49 +328,53 @@ class Logger:
                 # check if line is over 80 chars
                 if (len(mess) > char_len) and wrap:
                     # get new messages (wrapped at CHAR_LEN)
-                    new_messages = textwrap(mess, char_len)
+                    new_messages = drs_text.textwrap(mess, char_len)
                     for new_message in new_messages:
                         # add a space to the start of messages (if not present)
                         if not new_message.startswith(' '):
                             new_message = ' ' + new_message
                         cmdargs = [human_time, code, option, new_message]
-                        cmd = LOGFMT.format(*cmdargs)
+                        cmd = params['DRS_LOG_FORMAT'].format(*cmdargs)
                         # append separate commands for log writing
                         cmds.append(cmd)
                         # add to logger storage
                         self.logger_storage(params, key, human_time,
                                             new_message, printonly)
                         # print to stdout
-                        printlog(self, params, cmd, key, colour)
+                        printlog(self, params, cmd, key, colour,
+                                 sublevel=sublevel)
                 else:
                     cmdargs = [human_time, code, option, mess]
-                    cmd = LOGFMT.format(*cmdargs)
+                    cmd = params['DRS_LOG_FORMAT'].format(*cmdargs)
                     # append separate commands for log writing
                     cmds.append(cmd)
                     # add to logger storage
                     self.logger_storage(params, key, human_time, mess,
                                         printonly)
                     # print to stdout
-                    printlog(self, params, cmd, key, colour)
+                    printlog(self, params, cmd, key, colour,
+                             sublevel=sublevel)
         # ---------------------------------------------------------------------
         # get log parameters (in set language)
         # ---------------------------------------------------------------------
         # Get the key code (default is a whitespace)
         code = self.pconstant.LOG_TRIG_KEYS().get(key, ' ')
-        report = self.pconstant.REPORT_KEYS().get(key, False)
+        # deal with warn levels
+        code = self.pconstant.ADJUST_SUBLEVEL(code, sublevel)
+        # report = self.pconstant.REPORT_KEYS().get(key, False)
         # get messages
-        if type(message) is HelpEntry:
-            raw_message2 = msg_obj.get(self.d_helptext, report=True,
-                                       reportlevel=key)
+        if isinstance(msg_obj, lang.Text):
+            raw_messages2 = msg_obj.get_text(report=True, reportlevel=key)
         else:
-            raw_message2 = msg_obj.get(self.d_textdict, report=True,
-                                       reportlevel=key)
+            raw_messages2 = str(msg_obj)
         # split by '\n'
-        raw_messages2 = raw_message2.split('\n')
+        raw_messages2 = raw_messages2.split('\n')
         # ---------------------------------------------------------------------
         # deal with logging (in default language)
         # ---------------------------------------------------------------------
         if not printonly:
+            # get logfilepath
+            logfilepath = get_logfilepath(self, params)
             # loop around raw messages
             for mess in raw_messages2:
                 # Get the time now in human readable format
@@ -323,13 +384,11 @@ class Logger:
                 # storage for cmds
                 cmds = []
                 cmdargs = [human_time, code, option, mess]
-                cmd = LOGFMT.format(*cmdargs)
+                cmd = params['DRS_LOG_FORMAT'].format(*cmdargs)
                 # append separate commands for log writing
                 cmds.append(cmd)
-                # get logfilepath
-                logfilepath = get_logfilepath(self, params)
                 # write to log file
-                writelog(self, params, cmd, key, logfilepath)
+                writelog(self, params, cmd, key, logfilepath, sublevel=sublevel)
 
         # ---------------------------------------------------------------------
         # deal with errors caused by logging (print)
@@ -365,11 +424,22 @@ class Logger:
             elif raise_exception:
                 raise drs_exceptions.LogExit(errorstring)
 
-    def update_param_dict(self, paramdict):
+    def update_param_dict(self, paramdict: ParamDict):
+        """
+        Update the parameter dictionary when a change in instrument or
+        language is detected
+
+        :param paramdict: ParamDict, the parameter dictionary of constants to
+                          update
+        :return:
+        """
+        # set function name
+        _ = drs_misc.display_func('update_param_dict', __NAME__,
+                                  self.class_name)
         # update the parameter dictionary
         for key in paramdict:
             # set pin value from paramdict
-            self.pin[key] = paramdict[key]
+            self.pin.data[key] = paramdict.data[key]
             # set source from paramdict (or set to None)
             self.pin.set_source(key, paramdict.sources.get(key, None))
         # update these if "instrument" or "language" have changed
@@ -382,13 +452,22 @@ class Logger:
             # update language
             self.language = paramdict['LANGUAGE']
             # update pconstant
-            self.pconstant = constants.pload(self.instrument)
-            # updatetext
-            self.textdict = TextDict(self.instrument, self.language)
-            self.helptext = HelpText(self.instrument, self.language)
+            self.pconstant = constants.pload()
 
-    def output_param_dict(self, paramdict, new=False):
-        func_name = __NAME__ + '.Logger.output_param_dict()'
+    def output_param_dict(self, paramdict: ParamDict,
+                          new: bool = False) -> ParamDict:
+        """
+        Push the LOG_STORAGE_KEYS into a parameter dictionary (either new
+        if new = True or self.pout otherwise and return it
+
+        :param paramdict: ParamDict, the current constants parameter dictionary
+        :param new: bool, if True populate and return a new ParamDict instead
+                    of updating self.pout
+        :return:
+        """
+        # set function name
+        func_name = drs_misc.display_func('output_param_dict', __NAME__,
+                                          self.class_name)
         # get the process id from paramdict
         pid = paramdict['PID']
         # deal with new switch
@@ -418,8 +497,24 @@ class Logger:
         # return paramdict
         return pdict
 
-    def logger_storage(self, params, key, ttime, mess, printonly=False):
-        func_name = __NAME__ + '.Logger.logger_storage()'
+    def logger_storage(self, params: ParamDict, key: str,
+                       ttime: str, mess: str, printonly: bool = False):
+        """
+        Stoger log messages in a dictionary (for access later)
+        stored in Logger.pout
+
+        :param params: ParamDict, the constants parameter dictionary
+        :param key: str, the key to append (normally the log level)
+        :param ttime: str, the human time HH:MM:SS.SS
+        :param mess: str, the log message to store
+        :param printonly: bool, if True do not log (we are only printing the
+                          message not logging it)
+        :return: None
+        """
+        # set function name
+        func_name = drs_misc.display_func('logger_storage',
+                                          __NAME__, self.class_name)
+        # if we are printing only just return
         if printonly:
             return 0
         # get pid
@@ -446,8 +541,17 @@ class Logger:
         else:
             self.pout[pid]['LOGGER_FULL'] = [[ttime, mess]]
 
-    def clean_log(self, processid):
-        func_name = __NAME__ + '.Logger.clean_log()'
+    def clean_log(self, processid: str):
+        """
+        Clean the log of all entries for a specific process id
+
+        :param processid: str, the unique apero process ID generated once
+                          per recipe run
+        :return:
+        """
+        # set function name
+        func_name = drs_misc.display_func('clean_log', __NAME__,
+                                          self.class_name)
         # get log storage keys
         storekey = self.pconstant.LOG_STORAGE_KEYS()
         # clean out for this ID
@@ -463,15 +567,42 @@ class Logger:
         # set the source
         self.pout[processid].set_source('LOGGER_FULL', func_name)
 
-    def printmessage(self, params, messages, colour=None):
+    def printmessage(self, params: ParamDict, messages: Union[str, List[str]],
+                     colour: Union[str, None] = None,
+                     sublevel: Optional[int] = None):
+        """
+        Print the log message(s) in a certain colour (not at a certain level)
+
+        :param params: ParamDict, the parameter dictionary of constants,
+                       required to get levels to print at etc
+        :param messages: list of strings or string, the message(s) to print
+        :param colour: string, the colour wanted for the printed message
+        :param sublevel: int or None, the sub-level to add this "this level"
+                     final level is level + sub-level/10.0
+
+        :return: None
+        """
         # check whether message is string (if so make a list)
         if isinstance(messages, str):
             messages = [messages]
         # loop around messages
         for message in messages:
-            printlog(self, params, message, key='all', colour=colour)
+            printlog(self, params, message, key='all', colour=colour,
+                     sublevel=sublevel)
 
-    def logmessage(self, params, messages):
+    def logmessage(self, params: ParamDict, messages: Union[str, List[str]],
+                   sublevel: Optional[int] = None):
+        """
+        Writes the log message(s) to disk
+
+        :param params: ParamDict, the parameter dictionary of constants,
+                       required to get levels to print at etc
+        :param messages: list of strings or string, the message(s) to print
+        :param sublevel: int or None, the sub-level to add this "this level"
+                         final level is level + sub-level/10.0
+
+        :return: None
+        """
         # get logfilepath
         logfilepath = get_logfilepath(self, params)
         # check whether message is string (if so make a list)
@@ -479,13 +610,29 @@ class Logger:
             messages = [messages]
         # loop around messages
         for message in messages:
-            writelog(self, params, message, key='all', logfilepath=logfilepath)
+            writelog(self, params, message, key='all', logfilepath=logfilepath,
+                     sublevel=sublevel)
 
 
-class Printer():
+class Printer:
     """Print things to stdout on one line dynamically"""
 
-    def __init__(self, params, level, message):
+    def __init__(self, params: Union[ParamDict, None], level: Union[str, None],
+                 message: Union[list, np.ndarray, str]):
+        """
+        Dynamically print text to stdout, flushing the line so it appears
+        to come from only one line (does not have new lines)
+
+        :param params: ParamDict, the constants parameter dictionary
+                       (Not used but here to emulate Logger.__call__())
+        :param level: str,
+        :param message:
+        """
+        # set class name
+        self.class_name = 'Printer'
+        # set function name
+        _ = drs_misc.display_func('__init__', __NAME__, self.class_name)
+        # set params and level
         self.params = params
         self.level = level
 
@@ -500,418 +647,25 @@ class Printer():
             sys.stdout.flush()
             sleep(sleeptimer)
 
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state
+        return state
 
-class RecipeLog:
+    def __setstate__(self, state: dict):
+        """
+        For when we have to unpickle the class
 
-    def __init__(self, name, params, level=0, wlog=None):
-        # get the recipe name
-        self.name = str(name)
-        self.kind = str(params['DRS_RECIPE_KIND'])
-        self.defaultpath = str(params['DRS_DATA_MSG_FULL'])
-        self.logfitsfile = str(params['DRS_LOG_FITS_NAME'])
-        self.inputdir = str(params['INPATH'])
-        self.outputdir = str(params['OUTPATH'])
-        self.params = params
-        self.wlog = wlog
-        # set the pid
-        self.pid = str(params['PID'])
-        self.htime = str(params['DATE_NOW'])
-        self.group = str(params['DRS_GROUP'])
-        # set the night name directory (and deal with no value)
-        if 'NIGHTNAME' not in params:
-            self.directory = 'other'
-        elif params['NIGHTNAME'] in [None, 'None', '']:
-            self.directory = 'other'
-        else:
-            self.directory = str(params['NIGHTNAME'])
-        # get log fits path
-        self.logfitspath = self._get_write_dir()
-        # define lockfile (we need to lock the directory while this is
-        #   being done)
-        self.lockfile = self.directory + self.logfitsfile.replace('.', '_')
-        # set the log file name (just used to save log directory)
-        self.log_file = 'None'
-        self.plot_dir = 'None'
-        # set the inputs
-        self.args = ''
-        self.kwargs = ''
-        self.skwargs = ''
-        self.runstring = ''
-        # set that recipe started
-        self.started = True
-        # set the iteration
-        self.set = []
-        # set the level (top level=0)
-        self.level = level
-        # set the level criteria
-        self.level_criteria = ''
-        self.level_iteration = 0
-        # set qc
-        self.passed_qc = False
-        # set qc paarams
-        self.qc_string = ''
-        self.qc_name = ''
-        self.qc_value = ''
-        self.qc_pass = ''
-        self.qc_logic = ''
-        # set the errors
-        self.errors = ''
-        # set that recipe ended
-        self.ended = False
-        # set lock function
-        self.lfunc = None
-
-    def copy(self, rlog):
-        self.name = str(rlog.name)
-        self.kind = str(rlog.kind)
-        self.defaultpath = str(rlog.defaultpath)
-        self.inputdir = str(rlog.inputdir)
-        self.outputdir = str(rlog.outputdir)
-        self.pid = str(rlog.pid)
-        self.htime = str(rlog.htime)
-        self.group = str(rlog.group)
-        self.directory = str(rlog.directory)
-        self.logfitspath = str(rlog.logfitspath)
-        self.lockfile = str(rlog.lockfile)
-        self.log_file = str(rlog.log_file)
-        self.runstring = str(rlog.runstring)
-        self.args = str(rlog.args)
-        self.kwargs = str(rlog.kwargs)
-        self.skwargs = str(rlog.skwargs)
-        self.level_criteria = str(rlog.level_criteria)
-        self.lfunc = rlog.lfunc
-
-    def set_log_file(self, logfile):
-        self.log_file = logfile
-
-    def set_plot_dir(self, params, location, write=True):
-        if location is not None:
-            self.plot_dir = location
-            # update children
-            if len(self.set) != 0:
-                for child in self.set:
-                    child.set_plot_dir(params, location, write=False)
-        else:
-            self.plot_dir = 'None'
-        # whether to write (update) recipe log file
-        if write:
-            self.write_logfile(params)
-
-    def set_inputs(self, params, rargs, rkwargs, rskwargs):
-        # deal with not having inputs
-        if 'INPUTS' not in params:
-            return
-        # get inputs
-        inputs = params['INPUTS']
-        # start run string
-        if self.name.endswith('.py'):
-            self.runstring = '{0} '.format(self.name)
-        else:
-            self.runstring = '{0}.py '.format(self.name)
-        # ------------------------------------------------------------------
-        # deal with arguments
-        self.args = self._input_str(inputs, rargs, kind='arg')
-        # ------------------------------------------------------------------
-        # deal with kwargs
-        self.kwargs = self._input_str(inputs, rkwargs, kind='kwargs')
-        # ------------------------------------------------------------------
-        # deal with special kwargs
-        self.skwargs = self._input_str(inputs, rskwargs, kind='skwargs')
-        # strip the runstring
-        self.runstring.strip()
-
-    def set_lock_func(self, func):
-        self.lfunc = func
-
-    def add_level(self, params, key, value, write=True):
-        # get new level
-        level = self.level + 1
-        # create new log
-        newlog = RecipeLog(self.name, params, level=level, wlog=self.wlog)
-        # copy from parent
-        newlog.copy(self)
-        # record level criteria
-        newlog.level_criteria += '{0}={1} '.format(key, value)
-        # update the level iteration
-        newlog.level_iteration = len(self.set)
-        # add newlog to set
-        self.set.append(newlog)
-        # whether to write (update) recipe log file
-        if write:
-            newlog.write_logfile(params)
-        # return newlog (for use)
-        return newlog
-
-    def add_qc(self, params, qc_params, passed, write=True):
-        # update passed
-        if passed in [1, True, '1']:
-            self.passed_qc = True
-        else:
-            self.passed_qc = False
-        # update qc params
-        qc_names, qc_values, qc_logic, qc_pass = qc_params
-        for it in range(len(qc_names)):
-            # deal with no qc set
-            if qc_names[it] in ['None', None, '']:
-                continue
-
-            # set up qc pass string
-            if qc_pass[it]:
-                pass_str = 'PASSED'
-            else:
-                pass_str = 'FAILED'
-            # deal with qc set
-            qargs = [qc_names[it], qc_values[it], qc_logic[it], pass_str]
-            self.qc_string += '{0}={1} [{2}] {3} ||'.format(*qargs)
-            self.qc_name += '{0}||'.format(qc_names[it])
-            self.qc_value += '{0}||'.format(qc_values[it])
-            self.qc_logic += '{0}||'.format(qc_logic[it])
-            self.qc_pass += '{0}||'.format(qc_pass[it])
-
-        # whether to write (update) recipe log file
-        if write:
-            self.write_logfile(params)
-
-    def no_qc(self, params, write=True):
-        self.passed_qc = True
-        # whether to write (update) recipe log file
-        if write:
-            self.write_logfile(params)
-
-    def add_error(self, params, errortype, errormsg, write=True):
-        self.errors += '"{0}":"{1}"||'.format(errortype, errormsg)
-        # whether to write (update) recipe log file
-        if write:
-            self.write_logfile(params)
-
-    def end(self, params, write=True):
-
-        self.ended = True
-        # whether to write (update) recipe log file
-        if write:
-            self.write_logfile(params)
-
-    def write_logfile(self, params):
-        if self.lfunc is None:
-            return 0
-        else:
-            return self.lfunc(params, self.lockfile, self._writer)
-
-    def _input_str(self, inputs, argdict, kind='arg'):
-        # setup input str
-        inputstr = ''
-        # deal with kind
-        if kind == 'arg':
-            prefix = ''
-        else:
-            prefix = '--'
-        # deal with arguments
-        for argname in argdict:
-            # get arg
-            arg = argdict[argname]
-            # strip prefix (may or may not have one)
-            argname = argname.strip(prefix)
-            # get input arg
-            iarg = inputs[argname.strip(prefix)]
-            # add prefix (add prefix whether it had one or not)
-            argname = prefix + argname
-            # deal with file arguments
-            if arg.dtype in ['file', 'files']:
-                if not isinstance(iarg, list):
-                    continue
-                # get string and drsfile
-                strfiles = iarg[0]
-                drsfiles = iarg[1]
-                # deal with having string (force to list)
-                if isinstance(strfiles, str):
-                    strfiles = [strfiles]
-                    drsfiles = [drsfiles]
-
-                # add argname to run string
-                if kind != 'arg':
-                    self.runstring += '{0} '.format(argname)
-                # loop around fiels and add them
-                for f_it in range(len(strfiles)):
-                    # add to list
-                    fargs = [argname, f_it, strfiles[f_it], drsfiles[f_it].name]
-                    inputstr += '{0}[1]={2} [{3}] || '.format(*fargs)
-                    # add to run string
-                    if strfiles[f_it] in ['None', None, '']:
-                        continue
-                    else:
-                        basefile = os.path.basename(strfiles[f_it])
-                        self.runstring += '{0} '.format(basefile)
-            else:
-                inputstr += '{0}={1} || '.format(argname, iarg)
-                # skip Nones
-                if iarg in ['None', None, '']:
-                    continue
-                # add to run string
-                if isinstance(iarg, str):
-                    iarg = os.path.basename(iarg)
-                if kind != 'arg':
-                    self.runstring += '{0}={1} '.format(argname, iarg)
-                else:
-                    self.runstring += '{0} '.format(iarg)
-
-        # return the input string
-        return inputstr.strip().strip('||').strip()
-
-    # private methods
-    def _get_write_dir(self):
-        # ------------------------------------------------------------------
-        # get log path
-        if self.outputdir not in ['None', '', None]:
-            path = os.path.join(self.outputdir, self.directory)
-        # else use the default path
-        else:
-            path = self.defaultpath
-        # ------------------------------------------------------------------
-        # check that directory exists
-        if not os.path.exists(path):
-            try:
-                os.makedirs(path)
-            except:
-                # RecipeLogError: Cannot make path {0} for recipe log.'
-                eargs = [path]
-                emsg = TextEntry('00-005-00014', args=eargs)
-                if self.wlog is not None:
-                    self.wlog(self.params, 'error', emsg)
-        # ------------------------------------------------------------------
-        # return absolute log file path
-        return os.path.join(path, self.logfitsfile)
-
-    def _make_row(self):
-        row = OrderedDict()
-        row['RECIPE'] = self.name
-        row['KIND'] = self.kind
-        row['PID'] = self.pid
-        row['HTIME'] = self.htime
-        row['GROUP'] = self.group
-        row['LEVEL'] = self.level
-        row['SUBLEVEL'] = self.level_iteration
-        row['LEVEL_CRIT'] = self.level_criteria
-        row['INPATH'] = self.inputdir
-        row['OUTPATH'] = self.outputdir
-        row['DIRECTORY'] = self.directory
-        row['LOGFILE'] = self.log_file
-        row['PLOTDIR'] = self.plot_dir
-        row['RUNSTRING'] = self.runstring
-        # add inputs
-        row['ARGS'] = self.args
-        row['KWARGS'] = self.kwargs
-        row['SKWARGS'] = self.skwargs
-        # add whether recipe started
-        row['STARTED'] = self.started
-        # add whether all qc passed
-        row['PASSED_ALL_QC'] = self.passed_qc
-        # qc columns
-        row['QC_STRING'] = self.qc_string.strip().strip('||').strip()
-        row['QC_NAMES'] = self.qc_name.strip().strip('||').strip()
-        row['QC_VALUES'] = self.qc_value.strip().strip('||').strip()
-        row['QC_LOGIC'] = self.qc_logic.strip().strip('||').strip()
-        row['QC_PASS'] = self.qc_pass.strip().strip('||').strip()
-        # add errors
-        row['ERRORS'] = self.errors
-        # add whether recipe ended
-        row['ENDED'] = self.ended
-        # return row
-        return row
-
-    def _get_rows(self):
-        rows = []
-        # case where we have no sets
-        if len(self.set) == 0:
-            rows.append(self._make_row())
-        else:
-            # else we have children
-            for child in self.set:
-                rows += child._get_rows()
-        # return rows
-        return rows
-
-    def _writer(self):
-        # get write path
-        writepath = self.logfitspath
-        # ------------------------------------------------------------------
-        # check to see if table already exists
-        if os.path.exists(writepath):
-            try:
-                # RecipeLog: Reading file
-                dargs = [writepath]
-                dmsg = TextEntry('90-008-00012', args=dargs)
-                if self.wlog is not None:
-                    self.wlog(self.params, 'debug', dmsg)
-                table = Table.read(writepath, format='fits')
-            except Exception as e:
-                # RecipeLogError: Cannot read file
-                eargs = [writepath, type(e), str(e)]
-                emsg = TextEntry('00-005-00016', args=eargs)
-                if self.wlog is not None:
-                    self.wlog(self.params, 'error', emsg)
-        else:
-            table = None
-        # ------------------------------------------------------------------
-        # if pid in table remove all lines containing it (start with a clean
-        #   table)
-        if table is not None:
-            # find all rows with same PID
-            mask = self.pid == table['PID']
-            # find all rows with same level iteration
-            mask &= self.level_iteration == table['SUBLEVEL']
-            # keep all files that don't match mask
-            if np.sum(mask) > 0:
-                table = table[~mask]
-        # ------------------------------------------------------------------
-        # generate row(s) to add to table
-        rows = self._get_rows()
-        # ------------------------------------------------------------------
-        # add rows to table
-        # ------------------------------------------------------------------
-        tabledict = OrderedDict()
-        # ------------------------------------------------------------------
-        # populate with old table
-        if table is not None:
-            for col in table.colnames:
-                # deal with having
-                tabledict[col] = list(table[col])
-        # ------------------------------------------------------------------
-        # loop around rows and add to tabledict
-        for row in rows:
-            # loop around columns in row
-            for col in row:
-                # get column value
-                cvalue = row[col]
-                # deal with '' and None
-                if cvalue in ['', 'None', None]:
-                    cvalue = 'None'
-                # append to table
-                if col in tabledict:
-                    tabledict[col].append(cvalue)
-                # deal with column not in table dict (should only happen when
-                #   we have no previous rows/no previous table)
-                else:
-                    tabledict[col] = [cvalue]
-        # ------------------------------------------------------------------
-        # create new master table
-        mastertable = Table()
-        for col in tabledict:
-            mastertable[col] = tabledict[col]
-        # ------------------------------------------------------------------
-        # write to disk
-        try:
-            # debug log
-            if self.wlog is not None:
-                dargs = [writepath]
-                dmsg = TextEntry('90-008-00011', args=dargs)
-                self.wlog(self.params, 'debug', dmsg)
-            mastertable.write(writepath, format='fits', overwrite=True)
-        except Exception as e:
-            # RecipeLogError: Cannot write file {0}
-            if self.wlog is not None:
-                eargs = [writepath, type(e), str(e)]
-                emsg = TextEntry('00-005-00015', args=eargs)
-                self.wlog(self.params, 'error', emsg)
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
 
 
 # =============================================================================
@@ -924,108 +678,10 @@ wlog = Logger()
 # =============================================================================
 # Define Logger functions
 # =============================================================================
-def find_param(params=None, key=None, name=None, kwargs=None, func=None,
-               mapf=None, dtype=None, paramdict=None, required=True,
-               default=None):
-    """
-    Find a parameter "key" first in params or paramdict (if defined)
-    or in kwargs (with "name") - note if "name" in kwargs overrides
-    params/paramdict
-
-    :param params: ParamDict, the constants Parameter dictionary
-    :param key: string, the key to search for in "params"
-                (or paramdict if defined)
-    :param name: string, the name in kwargs of the constant - overrides use
-                 of param
-    :param kwargs: dict, the keyword arg dictionary (or any dictionary
-                   containing "key"
-    :param func: string, the function name "find_param" was used
-                 in (for logging)
-    :param mapf: string, 'list' or 'dict' - the way to map a string parameter
-                 i.e. 'a,b,c' mapf='list' -->  ['a', 'b', 'c']
-                 i.e. '{a:1, b:2}  mapf='dict' --> dict(a=1, b=2)
-    :param dtype: type, the data type for output of mapf (list or dict) for
-                  key
-    :param paramdict: ParamDict, if defined overrides the use of params for
-                      searching for "key"
-    :param required: bool, if True and "key" not found
-                     (and "constant" not found)
-    :param default: object, the default value of key if not found (if None
-                    does not set and raises error if required=True)
-
-    :type params: ParamDict
-    :type key: str
-    :type name: str
-    :type kwargs: dict
-    :type func: str
-    :type mapf: str
-    :type dtype: type
-    :type paramdict: ParamDict
-    :type required: bool
-    :type default: object
-
-    :return: returns the object or list/dict (if mapf='list'/'dict')
-    """
-    # deal with params being None
-    if params is None:
-        params = ParamDict()
-    # deal with dictionary being None
-    if paramdict is None:
-        paramdict = params
-    else:
-        paramdict = ParamDict(paramdict)
-    # deal with key being None
-    if key is None and name is None:
-        wlog(params, 'error', TextEntry('00-003-00004'))
-    elif key is None:
-        key = 'Not set'
-    # deal with no kwargs
-    if kwargs is None:
-        rkwargs = dict()
-    else:
-        rkwargs = dict()
-        # force all kwargs to be upper case
-        for kwarg in kwargs:
-            rkwargs[kwarg.upper()] = kwargs[kwarg]
-    # deal with no function
-    if func is None:
-        func = 'UNKNOWN'
-    # deal with no name
-    if name is None:
-        name = key.upper()
-    else:
-        name = name.upper()
-
-    # deal with None in rkwargs (take it as being unset)
-    if name in rkwargs:
-        if rkwargs[name] is None:
-            del rkwargs[name]
-    # deal with key not found in params
-    not_in_paramdict = name not in rkwargs
-    not_in_rkwargs = key not in paramdict
-    return_default = (not required) or (default is not None)
-
-    # now return a deep copied version of the value
-
-    # if we don't require value
-    if return_default and not_in_paramdict and not_in_rkwargs:
-        return copy.deepcopy(default)
-    elif not_in_paramdict and not_in_rkwargs:
-        eargs = [key, func]
-        wlog(params, 'error', TextEntry('00-003-00001', args=eargs))
-        return copy.deepcopy(default)
-    elif name in rkwargs:
-        return copy.deepcopy(rkwargs[name])
-    elif mapf == 'list':
-        return copy.deepcopy(paramdict.listp(key, dtype=dtype))
-    elif mapf == 'dict':
-        return copy.deepcopy(paramdict.dictp(key, dtype=dtype))
-    else:
-        return copy.deepcopy(paramdict[key])
-
-
-def printlogandcmd(logobj, params, message, key, human_time, option, wrap,
-                   colour):
+def printlogandcmd(logobj: Logger, params: ParamDict,
+                   message: Union[str, List[str]], key: str,
+                   human_time: str, option: str, wrap: bool = True,
+                   colour: str = 'green', sublevel: Optional[int] = None):
     """
     Prints log to standard output/screen (for internal use only when
     logger cannot be used)
@@ -1046,6 +702,8 @@ def printlogandcmd(logobj, params, message, key, human_time, option, wrap,
                    currently supported colours are:
                    "red", "green", "blue", "yellow", "cyan", "magenta",
                    "black", "white"
+    :param sublevel: int or None, the sub-level to add this "this level"
+                     final level is level + sub-level/10.0
 
     :return None:
     """
@@ -1057,32 +715,33 @@ def printlogandcmd(logobj, params, message, key, human_time, option, wrap,
     elif type(list):
         message = list(message)
     else:
-        message = [logobj.textdict['00-005-00005'].format(message)]
+        message = [textentry('00-005-00005', args=message)]
         key = 'error'
     for mess in message:
         code = logobj.pconstant.LOG_TRIG_KEYS().get(key, ' ')
         # check if line is over 80 chars
         if (len(mess) > char_len) and wrap:
             # get new messages (wrapped at CHAR_LEN)
-            new_messages = textwrap(mess, char_len)
+            new_messages = drs_text.textwrap(mess, char_len)
             for new_message in new_messages:
                 cmdargs = [human_time, code, option, new_message]
-                cmd = LOGFMT.format(*cmdargs)
-                printlog(logobj, params, cmd, key, colour)
+                cmd = params['DRS_LOG_FORMAT'].format(*cmdargs)
+                printlog(logobj, params, cmd, key, colour, sublevel)
         else:
             cmdargs = [human_time, code, option, mess]
-            cmd = LOGFMT.format(*cmdargs)
-            printlog(logobj, params, cmd, key, colour)
+            cmd = params['DRS_LOG_FORMAT'].format(*cmdargs)
+            printlog(logobj, params, cmd, key, colour, sublevel)
 
 
-def debug_start(logobj, params, raise_exception):
+def debug_start(logobj: Logger, params: ParamDict,
+                raise_exception: bool = True):
     """
     Initiate debugger (for DEBUG mode) - will start when an error is raised
     if 'DRS_DEBUG' is set to True or 1 (in config.py)
 
     :param logobj: logger instance, the logger object (for pconstant)
-    :param errorstring: string, the error to pipe to Sys.Exit after
-                        debugging options selected
+    :param params: the ParamDict of constants
+    :param raise_exception: bool, if True raises an exception on error
 
     uses pdb to do python debugging
 
@@ -1096,8 +755,6 @@ def debug_start(logobj, params, raise_exception):
         # noinspection PyPep8
         def raw_input(x):
             return str(input(x))
-    # get text
-    text = logobj.textdict
     # get colour
     clevels = logobj.pconstant.COLOUREDLEVELS()
     addcolour = params.get('DRS_COLOURED_LOG', True)
@@ -1110,20 +767,18 @@ def debug_start(logobj, params, raise_exception):
     # ask to run debugger
     # noinspection PyBroadException
     try:
-        print(cc + text['00-005-00006'] + nocol)
+        print(cc + textentry('00-005-00006') + nocol)
         # noinspection PyUnboundLocalVariable
-        uinput = raw_input(cc + text['00-005-00007'] + '\t' + nocol)
+        uinput = raw_input(cc + textentry('00-005-00007') + '\t' + nocol)
         if '1' in uinput.upper():
-            print(cc + text['00-005-00008'] + nocol)
+            print(cc + textentry('00-005-00008') + nocol)
 
             # noinspection PyBroadException
             try:
                 from IPython import embed
-                # noinspection PyUnboundLocalVariable
-                ipython = embed
                 import ipdb
                 ipdb.set_trace()
-            except:
+            except Exception as _:
                 import pdb
                 pdb.set_trace()
 
@@ -1132,45 +787,46 @@ def debug_start(logobj, params, raise_exception):
             if raise_exception:
                 logobj.pconstant.EXIT(params)()
         elif '2' in uinput.upper():
-            print(cc + text['00-005-00009'] + nocol)
+            print(cc + textentry('00-005-00009') + nocol)
 
             import pdb
             pdb.set_trace()
 
-            print(cc + text['00-005-00010'] + nocol)
+            print(cc + textentry('00-005-00010') + nocol)
             if raise_exception:
                 logobj.pconstant.EXIT(params)()
         elif raise_exception:
             logobj.pconstant.EXIT(params)()
-    except:
+    except Exception as _:
         if raise_exception:
             logobj.pconstant.EXIT(params)()
 
 
-def display_func(params=None, name=None, program=None, class_name=None):
+def display_func(name: Union[str, None] = None,
+                 program: Union[str, None] = None,
+                 class_name: Union[str, None] = None) -> str:
+    """
+    Alias to display function (but always with wlog set from Logger()
+
+    :param name: str or None - if set is the name of the function
+                 (i.e. def myfunction   name = "myfunction")
+                 if unset, set to "Unknown"
+    :param program: str or None, the program or recipe the function is defined
+                    in, if unset not added to the output string
+    :param class_name: str or None, the class name, if unset not added
+                       (i.e. class myclass   class_name = "myclass"
+
+    :return: a properly constructed string representation of where the
+              function is.
+    """
+    # set function name (obviously can't use display func here)
+    _ = __NAME__ + 'display_func()'
     # run the display function
-    return constants.param_functions.display_func(params, name,
-                                                  program, class_name,
-                                                  wlog=wlog,
-                                                  textentry=TextEntry)
+    return drs_misc.display_func(name, program, class_name)
 
 
-def _get_prev_count(params, previous):
-    # get the debug list
-    debug_list = params['DEBUG_FUNC_LIST'][:-1]
-    # get the number of iterations
-    n_elements = 0
-    # loop around until we get to
-    for row in range(len(debug_list))[::-1]:
-        if debug_list[row] != previous:
-            break
-        else:
-            n_elements += 1
-    # return number of element founds
-    return n_elements
-
-
-def warninglogger(p, w, funcname=None):
+def warninglogger(params: ParamDict, warnlist: Any,
+                  funcname: Union[str, None] = None):
     """
     Warning logger - takes "w" - a list of caught warnings and pipes them on
     to the log functions. If "funcname" is not None then t "funcname" is
@@ -1180,51 +836,58 @@ def warninglogger(p, w, funcname=None):
     to catch warnings use the following:
 
     >> import warnings
-    >> with warnings.catch_warnings(record=True) as w:
+    >> with warnings.catch_warnings(record=True) as warnlist:
     >>     code_to_generate_warnings()
-    >> warninglogger(w, 'some name for logging')
+    >> warninglogger(parmas, warnlist, 'some function name for logging')
 
-    :param p: ParamDict, the constants dictionary passed in call
-    :param w: list of warnings, the list of warnings from
-               warnings.catch_warnings
+    :param params: ParamDict, the constants dictionary passed in call
+    :param warnlist: list of warnings, the list of warnings from
+                     warnings.catch_warnings
     :param funcname: string or None, if string then also pipes "funcname" to the
                      warning message (intended to be used to identify the code/
                      function/module warning was generated in)
     :return:
     """
-    textdict = TextDict(p['INSTRUMENT'], p['LANGUAGE'])
-
     # get pconstant
-    pconstant = constants.pload(p['INSTRUMENT'])
+    pconstant = constants.pload()
     log_warnings = pconstant.LOG_CAUGHT_WARNINGS()
-
+    # deal with warnlist as string
+    if isinstance(warnlist, str):
+        warnlist = [warnlist]
     # deal with warnings
     displayed_warnings = []
-    if log_warnings and (len(w) > 0):
-        for wi in w:
+    if log_warnings and (len(warnlist) > 0):
+        for warnitem in warnlist:
+
             # if we have a function name then use it else just report the
             #    line number (not recommended)
             if funcname is None:
-                wargs = [wi.lineno, '', wi.message]
+                wargs = [warnitem.lineno, '', warnitem.message]
             else:
-                wargs = [wi.lineno, '({0})'.format(funcname), wi.message]
+                wargs = [warnitem.lineno, '({0})'.format(funcname),
+                         warnitem.message]
             # log message
             key = '10-005-00001'
-            wmsg = textdict[key].format(*wargs)
+            wmsg = textentry(key, args=wargs)
             # if we have already display this warning don't again
             if wmsg in displayed_warnings:
                 continue
             else:
-                wlog(p, 'warning', TextEntry(key, args=wargs))
+                wlog(params, 'warning', wmsg, sublevel=1)
                 displayed_warnings.append(wmsg)
 
 
-def get_logfilepath(logobj, params, use_group=True):
+def get_logfilepath(logobj: Logger, params: ParamDict,
+                    use_group: bool = True) -> str:
     """
     Construct the log file path and filename (normally from "DRS_DATA_MSG"
-    generates an ConfigError exception.
+    generates an DrsCodedException exception.
 
     "DRS_DATA_MSG" is defined in "config.py"
+
+    :param logobj: wlog (Logger) instance
+    :param params: Parameter dictionary of constants
+    :param use_group: bool if True use group name in log file path
 
     :return lpath: string, the path and filename for the log file to be used
     :return warning: bool, if True print warnings about log file path
@@ -1234,8 +897,8 @@ def get_logfilepath(logobj, params, use_group=True):
     if not use_group:
         group = None
         reset = True
-    elif 'DRS_GROUP' in params:
-        group = params['DRS_GROUP']
+    elif 'DRS_GROUP_PATH' in params:
+        group = params['DRS_GROUP_PATH']
         reset = False
     else:
         group = None
@@ -1250,7 +913,8 @@ def get_logfilepath(logobj, params, use_group=True):
     return lpath
 
 
-def correct_level(logobj, key, level):
+def correct_level(logobj: Logger, key: str, level: str,
+                  sublevel: Optional[int] = None):
     """
     Decides (based on WRITE_LEVEL) whether this level ("key") is to be printed/
     logged (based on the level "level"), return True if we should log key based
@@ -1266,6 +930,8 @@ def correct_level(logobj, key, level):
     :param level: string, write key (must be in
                 SpirouConfig.SpirouConst.LOG_TRIG_KEYS() and
                 SpirouConfig.SpirouConst.WRITE_LEVEL()
+    :param sublevel: int or None, the sub-level to add this "this level"
+                     final level is level + sub-level/10.0
 
     :return test: bool, True if: thislevel >= outlevel  else False
                     where:
@@ -1279,21 +945,25 @@ def correct_level(logobj, key, level):
     try:
         outlevel = logobj.pconstant.WRITE_LEVEL()[level]
     except KeyError:
-        emsg = TextEntry('00-005-00011', args=[level, func_name])
-        raise ConfigError(errorobj=[emsg, logobj.textdict])
-
+        eargs = [level, func_name]
+        raise DrsCodedException('00-005-00011', 'error', targs=eargs,
+                                func_name=func_name)
     # get numeric value for this level
     try:
         thislevel = logobj.pconstant.WRITE_LEVEL()[key]
+        if sublevel is not None:
+            thislevel += sublevel / 10.0
     except KeyError:
-        emsg = TextEntry('00-005-00012', args=[key, func_name])
-        raise ConfigError(errorobj=[emsg, logobj.textdict])
-
+        eargs = [key, func_name]
+        raise DrsCodedException('00-005-00012', 'error', targs=eargs,
+                                func_name=func_name)
     # return whether we are printing or not
     return thislevel >= outlevel
 
 
-def printlog(logobj, params, message, key='all', colour=None):
+def printlog(logobj: Logger, params: ParamDict, message: str,
+             key: str = 'all', colour: str = None,
+             sublevel: Optional[int] = None):
     """
     print message to stdout (if level is correct - set by PRINT_LEVEL)
     is coloured unless spirouConfig.Constants.COLOURED_LOG() is False
@@ -1307,23 +977,24 @@ def printlog(logobj, params, message, key='all', colour=None):
                    currently supported colours are:
                    "red", "green", "blue", "yellow", "cyan", "magenta",
                    "black", "white"
+    :param sublevel: int or None, the sub-level to add this "this level"
+                     final level is level + sub-level/10.0
 
     :return None:
     """
     func_name = __NAME__ + '.printlog()'
     # get the colours for the "key"
     c1, c2 = printcolour(logobj, params, key, func_name=func_name,
-                         colour=colour)
+                         colour=colour, sublevel=sublevel)
     # if the colours are not None then print the message
     if c1 is not None and c2 is not None:
         print(c1 + message + c2)
 
 
-def textwrap(input_string, length):
-    return constants.constant_functions.textwrap(input_string, length)
-
-
-def printcolour(logobj, params, key='all', func_name=None, colour=None):
+def printcolour(logobj: Logger, params: ParamDict, key: str = 'all',
+                func_name: Union[str, None] = None,
+                colour: Union[str, None] = None,
+                sublevel: Optional[int] = None) -> Tuple[str, str]:
     """
     Get the print colour (start and end) based on "key".
     This should be used as follows:
@@ -1340,6 +1011,8 @@ def printcolour(logobj, params, key='all', func_name=None, colour=None):
                    currently supported colours are:
                    "red", "green", "blue", "yellow", "cyan", "magenta",
                    "black", "white"
+    :param sublevel: int or None, the sub-level to add this "this level"
+                     final level is level + sub-level/10.0
 
     :return colour1: string or None, if key is found and we are using coloured
                      log returns the starting colour, if not returns empty
@@ -1363,14 +1036,16 @@ def printcolour(logobj, params, key='all', func_name=None, colour=None):
     nocol = Color.ENDC
     # make sure key is in clevels
     if (key not in clevels) and addcolour:
-        emsg = TextEntry('00-005-00012', args=[level, func_name])
-        raise ConfigError(errorobj=[emsg, logobj.textdict])
-
+        eargs = [level, func_name]
+        raise DrsCodedException('00-005-00012', 'error', eargs,
+                                func_name=func_name)
+    # get correct level condition
+    level_is_correct = correct_level(logobj, key, level, sublevel)
     # if this level is greater than or equal to out level then print to stdout
-    if correct_level(logobj, key, level) and (key in clevels) and addcolour:
+    if level_is_correct and (key in clevels) and addcolour:
         colour1 = clevels[key]
         colour2 = nocol
-    elif correct_level(logobj, key, level):
+    elif level_is_correct:
         colour1 = ''
         colour2 = ''
     else:
@@ -1379,7 +1054,7 @@ def printcolour(logobj, params, key='all', func_name=None, colour=None):
     return colour1, colour2
 
 
-def override_colour(params, colour):
+def override_colour(params: ParamDict, colour: str) -> Tuple[str, str]:
     """
     Override the colour with the themed colours
 
@@ -1395,9 +1070,6 @@ def override_colour(params, colour):
                      log returns the ending colour, if not returns empty
                      string if key is not accepted does not print
     """
-
-    # get the colour codes
-    codes = Color
     # get theme
     if 'THEME' not in params:
         theme = 'DARK'
@@ -1407,51 +1079,52 @@ def override_colour(params, colour):
     if theme == 'DARK':
         # find colour 1 in colour
         if colour.lower() == "red":
-            colour1 = codes.RED1
+            colour1 = Color.RED1
         elif colour.lower() == "green":
-            colour1 = codes.GREEN1
+            colour1 = Color.GREEN1
         elif colour.lower() == "blue":
-            colour1 = codes.BLUE1
+            colour1 = Color.BLUE1
         elif colour.lower() == "yellow":
-            colour1 = codes.YELLOW1
+            colour1 = Color.YELLOW1
         elif colour.lower() == "cyan":
-            colour1 = codes.CYAN1
+            colour1 = Color.CYAN1
         elif colour.lower() == "magenta":
-            colour1 = codes.MAGENTA1
+            colour1 = Color.MAGENTA1
         elif colour.lower() == 'black':
-            colour1 = codes.BLACK1
+            colour1 = Color.BLACK1
         elif colour.lower() == 'white':
-            colour1 = codes.WHITE1
+            colour1 = Color.WHITE1
         else:
             colour1 = None
     # get colour 1
     else:
         # find colour 1 in colour
         if colour.lower() == "red":
-            colour1 = codes.RED2
+            colour1 = Color.RED2
         elif colour.lower() == "green":
-            colour1 = codes.GREEN2
+            colour1 = Color.GREEN2
         elif colour.lower() == "blue":
-            colour1 = codes.BLUE2
+            colour1 = Color.BLUE2
         elif colour.lower() == "yellow":
-            colour1 = codes.YELLOW2
+            colour1 = Color.YELLOW2
         elif colour.lower() == "cyan":
-            colour1 = codes.CYAN2
+            colour1 = Color.CYAN2
         elif colour.lower() == "magenta":
-            colour1 = codes.MAGENTA2
+            colour1 = Color.MAGENTA2
         elif colour.lower() == 'black':
-            colour1 = codes.BLACK2
+            colour1 = Color.BLACK2
         elif colour.lower() == 'white':
-            colour1 = codes.WHITE2
+            colour1 = Color.WHITE2
         else:
             colour1 = None
     # last code should be the end
-    colour2 = codes.ENDC
+    colour2 = Color.ENDC
     # return colour1 and colour2
     return colour1, colour2
 
 
-def writelog(logobj, params, message, key, logfilepath):
+def writelog(logobj: Logger, params: ParamDict, message: str, key: str,
+             logfilepath: str, sublevel: Optional[int] = None):
     """
     write message to log file (if level is correct - set by LOG_LEVEL)
 
@@ -1460,8 +1133,9 @@ def writelog(logobj, params, message, key, logfilepath):
     :param message: string, message to write to log file
     :param key: string, either "error" or "warning" or "info" or graph, this
                 gives a character code in output
-
     :param logfilepath: string, the file name to write the log to
+    :param sublevel: int or None, the sub-level to add this "this level"
+                     final level is level + sub-level/10.0
 
     :return:
     """
@@ -1470,7 +1144,7 @@ def writelog(logobj, params, message, key, logfilepath):
     # get out level key
     level = params.get('LOG_LEVEL', 'all')
     # if this level is less than out level then do not log
-    if not correct_level(logobj, key, level):
+    if not correct_level(logobj, key, level, sublevel):
         return 0
     # -------------------------------------------------------------------------
     # Check if logfile path exists
@@ -1482,8 +1156,8 @@ def writelog(logobj, params, message, key, logfilepath):
                 f.write(message + '\n')
         except Exception as e:
             eargs = [logfilepath, type(e), e, func_name]
-            emsg = TextEntry('01-001-00011', args=eargs)
-            raise ConfigError(errorobj=[emsg, logobj.textdict])
+            raise DrsCodedException('01-001-00011', 'error', eargs,
+                                    func_name=func_name)
     else:
         # try to open the logfile
         try:
@@ -1499,11 +1173,18 @@ def writelog(logobj, params, message, key, logfilepath):
         # If we cannot write to log file then print to stdout
         except Exception as e:
             eargs = [logfilepath, type(e), e, func_name]
-            emsg = TextEntry('01-001-00011', args=eargs)
-            raise ConfigError(errorobj=[emsg, logobj.textdict])
+            raise DrsCodedException('01-001-00011', 'error', eargs,
+                                    func_name=func_name)
 
 
-def _clean_message(message):
+def _clean_message(message: str) -> str:
+    """
+    Remove colours from a message
+
+    :param message: str, message to clean
+
+    :return: str, cleaned message
+    """
     # get all attributes of Color
     all_attr = Color.__dict__
     # storeage for codes
@@ -1525,7 +1206,18 @@ def _clean_message(message):
     return message
 
 
-def get_drs_data_msg(params, group=None, reset=False):
+def get_drs_data_msg(params: ParamDict, group: Union[str, None] = None,
+                     reset: bool = False) -> str:
+    """
+    Get the drs message full path (either from existing one, or create one
+    using group name)
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param group: str, the group name (if set)
+    :param reset: bool, if True recalculates drs message full path
+
+    :return: str, the drs message full path
+    """
     # if we have a full path in params we use this
     if 'DRS_DATA_MSG_FULL' in params and not reset:
         # check that path exists - if it does skip next steps
@@ -1538,12 +1230,18 @@ def get_drs_data_msg(params, group=None, reset=False):
     dir_data_msg = params.get('DRS_DATA_MSG', None)
     # ----------------------------------------------------------------------
     # only sort by recipe kind if group is None
-    if (params['DRS_RECIPE_KIND'] is not None) and (group is None):
-        kind = params['DRS_RECIPE_KIND'].lower()
+    if (params['DRS_RECIPE_TYPE'] is not None) and (group is None):
+        kind = params['DRS_RECIPE_TYPE'].lower()
         dir_data_msg = os.path.join(dir_data_msg, kind)
-    # if we have a group then put it in processing folder
+    # if we have a group (and we are dealing with a recipe called within
+    #    another then put it in processing folder
+    elif group is not None and params['DRS_RECIPE_TYPE'] == 'sub-recipe':
+        dir_data_msg = os.path.join(dir_data_msg, 'sub-recipe')
+    # if we have a group (and we are not dealing with a recipe called within
+    #    another then put it in processing folder
     elif group is not None:
         dir_data_msg = os.path.join(dir_data_msg, 'processing')
+    # otherwise shove into an "other" directory
     else:
         dir_data_msg = os.path.join(dir_data_msg, 'other')
     # ----------------------------------------------------------------------
@@ -1553,15 +1251,21 @@ def get_drs_data_msg(params, group=None, reset=False):
         dir_data_msg = os.path.join(dir_data_msg, group)
     # ----------------------------------------------------------------------
     # add night name dir (if available) - put into sub-directory
-    if ('NIGHTNAME' in params) and (dir_data_msg is not None):
-        if params['NIGHTNAME'] not in [None, 'None', '']:
-            dir_data_msg = os.path.join(dir_data_msg, params['NIGHTNAME'])
+    if ('OBS_SUBDIR' in params) and (dir_data_msg is not None):
+        obs_subdir = params['OBS_SUBDIR']
+        # only add sub-directory if not None
+        if not drs_text.null_text(obs_subdir, ['None', '']):
+            # only add sub-directory if sub-directory not in the log path
+            #   already
+            if obs_subdir not in dir_data_msg:
+                dir_data_msg = os.path.join(dir_data_msg, obs_subdir)
     # ----------------------------------------------------------------------
     # try to create directory
     if not os.path.exists(dir_data_msg):
+        # noinspection PyBroadException
         try:
             os.makedirs(dir_data_msg)
-        except Exception:
+        except Exception as _:
             pass
     # ----------------------------------------------------------------------
     # if None use we have to create it
@@ -1580,9 +1284,10 @@ def get_drs_data_msg(params, group=None, reset=False):
         # get the users home directory
         homedir = os.path.expanduser('~')
         # make the default message directory
-        default_msg = os.path.join(homedir, '.terrapipe_msg/')
+        default_msg = os.path.join(homedir, '.apero/msg/')
         # check that deafult message directory exists
         if not os.path.exists(default_msg):
+            # noinspection PyBroadException
             try:
                 os.makedirs(default_msg)
                 return default_msg

@@ -1,58 +1,61 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
-
-# CODE DESCRIPTION HERE
+APERO order localisation (order centers and order widths) functionality
 
 Created on 2019-05-15 at 13:48
 
 @author: cook
 """
-import numpy as np
-import os
 import warnings
-from collections import OrderedDict
+from typing import Dict, List, Optional, Tuple
 
-from apero import core
-from apero.core import constants
+import numpy as np
+from scipy.ndimage import percentile_filter, binary_dilation
+from scipy.ndimage.filters import median_filter
+from skimage import measure
+
 from apero import lang
+from apero.base import base
+from apero.core import constants
 from apero.core import math as mp
-from apero.core.core import drs_log
-from apero.core.core import drs_file
 from apero.core.core import drs_database
-from apero.science.calib import general
+from apero.core.core import drs_log, drs_file
+from apero.core.utils import drs_recipe
+from apero.io import drs_table
+from apero.science.calib import gen_calib
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'science.calib.localisation.py'
 __INSTRUMENT__ = 'None'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # get param dict
 ParamDict = constants.ParamDict
+DrsRecipe = drs_recipe.DrsRecipe
 DrsFitsFile = drs_file.DrsFitsFile
+# get the calibration database
+CalibrationDatabase = drs_database.CalibrationDatabase
 # Get Logging function
 WLOG = drs_log.wlog
 # Get function string
 display_func = drs_log.display_func
 # Get the text types
-TextEntry = lang.drs_text.TextEntry
-TextDict = lang.drs_text.TextDict
+textentry = lang.textentry
 # alias pcheck
-pcheck = core.pcheck
+pcheck = constants.PCheck(wlog=WLOG)
 
 
 # =============================================================================
 # Define functions
 # =============================================================================
-def calculate_order_profile(params, image, **kwargs):
+def calculate_order_profile(params: ParamDict, image: np.ndarray,
+                            box_size: Optional[int] = None) -> np.ndarray:
     """
     Produce a (box) smoothed image, smoothed by the mean of a box of
         size=2*"size" pixels, edges are dealt with by expanding the size of the
@@ -61,22 +64,21 @@ def calculate_order_profile(params, image, **kwargs):
         pixel values less than 0 are given a weight of 1e-6, pixel values
         above 0 are given a weight of 1
 
+    :param params: ParamDict, the parameter dictionary of constants
     :param image: numpy array (2D), the image
-    :param kwargs: keyword arguments
-
-    :keyword size: int, the number of pixels to mask before and after pixel
-                 (for every row)
-                 i.e. box runs from  "pixel-size" to "pixel+size" unless
-                 near an edge
+    :param box_size: int, the number of pixels to mask before and after pixel
+                     (for every row), if set overrides "LOC_ORDERP_BOX_SIZE"
+                     from params
 
     :return newimage: numpy array (2D), the smoothed image
     """
     func_name = __NAME__ + '.calculate_order_profile()'
     # get constants from params
-    size = pcheck(params, 'LOC_ORDERP_BOX_SIZE', 'size', kwargs, func_name)
+    size = pcheck(params, 'LOC_ORDERP_BOX_SIZE', func=func_name,
+                  override=box_size)
     # -------------------------------------------------------------------------
     # log that we are creating order profile
-    WLOG(params, '', TextEntry('40-013-00001'))
+    WLOG(params, '', textentry('40-013-00001'))
     # -------------------------------------------------------------------------
     # copy the original image
     newimage = np.zeros_like(image)
@@ -106,382 +108,552 @@ def calculate_order_profile(params, image, **kwargs):
     return newimage
 
 
-def check_coeffs(params, recipe, image, coeffs, fiber, kind=None):
+def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
+                      fiber: str, binsize: Optional[int] = None,
+                      boxp_low: Optional[float] = None,
+                      boxp_high: Optional[float] = None,
+                      percentile_fsize: Optional[float] = None,
+                      fdilate_itr: Optional[int] = None,
+                      min_order_area: Optional[int] = None,
+                      cent_poly_deg: Optional[int] = None,
+                      wid_poly_deg: Optional[int] = None,
+                      range_wid_sum: Optional[int] = None,
+                      loc_ydet_min: Optional[int] = None,
+                      loc_ydet_max: Optional[int] = None,
+                      num_wsamples: Optional[int] = None,
+                      ) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Check and correct the coefficients by rejecting misbehaving coefficients
-    and smoothing with a robust fit
+    Find and fit the orders for this order based on the "image" (order profile)
 
-    :param coeffs:
-    :param nsigclip:
-    :return:
+    :param params: ParamDict, the parameter dictionary of constants
+    :param recipe: DreRecipe instance, the recipe that called this function
+    :param image: np.array (2D), the image to fit the orders on
+    :param fiber: str, the fiber name (i.e. 'A', 'B' or 'C')
+    :param binsize: int or None, median-binning size in the dispersion
+                    direction, if set overrides "LOC_BINSIZE" from params
+    :param boxp_low: float or None, the percentile of a box that is always an
+                     illuminated pixel, if set overrides
+                     "LOC_BOX_PERCENTILE_LOW" from  params
+    :param boxp_high: float or None, the percentile of a box that is always an
+                      illuminated pixel, if set overrides
+                      "LOC_BOX_PERCENTILE_HIGH" from params
+    :param percentile_fsize: float or None, the size of the percentile filter,
+                             if set overrides "LOC_PERCENTILE_FILTER_SIZE"
+                             from params
+    :param fdilate_itr: int or None, the fiber dilation number of iterations,
+                        if set overrides "LOC_FIBER_DILATE_ITERATIONS" from
+                        params
+    :param min_order_area: int or None, the minimum area (number of pixels)
+                           that defines an order, if set overrides
+                           "LOC_MIN_ORDER_AREA" from params
+    :param cent_poly_deg: int or None, degree of polynomial to fit for
+                          positions, if set overrides "LOC_CENT_POLY_DEG"
+                          from params
+    :param wid_poly_deg: int or None, degree of polynomial to fit the widths,
+                         if set overrides "LOC_WIDTH_POLY_DEG" from params
+    :param range_wid_sum: int or None, range width size (used to fit the width
+                          of the orders at certain points), if set overrides
+                          "LOC_RANGE_WID_SUM" from params
+    :param loc_ydet_min: int or None, the minimum detector position where the
+                         centers of the bottom most order should fall, if set
+                         overrides "LOC_YDET_MIN" from params
+    :param loc_ydet_max: int or None, the maximum detector position where the
+                         centers of the top most order should fall, if set
+                         overrides "LOC_YDET_MAX" from params
+    :param num_wsamples: int or None, the number of width samples to use, if
+                         set overrides "LOC_NUM_WID_SAMPLES" from params
+
+    :return: tuple, 1. the central position coefficients for each order, 2. the
+             width coefficients for each order
     """
-    # get the sigma clipping cut off value
-    nsigclip = params['LOC_COEFF_SIGCLIP']
-    coeffdeg = params['LOC_COEFFSIG_DEG']
-    # ----------------------------------------------------------------------
-    # get fiber params
-    pconst = constants.pload(params['INSTRUMENT'])
-    fiberparams = pconst.FIBER_SETTINGS(params, fiber)
-    max_num_orders = fiberparams['FIBER_MAX_NUM_ORDERS']
-    set_num_fibers = fiberparams['FIBER_SET_NUM_FIBERS']
-    num_fibers = max_num_orders / set_num_fibers
-    # ----------------------------------------------------------------------
-    # make sure coeffs is a numpy array
-    coeffs = np.array(coeffs)
-    # get the shape of coefficients
-    nbo, nbcoeff = coeffs.shape
-    # get the image shape
-    dim1, dim2 = image.shape
-    # ----------------------------------------------------------------------
-    # define an x array and we'll determine the position along each order as a
-    # matrix of y values. These will be sanitized and used to compute new coeffs
-    xpix = np.linspace(0, dim2, nbcoeff * 10, dtype=float)
-    # y matrix full of zeros
-    ypix = np.zeros([nbo, len(xpix)])
-    # fill in ypix
-    for order_num in range(nbo):
-        ypix[order_num] = np.polyval(coeffs[order_num][::-1], xpix)
-    # sanity check
-    ypix_ini = np.array(ypix)
-    # ----------------------------------------------------------------------
-    # storage of output values
-    new_coeffs = np.zeros_like(coeffs)
-    # we loop through fiber A and B and sanitize y position independently
-    for mod in range(int(nbo // num_fibers)):
-        # log progress
-        WLOG(params, '', TextEntry('40-013-00026', args=[mod]))
-        # index of Nth diffraction order
-        index = np.arange(nbo)
-        # keep either fiber A or B using modulo
-        index = index[(index % (nbo // num_fibers)) == mod]
-        # loop through xpix values and sanitize ypix values. y pix is fitted
-        # with a sigma-clipped 6 or 7th order polynomial
-        for it in range(len(xpix)):
-            # only use in the fit values falling on the science array. Otherwise
-            # the values are unconstrainted by flat field frames
-            good = (ypix[index, it] > 0) & (ypix[index, it] < dim2)
-            # robust polynomial fit
-            fit, keep = mp.robust_polyfit(index[good], ypix[index, it][good],
-                                          coeffdeg, nsigclip)
-            # put values back in the ypix matri
-            ypix[index, it] = np.polyval(fit, index)
-    # ----------------------------------------------------------------------
-    # storage for plotting
-    good_arr = []
-    ypix2 = []
-    # ----------------------------------------------------------------------
-    # re-fit the coefficients
-    for order_num in range(nbo):
-        # fit the order position using the sanitized ypix values
-        good = (ypix[order_num] > 0) & (ypix[order_num] < dim2)
-        # use the same order of coefficient
-        new_coeff_ord = np.polyfit(xpix[good], ypix[order_num, good], nbcoeff-1)
-        # push into new array
-        new_coeffs[order_num] = new_coeff_ord[::-1]
-        # add update y values (for plotting)
-        ypix2.append(np.polyval(new_coeff_ord, xpix))
-        # storage for plotting
-        good_arr.append(good)
-    # make ypix2 an array
-    ypix2 = np.array(ypix2)
-    # ----------------------------------------------------------------------
-    # plot of the coeffs
-    recipe.plot('LOC_CHECK_COEFFS', ypix=ypix2, ypix0=ypix_ini,
-                xpix=xpix, good=good_arr, kind=kind, image=image)
-    # ----------------------------------------------------------------------
-    return new_coeffs
-
-
-def find_and_fit_localisation(params, recipe, image, sigdet, fiber, **kwargs):
-    func_name = __NAME__ + '.find_and_fit_localisation()'
-
-    # get fiber params
-    pconst = constants.pload(params['INSTRUMENT'])
-    fiberparams = pconst.FIBER_SETTINGS(params, fiber)
-
-    # ----------------------------------------------------------------------
-    # get constants from p
-    # ----------------------------------------------------------------------
-    row_offset = pcheck(params, 'LOC_START_ROW_OFFSET', 'row_offset', kwargs,
-                        func=func_name)
-    central_col = pcheck(params, 'LOC_CENTRAL_COLUMN', 'central_col', kwargs,
-                         func=func_name)
-    horder_size = pcheck(params, 'LOC_HALF_ORDER_SPACING', 'horder_size',
-                         kwargs, func=func_name)
-    minpeak_amp = pcheck(params, 'LOC_MINPEAK_AMPLITUDE', 'minpeak_amp',
-                         kwargs, func=func_name)
-    back_thres = pcheck(params, 'LOC_BKGRD_THRESHOLD', 'back_thres', kwargs,
-                        func=func_name)
-    first_order = pcheck(params, 'FIBER_FIRST_ORDER_JUMP', 'first_order',
-                         kwargs, func=func_name, paramdict=fiberparams)
-    max_num_orders = pcheck(params, 'FIBER_MAX_NUM_ORDERS', 'max_num_orders',
-                            kwargs, func=func_name, paramdict=fiberparams)
-    num_fibers = pcheck(params, 'FIBER_SET_NUM_FIBERS', 'num_fibers', kwargs,
-                        func=func_name, paramdict=fiberparams)
-    wid_poly_deg = pcheck(params, 'LOC_WIDTH_POLY_DEG', 'wid_poly_deg', kwargs,
-                          func=func_name)
-    cent_poly_deg = pcheck(params, 'LOC_CENT_POLY_DEG', 'cent_poly_deg',
-                           kwargs, func=func_name)
-    locstep = pcheck(params, 'LOC_COLUMN_SEP_FITTING', 'locstep', kwargs,
-                     func=func_name)
-    ext_window = pcheck(params, 'LOC_EXT_WINDOW_SIZE', 'ext_window', kwargs,
-                        func=func_name)
-    image_gap = pcheck(params, 'LOC_IMAGE_GAP', 'image_gap', kwargs,
-                       func=func_name)
-    widthmin = pcheck(params, 'LOC_ORDER_WIDTH_MIN', 'widthmin', kwargs,
-                      func=func_name)
-    nm_thres = pcheck(params, 'LOC_NOISE_MULTIPLIER_THRES', 'nm_thres', kwargs,
-                      func=func_name)
-    max_rms_cent = pcheck(params, 'LOC_MAX_RMS_CENT', 'max_rms_cent', kwargs,
-                          func=func_name)
-    max_ptp_cent = pcheck(params, 'LOC_MAX_PTP_CENT', 'max_ptp_cent', kwargs,
-                          func=func_name)
-    ptporms_cent = pcheck(params, 'LOC_PTPORMS_CENT', 'ptporms_cent', kwargs,
-                          func=func_name)
-    max_rms_wid = pcheck(params, 'LOC_MAX_RMS_WID', 'max_rms_wid', kwargs,
-                         func=func_name)
-    max_ptp_wid = pcheck(params, 'LOC_MAX_PTP_WID', 'max_ptp_wid', kwargs,
-                         func=func_name)
-    center_drop = pcheck(params, 'LOC_ORDER_CURVE_DROP', 'curve_drop', kwargs,
-                         func=func_name)
-    # ----------------------------------------------------------------------
-    # Step 1: Measure and correct background on the central column
-    # ----------------------------------------------------------------------
-    # clip the data - start with the ic_offset row and only
-    # deal with the central column column=ic_cent_col
-    y = image[row_offset:, central_col]
-    # measure min max of box smoothed central col
-    miny, maxy = mp.measure_box_min_max(y, horder_size)
-    max_signal = np.nanpercentile(y, 95)
-    diff_maxmin = maxy - miny
-
-    # normalised the central pixel values above the minimum amplitude
-    #   zero by miny and normalise by (maxy - miny)
-    #   Set all values below ic_min_amplitude to zero
-    ycc = np.where(diff_maxmin > minpeak_amp, (y - miny) / diff_maxmin, 0)
-
-    # get the normalised minimum values for those rows above threshold
-    #   i.e. good background measurements
-    normed_miny = miny / diff_maxmin
-    goodback = np.compress(ycc > back_thres, normed_miny)
-    # measure the mean good background as a percentage
-    # (goodback and ycc are between 0 and 1)
-    mean_backgrd = np.mean(goodback) * 100
-    # Log the maximum signal and the mean background
-    WLOG(params, 'info', TextEntry('40-013-00003', args=[max_signal]))
-    WLOG(params, 'info', TextEntry('40-013-00004', args=[mean_backgrd]))
-    # plot y, miny and maxy
-    recipe.plot('LOC_MINMAX_CENTS', y=y, miny=miny, maxy=maxy)
-
-    # ----------------------------------------------------------------------
-    # Step 2: Search for order center on the central column - quick
-    #         estimation
-    # ----------------------------------------------------------------------
-    # log progress
-    WLOG(params, '', TextEntry('40-013-00005'))
-    # plot the minimum of ycc and back_thres
-    recipe.plot('LOC_MIN_CENTS_THRES', centers=ycc, threshold=back_thres)
-    # find the central positions of the orders in the central
-    posc_all = find_position_of_cent_col(ycc, back_thres)
-    # depending on the fiber type we may need to skip some pixels and also
-    # we need to add back on the ic_offset applied
-    posc = posc_all[first_order:] + row_offset
-    # work out the number of orders to use (minimum of ic_locnbmaxo and number
-    #    of orders found in 'LocateCentralOrderPositions')
-    num_orders = mp.nanmin([max_num_orders, len(posc)])
-    norm_num_orders = int(num_orders / num_fibers)
-    # log the number of orders than have been detected
-    wargs = [fiber, norm_num_orders, num_fibers]
-    WLOG(params, 'info', TextEntry('40-013-00006', args=wargs))
-    # ----------------------------------------------------------------------
-    # Step 3: Search for order center and profile on specific columns
-    # ----------------------------------------------------------------------
-    cent_0 = np.zeros((num_orders, image.shape[1]), dtype=float)
-    wid_0 = np.zeros((num_orders, image.shape[1]), dtype=float)
-    # Create arrays to store coefficients for position and width
-    cent_coeffs = np.zeros((num_orders, cent_poly_deg + 1))
-    wid_coeffs = np.zeros((num_orders, wid_poly_deg + 1))
-    # Create arrays to store rms values for position and width
-    cent_rms = np.zeros(num_orders)
-    wid_rms = np.zeros(num_orders)
-    # Create arrays to store point to point max value for position and width
-    cent_max_ptp = np.zeros(num_orders)
-    cent_frac_ptp = np.zeros(num_orders)
-    wid_max_ptp = np.zeros(num_orders)
-    wid_frac_ptp = np.zeros(num_orders)
-    # Create arrays to store rejected points
-    cent_max_rmpts = np.zeros(num_orders)
-    wid_max_rmpts = np.zeros(num_orders)
-    # storage for plotting
-    xplot, yplot = [], []
-    # ----------------------------------------------------------------------
-    # set the central col centers in the cpos_orders array
-    cent_0[:, central_col] = posc[0:num_orders]
-    # ----------------------------------------------------------------------
-    # storage for plotting
-    dvars = OrderedDict()
-    plimits = OrderedDict()
-    # loop around each order
-    rorder_num = 0
+    # set function name
+    func_name = display_func('calc_localisation', __NAME__, )
+    # -------------------------------------------------------------------------
+    # Get properties from params
+    # -------------------------------------------------------------------------
+    # median-binning size in the dispersion direction. This is just used to
+    #     get an order-of-magnitude of the order profile along a given column
+    binsize = pcheck(params, 'LOC_BINSIZE', func=func_name,
+                     override=binsize)
+    # the percentile of a box that is always an illuminated pixel
+    box_perc_low = pcheck(params, 'LOC_BOX_PERCENTILE_LOW', func=func_name,
+                          override=boxp_low)
+    box_perc_high = pcheck(params, 'LOC_BOX_PERCENTILE_HIGH', func=func_name,
+                           override=boxp_high)
+    # the size of the percentile filter - should be a bit bigger than the
+    # inter-order gap
+    perc_filter_size = pcheck(params, 'LOC_PERCENTILE_FILTER_SIZE',
+                              func=func_name, override=percentile_fsize)
+    # the fiber dilation number of iterations this should only be used when
+    #     we want a combined localisation solution i.e. AB from A and B
+    fiber_dilate_iterations = pcheck(params, 'LOC_FIBER_DILATE_ITERATIONS',
+                                     func=func_name, override=fdilate_itr)
+    # the minimum area (number of pixels) that defines an order
+    min_area = pcheck(params, 'LOC_MIN_ORDER_AREA', func=func_name,
+                      override=min_order_area)
+    # degree of polynomial to fit for positions
+    cent_order_fit = pcheck(params, 'LOC_CENT_POLY_DEG', func=func_name,
+                            override=cent_poly_deg)
+    # degree of polynomial to fit the widths
+    wid_order_fit = pcheck(params, 'LOC_WIDTH_POLY_DEG', func=func_name,
+                           override=wid_poly_deg)
+    # range width size (used to fit the width of the orders at certain points)
+    range_width_sum = pcheck(params, 'LOC_RANGE_WID_SUM', func=func_name,
+                             override=range_wid_sum)
+    # define the minimum and maximum detector position where the centers of
+    #   the orders should fall
+    ydet_min = pcheck(params, 'LOC_YDET_MIN', func=func_name,
+                      override=loc_ydet_min)
+    ydet_max = pcheck(params, 'LOC_YDET_MAX', func=func_name,
+                      override=loc_ydet_max)
+    # number of width samples to use
+    num_wid_samples = pcheck(params, 'LOC_NUM_WID_SAMPLES', func=func_name,
+                             override=num_wsamples)
+    # -------------------------------------------------------------------------
+    # Fiber properties
+    # -------------------------------------------------------------------------
+    # get pseudo constants
+    pconst = constants.pload()
+    # whether we are dilate the imagine due to fiber configuration this should
+    #     only be used when we want a combined localisation solution
+    #     i.e. AB from A and B
+    fiber_dilate = pconst.FIBER_DILATE(fiber)
+    # whether we have orders coming in doublets (i.e. SPIROUs AB --> A + B)
+    fiber_doublets = pconst.FIBER_DOUBLETS(fiber)
+    # the parity of the fiber i.e. A = -1, B = +1
+    fiber_doublet_parity = pconst.FIBER_DOUBLET_PARITY(fiber)
+    # -------------------------------------------------------------------------
+    # print progress: Finding and fitting orders for fiber = {0}'
+    WLOG(params, 'info', textentry('40-013-00028', args=[fiber]))
+    # -------------------------------------------------------------------------
+    # get the shape of the image
+    nbypix, nbxpix = image.shape
+    # set NaN pixels to zero to avoid warnings later on
+    image[~np.isfinite(image)] = 0
+    # set up an array of pixel values along order direction (x)
+    xpix = np.arange(nbxpix)
+    # -------------------------------------------------------------------------
+    # print progress: Masking orders
+    WLOG(params, '', textentry('40-013-00029'))
+    # empty array to hold the value above which a pixel is considered
+    #     illuminated for the purpose of order localisation
+    threshold = np.zeros_like(image)
+    # bin up the data - loop around binsize
+    for bin_it in range(binsize, nbxpix - binsize, binsize):
+        # profile for the spectral column
+        tmp = mp.nanmedian(image[:, bin_it:bin_it + binsize], axis=1)
+        # we assume that the 95th percentile of a box is always an
+        #     illuminated pixel. We set the threshold at half that value.
+        #     This is location-dependent, so we need to have a running
+        #     95th percentile filter with a certain size. We use 100 pixels
+        #     for the filter, this number should be a bit bigger than the
+        #     inter-order gap.
+        zp = percentile_filter(tmp, box_perc_low, size=perc_filter_size)
+        tmp = percentile_filter(tmp, box_perc_high, size=perc_filter_size)
+        # adding the foot after the division by 2
+        tmp = tmp / 2.0 + zp
+        # pad the threshold map
+        maptmp = np.repeat(tmp, binsize).reshape([nbypix, binsize])
+        threshold[:, bin_it:bin_it + binsize] = maptmp
+    # -------------------------------------------------------------------------
+    # create a binary mask that will indicate if a pixel is in or out of orders
+    mask_orders = image > threshold
+    # mask the edges to avoid problems
+    mask_orders[:, 0:binsize] = 0
+    mask_orders[:, -binsize:] = 0
+    # -------------------------------------------------------------------------
+    # copy mask orders (for plotting
+    mask_orders0 = np.array(mask_orders)
+    # -------------------------------------------------------------------------
+    # find the regions that define the orders
+    # the map contains integer values that are common to all pixels that form
+    # a region in the binary mask
+    all_labels1 = measure.label(mask_orders, connectivity=2)
+    label_props1 = measure.regionprops(all_labels1)
+    # find the area of all regions, we know that orders cover many pixels
+    area1 = []
+    for label_prop in label_props1:
+        area1.append(label_prop.area)
+    # these areas are considered orders. This is just a first guess we will
+    #   confirm these later - we have to add 1 as measure.label defines "0" as
+    #   the "background" - this is not an order
+    is_order1 = np.where(np.array(area1) > min_area)[0] + 1
+    # -------------------------------------------------------------------------
     # loop around orders
-    for order_num in range(num_orders):
-        # get the shape of the image
-        nx2 = image.shape[1]
-        # ------------------------------------------------------------------
-        # get columns (start from the center and work outwards right side
-        # first the left side) the order of these seems weird but we
-        # calculate row centers from the central col (posc) to the RIGHT
-        # edge then calculate the center pixel again from the
-        # "central col+locstep" pixel (first column calculated) then we
-        # calculate row centers to the LEFT edge - hence the order of columns
-        columns = list(range(central_col + locstep, nx2 - locstep, locstep))
-        columns += list(range(central_col - locstep, locstep, -locstep))
-        # ------------------------------------------------------------------
-        # storage for plotting
-        col_vals, maxycc, minxcc, maxxcc = [], -np.inf, np.inf, -np.inf
-        # loop around each column to get the order row center position from
-        # previous central measurement.
-        # For the first iteration this uses "posc" for all other iterations
-        # uses the central position found at the nearest column to it
-        # must also correct for conversion to int by adding 0.5
-        # center, width = 0, 0
-        columns = np.array(columns)
+    for order_num in is_order1:
+        # get this orders pixels
+        mask_region = (all_labels1 == order_num)
+        # get the flux values of the pixels for this order
+        value = image[mask_region]
+        # get the low flux bound (more than 5% of peak flux)
+        low_flux = value < mp.nanpercentile(value, 95) * 0.05
+        # get the positions so we can mask them with the low_flux mask
+        ypix1, xpix1 = np.where(mask_region)
+        # mask mask_orders with low_flux for this order region
+        mask_orders[ypix1[low_flux], xpix1[low_flux]] = 0
+    # -------------------------------------------------------------------------
+    # clean up edges of orders
+    for row in range(mask_orders.shape[0]):
+        mask_orders[row] = median_filter(mask_orders[row], 11)
+    # -------------------------------------------------------------------------
+    # apply a binary dilation, mostly to avoid mis-interpreting slices as
+    #    individual orders
+    if fiber_dilate:
+        # we dilate "fiber_dilate_iterations" times to merge orders together
+        #    this should only be used when we want a combined localisation
+        #    solution i.e. AB from A and B
+        for _ in range(fiber_dilate_iterations):
+            mask_orders = binary_dilation(mask_orders)
+    # else we just do the binary dilation once
+    else:
+        mask_orders = binary_dilation(mask_orders)
+    # -------------------------------------------------------------------------
+    # add image plot of mask orders
+    recipe.plot('LOC_IM_REGIONS', mask0=mask_orders0, mask1=mask_orders)
+    # -------------------------------------------------------------------------
+    # find the regions that define the orders (again now we have
+    # the map contains integer values that are common to all pixels that form
+    # a region in the binary mask
+    all_labels2 = measure.label(mask_orders, connectivity=2)
+    label_props2 = measure.regionprops(all_labels2)
+    # find the area of all regions, we know that orders cover many pixels
+    area2 = []
+    for label_prop in label_props2:
+        area2.append(label_prop.area)
+    # these areas are considered orders. This is just a first guess we will
+    #   confirm these later - we have to add 1 as measure.label defines "0" as
+    #   the "background" - this is not an order
+    is_order2 = np.where(np.array(area2) > min_area)[0] + 1
+    # log how many blobs were found: Found {0} order blobs'
+    margs = [len(is_order2)]
+    WLOG(params, '', textentry('40-013-00030', args=margs))
+    # -------------------------------------------------------------------------
+    # storage for fit the x vs y position per region
+    all_fits = np.zeros([len(is_order2), cent_order_fit + 1])
+    # storage for position of fit at center of images
+    order_centers = np.zeros(len(is_order2))
+    # storage for the width of orcer
+    order_widths = np.zeros([len(is_order2), num_wid_samples])
+    # storage for valid labels
+    valid_labels = np.array(is_order2)
+    # loop through orders
+    for order_num in range(len(is_order2)):
+        # ---------------------------------------------------------------------
+        # find x y position of the region considered to be an order
+        xy = label_props2[is_order2[order_num] - 1].coords
+        # extract the positions
+        ypos, xpos = xy[:, 0], xy[:, 1]
+        # determine if order overlaps with image center, if not it is not good
+        is_valid = np.min(xpos) < nbxpix / 2
+        is_valid &= np.max(xpos) > nbxpix / 2
+        # if not valid do not continue
+        if not is_valid:
+            continue
+        # ---------------------------------------------------------------------
+        # We get how many illuminated pixels are within +/- "range_width_sum"
+        #   pixels of the center of the image. This determines the width of
+        #   the order. Orders can be banana-shaped within the region, that's
+        #   fine
+        for ibin in range(num_wid_samples):
+            # get the pixels within this part of the detector
+            pos = np.abs(xpos - (ibin + 1) * nbxpix / (num_wid_samples + 1))
+            posmask = pos < range_width_sum
+            # get the width at 3 points
+            binwidth = (np.sum(posmask) / (range_width_sum * 2 + 1)) + 2
+            order_widths[order_num, ibin] = binwidth
+        # polynomial fit of x vs y of illuminated pixels
+        # IMPORTANT NOTE
+        # To avoid covariance problems between intercept and slope later on,
+        #     we define the x position in the fit as relative to the center
+        #     of the array. The DRS uses a fit with x=0 at the edge of the
+        #     array. We'll return the proper fit at the end, but for all
+        #     intermediate steps, the fit assumes that x = 0 is the *center*
+        #     of the image, not it's border.
+        # cent_fit = np.polyfit(xpos - nbxpix / 2, ypos, cent_order_fit)
+        cent_fit = mp.fit_cheby(xpos, ypos, cent_order_fit,
+                                domain=[0, image.shape[1]])
 
-        columns = columns[np.argsort(np.abs(columns - central_col))]
+        # save fit to all fits
+        all_fits[order_num] = cent_fit
+        # position of the order at the center of the image
+        # order_centers[order_num] = np.polyval(cent_fit, 0)
+        # term 0 of a Cheby polynomial is midpoint
+        order_centers[order_num] = mp.val_cheby(cent_fit, image.shape[1] // 2,
+                                                domain=[0, image.shape[1]])
 
-        for col in columns:
-            # for pixels>central pixel we need to get row center from last
-            # iteration (or posc) this is to the LEFT
-            if col > central_col:
-                rowcenter = int(cent_0[order_num, col - locstep] + 0.5)
-            # for pixels<=central pixel we need to get row center from last
-            # iteration this ir to the RIGHT
-            else:
-                rowcenter = int(cent_0[order_num, col + locstep] + 0.5)
-            # need to define the extraction window edges
-            rowtop, rowbottom = (rowcenter - ext_window), (
-                        rowcenter + ext_window)
-            # now make sure our extraction isn't out of bounds
-            if rowtop <= 0 or rowbottom >= nx2:
-                break
-            # get the pixel values between row bottom and row top for
-            # this column
-            # median over whole box of pixels to avoid outliers
-            imagebox = image[rowtop:rowbottom, col:col+locstep]
-            # get the values
-            ovalues = mp.nanmedian(imagebox, axis=1)
-            # as we are not normalised threshold needs multiplying by
-            # the maximum value
-            threshold = mp.nanmax(ovalues) * back_thres
-            # find the row center position and the width of the order
-            # for this column
-            lkwargs = dict(values=ovalues, threshold=threshold,
-                           min_width=widthmin)
-            center, width = locate_order_center(**lkwargs)
-            # need to add on row top (as centers are relative positions)
-            center = center + rowtop
-            # if the width is zero set the position back to the original
-            # position
-            if width == 0:
-                # to force the order curvature
-                center = float(rowcenter) - center_drop
-            # add these positions to storage
-            cent_0[order_num, col] = center
-            wid_0[order_num, col] = width
-            # debug plot parameters
-            if np.nanmax(ovalues) > maxycc:
-                maxycc = np.nanmax(ovalues)
-            if (rowtop - center) < minxcc:
-                minxcc = rowtop - center
-            if (rowbottom - center) > maxxcc:
-                maxxcc = rowbottom - center
-            col_val = [rowcenter, rowtop, rowbottom, center, width, ovalues]
-            col_vals.append(col_val)
-        # append col vals to order storage
-        dvars[order_num] = col_vals
-        plimits[order_num] = [minxcc, maxxcc, 0, maxycc]
-        # ------------------------------------------------------------------
-        # only keep the orders with non-zero width
-        mask = wid_0[order_num, :] != 0
-        # get the x pixels where we have non-zero width
-        xpix = np.arange(image.shape[1])[mask]
-        # check that we have enough data points to fit data
-        if len(xpix) > (mp.nanmax([wid_poly_deg, cent_poly_deg]) + 1):
-            # --------------------------------------------------------------
-            # initial fit for center positions for this order
-            cent_y = cent_0[rorder_num, :][mask]
-            iofargs = [params, xpix, cent_y, cent_poly_deg, central_col]
-            cf_data = initial_order_fit(*iofargs, kind='center')
-            # append centers for plot
-            xplot.append(xpix), yplot.append(cent_y)
-            # --------------------------------------------------------------
-            # initial fit for widths for this order
-            wid_y = wid_0[rorder_num, :][mask]
-            iofargs = [params, xpix, wid_y, wid_poly_deg, central_col]
-            wf_data = initial_order_fit(*iofargs, kind='fwhm')
-            # --------------------------------------------------------------
-            # Log order number and fit at central pixel and width and rms
-            wargs = [rorder_num, cf_data['cfitval'], wf_data['cfitval'],
-                     cf_data['rms']]
-            WLOG(params, '', TextEntry('40-013-00007', args=wargs))
-            # --------------------------------------------------------------
-            # sigma fit params for center
-            sigfargs = [params, recipe, xpix, cent_y, cf_data, cent_poly_deg,
-                        cent_max_rmpts[rorder_num], rorder_num]
-            sigfkwargs = dict(ic_max_ptp=max_ptp_cent, ic_max_ptp_frac=None,
-                              ic_ptporms=ptporms_cent, ic_max_rms=max_rms_cent,
-                              kind='center')
-            # sigma clip fit for center positions for this order
-            cf_data = sigmaclip_order_fit(*sigfargs, **sigfkwargs)
-            # load results into storage arrays for this order
-            cent_coeffs[rorder_num] = cf_data['a']
-            cent_rms[rorder_num] = cf_data['rms']
-            cent_max_ptp[rorder_num] = cf_data['max_ptp']
-            cent_frac_ptp[rorder_num] = cf_data['max_ptp_frac']
-            cent_max_rmpts[rorder_num] = cf_data['max_rmpts']
-            # --------------------------------------------------------------
-            # sigma fit params for width
-            sigfargs = [params, recipe, xpix, wid_y, wf_data, wid_poly_deg,
-                        wid_max_rmpts[rorder_num], rorder_num]
-            sigfkwargs = dict(ic_max_ptp=-np.inf, ic_max_ptp_frac=max_ptp_wid,
-                              ic_ptporms=None, ic_max_rms=max_rms_wid,
-                              kind='fwhm')
-            # sigma clip fit for width positions for this order
-            wf_data = sigmaclip_order_fit(*sigfargs, **sigfkwargs)
-            # load results into storage arrays for this order
-            wid_coeffs[rorder_num] = wf_data['a']
-            wid_rms[rorder_num] = wf_data['rms']
-            wid_max_ptp[rorder_num] = wf_data['max_ptp']
-            wid_frac_ptp[rorder_num] = wf_data['max_ptp_frac']
-            wid_max_rmpts[rorder_num] = wf_data['max_rmpts']
-            # --------------------------------------------------------------
-            # increase the roder_num iterator
-            rorder_num += 1
-        # else log that the order is unusable
+    measured_order_centers = np.array(order_centers)
+    # -------------------------------------------------------------------------
+    # keep only orders that have a center within the allowed y range
+    keep = (order_centers > ydet_min) & (order_centers < ydet_max)
+    # log how many orders we are keeping: Keeping {0} orders
+    margs = [np.sum(keep)]
+    WLOG(params, '', textentry('40-013-00031', args=margs))
+    # apply keep mask to centers and widths
+    order_centers = order_centers[keep]
+    # order_widths = order_widths[keep]
+    all_fits = all_fits[keep]
+    valid_labels = valid_labels[keep]
+    # -------------------------------------------------------------------------
+    # sort all regions in increasing y value
+    sortmask = np.argsort(order_centers)
+    order_centers = order_centers[sortmask]
+    # order_widths = order_widths[sortmask]
+    all_fits = all_fits[sortmask]
+    # -------------------------------------------------------------------------
+    # if orders come in doublets the gap between orders will therefore be nearly
+    #    constant if we step from A to B and vary if we step from B to next
+    #    orders A. We use that to identify which orders match and remove the
+    #    other orders
+    if fiber_doublets:
+        index = np.arange(len(order_centers))
+        # ok as a polyfit, it's just the position of order centers along the
+        # y axis of the array. This is used to ID orders that have problematic
+        # gaps.
+        cent_fit = np.polyfit(index, order_centers, 5)
+        residuals = order_centers - np.polyval(cent_fit, index)
+        # doublet fibers have a parity
+        if fiber_doublet_parity < 0:
+            keep = residuals < 0
         else:
-            WLOG(params, '', TextEntry('40-013-00010'))
-    # plot finding orders plot
-    recipe.plot('LOC_FINDING_ORDERS', plotdict=dvars, plimits=plimits)
-    # ----------------------------------------------------------------------
-    # Log that the order geometry has been measured
-    wargs = [fiber, rorder_num]
-    WLOG(params, 'info', TextEntry('40-013-00011', args=wargs))
-    # get the mean rms values
-    mean_rms_cent = mp.nansum(cent_rms[:rorder_num]) * 1000 / rorder_num
-    mean_rms_wid = mp.nansum(wid_rms[:rorder_num]) * 1000 / rorder_num
-    # Log mean rms values
-    WLOG(params, 'info', TextEntry('40-013-00012', args=[mean_rms_cent]))
-    WLOG(params, 'info', TextEntry('40-013-00013', args=[mean_rms_wid]))
-    # ----------------------------------------------------------------------
-    # return
-    outputs = [cent_0, cent_coeffs, cent_rms, cent_max_ptp, cent_frac_ptp,
-               cent_max_rmpts, wid_0, wid_coeffs, wid_rms, wid_max_ptp,
-               wid_frac_ptp, wid_max_rmpts, xplot, yplot, rorder_num,
-               mean_rms_cent, mean_rms_wid, max_signal, mean_backgrd]
-    return outputs
+            keep = residuals > 0
+        # plot the fiber doublet parity plot
+        recipe.plot('LOC_FIBER_DOUBLET_PARITY', index=index,
+                    centers=order_centers, residuals=residuals, fit=cent_fit)
+        # remove the other fibers orders
+        order_centers = order_centers[keep]
+        # other_widths = order_widths[keep]
+        all_fits = all_fits[keep]
+        valid_labels = valid_labels[keep]
+    # -------------------------------------------------------------------------
+    # find the gap between consecutive orders and use this to confirm the
+    #    numbering
+    orderdiff = order_centers[1:] - order_centers[:-1]
+    # same as above, the polyfit is used to identify orders that do not
+    # follo the right stepping expected from cross-dispersion.
+    fit_gap, gapmask = mp.robust_polyfit(order_centers[1:], orderdiff, 3, 5)
+    # -------------------------------------------------------------------------
+    recipe.plot('LOC_GAP_ORDERS', centers=order_centers, mask=gapmask,
+                fit=fit_gap)
+    # -------------------------------------------------------------------------
+    # use the robust polyfit mask to determine which order is valid
+    valid_order_centers = order_centers[1:][gapmask]
+    valid_gap = (order_centers[1:] - order_centers[:-1])[gapmask]
+    valid_fits = all_fits[1:][gapmask]
+    valid_labels = valid_labels[1:][gapmask]
+    # -------------------------------------------------------------------------
+    # loop around valid orders and count the orders using known gap
+    index2 = np.zeros_like(valid_order_centers, dtype=int)
+    for it in range(1, len(valid_order_centers)):
+        # get the difference
+        pixdiff = (valid_order_centers[it] - valid_order_centers[it - 1])
+        pixdiff = pixdiff / valid_gap[it]
+        # count the orders using the known gap to know if we missed any
+        index2[it] = index2[it - 1] + int(np.round(pixdiff))
+    # -------------------------------------------------------------------------
+    # have a big matrix to be filled with interpolated orders. We make it 5
+    #   orders bigger in both directions just in case we missed red/blue orders
+    #   These will be checked against y limits later
+    index_full = np.arange(np.min(index2) - 5, np.max(index2) + 5)
+    fits_full = np.zeros([len(index_full), valid_fits.shape[1]])
+    center_full = np.zeros(len(index_full))
+    # -------------------------------------------------------------------------
+    # order of polynomial fits used for the consistency of fitting values
+    nth_ord = np.ones(cent_order_fit + 1, dtype=int)
+    # for the intercept, we use a high-order-fit
+    nth_ord[0] = 13
+    # for the slope, we use a high-order fit
+    nth_ord[1] = 7
+    # for the curvature, we use a high-order-fit
+    nth_ord[2] = 3
+    # -------------------------------------------------------------------------
+    # domain across the orders
+    domain = [np.min(index_full), np.max(index_full)]
+    # force continuity between the localisation parameters
+    for it in range(valid_fits.shape[1]):
+        # robustly fit in the order direction
+        cfit, cmask = mp.robust_chebyfit(index2, valid_fits[:, it], nth_ord[it],
+                                         5, domain=domain)
+        # update the full fits
+        fits_full[:, it] = mp.val_cheby(cfit, index_full, domain=domain)
+    # get the central pixel position (note x=0 at the center here)
+    for it in range(fits_full.shape[0]):
+        center_full[it] = mp.val_cheby(fits_full[it], image.shape[1] // 2,
+                                       domain=[0, image.shape[1]])
+    # -------------------------------------------------------------------------
+    # keep only orders that have a center within the allowed y range
+    keep = (center_full > ydet_min) & (center_full < ydet_max)
+    # copy to the final center fits
+    final_cent_fit = fits_full[keep]
+    center_full = center_full[keep]
+    # -------------------------------------------------------------------------
+    # Remove cross term between coefficients in the fit by using the original
+    #   measured centers of the labels (orders)
+    # -------------------------------------------------------------------------
+    # get the max offset to allow correction using order separation
+    max_measured_offset = np.median(abs(np.diff(center_full))) / 4
+    # loop around each order
+    for order_num in range(len(center_full)):
+        # get the difference in final position and measure position
+        diff = center_full[order_num] - measured_order_centers
+        # get the minimum offset between the order in the original labelled fits
+        #   (measured position)
+        pos = np.argmin(abs(diff))
+        # if the difference is small then we take this as a correction to the
+        #   order center and fit
+        if abs(diff[pos]) < max_measured_offset:
+            final_cent_fit[order_num, 0] -= diff[pos]
+            center_full[order_num] -= diff[pos]
+    # -------------------------------------------------------------------------
+    # log final number of orders
+    msg = 'Final number of Orders: {0}'
+    margs = [final_cent_fit.shape[0]]
+    WLOG(params, 'info', msg.format(*margs))
+    # -------------------------------------------------------------------------
+    # Calculate width polynomial fits
+    # -------------------------------------------------------------------------
+    # storage for the width fit
+    width_fit = np.zeros([len(valid_labels), wid_order_fit + 1])
+    width_pos = np.zeros([len(valid_labels)])
+    # loop around each order
+    for wit, valid_label in enumerate(valid_labels):
+        # we get back the map of all pixels in this order (from the labelling)
+        ordpixmap = all_labels2 == valid_label
+        # we sum all the pixels in the y direction (this is the width in pixels
+        #  we have per x pixel
+        sumpixmap_x = np.sum(ordpixmap, axis=0)
+        sumpixmap_y = np.sum(ordpixmap, axis=1)
+        # get valid pixels within this order
+        thres = np.nanpercentile(sumpixmap_x, 90)
+        validsumpixmap = np.where(sumpixmap_x > 0.5 * thres)[0]
+        imin = np.min(validsumpixmap) + 15
+        imax = np.max(validsumpixmap) - 15
+        # we convolve this with a box to smooth it out
+        csumpixmap = np.convolve(sumpixmap_x, np.ones(15) / 15, mode='same')
+        # we then fit this robustly with a polyfit
+        wfit, wmask = mp.robust_chebyfit(xpix[imin:imax], csumpixmap[imin:imax],
+                                         wid_order_fit, 5, domain=[0, nbxpix])
+        # add this to the fit
+        width_fit[wit] = wfit
+        # get the mean position of region in y
+        wpos = np.sum(sumpixmap_y * np.arange(len(sumpixmap_y)))
+        width_pos[wit] = wpos / np.sum(sumpixmap_y)
+    # -------------------------------------------------------------------------
+    # need a final width fit array
+    final_width_fit = np.zeros([final_cent_fit.shape[0], wid_order_fit + 1])
+    # force continuity between the localisation parameters
+    for it in range(width_fit.shape[1]):
+        # robustly fit in the order direction
+        wfit, wmask = mp.robust_polyfit(width_pos, width_fit[:, it],
+                                        wid_order_fit, 5)
+        # update the full fits
+        final_width_fit[:, it] = np.polyval(wfit, center_full)
+    # -------------------------------------------------------------------------
+    # plot the width coefficients
+    recipe.plot('LOC_WIDTH_REGIONS', coeffs1=width_fit, coeffs2=final_width_fit)
+    # -------------------------------------------------------------------------
+    # plot first and final fit over image
+    recipe.plot('LOC_IMAGE_FIT', image=image, coeffs_old=all_fits,
+                coeffs=final_cent_fit, kind=fiber, reverse=False,
+                offset=0.0, xlines=[nbxpix // 2],
+                ylines=[ydet_min, ydet_max], width_coeffs=final_width_fit)
+    # -------------------------------------------------------------------------
+    # Convert centers fit to "start" at x = 0  (previous x = image.shape[1]//2)
+    # -------------------------------------------------------------------------
+    # convert back to start at x = 0
+    # for order_num in range(len(final_cent_fit)):
+    #     # get the current y values (centers at x half detector width)
+    #     #ypix = np.polyval(final_cent_fit[order_num], xpix - nbxpix // 2)
+    #     # push into the final center fit
+    #     #final_cent_fit[order_num] = np.polyfit(xpix, ypix, cent_order_fit)
+    #     final_cent_fit[order_num] = mp.val_cheby(cent_order_fit,
+    #                                              nbxpix//2,
+    #                                              domain=[0, nbxpix])
+
+    # -------------------------------------------------------------------------
+    # return the final centers fit and widths fit
+    return final_cent_fit, final_width_fit
 
 
-def image_superimp(image, coeffs):
+def merge_coeffs(params: ParamDict,
+                 ldict: Dict[str, tuple], nbxpix: int
+                 ) -> Tuple[np.ndarray, np.ndarray, str]:
+    """
+    Deal with merging A and B solutions (for SPIRou) - this is just because
+    originally they were merged
+
+    i.e. we go from "cent coeffs fiber 1" and "cent coeffs fiber 2" to:
+        order1 fiber1
+        order1 fiber2
+        order2 fiber1
+        order2 fiber2
+        ...
+        orderN fiber1
+        orderN fiber2
+
+    :param params:ParamDict, the parameter dictionary of constants
+    :param ldict: dictionary of fibers:
+                  ldict[fiber1] = [cent coeffs fiber1, wid coeffs fiber1]
+                  ldict[fiber2] = [cent coeffs fiber2, wid coeffs fiber2]
+    :param nbxpix: int, the number of pixels in the x-direction
+
+    :return: tuple, 1. the combined cent coeffs, 2. the combined width coeffs
+             3. the name of the fibers i.e. "1 + 2"
+    """
+    # set the function name
+    func_name = display_func('merge_coeffs', __NAME__)
+    # get the fibers we have in ldict
+    _fibers = np.array(list(ldict.keys()))
+    # merge ldict into a single array
+    if len(_fibers) == 1:
+        # get coefficients - need to be flipped
+        cent_coeffs = ldict[_fibers[0]][0]
+        wid_coeffs = ldict[_fibers[0]][1]
+        fiber_name = _fibers[0]
+        # return arrays
+        return np.array(cent_coeffs), np.array(wid_coeffs), fiber_name
+    else:
+        # get the first fibers values (to get the number of orders)
+        fiber0 = _fibers[0]
+        cent_coeffs0 = ldict[fiber0][0]
+        # get the number of orders
+        nbo = cent_coeffs0.shape[0]
+        # storage for output
+        cent_coeffs, wid_coeffs = [], []
+
+        # need to get the order of the fibers
+        fiber_min = []
+        for _fiber in _fibers:
+            # get the center value of the first order
+            #    (by definition the closest to the bottom of the detector))
+            cent = mp.val_cheby(ldict[_fiber][0][0], nbxpix // 2,
+                                domain=[0, nbxpix])
+            fiber_min.append(cent)
+        # get the fibers in the correct order
+        _fibers = _fibers[np.argsort(fiber_min)]
+        # loop around orders
+        for order_num in range(nbo):
+            # loop around the fibers in correct order
+            for _fiber in _fibers:
+                # get this fiber numbers of orders
+                fiber_nbo = len(ldict[_fiber][0])
+                # must check we have the same number of orders
+                if fiber_nbo != nbo:
+                    # log error: Inconsistent number of orders between fibers
+                    eargs = [fiber0, nbo, _fiber, fiber_nbo, func_name]
+                    WLOG(params, 'error', textentry('00-013-00008', args=eargs))
+                # add to merged coeffs - need to be flipped
+                cent_coeffs.append(ldict[_fiber][0][order_num])
+                wid_coeffs.append(ldict[_fiber][1][order_num])
+        # convert to numpy arrays
+        cent_coeffs = np.array(cent_coeffs)
+        wid_coeffs = np.array(wid_coeffs)
+        # get fiber name
+        fiber_name = ' + '.join(list(_fibers))
+        # return arrays
+        return cent_coeffs, wid_coeffs, fiber_name
+
+
+def image_superimp(image: np.ndarray, coeffs: np.ndarray) -> np.ndarray:
     """
     Take an image and superimpose zeros over the positions in the image where
     the central fits where found to be
@@ -490,6 +662,7 @@ def image_superimp(image, coeffs):
     :param coeffs: coefficient array,
                    size = (number of orders x number of coefficients in fit)
                    output array will be size = (number of orders x dim)
+
     :return newimage: numpy array (2D), the image with super-imposed zero filled
                       fits
     """
@@ -504,7 +677,7 @@ def image_superimp(image, coeffs):
     for order_num in range(n_orders):
         # get the pixel positions across the order (from fit coeffs in position)
         # add 0.5 to account for later conversion to int
-        fity = np.polyval(coeffs[order_num][::-1], xdata) + 0.5
+        fity = mp.val_cheby(coeffs[order_num], xdata, [0, image.shape[1]]) + 0.5
         # elements must be > 0 and less than image.shape[0]
         mask = (fity > 0) & (fity < image.shape[0])
         # Add good values to storage array
@@ -520,186 +693,335 @@ def image_superimp(image, coeffs):
     return newimage
 
 
-def get_coefficients(params, recipe, header, fiber, **kwargs):
+def get_coefficients(params: ParamDict, header: drs_file.Header,
+                     fiber: str, database: Optional[CalibrationDatabase] = None,
+                     merge: bool = False,
+                     filename: Optional[str] = None) -> ParamDict:
+    """
+    Get the localisation coefficients for a specific header
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param header: fits Header, the header to match date/time of coefficients
+                   caliration file to
+    :param fiber: str, the fiber to get coefficients for
+    :param database: CalibrationDatabase instance or None, if not set will
+                     reload the calibration database
+    :param merge: bool, if True merges the orders based on pseudo consts
+                  "FIBER_LOC_COEFF_EXT" method.
+    :param filename: str or None, if set overrides the file used to get the
+                     coefficients (does not use database)
+
+    :return: ParamDict, the localisation parameter dictionary
+    """
+    # set function name
     func_name = __NAME__ + '.get_coefficients()'
     # get pseudo constants
-    pconst = constants.pload(params['INSTRUMENT'])
-    # get parameters from params/kwargs
-    merge = kwargs.get('merge', False)
-    filename = kwargs.get('filename', None)
+    pconst = constants.pload()
     # deal with fibers that we don't have
     usefiber = pconst.FIBER_LOC_TYPES(fiber)
     # -------------------------------------------------------------------------
     # get loco file instance
-    locofile = core.get_file_definition('LOC_LOCO', params['INSTRUMENT'],
-                                        kind='red')
+    locofile = drs_file.get_file_definition(params, 'LOC_LOCO',
+                                            block_kind='red')
     # get calibration key
-    key = locofile.get_dbkey(func=func_name, fiber=usefiber)
-    # ------------------------------------------------------------------------
-    # check for filename in inputs
-    filename = general.get_input_files(params, 'LOCOFILE', key, header,
-                                       filename)
-    # ------------------------------------------------------------------------
-    # get loco filename
-    if filename is not None:
-        locofilepath = filename
+    key = locofile.get_dbkey()
+    # load database
+    if database is None:
+        calibdbm = CalibrationDatabase(params)
+        calibdbm.load_db()
     else:
-        # get calibDB
-        cdb = drs_database.get_full_database(params, 'calibration')
-        # get filename col
-        filecol = cdb.file_col
-
-        # get the badpix entries
-        locoentries = drs_database.get_key_from_db(params, key, cdb, header,
-                                                   n_ent=1)
-        # get badpix filename
-        locofilename = locoentries[filecol][0]
-        locofilepath = os.path.join(params['DRS_CALIB_DB'], locofilename)
+        calibdbm = database
+    # load loco file
+    cfile = gen_calib.CalibFile()
+    cfile.load_calib_file(params, key, header, filename=filename,
+                          userinputkey='LOCOFILE', database=calibdbm,
+                          fiber=usefiber, return_filename=True)
+    # get properties from calibration file
+    locofilepath, locotime = cfile.filename, cfile.mjdmid
     # ------------------------------------------------------------------------
     # construct new infile instance and read data/header
-    locofile = locofile.newcopy(filename=locofilepath, recipe=recipe,
+    locofile = locofile.newcopy(filename=locofilepath, params=params,
                                 fiber=usefiber)
     locofile.read_file()
     # -------------------------------------------------------------------------
     # extract keys from header
-    nbo = locofile.read_header_key('KW_LOC_NBO', dtype=int)
-    deg_c = locofile.read_header_key('KW_LOC_DEG_C', dtype=int)
-    deg_w = locofile.read_header_key('KW_LOC_DEG_W', dtype=int)
+    nbo = locofile.get_hkey('KW_LOC_NBO', dtype=int)
+    deg_c = locofile.get_hkey('KW_LOC_DEG_C', dtype=int)
+    deg_w = locofile.get_hkey('KW_LOC_DEG_W', dtype=int)
+    # TODO: Should be required v0.8
+    poly_type = locofile.get_hkey('KW_LOC_POLYT', dtype=str, required=False)
     nset = params['FIBER_SET_NUM_FIBERS_{0}'.format(fiber)]
     # extract coefficients from header
-    cent_coeffs = locofile.read_header_key_2d_list('KW_LOC_CTR_COEFF',
-                                                   dim1=nbo, dim2=deg_c + 1)
-    wid_coeffs = locofile.read_header_key_2d_list('KW_LOC_WID_COEFF',
-                                                  dim1=nbo, dim2=deg_w + 1)
+    cent_coeffs = locofile.get_hkey_2d('KW_LOC_CTR_COEFF',
+                                       dim1=nbo, dim2=deg_c + 1)
+    wid_coeffs = locofile.get_hkey_2d('KW_LOC_WID_COEFF',
+                                      dim1=nbo, dim2=deg_w + 1)
     # merge or extract individual coeffs
     if merge:
         cent_coeffs, nbo = pconst.FIBER_LOC_COEFF_EXT(cent_coeffs, fiber)
         wid_coeffs, nbo = pconst.FIBER_LOC_COEFF_EXT(wid_coeffs, fiber)
         nset = 1
+
+    # get y centers
+    nbxpix = locofile.data.shape[1]
+    ycents = []
+    for order_num in range(nbo):
+        ycents.append(mp.val_cheby(cent_coeffs[order_num], nbxpix//2,
+                                   domain=[0, nbxpix]))
     # -------------------------------------------------------------------------
     # store localisation properties in parameter dictionary
     props = ParamDict()
     props['LOCOFILE'] = locofilepath
+    props['LOCOTIME'] = locotime
     props['LOCOOBJECT'] = locofile
+    props['YCENT'] = np.array(ycents)
     props['NBO'] = int(nbo // nset)
+    props['NBXPIX'] = nbxpix
     props['DEG_C'] = int(deg_c)
     props['DEG_W'] = int(deg_w)
     props['CENT_COEFFS'] = cent_coeffs
     props['WID_COEFFS'] = wid_coeffs
     props['MERGED'] = merge
     props['NSET'] = nset
+    props['LOC_POLY_TYPE'] = poly_type
     # set sources
-    keys = ['CENT_COEFFS', 'WID_COEFFS', 'LOCOFILE', 'LOCOOBJECT', 'NBO',
-            'DEG_C', 'DEG_W', 'MERGED', 'NSET']
+    keys = ['CENT_COEFFS', 'WID_COEFFS', 'LOCOFILE', 'LOCOOBJECT', 'YCENT',
+            'NBO', 'NBXPIX', 'DEG_C', 'DEG_W', 'MERGED', 'NSET',
+            'LOC_POLY_TYPE']
     props.set_sources(keys, func_name)
     # -------------------------------------------------------------------------
     # return the coefficients and properties
     return props
 
 
-def load_orderp(params, header, fiber, filename=None):
-    # get pseudo constants
-    pconst = constants.pload(params['INSTRUMENT'])
-    # deal with fibers that we don't have
-    usefiber = pconst.FIBER_LOC_TYPES(fiber)
-    # get file definition
-    out_loc_orderp = core.get_file_definition('LOC_ORDERP',
-                                               params['INSTRUMENT'], kind='red')
-    # get key
-    key = out_loc_orderp.get_dbkey(fiber=usefiber)
-    # load calib file
-    orderp, orderp_file = general.load_calib_file(params, key, header,
-                                                     filename=filename)
-    # log which fpmaster file we are using
-    WLOG(params, '', TextEntry('40-013-00022', args=[orderp_file]))
-    # return the master image
-    return orderp_file, orderp
-
-
 # =============================================================================
 # write files and qc functions
 # =============================================================================
-def loc_quality_control(params, fiber, cent_max_rmpts, wid_max_rmpts,
-                        mean_rms_cent, mean_rms_wid, rorder_num, cent_fits):
+def loc_stats(params: ParamDict, fiber: str, cent_coeffs: np.ndarray,
+              wid_coeffs: np.ndarray, image: np.ndarray,
+              central_col: Optional[int] = None,
+              horder_size: Optional[int] = None,
+              minpeak_amp: Optional[float] = None,
+              back_thres: Optional[float] = None,
+              loc_ydet_min: Optional[int] = None,
+              loc_ydet_max: Optional[int] = None) -> ParamDict:
+    """
+    Calculate the localisation statistics
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param fiber: str, the fiber name
+    :param cent_coeffs: numpy 2D array of position coefficients
+    :param wid_coeffs: numpy 2D array of width coefficients
+    :param image: numpy 2D array, the original input image
+    :param central_col: int or None, the central column for use in localisation,
+                        if set overrides "LOC_CENTRAL_COLUMN" from params
+    :param horder_size: int or None, Half spacing between orders, if set
+                        overrides "LOC_HALF_ORDER_SPACING" from params
+    :param minpeak_amp: float or None, Minimum amplitude to accept (in e-),
+                        if set overrides "LOC_MINPEAK_AMPLITUDE" from params
+    :param back_thres: float or None, Normalised amplitude threshold to accept
+                       pixels for background calculation, if set overrides
+                       "LOC_BKGRD_THRESHOLD" from params
+    :param loc_ydet_min: int or None, the minimum detector position where the
+                         centers of the bottom most order should fall, if set
+                         overrides "LOC_YDET_MIN" from params
+    :param loc_ydet_max: int or None, the maximum detector position where the
+                         centers of the top most order should fall, if set
+                         overrides "LOC_YDET_MAX" from params
+
+    :return: ParamDict, the localisation parameter dictionary
+    """
 
     # set function name
-    func_name = display_func(params, 'localisation_quality_control', __NAME__)
+    func_name = display_func('loc_stats', __NAME__)
+
+    # get constants from params
+    central_col = pcheck(params, 'LOC_CENTRAL_COLUMN', func=func_name,
+                         override=central_col)
+    horder_size = pcheck(params, 'LOC_HALF_ORDER_SPACING', func=func_name,
+                         override=horder_size)
+    minpeak_amp = pcheck(params, 'LOC_MINPEAK_AMPLITUDE', func=func_name,
+                         override=minpeak_amp)
+    back_thres = pcheck(params, 'LOC_BKGRD_THRESHOLD', func=func_name,
+                        override=back_thres)
+    # define the minimum and maximum detector position where the centers of
+    #   the orders should fall
+    ydet_min = pcheck(params, 'LOC_YDET_MIN', func=func_name,
+                      override=loc_ydet_min)
+    ydet_max = pcheck(params, 'LOC_YDET_MAX', func=func_name,
+                      override=loc_ydet_max)
+    # -------------------------------------------------------------------------
+    # get shape of the original image
+    nbypix, nbxpix = image.shape
+    xpix = np.arange(nbxpix)
+    # shape of coeffiecients
+    nbo, nbcoeffs = cent_coeffs.shape
+    # -------------------------------------------------------------------------
+    # get the center fits (as an image)
+    center_fits = np.zeros([nbo, nbxpix])
+    # loop around orders
+    for order_num in range(nbo):
+        # get this orders coefficients (flipped for numpy)
+        ord_coeffs = cent_coeffs[order_num]
+        # load these values into the center fits arrays
+        center_fits[order_num] = mp.val_cheby(ord_coeffs, xpix,
+                                              domain=[0, nbxpix])
+    # -------------------------------------------------------------------------
+    # get the width fits (as an image)
+    width_fits = np.zeros([nbo, nbxpix])
+    # loop around orders
+    for order_num in range(nbo):
+        # get this orders coefficients (flipped for numpy)
+        ord_coeffs = wid_coeffs[order_num]
+        # load these values into the center fits arrays
+        width_fits[order_num] = mp.val_cheby(ord_coeffs, xpix,
+                                             domain=[0, nbxpix])
+    # -------------------------------------------------------------------------
+    # difference between centers
+    cent_diff = np.diff(center_fits, axis=0)
+    # -------------------------------------------------------------------------
+    # Get max signal and mean background (just for stats)
+    # -------------------------------------------------------------------------
+    # deal with the central column column=ic_cent_col
+    y = mp.nanmedian(image[ydet_min:ydet_max,
+                     central_col - 10:central_col + 10],
+                     axis=1)
+    # measure min max of box smoothed central col
+    miny, maxy = mp.measure_box_min_max(y, horder_size)
+    max_signal = mp.nanpercentile(y, 95)
+    diff_maxmin = maxy - miny
+    # normalised the central pixel values above the minimum amplitude
+    #   zero by miny and normalise by (maxy - miny)
+    #   Set all values below ic_min_amplitude to zero
+    ycc = np.where(diff_maxmin > minpeak_amp, (y - miny) / diff_maxmin, 0)
+    # get the normalised minimum values for those rows above threshold
+    #   i.e. good background measurements
+    normed_miny = miny / diff_maxmin
+    # find all y positions above the background threshold
+    goodmask = ycc > back_thres
+    # measure the mean good background as a percentage
+    mean_backgrd = np.mean(normed_miny[goodmask]) * 100
+    # Log the maximum signal and the mean background
+    WLOG(params, 'info', textentry('40-013-00003', args=[max_signal]))
+    WLOG(params, 'info', textentry('40-013-00004', args=[mean_backgrd]))
+    # -------------------------------------------------------------------------
+    # load stats into parameter dictionary
+    lprops = ParamDict()
+    lprops['CENT_COEFFS'] = cent_coeffs
+    lprops['WID_COEFFS'] = wid_coeffs
+    lprops['CENTER_FITS'] = center_fits
+    lprops['WIDTH_FITS'] = width_fits
+    lprops['FIBER'] = fiber
+    lprops['CENTER_DIFF'] = cent_diff
+    lprops['NORDERS'] = nbo
+    lprops['NCOEFFS'] = nbcoeffs
+    lprops['MAX_SIGNAL'] = max_signal
+    lprops['MEAN_BACKGRD'] = mean_backgrd
+    lprops['NBXPIX'] = nbxpix
+    lprops['LOC_POLY_TYPE'] = 'Chebyshev'
+    # add source
+    keys = ['CENT_COEFFS', 'WID_COEFFS', 'CENTER_FITS', 'WIDTH_FITS', 'FIBER',
+            'CENTER_DIFF', 'NORDERS', 'NCOEFFS', 'MAX_SIGNAL', 'MEAN_BACKGRD',
+            'NBXPIX', 'LOC_POLY_TYPE']
+    lprops.set_sources(keys, func_name)
+    # return stats parameter dictionary
+    return lprops
+
+
+def loc_quality_control(params: ParamDict, lprops: ParamDict
+                        ) -> Tuple[List[list], int]:
+    """
+    Calculate the localisation quality control criteria
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param lprops: ParamDict, the localisation parameter dictionary
+
+    :return: tuple, 1. the quality control lists, 2. bool whether all tests
+             passed
+    """
+    # set function name
+    func_name = display_func('localisation_quality_control', __NAME__)
     # set passed variable and fail message list
     fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
-    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
     # get qc parameters
-    max_removed_cent = pcheck(params, 'QC_LOC_MAXFIT_REMOVED_CTR',
-                              func=func_name)
-    max_removed_wid = pcheck(params, 'QC_LOC_MAXFIT_REMOVED_WID',
-                             func=func_name)
-    rmsmax_cent = pcheck(params, 'QC_LOC_RMSMAX_CTR', func=func_name)
-    rmsmax_wid = pcheck(params, 'QC_LOC_RMSMAX_WID', func=func_name)
+    # max_removed_cent = pcheck(params, 'QC_LOC_MAXFIT_REMOVED_CTR',
+    #                           func=func_name)
+    # max_removed_wid = pcheck(params, 'QC_LOC_MAXFIT_REMOVED_WID',
+    #                          func=func_name)
+    # rmsmax_cent = pcheck(params, 'QC_LOC_RMSMAX_CTR', func=func_name)
+    # rmsmax_wid = pcheck(params, 'QC_LOC_RMSMAX_WID', func=func_name)
+    # get constants from stats
+    fiber = lprops['FIBER']
+    rorder_num = lprops['NORDERS']
+    cent_diff = lprops['CENTER_DIFF']
     # this one comes from pseudo constants
-    pconst = constants.pload(params['INSTRUMENT'])
+    pconst = constants.pload()
     fiberparams = pconst.FIBER_SETTINGS(params, fiber)
 
     required_norders = pcheck(params, 'FIBER_MAX_NUM_ORDERS', func=func_name,
                               paramdict=fiberparams)
     # ----------------------------------------------------------------------
-    # check that max number of points rejected in center fit is below
-    #    threshold
-    sum_cent_max_rmpts = mp.nansum(cent_max_rmpts)
-    if sum_cent_max_rmpts > max_removed_cent:
-        # add failed message to fail message list
-        fargs = [sum_cent_max_rmpts, max_removed_cent]
-        fail_msg.append(textdict['40-013-00014'].format(*fargs))
-        qc_pass.append(0)
-    else:
-        qc_pass.append(1)
-    # add to qc header lists
-    qc_values.append(sum_cent_max_rmpts)
-    qc_names.append('sum(MAX_RMPTS_POS)')
-    qc_logic.append('sum(MAX_RMPTS_POS) < {0:.2f}'.format(max_removed_cent))
-    # ----------------------------------------------------------------------
-    # check that  max number of points rejected in width fit is below
-    #   threshold
-    sum_wid_max_rmpts = mp.nansum(wid_max_rmpts)
-    if sum_wid_max_rmpts > max_removed_wid:
-        # add failed message to fail message list
-        fargs = [sum_wid_max_rmpts, max_removed_wid]
-        fail_msg.append(textdict['40-013-00015'].format(*fargs))
-        qc_pass.append(0)
-    else:
-        qc_pass.append(1)
-    # add to qc header lists
-    qc_values.append(sum_wid_max_rmpts)
-    qc_names.append('sum(MAX_RMPTS_WID)')
-    qc_logic.append('sum(MAX_RMPTS_WID) < {0:.2f}'.format(max_removed_wid))
+    # # check that max number of points rejected in center fit is below
+    # #    threshold
+    # sum_cent_max_rmpts = mp.nansum(cent_max_rmpts)
+    # if sum_cent_max_rmpts > max_removed_cent:
+    #     # add failed message to fail message list
+    #     fargs = [sum_cent_max_rmpts, max_removed_cent]
+    #     fail_msg.append(textentry('40-013-00014', args=fargs))
+    #     qc_pass.append(0)
+    # else:
+    #     qc_pass.append(1)
+    # # add to qc header lists
+    # qc_values.append(sum_cent_max_rmpts)
+    # qc_names.append('sum(MAX_RMPTS_POS)')
+    # qc_logic.append('sum(MAX_RMPTS_POS) < {0:.2f}'
+    #                 ''.format(sum_cent_max_rmpts))
+    # # ----------------------------------------------------------------------
+    # # check that  max number of points rejected in width fit is below
+    # #   threshold
+    # sum_wid_max_rmpts = mp.nansum(wid_max_rmpts)
+    # if sum_wid_max_rmpts > max_removed_wid:
+    #     # add failed message to fail message list
+    #     fargs = [sum_wid_max_rmpts, max_removed_wid]
+    #     fail_msg.append(textentry('40-013-00015', args=fargs))
+    #     qc_pass.append(0)
+    # else:
+    #     qc_pass.append(1)
+    # # add to qc header lists
+    # qc_values.append(sum_wid_max_rmpts)
+    # qc_names.append('sum(MAX_RMPTS_WID)')
+    # qc_logic.append('sum(MAX_RMPTS_WID) < {0:.2f}'
+    #                 ''.format(sum_wid_max_rmpts))
     # ------------------------------------------------------------------
-    if mean_rms_cent > rmsmax_cent:
-        # add failed message to fail message list
-        fargs = [mean_rms_cent, rmsmax_cent]
-        fail_msg.append(textdict['40-013-00016'].format(*fargs))
-        qc_pass.append(0)
-    else:
-        qc_pass.append(1)
-    # add to qc header lists
-    qc_values.append(mean_rms_cent)
-    qc_names.append('mean_rms_center')
-    qc_logic.append('mean_rms_center < {0:.2f}'.format(rmsmax_cent))
-    # ------------------------------------------------------------------
-    if mean_rms_wid > rmsmax_wid:
-        # add failed message to fail message list
-        fargs = [mean_rms_wid, rmsmax_wid]
-        fail_msg.append(textdict['40-013-00017'].format(*fargs))
-        qc_pass.append(0)
-    else:
-        qc_pass.append(1)
-    # add to qc header lists
-    qc_values.append(mean_rms_wid)
-    qc_names.append('mean_rms_wid')
-    qc_logic.append('mean_rms_wid < {0:.2f}'.format(rmsmax_wid))
+    # if mean_rms_cent > rmsmax_cent:
+    #     # add failed message to fail message list
+    #     fargs = [mean_rms_cent, rmsmax_cent]
+    #     fail_msg.append(textentry('40-013-00016', args=fargs))
+    #     qc_pass.append(0)
+    # else:
+    #     qc_pass.append(1)
+    # # add to qc header lists
+    # qc_values.append(mean_rms_cent)
+    # qc_names.append('mean_rms_center')
+    # qc_logic.append('mean_rms_center < {0:.2f}'.format(rmsmax_cent))
+    # # ------------------------------------------------------------------
+    # if mean_rms_wid > rmsmax_wid:
+    #     # add failed message to fail message list
+    #     fargs = [mean_rms_wid, rmsmax_wid]
+    #     fail_msg.append(textentry('40-013-00017', args=fargs))
+    #     qc_pass.append(0)
+    # else:
+    #     qc_pass.append(1)
+    # # add to qc header lists
+    # qc_values.append(mean_rms_wid)
+    # qc_names.append('mean_rms_wid')
+    # qc_logic.append('mean_rms_wid < {0:.2f}'.format(rmsmax_wid))
     # ------------------------------------------------------------------
     # check for abnormal number of identified orders
     if rorder_num != required_norders:
         # add failed message to fail message list
         fargs = [rorder_num, required_norders]
-        fail_msg.append(textdict['40-013-00018'].format(*fargs))
+        fail_msg.append(textentry('40-013-00018', args=fargs))
         qc_pass.append(0)
     else:
         qc_pass.append(1)
@@ -711,13 +1033,12 @@ def loc_quality_control(params, fiber, cent_max_rmpts, wid_max_rmpts,
     # all positions in any pixel column should be positive
     #   (i.e. one order should not cross another)
     # find the difference between every order for every column
-    diff = np.diff(cent_fits, axis=0)
-    negative_diff = np.min(diff) < 0
+    negative_diff = np.min(cent_diff) < 0
     # if any value is negative QC fails
     if negative_diff:
         # add failed message to fail message list
         fargs = [' ']
-        fail_msg.append(textdict['40-013-00027'].format(*fargs))
+        fail_msg.append(textentry('40-013-00027', *fargs))
         qc_pass.append(0)
     else:
         qc_pass.append(1)
@@ -729,11 +1050,12 @@ def loc_quality_control(params, fiber, cent_max_rmpts, wid_max_rmpts,
     # finally log the failed messages and set QC = 1 if we pass the
     #    quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):
-        WLOG(params, 'info', TextEntry('40-005-10001'))
+        WLOG(params, 'info', textentry('40-005-10001'))
         passed = 1
     else:
         for farg in fail_msg:
-            WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
+            WLOG(params, 'warning', textentry('40-005-10002') + farg,
+                 sublevel=6)
         passed = 0
     # store in qc_params
     qc_params = [qc_names, qc_values, qc_logic, qc_pass]
@@ -741,30 +1063,83 @@ def loc_quality_control(params, fiber, cent_max_rmpts, wid_max_rmpts,
     return qc_params, passed
 
 
-def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
-                             fiber, props, order_profile, mean_backgrd,
-                             rorder_num, max_signal, cent_coeffs, wid_coeffs,
-                             center_fits, width_fits, qc_params):
-    # set function name
-    func_name = display_func(params, 'write_localisation_files', __NAME__)
-    # get qc parameters
-    max_removed_cent = pcheck(params, 'QC_LOC_MAXFIT_REMOVED_CTR',
-                              func=func_name)
-    max_removed_wid = pcheck(params, 'QC_LOC_MAXFIT_REMOVED_WID',
-                             func=func_name)
-    rmsmax_cent = pcheck(params, 'QC_LOC_RMSMAX_CTR', func=func_name)
-    rmsmax_wid = pcheck(params, 'QC_LOC_RMSMAX_WID', func=func_name)
+def write_localisation_files(params: ParamDict, recipe: DrsRecipe,
+                             infile: DrsFitsFile, image: np.ndarray,
+                             rawfiles: List[str], combine: bool,
+                             fiber: str, props: ParamDict,
+                             order_profile: np.ndarray, lprops: ParamDict,
+                             qc_params: List[list]
+                             ) -> Tuple[DrsFitsFile, DrsFitsFile]:
+    """
+    Write the localisation order profile and coefficients files to disk
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param recipe: DrsRecipe, the recipe instance that called this function
+    :param infile: DrsFitsFile, the input drs fits file instance
+    :param image: numpy 2D array, the original input image (to superimpose
+                  orders onto for debug file) may have been combined
+    :param rawfiles: list of strings, the filenames of the input files
+    :param combine: bool, if True, input files have be combined
+    :param fiber: str, the fiber we are writing loc files for
+    :param props: ParamDict, the calibration of pp file parameter dictionary
+    :param order_profile: numpy 2D array the order profile
+    :param lprops: ParamDict, the localisation parameter dictionary
+    :param qc_params: list of lists, the quality control lists
+
+    :return: tuple, 1. the order profile drs file instance, 2. the localisation
+             drs file instance
+    """
     # this one comes from pseudo constants
-    pconst = constants.pload(params['INSTRUMENT'])
-    fiberparams = pconst.FIBER_SETTINGS(params, fiber)
+    pconst = constants.pload()
+    # get properties from lprops
+    cent_coeffs = lprops['CENT_COEFFS']
+    wid_coeffs = lprops['WID_COEFFS']
+    center_fits = lprops['CENTER_FITS']
+    width_fits = lprops['WIDTH_FITS']
+    mean_backgrd = lprops['MEAN_BACKGRD']
+    rorder_num = lprops['NORDERS']
+    max_signal = lprops['MAX_SIGNAL']
+    # ------------------------------------------------------------------
+    # Make cent coefficient table
+    # ------------------------------------------------------------------
+    # get number of orders
+    nbo = cent_coeffs.shape[0]
+    fiberlist = pconst.FIBER_LOC(fiber=fiber)
+    # add order column
+    cent_cols = ['ORDER']
+    cent_vals = [np.repeat(np.arange(nbo // len(fiberlist)), len(fiberlist))]
+    # add fiber column
+    cent_cols += ['FIBER']
+    cent_vals.append(np.tile([fiberlist], nbo // len(fiberlist))[0])
+    # add coefficients columns
+    for c_it in range(cent_coeffs.shape[1]):
+        cent_cols.append('COEFFS_{0}'.format(c_it))
+        cent_vals.append(cent_coeffs[:, c_it])
+    cent_table = drs_table.make_table(params, columns=cent_cols,
+                                      values=cent_vals)
+    # ------------------------------------------------------------------
+    # Make width coefficient table
+    # ------------------------------------------------------------------
+    # add order column
+    wid_cols = ['ORDER']
+    wid_vals = [np.repeat(np.arange(nbo // len(fiberlist)), len(fiberlist))]
+    # add fiber column
+    wid_cols += ['FIBER']
+    wid_vals.append(np.tile([fiberlist], nbo // len(fiberlist))[0])
+    # add coefficients columns
+    for c_it in range(wid_coeffs.shape[1]):
+        wid_cols.append('COEFFS_{0}'.format(c_it))
+        wid_vals.append(wid_coeffs[:, c_it])
+    wid_table = drs_table.make_table(params, columns=wid_cols,
+                                     values=wid_vals)
     # ------------------------------------------------------------------
     # Write image order_profile to file
     # ------------------------------------------------------------------
     # get a new copy to the order profile
-    orderpfile = recipe.outputs['ORDERP_FILE'].newcopy(recipe=recipe,
+    orderpfile = recipe.outputs['ORDERP_FILE'].newcopy(params=params,
                                                        fiber=fiber)
     # construct the filename from file instance
-    orderpfile.construct_filename(params, infile=infile)
+    orderpfile.construct_filename(infile=infile)
     # define header keys for output file
     # copy keys from input file
     orderpfile.copy_original_keys(infile)
@@ -777,32 +1152,43 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
     orderpfile.add_hkey('KW_PID', value=params['PID'])
     # add output tag
     orderpfile.add_hkey('KW_OUTPUT', value=orderpfile.name)
+    orderpfile.add_hkey('KW_FIBER', value=fiber)
     # add input files (and deal with combining or not combining)
     if combine:
         hfiles = rawfiles
     else:
         hfiles = [infile.basename]
     orderpfile.add_hkey_1d('KW_INFILE1', values=hfiles, dim1name='file')
+    # add infiles
+    orderpfile.infiles = hfiles
     # add the calibration files use
-    orderpfile = general.add_calibs_to_header(orderpfile, props)
+    orderpfile = gen_calib.add_calibs_to_header(orderpfile, props)
     # add qc parameters
     orderpfile.add_qckeys(qc_params)
     # copy data
     orderpfile.data = order_profile
     # log that we are saving rotated image
-    WLOG(params, '', TextEntry('40-013-00002', args=[orderpfile.filename]))
+    WLOG(params, '', textentry('40-013-00002', args=[orderpfile.filename]))
+    # define multi lists
+    data_list, name_list = [], []
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(recipe, drsfitsfile=orderpfile)]
+        name_list += ['PARAM_TABLE']
     # write image to file
-    orderpfile.write_file()
+    orderpfile.write_multi(data_list=data_list, name_list=name_list,
+                           block_kind=recipe.out_block_str,
+                           runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(orderpfile)
     # ------------------------------------------------------------------
     # Save and record of image of localization with order center
     #     and keywords
     # ------------------------------------------------------------------
-    loco1file = recipe.outputs['LOCO_FILE'].newcopy(recipe=recipe,
+    loco1file = recipe.outputs['LOCO_FILE'].newcopy(params=params,
                                                     fiber=fiber)
     # construct the filename from file instance
-    loco1file.construct_filename(params, infile=infile)
+    loco1file.construct_filename(infile=infile)
     # ------------------------------------------------------------------
     # define header keys for output file
     # copy keys from input file
@@ -823,55 +1209,77 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
     else:
         hfiles = [infile.basename]
     loco1file.add_hkey_1d('KW_INFILE1', values=hfiles, dim1name='file')
+    # add infiles
+    loco1file.infiles = list(hfiles)
     # add the calibration files use
-    loco1file = general.add_calibs_to_header(loco1file, props)
+    loco1file = gen_calib.add_calibs_to_header(loco1file, props)
     # add localisation parameters
     loco1file.add_hkey('KW_LOC_BCKGRD', value=mean_backgrd)
     loco1file.add_hkey('KW_LOC_NBO', value=rorder_num)
     loco1file.add_hkey('KW_LOC_DEG_C', value=params['LOC_CENT_POLY_DEG'])
     loco1file.add_hkey('KW_LOC_DEG_W', value=params['LOC_WIDTH_POLY_DEG'])
     loco1file.add_hkey('KW_LOC_MAXFLX', value=max_signal)
-    loco1file.add_hkey('KW_LOC_SMAXPTS_CTR', value=max_removed_cent)
-    loco1file.add_hkey('KW_LOC_SMAXPTS_WID', value=max_removed_wid)
-    loco1file.add_hkey('KW_LOC_RMS_CTR', value=rmsmax_cent)
-    loco1file.add_hkey('KW_LOC_RMS_WID', value=rmsmax_wid)
     # write 2D list of position fit coefficients
-    loco1file.add_hkeys_2d('KW_LOC_CTR_COEFF', values=cent_coeffs,
-                           dim1name='order', dim2name='coeff')
+    loco1file.add_hkey_2d('KW_LOC_CTR_COEFF', values=cent_coeffs,
+                          dim1name='order', dim2name='coeff')
     # write 2D list of width fit coefficients
-    loco1file.add_hkeys_2d('KW_LOC_WID_COEFF', values=wid_coeffs,
-                           dim1name='order', dim2name='coeff')
+    loco1file.add_hkey_2d('KW_LOC_WID_COEFF', values=wid_coeffs,
+                          dim1name='order', dim2name='coeff')
+    # add loco polynomial type
+    loco1file.add_hkey('KW_LOC_POLYT', value=lprops['LOC_POLY_TYPE'])
     # add qc parameters
     loco1file.add_qckeys(qc_params)
     # copy data
     loco1file.data = center_fits
     # ------------------------------------------------------------------
     # log that we are saving rotated image
-    WLOG(params, '', TextEntry('40-013-00019', args=[loco1file.filename]))
+    WLOG(params, '', textentry('40-013-00019', args=[loco1file.filename]))
+    # define multi lists
+    data_list = [cent_table, wid_table]
+    name_list = ['CENT_TABLE', 'WIDTH_TABLE']
+    datatype_list = ['table', 'table']
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(recipe, drsfitsfile=loco1file)]
+        name_list += ['PARAM_TABLE']
+        datatype_list += ['table']
     # write image to file
-    loco1file.write_file()
+    loco1file.write_multi(data_list=data_list, name_list=name_list,
+                          datatype_list=datatype_list,
+                          block_kind=recipe.out_block_str,
+                          runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(loco1file)
     # ------------------------------------------------------------------
     # Save and record of image of sigma
     # ------------------------------------------------------------------
-    loco2file = recipe.outputs['FWHM_FILE'].newcopy(recipe=recipe,
+    loco2file = recipe.outputs['FWHM_FILE'].newcopy(params=params,
                                                     fiber=fiber)
     # construct the filename from file instance
-    loco2file.construct_filename(params, infile=infile)
+    loco2file.construct_filename(infile=infile)
     # ------------------------------------------------------------------
     # define header keys for output file
     # copy keys from loco1file
     loco2file.copy_hdict(loco1file)
+    # add infiles
+    loco2file.infiles = list(hfiles)
     # set output key
     loco2file.add_hkey('KW_OUTPUT', value=loco2file.name)
     # copy data
     loco2file.data = width_fits
     # ------------------------------------------------------------------
     # log that we are saving rotated image
-    WLOG(params, '', TextEntry('40-013-00020', args=[loco2file.filename]))
+    WLOG(params, '', textentry('40-013-00020', args=[loco2file.filename]))
+    # define multi lists
+    data_list, name_list = [], []
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(recipe, drsfitsfile=loco2file)]
+        name_list += ['PARAM_TABLE']
     # write image to file
-    loco2file.write_file()
+    loco2file.write_multi(data_list=data_list, name_list=name_list,
+                          block_kind=recipe.out_block_str,
+                          runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(loco2file)
     # ------------------------------------------------------------------
@@ -882,24 +1290,34 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
         # super impose zeros over the fit in the image
         image5 = image_superimp(image, cent_coeffs)
         # --------------------------------------------------------------
-        loco3file = recipe.outputs['SUP_FILE'].newcopy(recipe=recipe,
+        loco3file = recipe.outputs['SUP_FILE'].newcopy(params=params,
                                                        fiber=fiber)
         # construct the filename from file instance
-        loco3file.construct_filename(params, infile=infile)
+        loco3file.construct_filename(infile=infile)
         # --------------------------------------------------------------
         # define header keys for output file
         # copy keys from loco1file
         loco3file.copy_hdict(loco1file)
         # set output key
         loco3file.add_hkey('KW_OUTPUT', value=loco3file.name)
+        # add infiles
+        loco3file.infiles = list(hfiles)
         # copy data
         loco3file.data = image5
         # --------------------------------------------------------------
         # log that we are saving rotated image
         wargs = [loco3file.filename]
-        WLOG(params, '', TextEntry('40-013-00021', args=wargs))
+        WLOG(params, '', textentry('40-013-00021', args=wargs))
+        # define multi lists
+        data_list, name_list = [], []
+        # snapshot of parameters
+        if params['PARAMETER_SNAPSHOT']:
+            data_list += [params.snapshot_table(recipe, drsfitsfile=loco3file)]
+            name_list += ['PARAM_TABLE']
         # write image to file
-        loco3file.write_file()
+        loco3file.write_multi(data_list=data_list, name_list=name_list,
+                              block_kind=recipe.out_block_str,
+                              runstring=recipe.runstring)
         # add to output files (for indexing)
         recipe.add_output_file(loco3file)
     # ------------------------------------------------------------------
@@ -907,17 +1325,29 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
     return orderpfile, loco1file
 
 
-def loc_summary(recipe, it, params, qc_params, props, mean_backgrd, rorder_num,
-                max_signal):
+def loc_summary(recipe: DrsRecipe, it: int, params: ParamDict,
+                qc_params: List[list], props: ParamDict, lprops: ParamDict):
+    """
+    Produce the localisation summary document
+
+    :param recipe: DrsRecipe, the recipe instance that called this function
+    :param it: int, the iteration number for localisation
+    :param params: ParamDict, parameter dictionary of constants
+    :param qc_params: list of lists, the quality control lists
+    :param props: ParamDict, the calibration of pp file parameter dictionary
+    :param lprops: ParamDict, the localisation parameter dictionary
+
+    :return: None, saves summary document(s) to disk
+    """
     # add stats
     recipe.plot.add_stat('KW_VERSION', value=params['DRS_VERSION'])
     recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS_DATE'])
     recipe.plot.add_stat('KW_DPRTYPE', value=props['DPRTYPE'])
-    recipe.plot.add_stat('KW_LOC_BCKGRD', value=mean_backgrd)
-    recipe.plot.add_stat('KW_LOC_NBO', value=rorder_num)
+    recipe.plot.add_stat('KW_LOC_BCKGRD', value=lprops['MEAN_BACKGRD'])
+    recipe.plot.add_stat('KW_LOC_NBO', value=lprops['NORDERS'])
     recipe.plot.add_stat('KW_LOC_DEG_C', value=params['LOC_CENT_POLY_DEG'])
     recipe.plot.add_stat('KW_LOC_DEG_W', value=params['LOC_WIDTH_POLY_DEG'])
-    recipe.plot.add_stat('KW_LOC_MAXFLX', value=max_signal)
+    recipe.plot.add_stat('KW_LOC_MAXFLX', value=lprops['MAX_SIGNAL'])
     recipe.plot.add_stat('KW_LOC_SMAXPTS_CTR',
                          value=params['QC_LOC_MAXFIT_REMOVED_CTR'])
     recipe.plot.add_stat('KW_LOC_SMAXPTS_WID',
@@ -928,375 +1358,6 @@ def loc_summary(recipe, it, params, qc_params, props, mean_backgrd, rorder_num,
                          value=params['QC_LOC_RMSMAX_WID'])
     # construct summary
     recipe.plot.summary_document(it, qc_params)
-
-
-# =============================================================================
-# Worker functions
-# =============================================================================
-def find_position_of_cent_col(values, threshold):
-    """
-    Finds the central positions based on the central column values
-
-    :param values: numpy array (1D) size = number of rows,
-                    the central column values
-    :param threshold: float, the threshold above which to find pixels as being
-                      part of an order
-
-    :return position: numpy array (1D), size= number of rows,
-                      the pixel positions in cvalues where the centers of each
-                      order should be
-
-    For 1000 loops, best of 3: 771 µs per loop
-    """
-    # store the positions of the orders
-    positions = []
-    # get the len of cvalues
-    length = len(values)
-    # initialise the row number to zero
-    row, order_end = 0, 0
-    # move the row number to the first row below threshold
-    # (avoids first order on the edge)
-    while values[row] > threshold:
-        row += 1
-        if row == length:
-            break
-    # continue to move through rows
-    while row < length:
-        # if row is above threshold then we have found a start point
-        if values[row] > threshold:
-            # save the start point
-            order_start = row
-            # continue to move through rows to find end (end of order defined
-            # as the point at which it slips below the threshold)
-            while values[row] >= threshold:
-                row += 1
-                # if we have reached the end of cvalues stop (it is an end of
-                # an order by definition
-                if row == length:
-                    break
-            # as we have reached the end we should not add to positions
-            if row == length:
-                break
-            else:
-                # else record the end position
-                order_end = row
-                # determine the center of gravity of the order
-                # lx is the pixels in this order
-                lx = np.arange(order_start, order_end, 1)
-                # ly is the cvalues values in this order (use lx to get them)
-                ly = values[lx]
-                # position = sum of (lx * ly) / sum of sum(ly)
-                position = mp.nansum(lx * ly * 1.0) / mp.nansum(ly)
-                # append position and width to storage
-                positions.append(position)
-        # if row is still below threshold then move the row number forward
-        else:
-            row += 1
-    # finally return the positions
-    return np.array(positions)
-
-
-def locate_order_center(values, threshold, min_width=None):
-    """
-    Takes the values across the oder and finds the order center by looking for
-    the start and end of the order (and thus the center) above threshold
-
-    :param values: numpy array (1D) size = number of rows, the pixels in an
-                    order
-
-    :param threshold: float, the threshold above which to find pixels as being
-                      part of an order
-
-    :param min_width: float, the minimum width for an order to be accepted
-
-    :return positions: numpy array (1D), size= number of rows,
-                       the pixel positions in cvalues where the centers of each
-                       order should be
-
-    :return widths:    numpy array (1D), size= number of rows,
-                       the pixel positions in cvalues where the centers of each
-                       order should be
-
-    For 1000 loops, best of 3: 771 µs per loop
-    """
-    # deal with no min_width
-    if min_width is None:
-        min_width = 0
-    # get the len of cvalues
-    length = len(values)
-    # initialise the row number to zero
-    row, order_end = 0, 0
-    position, width = 0, 0
-    # move the row number to the first row below threshold
-    # (avoids first order on the edge)
-    while values[row] > threshold:
-        row += 1
-        if row == length:
-            break
-    # continue to move through rows
-    while row < length and (order_end == 0):
-        # if row is above threshold then we have found a start point
-        if values[row] > threshold:
-            # save the start point
-            order_start = row
-            # continue to move through rows to find end (end of order defined
-            # as the point at which it slips below the threshold)
-            while values[row] >= threshold:
-                row += 1
-                # if we have reached the end of cvalues stop (it is an end of
-                # an order by definition
-                if row == length:
-                    break
-            # as we have reached the end we should not add to positions
-            if row == length:
-                break
-            elif (row - order_start) > min_width:
-                # else record the end position
-                order_end = row
-                # determine the center of gravity of the order
-                # lx is the pixels in this order
-                lx = np.arange(order_start, order_end, 1)
-                # ly is the cvalues values in this order (use lx to get them)
-                ly = values[lx]
-                # position = sum of (lx * ly) / sum of sum(ly)
-                position = mp.nansum(lx * ly * 1.0) / mp.nansum(ly)
-                # width is just the distance from start to end
-                width = abs(order_end - order_start)
-        # if row is still below threshold then move the row number forward
-        else:
-            row += 1
-    # finally return the positions
-    return position, width
-
-
-def initial_order_fit(params, x, y, f_order, ccol, kind):
-    """
-    Performs a crude initial fit for this order, uses the ctro positions or
-    sigo width values found in "FindOrderCtrs" or "find_order_centers" to do
-    the fit
-
-    :param mask: numpy array (1D) of booleans, True where we have non-zero
-                 widths
-    :param onum: int, order iteration number (running number over all
-                 iterations)
-    :param kind: string, 'center' or 'fwhm', if 'center' then this fit is for
-                 the central positions, if 'fwhm' this fit is for the width of
-                 the orders
-    :param fig: plt.figure, the figure to plot initial fit on
-    :param frame: matplotlib axis i.e. plt.subplot(), the axis on which to plot
-                  the initial fit on (carries the plt.imshow(image))
-    :return fitdata: dictionary, contains the fit data key value pairs for this
-                     initial fit. keys are as follows:
-
-            a = coefficients of the fit from key
-            size = 'ic_locdfitc' [for kind='center'] or
-                 = 'ic_locdftiw' [for kind='fwhm']
-            fit = the fity values for the fit (for x = loc['X'])
-                where fity = Sum(a[i] * x^i)
-            res = the residuals from y - fity
-                 where y = ctro [kind='center'] or
-                         = sigo [kind='fwhm'])
-            abs_res = abs(res)
-            rms = the standard deviation of the residuals
-            max_ptp = maximum residual value max(res)
-            max_ptp_frac = max_ptp / rms  [kind='center']
-                         = max(abs_res/y) * 100   [kind='fwhm']
-    """
-    func_name = __NAME__ + '.initial_order_fit()'
-    # deal with kind
-    if kind not in ['center', 'fwhm']:
-        WLOG(params, 'error', TextEntry('00-013-00002', args=[kind, func_name]))
-    # -------------------------------------------------------------------------
-    # calculate fit - coefficients, fit y params, residuals, absolute residuals,
-    #                 rms and max_ptp
-    # -------------------------------------------------------------------------
-    acoeffs, fit, res, abs_res, rms, max_ptp = calculate_fit(x, y, f_order)
-    # max_ptp_frac is different for different cases
-    if kind == 'center':
-        max_ptp_frac = max_ptp / rms
-    else:
-        max_ptp_frac = mp.nanmax(abs_res/y) * 100
-    # -------------------------------------------------------------------------
-    # Work out the fit value at ic_cent_col (for logging)
-    cfitval = np.polyval(acoeffs[::-1], ccol)
-    # -------------------------------------------------------------------------
-    # return fit data
-    fitdata = dict(a=acoeffs, fit=fit, res=res, abs_res=abs_res, rms=rms,
-                   max_ptp=max_ptp, max_ptp_frac=max_ptp_frac, cfitval=cfitval)
-    return fitdata
-
-
-def sigmaclip_order_fit(params, recipe, x, y, fitdata, f_order, max_rmpts,
-                        rnum, ic_max_ptp, ic_max_ptp_frac, ic_ptporms,
-                        ic_max_rms, kind):
-    """
-    Performs a sigma clip fit for this order, uses the ctro positions or
-    sigo width values found in "FindOrderCtrs" or "find_order_centers" to do
-    the fit. Removes the largest residual from the initial fit (or subsequent
-    sigmaclips) value in x and y and recalculates the fit.
-
-    Does this until all the following conditions are NOT met:
-           rms > 'ic_max_rms'   [kind='center' or kind='fwhm']
-        or max_ptp > 'ic_max_ptp [kind='center']
-        or max_ptp_frac > 'ic_ptporms_center'   [kind='center']
-        or max_ptp_frac > 'ic_max_ptp_frac'     [kind='fwhm'
-
-    :param params:
-    :param x:
-    :param y:
-
-    :param fitdata: dictionary, contains the fit data key value pairs for this
-                     initial fit. keys are as follows:
-
-            a = coefficients of the fit from key
-            size = 'ic_locdfitc' [for kind='center'] or
-                 = 'ic_locdftiw' [for kind='fwhm']
-            fit = the fity values for the fit (for x = loc['X'])
-                where fity = Sum(a[i] * x^i)
-            res = the residuals from y - fity
-                 where y = ctro [kind='center'] or
-                         = sigo [kind='fwhm'])
-            abs_res = abs(res)
-            rms = the standard deviation of the residuals
-            max_ptp = maximum residual value max(res)
-            max_ptp_frac = max_ptp / rms  [kind='center']
-                         = max(abs_res/y) * 100   [kind='fwhm']
-
-    :param f_order:
-
-    :param rnum: int, order number (running number of successful order
-                 iterations only)
-    :param kind: string, 'center' or 'fwhm', if 'center' then this fit is for
-                 the central p
-
-    :return fitdata: dictionary, contains the fit data key value pairs for this
-                     initial fit. keys are as follows:
-
-            a = coefficients of the fit from key
-            size = 'ic_locdfitc' [for kind='center'] or
-                 = 'ic_locdftiw' [for kind='fwhm']
-            fit = the fity values for the fit (for x = loc['X'])
-                where fity = Sum(a[i] * x^i)
-            res = the residuals from y - fity
-                 where y = ctro [kind='center'] or
-                         = sigo [kind='fwhm'])
-            abs_res = abs(res)
-            rms = the standard deviation of the residuals
-            max_ptp = maximum residual value max(res)
-            max_ptp_frac = max_ptp / rms  [kind='center']
-                         = max(abs_res/y) * 100   [kind='fwhm']
-    """
-    func_name = __NAME__ + '.sigmaclip_order_fit()'
-    # deal with kind
-    if kind not in ['center', 'fwhm']:
-        WLOG(params, 'error', TextEntry('00-013-00003', args=[kind, func_name]))
-    # extract constants from fitdata
-    acoeffs = fitdata['a']
-    fit = fitdata['fit']
-    res = fitdata['res']
-    abs_res = fitdata['abs_res']
-    rms = fitdata['rms']
-    max_ptp = fitdata['max_ptp']
-    max_ptp_frac = fitdata['max_ptp_frac']
-
-    # get variables dependent on kind
-    if kind == 'center':
-        # variables
-        kind2, ptpfrackind = 'center', 'sigrms'
-    else:
-        # variables
-        kind2, ptpfrackind = 'width ', 'ptp%'
-    # -------------------------------------------------------------------------
-    # Need to do sigma clip fit
-    # -------------------------------------------------------------------------
-    # define clipping mask
-    wmask = np.ones(len(abs_res), dtype=bool)
-    # get condition for doing sigma clip
-    cond = rms > ic_max_rms
-    if kind == 'center':
-        cond |= max_ptp > ic_max_ptp
-        cond |= (max_ptp_frac > ic_ptporms)
-    else:
-        cond |= (max_ptp_frac > ic_max_ptp_frac)
-    # keep clipping until cond is met
-    xo, yo = np.array(x), np.array(y)
-    while cond:
-        # Log that we are clipping the fit
-        wargs = [kind, ptpfrackind, rms, max_ptp, max_ptp_frac]
-        WLOG(params, '', TextEntry('40-013-00008', args=wargs))
-        # add residuals to loc
-        recipe.plot('LOC_FIT_RESIDUALS', x=x, y=res, xo=xo, rnum=rnum,
-                    kind=kind)
-        # add one to the max rmpts
-        max_rmpts += 1
-        # remove the largest residual (set wmask = 0 at that position)
-        wmask[np.argmax(abs_res)] = False
-        # get the new x and y values (without largest residual)
-        xo, yo = xo[wmask], yo[wmask]
-        # fit the new x and y
-        fdata = calculate_fit(xo, yo, f_order)
-        acoeffs, fit, res, abs_res, rms, max_ptp = fdata
-        # max_ptp_frac is different for different cases
-        if kind == 'center':
-            max_ptp_frac = max_ptp / rms
-        else:
-            max_ptp_frac = mp.nanmax(abs_res / yo) * 100
-        # recalculate condition for doing sigma clip
-        cond = rms > ic_max_rms
-        if kind == 'center':
-            cond |= (max_ptp > ic_max_ptp)
-            cond |= (max_ptp_frac > ic_ptporms)
-        else:
-            cond |= (max_ptp_frac > ic_max_ptp_frac)
-        # reform wmask
-        wmask = wmask[wmask]
-    else:
-        wargs = [kind2, ptpfrackind, rms, max_ptp, max_ptp_frac, int(max_rmpts)]
-        WLOG(params, '', TextEntry('40-013-00009', args=wargs))
-
-    # return fit data
-    fitdata = dict(a=acoeffs, fit=fit, res=res, abs_res=abs_res, rms=rms,
-                   max_ptp=max_ptp, max_ptp_frac=max_ptp_frac,
-                   max_rmpts=max_rmpts)
-    return fitdata
-
-
-def calculate_fit(x, y, f):
-    """
-    Calculate the polynomial fit between x and y, for "f" fit parameters,
-    also calculate the residuals, absolute residuals, RMS and max peak-to-peak
-    values
-
-    :param x: numpy array (1D), the x values to use for the fit
-    :param y: numpy array (1D), the y values to fit
-    :param f: int, the number of fit parameters (i.e. for quadratic fit f=2)
-
-    :return a: numpy array (1D), the fit coefficients
-                        shape = f
-    :return fit: numpy array (1D), the fit values for positions in x
-                        shape = len(y) and len(x)
-    :return res: numpy array (1D), the residuals between y and fit
-                        shape = len(y) and len(x)
-    :return abs_res: numpy array (1D), the absolute values of "res"  abs(res)
-                        shape = len(y) and len(x)
-    :return rms: float, the RMS (root-mean square) of the residuals (std)
-    :return max_ptp: float, the max peak to peak value of the absolute
-                     residuals i.e. max(abs_res)
-    """
-    # Do initial fit (revere due to fortran compatibility)
-    a = mp.nanpolyfit(x, y, deg=f)[::-1]
-    # Get the intial fit data
-    fit = np.polyval(a[::-1], x)
-    # work out residuals
-    res = y - fit
-    # Work out absolute residuals
-    abs_res = abs(res)
-    # work out rms
-    rms = mp.nanstd(res)
-    # work out max point to point of residuals
-    max_ptp = mp.nanmax(abs_res)
-    # return all
-    return a, fit, res, abs_res, rms, max_ptp
 
 
 # =============================================================================

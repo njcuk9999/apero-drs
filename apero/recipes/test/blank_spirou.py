@@ -1,41 +1,43 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+blank_spirou.py
 
-# CODE DESCRIPTION HERE
+An example recipe used for development
 
 Created on 2019-07-05 at 16:46
 
 @author: cook
 """
-from apero import core
-from apero import lang
-from apero.core import constants
-from apero.tools.module.testing import drs_dev
+from typing import Any, Dict, Tuple, Union
 
+from apero.base import base
+from apero.core import constants
+from apero.core.core import drs_log
+from apero.core.utils import drs_recipe
+from apero.core.utils import drs_startup
+from apero.tools.module.testing import drs_dev
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'blank.py'
 __INSTRUMENT__ = 'SPIROU'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # get param dict
 ParamDict = constants.ParamDict
 # Get Logging function
-WLOG = core.wlog
-# Get the text types
-TextEntry = lang.drs_text.TextEntry
-TextDict = lang.drs_text.TextDict
+WLOG = drs_log.wlog
+# Get Recipe class
+DrsRecipe = drs_recipe.DrsRecipe
+
 # -----------------------------------------------------------------------------
-# TODO: move recipe definition to instrument set up when testing is finished
+# Note: move recipe definition to instrument set up when testing is finished
+# -----------------------------------------------------------------------------
 # set up recipe definitions (overwrites default one)
 RMOD = drs_dev.RecipeDefinition(instrument=__INSTRUMENT__)
 # define a recipe for this tool
@@ -43,9 +45,8 @@ blank = drs_dev.TmpRecipe()
 blank.name = __NAME__
 blank.shortname = 'DEVTEST'
 blank.instrument = __INSTRUMENT__
-blank.outputdir = 'reduced'
-blank.inputdir = 'reduced'
-blank.inputtype = 'reduced'
+blank.in_block_str = 'red'
+blank.out_block_str = 'red'
 blank.extension = 'fits'
 blank.description = 'Test for developer mode'
 blank.kind = 'misc'
@@ -64,45 +65,45 @@ RMOD.add(blank)
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(**kwargs):
+def main(**kwargs) -> Union[Dict[str, Any], Tuple[DrsRecipe, ParamDict]]:
     """
-    Main function for cal_update_berv.py
+    Main function for blank
 
     :param kwargs: additional keyword arguments
-
-    :type instrument: str
 
     :keyword debug: int, debug level (0 for None)
 
     :returns: dictionary of the local space
-    :rtype: dict
     """
     # assign function calls (must add positional)
     fkwargs = dict(**kwargs)
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
-    # TODO: remove rmod when put into full recipe
-    recipe, params = core.setup(__NAME__, __INSTRUMENT__, fkwargs,
-                                rmod=RMOD)
+    # -------------------------------------------------------------------------
+    # Note: remove rmod when put into full recipe
+    # -------------------------------------------------------------------------
+    recipe, params = drs_startup.setup(__NAME__, __INSTRUMENT__, fkwargs,
+                                       rmod=RMOD)
     # solid debug mode option
     if kwargs.get('DEBUG0000', False):
         return recipe, params
     # ----------------------------------------------------------------------
     # run main bulk of code (catching all errors)
-    llmain, success = core.run(__main__, recipe, params)
+    llmain, success = drs_startup.run(__main__, recipe, params)
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    return core.end_main(params, llmain, recipe, success)
+    return drs_startup.end_main(params, llmain, recipe, success)
 
 
-def __main__(recipe, params):
+def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     """
     Main code: should only call recipe and params (defined from main)
 
-    :param recipe:
-    :param params:
-    :return:
+    :param recipe: DrsRecipe, the recipe class using this function
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: dictionary containing the local variables
     """
     # ----------------------------------------------------------------------
     # Main Code
@@ -115,7 +116,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return core.return_locals(params, locals())
+    return locals()
 
 
 # =============================================================================

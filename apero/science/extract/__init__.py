@@ -11,7 +11,7 @@ Created on 2019-01-17 at 14:31
 """
 from apero.science.extract import berv
 from apero.science.extract import extraction
-from apero.science.extract import general
+from apero.science.extract import gen_ext
 
 __all__ = []
 
@@ -20,27 +20,29 @@ __all__ = []
 # =============================================================================
 add_berv_keys = berv.add_berv_keys
 
-add_s1d_keys = general.add_s1d_keys
+add_s1d_keys = gen_ext.add_s1d_keys
 
-e2ds_to_s1d = general.e2ds_to_s1d
+e2ds_to_s1d = gen_ext.e2ds_to_s1d
 
 extract2d = extraction.extraction_twod
 
+extract_blaze_flat = extraction.extract_blaze_flat
+
+flat_blaze_correction = extraction.flat_blaze_correction
+
 get_berv = berv.get_berv
 
-order_profiles = general.order_profiles
+order_profiles = gen_ext.order_profiles
 
-thermal_correction = general.thermal_correction
+qc_extraction = gen_ext.qc_extraction
 
-qc_extraction = general.qc_extraction
+ref_fplines = gen_ext.ref_fplines
 
-ref_fplines = general.ref_fplines
+write_extraction_files = gen_ext.write_extraction_files
 
-write_extraction_files = general.write_extraction_files
+write_extraction_files_ql = gen_ext.write_extraction_files_ql
 
-write_extraction_files_ql = general.write_extraction_files_ql
-
-extract_summary = general.extract_summary
+extract_summary = gen_ext.extract_summary
 
 # =============================================================================
 # End of code

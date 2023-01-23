@@ -1,17 +1,22 @@
 """
-
+Default constants for SPIROU
 
 Created on 2019-01-17
 
 @author: cook
 """
+from apero.base import base
 from apero.core.instruments.default.default_constants import *
 
 # Note: If variables are not showing up MUST CHECK __all__ definition
 #       in import * module
 
 __NAME__ = 'core.instruments.spirou.default_constants.py'
-
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # =============================================================================
 # Spirou Constant definitions
 # =============================================================================
@@ -21,7 +26,7 @@ __NAME__ = 'core.instruments.spirou.default_constants.py'
 # =============================================================================
 # Define the data engineering path
 DATA_ENGINEERING = DATA_ENGINEERING.copy(__NAME__)
-DATA_ENGINEERING.value = './data/spirou/engineering/'
+DATA_ENGINEERING.value = 'engineering/'
 
 # Define core data path
 DATA_CORE = DATA_CORE.copy(__NAME__)
@@ -91,9 +96,35 @@ IMAGE_PIXEL_SIZE.value = 2.28
 FWHM_PIXEL_LSF = FWHM_PIXEL_LSF.copy(__NAME__)
 FWHM_PIXEL_LSF.value = 2.1
 
+# Define all polar rhomb positions
+ALL_POLAR_RHOMB_POS = ALL_POLAR_RHOMB_POS.copy(__NAME__)
+ALL_POLAR_RHOMB_POS.value = 'P2, P4, P14, P16'
+
 # =============================================================================
 # CALIBRATION: GENERAL SETTINGS
 # =============================================================================
+# Define the maximum number of files that can be used in a group
+GROUP_FILE_LIMIT = GROUP_FILE_LIMIT.copy(__NAME__)
+GROUP_FILE_LIMIT.value = 20
+
+# Define whether we check the calibration and observation separation
+DO_CALIB_DTIME_CHECK = DO_CALIB_DTIME_CHECK.copy(__NAME__)
+DO_CALIB_DTIME_CHECK.value = True
+
+# Define the maximum time (in days) that a calibration can be separated from
+#   an observation in order to use it
+MAX_CALIB_DTIME = MAX_CALIB_DTIME.copy(__NAME__)
+MAX_CALIB_DTIME.value = 7.0
+
+# Define the threshold under which a file should not be combined
+#  (metric is compared to the median of all files 1 = perfect, 0 = noise)
+COMBINE_METRIC_THRESHOLD1 = COMBINE_METRIC_THRESHOLD1.copy(__NAME__)
+COMBINE_METRIC_THRESHOLD1.value = 0.99
+
+# Define the DPRTYPES allowed for the combine metric 1 comparison
+COMBINE_METRIC1_TYPES = COMBINE_METRIC1_TYPES.copy(__NAME__)
+COMBINE_METRIC1_TYPES.value = 'DARK_FLAT, FLAT_FLAT, FLAT_DARK, FP_FP, DARK_FP'
+
 # Define the coefficients of the fit of 1/m vs d
 CAVITY_1M_FILE = CAVITY_1M_FILE.copy(__NAME__)
 CAVITY_1M_FILE.value = 'cavity_length_m_fit.dat'
@@ -101,34 +132,6 @@ CAVITY_1M_FILE.value = 'cavity_length_m_fit.dat'
 # Define the coefficients of the fit of wavelength vs d
 CAVITY_LL_FILE = CAVITY_LL_FILE.copy(__NAME__)
 CAVITY_LL_FILE.value = 'cavity_length_ll_fit.dat'
-
-# Define the object list file name
-OBJ_LIST_FILE = OBJ_LIST_FILE.copy(__NAME__)
-OBJ_LIST_FILE.value = 'object_query_list.fits'
-
-# Define the object query list format
-OBJ_LIST_FILE_FMT = OBJ_LIST_FILE_FMT.copy(__NAME__)
-OBJ_LIST_FILE_FMT.value = 'fits'
-
-# Define the radius for crossmatching objects (in both lookup table and query)
-OBJ_LIST_CROSS_MATCH_RADIUS = OBJ_LIST_CROSS_MATCH_RADIUS.copy(__NAME__)
-OBJ_LIST_CROSS_MATCH_RADIUS.value = 60.0
-
-# Define the TAP Gaia URL (for use in crossmatching to Gaia via astroquery)
-OBJ_LIST_GAIA_URL = OBJ_LIST_GAIA_URL.copy(__NAME__)
-OBJ_LIST_GAIA_URL.value = 'https://gea.esac.esa.int/tap-server/tap'
-
-# Define the gaia magnitude cut (rp mag) to use in the gaia query
-OBJ_LIST_GAIA_MAG_CUT = OBJ_LIST_GAIA_MAG_CUT.copy(__NAME__)
-OBJ_LIST_GAIA_MAG_CUT.value = 15.0
-
-# Define the gaia epoch to use in the gaia query
-OBJ_LIST_GAIA_EPOCH = OBJ_LIST_GAIA_EPOCH.copy(__NAME__)
-OBJ_LIST_GAIA_EPOCH.value = 2015.5
-
-# Define the gaia parallax limit for using gaia point
-OBJ_LIST_GAIA_PLX_LIM = OBJ_LIST_GAIA_PLX_LIM.copy(__NAME__)
-OBJ_LIST_GAIA_PLX_LIM.value = 5
 
 # define the check FP percentile level
 CALIB_CHECK_FP_PERCENTILE = CALIB_CHECK_FP_PERCENTILE.copy(__NAME__)
@@ -141,6 +144,95 @@ CALIB_CHECK_FP_THRES.value = 100
 # define the check FP center image size [px]
 CALIB_CHECK_FP_CENT_SIZE = CALIB_CHECK_FP_CENT_SIZE.copy(__NAME__)
 CALIB_CHECK_FP_CENT_SIZE.value = 100
+
+# Define the TAP Gaia URL (for use in crossmatching to Gaia via astroquery)
+OBJ_LIST_GAIA_URL = OBJ_LIST_GAIA_URL.copy(__NAME__)
+OBJ_LIST_GAIA_URL.value = 'https://gea.esac.esa.int/tap-server/tap'
+
+# Define the google sheet to use for crossmatch (may be set to a directory for
+#   completely offline reduction)
+OBJ_LIST_GOOGLE_SHEET_URL = OBJ_LIST_GOOGLE_SHEET_URL.copy(__NAME__)
+OBJ_LIST_GOOGLE_SHEET_URL.value = '1dOogfEwC7wAagjVFdouB1Y1JdF9Eva4uDW6CTZ8x2FM'
+
+# Define the google sheet objname list main list id number (may be set to a
+#     csv file for completely offline reduction)
+OBJ_LIST_GSHEET_MAIN_LIST_ID = OBJ_LIST_GSHEET_MAIN_LIST_ID.copy(__NAME__)
+OBJ_LIST_GSHEET_MAIN_LIST_ID.value = '0'
+
+# Define the google sheet objname list pending list id number (may be set to a
+# #     csv file for completely offline reduction)
+OBJ_LIST_GSHEET_PEND_LIST_ID = OBJ_LIST_GSHEET_PEND_LIST_ID.copy(__NAME__)
+OBJ_LIST_GSHEET_PEND_LIST_ID.value = '623506317'
+
+# Define the google sheet objname list reject list id number
+OBJ_LIST_GSHEET_REJECT_LIST_ID = OBJ_LIST_GSHEET_REJECT_LIST_ID.copy(__NAME__)
+OBJ_LIST_GSHEET_REJECT_LIST_ID.value = '2006484513'
+
+# Define the google sheet user url object list (None for no user list)
+#     (may be set to a directory for completely offline reduction)
+OBJ_LIST_GSHEET_USER_URL = OBJ_LIST_GSHEET_USER_URL.copy(__NAME__)
+OBJ_LIST_GSHEET_USER_URL.value = 'None'
+
+# Define the google sheet user id object list id number (may be set to a
+#      csv file for completely offline reduction)
+OBJ_LIST_GSHEET_USER_ID = OBJ_LIST_GSHEET_USER_ID.copy(__NAME__)
+OBJ_LIST_GSHEET_USER_ID.value = '0'
+
+# Define whether to resolve from local database (via drs_database / drs_db)
+OBJ_LIST_RESOLVE_FROM_DATABASE = OBJ_LIST_RESOLVE_FROM_DATABASE.copy(__NAME__)
+OBJ_LIST_RESOLVE_FROM_DATABASE.value = True
+
+# Define whether to resolve from gaia id (via TapPlus to Gaia) if False
+#    ra/dec/pmra/pmde/plx will always come from header
+OBJ_LIST_RESOLVE_FROM_GAIAID = OBJ_LIST_RESOLVE_FROM_GAIAID.copy(__NAME__)
+OBJ_LIST_RESOLVE_FROM_GAIAID.value = True
+
+# Define whether to get Gaia ID / Teff / RV from google sheets if False
+#    will try to resolve if gaia ID given otherwise will use ra/dec if
+#    OBJ_LIST_RESOLVE_FROM_COORDS = True else will default to header values
+OBJ_LIST_RESOLVE_FROM_GLIST = OBJ_LIST_RESOLVE_FROM_GLIST.copy(__NAME__)
+OBJ_LIST_RESOLVE_FROM_GLIST.value = True
+
+# Define whether to get Gaia ID from header RA and Dec (basically if all other
+#    option fails) - WARNING - this is a crossmatch so may lead to a bad
+#    identification of the gaia id - not recommended
+OBJ_LIST_RESOLVE_FROM_COORDS = OBJ_LIST_RESOLVE_FROM_COORDS.copy(__NAME__)
+OBJ_LIST_RESOLVE_FROM_COORDS.value = False
+
+# Define the gaia epoch to use in the gaia query
+OBJ_LIST_GAIA_EPOCH = OBJ_LIST_GAIA_EPOCH.copy(__NAME__)
+OBJ_LIST_GAIA_EPOCH.value = 2015.5
+
+# Define the radius for crossmatching objects (in both lookup table and query)
+#    measured in arc sec (only used if OBJ_LIST_RESOLVE_FROM_COORDS = True)
+OBJ_LIST_CROSS_MATCH_RADIUS = OBJ_LIST_CROSS_MATCH_RADIUS.copy(__NAME__)
+OBJ_LIST_CROSS_MATCH_RADIUS.value = 180.0
+
+# Define the gaia parallax limit for using gaia point meansure in mas
+#    (only used if OBJ_LIST_RESOLVE_FROM_COORDS = True)
+OBJ_LIST_GAIA_PLX_LIM = OBJ_LIST_GAIA_PLX_LIM.copy(__NAME__)
+OBJ_LIST_GAIA_PLX_LIM.value = 0.5
+
+# Define the gaia magnitude cut (rp mag) to use in the gaia query
+#    (only used if OBJ_LIST_RESOLVE_FROM_COORDS = True)
+OBJ_LIST_GAIA_MAG_CUT = OBJ_LIST_GAIA_MAG_CUT.copy(__NAME__)
+OBJ_LIST_GAIA_MAG_CUT.value = 15.0
+
+# Define the google sheet to use for update the reject list
+REJECT_LIST_GOOGLE_SHEET_URL = REJECT_LIST_GOOGLE_SHEET_URL.copy(__NAME__)
+REJECT_LIST_GOOGLE_SHEET_URL.value = '1gvMp1nHmEcKCUpxsTxkx-5m115mLuQIGHhxJCyVoZCM'
+
+# Define the google sheet id to use for update the reject list
+REJECT_LIST_GSHEET_MAIN_LIST_ID = REJECT_LIST_GSHEET_MAIN_LIST_ID.copy(__NAME__)
+REJECT_LIST_GSHEET_MAIN_LIST_ID.value = '1398289367'
+
+# # Define the odometer code rejection google sheet id
+# ODOCODE_REJECT_GSHEET_ID = ODOCODE_REJECT_GSHEET_ID.copy(__NAME__)
+# ODOCODE_REJECT_GSHEET_ID.value = '1gvMp1nHmEcKCUpxsTxkx-5m115mLuQIGHhxJCyVoZCM'
+#
+# # Define the odmeter code rejection google sheet workbook
+# ODOCODE_REJECT_GSHEET_NUM = ODOCODE_REJECT_GSHEET_NUM.copy(__NAME__)
+# ODOCODE_REJECT_GSHEET_NUM.value = 0
 
 # =============================================================================
 # CALIBRATION: FIBER SETTINGS
@@ -186,6 +278,36 @@ FIBER_SET_NUM_FIBERS_C.value = 1
 # =============================================================================
 # PRE-PROCESSSING SETTINGS
 # =============================================================================
+# Define object (science or telluric)
+PP_OBJ_DPRTYPES = PP_OBJ_DPRTYPES.copy(__NAME__)
+PP_OBJ_DPRTYPES.value = 'OBJ_DARK, OBJ_FP, POLAR_DARK, POLAR_FP'
+PP_OBJ_DPRTYPES.author = base.AUTHORS['NJC']
+
+# Define the bad list google spreadsheet id
+PP_BADLIST_SSID = PP_BADLIST_SSID.copy(__NAME__)
+PP_BADLIST_SSID.value = '1gvMp1nHmEcKCUpxsTxkx-5m115mLuQIGHhxJCyVoZCM'
+PP_BADLIST_SSID.author = base.AUTHORS['NJC']
+
+# Define the bad list google workbook number
+PP_BADLIST_SSWB = PP_BADLIST_SSWB.copy(__NAME__)
+PP_BADLIST_SSWB.value = 0
+PP_BADLIST_SSWB.author = base.AUTHORS['NJC']
+
+# Define the bad list header key
+PP_BADLIST_DRS_HKEY = PP_BADLIST_DRS_HKEY.copy(__NAME__)
+PP_BADLIST_DRS_HKEY.value = 'KW_IDENTIFIER'
+PP_BADLIST_DRS_HKEY.author = base.AUTHORS['NJC']
+
+# Define the bad list google spreadsheet value column
+PP_BADLIST_SS_VALCOL = PP_BADLIST_SS_VALCOL.copy(__NAME__)
+PP_BADLIST_SS_VALCOL.value = 'IDENTIFIER'
+PP_BADLIST_SS_VALCOL.author = base.AUTHORS['NJC']
+
+# Define the bad list google spreadsheet mask column for preprocessing
+PP_BADLIST_SS_MASKCOL = PP_BADLIST_SS_MASKCOL.copy(__NAME__)
+PP_BADLIST_SS_MASKCOL.value = 'PP'
+PP_BADLIST_SS_MASKCOL.author = base.AUTHORS['NJC']
+
 # Defines the box size surrounding hot pixels to use
 PP_HOTPIX_BOXSIZE = PP_HOTPIX_BOXSIZE.copy(__NAME__)
 PP_HOTPIX_BOXSIZE.value = 5
@@ -193,6 +315,11 @@ PP_HOTPIX_BOXSIZE.value = 5
 # Defines the size around badpixels that is considered part of the bad pixel
 PP_CORRUPT_MED_SIZE = PP_CORRUPT_MED_SIZE.copy(__NAME__)
 PP_CORRUPT_MED_SIZE.value = 2
+
+# Define the fraction of the required exposure time that is required for a
+#   valid observation
+PP_BAD_EXPTIME_FRACTION = PP_BAD_EXPTIME_FRACTION.copy(__NAME__)
+PP_BAD_EXPTIME_FRACTION.value = 0.10
 
 # Defines the threshold in sigma that selects hot pixels
 PP_CORRUPT_HOT_THRES = PP_CORRUPT_HOT_THRES.copy(__NAME__)
@@ -214,6 +341,14 @@ PP_DARK_MED_BINNUM.value = 32
 PP_HOTPIX_FILE = PP_HOTPIX_FILE.copy(__NAME__)
 PP_HOTPIX_FILE.value = 'hotpix_pp.csv'
 
+#   Defines the pp amplifier bias model (located in the data folder)
+PP_AMP_ERROR_MODEL = PP_AMP_ERROR_MODEL.copy(__NAME__)
+PP_AMP_ERROR_MODEL.value = 'amplifier_bias_model_spirou.fits'
+
+# Defines the pp led flat file (located in the data folder)
+PP_LED_FLAT_FILE = PP_LED_FLAT_FILE.copy(__NAME__)
+PP_LED_FLAT_FILE.value = 'None'
+
 #   Define the number of un-illuminated reference pixels at top of image
 PP_NUM_REF_TOP = PP_NUM_REF_TOP.copy(__NAME__)
 PP_NUM_REF_TOP.value = 4
@@ -221,6 +356,14 @@ PP_NUM_REF_TOP.value = 4
 #   Define the number of un-illuminated reference pixels at bottom of image
 PP_NUM_REF_BOTTOM = PP_NUM_REF_BOTTOM.copy(__NAME__)
 PP_NUM_REF_BOTTOM.value = 4
+
+#   Define the number of un-illuminated reference pixels at left of image
+PP_NUM_REF_LEFT = PP_NUM_REF_LEFT.copy(__NAME__)
+PP_NUM_REF_LEFT.value = 4
+
+#   Define the number of un-illuminated reference pixels at right of image
+PP_NUM_REF_RIGHT = PP_NUM_REF_RIGHT.copy(__NAME__)
+PP_NUM_REF_RIGHT.value = 4
 
 # Define the percentile value for the rms normalisation (0-100)
 PP_RMS_PERCENTILE = PP_RMS_PERCENTILE.copy(__NAME__)
@@ -239,9 +382,94 @@ PP_CORRUPT_SNR_HOTPIX.value = 10
 PP_CORRUPT_RMS_THRES = PP_CORRUPT_RMS_THRES.copy(__NAME__)
 PP_CORRUPT_RMS_THRES.value = 0.15
 
+# super-pessimistic noise estimate. Includes uncorrected common noise
+PP_COSMIC_NOISE_ESTIMATE = PP_COSMIC_NOISE_ESTIMATE.copy(__NAME__)
+PP_COSMIC_NOISE_ESTIMATE.value = 30.0
+
+# define the cuts in sigma where we should look for cosmics (variance)
+PP_COSMIC_VARCUT1 = PP_COSMIC_VARCUT1.copy(__NAME__)
+PP_COSMIC_VARCUT1.value = 3000.0
+PP_COSMIC_VARCUT2 = PP_COSMIC_VARCUT2.copy(__NAME__)
+PP_COSMIC_VARCUT2.value = 1000.0
+
+# define the cuts in sigma where we should look for cosmics (intercept)
+PP_COSMIC_INTCUT1 = PP_COSMIC_INTCUT1.copy(__NAME__)
+PP_COSMIC_INTCUT1.value = 100.0    # 50.0
+PP_COSMIC_INTCUT2 = PP_COSMIC_INTCUT2.copy(__NAME__)
+PP_COSMIC_INTCUT2.value = 50.0    # 10.0
+
+# random box size [in pixels] to speed-up low-frequency band computation
+PP_COSMIC_BOXSIZE = PP_COSMIC_BOXSIZE.copy(__NAME__)
+PP_COSMIC_BOXSIZE.value = 64
+
 # Define whether to skip preprocessed files that have already be processed
 SKIP_DONE_PP = SKIP_DONE_PP.copy(__NAME__)
 SKIP_DONE_PP.value = False
+
+# Define dark dprtypes for threshold quality control check (PP_DARK_THRES)
+PP_DARK_DPRTYPES = PP_DARK_DPRTYPES.copy(__NAME__)
+PP_DARK_DPRTYPES.value = 'DARK_DARK_INT,DARK_DARK_TEL'
+
+# Define the threshold for a suitable DARK_DARK (above this will not be
+#    processed)
+PP_DARK_THRES = PP_DARK_THRES.copy(__NAME__)
+PP_DARK_THRES.value = 0.5
+
+# Define the amplitude of the flux-dependent along-readout-axis derivative
+#     component
+# TODO: Add calculation to static apero-utils.general.apero_statics.corr_xtalk.py
+PP_CORR_XTALK_AMP_FLUX = PP_CORR_XTALK_AMP_FLUX.copy(__NAME__)
+PP_CORR_XTALK_AMP_FLUX.value = 1.490711e-04
+PP_CORR_XTALK_AMP_FLUX.author = base.AUTHORS['EA']
+
+# Define amplitude of the flux-dependent along-readout-axis 1st derivative
+#     component
+# TODO: Add calculation to static apero-utils.general.apero_statics.corr_xtalk.py
+PP_COR_XTALK_AMP_DFLUX = PP_COR_XTALK_AMP_DFLUX.copy(__NAME__)
+PP_COR_XTALK_AMP_DFLUX.value = 8.080468e-04
+PP_COR_XTALK_AMP_DFLUX.author = base.AUTHORS['EA']
+
+# Define amplitude of the flux-dependent along-readout-axis 2nd derivative
+#     component
+# TODO: Add calculation to static apero-utils.general.apero_statics.corr_xtalk.py
+PP_COR_XTALK_AMP_D2FLUX = PP_COR_XTALK_AMP_D2FLUX.copy(__NAME__)
+PP_COR_XTALK_AMP_D2FLUX.value = -6.523985e-04
+PP_COR_XTALK_AMP_D2FLUX.author = base.AUTHORS['EA']
+
+# Define the partial APERO DPRTYPES which we should not do the science
+#    capacitive coupling
+PP_NOSCI_CAPC_DPRTYPES = PP_NOSCI_CAPC_DPRTYPES.copy(__NAME__)
+PP_NOSCI_CAPC_DPRTYPES.value = 'HCONE,HCTWO'
+
+# =============================================================================
+# CALIBRATION: ASTROMETRIC DATABASE SETTINGS
+# =============================================================================
+# gaia col name in google sheet
+GL_GAIA_COL_NAME = GL_GAIA_COL_NAME.copy(__NAME__)
+GL_GAIA_COL_NAME.value = 'GAIADR2ID'
+# object col name in google sheet
+GL_OBJ_COL_NAME = GL_OBJ_COL_NAME.copy(__NAME__)
+GL_OBJ_COL_NAME.value = 'OBJNAME'
+# alias col name in google sheet
+GL_ALIAS_COL_NAME = GL_ALIAS_COL_NAME.copy(__NAME__)
+GL_ALIAS_COL_NAME.value = 'ALIASES'
+# rv col name in google sheet
+GL_RV_COL_NAME = GL_RV_COL_NAME.copy(__NAME__)
+GL_RV_COL_NAME.value = 'RV'
+GL_RVREF_COL_NAME = GL_RVREF_COL_NAME.copy(__NAME__)
+GL_RVREF_COL_NAME.value = 'RV_REF'
+# teff col name in google sheet
+GL_TEFF_COL_NAME = GL_TEFF_COL_NAME.copy(__NAME__)
+GL_TEFF_COL_NAME.value = 'TEFF'
+GL_TEFFREF_COL_NAME = GL_TEFFREF_COL_NAME.copy(__NAME__)
+GL_TEFFREF_COL_NAME.value = 'TEFF_REF'
+# Reject like google columns
+GL_R_ODO_COL = GL_R_ODO_COL.copy(__NAME__)
+GL_R_ODO_COL.value = 'ODOMETER'
+GL_R_PP_COL = GL_R_PP_COL.copy(__NAME__)
+GL_R_PP_COL.value = 'PP'
+GL_R_RV_COL = GL_R_RV_COL.copy(__NAME__)
+GL_R_RV_COL.value = 'RV'
 
 # =============================================================================
 # CALIBRATION: DARK SETTINGS
@@ -302,19 +530,28 @@ HISTO_RANGE_LOW.value = -0.2
 HISTO_RANGE_HIGH = HISTO_RANGE_HIGH.copy(__NAME__)
 HISTO_RANGE_HIGH.value = 0.8
 
-#    Define the allowed DPRTYPES for finding files for DARK_MASTER will
+#    Define the allowed DPRTYPES for finding files for DARK_REF will
 #        only find those types define by 'filetype' but 'filetype' must
 #        be one of theses (strings separated by commas)
 ALLOWED_DARK_TYPES = ALLOWED_DARK_TYPES.copy(__NAME__)
 ALLOWED_DARK_TYPES.value = 'DARK_DARK_TEL, DARK_DARK_INT'
 
 #   Define the maximum time span to combine dark files over (in hours)
-DARK_MASTER_MATCH_TIME = DARK_MASTER_MATCH_TIME.copy(__NAME__)
-DARK_MASTER_MATCH_TIME.value = 2
+DARK_REF_MATCH_TIME = DARK_REF_MATCH_TIME.copy(__NAME__)
+DARK_REF_MATCH_TIME.value = 2
 
-#   median filter size for dark master
-DARK_MASTER_MED_SIZE = DARK_MASTER_MED_SIZE.copy(__NAME__)
-DARK_MASTER_MED_SIZE.value = 4
+#   median filter size for dark reference
+DARK_REF_MED_SIZE = DARK_REF_MED_SIZE.copy(__NAME__)
+DARK_REF_MED_SIZE.value = 4
+
+# define the maximum number of files to use in the dark reference
+DARK_REF_MAX_FILES = DARK_REF_MAX_FILES.copy(__NAME__)
+DARK_REF_MAX_FILES.value = 100
+
+# define the minimimum allowed exptime for dark files to be used in
+#    dark ref
+DARK_REF_MIN_EXPTIME = DARK_REF_MIN_EXPTIME.copy(__NAME__)
+DARK_REF_MIN_EXPTIME.value = 10
 
 # =============================================================================
 # CALIBRATION: BAD PIXEL MAP SETTINGS
@@ -348,6 +585,14 @@ BADPIX_MAX_HOTPIX.value = 5.0
 BADPIX_FULL_THRESHOLD = BADPIX_FULL_THRESHOLD.copy(__NAME__)
 BADPIX_FULL_THRESHOLD.value = 0.3
 
+#   Defines areas that are large/small for bad pixel erosion
+BADPIX_ERODE_SIZE = BADPIX_ERODE_SIZE.copy(__NAME__)
+BADPIX_ERODE_SIZE.value = 5
+
+#   Defines how much larger to make eroded bad pixel regions
+BADPIX_DILATE_SIZE = BADPIX_DILATE_SIZE.copy(__NAME__)
+BADPIX_DILATE_SIZE.value = 9
+
 # =============================================================================
 # CALIBRATION: BACKGROUND CORRECTION SETTINGS
 # =============================================================================
@@ -355,11 +600,11 @@ BADPIX_FULL_THRESHOLD.value = 0.3
 BKGR_BOXSIZE = BKGR_BOXSIZE.copy(__NAME__)
 BKGR_BOXSIZE.value = 128
 
-#    Do background percentile to compute minimum value (%)
+#    the background percentile to compute minimum value (%)
 BKGR_PERCENTAGE = BKGR_PERCENTAGE.copy(__NAME__)
 BKGR_PERCENTAGE.value = 5.0
 
-#    Size in pixels of the convolve tophat for the background mask
+#    Size in pixels of to convolve tophat for the background mask
 BKGR_MASK_CONVOLVE_SIZE = BKGR_MASK_CONVOLVE_SIZE.copy(__NAME__)
 BKGR_MASK_CONVOLVE_SIZE.value = 7
 
@@ -372,11 +617,11 @@ BKGR_N_BAD_NEIGHBOURS.value = 3
 BKGR_NO_SUBTRACTION = BKGR_NO_SUBTRACTION.copy(__NAME__)
 BKGR_NO_SUBTRACTION.value = False
 
-#    Kernel amplitude determined from drs_local_scatter.py
+#    background kernel amplitude
 BKGR_KER_AMP = BKGR_KER_AMP.copy(__NAME__)
 BKGR_KER_AMP.value = 47
 
-#    Background kernel width in in x and y [pixels]
+#    Background kernel width in x and y [pixels]
 BKGR_KER_WX = BKGR_KER_WX.copy(__NAME__)
 BKGR_KER_WX.value = 1
 BKGR_KER_WY = BKGR_KER_WY.copy(__NAME__)
@@ -392,6 +637,74 @@ BKGR_KER_SIG.value = 3
 # =============================================================================
 # CALIBRATION: LOCALISATION SETTINGS
 # =============================================================================
+# median-binning size in the dispersion direction. This is just used to
+#     get an order-of-magnitude of the order profile along a given column
+LOC_BINSIZE = LOC_BINSIZE.copy(__NAME__)
+LOC_BINSIZE.value = 25
+LOC_BINSIZE.author = base.AUTHORS['EA']
+
+# the zero point percentile of a box
+LOC_BOX_PERCENTILE_LOW = LOC_BOX_PERCENTILE_LOW.copy(__NAME__)
+LOC_BOX_PERCENTILE_LOW.value = 25
+LOC_BOX_PERCENTILE_LOW.author = base.AUTHORS['EA']
+
+# the percentile of a box that is always an illuminated pixel
+LOC_BOX_PERCENTILE_HIGH = LOC_BOX_PERCENTILE_HIGH.copy(__NAME__)
+LOC_BOX_PERCENTILE_HIGH.value = 95
+LOC_BOX_PERCENTILE_HIGH.author = base.AUTHORS['EA']
+
+# the size of the percentile filter - should be a bit bigger than the
+# inter-order gap
+LOC_PERCENTILE_FILTER_SIZE = LOC_PERCENTILE_FILTER_SIZE.copy(__NAME__)
+LOC_PERCENTILE_FILTER_SIZE.value = 100
+LOC_PERCENTILE_FILTER_SIZE.author = base.AUTHORS['EA']
+
+# the fiber dilation number of iterations this should only be used when
+#     we want a combined localisation solution i.e. AB from A and B
+LOC_FIBER_DILATE_ITERATIONS = LOC_FIBER_DILATE_ITERATIONS.copy(__NAME__)
+LOC_FIBER_DILATE_ITERATIONS.value = 3
+LOC_FIBER_DILATE_ITERATIONS.author = base.AUTHORS['EA']
+
+# the minimum area (number of pixels) that defines an order
+LOC_MIN_ORDER_AREA = LOC_MIN_ORDER_AREA.copy(__NAME__)
+LOC_MIN_ORDER_AREA.value = 500
+LOC_MIN_ORDER_AREA.author = base.AUTHORS['EA']
+
+# Order of polynomial to fit for widths
+LOC_WIDTH_POLY_DEG = LOC_WIDTH_POLY_DEG.copy(__NAME__)
+LOC_WIDTH_POLY_DEG.value = 1
+LOC_WIDTH_POLY_DEG.author = base.AUTHORS['EA']
+
+# Order of polynomial to fit for positions
+LOC_CENT_POLY_DEG = LOC_CENT_POLY_DEG.copy(__NAME__)
+LOC_CENT_POLY_DEG.value = 3
+LOC_CENT_POLY_DEG.author = base.AUTHORS['EA']
+
+# range width size (used to fit the width of the orders at certain points)
+LOC_RANGE_WID_SUM = LOC_RANGE_WID_SUM.copy(__NAME__)
+LOC_RANGE_WID_SUM.value = 100
+LOC_RANGE_WID_SUM.author = base.AUTHORS['EA']
+
+# define the minimum detector position where the centers of the orders should
+#   fall (across order direction)
+LOC_YDET_MIN = LOC_YDET_MIN.copy(__NAME__)
+LOC_YDET_MIN.value = 65
+LOC_YDET_MIN.author = base.AUTHORS['EA']
+
+# define the maximum detector position where the centers of the orders should
+#   fall (across order direction)
+LOC_YDET_MAX = LOC_YDET_MAX.copy(__NAME__)
+LOC_YDET_MAX.value = 3050
+LOC_YDET_MAX.author = base.AUTHORS['EA']
+
+# define the number of width samples to use in localisation
+LOC_NUM_WID_SAMPLES = LOC_NUM_WID_SAMPLES.copy(__NAME__)
+LOC_NUM_WID_SAMPLES.value = 10
+LOC_NUM_WID_SAMPLES.author = base.AUTHORS['EA']
+
+# =============================================================================
+# CALIBRATION: LOCALISATION SETTINGS
+# =============================================================================
 #   Size of the order_profile smoothed box
 #     (from pixel - size to pixel + size)
 LOC_ORDERP_BOX_SIZE = LOC_ORDERP_BOX_SIZE.copy(__NAME__)
@@ -402,8 +715,9 @@ LOC_START_ROW_OFFSET = LOC_START_ROW_OFFSET.copy(__NAME__)
 LOC_START_ROW_OFFSET.value = 0
 
 #   Definition of the central column for use in localisation
+# TODO: Why was this set to 2500?
 LOC_CENTRAL_COLUMN = LOC_CENTRAL_COLUMN.copy(__NAME__)
-LOC_CENTRAL_COLUMN.value = 2500
+LOC_CENTRAL_COLUMN.value = 2044     # 2500
 
 #   Half spacing between orders
 LOC_HALF_ORDER_SPACING = LOC_HALF_ORDER_SPACING.copy(__NAME__)
@@ -412,14 +726,6 @@ LOC_HALF_ORDER_SPACING.value = 45
 # Minimum amplitude to accept (in e-)
 LOC_MINPEAK_AMPLITUDE = LOC_MINPEAK_AMPLITUDE.copy(__NAME__)
 LOC_MINPEAK_AMPLITUDE.value = 10  # 50
-
-#   Order of polynomial to fit for widths
-LOC_WIDTH_POLY_DEG = LOC_WIDTH_POLY_DEG.copy(__NAME__)
-LOC_WIDTH_POLY_DEG.value = 4
-
-#   Order of polynomial to fit for positions
-LOC_CENT_POLY_DEG = LOC_CENT_POLY_DEG.copy(__NAME__)
-LOC_CENT_POLY_DEG.value = 4
 
 #   Define the jump size when finding the order position
 #       (jumps in steps of this from the center outwards)
@@ -481,6 +787,10 @@ LOC_COEFF_SIGCLIP.value = 7
 LOC_COEFFSIG_DEG = LOC_COEFFSIG_DEG.copy(__NAME__)
 LOC_COEFFSIG_DEG.value = 7
 
+#  Define the maximum value allowed in the localisation (cuts reddest orders)
+LOC_MAX_YPIX_VALUE = LOC_MAX_YPIX_VALUE.copy(__NAME__)
+LOC_MAX_YPIX_VALUE.value = 4088
+
 #   Saturation threshold for localisation
 LOC_SAT_THRES = LOC_SAT_THRES.copy(__NAME__)
 LOC_SAT_THRES.value = 1000  # 64536
@@ -525,58 +835,62 @@ LOC_PLOT_CORNER_YZOOM2.value = '600, 600, 3100, 3100'
 # =============================================================================
 # CALIBRATION: SHAPE SETTINGS
 # =============================================================================
-#    Define the allowed DPRTYPES for finding files for DARK_MASTER will
+#    Define the allowed DPRTYPES for finding files for DARK_REF will
 #        only find those types define by 'filetype' but 'filetype' must
 #        be one of theses (strings separated by commas)
 ALLOWED_FP_TYPES = ALLOWED_FP_TYPES.copy(__NAME__)
 ALLOWED_FP_TYPES.value = 'FP_FP'
 
-#   Define the maximum time span to combine dark files over (in hours)
-FP_MASTER_MATCH_TIME = FP_MASTER_MATCH_TIME.copy(__NAME__)
-FP_MASTER_MATCH_TIME.value = 2
+#   Define the maximum time span to combine fp files over (in hours)
+FP_REF_MATCH_TIME = FP_REF_MATCH_TIME.copy(__NAME__)
+FP_REF_MATCH_TIME.value = 2
 
 #   Define the percentile at which the FPs are normalised when getting the
-#      fp master in shape master
-FP_MASTER_PERCENT_THRES = FP_MASTER_PERCENT_THRES.copy(__NAME__)
-FP_MASTER_PERCENT_THRES.value = 90.0
+#      fp reference in shape reference
+FP_REF_PERCENT_THRES = FP_REF_PERCENT_THRES.copy(__NAME__)
+FP_REF_PERCENT_THRES.value = 90.0
 
 #  Define the largest standard deviation allowed for the shift in
-#     x or y when doing the shape master fp linear transform
+#     x or y when doing the shape reference fp linear transform
 SHAPE_QC_LTRANS_RES_THRES = SHAPE_QC_LTRANS_RES_THRES.copy(__NAME__)
 SHAPE_QC_LTRANS_RES_THRES.value = 0.1
 
+# define the maximum number of files to use in the shape reference
+SHAPE_REF_MAX_FILES = SHAPE_REF_MAX_FILES.copy(__NAME__)
+SHAPE_REF_MAX_FILES.value = 100
+
 #  Define the percentile which defines a true FP peak [0-100]
-SHAPE_MASTER_VALIDFP_PERCENTILE = SHAPE_MASTER_VALIDFP_PERCENTILE.copy(__NAME__)
-SHAPE_MASTER_VALIDFP_PERCENTILE.value = 80
+SHAPE_REF_VALIDFP_PERCENTILE = SHAPE_REF_VALIDFP_PERCENTILE.copy(__NAME__)
+SHAPE_REF_VALIDFP_PERCENTILE.value = 80
 
 #  Define the fractional flux an FP much have compared to its neighbours
-SHAPE_MASTER_VALIDFP_THRESHOLD = SHAPE_MASTER_VALIDFP_THRESHOLD.copy(__NAME__)
-SHAPE_MASTER_VALIDFP_THRESHOLD.value = 1.5
+SHAPE_REF_VALIDFP_THRESHOLD = SHAPE_REF_VALIDFP_THRESHOLD.copy(__NAME__)
+SHAPE_REF_VALIDFP_THRESHOLD.value = 1.5
 
 #  Define the number of iterations used to get the linear transform params
-SHAPE_MASTER_LINTRANS_NITER = SHAPE_MASTER_LINTRANS_NITER.copy(__NAME__)
-SHAPE_MASTER_LINTRANS_NITER.value = 5
+SHAPE_REF_LINTRANS_NITER = SHAPE_REF_LINTRANS_NITER.copy(__NAME__)
+SHAPE_REF_LINTRANS_NITER.value = 5
 
 #  Define the initial search box size (in pixels) around the fp peaks
-SHAPE_MASTER_FP_INI_BOXSIZE = SHAPE_MASTER_FP_INI_BOXSIZE.copy(__NAME__)
-SHAPE_MASTER_FP_INI_BOXSIZE.value = 11
+SHAPE_REF_FP_INI_BOXSIZE = SHAPE_REF_FP_INI_BOXSIZE.copy(__NAME__)
+SHAPE_REF_FP_INI_BOXSIZE.value = 11
 
 #  Define the small search box size (in pixels) around the fp peaks
-SHAPE_MASTER_FP_SMALL_BOXSIZE = SHAPE_MASTER_FP_SMALL_BOXSIZE.copy(__NAME__)
-SHAPE_MASTER_FP_SMALL_BOXSIZE.value = 2
+SHAPE_REF_FP_SMALL_BOXSIZE = SHAPE_REF_FP_SMALL_BOXSIZE.copy(__NAME__)
+SHAPE_REF_FP_SMALL_BOXSIZE.value = 2
 
 #  Define the minimum number of FP files in a group to mean group is valid
-SHAPE_FP_MASTER_MIN_IN_GROUP = SHAPE_FP_MASTER_MIN_IN_GROUP.copy(__NAME__)
-SHAPE_FP_MASTER_MIN_IN_GROUP.value = 3
+SHAPE_FP_REF_MIN_IN_GROUP = SHAPE_FP_REF_MIN_IN_GROUP.copy(__NAME__)
+SHAPE_FP_REF_MIN_IN_GROUP.value = 3
 
 #  Define which fiber should be used for fiber-dependent calibrations in
-#     shape master
-SHAPE_MASTER_FIBER = SHAPE_MASTER_FIBER.copy(__NAME__)
-SHAPE_MASTER_FIBER.value = 'AB'
+#     shape reference
+SHAPE_REF_FIBER = SHAPE_REF_FIBER.copy(__NAME__)
+SHAPE_REF_FIBER.value = 'AB'
 
-#  Define the shape master dx rms quality control criteria (per order)
-SHAPE_MASTER_DX_RMS_QC = SHAPE_MASTER_DX_RMS_QC.copy(__NAME__)
-SHAPE_MASTER_DX_RMS_QC.value = 0.3
+#  Define the shape reference dx rms quality control criteria (per order)
+SHAPE_REF_DX_RMS_QC = SHAPE_REF_DX_RMS_QC.copy(__NAME__)
+SHAPE_REF_DX_RMS_QC.value = 0.3
 
 # The number of iterations to run the shape finding out to
 SHAPE_NUM_ITERATIONS = SHAPE_NUM_ITERATIONS.copy(__NAME__)
@@ -588,7 +902,7 @@ SHAPE_PLOT_SELECTED_ORDER.value = 33
 
 # total width of the order (combined fibers) in pixels
 SHAPE_ORDER_WIDTH = SHAPE_ORDER_WIDTH.copy(__NAME__)
-SHAPE_ORDER_WIDTH.value = 60
+SHAPE_ORDER_WIDTH.value = '{"AB": 60, "A": 60, "B": 60, "C": 60}'
 
 # number of sections per order to split the order into
 SHAPE_NSECTIONS = SHAPE_NSECTIONS.copy(__NAME__)
@@ -724,10 +1038,6 @@ SHAPEOFFSET_ABSDEV_THRESHOLD.value = 0.2
 SHAPE_UNIQUE_FIBERS = SHAPE_UNIQUE_FIBERS.copy(__NAME__)
 SHAPE_UNIQUE_FIBERS.value = 'A, B, C'
 
-#  Define whether to output debug (sanity check) files
-SHAPE_DEBUG_OUTPUTS = SHAPE_DEBUG_OUTPUTS.copy(__NAME__)
-SHAPE_DEBUG_OUTPUTS.value = True
-
 #  Define first zoom plot for shape local zoom debug plot
 #     should be a string list (xmin, xmax, ymin, ymax)
 SHAPEL_PLOT_ZOOM1 = SHAPEL_PLOT_ZOOM1.copy(__NAME__)
@@ -770,6 +1080,11 @@ FF_BLAZE_BPERCENTILE.value = 95
 FF_BLAZE_NITER = FF_BLAZE_NITER.copy(__NAME__)
 FF_BLAZE_NITER.value = 2
 
+# Define the sinc fit median filter width (we want to fit the shape of the
+#   order not line structures)
+FF_BLAZE_SINC_MED_SIZE = FF_BLAZE_SINC_MED_SIZE.copy(__NAME__)
+FF_BLAZE_SINC_MED_SIZE.value = 25
+
 #   Define the orders not to plot on the RMS plot should be a string
 #       containing a list of integers
 FF_RMS_SKIP_ORDERS = FF_RMS_SKIP_ORDERS.copy(__NAME__)
@@ -786,27 +1101,31 @@ FF_PLOT_ORDER.value = 4
 # =============================================================================
 # CALIBRATION: LEAKAGE SETTINGS
 # =============================================================================
-# Define the types of input file allowed by the leakage master recipe
-ALLOWED_LEAKM_TYPES = ALLOWED_LEAKM_TYPES.copy(__NAME__)
-ALLOWED_LEAKM_TYPES.value = 'DARK_FP'
+# Define the types of input file allowed by the leakage reference recipe
+ALLOWED_LEAKREF_TYPES = ALLOWED_LEAKREF_TYPES.copy(__NAME__)
+ALLOWED_LEAKREF_TYPES.value = 'DARK_FP'
 
-# define whether to always extract leak master files
+# define whether to always extract leak reference files
 #      (i.e. overwrite existing files)
-LEAKM_ALWAYS_EXTRACT = LEAKM_ALWAYS_EXTRACT.copy(__NAME__)
-LEAKM_ALWAYS_EXTRACT.value = False
+LEAKREF_ALWAYS_EXTRACT = LEAKREF_ALWAYS_EXTRACT.copy(__NAME__)
+LEAKREF_ALWAYS_EXTRACT.value = False
 
-# define the type of file to use for leak master solution
+# define the type of file to use for leak reference solution
 #    (currently allowed are 'E2DSFF') - must match with LEAK_EXTRACT_FILE
-LEAKM_EXTRACT_TYPE = LEAKM_EXTRACT_TYPE.copy(__NAME__)
-LEAKM_EXTRACT_TYPE.value = 'E2DSFF'
+LEAKREF_EXTRACT_TYPE = LEAKREF_EXTRACT_TYPE.copy(__NAME__)
+LEAKREF_EXTRACT_TYPE.value = 'E2DSFF'
 
-# Define the types of input extracted files to correct for leakage
-ALLOWED_LEAK_TYPES = ALLOWED_LEAK_TYPES.copy(__NAME__)
-ALLOWED_LEAK_TYPES.value = 'OBJ_FP'
+# Define whether we want to correct leakage by default
+CORRECT_LEAKAGE = CORRECT_LEAKAGE.copy(__NAME__)
+CORRECT_LEAKAGE.value = True
+
+# Define DPRTYPE in reference fiber to do correction
+LEAKAGE_REF_TYPES = LEAKAGE_REF_TYPES.copy(__NAME__)
+LEAKAGE_REF_TYPES.value = 'FP'
 
 # define the type of file to use for the leak correction (currently allowed are
 #     'E2DS_FILE' or 'E2DSFF_FILE' (linked to recipe definition outputs)
-#     must match with LEAKM_EXTRACT_TYPE
+#     must match with LEAKREF_EXTRACT_TYPE
 LEAK_EXTRACT_FILE = LEAK_EXTRACT_FILE.copy(__NAME__)
 LEAK_EXTRACT_FILE.value = 'E2DSFF_FILE'
 
@@ -818,21 +1137,21 @@ LEAK_2D_EXTRACT_FILES.value = 'E2DS_FILE, E2DSFF_FILE'
 LEAK_1D_EXTRACT_FILES = LEAK_1D_EXTRACT_FILES.copy(__NAME__)
 LEAK_1D_EXTRACT_FILES.value = 'S1D_W_FILE, S1D_V_FILE'
 
-# define the thermal background percentile for the leak and leak master
+# define the thermal background percentile for the leak and leak reference
 LEAK_BCKGRD_PERCENTILE = LEAK_BCKGRD_PERCENTILE.copy(__NAME__)
 LEAK_BCKGRD_PERCENTILE.value = 5
 
-# define the normalisation perentile for the leak and leak master
+# define the normalisation percentile for the leak and leak reference
 LEAK_NORM_PERCENTILE = LEAK_NORM_PERCENTILE.copy(__NAME__)
 LEAK_NORM_PERCENTILE.value = 90
 
-# define the e-width of the smoothing kernel for leak master
-LEAKM_WSMOOTH = LEAKM_WSMOOTH.copy(__NAME__)
-LEAKM_WSMOOTH.value = 15
+# define the e-width of the smoothing kernel for leak reference
+LEAKREF_WSMOOTH = LEAKREF_WSMOOTH.copy(__NAME__)
+LEAKREF_WSMOOTH.value = 15
 
-# define the kernal size for leak master
-LEAKM_KERSIZE = LEAKM_KERSIZE.copy(__NAME__)
-LEAKM_KERSIZE.value = 3
+# define the kernel size for leak reference
+LEAKREF_KERSIZE = LEAKREF_KERSIZE.copy(__NAME__)
+LEAKREF_KERSIZE.value = 3
 
 # define the lower bound percentile for leak correction
 LEAK_LOW_PERCENTILE = LEAK_LOW_PERCENTILE.copy(__NAME__)
@@ -842,13 +1161,9 @@ LEAK_LOW_PERCENTILE.value = 1
 LEAK_HIGH_PERCENTILE = LEAK_HIGH_PERCENTILE.copy(__NAME__)
 LEAK_HIGH_PERCENTILE.value = 99
 
-# define the limit on surpious FP ratio (1 +/- limit)
+# define the limit on spurious FP ratio (1 +/- limit)
 LEAK_BAD_RATIO_OFFSET = LEAK_BAD_RATIO_OFFSET.copy(__NAME__)
 LEAK_BAD_RATIO_OFFSET.value = 0.1
-
-# Define whether to save uncorrected files
-LEAK_SAVE_UNCORRECTED = LEAK_SAVE_UNCORRECTED.copy(__NAME__)
-LEAK_SAVE_UNCORRECTED.value = True
 
 # =============================================================================
 # CALIBRATION: EXTRACTION SETTINGS
@@ -858,11 +1173,11 @@ LEAK_SAVE_UNCORRECTED.value = True
 EXT_QUICK_LOOK = EXT_QUICK_LOOK.copy(__NAME__)
 EXT_QUICK_LOOK.value = False
 
-#    Start order of the extraction in cal_ff if None starts from 0
+#    Start order of the extraction in apero_flat if None starts from 0
 EXT_START_ORDER = EXT_START_ORDER.copy(__NAME__)
 EXT_START_ORDER.value = None
 
-#    End order of the extraction in cal_ff if None ends at last order
+#    End order of the extraction in apero_flat if None ends at last order
 EXT_END_ORDER = EXT_END_ORDER.copy(__NAME__)
 EXT_END_ORDER.value = None
 
@@ -884,9 +1199,10 @@ EXT_SKIP_ORDERS.value = '[]'
 EXT_COSMIC_CORRETION = EXT_COSMIC_CORRETION.copy(__NAME__)
 EXT_COSMIC_CORRETION.value = True
 
-#    Define the percentage of flux above which we use to cut
+#    Define the number of sigmas away from the median flux which we use to
+#       cut cosmic rays
 EXT_COSMIC_SIGCUT = EXT_COSMIC_SIGCUT.copy(__NAME__)
-EXT_COSMIC_SIGCUT.value = 0.25
+EXT_COSMIC_SIGCUT.value = 10
 
 #    Defines the maximum number of iterations we use to check for cosmics
 #        (for each pixel)
@@ -926,7 +1242,7 @@ EXT_S1D_EDGE_SMOOTH_SIZE.value = 20
 
 #    Define dprtypes to calculate berv for (should be a string list)
 EXT_ALLOWED_BERV_DPRTYPES = EXT_ALLOWED_BERV_DPRTYPES.copy(__NAME__)
-EXT_ALLOWED_BERV_DPRTYPES.value = 'OBJ_FP, OBJ_DARK'
+EXT_ALLOWED_BERV_DPRTYPES.value = 'OBJ_FP, OBJ_DARK, POLAR_FP, POLAR_DARK'
 
 #    Define which BERV calculation to use ('barycorrpy' or 'estimate' or 'None')
 EXT_BERV_KIND = EXT_BERV_KIND.copy(__NAME__)
@@ -985,12 +1301,12 @@ THERMAL_ALWAYS_EXTRACT.value = False
 # define the type of file to use for wave solution (currently allowed are
 #    'E2DS' or 'E2DSFF'
 THERMAL_EXTRACT_TYPE = THERMAL_EXTRACT_TYPE.copy(__NAME__)
-THERMAL_EXTRACT_TYPE.value = 'E2DSFF'
+THERMAL_EXTRACT_TYPE.value = 'E2DS'
 
 # define DPRTYPEs we need to correct thermal background using
 #    telluric absorption (TAPAS)  (must be a string list separated by a comma)
 THERMAL_CORRETION_TYPE1 = THERMAL_CORRETION_TYPE1.copy(__NAME__)
-THERMAL_CORRETION_TYPE1.value = 'OBJ'
+THERMAL_CORRETION_TYPE1.value = 'OBJ, POLAR'
 
 # define DPRTYPEs we need to correct thermal background using
 #     method 2 (must be a string list separated by a comma)
@@ -1024,15 +1340,324 @@ THERMAL_ENVELOPE_PERCENTILE.value = 10
 
 # define the order to plot on the thermal debug plot
 THERMAL_PLOT_START_ORDER = THERMAL_PLOT_START_ORDER.copy(__NAME__)
-THERMAL_PLOT_START_ORDER.value = 40
+THERMAL_PLOT_START_ORDER.value = 35
 
+# define the dprtypes for which to apply the excess emissivity file
+THERMAL_EXCESS_DPRTYPES = THERMAL_EXCESS_DPRTYPES.copy(__NAME__)
+THERMAL_EXCESS_DPRTYPES.value = 'DARK_DARK_TEL'
+
+# define the thermal emissivity file
+THERMAL_EXCESS_EMISSIVITY_FILE = THERMAL_EXCESS_EMISSIVITY_FILE.copy(__NAME__)
+THERMAL_EXCESS_EMISSIVITY_FILE.value = 'excess_emissivity.csv'
+
+
+# =============================================================================
+# CALIBRATION: WAVE EA GENERAL SETTINGS
+# =============================================================================
+# Define wave reference fiber (controller fiber)
+WAVE_REF_FIBER = WAVE_REF_FIBER.copy(__NAME__)
+WAVE_REF_FIBER.value = 'AB'
+WAVE_REF_FIBER.author = base.AUTHORS['NJC']
+
+# Define the initial value of FP effective cavity width 2xd in nm
+WAVE_GUESS_CAVITY_WIDTH = WAVE_GUESS_CAVITY_WIDTH.copy(__NAME__)
+WAVE_GUESS_CAVITY_WIDTH.value = 2.4e7
+WAVE_GUESS_CAVITY_WIDTH.author = base.AUTHORS['EA']
+
+#
+
+# Define the wave solution polynomial fit degree
+WAVE_WAVESOL_FIT_DEGREE = WAVE_WAVESOL_FIT_DEGREE.copy(__NAME__)
+WAVE_WAVESOL_FIT_DEGREE.value = 5
+WAVE_WAVESOL_FIT_DEGREE.author = base.AUTHORS['EA']
+
+# Define the cavity fit polynomial fit degree for wave solution
+#   Note default: 9 for spirou  3 for NIRPS
+WAVE_CAVITY_FIT_DEGREE = WAVE_CAVITY_FIT_DEGREE.copy(__NAME__)
+WAVE_CAVITY_FIT_DEGREE.value = 9
+WAVE_CAVITY_FIT_DEGREE.author = base.AUTHORS['EA']
+
+# Define the number of sigmas to use in wave sol robust fits
+WAVE_NSIG_CUT = WAVE_NSIG_CUT.copy(__NAME__)
+WAVE_NSIG_CUT.value = 5
+WAVE_NSIG_CUT.author = base.AUTHORS['EA']
+
+# Define the minimum number of HC lines in an order to try to find
+#   absolute numbering
+WAVE_MIN_HC_LINES = WAVE_MIN_HC_LINES.copy(__NAME__)
+WAVE_MIN_HC_LINES.value = 5
+WAVE_MIN_HC_LINES.author = base.AUTHORS['EA']
+
+# Define the minimum number of FP lines in an order to try to find
+#   absolute numbering
+WAVE_MIN_FP_LINES = WAVE_MIN_FP_LINES.copy(__NAME__)
+WAVE_MIN_FP_LINES.value = 30
+WAVE_MIN_FP_LINES.author = base.AUTHORS['EA']
+
+# Define the maximum offset in FP peaks to explore when FP peak counting
+WAVE_MAX_FP_COUNT_OFFSET = WAVE_MAX_FP_COUNT_OFFSET.copy(__NAME__)
+WAVE_MAX_FP_COUNT_OFFSET.value = 5
+WAVE_MAX_FP_COUNT_OFFSET.author = base.AUTHORS['EA']
+
+# Define the number of iterations required to converge the FP peak counting
+#   offset loop
+WAVE_FP_COUNT_OFFSET_ITRS = WAVE_FP_COUNT_OFFSET_ITRS.copy(__NAME__)
+WAVE_FP_COUNT_OFFSET_ITRS.value = 3
+WAVE_FP_COUNT_OFFSET_ITRS.author = base.AUTHORS['EA']
+
+# Define the number of iterations required to converge on a cavity fit
+#  (first time this is done)
+WAVE_CAVITY_FIT_ITRS1 = WAVE_CAVITY_FIT_ITRS1.copy(__NAME__)
+WAVE_CAVITY_FIT_ITRS1.value = 3
+WAVE_CAVITY_FIT_ITRS1.author = base.AUTHORS['EA']
+
+# Define the number of iterations required to check order offset
+WAVE_ORDER_OFFSET_ITRS = WAVE_ORDER_OFFSET_ITRS.copy(__NAME__)
+WAVE_ORDER_OFFSET_ITRS.value = 2
+WAVE_ORDER_OFFSET_ITRS.author = base.AUTHORS['EA']
+
+# Define the maximum bulk offset of lines in a order can have
+WAVE_MAX_ORDER_BULK_OFFSET = WAVE_MAX_ORDER_BULK_OFFSET.copy(__NAME__)
+WAVE_MAX_ORDER_BULK_OFFSET.value = 10
+WAVE_MAX_ORDER_BULK_OFFSET.author = base.AUTHORS['EA']
+
+# Define the required precision that the cavity width change must converge
+#   to (will be a fraction of the error)
+WAVE_CAVITY_CHANGE_ERR_THRES = WAVE_CAVITY_CHANGE_ERR_THRES.copy(__NAME__)
+WAVE_CAVITY_CHANGE_ERR_THRES.value = 1.0e-2
+WAVE_CAVITY_CHANGE_ERR_THRES.author = base.AUTHORS['EA']
+
+# Define the number of iterations required to converge on a cavity fit
+#  (second time this is done)
+WAVE_CAVITY_FIT_ITRS2 = WAVE_CAVITY_FIT_ITRS2.copy(__NAME__)
+WAVE_CAVITY_FIT_ITRS2.value = 3
+WAVE_CAVITY_FIT_ITRS2.author = base.AUTHORS['EA']
+
+# Define the odd ratio that is used in generating the weighted mean
+WAVE_HC_VEL_ODD_RATIO = WAVE_HC_VEL_ODD_RATIO.copy(__NAME__)
+WAVE_HC_VEL_ODD_RATIO.value = 1.0e-2
+WAVE_HC_VEL_ODD_RATIO.author = base.AUTHORS['EA']
+
+# Define orders that we cannot fit HC or FP lines to (list of strings)
+WAVE_REMOVE_ORDERS = WAVE_REMOVE_ORDERS.copy(__NAME__)
+WAVE_REMOVE_ORDERS.value = ''  # '48'
+
+# Define the number of iterations required to do the final fplines
+#   wave solution
+WAVE_FWAVESOL_ITRS = WAVE_FWAVESOL_ITRS.copy(__NAME__)
+WAVE_FWAVESOL_ITRS.value = 3
+WAVE_FWAVESOL_ITRS.author = base.AUTHORS['EA']
+
+# define the wave fiber comparison plot order number
+WAVE_FIBER_COMP_PLOT_ORD = WAVE_FIBER_COMP_PLOT_ORD.copy(__NAME__)
+WAVE_FIBER_COMP_PLOT_ORD.value = 35
+WAVE_FIBER_COMP_PLOT_ORD.author = base.AUTHORS['NJC']
+
+# =============================================================================
+# CALIBRATION: WAVE LINES REFERENCE SETTINGS
+# =============================================================================
+# min SNR to consider the line (for HC)
+WAVEREF_NSIG_MIN_HC = WAVEREF_NSIG_MIN_HC.copy(__NAME__)
+WAVEREF_NSIG_MIN_HC.value = 15
+WAVEREF_NSIG_MIN_HC.author = base.AUTHORS['EA']
+
+# min SNR to consider the line (for FP)
+WAVEREF_NSIG_MIN_FP = WAVEREF_NSIG_MIN_FP.copy(__NAME__)
+WAVEREF_NSIG_MIN_FP.value = 15
+WAVEREF_NSIG_MIN_FP.author = base.AUTHORS['EA']
+
+# minimum distance to the edge of the array to consider a line
+WAVEREF_EDGE_WMAX = WAVEREF_EDGE_WMAX.copy(__NAME__)
+WAVEREF_EDGE_WMAX.value = 20
+WAVEREF_EDGE_WMAX.author = base.AUTHORS['EA']
+
+# value in pixel (+/-) for the box size around each HC line to perform fit
+WAVEREF_HC_BOXSIZE = WAVEREF_HC_BOXSIZE.copy(__NAME__)
+WAVEREF_HC_BOXSIZE.value = 5
+WAVEREF_HC_BOXSIZE.author = base.AUTHORS['EA']
+
+# get valid hc dprtypes (string list separated by commas)
+WAVEREF_HC_FIBTYPES = WAVEREF_HC_FIBTYPES.copy(__NAME__)
+WAVEREF_HC_FIBTYPES.value = 'HCONE, HCTWO'
+WAVEREF_HC_FIBTYPES.author = base.AUTHORS['NJC']
+
+# get valid fp dprtypes (string list separated by commas)
+WAVEREF_FP_FIBTYPES = WAVEREF_FP_FIBTYPES.copy(__NAME__)
+WAVEREF_FP_FIBTYPES.value = 'FP'
+WAVEREF_FP_FIBTYPES.author = base.AUTHORS['NJC']
+
+# get the degree to fix reference wavelength to in hc mode
+WAVEREF_FITDEG = WAVEREF_FITDEG.copy(__NAME__)
+WAVEREF_FITDEG.value = 5
+WAVEREF_FITDEG.author = base.AUTHORS['EA']
+
+# define the lowest N for fp peaks
+WAVEREF_FP_NLOW = WAVEREF_FP_NLOW.copy(__NAME__)
+WAVEREF_FP_NLOW.value = 9000
+WAVEREF_FP_NLOW.author = base.AUTHORS['EA']
+
+# define the highest N for fp peaks
+WAVEREF_FP_NHIGH = WAVEREF_FP_NHIGH.copy(__NAME__)
+WAVEREF_FP_NHIGH.value = 30000
+WAVEREF_FP_NHIGH.author = base.AUTHORS['EA']
+
+# define the number of iterations required to do the FP polynomial inversion
+WAVEREF_FP_POLYINV = WAVEREF_FP_POLYINV.copy(__NAME__)
+WAVEREF_FP_POLYINV.value = 10
+WAVEREF_FP_POLYINV.author = base.AUTHORS['EA']
+
+# define the guess HC exponetial width [pixels]
+WAVEREF_HC_GUESS_EWID = WAVEREF_HC_GUESS_EWID.copy(__NAME__)
+WAVEREF_HC_GUESS_EWID.value = 1
+WAVEREF_HC_GUESS_EWID.author = base.AUTHORS['EA']
+
+# Define the fiber offset (in pixels) away from reference fiber
+WAVE_FIBER_OFFSET_MOD = WAVE_FIBER_OFFSET_MOD.copy(__NAME__)
+WAVE_FIBER_OFFSET_MOD.value = '{"A":0.0, "B":0.0, "C":0.0}'
+
+# Define the fiber scale factor from reference fiber
+WAVE_FIBER_SCALE_MOD = WAVE_FIBER_SCALE_MOD.copy(__NAME__)
+WAVE_FIBER_SCALE_MOD.value = '{"A":1.0, "B":1.0, "C":1.0}'
+
+# =============================================================================
+# CALIBRATION: WAVE RESOLUTION MAP SETTINGS
+# =============================================================================
+# define the number of bins in order direction to use in the resolution map
+WAVE_RES_MAP_ORDER_BINS = WAVE_RES_MAP_ORDER_BINS.copy(__NAME__)
+WAVE_RES_MAP_ORDER_BINS.value = 3
+WAVE_RES_MAP_ORDER_BINS.author = base.AUTHORS['EA']
+
+# define the number of bins in spatial direction to use in the resolution map
+WAVE_RES_MAP_SPATIAL_BINS = WAVE_RES_MAP_SPATIAL_BINS.copy(__NAME__)
+WAVE_RES_MAP_SPATIAL_BINS.value = 3
+WAVE_RES_MAP_SPATIAL_BINS.author = base.AUTHORS['EA']
+
+# define the low pass filter size for the HC E2DS file in the resolution map
+WAVE_RES_MAP_FILTER_SIZE = WAVE_RES_MAP_FILTER_SIZE.copy(__NAME__)
+WAVE_RES_MAP_FILTER_SIZE.value = 101
+WAVE_RES_MAP_FILTER_SIZE.author = base.AUTHORS['EA']
+
+# define the broad resolution map velocity cut off (in km/s)
+WAVE_RES_VELO_CUTOFF1 = WAVE_RES_VELO_CUTOFF1.copy(__NAME__)
+WAVE_RES_VELO_CUTOFF1.value = 20
+WAVE_RES_VELO_CUTOFF1.author = base.AUTHORS['EA']
+
+# define the tight resolution map velocity cut off (in km/s)
+WAVE_RES_VELO_CUTOFF2 = WAVE_RES_VELO_CUTOFF2.copy(__NAME__)
+WAVE_RES_VELO_CUTOFF2.value = 5
+WAVE_RES_VELO_CUTOFF2.author = base.AUTHORS['EA']
+
+# =============================================================================
+# CALIBRATION: WAVE CCF SETTINGS
+# =============================================================================
+#   The value of the noise for wave dv rms calculation
+#       snr = flux/sqrt(flux + noise^2)
+WAVE_CCF_NOISE_SIGDET = WAVE_CCF_NOISE_SIGDET.copy(__NAME__)
+WAVE_CCF_NOISE_SIGDET.value = 8.0  # 100
+
+#   The size around a saturated pixel to flag as unusable for wave dv rms
+#      calculation
+WAVE_CCF_NOISE_BOXSIZE = WAVE_CCF_NOISE_BOXSIZE.copy(__NAME__)
+WAVE_CCF_NOISE_BOXSIZE.value = 12
+
+#   The maximum flux for a good (unsaturated) pixel for wave dv rms calculation
+WAVE_CCF_NOISE_THRES = WAVE_CCF_NOISE_THRES.copy(__NAME__)
+WAVE_CCF_NOISE_THRES.value = 1.0e9
+
+#   The CCF step size to use for the FP CCF
+WAVE_CCF_STEP = WAVE_CCF_STEP.copy(__NAME__)
+WAVE_CCF_STEP.value = 0.5
+
+#   The CCF width size to use for the FP CCF
+WAVE_CCF_WIDTH = WAVE_CCF_WIDTH.copy(__NAME__)
+WAVE_CCF_WIDTH.value = 7.5
+
+#   The target RV (CCF center) to use for the FP CCF
+WAVE_CCF_TARGET_RV = WAVE_CCF_TARGET_RV.copy(__NAME__)
+WAVE_CCF_TARGET_RV.value = 0.0
+
+#  The detector noise to use for the FP CCF
+WAVE_CCF_DETNOISE = WAVE_CCF_DETNOISE.copy(__NAME__)
+WAVE_CCF_DETNOISE.value = 100.0
+
+#  The filename of the CCF Mask to use for the FP CCF
+#     Note this file is copied over if WAVE_CCF_UPDATE_MASK = True
+WAVE_CCF_MASK = WAVE_CCF_MASK.copy(__NAME__)
+WAVE_CCF_MASK.value = 'smart_fp_mask.mas'
+
+# Define the default CCF MASK normalisation mode for FP CCF
+#   options are:
+#     'None'         for no normalization
+#     'all'          for normalization across all orders
+#     'order'        for normalization for each order
+WAVE_CCF_MASK_NORMALIZATION = WAVE_CCF_MASK_NORMALIZATION.copy(__NAME__)
+WAVE_CCF_MASK_NORMALIZATION.value = 'order'
+
+# Define the wavelength units for the mask for the FP CCF
+WAVE_CCF_MASK_UNITS = WAVE_CCF_MASK_UNITS.copy(__NAME__)
+WAVE_CCF_MASK_UNITS.value = 'nm'
+
+# Define the ccf mask path the FP CCF
+WAVE_CCF_MASK_PATH = WAVE_CCF_MASK_PATH.copy(__NAME__)
+WAVE_CCF_MASK_PATH.value = 'ccf_masks/'
+
+# Define the CCF mask format (must be an astropy.table format)
+WAVE_CCF_MASK_FMT = WAVE_CCF_MASK_FMT.copy(__NAME__)
+WAVE_CCF_MASK_FMT.value = 'ascii'
+
+#  Define the weight of the CCF mask (if 1 force all weights equal)
+WAVE_CCF_MASK_MIN_WEIGHT = WAVE_CCF_MASK_MIN_WEIGHT.copy(__NAME__)
+WAVE_CCF_MASK_MIN_WEIGHT.value = 0.0
+
+#  Define the width of the template line (if 0 use natural)
+WAVE_CCF_MASK_WIDTH = WAVE_CCF_MASK_WIDTH.copy(__NAME__)
+WAVE_CCF_MASK_WIDTH.value = 1.7
+
+#  Define the number of orders (from zero to ccf_num_orders_max) to use
+#      to calculate the FP CCF
+WAVE_CCF_N_ORD_MAX = WAVE_CCF_N_ORD_MAX.copy(__NAME__)
+WAVE_CCF_N_ORD_MAX.value = 48
+
+#  Define whether to regenerate the fp mask (WAVE_CCF_MASK) when we
+#      update the cavity width in the reference wave solution recipe
+WAVE_CCF_UPDATE_MASK = WAVE_CCF_UPDATE_MASK.copy(__NAME__)
+WAVE_CCF_UPDATE_MASK.value = True
+
+# define the width of the lines in the smart mask [km/s]
+WAVE_CCF_SMART_MASK_WIDTH = WAVE_CCF_SMART_MASK_WIDTH.copy(__NAME__)
+WAVE_CCF_SMART_MASK_WIDTH.value = 1.0
+
+# define the minimum wavelength for the smart mask [nm]
+WAVE_CCF_SMART_MASK_MINLAM = WAVE_CCF_SMART_MASK_MINLAM.copy(__NAME__)
+WAVE_CCF_SMART_MASK_MINLAM.value = 950
+
+# define the maximum wavelength for the smart mask [nm]
+WAVE_CCF_SMART_MASK_MAXLAM = WAVE_CCF_SMART_MASK_MAXLAM.copy(__NAME__)
+WAVE_CCF_SMART_MASK_MAXLAM.value = 2500
+
+# define a trial minimum FP N value (should be lower than true
+#     minimum FP N value)
+WAVE_CCF_SMART_MASK_TRIAL_NMIN = WAVE_CCF_SMART_MASK_TRIAL_NMIN.copy(__NAME__)
+WAVE_CCF_SMART_MASK_TRIAL_NMIN.value = 9000
+
+# define a trial maximum FP N value (should be higher than true
+#     maximum FP N value)
+WAVE_CCF_SMART_MASK_TRIAL_NMAX = WAVE_CCF_SMART_MASK_TRIAL_NMAX.copy(__NAME__)
+WAVE_CCF_SMART_MASK_TRIAL_NMAX.value = 27000
+
+# define the converges parameter for dwave in smart mask generation
+WAVE_CCF_SMART_MASK_DWAVE_THRES = WAVE_CCF_SMART_MASK_DWAVE_THRES.copy(__NAME__)
+WAVE_CCF_SMART_MASK_DWAVE_THRES.value = 1.0e-9
+
+# define the quality control threshold from RV of CCF FP between reference
+#    fiber and other fibers, above this limit fails QC [m/s]
+WAVE_CCF_RV_THRES_QC = WAVE_CCF_RV_THRES_QC.copy(__NAME__)
+WAVE_CCF_RV_THRES_QC.value = 2.0
+
+# TODO: Sort out wave constants below here
 # =============================================================================
 # CALIBRATION: WAVE GENERAL SETTINGS
 # =============================================================================
-# Define wave master fiber (controller fiber)
-WAVE_MASTER_FIBER = WAVE_MASTER_FIBER.copy(__NAME__)
-WAVE_MASTER_FIBER.value = 'AB'
-
 # Define the line list file (located in the DRS_WAVE_DATA directory)
 WAVE_LINELIST_FILE = WAVE_LINELIST_FILE.copy(__NAME__)
 WAVE_LINELIST_FILE.value = 'catalogue_UNe.csv'  # 'catalogue_UNe.dat'
@@ -1216,6 +1841,14 @@ WAVE_HC_RESMAP_XLIM.value = '-8.0, 8.0'
 WAVE_HC_RESMAP_YLIM = WAVE_HC_RESMAP_YLIM.copy(__NAME__)
 WAVE_HC_RESMAP_YLIM.value = '-0.05, 0.7'
 
+# Define whether to fit line profiles with "gaussian" or "super-gaussian"
+WAVE_HC_RESMAP_FITTYPE = WAVE_HC_RESMAP_FITTYPE.copy(__NAME__)
+WAVE_HC_RESMAP_FITTYPE.value = 'super-gaussian'
+
+# Define the sigma clip for line profiles for the resolution map
+WAVE_HC_RESMAP_SIGCLIP = WAVE_HC_RESMAP_SIGCLIP.copy(__NAME__)
+WAVE_HC_RESMAP_SIGCLIP.value = 0.2
+
 # Define the minimum instrumental error
 WAVE_FP_ERRX_MIN = WAVE_FP_ERRX_MIN.copy(__NAME__)
 WAVE_FP_ERRX_MIN.value = 0.01  # 0.03
@@ -1294,7 +1927,12 @@ WAVE_FP_PLOT_MULTI_NBO.value = 5
 
 # define the dprtype for generating FPLINES (string list)
 WAVE_FP_DPRLIST = WAVE_FP_DPRLIST.copy(__NAME__)
-WAVE_FP_DPRLIST.value = 'OBJ_FP'
+WAVE_FP_DPRLIST.value = 'OBJ_FP, POLAR_FP'
+
+# define the override for reference fiber for generating FPLINES
+#    None for no override
+WAVE_FP_FIBERTYPES = WAVE_FP_FIBERTYPES.copy(__NAME__)
+WAVE_FP_FIBERTYPES.value = 'None'
 
 # =============================================================================
 # CALIBRATION: WAVE LITTROW SETTINGS
@@ -1366,7 +2004,9 @@ WAVE_MODE_FP.value = 1
 # Define the initial value of FP effective cavity width 2xd in nm
 #   2xd = 24.5 mm = 24.5e6 nm  for SPIRou
 WAVE_FP_DOPD0 = WAVE_FP_DOPD0.copy(__NAME__)
-WAVE_FP_DOPD0.value = 2.44962434814043e7  # 2.44999e7  # 2.45e7
+# WAVE_FP_DOPD0.value = 2.44962434814043e7  # 2.44999e7  # 2.45e7
+WAVE_FP_DOPD0.value = 24498000
+WAVE_FP_DOPD0.author = base.AUTHORS['EA']
 
 #  Define the polynomial fit degree between FP line numbers and the
 #      measured cavity width for each line
@@ -1394,149 +2034,6 @@ WAVE_FP_PEAK_LIM.value = 0.1
 #    Define peak to peak width that is too large (removed from FP peaks)
 WAVE_FP_P2P_WIDTH_CUT = WAVE_FP_P2P_WIDTH_CUT.copy(__NAME__)
 WAVE_FP_P2P_WIDTH_CUT.value = 15
-
-# =============================================================================
-# CALIBRATION: WAVE CCF SETTINGS
-# =============================================================================
-#   The value of the noise for wave dv rms calculation
-#       snr = flux/sqrt(flux + noise^2)
-WAVE_CCF_NOISE_SIGDET = WAVE_CCF_NOISE_SIGDET.copy(__NAME__)
-WAVE_CCF_NOISE_SIGDET.value = 8.0  # 100
-
-#   The size around a saturated pixel to flag as unusable for wave dv rms
-#      calculation
-WAVE_CCF_NOISE_BOXSIZE = WAVE_CCF_NOISE_BOXSIZE.copy(__NAME__)
-WAVE_CCF_NOISE_BOXSIZE.value = 12
-
-#   The maximum flux for a good (unsaturated) pixel for wave dv rms calculation
-WAVE_CCF_NOISE_THRES = WAVE_CCF_NOISE_THRES.copy(__NAME__)
-WAVE_CCF_NOISE_THRES.value = 1.0e9
-
-#   The CCF step size to use for the FP CCF
-WAVE_CCF_STEP = WAVE_CCF_STEP.copy(__NAME__)
-WAVE_CCF_STEP.value = 0.5
-
-#   The CCF width size to use for the FP CCF
-WAVE_CCF_WIDTH = WAVE_CCF_WIDTH.copy(__NAME__)
-WAVE_CCF_WIDTH.value = 7.5
-
-#   The target RV (CCF center) to use for the FP CCF
-WAVE_CCF_TARGET_RV = WAVE_CCF_TARGET_RV.copy(__NAME__)
-WAVE_CCF_TARGET_RV.value = 0.0
-
-#  The detector noise to use for the FP CCF
-WAVE_CCF_DETNOISE = WAVE_CCF_DETNOISE.copy(__NAME__)
-WAVE_CCF_DETNOISE.value = 100.0
-
-#  The filename of the CCF Mask to use for the FP CCF
-#     Note this file is copied over if WAVE_CCF_UPDATE_MASK = True
-WAVE_CCF_MASK = WAVE_CCF_MASK.copy(__NAME__)
-# WAVE_CCF_MASK.value = 'fp.mas'
-WAVE_CCF_MASK.value = 'smart_fp_mask.mas'
-
-# Define the wavelength units for the mask for the FP CCF
-WAVE_CCF_MASK_UNITS = WAVE_CCF_MASK_UNITS.copy(__NAME__)
-WAVE_CCF_MASK_UNITS.value = 'nm'
-
-# Define the ccf mask path the FP CCF
-WAVE_CCF_MASK_PATH = WAVE_CCF_MASK_PATH.copy(__NAME__)
-WAVE_CCF_MASK_PATH.value = './data/spirou/ccf/'
-
-# Define the CCF mask format (must be an astropy.table format)
-WAVE_CCF_MASK_FMT = WAVE_CCF_MASK_FMT.copy(__NAME__)
-WAVE_CCF_MASK_FMT.value = 'ascii'
-
-#  Define the weight of the CCF mask (if 1 force all weights equal)
-WAVE_CCF_MASK_MIN_WEIGHT = WAVE_CCF_MASK_MIN_WEIGHT.copy(__NAME__)
-WAVE_CCF_MASK_MIN_WEIGHT.value = 0.0
-
-#  Define the width of the template line (if 0 use natural)
-WAVE_CCF_MASK_WIDTH = WAVE_CCF_MASK_WIDTH.copy(__NAME__)
-WAVE_CCF_MASK_WIDTH.value = 1.7
-
-#  Define the number of orders (from zero to ccf_num_orders_max) to use
-#      to calculate the FP CCF
-WAVE_CCF_N_ORD_MAX = WAVE_CCF_N_ORD_MAX.copy(__NAME__)
-WAVE_CCF_N_ORD_MAX.value = 48
-
-#  Define whether to regenerate the fp mask (WAVE_CCF_MASK) when we
-#      update the cavity width in the master wave solution recipe
-WAVE_CCF_UPDATE_MASK = WAVE_CCF_UPDATE_MASK.copy(__NAME__)
-WAVE_CCF_UPDATE_MASK.value = True
-
-# define the width of the lines in the smart mask [km/s]
-WAVE_CCF_SMART_MASK_WIDTH = WAVE_CCF_SMART_MASK_WIDTH.copy(__NAME__)
-WAVE_CCF_SMART_MASK_WIDTH.value = 1.0
-
-# define the minimum wavelength for the smart mask [nm]
-WAVE_CCF_SMART_MASK_MINLAM = WAVE_CCF_SMART_MASK_MINLAM.copy(__NAME__)
-WAVE_CCF_SMART_MASK_MINLAM.value = 950
-
-# define the maximum wavelength for the smart mask [nm]
-WAVE_CCF_SMART_MASK_MAXLAM = WAVE_CCF_SMART_MASK_MAXLAM.copy(__NAME__)
-WAVE_CCF_SMART_MASK_MAXLAM.value = 2500
-
-# define a trial minimum FP N value (should be lower than true
-#     minimum FP N value)
-WAVE_CCF_SMART_MASK_TRIAL_NMIN = WAVE_CCF_SMART_MASK_TRIAL_NMIN.copy(__NAME__)
-WAVE_CCF_SMART_MASK_TRIAL_NMIN.value = 9000
-
-# define a trial maximum FP N value (should be higher than true
-#     maximum FP N value)
-WAVE_CCF_SMART_MASK_TRIAL_NMAX = WAVE_CCF_SMART_MASK_TRIAL_NMAX.copy(__NAME__)
-WAVE_CCF_SMART_MASK_TRIAL_NMAX.value = 27000
-
-# define the converges parameter for dwave in smart mask generation
-WAVE_CCF_SMART_MASK_DWAVE_THRES = WAVE_CCF_SMART_MASK_DWAVE_THRES.copy(__NAME__)
-WAVE_CCF_SMART_MASK_DWAVE_THRES.value = 1.0e-9
-
-# define the quality control threshold from RV of CCF FP between master
-#    fiber and other fibers, above this limit fails QC [m/s]
-WAVE_CCF_RV_THRES_QC = WAVE_CCF_RV_THRES_QC.copy(__NAME__)
-WAVE_CCF_RV_THRES_QC.value = 0.5
-
-# =============================================================================
-# CALIBRATION: WAVE MASTER REFERENCE SETTINGS
-# =============================================================================
-# min SNR to consider the line
-WAVEREF_NSIG_MIN = WAVEREF_NSIG_MIN.copy(__NAME__)
-WAVEREF_NSIG_MIN.value = 15
-
-# minimum distance to the edge of the array to consider a line
-WAVEREF_EDGE_WMAX = WAVEREF_EDGE_WMAX.copy(__NAME__)
-WAVEREF_EDGE_WMAX.value = 20
-
-# value in pixel (+/-) for the box size around each HC line to perform fit
-WAVEREF_HC_BOXSIZE = WAVEREF_HC_BOXSIZE.copy(__NAME__)
-WAVEREF_HC_BOXSIZE.value = 5
-
-# get valid hc dprtypes (string list separated by commas)
-WAVEREF_HC_FIBTYPES = WAVEREF_HC_FIBTYPES.copy(__NAME__)
-WAVEREF_HC_FIBTYPES.value = 'HCONE, HCTWO'
-
-# get valid fp dprtypes (string list separated by commas)
-WAVEREF_FP_FIBTYPES = WAVEREF_FP_FIBTYPES.copy(__NAME__)
-WAVEREF_FP_FIBTYPES.value = 'FP'
-
-# get the degree to fix master wavelength to in hc mode
-WAVEREF_FITDEG = WAVEREF_FITDEG.copy(__NAME__)
-WAVEREF_FITDEG.value = 5
-
-# define the lowest N for fp peaks
-WAVEREF_FP_NLOW = WAVEREF_FP_NLOW.copy(__NAME__)
-WAVEREF_FP_NLOW.value = 9000
-
-# define the highest N for fp peaks
-WAVEREF_FP_NHIGH = WAVEREF_FP_NHIGH.copy(__NAME__)
-WAVEREF_FP_NHIGH.value = 30000
-
-# define the number of iterations required to do the Fp polynomial inversion
-WAVEREF_FP_POLYINV = WAVEREF_FP_POLYINV.copy(__NAME__)
-WAVEREF_FP_POLYINV.value = 4
-
-# define the wave fiber comparison plot order number
-WAVE_FIBER_COMP_PLOT_ORD = WAVE_FIBER_COMP_PLOT_ORD.copy(__NAME__)
-WAVE_FIBER_COMP_PLOT_ORD.value = 35
 
 # =============================================================================
 # CALIBRATION: WAVE NIGHT SETTINGS
@@ -1590,7 +2087,7 @@ TAPAS_FILE_FMT.value = 'fits'
 
 # The allowed input DPRTYPES for input telluric files
 TELLU_ALLOWED_DPRTYPES = TELLU_ALLOWED_DPRTYPES.copy(__NAME__)
-TELLU_ALLOWED_DPRTYPES.value = 'OBJ_DARK, OBJ_FP'
+TELLU_ALLOWED_DPRTYPES.value = 'OBJ_DARK, OBJ_FP, POLAR_FP, POLAR_DARK'
 
 # the INPUT type (KW_OUTPUT header key) and DrsFitsFile name required for
 #   input telluric files
@@ -1606,9 +2103,9 @@ TELLURIC_FIBER_TYPE.value = 'AB'
 TELLU_CUT_BLAZE_NORM = TELLU_CUT_BLAZE_NORM.copy(__NAME__)
 TELLU_CUT_BLAZE_NORM.value = 0.2
 
-# Define telluric black/white list directory
-TELLU_LIST_DIRECOTRY = TELLU_LIST_DIRECOTRY.copy(__NAME__)
-TELLU_LIST_DIRECOTRY.value = './data/spirou/telluric/'
+# Define telluric include/exclude list directory
+TELLU_LIST_DIRECTORY = TELLU_LIST_DIRECTORY.copy(__NAME__)
+TELLU_LIST_DIRECTORY.value = 'telluric/'
 
 # Define telluric white list name
 TELLU_WHITELIST_NAME = TELLU_WHITELIST_NAME.copy(__NAME__)
@@ -1618,6 +2115,10 @@ TELLU_WHITELIST_NAME.value = 'tellu_whitelist.txt'
 TELLU_BLACKLIST_NAME = TELLU_BLACKLIST_NAME.copy(__NAME__)
 TELLU_BLACKLIST_NAME.value = 'tellu_blacklist.txt'
 
+# Force only pre-cleaning (not recommended - only for debugging)
+TELLU_ONLY_PRECLEAN = TELLU_ONLY_PRECLEAN.copy(__NAME__)
+TELLU_ONLY_PRECLEAN.value = False
+
 # =============================================================================
 # OBJECT: TELLURIC PRE-CLEANING SETTINGS
 # =============================================================================
@@ -1625,22 +2126,31 @@ TELLU_BLACKLIST_NAME.value = 'tellu_blacklist.txt'
 TELLUP_DO_PRECLEANING = TELLUP_DO_PRECLEANING.copy(__NAME__)
 TELLUP_DO_PRECLEANING.value = True
 
+# define whether we do finite resolution correct (if we have a template)
+TELLUP_DO_FINITE_RES_CORR = TELLUP_DO_FINITE_RES_CORR.copy(__NAME__)
+TELLUP_DO_FINITE_RES_CORR.value = True
+
 # width in km/s for the ccf scan to determine the abso in pre-cleaning
 TELLUP_CCF_SCAN_RANGE = TELLUP_CCF_SCAN_RANGE.copy(__NAME__)
-TELLUP_CCF_SCAN_RANGE.value = 20
+TELLUP_CCF_SCAN_RANGE.value = 50
 
 # define whether to clean OH lines
 TELLUP_CLEAN_OH_LINES = TELLUP_CLEAN_OH_LINES.copy(__NAME__)
 TELLUP_CLEAN_OH_LINES.value = True
 
+# Define the number of bright OH lines that will be individually adjusted
+#     in amplitude. Done only on lines that are at an SNR > 1
+TELLUP_OHLINE_NBRIGHT = TELLUP_OHLINE_NBRIGHT.copy(__NAME__)
+TELLUP_OHLINE_NBRIGHT.value = 300
+
 # define the OH line pca file
 TELLUP_OHLINE_PCA_FILE = TELLUP_OHLINE_PCA_FILE.copy(__NAME__)
 TELLUP_OHLINE_PCA_FILE.value = 'sky_PCs.fits'
 
-# define the orders not to use in pre-cleaning fit (due to theraml
+# define the orders not to use in pre-cleaning fit (due to thermal
 # background)
 TELLUP_REMOVE_ORDS = TELLUP_REMOVE_ORDS.copy(__NAME__)
-TELLUP_REMOVE_ORDS.value = '47, 48'
+TELLUP_REMOVE_ORDS.value = '45, 46, 47, 48'
 
 # define the minimum snr to accept orders for pre-cleaning fit
 TELLUP_SNR_MIN_THRES = TELLUP_SNR_MIN_THRES.copy(__NAME__)
@@ -1661,7 +2171,7 @@ TELLUP_DEXPO_CONV_THRES.value = 1.0e-4
 # define the maximum number of iterations to try to get dexpo
 # convergence
 TELLUP_DEXPO_MAX_ITR = TELLUP_DEXPO_MAX_ITR.copy(__NAME__)
-TELLUP_DEXPO_MAX_ITR.value = 20
+TELLUP_DEXPO_MAX_ITR.value = 40
 
 # define the kernel threshold in abso_expo
 TELLUP_ABSO_EXPO_KTHRES = TELLUP_ABSO_EXPO_KTHRES.copy(__NAME__)
@@ -1703,6 +2213,11 @@ TELLUP_OTHER_BOUNDS.value = '0.8, 3.0'
 #  water absorber
 TELLUP_WATER_BOUNDS = TELLUP_WATER_BOUNDS.copy(__NAME__)
 TELLUP_WATER_BOUNDS.value = '0.1, 15'
+
+# set the plot order for the finite resolution plot (somewhere aroun 1.45 um)
+TELLU_FINITE_RES_ORDER = TELLU_FINITE_RES_ORDER.copy(__NAME__)
+TELLU_FINITE_RES_ORDER.value = 26
+TELLU_FINITE_RES_ORDER.author = base.AUTHORS['EA']
 
 # =============================================================================
 # OBJECT: MAKE TELLURIC SETTINGS
@@ -1769,6 +2284,11 @@ MKTELLU_QC_SNR_MIN.value = 100
 MKTELLU_QC_AIRMASS_DIFF = MKTELLU_QC_AIRMASS_DIFF.copy(__NAME__)
 MKTELLU_QC_AIRMASS_DIFF.value = 0.3
 
+# define the sigma cut for tellu transmission model
+TELLU_TRANS_MODEL_SIG = TELLU_TRANS_MODEL_SIG.copy(__NAME__)
+TELLU_TRANS_MODEL_SIG.value = 5.0
+TELLU_TRANS_MODEL_SIG.author = base.AUTHORS['EA']
+
 # =============================================================================
 # OBJECT: FIT TELLURIC SETTINGS
 # =============================================================================
@@ -1789,8 +2309,7 @@ FTELLU_NUM_PRINCIPLE_COMP.value = 5
 # The number of transmission files to use in the PCA fit (use this number of
 #    trans files closest in expo_h20 and expo_water
 FTELLU_NUM_TRANS = FTELLU_NUM_TRANS.copy(__NAME__)
-# TODO: put back to 50 after test
-FTELLU_NUM_TRANS.value = 20
+FTELLU_NUM_TRANS.value = 50
 
 # Define whether to add the first derivative and broadening factor to the
 #     principal components this allows a variable resolution and velocity
@@ -1885,16 +2404,68 @@ MKTEMPLATE_S1D_ITNUM.value = 5
 MKTEMPLATE_S1D_LOWF_SIZE = MKTEMPLATE_S1D_LOWF_SIZE.copy(__NAME__)
 MKTEMPLATE_S1D_LOWF_SIZE.value = 501
 
+# Define the minimum allowed berv coverage to construct a template
+#   in km/s  (default is double the resolution in km/s)
+MKTEMPLATE_BERVCOR_QCMIN = MKTEMPLATE_BERVCOR_QCMIN.copy(__NAME__)
+MKTEMPLATE_BERVCOR_QCMIN.value = 8.0
+
+# Define the core SNR in order to calculate required BERV coverage
+MKTEMPLATE_BERVCOV_CSNR = MKTEMPLATE_BERVCOV_CSNR.copy(__NAME__)
+MKTEMPLATE_BERVCOV_CSNR.value = 100.0
+
+# Defome the resolution in km/s for calculating BERV coverage
+MKTEMPLATE_BERVCOV_RES = MKTEMPLATE_BERVCOV_RES.copy(__NAME__)
+MKTEMPLATE_BERVCOV_RES.value = 4.0
+
+# Define whether to run template making in debug mode (do not bin the
+#   data when medianing)
+MKTEMPLATE_DEBUG_MODE = MKTEMPLATE_DEBUG_MODE.copy(__NAME__)
+MKTEMPLATE_DEBUG_MODE.value = False
+
+# Define the max number of files to be allowed into a bin (if not in debug
+#   mode)
+MKTEMPLATE_MAX_OPEN_FILES = MKTEMPLATE_MAX_OPEN_FILES.copy(__NAME__)
+MKTEMPLATE_MAX_OPEN_FILES.value = 50
+
+# Define the threshold for the Lucy-Richardson deconvolution steps. This is
+#    the maximum  value of the 99th percentile of the feed-back term
+MKTEMPLATE_DECONV_ITR_THRES = MKTEMPLATE_DECONV_ITR_THRES.copy(__NAME__)
+MKTEMPLATE_DECONV_ITR_THRES.value = 1.0e-3
+MKTEMPLATE_DECONV_ITR_THRES.author = base.AUTHORS['EA']
+
+# Define the max number of iterations to run if the iteration threshold
+#     is not met
+MKTEMPLATE_DECONV_ITR_MAX = MKTEMPLATE_DECONV_ITR_MAX.copy(__NAME__)
+MKTEMPLATE_DECONV_ITR_MAX.value = 100
+MKTEMPLATE_DECONV_ITR_MAX.author = base.AUTHORS['EA']
+
 # =============================================================================
 # CALIBRATION: CCF SETTINGS
 # =============================================================================
 # Define the ccf mask path
 CCF_MASK_PATH = CCF_MASK_PATH.copy(__NAME__)
-CCF_MASK_PATH.value = './data/spirou/ccf/'
+CCF_MASK_PATH.value = 'ccf_masks/'
+CCF_MASK_PATH.author = base.AUTHORS['NJC']
 
-# Define the default CCF MASK to use
+# Define the TEFF mask table for when CCF_DEFAULT_MASK is TEFF
+CCF_TEFF_MASK_TABLE = CCF_TEFF_MASK_TABLE.copy(__NAME__)
+CCF_TEFF_MASK_TABLE.value = 'teff_masks.csv'
+CCF_TEFF_MASK_TABLE.datatype = 'csv'
+CCF_TEFF_MASK_TABLE.author = base.AUTHORS['NJC']
+
+# Define the default CCF MASK to use (filename or TEFF to decide based on
+#    object temperature) - for TEFF setup see CCF_TEFF_MASK_TABLE file
 CCF_DEFAULT_MASK = CCF_DEFAULT_MASK.copy(__NAME__)
-CCF_DEFAULT_MASK.value = 'masque_sept18_andres_trans50.mas'
+CCF_DEFAULT_MASK.value = 'TEFF'
+CCF_DEFAULT_MASK.author = base.AUTHORS['NJC']
+
+# Define the default CCF MASK normalisation mode
+#   options are:
+#     'None'         for no normalization
+#     'all'          for normalization across all orders
+#     'order'        for normalization for each order
+CCF_MASK_NORMALIZATION = CCF_MASK_NORMALIZATION.copy(__NAME__)
+CCF_MASK_NORMALIZATION.value = 'order'
 
 # Define the wavelength units for the mask
 CCF_MASK_UNITS = CCF_MASK_UNITS.copy(__NAME__)
@@ -1914,8 +2485,8 @@ CCF_MASK_WIDTH.value = 1.7
 
 # Define target rv header null value
 #     (values greater than absolute value are set to zero)
-CCF_OBJRV_NULL_VAL = CCF_OBJRV_NULL_VAL.copy(__NAME__)
-CCF_OBJRV_NULL_VAL.value = 1000
+OBJRV_NULL_VAL = OBJRV_NULL_VAL.copy(__NAME__)
+OBJRV_NULL_VAL.value = 1000
 
 #  Define the maximum allowed ratio between input CCF STEP and CCF WIDTH
 #     i.e. error will be generated if CCF_STEP > (CCF_WIDTH / RATIO)
@@ -1951,7 +2522,7 @@ CCF_N_ORD_MAX.value = 48
 
 # Allowed input DPRTYPES for input  for CCF recipe
 CCF_ALLOWED_DPRTYPES = CCF_ALLOWED_DPRTYPES.copy(__NAME__)
-CCF_ALLOWED_DPRTYPES.value = 'OBJ_DARK, OBJ_FP'
+CCF_ALLOWED_DPRTYPES.value = 'OBJ_DARK, OBJ_FP, POLAR_DARK, POLAR_FP'
 
 # Define the KW_OUTPUT types that are valid telluric corrected spectra
 CCF_CORRECT_TELLU_TYPES = CCF_CORRECT_TELLU_TYPES.copy(__NAME__)
@@ -1986,142 +2557,238 @@ CCF_FIT_TYPE.value = 0
 CCF_BLAZE_NORM_PERCENTILE = CCF_BLAZE_NORM_PERCENTILE.copy(__NAME__)
 CCF_BLAZE_NORM_PERCENTILE.value = 90
 
-# =============================================================================
-# OBJECT: POLARISATION SETTINGS
-# =============================================================================
-#  Define all possible fibers used for polarimetry
-#     (define as a string list)
-POLAR_VALID_FIBERS = POLAR_VALID_FIBERS.copy(__NAME__)
-POLAR_VALID_FIBERS.value = 'A, B'
+# Define the minimum number of sigma the peak CCF must have to be acceptable
+CCF_NSIG_THRESHOLD = CCF_NSIG_THRESHOLD.copy(__NAME__)
+CCF_NSIG_THRESHOLD.value = 5
+CCF_NSIG_THRESHOLD.author = base.AUTHORS['EA']
 
-#  Define all possible stokes parameters  used for polarimetry
-#      (define as a string list)
-POLAR_VALID_STOKES = POLAR_VALID_STOKES.copy(__NAME__)
-POLAR_VALID_STOKES.value = 'V, Q, U'
+# Define the minimum number of sigma the FWHM of CCF must have to be acceptable
+CCF_FWHM_SIGCUT = CCF_FWHM_SIGCUT.copy(__NAME__)
+CCF_FWHM_SIGCUT.value = 8
+CCF_FWHM_SIGCUT.author = base.AUTHORS['EA']
 
-#  Define the polarimetry calculation method
+# =============================================================================
+# GENERAL POLARISATION SETTINGS
+# =============================================================================
+# Define all possible fibers used for polarimetry
+POLAR_FIBERS = POLAR_FIBERS.copy(__NAME__)
+POLAR_FIBERS.value = 'A,B'
+POLAR_FIBERS.author = base.AUTHORS['EM']
+
+# Define all possible stokes parameters
+POLAR_STOKES_PARAMS = POLAR_STOKES_PARAMS.copy(__NAME__)
+POLAR_STOKES_PARAMS.value = 'V,Q,U'
+POLAR_STOKES_PARAMS.author = base.AUTHORS['EM']
+
+# Whether or not to correct for BERV shift before calculate polarimetry
+POLAR_BERV_CORRECT = POLAR_BERV_CORRECT.copy(__NAME__)
+POLAR_BERV_CORRECT.value = True
+POLAR_BERV_CORRECT.author = base.AUTHORS['EM']
+
+# Whether or not to correct for SOURCE RV shift before calculate polarimetry
+POLAR_SOURCE_RV_CORRECT = POLAR_SOURCE_RV_CORRECT.copy(__NAME__)
+POLAR_SOURCE_RV_CORRECT.value = False
+POLAR_SOURCE_RV_CORRECT.author = base.AUTHORS['EM']
+
+#  Define the polarimetry method
 #    currently must be either:
 #         - Ratio
 #         - Difference
 POLAR_METHOD = POLAR_METHOD.copy(__NAME__)
 POLAR_METHOD.value = 'Ratio'
+POLAR_METHOD.author = base.AUTHORS['EM']
 
-#  Define the telluric mask for calculation of continnum lower limits
-#    (string list)
-POLAR_CONT_TELLMASK_LOWER = POLAR_CONT_TELLMASK_LOWER.copy(__NAME__)
-POLAR_CONT_TELLMASK_LOWER.value = '930, 1109, 1326, 1782, 1997, 2047'
+# Whether or not to interpolate flux values to correct for wavelength
+#   shifts between exposures
+POLAR_INTERPOLATE_FLUX = POLAR_INTERPOLATE_FLUX.copy(__NAME__)
+POLAR_INTERPOLATE_FLUX.value = True
+POLAR_INTERPOLATE_FLUX.author = base.AUTHORS['EM']
 
-#  Define the telluric mask for calculation of continnum upper limits
-#    (string list)
-POLAR_CONT_TELLMASK_UPPER = POLAR_CONT_TELLMASK_UPPER.copy(__NAME__)
-POLAR_CONT_TELLMASK_UPPER.value = '967, 1167, 1491, 1979, 2027, 2076'
+# Select stokes I continuum detection algorithm:
+#   formaly IC_STOKESI_CONTINUUM_DETECTION_ALGORITHM
+#     'IRAF' or 'MOVING_MEDIAN'
+STOKESI_CONTINUUM_DET_ALG = STOKESI_CONTINUUM_DET_ALG.copy(__NAME__)
+STOKESI_CONTINUUM_DET_ALG.value = 'IRAF'
+STOKESI_CONTINUUM_DET_ALG.author = base.AUTHORS['EM']
 
-#  Perform LSD analysis
-POLAR_LSD_ANALYSIS = POLAR_LSD_ANALYSIS.copy(__NAME__)
-POLAR_LSD_ANALYSIS.value = True
+# Select stokes I continuum detection algorithm:
+#   formaly IC_POLAR_CONTINUUM_DETECTION_ALGORITHM
+#     'IRAF' or 'MOVING_MEDIAN'
+POLAR_CONTINUUM_DET_ALG = POLAR_CONTINUUM_DET_ALG.copy(__NAME__)
+POLAR_CONTINUUM_DET_ALG.value = 'IRAF'
+POLAR_CONTINUUM_DET_ALG.author = base.AUTHORS['EM']
 
-#  Define the spectral lsd mask directory for lsd polar calculations
-POLAR_LSD_PATH = POLAR_LSD_PATH.copy(__NAME__)
-POLAR_LSD_PATH.value = './data/spirou/lsd/'
+# Normalize Stokes I (True or False)
+POLAR_NORMALIZE_STOKES_I = POLAR_NORMALIZE_STOKES_I.copy(__NAME__)
+POLAR_NORMALIZE_STOKES_I.value = True
+POLAR_NORMALIZE_STOKES_I.author = base.AUTHORS['EM']
 
-#  Define the file regular expression key to lsd mask files
+# Remove continuum polarization
+POLAR_REMOVE_CONTINUUM = POLAR_REMOVE_CONTINUUM.copy(__NAME__)
+POLAR_REMOVE_CONTINUUM.value = True
+POLAR_REMOVE_CONTINUUM.author = base.AUTHORS['EM']
+
+# Apply polarimetric sigma-clip cleanning (Works better if continuum
+#     is removed)
+POLAR_CLEAN_BY_SIGMA_CLIPPING = POLAR_CLEAN_BY_SIGMA_CLIPPING.copy(__NAME__)
+POLAR_CLEAN_BY_SIGMA_CLIPPING.value = True
+POLAR_CLEAN_BY_SIGMA_CLIPPING.author = base.AUTHORS['EM']
+
+# Define number of sigmas within which apply clipping
+POLAR_NSIGMA_CLIPPING = POLAR_NSIGMA_CLIPPING.copy(__NAME__)
+POLAR_NSIGMA_CLIPPING.value = 4
+POLAR_NSIGMA_CLIPPING.author = base.AUTHORS['EM']
+
+# Define the reddest wavelength to use throughout polar code
+POLAR_REDDEST_THRESHOLD = POLAR_REDDEST_THRESHOLD.copy(__NAME__)
+POLAR_REDDEST_THRESHOLD.value = 2450
+POLAR_REDDEST_THRESHOLD.author = base.AUTHORS['EM']
+
+# =============================================================================
+# POLAR POLY MOVING MEDIAN SETTINGS
+# =============================================================================
+# Define the polarimetry continuum bin size
+POLAR_CONT_BINSIZE = POLAR_CONT_BINSIZE.copy(__NAME__)
+POLAR_CONT_BINSIZE.value = 900
+POLAR_CONT_BINSIZE.author = base.AUTHORS['EM']
+
+# Define the polarimetry continuum overlap size
+POLAR_CONT_OVERLAP = POLAR_CONT_OVERLAP.copy(__NAME__)
+POLAR_CONT_OVERLAP.value = 200
+POLAR_CONT_OVERLAP.author = base.AUTHORS['EM']
+
+# Fit polynomial to continuum polarization?
+#    If False it will use a cubic interpolation instead of polynomial fit
+POLAR_CONT_POLYNOMIAL_FIT = POLAR_CONT_POLYNOMIAL_FIT.copy(__NAME__)
+POLAR_CONT_POLYNOMIAL_FIT.value = False
+POLAR_CONT_POLYNOMIAL_FIT.author = base.AUTHORS['EM']
+
+# Define degree of polynomial to fit continuum polarization
+POLAR_CONT_DEG_POLYNOMIAL = POLAR_CONT_DEG_POLYNOMIAL.copy(__NAME__)
+POLAR_CONT_DEG_POLYNOMIAL.value = 20
+POLAR_CONT_DEG_POLYNOMIAL.author = base.AUTHORS['EM']
+
+# =============================================================================
+# POLAR IRAF SETTINGS
+# =============================================================================
+# function to fit to the stokes I continuum: must be 'polynomial' or
+#    'spline3'
+STOKESI_IRAF_CONT_FIT_FUNC = STOKESI_IRAF_CONT_FIT_FUNC.copy(__NAME__)
+STOKESI_IRAF_CONT_FIT_FUNC.value = 'spline3'
+STOKESI_IRAF_CONT_FIT_FUNC.author = base.AUTHORS['EM']
+
+# function to fit to the polar continuum: must be 'polynomial' or 'spline3'
+POLAR_IRAF_CONT_FIT_FUNC = POLAR_IRAF_CONT_FIT_FUNC.copy(__NAME__)
+POLAR_IRAF_CONT_FIT_FUNC.value = 'spline3'
+POLAR_IRAF_CONT_FIT_FUNC.author = base.AUTHORS['EM']
+
+# stokes i continuum fit function order: 'polynomial': degree or 'spline3':
+#    number of knots
+STOKESI_IRAF_CONT_FUNC_ORDER = STOKESI_IRAF_CONT_FUNC_ORDER.copy(__NAME__)
+STOKESI_IRAF_CONT_FUNC_ORDER.value = 60
+STOKESI_IRAF_CONT_FUNC_ORDER.author = base.AUTHORS['EM']
+
+# polar continuum fit function order: 'polynomial': degree or 'spline3':
+#    number of knots
+POLAR_IRAF_CONT_FUNC_ORDER = POLAR_IRAF_CONT_FUNC_ORDER.copy(__NAME__)
+POLAR_IRAF_CONT_FUNC_ORDER.value = 20
+POLAR_IRAF_CONT_FUNC_ORDER.author = base.AUTHORS['EM']
+
+# =============================================================================
+# POLAR LSD SETTINGS
+# =============================================================================
+# Define the spectral lsd mask directory for lsd polar calculations
+POLAR_LSD_DIR = POLAR_LSD_DIR.copy(__NAME__)
+POLAR_LSD_DIR.value = 'lsd'
+POLAR_LSD_DIR.author = base.AUTHORS['EM']
+
+# Define the file regular expression key to lsd mask files
+#  for "marcs_t3000g50_all" this should be:
+#     - filekey = 'marcs_t*g
+#  for "t4000_g4.0_m0.00" it should be:
+#     - filekey = 't*_g'
 POLAR_LSD_FILE_KEY = POLAR_LSD_FILE_KEY.copy(__NAME__)
 POLAR_LSD_FILE_KEY.value = 'marcs_t*g50_all'
+POLAR_LSD_FILE_KEY.author = base.AUTHORS['EM']
 
-#  Define mask for selecting lines to be used in the LSD analysis
-#      lower bounds (string list)
-POLAR_LSD_WL_LOWER = POLAR_LSD_WL_LOWER.copy(__NAME__)
-POLAR_LSD_WL_LOWER.value = '983, 1163, 1280, 1490, 1975, 2030'
+# Define minimum lande of lines to be used in the LSD analyis
+POLAR_LSD_MIN_LANDE = POLAR_LSD_MIN_LANDE.copy(__NAME__)
+POLAR_LSD_MIN_LANDE.value = 0.0
+POLAR_LSD_MIN_LANDE.author = base.AUTHORS['EM']
 
-#  Define mask for selecting lines to be used in the LSD analysis
-#      upper bounds (string list)
-POLAR_LSD_WL_UPPER = POLAR_LSD_WL_UPPER.copy(__NAME__)
-POLAR_LSD_WL_UPPER.value = '1116, 1260, 1331, 1790, 1995, 2047.5'
+# Define maximum lande of lines to be used in the LSD analyis
+POLAR_LSD_MAX_LANDE = POLAR_LSD_MAX_LANDE.copy(__NAME__)
+POLAR_LSD_MAX_LANDE.value = 10.0
+POLAR_LSD_MAX_LANDE.author = base.AUTHORS['EM']
+
+# If mask lines are in air-wavelength then they will have to be
+#     converted from air to vacuum
+POLAR_LSD_CCFLINES_AIR_WAVE = POLAR_LSD_CCFLINES_AIR_WAVE.copy(__NAME__)
+POLAR_LSD_CCFLINES_AIR_WAVE.value = False
+POLAR_LSD_CCFLINES_AIR_WAVE.author = base.AUTHORS['EM']
 
 # Define minimum line depth to be used in the LSD analyis
 POLAR_LSD_MIN_LINEDEPTH = POLAR_LSD_MIN_LINEDEPTH.copy(__NAME__)
-POLAR_LSD_MIN_LINEDEPTH.value = 0.175
+POLAR_LSD_MIN_LINEDEPTH.value = 0.03
+POLAR_LSD_MIN_LINEDEPTH.author = base.AUTHORS['EM']
 
-#  Define initial velocity (km/s) for output LSD profile
-POLAR_LSD_VINIT = POLAR_LSD_VINIT.copy(__NAME__)
-POLAR_LSD_VINIT.value = -150.0
+# Define maximum line depth to be used in the LSD analyis
+POLAR_LSD_MAX_LINEDEPTH = POLAR_LSD_MAX_LINEDEPTH.copy(__NAME__)
+POLAR_LSD_MAX_LINEDEPTH.value = 1
+POLAR_LSD_MAX_LINEDEPTH.author = base.AUTHORS['EM']
+
+# Define initial velocity (km/s) for output LSD profile
+POLAR_LSD_V0 = POLAR_LSD_V0.copy(__NAME__)
+POLAR_LSD_V0.value = -150.0
+POLAR_LSD_V0.author = base.AUTHORS['EM']
 
 #  Define final velocity (km/s) for output LSD profile
-POLAR_LSD_VFINAL = POLAR_LSD_VFINAL.copy(__NAME__)
-POLAR_LSD_VFINAL.value = 150.0
+POLAR_LSD_VF = POLAR_LSD_VF.copy(__NAME__)
+POLAR_LSD_VF.value = 150.0
+POLAR_LSD_VF.author = base.AUTHORS['EM']
 
-#  Define the order wavelength mask filename
-POLAR_LSD_ORDER_MASK = POLAR_LSD_ORDER_MASK.copy(__NAME__)
-POLAR_LSD_ORDER_MASK.value = 'lsd_order_mask.dat'
+# Define number of points for output LSD profile
+POLAR_LSD_NP = POLAR_LSD_NP.copy(__NAME__)
+POLAR_LSD_NP.value = 151
+POLAR_LSD_NP.author = base.AUTHORS['EM']
 
-#  Define whether to normalise by stokei by the continuum in lsd process
-POLAR_LSD_NORM = POLAR_LSD_NORM.copy(__NAME__)
-POLAR_LSD_NORM.value = True
+# Renormalize data before LSD analysis
+POLAR_LSD_NORMALIZE = POLAR_LSD_NORMALIZE.copy(__NAME__)
+POLAR_LSD_NORMALIZE.value = False
+POLAR_LSD_NORMALIZE.author = base.AUTHORS['EM']
 
-#  Define the normalise by continuum lsd binsize
-#     used in the normalization with POLAR_LSD_NORM = True
-POLAR_LSD_NBIN1 = POLAR_LSD_NBIN1.copy(__NAME__)
-POLAR_LSD_NBIN1.value = 30
+# Remove edges of LSD profile
+POLAR_LSD_REMOVE_EDGES = POLAR_LSD_REMOVE_EDGES.copy(__NAME__)
+POLAR_LSD_REMOVE_EDGES.value = True
+POLAR_LSD_REMOVE_EDGES.author = base.AUTHORS['EM']
 
-#  Define the normalise by continuum lsd overlap with adjacent bins
-#     used in the normalization with POLAR_LSD_NORM = True
-POLAR_LSD_NOVERLAP1 = POLAR_LSD_NOVERLAP1.copy(__NAME__)
-POLAR_LSD_NOVERLAP1.value = 15
+# Define the guess at the resolving power for lsd profile fit
+POLAR_LSD_RES_POWER_GUESS = POLAR_LSD_RES_POWER_GUESS.copy(__NAME__)
+POLAR_LSD_RES_POWER_GUESS.value = 50000.0
+POLAR_LSD_RES_POWER_GUESS.author = base.AUTHORS['EM']
 
-#  Define the normalise by continuum lsd sigma clip value
-#     used in the normalization with POLAR_LSD_NORM = True
-POLAR_LSD_NSIGCLIP1 = POLAR_LSD_NSIGCLIP1.copy(__NAME__)
-POLAR_LSD_NSIGCLIP1.value = 3
+# =============================================================================
+# DEBUG OUTPUT FILE SETTINGS
+# =============================================================================
+# Whether to save background debug file (large 0.5 GB per file)
+#   one of these per extraction (lots)
+DEBUG_BACKGROUND_FILE = DEBUG_BACKGROUND_FILE.copy(__NAME__)
+DEBUG_BACKGROUND_FILE.value = False
 
-#  Define the normalise by continuum lsd window size (local fit size)
-#     used in the normalization with POLAR_LSD_NORM = True
-POLAR_LSD_NWINDOW1 = POLAR_LSD_NWINDOW1.copy(__NAME__)
-POLAR_LSD_NWINDOW1.value = 2
+# Whether to save the E2DSLL file (around 0.05 to 0.1 GB per file)
+#   one of these per fiber (lots)
+DEBUG_E2DSLL_FILE = DEBUG_E2DSLL_FILE.copy(__NAME__)
+DEBUG_E2DSLL_FILE.value = True
 
-#  Define the normalise by continuum lsd mode (mean/median/max)
-#     used in the normalization with POLAR_LSD_NORM = True
-POLAR_LSD_NMODE1 = POLAR_LSD_NMODE1.copy(__NAME__)
-POLAR_LSD_NMODE1.value = 'median'
+# Whether to save the shape in and out debug files (around 0.1 GB per file)
+#   but only one set of these per night
+DEBUG_SHAPE_FILES = DEBUG_SHAPE_FILES.copy(__NAME__)
+DEBUG_SHAPE_FILES.value = False
 
-#  Define whether to use a linear fit in the normalise by continuum lsd calc
-#     used in the normalization with POLAR_LSD_NORM = True
-POLAR_LSD_NLFIT1 = POLAR_LSD_NLFIT1.copy(__NAME__)
-POLAR_LSD_NLFIT1.value = True
-
-#  Define number of points for output LSD profile
-POLAR_LSD_NPOINTS = POLAR_LSD_NPOINTS.copy(__NAME__)
-POLAR_LSD_NPOINTS.value = 201
-
-#  Define the normalise by continuum lsd binsize
-#    used in the profile calculation
-POLAR_LSD_NBIN2 = POLAR_LSD_NBIN2.copy(__NAME__)
-POLAR_LSD_NBIN2.value = 20
-
-#  Define the normalise by continuum lsd overlap with adjacent bins
-#    used in the profile calculation
-POLAR_LSD_NOVERLAP2 = POLAR_LSD_NOVERLAP2.copy(__NAME__)
-POLAR_LSD_NOVERLAP2.value = 5
-
-#  Define the normalise by continuum lsd sigma clip value
-#    used in the profile calculation
-POLAR_LSD_NSIGCLIP2 = POLAR_LSD_NSIGCLIP2.copy(__NAME__)
-POLAR_LSD_NSIGCLIP2.value = 3
-
-#  Define the normalise by continuum lsd window size (local fit size)
-#    used in the profile calculation
-POLAR_LSD_NWINDOW2 = POLAR_LSD_NWINDOW2.copy(__NAME__)
-POLAR_LSD_NWINDOW2.value = 2
-
-#  Define the normalise by continuum lsd mode (mean/median/max)
-#    used in the profile calculation
-POLAR_LSD_NMODE2 = POLAR_LSD_NMODE2.copy(__NAME__)
-POLAR_LSD_NMODE2.value = 'median'
-
-#  Define whether to use a linear fit in the normalise by continuum lsd calc
-#    used in the profile calculation
-POLAR_LSD_NLFIT2 = POLAR_LSD_NLFIT2.copy(__NAME__)
-POLAR_LSD_NLFIT2.value = False
-
+# Whether to save the uncorrected for FP C fiber leak files
+#      (around 0.01 GB per file) one of these per fiber
+DEBUG_UNCORR_EXT_FILES = DEBUG_UNCORR_EXT_FILES.copy(__NAME__)
+DEBUG_UNCORR_EXT_FILES.value = False
 
 # =============================================================================
 # DEBUG PLOT SETTINGS
@@ -2138,33 +2805,29 @@ PLOT_DARK_HISTOGRAM.value = True
 PLOT_BADPIX_MAP = PLOT_BADPIX_MAP.copy(__NAME__)
 PLOT_BADPIX_MAP.value = True
 
-# turn on the localisation cent min max debug plot
-PLOT_LOC_MINMAX_CENTS = PLOT_LOC_MINMAX_CENTS.copy(__NAME__)
-PLOT_LOC_MINMAX_CENTS.value = True
+# turn on localisation the width regions plot
+PLOT_LOC_WIDTH_REGIONS = PLOT_LOC_WIDTH_REGIONS.copy(__NAME__)
+PLOT_LOC_WIDTH_REGIONS.value = True
 
-# turn on the localisation cent/thres debug plot
-PLOT_LOC_MIN_CENTS_THRES = PLOT_LOC_MIN_CENTS_THRES.copy(__NAME__)
-PLOT_LOC_MIN_CENTS_THRES.value = True
+# turn on localisation fiber doublet paroty plot
+PLOT_LOC_FIBER_DOUBLET_PARITY = PLOT_LOC_FIBER_DOUBLET_PARITY.copy(__NAME__)
+PLOT_LOC_FIBER_DOUBLET_PARITY.value = True
 
-# turn on the localisation finding orders debug plot
-PLOT_LOC_FINDING_ORDERS = PLOT_LOC_FINDING_ORDERS.copy(__NAME__)
-PLOT_LOC_FINDING_ORDERS.value = False
+# turn on localisation gap in orders plot
+PLOT_LOC_GAP_ORDERS = PLOT_LOC_GAP_ORDERS.copy(__NAME__)
+PLOT_LOC_GAP_ORDERS.value = True
 
-# turn on the image above saturation threshold debug plot
-PLOT_LOC_IM_SAT_THRES = PLOT_LOC_IM_SAT_THRES.copy(__NAME__)
-PLOT_LOC_IM_SAT_THRES.value = True
+# turn on localisation image fit plot
+PLOT_LOC_IMAGE_FIT = PLOT_LOC_IMAGE_FIT.copy(__NAME__)
+PLOT_LOC_IMAGE_FIT.value = True
 
-# turn on the localisation fit residuals plot (warning: done many times)
-PLOT_LOC_FIT_RESIDUALS = PLOT_LOC_FIT_RESIDUALS.copy(__NAME__)
-PLOT_LOC_FIT_RESIDUALS.value = False
+# turn on localisation image corners plot
+PLOT_LOC_IM_CORNER = PLOT_LOC_IM_CORNER.copy(__NAME__)
+PLOT_LOC_IM_CORNER.value = True
 
-# turn on the order number vs rms debug plot
-PLOT_LOC_ORD_VS_RMS = PLOT_LOC_ORD_VS_RMS.copy(__NAME__)
-PLOT_LOC_ORD_VS_RMS.value = True
-
-# turn on the localisation check coeffs debug plot
-PLOT_LOC_CHECK_COEFFS = PLOT_LOC_CHECK_COEFFS.copy(__NAME__)
-PLOT_LOC_CHECK_COEFFS.value = True
+# turn on localisation image regions plot
+PLOT_LOC_IM_REGIONS = PLOT_LOC_IM_REGIONS.copy(__NAME__)
+PLOT_LOC_IM_REGIONS.value = True
 
 # turn on the shape dx debug plot
 PLOT_SHAPE_DX = PLOT_SHAPE_DX.copy(__NAME__)
@@ -2222,6 +2885,29 @@ PLOT_EXTRACT_S1D.value = True
 PLOT_EXTRACT_S1D_WEIGHT = PLOT_EXTRACT_S1D_WEIGHT.copy(__NAME__)
 PLOT_EXTRACT_S1D_WEIGHT.value = True
 
+# turn on the wave line fiber comparison plot
+PLOT_WAVE_FIBER_COMPARISON = PLOT_WAVE_FIBER_COMPARISON.copy(__NAME__)
+PLOT_WAVE_FIBER_COMPARISON.value = True
+
+# turn on the wave line fiber comparison plot
+PLOT_WAVE_FIBER_COMP = PLOT_WAVE_FIBER_COMP.copy(__NAME__)
+PLOT_WAVE_FIBER_COMP.value = True
+
+# turn on the wave length vs cavity width plot
+PLOT_WAVE_WL_CAV = PLOT_WAVE_WL_CAV.copy(__NAME__)
+PLOT_WAVE_WL_CAV.value = True
+
+# turn on the wave diff HC histograms plot
+PLOT_WAVE_HC_DIFF_HIST = PLOT_WAVE_HC_DIFF_HIST.copy(__NAME__)
+PLOT_WAVE_HC_DIFF_HIST.value = True
+
+# turn on the wave lines hc/fp expected vs measured debug plot
+#  (will plot once for hc once for fp)
+PLOT_WAVEREF_EXPECTED = PLOT_WAVEREF_EXPECTED.copy(__NAME__)
+PLOT_WAVEREF_EXPECTED.value = True
+
+# TODO: WAVE plots need sorting
+
 # turn on the wave solution hc guess debug plot (in loop)
 PLOT_WAVE_HC_GUESS = PLOT_WAVE_HC_GUESS.copy(__NAME__)
 PLOT_WAVE_HC_GUESS.value = True
@@ -2237,6 +2923,10 @@ PLOT_WAVE_HC_TFIT_GRID.value = True
 # turn on the wave solution hc resolution map debug plot
 PLOT_WAVE_HC_RESMAP = PLOT_WAVE_HC_RESMAP.copy(__NAME__)
 PLOT_WAVE_HC_RESMAP.value = True
+
+# turn on the wave solution hc resolution map debug plot
+PLOT_WAVE_RESMAP = PLOT_WAVE_RESMAP.copy(__NAME__)
+PLOT_WAVE_RESMAP.value = True
 
 # turn on the wave solution littrow check debug plot
 PLOT_WAVE_LITTROW_CHECK1 = PLOT_WAVE_LITTROW_CHECK1.copy(__NAME__)
@@ -2290,15 +2980,6 @@ PLOT_WAVE_FP_MULTI_ORDER.value = True
 PLOT_WAVE_FP_SINGLE_ORDER = PLOT_WAVE_FP_SINGLE_ORDER.copy(__NAME__)
 PLOT_WAVE_FP_SINGLE_ORDER.value = True
 
-# turn on the wave lines hc/fp expected vs measured debug plot
-#  (will plot once for hc once for fp)
-PLOT_WAVEREF_EXPECTED = PLOT_WAVEREF_EXPECTED.copy(__NAME__)
-PLOT_WAVEREF_EXPECTED.value = True
-
-# turn on the wave line fiber comparison plot
-PLOT_WAVE_FIBER_COMPARISON = PLOT_WAVE_FIBER_COMPARISON.copy(__NAME__)
-PLOT_WAVE_FIBER_COMPARISON.value = True
-
 # turn on the wave per night iteration debug plot
 PLOT_WAVENIGHT_ITERPLOT = PLOT_WAVENIGHT_ITERPLOT.copy(__NAME__)
 PLOT_WAVENIGHT_ITERPLOT.value = True
@@ -2315,6 +2996,10 @@ PLOT_TELLUP_WAVE_TRANS.value = True
 PLOT_TELLUP_ABSO_SPEC = PLOT_TELLUP_ABSO_SPEC.copy(__NAME__)
 PLOT_TELLUP_ABSO_SPEC.value = True
 
+# turn on the telluric OH cleaning debug plot
+PLOT_TELLUP_CLEAN_OH = PLOT_TELLUP_CLEAN_OH.copy(__NAME__)
+PLOT_TELLUP_CLEAN_OH.value = True
+
 # turn on the make tellu wave flux debug plot (in loop)
 PLOT_MKTELLU_WAVE_FLUX1 = PLOT_MKTELLU_WAVE_FLUX1.copy(__NAME__)
 PLOT_MKTELLU_WAVE_FLUX1.value = False
@@ -2322,6 +3007,10 @@ PLOT_MKTELLU_WAVE_FLUX1.value = False
 # turn on the make tellu wave flux debug plot (single order)
 PLOT_MKTELLU_WAVE_FLUX2 = PLOT_MKTELLU_WAVE_FLUX2.copy(__NAME__)
 PLOT_MKTELLU_WAVE_FLUX2.value = True
+
+# turn on the make tellu model plot
+PLOT_MKTELLU_MODEL = PLOT_MKTELLU_MODEL.copy(__NAME__)
+PLOT_MKTELLU_MODEL.value = True
 
 # turn on the fit tellu pca component debug plot (in loop)
 PLOT_FTELLU_PCA_COMP1 = PLOT_FTELLU_PCA_COMP1.copy(__NAME__)
@@ -2355,6 +3044,22 @@ PLOT_FTELLU_RECON_ABSO1.value = True
 PLOT_FTELLU_RECON_ABSO2 = PLOT_FTELLU_RECON_ABSO2.copy(__NAME__)
 PLOT_FTELLU_RECON_ABSO2.value = True
 
+# turn on the fit tellu res model debug plot
+PLOT_FTELLU_RES_MODEL = PLOT_FTELLU_RES_MODEL.copy(__NAME__)
+PLOT_FTELLU_RES_MODEL.value = True
+
+# turn on the finite resolution correction debug plot
+PLOT_TELLU_FINITE_RES_CORR = PLOT_TELLU_FINITE_RES_CORR.copy(__NAME__)
+PLOT_TELLU_FINITE_RES_CORR.value = True
+
+# turn on the berv coverage debug plot
+PLOT_MKTEMP_BERV_COV = PLOT_MKTEMP_BERV_COV.copy(__NAME__)
+PLOT_MKTEMP_BERV_COV.value = True
+
+# turn on the template s1d deconvolution plot
+PLOT_MKTEMP_S1D_DECONV = PLOT_MKTEMP_S1D_DECONV.copy(__NAME__)
+PLOT_MKTEMP_S1D_DECONV.value = True
+
 # turn on the ccf rv fit debug plot (in a loop around orders)
 PLOT_CCF_RV_FIT_LOOP = PLOT_CCF_RV_FIT_LOOP.copy(__NAME__)
 PLOT_CCF_RV_FIT_LOOP.value = True
@@ -2370,6 +3075,10 @@ PLOT_CCF_SWAVE_REF.value = False
 # turn on the ccf photon uncertainty debug plot
 PLOT_CCF_PHOTON_UNCERT = PLOT_CCF_PHOTON_UNCERT.copy(__NAME__)
 PLOT_CCF_PHOTON_UNCERT.value = True
+
+# turn on the polar fit continuum plot
+PLOT_POLAR_FIT_CONT = PLOT_POLAR_FIT_CONT.copy(__NAME__)
+PLOT_POLAR_FIT_CONT.value = True
 
 # turn on the polar continuum debug plot
 PLOT_POLAR_CONTINUUM = PLOT_POLAR_CONTINUUM.copy(__NAME__)
@@ -2388,15 +3097,43 @@ PLOT_POLAR_LSD = PLOT_POLAR_LSD.copy(__NAME__)
 PLOT_POLAR_LSD.value = True
 
 # =============================================================================
+# POST PROCESS SETTINGS
+# =============================================================================
+# Define whether (by deafult) to clear reduced directory
+POST_CLEAR_REDUCED = POST_CLEAR_REDUCED.copy(__NAME__)
+POST_CLEAR_REDUCED.value = False
+
+# Define whether (by default) to overwrite post processed files
+POST_OVERWRITE = POST_OVERWRITE.copy(__NAME__)
+POST_OVERWRITE.value = False
+
+# Define the header keyword store to insert extension comment after
+POST_HDREXT_COMMENT_KEY = POST_HDREXT_COMMENT_KEY.copy(__NAME__)
+POST_HDREXT_COMMENT_KEY.value = 'KW_IDENTIFIER'
+
+# =============================================================================
 # TOOLS SETTINGS
 # =============================================================================
+# Define which block kinds to reindex (warning can take a long time)
+#    only select block kinds that have (or could be) manually changed
+REPROCESS_REINDEX_BLOCKS = REPROCESS_REINDEX_BLOCKS.copy(__NAME__)
+REPROCESS_REINDEX_BLOCKS.value = 'raw,tmp,red,out'
+
+# Define whether to use multiprocess Pool or Process
+REPROCESS_MP_TYPE = REPROCESS_MP_TYPE.copy(__NAME__)
+REPROCESS_MP_TYPE.value = 'process'
+
 # Key for use in run files
 REPROCESS_RUN_KEY = REPROCESS_RUN_KEY.copy(__NAME__)
 REPROCESS_RUN_KEY.value = 'ID'
 
-# Define the night name column name for raw file table
-REPROCESS_NIGHTCOL = REPROCESS_NIGHTCOL.copy(__NAME__)
-REPROCESS_NIGHTCOL.value = '__NIGHTNAME'
+# Define the obs_dir column name for raw file table
+REPROCESS_OBSDIR_COL = REPROCESS_OBSDIR_COL.copy(__NAME__)
+REPROCESS_OBSDIR_COL.value = 'OBS_DIR'
+
+# Define the KW_OBJTYPE allowed for a science target
+REPROCESS_OBJECT_TYPES = REPROCESS_OBJECT_TYPES.copy(__NAME__)
+REPROCESS_OBJECT_TYPES.value = 'OBJECT'
 
 # Define the pi name column name for raw file table
 REPROCESS_PINAMECOL = REPROCESS_PINAMECOL.copy(__NAME__)
@@ -2404,11 +3141,11 @@ REPROCESS_PINAMECOL.value = 'KW_PI_NAME'
 
 # Define the absolute file column name for raw file table
 REPROCESS_ABSFILECOL = REPROCESS_ABSFILECOL.copy(__NAME__)
-REPROCESS_ABSFILECOL.value = '__ABSFILE'
+REPROCESS_ABSFILECOL.value = 'ABSPATH'
 
 # Define the modified file column name for raw file table
 REPROCESS_MODIFIEDCOL = REPROCESS_MODIFIEDCOL.copy(__NAME__)
-REPROCESS_MODIFIEDCOL.value = '__MODIFIED'
+REPROCESS_MODIFIEDCOL.value = 'LAST_MODIFIED'
 
 # Define the sort column (from header keywords) for raw file table
 REPROCESS_SORTCOL_HDRKEY = REPROCESS_SORTCOL_HDRKEY.copy(__NAME__)
@@ -2425,6 +3162,15 @@ REPROCESS_SEQCOL.value = 'KW_CMPLTEXP'
 # define the time col for raw file table
 REPROCESS_TIMECOL = REPROCESS_TIMECOL.copy(__NAME__)
 REPROCESS_TIMECOL.value = 'KW_ACQTIME'
+
+# Define the rejection sql query (between identifier and reject list col)
+#    must use a valid reject database column and use {identifier} in query
+REPROCESS_REJECT_SQL = REPROCESS_REJECT_SQL.copy(__NAME__)
+REPROCESS_REJECT_SQL.value = 'FILENAME LIKE "{identifier}%.fits"'
+
+# Define the extra SQL science object select critera
+REPROCESS_OBJ_SCI_SQL = REPROCESS_OBJ_SCI_SQL.copy(__NAME__)
+REPROCESS_OBJ_SCI_SQL.value = ' AND KW_OBSTYPE="OBJECT"'
 
 # Define whether we try to create a latex summary pdf
 #   (turn this off if you have any problems with latex/pdflatex)
@@ -2445,12 +3191,11 @@ EXPMETER_TELLU_THRES.value = 0.95
 
 # Define the types of file allowed for drift measurement
 DRIFT_DPRTYPES = DRIFT_DPRTYPES.copy(__NAME__)
-DRIFT_DPRTYPES.value = 'FP_FP, OBJ_FP, DARK_FP, FP_DARK'
+DRIFT_DPRTYPES.value = 'FP_FP, OBJ_FP, DARK_FP, POLAR_FP, FP_DARK'
 
 # Define the fiber dprtype allowed for drift measurement (only FP)
 DRIFT_DPR_FIBER_TYPE = DRIFT_DPR_FIBER_TYPE.copy(__NAME__)
 DRIFT_DPR_FIBER_TYPE.value = 'FP'
-
 
 # =============================================================================
 #  End of configuration file

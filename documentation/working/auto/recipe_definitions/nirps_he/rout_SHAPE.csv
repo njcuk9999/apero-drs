@@ -1,0 +1,5 @@
+name,description,HDR[DRSOUTID],file type,suffix,dbname,dbkey,input file
+SHAPEL,Nightly shape calibration files,SHAPEL,.fits,_shapel,calibration,SHAPEL,FP_FP
+SHAPEL_IN_FP,Input FP file for nightly shape comparison,SHAPEL_IN_FP,.fits,_shapel_in_fp.fits,--,--,FP_FP
+SHAPEL_OUT_FP,Output FP file for nightly shape comparison,SHAPEL_OUT_FP,.fits,_shapel_out_fp.fits,--,--,FP_FP
+DEBUG_BACK,Individual file background map,DEBUG_BACK,.fits,_background.fits,--,--,DRS_PP

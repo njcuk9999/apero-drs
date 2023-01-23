@@ -13,9 +13,11 @@ import os
 import shutil
 
 import apero
-from apero import core
-from apero.core import constants
 from apero import lang
+from apero.base import base
+from apero.core.core import drs_log
+from apero.core.core import drs_misc
+from apero.core.utils import drs_startup
 from apero.tools.module.documentation import drs_changelog
 
 # =============================================================================
@@ -23,40 +25,25 @@ from apero.tools.module.documentation import drs_changelog
 # =============================================================================
 __NAME__ = 'apero_changelog.py'
 __INSTRUMENT__ = 'None'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # Get Logging function
-WLOG = core.wlog
+WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.drs_text.TextEntry
-TextDict = lang.drs_text.TextDict
+textentry = lang.textentry
 # --------------------------------------------------------------------------
 CLOGFILENAME = '../changelog.md'
 VERSIONFILE = '../version.txt'
-CONSTFILE = './core/instruments/default/default_config.py'
-# define line parameters
-VERSIONSTR_PREFIX = 'DRS_VERSION = Const('
-DATESTR_PREFIX = 'DRS_DATE = Const('
-
-VERSIONSTR = """
-DRS_VERSION = Const('DRS_VERSION', value='{0}', dtype=str, 
-                    source=__NAME__)
-"""
-DATESTR = """
-DRS_DATE = Const('DATE', value='{0}', dtype=str, 
-                 source=__NAME__)
-"""
+CONSTFILE = './base/base.py'
 # define documentation properties
 DOC_CONFPATH = '../documentation/working/conf.py'
 DOC_CONF_PREFIX = 'release = '
 DOC_INDEXPATH = '../documentation/working/index.rst'
 DOC_INDEX_PREFIX = 'Latest version: '
-DOC_CHANGELOGPATH = '../documentation/working/misc/changelog.rst'
+DOC_CHANGELOGPATH = '../documentation/working/main/misc/changelog.rst'
 
 
 # =============================================================================
@@ -79,17 +66,17 @@ def main(preview=1, **kwargs):
     fkwargs = dict(preview=preview, **kwargs)
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
-    recipe, params = core.setup(__NAME__, __INSTRUMENT__, fkwargs)
+    recipe, params = drs_startup.setup(__NAME__, __INSTRUMENT__, fkwargs)
     # solid debug mode option
     if kwargs.get('DEBUG0000', False):
         return recipe, params
     # ----------------------------------------------------------------------
     # run main bulk of code (catching all errors)
-    llmain, success = core.run(__main__, recipe, params)
+    llmain, success = drs_startup.run(__main__, recipe, params)
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    return core.end_main(params, llmain, recipe, success, outputs='None')
+    return drs_startup.end_main(params, llmain, recipe, success, outputs='None')
 
 
 def __main__(recipe, params):
@@ -105,22 +92,20 @@ def __main__(recipe, params):
     # get package
     package = params['DRS_PACKAGE']
     # get filename
-    filename = constants.get_relative_folder(package, CLOGFILENAME)
+    filename = drs_misc.get_relative_folder(package, CLOGFILENAME)
     # get version file path
-    versionfile = constants.get_relative_folder(package, VERSIONFILE)
+    versionfile = drs_misc.get_relative_folder(package, VERSIONFILE)
     # get const file path
-    constfile = constants.get_relative_folder(package, CONSTFILE)
-    # get the text dictionary
-    textdict = TextDict('None', params['LANGUAGE'])
+    constfile = drs_misc.get_relative_folder(package, CONSTFILE)
     # ----------------------------------------------------------------------
     # if in preview mode tell user
     if params['INPUTS']['PREVIEW']:
-        WLOG(params, 'info', TextEntry('40-501-00008'))
+        WLOG(params, 'info', textentry('40-501-00008'))
     # ----------------------------------------------------------------------
     # read and ask for new version
-    WLOG(params, '', TextEntry('40-501-00009'))
+    WLOG(params, '', textentry('40-501-00009'))
     # set new version
-    version = drs_changelog.ask_for_new_version(params)
+    version = drs_changelog.ask_for_new_version()
     # add tag of version
     if version is not None:
         # tag head with version
@@ -138,7 +123,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # create new changelog
     # log that we are updating the change log
-    WLOG(params, '', TextEntry('40-501-00010'))
+    WLOG(params, '', textentry('40-501-00010'))
     # if not in preview mode modify the changelog directly
     if not params['INPUTS']['PREVIEW']:
         drs_changelog.git_change_log(filename)
@@ -154,7 +139,7 @@ def __main__(recipe, params):
     # if we are in preview mode should we keep these changes and update version
     if params['INPUTS']['PREVIEW']:
         # ask whether to keep changes
-        uinput = input(textdict['40-501-00011'] + ' [Y]es [N]o:\t')
+        uinput = input(textentry('40-501-00011') + ' [Y]es [N]o:\t')
         # if we want to keep the changes apply changes from above
         if 'Y' in uinput.upper():
             # redo tagging
@@ -169,9 +154,9 @@ def __main__(recipe, params):
             os.remove('tmp.txt')
     # ----------------------------------------------------------------------
     # get doc paths
-    doc_confpath = constants.get_relative_folder(package, DOC_CONFPATH)
-    doc_clogpath = constants.get_relative_folder(package, DOC_CHANGELOGPATH)
-    doc_indxpath = constants.get_relative_folder(package, DOC_INDEXPATH)
+    doc_confpath = drs_misc.get_relative_folder(package, DOC_CONFPATH)
+    doc_clogpath = drs_misc.get_relative_folder(package, DOC_CHANGELOGPATH)
+    doc_indxpath = drs_misc.get_relative_folder(package, DOC_INDEXPATH)
     # update documentation (conf.py)
     strversion = '\'{0}\'\n'.format(version)
     drs_changelog.update_file(doc_confpath, DOC_CONF_PREFIX, strversion)
@@ -191,7 +176,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return core.return_locals(params, locals())
+    return locals()
 
 
 # =============================================================================

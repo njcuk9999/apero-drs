@@ -1,1 +1,1 @@
-NIRPS data files go in here
+NIRPS HA data files go in here

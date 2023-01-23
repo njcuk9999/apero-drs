@@ -11,61 +11,52 @@ Created on 2020-02-04 at 13:37
 """
 import sys
 
-from apero import core
+from apero.base import base
 from apero.core import constants
-from apero import lang
-from apero.core.constants import constant_functions as cf
-from apero.core.constants import param_functions as pf
-from apero.core.core import drs_recipe
-from apero.core.core import drs_file
+from apero.core.core import drs_log, drs_file
+from apero.core.core import drs_misc
+from apero.core.utils import drs_recipe
 
 # =============================================================================
 # Define variables
 # =============================================================================
 # Name of program
-__NAME__ = 'drs_startup.py'
+__NAME__ = 'tools.module.testing.drs_dev.py'
 __INSTRUMENT__ = 'None'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
-# Define package name
-PACKAGE = Constants['DRS_PACKAGE']
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # get param dict
 ParamDict = constants.ParamDict
 # Get Logging function
-WLOG = core.wlog
-# Get the text types
-TextEntry = lang.drs_text.TextEntry
-TextDict = lang.drs_text.TextDict
-HelpEntry = lang.drs_text.HelpEntry
-HelpText = lang.drs_text.HelpDict
+WLOG = drs_log.wlog
 # get DrsRecipe
 DrsRecipe = drs_recipe.DrsRecipe
 DrsFitsFile = drs_file.DrsFitsFile
 DrsInputFile = drs_file.DrsInputFile
 DrsNpyFile = drs_file.DrsNpyFile
 # recipe control path
-INSTRUMENT_PATH = Constants['DRS_MOD_INSTRUMENT_CONFIG']
-CORE_PATH = Constants['DRS_MOD_CORE_CONFIG']
-PDB_RC_FILE = Constants['DRS_PDB_RC_FILE']
+INSTRUMENT_PATH = base.CONST_PATH
+CORE_PATH = base.CORE_PATH
+PDB_RC_FILE = base.PDB_RC_FILE
 CURRENT_PATH = ''
+
+
 # -----------------------------------------------------------------------------
 
 # =============================================================================
-# Define functions
+# Define classes
 # =============================================================================
 class TmpRecipe(DrsRecipe):
-    def __init__(self, instrument=None, name=None, filemod=None):
+    def __init__(self, instrument='None', name=None, filemod=None):
         # load super class
         super().__init__(instrument, name, filemod)
 
 
-class RecipeDefinition():
-    def __init__(self, instrument=None):
+class RecipeDefinition:
+    def __init__(self, instrument='None'):
         self.instrument = instrument
         self.recipes = []
         self.mod = None
@@ -82,12 +73,12 @@ class RecipeDefinition():
             ipath = INSTRUMENT_PATH
         # get recipe definitions module
         margs = [self.instrument, ['recipe_definitions.py'], ipath, CORE_PATH]
-        modules = constants.getmodnames(*margs, path=False)
+        modules = constants.getmodnames(*margs, return_paths=False)
         # load module
         mod = constants.import_module(func_name, modules[0], full=True)
         # add to recipes
-        self.recipes = mod.recipes
-        self.mod = mod
+        self.recipes = mod.get().recipes
+        self.mod = mod.get()
 
     def add(self, *args):
         """
@@ -119,8 +110,8 @@ class TmpNpyFile(DrsFitsFile):
         super().__init__(name, **kwargs)
 
 
-class FileDefinition():
-    def __init__(self, instrument=None):
+class FileDefinition:
+    def __init__(self, instrument='None'):
         self.instrument = instrument
         self.files = None
         self.out = None
@@ -137,32 +128,35 @@ class FileDefinition():
             ipath = INSTRUMENT_PATH
         # get recipe definitions module
         margs = [self.instrument, ['file_definitions.py'], ipath, CORE_PATH]
-        modules = constants.getmodnames(*margs, path=False)
+        modules = constants.getmodnames(*margs, return_paths=False)
         # load module
         mod = constants.import_module(func_name, modules[0], full=True)
         # add to recipes
-        self.files = mod
-        self.out = mod.out
+        self.files = mod.get()
+        self.out = mod.get().out
+
 
 class Demo:
     """
     Holder of demonstration functions (to keep demo clean)
     """
+
     def __init__(self, params=None):
         # get parameters
         if params is None:
-            self.params = Constants
+            self.params = constants.load()
         else:
             self.params = params
         # get package
         self.package = params['DRS_PACKAGE']
 
-    def setup(self):
+    @staticmethod
+    def setup():
         # deal with arguments
         if isinstance(sys.argv, list):
             args = list(sys.argv)
         else:
-            args = sys.argv.split()
+            args = str(sys.argv).split()
         # if we don't have the required arguments add them
         if len(args) < 2:
             sys.argv = ['demo', '1']
@@ -170,13 +164,11 @@ class Demo:
 
     def get_lang_db_loc(self):
         # get language database relative path
-        relpath = lang.drs_text.DEFAULT_PATH
+        relpath = base.LANG_DEFAULT_PATH
         # return absolute language database path
-        return pf.get_relative_folder(self.package, relpath)
+        return drs_misc.get_relative_folder(self.package, relpath)
 
     def change_lang(self, params, language):
-        # get instrument
-        instrument = self.params['INSTRUMENT']
         # update the language
         self.params.set('LANGUAGE', language)
         params.set('LANGUAGE', language)
@@ -186,8 +178,35 @@ class Demo:
         pass
 
 
+# =============================================================================
+# Define functions
+# =============================================================================
+def get_size(obj, seen=None):
+    """
+    Recursively finds size of objects
 
+    from: https://goshippo.com/blog/measure-real-size-any-python-object/
+    """
 
+    sbtype = (str, bytes, bytearray)
+
+    size = sys.getsizeof(obj)
+    if seen is None:
+        seen = set()
+    obj_id = id(obj)
+    if obj_id in seen:
+        return 0
+    # Important mark as seen *before* entering recursion to gracefully handle
+    # self-referential objects
+    seen.add(obj_id)
+    if isinstance(obj, dict):
+        size += sum([get_size(v, seen) for v in obj.values()])
+        size += sum([get_size(k, seen) for k in obj.keys()])
+    elif hasattr(obj, '__dict__'):
+        size += get_size(obj.__dict__, seen)
+    elif hasattr(obj, '__iter__') and not isinstance(obj, sbtype):
+        size += sum([get_size(i, seen) for i in obj])
+    return size
 
 
 # =============================================================================

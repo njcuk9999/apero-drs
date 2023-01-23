@@ -9,34 +9,30 @@ Created on 2019-09-16 at 13:48
 
 @author: cook
 """
-import os
-
-from apero import core
 from apero import lang
+from apero.base import base
 from apero.core import constants
-from apero.core.core import drs_startup
-from apero.tools.module import listing
-from apero.io import drs_fits
+from apero.core.core import drs_log
+from apero.core.core import drs_text
+from apero.core.utils import drs_startup
+from apero.core.utils import drs_utils
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'apero_listing.py'
 __INSTRUMENT__ = 'None'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # get param dict
 ParamDict = constants.ParamDict
+# get text entry instance
+textentry = lang.textentry
 # Get Logging function
-WLOG = core.wlog
-# Get the text types
-TextEntry = lang.drs_text.TextEntry
-TextDict = lang.drs_text.TextDict
+WLOG = drs_log.wlog
 
 
 # =============================================================================
@@ -48,14 +44,11 @@ TextDict = lang.drs_text.TextDict
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(instrument=None, **kwargs):
+def main(**kwargs):
     """
     Main function for apero_listing.py
 
-    :param instrument: str, the instrument name
     :param kwargs: additional keyword arguments
-
-    :type instrument: str
 
     :keyword debug: int, debug level (0 for None)
 
@@ -63,20 +56,20 @@ def main(instrument=None, **kwargs):
     :rtype: dict
     """
     # assign function calls (must add positional)
-    fkwargs = dict(instrument=instrument, **kwargs)
+    fkwargs = dict(**kwargs)
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
-    recipe, params = core.setup(__NAME__, __INSTRUMENT__, fkwargs)
+    recipe, params = drs_startup.setup(__NAME__, __INSTRUMENT__, fkwargs)
     # solid debug mode option
     if kwargs.get('DEBUG0000', False):
         return recipe, params
     # ----------------------------------------------------------------------
     # run main bulk of code (catching all errors)
-    llmain, success = core.run(__main__, recipe, params)
+    llmain, success = drs_startup.run(__main__, recipe, params)
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    return core.end_main(params, llmain, recipe, success)
+    return drs_startup.end_main(params, llmain, recipe, success)
 
 
 def __main__(recipe, params):
@@ -92,80 +85,48 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     mainname = __NAME__ + '._main()'
     # get the night name from inputs
-    nightname = params['INPUTS']['NIGHTNAME']
+    obs_dir = params['INPUTS']['OBS_DIR']
     # get the kidn from inputs
-    kind = params['INPUTS']['KIND']
-    # get pseudo constants
-    pconst = constants.pload(params['INSTRUMENT'])
-    # get index file name
-    index_file_name = pconst.INDEX_OUTPUT_FILENAME()
+    block_kind = params['INPUTS']['BLOCK_KIND']
+    # get the white list of nights from inputs
+    include_list = params['INPUTS']['INCLUDE_OBS_DIRS']
+    if drs_text.null_text(include_list, ['None', '', 'All']):
+        include_list = None
+    else:
+        include_list = params['INPUTS'].listp('INCLUDE_OBS_DIRS')
+    # get the black list of nights from inputs
+    exclude_list = params['INPUTS']['EXCLUDE_OBS_DIRS']
+    if drs_text.null_text(exclude_list, ['None', '', 'All']):
+        exclude_list = None
+    else:
+        exclude_list = params['INPUTS'].listp('EXCLUDE_OBS_DIRS')
+
     # ----------------------------------------------------------------------
     # Deal with kind
     # ----------------------------------------------------------------------
     # deal with kind
-    if kind.lower() == 'raw':
-        # push files in to runs/raw_index
-        _ = drs_fits.find_raw_files(params, recipe)
-
-        return core.return_locals(params, locals())
-    elif kind.lower() == 'tmp':
-        path = params['DRS_DATA_WORKING']
-        columns = pconst.OUTPUT_FILE_HEADER_KEYS()
-    elif kind.lower() == 'red':
-        path = params['DRS_DATA_REDUC']
-        columns = pconst.OUTPUT_FILE_HEADER_KEYS()
+    if block_kind.lower() in ['raw', 'tmp', 'red', 'out']:
+        # print progress
+        WLOG(params, '', textentry('40-005-00006', args=[block_kind]))
+        # update the index database (taking into account include/exclude lists)
+        findexdbm = drs_utils.update_index_db(params,
+                                              block_kind=block_kind.lower(),
+                                              includelist=include_list,
+                                              excludelist=exclude_list)
     else:
-        path = params['DRS_DATA_WORKING']
-        columns = pconst.OUTPUT_FILE_HEADER_KEYS()
-    # ----------------------------------------------------------------------
-    # Deal with night name
-    # ----------------------------------------------------------------------
-    if (nightname is None) or (nightname == ''):
-        nightnames = listing.get_nightnames(params, path)
-    else:
-        nightnames = [nightname]
-    # ----------------------------------------------------------------------
-    # Loop over night name
-    # ----------------------------------------------------------------------
-    # loop around night names
-    for nightname in nightnames:
-        # construct path
-        path1 = os.path.join(path, nightname)
-        # test path exists
-        if not os.path.exists(path1):
-            # log error and exit
-            eargs = [nightname, path]
-            WLOG(params, 'error', TextEntry('09-504-00001', args=eargs))
-        # else log the progress
-        else:
-            WLOG(params, 'info', TextEntry('40-504-00005', args=[nightname]))
-        # ----------------------------------------------------------------------
-        # Find all index files and remove them (we are remaking them)
-        # ----------------------------------------------------------------------
-        listing.remove_index_files(params, path1)
-        # ----------------------------------------------------------------------
-        # Get all files in this directory
-        # ----------------------------------------------------------------------
-        files = listing.get_all_files(params, path1)
-        # ----------------------------------------------------------------------
-        # Read header outputs for all these files
-        # ----------------------------------------------------------------------
-        output_dictionary = listing.get_outputs(params, files)
-        # ----------------------------------------------------------------------
-        # Create indexing for all these files
-        # ----------------------------------------------------------------------
-        # get the index path
-        index_path = os.path.join(path1, index_file_name)
-        # index
-        istore = drs_startup.indexing(params, output_dictionary, columns,
-                                      index_path)
-        # save to file
-        drs_startup.save_index_file(params, istore, index_path)
+        for blockkind in ['raw', 'tmp', 'red', 'out']:
+            # print progress
+            WLOG(params, '', textentry('40-005-00006', args=[block_kind]))
+            # update the index database (taking into account include/exclude
+            #    lists)
+            findexdbm = drs_utils.update_index_db(params, block_kind=blockkind,
+                                                  includelist=include_list,
+                                                  excludelist=exclude_list)
 
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return core.return_locals(params, locals())
+    return locals()
 
 
 # =============================================================================

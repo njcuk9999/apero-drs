@@ -1,240 +1,459 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+CODE DESCRIPTION HERE
 
-# CODE DESCRIPTION HERE
-
-Created on 2019-07-23 at 09:29
+Created on 2020-10-2020-10-29 15:40
 
 @author: cook
 """
-import numpy as np
 import os
 import warnings
-from astropy import units as uu
-from astropy.time import Time
-from astropy.coordinates import SkyCoord
+from typing import List, Tuple, Union
 
-from apero import core
+import numpy as np
+from astropy import units as uu
+from astropy.coordinates import SkyCoord, Distance
+
 from apero import lang
+from apero.base import base
 from apero.core import constants
 from apero.core import math as mp
+from apero.core.core import drs_exceptions
+from apero.core.core import drs_file
+from apero.core.core import drs_log
 from apero.io import drs_fits
 from apero.io import drs_lock
 from apero.io import drs_path
 from apero.science.extract import bervest
-from apero.science.extract import crossmatch
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'science.extract.berv.py'
 __INSTRUMENT__ = 'None'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
+# Get Astropy Time and Time Delta
+Time, TimeDelta = base.AstropyTime, base.AstropyTimeDelta
 # get param dict
 ParamDict = constants.ParamDict
+# get drs file
+DrsFitsFile = drs_file.DrsFitsFile
+# Get exceptions
+DrsCodedException = drs_exceptions.DrsCodedException
 # Get Logging function
-WLOG = core.wlog
+WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.drs_text.TextEntry
-TextDict = lang.drs_text.TextDict
+textentry = lang.textentry
 # alias pcheck
-pcheck = core.pcheck
+pcheck = constants.PCheck(wlog=WLOG)
 
 
 # =============================================================================
-# Define property class
+# Define functions
 # =============================================================================
 class BaryCorrpyException(Exception):
     """Raised when config file is incorrect"""
     pass
 
 
-class Property:
-    def __init__(self, name=None, unit=None, headerkey=None, paramkey=None,
-                 outkey=None, default=None, datatype=None):
-        self.name = name
-        self.unit = unit
-        self.hkey = headerkey
-        self.pkey = paramkey
-        self.default = default
-        self.outkey = outkey
-        self.datatype = datatype
+def get_berv(params: ParamDict, infile: Union[DrsFitsFile, None] = None,
+             header: Union[drs_fits.Header, None] = None, log: bool = True,
+             warn: bool = True, force: bool = False,
+             dprtypes: Union[List[str], None] = None,
+             kind: Union[str, None] = None) -> ParamDict:
+    """
+    Get the BERV (either from header or calculate it using header parameters)
+    must define either 'infile' (with a header) or a 'header' directly.
 
+    :param params: ParamDict, parameter dictionary of constants
+    :param infile: DrsFitsFile with a valid header - if set uses parameters
+                   from this header
+    :param header: Header, drs_fits.Header instance - if infile not set uses
+                   parameters from this header
+    :param log: bool, if True logs calculation of BERV
+    :param warn: bool, if True add warnings about BERV correction
+    :param force: bool, if True will calculate BERV even when found in the
+                  if False (default) uses BERV in header if found
+    :param dprtypes: list of strings or None, overrides
+                     EXT_ALLOWED_BERV_DPRTYPES if set (this is the dprtypes
+                     for which a BERV should be calculated)
+    :param kind: str, either 'barycorrpy' or 'pyasl' or 'None' - the mode
+                 by which to calculate BERV
 
-# =============================================================================
-# Define user functions
-# =============================================================================
-# define the properties for barycorrpy
-mode1 = dict()
-mode1['ra'] = Property(name='ra', unit=uu.deg)
-mode1['dec'] = Property(name='dec', unit=uu.deg)
-mode1['epoch'] = Property(name='epoch', datatype='jd')
-mode1['pmra'] = Property(name='pmra', unit=uu.mas/uu.yr)
-mode1['pmde'] = Property(name='pmdec', unit=uu.mas/uu.yr)
-mode1['lat'] = Property(name='lat', unit=uu.deg)
-mode1['long'] = Property(name='longi', unit=uu.deg)
-mode1['alt'] = Property(name='alt', unit=uu.deg)
-mode1['plx'] = Property(name='px', unit=uu.mas)
-mode1['rv'] = Property(name='rv', unit=uu.km/uu.s)
-
-# define the properties for pyastronomy measurement
-mode2 = dict()
-mode2['ra'] = Property(name='ra2000', unit=uu.deg)
-mode2['dec'] = Property(name='dec2000', unit=uu.deg)
-mode2['lat'] = Property(name='obs_lat', unit=uu.deg)
-mode2['long'] = Property(name='obs_long', unit=uu.deg)
-mode2['alt'] = Property(name='obs_alt', unit=uu.deg)
-
-
-# =============================================================================
-# Define user functions
-# =============================================================================
-def get_berv(params, infile=None, header=None, props=None, log=True,
-             warn=True, force=False, **kwargs):
+    :return: ParamDict of BERV parameters
+    """
+    # set function name
     func_name = __NAME__ + '.get_berv()'
     # log progress
     if log:
-        WLOG(params, 'info', TextEntry('40-016-00017'))
+        WLOG(params, 'info', textentry('40-016-00017'))
     # get parameters from params and kwargs
-    dprtype = pcheck(params, 'DPRTYPE', 'dprtype', kwargs, func_name,
-                     paramdict=props)
-    dprtypes = pcheck(params, 'EXT_ALLOWED_BERV_DPRTYPES', 'dprtypes', kwargs,
-                      func_name, mapf='list', dtype=str)
-    kind = pcheck(params, 'EXT_BERV_KIND', 'kind', kwargs, func_name)
-    # ----------------------------------------------------------------------
+    dprtypes = pcheck(params, 'EXT_ALLOWED_BERV_DPRTYPES', func=func_name,
+                      mapf='list', dtype=str, override=dprtypes)
+    kind = pcheck(params, 'EXT_BERV_KIND', func=func_name, override=kind)
+    # -------------------------------------------------------------------------
+    # get header
+    # -------------------------------------------------------------------------
+    if infile is not None:
+        header = infile.header
+    if header is None:
+        WLOG(params, 'error', 'Either header or infile must be defined')
+    # convert header to drs_fits header
+    header = drs_fits.Header(header)
+    # -------------------------------------------------------------------------
+    # Get input properties from header
+    # -------------------------------------------------------------------------
+    # get current berv params + astrometrics from preprocesing
+    berv_props = get_keys_from_header(params, header)
+
+    # -------------------------------------------------------------------------
+    # Deal with wrong BERV type
+    # -------------------------------------------------------------------------
     # do not try to calculate berv for specific DPRTYPES
-    if (dprtype not in dprtypes):
+    if berv_props['DPRTYPE'] not in dprtypes:
         # log that we are skipping due to dprtype
-        WLOG(params, '', TextEntry('40-016-00018', args=[dprtype]))
+        msg = textentry('40-016-00018', args=[berv_props['DPRTYPE']])
+        WLOG(params, '', msg)
         # all entries returns are empty
-        return assign_properties(params, use=False)
-    if kind == 'None':
+        berv_props = assign_use_berv(berv_props, use=False)
+        # return bprops
+        return berv_props
+    if kind not in ['pyasl', 'barycorrpy']:
         # log that we are skipping due to user
-        WLOG(params, '', TextEntry('40-016-00019'))
+        WLOG(params, '', textentry('40-016-00019'))
         # all entries returns are empty
-        return assign_properties(params, use=False)
-    # ----------------------------------------------------------------------
-    # check if we already have berv (or bervest) if not forced
-    if force:
-        bprops = None
-    else:
-        bprops = get_outputs(params, infile, header, props, kwargs)
-    # if we have berv already then just return these
-    if bprops is not None:
-        # log that we are skipping due to user
-        WLOG(params, '', TextEntry('40-016-00020'))
-        # return entries
-        return assign_properties(params, **bprops)
-    # ----------------------------------------------------------------------
-    # get required parameters
-    bprops = get_parameters(params, kind, props, kwargs, infile, header)
-    # ----------------------------------------------------------------------
-    # deal with setting up time
-    # ----------------------------------------------------------------------
-    bprops = get_times(params, bprops, infile, header)
-    # ----------------------------------------------------------------------
-    # debug final parameters to use
-    # log: Final berv input parameters:
-    WLOG(params, 'debug', TextEntry('90-016-00002'))
-    for key in bprops:
-        bstrval = str(bprops[key])[:50]
-        WLOG(params, 'debug', '\t{0:20s}{1}'.format(key, bstrval))
+        return assign_use_berv(params, use=False)
+    # -------------------------------------------------------------------------
+    # Check if we already have BERV
+    # -------------------------------------------------------------------------
+    # check if we have berv
+    berv_props = assign_use_berv(berv_props)
+    # if we have a berv and we are not forcing then return values from header
+    if berv_props['USE_BERV'] is not None and not force:
+        if np.isfinite(berv_props['USE_BERV']):
+            # print progress about berv
+            # print msg: Identified object as {0} with BERV = {1:.4f} km/s
+            margs = [berv_props['OBJNAME'], berv_props['USE_BERV']]
+            WLOG(params, '', textentry('40-016-00035', args=margs))
+            # return the berv properties
+            return berv_props
+    # -------------------------------------------------------------------------
+    # Set up times
+    # -------------------------------------------------------------------------
+    # get observation time
+    obstime = Time(berv_props['MJDMID'], format=berv_props['MJDMID_FMT'])
+    # for the maximum peak to peak need an array of times
+    times = obstime.jd + np.arange(0, 365, 5.0 / 3.0)
+    # update OBS_TIME
+    berv_props['OBS_TIME'] = obstime.jd
+    berv_props['OBS_TIME_METHOD'] = 'header[MJDMID]'
+    berv_props['OBS_TIMES'] = times
     # ----------------------------------------------------------------------
     # try to run barcorrpy
+    # ----------------------------------------------------------------------
     if kind == 'barycorrpy':
         try:
             # --------------------------------------------------------------
             # calculate berv/bjd
-            bervs, bjds = use_barycorrpy(params, bprops['OBS_TIME'],
-                                         iteration=0, **bprops)
+            bervs, bjds = use_barycorrpy(params, berv_props['OBS_TIME'],
+                                         berv_props, iteration=0)
             # --------------------------------------------------------------
             # calculate max berv (using pyasl as it is faster)
-            bervs_, bjds_ = use_pyasl(params, bprops['OBS_TIMES'],
-                                      quiet=True, **bprops)
+            bervs_, bjds_ = use_pyasl(params, berv_props['OBS_TIMES'],
+                                      berv_props, quiet=True)
             bervmax = mp.nanmax(np.abs(bervs_))
             # --------------------------------------------------------------
             # calculate berv derivative (add 1 second)
-            deltat = (1*uu.s).to(uu.day).value
-            berv1, bjd1 = use_barycorrpy(params, bprops['OBS_TIME'] + deltat,
-                                         iteration=1, **bprops)
+            deltat = (1 * uu.s).to(uu.day).value
+            berv1, bjd1 = use_barycorrpy(params,
+                                         berv_props['OBS_TIME'] + deltat,
+                                         berv_props, iteration=1)
             dberv = np.abs(berv1[0] - bervs[0])
             # --------------------------------------------------------------
-            # push into output parameters
-            return assign_properties(params, berv=bervs[0], bjd=bjds[0],
-                                     bervmax=bervmax, source='barycorrpy',
-                                     props=bprops, dberv=dberv)
+            # update parameters
+            berv_props['BERV'] = bervs[0]
+            berv_props['BJD'] = bjds[0]
+            berv_props['BERV_MAX'] = bervmax
+            berv_props['DBERV'] = dberv
+            # set source
+            berv_props['BERVSOURCE'] = 'barycorrpy'
+            berv_props.set_sources(['BERV', 'BJD', 'BERV_MAX', 'DBERV',
+                                    'BERVSOURCE'], func_name)
+
         except BaryCorrpyException as bce:
             if warn:
-                WLOG(params, 'warning', str(bce))
+                WLOG(params, 'warning', str(bce), sublevel=8)
             else:
                 pass
-    # --------------------------------------------------------------
+        # check if we have berv a good berv
+        berv_props = assign_use_berv(berv_props)
+        if berv_props['USE_BERV'] is not None:
+            if np.isfinite(berv_props['USE_BERV']):
+                # print progress about berv
+                # print msg: Identified object as {0} with BERV = {1:.4f} km/s
+                margs = [berv_props['OBJNAME'], berv_props['USE_BERV']]
+                WLOG(params, '', textentry('40-016-00035', args=margs))
+                # return the berv properties
+                return berv_props
+    # -------------------------------------------------------------------------
     # if we are still here must use pyasl BERV estimate
-    # ----------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     # calculate berv/bjd
-    bervs, bjds = use_pyasl(params, bprops['OBS_TIMES'], **bprops)
+    bervs, bjds = use_pyasl(params, berv_props['OBS_TIMES'], props=berv_props)
     # --------------------------------------------------------------
     # calculate max berv
     bervmax = mp.nanmax(np.abs(bervs))
     # --------------------------------------------------------------
     # calculate berv derivative (add 1 second)
     deltat = (1 * uu.s).to(uu.day).value
-    berv1, bjd1 = use_pyasl(params, [bprops['OBS_TIME'] + deltat], **bprops)
+    berv1, bjd1 = use_pyasl(params, [berv_props['OBS_TIME'] + deltat],
+                            props=berv_props)
     dberv = np.abs(berv1[0] - bervs[0])
     # --------------------------------------------------------------
-    # push into output parameters
-    return assign_properties(params, bervest=bervs[0], bjdest=bjds[0],
-                             dbervest=dberv,
-                             bervmaxest=bervmax, source='pyasl', props=bprops)
+    # update parameters
+    berv_props['BERV_EST'] = bervs[0]
+    berv_props['BJD_EST'] = bjds[0]
+    berv_props['BERV_MAX_EST'] = bervmax
+    berv_props['DBERV_EST'] = dberv
+    # set source
+    berv_props['BERVSOURCE'] = 'pyasl'
+    berv_props.set_sources(['BERV_EST', 'BJD_EST', 'BERV_MAX_EST', 'DBERV_EST',
+                            'BERVSOURCE'], func_name)
+    # check if we have berv a good berv
+    berv_props = assign_use_berv(berv_props)
+    # print progress about berv
+    # print msg: Identified object as {0} with BERV = {1:.4f} km/s
+    margs = [berv_props['OBJNAME'], berv_props['USE_BERV']]
+    WLOG(params, '', textentry('40-016-00035', args=margs))
+    # return the berv properties
+    return berv_props
 
 
-def use_barycorrpy(params, times, iteration=0, **kwargs):
+def get_keys_from_header(params: ParamDict,
+                         header: drs_fits.Header) -> ParamDict:
+    """
+    Get all keys currently in the header related to the BERV calculation
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param header: drs_fits.Header - the header instance
+
+    :return: ParamDict, the updated BERV properties
+    """
+    # make sure header is drs_fits.header
+    if not isinstance(header, drs_fits.Header):
+        header = drs_fits.Header(header)
+    # set up berv properties dictionary
+    bprops = ParamDict()
+    # get dprtype
+    bprops['DPRTYPE'] = header.get_key(params, 'KW_DPRTYPE')
+    bprops.set_source('DPRTYPE', 'header')
+    # get the mid exposure time
+    bprops['MJDMID'] = header.get_key(params, 'KW_MID_OBS_TIME', np.nan)
+    bprops.set_source('MJDMID', 'header')
+    bprops['MJDMID_FMT'] = params.instances['KW_MID_OBS_TIME'].datatype
+    bprops.set_source('MJDMID_FMT', 'KW_MID_OBS_TIME')
+    # get longitude, latitude, altitude of the telescope
+    bprops['DRS_LONG'] = params['OBS_LONG']
+    bprops.set_source('DRS_LONG', 'params[OBS_LONG]')
+    bprops['DRS_LAT'] = params['OBS_LAT']
+    bprops.set_source('DRS_LAT', 'params[OBS_LAT]')
+    bprops['DRS_ALT'] = params['OBS_ALT']
+    bprops.set_source('DRS_ALT', 'params[OBS_ALT]')
+    # -------------------------------------------------------------------------
+    # get barycorrpy berv measurement (or set NaN)
+    bprops['BERV'] = header.get(params['KW_BERV'][0], np.nan)
+    bprops.set_source('BERV', 'header')
+    # get barycorrpy BJD measurment (or set NaN)
+    bprops['BJD'] = header.get(params['KW_BJD'][0], np.nan)
+    bprops.set_source('BJD', 'header')
+    # get barycorrpy BERVMAX (or set NaN)
+    bprops['BERV_MAX'] = header.get(params['KW_BERVMAX'][0], np.nan)
+    bprops.set_source('BERV_MAX', 'header')
+    # get barycorrpy berv diff (or set NaN)
+    bprops['DBERV'] = header.get(params['KW_DBERV'][0], np.nan)
+    bprops.set_source('DBERV', 'header')
+    # get berv source
+    bprops['BERVSOURCE'] = header.get(params['KW_BERVSOURCE'][0], 'None')
+    bprops.set_source('BERVSOURCE', 'header')
+    # get pyasl (berv estimate) BERV measurement (or set NaN)
+    bprops['BERV_EST'] = header.get(params['KW_BERV_EST'][0], np.nan)
+    bprops.set_source('BERV_EST', 'header')
+    # get pyasl (berv estimate) BJD measurement (or set NaN)
+    bprops['BJD_EST'] = header.get(params['KW_BJD_EST'][0], np.nan)
+    bprops.set_source('BJD_EST', 'header')
+    # get pyasl (berv estimate) BJD measurement (or set NaN)
+    bprops['BERV_MAX_EST'] = header.get(params['KW_BERVMAX_EST'][0], np.nan)
+    bprops.set_source('BERV_MAX_EST', 'header')
+    # get the berv diff from pyasl (or set NaN)
+    bprops['DBERV_EST'] = header.get(params['KW_DBERV_EST'][0], np.nan)
+    bprops.set_source('DBERV_EST', 'header')
+    # get the observation time and method parameters
+    bprops['OBS_TIME'] = header.get(params['KW_BERV_OBSTIME'][0], np.nan)
+    bprops['OBS_TIME_METHOD'] = header.get(params['KW_BERV_OBSTIME_METHOD'][0],
+                                           'None')
+    bprops.set_source('OBS_TIME', 'header')
+    bprops.set_source('OBS_TIME_METHOD', 'header')
+    # -------------------------------------------------------------------------
+    # observational parameters from pre-processing
+    # add object name and source
+    bprops['OBJNAME'] = header.get_key(params, 'KW_DRS_OBJNAME')
+    bprops.set_source('OBJNAME', header.get_key(params, 'KW_DRS_OBJNAME_S'))
+    # add the ra and source
+    bprops['RA'] = header.get_key(params, 'KW_DRS_RA')
+    bprops.set_source('RA', header.get_key(params, 'KW_DRS_RA_S'))
+    # add the dec and source
+    bprops['DEC'] = header.get_key(params, 'KW_DRS_DEC')
+    bprops.set_source('DEC', header.get_key(params, 'KW_DRS_DEC_S'))
+    # add the epoch
+    bprops['EPOCH'] = header.get_key(params, 'KW_DRS_EPOCH')
+    bprops.set_source('EPOCH', 'header')
+    # add the pmra
+    bprops['PMRA'] = header.get_key(params, 'KW_DRS_PMRA')
+    bprops.set_source('PMRA', header.get_key(params, 'KW_DRS_PMRA_S'))
+    # add the pmde
+    bprops['PMDE'] = header.get_key(params, 'KW_DRS_PMDE')
+    bprops.set_source('PMDE', header.get_key(params, 'KW_DRS_PMDE_S'))
+    # add the plx
+    bprops['PLX'] = header.get_key(params, 'KW_DRS_PLX')
+    bprops.set_source('PLX', header.get_key(params, 'KW_DRS_PLX_S'))
+    # add the rv
+    bprops['RV'] = header.get_key(params, 'KW_DRS_RV')
+    bprops.set_source('RV', header.get_key(params, 'KW_DRS_RV_S'))
+    # add the teff
+    bprops['TEFF'] = header.get_key(params, 'KW_DRS_TEFF')
+    bprops.set_source('TEFF', header.get_key(params, 'KW_DRS_TEFF_S'))
+    # add the spectral type key
+    bprops['SPT'] = header.get_key(params, 'KW_DRS_SPTYPE')
+    bprops.set_source('SPT', header.get_key(params, 'KW_DRS_SPTYPE_S'))
+    # add the data source / time added key
+    bprops['DATASOURCE'] = header.get_key(params, 'KW_DRS_DSOURCE')
+    bprops.set_source('DATASOURCE', 'header')
+    bprops['DATADATE'] = header.get_key(params, 'KW_DRS_DDATE')
+    bprops.set_source('DATADATE', 'header')
+    # return bprops
+    return bprops
+
+
+def assign_use_berv(berv_props: ParamDict, use=True) -> ParamDict:
+    """
+    Assigns the USE_BERV keywords (based on whether pyasl was used (EST) or
+    barycorrypy was used)
+
+    :param berv_props: ParamDict, the current loaded header parameters
+    :param use: bool, if False - then sets all USE_BERV parameters to None
+                else decides whether pyasl was used (EST) or barycorrypy was
+                used
+
+    :return: ParamDict, the updated BERV properties
+    """
+    # set function name
+    func_name = __NAME__ + '.assign_use_berv()'
+    # get keys
+    berv = berv_props['BERV']
+    berv_max = berv_props['BERV_MAX']
+    bjd = berv_props['BJD']
+    berv_est = berv_props['BERV_EST']
+    bjd_est = berv_props['BJD_EST']
+    berv_max_est = berv_props['BERV_MAX_EST']
+    berv_source = berv_props['BERVSOURCE']
+    # -------------------------------------------------------------------------
+    # need to decide which values should be used (and report if we are using
+    #   estimate)
+    have_berv = (berv is not None and np.isfinite(berv))
+    have_berv &= (bjd is not None and np.isfinite(bjd))
+    have_berv &= (berv_max is not None and np.isfinite(berv_max))
+
+    # need to test if we have no BERV at all
+    have_bervest = False
+    if not have_berv:
+        have_bervest = (berv_est is not None and np.isfinite(berv_est))
+        have_bervest &= (bjd_est is not None and np.isfinite(bjd_est))
+        have_bervest &= (berv_max_est is not None and np.isfinite(berv_max_est))
+
+    # Case 1: Not BERV used
+    if not use or (not have_berv and not have_bervest):
+        use_berv = None
+        use_bjd = None
+        use_berv_max = None
+        used_estimate = True
+        psource = '{0} [{1}]'.format(func_name, 'None')
+    # Case 2: pyasl used
+    elif (not have_berv) or berv_source == 'pyasl':
+        use_berv = float(berv_est)
+        use_bjd = float(bjd_est)
+        use_berv_max = float(berv_max_est)
+        used_estimate = True
+        psource = '{0} [{1}]'.format(func_name, 'pyasl')
+    # Case 3: Barycorrpy used
+    else:
+        # set parameters
+        use_berv = float(berv)
+        use_bjd = float(bjd)
+        use_berv_max = float(berv_max)
+        used_estimate = False
+        psource = '{0} [{1}]'.format(func_name, 'barycorrpy')
+    # add values to berv properties
+    berv_props['USE_BERV'] = use_berv
+    berv_props['USE_BJD'] = use_bjd
+    berv_props['USE_BERV_MAX'] = use_berv_max
+    berv_props['USED_ESTIMATE'] = used_estimate
+    # set source
+    keys = ['USE_BERV', 'USE_BJD', 'USE_BERV_MAX', 'USED_ESTIMATE']
+    berv_props.set_sources(keys, psource)
+    # return updated bprops
+    return berv_props
+
+
+def use_barycorrpy(params: ParamDict, times: np.ndarray, props: ParamDict,
+                   iteration: int = 0,
+                   berv_est: Union[float, None] = None,
+                   bc_dir: Union[str, None] = None,
+                   iersfile: Union[str, None] = None,
+                   package: Union[str, None] = None
+                   ) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Use the barycorrpy module to calculate BERV/BJD
+
+    :param params: ParamDict - parameter dictionary of constants
+    :param times: numpy array, the list of times [in julien date]
+    :param props: ParamDict - the berv input parameters (ra/dec/pmra/pmde etc)
+    :param iteration: int, which iteration of the barycorrpy calculation it is
+                      (for logging)
+    :param berv_est: float, an estimate of the pyasl BERV uncertainties
+                     (for logging)
+    :param bc_dir: str, the berv directory where the IERSFILE should be located
+    :param iersfile: str, the IERSFILE - if using a custom file
+    :param package: str, the package name (APERO)
+
+    :return: two numpy arrays, the array of bervs for the times [km/s], and
+             array of bjds [julien date]
+    """
+    # set function name
     func_name = __NAME__ + '.use_barycorrpy()'
     # get estimate accuracy
-    estimate = pcheck(params, 'EXT_BERV_EST_ACC', 'berv_est', kwargs, func_name)
+    estimate = pcheck(params, 'EXT_BERV_EST_ACC', func=func_name,
+                      override=berv_est)
     # get barycorrpy directory
-    bc_dir = pcheck(params, 'EXT_BERV_BARYCORRPY_DIR', 'bc_dir', kwargs,
-                    func_name)
-    iersfile = pcheck(params, 'EXT_BERV_IERSFILE', 'iersfile', kwargs,
-                      func_name)
-    # iers_a_url = pcheck(params, 'EXT_BERV_IERS_A_URL', 'iers_a_url', kwargs,
-    #                     func_name)
-    leap_dir = pcheck(params, 'EXT_BERV_LEAPDIR', 'leap_dir', kwargs, func_name)
-    leap_update = pcheck(params, 'EXT_BERV_LEAPUPDATE', 'leap_update', kwargs,
-                         func_name)
-    package = pcheck(params, 'DRS_PACKAGE', 'package', kwargs, func_name)
-    # get text dictionary
-    tdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
-
-    # convert kwargs to paramdict (just to be able to use capitals/non-capitals)
-    kwargs = ParamDict(kwargs)
-    # make leap_dir an absolute path
-    leap_dir = drs_path.get_relative_folder(params, package, leap_dir)
+    bc_dir = pcheck(params, 'EXT_BERV_BARYCORRPY_DIR', func=func_name,
+                    override=bc_dir)
+    iersfile = pcheck(params, 'EXT_BERV_IERSFILE', func=func_name,
+                      override=iersfile)
+    package = pcheck(params, 'DRS_PACKAGE', func=func_name, override=package)
     # make barycorrpy directory an absolute path
     bc_dir = drs_path.get_relative_folder(params, package, bc_dir)
-
     # get args
     # TODO: Add back in leap seconds (when barycorrpy works)
-    bkwargs = dict(ra=kwargs['ra'], dec=kwargs['dec'],
-                   epoch=kwargs['epoch'], px=kwargs['plx'],
-                   pmra=kwargs['pmra'], pmdec=kwargs['pmde'],
-                   lat=kwargs['lat'], longi=kwargs['long'],
-                   alt=kwargs['alt'], rv=kwargs['rv'] * 1000,
+    bkwargs = dict(ra=props['RA'], dec=props['DEC'],
+                   epoch=props['EPOCH'], px=props['PLX'],
+                   pmra=props['PMRA'], pmdec=props['PMDE'],
+                   lat=props['DRS_LAT'], longi=props['DRS_LONG'],
+                   alt=props['DRS_ALT'], rv=props['RV'],
                    leap_update=False)
-    # bkwargs = dict(ra=kwargs['ra'], dec=kwargs['dec'],
-    #                epoch=kwargs['epoch'], px=kwargs['plx'],
-    #                pmra=kwargs['pmra'], pmdec=kwargs['pmde'],
-    #                lat=kwargs['lat'], longi=kwargs['long'],
-    #                alt=kwargs['alt'], rv=kwargs['rv'] * 1000,
-    #                leap_dir=leap_dir, leap_update=leap_update)
     # try to set iers file
     try:
         from astropy.utils import iers
@@ -242,41 +461,52 @@ def use_barycorrpy(params, times, iteration=0, **kwargs):
         iers_a_file = os.path.join(bc_dir, iersfile)
         iers.IERS.iers_table = iers.IERS_A.open(iers_a_file)
     except Exception as e:
-        WLOG(params, 'warning', 'IERS_A_FILE Warning:' + str(e))
+        WLOG(params, 'warning', 'IERS_A_FILE Warning:' + str(e), sublevel=8)
     # try to import barycorrpy
     try:
         with warnings.catch_warnings(record=True) as _:
             import barycorrpy
     except Exception as _:
         wargs = [estimate, func_name]
-        WLOG(params, 'warning', TextEntry('10-016-00003', args=wargs))
-        raise BaryCorrpyException(tdict['10-016-00003'].format(*wargs))
+        WLOG(params, 'warning', textentry('10-016-00003', args=wargs),
+             sublevel=8)
+        raise BaryCorrpyException(textentry('10-016-00003', args=wargs))
     # must lock here (barcorrpy is not parallisable yet)
     lpath = params['DRS_DATA_REDUC']
     lfilename = os.path.join(lpath, 'barycorrpy')
     # ----------------------------------------------------------------------
-    # define a synchoronized lock for indexing (so multiple instances do not
+    # define a synchronized lock for indexing (so multiple instances do not
     #  run at the same time)
     lockfile = os.path.basename('{0}_{1}'.format(lfilename, iteration))
     # start a lock
     lock = drs_lock.Lock(params, lockfile)
+    # -------------------------------------------------------------------------
+    # must check that a pid is set
+    if params['PID'] is None:
+        WLOG(params, 'error', textentry('10-005-00006'))
+        pid = None
+    else:
+        pid = params['PID']
 
+    # -------------------------------------------------------------------------
     # make locked bervcalc function
-    @drs_lock.synchronized(lock, params['PID'])
-    def locked_bervcalc():
+    @drs_lock.synchronized(lock, pid)
+    def locked_bervcalc() -> Tuple[np.ndarray, np.ndarray]:
         # try to calculate bervs and bjds
         try:
             out1 = barycorrpy.get_BC_vel(JDUTC=times, zmeas=0.0, **bkwargs)
             out2 = barycorrpy.utc_tdb.JDUTC_to_BJDTDB(times, **bkwargs)
-        except Exception as e:
+        except Exception as e1:
             # log error
-            wargs = [type(e), str(e), estimate, func_name]
-            WLOG(params, 'warning', TextEntry('10-016-00004', args=wargs))
-            raise BaryCorrpyException(tdict['10-016-00004'].format(*wargs))
+            wargs1 = [type(e1), str(e1), estimate, func_name]
+            WLOG(params, 'warning', textentry('10-016-00004', args=wargs1),
+                 sublevel=8)
+            raise BaryCorrpyException(textentry('10-016-00004', args=wargs1))
         # return the bervs and bjds
         bervs = out1[0] / 1000.0
         bjds = out2[0]
         return bervs, bjds
+
     # -------------------------------------------------------------------------
     # try to run locked makedirs
     try:
@@ -290,19 +520,64 @@ def use_barycorrpy(params, times, iteration=0, **kwargs):
         raise e
 
 
-def use_pyasl(params, times, quiet=False, **kwargs):
+def use_pyasl(params: ParamDict, times: Union[np.ndarray, list],
+              props: ParamDict, quiet: bool = False,
+              berv_est: Union[float, None] = None
+              ) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Use the pyasl module to calculate BERV/BJD
+
+    :param params: ParamDict - parameter dictionary of constants
+    :param times: numpy array, the list of times [in julien date]
+    :param props: ParamDict - the berv input parameters (ra/dec/pmra/pmde etc)
+    :param quiet: bool, if True does not print warning about using BERV
+                  estimate
+    :param berv_est: float, an estimate of the pyasl BERV uncertainties
+                     (for logging)
+
+    :return: two numpy arrays, the array of bervs for the times [km/s], and
+             array of bjds [julien date]
+    """
+    # set the function name
     func_name = __NAME__ + '.use_pyasl()'
     # get estimate accuracy
-    estimate = pcheck(params, 'EXT_BERV_EST_ACC', 'berv_est', kwargs, func_name)
+    estimate = pcheck(params, 'EXT_BERV_EST_ACC', func=func_name,
+                      override=berv_est)
     # print warning that we are using estimate
     if not quiet:
-        WLOG(params, 'warning', TextEntry('10-016-00005', args=[estimate]))
-    # convert kwargs to paramdict (just to be able to use capitals/non-capitals)
-    kwargs = ParamDict(kwargs)
+        WLOG(params, 'warning', textentry('10-016-00005', args=[estimate]),
+             sublevel=8)
+
+    # deal with distance
+    if props['PLX'] == 0:
+        distance = None
+    else:
+        distance = Distance(parallax=props['PLX'] * uu.mas)
+
+    # need to propagate ra and dec to J2000
+    coords = SkyCoord(ra=props['RA'] * uu.deg, dec=props['DEC'] * uu.deg,
+                      distance=distance,
+                      pm_ra_cosdec=props['PMRA'] * uu.mas / uu.yr,
+                      pm_dec=props['PMDE'] * uu.mas / uu.yr,
+                      obstime=Time(props['EPOCH'], format='jd'))
+    # work out the delta time between epoch and J2000.0
+    j2000 = Time(2000.0, format='decimalyear').jd + 0.5
+    delta_time = j2000 - props['EPOCH']
+    # get the coordinates in J2000
+    with warnings.catch_warnings(record=True) as _:
+        coords2000 = coords.apply_space_motion(dt=delta_time * uu.day)
+    # extract the ra and dec from SkyCoords
+    ra2000 = coords2000.ra.value
+    dec2000 = coords2000.dec.value
+    # test the coordinates are find
+    if np.isnan(ra2000) or np.isnan(dec2000):
+        eargs = [props['OBJNAME'], props['RA'], props['DEC'], props['PMRA'],
+                 props['PMDE'], props['PLX'], props['EPOCH']]
+        WLOG(params, 'error', textentry('00-016-00028', args=eargs))
     # get args
-    bkwargs = dict(ra2000=kwargs['ra'], dec2000=kwargs['dec'],
-                   obs_long=kwargs['long'], obs_lat=kwargs['lat'],
-                   obs_alt=kwargs['alt'])
+    bkwargs = dict(ra2000=ra2000, dec2000=dec2000,
+                   obs_long=props['DRS_LONG'], obs_lat=props['DRS_LAT'],
+                   obs_alt=props['DRS_ALT'])
     # set up storage
     bervs, bjds = [], []
 
@@ -316,542 +591,39 @@ def use_pyasl(params, times, quiet=False, **kwargs):
             bjds.append(bjd)
         except Exception as e:
             wargs = [jdtime, type(e), e, func_name]
-            WLOG(params, 'error', TextEntry('00-016-00017', args=wargs))
+            WLOG(params, 'error', textentry('00-016-00017', args=wargs))
     # convert lists to numpy arrays and return
     return np.array(bervs), np.array(bjds)
 
 
-def add_berv_keys(params, infile, props):
-
-    # get the pseudo constants
-    pconst = constants.pload(params['INSTRUMENT'])
-    # get input properties
-    inputs = get_inputs(params)
-    # get output properties
-    outputs = pconst.BERV_OUTKEYS()
-    # add berv/bjd/bervmax/source (output keys)
-    for key in outputs:
-        # get this output
-        output = outputs[key]
-        # add key to header
-        if output[0] in props:
-            infile.add_hkey(output[1], value=props[output[0]])
-        else:
-            infile.add_hkey(output[1], value='None')
-    # add input keys
-    for param in inputs.keys():
-        # get require parameter instance
-        inparam = inputs[param]
-        # add key to header
-        if param in props:
-            infile.add_hkey(inparam.outkey, value=props[param])
-        else:
-            infile.add_hkey(inparam.outkey, value='None')
+def add_berv_keys(params: ParamDict, infile: DrsFitsFile,
+                  props: ParamDict) -> DrsFitsFile:
+    # make sure infile has params
+    infile.params = params
+    # add berv keys
+    infile.add_hkey('KW_BERVLONG', value=props['DRS_LONG'])
+    infile.add_hkey('KW_BERVLAT', value=props['DRS_LAT'])
+    infile.add_hkey('KW_BERVALT', value=props['DRS_ALT'])
+    infile.add_hkey('KW_BERV', value=props['BERV'])
+    infile.add_hkey('KW_BJD', value=props['BJD'])
+    infile.add_hkey('KW_BERVMAX', value=props['BERV_MAX'])
+    infile.add_hkey('KW_DBERV', value=props['DBERV'])
+    infile.add_hkey('KW_BERVSOURCE', value=props['BERVSOURCE'])
+    infile.add_hkey('KW_BERV_EST', value=props['BERV_EST'])
+    infile.add_hkey('KW_BJD_EST', value=props['BJD_EST'])
+    infile.add_hkey('KW_BERVMAX_EST', value=props['BERV_MAX_EST'])
+    infile.add_hkey('KW_DBERV_EST', value=props['DBERV_EST'])
+    infile.add_hkey('KW_BERV_OBSTIME', value=props['OBS_TIME'])
+    infile.add_hkey('KW_BERV_OBSTIME_METHOD', value=props['OBS_TIME_METHOD'])
     # return infile
     return infile
 
 
 # =============================================================================
-# Define worker functions
-# =============================================================================
-def assign_properties(params, props=None, use=True, **kwargs):
-    """
-    Assigns properties from input and deals with missing parameters
-
-    Available kwargs (output keys) come from BERV_OUTKEYS()
-
-    :param params:
-    :param props:
-    :param kwargs:
-
-    :keyword berv:
-    :keyword bjd:
-    :keyword bervmax:
-    :keyword dberv:
-    :keyword source:
-    :keyword bervest:
-    :keyword bjdest:
-    :keyword bervmaxest:
-    :keyword dbervest:
-    :keyword start_time:
-    :keyword exp_time:
-    :keyword time_delta:
-    :keyword obs_time:
-
-    :return:
-    """
-    func_name = __NAME__ + '.assign_properties()'
-    # get the pseudo constants
-    pconst = constants.pload(params['INSTRUMENT'])
-    # get estimate accuracy
-    estimate = pcheck(params, 'EXT_BERV_EST_ACC', 'berv_est', kwargs, func_name)
-    # get parameters from kwargs
-    source = kwargs.get('source', 'None')
-    # get output properties
-    outputs = pconst.BERV_OUTKEYS()
-    # get input properties
-    inputs = get_inputs(params)
-    # set up storage
-    oprops = ParamDict()
-    # -------------------------------------------------------------------------
-    # deal with no props
-    if props is None:
-        props = ParamDict()
-        for key in inputs:
-            if isinstance(inputs[key].default, str):
-                props[key] = 'None'
-            else:
-                props[key] = np.nan
-            props.set_source(key, '{0} [{1}]'.format(func_name, source))
-    # -------------------------------------------------------------------------
-    # add outputs
-    for key in outputs:
-        output = outputs[key]
-        # check for the key in kwargs
-        value = kwargs.get(key, None)
-        # if not found (None) check for the outputs[0] key in kwargs
-        if value is None:
-            value = kwargs.get(output[0], None)
-        if value is None:
-            oprops[output[0]] = np.nan
-        else:
-            oprops[output[0]] = value
-
-        oprops.set_source(output[0], '{0} [{1}]'.format(func_name, source))
-    # -------------------------------------------------------------------------
-    # deal with inputs (set value and source)
-    for prop in props:
-        oprops[prop] = props[prop]
-        oprops.set_source(prop, props.sources[prop])
-
-    # -------------------------------------------------------------------------
-    # need to decide which values should be used (and report if we are using
-    #   estimate)
-    cond = (oprops['BERV'] is not None and np.isfinite(oprops['BERV']))
-    cond &= (oprops['BJD'] is not None and np.isfinite(oprops['BJD']))
-    cond &= (oprops['BERV_MAX'] is not None and np.isfinite(oprops['BERV_MAX']))
-
-    # Case 1: Not BERV used
-    if not use:
-        oprops['USE_BERV'] = None
-        oprops['USE_BJD'] = None
-        oprops['USE_BERV_MAX'] = None
-        oprops['USED_ESTIMATE'] = None
-        psource = '{0} [{1}]'.format(func_name, 'None')
-    # Case 2: pyasl used
-    elif not cond or (source == 'pyasl'):
-        # log warning that we are using an estimate
-        WLOG(params, 'warning', TextEntry('10-016-00014', args=[estimate]))
-        # set parameters
-        oprops['USE_BERV'] = oprops['BERV_EST']
-        oprops['USE_BJD'] = oprops['BJD_EST']
-        oprops['USE_BERV_MAX'] = oprops['BERV_MAX_EST']
-        oprops['USED_ESTIMATE'] = True
-        psource = '{0} [{1}]'.format(func_name, 'pyasl')
-    # Case 3: Barycorrpy used
-    else:
-        # set parameters
-        oprops['USE_BERV'] = oprops['BERV']
-        oprops['USE_BJD'] = oprops['BJD']
-        oprops['USE_BERV_MAX'] = oprops['BERV_MAX']
-        oprops['USED_ESTIMATE'] = False
-        psource = '{0} [{1}]'.format(func_name, 'barycorrpy')
-    # set source
-    keys = ['USE_BERV', 'USE_BJD', 'USE_BERV_MAX', 'USED_ESTIMATE']
-    oprops.set_sources(keys, psource)
-
-    # return properties
-    return oprops
-
-
-def get_outputs(params, infile, header, props, kwargs):
-    found = False
-    # define storage
-    bprops = ParamDict()
-    # get the pseudo constants
-    pconst = constants.pload(params['INSTRUMENT'])
-    berv_keys = pconst.BERV_OUTKEYS()
-    # loop around keys
-    for key in berv_keys:
-        inkey, outkey, kind, dtype = berv_keys[key]
-        # unset value
-        value, datatype = None, None
-        # check for outkey in params
-        if outkey in params:
-            hkey = params[outkey][0]
-        else:
-            hkey = outkey
-        # get the value of the key from infile
-        if kind == 'header' and infile is not None:
-            if hkey in infile.header:
-                value = infile.header[hkey]
-                datatype = params.instances[outkey].datatype
-                found = True
-        # get the value of the key from header
-        elif (kind == 'header') and (header is not None) and (value is None):
-            if hkey in header:
-                value = header[hkey]
-                datatype = params.instances[outkey].datatype
-                found = True
-        # get the value from props
-        elif (value is None) and (props is not None) and (key in props):
-            value = props[key]
-            datatype = dtype
-            found = True
-        # get the value from kwargs
-        elif (value is None) and (key in kwargs):
-            value = kwargs[key]
-            datatype = dtype
-            found = True
-        # else set the value
-        elif (value is None) and (key in params):
-            value = params[outkey]
-            datatype = dtype
-            found = True
-        # push values into props
-        if found:
-            if datatype is not None:
-                bprops[inkey] = datatype(value)
-            else:
-                bprops[inkey] = value
-    # only return if we filled it
-    if len(bprops) == len(berv_keys):
-        return bprops
-    else:
-        return None
-
-
-def get_inputs(params):
-    func_name = __NAME__ + '.get_inputs()'
-    # set up storage
-    inputs = dict()
-    # get the pseudo constants
-    pconst = constants.pload(params['INSTRUMENT'])
-    # get berv keys
-    berv_keys = pconst.BERV_INKEYS()
-    # loop around keys
-    for key in berv_keys:
-        inkey, outkey, kind, default = berv_keys[key]
-        # find key in params
-        if (inkey not in params) and (default is None):
-            eargs = [inkey, key, func_name]
-            WLOG(params, 'error', TextEntry('00-016-00020', args=eargs))
-            units, datatype = None, None
-        elif (inkey not in params) and (default is not None):
-            datatype, units = None, None
-        else:
-            instance = params.instances[inkey]
-            # get properties
-            datatype = instance.datatype
-            units = instance.unit
-        # deal with kind
-        if kind == 'header':
-            headerkey = inkey
-            paramkey = None
-        else:
-            headerkey = None
-            paramkey = inkey
-        # append to inputs
-        inputs[key] = Property(unit=units, datatype=datatype,
-                               headerkey=headerkey, paramkey=paramkey,
-                               outkey=outkey, default=default)
-    # return inputs
-    return inputs
-
-
-def get_parameters(params, kind, props=None, kwargs=None, infile=None,
-                   header=None):
-    func_name = __NAME__ + '.get_parameters()'
-    inputs = get_inputs(params)
-    # ----------------------------------------------------------------------
-    if kind == 'barycorrpy':
-        rparams = mode1
-    else:
-        rparams = mode2
-    # ----------------------------------------------------------------------
-    # set values to np.nan
-    gprops = ParamDict()
-    for param in inputs:
-        gprops[param] = np.nan
-        gprops.set_source(param, func_name)
-    # ----------------------------------------------------------------------
-    # first get parameters from header
-    gprops = get_header_input_props(params, gprops, rparams, inputs, infile,
-                                    header, props, kwargs)
-    # ----------------------------------------------------------------------
-    # update using gaia positions (from lookup table or gaia query)
-    gprops = get_input_props_gaia(params, gprops)
-    # ----------------------------------------------------------------------
-    # return all gprops
-    return gprops
-
-
-def get_header_input_props(params, gprops, rparams, inputs, infile, header,
-                           props, kwargs):
-    func_name = __NAME__ + '.use_header_input_props()'
-    source_name = '{0} [{1}]'
-    # ----------------------------------------------------------------------
-    # ra and dec have to be dealt with together
-    raw_ra, s_ra = get_raw_param(params, 'ra', inputs['ra'], infile, header,
-                                 props, kwargs)
-    raw_dec, s_dec = get_raw_param(params, 'dec', inputs['dec'], infile, header,
-                                   props, kwargs)
-    raw_coord = '{0} {1}'.format(raw_ra, raw_dec)
-    coords = SkyCoord(raw_coord, unit=(inputs['ra'].unit, inputs['dec'].unit))
-    # add to output
-    gprops['ra'] = coords.ra.value
-    gprops.set_source('ra', source_name.format(func_name, s_dec))
-    gprops.set_instance('ra', coords.ra)
-    gprops['dec'] = coords.dec.value
-    gprops.set_source('dec', source_name.format(func_name, s_dec))
-    gprops.set_instance('dec', coords.dec)
-    # ----------------------------------------------------------------------
-    # deal with gaia id and objname
-    gprops['gaiaid'], s_id = get_raw_param(params, 'gaiaid', inputs['gaiaid'],
-                                           infile, header, props, kwargs)
-    gprops['objname'], s_obj = get_raw_param(params, 'objname',
-                                             inputs['objname'], infile, header,
-                                             props, kwargs)
-    # store the original header object name here (may be required later)
-    gprops['hobjname'] = str(gprops['objname'])
-    # set the sources
-    gprops.set_sources(['gaiaid', 'objname', 'hobjname'], [s_id, s_obj, s_obj])
-    # ----------------------------------------------------------------------
-    # loop around each parameter to get into the format we require
-    for param in rparams.keys():
-        # skip ra and dec
-        if param in ['ra', 'dec', 'gaiaid', 'objname', 'hobjname']:
-            continue
-        # ------------------------------------------------------------------
-        # get require parameter instance
-        rparam = rparams[param]
-        inparam = inputs[param]
-        # get the raw parameter value
-        rawvalue, source = get_raw_param(params, param, inparam, infile, header,
-                                         props, kwargs)
-        # ------------------------------------------------------------------
-        # apply units to values and convert to expected inputs
-        # ------------------------------------------------------------------
-        # case 1: have units
-        if inparam.unit is not None:
-            # apply
-            try:
-                unitvalue = float(rawvalue) * inparam.unit
-            except Exception as e:
-                eargs = [param, rawvalue, inparam.unit, type(e), e, func_name]
-                WLOG(params, 'error', TextEntry('00-016-00012', args=eargs))
-                unitvalue = None
-            # convert
-            try:
-                value = unitvalue.to(rparam.unit)
-            except Exception as e:
-                eargs = [param, rawvalue, inparam.unit, rparam.unit,
-                         type(e), e, func_name]
-                WLOG(params, 'error', TextEntry('00-016-00015', args=eargs))
-                value = None
-        # ------------------------------------------------------------------
-        # case 2: have datatype
-        elif inparam.datatype is not None:
-            # case 2a: is a time
-            if inparam.datatype in Time.FORMATS.keys():
-                # apply
-                try:
-                    unitvalue = Time(float(rawvalue), format=inparam.datatype)
-                except Exception as e:
-                    eargs = [param, rawvalue, inparam.datatype, type(e), e,
-                             func_name]
-                    WLOG(params, 'error', TextEntry('00-016-00013', args=eargs))
-                    unitvalue = None
-                # convert:
-                try:
-                    value = getattr(unitvalue, rparam.datatype)
-                except Exception as e:
-                    eargs = [param, rawvalue, inparam.datatype, rparam.datatype,
-                             type(e), e, func_name]
-                    WLOG(params, 'error', TextEntry('00-016-00016', args=eargs))
-                    value = None
-            # case 2b: is another datatype
-            else:
-                try:
-                    value = inparam.datatype(rawvalue)
-                except Exception as e:
-                    eargs = [param, rawvalue, inparam.datatype, type(e), e,
-                             func_name]
-                    WLOG(params, 'error', TextEntry('00-016-00014', args=eargs))
-                    value = None
-        # ------------------------------------------------------------------
-        # case 3: keep as string
-        else:
-            value = rawvalue
-        # ------------------------------------------------------------------
-        # add to output props
-        if hasattr(value, 'value'):
-            gprops[param] = value.value
-        else:
-            gprops[param] = value
-        # add source
-        gprops.set_source(param, source_name.format(func_name, source))
-        gprops.set_instance(param, inputs[param])
-    # set the input source
-    gprops['INPUTSOURCE'] = 'header'
-    gprops.set_source('INPUTSOURCE', func_name)
-    # return properties
-    return gprops
-
-
-def get_input_props_gaia(params, gprops, **kwargs):
-    """
-    Takes a set of properties 'gprops' and checks for 'GAIAID', 'OBJNAME'
-    and 'RA'/'DEC' and tries to look in look-up table / query gaia to
-    get new parameters (for all parameters in 'gprops'
-
-    :param params: ParamDict, the constant parameter dictionary
-    :param gprops: ParmDict, the properties parameter dictionary
-    :param kwargs: keyword arguments
-
-    :type params: ParamDict
-    :type gprops: ParamDict
-
-    :keyword gaiaid: string, if defined uses this gaia id
-    :keyword objname: string, if defined uses this objname
-    :keyword ra: float, if defined uses this right ascension
-    :keyword dec: float, if defined uses this declination
-
-    :returns: the updated set of properties (ParamDict)
-    :rtype: ParamDict
-
-    """
-    func_name = __NAME__ + '.get_input_props_gaia()'
-    # get parameters from gprops/kwargs
-    gaia_id = pcheck(params, 'gaiaid', 'gaiaid', kwargs, func_name,
-                     paramdict=gprops)
-    objname = pcheck(params, 'objname', 'objname', kwargs, func_name,
-                     paramdict=gprops)
-    hdr_objname = pcheck(params, 'hobjname', 'objname', kwargs, func_name,
-                         paramdict=gprops)
-    ra = pcheck(params, 'ra', 'ra', kwargs, func_name, paramdict=gprops)
-    dec = pcheck(params, 'dec', 'dec', kwargs, func_name, paramdict=gprops)
-    # -----------------------------------------------------------------------
-    # case 1: we have gaia id
-    # -----------------------------------------------------------------------
-    if gaia_id is not None and gaia_id != 'None':
-        pprops, fail = crossmatch.get_params(params, gprops, gaiaid=gaia_id,
-                                             objname=objname, ra=ra, dec=dec,
-                                             hdr_objname=hdr_objname)
-        # deal with failure
-        if not fail:
-            WLOG(params, '', TextEntry('40-016-00016', args=['gaiaid']))
-            return pprops
-    # -----------------------------------------------------------------------
-    # case 2: we have objname
-    # -----------------------------------------------------------------------
-    if gprops['objname'] is not None and gprops['objname'] != 'None':
-        pprops, fail = crossmatch.get_params(params, gprops, objname=objname,
-                                             ra=ra, dec=dec,
-                                             hdr_objname=hdr_objname)
-        # deal with failure
-        if not fail:
-            WLOG(params, '', TextEntry('40-016-00016', args=['objname']))
-            return pprops
-    # -----------------------------------------------------------------------
-    # case 3: use ra and dec
-    # -----------------------------------------------------------------------
-    pprops, fail = crossmatch.get_params(params, gprops, ra=ra, dec=dec,
-                                         hdr_objname=hdr_objname)
-    # deal with failure
-    if not fail:
-        WLOG(params, '', TextEntry('40-016-00016', args=['ra/dec']))
-        return pprops
-    else:
-        WLOG(params, '', TextEntry('40-016-00016', args=['header']))
-        # return gprops
-        return gprops
-
-
-def get_raw_param(params, param, inparam, infile, header, props, kwargs):
-    func_name = __NAME__ + '.get_raw_param()'
-
-    # ------------------------------------------------------------------
-    # get raw value from: 1. infile, 2. header, 3. props, 4. kwargs
-    # ------------------------------------------------------------------
-    # unset value
-    rawvalue, source = None, 'None'
-    # get value from infile
-    if (infile is not None) and (inparam.hkey is not None):
-        rawvalue = infile.get_key(inparam.hkey, required=False)
-        source = str(infile)
-    # if not get value from header
-    useheader = (inparam.hkey is not None) and (rawvalue is None)
-    if (header is not None) and useheader:
-        if inparam.hkey in header:
-            rawvalue = header[params[inparam.hkey][0]]
-            source = 'header'
-    # if not get value from props
-    if (props is not None) and (rawvalue is None):
-        if param in props:
-            rawvalue = props[param]
-            source = 'props'
-    # if not get value from kwargs
-    if (kwargs is not None) and (rawvalue is None):
-        if param in kwargs:
-            rawvalue = kwargs[param]
-            source = 'kwargs'
-    # if not get value from params
-    if (params is not None) and (rawvalue is None):
-        if inparam.pkey in params:
-            rawvalue = params[inparam.pkey]
-            source = 'params'
-    # ------------------------------------------------------------------
-    # deal with value still being unset
-    if rawvalue is None and inparam.default is not None:
-        rawvalue = inparam.default
-        source = 'default'
-    elif rawvalue is None:
-        strparam = str(param)
-        if inparam.hkey is not None:
-            strparam += ' (hkey={0})'.format(inparam.hkey)
-        if inparam.pkey is not None:
-            strparam += ' (pkey={0})'.format(inparam.pkey)
-        eargs = [strparam, func_name]
-        WLOG(params, 'error', TextEntry('00-016-00011', args=eargs))
-    return rawvalue, source
-
-
-def get_times(params, bprops, infile, header):
-    func_name = __NAME__ + '.get_times()'
-    # ---------------------------------------------------------------------
-    # deal with header
-    if infile is not None:
-        header = infile.header
-    elif header is not None:
-        pass
-    else:
-        WLOG(params, 'error', TextEntry('00-016-00019', args=[func_name]))
-    # ---------------------------------------------------------------------
-    # get obs_time
-    obstime, method = drs_fits.get_mid_obs_time(params, header, func=func_name)
-
-    # for the maximum peak to peak need an array of times
-    times = obstime.jd + np.arange(0, 365, 5.0/3.0)
-    # add to bprops
-    bprops['OBS_TIME'] = obstime.jd
-    bprops['OBS_TIME_METHOD'] = method
-    bprops['OBS_TIMES'] = times
-    # add source
-    keys = ['OBS_TIME', 'OBS_TIMES', 'OBS_TIME_METHOD']
-    bprops.set_sources(keys, func_name)
-    # return bprops
-    return bprops
-
-
-# =============================================================================
 # Start of code
 # =============================================================================
-# Main code here
 if __name__ == "__main__":
-    # ----------------------------------------------------------------------
-    # print 'Hello World!'
-    print("Hello World!")
+    print('Hello World')
 
 # =============================================================================
 # End of code

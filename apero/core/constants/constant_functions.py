@@ -1,5 +1,5 @@
 """
-Package containing all constants Classes and functionality
+APERO constants classes and constant functionality
 
 DRS Import Rules:
 
@@ -9,39 +9,44 @@ Created on 2019-01-17 at 14:09
 
 @author: cook
 """
-import numpy as np
 import os
 import sys
 import traceback
-import importlib
-import string
-import warnings
-from astropy import units as uu
-from typing import Union
+from pathlib import Path
+from typing import Any, List, Tuple, Union
 
-from apero.lang import drs_exceptions
-from apero.lang import drs_lang_db
+import numpy as np
+from astropy import units as uu
+
+from apero import lang
+from apero.base import base
+from apero.core.core import drs_base_classes as base_class
+from apero.core.core import drs_exceptions
+from apero.core.core import drs_misc
+from apero.core.core import drs_text
 
 # =============================================================================
 # Define variables
 # =============================================================================
 # Define script name
 __NAME__ = 'constant_functions.py'
-# Define simple types allowed for constants
-SIMPLE_TYPES = [int, float, str, bool, list]
-SIMPLE_STYPES = ['int', 'float', 'str', 'bool', 'list']
-# define valid characters
-VALID_CHARS = list(string.ascii_letters) + list(string.digits)
-VALID_CHARS += list(string.punctuation) + list(string.whitespace)
+__PACKAGE__ = base.__PACKAGE__
+__INSTRUMENT__ = 'None'
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
+
 # get the Drs Exceptions
-DRSError = drs_exceptions.DrsError
-DRSWarning = drs_exceptions.DrsWarning
-TextError = drs_exceptions.TextError
-TextWarning = drs_exceptions.TextWarning
-ConfigError = drs_exceptions.ConfigError
-ConfigWarning = drs_exceptions.ConfigWarning
-# get the logger
-BLOG = drs_exceptions.basiclogger
+DrsCodedException = drs_exceptions.DrsCodedException
+# get the text entry
+textentry = lang.textentry
+# get simple types
+SIMPLE_TYPES = base.SIMPLE_TYPES
+SIMPLE_STYPES = base.SIMPLE_STYPES
+VALID_CHARS = base.VALID_CHARS
+# get display function
+display_func = drs_misc.display_func
 
 
 # =============================================================================
@@ -54,11 +59,24 @@ class Const:
     e.g. stores information to read and check config/constant file constants
 
     """
-    def __init__(self, name, value=None, dtype=None, dtypei=None,
-                 options=None, maximum=None, minimum=None, source=None,
-                 unit=None, default=None, datatype=None, dataformat=None,
-                 group=None, user=False, active=False, description=None,
-                 author=None, parent=None):
+    # set class name
+    class_name = 'Const'
+
+    def __init__(self, name: str, value: Any = None,
+                 dtype: Union[None, str, type] = None,
+                 dtypei: Union[None, str, type] = None,
+                 options: List = None,
+                 maximum: Union[int, float, None] = None,
+                 minimum: Union[int, float, None] = None,
+                 source: Union[str, None] = None,
+                 unit: Union[uu.Unit] = None, default: Any = None,
+                 datatype: Union[type, None] = None,
+                 dataformat: Union[str, None] = None,
+                 group: Union[str, None] = None, user: bool = False,
+                 active: bool = False, description: Union[str, None] = None,
+                 author: Union[str, List[str], None] = None,
+                 parent: Union[str, None] = None,
+                 output: bool = True):
         """
         Construct the constant instance
 
@@ -82,32 +100,14 @@ class Const:
                        (for user config file generation)
         :param description: str, the description for this constant
         :param author: str, the author of this constant (i.e. who to contact)
-        :param parent: Const, the parent of this constant (if a constant is
+        :param parent: str, the parent of this constant (if a constant is
                        related to or comes from another constant)
-
-        :type name: str
-        :type value: object
-        :type dtype: Union[str, type]
-        :type dtypei: Union[str, type]
-        :type options: list[object]
-        :type maximum: object
-        :type minimum: object
-        :type source: str
-        :type unit: uu.Unit
-        :type default: object
-        :type datatype: str
-        :type dataformat: str
-        :type group: str
-        :type user: bool
-        :type active: bool
-        :type description: str
-        :type author: str
-        :type parent: Const
+        :param output: bool if False does not put in parameter output table
 
         :returns: None (constructor)
         """
-        # set function name (cannot break function here)
-        _ = str(__NAME__) + '.Const.validate()'
+        # set function name
+        func_name = display_func('__init__', __NAME__, self.class_name)
         # set the name of the constant
         self.name = name
         # set the value of the constant
@@ -122,8 +122,15 @@ class Const:
         self.maximum, self.minimum = maximum, minimum
         # set the kind (Const or Keyword)
         self.kind = 'Const'
+        # set the output parameter table
+        self.output = output
         # set the source file of the constant
-        self.source = source
+        if source is None:
+            eargs = [self.class_name, self.name]
+            raise DrsCodedException('00-003-00034', level='error',
+                                    targs=eargs, func_name=func_name)
+        else:
+            self.source = source
         # set the units of the constant (astropy units)
         self.unit = unit
         # set the default value of the constant
@@ -150,7 +157,35 @@ class Const:
         # set true value
         self.true_value = None
 
-    def validate(self, test_value=None, quiet=False, source=None):
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state (for pickle)
+        return state
+
+    def __setstate__(self, state):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+
+    def __str__(self) -> str:
+        """
+        Return string represenation of Const class
+        :return:
+        """
+        return 'Const[{0}]'.format(self.name)
+
+    def validate(self, test_value: Any = None, quiet: bool = False,
+                 source: Union[str, None] = None) -> Union[bool, Any]:
         """
         Validate a value either from definition (when `test_value` is None)
         or test a new value for this constant instance (`test_value` set).
@@ -172,10 +207,8 @@ class Const:
                  else if unset returns True if value is valid. If not valid
                  exception is raised.
         :rtype: Union[bool, object]
-        :raises ConfigError: if value is not valid
+        :raises DrsCodedError: if value is not valid
         """
-        # set function name (cannot break function here)
-        _ = str(__NAME__) + '.Const.validate()'
         # deal with no test value (use value set at module level)
         if test_value is None:
             value = self.value
@@ -193,7 +226,7 @@ class Const:
                  self.maximum, self.minimum, ]
         vkwargs = dict(quiet=quiet, source=source)
 
-        true_value, self.source = _validate_value(*vargs, **vkwargs)
+        true_value, source = _validate_value(*vargs, **vkwargs)
         # deal with storing
         if test_value is None:
             self.true_value = true_value
@@ -201,7 +234,7 @@ class Const:
         else:
             return true_value
 
-    def copy(self, source=None):
+    def copy(self, source: Union[str, None] = None) -> 'Const':
         """
         Shallow copy of constant instance
 
@@ -211,16 +244,15 @@ class Const:
         :type source: str
         :return: Const, a shallow copy of the constant
         :rtype: Const
-        :raises ConfigError: if source is None
+        :raises DrsCodedException: if source is None
         """
-        # set function name (cannot break function here)
-        func_name = str(__NAME__) + '.Const.copy()'
-        # get display text
-        textentry = DisplayText()
+        # set function name
+        func_name = display_func('copy', __NAME__, self.class_name)
         # check that source is valid
         if source is None:
-            raise ConfigError(textentry('00-003-00007', args=[func_name]),
-                              level='error')
+            raise DrsCodedException('00-003-00007', 'error', targs=[func_name],
+                                    func_name=func_name)
+
         # return new copy of Const
         return Const(self.name, self.value, self.dtype, self.dtypei,
                      self.options, self.maximum, self.minimum, source=source,
@@ -228,9 +260,9 @@ class Const:
                      datatype=self.datatype, dataformat=self.dataformat,
                      group=self.group, user=self.user, active=self.active,
                      description=self.description, author=self.author,
-                     parent=self.parent)
+                     parent=self.parent, output=self.output)
 
-    def write_line(self, value=None):
+    def write_line(self, value: Any = None) -> List[str]:
         """
         Creates the lines required for a config/constant file for this constant
 
@@ -249,8 +281,6 @@ class Const:
 
         :rtype: list[str]
         """
-        # set function name (cannot break function here)
-        _ = str(__NAME__) + '.Const.write_line()'
         # set up line list
         lines = ['']
         # deal with value
@@ -260,10 +290,10 @@ class Const:
         # add description
         # -------------------------------------------------------------------
         # check if we have a description defined
-        if self.description not in ['', 'None', None]:
+        if not drs_text.null_text(self.description, ['', 'None']):
             description = self.description.strip().capitalize()
             # wrap long descriptions by words
-            wrapdesc = textwrap(description, 77)
+            wrapdesc = drs_text.textwrap(description, 77)
             # loop around wrapped lines and add as comments
             for wline in wrapdesc:
                 # add wrapped line to
@@ -331,11 +361,25 @@ class Keyword(Const):
         key  value // comment
 
     """
+    # set class name
+    class_name = 'Keyword'
 
-    def __init__(self, name, key=None, value=None, dtype=None, comment=None,
-                 options=None, maximum=None, minimum=None, source=None,
-                 unit=None, default=None, datatype=None, dataformat=None,
-                 group=None, author=None, parent=None):
+    def __init__(self, name: str, key: Union[str, None] = None,
+                 value: Any = None, dtype: Union[None, str, type] = None,
+                 comment: Union[str, None] = None,
+                 options: List = None,
+                 maximum: Union[int, float, None] = None,
+                 minimum: Union[int, float, None] = None,
+                 source: Union[str, None] = None,
+                 unit: Union[uu.Unit] = None, default: Any = None,
+                 datatype: Union[type, None] = None,
+                 dataformat: Union[str, None] = None,
+                 group: Union[str, None] = None,
+                 author: Union[str, List[str], None] = None,
+                 parent: Union[str, None] = None,
+                 combine_method: Union[str, None] = None,
+                 description: Union[str, None] = None,
+                 post_exclude: bool = False):
         """
         Construct the keyword instance
 
@@ -358,41 +402,38 @@ class Keyword(Const):
         :param author: str, the author of this constant (i.e. who to contact)
         :param parent: Const, the parent of this constant (if a constant is
                        related to or comes from another constant)
-
-        :type name: str
-        :type key: str
-        :type value: object
-        :type dtype: Union[str, type]
-        :type comment: str
-        :type options: list[object]
-        :type maximum: object
-        :type minimum: object
-        :type source: str
-        :type unit: uu.Unit
-        :type default: object
-        :type datatype: str
-        :type dataformat: str
-        :type group: str
-        :type author: str
-        :type parent: Union[Const,Keyword]
+        :param combine_method: str, the method to combine keyword (if we are
+                               combining images)
+        :param description: str or None, if set this is the description of the
+                            constants
+        :param post_exclude: bool, if True flags that keyword can be removed
+                             in post processing files
 
         :returns: None (constructor)
         """
-        # set function name (cannot break function here)
-        _ = str(__NAME__) + '.Keyword.__init__()'
+        # set function name
+        func_name = display_func('__init__', __NAME__, self.class_name)
+        # set the name
+        self.name = name
+        # set the source file of the Keyword
+        if source is None:
+            eargs = [self.class_name, self.name]
+            raise DrsCodedException('00-003-00034', level='error',
+                                    targs=eargs, func_name=func_name)
+        else:
+            self.source = source
         # Initialize the constant parameters (super)
         Const.__init__(self, name, value, dtype, None, options, maximum,
                        minimum, source, unit, default, datatype, dataformat,
-                       group, user=False, active=False, description='',
-                       author=author, parent=parent)
+                       group, user=False, active=False,
+                       description=description, author=author, parent=parent,
+                       output=False)
         # set the header key associated with this keyword (8 characters only)
         self.key = key
         # set the header comment associated with this keyword
         self.comment = comment
         # set the kind (Const or Keyword)
         self.kind = 'Keyword'
-        # set the source file of the Keyword
-        self.source = source
         # set the units of the Keyword (for use when reading and converting)
         self.unit = unit
         # set the default value of this constant
@@ -410,11 +451,53 @@ class Keyword(Const):
         # set the parent of this keyword (if a constant/keyword is related to
         #   or comes from another constant/keyword)
         self.parent = parent
+        # set the combine method
+        self.combine_method = combine_method
+        # set the post processing exclude key flag
+        self.post_exclude = post_exclude
 
-    def set(self, key=None, value=None, dtype=None, comment=None,
-            options=None, unit=None, maximum=None, minimum=None,
-            source=None, default=None, datatype=None,
-            dataformat=None, group=None, author=None, parent=None):
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state (for pickle)
+        return state
+
+    def __setstate__(self, state):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+
+    def __str__(self) -> str:
+        """
+        Return string represenation of Const class
+        :return:
+        """
+        return 'Const[{0}]'.format(self.name)
+
+    def set(self, key: str = None, value: Any = None,
+            dtype: Union[None, str, type] = None,
+            comment: Union[str, None] = None,
+            options: List = None,
+            maximum: Union[int, float, None] = None,
+            minimum: Union[int, float, None] = None,
+            source: Union[str, None] = None,
+            unit: Union[uu.Unit] = None, default: Any = None,
+            datatype: Union[type, None] = None,
+            dataformat: Union[str, None] = None,
+            group: Union[str, None] = None,
+            author: Union[str, List[str], None] = None,
+            parent: Union[str, None] = None,
+            combine_method: Union[str, None] = None,
+            post_exclude: Union[bool, None] = None):
         """
         Set attributes of the Keyword instance
 
@@ -436,27 +519,12 @@ class Keyword(Const):
         :param author: str, the author of this constant (i.e. who to contact)
         :param parent: Const, the parent of this constant (if a constant is
                        related to or comes from another constant)
-
-        :type key: str
-        :type value: object
-        :type dtype: object
-        :type comment: str
-        :type options: list[object]
-        :type maximum: object
-        :type minimum: object
-        :type source: str
-        :type unit: uu.Unit
-        :type default: object
-        :type datatype: str
-        :type dataformat: str
-        :type group: str
-        :type author: str
-        :type parent: Union[Const,Keyword]
+        :param combine_method: str, the method used to combine this keyword
+                               when combining two or more files
+        :param post_exclude: bool, whether to exclude from post processing
 
         :returns: None
         """
-        # set function name (cannot break function here)
-        _ = str(__NAME__) + '.Keyword.set()'
         # set the header key associated with this keyword
         if key is not None:
             self.key = key
@@ -505,8 +573,15 @@ class Keyword(Const):
         #   comes from another constant)
         if parent is not None:
             self.parent = parent
+        # set the combine method for this keyword
+        if combine_method is not None:
+            self.combine_method = combine_method
+        # set the post processing exclude key
+        if post_exclude is not None:
+            self.post_exclude = post_exclude
 
-    def validate(self, test_value=None, quiet=False, source=None):
+    def validate(self, test_value: Any = None, quiet: bool = False,
+                 source: Union[str, None] = None) -> Union[bool, Any]:
         """
         Validate a value either from definition (when `test_value` is None)
         or test a new value for this keyword instance (`test_value` set).
@@ -534,10 +609,10 @@ class Keyword(Const):
                  else if unset returns True if value is valid. If not valid
                  exception is raised.
         :rtype: Union[bool, object]
-        :raises ConfigError: if value is not valid
+        :raises DrsCodedException: if value is not valid
         """
-        # set function name (cannot break function here)
-        _ = str(__NAME__) + '.Keyword.validate()'
+        # set function name
+        func_name = display_func('validate', __NAME__, self.class_name)
         # deal with no test value (use value set at module level)
         if test_value is None:
             value = self.value
@@ -550,14 +625,15 @@ class Keyword(Const):
         vargs = [self.name, self.dtype, value, self.dtypei, self.options,
                  self.maximum, self.minimum, ]
         vkwargs = dict(quiet=quiet, source=source)
-        true_value, self.source = _validate_value(*vargs, **vkwargs)
+        true_value, source = _validate_value(*vargs, **vkwargs)
         # deal with no comment
         if self.comment is None:
             self.comment = ''
         # need a key
         if self.key is None:
-            emsg = 'Keyword "{0}" must have a key'
-            raise ConfigError(emsg.format(self.name), level='error')
+            raise DrsCodedException('00-003-00035', 'error', targs=[self.name],
+                                    func_name=func_name)
+
         # construct true value as keyword store
         true_value = [self.key, true_value, self.comment]
         # deal with storing
@@ -567,7 +643,7 @@ class Keyword(Const):
         else:
             return true_value
 
-    def copy(self, source=None):
+    def copy(self, source: Union[str, None] = None) -> 'Keyword':
         """
         Shallow copy of keyword instance
 
@@ -577,73 +653,94 @@ class Keyword(Const):
         :type source: str
         :return: Keyword, a shallow copy of the keyword
         :rtype: Keyword
-        :raises ConfigError: if source is None
+        :raises DrsCodedException: if source is None
         """
-        # set function name (cannot break function here)
-        func_name = str(__NAME__) + '.Keyword.copy()'
-        # get display text
-        textentry = DisplayText()
+        # set function name
+        func_name = display_func('copy', __NAME__, self.class_name)
         # check that source is valid
         if source is None:
-            raise ConfigError(textentry('00-003-00008', args=[func_name]),
-                              level='error')
+            raise DrsCodedException('00-003-00008', 'error', targs=[func_name],
+                                    func_name=func_name)
         # return new copy of Const
         return Keyword(self.name, self.key, self.value, self.dtype,
                        self.comment, self.options, self.maximum,
                        self.minimum, source=source, unit=self.unit,
                        default=self.default, datatype=self.datatype,
                        dataformat=self.dataformat, group=self.group,
-                       author=self.author, parent=self.parent)
+                       author=self.author, parent=self.parent,
+                       combine_method=self.combine_method,
+                       description=self.description,
+                       post_exclude=self.post_exclude)
 
 
-class DisplayText:
-    """
-    Manually enter wlog TextEntries here -- will be in english only
-
-    This is used for when we cannot have access to the language database
-    """
-
-    def __init__(self):
+class CKCaseINSDict(base_class.CaseInsensitiveDict):
+    def __init__(self, *arg, **kw):
         """
-        Constructs the manual language database (into `self.entries`)
+        Construct the Const/Keyword elements case insensitive dictionary class
+        :param arg: arguments passed to dict
+        :param kw: keyword arguments passed to dict
         """
-        # set function name (cannot break here --> no access to inputs)
-        _ = __NAME__ + '._DisplayText.__init__()'
-        # get the entries from module
-        self.entries = drs_lang_db.get_entries()
+        # set class name
+        self.class_name = 'CKCaseINSDict'
+        # super from dict
+        super(CKCaseINSDict, self).__init__(*arg, **kw)
 
-    def __call__(self, key, args=None):
+    def __getitem__(self, key: str) -> Union[None, Const, Keyword]:
         """
-        When constructed this call method acts like a TextEntry instance,
-        returning a string that can be used in WLOG and is formatted by
-        arguments `args`
+        Method used to get the value of an item using "key"
+        used as x.__getitem__(y) <==> x[y]
+        where key is case insensitive
 
-        :param key: str, the key code from the language database
-                    (i.e. 00-001-00001)
-        :param args: list of objects, if there is formating in entry this
-                     is how arguments are supplied i.e.
-                     `'LOG MESSAGE {0}: Message = {1}'.format(*args)`
+        :param key: string, the key for the value returned (case insensitive)
 
         :type key: str
-        :type args: list[objects]
 
-        :return: returns string
-        :rtype: str
+        :return value: list, the value stored at position "key"
         """
-        # set function name (cannot break here --> no access to inputs)
-        _ = str(__NAME__) + '._DisplayText.__init__()'
-        # return the entry for key with the arguments used for formatting
-        if args is not None:
-            return self.entries[key].format(*args)
-        # else just return the entry
-        else:
-            return self.entries[key]
+        # return from supers dictionary storage
+        # noinspection PyTypeChecker
+        return super(CKCaseINSDict, self).__getitem__(key)
+
+    def __setitem__(self, key: str, value: Union[None, Const, Keyword]):
+        """
+        Sets an item wrapper for self[key] = value
+        :param key: string, the key to set for the parameter
+        :param value: object, the object to set (as in dictionary) for the
+                      parameter
+
+        :type key: str
+        :type value: list
+
+        :return: None
+        """
+        # then do the normal dictionary setting
+        super(CKCaseINSDict, self).__setitem__(key, value)
+
+    def __str__(self):
+        """
+        Return the string representation of the class
+        :return: str, the string representation
+        """
+        return '{0}[CaseInsensitiveDict]'.format(self.class_name)
+
+    def __repr__(self) -> str:
+        """
+        Return the string representation of the class
+        :return: str, the string representation
+        """
+        return self.__str__()
+
+
+# =============================================================================
+# Define complex type returns
+# =============================================================================
+GenConsts = Tuple[List[str], Union[List[Const], List[Keyword]]]
 
 
 # =============================================================================
 # Define functions
 # =============================================================================
-def generate_consts(modulepath):
+def generate_consts(modulepath: str) -> GenConsts:
     """
     Get all Const and Keyword instances from a module - basically load
     constants from a python file
@@ -654,12 +751,14 @@ def generate_consts(modulepath):
 
     :return: the keys (Const/Keyword names) and their respective instances
     :rtype: tuple[list[str], list[Const, Keyword]]
-    :raises ConfigError: if module name is not valid
+    :raises DrsCodedException: if module name is not valid
     """
-    # set function name (cannot break here --> no access to inputs)
-    func_name = str(__NAME__) + '.generate_consts()'
-    # import module
-    mod = import_module(func_name, modulepath)
+    # set function name
+    func_name = display_func('generate_consts', __NAME__)
+    # get the import module class
+    module = import_module(func_name, modulepath)
+    # get the correct module for this class
+    mod = module.get()
     # get keys and values
     keys, values = list(mod.__dict__.keys()), list(mod.__dict__.values())
     # storage for all values
@@ -681,32 +780,33 @@ def generate_consts(modulepath):
     return new_keys, new_values
 
 
-def import_module(func, modulepath, full=False, quiet=False):
+def import_module(func: str, modulepath: str, full: bool = False,
+                  quiet: bool = False) -> base_class.ImportModule:
     """
     Import a module given a module path
 
     :param func: str, the function where import_module was called
     :param modulepath: str, the
     :param full: bool, if True, assumes modulepath is the full path
-    :param quiet: bool, if True raises a ValueError instead of a ConfigError
+    :param quiet: bool, if True raises a ValueError instead of a
+                  DrsCodedException
 
     :type func: str
     :type modulepath: str
     :type full: bool
     :type quiet: bool
 
-    :raises: ConfigError - if module path is not valid (and quiet=False)
+    :raises: DrsCodedException - if module path is not valid (and quiet=False)
     :raises: ValueError - if module path is not valid (and quiet=True)
 
     :return: the imported module instance
     """
     # set function name (cannot break here --> no access to inputs)
     if func is None:
-        func_name = str(__NAME__) + '.import_module()'
+        # set function name
+        func_name = display_func('import_module', __NAME__)
     else:
         func_name = str(func)
-    # get display text
-    textentry = DisplayText()
     # deal with getting module
     if full:
         modfile = modulepath
@@ -721,7 +821,12 @@ def import_module(func, modulepath, full=False, quiet=False):
             del sys.modules[modfile]
         if not full:
             sys.path.insert(0, moddir)
-        mod = importlib.import_module(modfile)
+        # get name for import module class
+        name = modfile.split('.')[-1]
+        # construct class and get module
+        mod = base_class.ImportModule(name, modfile)
+        mod.get()
+        # remove mod directory from sys.path (if not full)
         if not full:
             sys.path.remove(moddir)
         # return
@@ -734,11 +839,11 @@ def import_module(func, modulepath, full=False, quiet=False):
         if quiet:
             raise ValueError(textentry('00-000-00003', args=eargs))
         else:
-            raise ConfigError(textentry('00-000-00003', args=eargs),
-                              level='error')
+            raise DrsCodedException('00-000-00003', 'error', targs=eargs,
+                                    func_name=func_name)
 
 
-def get_constants_from_file(filename):
+def get_constants_from_file(filename: str) -> Tuple[List[str], List[str]]:
     """
     Read config file and convert to key, value pairs
         comments have a '#' at the start
@@ -751,15 +856,13 @@ def get_constants_from_file(filename):
     :return keys: list of strings, upper case strings for each variable
     :return values: list of strings, value of each key
 
-    :raises ConfigError: if there is a profile read constants from file
+    :raises DrsCodedException: if there is a profile read constants from file
     """
-    # set function name (cannot break here --> no access to inputs)
-    _ = str(__NAME__) + '.get_constants_from_file()'
     # first try to reformat text file to avoid weird characters
     #   (like mac smart quotes)
     _validate_text_file(filename)
     # read raw config file as strings
-    raw = _get_raw_txt(filename, comments='#', delimiter='=')
+    raw = drs_text.load_text_file(filename, comments='#', delimiter='=')
     # check that we have lines in config file
     if len(raw) == 0:
         return [], []
@@ -793,7 +896,7 @@ def get_constants_from_file(filename):
     return keys, values
 
 
-def update_file(filename, dictionary):
+def update_file(filename: str, dictionary: dict):
     """
     Updates a config/constants file with key/value pairs in the `dictionary`
     If key not found in config/constants file does not add key/value to file
@@ -805,12 +908,10 @@ def update_file(filename, dictionary):
     :type filename: str
     :type dictionary: dict
     :return: None
-    :raises ConfigError: if we cannot read filename
+    :raises DrsCodedException: if we cannot read filename
     """
     # set function name (cannot break here --> no access to inputs)
     func_name = str(__NAME__) + '.update_file()'
-    # get display text
-    textentry = DisplayText()
     # open file
     try:
         # read the lines
@@ -818,8 +919,8 @@ def update_file(filename, dictionary):
             lines = f.readlines()
     except Exception as e:
         eargs = [filename, func_name, type(e), e]
-        raise ConfigError(textentry('00-004-00003', args=eargs),
-                          level='error')
+        raise DrsCodedException('00-004-00003', 'error', targs=eargs,
+                                func_name=func_name)
     # convert lines to char array
     clines = np.char.array(lines).strip()
     # loop through keys in dictionary
@@ -844,160 +945,15 @@ def update_file(filename, dictionary):
             f.writelines(lines)
     except Exception as e:
         eargs = [filename, func_name, type(e), e]
-        raise ConfigError(textentry('00-004-00004', args=eargs),
-                          level='error')
-
-
-def textwrap(input_string, length):
-    """
-    Wraps the text `input_string` to the length of `length` new lines are
-    indented with a tab
-
-    Modified version of this: https://stackoverflow.com/a/16430754
-
-    :param input_string: str, the input text to wrap
-    :param length: int, the length of the wrap
-    :type input_string: str
-    :type length: int
-    :return: list of strings, the new set of wrapped lines
-    :rtype: list[str]
-    """
-    # set function name (cannot break here --> no access to inputs)
-    _ = str(__NAME__) + '.textwrap()'
-    # set up a new empty list of strings
-    new_string = []
-    # loop around the input string split by new lines
-    for s in input_string.split("\n"):
-        # if line is empty add an empty line to new_string
-        if s == "":
-            new_string.append('')
-        # set the current line length to zero initially
-        wlen = 0
-        # storage
-        line = []
-        # loop around words in string and split at words if length is too long
-        #   words are definied by white spaces
-        for dor in s.split():
-            # if the word + current length is shorter than the wrap length
-            #   then append to current line
-            if wlen + len(dor) + 1 <= length:
-                line.append(dor)
-                # update the current line length
-                wlen += len(dor) + 1
-            # else we have to wrap
-            else:
-                # add the current line to the output string
-                new_string.append(" ".join(line))
-                # start a new line with the word that broke the wrap
-                line = [dor]
-                # set the current line length to the length of the word
-                wlen = len(dor)
-        # if the length of the line is larger than zero append line
-        if len(line) > 0:
-            new_string.append(" ".join(line))
-    # add a tab to all but first line
-    new_string2 = [new_string[0]]
-    # loop around lines in new strings (except the first line)
-    for it in range(1, len(new_string)):
-        new_string2.append('\t' + new_string[it])
-    # return the new string with tabs for subsequent lines
-    return new_string2
+        raise DrsCodedException('00-004-00004', 'error', targs=eargs,
+                                func_name=func_name)
 
 
 # =============================================================================
 # Define private functions
 # =============================================================================
-def _get_raw_txt(filename,  comments,  delimiter):
-    """
-    Read raw text from a file `filename` where comments are prefixed by
-    `comments` and columns separated by `delimiter`. By default tries to use
-    np.genfromtxt but if this fails tries a slower method.
-
-    :param filename: str, the absolute file path to read
-    :param comments: str, the comment character to look for
-    :param delimiter: str, the delimiter value to look for
-    :type filename: str
-    :type comments: str
-    :type delimiter: str
-
-    :return: numpy array containing columns delimited by `delimiter`
-    :rtype: np.ndarray
-    """
-    # set function name (cannot break here --> no access to inputs)
-    _ = str(__NAME__) + '._get_raw_txt()'
-    # catch warnings from here
-    with warnings.catch_warnings(record=True) as _:
-        # noinspection PyBroadException
-        # try to read the text file using numpy's genfromtxt (faster)
-        try:
-            raw = np.genfromtxt(filename, comments=comments,
-                                delimiter=delimiter, dtype=str).astype(str)
-        # if this fails for any read use a slow method (defined below)
-        except Exception:
-            raw = _read_lines(filename, comments=comments, delimiter=delimiter)
-    # return the raw lines
-    return raw
-
-
-def _read_lines(filename, comments='#', delimiter=' '):
-    """
-    Basic way to open file containing tabular data
-
-    :param filename: str, the absolute file path to read
-    :param comments: str, the comment character to look for
-    :param delimiter: str, the delimiter value to look for
-    :type filename: str
-    :type comments: str
-    :type delimiter: str
-
-    :return: numpy array containing columns delimited by `delimiter`
-    :rtype: np.ndarray
-    :raises ConfigError: if filename cannot be read
-    """
-    # set function name (cannot break here --> no access to inputs)
-    func_name = str(__NAME__) + '.read_lines()'
-    # get display text
-    textentry = DisplayText()
-    # manually open file (slow)
-    try:
-        # read the lines
-        with open(filename, 'r') as f:
-            lines = f.readlines()
-    except Exception as e:
-        eargs = [filename, func_name, type(e), e]
-        raise ConfigError(textentry('00-004-00003', args=eargs),
-                          level='error')
-    # valid lines
-    raw = []
-    # loop around lines
-    for l, line in enumerate(lines):
-        # remove line endings and blanks at start and end
-        line = line.replace('\n', '').strip()
-        # do not include blank lines
-        if len(line) == 0:
-            continue
-        # do not include commented lines
-        elif line[0] == comments:
-            continue
-        else:
-            # append to raw
-            try:
-                key, value = line.split(delimiter)
-            except ValueError as _:
-                eargs = [l + 1, filename, line, func_name]
-                raise ConfigError(textentry('00-003-00022', args=eargs),
-                                  level='error')
-            raw.append([key, value])
-    # check that raw has entries
-    if len(raw) == 0:
-        eargs = [filename, func_name]
-        raise ConfigError(textentry('00-003-00023', args=eargs),
-                          level='error')
-    # return raw
-    return np.array(raw)
-
-
-def _test_dtype(name, invalue, dtype, source, quiet=False):
+def _test_dtype(name: str, invalue: Any, dtype: Union[str, type],
+                source: str, quiet: bool = False) -> Any:
     """
     Test the data type of a variable `invalue`
 
@@ -1016,34 +972,32 @@ def _test_dtype(name, invalue, dtype, source, quiet=False):
     :return: returns the value in the input dtype (if valid) if invalid
              returns input value (unless quiet=True then exception raised)
     :rtype: Any
-    :raises ConfigError: if quiet=True and type invalid
+    :raises DrsCodedException: if quiet=True and type invalid
     """
     # set function name (cannot break here --> no access to inputs)
     func_name = str(__NAME__) + '._test_dtype()'
-    # get display text
-    textentry = DisplayText()
     # if we don't have a value (i.e. it is None) don't test
     if invalue is None:
         return None
     # check paths (must be strings and must exist)
     if dtype == 'path':
-        if type(invalue) is not str:
+        if not isinstance(invalue, str):
             if not quiet:
                 eargs = [name, type(invalue), invalue, source, func_name]
-                raise ConfigError(textentry('00-003-00009', args=eargs),
-                                  level='error')
+                raise DrsCodedException('00-003-00009', 'error', targs=eargs,
+                                        func_name=func_name)
         if not os.path.exists(invalue):
             if not quiet:
                 eargs = [name, invalue, func_name]
-                raise ConfigError(textentry('00-003-00010', args=eargs),
-                                  level='error')
+                raise DrsCodedException('00-003-00010', 'error', targs=eargs,
+                                        func_name=func_name)
         return str(invalue)
     # deal with casting a string into a list
-    if (dtype is list) and (type(invalue) is str):
+    if (dtype is list) and isinstance(invalue, str):
         if not quiet:
             eargs = [name, invalue, source, func_name]
-            raise ConfigError(textentry('00-003-00011', args=eargs),
-                              level='error')
+            raise DrsCodedException('00-003-00011', 'error', targs=eargs,
+                                    func_name=func_name)
     # now try to cast value
     try:
         outvalue = dtype(invalue)
@@ -1051,15 +1005,18 @@ def _test_dtype(name, invalue, dtype, source, quiet=False):
         if not quiet:
             eargs = [name, dtype, invalue, type(invalue), type(e), e,
                      source, func_name]
-            raise ConfigError(textentry('00-003-00012', args=eargs),
-                              level='error')
+            raise DrsCodedException('00-003-00012', 'error', targs=eargs,
+                                    func_name='error')
         outvalue = invalue
     # return out value
     return outvalue
 
 
-def _validate_value(name, dtype, value, dtypei, options, maximum, minimum,
-                    quiet=False, source=None):
+def _validate_value(name: str, dtype: Union[str, type, None],
+                    value: Any, dtypei: Union[str, type, None],
+                    options: list, maximum: Union[int, float, None],
+                    minimum: Union[int, float, None], quiet: bool = False,
+                    source: Union[None, str] = None) -> Tuple[Any, str]:
     """
     Checks whether a variable `value` is valid based on the specifications given
 
@@ -1084,12 +1041,10 @@ def _validate_value(name, dtype, value, dtypei, options, maximum, minimum,
     :return: returns the value in the input dtype and the source of that
              value
     :rtype: tuple[object, str]
-    :raises ConfigError: if quiet=True and type invalid
+    :raises DrsCodedException: if quiet=True and type invalid
     """
     # set function name (cannot break here --> no access to inputs)
     func_name = str(__NAME__) + '._validate_value()'
-    # get display text
-    textentry = DisplayText()
     # deal with no source
     if source is None:
         source = 'Unknown ({0})'.format(func_name)
@@ -1098,20 +1053,20 @@ def _validate_value(name, dtype, value, dtypei, options, maximum, minimum,
     if dtype is None:
         if not quiet:
             eargs = [name, source, func_name]
-            raise ConfigError(textentry('00-003-00013', args=eargs),
-                              level='error')
+            raise DrsCodedException('00-003-00013', 'error', targs=eargs,
+                                    func_name=func_name)
     if (dtype not in SIMPLE_TYPES) and (dtype != 'path'):
         if not quiet:
             eargs = [name, ', '.join(SIMPLE_STYPES), source, func_name]
-            raise ConfigError(textentry('00-003-00014', args=eargs),
-                              level='error')
+            raise DrsCodedException('00-003-00014', 'error', targs=eargs,
+                                    func_name=func_name)
     # ---------------------------------------------------------------------
     # Check value is not None
     if value is None:
         if not quiet:
             eargs = [name, source, func_name]
-            raise ConfigError(textentry('00-003-00015', args=eargs),
-                              level='error')
+            raise DrsCodedException('00-003-00015', 'error', targs=eargs,
+                                    func_name=func_name)
     # ---------------------------------------------------------------------
     # check bools
     if dtype is bool:
@@ -1123,8 +1078,8 @@ def _validate_value(name, dtype, value, dtypei, options, maximum, minimum,
         if value not in [True, 1, False, 0]:
             if not quiet:
                 eargs = [name, value, source, func_name]
-                raise ConfigError(textentry('00-003-00016', args=eargs),
-                                  level='error')
+                raise DrsCodedException('00-003-00016', 'error', targs=eargs,
+                                        func_name=func_name)
     # ---------------------------------------------------------------------
     # Check if dtype is correct
     true_value = _test_dtype(name, value, dtype, source, quiet=quiet)
@@ -1144,8 +1099,8 @@ def _validate_value(name, dtype, value, dtypei, options, maximum, minimum,
                 stroptions = ['"{0}"'.format(opt) for opt in options]
                 eargs = [name, ', '.join(stroptions), true_value, source,
                          func_name]
-                raise ConfigError(textentry('00-003-00017', args=eargs),
-                                  level='error')
+                raise DrsCodedException('00-003-00017', 'error', targs=eargs,
+                                        func_name=func_name)
     # ---------------------------------------------------------------------
     # check limits if not a list or str or bool
     if dtype in [int, float]:
@@ -1153,19 +1108,20 @@ def _validate_value(name, dtype, value, dtypei, options, maximum, minimum,
             if true_value > maximum:
                 if not quiet:
                     eargs = [name, maximum, true_value, source, func_name]
-                    raise ConfigError(textentry('00-003-00018', args=eargs),
-                                      level='error')
+                    raise DrsCodedException('00-003-00018', 'error',
+                                            targs=eargs, func_name=func_name)
         if minimum is not None:
             if true_value < minimum:
                 if not quiet:
                     eargs = [name, minimum, true_value, source, func_name]
-                    raise ConfigError(textentry('00-003-00019', args=eargs),
-                                      level='error')
+                    raise DrsCodedException('00-003-00019', 'error',
+                                            targs=eargs, func_name=func_name)
     # return true value
     return true_value, source
 
 
-def _validate_text_file(filename, comments='#'):
+def _validate_text_file(filename: Union[str, Path],
+                        comments: str = '#'):
     """
     Validation on any text file, makes sure all non commented lines have
     valid characters (i.e. are either letters, digits, punctuation or
@@ -1181,17 +1137,15 @@ def _validate_text_file(filename, comments='#'):
     :type comments: str
 
     :return None:
-    :raises ConfigError: If text file is invalid
+    :raises DrsCodedException: If text file is invalid
     """
     # set function name (cannot break here --> no access to inputs)
     func_name = str(__NAME__) + '._validate_text_file()'
-    # get display text
-    textentry = DisplayText()
     # read the lines
     with open(filename, 'r') as f:
         lines = f.readlines()
     # loop around each line in text file
-    for l, line in enumerate(lines):
+    for l_it, line in enumerate(lines):
         # ignore blank lines
         if len(line.strip()) == 0:
             continue
@@ -1206,10 +1160,11 @@ def _validate_text_file(filename, comments='#'):
         for char in line:
             if char not in VALID_CHARS:
                 invalid = True
-                emsg += textentry('00-003-00021', args=[char, l + 1])
+                emsg += textentry('00-003-00021', args=[char, l_it + 1])
         # only raise an error if invalid is True (if we found bad characters)
         if invalid:
-            raise ConfigError(emsg, level='error')
+            raise DrsCodedException('00-003-00020', 'error', message=emsg,
+                                    func_name=func_name)
 
 
 # =============================================================================

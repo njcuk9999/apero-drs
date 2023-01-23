@@ -1,42 +1,50 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
-
-# CODE DESCRIPTION HERE
+APERO Gaussian math functionality
 
 Created on 2019-05-15 at 12:24
 
 @author: cook
 """
+import warnings
+from typing import Any, Tuple, Union
+
 import numpy as np
 from scipy.optimize import curve_fit
 from scipy.stats import chisquare
-import warnings
 
-from apero.core import constants
-from apero.core.math import general
+from apero.base import base
 from apero.core.math import fast
+from apero.core.math import gen_math
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'core.math.gauss.py'
 __INSTRUMENT__ = 'None'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
-PConstants = constants.pload(__INSTRUMENT__)
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
+
+# =============================================================================
+# Define complex typing
+# =============================================================================
+# For: gaussian_function_nn
+GFNTypes = Tuple[np.ndarray, np.ndarray]
+# For: fit_gauss_with_slope
+FGSTypes = Union[Tuple[Any, Any, np.ndarray], Tuple[Any, Any]]
+# For: fitgaussian
+FGTypes = Union[Tuple[Any, np.ndarray, np.ndarray], Tuple[Any, np.ndarray], Any]
 
 
 # =============================================================================
 # Gaussian function
 # =============================================================================
-def gauss_function(x, a, x0, sigma, dc):
+def gauss_function(x: Union[float, np.ndarray], a: float, x0: float,
+                   sigma: float, dc: float) -> Union[float, np.ndarray]:
     """
     A standard 1D gaussian function (for fitting against)
 
@@ -48,10 +56,14 @@ def gauss_function(x, a, x0, sigma, dc):
 
     :return gauss: numpy array (1D), size = len(x), the output gaussian
     """
+    # set function name
+    # _ = display_func('gauss_function', __NAME__)
+    # return gauss function
     return a * np.exp(-0.5 * ((x - x0) / sigma) ** 2) + dc
 
 
-def gauss_function_nodc(x, a, x0, sigma):
+def gauss_function_nodc(x: Union[float, np.ndarray], a: float, x0: float,
+                        sigma: float) -> Union[float, np.ndarray]:
     """
     A standard 1D gaussian function (for fitting against) without a dc
     parameter
@@ -63,10 +75,15 @@ def gauss_function_nodc(x, a, x0, sigma):
 
     :return gauss: numpy array (1D), size = len(x), the output gaussian
     """
+    # set function name
+    # _ = display_func('gauss_function_nodc', __NAME__)
+    # return gauss function
     return a * np.exp(-0.5 * ((x - x0) / sigma) ** 2)
 
 
-def gauss_beta_function(x, a, x0, sigma, dc, beta):
+def gauss_beta_function(x: Union[float, np.ndarray], a: float, x0: float,
+                        sigma: float, dc: float,
+                        beta: float) -> Union[float, np.ndarray]:
     """
     A 1D gaussian function with beta power (for fitting against)
 
@@ -80,10 +97,14 @@ def gauss_beta_function(x, a, x0, sigma, dc, beta):
 
     :return gauss: numpy array (1D), size = len(x), the output gaussian
     """
+    # set function name
+    # _ = display_func('gauss_beta_function', __NAME__)
+    # return gauss function
     return a * np.exp(-0.5 * np.abs((x - x0) / sigma) ** beta) + dc
 
 
-def gaussian_function_nn(x, a):
+def gaussian_function_nn(x: Union[list, np.ndarray],
+                         a: Union[list, np.ndarray]) -> GFNTypes:
     """
     Generate a Gaussian and return its derivaties
 
@@ -122,6 +143,8 @@ def gaussian_function_nn(x, a):
     :return fout: numpy array (1D), the gaussian fit
     :return pder: numpy array (1D), the gaussian fit derivatives
     """
+    # set function name
+    # _ = display_func('gaussian_function_nn', __NAME__)
     # get the dimensions
     n, nx = len(a), len(x)
     # work out gaussian
@@ -154,7 +177,8 @@ def gaussian_function_nn(x, a):
     return fout, pder
 
 
-def gauss_fit_nn(xpix, ypix, nn):
+def gauss_fit_nn(xpix: np.ndarray, ypix: np.ndarray,
+                 nn: int) -> Tuple[list, np.ndarray]:
     """
     fits a Gaussian function to xpix and ypix without prior knowledge of
     parameters
@@ -183,10 +207,11 @@ def gauss_fit_nn(xpix, ypix, nn):
 
     :return gfit: numpy array (1D), the fitted gaussian
     """
-    func_name = __NAME__ + '.gauss_fit_slope()'
+    # set function name
+    func_name = __NAME__ + 'gauss_fit_slope()'
     # we guess that the Gaussian is close to Nyquist and has a
     # 2 PIX FWHM and therefore 2/2.54 e-width
-    ew_guess = 2 * fast.nanmedian(np.gradient(xpix)) / general.fwhm()
+    ew_guess = 2 * fast.nanmedian(np.gradient(xpix)) / gen_math.fwhm()
 
     if nn == 3:
         # only amp, cen and ew
@@ -222,7 +247,7 @@ def gauss_fit_nn(xpix, ypix, nn):
         # work out residuals
         residu = ypix - gfit
         # work out amplitudes and residual fit
-        amps, fit = general.linear_minimization(residu, pder)
+        amps, fit = gen_math.linear_minimization(residu, pder)
 
         # add to the amplitudes
         a0 += amps
@@ -241,13 +266,72 @@ def gauss_fit_nn(xpix, ypix, nn):
     return a0, gfit
 
 
-def gauss_fit_s(x, a, x0, sigma, zp, slope):
+def gauss_fit_s(x: Union[float, np.ndarray], a: float, x0: float, sigma: float,
+                zp: float, slope: float) -> Union[float, np.ndarray]:
+    """
+    Gaussian fit with a slope
+
+    :param x: numpy array (1D), the x values for the gauss fit
+    :param a: float, the amplitude
+    :param x0: float, the mean position
+    :param sigma: float, the FWHM
+    :param zp: float, the dc level
+    :param slope: float, the float (x-x0) * slope
+
+    :return: np.ndarray - the gaussian value with slope correction
+    """
+    # set function name
+    # _ = display_func('gauss_fit_s', __NAME__)
+    # calculate gaussian
     gauss = a * np.exp(-0.5 * (x - x0) ** 2 / (sigma ** 2)) + zp
     correction = (x - x0) * slope
     return gauss + correction
 
 
-def fit_gauss_with_slope(x, y, guess, return_fit=False):
+def centered_super_gauss(x: np.ndarray, fwhm: float, amp: float,
+                         expo: float) -> np.ndarray:
+    """
+    generalized super gaussian with an arbitrary exponent. We pass the FWHM
+    which simplifies the understanding of the outputs for the random user.
+    We assume that the zero point is =0 and that there is no slope. The center
+    is set to x=0 conversion between ew and FHWM
+    we set:
+    0.5 = np.exp(-0.5*((FWHM/2)/ew)**expo)
+    np.log(0.5) = -0.5*((FWHM/2)/ew)**expo
+    -2*np.log(0.5) = ((FWHM/2)/ew)**expo
+    (-2*np.log(0.5))**(1/expo) = (FWHM/2)/ew
+    ew = (FWHM/2)/( (-2*np.log(0.5))**(1/expo) )
+
+    :param x: np.ndarray, the x values
+    :param fwhm: float, the FWHM of the super gaussian
+    :param amp: float, the amplitude of the super gaussian
+    :param expo: float, the exponent (for a normal gaussian this would be =2)
+
+    :return: the y values for given parameters across x
+    """
+    # convert fwhm to equivalent width
+    ew = (fwhm / 2) / (-2 * np.log(0.5)) ** (1 / expo)
+    # calculate the
+    return np.exp(-0.5 * (np.abs(x)/ew) ** np.abs(expo)) * amp
+
+
+def fit_gauss_with_slope(x: np.ndarray, y: np.ndarray,
+                         guess: Union[list, np.ndarray],
+                         return_fit: bool = False) -> FGSTypes:
+    """
+    Fit a guessian with a slope (given an input x and y data and a guess
+    guess in the form [amplitude, mean position, FWHM, DC, slope]
+
+    :param x: numpy array (1D), the x values for the gauss fit
+    :param y: numpy array (1D), the y values for the gauss fit
+    :param guess: list, first guess at the fit in form:
+                    in the form [amplitude, mean position, FWHM, DC, slope]
+    :param return_fit: bool, if True returns the git
+    :return: return the fit coefficients, covarience matrix and if return_fit
+             is True return the best fit y values for the given x values
+    """
+    # set function name
+    # _ = display_func('fit_gauss_with_slope', __NAME__)
     # produce curve_fit using gauss_fit_s function
     with warnings.catch_warnings(record=True) as _:
         popt, pcov = curve_fit(gauss_fit_s, x, y, p0=guess)
@@ -259,8 +343,11 @@ def fit_gauss_with_slope(x, y, guess, return_fit=False):
         return popt, pcov
 
 
-def fitgaussian(x, y, weights=None, guess=None, return_fit=True,
-                return_uncertainties=False):
+def fitgaussian(x: np.ndarray, y: np.ndarray,
+                weights: Union[np.ndarray, None] = None,
+                guess: Union[list, np.ndarray, None] = None,
+                return_fit: bool = True,
+                return_uncertainties: bool = False) -> FGTypes:
     """
     Fit a single gaussian to the data "y" at positions "x", points can be
     weighted by "weights" and an initial guess for the gaussian parameters
@@ -287,9 +374,9 @@ def fitgaussian(x, y, weights=None, guess=None, return_fit=True,
 
     :return yfit: numpy array (1D), the fit y values, i.e. the gaussian values
                   for the fit parameters, only returned if return_fit = True
-
     """
-
+    # set function name
+    # _ = display_func('fitgaussian', __NAME__)
     # if we don't have weights set them to be all equally weighted
     if weights is None:
         weights = np.ones(len(x))
@@ -332,3 +419,17 @@ def fitgaussian(x, y, weights=None, guess=None, return_fit=True,
     else:
         # return pfit
         return pfit
+
+
+# =============================================================================
+# Start of code
+# =============================================================================
+# Main code here
+if __name__ == "__main__":
+    # ----------------------------------------------------------------------
+    # print 'Hello World!'
+    print("Hello World!")
+
+# =============================================================================
+# End of code
+# =============================================================================

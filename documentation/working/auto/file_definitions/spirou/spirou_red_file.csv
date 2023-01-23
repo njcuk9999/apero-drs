@@ -1,0 +1,82 @@
+name,description,HDR[DRSOUTID],file type,suffix,basename,fibers,input file
+DARKI,Internal dark calibration file,DARKI,.fits,_darki,--,--,DARK_DARK_INT
+DARKT,Telescope dark calibration file,DARKT,.fits,_darkt,--,--,DARK_DARK_TEL
+DARKS,Sky dark calibration file,DARKS,.fits,_darks,--,--,DARK_DARK_SKY
+DARKREF,Reference dark calibration file,DARKREF,.fits,_dark_ref,--,--,"DARK_DARK_TEL, DARK_DARK_INT"
+BADPIX,Bad pixel map,BADPIX,.fits,_badpixel,--,--,FLAT_FLAT
+BKGRD_MAP,Bad pixel background map,BKGRD_MAP,.fits,_bmap.fits,--,--,FLAT_FLAT
+DEBUG_BACK,Individual file background map,DEBUG_BACK,.fits,_background.fits,--,--,DRS_PP
+LOC_ORDERP,Localisation: Order profile calibration file,LOC_ORDERP,.fits,_order_profile,--,"AB, C","FLAT_DARK, DARK_FLAT"
+LOC_LOCO,Localisation: Position polynomial calibration file,LOC_LOCO,.fits,_loco,--,"AB, C","FLAT_DARK, DARK_FLAT"
+LOC_FWHM,Localisation: Width polynomial calibration file,LOC_FWHM,.fits,_fwhm-order,--,"AB, C","FLAT_DARK, DARK_FLAT"
+LOC_SUP,Localisation: Position superpositionimage calibration file,LOC_SUP,.fits,_with-order,--,"AB, C","FLAT_DARK, DARK_FLAT"
+SHAPE_X,Reference shape dx calibration file,SHAPE_X,.fits,_shapex,--,--,FP_FP
+SHAPE_Y,Reference shape dy calibration file,SHAPE_Y,.fits,_shapey,--,--,FP_FP
+REF_FP,Reference shape master FP calibration file,REF_FP,.fits,_fpref,--,--,FP_FP
+SHAPE_IN_FP,Input FP file for shape comparison,SHAPE_IN_FP,.fits,_shape_in_fp,--,--,FP_FP
+SHAPE_OUT_FP,Output FP file for shape comparison,SHAPE_OUT_FP,.fits,_shape_out_fp,--,--,FP_FP
+SHAPE_IN_HC,Input Hollow Cathode file forshape comparison,SHAPE_IN_HC,.fits,_shape_in_hc,--,--,HCONE_HCONE
+SHAPE_OUT_HC,Output Hollow Cathode file forshape comparison,SHAPE_OUT_HC,.fits,_shape_out_hc,--,--,HCONE_HCONE
+SHAPE_BDX,Shape transformed dx comparison file,SHAPE_BDX,.fits,_shape_out_bdx,--,--,FP_FP
+SHAPEL,Nightly shape calibration files,SHAPEL,.fits,_shapel,--,--,FP_FP
+SHAPEL_IN_FP,Input FP file for nightly shape comparison,SHAPEL_IN_FP,.fits,_shapel_in_fp.fits,--,--,FP_FP
+SHAPEL_OUT_FP,Output FP file for nightly shape comparison,SHAPEL_OUT_FP,.fits,_shapel_out_fp.fits,--,--,FP_FP
+FF_BLAZE,Blaze calibration file,FF_BLAZE,.fits,_blaze,--,"AB, A, B, C",FLAT_FLAT
+FF_FLAT,Flat calibration file,FF_FLAT,.fits,_flat,--,"AB, A, B, C",FLAT_FLAT
+ORDERP_STRAIGHT,Straightened order profile for an individual image,ORDERP_STRAIGHT,.fits,_orderps,--,"AB, A, B, C",SHAPEL
+EXT_E2DS,Extracted 2D spectrum,EXT_E2DS,.fits,_e2ds,--,"AB, A, B, C",DRS_PP
+EXT_E2DS_FF,Extracted + flat-fielded 2D spectrum,EXT_E2DS_FF,.fits,_e2dsff,--,"AB, A, B, C",DRS_PP
+EXT_E2DS_LL,Pre-extracted straighted stacked spectrum,EXT_E2DS_LL,.fits,_e2dsll,--,"AB, A, B, C","DRS_PP, FLAT_FLAT"
+EXT_LOCO,Straightened localisation file,EXT_LOCO,.fits,_e2dsloco,--,"AB, A, B, C",DRS_PP
+EXT_S1D_W,1D stitched spectrum (constant wavelength binning),EXT_S1D_W,.fits,_s1d_w,--,"AB, A, B, C",DRS_PP
+EXT_S1D_V,1D stitched spectrum (constant velocity binning),EXT_S1D_V,.fits,_s1d_v,--,"AB, A, B, C",DRS_PP
+EXT_FPLIST,FP lines identified from extracted FP fiber,EXT_FPLIST,.fits,_ext_fplines,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
+THERMALI_E2DS,"Extracted sci=DARK calib=DARK thermal calibration file, where dark is an internal dark",THERMALI_E2DS,.fits,_thermal_e2ds_int,--,"AB, A, B, C",DARK_DARK_INT
+THERMALT_E2DS,"Extracted sci=DARK calib=DARK thermal calibration file, where dark is a telescope dark",THERMALT_E2DS,.fits,_thermal_e2ds_tel,--,"AB, A, B, C",DARK_DARK_TEL
+LEAKREF_E2DS,Reference leak correction calibration file,LEAKREF_E2DS,.fits,_LEAK_REF,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
+WAVESOL_REF,Reference wavelength solution calibration file,WAVESOL_REF,.fits,_wavesol_ref,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
+WAVE_HCLIST_REF,Reference list of Hollow cathode lines calibration file,WAVE_HCLIST_REF,.fits,_waveref_hclines,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
+WAVE_FPLIST_REF,Reference list of FP liens calibration file,WAVE_FPLIST_REF,.fits,_waveref_fplines,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
+WAVEREF_CAV,Reference wavelength cavity width polynomial calibration file,WAVEREF_CAV,.fits,_waveref_cav_,--,AB,"EXT_E2DS, EXT_E2DS_FF"
+WAVESOL_DEFAULT,Default wavelength solution calibration file,WAVESOL_DEFAULT,.fits,_wave_d_ref,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
+WAVERES,Reference wavelength resolution map file,WAVE_RES,.fits,_waveref_resmap,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
+WAVE_FPRESTAB,Reference wavelength resolution table,--,.tbl,--,apero_wave_results,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
+WAVE_FPLLTABL,Reference wavelength FP line-list table,--,.tbl,_mhc_lines,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
+WAVE_NIGHT,Nightly wavelength solution calibration file,WAVE_NIGHT,.fits,_wave_night,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
+WAVEHCLL,Nightly HC line list calibration file,--,.dat,_linelist,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
+WAVERES,Nightly wavelength resolution map file,WAVE_RES,.fits,_wave_res,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
+WAVE_FPRESTAB,Nightly wavelength resolutiontable,--,.tbl,--,apero_wave_results,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
+WAVE_FPLLTABL,Nightly wavelength FP line-list table,--,.tbl,_hc_lines,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
+WAVE_HCLIST,Nightly wavelength Hollow cathodeline-list table,WAVE_HCLIST,.fits,_wave_hclines,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
+WAVE_FPLIST,Nightly wavelength FP line-list calibration file,WAVE_FPLIST,.fits,_wave_fplines,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
+TELLU_PCLEAN,Telluric pre-cleaning file,TELLU_PCLEAN,.fits,_tellu_pclean,--,"AB, A, B",EXT_E2DS_FF
+TELLU_CONV,--,--,.npy,_tellu_conv,--,"AB, A, B","WAVESOL_REF, WAVE_NIGHT, WAVESOL_DEFAULT"
+TELLU_TRANS,Telluric transmission file,TELLU_TRANS,.fits,_tellu_trans,--,"AB, A, B",EXT_E2DS_FF
+TELLU_TAPAS,--,--,.npy,--,tapas_spl.npy,--,--
+TRANS_MODEL,Telluric transmission model file,TRANS_MODEL,.fits,--,trans_model_{0},"AB, A, B",--
+ABSO_NPY,--,--,.npy,--,tellu_save.npy,--,--
+TELLU_OBJ,Telluric corrected extracted 2D spectrum,TELLU_OBJ,.fits,_e2dsff_tcorr,--,"AB, A, B",EXT_E2DS_FF
+SC1D_W_FILE,Telluric corrected extracted 1D spectrum (constant wavelength binning),SC1D_W_FILE,.fits,_s1d_w_tcorr,--,"AB, A, B",EXT_E2DS_FF
+SC1D_V_FILE,Telluric corrected extracted 1D spectrum (constant velocity binning),SC1D_V_FILE,.fits,_s1d_v_tcorr,--,"AB, A, B",EXT_E2DS_FF
+TELLU_RECON,Telluric reconstructed 2D absorption file,TELLU_RECON,.fits,_e2dsff_recon,--,"AB, A, B",EXT_E2DS_FF
+RC1D_W_FILE,Telluric reconstructed 1D absorption file (constant wavelength binning),RC1D_W_FILE,.fits,_s1d_w_recon,--,"AB, A, B",EXT_E2DS_FF
+RC1D_V_FILE,Telluric reconstructed 1D absorption file (constant velocity binning),RC1D_V_FILE,.fits,_s1d_v_recon,--,"AB, A, B",EXT_E2DS_FF
+TELLU_TEMP,Telluric 2D template file,TELLU_TEMP,.fits,--,Template,"AB, A, B","EXT_E2DS_FF, TELLU_OBJ"
+TELLU_BIGCUBE,Telluric object 2D stack file (star frame),TELLU_BIGCUBE,.fits,--,BigCube,"AB, A, B","EXT_E2DS_FF, TELLU_OBJ"
+TELLU_BIGCUBE0,Telluric object  2D stack file (Earth frame),TELLU_BIGCUBE0,.fits,--,BigCube0,"AB, A, B","EXT_E2DS_FF, TELLU_OBJ"
+TELLU_TEMP_S1D,Telluric 1D template file,TELLU_TEMP_S1D,.fits,--,Template_s1d,"AB, A, B","EXT_E2DS_FF, TELLU_OBJ"
+TELLU_BIGCUBE_S1D,Telluric object 1D stack file (Earth frame),TELLU_BIGCUBE_S1D,.fits,--,BigCube_s1d,"AB, A, B","EXT_E2DS_FF, TELLU_OBJ"
+CCF_RV,Cross-correlation RV results file,CCF_RV,.fits,_ccf,--,"AB, A, B, C","EXT_E2DS_FF, TELLU_OBJ"
+POL_DEG,Polarimetry 2D degree of polarisation file,POL_DEG,.fits,_pol,--,--,"EXT_E2DS_FF, TELLU_OBJ"
+STOKESI_POL,Polarimetry 2D stokes I polarisation file,STOKESI_POL,.fits,_StokesI,--,--,"EXT_E2DS_FF, TELLU_OBJ"
+NULL_POL1,2D Null polarisation 1 file,NULL_POL1,.fits,_null1_pol,--,--,"EXT_E2DS_FF, TELLU_OBJ"
+NULL_POL2,2D Null polarisation 2 file,NULL_POL2,.fits,_null2_pol,--,--,"EXT_E2DS_FF, TELLU_OBJ"
+LSD_POL,Least squares deconvolution file,LSD_POL,.fits,_lsd_pol,--,--,"EXT_E2DS_FF, TELLU_OBJ"
+S1DW_POL,Polarimetry 2D degree of polarisation file (constant wavelength binning),S1DW_POL,.fits,_s1d_w_pol,--,--,"EXT_E2DS_FF, TELLU_OBJ"
+S1DV_POL,Polarimetry 2D degree of polarisation file (constant velocity binning),S1DV_POL,.fits,_s1d_v_pol,--,--,"EXT_E2DS_FF, TELLU_OBJ"
+S1DW_NULL1,1D Null polarisation 1 file (constant wavelength binning),S1DW_NULL1,.fits,_s1d_w_null1,--,--,"EXT_E2DS_FF, TELLU_OBJ"
+S1DV_NULL1,1D Null polarisation 1 file (constant velocity binning),S1DV_NULL1,.fits,_s1d_v_null1,--,--,"EXT_E2DS_FF, TELLU_OBJ"
+S1DW_NULL2,1D Null polarisation 2 file (constant wavelength binning),S1DW_NULL1,.fits,_s1d_w_null2,--,--,"EXT_E2DS_FF, TELLU_OBJ"
+S1DV_NULL2,1D Null polarisation 2 file (constant velocity binning),S1DV_NULL2,.fits,_s1d_v_null2,--,--,"EXT_E2DS_FF, TELLU_OBJ"
+S1DW_STOKESI,Polarimetry 1D stokes I polarisation file (constant wavelength binning),S1DW_STOKESI,.fits,_s1d_w_stokesi,--,--,"EXT_E2DS_FF, TELLU_OBJ"
+S1DV_STOKESI,Polarimetry 1D stokes I polarisation file (constant velocity binning),S1DV_STOKESI,.fits,_s1d_v_stokesi,--,--,"EXT_E2DS_FF, TELLU_OBJ"

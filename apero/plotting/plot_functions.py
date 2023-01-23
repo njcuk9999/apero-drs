@@ -1,36 +1,44 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+APERO plotting definitions
 
-# CODE DESCRIPTION HERE
+All plots come are linked to here via Graph and Plot classes
 
 Created on 2019-10-03 at 10:51
 
 @author: cook
 """
-import numpy as np
-from astropy import constants as cc
-from astropy import units as uu
 import copy
 import os
 import warnings
+from collections.abc import Iterable
+from typing import Any, Dict, Generator, Tuple, Union
 
+import numpy as np
+from astropy import constants as cc
+from astropy import units as uu
+
+from apero.base import base
 from apero.core import constants
 from apero.core import math as mp
+from apero.core.utils import drs_recipe
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'core.plotting.plot_functions.py'
 __INSTRUMENT__ = 'None'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
+# Get parameter dictionary class
+ParamDict = constants.ParamDict
+DrsRecipe = drs_recipe.DrsRecipe
+# get astropy time module
+Time = base.Time
 # set up definition storage
 definitions = []
 # Speed of light
@@ -47,8 +55,32 @@ speed_of_light = cc.c.to(uu.km / uu.s).value
 # Define plotting class
 # =============================================================================
 class Graph:
-    def __init__(self, name, kind='debug', func=None, filename=None,
-                 description=None, figsize=None, dpi=None):
+    def __init__(self, name: str, kind: str = 'debug',
+                 func: Any = None, filename: Union[str, None] = None,
+                 description: Union[str, None] = None,
+                 figsize: Union[Tuple[float, float], None] = None,
+                 dpi: Union[int, None] = None):
+        """
+        Construct a graph instance (there should be one of these instances for
+        each type of graph) these graphs a linked to a plotting function:
+            Function(plotter, graph, kwarg)
+
+        :param name: str, the name of the graph (this is how we link to this
+                     graph using recipe.plot(name) so must be unique
+        :param kind: str, either 'debug' or 'summary'
+        :param func: Function, this is the actual plotting function
+                     the function must have the following arguments and only the
+                     following arguments:
+                     Function(plotter, graph, kwarg)
+        :param filename: str or None, this overrides the default filename given
+                         if set (this includes the aboslute path to the plot)
+        :param description: str, for kind=='summary' this is the figure caption
+                            that is used
+        :param figsize: tuple[int, int], this is the figsize to use for the
+                        summary plot saved to disk (kind=='summary')
+        :param dpi: int, this is the dots per inch (resolution) for the summary
+                    plot save to disk (kind=='summary')
+        """
         self.name = name
         # set kind
         if kind in ['debug', 'summary', 'show']:
@@ -75,11 +107,12 @@ class Graph:
         else:
             self.dpi = dpi
 
-    def copy(self):
+    def copy(self) -> 'Graph':
         """
         Make a copy of the Graph instance (don't ever want to set values to
         the default ones defined below)
-        :return:
+
+        :return: Graph instance - the copy of this Graph instance
         """
         name = copy.deepcopy(self.name)
         # deep copy other parameters (deep copy as could be string or None)
@@ -93,13 +126,19 @@ class Graph:
         # return new instance
         return Graph(name, **kwargs)
 
-    def set_filename(self, params, location, suffix=None):
+    def set_filename(self, params: ParamDict, location: str,
+                     suffix: Union[str, None] = None):
         """
         Set the file name for this Graph instance
-        :param params:
-        :param location:
-        :param suffix:
-        :return:
+
+        :param params: ParamDict, the parameter dictionary of constants
+                       (used to get "PID") for the filename
+        :param location: str, the aboslute path to the directory where plot
+                         should be saved
+        :param suffix: str or None, if set adds an additional suffix to the
+                       filename
+
+        :return: None, updates self.filename
         """
         # get pid
         pid = params['PID']
@@ -113,7 +152,19 @@ class Graph:
         # construct absolute filename
         self.filename = os.path.join(location, filename)
 
-    def set_figure(self, plotter, figsize=None, **kwargs):
+    def set_figure(self, plotter: 'Plotter',
+                   figsize: Union[Tuple[int, int], None] = None,
+                   **kwargs) -> Tuple[Any, Any]:
+        """
+        Set up the figure (should be done before plotting)
+
+        :param plotter: Plotter, the plotting.core.Plotter instance
+        :param figsize: tuple or None, if set this is the size of the figure
+        :param kwargs: keyword arguments passed to
+                       matplotlib.pyplot.plt.subplots
+
+        :return: matplotlib figure and axes (return of plt.subplots)
+        """
         # get plt from plotter (for matplotlib set up)
         plt = plotter.plt
         # get figure and frame
@@ -126,7 +177,19 @@ class Graph:
         # return figure and frames
         return fig, frames
 
-    def set_grid(self, plotter, figsize=None, **kwargs):
+    def set_grid(self, plotter: 'Plotter',
+                 figsize: Union[Tuple[int, int], None] = None,
+                 **kwargs) -> Tuple[Any, Any]:
+        """
+        Set up the figure grid (should be done before plotting)
+
+        :param plotter: Plotter, the plotting.core.Plotter instance
+        :param figsize: tuple or None, if set this is the size of the figure
+        :param kwargs: keyword arguments passed to
+                       matplotlib.pyplot.plt.figure().add_gridspec
+
+        :return: matplotlib figure and return of plt.figure.().add_gridspec
+        """
         # get plt from plotter (for matplotlib set up)
         plt = plotter.plt
         # get figure and frame
@@ -142,8 +205,92 @@ class Graph:
         return fig, gs
 
 
+class Plotter:
+    """
+    Proxy for plotting.core that cannot be imported here as it requires
+    this module itself
+    """
+    params: ParamDict
+    recipe: Union[DrsRecipe, None]
+    mode: Union[int, None]
+    recipename: str
+    used_command: str
+    plotoption: int
+    location: Union[str, None]
+    backend: Any
+    plt: Any
+    matplotlib: Any
+    axes_grid1: Any
+
+    def plotstart(self, graph: Graph) -> bool:
+        """
+        Proxy for plotting.core.Plotter.plotstart
+
+        Find out whether we should start this plot (or skip).
+
+        Bases this on graph.kind and self.plotoption
+
+        :param graph: Graph instances, has atrribute "kind"
+        :return:
+        """
+        _ = self.plt, graph
+        return True
+
+    def plotend(self, graph: Graph):
+        """
+        Proxy for plotting.core.Plotter.plotend
+
+        Perform the final plotting tasks before properly closing all plots
+
+        :param graph: Graph instance
+
+        :return: None - saves / closes plots
+        """
+        _ = self.plt, graph
+
+    def plotloop(self,
+                 looplist: Union[list, np.ndarray, Iterable]) -> Generator:
+        """
+        Proxy for core.plotting.Plotter.plotloop
+        A generator to loop around plotting instants and ask the user
+        whether they want the previous, next, or a specific element in a
+        list of iterables
+
+        :param looplist: list, np.array or iterable - the 'list' to generate
+                         the asked parameters from
+
+        :return: Generator - yield the value in the list asked for by the user
+                 or ends loop if user wishes
+        """
+        _ = self.plt, looplist
+        yield None
+
+    def close_plots(self, loop: bool = False):
+        """
+        Proxy for core.plotting.Plotter.close_plots
+
+        Asks the user whether they want to close plots (used in specific
+        plot modes where many graphs may need to be closed)
+
+        :param loop: bool, if True this is inside a loop
+
+        :return: None, closes all plots if user selected "Y"
+        """
+        _ = self.plt, loop
+
+
 class CrossCursor(object):
-    def __init__(self, frame, color='r', alpha=0.5):
+    def __init__(self, frame: Any, color: str = 'r', alpha: float = 0.5):
+        """
+        Construct a matplotlib object that updates some text on the plot when
+        the cursor is moved (via event "mouse_move") - sets self.txt to blank
+        until mouse is moved
+
+        :param frame: matplotlib axis
+        :param color: str, the colour of the text
+        :param alpha: float, the transparency of the text
+                      (0 = clear, 1 = opaque)
+        """
         self.frame = frame
         # the horizontal line
         self.lx = frame.axhline(color=color, alpha=alpha)
@@ -158,7 +305,15 @@ class CrossCursor(object):
         # start off the text without values
         self.txt.set_text('x=NaN, y=NaN')
 
-    def mouse_move(self, event):
+    def mouse_move(self, event: Any):
+        """
+        The event for matplotlib to catch (on mouse movement this function is
+        called)
+
+        :param event: matplotlib event
+
+        :return: None, updates self.txt
+        """
         if not event.inaxes:
             return
         # get the new x and y locations
@@ -173,11 +328,27 @@ class CrossCursor(object):
 
 
 class ClickCursor(object):
-    def __init__(self, fig, frame):
+    def __init__(self, fig: Any, frame: Any):
+        """
+        Construct an object that prints to screen when the cursor
+        is clicked (via event "mouse_click") - sets self.txt to blank until
+        mouse is moved
+
+        :param fig: matplotlib figure
+        :param frame: matplotlib frame
+        """
         self.fig = fig
         self.frame = frame
 
-    def mouse_click(self, event):
+    def mouse_click(self, event: Any):
+        """
+        The event for matplotlib to catch (on mouse click this function is
+        called)
+
+        :param event: matplotlib event
+
+        :return: None, prints text to screen
+        """
         # noinspection PyProtectedMember
         if self.fig.canvas.manager.toolbar._active:
             return
@@ -192,7 +363,18 @@ class ClickCursor(object):
 # =============================================================================
 # Define user graph functions
 # =============================================================================
-def ulegend(frame=None, plotter=None, **kwargs):
+def ulegend(frame: Any = None,
+            plotter: Union[Plotter, None] = None, **kwargs):
+    """
+    Filter a legend so we only have unique legend elements that have unique
+    text
+
+    :param frame: matplotlib axis
+    :param plotter: Plotter instance (from plotting.core)
+    :param kwargs: keyword arguments passed to frame.legend
+
+    :return: None, updates the frame.legend
+    """
     # deal with no frame set
     if frame is None:
         frame = plotter.plt.gca()
@@ -209,29 +391,32 @@ def ulegend(frame=None, plotter=None, **kwargs):
     frame.legend(unique_h, unique_l, **kwargs)
 
 
-def mc_line(frame, plt, line, x, y, z, norm=None, cmap=None):
+def mc_line(frame: Any, plt: Any, line: Any, x: np.ndarray, y: np.ndarray,
+            z: np.ndarray, norm: Union[Any, None] = None,
+            cmap: Union[str, None] = None) -> Any:
     """
     Create a line coloured by vector "z"
     From here:
         https://matplotlib.org/3.1.1/gallery/lines_bars_and_markers/
             multicolored_line.html
 
-    :param frame:
-    :param plt:
-    :param line:
-    :param x:
-    :param y:
-    :param z:
-    :param norm:
-    :param cmap:
-    :return:
+    :param frame: matplotlib axis
+    :param plt: matplotlib.pyplot
+    :param line: matplotlib.collections.LineCollection
+    :param x: the x data
+    :param y: the y data
+    :param z: the z data (colour axis)
+    :param norm: matplotlib.Normalize 
+    :param cmap: str, the colour map to use (from matplotlib)
+    
+    :return: the update frame (with correctly coloured line collection)
     """
     # deal with no colormap
     if cmap is None:
         cmap = 'viridis'
     # Create a continuous norm to map from data points to colors
     if norm is None:
-        norm = plt.Normalize(np.nanmin(z), np.nanmax(z))
+        norm = plt.Normalize(mp.nanmin(z), mp.nanmax(z))
     # Create a set of line segments so that we can color them individually
     # This creates the points as a N x 1 x 2 array so that we can stack points
     # together easily to get the segments. The segments array for line
@@ -246,7 +431,18 @@ def mc_line(frame, plt, line, x, y, z, norm=None, cmap=None):
     return frame.add_collection(lc)
 
 
-def remove_first_last_ticks(frame, axis='x'):
+def remove_first_last_ticks(frame: Any, axis: str = 'x') -> Any:
+    """
+    Remove the first and last axis tick labels from the x axis, y axis or
+    both axes 
+    
+    :param frame: matplotlib axis 
+    :param axis: str, the axis to remove the ticks from, must be 'x', 'y', or 
+                 'both'
+    
+    :return: the updated frame
+    """
+
     if axis == 'x' or axis == 'both':
         xticks = frame.get_xticks()
         xticklabels = xticks.astype(str)
@@ -262,7 +458,32 @@ def remove_first_last_ticks(frame, axis='x'):
     return frame
 
 
-def add_grid(frame):
+def legend_no_alpha(legend: Any):
+    """
+    Remove an transparency from the legend lines
+    
+    :param legend: matplotlib legend instance
+     
+    :return: None, updates legend instance
+    """
+    for handle in legend.legendHandles:
+        if hasattr(handle, 'set_alpha'):
+            handle.set_alpha(1)
+        if hasattr(handle, '_legmarker'):
+            legmarker = getattr(handle, '_legmarker')
+            if hasattr(legmarker, 'set_alpha'):
+                legmarker.set_alpha(1)
+
+
+def add_grid(frame: Any):
+    """
+    Add grid lines to a frame
+    
+    :param frame: matplotlib axis
+     
+    :return: None, updates frame 
+    """
+    # turn on minor ticks
     frame.minorticks_on()
     # Don't allow the axis to be on top of your data
     frame.grid(which='major', linestyle='-', linewidth='0.5', color='black',
@@ -271,10 +492,66 @@ def add_grid(frame):
                alpha=0.5, zorder=0)
 
 
+def get_arr_limits(*arrays: np.ndarray, plow: float = 1,
+                   phigh: float = 99) -> Tuple[float, float]:
+    """
+    Get the percentile limits of a set of arrays
+
+    :param arrays: list of np.ndarrays
+    :param plow: float, the lower perenctile
+    :param phigh: float, the upper percentile
+
+    :return: tuple, 1. the lower bound, 2. the upper bound
+    """
+    low = np.inf
+    high = -np.inf
+
+    for array in arrays:
+
+        alow, ahigh = np.nanpercentile(array, [plow, phigh])
+
+        if alow < low:
+            low = alow
+        if ahigh > high:
+            high = ahigh
+
+    return low, high
+
+
+# =============================================================================
+# After this point all plotting functions
+# =============================================================================
+# Should have form:
+#     def func_name(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+#
+#         # ------------------------------------------------------------------
+#         # start the plotting process
+#         if not plotter.plotstart(graph):
+#             return
+#         # get variable / data from kwargs
+#         x = kwargs.get('x', 'default')
+#         # ------------------------------------------------------------------
+#         # plot
+#         fig, frame = graph.set_figure(plotter)
+#         # plot code
+#         # ...
+#         # ------------------------------------------------------------------
+#         # wrap up using plotter
+#         plotter.plotend(graph)
+
 # =============================================================================
 # Define test plotting functions
 # =============================================================================
-def graph_test_plot_1(plotter, graph, kwargs):
+def graph_test_plot_1(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+    """
+    Graph: Test Plot 1
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -294,7 +571,16 @@ def graph_test_plot_1(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def graph_test_plot_2(plotter, graph, kwargs):
+def graph_test_plot_2(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+    """
+    Graph: Test Plot 2
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -337,7 +623,17 @@ definitions += [test_plot1, test_plot2, test_plot3, test_plot4]
 # =============================================================================
 # Define dark plotting functions
 # =============================================================================
-def plot_dark_image_regions(plotter, graph, kwargs):
+def plot_dark_image_regions(plotter: Plotter, graph: Graph,
+                            kwargs: Dict[str, Any]):
+    """
+    Graph: Dark image region plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -394,7 +690,16 @@ def plot_dark_image_regions(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_dark_histogram(plotter, graph, kwargs):
+def plot_dark_histogram(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+    """
+    Graph: Dark Histogram plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -451,7 +756,16 @@ definitions += [dark_image_regions, dark_histogram,
 # =============================================================================
 # Define badpix plotting functions
 # =============================================================================
-def plot_badpix_map(plotter, graph, kwargs):
+def plot_badpix_map(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+    """
+    Graph: Bad pixel map plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -490,136 +804,140 @@ definitions += [badpix_map, summary_badpix_map]
 # =============================================================================
 # Define localisation plotting functions
 # =============================================================================
-def plot_loc_minmax_cents(plotter, graph, kwargs):
-    # ------------------------------------------------------------------
-    # start the plotting process
-    if not plotter.plotstart(graph):
-        return
-    # ------------------------------------------------------------------
-    # get the arguments from kwargs
-    y = kwargs['y']
-    miny = kwargs['miny']
-    maxy = kwargs['maxy']
-    # set up the row number
-    rownumber = np.arange(len(y))
-    # ------------------------------------------------------------------
-    # set up plot
-    fig, frame = graph.set_figure(plotter)
-    # plot y against row number
-    frame.plot(rownumber, y, linestyle='-')
-    # plot miny against row number
-    if miny is not None:
-        frame.plot(rownumber, miny, marker='_')
-    # plot maxy against row number
-    if maxy is not None:
-        frame.plot(rownumber, maxy, marker='_')
-    # set title
-    frame.set(title='Central CUT', xlabel='pixels', ylabel='ADU')
-    # ------------------------------------------------------------------
-    # wrap up using plotter
-    plotter.plotend(graph)
+def plot_loc_width_regions(plotter: Plotter, graph: Graph,
+                           kwargs: Dict[str, Any]):
+    """
+    Graph: Localisation width regions
 
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
 
-def plot_loc_min_cents_thres(plotter, graph, kwargs):
-    # ------------------------------------------------------------------
-    # start the plotting process
-    if not plotter.plotstart(graph):
-        return
-    # ------------------------------------------------------------------
-    # get the arguments from kwargs
-    threshold = kwargs['threshold']
-    centers = kwargs['centers']
-    # set up the row number
-    rownumber = np.arange(len(centers))
-    # ------------------------------------------------------------------
-    # set up plot
-    fig, frame = graph.set_figure(plotter)
-    # plot the centers
-    frame.plot(rownumber, np.minimum(centers, threshold))
-    # set title
-    frame.set(title='Central CUT', xlabel='pixels', ylabel='ADU')
-    # ------------------------------------------------------------------
-    # wrap up using plotter
-    plotter.plotend(graph)
-
-
-def plot_loc_finding_orders(plotter, graph, kwargs):
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
         return
     # get plt
     plt = plotter.plt
+    # -------------------------------------------------------------------------
+    # get the arguments from kwargs
+    coeffs1 = np.array(kwargs['coeffs1'])
+    coeffs2 = np.array(kwargs['coeffs2'])
+    # -------------------------------------------------------------------------
+    # set up plot
+    fig, frames = graph.set_figure(plotter, ncols=coeffs1.shape[1], nrows=1)
+    # -------------------------------------------------------------------------
+    str_coeffs = []
+    # plot coefficients
+    for coeff in range(coeffs1.shape[1]):
+        # get string version of coeff
+        scoeff = str(coeff)
+        # plot this coefficient
+        frames[coeff].plot(coeffs1[:, coeff], 'b.', label='first fit')
+        frames[coeff].plot(coeffs2[:, coeff], 'r.', label='final fit')
+        # add axis labels
+        frames[coeff].set(xlabel='Order Number',
+                          ylabel='Coefficient $T_{{{' + scoeff + '}}}$')
+        frames[coeff].legend(loc=0)
+        # construct coefficient string
+        str_coeffs += ['$T_{{{' + scoeff + '}}}$']
+    # set global title
+    title = 'Localisation width calculation per order: {0}'
+    plt.suptitle(title.format(' + '.join(str_coeffs)))
+    # -------------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+def plot_loc_fiber_doublet_parity(plotter: Plotter, graph: Graph,
+                                  kwargs: Dict[str, Any]):
+    """
+    Graph: Localisation fiber doublet parity plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
     # ------------------------------------------------------------------
     # get the arguments from kwargs
-    plotdict = kwargs['plotdict']
-    plotlimits = kwargs['plimits']
-    # get the plot loop generator (around orders)
-    generator = plotter.plotloop(list(plotdict.keys()))
-    # prompt to start looper
-    plotter.close_plots(loop=True)
-    # loop around orders
-    for order_num in generator:
-        # get this orders values
-        col_vals = plotdict[order_num]
-        # expand limits
-        minxcc, maxxcc, minycc, maxycc = plotlimits[order_num]
-        # get the length
-        length = len(col_vals)
-        # get colours for each line
-        colors = plt.cm.jet(np.linspace(0, 1, len(col_vals)))[::-1]
-        # get the number of columns
-        ncols = int(np.ceil(np.sqrt(length)))
-        nrows = int(np.ceil(length / ncols))
-        # set up plot
-        fig, frames = graph.set_figure(plotter, ncols=ncols, nrows=nrows)
-        # loop around col_vals
-        for row in range(np.product(frames.shape)):
-            # get the correct frame
-            jt, it = row % ncols, row // ncols
-            frame = frames[it, jt]
-            # deal with out of bounds frames
-            if row >= length:
-                frame.axis('off')
-                continue
-            # get the col val
-            col_val = col_vals[row]
-            # get variables for this col_val
-            rowcenter, rowtop, rowbottom, center, width, ycc = col_val
-            # plot data
-            xpix = np.arange(rowtop - center, rowbottom - center, 1.0)
-            frame.plot(xpix, ycc, color=colors[row])
-            # plot lines
-            frame.vlines(-width / 2, ymin=0.0, ymax=maxycc,
-                         colors=colors[row])
-            frame.vlines(width / 2, ymin=0.0, ymax=maxycc,
-                         colors=colors[row])
-            # set lim
-            frame.set(ylim=[minycc, maxycc], xlim=[minxcc, maxxcc])
-            # add center text
-            frame.text(0.5, 0.1, 'C={0:.2f}'.format(center),
-                       fontdict=dict(fontsize=8), horizontalalignment='center',
-                       verticalalignment='center', transform=frame.transAxes)
-            # hide certain axis
-            if it != nrows - 1:
-                frame.set_xticklabels([])
-            if jt != 0:
-                frame.set_yticklabels([])
-        # ------------------------------------------------------------------
-        # add title
-        plt.suptitle('Order {0}'.format(order_num))
-        plt.subplots_adjust(hspace=0, wspace=0, top=0.95, bottom=0.05,
-                            left=0.05, right=0.975)
-        # ------------------------------------------------------------------
-        # update filename (adding order_num to end)
-        suffix = 'order{0}'.format(order_num)
-        graph.set_filename(plotter.params, plotter.location, suffix=suffix)
-        # ------------------------------------------------------------------
-        # wrap up using plotter
-        plotter.plotend(graph)
+    index = kwargs['index']
+    centers = kwargs['centers']
+    residuals = kwargs['residuals']
+    cfit = kwargs['fit']
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frames = graph.set_figure(plotter, nrows=2, ncols=1, sharex='all')
+    # ------------------------------------------------------------------
+    # plot the centers and the fit
+    frames[0].plot(index, centers, 'g.')
+    frames[0].plot(index, np.polyval(cfit, index), ls='--', color='red')
+    # plot the residuals
+    frames[1].plot(index, residuals, 'g.')
+    frames[1].axhline(y=0, ls='--', color='red')
+    # set axis labels and title
+    frames[0].set(xlabel='Nth order', ylabel='y pixel order center',
+                  title='Localisation fiber doublet plot')
+    frames[1].set(xlabel='Nth order', ylabel='residual to order fit')
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
 
 
-def plot_loc_im_sat_thres(plotter, graph, kwargs):
+def plot_loc_gap_orders(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+    """
+    Graph: Localisation gap between consecutive orders
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    centers = kwargs['centers']
+    mask = kwargs['mask']
+    fit = kwargs['fit']
+    # get difference between the centers
+    cdiff = centers[1:] - centers[:-1]
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frame = graph.set_figure(plotter)
+    # ------------------------------------------------------------------
+    # plot the orders
+    frame.plot(centers[1:], cdiff, 'r.')
+    frame.plot(centers[1:][mask], cdiff[mask], 'g.')
+    frame.plot(centers[1:], np.polyval(fit, centers[1:]))
+    frame.set(xlabel='y position of order',
+              ylabel='order-to-order gap in pixels')
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+def plot_loc_image_fit(plotter: Plotter, graph: Graph,
+                       kwargs: Dict[str, Any]):
+    """
+    Graph: Localisation image saturation threshold plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -630,30 +948,89 @@ def plot_loc_im_sat_thres(plotter, graph, kwargs):
     # ------------------------------------------------------------------
     # get the arguments from kwargs
     image = kwargs['image']
-    threshold = kwargs['threshold']
-    xarr = kwargs['xarr']
-    yarr = kwargs['yarr']
     coeffs = kwargs['coeffs']
-    # get xpix
-    xpix = np.arange(image.shape[1])
+    coeffs_old = kwargs.get('coeffs_old', None)
+    threshold = kwargs.get('threshold', None)
+    reverse = kwargs.get('reverse', True)
+    plot_kind = kwargs['kind']
+    offset = kwargs.get('offset', 0.0)
+    xlines = kwargs.get('xlines', None)
+    ylines = kwargs.get('ylines', None)
+    width_coeffs = kwargs.get('width_coeffs', None)
+    # get shape
+    nbypix, nbxpix = image.shape
+    # get x array
+    xpix = np.arange(nbxpix)
+    # deal with no threshold
+    if threshold is None:
+        threshold = mp.nanpercentile(image, 95)
+    # ------------------------------------------------------------------
+    title = 'Localisation for fibers={0}'.format(plot_kind)
     # ------------------------------------------------------------------
     # set up plot
     fig, frame = graph.set_figure(plotter)
+    # ------------------------------------------------------------------
     # plot image
     im = frame.imshow(image, origin='lower', clim=(1.0, threshold),
                       cmap='gist_gray', zorder=0, aspect='auto')
-    # set the limits
-    frame.set(xlim=(0, image.shape[1]), ylim=(0, image.shape[0]))
-    # loop around xarr and yarr and plot
-    for order_num in range(len(xarr)):
-        # x and y
-        x, y = xarr[order_num], yarr[order_num]
-        # get ypix
-        ypix = np.polyval(coeffs[order_num][::-1], xpix)
-        # plot full fit
-        frame.plot(xpix, ypix, linewidth=1, color='blue', ls='--', label='all')
-        # plot valid fit
-        frame.plot(x, y, linewidth=1, color='red', label='valid')
+    # ------------------------------------------------------------------
+    # plot old coeffs
+    if coeffs_old is not None:
+        for order_num in range(coeffs_old.shape[0]):
+            # deal with reverse coefficients
+            if reverse:
+                cfit = mp.val_cheby(coeffs_old[order_num], xpix + offset,
+                                    domain=[0, image.shape[1]])
+            # else just fit
+            else:
+                cfit = mp.val_cheby(coeffs_old[order_num], xpix + offset,
+                                    domain=[0, image.shape[1]])
+            # plot this orders coefficients
+            oldlabel = 'old fit (Norders={0})'.format(coeffs_old.shape[0])
+            frame.plot(xpix, cfit, ls='-', color='blue', lw=1,
+                       label=oldlabel)
+        # if we have old points label the new points "new fit"
+        newlabel = 'new fit (Norders={0})'.format(coeffs.shape[0])
+    else:
+        newlabel = 'fit (Norders={0})'.format(coeffs.shape[0])
+    # ------------------------------------------------------------------
+    # plot coeffs
+    for order_num in range(coeffs.shape[0]):
+        # deal with reverse coefficients
+        if reverse:
+            cfit = mp.val_cheby(coeffs[order_num], xpix + offset,
+                                domain=[0, image.shape[1]])
+        # else just fit
+        else:
+            cfit = mp.val_cheby(coeffs[order_num], xpix + offset,
+                                domain=[0, image.shape[1]])
+        # plot this orders coefficients
+        frame.plot(xpix, cfit, ls='--', color='red', lw=1, label=newlabel)
+        # plot widths
+        if width_coeffs is not None:
+            # get the width fit per pixel
+            if reverse:
+                wfit = mp.val_cheby(width_coeffs[order_num], xpix,
+                                    domain=[0, nbxpix])
+            else:
+                wfit = mp.val_cheby(width_coeffs[order_num], xpix,
+                                    domain=[0, nbxpix])
+            # plot these on the edge
+            frame.plot(xpix, cfit + wfit / 2, ls=':', color='m', lw=1,
+                       alpha=0.75, label=newlabel)
+            frame.plot(xpix, cfit - wfit / 2, ls=':', color='m', lw=1,
+                       alpha=0.75, label=newlabel)
+    # ------------------------------------------------------------------
+    # plot guide lines
+    if xlines is not None:
+        for xline in xlines:
+            frame.axvline(xline, color='orange', ls=':')
+    if ylines is not None:
+        for yline in ylines:
+            frame.axhline(yline, color='orange', ls=':')
+    # set the title
+    frame.set(xlim=[0, nbxpix], ylim=[0, nbypix], title=title)
+    # ------------------------------------------------------------------
     # only keep unique labels
     ulegend(frame, loc=10, ncol=2)
     # create an axes on the right side of ax. The width of cax will be 5%
@@ -668,66 +1045,16 @@ def plot_loc_im_sat_thres(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_loc_fit_residuals(plotter, graph, kwargs):
-    # ------------------------------------------------------------------
-    # start the plotting process
-    if not plotter.plotstart(graph):
-        return
-    # ------------------------------------------------------------------
-    # get the arguments from kwargs
-    x = kwargs['x']
-    y = kwargs['y']
-    xo = kwargs['xo']
-    rnum = kwargs['rnum']
-    kind = kwargs['kind']
-    # ------------------------------------------------------------------
-    # set up plot
-    fig, frame = graph.set_figure(plotter)
-    # ------------------------------------------------------------------
-    # plot residuals of data - fit
-    frame.plot(x, y, marker='_')
-    # set title and limits
-    frame.set(title='{0} fit residual of order {1}'.format(kind, rnum),
-              xlim=(0, len(xo)), ylim=(np.min(y), np.max(y)))
-    # ------------------------------------------------------------------
-    # update suffix
-    suffix = 'kind{0}_order{1}'.format(kind, rnum)
-    graph.set_filename(plotter.params, plotter.location, suffix=suffix)
-    # ------------------------------------------------------------------
-    # wrap up using plotter
-    plotter.plotend(graph)
+def plot_loc_im_corner(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+    """
+    Graph: Localisation image "corners" plot
 
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
 
-def plot_loc_ord_vs_rms(plotter, graph, kwargs):
-    # ------------------------------------------------------------------
-    # start the plotting process
-    if not plotter.plotstart(graph):
-        return
-    # ------------------------------------------------------------------
-    # get the arguments from kwargs
-    rnum = kwargs['rnum']
-    rms_center = kwargs['rms_center']
-    rms_fwhm = kwargs['rms_fwhm']
-    fiber = kwargs['fiber']
-    # ------------------------------------------------------------------
-    # set up plot
-    fig, frame = graph.set_figure(plotter)
-    # plot image
-    frame.plot(np.arange(rnum), rms_center[0:rnum], label='center')
-    frame.plot(np.arange(rnum), rms_fwhm[0:rnum], label='fwhm')
-    # construct title
-    title = 'Dispersion of localization parameters fiber {0}'.format(fiber)
-    # set title labels limits
-    frame.set(xlim=(0, rnum), xlabel='Order number', ylabel='RMS [pixel]',
-              title=title)
-    # Add legend
-    frame.legend(loc=0)
-    # ------------------------------------------------------------------
-    # wrap up using plotter
-    plotter.plotend(graph)
-
-
-def plot_loc_im_corner(plotter, graph, kwargs):
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -739,9 +1066,8 @@ def plot_loc_im_corner(plotter, graph, kwargs):
     # get the arguments from kwargs
     params = kwargs['params']
     image = kwargs['image']
-    xarr = kwargs['xarr']
-    yarr = kwargs['yarr']
     coeffs = kwargs['coeffs']
+    width_coeffs = kwargs.get('width_coeffs', None)
     # get xpix
     xpix = np.arange(image.shape[1])
     # get zoom values
@@ -771,22 +1097,30 @@ def plot_loc_im_corner(plotter, graph, kwargs):
         # get image zoom
         image_zoom = image[ymin:ymax, xmin:xmax]
         # threshold = percentile
-        threshold = np.nanpercentile(image_zoom, 95)
+        threshold = mp.nanpercentile(image_zoom, 95)
         # ------------------------------------------------------------------
         # plot image
         im = frame.imshow(image_zoom, origin='lower', vmin=0.0, vmax=threshold,
                           cmap='gist_gray', aspect='auto',
                           extent=[xmin, xmax, ymin, ymax])
         # loop around xarr and yarr and plot
-        for order_num in range(len(xarr)):
-            # x and y
-            x, y = xarr[order_num], yarr[order_num]
+        for order_num in range(coeffs.shape[0]):
             # get ypix
-            ypix = np.polyval(coeffs[order_num][::-1], xpix)
+            ypix = mp.val_cheby(coeffs[order_num], xpix,
+                                domain=[0, image.shape[1]])
             # plot full fit
-            frame.plot(xpix, ypix, linewidth=1, color='blue', ls='--', zorder=1)
-            # plot valid fit
-            frame.plot(x, y, linewidth=1, color='red', zorder=2)
+            frame.plot(xpix, ypix, linewidth=1, color='red', ls='--', zorder=1)
+            # add the width poly + ypix if widths are given
+            if width_coeffs is not None:
+                # get the width fit
+                wfit = mp.val_cheby(width_coeffs[order_num], xpix,
+                                    domain=[0, image.shape[1]])
+                # plot these on the edge
+                frame.plot(xpix, ypix + wfit / 2, ls=':', color='m', lw=1,
+                           alpha=0.75)
+                frame.plot(xpix, ypix - wfit / 2, ls=':', color='m', lw=1,
+                           alpha=0.75)
+
         # set the limits
         frame.set(xlim=(xmin, xmax), ylim=(ymin, ymax))
         # create an axes on the right side of ax. The width of cax will be 5%
@@ -802,144 +1136,75 @@ def plot_loc_im_corner(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_loc_check_coeffs(plotter, graph, kwargs):
+def plot_loc_im_regions(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+    """
+    Graph: Localisation image regions plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
         return
-    plt = plotter.plt
     # ------------------------------------------------------------------
     # get the arguments from kwargs
-    good_arr = kwargs['good']
-    xpix = kwargs['xpix']
-    ypix = kwargs['ypix']
-    ypix0 = kwargs['ypix0']
-    image = kwargs['image']
-    order = kwargs.get('order', None)
-    kind = kwargs.get('kind', None)
+    mask0 = kwargs['mask0']
+    mask1 = kwargs['mask1']
     # ------------------------------------------------------------------
-    # get order generator
+    # set up plot
+    fig, frame = graph.set_figure(plotter, ncols=1, nrows=1)
     # ------------------------------------------------------------------
-    if order is None:
-        order_gen = plotter.plotloop(np.arange(len(good_arr)))
-        # prompt to start looper
-        plotter.close_plots(loop=True)
-    # else we just deal with the order specified
-    else:
-        order_gen = [order]
+    # plot the images
+    frame.imshow(mask0, aspect='auto', origin='lower')
+    frame.imshow(mask1, alpha=0.5, aspect='auto', origin='lower')
     # ------------------------------------------------------------------
-    # loop around orders
-    for order_num in order_gen:
-        # get this iterations values
-        good = good_arr[order_num]
-        ypixgo = ypix[order_num, good]
-        ypix0go = ypix0[order_num, good]
-        residual = ypixgo - ypix0go
-        # get the y limits
-        ymax = np.ceil(np.nanmax([np.nanmax(ypixgo), np.nanmax(ypix0go)]))
-        ymin = np.floor(np.nanmin([np.nanmin(ypixgo), np.nanmin(ypix0go)]))
-        ydiff = np.ceil(ymax - ymin)
-        ymax = np.min([int(ymax + 0.25 * ydiff), image.shape[0]])
-        ymin = np.max([int(ymin - 0.25 * ydiff), 0])
-        # mask the image between y limits
-        imagezoom = image[ymin:ymax]
-        # normalise zoom image
-        imagezoom = imagezoom / np.nanpercentile(imagezoom, 85)
-        # ------------------------------------------------------------------
-        # set up plot
-        if kind == 'center':
-            fig, frames = graph.set_figure(plotter, nrows=2, ncols=1,
-                                           sharex=True)
-            frame1, frame2 = frames
-        else:
-            fig, frame2 = graph.set_figure(plotter, nrows=1, ncols=1)
-            frame1 = None
-        # ------------------------------------------------------------------
-        # plot the image fits (if we are dealing with a center plot)
-        if kind == 'center':
-            frame1.imshow(imagezoom, aspect='auto', origin='lower', zorder=0,
-                          cmap='gist_gray', vmin=0, vmax=1,
-                          extent=[0, image.shape[1], ymin, ymax])
-            frame1.plot(xpix[good], ypix0go, color='b', ls='--', label='old',
-                        zorder=2)
-            frame1.plot(xpix[good], ypixgo, color='r', ls='-', label='new',
-                        zorder=1)
-            frame1.legend(loc=0)
-            # force x limits
-            frame1.set_xlim(0, image.shape[1])
-        # ------------------------------------------------------------------
-        # plot the residuals
-        frame2.plot(xpix[good], residual, marker='x')
-        # add legend
-        frame2.legend(loc=0)
-        # force x limits
-        frame2.set_xlim(0, image.shape[1])
-        # ------------------------------------------------------------------
-        # construct frame title
-        if kind is None:
-            title = 'Coefficient Residuals (New - Original) Order={1}'
-        else:
-            title = '{0} coefficient residuals (New - Original) Order={1}'
-        # ------------------------------------------------------------------
-        # set title and labels
-        if kind == 'center':
-            frame1.set(title=title.format(kind, order_num),
-                       ylabel='y pixel position')
-            frame2.set(xlabel='x pixel position',
-                       ylabel=r'$\Delta$y pixel position')
-        else:
-            frame2.set(title=title.format(kind, order_num),
-                       xlabel='x pixel position',
-                       ylabel=r'$\Delta$y pixel position')
-        # ------------------------------------------------------------------
-        # adjust plot
-        plt.subplots_adjust(top=0.925, bottom=0.125, left=0.1, right=0.975,
-                            hspace=0.05)
-        # ------------------------------------------------------------------
-        # update filename (adding order_num to end)
-        suffix = 'order{0}'.format(order_num)
-        graph.set_filename(plotter.params, plotter.location, suffix=suffix)
-        # ------------------------------------------------------------------
-        # wrap up using plotter
-        plotter.plotend(graph)
+    # wrap up using plotter
+    plotter.plotend(graph)
 
 
-# define graphing instances
-loc_minmax_cents = Graph('LOC_MINMAX_CENTS', kind='debug',
-                         func=plot_loc_minmax_cents)
-loc_min_cents_thres = Graph('LOC_MIN_CENTS_THRES', kind='debug',
-                            func=plot_loc_min_cents_thres)
-loc_finding_orders = Graph('LOC_FINDING_ORDERS', kind='debug',
-                           func=plot_loc_finding_orders)
-loc_im_sat_thres = Graph('LOC_IM_SAT_THRES', kind='debug',
-                         func=plot_loc_im_sat_thres)
-loc_fit_residuals = Graph('LOC_FIT_RESIDUALS', kind='debug',
-                          func=plot_loc_fit_residuals)
-loc_ord_vs_rms = Graph('LOC_ORD_VS_RMS', kind='debug',
-                       func=plot_loc_ord_vs_rms)
-loc_check_coeffs = Graph('LOC_CHECK_COEFFS', kind='debug',
-                         func=plot_loc_check_coeffs)
+loc_width_regions = Graph('LOC_WIDTH_REGIONS', kind='debug',
+                          func=plot_loc_width_regions)
+loc_fiber_doublet_parity = Graph('LOC_FIBER_DOUBLET_PARITY', kind='debug',
+                                 func=plot_loc_fiber_doublet_parity)
+loc_gap_orders = Graph('LOC_GAP_ORDERS', kind='debug',
+                       func=plot_loc_gap_orders)
+loc_image_fit = Graph('LOC_IMAGE_FIT', kind='debug', func=plot_loc_image_fit)
+loc_im_corner = Graph('LOC_IM_CORNER', kind='debug', func=plot_loc_im_corner)
+loc_im_regions = Graph('LOC_IM_REGIONS', kind='debug', func=plot_loc_im_regions)
 sum_desc = ('Polynomial fits for localisation (overplotted on '
             'pre-processed image)')
-sum_loc_im_sat_thres = Graph('SUM_LOC_IM_THRES', kind='summary',
-                             func=plot_loc_im_sat_thres, figsize=(12, 8),
-                             dpi=300, description=sum_desc)
+sum_plot_loc_im_fit = Graph('SUM_LOC_IM_FIT', kind='summary',
+                            func=plot_loc_image_fit, figsize=(12, 8),
+                            dpi=300, description=sum_desc)
 sum_desc = ('Zoom in polynomial fits for localisation (overplotted on '
             'pre-processed image)')
 sum_plot_loc_im_corner = Graph('SUM_LOC_IM_CORNER', kind='summary',
                                func=plot_loc_im_corner, figsize=(16, 10),
                                dpi=150, description=sum_desc)
+
 # add to definitions
-definitions += [loc_minmax_cents, loc_min_cents_thres, loc_finding_orders,
-                loc_im_sat_thres, loc_ord_vs_rms, loc_check_coeffs,
-                loc_fit_residuals,
-                sum_loc_im_sat_thres, sum_plot_loc_im_corner]
+definitions += [loc_width_regions, loc_fiber_doublet_parity, loc_gap_orders,
+                loc_image_fit, loc_im_corner, loc_im_regions,
+                sum_plot_loc_im_fit, sum_plot_loc_im_corner]
 
 
 # =============================================================================
 # Define shape plotting functions
 # =============================================================================
-def plot_shape_dx(plotter, graph, kwargs):
+def plot_shape_dx(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+    """
+    Graph: Shape dx plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -952,10 +1217,11 @@ def plot_shape_dx(plotter, graph, kwargs):
     dx2 = kwargs['dx2']
     bnum = kwargs['bnum']
     nbanana = kwargs['nbanana']
+    fiber = kwargs['fiber']
     # set the zeropoint
-    zeropoint = np.nanmedian(dx)
+    zeropoint = mp.nanmedian(dx)
     # get the sig of dx
-    sig_dx = np.nanmedian(np.abs(dx - zeropoint))
+    sig_dx = mp.nanmedian(np.abs(dx - zeropoint))
     # ------------------------------------------------------------------
     # set up plot
     fig, frames = graph.set_figure(plotter, ncols=3, nrows=1)
@@ -965,7 +1231,8 @@ def plot_shape_dx(plotter, graph, kwargs):
     # plot dx
     vmin = (-2 * sig_dx) + zeropoint
     vmax = (2 * sig_dx) + zeropoint
-    im1 = frame1.imshow(dx, vmin=vmin, vmax=vmax, cmap='viridis')
+    im1 = frame1.imshow(dx, vmin=vmin, vmax=vmax, cmap='viridis',
+                        aspect='auto', origin='lower')
     # add colour bar
     divider1 = axes_grid1.make_axes_locatable(frame1)
     cax1 = divider1.append_axes("top", size="10%", pad=0.05)
@@ -980,7 +1247,8 @@ def plot_shape_dx(plotter, graph, kwargs):
     # plot dx2
     vmin = (-2 * sig_dx) + zeropoint
     vmax = (2 * sig_dx) + zeropoint
-    im2 = frame2.imshow(dx2, vmin=vmin, vmax=vmax, cmap='viridis')
+    im2 = frame2.imshow(dx2, vmin=vmin, vmax=vmax, cmap='viridis',
+                        aspect='auto', origin='lower')
     # add colour bar
     divider2 = axes_grid1.make_axes_locatable(frame2)
     cax2 = divider2.append_axes("top", size="10%", pad=0.05)
@@ -995,7 +1263,8 @@ def plot_shape_dx(plotter, graph, kwargs):
     # plot diff
     vmin = (-0.5 * sig_dx) + zeropoint
     vmax = (0.5 * sig_dx) + zeropoint
-    im3 = frame3.imshow(dx - dx2, vmin=vmin, vmax=vmax, cmap='viridis')
+    im3 = frame3.imshow(dx - dx2, vmin=vmin, vmax=vmax, cmap='viridis',
+                        aspect='auto', origin='lower')
     # add colour bar
     divider3 = axes_grid1.make_axes_locatable(frame3)
     cax3 = divider3.append_axes("top", size="10%", pad=0.05)
@@ -1009,13 +1278,24 @@ def plot_shape_dx(plotter, graph, kwargs):
     # ----------------------------------------------------------------------
     # title
     # ----------------------------------------------------------------------
-    plt.suptitle('Iteration {0} / {1}'.format(bnum + 1, nbanana))
+    targs = [bnum + 1, nbanana, fiber]
+    plt.suptitle('Iteration {0} / {1}  Fiber {2}'.format(*targs))
     # ------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)
 
 
-def plot_shape_linear_tparams(plotter, graph, kwargs):
+def plot_shape_linear_tparams(plotter: Plotter, graph: Graph,
+                              kwargs: Dict[str, Any]):
+    """
+    Graph: Shape linear transform plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -1036,7 +1316,7 @@ def plot_shape_linear_tparams(plotter, graph, kwargs):
     diffy = y1 - y2
     xrange1 = [0, dim2]
     xrange2 = [0, dim1]
-    ylim = np.max([np.nanmedian(np.abs(diffx)), np.nanmedian(np.abs(diffy))])
+    ylim = np.max([mp.nanmedian(np.abs(diffx)), mp.nanmedian(np.abs(diffy))])
     yrange = [-10 * ylim, 10 * ylim]
     nbins = 50
     pstep = 100
@@ -1102,7 +1382,17 @@ def plot_shape_linear_tparams(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_shape_angle_offset(plotter, graph, kwargs):
+def plot_shape_angle_offset(plotter: Plotter, graph: Graph,
+                            kwargs: Dict[str, Any]):
+    """
+    Graph: Shape angle offset plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -1125,10 +1415,12 @@ def plot_shape_angle_offset(plotter, graph, kwargs):
     dx_arr = kwargs['dx']
     dypix_arr = kwargs['dypix']
     ckeep_arr = kwargs['ckeep']
+    fiber = kwargs['fiber']
     # get parameters from params
     sorder = params['SHAPE_PLOT_SELECTED_ORDER']
     nbanana = params['SHAPE_NUM_ITERATIONS']
-    width = params['SHAPE_ORDER_WIDTH']
+    # get width for fiber
+    width = params.dictp('SHAPE_ORDER_WIDTH', dtype=int)[fiber]
     # ------------------------------------------------------------------
     # if we have a bnum set get the plot loop generator (around orders)
     if bnum is not None:
@@ -1167,8 +1459,8 @@ def plot_shape_angle_offset(plotter, graph, kwargs):
             fig, frames = graph.set_figure(plotter, ncols=2, nrows=1)
             frame1, frame2 = frames
             # title
-            title = 'Iteration {0}/{1} - Order {2}'
-            plt.suptitle(title.format(bnum_it + 1, nbanana, order_num))
+            title = 'Iteration {0}/{1} - Order {2} Fiber {3}'
+            plt.suptitle(title.format(bnum_it + 1, nbanana, order_num, fiber))
             # --------------------------------------------------------------
             # frame 1
             # --------------------------------------------------------------
@@ -1187,14 +1479,25 @@ def plot_shape_angle_offset(plotter, graph, kwargs):
             frame2.set(ylim=[0.0, width - 1], xlim=[0, len(ddx) - 1])
             # ------------------------------------------------------------------
             # update filename (adding order_num to end)
-            suffix = 'bnum{0}_order{1}'.format(bnum_it, order_num)
+            sname = 'bnum{0}_order{1}_fiber{2}'
+            suffix = sname.format(bnum_it, order_num, fiber)
             graph.set_filename(plotter.params, plotter.location, suffix=suffix)
             # --------------------------------------------------------------
             # wrap up using plotter
             plotter.plotend(graph)
 
 
-def plot_shape_local_zoom_shift(plotter, graph, kwargs):
+def plot_shape_local_zoom_shift(plotter: Plotter, graph: Graph,
+                                kwargs: Dict[str, Any]):
+    """
+    Graph: Shape local zoom shift plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -1217,8 +1520,8 @@ def plot_shape_local_zoom_shift(plotter, graph, kwargs):
     image2 = image[ymin2:ymax2, xmin2:xmax2]
     simage2 = simage[ymin2:ymax2, xmin2:xmax2]
     # threshold = percentile
-    threshold1 = np.nanpercentile(image1, 95)
-    threshold2 = np.nanpercentile(image2, 95)
+    threshold1 = mp.nanpercentile(image1, 95)
+    threshold2 = mp.nanpercentile(image2, 95)
     # ------------------------------------------------------------------
     skwargs1 = dict(origin='lower', aspect='auto', vmin=0.0, vmax=threshold1,
                     extent=[xmin1, xmax1, ymin1, ymax1])
@@ -1283,7 +1586,17 @@ definitions += [shape_dx, shape_linear_tparams, shape_angle_offset_all,
 # =============================================================================
 # Define flat plotting functions
 # =============================================================================
-def plot_flat_order_fit_edges(plotter, graph, kwargs):
+def plot_flat_order_fit_edges(plotter: Plotter, graph: Graph,
+                              kwargs: Dict[str, Any]):
+    """
+    Graph: Flat order fit edges plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -1326,17 +1639,18 @@ def plot_flat_order_fit_edges(plotter, graph, kwargs):
         ocoeffs1 = coeffs1[order_num]
         ocoeffs2 = coeffs2[order_num]
         # get fit and edge fits (for raw image)
-        yfit1 = np.polyval(ocoeffs1[::-1], xfit1)
-        yfitlow1 = np.polyval(ocoeffs1[::-1], xfit1) - range1
-        yfithigh1 = np.polyval(ocoeffs1[::-1], xfit1) + range2
-        ylower1 = np.polyval(ocoeffs1[::-1], xfit1) - 2 * range1
-        yupper1 = np.polyval(ocoeffs1[::-1], xfit1) + 2 * range2
+        domain = [0, image1.shape[1]]
+        yfit1 = mp.val_cheby(ocoeffs1, xfit1, domain=domain)
+        yfitlow1 = mp.val_cheby(ocoeffs1, xfit1, domain=domain) - range1
+        yfithigh1 = mp.val_cheby(ocoeffs1, xfit1, domain=domain) + range2
+        ylower1 = mp.val_cheby(ocoeffs1, xfit1, domain=domain) - 2 * range1
+        yupper1 = mp.val_cheby(ocoeffs1, xfit1, domain=domain) + 2 * range2
         # get fit and edge fits (for straight image)
-        yfit2 = np.polyval(ocoeffs2[::-1], xfit2)
-        yfitlow2 = np.polyval(ocoeffs2[::-1], xfit2) - range1
-        yfithigh2 = np.polyval(ocoeffs2[::-1], xfit2) + range2
-        ylower2 = np.polyval(ocoeffs2[::-1], xfit2) - 6 * range1
-        yupper2 = np.polyval(ocoeffs2[::-1], xfit2) + 6 * range2
+        yfit2 = mp.val_cheby(ocoeffs2, xfit2, domain=domain)
+        yfitlow2 = mp.val_cheby(ocoeffs2, xfit2, domain=domain) - range1
+        yfithigh2 = mp.val_cheby(ocoeffs2, xfit2, domain=domain) + range2
+        ylower2 = mp.val_cheby(ocoeffs2, xfit2, domain=domain) - 6 * range1
+        yupper2 = mp.val_cheby(ocoeffs2, xfit2, domain=domain) + 6 * range2
         # get image bounds
         ymin1 = np.max([np.min(ylower1), 0])
         ymax1 = np.min([np.max(yupper1), image1.shape[0]])
@@ -1351,8 +1665,8 @@ def plot_flat_order_fit_edges(plotter, graph, kwargs):
         imagezoom1 = image1[ymin1:ymax1]
         imagezoom2 = image2[ymin2:ymax2]
         # set threshold
-        threshold1 = np.nanpercentile(imagezoom1, 95)
-        threshold2 = np.nanpercentile(imagezoom2, 95)
+        threshold1 = mp.nanpercentile(imagezoom1, 95)
+        threshold2 = mp.nanpercentile(imagezoom2, 95)
         # ------------------------------------------------------------------
         # set up plot
         fig, frames = graph.set_figure(plotter, ncols=1, nrows=2, sharex=True)
@@ -1399,14 +1713,24 @@ def plot_flat_order_fit_edges(plotter, graph, kwargs):
                             hspace=0.05)
         # ------------------------------------------------------------------
         # update filename (adding order_num to end)
-        suffix = 'order{0}'.format(order_num)
+        suffix = 'order{0}_{1}'.format(order_num, fiber)
         graph.set_filename(plotter.params, plotter.location, suffix=suffix)
         # ------------------------------------------------------------------
         # wrap up using plotter
         plotter.plotend(graph)
 
 
-def plot_flat_blaze_order(plotter, graph, kwargs):
+def plot_flat_blaze_order(plotter: Plotter, graph: Graph,
+                          kwargs: Dict[str, Any]):
+    """
+    Graph: Flat blaze order plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -1465,7 +1789,7 @@ def plot_flat_blaze_order(plotter, graph, kwargs):
                             wspace=0, hspace=0)
         # ------------------------------------------------------------------
         # update filename (adding order_num to end)
-        suffix = 'order{0}'.format(order_num)
+        suffix = 'order{0}_{1}'.format(order_num, fiber)
         graph.set_filename(plotter.params, plotter.location, suffix=suffix)
         # ------------------------------------------------------------------
         # wrap up using plotter
@@ -1497,7 +1821,17 @@ definitions += [flat_order_fit_edges1, flat_order_fit_edges2,
 # =============================================================================
 # Define thermal plotting functions
 # =============================================================================
-def plot_thermal_background(plotter, graph, kwargs):
+def plot_thermal_background(plotter: Plotter, graph: Graph,
+                            kwargs: Dict[str, Any]):
+    """
+    Graph: Thermal background plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -1533,6 +1867,10 @@ def plot_thermal_background(plotter, graph, kwargs):
     title = 'Thermal scaled background ({0}Fiber {1})'.format(kind, fiber)
     frame.set(xlabel='Wavelength [nm]', ylabel='Flux', title=title)
     # ------------------------------------------------------------------
+    # update filename (adding order_num to end)
+    suffix = '{0}'.format(fiber)
+    graph.set_filename(plotter.params, plotter.location, suffix=suffix)
+    # ------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)
 
@@ -1546,7 +1884,17 @@ definitions += [thermal_background]
 # =============================================================================
 # Define extraction plotting functions
 # =============================================================================
-def plot_extract_spectral_order(plotter, graph, kwargs):
+def plot_extract_spectral_order(plotter: Plotter, graph: Graph,
+                                kwargs: Dict[str, Any]):
+    """
+    Graph: extract spectral order plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -1581,9 +1929,9 @@ def plot_extract_spectral_order(plotter, graph, kwargs):
         # set up plot
         fig, frames = graph.set_figure(plotter, ncols=1, nrows=2, sharex=True)
         # get normalised values
-        e2dsn = e2ds[order_num] / np.nanmedian(e2ds[order_num])
-        e2dsffn = e2dsff[order_num] / np.nanmedian(e2ds[order_num])
-        blazen = blaze[order_num] / np.nanmedian(blaze[order_num])
+        e2dsn = e2ds[order_num] / mp.nanmedian(e2ds[order_num])
+        e2dsffn = e2dsff[order_num] / mp.nanmedian(e2ds[order_num])
+        blazen = blaze[order_num] / mp.nanmedian(blaze[order_num])
         # plot fits
         frames[0].plot(wavemap[order_num], e2dsn, label='e2ds')
         frames[0].plot(wavemap[order_num], e2dsffn, label='e2dsff')
@@ -1604,14 +1952,23 @@ def plot_extract_spectral_order(plotter, graph, kwargs):
                             wspace=0, hspace=0)
         # ------------------------------------------------------------------
         # update filename (adding order_num to end)
-        suffix = 'order{0}'.format(order_num)
+        suffix = 'order{0}_{1}'.format(order_num, fiber)
         graph.set_filename(plotter.params, plotter.location, suffix=suffix)
         # ------------------------------------------------------------------
         # wrap up using plotter
         plotter.plotend(graph)
 
 
-def plot_extract_s1d(plotter, graph, kwargs):
+def plot_extract_s1d(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+    """
+    Graph: extract 1D plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -1634,7 +1991,7 @@ def plot_extract_s1d(plotter, graph, kwargs):
     # set up plot
     fig, frames = graph.set_figure(plotter, ncols=1, nrows=len(zoom1))
     # get the normalised colours based on the full wavelength range
-    norm = plt.Normalize(np.nanmin(wavemap), np.nanmax(wavemap))
+    norm = plt.Normalize(mp.nanmin(wavemap), mp.nanmax(wavemap))
     # loop around frames
     for row in range(len(zoom1)):
         # get bounds
@@ -1657,7 +2014,7 @@ def plot_extract_s1d(plotter, graph, kwargs):
         frame.set_xlim(lowerbound, upperbound)
         # set the y limits to 5 and 95 percentiles (to avoid outliers)
         with warnings.catch_warnings(record=True) as _:
-            ylow, yhigh = np.nanpercentile(flux[mask], [2, 98])
+            ylow, yhigh = mp.nanpercentile(flux[mask], [2, 98])
         # only set ylimit if whole region is not NaN
         if np.isfinite(ylow) and np.isfinite(yhigh):
             frame.set_ylim(ylow, yhigh)
@@ -1668,7 +2025,7 @@ def plot_extract_s1d(plotter, graph, kwargs):
             frame.set_xlabel('Wavelength [nm]')
     # update filename (adding order_num to end)
     if kind is not None:
-        suffix = kind.lower()
+        suffix = '{0}_{1}'.format(kind.lower(), fiber)
         graph.set_filename(plotter.params, plotter.location, suffix=suffix)
     # ------------------------------------------------------------------
     # adjust plot
@@ -1678,7 +2035,17 @@ def plot_extract_s1d(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_extract_s1d_weights(plotter, graph, kwargs):
+def plot_extract_s1d_weights(plotter: Plotter, graph: Graph,
+                             kwargs: Dict[str, Any]):
+    """
+    Graph: extract 1D weights plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -1698,10 +2065,10 @@ def plot_extract_s1d_weights(plotter, graph, kwargs):
     zoom2 = params.listp('EXTRACT_S1D_PLOT_ZOOM2', dtype=float)
     # ------------------------------------------------------------------
     # correct data for plotting
-    flux1 = flux / np.nanmedian(flux)
-    weight = weight / np.nanmedian(weight)
     with warnings.catch_warnings(record=True) as _:
-        flux2 = (flux / weight) / np.nanmedian(flux / weight)
+        flux1 = flux / mp.nanmedian(flux)
+        weight = weight / mp.nanmedian(weight)
+        flux2 = (flux / weight) / mp.nanmedian(flux / weight)
     # ------------------------------------------------------------------
     # set up plot
     fig, frames = graph.set_figure(plotter, ncols=1, nrows=len(zoom1))
@@ -1743,7 +2110,7 @@ def plot_extract_s1d_weights(plotter, graph, kwargs):
         if row == len(zoom1) - 1:
             frame.set_xlabel('Wavelength [nm]')
     # update filename (adding order_num to end)
-    suffix = stype.lower()
+    suffix = '{0}_{1}'.format(stype.lower(), fiber)
     graph.set_filename(plotter.params, plotter.location, suffix=suffix)
     # ------------------------------------------------------------------
     # adjust plot
@@ -1776,9 +2143,245 @@ definitions += [extract_spectral_order1, extract_spectral_order2,
 
 
 # =============================================================================
+# Define wave ea plotting functions
+# =============================================================================
+def plot_wave_wl_vs_cavity(plotter: Plotter, graph: Graph,
+                           kwargs: Dict[str, Any]):
+    """
+    Graph: Wavelength vs cavity length plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # get plt
+    plt = plotter.plt
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    params = kwargs['params']
+    cavity = kwargs['cavity']
+    # get vectors from tables
+    fp_wave_meas1 = kwargs['fp_wave_meas1']
+    fp_wave_meas2 = kwargs['fp_wave_meas2']
+    fp_cavity1 = fp_wave_meas1 * kwargs['fp_peak_num_1']
+    fp_cavity2 = fp_wave_meas2 * kwargs['fp_peak_num_2']
+    orders = kwargs['orders']
+    iteration = kwargs.get('iteration', 0)
+    # get values from params
+    # define the bulk offset to be added to the cavity length
+    cavity_pedestal = params['WAVE_FP_DOPD0']
+    # define the wavelength bounds of the instrument
+    inst_wavestart = params['EXT_S1D_WAVESTART']
+    inst_waveend = params['EXT_S1D_WAVEEND']
+    # work out residuals (when compared to the model)
+    tmp_cavity = mp.val_cheby(cavity, kwargs['fp_wave_ref_2'],
+                              domain=[inst_wavestart, inst_waveend])
+    res = fp_cavity2 - (tmp_cavity + cavity_pedestal)
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frames = graph.set_figure(plotter, nrows=2, ncols=1, sharex=True)
+    # ------------------------------------------------------------------
+    # plot the fp vs cavity (before)
+    frames[0].plot(fp_wave_meas1, fp_cavity1, color='r', marker='.',
+                   linestyle='None', alpha=0.4, label='before')
+    # plot the fp vs cavity (after)
+    frames[0].plot(fp_wave_meas2, fp_cavity2, color='g', marker='.',
+                   linestyle='None', alpha=0.4, label='after')
+    # plot the residuals
+    for order_num in set(orders):
+        # get mask for this order
+        order_mask = orders == order_num
+        # get colour for this order
+        if order_num % 2 == 0:
+            color = 'purple'
+        else:
+            color = 'orange'
+        # plot
+        frames[1].plot(fp_wave_meas2[order_mask], res[order_mask], color=color,
+                       marker='.', linestyle='None', alpha=0.5, ms=2)
+    # -----------------------------------------------------------------
+    # add legend
+    frames[0].legend(loc=0)
+    # add labels
+    frames[0].set(xlabel='Wavelength [nm]', ylabel='Cavity length [nm]')
+    frames[1].set(xlabel='Wavelength [nm]',
+                  ylabel='Model - Obs Cavity length [nm]')
+    # set title
+    plt.suptitle('Comparison between guess and final cavity length fit. '
+                 'Iteration {0}'.format(iteration))
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+def plot_wave_hc_diff_hist(plotter: Plotter, graph: Graph,
+                           kwargs: Dict[str, Any]):
+    """
+    Graph: Wavelength HC difference histogram
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # get plt
+    plt = plotter.plt
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    diff_hc = np.array(kwargs['diff_hc'])
+    error = np.array(kwargs['error'])
+    iteration = kwargs.get('iteration', 0)
+    # filter by 5 and 95 percentiles
+    low, high = np.percentile(diff_hc, [5, 95])
+    mask = (diff_hc > low) & (diff_hc < high)
+    # update diff hc and error
+    diff_hc = diff_hc[mask]
+    error = error[mask]
+    # set number of bins
+    nbins = 100
+    # get nsig
+    nsig = diff_hc / error
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frames = graph.set_figure(plotter, nrows=1, ncols=2)
+    # ------------------------------------------------------------------
+    # plot histogram for hc diff
+    frames[0].hist(diff_hc[np.abs(diff_hc) < 500], bins=nbins)
+    # add axis labels + title
+    frames[0].set(xlabel='Velocity [m/s]', ylabel='Number', title='HC diff')
+    # plot histogram for nsig
+    frames[1].hist(nsig[np.abs(nsig) < 5], bins=nbins)
+    # add axis labels + title
+    frames[1].set(xlabel='Sigma', ylabel='Number', title='HC diff / error')
+    # plot super title
+    plt.suptitle('Iteration {0}'.format(iteration))
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+def plot_wave_fiber_comparison(plotter: Plotter, graph: Graph,
+                               kwargs: Dict[str, Any]):
+    """
+    Graph: Wave solution fiber comparison plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    ref_fiber = kwargs['reffiber']
+    solutions = kwargs['solutions']
+    reference = kwargs['ref']
+    order = kwargs.get('order', None)
+    # get number of orders and fibers
+    nbo = reference['NBO']
+    fibers = list(solutions.keys())
+    # get reference values
+    m_coeffs = reference['COEFFS']
+    # ------------------------------------------------------------------
+    # get order generator
+    if order is None:
+        order_gen = plotter.plotloop(np.arange(nbo).astype(int))
+        # prompt to start looper
+        plotter.close_plots(loop=True)
+    else:
+        order_gen = [order]
+    # ------------------------------------------------------------------
+    # loop around orders
+    for order_num in order_gen:
+        # ------------------------------------------------------------------
+        # set up plot
+        fig, frames = graph.set_figure(plotter, nrows=1, ncols=len(fibers))
+        # ------------------------------------------------------------------
+        for it, fiber in enumerate(fibers):
+            # get this fibers lines
+            rfpl = solutions[fiber]['FPLINES']
+            r_waveref = rfpl['WAVE_REF']
+            r_pixel = rfpl['PIXEL_MEAS']
+            r_order = rfpl['ORDER']
+            r_coeffs = solutions[fiber]['COEFFS']
+            domain = [0, solutions[fiber]['NBPIX']]
+            # get the order mask
+            good = (r_order == order_num) & np.isfinite(r_pixel)
+            # get the x values for the graph
+            xvals = r_waveref[good]
+            # get the line fit values
+            fit1 = mp.val_cheby(m_coeffs[order_num], r_pixel[good],
+                                domain=domain)
+            fit2 = mp.val_cheby(r_coeffs[order_num], r_pixel[good],
+                                domain=domain)
+            # get the y values
+            y1vals = speed_of_light * (1 - r_waveref[good] / fit1)
+            y2vals = speed_of_light * (1 - r_waveref[good] / fit2)
+            # plot
+            frames[it].scatter(xvals, y1vals, color='r', s=5,
+                               label='Fiber {0}'.format(ref_fiber))
+            frames[it].scatter(xvals, y2vals, color='g', s=5,
+                               label='Fiber {0}'.format(fiber))
+            frames[it].set(title='Order {0} Fiber {1}'.format(order_num, fiber),
+                           xlabel='wavelength [nm]',
+                           ylabel='dv [km/s]')
+            frames[it].legend(loc=0)
+        # ------------------------------------------------------------------
+        # update filename (adding order_num to end)
+        suffix = 'order{0}'.format(order_num)
+        graph.set_filename(plotter.params, plotter.location, suffix=suffix)
+        # ------------------------------------------------------------------
+        # wrap up using plotter
+        plotter.plotend(graph)
+
+
+wave_wl_vs_cavity = Graph('WAVE_WL_CAV', kind='debug',
+                          func=plot_wave_wl_vs_cavity)
+wave_hc_diff_hist = Graph('WAVE_HC_DIFF_HIST', kind='debug',
+                          func=plot_wave_hc_diff_hist)
+wave_fiber_comparison = Graph('WAVE_FIBER_COMPARISON', kind='debug',
+                              func=plot_wave_fiber_comparison)
+wave_fiber_comp = Graph('WAVE_FIBER_COMP', kind='debug',
+                        func=plot_wave_fiber_comparison)
+sum_desc = 'Fiber comparison plot'
+sum_wave_fiber_comp = Graph('SUM_WAVE_FIBER_COMP', kind='summary',
+                            func=plot_wave_fiber_comparison,
+                            figsize=(16, 10), dpi=150,
+                            description=sum_desc)
+
+# add to definitions
+definitions += [wave_wl_vs_cavity, wave_fiber_comparison,
+                wave_fiber_comp, sum_wave_fiber_comp, wave_hc_diff_hist]
+
+
+# =============================================================================
 # Define wave plotting functions
 # =============================================================================
-def plot_wave_hc_guess(plotter, graph, kwargs):
+def plot_wave_hc_guess(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+    """
+    Graph: Wave solution HC guess plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -1860,23 +2463,33 @@ def plot_wave_hc_guess(plotter, graph, kwargs):
         plotter.plotend(graph)
 
 
-def plot_wave_hc_brightest_lines(plotter, graph, kwargs):
-    # ------------------------------------------------------------------
+def plot_wave_hc_brightest_lines(plotter: Plotter, graph: Graph,
+                                 kwargs: Dict[str, Any]):
+    """
+    Graph: Wave solution HC brightest lines plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
+    # -------------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
         return
     plt = plotter.plt
-    # ------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     # get the arguments from kwargs
     wavemap = kwargs['wave']
     dv = kwargs['dv']
     mask = kwargs['mask']
     iteration = kwargs['iteration']
     niters = kwargs['niters']
-    # ------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     # set up plot
     fig, frame = graph.set_figure(plotter, ncols=1, nrows=1)
-    # ------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     # plot all lines
     frame.scatter(wavemap[~mask], dv[~mask], color='g', s=5, label='All lines')
     # plot brightest lines
@@ -1896,7 +2509,17 @@ def plot_wave_hc_brightest_lines(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_wave_hc_tfit_grid(plotter, graph, kwargs):
+def plot_wave_hc_tfit_grid(plotter: Plotter, graph: Graph,
+                           kwargs: Dict[str, Any]):
+    """
+    Graph: Wave solution HC t-fit grid
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -1958,7 +2581,111 @@ def plot_wave_hc_tfit_grid(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_wave_hc_resmap(plotter, graph, kwargs):
+def plot_wave_hc_resmap(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+    """
+    Graph: Wave solution resolution map plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    plt = plotter.plt
+    # get matplotlib rectange
+    rectangle = plotter.matplotlib.patches.Rectangle
+    # ------------------------------------------------------------------
+    n_order_bin = kwargs['n_order_bin']
+    n_spatial_bin = kwargs['n_spatial_bin']
+    map_dvs = kwargs['map_dvs']
+    map_fluxes = kwargs['map_fluxes']
+    map_fits = kwargs['map_fits']
+    map_res_eff = kwargs['map_res_eff']
+    map_lower_ords = kwargs['map_lower_ords']
+    map_high_ords = kwargs['map_high_ords']
+    map_lower_pix = kwargs['map_lower_pix']
+    map_high_pix = kwargs['map_high_pix']
+    xlim, ylim = kwargs['xlim'], kwargs['ylim']
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frames = graph.set_figure(plotter, nrows=n_order_bin,
+                                   ncols=n_spatial_bin, sharex='all',
+                                   sharey='all')
+    # ------------------------------------------------------------------
+    # loop over number of bins in order direction
+    for i_order_bin in range(n_order_bin):
+        # loop over number of bins in spatial direction
+        for i_spatial_bin in range(n_spatial_bin):
+            # get the correct frame
+            frame = frames[i_order_bin, i_spatial_bin]
+            # key for this iteration (order bin + spatial bin)
+            mapkey = (i_order_bin, i_spatial_bin)
+            # get the correct data
+            all_dvs = map_dvs[mapkey]
+            all_fluxes = map_fluxes[mapkey]
+            fit_fluxes = map_fits[mapkey]
+            resolution = map_res_eff[mapkey]
+
+            first_order = map_lower_ords[mapkey]
+            last_order = map_high_ords[mapkey]
+            first_x = map_lower_pix[mapkey]
+            last_x = map_high_pix[mapkey]
+
+            # get labels
+            if i_order_bin == 0 and i_spatial_bin == 0:
+                label1 = 'residual'
+                label2 = 'data'
+                label3 = 'fit'
+            else:
+                label1, label2, label3 = None, None, None
+
+            # plot data
+            frame.plot(all_dvs, all_fluxes - fit_fluxes, color='b', marker='.',
+                       ms=3, ls='None', alpha=0.1, label=label1)
+            frame.plot(all_dvs, all_fluxes, color='g', ms=3, marker='.',
+                       ls='None', alpha=0.5, label=label2)
+            frame.plot(all_dvs, fit_fluxes, color='r', ls='-', label=label3)
+            # set frame limits
+            frame.set(xlim=xlim, ylim=ylim)
+            # add label in legend (for sticky position)
+            largs = [first_order, last_order, first_x, last_x, resolution]
+            handle = rectangle((0, 0), 1, 1, fc="w", fill=False,
+                               edgecolor='none', linewidth=0)
+            label = 'Orders {0}-{1} region={2}-{3} R={4:.0f}'.format(*largs)
+            frame.legend([handle], [label], loc=9, fontsize=10)
+            # remove white space and some axis ticks
+            frame = remove_first_last_ticks(frame, axis='both')
+            if i_order_bin == n_order_bin - 1:
+                frame.set_xlabel('dv [km/s]')
+            if i_spatial_bin == 0:
+                frame.set_ylabel('Amp')
+    # finally add a figure legend
+    legend = fig.legend(loc=8, bbox_to_anchor=(0.5, 0), ncol=3)
+    legend_no_alpha(legend)
+    # add titles
+    plt.suptitle('Line Profiles for resolution grid')
+    # adjust spaces between plots
+    plt.subplots_adjust(hspace=0, wspace=0, bottom=0.075)
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+def plot_wave_hc_resmap_old(plotter: Plotter, graph: Graph,
+                            kwargs: Dict[str, Any]):
+    """
+    Graph: Wave solution resolution map plot (old)
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -2054,7 +2781,17 @@ def plot_wave_hc_resmap(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_wave_littrow_check(plotter, graph, kwargs):
+def plot_wave_littrow_check(plotter: Plotter, graph: Graph,
+                            kwargs: Dict[str, Any]):
+    """
+    Graph: Wave solution Littrow check plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -2103,11 +2840,25 @@ def plot_wave_littrow_check(plotter, graph, kwargs):
     # add legend
     frame.legend(loc=0)
     # ------------------------------------------------------------------
+    # update filename (adding order_num to end)
+    suffix = 'L{0}_{1}'.format(iteration, fiber)
+    graph.set_filename(plotter.params, plotter.location, suffix=suffix)
+    # ------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)
 
 
-def plot_wave_littrow_extrap(plotter, graph, kwargs):
+def plot_wave_littrow_extrap(plotter: Plotter, graph: Graph,
+                             kwargs: Dict[str, Any]):
+    """
+    Graph: Wave solution Littrow extrapolation plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -2152,11 +2903,25 @@ def plot_wave_littrow_extrap(plotter, graph, kwargs):
     frame.set(xlabel='Pixel number', ylabel='Wavelength [nm]',
               title=title.format(iteration, fiber))
     # ------------------------------------------------------------------
+    # update filename (adding order_num to end)
+    suffix = 'L{0}_{1}'.format(iteration, fiber)
+    graph.set_filename(plotter.params, plotter.location, suffix=suffix)
+    # ------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)
 
 
-def plot_wave_fp_final_order(plotter, graph, kwargs):
+def plot_wave_fp_final_order(plotter: Plotter, graph: Graph,
+                             kwargs: Dict[str, Any]):
+    """
+    Graph: Wave solution FP final order plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -2183,11 +2948,25 @@ def plot_wave_fp_final_order(plotter, graph, kwargs):
     frame.set(xlabel='Wavelength [nm]', ylabel='flux',
               title=title.format(selected_order, fiber, iteration))
     # ------------------------------------------------------------------
+    # update filename (adding order_num to end)
+    suffix = 'order{0}_L{1}_{2}'.format(selected_order, iteration, fiber)
+    graph.set_filename(plotter.params, plotter.location, suffix=suffix)
+    # ------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)
 
 
-def plot_wave_fp_lwid_offset(plotter, graph, kwargs):
+def plot_wave_fp_lwid_offset(plotter: Plotter, graph: Graph,
+                             kwargs: Dict[str, Any]):
+    """
+    Graph: Wave solution FP l-width offset plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -2200,7 +2979,7 @@ def plot_wave_fp_lwid_offset(plotter, graph, kwargs):
     fp_dopd = llprops['FP_DOPD_OFFSET']
     fp_dopd_coeff = llprops['FP_DOPD_OFFSET_COEFF']
     # get fit values
-    fp_dopd_fit = np.polyval(fp_dopd_coeff[::-1], np.sort(fp_m))
+    fp_dopd_fit = np.polyval(fp_dopd_coeff, np.sort(fp_m))
     # ------------------------------------------------------------------
     # set up plot
     fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
@@ -2220,7 +2999,17 @@ def plot_wave_fp_lwid_offset(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_wave_fp_wave_res(plotter, graph, kwargs):
+def plot_wave_fp_wave_res(plotter: Plotter, graph: Graph,
+                          kwargs: Dict[str, Any]):
+    """
+    Graph: Wave solution FP wave resolution plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -2246,7 +3035,17 @@ def plot_wave_fp_wave_res(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_wave_fp_m_x_res(plotter, graph, kwargs):
+def plot_wave_fp_m_x_res(plotter: Plotter, graph: Graph,
+                         kwargs: Dict[str, Any]):
+    """
+    Graph: Wave solution FP M vs x-res plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -2285,7 +3084,17 @@ def plot_wave_fp_m_x_res(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_wave_fp_ipt_cwid_1mhc(plotter, graph, kwargs):
+def plot_wave_fp_ipt_cwid_1mhc(plotter: Plotter, graph: Graph,
+                               kwargs: Dict[str, Any]):
+    """
+    Graph: Wave solution FP IPT c-width 1/m plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -2331,7 +3140,17 @@ def plot_wave_fp_ipt_cwid_1mhc(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_wave_fp_ipt_cwid_llhc(plotter, graph, kwargs):
+def plot_wave_fp_ipt_cwid_llhc(plotter: Plotter, graph: Graph,
+                               kwargs: Dict[str, Any]):
+    """
+    Graph: Wave solution FP IPT c-width ll plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -2373,11 +3192,25 @@ def plot_wave_fp_ipt_cwid_llhc(plotter, graph, kwargs):
     fig.subplots_adjust(top=0.9, bottom=0.1, left=0.05, right=0.95,
                         hspace=0, wspace=0)
     # ------------------------------------------------------------------
+    # update filename (adding order_num to end)
+    suffix = fiber
+    graph.set_filename(plotter.params, plotter.location, suffix=suffix)
+    # ------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)
 
 
-def plot_wave_fp_ll_diff(plotter, graph, kwargs):
+def plot_wave_fp_ll_diff(plotter: Plotter, graph: Graph,
+                         kwargs: Dict[str, Any]):
+    """
+    Graph: Wave solution FP ll difference plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -2393,6 +3226,7 @@ def plot_wave_fp_ll_diff(plotter, graph, kwargs):
     fp_ord_new = llprops['FP_ORD_NEW']
     fp_xx_new = llprops['FP_XX_NEW']
     fp_ll_new = llprops['FP_LL_NEW']
+    nbxpix = llprops['NBPIX']
     # ------------------------------------------------------------------
     # get colours
     # noinspection PyUnresolvedReferences
@@ -2404,13 +3238,13 @@ def plot_wave_fp_ll_diff(plotter, graph, kwargs):
     # loop through the orders
     for ind_ord in range(n_fin - n_init):
         # get parameters for initial wavelength solution
-        c_aux = np.poly1d(poly_wave_sol[ind_ord + n_init][::-1])
         # order mask
         ord_mask = np.where(fp_ord_new == ind_ord + n_init)
         # get FP line pixel positions for the order
         fp_x_ord = fp_xx_new[ord_mask]
         # derive FP line wavelengths using initial solution
-        fp_ll_orig = c_aux(fp_x_ord)
+        fp_ll_orig = mp.val_cheby(poly_wave_sol[ind_ord + n_init], fp_x_ord,
+                                  domain=[0, nbxpix])
         # get new FP line wavelengths for the order
         fp_ll_new_ord = fp_ll_new[ord_mask]
         # plot old-new wavelengths
@@ -2426,7 +3260,17 @@ def plot_wave_fp_ll_diff(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_wave_fp_multi_order(plotter, graph, kwargs):
+def plot_wave_fp_multi_order(plotter: Plotter, graph: Graph,
+                             kwargs: Dict[str, Any]):
+    """
+    Graph: Wave solution FP multi-order plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -2469,7 +3313,7 @@ def plot_wave_fp_multi_order(plotter, graph, kwargs):
         # plot hc spectra
         frame.plot(wave_map[order_num], loghcdata)
         # plot used HC lines
-        frame.vlines(hc_ll_plot, 0, np.nanmax(loghcdata),
+        frame.vlines(hc_ll_plot, 0, mp.nanmax(loghcdata),
                      color=col_plot, linestyles=lty_plot)
         # set axis labels
     frame.set(xlabel='Wavelength [nm]', ylabel='log_{10}(Normalised flux)',
@@ -2479,7 +3323,17 @@ def plot_wave_fp_multi_order(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_wave_fp_single_order(plotter, graph, kwargs):
+def plot_wave_fp_single_order(plotter: Plotter, graph: Graph,
+                              kwargs: Dict[str, Any]):
+    """
+    Graph: Wave solution FP single-order plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -2540,7 +3394,17 @@ def plot_wave_fp_single_order(plotter, graph, kwargs):
         plotter.plotend(graph)
 
 
-def plot_waveref_expected(plotter, graph, kwargs):
+def plot_waveref_expected(plotter: Plotter, graph: Graph,
+                          kwargs: Dict[str, Any]):
+    """
+    Graph: Wave solution reference expected plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -2561,18 +3425,26 @@ def plot_waveref_expected(plotter, graph, kwargs):
     for order_num in range(nbo):
         # get order mask
         omask = order_num == orders
+        # do not continue if we have no lines in order
+        if np.sum(omask) == 0:
+            continue
+        # ------------------------------------------------------------------
+        # do not plot outliers in diff
+        low, high = mp.nanpercentile(diff[omask], [1, 99])
+        pmask = (diff[omask] > low) & (diff[omask] < high)
+        # ------------------------------------------------------------------
         # plot points
-        frame.scatter(wavemap[omask], diff[omask], s=5)
+        frame.scatter(wavemap[omask][pmask], diff[omask][pmask], s=5)
     # add title (with or without iteration)
     if iteration is not None:
         if isinstance(iteration, int) or isinstance(iteration, float):
-            title = 'Pixel difference Fiber {0} Type {1} (Iteration = {2})'
+            title = 'Velocity difference Fiber {0} Type {1} (Iteration = {2})'
         else:
-            title = 'Pixel difference Fiber {0} Type {1} ({2})'
+            title = 'Velocity difference Fiber {0} Type {1} ({2})'
     else:
-        title = 'Pixel difference Fiber {0} Type {1}'
+        title = 'Velocity difference Fiber {0} Type {1}'
     # set labels
-    frame.set(xlabel='Wavelength [nm]', ylabel='Pixel difference',
+    frame.set(xlabel='Wavelength [nm]', ylabel='Velocity difference [m/s]',
               title=title.format(fiber, fibtype, iteration))
     # ------------------------------------------------------------------
     # update filename (adding order_num to end)
@@ -2583,73 +3455,17 @@ def plot_waveref_expected(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_wave_fiber_comparison(plotter, graph, kwargs):
-    # ------------------------------------------------------------------
-    # start the plotting process
-    if not plotter.plotstart(graph):
-        return
-    # ------------------------------------------------------------------
-    # get the arguments from kwargs
-    master_fiber = kwargs['masterfiber']
-    solutions = kwargs['solutions']
-    master = kwargs['master']
-    order = kwargs.get('order', None)
-    # get number of orders and fibers
-    nbo = master['NBO']
-    fibers = list(solutions.keys())
-    # get master values
-    m_coeffs = master['COEFFS']
-    # ------------------------------------------------------------------
-    # get order generator
-    if order is None:
-        order_gen = plotter.plotloop(np.arange(nbo).astype(int))
-        # prompt to start looper
-        plotter.close_plots(loop=True)
-    else:
-        order_gen = [order]
-    # ------------------------------------------------------------------
-    # loop around orders
-    for order_num in order_gen:
-        # ------------------------------------------------------------------
-        # set up plot
-        fig, frames = graph.set_figure(plotter, nrows=1, ncols=len(fibers))
-        # ------------------------------------------------------------------
-        for it, fiber in enumerate(fibers):
-            # get this fibers lines
-            rfpl = solutions[fiber]['FPLINES']
-            r_waveref = rfpl['WAVE_REF']
-            r_pixel = rfpl['PIXEL_MEAS']
-            r_order = rfpl['ORDER']
-            r_coeffs = solutions[fiber]['COEFFS']
-            # get the order mask
-            good = (r_order == order_num) & np.isfinite(r_pixel)
-            # get the x values for the graph
-            xvals = r_waveref[good]
-            # get the line fit values
-            fit1 = np.polyval(m_coeffs[order_num][::-1], r_pixel[good])
-            fit2 = np.polyval(r_coeffs[order_num][::-1], r_pixel[good])
-            # get the y values
-            y1vals = speed_of_light * (1 - r_waveref[good] / fit1)
-            y2vals = speed_of_light * (1 - r_waveref[good] / fit2)
-            # plot
-            frames[it].scatter(xvals, y1vals, color='r', s=5,
-                               label='Fiber {0}'.format(master_fiber))
-            frames[it].scatter(xvals, y2vals, color='g', s=5,
-                               label='Fiber {0}'.format(fiber))
-            frames[it].set(title='Order {0} Fiber {1}'.format(order_num, fiber),
-                           xlabel='wavelength [nm]',
-                           ylabel='dv [km/s]')
-            frames[it].legend(loc=0)
-        # ------------------------------------------------------------------
-        # update filename (adding order_num to end)
-        suffix = 'order{0}'.format(order_num)
-        graph.set_filename(plotter.params, plotter.location, suffix=suffix)
-        # ------------------------------------------------------------------
-        # wrap up using plotter
-        plotter.plotend(graph)
+def plot_wavenight_iterplot(plotter: Plotter, graph: Graph,
+                            kwargs: Dict[str, Any]):
+    """
+    Graph: Wave night iteration plot
 
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
 
-def plot_wavenight_iterplot(plotter, graph, kwargs):
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -2676,7 +3492,17 @@ def plot_wavenight_iterplot(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_wavenight_histplot(plotter, graph, kwargs):
+def plot_wavenight_histplot(plotter: Plotter, graph: Graph,
+                            kwargs: Dict[str, Any]):
+    """
+    Graph: Wave night histogram plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -2739,9 +3565,13 @@ wave_hc_brightest_lines = Graph('WAVE_HC_BRIGHTEST_LINES', kind='debug',
                                 func=plot_wave_hc_brightest_lines)
 wave_hc_tfit_grid = Graph('WAVE_HC_TFIT_GRID', kind='debug',
                           func=plot_wave_hc_tfit_grid)
+wave_resmap = Graph('WAVE_RESMAP', kind='debug',
+                    func=plot_wave_hc_resmap,
+                    figsize=(20, 16))
 wave_hc_resmap = Graph('WAVE_HC_RESMAP', kind='debug',
-                       func=plot_wave_hc_resmap,
+                       func=plot_wave_hc_resmap_old,
                        figsize=(20, 16))
+
 wave_littrow_check1 = Graph('WAVE_LITTROW_CHECK1', kind='debug',
                             func=plot_wave_littrow_check)
 wave_littrow_extrap1 = Graph('WAVE_LITTROW_EXTRAP1', kind='debug',
@@ -2784,15 +3614,6 @@ wave_fp_single_order = Graph('WAVE_FP_SINGLE_ORDER', kind='debug',
 waveref_expected = Graph('WAVEREF_EXPECTED', kind='debug',
                          func=plot_waveref_expected)
 
-wave_fiber_comparison = Graph('WAVE_FIBER_COMPARISON', kind='debug',
-                              func=plot_wave_fiber_comparison)
-wave_fiber_comp = Graph('WAVE_FIBER_COMP', kind='debug',
-                        func=plot_wave_fiber_comparison)
-sum_desc = 'Fiber comparison plot'
-sum_wave_fiber_comp = Graph('SUM_WAVE_FIBER_COMP', kind='summary',
-                            func=plot_wave_fiber_comparison,
-                            figsize=(16, 10), dpi=150,
-                            description=sum_desc)
 wavenight_iterplot = Graph('WAVENIGHT_ITERPLOT', kind='debug',
                            func=plot_wavenight_iterplot)
 sum_desc = 'Wave night iteration plot'
@@ -2813,18 +3634,88 @@ definitions += [wave_hc_guess, wave_hc_brightest_lines, wave_hc_tfit_grid,
                 wave_littrow_check2, wave_littrow_extrap2, wave_fp_final_order,
                 wave_fp_lwid_offset, wave_fp_wave_res, wave_fp_m_x_res,
                 wave_fp_ipt_cwid_1mhc, wave_fp_ipt_cwid_llhc, wave_fp_ll_diff,
-                wave_fp_multi_order, wave_fp_single_order,
+                wave_fp_multi_order, wave_fp_single_order, wave_resmap,
                 sum_wave_littrow_check, sum_wave_littrow_extrap,
                 sum_wave_fp_ipt_cwid_1mhc, waveref_expected, wavenight_iterplot,
                 sum_wavenight_iterplot, wavenight_histplot,
-                sum_wavenight_histplot, wave_fiber_comparison,
-                wave_fiber_comp, sum_wave_fiber_comp]
+                sum_wavenight_histplot]
 
 
 # =============================================================================
 # Define telluric plotting functions
 # =============================================================================
-def plot_tellup_wave_trans(plotter, graph, kwargs):
+def plot_tellu_sky_corr(plotter: Plotter, graph: Graph,
+                        kwargs: Dict[str, Any]):
+    """
+    Graph: Sky Correction plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # get plt
+    plt = plotter.plt
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    sci_fiber = kwargs['props']['SCI_FIBER']
+    ref_fiber = kwargs['props']['REF_FIBER']
+    # get sci vectors
+    wave_sci = kwargs['props']['WAVE_SCI']
+    sp_sci = kwargs['props'][f'UNCORR_EXT_{sci_fiber}']
+    sp_sci_corr = kwargs['props'][f'CORR_EXT_{sci_fiber}']
+    # get ref vectors
+    wave_ref = kwargs['props']['WAVE_REF']
+    sp_ref = kwargs['props'][f'UNCORR_EXT_{ref_fiber}']
+    sp_ref_corr = kwargs['props'][f'CORR_EXT_{ref_fiber}']
+    # get objname and dprtype
+    objname = kwargs['objname']
+    dprtype = kwargs['dprtype']
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frames = graph.set_figure(plotter, nrows=2, ncols=1, sharex='all')
+    # plot science fiber
+    frames[0].plot(wave_sci.ravel(), sp_sci.ravel(), alpha=0.5, color='b',
+                   label='Original [sci fiber]')
+    frames[0].plot(wave_sci.ravel(), sp_sci_corr.ravel(), color='r',
+                   label='Corrected [sci fiber]')
+    # plot calib (ref) fiber
+    if sp_ref is not None:
+        frames[1].plot(wave_ref.ravel(), sp_ref.ravel(), alpha=0.5, color='b',
+                       label='Original [calib fiber]')
+        frames[1].plot(wave_ref.ravel(), sp_ref_corr.ravel(), color='r',
+                       label='Corrected [calib fiber]')
+    else:
+        frames[1].plot(wave_sci.ravel(), sp_sci_corr.ravel(), color='r',
+                       label='Corrected [sci fiber]')
+
+    frames[0].set(ylabel='Flux')
+    frames[1].set(xlabel='Wavelength [nm]', ylabel='Flux')
+    frames[0].legend(loc=0)
+    frames[1].legend(loc=0)
+
+    plt.suptitle(f'{objname} [{dprtype}]')
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+def plot_tellup_wave_trans(plotter: Plotter, graph: Graph,
+                           kwargs: Dict[str, Any]):
+    """
+    Graph: Telluric wave transmission plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -2834,27 +3725,132 @@ def plot_tellup_wave_trans(plotter, graph, kwargs):
     dd_arr = kwargs['dd_arr']
     ccf_water_arr = kwargs['ccf_water_arr']
     ccf_others_arr = kwargs['ccf_others_arr']
+    size = kwargs['size']
     n_iterations = len(dd_arr)
     # ------------------------------------------------------------------
     # set up plot
-    fig, frames = graph.set_figure(plotter, nrows=1, ncols=2)
+    fig, frames = graph.set_figure(plotter, nrows=1, ncols=2, sharex='all')
+    # construct the title
+    titlesup = '[Total iterations={0}]'.format(n_iterations)
     # ------------------------------------------------------------------
-    # plot ccfs
+    # plot ccfs (for each iteration)
     for n_it in range(n_iterations):
+        # ---------------------------------------------------------------------
+        # set up different plot parameters based on iteration number
+        if n_it == 0:
+            color = 'red'
+            alpha = 1
+            label = 'First iteration'
+        elif n_it == n_iterations - 1:
+            color = 'green'
+            alpha = 1
+            label = 'Last iteration'
+        else:
+            color = 'black'
+            alpha = (n_it + 1) / n_iterations
+            label = None
+        # ---------------------------------------------------------------------
         # plot water ccf
-        frames[0].plot(dd_arr[n_it], ccf_water_arr[n_it])
+        frames[0].plot(dd_arr[n_it], ccf_water_arr[n_it], color=color,
+                       alpha=alpha, label=label)
         frames[0].set(xlabel='dv [km/s]', ylabel='CCF power',
                       title='Water CCF')
         # plot other species ccf
-        frames[1].plot(dd_arr[n_it], ccf_others_arr[n_it])
+        frames[1].plot(dd_arr[n_it], ccf_others_arr[n_it], color=color,
+                       alpha=alpha, label=label)
         frames[1].set(xlabel='dv [km/s]', ylabel='CCF power',
                       title='Dry CCF')
+    # ------------------------------------------------------------------
+    # plot the control region
+    frames[0].axvline(x=size, color='k', linestyle='--')
+    frames[0].axvline(x=-size, color='k', linestyle='--')
+    # plot the horizontal zero line
+    frames[0].axhline(y=0, color='k', linestyle='--', label='control region')
+    # plot the control region
+    frames[1].axvline(x=size, color='k', linestyle='--')
+    frames[1].axvline(x=-size, color='k', linestyle='--')
+    # plot the horizontal zero line
+    frames[1].axhline(y=0, color='k', linestyle='--', label='control region')
+    # ------------------------------------------------------------------
+    # plot legends
+    frames[0].legend(loc=0)
+    frames[1].legend(loc=1)
+    # plot super title
+    plotter.plt.suptitle(titlesup)
     # ------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)
 
 
-def plot_tellup_abso_spec(plotter, graph, kwargs):
+def plot_tellup_clean_oh(plotter: Plotter, graph: Graph,
+                         kwargs: Dict[str, Any]):
+    """
+    Graph: Telluric clean OH lines plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    wave = kwargs['wave'].ravel()
+    image = kwargs['image'].ravel()
+    skymodel0 = kwargs['skymodel0'].ravel()
+    skymodel = kwargs['skymodel'].ravel()
+    mask_limits = kwargs['mask_limits']
+    # ------------------------------------------------------------------
+    wave_limits = []
+    for mask_limit in mask_limits:
+        wave_limits.append([wave[mask_limit[0]], wave[mask_limit[1]]])
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
+    # plot the image, image - skymodel (before), image - skymodel (after)
+    frame.plot(wave, image, label='input', color='orange',
+               alpha=0.3)
+    frame.plot(wave, image - skymodel0, label='PCA sky model', color='red',
+               alpha=0.9)
+    frame.plot(wave, image - skymodel, label='PCA+per-line', color='green',
+               alpha=0.9)
+    # ------------------------------------------------------------------
+    # get graph bounds
+    xmin, xmax, ymin, ymax = frame.axis()
+    # loop around mask limits and plot
+    for wave_limit in wave_limits:
+        frame.fill_between(wave_limit, ymin, ymax, color='0.5', alpha=0.05)
+    # add a square for the mask limits
+    mpatches = plotter.matplotlib.patches
+    # draw a rectangle representing the mask limits
+    lmask = mpatches.Patch(color='0.5', alpha=0.5, label='Mask limits')
+    # get handles and labels
+    handles, labels = frame.get_legend_handles_labels()
+    # add lmask to handles and labels
+    handles.append(lmask)
+    labels.append('Mask limits')
+    # add legend
+    frame.legend(handles, labels, loc=0)
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+def plot_tellup_abso_spec(plotter: Plotter, graph: Graph,
+                          kwargs: Dict[str, Any]):
+    """
+    Graph: Telluric absorption spectrum plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -2867,10 +3863,11 @@ def plot_tellup_abso_spec(plotter, graph, kwargs):
     spectrum = kwargs['spectrum']
     spectrum_ini = kwargs['spectrum_ini']
     objname = kwargs['objname']
+    dprtype = kwargs['dprtype']
     clean_ohlines = kwargs['clean_ohlines']
     # ------------------------------------------------------------------
     # calculate normalisation
-    median = np.nanmedian(spectrum)
+    median = mp.nanmedian(spectrum)
     spectrum = spectrum / median
     spectrum_ini = spectrum_ini / median
     # calculate mask for transmissiong
@@ -2880,7 +3877,7 @@ def plot_tellup_abso_spec(plotter, graph, kwargs):
     # set NaN values in spectrum to NaNs in mask
     mask[~np.isfinite(spectrum)] = np.nan
     # work out a scaling
-    scale = np.nanpercentile(spectrum/trans*mask, 99.5)
+    scale = mp.nanpercentile(spectrum / trans * mask, 99.5)
     # ------------------------------------------------------------------
     # set up plot
     fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
@@ -2902,7 +3899,8 @@ def plot_tellup_abso_spec(plotter, graph, kwargs):
     ymax = mp.nanmax(spectrum_ini / (trans * mask) / scale) * 1.05
     # set limits
     frame.set(xlabel='Wavelength [nm]', ylabel='Normalized flux\n transmission',
-              title='OBJECT = {0}'.format(objname), ylim=[0, ymax])
+              title='OBJECT = {0} [{1}]'.format(objname, dprtype),
+              ylim=[0, ymax])
     # make figure tight
     fig.tight_layout()
     # ------------------------------------------------------------------
@@ -2910,7 +3908,17 @@ def plot_tellup_abso_spec(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_mktellu_wave_flux(plotter, graph, kwargs):
+def plot_mktellu_wave_flux(plotter: Plotter, graph: Graph,
+                           kwargs: Dict[str, Any]):
+    """
+    Graph: Make Telluric wave flux plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -2967,8 +3975,8 @@ def plot_mktellu_wave_flux(plotter, graph, kwargs):
 
         # get max / min y
         values = list(y2) + list(y3) + list(y4) + list(y5)
-        mins = 0.95 * np.nanmin([0, np.nanmin(values)])
-        maxs = 1.05 * np.nanmax(values)
+        mins = 0.95 * mp.nanmin([0, mp.nanmin(values)])
+        maxs = 1.05 * mp.nanmax(values)
 
         # plot legend and set up labels / limits / title
         frame.legend(loc=0)
@@ -2983,7 +3991,55 @@ def plot_mktellu_wave_flux(plotter, graph, kwargs):
         plotter.plotend(graph)
 
 
-def plot_ftellu_pca_comp(plotter, graph, kwargs):
+def plot_mktellu_model(plotter: Plotter, graph: Graph,
+                       kwargs: Dict[str, Any]):
+    """
+    Graph: Make Telluric Model plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    zero_res = kwargs['tprops']['ZERO_RES']
+    water_res = kwargs['tprops']['WATER_RES']
+    others_res = kwargs['tprops']['OTHERS_RES']
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
+    # ------------------------------------------------------------------
+    # plot vectors flat
+    frame.plot(zero_res.ravel(), label='DC component')
+    frame.plot(water_res.ravel(), label='Water component')
+    frame.plot(others_res.ravel(), label='Dry component')
+    # set the limit
+    frame.set(xlabel='Pixel number', ylabel='Residual value',
+              ylim=[-5, 5])
+    # set the legend
+    frame.legend(loc=0)
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+def plot_ftellu_pca_comp(plotter: Plotter, graph: Graph,
+                         kwargs: Dict[str, Any]):
+    """
+    Graph: Fit telluric PCA components plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -3046,7 +4102,17 @@ def plot_ftellu_pca_comp(plotter, graph, kwargs):
         plotter.plotend(graph)
 
 
-def plot_ftellu_recon_spline(plotter, graph, kwargs):
+def plot_ftellu_recon_spline(plotter: Plotter, graph: Graph,
+                             kwargs: Dict[str, Any]):
+    """
+    Graph: Fit telluric recon spline plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -3084,9 +4150,9 @@ def plot_ftellu_recon_spline(plotter, graph, kwargs):
         fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
         # ------------------------------------------------------------------
         # plot spectra for selected order
-        frame.plot(swave, simage / np.nanmedian(simage), label='Observed SP')
-        frame.plot(swave, stemp / np.nanmedian(stemp), label='Template SP')
-        frame.plot(swave, srecov / np.nanmedian(srecov),
+        frame.plot(swave, simage / mp.nanmedian(simage), label='Observed SP')
+        frame.plot(swave, stemp / mp.nanmedian(stemp), label='Template SP')
+        frame.plot(swave, srecov / mp.nanmedian(srecov),
                    label='Recov abso SP (Observed/Template)')
         # add legend
         frame.legend(loc=0)
@@ -3103,7 +4169,17 @@ def plot_ftellu_recon_spline(plotter, graph, kwargs):
         plotter.plotend(graph)
 
 
-def plot_ftellu_wave_shift(plotter, graph, kwargs):
+def plot_ftellu_wave_shift(plotter: Plotter, graph: Graph,
+                           kwargs: Dict[str, Any]):
+    """
+    Graph: Fit telluric wave shift plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -3132,7 +4208,7 @@ def plot_ftellu_wave_shift(plotter, graph, kwargs):
         # get start and end points
         start, end = order_num * nbpix, order_num * nbpix + nbpix
         # get this orders data
-        tdata_s = image[order_num, :] / np.nanmedian(image[order_num, :])
+        tdata_s = image[order_num, :] / mp.nanmedian(image[order_num, :])
         tapas_before_s = tapas_before[start:end]
         tapas_after_s = tapas_after[start:end]
         pc1_before_s = pc_before[start:end]
@@ -3163,7 +4239,17 @@ def plot_ftellu_wave_shift(plotter, graph, kwargs):
         plotter.plotend(graph)
 
 
-def plot_ftellu_recon_abso(plotter, graph, kwargs):
+def plot_ftellu_recon_abso(plotter: Plotter, graph: Graph,
+                           kwargs: Dict[str, Any]):
+    """
+    Graph: Fit telluric recon absorption plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -3215,11 +4301,11 @@ def plot_ftellu_recon_abso(plotter, graph, kwargs):
         fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
         # ------------------------------------------------------------------
         # plot spectra for selected order
-        frame.plot(swave, ssp / np.nanmedian(ssp), color=black,
+        frame.plot(swave, ssp / mp.nanmedian(ssp), color=black,
                    label='input SP')
-        frame.plot(swave, ssp2 / np.nanmedian(ssp2) / srecon_abso, color='g',
+        frame.plot(swave, ssp2 / mp.nanmedian(ssp2) / srecon_abso, color='g',
                    label='Cleaned SP')
-        frame.plot(swave, stemp2 / np.nanmedian(stemp2), color='c',
+        frame.plot(swave, stemp2 / mp.nanmedian(stemp2), color='c',
                    label='Template')
         frame.plot(swave, srecon_abso, color='r', label='recon abso')
         # add legend
@@ -3237,6 +4323,244 @@ def plot_ftellu_recon_abso(plotter, graph, kwargs):
         plotter.plotend(graph)
 
 
+def plot_ftellu_res_model(plotter: Plotter, graph: Graph,
+                          kwargs: Dict[str, Any]):
+    """
+    Graph: Fit telluric recon absorption plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
+    # -------------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # get plt from plotter (for matplotlib set up)
+    plt = plotter.plt
+    # -------------------------------------------------------------------------
+    # get the arguments from kwargs
+    wprops = kwargs['wprops']
+    image = kwargs['image']
+    image1 = kwargs['image1']
+    sp_out = kwargs['sp_out']
+    res_model2 = kwargs['res_model2']
+    tpreprops = kwargs['tpreprops']
+    recon_abso = kwargs['recon_abso']
+    objname = kwargs['objname']
+    dprtype =  kwargs['dprtype']
+
+    # -------------------------------------------------------------------------
+    # set up plot
+    fig, frames = graph.set_figure(plotter, nrows=2, ncols=1, sharex='all')
+    frame1, frame2 = frames[0], frames[1]
+
+    # get limits
+    ylim1 = get_arr_limits(image / mp.nanmedian(image),
+                           image1 / mp.nanmedian(image),
+                           sp_out / mp.nanmedian(image),  plow=0.1, phigh=99.9)
+    ylim2 = get_arr_limits(tpreprops['ABSO_E2DS'], res_model2, recon_abso,
+                           plow=0.1, phigh=99.9)
+    # -------------------------------------------------------------------------
+    # loop around order and plot
+    for order_num in range(image.shape[0]):
+        # get wave solution for this order
+        wavemap = wprops['WAVEMAP'][order_num]
+        # get original uncorrected image for this order
+        flat_image = image[order_num] / mp.nanmedian(image)
+        # get pre-cleaned image for this order
+        flat_image1 = image1[order_num] / mp.nanmedian(image)
+        # get output image (completely corrected) for this order
+        flat_sp_out = sp_out[order_num] / mp.nanmedian(image)
+        # get the pre-cleaned absorption
+        flat_abso = tpreprops['ABSO_E2DS'][order_num]
+        # get the residual model
+        flat_res_model = res_model2[order_num]
+        # remove residual model where absorption is NaN
+        flat_res_model[np.isnan(flat_abso)] = np.nan
+        # get the recon (res_model * abso) for this order
+        flat_recon = recon_abso[order_num]
+        # plot the original uncorrected image
+        frame1.plot(wavemap, flat_image, color='k', label='e2ds image',
+                    alpha=0.25)
+        # plot the pre-cleaned image
+        frame1.plot(wavemap, flat_image1, color='r',
+                    label='precleaned_image')
+        # plot the output image (completely corrected)
+        frame1.plot(wavemap, flat_sp_out, color='g',
+                    label='precleaned_image/res_model')
+        # plot the residual model
+        frame2.plot(wavemap, flat_res_model, color='orange', label='res_model',
+                    alpha=0.5)
+        # plot the pre-cleaned absorption model
+        frame2.plot(wavemap, flat_abso, color='b', label='abso_e2ds',
+                    alpha=0.5)
+        # plot the recon (res_model * abso)
+        frame2.plot(wavemap, flat_recon, color='c',
+                    label='recon=res_model*abso_e2ds', alpha=0.5)
+    # -------------------------------------------------------------------------
+    # loop around and fix the labels
+    for frame in frames:
+        # get the input handles
+        rawh, rawl = frame.get_legend_handles_labels()
+        labels, handles = [], []
+        # only add unique labels
+        for it in range(len(rawl)):
+            if rawl[it] not in labels:
+                labels.append(rawl[it])
+                handles.append(rawh[it])
+        # plot the legend
+        frame.legend(handles, labels, loc=0)
+    # -------------------------------------------------------------------------
+    # set the labels
+    frame1.set(ylabel='Normalized flux', ylim=ylim1)
+    frame2.set(xlabel='Wavelength [nm]', ylabel='Tranmission', ylim=ylim2)
+
+    # add title
+    plt.suptitle('OBJECT = {0} [{1}]'.format(objname, dprtype))
+    # -------------------------------------------------------------------------
+    plt.subplots_adjust(hspace=0.01)
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+def plot_mktemp_berv_cov(plotter: Plotter, graph: Graph,
+                         kwargs: Dict[str, Any]):
+    """
+    Graph: Make telluric template BERV coverage plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    berv = kwargs['berv']
+    coverage = kwargs['coverage']
+    objname = kwargs['objname']
+    total = kwargs['total']
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
+    # plot
+    frame.plot(berv, coverage * 100)
+    title = 'BERV Coverage for {0} ({1:.2f} km/s)'.format(objname, total)
+    frame.set(xlabel='BERV [km/s]', ylabel='Coverage [%]', title=title)
+    # ------------------------------------------------------------------
+    # update filename (adding order_num to end)
+    suffix = 'objname{0}'.format(objname)
+    graph.set_filename(plotter.params, plotter.location, suffix=suffix)
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+def plot_mktemp_deconv(plotter: Plotter, graph: Graph,
+                       kwargs: Dict[str, Any]):
+    """
+    Graph: Make telluric template deconvolution plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    wavemap = kwargs['wavemap']
+    flux = kwargs['flux']
+    mask = kwargs['mask']
+    deconv = kwargs['deconv']
+    reconv = kwargs['reconv']
+    res = kwargs['res']
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frames = graph.set_figure(plotter, nrows=2, ncols=1,
+                                   sharex='all')
+    # plot
+    frames[0].plot(wavemap, flux * mask, color='red', label='input')
+    frames[0].plot(wavemap, reconv * mask, color='blue', label='reconvolved',
+               ls='--', alpha=0.6)
+    frames[1].plot(wavemap, res * mask, color='green', alpha=0.9)
+    frames[0].plot(wavemap, deconv * mask, color='black', label='deconvolved',
+               alpha=0.6)
+    # add legends
+    frames[0].legend(loc=0)
+    frames[0].set(xlabel='Wavelength [nm]', ylabel='Normalized flux')
+    frames[1].set(xlabel='Wavelength [nm]', ylabel='Measured - reconvolved')
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+def plot_tellu_finite_res_corr(plotter: Plotter, graph: Graph,
+                               kwargs: Dict[str, Any]):
+    """
+    Graph: Make telluric template deconvolution plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    params = kwargs['params']
+    wavemap = kwargs['wavemap']
+    e2ds0 = kwargs['e2ds0']
+    e2ds1 = kwargs['e2ds1']
+    corr = kwargs['corr']
+    abso_e2ds = kwargs['abso_e2ds']
+    # get sample order from parameters
+    sample_order = params['TELLU_FINITE_RES_ORDER']
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frames = graph.set_figure(plotter, nrows=3, ncols=1,
+                                   sharex='all')
+    # plot
+    frames[0].plot(wavemap[sample_order], e2ds0[sample_order], color='k',
+                   label='prior to correction')
+    frames[0].plot(wavemap[sample_order], e2ds1[sample_order], color='orange',
+                   label='after correction')
+    frames[1].plot(wavemap[sample_order], corr[sample_order], color='r',
+                   label='Finite resolution effect')
+    frames[2].plot(wavemap[sample_order], abso_e2ds[sample_order], color='b',
+                   label='Transmission')
+    # add legends, labels and titles
+    frames[0].legend(loc=0)
+    frames[1].legend(loc=0)
+    frames[2].legend(loc=0)
+    title = 'Before/after correction [Order {0}]'.format(sample_order)
+    frames[0].set(title=title, ylabel='Normalized flux', xlabel='Wavelength [nm]')
+    frames[1].set(ylabel='Residual',  xlabel='Wavelength [nm]')
+    frames[2].set(ylabel='Transmission', xlabel='Wavelength [nm]')
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+# sky correction graph instance
+tellu_sky_corr = Graph('TELLU_SKY_CORR_PLOT', kind='debug',
+                       func=plot_tellu_sky_corr)
+
 # telluric pre clean graph instances
 tellup_wave_trans = Graph('TELLUP_WAVE_TRANS', kind='debug',
                           func=plot_tellup_wave_trans)
@@ -3251,6 +4575,10 @@ sum_desc = 'Plot to the result of the telluric pre-cleaning'
 sum_tellup_abso_spec = Graph('SUM_TELLUP_ABSO_SPEC', kind='summary',
                              func=plot_tellup_abso_spec,
                              figsize=(16, 10), dpi=150, description=sum_desc)
+# telluric oh clean plot
+tellup_clean_oh = Graph('TELLUP_CLEAN_OH', kind='debug',
+                        func=plot_tellup_clean_oh)
+
 # make telluric graph instances
 mktellu_wave_flux1 = Graph('MKTELLU_WAVE_FLUX1', kind='debug',
                            func=plot_mktellu_wave_flux)
@@ -3261,6 +4589,14 @@ sum_desc = ('Plot to show the measured transmission (and calcaulted SED) for'
 sum_mktellu_wave_flux = Graph('SUM_MKTELLU_WAVE_FLUX', kind='summary',
                               func=plot_mktellu_wave_flux,
                               figsize=(16, 10), dpi=150, description=sum_desc)
+# make telluric model graph instances
+mktellu_model = Graph('MKTELLU_MODEL', kind='debug', func=plot_mktellu_model)
+
+sum_desc = 'Plot to show the linearized vectors for the transmission model'
+sum_mktellu_model = Graph('SUM_MKTELLU_MODEL', kind='summary',
+                          func=plot_mktellu_model,
+                          figsize=(16, 10), dpi=150, description=sum_desc)
+
 # fit tellu grpah instances
 ftellu_pca_comp1 = Graph('FTELLU_PCA_COMP1', kind='debug',
                          func=plot_ftellu_pca_comp)
@@ -3282,19 +4618,51 @@ sum_desc = 'Results from the telluric fit'
 sum_ftellu_recon_abso = Graph('SUM_FTELLU_RECON_ABSO', kind='summary',
                               func=plot_ftellu_recon_abso, figsize=(16, 10),
                               dpi=150, description=sum_desc)
+ftellu_res_model = Graph('FTELLU_RES_MODEL', kind='debug',
+                         func=plot_ftellu_res_model)
+sum_desc = 'Results from the telluric residual model fit'
+sum_ftellu_res_model = Graph('SUM_FTELLU_RES_MODEL', kind='summary',
+                             func=plot_ftellu_res_model, figsize=(16, 10),
+                             dpi=150, description=sum_desc)
+
+mktemp_berv_cov = Graph('MKTEMP_BERV_COV', kind='debug',
+                        func=plot_mktemp_berv_cov)
+sum_desc = 'Template coverage'
+sum_mktemp_berv_cov = Graph('SUM_MKTEMP_BERV_COV', kind='summary',
+                            func=plot_mktemp_berv_cov, figsize=(16, 10),
+                            dpi=150, description=sum_desc)
+
+mktemp_deconv = Graph('MKTEMP_S1D_DECONV', kind='debug',
+                      func=plot_mktemp_deconv)
+
+tellu_finite_res_cor = Graph('TELLU_FINITE_RES_CORR', kind='debug',
+                             func=plot_tellu_finite_res_corr)
+
 # add to definitions
-definitions += [mktellu_wave_flux1, mktellu_wave_flux2, sum_mktellu_wave_flux,
+definitions += [tellu_sky_corr, mktellu_wave_flux1, mktellu_wave_flux2,
+                sum_mktellu_wave_flux,  mktellu_model, sum_mktellu_model,
                 ftellu_pca_comp1, ftellu_pca_comp2, ftellu_recon_spline1,
                 ftellu_recon_spline2, ftellu_wave_shift1, ftellu_wave_shift2,
                 ftellu_recon_abso1, ftellu_recon_abso2, sum_ftellu_recon_abso,
-                tellup_wave_trans, sum_tellup_wave_trans,
-                tellup_abso_spec, sum_tellup_abso_spec]
+                tellup_wave_trans, sum_tellup_wave_trans, tellup_abso_spec,
+                tellup_clean_oh, sum_tellup_abso_spec, mktemp_berv_cov,
+                mktemp_deconv, tellu_finite_res_cor, sum_mktemp_berv_cov,
+                ftellu_res_model, sum_ftellu_res_model]
 
 
 # =============================================================================
 # Define velocity plotting functions
 # =============================================================================
-def plot_ccf_rv_fit(plotter, graph, kwargs):
+def plot_ccf_rv_fit(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+    """
+    Graph: CCF RV fit plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -3375,7 +4743,16 @@ def plot_ccf_rv_fit(plotter, graph, kwargs):
         plotter.plotend(graph)
 
 
-def plot_ccf_swave_ref(plotter, graph, kwargs):
+def plot_ccf_swave_ref(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+    """
+    Graph: CCF spectral wave reference plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -3424,7 +4801,17 @@ def plot_ccf_swave_ref(plotter, graph, kwargs):
         plotter.plotend(graph)
 
 
-def plot_ccf_photon_uncert(plotter, graph, kwargs):
+def plot_ccf_photon_uncert(plotter: Plotter, graph: Graph,
+                           kwargs: Dict[str, Any]):
+    """
+    Graph: CCF photon uncertainty plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -3486,7 +4873,111 @@ definitions += [ccf_rv_fit, ccf_rv_fit_loop, ccf_swave_ref,
 # =============================================================================
 # Define polarisation plotting functions
 # =============================================================================
-def plot_polar_continuum(plotter, graph, kwargs):
+def plot_polar_fit_cont(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+    """
+    Graph: Polar fit continuum plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    wavemap = kwargs['wavemap']
+    mask = ~kwargs['mask']
+    spec = kwargs['spec']
+    fspec = kwargs['fspec']
+    med_filt = kwargs['med_filt']
+    cont = kwargs['cont']
+    niter = kwargs['niter']
+    rej_low = kwargs['rej_low']
+    rej_high = kwargs['rej_high']
+    sigm = kwargs['sigm']
+    res = kwargs['res']
+    ores = kwargs['ores']
+    kind = kwargs['kind']
+    # ------------------------------------------------------------------
+    # set up plot
+    if niter > 0:
+        fig, frames = graph.set_figure(plotter, ncols=1, nrows=2)
+        frame0 = frames[0]
+        frame1 = frames[1]
+    else:
+        fig, frames = graph.set_figure(plotter, ncols=1, nrows=1)
+        frame0 = frames[0]
+        frame1 = None
+    # ------------------------------------------------------------------
+    # frame 0
+    # ------------------------------------------------------------------
+    # plot the valid points of the original data
+    frame0.plot(wavemap[~mask], spec[~mask], color='tab:blue', lw=1.0,
+                label='Data used')
+    # plot the median filtered points
+    if med_filt > 0:
+        frame0.plot(wavemap[~mask], fspec[~mask],
+                    c='tab:cyan', lw=1.0, label='median filter')
+
+    frame0.scatter(wavemap[mask], spec[mask], s=20., marker='d',
+                   edgecolors='tab:gray', facecolors='none', lw=0.5,
+                   label='Data not used')
+    # plot the continuum
+    frame0.plot(wavemap, cont, ls='--', color='tab:orange',
+                label='Continnum fit')
+    # ---------------------------------------------------------------------
+    # set up title and labels
+    title = '{0}: Fit continuum. Iteration {1}'.format(kind, niter)
+    xlabel = 'wavelength [nm]'
+    ylabel = 'Spectrum'
+    frame0.set(title=title, xlabel=xlabel, ylabel=ylabel)
+    frame0.legend(loc=0)
+    # ------------------------------------------------------------------
+    # frame 2 - only plot for nit > 0
+    # ------------------------------------------------------------------
+    if niter > 0:
+        # plot some horizontal lines at limits
+        frame1.axhline(0.0, ls='--', color='tab:orange', lw=1.0)
+        frame1.axhline(-rej_low * sigm, ls=':', label='Rejection threshold')
+        frame1.axhline(rej_high * sigm, ls=':')
+        # plot the points
+        frame1.scatter(wavemap[mask], res[mask], s=10.0, marker='d',
+                       edgecolors='tab:gray', facecolors='None', lw=0.5,
+                       label='Data not used')
+        frame1.scatter(wavemap[~mask], ores[~mask], s=10.0, marker='o',
+                       edgecolors='tab:blue', facecolors='None', lw=0.5,
+                       label='Data used')
+        # overplot median filtered spectrum
+        if med_filt > 0:
+            frame1.scatter(wavemap[~mask], res[~mask], s=5.0, marker='s',
+                           edgecolors='tab:cyan', facecolors='None', lw=0.2,
+                           label='median filtered data used')
+        # ---------------------------------------------------------------------
+        # set up labels
+        xlabel = 'wavelength [nm]'
+        ylabel = 'Residuals'
+        frame1.set(xlabel=xlabel, ylabel=ylabel)
+        frame1.legend(loc=0)
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+def plot_polar_continuum(plotter: Plotter, graph: Graph,
+                         kwargs: Dict[str, Any]):
+    """
+    Graph: Polar continuum spectrum plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -3495,14 +4986,13 @@ def plot_polar_continuum(plotter, graph, kwargs):
     # get the arguments from kwargs
     props = kwargs['props']
     # get data from props
-    wl = props['FLAT_X']
+    wl = props['FLAT_WLDATA']
     pol = 100 * props['FLAT_POL']
     contpol = 100.0 * props['CONT_POL']
-    contxbin = np.array(props['CONT_XBIN'])
-    contybin = 100. * np.array(props['CONT_YBIN'])
-    stokes = props['STOKES']
+    contxbin = props['CONT_POL_XBIN']
+    stokes = props['STOKES']['A_1']
     method = props['METHOD']
-    nexp = props['NEXPOSURES']
+    nexp = props['N_EXPOSURES']
     # ------------------------------------------------------------------
     # set up plot
     fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
@@ -3513,10 +5003,15 @@ def plot_polar_continuum(plotter, graph, kwargs):
     # ------------------------------------------------------------------
     # plot polarimetry data
     frame.plot(wl, pol, linestyle='None', marker='.',
-               label='Degree of Polarization')
+               label='Degree of Polarization', alpha=0.3)
     # plot continuum sample points
-    frame.plot(contxbin, contybin, linestyle='None', marker='o',
-               label='Continuum Sampling')
+    if contxbin is not None:
+        # get values
+        contxbin = np.array(contxbin)
+        contybin = 100. * np.array(props['CONT_POL_YBIN'])
+        # plot continuum sampling
+        frame.plot(contxbin, contybin, linestyle='None', marker='o',
+                   label='Continuum Sampling')
     # plot continuum fit
     frame.plot(wl, contpol, label='Continuum Polarization')
     # ---------------------------------------------------------------------
@@ -3532,7 +5027,16 @@ def plot_polar_continuum(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_polar_results(plotter, graph, kwargs):
+def plot_polar_results(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+    """
+    Graph: Polar results plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -3541,13 +5045,13 @@ def plot_polar_results(plotter, graph, kwargs):
     # get the arguments from kwargs
     props = kwargs['props']
     # get data from props
-    wl = props['FLAT_X']
+    wl = props['FLAT_WLDATA']
     pol = 100 * props['FLAT_POL']
     null1 = 100.0 * props['FLAT_NULL1']
     null2 = 100.0 * props['FLAT_NULL2']
-    stokes = props['STOKES']
+    stokes = props['STOKES']['A_1']
     method = props['METHOD']
-    nexp = props['NEXPOSURES']
+    nexp = props['N_EXPOSURES']
     # ------------------------------------------------------------------
     # set up plot
     fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
@@ -3559,9 +5063,9 @@ def plot_polar_results(plotter, graph, kwargs):
     # plot polarimetry data
     frame.plot(wl, pol, label='Degree of Polarization')
     # plot null1 data
-    frame.plot(wl, null1, label='Null Polarization 1')
+    frame.plot(wl, null1, label='Null Polarization 1', linewidth=0.5, alpha=0.6)
     # plot null2 data
-    frame.plot(wl, null2, label='Null Polarization 2')
+    frame.plot(wl, null2, label='Null Polarization 2', linewidth=0.5, alpha=0.6)
     # ---------------------------------------------------------------------
     # set title and labels
     xlabel = 'wavelength [nm]'
@@ -3575,7 +5079,16 @@ def plot_polar_results(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_polar_stoke_i(plotter, graph, kwargs):
+def plot_polar_stoke_i(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+    """
+    Graph: Polar Stokes I plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -3584,12 +5097,14 @@ def plot_polar_stoke_i(plotter, graph, kwargs):
     # get the arguments from kwargs
     props = kwargs['props']
     # get data from props
-    wl = props['FLAT_X']
-    stokes_i = props['FLAT_STOKES_I']
-    stokes_ierr = props['FLAT_STOKES_I_ERR']
-    stokes = props['STOKES']
+    wl = props['FLAT_WLDATA']
+    stokes_i = props['FLAT_STOKESI'] * props['CONT_FLUX']
+    stokes_ierr = props['FLAT_STOKESIERR'] * props['CONT_FLUX']
+    contxbin = props['CONT_FLUX_XBIN']
+    stokes = props['STOKES']['A_1']
     method = props['METHOD']
-    nexp = props['NEXPOSURES']
+    nexp = props['N_EXPOSURES']
+    cont_flux = props['CONT_FLUX']
     # ------------------------------------------------------------------
     # set up plot
     fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
@@ -3599,8 +5114,20 @@ def plot_polar_stoke_i(plotter, graph, kwargs):
     titleargs = [stokes, method, nexp]
     # ---------------------------------------------------------------------
     # plot polarimetry data
-    frame.errorbar(wl, stokes_i, yerr=stokes_ierr, fmt='-', label='Stokes I',
-                   alpha=0.5)
+    frame.errorbar(wl, stokes_i, yerr=stokes_ierr, fmt='.', linestyle='None',
+                   label='Stokes I', alpha=0.3, zorder=1)
+    # plot continuum sample points
+    if contxbin is not None:
+        # get values
+        contxbin = np.array(contxbin)
+        contybin = 100. * np.array(props['CONT_FLUX_YBIN'])
+        # plot continuum sampling
+        frame.plot(contxbin, contybin, linestyle='None', marker='o',
+                   label='Continuum Samples')
+
+    # plot continuum flux
+    frame.plot(wl, cont_flux, label='Continuum Flux for Normalization',
+               zorder=2)
     # ---------------------------------------------------------------------
     # set title and labels
     xlabel = 'wavelength [nm]'
@@ -3614,29 +5141,41 @@ def plot_polar_stoke_i(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_polar_lsd(plotter, graph, kwargs):
+def plot_polar_lsd(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+    """
+    Graph: Polar LSD plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
         return
     # ------------------------------------------------------------------
     # get the arguments from kwargs
-    pprops = kwargs['pprops']
-    lprops = kwargs['lprops']
+    props = kwargs['props']
     # get data from props
-    vels = lprops['LSD_VELOCITIES']
-    zz = lprops['LSD_STOKES_I']
-    zgauss = lprops['LSD_STOKES_I_MODEL']
-    z_p = lprops['LSD_STOKES_VQU']
-    z_np = lprops['LSD_NULL']
-    stokes = pprops['STOKES']
+    vels = props['LSD_VELOCITIES']
+    zz = props['LSD_STOKESI']
+    zz_err = props['LSD_STOKESI_ERR']
+    zgauss = props['LSD_STOKESI_MODEL']
+    z_p = props['LSD_STOKESVQU']
+    z_p_err = props['LSD_STOKESVQU_ERR']
+    z_np = props['LSD_NULL']
+    z_np_err = props['LSD_NULL_ERR']
+    stokes = props['STOKES']['A_1']
     # ------------------------------------------------------------------
     # set up plot
-    fig, frames = graph.set_figure(plotter, nrows=1, ncols=3)
+    fig, frames = graph.set_figure(plotter, nrows=3, ncols=1)
     # ------------------------------------------------------------------
     frame = frames[0]
-    frame.plot(vels, zz, '-')
-    frame.plot(vels, zgauss, '-')
+    frame.errorbar(vels, zz, yerr=zz_err, fmt='.', color='red')
+    frame.plot(vels, zz, '-', linewidth=0.3, color='red')
+    frame.plot(vels, zgauss, '-', color='green')
     title = 'LSD Analysis'
     ylabel = 'Stokes I profile'
     xlabel = ''
@@ -3645,14 +5184,16 @@ def plot_polar_lsd(plotter, graph, kwargs):
     # ---------------------------------------------------------------------
     frame = frames[1]
     title = ''
-    frame.plot(vels, z_p, '-')
+    frame.errorbar(vels, z_p, yerr=z_p_err, fmt='.', color='blue')
+    frame.plot(vels, z_p, '-', linewidth=0.5, color='blue')
     ylabel = 'Stokes {0} profile'.format(stokes)
     xlabel = ''
     # set title and labels
     frame.set(title=title, xlabel=xlabel, ylabel=ylabel)
     # ---------------------------------------------------------------------
     frame = frames[2]
-    frame.plot(vels, z_np, '-')
+    frame.errorbar(vels, z_np, yerr=z_np_err, fmt='.', color='orange')
+    frame.plot(vels, z_np, '-', linewidth=0.5, color='orange')
     xlabel = 'velocity (km/s)'
     ylabel = 'Null profile'
     # set title and labels
@@ -3662,6 +5203,7 @@ def plot_polar_lsd(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
+polar_fit_cont = Graph('POLAR_FIT_CONT', kind='debug', func=plot_polar_fit_cont)
 polar_continuum = Graph('POLAR_CONTINUUM', kind='debug',
                         func=plot_polar_continuum)
 polar_results = Graph('POLAR_RESULTS', kind='debug', func=plot_polar_results)
@@ -3669,13 +5211,23 @@ polar_stokes_i = Graph('POLAR_STOKES_I', kind='debug', func=plot_polar_stoke_i)
 polar_lsd = Graph('POLAR_LSD', kind='debug', func=plot_polar_lsd)
 
 # add to definitions
-definitions += [polar_continuum, polar_results, polar_stokes_i, polar_lsd]
+definitions += [polar_fit_cont, polar_continuum, polar_results,
+                polar_stokes_i, polar_lsd]
 
 
 # =============================================================================
 # Define tool functions
 # =============================================================================
-def plot_logstats_bar(plotter, graph, kwargs):
+def plot_logstats_bar(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+    """
+    Graph: Log stats bar plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -3725,23 +5277,350 @@ def plot_logstats_bar(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
+def plot_stats_timing_plot(plotter: Plotter, graph: Graph,
+                           kwargs: Dict[str, Any]):
+    """
+    Graph: Log stats bar plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
+    # -------------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # get plt
+    plt = plotter.plt
+    # -------------------------------------------------------------------------
+    # get the arguments from kwargs
+    logs = kwargs['logs']
+    pstats = kwargs['pstats']
+    # -------------------------------------------------------------------------
+    # get data from logs
+    durations = np.array(list(map(lambda x: x.duration, logs)))
+    recipes = np.array(list(map(lambda x: x.shortname, logs)))
+    start_times = np.array(list(map(lambda x: x.start_time, logs)))
+    # filter out NaNs
+    nanmask = np.isfinite(durations)
+    durations = durations[nanmask]
+    recipes = recipes[nanmask]
+    start_times = start_times[nanmask]
+    # sort by start_times
+    sortmask = np.argsort(start_times)
+    durations = durations[sortmask]
+    recipes = recipes[sortmask]
+    # get durations
+    durationdict = dict()
+    startdict = dict()
+    # loop around recipes
+    for recipe in recipes:
+        if recipe in durationdict:
+            continue
+        # mask the recipe
+        rmask = (recipes == recipe)
+        # only add if we have more than 10 recipes
+        if len(durations[rmask]) > 10:
+            durationdict[recipe] = durations[rmask]
+            startdict[recipe] = Time(start_times[rmask], format='unix')
+    # re-get recipe names
+    rnames = list(durationdict.keys())
+    # -------------------------------------------------------------------------
+    # plot graphs
+    # -------------------------------------------------------------------------
+    # force plot settings
+    plotter.loop_allowed = True
+    # get the plot generator
+    generator = plotter.plotloop(rnames)
+
+    indices = dict(zip(rnames, range(len(rnames))))
+    # prompt to start looper
+    plotter.close_plots(loop=True)
+    # loop around recipes
+    for recipe in generator:
+        # get this recipes values
+        durations = durationdict[recipe]
+        starts = startdict[recipe]
+        # ---------------------------------------------------------------------
+        # do not plot less than 10 entries
+        if len(durations) < 10:
+            continue
+        # ---------------------------------------------------------------------
+        # set up plot
+        fig, gs = graph.set_grid(plotter, nrows=2, ncols=2,
+                                 figsize=(12, 12))
+        # ---------------------------------------------------------------------
+        # first frame: histogram
+        frame = fig.add_subplot(gs[0, 0])
+        # work out the number of bins
+        nbins = np.max([len(durations) // 10, 10])
+        # plot the histogram
+        frame.hist(durations, bins=nbins)
+        # set labels
+        frame.set(xlabel='Duration [seconds]',
+                  ylabel='Number of recipes')
+        # ---------------------------------------------------------------------
+        # table
+        frame = fig.add_subplot(gs[0, 1])
+        # just add the text
+        frame.text(0.5, 0.5, pstats[recipe], ha='center', va='center',
+                   fontsize=12, style='oblique')
+        # turn off this axis
+        frame.axis('off')
+        # ---------------------------------------------------------------------
+        # large frame: dt
+        frame = fig.add_subplot(gs[1, :])
+        # get time since first
+        start0 = (starts - np.min(starts)).to(uu.hr)
+        # plot the start vs duration
+        frame.plot(start0, durations, ls='None', marker='.')
+        frame.set(xlabel='Time since first call [hours]',
+                  ylabel='Duration [seconds]')
+        plt.suptitle('{0}: {1}'.format(indices[recipe], recipe))
+        # ---------------------------------------------------------------------
+        # wrap up using plotter
+        plotter.plotend(graph)
+
+
+def plot_stats_qc_recipe_plot(plotter: Plotter, graph: Graph,
+                              kwargs: Dict[str, Any]):
+    """
+    Graph: Log stats bar plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
+    # -------------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # get plt
+    plt = plotter.plt
+    # -------------------------------------------------------------------------
+    # get values from kwargs
+    xvalues = kwargs['xvalues']
+    yvalues = kwargs['yvalues']
+    lvalues = kwargs['lvalues']
+    llabels = kwargs['llabels']
+    recipe_name = kwargs['recipe_name']
+    # -------------------------------------------------------------------------
+    num_plots = len(xvalues)
+    # set up plot
+    fig, frames = graph.set_figure(plotter, nrows=num_plots, ncols=1,
+                                   sharex='all', figsize=(num_plots * 10, 16))
+    # deal with only one plot
+    if num_plots == 1:
+        frames = [frames]
+    # -------------------------------------------------------------------------
+    for fnum, name in enumerate(xvalues):
+        xvalues_i, yvalues_i = xvalues[name], yvalues[name]
+        labels_i, lvalues_i = llabels[name], lvalues[name]
+
+        if name == 'Condition':
+            # -----------------------------------------------------------------
+            # plot passed/running/ended
+            frames[fnum].plot(xvalues_i[0], yvalues_i[0], label=labels_i[0],
+                              marker='.')
+            frames[fnum].plot(xvalues_i[1], yvalues_i[1], label=labels_i[1],
+                              marker='.')
+            frames[fnum].plot(xvalues_i[2], yvalues_i[2], label=labels_i[2],
+                              marker='.')
+            # -----------------------------------------------------------------
+        else:
+            # -----------------------------------------------------------------
+            # plot the points as a function of time
+            frames[fnum].plot(xvalues_i[0], yvalues_i[0], marker='.', color='b',
+                              label=labels_i[0], linestyle='None')
+            # plot limits
+            for l_it, lvalue in enumerate(lvalues_i[0]):
+                if len(lvalue) == 0:
+                    continue
+                if l_it == 0:
+                    frames[fnum].plot(xvalues_i[0], lvalue, linestyle='--',
+                                      color='r', label='limit')
+                else:
+                    frames[fnum].plot(xvalues_i[0], lvalue, linestyle='--',
+                                      color='r')
+        # plot legend
+        frames[fnum].legend(loc=0)
+        # add xlabel only on last plot
+        if fnum == len(frames) - 1:
+            frames[fnum].set(xlabel='MJD')
+        # -----------------------------------------------------------------
+    # adjust plot
+    plt.subplots_adjust(hspace=0, wspace=0, bottom=0.05, top=0.95,
+                        right=0.975, left=0.05)
+    # add title
+    plt.suptitle(recipe_name)
+    # -------------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+def plot_stats_ram_plot(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+    """
+    Graph: Log stats bar plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
+    # -------------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # get plt
+    plt = plotter.plt
+    mlines = plotter.matplotlib.lines
+    # -------------------------------------------------------------------------
+    # get values from kwargs
+    time0 = kwargs['time0']
+    ram_start = kwargs['ram_start']
+    ram_end = kwargs['ram_end']
+    rmax_start = kwargs['rmax_start']
+    rmax_end = kwargs['rmax_end']
+    rmin_start = kwargs['rmin_start']
+    rmin_end = kwargs['rmin_end']
+    shortnames = kwargs['shortnames']
+    shortname_values = kwargs['shortname_values']
+    # -------------------------------------------------------------------------
+    # set up plot
+    fig, frames = graph.set_figure(plotter, nrows=2, ncols=1,
+                                   sharex='all', figsize=(16, 16))
+    # -------------------------------------------------------------------------
+    # plot ram usage
+    frames[0].fill_between(time0,
+                           np.max([rmax_start, rmax_end], axis=0),
+                           np.min([rmin_start, rmin_end], axis=0),
+                           color='k', alpha=0.2)
+
+    y = np.mean([ram_start, ram_end], axis=0)
+    # eyl = y - np.min([ram_start, ram_end], axis=0)
+    # eyu = np.max([ram_start, ram_end], axis=0) - y
+
+    frames[0].plot(time0, y, color='k', marker='None', ls=':')
+    # frames[0].errorbar(time0, y, yerr=[eyl, eyu], color='r',
+    #                    marker='o', ls='None', alpha=0.25, capsize=5)
+    # -------------------------------------------------------------------------
+    # add error bars for recipes
+    colors = ['r', 'g', 'b', 'm', 'c', 'orange', 'purple'] * 50
+    counter = 0
+    # flip the list of shortnames
+    shortnames = list(shortnames)[::-1]
+
+    for counter, shortname in enumerate(shortnames):
+
+        if 'EXT' in shortname:
+            linestyle = '--'
+            linewidth = 2
+        else:
+            linestyle = '-'
+            linewidth = 1
+
+        _, _, _, s_start, s_end, r_start, r_end = shortname_values[shortname]
+
+        pargs = [shortname, len(s_start)]
+        print('\tAdding recipe {0} [{1} entries]'.format(*pargs))
+
+        smed = np.median([s_start, s_end], axis=0)
+        # smin = smed - s_start
+        # smax = s_end - smed
+        counts = counter + np.linspace(0, 1, len(smed) + 2)[1:-1] - 0.5
+
+        for row in range(len(s_start)):
+            frames[1].plot([s_start[row], s_end[row]],
+                           [counts[row], counts[row]], color=colors[counter],
+                           alpha=0.3, ls=linestyle, linewidth=linewidth)
+        frames[1].plot(s_start, counts, marker='+', ms=7,
+                       color=colors[counter], ls='None')
+        frames[1].plot(s_end, counts, marker='x', ms=7,
+                       color=colors[counter], ls='None')
+
+        # plot rise in ram from start to end
+        for row in range(len(s_start)):
+            frames[0].plot([s_start[row], s_end[row]],
+                           [r_start[row], r_end[row]], color=colors[counter],
+                           alpha=0.3, ls=linestyle, linewidth=linewidth)
+        frames[0].plot(s_start, r_start, marker='+', ms=7,
+                       color=colors[counter], ls='None', alpha=0.3)
+        frames[0].plot(s_end, r_end, marker='x', ms=7,
+                       color=colors[counter], ls='None', alpha=0.3)
+
+    # add a fill between to separate coloured bands
+    for counter, shortname in enumerate(shortnames):
+        frames[1].fill_between(time0, counter - 0.5, counter + 0.5,
+                               color=colors[counter], alpha=0.25)
+
+    # -------------------------------------------------------------------------
+    frames[1].set_yticks(range(0, counter + 1))
+    frames[1].set_yticklabels(shortnames)
+    # set the ytick colours
+    for it, tick in enumerate(frames[1].yaxis.get_ticklabels()):
+        tick.set_color(colors[it])
+    # -------------------------------------------------------------------------
+    # set labels
+    frames[0].set(ylabel='Mean RAM usuage [GB]')
+    frames[1].set(ylabel='Recipe shortname', xlabel='Time since start [hr]')
+    plt.suptitle('Memory usuage as a function of time')
+
+    # set limits
+    frames[1].set(xlim=[0, np.max(time0)],
+                  ylim=[-0.5, len(shortnames) - 0.5])
+
+    # custom legend
+    start = mlines.Line2D([], [], color='k', marker='+', ls='None',
+                          label='Start of recipe', ms=7)
+    end = mlines.Line2D([], [], color='k', marker='x', ls='None',
+                        label='End of recipe', ms=7)
+    mean = mlines.Line2D([], [], label='Running mean', color='r',
+                         marker='None')
+    frames[0].legend(handles=[mean, start, end], loc=0)
+    frames[1].legend(handles=[start, end], loc=0)
+
+    # -------------------------------------------------------------------------
+    # adjust plot
+    plt.subplots_adjust(hspace=0, left=0.05, right=0.99, top=0.95,
+                        bottom=0.05)
+
+    # -------------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
 logstats_bar = Graph('LOGSTATS_BAR', kind='show', func=plot_logstats_bar)
 
+stats_timing = Graph('STATS_TIMING_PLOT', kind='show',
+                     func=plot_stats_timing_plot)
+
+stats_qc_recipe = Graph('STAT_QC_RECIPE_PLOT', kind='show',
+                        func=plot_stats_qc_recipe_plot)
+
+stats_ram_plot = Graph('STAT_RAM_PLOT', kind='show',
+                       func=plot_stats_ram_plot)
+
 # add to definitions
-definitions += [logstats_bar]
+definitions += [logstats_bar, stats_timing, stats_qc_recipe, stats_ram_plot]
 
 
 # =============================================================================
 # Define other plotting functions
 # =============================================================================
-def plot_image(plotter, graph, kwargs):
+def plot_image(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     """
     Generic image plotter
 
-    :param plotter:
-    :param graph:
-    :param kwargs:
-    :return:
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
     """
     # ------------------------------------------------------------------
     # start the plotting process
@@ -3781,7 +5660,16 @@ def plot_image(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
-def plot_plot(plotter, graph, kwargs):
+def plot_plot(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+    """
+    Generic print position on click plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -3798,7 +5686,6 @@ def plot_plot(plotter, graph, kwargs):
     # we don't want fiber in kwargs
     if 'fiber' in kwargs:
         del kwargs['fiber']
-
     # ------------------------------------------------------------------
     # get the xlabel and clean from keyword args
     xlabel = kwargs.get('xlabel', None)

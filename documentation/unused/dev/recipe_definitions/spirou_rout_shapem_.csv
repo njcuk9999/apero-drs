@@ -1,0 +1,10 @@
+name,HDR[DRSOUTID],file type,suffix,dbname,dbkey,input file
+MASTER_FP,MASTER_FP,.fits,_fpmaster,calibration,FPMASTER,FP_FP
+SHAPE_X,SHAPE_X,.fits,_shapex,calibration,SHAPEX,FP_FP
+SHAPE_Y,SHAPE_Y,.fits,_shapey,calibration,SHAPEY,FP_FP
+SHAPE_IN_FP,SHAPE_IN_FP,.fits,_shape_in_fp,--,--,FP_FP
+SHAPE_IN_HC,SHAPE_IN_HC,.fits,_shape_in_hc,--,--,HCONE_HCONE
+SHAPE_OUT_FP,SHAPE_OUT_FP,.fits,_shape_out_fp,--,--,FP_FP
+SHAPE_OUT_HC,SHAPE_OUT_HC,.fits,_shape_out_hc,--,--,HCONE_HCONE
+SHAPE_BDX,SHAPE_BDX,.fits,_shape_out_bdx,--,--,FP_FP
+DEBUG_BACK,DEBUG_BACK,.fits,_background.fits,--,--,DRS_PP

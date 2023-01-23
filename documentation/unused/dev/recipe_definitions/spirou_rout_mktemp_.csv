@@ -1,0 +1,6 @@
+name,HDR[DRSOUTID],file type,basename,fibers,dbname,dbkey,input file
+TELLU_TEMP,TELLU_TEMP,.fits,Template,"AB, A, B, C",telluric,TELLU_TEMP,"EXT_E2DS_FF, TELLU_OBJ"
+TELLU_BIGCUBE,TELLU_BIGCUBE,.fits,BigCube,"AB, A, B, C",--,--,"EXT_E2DS_FF, TELLU_OBJ"
+TELLU_BIGCUBE0,TELLU_BIGCUBE0,.fits,BigCube0,"AB, A, B, C",--,--,"EXT_E2DS_FF, TELLU_OBJ"
+TELLU_TEMP_S1D,TELLU_TEMP_S1D,.fits,Template_s1d,"AB, A, B, C",--,--,"EXT_E2DS_FF, TELLU_OBJ"
+TELLU_BIGCUBE_S1D,TELLU_BIGCUBE_S1D,.fits,BigCube_s1d,"AB, A, B, C",--,--,"EXT_E2DS_FF, TELLU_OBJ"

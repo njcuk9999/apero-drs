@@ -1,18 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+APERO Not-a-Number (NaN) functionality
 
-# CODE DESCRIPTION HERE
+Mostly linking to the apero fast math module
 
 Created on 2019-05-15 at 12:24
 
 @author: cook
 """
-import numpy as np
 import warnings
+from typing import Any, List, Union
 
-from apero.core import constants
+import numpy as np
+
+from apero.base import base
 from apero.core.math import fast
 
 # =============================================================================
@@ -20,19 +22,17 @@ from apero.core.math import fast
 # =============================================================================
 __NAME__ = 'core.math.nan.py'
 __INSTRUMENT__ = 'None'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
-PConstants = constants.pload(__INSTRUMENT__)
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
+
 
 # =============================================================================
 # Define NaN functions
 # =============================================================================
-def nanpad(oimage):
+def nanpad(oimage: np.ndarray) -> np.ndarray:
     """
     Pads NaN values with the median (non NaN values from the 9 pixels around
     it) does this iteratively until no NaNs are left - if all 9 pixels are
@@ -44,6 +44,9 @@ def nanpad(oimage):
     :return: Nan-removed copy of original image
     :rtype: np.ndarray
     """
+    # set function name
+    # _ = display_func('nanpad', __NAME__)
+    # deep copy image
     image = np.array(oimage)
     # replace the NaNs on the edge with zeros
     image[:, 0] = killnan(image[:, 0], 0)
@@ -72,25 +75,101 @@ def nanpad(oimage):
     return image
 
 
-def nanpolyfit(x, y, deg, **kwargs):
+def nanchebyfit(xvector: np.ndarray, yvector: np.ndarray, deg: int,
+                domain: List[float],
+                weight: Union[np.ndarray, None] = None) -> Any:
+    """
+    A Chebyshev polyfit that takes into account NaNs in the array (masks them)
+
+    :param xvector: np.array, the x data
+    :param yvector: np.array, the y data
+    :param deg: int, the degree of the polynomial fit
+    :param domain: list of floats, 1. minimum point in domain
+                                   2. maximum point in domain
+    :param weight: None or np.array - the weight vector
+
+    :return: same as np.polyfit
+    """
+    # set function name
+    # _ = display_func('nanpolyfit', __NAME__)
     # check if there is a weight input in kwargs
-    if 'w' in kwargs:
-        if kwargs['w'] is not None:
-            # find the NaNs in x, y, w
-            nanmask = np.isfinite(y) & np.isfinite(x) & np.isfinite(kwargs['w'])
-            # mask the weight in kwargs
-            kwargs['w'] = kwargs['w'][nanmask]
-        else:
-            # find the NaNs in x and y
-            nanmask = np.isfinite(y) & np.isfinite(x)
+    if weight is not None:
+        # find the NaNs in x, y, w
+        nanmask = np.isfinite(yvector) & np.isfinite(xvector)
+        nanmask &= np.isfinite(weight)
+        # mask the weight in kwargs
+        weight = weight[nanmask]
     else:
         # find the NaNs in x and y
-        nanmask = np.isfinite(y) & np.isfinite(x)
+        nanmask = np.isfinite(yvector) & np.isfinite(xvector)
+
+    domain_cheby = 2 * (xvector - domain[0]) / (domain[1] - domain[0]) - 1
+    fit = np.polynomial.chebyshev.chebfit(domain_cheby[nanmask],
+                                          yvector[nanmask], deg, w=weight)
     # return polyfit without the nans
-    return np.polyfit(x[nanmask], y[nanmask], deg, **kwargs)
+    return fit
 
 
-def killnan(vect, val=0):
-    mask = ~np.isfinite(vect)
-    vect[mask] = val
-    return vect
+def nanpolyfit(xvector: np.ndarray, yvector: np.ndarray, deg: int,
+               weight: Union[np.ndarray, None] = None, **kwargs) -> Any:
+    """
+    A polyfit that takes into account NaNs in the array (masks them)
+
+    :param xvector: np.array, the x data
+    :param yvector: np.array, the y data
+    :param weight: None or np.array - the weight vector
+    :param deg: int, the degree of the polynomial fit
+    :param kwargs: passed to np.polyfit
+
+    :return: same as np.polyfit
+    """
+    # set function name
+    # _ = display_func('nanpolyfit', __NAME__)
+    # check if there is a weight input in kwargs
+    if weight is not None:
+        # find the NaNs in x, y, w
+        nanmask = np.isfinite(yvector) & np.isfinite(xvector)
+        nanmask &= np.isfinite(weight)
+        # mask the weight in kwargs
+        weight = weight[nanmask]
+    else:
+        # find the NaNs in x and y
+        nanmask = np.isfinite(yvector) & np.isfinite(xvector)
+    # return polyfit without the nans
+    return np.polyfit(xvector[nanmask], yvector[nanmask], deg, w=weight,
+                      **kwargs)
+
+
+def killnan(invector: np.ndarray, value: float = 0.0) -> np.ndarray:
+    """
+    Replace all NaNs in a vector with a value
+
+    :param invector: np.array - the input vector to remove NaNs from
+    :param value: float, the value to fill the vectory with
+
+    :return: the invector where NaNs are filled with value
+    """
+    # set function name
+    # _ = display_func('killnan', __NAME__)
+    # copy vector
+    vector = np.array(invector)
+    # find all finite values
+    mask = np.isfinite(vector)
+    # replace all non-finite numbers with value
+    vector[~mask] = value
+    # return updated vector
+    return vector
+
+
+# =============================================================================
+# Start of code
+# =============================================================================
+# Main code here
+if __name__ == "__main__":
+    # ----------------------------------------------------------------------
+    # print 'Hello World!'
+    print("Hello World!")
+
+# =============================================================================
+# End of code
+# =============================================================================

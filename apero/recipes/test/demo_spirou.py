@@ -1,20 +1,25 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+demo_spirou.py
 
-# CODE DESCRIPTION HERE
+A demo spirou recipe used for demonstrating how to use a top level recipe
 
 Created on 2019-07-05 at 16:46
 
 @author: cook
 """
-import numpy as np
 import sys
+from typing import Any, Dict, Tuple, Union
 
-from apero import core
+import numpy as np
+
 from apero import lang
+from apero.base import base
 from apero.core import constants
+from apero.core.core import drs_log
+from apero.core.utils import drs_recipe
+from apero.core.utils import drs_startup
 from apero.tools.module.testing import drs_dev
 
 # =============================================================================
@@ -22,43 +27,42 @@ from apero.tools.module.testing import drs_dev
 # =============================================================================
 __NAME__ = 'demo_spirou.py'
 __INSTRUMENT__ = 'SPIROU'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
-# get param dict
-ParamDict = constants.ParamDict
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # Get Logging function
-WLOG = core.wlog
+WLOG = drs_log.wlog
+# Get Recipe class
+DrsRecipe = drs_recipe.DrsRecipe
+# Get parameter class
+ParamDict = constants.ParamDict
 # Get the text types
-TextEntry = lang.drs_text.TextEntry
-TextDict = lang.drs_text.TextDict
+textentry = lang.textentry
 # -----------------------------------------------------------------------------
-# TODO: move recipe definition to instrument set up when testing is finished
+# Note: move recipe definition to instrument set up when testing is finished
+# -----------------------------------------------------------------------------
 # set up recipe definitions (overwrites default one)
 RMOD = drs_dev.RecipeDefinition(instrument=__INSTRUMENT__)
 # define a recipe for this tool
-demo = drs_dev.TmpRecipe()
-demo.name = __NAME__
-demo.shortname = 'DEVTEST'
-demo.instrument = __INSTRUMENT__
-demo.outputdir = 'reduced'
-demo.inputdir = 'reduced'
-demo.inputtype = 'reduced'
-demo.extension = 'fits'
-demo.description = 'This is a demo of some APERO features'
-demo.kind = 'misc'
-demo.set_arg(name='mode', dtype=int, options=[1],
-             helpstr='Enter a mode (demo purposes)')
-demo.set_kwarg(name='--text', dtype=str, default='None',
-                helpstr='Enter text here to print it')
+demo_recipe = drs_dev.TmpRecipe()
+demo_recipe.name = __NAME__
+demo_recipe.shortname = 'DEVTEST'
+demo_recipe.instrument = __INSTRUMENT__
+demo_recipe.in_block_str = 'red'
+demo_recipe.out_block_str = 'red'
+demo_recipe.extension = 'fits'
+demo_recipe.description = 'This is a demo of some APERO features'
+demo_recipe.kind = 'misc'
+demo_recipe.set_arg(name='mode', dtype=int, options=[1],
+                    helpstr='Enter a mode (demo purposes)')
+demo_recipe.set_kwarg(name='--text', dtype=str, default='None',
+                      helpstr='Enter text here to print it')
 # add recipe to recipe definition
-RMOD.add(demo)
-# demo functions (TODO: remove anywhere that is not a demo)
-demo = drs_dev.Demo(Constants)
+RMOD.add(demo_recipe)
+# demo functions (Note: remove anywhere that is not a demo)
+demo = drs_dev.Demo(constants.load())
 
 
 # =============================================================================
@@ -70,45 +74,45 @@ demo = drs_dev.Demo(Constants)
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(**kwargs):
+def main(**kwargs) -> Union[Dict[str, Any], Tuple[DrsRecipe, ParamDict]]:
     """
-    Main function for cal_update_berv.py
+    Main function for demo_spirou.py
 
     :param kwargs: additional keyword arguments
-
-    :type instrument: str
 
     :keyword debug: int, debug level (0 for None)
 
     :returns: dictionary of the local space
-    :rtype: dict
     """
     # assign function calls (must add positional)
     fkwargs = dict(**kwargs)
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
-    # TODO: remove rmod when put into full recipe
-    recipe, params = core.setup(__NAME__, __INSTRUMENT__, fkwargs,
-                                rmod=RMOD)
+    # -------------------------------------------------------------------------
+    # Note: remove rmod when put into full recipe
+    # -------------------------------------------------------------------------
+    recipe, params = drs_startup.setup(__NAME__, __INSTRUMENT__, fkwargs,
+                                       rmod=RMOD)
     # solid debug mode option
     if kwargs.get('DEBUG0000', False):
         return recipe, params
     # ----------------------------------------------------------------------
     # run main bulk of code (catching all errors)
-    llmain, success = core.run(__main__, recipe, params)
+    llmain, success = drs_startup.run(__main__, recipe, params)
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    return core.end_main(params, llmain, recipe, success)
+    return drs_startup.end_main(params, llmain, recipe, success)
 
 
-def __main__(recipe, params):
+def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     """
     Main code: should only call recipe and params (defined from main)
 
-    :param recipe:
-    :param params:
-    :return:
+    :param recipe: DrsRecipe, the recipe class using this function
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: dictionary containing the local variables
     """
     # ----------------------------------------------------------------------
     # Main Code
@@ -126,8 +130,8 @@ def __main__(recipe, params):
         # This is how we get parameters directly from user inputs
         # See blank.set_arg and blank.set_kwarg above for user input definitions
         print('Current inputs:')
-        for input in params['INPUTS']:
-            print('\t{0} = {1}'.format(input, params['INPUTS'][input]))
+        for _input in params['INPUTS']:
+            print('\t{0} = {1}'.format(_input, params['INPUTS'][_input]))
         # print gap
         print('\n\n\n')
 
@@ -142,7 +146,7 @@ def __main__(recipe, params):
         WLOG(params, '', 'Message types:')
         WLOG(params, '', '\'\':\tGeneral message')
         WLOG(params, 'info', '\'info\':\tInfo message')
-        WLOG(params, 'warning', '\'warning\':\tWarning message')
+        WLOG(params, 'warning', '\'warning\':\tWarning message', sublevel=1)
         # Note that error messages will end the code
         #    (uncomment below to use)
         # WLOG(params, 'error', '\'error\':\tError message')
@@ -171,21 +175,21 @@ def __main__(recipe, params):
         # following:
         wmsg = 'Change to the database must be updated with command: \n\t{0}'
         wargs = ['tools/dev/apero_langdb.py --update']
-        WLOG(params, 'warning', wmsg.format(*wargs))
+        WLOG(params, 'warning', wmsg.format(*wargs), sublevel=2)
 
         # examples of these codes are as follows:
         wargs = ['SPIROU']
         WLOG(params, 'info', 'Text Entry examples:')
-        WLOG(params, '', TextEntry('40-005-00001', args=wargs))
+        WLOG(params, '', textentry('40-005-00001', args=wargs))
         # same as running the following:
         wmsg = 'Listing for: {0}'
         WLOG(params, '', wmsg.format(*wargs))
 
         # but if the user specified french:
-        demo.change_lang(params, 'FR')    # only for demo purposes DO NOT USE
-        WLOG(params, '', TextEntry('00-000-99999'))
-        demo.change_lang(params, 'ENG')    # only for demo purposes DO NOT USE
-        WLOG(params, '', TextEntry('00-000-99999'))
+        demo.change_lang(params, 'FR')  # only for demo purposes DO NOT USE
+        WLOG(params, '', textentry('00-000-99999'))
+        demo.change_lang(params, 'ENG')  # only for demo purposes DO NOT USE
+        WLOG(params, '', textentry('00-000-99999'))
 
         # print gap
         print('\n\n\n')
@@ -254,7 +258,6 @@ def __main__(recipe, params):
         WLOG(params, '', 'ParamDict: dictp method')
         print('dict1 = ', newparams.dictp('DICT1', dtype=float))
 
-
     # ----------------------------------------------------------------------
     # Demo 5: Calibrations
     # ----------------------------------------------------------------------
@@ -262,20 +265,17 @@ def __main__(recipe, params):
         # for this you need a file
         pass
 
-
-
-
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return core.return_locals(params, locals())
+    return locals()
 
 
 # =============================================================================
 # Start of code
 # =============================================================================
 # This is the classic start up:
-# TODO: Uncomment if not a demo
+# Note: Uncomment if not a demo
 
 # if __name__ == "__main__":
 #         # run main with no arguments (get from command line - sys.argv)
@@ -295,10 +295,9 @@ if __name__ == "__main__":
         # need to set up sys.argv if we want to use this
         sys.argv = ['demo', '1']
         # note to access recipe and params from __main__ do the following
-        recipe, params = main(DEBUG0000=True)
+        _recipe, _params = main(DEBUG0000=True)
         # simple print statement
-        WLOG(params, '', 'Welcome to {0}'.format(params['DRS_PACKAGE']))
-
+        WLOG(_params, '', 'Welcome to {0}'.format(_params['DRS_PACKAGE']))
 
 # =============================================================================
 # End of code

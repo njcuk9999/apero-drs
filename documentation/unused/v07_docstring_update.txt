@@ -1,0 +1,241 @@
+# done doc strings + formatting
+
+
+apero:
+	base:
+		- base.py
+		- drs_base.py
+		- drs_db.py
+	core:
+		constants:
+			- constants_functions.py
+			- param_functions.py
+			- path_definitions.py
+		core:
+			- drs_arguments.py
+			- drs_base_classes.py
+			- drs_database.py
+			- drs_exceptions.py
+			- drs_file.py
+			- drs_log.py
+			- drs_misc.py
+			- drs_out_file.py
+			- drs_text.py
+		instruments:
+			default:
+				- default_config.py
+				- default_constants.py
+				- default_keywords.py
+				- file_definitions.py
+				- grouping.py
+				- pseudo_const.py
+				- recipe_definitions.py
+			nirps_ha:
+				- default_config.py
+				- default_constants.py
+				- default_keywords.py
+				- file_definitions.py
+				- pseudo_const.py
+				- recipe_definitions.py
+			nirps_he:
+				- default_config.py
+				- default_constants.py
+				- default_keywords.py
+				- file_definitions.py
+				- pseudo_const.py
+				- recipe_definitions.py
+			spirou:
+				- default_config.py
+				- default_constants.py
+				- default_keywords.py
+				- file_definitions.py
+				- pseudo_const.py
+				- recipe_definitions.py
+		math:
+			- fast.py
+			- gauss.py
+			- gen_math.py
+			- nan.py
+			- time.py
+		utils:
+			- drs_data.py
+			- drs_recipe.py
+			- drs_startup.py
+			- drs_utils.py
+	io:
+		- drs_fits.py
+		- drs_image.py
+		- drs_lock.py
+		- drs_path.py
+		- drs_table.py
+	lang:
+		core:
+			- drs_lang.py
+	plotting:
+		- core.py 
+		- html.py
+		- latex.py
+		- plot_functions.py
+	recipes:
+		nirps_ha:
+			- apero_badpix
+			- apero_dark
+			- apero_dark_ref
+			- apero_extract
+			- apero_fit_tellu
+			- apero_flat
+			- apero_leak_ref
+			- apero_loc
+			- apero_mk_model
+			- apero_mk_tellu
+			- apero_preprocess
+			- apero_shape
+			- apero_shape_ref
+			- apero_wave_night
+			- apero_wave_ref
+		nirps_he:
+			- apero_badpix
+			- apero_dark
+			- apero_dark_ref
+			- apero_extract
+			- apero_fit_tellu
+			- apero_flat
+			- apero_leak_ref
+			- apero_loc
+			- apero_mk_model
+			- apero_mk_tellu
+			- apero_pp_ref
+			- apero_preprocess
+			- apero_shape
+			- apero_shape_ref
+			- apero_wave_night
+			- apero_wave_ref
+		spirou:
+			- apero_badpix
+			- apero_dark
+			- apero_dark_ref
+			- apero_ccf
+			- apero_extract
+			- apero_fit_tellu
+			- apero_flat
+			- apero_leak_ref
+			- apero_loc
+			- apero_mk_model
+			- apero_mk_tellu
+			- apero_postprocess
+			- apero_preprocess
+			- apero_shape
+			- apero_shape_ref
+			- apero_wave_night
+			- apero_wave_ref
+		test:
+			- blank_spirou.py
+			- demo_spirou.py
+	science:
+		calib:
+			- background.py
+			- badpix.py
+			- dark.py
+			- flat_blaze.py
+			- gen_calib.py
+			- leak.py
+			- localisation.py
+			# - shape.py
+			# - thermal.py
+			# - wave.py
+		extract:
+			# - berv.py
+			# - bervest.py
+			# - extraction.py
+			# - gen_ext.py
+			# - other.py
+		polar:
+			# - gen_pol.py
+			# - lsd.py
+		preprocessing:
+			# - detector.py
+			# - gen_pp.py
+			# - identification.py
+		telluric:
+			# - fit_tellu.py
+			# - gen_tellu.py
+			# - mk_tellu.py
+			# - template_tellu.py
+		velocity:
+			# - gen_vel.py
+	tools:
+		module:
+			database:
+				# - database_gui.py
+				# - database_update.py
+				# - drs_astrometrics.py
+				# - mangage_databases.py
+				# - manage_db_gui.py
+			documentation:
+				# - drs_changelog.py
+				# - drs_documentation.py
+				# - drs_markdown.py
+			error:
+				# - find_error.py
+			gui:
+				# - gen_gui.py
+				# - widgets.py
+			listing:
+				# - drs_get.py
+				# - gen_list.py
+			processing:
+				# - drs_grouping_functions.py
+				# - drs_precheck.py
+				# - drs_processing.py
+				# - drs_run_ini.py
+				# - drs_trigger.py
+			setup:
+				# - drs_installation.py
+				# - drs_reset.py
+			testing:
+				# - drs_dev.py
+				# - drs_stats.py
+			utils:
+				# - drs_constants_tools.py
+				# - drs_static.py
+				# - drs_inverse.py
+			visualisation:
+				# - tmp.py
+				# - visu_core.py
+				# - visu_plots.py
+		recipes:
+			bin:
+				# - apero_astrometrics.py
+				# - apero_database.py
+				# - apero_explorer.py
+				# - apero_get.py
+				# - apero_go.py
+				# - apero_listing.py
+				# - apero_precheck.py
+				# - apero_processing.py
+				# - apero_reset.py
+				# - apero_stats.py
+				# - apero_trigger.py
+				# - apero_validate.py
+				# - apero_visu.py
+			dev:
+				# - apero_changelog.py
+				# - apero_constants.py
+				# - apero_dependencies.py
+				# - apero_documentation.py
+				# - apero_langdb.py
+				# - apero_run_ini.py
+				# - apero_static.py
+			nirps_ha:
+				# - apero_pp_master
+				# - apero_pphoxpix
+			nirps_he:
+				# - __init__.py
+			spirou:
+				# - apero_drift_spirou.py
+				# - apero_expmeter_spirou.py
+				# - apero_fplines_spirou.py
+				# - apero_pphotpix_spirou.py
+				# - apero_uberv_spirou.py
+			utils:
+				# - get_grid_models.py

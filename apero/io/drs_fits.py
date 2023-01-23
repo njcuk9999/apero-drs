@@ -1,58 +1,74 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+Functionality for dealing with fits files
 
-# CODE DESCRIPTION HERE
+Mostly via astropy.io.fits
 
 Created on 2019-03-21 at 11:36
 
 @author: cook
+
+Import rules:
+    only from core.core.drs_log, core.io, core.math, core.constants,
+    apero.lang, apero.base
+
+    do not import from core.core.drs_file
+    do not import from core.core.drs_argument
+    do not import from core.io.drs_image
+    do not import from core.core.drs_database
 """
+import os
+import time
+import traceback
+import warnings
+from copy import deepcopy
+from pathlib import Path
+from typing import Any, List, Optional, Tuple, Union
+
 import numpy as np
 from astropy.io import fits
+from astropy.io.fits.verify import VerifyWarning
 from astropy.table import Table
-from astropy.time import Time, TimeDelta
-from astropy import version as av
-from astropy import units as uu
-import os
-import warnings
-import traceback
 
+from apero import lang
+from apero.base import base
 from apero.core import constants
 from apero.core.core import drs_log
-from apero import lang
-from apero.io import drs_table
-from apero.io import drs_lock
-from apero.io import drs_path
-from apero.io import drs_text
+from apero.core.core import drs_base_classes
+
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'io.drs_fits.py'
 __INSTRUMENT__ = 'None'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
+# Get Astropy Time and Time Delta
+Time, TimeDelta = base.AstropyTime, base.AstropyTimeDelta
 # get param dict
 ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
 # alias pcheck
-pcheck = drs_log.find_param
+pcheck = constants.PCheck(wlog=WLOG)
+# Get function string
+display_func = drs_log.display_func
 # Get the text types
-TextEntry = lang.drs_text.TextEntry
-# TODO: This should be changed for astropy -> 2.0.1
-# bug that hdu.scale has bug before version 2.0.1
-if av.major < 2 or (av.major == 2 and av.minor < 1):
-    SCALEARGS = dict(bscale=(1.0 + 1.0e-8), bzero=1.0e-8)
-else:
-    SCALEARGS = dict(bscale=1, bzero=0)
+textentry = lang.textentry
+# set scale args for astropy >3.0
+SCALEARGS = dict(bscale=1, bzero=0)
+# Define any simple type for typing
+AnySimple = Union[int, float, str, bool]
+# get header comment cards
+# noinspection PyProtectedMember
+HeaderCommentCards = fits.header._HeaderCommentaryCards
+# filter verify warnings
+warnings.filterwarnings('ignore', category=VerifyWarning)
 
 
 # =============================================================================
@@ -68,10 +84,23 @@ class Header(fits.Header):
     """
 
     def __init__(self, *args, **kwargs):
+        """
+        Construct the Apero Fits Header
+
+        :param args: passed to super astropy.io.fits.Header
+        :param kwargs: passed to super astropy.io.fits.Header
+        """
+        # save class name
+        self.classname = 'Header'
+        # set function
+        # _ = display_func('__init__', __NAME__, self.classname)
+        # construct astropy.io.fits.Header class
         super().__init__(*args, **kwargs)
+        # set storage for temporary items
         self.__temp_items = {}
 
-    def __setitem__(self, key: str, item):
+    def __setitem__(self, key: str,
+                    item: Union[AnySimple, Tuple[AnySimple, str]]):
         """
         Set a key with "item"
         same as using: header[key] = item
@@ -80,18 +109,26 @@ class Header(fits.Header):
         :param item: object, the object to
         :return: None
         """
+        # set function
+        # _ = display_func('__setitem__', __NAME__, self.classname)
         # deal with key not being string
         if isinstance(key, tuple):
+            # assume it is a tuple (key, id) - therefore we check key[0]
             if key[0].startswith('@@@'):
                 tmpkey = self.__get_temp_key(key[0])
                 self.__temp_items.__setitem__(tmpkey, item)
             else:
                 # check for NaN values (and convert -- cannot put directly in)
                 nan_filtered = self.__nan_check(item)
+                # deal with long keys
+                if len(key[0]) > 8 and not key[0].startswith('HIERARCH'):
+                    dkey = 'HIERARCH ' + key[0]
+                else:
+                    dkey = str(key[0])
                 # do the super __setitem__ on nan filtered item
-                super().__setitem__(key, nan_filtered)
+                super().__setitem__(dkey, nan_filtered)
         # if key starts with @@@ add to temp items (without @@@)
-        if key.startswith('@@@'):
+        elif key.startswith('@@@') or key.startswith('HIERARCH @@@'):
             # use the __get_temp_key method to strip key
             self.__temp_items.__setitem__(self.__get_temp_key(key), item)
         # do not add empty keys
@@ -99,12 +136,17 @@ class Header(fits.Header):
             pass
         # else add normal keys
         else:
+            # deal with long keys
+            if len(key) > 8 and not key.startswith('HIERARCH'):
+                dkey = 'HIERARCH ' + key
+            else:
+                dkey = str(key)
             # check for NaN values (and convert -- cannot put directly in)
             nan_filtered = self.__nan_check(item)
             # do the super __setitem__ on nan filtered item
-            super().__setitem__(key, nan_filtered)
+            super().__setitem__(dkey, nan_filtered)
 
-    def __getitem__(self, key: str):
+    def __getitem__(self, key: str) -> Union[AnySimple, dict]:
         """
         Get an "item" with key
         same as using: item = header[key]
@@ -112,23 +154,52 @@ class Header(fits.Header):
         :param key: str, the key in the header to get item for
         :return: the item in the header with key="key"
         """
+        # set function
+        # _ = display_func('__getitem__', __NAME__, self.classname)
         # deal with key not being string
         if isinstance(key, tuple):
+            # assume it is a tuple (key, id) - therefore we check key[0]
             if key[0].startswith('@@@'):
                 tmpkey = self.__get_temp_key(key[0])
-                return self.__temp_items.__getitem__(tmpkey)
+                value = self.__temp_items.__getitem__(tmpkey)
+                return self.__nan_check(value, dtype=float)
             else:
-                return super().__getitem__(key)
+                value = super().__getitem__(key)
+                return self.__nan_check(value, dtype=float)
         elif not isinstance(key, str):
-            return super().__getitem__(key)
+            value = super().__getitem__(key)
+            return self.__nan_check(value, dtype=float)
         # if key starts with @@@ get it from the temporary items storage
         if key.startswith('@@@'):
-            return self.__temp_items.__getitem__(self.__get_temp_key(key))
+            value = self.__temp_items.__getitem__(self.__get_temp_key(key))
+            return self.__nan_check(value, dtype=float)
         # else get it from the normal storage location (in super)
         else:
-            return super().__getitem__(key)
+            value = super().__getitem__(key)
+            return self.__nan_check(value, dtype=float)
 
-    def __contains__(self, key: str):
+    def get(self, key: str, default: Any = None) -> Any:
+        """
+        Get the value of a header key (with nan support)
+
+        :param key: str, the header key to get
+        :param default: Any, the default value if we do not have key in header
+                        if not give returns None
+
+        :return: Any, the value of header[key] or default if not present
+        """
+        value = super().get(key, default)
+        return self.__nan_check(value, dtype=float)
+
+    def get_key(self, params: ParamDict, key: str, default=None) -> Any:
+        # deal with key in params
+        if key in params:
+            drs_key, _, drs_comment = params[key]
+        else:
+            drs_key = str(key)
+        return self.get(drs_key, default=default)
+
+    def __contains__(self, key: str) -> bool:
         """
         Whether key is in header
         same as using: key in header
@@ -136,6 +207,8 @@ class Header(fits.Header):
         :param key: str, the key to search for in the header
         :return:
         """
+        # set function
+        # _ = display_func('__contains__', __NAME__, self.classname)
         # deal with key not being str
         if isinstance(key, tuple):
             if key[0].startswith('@@@'):
@@ -152,40 +225,139 @@ class Header(fits.Header):
         else:
             return super().__contains__(key)
 
-    def copy(self, strip=False):
+    def set_key(self, params: ParamDict, key: str, value: Any):
+        """
+        Set a key (maybe from params with a keywordstore)
+
+        :param params: ParamDict, parameter dictionary of constants
+        :param key: str, either key or key in params for keywordsotre
+        :param value: Any, the value to put into the header
+
+        :return: None - sets the key or params[key][0]
+        """
+        # deal with key in params
+        if key in params:
+            drs_key, _, drs_comment = params[key]
+            drs_value = (value, drs_comment)
+        else:
+            drs_key = str(key)
+            drs_value = value
+        # set item as normal
+        self.__setitem__(drs_key, drs_value)
+
+    def copy(self, strip: bool = False) -> 'Header':
+        """
+        Copy an entire header (including temp items)
+
+        :param strip: If `True`, strip any headers that are specific to one
+                      of the standard HDU types, so that this header can be
+                      used in a different HDU.
+
+        :return: copy of the header
+        """
+        # set function
+        # _ = display_func('copy', __NAME__, self.classname)
+        # copy header via super
         header = Header(super().copy(strip), copy=False)
+        # copy temp items
         header.__temp_items = self.__temp_items.copy()
         return header
 
-    def to_fits_header(self, strip=True, nan_to_string=True):
+    def to_fits_header(self, strip: bool = True,
+                       nan_to_string: bool = True) -> fits.Header:
+        """
+        Cast Header in to astropy.io.fits.Header (including the NaN to
+        string and no temp items)
+
+        :param strip: If `True`, strip any headers that are specific to one
+                      of the standard HDU types, so that this header can be
+                      used in a different HDU.
+
+        :param nan_to_string: bool, whether to convert NaNs to strings (for
+                              saving to HDU)
+        :return: copy of the header
+        """
+        # set function
+        # _ = display_func('to_fits_header', __NAME__, self.classname)
+        # copy header via super
         header = super().copy(strip=strip)
+        # if nan to string is True set all header keys (note the __setitem__
+        #   converts NaNs to strings)
         if nan_to_string:
             for key in list(header.keys()):
-
-                if isinstance(header[key], fits.header._HeaderCommentaryCards):
+                # need to deal with comment keys
+                #    Cannot do header['COMMENT'] = header['COMMENT']
+                if isinstance(header[key], HeaderCommentCards):
                     header[key] = header[key][0]
                 else:
                     header[key] = header[key]
+        # return fits header
         return header
 
     @staticmethod
-    def from_fits_header(fits_header):
+    def from_fits_header(fits_header: fits.Header) -> 'Header':
+        """
+        Get the Header instance from a fits.Header instance (copy all keys)
+
+        :param fits_header: astropy.io.fits Header
+        :return:
+        """
+        # set function
+        # _ = display_func('from_fits_header', __NAME__)
+        # construct new Header instance
         return Header(fits_header, copy=True)
 
     @staticmethod
-    def __get_temp_key(key):
-        return key[3:]
+    def __get_temp_key(key: str, chars: str = '@@@') -> Any:
+        """
+        Remove first three characters ('chars') from a key if they are there
+        else return the key unchanged
+
+        :param key: the key to change
+        :param chars: the characters to remove
+        :return:
+        """
+        # set function
+        # _ = display_func('from_fits_header', __NAME__)
+        # look for temp key prefix
+        if key.startswith(chars):
+            return key[len(chars):]
+        else:
+            return key
 
     @staticmethod
-    def __nan_check(value):
+    def __nan_check(value, dtype=None) -> Any:
+        """
+        Check for NaNs/Infs in value (cannot be used in astropy.io.header)
+
+        :param value: Any, check for NaNs/INFs
+
+        :return: if NaN or INF found replaces with string, else just returns
+                 the original value
+        """
+        if isinstance(value, str):
+            if value.upper() == 'NAN' and dtype == float:
+                return np.nan
+            if value.upper() == 'INF' and dtype == float:
+                return np.inf
+            if value.upper() == '-INF' and dtype == float:
+                return -np.inf
+        # if we expect a float don't continue (used for get not set)
+        if dtype == float:
+            return value
+        # check for NaNs
         if isinstance(value, float) and np.isnan(value):
             return 'NaN'
+        # check for positive infinity
         elif isinstance(value, float) and np.isposinf(value):
             return 'INF'
+        # check for negative infinity
         elif isinstance(value, float) and np.isneginf(value):
             return '-INF'
+        # check and deal with tuple
         elif type(value) == tuple:
             return (Header.__nan_check(value[0]),) + value[1:]
+        # else return original value
         else:
             return value
 
@@ -193,133 +365,20 @@ class Header(fits.Header):
 # =============================================================================
 # Define read functions
 # =============================================================================
-def id_drs_file(params, recipe, drs_file_sets, filename=None, nentries=None,
-                required=True, use_input_file=False):
-
-    func_name = __NAME__ + '.id_drs_file()'
-    # ----------------------------------------------------------------------
-    # deal with list vs no list for drs_file_sets
-    if isinstance(drs_file_sets, list):
-        pass
-    else:
-        drs_file_sets = [drs_file_sets]
-    # ----------------------------------------------------------------------
-    # storage
-    found = False
-    kinds = []
-    names = []
-    file_set = None
-    # ----------------------------------------------------------------------
-    # loop around file set
-    for file_set in drs_file_sets:
-        # get the names of the file_set
-        names.append(file_set.name)
-        # ------------------------------------------------------------------
-        # check we have entries
-        if len(file_set.fileset) == 0:
-            continue
-        # ------------------------------------------------------------------
-        # check we have a recipe set
-        if file_set.recipe is None:
-            file_set.recipe = recipe
-        # ------------------------------------------------------------------
-        # check we ahve a file set
-        if file_set.filename is None:
-            if filename is None:
-                WLOG(params, 'error', 'filename is not set')
-            else:
-                file_set.set_filename(filename)
-        # ------------------------------------------------------------------
-        # get the associated files with this generic drs file
-        fileset = list(file_set.fileset)
-        # ------------------------------------------------------------------
-        # loop around files
-        for drs_file in fileset:
-            # --------------------------------------------------------------
-            # debug
-            dargs = [str(drs_file)]
-            WLOG(params, 'debug', TextEntry('90-010-00001', args=dargs))
-            # --------------------------------------------------------------
-            # copy info from given_drs_file into drs_file
-            file_in = drs_file.copyother(file_set, recipe=recipe)
-            # --------------------------------------------------------------
-            # load the header for this kind
-            try:
-                # need to read the file header for this specific drs file
-                file_in.read_header(log=False)
-                # copy in hdict from file_set
-                # - this is the only way to get keys added from file that is
-                #   read above
-                if file_set.hdict is not None:
-                    for key in file_set.hdict:
-                        file_in.header[key] = file_set.hdict[key]
-
-            # if exception occurs continue to next file
-            #    (this is not the correct file)
-            except Exception as _:
-                continue
-            except SystemExit as _:
-                continue
-            # --------------------------------------------------------------
-            # check this file is valid
-            cond, _ = file_in.check_file()
-            # --------------------------------------------------------------
-            # if True we have found our file
-            if cond:
-                # ----------------------------------------------------------
-                found = True
-                # ----------------------------------------------------------
-                # load the data for this kind
-                cond1 = file_set.data is not None
-                cond2 = file_set.header is not None
-                # use the data if flagged and if possible (cond1 & cond2)
-                if use_input_file and cond1 and cond2:
-                    # shallow copy data
-                    file_in.data = file_set.data
-                    # copy over header
-                    file_in.header = file_set.header
-                else:
-                    file_in.read_data()
-                # ----------------------------------------------------------
-                # append to list
-                kinds.append(file_in)
-                # ----------------------------------------------------------
-                # if we only want one entry break here
-                if nentries == 1:
-                    break
-    # ----------------------------------------------------------------------
-    # deal with no files found
-    if len(kinds) == 0 and required:
-        # get header keys for info purposes
-        keys = ['KW_CCAS', 'KW_CREF', 'KW_OBSTYPE', 'KW_TARGET_TYPE',
-                'KW_OBJNAME']
-        argstr = ''
-        for key in keys:
-            if file_set is not None and file_set.header is not None:
-                value = file_set.get_key(key)
-            else:
-                value = None
-            argstr += '\t{0}: {1}\n'.format(key, value)
-
-        eargs = [' '.join(names), file_set.filename, argstr, func_name]
-        WLOG(params, 'error', TextEntry('00-010-00001', args=eargs))
-    # ----------------------------------------------------------------------
-    # return found and the drs_file instance
-    if len(kinds) == 0:
-        return found, kinds
-    elif nentries == None:
-        return found, kinds
-    elif nentries == 1:
-        return found, kinds[0]
-    else:
-        return found, kinds[:nentries]
+# define complex typing for readfits
+DataHdrType = Union[Tuple[np.ndarray, fits.Header], np.ndarray, None,
+                    Tuple[np.ndarray, fits.Header, str], Tuple[np.ndarray, str],
+                    Tuple[List[Union[np.ndarray, Table]], List[fits.Header]],
+                    Tuple[List[Union[np.ndarray, Table]], List[fits.Header],
+                          List[str]]]
 
 
-# =============================================================================
-# Define read functions
-# =============================================================================
-def readfits(params, filename, getdata=True, gethdr=False, fmt='fits-image',
-             ext=0, func=None, log=True, copy=False):
+def readfits(params: ParamDict, filename: Union[str, Path],
+             getdata: bool = True, gethdr: bool = False,
+             fmt: str = 'fits-image', ext: Union[int, None] = None,
+             extname: Union[str, None] = None, func: Union[str, None] = None,
+             log: bool = True, return_names: bool = False
+             ) -> Union[DataHdrType, np.ndarray, fits.Header, None]:
     """
     The drs fits file read function
 
@@ -328,16 +387,11 @@ def readfits(params, filename, getdata=True, gethdr=False, fmt='fits-image',
     :param getdata: bool, whether to return data from "ext"
     :param gethdr: bool, whether to return header from "ext"
     :param fmt: str, format of data (either 'fits-image' or 'fits-table'
-    :param ext: int, the extension to open
+    :param ext: int or None, if set tries to read this extension (via position)
+    :param extname: str or None, if set tires to read this extension (via name)
     :param func: str, function name of calling function (input function)
-
-    :type params: ParamDict
-    :type filename: str
-    :type getdata: bool
-    :type gethdr: bool
-    :type fmt: str
-    :type ext: int
-    :type func: str
+    :param log: bool, if True logs that we read file
+    :param return_names: bool, if True returns extension names
 
     :returns: if getdata and gethdr: returns data, header, if getdata return
               data, if gethdr returns header.
@@ -345,10 +399,10 @@ def readfits(params, filename, getdata=True, gethdr=False, fmt='fits-image',
               header, if fmt 'fits-table' returns astropy.table for data and
               dictionary for header
     """
-    if func is None:
-        func_name = __NAME__ + '.readfits()'
-    else:
-        func_name = '{0} and {1}'.format(func, __NAME__ + '.readfits()')
+    # set function
+    func_name = display_func('readfits', __NAME__)
+    if func is not None:
+        func_name = '{0} and {1}'.format(func, func_name)
     # define allowed values of 'fmt'
     allowed_formats = ['fits-image', 'fits-table', 'fits-multi']
     # -------------------------------------------------------------------------
@@ -358,129 +412,379 @@ def readfits(params, filename, getdata=True, gethdr=False, fmt='fits-image',
         dirname = os.path.dirname(filename)
         if not os.path.exists(dirname):
             eargs = [dirname, os.path.basename(filename), func_name]
-            WLOG(params, 'error', TextEntry('01-001-00013', args=eargs))
+            WLOG(params, 'error', textentry('01-001-00013', args=eargs))
         else:
             eargs = [os.path.basename(filename), dirname, func_name]
-            WLOG(params, 'error', TextEntry('01-001-00012', args=eargs))
+            WLOG(params, 'error', textentry('01-001-00012', args=eargs))
     # -------------------------------------------------------------------------
     # deal with obtaining data
     if fmt == 'fits-image':
         data, header = _read_fitsimage(params, filename, getdata, gethdr, ext,
-                                       log=log)
+                                       extname, log=log)
+        name = None
+
     elif fmt == 'fits-table':
         data, header = _read_fitstable(params, filename, getdata, gethdr, ext,
-                                       log=log)
+                                       extname, log=log)
+        name = None
     elif fmt == 'fits-multi':
-        data, header = _read_fitsmulti(params, filename, getdata, gethdr,
-                                       log=log)
+        mout = _read_fitsmulti(params, filename, getdata, gethdr, log=log)
+        if getdata and gethdr:
+            data, header, name = mout
+        elif getdata:
+            data, name = mout
+            header = None
+        else:
+            data = None
+            header, name = mout
     else:
         cfmts = ', '.join(allowed_formats)
         eargs = [filename, fmt, cfmts, func_name]
-        WLOG(params, 'error', TextEntry('00-008-00019', args=eargs))
-        data, header = None, None
-    # -------------------------------------------------------------------------
-    # deal with copying
-    if copy:
-        data = np.array(data)
-        header = fits.Header(header)
+        WLOG(params, 'error', textentry('00-008-00019', args=eargs))
+        return None
     # -------------------------------------------------------------------------
     # deal with return
-    if getdata and gethdr:
-        return data, header
-    elif getdata:
-        return data
-    elif gethdr:
-        return header
+    if return_names:
+        if getdata and gethdr:
+            return data, header, name
+        elif getdata:
+            return data, name
+        elif gethdr:
+            return header, name
+        else:
+            return None
     else:
-        return None
+        if getdata and gethdr:
+            return data, header
+        elif getdata:
+            return data
+        elif gethdr:
+            return header
+        else:
+            return None
 
 
-def read_header(params, filename, ext=0, log=True):
-    func_name = __NAME__ + '.read_header()'
+def read_header(params: ParamDict, filename: str, ext: Union[int, None] = None,
+                log: bool = True, copy: bool = False) -> fits.Header:
+    """
+    Read the header from a fits file located at 'filename' with extension
+    'ext' (defaults to 0)
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param filename: str, the filename to read the fits hdu from
+    :param ext: int, the hdu extension to read the header from (defaults to
+                first extension)
+    :param log: bool, if True logs on error, else raises astropy.io.fits
+                exception that generated the error
+    :param copy: bool, if True deepcopy of the header is done
+
+    :return: astropy.io.fits.Header instance - the header read from 'filename'
+    """
+    # set function name
+    func_name = display_func('read_header', __NAME__)
     # try to open header
     try:
         header = fits.getheader(filename, ext=ext)
     except Exception as e:
         if log:
             eargs = [os.path.basename(filename), ext, type(e), e, func_name]
-            WLOG(params, 'error', TextEntry('01-001-00010', args=eargs))
+            WLOG(params, 'error', textentry('01-001-00010', args=eargs))
             header = None
         else:
             raise e
     # return header
-    return header
-
-
-def _read_fitsmulti(params, filename, getdata, gethdr, log=True):
-    func_name = __NAME__ + '._read_fitsmulti()'
-    # attempt to open hdu of fits file
-    try:
-        hdulist = fits.open(filename)
-    except Exception as e:
-        eargs = [filename, type(e), e, func_name]
-        WLOG(params, 'error', TextEntry('01-001-00006', args=eargs))
-        hdulist = None
-    # -------------------------------------------------------------------------
-    # get the number of fits files in filename
-    try:
-        n_ext = len(hdulist)
-    except Exception as e:
-        WLOG(params, 'warning', TextEntry('10-001-00005', args=[type(e), e]))
-        n_ext = None
-    # deal with unknown number of extensions
-    if n_ext is None:
-        data, header = deal_with_bad_header(params, hdulist, filename)
-    # -------------------------------------------------------------------------
-    # else get the data and header based on how many extnesions there are
-    else:
-        dataarr, headerarr = [], []
-        for it in range(n_ext):
-            # append header
-            try:
-                headerarr.append(hdulist[it].header)
-            except Exception as e:
-                if log:
-                    eargs = [os.path.basename(filename), it, type(e), e,
-                             func_name]
-                    WLOG(params, 'error', TextEntry('01-001-00008', args=eargs))
-                else:
-                    raise e
-            # append data
-            try:
-                if isinstance(hdulist[it].data, fits.BinTableHDU):
-                    dataarr.append(Table.read(hdulist[it].data))
-                else:
-                    dataarr.append(hdulist[it].data)
-            except Exception as e:
-                if log:
-                    eargs = [os.path.basename(filename), it, type(e), e,
-                             func_name]
-                    WLOG(params, 'error', TextEntry('01-001-00007', args=eargs))
-                else:
-                    raise e
-        data = list(dataarr)
-        header = list(headerarr)
-    # -------------------------------------------------------------------------
-    # return data and/or header
-    if getdata and gethdr:
-        return data, header
-    elif getdata:
-        return data
+    if copy:
+        return fits.Header(header)
     else:
         return header
 
 
-def _read_fitsimage(params, filename, getdata, gethdr, ext=0, log=True):
+# define complex typing for _read_fitsmulti
+DataHdrListType = Union[Tuple[List[np.ndarray], List[fits.Header], List[str]],
+                        Tuple[List[np.ndarray], List[str]],
+                        Tuple[List[fits.Header], List[str]]]
+
+
+def _read_fitsmulti(params: ParamDict, filename: str, getdata: bool,
+                    gethdr: bool, log: bool = True) -> DataHdrListType:
+    """
+    Read all extensions from a multi-extension fits file 'filename'
+    returns data if getdata is True, returns header if gethdr is True
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param filename: str, the filename to read the fits hdu from
+    :param getdata: bool, if True read the data from all extensions
+    :param gethdr: bool, if True read the headers from all extensions
+    :param log: bool, if True logs on error, else raises astropy.io.fits
+                exception that generated the error
+
+    :return: list of data if getdata True and/or list of headers if gethdr True
+    """
+    # set function name
+    func_name = display_func('_read_fitsmulti', __NAME__)
+    # attempt to open hdu of fits file
+    try:
+        with fits.open(filename) as hdulist:
+            # -----------------------------------------------------------------
+            # get the number of fits files in filename
+            try:
+                n_ext = len(hdulist)
+            except Exception as e:
+                msg = textentry('10-001-00005', args=[type(e), e])
+                WLOG(params, 'warning', msg, sublevel=2)
+                n_ext = None
+            # deal with unknown number of extensions
+            if n_ext is None:
+                bout = deal_with_bad_header(params, hdulist, filename)
+                dataarr, headerarr, names = bout
+            # -----------------------------------------------------------------
+            # else get the data and header based on how many extensions
+            #    there are
+            else:
+                dataarr, headerarr, names = [], [], []
+                for it in range(n_ext):
+                    # ---------------------------------------------------------
+                    # get this iterations header (and copy it)
+                    try:
+                        hdr_it = fits.Header(hdulist[it].header)
+                    except Exception as e:
+                        if log:
+                            eargs = [os.path.basename(filename), it,
+                                     type(e), e, func_name]
+                            msg = textentry('01-001-00008', args=eargs)
+                            WLOG(params, 'error', msg)
+                        else:
+                            raise e
+                    # ---------------------------------------------------------
+                    # get this iterations data
+                    data_it = hdulist[it].data
+                    # ---------------------------------------------------------
+                    # get name
+                    if hdulist[it].name is not None:
+                        names.append(str(hdulist[it].name))
+                    else:
+                        names.append('Unknown')
+                    # get xtension type
+                    if hdr_it is not None:
+                        xtension = hdr_it.get('XTENSION', None)
+                    else:
+                        xtension = None
+                    # append header
+                    headerarr.append(hdr_it)
+                    # append data
+                    try:
+                        if isinstance(data_it, fits.BinTableHDU):
+                            dataarr.append(Table(data_it))
+                        elif xtension is not None and xtension == 'BINTABLE':
+                            dataarr.append(Table(data_it))
+                        else:
+                            dataarr.append(deepcopy(data_it))
+                    except Exception as e:
+                        if log:
+                            eargs = [os.path.basename(filename), it,
+                                     type(e), e, func_name]
+                            emsg = textentry('01-001-00007', args=eargs)
+                            WLOG(params, 'error', emsg)
+                        else:
+                            raise e
+    except Exception as e:
+        eargs = [filename, type(e), e, func_name]
+        WLOG(params, 'error', textentry('01-001-00006', args=eargs))
+
+    # -------------------------------------------------------------------------
+    # return data and/or header
+    if getdata and gethdr:
+        return dataarr, headerarr, names
+    elif getdata:
+        return dataarr, names
+    else:
+        return headerarr, names
+
+
+# define complex typing for _read_fitsimage
+ImageFitsType = Tuple[Union[np.ndarray, None], Union[fits.Header, None]]
+
+
+def _read_fitsimage(params: ParamDict, filename: str, getdata: bool,
+                    gethdr: bool, ext: Union[int, None] = None,
+                    extname: Union[str, None] = None,
+                    log: bool = True) -> ImageFitsType:
+    """
+    Read a fits image in extension 'ext' for fits file 'filename'
+    returns data if getdata is True, returns header if gethdr is True
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param filename: str, the filename to read the fits hdu from
+    :param getdata: bool, if True read the data from extension 'ext'
+    :param gethdr: bool, if True read the headers from extension 'ext'
+    :param ext: int or None, if set tries to read this extension (via position)
+    :param extname: str or None, if set tires to read this extension (via name)
+    :param log: bool, if True logs on error, else raises astropy.io.fits
+                exception that generated the error
+
+    :return: data if getdata True and/or headers if gethdr True
+    """
+    # set function name
+    # _ = display_func('_read_fitsimage', __NAME__)
+    # -------------------------------------------------------------------------
+    # deal with getting data
+    if getdata:
+        # noinspection PyBroadException
+        try:
+            # deal with ext being set
+            if ext is not None:
+                # open fits file
+                with fits.open(filename) as hdulist:
+                    if len(hdulist) - 1 < ext:
+                        # print error: File {0} does not have extension {1}
+                        #              File may be corrupted or wrong type
+                        eargs = [filename, ext]
+                        emsg = textentry('00-004-00015', args=eargs)
+                        WLOG(params, 'error', emsg)
+                    data = np.array(hdulist[ext].data)
+            # deal with extname being set
+            elif extname is not None:
+                # open fits file
+                with fits.open(filename) as hdulist:
+                    if extname not in hdulist:
+                        # print error: File {0} does not have extension name {1}
+                        #              File may be corrupted or wrong type
+                        eargs = [filename, extname]
+                        emsg = textentry('00-004-00016', args=eargs)
+                        WLOG(params, 'error', emsg)
+                    data = np.array(hdulist[extname].data)
+            # just load first valid extension (and copy it)
+            else:
+                data = np.array(fits.getdata(filename))
+        except Exception as _:
+            try:
+                # try to deal with corrupted data extensions
+                data = deal_with_bad_file_single(filename, ext=ext,
+                                                 extname=extname,
+                                                 flavour='data')
+            except Exception as e:
+                if log:
+                    if ext is not None:
+                        extstr = 'ext = {0}'.format(ext)
+                    elif extname is not None:
+                        extstr = 'extname = {0}'.format(extname)
+                    else:
+                        extstr = ''
+                    # if we get to this point we cannot open the required
+                    #   extension
+                    string_trackback = traceback.format_exc()
+                    eargs = [filename, extstr, type(e)]
+                    emsg = textentry('01-001-00014', args=eargs)
+                    emsg += '\n\n' + textentry(string_trackback)
+                    WLOG(params, 'error', emsg)
+                    data = None
+                else:
+                    raise e
+    else:
+        data = None
+    # -------------------------------------------------------------------------
+    # deal with getting header
+    if gethdr:
+        # noinspection PyBroadException
+        try:
+            # deal with ext being set
+            if ext is not None:
+                # open fits file
+                with fits.open(filename) as hdulist:
+                    if len(hdulist) - 1 < ext:
+                        # print error: File {0} does not have extension {1}
+                        #              File may be corrupted or wrong type
+                        eargs = [filename, ext]
+                        emsg = textentry('00-004-00015', args=eargs)
+                        WLOG(params, 'error', emsg)
+                    header = Header(hdulist[ext].header)
+            # deal with extname being set
+            elif extname is not None:
+                # open fits file
+                with fits.open(filename) as hdulist:
+                    if extname not in hdulist:
+                        # print error: File {0} does not have extension name {1}
+                        #              File may be corrupted or wrong type
+                        eargs = [filename, extname]
+                        emsg = textentry('00-004-00016', args=eargs)
+                        WLOG(params, 'error', emsg)
+                    header = Header(hdulist[extname].header)
+            # just load first valid extension (and copy it)
+            else:
+                header = fits.Header(fits.getheader(filename))
+        except Exception as _:
+            try:
+                # try to deal with corrupted data extensions
+                header = deal_with_bad_file_single(filename, ext=ext,
+                                                   extname=extname,
+                                                   flavour='header')
+            except Exception as e:
+                if log:
+                    if ext is not None:
+                        extstr = 'ext = {0}'.format(ext)
+                    elif extname is not None:
+                        extstr = 'extname = {0}'.format(extname)
+                    else:
+                        extstr = ''
+                    string_trackback = traceback.format_exc()
+                    eargs = [filename, extstr, type(e)]
+                    emsg = textentry('01-001-00015', args=eargs)
+                    emsg += '\n\n' + textentry(string_trackback)
+                    WLOG(params, 'error', emsg)
+                    header = None
+                else:
+                    raise e
+    else:
+        header = None
+    # -------------------------------------------------------------------------
+    # return data and header
+    return data, header
+
+
+# define complex typing for _read_fitsimage
+TableFitsType = Tuple[Union[Table, None], Union[fits.Header, None]]
+
+
+def _read_fitstable(params: ParamDict, filename: str, getdata: bool,
+                    gethdr: bool, ext: Union[int, None] = None,
+                    extname: Union[str, None] = None,
+                    log: bool = True) -> TableFitsType:
+    """
+    Read a fits bin table in extension 'ext' for fits file 'filename'
+    returns table if getdata is True, returns header if gethdr is True
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param filename: str, the filename to read the fits hdu from
+    :param getdata: bool, if True read the table from extension 'ext'
+    :param gethdr: bool, if True read the headers from extension 'ext'
+    :param ext: int or None, if set tries to read this extension (via position)
+    :param extname: str or None, if set tires to read this extension (via name)
+    :param log: bool, if True logs on error, else raises astropy.io.fits
+                exception that generated the error
+
+    :return: table if getdata True and/or headers if gethdr True
+    """
+    # set function name
+    # _ = display_func('_read_fitstable', __NAME__)
     # -------------------------------------------------------------------------
     # deal with getting data
     if getdata:
         try:
-            data = fits.getdata(filename, ext=ext)
+            with warnings.catch_warnings(record=True) as _:
+                # double Table(Table.read is to make sure it is definitely
+                #   deep copied)
+                if ext is not None:
+                    data = Table(Table.read(filename, format='fits', hdu=ext))
+                elif extname is not None:
+                    data = Table(Table.read(filename, format='fits',
+                                            hdu=extname))
+                else:
+                    data = Table(Table.read(filename, format='fits'))
         except Exception as e:
             if log:
                 string_trackback = traceback.format_exc()
-                emsg = TextEntry('01-001-00014', args=[filename, ext, type(e)])
-                emsg += '\n\n' + TextEntry(string_trackback)
+                emsg = textentry('01-001-00016', args=[filename, ext, type(e)])
+                emsg += '\n\n' + textentry(string_trackback)
                 WLOG(params, 'error', emsg)
                 data = None
             else:
@@ -491,12 +795,12 @@ def _read_fitsimage(params, filename, getdata, gethdr, ext=0, log=True):
     # deal with getting header
     if gethdr:
         try:
-            header = fits.getheader(filename, ext=ext)
+            header = fits.Header(fits.getheader(filename, ext=ext))
         except Exception as e:
             if log:
                 string_trackback = traceback.format_exc()
-                emsg = TextEntry('01-001-00015', args=[filename, ext, type(e)])
-                emsg += '\n\n' + TextEntry(string_trackback)
+                emsg = textentry('01-001-00017', args=[filename, ext, type(e)])
+                emsg += '\n\n' + textentry(string_trackback)
                 WLOG(params, 'error', emsg)
                 header = None
             else:
@@ -508,164 +812,259 @@ def _read_fitsimage(params, filename, getdata, gethdr, ext=0, log=True):
     return data, header
 
 
-def _read_fitstable(params, filename, getdata, gethdr, ext=0, log=True):
-    # -------------------------------------------------------------------------
-    # deal with getting data
-    if getdata:
-        try:
-            data = Table.read(filename, format='fits')
-        except Exception as e:
-            if log:
-                string_trackback = traceback.format_exc()
-                emsg = TextEntry('01-001-00016', args=[filename, ext, type(e)])
-                emsg += '\n\n' + TextEntry(string_trackback)
-                WLOG(params, 'error', emsg)
-                data = None
-            else:
-                raise e
-    else:
-        data = None
-    # -------------------------------------------------------------------------
-    # deal with getting header
-    if gethdr:
-        try:
-            header = fits.getheader(filename, ext=ext)
-        except Exception as e:
-            if log:
-                string_trackback = traceback.format_exc()
-                emsg = TextEntry('01-001-00017', args=[filename, ext, type(e)])
-                emsg += '\n\n' + TextEntry(string_trackback)
-                WLOG(params, 'error', emsg)
-                header = None
-            else:
-                raise e
-    else:
-        header = None
-    # -------------------------------------------------------------------------
-    # return data and header
-    return data, header
+def find_named_extensions(filename: str, name: Union[str, None] = None,
+                          startswith: Union[str, None] = None) -> List[int]:
+    """
+    Find named extensions (either matching "name" or starting with "startswith")
+    returns a list of matched extensions (integers)
+
+    :param filename: str, the filename to try and open
+    :param name: str or None, if set EXTNAME much match this for extension to
+                 be returned
+    :param startswith: str or None, if set and name not set EXTNAME must start
+                       with this for extension to be returned
+
+    :return: a list of matched extensions (integers)
+    """
+    # valid extensions
+    valid_ext = []
+    # open file
+    with fits.open(filename) as hdulist:
+        # loop around extensions
+        for it in range(len(hdulist)):
+            # deal with None and non string names
+            if not isinstance(hdulist[it].name, str):
+                continue
+            # deal with full name being set
+            if name is not None:
+                if hdulist[it].name == name:
+                    valid_ext.append(it)
+            # deal with starts with being set
+            elif startswith is not None:
+                if hdulist[it].name.startswith(startswith):
+                    valid_ext.append(it)
+    # return valid extensions
+    return valid_ext
 
 
 # =============================================================================
 # Define write functions
 # =============================================================================
-def writefits(params, filename, data, header, datatype='image', dtype=None,
-              func=None):
-    # ------------------------------------------------------------------
-    # define a synchoronized lock for indexing (so multiple instances do not
-    #  run at the same time)
-    lockfile = os.path.basename(filename)
-    # start a lock
-    lock = drs_lock.Lock(params, lockfile)
-    # ------------------------------------------------------------------
-    # make locked read function
-    @drs_lock.synchronized(lock, params['PID'])
-    def locked_write():
-        return _write_fits(params, filename, data, header, datatype, dtype,
-                           func)
-    # ------------------------------------------------------------------
-    # try to run locked read function
-    try:
-        locked_write()
-    except KeyboardInterrupt as e:
-        lock.reset()
-        raise e
-    except Exception as e:
-        # reset lock
-        lock.reset()
-        raise e
+# define complex typing for writing
+ListImageTable = List[Union[np.ndarray, Table, None]]
+ListHeader = List[Union[Header, fits.Header, None]]
 
 
-def _write_fits(params, filename, data, header, datatype='image', dtype=None,
-                func=None):
+def writefits(params: ParamDict, filename: str, data: ListImageTable,
+              header: ListHeader, names: List[Union[str, None]],
+              datatype: List[str],
+              dtype: List[Union[str, None]], func: Union[str, None] = None):
+    """
+    Write a fits file (wrapper around locked function _write_fits) either
+    with single extension (data/header/datatype/dtype) are not lists,
+    or multiple extensions (data/header/datatype/dtype) are lists.
+
+    if data/header/datatype/dtype are lists all others must be lists of the
+    same legnth
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param filename: str, the filename and location to save fits file to
+    :param data: list of np.array/Table or just a np.array/Table - this is the
+                 data to be written the the fits HDU (HDU[i].data)
+    :param header: list of Header/fits.Header instances or just a
+                   Header/fits.Header instance - this is the header to be
+                   written to the fits HDU (HDU[i].header)
+    :param names: str or list of strings, the names of each extension
+
+    :param datatype: str or list of strings, the data type for each extension
+                     - must be either 'image' (for a ImageHDU) or 'table'
+                     (for a BinTableHDU)
+    :param dtype: str or list of strings, the destination data type, use a
+                  string representing a numpy dtype name, (e.g. ``'uint8'``,
+                  ``'int16'``, ``'float32'`` etc.).
+    :param func: str or None, the function calling the writefits function (for
+                 logging purposes)
+
+    :return: None - writes Fits HDU to 'filename'
+    """
+    return _write_fits(params, filename, data, header, names, datatype, dtype,
+                       func)
+
+
+def _write_fits(params: ParamDict, filename: str, data: ListImageTable,
+                header: ListHeader, names: List[Union[str, None]],
+                datatype: List[Union[str, None]], dtype: List[Union[str, None]],
+                func: Union[str, None] = None):
+    """
+    Internal write fits file function (should use writefits externally)
+    write fits file with single extension (data/header/datatype/dtype)
+    are not lists, or multiple extensions (data/header/datatype/dtype)
+    are lists.
+
+    if data/header/datatype/dtype are lists all others must be lists of the
+    same length
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param filename: str, the filename and location to save fits file to
+    :param data: list of np.array/Table or just a np.array/Table - this is the
+                 data to be written the the fits HDU (HDU[i].data)
+    :param header: list of Header/fits.Header instances or just a
+                   Header/fits.Header instance - this is the header to be
+                   written to the fits HDU (HDU[i].header)
+    :param datatype: str or list of strings, the data type for each extension
+                     - must be either 'image' (for a ImageHDU) or 'table'
+                     (for a BinTableHDU)
+    :param dtype: str or list of strings, the destination data type, use a
+                  string representing a numpy dtype name, (e.g. ``'uint8'``,
+                  ``'int16'``, ``'float32'`` etc.).
+    :param func: str or None, the function calling the writefits function (for
+                 logging purposes)
+
+    :return: None - writes Fits HDU to 'filename'
+    """
+    # set function name
+    func_name = display_func('_write_fits', __NAME__)
     # deal with function name coming from somewhere else
-    if func is None:
-        func_name = __NAME__ + '.writefits()'
-    else:
-        func_name = '{0} (via {1})'.format(func, __NAME__ + '.writefits()')
+    if func is not None:
+        func_name = '{0} (via {1})'.format(func, func_name)
     # ----------------------------------------------------------------------
     # check if file exists and remove it if it does
-    if os.path.exists(filename):
-        try:
-            os.remove(filename)
-        except Exception as e:
-            eargs = [os.path.basename(filename), type(e), e, func_name]
-            WLOG(params, 'error', TextEntry('01-001-00003', args=eargs))
-    # ----------------------------------------------------------------------
-    # make sure we are dealing with lists of data and headers
-    if not isinstance(data, list):
-        data = [data]
-    if not isinstance(header, list):
-        header = [header.to_fits_header()]
-    if not isinstance(datatype, list):
-        datatype = [datatype]
-    if dtype is not None and not isinstance(dtype, list):
-        dtype = [dtype]
+    # done in a while loop
+    tries, success, store_error = 0, False, None
+    while tries <= 5:
+        # test if file exists
+        if os.path.exists(filename):
+            # if it does try to remove it
+            try:
+                # remove file
+                os.remove(filename)
+                # success is True we don't need to report an error
+                success = True
+                # break out of while loop
+                break
+            # removing file may fail if removed by another process (very rare)
+            # so sleep for 0.1 s and then try to see if the file exists again
+            except Exception as e:
+                # add to tries (we don't want to try too many times)
+                tries += 1
+                # sleep zzz
+                time.sleep(0.1)
+                # store the error for eventual reporting (if fails more than
+                #   5 times)
+                store_error = (type(e), str(e))
+        # if file does not exist we can break out of loop
+        else:
+            # success is True we don't need to report an error
+            success = True
+            # break out of while loop
+            break
+    # deal with not being able to remove file
+    if not success:
+        eargs = [os.path.basename(filename), store_error[0], store_error[1],
+                 func_name]
+        WLOG(params, 'error', textentry('01-001-00003', args=eargs))
     # ----------------------------------------------------------------------
     # header must be same length as data
     if len(data) != len(header):
         eargs = [filename, len(data), len(header), func_name]
-        WLOG(params, 'error', TextEntry('00-013-00004', args=eargs))
+        WLOG(params, 'error', textentry('00-013-00004', args=eargs))
     # datatype must be same length as data
     if len(data) != len(datatype):
         eargs = [filename, len(data), len(datatype), func_name]
-        WLOG(params, 'error', TextEntry('00-013-00005', args=eargs))
+        WLOG(params, 'error', textentry('00-013-00005', args=eargs))
+    # names must be same length as data
+    if len(names) != len(data):
+        eargs = [filename, len(data), len(names), func_name]
+        WLOG(params, 'error', textentry('00-013-00009', args=eargs))
     # if dtype is not None must be same length as data
     if dtype is not None:
         if len(data) != len(dtype):
             eargs = [filename, len(data), len(dtype), func_name]
-            WLOG(params, 'error', TextEntry('00-013-00006', args=eargs))
+            WLOG(params, 'error', textentry('00-013-00006', args=eargs))
     # ----------------------------------------------------------------------
     # create the multi HDU list
     # try to create primary HDU first
     if isinstance(header[0], Header):
-        header0 = header[0].to_fits_header()
+        if hasattr(header[0], 'to_fits_header'):
+            header0 = header[0].to_fits_header()
+        else:
+            header0 = header[0].copy()
     else:
         header0 = header[0]
-    # set up primary HDU (if data[0] == image then put this in the primary)
-    #   else if table then primary HDU should be empty
-    if datatype[0] == 'image':
-        hdu0 = fits.PrimaryHDU(data[0], header=header0)
-        start = 1
-    else:
-        hdu0 = fits.PrimaryHDU()
-        start = 0
 
-    if dtype is not None:
-        hdu0.scale(type=dtype[0], **SCALEARGS)
-    # add all others afterwards
+    # data should not be in primary - we should have None as the first data
+    # entry - if no
+    if data[0] is None:
+        # set up primary HDU (header only)
+        hdu0 = fits.PrimaryHDU(header=header0)
+    else:
+        # set up primary HDU (header only)
+        hdu0 = fits.PrimaryHDU(data[0], header=header0)
+    # remove first entry from data / header
+    data = data[1:]
+    header = header[1:]
+    names = names[1:]
+    datatype = datatype[1:]
+    dtype = dtype[1:]
+    # add primary to hdus
     hdus = [hdu0]
-    for it in range(start, len(data)):
+    # add all others afterwards
+    for it in range(len(data)):
+        # ---------------------------------------------------------------------
+        # sanity check on data type (force Tables to 'table')
+        if isinstance(data[it], Table):
+            datatype[it] = 'table'
+        elif not isinstance(data[it], np.ndarray):
+            pass
+        elif 'void' in data[it].dtype.name:
+            datatype[it] = 'table'
+        # ---------------------------------------------------------------------
         if datatype[it] == 'image':
             fitstype = fits.ImageHDU
         elif datatype[it] == 'table':
             fitstype = fits.BinTableHDU
         else:
+            # warn user that extension is being skipped
+            wargs = [it + 1, names[it], datatype[it]]
+            WLOG(params, 'warning', textentry('10-001-00010', args=wargs),
+                 sublevel=4)
             continue
-        # add to hdu list
-        if isinstance(header[it], Header):
-            header_it = header[it].to_fits_header()
+        # ---------------------------------------------------------------------
+        # only add if header is a fits header
+        if isinstance(header[it], (Header, fits.Header)):
+            # deal with our custom headers
+            if hasattr(header[it], 'to_fits_header'):
+                header_it = header[it].to_fits_header()
+            else:
+                header_it = header[it].copy()
+        # otherwise we shouldn't really set header
         else:
-            header_it = header[it]
+            header_it = fits.Header()
+        # must add the EXTNAME for all extensions
+        header_it['EXTNAME'] = (names[it], 'name of the extension')
+        # ---------------------------------------------------------------------
+        # set HDU_i
         hdu_i = fitstype(data[it], header=header_it)
+        # deal with dtype being set
         if dtype is not None and datatype[it] == 'image':
             if dtype[it] is not None:
-                hdu_i.scale(type=dtype[it])
+                hdu_i.scale(type=dtype[it], **SCALEARGS)
         hdus.append(hdu_i)
     # convert to  HDU list
     hdulist = fits.HDUList(hdus)
     # except Exception as e:
     #     eargs = [type(e), e, func_name]
-    #     WLOG(params, 'error', TextEntry('01-001-00004', args=eargs))
+    #     WLOG(params, 'error', textentry('01-001-00004', args=eargs))
     #     hdulist = None
     # ---------------------------------------------------------------------
     # write to file
     with warnings.catch_warnings(record=True) as w:
         try:
             hdulist.writeto(filename, overwrite=True)
+            hdulist.close()
         except Exception as e:
             eargs = [os.path.basename(filename), type(e), e, func_name]
-            WLOG(params, 'error', TextEntry('01-001-00005', args=eargs))
+            WLOG(params, 'error', textentry('01-001-00005', args=eargs))
     # ---------------------------------------------------------------------
     # ignore truncated comment warning since spirou images have some poorly
     #   formatted header cards
@@ -680,485 +1079,101 @@ def _write_fits(params, filename, data, header, datatype='image', dtype=None,
     drs_log.warninglogger(params, w1)
 
 
-def add_header_key(header, keystore, value=None):
-    # only used if one cannot use DrsFitsFile
-    hkey, hvalue, hcomment = keystore
-    # deal with value set
-    if value is not None:
-        hvalue = value
-    # add to header
-    header[hkey] = (hvalue, hcomment)
-    # return header
-    return header
-
-
-# =============================================================================
-# Define search functions
-# =============================================================================
-def find_files(params, recipe, kind=None, path=None, logic='and', fiber=None,
-               return_table=False, night=None, **kwargs):
+def update_extension(params: ParamDict, filename: str, extension: int,
+                     data: Union[np.ndarray, Table, None] = None,
+                     header: Union[Header, None] = None, fmt: str = 'image'):
     """
-    Find files using kwargs (using index files located in 'kind' or 'path')
-
-    If path is set will use this path to look for index files
-
-    If kind is set to 'raw' uses DRS_DATA_RAW path, if kind is set to 'tmp'
-    uses DRS_DATA_WORKING path, if kind is set to 'red' uses DRS_DATA_REDUC
-    else uses params['INPATH']
-
-    The logic defines how kwargs are added.
-    kwargs must be in index file (column names) or in params as header keyword
-    stores (i.e. KW_DPRTYPE = [HEADER key, HEADER value, HEADER comment]
-
-    i.e.
-
-    find_files(params, kind='tmp', KW_DPRTYPE='FP_FP')
-    --> will return all files in the working directory with DPRTYPE = 'FP_FP'
-
-    find_files(params, kind='red', KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK'],
-               KW_OUTPUT='EXT_E2DS')
-    --> will return all files in reduced directory with:
-          DPRTYPE = OBJ_FP or OBJ_DARK   and DRSOUTID
-
-    :param params:
-    :param kind:
-    :param path:
-    :param logic:
-    :param kwargs:
-    :return:
-    """
-    func_name = __NAME__ + '.find_files()'
-    # ----------------------------------------------------------------------
-    # get pseudo constants
-    pconst = constants.pload(params['INSTRUMENT'])
-    # get the index file col name
-    filecol = params['DRS_INDEX_FILENAME']
-    nightcol = params['REPROCESS_NIGHTCOL']
-    timecol = 'KW_MID_OBS_TIME'
-    # ----------------------------------------------------------------------
-    # deal with setting path
-    if path is not None:
-        path = str(path)
-        columns = None
-        index_files = None
-        index_dir = None
-    elif kind == 'raw':
-        # get index table (generate if needed)
-        indextable, index_dir = find_raw_files(params, recipe)
-        # construct index file path for raw
-        raw_index_file = pcheck(params, 'REPROCESS_RAWINDEXFILE',
-                                'raw_index_file', kwargs, func_name)
-        mpath = os.path.join(params['DRS_DATA_RUN'], raw_index_file)
-        # set the columns from table
-        columns = indextable.colnames
-        # set index files
-        index_files = [mpath]
-    elif kind == 'tmp':
-        path = params['DRS_DATA_WORKING']
-        columns = pconst.OUTPUT_FILE_HEADER_KEYS()
-        index_files = None
-        index_dir = None
-    elif kind == 'red':
-        path = params['DRS_DATA_REDUC']
-        columns = pconst.OUTPUT_FILE_HEADER_KEYS()
-        index_files = None
-        index_dir = None
-    else:
-        path = params['INPATH']
-        columns = None
-        index_files = None
-        index_dir = None
-    # ----------------------------------------------------------------------
-    # deal with making sure all kwargs are in columns (if columns defined)
-    if columns is not None:
-        for kwarg in kwargs:
-            # if dkey not in columns report error
-            if kwarg not in columns:
-                # log and raise error
-                eargs = [kwarg, path, func_name]
-                WLOG(params, 'error', TextEntry('00-004-00001', args=eargs))
-    # ----------------------------------------------------------------------
-    # get index files
-    if index_files is None:
-        index_files = get_index_files(params, path, night=night)
-    # ----------------------------------------------------------------------
-    # valid files storage
-    valid_files = []
-    table_list = []
-    time_list = []
-    # filters added string
-    fstring = ''
-    # ----------------------------------------------------------------------
-    # loop through index files
-    for index_file in index_files:
-        # read index file
-        index = drs_table.read_fits_table(params, index_file)
-        # get directory
-        if index_dir is None:
-            dirname = os.path.dirname(index_file)
-        else:
-            dirname = index_dir
-        # ------------------------------------------------------------------
-        # overall masks
-        mask = np.ones(len(index), dtype=bool)
-        # filters added string
-        fstring = ''
-        # ------------------------------------------------------------------
-        # filter via kwargs
-        for kwarg in kwargs:
-            # --------------------------------------------------------------
-            # if dkey is not found in index file then report error
-            if kwarg not in index.colnames:
-                # report error
-                eargs = [kwarg, index_file, func_name]
-                WLOG(params, 'error', TextEntry('00-004-00002', args=eargs))
-            # --------------------------------------------------------------
-            # deal with list of args
-            if isinstance(kwargs[kwarg], list):
-                # get new mask
-                mask0 = np.zeros_like(mask)
-                # loop around kwargs[kwarg] values (has to be logic==or here)
-                for value in kwargs[kwarg]:
-                    mask0 |= (index[kwarg] == value.strip())
-            else:
-                mask0 = (index[kwarg] == kwargs[kwarg])
-            # --------------------------------------------------------------
-            # mask by filter
-            if logic == 'or':
-                mask |= mask0
-            else:
-                mask &= mask0
-            # --------------------------------------------------------------
-            # add to fstring
-            fstring += '\n\t{0}=\'{1}\''.format(kwarg, kwargs[kwarg])
-        # ------------------------------------------------------------------
-        # get files for those that remain
-        masked_files = index[filecol][mask]
-        if index_dir is None:
-            nightnames = np.array(mask).astype(int)
-        else:
-            nightnames = index[nightcol][mask]
-        # ------------------------------------------------------------------
-        masked_index = index[mask]
-        # new mask for index files
-        mask1 = np.zeros(len(masked_files), dtype=bool)
-        # check that files exist
-        # loop around masked files
-        for row, filename in enumerate(masked_files):
-            # deal with requiring night name
-            if index_dir is None:
-                nightname = ''
-            else:
-                nightname = nightnames[row]
-            # --------------------------------------------------------------
-            # deal with fiber
-            if fiber is not None:
-                # two conditions for not having fiber in name
-                cond1 = '_{0}.'.format(fiber) not in filename
-                cond2 = '_{0}_'.format(fiber) not in filename
-                # if both conditions are True then skip
-                if cond1 and cond2:
-                    continue
-            # get time value
-            timeval = float(masked_index[timecol][row])
-            # construct absolute path
-            absfilename = os.path.join(dirname, nightname, filename)
-            # check that file exists
-            if not os.path.exists(absfilename):
-                continue
-            # deal with returning index
-            mask1[row] = True
-            # append to storage
-            if absfilename not in valid_files:
-                valid_files.append(absfilename)
-                time_list.append(timeval)
-        # ------------------------------------------------------------------
-        # append to table list
-        if return_table:
-            table_list.append(masked_index[mask1])
-    # ----------------------------------------------------------------------
-    # log found
-    wargs = [len(valid_files), fstring]
-    WLOG(params, '', TextEntry('40-004-00004', args=wargs))
-    # ----------------------------------------------------------------------
-    # define sort mask (sort by time column)
-    sortmask = np.argsort(time_list)
-    # make sure valid_files is a numpy array
-    valid_files = np.array(valid_files)
-    # deal with table list
-    if return_table:
-        indextable = drs_table.vstack_cols(params, table_list)
-        return valid_files[sortmask], indextable[sortmask]
-    else:
-        # return full list
-        return valid_files[sortmask]
-
-
-def get_index_files(params, path=None, required=True, night=None):
-    """
-    Get index files in path (or sub-directory of path)
-        if path is "None" params['INPATH'] is used
+    Update the extension of an existing file
 
     :param params: ParamDict, the parameter dictionary of constants
-    :param path: str, the path to check for filetypes (must have index files
-                 in this path or sub directories of this path)
-                 if path is "None" params['INPATH'] is used
-    :param required: bool, if True generates an error when None found
-    :param night: str or None, if set filters index files by night
+    :param filename: str, the filename to save to
+    :param extension: int, the extension to update
+    :param data: numpy array or astropy Table, the data to update
+    :param header: Header, if set updates the header
+    :param fmt: str, the data format (image or table)
 
-    :type params: ParamDict
-    :type path: str
-    :type required: bool
-    :type night: str
-
-    :return: the absolute paths to all index files under path
-    :rtype: list[str]
+    :return: None, updates filename hdu extension="extension"
     """
-    func_name = __NAME__ + '.get_index_files()'
-    # deal with no path set
-    if path is None:
-        path = params['INPATH']
-    # storage of index files
-    index_files = []
-    # walk through path and find index files
-    for root, dirs, files in os.walk(path, followlinks=True):
-        # skip nights if required
-        if night is not None:
-            if not root.strip(os.sep).endswith(night):
-                continue
-        for filename in files:
-            if filename == params['DRS_INDEX_FILE']:
-                index_files.append(os.path.join(root, filename))
-    # log number of index files found
-    if len(index_files) > 0:
-        WLOG(params, '', TextEntry('40-004-00003', args=[len(index_files)]))
-    elif required:
-        eargs = [path, func_name]
-        WLOG(params, 'error', TextEntry('01-001-00021', args=eargs))
-    # return the index files
-    return np.sort(index_files)
-
-
-def find_raw_files(params, recipe, **kwargs):
-    func_name = __NAME__ + '.find_raw_files()'
-    # get properties from params
-    night_col = pcheck(params, 'REPROCESS_NIGHTCOL', 'night_col', kwargs,
-                       func_name)
-    absfile_col = pcheck(params, 'REPROCESS_ABSFILECOL', 'absfile_col',
-                         kwargs,
-                         func_name)
-    modified_col = pcheck(params, 'REPROCESS_MODIFIEDCOL', 'modified_col',
-                          kwargs, func_name)
-    sortcol = pcheck(params, 'REPROCESS_SORTCOL_HDRKEY', 'sortcol', kwargs,
-                     func_name)
-    raw_index_file = pcheck(params, 'REPROCESS_RAWINDEXFILE',
-                            'raw_index_file',
-                            kwargs, func_name)
-    itable_filecol = pcheck(params, 'DRS_INDEX_FILENAME', 'itable_filecol',
-                            kwargs, func_name)
-    # get path
-    path, rpath = _get_path_and_check(params, 'DRS_DATA_RAW')
-
-    # print progress
-    WLOG(params, 'info', TextEntry('40-503-00010'))
-
-    # get files
-    gfout = _get_files(params, recipe, path, rpath)
-    nightnames, filelist, basenames, mod_times, mkwargs = gfout
-
-    # construct a table
-    mastertable = Table()
-    mastertable[night_col] = nightnames
-    mastertable[itable_filecol] = basenames
-    mastertable[absfile_col] = filelist
-    mastertable[modified_col] = mod_times
-    for kwarg in mkwargs:
-        mastertable[kwarg] = mkwargs[kwarg]
-    # sort by sortcol
-    sortmask = np.argsort(mastertable[sortcol])
-    mastertable = mastertable[sortmask]
-    # save master table
-    mpath = os.path.join(params['DRS_DATA_RUN'], raw_index_file)
-    mastertable.write(mpath, overwrite=True)
-    # return the file list
-    return mastertable, rpath
-
-
-def fix_header(params, recipe, infile=None, header=None,
-               raise_exception=False, **kwargs):
-    """
-    Instrument specific header fixes are define in pseudo_const.py for an
-    instrument and called here (function in pseudo_const.py is HEADER_FIXES)
-    :param params:
-    :param infile:
-    :return:
-    """
-    # deal with no header
-    if header is None:
-        header = infile.header
-        hdict = infile.hdict
-        filename = infile.filename
-        has_infile = True
+    # set function name
+    func_name = display_func('_update_extension', __NAME__)
+    # deal with fits type
+    if fmt in ['image', 'fits-image']:
+        fitstype = fits.ImageHDU
+    elif fmt in ['table', 'fits-table']:
+        fitstype = fits.BinTableHDU
     else:
-        has_infile = False
-        hdict = Header()
-        filename = None
-
-    # load pseudo constants
-    pconst = constants.pload(params['INSTRUMENT'])
-    # use pseudo constant to apply any header fixes required (specific to
-    #   a specific instrument) and update the header
-    try:
-        header, hdict = pconst.HEADER_FIXES(params=params, recipe=recipe,
-                                            header=header, hdict=hdict,
-                                            filename=filename,
-                                            **kwargs)
-    except lang.drs_exceptions.DrsHeaderError as e:
-        if raise_exception:
-            raise e
+        # log error fmt must be image or table
+        WLOG(params, 'error', textentry('00-004-00013', args=[fmt]))
+        return
+    # open hdulist
+    with fits.open(filename) as hdulist:
+        # only update if we have enough extensions
+        if len(hdulist) >= extension:
+            # set up new hdu
+            new_hdu_list = []
+            # loop around all extensions
+            for ext in range(len(hdulist)):
+                # if we are not changing the extension add it here
+                if ext != extension:
+                    new_hdu_list.append(hdulist[ext].copy())
+                # else update data / header
+                else:
+                    # update header if not None (and Header instance)
+                    if header is not None:
+                        if isinstance(header, Header):
+                            header = header.to_fits_header()
+                        else:
+                            header = header.copy()
+                    if data is None and header is None:
+                        new_hdu_list.append(hdulist[ext].copy())
+                    elif data is None:
+                        new_hdu = hdulist[ext].copy()
+                        new_hdu.header = header
+                        new_hdu_list.append(new_hdu)
+                    elif header is None:
+                        new_hdu_list.append(fitstype(data))
+                    else:
+                        new_hdu_list.append(fitstype(data, header=header))
+        # else raise error
         else:
-            eargs = [e.key, e.filename]
-            WLOG(params, 'error', TextEntry('01-001-00027', args=eargs))
-    # if the input was an infile return the infile back
-    if has_infile:
-        # return the updated infile
-        infile.header = header
-        infile.hdict = hdict
-        return infile
-    # else return the header (assuming input was a header only)
-    else:
-        # else return the header
-        return header, hdict
-
-
-# =============================================================================
-# Define other functions
-# =============================================================================
-def combine(params, recipe, infiles, math='average', same_type=True):
-    """
-    Takes a list of infiles and combines them (infiles must be DrsFitsFiles)
-    combines using the math given.
-
-    Allowed math:
-        'sum', 'add', '+'
-        'average', 'mean'
-        'subtract', '-'
-        'divide', '/'
-        'multiply', 'times', '*'
-
-    Note 'infiles' must be all the same DrsFitsFile type to combine by default,
-    use 'same_type=False' to override this option
-
-    Note the header is copied from infiles[0]
-
-    :param params: ParamDict, parameter dictionary of constants
-    :param infiles: list of DrsFiles, list of DrsFitsFiles to combine
-    :param math: str, the math allowed (see above)
-    :param same_type: bool, if True all infiles must have the same DrsFitFile
-                      dtype
-
-    :type params: ParamDict
-    :type infiles: list[DrsFitsFile]
-    :type math: str
-    :type same_type: bool
-
-    :return: Returns the combined DrsFitFile (header same as infiles[0])
-    :rtype: DrsFitsFile
-    """
-    func_name = __NAME__ + '.combine()'
-    # if we have a string assume we have 1 file and skip combine
-    if type(infiles) is str:
-        return infiles
-    # make sure infiles is a list
-    if type(infiles) is not list:
-        WLOG(params, 'error', TextEntry('00-001-00020', args=[func_name]))
-    # if we have only one file (or none) skip combine
-    if len(infiles) == 1:
-        return infiles[0]
-    elif len(infiles) == 0:
-        return infiles
-    # check that all infiles are the same DrsFileType
-    if same_type:
-        for it, infile in enumerate(infiles):
-            if infile.name != infiles[0].name:
-                eargs = [infiles[0].name, it, infile.name, func_name]
-                WLOG(params, 'error', TextEntry('00-001-00021', args=eargs))
-
-    # get output path from params
-    outpath = str(params['OUTPATH'])
-    # check if outpath is set
-    if outpath is None:
-        WLOG(params, 'error', TextEntry('01-001-00023', args=[func_name]))
-        return None
-    # get the absolute path (for combined output)
-    if params['NIGHTNAME'] is None:
-        outdirectory = ''
-    else:
-        outdirectory = params['NIGHTNAME']
-    # combine outpath and out directory
-    abspath = os.path.join(outpath, outdirectory)
-    # make new infile using math
-    outfile = infiles[0].combine(infiles[1:], math, same_type, path=abspath)
-    # update the number of files
-    outfile.numfiles = len(infiles)
-    # write to disk
-    WLOG(params, '', TextEntry('40-001-00025', args=[outfile.filename]))
-    outfile.write_file()
-    # add to output files (for indexing)
-    recipe.add_output_file(outfile)
-    # return combined infile
-    return outfile
-
-
-def get_mid_obs_time(params, header, out_fmt=None, **kwargs):
-    func_name = __NAME__ + '.get_mid_obs_time()'
-    # get obs_time
-    outkey = params['KW_MID_OBS_TIME'][0]
-    # get format from params
-    timefmt = params.instances['KW_MID_OBS_TIME'].datatype
-    # get data type from params
-    timetype = params.instances['KW_MID_OBS_TIME'].dataformat
-    # get raw value from header
-    rawtime = header[outkey]
-    # get time object
-    obstime = Time(timetype(rawtime), format=timefmt)
-    # set the method for getting mid obs time
-    method = 'header'
-    dbname = 'header_time'
-    # return time in requested format
-    if out_fmt is None:
-        return obstime, method
-    elif out_fmt == 'mjd':
-        return float(obstime.mjd), method
-    elif out_fmt == 'jd':
-        return float(obstime.jd), method
-    elif out_fmt == 'iso' or out_fmt == 'human':
-        return obstime.iso, method
-    elif out_fmt == 'unix':
-        return float(obstime.unix), method
-    elif out_fmt == 'decimalyear':
-        return float(obstime.decimalyear), method
-    else:
-        kinds = ['None', 'human', 'iso', 'unix', 'mjd', 'jd', 'decimalyear']
-        eargs = [dbname, ' or '.join(kinds), out_fmt, func_name]
-        WLOG(params, 'error', TextEntry('00-001-00030', args=eargs))
+            # log error: Extension {0} not in {1}
+            eargs = [extension, filename, func_name]
+            # log error
+            WLOG(params, 'error', textentry('00-004-00014', args=eargs))
+            return
+        # write to file
+        with warnings.catch_warnings(record=True) as _:
+            try:
+                nhdulist = fits.HDUList(new_hdu_list)
+                nhdulist.writeto(filename, overwrite=True)
+                nhdulist.close()
+            except Exception as e:
+                eargs = [os.path.basename(filename), type(e), e, func_name]
+                WLOG(params, 'error', textentry('01-001-00005', args=eargs))
 
 
 # =============================================================================
 # Worker functions
 # =============================================================================
-def deal_with_bad_header(p, hdu, filename):
+# complex typing return for deal_with_bad_header
+BadHdrType = Tuple[List[np.ndarray], List[fits.Header], List[str]]
+
+
+def deal_with_bad_header(params: ParamDict, hdu: fits.HDUList,
+                         filename: str) -> BadHdrType:
     """
     Deal with bad headers by iterating through good hdu's until we hit a
     problem
 
-    :param p: ParamDict, the constants file
+    :param params: ParamDict, the constants file
     :param hdu: astropy.io.fits HDU
     :param filename: string - the filename for logging
 
-    :return data:
-    :return header:
+    :returns: a typle 1. the list of data (images), 2. the list of headers
+              up to the point where it cannot get them
     """
+    # set function name
+    # _ = display_func('deal_with_bad_header', __NAME__)
     # define condition to pass
     cond = True
     # define iterator
@@ -1166,12 +1181,14 @@ def deal_with_bad_header(p, hdu, filename):
     # define storage
     datastore = []
     headerstore = []
+    names = []
     # loop through HDU's until we cannot open them
     while cond:
         # noinspection PyBroadException
         try:
             datastore.append(hdu[it].data)
             headerstore.append(hdu[it].header)
+            names.append(hdu[it].name)
         except Exception as _:
             cond = False
         # iterate
@@ -1179,7 +1196,8 @@ def deal_with_bad_header(p, hdu, filename):
     # print message
     if len(datastore) > 0:
         dargs = [it - 1, filename]
-        WLOG(p, 'warning', TextEntry('10-001-00001', args=dargs))
+        WLOG(params, 'warning', textentry('10-001-00001', args=dargs),
+             sublevel=4)
     # find the first one that contains equal shaped array
     valid = []
     for d_it in range(len(datastore)):
@@ -1187,12 +1205,27 @@ def deal_with_bad_header(p, hdu, filename):
             valid.append(d_it)
     # if valid is empty we have a problem
     if len(valid) == 0:
-        WLOG(p, 'error', TextEntry('01-001-00001', args=[filename]))
+        WLOG(params, 'error', textentry('01-001-00001', args=[filename]))
     # return valid data
-    return datastore, headerstore
+    return datastore, headerstore, names
 
 
-def check_dtype_for_header(value):
+def check_dtype_for_header(value: Any) -> Any:
+    """
+    Header datatype value assignment
+    if string:  check for file (os.path.isfile) --> remove path
+                check for directory (os.path.isdir) --> remove path
+    if bool: change True --> 1, False --> 0
+    if float: np.nan --> NaN  np.inf --> INF  -np.inf --> -INF
+    if int: just copy to new int
+    else: copy to new string
+
+    :param value: Any value to be pushed into header
+
+    :return: the value updates with rules above
+    """
+    # set function name
+    # _ = display_func('check_dtype_for_header', __NAME__)
     # if value is a string check if it is a path if it is remove path
     #   and leave base file
     if isinstance(value, str):
@@ -1212,6 +1245,10 @@ def check_dtype_for_header(value):
     elif isinstance(value, float):
         if np.isnan(value):
             newvalue = 'NaN'
+        elif np.isposinf(value):
+            newvalue = 'INF'
+        elif np.isneginf(value):
+            newvalue = '-INF'
         else:
             newvalue = float(value)
     # if value is a int do nothing
@@ -1224,202 +1261,62 @@ def check_dtype_for_header(value):
     return newvalue
 
 
-def _get_path_and_check(params, key):
-    # check key in params
-    if key not in params:
-        WLOG(params, 'error', '{0} not found in params'.format(key))
-    # get top level path to search
-    rpath = params[key]
-    # deal with not having nightname
-    if 'NIGHTNAME' not in params:
-        path = str(rpath)
-    elif params['NIGHTNAME'] not in ['', 'None', None]:
-        path = os.path.join(rpath, params['NIGHTNAME'])
-    else:
-        path = str(rpath)
-    # check if path exists
-    if not os.path.exists(path):
-        WLOG(params, 'error', 'Path {0} does not exist'.format(path))
-    else:
-        return path, rpath
+def deal_with_bad_file_single(filename: str, ext: Optional[int] = None,
+                              extname: Optional[str] = None,
+                              flavour: str = 'data'
+                              ) -> Union[np.ndarray, fits.Header]:
+    """
+    One last attempt to read data or header but not both, for a single
+    ext or extname
 
+    :param filename: str, fits filename to try to open
+    :param ext: int or None, if given is the extension in the fits file to open
+    :param extname: str or None, if given is the extension name in the fits
+                    file to open
+    :param flavour: str, "data" to open image or "header" to open the meta info
 
-def _get_files(params, recipe, path, rpath, **kwargs):
-    func_name = __NAME__ + '.get_files()'
-    # get properties from params
-    absfile_col = pcheck(params, 'REPROCESS_ABSFILECOL', 'absfile_col', kwargs,
-                         func_name)
-    modified_col = pcheck(params, 'REPROCESS_MODIFIEDCOL', 'modified_col',
-                          kwargs, func_name)
-    raw_index_file = pcheck(params, 'REPROCESS_RAWINDEXFILE', 'raw_index_file',
-                            kwargs, func_name)
-    # get the file filter (should be None unless we want specific files)
-    filefilter = params.get('FILENAME', None)
-    if filefilter is not None:
-        filefilter = list(params['FILENAME'])
-    # ----------------------------------------------------------------------
-    # get the pseudo constant object
-    pconst = constants.pload(params['INSTRUMENT'])
-    # ----------------------------------------------------------------------
-    # get header keys
-    headerkeys = pconst.OUTPUT_FILE_HEADER_KEYS()
-    # get raw valid files
-    raw_valid = pconst.VALID_RAW_FILES()
-    # ----------------------------------------------------------------------
-    # storage list
-    filelist, basenames, nightnames, mod_times = [], [], [], []
-    blist = []
-    # load raw index
-    rawindexfile = os.path.join(params['DRS_DATA_RUN'], raw_index_file)
-    if os.path.exists(rawindexfile):
-        rawindex = drs_table.read_table(params, rawindexfile, fmt='fits')
+    :return: either a numpy array (if flavour='data') or fits Header
+    """
+    # set function name
+    func_name = display_func('deal_with_bad_file_single', __NAME__)
+    # open HDU
+    loaded, it = False, 0
+    hdulist = None
+    # try to open the file
+    while not loaded:
+        try:
+            hdulist = fits.open(filename)
+            loaded = True
+        except Exception as e:
+            # sometimes the file is open by another process --> wait
+            time.sleep(0.5)
+            it += 1
+            # if we have tried a few times stop
+            if it > 10:
+                # raise an error
+                eargs = [filename, ext, type(e)]
+                ekwargs = dict(codeid='01-001-00014', level='error',
+                               targs=eargs, func_name=func_name)
+                raise drs_base_classes.DrsCodedException(**ekwargs)
+    # deal with having an extension number
+    if ext is not None:
+        if flavour == 'data':
+            return np.array(hdulist[ext].data)
+        else:
+            return fits.Header(hdulist[ext].header)
+    # deal with having a extension name
+    if extname is not None:
+        if flavour == 'data':
+            return np.arary(hdulist[extname].data)
+        else:
+            return fits.Header(hdulist[extname].header)
+    # else loop around until we find the data we are after
     else:
-        rawindex = None
-    # ----------------------------------------------------------------------
-    # populate the storage dictionary
-    kwargs = dict()
-    for key in headerkeys:
-        kwargs[key] = []
-    # ----------------------------------------------------------------------
-    # deal with white/black list for nights
-    wnightnames = None
-    if 'WNIGHTNAMES' in params:
-        if not drs_text.null_text(params['WNIGHTNAMES'], ['None', 'All', '']):
-            wnightnames = params.listp('WNIGHTNAMES', dtype=str)
-    bnightnames = None
-    if 'BNIGHTNAMES' in params:
-        if not drs_text.null_text(params['BNIGHTNAMES'], ['None', 'All', '']):
-            bnightnames = params.listp('BNIGHTNAMES', dtype=str)
-    # ----------------------------------------------------------------------
-    # get files (walk through path)
-    for root, dirs, files in os.walk(path, followlinks=True):
-        # loop around files in this root directory
-        for filename in files:
-            # --------------------------------------------------------------
-            if filefilter is not None:
-                if os.path.basename(filename) not in filefilter:
-                    continue
-            # --------------------------------------------------------------
-            # get night name
-            ucpath = drs_path.get_uncommon_path(rpath, root)
-            if ucpath is None:
-                eargs = [path, rpath, func_name]
-                WLOG(params, 'error', TextEntry('00-503-00003', args=eargs))
-            # --------------------------------------------------------------
-            # make sure file is valid
-            isvalid = False
-            for suffix in raw_valid:
-                if filename.endswith(suffix):
-                    isvalid = True
-            # --------------------------------------------------------------
-            # do not scan empty ucpath
-            if len(ucpath) == 0:
-                continue
-            # --------------------------------------------------------------
-            # deal with blacklist/whitelist
-            if not drs_text.null_text(bnightnames, ['None', 'All', '']):
-                if ucpath in bnightnames:
-                    # only print path if not already in blist
-                    if ucpath not in blist:
-                        # log blacklisted
-                        margs = [ucpath]
-                        WLOG(params, '', TextEntry('40-503-00031', args=margs))
-                        # add to blist for printouts
-                        blist.append(ucpath)
-                    # skip this night
-                    continue
-            if not drs_text.null_text(wnightnames, ['None', 'All', '']):
-                if ucpath not in wnightnames:
-                    # skip this night
-                    continue
-                # elif we haven't seen this night before log statement
-                elif ucpath not in nightnames:
-                    # log: whitelisted
-                    margs = [ucpath]
-                    WLOG(params, '', TextEntry('40-503-00030', args=margs))
-            # --------------------------------------------------------------
-            # log the night directory
-            if (ucpath not in nightnames) and (ucpath != rpath):
-                # log: scnannming directory
-                margs = [ucpath]
-                WLOG(params, '', TextEntry('40-503-00003', args=margs))
-            # --------------------------------------------------------------
-            # get absolute path
-            abspath = os.path.join(root, filename)
-            modified = os.path.getmtime(abspath)
-            # --------------------------------------------------------------
-            # if not valid skip
-            if not isvalid:
-                continue
-            # --------------------------------------------------------------
-            # else append to list
-            else:
-                nightnames.append(ucpath)
-                filelist.append(abspath)
-                basenames.append(filename)
-                mod_times.append(modified)
-            # --------------------------------------------------------------
-            # see if file in raw index and has correct modified date
-            if rawindex is not None:
-                # find file
-                rowmask = (rawindex[absfile_col] == abspath)
-                # find match date
-                rowmask &= modified == rawindex[modified_col]
-                # only continue if both conditions found
-                if np.sum(rowmask) > 0:
-                    # locate file
-                    row = np.where(rowmask)[0][0]
-                    # if both conditions met load from raw fits file
-                    for key in headerkeys:
-                        kwargs[key].append(rawindex[key][row])
-                    # file was found
-                    rfound = True
-                else:
-                    rfound = False
-            else:
-                rfound = False
-            # --------------------------------------------------------------
-            # deal with header
-            if filename.endswith('.fits') and not rfound:
-                # read the header
-                header = read_header(params, abspath)
-                # fix the headers
-                try:
-                    header, _ = fix_header(params, recipe, header=header,
-                                           raise_exception=True)
-                except lang.drs_exceptions.DrsHeaderError as e:
-                    # log warning message
-                    eargs = [e.key, abspath]
-                    emsg = TextEntry('10-001-00008', args=eargs)
-                    WLOG(params, 'warning', emsg)
-                    # remove from lists
-                    nightnames.pop()
-                    filelist.pop()
-                    basenames.pop()
-                    mod_times.pop()
-                    # continue to next file
-                    continue
-
-                # loop around header keys
-                for key in headerkeys:
-                    rkey = params[key][0]
-                    if rkey in header:
-                        kwargs[key].append(header[rkey])
-                    else:
-                        kwargs[key].append('')
-    # ----------------------------------------------------------------------
-    # sort by filename
-    sortmask = np.argsort(filelist)
-    filelist = np.array(filelist)[sortmask]
-    nightnames = np.array(nightnames)[sortmask]
-    basenames = np.array(basenames)[sortmask]
-    mod_times = np.array(mod_times)[sortmask]
-    # need to sort kwargs
-    for key in kwargs:
-        kwargs[key] = np.array(kwargs[key])[sortmask]
-    # ----------------------------------------------------------------------
-    # return filelist
-    return nightnames, filelist, basenames, mod_times, kwargs
+        for ext in range(len(hdulist)):
+            if flavour == 'data' and hdulist[ext].data is not None:
+                return np.array(hdulist[ext].data)
+            elif flavour == 'header' and hdulist[ext].header is not None:
+                return fits.Header(hdulist[ext].header)
 
 
 # =============================================================================

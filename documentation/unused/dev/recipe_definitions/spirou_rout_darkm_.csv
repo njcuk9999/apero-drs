@@ -1,0 +1,2 @@
+name,HDR[DRSOUTID],file type,suffix,dbname,dbkey,input file
+DARKM,DARKM,.fits,_dark_master,calibration,DARKM,"DARK_DARK_TEL, DARK_DARK_INT"

@@ -12,9 +12,12 @@ body {
 
     margin: 0 auto;
     min-width: 786px;
-    max-width: 1200px;
+    max-width: 1600px;
 }
 
+.wy-nav-content {
+   max-width: none;
+}
 
 .pageheader {
     background-color: black;
@@ -50,17 +53,30 @@ body {
     text-shadow: none;
 }
 
+table.csvtable tr.row-odd {
+    background-color: #aabbcc;
+    font-size: 0.75em;
+}
+
+table.csvtable tr.row-even {
+    background-color: #bbbbbb;
+    font-size: 0.75em;
+}
+
 
 /*div.sphinxsidebar {
     max-height: 100%;
     overflow-y: auto;
 } */
 
-
+div.documentwrapper {
+    float: none;
+    width: 100%;
+}
 
 div.sphinxsidebarwrapper {
     position: relative;
-    top: 0px;
+    top: 0;
     padding: 0;
 }
 

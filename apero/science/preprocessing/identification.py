@@ -8,40 +8,36 @@ Created on 2019-03-05 16:37
 @author: ncook
 Version 0.0.1
 """
-from apero.core import constants
-from apero import core
-from apero.core.core import drs_file
-from apero.core.core import drs_recipe
 from apero import lang
-from apero.io import drs_fits
-
+from apero.base import base
+from apero.core import constants
+from apero.core.core import drs_log, drs_file
+from apero.core.utils import drs_recipe
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'preprocessing.identification.py'
 __INSTRUMENT__ = 'None'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # Get Logging function
-WLOG = core.wlog
+WLOG = drs_log.wlog
 # get param dict
 ParamDict = constants.ParamDict
 DrsFitsFile = drs_file.DrsFitsFile
 DrsRecipe = drs_recipe.DrsRecipe
 # Get the text types
-TextEntry = lang.drs_text.TextEntry
+textentry = lang.textentry
 
 
 # =============================================================================
 # Define functions
 # =============================================================================
-def drs_infile_id(params, recipe, given_drs_file):
+def drs_infile_id(params, given_drs_file):
     """
     Given a generic drs file (i.e. "raw_file") -- must have a fileset --
     identifies which sub-file (from fileset) this file is (based on
@@ -58,10 +54,10 @@ def drs_infile_id(params, recipe, given_drs_file):
               matching the DrsFitsFile sub-type
     :rtype: tuple[bool, DrsFitsFile]
     """
-    func_name = __NAME__ + '.drs_file_id()'
+    _ = __NAME__ + '.drs_file_id()'
     # ID DRS FILE
-    found, kind = drs_fits.id_drs_file(params, recipe, given_drs_file,
-                                       nentries=1, use_input_file=True)
+    found, kind = drs_file.id_drs_file(params, given_drs_file, nentries=1,
+                                       use_input_file=True)
     # return found and drs file that matches the correct type
     return found, kind
 
@@ -77,6 +73,7 @@ def drs_outfile_id(params, recipe, infile, drsfileset, prefix=None):
     :param infile: DrsFitsFile, the input drs_file
     :param drsfileset: DrsFitsFile, the drs file (with file set) to look
                            for sub-types
+    :param prefix: str, a prefix to remove from filename
 
     :type params: ParamDict
     :type recipe: DrsRecipe
@@ -91,7 +88,7 @@ def drs_outfile_id(params, recipe, infile, drsfileset, prefix=None):
     # check we have entries
     if len(drsfileset.fileset) == 0:
         eargs = [drsfileset.name, func_name]
-        WLOG(params, 'error', TextEntry('00-010-00001', args=eargs))
+        WLOG(params, 'error', textentry('00-010-00001', args=eargs))
     # get the associated files with this generic drs file
     fileset = list(drsfileset.fileset)
     strfileset = list(map(lambda x: str(x.name), fileset))
@@ -100,6 +97,8 @@ def drs_outfile_id(params, recipe, infile, drsfileset, prefix=None):
     kind, inname = None, 'not set'
     # loop around files
     for fileseti in fileset:
+        # make sure fileseti has params
+        fileseti.params = params
         # remove prefix if not None
         if prefix is not None:
             inname = infile.name.split(prefix)[-1]
@@ -115,7 +114,7 @@ def drs_outfile_id(params, recipe, infile, drsfileset, prefix=None):
     # deal with not being found
     if kind is None:
         eargs = [inname, '\n\t'.join(strfileset), func_name]
-        WLOG(params, 'error', TextEntry('00-010-00006', args=eargs))
+        WLOG(params, 'error', textentry('00-010-00006', args=eargs))
 
     # set the recipe if found
     if found:
