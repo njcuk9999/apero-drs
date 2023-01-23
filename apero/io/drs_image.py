@@ -1,23 +1,33 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Functions for dealing with drs images
+Functions for dealing with APERO images
 
 Created on 2019-03-21 at 14:28
 
 @author: cook
-"""
-import numpy as np
-import warnings
-import os
-from typing import List, Union, Tuple, Callable
 
-from apero import core
+Import rules:
+    only from core.core.drs_log, core.io, core.math, core.constants,
+    apero.lang, apero.base
+
+    do not import from core.core.drs_file
+    do not import from core.core.drs_argument
+    do not import from core.core.drs_database
+"""
+import os
+import warnings
+from typing import List, Union, Tuple
+
+import numpy as np
+from scipy.ndimage.morphology import binary_erosion, binary_dilation
+
+from apero import lang
+from apero.base import base
 from apero.core import constants
-from apero.core import drs_startup
 from apero.core import math as mp
 from apero.core.core import drs_log
-from apero import lang
+from apero.core.core import drs_misc
 from apero.io import drs_fits
 from apero.io import drs_path
 
@@ -26,27 +36,27 @@ from apero.io import drs_path
 # =============================================================================
 __NAME__ = 'io.drs_path.py'
 __INSTRUMENT__ = 'None'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # get param dict
 ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.drs_text.TextEntry
+textentry = lang.textentry
 # alias pcheck
-pcheck = core.pcheck
+pcheck = constants.PCheck(wlog=WLOG)
+# Get function string
+display_func = drs_log.display_func
 
 
 # =============================================================================
 # Define functions
 # =============================================================================
-def rotate_image(image, rotnum):
+def rotate_image(image: np.ndarray, rotnum: int) -> np.ndarray:
     """
     Rotates the image by a given rotation (rotnum)
 
@@ -68,11 +78,16 @@ def rotate_image(image, rotnum):
 
     :return newimage:  numpy array (2D), the rotated image
     """
+    # set function name
+    # _ = display_func('rotate_image', __NAME__)
+    # return math functino to rotate
     return mp.rot8(image, rotnum)
 
 
-def resize(params, image, x=None, y=None, xlow=0, xhigh=None,
-           ylow=0, yhigh=None):
+def resize(params: ParamDict, image: np.ndarray,
+           x: Union[np.ndarray, None] = None, y: Union[np.ndarray, None] = None,
+           xlow: int = 0, xhigh: Union[int, None] = None, ylow: int = 0,
+           yhigh: Union[int, None] = None) -> Union[np.ndarray, None]:
     """
     Resize an image based on a pixel values
 
@@ -89,7 +104,6 @@ def resize(params, image, x=None, y=None, xlow=0, xhigh=None,
     :param yhigh: int, y pixel value (x, y) in the top right corner,
                  if None default is image.shape[0]
 
-
     if getshape = True
     :return newimage: numpy array (2D), the new resized image
     :return nx: int, the shape in the first dimension, i.e. data.shape[0]
@@ -98,12 +112,13 @@ def resize(params, image, x=None, y=None, xlow=0, xhigh=None,
     if getshape = False
     :return newimage: numpy array (2D), the new resized image
     """
-    func_name = __NAME__ + '.resize()'
+    # set function name
+    func_name = display_func('resize', __NAME__)
     # Deal with no low/high values
     if xhigh is None:
-        xhigh = image.shape(1)
+        xhigh = image.shape[1]
     if yhigh is None:
-        yhigh = image.shape(0)
+        yhigh = image.shape[0]
     # if our x pixels and y pixels to keep are defined then use them to
     # construct the new image
     if x is not None and y is not None:
@@ -115,7 +130,7 @@ def resize(params, image, x=None, y=None, xlow=0, xhigh=None,
             x = np.arange(xhigh + 1, xlow + 1)[::-1]
         elif xlow == xhigh:
             eargs = ['xlow', 'xhigh', xlow, func_name]
-            WLOG(params, 'error', TextEntry('00-001-00023', args=eargs))
+            WLOG(params, 'error', textentry('00-001-00023', args=eargs))
         else:
             x = np.arange(xlow, xhigh)
         # deal with ylow > yhigh
@@ -123,7 +138,7 @@ def resize(params, image, x=None, y=None, xlow=0, xhigh=None,
             y = np.arange(yhigh + 1, ylow + 1)[::-1]
         elif ylow == yhigh:
             eargs = ['ylow', 'yhigh', xlow, func_name]
-            WLOG(params, 'error', TextEntry('00-001-00023', args=eargs))
+            WLOG(params, 'error', textentry('00-001-00023', args=eargs))
         else:
             y = np.arange(ylow, yhigh)
     # construct the new image (if one can't raise error)
@@ -131,19 +146,20 @@ def resize(params, image, x=None, y=None, xlow=0, xhigh=None,
         newimage = np.take(np.take(image, x, axis=1), y, axis=0)
     except Exception as e:
         eargs = [xlow, xhigh, ylow, yhigh, type(e), e, func_name]
-        WLOG(params, 'error', TextEntry('00-001-00024', args=eargs))
+        WLOG(params, 'error', textentry('00-001-00024', args=eargs))
         newimage = None
     # return error if we removed all pixels
     if newimage.shape[0] == 0 or newimage.shape[1] == 0:
         eargs = [xlow, xhigh, ylow, yhigh, func_name]
-        WLOG(params, 'error', TextEntry('00-001-00025', args=eargs))
+        WLOG(params, 'error', textentry('00-001-00025', args=eargs))
         newimage = None
 
     # return new image
     return newimage
 
 
-def flip_image(params, image, fliprows=True, flipcols=True):
+def flip_image(params: ParamDict, image: np.ndarray, fliprows: bool = True,
+               flipcols: bool = True) -> np.ndarray:
     """
     Flips the image in the x and/or the y direction
 
@@ -154,11 +170,12 @@ def flip_image(params, image, fliprows=True, flipcols=True):
 
     :return newimage: numpy array (2D), the flipped image
     """
-    func_name = __NAME__ + '.flip_image()'
+    # set function name
+    func_name = display_func('flip_image', __NAME__)
     # raise error if image is not 2D
     if len(image.shape) < 2:
         eargs = [image.shape, func_name]
-        WLOG(params, 'error', TextEntry('09-002-00001', args=eargs))
+        WLOG(params, 'error', textentry('09-002-00001', args=eargs))
     # flip both dimensions
     if fliprows and flipcols:
         return image[::-1, ::-1]
@@ -173,7 +190,9 @@ def flip_image(params, image, fliprows=True, flipcols=True):
         return image
 
 
-def convert_to_e(params, image, **kwargs):
+def convert_to_e(params: ParamDict, image: np.ndarray,
+                 gain: Union[float, None] = None,
+                 exptime: Union[float, None] = None) -> np.ndarray:
     """
     Converts image from ADU/s into e-
 
@@ -183,72 +202,84 @@ def convert_to_e(params, image, **kwargs):
                 gain: float, the gain of the image
     :param image: numpy array (2D), the image
 
-    :keyword gain: float, if p is None, used as the gain to multiple the
-                   image by
-    :keyword exptime: float, if p is None, used as the exposure time the image
-                    is multiplied by
+    :param gain: float, if set overrides params['GAIN'], used as the gain
+                   to multiple the image by
+    :param exptime: float, if set overrides params['EXPTIME'], used as the
+                      exposure time the image is multiplied by
 
     :return newimage: numpy array (2D), the image in e-
     """
-    func_name = __NAME__ + '.convert_to_e()'
+    # set function name
+    func_name = display_func('convert_to_e', __NAME__)
     # get constants from params / kwargs
-    gain = pcheck(params, 'GAIN', 'gain', kwargs, func=func_name)
-    exptime = pcheck(params, 'EXPTIME', 'exptime', kwargs, func=func_name)
+    _gain = pcheck(params, 'GAIN', func=func_name, override=gain)
+    _exptime = pcheck(params, 'EXPTIME', func=func_name, override=exptime)
     # correct image
-    newimage = image * gain * exptime
+    newimage = image * _gain * _exptime
     # return corrected image
     return newimage
 
 
-def convert_to_adu(params, image, **kwargs):
+def convert_to_adu(params: ParamDict, image: np.ndarray,
+                   exptime=Union[float, None]) -> np.ndarray:
     """
     Converts image from ADU/s into ADU
 
     :param params: parameter dictionary, ParamDict containing constants
         Must contain at least: (if exptime is None)
             exptime: float, the exposure time of the image
-    :param image:
-
-    :keyword exptime: float, if p is None, used as the exposure time the image
-                    is multiplied by
+    :param image: np.narray the image to convert to ADUs
+    :param exptime: float, if set overrides params['EXPTIME'], used as the
+                    exposure time the image is multiplied by
 
     :return newimage: numpy array (2D), the image in e-
     """
-    func_name = __NAME__ + '.convert_to_adu()'
+    # set function name
+    func_name = display_func('convert_to_adu', __NAME__)
     # get constants from params / kwargs
-    exptime = pcheck(params, 'EXPTIME', 'exptime', kwargs, func=func_name)
+    _exptime = pcheck(params, 'EXPTIME', func=func_name, override=exptime)
     # correct image
-    newimage = image * exptime
+    newimage = image * _exptime
     # return corrected image
     return newimage
 
 
-def clean_hotpix(image, badpix):
-    # Cleans an image by finding pixels that are high-sigma (positive or negative)
-    # outliers compared to their immediate neighbours. Bad pixels are
-    # interpolated with a 2D surface fit by using valid pixels within the
-    # 3x3 pixel box centered on the bad pix.
-    #
-    # Pixels in big clusters of bad pix (more than 3 bad neighbours)
-    # are left as is
+def clean_hotpix(image: np.ndarray, badpix: np.ndarray) -> np.ndarray:
+    """
+    Cleans an image by finding pixels that are high-sigma (positive or negative)
+    outliers compared to their immediate neighbours. Bad pixels are
+    interpolated with a 2D surface fit by using valid pixels within the
+    3x3 pixel box centered on the bad pix.
+
+    Pixels in big clusters of bad pix (more than 3 bad neighbours)
+    are left as is
+
+    First we construct a 'flattened' image
+    We perform a low-pass filter along the x axis
+    filtering the image so that only pixel-to-pixel structures
+    remain. This is use to find big outliers in RMS.
+    First we apply a median filtering, which removes big outliers
+    and then we smooth the image to avoid big regions filled with zeros.
+    Regions filled with zeros in the low-pass image happen when the local
+    median is equal to the pixel value in the input image.
+
+    We apply a 5-pix median boxcar in X and a 5-pix boxcar smoothing
+    in x. This blurs along the dispersion over a scale of ~7 pixels.
+
+    perform a [1,5] median filtering by rolling axis of a 2D image
+    and constructing a 5*N*M cube, then taking a big median along axis=0
+    analoguous to, but faster than :
+        low_pass = signal.medfilt(image_rms_measurement, [1, 5])
+
+    :param image: np.ndarray (2D) the image to fix the hot pixels for
+    :param badpix: np.ndarray (2D) the bad pixel map to help fix bad pixel
+
+    :return: np.array the image corrected for hot pixels
+    """
+    # set function name
+    # _ = display_func('clean_hotpix', __NAME__)
+    # copy the image
     image_rms_measurement = np.array(image)
-    # First we construct a 'flattened' image
-    # We perform a low-pass filter along the x axis
-    # filtering the image so that only pixel-to-pixel structures
-    # remain. This is use to find big outliers in RMS.
-    # First we apply a median filtering, which removes big outliers
-    # and then we smooth the image to avoid big regions filled with zeros.
-    # Regions filled with zeros in the low-pass image happen when the local
-    # median is equal to the pixel value in the input image.
-    #
-    # We apply a 5-pix median boxcar in X and a 5-pix boxcar smoothing
-    # in x. This blurs along the dispersion over a scale of ~7 pixels.
-
-    # perform a [1,5] median filtering by rolling axis of a 2D image
-    # and constructing a 5*N*M cube, then taking a big median along axis=0
-    # analoguous to, but faster than :
-    #     low_pass = signal.medfilt(image_rms_measurement, [1, 5])
-
     # make shifted cubes from +/- 2 pixels
     tmp = []
     for d in range(-2, 3):
@@ -285,6 +316,7 @@ def clean_hotpix(image, badpix):
         rms[rms < (0.5 * mp.nanmedian(rms))] = 0.5 * mp.nanmedian(rms)
         # determining a proxy of N sigma
         nsig = image_rms_measurement / rms
+        # TODO: remove hard-coded 10 value
         bad = np.array((np.abs(nsig) > 10), dtype=bool)
     # known bad pixels are also considered bad even if they are
     # within the +-N sigma rejection
@@ -300,7 +332,7 @@ def clean_hotpix(image, badpix):
     box3d = np.zeros([len(x), 3, 3])
     keep3d = np.zeros([len(x), 3, 3], dtype=bool)
     # centering on zero
-    yy, xx = np.indices([3, 3]) - 1
+    # yy, xx = np.indices([3, 3]) - 1
 
     sz = image.shape
     # loop around the pixels in x and y
@@ -324,10 +356,10 @@ def clean_hotpix(image, badpix):
     image1 = np.array(image)
     # correcting bad pixels with a 2D fit to valid neighbours
     # pre-computing some values that are needed below
-    xx2 = xx ** 2
-    yy2 = yy ** 2
-    xy = xx * yy
-    ones = np.ones_like(xx)
+    # xx2 = xx ** 2
+    # yy2 = yy ** 2
+    # xy = xx * yy
+    # ones = np.ones_like(xx)
     # loop around the x axis
     for it in range(len(x)):
         # get the keep and box values for this iteration
@@ -336,40 +368,51 @@ def clean_hotpix(image, badpix):
         if nvalid[it] == 8:
             # we fall in a special case where there is only a central pixel
             # that is bad surrounded by valid pixel. The central value is
-            # straightfward to compute by using the means of 4 immediate
+            # straightforward to compute by using the means of 4 immediate
             # neighbours and the 4 corner neighbours.
             m1 = np.mean(box[[0, 1, 1, 2], [1, 0, 2, 1]])
             m2 = np.mean(box[[0, 0, 2, 2], [2, 0, 2, 0]])
             image1[x[it], y[it]] = 2 * m1 - m2
         else:
-            # fitting a 2D 2nd order polynomial surface. As the xx=0, yy=0
-            # corresponds to the bad pixel, then the first coefficient
-            # of the fit (its zero point) corresponds to the value that
-            # must be given to the pixel
-            a = np.array([ones[keep], xx[keep], yy[keep], xx2[keep], yy2[keep],
-                          xy[keep]])
-            b = box[keep]
-            # perform a least squares fit on a and b
-            coeff, _ = mp.linear_minimization(b, a, no_recon=True)
-            # this is equivalent to the slower command :
-            # coeff = fit2dpoly(xx[keep], yy[keep], box[keep])
-            image1[x[it], y[it]] = coeff[0]
+
+            image1[x[it], y[it]] = np.nanmean(box[keep])
+
+        # else:
+        #     # fitting a 2D 2nd order polynomial surface. As the xx=0, yy=0
+        #     # corresponds to the bad pixel, then the first coefficient
+        #     # of the fit (its zero point) corresponds to the value that
+        #     # must be given to the pixel
+        #     a = np.array([ones[keep], xx[keep], yy[keep], xx2[keep], yy2[keep],
+        #                   xy[keep]])
+        #     b = box[keep]
+        #     # perform a least squares fit on a and b
+        #     coeff, _ = mp.linear_minimization(b, a, no_recon=True)
+        #     # this is equivalent to the slower command :
+        #     # coeff = fit2dpoly(xx[keep], yy[keep], box[keep])
+        #     image1[x[it], y[it]] = coeff[0]
     # return the cleaned image
     return image1
 
 
-def get_fiber_types(params: ParamDict, **kwargs):
-    func_name = __NAME__ + '.get_fiber_type()'
+def get_fiber_types(params: ParamDict,
+                    fibertypes: Union[List[str], None] = None,
+                    fiber: Union[str, None] = None) -> List[str]:
+    """
+    Get the correct fiber types based on params['FIBER_TYPES'] - if fibertypes
+    is set this is just returned, if fiber is 'ALL' return all fiber types,
+    else if fiber is in fibers just return fiber in a list form.
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param fibertypes: None or list of strings, if set this is the list of
+                       fibers returned
+    :param fiber: str or None, if set returns this fiber (in a list)
+
+    :return: list of strings, the fibers allowed
+    """
+    # set function name
+    func_name = display_func('get_fiber_types', __NAME__)
     # get parameter list from params/kwargs
     validfibertypes = params.listp('FIBER_TYPES', dtype=str)
-    # deal with fiber types from kwargs
-    fibertypes = kwargs.get('fibertypes', None)
-    # get fiber
-    if 'fiber' in kwargs:
-        fiber = kwargs['fiber']
-    else:
-        fiber = None
-
     # if fiber types is defined then return it (assuming user knows best)
     if fibertypes is not None:
         return fibertypes
@@ -390,13 +433,36 @@ def get_fiber_types(params: ParamDict, **kwargs):
         return [fiber]
     else:
         eargs = [fiber, ', '.join(validfibertypes), func_name]
-        WLOG(params, 'error', TextEntry('09-001-00030', args=eargs))
+        WLOG(params, 'error', textentry('09-001-00030', args=eargs))
 
 
 def npy_filelist(params: ParamDict, name: str, index: int,
                  array: np.ndarray, filenames: Union[List[str], None],
                  subdir: Union[str, None] = None,
                  outdir: Union[str, None] = None) -> Tuple[List[str], str]:
+    """
+    Save a numpy array to a npy file and append to 'filenames' (or start a new
+    list of 'filenames')
+
+    file is named as follows:
+        /LIM-{unixtime}-{random value}/{name}_{index}.npy
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param name: str, the name to add to the npy filename (as a prefix)
+    :param index: int, the iteration of this file
+    :param array: np.array - the numay array to save in the npy file
+    :param filenames: either None or a list of previous filenames
+    :param subdir: str or None, if set replaces this default sub-directory
+                   with user defined sub-directory (default is
+                   LIM-{unixtime}-{random value})
+    :param outdir: str  or None, the output dir for the subdirectory and npy
+                   files to be save - if not set defaults to current directory
+
+    :return: tuple, 1. the list of npy filenames, 2. the sub-directory name used
+             to store npy filename
+    """
+    # set function name
+    # _ = display_func('npy_filelist', __NAME__)
     # deal with no filenames
     if filenames is None:
         filenames = []
@@ -406,7 +472,7 @@ def npy_filelist(params: ParamDict, name: str, index: int,
     # deal with having no subdir
     if subdir is None:
         # get unix char code
-        unixtime, humantime, rval = drs_startup.unix_char_code()
+        unixtime, humantime, rval = drs_misc.unix_char_code()
         # create subdir
         subdir = 'LIM-{0:020d}-{1}'.format(int(unixtime), rval)
     # construct file name
@@ -427,8 +493,24 @@ def npy_filelist(params: ParamDict, name: str, index: int,
 
 
 def npy_fileclean(params: ParamDict, filenames: Union[List[str], None],
-                  subdir: Union[str, None],
+                  subdir: Union[str, None] = None,
                   outdir: Union[str, None] = None):
+    """
+    Remove all numpy files (after no longer needed) and the sub-directory they
+    were saved to (a clean up)
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param filenames: None or list of npy files
+    :param subdir: str or None, if set replaces this default sub-directory
+                   with user defined sub-directory (default is
+                   LIM-{unixtime}-{random value})
+    :param outdir: str  or None, the output dir for the subdirectory and npy
+                   files to be save - if not set defaults to current directory
+
+    :return: None - removes npy files and subdir
+    """
+    # set function name
+    # _ = display_func('npy_fileclean', __NAME__)
     # deal with not outdir
     if outdir is None:
         outdir = ''
@@ -445,7 +527,7 @@ def npy_fileclean(params: ParamDict, filenames: Union[List[str], None],
         os.removedirs(filepath)
 
 
-def large_image_combine(params: ParamDict, files: List[str],
+def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
                         math: str = 'median', fmt='fits', nmax: int = 2e7,
                         subdir: Union[str, None] = None,
                         outdir: Union[str, None] = None) -> np.ndarray:
@@ -461,6 +543,7 @@ def large_image_combine(params: ParamDict, files: List[str],
     :param params: the constant parameter dictionary
     :param files: list of strings, the files to open
     :param math: the mathematical operation to combine (median, mean, sum)
+    :param fmt: the format of the file to large image combine (fits or npy)
     :param nmax: int, the maximum number of pixels to open at any given time
                  note assuming 64 bits per pixel this gives a direct memory
                  constraint - 2e7 pixels ~ 1.28 Gb
@@ -479,7 +562,7 @@ def large_image_combine(params: ParamDict, files: List[str],
     :rtype: np.ndarray
     """
     # set function name
-    func_name = __NAME__ + '.large_image_combine()'
+    func_name = display_func('large_image_combine', __NAME__)
     # deal with math mode
     if math == 'median':
         cfunc = mp.nanmedian
@@ -498,7 +581,7 @@ def large_image_combine(params: ParamDict, files: List[str],
     # deal with having no subdir
     if subdir is None:
         # get unix char code
-        unixtime, humantime, rval = drs_startup.unix_char_code()
+        unixtime, humantime, rval = drs_misc.unix_char_code()
         # create subdir
         subdir = 'LIM-{0:020d}-{1}'.format(int(unixtime), rval)
     # construct file dir
@@ -517,7 +600,7 @@ def large_image_combine(params: ParamDict, files: List[str],
     else:
         # fmt="{0}" is incorrect
         eargs = [fmt, 'fits, npy', func_name]
-        WLOG(params, 'error', TextEntry('00-001-00044', args=eargs))
+        WLOG(params, 'error', textentry('00-001-00044', args=eargs))
         image0 = None
     # ----------------------------------------------------------------------
     # deal with only having 1 file
@@ -542,7 +625,7 @@ def large_image_combine(params: ParamDict, files: List[str],
         # log message so we know how far through we are
         # Processing file {0} / {1}
         wargs = [f_it + 1, numfiles]
-        WLOG(params, '', TextEntry('40-000-00012', args=wargs))
+        WLOG(params, '', textentry('40-000-00012', args=wargs))
         # ------------------------------------------------------------------
         # load file
         if fmt == 'fits':
@@ -552,7 +635,7 @@ def large_image_combine(params: ParamDict, files: List[str],
         else:
             # fmt="{0}" is incorrect
             eargs = [fmt, 'fits, npy', func_name]
-            WLOG(params, 'error', TextEntry('00-001-00044', args=eargs))
+            WLOG(params, 'error', textentry('00-001-00044', args=eargs))
             image = None
         # get the shape of the image
         dim1, dim2 = np.array(image.shape).astype(int)
@@ -565,7 +648,7 @@ def large_image_combine(params: ParamDict, files: List[str],
             # Files are not the same shape
             eargs = [mdim1, mdim2, f_it, dim1, dim2, files[0], files[1],
                      func_name]
-            WLOG(params, 'error', TextEntry('00-001-00045', args=eargs))
+            WLOG(params, 'error', textentry('00-001-00045', args=eargs))
         # ------------------------------------------------------------------
         # extract and save ribbons
         for b_it in range(len(bins) - 1):
@@ -576,7 +659,7 @@ def large_image_combine(params: ParamDict, files: List[str],
             ribbon_path = os.path.join(subfilepath, ribbon_name)
             # save ribbon to file
             # log: Saving file: {0}
-            WLOG(params, '', TextEntry('40-000-00013', args=[ribbon_path]))
+            WLOG(params, '', textentry('40-000-00013', args=[ribbon_path]))
             np.save(ribbon_path, ribbon)
             # delete ribbon
             del ribbon
@@ -590,7 +673,7 @@ def large_image_combine(params: ParamDict, files: List[str],
         # log message so we know how far through we are
         # Combining ribbon {0} / {1}
         wargs = [b_it + 1, len(bins)]
-        WLOG(params, '', TextEntry('40-000-00014', args=wargs))
+        WLOG(params, '', textentry('40-000-00014', args=wargs))
         # store box
         box = []
         # ------------------------------------------------------------------
@@ -602,11 +685,11 @@ def large_image_combine(params: ParamDict, files: List[str],
             ribbon_path = os.path.join(subfilepath, ribbon_name)
             # load ribbon
             # log: Loading file: {0}
-            WLOG(params, '', TextEntry('40-000-00015', args=[ribbon_path]))
+            WLOG(params, '', textentry('40-000-00015', args=[ribbon_path]))
             ribbon = np.load(ribbon_path)
             # delete this ribbon from disk
             # log: Removing file: {0}
-            WLOG(params, '', TextEntry('40-000-00016', args=[ribbon_path]))
+            WLOG(params, '', textentry('40-000-00016', args=[ribbon_path]))
             os.remove(ribbon_path)
             # append to box
             box.append(np.array(ribbon))
@@ -626,6 +709,37 @@ def large_image_combine(params: ParamDict, files: List[str],
     # ----------------------------------------------------------------------
     # return the out image
     return out_image
+
+
+def expand_badpixelmap(params: ParamDict, bad_pixel_map1: np.ndarray
+                       ) -> np.ndarray:
+    """
+    Expand large bad pixel areas to make sure the edges are counted as
+    bad pixels
+
+    Erode size (BAD_PIX_ERODE_SIZE) defines areas that are large/small
+    Dilate size (BAD_PIX_DILATE_SIZE) determines how much larger to make them
+
+    :param params: ParamDict
+    :param bad_pixel_map1: np.ndarray, input bad pixel map (1=bad, 0=good)
+
+    :return: np.ndarray, updated bad pixel map (1=bad, 0=good)
+    """
+    # get erode and dilate size
+    erode_size = pcheck(params, 'BADPIX_ERODE_SIZE', dtype=float)
+    dilate_size = pcheck(params, 'BADPIX_DILATE_SIZE', dtype=float)
+    # define circular masks for the erosion and dilation of the bad pixels
+    erode_mask = mp.get_circular_mask(erode_size)
+    dilate_mask = mp.get_circular_mask(dilate_size)
+    # remove small bad pixels (i.e. pixels with one of the dimensions of
+    #    size = 1)
+    bad_pixel_map2 = binary_erosion(bad_pixel_map1, structure=erode_mask)
+    # expand large bad pixel regions
+    bad_pixel_map2 = binary_dilation(bad_pixel_map2, structure=dilate_mask)
+    # bad pixels are a combination of original map and the expanded region
+    bad_pixel_map3 = bad_pixel_map1 | bad_pixel_map2
+    # return
+    return bad_pixel_map3
 
 
 # =============================================================================

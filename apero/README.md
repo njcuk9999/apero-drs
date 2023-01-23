@@ -6,6 +6,23 @@
 import apero
 ```
 
+## import rules
+
+apero.base				- no apero modules
+apero.lang 				- only from apero.lang, apero.base
+apero.core.constants   	- only from core.constants, apero.lang, apero.base
+apero.core.math 		- only from core.math, core.constants, apero.lang, apero.base
+apero.core.core   		- only from core.core, core.math, core.constants, apero.lang, apero.base
+apero.core.utils  		- only from apero.core.utils, core.core, core.math, core.constants, apero.lang, apero.base
+
+apero.io - only from core.core
+
+apero.plotting - from all
+apero.recipes - from all
+apero.science - from all
+apero.tools - from all
+
+
 ## Contains:
 
 - core

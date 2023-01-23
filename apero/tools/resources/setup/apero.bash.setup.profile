@@ -9,6 +9,7 @@ export PYTHONPATH={PYTHONPATH}:$PYTHONPATH
 
 # setup aliases
 alias gointroot="cd {ROOT_PATH}"
+alias gosetup="cd {USER_CONFIG}"
 
 # setup drs config path
 export DRS_UCONFIG="{USER_CONFIG}"

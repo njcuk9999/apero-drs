@@ -1,0 +1,26 @@
+name,HDR[DRSOUTID],file type,suffix,fibers,dbname,dbkey,input file
+PPMSTR,PPMSTR,.fits,_pmaster,--,calibration,PPMSTR,RAW_FLAT_FLAT
+DARKI,DARKI,.fits,_darki,--,calibration,DARKI,DARK_DARK
+DARKS,DARKS,.fits,_darks,--,calibration,DARKS,DARK_DARK_SKY
+DARKM,DARKM,.fits,_dark_master,--,calibration,DARKM,DARK_DARK
+BADPIX,BADPIX,.fits,_badpixel,--,calibration,BADPIX,FLAT_FLAT
+BKGRD_MAP,BKGRD_MAP,.fits,_bmap.fits,--,calibration,BKGRDMAP,FLAT_FLAT
+LOC_ORDERP,LOC_ORDERP,.fits,_order_profile,"A, B",calibration,ORDER_PROFILE,"FLAT_DARK, DARK_FLAT"
+LOC_LOCO,LOC_LOCO,.fits,_loco,"A, B",calibration,LOC,"FLAT_DARK, DARK_FLAT"
+SHAPE_X,SHAPE_X,.fits,_shapex,--,calibration,SHAPEX,FP_FP
+SHAPE_Y,SHAPE_Y,.fits,_shapey,--,calibration,SHAPEY,FP_FP
+MASTER_FP,MASTER_FP,.fits,_fpmaster,--,calibration,FPMASTER,FP_FP
+SHAPEL,SHAPEL,.fits,_shapel,--,calibration,SHAPEL,FP_FP
+FF_BLAZE,FF_BLAZE,.fits,_blaze,"A, B",calibration,BLAZE,FLAT_FLAT
+FF_FLAT,FF_FLAT,.fits,_flat,"A, B",calibration,FLAT,FLAT_FLAT
+LEAKM_E2DS,LEAKM_E2DS,.fits,_leak_master,"A, B",calibration,LEAKM,"EXT_E2DS, EXT_E2DS_FF"
+WAVESOL_MASTER,WAVESOL_MASTER,.fits,_wavesol_master_,"A, B",calibration,WAVESOL_MASTER,"EXT_E2DS, EXT_E2DS_FF"
+WAVE_HCLIST_MASTER,WAVE_HCLIST_MASTER,.fits,_wavem_hclines,"A, B",calibration,WAVEHCL,"EXT_E2DS, EXT_E2DS_FF"
+WAVE_FPLIST_MASTER,WAVE_FPLIST_MASTER,.fits,_wavem_fplines,"A, B",calibration,WAVEFPL,"EXT_E2DS, EXT_E2DS_FF"
+WAVEM_CAV,WAVEM_CAV,.fits,_wavecav_,--,calibration,WAVECAV,"EXT_E2DS, EXT_E2DS_FF"
+WAVEM_D,WAVEM_SOL,.fits,_wavem,"A, B",calibration,WAVEM_D,"EXT_E2DS, EXT_E2DS_FF"
+WAVEM_FP,WAVEM_FP,.fits,_wavem_fp,"A, B",calibration,WAVESOL_MASTER,"EXT_E2DS, EXT_E2DS_FF"
+WAVEM_HC,WAVEM_HC,.fits,_wavem_hc,"A, B",calibration,WAVEM,"EXT_E2DS, EXT_E2DS_FF"
+WAVE_HC,WAVE_HC,.fits,_wave_hc,"A, B",calibration,WAVE,"EXT_E2DS, EXT_E2DS_FF"
+WAVE_FP,WAVE_FP,.fits,_wave_fp,"A, B",calibration,WAVE,"EXT_E2DS, EXT_E2DS_FF"
+WAVE_NIGHT,WAVE_NIGHT,.fits,_wave_night,"A, B",calibration,WAVE,"EXT_E2DS, EXT_E2DS_FF"

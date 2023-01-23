@@ -1,19 +1,26 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
-
-# CODE DESCRIPTION HERE
+Pseudo constants (function) definitions for NO INSTRUMENT
 
 Created on 2019-01-18 at 14:44
 
 @author: cook
 """
-import importlib
-import sys
 import os
+import string
+import sys
+from typing import Any, Dict, List, Optional, Tuple, Union
 
-from apero.lang import drs_exceptions
+import numpy as np
+from astropy.table import Table
+
+from apero.base import base
+from apero.base import drs_db
+from apero.core.core import drs_base_classes as base_class
+from apero.core.core import drs_exceptions
+from apero.core.core import drs_misc
+from apero.core.core import drs_text
 
 # =============================================================================
 # Define variables
@@ -21,43 +28,200 @@ from apero.lang import drs_exceptions
 # Name of program
 __NAME__ = 'instruments.default.pseudo_const'
 __PATH__ = 'instruments.default'
-# get error
-ConfigError = drs_exceptions.ConfigError
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # get not implemented error
 NOT_IMPLEMENTED = ('Definition Error: Must be overwritten in instrument '
                    'pseudo_const not {0} \n\t i.e. in apero.core.'
                    'instruments.spirou.pseudoconst.py \n\t method = {1}')
+# get database columns
+DatabaseColumns = drs_db.DatabaseColumns
+# get display func
+display_func = drs_misc.display_func
+# define bad characters for objects (alpha numeric + "_")
+BAD_OBJ_CHARS = [' '] + list(string.punctuation.replace('_', ''))
+# null text
+NULL_TEXT = ['', 'None', 'Null']
 
 
 # =============================================================================
 # Define Constants class (pseudo constants)
 # =============================================================================
-class PseudoConstants:
-    def __init__(self, instrument=None):
+# noinspection PyMethodMayBeStatic,PyPep8Naming
+class DefaultPseudoConstants:
+    # set class name
+    class_name = 'DefaultPseudoConstants'
+
+    def __init__(self, instrument: Union[str, None] = None):
+        """
+        Pseudo Constants constructor
+
+        :param instrument: str, the drs instrument name
+        """
+        # set function name
+        # _ = display_func('__init__', __NAME__, self.class_name)
+        # set instrument name
         self.instrument = instrument
+        # storage of things we don't want to compute twice without need
+        self.header_cols: Optional[DatabaseColumns] = None
+        self.index_cols: Optional[DatabaseColumns] = None
+        self.calibration_cols: Optional[DatabaseColumns] = None
+        self.telluric_cols: Optional[DatabaseColumns] = None
+        self.logdb_cols: Optional[DatabaseColumns] = None
+        self.objdb_cols: Optional[DatabaseColumns] = None
+        self.rejectdb_cols: Optional[DatabaseColumns] = None
+
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set function name
+        # _ = display_func('__getstate__', __NAME__, self.class_name)
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state
+        return state
+
+    def __setstate__(self, state: dict):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # set function name
+        # _ = display_func('__setstate__', __NAME__, self.class_name)
+        # update dict with state
+        self.__dict__.update(state)
+
+    def __str__(self) -> str:
+        """
+        string representation of PseudoConstants
+        :return:
+        """
+        # set function name
+        # _ = display_func('__str__', __NAME__, self.class_name)
+        # return string representation
+        return self.__repr__()
+
+    def __repr__(self) -> str:
+        """
+        string representation of PseudoConstants
+        :return:
+        """
+        # set function name
+        # _ = display_func('__repr__', __NAME__, self.class_name)
+        # return string representation
+        return '{0}[{1}]'.format(self.class_name, self.instrument)
+
+    def _not_implemented(self, method_name: str):
+        """
+        Raise a Not Implemented Error (for methods that are required to be
+        defined by PseudoConstants child class i.e. the instrument class)
+
+        :param method_name: str, the method name that needs overriding
+
+        :raises: NotImplementedError
+
+        :return: None
+        """
+        emsg = '{0} must be defined at instrument level'
+        raise NotImplementedError(emsg.format(method_name))
 
     # =========================================================================
     # File and Recipe definitions
     # =========================================================================
-    def FILEMOD(self):
+    def FILEMOD(self) -> base_class.ImportModule:
+        """
+        The import for the file definitions
+        :return: file_definitions
+        """
+        # set function name
+        func_name = display_func('FILEMOD', __NAME__, self.class_name)
+        # set module name
         module_name = 'apero.core.instruments.default.file_definitions'
-        return importlib.import_module(module_name)
+        # try to import module
+        try:
+            return base_class.ImportModule('default.file_definitions',
+                                           module_name)
+        except Exception as e:
+            # raise coded exception
+            eargs = [module_name, 'system', func_name, type(e), str(e), '']
+            ekwargs = dict(codeid='00-000-00003', level='error',
+                           targs=eargs, func_name=func_name)
+            raise drs_exceptions.DrsCodedException(**ekwargs)
 
-    def RECIPEMOD(self):
+    def RECIPEMOD(self) -> base_class.ImportModule:
+        """
+        The import for the recipe defintions
+
+        :return: file_definitions
+        """
+        # set function name
+        func_name = display_func('RECIPEMOD', __NAME__, self.class_name)
+        # set module name
         module_name = 'apero.core.instruments.default.recipe_definitions'
-        return importlib.import_module(module_name)
+        # try to import module
+        try:
+            return base_class.ImportModule('default.recipe_definitions',
+                                           module_name)
+        except Exception as e:
+            # raise coded exception
+            eargs = [module_name, 'system', func_name, type(e), str(e), '']
+            ekwargs = dict(codeid='00-000-00003', level='error',
+                           targs=eargs, func_name=func_name)
+            raise drs_exceptions.DrsCodedException(**ekwargs)
 
     # =========================================================================
     # HEADER SETTINGS
     # =========================================================================
-    def VALID_RAW_FILES(self):
+    def VALID_RAW_FILES(self) -> List[str]:
+        """
+        Return the extensions that are valid for raw files
+
+        :return: a list of strings of valid extensions
+        """
+        # set function name
+        # _ = display_func('VALID_RAW_FILES', __NAME__, self.class_name)
+        # set valid extentions
         valid = ['.fits']
         return valid
 
-    # =========================================================================
-    # HEADER SETTINGS
-    # =========================================================================
-    # noinspection PyPep8Naming
+    def NON_CHECK_DUPLICATE_KEYS(self) -> List[str]:
+        """
+        Post process do not check these duplicate keys
+        """
+        # set function name
+        # _ = display_func('NON_CHECK_DUPLICATE_KEYS', __NAME__,
+        #                  self.class_name)
+        # set forbidden keys
+        keys = ['SIMPLE', 'EXTEND', 'NEXTEND']
+        # return forbiiden keys
+        return keys
+
+    def FORBIDDEN_OUT_KEYS(self) -> List[str]:
+        """
+        Defines the keys in a HEADER file not to copy when copying over all
+        HEADER keys to a new fits file
+
+        :return forbidden_keys: list of strings, the keys in a HEADER file not
+                                to copy from and old fits file
+        """
+        # set function name
+        # _ = display_func('FORBIDDEN_COPY_KEYS', __NAME__, self.class_name)
+        # set forbidden keys
+        forbidden_keys = ['SIMPLE', 'BITPIX', 'NAXIS', 'NAXIS1', 'NAXIS2',
+                          'EXTEND', 'COMMENT', 'CRVAL1', 'CRPIX1', 'CDELT1',
+                          'CRVAL2', 'CRPIX2', 'CDELT2', 'BSCALE', 'BZERO',
+                          'PHOT_IM', 'FRAC_OBJ', 'FRAC_SKY', 'FRAC_BB',
+                          'NEXTEND']
+        # return keys
+        return forbidden_keys
+
     def FORBIDDEN_COPY_KEYS(self):
         """
         Defines the keys in a HEADER file not to copy when copying over all
@@ -66,136 +230,257 @@ class PseudoConstants:
         :return forbidden_keys: list of strings, the keys in a HEADER file not
                                 to copy from and old fits file
         """
-        forbidden_keys = []
-        # return keys
-        return forbidden_keys
+        # set function name
+        # _ = display_func('FORBIDDEN_COPY_KEYS', __NAME__, self.class_name)
+        # raise implementation error
+        self._not_implemented('FORBIDDEN_COPY_KEYS')
 
-    # noinspection PyPep8Naming
-    def FORBIDDEN_HEADER_PREFIXES(self):
+    def FORBIDDEN_HEADER_PREFIXES(self) -> List[str]:
         """
         Define the QC keys prefixes that should not be copied (i.e. they are
         just for the input file not the output file)
 
         :return keys:
         """
+        # set function name
+        # _ = display_func('FORBIDDEN_HEADER_PREFIXES', __NAME__,
+        #                  self.class_name)
+        # set qc prefixes
         prefixes = ['QCC', 'INF1', 'INF2', 'INF3', 'INP1']
         # return keys
         return prefixes
 
-    # noinspection PyPep8Naming
-    def FORBIDDEN_DRS_KEY(self):
+    def FORBIDDEN_DRS_KEY(self) -> List[str]:
+        """
+        Define a list of keys that should not be copied from headers to new
+        headers
+
+        :return: list of strings, the header keys to not be copied
+        """
+        # set function name
+        # _ = display_func('FORBIDDEN_DRS_KEY', __NAME__, self.class_name)
         # DRS OUTPUT KEYS
         forbidden_keys = ['WAVELOC', 'REFRFILE', 'DRSPID', 'VERSION',
                           'DRSOUTID']
         # return keys
         return forbidden_keys
 
-    # noinspection PyPep8Naming
-    def HEADER_FIXES(self, **kwargs):
+    def HEADER_FIXES(self, params: Any, recipe: Any, header: Any,
+                     hdict: Any, filename: str, check_aliases: bool = False,
+                     objdbm: Any = None):
         """
         This should do nothing unless an instrument header needs fixing
 
-        :param header: DrsFitsFile header
-
+        :param params: ParamDict, the parameter dictionary of constants
+        :param recipe: DrsRecipe instance, the recipe instance the call came
+                       from
+        :param header: drs_fits.Header or astropy.io.fits.Header - containing
+                       key words, can be unset if hdict set
+        :param hdict:  drs_fits.Header, alternate source for keys, can be
+                       unset if header set
+        :param filename: str, used for filename reported in exceptions
+        :param check_aliases: bool, if True check aliases (using database)
+        :param objdbm: drs_database.ObjectDatabase - the database to check
+                       aliases in
+                       
         :return: the fixed header
         """
-        # get arguments from kwargs
-        params = kwargs.get('params')
-        recipe = kwargs.get('recipe')
-        header = kwargs.get('header')
-        filename = kwargs.get('filename')
-        # return header
-        return header
+        # set function name
+        # _ = display_func('HEADER_FIXES', __NAME__, self.class_name)
+        # do nothing
+        _ = params, recipe, header, hdict, filename, check_aliases, objdbm
+        # raise implementation error
+        self._not_implemented('HEADER_FIXES')
+
+    def DRS_OBJ_NAME(self, objname: str) -> str:
+        """
+        Clean and standardize an object name
+
+        Default action: make upper case and remove white spaces
+
+        Should only be used when we do not have to worry about aliases to
+        object names - use:
+            objdbm = drs_database.ObjectDatabase(params)
+            objdbm.load_db()
+            objdbm.find_objname(pconst, objname)
+        instead to deal with aliases
+
+        :param objname: str, input object name
+        :return:
+        """
+        # return object name
+        return clean_object(objname)
+
+    def DRS_DPRTYPE(self, params: Any, recipe: Any, header: Any,
+                    filename: str):
+        """
+        Get the dprtype for a specific header
+
+        :param params: ParamDict, the parameter dictionary of constants
+        :param recipe: DrsRecipe instance (used to get file mod) - used to
+                       get correct header keys to check dprtype
+        :param header: fits.Header or drs_fits.Header - the header with
+                       header keys to id file
+        :param filename: str, the filename name header belongs to (for error
+                         logging)
+        :return: the dprtype - the database type in each fiber (e.g. {AB}_{C}
+                 or DARK_DARK)
+        """
+        # cannot get dprtye without instrument
+        _ = params, recipe, header, filename
+        # raise implementation error
+        self._not_implemented('DRS_DPRTYPE')
+
+    def DRS_MIDMJD(self, params: Any, header: Any, filename: str):
+        """
+        Get the midmjd for a specific header
+
+        :param params: ParamDict, the parameter dictionary of constants
+        :param header: fits.Header or drs_fits.Header - the header with
+                       header keys to id file
+        :param filename: str, the filename name header belongs to (for error
+                         logging)
+
+        :return: float the
+        """
+        # cannot get mid mjd without header definitions
+        _ = params, header, filename
+        # raise implementation error
+        self._not_implemented('DRS_MIDMJD')
+
+    def FRAME_TIME(self, params: Any, header: Any):
+        """
+        Get the frame time (either from header or constants depending on
+        instrument)
+
+        :param params: ParamDict, the parameter dictionary of constants
+        :param header: fits.Header or drs_fits.Header - the header with
+                       header keys to id file
+        :return: float the frame time in seconds
+        """
+        # cannot get frame time without instrument
+        _ = params, header
+        # raise implementation error
+        self._not_implemented('FRAME_TIME')
+
+    def SATURATION(self, params: Any, header: Any):
+        """
+        Get the saturation (either from header or constants depending on
+        instrument)
+
+        :param params: ParamDict, the parameter dictionary of constants
+        :param header: fits.Header or drs_fits.Header - the header with
+                       header keys to id file
+        :return: float the frame time in seconds
+        """
+        # cannot get saturation without instrument
+        _ = params, header
+        # raise implementation error
+        self._not_implemented('SATURATION')
+
+    def GET_STOKES_FROM_HEADER(self, params: Any, header: Any, wlog: Any):
+        """
+        Get the stokes parameter and exposure number from the header
+
+        :param params: ParamDict, the parameter dictionary of constants
+        :param header: fits.Header, the fits header to get keys from
+        :param wlog: logger for error reporting
+
+        :return: tuple, 1. The stokes parameter, 2. the exposure number
+        """
+        _ = params, header, wlog
+        # raise implementation error
+        self._not_implemented('DRS_MIDMJD')
+
+    def GET_POLAR_TELLURIC_BANDS(self):
+        """
+        Define regions where telluric absorption is high
+
+        :return: list of bands each element is a list of a minimum wavelength
+                 and a maximum wavelength of that band
+        """
+        # raise implementation error
+        self._not_implemented('GET_POLAR_TELLURIC_BANDS')
+
+    def GET_LSD_LINE_REGIONS(self):
+        """
+        Define regions to select lines in the LSD analysis
+
+        :return: list of regions each element is a list of a minimum wavelength
+                 and a maximum wavelength of that band
+        """
+        # raise implementation error
+        self._not_implemented('GET_LSD_LINE_REGIONS')
+
+    def GET_LSD_ORDER_RANGES(self):
+        """
+        Define the valid wavelength ranges for each order in SPIrou.
+
+        :return orders: array of float pairs for wavelength ranges
+        """
+        # raise implementation error
+        self._not_implemented('GET_LSD_ORDER_RANGES')
 
     # =========================================================================
     # INDEXING SETTINGS
     # =========================================================================
-    # noinspection PyPep8Naming
-    def INDEX_OUTPUT_FILENAME(self):
-        filename = 'index.fits'
-        return filename
-
-    # noinspection PyPep8Naming
-    def INDEX_LOCK_FILENAME(self, params):
-        night_name = 'UNKNOWN'
-        # get the night name directory
-        if 'NIGHTNAME' in params:
-            if params['NIGHTNAME'] is not None:
-                night_name = params['NIGHTNAME'].replace(os.sep, '_')
-                night_name = night_name.replace(' ', '_')
-        # get the index file
-        index_file = self.INDEX_OUTPUT_FILENAME()
-        # construct the index lock file name
-        oargs = [night_name, index_file]
-        # get msg path
-        msgpath = params['DRS_DATA_MSG_FULL']
-        opath = os.path.join(msgpath, '{0}_{1}'.format(*oargs))
-        # return the index lock file name
-        return opath
-
-    # noinspection PyPep8Naming
-    def OUTPUT_FILE_HEADER_KEYS(self):
+    def FILEINDEX_HEADER_COLS(self) -> DatabaseColumns:
         """
-        Output file header keys.
-        Used for indexing
+        Which header keys should we have in the index database.
 
-        :param p:
+        Only keys where you have to read many files to get these should be
+        added - if you access file by file do not need header key to be here.
+
+        Must overwrite for each instrument
+
         :return:
         """
-        # Get required header keys from spirouKeywords.py (via p)
-        output_keys = ['KW_DATE_OBS', 'KW_UTC_OBS', 'KW_ACQTIME',
-                       'KW_MID_OBS_TIME', 'KW_OBJNAME', 'KW_OBSTYPE',
-                       'KW_EXPTIME', 'KW_CCAS', 'KW_CREF', 'KW_CDEN',
-                       'KW_DPRTYPE', 'KW_OUTPUT', 'KW_CMPLTEXP', 'KW_NEXP',
-                       'KW_VERSION', 'KW_PPVERSION', 'KW_PI_NAME', 'KW_PID',
-                       'KW_FIBER']
-        # return output_keys
-        return output_keys
+        # check for pre-existing values
+        if self.header_cols is not None:
+            return self.header_cols
+        # set keyts
+        header_cols = DatabaseColumns()
+        # check that filedef keys are present
+        for fkey in self.FILEDEF_HEADER_KEYS():
+            if fkey not in header_cols.names:
+                emsg = __NAME__ + '.FILEINDEX_HEADER_COLS() missing key "{0}"'
+                raise AttributeError(emsg.format(fkey))
+        # return index header keys
+        self.header_cols = header_cols
+        return header_cols
 
-    # TODO: remove these
-    # # noinspection PyPep8Naming
-    # def RAW_OUTPUT_KEYS(self):
-    #     # define selected keys
-    #     output_keys = ['KW_DATE_OBS', 'KW_UTC_OBS', 'KW_ACQTIME',
-    #                    'KW_MID_OBS_TIME', 'KW_OBJNAME', 'KW_OBSTYPE',
-    #                    'KW_EXPTIME', 'KW_DPRTYPE', 'KW_CCAS', 'KW_CREF',
-    #                    'KW_CDEN', 'KW_CMPLTEXP', 'KW_NEXP', 'KW_PI_NAME',
-    #                    'KW_PID']
-    #     # return these keys
-    #     return output_keys
-    #
-    # # noinspection PyPep8Naming
-    # def REDUC_OUTPUT_KEYS(self):
-    #     # define selected keys
-    #     output_keys = ['KW_DATE_OBS', 'KW_UTC_OBS', 'KW_MID_OBS_TIME',
-    #                    'KW_OBJNAME', 'KW_OUTPUT', 'KW_DPRTYPE',
-    #                    'KW_VERSION', 'KW_PID', 'KW_FIBER']
-    #     # return these keys
-    #     return output_keys
-    #
-    # # noinspection PyPep8Naming
-    # def GEN_OUTPUT_COLUMNS(self):
-    #     output_keys = ['KW_DATE_OBS', 'KW_UTC_OBS', 'KW_MID_OBS_TIME',
-    #                    'KW_OBJNAME', 'KW_OBSTYPE', 'KW_EXPTIME',
-    #                    'KW_OUTPUT', 'KW_DPRTYPE', 'KW_VERSION', 'KW_PID']
-    #     return output_keys
+    def FILEDEF_HEADER_KEYS(self) -> List[str]:
+        """
+        Define the keys allowed to be used in file definitions
+
+        :return: list of keys
+        """
+        keys = []
+        return keys
 
     # =========================================================================
     # DISPLAY/LOGGING SETTINGS
     # =========================================================================
-    # noinspection PyPep8Naming
-    def CHARACTER_LOG_LENGTH(self):
+    def CHARACTER_LOG_LENGTH(self) -> int:
+        """
+        Define the maximum length of characters in the log
+
+        :return: int,  the maximum length of characters
+        """
+        # set function name
+        # _ = display_func('CHARACTER_LOG_LENGTH', __NAME__,
+        #                  self.class_name)
+        # set default log character length
         length = 80
         return length
 
-    # noinspection PyPep8Naming
-    def COLOUREDLEVELS(self, p=None):
+    def COLOUREDLEVELS(self, params=None) -> dict:
         """
         Defines the colours if using coloured log.
         Allowed colour strings are found here:
                 see here:
                 http://ozzmaker.com/add-colour-to-text-in-python/
-                or in spirouConst.colors (colour class):
+                or in drs_misc.Colors (colour class):
                     HEADER, OKBLUE, OKGREEN, WARNING, FAIL,
                     BOLD, UNDERLINE
 
@@ -205,11 +490,13 @@ class PseudoConstants:
                          see here:
                              http://ozzmaker.com/add-colour-to-text-in-python/
         """
+        # set function name
+        # _ = display_func('COLOUREDLEVELS', __NAME__, self.class_name)
         # reference:
-        colors = Colors()
-        if p is not None:
-            if 'THEME' in p:
-                colors.update_theme(p['THEME'])
+        colors = drs_misc.Colors()
+        if params is not None:
+            if 'THEME' in params:
+                colors.update_theme(params['THEME'])
         # http://ozzmaker.com/add-colour-to-text-in-python/
         clevels = dict(error=colors.fail,  # red
                        warning=colors.warning,  # yellow
@@ -219,24 +506,28 @@ class PseudoConstants:
                        debug=colors.debug)  # green
         return clevels
 
-    def EXIT(self, params):
+    def EXIT(self, params: Any) -> Any:
         """
         Defines how to exit based on the string defined in
         spirouConst.LOG_EXIT_TYPE()
 
+        :param params: ParamDict, parameter dictionary of constants
+
         :return my_exit: function
         """
+        # set function name
+        # _ = display_func('EXIT', __NAME__, self.class_name)
+        # try to key exit type
         my_exit = params.get('DRS_LOG_EXIT_TYPE', 'sys')
         if my_exit == 'sys':
             return sys.exit
-        elif my_exit == 'os':
-            # noinspection PyProtectedMember
-            return os._exit
-        else:
-            def my_exit(_):
-                return None
+        if my_exit == 'os':
+            if hasattr(os, '_exit'):
+                return getattr(os, '_exit')
+        # return func that returns nothing in all other circumstances
+        return lambda pos: None
 
-    def EXIT_LEVELS(self):
+    def EXIT_LEVELS(self) -> List[str]:
         """
         Defines which levels (in spirouConst.LOG_TRIG_KEYS and
         spirouConst.WRITE_LEVELS) trigger an exit of the DRS after they are
@@ -248,20 +539,23 @@ class PseudoConstants:
                              spirouConst.WRITE_LEVELS which trigger an exit
                              after they are logged
         """
+        # set function name
+        # _ = display_func('EXIT_LEVELS', __NAME__, self.class_name)
+        # set exit levels
         exit_levels = ['error']
         return exit_levels
 
-    # noinspection PyPep8Naming
-    def LOG_FILE_NAME(self, params, dir_data_msg=None):
+    def LOG_FILE_NAME(self, params: Any,
+                      dir_data_msg: Union[str, None] = None) -> str:
         """
         Define the log filename and full path.
 
         The filename is defined as:
             DRS-YYYY-MM-DD  (GMT date)
-        The directory is defined as dir_data_msg (or p['DRS_DATA_MSG'] if not
-            defined)
+        The directory is defined as dir_data_msg (or params['DRS_DATA_MSG']
+            if not defined)
 
-        if p['DRS_USED_DATE'] is set this date is used instead
+        if params['DRS_USED_DATE'] is set this date is used instead
         if no utime is defined uses the time now (in gmt time)
 
         :param params: parameter dictionary, ParamDict containing constants
@@ -273,11 +567,11 @@ class PseudoConstants:
                                    set to "None" then "utime" is used or if
                                    "utime" not defined uses the time now
         :param dir_data_msg: string or None, if defined the p
-        :param utime: float or None, the unix time to use to set the date, if
-                      undefined uses time.time() (time now) - in GMT
 
         :return lpath: string, the full path and file name for the log file
         """
+        # set function name
+        # _ = display_func('LOG_FILE_NAME', __NAME__, self.class_name)
         # deal with no dir_data_msg
         if dir_data_msg is None:
             dir_data_msg = str(params['DRS_DATA_MSG'])
@@ -298,29 +592,39 @@ class PseudoConstants:
         # return lpath
         return lpath
 
-    # noinspection PyPep8Naming
-    def LOG_STORAGE_KEYS(self):
+    def LOG_STORAGE_KEYS(self) -> Dict[str, str]:
+        """
+        Create a dictionary of all the levels of logging available (values
+        are the params[KEY] to save them in
+
+        :return: dictionary of strings keys are logging levels, values are
+                 params[KEY] to save them to
+        """
+        # set function name
+        # _ = display_func('LOG_STORAGE_KEYS', __NAME__, self.class_name)
         # The storage key to use for each key
         storekey = dict(all='LOGGER_ALL', error='LOGGER_ERROR',
-                        warning='LOGGER_WARNING', info='LOGGER_INFO',
-                        graph='LOGGER_ALL', debug='LOGGER_DEBUG')
+                        warning='LOGGER_WARNING',
+                        info='LOGGER_INFO', graph='LOGGER_ALL',
+                        debug='LOGGER_DEBUG')
         return storekey
 
-    # noinspection PyPep8Naming
-    def LOG_CAUGHT_WARNINGS(self):
+    def LOG_CAUGHT_WARNINGS(self) -> bool:
         """
-        Defines a master switch, whether to report warnings that are caught in
+        Defines a reference switch, whether to report warnings that are caught in
 
         >> with warnings.catch_warnings(record=True) as w:
         >>     code_that_may_gen_warnings
 
         :return warn: bool, if True reports warnings, if False does not
         """
+        # set function name
+        # _ = display_func('LOG_CAUGHT_WARNINGS', __NAME__, self.class_name)
         # Define whether we warn
         warn = True
         return warn
 
-    def LOG_TRIG_KEYS(self):
+    def LOG_TRIG_KEYS(self) -> Dict[str, str]:
         """
         The log trigger key characters to use in log. Keys must be the same as
         spirouConst.WRITE_LEVELS()
@@ -338,12 +642,33 @@ class PseudoConstants:
                           characters/strings to use in logging. Keys must be the
                           same as spirouConst.WRITE_LEVELS()
         """
+        # set function name
+        # _ = display_func('LOG_TRIG_KEYS', __NAME__, self.class_name)
         # The trigger character to display for each
-        trig_key = dict(all=' ', error='!', warning='@', info='*', graph='~',
-                        debug='+')
+        trig_key = dict(all='  ', error='!!', warning='@@',
+                        info='**', graph='~~', debug='++')
         return trig_key
 
-    def WRITE_LEVEL(self):
+    def ADJUST_SUBLEVEL(self, code: str, sublevel: Optional[int] = None):
+        """
+        Adjust the log code based on sub level (minor and major)
+
+        :param code: str, the default code for logging
+        :param sublevel: float, required for giving levels sub level
+                         (can filter by this) sets the priority of the message
+                         (0 being the lowest, 9 being the highest)
+
+        :return:
+        """
+        if sublevel is None:
+            return code
+        # deal with major and minor codes
+        if sublevel > 5:
+            return '{0}!'.format(code[0])
+        else:
+            return '{0}$'.format(code[0])
+
+    def WRITE_LEVEL(self) -> Dict[str, int]:
         """
         The write levels. Keys must be the same as spirouConst.LOG_TRIG_KEYS()
 
@@ -366,39 +691,54 @@ class PseudoConstants:
                              of each trigger level. Keys must be the same as
                              spirouConst.LOG_TRIG_KEYS()
         """
-        write_level = dict(error=3, warning=2, info=1, graph=0, all=0,
-                           debug=0)
+        # set function name
+        # _ = display_func('WRITE_LEVEL', __NAME__, self.class_name)
+        # set the write levels
+        write_level = dict(error=3, warning=2, info=1,
+                           graph=0, all=0, debug=0)
         return write_level
 
-    def REPORT_KEYS(self):
+    def REPORT_KEYS(self) -> dict:
         """
         The report levels. Keys must be the same as spirouConst.LOG_TRIG_KEYS()
 
         If True then the input code is printed (used for errors /warning/debug)
 
         if False just the message is printed
-        """
-        write_level = dict(error=True, warning=True, info=False, graph=False,
-                           all=False, debug=False)
-        return write_level
 
-    def SPLASH(self):
-        logo = [" .----------------.  .----------------.  .----------------.   ",
-                " | .--------------. || .--------------. || .--------------. | ",
-                " | |  ________    | || |  _______     | || |    _______   | | ",
-                " | | |_   ___ `.  | || | |_   __ \    | || |   /  ___  |  | | ",
-                " | |   | |   `. \ | || |   | |__) |   | || |  |  (__ \_|  | | ",
-                " | |   | |    | | | || |   |  __ /    | || |   '.___`-.   | | ",
-                " | |  _| |___.' / | || |  _| |  \ \_  | || |  |`\____) |  | | ",
-                " | | |________.'  | || | |____| |___| | || |  |_______.'  | | ",
-                " | |              | || |              | || |              | | ",
-                " | '--------------' || '--------------' || '--------------' | ",
-                "  '----------------'  '----------------'  '----------------'  "]
+        :returns: dictionary of True and False for each level
+        """
+        # set function name
+        # _ = display_func('REPORT_KEYS', __NAME__, self.class_name)
+        # set the report level
+        report_level = dict(error=True, warning=True,
+                            info=False, graph=False, all=False, debug=False)
+        return report_level
+
+    def SPLASH(self) -> List[str]:
+        """
+        The splash image for the instrument
+        :return:
+        """
+        # set function name
+        # _ = display_func('SPLASH', __NAME__, self.class_name)
+        # set the logo
+        logo = [r".----------------.  .----------------.  .----------------.  ",
+                r"| .--------------. || .--------------. || .--------------. |",
+                r"| |  ________    | || |  _______     | || |    _______   | |",
+                r"| | |_   ___ `.  | || | |_   __ \    | || |   /  ___  |  | |",
+                r"| |   | |   `. \ | || |   | |__) |   | || |  |  (__ \_|  | |",
+                r"| |   | |    | | | || |   |  __ /    | || |   '.___`-.   | |",
+                r"| |  _| |___.' / | || |  _| |  \ \_  | || |  |`\____) |  | |",
+                r"| | |________.'  | || | |____| |___| | || |  |_______.'  | |",
+                r"| |              | || |              | || |              | |",
+                r"| '--------------' || '--------------' || '--------------' |",
+                r" '----------------'  '----------------'  '----------------' "]
         return logo
 
-    def LOGO(self):
+    def LOGO(self) -> List[str]:
         """
-        apero logo
+        The apero logo (coloured)
 
         Font Author: ?
 
@@ -410,13 +750,16 @@ class PseudoConstants:
 
         :return:
         """
-        logo = ["  █████╗ ██████╗ ███████╗██████╗  ██████╗  ",
-                " ██╔══██╗██╔══██╗██╔════╝██╔══██╗██╔═══██╗ ",
-                " ███████║██████╔╝█████╗  ██████╔╝██║   ██║ ",
-                " ██╔══██║██╔═══╝ ██╔══╝  ██╔══██╗██║   ██║ ",
-                " ██║  ██║██║     ███████╗██║  ██║╚██████╔╝ ",
-                " ╚═╝  ╚═╝╚═╝     ╚══════╝╚═╝  ╚═╝ ╚═════╝  "]
+        # set function name
+        # _ = display_func('LOGO', __NAME__, self.class_name)
 
+        # logo = ["  █████╗ ██████╗ ███████╗██████╗  ██████╗  ",
+        #         " ██╔══██╗██╔══██╗██╔════╝██╔══██╗██╔═══██╗ ",
+        #         " ███████║██████╔╝█████╗  ██████╔╝██║   ██║ ",
+        #         " ██╔══██║██╔═══╝ ██╔══╝  ██╔══██╗██║   ██║ ",
+        #         " ██║  ██║██║     ███████╗██║  ██║╚██████╔╝ ",
+        #         " ╚═╝  ╚═╝╚═╝     ╚══════╝╚═╝  ╚═╝ ╚═════╝  "]
+        # set the logo
         logo = ["\t\033[1;91;1m  █████\033[1;37m╗\033[1;91;1m ██████\033[1;37m╗"
                 "\033[1;91;1m ███████\033[1;37m╗\033[1;91;1m██████\033[1;37m╗"
                 "\033[1;91;1m  ██████\033[1;37m╗\033[1;91;1m  ",
@@ -471,17 +814,114 @@ class PseudoConstants:
     # =========================================================================
     # FIBER SETTINGS
     # =========================================================================
-    def FIBER_SETTINGS(self, params, fiber):
-        func_name = 'FIBER_SETTINGS'
+    def FIBER_SETTINGS(self, params: Any, fiber: str) -> Any:
+        """
+        Get the fiber settings for localisation setup for a specific fiber
+        (keys must be stored in params as a set of parameters with all fibers
+         provided for i.e. MYKEY_AB, MYKEY_A, MYKEY_B, MYKEY_C)
+
+        :param params: ParamDict the parameter dictionary of constants
+        :param fiber: str, the fiber to get keys for
+        :return:
+        """
+        # set function name
+        func_name = display_func('FIBER_SETTINGS', __NAME__,
+                                 self.class_name)
+        # do nothing
+        _ = params
+        _ = fiber
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
-    def FIBER_LOC_TYPES(self, fiber):
+    def FIBER_LOCALISATION(self, fiber):
+        """
+        Return which fibers to calculate localisation for
+
+        :param fiber: str, fiber name
+
+        :return: list of strings, the fibers to find localisation for
+        """
+        # set function name
+        func_name = display_func('FIBER_LOCALISATION', __NAME__,
+                                 self.class_name)
+        # do nothing
+        _ = fiber
+        raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
+
+    def FIBER_DILATE(self, fiber: str):
+        """
+        whether we are dilate the imagine due to fiber configuration this should
+        only be used when we want a combined localisation solution
+        i.e. AB from A and B
+
+        :param fiber: str, the fiber name
+        :return: bool, True if we should dilate, False otherwise
+        """
+        # set function name
+        func_name = display_func('FIBER_DILATE', __NAME__,
+                                 self.class_name)
+        # do nothing
+        _ = fiber
+        raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
+
+    def FIBER_DOUBLETS(self, fiber: str):
+        """
+        whether we have orders coming in doublets (i.e. SPIROUs AB --> A + B)
+
+        :param fiber: str, the fiber name
+        :return: bool, True if we have fiber 'doublets', False otherwise
+        """
+        # set function name
+        func_name = display_func('FIBER_DOUBLETS', __NAME__,
+                                 self.class_name)
+        # do nothing
+        _ = fiber
+        raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
+
+    # noinspection PyTypeChecker
+    def FIBER_DOUBLET_PARITY(self, fiber: str) -> Union[int, None]:
+        """
+        Give the doublt fibers parity - all other fibers should not use this
+        function
+
+        :param fiber: str, the fiber name
+        :return: int or None, either +/-1 (for fiber A/B) or None)
+        """
+        # set function name
+        func_name = display_func('FIBER_DOUBLET_PARITY', __NAME__,
+                                 self.class_name)
+        # do nothing
+        _ = fiber
+        raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
+
+    def FIBER_LOC_TYPES(self, fiber: str) -> str:
+        """
+        The fiber localisation types to use (i.e. some fiber types should use
+        another fiber for localisation e.g. SPIRou A or B --> AB
+
+        :param fiber: str, the input fiber
+
+        :return: str, the fiber to use for input fiber
+        """
+        # set function name
+        # _ = display_func('FIBER_LOC_TYPES', __NAME__, self.class_name)
+        # return input fiber
         return fiber
 
-    def FIBER_WAVE_TYPES(self, fiber):
+    def FIBER_WAVE_TYPES(self, fiber: str) -> str:
+        """
+        The fiber localisation types to use (i.e. some fiber types should use
+        another fiber for localisation e.g. SPIRou A or B --> AB
+
+        :param fiber: str, the input fiber
+
+        :return: str, the fiber to use for input fiber
+        """
+        # set function name
+        # _ = display_func('FIBER_WAVE_TYPES', __NAME__, self.class_name)
+        # return input fiber
         return fiber
 
-    def FIBER_DPR_POS(self, dprtype, fiber):
+    def FIBER_DPR_POS(self, dprtype: str, fiber: str):
         """
         When we have a DPRTYPE figure out what is in the fiber requested
 
@@ -491,71 +931,149 @@ class PseudoConstants:
 
         :return:
         """
-        func_name = 'FIBER_DPR_POS'
+        # set function name
+        func_name = display_func('FIBER_DPR_POS', __NAME__,
+                                 self.class_name)
+        # do nothing
+        _ = dprtype
+        _ = fiber
+        # raise not implemented yet error
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
-    def FIBER_LOC_COEFF_EXT(self, coeffs, fiber):
-        func_name = 'FIBER_LOC_COEFF_EXT'
+    def FIBER_DPRTYPE(self, dprtype: str):
+        """
+        Input DPRTYPE tells you which fiber we are correcting for
+
+        :param dprtype: str, the dprtype (probably either FLAT_DARK or DARK_FLAT
+        :return: str, the fiber
+        """
+        # set function name
+        func_name = display_func('FIBER_DPRTYPE', __NAME__,
+                                 self.class_name)
+        # do nothing
+        _ = dprtype
+        # raise not implemented yet error
+        raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
+
+    def FIBER_LOC_COEFF_EXT(self, coeffs: np.ndarray, fiber: str):
+        """
+        Extract the localisation coefficients based on how they are stored
+        FIBER_LOC_TYPES
+
+        :param coeffs: the input localisation coefficients
+        :param fiber: str, the fiber
+
+        :returns: the update coefficients and the number of orders
+        """
+        # set function name
+        func_name = display_func('FIBER_LOC_COEFF_EXT', __NAME__,
+                                 self.class_name)
+        # do nothing
+        _ = coeffs
+        _ = fiber
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
     def FIBER_DATA_TYPE(self, dprtype, fiber):
-        func_name = 'FIBER_DATA_TYPE'
+        """
+        Return the data type from a DPRTYPE
+
+        i.e. for OBJ_FP   fiber = 'fiber1'  --> 'OBJ'
+             for OBJ_FP   fiber = 'fiber2'  --> 'FP'
+
+        :param dprtype: str, the DPRTYPE (data type {fiber1}_{fiber2})
+        :param fiber: str, the current fiber
+
+        :return:
+        """
+        # set function name
+        func_name = display_func('FIBER_DATA_TYPE', __NAME__,
+                                 self.class_name)
+        # do nothing
+        _ = dprtype
+        _ = fiber
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
     def FIBER_CCF(self):
-        func_name = 'FIBER_CCF'
+        """
+        Get the science and reference fiber to use in the CCF process
+
+        :return: the science and reference fiber
+        """
+        # set function name
+        func_name = display_func('FIBER_CCF', __NAME__, self.class_name)
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
     def FIBER_KINDS(self):
-        func_name = 'FIBER_KINDS'
+        """
+        Set the fiber kinds (those to be though as as "science" and those to be
+        though as as "reference" fibers.
+
+        :return: list of science fibers and the reference fiber
+        """
+        # set function name
+        func_name = display_func('FIBER_KINDS', __NAME__, self.class_name)
+        raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
+
+    def FIBER_LOC(self, fiber: str) -> Any:
+        """
+        Set the localisation fibers
+        AB --> A, B
+        C --> C
+
+        :param fiber:
+        :return:
+        """
+        _ = fiber
+        # set function name
+        func_name = display_func('FIBER_KINDS', __NAME__, self.class_name)
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
     def INDIVIDUAL_FIBERS(self):
-        func_name = 'INDIVIDUAL_FIBERS'
+        """
+        List the individual fiber names
+
+        :return: list of strings, the individual fiber names
+        """
+        # set function name
+        func_name = display_func('INDIVIDUAL_FIBERS', __NAME__,
+                                 self.class_name)
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
-    # =========================================================================
-    # BERV_KEYS
-    # =========================================================================
-    def BERV_INKEYS(self):
-        # FORMAT:   [in_key, out_key, kind, default]
-        #
-        #    Where 'in_key' is the header key or param key to use
-        #    Where 'out_key' is the output header key to save to
-        #    Where 'kind' is 'header' or 'const'
-        #    Where default is the default value to assign
-        func_name = 'BERV_INKEYS'
-        raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
+    # tellu fudge
+    def TAPAS_INST_CORR(self, mask_water: Table,
+                        mask_others: Table) -> Tuple[Table, Table]:
+        """
+        Default here is to do nothing
 
-    def BERV_OUTKEYS(self):
-        # FORMAT:   [in_key, out_key, kind, default]
-        #
-        #    Where 'in_key' is the header key or param key to use
-        #    Where 'out_key' is the output header key to save to
-        #    Where 'kind' is 'header' or 'const'
-        #    Where default is the default value to assign
-        func_name = 'BERV_OUTKEYS'
-        raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
+        :param mask_water: astropy table the water TAPAS mask table
+        :param mask_others: astropy table the others TAPAS mask table
 
-    # =========================================================================
-    # OTHER KEYS
-    # =========================================================================
-    def MASTER_DB_KEYS(self):
-        func_name = 'MASTER_DB_KEYS'
-        raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
+        :return: tuple, 1. the updated mask_water table, 2. the update
+                 mask_others table
+        """
+        # default is to just return full mask in both cases
+        return mask_water, mask_others
 
     # =========================================================================
     # PLOT SETTINGS
     # =========================================================================
-    def FONT_DICT(self, params):
+    def FONT_DICT(self, params: Any) -> dict:
         """
         Font manager for matplotlib fonts - added to matplotlib.rcParams as a
         dictionary
-        :return font: rcParams dictionary (must be accepted by maplotlbi.rcParams)
+
+        :param params: ParamDict, the parameter dictionary of constants
+
+        :return font: rcParams dictionary (must be accepted by
+                      maplotlbi.rcParams)
 
         see:
-          https://matplotlib.org/api/matplotlib_configuration_api.html#matplotlib.rc
+          https://matplotlib.org/api/
+              matplotlib_configuration_api.html#matplotlib.rc
         """
+        # set function name
+        # _ = display_func('FONT_DICT', __NAME__, self.class_name)
+        # set up font storage
         font = dict()
         if params['DRS_PLOT_FONT_FAMILY'] != 'None':
             font['family'] = params['DRS_PLOT_FONT_FAMILY']
@@ -565,80 +1083,460 @@ class PseudoConstants:
             font['size'] = params['DRS_PLOT_FONT_SIZE']
         return font
 
+    # =========================================================================
+    # DATABASE SETTINGS
+    # =========================================================================
+    def GET_DB_COLS(self, tname: str) -> Union[DatabaseColumns, None]:
+        """
+        Get a DB column definition based on tname (database table name)
+
+        :param tname: str, the database table name
+
+        :return: DatabaseColumn class if valid otherwise None
+        """
+        # get definitions from base
+        database_names = base.DATABASE_NAMES
+        database_col_classes = base.DATABASE_COL_CLASS
+        # loop around database types
+        for it, key in enumerate(database_names):
+            if tname == key:
+
+                if database_col_classes[it] is None:
+                    return None
+                else:
+                    return getattr(self, database_col_classes[it])
+
+    def CALIBRATION_DB_COLUMNS(self) -> DatabaseColumns:
+        """
+        Define the columns used in the calibration database
+        :return: list of columns (strings)
+        """
+        # set function name
+        # _ = display_func('CALIBRATION_DB_COLUMNS', __NAME__,
+        #                  self.class_name)
+        # check for pre-existing values
+        if self.calibration_cols is not None:
+            return self.calibration_cols
+        # set columns
+        calib_columns = DatabaseColumns()
+        calib_columns.add(name='KEYNAME', datatype='VARCHAR(20)',
+                          is_index=True, is_unique=True)
+        calib_columns.add(name='FIBER', datatype='VARCHAR(10)',
+                          is_unique=True)
+        calib_columns.add(name='REFCAL', datatype='INT',
+                          is_unique=True)
+        calib_columns.add(name='FILENAME', datatype='VARCHAR(200)',
+                          is_unique=True)
+        calib_columns.add(name='HUMANTIME', datatype='VARCHAR(50)')
+        calib_columns.add(name='UNIXTIME', datatype='DOUBLE', is_index=True)
+        calib_columns.add(name='PID', datatype='VARCHAR(80)', is_index=True)
+        calib_columns.add(name='PDATE', datatype='VARCHAR(50)')
+        calib_columns.add(name='USED', datatype='INT')
+        # return columns
+        self.calibration_cols = calib_columns
+        return calib_columns
+
+    def TELLURIC_DB_COLUMNS(self) -> DatabaseColumns:
+        """
+        Define the columns used in the telluric database
+        :return: list of columns (strings)
+        """
+        # set function name
+        # _ = display_func('TELLURIC_DB_COLUMNS', __NAME__, self.class_name)
+        # check for pre-existing values
+        if self.telluric_cols is not None:
+            return self.telluric_cols
+        # set columns
+        tellu_columns = DatabaseColumns()
+        tellu_columns.add(name='KEYNAME', datatype='VARCHAR(20)', is_index=True,
+                          is_unique=True)
+        tellu_columns.add(name='FIBER', datatype='VARCHAR(5)',
+                          is_unique=True)
+        tellu_columns.add(name='REFCAL', datatype='INT',
+                          is_unique=True)
+        tellu_columns.add(name='FILENAME', datatype='VARCHAR(200)',
+                          is_unique=True)
+        tellu_columns.add(name='HUMANTIME', datatype='VARCHAR(50)')
+        tellu_columns.add(name='UNIXTIME', datatype='DOUBLE', is_index=True)
+        tellu_columns.add(name='OBJECT', datatype='VARCHAR(80)', is_index=True)
+        tellu_columns.add(name='AIRMASS', datatype='DOUBLE')
+        tellu_columns.add(name='TAU_WATER', datatype='DOUBLE')
+        tellu_columns.add(name='TAU_OTHERS', datatype='DOUBLE')
+        tellu_columns.add(name='PID', datatype='VARCHAR(80)', is_index=True)
+        tellu_columns.add(name='PDATE', datatype='VARCHAR(50)')
+        tellu_columns.add(name='USED', datatype='INT')
+        # return columns and ctypes
+        self.telluric_cols = tellu_columns
+        return tellu_columns
+
+    def FILEINDEX_DB_COLUMNS(self) -> DatabaseColumns:
+        """
+        Define the columns used in the index database
+
+        Currently defined columns
+            - PATH: the path under which files are stored (based on KIND)
+            - DIRECTORY: the sub-directory in PATH which files are stored
+            - FILENAME: the name of the file (basename)
+            - KIND: either raw/tmp/red/calib/tellu/asset
+            - LAST_MODIFIED: float, the last modified time of this file
+                             (for sorting)
+            - RUNSTRING: the arguments entered to make this file
+                         (used for checksum)
+            - {HKEYS}: see INDEX_HEADER_KEYS()
+            - USED: int, whether entry should be used or ignored
+
+        :return: tuple, list of columns (strings), list of types, list of
+                 columns that should be unique
+        """
+        # set function name
+        # _ = display_func('FILEINDEX_DB_COLUMNS', __NAME__, self.class_name)
+        # check for pre-existing values
+        if self.index_cols is not None:
+            return self.index_cols
+        # column definitions
+        index_cols = DatabaseColumns()
+
+        index_cols.add(name='ABSPATH', datatype='TEXT', is_unique=True)
+        index_cols.add(name='OBS_DIR', datatype='VARCHAR(200)',
+                       is_index=True)
+        index_cols.add(name='FILENAME', is_index=True, datatype='VARCHAR(200)')
+        index_cols.add(name='BLOCK_KIND', is_index=True, datatype='VARCHAR(20)')
+        index_cols.add(name='LAST_MODIFIED', datatype='DOUBLE')
+        index_cols.add(name='RECIPE', datatype='VARCHAR(200)')
+        index_cols.add(name='RUNSTRING', datatype='TEXT')
+        index_cols.add(name='INFILES', datatype='TEXT')
+        # get header keys
+        header_columns = self.FILEINDEX_HEADER_COLS()
+        # add header columns to index columns
+        index_cols += header_columns
+        # add extra columns
+        index_cols.add(name='USED', datatype='INT')
+        index_cols.add(name='RAWFIX', datatype='INT')
+        # manage index groups
+        index_cols.index_groups.append(['BLOCK_KIND', 'OBS_DIR', 'USED'])
+        index_cols.index_groups.append(['BLOCK_KIND', 'OBS_DIR', 'FILENAME'])
+        # return columns and column types
+        self.index_cols = index_cols
+        return index_cols
+
+    def REJECT_DB_COLUMNS(self) -> DatabaseColumns:
+        """
+        Define the columns use in the reject database
+        :return: list of columns (strings)
+        """
+        # set function name
+        # _ = display_func('LOG_DB_COLUMNS', __NAME__,
+        #                  self.class_name)
+        # check for pre-existing values
+        if self.rejectdb_cols is not None:
+            return self.rejectdb_cols
+        # set columns (dictionary form for clarity
+        rejectdb_cols = DatabaseColumns(name_prefix='rlog.')
+        rejectdb_cols.add(name='IDENTIFIER', datatype='VARCHAR(255)',
+                          is_index=True,
+                          comment='Identifier column')
+        rejectdb_cols.add(name='PP', datatype='INT',
+                          comment='Whether this file should not be '
+                                  'preprocessed')
+        rejectdb_cols.add(name='TEL', datatype='INT',
+                          comment='Whether this file should be used for '
+                                  'telluric')
+        rejectdb_cols.add(name='RV', datatype='INT',
+                          comment='Whether this file should be used for RV')
+        rejectdb_cols.add(name='USED', datatype='INT',
+                          comment='Whether flags should be used')
+        rejectdb_cols.add(name='DATE_ADDED', datatype='VARCHAR(26)')
+        rejectdb_cols.add(name='COMMENT', datatype='TEXT')
+        # return columns and ctypes
+        self.rejectdb_cols = rejectdb_cols
+        return rejectdb_cols
+
+    def LOG_DB_COLUMNS(self) -> DatabaseColumns:
+        """
+        Define the columns use in the log database
+        :return: list of columns (strings)
+        """
+        # set function name
+        # _ = display_func('LOG_DB_COLUMNS', __NAME__,
+        #                  self.class_name)
+        # check for pre-existing values
+        if self.logdb_cols is not None:
+            return self.logdb_cols
+        # set columns (dictionary form for clarity
+        log_columns = DatabaseColumns(name_prefix='rlog.')
+        log_columns.add(name='RECIPE', datatype='VARCHAR(200)',
+                        comment='Recipe name from recipe log')
+        log_columns.add(name='SHORTNAME', datatype='VARCHAR(20)',
+                        comment='Recipe shortname from recipe log')
+        log_columns.add(name='BLOCK_KIND', is_index=True,
+                        datatype='VARCHAR(20)', comment='Recipe block type')
+        log_columns.add(name='RECIPE_TYPE', datatype='VARCHAR(80)',
+                        comment='Recipe type')
+        log_columns.add(name='RECIPE_KIND', datatype='VARCHAR(80)',
+                        comment='Recipe kind')
+        log_columns.add(name='PROGRAM_NAME', datatype='VARCHAR(80)',
+                        comment='Recipe Program Name')
+        log_columns.add(name='PID', datatype='VARCHAR(80)', is_index=True,
+                        comment='Recipe drs process id number')
+        log_columns.add(name='HUMANTIME', datatype='VARCHAR(25)',
+                        comment='Recipe process time (human format)')
+        log_columns.add(name='UNIXTIME', datatype='DOUBLE', is_index=True,
+                        comment='Recipe process time (unix format)')
+        log_columns.add(name='GROUPNAME', datatype='VARCHAR(200)',
+                        comment='Recipe group name')
+        log_columns.add(name='LEVEL', datatype='INT',
+                        comment='Recipe level name')
+        log_columns.add(name='SUBLEVEL', datatype='INT',
+                        comment='Recipe sub-level name')
+        log_columns.add(name='LEVELCRIT', datatype='VARCHAR(80)',
+                        comment='Recipe level/sub level description')
+        log_columns.add(name='INPATH', datatype='TEXT',
+                        comment='Recipe inputs path')
+        log_columns.add(name='OUTPATH', datatype='TEXT',
+                        comment='Recipe outputs path')
+        log_columns.add(name='OBS_DIR', datatype='VARCHAR(200)', is_index=True,
+                        comment='Recipe observation directory')
+        log_columns.add(name='LOGFILE', datatype='TEXT',
+                        comment='Recipe log file path')
+        log_columns.add(name='PLOTDIR', datatype='TEXT',
+                        comment='Recipe plot file path')
+        log_columns.add(name='RUNSTRING', datatype='TEXT',
+                        comment='Recipe run string')
+        log_columns.add(name='ARGS', datatype='TEXT',
+                        comment='Recipe argument list')
+        log_columns.add(name='KWARGS', datatype='TEXT',
+                        comment='Recipe keyword argument list')
+        log_columns.add(name='SKWARGS', datatype='TEXT',
+                        comment='Recipe special argument list')
+        log_columns.add(name='START_TIME', datatype='VARCHAR(25)',
+                        comment='Recipe start time YYYY-mm-dd HH:MM:SS.SSS')
+        log_columns.add(name='END_TIME', datatype='VARCHAR(25)',
+                        comment='Recipe end time YYYY-mm-dd HH:MM:SS.SSS')
+        log_columns.add(name='STARTED', datatype='INT',
+                        comment='flag recipe started')
+        log_columns.add(name='PASSED_ALL_QC', datatype='INT',
+                        comment='flag recipe passed all quality control')
+        log_columns.add(name='QC_STRING', datatype='TEXT',
+                        comment='full quality control string')
+        log_columns.add(name='QC_NAMES', datatype='TEXT',
+                        comment='full quality control names')
+        log_columns.add(name='QC_VALUES', datatype='TEXT',
+                        comment='full quality control values')
+        log_columns.add(name='QC_LOGIC', datatype='TEXT',
+                        comment='full quality control logic')
+        log_columns.add(name='QC_PASS', datatype='TEXT',
+                        comment='full quality control pass/fail')
+        log_columns.add(name='ERRORMSGS', datatype='TEXT',
+                        comment='recipe errors')
+        log_columns.add(name='ENDED', datatype='INT',
+                        comment='flag for recipe ended '
+                                '(false at time of writing)')
+        log_columns.add(name='FLAGNUM', datatype='INT',
+                        comment='binary flag decimal number')
+        log_columns.add(name='FLAGSTR', datatype='TEXT',
+                        comment='binary flag names (one for each binary flag)')
+        log_columns.add(name='USED', datatype='INT',
+                        comment='Whether file should be used (always true)')
+        log_columns.add(name='RAM_USAGE_START', datatype='DOUBLE',
+                        comment='RAM usuage at start of recipe / GB')
+        log_columns.add(name='RAM_USAGE_END', datatype='DOUBLE',
+                        comment='RAM usuage at end of recipe / GB')
+        log_columns.add(name='RAW_TOTAL', datatype='DOUBLE',
+                        comment='Total RAM at start')
+        log_columns.add(name='SWAP_USAGE_START', datatype='DOUBLE',
+                        comment='SWAP usuage at start of recipe / GB')
+        log_columns.add(name='SWAP_USAGE_END', datatype='DOUBLE',
+                        comment='SWAP usuage at end of recipe / GB')
+        log_columns.add(name='SWAP_TOTAL', datatype='DOUBLE',
+                        comment='Total SWAP at start')
+        log_columns.add(name='CPU_USAGE_START', datatype='DOUBLE',
+                        comment='CPU usage at the start  or recipe (percent)')
+        log_columns.add(name='CPU_USAGE_END', datatype='DOUBLE',
+                        comment='CPU usage at the end  or recipe (percent)')
+        log_columns.add(name='CPU_NUM', datatype='INT',
+                        comment='Total number of CPUs at start')
+        log_columns.add(name='LOG_START', datatype='VARCHAR(25)',
+                        comment='log sub-level start time '
+                                'YYYY-mm-dd HH:MM:SS.SSS')
+        log_columns.add(name='LOG_END', datatype='VARCHAR(25)',
+                        comment='Log sub-level end time '
+                                'YYYY-mm-dd HH:MM:SS.SSS')
+
+        # return columns and ctypes
+        self.logdb_cols = log_columns
+        return log_columns
+
+    def ASTROMETRIC_DB_COLUMNS(self) -> DatabaseColumns:
+        """
+        Define the columns use in the object database
+        :return: list of columns (strings)
+        """
+        # set function name
+        # _ = display_func('ASTROMETRIC_DB_COLUMNS', __NAME__,
+        #                  self.class_name)
+        # check for pre-existing values
+        if self.objdb_cols is not None:
+            return self.objdb_cols
+        # set columns
+        obj_columns = DatabaseColumns()
+        obj_columns.add(name='OBJNAME', datatype='VARCHAR(80)', is_index=True,
+                        is_unique=True)
+        obj_columns.add(name='ORIGINAL_NAME', datatype='VARCHAR(80)')
+        obj_columns.add(name='ALIASES', datatype='TEXT')
+        obj_columns.add(name='RA_DEG', datatype='DOUBLE')
+        obj_columns.add(name='RA_SOURCE', datatype='VARCHAR(80)')
+        obj_columns.add(name='DEC_DEG', datatype='DOUBLE')
+        obj_columns.add(name='DEC_SOURCE', datatype='VARCHAR(80)')
+        obj_columns.add(name='EPOCH', datatype='DOUBLE')
+        obj_columns.add(name='PMRA', datatype='DOUBLE')
+        obj_columns.add(name='PMRA_SOURCE', datatype='VARCHAR(80)')
+        obj_columns.add(name='PMDE', datatype='DOUBLE')
+        obj_columns.add(name='PMDE_SOURCE', datatype='VARCHAR(80)')
+        obj_columns.add(name='PLX', datatype='DOUBLE')
+        obj_columns.add(name='PLX_SOURCE', datatype='VARCHAR(80)')
+        obj_columns.add(name='RV', datatype='DOUBLE')
+        obj_columns.add(name='RV_SOURCE', datatype='VARCHAR(80)')
+        obj_columns.add(name='TEFF', datatype='DOUBLE')
+        obj_columns.add(name='TEFF_SOURCE', datatype='VARCHAR(80)')
+        obj_columns.add(name='SP_TYPE', datatype='VARCHAR(80)')
+        obj_columns.add(name='SP_SOURCE', datatype='VARCHAR(80)')
+        obj_columns.add(name='NOTES', datatype='TEXT')
+        obj_columns.add(name='USED', datatype='INT')
+        obj_columns.add(name='DATE_ADDED', datatype='VARCHAR(26)')
+        # return columns and ctypes
+        self.objdb_cols = obj_columns
+        return obj_columns
+
+    def GET_EPOCH(self, params, header):
+        """
+        Get the EPOCH in JD from a input header file (instrument specific)
+        """
+        _ = params, header
+        # raise implementation error
+        self._not_implemented('GET_EPOCH')
+
+    # =========================================================================
+    # CROSSMATCHING
+    # =========================================================================
+    # noinspection SqlDialectInspection
+    def PM_TAP_DICT(self, params: Any) -> Dict[str, Dict[str, str]]:
+        """
+        Once we have an id for a proper motion catalogue we can cross-match
+        against this catalogue and get back variables. To do this we have
+        to set up a TAP query. These are done per proper motion catalogue and
+        stored as a dictionary.
+
+        Each entry should have:
+
+        query: SELECT {ra} as ra, {dec} as dec, {pmra} as pmde,
+                      {pmde} as pmde, {plx} as {plx}, epoch as {epoch}
+               FROM {cat} WHERE {id}={idnum}
+        url: TAP url
+
+        :return:
+        """
+        # storage
+        tap_dict = dict()
+        # ---------------------------------------------------------------------
+        QUERY1 = ('SELECT TOP 5 {id} as sid, {ra} as ra, {dec} as dec, '
+                  '{pmra} as pmra, {pmde} as pmde, {plx} as plx, '
+                  '{epoch} as epoch FROM {cat} WHERE {id}=\'{idnum}\'')
+
+        # ---------------------------------------------------------------------
+        # Gaia EDR3
+        # ---------------------------------------------------------------------
+        qkargs = dict(ra='ra', dec='dec', pmra='pmra', pmde='pmdec',
+                      plx='parallax', epoch='ref_epoch',
+                      cat='gaiaedr3.gaia_source', id='source_id', idnum='{0}')
+        params.set('TAP_GAIA_EDR3_URL',
+                   'https://gea.esac.esa.int/tap-server/tap')
+        tap_dict['Gaia EDR3 '] = dict()
+        tap_dict['Gaia EDR3 ']['QUERY'] = QUERY1.format(**qkargs)
+        tap_dict['Gaia EDR3 ']['URL'] = str(params['TAP_GAIA_EDR3_URL'])
+        # ---------------------------------------------------------------------
+        # Gaia DR2
+        # ---------------------------------------------------------------------
+        qkargs = dict(ra='ra', dec='dec', pmra='pmra', pmde='pmdec',
+                      plx='parallax', epoch='ref_epoch',
+                      cat='gaiadr2.gaia_source', id='source_id', idnum='{0}')
+        params.set('TAP_GAIA_DR2_URL',
+                   'https://gea.esac.esa.int/tap-server/tap')
+        tap_dict['Gaia DR2 '] = dict()
+        tap_dict['Gaia DR2 ']['QUERY'] = QUERY1.format(**qkargs)
+        tap_dict['Gaia DR2 ']['URL'] = str(params['TAP_GAIA_DR2_URL'])
+        # ---------------------------------------------------------------------
+        # Gaia DR1
+        # ---------------------------------------------------------------------
+        qkargs = dict(ra='ra', dec='dec', pmra='pmra', pmde='pmdec',
+                      plx='parallax', epoch='ref_epoch',
+                      cat='gaiadr1.gaia_source', id='source_id', idnum='{0}')
+        params.set('TAP_GAIA_DR1_URL',
+                   'https://gea.esac.esa.int/tap-server/tap')
+        tap_dict['Gaia DR1 '] = dict()
+        tap_dict['Gaia DR1 ']['QUERY'] = QUERY1.format(**qkargs)
+        tap_dict['Gaia DR1 ']['URL'] = str(params['TAP_GAIA_DR1_URL'])
+        # ---------------------------------------------------------------------
+        # UCAC 4
+        # ---------------------------------------------------------------------
+        QUERY2 = ('SELECT TOP 5 {id} as sid, {ra} as ra, {dec} as dec, '
+                  '{pmra}*3600*1000 as pmra, {pmde}*3600*1000 as pmde,'
+                  '0 as plx, 2000.0 as epoch'
+                  ' FROM {cat} WHERE {id}=\'UCAC4-{idnum}\'')
+        qkargs = dict(ra='raj2000', dec='dej2000', pmra='pmra', pmde='pmde',
+                      cat='ucac4.main', id='ucacid', idnum='{0}')
+        params.set('TAP_UCAC4_URL', 'http://dc.zah.uni-heidelberg.de/tap')
+        tap_dict['UCAC4 '] = dict()
+        tap_dict['UCAC4 ']['QUERY'] = QUERY2.format(**qkargs)
+        tap_dict['UCAC4 ']['URL'] = str(params['TAP_UCAC4_URL'])
+        # ---------------------------------------------------------------------
+        # Hipparcos
+        # ---------------------------------------------------------------------
+        QUERY3 = ('SELECT TOP 5 {id} as sid, {ra} as ra, {dec} as dec, '
+                  '{pmra} as pmra, {pmde} as pmde,'
+                  '{plx} as plx, 1991.25 as epoch'
+                  ' FROM {cat} WHERE {id}=\'{idnum}\'')
+        qkargs = dict(ra='ra', dec='dec', pmra='pm_ra', pmde='pm_de',
+                      plx='plx', id='hip', idnum='{0}',
+                      cat='public.hipparcos_newreduction')
+        params.set('TAP_HIP_URL', 'https://gea.esac.esa.int/tap-server/tap')
+        tap_dict['HIP '] = dict()
+        tap_dict['HIP ']['QUERY'] = QUERY3.format(**qkargs)
+        tap_dict['HIP ']['URL'] = str(params['TAP_HIP_URL'])
+        # ---------------------------------------------------------------------
+        # return dictionary
+        return tap_dict
+
 
 # =============================================================================
-# Define functions
+# Functions used by pseudo const
 # =============================================================================
-# defines the colours
-class Colors:
-    BLACK1 = '\033[90;1m'
-    RED1 = '\033[1;91;1m'
-    GREEN1 = '\033[92;1m'
-    YELLOW1 = '\033[1;93;1m'
-    BLUE1 = '\033[94;1m'
-    MAGENTA1 = '\033[1;95;1m'
-    CYAN1 = '\033[1;96;1m'
-    WHITE1 = '\033[97;1m'
-    BLACK2 = '\033[1;30m'
-    RED2 = '\033[1;31m'
-    GREEN2 = '\033[1;32m'
-    YELLOW2 = '\033[1;33m'
-    BLUE2 = '\033[1;34m'
-    MAGENTA2 = '\033[1;35m'
-    CYAN2 = '\033[1;36m'
-    WHITE2 = '\033[1;37m'
-    ENDC = '\033[0;0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
+def clean_object(rawobjname: str) -> str:
+    """
+    Clean a 'rawobjname' to allow it to be consistent
 
-    def __init__(self, theme=None):
-        if theme is None:
-            self.theme = 'DARK'
-        else:
-            self.theme = theme
-        self.endc = self.ENDC
-        self.bold = self.BOLD
-        self.underline = self.UNDERLINE
-        self.update_theme()
+    :param rawobjname: str, the raw object name to clean
 
-    def update_theme(self, theme=None):
-        if theme is not None:
-            self.theme = theme
-        if self.theme == 'DARK':
-            self.header = self.MAGENTA1
-            self.okblue = self.BLUE1
-            self.okgreen = self.GREEN1
-            self.ok = self.MAGENTA2
-            self.warning = self.YELLOW1
-            self.fail = self.RED1
-            self.debug = self.BLACK1
-        else:
-            self.header = self.MAGENTA2
-            self.okblue = self.MAGENTA2
-            self.okgreen = self.BLACK2
-            self.ok = self.MAGENTA2
-            self.warning = self.BLUE2
-            self.fail = self.RED2
-            self.debug = self.GREEN2
-
-    def print(self, message, colour):
-        if colour in ['b', 'blue']:
-            start = self.BLUE1
-        elif colour in ['r', 'red']:
-            start = self.RED1
-        elif colour in ['g', 'green']:
-            start = self.GREEN1
-        elif colour in ['y', 'yellow']:
-            start = self.YELLOW1
-        elif colour in ['m', 'magenta']:
-            start = self.MAGENTA1
-        elif colour in ['k', 'black', 'grey']:
-            start = self.BLACK1
-        else:
-            start = self.endc
-        # return colour mesage
-        return start + message + self.endc
-
+    :return: str, the cleaned object name
+    """
+    # if raw object name contains null text - return Null string
+    if drs_text.null_text(rawobjname, NULL_TEXT):
+        return 'Null'
+    # strip spaces off raw object
+    objectname = rawobjname.strip()
+    # replace + and - with "p" and "m"
+    objectname = objectname.replace('+', 'p')
+    objectname = objectname.replace('-', 'm')
+    # now remove bad characters
+    for bad_char in BAD_OBJ_CHARS:
+        objectname = objectname.replace(bad_char, '_')
+    objectname = objectname.upper()
+    # deal with multiple underscores in a row
+    while '__' in objectname:
+        objectname = objectname.replace('__', '_')
+    # strip leading / trailing '_'
+    objectname = objectname.strip('_')
+    # return cleaned object name
+    return objectname
 
 # =============================================================================
 # End of code

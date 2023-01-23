@@ -1,134 +1,104 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
-
-# CODE DESCRIPTION HERE
+APERO flat and blaze calibration functionality
 
 Created on 2019-07-10 at 09:30
 
 @author: cook
 """
+import warnings
+from typing import List, Optional, Tuple, Union
+
 import numpy as np
 from scipy.optimize import curve_fit
-import warnings
 
-from apero import core
-from apero.core import constants
 from apero import lang
+from apero.base import base
+from apero.core import constants
 from apero.core import math as mp
-from apero.core.core import drs_log
+from apero.core.core import drs_database
 from apero.core.core import drs_file
-from apero.science.calib import general
+from apero.core.core import drs_log
+from apero.core.utils import drs_recipe
+from apero.science.calib import gen_calib
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'science.extract.extraction.py'
 __INSTRUMENT__ = 'None'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
-# get param dict
-ParamDict = constants.ParamDict
-DrsFitsFile = drs_file.DrsFitsFile
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# Get Recipe class
+DrsRecipe = drs_recipe.DrsRecipe
+# Get parameter class
+ParamDict = constants.ParamDict
+# Get the input fits file class
+DrsFitsFile = drs_file.DrsFitsFile
 # Get the text types
-TextEntry = lang.drs_text.TextEntry
-TextDict = lang.drs_text.TextDict
+textentry = lang.textentry
 # alias pcheck
-pcheck = core.pcheck
+pcheck = constants.PCheck(wlog=WLOG)
 
 
 # =============================================================================
 # Define functions
 # =============================================================================
-# TODO: not used!
-def calculate_blaze_flat(e2ds, flux, blaze_cut, blaze_deg):
+blaze_flat_return = Tuple[np.ndarray, np.ndarray, np.ndarray, float]
+
+
+def calculate_blaze_flat_sinc(params: ParamDict, e2ds_ini: np.ndarray,
+                              peak_cut: float, badpercentile: float,
+                              order_num: int, fiber: str,
+                              sinc_med_size: Optional[int] = None
+                              ) -> blaze_flat_return:
     """
-    do not use -- old function here for comparison
-    :param e2ds:
-    :param flux:
-    :param blaze_cut:
-    :param blaze_deg:
-    :return:
+    Calculate the blaze function using a sinc function
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param e2ds_ini: numpy (1D) array: the extracted flux for this order
+    :param peak_cut: float, the threshold expressed as the fraction of the
+                     maximum peak, below this threshold the blaze is set to NaN
+    :param badpercentile: float, the hot pixel percentile level
+    :param order_num: int, the order number we are dealing with
+    :param fiber: str, the fiber name we are dealing with
+    :param sinc_med_size: int or None, optional, the sinc fit median filter
+                          width, overrides params['FF_BLAZE_SINC_MED_SIZE']
+
+    :return: tuple, 1. the updated extracted flux for this order
+             2. the flat profile for this order
+             3. the blaze fit for this order
+             4. the rms for this order
     """
-    # do not use -- old function here for comparison
-    args = [__NAME__ + '.calculate_blaze_flat_sinc()']
-    warnings.warn('Do not use - Use {0} instead'.format(*args))
-    # ----------------------------------------------------------------------
-    # remove edge of orders at low S/N
-    # ----------------------------------------------------------------------
-    with warnings.catch_warnings(record=True) as _:
-        blazemask = e2ds < (flux / blaze_cut)
-        e2ds[blazemask] = np.nan
-    # ----------------------------------------------------------------------
-    # measure the blaze (with polynomial fit)
-    # ----------------------------------------------------------------------
-    # get x position values
-    xpix = np.arange(len(e2ds))
-    # find all good pixels
-    good = np.isfinite(e2ds)
-    # do poly fit on good values
-    coeffs = mp.nanpolyfit(xpix[good], e2ds[good], deg=blaze_deg)
-    # fit all positions based on these fit coefficients
-    blaze = np.polyval(coeffs, xpix)
-    # blaze is not usable outside mask range to do this we convole with a
-    #   width=1 tophat (this will remove any cluster of pixels that has 2 or
-    #   less points and is surrounded by NaN values
-    # find minimum/maximum position of convolved blaze
-    nanxpix = np.array(xpix).astype(float)
-    nanxpix[~good] = np.nan
-    minpos, maxpos = mp.nanargmin(nanxpix), mp.nanargmax(nanxpix)
-
-    # set these bad values to NaN
-    blaze[:minpos] = np.nan
-    blaze[maxpos:] = np.nan
-
-    # ----------------------------------------------------------------------
-    #  calcaulte the flat
-    # ----------------------------------------------------------------------
-    with warnings.catch_warnings(record=True) as _:
-        flat = e2ds / blaze
-
-    # ----------------------------------------------------------------------
-    # calculate the rms
-    # ----------------------------------------------------------------------
-    rms = mp.nanstd(flat)
-
-    # ----------------------------------------------------------------------
-    # return values
-    return e2ds, flat, blaze, rms
-
-
-def calculate_blaze_flat_sinc(params, e2ds_ini, peak_cut, nsigfit, badpercentile,
-                              order_num, fiber, niter=2,):
     # get function name
     func_name = __NAME__ + '.calculate_blaze_flat_sinc()'
+    # get med filt parameter
+    med_size = pcheck(params, 'FF_BLAZE_SINC_MED_SIZE', func=func_name,
+                      override=sinc_med_size)
     # ----------------------------------------------------------------------
     # defnie the x positions
     xpix = np.arange(len(e2ds_ini))
     # ------------------------------------------------------------------
-
-    e2ds = mp.medfilt_1d(e2ds_ini,15)
-
+    # Need to median filter the e2ds here as we want to fit the shape not
+    #   individual line shapes for the blaze
+    e2ds = mp.medfilt_1d(e2ds_ini, med_size)
     # region over which we will fit
     keep = np.isfinite(e2ds)
     # keep only regions that make sense compared to the 95th percentile
     #   max would be affected by outliers
     with warnings.catch_warnings(record=True) as _:
-        keep &= e2ds > 0.05 * np.nanpercentile(e2ds, 95)
-        keep &= e2ds < 2 * np.nanpercentile(e2ds, 95)
-
+        keep &= e2ds > 0.05 * mp.nanpercentile(e2ds, 95)
+        keep &= e2ds < 2 * mp.nanpercentile(e2ds, 95)
     # ------------------------------------------------------------------
     # guess of peak value, we do not take the max as there may be a
     #     hot/bad pix in the order
-    thres = np.nanpercentile(e2ds, badpercentile)
+    thres = mp.nanpercentile(e2ds, badpercentile)
     # ------------------------------------------------------------------
     # how many points above 50% of peak value?
     # The period should be a factor of about 2.0 more than the domain
@@ -138,9 +108,9 @@ def calculate_blaze_flat_sinc(params, e2ds_ini, peak_cut, nsigfit, badpercentile
     with warnings.catch_warnings(record=True) as _:
         pospeak = mp.nanmedian(xpix[e2ds > thres])
     # bounds
-    with warnings.catch_warnings(record=True) as _:
-        xlower = mp.nanmin(xpix[e2ds > thres])
-        xupper = mp.nanmax(xpix[e2ds > thres])
+    # with warnings.catch_warnings(record=True) as _:
+    #     xlower = mp.nanmin(xpix[e2ds > thres])
+    #     xupper = mp.nanmax(xpix[e2ds > thres])
     # ------------------------------------------------------------------
     # starting point for the fit to the blaze sinc model
     # we start with :
@@ -157,65 +127,70 @@ def calculate_blaze_flat_sinc(params, e2ds_ini, peak_cut, nsigfit, badpercentile
     # bounds = [(thres * 0.5, 0.0, 0.0, -np.inf, -np.inf, -1e-2),
     #           (thres * 1.5, np.inf, np.max(xpix), np.inf, np.inf, 1e-2)]
     # pass without DC and SLOPE
-    bounds = [ (0, 0.0, 0.0, -np.inf, -1e-20, -np.inf),
-               (thres * 1.5, np.inf, np.max(xpix), np.inf, 1e-20, np.inf)]
+    bounds = [(0, 0.0, 0.0, -np.inf, -np.inf, -1e-20),
+              (thres * 1.5, np.inf, np.max(xpix), np.inf, np.inf, 1e-20)]
     # set a counter
     n_it = -1
-    # ------------------------------------------------------------------
-    # try to fit and if there is a failure catch it
-    try:
-        # we optimize over pixels that are not NaN
-        #popt0, pcov0 = curve_fit(mp.sinc, xpix[keep], e2ds[keep], p0=fit_guess,
-        #                         method='dogbox', bounds=bounds)
-        # set the first guess for the full fit to the fit without slope and
-        #   quadratic terms
-        #fit_guess = popt0
-        # set the quad, cube and slope to zero (pass without DC and SLOPE)
-        #fit_guess[[3, 4, 5]] = 0.0
-
-        # we optimize over pixels that are not NaN (this time with no bounds)
-        popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep], p0=fit_guess,
-                               bounds = bounds)
-        # ------------------------------------------------------------------
-        # set the model to zeros at first
-        blaze = mp.sinc(xpix, popt[0], popt[1], popt[2], popt[3], popt[4],
-                        popt[5], peak_cut=peak_cut)
-
-        # # now we iterate using a sigma clip
-        # for n_it in range(niter):
-        #     # we construct a model with the peak cut-off
-        #     blaze = mp.sinc(xpix, popt[0], popt[1], popt[2], popt[3], popt[4],
-        #                     popt[5], peak_cut=peak_cut)
-        #     # we find residuals to the fit and normalize them
-        #     residual = (e2ds - blaze)
-        #     residual /= mp.nanmedian(np.abs(residual))
-        #     # we keep only non-NaN model points (i.e. above peak_cut) and
-        #     # within +- Nsigfit dispersion elements
-        #     with warnings.catch_warnings(record=True) as _:
-        #         keep = (np.abs(residual) < nsigfit) & np.isfinite(blaze)
-        #     popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep],
-        #                            p0=fit_guess) #, bounds=bounds)
-    except RuntimeError as e:
-        # if it failed with bounds try without bounds
+    # -------------------------------------------------------------------------
+    # try a few times (this can fix it not working)
+    tries = 0
+    popt, pcov = [], []
+    # loop around 5 times
+    while tries <= 5:
+        # try to fit and if there is a failure catch it
         try:
-            # we optimize over pixels that are not NaN (this time with no bounds)
+            # we optimize over pixels that are not NaN
             popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep],
-                                   p0=fit_guess)
-            # ------------------------------------------------------------------
-            # set the model to zeros at first
-            blaze = mp.sinc(xpix, popt[0], popt[1], popt[2], popt[3], popt[4],
-                            popt[5], peak_cut=peak_cut)
-
-        except RuntimeError as e:
-            strlist = 'amp={0} period={1} lin={2} quad={3} cube={4} slope={5}'
-            strguess = strlist.format(*fit_guess)
-            strlower = strlist.format(*bounds[0])
-            strupper = strlist.format(*bounds[1])
-            eargs = [order_num, fiber, n_it, strguess, strlower, strupper,
-                     type(e), str(e), func_name]
-            WLOG(params, 'error', TextEntry('40-015-00009', args=eargs))
-            blaze = None
-
+                                   p0=fit_guess, bounds=bounds)
+            # we then re-fit to avoid local minima (this has happened - fitting
+            #   a second time seemed to fix this - when the guess is off)
+            popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep], p0=popt,
+                                   bounds=bounds)
+            # worked --> break while loop
+            break
+        except RuntimeError as _:
+            # if it failed with bounds try without bounds
+            try:
+                # we optimize over pixels that are not NaN (this time with
+                # no bounds)
+                popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep],
+                                       p0=fit_guess)
+                # we then re-fit to avoid local minima (this has happened
+                #    - fitting a second time seemed to fix this
+                #    - when the guess is off)
+                popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep], p0=popt)
+                # worked --> break while loop
+                break
+            except RuntimeError as _:
+                # finally try without the cubic term
+                try:
+                    fit_guess1 = fit_guess[:5]
+                    # we optimize over pixels that are not NaN (this time with
+                    #    no bounds)
+                    popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep],
+                                           p0=fit_guess1)
+                    # worked --> break while loop
+                    break
+                except RuntimeError as e:
+                    # try again and give warning that we are trying again
+                    if tries < 5:
+                        wmsg = textentry('10-015-00001', args=[tries])
+                        WLOG(params, 'warning', wmsg, sublevel=2)
+                        tries += 1
+                    # on the 5th attempt give up
+                    if tries == 5:
+                        strlist = ('amp={0} period={1} lin={2} slope={3} '
+                                   'quad={4} (cube={5})')
+                        strguess = strlist.format(*fit_guess)
+                        strlower = strlist.format(*bounds[0])
+                        strupper = strlist.format(*bounds[1])
+                        eargs = [order_num, fiber, n_it, strguess, strlower,
+                                 strupper, type(e), str(e), func_name]
+                        emsg = textentry('40-015-00009', args=eargs)
+                        WLOG(params, 'error', emsg)
+    # ------------------------------------------------------------------
+    # calculate the blaze from the curve_fit coefficients
+    blaze = mp.sinc(xpix, *popt, peak_cut=peak_cut)
     # ----------------------------------------------------------------------
     # remove nan in the blaze also in the e2ds
     # ----------------------------------------------------------------------
@@ -230,61 +205,143 @@ def calculate_blaze_flat_sinc(params, e2ds_ini, peak_cut, nsigfit, badpercentile
     rms = mp.robust_nanstd(flat[keep])
     # remove any very large outliers (set to NaN)
     with warnings.catch_warnings(record=True) as _:
-        flat[np.abs(flat - 1) > 10 * rms] = np.nan
+        bad_mask1 = np.abs(flat - 1) > 10 * rms
+        # apply mask
+        flat[bad_mask1] = np.nan
+        blaze[bad_mask1] = np.nan
+        e2ds_ini[bad_mask1] = np.nan
+    # ----------------------------------------------------------------------
+    # remove outliers within flat field to avoid division by small numbers
+    #   or suspiciously large flat response
+    with warnings.catch_warnings(record=True) as _:
+        bad_mask2 = np.abs(1 - flat) > 0.2
+        # apply mask
+        flat[bad_mask2] = np.nan
+        blaze[bad_mask2] = np.nan
+        e2ds_ini[bad_mask1] = np.nan
+    # ----------------------------------------------------------------------
+    # recalculate calculate the rms
+    # ----------------------------------------------------------------------
+    rms = mp.robust_nanstd(flat[keep])
     # ----------------------------------------------------------------------
     # return values
     return e2ds_ini, flat, blaze, rms
 
 
-def get_flat(params, header, fiber, filename=None, quiet=False):
+def get_flat(params: ParamDict, header: Union[drs_file.Header, None],
+             fiber: str, filename: Optional[str] = None, quiet: bool = False,
+             database: Optional[drs_database.CalibrationDatabase] = None
+             ) -> Tuple[str, float, np.ndarray]:
+    """
+    Get the flat calibration file from the calibration database
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param header: fits Header, the fits header associated with the input
+                   file (required to get closest in time) can be None if
+                   filename is given
+    :param fiber: str, the fiber name
+    :param filename: str or None, the filename of the flat calibration to
+                     load, overrides getting it from calibration database
+                     header not require for this
+    :param quiet: bool, whether to log/print loading messages
+    :param database: CalibrationDatabase or None, if passed does not reload
+                     the calibration database
+    :return: tuple, 1. the flat file name used, 2. the MJD time of the flat file
+             3. numpy (2D) array, the loaded flat file
+    """
     # get file definition
-    out_flat = core.get_file_definition('FF_FLAT', params['INSTRUMENT'],
-                                        kind='red')
+    out_flat = drs_file.get_file_definition(params, 'FF_FLAT', block_kind='red')
     # get key
-    key = out_flat.get_dbkey(fiber=fiber)
+    key = out_flat.get_dbkey()
+    # load database
+    if database is None:
+        calibdbm = drs_database.CalibrationDatabase(params)
+        calibdbm.load_db()
+    else:
+        calibdbm = database
     # ------------------------------------------------------------------------
-    # check for filename in inputs
-    filename = general.get_input_files(params, 'FLATFILE', key, header,
-                                       filename)
+    # load flat file
+    cfile = gen_calib.CalibFile()
+    cfile.load_calib_file(params, key, header, filename=filename,
+                          userinputkey='FLATFILE', database=calibdbm,
+                          fiber=fiber)
+    # get properties from calibration file
+    flat = cfile.data
+    flat_file = cfile.filename
+    flat_time = cfile.mjdmid
     # ------------------------------------------------------------------------
-    # load calib file
-    flat, flat_file = general.load_calib_file(params, key, header,
-                                              filename=filename)
-    # log which fpmaster file we are using
+    # log which fpref file we are using
     if not quiet:
-        WLOG(params, '', TextEntry('40-015-00006', args=[flat_file]))
-    # return the master image
-    return flat_file, flat
+        WLOG(params, '', textentry('40-015-00006', args=[flat_file]))
+    # return the reference image
+    return flat_file, flat_time, flat
 
 
-def get_blaze(params, header, fiber, filename=None):
+def get_blaze(params: ParamDict, header: Union[drs_file.Header, None],
+              fiber: str, filename: Optional[str] = None,
+              database: Optional[drs_database.CalibrationDatabase] = None
+              ) -> Tuple[str, float, np.ndarray]:
+    """
+    Get the blaze calibration file from the calibration database
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param header: fits Header, the fits header associated with the input
+                   file (required to get closest in time) can be None if
+                   filename is given
+    :param fiber: str, the fiber name
+    :param filename: str or None, the filename of the blaze calibration to
+                     load, overrides getting it from calibration database
+                     header not require for this
+    :param database: CalibrationDatabase or None, if passed does not reload
+                     the calibration database
+    :return: tuple, 1. the blaze file name used, 2. the MJD time of the blaze
+             file 3. numpy (2D) array, the loaded blaze file
+    """
     # get file definition
-    out_blaze = core.get_file_definition('FF_BLAZE', params['INSTRUMENT'],
-                                         kind='red')
+    out_blaze = drs_file.get_file_definition(params, 'FF_BLAZE',
+                                             block_kind='red')
     # get key
-    key = out_blaze.get_dbkey(fiber=fiber)
+    key = out_blaze.get_dbkey()
+    # load database
+    if database is None:
+        calibdbm = drs_database.CalibrationDatabase(params)
+        calibdbm.load_db()
+    else:
+        calibdbm = database
     # ------------------------------------------------------------------------
-    # check for filename in inputs
-    filename = general.get_input_files(params, 'BLAZEFILE', key, header,
-                                       filename)
+    # load blaze file
+    cfile = gen_calib.CalibFile()
+    cfile.load_calib_file(params, key, header, filename=filename,
+                          userinputkey='BLAZEFILE', database=calibdbm,
+                          fiber=fiber)
+    # get properties from calibration file
+    blaze = cfile.data
+    blaze_file = cfile.filename
+    blaze_time = cfile.mjdmid
     # ------------------------------------------------------------------------
-    # load calib file
-    blaze, blaze_file = general.load_calib_file(params, key, header,
-                                              filename=filename)
-    # log which fpmaster file we are using
-    WLOG(params, '', TextEntry('40-015-00007', args=[blaze_file]))
-    # return the master image
-    return blaze_file, blaze
+    # log which fpref file we are using
+    WLOG(params, '', textentry('40-015-00007', args=[blaze_file]))
+    # return the reference image
+    return blaze_file, blaze_time, blaze
 
 
 # =============================================================================
 # Define write and qc functions
 # =============================================================================
-def flat_blaze_qc(params, eprops, fiber):
+def flat_blaze_qc(params: ParamDict, eprops: ParamDict, fiber: str
+                  ) -> Tuple[List[list], int]:
+    """
+    Calculate the flat and blaze quality control criteria
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param eprops: dictionary, the extraction dictionary
+    :param fiber: str, the fiber name
+
+    :return: tuple, 1. the qc lists, 2. int 1 if passed 0 if failed
+    """
     # set passed variable and fail message list
     fail_msg, qc_values, qc_names = [], [], [],
     qc_logic, qc_pass = [], []
-    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
     # --------------------------------------------------------------
     # check that rms values in required orders are below threshold
 
@@ -298,7 +355,7 @@ def flat_blaze_qc(params, eprops, fiber):
     if max_rms > params['QC_FF_MAX_RMS']:
         # add failed message to fail message list
         fargs = [fiber, max_rms, params['QC_FF_MAX_RMS']]
-        fail_msg.append(textdict['40-015-00008'].format(*fargs))
+        fail_msg.append(textentry('40-015-00008', args=fargs))
         qc_pass.append(0)
     else:
         qc_pass.append(1)
@@ -310,11 +367,12 @@ def flat_blaze_qc(params, eprops, fiber):
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):
-        WLOG(params, 'info', TextEntry('40-005-10001'))
+        WLOG(params, 'info', textentry('40-005-10001'))
         passed = 1
     else:
         for farg in fail_msg:
-            WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
+            WLOG(params, 'warning', textentry('40-005-10002') + farg,
+                 sublevel=6)
         passed = 0
     # store in qc_params
     qc_params = [qc_names, qc_values, qc_logic, qc_pass]
@@ -322,17 +380,37 @@ def flat_blaze_qc(params, eprops, fiber):
     return qc_params, passed
 
 
-def flat_blaze_write(params, recipe, infile, eprops, fiber, rawfiles, combine,
-                     props, lprops, orderpfile, shapelocalfile, shapexfile,
-                     shapeyfile, qc_params):
+def flat_blaze_write(params: ParamDict, recipe: DrsRecipe, infile: DrsFitsFile,
+                     eprops: ParamDict, fiber: str, rawfiles: List[str],
+                     combine: bool, shapeprops: ParamDict, lprops: ParamDict,
+                     sprops: ParamDict, qc_params: List[list]
+                     ) -> Tuple[DrsFitsFile, DrsFitsFile]:
+    """
+    Write the flat and blaze calibration files to disk
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param recipe: DrsRecipe, the recipe that called this function
+    :param infile: DrsFitsFile, the input fits file class
+    :param eprops: ParamDict, the extraction parameter dictionary
+    :param fiber: str, the fiber name
+    :param rawfiles: list of strings, the raw filenames
+    :param combine: bool, if True input files were combined
+    :param shapeprops: ParamDict, the shape parameter dictionary
+    :param lprops: ParamDict, the localisation parameter dictionary
+    :param sprops: ParamDict, the s1d parameter dictionary
+    :param qc_params: list of lists, the quality control lists
+
+    :return: tuple, 1. DrsFitsFile, the output blaze fits file class
+             2. DrsFitsFile, the output flat fits file class
+    """
     # --------------------------------------------------------------
     # Store Blaze in file
     # --------------------------------------------------------------
     # get a new copy of the blaze file
-    blazefile = recipe.outputs['BLAZE_FILE'].newcopy(recipe=recipe,
+    blazefile = recipe.outputs['BLAZE_FILE'].newcopy(params=params,
                                                      fiber=fiber)
     # construct the filename from file instance
-    blazefile.construct_filename(params, infile=infile)
+    blazefile.construct_filename(infile=infile)
     # define header keys for output file
     # copy keys from input file
     blazefile.copy_original_keys(infile)
@@ -353,17 +431,24 @@ def flat_blaze_write(params, recipe, infile, eprops, fiber, rawfiles, combine,
         hfiles = [infile.basename]
     blazefile.add_hkey_1d('KW_INFILE1', values=hfiles,
                           dim1name='file')
+    # set in files
+    blazefile.infiles = list(hfiles)
     # add qc parameters
     blazefile.add_qckeys(qc_params)
     # add the calibration files use
-    blazefile = general.add_calibs_to_header(blazefile, props)
+    blazefile = gen_calib.add_calibs_to_header(blazefile, shapeprops)
     # --------------------------------------------------------------
     # add the other calibration files used
-    blazefile.add_hkey('KW_CDBORDP', value=orderpfile)
+    blazefile.add_hkey('KW_CDBORDP', value=lprops['ORDERPFILE'])
+    blazefile.add_hkey('KW_CDTORDP', value=lprops['ORDERPTIME'])
     blazefile.add_hkey('KW_CDBLOCO', value=lprops['LOCOFILE'])
-    blazefile.add_hkey('KW_CDBSHAPEL', value=shapelocalfile)
-    blazefile.add_hkey('KW_CDBSHAPEDX', value=shapexfile)
-    blazefile.add_hkey('KW_CDBSHAPEDY', value=shapeyfile)
+    blazefile.add_hkey('KW_CDTLOCO', value=lprops['LOCOTIME'])
+    blazefile.add_hkey('KW_CDBSHAPEL', value=sprops['SHAPELFILE'])
+    blazefile.add_hkey('KW_CDTSHAPEL', value=sprops['SHAPELTIME'])
+    blazefile.add_hkey('KW_CDBSHAPEDX', value=sprops['SHAPEXFILE'])
+    blazefile.add_hkey('KW_CDTSHAPEDX', value=sprops['SHAPEXTIME'])
+    blazefile.add_hkey('KW_CDBSHAPEDY', value=sprops['SHAPEYFILE'])
+    blazefile.add_hkey('KW_CDTSHAPEDY', value=sprops['SHAPEYTIME'])
     # --------------------------------------------------------------
     # add SNR parameters to header
     blazefile.add_hkey_1d('KW_EXT_SNR', values=eprops['SNR'],
@@ -379,18 +464,9 @@ def flat_blaze_write(params, recipe, infile, eprops, fiber, rawfiles, combine,
     blazefile.add_hkey('KW_COSMIC_CUT', value=eprops['COSMIC_SIGCUT'])
     blazefile.add_hkey('KW_COSMIC_THRES',
                        value=eprops['COSMIC_THRESHOLD'])
-    # add blaze parameter used
-    # TODO: is blaze_size needed with sinc function?
-    blazefile.add_hkey('KW_BLAZE_WID', value=eprops['BLAZE_SIZE'])
-    # TODO: is blaze_cut needed with sinc function?
-    blazefile.add_hkey('KW_BLAZE_CUT', value=eprops['BLAZE_CUT'])
-    # TODO: is blaze_deg needed with sinc function?
-    blazefile.add_hkey('KW_BLAZE_DEG', value=eprops['BLAZE_DEG'])
     # add blaze sinc parameters used
     blazefile.add_hkey('KW_BLAZE_SCUT', value=eprops['BLAZE_SCUT'])
-    blazefile.add_hkey('KW_BLAZE_SIGFIG', value=eprops['BLAZE_SIGFIT'])
     blazefile.add_hkey('KW_BLAZE_BPRCNTL', value=eprops['BLAZE_BPERCENTILE'])
-    blazefile.add_hkey('KW_BLAZE_NITER', value=eprops['BLAZE_NITER'])
     # add saturation parameters used
     blazefile.add_hkey('KW_SAT_QC', value=eprops['SAT_LEVEL'])
     with warnings.catch_warnings(record=True) as _:
@@ -401,44 +477,62 @@ def flat_blaze_write(params, recipe, infile, eprops, fiber, rawfiles, combine,
     blazefile.data = eprops['BLAZE']
     # --------------------------------------------------------------
     # log that we are saving rotated image
-    WLOG(params, '',
-         TextEntry('40-015-00003', args=[blazefile.filename]))
+    WLOG(params, '', textentry('40-015-00003', args=[blazefile.filename]))
+    # define multi lists
+    data_list, name_list = [], []
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(recipe, drsfitsfile=blazefile)]
+        name_list += ['PARAM_TABLE']
     # write image to file
-    blazefile.write_file()
+    blazefile.write_multi(data_list=data_list, name_list=name_list,
+                          block_kind=recipe.out_block_str,
+                          runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(blazefile)
     # --------------------------------------------------------------
     # Store Flat-field in file
     # --------------------------------------------------------------
     # get a new copy of the blaze file
-    flatfile = recipe.outputs['FLAT_FILE'].newcopy(recipe=recipe,
+    flatfile = recipe.outputs['FLAT_FILE'].newcopy(params=params,
                                                    fiber=fiber)
     # construct the filename from file instance
-    flatfile.construct_filename(params, infile=infile)
+    flatfile.construct_filename(infile=infile)
     # copy header from blaze file
     flatfile.copy_hdict(blazefile)
+    # set in files
+    flatfile.infiles = list(hfiles)
     # set output key
     flatfile.add_hkey('KW_OUTPUT', value=flatfile.name)
     # copy data
     flatfile.data = eprops['FLAT']
     # --------------------------------------------------------------
     # log that we are saving rotated image
-    WLOG(params, '',
-         TextEntry('40-015-00004', args=[flatfile.filename]))
+    WLOG(params, '', textentry('40-015-00004', args=[flatfile.filename]))
+    # define multi lists
+    data_list, name_list = [], []
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(recipe, drsfitsfile=blazefile)]
+        name_list += ['PARAM_TABLE']
     # write image to file
-    flatfile.write_file()
+    flatfile.write_multi(data_list=data_list, name_list=name_list,
+                         block_kind=recipe.out_block_str,
+                         runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(flatfile)
     # --------------------------------------------------------------
     # Store E2DSLL in file
     # --------------------------------------------------------------
     # get a new copy of the blaze file
-    e2dsllfile = recipe.outputs['E2DSLL_FILE'].newcopy(recipe=recipe,
+    e2dsllfile = recipe.outputs['E2DSLL_FILE'].newcopy(params=params,
                                                        fiber=fiber)
     # construct the filename from file instance
-    e2dsllfile.construct_filename(params, infile=infile)
+    e2dsllfile.construct_filename(infile=infile)
     # copy header from blaze file
     e2dsllfile.copy_hdict(blazefile)
+    # set in files
+    e2dsllfile.infiles = list(hfiles)
     # set output key
     e2dsllfile.add_hkey('KW_OUTPUT', value=e2dsllfile.name)
     # copy data
@@ -446,16 +540,39 @@ def flat_blaze_write(params, recipe, infile, eprops, fiber, rawfiles, combine,
     # --------------------------------------------------------------
     # log that we are saving rotated image
     WLOG(params, '',
-         TextEntry('40-015-00005', args=[e2dsllfile.filename]))
+         textentry('40-015-00005', args=[e2dsllfile.filename]))
+    # define multi lists
+    data_list, name_list = [eprops['E2DSCC']], ['E2DSLL', 'E2DSCC']
+    datatype_list = ['image']
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(recipe, drsfitsfile=e2dsllfile)]
+        name_list += ['PARAM_TABLE']
+        datatype_list += ['table']
     # write image to file
-    e2dsllfile.write_file()
+    e2dsllfile.write_multi(data_list=data_list, name_list=name_list,
+                           datatype_list=datatype_list,
+                           block_kind=recipe.out_block_str,
+                           runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(e2dsllfile)
     # return out file
     return blazefile, flatfile
 
 
-def flat_blaze_summary(recipe, params, qc_params, eprops, fiber):
+def flat_blaze_summary(recipe: DrsRecipe, params: ParamDict,
+                       qc_params: List[list], eprops: ParamDict, fiber: str):
+    """
+    Produce the flat and blaze summary document
+
+    :param recipe: DrsRecipe, the recipe that called this function
+    :param params: ParamDict, parameter dictionary of constants
+    :param qc_params: list of lists, the quality control lists
+    :param eprops: ParamDict, the extraction parameter dictionary
+    :param fiber: str, the fiber name
+
+    :return: None, produces the summary document
+    """
     # alias to eprops
     epp = eprops
     # add qc params (fiber specific)
@@ -474,24 +591,10 @@ def flat_blaze_summary(recipe, params, qc_params, eprops, fiber):
                          fiber=fiber)
     recipe.plot.add_stat('KW_COSMIC_THRES', fiber=fiber,
                          value=epp['COSMIC_THRESHOLD'])
-    # add blaze parameter used
-    # TODO: is blaze_size needed with sinc function?
-    recipe.plot.add_stat('KW_BLAZE_WID', value=eprops['BLAZE_SIZE'],
-                         fiber=fiber)
-    # TODO: is blaze_cut needed with sinc function?
-    recipe.plot.add_stat('KW_BLAZE_CUT', value=eprops['BLAZE_CUT'],
-                         fiber=fiber)
-    # TODO: is blaze_deg needed with sinc function?
-    recipe.plot.add_stat('KW_BLAZE_DEG', value=eprops['BLAZE_DEG'],
-                         fiber=fiber)
     # add blaze sinc parameters used
     recipe.plot.add_stat('KW_BLAZE_SCUT', value=eprops['BLAZE_SCUT'],
                          fiber=fiber)
-    recipe.plot.add_stat('KW_BLAZE_SIGFIG', value=eprops['BLAZE_SIGFIT'],
-                         fiber=fiber)
     recipe.plot.add_stat('KW_BLAZE_BPRCNTL', value=eprops['BLAZE_BPERCENTILE'],
-                         fiber=fiber)
-    recipe.plot.add_stat('KW_BLAZE_NITER', value=eprops['BLAZE_NITER'],
                          fiber=fiber)
 
 

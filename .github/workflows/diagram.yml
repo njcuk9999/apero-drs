@@ -1,0 +1,20 @@
+ 
+name: Create diagram
+on:
+  workflow_dispatch: {}
+  push:
+    branches:
+      - v0.7.151-working
+jobs:
+  get_data:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@master
+      - name: Update diagram
+        uses: githubocto/repo-visualizer@main
+        with:
+          root_path: "apero"
+          excluded_paths: "ignore,.github,documentation,data" 
+          output_file: "documentation/working/_static/diagram.svg"
+          push: false

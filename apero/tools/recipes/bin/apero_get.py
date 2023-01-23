@@ -1,0 +1,138 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Get files with specific filters
+
+Created on 2021-06-11
+
+@author: cook
+"""
+import os
+from typing import Any, Dict
+
+from apero.base import base
+from apero.core import constants
+from apero.core.core import drs_log
+from apero.core.core import drs_text
+from apero.core.utils import drs_recipe
+from apero.core.utils import drs_startup
+from apero.tools.module.listing import drs_get
+
+# =============================================================================
+# Define variables
+# =============================================================================
+__NAME__ = 'apero_get.py'
+__INSTRUMENT__ = 'None'
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
+# Get Logging function
+WLOG = drs_log.wlog
+# Get Recipe class
+DrsRecipe = drs_recipe.DrsRecipe
+# Get parameter class
+ParamDict = constants.ParamDict
+
+
+# =============================================================================
+# Define functions
+# =============================================================================
+def main(**kwargs):
+    """
+    Main function for apero_explorer.py
+
+    :param kwargs: additional keyword arguments
+
+    :keyword debug: int, debug level (0 for None)
+
+    :returns: dictionary of the local space
+    :rtype: dict
+    """
+    # assign function calls (must add positional)
+    fkwargs = dict(**kwargs)
+    # ----------------------------------------------------------------------
+    # deal with command line inputs / function call inputs
+    recipe, params = drs_startup.setup(__NAME__, __INSTRUMENT__, fkwargs,
+                                       enable_plotter=False)
+    # solid debug mode option
+    if kwargs.get('DEBUG0000', False):
+        return recipe, params
+    # ----------------------------------------------------------------------
+    # run main bulk of code (catching all errors)
+    llmain, success = drs_startup.run(__main__, recipe, params)
+    # ----------------------------------------------------------------------
+    # End Message
+    # ----------------------------------------------------------------------
+    return drs_startup.end_main(params, llmain, recipe, success, outputs='None')
+
+
+def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
+    """
+    Main function - using user inputs (or gui inputs) filters files and
+    copies them to a new location
+
+    :param recipe: DrsRecipe, the recipe class using this function
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: dictionary containing the local variables
+    """
+    # get copy criteria from user inputs
+    do_copy = not params['INPUTS']['TEST']
+    # get sym link criteria from user inputs
+    do_symlink = params['INPUTS']['SYMLINKS']
+    # get outpath from user inputs
+    user_outdir = params['INPUTS']['OUTPATH']
+    if drs_text.null_text(user_outdir, ['None', '', 'Null']):
+        user_outdir = os.getcwd()
+        current = True
+    else:
+        current = False
+    # get inputs from user
+    inputs = params['INPUTS']
+    use_gui = params['INPUTS']['GUI']
+    if use_gui:
+        WLOG(params, 'warning', 'Not Implemented yet',
+             sublevel=2)
+        return locals()
+    # get filters from user inputs
+    kw_objnames = inputs.listp('objnames', dtype=str, required=False)
+    kw_dprtypes = inputs.listp('dprtypes', dtype=str, required=False)
+    kw_outputs = inputs.listp('outtypes', dtype=str, required=False)
+    kw_fibers = inputs.listp('fibers', dtype=str, required=False)
+    # check for None / *
+    if drs_text.null_text(kw_objnames, ['None', '', 'Null']):
+        kw_objnames = None
+    elif '*' in kw_objnames:
+        kw_objnames = drs_get.all_objects(params)
+    if drs_text.null_text(kw_dprtypes, ['None', '', 'Null', '*']):
+        kw_dprtypes = None
+    if drs_text.null_text(kw_outputs, ['None', '', 'Null', '*']):
+        kw_outputs = None
+    if drs_text.null_text(kw_fibers, ['None', '', 'Null', '*']):
+        kw_fibers = None
+    # push filters into dictionary (not object names these are special)
+    filters = dict()
+    filters['KW_DPRTYPE'] = kw_dprtypes
+    filters['KW_OUTPUT'] = kw_outputs
+    filters['KW_FIBER'] = kw_fibers
+    # run basic filter
+    indict, outdict = drs_get.basic_filter(params, kw_objnames, filters,
+                                           user_outdir, do_copy, do_symlink)
+    # ----------------------------------------------------------------------
+    # End of main code
+    # ----------------------------------------------------------------------
+    return locals()
+
+
+# =============================================================================
+# Start of code
+# =============================================================================
+if __name__ == "__main__":
+    # run main with no arguments (get from command line - sys.argv)
+    ll = main()
+
+# =============================================================================
+# End of code
+# =============================================================================

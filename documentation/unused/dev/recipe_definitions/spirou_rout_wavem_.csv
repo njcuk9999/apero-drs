@@ -1,0 +1,11 @@
+name,HDR[DRSOUTID],file type,suffix,basename,fibers,dbname,dbkey,input file
+EXT_E2DS_FF,EXT_E2DS_FF,.fits,_e2dsff,--,"AB, A, B, C",--,--,DRS_PP
+WAVEHCLL,--,.dat,_linelist,--,"AB, A, B, C",--,--,"EXT_E2DS, EXT_E2DS_FF"
+WAVERES,WAVE_RES,.fits,_wavemres,--,"AB, A, B, C",--,--,"EXT_E2DS, EXT_E2DS_FF"
+WAVEM_HC,WAVEM_HC,.fits,_wavem_hc,--,"AB, A, B, C",calibration,WAVEM,"EXT_E2DS, EXT_E2DS_FF"
+WAVEM_FP,WAVEM_FP,.fits,_wavem_fp,--,"AB, A, B, C",calibration,WAVESOL_MASTER,"EXT_E2DS, EXT_E2DS_FF"
+WAVE_FPRESTAB,--,.tbl,--,apero_wave_results,"AB, A, B, C",--,--,"EXT_E2DS, EXT_E2DS_FF"
+WAVE_FPLLTABL,--,.tbl,_mhc_lines,--,"AB, A, B, C",--,--,"EXT_E2DS, EXT_E2DS_FF"
+WAVE_HCLIST_MASTER,WAVE_HCLIST_MASTER,.fits,_wavem_hclines,--,"AB, A, B, C",calibration,WAVEHCL,"EXT_E2DS, EXT_E2DS_FF"
+WAVE_FPLIST_MASTER,WAVE_FPLIST_MASTER,.fits,_wavem_fplines,--,"AB, A, B, C",calibration,WAVEFPL,"EXT_E2DS, EXT_E2DS_FF"
+CCF_RV,CCF_RV,.fits,_ccf,--,"AB, A, B, C",--,--,"EXT_E2DS_FF, TELLU_OBJ"

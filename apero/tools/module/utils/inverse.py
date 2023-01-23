@@ -11,34 +11,27 @@ Created on 2020-03-30 at 14:47
 """
 import numpy as np
 
-from apero import core
-from apero import lang
+from apero.base import base
 from apero.core import constants
+from apero.core import math as mp
+from apero.core.core import drs_log
 from apero.science.calib import localisation
 from apero.science.calib import shape
-from apero.core.core import drs_recipe
-
 
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'cal_update_berv.py'
-__INSTRUMENT__ = 'SPIROU'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
+__NAME__ = 'tools.modeule.inverse.py'
+__INSTRUMENT__ = 'None'
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # get param dict
 ParamDict = constants.ParamDict
 # Get Logging function
-WLOG = core.wlog
-# Get the text types
-TextEntry = lang.drs_text.TextEntry
-TextDict = lang.drs_text.TextDict
-Help = lang.drs_text.HelpDict(__INSTRUMENT__, Constants['LANGUAGE'])
+WLOG = drs_log.wlog
 
 
 # =============================================================================
@@ -52,11 +45,9 @@ def drs_image_shape(params):
     return yhigh - ylow, xhigh - xlow
 
 
-def calc_central_localisation(params, recipe, fiber, header=None,
-                              filename=None):
+def calc_central_localisation(params, fiber, header=None, filename=None):
     # get the loco image and number of orders for this fiber
-    lprops = localisation.get_coefficients(params, recipe, header,
-                                           filename=filename,
+    lprops = localisation.get_coefficients(params, header, filename=filename,
                                            fiber=fiber, merge=True)
     # get the cut down image size
     xlow, xhigh = params['IMAGE_X_LOW'], params['IMAGE_X_HIGH']
@@ -66,11 +57,11 @@ def calc_central_localisation(params, recipe, fiber, header=None,
     # loop around orders
     for order_num in range(lprops['NBO']):
         # get coefficents
-        acc = lprops['CENT_COEFFS'][order_num][::-1]
-        ass = lprops['WID_COEFFS'][order_num][::-1]
+        acc = lprops['CENT_COEFFS'][order_num]
+        ass = lprops['WID_COEFFS'][order_num]
         # get value at xpix center of detector
-        cfit = np.polyval(acc, nbxpix // 2)
-        wfit = np.polyval(ass, nbxpix // 2)
+        cfit = mp.val_cheby(acc, nbxpix // 2, domain=[0, nbxpix])
+        wfit = mp.val_cheby(ass, nbxpix // 2, domain=[0, nbxpix])
         # store to file
         centers.append(cfit)
         widths.append(wfit)
@@ -130,31 +121,30 @@ def main():
     from astropy.io import fits
     workspace = '/scratch3/rali/spirou/mini_data/calibDB/'
     workspace1 = '/scratch3/rali/spirou/mini_data/reduced/2019-04-20/'
-    locofileAB = workspace + '2019-04-20_2400399f_pp_loco_AB.fits'
-    locofileC = workspace + '2019-04-20_2400550f_pp_loco_C.fits'
+    locofile_ab = workspace + '2019-04-20_2400399f_pp_loco_AB.fits'
+    locofile_c = workspace + '2019-04-20_2400550f_pp_loco_C.fits'
     shapex = fits.getdata(workspace + '2019-04-20_2400409a_pp_shapex.fits')
     shapey = fits.getdata(workspace + '2019-04-20_2400409a_pp_shapey.fits')
-    waveA = fits.getdata(workspace + '2019-04-20_2400416c_pp_e2dsff_A_wavem_fp_A.fits')
-    waveB = fits.getdata(workspace + '2019-04-20_2400416c_pp_e2dsff_B_wavem_fp_B.fits')
-    waveC = fits.getdata(workspace + '2019-04-20_2400416c_pp_e2dsff_C_wavem_fp_C.fits')
-    fpA = fits.getdata(workspace1 + '2400565a_pp_e2dsff_A.fits')
-    fpB = fits.getdata(workspace1 + '2400565a_pp_e2dsff_B.fits')
-    fpC = fits.getdata(workspace1 + '2400565a_pp_e2dsff_C.fits')
-    orderpAB = fits.getdata(workspace + '2019-04-20_2400399f_pp_order_profile_AB.fits')
-    orderpC = fits.getdata(workspace + '2019-04-20_2400394f_pp_order_profile_C.fits')
+    wave_a = fits.getdata(workspace + '2019-04-20_2400416c_pp_e2dsff_A_wavem_fp_A.fits')
+    wave_b = fits.getdata(workspace + '2019-04-20_2400416c_pp_e2dsff_B_wavem_fp_B.fits')
+    wave_c = fits.getdata(workspace + '2019-04-20_2400416c_pp_e2dsff_C_wavem_fp_C.fits')
+    fp_a = fits.getdata(workspace1 + '2400565a_pp_e2dsff_A.fits')
+    fp_b = fits.getdata(workspace1 + '2400565a_pp_e2dsff_B.fits')
+    fp_c = fits.getdata(workspace1 + '2400565a_pp_e2dsff_C.fits')
+    orderp_ab = fits.getdata(workspace + '2019-04-20_2400399f_pp_order_profile_AB.fits')
+    orderp_c = fits.getdata(workspace + '2019-04-20_2400394f_pp_order_profile_C.fits')
 
-    locofiles = dict(A=locofileAB, B=locofileAB, C=locofileC)
-    fpfiles = dict(A=fpA, B=fpB, C=fpC)
-    wavefiles = dict(A=waveA, B=waveB, C=waveC)
+    locofiles = dict(A=locofile_ab, B=locofile_ab, C=locofile_c)
+    fpfiles = dict(A=fp_a, B=fp_b, C=fp_c)
+    wavefiles = dict(A=wave_a, B=wave_b, C=wave_c)
     nbxpix = 4088
     nbypix = 3100
     nbo = 49
     fibers = ['A', 'B', 'C']
-    params = constants.load('SPIROU')
-    recipe = drs_recipe.make_default_recipe(params, name='test')
+    params = constants.load()
+    # recipe = drs_recipe.make_default_recipe(params, name='test')
     ishape = (nbypix, nbxpix)
     eshape = (nbo, nbxpix)
-
 
     # transform the shape maps
     shapex2 = shape.ea_transform(params, shapex, dymap=-shapey)
@@ -183,7 +173,7 @@ def main():
         locofile = locofiles[fiber]
         # calculate fiber centers
         print('\t Getting centers')
-        cents, wids = calc_central_localisation(params, recipe, fiber,
+        cents, wids = calc_central_localisation(params, fiber,
                                                 filename=locofile)
         # get straighted image for order map
         print('\t Getting order map')
@@ -192,11 +182,11 @@ def main():
         # get straighted image for ximage map
         print('\t Getting x map')
         sx_map = e2ds_to_simage(x_map, ximage, yimage, cents, wids,
-                                     fill=np.nan, simage=sx_map)
+                                fill=np.nan, simage=sx_map)
         # get straighted wave image
         print('\t Getting wave map')
-        swave_map =  e2ds_to_simage(wavefiles[fiber], ximage, yimage, cents,
-                                    wids, fill=np.nan, simage=swave_map)
+        swave_map = e2ds_to_simage(wavefiles[fiber], ximage, yimage, cents,
+                                   wids, fill=np.nan, simage=swave_map)
         # get straighted fp image
         print('\t Getting fp map')
         sfp_map = e2ds_to_simage(fpfiles[fiber], ximage, yimage, cents, wids,
@@ -208,29 +198,28 @@ def main():
     print('MAP --> IMAGE')
     # get shifted order map
     print('\tshifting order map')
-    porder_map = simage_to_drs(sorder_map, shapex2, shapey)
+    # porder_map = simage_to_drs(params, sorder_map, shapex2, shapey)
 
     # get shifted position map
     print('\tshifting x map')
-    px_map = simage_to_drs(sx_map, shapex2, shapey)
+    # px_map = simage_to_drs(params, sx_map, shapex2, shapey)
 
     # get shifted wave map
     print('\tshifting wave map')
-    pwave_map = simage_to_drs(swave_map, shapex2, shapey)
+    # pwave_map = simage_to_drs(params, swave_map, shapex2, shapey)
 
     # get shifted wave map
     print('\tshifting fp map')
-    pfp_map = simage_to_drs(sfp_map, shapex2, shapey)
+    pfp_map = simage_to_drs(params, sfp_map, shapex2, shapey)
 
     # --------------------------------------------------------------------------
     # apply order profile (after de-straightening)
     # --------------------------------------------------------------------------
     # calculate order profile for full image
-    orderp = orderpAB / np.nanmax(orderpAB)
-    orderp += orderpC / np.nanmax(orderpC)
+    orderp = orderp_ab / mp.nanmax(orderp_ab)
+    orderp += orderp_c / mp.nanmax(orderp_c)
     # apply this to maps
     pfp_map = pfp_map * orderp
-
 
     # temporary save to pp format (for testing)
     pfp_map[np.isnan(pfp_map)] = 0.0

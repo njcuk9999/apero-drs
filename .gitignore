@@ -170,6 +170,7 @@ fabric.properties
 
 # ignore whole .idea folder
 .idea
+.run/*.xml
 
 # Ignore config.py
 #/INTROOT/misc/
@@ -182,4 +183,7 @@ fabric.properties
 # Ignore everythign in apero data except readme
 /apero-data/*
 !/apero-data/*.md
-/.run/
+# Ignore backup files
+*.backup
+# Ignore database files
+*.db

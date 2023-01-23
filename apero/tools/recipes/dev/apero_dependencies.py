@@ -9,31 +9,28 @@ Created on 2019-11-27 at 13:58
 
 @author: cook
 """
-import numpy as np
 import os
-import pkg_resources
 from collections import OrderedDict
 
-from apero import core
-from apero import lang
-from apero.core import constants
+import numpy as np
+
+from apero.base import base
+from apero.core.core import drs_log
+from apero.core.core import drs_misc
+from apero.core.utils import drs_startup
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'apero_dependencies.py'
 __INSTRUMENT__ = 'None'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # Get Logging function
-WLOG = core.wlog
-# Get the text types
-TextEntry = lang.drs_text.TextEntry
+WLOG = drs_log.wlog
 # --------------------------------------------------------------------------
 # path strings to exclude
 EXCLUDE_PATH_STR = []
@@ -67,17 +64,17 @@ def main(**kwargs):
     fkwargs = dict(**kwargs)
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
-    recipe, params = core.setup(__NAME__, __INSTRUMENT__, fkwargs)
+    recipe, params = drs_startup.setup(__NAME__, __INSTRUMENT__, fkwargs)
     # solid debug mode option
     if kwargs.get('DEBUG0000', False):
         return recipe, params
     # ----------------------------------------------------------------------
     # run main bulk of code (catching all errors)
-    llmain, success = core.run(__main__, recipe, params)
+    llmain, success = drs_startup.run(__main__, recipe, params)
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    return core.end_main(params, llmain, recipe, success, outputs='None')
+    return drs_startup.end_main(params, llmain, recipe, success, outputs='None')
 
 
 def __main__(recipe, params):
@@ -85,7 +82,7 @@ def __main__(recipe, params):
 
     # ----------------------------------------------------------------------
     # define DRS path
-    drs_path = constants.get_relative_folder(params['DRS_PACKAGE'], '')
+    drs_path = drs_misc.get_relative_folder(params['DRS_PACKAGE'], '')
     # ----------------------------------------------------------------------
     # get all python files
     WLOG(params, '', 'Getting python files')
@@ -116,7 +113,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return core.return_locals(params, dict(locals()))
+    return locals()
 
 
 def get_python_files(path):
@@ -206,7 +203,7 @@ def get_import_statements(params, files):
 
         if DEBUG:
             # get package path
-            packagepath = constants.get_relative_folder(package, '')
+            packagepath = drs_misc.get_relative_folder(package, '')
             # get relative path
             relfilename = filename.split(packagepath)[-1]
             # remove leading/trailing separators
@@ -214,12 +211,19 @@ def get_import_statements(params, files):
             # add package to start
             relfilename = os.path.join(package, relfilename)
             # print total number of lines
-            WLOG(params, '', '='*60)
+            WLOG(params, '', '=' * 60)
             WLOG(params, '', 'Stats file={0}'.format(relfilename))
             WLOG(params, '', '=' * 60)
             stats = statsdict2[filename]
             for stat in stats:
-                WLOG(params, '', '\t{0}: {1}'.format(stat, stats[stat]))
+                lines_of_code = stats['total lines of code']
+                lines_of_comment = stats['total lines of comments']
+                # yellow message if code > comments
+                if lines_of_code > lines_of_comment:
+                    WLOG(params, '', '\t{0}: {1}'.format(stat, stats[stat]),
+                         colour='yellow')
+                else:
+                    WLOG(params, '', '\t{0}: {1}'.format(stat, stats[stat]))
 
     # return
     return importslist, statsdict, infodict
@@ -244,7 +248,6 @@ def deal_with_doc_strings(line, docstring_skip):
 
 
 def clean_imports(rawimports):
-
     # clean up (keep unique only)
     uimports = np.unique(rawimports)
     # loop around unique imports
@@ -288,7 +291,6 @@ def get_current_versions(importslist):
         except ImportError:
             versionslist.append('NOT INSTALLED')
     return versionslist
-
 
 
 # =============================================================================

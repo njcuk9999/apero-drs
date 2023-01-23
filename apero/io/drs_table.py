@@ -1,33 +1,40 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+APERO table functionality
 
-# CODE DESCRIPTION HERE
+Mostly linked to astropy.table
 
 Created on 2019-01-21 at 09:33
 
-import rules:
-    Cannot import whole of apero.config (drs_setup uses drs_table)
-
 @author: cook
+
+Import rules:
+    only from core.core.drs_log, core.io, core.math, core.constants,
+    apero.lang, apero.base
+
+    do not import from core.core.drs_file
+    do not import from core.core.drs_argument
+    do not import from core.core.drs_database
 """
-import numpy as np
 import os
-import sys
 import shutil
-from astropy.table import Table, vstack
-from astropy.table import TableMergeError
-from astropy.io.registry import get_formats
-from astropy.io import fits
+import warnings
 from collections import OrderedDict
+from typing import List, Tuple, Type, Union
 
-from apero.core import constants
+import numpy as np
+from astropy.io import fits
+from astropy.io.registry import get_formats
+from astropy.table import Column, Table, vstack
+from astropy.table import TableMergeError
+
 from apero import lang
+from apero.base import base
+from apero.core import constants
 from apero.core.core import drs_log
-
+from apero.core.core import drs_text
 from apero.io import drs_lock
-
 
 # =============================================================================
 # Define variables
@@ -35,31 +42,34 @@ from apero.io import drs_lock
 # Name of program
 __NAME__ = 'drs_table.py'
 __INSTRUMENT__ = 'None'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # get the parameter dictionary
 ParamDict = constants.ParamDict
+# Get function string
+display_func = drs_log.display_func
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.drs_text.TextEntry
+textentry = lang.textentry
 
 # -----------------------------------------------------------------------------
 # define list of integers
-INTEGERS = (np.int, np.int32, np.int64, int)
-STRINGS = (str, np.str)
-FLOATS = (np.float, np.float32, np.float64, float)
+INTEGERS = (np.int32, np.int64, int)
+STRINGS = str
+FLOATS = (np.float32, np.float64, float)
 
 
 # =============================================================================
 # Define usable table functions
 # =============================================================================
-def make_table(params, columns, values, formats=None, units=None):
+def make_table(params: ParamDict, columns: List[str],
+               values: Union[list, np.ndarray],
+               formats: List[str] = None,
+               units: List[str] = None) -> Table:
     """
     Construct an astropy table from columns and values
 
@@ -87,8 +97,8 @@ def make_table(params, columns, values, formats=None, units=None):
                    all columns and data
     :rtype: astropy.table.Table
     """
-
-    func_name = __NAME__ + '.make_table()'
+    # set function
+    func_name = display_func('make_table', __NAME__)
     # make empty table
     table = Table()
     # get variables
@@ -96,24 +106,24 @@ def make_table(params, columns, values, formats=None, units=None):
     # make sure we have as many columns as we do values
     if lcol != len(values):
         eargs = [lcol, len(values), func_name]
-        WLOG(params, 'error', TextEntry('01-002-00001', args=eargs))
+        WLOG(params, 'error', textentry('01-002-00001', args=eargs))
     # make sure if we have formats we have as many as columns
     if formats is not None:
         if lcol != len(formats):
             eargs = [lcol, len(formats), func_name]
-            WLOG(params, 'error', TextEntry('01-002-00002', args=eargs))
+            WLOG(params, 'error', textentry('01-002-00002', args=eargs))
     else:
         formats = [None] * len(columns)
     # make sure if we have units we have as many as columns
     if units is not None:
         if lcol != len(units):
             eargs = [lcol, len(units), func_name]
-            WLOG(params, 'error', TextEntry('01-002-00003', args=eargs))
+            WLOG(params, 'error', textentry('01-002-00003', args=eargs))
     # make sure that the values in values are the same length
     lval1 = len(values[0])
     for value in values:
         if len(value) != lval1:
-            WLOG(params, 'error', TextEntry('01-002-00004', args=[func_name]))
+            WLOG(params, 'error', textentry('01-002-00004', args=[func_name]))
     # now construct the table
     for c_it, col in enumerate(columns):
         # get value for this iteration
@@ -122,11 +132,11 @@ def make_table(params, columns, values, formats=None, units=None):
         table[col] = val
         # if we have formats set format
         if formats[c_it] is not None:
-            if test_format(formats[c_it]):
+            if drs_text.test_format(formats[c_it]):
                 table[col].format = formats[c_it]
             else:
                 eargs = [formats[c_it], col, func_name]
-                WLOG(params, 'error', TextEntry('01-002-00005', args=eargs))
+                WLOG(params, 'error', textentry('01-002-00005', args=eargs))
         # if we have units set the unit
         if units is not None:
             table[col].unit = units[c_it]
@@ -134,7 +144,8 @@ def make_table(params, columns, values, formats=None, units=None):
     return table
 
 
-def write_table(params, table, filename, fmt='fits', header=None):
+def write_table(params: ParamDict, table: Table, filename: str,
+                fmt: str = 'fits', header: Union[dict, None] = None):
     """
     Writes a table to file "filename" with format "fmt"
 
@@ -156,7 +167,7 @@ def write_table(params, table, filename, fmt='fits', header=None):
     :type fmt: str
     :type header: dict
 
-    :return: None
+    :return: None - writes the table to 'filename'
 
     Note to open fits tables in IDL see here:
         https://idlastro.gsfc.nasa.gov/ftp/pro/fits_table/aaareadme.txt
@@ -171,37 +182,46 @@ def write_table(params, table, filename, fmt='fits', header=None):
     astropy.table writeable formats are as follows:
 
     """
-    func_name = __NAME__ + '.write_table()'
+    # set function
+    func_name = display_func('write_table', __NAME__)
     # get format table
     ftable = list_of_formats()
     # check that format in format_table
     if fmt not in ftable['Format']:
         eargs = [fmt, func_name]
-        WLOG(params, 'error', TextEntry('01-002-00006', args=eargs))
+        WLOG(params, 'error', textentry('01-002-00006', args=eargs))
     # else check that we can read file
     else:
         pos = np.where(ftable['Format'] == fmt)[0][0]
         if not ftable['write?'][pos]:
             eargs = [fmt, func_name]
-            WLOG(params, 'error', TextEntry('01-002-00007', args=eargs))
+            WLOG(params, 'error', textentry('01-002-00007', args=eargs))
     # ----------------------------------------------------------------------
     # define a synchoronized lock for indexing (so multiple instances do not
     #  run at the same time)
     lockfile = os.path.basename(filename)
     # start a lock
     lock = drs_lock.Lock(params, lockfile)
+    # -------------------------------------------------------------------------
+    # must check that a pid is set
+    if params['PID'] is None:
+        WLOG(params, 'error', textentry('10-005-00006'))
+        pid = None
+    else:
+        pid = params['PID']
 
+    # -------------------------------------------------------------------------
     # make locked write function
-    @drs_lock.synchronized(lock, params['PID'])
+    @drs_lock.synchronized(lock, pid)
     def locked_write():
         # try to write table to file
         try:
             # write file
             table.write(filename, format=fmt, overwrite=True)
-        except Exception as e:
+        except Exception as exception:
             # log error
-            eargs = [type(e), e, func_name]
-            WLOG(params, 'error', TextEntry('01-002-00008', args=eargs))
+            _eargs = [type(exception), exception, func_name]
+            WLOG(params, 'error', textentry('01-002-00008', args=_eargs))
 
         if (fmt == 'fits') and (header is not None):
             # reload fits data
@@ -213,10 +233,11 @@ def write_table(params, table, filename, fmt='fits', header=None):
             try:
                 # save data
                 fits.writeto(filename, data, filehdr, overwrite=True)
-            except Exception as e:
+            except Exception as exception:
                 # log error
-                eargs = [type(e), e, func_name]
-                WLOG(params, 'error', TextEntry('01-002-00009', args=eargs))
+                _eargs = [type(exception), exception, func_name]
+                WLOG(params, 'error', textentry('01-002-00009', args=_eargs))
+
     # -------------------------------------------------------------------------
     # try to run locked makedirs
     try:
@@ -230,57 +251,60 @@ def write_table(params, table, filename, fmt='fits', header=None):
         raise e
 
 
-def merge_table(p, table, filename, fmt='fits'):
+def merge_table(params: ParamDict, table: Table, filename: str,
+                fmt: str = 'fits'):
     """
     If a file already exists for "filename" try to merge this new table with
     the old one (requires all columns/formats to be the same).
     If filename does not exist writes "table" as if new table
 
-    :param p: dictionary, parameter dictionary containing constants
+    :param params: dictionary, parameter dictionary containing constants
     :param table:  astropy table, the new table to be merged to existing file
     :param filename: string, the filename and location of the table
                      to written to
     :param fmt: string, the format of the table to read from (must be valid
                 for astropy.table to read - see below)
 
-    :type p: ParamDict
+    :type params: ParamDict
     :type table: astropy.table.Table
     :type filename: str
     :type fmt: str
 
     :exception SystemExit: on caught errors
 
-    :returns: None
+    :returns: None - writes table to 'filename'
 
     astropy.table writeable formats are as follows:
     """
-    func_name = __NAME__ + '.merge_table()'
+    # set function
+    func_name = display_func('merge_table', __NAME__)
     # first try to open table
     if os.path.exists(filename):
         # read old table
-        old_table = read_table(p, filename, fmt)
+        old_table = read_table(params, filename, fmt)
         # check against new table (colnames and formats)
-        old_table = prep_merge(p, filename, old_table, table)
+        old_table = prep_merge(params, filename, old_table, table)
         # generate a new table
         try:
             new_table = vstack([old_table, table])
         except TableMergeError as e:
             eargs = [filename, type(e), e, func_name]
-            WLOG(p, 'error', TextEntry('01-002-00010', args=eargs))
+            WLOG(params, 'error', textentry('01-002-00010', args=eargs))
             new_table = None
         # write new table
-        write_table(p, new_table, filename, fmt)
+        write_table(params, new_table, filename, fmt)
     # else just write the table
     else:
-        write_table(p, table, filename, fmt)
+        write_table(params, table, filename, fmt)
 
 
-def read_table(p, filename, fmt, colnames=None, **kwargs):
+def read_table(params: ParamDict, filename: str, fmt: str,
+               colnames: Union[List[str], None] = None, **kwargs) -> Table:
     """
     Reads a table from file "filename" in format "fmt", if colnames are defined
     renames the columns to these name
 
-    :param p: dictionary, parameter dictionary containing constants
+    :param params: dictionary, parameter dictionary containing constants
     :param filename: string, the filename and location of the table to read
     :param fmt: string, the format of the table to read from (must be valid
                 for astropy.table to read - see below)
@@ -290,7 +314,7 @@ def read_table(p, filename, fmt, colnames=None, **kwargs):
     :param kwargs: keys to pass to the reader
                    (Table.read(filename, format=fmt**kwargs))
 
-    :type p: ParamDict
+    :type params: ParamDict
     :type filename: str
     :type fmt: str
     :type colnames: list[str]
@@ -303,29 +327,28 @@ def read_table(p, filename, fmt, colnames=None, **kwargs):
     astropy.table readable formats are as follows:
 
     """
-    func_name = __NAME__ + '.read_table()'
+    # set function
+    func_name = display_func('read_table', __NAME__)
     # get format table
     ftable = list_of_formats()
-
     # don't let format be None
     if fmt is None:
         fmt = 'fits'
-
     # check that format in format_table
     if fmt not in ftable['Format']:
         eargs = [fmt, func_name]
-        WLOG(p, 'error', TextEntry('01-002-00006', args=eargs))
+        WLOG(params, 'error', textentry('01-002-00006', args=eargs))
     # else check that we can read file
     else:
         pos = np.where(ftable['Format'] == fmt)[0][0]
         if not ftable['read?'][pos]:
             eargs = [fmt, func_name]
-            WLOG(p, 'error', TextEntry('01-002-00008', args=eargs))
+            WLOG(params, 'error', textentry('01-002-00008', args=eargs))
 
     # check that filename exists
     if not os.path.exists(filename):
         eargs = [filename, func_name]
-        WLOG(p, 'error', TextEntry('01-002-00011', args=eargs))
+        WLOG(params, 'error', textentry('01-002-00011', args=eargs))
 
     # remove data_start for fits files
     if (fmt in ['fits']) and ('data_start' in kwargs):
@@ -333,51 +356,59 @@ def read_table(p, filename, fmt, colnames=None, **kwargs):
 
     # try to load file using astropy table
     try:
-        table = Table.read(filename, format=fmt, **kwargs)
+        with warnings.catch_warnings(record=True) as _:
+            table = Table.read(filename, format=fmt, **kwargs)
     except Exception as e:
         eargs = [type(e), e, filename, func_name]
-        WLOG(p, 'error', TextEntry('01-002-00012', args=eargs))
+        WLOG(params, 'error', textentry('01-002-00012', args=eargs))
         table = None
 
     # if we have colnames rename the columns
     if colnames is not None:
-        if len(colnames) != len(table.colnames):
+        if len(colnames) > len(table.colnames):
             eargs = [len(colnames), len(table.colnames), filename, func_name]
-            WLOG(p, 'error', TextEntry('01-002-00013', args=eargs))
+            WLOG(params, 'error', textentry('01-002-00013', args=eargs))
         # rename old names to new names
         oldcols = table.colnames
         for c_it, col in enumerate(colnames):
             table[oldcols[c_it]].name = col
+        # delete other column names
+        for col in table.colnames:
+            if col not in colnames:
+                del table[col]
 
     # return table
     return table
 
 
-def print_full_table(p, table):
+def print_full_table(params: ParamDict, table: Table):
     """
     print and log table (all lines) in standard drs manner
 
-    :param p: ParamDict, the constants parameter dictionary
+    :param params: ParamDict, the constants parameter dictionary
     :param table: astropy.table.Table
 
-    :type p: ParamDict
+    :type params: ParamDict
     :type table: astropy.table.Table
 
     :exception SystemExit: on caught errors
 
-    :return: None
+    :return: None - prints the table (up to 9999)
     """
-    tablestrings = table.pformat(max_lines=len(table)*10,
+    # set function
+    # _ = display_func('print_full_table', __NAME__)
+    # print table
+    tablestrings = table.pformat(max_lines=len(table) * 10,
                                  max_width=9999)
-    WLOG(p, '', '=' * len(tablestrings[0]), wrap=False)
-    WLOG(p, '', tablestrings, wrap=False)
-    WLOG(p, '', '=' * len(tablestrings[0]), wrap=False)
+    WLOG(params, '', '=' * len(tablestrings[0]), wrap=False)
+    WLOG(params, '', tablestrings, wrap=False)
+    WLOG(params, '', '=' * len(tablestrings[0]), wrap=False)
 
 
 # =============================================================================
 # Define usable table functions
 # =============================================================================
-def make_fits_table(dictionary=None):
+def make_fits_table(dictionary: Union[dict, None] = None) -> Table:
     """
     Make fits table from a dictionary
 
@@ -390,6 +421,8 @@ def make_fits_table(dictionary=None):
     :returns: astropy.table.Table representation of the dictionary
     :rtype: astropy.table.Table
     """
+    # set function
+    # _ = display_func('make_fits_table', __NAME__)
     # if dictionary is None return empty astropy table
     if dictionary is None:
         return Table()
@@ -404,17 +437,18 @@ def make_fits_table(dictionary=None):
         return astropy_table
 
 
-def read_fits_table(p, filename, return_dict=False):
+def read_fits_table(params: ParamDict, filename: str,
+                    return_dict: bool = False) -> Union[Table, dict]:
     """
     Read a fits table and return an astropy.table or a dictionary (depending
     on value of "return_dict"
 
-    :param p: ParamDict, the constants parameter dictionary
+    :param params: ParamDict, the constants parameter dictionary
     :param filename: str, the filename to open
     :param return_dict: bool, whether to return a dictionary (True) or an
                         astropy.table.Table (False) default is False
 
-    :type p: ParamDict
+    :type params: ParamDict
     :type filename: str
     :type return_dict: bool
 
@@ -423,21 +457,24 @@ def read_fits_table(p, filename, return_dict=False):
     :returns: either an Astropy Table or OrderedDict
     :rtype: astropy.table.Table | dict
     """
-    func_name = __NAME__ + '.read_fits_table()'
+    # set function
+    func_name = display_func('read_fits_table', __NAME__)
     # check that filename exists
     if not os.path.exists(filename):
         eargs = [filename, func_name]
-        WLOG(p, 'error', TextEntry('01-002-00014', args=eargs))
+        WLOG(params, 'error', textentry('01-002-00014', args=eargs))
     # read data
     try:
-        astropy_table = Table.read(filename)
+        with warnings.catch_warnings(record=True) as _:
+            astropy_table = Table.read(filename)
     except OSError as e:
         # try to deal with missing card issue
-        astropy_table = deal_with_missing_end_card(p, filename, e, func_name)
+        astropy_table = deal_with_missing_end_card(params, filename, e,
+                                                   func_name)
     except Exception as e:
         # display error
         eargs = [filename, type(e), e, func_name]
-        WLOG(p, 'error', TextEntry('01-002-00015', args=eargs))
+        WLOG(params, 'error', textentry('01-002-00015', args=eargs))
         astropy_table = None
     # return dict if return_dict is True
     if return_dict:
@@ -452,29 +489,31 @@ def read_fits_table(p, filename, return_dict=False):
     return astropy_table
 
 
-def write_fits_table(p, astropy_table, output_filename):
+def write_fits_table(params: ParamDict, astropy_table: Table,
+                     output_filename: str):
     """
     Write "astropy_table" fits table to "output_filename"
 
-    :param p: ParamDict, the constants parameter dictionary
+    :param params: ParamDict, the constants parameter dictionary
     :param astropy_table: astropy.table.Table, the input table to save
     :param output_filename: str, the output filename to save to
 
-    :type p: ParamDict
+    :type params: ParamDict
     :type astropy_table: astropy.table.Table
     :type output_filename: str
 
     :exception SystemExit: on caught errors
 
-    :returns: None
+    :returns: None -> writes 'astropy_table' to 'output_filename'
     """
-    func_name = __NAME__ + '.write_fits_table()'
+    # set function
+    func_name = display_func('write_fits_table', __NAME__)
     # get directory name
     dir_name = os.path.dirname(output_filename)
     # check directory exists
     if not os.path.exists(dir_name):
         eargs = [dir_name, func_name]
-        WLOG(p, 'error', TextEntry('01-002-00016', args=eargs))
+        WLOG(params, 'error', textentry('01-002-00016', args=eargs))
     # get backup file name
     backup_file = output_filename.replace('.fits', '.fits.back')
     # deal with file already existing
@@ -487,7 +526,7 @@ def write_fits_table(p, astropy_table, output_filename):
         except Exception as e:
             # log error
             eargs = [output_filename, type(e), e, func_name]
-            WLOG(p, 'error', TextEntry('01-002-00023', args=eargs))
+            WLOG(params, 'error', textentry('01-002-00023', args=eargs))
     # write data
     try:
         # write file
@@ -506,11 +545,11 @@ def write_fits_table(p, astropy_table, output_filename):
             shutil.copy(backup_file, output_filename)
         # log error
         eargs = [output_filename, type(e), e, func_name]
-        WLOG(p, 'error', TextEntry('01-002-00017', args=eargs))
+        WLOG(params, 'error', textentry('01-002-00017', args=eargs))
 
 
-# TODO: Find cause of this problem and fix properly
-def deal_with_missing_end_card(p, filename, e, func_name):
+def deal_with_missing_end_card(params: ParamDict, filename: str,
+                               exception: Exception, func: str) -> Table:
     """
     This is specifically to fix a unidentfied error that causes fits table
     to be saved without END card.
@@ -524,22 +563,26 @@ def deal_with_missing_end_card(p, filename, e, func_name):
     Solution is to read with fits (astropy.io.fits)
     --> also saves over old index file so this problem doesn't persist
 
-    :param p: ParamDict, the constant parameter dictionary
+    :param params: ParamDict, the constant parameter dictionary
     :param filename: string, the full path and filename to open the file
-    :param e: exception return, the error to print
-    :param func_name: string, the function this was called for
-                      (for error reporting)
+    :param exception: exception return, the error to print
+    :param func: string, the function this was called for (for error reporting)
 
-    :type p: ParamDict
+    :type params: ParamDict
     :type filename: str
-    :type e: Exception
-    :type func_name: str
+    :type exception: Exception
+    :type func: str
 
     :exception SystemExit: on caught errors
 
     :returns: astropy.table.Table containing the fits file
     :rtype: astropy.table.Table
     """
+    # set function
+    func_name = display_func('deal_with_missing_end_card', __NAME__)
+    if func is not None:
+        func_name += '(via {0})'.format(func)
+    # open fits file
     hdu = fits.open(filename, ignore_missing_end=True)
     ext = None
     if hdu[0].data is not None:
@@ -549,21 +592,21 @@ def deal_with_missing_end_card(p, filename, e, func_name):
         data = hdu[1].data
         ext = 1
     else:
-        eargs = [filename, type(e), e, func_name]
-        WLOG(p, 'error', TextEntry('01-002-00018', args=eargs))
+        eargs = [filename, type(exception), exception, func_name]
+        WLOG(params, 'error', textentry('01-002-00018', args=eargs))
         data = None
     # test that we have columns and names
     if not hasattr(data, 'columns'):
-        eargs = [filename, type(e), e, func_name]
-        WLOG(p, 'error', TextEntry('01-002-00019', args=eargs))
+        eargs = [filename, type(exception), exception, func_name]
+        WLOG(params, 'error', textentry('01-002-00019', args=eargs))
         data = None
     if not hasattr(data.columns, 'names'):
-        eargs = [filename, type(e), e, func_name]
-        WLOG(p, 'error', TextEntry('01-002-00020', args=eargs))
+        eargs = [filename, type(exception), exception, func_name]
+        WLOG(params, 'error', textentry('01-002-00020', args=eargs))
         data = None
     # print warning
-    wargs = [type(e), e, ext, filename, func_name]
-    WLOG(p, 'warning', TextEntry('10-001-00006', args=wargs))
+    wargs = [type(exception), exception, ext, filename, func_name]
+    WLOG(params, 'warning', textentry('10-001-00006', args=wargs), sublevel=2)
     # convert data to astropy table
     astropy_table = Table()
     for col in data.columns.names:
@@ -574,22 +617,23 @@ def deal_with_missing_end_card(p, filename, e, func_name):
     return astropy_table
 
 
-def vstack_cols(params, tablelist):
+def vstack_cols(tablelist: List[Table]) -> Union[Table, None]:
     """
     Take a list of Astropy Tables and stack into single Astropy Table
     Note same as core.core.drs_recipe.vstack_cols
 
-    :param params:
-    :param tablelist:
+    :param tablelist: list of tables, the tables to stack
     :return:
     """
+    # set function
+    # _ = display_func('vstack_cols', __NAME__)
     # deal with empty list
     if len(tablelist) == 0:
         # append a None
         return None
     elif len(tablelist) == 1:
         # append the single row
-        return  tablelist[0]
+        return tablelist[0]
     else:
         # get column names
         columns = tablelist[0].colnames
@@ -616,11 +660,28 @@ def vstack_cols(params, tablelist):
         return newtable
 
 
-def force_dtype_col(column, dtype=str, **kwargs):
-    import numpy as np
-    INTEGERS = (np.int, np.int32, np.int64, int)
-    STRINGS = (str, np.str)
-    FLOATS = (np.float, np.float32, np.float64, float)
+def force_dtype_col(column: Union[np.ndarray, list, Column],
+                    dtype: Union[Type, None] = str,
+                    lower: bool = False, upper: bool = False,
+                    strip: bool = False
+                    ) -> Tuple[Union[np.ndarray, None], Union[Type, None]]:
+    """
+    Force a 'column' to a specific datatype 'dtype'
+
+    :param column: np.array, list or astropy.table.Column - the column to try
+                   to force all entries to the same dtype
+    :param dtype: None or Type, the type to force (if None uses the first entry
+                  to force all elements to that dtype
+    :param lower: bool, if True and dtype is str force all to lower case
+    :param upper: bool, if True and dtype is str force all to upper case
+    :param strip: bool, if True and dtype is str force string.strip()
+
+    :return: tuple, 1. if force typing was successful return a np.array of the
+                    column (or if dtype not recognised)
+                    2. the dtype forced to (None if not recognised/not forced)
+    """
+    # set function
+    # _ = display_func('force_dtype_col', __NAME__)
     # if we have no columns don't do anything
     if len(column) == 0:
         return column, None
@@ -636,34 +697,37 @@ def force_dtype_col(column, dtype=str, **kwargs):
             dtype = None
     # deal with string columns
     if dtype in STRINGS:
+        # noinspection PyBroadException
         try:
             # cast to string (may be byte)
             col = np.array(column).astype(str)
             # create character array
             col = np.char.array(col)
-            if kwargs.get('lower', False):
+            if lower:
                 col = col.lower()
-            if kwargs.get('upper', False):
+            if upper:
                 col = col.upper()
-            if kwargs.get('strip', False):
+            if strip:
                 col = col.strip()
             # return the column
             return col, str
-        except:
+        except Exception as _:
             return None, None
     # deal with integer columns
     if dtype in INTEGERS:
+        # noinspection PyBroadException
         try:
             col = np.array(column).astype(int)
             return col, int
-        except:
+        except Exception as _:
             return None, None
     # deal with float columns
     if dtype in FLOATS:
+        # noinspection PyBroadException
         try:
             col = np.array(column).astype(float)
             return col, float
-        except:
+        except Exception as _:
             return None, None
     # else just return the column as is
     return np.array(column), None
@@ -672,18 +736,19 @@ def force_dtype_col(column, dtype=str, **kwargs):
 # =============================================================================
 # Define worker functions
 # =============================================================================
-def prep_merge(p, filename, table, preptable):
+def prep_merge(params: ParamDict, filename: str, table: Table,
+               preptable: Table) -> Table:
     """
     Prepare the merging of two files by checking that all columns and
     data types are correct
 
-    :param p: ParamDict, the constants parameter dictionary
+    :param params: ParamDict, the constants parameter dictionary
     :param filename: str, the filename of the table to merge
     :param table: astropy.table.Table, the parent table to merge to
     :param preptable: astropy.table.Table, the child table to merge into
                       "table" (parent)
 
-    :type p: ParamDict
+    :type params: ParamDict
     :type filename: str
     :type table: astropy.table.Table
     :type preptable: astropy.table.Table
@@ -693,7 +758,8 @@ def prep_merge(p, filename, table, preptable):
     :returns: the updated "preptable" ready for merging
     :rtype: astropy.table.Table
     """
-    func_name = __NAME__ + '.prep_merge()'
+    # set function
+    func_name = display_func('prep_merge', __NAME__)
     # set up new table to store prepped data
     newtable = Table()
     # loop around all columns
@@ -703,46 +769,21 @@ def prep_merge(p, filename, table, preptable):
         # check for column name
         if col not in table.colnames:
             eargs = [col, filename, func_name]
-            WLOG(p, 'error', TextEntry('01-002-00021', args=eargs))
+            WLOG(params, 'error', textentry('01-002-00021', args=eargs))
         # check format
         if table[col].dtype != pformat:
             try:
                 newtable[col] = np.array(table[col]).astype(pformat)
             except Exception as e:
                 eargs = [col, filename, type(e), e, func_name]
-                WLOG(p, 'error', TextEntry('01-002-00022', args=eargs))
+                WLOG(params, 'error', textentry('01-002-00022', args=eargs))
         else:
             newtable[col] = table[col]
     # return prepped table
     return newtable
 
 
-def test_format(fmt):
-    """
-    Test the format string with a floating point number
-
-    :param fmt: string, the format string i.e. "7.4f"
-
-    :type fmt: str
-
-    :returns: bool, if valid returns True else returns False
-    :rtype: bool
-    """
-    try:
-        if fmt.startswith('{') and fmt.endswith('}'):
-            return True
-        elif 's' in fmt:
-            return True
-        elif 'd' in fmt:
-            _ = ('{0:' + fmt + '}').format(123)
-        else:
-            _ = ('{0:' + fmt + '}').format(123.456789)
-        return True
-    except ValueError:
-        return False
-
-
-def list_of_formats():
+def list_of_formats() -> Table:
     """
     Get the list of astropy formats and return it
 
@@ -750,16 +791,19 @@ def list_of_formats():
               for reading and writing astropy tables
     :rtype: astropy.table.Table
     """
+    # set function
+    # _ = display_func('list_of_formats', __NAME__)
+    # get table formats
     ftable = get_formats(Table)
-
+    # push read and write into this table
     ftable['read?'] = ftable['Read'] == 'Yes'
     ftable['write?'] = ftable['Write'] == 'Yes'
-
     # return format table
     return ftable
 
 
-def string_formats(ftable=None, mask=None):
+def string_formats(ftable: Union[Table, None] = None,
+                   mask: np.ndarray = None) -> str:
     """
     Creates a string list of formats from the ftable created by
     spirouTable.list_of_formats()
@@ -802,7 +846,7 @@ def update_docs():
     This is only for internal use after the function definitions, to append
     the doc strings in "write_table" and "read_table
 
-    :return None:
+    :return: None - just update the docstrings
     """
     # get ftable
     ftable = list_of_formats()
@@ -818,7 +862,6 @@ def update_docs():
 
 # global call update the docs
 update_docs()
-
 
 # =============================================================================
 # End of code

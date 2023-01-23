@@ -9,31 +9,38 @@ Created on 2019-01-18 at 15:53
 
 @author: cook
 """
-from apero.core.math import general
-from apero.core.math import gauss
-from apero.core.math import nan
+
 from apero.core.math import fast
+from apero.core.math import gauss
+from apero.core.math import gen_math
+from apero.core.math import nan
 
 # =============================================================================
 # Define functions
 # =============================================================================
-continuum = general.continuum
+calculate_polyvals = gen_math.calculate_polyvals
 
-calculate_polyvals = general.calculate_polyvals
+centered_super_gauss = gauss.centered_super_gauss
 
-ea_airy_function = general.ea_airy_function
+ea_airy_function = gen_math.ea_airy_function
+
+estimate_sigma = gen_math.estimate_sigma
 
 fit_gauss_with_slope = gauss.fit_gauss_with_slope
 
-fit2dpoly = general.fit2dpoly
+fit2dpoly = gen_math.fit2dpoly
+
+fit_cheby = gen_math.fit_cheby
 
 fitgaussian = gauss.fitgaussian
 
-fwhm = general.fwhm
+fuzzy_curve_fit = gen_math.fuzzy_curve_fit
+
+fwhm = gen_math.fwhm
 
 gauss_fit_nn = gauss.gauss_fit_nn
 
-gaussian_function_nn =  gauss.gaussian_function_nn
+gaussian_function_nn = gauss.gaussian_function_nn
 
 gauss_function = gauss.gauss_function
 
@@ -43,23 +50,33 @@ gauss_beta_function = gauss.gauss_beta_function
 
 gauss_fit_s = gauss.gauss_fit_s
 
-get_dll_from_coefficients = general.get_dll_from_coefficients
+get_magic_grid = gen_math.get_magic_grid
 
-get_ll_from_coefficients = general.get_ll_from_coefficients
+get_circular_mask = gen_math.get_circular_mask
 
-get_ll_from_coefficients_cheb = general.get_ll_from_coefficients_cheb
+get_dll_from_coefficients = gen_math.get_dll_from_coefficients
 
-iuv_spline = general.iuv_spline
+get_ll_from_coefficients = gen_math.get_ll_from_coefficients
+
+get_ll_from_coefficients_cheb = gen_math.get_ll_from_coefficients_cheb
+
+iuv_spline = gen_math.iuv_spline
 
 killnan = nan.killnan
 
-lowpassfilter = general.lowpassfilter
+largest_divisor_below = gen_math.largest_divisor_below
 
-measure_box_min_max = general.measure_box_min_max
+lowpassfilter = gen_math.lowpassfilter
 
-medbin = general.medbin
+measure_box_min_max = gen_math.measure_box_min_max
+
+median_absolute_deviation = gen_math.median_absolute_deviation
+
+medbin = gen_math.medbin
 
 medfilt_1d = fast.medfilt_1d
+
+median = fast.median
 
 nanargmax = fast.nanargmax
 
@@ -75,29 +92,45 @@ nanmedian = fast.nanmedian
 
 nanpad = nan.nanpad
 
+nanchebyfit = nan.nanchebyfit
+
 nanpolyfit = nan.nanpolyfit
 
 nanstd = fast.nanstd
 
 nansum = fast.nansum
 
-normal_fraction = general.normal_fraction
+nanpercentile = fast.nanpercentile
 
-median = fast.median
+normal_fraction = gen_math.normal_fraction
 
-linear_minimization = general.linear_minimization
+odd_ratio_mean = fast.odd_ratio_mean
 
-relativistic_waveshift = general.relativistic_waveshift
+percentile_bin = gen_math.percentile_bin
 
-robust_nanstd = general.robust_nanstd
+linear_minimization = gen_math.linear_minimization
 
-robust_polyfit = general.robust_polyfit
+relativistic_waveshift = gen_math.relativistic_waveshift
 
-rot8 = general.rot8
+robust_nanstd = gen_math.robust_nanstd
 
-sinc = general.sinc
+robust_chebyfit = gen_math.robust_chebyfit
 
-sigfig = general.sigfig
+robust_polyfit = gen_math.robust_polyfit
+
+rot8 = gen_math.rot8
+
+sinc = gen_math.sinc
+
+sigfig = gen_math.sigfig
+
+square_medbin = gen_math.square_medbin
+
+super_gauss_fast = fast.super_gauss_fast
+
+val_cheby = gen_math.val_cheby
+
+xpand_mask = gen_math.xpand_mask
 
 # =============================================================================
 # End of code

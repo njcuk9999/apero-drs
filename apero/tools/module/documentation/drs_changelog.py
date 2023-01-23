@@ -14,66 +14,67 @@ import os
 import shutil
 from datetime import datetime
 
-from apero import core
-from apero.core import constants
 from apero import lang
-from apero.io import drs_path
+from apero.base import base
+from apero.core.core import drs_log
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'drs_changelog.py'
 __INSTRUMENT__ = 'None'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # Get Logging function
-WLOG = core.wlog
-# Get the text types
-TextEntry = lang.drs_text.TextEntry
-TextDict = lang.drs_text.TextDict
+WLOG = drs_log.wlog
+# get text entry
+textentry = lang.textentry
 # -----------------------------------------------------------------------------
 # define line parameters
-VERSIONSTR_PREFIX = 'DRS_VERSION = Const('
-DATESTR_PREFIX = 'DRS_DATE = Const('
+VERSIONSTR_PREFIX = '__version__ = '
+DATESTR_PREFIX = '__date__ = '
 
-VERSIONSTR = "DRS_VERSION = Const('DRS_VERSION', value='{0}', dtype=str,"
-DATESTR = "DRS_DATE = Const('DATE', value='{0}', dtype=str, source=__NAME__,"
+VERSIONSTR = "__version__ = '{0}'"
+DATESTR = "__date__ = '{0}'"
+
+NUMBER_OF_CHANGELOG_ENTRIES_LATEX = 4
+
+# yes or no text in language
+YES_OR_NO = '{0} {1} {2}'.format(textentry('Q_YES'), textentry('OR_TEXT'),
+                                 textentry('Q_NO'))
 
 
 # =============================================================================
 # Define functions
 # =============================================================================
-def ask_for_new_version(params):
-
-    # get the text dictionary
-    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
+def ask_for_new_version():
     # log current version
-    print(textdict['40-501-00001'].format(__version__))
+    print(textentry('40-501-00001', args=[__version__]))
     # ask if we wish to change version
-    uinput1 = str(input(textdict['40-501-00002'] + ' [Y]es or [N]o:\t'))
+    uinput1 = str(input(textentry('40-501-00002') +
+                        ' {0}:\t'.format(YES_OR_NO)))
     # if yes change the version
     if 'Y' in uinput1.upper():
         cond = True
         uinput2a = ''
         while cond:
             # ask for new version
-            uinput2a = str(input(textdict['40-501-00003']))
+            uinput2a = str(input(textentry('40-501-00003')))
             # ask for new version again (must match)
-            uinput2b = str(input(textdict['40-501-00004']))
+            uinput2b = str(input(textentry('40-501-00004')))
             # if both versions don't match
             if uinput2a != uinput2b:
                 # print that versions don't match
-                print(textdict['40-501-00005'])
+                print(textentry('40-501-00005'))
             else:
                 # print the new version
-                print(textdict['40-501-00006'].format(uinput2a))
+                print(textentry('40-501-00006').format(uinput2a))
                 # ask if new version is correct
-                qinput3 = textdict['40-501-00007'] + ' [Y]es or [N]o:\t'
+                qinput3 = (textentry('40-501-00007') +
+                           ' {0}:\t'.format(YES_OR_NO))
                 uinput3 = str(input(qinput3))
                 if 'Y' in uinput3.upper():
                     cond = False
@@ -176,7 +177,7 @@ def update_file(filename, prefix, suffix):
         else:
             outline = line
         # add new line at end if not there
-        if not line.endswith('\n'):
+        if not outline.endswith('\n'):
             outline += '\n'
         # append to output lines
         outlines.append(outline)
@@ -186,15 +187,36 @@ def update_file(filename, prefix, suffix):
             f.write(outline)
 
 
-def format_rst(filename):
+def format_rst(filename, special=None):
+
+    n_entries = NUMBER_OF_CHANGELOG_ENTRIES_LATEX
     # ----------------------------------------------------------------------
     # read the lines
     with open(filename, 'r') as f:
         lines = f.readlines()
     # ----------------------------------------------------------------------
+    # this is used to find which bits are for latex and which are for html
+    #    for latex we only keep the first n_entries in the change log
+    #    for html we keep the lot
+    used = 0
+    start = ''
     outlines = []
     # loop around in lines
     for line in lines:
+
+        if special == 'changelog':
+            if used < n_entries and line.startswith('----'):
+                used += 1
+            elif line.startswith('----'):
+                # need to store previous line as we are going to change it
+                tmp = str(outlines[-1])
+                # need to add only html code
+                outlines[-1] = '\n.. only:: html \n\n'
+                # need to re-add last line
+                outlines.append(tmp)
+                # special
+                special = None
+                start = '\t'
         # ------------------------------------------------------------------
         # deal with special characters
         line = _special_chars(line)
@@ -203,7 +225,7 @@ def format_rst(filename):
         if not line.endswith('\n'):
             line += '\n'
         # append line to outlines
-        outlines.append(line)
+        outlines.append(start + line)
     # ----------------------------------------------------------------------
     # write outlines
     with open(filename, 'w') as f:

@@ -1,0 +1,6 @@
+name,HDR[DRSOUTID],file type,suffix,fibers,dbname,dbkey,input file
+EXT_E2DS_FF,EXT_E2DS_FF,.fits,_e2dsff,"AB, A, B, C",--,--,DRS_PP
+WAVE_NIGHT,WAVE_NIGHT,.fits,_wave_night,"AB, A, B, C",calibration,WAVE,"EXT_E2DS, EXT_E2DS_FF"
+WAVE_HCLIST,WAVE_HCLIST,.fits,_wave_hclines,"AB, A, B, C",--,--,"EXT_E2DS, EXT_E2DS_FF"
+WAVE_FPLIST,WAVE_FPLIST,.fits,_wave_fplines,"AB, A, B, C",--,--,"EXT_E2DS, EXT_E2DS_FF"
+CCF_RV,CCF_RV,.fits,_ccf,"AB, A, B, C",--,--,"EXT_E2DS_FF, TELLU_OBJ"

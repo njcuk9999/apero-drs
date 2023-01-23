@@ -18,9 +18,8 @@ from apero.core.constants import param_functions
 # define name of script
 __NAME__ = 'constants.__init__.py'
 # define all functions
-__all__ = ['load', 'pload', 'ParamDict', 'ArgumentError', 'ConfigError',
-           'ConfigWarning', 'gen_all', 'getmodnames', 'import_module',
-           'get_filenames', 'get_relative_folder', 'break_point']
+__all__ = ['load', 'pload', 'ParamDict', 'gen_all', 'getmodnames',
+           'import_module']
 
 # =============================================================================
 # Define functions
@@ -32,30 +31,22 @@ load = param_functions.load_config
 # load the pseudo constants (based on instrument)
 pload = param_functions.load_pconfig
 
+# load the psuedo constants typing
+PseudoConstants = param_functions.pseudo_const.DefaultPseudoConstants
+
+# pchcek
+PCheck = param_functions.PCheck
+
 # get module names
 getmodnames = param_functions.get_module_names
-
-get_relative_folder = param_functions.get_relative_folder
 
 # import modules
 import_module = constant_functions.import_module
 
 get_constants_from_file = constant_functions.get_constants_from_file
 
-# get file names
-get_filenames = param_functions.get_file_names
-
 # param dict
 ParamDict = param_functions.ParamDict
-
-# argument error
-ArgumentError = param_functions.ArgumentError
-
-# config error
-ConfigError = param_functions.ConfigError
-
-# config warning
-ConfigWarning = param_functions.ConfigWarning
 
 # helper function
 gen_all = param_functions.get_config_all
@@ -64,9 +55,6 @@ gen_all = param_functions.get_config_all
 uparamdicts = param_functions.update_paramdicts
 
 update_file = constant_functions.update_file
-
-# generate a drs breakpoint
-break_point = param_functions.break_point
 
 # catching Ctrl+C and other code interruptions
 catch_sigint = param_functions.catch_sigint

@@ -9,41 +9,31 @@ Created on 2019-11-02 12:51
 Version 0.0.1
 """
 import os
-import sys
-
-# try to deal with python 2/3 compatibility
-if sys.version_info.major > 2:
-    import tkinter as tk
-    from tkinter import ttk
-    from tkinter import filedialog
-    from tkinter import messagebox
-    import tkinter.font as tkFont
-else:
-    import Tkinter as tk
-    import tkFont
-    import ttk
-    import tkFileFialog as filedialog
+import tkinter as tk
+from tkinter import filedialog
+from tkinter import ttk
 
 from PIL import Image, ImageTk
 
-from apero.core import constants
-from apero import core
-
+from apero.base import base
+from apero.core.core import drs_log
+from apero.core.core import drs_misc
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'file_explorer.py'
 __INSTRUMENT__ = 'None'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # Get Logging function
-WLOG = core.wlog
+WLOG = drs_log.wlog
+# Get resource path
+RESOURCE_PATH = drs_misc.get_relative_folder(__PACKAGE__, 'tools/resources')
+IMAGEDIR = os.path.join(RESOURCE_PATH, 'images')
 
 
 # =============================================================================
@@ -65,7 +55,8 @@ class DropDown(ttk.OptionMenu):
         # add the callback function to the dropdown
         dd.add_callback(callback)
     """
-    def __init__(self, parent, options:list, initial_value:str=None):
+
+    def __init__(self, parent, options: list, initial_value: str = None):
         """
         Constructor for drop down entry
 
@@ -88,7 +79,9 @@ class DropDown(ttk.OptionMenu):
         :param callback: callable function
         :return:
         """
+
         def internal_callback(*args):
+            _ = args
             callback()
 
         self.var.trace("w", internal_callback)
@@ -117,10 +110,10 @@ class StatusBar(ttk.Frame):
 
         self.frame = tk.Frame(self, relief=tk.SUNKEN)
 
-        self.status=tk.StringVar()
-        self.label=tk.Label(self.frame, bd=1, relief=tk.SUNKEN, anchor=tk.W,
-                           textvariable=self.status,
-                           font=('arial',10,'normal'))
+        self.status = tk.StringVar()
+        self.label = tk.Label(self.frame, bd=1, relief=tk.SUNKEN, anchor=tk.W,
+                              textvariable=self.status,
+                              font=('arial', 10, 'normal'))
         self.status.set('')
         self.label.pack(side=tk.LEFT)
 
@@ -147,21 +140,31 @@ class PageButtonPanel(ttk.Frame):
         self.parent = parent
         self.controller = controller
         self.button_panel(number)
+        self.button1 = None
+        self.button2 = None
+        self.button3 = None
+        self.button4 = None
 
     def button_panel(self, number=0):
-        if number != 0:
-            self.button1 = ttk.Button(self, text='Previous',
-                                      command=self.__previouspage)
-            self.button1.grid(row=0, column=0)
-        if number != (self.num_pages - 1):
-            self.button2 = ttk.Button(self, text='Next',
-                                      command=self.__nextpage)
-            self.button2.grid(row=0, column=1)
 
-        if number == (self.num_pages - 1):
-            self.button3 = ttk.Button(self, text='Finish',
+        if self.num_pages == 1:
+            self.button3 = ttk.Button(self, text='Submit',
                                       command=self.controller.execute)
             self.button3.grid(row=0, column=2)
+        else:
+            if number != 0:
+                self.button1 = ttk.Button(self, text='Previous',
+                                          command=self.__previouspage)
+                self.button1.grid(row=0, column=0)
+            if number != (self.num_pages - 1):
+                self.button2 = ttk.Button(self, text='Next',
+                                          command=self.__nextpage)
+                self.button2.grid(row=0, column=1)
+
+            if number == (self.num_pages - 1):
+                self.button3 = ttk.Button(self, text='Submit',
+                                          command=self.controller.execute)
+                self.button3.grid(row=0, column=2)
 
         # exit button
         self.button4 = ttk.Button(self, text='Exit',
@@ -177,7 +180,6 @@ class PageButtonPanel(ttk.Frame):
             current = self.num_pages - 1
         self.controller.current = current
         self._goto_page(current)
-
 
     def __previouspage(self):
         current = self.controller.current
@@ -197,10 +199,8 @@ class PageButtonPanel(ttk.Frame):
 
 class PageLogo(ttk.Frame):
     def __init__(self, parent, logo_path=None):
-        # TODO: remove with full path
         if logo_path is None:
-            IMAGEDIR = './tools/resources/images'
-            logo_path = os.path.join(IMAGEDIR, 'terrapipe_logo.png')
+            logo_path = os.path.join(IMAGEDIR, 'apero_logo.png')
         ttk.Frame.__init__(self, parent)
         self.image = Image.open(logo_path)
         self.logo = ImageTk.PhotoImage(master=self, image=self.image)
@@ -243,7 +243,9 @@ class SettingsPage(ttk.Frame):
         for name in self.elements:
             # get element
             element = self.elements[name]
-            self.results[name] = element.get()
+            if hasattr(element, 'get'):
+                # noinspection PyTypeChecker
+                self.results[name] = element.get()
 
 
 class BrowseSetting(ttk.Frame):
@@ -340,7 +342,6 @@ class CheckBoxes(ttk.Frame):
             rvalue = self.checkboxes[option]
             values[option] = rvalue.get()
         return values
-
 
 
 # =============================================================================

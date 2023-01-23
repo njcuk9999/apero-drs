@@ -1,0 +1,8 @@
+name,HDR[DRSOUTID],file type,suffix,basename,fibers,dbname,dbkey,input file
+TELLU_PCLEAN,TELLU_PCLEAN,.fits,_tellu_pclean,--,"A, B",telluric,TELLU_PCLEAN,EXT_E2DS_FF
+TELLU_CONV,--,.npy,_tellu_conv,--,"A, B",telluric,TELLU_CONV,"WAVEM_FP, WAVEM_HC"
+TELLU_TRANS,TELLU_TRANS,.fits,_tellu_trans,--,"A, B",telluric,TELLU_TRANS,EXT_E2DS_FF
+TELLU_TAPAS,--,.npy,--,tapas_spl.npy,--,telluric,TELLU_TAPAS,--
+TELLU_OBJ,TELLU_OBJ,.fits,_e2dsff_tcorr,--,"A, B",telluric,TELLU_OBJ,EXT_E2DS_FF
+TELLU_RECON,TELLU_RECON,.fits,_e2dsff_recon,--,"A, B",telluric,TELLU_RECON,EXT_E2DS_FF
+TELLU_TEMP,TELLU_TEMP,.fits,--,Template,"A, B",telluric,TELLU_TEMP,"EXT_E2DS_FF, TELLU_OBJ"

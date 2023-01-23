@@ -7,48 +7,208 @@ Created on 2020-07-2020-07-15 17:56
 
 @author: cook
 """
+import warnings
+from typing import List, Tuple
+
 import numpy as np
 
-from apero import core
+from apero import lang
+from apero.base import base
 from apero.core import constants
 from apero.core import math as mp
-from apero import lang
-from apero.core.core import drs_log
 from apero.core.core import drs_file
+from apero.core.core import drs_log
+from apero.core.utils import drs_recipe
+from apero.io import drs_fits
+from apero.io import drs_table
 from apero.science.calib import wave
 from apero.science.telluric import gen_tellu
-
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'science.telluric.mk_tellu.py'
 __INSTRUMENT__ = 'None'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # get param dict
 ParamDict = constants.ParamDict
 DrsFitsFile = drs_file.DrsFitsFile
+DrsRecipe = drs_recipe.DrsRecipe
 # Get function string
 display_func = drs_log.display_func
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.drs_text.TextEntry
-TextDict = lang.drs_text.TextDict
+textentry = lang.textentry
 # alias pcheck
-pcheck = core.pcheck
+pcheck = constants.PCheck(wlog=WLOG)
+
 
 # =============================================================================
 # General functions
 # =============================================================================
-def calculate_tellu_res_absorption(params, recipe, image, template,
-                                   template_file, header, mprops, wprops,
+def make_trans_cube(params: ParamDict, transfiles: List[str]
+                    ) -> Tuple[np.ndarray, drs_fits.Table]:
+    # -------------------------------------------------------------------------
+    # print progress: Making Transmission cube
+    WLOG(params, '', textentry('40-019-00054'))
+    # get parameters from params
+    snr_order = params['MKTELLU_QC_SNR_ORDER']
+    water_key = params['KW_TELLUP_EXPO_WATER'][0]
+    others_key = params['KW_TELLUP_EXPO_OTHERS'][0]
+    snr_key = params['KW_EXT_SNR'][0].format(snr_order)
+    objname_key = params['KW_OBJNAME'][0]
+    mjdmid_key = params['KW_MID_OBS_TIME'][0]
+    # load first transfile as reference
+    refimage, refhdr = drs_fits.readfits(params, transfiles[0], gethdr=True)
+    # set up storage for the absorption
+    trans_cube = np.zeros([refimage.shape[0], refimage.shape[1],
+                           len(transfiles)])
+    # get vectors
+    expo_water = np.zeros(len(transfiles), dtype=float)
+    expo_others = np.zeros(len(transfiles), dtype=float)
+    snr = np.zeros(len(transfiles), dtype=float)
+    mjdmids = np.zeros(len(transfiles), dtype=float)
+    objnames = np.array(['NULL'] * len(transfiles))
+    # load all the trans files
+    for it, filename in enumerate(transfiles):
+        # load trans image
+        tout = drs_fits.readfits(params, filename, gethdr=True)
+        transimage, transhdr = tout
+        # make sure we have required header key for expo_water
+        if water_key not in transhdr:
+            wargs = [water_key, transfiles[it]]
+            WLOG(params, '', textentry('40-019-00050', args=wargs))
+        # make sure we have required header key for expo_others
+        elif others_key not in transhdr:
+            wargs = [others_key, transfiles[it]]
+            WLOG(params, '', textentry('40-019-00050', args=wargs))
+        else:
+            # push data into abso array
+            with warnings.catch_warnings(record=True) as _:
+                trans_cube[:, :, it] = np.log(transimage)
+            # get header keys
+            expo_water[it] = float(transhdr[water_key])
+            expo_others[it] = float(transhdr[others_key])
+            snr[it] = float(transhdr[snr_key])
+            objnames[it] = str(transhdr[objname_key])
+            mjdmids[it] = float(transhdr[mjdmid_key])
+    # -------------------------------------------------------------------------
+    # setup table
+    columns = ['TRANS_FILE', 'EXPO_H2O', 'EXPO_OTHERS', 'SNR', 'OBJNAME',
+               'MJDMID']
+    values = [transfiles, expo_water, expo_others, snr, objnames, mjdmids]
+    # construct table
+    trans_table = drs_table.make_table(params, columns=columns, values=values)
+    # -------------------------------------------------------------------------
+    # return the vectors
+    return trans_cube, trans_table
+
+
+def make_trans_model(params: ParamDict, transcube: np.ndarray,
+                     transtable: drs_fits.Table) -> ParamDict:
+    # set function name
+    func_name = display_func('make_trans_model', __NAME__)
+    # get values from params
+    sigma_cut = params['TELLU_TRANS_MODEL_SIG']
+    # get the minimum number of trans files required
+    min_trans_files = np.max([3, len(transtable) // 5])
+    # get vectors from table
+    expo_water = transtable['EXPO_H2O']
+    expo_others = transtable['EXPO_OTHERS']
+    # get a reference trans file from cube (first trans file)
+    ref_trans = transcube[:, :, 0]
+    # -------------------------------------------------------------------------
+    # print progress: Calculating Transmission model
+    WLOG(params, '', textentry('40-019-00055'))
+    # -------------------------------------------------------------------------
+    # sample vectors for the reconstruction
+    sample = np.zeros([3, len(expo_water)])
+    # bias level of the residual
+    sample[0] = 1
+    # water abso
+    sample[1] = expo_water
+    # dry abso
+    sample[2] = expo_others
+    # -------------------------------------------------------------------------
+    # create the reference vectors
+    zero_residual = np.full_like(ref_trans, np.nan)
+    expo_water_residual = np.full_like(ref_trans, np.nan)
+    expo_others_residual = np.full_like(ref_trans, np.nan)
+    # rms_map = np.full_like(ref_trans, np.nan)
+    # num_map = np.full_like(ref_trans, np.nan)
+    # loop around all orders
+    for order_num in range(ref_trans.shape[0]):
+        # print progress: processing order {0} / {1}
+        margs = [order_num, ref_trans.shape[0]]
+        WLOG(params, '', textentry('40-019-00056', args=margs))
+        # loop around all pixels in order
+        for ix in range(ref_trans.shape[1]):
+            # get one pixel of the trans_cube for all observations
+            trans_slice = transcube[order_num, ix, :]
+            # deal with not having enough pixels (skip)
+            if np.sum(np.isfinite(trans_slice)) < min_trans_files:
+                continue
+            # if we can all zero values skip
+            # TODO: why do we have values exactly at zero?
+            if mp.nansum(trans_slice) == 0:
+                continue
+            # construct a linear model with offset and water+dry components
+            worst_offender = np.inf
+            # loop until no point is an outlier beyond "sigma cut" sigma
+            while worst_offender > sigma_cut:
+                # get the linear minimization between trans files and our sample
+                # noinspection PyBroadException
+                try:
+                    amp, recon = mp.linear_minimization(trans_slice, sample)
+                except Exception as _:
+                    break
+                # work out the sigma between trans slice and recon
+                res = trans_slice - recon
+                est_sig = mp.estimate_sigma(res)
+                sigma = res / est_sig
+                # re-calculate worst offender
+                worst_pos = mp.nanargmax(sigma)
+                worst_offender = sigma[worst_pos]
+                # deal with worst offender - remove worst
+                if worst_offender > sigma_cut:
+                    trans_slice[worst_pos] = np.nan
+                # else we are good - push values into output vectors
+                else:
+                    # num_map[order_num, ix] = num
+                    # rms_map[order_num, ix] = est_sig
+                    zero_residual[order_num, ix] = amp[0]
+                    expo_water_residual[order_num, ix] = amp[1]
+                    expo_others_residual[order_num, ix] = amp[2]
+                # recalculate the size of trans_slice
+                num = np.sum(np.isfinite(trans_slice))
+                # if we have less than the minimum number of points left
+                #   stop here
+                if num < min_trans_files:
+                    break
+    # -------------------------------------------------------------------------
+    # return e2ds shaped vectors in props
+    props = ParamDict()
+    props['ZERO_RES'] = zero_residual
+    props['WATER_RES'] = expo_water_residual
+    props['OTHERS_RES'] = expo_others_residual
+    props['N_TRANS_FILES'] = len(transtable)
+    props['MIN_TRANS_FILES'] = min_trans_files
+    props['SIGMA_CUT'] = sigma_cut
+    # set source
+    keys = ['ZERO_RES', 'WATER_RES', 'OTHERS_RES', 'N_TRANS_FILES',
+            'MIN_TRANS_FILES', 'SIGMA_CUT']
+    props.set_sources(keys, func_name)
+    # return parameter dictionary
+    return props
+
+
+def calculate_tellu_res_absorption(params, recipe, image, template_props,
+                                   header, refprops, wprops,
                                    bprops, tpreprops, **kwargs):
     func_name = __NAME__ + '.calculate_telluric_absoprtion()'
     # get constatns from params/kwargs
@@ -67,18 +227,19 @@ def calculate_tellu_res_absorption(params, recipe, image, template,
     # deal with bad berv (nan or None)
     if berv in [np.nan, None] or not isinstance(berv, (int, float)):
         eargs = [berv, func_name]
-        WLOG(params, 'error', TextEntry('09-016-00004', args=eargs))
+        WLOG(params, 'error', textentry('09-016-00004', args=eargs))
     # get airmass from header
     airmass = header[params['KW_AIRMASS'][0]]
-    # get master wave map
-    mwavemap = mprops['WAVEMAP']
+    # get reference wave map
+    mwavemap = refprops['WAVEMAP']
     # get wave map
     wavemap = wprops['WAVEMAP']
     # get dimensions of data
     nbo, nbpix = image1.shape
-
+    # get the e2ds template
+    template = template_props['TEMP_S2D']
     # ------------------------------------------------------------------
-    # Shift the image to the master grid
+    # Shift the image to the reference grid
     # ------------------------------------------------------------------
     image1 = gen_tellu.wave_to_wave(params, image1, wavemap, mwavemap)
 
@@ -168,11 +329,14 @@ def calculate_tellu_res_absorption(params, recipe, image, template,
     tprops['TEMPLATE'] = template
     tprops['TEMPLATE_FLAG'] = template_flag
     tprops['TRANMISSION_MAP'] = transmission_map
-    tprops['TEMPLATE_FILE'] = template_file
+    tprops['TEMP_FILE'] = template_props['TEMP_FILE']
+    tprops['TEMP_NUM'] = template_props['TEMP_NUM']
+    tprops['TEMP_HASH'] = template_props['TEMP_HASH']
+    tprops['TEMP_TIME'] = template_props['TEMP_TIME']
     # set sources
     keys = ['PASSED', 'RECOV_AIRMASS', 'RECOV_WATER', 'IMAGE_OUT', 'SED_OUT',
             'TEMPLATE', 'TEMPLATE_FLAG', 'TRANMISSION_MAP', 'AIRMASS',
-            'TEMPLATE_FILE']
+            'TEMP_FILE', 'TEMP_NUM', 'TEMP_HASH']
     tprops.set_sources(keys, func_name)
     # add constants
     tprops['DEFAULT_CWIDTH'] = default_conv_width
@@ -200,8 +364,6 @@ def mk_tellu_quality_control(params, tprops, infile, tpreprops, **kwargs):
                              'qc_min_watercol', kwargs, func_name)
     qc_max_watercol = pcheck(params, 'MKTELLU_TRANS_MAX_WATERCOL',
                              'qc_min_watercol', kwargs, func_name)
-    # get the text dictionary
-    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
     # get data from tprops
     transmission_map = tprops['TRANMISSION_MAP']
     image1 = tprops['IMAGE_OUT']
@@ -230,7 +392,7 @@ def mk_tellu_quality_control(params, tprops, infile, tpreprops, **kwargs):
     # ----------------------------------------------------------------------
     # if array is completely NaNs it shouldn't pass
     if np.sum(np.isfinite(transmission_map)) == 0:
-        fail_msg.append(textdict['40-019-00006'])
+        fail_msg.append(textentry('40-019-00006'))
         qc_pass.append(0)
     else:
         qc_pass.append(1)
@@ -241,11 +403,11 @@ def mk_tellu_quality_control(params, tprops, infile, tpreprops, **kwargs):
     # ----------------------------------------------------------------------
     # get SNR for each order from header
     nbo, nbpix = image1.shape
-    snr = infile.read_header_key_1d_list('KW_EXT_SNR', nbo, dtype=float)
+    snr = infile.get_hkey_1d('KW_EXT_SNR', nbo, dtype=float)
     # check that SNR is high enough
     if snr[snr_order] < qc_snr_min:
         fargs = [snr_order, snr[snr_order], qc_snr_min]
-        fail_msg.append(textdict['40-019-00007'].format(*fargs))
+        fail_msg.append(textentry('40-019-00007', args=fargs))
         qc_pass.append(0)
     else:
         qc_pass.append(1)
@@ -258,7 +420,7 @@ def mk_tellu_quality_control(params, tprops, infile, tpreprops, **kwargs):
     # check that the file passed the CalcTelluAbsorption sigma clip loop
     if not calc_passed:
         fargs = [infile.basename]
-        fail_msg.append(textdict['40-019-00008'].format(*fargs))
+        fail_msg.append(textentry('40-019-00008', args=fargs))
         qc_pass.append(0)
     else:
         qc_pass.append(1)
@@ -271,7 +433,7 @@ def mk_tellu_quality_control(params, tprops, infile, tpreprops, **kwargs):
     airmass_diff = np.abs(recovered_airmass - airmass)
     if airmass_diff > qc_airmass_diff:
         fargs = [recovered_airmass, airmass, qc_airmass_diff]
-        fail_msg.append(textdict['40-019-00009'].format(*fargs))
+        fail_msg.append(textentry('40-019-00009', args=fargs))
         qc_pass.append(0)
     else:
         qc_pass.append(1)
@@ -286,7 +448,7 @@ def mk_tellu_quality_control(params, tprops, infile, tpreprops, **kwargs):
     # check both conditions
     if water_cond1 or water_cond2:
         fargs = [qc_min_watercol, qc_max_watercol, recovered_water]
-        fail_msg.append(textdict['40-019-00010'].format(*fargs))
+        fail_msg.append(textentry('40-019-00010', args=fargs))
         qc_pass.append(0)
     else:
         qc_pass.append(1)
@@ -301,11 +463,12 @@ def mk_tellu_quality_control(params, tprops, infile, tpreprops, **kwargs):
     # finally log the failed messages and set QC = 1 if we pass the
     #     quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):
-        WLOG(params, 'info', TextEntry('40-005-10001'))
+        WLOG(params, 'info', textentry('40-005-10001'))
         passed = 1
     else:
         for farg in fail_msg:
-            WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
+            WLOG(params, 'warning', textentry('40-005-10002') + farg,
+                 sublevel=6)
         passed = 0
     # store in qc_params
     qc_params = [qc_names, qc_values, qc_logic, qc_pass]
@@ -331,22 +494,60 @@ def mk_tellu_summary(recipe, it, params, qc_params, tellu_props, fiber):
     recipe.plot.summary_document(it)
 
 
+def mk_model_qc(params: ParamDict) -> Tuple[list, int]:
+    # set passed variable and fail message list
+    fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
+    # no quality control currently
+    qc_values.append('None')
+    qc_names.append('None')
+    qc_logic.append('None')
+    qc_pass.append(1)
+    # ----------------------------------------------------------------------
+    # finally log the failed messages and set QC = 1 if we pass the
+    # quality control QC = 0 if we fail quality control
+    if np.sum(qc_pass) == len(qc_pass):
+        WLOG(params, 'info', textentry('40-005-10001'))
+        passed = 1
+    else:
+        for farg in fail_msg:
+            WLOG(params, 'warning', textentry('40-005-10002') + farg,
+                 sublevel=6)
+        passed = 0
+    # store in qc_params
+    qc_params = [qc_names, qc_values, qc_logic, qc_pass]
+    # return qc params and passed
+    return qc_params, passed
+
+
+def mk_model_summary(recipe, params, qc_params, tprops):
+    # add stats
+    recipe.plot.add_stat('KW_VERSION', value=params['DRS_VERSION'])
+    recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS_DATE'])
+
+    recipe.plot.add_stat('KW_MKMODEL_NFILES', value=tprops['N_TRANS_FILES'])
+    recipe.plot.add_stat('KW_MKMODEL_MIN_FILES',
+                         value=tprops['MIN_TRANS_FILES'])
+    recipe.plot.add_stat('KW_MKMODEL_SIGCUT', value=tprops['SIGMA_CUT'])
+    # construct summary (outside fiber loop)
+    recipe.plot.summary_document(0, qc_params)
+
+
 # =============================================================================
 # Write functions
 # =============================================================================
 def mk_tellu_write_trans_file(params, recipe, infile, rawfiles, fiber, combine,
-                              mprops, nprops, tprops, tpreprops, qc_params):
+                              refprops, nprops, tprops, tpreprops, qc_params):
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
-    transfile = recipe.outputs['TELLU_TRANS'].newcopy(recipe=recipe,
+    transfile = recipe.outputs['TELLU_TRANS'].newcopy(params=params,
                                                       fiber=fiber)
     # construct the filename from file instance
-    transfile.construct_filename(params, infile=infile)
+    transfile.construct_filename(infile=infile)
     # ------------------------------------------------------------------
     # copy keys from input file
     transfile.copy_original_keys(infile, exclude_groups='wave')
     # add wave keys
-    transfile = wave.add_wave_keys(params, transfile, mprops)
+    transfile = wave.add_wave_keys(transfile, refprops)
     # add version
     transfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
     # add dates
@@ -362,18 +563,28 @@ def mk_tellu_write_trans_file(params, recipe, infile, rawfiles, fiber, combine,
     else:
         hfiles = [infile.basename]
     transfile.add_hkey_1d('KW_INFILE1', values=hfiles, dim1name='file')
+    # add infiles to outfile
+    transfile.infiles = list(hfiles)
     # add  calibration files used
     transfile.add_hkey('KW_CDBBLAZE', value=nprops['BLAZE_FILE'])
-    transfile.add_hkey('KW_CDBWAVE', value=mprops['WAVEFILE'])
+    transfile.add_hkey('KW_CDTBLAZE', value=nprops['BLAZE_TIME'])
+    transfile.add_hkey('KW_CDBWAVE', value=refprops['WAVEFILE'])
+    transfile.add_hkey('KW_CDTWAVE', value=refprops['WAVETIME'])
     # ----------------------------------------------------------------------
     # add qc parameters
     transfile.add_qckeys(qc_params)
     # ----------------------------------------------------------------------
     # add telluric constants used
     if tprops['TEMPLATE_FLAG']:
-        transfile.add_hkey('KW_MKTELL_TEMP_FILE', value=tprops['TEMPLATE_FILE'])
+        transfile.add_hkey('KW_MKTELL_TEMP_FILE', value=tprops['TEMP_FILE'])
+        transfile.add_hkey('KW_MKTELL_TEMPNUM', value=tprops['TEMP_NUM'])
+        transfile.add_hkey('KW_MKTELL_TEMPHASH', value=tprops['TEMP_HASH'])
+        transfile.add_hkey('KW_MKTELL_TEMPTIME', value=tprops['TEMP_TIME'])
     else:
         transfile.add_hkey('KW_MKTELL_TEMP_FILE', value='None')
+        transfile.add_hkey('KW_MKTELL_TEMPNUM', value=0)
+        transfile.add_hkey('KW_MKTELL_TEMPHASH', value='None')
+        transfile.add_hkey('KW_MKTELL_TEMPTIME', value='None')
     # add blaze parameters
     transfile.add_hkey('KW_MKTELL_BLAZE_PRCT', value=nprops['BLAZE_PERCENTILE'])
     transfile.add_hkey('KW_MKTELL_BLAZE_CUT', value=nprops['BLAZE_CUT_NORM'])
@@ -387,43 +598,43 @@ def mk_tellu_write_trans_file(params, recipe, infile, rawfiles, fiber, combine,
     transfile.add_hkey('KW_TELLUP_DV_WATER', value=tpreprops['DV_WATER'])
     transfile.add_hkey('KW_TELLUP_DV_OTHERS', value=tpreprops['DV_OTHERS'])
     transfile.add_hkey('KW_TELLUP_DO_PRECLEAN',
-                      value=tpreprops['TELLUP_DO_PRECLEANING'])
+                       value=tpreprops['TELLUP_DO_PRECLEANING'])
     transfile.add_hkey('KW_TELLUP_DFLT_WATER',
-                      value=tpreprops['TELLUP_D_WATER_ABSO'])
+                       value=tpreprops['TELLUP_D_WATER_ABSO'])
     transfile.add_hkey('KW_TELLUP_CCF_SRANGE',
-                      value=tpreprops['TELLUP_CCF_SCAN_RANGE'])
+                       value=tpreprops['TELLUP_CCF_SCAN_RANGE'])
     transfile.add_hkey('KW_TELLUP_CLEAN_OHLINES',
-                      value=tpreprops['TELLUP_CLEAN_OH_LINES'])
+                       value=tpreprops['TELLUP_CLEAN_OH_LINES'])
     transfile.add_hkey('KW_TELLUP_REMOVE_ORDS',
-                      value=tpreprops['TELLUP_REMOVE_ORDS'], mapf='list')
+                       value=tpreprops['TELLUP_REMOVE_ORDS'], mapf='list')
     transfile.add_hkey('KW_TELLUP_SNR_MIN_THRES',
-                      value=tpreprops['TELLUP_SNR_MIN_THRES'])
+                       value=tpreprops['TELLUP_SNR_MIN_THRES'])
     transfile.add_hkey('KW_TELLUP_DEXPO_CONV_THRES',
-                      value=tpreprops['TELLUP_DEXPO_CONV_THRES'])
+                       value=tpreprops['TELLUP_DEXPO_CONV_THRES'])
     transfile.add_hkey('KW_TELLUP_DEXPO_MAX_ITR',
-                      value=tpreprops['TELLUP_DEXPO_MAX_ITR'])
+                       value=tpreprops['TELLUP_DEXPO_MAX_ITR'])
     transfile.add_hkey('KW_TELLUP_ABSOEXPO_KTHRES',
-                      value=tpreprops['TELLUP_ABSO_EXPO_KTHRES'])
+                       value=tpreprops['TELLUP_ABSO_EXPO_KTHRES'])
     transfile.add_hkey('KW_TELLUP_WAVE_START',
-                      value=tpreprops['TELLUP_WAVE_START'])
+                       value=tpreprops['TELLUP_WAVE_START'])
     transfile.add_hkey('KW_TELLUP_WAVE_END',
-                      value=tpreprops['TELLUP_WAVE_END'])
+                       value=tpreprops['TELLUP_WAVE_END'])
     transfile.add_hkey('KW_TELLUP_DVGRID',
-                      value=tpreprops['TELLUP_DVGRID'])
+                       value=tpreprops['TELLUP_DVGRID'])
     transfile.add_hkey('KW_TELLUP_ABSOEXPO_KWID',
-                      value=tpreprops['TELLUP_ABSO_EXPO_KWID'])
+                       value=tpreprops['TELLUP_ABSO_EXPO_KWID'])
     transfile.add_hkey('KW_TELLUP_ABSOEXPO_KEXP',
-                      value=tpreprops['TELLUP_ABSO_EXPO_KEXP'])
+                       value=tpreprops['TELLUP_ABSO_EXPO_KEXP'])
     transfile.add_hkey('KW_TELLUP_TRANS_THRES',
-                      value=tpreprops['TELLUP_TRANS_THRES'])
+                       value=tpreprops['TELLUP_TRANS_THRES'])
     transfile.add_hkey('KW_TELLUP_TRANS_SIGL',
-                      value=tpreprops['TELLUP_TRANS_SIGLIM'])
+                       value=tpreprops['TELLUP_TRANS_SIGLIM'])
     transfile.add_hkey('KW_TELLUP_FORCE_AIRMASS',
-                      value=tpreprops['TELLUP_FORCE_AIRMASS'])
+                       value=tpreprops['TELLUP_FORCE_AIRMASS'])
     transfile.add_hkey('KW_TELLUP_OTHER_BOUNDS',
-                      value=tpreprops['TELLUP_OTHER_BOUNDS'], mapf='list')
+                       value=tpreprops['TELLUP_OTHER_BOUNDS'], mapf='list')
     transfile.add_hkey('KW_TELLUP_WATER_BOUNDS',
-                      value=tpreprops['TELLUP_WATER_BOUNDS'], mapf='list')
+                       value=tpreprops['TELLUP_WATER_BOUNDS'], mapf='list')
     # ----------------------------------------------------------------------
     # save recovered airmass and water vapor
     transfile.add_hkey('KW_MKTELL_AIRMASS', value=tprops['RECOV_AIRMASS'])
@@ -433,14 +644,77 @@ def mk_tellu_write_trans_file(params, recipe, infile, rawfiles, fiber, combine,
     transfile.data = tprops['TRANMISSION_MAP']
     # ------------------------------------------------------------------
     # log that we are saving rotated image
-    WLOG(params, '', TextEntry('40-019-00011', args=[transfile.filename]))
+    WLOG(params, '', textentry('40-019-00011', args=[transfile.filename]))
+    # define multi lists
+    data_list, name_list = [], []
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(recipe, drsfitsfile=transfile)]
+        name_list += ['PARAM_TABLE']
     # write image to file
-    transfile.write_file()
+    transfile.write_multi(data_list=data_list, name_list=name_list,
+                          block_kind=recipe.out_block_str,
+                          runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(transfile)
     # ------------------------------------------------------------------
     # return transmission file instance
     return transfile
+
+
+def mk_write_model(params: ParamDict, recipe: DrsRecipe, infile: DrsFitsFile,
+                   tprops: ParamDict, transtable: drs_fits.Table, fiber: str,
+                   qc_params: list):
+    # ------------------------------------------------------------------
+    # write the template file (TELLU_TEMP)
+    # ------------------------------------------------------------------
+    # get copy of instance of file
+    model_file = recipe.outputs['TRANS_MODEL'].newcopy(params=params,
+                                                       fiber=fiber)
+    # construct the filename from file instance
+    filename = model_file.basename.format(fiber)
+    model_file.construct_filename(filename=filename)
+    # ------------------------------------------------------------------
+    # copy keys from input file
+    model_file.copy_original_keys(infile, exclude_groups='wave')
+    # add version
+    model_file.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
+    # add dates
+    model_file.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
+    model_file.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
+    # add process id
+    model_file.add_hkey('KW_PID', value=params['PID'])
+    # add output tag
+    model_file.add_hkey('KW_OUTPUT', value=model_file.name)
+    # add qc parameters
+    model_file.add_qckeys(qc_params)
+    # add constants
+    model_file.add_hkey('KW_MKMODEL_NFILES', value=tprops['N_TRANS_FILES'])
+    model_file.add_hkey('KW_MKMODEL_MIN_FILES',
+                        value=tprops['MIN_TRANS_FILES'])
+    model_file.add_hkey('KW_MKMODEL_SIGCUT', value=tprops['SIGMA_CUT'])
+    # set data
+    model_file.data = tprops['ZERO_RES']
+    # log that we are saving s1d table
+    WLOG(params, '', textentry('40-019-00053', args=[model_file.filename]))
+    # define multi lists
+    data_list = [tprops['WATER_RES'], tprops['OTHERS_RES'], transtable]
+    datatype_list = ['image', 'image', 'table']
+    name_list = ['ZERO_RES', 'H2O_RES', 'DRY_RES', 'TRANS_TABLE']
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(recipe, drsfitsfile=model_file)]
+        name_list += ['PARAM_TABLE']
+        datatype_list += ['table']
+    # write multi
+    model_file.write_multi(data_list=data_list, name_list=name_list,
+                           datatype_list=datatype_list,
+                           block_kind=recipe.out_block_str,
+                           runstring=recipe.runstring)
+    # add to output files (for indexing)
+    recipe.add_output_file(model_file)
+    # return the template file
+    return model_file
 
 
 # =============================================================================

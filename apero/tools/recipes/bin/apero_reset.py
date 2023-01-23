@@ -9,29 +9,26 @@ Created on 2019-07-26 at 09:39
 
 @author: cook
 """
-from apero import core
 from apero import lang
-from apero.core import constants
+from apero.base import base
+from apero.core.core import drs_log
+from apero.core.utils import drs_startup
 from apero.tools.module.setup import drs_reset
-
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'apero_reset.py'
 __INSTRUMENT__ = 'None'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # Get Logging function
-WLOG = core.wlog
+WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.drs_text.TextEntry
-TextDict = lang.drs_text.TextDict
+textentry = lang.textentry
 
 
 # =============================================================================
@@ -43,14 +40,11 @@ TextDict = lang.drs_text.TextDict
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(instrument=None, **kwargs):
+def main(**kwargs):
     """
     Main function for apero_reset.py
 
-    :param instrument: str, the instrument name
     :param kwargs: additional keyword arguments
-
-    :type instrument: str
 
     :keyword debug: int, debug level (0 for None)
 
@@ -58,20 +52,20 @@ def main(instrument=None, **kwargs):
     :rtype: dict
     """
     # assign function calls (must add positional)
-    fkwargs = dict(instrument=instrument, **kwargs)
+    fkwargs = dict(**kwargs)
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
-    recipe, params = core.setup(__NAME__, __INSTRUMENT__, fkwargs)
+    recipe, params = drs_startup.setup(__NAME__, __INSTRUMENT__, fkwargs)
     # solid debug mode option
     if kwargs.get('DEBUG0000', False):
         return recipe, params
     # ----------------------------------------------------------------------
     # run main bulk of code (catching all errors)
-    llmain, success = core.run(__main__, recipe, params)
+    llmain, success = drs_startup.run(__main__, recipe, params)
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    return core.end_main(params, llmain, recipe, success, outputs='None')
+    return drs_startup.end_main(params, llmain, recipe, success, outputs='None')
 
 
 def __main__(recipe, params):
@@ -88,57 +82,88 @@ def __main__(recipe, params):
     # get log and warn from inputs
     log = params['INPUTS']['log']
     warn = params['INPUTS']['warn']
+    database_timeout = params['INPUTS']['DATABASE_TIMEOUT']
+    # ----------------------------------------------------------------------
+    # Must check that we are not inside an apero directory
+    drs_reset.check_cwd(params)
 
     # ----------------------------------------------------------------------
     # Perform resets
     # ----------------------------------------------------------------------
-    reset1, reset2, reset3 = True, True, True
-    reset4, reset5, reset6 = True, True, True
-    reset7, reset8 = True, True
+    reset0, reset1, reset2, reset3 = True, True, True, True
+    reset4, reset5, reset6, reset7, reset8 = True, True, True, True, True
     # ----------------------------------------------------------------------
+    # progress
+    drs_reset.reset_title(params, 'Assets')
+    # assets folder
+    if warn:
+        reset0 = drs_reset.reset_confirmation(params, 'Assets',
+                                              params['DRS_DATA_ASSETS'])
+    if reset0:
+        drs_reset.reset_assets(params, dtimeout=database_timeout)
+    else:
+        WLOG(params, '', textentry('40-502-00013', args=['Assets']))
+    # ----------------------------------------------------------------------
+    # progress
+    drs_reset.reset_title(params, 'Tmp')
     # tmp folder
     if warn:
         reset1 = drs_reset.reset_confirmation(params, 'Working',
                                               params['DRS_DATA_WORKING'])
     if reset1:
-        drs_reset.reset_tmp_folders(params, log)
+        drs_reset.reset_tmp_folders(params, log, dtimeout=database_timeout)
     else:
-        WLOG(params, '', 'Not resetting tmp folders.')
+        WLOG(params, '', textentry('40-502-00013', args=['Tmp']))
     # ----------------------------------------------------------------------
+    # progress
+    drs_reset.reset_title(params, 'Reduced')
     # reduced folder
     if warn:
         reset2 = drs_reset.reset_confirmation(params, 'Reduced',
                                               params['DRS_DATA_REDUC'])
     if reset2:
-        drs_reset.reset_reduced_folders(params, log)
+        drs_reset.reset_reduced_folders(params, log, dtimeout=database_timeout)
     else:
-        WLOG(params, '', 'Not resetting reduced folders.')
+        WLOG(params, '', textentry('40-502-00013', args=['Reduced']))
     # ----------------------------------------------------------------------
+    # progress
+    drs_reset.reset_title(params, 'Calibration')
     # calibration folder
     if warn:
         reset3 = drs_reset.reset_confirmation(params, 'Calibration',
                                               params['DRS_CALIB_DB'])
     if reset3:
-        drs_reset.reset_calibdb(params, log)
+        drs_reset.reset_calibdb(params, log, dtimeout=database_timeout)
     else:
-        WLOG(params, '', 'Not resetting CalibDB files.')
+        WLOG(params, '', '\tNot resetting CalibDB files.')
     # ----------------------------------------------------------------------
+    # progress
+    drs_reset.reset_title(params, 'Telluric')
     # telluric folder
     if warn:
         reset4 = drs_reset.reset_confirmation(params, 'Telluric',
                                               params['DRS_TELLU_DB'])
     if reset4:
-        drs_reset.reset_telludb(params, log)
+        drs_reset.reset_telludb(params, log, dtimeout=database_timeout)
     else:
-        WLOG(params, '', 'Not resetting TelluDB files.')
+        WLOG(params, '', textentry('40-502-00013', args=['Telluric']))
     # ----------------------------------------------------------------------
+    # progress
+    drs_reset.reset_title(params, 'Log')
+    # deal with files to skip
+    exclude_files = [drs_log.get_logfilepath(WLOG, params)]
     # log folder
     if warn:
         reset5 = drs_reset.reset_confirmation(params, 'Log',
-                                              params['DRS_DATA_MSG'])
+                                              params['DRS_DATA_MSG'],
+                                              exclude_files=exclude_files)
     if reset5:
-        drs_reset.reset_log(params)
+        drs_reset.reset_log(params, exclude_files)
+    else:
+        WLOG(params, '', textentry('40-502-00013', args=['Log']))
     # ----------------------------------------------------------------------
+    # progress
+    drs_reset.reset_title(params, 'Plot')
     # plot folder
     if warn:
         reset6 = drs_reset.reset_confirmation(params, 'Plotting',
@@ -146,8 +171,10 @@ def __main__(recipe, params):
     if reset6:
         drs_reset.reset_plot(params)
     else:
-        WLOG(params, '', 'Not resetting Log files.')
+        WLOG(params, '', textentry('40-502-00013', args=['Plot']))
     # ----------------------------------------------------------------------
+    # progress
+    drs_reset.reset_title(params, 'Run')
     # plot folder
     if warn:
         reset7 = drs_reset.reset_confirmation(params, 'Run',
@@ -155,20 +182,22 @@ def __main__(recipe, params):
     if reset7:
         drs_reset.reset_run(params)
     else:
-        WLOG(params, '', 'Not resetting run files.')
+        WLOG(params, '', textentry('40-502-00013', args=['Run']))
     # ----------------------------------------------------------------------
+    # progress
+    drs_reset.reset_title(params, 'Out')
     # plot folder
     if warn:
-        reset8 = drs_reset.reset_confirmation(params, 'log_fits')
+        reset8 = drs_reset.reset_confirmation(params, 'Out',
+                                              params['DRS_DATA_OUT'])
     if reset8:
-        drs_reset.reset_log_fits(params)
+        drs_reset.reset_out_folders(params, log, dtimeout=database_timeout)
     else:
-        WLOG(params, '', 'Not resetting log.fits files.')
-
+        WLOG(params, '', textentry('40-502-00013', args=['Run']))
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return core.return_locals(params, locals())
+    return locals()
 
 
 # =============================================================================

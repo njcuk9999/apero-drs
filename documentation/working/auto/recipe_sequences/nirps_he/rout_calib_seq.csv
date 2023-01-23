@@ -1,0 +1,7 @@
+ORDER,RECIPE,SHORTNAME,RECIPE KIND,REF RECIPE,ARGS
+1,apero_badpix_nirps_he.py,BAD,calib-night,No,
+2,apero_loc_nirps_he.py,LOCB,calib-night-B,No,{files}=[DARK_FLAT]
+3,apero_loc_nirps_he.py,LOCA,calib-night-A,No,{files}=[FLAT_DARK]
+4,apero_shape_nirps_he.py,SHAPE,calib-night,No,
+5,apero_flat_nirps_he.py,FF,calib-night,No,{files}=[FLAT_FLAT]
+6,apero_wave_night_nirps_he.py,WAVE,calib-night,No,

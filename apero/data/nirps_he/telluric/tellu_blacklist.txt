@@ -1,0 +1,10 @@
+# ============================================
+# Telluric black list file
+# ============================================
+#
+# The OBJNAME of the blacklisted file
+#
+HR6511
+kapUMa
+HR6955
+16Sco
