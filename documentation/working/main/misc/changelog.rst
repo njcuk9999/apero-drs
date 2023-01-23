@@ -2,6 +2,22 @@ Changelog
 =========
 
 
+0.7.273 (2023-01-23)
+--------------------
+- [NIRPS] update telluric list. [njcuk9999]
+- [APERO] `apero.science.telluric.gen_tellu.py` - correct typo for failing
+  precleaned files. [njcuk9999]
+- Merge remote-tracking branch 'origin/v0.7.267-live' into
+  v0.7.267-live. [njcuk9999]
+- [APERO] correct params['INPUTS'] for FINITERES. [njcuk9999]
+- Merge remote-tracking branch 'origin/v0.7.267-live' into
+  v0.7.267-live. [njcuk9999]
+- [APERO] update date/version/docs. [Neil Cook]
+- [NIRPS] update `sky_model` (ha and he) [njcuk9999]
+- [APERO] `apero.science.telluric.gen_tellu.py` - fix spline in finite
+  res. [njcuk9999]
+
+
 0.7.272 (2023-01-19)
 --------------------
 - [APERO] allow switching on and off of finite res corr (via params and
