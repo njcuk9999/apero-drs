@@ -218,8 +218,11 @@ def correct_sky_with_ref(params: ParamDict, recipe: DrsRecipe,
             'WAVE_SCI', 'WAVE_REF']
     sc_props.set_sources(keys, func_name)
     # -------------------------------------------------------------------------
+    objname = infile.get_hkey('KW_OBJNAME')
+    dprtype = infile.get_hkey('KW_DPRTYPE')
     # plot
-    recipe.plot('TELLU_SKY_CORR_PLOT', props=sc_props)
+    recipe.plot('TELLU_SKY_CORR_PLOT', props=sc_props, objname=objname,
+                dprtype=dprtype)
     # -------------------------------------------------------------------------
     # write debug file
     skyclean_write(params, recipe, infile, rawfiles, combine, wprops, sc_props)
