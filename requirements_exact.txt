@@ -68,7 +68,7 @@ Pillow==9.0.0
 platformdirs==2.5.0
 premailer==3.10.0
 prompt-toolkit==3.0.28
-protobuf==3.19.4
+protobuf==3.19.5
 psutil==5.9.0
 ptyprocess==0.7.0
 pure-eval==0.2.2
