@@ -4252,11 +4252,12 @@ MKTEMPLATE_MAX_OPEN_FILES = Const('MKTEMPLATE_MAX_OPEN_FILES', value=50,
 # Define the fwhm of hot star convolution kernel size in km/s so it is half
 #     the minimum v sin i of our hot stars
 MKTEMPLATE_HOTSTAR_KER_VEL = Const('MKTEMPLATE_HOTSTAR_KER_VEL', value=None,
-                                  dtype=bool, source=__NAME__, group=cgroup,
-                                  description='Define the fwhm of hot star '
-                                              'convolution kernel size in km/s '
-                                              'so it is half the minimum v sin '
-                                              'i of our hot stars')
+                                   dtype=float, source=__NAME__, group=cgroup,
+                                   description='Define the fwhm of hot star '
+                                               'convolution kernel size in '
+                                               'km/s  so it is half the '
+                                               'minimum v sin i of our hot '
+                                               'stars')
 
 # Define the threshold for the Lucy-Richardson deconvolution steps. This is
 #    the maximum  value of the 99th percentile of the feed-back term
