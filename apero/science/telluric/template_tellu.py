@@ -13,6 +13,7 @@ from typing import Optional, Tuple, Union
 
 import numpy as np
 from astropy import constants as cc
+from astropy import units as uu
 from astropy.table import Table
 from scipy.signal import savgol_filter
 
@@ -25,11 +26,11 @@ from apero.core.core import drs_database
 from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.core.utils import drs_recipe
-from apero.io import drs_table
 from apero.io import drs_fits
+from apero.io import drs_table
 from apero.science import extract
-from apero.science.calib import wave
 from apero.science.calib import gen_calib
+from apero.science.calib import wave
 from apero.science.telluric import gen_tellu
 
 # =============================================================================
