@@ -47,11 +47,14 @@ explicit_args = ['update', 'skip', 'dev', 'gui']
 # modules that don't install like their name
 module_translation = dict()
 module_translation['Pillow'] = 'PIL'
-module_translation['pyyaml'] = 'yaml'
+module_translation['PyYAML'] = 'yaml'
 module_translation['mysql-connector-python'] = 'mysql.connector'
 module_translation['scikit-image'] = 'skimage'
-module_translation['pandastable'] = ('pandastable', '0.12.2')
+module_translation['pandastable'] = ('pandastable', '0.13.0')
 module_translation['GitPython'] = 'git'
+module_translation['Bottleneck'] = 'bottleneck'
+module_translation['SQLAlchemy'] = 'sqlalchemy'
+module_translation['Sphinx'] = 'sphinx'
 # start the language dictionary
 lang = setup_lang.LangDict()
 
