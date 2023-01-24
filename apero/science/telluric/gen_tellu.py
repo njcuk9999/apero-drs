@@ -1122,10 +1122,11 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         # copy the original corrected e2ds
         corrected_e2ds0 = np.array(corrected_e2ds)
         # calculate the finite resolution e2ds matrix
-        finite_res_e2ds = finite_res_correction(template_props, wave_e2ds,
-                                                res_s1d_fwhm, res_s1d_expo,
-                                                expo_others, expo_water,
-                                                spl_others,  spl_water, dvgrid)
+        finite_res_e2ds = finite_res_correction(params, template_props,
+                                                wave_e2ds, res_s1d_fwhm,
+                                                res_s1d_expo, expo_others,
+                                                expo_water,  spl_others,
+                                                spl_water, dvgrid)
         # correction the spectrum
         corrected_e2ds = corrected_e2ds / finite_res_e2ds
         # add a flag that finite resolution correction was performed
@@ -1740,10 +1741,11 @@ def qc_exit_tellu_preclean(params, recipe, image, image_e2ds_ini, infile,
         # copy the original corrected e2ds
         corrected_e2ds0 = np.array(corrected_e2ds)
         # calculate the finite resolution e2ds matrix
-        finite_res_e2ds = finite_res_correction(template_props, wave_e2ds,
-                                                res_s1d_fwhm, res_s1d_expo,
-                                                expo_others, expo_water,
-                                                spl_others,  spl_water, dvgrid)
+        finite_res_e2ds = finite_res_correction(params, template_props,
+                                                wave_e2ds, res_s1d_fwhm,
+                                                res_s1d_expo, expo_others,
+                                                expo_water, spl_others,
+                                                spl_water, dvgrid)
         # correction the spectrum
         corrected_e2ds = corrected_e2ds / finite_res_e2ds
         # add a flag that finite resolution correction was performed
