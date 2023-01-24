@@ -69,6 +69,13 @@ speed_of_light = cc.c.to(uu.km / uu.s).value
 # =============================================================================
 # Define functions
 # =============================================================================
+def id_hot_star(params: ParamDict, objname: str) -> bool:
+    # get all telluric stars
+    tstars = get_tellu_include_list(params)
+    # return whether objname is a hot-star
+    return objname in tstars
+
+
 def get_tellu_include_list(params: ParamDict,
                            assets_dir: Union[str, None] = None,
                            tellu_dir: Union[str, None] = None,

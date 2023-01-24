@@ -271,8 +271,8 @@ __all__ = [
     'MKTEMPLATE_S1D_ITNUM', 'MKTEMPLATE_S1D_LOWF_SIZE', 'MKTEMPLATE_FILESOURCE',
     'MKTEMPLATE_BERVCOR_QCMIN', 'MKTEMPLATE_BERVCOV_CSNR',
     'MKTEMPLATE_BERVCOV_RES', 'MKTEMPLATE_DEBUG_MODE',
-    'MKTEMPLATE_MAX_OPEN_FILES', 'MKTEMPLATE_DECONV_ITR_THRES',
-    'MKTEMPLATE_DECONV_ITR_MAX',
+    'MKTEMPLATE_MAX_OPEN_FILES', 'MKTEMPLATE_HOTSTAR_KER_VEL',
+    'MKTEMPLATE_DECONV_ITR_THRES', 'MKTEMPLATE_DECONV_ITR_MAX',
     # ccf constants
     'CCF_MASK_PATH', 'CCF_NO_RV_VAL', 'CCF_MASK_MIN_WEIGHT', 'CCF_MASK_WIDTH',
     'CCF_N_ORD_MAX', 'CCF_DEFAULT_MASK', 'CCF_MASK_UNITS', 'CCF_MASK_FMT',
@@ -4248,6 +4248,15 @@ MKTEMPLATE_MAX_OPEN_FILES = Const('MKTEMPLATE_MAX_OPEN_FILES', value=50,
                                   description='Define the max number of files '
                                               'to be allowed into a bin '
                                               '(if not in debug mode)')
+
+# Define the fwhm of hot star convolution kernel size in km/s so it is half
+#     the minimum v sin i of our hot stars
+MKTEMPLATE_HOTSTAR_KER_VEL = Const('MKTEMPLATE_HOTSTAR_KER_VEL', value=None,
+                                  dtype=bool, source=__NAME__, group=cgroup,
+                                  description='Define the fwhm of hot star '
+                                              'convolution kernel size in km/s '
+                                              'so it is half the minimum v sin '
+                                              'i of our hot stars')
 
 # Define the threshold for the Lucy-Richardson deconvolution steps. This is
 #    the maximum  value of the 99th percentile of the feed-back term
