@@ -2102,7 +2102,7 @@ TELLUP_DO_FINITE_RES_CORR.value = True
 
 # width in km/s for the ccf scan to determine the abso in pre-cleaning
 TELLUP_CCF_SCAN_RANGE = TELLUP_CCF_SCAN_RANGE.copy(__NAME__)
-TELLUP_CCF_SCAN_RANGE.value = 50
+TELLUP_CCF_SCAN_RANGE.value = 25
 
 # define whether to clean OH lines
 # TODO: Turn on OH line cleaning
@@ -2173,7 +2173,7 @@ TELLUP_FORCE_AIRMASS.value = False
 # set the typical water abso exponent. Compare to values in header for
 #    high-snr targets later
 TELLUP_D_WATER_ABSO = TELLUP_D_WATER_ABSO.copy(__NAME__)
-TELLUP_D_WATER_ABSO.value = 4.0
+TELLUP_D_WATER_ABSO.value = 8.0
 
 # set the lower and upper bounds (String list) for the exponent of
 #  the other species of absorbers

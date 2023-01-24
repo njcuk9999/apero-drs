@@ -426,7 +426,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
                        func_name)
     waveend = pcheck(params, 'EXT_S1D_WAVEEND', 'waveend', kwargs, func_name)
     dvgrid = pcheck(params, 'EXT_S1D_BIN_UVELO', 'dvgrid', kwargs, func_name)
-    ccf_control_radius = params['IMAGE_PIXEL_SIZE']
+    ccf_control_radius = 2 * params['IMAGE_PIXEL_SIZE']
     # ----------------------------------------------------------------------
     # load database
     if calibdbm is None:
@@ -512,14 +512,21 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     if clean_ohlines and sky_props is None:
         image_e2ds, sky_model = clean_ohline_pca(params, recipe,
                                                  image_e2ds_ini, wave_e2ds)
+        # this one is for saving in the pclean
+        sky_model_save = np.array(sky_model)
     # if we did the sky cleaning before pre-cleaning use this
     elif sky_props is not None:
         image_e2ds = np.array(image_e2ds_ini)
-        sky_model = sky_props['SKY_CORR_SCI']
+        # this needs to be zeros (sky model already applied)
+        sky_model = np.zeros_like(image_e2ds_ini)
+        # this one is for saving in the pclean
+        sky_model_save = sky_props['SKY_CORR_SCI']
     # else just copy the image and set the sky model to zeros
     else:
         image_e2ds = np.array(image_e2ds_ini)
+        # both sky models need to be zero (no sky model to apply)
         sky_model = np.zeros_like(image_e2ds_ini)
+        sky_model_save = np.zeros_like(image_e2ds_ini)
     # ----------------------------------------------------------------------
     if not do_precleaning:
         # log progress
@@ -531,7 +538,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         props['CORRECTED_E2DS'] = image_e2ds
         props['TRANS_MASK'] = np.ones_like(image_e2ds_ini).astype(bool)
         props['ABSO_E2DS'] = np.ones_like(image_e2ds_ini)
-        props['SKY_MODEL'] = sky_model
+        props['SKY_MODEL'] = sky_model_save
         props['PRE_SKYCORR_IMAGE'] = image_e2ds_ini
         props['EXPO_WATER'] = np.nan
         props['EXPO_OTHERS'] = np.nan
@@ -642,7 +649,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         # return qc_exit_tellu_preclean
         return qc_exit_tellu_preclean(params, recipe, image_e2ds,
                                       image_e2ds_ini, infile,
-                                      wave_e2ds, qc_params, sky_model,
+                                      wave_e2ds, qc_params, sky_model_save,
                                       res_e2ds_fwhm, res_e2ds_expo,
                                       template_props, wave_e2ds, res_s1d_fwhm,
                                       res_s1d_expo, database=telludbm)
@@ -810,11 +817,15 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
 
         # ---------------------------------------------------------------------
         # remove a polynomial fit (remove continuum of the CCF) for water
-        water_coeffs, _ = mp.robust_polyfit(drange, ccf_water, 2, 3)
-        ccf_water = ccf_water - np.polyval(water_coeffs, drange)
+        cont = np.abs(drange)>np.max(np.abs(drange))/2
+        ccf_water -= np.nanmedian(ccf_water[cont])
+        ccf_others -= np.nanmedian(ccf_others[cont])
+
+        #water_coeffs, _ = mp.robust_polyfit(drange, ccf_water, 2, 3)
+        #ccf_water = ccf_water - np.polyval(water_coeffs, drange)
         # remove a polynomial fit (remove continuum of the CCF) for water
-        others_coeffs, _ = mp.robust_polyfit(drange, ccf_others, 2, 3)
-        ccf_others = ccf_others - np.polyval(others_coeffs, drange)
+        #others_coeffs, _ = mp.robust_polyfit(drange, ccf_others, 2, 3)
+        #ccf_others = ccf_others - np.polyval(others_coeffs, drange)
 
         # ------------------------------------------------------------------
         # get the amplitude of the middle of the CCF
@@ -917,7 +928,16 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
 
             # # if we have over 5 iterations we fit a 2nd order polynomial
             # # to the lowest 5 amplitudes
-            # if iteration > 5:
+            if iteration > 5:
+                # fit the last 4 amplitudes for others
+                fit_others = np.polyfit(amp_others_arr[-4:],expo_others_arr[-4:],2)
+                # fit the last 4 ampliters for water
+                fit_water = np.polyfit(amp_water_arr[-4:],expo_water_arr[-4:],2)
+                # take the slope of the derivative as the slope (others)
+                slope_others = np.polyval(np.polyder(fit_others),0)
+                # take the slope of the derivative as the slope (water)
+                slope_water = np.polyval(np.polyder(fit_water),0)
+
             #     if not force_airmass:
             #         # get others lists as array and sort them
             #         # sortmask = np.argsort(np.abs(amp_others_arr))
@@ -1008,7 +1028,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         qc_pass[5] = 1
     # ----------------------------------------------------------------------
     # deal with iterations hitting the max (no convergence)
-    if iteration == max_iterations - 1:
+    if iteration >= (max_iterations - 1):
         # update qc params
         qc_values[6] = iteration
         qc_pass[6] = 0
@@ -1030,7 +1050,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         # return qc_exit_tellu_preclean
         return qc_exit_tellu_preclean(params, recipe, image_e2ds,
                                       image_e2ds_ini, infile,
-                                      wave_e2ds, qc_params, sky_model,
+                                      wave_e2ds, qc_params, sky_model_save,
                                       res_e2ds_fwhm, res_e2ds_expo,
                                       template_props, wave_e2ds, res_s1d_fwhm,
                                       res_s1d_expo, database=telludbm)
@@ -1129,7 +1149,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     props['CORRECTED_E2DS'] = corrected_e2ds
     props['TRANS_MASK'] = mask
     props['ABSO_E2DS'] = abso_e2ds
-    props['SKY_MODEL'] = sky_model
+    props['SKY_MODEL'] = sky_model_save
     props['PRE_SKYCORR_IMAGE'] = image_e2ds_ini
     props['FINITE_RES_CORRECTED'] = finite_res_corr
     props['EXPO_WATER'] = expo_water
