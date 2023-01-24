@@ -12,6 +12,7 @@ from collections import OrderedDict
 from typing import Optional, Tuple, Union
 
 import numpy as np
+from astropy import constants as cc
 from astropy.table import Table
 from scipy.signal import savgol_filter
 
@@ -58,6 +59,11 @@ WLOG = drs_log.wlog
 textentry = lang.textentry
 # alias pcheck
 pcheck = constants.PCheck(wlog=WLOG)
+# Speed of light
+# noinspection PyUnresolvedReferences
+speed_of_light_ms = cc.c.to(uu.m / uu.s).value
+# noinspection PyUnresolvedReferences
+speed_of_light = cc.c.to(uu.km / uu.s).value
 
 
 # =============================================================================
@@ -66,7 +72,7 @@ pcheck = constants.PCheck(wlog=WLOG)
 def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
                         filenames: Union[str, None], reffile: DrsFitsFile,
                         refprops: ParamDict, nprops: ParamDict,
-                        fiber: str, qc_params: list,
+                        fiber: str, qc_params: list, flag_hotstar: bool,
                         calibdb: Union[CalibrationDatabase, None] = None,
                         **kwargs) -> ParamDict:
     # set function mame
@@ -89,7 +95,8 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
                         func_name)
     max_files = pcheck(params, 'MKTEMPLATE_MAX_OPEN_FILES', 'max_files',
                        kwargs, func_name)
-
+    hotstar_kernel_velocity = pcheck(params, 'MKTEMPLATE_HOTSTAR_KER_VEL',
+                                     'hotstar_ker_vel', kwargs, func_name)
     # get reference wave map
     mwavemap = refprops['WAVEMAP']
     # get the objname
@@ -460,6 +467,20 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
             # TODO: only accept pixels where we have a fraction of values
             #    finite (i.e. if <30 obs need 50%  if >30 need 30)
 
+        # ----------------------------------------------------------------------
+        # deal with hot star (low pass filter)
+        if flag_hotstar:
+            # get the image pixel size
+            psize = params['IMAGE_PIXEL_SIZE']
+            # calculate hot star kernel size
+            hotstar_kernel_size = hotstar_kernel_velocity / psize
+            # must be an odd integer
+            hotstar_kernel_size = int(np.round(hotstar_kernel_size / 2) * 2 + 1)
+            # loop around each order and keep the low pass filter
+            for order_num in range(reffile.shape[0]):
+                median[order_num] = mp.lowpassfilter(median[order_num],
+                                                     hotstar_kernel_size)
+        # ----------------------------------------------------------------------
         # deal with quality control (passed)
         qc_names.append('HAS_ROWS')
         qc_values.append('True')
@@ -502,7 +523,7 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
 
 
 def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
-                          calibdbm, **kwargs):
+                          flag_hotstar: bool, calibdbm, **kwargs):
     # set function mame
     func_name = display_func('make_1d_template_cube', __NAME__)
     # get parameters from params/kwargs
@@ -517,6 +538,8 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
                         func_name)
     max_files = pcheck(params, 'MKTEMPLATE_MAX_OPEN_FILES', 'max_files',
                        kwargs, func_name)
+    hotstar_kernel_velocity = pcheck(params, 'MKTEMPLATE_HOTSTAR_KER_VEL',
+                                     'hotstar_ker_vel', kwargs, func_name)
     # log that we are constructing the cubes
     WLOG(params, 'info', textentry('40-019-00027'))
 
@@ -813,6 +836,17 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
         # calculate the median of the big cube
         median = mp.nanmedian(big_cube, axis=1)
     # ----------------------------------------------------------------------
+    # deal with hot star low pass filter
+    if flag_hotstar:
+        # get the image pixel size
+        psize = np.median(np.gradient(rwavemap) / rwavemap) * speed_of_light
+        # calculate hot star kernel size
+        hotstar_kernel_size = hotstar_kernel_velocity / psize
+        # must be an odd integer
+        hotstar_kernel_size = int(np.round(hotstar_kernel_size/2) * 2 + 1)
+        # loop around each order and keep the low pass filter
+        median = mp.lowpassfilter(median, hotstar_kernel_size)
+    # ----------------------------------------------------------------------
     # calculate residuals from the median
     residual_cube = np.array(big_cube)
     for it in range(big_cube.shape[-1]):
@@ -822,8 +856,13 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
     # ----------------------------------------------------------------------
     # create the deconvolved template (used to correct finite resolution
     #   effects)
-    deconv = create_deconvolved_template(params, recipe, rwavemap, median,
-                                         header, s1d_type, calibdbm)
+    # ----------------------------------------------------------------------
+    # deal with hot star
+    if flag_hotstar:
+        deconv = np.array(median)
+    else:
+        deconv = create_deconvolved_template(params, recipe, rwavemap, median,
+                                             header, s1d_type, calibdbm)
     # ----------------------------------------------------------------------
     # setup output parameter dictionary
     props = ParamDict()
