@@ -1498,14 +1498,17 @@ def variable_res_conv(wavemap: np.ndarray, spectrum: np.ndarray,
     return spectrum2
 
 
-def finite_res_correction(template_props: ParamDict, wave_e2ds: np.ndarray,
+def finite_res_correction(params: ParamDict, template_props: ParamDict,
+                          wave_e2ds: np.ndarray,
                           res_s1d_fwhm: np.ndarray, res_s1d_expo: np.ndarray,
                           expo_others: float, expo_water: float,
-                          spl_others: Any, spl_water: Any, dvgrid: float
+                          spl_others: Any, spl_water: Any, dvgrid: float,
+                          threshold: Optional[float] = None
                           ) -> np.ndarray:
     """
-    Produce a e2ds finite resolution correction matrix
+    Produce an e2ds finite resolution correction matrix
 
+    :param params: ParamDict, parameter dictionary of constants
     :param template_props: ParamDict, parameter dictionary of template
                            properties
     :param wave_e2ds: np.ndarray (2D), the e2ds wavelength solution
@@ -1518,9 +1521,16 @@ def finite_res_correction(template_props: ParamDict, wave_e2ds: np.ndarray,
     :param spl_others: spline function from tapas of other species
     :param spl_water: spline function from tapas of water
     :param dvgrid: float, the s1d bin grid (constant in velocity)
+    :param threshold: float, the transmission threshold (in exponential form)
+                      for keeping valid finite res correction
 
     :return: np.ndarray (2D), the e2ds finite resolution correction
     """
+    # set function name
+    func_name = display_func('finite_res_correction', __NAME__)
+    # get threshold
+    thres = pcheck(params, 'TELLUP_TRANS_THRES', func=func_name,
+                   override=threshold)
     # -------------------------------------------------------------------------
     # spline with slopes in domains that are not defined. We cannot have a NaN
     # in these maps.
@@ -1578,8 +1588,11 @@ def finite_res_correction(template_props: ParamDict, wave_e2ds: np.ndarray,
     # ratio of 'contaminated' to 'pristine' to find the fractional error
     #    injected in the data
     finite_err_ratio = s1d_with_error / pristine_conv_s1d
+    # filter out bad finite res correction
+    logfinite_err_ratio = abs(np.log(finite_err_ratio))
+    valid_finite_res = logfinite_err_ratio < abs(thres)
     # spline that error to we can propagate it onto the e2ds grid
-    valid = np.isfinite(finite_err_ratio)
+    valid = np.isfinite(finite_err_ratio) & valid_finite_res
     spl_finite_res = mp.iuv_spline(s1d_wave[valid], finite_err_ratio[valid],
                                    k=1, ext=3)
     # propagate the finite error onto the e2ds grid
