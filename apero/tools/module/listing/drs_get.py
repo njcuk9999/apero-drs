@@ -11,7 +11,7 @@ Created on 2022-02-07
 """
 import os
 import shutil
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -44,7 +44,8 @@ textentry = lang.textentry
 # =============================================================================
 def basic_filter(params: ParamDict, kw_objnames: List[str],
                  filters: Dict[str, List[str]], user_outdir: str,
-                 do_copy: bool = True, do_symlink: bool = False
+                 do_copy: bool = True, do_symlink: bool = False,
+                 since: Optional[str] = None
                  ) -> Tuple[Dict[str, List[str]], Dict[str, List[str]]]:
     """
     The basic filter function - copies files into OBJNAME directories
@@ -108,6 +109,9 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
             master_condition += '({0})'.format(' OR '.join(subconditions))
         else:
             master_condition += ' AND ({0})'.format(' OR '.join(subconditions))
+    # -------------------------------------------------------------------------
+    if since is not None:
+        master_condition += ' AND (KW_DRS_DATE_NOW > {0})'.format(since)
     # -------------------------------------------------------------------------
     # separate list for each object name
     # -------------------------------------------------------------------------

@@ -252,6 +252,9 @@ get_files.set_kwarg(name='--test', default=False, dtype='switch',
                     helpstr=textentry('GET_TEST_HELP'))
 get_files.set_kwarg(name='--failedqc', default=False, dtype='switch',
                     helpstr=textentry('GET_FAILEDQC_HELP'))
+get_files.set_kwarg(name='--since', default='None', dtype=str,
+                    helpstr='Only get files processed since a certain date '
+                            'YYYY-MM-DD hh:mm:ss')
 get_files.description_file = 'apero_get.rst'
 
 # -----------------------------------------------------------------------------
