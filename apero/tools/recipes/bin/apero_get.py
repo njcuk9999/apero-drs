@@ -108,7 +108,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     since = inputs.get('SINCE', None)
     # -------------------------------------------------------------------------
     # test that since value is a valid time
-    if since is not None:
+    if not drs_text.null_text(since, ['None', '', 'Null']):
         try:
             since = Time(since).iso
             msg = 'Using --since={0}'
@@ -119,6 +119,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             emsg = '--since={0} is not a valid time YYYY-MM-DD hh:mm:ss'
             eargs = [since]
             WLOG(params, 'error', emsg.format(*eargs))
+    else:
+        since = None
     # -------------------------------------------------------------------------
     # check for None / *
     if drs_text.null_text(kw_objnames, ['None', '', 'Null']):
