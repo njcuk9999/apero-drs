@@ -111,7 +111,11 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
             master_condition += ' AND ({0})'.format(' OR '.join(subconditions))
     # -------------------------------------------------------------------------
     if since is not None:
-        master_condition += ' AND (KW_DRS_DATE_NOW > {0})'.format(since)
+        subcondition = '(KW_DRS_DATE_NOW > \'{0}\')'.format(since)
+        if len(master_condition) == 0:
+            master_condition = subcondition
+        else:
+            master_condition += f' AND {subcondition}'
     # -------------------------------------------------------------------------
     # separate list for each object name
     # -------------------------------------------------------------------------
