@@ -270,6 +270,8 @@ go_recipe.set_kwarg(name='--data', dtype='switch', default=False,
                     helpstr=textentry('GO_DATA_HELP'))
 go_recipe.set_kwarg(name='--all', dtype='switch', default=False,
                     helpstr='Display all relevant paths')
+go_recipe.set_kwarg(name='--setup',  dtype='switch', default=False,
+                    helpstr='Display DRS_UCONFIG path')
 # loop around block kinds and add arguments
 for block in path_definitions.BLOCKS:
     go_recipe.set_kwarg(name=f'--{block.argname}',
