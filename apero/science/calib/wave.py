@@ -3835,7 +3835,7 @@ def res_s1d_table(s1dproplist: Dict[str, ParamDict]) -> Table:
         s1dtable = s1dproplist[key]['S1DTABLE']
         # deal with already having wavelength col - wavelength grid
         #  must be shared between all entries of s1dproplist
-        if 'wavelength' not in outtable:
+        if 'wavelength' not in outtable.colnames:
             outtable['wavelength'] = s1dtable['wavelength']
         # add the columns for the flux/error in flux and weight
         outtable[f'flux_{key}'] = s1dtable['flux']

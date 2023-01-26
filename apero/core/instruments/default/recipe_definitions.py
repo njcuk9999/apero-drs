@@ -252,6 +252,9 @@ get_files.set_kwarg(name='--test', default=False, dtype='switch',
                     helpstr=textentry('GET_TEST_HELP'))
 get_files.set_kwarg(name='--failedqc', default=False, dtype='switch',
                     helpstr=textentry('GET_FAILEDQC_HELP'))
+get_files.set_kwarg(name='--since', default='None', dtype=str,
+                    helpstr='Only get files processed since a certain date '
+                            'YYYY-MM-DD hh:mm:ss')
 get_files.description_file = 'apero_get.rst'
 
 # -----------------------------------------------------------------------------
@@ -267,6 +270,8 @@ go_recipe.set_kwarg(name='--data', dtype='switch', default=False,
                     helpstr=textentry('GO_DATA_HELP'))
 go_recipe.set_kwarg(name='--all', dtype='switch', default=False,
                     helpstr='Display all relevant paths')
+go_recipe.set_kwarg(name='--setup',  dtype='switch', default=False,
+                    helpstr='Display DRS_UCONFIG path')
 # loop around block kinds and add arguments
 for block in path_definitions.BLOCKS:
     go_recipe.set_kwarg(name=f'--{block.argname}',

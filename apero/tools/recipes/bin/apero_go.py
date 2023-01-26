@@ -51,8 +51,11 @@ def get_args() -> Dict[str, Any]:
     # add the full database
     pargs, pkwargs = rd.go_recipe.proxy_keywordarg('data')
     parser.add_argument(*pargs, **pkwargs)
-
+    # add the all argument
     pargs, pkwargs = rd.go_recipe.proxy_keywordarg('all')
+    parser.add_argument(*pargs, **pkwargs)
+    # add the setup argument
+    pargs, pkwargs = rd.go_recipe.proxy_keywordarg('setup')
     parser.add_argument(*pargs, **pkwargs)
     # loop around block kinds and add arguments
     for block in path_definitions.BLOCKS:
@@ -96,6 +99,14 @@ def __main__(recipe: None, params: ParamDict) -> Dict[str, Any]:
     props = dict()
     props['path'] = None
     props['chdir'] = False
+    # ----------------------------------------------------------------------
+    # --setup option
+    # ----------------------------------------------------------------------
+    if 'setup' in params['INPUTS']:
+        if params['INPUTS']['setup']:
+            value = os.environ['DRS_UCONFIG']
+            print('SETUP: {0}'.format(value))
+            return locals()
     # ----------------------------------------------------------------------
     # deal with 'all' argument
     if 'all' in params['INPUTS']:

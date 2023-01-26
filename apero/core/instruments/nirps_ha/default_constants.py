@@ -2102,7 +2102,7 @@ TELLUP_DO_FINITE_RES_CORR.value = True
 
 # width in km/s for the ccf scan to determine the abso in pre-cleaning
 TELLUP_CCF_SCAN_RANGE = TELLUP_CCF_SCAN_RANGE.copy(__NAME__)
-TELLUP_CCF_SCAN_RANGE.value = 50
+TELLUP_CCF_SCAN_RANGE.value = 25
 
 # define whether to clean OH lines
 # TODO: Turn on OH line cleaning
@@ -2173,7 +2173,7 @@ TELLUP_FORCE_AIRMASS.value = False
 # set the typical water abso exponent. Compare to values in header for
 #    high-snr targets later
 TELLUP_D_WATER_ABSO = TELLUP_D_WATER_ABSO.copy(__NAME__)
-TELLUP_D_WATER_ABSO.value = 4.0
+TELLUP_D_WATER_ABSO.value = 8.0
 
 # set the lower and upper bounds (String list) for the exponent of
 #  the other species of absorbers
@@ -2398,6 +2398,11 @@ MKTEMPLATE_DEBUG_MODE.value = False
 #   mode)
 MKTEMPLATE_MAX_OPEN_FILES = MKTEMPLATE_MAX_OPEN_FILES.copy(__NAME__)
 MKTEMPLATE_MAX_OPEN_FILES.value = 50
+
+# Define the fwhm of hot star convolution kernel size in km/s so it is half
+#     the minimum v sin i of our hot stars
+MKTEMPLATE_HOTSTAR_KER_VEL = MKTEMPLATE_HOTSTAR_KER_VEL.copy(__NAME__)
+MKTEMPLATE_HOTSTAR_KER_VEL.value = 25
 
 # Define the threshold for the Lucy-Richardson deconvolution steps. This is
 #    the maximum  value of the 99th percentile of the feed-back term
