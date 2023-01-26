@@ -8,6 +8,7 @@ Created on 2020-07-2020-07-15 17:58
 @author: cook
 """
 import os
+import warnings
 from collections import OrderedDict
 from typing import Dict, Optional, Tuple, Union
 
@@ -665,10 +666,14 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
         nbins = int(np.sqrt(len(vfilenames)))
         # get the bin position for each file
         pbins = np.array(np.arange(vlen) // (nbins + 0.5)).astype(int)
+        # flag that we are binning
+        flag_bin = True
     # otherwise each file is a "bin"
     else:
         # each bin has exactly one file
         pbins = np.arange(vlen).astype(int)
+        # flag that we are not binning
+        flag_bin = False
     # ----------------------------------------------------------------------
     # Set up storage for cubes (NaN arrays)
     # ----------------------------------------------------------------------
@@ -679,8 +684,11 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
     flatsize = np.product(dims)
     # create NaN filled storage
     big_cube = np.repeat([np.nan], flatsize).reshape(*dims)
-    big_errors =  np.repeat([np.nan], flatsize).reshape(*dims)
+    big_errors = np.repeat([np.nan], flatsize).reshape(*dims)
     big_n = np.repeat([np.nan], flatsize).reshape(*dims)
+    # get the 16th 50th and 84th percentile
+    percentiles = [100 * (1 - mp.normal_fraction()) / 2, 50,
+                   100 * (1 - (1 - mp.normal_fraction()) / 2)]
     # ----------------------------------------------------------------------
     # Loop through bins
     # ----------------------------------------------------------------------
@@ -778,28 +786,35 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
         # ------------------------------------------------------------------
         # add to cube storage
         # ------------------------------------------------------------------
+
         # deal with having no bins (no extra median)
-        if dims_tmp[-1] == 1:
+        if not flag_bin:
             # add the shifted data to big_cube
             big_cube[:, p_it] = big_cube_tmp[:, 0]
         else:
-
+            # print progress
+            WLOG(params, 'info', params['DRS_HEADER'])
+            msg = 'Combining bin {0} of {1}'
+            margs = [p_it + 1, len(upbins)]
+            WLOG(params, '', msg.format(*margs))
+            WLOG(params, '', params['DRS_HEADER'])
+            # work out the median of this bin
             median = mp.nanmedian(big_cube_tmp, axis=1)
+            # loop through files and normalise by cube median
             for it in range(big_cube_tmp.shape[-1]):
                 # get the new ratio
                 ratio = big_cube_tmp[:, it] / median
                 # apply median filtered ratio (low frequency removal)
                 big_cube_tmp[:, it] /= mp.medfilt_1d(ratio, s1d_lowf_size)
-
-            ps = [100*(1 - mp.normal_fraction()) / 2,50,
-                  (1 - (1 - mp.normal_fraction()) / 2) * 100]
-            n1,med,p1 = mp.nanpercentile(big_cube_tmp,ps, axis=1)
-            sig = (p1-n1)/2 # 1-sigma excursion
-
-            # add the shifted data to big_cube
-            big_n[:, p_it] = np.sum(np.isfinite(big_cube_tmp),axis=1)
-            big_errors[:, p_it] = sig / np.sqrt(big_n[:, p_it] - 1)
-            big_cube[:, p_it] = med
+            # work out the percentiles at 16, 50 and 84
+            with warnings.catch_warnings(record=True) as _:
+                p16, p50, p84 = mp.nanpercentile(big_cube_tmp, percentiles,
+                                                 axis=1)
+                sig = (p84 - p16) / 2  # 1-sigma excursion
+                # add the shifted data to big_cube
+                big_n[:, p_it] = np.sum(np.isfinite(big_cube_tmp), axis=1)
+                big_errors[:, p_it] = sig / np.sqrt(big_n[:, p_it] - 1)
+                big_cube[:, p_it] = p50
 
     # ------------------------------------------------------------------
     # Iterate until low frequency noise is gone
@@ -819,6 +834,22 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
             big_cube[:, it] /= mp.medfilt_1d(ratio, s1d_lowf_size)
         # calculate the median of the big cube
         median = mp.nanmedian(big_cube, axis=1)
+
+    # ------------------------------------------------------------------
+    # Combine eflux and number of valid pixels properly
+    # ------------------------------------------------------------------
+    # for case when bin
+    if flag_bin:
+        with warnings.catch_warnings(record=True) as _:
+            eflux = (1/np.sqrt(np.nansum(1/big_errors**2,axis=1)))
+            eflux[~np.isfinite(eflux)] = np.nan
+            final_n = np.sum(big_n,axis=1)
+    else:
+        with warnings.catch_warnings(record=True) as _:
+            p16, p50, p84 = mp.nanpercentile(big_cube, percentiles, axis=1)
+            final_n = np.sum(np.isfinite(big_cube), axis=1)
+            eflux = ((p84 - p16) / 2) / np.sqrt(final_n - 1)
+
     # ----------------------------------------------------------------------
     # deal with hot star low pass filter
     if flag_hotstar:
@@ -827,7 +858,7 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
         # calculate hot star kernel size
         hotstar_kernel_size = hotstar_kernel_velocity / psize
         # must be an odd integer
-        hotstar_kernel_size = int(np.round(hotstar_kernel_size/2) * 2 + 1)
+        hotstar_kernel_size = int(np.round(hotstar_kernel_size / 2) * 2 + 1)
         # loop around each order and keep the low pass filter
         median = mp.lowpassfilter(median, hotstar_kernel_size)
     # ----------------------------------------------------------------------
@@ -858,6 +889,8 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
     props['S1D_WAVELENGTH'] = rwavemap
     props['S1D_MEDIAN'] = median
     props['S1D_RMS'] = rms
+    props['S1D_EFLUX'] = eflux
+    props['S1D_N_VALID'] = final_n
     props['QC_SNR_ORDER'] = qc_snr_order
     props['QC_SNR_THRES'] = snr_thres
     props['S1D_ITERATIONS'] = s1d_iterations
@@ -866,7 +899,8 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
     # set sources
     keys = ['S1D_TYPE', 'S1D_BIG_CUBE', 'S1D_BIG_COLS', 'S1D_MEDIAN',
             'S1D_WAVELENGTH', 'S1D_RMS', 'QC_SNR_ORDER', 'QC_SNR_THRES',
-            'S1D_ITERATIONS', 'S1D_LOWF_SIZE', 'S1D_DECONV']
+            'S1D_ITERATIONS', 'S1D_LOWF_SIZE', 'S1D_DECONV', 'S1D_EFLUX',
+            'S1D_N_VALID']
     props.set_sources(keys, func_name)
     # ----------------------------------------------------------------------
     # return outputs
@@ -1002,7 +1036,7 @@ def create_deconvolved_template(params: ParamDict, recipe: DrsRecipe,
                                      func=func_name, override=p99_itr_thres)
     # Max number of iterations to run if the iteration threshold is not met
     niterations_max = pcheck(params, 'MKTEMPLATE_DECONV_ITR_MAX',
-                                     func=func_name, override=p99_itr_max)
+                             func=func_name, override=p99_itr_max)
     # -------------------------------------------------------------------------
     # get database if none
     if calibdbm is None:
@@ -1341,10 +1375,10 @@ def mk_1d_template_write(params, recipe, infile, props, filetype, fiber,
     s1dtable = Table()
     s1dtable['wavelength'] = props['S1D_WAVELENGTH']
     s1dtable['flux'] = props['S1D_MEDIAN']
-    s1dtable['eflux'] = np.zeros_like(props['S1D_MEDIAN'])
+    s1dtable['eflux'] = props['S1D_EFLUX']
     s1dtable['rms'] = props['S1D_RMS']
     s1dtable['deconv'] = props['S1D_DECONV']
-
+    s1dtable['n_valid'] = props['S1D_N_VALID']
     # ------------------------------------------------------------------
     # write the s1d template file (TELLU_TEMP)
     # ------------------------------------------------------------------
