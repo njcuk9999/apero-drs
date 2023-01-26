@@ -2132,7 +2132,7 @@ TELLUP_DO_FINITE_RES_CORR.value = True
 
 # width in km/s for the ccf scan to determine the abso in pre-cleaning
 TELLUP_CCF_SCAN_RANGE = TELLUP_CCF_SCAN_RANGE.copy(__NAME__)
-TELLUP_CCF_SCAN_RANGE.value = 50
+TELLUP_CCF_SCAN_RANGE.value = 25
 
 # define whether to clean OH lines
 TELLUP_CLEAN_OH_LINES = TELLUP_CLEAN_OH_LINES.copy(__NAME__)
@@ -2426,6 +2426,11 @@ MKTEMPLATE_DEBUG_MODE.value = False
 #   mode)
 MKTEMPLATE_MAX_OPEN_FILES = MKTEMPLATE_MAX_OPEN_FILES.copy(__NAME__)
 MKTEMPLATE_MAX_OPEN_FILES.value = 50
+
+# Define the fwhm of hot star convolution kernel size in km/s so it is half
+#     the minimum v sin i of our hot stars
+MKTEMPLATE_HOTSTAR_KER_VEL = MKTEMPLATE_HOTSTAR_KER_VEL.copy(__NAME__)
+MKTEMPLATE_HOTSTAR_KER_VEL.value = 100
 
 # Define the threshold for the Lucy-Richardson deconvolution steps. This is
 #    the maximum  value of the 99th percentile of the feed-back term

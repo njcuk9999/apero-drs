@@ -34,6 +34,8 @@ WLOG = drs_log.wlog
 DrsRecipe = drs_recipe.DrsRecipe
 # Get parameter class
 ParamDict = constants.ParamDict
+# get time from base
+Time = base.Time
 
 
 # =============================================================================
@@ -89,6 +91,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         current = True
     else:
         current = False
+    # -------------------------------------------------------------------------
     # get inputs from user
     inputs = params['INPUTS']
     use_gui = params['INPUTS']['GUI']
@@ -96,11 +99,29 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         WLOG(params, 'warning', 'Not Implemented yet',
              sublevel=2)
         return locals()
+    # -------------------------------------------------------------------------
     # get filters from user inputs
     kw_objnames = inputs.listp('objnames', dtype=str, required=False)
     kw_dprtypes = inputs.listp('dprtypes', dtype=str, required=False)
     kw_outputs = inputs.listp('outtypes', dtype=str, required=False)
     kw_fibers = inputs.listp('fibers', dtype=str, required=False)
+    since = inputs.get('SINCE', None)
+    # -------------------------------------------------------------------------
+    # test that since value is a valid time
+    if not drs_text.null_text(since, ['None', '', 'Null']):
+        try:
+            since = Time(since).iso
+            msg = 'Using --since={0}'
+            margs = [since]
+            WLOG(params, '', msg.format(*margs))
+        except Exception as _:
+            # TODO: move to language database
+            emsg = '--since={0} is not a valid time YYYY-MM-DD hh:mm:ss'
+            eargs = [since]
+            WLOG(params, 'error', emsg.format(*eargs))
+    else:
+        since = None
+    # -------------------------------------------------------------------------
     # check for None / *
     if drs_text.null_text(kw_objnames, ['None', '', 'Null']):
         kw_objnames = None
@@ -112,6 +133,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         kw_outputs = None
     if drs_text.null_text(kw_fibers, ['None', '', 'Null', '*']):
         kw_fibers = None
+    # -------------------------------------------------------------------------
     # push filters into dictionary (not object names these are special)
     filters = dict()
     filters['KW_DPRTYPE'] = kw_dprtypes
@@ -119,7 +141,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     filters['KW_FIBER'] = kw_fibers
     # run basic filter
     indict, outdict = drs_get.basic_filter(params, kw_objnames, filters,
-                                           user_outdir, do_copy, do_symlink)
+                                           user_outdir, do_copy, do_symlink,
+                                           since=since)
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------

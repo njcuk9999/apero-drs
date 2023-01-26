@@ -69,6 +69,13 @@ speed_of_light = cc.c.to(uu.km / uu.s).value
 # =============================================================================
 # Define functions
 # =============================================================================
+def id_hot_star(params: ParamDict, objname: str) -> bool:
+    # get all telluric stars
+    tstars = get_tellu_include_list(params)
+    # return whether objname is a hot-star
+    return objname in tstars
+
+
 def get_tellu_include_list(params: ParamDict,
                            assets_dir: Union[str, None] = None,
                            tellu_dir: Union[str, None] = None,
@@ -426,7 +433,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
                        func_name)
     waveend = pcheck(params, 'EXT_S1D_WAVEEND', 'waveend', kwargs, func_name)
     dvgrid = pcheck(params, 'EXT_S1D_BIN_UVELO', 'dvgrid', kwargs, func_name)
-    ccf_control_radius = params['IMAGE_PIXEL_SIZE']
+    ccf_control_radius = 2 * params['IMAGE_PIXEL_SIZE']
     # ----------------------------------------------------------------------
     # load database
     if calibdbm is None:
@@ -512,14 +519,21 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     if clean_ohlines and sky_props is None:
         image_e2ds, sky_model = clean_ohline_pca(params, recipe,
                                                  image_e2ds_ini, wave_e2ds)
+        # this one is for saving in the pclean
+        sky_model_save = np.array(sky_model)
     # if we did the sky cleaning before pre-cleaning use this
     elif sky_props is not None:
         image_e2ds = np.array(image_e2ds_ini)
-        sky_model = sky_props['SKY_CORR_SCI']
+        # this needs to be zeros (sky model already applied)
+        sky_model = np.zeros_like(image_e2ds_ini)
+        # this one is for saving in the pclean
+        sky_model_save = sky_props['SKY_CORR_SCI']
     # else just copy the image and set the sky model to zeros
     else:
         image_e2ds = np.array(image_e2ds_ini)
+        # both sky models need to be zero (no sky model to apply)
         sky_model = np.zeros_like(image_e2ds_ini)
+        sky_model_save = np.zeros_like(image_e2ds_ini)
     # ----------------------------------------------------------------------
     if not do_precleaning:
         # log progress
@@ -531,7 +545,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         props['CORRECTED_E2DS'] = image_e2ds
         props['TRANS_MASK'] = np.ones_like(image_e2ds_ini).astype(bool)
         props['ABSO_E2DS'] = np.ones_like(image_e2ds_ini)
-        props['SKY_MODEL'] = sky_model
+        props['SKY_MODEL'] = sky_model_save
         props['PRE_SKYCORR_IMAGE'] = image_e2ds_ini
         props['EXPO_WATER'] = np.nan
         props['EXPO_OTHERS'] = np.nan
@@ -642,7 +656,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         # return qc_exit_tellu_preclean
         return qc_exit_tellu_preclean(params, recipe, image_e2ds,
                                       image_e2ds_ini, infile,
-                                      wave_e2ds, qc_params, sky_model,
+                                      wave_e2ds, qc_params, sky_model_save,
                                       res_e2ds_fwhm, res_e2ds_expo,
                                       template_props, wave_e2ds, res_s1d_fwhm,
                                       res_s1d_expo, database=telludbm)
@@ -810,11 +824,15 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
 
         # ---------------------------------------------------------------------
         # remove a polynomial fit (remove continuum of the CCF) for water
-        water_coeffs, _ = mp.robust_polyfit(drange, ccf_water, 2, 3)
-        ccf_water = ccf_water - np.polyval(water_coeffs, drange)
+        cont = np.abs(drange)>np.max(np.abs(drange))/2
+        ccf_water -= np.nanmedian(ccf_water[cont])
+        ccf_others -= np.nanmedian(ccf_others[cont])
+
+        #water_coeffs, _ = mp.robust_polyfit(drange, ccf_water, 2, 3)
+        #ccf_water = ccf_water - np.polyval(water_coeffs, drange)
         # remove a polynomial fit (remove continuum of the CCF) for water
-        others_coeffs, _ = mp.robust_polyfit(drange, ccf_others, 2, 3)
-        ccf_others = ccf_others - np.polyval(others_coeffs, drange)
+        #others_coeffs, _ = mp.robust_polyfit(drange, ccf_others, 2, 3)
+        #ccf_others = ccf_others - np.polyval(others_coeffs, drange)
 
         # ------------------------------------------------------------------
         # get the amplitude of the middle of the CCF
@@ -917,7 +935,16 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
 
             # # if we have over 5 iterations we fit a 2nd order polynomial
             # # to the lowest 5 amplitudes
-            # if iteration > 5:
+            if iteration > 5:
+                # fit the last 4 amplitudes for others
+                fit_others = np.polyfit(amp_others_arr[-4:],expo_others_arr[-4:],2)
+                # fit the last 4 ampliters for water
+                fit_water = np.polyfit(amp_water_arr[-4:],expo_water_arr[-4:],2)
+                # take the slope of the derivative as the slope (others)
+                slope_others = np.polyval(np.polyder(fit_others),0)
+                # take the slope of the derivative as the slope (water)
+                slope_water = np.polyval(np.polyder(fit_water),0)
+
             #     if not force_airmass:
             #         # get others lists as array and sort them
             #         # sortmask = np.argsort(np.abs(amp_others_arr))
@@ -1008,7 +1035,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         qc_pass[5] = 1
     # ----------------------------------------------------------------------
     # deal with iterations hitting the max (no convergence)
-    if iteration == max_iterations - 1:
+    if iteration >= (max_iterations - 1):
         # update qc params
         qc_values[6] = iteration
         qc_pass[6] = 0
@@ -1030,7 +1057,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         # return qc_exit_tellu_preclean
         return qc_exit_tellu_preclean(params, recipe, image_e2ds,
                                       image_e2ds_ini, infile,
-                                      wave_e2ds, qc_params, sky_model,
+                                      wave_e2ds, qc_params, sky_model_save,
                                       res_e2ds_fwhm, res_e2ds_expo,
                                       template_props, wave_e2ds, res_s1d_fwhm,
                                       res_s1d_expo, database=telludbm)
@@ -1093,8 +1120,8 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     # ----------------------------------------------------------------------
     # check whether user wants to do finite resolution corrections
     #   from the inputs and then from params
-    if not drs_text.null_text(params['INPUTS']['DO_FINITE_RES_CORR']):
-        do_finite_res_corr = params['INPUTS']['DO_FINITE_RES_CORR']
+    if not drs_text.null_text(params['INPUTS']['FINITERES']):
+        do_finite_res_corr = params['INPUTS']['FINITERES']
     else:
         do_finite_res_corr = params['TELLUP_DO_FINITE_RES_CORR']
     # correct if conditions are met
@@ -1102,10 +1129,11 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         # copy the original corrected e2ds
         corrected_e2ds0 = np.array(corrected_e2ds)
         # calculate the finite resolution e2ds matrix
-        finite_res_e2ds = finite_res_correction(template_props, wave_e2ds,
-                                                res_s1d_fwhm, res_s1d_expo,
-                                                expo_others, expo_water,
-                                                spl_others,  spl_water, dvgrid)
+        finite_res_e2ds = finite_res_correction(params, template_props,
+                                                wave_e2ds, res_s1d_fwhm,
+                                                res_s1d_expo, expo_others,
+                                                expo_water,  spl_others,
+                                                spl_water, dvgrid)
         # correction the spectrum
         corrected_e2ds = corrected_e2ds / finite_res_e2ds
         # add a flag that finite resolution correction was performed
@@ -1129,7 +1157,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     props['CORRECTED_E2DS'] = corrected_e2ds
     props['TRANS_MASK'] = mask
     props['ABSO_E2DS'] = abso_e2ds
-    props['SKY_MODEL'] = sky_model
+    props['SKY_MODEL'] = sky_model_save
     props['PRE_SKYCORR_IMAGE'] = image_e2ds_ini
     props['FINITE_RES_CORRECTED'] = finite_res_corr
     props['EXPO_WATER'] = expo_water
@@ -1498,14 +1526,17 @@ def variable_res_conv(wavemap: np.ndarray, spectrum: np.ndarray,
     return spectrum2
 
 
-def finite_res_correction(template_props: ParamDict, wave_e2ds: np.ndarray,
+def finite_res_correction(params: ParamDict, template_props: ParamDict,
+                          wave_e2ds: np.ndarray,
                           res_s1d_fwhm: np.ndarray, res_s1d_expo: np.ndarray,
                           expo_others: float, expo_water: float,
-                          spl_others: Any, spl_water: Any, dvgrid: float
+                          spl_others: Any, spl_water: Any, dvgrid: float,
+                          threshold: Optional[float] = None
                           ) -> np.ndarray:
     """
-    Produce a e2ds finite resolution correction matrix
+    Produce an e2ds finite resolution correction matrix
 
+    :param params: ParamDict, parameter dictionary of constants
     :param template_props: ParamDict, parameter dictionary of template
                            properties
     :param wave_e2ds: np.ndarray (2D), the e2ds wavelength solution
@@ -1518,9 +1549,16 @@ def finite_res_correction(template_props: ParamDict, wave_e2ds: np.ndarray,
     :param spl_others: spline function from tapas of other species
     :param spl_water: spline function from tapas of water
     :param dvgrid: float, the s1d bin grid (constant in velocity)
+    :param threshold: float, the transmission threshold (in exponential form)
+                      for keeping valid finite res correction
 
     :return: np.ndarray (2D), the e2ds finite resolution correction
     """
+    # set function name
+    func_name = display_func('finite_res_correction', __NAME__)
+    # get threshold
+    thres = pcheck(params, 'TELLUP_TRANS_THRES', func=func_name,
+                   override=threshold)
     # -------------------------------------------------------------------------
     # spline with slopes in domains that are not defined. We cannot have a NaN
     # in these maps.
@@ -1578,8 +1616,13 @@ def finite_res_correction(template_props: ParamDict, wave_e2ds: np.ndarray,
     # ratio of 'contaminated' to 'pristine' to find the fractional error
     #    injected in the data
     finite_err_ratio = s1d_with_error / pristine_conv_s1d
+    # filter out bad finite res correction
+    logfinite_err_ratio = abs(np.log(finite_err_ratio))
+    valid_finite_res = logfinite_err_ratio < abs(thres)
     # spline that error to we can propagate it onto the e2ds grid
-    spl_finite_res = mp.iuv_spline(s1d_wave, finite_err_ratio)
+    valid = np.isfinite(finite_err_ratio) & valid_finite_res
+    spl_finite_res = mp.iuv_spline(s1d_wave[valid], finite_err_ratio[valid],
+                                   k=1, ext=3)
     # propagate the finite error onto the e2ds grid
     finite_res_e2ds = np.zeros_like(wave_e2ds)
     # loop around each order
@@ -1696,8 +1739,8 @@ def qc_exit_tellu_preclean(params, recipe, image, image_e2ds_ini, infile,
     # ----------------------------------------------------------------------
     # check whether user wants to do finite resolution corrections
     #   from the inputs and then from params
-    if not drs_text.null_text(params['INPUTS']['DO_FINITE_RES_CORR']):
-        do_finite_res_corr = params['INPUTS']['DO_FINITE_RES_CORR']
+    if not drs_text.null_text(params['INPUTS']['FINITERES']):
+        do_finite_res_corr = params['INPUTS']['FINITERES']
     else:
         do_finite_res_corr = params['TELLUP_DO_FINITE_RES_CORR']
     # correct if conditions are met
@@ -1705,10 +1748,11 @@ def qc_exit_tellu_preclean(params, recipe, image, image_e2ds_ini, infile,
         # copy the original corrected e2ds
         corrected_e2ds0 = np.array(corrected_e2ds)
         # calculate the finite resolution e2ds matrix
-        finite_res_e2ds = finite_res_correction(template_props, wave_e2ds,
-                                                res_s1d_fwhm, res_s1d_expo,
-                                                expo_others, expo_water,
-                                                spl_others,  spl_water, dvgrid)
+        finite_res_e2ds = finite_res_correction(params, template_props,
+                                                wave_e2ds, res_s1d_fwhm,
+                                                res_s1d_expo, expo_others,
+                                                expo_water, spl_others,
+                                                spl_water, dvgrid)
         # correction the spectrum
         corrected_e2ds = corrected_e2ds / finite_res_e2ds
         # add a flag that finite resolution correction was performed

@@ -168,7 +168,10 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         abspath = os.path.join(params['OUTPATH'], obs_dir)
         if not os.path.exists(abspath):
             os.makedirs(abspath)
-
+    # ----------------------------------------------------------------------
+    # flag whether object is a hot star
+    flag_hotstar = telluric.id_hot_star(params, objname)
+    # ----------------------------------------------------------------------
     # set up plotting (no plotting before this) -- must be after setting
     #   night name
     recipe.plot.set_location(0)
@@ -185,7 +188,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # ----------------------------------------------------------------------
     # Make data cubes
     # ----------------------------------------------------------------------
-    cargs = [object_filenames, infile, refprops, nprops, fiber, qc_params]
+    cargs = [object_filenames, infile, refprops, nprops, fiber, qc_params,
+             flag_hotstar]
     cprops = telluric.make_template_cubes(params, recipe, *cargs,
                                           calibdb=calibdbm)
     # ----------------------------------------------------------------------
@@ -218,7 +222,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         s1d_filenames = drs_utils.find_files(params, block_kind='red',
                                              filters=filters)
         # make s1d cube
-        margs = [s1d_filenames, s1d_file, fiber, infile.header, calibdbm]
+        margs = [s1d_filenames, s1d_file, fiber, infile.header, flag_hotstar,
+                 calibdbm]
         s1d_props = telluric.make_1d_template_cube(params, recipe, *margs)
         # append to storage
         s1d_cubes.append(s1d_props)

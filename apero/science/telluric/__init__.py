@@ -35,6 +35,8 @@ correct_sky_no_ref = sky_corr.correct_sky_no_ref
 
 correct_other_science = fit_tellu.correct_other_science
 
+id_hot_star = gen_tellu.id_hot_star
+
 fit_tellu_write_corrected = fit_tellu.fit_tellu_write_corrected
 
 fit_tellu_write_corrected_s1d = fit_tellu.fit_tellu_write_corrected_s1d
