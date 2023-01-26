@@ -794,6 +794,7 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
         else:
             # print progress
             WLOG(params, 'info', params['DRS_HEADER'])
+            # TODO: Add to language database
             msg = 'Combining bin {0} of {1}'
             margs = [p_it + 1, len(upbins)]
             WLOG(params, '', msg.format(*margs))
@@ -845,6 +846,13 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
             eflux[~np.isfinite(eflux)] = np.nan
             final_n = np.sum(big_n,axis=1)
     else:
+        # print progress
+        WLOG(params, '', params['DRS_HEADER'])
+        # TODO: Add to language database
+        msg = 'Combining big_cube error and number of valid pixels'
+        WLOG(params, '', msg)
+        WLOG(params, '', params['DRS_HEADER'])
+
         with warnings.catch_warnings(record=True) as _:
             p16, p50, p84 = mp.nanpercentile(big_cube, percentiles, axis=1)
             final_n = np.sum(np.isfinite(big_cube), axis=1)
