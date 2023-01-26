@@ -9,7 +9,7 @@ Created on 2020-07-2020-07-15 17:58
 """
 import os
 from collections import OrderedDict
-from typing import Optional, Tuple, Union
+from typing import Dict, Optional, Tuple, Union
 
 import numpy as np
 from astropy.table import Table
@@ -160,22 +160,7 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
     # Storage for cube table
     # ----------------------------------------------------------------------
     # compile base columns
-    b_cols = OrderedDict()
-    b_cols['RowNum'] = []
-    b_cols['Filename'], b_cols['OBJNAME'] = [], []
-    b_cols['BERV'], b_cols['BJD'], b_cols['BERVMAX'] = [], [], []
-    b_cols['SNR{0}'.format(snr_order)] = []
-    b_cols['MidObsHuman'], b_cols['MidObsMJD'] = [], []
-    b_cols['VERSION'], b_cols['Process_Date'], b_cols['DRS_Date'] = [], [], []
-    b_cols['DARKFILE'], b_cols['BADFILE'], b_cols['BACKFILE'] = [], [], []
-    b_cols['LOCOFILE'], b_cols['BLAZEFILE'], b_cols['FLATFILE'] = [], [], []
-    b_cols['SHAPEXFILE'], b_cols['SHAPEYFILE'] = [], []
-    b_cols['SHAPELFILE'], b_cols['THERMFILE'], b_cols['WAVEFILE'] = [], [], []
-    b_cols['DARKTIME'], b_cols['BADTIME'], b_cols['BACKTIME'] = [], [], []
-    b_cols['LOCOTIME'], b_cols['BLAZETIME'], b_cols['FLATTIME'] = [], [], []
-    b_cols['SHAPEXTIME'], b_cols['SHAPEYTIME'] = [], []
-    b_cols['SHAPELTIME'], b_cols['THERMTIME'], b_cols['WAVETIME'] = [], [], []
-    b_cols['USED'], b_cols['TEMPLATE_BIN'] = [], []
+    b_cols = template_bcols0(params)
     # ----------------------------------------------------------------------
     # Deal with binning up the template
     # ----------------------------------------------------------------------
@@ -254,8 +239,6 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
             bprops = extract.get_berv(params, infile, log=False)
             # get berv from bprops
             berv = bprops['USE_BERV']
-            bjd = bprops['USE_BJD']
-            bervmax = bprops['USE_BERV_MAX']
             # deal with bad berv (nan or None)
             if berv in [np.nan, None] or not isinstance(berv, (int, float)):
                 eargs = [berv, func_name]
@@ -268,79 +251,11 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
             # get wavemap
             wavemap = wprops['WAVEMAP']
             # ------------------------------------------------------------------
-            # append to table lists
+            # populate the template file table
             # ------------------------------------------------------------------
-            # get string/file kwargs
-            bkwargs = dict(dtype=str, required=False)
-            # get drs date now
-            drs_date_now = infile.get_hkey('KW_DRS_DATE_NOW', dtype=str)
-            # add values
-            b_cols['RowNum'].append(jt)
-            b_cols['Filename'].append(infile.basename)
-            b_cols['OBJNAME'].append(infile.get_hkey('KW_OBJNAME', dtype=str))
-            b_cols['BERV'].append(berv)
-            b_cols['BJD'].append(bjd)
-            b_cols['BERVMAX'].append(bervmax)
-            b_cols['SNR{0}'.format(snr_order)].append(snr_all[jt])
-            b_cols['MidObsHuman'].append(Time(midexps[jt], format='mjd').iso)
-            b_cols['MidObsMJD'].append(midexps[jt])
-            b_cols['VERSION'].append(infile.get_hkey('KW_VERSION', dtype=str))
-            b_cols['Process_Date'].append(drs_date_now)
-            b_cols['DRS_Date'].append(infile.get_hkey('KW_DRS_DATE', dtype=str))
-            # add the dark file and dark file time (MJDMID)
-            b_cols['DARKFILE'].append(infile.get_hkey('KW_CDBDARK', **bkwargs))
-            b_cols['DARKTIME'].append(infile.get_hkey('KW_CDTDARK', **bkwargs))
-            # add the bad file and bad file time (MJDMID)
-            b_cols['BADFILE'].append(infile.get_hkey('KW_CDBBAD', **bkwargs))
-            b_cols['BADTIME'].append(infile.get_hkey('KW_CDTBAD', **bkwargs))
-            # add the background file and background file time (MJDMID)
-            b_cols['BACKFILE'].append(infile.get_hkey('KW_CDBBACK', **bkwargs))
-            b_cols['BACKTIME'].append(infile.get_hkey('KW_CDTBACK', **bkwargs))
-            # add the loco file and loco time (MJDMID)
-            b_cols['LOCOFILE'].append(infile.get_hkey('KW_CDBLOCO', **bkwargs))
-            b_cols['LOCOTIME'].append(infile.get_hkey('KW_CDTLOCO', **bkwargs))
-            # add the blaze file and blaze time (MJDMID)
-            b_cols['BLAZEFILE'].append(infile.get_hkey('KW_CDBBLAZE',
-                                                       **bkwargs))
-            b_cols['BLAZETIME'].append(infile.get_hkey('KW_CDTBLAZE',
-                                                       **bkwargs))
-            # add the flat file and flat time (MJDMID)
-            b_cols['FLATFILE'].append(infile.get_hkey('KW_CDBFLAT', **bkwargs))
-            b_cols['FLATTIME'].append(infile.get_hkey('KW_CDTFLAT', **bkwargs))
-            # add the shape x file and shape x time (MJDMID)
-            b_cols['SHAPEXFILE'].append(infile.get_hkey('KW_CDBSHAPEDX',
-                                                        **bkwargs))
-            b_cols['SHAPEXTIME'].append(infile.get_hkey('KW_CDTSHAPEDX',
-                                                        **bkwargs))
-            # add the shape y file and shape y time (MJDMID)
-            b_cols['SHAPEYFILE'].append(infile.get_hkey('KW_CDBSHAPEDY',
-                                                        **bkwargs))
-            b_cols['SHAPEYTIME'].append(infile.get_hkey('KW_CDTSHAPEDY',
-                                                        **bkwargs))
-            # add the shape local file and shape local time (MJDMID)
-            b_cols['SHAPELFILE'].append(infile.get_hkey('KW_CDBSHAPEL',
-                                                        **bkwargs))
-            b_cols['SHAPELTIME'].append(infile.get_hkey('KW_CDTSHAPEL',
-                                                        **bkwargs))
-            # add the thermal file
-            cdb_thermal = infile.get_hkey('KW_CDBTHERMAL', **bkwargs)
-            # can be None if no thermal correction done
-            if cdb_thermal is None:
-                cdb_thermal = 'None'
-            b_cols['THERMFILE'].append(cdb_thermal)
-            # add the thermal time (MJDMID)
-            cdt_thermal = infile.get_hkey('KW_CDTTHERMAL', **bkwargs)
-            # can be None if no thermal correction done
-            if cdt_thermal is None:
-                cdt_thermal = 0.0
-            b_cols['THERMTIME'].append(cdt_thermal)
-            # add the wave file and wave time (MJDMID)
-            b_cols['WAVEFILE'].append(os.path.basename(wprops['WAVEFILE']))
-            b_cols['WAVETIME'].append(wprops['WAVETIME'])
-            # add the bin number for this file
-            b_cols['TEMPLATE_BIN'].append(p_it)
-            # remove the infile
-            del infile
+            b_cols = template_bcols(params, b_cols, infile, jt, p_it, bprops,
+                                    snr_all[jt], midexps[jt])
+
             # ------------------------------------------------------------------
             # skip if bad snr object
             # ------------------------------------------------------------------
@@ -501,6 +416,136 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
     return props
 
 
+def template_bcols0(params: ParamDict):
+    """
+    Construct the lists for each column in the template table
+
+    :param params: ParamDict, parameter dictionary of constants
+    :return:
+    """
+    # get parameters from params/kwargs
+    snr_order = params['MKTEMPLATE_SNR_ORDER']
+    b_cols = OrderedDict()
+    b_cols['RowNum'] = []
+    b_cols['Filename'], b_cols['OBJNAME'] = [], []
+    b_cols['BERV'], b_cols['BJD'], b_cols['BERVMAX'] = [], [], []
+    b_cols['SNR{0}'.format(snr_order)] = []
+    b_cols['DPRTYPE'] = []
+    b_cols['MidObsHuman'], b_cols['MidObsMJD'] = [], []
+    b_cols['VERSION'], b_cols['Process_Date'], b_cols['DRS_Date'] = [], [], []
+    b_cols['DARKFILE'], b_cols['BADFILE'], b_cols['BACKFILE'] = [], [], []
+    b_cols['LOCOFILE'], b_cols['BLAZEFILE'], b_cols['FLATFILE'] = [], [], []
+    b_cols['SHAPEXFILE'], b_cols['SHAPEYFILE'] = [], []
+    b_cols['SHAPELFILE'], b_cols['THERMFILE'], b_cols['WAVEFILE'] = [], [], []
+    b_cols['DARKTIME'], b_cols['BADTIME'], b_cols['BACKTIME'] = [], [], []
+    b_cols['LOCOTIME'], b_cols['BLAZETIME'], b_cols['FLATTIME'] = [], [], []
+    b_cols['SHAPEXTIME'], b_cols['SHAPEYTIME'] = [], []
+    b_cols['SHAPELTIME'], b_cols['THERMTIME'], b_cols['WAVETIME'] = [], [], []
+    b_cols['USED'], b_cols['TEMPLATE_BIN'] = [], []
+    # return table dict
+    return b_cols
+
+
+def template_bcols(params: ParamDict, b_cols: Dict[str, list],
+                   infile: DrsFitsFile,
+                   rownum: int, templatenum: int,
+                   bprops: ParamDict, snr: float, midexp: float
+                   ) -> Dict[str, list]:
+    """
+    Fill the template columns for this observation
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param b_cols: dictionary (template table dictionary) from
+                   template_bcols0
+    :param infile: DrsFitsFile, the input file that goes into the template
+    :param rownum: int, The row in the table (time order)
+    :param templatenum: int, the sub-median number (combined before final
+                        median) we do a median of medians to avoid opening
+                        too many files
+    :param bprops: ParamDict, the BERV parameter dictionary
+    :param snr: float, snr in selected order for this file
+    :param midexp: float, the mid exposure time of the observation
+
+    :return: dictionary (template table dictionary) updated with this
+             observation
+    """
+    # get parameters from params/kwargs
+    snr_order = params['MKTEMPLATE_SNR_ORDER']
+    # get berv from bprops
+    berv = bprops['USE_BERV']
+    bjd = bprops['USE_BJD']
+    bervmax = bprops['USE_BERV_MAX']
+    # ------------------------------------------------------------------
+    # append to table lists
+    # ------------------------------------------------------------------
+    # get string/file kwargs
+    bkwargs = dict(dtype=str, required=False)
+    # get drs date now
+    drs_date_now = infile.get_hkey('KW_DRS_DATE_NOW', dtype=str)
+    # add values
+    b_cols['RowNum'].append(rownum)
+    b_cols['Filename'].append(infile.basename)
+    b_cols['OBJNAME'].append(infile.get_hkey('KW_OBJNAME', dtype=str))
+    b_cols['BERV'].append(berv)
+    b_cols['BJD'].append(bjd)
+    b_cols['BERVMAX'].append(bervmax)
+    b_cols['SNR{0}'.format(snr_order)].append(snr)
+    b_cols['DPRTYPE'].append(infile.get_hkey('KW_DPRTYPE', dtype=str))
+    b_cols['MidObsHuman'].append(Time(midexp, format='mjd').iso)
+    b_cols['MidObsMJD'].append(midexp)
+    b_cols['VERSION'].append(infile.get_hkey('KW_VERSION', dtype=str))
+    b_cols['Process_Date'].append(drs_date_now)
+    b_cols['DRS_Date'].append(infile.get_hkey('KW_DRS_DATE', dtype=str))
+    # add dark file and time
+    b_cols['DARKFILE'].append(infile.get_hkey('KW_CDBDARK', **bkwargs))
+    b_cols['DARKTIME'].append(infile.get_hkey('KW_CDTDARK', **bkwargs))
+    # add bad file and time
+    b_cols['BADFILE'].append(infile.get_hkey('KW_CDBBAD', **bkwargs))
+    b_cols['BADTIME'].append(infile.get_hkey('KW_CDTBAD', **bkwargs))
+    # add back file and time
+    b_cols['BACKFILE'].append(infile.get_hkey('KW_CDBBACK', **bkwargs))
+    b_cols['BACKTIME'].append(infile.get_hkey('KW_CDTBACK', **bkwargs))
+    # add loco file and time
+    b_cols['LOCOFILE'].append(infile.get_hkey('KW_CDBLOCO', **bkwargs))
+    b_cols['LOCOTIME'].append(infile.get_hkey('KW_CDTLOCO', **bkwargs))
+    # add blaze file and time
+    b_cols['BLAZEFILE'].append(infile.get_hkey('KW_CDBBLAZE', **bkwargs))
+    b_cols['BLAZETIME'].append(infile.get_hkey('KW_CDTBLAZE', **bkwargs))
+    # add flat file and time
+    b_cols['FLATFILE'].append(infile.get_hkey('KW_CDBFLAT', **bkwargs))
+    b_cols['FLATTIME'].append(infile.get_hkey('KW_CDTFLAT', **bkwargs))
+    # add shape x file and time
+    b_cols['SHAPEXFILE'].append(infile.get_hkey('KW_CDBSHAPEDX', **bkwargs))
+    b_cols['SHAPEXTIME'].append(infile.get_hkey('KW_CDTSHAPEDX', **bkwargs))
+    # add shape y file and time
+    b_cols['SHAPEYFILE'].append(infile.get_hkey('KW_CDBSHAPEDY', **bkwargs))
+    b_cols['SHAPEYTIME'].append(infile.get_hkey('KW_CDTSHAPEDY', **bkwargs))
+    # add shape local file and time
+    b_cols['SHAPELFILE'].append(infile.get_hkey('KW_CDBSHAPEL', **bkwargs))
+    b_cols['SHAPELTIME'].append(infile.get_hkey('KW_CDTSHAPEL', **bkwargs))
+    # add the thermal file
+    cdb_thermal = infile.get_hkey('KW_CDBTHERMAL', **bkwargs)
+    # can be None if no thermal correction done
+    if cdb_thermal is None:
+        cdb_thermal = 'None'
+    b_cols['THERMFILE'].append(cdb_thermal)
+    # add the thermal time (MJDMID)
+    cdt_thermal = infile.get_hkey('KW_CDTTHERMAL', **bkwargs)
+    # can be None if no thermal correction done
+    if cdt_thermal is None:
+        cdt_thermal = 0.0
+    b_cols['THERMTIME'].append(cdt_thermal)
+    # add wave file and time
+    b_cols['WAVEFILE'].append(infile.get_hkey('KW_CDBWAVE', **bkwargs))
+    b_cols['WAVETIME'].append(infile.get_hkey('KW_CDTWAVE', **bkwargs))
+    # add the bin number for this file
+    b_cols['TEMPLATE_BIN'].append(templatenum)
+    # remove the infile
+    del infile
+    # return table dict
+    return b_cols
+
+
 def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
                           calibdbm, **kwargs):
     # set function mame
@@ -508,7 +553,6 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
     # get parameters from params/kwargs
     qc_snr_order = pcheck(params, 'MKTEMPLATE_SNR_ORDER', 'qc_snr_order',
                           kwargs, func_name)
-
     s1d_iterations = pcheck(params, 'MKTEMPLATE_S1D_ITNUM', 's1d_iterations',
                             kwargs, func_name)
     s1d_lowf_size = pcheck(params, 'MKTEMPLATE_S1D_LOWF_SIZE', 's1d_lowf_size',
@@ -582,27 +626,13 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
     # Storage for cube table
     # ----------------------------------------------------------------------
     # compile base columns
-    b_cols = OrderedDict()
-    b_cols['RowNum'], b_cols['Filename'], b_cols['OBJNAME'] = [], [], []
-    b_cols['BERV'], b_cols['SNR{0}'.format(snr_order)] = [], []
-    b_cols['MidObsHuman'], b_cols['MidObsMJD'] = [], []
-    b_cols['VERSION'], b_cols['Process_Date'], b_cols['DRS_Date'] = [], [], []
-    b_cols['DARKFILE'], b_cols['BADFILE'], b_cols['BACKFILE'] = [], [], []
-    b_cols['LOCOFILE'], b_cols['BLAZEFILE'], b_cols['FLATFILE'] = [], [], []
-    b_cols['SHAPEXFILE'], b_cols['SHAPEYFILE'] = [], []
-    b_cols['SHAPELFILE'], b_cols['THERMFILE'], b_cols['WAVEFILE'] = [], [], []
-    b_cols['DARKTIME'], b_cols['BADTIME'], b_cols['BACKTIME'] = [], [], []
-    b_cols['LOCOTIME'], b_cols['BLAZETIME'], b_cols['FLATTIME'] = [], [], []
-    b_cols['SHAPEXTIME'], b_cols['SHAPEYTIME'] = [], []
-    b_cols['SHAPELTIME'], b_cols['THERMTIME'], b_cols['WAVETIME'] = [], [], []
-    b_cols['USED'], b_cols['TEMPLATE_BIN'] = [], []
+    b_cols = template_bcols0(params)
     # ----------------------------------------------------------------------
     # Deal with binning up the template
     # ----------------------------------------------------------------------
     # make vfilenames an array
     vfilenames = np.array(vfilenames)
     vlen = len(vfilenames)
-
     # if we have more then the maximum number of files and we are not in
     #   debug mode we need to bin the files and do a median of a median for
     #   all files
@@ -625,6 +655,8 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
     flatsize = np.product(dims)
     # create NaN filled storage
     big_cube = np.repeat([np.nan], flatsize).reshape(*dims)
+    big_errors =  np.repeat([np.nan], flatsize).reshape(*dims)
+    big_n = np.repeat([np.nan], flatsize).reshape(*dims)
     # ----------------------------------------------------------------------
     # Loop through bins
     # ----------------------------------------------------------------------
@@ -675,78 +707,13 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
             if berv in [np.nan, None] or not isinstance(berv, (int, float)):
                 eargs = [berv, func_name]
                 WLOG(params, 'error', textentry('09-016-00004', args=eargs))
+
             # ------------------------------------------------------------------
-            # append to table lists
+            # populate the template file table
             # ------------------------------------------------------------------
-            # get string/file kwargs
-            bkwargs = dict(dtype=str, required=False)
-            # get drs date now
-            drs_date_now = infile.get_hkey('KW_DRS_DATE_NOW', dtype=str)
-            # add values
-            b_cols['RowNum'].append(jt)
-            b_cols['Filename'].append(infile.basename)
-            b_cols['OBJNAME'].append(infile.get_hkey('KW_OBJNAME', dtype=str))
-            b_cols['BERV'].append(berv)
-            b_cols['SNR{0}'.format(snr_order)].append(snr_all[jt])
-            b_cols['MidObsHuman'].append(Time(midexps[jt], format='mjd').iso)
-            b_cols['MidObsMJD'].append(midexps[jt])
-            b_cols['VERSION'].append(infile.get_hkey('KW_VERSION', dtype=str))
-            b_cols['Process_Date'].append(drs_date_now)
-            b_cols['DRS_Date'].append(infile.get_hkey('KW_DRS_DATE', dtype=str))
-            # add dark file and time
-            b_cols['DARKFILE'].append(infile.get_hkey('KW_CDBDARK', **bkwargs))
-            b_cols['DARKTIME'].append(infile.get_hkey('KW_CDTDARK', **bkwargs))
-            # add bad file and time
-            b_cols['BADFILE'].append(infile.get_hkey('KW_CDBBAD', **bkwargs))
-            b_cols['BADTIME'].append(infile.get_hkey('KW_CDTBAD', **bkwargs))
-            # add back file and time
-            b_cols['BACKFILE'].append(infile.get_hkey('KW_CDBBACK', **bkwargs))
-            b_cols['BACKTIME'].append(infile.get_hkey('KW_CDTBACK', **bkwargs))
-            # add loco file and time
-            b_cols['LOCOFILE'].append(infile.get_hkey('KW_CDBLOCO', **bkwargs))
-            b_cols['LOCOTIME'].append(infile.get_hkey('KW_CDTLOCO', **bkwargs))
-            # add blaze file and time
-            b_cols['BLAZEFILE'].append(infile.get_hkey('KW_CDBBLAZE',
-                                                       **bkwargs))
-            b_cols['BLAZETIME'].append(infile.get_hkey('KW_CDTBLAZE',
-                                                       **bkwargs))
-            # add flat file and time
-            b_cols['FLATFILE'].append(infile.get_hkey('KW_CDBFLAT', **bkwargs))
-            b_cols['FLATTIME'].append(infile.get_hkey('KW_CDTFLAT', **bkwargs))
-            # add shape x file and time
-            b_cols['SHAPEXFILE'].append(infile.get_hkey('KW_CDBSHAPEDX',
-                                                        **bkwargs))
-            b_cols['SHAPEXTIME'].append(infile.get_hkey('KW_CDTSHAPEDX',
-                                                        **bkwargs))
-            # add shape y file and time
-            b_cols['SHAPEYFILE'].append(infile.get_hkey('KW_CDBSHAPEDY',
-                                                        **bkwargs))
-            b_cols['SHAPEYTIME'].append(infile.get_hkey('KW_CDTSHAPEDY',
-                                                        **bkwargs))
-            # add shape local file and time
-            b_cols['SHAPELFILE'].append(infile.get_hkey('KW_CDBSHAPEL',
-                                                        **bkwargs))
-            b_cols['SHAPELTIME'].append(infile.get_hkey('KW_CDTSHAPEL',
-                                                        **bkwargs))
-            # add the thermal file
-            cdb_thermal = infile.get_hkey('KW_CDBTHERMAL', **bkwargs)
-            # can be None if no thermal correction done
-            if cdb_thermal is None:
-                cdb_thermal = 'None'
-            b_cols['THERMFILE'].append(cdb_thermal)
-            # add the thermal time (MJDMID)
-            cdt_thermal = infile.get_hkey('KW_CDTTHERMAL', **bkwargs)
-            # can be None if no thermal correction done
-            if cdt_thermal is None:
-                cdt_thermal = 0.0
-            b_cols['THERMTIME'].append(cdt_thermal)
-            # add wave file and time
-            b_cols['WAVEFILE'].append(infile.get_hkey('KW_CDBWAVE', **bkwargs))
-            b_cols['WAVETIME'].append(infile.get_hkey('KW_CDTWAVE', **bkwargs))
-            # add the bin number for this file
-            b_cols['TEMPLATE_BIN'].append(p_it)
-            # remove the infile
-            del infile
+            b_cols = template_bcols(params, b_cols, infile, jt, p_it, bprops,
+                                    snr_all[jt], midexps[jt])
+
             # ------------------------------------------------------------------
             # skip if bad snr object
             # ------------------------------------------------------------------
@@ -792,8 +759,24 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
             # add the shifted data to big_cube
             big_cube[:, p_it] = big_cube_tmp[:, 0]
         else:
+
+            median = mp.nanmedian(big_cube_tmp, axis=1)
+            for it in range(big_cube_tmp.shape[-1]):
+                # get the new ratio
+                ratio = big_cube_tmp[:, it] / median
+                # apply median filtered ratio (low frequency removal)
+                big_cube_tmp[:, it] /= mp.medfilt_1d(ratio, s1d_lowf_size)
+
+            ps = [100*(1 - mp.normal_fraction()) / 2,50,
+                  (1 - (1 - mp.normal_fraction()) / 2) * 100]
+            n1,med,p1 = mp.nanpercentile(big_cube_tmp,ps, axis=1)
+            sig = (p1-n1)/2 # 1-sigma excursion
+
             # add the shifted data to big_cube
-            big_cube[:, p_it] = mp.nanmedian(big_cube_tmp, axis=1)
+            big_n[:, p_it] = np.sum(np.isfinite(big_cube_tmp),axis=1)
+            big_errors[:, p_it] = sig / np.sqrt(big_n[:, p_it] - 1)
+            big_cube[:, p_it] = med
+
     # ------------------------------------------------------------------
     # Iterate until low frequency noise is gone
     # ------------------------------------------------------------------
@@ -818,7 +801,9 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
     for it in range(big_cube.shape[-1]):
         residual_cube[:, it] -= median
     # calculate rms (median of residuals)
-    rms = mp.nanmedian(np.abs(residual_cube), axis=1)
+    norm_frac = mp.normal_fraction() * 100
+    rms = mp.nanpercentile(np.abs(residual_cube), norm_frac, axis=1)
+
     # ----------------------------------------------------------------------
     # create the deconvolved template (used to correct finite resolution
     #   effects)
@@ -1325,11 +1310,12 @@ def mk_1d_template_write(params, recipe, infile, props, filetype, fiber,
     # ------------------------------------------------------------------
     # deal with difference file type for s1dv and s1dw
     if props['S1D_TYPE'] == 'S1DV':
-        drs_file = 'TELLU_TEMP_S1DV'
+        drs_file_type = 'TELLU_TEMP_S1DV'
     else:
-        drs_file = 'TELLU_TEMP_S1DW'
+        drs_file_type = 'TELLU_TEMP_S1DW'
     # get copy of instance of file
-    template_file = recipe.outputs[drs_file].newcopy(params=params, fiber=fiber)
+    template_file = recipe.outputs[drs_file_type].newcopy(params=params,
+                                                          fiber=fiber)
     # construct the filename from file instance
     template_file.construct_filename(infile=infile, suffix=suffix)
     # copy keys from input file

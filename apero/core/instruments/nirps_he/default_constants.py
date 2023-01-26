@@ -2354,7 +2354,7 @@ MKTEMPLATE_FILESOURCE.value = 'telludb'
 
 # the order to use for signal to noise cut requirement
 MKTEMPLATE_SNR_ORDER = MKTEMPLATE_SNR_ORDER.copy(__NAME__)
-MKTEMPLATE_SNR_ORDER.value = 33
+MKTEMPLATE_SNR_ORDER.value = 59
 
 # The number of iterations to filter low frequency noise before medianing
 #   the template "big cube" to the final template spectrum
