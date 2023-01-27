@@ -39,9 +39,14 @@ Using the Github Action [Repo Visualizer](https://github.com/githubocto/repo-vis
     non-developers or for data put on archives. Some changes may not be
     in this version that are in the working version.
     ```
-- working (untested) V0.8.??? (2022-02-??)
+- stable-test (tested) V0.7.275 (2023-01-27)
     ```
-    Note the working version will be the most up-to-date version but has not been
+    Notrmally up-to-date with the live version has been or is currently
+    being tested for stability
+    ```
+- live (untested) V0.8.??? (2022-02-??)
+    ```
+    Note the live version will be the most up-to-date version but has not been
     tested for stability - use at own risk.
     ```
 
