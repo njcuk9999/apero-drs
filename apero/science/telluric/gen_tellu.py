@@ -27,6 +27,7 @@ from apero.core.core import drs_database
 from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.core.core import drs_text
+from apero.core.instruments.default import pseudo_const
 from apero.core.utils import drs_data
 from apero.core.utils import drs_utils
 from apero.io import drs_fits
@@ -51,6 +52,7 @@ DrsFitsFile = drs_file.DrsFitsFile
 CalibDatabase = drs_database.CalibrationDatabase
 TelluDatabase = drs_database.TelluricDatabase
 FileIndexDatabase = drs_database.FileIndexDatabase
+DPseudoConsts = pseudo_const.DefaultPseudoConstants
 # Get function string
 display_func = drs_log.display_func
 # Get Logging function
@@ -349,6 +351,84 @@ def get_sp_linelists(params, **kwargs):
     mask_water, mask_others = pconst.TAPAS_INST_CORR(mask_water, mask_others)
     # return masks
     return mask_others, mask_water
+
+
+def mask_bad_regions(params: ParamDict,
+                     image: np.ndarray, wavemap: np.ndarray,
+                     pconst: Optional[DPseudoConsts] = None,
+                     bad_regions: Optional[Tuple[float, float]]= None
+                     ) -> np.ndarray:
+    """
+    Mask bad regions based on the wave map
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param image: np.ndarray (1D or 2D), the 1D or 2D vector to fill with NaNs
+                  in the bad_regions area (defined by wavemap)
+    :param wavemap: np.ndarray (1D or 2D), must match shape of image, the
+                    wavemap to mask by
+    :param pconst: Optional Pconst, the pseudo constants instance for this
+                   instrument, if not given and bad_regions is None, loaded
+                   from constants.pload()
+    :param bad_regions: Optional tuple of (float, float), the bad regions
+                        each tuple entry is a wave start and wave end (in units
+                        of the wavemap) if set to None this is loaded from
+                        pconst.TELLU_BAD_WAVEREGIONS()
+
+    :return: np.ndarray (1D or 2D), the image, filled with NaNs in the
+             bad_regions
+    """
+    # set function name
+    func_name = display_func('mask_bad_regions', __NAME__)
+    # -------------------------------------------------------------------------
+    # get bad wavelength regimes
+    if bad_regions is None:
+        # if pconst is not loaded load it
+        if pconst is None:
+            pconst = constants.pload()
+        # get the bad regions from TELLU_BAD_WAVEREGIONS()
+        bad_regions = pconst.TELLU_BAD_WAVEREGIONS()
+    # deal with no bad regions
+    if len(bad_regions) == 0:
+        return image
+    # -------------------------------------------------------------------------
+    # we can deal with 1D and 2D files
+    if len(image.shape) not in [1, 2]:
+        # TODO: Add to language database
+        emsg = ('Can only mask bad regions in 1D and 2D images. '
+                '\n\tImage shape: {0}'
+                '\n\tFunction: {1}')
+        eargs = [image.shape, func_name]
+        WLOG(params, 'error', emsg.format(*eargs))
+    if image.shape != wavemap.shape:
+        # TODO: Add to language database
+        emsg = ('Image and wavelength grid must have same dimensions'
+                '\n\tImage shape: {0} \n\tWavemap shape: {1}'
+                '\n\tFunction: {2}')
+        eargs = [image.shape, wavemap.shape, func_name]
+        WLOG(params, 'error', emsg.format(*eargs))
+    # -------------------------------------------------------------------------
+    # loop around bad regions and mask them
+    for bad_region in bad_regions:
+        # get the start and end points of the tuple
+        wavestart, waveend = bad_region
+        # if e2ds we need to
+        if len(image.shape) == 2:
+            for order_num in image.shape[0]:
+                # mask wavelength per order
+                mask_order = wavemap[order_num] > wavestart
+                mask_order &= wavemap[order_num] < waveend
+                # set these regions to NaN
+                image[order_num][mask_order] = np.nan
+        # else we have 1D
+        else:
+            # mask by wavelength
+            mask_order = wavemap > wavestart
+            mask_order &= wavemap < waveend
+            # set these regions to NaN
+            image[mask_order] = np.nan
+    # -------------------------------------------------------------------------
+    # return image - NaN filled
+    return image
 
 
 # =============================================================================

@@ -231,6 +231,14 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         template_props = telluric.shift_template(params, recipe, image,
                                                  template_props, refprops,
                                                  wprops, bprops)
+        # ------------------------------------------------------------------
+        # mask bad regions
+        # ------------------------------------------------------------------
+        # Some regions cannot be telluric corrected and the data should be
+        #   just set to NaNs to avoid bad corrections
+        infile.data = telluric.mask_bad_regions(params, infile.data,
+                                                wprops['WAVEMAP'],
+                                                pconst=pconst)
 
         # ------------------------------------------------------------------
         # apply sky correction
