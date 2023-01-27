@@ -2,6 +2,145 @@ Changelog
 =========
 
 
+0.7.275 (2023-01-27)
+--------------------
+- [APERO] allow masking of bad wavelength regions in telluric correct +
+  mask out bad tranmission. [Neil Cook]
+- [APERO] `apero.science.telluric.template_tellu.py` - calculate the s1d
+  template error and `n_valid`. [Neil Cook]
+- [APERO] `apero.science.telluric.template_tellu.py` - calculate the s1d
+  template error and `n_valid`. [Neil Cook]
+- Merge branch 'v0.7.273-live' into v0.7.267-live. [Neil Cook]
+- [APERO] recalculate template RMS + linearize template bcols between
+  e2ds and s1d [NIRPS] change `MKTEMPLATE_SNR_ORDER` 33-->59. [Neil Cook]
+
+
+0.7.274 (2023-01-25)
+--------------------
+- [APERO] fix not having a --since option. [njcuk9999]
+- [APERO] `apero_go.py` - add --setup option. [njcuk9999]
+- [APERO] check that --since argument is a valid date+ [njcuk9999]
+- [APERO] add a --since argument to `drs_get.py`. [njcuk9999]
+- [APERO] low-pass hot star template + deconv=median for hot stars
+  (update `MKTEMPLATE_HOTSTAR_KER_VEL` dtype) [njcuk9999]
+- [APERO] low-pass hot star template + deconv=median for hot stars
+  (update imports) [njcuk9999]
+- [APERO] low-pass hot star template + deconv=median for hot stars.
+  [njcuk9999]
+- [NIRPS] `apero.science.telluric.gen_tellu.py` - `finite_res_correction`
+  now requires params (For threshold) [njcuk9999]
+- [NIRPS] fix sky corr being applied twice for nirps and fix
+  convergence. [njcuk9999]
+- Merge remote-tracking branch 'origin/v0.7.273-live' into
+  v0.7.273-live. [njcuk9999]
+- [APERO] update `install.py` `module_translation`. [Neil Cook]
+- [NIRPS] `gen_tellu.py` - filter over bad finite res corrections.
+  [njcuk9999]
+- Merge remote-tracking branch 'origin/v0.7.273-live' into
+  v0.7.273-live. [Neil Cook]
+- [NIRPS] update skymodels (error in calculation) [njcuk9999]
+- [APERO] `apero.science.calib.wave.py` - update key in table  to key in
+  table.colnames. [Neil Cook]
+- [APERO] update requirements. [Neil Cook]
+- [APERO] update readme. [Neil Cook]
+- Merge branch 'v0.7.273-live' into developer. [Neil Cook]
+
+  # Conflicts:
+  #    .gitignore
+  #    README.md
+  #    `apero/core/core/drs_database.py`
+  #    `apero/core/core/drs_startup.py`
+  #    `apero/core/instruments/default/default_config.py`
+  #    `apero/core/instruments/default/default_constants.py`
+  #    `apero/core/instruments/spirou/default_constants.py`
+  #    `apero/core/instruments/spirou/file_definitions.py`
+  #    `apero/core/instruments/spirou/recipe_definitions.py`
+  #    apero/core/math/general.py
+  #    `apero/data/spirou/reset/runs/calib_run.ini`
+  #    `apero/data/spirou/reset/runs/complete_run.ini`
+  #    `apero/data/spirou/reset/runs/mini_run.ini`
+  #    `apero/data/spirou/reset/runs/other_run.ini`
+  #    `apero/data/spirou/reset/runs/science_run.ini`
+  #    `apero/data/spirou/reset/runs/trigger_night_calib_run.ini`
+  #    apero/lang/backup/language.xls
+  #    apero/lang/databases/language.xls
+  #    `apero/recipes/spirou/apero_ccf_spirou.py`
+  #    `apero/recipes/spirou/cal_thermal_spirou.py`
+  #    apero/science/calib/localisation.py
+  #    apero/science/calib/shape.py
+  #    apero/science/calib/wave.py
+  #    apero/science/extract/berv.py
+  #    apero/science/polar/general.py
+  #    `apero/science/telluric/gen_tellu.py`
+  #    `apero/science/velocity/gen_vel.py`
+  #    `apero/tools/module/setup/drs_processing.py`
+  #    `apero/tools/recipes/bin/apero_processing.py`
+  #    `apero/tools/recipes/spirou/apero_drift_spirou.py`
+  #    `apero/tools/recipes/spirou/apero_expmeter_spirou.py`
+  #    changelog.md
+  #    documentation/working/conf.py
+  #    documentation/working/index.rst
+  #    documentation/working/main/misc/changelog.rst
+  #    version.txt
+- [APERO] update date/version/docs. [Neil Cook]
+- Update `peak_number` rounding issue. [Neil Cook]
+- Merge remote-tracking branch 'origin/developer' into developer. [Neil
+  Cook]
+- Merge branch 'master' into developer. [Neil Cook]
+- `Science.extract.berv.py` - `get_berv` should warn when barycorrpy fails.
+  [Neil Cook]
+- Merge remote-tracking branch 'origin/developer' into developer. [Neil
+  Cook]
+- Merge remote-tracking branch 'origin/developer' into developer.
+  [njcuk9999]
+- `Apero.science.calib.shape.py` - Problem with shape when maximum
+  correlation between FPs split between pixels (Issue #668) [njcuk9999]
+- `Apero.core.instruments.spirou.file_definitions.py` - `RAW_LFC_FP` did not
+  have outfunc - add outfunc=out.blank. [Neil Cook]
+- `Apero.core.instruments.spirou.recipe_definitions.py` - `leak_master`
+  should be after thermal master. [Neil Cook]
+- `Apero.data.spirou.reset.runs.other_run.ini` - add LFCFP and FPLFC to
+  other run.ini file. [Neil Cook]
+- `Apero.core.instruments.spirou.file_definitions.py` +
+  `recipe_definitions.py` - add LFCFP and FPLFC to sequences. [Neil Cook]
+- `Apero.core.instruments.spirou.file_definitions.py` +
+  `recipe_definitions.py` - add LFCFP and FPLFC to sequences. [Neil Cook]
+- `Apero.tools.module.setup.drs_processing.py` - `_split_string_list` - if
+  `allow_whitespace` must return a list not string. [njcuk9999]
+- `Apero.tools.module.setup.drs_processing.py` - `_split_string_list` should
+  not split by white space unless directly told to (allows spaces in
+  filenames) [njcuk9999]
+- `Apero.recipes.spirou.cal_ccf_spirou.py` - make sure A and B can be used
+  as science fibers. [Neil Cook]
+- `Apero.core.instruments.spirou.default_constants.py` - update
+  `DRIFT_DPRTYPES` - (add `FP_DARK)` [Neil Cook]
+- `Apero.recipes.spirou.cal_thermal_spirou.py` - `thermal_files` are not
+  indexed - correct this. [Neil Cook]
+- `Apero.science.calib.localisation.py` + `wave.py` - add `KW_PID` to writing
+  functions. [Neil Cook]
+- Merge remote-tracking branch 'origin/developer' into developer.
+  [njcuk9999]
+- Update README.md. [Neil Cook]
+
+  correct typo
+- `Apero.science.telluric.gen_tellu.py` - deal with Etienne using 0 as
+  flag - bad bad bad. [njcuk9999]
+- `Tools.recipe.spirou.cal_drift_spirou.py` - update output filename.
+  [Neil Cook]
+- `Tools.recipe.spirou.cal_drift_spirou.py` - allow `OBJ_FP` and `DARK_FP`
+  files (and deal with fibers not containing FP) [Neil Cook]
+- `Apero.science.calib.localisation.py` - fix qc logic for `MAX_RMPTS_POS`
+  and `MAX_RMPTS_WID`. [Neil Cook]
+- `Apero.core.core.drs_startup.py` - pep8 change. [Neil Cook]
+- `Cal_expmeter_spirou.py` - update output filename based on input fibers.
+  [Neil Cook]
+- `Apero.core.core.drs_startup.py` - try to fix integer scalar bug. [Neil
+  Cook]
+- `Apero.tools.recipes.spirou.cal_expmeter_spirou.py` - add --fibers
+  option. [Neil Cook]
+- Update date/version/changelog/readme/documentation. [Neil Cook]
+
+
 0.7.273 (2023-01-23)
 --------------------
 - [NIRPS] update telluric list. [njcuk9999]
