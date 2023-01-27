@@ -79,6 +79,8 @@ make_trans_model = mk_tellu.make_trans_model
 
 make_template_cubes = template_tellu.make_template_cubes
 
+mask_bad_regions = gen_tellu.mask_bad_regions
+
 mk_tellu_quality_control = mk_tellu.mk_tellu_quality_control
 
 mk_tellu_write_trans_file = mk_tellu.mk_tellu_write_trans_file

@@ -814,7 +814,8 @@ def calc_recon_and_correct(params, recipe, image, wprops, pca_props, sprops,
 
 
 def calc_res_model(params, recipe, image, image1, trans_props, tpreprops,
-                   refprops, wprops, infile) -> ParamDict:
+                   refprops, wprops, infile,
+                   min_trans: Optional[float] = None) -> ParamDict:
     """
     Calculate the residual model and apply it to the image
 
@@ -831,6 +832,9 @@ def calc_res_model(params, recipe, image, image1, trans_props, tpreprops,
     """
     # set function name
     func_name = display_func('calc_res_model', __NAME__)
+    # get the minimum allowed transmission
+    min_trans = pcheck(params, 'FTELLU_FIT_MIN_TRANS', func=func_name,
+                       override=min_trans)
     # get vectors from transmission model
     zero_res = trans_props['ZERO_RES']
     water_res = trans_props['WATER_RES']
@@ -853,6 +857,12 @@ def calc_res_model(params, recipe, image, image1, trans_props, tpreprops,
     # recon is the absorption model from pre-cleaning multipled by the
     #    residual model
     recon_abso = tpreprops['ABSO_E2DS'] * res_model2
+    # cut out bad transmissions
+    mask = recon_abso < min_trans
+    mask |= recon_abso > (1 + min_trans)
+    # apply to the spectrum and the recon
+    sp_out[mask] = np.nan
+    recon_abso[mask] = np.nan
     # ------------------------------------------------------------------
     # Plot wavelength vs vectors
     # ------------------------------------------------------------------

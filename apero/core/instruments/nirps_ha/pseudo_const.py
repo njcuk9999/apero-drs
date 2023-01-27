@@ -766,6 +766,21 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
 
         return mask_water, mask_others
 
+    def TELLU_BAD_WAVEREGIONS(self) -> List[Tuple[float, float]]:
+        """
+        Define bad wavelength regions to mask before correcting tellurics
+
+        :return:  list of tuples (float, float), each tuple is a region from
+                  min wavelength to max wavelength
+        """
+        bad_regions = []
+        # mask the absorption region
+        bad_regions.append((1370, 1410))
+        # mask the reddest wavelength
+        bad_regions.append((1850, 2000))
+        # by default we mask no regions
+        return bad_regions
+
     # =========================================================================
     # DATABASE SETTINGS
     # =========================================================================
