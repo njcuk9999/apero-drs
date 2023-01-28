@@ -413,7 +413,7 @@ def mask_bad_regions(params: ParamDict,
         wavestart, waveend = bad_region
         # if e2ds we need to
         if len(image.shape) == 2:
-            for order_num in image.shape[0]:
+            for order_num in range(image.shape[0]):
                 # mask wavelength per order
                 mask_order = wavemap[order_num] > wavestart
                 mask_order &= wavemap[order_num] < waveend
