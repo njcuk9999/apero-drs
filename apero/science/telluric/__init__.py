@@ -109,6 +109,19 @@ pclean_only = fit_tellu.pclean_only
 
 shift_template = fit_tellu.shift_template
 
+skymodel_table = sky_corr.skymodel_table
+
+skymodel_cube = sky_corr.skymodel_cube
+
+calc_skymodel = sky_corr.calc_skymodel
+
+mk_skymodel_qc = sky_corr.mk_skymodel_qc
+
+write_skymodel = sky_corr.write_skymodel
+
+mk_skymodel_summary = sky_corr.mk_skymodel_summary
+
+
 # =============================================================================
 # End of code
 # =============================================================================

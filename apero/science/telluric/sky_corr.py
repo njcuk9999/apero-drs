@@ -8,10 +8,9 @@ Created on 2020-07-2020-07-15 17:58
 @author: cook
 """
 import os
-from typing import Optional, List
+from typing import Optional, List, Tuple
 
 import numpy as np
-from scipy.ndimage import binary_erosion
 
 from apero import lang
 from apero.base import base
@@ -24,6 +23,7 @@ from apero.core.utils import drs_recipe
 from apero.io import drs_fits
 from apero.science.calib import wave
 from apero.science.telluric import gen_tellu
+
 
 # =============================================================================
 # Define variables
@@ -57,6 +57,76 @@ pcheck = constants.PCheck(wlog=WLOG)
 # =============================================================================
 # Reference sky-corr functions
 # =============================================================================
+def skymodel_table(params: ParamDict, sky_files: List[str]) -> ParamDict:
+    
+    # TODO: write skymodel_table
+    #       - construct table via reading headers
+    #       - filter out short exposure times?
+    
+    return ParamDict()
+    
+    
+def skymodel_cube(params: ParamDict, sky_props: ParamDict) -> ParamDict:
+    
+    # TODO: Write skymodel cube
+    
+    # return updated sky props parameter dictionary
+    return sky_props
+
+
+def calc_skymodel(params: ParamDict, sky_props: ParamDict) -> ParamDict:
+    
+    # TODO: Write calc_skymodel
+    
+    # return updated sky props parameter dictionary
+    return sky_props
+
+
+def mk_skymodel_qc(params: ParamDict, sky_props: ParamDict
+                   ) -> Tuple[List[list], int]:
+    # TODO: Fill out QC
+    # set passed variable and fail message list
+    fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
+    # no quality control currently
+    qc_values.append('None')
+    qc_names.append('None')
+    qc_logic.append('None')
+    qc_pass.append(1)
+    # ------------------------------------------------------------------
+    # finally log the failed messages and set QC = 1 if we pass the
+    # quality control QC = 0 if we fail quality control
+    if np.sum(qc_pass) == len(qc_pass):
+        WLOG(params, 'info', textentry('40-005-10001'))
+        passed = 1
+    else:
+        for farg in fail_msg:
+            WLOG(params, 'warning', textentry('40-005-10002') + farg,
+                 sublevel=6)
+        passed = 0
+    # store in qc_params
+    qc_params = [qc_names, qc_values, qc_logic, qc_pass]
+    # return qc params and passed
+    return qc_params, passed
+
+
+def write_skymodel(params: ParamDict, sky_props: ParamDict) -> DrsFitsFile:
+    
+    # TODO: Write sky model 
+    
+    # return sky model
+    return None
+
+
+def mk_skymodel_summary(recipe, params, sky_props: ParamDict, qc_params):
+
+    # TODO: Write skymodel summary
+
+    # add stats
+    recipe.plot.add_stat('KW_VERSION', value=params['DRS_VERSION'])
+    recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS_DATE'])
+    recipe.plot.add_stat('', value=None)
+    # construct summary
+    recipe.plot.summary_document(0, qc_params)
 
 
 # =============================================================================
