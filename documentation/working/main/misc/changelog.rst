@@ -2,6 +2,15 @@ Changelog
 =========
 
 
+0.8.001 (2023-01-30)
+--------------------
+- [APERO] update README.md (move developer and main to v0.7.275) [Neil
+  Cook]
+- [APERO] fix typo `apero.science.telluric.gen_tellu.py` - image.shape[0]
+  --> range(image.shape[0]) [njcuk9999]
+- [APERO] update date / version / documentation. [Neil Cook]
+
+
 0.7.275 (2023-01-27)
 --------------------
 - [APERO] allow masking of bad wavelength regions in telluric correct +

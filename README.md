@@ -44,7 +44,7 @@ Using the Github Action [Repo Visualizer](https://github.com/githubocto/repo-vis
     Notrmally up-to-date with the live version has been or is currently
     being tested for stability
     ```
-- live (untested) V0.8.??? (2022-01-30)
+- live (untested) V0.8.001 (2022-01-30)
     ```
     Note the live version will be the most up-to-date version but has not been
     tested for stability - use at own risk.
