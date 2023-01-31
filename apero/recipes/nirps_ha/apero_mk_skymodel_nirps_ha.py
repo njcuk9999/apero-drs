@@ -117,28 +117,87 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
 
     # TODO: Add these to constants
 
+    # Define the order to get the snr from (for input data qc check)
+    params.set('SKYMODEL_EXT_SNR_ORDERNUM', value=35)   # 59 nirps?
+    # Define the minimum exptime to use a sky in the model
+    params.set('SKYMODEL_MIN_EXPTIME', value=300)
 
     # ----------------------------------------------------------------------
     # find all sky files
     # ----------------------------------------------------------------------
-    # TODO: What is the filter parameters?
-    sky_files = drs_utils.find_files(params, block_kind='red',
-                                     filters='')
-
+    # get the science and calib fibers to use
+    sci_fiber, calib_fiber = pconst.SKYFIBERS()
+    # get the filetype (this is overwritten from user inputs if defined)
+    filetype = params['INPUTS']['FILETYPE']
+    # find the science fiber files
+    if sci_fiber is not None:
+        # get the science fiber files for "SKY" files (which are night files)
+        #    for the specific filetype
+        sky_files_sci = drs_utils.find_files(params, block_kind='red',
+                                             filters=dict(KW_TARGET_TYPE='SKY',
+                                                          KW_NIGHT_OBS=True,
+                                                          KW_OUTPUT=filetype,
+                                                          KW_FIBER=sci_fiber))
+        # Get filetype definition
+        infiletype = drs_file.get_file_definition(params, filetype,
+                                                  block_kind='red')
+        # get new copy of file definition
+        infile_sci = infiletype.newcopy(params=params, fiber=sci_fiber)
+        # set reference filename
+        infile_sci.set_filename(sky_files_sci[-1])
+        # read data
+        infile_sci.read_file()
+    # otherwise we do not have science files for the sky model
+    else:
+        # otherwise set to None
+        sky_files_sci = None
+        infile_sci = None
+    # find the calibration fiber files
+    if calib_fiber is not None:
+        # get the science fiber files for "SKY" files (which are night files)
+        #    for the specific filetype
+        sky_files_cal = drs_utils.find_files(params, block_kind='red',
+                                             filters=dict(KW_TARGET_TYPE='SKY',
+                                                          KW_NIGHT_OBS=True,
+                                                          KW_OUTPUT=filetype,
+                                                          KW_FIBER=calib_fiber))
+        # Get filetype definition
+        infiletype = drs_file.get_file_definition(params, filetype,
+                                                  block_kind='red')
+        # get new copy of file definition
+        infile_cal = infiletype.newcopy(params=params, fiber=sci_fiber)
+        # set reference filename
+        infile_cal.set_filename(sky_files_sci[-1])
+        # read data
+        infile_cal.read_file()
+    # otherwise we to not have calib files for the sky model
+    else:
+        sky_files_cal = None
+        infile_cal = None
     # ----------------------------------------------------------------------
     # make sky table
     # ----------------------------------------------------------------------
-    sky_props = telluric.skymodel_table(params, sky_files)
+    # get science table
+    sky_table_sci = telluric.skymodel_table(params, sky_files_sci, infile_sci)
+    # get calib table
+    sky_table_cal = telluric.skymodel_table(params, sky_files_cal, infile_cal)
 
     # ----------------------------------------------------------------------
     # Construct sky cubes
     # ----------------------------------------------------------------------
-    sky_props = telluric.skymodel_cube(params, sky_props)
+    sky_props_sci = telluric.skymodel_cube(params, sky_table_sci)
+    sky_props_cal = telluric.skymodel_cube(params, sky_table_cal)
+
+    # ----------------------------------------------------------------------
+    # Identify line regions
+    # ----------------------------------------------------------------------
+    regions = telluric.identify_sky_line_regions(params, sky_props_sci)
 
     # ----------------------------------------------------------------------
     # Make the sky model
     # ----------------------------------------------------------------------
-    sky_props = telluric.calc_skymodel(params, sky_props)
+    sky_props = telluric.calc_skymodel(params, sky_props_sci, sky_props_cal,
+                                       regions)
 
     # ----------------------------------------------------------------------
     # Plot
@@ -152,11 +211,10 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # update recipe log
     recipe.log.add_qc(qc_params, passed)
 
-
     # ----------------------------------------------------------------------
     # Write files to disk
     # ----------------------------------------------------------------------
-    skymodel = telluric.write_skymodel(params, sky_props)
+    skymodel = telluric.write_skymodel(recipe, params, infile_sci, sky_props)
 
     # ----------------------------------------------------------------------
     # Update the telluric database with the sky model

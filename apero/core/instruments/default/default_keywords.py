@@ -22,9 +22,11 @@ __all__ = [  # input keys
     'KW_CMPLTEXP', 'KW_NEXP', 'KW_PI_NAME', 'KW_PLX', 'KW_CALIBWH',
     'KW_TARGET_TYPE', 'KW_WEATHER_TOWER_TEMP', 'KW_CASS_TEMP',
     'KW_HUMIDITY', 'KW_INPUTRV', 'KW_OBJ_TEMP',
-    'KW_POLAR_KEY_1', 'KW_POLAR_KEY_2', 'KW_SATURATE', 'KW_FRMTIME',
-    'KW_OBJECTNAME', 'KW_OBJECTNAME2', 'KW_IDENTIFIER',
-    'KW_INSTRUMENT', 'KW_INST_MODE', 'KW_RAW_DPRTYPE', 'KW_RAW_DPRCATG',
+    'KW_POLAR_KEY_1', 'KW_POLAR_KEY_2',
+    'KW_NIGHT_OBS', 'KW_CIV_TWIL', 'KW_NAU_TWIL', 'KW_AST_TWIL', 'KW_SUN_ELEV',
+    'KW_SATURATE', 'KW_FRMTIME', 'KW_OBJECTNAME', 'KW_OBJECTNAME2',
+    'KW_IDENTIFIER', 'KW_INSTRUMENT', 'KW_INST_MODE',
+    'KW_RAW_DPRTYPE', 'KW_RAW_DPRCATG',
     # object resolution keys
     'KW_DRS_OBJNAME', 'KW_DRS_OBJNAME_S',
     'KW_DRS_RA', 'KW_DRS_RA_S', 'KW_DRS_DEC', 'KW_DRS_DEC_S',
@@ -129,6 +131,8 @@ __all__ = [  # input keys
     'KW_RESMAP_BINPIX', 'KW_RESMAP_NBINPIX', 'KW_RES_MAP_ORDLOW',
     'KW_RES_MAP_ORDHIGH', 'KW_RES_MAP_PIXLOW', 'KW_RES_MAP_PIXHIGH',
     'KW_RES_MAP_FWHM', 'KW_RES_MAP_AMP', 'KW_RES_MAP_EXPO', 'KW_RES_MAP_RESEFF',
+    # sky model variables
+    'KW_HAS_SKY_SCI', 'KW_HAS_SKY_CAL', 'KW_SKY_SCI_FIBER', 'KW_SKY_CAL_FIBER',
     # telluric preclean variables
     'KW_TELLUP_EXPO_WATER', 'KW_TELLUP_EXPO_OTHERS',
     'KW_TELLUP_DV_WATER', 'KW_TELLUP_DV_OTHERS',
@@ -407,6 +411,34 @@ KW_POLAR_KEY_1 = Keyword('KW_POLAR_KEY_1', key='NULL', dtype=str, source=__NAME_
 # define the second polar sequence key
 KW_POLAR_KEY_2 = Keyword('KW_POLAR_KEY_2', key='NULL', dtype=str, source=__NAME__,
                          description='define the first polar sequence key')
+
+# -----------------------------------------------------------------------------
+# Keys added as early as possible
+# -----------------------------------------------------------------------------
+# Define whether a target was observed at night
+KW_NIGHT_OBS = Keyword('KW_NIGHT_OBS', key='NULL', dtype=bool, source=__NAME__,
+                       description='Define whether a target was observed '
+                                   'at night')
+
+# Define whether a target was observed during civil twilight
+KW_CIV_TWIL = Keyword('KW_CIV_TWIL', key='NULL', dtype=bool, source=__NAME__,
+                       description='Define whether a target was observed '
+                                   'during civil twilight')
+
+# Define whether a target was observed during nautical twilight
+KW_NAU_TWIL = Keyword('KW_NAU_TWIL', key='NULL', dtype=bool, source=__NAME__,
+                       description='Define whether a target was observed '
+                                   'during nautical twilight')
+
+# Define whether a target was observed during astronomical twilight
+KW_AST_TWIL = Keyword('KW_AST_TWIL', key='NULL', dtype=bool, source=__NAME__,
+                       description='Define whether a target was observed '
+                                   'during astronomical twilight')
+
+# Define the calculated sun elevation during observation
+KW_SUN_ELEV = Keyword('KW_SUN_ELEV', key='NULL', dtype=float, source=__NAME__,
+                       description='Define the calculated sun elevation during '
+                                   'observation')
 
 # -----------------------------------------------------------------------------
 # Object resolution keys
@@ -1774,6 +1806,33 @@ KW_RES_MAP_RESEFF = Keyword('KW_RES_MAP_RESEFF', key='NULL', dtype=int,
                             source=__NAME__,
                             description='Measured effective resolution measured'
                                         ' for this sector')
+
+# -----------------------------------------------------------------------------
+# Define telluric sky model variables
+# -----------------------------------------------------------------------------
+# Defines whether we have a sky correction for the science fiber
+KW_HAS_SKY_SCI = Keyword('KW_HAS_SKY_SCI', key='NULL', dtype=bool,
+                         source=__NAME__,
+                         description='Defines whether we have a sky correction '
+                                     'for the science fiber')
+
+# Defines whether we have a sky correction for the calib fiber
+KW_HAS_SKY_CAL = Keyword('KW_HAS_SKY_CAL', key='NULL', dtype=bool,
+                         source=__NAME__,
+                         description='Defines whether we have a sky correction '
+                                     'for the science fiber')
+
+# Defines which fiber was used for the science fiber sky correction model
+KW_SKY_SCI_FIBER = Keyword('KW_SKY_SCI_FIBER', key='NULL', dtype=str,
+                           source=__NAME__,
+                           description='Defines which fiber was used for the '
+                                       'science fiber sky correction model')
+
+# Defines which fiber was used for the calib fiber sky correction model
+KW_SKY_CAL_FIBER = Keyword('KW_SKY_CAL_FIBER', key='NULL', dtype=str,
+                           source=__NAME__,
+                           description='Defines which fiber was used for the '
+                                       'science fiber sky correction model')
 
 # -----------------------------------------------------------------------------
 # Define telluric preclean variables

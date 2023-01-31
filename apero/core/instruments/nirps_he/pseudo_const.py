@@ -304,6 +304,10 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         # ------------------------------------------------------------------
         header, hdict = get_special_objname(params, header, hdict)
         # ------------------------------------------------------------------
+        # Deal with sun altitude
+        # ------------------------------------------------------------------
+        header, hdict = pseudo_const.get_sun_altitude(params, header, hdict)
+        # ------------------------------------------------------------------
         # Return header
         # ------------------------------------------------------------------
         return header, hdict
@@ -430,6 +434,7 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         header_cols.add(name='KW_DRS_MODE', datatype='VARCHAR(80)')
         header_cols.add(name='KW_OUTPUT', datatype='VARCHAR(80)',
                         is_index=True)
+        header_cols.add(name='KW_NIGHT_OBS', datatype='INT')
         header_cols.add(name='KW_CMPLTEXP', datatype='VARCHAR(80)')
         header_cols.add(name='KW_NEXP', datatype='VARCHAR(80)')
         header_cols.add(name='KW_VERSION', datatype='VARCHAR(80)')
@@ -458,7 +463,7 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         """
         keys = ['KW_TARGET_TYPE', 'KW_OBJECTNAME', 'KW_OBSTYPE',
                 'KW_RAW_DPRTYPE', 'KW_RAW_DPRCATG', 'KW_INSTRUMENT',
-                'KW_INST_MODE', 'KW_DPRTYPE', 'KW_OUTPUT']
+                'KW_INST_MODE', 'KW_DPRTYPE', 'KW_OUTPUT', 'KW_NIGHT_OBS']
         return keys
 
     # =========================================================================
@@ -741,6 +746,15 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         # list the individual fiber names
         return ['A', 'B']
 
+    def SKYFIBERS(self) -> Tuple[Union[str, None], Union[str, None]]:
+        """
+        List the sky fibers to use for the science channel and the calib
+        channel
+
+        :return:
+        """
+        return 'A', 'B'
+
     # tellu fudge
     def TAPAS_INST_CORR(self, mask_water: Table,
                         mask_others: Table) -> Tuple[Table, Table]:
@@ -931,6 +945,7 @@ def get_trg_type(params: ParamDict, header: Any, hdict: Any,
     # _ = display_func('get_trg_type', __NAME__)
     # get keys from params
     kwobstype = params['KW_OBSTYPE'][0]
+    kwobjname = params['KW_OBJNAME'][0]
     kwtrgtype = params['KW_TARGET_TYPE'][0]
     kwtrgcomment = params['KW_TARGET_TYPE'][2]
     # get obstype
@@ -939,12 +954,18 @@ def get_trg_type(params: ParamDict, header: Any, hdict: Any,
         raise drs_exceptions.DrsCodedException('01-001-00027', 'error',
                                                targs=eargs)
     obstype = header[kwobstype]
+    # -------------------------------------------------------------------------
     # deal with setting value
+    # -------------------------------------------------------------------------
+    # "SKY" in dpr.type
     cond1 = 'SKY' in obstype
-    cond2 = 'OBJECT' not in obstype
+    # "SKY" in object name
+    cond2 = 'SKY' in header[kwobjname]
+    # "telluric" not in dpr.type
     cond3 = 'TELLURIC' not in obstype
+    # "flux" not in dpr.type
     cond4 = 'FLUX' not in obstype
-
+    # -------------------------------------------------------------------------
     if cond1 and cond2 and cond3 and cond4:
         trg_type = 'SKY'
     elif not cond1 or not cond2 or not cond3:

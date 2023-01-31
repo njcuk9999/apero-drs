@@ -282,13 +282,12 @@ apero_dark.recipe_type = 'recipe'
 apero_dark.recipe_kind = 'calib-night'
 apero_dark.calib_required = False
 apero_dark.set_outputs(DARK_INT_FILE=files.out_dark,
-                       DARK_TEL_FIEL=files.out_dark,
-                       DARK_SKY_FILE=files.out_dark_sky)
+                       DARK_TEL_FIEL=files.out_dark)
 apero_dark.set_debug_plots('DARK_IMAGE_REGIONS', 'DARK_HISTOGRAM')
 apero_dark.set_summary_plots('SUM_DARK_IMAGE_REGIONS', 'SUM_DARK_HISTOGRAM')
 apero_dark.set_arg(pos=0, **obs_dir)
 apero_dark.set_arg(name='files', dtype='files',
-                   files=[files.pp_dark_dark, files.pp_dark_dark_sky],
+                   files=[files.pp_dark_dark],
                    pos='1+', filelogic='exclusive',
                    helpstr=textentry('FILES_HELP') + textentry('DARK_FILES_HELP'))
 apero_dark.set_kwarg(**add_db)
@@ -1188,7 +1187,7 @@ pp_seq_opt.add(apero_preprocess, name='PP_FF', files=[files.raw_flat_flat],
 pp_seq_opt.add(apero_preprocess, name='PP_DFP', files=[files.raw_dark_fp],
                recipe_kind='pre-dfp')
 pp_seq_opt.add(apero_preprocess, name='PP_SKY',
-               files=[files.raw_dark_dark_sky, files.raw_test_dark_dark_sky],
+               files=[files.raw_night_sky_sky],
                recipe_kind='pre-sky')
 pp_seq_opt.add(apero_preprocess, name='PP_LFC', files=[files.raw_lfc_lfc],
                recipe_kind='pre-lfc')
@@ -1345,7 +1344,7 @@ eng_seq.add(apero_extract, name='EXT_FF', files=[files.pp_flat_flat],
 eng_seq.add(apero_extract, name='EXT_DFP', files=[files.pp_dark_fp],
             recipe_kind='extract-dfp')
 eng_seq.add(apero_extract, name='EXT_SKY',
-            files=[files.pp_dark_dark_sky, files.pp_test_dark_dark_sky],
+            files=[files.pp_night_sky_sky],
             recipe_kind='extract-sky')
 eng_seq.add(apero_extract, name='EXT_LFC', files=[files.pp_lfc_lfc],
             recipe_kind='extract-lfc')

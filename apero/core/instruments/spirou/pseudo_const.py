@@ -12,6 +12,7 @@ from typing import Any, List, Optional, Tuple, Union
 
 import numpy as np
 
+
 from apero.base import base
 from apero.base import drs_db
 from apero.core import constants
@@ -301,6 +302,10 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         # Deal with calibrations and sky KW_OBJNAME
         # ------------------------------------------------------------------
         header, hdict = get_special_objname(params, header, hdict)
+        # ------------------------------------------------------------------
+        # Deal with sun altitude
+        # ------------------------------------------------------------------
+        header, hdict = pseudo_const.get_sun_altitude(params, header, hdict)
         # ------------------------------------------------------------------
         # Return header
         # ------------------------------------------------------------------
@@ -608,6 +613,7 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         header_cols.add(name='KW_DRS_MODE', datatype='VARCHAR(80)')
         header_cols.add(name='KW_OUTPUT', datatype='VARCHAR(80)',
                         is_index=True)
+        header_cols.add(name='KW_NIGHT_OBS', datatype='INT')
         header_cols.add(name='KW_CMPLTEXP', datatype='VARCHAR(80)')
         header_cols.add(name='KW_NEXP', datatype='VARCHAR(80)')
         header_cols.add(name='KW_VERSION', datatype='VARCHAR(80)')
@@ -637,7 +643,7 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         keys = ['KW_TARGET_TYPE', 'KW_OBJECTNAME', 'KW_OBSTYPE',
                 'KW_CCAS', 'KW_CREF', 'KW_CALIBWH', 'KW_INSTRUMENT',
                 'KW_DPRTYPE', 'KW_OUTPUT', 'KW_DRS_MODE', 'KW_POLAR_KEY_1',
-                'KW_POLAR_KEY_2']
+                'KW_POLAR_KEY_2', 'KW_NIGHT_OBS']
         return keys
 
     # =========================================================================
@@ -948,6 +954,15 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         # _ = display_func('INDIVIDUAL_FIBERS', __NAME__, self.class_name)
         # list the individual fiber names
         return ['A', 'B', 'C']
+
+    def SKYFIBERS(self) -> Tuple[Union[str, None], Union[str, None]]:
+        """
+        List the sky fibers to use for the science channel and the calib
+        channel
+
+        :return:
+        """
+        return 'AB', None
 
     # =========================================================================
     # DATABASE SETTINGS
@@ -1449,6 +1464,8 @@ def get_special_objname(params: ParamDict, header: Any,
     hdict[kwobjname] = (objname, kwobjcomment)
     # return header and hdict
     return header, hdict
+
+
 
 # =============================================================================
 # End of code

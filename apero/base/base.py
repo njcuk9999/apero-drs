@@ -170,6 +170,15 @@ LOG_FLAGS['QUICKLOOK'] = 'Extraction is running in quick look mode'
 LOG_FLAGS['EXP_FPLINE'] = 'Extraction has an FP ref fiber and addition outputs'
 LOG_FLAGS['INPUTQC'] = 'Polar inputs passed QC (or were forced to)'
 LOG_FLAGS['ONLYPRECLEAN'] = 'Only do preclean part of telluric correction'
+# -----------------------------------------------------------------------------
+# Hard coded constants that should not be changed ever
+# -----------------------------------------------------------------------------
+# Sun's elevation at civil twilight (degrees)
+CIVIL_TWILIGHT = -6
+# Sun's elevation at nautical twilight (degrees)
+NAUTICAL_TWILIGHT = -12
+# Sun's elevation at astronomical twilight (degrees)
+ASTRONOMIAL_TWILIGHT = -18
 
 
 # =============================================================================

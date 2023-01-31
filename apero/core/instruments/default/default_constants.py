@@ -61,7 +61,7 @@ __all__ = [
     'OBJ_LIST_GAIA_EPOCH', 'OBJ_LIST_GAIA_PLX_LIM', 'OBJ_LIST_GAIA_MAG_CUT',
     'OBJ_LIST_CROSS_MATCH_RADIUS', 'REJECT_LIST_GOOGLE_SHEET_URL',
     'REJECT_LIST_GSHEET_MAIN_LIST_ID', 'GROUP_FILE_LIMIT', 'MAX_CALIB_DTIME',
-    'DO_CALIB_DTIME_CHECK',
+    'DO_CALIB_DTIME_CHECK', 'NIGHT_DEFINITION',
     # qc constants
     'QC_DARK_TIME', 'QC_MAX_DEAD', 'DARK_QMIN', 'DARK_QMAX',
     'QC_MAX_DARK', 'QC_LOC_MAXFIT_REMOVED_CTR',
@@ -753,6 +753,15 @@ REJECT_LIST_GSHEET_MAIN_LIST_ID = Const('REJECT_LIST_GSHEET_MAIN_LIST_ID', value
 #                                                'rejection google sheet '
 #                                                'workbook'))
 
+# Define which twilight to use as the definition of a night observation
+#    ("CIVIL", "NAUTICAL", "ASTRONOMICAL")
+NIGHT_DEFINITION = Const('NIGHT_DEFINITION', value=None, dtype=str,
+                         source=__NAME__, group=cgroup,
+                         options=['CIVIL', 'NAUTICAL', 'ASTRONOMICAL'],
+                         description='Define which twilight to use as the '
+                                     'definition of a night observation'
+                                     '("CIVIL", "NAUTICAL", "ASTRONOMICAL")')
+
 # =============================================================================
 # CALIBRATION: FIBER SETTINGS
 # =============================================================================
@@ -1037,7 +1046,6 @@ PP_MEDAMP_BINSIZE = Const('PP_MEDAMP_BINSIZE', value=None, dtype=int,
                                       'smaller than the order footprint on the '
                                       'array as it would lead to a set of NaNs '
                                       'in the downsized image')
-
 
 # Define the amplitude of the flux-dependent along-readout-axis derivative
 #     component
@@ -3855,7 +3863,7 @@ TELLUP_WATER_BOUNDS = Const('TELLUP_WATER_BOUNDS', value=None, dtype=str,
 
 # set the plot order for the finite resolution plot
 TELLU_FINITE_RES_ORDER = Const('TELLUP_WATER_BOUNDS', value=None, dtype=int,
-                               minimum=0,  source=__NAME__, group=cgroup,
+                               minimum=0, source=__NAME__, group=cgroup,
                                description='set the plot order for the finite '
                                            'resolution plot')
 
@@ -4273,12 +4281,12 @@ MKTEMPLATE_DECONV_ITR_THRES = Const('MKTEMPLATE_DECONV_ITR_THRES', value=None,
 # Define the max number of iterations to run if the iteration threshold
 #     is not met
 MKTEMPLATE_DECONV_ITR_MAX = Const('MKTEMPLATE_DECONV_ITR_MAX', value=None,
-                                    dtype=float, source=__NAME__, minimum=0,
-                                    group=cgroup,
-                                    description='Define the max number of '
-                                                'iterations to run if the '
-                                                'iteration threshold is not '
-                                                'met')
+                                  dtype=float, source=__NAME__, minimum=0,
+                                  group=cgroup,
+                                  description='Define the max number of '
+                                              'iterations to run if the '
+                                              'iteration threshold is not '
+                                              'met')
 
 # =============================================================================
 # CALIBRATION: CCF SETTINGS
@@ -4463,13 +4471,11 @@ CCF_NSIG_THRESHOLD = Const('CCF_NSIG_THRESHOLD', value=None, dtype=float,
                            description='Define the minimum number of sigma the '
                                        'peak CCF must have to be acceptable')
 
-
 # Define the minimum number of sigma the FWHM of CCF must have to be acceptable
 CCF_FWHM_SIGCUT = Const('CCF_FWHM_SIGCUT', value=None, dtype=float,
                         source=__NAME__, minimum=0, group=cgroup,
                         description='Define the minimum number of sigma the '
                                     'FWHM of CCF must have to be acceptable')
-
 
 # =============================================================================
 # GENERAL POLARISATION SETTINGS

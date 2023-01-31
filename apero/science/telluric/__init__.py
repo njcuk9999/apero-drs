@@ -113,6 +113,8 @@ skymodel_table = sky_corr.skymodel_table
 
 skymodel_cube = sky_corr.skymodel_cube
 
+identify_sky_line_regions = sky_corr.identify_sky_line_regions
+
 calc_skymodel = sky_corr.calc_skymodel
 
 mk_skymodel_qc = sky_corr.mk_skymodel_qc

@@ -80,15 +80,26 @@ raw_dark_dark = drs_finput('RAW_DARK_DARK', filetype='.fits',
                            description='Raw sci=DARK calib=DARK file')
 raw_file.addset(raw_dark_dark)
 
-# sky observation (sky dark)
-raw_dark_dark_sky = drs_finput('RAW_DARK_DARK_SKY', filetype='.fits',
+# flux calib sky observation
+raw_flux_sky_sky = drs_finput('RAW_FLUX_SKY_SKY', filetype='.fits',
+                              suffix='', inext='.fits', outclass=blank_ofile,
+                              hkeys=dict(KW_RAW_DPRTYPE='EFF,SKY,SKY',
+                                         KW_RAW_DPRCATG='CALIB',
+                                         KW_INST_MODE=INSTRUMENT_MODE,
+                                         KW_INSTRUMENT=INSTRUMENT_NAME),
+                              description='Raw sci=DARK calib=DARK file')
+raw_file.addset(raw_flux_sky_sky)
+
+# night sky sky observation
+raw_night_sky_sky = drs_finput('RAW_NIGHT_SKY_SKY', filetype='.fits',
                                suffix='', inext='.fits', outclass=blank_ofile,
-                               hkeys=dict(KW_RAW_DPRTYPE='EFF,SKY,SKY',
-                                          KW_RAW_DPRCATG='CALIB',
+                               hkeys=dict(KW_RAW_DPRTYPE='OBJECT,SKY',
+                                          KW_RAW_DPRCATG='SCIENCE',
+                                          KW_NIGHT_OBS=True,
                                           KW_INST_MODE=INSTRUMENT_MODE,
                                           KW_INSTRUMENT=INSTRUMENT_NAME),
-                               description='Raw sci=DARK calib=DARK file')
-raw_file.addset(raw_dark_dark_sky)
+                               description='Raw night sci=SKY calib=SKY file')
+raw_file.addset(raw_night_sky_sky)
 
 # -----------------------------------------------------------------------------
 # raw flat files
@@ -491,12 +502,21 @@ pp_dark_dark = drs_finput('DARK_DARK', filetype='.fits',
                           description='Preprocessed sci=DARK calib=DARK file')
 pp_file.addset(pp_dark_dark)
 
-pp_dark_dark_sky = drs_finput('DARK_DARK_SKY', filetype='.fits',
-                              suffix='_pp', intype=raw_dark_dark_sky,
+pp_flux_sky_sky = drs_finput('DARK_DARK_SKY', filetype='.fits',
+                              suffix='_pp', intype=raw_flux_sky_sky,
                               inext='.fits', outclass=general_ofile,
-                              hkeys=dict(KW_DPRTYPE='DARK_DARK_SKY'),
-                              description='Preprocessed sci=SKY calib=SKY file')
-pp_file.addset(pp_dark_dark_sky)
+                              hkeys=dict(KW_DPRTYPE='FLUX_SKY_SKY'),
+                              description='Preprocessed flux sci=SKY calib=SKY '
+                                          'file')
+pp_file.addset(pp_flux_sky_sky)
+
+pp_night_sky_sky = drs_finput('DARK_DARK_SKY', filetype='.fits',
+                              suffix='_pp', intype=raw_night_sky_sky,
+                              inext='.fits', outclass=general_ofile,
+                              hkeys=dict(KW_DPRTYPE='FLUX_SKY_SKY'),
+                              description='Preprocessed night sci=SKY '
+                                          'calib=SKY file')
+pp_file.addset(pp_night_sky_sky)
 
 # -----------------------------------------------------------------------------
 # flat
@@ -874,12 +894,6 @@ out_dark = drs_finput('DARKI', hkeys=dict(KW_OUTPUT='DARKI'),
                       dbname='calibration', dbkey='DARKI',
                       description='Internal dark calibration file')
 
-out_dark_sky = drs_finput('DARKS', hkeys=dict(KW_OUTPUT='DARKS'),
-                          filetype='.fits', intype=pp_dark_dark_sky,
-                          suffix='_darks',
-                          outclass=calib_ofile,
-                          dbname='calibration', dbkey='DARKS',
-                          description='Sky dark calibration file')
 
 out_dark_ref = drs_finput('DARKREF', hkeys=dict(KW_OUTPUT='DARKREF'),
                           filetype='.fits',
@@ -890,10 +904,8 @@ out_dark_ref = drs_finput('DARKREF', hkeys=dict(KW_OUTPUT='DARKREF'),
                           description='Reference dark calibration file')
 # add dark outputs to output fileset
 red_file.addset(out_dark)
-red_file.addset(out_dark_sky)
 red_file.addset(out_dark_ref)
 calib_file.addset(out_dark)
-calib_file.addset(out_dark_sky)
 calib_file.addset(out_dark_ref)
 
 # -----------------------------------------------------------------------------

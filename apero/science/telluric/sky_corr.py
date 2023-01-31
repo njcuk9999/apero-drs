@@ -8,9 +8,10 @@ Created on 2020-07-2020-07-15 17:58
 @author: cook
 """
 import os
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, Union
 
 import numpy as np
+from astropy.table import Table
 
 from apero import lang
 from apero.base import base
@@ -57,27 +58,153 @@ pcheck = constants.PCheck(wlog=WLOG)
 # =============================================================================
 # Reference sky-corr functions
 # =============================================================================
-def skymodel_table(params: ParamDict, sky_files: List[str]) -> ParamDict:
+def skymodel_table(params: ParamDict, sky_files: Union[List[str], None],
+                   reffile: DrsFitsFile, snr_order: Optional[int] = None,
+                   min_exptime: Optional[float] = None) -> Union[Table, None]:
+
+    # set function name
+    func_name = display_func('skymodel_table', __NAME__)
+    # -------------------------------------------------------------------------
+    # deal with sky_files being None
+    if sky_files is None:
+        return None
+    # -------------------------------------------------------------------------
+    # get parameters from parameter dictionary
+    snr_order = pcheck(params, 'SKYMODEL_EXT_SNR_ORDERNUM', func=func_name,
+                       override=snr_order)
+
+    min_exptime = pcheck(params, 'SKYMODEL_MIN_EXPTIME', func=func_name,
+                         override=min_exptime)
+    # get fiber from ref file
+    fiber = reffile.fiber
+    # -------------------------------------------------------------------------
+    # storage for table dictionary columns
+    table_dict = dict()
+    # define columns for table
+    table_dict['FILENAME'] = []
+    table_dict['DPRTYPE'] = []
+    table_dict['EXPTIME'] = []
+    table_dict['AIRMASS'] = []
+    table_dict['SUN_ALT'] = []
+    table_dict['MJDMID'] = []
+    table_dict[f'SNR_{snr_order}'] = []
+    table_dict['USED'] = []
+    # -------------------------------------------------------------------------
+    # loop around sky files
+    for sky_file in sky_files:
+        # get new copy of file definition - do not copy the data as it is
+        #   already loaded in reffile (set to empty array for now)
+        infile = reffile.newcopy(params=params, fiber=fiber,
+                                 data=np.array([]))
+        # set filename
+        infile.set_filename(sky_file)
+        # read header only
+        infile.read_header()
+        # get dprtype
+        dprtype = infile.get_hkey('KW_DPRTYPE', dtype=str)
+        # get exptime
+        exptime = infile.get_hkey('KW_EXPTIME', dtype=float)
+        # get airmass
+        airmass = infile.get_hkey('KW_AIRMASS', dtype=float)
+        # get sun elevation
+        sun_elev = infile.get_hkey('KW_SUN_ELEV', dtype=float)
+        # get mid exposure time
+        mjdmid = infile.get_hkey('KW_MID_OBS_TIME', dtype=float)
+        # get number of orders
+        nbo = infile.get_hkey('KW_WAVE_NBO', dtype=int)
+        # get snr
+        snr = infile.get_hkey_1d('KW_EXT_SNR', nbo, dtype=float)
+        # add values to table_dict
+        table_dict['FILENAME'].append(sky_file)
+        table_dict['DPRTYPE'].append(dprtype)
+        table_dict['EXPTIME'].append(exptime)
+        table_dict['AIRMASS'].append(airmass)
+        table_dict['SUN_ALT'].append(sun_elev)
+        table_dict['MJDMID'].append(mjdmid)
+        table_dict[f'SNR_{snr_order}'].append(snr[snr_order])
+        # deal with exposure time cut off
+        if exptime < min_exptime:
+            table_dict['USED'].append(False)
+        else:
+            table_dict['USED'].append(True)
+    # -------------------------------------------------------------------------
+    # convert dictionary to table
+    sky_table = Table(table_dict)
+    # mask by exposure time
+    mask = sky_table['USED'] == 1
+    # return filled table
+    return sky_table[mask]
     
-    # TODO: write skymodel_table
-    #       - construct table via reading headers
-    #       - filter out short exposure times?
     
+def skymodel_cube(params: ParamDict, sky_props: Union[Table, None]
+                  ) -> ParamDict:
+
+
+    # TODO: Write skymodel files
+
+    # TODO: for each file
+    #       - open file
+    #       - lowpassfilter (per order) width=101
+    #       - spline onto reference wave grid
+    #       - save in temporary file
+    #       - perform hierarchical median (v)
+
+    # return updated sky props parameter dictionary
     return ParamDict()
+
+
+def identify_sky_line_regions(params: ParamDict, sky_props: ParamDict
+                              ) -> np.ndarray:
     
-    
-def skymodel_cube(params: ParamDict, sky_props: ParamDict) -> ParamDict:
-    
-    # TODO: Write skymodel cube
+    # TODO: Write indentify sky line regions
+    #       - set NaN values to 0
+    #       - find positive exursions in sky signal
+    #       - identify lines (5sigma positive exursions)
+    #       - binary erode + dilate
+    #       - produce reg_id labelling
+    #       - get magic grid
+    #       - magic mask for reg_id
+    #       - fill reg_id map
     
     # return updated sky props parameter dictionary
-    return sky_props
+    return np.array([])
 
 
-def calc_skymodel(params: ParamDict, sky_props: ParamDict) -> ParamDict:
-    
+def calc_skymodel(params: ParamDict, sky_props_sci: ParamDict,
+                  sky_props_cal: ParamDict, regions: np.ndarray) -> ParamDict:
+    # set function name
+    func_name = display_func('calc_skymodel', __NAME__)
+
+
     # TODO: Write calc_skymodel
-    
+    #       - construct model with all lines normalized to a median of 1 in
+    #         sci fiber
+    #       - loop around regions
+    #          - loop around sci and calib fiber
+    #             - loop around tmp low-passed files
+    #             - create a median for sci and calib (hierarchical median)
+    #          - fit median line in region(curve_fit)
+    #          - save median as model_{fiber}
+    #       - work out weight
+
+
+    # create sky props
+    sky_props = ParamDict()
+    # add parameters to sky_props
+    sky_props['HAS_SCI'] = None
+    sky_props['HAS_CAL'] = None
+    sky_props['SKYMODEL_SCI'] = None
+    sky_props['SKYMODEL_CAL'] = None
+    sky_props['WAVEMAP'] = None
+    sky_props['REGION_ID'] = None
+    sky_props['WEIGHTS'] = None
+    sky_props['GRADIENT'] = None
+    sky_props['SKYTABLE_SCI'] = sky_props_sci['TABLE']
+    sky_props['SKYTABLE_CAL'] = sky_props_cal['TABLE']
+    # set the source of sky_props to this function name
+    keys = ['SKYMODEL_SCI', 'SKYMODEL_CAL', 'WAVEMAP', 'REGION_ID',
+            'WEIGHTS', 'GRADIENT', 'SKYTABLE_SCI', 'SKYTABLE_CAL']
+    sky_props.set_sources(keys, func_name)
     # return updated sky props parameter dictionary
     return sky_props
 
@@ -109,12 +236,59 @@ def mk_skymodel_qc(params: ParamDict, sky_props: ParamDict
     return qc_params, passed
 
 
-def write_skymodel(params: ParamDict, sky_props: ParamDict) -> DrsFitsFile:
-    
-    # TODO: Write sky model 
-    
+def write_skymodel(recipe: DrsRecipe, params: ParamDict,
+                   infile: DrsFitsFile, sky_props: ParamDict) -> DrsFitsFile:
+    # ------------------------------------------------------------------
+    # write the sky model file (SKYMODEL)
+    # ------------------------------------------------------------------
+    # get copy of instance of file
+    skymodel_file = recipe.outputs['SKYMODEL'].newcopy(params=params)
+    # construct the filename from file instance
+    skymodel_file.construct_filename(infile=infile)
+    # ------------------------------------------------------------------
+    # add version
+    skymodel_file.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
+    # add dates
+    skymodel_file.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
+    skymodel_file.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
+    # add process id
+    skymodel_file.add_hkey('KW_PID', value=params['PID'])
+    # add output tag
+    skymodel_file.add_hkey('KW_OUTPUT', value=skymodel_file.name)
+
+    # TODO: Add keys for valid SKY MODEL
+    skymodel_file.add_hkey('KW_HAS_SKY_SCI', value=sky_props['HAS_SCI'])
+    skymodel_file.add_hkey('KW_HAS_SKY_CAL', value=sky_props['HAS_CAL'])
+
+    # ------------------------------------------------------------------
+    # set data = sky
+    skymodel_file.data = sky_props['SKYMODEL_SCI']
+    # log that we are saving s1d table
+    WLOG(params, '', textentry('40-019-00029', args=[skymodel_file.filename]))
+    # define multi lists
+    data_list = [sky_props['SKYMODEL_CAL'],  sky_props['WAVEMAP'],
+                 sky_props['REGION_ID'],  sky_props['WEIGHTS'],
+                 sky_props['GRADIENT'], sky_props['SKYTABLE_SCI'],
+                 sky_props['SKYTABLE_CAL']]
+    datatype_list = ['image', 'image', 'image', 'image', 'image',
+                     'table', 'table']
+    name_list = ['SCI_SKY', 'CAL_SKY', 'WAVE', 'REG_ID', 'WEIGHTS',
+                 'GRADIENT', 'SKYTAB_SCI', 'SKYTAB_CAL']
+    # ------------------------------------------------------------------
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(recipe, drsfitsfile=skymodel_file)]
+        name_list += ['PARAM_TABLE']
+        datatype_list += ['table']
+    # write multi
+    skymodel_file.write_multi(data_list=data_list, name_list=name_list,
+                              datatype_list=datatype_list,
+                              block_kind=recipe.out_block_str,
+                              runstring=recipe.runstring)
+    # add to output files (for indexing)
+    recipe.add_output_file(skymodel_file)
     # return sky model
-    return None
+    return skymodel_file
 
 
 def mk_skymodel_summary(recipe, params, sky_props: ParamDict, qc_params):

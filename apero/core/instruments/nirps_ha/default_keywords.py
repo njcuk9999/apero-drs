@@ -218,6 +218,35 @@ KW_OBJ_TEMP = KW_OBJ_TEMP.copy(__NAME__)
 KW_OBJ_TEMP.set(key='OBJTEMP', unit=uu.K, group='raw')
 
 # -----------------------------------------------------------------------------
+# Keys added as early as possible
+# -----------------------------------------------------------------------------
+# define whether a target was observed at night
+KW_NIGHT_OBS = KW_NIGHT_OBS.copy(__NAME__)
+KW_NIGHT_OBS.set(key='DRS_NOBS', comment='Whether target was observed at night',
+                 group='raw-add')
+
+# Define whether a target was observed during civil twilight
+KW_CIV_TWIL = KW_CIV_TWIL.copy(__NAME__)
+KW_CIV_TWIL.set(key='DRSCTWIL', group='raw-add',
+                comment='Whether target was observed during civil twilight')
+
+# Define whether a target was observed during nautical twilight
+KW_NAU_TWIL = KW_NAU_TWIL.copy(__NAME__)
+KW_NAU_TWIL.set(key='DRSNTWIL', group='raw-add',
+                comment='Whether target was observed during nautical twilight')
+
+# Define whether a target was observed during astronomical twilight
+KW_AST_TWIL = KW_AST_TWIL.copy(__NAME__)
+KW_AST_TWIL.set(key='DRSATWIL', group='raw-add',
+                comment='Whether target was observed during astronomical '
+                        'twilight')
+
+# Define the calculated sun elevation during observation
+KW_SUN_ELEV = KW_SUN_ELEV.copy(__NAME__)
+KW_SUN_ELEV.set(key='DRSSUNEL', group='raw-add',
+                comment='The calculated sun elevation during observation')
+
+# -----------------------------------------------------------------------------
 # Object resolution keys
 # -----------------------------------------------------------------------------
 # the object name to be used by the drs (after preprocessing)
@@ -1605,6 +1634,29 @@ KW_RES_MAP_EXPO.set(key='FIT_EXPO', group='wave-res',
 KW_RES_MAP_RESEFF = KW_RES_MAP_RESEFF.copy(__NAME__)
 KW_RES_MAP_RESEFF.set(key='RES_EFF', group='wave-res',
                       comment='Measured effective resolution for this sector')
+
+# -----------------------------------------------------------------------------
+# Define telluric sky model variables
+# -----------------------------------------------------------------------------
+# Defines whether we have a sky correction for the science fiber
+KW_HAS_SKY_SCI = KW_HAS_SKY_SCI.copy(__NAME__)
+KW_HAS_SKY_SCI.set(key='HSKYSCI', group='skymodel',
+                   comment='Sky model calculated for science fiber')
+
+# Defines whether we have a sky correction for the calib fiber
+KW_HAS_SKY_CAL = KW_HAS_SKY_CAL.copy(__NAME__)
+KW_HAS_SKY_CAL.set(key='HSKYCAL', group='skymodel',
+                   comment='Sky model calculated for science fiber')
+
+# Defines which fiber was used for the science fiber sky correction model
+KW_SKY_SCI_FIBER = KW_SKY_SCI_FIBER.copy(__NAME__)
+KW_SKY_SCI_FIBER.set(key='FSKYSCI', group='skymodel',
+                     comment='Sky model fiber used as science fiber')
+
+# Defines which fiber was used for the calib fiber sky correction model
+KW_SKY_CAL_FIBER = KW_SKY_CAL_FIBER.copy(__NAME__)
+KW_SKY_CAL_FIBER.set(key='FSKYCAL', group='skymodel',
+                     comment='Sky model fiber used as calibration fiber')
 
 # -----------------------------------------------------------------------------
 # Define telluric preclean variables

@@ -13,6 +13,8 @@ import sys
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
+from astropy import coordinates as coord
+from astropy import units as uu
 from astropy.table import Table
 
 from apero.base import base
@@ -33,6 +35,8 @@ __version__ = base.__version__
 __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
+# get Time / TimeDelta
+Time = base.AstropyTime
 # get not implemented error
 NOT_IMPLEMENTED = ('Definition Error: Must be overwritten in instrument '
                    'pseudo_const not {0} \n\t i.e. in apero.core.'
@@ -1547,6 +1551,83 @@ def clean_object(rawobjname: str) -> str:
     objectname = objectname.strip('_')
     # return cleaned object name
     return objectname
+
+
+def get_sun_altitude(params: Any, header: Any, hdict: Any) -> Tuple[Any, Any]:
+    """
+    Deal with flagging observations taken in the day and getting the
+    twilight and sun altitude keywords
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param header: drs_fits.Header or astropy.io.fits.Header, the header to
+                   check for objname (if "objname" not set)
+    :param hdict: drs_fits.Header the output header dictionary to update with
+                  objname (as well as "header" if "objname" not set)
+
+    :return: the updated header/hdict
+    """
+    # get longitude and latitude from params
+    obs_lat = params['OBS_LAT'] * uu.deg
+    obs_long = params['OBS_LONG'] * uu.deg
+    # get the definitions of civil, nautical and astronomical twilight
+    night_def = params['NIGHT_DEFINITION']
+    civ_twil_angle = base.CIVIL_TWILIGHT
+    nau_twil_angle = base.NAUTICAL_TWILIGHT
+    ast_twil_angle = base.ASTRONOMIAL_TWILIGHT
+    # get header keys
+    kwmidobstime = params['KW_MID_OBS_TIME'][0]
+    kw_night_obs, _, kw_night_obs_comment = params['KW_NIGHT_OBS']
+    kw_civ_twil, _, kw_civ_twil_comment = params['KW_CIV_TWIL'][0]
+    kw_nau_twil, _, kw_nau_twil_comment = params['KW_NAU_TWIL'][0]
+    kw_ast_twil, _, kw_ast_twil_comment = params['KW_AST_TWIL'][0]
+    kw_sun_elev, _, kw_sun_elev_comment = params['KW_SUN_ELEV'][0]
+    # -------------------------------------------------------------------------
+    # get the mid exposure time
+    mjdmid = header[kwmidobstime]
+    # -------------------------------------------------------------------------
+    # calculate the location of the observatory
+    location = coord.EarthLocation(lon=obs_long, lat=obs_lat)
+    # calculate sun time
+    sun_time = Time(mjdmid, format='mjd')
+    # get the alt-az angle
+    alt_az = coord.AltAz(sun_time, location=location)
+    # get the sun's elevation
+    sun_elevation = 90 - coord.get_sun(sun_time).transform_to(alt_az).zen.value
+    # calculate the twilight angles
+    civ_twil = sun_elevation < civ_twil_angle
+    nau_twil = sun_elevation < nau_twil_angle
+    ast_twil = sun_elevation < ast_twil_angle
+    # -------------------------------------------------------------------------
+    # decide on flag for an observation to be a night observation
+    if night_def == 'CIVIL':
+        night_obs = civ_twil
+    elif night_def == 'NAUTICAL':
+        night_obs = nau_twil
+    elif night_def == 'ASTRONOMICAL':
+        night_obs = ast_twil
+    else:
+        night_obs = civ_twil
+    # -------------------------------------------------------------------------
+    # push values into header and hdict
+    # -------------------------------------------------------------------------
+    # night observation
+    header[kw_night_obs] = (night_obs, kw_night_obs_comment)
+    hdict[kw_night_obs] = (night_obs, kw_night_obs_comment)
+    # civil twilight
+    header[kw_civ_twil] = (civ_twil, kw_civ_twil_comment)
+    hdict[kw_civ_twil] = (civ_twil, kw_civ_twil_comment)
+    # nautical twilight
+    header[kw_nau_twil] = (nau_twil, kw_nau_twil_comment)
+    hdict[kw_nau_twil] = (nau_twil, kw_nau_twil_comment)
+    # astronomical twilight
+    header[kw_ast_twil] = (ast_twil, kw_ast_twil_comment)
+    hdict[kw_ast_twil] = (ast_twil, kw_ast_twil_comment)
+    # sun elevation
+    header[kw_sun_elev] = (sun_elevation, kw_sun_elev_comment)
+    header[kw_sun_elev] = (sun_elevation, kw_sun_elev_comment)
+    # -------------------------------------------------------------------------
+    # return header and hdict
+    return header, hdict
 
 # =============================================================================
 # End of code
