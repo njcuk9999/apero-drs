@@ -116,11 +116,18 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     telludbm.load_db()
 
     # TODO: Add these to constants
-
+    #       ------------------------------------------------------------------
     # Define the order to get the snr from (for input data qc check)
     params.set('SKYMODEL_EXT_SNR_ORDERNUM', value=35)   # 59 nirps?
     # Define the minimum exptime to use a sky in the model
     params.set('SKYMODEL_MIN_EXPTIME', value=300)
+    # define the sigma that positive exursions need to have to be identified
+    #   as lines
+    params.set('SKYMODEL_LINE_SIGMA', value=5)
+    # define the erosion size to use on a line
+    params.set('SKYMODEL_LINE_ERODE_SIZE', value=5)
+    # define the dilatation size to use on a line
+    params.set('SKYMODEL_LINE_DILATE_SIZE', value=27)
 
     # ----------------------------------------------------------------------
     # find all sky files

@@ -1068,6 +1068,19 @@ class DefaultPseudoConstants:
         # by default we mask no regions
         return []
 
+
+    def SKYFIBERS(self):
+        """
+        List the sky fibers to use for the science channel and the calib
+        channel
+
+        :return:
+        """
+        # set function name
+        func_name = display_func('SKYFIBERS', __NAME__,
+                                 self.class_name)
+        raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
+
     # =========================================================================
     # PLOT SETTINGS
     # =========================================================================

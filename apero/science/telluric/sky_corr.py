@@ -12,6 +12,7 @@ from typing import Optional, List, Tuple, Union
 
 import numpy as np
 from astropy.table import Table
+from scipy.ndimage import binary_erosion, binary_dilation
 
 from apero import lang
 from apero.base import base
@@ -153,7 +154,14 @@ def skymodel_cube(params: ParamDict, sky_props: Union[Table, None]
     return ParamDict()
 
 
-def identify_sky_line_regions(params: ParamDict, sky_props: ParamDict
+def identify_sky_line_regions(params: ParamDict, sky_props: ParamDict,
+                              wavemap: np.ndarray,
+                              line_sigma: Optional[float] = None,
+                              erode_size: Optional[int] = None,
+                              dilate_size: Optional[int] = None,
+                              wavestart: Optional[float] = None,
+                              waveend: Optional[float] = None,
+                              binvelo: Optional[float] = None,
                               ) -> np.ndarray:
     
     # TODO: Write indentify sky line regions
@@ -165,9 +173,84 @@ def identify_sky_line_regions(params: ParamDict, sky_props: ParamDict
     #       - get magic grid
     #       - magic mask for reg_id
     #       - fill reg_id map
-    
+
+    # set function name
+    func_name = display_func('identify_sky_line_regions', __NAME__)
+    # get parameters from parameter dictionary
+    line_sigma = pcheck(params, 'SKYMODEL_LINE_SIGMA', func=func_name,
+                        override=line_sigma)
+    erode_size = pcheck(params, 'SKYMODEL_LINE_ERODE_SIZE', func=func_name,
+                        override=erode_size)
+    dilate_size = pcheck(params, 'SKYMODEL_LINE_DILATE_SIZE', func=func_name,
+                         override=dilate_size)
+    wavestart = pcheck(params, 'EXT_S1D_WAVESTART', func=func_name,
+                       override=wavestart)
+    waveend = pcheck(params, 'EXT_S1D_WAVEEND', 'waveend', func=func_name,
+                     override=waveend)
+    binvelo = pcheck(params, 'EXT_S1D_BIN_UVELO', func=func_name,
+                     override=binvelo)
+    # ravel e2ds wavemap (for dilation stuff later)
+    wave1d = wavemap.ravel()
+    # get the median sky spectrum
+    sky_med = sky_props['MED']
+    # set all NaN values to zero
+    sky_med[~np.isfinite(sky_med)] = 0.0
+    # find positive excursions in sky signal
+    nsig = sky_med / mp.estimate_sigma(sky_med)
+    # identify lines that are n sigma positive excursions
+    line = np.array(nsig > line_sigma, dtype=int)
+    # erode features that are too narrow
+    line = binary_erosion(line, structure=np.ones(erode_size))
+    # dilate to get wings of lines
+    line = binary_dilation(line, structure=np.ones(dilate_size))
+    # build the region mask
+    regions = np.cumsum(line != np.roll(line, 1))
+    # set all the even regions to zero
+    regions[(regions % 2) == 0] = 0
+    # re-number all non-zero regions to produce labels from 1--> N
+    #   (original were all the odd numbers)
+    non_zero = regions != 0
+    regions[non_zero] = (regions[non_zero] + 1) // 2
+    # velocity grid in round numbers of m / s
+    magic_grid = mp.get_magic_grid(wavestart, waveend, binvelo * 1000)
+    # put the line mask onto the magic grid to avoid errors at order overlaps
+    magic_mask = np.zeros_like(magic_grid, dtype=bool)
+    # find unique valid regions
+    valid_regions = set(regions)
+    valid_regions.remove(0)
+    # loop around regions and fill magic mask
+    for region in valid_regions:
+        # find pixels that are in this region
+        good = regions == region
+        # find mask of minimum and maximum wavelength for this region
+        minmask = magic_grid > np.min(wave1d[good])
+        maxmask = magic_grid < np.max(wave1d[good])
+        magic_mask[minmask & maxmask] = True
+    # now in the space of magic grid work out the regions
+    # build the region mask
+    regions_magic = np.cumsum(magic_mask != np.roll(magic_mask, 1))
+    # set all the even regions to zero
+    regions_magic[(regions_magic % 2) == 0] = 0
+    # re-number all non-zero regions to produce labels from 1--> N
+    #   (original were all the odd numbers)
+    non_zero_magic = regions_magic != 0
+    regions_magic[non_zero_magic] = (regions_magic[non_zero_magic] + 1) // 2
+    # fill the original map with unique values and common ID for overlapping
+    #   orders
+    regions = np.zeros_like(regions, dtype=int)
+    # find unique valid regions
+    valid_regions = set(regions)
+    valid_regions.remove(0)
+    # loop around regions and fill
+    for region in valid_regions:
+        wave_min = np.min(magic_grid[regions_magic == region])
+        wave_max = np.max(magic_grid[regions_magic == region])
+        # find valid pixels in wavelength
+        good = (wave1d > wave_min) & (wave1d < wave_max)
+        # update the region id for these good pixels
+        regions[good] = region
     # return updated sky props parameter dictionary
-    return np.array([])
+    return regions
 
 
 def calc_skymodel(params: ParamDict, sky_props_sci: ParamDict,

@@ -380,7 +380,7 @@ def e2ds_to_s1d(params: ParamDict, recipe: DrsRecipe,  wavemap: np.ndarray,
     else:
         # velocity grid in round numbers of m / s
         magicgrid = mp.get_magic_grid(wavestart, waveend, binvelo * 1000)
-        # we want wave grid in
+        # this is our wave grid
         wavegrid = np.array(magicgrid)
     # -------------------------------------------------------------------------
     # define a smooth transition mask at the edges of the image
