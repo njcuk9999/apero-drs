@@ -123,6 +123,9 @@ write_skymodel = sky_corr.write_skymodel
 
 mk_skymodel_summary = sky_corr.mk_skymodel_summary
 
+find_night_skyfiles = sky_corr.find_night_skyfiles
+
+skymodel_matchfiles = sky_corr.skymodel_matchfiles
 
 # =============================================================================
 # End of code

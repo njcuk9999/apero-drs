@@ -9,8 +9,6 @@ Created on 2019-09-05 at 14:58
 
 @author: cook
 """
-import numpy as np
-import os
 from typing import Any, Dict, Optional, Tuple, Union
 
 from apero.base import base
@@ -18,10 +16,8 @@ from apero import lang
 from apero.core import constants
 from apero.core.core import drs_database
 from apero.core.core import drs_log
-from apero.core.core import drs_file
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
-from apero.core.utils import drs_utils
 from apero.science.calib import wave
 from apero.science import telluric
 
@@ -96,15 +92,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # Main Code
     # ----------------------------------------------------------------------
     mainname = __NAME__ + '._main()'
-    # get the object name
-    objname = params['INPUTS']['OBJNAME']
     # need to convert object to drs object name
     pconst = constants.pload()
-    # load object database
-    objdbm = drs_database.AstrometricDatabase(params)
-    objdbm.load_db()
-    # get clean / alias-safe version of object name
-    objname, _ = objdbm.find_objname(pconst, objname)
     # get the filetype (this is overwritten from user inputs if defined)
     filetype = params['INPUTS']['FILETYPE']
     # get the fiber type required
@@ -118,7 +107,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # TODO: Add these to constants
     #       ------------------------------------------------------------------
     # Define the order to get the snr from (for input data qc check)
-    params.set('SKYMODEL_EXT_SNR_ORDERNUM', value=35)   # 59 nirps?
+    params.set('SKYMODEL_EXT_SNR_ORDERNUM', value=35)  # 59 nirps?
     # Define the minimum exptime to use a sky in the model
     params.set('SKYMODEL_MIN_EXPTIME', value=300)
     # define the sigma that positive exursions need to have to be identified
@@ -133,72 +122,61 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # find all sky files
     # ----------------------------------------------------------------------
     # get the science and calib fibers to use
-    sci_fiber, calib_fiber = pconst.SKYFIBERS()
-    # get the filetype (this is overwritten from user inputs if defined)
-    filetype = params['INPUTS']['FILETYPE']
-    # find the science fiber files
-    if sci_fiber is not None:
-        # get the science fiber files for "SKY" files (which are night files)
-        #    for the specific filetype
-        sky_files_sci = drs_utils.find_files(params, block_kind='red',
-                                             filters=dict(KW_TARGET_TYPE='SKY',
-                                                          KW_NIGHT_OBS=True,
-                                                          KW_OUTPUT=filetype,
-                                                          KW_FIBER=sci_fiber))
-        # Get filetype definition
-        infiletype = drs_file.get_file_definition(params, filetype,
-                                                  block_kind='red')
-        # get new copy of file definition
-        infile_sci = infiletype.newcopy(params=params, fiber=sci_fiber)
-        # set reference filename
-        infile_sci.set_filename(sky_files_sci[-1])
-        # read data
-        infile_sci.read_file()
-    # otherwise we do not have science files for the sky model
-    else:
-        # otherwise set to None
-        sky_files_sci = None
-        infile_sci = None
-    # find the calibration fiber files
-    if calib_fiber is not None:
-        # get the science fiber files for "SKY" files (which are night files)
-        #    for the specific filetype
-        sky_files_cal = drs_utils.find_files(params, block_kind='red',
-                                             filters=dict(KW_TARGET_TYPE='SKY',
-                                                          KW_NIGHT_OBS=True,
-                                                          KW_OUTPUT=filetype,
-                                                          KW_FIBER=calib_fiber))
-        # Get filetype definition
-        infiletype = drs_file.get_file_definition(params, filetype,
-                                                  block_kind='red')
-        # get new copy of file definition
-        infile_cal = infiletype.newcopy(params=params, fiber=sci_fiber)
-        # set reference filename
-        infile_cal.set_filename(sky_files_sci[-1])
-        # read data
-        infile_cal.read_file()
-    # otherwise we to not have calib files for the sky model
-    else:
-        sky_files_cal = None
-        infile_cal = None
+    sci_fiber, cal_fiber = pconst.SKYFIBERS()
+    # find science files
+    sky_files_sci, infile_sci = telluric.find_night_skyfiles(params, sci_fiber,
+                                                             filetype)
+    sky_files_cal, infile_cal = telluric.find_night_skyfiles(params, cal_fiber,
+                                                             filetype)
+    # only keep files that match between the two
+    margs = [sky_files_sci, sky_files_cal, sci_fiber, cal_fiber,
+             infile_sci, infile_cal]
+    sky_files_sci, sky_files_cal = telluric.skymodel_matchfiles(*margs)
+    # print progress
+    # TODO: Add to language database
+    msg = 'Found {0} sky files (after matched fiber {1} and {2})'
+    margs = [len(sky_files_sci), sci_fiber, cal_fiber]
+    WLOG(params, '', msg.format(*margs))
+
     # ----------------------------------------------------------------------
     # make sky table
     # ----------------------------------------------------------------------
-    # get science table
-    sky_table_sci = telluric.skymodel_table(params, sky_files_sci, infile_sci)
-    # get calib table
-    sky_table_cal = telluric.skymodel_table(params, sky_files_cal, infile_cal)
+    # get science table and update ref infile to the latest file
+    sky_table_sci, infile_sci, nbins = telluric.skymodel_table(params,
+                                                               sky_files_sci,
+                                                               infile_sci)
+    # get calib table and update ref infile to the latest file
+    sky_table_cal, infile_cal, nbins = telluric.skymodel_table(params,
+                                                               sky_files_cal,
+                                                               infile_cal)
+    # print progress
+    # TODO: Add to language database
+    msg = 'Kept {0} sky files (after filtering)'
+    margs = [len(sky_table_sci)]
+    WLOG(params, '', msg.format(*margs))
 
+    # ----------------------------------------------------------------------
+    # load reference wave map
+    # ----------------------------------------------------------------------
+    # load reference wavelength solution
+    mkwargs = dict(infile=infile_sci, ref=True, fiber=sci_fiber,
+                   database=calibdbm, rlog=recipe.log)
+    refprops = wave.get_wavesolution(params, recipe, **mkwargs)
     # ----------------------------------------------------------------------
     # Construct sky cubes
     # ----------------------------------------------------------------------
-    sky_props_sci = telluric.skymodel_cube(params, sky_table_sci)
-    sky_props_cal = telluric.skymodel_cube(params, sky_table_cal)
+    sky_props_sci = telluric.skymodel_cube(recipe, params, sky_table_sci,
+                                           nbins, sci_fiber,
+                                           refprops['WAVEMAP'])
+    sky_props_cal = telluric.skymodel_cube(recipe, params, sky_table_cal,
+                                           nbins, cal_fiber,
+                                           refprops['WAVEMAP'])
 
     # ----------------------------------------------------------------------
     # Identify line regions
     # ----------------------------------------------------------------------
-    regions = telluric.identify_sky_line_regions(params, sky_props_sci)
+    regions = telluric.identify_sky_line_regions(params, sky_props_sci,
+                                                 refprops['WAVEMAP'])
 
     # ----------------------------------------------------------------------
     # Make the sky model

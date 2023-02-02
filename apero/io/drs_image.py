@@ -17,7 +17,7 @@ Import rules:
 """
 import os
 import warnings
-from typing import List, Union, Tuple
+from typing import Any, Dict, List, Optional, Union, Tuple
 
 import numpy as np
 from scipy.ndimage.morphology import binary_erosion, binary_dilation
@@ -530,7 +530,10 @@ def npy_fileclean(params: ParamDict, filenames: Union[List[str], None],
 def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
                         math: str = 'median', fmt='fits', nmax: int = 2e7,
                         subdir: Union[str, None] = None,
-                        outdir: Union[str, None] = None) -> np.ndarray:
+                        outdir: Union[str, None] = None,
+                        func: Optional[Any] = None,
+                        fkwargs: Optional[Dict[str, Any]] = None
+                        ) -> Union[np.ndarray, Tuple[np.ndarray, List[str]]]:
     """
     Pass a large list of images and combine in a memory efficient
     way. (math = 'median', 'mean', 'sum')
@@ -551,6 +554,20 @@ def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
                    products in - should be unique
     :param outdir: the output directory for intermediate products (if unset
                    uses the current directory)
+    :param func: A function only taking the image and keyword arguments from
+                 fkwargs as arguments as well as an additional "hdr"
+                 keyword argument (containing the header of the image file)
+                 Note hdr can be None
+                 This function is applied to the image, it must return
+                 the same shape image as a np.ndarray only
+
+                 e.g.  def lowpass(image, hdr=None, width=101):
+                            return image - lowpassfilter(image, width)
+
+                       fkwargs = dict(width=101)
+
+    :param fkwargs: Optional dictionary, if func is defined pass arguments to
+                    pass to "func" (must be the same for all images)
 
     :type params: ParamDict
     :type files: List[str]
@@ -594,20 +611,30 @@ def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
     # ----------------------------------------------------------------------
     # load first image
     if fmt == 'fits':
-        image0 = drs_fits.readfits(params, files[0])
+        image0, hdr0 = drs_fits.readfits(params, files[0], gethdr=True)
     elif fmt == 'npy':
         image0 = drs_path.numpy_load(files[0])
+        hdr0 = None
     else:
         # fmt="{0}" is incorrect
         eargs = [fmt, 'fits, npy', func_name]
         WLOG(params, 'error', textentry('00-001-00044', args=eargs))
-        image0 = None
+        image0, hdr0 = None, None
     # ----------------------------------------------------------------------
     # deal with only having 1 file
     if numfiles == 1:
         # delete the sub directory
         if os.path.exists(subfilepath):
             os.removedirs(subfilepath)
+        # ------------------------------------------------------------------
+        # deal with no fkwargs
+        if fkwargs is None:
+            fkwargs = dict(hdr=hdr0)
+        else:
+            fkwargs['hdr'] = hdr0
+        # apply a function to the image (if func is not None)
+        if func is not None:
+            image0 = func(image0, hdr=hdr0, **fkwargs)
         # return the only image
         return image0
     # ----------------------------------------------------------------------
@@ -629,14 +656,15 @@ def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
         # ------------------------------------------------------------------
         # load file
         if fmt == 'fits':
-            image = drs_fits.readfits(params, filename)
+            image, hdr = drs_fits.readfits(params, filename, gethdr=True)
         elif fmt == 'npy':
             image = drs_path.numpy_load(filename)
+            hdr = None
         else:
             # fmt="{0}" is incorrect
             eargs = [fmt, 'fits, npy', func_name]
             WLOG(params, 'error', textentry('00-001-00044', args=eargs))
-            image = None
+            image, hdr = None, None
         # get the shape of the image
         dim1, dim2 = np.array(image.shape).astype(int)
         # construct clean version of filename
@@ -649,6 +677,15 @@ def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
             eargs = [mdim1, mdim2, f_it, dim1, dim2, files[0], files[1],
                      func_name]
             WLOG(params, 'error', textentry('00-001-00045', args=eargs))
+        # ------------------------------------------------------------------
+        # deal with no fkwargs
+        if fkwargs is None:
+            fkwargs = dict(hdr=hdr)
+        else:
+            fkwargs['hdr'] = hdr
+        # apply a function to the image (if func is not None)
+        if func is not None:
+            image = func(image, hdr=hdr, **fkwargs)
         # ------------------------------------------------------------------
         # extract and save ribbons
         for b_it in range(len(bins) - 1):

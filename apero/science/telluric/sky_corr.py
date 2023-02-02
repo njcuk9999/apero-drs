@@ -8,7 +8,7 @@ Created on 2020-07-2020-07-15 17:58
 @author: cook
 """
 import os
-from typing import Optional, List, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
 
 import numpy as np
 from astropy.table import Table
@@ -22,10 +22,11 @@ from apero.core.core import drs_database
 from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.core.utils import drs_recipe
+from apero.core.utils import drs_utils
 from apero.io import drs_fits
+from apero.io import drs_image
 from apero.science.calib import wave
 from apero.science.telluric import gen_tellu
-
 
 # =============================================================================
 # Define variables
@@ -59,23 +60,111 @@ pcheck = constants.PCheck(wlog=WLOG)
 # =============================================================================
 # Reference sky-corr functions
 # =============================================================================
+skyfile_return = Tuple[Union[List[str], None], Union[DrsFitsFile, None]]
+
+
+def find_night_skyfiles(params: ParamDict, fiber: Union[str, None],
+                        filetype: str) -> skyfile_return:
+    """
+    Find night sky files and push into list. Also load last night sky file
+    as the reference night sky file
+
+    fiber can be None only in the case of a calibration fiber
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param fiber: str or None, if str the fiber to use to find files
+    :param filetype: str, the file type (KW_OUTPUT) of the files to find
+                     (i.e. for e2dsff use EXT_E2DS_FF)
+
+    :raises: Drs Exception if no files found (and fiber was not None)
+    :return: tuple 1: None, 2: None if fiber was None, otherwise a tuple
+             1: list of night sky files found, 2: reference infile
+    """
+    # set function name
+    func_name = display_func('find_night_skyfiles', __NAME__)
+    # return None if fiber is None (should only be the case for cal fiber)
+    if fiber is None:
+        return None, None
+    # get the science fiber files for "SKY" files (which are night files)
+    #    for the specific filetype
+    sky_files = drs_utils.find_files(params, block_kind='red',
+                                     filters=dict(KW_TARGET_TYPE='SKY',
+                                                  KW_NIGHT_OBS=True,
+                                                  KW_OUTPUT=filetype,
+                                                  KW_FIBER=fiber))
+    # deal with no science files
+    if len(sky_files) == 0:
+        emsg = ('No night SKY files found (KW_OUTPUT={0} KW_FIBER={1})'
+                '\n\tFunction = {2}')
+        eargs = [filetype, fiber, func_name]
+        # log error
+        WLOG(params, 'error', emsg.format(*eargs))
+        return None, None
+    else:
+        sky_files = list(np.sort(sky_files))
+    # Get filetype definition
+    infiletype = drs_file.get_file_definition(params, filetype,
+                                              block_kind='red')
+    # get new copy of file definition
+    infile = infiletype.newcopy(params=params, fiber=fiber)
+    # set reference filename
+    infile.set_filename(sky_files[-1])
+    # read data
+    infile.read_file()
+    # return list of files and infile
+    return sky_files, infile
+
+
+def skymodel_matchfiles(sky_files_sci: List[str], sky_files_cal: List[str],
+                        sci_fiber: str, cal_fiber: str):
+    """
+    Only keep files that match in both fibers
+
+    :param sky_files_sci:
+    :param sky_files_cal:
+    :return:
+    """
+    # lists for keeping
+    keep_sci_files = []
+    keep_cal_files = []
+    # loop around science fiber filers
+    for sci_file in sky_files_sci:
+        # science fiber files must have _{fiber} in their name
+        basename_sci = sci_file.replace(f'_{sci_fiber}', '')
+        for cal_file in sky_files_cal:
+            # calibration fiber files must have _{fiber} in their name
+            basename_cal = cal_file.replace(f'_{cal_fiber}', '')
+            # test whether "de-fibered" name matches
+            if basename_sci == basename_cal:
+                # add to keep lists
+                keep_sci_files.append(sci_file)
+                keep_cal_files.append(cal_file)
+                # break here: we don't need to continue looking through
+                #             cal_files
+                break
+    # return new list of science and calib fiber files
+    return keep_sci_files, keep_cal_files
+
+
 def skymodel_table(params: ParamDict, sky_files: Union[List[str], None],
                    reffile: DrsFitsFile, snr_order: Optional[int] = None,
-                   min_exptime: Optional[float] = None) -> Union[Table, None]:
-
+                   min_exptime: Optional[float] = None,
+                   max_files: Optional[int] = None,
+                   ) -> Tuple[Union[Table, None], Union[DrsFitsFile, None], int]:
     # set function name
     func_name = display_func('skymodel_table', __NAME__)
     # -------------------------------------------------------------------------
     # deal with sky_files being None
     if sky_files is None:
-        return None
+        return None, None, 0
     # -------------------------------------------------------------------------
     # get parameters from parameter dictionary
     snr_order = pcheck(params, 'SKYMODEL_EXT_SNR_ORDERNUM', func=func_name,
                        override=snr_order)
-
     min_exptime = pcheck(params, 'SKYMODEL_MIN_EXPTIME', func=func_name,
                          override=min_exptime)
+    max_bins = pcheck(params, 'SKYMODEL_MAX_BIN', func=func_name,
+                      override=max_files)
     # get fiber from ref file
     fiber = reffile.fiber
     # -------------------------------------------------------------------------
@@ -132,26 +221,131 @@ def skymodel_table(params: ParamDict, sky_files: Union[List[str], None],
     # convert dictionary to table
     sky_table = Table(table_dict)
     # mask by exposure time
-    mask = sky_table['USED'] == 1
+    use_mask = sky_table['USED'] == 1
+    sky_table = sky_table[use_mask]
+    # -------------------------------------------------------------------------
+    # sort by MJDMID
+    sortmask = np.argsort(sky_table['MJDMID'])
+    sky_table = sky_table[sortmask]
+    # -------------------------------------------------------------------------
+    # calculate bin number and assign bin for all remaining objects
+    nfiles = len(sky_table)
+    nbins = np.min([nfiles, max_bins])
+    sky_table['BIN_NUM'] = (nbins * np.arange(nfiles)) // nfiles
+    # -------------------------------------------------------------------------
+    # update ref infile (use the latest file)
+    reffile2 = reffile.newcopy(params=params, fiber=fiber,
+                               data=np.array([]))
+    # set reference filename
+    reffile2.set_filename(sky_table['FILENAME'][-1])
+    # read data
+    reffile2.read_file()
+    # -------------------------------------------------------------------------
     # return filled table
-    return sky_table[mask]
-    
-    
-def skymodel_cube(params: ParamDict, sky_props: Union[Table, None]
-                  ) -> ParamDict:
+    return sky_table, reffile2, nbins
 
 
-    # TODO: Write skymodel files
+# define function to act on image
+def skymodel_combine_func(image: np.ndarray, hdr: drs_fits.Header,
+                          params: ParamDict, recipe: DrsRecipe,
+                          refwavemap: np.ndarray, fiber: str) -> np.ndarray:
+    """
+    Modification of the original image to add to median "cube"
 
-    # TODO: for each file
-    #       - open file
-    #       - lowpassfilter (per order) width=101
-    #       - spline onto reference wave grid
-    #       - save in temporary file
-    #       - perform hierarchical median (v)
+    :param image: np.ndarray, image to update - passed from
+                  large_image_combine
+    :param hdr: fits.Header - header associated with image passed
+                from large_image_combine
+    :param params: ParamDict, parameter dictionary of constants
+    :param recipe: DrsRecipe, recipe calling this function
+    :param refwavemap: np.ndarray, reference night wavelength solution
+    :param fiber: str, the fiber this image is associated with
+    :param wavemod: apero wave python sub-module (cannot assume we have
+                    non-standard modules so passed via arguments)
+    :param mathmod: apero math python sub-module (cannot assume we have
+                    non-standard modules so passed via arguments)
 
+    :return: np.ndarray, the updated image
+    """
+    # avoid NaNs for the spline later
+    image[~np.isfinite(image)] = 0.0
+    # load wavelength solution for this image
+    mkwargs = dict(header=hdr, ref=True, fiber=fiber)
+    wprops = wave.get_wavesolution(params, recipe, **mkwargs)
+    wavemap = wprops['WAVEMAP']
+    # loop around each order and low pass
+    for order_num in range(image.shape[0]):
+        # calculate the low pass filter
+        lowpass = mp.lowpassfilter(image[order_num], 101)
+        # apply this to the image
+        limage = image[order_num] - lowpass
+        # spline on the reference wave grid
+        ispline = mp.iuv_spline(wavemap, limage[order_num],
+                                     ext=1, k=3)
+        # get image on reference wave grid
+        image[order_num] = np.array(ispline(refwavemap[order_num]))
+    # return the image
+    return np.array(image)
+
+
+def skymodel_cube(recipe: DrsRecipe, params: ParamDict,
+                  sky_table: Union[Table, None], nbins: int,
+                  fiber: str, refwavemap: np.ndarray) -> ParamDict:
+    """
+    Product a cube and median of all sky_table files (binned by BIN_NUM)
+    to downsample cube (otherwise we open all files and have to store a
+    potential very large cube)
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param recipe: DrsRecipe, recipe calling this function
+    :param sky_table: astropy.Table - the sky files table
+    :param nbins: int, the number of bins
+    :param fiber: str, the fiber type
+    :param refwavemap: np.ndarray, the reference night wavelength solution
+
+    :return: ParamDict, the sky model parameters
+    """
+    # set function name
+    func_name = display_func('skymodel_cube', __NAME__)
+    # output parameter dictionary storage
+    sky_props = ParamDict()
+    # deal with no sky_table
+    if sky_table is None:
+        # set values for sky props
+        sky_props['HAS_SKY'] = False
+        sky_props['MED'] = None
+        sky_props['TABLE'] = None
+    else:
+        # get sky filenames
+        sky_files = sky_table['FILENAMES']
+        # get bins
+        sky_bins = sky_table['BIN_NUM']
+        # set up median storage
+        cube = np.zeros([nbins, np.prodict(refwavemap.shape)])
+        # loop around files
+        for it in range(len(sky_files)):
+            # read image and header
+            image, hdr = drs_fits.readfits(params, sky_files[it], gethdr=True)
+            # lowpass + shift image
+            cimage = skymodel_combine_func(image, hdr, params, recipe,
+                                           refwavemap, fiber)
+            # sum to the binned image ravelled into 1D
+            cube[sky_bins[it]] += cimage.ravel()
+            # remove image and header
+            del image, cimage, hdr
+        # get median sky spectrum, only used for identification of lines
+        med = np.nanmedian(cube, axis=0)
+        # set values for sky props
+        sky_props['HAS_SKY'] = True
+        sky_props['MED'] = med
+        sky_props['WAVEMAP'] = refwavemap.ravel()
+        sky_props['CUBE'] = cube
+        sky_props['TABLE'] = sky_table
+    # set source
+    keys = ['HAS_SKY', 'MED', 'CUBE', 'WAVEMAP', 'TABLE']
+    sky_props.set_sources(keys, func_name)
     # return updated sky props parameter dictionary
-    return ParamDict()
+    return sky_props
 
 
 def identify_sky_line_regions(params: ParamDict, sky_props: ParamDict,
@@ -163,16 +357,6 @@ def identify_sky_line_regions(params: ParamDict, sky_props: ParamDict,
                               waveend: Optional[float] = None,
                               binvelo: Optional[float] = None,
                               ) -> np.ndarray:
-    
-    # TODO: Write indentify sky line regions
-    #       - set NaN values to 0
-    #       - find positive exursions in sky signal
-    #       - identify lines (5sigma positive exursions)
-    #       - binary erode + dilate
-    #       - produce reg_id labelling
-    #       - get magic grid
-    #       - magic mask for reg_id
-    #       - fill reg_id map
 
     # set function name
     func_name = display_func('identify_sky_line_regions', __NAME__)
@@ -257,7 +441,6 @@ def calc_skymodel(params: ParamDict, sky_props_sci: ParamDict,
                   sky_props_cal: ParamDict, regions: np.ndarray) -> ParamDict:
     # set function name
     func_name = display_func('calc_skymodel', __NAME__)
-
 
     # TODO: Write calc_skymodel
     #       - construct model with all lines normalized to a median of 1 in
