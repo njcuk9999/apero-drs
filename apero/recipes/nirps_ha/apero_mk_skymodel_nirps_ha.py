@@ -179,12 +179,12 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # Plot
     # ----------------------------------------------------------------------
     # plot sky model median
-    recipe.plot('', sky_props=sky_props)
+    recipe.plot('TELLU_SKYMODEL_MED', sky_props=sky_props)
     # clear up memory
     del sky_props['ALL_SCI']
     del sky_props['ALL_CAL']
     # plot line fits
-    recipe.plot('', sky_props=sky_props)
+    recipe.plot('TELLU_SKYMODEL_LINEFIT', sky_props=sky_props)
 
     # ----------------------------------------------------------------------
     # print/log quality control (all assigned previously)
