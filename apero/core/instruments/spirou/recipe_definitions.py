@@ -874,6 +874,29 @@ apero_ccf.group_column = 'REPROCESS_OBSDIR_COL'
 recipes.append(apero_ccf)
 
 # -----------------------------------------------------------------------------
+# apero_mk_skymodel
+# -----------------------------------------------------------------------------
+apero_mk_skymodel = DrsRecipe(__INSTRUMENT__)
+apero_mk_skymodel.name = 'apero_mk_skymodel_{0}.py'.format(INSTRUMENT_ALIAS)
+apero_mk_skymodel.shortname = 'MKSKY'
+apero_mk_skymodel.instrument = __INSTRUMENT__
+apero_mk_skymodel.in_block_str = 'red'
+apero_mk_skymodel.out_block_str = 'red'
+apero_mk_skymodel.extension = 'fits'
+apero_mk_skymodel.description = textentry('MKSKY_DESC')
+apero_mk_skymodel.epilog = textentry('MKSKY_EXAMPLE')
+apero_mk_skymodel.recipe_type = 'recipe'
+apero_mk_skymodel.recipe_kind = 'tellu-sky'
+apero_mk_skymodel.set_outputs(SKYMODEL=files.out_sky_model)
+apero_mk_skymodel.set_debug_plots('TELLU_SKYMODEL_REGION_PLOT',
+                                  'TELLU_SKYMODEL_MED',
+                                  'TELLU_SKYMODEL_LINEFIT')
+apero_mk_skymodel.group_func = grouping.no_group
+apero_mk_skymodel.group_column = None
+# add to recipe
+recipes.append(apero_mk_skymodel)
+
+# -----------------------------------------------------------------------------
 # apero_mk_tellu
 # -----------------------------------------------------------------------------
 apero_mk_tellu = DrsRecipe(__INSTRUMENT__)

@@ -3644,6 +3644,149 @@ definitions += [wave_hc_guess, wave_hc_brightest_lines, wave_hc_tfit_grid,
 # =============================================================================
 # Define telluric plotting functions
 # =============================================================================
+def plot_regions_sky_model(plotter: Plotter, graph: Graph,
+                           kwargs: Dict[str, Any]):
+    """
+    Graph: Sky model region plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    sky_props = kwargs['sky_props']
+    regions = kwargs['regions']
+
+    waveref = sky_props['WAVEMAP']
+    waverefr = sky_props['WAVEMAPR']
+    med = sky_props['MED']
+    med_e2ds = med.reshape(waveref)
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frames = graph.set_figure(plotter, nrows=1, ncols=1)
+    # plot science fiber
+    for order_num in range(waveref.shape[0]):
+        if order_num % 2 == 0:
+            color = 'r'
+        else:
+            color = 'b'
+        frames[0].plot(waveref[order_num], med_e2ds[order_num], alpha=0.5,
+                       color=color)
+
+    frames[0].plot(waverefr[regions != 0], med[regions != 0], color='g',
+                   marker='o', ls='None', alpha=0.3)
+
+    frames[0].set(xlabel='Wavelength [nm]', ylabel='Median flux')
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+def plot_sky_model_med(plotter: Plotter, graph: Graph,  kwargs: Dict[str, Any]):
+    """
+    Graph: Sky model median plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
+    # -------------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # -------------------------------------------------------------------------
+    # get the arguments from kwargs
+    sky_props = kwargs['sky_props']
+
+    all_sci = sky_props['ALL_SCI']
+    all_cal = sky_props['ALL_CAL']
+    waveref = sky_props['WAVEMAP'].ravel()
+    regions = sky_props['REGION_ID'].ravel()
+    model_sci = sky_props['SKYMODEL_SCI'].ravel()
+    model_cal = sky_props['SKYMODEL_CAL'].ravel()
+    # get unique regions
+    unique_regions = set(regions)
+    unique_regions.remove(0)
+    # -------------------------------------------------------------------------
+    # set up plot
+    fig, frames = graph.set_figure(plotter, nrows=2, ncols=1)
+    # loop around regions
+    for region in unique_regions:
+        # find pixels in this region
+        region_mask = regions == region
+        # get number of binned files
+        nbins = len(all_sci[region])
+        # plot all the binned files
+        for bin in range(nbins):
+            frames[0].plot(waveref[region_mask], all_sci[region][bin],
+                           color='orange', alpha=0.5,
+                           label='Individual binned files')
+            frames[1].plot(waveref[region_mask], all_cal[region][bin],
+                           color='orange', alpha=0.5,
+                           label='Individual binned files')
+        # plot the median
+        frames[0].plot(waveref[region_mask], model_sci[region_mask],
+                       color='blue', label='Median')
+        frames[1].plot(waveref[region_mask], model_cal[region_mask],
+                       color='blue', label='Median')
+    # -------------------------------------------------------------------------
+    # only keep unique labels
+    rhandles, rlabels = frames[0].get_legend_handles_labels()
+    handles, labels = [], []
+    for r_it, rlabel in enumerate(rlabels):
+        if rlabel not in labels:
+            handles.append(rhandles[r_it])
+            labels.append(rlabel)
+    # -------------------------------------------------------------------------
+    # set legend and labels
+    frames[0].legend(handles, labels, loc=0)
+    frames[1].legend(handles, labels, loc=0)
+    frames[0].set(xlabel='Wavelength [nm]', ylabel='Flux')
+    # -------------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+def plot_sky_model_line_fits(plotter: Plotter, graph: Graph,
+                             kwargs: Dict[str, Any]):
+    """
+    Graph: Sky model line fits
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    sky_props = kwargs['sky_props']
+    xpix_all = sky_props['XPIX_ALL']
+    fwhm_all = sky_props['FWHM_ALL']
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
+    frame.plot(xpix_all, fwhm_all, color='green', marker='o', ls='None',
+               alpha=0.5)
+    frame.set(xlabel='X pixel position', ylabel='FWHM')
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
 def plot_tellu_sky_corr(plotter: Plotter, graph: Graph,
                         kwargs: Dict[str, Any]):
     """
@@ -4557,6 +4700,16 @@ def plot_tellu_finite_res_corr(plotter: Plotter, graph: Graph,
     plotter.plotend(graph)
 
 
+# sky model region graph instance
+tellu_skymodel_region = Graph('TELLU_SKYMODEL_REGION_PLOT', kind='debug',
+                              func=plot_regions_sky_model)
+
+tellu_skymodel_med = Graph('TELLU_SKYMODEL_MED', kind='debug',
+                           func=plot_sky_model_med)
+
+tellu_skymodel_linefit = Graph('TELLU_SKYMODEL_LINEFIT', kind='debug',
+                               func=plot_sky_model_line_fits)
+
 # sky correction graph instance
 tellu_sky_corr = Graph('TELLU_SKY_CORR_PLOT', kind='debug',
                        func=plot_tellu_sky_corr)
@@ -4639,7 +4792,9 @@ tellu_finite_res_cor = Graph('TELLU_FINITE_RES_CORR', kind='debug',
                              func=plot_tellu_finite_res_corr)
 
 # add to definitions
-definitions += [tellu_sky_corr, mktellu_wave_flux1, mktellu_wave_flux2,
+definitions += [tellu_skymodel_region, tellu_skymodel_med,
+                tellu_skymodel_linefit,  tellu_sky_corr,
+                mktellu_wave_flux1, mktellu_wave_flux2,
                 sum_mktellu_wave_flux,  mktellu_model, sum_mktellu_model,
                 ftellu_pca_comp1, ftellu_pca_comp2, ftellu_recon_spline1,
                 ftellu_recon_spline2, ftellu_wave_shift1, ftellu_wave_shift2,

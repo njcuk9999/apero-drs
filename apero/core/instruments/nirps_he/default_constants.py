@@ -2021,6 +2021,43 @@ WAVENIGHT_PLT_BINU.value = 20
 # =============================================================================
 # OBJECT: SKY CORR SETTINGS
 # =============================================================================
+# Define the order to get the snr from (for input data qc check)
+SKYMODEL_EXT_SNR_ORDERNUM =  SKYMODEL_EXT_SNR_ORDERNUM.copy(__NAME__)
+SKYMODEL_EXT_SNR_ORDERNUM.value = 59
+SKYMODEL_EXT_SNR_ORDERNUM.author = base.AUTHORS['EA']
+
+# Define the minimum exptime to use a sky in the model [s]
+SKYMODEL_MIN_EXPTIME =  SKYMODEL_MIN_EXPTIME.copy(__NAME__)
+SKYMODEL_MIN_EXPTIME.value = 300
+SKYMODEL_MIN_EXPTIME.author = base.AUTHORS['EA']
+
+# define the sigma that positive exursions need to have to be identified
+#   as lines
+SKYMODEL_LINE_SIGMA = SKYMODEL_LINE_SIGMA.copy(__NAME__)
+SKYMODEL_LINE_SIGMA.value = 5
+SKYMODEL_LINE_SIGMA.author = base.AUTHORS['EA']
+
+# define the erosion size to use on a line
+SKYMODEL_LINE_ERODE_SIZE = SKYMODEL_LINE_ERODE_SIZE.copy(__NAME__)
+SKYMODEL_LINE_ERODE_SIZE.value = 5
+SKYMODEL_LINE_ERODE_SIZE.author = base.AUTHORS['EA']
+
+# define the dilatation size to use on a line
+SKYMODEL_LINE_DILATE_SIZE = SKYMODEL_LINE_DILATE_SIZE.copy(__NAME__)
+SKYMODEL_LINE_DILATE_SIZE.value = 27
+SKYMODEL_LINE_DILATE_SIZE.author = base.AUTHORS['EA']
+
+# define the number of weight iterations to use when construct sky model
+#       weight vector
+SKYMODEL_WEIGHT_ITERS = SKYMODEL_WEIGHT_ITERS.copy(__NAME__)
+SKYMODEL_WEIGHT_ITERS.value = 5
+SKYMODEL_WEIGHT_ITERS.author = base.AUTHORS['EA']
+
+# define the erosion size for the sky model line weight calculation
+SKYMODEL_WEIGHT_ERODE_SIZE = SKYMODEL_WEIGHT_ERODE_SIZE.copy(__NAME__)
+SKYMODEL_WEIGHT_ERODE_SIZE.value = 3
+SKYMODEL_WEIGHT_ERODE_SIZE.author = base.AUTHORS['EA']
+
 # Define the allowed DPRTYPEs for sky correction
 ALLOWED_SKYCORR_DPRTYPES = ALLOWED_SKYCORR_DPRTYPES.copy(__NAME__)
 ALLOWED_SKYCORR_DPRTYPES.value = 'OBJ_SKY, TELLU_SKY, FLUXSTD_SKY'
@@ -2747,6 +2784,18 @@ PLOT_WAVENIGHT_ITERPLOT.value = True
 # turn on the wave per night hist debug plot
 PLOT_WAVENIGHT_HISTPLOT = PLOT_WAVENIGHT_HISTPLOT.copy(__NAME__)
 PLOT_WAVENIGHT_HISTPLOT.value = True
+
+# turn on the sky model region plot
+PLOT_TELLU_SKYMODEL_REGION_PLOT = PLOT_TELLU_SKYMODEL_REGION_PLOT.copy(__NAME__)
+PLOT_TELLU_SKYMODEL_REGION_PLOT.value = True
+
+# turn on the sky model median plot
+PLOT_TELLU_SKYMODEL_MED = PLOT_TELLU_SKYMODEL_MED.copy(__NAME__)
+PLOT_TELLU_SKYMODEL_MED.value = True
+
+# turn on the sky model median plot
+PLOT_TELLU_SKYMODEL_LINEFIT = PLOT_TELLU_SKYMODEL_LINEFIT.copy(__NAME__)
+PLOT_TELLU_SKYMODEL_LINEFIT.value = True
 
 # turn on the sky correction debug plot
 PLOT_TELLU_SKY_CORR_PLOT = PLOT_TELLU_SKY_CORR_PLOT.copy(__NAME__)

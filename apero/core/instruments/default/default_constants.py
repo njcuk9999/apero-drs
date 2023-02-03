@@ -233,6 +233,9 @@ __all__ = [
     'WAVE_NIGHT_NSIG_FIT_CUT', 'WAVENIGHT_PLT_BINL', 'WAVENIGHT_PLT_BINU',
     'WAVENIGHT_PLT_NBINS',
     # sky correction constants
+    'SKYMODEL_EXT_SNR_ORDERNUM', 'SKYMODEL_MIN_EXPTIME', 'SKYMODEL_LINE_SIGMA',
+    'SKYMODEL_LINE_ERODE_SIZE', 'SKYMODEL_LINE_DILATE_SIZE',
+    'SKYMODEL_WEIGHT_ITERS', 'SKYMODEL_WEIGHT_ERODE_SIZE',
     'ALLOWED_SKYCORR_DPRTYPES', 'SKYCORR_WEIGHT_ITERATIONS',
     'SKYCORR_LOWPASS_SIZE1', 'SKYCORR_LOWPASS_SIZE2',
     'SKYCORR_LOWPASS_ITERATIONS', 'SKYCORR_NSIG_THRES',
@@ -340,7 +343,8 @@ __all__ = [
     'PLOT_WAVENIGHT_ITERPLOT', 'PLOT_WAVENIGHT_HISTPLOT',
     'PLOT_WAVE_RESMAP',
     # sky corr plot settings
-    'PLOT_TELLU_SKY_CORR_PLOT',
+    'PLOT_TELLU_SKYMODEL_REGION_PLOT', 'PLOT_TELLU_SKYMODEL_MED',
+    'PLOT_TELLU_SKYMODEL_LINEFIT', 'PLOT_TELLU_SKY_CORR_PLOT',
     # debug telluric plot settings
     'PLOT_TELLUP_WAVE_TRANS', 'PLOT_TELLUP_ABSO_SPEC',
     'PLOT_MKTELLU_WAVE_FLUX1', 'PLOT_MKTELLU_WAVE_FLUX2',
@@ -3616,6 +3620,62 @@ WAVENIGHT_PLT_BINU = Const('WAVENIGHT_PLT_BINU', value=None, dtype=float,
 # OBJECT: SKY CORR SETTINGS
 # =============================================================================
 cgroup = 'OBJECT: SKY CORR SETTINGS'
+
+# Define the order to get the snr from (for input data qc check)
+SKYMODEL_EXT_SNR_ORDERNUM = Const('SKYMODEL_EXT_SNR_ORDERNUM', value=None,
+                                  dtype=int, source=__NAME__, minimum=0,
+                                  group=cgroup,
+                                  description='Define the order to get the '
+                                              'snr from (for input data qc '
+                                              'check)')
+
+# Define the minimum exptime to use a sky in the model [s]
+SKYMODEL_MIN_EXPTIME = Const('SKYMODEL_MIN_EXPTIME', value=None,
+                             dtype=float, source=__NAME__, minimum=0,
+                             group=cgroup,
+                             description='Define the minimum exptime to use a '
+                                         'sky in the model [s]')
+
+# define the sigma that positive exursions need to have to be identified
+#   as lines
+SKYMODEL_LINE_SIGMA = Const('SKYMODEL_LINE_SIGMA', value=None,
+                            dtype=float, source=__NAME__, minimum=0,
+                            group=cgroup,
+                            description='define the sigma that positive '
+                                        'exursions need to have to be '
+                                        'identified as lines')
+
+# define the erosion size to use on a line
+SKYMODEL_LINE_ERODE_SIZE = Const('SKYMODEL_LINE_ERODE_SIZE', value=None,
+                                 dtype=int, source=__NAME__, minimum=0,
+                                 group=cgroup,
+                                 description='define the erosion size to use '
+                                             'on a line')
+
+# define the dilatation size to use on a line
+SKYMODEL_LINE_DILATE_SIZE = Const('SKYMODEL_LINE_DILATE_SIZE', value=None,
+                                  dtype=int, source=__NAME__, minimum=0,
+                                  group=cgroup,
+                                  description='define the dilatation size to '
+                                              'use on a line')
+
+# define the number of weight iterations to use when construct sky model
+#       weight vector
+SKYMODEL_WEIGHT_ITERS = Const('SKYMODEL_WEIGHT_ITERS', value=None,
+                              dtype=int, source=__NAME__, minimum=1,
+                              group=cgroup,
+                              description='define the number of weight '
+                                          'iterations to use when construct '
+                                          'sky model weight vector')
+
+# define the erosion size for the sky model line weight calculation
+SKYMODEL_WEIGHT_ERODE_SIZE = Const('SKYMODEL_WEIGHT_ERODE_SIZE', value=None,
+                                   dtype=int, source=__NAME__, minimum=0,
+                                   group=cgroup,
+                                   description='define the erosion size for '
+                                               'the sky model line weight '
+                                               'calculation')
+
 # Define the allowed DPRTYPEs for sky correction
 ALLOWED_SKYCORR_DPRTYPES = Const('ALLOWED_SKYCORR_DPRTYPES', value=None,
                                  dtype=str, source=__NAME__, group=cgroup,
@@ -5124,13 +5184,36 @@ PLOT_WAVENIGHT_HISTPLOT = Const('PLOT_WAVENIGHT_HISTPLOT', value=False,
                                 active=False, group=cgroup,
                                 description='turn on the wave per night '
                                             'hist debug plot')
+# turn on the sky model region plot
+PLOT_TELLU_SKYMODEL_REGION_PLOT = Const('PLOT_TELLU_SKYMODEL_REGION_PLOT',
+                                        value=False, dtype=bool,
+                                        source=__NAME__, user=True,
+                                        active=False, group=cgroup,
+                                        description='turn on the sky model '
+                                                    'region plot')
+
+# turn on the sky model median plot
+PLOT_TELLU_SKYMODEL_MED = Const('PLOT_TELLU_SKYMODEL_MED',
+                                value=False, dtype=bool,
+                                source=__NAME__, user=True,
+                                active=False, group=cgroup,
+                                description='turn on the sky model '
+                                            'median plot')
+
+# turn on the sky model median plot
+PLOT_TELLU_SKYMODEL_LINEFIT = Const('PLOT_TELLU_SKYMODEL_LINEFIT',
+                                    value=False, dtype=bool,
+                                    source=__NAME__, user=True,
+                                    active=False, group=cgroup,
+                                    description='turn on the sky model '
+                                                'median plot')
 
 # turn on the sky correction debug plot
-PLOT_TELLU_SKY_CORR_PLOT = Const('PLOT_TELLU_SKY_CORR_PLOT', value=False,
-                                 dtype=bool, source=__NAME__, user=True,
-                                 active=False, group=cgroup,
-                                 description='turn on the sky correction debug '
-                                             'plot')
+PLOT_TELLU_SKYMODEL_LINEFIT = Const('PLOT_TELLU_SKYMODEL_LINEFIT', value=False,
+                                    dtype=bool, source=__NAME__, user=True,
+                                    active=False, group=cgroup,
+                                    description='turn on the sky correction '
+                                                'debug plot')
 
 # turn on the telluric pre-cleaning ccf debug plot
 PLOT_TELLUP_WAVE_TRANS = Const('PLOT_TELLUP_WAVE_TRANS', value=False,

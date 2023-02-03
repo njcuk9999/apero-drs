@@ -8,11 +8,14 @@ Created on 2020-07-2020-07-15 17:58
 @author: cook
 """
 import os
-from typing import Any, List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
+from astropy import constants as cc
+from astropy import units as uu
 from astropy.table import Table
 from scipy.ndimage import binary_erosion, binary_dilation
+from scipy.optimize import curve_fit
 
 from apero import lang
 from apero.base import base
@@ -24,7 +27,6 @@ from apero.core.core import drs_log
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_utils
 from apero.io import drs_fits
-from apero.io import drs_image
 from apero.science.calib import wave
 from apero.science.telluric import gen_tellu
 
@@ -55,6 +57,11 @@ WLOG = drs_log.wlog
 textentry = lang.textentry
 # alias pcheck
 pcheck = constants.PCheck(wlog=WLOG)
+# Speed of light
+# noinspection PyUnresolvedReferences
+speed_of_light_ms = cc.c.to(uu.m / uu.s).value
+# noinspection PyUnresolvedReferences
+speed_of_light = cc.c.to(uu.km / uu.s).value
 
 
 # =============================================================================
@@ -316,6 +323,11 @@ def skymodel_cube(recipe: DrsRecipe, params: ParamDict,
         sky_props['MED'] = None
         sky_props['TABLE'] = None
     else:
+        # print progress
+        # TODO: Add to language database
+        msg = 'Building sky model cubes fiber={0}'
+        margs = [fiber]
+        WLOG(params, '', msg.format(*margs))
         # get sky filenames
         sky_files = sky_table['FILENAMES']
         # get bins
@@ -324,6 +336,9 @@ def skymodel_cube(recipe: DrsRecipe, params: ParamDict,
         cube = np.zeros([nbins, np.prodict(refwavemap.shape)])
         # loop around files
         for it in range(len(sky_files)):
+            # print analysing file
+            msg = '\tAdding sky file {0}/{1}'
+            margs = [it + 1, len(sky_files)]
             # read image and header
             image, hdr = drs_fits.readfits(params, sky_files[it], gethdr=True)
             # lowpass + shift image
@@ -338,18 +353,18 @@ def skymodel_cube(recipe: DrsRecipe, params: ParamDict,
         # set values for sky props
         sky_props['HAS_SKY'] = True
         sky_props['MED'] = med
-        sky_props['WAVEMAP'] = refwavemap.ravel()
+        sky_props['WAVEMAP'] = refwavemap
+        sky_props['WAVEMAPR'] = refwavemap.ravel()
         sky_props['CUBE'] = cube
         sky_props['TABLE'] = sky_table
     # set source
-    keys = ['HAS_SKY', 'MED', 'CUBE', 'WAVEMAP', 'TABLE']
+    keys = ['HAS_SKY', 'MED', 'CUBE', 'WAVEMAP', 'WAVEMAPR', 'TABLE']
     sky_props.set_sources(keys, func_name)
     # return updated sky props parameter dictionary
     return sky_props
 
 
 def identify_sky_line_regions(params: ParamDict, sky_props: ParamDict,
-                              wavemap: np.ndarray,
                               line_sigma: Optional[float] = None,
                               erode_size: Optional[int] = None,
                               dilate_size: Optional[int] = None,
@@ -374,7 +389,7 @@ def identify_sky_line_regions(params: ParamDict, sky_props: ParamDict,
     binvelo = pcheck(params, 'EXT_S1D_BIN_UVELO', func=func_name,
                      override=binvelo)
     # ravel e2ds wavemap (for dilation stuff later)
-    wave1d = wavemap.ravel()
+    wave1d = sky_props['WAVEMAPR']
     # get the median sky spectrum
     sky_med = sky_props['MED']
     # set all NaN values to zero
@@ -438,38 +453,156 @@ def identify_sky_line_regions(params: ParamDict, sky_props: ParamDict,
 
 
 def calc_skymodel(params: ParamDict, sky_props_sci: ParamDict,
-                  sky_props_cal: ParamDict, regions: np.ndarray) -> ParamDict:
+                  sky_props_cal: ParamDict, regions: np.ndarray,
+                  witerations: Optional[int] = None,
+                  erode_size: Optional[int] = None) -> ParamDict:
     # set function name
     func_name = display_func('calc_skymodel', __NAME__)
+    # -------------------------------------------------------------------------
+    # get values from parameters
+    weight_iterations = pcheck(params, 'SKYMODEL_WEIGHT_ITERS', func=func_name,
+                               override=witerations)
+    erode_size = pcheck(params, 'SKYMODEL_WEIGHT_ERODE_SIZE', func=func_name,
+                        override=erode_size)
+    # get cubes
+    sci_cube = sky_props_sci['CUBE']
+    cal_cube = sky_props_cal['CUBE']
+    # get the reference wavelength solution
+    waveref = sky_props_sci['WAVEMAP']
+    # get the number of binned files
+    nbins = sci_cube.shape[0]
+    # deal with no calibration fiber data
+    if cal_cube is None:
+        cal_cube = np.zeros_like(sci_cube)
+        has_cal = False
+    else:
+        has_cal = True
+    # assume we always have sci
+    has_sci = True
+    # -------------------------------------------------------------------------
+    # get pixel positions
+    order_pix, x_pix = np.indices(waveref)
+    # ravel 2D arrays
+    regions_rav = regions.ravel()
+    order_pix_rav = order_pix.ravel()
+    x_pix_rav = x_pix.ravel()
+    # get unique regions
+    unique_regions = set(regions)
+    unique_regions.remove(0)
+    # storage for the line fit
+    fwhm_all, xpix_all, nsig_all = [], [], []
+    model_sci = np.zeros_like(sky_props_sci['MED'])
+    model_cal = np.zeros_like(sky_props_sci['MED'])
+    all_sci_dict = dict()
+    all_cal_dict = dict()
+    # -------------------------------------------------------------------------
+    # loop  around regions
+    for region in unique_regions:
+        # find pixels in this region
+        region_mask = regions_rav == region
+        # get length of the region
+        region_length = np.sum(region_mask)
+        # get the wavelength for this region
+        region_wave = waveref[region_mask]
+        # make lists for this region
+        all_sci, all_cal = [], []
+        # construct new cubes by loop around all binned files
+        for bin in range(nbins):
+            # get this bins data (for this region)
+            tmp_sci = sci_cube[bin][region_mask]
+            tmp_cal = cal_cube[bin][region_mask]
+            # work out the amplitude of the science fiber
+            amp = np.nansum(tmp_sci)
+            # add to list for this region
+            all_sci.append(tmp_sci / amp)
+            all_cal.append(tmp_cal / amp)
+        # convert to numpy array and reshape
+        all_sci = np.array(all_sci).reshape(nbins, region_length)
+        all_cal = np.array(all_cal).reshape(nbins, region_length)
+        # perform medians along axis 0
+        med_sci = mp.nanmedian(all_sci, axis=0)
+        med_cal = mp.nanmedian(all_cal, axis=0)
+        # push medians into models
+        model_sci[region_mask] = med_sci
+        model_cal[region_mask] = med_cal
+        # save all_sci and all_cal
+        all_sci_dict[region] = all_sci
+        all_cal_dict[region] = all_cal
+        # calculate the line fit (if possible)
+        try:
+            # calculate the dv step in km/s
+            wavestep = (region_wave / np.mean(region_wave)) - 1
+            dvstep = wavestep * speed_of_light
+            # get the fwhm of the line
+            guess = [0, np.max(med_sci), 4.0, 2.0, 0.0]
+            # fit using curve fit
+            fitcoeffs, _ = curve_fit(mp.super_gauss_fast, dvstep, med_sci,
+                                     p0=guess)
+            # get the fwhm
+            fwhm_all.append(fitcoeffs[2])
+            # get the mean pixel position for this region
+            xpix_all.append(np.mean(x_pix_rav[region_mask]))
+            # work out fit using fit coefficients
+            model =  mp.super_gauss_fast(dvstep, *fitcoeffs)
+            # get the number of sigma this fit has away from the data
+            nsig = fitcoeffs[1] / mp.nanstd(med_sci - model)
+            nsig_all.append(nsig)
+        # if we can't fit this region we skip it
+        except:
+            pass
 
-    # TODO: Write calc_skymodel
-    #       - construct model with all lines normalized to a median of 1 in
-    #         sci fiber
-    #       - loop around regions
-    #          - loop around sci and calib fiber
-    #             - loop around tmp low-passed files
-    #             - create a median for sci and calib (hierarchical median)
-    #          - fit median line in region(curve_fit)
-    #          - save median as model_{fiber}
-    #       - work out weight
-
-
+    # -------------------------------------------------------------------------
+    # only keep lines more prominent than 5 sigma
+    keep = np.array(nsig_all) > 5
+    xpix_all = np.array(xpix_all)[keep]
+    fwhm_all = np.array(fwhm_all)[keep]
+    nsig_all = np.array(nsig_all)[keep]
+    # -------------------------------------------------------------------------
+    # calculates weights given to each line
+    weights = np.array(regions != 0, dtype=float)
+    weights2 = np.array(weights)
+    # iterate a few times to produce weights
+    for _ in range(weight_iterations):
+        # erode the weights
+        weights2 = binary_erosion(weights2, structure=erode_size)
+        # add these to the final weights
+        weights += np.array(weights2)
+    # normalize weights
+    weights = weights / np.max(weights)
+    # -------------------------------------------------------------------------
+    # reshape models and regions back to e2ds format
+    model_sci = model_sci.reshape(waveref.shape)
+    model_cal = model_cal.reshape(waveref.shape)
+    regions = regions.reshape(waveref.shape)
+    weights = weights.reshape(waveref.shape)
+    # set to 0 negative values that are spuriuous for a sky flux
+    model_sci[model_sci < 0] = 0.0
+    model_cal[model_cal < 0] = 0.0
+    # work out gradient of the science fiber model
+    gradient = np.gradient(model_sci, axis=1)
+    # -------------------------------------------------------------------------
     # create sky props
     sky_props = ParamDict()
     # add parameters to sky_props
-    sky_props['HAS_SCI'] = None
-    sky_props['HAS_CAL'] = None
-    sky_props['SKYMODEL_SCI'] = None
-    sky_props['SKYMODEL_CAL'] = None
-    sky_props['WAVEMAP'] = None
-    sky_props['REGION_ID'] = None
-    sky_props['WEIGHTS'] = None
-    sky_props['GRADIENT'] = None
+    sky_props['HAS_SCI'] = has_sci
+    sky_props['HAS_CAL'] = has_cal
+    sky_props['SKYMODEL_SCI'] = model_sci
+    sky_props['SKYMODEL_CAL'] = model_cal
+    sky_props['WAVEMAP'] = waveref
+    sky_props['REGION_ID'] = regions
+    sky_props['WEIGHTS'] = weights
+    sky_props['GRADIENT'] = gradient
     sky_props['SKYTABLE_SCI'] = sky_props_sci['TABLE']
     sky_props['SKYTABLE_CAL'] = sky_props_cal['TABLE']
+    sky_props['ALL_SCI'] = all_sci_dict
+    sky_props['ALL_CAL'] = all_cal_dict
+    sky_props['XPIX_ALL'] = xpix_all
+    sky_props['FWHM_ALL'] = fwhm_all
+    sky_props['NSIG_ALL'] = nsig_all
     # set the source of sky_props to this function name
     keys = ['SKYMODEL_SCI', 'SKYMODEL_CAL', 'WAVEMAP', 'REGION_ID',
-            'WEIGHTS', 'GRADIENT', 'SKYTABLE_SCI', 'SKYTABLE_CAL']
+            'WEIGHTS', 'GRADIENT', 'SKYTABLE_SCI', 'SKYTABLE_CAL',
+            'ALL_SCI', 'ALL_CAL', 'XPIX_ALL', 'FWHM_ALL', 'NSIG_ALL']
     sky_props.set_sources(keys, func_name)
     # return updated sky props parameter dictionary
     return sky_props
