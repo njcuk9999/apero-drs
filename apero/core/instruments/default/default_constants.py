@@ -5208,12 +5208,20 @@ PLOT_TELLU_SKYMODEL_LINEFIT = Const('PLOT_TELLU_SKYMODEL_LINEFIT',
                                     description='turn on the sky model '
                                                 'median plot')
 
-# turn on the sky correction debug plot
-PLOT_TELLU_SKYMODEL_LINEFIT = Const('PLOT_TELLU_SKYMODEL_LINEFIT', value=False,
-                                    dtype=bool, source=__NAME__, user=True,
+# turn on the sky model median plot
+PLOT_TELLU_SKYMODEL_LINEFIT = Const('PLOT_TELLU_SKYMODEL_LINEFIT',
+                                    value=False, dtype=bool,
+                                    source=__NAME__, user=True,
                                     active=False, group=cgroup,
-                                    description='turn on the sky correction '
-                                                'debug plot')
+                                    description='turn on the sky model '
+                                                'median plot')
+
+# turn on the sky correction debug plot
+PLOT_TELLU_SKY_CORR_PLOT = Const('PLOT_TELLU_SKY_CORR_PLOT', value=False,
+                                 dtype=bool, source=__NAME__, user=True,
+                                 active=False, group=cgroup,
+                                 description='turn on the sky correction '
+                                             'debug plot')
 
 # turn on the telluric pre-cleaning ccf debug plot
 PLOT_TELLUP_WAVE_TRANS = Const('PLOT_TELLUP_WAVE_TRANS', value=False,
