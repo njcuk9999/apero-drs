@@ -2020,6 +2020,12 @@ WAVENIGHT_PLT_BINU.value = 20
 # =============================================================================
 # OBJECT: SKY CORR SETTINGS
 # =============================================================================
+# the OUTPUT type (KW_OUTPUT header key) and DrsFitsFile name required for
+#   input sky files
+SKYMODEL_FILETYPE = SKYMODEL_FILETYPE.copy(__NAME__)
+SKYMODEL_FILETYPE.value = 'EXT_E2DS_FF'
+SKYMODEL_FILETYPE.author = base.AUTHORS['NJC']
+
 # Define the order to get the snr from (for input data qc check)
 SKYMODEL_EXT_SNR_ORDERNUM =  SKYMODEL_EXT_SNR_ORDERNUM.copy(__NAME__)
 SKYMODEL_EXT_SNR_ORDERNUM.value = 59

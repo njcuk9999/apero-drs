@@ -96,8 +96,6 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     pconst = constants.pload()
     # get the filetype (this is overwritten from user inputs if defined)
     filetype = params['INPUTS']['FILETYPE']
-    # get the fiber type required
-    fiber = params['INPUTS']['FIBER']
     # load the calibration and telluric databases
     calibdbm = drs_database.CalibrationDatabase(params)
     calibdbm.load_db()

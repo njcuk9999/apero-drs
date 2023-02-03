@@ -3621,6 +3621,15 @@ WAVENIGHT_PLT_BINU = Const('WAVENIGHT_PLT_BINU', value=None, dtype=float,
 # =============================================================================
 cgroup = 'OBJECT: SKY CORR SETTINGS'
 
+
+# the OUTPUT type (KW_OUTPUT header key) and DrsFitsFile name required for
+#   input sky files
+SKYMODEL_FILETYPE = Const('SKYMODEL_FILETYPE', value=None, dtype=str,
+                          source=__NAME__,
+                          description='the OUTPUT type (KW_OUTPUT header key) '
+                                      'and DrsFitsFile name required for '
+                                      'input sky files')
+
 # Define the order to get the snr from (for input data qc check)
 SKYMODEL_EXT_SNR_ORDERNUM = Const('SKYMODEL_EXT_SNR_ORDERNUM', value=None,
                                   dtype=int, source=__NAME__, minimum=0,

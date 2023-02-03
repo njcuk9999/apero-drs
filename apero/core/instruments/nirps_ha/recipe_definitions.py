@@ -783,6 +783,10 @@ apero_mk_skymodel.set_outputs(SKYMODEL=files.out_sky_model)
 apero_mk_skymodel.set_debug_plots('TELLU_SKYMODEL_REGION_PLOT',
                                   'TELLU_SKYMODEL_MED',
                                   'TELLU_SKYMODEL_LINEFIT')
+apero_mk_skymodel.set_kwarg(name='--filetype', dtype='options',
+                            default_ref='SKYMODEL_FILETYPE',
+                            helpstr=textentry('MKTEMP_FILETYPE'),
+                            options=['EXT_E2DS', 'EXT_E2DS_FF'])
 apero_mk_skymodel.group_func = grouping.no_group
 apero_mk_skymodel.group_column = None
 # add to recipe
