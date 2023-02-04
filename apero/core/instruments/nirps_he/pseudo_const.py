@@ -291,6 +291,10 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         header, hdict = get_mid_obs_time(params, header, hdict,
                                          filename=filename)
         # ------------------------------------------------------------------
+        # Deal with sun altitude
+        # ------------------------------------------------------------------
+        header, hdict = pseudo_const.get_sun_altitude(params, header, hdict)
+        # ------------------------------------------------------------------
         # Deal with drs mode
         # ------------------------------------------------------------------
         header, hdict = get_drs_mode(params, header, hdict)
@@ -303,10 +307,6 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         # Deal with calibrations and sky KW_OBJNAME
         # ------------------------------------------------------------------
         header, hdict = get_special_objname(params, header, hdict)
-        # ------------------------------------------------------------------
-        # Deal with sun altitude
-        # ------------------------------------------------------------------
-        header, hdict = pseudo_const.get_sun_altitude(params, header, hdict)
         # ------------------------------------------------------------------
         # Return header
         # ------------------------------------------------------------------
