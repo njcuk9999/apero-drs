@@ -1590,10 +1590,10 @@ def get_sun_altitude(params: Any, header: Any, hdict: Any) -> Tuple[Any, Any]:
     # get header keys
     kwmidobstime = params['KW_MID_OBS_TIME'][0]
     kw_night_obs, _, kw_night_obs_comment = params['KW_NIGHT_OBS']
-    kw_civ_twil, _, kw_civ_twil_comment = params['KW_CIV_TWIL'][0]
-    kw_nau_twil, _, kw_nau_twil_comment = params['KW_NAU_TWIL'][0]
-    kw_ast_twil, _, kw_ast_twil_comment = params['KW_AST_TWIL'][0]
-    kw_sun_elev, _, kw_sun_elev_comment = params['KW_SUN_ELEV'][0]
+    kw_civ_twil, _, kw_civ_twil_comment = params['KW_CIV_TWIL']
+    kw_nau_twil, _, kw_nau_twil_comment = params['KW_NAU_TWIL']
+    kw_ast_twil, _, kw_ast_twil_comment = params['KW_AST_TWIL']
+    kw_sun_elev, _, kw_sun_elev_comment = params['KW_SUN_ELEV']
     # -------------------------------------------------------------------------
     # get the mid exposure time
     mjdmid = header[kwmidobstime]
@@ -1603,7 +1603,7 @@ def get_sun_altitude(params: Any, header: Any, hdict: Any) -> Tuple[Any, Any]:
     # calculate sun time
     sun_time = Time(mjdmid, format='mjd')
     # get the alt-az angle
-    alt_az = coord.AltAz(sun_time, location=location)
+    alt_az = coord.AltAz(obstime=sun_time, location=location)
     # get the sun's elevation
     sun_elevation = 90 - coord.get_sun(sun_time).transform_to(alt_az).zen.value
     # calculate the twilight angles

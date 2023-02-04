@@ -2371,22 +2371,25 @@ def _sort_version(messages: Union[str, None] = None) -> Union[List[str]]:
 
     # add distribution if possible
     try:
-        build = sys.version.split('|')[1].strip()
-        messages += '\n' + textentry('40-001-00014', args=[build])
+        if '|' in sys.version:
+            build = sys.version.split('|')[1].strip()
+            messages += '\n' + textentry('40-001-00014', args=[build])
     except IndexError:
         pass
 
     # add date information if possible
     try:
-        date = sys.version.split('(')[1].split(')')[0].strip()
-        messages += '\n' + textentry('40-001-00015', args=[date])
+        if '(' in sys.version and ')' in sys.version:
+            date = sys.version.split('(')[1].split(')')[0].strip()
+            messages += '\n' + textentry('40-001-00015', args=[date])
     except IndexError:
         pass
 
     # add Other info information if possible
     try:
-        other = sys.version.split('[')[1].split(']')[0].strip()
-        messages += '\n' + textentry('40-001-00016', args=[other])
+        if '[' in sys.version and ']' in sys.version:
+            other = sys.version.split('[')[1].split(']')[0].strip()
+            messages += '\n' + textentry('40-001-00016', args=[other])
     except IndexError:
         pass
 
