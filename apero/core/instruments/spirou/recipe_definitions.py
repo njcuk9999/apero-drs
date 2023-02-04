@@ -1596,6 +1596,8 @@ pp_seq_opt.add(apero_preprocess, name='PP_LFCFP', files=[files.raw_lfc_fp],
                recipe_kind='pre-lfcfp')
 pp_seq_opt.add(apero_preprocess, name='PP_FPLFC', files=[files.raw_fp_lfc],
                recipe_kind='pre-fplfc')
+pp_seq_opt.add(apero_preprocess, name='PP_EVERY',
+               files=[files.raw_file])
 
 # -----------------------------------------------------------------------------
 # reference sequence (for trigger)
@@ -1837,6 +1839,8 @@ eng_seq.add(apero_extract, name='EXT_LFCFP', files=[files.pp_lfc_fp],
             recipe_kind='extract-lfcfp')
 eng_seq.add(apero_extract, name='EXT_FPLFC', files=[files.pp_fp_lfc],
             recipe_kind='extract-fplfc')
+eng_seq.add(apero_extract, name='EXT_EVERY', files=[files.pp_file],
+            recipe_kind='extract-everything')
 
 # -----------------------------------------------------------------------------
 # sequences list
