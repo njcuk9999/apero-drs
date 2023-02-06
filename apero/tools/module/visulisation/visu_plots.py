@@ -9,22 +9,21 @@ Created on 2022-02-22
 
 @author: cook
 """
-import numpy as np
 import warnings
 
 import bokeh
-from bokeh.plotting import figure
+import numpy as np
 from bokeh.layouts import grid, row, column, Spacer
-from bokeh.models import HoverTool, CheckboxButtonGroup
 from bokeh.models import ColumnDataSource, Slider, Button
+from bokeh.models import HoverTool, CheckboxButtonGroup
 from bokeh.models import Range1d, Dropdown, RangeSlider
 from bokeh.models.widgets import DataTable, TableColumn
-from bokeh.models.widgets import  Div
+from bokeh.models.widgets import Div
+from bokeh.plotting import figure
 
 from apero.core import constants
 from apero.core import math as mp
 from apero.tools.module.visulisation import visu_core
-
 
 # =============================================================================
 # Define variables
@@ -51,23 +50,21 @@ def test_plot(**kwargs) -> bokeh.models.Model:
                    x_range=[0, 4 * np.pi], y_range=[-2.5, 2.5])
 
     x = np.arange(-10, 10, 0.1)
-    plot1.circle(x=x, y=x**kwargs['power'])
+    plot1.circle(x=x, y=x ** kwargs['power'])
     plot1.xaxis.axis_label = kwargs['xlabel']
     plot1.yaxis.axis_label = kwargs['ylabel']
 
     return grid([plot1])
 
 
-
-
-
 # =============================================================================
 # Define e2ds plotter
 # =============================================================================
+# noinspection PyUnresolvedReferences
 class SpectrumPlot:
-    def __init__(self, figure):
+    def __init__(self, figureinst):
         # figure this is part of
-        self.figure = figure
+        self.figure = figureinst
         # values to change by the user
         self.obs_dir = ''
         self.identifier = ''
@@ -107,7 +104,7 @@ class SpectrumPlot:
                             TableColumn(field='values', title='')]
         self.current_filename = 'None'
         # create div spinner
-        self.div_spinner = Div(text="",width=120,height=120)
+        self.div_spinner = Div(text="", width=120, height=120)
         # widgets
         self.obs_dir_widget = None
         self.identifier_widget = None
@@ -132,6 +129,10 @@ class SpectrumPlot:
                                   fiber=self.fiber)
 
         self.valid = False
+        self.hover = None
+        self.wave_widget = None
+        self.widget_spacer = None
+        self.log_widget = None
         # create the graph
         self.create()
 
@@ -316,7 +317,7 @@ class SpectrumPlot:
             if it in switch:
                 if self.lines[it] is None:
                     self.plot_line(it)
-                else:
+                elif self.lines:
                     self.lines[it].visible = True
             elif self.lines[it] is not None:
                 self.lines[it].visible = False
@@ -538,7 +539,7 @@ class SpectrumPlot:
         self.source.data[cxname] = self.source.data[sxname]
         self.source.data[cyname] = self.source.data[syname]
         # adjust ymin and ymax
-        y = self.source.data[syname]
+        y = np.array(self.source.data[syname])
         self.ymin = np.min([self.ymin, mp.nanmin(y)])
         self.ymax = np.max([self.ymax, mp.nanmax(y)])
         # only plot if active
@@ -585,6 +586,7 @@ class SpectrumPlot:
 
 
 def e2ds_plot(**kwargs) -> bokeh.models.Model:
+    _ = kwargs
     # -------------------------------------------------------------------------
     plotwindow = figure(height=512, width=768)
     plotwindow.sizing_mode = 'stretch_both'

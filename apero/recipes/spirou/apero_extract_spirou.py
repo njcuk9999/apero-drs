@@ -1,29 +1,32 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+apero_extract_spirou.py [obs dir] [ files]
 
-# CODE DESCRIPTION HERE
+APERO extraction recipe for SPIROU
 
 Created on 2019-07-05 at 16:46
 
 @author: cook
 """
-from apero.base import base
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 from apero import lang
+from apero.base import base
 from apero.core import constants
+from apero.core.core import drs_database
 from apero.core.core import drs_file
 from apero.core.core import drs_log
+from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
-from apero.core.core import drs_database
+from apero.science import extract
 from apero.science.calib import flat_blaze
 from apero.science.calib import gen_calib
+from apero.science.calib import leak
 from apero.science.calib import localisation
 from apero.science.calib import shape
-from apero.science.calib import wave
 from apero.science.calib import thermal
-from apero.science.calib import leak
-from apero.science import extract
+from apero.science.calib import wave
 
 # =============================================================================
 # Define variables
@@ -35,10 +38,12 @@ __version__ = base.__version__
 __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
-# get param dict
-ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
+# Get Recipe class
+DrsRecipe = drs_recipe.DrsRecipe
+# Get parameter class
+ParamDict = constants.ParamDict
 # Get the text types
 textentry = lang.textentry
 
@@ -52,21 +57,18 @@ textentry = lang.textentry
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(obs_dir=None, files=None, **kwargs):
+def main(obs_dir: Optional[str] = None, files: Optional[List[str]] = None,
+         **kwargs) -> Union[Dict[str, Any], Tuple[DrsRecipe, ParamDict]]:
     """
-    Main function for apero_extract_spirou.py
+    Main function for apero_extract
 
     :param obs_dir: string, the night name sub-directory
     :param files: list of strings or string, the list of files to process
     :param kwargs: any additional keywords
 
-    :type obs_dir: str
-    :type files: list[str]
-
     :keyword debug: int, debug level (0 for None)
 
     :returns: dictionary of the local space
-    :rtype: dict
     """
     # assign function calls (must add positional)
     fkwargs = dict(obs_dir=obs_dir, files=files, **kwargs)
@@ -85,13 +87,14 @@ def main(obs_dir=None, files=None, **kwargs):
     return drs_startup.end_main(params, llmain, recipe, success)
 
 
-def __main__(recipe, params):
+def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     """
     Main code: should only call recipe and params (defined from main)
 
-    :param recipe:
-    :param params:
-    :return:
+    :param recipe: DrsRecipe, the recipe class using this function
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: dictionary containing the local variables
     """
     # ----------------------------------------------------------------------
     # Main Code
@@ -110,7 +113,8 @@ def __main__(recipe, params):
     # deal with input data from function
     if 'files' in params['DATA_DICT']:
         # get list of in files from data dict (passed in)
-        infiles = params['DATA_DICT']['files']
+        if params['DATA_DICT']['files'] is not None:
+            infiles = params['DATA_DICT']['files']
         # get list of raw files from data dict (passed in)
         rawfiles = params['DATA_DICT']['rawfiles']
         # get combine parameter from data dict (passed in)
@@ -328,7 +332,7 @@ def __main__(recipe, params):
                                               wgrid='velocity', fiber=fiber,
                                               s1dkind=s1dextfile)
             else:
-                swprops, svprops = None,  None
+                swprops, svprops = None, None
 
             # --------------------------------------------------------------
             # Plots
@@ -445,7 +449,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return drs_startup.return_locals(params, locals())
+    return locals()
 
 
 # =============================================================================

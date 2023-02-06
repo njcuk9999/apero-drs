@@ -1,21 +1,22 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+APERO plotting latex functionality
 
-# CODE DESCRIPTION HERE
+How to convert summary plots into latex
 
 Created on 2019-10-04 at 14:14
 
 @author: cook
 """
-from astropy.table import Table
-from collections import OrderedDict
 import glob
-import numpy as np
 import os
 import shutil
+from collections import OrderedDict
 from typing import Dict, List, Union
+
+import numpy as np
+from astropy.table import Table
 
 from apero.base import base
 from apero.core import constants

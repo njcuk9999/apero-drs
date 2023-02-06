@@ -111,8 +111,16 @@ Counting recipes that did not finish
 
 .. code-block:: MySQL
 
-    SELECT RECIPE, SHORTNAME, COUNT(SHORTNAME) 
-    FROM LOG_setup_spirou_stable_07_DB 
+    SELECT RECIPE, SHORTNAME, COUNT(SHORTNAME) as count
+    FROM {log table name}
     WHERE ENDED=0 
     GROUP BY SHORTNAME;
 
+Finding the number of telluric stars that were used in making transmission measurements and show their RA and Dec
+
+.. code-block:: MySQL
+
+    SELECT m.OBJECT as object, COUNT(m.OBJECT) as count, c.RA_DEG as ra, c.DEC_DEG as de
+    FROM {tellu table name} AS m
+    INNER JOIN {object table name} AS c ON c.OBJNAME = m.OBJECT
+    WHERE KEYNAME='TELLU_TRANS' GROUP BY m.OBJECT;

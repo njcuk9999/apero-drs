@@ -10,7 +10,6 @@ Created on 2019-11-26 at 18:10
 @author: cook
 """
 from apero.base import base
-from apero import lang
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
 
@@ -42,12 +41,7 @@ def main(**kwargs):
     """
     Main function for apero_validate.py
 
-    :param directory: string, the night name sub-directory
-    :param files: list of strings or string, the list of files to process
     :param kwargs: any additional keywords
-
-    :type directory: str
-    :type files: list[str]
 
     :keyword debug: int, debug level (0 for None)
 
@@ -87,7 +81,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return drs_startup.return_locals(params, locals())
+    return locals()
 
 
 # =============================================================================

@@ -9,13 +9,12 @@ Created on 2022-06-03
 
 @author: cook
 """
-from apero.base import base
 from apero import lang
+from apero.base import base
 from apero.core.core import drs_log
 from apero.core.core import drs_text
 from apero.core.utils import drs_startup
 from apero.tools.module.processing import drs_trigger
-
 
 # =============================================================================
 # Define variables
@@ -41,8 +40,6 @@ def main(**kwargs):
     Main function for apero_changelog.py
 
     :param kwargs: any additional keywords
-
-    :type preview: bool
 
     :returns: dictionary of the local space
     :rtype: dict
@@ -92,11 +89,10 @@ def __main__(recipe, params):
     iteration = 1
     # run the loop
     while trigger.active:
-        # update progress
-        # TODO: Add to language database
-        msg = f'Iteration {0} (Ctrl+C to cancel)'
+        # update progress: Iteration {0} (Ctrl+C to cancel)
         margs = [iteration]
-        WLOG(params, 'info', msg.format(*margs), colour='magenta')
+        WLOG(params, 'info', textentry('40-503-00062', args=margs),
+             colour='magenta')
         # run trigger
         trigger()
         # update iterator
@@ -105,7 +101,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return drs_startup.return_locals(params, locals())
+    return locals()
 
 
 # =============================================================================

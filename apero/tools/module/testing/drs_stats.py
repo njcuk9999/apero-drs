@@ -9,26 +9,28 @@ Created on 2021-12-06
 
 @author: cook
 """
-from astropy.table import Table
 import glob
-import numpy as np
 import os
-from pandasql import sqldf
-import pandas as pd
 import re
 import string
-from typing import Any, Dict, List, Optional, Tuple
 import warnings
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+import numpy as np
+import pandas as pd
+from astropy.table import Table
+from pandasql import sqldf
 
 from apero.base import base
 from apero.core import constants
 from apero.core import math as mp
 from apero.core.core import drs_base_classes as base_class
-from apero.core.core import drs_log
 from apero.core.core import drs_database
+from apero.core.core import drs_log
+from apero.core.core import drs_misc
 from apero.core.core import drs_text
 from apero.core.utils import drs_recipe
-
+from apero.io import drs_fits
 
 # =============================================================================
 # Define variables
@@ -50,8 +52,8 @@ ParamDict = constants.ParamDict
 DrsRecipe = drs_recipe.DrsRecipe
 # define index columns to get
 FINDEX_COLS = ['FILENAME', 'OBS_DIR', 'BLOCK_KIND', 'KW_MID_OBS_TIME',
-              'INFILES', 'KW_OUTPUT', 'KW_DPRTYPE']
-# reegex code for locating errors
+               'INFILES', 'KW_OUTPUT', 'KW_DPRTYPE']
+# regex code for locating errors
 REGEX_ERROR_CODE = r'E\[\d\d-\d\d\d-\d\d\d\d\d\]'
 # apero processing code for printing error summary entry
 REPORT_ERROR_CODE = 'W[40-503-00019]'
@@ -60,7 +62,7 @@ UNHANDLED_ERROR_CODE = 'E[01-010-00001]'
 
 
 # =============================================================================
-# General functions
+# Define classes
 # =============================================================================
 class LogEntry:
     def __init__(self, pid: str, dataframe: pd.DataFrame):
@@ -94,9 +96,9 @@ class LogEntry:
         self.is_valid = False
         self.is_valid_for_timing = False
         self.is_valid_for_qc = False
-        # set sublevel criteria
+        # set sub level criteria
         self.criteria = []
-        # qc criteria (for each sublevel)
+        # qc criteria (for each sub level)
         self.passed = dict()
         self.qc_names = dict()
         self.qc_values = dict()
@@ -144,11 +146,11 @@ class LogEntry:
                 self.has_index = True
                 # get the observation directories (assume all entries equal)
                 self.obs_dir = self.index['OBS_DIR'].iloc[0]
-                # get the infiles (assume all entries equal)
+                # get the in files (assume all entries equal)
                 raw_infiles = self.index['INFILES'].iloc[0]
                 if isinstance(raw_infiles, str):
                     self.infiles = self.index['INFILES'].iloc[0].split('|')
-                # get outfiles
+                # get out files
                 self.outfiles = np.array(self.index['FILENAME'])
                 # get the output file type
                 self.outtypes = np.array(self.index['KW_OUTPUT'])
@@ -169,7 +171,7 @@ class LogEntry:
             rawend = self.data.iloc[0]['END_TIME']
             # try to get duration
             try:
-                # convert start tiem to a time
+                # convert start time to a time
                 if not drs_text.null_text(rawstart, ['None', 'Null', '']):
                     self.start_time = Time(rawstart).unix
                 else:
@@ -208,7 +210,7 @@ class LogEntry:
                 for row in range(len(self.data)):
                     # get this rows datas
                     row_data = self.data.iloc[row]
-                    # get sublevel
+                    # get sub level
                     sublevel = subcriteria[row]
                     # get passed criteria for all qc
                     passed = drs_text.true_text(row_data['PASSED_ALL_QC'])
@@ -226,6 +228,7 @@ class LogEntry:
                         if cond1 or cond2:
                             continue
                         # evaluate values
+                        # noinspection PyBroadException
                         try:
                             qc_values.append(eval(qc_values_raw[qc_it]))
                         except Exception as _:
@@ -240,7 +243,7 @@ class LogEntry:
                     flags = base_class.BinaryDict()
                     flags.add_keys(row_data['FLAGSTR'].split('|'))
                     flags.encode(row_data['FLAGNUM'])
-                    # get the runninng + ended flags
+                    # get the running + ended flags
                     running = flags['RUNNING']
                     ended = flags['ENDED']
                     # get any errors
@@ -268,15 +271,31 @@ class LogEntry:
         return sqldf(command, self.namespace)
 
 
+class StatProperty:
+    def __init__(self, name, kind):
+        self.name = name
+        self.kind = kind
+        self.value = None
 
+    def add(self, pdict, value, func_name):
+        self.value = value
+        pdict[self.name] = self.value
+        pdict.set_source(self.name, func_name)
+        pdict.instances[self.name] = self
+
+    def make(self) -> str:
+        return f'{self.name} = {self.value}'
+
+
+# =============================================================================
+# Define class worker functions
+# =============================================================================
 def get_log_entries(params: ParamDict,
                     mode: str) -> List[LogEntry]:
-
     # load log database
     WLOG(params, '', 'Obtaining full log database. Please wait...')
     logdbm = drs_database.LogDatabase(params)
     logdbm.load_db()
-
 
     # get condition from arguments
     if drs_text.null_text(params['INPUTS']['SQL'], ['None', '', 'Null']):
@@ -323,7 +342,7 @@ def _index_database_crossmatch(idataframe: pd.DataFrame,
     """
     Get all index entries for a specific pid
 
-    :param idataframe: pandas.DataFrame -the full index database
+    :param idataframe: pandas.DataFrame - the full index database
     :param pid: str, the unique pid from the log entry
 
     :return: pandas dataframe - all index entries that match this pid
@@ -337,7 +356,7 @@ def _index_database_crossmatch(idataframe: pd.DataFrame,
 # =============================================================================
 # Define timing stats functions
 # =============================================================================
-def timing_stats(params: ParamDict, recipe: DrsRecipe):
+def timing_stats(params: ParamDict, recipe: DrsRecipe) -> ParamDict:
     """
     Print and plot timing stats
 
@@ -345,6 +364,8 @@ def timing_stats(params: ParamDict, recipe: DrsRecipe):
     :param recipe:
     :return:
     """
+    # set function name
+    func_name = __NAME__ + '.timing_stats()'
     # print progress
     WLOG(params, 'info', 'Running timing code')
     # -------------------------------------------------------------------------
@@ -392,6 +413,16 @@ def timing_stats(params: ParamDict, recipe: DrsRecipe):
     # -------------------------------------------------------------------------
     # plot timing graph
     recipe.plot('STATS_TIMING_PLOT', logs=log_entries, pstats=pdict)
+    # -------------------------------------------------------------------------
+    # save outputs to return
+    outputs = ParamDict()
+    # loop around stat dictionary
+    for recipe_name in stat_dict:
+        # add outputs
+        sprop = StatProperty(f'{recipe_name}_NRUNS', 'static')
+        sprop.add(outputs, stat_dict[recipe_name]['NUMBER'], func_name)
+    # return outputs
+    return outputs
 
 
 def get_timing_stats(logs: List[LogEntry]) -> Dict[str, Dict[str, Any]]:
@@ -454,9 +485,9 @@ def get_timing_stats(logs: List[LogEntry]) -> Dict[str, Dict[str, Any]]:
 
 def print_timing_stats(params: ParamDict, recipe: str,
                        stats: Dict[str, Any]) -> str:
-    WLOG(params, 'info', '='*50)
+    WLOG(params, 'info', '=' * 50)
     WLOG(params, 'info', '\t{0}'.format(recipe))
-    WLOG(params, 'info', '='*50)
+    WLOG(params, 'info', '=' * 50)
     # print stats
     statstr = ('\n\tMean Time: {MEAN:.3f} s +/- {STD:.3f}'
                '\n\tMed Time: {MEDIAN:.3f} s +/- {STD:.3f}'
@@ -469,10 +500,11 @@ def print_timing_stats(params: ParamDict, recipe: str,
 
     return statstr.replace('\t', '\n').format(**stats)
 
+
 # =============================================================================
 # Define qc stats functions
 # =============================================================================
-def qc_stats(params: ParamDict, recipe: DrsRecipe):
+def qc_stats(params: ParamDict, recipe: DrsRecipe) -> ParamDict:
     """
     Print and plot quality control / running / error stats
 
@@ -480,6 +512,8 @@ def qc_stats(params: ParamDict, recipe: DrsRecipe):
     :param recipe:
     :return:
     """
+    # set function name
+    func_name = __NAME__ + '.qc_stats()'
     # print progress
     WLOG(params, 'info', 'Running timing code')
     # get log entries
@@ -499,10 +533,39 @@ def qc_stats(params: ParamDict, recipe: DrsRecipe):
         # check we have more than one point
         cond = _check_have_stats(stat_dict[recipe_name])
         # plot if we have more than one point and we have a qc plot
-        if cond and len(xvalues) > 1 :
+        if cond and len(xvalues) > 1:
             recipe.plot('STAT_QC_RECIPE_PLOT', xvalues=xvalues,
                         yvalues=yvalues, lvalues=lvalues, llabels=llabels,
                         recipe_name=recipe_name)
+
+    # -------------------------------------------------------------------------
+    # save outputs to return
+    outputs = ParamDict()
+    # loop around stat dictionary
+    for recipe_name in stat_dict:
+        crits = stat_crit[recipe_name]
+        # loop around log levels
+        for crit in crits:
+            # deal with log levels as stat_dict key
+            if crit == 'None':
+                cstring = ''
+            else:
+                cstring = f'::{crit.strip()}'
+            # set number passed
+            sprop = StatProperty(f'{recipe_name}_QC_NPASSED', 'static')
+            sprop.add(outputs, stat_dict[recipe_name]['NUM_PASSED' + cstring],
+                      func_name)
+            # set number failed
+            sprop = StatProperty(f'{recipe_name}_QC_NFAILED', 'static')
+            sprop.add(outputs, stat_dict[recipe_name]['NUM_FAILED' + cstring],
+                      func_name)
+            # set number ended
+            sprop = StatProperty(f'{recipe_name}_QC_NENDED', 'static')
+            sprop.add(outputs, stat_dict[recipe_name]['NUM_ENDED' + cstring],
+                      func_name)
+
+    # return outputs
+    return outputs
 
 
 def _get_list_param(data, key: str, delimiter='||'):
@@ -521,11 +584,11 @@ def _get_list_param(data, key: str, delimiter='||'):
         return data[key].split(delimiter)
 
 
-def _sort_sublevel(data) -> List[str]:
+def _sort_sublevel(data: pd.DataFrame) -> List[str]:
     """
     Remove any static variables from the criteria
 
-    :param criteria: pandas data, the sublevel criteria
+    :param data: pandas data, the sublevel criteria
 
     :return: list of strings, updated sublevel criteria
     """
@@ -638,7 +701,7 @@ def get_qc_stats(logs: List[LogEntry]) -> QcStatReturn:
                 qcpfunc = lambda x: _mapqc(x, 'qc_passes', crit, qcn, False)
                 qclfunc = lambda x: _mapqc(x, 'qc_logics', crit, qcn, 'None')
                 # get mapped values
-                qcv = list(map(qcvfunc,  rlogs))
+                qcv = list(map(qcvfunc, rlogs))
                 qcp = list(map(qcpfunc, rlogs))
                 qcl = list(map(qclfunc, rlogs))
                 # push into stats dict
@@ -667,9 +730,9 @@ def get_qc_stats(logs: List[LogEntry]) -> QcStatReturn:
 def print_qc_stats(params: ParamDict, recipe_name: str, stats: Dict[str, Any],
                    stat_crit: List[str], stat_qc: Dict[str, List[str]]):
     # print recipe
-    WLOG(params, 'info', '='*50)
+    WLOG(params, 'info', '=' * 50)
     WLOG(params, 'info', '\t{0}'.format(recipe_name))
-    WLOG(params, 'info', '='*50)
+    WLOG(params, 'info', '=' * 50)
     # loop around criteria
     for crit in stat_crit:
         # clean stat str
@@ -892,18 +955,19 @@ def _get_logic_values(key: str, logic: List[str]) -> List[List[float]]:
         # storage for number
         logic_nums = []
         # remove any non numeric "words"
-        for row in range(len(logic_var)):
+        for subrow in range(len(logic_var)):
             # try to get a int or float out of parameter
+            # noinspection PyBroadException
             try:
-                logic_nums.append(float(eval(logic_var[row])))
+                logic_nums.append(float(eval(logic_var[subrow])))
             except Exception as _:
                 continue
         # push numbers into dictionary
-        for row in range(len(logic_nums)):
-            if row in ldict:
-                ldict[row].append(logic_nums[row])
+        for subrow in range(len(logic_nums)):
+            if subrow in ldict:
+                ldict[subrow].append(logic_nums[subrow])
             else:
-                ldict[row] = [logic_nums[row]]
+                ldict[subrow] = [logic_nums[subrow]]
     # push into vectors
     lvalues = []
     for row in ldict:
@@ -912,7 +976,7 @@ def _get_logic_values(key: str, logic: List[str]) -> List[List[float]]:
     return lvalues
 
 
-def _get_qcv(stats: dict, xkey: str, ykey: str, return_mask: bool = False
+def _get_qcv(stats: dict, xkey: str, ykey: str
              ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Filter out bad values for both x and y in the qc stat dictionary
@@ -932,6 +996,7 @@ def _get_qcv(stats: dict, xkey: str, ykey: str, return_mask: bool = False
     valid_mask = []
     # loop around all values
     for row in range(len(yvalues)):
+        # noinspection PyBroadException
         try:
             # cast to floats / bool
             vx = float(xvalues[row])
@@ -953,8 +1018,6 @@ def _get_qcv(stats: dict, xkey: str, ykey: str, return_mask: bool = False
     sortmask = np.argsort(vxvalues)
     # return sorted valid values in x and y
     return vxvalues[sortmask], vyvalues[sortmask], vmask[sortmask]
-
-
 
 
 # =============================================================================
@@ -983,7 +1046,7 @@ class ErrorReportEntry:
         entrystr += '\n#' + ' {0} / {1}'.format(iteration + 1, length)
         entrystr += '\n#' + ' RUNSTRING = {0}'.format(self.runstring)
         entrystr += '\n#' + '=' * 80
-        # entrystr around lines in report and add to lines
+        # entry str around lines in report and add to lines
         for reportline in self.error_report:
             entrystr += '\n' + reportline
         entrystr += '\n\n'
@@ -992,6 +1055,7 @@ class ErrorReportEntry:
     def process(self, params):
         # ---------------------------------------------------------------------
         # get run id - should be in line 0
+        # noinspection PyBroadException
         try:
             run_id = self.error_lines[0].split('ID=\'')[-1]
             run_id = run_id.split('\'')[0]
@@ -1049,7 +1113,8 @@ def error_stats(params: ParamDict):
 
     :return: None, writes log files to {DRS_DATA_MSG}/reports/LOG_NAME/
     """
-
+    # set function name
+    func_name = __NAME__ + '.error_stats()'
     # deal with plog from arguments
     plog_files = []
     if 'INPUTS' in params:
@@ -1071,6 +1136,8 @@ def error_stats(params: ParamDict):
                 if filename.endswith('apero_processing.log'):
                     plog_files.append(os.path.join(_root, filename))
     # -------------------------------------------------------------------------
+    # storage for output
+    recipe_count_all = dict()
     # loop around log files
     for p_it, plog_file in enumerate(plog_files):
         # print progress
@@ -1081,6 +1148,8 @@ def error_stats(params: ParamDict):
         # read the log file
         with open(plog_file, 'r') as plogfile:
             lines = plogfile.readlines()
+        # storage for this processing log
+        recipe_count_all[plog_file] = dict()
         # ---------------------------------------------------------------------
         # get the reports in a directory
         report_subdir = os.path.basename(plog_file).replace('.log', '')
@@ -1150,6 +1219,10 @@ def error_stats(params: ParamDict):
         for recipename in recipe_count:
             msg = '\t- There were {0} errors for recipe {1}'
             WLOG(params, '', msg.format(recipe_count[recipename], recipename))
+
+        # save all plog recipe counts
+        recipe_count_all[plog_file]['TCOUNT'] = len(error_rentries)
+        recipe_count_all[plog_file]['RCOUNT'] = recipe_count
         # ---------------------------------------------------------------------
         # print progress
         WLOG(params, 'info', 'Counting number of unique errors')
@@ -1175,6 +1248,8 @@ def error_stats(params: ParamDict):
                     all_error_codes_runstrings[code] += [entry.runstring]
                     all_error_codes_instance[code] += [entry]
                     all_error_codes_recipe_names[code] += [entry.recipename]
+        # update full plog
+        recipe_count_all[plog_file]['EXPECTED_COUNT'] = all_error_codes
         # ---------------------------------------------------------------------
         # print out error codes into groups
         for code in all_error_codes:
@@ -1214,7 +1289,9 @@ def error_stats(params: ParamDict):
         # deal with no unhandled errors found
         if UNHANDLED_ERROR_CODE not in all_error_codes_instance:
             WLOG(params, 'info', '\tNo unhandled errors found')
-            return
+            # update full plog
+            recipe_count_all[plog_file]['UNEXPECTED_COUNT'] = dict()
+            continue
         # get unhandled instances
         uinstances = all_error_codes_instance[UNHANDLED_ERROR_CODE]
         uerror_reports = list(map(lambda x: x.error_report, uinstances))
@@ -1239,6 +1316,8 @@ def error_stats(params: ParamDict):
         # write unhandled groups to log files
         # print progress
         WLOG(params, 'info', 'Writing unhandled errors to group log files')
+        # store unhandled
+        unhandled_store = dict()
         # loop around groups and save
         for key in group_instances:
             # define the code string
@@ -1256,6 +1335,8 @@ def error_stats(params: ParamDict):
             # log how many instances found
             msg = '\t\t Found {0} recipes with this error'
             WLOG(params, '', msg.format(len(instance_group)))
+            # store number
+            unhandled_store[key] = len(instance_group)
             # print unique recipe names
             WLOG(params, '', '\t\t({0})'.format(','.join(urecipe_names)))
             # reset lines
@@ -1266,6 +1347,18 @@ def error_stats(params: ParamDict):
             # save to file
             with open(os.path.join(report_dir, codestr + '.log'), 'w') as rfile:
                 rfile.write(lines)
+        # update full plog
+        recipe_count_all[plog_file]['UNEXPECTED_COUNT'] = unhandled_store
+    # -------------------------------------------------------------------------
+    # save outputs to return
+    outputs = ParamDict()
+    # loop around stat dictionary
+    for plog_file in recipe_count_all:
+        # each plog file creates one entry
+        sprop = StatProperty(plog_file, 'varying')
+        sprop.add(outputs, recipe_count_all[plog_file], func_name)
+    # return outputs
+    return outputs
 
 
 # =============================================================================
@@ -1276,18 +1369,59 @@ def memory_stats(params: ParamDict, recipe: DrsRecipe):
     Create the memory stats plot
 
     :param params: ParamDict, parameter dictionary of constants
+    :param recipe: DrsRecipe, the recipe that called this module (used for
+                   plotting)
 
     :return: None, plots graph
     """
+    # set function name
+    func_name = __NAME__ + '.memory_stats()'
+    # ---------------------------------------------------------------------
+    # construct report directory
+    report_dir = os.path.join(params['DRS_DATA_MSG'], 'report')
+    # deal with report directory not existing
+    if not os.path.exists(report_dir):
+        os.makedirs(report_dir)
+    # ---------------------------------------------------------------------
     # get log database
     WLOG(params, '', 'Loading log database')
     logdbm = drs_database.LogDatabase(params)
     # set up condition
-    condition = 'RECIPE_TYPE="recipe" AND ENDED=1'
+    condition = 'RECIPE_TYPE LIKE "%recipe%" AND ENDED=1'
     columns = ('SHORTNAME, UNIXTIME, RAM_USAGE_START, RAM_USAGE_END, '
-               'START_TIME, END_TIME')
-    # get columns from logdbm
-    ltable = logdbm.get_entries(columns, condition=condition)
+               'START_TIME, END_TIME, RECIPE, RECIPE_TYPE, ENDED')
+    # -------------------------------------------------------------------------
+    # use sql to turn off certain recipes
+    if not drs_text.null_text(params['INPUTS']['SQL'], ['None', '', 'Null']):
+        condition += 'AND' + params['INPUTS']['SQL']
+    # -------------------------------------------------------------------------
+    # get limit
+    if params['INPUTS']['LIMIT'] != 0:
+        limit = params['INPUTS']['LIMIT']
+    else:
+        limit = None
+    # -------------------------------------------------------------------------
+    # get columns from log dbm
+    ltable = logdbm.get_entries(columns, condition=condition,
+                                groupby='PID')
+    # find start and end points for each recipe
+    shortnames = logdbm.database.unique('SHORTNAME', condition=condition)
+    # -------------------------------------------------------------------------
+    # deal with limit
+    if limit is not None:
+        # store valid shortnames
+        new_shortnames = []
+        # loop around all shortnames
+        for shortname in shortnames:
+            # get a mask for this shortname
+            mask = ltable['SHORTNAME'] == shortname
+            # remove any able limit
+            if np.sum(mask) > limit:
+                ltable = ltable[~mask]
+            else:
+                new_shortnames.append(shortname)
+        # overwrite original list
+        shortnames = np.array(new_shortnames)
     # -------------------------------------------------------------------------
     # print progress
     WLOG(params, '', 'Sorting time axis')
@@ -1297,22 +1431,20 @@ def memory_stats(params: ParamDict, recipe: DrsRecipe):
     # change time to hours
     time0 = time0 / 3600
     # change start time and end time into time since start
-    starttime = pd.to_datetime(ltable["START_TIME"]).view("int64") / 10**9
+    starttime = pd.to_datetime(ltable["START_TIME"]).view("int64") / 10 ** 9
     starttime = (starttime - time000) / 3600
-    endtime = pd.to_datetime(ltable["END_TIME"]).view("int64") / 10**9
+    endtime = pd.to_datetime(ltable["END_TIME"]).view("int64") / 10 ** 9
     endtime = (endtime - time000) / 3600
     # -------------------------------------------------------------------------
     # print progress
     WLOG(params, '', 'Getting recipe start and finish limits')
-    # find start and end points for each recipe
-    shortnames = logdbm.database.unique('SHORTNAME', condition=condition)
     # get first occurrence of each short name
     unix_short = []
     for shortname in shortnames:
         mask = ltable['SHORTNAME'] == shortname
         unix_short.append(np.min(starttime[mask]))
-    # resort shortnames by occurence
-    shortnames = shortnames[np.argsort(unix_short)[::-1]]
+    # resort shortnames by occurrence
+    shortnames = shortnames[np.argsort(unix_short)]
     # storage box values
     shortname_values = dict()
     # find the first and last entry for each shortname
@@ -1320,17 +1452,25 @@ def memory_stats(params: ParamDict, recipe: DrsRecipe):
         mask = ltable['SHORTNAME'] == shortname
         # have to deal with one entry
         if np.sum(mask) == 1:
+            s_start = np.array([starttime[mask].iloc[0]])
+            s_end = np.array([endtime[mask].iloc[0]])
             smed = time0[mask].iloc[0]
-            smin = smed - starttime[mask].iloc[0]
-            smax = endtime[mask].iloc[0] - smed
+            r_start = np.array([ltable['RAM_USAGE_START'][mask].iloc[0]])
+            r_end = np.array([ltable['RAM_USAGE_END'][mask].iloc[0]])
         else:
+            s_start = np.array(starttime[mask])
+            s_end = np.array(endtime[mask])
             smed = np.median(time0[mask])
-            smin = smed - np.min(starttime[mask])
-            smax = np.max(endtime[mask]) - smed
-        shortname_values[shortname] = [smin, smed, smax]
+            r_start = np.array(ltable['RAM_USAGE_START'][mask])
+            r_end = np.array(ltable['RAM_USAGE_END'][mask])
+        smin = smed - np.min(s_start)
+        smax = np.max(s_end) - smed
+        shortname_values[shortname] = [smin, smed, smax, s_start, s_end,
+                                       r_start, r_end]
     # -------------------------------------------------------------------------
     # length
-    window = len(ltable) // 1000
+    # window = len(ltable) // 1000
+    window = 1
     # print progress
     WLOG(params, '', f'Calculating rolling mean of timings (window={window}')
     # mean results
@@ -1353,11 +1493,332 @@ def memory_stats(params: ParamDict, recipe: DrsRecipe):
     rmax_end = rmax_end[nanmask]
     rmin_end = rmin_end[nanmask]
     # -------------------------------------------------------------------------
+    # print stats to screen
+    for shortname in shortname_values:
+        _, _, _, _, _, r_start, r_end = shortname_values[shortname]
+        WLOG(params, 'info', 'Recipe = {0}'.format(shortname))
+        WLOG(params, '', '\tMin RAM start: {0:.3f} GB'.format(np.min(r_start)))
+        WLOG(params, '', '\tMax RAM start: {0:.3f} GB'.format(np.max(r_start)))
+        WLOG(params, '', '\tMin RAM end: {0:.3f} GB'.format(np.min(r_end)))
+        WLOG(params, '', '\tMax RAM end: {0:.3f} GB'.format(np.max(r_end)))
+
+    # -------------------------------------------------------------------------
     # plot (more to recipe plots)
     recipe.plot('STAT_RAM_PLOT', time0=time0, ram_start=ram_start,
                 ram_end=ram_end, rmax_start=rmax_start, rmax_end=rmax_end,
                 rmin_start=rmin_start, rmin_end=rmin_end,
                 shortnames=shortnames, shortname_values=shortname_values)
+    # -------------------------------------------------------------------------
+    # make table 1 output
+    table1 = Table()
+    table1['TIME_SINCE_START'] = time0
+    table1['RAM_MIN_START'] = rmin_start
+    table1['RAM_MIN_END'] = rmin_end
+    table1['RAM_MAX_START'] = rmax_start
+    table1['RAM_MAX_END'] = rmax_end
+    table1['RAM_MIN_MIN'] = np.min([rmin_start, rmin_end], axis=0)
+    table1['RAM_MAX_MAX'] = np.max([rmax_start, rmax_end], axis=0)
+    table1['RAM_MEAN'] = np.mean([ram_start, ram_end], axis=0)
+    # -------------------------------------------------------------------------
+    # get data for table 2
+    tabledict2 = dict(SHORTNAME=[], START_UNIX=[],
+                      MED_UNIX=[], END_UNIX=[])
+    for shortname in shortname_values:
+        smin, smed, smax, _, _, _, _ = shortname_values[shortname]
+        tabledict2['SHORTNAME'].append(shortname)
+        tabledict2['START_UNIX'].append(smin)
+        tabledict2['MED_UNIX'].append(smed)
+        tabledict2['END_UNIX'].append(smax)
+    # push table 2 data into table
+    table2 = Table(tabledict2)
+    # -------------------------------------------------------------------------
+    # construct filename
+    filename = os.path.join(report_dir, 'apero_stats_memory.fits')
+    # write memory data
+    drs_fits.writefits(params, filename, data=[None, table1, table2],
+                       header=[None, None, None], names=[None, 'ram', 'recipe'],
+                       datatype=[None, 'table', 'table'],
+                       dtype=[None, None, None])
+    # -------------------------------------------------------------------------
+    # save outputs to return
+    outputs = ParamDict()
+    # loop around stat dictionary
+    for shortname in shortnames:
+        # add outputs
+        sout = shortname_values[shortname]
+        smin, smed, smax, s_start, s_end, r_start, r_end = sout
+        # set time start
+        sprop = StatProperty(f'{shortname}_TIMESTART', 'varying')
+        sprop.add(outputs, smed - smin, func_name)
+        # set time median
+        sprop = StatProperty(f'{shortname}_TIMEMED', 'varying')
+        sprop.add(outputs, smed, func_name)
+        # set time end
+        sprop = StatProperty(f'{shortname}_TIMEEND', 'varying')
+        sprop.add(outputs, smed + smax, func_name)
+        # set ram start min
+        sprop = StatProperty(f'{shortname}_RAMSTART_MIN', 'varying')
+        sprop.add(outputs, np.nanmin(r_start), func_name)
+        # set ram start max
+        sprop = StatProperty(f'{shortname}_RAMSTART_MAX', 'varying')
+        sprop.add(outputs, np.nanmax(r_start), func_name)
+        # set ram end min
+        sprop = StatProperty(f'{shortname}_RAMEND_MIN', 'varying')
+        sprop.add(outputs, np.nanmin(r_end), func_name)
+        # set ram end max
+        sprop = StatProperty(f'{shortname}_RAMEND_MAX', 'varying')
+        sprop.add(outputs, np.nanmax(r_end), func_name)
+
+    # return outputs
+    return outputs
+
+
+# =============================================================================
+# Define file index stats functions
+# =============================================================================
+class FileStat:
+    def __init__(self, name: str, path: str, condition: Optional[str] = None,
+                 per_obs_dir: bool = False, suffix: str = ''):
+        """
+        Construct the file stat class
+
+        :param name: str, the name for the variable
+        :param path: path, the path to the directory to check
+        :param condition: str, the sql WHERE condition to identify this
+                          type of file
+        :param per_obs_dir: bool, if True do this per directory
+        :param suffix: str, the suffix to look for (defaults to '' for None)
+        """
+        self.name = name
+        self.path = path
+        self.suffix = suffix
+        self.condition = condition
+        # can't have a suffix and check database
+        if self.condition is not None and len(self.suffix) > 0:
+            self.condition += f' AND FILENAME LIKE "%{suffix}"'
+        self.per_obs_dir = per_obs_dir
+        self.disk_name = f'DISK_{name.upper()}'
+        self.db_name = f'DB_{name.upper()}'
+        # stuff filled by class
+        self.paths = []
+        self.names = []
+        self.conditions = []
+        self.disk_counts = dict()
+        self.db_counts = dict()
+        # must deal with per obs dirs
+        self.deal_with_per_obs_dir()
+
+    def deal_with_per_obs_dir(self):
+        """
+        Deal with requiring obs_dir sub-directories
+
+        :return:
+        """
+        if not self.per_obs_dir:
+            self.paths = [self.path]
+            self.names = [self.name]
+            self.conditions = [self.condition]
+        else:
+            paths = glob.glob(self.path + '/*')
+            for path in paths:
+                obs_dir = drs_misc.get_uncommon_path(path, self.path)
+                # do not include non-directories (obs_dir must be a directory)
+                if not os.path.isdir(path):
+                    continue
+                name = f'{self.name}[{obs_dir}]'
+                condition = f'{self.condition} AND OBS_DIR="{obs_dir}"'
+                # update class attributes
+                self.paths.append(path)
+                self.names.append(name)
+                self.conditions.append(condition)
+
+    def count_on_disk(self):
+        """
+        Count files on disk
+
+        :return: None, updates self.disk_counts
+        """
+        # loop through paths
+        for it, path in enumerate(self.paths):
+            count = 0
+            # loop through files in path
+            for root, dirs, files in os.walk(path):
+                # loop through files in each directory
+                for filename in files:
+                    # deal with suffix
+                    if filename.endswith(self.suffix):
+                        # add to count
+                        count += 1
+            # save to storage
+            self.disk_counts['disk_' + self.names[it]] = count
+
+    def count_in_db(self, database: drs_database.drs_db.Database):
+        """
+        Count files in database
+
+        :param database: the raw database class (drs_db.Database)
+
+        :return: None, updates self.db_counts
+        """
+        # loop through conditions
+        for it, condition in enumerate(self.conditions):
+            # if we have a condition query database
+            if condition is not None:
+                count = database.count(database.tname, condition)
+            else:
+                count = np.nan
+            # save to storage
+            self.db_counts['db_' + self.names[it]] = count
+
+
+def file_index_stats(params: ParamDict) -> ParamDict:
+    """
+    Get statistics on the file index
+
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: ParamDicts, the param dictionary for outputs
+    """
+    # set function name
+    func_name = __NAME__ + 'file_index_stats()'
+    # load index database
+    findexdb = drs_database.FileIndexDatabase(params)
+    findexdb.load_db()
+    # define data to count
+    # noinspection PyListCreation
+    file_stats: list[FileStat] = []
+    # raw / tmp / red
+    file_stats.append(FileStat('raw', path=params['DRS_DATA_RAW'],
+                               condition='BLOCK_KIND="raw"'))
+    file_stats.append(FileStat('raw[fits]', path=params['DRS_DATA_RAW'],
+                               condition='BLOCK_KIND="raw"',
+                               suffix='.fits'))
+    file_stats.append(FileStat('tmp', path=params['DRS_DATA_WORKING'],
+                               condition='BLOCK_KIND="tmp"'))
+    file_stats.append(FileStat('tmp[fits]', path=params['DRS_DATA_WORKING'],
+                               condition='BLOCK_KIND="tmp"',
+                               suffix='.fits'))
+    file_stats.append(FileStat('red', path=params['DRS_DATA_REDUC'],
+                               condition='BLOCK_KIND="red"'))
+    file_stats.append(FileStat('red[fits]', path=params['DRS_DATA_REDUC'],
+                               condition='BLOCK_KIND="red"',
+                               suffix='.fits'))
+    # calib + tellu
+    file_stats.append(FileStat('calib', path=params['DRS_CALIB_DB']))
+    file_stats.append(FileStat('calib[fits]', path=params['DRS_CALIB_DB'],
+                               suffix='.fits'))
+    file_stats.append(FileStat('tellu', path=params['DRS_TELLU_DB']))
+    file_stats.append(FileStat('tellu[fits]', path=params['DRS_TELLU_DB'],
+                               suffix='.fits'))
+    # per night
+    file_stats.append(FileStat('raw[fits]', path=params['DRS_DATA_RAW'],
+                               condition='BLOCK_KIND="raw"', per_obs_dir=True,
+                               suffix='.fits'))
+    file_stats.append(FileStat('tmp[fits]', path=params['DRS_DATA_WORKING'],
+                               condition='BLOCK_KIND="tmp"', per_obs_dir=True,
+                               suffix='.fits'))
+    file_stats.append(FileStat('red[fits]', path=params['DRS_DATA_REDUC'],
+                               condition='BLOCK_KIND="red"', per_obs_dir=True,
+                               suffix='.fits'))
+    # -------------------------------------------------------------------------
+    # store file outputs
+    file_outputs = dict()
+    # loop around all counts
+    for it in range(len(file_stats)):
+        # get this iterations values
+        file_stat = file_stats[it]
+        # ---------------------------------------------------------------------
+        # log progress
+        WLOG(params, 'info', f'Counting disk files for {file_stat.name}')
+        # count files on disk
+        file_stat.count_on_disk()
+        # print counts
+        for name in file_stat.disk_counts:
+            # get count for disk name
+            disk_count = file_stat.disk_counts[name]
+            # log output
+            WLOG(params, '', f'\t{name}={disk_count}')
+            # add to outputs
+            file_outputs[name] = disk_count
+        # ---------------------------------------------------------------------
+        # log progress
+        WLOG(params, 'info', f'Counting db files for {file_stat.name}')
+        # count files in database
+        file_stat.count_in_db(findexdb.database)
+        # print counts
+        for name in file_stat.db_counts:
+            # get count for disk name
+            db_count = file_stat.db_counts[name]
+            # log output
+            WLOG(params, '', f'\t{name}={db_count}')
+            # add to outputs
+            file_outputs[name] = db_count
+    # -------------------------------------------------------------------------
+    # save outputs to return
+    outputs = ParamDict()
+    for param_name in file_outputs:
+        # set ram end max
+        sprop = StatProperty(param_name, 'static')
+        sprop.add(outputs, file_outputs[param_name], func_name)
+    # return outputs
+    return outputs
+
+
+# =============================================================================
+# Define combine stats functions
+# =============================================================================
+def combine_stats(params: ParamDict, outputs: List[Union[ParamDict, None]]):
+    """
+    Combine the various outputs into a text file
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param outputs: list of ParamDicts, the output parameter dictionary from
+                    each statistic (or None if statistic was skipped)
+
+    :return: None, writes files apero_stats_static and apero_stats_varying
+    """
+    # -------------------------------------------------------------------------
+    # construct report directory
+    report_dir = os.path.join(params['DRS_DATA_MSG'], 'report')
+    # deal with report directory not existing
+    if not os.path.exists(report_dir):
+        os.makedirs(report_dir)
+    # -------------------------------------------------------------------------
+    # construct file names
+    static_file = os.path.join(report_dir, 'apero_stats_static.txt')
+    varying_file = os.path.join(report_dir, 'apero_stats_varying.txt')
+    # -------------------------------------------------------------------------
+    static_list = []
+    varying_list = []
+    # get all static files and add to file
+    for output in outputs:
+        # skip None
+        if output is None:
+            continue
+        # loop around parameters in each output
+        for param_name in output:
+            # get instance associated with parameter
+            instance = output.instances[param_name]
+            # deal with static vs varying
+            if instance.kind == 'static':
+                static_list.append(instance.make())
+            else:
+                varying_list.append(instance.make())
+    # -------------------------------------------------------------------------
+    # log progress
+    WLOG(params, 'info', f'Saving file {static_file}')
+    # create static file list
+    with open(static_file, 'w') as sfile:
+        for line in static_list:
+            sfile.write(line + '\n')
+    # -------------------------------------------------------------------------
+    # log progress
+    WLOG(params, 'info', f'Saving file {varying_file}')
+    # create varying file list
+    with open(varying_file, 'w') as vfile:
+        for line in varying_list:
+            vfile.write(line + '\n')
+    # -------------------------------------------------------------------------
 
 
 # =============================================================================

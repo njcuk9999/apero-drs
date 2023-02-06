@@ -13,11 +13,10 @@ from apero import lang
 from apero.base import base
 from apero.core import constants
 from apero.core.core import drs_log
-from apero.core.core import drs_database
 from apero.core.utils import drs_startup
+from apero.tools.module.database import drs_astrometrics
 from apero.tools.module.database import manage_databases
 from apero.tools.module.setup import drs_installation
-from apero.tools.module.database import drs_astrometrics
 
 # =============================================================================
 # Define variables
@@ -96,7 +95,7 @@ def __main__(recipe, params):
     if len(unfound_objs) == 0:
         msg = 'All objects found in database'
         WLOG(params, 'info', msg)
-        return drs_startup.return_locals(params, locals())
+        return locals()
 
     # ----------------------------------------------------------------------
     # step 2: Can we find object automatically from simbad?
@@ -150,7 +149,7 @@ def __main__(recipe, params):
                     # append to add list
                     add_objs.append(astro_obj)
                 # add to astro_objs
-                astro_objs  = [astro_obj]
+                astro_objs = [astro_obj]
         # --------------------------------------------------------------------
         # if we still have no objects deal with no objects
         if len(astro_objs) == 0:
@@ -193,7 +192,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return drs_startup.return_locals(params, locals())
+    return locals()
 
 
 # =============================================================================

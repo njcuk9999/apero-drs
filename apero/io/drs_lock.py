@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+APERO lock file functionality
 
-# CODE DESCRIPTION HERE
+Mostly for locking and queuing specific files to stop errors when accessing
+at the same time
 
 Created on 2019-01-21 at 09:37
 
@@ -20,15 +21,16 @@ Import rules:
     do not import from core.core.drs_argument
     do not import from core.core.drs_database
 """
-import numpy as np
 import os
 import random
 import time
 from typing import Any, Tuple, Union
 
+import numpy as np
+
+from apero import lang
 from apero.base import base
 from apero.core import constants
-from apero import lang
 from apero.core.core import drs_log
 
 # =============================================================================
@@ -52,6 +54,7 @@ WLOG = drs_log.wlog
 textentry = lang.textentry
 # define max wait
 MAX_WAIT = 100
+
 
 # =============================================================================
 # Define functions
@@ -623,17 +626,16 @@ def __remove_empty__(params: ParamDict, path: str, remove_head: bool = True,
     files = np.sort(os.listdir(path))
     if len(files) == 0 and remove_head:
         if log:
-            # TODO: move to language database
-            WLOG(params, 'debug', "Removing empty folder: {0}".format(path))
+            # print msg: Lock is removing empty folder: {0}
+            WLOG(params, 'debug', textentry('90-008-00015', args=[path]))
         # try to remove or report warning
         try:
             os.rmdir(path)
         except Exception as e:
             eargs = [path, type(e), e, func_name]
-            # TODO: move to language database
-            emsg = ('Cannot remove dir {0}. \n\t Error {1}: {2} '
-                    '\n\t function = {3}')
-            WLOG(params, 'warning', emsg.format(*eargs), sublevel=2)
+            # print msg: Cannot remove dir {0}. Error {1}: {2}
+            WLOG(params, 'warning', textentry('10-001-00014', args=eargs),
+                 sublevel=2)
 
 
 # =============================================================================

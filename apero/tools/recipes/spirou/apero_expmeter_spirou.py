@@ -9,21 +9,22 @@ Created on 2020-02-28 at 16:47
 
 @author: cook
 """
-import numpy as np
 import warnings
 
-from apero.base import base
+import numpy as np
+
 from apero import lang
+from apero.base import base
 from apero.core import constants
 from apero.core import math as mp
 from apero.core.core import drs_database
-from apero.core.core import drs_log
 from apero.core.core import drs_file
+from apero.core.core import drs_log
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_utils
+from apero.science import telluric
 from apero.science.calib import shape
 from apero.science.calib import wave
-from apero.science import telluric
 from apero.tools.module.testing import drs_dev
 from apero.tools.module.utils import inverse
 
@@ -66,16 +67,18 @@ RMOD.add(exposuremeter)
 # get file definitions for this instrument
 FMOD = drs_dev.FileDefinition(instrument=__INSTRUMENT__)
 # make files for this tool
-exp_pp_file = drs_dev.TmpFitsFile('EXP_PP_FILE', KW_OUTPUT='EXP_PP_FILE',
+exp_pp_file = drs_dev.TmpFitsFile('EXP_PP_FILE',
+                                  hkeys=dict(KW_OUTPUT='EXP_PP_FILE'),
                                   filetype='.fits', prefix='EXPMETER_',
                                   suffix='_PPTYPE', remove_insuffix=True,
                                   intype=[FMOD.files.out_wave_night],
-                                  outfunc=FMOD.out.general_file)
-exp_raw_file = drs_dev.TmpFitsFile('EXP_RAW_FILE', KW_OUTPUT='EXP_PP_FILE',
+                                  outclass=FMOD.files.general_ofile)
+exp_raw_file = drs_dev.TmpFitsFile('EXP_RAW_FILE',
+                                   hkeys=dict(KW_OUTPUT='EXP_PP_FILE'),
                                    filetype='.fits', prefix='EXPMETER_',
                                    suffix='_RAWTYPE', remove_insuffix=True,
                                    intype=[FMOD.files.out_wave_night],
-                                   outfunc=FMOD.out.general_file)
+                                   outclass=FMOD.files.general_ofile)
 
 # header keys
 EM_MIN_WAVE = ['EM_MNWAV', 0.0, 'Exposure meter min wave for mask']
@@ -97,9 +100,8 @@ def main(obs_dir=None, **kwargs):
     """
     Main function for exposuremeter_spirou.py
 
+    :param obs_dir: the observation directory
     :param kwargs: additional keyword arguments
-
-    :type instrument: str
 
     :keyword debug: int, debug level (0 for None)
 
@@ -203,12 +205,12 @@ def __main__(recipe, params):
     for fiber in fibers:
         # wave infile
         header = wave_infiles[fiber].get_header()
-        ishape = wave_images[fiber].get_data().shape
+        ishape = wave_images[fiber].shape
         # ------------------------------------------------------------------
         # load wavelength solution for this fiber
         wprops = wave.get_wavesolution(params, recipe,
                                        filename=wave_infiles[fiber].filename,
-                                       database=calibdbm)
+                                       header=header, database=calibdbm)
         # ------------------------------------------------------------------
         # Load the TAPAS atmospheric transmission convolved with the
         #   reference wave solution (1D spectrum)
@@ -232,8 +234,8 @@ def __main__(recipe, params):
     # get the x and y position images
     yimage, ximage = np.indices(ishape)
     # get shape files
-    shapexfile, shapex = shape.get_shapex(params, ref_header)
-    shapeyfile, shapey = shape.get_shapey(params, ref_header)
+    _, _, shapex = shape.get_shapex(params, ref_header)
+    _, _, shapey = shape.get_shapey(params, ref_header)
     # transform the shapex map
     WLOG(params, '', 'Transforming shapex map')
     shapex2 = shape.ea_transform(params, shapex, dymap=-shapey)
@@ -251,7 +253,7 @@ def __main__(recipe, params):
         header = wave_infiles[fiber].get_header()
         # get the localisation parameters for this fiber
         WLOG(params, '', '\t Getting localisation for Fiber={0}'.format(fiber))
-        cents, wids = inverse.calc_central_localisation(params, recipe, fiber,
+        cents, wids = inverse.calc_central_localisation(params, fiber,
                                                         header=header)
         # add to storage
         centers[fiber] = cents
@@ -395,7 +397,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return drs_startup.return_locals(params, locals())
+    return locals()
 
 
 # =============================================================================

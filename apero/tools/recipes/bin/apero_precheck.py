@@ -11,12 +11,11 @@ Created on 2019-07-26 at 09:47
 """
 from apero import lang
 from apero.base import base
-from apero.core.core import drs_log
 from apero.core.core import drs_database
+from apero.core.core import drs_log
 from apero.core.utils import drs_startup
-from apero.tools.module.processing import drs_processing
 from apero.tools.module.processing import drs_precheck
-
+from apero.tools.module.processing import drs_processing
 
 # =============================================================================
 # Define variables
@@ -98,7 +97,8 @@ def __main__(recipe, params):
     # Deal with run file
     # -------------------------------------------------------------------------
     # deal with run file
-    params, runtable = drs_startup.read_runfile(params, runfile, rkind='run')
+    params, runtable = drs_startup.read_runfile(params, recipe, runfile,
+                                                rkind='run')
     # -------------------------------------------------------------------------
     # find all files via index database (required for both checks)
     # -------------------------------------------------------------------------
@@ -142,7 +142,7 @@ def __main__(recipe, params):
     # -------------------------------------------------------------------------
     # End of main code
     # -------------------------------------------------------------------------
-    return drs_startup.return_locals(params, locals())
+    return locals()
 
 
 # =============================================================================

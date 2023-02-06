@@ -1,24 +1,23 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+apero_loc_spirou.py [obs dir] [files]
 
-# CODE DESCRIPTION HERE
+APERO localisation calibration recipe for SPIROU
 
 Created on 2019-05-14 at 09:40
 
 @author: cook
 """
-from apero.base import base
 from apero import lang
+from apero.base import base
 from apero.core import constants
+from apero.core.core import drs_database
 from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
-from apero.core.core import drs_database
 from apero.science.calib import gen_calib
 from apero.science.calib import localisation
-
 
 # =============================================================================
 # Define variables
@@ -49,7 +48,7 @@ pcheck = constants.PCheck(wlog=WLOG)
 # Everything else is controlled from recipe_definition
 def main(obs_dir=None, files=None, **kwargs):
     """
-    Main function for apero_loc_spirou.py
+    Main function for apero_loc
 
     :param obs_dir: string, the night name sub-directory
     :param files: list of strings or string, the list of files to process
@@ -174,7 +173,7 @@ def __main__(recipe, params):
             ldict[_fiber] = lout
         # deal with merging coefficients and formatting for use as they
         #   were in older codes (may be redundant in future)
-        m_out = localisation.merge_coeffs(params, ldict)
+        m_out = localisation.merge_coeffs(params, ldict, image.shape[1])
         cent_coeffs, wid_coeffs, fibername = m_out
         # ------------------------------------------------------------------
         # Localisation stats (for header and quality control)
@@ -244,7 +243,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return drs_startup.return_locals(params, locals())
+    return locals()
 
 
 # =============================================================================

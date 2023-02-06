@@ -1,34 +1,27 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-apero_mk_model [night_directory] [files]
+apero_mk_model_nirps_ha.py [obs dir] [files]
 
 Takes the transmissions made in apero_mk_tellu and saves them as three
 arrays that have the same shape as an e2ds (zero_residual, a dc offset of
 residuals, a linear dependency with water absorption and a linear dependency
 with dry absorption
 
-Usage:
-  apero_mk_model
-
-Outputs:
-trans-model
-
 Created on 2019-09-03 at 14:58
 
 @author: cook
 """
-import numpy as np
+from typing import Any, Dict, Tuple, Union
 
-from apero.base import base
 from apero import lang
+from apero.base import base
 from apero.core import constants
+from apero.core.core import drs_database
 from apero.core.core import drs_file
 from apero.core.core import drs_log
+from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
-from apero.core.core import drs_database
-from apero.science.calib import wave
-from apero.science import extract
 from apero.science import telluric
 
 # =============================================================================
@@ -41,10 +34,12 @@ __version__ = base.__version__
 __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
-# get param dict
-ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
+# Get Recipe class
+DrsRecipe = drs_recipe.DrsRecipe
+# Get parameter class
+ParamDict = constants.ParamDict
 # Get the text types
 textentry = lang.textentry
 
@@ -58,19 +53,15 @@ textentry = lang.textentry
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(**kwargs):
+def main(**kwargs) -> Union[Dict[str, Any], Tuple[DrsRecipe, ParamDict]]:
     """
-    Main function for apero_mk_tellu_spirou.py
+    Main function for apero_mk_model
 
     :param kwargs: any additional keywords
-
-    :type obs_dir: str
-    :type files: list[str]
 
     :keyword debug: int, debug level (0 for None)
 
     :returns: dictionary of the local space
-    :rtype: dict
     """
     # assign function calls (must add positional)
     fkwargs = dict(**kwargs)
@@ -89,13 +80,14 @@ def main(**kwargs):
     return drs_startup.end_main(params, llmain, recipe, success)
 
 
-def __main__(recipe, params):
+def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     """
     Main code: should only call recipe and params (defined from main)
 
-    :param recipe:
-    :param params:
-    :return:
+    :param recipe: DrsRecipe, the recipe class using this function
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: dictionary containing the local variables
     """
     # ----------------------------------------------------------------------
     # Main Code
@@ -170,7 +162,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return drs_startup.return_locals(params, locals())
+    return locals()
 
 
 # =============================================================================

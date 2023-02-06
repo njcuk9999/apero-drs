@@ -1,25 +1,27 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+apero_leak_ref_nirps_ha.py [obs dir]
 
-# CODE DESCRIPTION HERE
+APERO leak reference calibration recipe for NIRPS HA
 
 Created on 2020-03-02 at 17:26
 
 @author: cook
 """
-from apero.base import base
+from typing import Any, Dict, Optional, Tuple, Union
+
 from apero import lang
+from apero.base import base
+from apero.core import constants
 from apero.core.core import drs_database
-from apero.core.core import drs_log
 from apero.core.core import drs_file
+from apero.core.core import drs_log
+from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_utils
 from apero.science.calib import leak
 from apero.science.extract import other as extother
-from apero.science.extract import gen_ext as extgen
-
 
 # =============================================================================
 # Define variables
@@ -33,6 +35,11 @@ __date__ = base.__date__
 __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# Get Recipe class
+DrsRecipe = drs_recipe.DrsRecipe
+# Get parameter class
+ParamDict = constants.ParamDict
+
 # Get the text types
 textentry = lang.textentry
 # define extraction code to use
@@ -48,16 +55,17 @@ EXTRACT_NAME = 'apero_extract_nirps_ha.py'
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(obs_dir=None, **kwargs):
+def main(obs_dir: Optional[str] = None, **kwargs
+         ) -> Union[Dict[str, Any], Tuple[DrsRecipe, ParamDict]]:
     """
     Main function for apero_leak_ref_spirou.py
 
+    :param obs_dir: str, the observation directory
     :param kwargs: any additional keywords
 
     :keyword debug: int, debug level (0 for None)
 
     :returns: dictionary of the local space
-    :rtype: dict
     """
     # assign function calls (must add positional)
     fkwargs = dict(obs_dir=obs_dir, **kwargs)
@@ -76,13 +84,14 @@ def main(obs_dir=None, **kwargs):
     return drs_startup.end_main(params, llmain, recipe, success)
 
 
-def __main__(recipe, params):
+def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     """
     Main code: should only call recipe and params (defined from main)
 
-    :param recipe:
-    :param params:
-    :return:
+    :param recipe: DrsRecipe, the recipe class using this function
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: dictionary containing the local variables
     """
     # ----------------------------------------------------------------------
     # Main Code
@@ -122,8 +131,8 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # get all "filetype" filenames
         files = drs_utils.find_files(params, block_kind='tmp',
-                                    filters=dict(KW_DPRTYPE=filetype,
-                                                 OBS_DIR=params['OBS_DIR']))
+                                     filters=dict(KW_DPRTYPE=filetype,
+                                                  OBS_DIR=params['OBS_DIR']))
         # create infiles
         for filename in files:
             infile = darkfpfile.newcopy(filename=filename, params=params)
@@ -142,7 +151,7 @@ def __main__(recipe, params):
         # update recipe log file
         recipe.log.end()
         # End of main code
-        return drs_startup.return_locals(params, locals())
+        return locals()
     # ----------------------------------------------------------------------
     # set up plotting (no plotting before this)
     recipe.plot.set_location()
@@ -193,18 +202,17 @@ def __main__(recipe, params):
     # ------------------------------------------------------------------
     # Produce super dark fp from median of all extractions
     # ------------------------------------------------------------------
-    medcubes = leak.ref_dark_fp_cube(params, recipe, dark_fp_storage)
+    dout = leak.ref_dark_fp_cube(params, recipe, dark_fp_storage)
+    medcubes, medtables = dout
     # ------------------------------------------------------------------
     # Quality control
     # ------------------------------------------------------------------
-    # TODO: Need to add some QC
-    qc_params, passed = leak.qc_LEAK_REF(params, medcubes)
+    qc_params, passed = leak.qc_leak_ref(params, medcubes)
     # ------------------------------------------------------------------
     # Write super dark fp to file
     # ------------------------------------------------------------------
-    # TODO: Need to add some parameters to header
-    medcubes = leak.write_LEAK_REF(params, recipe, rawfiles, medcubes,
-                                        qc_params, cprops)
+    medcubes = leak.write_leak_ref(params, recipe, rawfiles, medcubes,
+                                   medtables, qc_params, cprops)
     # ------------------------------------------------------------------
     # Move to calibDB and update calibDB
     # ------------------------------------------------------------------
@@ -228,7 +236,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return drs_startup.return_locals(params, locals())
+    return locals()
 
 
 # =============================================================================

@@ -7,14 +7,13 @@ Created on 2021-01-2021-01-13 14:42
 
 @author: cook
 """
-from apero.base import base
 from apero import lang
+from apero.base import base
 from apero.core import constants
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
 from apero.tools.module.testing import drs_dev
 from apero.tools.module.utils import constants_tools
-
 
 # =============================================================================
 # Define variables
@@ -63,7 +62,6 @@ apero_constants.set_kwarg(name='--glossary', dtype='switch', default=False,
 
 # add recipe to recipe definition
 RMOD.add(apero_constants)
-
 
 
 # =============================================================================
@@ -126,7 +124,7 @@ def __main__(recipe, params):
         success = constants_tools.deal_with_generate(params)
         # if generation successful stop here
         if success:
-            return drs_startup.return_locals(params, locals())
+            return locals()
 
     # -------------------------------------------------------------------------
     # Cleaning constant python files functionality
@@ -140,7 +138,7 @@ def __main__(recipe, params):
             success = constants_tools.deal_with_clean(params)
             # if cleaning successful stop here
             if success:
-                return drs_startup.return_locals(params, locals())
+                return locals()
 
     # -------------------------------------------------------------------------
     # Create glossary functionality
@@ -154,13 +152,12 @@ def __main__(recipe, params):
             success = constants_tools.create_glossary(params)
             # if creation successful stop here
             if success:
-                return drs_startup.return_locals(params, locals())
+                return locals()
 
     # -------------------------------------------------------------------------
     # End of main code
     # -------------------------------------------------------------------------
-    return drs_startup.return_locals(params, locals())
-
+    return locals()
 
 
 # =============================================================================

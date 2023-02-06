@@ -1,28 +1,31 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
+apero_preprocess_nirps_he.py [obs dir] [files]
 
-# CODE DESCRIPTION HERE
+APERO pre-processing of raw images for NIRPS HE
 
 Created on 2019-03-05 16:38
+
 @author: ncook
-Version 0.0.1
 """
-import numpy as np
 import os
 import warnings
+from typing import Any, Dict, List, Optional, Tuple, Union
 
-from apero.base import base
+import numpy as np
+
 from apero import lang
+from apero.base import base
 from apero.core import constants
+from apero.core.core import drs_database
 from apero.core.core import drs_file
 from apero.core.core import drs_log
-from apero.core.core import drs_database
-from apero.core.utils import drs_startup
-from apero.science import preprocessing as prep
-from apero.io import drs_image
 from apero.core.instruments.spirou import file_definitions
-
+from apero.core.utils import drs_recipe
+from apero.core.utils import drs_startup
+from apero.io import drs_image
+from apero.science import preprocessing as prep
 
 # =============================================================================
 # Define variables
@@ -36,6 +39,10 @@ __date__ = base.__date__
 __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# Get Recipe class
+DrsRecipe = drs_recipe.DrsRecipe
+# Get parameter class
+ParamDict = constants.ParamDict
 # Get the text types
 textentry = lang.textentry
 # Raw prefix
@@ -53,7 +60,8 @@ ObjectDatabase = drs_database.AstrometricDatabase
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(obs_dir=None, files=None, **kwargs):
+def main(obs_dir: Optional[str] = None, files: Optional[List[str]] = None,
+         **kwargs) -> Union[Dict[str, Any], Tuple[DrsRecipe, ParamDict]]:
     """
     Main function for apero_preprocess
 
@@ -61,13 +69,9 @@ def main(obs_dir=None, files=None, **kwargs):
     :param files: list of strings or string, the list of files to process
     :param kwargs: any additional keywords
 
-    :type obs_dir: str
-    :type files: list[str]
-
     :keyword debug: int, debug level (0 for None)
 
     :returns: dictionary of the local space
-    :rtype: dict
     """
     # assign function calls (must add positional)
     fkwargs = dict(obs_dir=obs_dir, files=files, **kwargs)
@@ -86,7 +90,15 @@ def main(obs_dir=None, files=None, **kwargs):
     return drs_startup.end_main(params, llmain, recipe, success, outputs='None')
 
 
-def __main__(recipe, params):
+def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
+    """
+    Main code: should only call recipe and params (defined from main)
+
+    :param recipe: DrsRecipe, the recipe class using this function
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: dictionary containing the local variables
+    """
     # ----------------------------------------------------------------------
     # Main Code
     # ----------------------------------------------------------------------
@@ -127,7 +139,7 @@ def __main__(recipe, params):
         # identification of file drs type
         # ------------------------------------------------------------------
         # identify this iterations file type
-        cond, infile = prep.drs_infile_id(params, recipe, file_instance)
+        cond, infile = prep.drs_infile_id(params, file_instance)
 
         # ------------------------------------------------------------------
         # For OBJECT files we need to resolve object and update header
@@ -152,6 +164,8 @@ def __main__(recipe, params):
         datalist = infile.get_data(copy=True, extensions=[1, 2, 3])
         # get flux image from the data list
         image = datalist[0]
+
+        # ------------------------------------------------------------------
         # get intercept from the data list
         intercept = datalist[1]
         # get frame time
@@ -166,6 +180,9 @@ def __main__(recipe, params):
         with warnings.catch_warnings(record=True) as _:
             errslope = np.sqrt(np.abs(image * inttime) + readout_noise**2)
             errslope = errslope / np.sqrt(inttime)
+        # ------------------------------------------------------------------
+        # any pixel with less than 2 reads has no ramp fitting - set to NaN
+        image[datalist[2] < 2] = np.nan
 
         # ------------------------------------------------------------------
         # Get out file and check skip
@@ -273,7 +290,17 @@ def __main__(recipe, params):
         # correct image
         # ------------------------------------------------------------------
         # nirps correction for preprocessing (specific to NIRPS)
-        image = prep.nirps_correction(params, image, create_mask=False)
+        image = prep.nirps_correction(params, image, infile.header,
+                                      create_mask=False)
+        # get dprtypes we don't do sci capacitive coupling for
+        nosci_capc = params.listp('PP_NOSCI_CAPC_DPRTYPES', dtype=str)
+        sci_capc_corr = True
+        for _string in nosci_capc:
+            if _string in infile.header['DPRTYPE']:
+                sci_capc_corr = False
+        # correct between amplifier capacity coupling from science flux
+        if sci_capc_corr:
+            image = prep.correct_sci_capacitive_coupling(params, image)
 
         # ----------------------------------------------------------------------
         # Correct for cosmic rays before the possible pixel shift
@@ -301,6 +328,16 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         mout = drs_file.get_mid_obs_time(params, infile.get_header())
         mid_obs_time, mid_obs_method = mout
+
+        # ------------------------------------------------------------------
+        # divide by LED flat
+        # ------------------------------------------------------------------
+        # TODO: Add to language database
+        WLOG(params, '', 'Performing LED flat')
+        # load the LED flat from calibration database
+        led_flat, led_file = prep.load_led_flat(params)
+        # divide image by LED flat
+        image = image / led_flat
 
         # ------------------------------------------------------------------
         # rotate image
@@ -350,6 +387,9 @@ def __main__(recipe, params):
         outfile.add_hkey('KW_PPC_NBAD_INTE', value=cprops['NUM_BAD_INTERCEPT'])
         outfile.add_hkey('KW_PPC_NBAD_SLOPE', value=cprops['NUM_BAD_SLOPE'])
         outfile.add_hkey('KW_PPC_NBAD_BOTH', value=cprops['NUM_BAD_BOTH'])
+        # Add the LED flat file used
+        outfile.add_hkey('KW_PP_LED_FLAT_FILE',
+                         value=os.path.basename(led_file))
         # ------------------------------------------------------------------
         # copy data
         outfile.data = image
@@ -385,7 +425,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return drs_startup.return_locals(params, dict(locals()))
+    return locals()
 
 
 # =============================================================================

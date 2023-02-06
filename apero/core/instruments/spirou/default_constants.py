@@ -1,5 +1,5 @@
 """
-
+Default constants for SPIROU
 
 Created on 2019-01-17
 
@@ -234,6 +234,12 @@ REJECT_LIST_GSHEET_MAIN_LIST_ID.value = '1398289367'
 # ODOCODE_REJECT_GSHEET_NUM = ODOCODE_REJECT_GSHEET_NUM.copy(__NAME__)
 # ODOCODE_REJECT_GSHEET_NUM.value = 0
 
+# Define which twilight to use as the definition of a night observation
+#    ("CIVIL", "NAUTICAL", "ASTRONOMICAL")
+NIGHT_DEFINITION = NIGHT_DEFINITION.copy(__NAME__)
+NIGHT_DEFINITION.value = 'NAUTICAL'
+NIGHT_DEFINITION.author = base.AUTHORS['EA']
+
 # =============================================================================
 # CALIBRATION: FIBER SETTINGS
 # =============================================================================
@@ -341,6 +347,14 @@ PP_DARK_MED_BINNUM.value = 32
 PP_HOTPIX_FILE = PP_HOTPIX_FILE.copy(__NAME__)
 PP_HOTPIX_FILE.value = 'hotpix_pp.csv'
 
+#   Defines the pp amplifier bias model (located in the data folder)
+PP_AMP_ERROR_MODEL = PP_AMP_ERROR_MODEL.copy(__NAME__)
+PP_AMP_ERROR_MODEL.value = 'amplifier_bias_model_spirou.fits'
+
+# Defines the pp led flat file (located in the data folder)
+PP_LED_FLAT_FILE = PP_LED_FLAT_FILE.copy(__NAME__)
+PP_LED_FLAT_FILE.value = 'None'
+
 #   Define the number of un-illuminated reference pixels at top of image
 PP_NUM_REF_TOP = PP_NUM_REF_TOP.copy(__NAME__)
 PP_NUM_REF_TOP.value = 4
@@ -406,6 +420,32 @@ PP_DARK_DPRTYPES.value = 'DARK_DARK_INT,DARK_DARK_TEL'
 #    processed)
 PP_DARK_THRES = PP_DARK_THRES.copy(__NAME__)
 PP_DARK_THRES.value = 0.5
+
+# Define the amplitude of the flux-dependent along-readout-axis derivative
+#     component
+# TODO: Add calculation to static apero-utils.general.apero_statics.corr_xtalk.py
+PP_CORR_XTALK_AMP_FLUX = PP_CORR_XTALK_AMP_FLUX.copy(__NAME__)
+PP_CORR_XTALK_AMP_FLUX.value = 1.490711e-04
+PP_CORR_XTALK_AMP_FLUX.author = base.AUTHORS['EA']
+
+# Define amplitude of the flux-dependent along-readout-axis 1st derivative
+#     component
+# TODO: Add calculation to static apero-utils.general.apero_statics.corr_xtalk.py
+PP_COR_XTALK_AMP_DFLUX = PP_COR_XTALK_AMP_DFLUX.copy(__NAME__)
+PP_COR_XTALK_AMP_DFLUX.value = 8.080468e-04
+PP_COR_XTALK_AMP_DFLUX.author = base.AUTHORS['EA']
+
+# Define amplitude of the flux-dependent along-readout-axis 2nd derivative
+#     component
+# TODO: Add calculation to static apero-utils.general.apero_statics.corr_xtalk.py
+PP_COR_XTALK_AMP_D2FLUX = PP_COR_XTALK_AMP_D2FLUX.copy(__NAME__)
+PP_COR_XTALK_AMP_D2FLUX.value = -6.523985e-04
+PP_COR_XTALK_AMP_D2FLUX.author = base.AUTHORS['EA']
+
+# Define the partial APERO DPRTYPES which we should not do the science
+#    capacitive coupling
+PP_NOSCI_CAPC_DPRTYPES = PP_NOSCI_CAPC_DPRTYPES.copy(__NAME__)
+PP_NOSCI_CAPC_DPRTYPES.value = 'HCONE,HCTWO'
 
 # =============================================================================
 # CALIBRATION: ASTROMETRIC DATABASE SETTINGS
@@ -514,6 +554,11 @@ DARK_REF_MED_SIZE.value = 4
 DARK_REF_MAX_FILES = DARK_REF_MAX_FILES.copy(__NAME__)
 DARK_REF_MAX_FILES.value = 100
 
+# define the minimimum allowed exptime for dark files to be used in
+#    dark ref
+DARK_REF_MIN_EXPTIME = DARK_REF_MIN_EXPTIME.copy(__NAME__)
+DARK_REF_MIN_EXPTIME.value = 10
+
 # =============================================================================
 # CALIBRATION: BAD PIXEL MAP SETTINGS
 # =============================================================================
@@ -561,11 +606,11 @@ BADPIX_DILATE_SIZE.value = 9
 BKGR_BOXSIZE = BKGR_BOXSIZE.copy(__NAME__)
 BKGR_BOXSIZE.value = 128
 
-#    Do background percentile to compute minimum value (%)
+#    the background percentile to compute minimum value (%)
 BKGR_PERCENTAGE = BKGR_PERCENTAGE.copy(__NAME__)
 BKGR_PERCENTAGE.value = 5.0
 
-#    Size in pixels of the convolve tophat for the background mask
+#    Size in pixels of to convolve tophat for the background mask
 BKGR_MASK_CONVOLVE_SIZE = BKGR_MASK_CONVOLVE_SIZE.copy(__NAME__)
 BKGR_MASK_CONVOLVE_SIZE.value = 7
 
@@ -578,11 +623,11 @@ BKGR_N_BAD_NEIGHBOURS.value = 3
 BKGR_NO_SUBTRACTION = BKGR_NO_SUBTRACTION.copy(__NAME__)
 BKGR_NO_SUBTRACTION.value = False
 
-#    Kernel amplitude determined from drs_local_scatter.py
+#    background kernel amplitude
 BKGR_KER_AMP = BKGR_KER_AMP.copy(__NAME__)
 BKGR_KER_AMP.value = 47
 
-#    Background kernel width in in x and y [pixels]
+#    Background kernel width in x and y [pixels]
 BKGR_KER_WX = BKGR_KER_WX.copy(__NAME__)
 BKGR_KER_WX.value = 1
 BKGR_KER_WY = BKGR_KER_WY.copy(__NAME__)
@@ -657,6 +702,11 @@ LOC_YDET_MIN.author = base.AUTHORS['EA']
 LOC_YDET_MAX = LOC_YDET_MAX.copy(__NAME__)
 LOC_YDET_MAX.value = 3050
 LOC_YDET_MAX.author = base.AUTHORS['EA']
+
+# define the number of width samples to use in localisation
+LOC_NUM_WID_SAMPLES = LOC_NUM_WID_SAMPLES.copy(__NAME__)
+LOC_NUM_WID_SAMPLES.value = 10
+LOC_NUM_WID_SAMPLES.author = base.AUTHORS['EA']
 
 # =============================================================================
 # CALIBRATION: LOCALISATION SETTINGS
@@ -797,7 +847,7 @@ LOC_PLOT_CORNER_YZOOM2.value = '600, 600, 3100, 3100'
 ALLOWED_FP_TYPES = ALLOWED_FP_TYPES.copy(__NAME__)
 ALLOWED_FP_TYPES.value = 'FP_FP'
 
-#   Define the maximum time span to combine dark files over (in hours)
+#   Define the maximum time span to combine fp files over (in hours)
 FP_REF_MATCH_TIME = FP_REF_MATCH_TIME.copy(__NAME__)
 FP_REF_MATCH_TIME.value = 2
 
@@ -1097,7 +1147,7 @@ LEAK_1D_EXTRACT_FILES.value = 'S1D_W_FILE, S1D_V_FILE'
 LEAK_BCKGRD_PERCENTILE = LEAK_BCKGRD_PERCENTILE.copy(__NAME__)
 LEAK_BCKGRD_PERCENTILE.value = 5
 
-# define the normalisation perentile for the leak and leak reference
+# define the normalisation percentile for the leak and leak reference
 LEAK_NORM_PERCENTILE = LEAK_NORM_PERCENTILE.copy(__NAME__)
 LEAK_NORM_PERCENTILE.value = 90
 
@@ -1105,7 +1155,7 @@ LEAK_NORM_PERCENTILE.value = 90
 LEAKREF_WSMOOTH = LEAKREF_WSMOOTH.copy(__NAME__)
 LEAKREF_WSMOOTH.value = 15
 
-# define the kernal size for leak reference
+# define the kernel size for leak reference
 LEAKREF_KERSIZE = LEAKREF_KERSIZE.copy(__NAME__)
 LEAKREF_KERSIZE.value = 3
 
@@ -1117,7 +1167,7 @@ LEAK_LOW_PERCENTILE.value = 1
 LEAK_HIGH_PERCENTILE = LEAK_HIGH_PERCENTILE.copy(__NAME__)
 LEAK_HIGH_PERCENTILE.value = 99
 
-# define the limit on surpious FP ratio (1 +/- limit)
+# define the limit on spurious FP ratio (1 +/- limit)
 LEAK_BAD_RATIO_OFFSET = LEAK_BAD_RATIO_OFFSET.copy(__NAME__)
 LEAK_BAD_RATIO_OFFSET.value = 0.1
 
@@ -1320,6 +1370,8 @@ WAVE_GUESS_CAVITY_WIDTH = WAVE_GUESS_CAVITY_WIDTH.copy(__NAME__)
 WAVE_GUESS_CAVITY_WIDTH.value = 2.4e7
 WAVE_GUESS_CAVITY_WIDTH.author = base.AUTHORS['EA']
 
+#
+
 # Define the wave solution polynomial fit degree
 WAVE_WAVESOL_FIT_DEGREE = WAVE_WAVESOL_FIT_DEGREE.copy(__NAME__)
 WAVE_WAVESOL_FIT_DEGREE.value = 5
@@ -1457,7 +1509,7 @@ WAVEREF_FP_NHIGH.author = base.AUTHORS['EA']
 
 # define the number of iterations required to do the FP polynomial inversion
 WAVEREF_FP_POLYINV = WAVEREF_FP_POLYINV.copy(__NAME__)
-WAVEREF_FP_POLYINV.value = 4
+WAVEREF_FP_POLYINV.value = 10
 WAVEREF_FP_POLYINV.author = base.AUTHORS['EA']
 
 # define the guess HC exponetial width [pixels]
@@ -1883,6 +1935,11 @@ WAVE_FP_PLOT_MULTI_NBO.value = 5
 WAVE_FP_DPRLIST = WAVE_FP_DPRLIST.copy(__NAME__)
 WAVE_FP_DPRLIST.value = 'OBJ_FP, POLAR_FP'
 
+# define the override for reference fiber for generating FPLINES
+#    None for no override
+WAVE_FP_FIBERTYPES = WAVE_FP_FIBERTYPES.copy(__NAME__)
+WAVE_FP_FIBERTYPES.value = 'None'
+
 # =============================================================================
 # CALIBRATION: WAVE LITTROW SETTINGS
 # =============================================================================
@@ -1953,7 +2010,9 @@ WAVE_MODE_FP.value = 1
 # Define the initial value of FP effective cavity width 2xd in nm
 #   2xd = 24.5 mm = 24.5e6 nm  for SPIRou
 WAVE_FP_DOPD0 = WAVE_FP_DOPD0.copy(__NAME__)
-WAVE_FP_DOPD0.value = 2.44962434814043e7  # 2.44999e7  # 2.45e7
+# WAVE_FP_DOPD0.value = 2.44962434814043e7  # 2.44999e7  # 2.45e7
+WAVE_FP_DOPD0.value = 24498000
+WAVE_FP_DOPD0.author = base.AUTHORS['EA']
 
 #  Define the polynomial fit degree between FP line numbers and the
 #      measured cavity width for each line
@@ -2022,6 +2081,82 @@ WAVENIGHT_PLT_BINU = WAVENIGHT_PLT_BINU.copy(__NAME__)
 WAVENIGHT_PLT_BINU.value = 20
 
 # =============================================================================
+# OBJECT: SKY CORR SETTINGS
+# =============================================================================
+# the OUTPUT type (KW_OUTPUT header key) and DrsFitsFile name required for
+#   input sky files
+SKYMODEL_FILETYPE = SKYMODEL_FILETYPE.copy(__NAME__)
+SKYMODEL_FILETYPE.value = 'EXT_E2DS_FF'
+SKYMODEL_FILETYPE.author = base.AUTHORS['NJC']
+
+# Define the order to get the snr from (for input data qc check)
+SKYMODEL_EXT_SNR_ORDERNUM =  SKYMODEL_EXT_SNR_ORDERNUM.copy(__NAME__)
+SKYMODEL_EXT_SNR_ORDERNUM.value = 35
+SKYMODEL_EXT_SNR_ORDERNUM.author = base.AUTHORS['EA']
+
+# Define the minimum exptime to use a sky in the model [s]
+SKYMODEL_MIN_EXPTIME =  SKYMODEL_MIN_EXPTIME.copy(__NAME__)
+SKYMODEL_MIN_EXPTIME.value = 300
+SKYMODEL_MIN_EXPTIME.author = base.AUTHORS['EA']
+
+# define the sigma that positive exursions need to have to be identified
+#   as lines
+SKYMODEL_LINE_SIGMA = SKYMODEL_LINE_SIGMA.copy(__NAME__)
+SKYMODEL_LINE_SIGMA.value = 5
+SKYMODEL_LINE_SIGMA.author = base.AUTHORS['EA']
+
+# define the erosion size to use on a line
+SKYMODEL_LINE_ERODE_SIZE = SKYMODEL_LINE_ERODE_SIZE.copy(__NAME__)
+SKYMODEL_LINE_ERODE_SIZE.value = 5
+SKYMODEL_LINE_ERODE_SIZE.author = base.AUTHORS['EA']
+
+# define the dilatation size to use on a line
+SKYMODEL_LINE_DILATE_SIZE = SKYMODEL_LINE_DILATE_SIZE.copy(__NAME__)
+SKYMODEL_LINE_DILATE_SIZE.value = 27
+SKYMODEL_LINE_DILATE_SIZE.author = base.AUTHORS['EA']
+
+# define the number of weight iterations to use when construct sky model
+#       weight vector
+SKYMODEL_WEIGHT_ITERS = SKYMODEL_WEIGHT_ITERS.copy(__NAME__)
+SKYMODEL_WEIGHT_ITERS.value = 5
+SKYMODEL_WEIGHT_ITERS.author = base.AUTHORS['EA']
+
+# define the erosion size for the sky model line weight calculation
+SKYMODEL_WEIGHT_ERODE_SIZE = SKYMODEL_WEIGHT_ERODE_SIZE.copy(__NAME__)
+SKYMODEL_WEIGHT_ERODE_SIZE.value = 3
+SKYMODEL_WEIGHT_ERODE_SIZE.author = base.AUTHORS['EA']
+
+# Define the allowed DPRTYPEs for sky correction
+ALLOWED_SKYCORR_DPRTYPES = ALLOWED_SKYCORR_DPRTYPES.copy(__NAME__)
+ALLOWED_SKYCORR_DPRTYPES.value = 'OBJ_SKY, TELLU_SKY, FLUXSTD_SKY'
+ALLOWED_SKYCORR_DPRTYPES.author = base.AUTHORS['NJC']
+
+# Define the number of iterations used to create sky correction weights
+SKYCORR_WEIGHT_ITERATIONS = SKYCORR_WEIGHT_ITERATIONS.copy(__NAME__)
+SKYCORR_WEIGHT_ITERATIONS.value = 5
+SKYCORR_WEIGHT_ITERATIONS.author = base.AUTHORS['EA']
+
+# Define the size of the fine low pass filter (must be an odd integer)
+SKYCORR_LOWPASS_SIZE1 = SKYCORR_LOWPASS_SIZE1.copy(__NAME__)
+SKYCORR_LOWPASS_SIZE1.value = 51
+SKYCORR_LOWPASS_SIZE1.author = base.AUTHORS['EA']
+
+# Define the size of the coarse low pass filter (msut be an odd integer)
+SKYCORR_LOWPASS_SIZE2 = SKYCORR_LOWPASS_SIZE2.copy(__NAME__)
+SKYCORR_LOWPASS_SIZE2.value = 101
+SKYCORR_LOWPASS_SIZE2.author = base.AUTHORS['EA']
+
+# Define the number of iterations to use for the coarse low pass filter
+SKYCORR_LOWPASS_ITERATIONS = SKYCORR_LOWPASS_ITERATIONS.copy(__NAME__)
+SKYCORR_LOWPASS_ITERATIONS.value = 2
+SKYCORR_LOWPASS_ITERATIONS.author = base.AUTHORS['EA']
+
+# Define the number of sigma threshold for sky corr sigma clipping
+SKYCORR_NSIG_THRES = SKYCORR_NSIG_THRES.copy(__NAME__)
+SKYCORR_NSIG_THRES.value = 5
+SKYCORR_NSIG_THRES.author = base.AUTHORS['EA']
+
+# =============================================================================
 # OBJECT: TELLURIC SETTINGS
 # =============================================================================
 # Define the name of the tapas file used
@@ -2062,6 +2197,10 @@ TELLU_WHITELIST_NAME.value = 'tellu_whitelist.txt'
 TELLU_BLACKLIST_NAME = TELLU_BLACKLIST_NAME.copy(__NAME__)
 TELLU_BLACKLIST_NAME.value = 'tellu_blacklist.txt'
 
+# Force only pre-cleaning (not recommended - only for debugging)
+TELLU_ONLY_PRECLEAN = TELLU_ONLY_PRECLEAN.copy(__NAME__)
+TELLU_ONLY_PRECLEAN.value = False
+
 # =============================================================================
 # OBJECT: TELLURIC PRE-CLEANING SETTINGS
 # =============================================================================
@@ -2069,9 +2208,13 @@ TELLU_BLACKLIST_NAME.value = 'tellu_blacklist.txt'
 TELLUP_DO_PRECLEANING = TELLUP_DO_PRECLEANING.copy(__NAME__)
 TELLUP_DO_PRECLEANING.value = True
 
+# define whether we do finite resolution correct (if we have a template)
+TELLUP_DO_FINITE_RES_CORR = TELLUP_DO_FINITE_RES_CORR.copy(__NAME__)
+TELLUP_DO_FINITE_RES_CORR.value = True
+
 # width in km/s for the ccf scan to determine the abso in pre-cleaning
 TELLUP_CCF_SCAN_RANGE = TELLUP_CCF_SCAN_RANGE.copy(__NAME__)
-TELLUP_CCF_SCAN_RANGE.value = 50
+TELLUP_CCF_SCAN_RANGE.value = 25
 
 # define whether to clean OH lines
 TELLUP_CLEAN_OH_LINES = TELLUP_CLEAN_OH_LINES.copy(__NAME__)
@@ -2152,6 +2295,11 @@ TELLUP_OTHER_BOUNDS.value = '0.8, 3.0'
 #  water absorber
 TELLUP_WATER_BOUNDS = TELLUP_WATER_BOUNDS.copy(__NAME__)
 TELLUP_WATER_BOUNDS.value = '0.1, 15'
+
+# set the plot order for the finite resolution plot (somewhere aroun 1.45 um)
+TELLU_FINITE_RES_ORDER = TELLU_FINITE_RES_ORDER.copy(__NAME__)
+TELLU_FINITE_RES_ORDER.value = 26
+TELLU_FINITE_RES_ORDER.author = base.AUTHORS['EA']
 
 # =============================================================================
 # OBJECT: MAKE TELLURIC SETTINGS
@@ -2361,6 +2509,23 @@ MKTEMPLATE_DEBUG_MODE.value = False
 MKTEMPLATE_MAX_OPEN_FILES = MKTEMPLATE_MAX_OPEN_FILES.copy(__NAME__)
 MKTEMPLATE_MAX_OPEN_FILES.value = 50
 
+# Define the fwhm of hot star convolution kernel size in km/s so it is half
+#     the minimum v sin i of our hot stars
+MKTEMPLATE_HOTSTAR_KER_VEL = MKTEMPLATE_HOTSTAR_KER_VEL.copy(__NAME__)
+MKTEMPLATE_HOTSTAR_KER_VEL.value = 100
+
+# Define the threshold for the Lucy-Richardson deconvolution steps. This is
+#    the maximum  value of the 99th percentile of the feed-back term
+MKTEMPLATE_DECONV_ITR_THRES = MKTEMPLATE_DECONV_ITR_THRES.copy(__NAME__)
+MKTEMPLATE_DECONV_ITR_THRES.value = 1.0e-3
+MKTEMPLATE_DECONV_ITR_THRES.author = base.AUTHORS['EA']
+
+# Define the max number of iterations to run if the iteration threshold
+#     is not met
+MKTEMPLATE_DECONV_ITR_MAX = MKTEMPLATE_DECONV_ITR_MAX.copy(__NAME__)
+MKTEMPLATE_DECONV_ITR_MAX.value = 100
+MKTEMPLATE_DECONV_ITR_MAX.author = base.AUTHORS['EA']
+
 # =============================================================================
 # CALIBRATION: CCF SETTINGS
 # =============================================================================
@@ -2478,6 +2643,16 @@ CCF_FIT_TYPE.value = 0
 # Define the percentile the blaze is normalised by before using in CCF calc
 CCF_BLAZE_NORM_PERCENTILE = CCF_BLAZE_NORM_PERCENTILE.copy(__NAME__)
 CCF_BLAZE_NORM_PERCENTILE.value = 90
+
+# Define the minimum number of sigma the peak CCF must have to be acceptable
+CCF_NSIG_THRESHOLD = CCF_NSIG_THRESHOLD.copy(__NAME__)
+CCF_NSIG_THRESHOLD.value = 5
+CCF_NSIG_THRESHOLD.author = base.AUTHORS['EA']
+
+# Define the minimum number of sigma the FWHM of CCF must have to be acceptable
+CCF_FWHM_SIGCUT = CCF_FWHM_SIGCUT.copy(__NAME__)
+CCF_FWHM_SIGCUT.value = 8
+CCF_FWHM_SIGCUT.author = base.AUTHORS['EA']
 
 # =============================================================================
 # GENERAL POLARISATION SETTINGS
@@ -2900,6 +3075,18 @@ PLOT_WAVENIGHT_ITERPLOT.value = True
 PLOT_WAVENIGHT_HISTPLOT = PLOT_WAVENIGHT_HISTPLOT.copy(__NAME__)
 PLOT_WAVENIGHT_HISTPLOT.value = True
 
+# turn on the sky model region plot
+PLOT_TELLU_SKYMODEL_REGION_PLOT = PLOT_TELLU_SKYMODEL_REGION_PLOT.copy(__NAME__)
+PLOT_TELLU_SKYMODEL_REGION_PLOT.value = True
+
+# turn on the sky model median plot
+PLOT_TELLU_SKYMODEL_MED = PLOT_TELLU_SKYMODEL_MED.copy(__NAME__)
+PLOT_TELLU_SKYMODEL_MED.value = True
+
+# turn on the sky model median plot
+PLOT_TELLU_SKYMODEL_LINEFIT = PLOT_TELLU_SKYMODEL_LINEFIT.copy(__NAME__)
+PLOT_TELLU_SKYMODEL_LINEFIT.value = True
+
 # turn on the telluric pre-cleaning ccf debug plot
 PLOT_TELLUP_WAVE_TRANS = PLOT_TELLUP_WAVE_TRANS.copy(__NAME__)
 PLOT_TELLUP_WAVE_TRANS.value = True
@@ -2960,9 +3147,17 @@ PLOT_FTELLU_RECON_ABSO2.value = True
 PLOT_FTELLU_RES_MODEL = PLOT_FTELLU_RES_MODEL.copy(__NAME__)
 PLOT_FTELLU_RES_MODEL.value = True
 
+# turn on the finite resolution correction debug plot
+PLOT_TELLU_FINITE_RES_CORR = PLOT_TELLU_FINITE_RES_CORR.copy(__NAME__)
+PLOT_TELLU_FINITE_RES_CORR.value = True
+
 # turn on the berv coverage debug plot
 PLOT_MKTEMP_BERV_COV = PLOT_MKTEMP_BERV_COV.copy(__NAME__)
 PLOT_MKTEMP_BERV_COV.value = True
+
+# turn on the template s1d deconvolution plot
+PLOT_MKTEMP_S1D_DECONV = PLOT_MKTEMP_S1D_DECONV.copy(__NAME__)
+PLOT_MKTEMP_S1D_DECONV.value = True
 
 # turn on the ccf rv fit debug plot (in a loop around orders)
 PLOT_CCF_RV_FIT_LOOP = PLOT_CCF_RV_FIT_LOOP.copy(__NAME__)

@@ -1,22 +1,21 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
-
-# CODE DESCRIPTION HERE
+Core potting functionality
 
 Created on 2019-01-19 at 13:45
 
 @author: cook
 """
-from astropy.table import Table
-from collections import OrderedDict
-from collections.abc import Iterable
-import matplotlib
-import numpy as np
 import os
 import sys
+from collections import OrderedDict
+from collections.abc import Iterable
 from typing import Any, Generator, List, Tuple, Union
+
+import matplotlib
+import numpy as np
+from astropy.table import Table
 
 from apero import lang
 from apero.base import base
@@ -25,9 +24,9 @@ from apero.core import math as mp
 from apero.core.core import drs_log
 from apero.core.utils import drs_recipe
 from apero.io import drs_path
-from apero.plotting import plot_functions
-from apero.plotting import latex
 from apero.plotting import html
+from apero.plotting import latex
+from apero.plotting import plot_functions
 
 # =============================================================================
 # Define variables
@@ -1241,7 +1240,7 @@ def import_matplotlib() -> Union[Tuple[Any, Any, Any], None]:
     global PLT_MOD
     global MPL_MOD
     # fix for MacOSX plots freezing
-    gui_env = ['Qt5Agg', 'GTKAgg', 'TKAgg', 'WXAgg', 'Agg']
+    gui_env = ['MacOSX', 'Qt5Agg', 'GTKAgg', 'TKAgg', 'WXAgg', 'Agg']
     for gui in gui_env:
         # noinspection PyBroadException
         try:
@@ -1362,6 +1361,61 @@ def main(params: ParamDict, graph_name: str,
     plotter = Plotter(params, None, mode=mode)
     # use plotter to plot
     plotter(graph_name, **kwargs)
+
+
+def plot_selection(params: ParamDict,
+                   recipe: DrsRecipe) -> tuple[ParamDict, DrsRecipe]:
+    """
+    Present user with a list of plots to plot
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param recipe: DrsRecipe, the recipe instance that called this function
+
+    :return: 1. the updated parameter dictionary, 2. the updated Recipe
+    """
+    # set function name
+    func_name = display_func('plot_selection', __NAME__)
+    # get a list of plots for this recipe
+    plots = recipe.debug_plots
+    # print options
+    print('Select from the following plots to plot:')
+    # loop around plots to give user the options
+    for it in range(len(plots)):
+        # TODO: We may need a description here
+        print('\t{0}: {1}'.format(it + 1, plots[it]))
+    # ask user for options
+    uinput = input('\n\t Select numbers separated by a whitespace:\t')
+    # split numbers by spaces
+    plot_nums = uinput.split()
+    # storage for chosen plot names
+    plot_names = []
+    # loop around plot numbers and get plot names
+    for plot_num in plot_nums:
+        try:
+            plot_names.append(plots[int(plot_num) - 1])
+        except Exception as _:
+            print(f'\t Entry "{plot_num} invalid. Skipping')
+            continue
+    # loop around plots
+    for plot in plots:
+        # get key name
+        keyname = f'PLOT_{plot}'
+        # skip if we don't have this key (shouldn't happen)
+        if keyname not in params:
+            continue
+        # if plot name has been selected we set it to true
+        if plot in plot_names:
+            params.set(keyname, value=True, source=func_name)
+        # otherwise we set it to False
+        else:
+            params.set(keyname, value=True, source=func_name)
+    # finally set DRS_PLOT to mode = 3
+    params.set(key='DRS_PLOT', value=3, source=func_name)
+    # update recipe params
+    recipe.params = params
+    # return update params and recipe
+    return params, recipe
+
 
 
 # =============================================================================

@@ -1,27 +1,30 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
-
-# CODE DESCRIPTION HERE
+APERO dark calibration functionality
 
 Created on 2019-03-25 at 12:29
 
 @author: cook
 """
-import numpy as np
 import os
 import warnings
+from typing import List, Optional, Tuple, Union
 
+import numpy as np
+from astropy.table import Table
+
+from apero import lang
 from apero.base import base
 from apero.core import constants
 from apero.core import math as mp
-from apero import lang
-from apero.core.core import drs_log, drs_file
+from apero.core.core import drs_file
+from apero.core.core import drs_log
+from apero.core.utils import drs_recipe
 from apero.core.utils import drs_utils
 from apero.io import drs_fits
-from apero.io import drs_path
 from apero.io import drs_image
+from apero.io import drs_path
 from apero.io import drs_table
 
 # =============================================================================
@@ -34,11 +37,14 @@ __version__ = base.__version__
 __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
-# get param dict
-ParamDict = constants.ParamDict
-DrsFitsFile = drs_file.DrsFitsFile
 # Get Logging function
 WLOG = drs_log.wlog
+# Get Recipe class
+DrsRecipe = drs_recipe.DrsRecipe
+# Get parameter class
+ParamDict = constants.ParamDict
+# Get fits file class
+DrsFitsFile = drs_file.DrsFitsFile
 # Get the text types
 textentry = lang.textentry
 # alias pcheck
@@ -48,7 +54,13 @@ pcheck = constants.PCheck(wlog=WLOG)
 # =============================================================================
 # Define dark functions
 # =============================================================================
-def measure_dark(params, image, entry_key, **kwargs):
+def measure_dark(params: ParamDict, image: np.ndarray, entry_key: str,
+                 dark_qmin: Optional[int] = None,
+                 dark_qmax: Optional[int] = None,
+                 histo_bins: Optional[int] = None,
+                 histo_low: Optional[int] = None,
+                 histo_high: Optional[int] = None
+                 ) -> Tuple[np.ndarray, float, float]:
     """
     Measure the dark pixels in "image"
 
@@ -65,22 +77,35 @@ def measure_dark(params, image, entry_key, **kwargs):
 
     :param image: numpy array (2D), the image
     :param entry_key: string, the entry key (for logging)
+    :param dark_qmin: int, optional, the lower percentile when measuring the
+                      dark, overrides params['DARK_QMIN']
+    :param dark_qmax: int, optional, the upper percentile when measuring the
+                      dark, overrides params['DARK_QMAX']
+    :param histo_bins: int, optional, the numberof bins in dark histogram,
+                       overrides params['HISTO_BINS']
+    :param histo_low: int, optional, the lower range of the histogram in ADU/s,
+                      overrides params['HISTO_RANGE_LOW']
+    :param histo_high: int, optional, the upper range of the histogram in ADU/s,
+                       overrides params['HIST_RANGE_HIGH']
 
-    :return: hist numpy.histogram tuple (hist, bin_edges),
-             med: float, the median value of the non-Nan image values,
-             dadead: float, the fraction of dead pixels as a percentage
+    :returns: tuple, 1. hist numpy.histogram tuple (hist, bin_edges),
+             2. med: float, the median value of the non-Nan image values,
+             3. dadead: float, the fraction of dead pixels as a percentage
 
           where:
               hist : numpy array (1D) The values of the histogram.
               bin_edges : numpy array (1D) of floats, the bin edges
     """
+    # set the function name
     func_name = __NAME__ + '.measure_dark()'
     # check that params contains required parameters
-    dark_qmin = pcheck(params, 'DARK_QMIN', 'dark_qmin', kwargs, func_name)
-    dark_qmax = pcheck(params, 'DARK_QMAX', 'dark_qmax', kwargs, func_name)
-    hbins = pcheck(params, 'HISTO_BINS', 'hbins', kwargs, func_name)
-    hrangelow = pcheck(params, 'HISTO_RANGE_LOW', 'hlow', kwargs, func_name)
-    hrangehigh = pcheck(params, 'HISTO_RANGE_HIGH', 'hhigh', kwargs, func_name)
+    dark_qmin = pcheck(params, 'DARK_QMIN', func=func_name, override=dark_qmin)
+    dark_qmax = pcheck(params, 'DARK_QMAX', func=func_name, override=dark_qmax)
+    hbins = pcheck(params, 'HISTO_BINS', func=func_name, override=histo_bins)
+    hrangelow = pcheck(params, 'HISTO_RANGE_LOW', func=func_name,
+                       override=histo_low)
+    hrangehigh = pcheck(params, 'HISTO_RANGE_HIGH', func=func_name,
+                        override=histo_high)
     # get the textdict
     image_name = textentry(entry_key)
     # make sure image is a numpy array
@@ -112,7 +137,10 @@ def measure_dark(params, image, entry_key, **kwargs):
     return np.array(histo), float(med), float(dadead)
 
 
-def measure_dark_badpix(params, image, nanmask, **kwargs):
+def measure_dark_badpix(params: ParamDict, image: np.ndarray,
+                        nanmask: np.ndarray,
+                        dark_cutlimit: Optional[float] = None
+                        ) -> Tuple[float, float]:
     """
     Measure the bad pixels (non-dark pixels and NaN pixels)
 
@@ -121,21 +149,25 @@ def measure_dark_badpix(params, image, nanmask, **kwargs):
                 DARK_CUT_LIMIT
     :param image: numpy array (2D), the image
     :param nanmask: numpy array (2D), the make of non-finite values
-    :return:
+    :param dark_cutlimit: float, optional, define the bad pixel cut limit in
+                          ADU/s, overrides params['DARK_CUTLIMIT']
+
+    :return: tuple, 1. the percentage of bad dark pixels
+             2. the percentage of bad dark pixels abouve cut limit
     """
     func_name = __NAME__ + '.measure_dark_badpix()'
     # get constants from params/kwargs
-    darkcutlimit = pcheck(params, 'DARK_CUTLIMIT', 'darkcutlimit', kwargs,
-                           func_name)
+    darkcutlimit = pcheck(params, 'DARK_CUTLIMIT', func=func_name,
+                          override=dark_cutlimit)
     # get number of bad dark pixels (as a fraction of total pixels)
-    with warnings.catch_warnings(record=True) as w:
+    with warnings.catch_warnings(record=True) as _:
         baddark = 100.0 * np.sum(image > darkcutlimit)
         baddark /= np.product(image.shape)
     # log the fraction of bad dark pixels
     wargs = [darkcutlimit, baddark]
     WLOG(params, 'info', textentry('40-011-00006', args=wargs))
     # define mask for values above cut limit or NaN
-    with warnings.catch_warnings(record=True) as w:
+    with warnings.catch_warnings(record=True) as _:
         datacutmask = ~((image > darkcutlimit) | nanmask)
     # get number of pixels above cut limit or NaN
     n_bad_pix = np.product(image.shape) - np.sum(datacutmask)
@@ -148,7 +180,9 @@ def measure_dark_badpix(params, image, nanmask, **kwargs):
     return baddark, dadeadall
 
 
-def correction(params, image, nfiles, darkfile, return_dark=False):
+def correction(params: ParamDict, image: np.ndarray, nfiles: int,
+               darkfile: str, return_dark: bool = False
+               ) -> Union[np.ndarray, Tuple[np.ndarray, str]]:
     """
     Corrects "image" for "dark" using calibDB file (header must contain
     value of p['ACQTIME_KEY'] as a keyword)
@@ -161,11 +195,10 @@ def correction(params, image, nfiles, darkfile, return_dark=False):
     :param return_dark: bool, if True return the dark as well as the corrected
                         image
 
-    :return corrected_image: numpy array (2D), the dark corrected image
-                             only returned if return_dark = True:
-    :return darkimage: numpy array (2D), the dark
+    :returns: darkimage: numpy array (2D), the dark or tuple:
+              1. darkimage, 2. the dark used for correction
     """
-    func_name = __NAME__ + '.correct_for_dark()'
+    _ = __NAME__ + '.correct_for_dark()'
     # -------------------------------------------------------------------------
     # do dark using correct file
     darkimage, dhdr = drs_fits.readfits(params, darkfile, gethdr=True)
@@ -184,15 +217,37 @@ def correction(params, image, nfiles, darkfile, return_dark=False):
 # =============================================================================
 # Define reference dark functions
 # =============================================================================
-def construct_dark_table(params, filenames, **kwargs):
+def construct_dark_table(params: ParamDict, filenames: List[str],
+                         match_time: Optional[float] = None,
+                         max_files: Optional[int] = None,
+                         min_exptime: Optional[float] = None,
+                         mode: str = 'pp') -> Table:
+    """
+    Construct the dark file table - consisting of all darks to use in
+    dark reference calibration
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param filenames: list of strings, all dark files possible to use
+    :param match_time: float or None, optional, the maximum time (in hours)
+                       to group files by, overrides
+                       params['DARK_REF_MATCH_TIME']
+    :param max_files: int or None, optional, the maximum number of files to use
+                      in the dark reference calibration
+    :param mode: str, 'raw' or 'pp' - changes the keywords which are used
+
+    :return: astropy table, the filled dark file table
+    """
     # define function
     func_name = __NAME__ + '.construct_dark_table()'
     # get parameters from params
-    time_thres = pcheck(params, 'DARK_REF_MATCH_TIME', 'time_thres', kwargs,
-                        func_name)
-    max_num_files = pcheck(params, 'DARK_REF_MAX_FILES', 'max_num', kwargs,
-                           func_name)
+    time_thres = pcheck(params, 'DARK_REF_MATCH_TIME', func=func_name,
+                        override=match_time)
+    max_num_files = pcheck(params, 'DARK_REF_MAX_FILES', func=func_name,
+                           override=max_files)
+    dark_ref_min_exptime = pcheck(params, 'DARK_REF_MIN_EXPTIME',
+                                  func=func_name, override=min_exptime)
     # define storage for table columns
+    dark_files = []
     dark_time, dark_exp, dark_pp_version = [], [], []
     basenames, obs_dirs, dprtypes = [], [], []
     dark_wt_temp, dark_cass_temp, dark_humidity = [], [], []
@@ -208,19 +263,34 @@ def construct_dark_table(params, filenames, **kwargs):
         obs_dir = path_inst.obs_dir
         # read the header
         hdr = drs_fits.read_header(params, filenames[it])
+        # ---------------------------------------------------------------------
         # get keys from hdr
-        acqtime, acqmethod = drs_file.get_mid_obs_time(params, hdr,
-                                                       out_fmt='mjd')
+        # ---------------------------------------------------------------------
+        # deal with mid_obs_time (will not be set in raw files)
+        if mode == 'pp':
+            acqtime, _ = drs_file.get_mid_obs_time(params, hdr, out_fmt='mjd')
+        else:
+            acqtime = hdr[params['KW_MJDATE'][0]]
+        # get exposure time
         exptime = hdr[params['KW_EXPTIME'][0]]
-        ppversion = hdr[params['KW_PPVERSION'][0]]
+        # get pp version (will not be set in raw files)
+        ppversion = hdr.get(params['KW_PPVERSION'][0], 'None')
+        # do not consider dark exp time below this value
+        if exptime < dark_ref_min_exptime:
+            continue
         # TODO: Cannot get this value from headers currently [NIRPS]
         wt_temp = hdr.get(params['KW_WEATHER_TOWER_TEMP'][0], np.nan)
         # TODO: Cannot get this value from headers currently [NIRPS]
         cass_temp = hdr.get(params['KW_CASS_TEMP'][0], np.nan)
         # TODO: Cannot get this value from headers currently [NIRPS]
         humidity = hdr.get(params['KW_HUMIDITY'][0], np.nan)
-        dprtype = hdr[params['KW_DPRTYPE'][0]]
+        # deal with DPRTYPE (will not be set in raw files)
+        if mode == 'pp':
+            dprtype = hdr.get(params['KW_DPRTYPE'][0])
+        else:
+            dprtype = 'DARK_DARK'
         # append to lists
+        dark_files.append(filenames[it])
         dark_time.append(float(acqtime))
         dark_exp.append(float(exptime))
         dark_pp_version.append(ppversion)
@@ -237,10 +307,10 @@ def construct_dark_table(params, filenames, **kwargs):
     dark_time = np.array(dark_time)
     time_mask = drs_utils.uniform_time_list(dark_time, max_num_files)
     # mask all lists (as numpy arrays)
+    dark_files = np.array(dark_files)[time_mask]
     dark_time = np.array(dark_time)[time_mask]
     dark_exp = np.array(dark_exp)[time_mask]
     dark_pp_version = np.array(dark_pp_version)[time_mask]
-    filenames = np.array(filenames)[time_mask]
     basenames = np.array(basenames)[time_mask]
     obs_dirs = np.array(obs_dirs)[time_mask]
     dprtypes = np.array(dprtypes)[time_mask]
@@ -264,7 +334,7 @@ def construct_dark_table(params, filenames, **kwargs):
     columns = ['OBS_DIR', 'BASENAME', 'FILENAME', 'MJDATE', 'EXPTIME',
                'PPVERSION', 'WT_TEMP', 'CASS_TEMP', 'HUMIDITY', 'DPRTYPE',
                'GROUP']
-    values = [obs_dirs, basenames, filenames, dark_time, dark_exp,
+    values = [obs_dirs, basenames, dark_files, dark_time, dark_exp,
               dark_pp_version, dark_wt_temp, dark_cass_temp, dark_humidity,
               dprtypes, matched_id]
     # make table using columns and values
@@ -273,11 +343,23 @@ def construct_dark_table(params, filenames, **kwargs):
     return dark_table
 
 
-def construct_ref_dark(params, recipe, dark_table, **kwargs):
+def construct_ref_dark(params: ParamDict, dark_table: Table,
+                       ref_med_size: Optional[int] = None
+                       ) -> Tuple[np.ndarray, DrsFitsFile]:
+    """
+    Construct the reference dark calibration from the dark file table
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param dark_table: astropy Table, the dark file table
+    :param ref_med_size: int or None, optional, the median filter size for
+                         dark reference calibration
+
+    :return: tuple, 1. the reference dark, 2. dark file class
+    """
     func_name = __NAME__ + '.construct_ref_dark'
     # get constants from p
-    med_size = pcheck(params, 'DARK_REF_MED_SIZE', 'med_size', kwargs,
-                      func_name)
+    med_size = pcheck(params, 'DARK_REF_MED_SIZE', func=func_name,
+                      override=ref_med_size)
     # get col data from dark_table
     filenames = dark_table['FILENAME']
     dark_times = dark_table['MJDATE']
@@ -329,8 +411,8 @@ def construct_ref_dark(params, recipe, dark_table, **kwargs):
     # produce the large median (write ribbons to disk to save space)
     with warnings.catch_warnings(record=True) as _:
         ref_dark = drs_image.large_image_combine(params, group_dark_files,
-                                                    math='median',
-                                                    outdir=outdir, fmt='npy')
+                                                 math='median',
+                                                 outdir=outdir, fmt='npy')
     # clean up npy dir
     drs_image.npy_fileclean(params, group_dark_files, darkm_subdir, outdir)
     # -------------------------------------------------------------------------
@@ -349,7 +431,14 @@ def construct_ref_dark(params, recipe, dark_table, **kwargs):
 # =============================================================================
 # write files and qc functions
 # =============================================================================
-def reference_qc(params):
+def reference_qc(params: ParamDict) -> Tuple[List[list], int]:
+    """
+    The dark reference quality control
+
+    :param params: ParamDict, parameter dictionary of constants
+
+    :return: tuple, 1. the qc lists, 2. if passed 1 else 0
+    """
     # set passed variable and fail message list
     fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
     # no quality control currently
@@ -374,8 +463,22 @@ def reference_qc(params):
     return qc_params, passed
 
 
-def write_reference_files(params, recipe, reffile, ref_dark, dark_table,
-                          qc_params):
+def write_reference_files(params: ParamDict, recipe: DrsRecipe,
+                          reffile: DrsFitsFile, ref_dark: np.ndarray,
+                          dark_table: Table, qc_params: List[list]
+                          ) -> DrsFitsFile:
+    """
+    Write the dark reference file to disk
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param recipe: DrsRecipe, the recipe that called this function
+    :param reffile: DrsFitsFile, an input dark file class
+    :param ref_dark: numpy (2D) array, the reference dark calibration image
+    :param dark_table: astropy Table, the dark file table
+    :param qc_params: list of lists, the quality control lists
+
+    :return: DrsFitsFile, the output dark reference calibration fits file class
+    """
     # define outfile
     outfile = recipe.outputs['DARK_REF_FILE'].newcopy(params=params)
     # construct the filename from file instance
@@ -417,7 +520,18 @@ def write_reference_files(params, recipe, reffile, ref_dark, dark_table,
     return outfile
 
 
-def reference_summary(recipe, params, qc_params, dark_table):
+def reference_summary(recipe: DrsRecipe, params: ParamDict,
+                      qc_params: List[list], dark_table: Table):
+    """
+    Write the dark reference calibration summary document
+
+    :param recipe: DrsRecipe, the recipe that called this function
+    :param params: ParamDict, parameter dictionary of constants
+    :param qc_params: list of lists, the quality control lists
+    :param dark_table: astropy Table, the dark file table
+
+    :return: None, writes summary document
+    """
     # add stats
     recipe.plot.add_stat('KW_VERSION', value=params['DRS_VERSION'])
     recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS_DATE'])
@@ -427,7 +541,18 @@ def reference_summary(recipe, params, qc_params, dark_table):
     recipe.plot.summary_document(0, qc_params)
 
 
-def dark_qc(params, med_full, dadeadall, baddark):
+def dark_qc(params: ParamDict, med_full: float, dadeadall: float,
+            baddark: float) -> Tuple[List[list], int]:
+    """
+    Dark quality control
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param med_full: float, the median value of the non-Nan image values
+    :param dadeadall: float, the fraction of dead pixels as a percentage
+    :param baddark: float, the percentage of bad dark pixels
+
+    :return: tuple, 1. the qc lists, 2. int 1 if passed 0 if failed
+    """
     # set passed variable and fail message list
     fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
     # ------------------------------------------------------------------
@@ -485,9 +610,37 @@ def dark_qc(params, med_full, dadeadall, baddark):
     return qc_params, passed
 
 
-def dark_write_files(params, recipe, dprtype, infile, combine, rawfiles,
-                     dadead_full, med_full, dadead_blue, med_blue,
-                     dadead_red, med_red, qc_params, image0):
+def dark_write_files(params: ParamDict, recipe: DrsRecipe, dprtype: str,
+                     infile: DrsFitsFile, combine: bool, rawfiles: List[str],
+                     dadead_full: float, med_full: float, dadead_blue: float,
+                     med_blue: float, dadead_red: float, med_red: float,
+                     qc_params: List[list], image0: np.ndarray) -> DrsFitsFile:
+    """
+    Write the dark file to disk
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param recipe: DrsRecipe, the recipe that called this function
+    :param dprtype: str, the data product type (DARK_DARK_INT DARK_DARK_TEL)
+    :param infile: DrsFitsFile, the input dark file
+    :param combine: bool, if True input dark files were combined
+    :param rawfiles: list of strings, the list of input files
+    :param dadead_full: float, the fraction of dead pixels as a percentage
+                        across whole detector
+    :param med_full: float,  the median value of the non-Nan image values across
+                     whole detector
+    :param dadead_blue: float, the fraction of dead pixels as a percentage in
+                        blue region
+    :param med_blue: float,  the median value of the non-Nan image values in
+                     blue region
+    :param dadead_red: float, the fraction of dead pixels as a percentage in
+                       red region
+    :param med_red: float,  the median value of the non-Nan image values in red
+                    region
+    :param qc_params: list of lists, the qc lists
+    :param image0: numpy (2D) array: the final dark image
+
+    :return: DrsFitsFile, the output dark calibration fits file class
+    """
     # define outfile
     if dprtype == 'DARK_DARK_INT':
         outfile = recipe.outputs['DARK_INT_FILE'].newcopy(params=params)
@@ -546,8 +699,32 @@ def dark_write_files(params, recipe, dprtype, infile, combine, rawfiles,
     return outfile
 
 
-def dark_summary(recipe, it, params, dadead_full, med_full, dadead_blue,
-                 med_blue, dadead_red, med_red, qc_params):
+def dark_summary(recipe: DrsRecipe, it: int, params: ParamDict,
+                 dadead_full: float, med_full: float, dadead_blue: float,
+                 med_blue: float, dadead_red: float, med_red: float,
+                 qc_params: List[list]):
+    """
+    Write the dark calibration summary document
+
+    :param recipe: DrsRecipe, the recipe that called this function
+    :param it: int, the iteration
+    :param params: ParamDict, parameter dictionary of constants
+    :param dadead_full: float, the fraction of dead pixels as a percentage
+                        across whole detector
+    :param med_full: float,  the median value of the non-Nan image values across
+                     whole detector
+    :param dadead_blue: float, the fraction of dead pixels as a percentage in
+                        blue region
+    :param med_blue: float,  the median value of the non-Nan image values in
+                     blue region
+    :param dadead_red: float, the fraction of dead pixels as a percentage in
+                       red region
+    :param med_red: float,  the median value of the non-Nan image values in red
+                    region
+    :param qc_params: list of lists, the qc lists
+
+    :return: None, writes summary document
+    """
     # add stats
     recipe.plot.add_stat('KW_VERSION', value=params['DRS_VERSION'])
     recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS_DATE'])

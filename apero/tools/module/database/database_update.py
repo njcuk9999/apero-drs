@@ -9,30 +9,25 @@ Created on 2021-05-10
 
 @author: cook
 """
-from astropy.table import Table, vstack
-from astropy.io import fits
-import numpy as np
-import os
 import glob
+import os
 from pathlib import Path
-import shutil
 from typing import Any, List, Tuple
 
-from apero.base import base
+import numpy as np
+from astropy.io import fits
+from astropy.table import Table
+
 from apero import lang
+from apero.base import base
 from apero.core import constants
+from apero.core.core import drs_database
 from apero.core.core import drs_file
 from apero.core.core import drs_log
-from apero.core.core import drs_database
-from apero.core.core import drs_text
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_utils
-from apero.io import drs_fits
 from apero.io import drs_table
 from apero.tools.module.database import manage_databases
-from apero.core.instruments.default import pseudo_const
-from apero.science import preprocessing as prep
-
 
 # =============================================================================
 # Define variables
@@ -49,7 +44,7 @@ WLOG = drs_log.wlog
 # get parameter dictionary
 ParamDict = constants.ParamDict
 DrsRecipe = drs_recipe.DrsRecipe
-PseudoConstants = pseudo_const.PseudoConstants
+PseudoConstants = constants.PseudoConstants
 # get display func
 display_func = drs_log.display_func
 # Get the text types
@@ -65,12 +60,12 @@ GAIA_COL = 'GAIADR2ID'
 # =============================================================================
 # Define functions
 # =============================================================================
-def update_database(params: ParamDict, recipe: DrsRecipe, dbkind: str):
+def update_database(params: ParamDict, dbkind: str):
     """
     Update the calib/tellu/log and index databases from files on disk
 
     :param params: Paramdict, the parameter dictionary of constants
-    :param recipe: DrsRecipe, the recipe that called this function
+    :param dbkind: str, the type of database (i.e. all, calib, tellu, log etc)
     :return:
     """
     # load pconst
@@ -81,14 +76,14 @@ def update_database(params: ParamDict, recipe: DrsRecipe, dbkind: str):
         WLOG(params, 'info', textentry('40-006-00007', args=['calibration']),
              colour='magenta')
         WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
-        calib_tellu_update(params, recipe, pconst, 'calibration')
+        calib_tellu_update(params, pconst, 'calibration')
     # update telluric database
     if dbkind in ['tellu', 'all']:
         WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
         WLOG(params, 'info', textentry('40-006-00007', args=['telluric']),
              colour='magenta')
         WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
-        calib_tellu_update(params, recipe, pconst, 'telluric')
+        calib_tellu_update(params, pconst, 'telluric')
     # update log and index database
     if dbkind in ['log', 'all']:
         WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
@@ -129,13 +124,12 @@ def reset_databases(params: ParamDict):
     manage_databases.install_databases(params)
 
 
-def calib_tellu_update(params: ParamDict, recipe: DrsRecipe,
-                       pconst: PseudoConstants, db_type: str):
+def calib_tellu_update(params: ParamDict, pconst: PseudoConstants,
+                       db_type: str):
     """
     Update either the calibration or telluric database with files on disk
 
     :param params: Paramdict, the parameter dictionary of constants
-    :param recipe: DrsRecipe, the recipe that called this function
     :param pconst: PseudoConst, pseudo constant object
     :param db_type: str, either 'calibration' or 'telluric'
 
@@ -178,7 +172,7 @@ def calib_tellu_update(params: ParamDict, recipe: DrsRecipe,
         dbmanager = drs_database.CalibrationDatabase(params)
         dbmanager.load_db()
     elif db_type == 'telluric':
-        manage_databases.create_telluric_database(pconst, db_list)
+        manage_databases.create_telluric_database(params, pconst, db_list)
         # reload the telluric database
         dbmanager = drs_database.TelluricDatabase(params)
         dbmanager.load_db()
@@ -264,7 +258,7 @@ def index_update(params: ParamDict):
         WLOG(params, '', textentry('40-503-00044', args=[block_kind]))
         # update index database for block kind
         findexdbm = drs_utils.update_index_db(params, block_kind=block_kind,
-                                             findexdbm=findexdbm)
+                                              findexdbm=findexdbm)
 
 
 def log_update(params: ParamDict, pconst: PseudoConstants):

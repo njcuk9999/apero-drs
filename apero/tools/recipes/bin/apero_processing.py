@@ -14,11 +14,11 @@ import traceback
 
 from apero import lang
 from apero.base import base
-from apero.core.core import drs_log
 from apero.core.core import drs_database
+from apero.core.core import drs_log
 from apero.core.utils import drs_startup
-from apero.tools.module.processing import drs_processing
 from apero.tools.module.database import manage_databases
+from apero.tools.module.processing import drs_processing
 
 # =============================================================================
 # Define variables
@@ -52,7 +52,6 @@ def main(runfile=None, **kwargs):
     """
     Main function for apero_explorer.py
 
-    :param instrument: str, the instrument name
     :param runfile: str, the run file to run (see the /run/ folder)
     :param kwargs: additional keyword arguments
 
@@ -102,7 +101,8 @@ def __main__(recipe, params):
     # Deal with run file
     # ----------------------------------------------------------------------
     # deal with run file
-    params, runtable = drs_startup.read_runfile(params, runfile, rkind='run')
+    params, runtable = drs_startup.read_runfile(params, recipe, runfile,
+                                                rkind='run')
     # reset sys.argv so it doesn't mess with recipes
     sys.argv = [__NAME__]
 
@@ -232,7 +232,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return drs_startup.return_locals(params, locals())
+    return locals()
 
 
 # =============================================================================

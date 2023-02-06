@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Constants parameter functions
+APERO Constants parameter functions
 
 DRS Import Rules:
 
@@ -11,24 +11,25 @@ Created on 2019-01-17 at 15:24
 
 @author: cook
 """
-from astropy.io import fits
-from astropy.table import Table
-from collections import OrderedDict
 import copy
-import numpy as np
 import os
 import shutil
-from typing import Any, List, Tuple, Type, Union
+from collections import OrderedDict
 from pathlib import Path
+from typing import Any, List, Tuple, Type, Union
 
+import numpy as np
+from astropy.io import fits
+from astropy.table import Table
+
+from apero import lang
 from apero.base import base
 from apero.core import math as mp
+from apero.core.constants import constant_functions
 from apero.core.core import drs_base_classes as base_class
 from apero.core.core import drs_exceptions
 from apero.core.core import drs_misc
 from apero.core.core import drs_text
-from apero import lang
-from apero.core.constants import constant_functions
 from apero.core.instruments.default import pseudo_const
 
 # =============================================================================
@@ -60,6 +61,7 @@ SCRIPTS = base.SCRIPTS
 USCRIPTS = base.USCRIPTS
 PSEUDO_CONST_FILE = base.PSEUDO_CONST_FILE
 PSEUDO_CONST_CLASS = base.PSEUDO_CONST_CLASS
+DEFAULT_PSEUDO_CONST_CLASS = base.DEFAULT_PSEUDO_CONST_CLASS
 # Get base classes
 CaseInDict = base_class.CaseInsensitiveDict
 # Get the text types
@@ -78,7 +80,6 @@ ModLoads = Tuple[List[str], List[Any], List[str], List[Union[Const, Keyword]]]
 
 # storage for checked sources
 CHECKED_SOURCES = dict()
-
 
 
 # =============================================================================
@@ -152,10 +153,7 @@ class ParamDict(CaseInDict):
         func_name = display_func('__getitem__', __NAME__, self.class_name)
         # store:
         if key in self.data.keys():
-            if key not in self.used:
-                self.used[key] = 0
-            else:
-                self.used[key] += 1
+            self.count_used(key)
         # try to get item from super
         try:
             return super(ParamDict, self).__getitem__(key)
@@ -248,6 +246,21 @@ class ParamDict(CaseInDict):
         # get string from string print
         return self._string_print()
 
+    def count_used(self, key: str, start_value: int = 0):
+        """
+        Counts the usage of key and stores it in self.used
+
+        :param key: str, the key name
+        :param start_value: str, the start position (normally zero) but if
+                            forcing this should be 1
+
+        :return: None, updates self.used
+        """
+        if key not in self.used:
+            self.used[key] = start_value
+        else:
+            self.used[key] += 1
+
     def set(self, key: str, value: Any,
             source: Union[None, str] = None,
             instance: Union[None, Const, Keyword] = None,
@@ -269,10 +282,7 @@ class ParamDict(CaseInDict):
         """
         # update used
         if key in self.data.keys() and record_use:
-            if key not in self.used:
-                self.used[key] = 0
-            else:
-                self.used[key] += 1
+            self.count_used(key)
         # if we dont have the key in sources set it regardless
         if key not in self.sources:
             self.sources[key] = source
@@ -812,6 +822,8 @@ class ParamDict(CaseInDict):
         :param key: str, the key that contains a string list
         :param separator: str, the character that separates
         :param dtype: type, the type to cast the list element to
+        :param required: bool, if not required returns None when key is not
+                         in parameter dictionary
 
         :return: the list of values extracted from the string for `key`
         :rtype: list
@@ -860,6 +872,8 @@ class ParamDict(CaseInDict):
 
         :param key: str, the key that contains a string list
         :param dtype: type, the type to cast the list element to
+        :param required: bool, if not required returns None when key is not
+                         in parameter dictionary
 
         :return: the list of values extracted from the string for `key`
         :rtype: dict
@@ -991,10 +1005,20 @@ class ParamDict(CaseInDict):
         else:
             print(textentry('40-000-00010', args=[key]))
 
-    def keys(self):
+    def keys(self) -> List:
+        """
+        Return a list of keys for the ParamDict
+
+        :return: list, list of keys for the ParamDict
+        """
         return list(self.data.keys())
 
-    def values(self):
+    def values(self) -> List:
+        """
+        Return a list of values for the ParamDict
+
+        :return: list, list of values for each key
+        """
         return list(self.data.values())
 
     def snapshot_table(self, recipe: Union[Any, None] = None,
@@ -1129,6 +1153,7 @@ class ParamDict(CaseInDict):
             if key not in self.used:
                 continue
             # do not continue if we have not used this key (set to zero)
+            # noinspection PyTypeChecker
             if int(self.used[key]) < 1:
                 continue
             # add param_dict entry (or entries)
@@ -1357,9 +1382,7 @@ class PCheck:
 # =============================================================================
 # Define functions
 # =============================================================================
-def update_paramdicts(*args: List[ParamDict], key: str,
-                      value: Any = None,
-                      source: str = None,
+def update_paramdicts(*args, key: str, value: Any = None, source: str = None,
                       instance: Union[None, Const, Keyword] = None):
     """
     Update a set of parameter dictionarys with a key/value/source/instance
@@ -1441,7 +1464,7 @@ def load_config(instrument: Union[str, None] = None,
 
 
 def load_pconfig(instrument: Union[str, None] = None
-                 ) -> pseudo_const.PseudoConstants:
+                 ) -> pseudo_const.DefaultPseudoConstants:
     """
     Load an instrument pseudo constants
 
@@ -1469,6 +1492,10 @@ def load_pconfig(instrument: Union[str, None] = None
     # check that we have class and import it
     if hasattr(mod, PSEUDO_CONST_CLASS):
         psconst = getattr(mod, PSEUDO_CONST_CLASS)
+    # deal with case where we want to use the default pseudo class
+    #     (non-instrument dependent)
+    elif hasattr(mod, DEFAULT_PSEUDO_CONST_CLASS):
+        psconst = getattr(mod, DEFAULT_PSEUDO_CONST_CLASS)
     # else raise error
     else:
         eargs = [modules[0], PSEUDO_CONST_CLASS, func_name]

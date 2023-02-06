@@ -13,13 +13,12 @@ import os
 import shutil
 
 import apero
-from apero.base import base
-from apero.core.core import drs_misc
 from apero import lang
+from apero.base import base
 from apero.core.core import drs_log
+from apero.core.core import drs_misc
 from apero.core.utils import drs_startup
 from apero.tools.module.documentation import drs_changelog
-
 
 # =============================================================================
 # Define variables
@@ -106,7 +105,7 @@ def __main__(recipe, params):
     # read and ask for new version
     WLOG(params, '', textentry('40-501-00009'))
     # set new version
-    version = drs_changelog.ask_for_new_version(params)
+    version = drs_changelog.ask_for_new_version()
     # add tag of version
     if version is not None:
         # tag head with version
@@ -177,7 +176,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return drs_startup.return_locals(params, locals())
+    return locals()
 
 
 # =============================================================================

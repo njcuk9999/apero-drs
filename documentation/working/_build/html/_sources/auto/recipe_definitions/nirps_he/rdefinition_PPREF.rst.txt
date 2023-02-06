@@ -3,7 +3,7 @@
 
 
 ################################################################################
-apero_PP_REF_nirps_he
+apero_pp_ref_nirps_he
 ################################################################################
 
 
@@ -33,7 +33,7 @@ No schematic set
 
 .. code-block:: 
 
-    apero_PP_REF_nirps_he.py {obs_dir}[STRING] {options}
+    apero_pp_ref_nirps_he.py {obs_dir}[STRING] {options}
 
 
 .. code-block:: 
@@ -72,7 +72,7 @@ No schematic set
      --ref[STRING] // If set then recipe is a reference recipe (e.g. reference recipes write to calibration database as reference calibrations)
      --crunfile[STRING] // Set a run file to override default arguments
      --quiet[STRING] // Run recipe without start up text
-     --nosave[STRING] // Do not save any outputs (debug/information run). Note some recipes require other recipesto be run. Only use --nosave after previous recipe runs have been run successfully.
+     --nosave[STRING] // Do not save any outputs (debug/information run). Note some recipes require other recipesto be run. Only use --nosave after previous recipe runs have been run successfully at least once.
      --force_indir[STRING] // [STRING] Force the default input directory (Normally set by recipe)
      --force_outdir[STRING] // [STRING] Force the default output directory (Normally set by recipe)
 

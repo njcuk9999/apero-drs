@@ -1,26 +1,25 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
-
-# CODE DESCRIPTION HERE
+Pseudo constants (function) definitions for NIRPS HA
 
 Created on 2019-01-18 at 14:44
 
 @author: cook
 """
-import numpy as np
 from pathlib import Path
 from typing import Any, List, Optional, Tuple, Union
 
+import numpy as np
+
 from apero.base import base
 from apero.base import drs_db
+from apero.core import constants
 from apero.core.core import drs_base_classes as base_class
+from apero.core.core import drs_exceptions
 from apero.core.core import drs_misc
 from apero.core.core import drs_text
-from apero.core import constants
 from apero.core.instruments.default import pseudo_const
-from apero.core.core import drs_exceptions
 
 # =============================================================================
 # Define variables
@@ -38,8 +37,6 @@ Time, TimeDelta = base.AstropyTime, base.AstropyTimeDelta
 ParamDict = constants.ParamDict
 # Get the Database Columns class
 DatabaseColumns = drs_db.DatabaseColumns
-# get default Constant class
-DefaultConstants = pseudo_const.PseudoConstants
 # get error
 DrsCodedException = drs_exceptions.DrsCodedException
 # get display func
@@ -53,7 +50,7 @@ Table = pseudo_const.Table
 # =============================================================================
 # Define Constants class (pseudo constants)
 # =============================================================================
-class PseudoConstants(pseudo_const.PseudoConstants):
+class PseudoConstants(pseudo_const.DefaultPseudoConstants):
     # set class name
     class_name = 'PsuedoConstants'
 
@@ -66,7 +63,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         # set function name
         # _ = display_func('__init__', __NAME__, self.class_name)
         # set instrument name
-        self.instrument = instrument
+        super().__init__(instrument)
         # storage of things we don't want to compute twice without need
         self.exclude = ['header_cols', 'index_cols', 'calibration_cols',
                         'telluric_cols', 'logdb_cols', 'objdb_cols',
@@ -294,6 +291,10 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         header, hdict = get_mid_obs_time(params, header, hdict,
                                          filename=filename)
         # ------------------------------------------------------------------
+        # Deal with sun altitude
+        # ------------------------------------------------------------------
+        header, hdict = pseudo_const.get_sun_altitude(params, header, hdict)
+        # ------------------------------------------------------------------
         # Deal with drs mode
         # ------------------------------------------------------------------
         header, hdict = get_drs_mode(params, header, hdict)
@@ -306,6 +307,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         # Deal with calibrations and sky KW_OBJNAME
         # ------------------------------------------------------------------
         header, hdict = get_special_objname(params, header, hdict)
+
         # ------------------------------------------------------------------
         # Return header
         # ------------------------------------------------------------------
@@ -433,6 +435,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         header_cols.add(name='KW_DRS_MODE', datatype='VARCHAR(80)')
         header_cols.add(name='KW_OUTPUT', datatype='VARCHAR(80)',
                         is_index=True)
+        header_cols.add(name='KW_NIGHT_OBS', datatype='INT')
         header_cols.add(name='KW_CMPLTEXP', datatype='VARCHAR(80)')
         header_cols.add(name='KW_NEXP', datatype='VARCHAR(80)')
         header_cols.add(name='KW_VERSION', datatype='VARCHAR(80)')
@@ -461,7 +464,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         """
         keys = ['KW_TARGET_TYPE', 'KW_OBJECTNAME', 'KW_OBSTYPE',
                 'KW_RAW_DPRTYPE', 'KW_RAW_DPRCATG', 'KW_INSTRUMENT',
-                'KW_INST_MODE', 'KW_DPRTYPE', 'KW_OUTPUT']
+                'KW_INST_MODE', 'KW_DPRTYPE', 'KW_OUTPUT', 'KW_NIGHT_OBS']
         return keys
 
     # =========================================================================
@@ -744,6 +747,15 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         # list the individual fiber names
         return ['A', 'B']
 
+    def SKYFIBERS(self) -> Tuple[Union[str, None], Union[str, None]]:
+        """
+        List the sky fibers to use for the science channel and the calib
+        channel
+
+        :return:
+        """
+        return 'A', 'B'
+
     # tellu fudge
     def TAPAS_INST_CORR(self, mask_water: Table,
                         mask_others: Table) -> Tuple[Table, Table]:
@@ -768,6 +780,21 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         mask_others = mask_others[nirps_mask_others]
 
         return mask_water, mask_others
+
+    def TELLU_BAD_WAVEREGIONS(self) -> List[Tuple[float, float]]:
+        """
+        Define bad wavelength regions to mask before correcting tellurics
+
+        :return:  list of tuples (float, float), each tuple is a region from
+                  min wavelength to max wavelength
+        """
+        bad_regions = []
+        # mask the absorption region
+        bad_regions.append((1370, 1410))
+        # mask the reddest wavelength
+        bad_regions.append((1850, 2000))
+        # by default we mask no regions
+        return bad_regions
 
     # =========================================================================
     # DATABASE SETTINGS
@@ -840,8 +867,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
 # Functions used by pseudo const (instrument specific)
 # =============================================================================
 def clean_obj_name(params: ParamDict = None, header: Any = None,
-                   hdict: Any = None, objname: Union[str, None] = None,
-                   filename: Union[None, str, Path] = None,
+                   hdict: Any = None, filename: Union[None, str, Path] = None,
                    check_aliases: bool = False,
                    objdbm: Any = None) -> Union[Tuple[Any, Any], str]:
     """
@@ -852,7 +878,6 @@ def clean_obj_name(params: ParamDict = None, header: Any = None,
                    check for objname (if "objname" not set)
     :param hdict: drs_fits.Header the output header dictionary to update with
                   objname (as well as "header" if "objname" not set)
-    :param objname: str, the uncleaned object name to clean
     :param filename: str, the filename header came from (for exception)
     :param check_aliases: bool, if True check aliases (using database)
     :param objdbm: drs_database.ObjectDatabase - the database to check aliases
@@ -921,6 +946,7 @@ def get_trg_type(params: ParamDict, header: Any, hdict: Any,
     # _ = display_func('get_trg_type', __NAME__)
     # get keys from params
     kwobstype = params['KW_OBSTYPE'][0]
+    kwobjname = params['KW_OBJNAME'][0]
     kwtrgtype = params['KW_TARGET_TYPE'][0]
     kwtrgcomment = params['KW_TARGET_TYPE'][2]
     # get obstype
@@ -929,12 +955,18 @@ def get_trg_type(params: ParamDict, header: Any, hdict: Any,
         raise drs_exceptions.DrsCodedException('01-001-00027', 'error',
                                                targs=eargs)
     obstype = header[kwobstype]
+    # -------------------------------------------------------------------------
     # deal with setting value
+    # -------------------------------------------------------------------------
+    # "SKY" in dpr.type
     cond1 = 'SKY' in obstype
-    cond2 = 'OBJECT' not in obstype
+    # "SKY" in object name
+    cond2 = 'SKY' in header[kwobjname]
+    # "telluric" not in dpr.type
     cond3 = 'TELLURIC' not in obstype
+    # "flux" not in dpr.type
     cond4 = 'FLUX' not in obstype
-
+    # -------------------------------------------------------------------------
     if cond1 and cond2 and cond3 and cond4:
         trg_type = 'SKY'
     elif not cond1 or not cond2 or not cond3:

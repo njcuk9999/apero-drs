@@ -2,6 +2,648 @@ Changelog
 =========
 
 
+0.8.001 (2023-01-30)
+--------------------
+- [APERO] update README.md (move developer and main to v0.7.275) [Neil
+  Cook]
+- [APERO] fix typo `apero.science.telluric.gen_tellu.py` - image.shape[0]
+  --> range(image.shape[0]) [njcuk9999]
+- [APERO] update date / version / documentation. [Neil Cook]
+
+
+0.7.275 (2023-01-27)
+--------------------
+- [APERO] allow masking of bad wavelength regions in telluric correct +
+  mask out bad tranmission. [Neil Cook]
+- [APERO] `apero.science.telluric.template_tellu.py` - calculate the s1d
+  template error and `n_valid`. [Neil Cook]
+- [APERO] `apero.science.telluric.template_tellu.py` - calculate the s1d
+  template error and `n_valid`. [Neil Cook]
+- Merge branch 'v0.7.273-live' into v0.7.267-live. [Neil Cook]
+- [APERO] recalculate template RMS + linearize template bcols between
+  e2ds and s1d [NIRPS] change `MKTEMPLATE_SNR_ORDER` 33-->59. [Neil Cook]
+
+
+0.7.274 (2023-01-25)
+--------------------
+- [APERO] fix not having a --since option. [njcuk9999]
+- [APERO] `apero_go.py` - add --setup option. [njcuk9999]
+- [APERO] check that --since argument is a valid date+ [njcuk9999]
+- [APERO] add a --since argument to `drs_get.py`. [njcuk9999]
+- [APERO] low-pass hot star template + deconv=median for hot stars
+  (update `MKTEMPLATE_HOTSTAR_KER_VEL` dtype) [njcuk9999]
+- [APERO] low-pass hot star template + deconv=median for hot stars
+  (update imports) [njcuk9999]
+- [APERO] low-pass hot star template + deconv=median for hot stars.
+  [njcuk9999]
+- [NIRPS] `apero.science.telluric.gen_tellu.py` - `finite_res_correction`
+  now requires params (For threshold) [njcuk9999]
+- [NIRPS] fix sky corr being applied twice for nirps and fix
+  convergence. [njcuk9999]
+- Merge remote-tracking branch 'origin/v0.7.273-live' into
+  v0.7.273-live. [njcuk9999]
+- [APERO] update `install.py` `module_translation`. [Neil Cook]
+- [NIRPS] `gen_tellu.py` - filter over bad finite res corrections.
+  [njcuk9999]
+- Merge remote-tracking branch 'origin/v0.7.273-live' into
+  v0.7.273-live. [Neil Cook]
+- [NIRPS] update skymodels (error in calculation) [njcuk9999]
+- [APERO] `apero.science.calib.wave.py` - update key in table  to key in
+  table.colnames. [Neil Cook]
+- [APERO] update requirements. [Neil Cook]
+- [APERO] update readme. [Neil Cook]
+- Merge branch 'v0.7.273-live' into developer. [Neil Cook]
+
+  # Conflicts:
+  #    .gitignore
+  #    README.md
+  #    `apero/core/core/drs_database.py`
+  #    `apero/core/core/drs_startup.py`
+  #    `apero/core/instruments/default/default_config.py`
+  #    `apero/core/instruments/default/default_constants.py`
+  #    `apero/core/instruments/spirou/default_constants.py`
+  #    `apero/core/instruments/spirou/file_definitions.py`
+  #    `apero/core/instruments/spirou/recipe_definitions.py`
+  #    apero/core/math/general.py
+  #    `apero/data/spirou/reset/runs/calib_run.ini`
+  #    `apero/data/spirou/reset/runs/complete_run.ini`
+  #    `apero/data/spirou/reset/runs/mini_run.ini`
+  #    `apero/data/spirou/reset/runs/other_run.ini`
+  #    `apero/data/spirou/reset/runs/science_run.ini`
+  #    `apero/data/spirou/reset/runs/trigger_night_calib_run.ini`
+  #    apero/lang/backup/language.xls
+  #    apero/lang/databases/language.xls
+  #    `apero/recipes/spirou/apero_ccf_spirou.py`
+  #    `apero/recipes/spirou/cal_thermal_spirou.py`
+  #    apero/science/calib/localisation.py
+  #    apero/science/calib/shape.py
+  #    apero/science/calib/wave.py
+  #    apero/science/extract/berv.py
+  #    apero/science/polar/general.py
+  #    `apero/science/telluric/gen_tellu.py`
+  #    `apero/science/velocity/gen_vel.py`
+  #    `apero/tools/module/setup/drs_processing.py`
+  #    `apero/tools/recipes/bin/apero_processing.py`
+  #    `apero/tools/recipes/spirou/apero_drift_spirou.py`
+  #    `apero/tools/recipes/spirou/apero_expmeter_spirou.py`
+  #    changelog.md
+  #    documentation/working/conf.py
+  #    documentation/working/index.rst
+  #    documentation/working/main/misc/changelog.rst
+  #    version.txt
+- [APERO] update date/version/docs. [Neil Cook]
+- Update `peak_number` rounding issue. [Neil Cook]
+- Merge remote-tracking branch 'origin/developer' into developer. [Neil
+  Cook]
+- Merge branch 'master' into developer. [Neil Cook]
+- `Science.extract.berv.py` - `get_berv` should warn when barycorrpy fails.
+  [Neil Cook]
+- Merge remote-tracking branch 'origin/developer' into developer. [Neil
+  Cook]
+- Merge remote-tracking branch 'origin/developer' into developer.
+  [njcuk9999]
+- `Apero.science.calib.shape.py` - Problem with shape when maximum
+  correlation between FPs split between pixels (Issue #668) [njcuk9999]
+- `Apero.core.instruments.spirou.file_definitions.py` - `RAW_LFC_FP` did not
+  have outfunc - add outfunc=out.blank. [Neil Cook]
+- `Apero.core.instruments.spirou.recipe_definitions.py` - `leak_master`
+  should be after thermal master. [Neil Cook]
+- `Apero.data.spirou.reset.runs.other_run.ini` - add LFCFP and FPLFC to
+  other run.ini file. [Neil Cook]
+- `Apero.core.instruments.spirou.file_definitions.py` +
+  `recipe_definitions.py` - add LFCFP and FPLFC to sequences. [Neil Cook]
+- `Apero.core.instruments.spirou.file_definitions.py` +
+  `recipe_definitions.py` - add LFCFP and FPLFC to sequences. [Neil Cook]
+- `Apero.tools.module.setup.drs_processing.py` - `_split_string_list` - if
+  `allow_whitespace` must return a list not string. [njcuk9999]
+- `Apero.tools.module.setup.drs_processing.py` - `_split_string_list` should
+  not split by white space unless directly told to (allows spaces in
+  filenames) [njcuk9999]
+- `Apero.recipes.spirou.cal_ccf_spirou.py` - make sure A and B can be used
+  as science fibers. [Neil Cook]
+- `Apero.core.instruments.spirou.default_constants.py` - update
+  `DRIFT_DPRTYPES` - (add `FP_DARK)` [Neil Cook]
+- `Apero.recipes.spirou.cal_thermal_spirou.py` - `thermal_files` are not
+  indexed - correct this. [Neil Cook]
+- `Apero.science.calib.localisation.py` + `wave.py` - add `KW_PID` to writing
+  functions. [Neil Cook]
+- Merge remote-tracking branch 'origin/developer' into developer.
+  [njcuk9999]
+- Update README.md. [Neil Cook]
+
+  correct typo
+- `Apero.science.telluric.gen_tellu.py` - deal with Etienne using 0 as
+  flag - bad bad bad. [njcuk9999]
+- `Tools.recipe.spirou.cal_drift_spirou.py` - update output filename.
+  [Neil Cook]
+- `Tools.recipe.spirou.cal_drift_spirou.py` - allow `OBJ_FP` and `DARK_FP`
+  files (and deal with fibers not containing FP) [Neil Cook]
+- `Apero.science.calib.localisation.py` - fix qc logic for `MAX_RMPTS_POS`
+  and `MAX_RMPTS_WID`. [Neil Cook]
+- `Apero.core.core.drs_startup.py` - pep8 change. [Neil Cook]
+- `Cal_expmeter_spirou.py` - update output filename based on input fibers.
+  [Neil Cook]
+- `Apero.core.core.drs_startup.py` - try to fix integer scalar bug. [Neil
+  Cook]
+- `Apero.tools.recipes.spirou.cal_expmeter_spirou.py` - add --fibers
+  option. [Neil Cook]
+- Update date/version/changelog/readme/documentation. [Neil Cook]
+
+
+0.7.273 (2023-01-23)
+--------------------
+- [NIRPS] update telluric list. [njcuk9999]
+- [APERO] `apero.science.telluric.gen_tellu.py` - correct typo for failing
+  precleaned files. [njcuk9999]
+- Merge remote-tracking branch 'origin/v0.7.267-live' into
+  v0.7.267-live. [njcuk9999]
+- [APERO] correct params['INPUTS'] for FINITERES. [njcuk9999]
+- Merge remote-tracking branch 'origin/v0.7.267-live' into
+  v0.7.267-live. [njcuk9999]
+- [APERO] update date/version/docs. [Neil Cook]
+- [NIRPS] update `sky_model` (ha and he) [njcuk9999]
+- [APERO] `apero.science.telluric.gen_tellu.py` - fix spline in finite
+  res. [njcuk9999]
+
+
+0.7.272 (2023-01-19)
+--------------------
+- [APERO] allow switching on and off of finite res corr (via params and
+  user input) + add header key that finite res was/wasn't done. [Neil
+  Cook]
+- [APERO] `ref_calib_run.ini` should not have `RUN_OBS_DIR` set to
+  `DEFAULT_REF_OBSDIR` (we need `FP_FP` from all nights) [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.267-live' into
+  v0.7.267-live. [njcuk9999]
+- [APERO] `apero.science.telluric.gen_tellu.py` - deal with edge effects
+  in `wave_to_wave`. [Neil Cook]
+- [APERO] `apero.science.calib.gen_calib.py` - fix typo in `check_fp`.
+  [njcuk9999]
+- [APERO] `apero.science.preprocessing.detector.py` - flag pixels that
+  have inconsistent intercept in LED. [Neil Cook]
+- [APERO] `apero.science.preprocessing.detector.py` - flag pixels that
+  have inconsistent intercept in LED. [Neil Cook]
+- [APERO] do not do science capacitive coupling correction for HC files.
+  [Neil Cook]
+- [NIRPS] apero.science.preprocessing.detector - do not sigma clip
+  columns when we are creating a mask. [Neil Cook]
+- [APERO] `apero.science.preprocessing.detector.py` - account for NaNs in
+  butterfly maps. [Neil Cook]
+- [APERO] `apero.science.telluric.gen_tellu.py` - correct (bad) changes
+  for finite res. [Neil Cook]
+- [APERO] `apero.science.telluric.gen_tellu.py` - correct (bad) changes
+  for finite res. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.267-live' into
+  v0.7.267-live. [Neil Cook]
+- [NIRPS] correct `nirps_correction`. [Neil Cook]
+- [NIRPS] `science.preprocessing.detector.py` - correct typos. [Neil Cook]
+- [NIRPS] `science.preprocessing.detector.py` - correct of the first read
+  of the amplifiers. [Neil Cook]
+- [NIRPS] `science.preprocessing.detector.py` - correct of the first read
+  of the amplifiers. [Neil Cook]
+- [APERO]
+  `apero.science.telluric.template_tellu.create_deconvolved_template` do
+  not copy over flux (call flux0 as input) [Neil Cook]
+
+
+0.7.271 (2023-01-17)
+--------------------
+- [APERO] `apero.core.math.gen_math.py` - add typing in `square_medbin`.
+  [Neil Cook]
+- [APERO] `science.telluric.gen_tellu.py` - fix that
+  `qc_exit_tellu_preclean` fails without `image_e2ds_ini`
+  `(PRE_SKYCORR_IMAGE)` [Neil Cook]
+- [NIRPS] `science.preprocessing.detector.py` - fix nirps pp mask. [Neil
+  Cook]
+- [APERO] correct A and B telluric properly (sky + finite resolution)
+  [Neil Cook]
+- [APERO] correct A and B telluric properly (sky + finite resolution)
+  [Neil Cook]
+- [NIRPS] `apero.core.utils.drs_utils.py` - fix that times are a numpy
+  array. [njcuk9999]
+- [APERO] correct `post_t_file` (OHLINE, SKYCORR etc) [Neil Cook]
+- [APERO] finish adjustments to finite resolution model. [Neil Cook]
+- [APERO] add finite resolution effects code. [Neil Cook]
+- [APERO] print progress on capacitive coupling. [Neil Cook]
+- [NIRPS] add in the capacitive coupling from sci flux (for NIRPS) [Neil
+  Cook]
+- [APERO] add in the capacitive coupling from sci flux. [Neil Cook]
+
+
+0.7.270 (2023-01-13)
+--------------------
+- [APERO] correct typo (bug) cavity[0] must have the pedestal added
+  before updating by `mean_hc_vel` - all wave sols are wrong without this
+  fix. [njcuk9999]
+- [APERO] typo `correct_capacitive_coupling_pattern` -->
+  `correct_capacitive_coupling`. [Neil Cook]
+- [NIRPS] minor bug fixes for variable resolution. [njcuk9999]
+- [APERO] correct the capacitive coupling pattern using the amplifier
+  bias model. [Neil Cook]
+- [APERO] correct the capacitive coupling pattern using the amplifier
+  bias model. [Neil Cook]
+- [APERO] correct the capacitive coupling pattern using the amplifier
+  bias model. [Neil Cook]
+- [APERO] correct the capacitive coupling pattern using the amplifier
+  bias model. [Neil Cook]
+- [APERO] correct the capacitive coupling pattern using the amplifier
+  bias model. [Neil Cook]
+- [APERO] correct the capacitive coupling pattern using the amplifier
+  bias model. [Neil Cook]
+- [NIRPS] correct + speed variable resolution convolution, add `sky_model`
+  for NIRPS HA. [njcuk9999]
+- [APERO] add in variable resolution for the tellu convolution.
+  [njcuk9999]
+- [APERO] correct s1d res maps (needed blaze) [njcuk9999]
+- [APERO] add s1d res amp/fwhm/expo files. [njcuk9999]
+- Merge branch 'v0.7.261-live' into v0.7.267-live. [njcuk9999]
+- [APERO] `apero.core.math.gen_math.py` - deal with nans for robust
+  chebyshev. [njcuk9999]
+
+
+0.7.269 (2023-01-10)
+--------------------
+- [APERO] create s1d res map [unfinished] [Neil Cook]
+- [NIRPS] sky corr changes. [njcuk9999]
+- [NIRPS] remove ravel from possible Nones. [Neil Cook]
+- [NIRPS] remove ravel from possible Nones. [Neil Cook]
+- [NIRPS] correct typo np.nqnwum --> np.nansum. [Neil Cook]
+- Merge branch 'v0.7.261-live' into v0.7.267-live. [Neil Cook]
+- [NIRPS] deal with not having the `KW_CAV_PEDESTAL` key. [Neil Cook]
+- [NIRPS] add sky correction. [Neil Cook]
+- [NIRPS] add sky correction. [Neil Cook]
+- Merge branch 'v0.7.261-live' into v0.7.259-nirps-test. [Neil Cook]
+- [NIRPS] add sky correction. [Neil Cook]
+- [NIRPS] plan for res convolve change. [Neil Cook]
+- [NIRPS] add `apero_skycorr_nirps_he.py` [UNFINISHED] [Neil Cook]
+- [NIRPS] add sky model correction to telluric `mk_tellu` and `fit_tellu`
+  codes. [Neil Cook]
+
+
+0.7.268 (2022-12-23)
+--------------------
+- [APERO] update `apero_database.py` database names. [njcuk9999]
+- [APERO] update date/version/docs/changelog. [njcuk9999]
+
+
+0.7.267 (2022-12-22)
+--------------------
+- [APERO] change continuity for wave to chebyshev. [Neil Cook]
+- [APERO] add sigma cut criteria on the CCF FWHM for the mean CCF
+  profile. [Neil Cook]
+- [APERO] add sigma cut criteria on the CCF FWHM for the mean CCF
+  profile. [Neil Cook]
+- [APERO] do not do nsig CCF cut for FP. [Neil Cook]
+- [APERO] set a minimum value for allowed CCF fit (peak CCF < 5sigma)
+  [Neil Cook]
+
+
+0.7.266 (2022-12-21)
+--------------------
+- [APERO] fix key error with `CAVITY_PEDESTAL`. [Neil Cook]
+- [APERO] add res e2ds to wave sol. [njcuk9999]
+- [APERO] add a resolution e2ds map for amp/fwhm/expo. [Neil Cook]
+- [APERO] improve wave solution with more cavity fit using chebyshev.
+  [njcuk9999]
+- [APERO] try making wave solution converge across machines. [Neil Cook]
+- [APERO] `apero.core.math.gen_math.py` - update `robust_polyfit` and
+  `robust_chebyfit` to be fuzzy at edges. [Neil Cook]
+- [APERO] `apero.core.math.gen_math.py` - update `robust_polyfit` and
+  `robust_chebyfit` to be fuzzy at edges. [Neil Cook]
+- [APERO] `apero.core.math.gen_math.py` - update `robust_polyfit` and
+  `robust_chebyfit` to be fuzzy at edges. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.261-live' into
+  v0.7.261-live. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.261-live' into
+  v0.7.261-live. [Neil Cook]
+- [APERO] correct typo. [Neil Cook]
+- [APERO] `apero.core.math.gen_math.py` - update `robust_polyfit` and
+  `robust_chebyfit` to be fuzzy at edges. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.259-nirps-test' into
+  v0.7.259-nirps-test. [njcuk9999]
+
+  # Conflicts:
+  #    `apero/data/spirou/telluric/sky_PCs.fits`
+- [APERO] update `sky_PCs.fits`. [Neil Cook]
+- [SPIROU] update `sky_PCs.fits` (needed to be flipped in shape)
+  [njcuk9999]
+
+
+0.7.265 (2022-12-13)
+--------------------
+- [APERO] storage for optimizing code. [Neil Cook]
+- [APERO] storage for optimizing code. [Neil Cook]
+- Merge branch 'v0.7.261-live' into v0.7.259-nirps-test. [Neil Cook]
+- [APERO] implement a locking for orderps file so we don't try to write
+  it and read it at the same time (should prevent an error we are
+  getting in extraction) [Neil Cook]
+- [APERO] fix ycents for AB,A,B spirou (change added for NIRPS) in order
+  table. [Neil Cook]
+- [APERO] fix ycents for AB,A,B spirou (change added for NIRPS) in order
+  table. [Neil Cook]
+- [APERO] fix ycents for AB,A,B spirou (change added for NIRPS) in order
+  table. [Neil Cook]
+- Merge branch 'v0.7.259-nirps-test' into v0.7.261-live. [Neil Cook]
+- [APERO] update date/version/docs. [Neil Cook]
+- [NIRPS] switch sequences for EFF,SKY,SKY and DARK,SKY. [njcuk9999]
+- [NIRPS] add `calculate_dxmap_nirps` to both modes (rename from
+  `calculate_dxmap_nirpshe)` [njcuk9999]
+- [NIRPS] add `calculate_dxmap_nirps` to both modes (rename from
+  `calculate_dxmap_nirpshe)` [njcuk9999]
+- [APERO] `apero.science.extract.gen_ext.py` - better handle trying shapel
+  file (when multiple files try to write it at once) [Neil Cook]
+- [NIRPS] `apero.recipes.nirps_ha.apero_preprocess_nirps_ha.py` - fix
+  loading of led lat. [Neil Cook]
+- [APERO] add --plot=4 (select plots) and fix --fpref. [njcuk9999]
+- [NIRPS] fix LED flat creation + update run.ini files. [Neil Cook]
+- [NIRPS] fix LED flat creation + combine (for hash code) + save to
+  calibDB. [Neil Cook]
+
+
+0.7.264 (2022-12-08)
+--------------------
+- [NIRPS] update LED flat creation. [Neil Cook]
+- [NIRPS] update preprocessing codes to use `LED_FLAT` from calibrations.
+  [Neil Cook]
+- [APERO] update `apero_get` + documentation. [Neil Cook]
+- [APERO] update `apero_get.py`. [njcuk9999]
+- [APERO] `apero_get.py` allow wildcard for --objnames. [Neil Cook]
+- [NIRPS] Add LED flat creation to `PP_REF`. [Neil Cook]
+- [APERO] update sky model. [njcuk9999]
+- [APERO] require wavelength solution to be within 7 days if a night
+  calibration. [njcuk9999]
+- [APERO] try to fix problem with `shapel_orderps` FileNotFoundError.
+  [Neil Cook]
+- [APERO] add order table (for extracted files) + `WAVE_POLY_TYPE` +
+  `LOC_POLY_TYPE`. [Neil Cook]
+- [APERO] add order table (for extracted files) + `WAVE_POLY_TYPE` +
+  `LOC_POLY_TYPE`. [Neil Cook]
+- [APERO] add order table (for extracted files) + `WAVE_POLY_TYPE` +
+  `LOC_POLY_TYPE`. [Neil Cook]
+- [APERO] add poly type to loco keys loaded from locofile. [njcuk9999]
+- [NIRPS] remove extraction bad pixel flagging for HA-A, HA-B, HE-B
+  fibers [APERO] add loc and wave poly coeff type (Chebyshev)
+  [njcuk9999]
+
+
+0.7.263 (2022-11-30)
+--------------------
+- [NIRPS] change s1d max wavelength. [njcuk9999]
+- [APERO] add `led_flat` code + allow forcing only telluric preclean.
+  [njcuk9999]
+- [APERO] add `led_flat`. [njcuk9999]
+- [APERO] allow a constant to determine the min exptime for darks in the
+  `dark_ref`. [njcuk9999]
+- [APERO] must add to e2dsoutputs for leak correction to work.
+  [njcuk9999]
+- [NIRPS] update the list of telluric stars. [njcuk9999]
+- [NIRPS] `apero.tools.module.processing.drs_processing.py` - fix skip
+  list with `INCLUDE_OBS_DIRS` and `EXCLUDE_OBS_DIRS` (param--> param.listp)
+  [njcuk9999]
+- [NIRPS] `apero.science.gen_ext.py` - allow override of fibers for
+  fplines calculation (for `FP_FP` tests) [njcuk9999]
+- [NIRPS] `apero.science.calib.localisation.py` - change max to a
+  percentile in the order loc label (avoids picking up pixels outside
+  order for width measurement) [njcuk9999]
+- [NIRPS] update `nirps_he` `recipe_definitions` (add `PP_EVERY` and
+  `EXT_EVERY)` [Neil Cook]
+
+
+0.7.262 (2022-11-15)
+--------------------
+- [APERO] Add `PP_EVERY` to `pp_seq_opt` and `EXTRACT_EVERY` to `eng_seq` (used
+  in `other_run.ini)` to preprocess and extract everything (no calibs)
+  [Neil Cook]
+- [NIRPS] update HE and HA default wave solution. [Neil Cook]
+- [NIRPS] updates for nirps HE wave solution. [Neil Cook]
+- [APERO] update reset.calib.csv and `deafult_constants` for wave
+  constants. [Neil Cook]
+- [APERO] update nirps ref wave solutions. [Neil Cook]
+- [APERO] nirps updates for wave sol. [Neil Cook]
+
+
+0.7.261 (2022-11-10)
+--------------------
+- [APERO]doc string / typing /pcheck / pep8 update. [Neil Cook]
+- Merge branch 'v0.7.259-working' into v0.7.259-nirps-test. [Neil Cook]
+- Merge branch 'v0.7.259-nirps-test' into v0.7.259-working. [Neil Cook]
+- [APERO] fix exposure meter. [Neil Cook]
+- [APERO] doc string/ typing / pcheck / pep8 updates. [Neil Cook]
+- [APERO] `localisation.py` - remove cross term between coefficients in
+  the loco fit. [Neil Cook]
+- [NIRPS] update orders and order position. [Neil Cook]
+
+
+0.7.260 (2022-11-07)
+--------------------
+- [NIRPS] use chebyshev in the continuity fit. [Neil Cook]
+- [NIRPS] use chebyshev in the continuity fit. [Neil Cook]
+- [NIRPS] use chebyshev in the continuity fit. [Neil Cook]
+- [NIRPS] use chebyshev in the continuity fit. [Neil Cook]
+- [NIRPS] update number of orders (75--> 74) and `LOC_YDET_MIN`. [Neil
+  Cook]
+- [NIRPS] update number of orders (74--> 75) [Neil Cook]
+- [NIRPS] update `LOC_YDET_MAX`, `LOC_YDET_MAX`. [Neil Cook]
+- [NIRPS] back to 74 orders but move `LOC_YDET_MAX`. [Neil Cook]
+- [NIRPS] back to 73 orders but move `LOC_YDET_MAX`. [Neil Cook]
+- [NIRPS] update number of orders 73 --> 74. [Neil Cook]
+- [NIRPS] update number of orders 73 --> 74. [Neil Cook]
+- [APERO] `install.py` - fix git python version. [Neil Cook]
+- [APERO] fix problem with `leak_ref` not being a hash code file (was just
+  using first file) [Neil Cook]
+- [APERO] `apero.plotting.plot_functions.py` - fix broken plot (type
+  reference-->ref) [Neil Cook]
+- [APERO] add paper to main page. [Neil Cook]
+- [APERO] fix for badpix (bstatsb) [Neil Cook]
+- [APERO] update version/date/changelog/docs. [Neil Cook]
+
+
+0.7.259 (2022-11-04)
+--------------------
+- [APERO] add git branch + git hash + python modules + python version to
+  `PARAM_TABLE`. [Neil Cook]
+- [APERO] pep8 and warning fixes. [Neil Cook]
+- Merge branch 'v0.7.254-working' into v0.7.254-cheby. [Neil Cook]
+
+  # Conflicts:
+  #    `apero/core/math/gen_math.py`
+  #    `apero/plotting/plot_functions.py`
+  #    apero/science/calib/shape.py
+  #    apero/science/calib/wave.py
+  #    apero/tools/module/utils/inverse.py
+- [APERO] push chevyshev + clean hot pix lin mini fix into working
+  branch. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.254-cheby' into
+  v0.7.254-cheby. [Neil Cook]
+- [APERO] `apero.tools.recipes.spirou.apero_expmeter_spirou.py`. [Neil
+  Cook]
+- [APERO] remove linear minimization from `clean_hotpix` function. [Neil
+  Cook]
+- [APERO] fixes for chebyshev. [Neil Cook]
+- [APERO] force jit functions to not use fastmath mode. [Neil Cook]
+- [APERO] fixes to EA chebyshev code. [Neil Cook]
+
+
+0.7.258 (2022-10-31)
+--------------------
+- Adding cheby stuff all over the place. [eartigau]
+- [APERO] make sure assets directory is reset (but copy all "new" files
+  to a backup assets dir) [Neil Cook]
+- [APERO] re-run template after best telluric correction. [Neil Cook]
+- [APERO] add zsh profiles to setup dir. [Neil Cook]
+- [APERO] update import order (pycharm Ctrl+Alt+O to sort) [Neil Cook]
+- Update date/version/changelog/documentation. [Neil Cook]
+
+
+0.7.257 (2022-10-25)
+--------------------
+- [APERO] correct columns in `apero_stats.py`. [Neil Cook]
+- [APERO] add file index mode to `apero_stats.py` + write
+  `apero_stats_static.txt` and `apero_stats_varying.txt` to msg/report
+  directory. [Neil Cook]
+- [APERO] remove cook@localhost.mysql.backup file from calib reset (it
+  shouldn't be here) [Neil Cook]
+- [APERO] start adding "all" mode to `apero_stats.py`. [Neil Cook]
+- [APERO] fix `FORCE_REFWAVE` flag in `get_wavelength` function calls. [Neil
+  Cook]
+- [APERO] add conda and git documentation to other documentation. [Neil
+  Cook]
+- [APERO] add TODO re: hard coded value. [Neil Cook]
+- [APERO] add a limit to `apero_stats` memory mode. [Neil Cook]
+- [APERO] update `apero_stats` memory plot. [Neil Cook]
+- [APERO] add to `apero_get` documentation. [Neil Cook]
+- [APERO] test of wave [EXT] memory issue. [Neil Cook]
+- [APERO] test of wave [EXT] memory issue. [Neil Cook]
+- [APERO] fix problem with using `setup/install.py` --update mode. [Neil
+  Cook]
+- [APERO] update `apero_stats` plot. [Neil Cook]
+
+
+0.7.256 (2022-10-13)
+--------------------
+- [APERO] pep8 fixes. [Neil Cook]
+- [APERO] fixes for adding log start/log end + ccf `run_file`. [Neil Cook]
+- [APERO] add `LOG_START` and `LOG_END` to log database (and fix `END_TIME)` -
+  will require new log database. [Neil Cook]
+- [APERO] improve memory stats plot. [Neil Cook]
+- [APERO] add an exact requirements module to test all packages being
+  the same. [Neil Cook]
+- [APERO] fix custom arguments [INPUTS] coming from run.ini file and
+  --mask argument not looking in the `assets/ccf_masks` directory. [Neil
+  Cook]
+- [APERO] add a printout to `wave_ref_spirou` + update `apero_overall_flow`
+  graph. [Neil Cook]
+- [APERO] update date/version/changelog/docs. [Neil Cook]
+
+
+0.7.254 (2022-09-22)
+--------------------
+- [APERO] test fix for pickling PseudoConstants. [Neil Cook]
+- [APERO] Apply fixes for pickling Run Class. [Neil Cook]
+- [APERO] `apero.science.extract.extraction.py` - fix bug is cosmic check
+  res = sx - fx/amp --> res = sx - `fx*amp`. [Neil Cook]
+- [APERO] `apero.core.utils.drs_startup.py` - use np.genfromtxt instead of
+  np.loadtxt as there is a bug in numpy 1.23. [Neil Cook]
+
+
+0.7.255 (2022-09-30)
+--------------------
+- [APERO] doc + pep8 `[gen_calib.py]` [Neil Cook]
+- [APERO] doc + pep8 `[flat_blaze.py]` [Neil Cook]
+- [APERO] doc + pep8 [background.py, badpix.py, dark.py] [Neil Cook]
+- [APERO] update docs. [Neil Cook]
+- [APERO] update date/version/changelog/docs. [Neil Cook]
+
+
+0.7.253 (2022-09-29)
+--------------------
+- [APERO] add `apero_stats` memory table to report directory. [Neil Cook]
+- [APERO] correct documentation schematics not appearing. [Neil Cook]
+- [APERO] correct documentation schematics not appearing. [Neil Cook]
+- [APERO] update versionn/date/docs/changelog. [Neil Cook]
+
+
+0.7.252 (2022-09-27)
+--------------------
+- [APERO] continue update doc string + pep8. [Neil Cook]
+- [APERO] continue update doc string + pep8. [Neil Cook]
+- [APERO] continue update doc string + pep8. [Neil Cook]
+- [APERO] continue update doc string + pep8. [Neil Cook]
+- [APERO] `apero.core.instruments.*.file_definitions.py` - fix typo
+  `_WAVESOL_REF` --> `_wavesol_ref`. [Neil Cook]
+- [APERO] update program descriptions and some doc strings + pep8. [Neil
+  Cook]
+- [APERO] `documentation.unused.v07_docstring_update.txt` - add more
+  recipes to check. [Neil Cook]
+- [APERO] `documentation.unused.v07_docstring_update.txt` - add more
+  recipes to check. [Neil Cook]
+- [APERO] `apero.science.calib.gen_calib.py` - if not required do not
+  cause error. [Neil Cook]
+- [APERO] correct flat codes - combine method should be "flat" [Neil
+  Cook]
+- [APERO] `apero.io.drs_path.py` - reset the listdir function. [njcuk9999]
+
+
+0.7.251 (2022-09-19)
+--------------------
+- [APERO] update doc strings + pep8 (see `v07_docstring_update.txt)` [Neil
+  Cook]
+- [APERO] documentation - add to useful mysql commands. [Neil Cook]
+- [APERO] update doc strings + pep8 (see progress in
+  `v07_docstring_update.txt)` [Neil Cook]
+- [APERO] `apero.tools.module.testing.drs_stats.py` - for sqlite need the
+  LIKE parameter for recipe. [Neil Cook]
+- [APERO] `apero.tools.module.setup.drs_installation.py` - fix arg return
+  of `get_sqlite_settings`. [Neil Cook]
+- [APERO] update doc-string + deal with pep8. [Neil Cook]
+- [APERO] update doc-string + deal with pep8. [Neil Cook]
+
+
+0.7.250 (2022-09-13)
+--------------------
+- [APERO] update language database. [Neil Cook]
+- [SPIROU] documentation: add schematics back to `recipe_definitions.py`.
+  [Neil Cook]
+- [APERO] update some todo messages. [Neil Cook]
+- [APERO] update language database to replace some text (in TODO) [Neil
+  Cook]
+- [APERO] `apero.science.extract.gen_ext.py` - try to stop errors when
+  order profile exists but cannot be read (parallelisation issue) [Neil
+  Cook]
+- Update `UPDATE_NOTES.txt`. [Neil Cook]
+- Update `UPDATE_NOTES.txt`. [Neil Cook]
+- [APERO] `apero.recipes.*.apero_fit_tellu*.py` - recon must be multiplied
+  by blaze before creating s1d (for proper weighting) [Neil Cook]
+- [APERO] `apero.science.polar.gen_pol.py` - fix factor 2 in exponent
+  (from Eder) [Neil Cook]
+
+
+0.7.249 (2022-09-07)
+--------------------
+- [APERO] `setup.install.py` - make sure config path is still the full
+  path. [Neil Cook]
+- [APERO] `apero.base.base.py` - fix references to allparams. [Neil Cook]
+- [NIRPS] correct typo `apero_PP_REF_nirps` --> `apero_pp_ref_nirps`. [Neil
+  Cook]
+- [NIRPS] correct typo `apero_PP_REF_nirps` --> `apero_pp_ref_nirps`. [Neil
+  Cook]
+- [APERO] `apero.tools.module.setup.drs_installation.py` - save install
+  params to `DRS_UCONFIG` (for re-use / debug) in install.sh. [Neil Cook]
+- [APERO] `apero.tools.module.setup.drs_installation.py` -
+  `all_params['MYSQL']` parameters should be uppercase (to match sqlite)
+  [Neil Cook]
+- [APERO] `apero.tools.module.setup.drs_installation.py` -
+  `all_params['MYSQL']` parameters should be uppercase (to match sqlite)
+  [Neil Cook]
+- [APERO] `apero.core.instruments.default.grouping.py` - fix problem where
+  1 entry leads to a crash. [Neil Cook]
+- [APERO] fix sqlite installation error (Issue #682) [Neil Cook]
+- [APERO] apero.base.base.py: typo FILEINDEX --> FINDEX. [Neil Cook]
+- [APERO] test recipe documentation. [Neil Cook]
+- [APERO] correct `drs_db` change. [Neil Cook]
+- [APERO] update version/date/changelog/documentation. [Neil Cook]
+
+
 0.7.248 (2022-08-31)
 --------------------
 - [APERO] manage locking better (when no PID), manage databases better

@@ -9,18 +9,16 @@ Created on 2021-06-24
 
 @author: cook
 """
-import sys
-import os
 import tkinter as tk
 from tkinter import Tk as ThemedTk
 from tkinter import ttk, messagebox
+
 from ttkthemes import ThemedTk
 
 from apero.base import base
 from apero.base import drs_db
 from apero.core import constants
 from apero.core.core import drs_log
-from apero.core.utils import drs_startup
 from apero.tools.module.gui import gen_gui
 from apero.tools.module.gui import widgets
 
@@ -49,6 +47,7 @@ StartPage = gen_gui.StartPage
 # =============================================================================
 class DeleteTables(ThemedTk):
     def __init__(self, *args, **kwargs):
+        _ = args, kwargs
         # run the super
         ThemedTk.__init__(self, themebg=True)
         self.set_theme('plastik')
@@ -202,16 +201,15 @@ def delete_db_tables(tables):
         return []
 
 
-def run_delete_table_app(recipe, params):
+def run_delete_table_app(params: ParamDict) -> DeleteTables:
     """
     Main function - takes the instrument name, index the databases and python
     script (in real time due to any changes in code) and then runs the
     application to find errors
 
-    :param instrument: string, the instrument name
-    :type: str
-    :return: returns the local namespace as a dictionary
-    :rtype: dict
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return DeteleTables instance
     """
     # Log that we are running indexing
     WLOG(params, '', 'Running delete table app')
@@ -229,7 +227,7 @@ def run_delete_table_app(recipe, params):
 # =============================================================================
 if __name__ == "__main__":
     # get args
-    ll = run_delete_table_app()
+    print('Hello World!')
 
 # =============================================================================
 # End of code

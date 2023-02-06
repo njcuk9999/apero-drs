@@ -1,35 +1,34 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-General calibration functions in here only
+General calibration functionality
 
 Created on 2019-06-27 at 10:48
 
 @author: cook
 """
-from astropy.io import fits
-from astropy.table import Table
-import numpy as np
 import os
-from typing import List, Optional, Tuple, Union
 import warnings
+from typing import List, Optional, Tuple, Union
+
+import numpy as np
+from astropy.io import fits
 
 from apero import lang
 from apero.base import base
 from apero.core import constants
 from apero.core import math as mp
-from apero.core.core import drs_log
-from apero.core.core import drs_file
 from apero.core.core import drs_database
+from apero.core.core import drs_file
+from apero.core.core import drs_log
 from apero.core.core import drs_text
 from apero.core.utils import drs_data
 from apero.core.utils import drs_recipe
 from apero.io import drs_fits
 from apero.io import drs_image
-from apero.science.calib import dark
-from apero.science.calib import badpix
 from apero.science.calib import background
-
+from apero.science.calib import badpix
+from apero.science.calib import dark
 
 # =============================================================================
 # Define variables
@@ -64,6 +63,9 @@ display_func = drs_log.display_func
 # Define classes
 # =============================================================================
 class CalibFile:
+    """
+    Calibration file class
+    """
     key: Optional[str]
     fiber: Optional[str]
     filename: Optional[Union[List[str], str]]
@@ -76,6 +78,8 @@ class CalibFile:
     found: bool
     reference: Union[List[bool], bool]
     user: bool
+    dtime_pass: bool
+    dtime_eargs: list
 
     def __init__(self):
         """
@@ -106,6 +110,10 @@ class CalibFile:
         self.reference = False
         # whether the calibration is from a user input override
         self.user = False
+        # whether delta time criteria was passed
+        self.dtime_pass = True
+        # store args for failure
+        self.dtime_eargs = []
 
     def load_calib_file(self, params: ParamDict, key: str,
                         inheader: Union[drs_fits.Header, None] = None,
@@ -192,15 +200,14 @@ class CalibFile:
                     self.user = True
             else:
                 # warn user that input file was not valid
-                # TODO: add to language database
-                wmsg = ('Warning user file: {0} not found. '
-                        'Using calibration database')
-                WLOG(params, 'warning', wmsg.format(self.filename), sublevel=2)
+                wargs = [self.filename, self.key]
+                WLOG(params, 'warning', textentry('10-001-00012', args=wargs),
+                     sublevel=2)
                 self.filename = None
             # we are finished - return here
             if return_filename:
                 return
-        # -------------------------------------------------------------------------
+        # ---------------------------------------------------------------------
         # else we have to load from database
         if self.filename is None:
             # check if we have the database
@@ -235,14 +242,24 @@ class CalibFile:
         if inheader is not None:
             if isinstance(self.filename, list):
                 for it in range(len(filename)):
-                    calib_delta_time_check(params, inheader, self.mjdmid[it],
-                                           self.filename[it],
-                                           self.reference[it],
-                                           self.user, self.key)
+                    # get args for calib delta time check
+                    cargs = [inheader, self.mjdmid[it], self.filename[it],
+                             self.reference[it], self.user, self.key, required]
+                    # run the time check
+                    cout = calib_delta_time_check(params, *cargs)
+                    # if time check failed store this info
+                    if not cout:
+                        self.dtime_pass = cout[0]
+                        self.dtime_eargs = cout[1]
+
             else:
-                calib_delta_time_check(params, inheader, self.mjdmid,
-                                       self.filename, self.reference, self.user,
-                                       self.key)
+                cargs = [inheader, self.mjdmid, self.filename, self.reference,
+                         self.user, self.key, required]
+                # run the time check
+                cout = calib_delta_time_check(params, *cargs)
+                self.dtime_pass = cout[0]
+                self.dtime_eargs = cout[1]
+
         # ---------------------------------------------------------------------
         # if we are just returning filename return here
         if return_filename:
@@ -698,7 +715,8 @@ def add_calibs_to_header(outfile: DrsFitsFile,
 
 def calib_delta_time_check(params: ParamDict, inheader: DrsHeader,
                            calib_time: float, calib_filename: str,
-                           ref: bool, user: bool, key: str):
+                           ref: bool, user: bool, key: str,
+                           required: bool = True) -> Tuple[bool, list]:
     """
     Check that the delta time between calibration and observation is
     valid (as defined by MAX_CALIB_DTIME)
@@ -712,6 +730,7 @@ def calib_delta_time_check(params: ParamDict, inheader: DrsHeader,
     :param user: bool, if True this calib came from the user and should not
                  be checked
     :param key: str, the calibration key for the calib file
+    :param required: bool, if True raises an error if calib file not found
 
     :raises: DrsLogException if DO_CALIB_DTIME_CHECK = True and delta time is
              greater than MAX_CALIB_DTIME
@@ -730,25 +749,25 @@ def calib_delta_time_check(params: ParamDict, inheader: DrsHeader,
     # ---------------------------------------------------------------------
     # deal with reference and user flags
     if ref or user:
-        return
+        return True, []
     # ---------------------------------------------------------------------
     # deal with check (if check is False we do not check)
     if not do_check:
-        return
+        return True, []
     # deal with quick look mode (extraction only)
     if quicklook:
-        return
+        return True, []
     # ---------------------------------------------------------------------
     # get and check observation time
     if timekey in inheader:
         # observation time (MJDMID)
         obstime = inheader[timekey]
     else:
-        return
+        return True, []
     # ---------------------------------------------------------------------
     # check calibration time is finite (if it isn't we can't check this)
     if not np.isfinite(calib_time):
-        return
+        return True, []
     # ---------------------------------------------------------------------
     # work out delta time
     delta_time = np.abs(obstime - calib_time)
@@ -760,17 +779,26 @@ def calib_delta_time_check(params: ParamDict, inheader: DrsHeader,
         # log error
         eargs = [key, calib_filename, delta_time, max_dtime, hobstime,
                  hcalibtime, func_name]
-        WLOG(params, 'error', textentry('09-002-00004', args=eargs))
+        if required:
+            WLOG(params, 'error', textentry('09-002-00004', args=eargs))
+            return False, eargs
+        else:
+            WLOG(params, 'warning', textentry('09-002-00004', args=eargs))
+            return False, eargs
+    # time check successful
     else:
         margs = [key, delta_time, max_dtime, calib_filename]
         WLOG(params, '', textentry('40-005-10003', args=margs))
+        return True, []
 
 
 def check_fp(params: ParamDict, image: np.ndarray, filename: str,
              percentile: Union[float, None] = None,
              fp_qc_thres: Union[float, None] = None,
              centersize: Union[int, None] = None,
-             num_ref: Union[int, None] = None) -> bool:
+             num_ref: Union[int, None] = None,
+             iterator: Optional[int] = None,
+             total_num: Optional[int] = None) -> bool:
     """
     Checks that a 2D image containing FP is valid
 
@@ -791,7 +819,13 @@ def check_fp(params: ParamDict, image: np.ndarray, filename: str,
     # set the function name
     func_name = __NAME__ + '.check_fp()'
     # log: Validating FP file
-    WLOG(params, '', textentry('40-014-00043', args=[filename]))
+    if iterator is None or total_num is None:
+        WLOG(params, '', textentry('40-014-00043', args=[filename]))
+    else:
+        # TODO: Add to language database
+        pmsg = 'Validating FP file {0} of {1}: {2} '
+        args = [iterator + 1, total_num, filename]
+        WLOG(params, '', pmsg.format(*args))
     # get properties from params
     percentile = pcheck(params, 'CALIB_CHECK_FP_PERCENTILE', func=func_name,
                         override=percentile)
@@ -809,7 +843,7 @@ def check_fp(params: ParamDict, image: np.ndarray, filename: str,
     # get the center percentile of image
     cent = mp.nanpercentile(image[xlower:xupper, ylower:yupper], percentile)
     # work out the residuals in the reference pixels
-    residuals = np.abs(image[:num_ref]) - mp.nanmedian(image[:num_ref])
+    residuals = np.abs(image[:num_ref] - mp.nanmedian(image[:num_ref]))
     # get the quality control on fp
     passed = (cent / mp.nanmedian(residuals)) > fp_qc
     # return passed

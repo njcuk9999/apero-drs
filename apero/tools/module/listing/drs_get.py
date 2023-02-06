@@ -9,17 +9,18 @@ Created on 2022-02-07
 
 @author: cook
 """
-import numpy as np
 import os
 import shutil
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
+import numpy as np
+
+from apero import lang
 from apero.base import base
 from apero.core import constants
-from apero.core.core import drs_log
 from apero.core.core import drs_database
+from apero.core.core import drs_log
 from apero.core.core import drs_text
-from apero.core.core import drs_misc
 
 # =============================================================================
 # Define variables
@@ -34,6 +35,8 @@ __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 ParamDict = constants.ParamDict
+# Get the text types
+textentry = lang.textentry
 
 
 # =============================================================================
@@ -41,7 +44,8 @@ ParamDict = constants.ParamDict
 # =============================================================================
 def basic_filter(params: ParamDict, kw_objnames: List[str],
                  filters: Dict[str, List[str]], user_outdir: str,
-                 do_copy: bool = True, do_symlink: bool = False
+                 do_copy: bool = True, do_symlink: bool = False,
+                 since: Optional[str] = None
                  ) -> Tuple[Dict[str, List[str]], Dict[str, List[str]]]:
     """
     The basic filter function - copies files into OBJNAME directories
@@ -60,7 +64,6 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
     :return: Tuple, 1. dict, for each objname a list of input file locations
                     2. dict, for each objname a list of output file locations
     """
-    # TODO: move all strings to language database
     # -------------------------------------------------------------------------
     # get pconst
     pconst = constants.pload()
@@ -68,13 +71,15 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
     filter_qc = not params['INPUTS']['failedqc']
     # -------------------------------------------------------------------------
     # load index database
-    WLOG(params, '', 'Loading database...')
+    WLOG(params, '', textentry('40-509-00001', args='file index'))
     findexdb = drs_database.FileIndexDatabase(params)
     findexdb.load_db()
     # load object database
+    WLOG(params, '', textentry('40-509-00001', args='astrometric'))
     objdbm = drs_database.AstrometricDatabase(params)
     objdbm.load_db()
     # load log database
+    WLOG(params, '', textentry('40-509-00001', args='log'))
     logdbm = drs_database.LogDatabase(params)
     logdbm.load_db()
     # -------------------------------------------------------------------------
@@ -105,6 +110,13 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
         else:
             master_condition += ' AND ({0})'.format(' OR '.join(subconditions))
     # -------------------------------------------------------------------------
+    if since is not None:
+        subcondition = '(KW_DRS_DATE_NOW > \'{0}\')'.format(since)
+        if len(master_condition) == 0:
+            master_condition = subcondition
+        else:
+            master_condition += f' AND {subcondition}'
+    # -------------------------------------------------------------------------
     # separate list for each object name
     # -------------------------------------------------------------------------
     # storage of inpaths
@@ -113,7 +125,7 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
     for kw_objname in kw_objnames:
         # clean object name (as best we can)
         clean_obj_name, _ = objdbm.find_objname(pconst, kw_objname)
-        WLOG(params, '', 'Processing KW_OBJNAME={0}'.format(clean_obj_name))
+        WLOG(params, '', textentry('40-509-00002', args=[clean_obj_name]))
         # write condition for this object
         if drs_text.null_text(kw_objname, ['None', '', 'Null']):
             obj_condition = None
@@ -151,15 +163,14 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
         # ---------------------------------------------------------------------
         # load into file storage
         if len(inpaths[mask]) > 0:
-            WLOG(params, '', '\tFound {0} entries'.format(len(inpaths)))
+            WLOG(params, '', textentry('40-509-00003', args=[len(inpaths)]))
             # keep files
             database_inpaths[clean_obj_name] = inpaths[mask]
         else:
-            WLOG(params, '', '\tFound no entries')
+            WLOG(params, '', textentry('40-509-00004'))
         # write that we excluded some files
         if filter_qc:
-            msg = '\tExcluded {0} files for failing QC'
-            WLOG(params, '', msg.format(np.sum(~mask)))
+            WLOG(params, '', textentry('40-509-00005', args=[np.sum(~mask)]))
     # -------------------------------------------------------------------------
     # Now get outpaths (if infile exists)
     # -------------------------------------------------------------------------
@@ -170,8 +181,8 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
     for objname in database_inpaths:
         # output directory for objname
         outdir = os.path.join(user_outdir, objname)
-        # print progress
-        WLOG(params, '', 'Adding outpaths for KW_OBJNAME={0}'.format(objname))
+        # print progress: Adding outpaths for KW_OBJNAME={0}
+        WLOG(params, '', textentry('40-509-00006', args=[objname]))
         # add object name to storage
         all_inpaths[objname] = []
         all_outpaths[objname] = []
@@ -188,10 +199,9 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
                 all_outpaths[objname].append(outpath)
         # make a directory for this object (if it doesn't exist)
         if len(all_outpaths[objname]) != 0:
-            # print progress
-            msg = '\tAdded {0} outpaths'
+            # print progress: Added {0} outpaths'
             margs = [len(all_outpaths[objname])]
-            WLOG(params, '', msg.format(*margs))
+            WLOG(params, '', textentry('40-509-00007', args=margs))
             # create output directory if it doesn't exist
             if not os.path.exists(outdir) and do_copy:
                 os.mkdir(outdir)
@@ -201,7 +211,7 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
     for objname in all_inpaths:
         WLOG(params, '', '')
         WLOG(params, '', params['DRS_HEADER'])
-        WLOG(params, '', 'COPY OBJNAME={0}'.format(objname))
+        WLOG(params, '', textentry('40-509-00008', args=[objname]))
         WLOG(params, '', params['DRS_HEADER'])
         WLOG(params, '', '')
         # loop around files
@@ -221,6 +231,17 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
                 shutil.copy(inpath, outpath)
 
     return all_inpaths, all_outpaths
+
+
+def all_objects(params):
+    # load index database
+    WLOG(params, '', textentry('40-509-00001', args='file index'))
+    findexdb = drs_database.FileIndexDatabase(params)
+    findexdb.load_db()
+    # return all object names
+    return findexdb.get_unique(column='KW_OBJNAME',
+                               condition='BLOCK_KIND="raw"')
+
 
 # =============================================================================
 # Start of code

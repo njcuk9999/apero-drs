@@ -9,17 +9,17 @@ Created on 2022-02-22
 
 @author: cook
 """
-import numpy as np
 import os
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from apero.base import base
+import numpy as np
+
 from apero import lang
+from apero.base import base
 from apero.core import constants
+from apero.core.core import drs_database
 from apero.core.core import drs_log
 from apero.core.utils import drs_recipe
-from apero.core.instruments.default import pseudo_const
-from apero.core.core import drs_database
 from apero.io import drs_fits
 
 # =============================================================================
@@ -39,7 +39,7 @@ WLOG = drs_log.wlog
 # get parameter dictionary
 ParamDict = constants.ParamDict
 DrsRecipe = drs_recipe.DrsRecipe
-PseudoConstants = pseudo_const.PseudoConstants
+PseudoConstants = constants.PseudoConstants
 # get display func
 display_func = drs_log.display_func
 # Get the text types
@@ -108,7 +108,7 @@ class BokehPlot:
         Add keyword arguments (int/float/bool/str) in string form - for passing
         to our script
 
-        :param args: list of
+        :param kwargs: list of keyword arguments
         :return:
         """
         # deal with no keyword arguments --> empty string
@@ -127,6 +127,7 @@ class BokehPlot:
                 continue
             # -----------------------------------------------------------------
             # deal with others
+            # noinspection PyBroadException
             try:
                 strarg = '{0}={1}'.format(key, str(kwargs[key]))
                 # test as dictionary entry
@@ -196,8 +197,12 @@ def get_calib(header: drs_fits.Header, key: str) -> Tuple[np.ndarray, str]:
     """
     Get a calibration file for a speific file and get
 
-    :param filename: str, the filename
+    :param header: fits.Header - the header to get the time of calibration
+                   from
     :param key: str, the db key for the specific type of calibration
+
+    :return: tuple, 1. the calibration file data (extension 1)
+                    2. the calibration file name
     """
     # get database
     calibdbm = drs_database.CalibrationDatabase(PARAMS)
@@ -261,8 +266,6 @@ def get_bokeh_plot_dir(params, pyfile):
 # =============================================================================
 if __name__ == "__main__":
 
-
-    # _path = os.path.join(PARAMS['DRS_DATA_PLOT'], 'test.py')
     # _bplt = BokehPlot(PARAMS, 'test_plot', _path, 'My test plot')
     # _bplt.create(kwargs=dict(power=3, xlabel='x', ylabel='x^3'))
     # _bplt.run()

@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-spirouCore.py
-
-Logging related functions
+APERO logging functionality
 
 Created on 2017-10-11 at 10:59
 
@@ -23,11 +21,12 @@ only from
 
 Version 0.0.1
 """
-import numpy as np
 import os
 import sys
 from time import sleep
 from typing import Any, List, Optional, Tuple, Union
+
+import numpy as np
 
 from apero import lang
 from apero.base import base
@@ -36,7 +35,6 @@ from apero.core.core import drs_exceptions
 from apero.core.core import drs_misc
 from apero.core.core import drs_text
 from apero.core.math import time
-
 
 # =============================================================================
 # Define variables
@@ -84,6 +82,7 @@ class Logger:
             self.pin = paramdict
         else:
             self.pin = constants.load()
+        # noinspection PyBroadException
         try:
             self.language = base.IPARAMS['LANGUAGE']
             self.instrument = base.IPARAMS['INSTRUMENT']
@@ -354,7 +353,7 @@ class Logger:
                                         printonly)
                     # print to stdout
                     printlog(self, params, cmd, key, colour,
-                                 sublevel=sublevel)
+                             sublevel=sublevel)
         # ---------------------------------------------------------------------
         # get log parameters (in set language)
         # ---------------------------------------------------------------------
@@ -777,8 +776,6 @@ def debug_start(logobj: Logger, params: ParamDict,
             # noinspection PyBroadException
             try:
                 from IPython import embed
-                # noinspection PyUnboundLocalVariable
-                ipython = embed
                 import ipdb
                 ipdb.set_trace()
             except Exception as _:
@@ -917,7 +914,7 @@ def get_logfilepath(logobj: Logger, params: ParamDict,
 
 
 def correct_level(logobj: Logger, key: str, level: str,
-                  sublevel: Optional[int]=None):
+                  sublevel: Optional[int] = None):
     """
     Decides (based on WRITE_LEVEL) whether this level ("key") is to be printed/
     logged (based on the level "level"), return True if we should log key based

@@ -9,12 +9,11 @@ Created on 2019-07-26 at 09:39
 
 @author: cook
 """
-from apero.base import base
 from apero import lang
+from apero.base import base
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
 from apero.tools.module.setup import drs_reset
-
 
 # =============================================================================
 # Define variables
@@ -45,10 +44,7 @@ def main(**kwargs):
     """
     Main function for apero_reset.py
 
-    :param instrument: str, the instrument name
     :param kwargs: additional keyword arguments
-
-    :type instrument: str
 
     :keyword debug: int, debug level (0 for None)
 
@@ -155,8 +151,7 @@ def __main__(recipe, params):
     # progress
     drs_reset.reset_title(params, 'Log')
     # deal with files to skip
-    exclude_files = []
-    exclude_files.append(drs_log.get_logfilepath(WLOG, params))
+    exclude_files = [drs_log.get_logfilepath(WLOG, params)]
     # log folder
     if warn:
         reset5 = drs_reset.reset_confirmation(params, 'Log',
@@ -202,7 +197,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return drs_startup.return_locals(params, locals())
+    return locals()
 
 
 # =============================================================================

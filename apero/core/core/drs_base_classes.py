@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Base classes (Most typed dictionaries) go in here
+APERO Base classes (Most typed dictionaries) go in here
 
 Created on 2020-08-2020-08-31 16:07
 
@@ -16,20 +16,20 @@ only from
 - apero.core.core.drs_text
 - apero.core.core.drs_exceptions
 """
-from collections import UserDict
 import importlib
-import duckdb
 import os
+import sys
+from collections import UserDict
+from typing import Any, List, Optional, Union
+
+import duckdb
 import pandas as pd
 from pandasql import sqldf
-from typing import Any, List, Optional, Union
-import sys
 
 from apero.base import base
+from apero.core.core import drs_exceptions
 from apero.core.core import drs_misc
 from apero.core.core import drs_text
-from apero.core.core import drs_exceptions
-
 
 # =============================================================================
 # Define variables
@@ -486,10 +486,8 @@ class BinaryDict(UserDict):
 
         :returns: string representation of the binary dictionary
         """
-
-
         sargs = [self.decode(), self.bin()]
-        string = ('BinaryDict[{0}] = {1}').format(*sargs)
+        string = 'BinaryDict[{0}] = {1}'.format(*sargs)
         for key in self.data:
             string += f'\n\t{key} = {self.data[key]}'
         return string
@@ -553,7 +551,6 @@ class BinaryDict(UserDict):
 class ImportModule:
     # set class name
     class_name = 'ImportModule'
-
 
     def __init__(self, name: str, path: str, mod: Any = None):
         """
@@ -651,6 +648,7 @@ class ImportModule:
             except Exception as e:
                 # forget if we have ever imported the module
                 self.modset = False
+                # noinspection PyBroadException
                 try:
                     import traceback
                     string_traceback = traceback.format_exc()
@@ -788,10 +786,12 @@ class PandasLikeDatabaseDuckDB(PandasLikeDatabase):
         conn = duckdb.connect()
         # ref has to be in local space for duckdb to use it
         data = self.namespace['data']
+        # this prevents data being "unused"
+        _ = data
         # command has to use single quotations
         command = command.replace('\"', '\'')
         # get dataframe
-        results =  conn.execute(command).df()
+        results = conn.execute(command).df()
         # close conn
         conn.close()
         # return results

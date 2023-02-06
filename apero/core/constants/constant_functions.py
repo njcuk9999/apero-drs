@@ -1,5 +1,5 @@
 """
-Package containing all constants Classes and functionality
+APERO constants classes and constant functionality
 
 DRS Import Rules:
 
@@ -9,20 +9,21 @@ Created on 2019-01-17 at 14:09
 
 @author: cook
 """
-from astropy import units as uu
-import numpy as np
 import os
-from pathlib import Path
 import sys
 import traceback
+from pathlib import Path
 from typing import Any, List, Tuple, Union
 
+import numpy as np
+from astropy import units as uu
+
+from apero import lang
 from apero.base import base
 from apero.core.core import drs_base_classes as base_class
 from apero.core.core import drs_exceptions
 from apero.core.core import drs_misc
 from apero.core.core import drs_text
-from apero import lang
 
 # =============================================================================
 # Define variables
@@ -520,6 +521,7 @@ class Keyword(Const):
                        related to or comes from another constant)
         :param combine_method: str, the method used to combine this keyword
                                when combining two or more files
+        :param post_exclude: bool, whether to exclude from post processing
 
         :returns: None
         """

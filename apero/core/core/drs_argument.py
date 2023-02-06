@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+APERO argument definitions
 
-# CODE DESCRIPTION HERE
+Mostly for use with argparse
 
 Created on 2019-02-04 at 16:40
 
@@ -23,25 +23,26 @@ only from
 
 """
 import argparse
-from collections import OrderedDict
 import copy
 import glob
-import numpy as np
 import os
 import sys
+from collections import OrderedDict
 from typing import Any, IO, Dict, List, Tuple, Type, Union
+
+import numpy as np
 
 from apero import lang
 from apero.base import base
 from apero.base import drs_db
 from apero.core import constants
+from apero.core.core import drs_base_classes
+from apero.core.core import drs_database
 from apero.core.core import drs_exceptions
+from apero.core.core import drs_file
+from apero.core.core import drs_log
 from apero.core.core import drs_misc
 from apero.core.core import drs_text
-from apero.core.core import drs_log
-from apero.core.core import drs_file
-from apero.core.core import drs_database
-from apero.core.core import drs_base_classes
 from apero.io import drs_fits
 
 # =============================================================================
@@ -2380,20 +2381,6 @@ class _IsReference(DrsAction):
         """
         return '_IsReference[DrsAction]'
 
-    def _set_reference(self, value: Any) -> Union[str, None]:
-        """
-        Sets the reference value to string representation of value
-
-        :param value: Any, value to turn to string representation of value
-
-        :return: str: the valid directory (raises exception if invalid)
-        """
-        # deal with unset value
-        if value is None:
-            return None
-        else:
-            return str(value)
-
     def __call__(self, parser: DrsArgumentParser,
                  namespace: argparse.Namespace, values: Any,
                  option_string: Any = None):
@@ -2413,9 +2400,9 @@ class _IsReference(DrsAction):
         self.recipe = parser.recipe
         # display listing
         if type(values) == list:
-            value = list(map(self._set_reference, values))
+            value = list(map(_set_reference, values))
         else:
-            value = self._set_reference(values)
+            value = _set_reference(values)
         # make sure value is not a list
         if isinstance(value, list):
             value = value[0]
@@ -2465,20 +2452,6 @@ class _SetCrunFile(DrsAction):
         """
         return '_SetCrunFile[DrsAction]'
 
-    def _set_crun_file(self, value: Any) -> Union[str, None]:
-        """
-        Sets the config run file value to string representation of value
-
-        :param value: Any, value to turn to string representation of value
-
-        :return: str: the valid directory (raises exception if invalid)
-        """
-        # deal with unset value
-        if value is None:
-            return None
-        else:
-            return str(value)
-
     def __call__(self, parser: DrsArgumentParser,
                  namespace: argparse.Namespace, values: Any,
                  option_string: Any = None):
@@ -2498,9 +2471,9 @@ class _SetCrunFile(DrsAction):
         self.recipe = parser.recipe
         # display listing
         if type(values) == list:
-            value = list(map(self._set_crun_file, values))
+            value = list(map(_set_crun_file, values))
         else:
-            value = self._set_crun_file(values)
+            value = _set_crun_file(values)
         # make sure value is not a list
         if isinstance(value, list):
             value = value[0]
@@ -3428,6 +3401,11 @@ def valid_file(params: ParamDict, indexdb: FileIndexDatabase,
     # get the argument that we are checking the file of
     arg = _get_arg(rargs, rkwargs, argname)
     drsfiles = arg.files
+
+    # need to check inpath in drsfiles - this changes the strategy
+    for drsfile in drsfiles:
+        if drsfile.inpath is not None:
+            return _inpath_file(params, argname, filename, drsfile)
     # get the drs logic
     drs_logic = arg.filelogic
     # check whether we are updating the index
@@ -3449,8 +3427,9 @@ def valid_file(params: ParamDict, indexdb: FileIndexDatabase,
         WLOG(params, 'error', textentry('09-001-00005', args=eargs))
     # clean up
     filename = filename.strip()
+
     # -------------------------------------------------------------------------
-    # deal with database (either gettings + updating or coming from stored)
+    # deal with database (either getting + updating or coming from stored)
     # -------------------------------------------------------------------------
     # deal with instrument == 'None'
     if indexdb.instrument == 'None':
@@ -3470,6 +3449,7 @@ def valid_file(params: ParamDict, indexdb: FileIndexDatabase,
     if not drs_text.null_text(obs_dir.obs_dir, ['None', '', 'Null']):
         condition += ' AND OBS_DIR="{0}"'.format(obs_dir.obs_dir)
     # get filedb
+    # TODO: Do we really need to get all entries for this night??
     dbtable = indexdb.get_entries('*', condition=condition)
     filedb = PandasLikeDatabase(dbtable)
     # deal with wildcards
@@ -3481,6 +3461,7 @@ def valid_file(params: ParamDict, indexdb: FileIndexDatabase,
     else:
         # make a path cond
         pathcond = 'FILENAME="{0}"'
+
     # ---------------------------------------------------------------------
     # Step 2: Check whether filename itself is in database
     # ---------------------------------------------------------------------
@@ -3718,7 +3699,18 @@ def _fits_query(params: ParamDict, recipe: Any,
     return files, types
 
 
-def _check_file_logic(params, argname, logic, filetypes, types):
+def _check_file_logic(params: ParamDict, argname: str, logic: str,
+                      filetypes: List[DrsInputFile], types: List[DrsInputFile]):
+    """
+    Check the file logic for all filetypes
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param argname: str
+    :param logic:
+    :param filetypes:
+    :param types:
+    :return:
+    """
     # deal with types being an empty list
     if len(types) == 0:
         return
@@ -3731,15 +3723,44 @@ def _check_file_logic(params, argname, logic, filetypes, types):
             #   file in types
             if filetype.name != types[-1].name:
                 # raise error if not
-                eargs = [argname, filetype.name, types.name[-1]]
+                eargs = [argname, filetype.name, types[-1].name]
                 WLOG(params, 'error', textentry('09-001-00008', args=eargs))
+
+
+def _inpath_file(params: ParamDict, argname: str, filename: str,
+                 drsfile: DrsInputFile) -> Tuple[List[str], List[DrsInputFile]]:
+    """
+    Special case of finding a file where path is defined and forced
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param argname: str, the argument name (used for error reporting)
+    :param filename: str, the filename (absolute or base) for the mask
+    :param drsfile: DrsInputFile, the File Definition class we are checking
+
+    :return: tuple, 1. one element list: The absolute path of the file,
+                    2. one element list: the updated DrsInputFile
+    """
+    # construct absolute filename
+    if not os.path.exists(filename):
+        abspath = os.path.join(drsfile.inpath, filename)
+    else:
+        abspath = filename
+    # only if absolute path exists do we do this
+    if os.path.exists(abspath):
+        # create an instance of this drs_file with the filename set
+        file_in = drsfile.newcopy(filename=filename, params=params)
+        # return the absolute path and the drs input file with filename updated
+        return [abspath], [file_in]
+    # if we have reached this point we cannot file filename
+    eargs = [argname, filename, abspath]
+    WLOG(params, 'error', textentry('09-001-00005', args=eargs))
+    # return placeholders (should not get to here)
+    return [abspath], [drsfile]
 
 
 # =============================================================================
 # Worker functions
 # =============================================================================
-
-
 def _get_version_info(params: ParamDict, green: str = '',
                       end: str = '') -> List[str]:
     """
@@ -4045,14 +4066,51 @@ def _check_arg_path(params: ParamDict, arg: DrsArgument,
     """
     # set function name
     # _ = display_func('_check_arg_path', __NAME__)
+
+
+    # get block names
+    blocks = drs_file.DrsPath.get_blocks(params)
+    block_names = drs_file.DrsPath.get_block_names(blocks)
     # set the path as directory if arg.path is None
     if arg.path is None:
         return obs_dir
     # deal with arg.path being a block kind
     if arg.path in params:
+        return drs_file.DrsPath(params, params['arg.path'])
+    elif arg.path in block_names:
         return drs_file.DrsPath(params, block_kind=arg.path)
     else:
         return drs_file.DrsPath(params, arg.path)
+
+
+def _set_reference(value: Any) -> Union[str, None]:
+    """
+    Sets the reference value to string representation of value
+
+    :param value: Any, value to turn to string representation of value
+
+    :return: str: the valid directory (raises exception if invalid)
+    """
+    # deal with unset value
+    if value is None:
+        return None
+    else:
+        return str(value)
+
+
+def _set_crun_file(value: Any) -> Union[str, None]:
+    """
+    Sets the config run file value to string representation of value
+
+    :param value: Any, value to turn to string representation of value
+
+    :return: str: the valid directory (raises exception if invalid)
+    """
+    # deal with unset value
+    if value is None:
+        return None
+    else:
+        return str(value)
 
 
 # =============================================================================
@@ -4167,8 +4225,7 @@ def extended_help(params: ParamDict) -> OrderedDict:
     # set the number of argument to expect
     props['nargs'] = 0
     # set the help message
-    # TODO: add to language database
-    props['help'] = 'Extended help menu (with all advanced arguments)'
+    props['help'] = textentry('EXTENDED_HELP')
     # return the argument dictionary
     return props
 
@@ -4486,8 +4543,7 @@ def set_crun_file(params: ParamDict) -> OrderedDict:
     # set the number of argument to expect
     props['nargs'] = 1
     # set the help message
-    # TODO: move to language database
-    props['help'] = 'Set a run file to override default arguments'
+    props['help'] = textentry('SET_RUNFILE_HELP')
     # return the argument dictionary
     return props
 
@@ -4540,10 +4596,7 @@ def set_nosave(params: ParamDict) -> OrderedDict:
     # set the argument action function
     props['action'] = 'store_true'
     # set the help message
-    props['help'] = ('Do not save any outputs (debug/information run).'
-                     ' Note some recipes require other recipesto be run.'
-                     ' Only use --nosave after previous recipe runs have '
-                     'been run successfully.')
+    props['help'] = textentry('SET_NOSAVE_HELP')
     # return the argument dictionary
     return props
 

@@ -1,27 +1,28 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
-
-# CODE DESCRIPTION HERE
+APERO background functionality
 
 Created on 2019-05-13 at 12:40
 
 @author: cook
 """
-import numpy as np
 import warnings
-from scipy.signal import convolve2d
+from typing import List, Optional
+
+import numpy as np
 from scipy.ndimage import map_coordinates as mapc
 from scipy.ndimage import zoom
+from scipy.signal import convolve2d
 
-from apero.base import base
 from apero import lang
+from apero.base import base
 from apero.core import constants
 from apero.core import math as mp
-from apero.core.core import drs_log, drs_file
+from apero.core.core import drs_file
+from apero.core.core import drs_log
+from apero.core.utils import drs_recipe
 from apero.io import drs_fits
-
 
 # =============================================================================
 # Define variables
@@ -37,6 +38,10 @@ __release__ = base.__release__
 DrsFitsFile = drs_file.DrsFitsFile
 # Get Logging function
 WLOG = drs_log.wlog
+# Get Recipe class
+DrsRecipe = drs_recipe.DrsRecipe
+# Get parameter class
+ParamDict = constants.ParamDict
 # Get the text types
 textentry = lang.textentry
 # alias pcheck
@@ -46,14 +51,45 @@ pcheck = constants.PCheck(wlog=WLOG)
 # =============================================================================
 # Define functions
 # =============================================================================
-def create_background_map(params, image, badpixmask, **kwargs):
+def create_background_map(params: ParamDict, image: np.ndarray,
+                          badpixmask: np.ndarray,
+                          bkgr_boxsize: Optional[int] = None,
+                          bkgr_percentage: Optional[float] = None,
+                          bkgr_mask_conv_size: Optional[int] = None,
+                          bkgr_n_bad: Optional[int] = None) -> np.ndarray:
+    """
+    Create background map mask
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param image: numpy (2D) array, the image to calculate the background from
+    :param badpixmask: numpy (2D) array, a map of bad pixels
+    :param bkgr_boxsize: int or None, optional, Width of the box to produce the
+                         background mask, if provided overrides
+                         params['BKGR_BOXSIZE']
+    :param bkgr_percentage: float or None, optional, the background percentile
+                            to compute minimum value (%), if provided overrides
+                            params['BKGR_PERCENTAGE']
+    :param bkgr_mask_conv_size: int or None, optional, size in pixels of to
+                                convolve tophat for the background mask, if
+                                provided overrides
+                                params['BKGR_MASK_CONVOLVE_SIZE']
+    :param bkgr_n_bad: int or None, optional, If a pixel has this or more
+                       "dark" neighbours, we consider it dark regardless of
+                       its initial value, overrides
+                       params['BKGR_N_BAD_NEIGHBOURS']
+
+    :return: numpy (2D) array, the background map (same shape as input image)
+    """
     func_name = __NAME__ + '.create_background_map()'
     # get constants
-    width = pcheck(params, 'BKGR_BOXSIZE', 'width', kwargs, func_name)
-    percent = pcheck(params, 'BKGR_PERCENTAGE', 'percent', kwargs, func_name)
-    csize = pcheck(params, 'BKGR_MASK_CONVOLVE_SIZE', 'csize', kwargs,
-                   func_name)
-    nbad = pcheck(params, 'BKGR_N_BAD_NEIGHBOURS', 'nbad', kwargs, func_name)
+    width = pcheck(params, 'BKGR_BOXSIZE', func=func_name,
+                   override=bkgr_boxsize)
+    percent = pcheck(params, 'BKGR_PERCENTAGE', func=func_name,
+                     override=bkgr_percentage)
+    csize = pcheck(params, 'BKGR_MASK_CONVOLVE_SIZE', func=func_name,
+                   override=bkgr_mask_conv_size)
+    nbad = pcheck(params, 'BKGR_N_BAD_NEIGHBOURS', func=func_name,
+                  override=bkgr_n_bad)
     # set image bad pixels to NaN
     image0 = np.array(image)
     badmask = np.array(badpixmask, dtype=bool)
@@ -99,11 +135,23 @@ def create_background_map(params, image, badpixmask, **kwargs):
     return backmask
 
 
-def correct_local_background(params, image, **kwargs):
+def correct_local_background(params: ParamDict, image: np.ndarray,
+                             bkgr_ker_wx: Optional[int] = None,
+                             bkgr_ker_wy: Optional[int] = None,
+                             bkgr_ker_sig: Optional[int] = None) -> np.ndarray:
     """
     determine the scattering from an imput image. To speed up the code,
     do the following steps rather than a simple convolution with the
     scattering kernel.
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param image: np.array, image to correct local background
+    :param bkgr_ker_wx: int or None, optional, Background kernel width in
+                        x [pixels], overrides params['BKGR_KER_WX']
+    :param bkgr_ker_wy: int or None, optional, Background kernel width in
+                        y [pixels], overrides params['BKGR_KER_WX']
+    :param bkgr_ker_sig: int or None, optional, convolution kernel sigma range
+                        overrides params['BKGR_KER_SIG']
 
     Logical (slow) steps -->
 
@@ -126,24 +174,26 @@ def correct_local_background(params, image, **kwargs):
     gaussian. The kernel is smaller and the input image is also similarly
     smaller, so there is a N^2 gain.
     - Upscale the convolved image to the input dimensions
+
+    :returns: np.ndarray, the local background (scattered_light), same size
+              as input image
     """
     func_name = __NAME__ + '.correct_local_background()'
     # get constants from parameter dictionary
-    wx_ker = pcheck(params, 'BKGR_KER_WX', 'wx_ker', kwargs, func_name)
-    wy_ker = pcheck(params, 'BKGR_KER_WY', 'wy_ker', kwargs, func_name)
-    sig_ker = pcheck(params, 'BKGR_KER_SIG', 'sig_ker', kwargs, func_name)
+    wx_ker = pcheck(params, 'BKGR_KER_WX', func=func_name, override=bkgr_ker_wx)
+    wy_ker = pcheck(params, 'BKGR_KER_WY', func=func_name, override=bkgr_ker_wy)
+    sig_ker = pcheck(params, 'BKGR_KER_SIG', func=func_name,
+                     override=bkgr_ker_sig)
     # log process
     WLOG(params, '', textentry('40-012-00010'))
-
     # Remove NaNs from image
     image1 = mp.nanpad(image)
-
     # size if input image
     sz = image1.shape
     # size of the smaller image. It is an integer divider of the input image
     # 4088 on an axis and wN_ker = 9 would lead to an 8x scale-down (8*511)
-    sz_small = [sz[0] // largest_divisor_below(sz[0], wy_ker),
-                sz[1] // largest_divisor_below(sz[1], wx_ker)]
+    sz_small = [sz[0] // mp.largest_divisor_below(sz[0], wy_ker),
+                sz[1] // mp.largest_divisor_below(sz[1], wx_ker)]
 
     # downsizing image prior to convolution
     # bins an image from its shape down to a smaller shape, say 4096x4096 to
@@ -181,30 +231,39 @@ def correct_local_background(params, image, **kwargs):
     return scattered_light
 
 
-def largest_divisor_below(n1, n2):
+def correction(recipe: DrsRecipe, params: ParamDict, infile: DrsFitsFile,
+               image: np.ndarray, bkgrdfile: str, return_map: bool = False,
+               bkgr_no_sub: Optional[bool] = None,
+               bkgr_boxsize: Optional[int] = None,
+               bkgr_ker_amp: Optional[int] = None) -> np.ndarray:
     """
-    finds the largest divisor of a large number below a certain limit
-    for 4088 and 9, we would get 8 (511*8 = 4088)
-    Useful to downsize images.
+    Background correct an image
 
-    :param n1:
-    :param n2:
-    :return:
+    :param recipe: DrsRecipe, used for producing the DEBUG output
+    :param params: ParamDict, parameter dictionary of constants
+    :param infile: DrsFitsFile, input file
+    :param image: np.ndarray, the input image
+    :param bkgrdfile: str, the background calibration absolute filename
+    :param return_map: bool, if True, return the full background image
+    :param bkgr_no_sub: bool or None, optional, whether to do the background
+                        measurement (True or False), overrides
+                        params['BKGR_NO_SUBTRACTION']
+    :param bkgr_boxsize: int, optional, width of the box to produce the
+                         background mask, overrides params['BKGR_BOXSIZE']
+    :param bkgr_ker_amp: int, optional, kernel amplitude , overrides
+                         params['BKGR_KER_AMP']
+
+    :return: numpy array, either the corrected image, or the full background
+             map (if return_map is True)
     """
-    for i in range(n2, 0, -1):
-        if n1 % i == 0:
-            return i
-    # if there is a problem return NaN
-    return np.nan
-
-
-def correction(recipe, params, infile, image, bkgrdfile, return_map=False,
-               **kwargs):
     func_name = __NAME__ + '.correction()'
     # get constants from params/kwargs
-    no_sub = pcheck(params, 'BKGR_NO_SUBTRACTION', 'no_sub', kwargs, func_name)
-    width = pcheck(params, 'BKGR_BOXSIZE', 'width', kwargs, func_name)
-    amp_ker = pcheck(params, 'BKGR_KER_AMP', 'amp_ker', kwargs, func_name)
+    no_sub = pcheck(params, 'BKGR_NO_SUBTRACTION', 'no_sub', func=func_name,
+                    override=bkgr_no_sub)
+    width = pcheck(params, 'BKGR_BOXSIZE', 'width', func=func_name,
+                   override=bkgr_boxsize)
+    amp_ker = pcheck(params, 'BKGR_KER_AMP', 'amp_ker', func=func_name,
+                     override=bkgr_ker_amp)
     # deal with no correction needed
     if no_sub:
         background = np.zeros_like(image)
@@ -317,7 +376,25 @@ def correction(recipe, params, infile, image, bkgrdfile, return_map=False,
             return corrected_image
 
 
-def debug_file(recipe, params, infile, dlist):
+def debug_file(recipe: DrsRecipe, params: ParamDict, infile: DrsFitsFile,
+               dlist: List[np.ndarray]):
+    """
+    Produce the background DEBUG file
+
+    :param recipe: DrsRecipe, the recipe that called this function
+    :param params: ParamDict, parameter dictionary of constants
+    :param infile: DrsFitsFile, the input file class
+    :param dlist: list of numpy array, the images for each extension:
+                  1. corrected image
+                  2. original image
+                  3. locally corrected image
+                  4. locally corrected NaN filled image
+                  5. Local Background image
+                  6. Global Background image
+                  7. Global binned background image
+
+    :return: None, writes debug file to disk
+    """
     # debug output
     debug_back = recipe.outputs['DEBUG_BACK'].newcopy(params=params)
     # construct the filename from file instance

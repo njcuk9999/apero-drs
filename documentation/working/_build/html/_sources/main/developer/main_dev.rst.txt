@@ -68,7 +68,7 @@ Other
   :caption: Contents:
 
   ../misc/mysql_database_commands.rst
-
+  ../misc/conda_and_git.rst
 
 
 

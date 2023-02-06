@@ -9,24 +9,24 @@ Created on 2019-08-21 at 12:28
 
 @author: cook
 """
-from astropy.table import Table
+import os
+import warnings
+from typing import Optional, Tuple
+
+import numpy as np
 from astropy import constants as cc
 from astropy import units as uu
-import numpy as np
-import os
+from astropy.table import Table
 from scipy.optimize import curve_fit
-from typing import Optional, Tuple
-import warnings
 
-from apero.base import base
 from apero import lang
+from apero.base import base
 from apero.core import constants
 from apero.core import math as mp
-from apero.core.core import drs_log
 from apero.core.core import drs_file
+from apero.core.core import drs_log
 from apero.core.utils import drs_data
 from apero.io import drs_fits
-
 
 # =============================================================================
 # Define variables
@@ -91,6 +91,9 @@ def measure_fp_peaks(params: ParamDict, props: ParamDict, limit: float,
                 wave: numpy array (2D), the wave solution image
                 lamp: string, the lamp type (either 'hc' or 'fp')
 
+    :param limit: float, FP peak limit for keeping a line
+    :param normpercent: float, percentile to normalize by
+
     :return props: parameter dictionary, the updated parameter dictionary
             Adds/updates the following:
                 ordpeak: numpy array (1D), the order number for each valid FP
@@ -148,7 +151,7 @@ def measure_fp_peaks(params: ParamDict, props: ParamDict, limit: float,
         tmp = tmp / mp.nanpercentile(tmp, normpercent)
         # ------------------------------------------------------------------
         # find the peaks
-        with warnings.catch_warnings(record=True) as w:
+        with warnings.catch_warnings(record=True) as _:
             peakmask = (tmp[1:-1] > tmp[2:]) & (tmp[1:-1] > tmp[:-2])
         peakpos = np.where(peakmask)[0]
         # work out the FP width for this order
@@ -418,85 +421,82 @@ def get_ccf_teff_mask(params: ParamDict,
                       header: drs_fits.Header,
                       assetsdir: Optional[str] = None,
                       mask_dir: Optional[str] = None) -> Tuple[str, str]:
-        """
-        Decide on a mask based on effective temperature (from the header)
+    """
+    Decide on a mask based on effective temperature (from the header)
 
-        :param params: ParamDict, the parameter dictionary of constants
-        :param header: fits Header, to get temperature from
+    :param params: ParamDict, the parameter dictionary of constants
+    :param header: fits Header, to get temperature from
+    :param assetsdir: str, the assets directory (overrides DRS_DATA_ASSETS)
+    :param mask_dir: str, the mask directory (overrides CCF_MASK_PATH)
 
-        :return: tuple, 1. str, the ccf mask to use 2. str, the format
-                 for astropy.table.Table.read
-        """
-        # set function name
-        func_name = display_func('get_ccf_teff_mask', __NAME__)
-        # get parameters from params/kwargs
-        assetdir = pcheck(params, 'DRS_DATA_ASSETS', func=func_name,
-                          override=assetsdir)
-        relfolder = pcheck(params, 'CCF_MASK_PATH', func=func_name,
-                           override=mask_dir)
-        # get temperature header key
-        teff_key = params['KW_DRS_TEFF'][0]
-        # get teff mask file
-        teff_masks_file = params['CCF_TEFF_MASK_TABLE']
-        # get teff mask datatype
-        teff_masks_fmt = params.instances['CCF_TEFF_MASK_TABLE'].datatype
-        # get temperature from header
-        if teff_key in header:
-            teff = float(header[teff_key])
-            # log that we are using a Teff key for mask
-            # TODO: move to language database
-            msg = 'Using object temperature = {0} K for mask identification'
-            margs = [teff]
-            WLOG(params, '', msg.format(*margs))
-        else:
-            # TODO: move to language database
-            emsg = 'Object temperature key "{0}" not in header'
-            eargs = [teff_key]
-            WLOG(params, 'error', emsg.format(*eargs))
-            # should never get here
-            return '', ''
-        # ---------------------------------------------------------------------
-        # load teff masks file
-        teff_mask_path = os.path.join(assetdir, relfolder, teff_masks_file)
-        teff_masks = Table.read(teff_mask_path, format=teff_masks_fmt)
-        # ---------------------------------------------------------------------
-        # find default
-        if 'default' not in teff_masks['kind']:
-            # TODO: move to language database
-            emsg = 'Cannot use {0} - must have default value in kind column'
-            eargs = [teff_masks_file]
-            WLOG(params, 'error', emsg.format(*eargs))
-            return '', ''
-        # get position of defaults
-        default_mask = teff_masks['kind'] == 'default'
-        pos = np.where(default_mask)[0][0]
-        # use mask for default
-        default_maskfile = str(teff_masks['mask'][pos])
-        default_datatype = str(teff_masks['datatype'][pos])
-        # remove default from teff_masks
-        teff_masks = teff_masks[~default_mask]
-        # ---------------------------------------------------------------------
-        # deal with teff choosing mask
-        # ---------------------------------------------------------------------
-        # non finite values should use default mask
-        if not np.isfinite(teff):
-            # return the mask and the file type (i.e. fits, ascii)
-            return default_maskfile, default_datatype
-        # loop around rows in teff_masks
-        for row in range(len(teff_masks)):
-            # get teff limits
-            cond1 = teff >= teff_masks['teff_min'][row]
-            cond2 = teff < teff_masks['teff_max'][row]
-            # if teff satisfies both limits return here
-            if cond1 and cond2:
-                # get this rows mask and data type
-                row_maskfile = str(teff_masks['mask'][row])
-                row_datatype = str(teff_masks['datatype'][row])
-                # return the mask and the file type (i.e. fits, ascii)
-                return row_maskfile, row_datatype
-        # ---------------------------------------------------------------------
-        # else we use the default for anything else
+    :return: tuple, 1. str, the ccf mask to use 2. str, the format
+             for astropy.table.Table.read
+    """
+    # set function name
+    func_name = display_func('get_ccf_teff_mask', __NAME__)
+    # get parameters from params/kwargs
+    assetdir = pcheck(params, 'DRS_DATA_ASSETS', func=func_name,
+                      override=assetsdir)
+    relfolder = pcheck(params, 'CCF_MASK_PATH', func=func_name,
+                       override=mask_dir)
+    # get temperature header key
+    teff_key = params['KW_DRS_TEFF'][0]
+    # get teff mask file
+    teff_masks_file = params['CCF_TEFF_MASK_TABLE']
+    # get teff mask datatype
+    teff_masks_fmt = params.instances['CCF_TEFF_MASK_TABLE'].datatype
+    # get temperature from header
+    if teff_key in header:
+        teff = float(header[teff_key])
+        # log that we are using a Teff key for mask
+        WLOG(params, '', textentry('40-020-00008', args=[teff]))
+    else:
+        # error msg: Object temperature key "{0}" not in header'
+        eargs = [teff_key]
+        WLOG(params, 'error', textentry('09-020-00008', args=eargs))
+        # should never get here
+        return '', ''
+    # ---------------------------------------------------------------------
+    # load teff masks file
+    teff_mask_path = os.path.join(assetdir, relfolder, teff_masks_file)
+    teff_masks = Table.read(teff_mask_path, format=teff_masks_fmt)
+    # ---------------------------------------------------------------------
+    # find default
+    if 'default' not in teff_masks['kind']:
+        # error msg: Cannot use {0} - must have default value in kind column
+        eargs = [teff_masks_file]
+        WLOG(params, 'error', textentry('09-020-00009', args=eargs))
+        return '', ''
+    # get position of defaults
+    default_mask = teff_masks['kind'] == 'default'
+    pos = np.where(default_mask)[0][0]
+    # use mask for default
+    default_maskfile = str(teff_masks['mask'][pos])
+    default_datatype = str(teff_masks['datatype'][pos])
+    # remove default from teff_masks
+    teff_masks = teff_masks[~default_mask]
+    # ---------------------------------------------------------------------
+    # deal with teff choosing mask
+    # ---------------------------------------------------------------------
+    # non finite values should use default mask
+    if not np.isfinite(teff):
+        # return the mask and the file type (i.e. fits, ascii)
         return default_maskfile, default_datatype
+    # loop around rows in teff_masks
+    for row in range(len(teff_masks)):
+        # get teff limits
+        cond1 = teff >= teff_masks['teff_min'][row]
+        cond2 = teff < teff_masks['teff_max'][row]
+        # if teff satisfies both limits return here
+        if cond1 and cond2:
+            # get this rows mask and data type
+            row_maskfile = str(teff_masks['mask'][row])
+            row_datatype = str(teff_masks['datatype'][row])
+            # return the mask and the file type (i.e. fits, ascii)
+            return row_maskfile, row_datatype
+    # ---------------------------------------------------------------------
+    # else we use the default for anything else
+    return default_maskfile, default_datatype
 
 
 def get_ccf_mask(params, filename, mask_width, mask_units='nm',
@@ -584,7 +584,7 @@ def delta_v_rms_2d(spe, wave, sigdet, threshold, size):
     return dvrms2, weightedmean, weightedmeanorder
 
 
-def remove_telluric_domain(params, recipe, infile, fiber, **kwargs):
+def remove_telluric_domain(params, infile, fiber, **kwargs):
     func_name = __NAME__ + '.remove_telluric_domain()'
     # get parameters from params/kwargs
     ccf_tellu_thres = pcheck(params, 'CCF_TELLU_THRES', 'ccf_tellu_thres',
@@ -630,7 +630,6 @@ def remove_telluric_domain(params, recipe, infile, fiber, **kwargs):
 
 
 def fill_e2ds_nans(params, image, **kwargs):
-
     func_name = __NAME__ + '.fill_e2ds_nans()'
     # get parameters from params/kwargs
     kernel_size = pcheck(params, 'CCF_FILL_NAN_KERN_SIZE', 'kernel_size',
@@ -670,37 +669,11 @@ def fill_e2ds_nans(params, image, **kwargs):
     return image2
 
 
-def locate_reference_file(params, recipe, infile):
-    # set function name
-    # _ = display_func('locate_reference_file', __NAME__)
-    # deal with infile being telluric file (we do not have reference file
-    #   for telluric files) --> must use the telluric files "intype file"
-    if infile.name == 'TELLU_OBJ':
-        instance = infile.intype
-        # need to get filename of input file
-        inbasename = infile.get_infile_infilename(filename=infile.filename,
-                                                  fiber=infile.fiber)
-        # get absolute path
-        infilename = os.path.join(infile.path, inbasename)
-        # set filename
-        instance.set_filename(infilename)
-    else:
-        instance = infile
-    # switch fiber and read file
-    outfile = drs_file.get_another_fiber_file(params, instance, fiber='C',
-                                              in_block_kind='tmp',
-                                              out_block_kind='red',
-                                              getdata=True, gethdr=True)
-    # return outfile
-    return outfile
-
-
 # =============================================================================
 # Define CCF calculation functions
 # =============================================================================
 def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
                         fiber, **kwargs):
-
     func_name = __NAME__ + '.compute_ccf()'
     # get parameters from params/kwargs
     noise_sigdet = pcheck(params, 'CCF_NOISE_SIGDET', 'noise_sigdet', kwargs,
@@ -716,12 +689,11 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     fit_type = pcheck(params, 'CCF_FIT_TYPE', 'fit_type', kwargs, func_name)
     ccfnmax = pcheck(params, 'CCF_N_ORD_MAX', 'ccfnmax', kwargs,
                      func_name)
-    image_pixel_size = pcheck(params, 'IMAGE_PIXEL_SIZE', 'image_pixel_size',
-                              kwargs, func_name)
     null_targetrv = pcheck(params, 'OBJRV_NULL_VAL', 'null_targetrv',
                            kwargs, func_name)
     maxwsr = pcheck(params, 'CCF_MAX_CCF_WID_STEP_RATIO', 'maxwsr', kwargs,
                     func_name)
+    nsig_fwhm_threshold = pcheck(params, 'CCF_FWHM_SIGCUT', func=func_name)
     # get image size
     nbo, nbpix = image.shape
     # get parameters from inputs
@@ -821,9 +793,13 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     # ----------------------------------------------------------------------
     # Calculate the mean CCF
     # ----------------------------------------------------------------------
-    # get the average ccf
-    mean_ccf = mp.nanmean(props['CCF'][: ccfnmax], axis=0)
-
+    # find spurious fwhm
+    fwhm = props['CCF_FIT_COEFFS'][:, 2]
+    nsig = (fwhm - np.nanmedian(fwhm)) / mp.estimate_sigma(fwhm)
+    # create a mask based on good sigma values
+    nsig_mask = nsig < nsig_fwhm_threshold
+    # get the average ccf (after fwhm sigma clip)
+    mean_ccf = mp.nanmean(props['CCF'][nsig_mask], axis=0)
     # get the fit for the normalized average ccf
     mean_ccf_coeffs, mean_ccf_fit = fit_ccf(params, 'mean', props['RV_CCF'],
                                             mean_ccf, fit_type=fit_type)
@@ -1045,6 +1021,7 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
                                    'blaze_norm_percentile', kwargs, func_name)
     blaze_threshold = pcheck(params, 'WAVE_FP_BLAZE_THRES', 'blaze_threshold',
                              kwargs, func_name)
+    ccf_nsig_threshold = pcheck(params, 'CCF_NSIG_THRESHOLD', func=func_name)
     # get rvmin and rvmax
     rvmin = targetrv - ccfwidth
     rvmin = pcheck(params, 'RVMIN', 'rvmin', kwargs, func_name, default=rvmin)
@@ -1078,7 +1055,7 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         bl_ord = np.array(blaze[order_num])
 
         # we express sp_ord as a flux in photons per km/s
-        grad = speed_of_light * np.gradient(wa_ord)/wa_ord
+        grad = speed_of_light * np.gradient(wa_ord) / wa_ord
         sp_ord = sp_ord / grad
 
         # normalize per-ord blaze to its peak value
@@ -1196,8 +1173,8 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         nphot = spline_sp(omask_centers) * sweights / ccfstep
 
         # Poisson noise is a bit bigger because of weights
-        wsum = np.sum(nphot*omask_weights)
-        wsum2 = np.sum(nphot*omask_weights**2)
+        wsum = np.sum(nphot * omask_weights)
+        wsum2 = np.sum(nphot * omask_weights ** 2)
         # we can't calculate wnoise for negative values --> set to inf
         if (wsum <= 0) or (wsum2 <= 0):
             wargs = [order_num]
@@ -1245,6 +1222,28 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         # TODO -- with reasonable mid-M values and use these values for
         # TODO -- all stars. At some point, have a temperature-dependent
         # TODO -- LUT of weights.
+        # ------------------------------------------------------------------
+        if fit_type == 0:
+            # reject rubbish orders (using a sigma cut)
+            dev = ccf_ord - np.nanmedian(ccf_ord)
+            # calculate how many sigma the peak of the CCF is away from the median
+            nsig = -np.min(dev) / np.median(abs(dev))
+            # if the nsig of the CCF peak is below the threshold reject it
+            if nsig < ccf_nsig_threshold:
+                # log all NaN
+                wargs = [order_num, nsig, ccf_nsig_threshold]
+                wmsg = 'CCF order {0} rejected (nsig CCF peak = {1:.3f} < {2})'
+                WLOG(params, 'warning', wmsg.format(*wargs), sublevel=6)
+                # set all values to NaN
+                ccf_all.append(np.repeat(np.nan, len(rv_ccf)))
+                ccf_all_fit.append(np.repeat(np.nan, len(rv_ccf)))
+                ccf_all_results.append(np.repeat(np.nan, 4))
+                ccf_noise_all.append(np.nan)
+                ccf_lines.append(0)
+                ccf_all_snr.append(np.nan)
+                ccf_norm_all.append(np.nan)
+                continue
+        # ------------------------------------------------------------------
         ccf_norm = mp.nanmedian(ccf_ord)
         # ccf_ord = ccf_ord / ccf_norm
         # ------------------------------------------------------------------
@@ -1253,11 +1252,11 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         ccf_coeffs_ord, ccf_fit_ord = fit_ccf(params, *fargs)
         # ------------------------------------------------------------------
         # get the RV accuracy from Bouchy 2001 equation
-        dv_pix = (np.gradient(ccf_ord)/np.gradient(rv_ccf))/wnoise
+        dv_pix = (np.gradient(ccf_ord) / np.gradient(rv_ccf)) / wnoise
         # set the bad values for ccf noise and ccf snr --> NaN value is bad
         if wsum == 0:
-                ccf_noise = np.nan
-                ccf_snr = np.nan
+            ccf_noise = np.nan
+            ccf_snr = np.nan
         else:
             ccf_noise = 1 / np.sqrt(mp.nansum(dv_pix ** 2))
             # ge the snr
@@ -1278,7 +1277,7 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
     props['CCF'] = np.array(ccf_all)
     props['CCF_LINES'] = np.array(ccf_lines)
     props['TOT_LINE'] = np.sum(ccf_lines)
-    props['CCF_NOISE'] = np.array(ccf_noise_all) * 1000   # [m/s]
+    props['CCF_NOISE'] = np.array(ccf_noise_all) * 1000  # [m/s]
     props['CCF_SNR'] = np.array(ccf_all_snr)
     props['CCF_FIT'] = np.array(ccf_all_fit)
     props['CCF_FIT_COEFFS'] = np.array(ccf_all_results)
@@ -1296,6 +1295,8 @@ def fit_ccf(params, order_num, rv, ccf, fit_type):
     """
     Fit the CCF to a guassian function
 
+    :param params: ParamDict, parameter dictionary of constants
+    :param order_num: int, the order number we are fitting
     :param rv: numpy array (1D), the radial velocities for the line
     :param ccf: numpy array (1D), the CCF values for the line
     :param fit_type: int, if "0" then we have an absorption line

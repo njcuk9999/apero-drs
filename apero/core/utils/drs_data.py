@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-drs data
-
+APERO data file functionality
 
 Used to load data files from the assets directory only
 
@@ -10,22 +9,23 @@ Created on 2019-07-02 at 09:24
 
 @author: cook
 """
-from astropy.table import Table
 import glob
-import numpy as np
 import os
 from pathlib import Path
 from typing import List, Tuple, Type, Union
 
-from apero.base import base
-from apero.core.core import drs_misc
-from apero.core.core import drs_exceptions
-from apero.core.core import drs_text
-from apero.core import constants
+import numpy as np
+from astropy.table import Table
+
 from apero import lang
+from apero.base import base
+from apero.core import constants
+from apero.core.core import drs_exceptions
 from apero.core.core import drs_log
-from apero.io import drs_path
+from apero.core.core import drs_misc
+from apero.core.core import drs_text
 from apero.io import drs_fits
+from apero.io import drs_path
 from apero.io import drs_table
 
 # =============================================================================
@@ -258,15 +258,8 @@ def load_full_flat_badpix(params: ParamDict,
         func_name = display_func('load_full_flat_badpix', __NAME__)
     else:
         func_name = func
-    # set parameters from params (or override)
-    assetdir = pcheck(params, 'DRS_DATA_ASSETS', func=func_name,
-                      override=assetsdir)
-    relfolder = pcheck(params, 'DRS_BADPIX_DATA', func=func_name,
-                       override=badpix_dir)
-    filename = pcheck(params, 'BADPIX_FULL_FLAT', func=func_name,
-                      override=filename)
     # deal with return_filename
-    absfilename = os.path.join(assetdir, relfolder, filename)
+    absfilename = os.path.join(assetsdir, badpix_dir, filename)
     if return_filename:
         return absfilename
     # return image
@@ -347,7 +340,7 @@ def load_hotpix(params: ParamDict,
     :param datastart: int, the row at which to start reading the file
     :param return_filename: bool, if True returns filename else returns image
 
-    :return: either the filename (return_filename=True) or np.ndarray the
+    :return: either the filename (return_filename=True) or Table the
              hot pix image
     """
     # set function name
@@ -369,8 +362,60 @@ def load_hotpix(params: ParamDict,
     # return table
     table = load_table_file(params, absfilename, fmt=fmt,
                             datastart=datastart, func_name=func_name)
+
     WLOG(params, '', textentry('40-010-00011', args=absfilename))
     return table
+
+
+def load_amp_bias_model(params: ParamDict,
+                         assetsdir: Union[str, None] = None,
+                         eng_dir: Union[str, None] = None,
+                         filename: Union[str, None] = None,
+                         func: Union[str, None] = None,
+                         return_filename: bool = False
+                         ) -> Union[str, Tuple[np.ndarray, np.ndarray]]:
+    """
+    Load the preprocessing amplifier bias model
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param assetsdir: str, Define the assets directory -- overrides
+                      params['DRS_DATA_ASSETS']
+    :param eng_dir: str, where the hotpix file is stored (within assets
+                      directory) -- overrides params['DATA_ENGINEERING']
+    :param filename: str, the amp bias model file name
+                     -- overrides params['PP_AMP_ERROR_MODEL']
+    :param func: str, the function name calling this function
+    :param fmt: str, the data format (astropy.table format)
+    :param return_filename: bool, if True returns filename else returns image
+
+    :return: either the filename (return_filename=True) or tuple 1. np.ndarray
+             the slope of the amp bias model, 2. np.ndarray the intercept of
+             the amp bias model
+    """
+    # set function name
+    if func is None:
+        func_name = display_func('load_amp_bias_model', __NAME__)
+    else:
+        func_name = func
+    # set parameters from params (or override)
+    assetdir = pcheck(params, 'DRS_DATA_ASSETS', func=func_name,
+                      override=assetsdir)
+    relfolder = pcheck(params, 'DATA_ENGINEERING', func=func_name,
+                       override=eng_dir)
+    filename = pcheck(params, 'PP_AMP_ERROR_MODEL', func=func_name,
+                      override=filename)
+    # deal with return_filename
+    absfilename = os.path.join(assetdir, relfolder, filename)
+    if return_filename:
+        return absfilename
+    # return table
+    data = drs_fits.readfits(params, absfilename, getdata=True,
+                             fmt='fits-multi')
+    # TODO: Add to lanugage database
+    msg = 'Loading amplifer bias model: {0}'
+    WLOG(params, '', msg.format(absfilename))
+    # return the slope (ext=1) and intercept (ext=2)
+    return data[1], data[2]
 
 
 def load_tapas(params: ParamDict,

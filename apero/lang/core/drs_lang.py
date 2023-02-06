@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-CODE DESCRIPTION HERE
+Language database functionality
 
 Created on 2020-11-2020-11-13 10:41
 
@@ -15,11 +15,12 @@ only from:
     - apero.base.drs_db
 
 """
-import numpy as np
 import os
-import pandas as pd
 import shutil
 from typing import Any, Dict, List, Union
+
+import numpy as np
+import pandas as pd
 
 from apero.base import base
 from apero.base import drs_base
@@ -39,6 +40,7 @@ __release__ = base.__release__
 DEFAULT_LANG = base.DEFAULT_LANG
 LANG = base.IPARAMS.get('LANGUAGE', DEFAULT_LANG)
 # get and load the language database once
+# noinspection PyBroadException
 try:
     langdbm = drs_db.LanguageDatabase()
     # load database
@@ -68,6 +70,9 @@ DATABASE_FILE = base.LANG_XLS_FILE
 # Define classes
 # =============================================================================
 class LanguageException(Exception):
+    """
+    Base language exception class
+    """
     pass
 
 
@@ -80,7 +85,6 @@ class LanguageError(LanguageException):
 
         :param message: str a mesage to pass / print
         :param errorobj: the error instance (or anything else)
-        :param path: str/Path the path of the database
         :param func_name: str, the function name where error occured
         """
         self.message = message
@@ -122,6 +126,7 @@ class Text(str):
     """
     Special text container (so we can store text entry key)
     """
+
     def __init__(self, *args, **kwargs):
         str.__init__(*args, **kwargs)
         self.tkey = None
@@ -193,8 +198,34 @@ class Text(str):
         msg.set_text_props(self.tkey)
         return msg
 
-    def __mul__(self, other):
+    def __mul__(self, other: Any) -> Any:
+        """
+        Do not allow multiplication
+
+        :param other: Any, anything else to multiple by
+        :return:
+        """
         NotImplemented('Multiply in {0}.Text not implemented'.format(__NAME__))
+
+    def __repr__(self) -> str:
+        """
+        String representation of Text class
+
+        :return: str, the string representation of the Text class
+        """
+        if not self.formatted:
+            self.get_formatting()
+        return str(self.tvalue)
+
+    def __str__(self) -> str:
+        """
+        String representation of Text class
+
+        :return: str, the string representation of the Text class
+        """
+        if not self.formatted:
+            self.get_formatting()
+        return str(self.tvalue)
 
     def set_text_props(self, key: str,
                        args: Union[List[Any], str, None] = None,
@@ -203,7 +234,6 @@ class Text(str):
         Add the text properties to the Text (done so init is like str)
 
         :param key: str, the key (code id) for the language database
-        :param value: str, the text (unformatted)
         :param args: if set a list of arguments to pass to the formatter
                      i.e. value.format(*args)
         :param kwargs: if set a dictionary of keyword arguments to pass to the
@@ -260,6 +290,14 @@ class Text(str):
         return valuestr
 
     def get_formatting(self, force=False):
+        """
+        set the formatting (of self.tvalue) based on self.tkwargs and self.targs
+
+        :param force: bool, if True then override the condition that the text
+                      is already formated (self.formatted)
+
+        :return: None, updates self.tvalue
+        """
         # don't bother if already formatted
         if not force and self.formatted:
             return
@@ -282,16 +320,6 @@ class Text(str):
         else:
             self.tvalue = value.format(*self.targs, **self.tkwargs)
 
-    def __repr__(self) -> str:
-        if not self.formatted:
-            self.get_formatting()
-        return str(self.tvalue)
-
-    def __str__(self) -> str:
-        if not self.formatted:
-            self.get_formatting()
-        return str(self.tvalue)
-
 
 def textentry(key: str, args: Union[List[Any], str, None] = None,
               kwargs: Union[Dict[str, Any], None] = None) -> Text:
@@ -301,10 +329,12 @@ def textentry(key: str, args: Union[List[Any], str, None] = None,
     This is the only function that can use langdict and expect it to be
     populated
 
-    :param key:
-    :param args:
-    :param kwargs:
-    :return:
+    :param key: str, the code by which to find the text in the language
+                dictionary
+    :param args: dict, arguments passed to text.format
+    :param kwargs: dict, keyword arguments passed to text.format
+
+    :return: Text class, the text taken from langdict[key] in Text class format
     """
     # set function name
     _ = __NAME__ + '.textentry()'
@@ -323,6 +353,7 @@ def textentry(key: str, args: Union[List[Any], str, None] = None,
     return msg_obj
 
 
+# noinspection PyUnresolvedReferences
 def read_xls(xls_file: str) -> pd.io.excel.ExcelFile:
     """
     Read a Excel file
@@ -344,10 +375,11 @@ def read_xls(xls_file: str) -> pd.io.excel.ExcelFile:
         emsg = drs_base.BETEXT(ecode)
         eargs = [xls_file, str(e), e]
         raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
-                                   exception=LanguageError)
+                                  exception=LanguageError)
     return xls
 
 
+# noinspection PyUnresolvedReferences
 def convert_csv(xls: pd.io.excel.ExcelFile, out_dir: str):
     """
     Use the pandas excel file to write the reset files (one default one and
@@ -416,10 +448,16 @@ def convert_csv(xls: pd.io.excel.ExcelFile, out_dir: str):
             # add back to columns
             df[column] = values
         # save to csv
+        # noinspection PyTypeChecker
         df.to_csv(rpath, sep=',', quoting=2, index=False, encoding='utf-8')
 
 
 def make_reset_csvs():
+    """
+    Makes the reset csvs based on paths given
+
+    :return: None, re-writes reset csv files for language datse
+    """
     # ----------------------------------------------------------------------
     # get abspath from relative path
     database_path = drs_base.base_get_relative_folder(__PACKAGE__,
@@ -436,7 +474,7 @@ def make_reset_csvs():
         emsg = drs_base.BETEXT[ecode]
         eargs = [DATABASE_FILE, database_path]
         raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
-                                   exception=LanguageError)
+                                  exception=LanguageError)
     # ----------------------------------------------------------------------
     # create a backup of the database: Backing up database
     wcode = '40-001-00029'

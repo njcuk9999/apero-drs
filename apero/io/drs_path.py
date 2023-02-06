@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
-
-# CODE DESCRIPTION HERE
+APERO path functionality
 
 Created on 2019-03-21 at 11:36
 
@@ -18,21 +16,21 @@ Import rules:
     do not import from core.core.drs_argument
     do not import from core.core.drs_database
 """
-import numpy as np
-from astropy import units as uu
 import os
 import shutil
 from pathlib import Path
 from typing import Any, List, Optional, Union
 
+import numpy as np
+from astropy import units as uu
+
+from apero import lang
 from apero.base import base
-from apero.core.core import drs_exceptions
-from apero.core.core import drs_misc
 from apero.core import constants
 from apero.core import math as mp
+from apero.core.core import drs_exceptions
 from apero.core.core import drs_log
-from apero import lang
-
+from apero.core.core import drs_misc
 
 # =============================================================================
 # Define variables
@@ -56,7 +54,9 @@ DrsCodedException = drs_exceptions.DrsCodedException
 WLOG = drs_log.wlog
 TLOG = drs_log.Printer
 # Get the text types
-textentry= lang.textentry
+textentry = lang.textentry
+
+
 # -----------------------------------------------------------------------------
 
 
@@ -227,7 +227,6 @@ def copytree(src: Union[str, Path], dst: Union[str, Path]):
 
     :param src: str, the source path
     :param dst: str, the desination path
-    :param log: bool, whether to log the copying
 
     :return: None - just copies directories
     """
@@ -345,7 +344,7 @@ def get_all_non_empty_subdirs(path: Union[Path, str],
         if _dir.is_dir():
             # get uncommon path
             if relative:
-                save_path = get_uncommon_path(str(_dir), path)
+                save_path = get_uncommon_path(str(_dir), str(path))
             else:
                 save_path = str(_dir)
             # flag to keep dir
@@ -365,6 +364,7 @@ def get_all_non_empty_subdirs(path: Union[Path, str],
     return subdirs
 
 
+# noinspection PyUnresolvedReferences
 def listdirs(rootdir: str) -> List[str]:
     """
     Fast recursive listing of directories
@@ -372,6 +372,7 @@ def listdirs(rootdir: str) -> List[str]:
 
     :return: list of strings, the directories under root dir
     """
+    # store directories
     directories = []
     # loop around items in rootdir
     for it in os.scandir(rootdir):
@@ -422,7 +423,6 @@ def get_dirs(path: str, relative=False) -> List[str]:
             rel_obs_dirs.append(obs_dir)
     # return the relative paths
     return rel_obs_dirs
-
 
 
 def nofiles(rootdir: str) -> bool:

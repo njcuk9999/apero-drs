@@ -10,15 +10,17 @@ Created on 2019-07-26 at 09:39
 @author: cook
 """
 from pathlib import Path
+from typing import Any, Dict
 
 from apero.base import base
+from apero.core import constants
 from apero.core.core import drs_log
 from apero.core.core import drs_text
+from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_utils
-
-from apero.tools.module.database import manage_databases
 from apero.tools.module.database import database_gui
+from apero.tools.module.database import manage_databases
 
 # =============================================================================
 # Define variables
@@ -32,6 +34,10 @@ __date__ = base.__date__
 __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# Get Recipe class
+DrsRecipe = drs_recipe.DrsRecipe
+# Get parameter class
+ParamDict = constants.ParamDict
 # -----------------------------------------------------------------------------
 # define the program name
 PROGRAM_NAME = 'APERO File Explorer'
@@ -39,6 +45,8 @@ PROGRAM_NAME = 'APERO File Explorer'
 ALLOWED_PATHS = ['DRS_DATA_WORKING', 'DRS_DATA_REDUC']
 # define database names
 NAMES = dict(zip(base.DATABASE_NAMES, base.DATABASE_FULLNAMES))
+
+
 # -----------------------------------------------------------------------------
 
 
@@ -49,10 +57,7 @@ def main(**kwargs):
     """
     Main function for apero_explorer.py
 
-    :param instrument: str, the instrument name
     :param kwargs: additional keyword arguments
-
-    :type instrument: str
 
     :keyword debug: int, debug level (0 for None)
 
@@ -77,16 +82,16 @@ def main(**kwargs):
     return drs_startup.end_main(params, llmain, recipe, success, outputs='None')
 
 
-def __main__(recipe, params):
+def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     """
     Main function - takes the instrument name, index the databases and python
     script (in real time due to any changes in code) and then runs the
     application to find errors
 
-    :param instrument: string, the instrument name
-    :type: str
-    :return: returns the local namespace as a dictionary
-    :rtype: dict
+    :param recipe: DrsRecipe, the recipe class using this function
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: dictionary containing the local variables
     """
 
     # get inputs
@@ -102,7 +107,7 @@ def __main__(recipe, params):
         # ----------------------------------------------------------------------
         # End of main code
         # ----------------------------------------------------------------------
-        return drs_startup.return_locals(params, locals())
+        return locals()
 
     # get instrument
     instrument = str(recipe.instrument)
@@ -130,7 +135,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return drs_startup.return_locals(params, locals())
+    return locals()
 
 
 # =============================================================================
@@ -139,7 +144,6 @@ def __main__(recipe, params):
 if __name__ == "__main__":
     # run main with no arguments (get from command line - sys.argv)
     ll = main()
-
 
 # =============================================================================
 # End of code

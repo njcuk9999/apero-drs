@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-CODE DESCRIPTION HERE
+APERO base database functionality
+
+The direct interface with SQL
 
 Created on 2020-08-2020-08-21 18:13
 
@@ -14,17 +16,18 @@ only from:
     - apero.base.drs_base
 
 """
-import warnings
-
-from astropy.table import Table
-from contextlib import closing
-import numpy as np
 import os
-import pandas as pd
-from pathlib import Path
 import sqlite3
 import time
+import warnings
+from contextlib import closing
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, Union
+
+import numpy as np
+import pandas
+import pandas as pd
+from astropy.table import Table
 
 from apero.base import base
 from apero.base import drs_base
@@ -54,7 +57,7 @@ Time = base.AstropyTime
 TIMEOUT = 20.0
 MAXWAIT = 1000
 # mysql timeout
-MYSQL_WAIT = 30   # 5
+MYSQL_WAIT = 30  # 5
 
 # unique hash column
 UHASH_COL = 'UHASH'
@@ -64,10 +67,16 @@ UHASH_COL = 'UHASH'
 # Define classes
 # =============================================================================
 class DatabaseException(Exception):
+    """
+    Database exception
+    """
     pass
 
 
 class UniqueEntryException(Exception):
+    """
+    Unique entry exception
+    """
     pass
 
 
@@ -135,6 +144,14 @@ class Database:
     """
 
     def __init__(self, *args, verbose: bool = False, **kwargs):
+        """
+        Construct the most basic database - overridden by MySQLDatabase and
+        SQLiteDatabase (do not use Database directly)
+
+        :param args: not used
+        :param verbose: bool, if True extra printouts
+        :param kwargs: not used
+        """
         # set class name
         self.classname = 'Database'
         # set a tries criteria
@@ -164,6 +181,9 @@ class Database:
         :param user: str, the user name
         :param passwd: str, the password
         :param dbname: str, the database name (can be None)
+        :param connect_kind: str, the type of connection
+        :param func: str, the function name that called the connection
+        :param kind: str, a description of the use of the connection
 
         :return: return the connection
         """
@@ -383,7 +403,7 @@ class Database:
             condition: Optional[str] = None, sort_by: Optional[str] = None,
             sort_descending: bool = True, max_rows: Optional[int] = None,
             return_array: bool = False, return_table: bool = False,
-            return_pandas: bool = False
+            return_pandas: bool = False, groupby: Optional[str] = None
             ) -> Union[tuple, pd.DataFrame, np.ndarray, Table]:
         """
         Retrieves data from the database with a variety of options.
@@ -417,6 +437,7 @@ class Database:
                              table - takes slightly longer than return_array
         :param return_pandas: Whether to transform the results into a pandas
                               table - takes slightly longer than return_array
+        :param groupby: str or None, if set sets the group by sql criteria
 
         :returns:
             The requested data (if any) filtered, sorted, and truncated
@@ -442,6 +463,7 @@ class Database:
         table = self._infer_table_(table)
         # construct basic command SELECT {COLUMNS} FROM {TABLE}
         command = 'SELECT {} FROM {}'.format(columns, table)
+        # ---------------------------------------------------------------------
         # add WHERE statement if condition is set
         if condition is not None:
             # make sure condition is a string
@@ -454,7 +476,13 @@ class Database:
                 raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
                                           exceptionname='DatabaseError',
                                           exception=DatabaseError)
+
             command += " WHERE {} ".format(condition)
+        # ---------------------------------------------------------------------
+        # add the group by column
+        if groupby is not None:
+            command += " GROUP BY {}".format(groupby)
+        # ---------------------------------------------------------------------
         # add ORDER BY if sort_by is set
         if sort_by is not None:
             command += " ORDER BY {} ".format(sort_by)
@@ -463,6 +491,7 @@ class Database:
                 command += "DESC"
             else:
                 command += "ASC"
+        # ---------------------------------------------------------------------
         # if max rows is set use it to set the limit
         if max_rows is not None:
             # make sure max_rows is an integer
@@ -477,6 +506,7 @@ class Database:
                                           exception=DatabaseError)
             # add LIMIT command
             command += " LIMIT {}".format(max_rows)
+        # ---------------------------------------------------------------------
         # if a pandas table is requested use the _to_pandas method to
         #  execute the command
         if return_pandas:
@@ -570,8 +600,8 @@ class Database:
                 eargs = [self.path, table, func_name]
                 # log base error
                 raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
-                                           exceptionname='DatabaseError',
-                                           exception=DatabaseError)
+                                          exceptionname='DatabaseError',
+                                          exception=DatabaseError)
             # deal with value
             set_str.append('{0} = {1}'.format(column, _decode_value(value)))
 
@@ -594,7 +624,7 @@ class Database:
         # execute sql command
         self.execute(command, fetch=False)
 
-    def add_row(self, values: List[object], table: Optional[str]=None,
+    def add_row(self, values: List[object], table: Optional[str] = None,
                 columns: Union[str, List[str]] = "*",
                 unique_cols: Optional[List[str]] = None):
         """
@@ -731,8 +761,8 @@ class Database:
                 eargs = [self.path, name, func_name]
                 # log base error
                 raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
-                                           exceptionname='DatabaseError',
-                                           exception=DatabaseError)
+                                          exceptionname='DatabaseError',
+                                          exception=DatabaseError)
             # deal with type
             if isinstance(ftype, type):
                 # deal with wrong type
@@ -909,7 +939,7 @@ class Database:
         allcolnames, _ = self.table_info(table)
         # if user wants all columns return them all
         if columns == '*':
-            # return the out put columns
+            # return the output columns
             return allcolnames
         else:
             # get user columns
@@ -984,8 +1014,8 @@ class Database:
                 eargs = [self.tname, self.path, strtables, func_name]
                 # log base error
                 raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
-                                           exceptionname='DatabaseError',
-                                           exception=DatabaseError)
+                                          exceptionname='DatabaseError',
+                                          exception=DatabaseError)
         # deal with no table
         if table is None:
             if len(self.tables) != 1:
@@ -1000,8 +1030,8 @@ class Database:
                 eargs = [self.path, strtables, func_name]
                 # log base error
                 raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
-                                           exceptionname='DatabaseError',
-                                           exception=DatabaseError)
+                                          exceptionname='DatabaseError',
+                                          exception=DatabaseError)
             return self.tables[0]
         return table
 
@@ -1037,8 +1067,8 @@ class Database:
                 eargs = [type(e), str(e), self.path, table, func_name]
                 # log base error
                 raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
-                                           exceptionname='DatabaseError',
-                                           exception=DatabaseError)
+                                          exceptionname='DatabaseError',
+                                          exception=DatabaseError)
         # return astropy table
         return table
 
@@ -1197,8 +1227,6 @@ class SQLiteDatabase(Database):
                      This may be :memory: to create a temporary in-memory
                      database which will not be saved when the program closes.
         """
-        # set function name
-        func_name = __NAME__ + 'SQLiteDatabase.__init__()'
         # call to super class
         super().__init__(verbose=verbose)
         # storage for database path
@@ -1227,6 +1255,9 @@ class SQLiteDatabase(Database):
         :param user: str, the user name
         :param passwd: str, the password
         :param dbname: str, the database name (can be None)
+        :param connect_kind: str, the type of connection
+        :param func: str, the function name that called the connection
+        :param kind: str, a description of the use of the connection
 
         :return: return the sqlite connection
         """
@@ -1246,8 +1277,8 @@ class SQLiteDatabase(Database):
             eargs = [type(e), str(e), 'sqlite3.connect', self.path, func_name]
             # log base error
             raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
-                                exceptionname='DatabaseError',
-                                exception=DatabaseError)
+                                      exceptionname='DatabaseError',
+                                      exception=DatabaseError)
 
     def __str__(self):
         """
@@ -1278,8 +1309,6 @@ class SQLiteDatabase(Database):
         :param state: dictionary from pickle
         :return:
         """
-        # set function name
-        func_name = __NAME__ + 'SQLiteDatabase.__setstate__()'
         # update dict with state
         self.__dict__.update(state)
         # update table list
@@ -1341,8 +1370,8 @@ class SQLiteDatabase(Database):
                 eargs = [self.path, name, func_name]
                 # log base error
                 raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
-                                           exceptionname='DatabaseError',
-                                           exception=DatabaseError)
+                                          exceptionname='DatabaseError',
+                                          exception=DatabaseError)
             # deal with type
             if isinstance(ftype, type):
                 # deal with wrong type
@@ -1565,8 +1594,8 @@ class SQLiteDatabase(Database):
             eargs = [command, self.path, func_name]
             # log base error
             raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
-                                       exceptionname='DatabaseError',
-                                       exception=DatabaseError)
+                                      exceptionname='DatabaseError',
+                                      exception=DatabaseError)
         # return dataframe
         return df
 
@@ -1609,8 +1638,8 @@ class SQLiteDatabase(Database):
             eargs = [type(e), str(e), self.path, table, func_name]
             # log base error
             raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
-                                       exceptionname='DatabaseError',
-                                       exception=DatabaseError)
+                                      exceptionname='DatabaseError',
+                                      exception=DatabaseError)
         # return a list of columns
         return colnames, coltypes
 
@@ -1625,6 +1654,7 @@ class SQLiteDatabase(Database):
         # construct backup path
         backup_path = str(self.path).replace('.db', 'backup.db')
         # remove old backup
+        # noinspection PyBroadException
         try:
             if os.path.exists(backup_path):
                 os.remove(backup_path)
@@ -1720,6 +1750,8 @@ class MySQLDatabase(Database):
         """
         # set class name
         self.classname = 'MySQLDatabase'
+        # mysql doesn't use path
+        _ = path
         # set function name
         func_name = '{0}.{1}.{2}()'.format(__NAME__, self.classname,
                                            '__init__()')
@@ -1737,8 +1769,8 @@ class MySQLDatabase(Database):
             eargs = [self.path, func_name]
             # log base error
             raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
-                                exceptionname='DatabaseError',
-                                exception=DatabaseError)
+                                      exceptionname='DatabaseError',
+                                      exception=DatabaseError)
         # call to super class
         super().__init__(verbose=verbose)
         # set a tries criteria
@@ -1778,6 +1810,9 @@ class MySQLDatabase(Database):
         :param user: str, the user name
         :param passwd: str, the password
         :param dbname: str, the database name (can be None)
+        :param connect_kind: str, the type of connection
+        :param func: str, the function name that called the connection
+        :param kind: str, a description of the use of the connection
 
         :return: return the mysql connection
         """
@@ -1830,7 +1865,7 @@ class MySQLDatabase(Database):
                                            tname, func, kind, count)
                 print(connkind)
 
-                time.sleep(MYSQL_WAIT + np.random.uniform()*1)
+                time.sleep(MYSQL_WAIT + np.random.uniform() * 1)
                 count += 1
 
         # if we get to this point log an error
@@ -1876,8 +1911,6 @@ class MySQLDatabase(Database):
         :param state: dictionary from pickle
         :return:
         """
-        # set function name
-        func_name = __NAME__ + 'Database.__setstate__()'
         # update dict with state
         self.__dict__.update(state)
         # update table list
@@ -2030,7 +2063,7 @@ class MySQLDatabase(Database):
         """
         return conn.cursor()
 
-    def _execute(self, cursor: Any, command: str,
+    def _execute(self, cursor: MySQLCursorType, command: str,
                  fetch: bool = True):
         """
         Dummy function to try to catch database UNIQUE(col) error
@@ -2112,8 +2145,8 @@ class MySQLDatabase(Database):
                 eargs = [self.path, name, func_name]
                 # log base error
                 raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
-                                           exceptionname='DatabaseError',
-                                           exception=DatabaseError)
+                                          exceptionname='DatabaseError',
+                                          exception=DatabaseError)
             # deal with type
             if isinstance(ftype, type):
                 # deal with wrong type
@@ -2290,8 +2323,8 @@ class MySQLDatabase(Database):
             eargs = [command, self.path, func_name]
             # log base error
             raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
-                                       exceptionname='DatabaseError',
-                                       exception=DatabaseError)
+                                      exceptionname='DatabaseError',
+                                      exception=DatabaseError)
         # return dataframe
         return df
 
@@ -2368,6 +2401,7 @@ class MySQLDatabase(Database):
             return
         # -------------------------------------------------------------------
         # remove old backup
+        # noinspection PyBroadException
         try:
             if os.path.exists(self.backup_path):
                 os.remove(self.backup_path)
@@ -2426,6 +2460,7 @@ def database_wrapper(kind: str, path: Union[Path, str, None],
                  for MySQL this is just user@host
     :param verbose: bool - if True the database prints out debug messages
                     verbosely
+    :param tries: int, number of tries before failing
 
     :return: Database instance (either SQLiteDatabase or MySQLDatabase)
     """
@@ -2687,6 +2722,15 @@ class BaseDatabaseManager:
         return self.__str__()
 
     def set_path(self, path: Union[Path, str], check: bool = True):
+        """
+        Set the path for the database
+
+        :param path: Path or str, the path of the database (for MySQL this
+                     is not a real path)
+        :param check: bool, check if path exists
+
+        :return: None, sets self.path
+        """
         # set function
         func_name = '{0}.{1}.{2}()'.format(__NAME__, self.classname, '__init__')
         # deal with no instrument (i.e. no database)
@@ -2717,7 +2761,13 @@ class BaseDatabaseManager:
             raise DatabaseException(emsg.format(self.dbtype))
 
     def load_db(self, check: bool = False):
+        """
+        Load a database (using database_wrapper)
 
+        :param check: bool, if we don't want to check, do nothing and assume
+                      database is already loaded
+        :return:
+        """
         # set function
         _ = '{0}.{1}.{2}()'.format(__NAME__, self.classname, 'load_db')
         # if we already have database do nothing
@@ -2727,6 +2777,11 @@ class BaseDatabaseManager:
         self.database = database_wrapper(self.kind, self.path)
 
     def database_settings(self):
+        """
+        Update the database settings using database yaml file
+
+        :return: None, sets dbtype, dbhost, dbuser, dbname
+        """
         # set function
         _ = '{0}.{1}.{2}()'.format(__NAME__, self.classname,
                                    'database_settings')
@@ -2783,6 +2838,10 @@ class LanguageDatabase(BaseDatabaseManager):
         self.set_path(self.databasefile, check=check)
 
     def path_definitions(self):
+        """
+        Sets up the path definitions required to load language database
+        :return:
+        """
         # set function
         func_name = '{0}.{1}.{2}()'.format(__NAME__, self.classname,
                                            'path_definitions')
@@ -2800,7 +2859,18 @@ class LanguageDatabase(BaseDatabaseManager):
         instrument_reset = base.LANG_DB_RESET_INST.format(self.instrument)
         self.instruement_resetfile = abs_lang_path.joinpath(instrument_reset)
 
-    def get_entry(self, columns: str, key: str):
+    LanguageEntry = Union[tuple, pd.DataFrame, np.ndarray, Table, None]
+
+    def get_entry(self, columns: str, key: str) -> LanguageEntry:
+        """
+        Get an entry from the language database
+
+        :param columns: str, the columns to return (can be '*' for all)
+        :param key: str, the unique key that defines the entry (KEYNAME)
+
+        :return: tuple, dataframe, numpy array, Table or None, the value(s) of
+                 the entry for given columns
+        """
         # set function
         _ = '{0}.{1}.{2}()'.format(__NAME__, self.classname, '__init__')
         # deal with no instrument set
@@ -2903,7 +2973,9 @@ class LanguageDatabase(BaseDatabaseManager):
         writing to the database in a run)
 
         :param language: str, the language to use
-        :return:
+
+        :return: dict, the dictionary representation of the database
+                 keys are 'KEYNAME'
         """
         # set function
         func_name = '{0}.{1}.{2}()'.format(__NAME__, self.classname,
@@ -2947,64 +3019,132 @@ class LanguageDatabase(BaseDatabaseManager):
 #    when we use base.WARN_TO_ERROR
 # =============================================================================
 def _ignore_warnings():
+    """
+    filter to ignore all warnings
+
+    :return:
+    """
     if base.WARN_TO_ERROR:
         warnings.filterwarnings('ignore')
 
 
 def _unignore_warnings():
+    """
+    filter to turn all warnings back on
+
+    :return:
+    """
     if base.WARN_TO_ERROR:
         warnings.filterwarnings('error')
 
 
-def _mysql_connect(host, user, passwd, dbname):
+def _mysql_connect(host: str, user: str, passwd: str,
+                   dbname: str) -> Any:
+    """
+    Connect to mysql with a connection timeout set
 
-    func_name = __NAME__ + '._mysql_connect()'
+    :param host: str, the hostname for the mysql database
+    :param user: str, the username for the mysql database
+    :param passwd: str, the password for the mysql database
+    :param dbname: str, the database name for the mysql database
 
+    :return: the MySQL connection object
+    """
+    # catch all warnings at this point
     with warnings.catch_warnings():
         try:
+            # ignore all warnings
             _ignore_warnings()
+            # connect and create a MySQL connection object
             conn = mysql.connect(host=host, user=user, passwd=passwd,
                                  database=dbname,
                                  connection_timeout=3600)
+            # turn all warnings back on
             _unignore_warnings()
-        except Exception as e:
+        except Exception as _:
+            # turn all warnings back on
             _unignore_warnings()
+            # report an error in the database
             ecode = '00-002-00051'
             emsg = drs_base.BETEXT[ecode]
             eargs = [host, user, passwd]
             # log base error
             raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
-                                       exceptionname='DatabaseError',
-                                       exception=DatabaseError)
+                                      exceptionname='DatabaseError',
+                                      exception=DatabaseError)
+    # return the MySQL connection object
     return conn
 
 
-def _mysql_sqlalchemy_connect(host, user, passwd, dbname):
+def _mysql_sqlalchemy_connect(host: str, user: str, passwd: str,
+                              dbname: str) -> Any:
+    """
+    Connect to MySQL using sqlalchemy
+
+    :param host: str, the hostname for the mysql database
+    :param user: str, the username for the mysql database
+    :param passwd: str, the password for the mysql database
+    :param dbname: str, the database name for the mysql database
+
+    :return: mysql sqlalchemy connection
+    """
+    # catch all warnings at this point
     with warnings.catch_warnings():
+        # ignore all warnings
         _ignore_warnings()
+        # import sqlalchemy
         import sqlalchemy
+        # create a database engine for sqlalchemy
         dpath = 'mysql+mysqlconnector://{0}:{1}@{2}/{3}'
         dargs = [user, passwd, host, dbname]
         db = sqlalchemy.create_engine(dpath.format(*dargs),
                                       pool_pre_ping=True)
+        # create a connection to the database
         conn = db.connect()
+    # turn all warnings back on
     _unignore_warnings()
+    # return the MySQL connection object
     return conn
 
 
-def _mysql_exectue(cursor, command):
+def _mysql_exectue(cursor: Any, command: str) -> Any:
+    """
+    Execute a MySQL comment
+
+    :param cursor: a MySQL cursor (from connection)
+    :param command: str, the command to run
+    :return:
+    """
+    # catch all warnings at this point
     with warnings.catch_warnings():
+        # ignore all warnings
         _ignore_warnings()
+        # execute command on connection cursor
         cursor.execute(command)
+    # turn all warnings back on
     _unignore_warnings()
+    # return the connection cursor
     return cursor
 
 
-def _read_sql(command, dconn):
+def _read_sql(command: str, dconn: any) -> pandas.DataFrame:
+    """
+    Execute a read command (query) using pandas database connection
+
+    :param command: str, the command to execute
+    :param dconn: the database connection readible by pandas
+
+    :return: pandas dataframe - the result of the query
+    """
+    # catch all warnings at this point
     with warnings.catch_warnings():
+        # ignore all warnings
         _ignore_warnings()
+        # get the result of the read sql command
         df = pd.read_sql(command, con=dconn)
+    # turn all warnings back on
     _unignore_warnings()
+    # return the pandas dataframe result of the query
     return df
 
 

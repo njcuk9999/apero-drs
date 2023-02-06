@@ -1,27 +1,30 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
+apero_preprocess_spirou.py [obs dir] [files]
 
-# CODE DESCRIPTION HERE
+APERO pre-processing of raw images for SPIROU
 
 Created on 2019-03-05 16:38
-@author: ncook
-Version 0.0.1
-"""
-import numpy as np
-import os
 
-from apero.base import base
+@author: ncook
+"""
+import os
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+import numpy as np
+
 from apero import lang
+from apero.base import base
 from apero.core import constants
+from apero.core.core import drs_database
 from apero.core.core import drs_file
 from apero.core.core import drs_log
-from apero.core.core import drs_database
-from apero.core.utils import drs_startup
-from apero.science import preprocessing as prep
-from apero.io import drs_image
 from apero.core.instruments.spirou import file_definitions
-
+from apero.core.utils import drs_recipe
+from apero.core.utils import drs_startup
+from apero.io import drs_image
+from apero.science import preprocessing as prep
 
 # =============================================================================
 # Define variables
@@ -35,6 +38,10 @@ __date__ = base.__date__
 __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# Get Recipe class
+DrsRecipe = drs_recipe.DrsRecipe
+# Get parameter class
+ParamDict = constants.ParamDict
 # Get the text types
 textentry = lang.textentry
 # Raw prefix
@@ -52,7 +59,8 @@ ObjectDatabase = drs_database.AstrometricDatabase
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(obs_dir=None, files=None, **kwargs):
+def main(obs_dir: Optional[str] = None, files: Optional[List[str]] = None,
+         **kwargs) -> Union[Dict[str, Any], Tuple[DrsRecipe, ParamDict]]:
     """
     Main function for apero_preprocess
 
@@ -85,7 +93,15 @@ def main(obs_dir=None, files=None, **kwargs):
     return drs_startup.end_main(params, llmain, recipe, success, outputs='None')
 
 
-def __main__(recipe, params):
+def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
+    """
+    Main code: should only call recipe and params (defined from main)
+
+    :param recipe: DrsRecipe, the recipe class using this function
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: dictionary containing the local variables
+    """
     # ----------------------------------------------------------------------
     # Main Code
     # ----------------------------------------------------------------------
@@ -135,7 +151,7 @@ def __main__(recipe, params):
         # identification of file drs type
         # ------------------------------------------------------------------
         # identify this iterations file type
-        cond, infile = prep.drs_infile_id(params, recipe, file_instance)
+        cond, infile = prep.drs_infile_id(params, file_instance)
 
         # ------------------------------------------------------------------
         # For OBJECT files we need to resolve object and update header
@@ -279,6 +295,10 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # correct image
         # ------------------------------------------------------------------
+        # get the exposure time from the header
+        exptime = infile.header[params['KW_EXPTIME'][0]]
+        # correct the capacitive coupling pattern
+        image = prep.correct_capacitive_coupling(params, image, exptime)
         # correct for the top and bottom reference pixels
         WLOG(params, '', textentry('40-010-00003'))
         image = prep.correct_top_bottom(params, image)
@@ -302,6 +322,15 @@ def __main__(recipe, params):
         WLOG(params, '', textentry('40-010-00018'))
         image, cprops = prep.correct_cosmics(params, image, intercept,
                                              errslope1, inttime)
+        # get dprtypes we don't do sci capacitive coupling for
+        nosci_capc = params.listp('PP_NOSCI_CAPC_DPRTYPES', dtype=str)
+        sci_capc_corr = True
+        for _string in nosci_capc:
+            if _string in infile.header['DPRTYPE']:
+                sci_capc_corr = False
+        # correct between amplifier capacity coupling from science flux
+        if sci_capc_corr:
+            image = prep.correct_sci_capacitive_coupling(params, image)
 
         # ------------------------------------------------------------------
         # calculate mid observation time
@@ -324,7 +353,7 @@ def __main__(recipe, params):
         # update recipe log
         log1.add_qc(qc_params, passed)
         if passed:
-           log1.update_flags(QCPASSED=True)
+            log1.update_flags(QCPASSED=True)
 
         # ------------------------------------------------------------------
         # Save rotated image
@@ -394,7 +423,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return drs_startup.return_locals(params, dict(locals()))
+    return locals()
 
 
 # =============================================================================

@@ -9,30 +9,30 @@ Created on 2019-10-25 at 13:25
 
 @author: cook
 """
-from astropy.table import Table
-from astropy import units as uu
-import numpy as np
-from scipy import interpolate
-from scipy import stats
-from scipy import signal
-from scipy.interpolate import UnivariateSpline
-from typing import Any, List, Tuple, Union
 import warnings
+from typing import Any, List, Tuple, Union
 
-from apero.base import base
-from apero.core import math as mp
+import numpy as np
+from astropy import units as uu
+from astropy.table import Table
+from scipy import interpolate
+from scipy import signal
+from scipy import stats
+from scipy.interpolate import UnivariateSpline
+
 from apero import lang
+from apero.base import base
 from apero.core import constants
+from apero.core import math as mp
 from apero.core.core import drs_database
-from apero.core.core import drs_log
 from apero.core.core import drs_file
+from apero.core.core import drs_log
 from apero.core.core import drs_text
 from apero.core.utils import drs_recipe
+from apero.io import drs_fits
+from apero.science import extract
 from apero.science.calib import flat_blaze
 from apero.science.calib import wave
-from apero.science import extract
-from apero.io import drs_fits
-
 
 # =============================================================================
 # Define variables
@@ -374,10 +374,10 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
     # -------------------------------------------------------------------------
     # deal with multiple temperatures
     if len(np.unique(objtemps)) != 1:
-        # TODO: Add to language database
-        wmsgs = 'Object temperatures do not match - taking finite median'
+        # Object temperatures do not match - taking finite median
+        wmsgs = textentry('10-021-00010')
         for it in range(len(objtemps)):
-            wmsg = '\n\tFile {0}\t{1}={2}'
+            wmsg = '\n\t- {0}\t{1}={2}'
             wargs = [basenames[it], params['KW_DRS_TEFF'][0], objtemps[it]]
             wmsg = wmsg.format(*wargs)
             wmsgs += wmsg
@@ -999,7 +999,7 @@ def polarimetry_ratio_method(params: ParamDict, props: ParamDict,
         #          (Part of Eq #24 on page 998 of Bagnulo et al. 2009)
         # -----------------------------------------------------------------
         with warnings.catch_warnings(record=True) as _:
-            rr = (r1 * r2) ** (1.0 / (2 * nexp))
+            rr = (r1 * r2) ** (1.0 / nexp)
         # -----------------------------------------------------------------
         # STEP 5 - calculate the degree of polarization
         #          (Eq #24 on page 998 of Bagnulo et al. 2009)
@@ -1010,7 +1010,7 @@ def polarimetry_ratio_method(params: ParamDict, props: ParamDict,
         #          (Part of Eq #25-26 on page 998 of Bagnulo et al. 2009)
         # -----------------------------------------------------------------
         with warnings.catch_warnings(record=True) as _:
-            rn1 = (r1 / r2) ** (1.0 / (2 * nexp))
+            rn1 = (r1 / r2) ** (1.0 / nexp)
         # -----------------------------------------------------------------
         # STEP 7 - calculate the first NULL spectrum
         #          (Eq #25-26 on page 998 of Bagnulo et al. 2009)
@@ -1022,7 +1022,7 @@ def polarimetry_ratio_method(params: ParamDict, props: ParamDict,
         #          with exposure 2 and 4 swapped
         # -----------------------------------------------------------------
         with warnings.catch_warnings(record=True) as _:
-            rn2 = (r1s / r2s) ** (1.0 / (2 * nexp))
+            rn2 = (r1s / r2s) ** (1.0 / nexp)
         # -----------------------------------------------------------------
         # STEP 9 - calculate the second NULL spectrum
         #          (Eq #25-26 on page 998 of Bagnulo et al. 2009),
@@ -1054,7 +1054,7 @@ def polarimetry_ratio_method(params: ParamDict, props: ParamDict,
         # STEP 4 - calculate the quantity R
         #          (Part of Eq #24 on page 998 of Bagnulo et al. 2009)
         # -----------------------------------------------------------------
-        rr = r1 ** (1.0 / (2 * nexp))
+        rr = r1 ** (1.0 / nexp)
 
         # -----------------------------------------------------------------
         # STEP 5 - calculate the degree of polarization
@@ -1200,7 +1200,7 @@ def get_interp_flux(params: ParamDict, wavemap0: np.ndarray, flux0: np.ndarray,
     # output flux and flux error maps
     flux1 = np.full_like(flux0, np.nan)
     fluxerr1 = np.full_like(flux0, np.nan)
-    blaze1 = np.full_like(flux0, np.nan)
+    # blaze1 = np.full_like(flux0, np.nan)
     # loop around each order (per order spline)
     for order_num in range(wavemap0.shape[0]):
         # only keep clean data
@@ -1247,7 +1247,6 @@ def get_interp_blaze(params: ParamDict, wavemap0: np.ndarray,
 
     :param params: ParamDict, the parameter dictionary of constants
     :param wavemap0: np.array, the initial wave grid of the flux data
-    :param flux0: np.array, the initial flux values
     :param blaze0: np.array, the initial blaze values
     :param wavemap1: np.array, the final wave grid to interpolate to
 
@@ -1495,6 +1494,7 @@ def remove_continuum_polarization(params: ParamDict, props: ParamDict
     """
         Function to remove the continuum polarization
 
+        :param params: ParamDict, parameter dictionary of constants
         :param props: parameter dictionary, ParamDict containing data
 
         Must contain at least:
@@ -1574,6 +1574,7 @@ def normalize_stokes_i(params: ParamDict, props: ParamDict) -> ParamDict:
     """
         Function to normalize Stokes I by the continuum flux
 
+        :param params: ParamDict, parameter dictionary of constants
         :param props: parameter dictionary, ParamDict containing data
             Must contain at least:
                 WAVE: numpy array (2D), e2ds wavelength data

@@ -1,46 +1,30 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-apero_fit_tellu [night_directory] [files]
+apero_mk_template_nirps_ha.py [object name]
 
-Using all transmission files, we fit the absorption of a given science
-observation. To reduce the number of degrees of freedom, we perform a PCA and
-keep only the N (currently we suggest N=5)  principal components in absorbance.
-As telluric absorption may shift in velocity from one observation to another,
-we have the option of including the derivative of the absorbance in the
-reconstruction. The method also measures a proxy of optical depth per molecule
-(H2O, O2, O3, CO2, CH4, N2O) that can be used for data quality assessment.
-
-Usage:
-  apero_fit_tellu night_name object.fits
-
-Outputs:
-  telluDB: TELL_OBJ file - The object corrected for tellurics
-        file also saved in the reduced folder
-        input file + '_tellu_corrected.fits'
-
-    recon_abso file - The reconstructed absorption file saved in the reduced
-                    folder
-        input file + '_tellu_recon.fits'
+APERO recipe to make object templates
 
 Created on 2019-09-05 at 14:58
 
 @author: cook
 """
-import numpy as np
 import os
+from typing import Any, Dict, Optional, Tuple, Union
 
-from apero.base import base
+import numpy as np
+
 from apero import lang
+from apero.base import base
 from apero.core import constants
 from apero.core.core import drs_database
-from apero.core.core import drs_log
 from apero.core.core import drs_file
+from apero.core.core import drs_log
+from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_utils
-from apero.science.calib import wave
 from apero.science import telluric
-
+from apero.science.calib import wave
 
 # =============================================================================
 # Define variables
@@ -52,10 +36,12 @@ __version__ = base.__version__
 __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
-# get param dict
-ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
+# Get Recipe class
+DrsRecipe = drs_recipe.DrsRecipe
+# Get parameter class
+ParamDict = constants.ParamDict
 # Get the text types
 textentry = lang.textentry
 
@@ -69,19 +55,17 @@ textentry = lang.textentry
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(objname=None, **kwargs):
+def main(objname: Optional[str] = None, **kwargs
+         ) -> Union[Dict[str, Any], Tuple[DrsRecipe, ParamDict]]:
     """
-    Main function for apero_mk_template_spirou.py
+    Main function for apero_mk_template
 
     :param objname: str, the object name to make a template for
     :param kwargs: additional keyword arguments
 
-    :type objname: str
-
     :keyword debug: int, debug level (0 for None)
 
     :returns: dictionary of the local space
-    :rtype: dict
     """
     # assign function calls (must add positional)
     fkwargs = dict(objname=objname, **kwargs)
@@ -100,13 +84,14 @@ def main(objname=None, **kwargs):
     return drs_startup.end_main(params, llmain, recipe, success)
 
 
-def __main__(recipe, params):
+def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     """
     Main code: should only call recipe and params (defined from main)
 
-    :param recipe:
-    :param params:
-    :return:
+    :param recipe: DrsRecipe, the recipe class using this function
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: dictionary containing the local variables
     """
     # ----------------------------------------------------------------------
     # Main Code
@@ -155,7 +140,7 @@ def __main__(recipe, params):
         # update recipe log file
         recipe.log.end()
         # end this run
-        return drs_startup.return_locals(params, locals())
+        return locals()
     else:
         qc_params = [['HAS_OBJ'], ['True'], ['HAS_OBJ==False'], [1]]
     # ----------------------------------------------------------------------
@@ -183,14 +168,17 @@ def __main__(recipe, params):
         abspath = os.path.join(params['OUTPATH'], obs_dir)
         if not os.path.exists(abspath):
             os.makedirs(abspath)
-
+    # ----------------------------------------------------------------------
+    # flag whether object is a hot star
+    flag_hotstar = telluric.id_hot_star(params, objname)
+    # ----------------------------------------------------------------------
     # set up plotting (no plotting before this) -- must be after setting
     #   night name
     recipe.plot.set_location(0)
     # ----------------------------------------------------------------------
     # load reference wavelength solution
     mkwargs = dict(infile=infile, ref=True, fiber=fiber,
-                   database=calibdbm, log=recipe.log)
+                   database=calibdbm, rlog=recipe.log)
     refprops = wave.get_wavesolution(params, recipe, **mkwargs)
     # ------------------------------------------------------------------
     # Normalize image by peak blaze
@@ -200,7 +188,8 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Make data cubes
     # ----------------------------------------------------------------------
-    cargs = [object_filenames, infile, refprops, nprops, fiber, qc_params]
+    cargs = [object_filenames, infile, refprops, nprops, fiber, qc_params,
+             flag_hotstar]
     cprops = telluric.make_template_cubes(params, recipe, *cargs,
                                           calibdb=calibdbm)
     # ----------------------------------------------------------------------
@@ -209,11 +198,11 @@ def __main__(recipe, params):
         # print qc failure
         telluric.mk_template_qc(params, qc_params, cprops['FAIL_MSG'])
         # update recipe log
-        recipe.log.add_qc(cprops['QC_PARAMS'] , True)
+        recipe.log.add_qc(cprops['QC_PARAMS'], True)
         # update recipe log file
         recipe.log.end()
         # end here
-        return drs_startup.return_locals(params, locals())
+        return locals()
     # ----------------------------------------------------------------------
     # Make s1d cubes
     # ----------------------------------------------------------------------
@@ -233,7 +222,8 @@ def __main__(recipe, params):
         s1d_filenames = drs_utils.find_files(params, block_kind='red',
                                              filters=filters)
         # make s1d cube
-        margs = [s1d_filenames, s1d_file, fiber]
+        margs = [s1d_filenames, s1d_file, fiber, infile.header, flag_hotstar,
+                 calibdbm]
         s1d_props = telluric.make_1d_template_cube(params, recipe, *margs)
         # append to storage
         s1d_cubes.append(s1d_props)
@@ -251,12 +241,12 @@ def __main__(recipe, params):
     # write e2ds cubes + median
     margs = [infile, cprops, filetype, fiber, refprops, qc_params]
     template_file = telluric.mk_template_write(params, recipe, *margs)
-    props1d = None
+    props1d = []
     # write s1d cubes + median
     for it, s1d_props in enumerate(s1d_cubes):
         sargs = [infile, s1d_props, infile.s1d[it], fiber, refprops, qc_params,
                  template_file]
-        props1d = telluric.mk_1d_template_write(params, recipe, *sargs)
+        props1d.append(telluric.mk_1d_template_write(params, recipe, *sargs))
 
     # ----------------------------------------------------------------------
     # Update the telluric database with the template
@@ -264,6 +254,20 @@ def __main__(recipe, params):
     if passed and params['INPUTS']['DATABASE']:
         # copy the big cube median to the calibDB
         telludbm.add_tellu_file(template_file)
+        # add s1d templates to telluric database
+        for prop1d in props1d:
+            telludbm.add_tellu_file(prop1d['S1DFILE'])
+
+    # ----------------------------------------------------------------------
+    # plots
+    # ----------------------------------------------------------------------
+    for prop1d in props1d:
+        # plot debug plot
+        recipe.plot('EXTRACT_S1D', params=params, props=prop1d, fiber=fiber,
+                    kind='Template')
+        # plot summary plot
+        recipe.plot('SUM_EXTRACT_S1D', params=params, props=prop1d, fiber=fiber,
+                    kind='Template')
 
     # ----------------------------------------------------------------------
     # plots
@@ -288,7 +292,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return drs_startup.return_locals(params, locals())
+    return locals()
 
 
 # =============================================================================

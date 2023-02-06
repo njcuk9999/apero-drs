@@ -1,34 +1,34 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+APERO recipe functionality
 
-# CODE DESCRIPTION HERE
+dealing with the front-end scripts (a.k.a. the recipes)
 
 Created on 2019-01-19 at 12:02
 
 @author: cook
 """
-from astropy.table import Table
 import argparse
-from collections import OrderedDict
 import copy
-import numpy as np
-from pathlib import Path
 import sys
+from collections import OrderedDict
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
+
+import numpy as np
+from astropy.table import Table
 
 from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core.core import drs_argument
 from apero.core.core import drs_base_classes as base_class
-from apero.core.core import drs_misc
-from apero.core.core import drs_text
+from apero.core.core import drs_database
 from apero.core.core import drs_exceptions
 from apero.core.core import drs_log, drs_file
-from apero.core.core import drs_argument
-from apero.core.core import drs_database
-
+from apero.core.core import drs_misc
+from apero.core.core import drs_text
 
 # =============================================================================
 # Define variables
@@ -72,6 +72,9 @@ SPECIAL_LIST_KEYS = ['SCIENCE_TARGETS', 'TELLURIC_TARGETS']
 # Define Recipe Classes
 # =============================================================================
 class DrsRecipe(object):
+    """
+    Recipe class - giving properties to each recipe
+    """
     # define typing for attributes
     filemod: Union[base_class.ImportModule, None]
     # set class name
@@ -262,8 +265,17 @@ class DrsRecipe(object):
         return '{0}[{1}]'.format(self.class_name, self.name)
 
     def reload(self, instrument: str):
+        """
+        Reload a recipe class after setting instrument
+
+        :param instrument: str, the instrument this recipe belongs to
+        :return:
+        """
+        # get the state of the list class
         state = self.__getstate__()
+        # update the instrument
         state['instrument'] = instrument
+        # set this as the current state
         self.__setstate__(state)
 
     def summary(self, params: ParamDict) -> Dict[str, Any]:
@@ -835,11 +847,11 @@ class DrsRecipe(object):
         for kwarg in kwargs:
             # flag must be defined
             if kwarg not in base.LOG_FLAGS:
-                # TODO: move to language database
-                emsg = ('Recipe {0} flag "{1}" not in base.LOG_FLAGS. '
-                        'Please add to use')
+                # print msg: Recipe {0} flag "{1}" not in base.LOG_FLAGS.
+                #            Please add to use
                 eargs = [self.name, kwarg]
-                WLOG(self.params, 'error', emsg.format(*eargs))
+                emsg = textentry('00-007-00004', args=eargs)
+                WLOG(self.params, 'error', emsg)
             # check if kwarg is a string
             if isinstance(kwargs[kwarg], bool):
                 # update the flag
@@ -1062,8 +1074,10 @@ class DrsRecipe(object):
         """
         Return the arguments for argparse (proxy call to recipe args)
 
-        :param name: str: the name of the argument
-        :return:
+        :param kwargname: str: the name of the argument
+
+        :return: tuple, 1. list of arguments, 2. list of keyword arguments
+                 to emulate call to recipe args
         """
         # set function name
         func_name = display_func('proxy_arg', __NAME__, self.class_name)
@@ -1142,6 +1156,8 @@ class DrsRecipe(object):
                        "SCIENCE_TARGETS" and SCIENCE_TARGETS
                        value = ['None', 'All', ''] to list all non-telluric
                        'science targets' currently defined
+        :param template_stars: list, list of template star object names
+
         :return: None - updates DrsRecipe.extras (for later use)
         """
         # set function name
@@ -1452,7 +1468,7 @@ class DrsRecipe(object):
         self.specialargs[name] = spec
 
     def drs_usage(self, output: str = 'default'
-                   ) -> Union[str, Tuple[str, dict, dict, dict]]:
+                  ) -> Union[str, Tuple[str, dict, dict, dict]]:
         """
         Create a string that shows this recipes usage
 
@@ -1582,9 +1598,9 @@ class DrsRecipe(object):
                     strfiles = [strfiles]
                     drsfiles = [drsfiles]
                 # need to sort strfiles
-                sorted = np.argsort(strfiles)
-                strfiles = np.array(strfiles)[sorted]
-                drsfiles = np.array(drsfiles)[sorted]
+                sortmask = np.argsort(strfiles)
+                strfiles = np.array(strfiles)[sortmask]
+                drsfiles = np.array(drsfiles)[sortmask]
                 # add argname to run string
                 if kind != 'arg':
                     self.runstring += '{0} '.format(argname)
@@ -1615,6 +1631,9 @@ class DrsRecipe(object):
 
 
 class DrsRunSequence:
+    """
+    Defines a specific sequence of recipes to run one after the other
+    """
     # set class name
     class_name = 'DrsRunSequence'
 
@@ -1640,6 +1659,9 @@ class DrsRunSequence:
         self.tstars = None
         # set up storage for the non-telluric stars list
         self.ostars = None
+        # define and store description and schematic file
+        self.description_file = None
+        self.schematic = None
 
     def __getstate__(self) -> dict:
         """
@@ -1798,6 +1820,7 @@ class DrsRunSequence:
                        names)
         :param template_stars: list of strings, the list of stars that
                                currently have a template
+        :param logmsg: bool, if True logs that recipe was processed
 
         :return: None - updates DrsRunSequence.sequence
         """
@@ -1856,7 +1879,8 @@ class DrsRunSequence:
             # add to sequence storage
             self.sequence.append(frecipe)
 
-    def add_filters(self, frecipe: DrsRecipe,
+    @staticmethod
+    def add_filters(frecipe: DrsRecipe,
                     files: Union[List[drs_file.DrsFitsFile], None] = None,
                     infilters: Union[Dict[str, Any], None] = None) -> DrsRecipe:
         """
@@ -1953,7 +1977,8 @@ class DrsRunSequence:
         # return recipes
         return frecipe
 
-    def _update_arg(self, arguments: Dict[str, DrsArgument],
+    @staticmethod
+    def _update_arg(arguments: Dict[str, DrsArgument],
                     fargs: Dict[str, List[DrsInputFile]]
                     ) -> Dict[str, DrsArgument]:
         """
@@ -2064,7 +2089,7 @@ class DrsRunSequence:
 
             filters_str = ''
             # add list of filters
-            for it, _filter in enumerate(filters):
+            for jt, _filter in enumerate(filters):
                 # get value
                 value = filters[_filter]
                 if isinstance(value, list):
@@ -2072,7 +2097,7 @@ class DrsRunSequence:
                 else:
                     valuestr = str(value)
                 # deal with first iteration
-                if it == 0:
+                if jt == 0:
                     filters_str += '{0}: {1}'.format(_filter, valuestr)
                 else:
                     filters_str += ' |br| {0}: {1}'.format(_filter, valuestr)
@@ -2105,21 +2130,8 @@ class DrsRunSequence:
 # =============================================================================
 # Define file check functions
 # =============================================================================
-# TODO: Should this be used?
-def make_default_recipe(params: ParamDict = None,
-                        name: str = None) -> DrsRecipe:
-    """
-    Create a blank version of a recipe
-    :param params: ParamDict, the parameter dictionary of constants
-    :param name: str, the name of the recipe
-    :return:
-    """
-    # return a 'blank' instance of the DrsRecipe
-    return DrsRecipe(params=params, name=name)
-
-
 def filter_values(values: List[str], filter_list: List[str],
-                   mode: str ='keep') -> List[str]:
+                  mode: str = 'keep') -> List[str]:
     """
     Filter a list by another list
 
@@ -2195,8 +2207,18 @@ def _summary_args(args: Dict[str, Any], argkind: str = 'pos') -> str:
 
 # must add a plot lambda function
 def lambda_plot(*args, **kwargs):
-    pass
+    """
+    Lambda function when a plotting function cannot be attached to the
+    recipe
 
+    :param args: list, arguments normally passed to the plotting class
+    :param kwargs: dict, keyword arguments normally passed to the plotting
+                   class
+    :return: None - does nothing (as intended) when plotting class is
+                    not available
+    """
+    _ = args, kwargs
+    pass
 
 # =============================================================================
 # End of code

@@ -1,39 +1,39 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
-
-# CODE DESCRIPTION HERE
+APERO shape, order geometry functionality
 
 Created on 2019-06-27 at 10:13
 
 @author: cook
 """
-import numpy as np
 import os
+import warnings
+from typing import List, Optional, Tuple, Union
+
+from astropy.table import Table
+import numpy as np
 from scipy.ndimage import filters
 from scipy.ndimage import map_coordinates as mapc
-from scipy.optimize import curve_fit
 from scipy.signal import convolve2d
 from scipy.stats import stats
-import warnings
 
+from apero import lang
 from apero.base import base
 from apero.core import constants
-from apero import lang
 from apero.core import math as mp
+from apero.core.core import drs_database
 from apero.core.core import drs_file
 from apero.core.core import drs_log
-from apero.core.core import drs_database
 from apero.core.utils import drs_data
+from apero.core.utils import drs_recipe
 from apero.core.utils import drs_utils
-from apero.io import drs_path
 from apero.io import drs_fits
 from apero.io import drs_image
+from apero.io import drs_path
 from apero.io import drs_table
 from apero.science.calib import gen_calib
 from apero.science.calib import localisation
-
 
 # =============================================================================
 # Define variables
@@ -45,13 +45,16 @@ __version__ = base.__version__
 __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
-# get param dict
-ParamDict = constants.ParamDict
-DrsFitsFile = drs_file.DrsFitsFile
 # Get Logging function
 WLOG = drs_log.wlog
+# Get Recipe class
+DrsRecipe = drs_recipe.DrsRecipe
+# Get parameter class
+ParamDict = constants.ParamDict
 # Get the text types
 textentry = lang.textentry
+# Get function string
+display_func = drs_log.display_func
 # alias pcheck
 pcheck = constants.PCheck(wlog=WLOG)
 
@@ -59,12 +62,25 @@ pcheck = constants.PCheck(wlog=WLOG)
 # =============================================================================
 # Define user functions
 # =============================================================================
-def construct_fp_table(params, filenames, **kwargs):
-    # define function
-    func_name = __NAME__ + '.construct_fp_table()'
+def construct_fp_table(params: ParamDict,
+                       filenames: Union[List[str], np.ndarray],
+                       max_nfiles: Optional[int] = None) -> Table:
+    """
+    Construct the FP table
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param filenames: list of strs, the list of FP filenames
+    :param max_nfiles: int or None, the maximum number of files to use in
+                       shape reference file, if set overrides
+                       "SHAPE_REF_MAX_FILES" from params
+
+    :return: astropy table, the FP table
+    """
+    # set function name
+    func_name = display_func('construct_fp_table', __NAME__)
     # get parameters from params
-    max_num_files = pcheck(params, 'SHAPE_REF_MAX_FILES', 'max_num', kwargs,
-                           func_name)
+    max_num_files = pcheck(params, 'SHAPE_REF_MAX_FILES', func=func_name,
+                           override=max_nfiles)
     # define storage for table columns
     fp_time, fp_exp, fp_pp_version = [], [], []
     basenames, obs_dirs = [], []
@@ -81,12 +97,6 @@ def construct_fp_table(params, filenames, **kwargs):
         obs_dir = str(path_inst.obs_dir)
         # read the header
         hdr = drs_fits.read_header(params, filenames[it], copy=True)
-        # must load file here to check if fp is valid
-        image = drs_fits.readfits(params, filenames[it])
-        fpcheck =gen_calib.check_fp(params, image, filename=filenames[it])
-        del image
-        if not fpcheck:
-            continue
         # get keys from hdr
         acqtime, acqmethod = drs_file.get_mid_obs_time(params, hdr,
                                                        out_fmt='mjd')
@@ -113,7 +123,30 @@ def construct_fp_table(params, filenames, **kwargs):
     basenames = np.array(basenames)[time_mask]
     obs_dirs = np.array(obs_dirs)[time_mask]
     valid_files = np.array(valid_files)[time_mask]
-
+    # ----------------------------------------------------------------------
+    # check that all fps valid
+    # ----------------------------------------------------------------------
+    # store mask for
+    check_mask = np.zeros(len(valid_files)).astype(bool)
+    # loop through file valid_files
+    for it in range(len(valid_files)):
+        # must load file here to check if fp is valid
+        image = drs_fits.readfits(params, valid_files[it])
+        fpcheck = gen_calib.check_fp(params, image, filename=valid_files[it],
+                                     iterator=it, total_num=len(valid_files))
+        del image
+        if not fpcheck:
+            continue
+        else:
+            check_mask[it] = True
+    # mask all lists
+    fp_time = fp_time[check_mask]
+    fp_exp = fp_exp[check_mask]
+    fp_pp_version = fp_pp_version[check_mask]
+    basenames = basenames[check_mask]
+    obs_dirs = obs_dirs[check_mask]
+    valid_files = valid_files[check_mask]
+    # ----------------------------------------------------------------------
     # convert lists to table
     columns = ['OBS_DIR', 'BASENAME', 'FILENAME', 'MJDATE', 'EXPTIME',
                'PPVERSION']
@@ -125,160 +158,43 @@ def construct_fp_table(params, filenames, **kwargs):
     return fp_table
 
 
-# def construct_REF_FP(params, recipe, dprtype, fp_table, image_ref, **kwargs):
-#     func_name = __NAME__ + '.construct_ref_dark'
-#     # get constants from params/kwargs
-#     time_thres = pcheck(params, 'FP_REF_MATCH_TIME', 'time_thres', kwargs,
-#                         func_name)
-#     percent_thres = pcheck(params, 'FP_REF_PERCENT_THRES', 'percent_thres',
-#                            kwargs, func_name)
-#     qc_res = pcheck(params, 'SHAPE_QC_LTRANS_RES_THRES', 'qc_res', kwargs,
-#                     func_name)
-#     min_num = pcheck(params, 'SHAPE_FP_REF_MIN_IN_GROUP', 'min_num', kwargs,
-#                      func_name)
-#
-#     # get col data from dark_table
-#     filenames = fp_table['FILENAME']
-#     fp_times = fp_table['MJDATE']
-#
-#     # ----------------------------------------------------------------------
-#     # match files by date
-#     # ----------------------------------------------------------------------
-#     # log progress
-#     WLOG(params, '', textentry('40-014-00004', args=[time_thres]))
-#     # match files by time
-#     matched_id = drs_path.group_files_by_time(params, fp_times, time_thres)
-#
-#     # ----------------------------------------------------------------------
-#     # Read individual files and sum groups
-#     # ----------------------------------------------------------------------
-#     # log process
-#     WLOG(params, '', textentry('40-014-00005'))
-#     # Find all unique groups
-#     u_groups = np.unique(matched_id)
-#     # storage of dark cube
-#     valid_dark_files, valid_badpfiles, valid_backfiles = [], [], []
-#     fp_cube, transforms_list, valid_matched_id = [], [], []
-#     table_mask = np.zeros(len(fp_table), dtype=bool)
-#     # loop through groups
-#     for g_it, group_num in enumerate(u_groups):
-#         # log progress
-#         wargs = [g_it + 1, len(u_groups)]
-#         WLOG(params, 'info', textentry('40-014-00006', args=wargs))
-#         # find all files for this group
-#         fp_ids = filenames[matched_id == group_num]
-#         indices = np.arange(len(filenames))[matched_id == group_num]
-#         # only combine if 3 or more images were taken
-#         if len(fp_ids) >= min_num:
-#             # load this groups files into a cube
-#             cube = []
-#             # get infile from filetype
-#             file_inst = core.get_file_definition(dprtype, params['INSTRUMENT'],
-#                                                  kind='tmp')
-#             # get this groups storage
-#             vheaders = []
-#             # loop around fp ids
-#             for f_it, filename in enumerate(fp_ids):
-#                 # log reading of data
-#                 wargs = [os.path.basename(filename), f_it + 1, len(fp_ids)]
-#                 WLOG(params, 'info', textentry('40-014-00007', args=wargs))
-#                 # construct new infile instance
-#                 fpfile_it = file_inst.newcopy(filename=filename, recipe=recipe)
-#                 fpfile_it.read_file()
-#                 # append to cube
-#                 cube.append(np.array(fpfile_it.data))
-#                 vheaders.append(drs_fits.Header(fpfile_it.header))
-#                 # delete fits data
-#                 del fpfile_it
-#             # convert to numpy array
-#             cube = np.array(cube)
-#             # log process
-#             WLOG(params, '', textentry('40-014-00008', args=[len(fp_ids)]))
-#             # median fp cube
-#             with warnings.catch_warnings(record=True) as _:
-#                 groupfp = mp.nanmedian(cube, axis=0)
-#
-#             # --------------------------------------------------------------
-#             # calibrate group fp
-#             # --------------------------------------------------------------
-#             # construct new infile instance
-#             groupfile = file_inst.newcopy(params=params)
-#             groupfile.data = groupfp
-#             groupfile.header = vheaders[0]
-#             groupfile.filename = fp_ids[0]
-#             groupfile.basename = os.path.basename(fp_ids[0])
-#
-#             # get and correct file
-#             cargs = [params, recipe, groupfile]
-#             ckwargs = dict(n_percentile=percent_thres,
-#                            correctback=False)
-#             props, groupfp = general.calibrate_ppfile(*cargs, **ckwargs)
-#             # --------------------------------------------------------------
-#             # shift group to reference
-#             targs = [image_ref, groupfp]
-#             gout = get_linear_transform_params(params, recipe, *targs)
-#             transforms, xres, yres = gout
-#             # quality control on group
-#             if transforms is None:
-#                 # log that image quality too poor
-#                 wargs = [g_it + 1]
-#                 WLOG(params, 'warning', textentry('10-014-00001', args=wargs))
-#                 # skip adding to group
-#                 continue
-#             if (xres > qc_res) or (yres > qc_res):
-#                 # log that xres and yres too larger
-#                 wargs = [xres, yres, qc_res]
-#                 WLOG(params, 'warning', textentry('10-014-00002', args=wargs))
-#                 # skip adding to group
-#                 continue
-#             # perform a final transform on the group
-#             groupfp = ea_transform(params, groupfp,
-#                                    lin_transform_vect=transforms)
-#             # append to cube
-#             fp_cube.append(groupfp)
-#             # append transforms to list
-#             for _ in fp_ids:
-#                 transforms_list.append(transforms)
-#                 # now add extract properties to main group
-#                 valid_matched_id.append(group_num)
-#                 valid_dark_files.append(props['DARKFILE'])
-#                 valid_badpfiles.append(props['BADPFILE'])
-#                 valid_backfiles.append(props['BACKFILE'])
-#             # validate table mask
-#             table_mask[indices] = True
-#         else:
-#             eargs = [g_it + 1, min_num]
-#             WLOG(params, '', textentry('40-014-00015', args=eargs))
-#     # ----------------------------------------------------------------------
-#     # convert fp cube to array
-#     fp_cube = np.array(fp_cube)
-#     # convert transform_list to array
-#     tarrary = np.array(transforms_list)
-#     # cut down fp_table to valid
-#     valid_fp_table = fp_table[table_mask]
-#     # ----------------------------------------------------------------------
-#     # add columns to fp_table
-#     colnames = ['GROUPID', 'DARKFILE', 'BADPFILE', 'BACKFILE', 'DXREF',
-#                 'DYREF', 'A', 'B', 'C', 'D']
-#     values = [valid_matched_id, valid_dark_files, valid_badpfiles,
-#               valid_backfiles, tarrary[:, 0], tarrary[:, 1],
-#               tarrary[:, 2], tarrary[:, 3], tarrary[:, 4], tarrary[:, 5]]
-#     for c_it, col in enumerate(colnames):
-#         valid_fp_table[col] = values[c_it]
-#     # ----------------------------------------------------------------------
-#     # return fp_cube
-#     return fp_cube, valid_fp_table
+def construct_ref_fp(params: ParamDict, recipe: DrsRecipe, dprtype: str,
+                     fp_table: Table, image_ref: np.ndarray,
+                     time_thres: Optional[float] = None,
+                     percent_thres: Optional[float] = None,
+                     qc_res: Optional[float]=None) -> Tuple[np.ndarray, Table]:
+    """
+    Construct the reference FP
 
+    :param params: ParamDict, parameter dictionary of constants
+    :param recipe: DrsRecipe, reipce instance that called this function
+    :param dprtype: str, the data product type
+    :param fp_table: astropy Table, the FP Table from construct_fp_table()
+    :param image_ref: numpy 2D array, the reference FP image (FP_FP from
+                      reference observation directory)
+    :param time_thres: float or None, maximum time span to combine fp files
+                       over in hours, if set overrides "FP_REF_MATCH_TIME"
+                       in params
+    :param percent_thres: float or None, the percentile at which the FPs are
+                          normalised when getting the fp reference, if set
+                          overrides "FP_REF_PERCENT_THRES" in params
+    :param qc_res: float or None, the largest standard deviation allowed for
+                   the shift in x or y when doing the shape reference fp linear
+                   transform, if set overrides "SHAPE_QC_LTRANS_RES_THRES"
+                   in params
 
-def construct_ref_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
-    func_name = __NAME__ + '.construct_ref_fp'
+    :return: tuple, 1. numpy 2D array, the reference FP, 2. astropy Table: the
+             updated fp_table
+    """
+    # set function name
+    func_name = display_func('construct_ref_fp', __NAME__)
     # get constants from params/kwargs
-    time_thres = pcheck(params, 'FP_REF_MATCH_TIME', 'time_thres', kwargs,
-                        func_name)
+    time_thres = pcheck(params, 'FP_REF_MATCH_TIME', 'time_thres',
+                        func=func_name, override=time_thres)
     percent_thres = pcheck(params, 'FP_REF_PERCENT_THRES', 'percent_thres',
-                           kwargs, func_name)
-    qc_res = pcheck(params, 'SHAPE_QC_LTRANS_RES_THRES', 'qc_res', kwargs,
-                    func_name)
+                           func=func_name, override=percent_thres)
+    qc_res = pcheck(params, 'SHAPE_QC_LTRANS_RES_THRES', 'qc_res',
+                    func=func_name, override=qc_res)
     # get temporary output dir
     out_obs_dir = params['INPUTS']['OBS_DIR']
     # get col data from dark_table
@@ -411,19 +327,27 @@ def construct_ref_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
     return fp_ref, valid_fp_table
 
 
-def get_linear_transform_params(params, recipe, image1, image2, **kwargs):
-    func_name = __NAME__ + '.get_linear_transform_params()'
+def get_linear_transform_params(params: ParamDict, recipe: DrsRecipe,
+                                image1: np.ndarray, image2: np.ndarray,
+                                maxn_percent: Optional[float] = None,
+                                maxn_thres: Optional[float] = None,
+                                niterations: Optional[int] = None,
+                                ini_boxsize: Optional[int] = None,
+                                small_boxsize: Optional[int] = None
+                                ) -> Tuple[np.ndarray, float, float]:
+    # set function name
+    func_name = display_func('get_linear_transform_params', __NAME__)
     # get parameters from params/kwargs
     maxn_percent = pcheck(params, 'SHAPE_REF_VALIDFP_PERCENTILE',
-                          'maxn_perecent', kwargs, func_name)
+                          func=func_name, override=maxn_percent)
     maxn_thres = pcheck(params, 'SHAPE_REF_VALIDFP_THRESHOLD',
-                        'maxn_thres', kwargs, func_name)
+                        func=func_name, override=maxn_thres)
     niterations = pcheck(params, 'SHAPE_REF_LINTRANS_NITER',
-                         'niterations', kwargs, func_name)
+                         func=func_name, override=niterations)
     ini_boxsize = pcheck(params, 'SHAPE_REF_FP_INI_BOXSIZE',
-                         'ini_boxsize', kwargs, func_name)
+                         func=func_name, override=ini_boxsize)
     small_boxsize = pcheck(params, 'SHAPE_REF_FP_SMALL_BOXSIZE',
-                           'small_boxsize', kwargs, func_name)
+                           func=func_name, override=small_boxsize)
     # get the shape of the image
     dim1, dim2 = image1.shape
     # check that image is correct shape
@@ -694,12 +618,13 @@ def ea_transform_coeff(image, coeffs, lin_transform_vect):
         # get this orders coefficients
         ocoeff = coeffs[order_num]
         # get the poly fit values for coeffs
-        yfit = np.polyval(ocoeff[::-1], xpix)
+        yfit = mp.val_cheby(ocoeff, xpix, domain=[0, image.shape[1]])
         # transform the x pixel positions and fit positions
         xpix2 = -dx0 + xpix * lin_a + yfit * lin_b
         yfit2 = -dy0 + xpix * lin_c + yfit * lin_d
         # refit polynomial
-        coeffs2[order_num] = np.polyfit(xpix2, yfit2, len(ocoeff) - 1)[::-1]
+        coeffs2[order_num] = mp.fit_cheby(xpix2, yfit2, len(ocoeff) - 1,
+                                          domain=[0, image.shape[1]])
     # return new coefficients
     return coeffs2
 
@@ -766,7 +691,8 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, lprops, fiber, **kwargs):
         # x pixel vector that is used with polynomials to
         # find the order center y order center
         # TODO: This is spirou-centric *2 for A and B
-        ypix[order_num] = np.polyval(acc[order_num * 2][::-1], xpix)
+        ypix[order_num] = mp.val_cheby(acc[order_num * 2], xpix,
+                                       domain=[0, dim2])
     # -------------------------------------------------------------------------
     # storage of the dxmap standard deviations
     dxmap_stds = []
@@ -1233,8 +1159,8 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, lprops, fiber, **kwargs):
     return ref_dxmap, max_dxmap_std, max_dxmap_info, dxrms
 
 
-def calculate_dxmap_nirpshe(params, recipe, fpdata, lprops, fiber, **kwargs):
-    func_name = __NAME__ + '.calculate_dxmap()'
+def calculate_dxmap_nirps(params, recipe, fpdata, lprops, fiber, **kwargs):
+    func_name = __NAME__ + '.calculate_dxmap_nirps()'
 
     # get parameters from params/kwargs
     nbanana = pcheck(params, 'SHAPE_NUM_ITERATIONS', 'nbanana', kwargs,
@@ -1295,7 +1221,7 @@ def calculate_dxmap_nirpshe(params, recipe, fpdata, lprops, fiber, **kwargs):
     for order_num in range(nbo):
         # x pixel vector that is used with polynomials to
         # find the order center y order center
-        ypix[order_num] = np.polyval(acc[order_num][::-1], xpix)
+        ypix[order_num] = mp.val_cheby(acc[order_num], xpix, domain=[0, dim2])
     # -------------------------------------------------------------------------
     # storage of the dxmap standard deviations
     dxmap_stds = []
@@ -1743,8 +1669,6 @@ def calculate_dxmap_nirpshe(params, recipe, fpdata, lprops, fiber, **kwargs):
     return ref_dxmap, max_dxmap_std, max_dxmap_info, dxrms
 
 
-
-
 def calculate_dymap(params, fpimage, fpheader, **kwargs):
     func_name = __NAME__ + '.calculate_dymap()'
     # get properties from property dictionaries
@@ -1793,9 +1717,9 @@ def calculate_dymap(params, fpimage, fpheader, **kwargs):
         #   fibers coefficients (for each order)
         for f_it, fiber in enumerate(accs.keys()):
             # get this order + fibers coefficients
-            acco = accs[fiber][order_num, :][::-1]
+            acco = accs[fiber][order_num, :]
             # get the poly values
-            ypoly = np.polyval(acco, xpix)
+            ypoly = mp.val_cheby(acco, xpix, domain=[0, dim2])
             # work out this order + fibers y values: polynomial(x position)
             y0[iord + f_it, :] = ypoly
     # loop around each x pixel (columns)
@@ -1814,7 +1738,7 @@ def calculate_dymap(params, fpimage, fpheader, **kwargs):
 def get_ref_fp(params, header, filename=None, database=None):
     # get file definition
     out_fpref = drs_file.get_file_definition(params, 'REF_FP',
-                                                block_kind='red')
+                                             block_kind='red')
     # get key
     key = out_fpref.dbkey
     # load database
@@ -1828,12 +1752,12 @@ def get_ref_fp(params, header, filename=None, database=None):
     cfile = gen_calib.CalibFile()
     cfile.load_calib_file(params, key, header, filename=filename,
                           userinputkey='FPREF', database=calibdbm)
-    fpref, FPREF_FILE = cfile.data, cfile.filename
+    fpref, fpref_file = cfile.data, cfile.filename
     # ----------------------------------------------------------------------
     # log which fpref file we are using
-    WLOG(params, '', textentry('40-014-00030', args=[FPREF_FILE]))
+    WLOG(params, '', textentry('40-014-00030', args=[fpref_file]))
     # return the reference image
-    return FPREF_FILE, fpref
+    return fpref_file, fpref
 
 
 def get_shape_calibs(params, header, database):
@@ -1957,7 +1881,7 @@ def get_shapelocal(params, header, filename=None, database=None):
 # write file functions
 # =============================================================================
 def write_shape_ref_files(params, recipe, fpfile, hcfile, rawfpfiles,
-                          rawhcfiles, dxmap, dymap, REF_FP, fp_table,
+                          rawhcfiles, dxmap, dymap, ref_fp, fp_table,
                           fpprops, dxmap0, fpimage, fpimage2, hcimage,
                           hcimage2, qc_params):
     # ----------------------------------------------------------------------
@@ -2066,8 +1990,8 @@ def write_shape_ref_files(params, recipe, fpfile, hcfile, rawfpfiles,
     # set output key
     outfile3.add_hkey('KW_OUTPUT', value=outfile3.name)
     # copy data
-    outfile3.data = REF_FP
-    # log that we are saving REF_FP to file
+    outfile3.data = ref_fp
+    # log that we are saving ref_fp to file
     WLOG(params, '', textentry('40-014-00028', args=[outfile3.filename]))
     # define multi lists
     data_list = [fp_table]
@@ -2295,7 +2219,6 @@ def write_shape_ref_summary(recipe, params, fp_table, qc_params):
     recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS_DATE'])
     recipe.plot.add_stat('N_FPREF', value=len(fp_table),
                          comment='Number FP in reference')
-    # TODO: Add more stats?
     # construct summary
     recipe.plot.summary_document(0, qc_params)
 
@@ -2550,345 +2473,6 @@ def xy_acc_peak(xpeak, ypeak, im):
     y1 = -0.5 * my / ay + ypeak
 
     return x1, y1
-
-
-# TODO: function no longer used (was used in calculate_dxmap)
-def get_offset_sp(params, sp_fp, sp_hc, order_num, hcdata, poly_wave_ref,
-                  une_lines, poly_cavity, **kwargs):
-    func_name = __NAME__ + '.get_offset_sp'
-    # get constants from params/kwargs
-    xoffset = pcheck(params, 'SHAPEOFFSET_XOFFSET', 'xoffset', kwargs,
-                     func_name)
-    bottom_fp_percentile = pcheck(params, 'SHAPEOFFSET_BOTTOM_PERCENTILE',
-                                  'bottom_fp_percentile', kwargs, func_name)
-    top_fp_percentile = pcheck(params, 'SHAPEOFFSET_TOP_PERCENTILE',
-                               'top_fp_percentile', kwargs, func_name)
-    top_floor_frac = pcheck(params, 'SHAPEOFFSET_TOP_FLOOR_FRAC',
-                            'top_floor_frac', kwargs, func_name)
-    med_filter_wid = pcheck(params, 'SHAPEOFFSET_MED_FILTER_WIDTH',
-                            'med_filter_wid', kwargs, func_name)
-    fpindexmax = pcheck(params, 'SHAPEOFFSET_FPINDEX_MAX', 'fpindexmax',
-                        kwargs, func_name)
-    valid_fp_length = pcheck(params, 'SHAPEOFFSET_VALID_FP_LENGTH',
-                             'valid_fp_length', kwargs, func_name)
-    drift_margin = pcheck(params, 'SHAPEOFFSET_DRIFT_MARGIN',
-                          'drift_margin', kwargs, func_name)
-    inv_iterations = pcheck(params, 'SHAPEOFFSET_WAVEFP_INV_IT',
-                            'inv_iterations', kwargs, func_name)
-    mask_border = pcheck(params, 'SHAPEOFFSET_MASK_BORDER', 'mask_border',
-                         kwargs, func_name)
-    minimum_maxpeak_frac = pcheck(params, 'SHAPEOFFSET_MIN_MAXPEAK_FRAC',
-                                  'minimum_maxpeak_frac', kwargs, func_name)
-    mask_pixwidth = pcheck(params, 'SHAPEOFFSET_MASK_PIXWIDTH',
-                           'mask_pixwidth', kwargs, func_name)
-    mask_extwidth = pcheck(params, 'SHAPEOFFSET_MASK_EXTWIDTH',
-                           'mask_extwidth', kwargs, func_name)
-    dpmin = pcheck(params, 'SHAPEOFFSET_DEVIANT_PMIN', 'dpmin',
-                   kwargs, func_name)
-    dpmax = pcheck(params, 'SHAPEOFFSET_DEVIANT_PMAX', 'dpmax',
-                   kwargs, func_name)
-    deviant_percentiles = [dpmin, dpmax]
-    fp_max_num_error = pcheck(params, 'SHAPEOFFSET_FPMAX_NUM_ERROR',
-                              'fp_max_num_error', kwargs, func_name)
-    fit_hc_sigma = pcheck(params, 'SHAPEOFFSET_FIT_HC_SIGMA',
-                          'fit_hc_sigma', kwargs, func_name)
-    maxdev_threshold = pcheck(params, 'SHAPEOFFSET_MAXDEV_THRESHOLD',
-                              'maxdev_threshold', kwargs, func_name)
-    absdev_threshold = pcheck(params, 'SHAPEOFFSET_ABSDEV_THRESHOLD',
-                              'absdev_threshold', kwargs, func_name)
-
-    # -------------------------------------------------------------------------
-    # get data from loc
-    dim1, dim2 = hcdata.shape
-    # -------------------------------------------------------------------------
-    # define storage for the bottom and top values of the FPs
-    bottom = np.zeros_like(sp_fp)
-    top = np.zeros_like(sp_fp)
-    # -------------------------------------------------------------------------
-    # loop around pixels
-    for xpix in range(dim2):
-        # put the start a certain number of pixels behind
-        start = xpix - xoffset
-        end = xpix + xoffset
-        # deal with boundaries
-        if start < 0:
-            start = 0
-        if end > (dim2 - 1):
-            end = dim2 - 1
-        # define a segment between start and end
-        segment = sp_fp[start:end]
-        # push values into bottom and top
-        bottom[xpix] = mp.nanpercentile(segment, bottom_fp_percentile)
-        top[xpix] = mp.nanpercentile(segment, top_fp_percentile)
-    # -------------------------------------------------------------------------
-    # put a floor in the top values
-    top_floor_value = top_floor_frac * mp.nanmax(top)
-    top_mask = top <= top_floor_value
-    top[top_mask] = top_floor_value
-    # -------------------------------------------------------------------------
-    # subtract off the bottom from the FP's of this order
-    sp_fp = sp_fp - bottom
-    # normalise by the difference between top and bottom
-    sp_fp = sp_fp / (top - bottom)
-    # set NaN's to zero
-    sp_fp[~np.isfinite(sp_fp)] = 0.0
-    # -------------------------------------------------------------------------
-    # The HC spectrum is high-passed. We are just interested to know if
-    # a given expected line from the catalog falls at the position of a
-    # >3-sigma peak relative to the continuum
-    sp_hc = sp_hc - mp.medfilt_1d(sp_hc, med_filter_wid)
-    # normalise HC to its absolute deviation
-    norm = mp.nanmedian(np.abs(sp_hc[sp_hc != 0]))
-    sp_hc = sp_hc / norm
-    # -------------------------------------------------------------------------
-    # fpindex is a variable that contains the index of the FP peak interference
-    # this is expected to range from ~10000 to ~25000
-    fpindex = np.arange(fpindexmax) + 1
-    # -------------------------------------------------------------------------
-    # We find the exact wavelength of each FP peak in fpindex
-    # considering the cavity length
-
-    # The cavity length is very slightly wavelength dependent (hence the
-    # polynomial read earlier). First we find the length in the middle of the
-    # expected wavelength domain from the reference file
-
-    # just to cut the number of peaks so that they are
-    # all contained within the relevant domain
-    xdomain = np.linspace(0, dim2, 3).astype(int)
-    wave_start_med_end = np.polyval(poly_wave_ref[order_num][::-1], xdomain)
-    # get the wavelengths for the fp
-    wave_fp = np.polyval(poly_cavity, wave_start_med_end[1]) * 2 / fpindex
-    # -------------------------------------------------------------------------
-    # we give a 20 nm marging on either side... who knows, maybe SPIRou
-    #    has drifted
-    good = (wave_fp > wave_start_med_end[0] - drift_margin)
-    good &= (wave_fp < wave_start_med_end[2] + drift_margin)
-    # keep only the relevant FPs in this good region
-    fpindex = fpindex[good]
-    wave_fp = wave_fp[good]
-    # -------------------------------------------------------------------------
-    # a numerical trick so that we don't have to invert the poly_cavity
-    #    polynomial wave_fp depends on the cavity length, which in turns
-    #    depends (very slightly) on wave_fp again. This iteration
-    #    fixes the problem
-    for iteration in range(inv_iterations):
-        wave_fp = np.polyval(poly_cavity, wave_fp) * 2 / fpindex
-    # -------------------------------------------------------------------------
-    # get the pixel position along the spectrum
-    xpixs = np.arange(len(sp_fp))
-    # storage to be appended to
-    # x position of the FP peak, peak value. Could be used for quality check,
-    #    e-width of the line. Could be used for quality check
-    xpeak, peakval, ewval = [], [], []
-    # peak value of the FP spectrum
-    maxfp = mp.nanmax(sp_fp)
-    # current maximum value after masking
-    max_it = float(maxfp)
-    # mask
-    mask = np.ones_like(sp_fp).astype(int)
-    # deal with borders
-    mask[:mask_border] = 0
-    mask[-mask_border:] = 0
-
-    # looping while FP peaks are at least "minimum_maxpeak_frac" * 100% of
-    #     the max peak value
-    while max_it > (maxfp * minimum_maxpeak_frac):
-        # get the position of the maximum peak
-        pos = np.argmax(sp_fp * mask)
-        # get the current maximum value
-        max_it = sp_fp[pos]
-        # set this peak to False in the mask
-        fpstart, fpend = pos - mask_pixwidth, pos + mask_pixwidth + 1
-        mask[fpstart:fpend] = 0
-        # set the width
-        extstart, extend = pos - mask_extwidth, pos + mask_extwidth + 1
-        # extract a window in the spectrum
-        yy = sp_fp[extstart:extend]
-        xx = xpixs[extstart:extend]
-        # find the domain between the minima before and the minima after the
-        #   peak value
-        mask1 = np.ones_like(yy).astype(int)
-        mask1[:mask_extwidth] = 0
-        mask2 = np.ones_like(yy).astype(int)
-        mask2[mask_extwidth:] = 0
-        # find the minima of the fp's in this mask
-        y0 = mp.nanargmin(yy / mp.nanmax(yy) + mask1)
-        y1 = mp.nanargmin(yy / mp.nanmax(yy) + mask2)
-        # re-set xx and yy
-        xx = np.array(xx[y0:y1 + 1]).astype(float)
-        yy = np.array(yy[y0:y1 + 1]).astype(float)
-
-        # the FP must be at least 5 pixels long to be valid
-        if len(xx) > valid_fp_length:
-            # set up the guess: amp, x0, w, zp
-            guess = (float(mp.nanmax(yy) - mp.nanmin(yy)),
-                     float(xx[mp.nanargmax(yy)]), 1.0,
-                     float(mp.nanmin(yy)), 0.0)
-            # try to fit a gaussian
-            # noinspection PyBroadException
-            try:
-                coeffs, _ = curve_fit(mp.gauss_fit_s, xx, yy, p0=guess)
-                goodfit = True
-            except Exception as _:
-                goodfit, coeffs = False, None
-            # if we had a fit then update some values
-            if goodfit:
-                xpeak.append(coeffs[1])
-                peakval.append(coeffs[0])
-                ewval.append(coeffs[2])
-
-    # -------------------------------------------------------------------------
-    # sort FP peaks by their x pixel position
-    indices = np.argsort(xpeak)
-    # apply sort to vectors
-    xpeak2 = np.array(xpeak)[indices]
-    peakval2 = np.array(peakval)[indices]
-    ewval2 = np.array(ewval)[indices]
-    # we  "count" the FP peaks and determine their number in the
-    #   FP interference
-    # determine distance between consecutive peaks
-    xpeak2_mean = (xpeak2[1:] + xpeak2[:-1]) / 2
-    dxpeak = xpeak2[1:] - xpeak2[:-1]
-    # we clip the most deviant peaks
-    lowermask = dxpeak > mp.nanpercentile(dxpeak, deviant_percentiles[0])
-    uppermask = dxpeak < mp.nanpercentile(dxpeak, deviant_percentiles[1])
-    good = lowermask & uppermask
-    # apply good mask and fit the peak separation
-    fit_peak_separation = mp.nanpolyfit(xpeak2_mean[good], dxpeak[good], 2)
-    # Looping through peaks and counting the number of meddx between peaks
-    #    we know that peaks will be at integer multiple or medds (in the
-    #    overwhelming majority, they will be at 1 x meddx)
-    ipeak = np.zeros(len(xpeak2), dtype=int)
-    # loop around the xpeaks
-    for it in range(1, len(xpeak2)):
-        # get the distance between peaks
-        dx = xpeak2[it] - xpeak2[it - 1]
-        # get the estimate from the fit peak separation
-        dx_est = np.polyval(fit_peak_separation, xpeak2[it])
-        # find the integer number of the peak
-        ipeak[it] = ipeak[it - 1] + np.round(dx / dx_est)
-        # if we have a unexpected deviation log it
-        if np.round(dx / dx_est) != 1:
-            wmsg = '\t\tdx={0:.5f} dx/dx_est={1:.5f} est={2:.5f}'
-            wargs = [dx, dx / dx_est, dx_est]
-            WLOG(params, '', wmsg.format(*wargs))
-    # -------------------------------------------------------------------------
-    # Trusting the wavelength solution this is the wavelength of FP peaks
-    wave_from_hdr = np.polyval(poly_wave_ref[order_num][::-1], xpeak2)
-    # We estimate the FP order of the first FP peak. This integer value
-    # should be good to within a few units
-    fit0 = np.polyval(poly_cavity, wave_from_hdr[0])
-    fp_peak0_est = int(fit0 * 2 / wave_from_hdr[0])
-    # we scan "zp", which is the FP order of the first FP peak that we've
-    #    found we assume that the error in FP order assignment could range
-    #    from -50 to +50 in practice, it is -1, 0 or +1 for the cases we've
-    #    tested to date
-    best_zp = int(fp_peak0_est)
-    max_good = 0
-    # loop around estimates
-    fpstart = fp_peak0_est - fpindex[0] - fp_max_num_error
-    fpend = fp_peak0_est - fpindex[0] + fp_max_num_error
-    # empty value
-    xpos_predict_int, zp = None, None
-    # loop from fpstart to fpend
-    for zp in range(fpstart, fpend):
-        # we take a trial solution between wave (from the theoretical FP
-        #    solution) and the x position of measured peaks
-        fitzp = mp.nanpolyfit(wave_fp[zp - ipeak], xpeak2, 3)
-        # we predict an x position for the known U Ne lines
-        xpos_predict = np.polyval(fitzp, une_lines)
-        # deal with borders
-        good = (xpos_predict > 0) & (xpos_predict < dim2)
-        # doing this for order where there are no UNe lines
-        if np.sum(good) == 0:
-            WLOG(params, 'warning', textentry('40-014-00040', args=[order_num]),
-                 sublevel=4)
-            best_zp = fp_peak0_est - fpindex[0]
-            break
-        # mask
-        xpos_predict = xpos_predict[good]
-        # we check how many of these lines indeed fall on > "fit_hc_sigma"
-        #    sigma excursion of the HC spectrum
-        xpos_predict_int = np.zeros(len(xpos_predict), dtype=int)
-        for it in range(len(xpos_predict_int)):
-            xpos_predict_int[it] = xpos_predict[it]
-        # the FP order number that produces the most HC matches
-        #   is taken to be the right wavelength solution
-        frac_good = np.mean(sp_hc[xpos_predict_int] > fit_hc_sigma)
-        # update the best values if better than last iteration
-        if frac_good > max_good:
-            max_good, best_zp = frac_good, zp
-    # -------------------------------------------------------------------------
-    # log the predicted vs measured FP peak
-    wargs = [fp_peak0_est, fpindex[best_zp]]
-    WLOG(params, '', textentry('40-014-00019', args=wargs))
-    # -------------------------------------------------------------------------
-    # we find teh actual wavelength of our IDed peaks
-    wave_xpeak2 = wave_fp[best_zp - ipeak]
-    # get the derivative of the polynomial
-    poly = poly_wave_ref[order_num]
-    deriv_poly = np.polyder(poly[::-1], 1)[::-1]
-    # we find the corresponding offset
-    err_wave = wave_xpeak2 - np.polyval(poly[::-1], xpeak2)
-    err_pix = err_wave / np.polyval(deriv_poly[::-1], xpeak2)
-    # -------------------------------------------------------------------------
-    # first we perform a thresholding with a 1st order polynomial
-    maxabsdev = np.inf
-    good = np.isfinite(err_pix)
-    # loop around until we are better than threshold
-    while maxabsdev > maxdev_threshold:
-        # get the error fit (1st order polynomial)
-        fit_err_xpix = mp.nanpolyfit(xpeak2[good], err_pix[good], 1)
-        # get the deviation from error fit
-        dev = err_pix - np.polyval(fit_err_xpix, xpeak2)
-        # get the median absolute deviation
-        absdev = mp.nanmedian(np.abs(dev))
-        # very low thresholding values tend to clip valid points
-        if absdev < absdev_threshold:
-            absdev = absdev_threshold
-        # get the max median asbolute deviation
-        maxabsdev = mp.nanmax(np.abs(dev[good] / absdev))
-        # iterate the good mask
-        good &= np.abs(dev / absdev) < maxdev_threshold
-    # -------------------------------------------------------------------------
-    # then we perform a thresholding with a 5th order polynomial
-    maxabsdev = np.inf
-    # temp empty values
-    fit_err_xpix, dev, absdev = None, None, None
-    # loop around until we are better than threshold
-    while maxabsdev > maxdev_threshold:
-        # get the error fit (1st order polynomial)
-        fit_err_xpix = mp.nanpolyfit(xpeak2[good], err_pix[good], 5)
-        # get the deviation from error fit
-        dev = err_pix - np.polyval(fit_err_xpix, xpeak2)
-        # get the median absolute deviation
-        absdev = mp.nanmedian(np.abs(dev))
-        # very low thresholding values tend to clip valid points
-        if absdev < absdev_threshold:
-            absdev = absdev_threshold
-        # get the max median asbolute deviation
-        maxabsdev = mp.nanmax(np.abs(dev[good] / absdev))
-        # iterate the good mask
-        good &= np.abs(dev / absdev) < maxdev_threshold
-    # -------------------------------------------------------------------------
-    # this relation is the (sigma-clipped) fit between the xpix error
-    #    and xpix along the order. The corresponding correction vector will
-    #    be sent back to the dx grid
-    corr_err_xpix = np.polyval(fit_err_xpix, np.arange(dim2))
-    # -------------------------------------------------------------------------
-    # get the statistics
-    std_dev = mp.nanstd(dev)
-    errpix_med = mp.nanmedian(err_pix)
-    std_corr = mp.nanstd(corr_err_xpix[xpos_predict_int])
-    corr_med = mp.nanmedian(corr_err_xpix[xpos_predict_int])
-    cent_fit = mp.nanpolyfit(xpeak2[good], fpindex[zp - ipeak[good]], 5)
-    num_fp_cent = np.polyval(cent_fit, dim2 // 2)
-    # log the statistics
-    wargs = [std_dev, absdev, errpix_med, std_corr, corr_med, num_fp_cent]
-    WLOG(params, '', textentry('40-014-00020', args=wargs))
-    # -------------------------------------------------------------------------
-    # return loc
-    return corr_err_xpix, xpeak2, peakval2, ewval2, err_pix, good
 
 # =============================================================================
 # End of code

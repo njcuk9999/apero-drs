@@ -12,38 +12,37 @@ Created on 2019-08-06 at 11:57
 
 
 """
-from astropy.table import Table
-from collections import OrderedDict
-from copy import deepcopy
 import itertools
-import numpy as np
 import os
-import pandas as pd
 import sys
 import time
-from typing import Any, Dict, List, Optional, Tuple, Union
 import warnings
+from collections import OrderedDict
+from copy import deepcopy
+from typing import Any, Dict, List, Optional, Tuple, Union
 
+import numpy as np
+from astropy.table import Table
+
+from apero import lang
 from apero.base import base
-from apero.core.core import drs_base_classes as base_class
-from apero.core.core import drs_exceptions
-from apero.core.core import drs_text
-from apero.core.core import drs_misc
-from apero.core.core import drs_log
+from apero.core import constants
 from apero.core.core import drs_argument
+from apero.core.core import drs_base_classes as base_class
+from apero.core.core import drs_database
+from apero.core.core import drs_exceptions
+from apero.core.core import drs_file
+from apero.core.core import drs_log
+from apero.core.core import drs_misc
+from apero.core.core import drs_text
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_utils
-from apero.core.core import drs_database
-from apero.core.core import drs_file
-from apero import lang
-from apero.core import constants
-from apero.io import drs_table
 from apero.io import drs_lock
+from apero.io import drs_table
 from apero.science import preprocessing as prep
 from apero.science import telluric
 from apero.tools.module.setup import drs_reset
-
 
 # =============================================================================
 # Define variables
@@ -82,7 +81,7 @@ OBJNAMECOL = 'KW_OBJNAME'
 # list of arguments to remove from skip check
 SKIP_REMOVE_ARGS = ['--skip', '--program', '--prog', '--debug',
                     '--verbose' '--plot', '--shortname', '--short'
-                    '--rkind', '--recipe_kind', '--parallel', '--crunfile']
+                                                         '--rkind', '--recipe_kind', '--parallel', '--crunfile']
 # keep a global copy of plt
 PLT_MOD = None
 
@@ -91,9 +90,9 @@ PLT_MOD = None
 # Define classes
 # =============================================================================
 class Run:
-    def __init__(self, params, indexdb: FileIndexDatabase, runstring,
+    def __init__(self, params, indexdb: FileIndexDatabase, runstring: str,
                  mod: Union[base_class.ImportModule, None] = None,
-                 priority=0, inrecipe=None):
+                 priority: int = 0, inrecipe=None):
         self.params = params
         self.indexdb = indexdb
         self.pconst = constants.pload(params['INSTRUMENT'])
@@ -122,6 +121,8 @@ class Run:
         self.obs_dir = None
         # update parameters given runstring
         self.update()
+        # pickle recipe name (only used for pickling)
+        self.pickle_recipe_name = None
 
     def filename_args(self):
         """
@@ -395,6 +396,54 @@ class Run:
     def __repr__(self):
         return 'Run[{0}]'.format(self.runstring)
 
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # add a new constant for getting recipe and recipemod
+        if self.recipe is not None:
+            self.pickle_recipe_name = self.recipe.name
+        # what to exclude from state (may not be pickle-able)
+        exclude = ['pconst', 'indexdb', 'recipe', 'recipemod']
+        # need a dictionary for pickle
+        state = dict()
+        for key, item in self.__dict__.items():
+            if key not in exclude:
+                state[key] = item
+        # return dictionary state
+        return state
+
+    def __setstate__(self, state):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+        # reload excluded attributes
+        self.pconst = constants.pload(self.params['INSTRUMENT'])
+        self.indexdb = FileIndexDatabase(self.params)
+        # need to re-find and set recipe and recipe modd
+        self.reload_recipe()
+
+    def reload_recipe(self):
+        # deal with no pickable recipe name
+        if self.pickle_recipe_name is None:
+            return
+        # load the recipe mod
+        rmod = self.pconst.RECIPEMOD()
+        # set up the arguments to find the recipe
+        fkwargs = dict(name=self.pickle_recipe_name,
+                       instrument=self.params['INSTRUMENT'],
+                       mod=rmod)
+        # set recipe
+        self.recipe, _ = drs_startup.find_recipe(**fkwargs)
+        # recipe mod in this sense is the recipe.main
+        self.recipemod = self.recipe.main
+
 
 # =============================================================================
 # Define user functions
@@ -451,12 +500,12 @@ def generate_skip_table(params):
     if drs_text.null_text(params['INCLUDE_OBS_DIRS'], ['', 'All', 'None']):
         include_list = None
     else:
-        include_list = params['INCLUDE_OBS_DIRS']
+        include_list = params.listp('INCLUDE_OBS_DIRS')
     # deal with black list for directories
     if drs_text.null_text(params['EXCLUDE_OBS_DIRS'], ['', 'All', 'None']):
         exclude_list = None
     else:
-        exclude_list = params['EXCLUDE_OBS_DIRS']
+        exclude_list = params.listp('EXCLUDE_OBS_DIRS')
     # deal with obs_dir set (take precedences over white list)
     if not drs_text.null_text(params['RUN_OBS_DIR'], ['', 'None', 'All']):
         include_list = [params['RUN_OBS_DIR']]
@@ -1320,7 +1369,7 @@ def _generate_run_from_sequence(params: ParamDict, sequence,
     newruns = []
     # define the reference conditions (that affect all recipes)
     ref_condition = gen_global_condition(params, indexdb,
-                                            reject_list)
+                                         reject_list)
     # ------------------------------------------------------------------
     # check we have rows left
     # ------------------------------------------------------------------
@@ -1586,50 +1635,50 @@ def prompt():
 
 def conditional_list(strlist: List[str], key: str, logic: str,
                      condition: Optional[str] = None) -> str:
-        """
-        Add a condition list to a condition (or create a condition if condition
-        is not given)
+    """
+    Add a condition list to a condition (or create a condition if condition
+    is not given)
 
-        :param strlist: List of strings, the items to add
-        :param key: str, the column name to check against
-        :param logic: str, eitehr 'include' or 'exclude'
-        :param condition: str or None, if set a previous condition to add to
+    :param strlist: List of strings, the items to add
+    :param key: str, the column name to check against
+    :param logic: str, eitehr 'include' or 'exclude'
+    :param condition: str or None, if set a previous condition to add to
 
-        :return: str, the updated (or new) condition
-        """
-        # ---------------------------------------------------------------------
-        # deal with no starting condition
-        if condition is None:
-            condition = ''
-            add = ''
-        else:
-            add = ' AND '
-        # ---------------------------------------------------------------------
-        # deal with include logic
-        if logic == 'include':
-            # define a subcondition
-            subconditions = []
-            # loop around white listed nights and set them to False
-            for item in strlist:
-                # add subcondition
-                subcondition = '{0}="{1}"'.format(key, item)
-                subconditions.append(subcondition)
-            # add to conditions
-            condition += add + '({0})'.format(' OR '.join(subconditions))
-        # ---------------------------------------------------------------------
-        # else we have exclude logic
-        else:
-            # define a subcondition
-            subconditions = []
-            # loop around white listed nights and set them to False
-            for item in strlist:
-                # add subcondition
-                subcondition = '{0}!="{1}"'.format(key, item)
-                subconditions.append(subcondition)
-            # add to conditions
-            condition += add + '({0})'.format(' AND '.join(subconditions))
-        # ---------------------------------------------------------------------
-        return condition
+    :return: str, the updated (or new) condition
+    """
+    # ---------------------------------------------------------------------
+    # deal with no starting condition
+    if condition is None:
+        condition = ''
+        add = ''
+    else:
+        add = ' AND '
+    # ---------------------------------------------------------------------
+    # deal with include logic
+    if logic == 'include':
+        # define a subcondition
+        subconditions = []
+        # loop around white listed nights and set them to False
+        for item in strlist:
+            # add subcondition
+            subcondition = '{0}="{1}"'.format(key, item)
+            subconditions.append(subcondition)
+        # add to conditions
+        condition += add + '({0})'.format(' OR '.join(subconditions))
+    # ---------------------------------------------------------------------
+    # else we have exclude logic
+    else:
+        # define a subcondition
+        subconditions = []
+        # loop around white listed nights and set them to False
+        for item in strlist:
+            # add subcondition
+            subcondition = '{0}!="{1}"'.format(key, item)
+            subconditions.append(subcondition)
+        # add to conditions
+        condition += add + '({0})'.format(' AND '.join(subconditions))
+    # ---------------------------------------------------------------------
+    return condition
 
 
 def gen_global_condition(params: ParamDict, indexdb: FileIndexDatabase,
@@ -1776,7 +1825,7 @@ def gen_global_condition(params: ParamDict, indexdb: FileIndexDatabase,
 # Define processing functions
 # =============================================================================
 def _linear_process(params, runlist, number=0, cores=1, event=None,
-                    group=None, return_dict=None, ):
+                    group=None, return_dict=None):
     # deal with empty return_dict
     if return_dict is None:
         return_dict = dict()

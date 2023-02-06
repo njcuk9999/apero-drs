@@ -9,28 +9,29 @@ Created on 2019-07-09 at 13:42
 
 @author: cook
 """
+import os
+import warnings
+from typing import Tuple, Union
+
 import numpy as np
-from astropy.table import Table
 from astropy import constants as cc
 from astropy import units as uu
-import os
-from typing import Union
-import warnings
+from astropy.table import Table
 
+from apero import lang
 from apero.base import base
-from apero.core.core import drs_text
 from apero.core import constants
 from apero.core import math as mp
-from apero import lang
-from apero.core.core import drs_log, drs_file
-from apero.core.utils import drs_recipe
 from apero.core.core import drs_database
+from apero.core.core import drs_log, drs_file
+from apero.core.core import drs_text
+from apero.core.utils import drs_recipe
 from apero.io import drs_fits
+from apero.io import drs_lock
+from apero.science.calib import gen_calib
 from apero.science.calib import shape
 from apero.science.calib import wave
-from apero.science.calib import gen_calib
 from apero.science.extract import berv
-
 
 # =============================================================================
 # Define variables
@@ -68,7 +69,6 @@ display_func = drs_log.display_func
 # =============================================================================
 def order_profiles(params, recipe, infile, fibertypes, sprops,
                    filenames=None, database=None):
-    func_name = __NAME__ + '.order_profiles()'
     # filenames must be a dictionary
     if not isinstance(filenames, dict):
         filenames = dict()
@@ -119,9 +119,86 @@ def order_profiles(params, recipe, infile, fibertypes, sprops,
             # construct order profile straightened
             orderpsfile = ospfile.newcopy(params=params, fiber=fiber)
             orderpsfile.construct_filename(infile=oinfile)
+        # ----------------------------------------------------------------------
+        # define a synchronized lock for indexing (so multiple instances do not
+        #  run at the same time)
+        lockfile = os.path.basename(filename)
+        # start a lock
+        lock = drs_lock.Lock(params, lockfile)
+        # -------------------------------------------------------------------------
+        # must check that a pid is set
+        if params['PID'] is None:
+            WLOG(params, 'error', textentry('10-005-00006'))
+            pid = None
+        else:
+            pid = params['PID']
         # ------------------------------------------------------------------
-        # check if temporary file exists
-        if orderpsfile.file_exists():
+        # need a lock here as orderps temporary file can be writing to disk
+        #    and other cores then try to read the file while writing
+        @drs_lock.synchronized(lock, pid)
+        def locked_save_file():
+            return save_tmp_orderps_file(params, recipe, orderpsfile, opfile,
+                                         fiber, header, filename, calibdbm,
+                                         sprops)
+        # -----------------------------------------------------------------
+        # try to run locked makedirs
+        try:
+            orderp, orderpfilename, orderptime = locked_save_file()
+        except KeyboardInterrupt as e:
+            lock.reset()
+            raise e
+        except Exception as e:
+            # reset lock
+            lock.reset()
+            raise e
+        # -----------------------------------------------------------------
+        # store in storage dictionary
+        orderprofiles[fiber] = orderp
+        orderfiles[fiber] = orderpfilename
+        ordertimes[fiber] = orderptime
+    # return order profiles
+    return orderprofiles, orderfiles, ordertimes
+
+
+OrderPSReturn = Tuple[Union[DrsFitsFile, None], str, float]
+
+
+def save_tmp_orderps_file(params: ParamDict, recipe: DrsRecipe,
+                          orderpsfile: DrsFitsFile, opfile: DrsFitsFile,
+                          fiber: str, header: drs_fits.Header,
+                          filename: str,
+                          calibdbm: drs_database.CalibrationDatabase,
+                          sprops: ParamDict) -> OrderPSReturn:
+    """
+    We need to find the temporary order ps file one core at a time (if we
+    don't find the file we create it) this can lead to problems when we are
+    writing it at the same time as trying to find it on another core
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param recipe: DrsRecipe, the recipe instance that called this function
+    :param orderpsfile: DrsFitsFile, the output straightened order profile
+                        file class instance
+    :param opfile: DrsFitsFile, the input order profile file class instance
+    :param fiber: str, the fiber name
+    :param header: Header, the fits Header class for the input file
+    :param filename: str, the input filename
+    :param calibdbm: Calibration database, the calibration database class
+    :param sprops: ParamDict, the shape parameter dictionary
+
+    :return: tuple, 1. return the order profile, 2. the filename and
+             3. the time of this file
+    """
+    # set function name
+    func_name = display_func('save_tmp_orderps_file', __NAME__)
+    # flag that order profile has been read (or not read)
+    orderp_read = False
+    orderp = None
+    orderpfilename = 'Unknown'
+    orderptime = np.nan
+    # check if temporary file exists
+    if orderpsfile.file_exists():
+        # we need to wait (as file may exist but still be writing to disk
+        try:
             # load the numpy temporary file
             #    Note: NpyFitsFile needs arguments params!
             if isinstance(orderpsfile, DrsFitsFile):
@@ -138,64 +215,70 @@ def order_profiles(params, recipe, infile, fibertypes, sprops,
             orderpfilename = orderpsfile.filename
             # time is the MJDMID of the order profile
             orderptime = orderpsfile.get_hkey('KW_MID_OBS_TIME')
-        # if straighted order profile doesn't exist and we have no filename
-        #   defined then we need to figure out the order profile file -
-        #   load it and then save it as a straighted version (orderpsfile)
-        else:
-            # get key
-            key = opfile.get_dbkey()
-            # get pseudo constants
-            pconst = constants.pload()
-            # get fiber to use for ORDERPFILE (i.e. AB,A,B --> AB  and C-->C)
-            usefiber = pconst.FIBER_LOC_TYPES(fiber)
-            # get the order profile filename
-            cfile = gen_calib.CalibFile()
-            cfile.load_calib_file(params, key, header, filename=filename,
-                                  userinputkey='ORDERPFILE', database=calibdbm,
-                                  fiber=usefiber, return_filename=True)
-            # get properties from calibration file
-            filename, orderptime = cfile.filename, cfile.mjdmid
-            # load order profile
-            orderp, orderhdr = drs_fits.readfits(params, filename, getdata=True,
-                                                 gethdr=True)
-            orderpfilename = filename
-            # straighten orders
-            orderp = shape.ea_transform(params, orderp, sprops['SHAPEL'],
-                                        dxmap=sprops['SHAPEX'],
-                                        dymap=sprops['SHAPEY'],)
-            # copy full header from order profile
-            orderpsfile.copy_header(header=orderhdr)
-            orderpsfile.add_hkey('KW_CDBSHAPEL', value=sprops['SHAPELFILE'])
-            orderpsfile.add_hkey('KW_CDTSHAPEL', value=sprops['SHAPELTIME'])
-            orderpsfile.add_hkey('KW_CDBSHAPEDX', value=sprops['SHAPEXFILE'])
-            orderpsfile.add_hkey('KW_CDTSHAPEDX', value=sprops['SHAPEXTIME'])
-            orderpsfile.add_hkey('KW_CDBSHAPEDY', value=sprops['SHAPEYFILE'])
-            orderpsfile.add_hkey('KW_CDTSHAPEDY', value=sprops['SHAPEYTIME'])
-            # push into orderpsfile
-            orderpsfile.data = orderp
-            # log progress (saving to file)
-            wargs = [orderpsfile.filename]
-            WLOG(params, '', textentry('40-013-00024', args=wargs))
-            # define multi lists
-            data_list, name_list = [], []
-            # snapshot of parameters
-            if params['PARAMETER_SNAPSHOT']:
-                data_list += [params.snapshot_table(recipe,
-                                                    drsfitsfile=orderpsfile)]
-                name_list += ['PARAM_TABLE']
-            # write image to file
-            orderpsfile.write_multi(data_list=data_list, name_list=name_list,
-                                    block_kind=recipe.out_block_str,
-                                    runstring=recipe.runstring)
-            # add to output files (for indexing)
-            recipe.add_output_file(orderpsfile)
-
-        # store in storage dictionary
-        orderprofiles[fiber] = orderp
-        orderfiles[fiber] = orderpfilename
-        ordertimes[fiber] = orderptime
-    # return order profiles
-    return orderprofiles, orderfiles, ordertimes
+            # mark orderp as read
+            orderp_read = True
+        except Exception as e:
+            # args for warning (from error thrown)
+            wargs = [orderpsfile.filename, type(e), str(e), func_name]
+            # report error as warning
+            WLOG(params, 'warning', textentry('10-016-00026', args=wargs),
+                 sublevel=2)
+            # make sure we know order profile has not been read
+            orderp_read = False
+    # if straighted order profile doesn't exist and we have no filename
+    #   defined then we need to figure out the order profile file -
+    #   load it and then save it as a straighted version (orderpsfile)
+    if not orderp_read:
+        # get key
+        key = opfile.get_dbkey()
+        # get pseudo constants
+        pconst = constants.pload()
+        # get fiber to use for ORDERPFILE (i.e. AB,A,B --> AB  and C-->C)
+        usefiber = pconst.FIBER_LOC_TYPES(fiber)
+        # get the order profile filename
+        cfile = gen_calib.CalibFile()
+        cfile.load_calib_file(params, key, header, filename=filename,
+                              userinputkey='ORDERPFILE', database=calibdbm,
+                              fiber=usefiber, return_filename=True)
+        # get properties from calibration file
+        filename, orderptime = cfile.filename, cfile.mjdmid
+        # load order profile
+        orderp, orderhdr = drs_fits.readfits(params, filename, getdata=True,
+                                             gethdr=True)
+        orderpfilename = filename
+        # straighten orders
+        orderp = shape.ea_transform(params, orderp, sprops['SHAPEL'],
+                                    dxmap=sprops['SHAPEX'],
+                                    dymap=sprops['SHAPEY'], )
+        # copy full header from order profile
+        orderpsfile.copy_header(header=orderhdr)
+        orderpsfile.add_hkey('KW_CDBSHAPEL', value=sprops['SHAPELFILE'])
+        orderpsfile.add_hkey('KW_CDTSHAPEL', value=sprops['SHAPELTIME'])
+        orderpsfile.add_hkey('KW_CDBSHAPEDX', value=sprops['SHAPEXFILE'])
+        orderpsfile.add_hkey('KW_CDTSHAPEDX', value=sprops['SHAPEXTIME'])
+        orderpsfile.add_hkey('KW_CDBSHAPEDY', value=sprops['SHAPEYFILE'])
+        orderpsfile.add_hkey('KW_CDTSHAPEDY', value=sprops['SHAPEYTIME'])
+        # push into orderpsfile
+        orderpsfile.data = orderp
+        # log progress (saving to file)
+        wargs = [orderpsfile.filename]
+        WLOG(params, '', textentry('40-013-00024', args=wargs))
+        # define multi lists
+        data_list, name_list = [], []
+        # snapshot of parameters
+        if params['PARAMETER_SNAPSHOT']:
+            data_list += [params.snapshot_table(recipe,
+                                                drsfitsfile=orderpsfile)]
+            name_list += ['PARAM_TABLE']
+        # write the shapel file
+        orderpsfile.write_multi(data_list=data_list,
+                                name_list=name_list,
+                                block_kind=recipe.out_block_str,
+                                runstring=recipe.runstring)
+        # add to output files (for indexing)
+        recipe.add_output_file(orderpsfile)
+    # return the order profile, the filename and the time of this file
+    return orderp, orderpfilename, orderptime
 
 
 def ref_fplines(params, recipe, e2dsfile, wavemap, fiber, database=None,
@@ -205,11 +288,17 @@ def ref_fplines(params, recipe, e2dsfile, wavemap, fiber, database=None,
     # get constant from params
     allowtypes = pcheck(params, 'WAVE_FP_DPRLIST', 'fptypes', kwargs, func_name,
                         mapf='list')
+
+    allowfibers = pcheck(params, 'WAVE_FP_FIBERTYPES', 'fpfibers', kwargs,
+                         func_name, mapf='list')
     # get dprtype
     dprtype = e2dsfile.get_hkey('KW_DPRTYPE', dtype=str)
     # get psuedo constants
     pconst = constants.pload()
-    sfibers, rfiber = pconst.FIBER_KINDS()
+    if fiber in allowfibers:
+        rfiber = str(fiber)
+    else:
+        sfibers, rfiber = pconst.FIBER_KINDS()
     # ----------------------------------------------------------------------
     # deal with fiber being the reference fiber
     if fiber != rfiber:
@@ -221,6 +310,12 @@ def ref_fplines(params, recipe, e2dsfile, wavemap, fiber, database=None,
     if dprtype not in allowtypes:
         # Skipping FPLINES (DPRTYPE = {0})
         WLOG(params, 'debug', textentry('90-016-000034', args=[dprtype]))
+        return None
+    # ----------------------------------------------------------------------
+    # make sure fiber is FP
+    if pconst.FIBER_DPR_POS(dprtype, fiber) != 'FP':
+        # Skipping FPLINES (Fiber = {0})'
+        WLOG(params, 'debug', textentry('90-016-00003', args=[fiber]))
         return None
     # ----------------------------------------------------------------------
     # get reference hc lines and fp lines from calibDB
@@ -285,7 +380,7 @@ def e2ds_to_s1d(params: ParamDict, recipe: DrsRecipe,  wavemap: np.ndarray,
     else:
         # velocity grid in round numbers of m / s
         magicgrid = mp.get_magic_grid(wavestart, waveend, binvelo * 1000)
-        # we want wave grid in
+        # this is our wave grid
         wavegrid = np.array(magicgrid)
     # -------------------------------------------------------------------------
     # define a smooth transition mask at the edges of the image
@@ -472,9 +567,66 @@ def qc_extraction(params, eprops):
     return qc_params, passed
 
 
+def create_order_table(lprops: ParamDict, wprops: ParamDict,
+                       eprops: ParamDict) -> Table:
+    """
+    Create the order table with statistics about each order
+    and the wave and loc coefficients
+
+    :param lprops: ParamDict, the localisation parameter dictionary
+    :param wprops: ParamDict, the wave solution parameter dictionary
+    :param eprops: ParamDict, the extraction parameter dictionary
+
+    :return: astropy.Table - the order table
+    """
+    # number of orders
+    nbo = wprops['NBO']
+    nbxpix = wprops['NBPIX']
+    # start the table
+    order_table = Table()
+    # order number
+    order_table['order_num'] = np.arange(nbo).astype(int)
+    # echelle number
+    order_table['echelle_num'] = wprops['EORDERS']
+    # wave min/max/med
+    order_table['WAVE_MIN'] = mp.nanmin(wprops['WAVEMAP'], axis=1)
+    order_table['WAVE_MED'] = mp.nanmedian(wprops['WAVEMAP'], axis=1)
+    order_table['WAVE_MEAN'] = mp.nanmean(wprops['WAVEMAP'], axis=1)
+    order_table['WAVE_MAX'] = mp.nanmax(wprops['WAVEMAP'], axis=1)
+    # central y pixel position
+    order_table['YPIX_CENT'] = lprops['YCENT']
+    # extract parameters
+    order_table['SNR'] = eprops['SNR']
+    order_table['NCOSMIC'] = eprops['N_COSMIC']
+    order_table['FLUXVAL'] = eprops['FLUX_VAL']
+    # loop around e2ds frames
+    keys = ['E2DS', 'E2DSFF', 'FLAT', 'BLAZE']
+    for key in keys:
+        order_table[f'{key}_MIN'] = mp.nanmin(eprops[key], axis=1)
+        order_table[f'{key}_MAX'] = mp.nanmax(eprops[key], axis=1)
+        order_table[f'{key}_MED'] = mp.nanmedian(eprops[key], axis=1)
+        order_table[f'{key}_MEAN'] = mp.nanmean(eprops[key], axis=1)
+    # loc parameters
+    for n_coeff in range(lprops['CENT_COEFFS'].shape[1]):
+        keyname = f'LOC_POS_COEFF_{n_coeff}'
+        order_table[keyname] = lprops['CENT_COEFFS'][:, n_coeff]
+    for n_coeff in range(lprops['WID_COEFFS'].shape[1]):
+        keyname = f'LOC_WID_COEFF_{n_coeff}'
+        order_table[keyname] = lprops['WID_COEFFS'][:, n_coeff]
+    # wave parameters
+    for n_coeff in range(wprops['COEFFS'].shape[1]):
+        keyname = f'WAVE_COEFF_{n_coeff}'
+        order_table[keyname] = wprops['COEFFS'][:, n_coeff]
+    # return the table
+    return order_table
+
+
 def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
                            props, lprops, wprops, eprops, bprops,
                            swprops, svprops, sprops, fbprops, qc_params):
+
+    # create extraction order table
+    order_table = create_order_table(lprops, wprops, eprops)
     # ----------------------------------------------------------------------
     # Store E2DS in file
     # ----------------------------------------------------------------------
@@ -612,7 +764,7 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     wargs = [e2dsfile.filename]
     WLOG(params, '', textentry('40-016-00005', args=wargs))
     # define multi lists
-    data_list, name_list = [], []
+    data_list, name_list = [order_table], ['ORDER_TABLE']
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=e2dsfile)]
@@ -651,7 +803,7 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     wargs = [e2dsfffile.filename]
     WLOG(params, '', textentry('40-016-00006', args=wargs))
     # define multi lists
-    data_list, name_list = [], []
+    data_list, name_list = [order_table], ['ORDER_TABLE']
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=e2dsfffile)]
@@ -846,6 +998,7 @@ def write_extraction_files_ql(params, recipe, infile, rawfiles, combine, fiber,
     # add SNR parameters to header
     e2dsfile.add_hkey_1d('KW_EXT_SNR', values=eprops['SNR'],
                          dim1name='order')
+    e2dsfile.add_hkey('KW_EXT_NBO', value=len(eprops['SNR']))
     # add start and end extraction order used
     e2dsfile.add_hkey('KW_EXT_START', value=eprops['START_ORDER'])
     e2dsfile.add_hkey('KW_EXT_END', value=eprops['END_ORDER'])

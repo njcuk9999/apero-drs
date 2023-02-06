@@ -9,16 +9,16 @@ Created on 2019-11-26 at 15:54
 
 @author: cook
 
-Import Rules: Cannot use anything other than standard python 3 packages and apero
-(i.e. no numpy, no astropy etc)
+Import Rules: Cannot use anything other than standard python 3 packages
+and apero (i.e. no numpy, no astropy etc)
 """
 import argparse
 import importlib
 import os
-from pathlib import Path
 import signal
 import sys
-from typing import Any, List, Union
+from pathlib import Path
+from typing import Any, List, Tuple, Union
 
 from apero.tools.module.setup import drs_installation as install
 from apero.core import constants
@@ -41,14 +41,30 @@ __version__ = base.__version__
 INSTRUMENTS = base.INSTRUMENTS[:-1]  # Remove "None"
 # define the drs name (and module name)
 DRS_PATH = 'apero'
+# define the place where the constant recipes are
+CONSTANTS_PATH = 'core.constants'
+# define the place where the installation recipes are
+INSTALL_PATH = 'tools.module.setup.drs_installation'
+# define the drs_base path for language dict
+BASE_PATH = 'base.drs_base'
+# Requirement files
+REQ_USER = 'requirements_current.txt'
+REQ_DEV = 'requirements_developer.txt'
+VERSION_FILE = 'version.txt'
+# explicit args
+explicit_args = ['update', 'skip', 'dev', 'gui']
 # modules that don't install like their name
 module_translation = dict()
+module_translation['importlib-resources'] = 'importlib_resources'
 module_translation['Pillow'] = 'PIL'
-module_translation['pyyaml'] = 'yaml'
+module_translation['PyYAML'] = 'yaml'
 module_translation['mysql-connector-python'] = 'mysql.connector'
 module_translation['scikit-image'] = 'skimage'
-module_translation['importlib-resources'] = 'importlib_resources'
-module_translation['pandastable'] = ('pandastable', '0.12.2')
+module_translation['pandastable'] = ('pandastable', '0.13.0')
+module_translation['GitPython'] = 'git'
+module_translation['Bottleneck'] = 'bottleneck'
+module_translation['SQLAlchemy'] = 'sqlalchemy'
+module_translation['Sphinx'] = 'sphinx'
 # start the language dictionary
 lang = setup_lang.LangDict()
 
@@ -179,7 +195,7 @@ def get_args() -> argparse.Namespace:
     parser.add_argument('--skip', action='store_true', default=False,
                         dest='skip', help=lang['INSTALL_SKIP_HELP'])
     parser.add_argument('--dev', action='store_true', default=False,
-                        dest='devmode', help=lang['INSTALL_DEV_HELP'])
+                        dest='dev', help=lang['INSTALL_DEV_HELP'])
     parser.add_argument('--gui', action='store_true', default=False, dest='gui',
                         help=lang['INSTALL_GUI_HELP'])
     parser.add_argument('--name', action='store', dest='name',
@@ -214,7 +230,7 @@ def get_args() -> argparse.Namespace:
                         help=lang['INSTALL_ASSETDIR_HELP'])
     parser.add_argument('--logdir', action='store', dest='logdir',
                         help=lang['INSTALL_LOGDIR_HELP'])
-    parser.add_argument('--always_create', action='store', dest='alwayscreate',
+    parser.add_argument('--always_create', action='store', dest='always_create',
                         help='Always create directories that do not exist. '
                              'Do not prompt.')
     # add plot mode argument
@@ -225,7 +241,8 @@ def get_args() -> argparse.Namespace:
     parser.add_argument('--clean', action='store', dest='clean',
                         help=lang['INSTALL_CLEAN_HELP'])
     # add argument to skip cleaning check
-    parser.add_argument('--clean_no_warning', action='store', dest='cleanwarn',
+    parser.add_argument('--clean_no_warning', action='store',
+                        dest='clean_no_warning',
                         help=lang['INSTALL_CLEAN_NO_WARNING_HELP'])
     # add database mode argument
     parser.add_argument('--database_mode', action='store', dest='database_mode',
@@ -240,23 +257,75 @@ def get_args() -> argparse.Namespace:
                         help=lang['INSTALL_DB_PASS_HELP'])
     parser.add_argument('--database_name', action='store', dest='database_name',
                         help=lang['INSTALL_DB_NAME_HELP'])
-    parser.add_argument('--calib-table', action='store', dest='calibtable',
+    parser.add_argument('--calibtable', action='store', dest='calibtable',
                         help=lang['INSTALL_CALIBTABLE_HELP'])
-    parser.add_argument('--tellu-table', action='store', dest='tellutable',
+    parser.add_argument('--tellutable', action='store', dest='tellutable',
                         help=lang['INSTALL_TELLUTABLE_HELP'])
-    parser.add_argument('--index-table', action='store', dest='indextable',
+    parser.add_argument('--findextable', action='store', dest='findextable',
                         help=lang['INSTALL_INDEXTABLE_HELP'])
-    parser.add_argument('--log-table', action='store', dest='logtable',
+    parser.add_argument('--logtable', action='store', dest='logtable',
                         help=lang['INSTALL_LOGTABLE_HELP'])
-    parser.add_argument('--obj-table', action='store', dest='objtable',
+    parser.add_argument('--astromtable', action='store', dest='astromtable',
                         help=lang['INSTALL_OBJTABLE_HELP'])
-    parser.add_argument('--reject-table', action='store', dest='rejecttable',
+    parser.add_argument('--rejecttable', action='store', dest='rejecttable',
                         help=lang['INSTALL_REJECTTABLE_HELP'])
-    parser.add_argument('--lang-table', action='store', dest='langtable',
+    parser.add_argument('--langtable', action='store', dest='langtable',
                         help=lang['INSTALL_LANGTABLE_HELP'])
     # parse arguments
     args = parser.parse_args()
     return args
+
+
+def save_args(args: argparse.Namespace):
+    """
+    Save argument list to file (in the config directory) this allows knowing
+    what parameters were used and running the profile again with the same
+    settings
+
+    :param args: argparse.Namespace - from argparse (but with updated
+                 values after user input)
+    :return: None, writes to disk
+    """
+    # write command
+    command = f'python {__NAME__}          \\'
+    # set always create to true (even if False)
+    args.always_create = True
+    # remove profile name from config path (for arguments)
+    #   but keep config_path for saving file to
+    config_path = str(args.config)
+    if str(args.config).endswith(args.name):
+        args.config = str(args.config)[:-len(args.name)]
+    # convert namespace to dictionary
+    argdict = vars(args)
+    # add non null arguments
+    for it, arg in enumerate(argdict):
+        # only add arguments which are not still None
+        if argdict[arg] is not None:
+            # set up command prefix
+            prefix = '\n' + 10 * ' '
+            # set up command suffix
+            if it != len(argdict) - 1:
+                suffix = ' ' * 4 + '\\'
+            else:
+                suffix = ''
+            # add command
+            # deal with explicit argument (no value)
+            if arg in explicit_args:
+                if argdict[arg]:
+                    command += prefix + f'--{arg}' + suffix
+            # deal with strings (need to worry about white spaces)
+            elif isinstance(argdict[arg], (str, Path)):
+                command += prefix + f'--{arg}="{argdict[arg]}"' + suffix
+            # deal with everything else (just convert to string)
+            else:
+                command += prefix + f'--{arg}={str(argdict[arg])}' + suffix
+    # construct path
+    path = os.path.join(config_path, 'install.sh')
+    # write to file
+    with open(path, 'w') as afile:
+        afile.write(command)
+    # return the path (for printing)
+    return path
 
 
 def load_requirements(filename: Union[str, Path]) -> List[str]:
@@ -379,7 +448,7 @@ def main():
         lang = setup_lang.LangDict(langarg)
     else:
         lang = setup_lang.LangDict()
-    LANGUAGE = lang.language
+    language = lang.language
     # ----------------------------------------------------------------------
     # deal with validation
     if not get_sys_arg('--skip') and not get_sys_arg('--help', 'switch'):
@@ -407,7 +476,10 @@ def main():
         sys.exit()
     # get parameters from user input
     elif not args.update:
-        allparams, args = install.user_interface(params, args, LANGUAGE)
+        allparams, args = install.user_interface(params, args, language)
+        # save current arguments to disk
+        afile = save_args(args)
+        install.cprint(f'Saved installation parameters to: {afile}')
     else:
         allparams = install.update(params, args)
     # add environmental variable DRS_UCONFIG

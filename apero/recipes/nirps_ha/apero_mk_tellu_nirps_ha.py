@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-apero_mk_tellu [night_directory] [files]
+apero_mk_tellu_nirps_ha.py [obs_dir] [files]
 
 Creates a flattened transmission spectrum from a hot star observation.
 The continuum is set to 1 and regions with too many tellurics for continuum
@@ -15,36 +15,25 @@ absorption, so the output transmission files meet our pRV requirements in
 terms of wavelength coverage. Extension of the transmission maps to the
 domain between photometric bandpasses is seen as a low priority item.
 
-Usage:
-  apero_mk_tellu night_name telluric_file_name.fits
-
-
-Outputs:
-  telluDB: TELL_MAP file - telluric transmission map for input file
-        file also saved in the reduced folder
-        input file + '_trans.fits'
-
-  telluDB: TELL_CONV file - convolved molecular file (for specific
-                            wavelength solution) if it doesn't already exist
-        file also saved in the reduced folder
-        wavelength solution + '_tapas_convolved.npy'
-
 Created on 2019-09-03 at 14:58
 
 @author: cook
 """
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 import numpy as np
 
-from apero.base import base
 from apero import lang
+from apero.base import base
 from apero.core import constants
+from apero.core.core import drs_database
 from apero.core.core import drs_file
 from apero.core.core import drs_log
+from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
-from apero.core.core import drs_database
-from apero.science.calib import wave
 from apero.science import extract
 from apero.science import telluric
+from apero.science.calib import wave
 
 # =============================================================================
 # Define variables
@@ -56,10 +45,12 @@ __version__ = base.__version__
 __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
-# get param dict
-ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
+# Get Recipe class
+DrsRecipe = drs_recipe.DrsRecipe
+# Get parameter class
+ParamDict = constants.ParamDict
 # Get the text types
 textentry = lang.textentry
 
@@ -73,21 +64,18 @@ textentry = lang.textentry
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(obs_dir=None, files=None, **kwargs):
+def main(obs_dir: Optional[str] = None, files: Optional[List[str]] = None,
+         **kwargs) -> Union[Dict[str, Any], Tuple[DrsRecipe, ParamDict]]:
     """
-    Main function for apero_mk_tellu_spirou.py
+    Main function for apero_mk_tellu
 
     :param obs_dir: string, the night name sub-directory
     :param files: list of strings or string, the list of files to process
     :param kwargs: any additional keywords
 
-    :type obs_dir: str
-    :type files: list[str]
-
     :keyword debug: int, debug level (0 for None)
 
     :returns: dictionary of the local space
-    :rtype: dict
     """
     # assign function calls (must add positional)
     fkwargs = dict(obs_dir=obs_dir, files=files, **kwargs)
@@ -106,13 +94,14 @@ def main(obs_dir=None, files=None, **kwargs):
     return drs_startup.end_main(params, llmain, recipe, success)
 
 
-def __main__(recipe, params):
+def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     """
     Main code: should only call recipe and params (defined from main)
 
-    :param recipe:
-    :param params:
-    :return:
+    :param recipe: DrsRecipe, the recipe class using this function
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: dictionary containing the local variables
     """
     # ----------------------------------------------------------------------
     # Main Code
@@ -222,8 +211,8 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # load reference wavelength solution
         refprops = wave.get_wavesolution(params, recipe, ref=True,
-                                       fiber=fiber, infile=infile,
-                                       database=calibdbm, log=log1)
+                                         fiber=fiber, infile=infile,
+                                         database=calibdbm, rlog=log1)
         # ------------------------------------------------------------------
         # load wavelength solution for this fiber
         wprops = wave.get_wavesolution(params, recipe, fiber=fiber,
@@ -231,22 +220,56 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Get template file (if available)
         # ------------------------------------------------------------------
-        tout = telluric.load_templates(params, header, objname, fiber)
-        template, template_props = tout
+        template_props = telluric.load_templates(params, header, objname, fiber)
         # ------------------------------------------------------------------
         # Get barycentric corrections (BERV)
         # ------------------------------------------------------------------
         bprops = extract.get_berv(params, infile)
         # ------------------------------------------------------------------
-        # Shift the template from reference wave solution --> night wave solution
-        template = telluric.shift_template(params, recipe, image, template,
-                                           refprops, wprops, bprops)
+        # Shift the template from reference wave solution --> night
+        #     wave solution
+        template_props = telluric.shift_template(params, recipe, image,
+                                                 template_props, refprops,
+                                                 wprops, bprops)
+        # ------------------------------------------------------------------
+        # mask bad regions
+        # ------------------------------------------------------------------
+        # Some regions cannot be telluric corrected and the data should be
+        #   just set to NaNs to avoid bad corrections
+        infile.data = telluric.mask_bad_regions(params, infile.data,
+                                                wprops['WAVEMAP'],
+                                                pconst=pconst)
+
+        # ------------------------------------------------------------------
+        # apply sky correction
+        # ------------------------------------------------------------------
+        if dprtype in params.listp('ALLOWED_SKYCORR_DPRTYPES', dtype=str):
+            # correct sky using model and B fiber
+            scprops = telluric.correct_sky_with_ref(params, recipe, infile,
+                                                    wprops, rawfiles, combine,
+                                                    calibdbm, telludbm)
+            # update infile
+            infile.data = scprops[f'CORR_EXT_{fiber}']
+            # turn off cleaning of OH lines in pre-cleaning
+            clean_ohlines = False
+        else:
+            # correct sky using model and B fiber
+            scprops = telluric.correct_sky_no_ref(params, recipe, infile,
+                                                  wprops, rawfiles, combine,
+                                                  calibdbm, telludbm)
+            # update infile
+            infile.data = scprops[f'CORR_EXT_{fiber}']
+            # turn off cleaning of OH lines in pre-cleaning
+            clean_ohlines = False
+
         # ------------------------------------------------------------------
         # telluric pre-cleaning
         # ------------------------------------------------------------------
         tpreprops = telluric.tellu_preclean(params, recipe, infile, wprops,
                                             fiber, rawfiles, combine,
-                                            template=template)
+                                            template_props=template_props,
+                                            clean_ohlines=clean_ohlines,
+                                            sky_props=scprops)
         # get variables out of tpreprops
         image1 = tpreprops['CORRECTED_E2DS']
         # ------------------------------------------------------------------
@@ -258,7 +281,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Calculate telluric absorption
         # ------------------------------------------------------------------
-        cargs = [recipe, image1, template, template_props, header, refprops,
+        cargs = [recipe, image1, template_props, header, refprops,
                  wprops, bprops, tpreprops]
         tellu_props = telluric.calculate_tellu_res_absorption(params, *cargs)
         # ------------------------------------------------------------------
@@ -294,7 +317,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return drs_startup.return_locals(params, locals())
+    return locals()
 
 
 # =============================================================================

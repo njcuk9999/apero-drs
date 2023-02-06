@@ -10,22 +10,20 @@ Version 0.0.1
 """
 import numpy as np
 
-from apero.base import base
 from apero import lang
-from apero.core.core import drs_log
-from apero.core.core import drs_file
+from apero.base import base
 from apero.core.core import drs_database
+from apero.core.core import drs_file
+from apero.core.core import drs_log
+from apero.core.instruments.spirou import file_definitions
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_utils
-
-from apero.core.instruments.spirou import file_definitions
 from apero.science import preprocessing
-
 
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero_PP_REF_nirps_ha.py'
+__NAME__ = 'apero_pp_ref_nirps_ha.py'
 __INSTRUMENT__ = 'NIRPS_HA'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
@@ -54,11 +52,9 @@ def main(obs_dir=None, **kwargs):
     Main function for apero_preprocess_spirou.py
 
     :param obs_dir: string, the night name sub-directory
-    :param files: list of strings or string, the list of files to process
     :param kwargs: any additional keywords
 
     :type obs_dir: str
-    :type files: list[str]
 
     :keyword debug: int, debug level (0 for None)
 
@@ -127,8 +123,8 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # get all "filetype" filenames
         files = drs_utils.find_files(params, block_kind='raw',
-                                    filters=dict(KW_DPRTYPE=filetype,
-                                                 OBS_DIR=params['OBS_DIR']))
+                                     filters=dict(KW_DPRTYPE=filetype,
+                                                  OBS_DIR=params['OBS_DIR']))
         # create infiles
         for filename in files:
             infile = rawfile.newcopy(filename=filename, params=params)
@@ -217,7 +213,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return drs_startup.return_locals(params, dict(locals()))
+    return locals()
 
 
 # =============================================================================

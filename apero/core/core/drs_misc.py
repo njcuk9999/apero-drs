@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-CODE DESCRIPTION HERE
+APERO core miscellaneous functionality
 
 Created on 2020-08-2020-08-21 19:17
 
@@ -15,14 +15,17 @@ only from
 - apero.core.core.drs_break
 - apero.core.core.drs_exceptions
 """
-import numpy as np
 import os
-from pathlib import Path
-import psutil
 import random
 import string
 import time
+import sys
+import warnings
+from pathlib import Path
 from typing import Any, Dict, List, Union, Tuple
+
+import numpy as np
+import psutil
 
 from apero import lang
 from apero.base import base
@@ -251,7 +254,6 @@ def send_email(params: Any, subject: str, message: Union[List[str], str],
     :param message: str or list of strings, the message to send
     :param email: str or None, if set this is the email address to send the
                   email to
-    :param attach: str or None, if set this attaches a file to the email
 
     :return: None - sends email
     """
@@ -306,6 +308,7 @@ def get_system_stats() -> Dict[str, Any]:
     # storage for stats
     stats = dict()
     # try to get stats
+    # noinspection PyBroadException
     try:
         # default ram value is in bytes
         stats['ram_used'] = psutil.virtual_memory().used / 2**30
@@ -324,6 +327,104 @@ def get_system_stats() -> Dict[str, Any]:
     # return stats
     return stats
 
+
+def python_git_stats(params: Any) -> Any:
+    """
+    Get python and git stats if possible
+
+    :param params: ParamDict, parameter dicionary of constants
+
+    :return: update parameter dictionary of constants
+    """
+    # set function name
+    func_name = display_func('python_git_stats', __NAME__)
+    # unlock parameters if locked
+    if hasattr(params, 'unlock') and params.locked:
+        params.unlock()
+        was_locked = True
+    else:
+        was_locked = False
+    # -------------------------------------------------------------------------
+    # get python version
+    # -------------------------------------------------------------------------
+    major = sys.version_info.major
+    minor = sys.version_info.minor
+    micro = sys.version_info.micro
+
+    pyversion = f'{major}.{minor}.{micro}'
+    # add to params
+    params['PYVERSION'] = pyversion
+    params.set_source('PYVERSION', func_name)
+    params.count_used('PYVERSION', start_value=1)
+    # -------------------------------------------------------------------------
+    # try to get pip installed modules
+    # -------------------------------------------------------------------------
+    # pip operations might be in one of two places (or pip might not be
+    #   available)
+    with warnings.catch_warnings(record=True) as _:
+        try:
+            from pip._internal.operations import freeze
+        except ImportError:
+            # pip < 10.0
+            try:
+                # noinspection PyUnresolvedReferences
+                from pip.operations import freeze
+            except Exception as _:
+                freeze = None
+    # if we could not get pip modules then just say python modules
+    #   are not known
+    if freeze is None:
+        params['PYTHONMOD'] = 'UNKNOWN'
+        params.set_source('PYTHONMOD', func_name)
+        params.count_used('PYTHONMOD', start_value=1)
+    else:
+        # get the pip freeze list of python packages
+        pkgs = freeze.freeze()
+        # loop around packages in pip freeze
+        for pkg in list(pkgs):
+            # standard packages we assume are split by ==
+            if '==' in pkg:
+                key, version = pkg.split('==', 1)
+                # set this python module parameter
+                #   key is based on the python module name
+                params[f'PYTHONMOD_{key}'] = version.strip()
+                params.set_source(f'PYTHONMOD_{key}', func_name)
+                params.count_used(f'PYTHONMOD_{key}', start_value=1)
+            # local packages are have an @ in their pip freeze entry
+            elif '@' in pkg:
+                key, version = pkg.split('@', 1)
+                # set this python module parameter
+                #   key is based on the python module name
+                params[f'PYTHONOTHER_{key}'] = version.strip()
+                params.set_source(f'PYTHONOTHER_{key}', func_name)
+                params.count_used(f'PYTHONOTHER_{key}', start_value=1)
+    # -------------------------------------------------------------------------
+    # try to get git version
+    # -------------------------------------------------------------------------
+    try:
+        # noinspection PyUnresolvedReferences
+        from git import Repo
+        repo = Repo(os.path.dirname(params['DRS_ROOT']))
+        branch_name = str(repo.active_branch.name)
+        branch_hash = str(repo.head.object.hexsha)
+        del repo
+    except Exception as _:
+        branch_name = 'Unknown'
+        branch_hash = 'Unknown'
+    # set the git branch parameter
+    params['GIT_BRANCH'] = branch_name
+    params.set_source('GIT_BRANCH', func_name)
+    params.count_used('GIT_BRANCH', start_value=1)
+    # set the git hash parameter
+    params['GIT_HASH'] = branch_hash
+    params.set_source('GIT_HASH', func_name)
+    params.count_used('GIT_HASH', start_value=1)
+    # -------------------------------------------------------------------------
+    # lock parameters
+    if hasattr(params, 'lock') and was_locked:
+        params.lock()
+
+    return params
 
 # =============================================================================
 # Basic other functions

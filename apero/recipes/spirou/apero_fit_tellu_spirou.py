@@ -1,45 +1,28 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-apero_fit_tellu [night_directory] [files]
+apero_fit_tellu_spirou.py [obs dir] [files]
 
 Using all transmission files, we fit the absorption of a given science
-observation. To reduce the number of degrees of freedom, we perform a PCA and
-keep only the N (currently we suggest N=5)  principal components in absorbance.
-As telluric absorption may shift in velocity from one observation to another,
-we have the option of including the derivative of the absorbance in the
-reconstruction. The method also measures a proxy of optical depth per molecule
-(H2O, O2, O3, CO2, CH4, N2O) that can be used for data quality assessment.
-
-Usage:
-  apero_fit_tellu night_name object.fits
-
-Outputs:
-  telluDB: TELL_OBJ file - The object corrected for tellurics
-        file also saved in the reduced folder
-        input file + '_tellu_corrected.fits'
-
-    recon_abso file - The reconstructed absorption file saved in the reduced
-                    folder
-        input file + '_tellu_recon.fits'
-
-Created on 2019-09-05 at 14:58
+observation.
 
 @author: cook
 """
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 import numpy as np
 
-from apero.base import base
 from apero import lang
+from apero.base import base
 from apero.core import constants
+from apero.core.core import drs_database
 from apero.core.core import drs_file
 from apero.core.core import drs_log
+from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
-from apero.core.core import drs_database
-from apero.science.calib import wave
 from apero.science import extract
 from apero.science import telluric
-
+from apero.science.calib import wave
 
 # =============================================================================
 # Define variables
@@ -51,10 +34,12 @@ __version__ = base.__version__
 __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
-# get param dict
-ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
+# Get Recipe class
+DrsRecipe = drs_recipe.DrsRecipe
+# Get parameter class
+ParamDict = constants.ParamDict
 # Get the text types
 textentry = lang.textentry
 
@@ -68,7 +53,8 @@ textentry = lang.textentry
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(obs_dir=None, files=None, **kwargs):
+def main(obs_dir: Optional[str] = None, files: Optional[List[str]] = None,
+         **kwargs) -> Union[Dict[str, Any], Tuple[DrsRecipe, ParamDict]]:
     """
     Main function for apero_fit_tellu_spirou.py
 
@@ -76,13 +62,9 @@ def main(obs_dir=None, files=None, **kwargs):
     :param files: list of strings or string, the list of files to process
     :param kwargs: any additional keywords
 
-    :type obs_dir: str
-    :type files: list[str]
-
     :keyword debug: int, debug level (0 for None)
 
     :returns: dictionary of the local space
-    :rtype: dict
     """
     # assign function calls (must add positional)
     fkwargs = dict(obs_dir=obs_dir, files=files, **kwargs)
@@ -101,13 +83,14 @@ def main(obs_dir=None, files=None, **kwargs):
     return drs_startup.end_main(params, llmain, recipe, success)
 
 
-def __main__(recipe, params):
+def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     """
     Main code: should only call recipe and params (defined from main)
 
-    :param recipe:
-    :param params:
-    :return:
+    :param recipe: DrsRecipe, the recipe class using this function
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: dictionary containing the local variables
     """
     # ----------------------------------------------------------------------
     # Main Code
@@ -122,6 +105,9 @@ def __main__(recipe, params):
     onlypreclean = False
     if 'ONLYPRECLEAN' in params['INPUTS']:
         onlypreclean = params['INPUTS']['ONLYPRECLEAN']
+    # force only preclean from params
+    if params['TELLU_ONLY_PRECLEAN']:
+        onlypreclean = True
     # get list of filenames (for output)
     rawfiles = []
     for infile in infiles:
@@ -214,21 +200,18 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # load reference wavelength solution
         refprops = wave.get_wavesolution(params, recipe, ref=True,
-                                       fiber=fiber, infile=infile,
-                                       database=calibdbm)
+                                         fiber=fiber, infile=infile,
+                                         database=calibdbm)
         # ------------------------------------------------------------------
         # load wavelength solution for this fiber
         wprops = wave.get_wavesolution(params, recipe, fiber=fiber,
-                                       infile=infile, database=calibdbm,
-                                       log=log1)
+                                       infile=infile, database=calibdbm)
 
         # ------------------------------------------------------------------
         # Get template file (if available)
         # ------------------------------------------------------------------
-        tout = telluric.load_templates(params, header, objname, fiber,
-                                       database=telludbm)
-        template, template_props = tout
-
+        template_props = telluric.load_templates(params, header, objname, fiber,
+                                                 database=telludbm)
         # ------------------------------------------------------------------
         # Load transmission model
         # ------------------------------------------------------------------
@@ -237,6 +220,7 @@ def __main__(recipe, params):
                                                    database=telludbm)
         else:
             trans_props = ParamDict()
+            trans_props['TRANS_TABLE'] = None
 
         # ------------------------------------------------------------------
         # Get barycentric corrections (BERV)
@@ -244,9 +228,11 @@ def __main__(recipe, params):
         bprops = extract.get_berv(params, infile)
 
         # ------------------------------------------------------------------
-        # Shift the template from reference wave solution --> night wave solution
-        template = telluric.shift_template(params, recipe, image, template,
-                                           refprops, wprops, bprops)
+        # Shift the template from reference wave solution --> night
+        #    wave solution
+        template_props = telluric.shift_template(params, recipe, image,
+                                                 template_props, refprops,
+                                                 wprops, bprops)
 
         # ------------------------------------------------------------------
         # telluric pre-cleaning
@@ -254,7 +240,7 @@ def __main__(recipe, params):
         tpreprops = telluric.tellu_preclean(params, recipe, infile, wprops,
                                             fiber, rawfiles, combine,
                                             database=telludbm,
-                                            template=template)
+                                            template_props=template_props)
         # get corrected image out of pre-cleaning parameter dictionary
         image1 = tpreprops['CORRECTED_E2DS']
 
@@ -269,7 +255,7 @@ def __main__(recipe, params):
         if not onlypreclean:
             cprops = telluric.calc_res_model(params, recipe, image, image1,
                                              trans_props, tpreprops, refprops,
-                                             wprops)
+                                             wprops, infile)
         else:
             cprops = telluric.pclean_only(tpreprops)
 
@@ -286,7 +272,10 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Create 1d spectra (s1d) of the reconstructed absorption
         # ------------------------------------------------------------------
-        rcargs = [wprops['WAVEMAP'], cprops['RECON_ABSO'], nprops['BLAZE']]
+        # must multiple recon by blaze (for proper weighting in s1d)
+        brecon = cprops['RECON_ABSO'] * nprops['BLAZE']
+        # do s1d
+        rcargs = [wprops['WAVEMAP'], brecon, nprops['BLAZE']]
         rcwprops = extract.e2ds_to_s1d(params, recipe, *rcargs, wgrid='wave',
                                        fiber=fiber, s1dkind='recon')
         rcvprops = extract.e2ds_to_s1d(params, recipe, *rcargs,
@@ -379,7 +368,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return drs_startup.return_locals(params, locals())
+    return locals()
 
 
 # =============================================================================

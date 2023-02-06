@@ -9,10 +9,12 @@ Created on 2019-01-17 at 14:31
 
 @author: cook
 """
+from apero.science.telluric import fit_tellu
 from apero.science.telluric import gen_tellu
 from apero.science.telluric import mk_tellu
-from apero.science.telluric import fit_tellu
 from apero.science.telluric import template_tellu
+from apero.science.telluric import sky_corr
+
 
 __all__ = ['calculate_tellu_res_absorption', 'get_tellu_exclude_list',
            'get_tellu_include_list', 'load_conv_tapas', 'load_templates',
@@ -27,7 +29,13 @@ calc_res_model = fit_tellu.calc_res_model
 
 calculate_tellu_res_absorption = mk_tellu.calculate_tellu_res_absorption
 
+correct_sky_with_ref = sky_corr.correct_sky_with_ref
+
+correct_sky_no_ref = sky_corr.correct_sky_no_ref
+
 correct_other_science = fit_tellu.correct_other_science
+
+id_hot_star = gen_tellu.id_hot_star
 
 fit_tellu_write_corrected = fit_tellu.fit_tellu_write_corrected
 
@@ -71,6 +79,8 @@ make_trans_model = mk_tellu.make_trans_model
 
 make_template_cubes = template_tellu.make_template_cubes
 
+mask_bad_regions = gen_tellu.mask_bad_regions
+
 mk_tellu_quality_control = mk_tellu.mk_tellu_quality_control
 
 mk_tellu_write_trans_file = mk_tellu.mk_tellu_write_trans_file
@@ -98,6 +108,24 @@ normalise_by_pblaze = gen_tellu.normalise_by_pblaze
 pclean_only = fit_tellu.pclean_only
 
 shift_template = fit_tellu.shift_template
+
+skymodel_table = sky_corr.skymodel_table
+
+skymodel_cube = sky_corr.skymodel_cube
+
+identify_sky_line_regions = sky_corr.identify_sky_line_regions
+
+calc_skymodel = sky_corr.calc_skymodel
+
+mk_skymodel_qc = sky_corr.mk_skymodel_qc
+
+write_skymodel = sky_corr.write_skymodel
+
+mk_skymodel_summary = sky_corr.mk_skymodel_summary
+
+find_night_skyfiles = sky_corr.find_night_skyfiles
+
+skymodel_matchfiles = sky_corr.skymodel_matchfiles
 
 # =============================================================================
 # End of code

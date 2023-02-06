@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
-
-# CODE DESCRIPTION HERE
+APERO Output file functionality
 
 Created on 2019-03-21 at 18:35
 
@@ -13,9 +11,9 @@ import os
 from typing import Any, Tuple, Union
 
 from apero.base import base
+from apero.core.constants import param_functions
 from apero.core.core import drs_exceptions
 from apero.core.core import drs_misc
-from apero.core.constants import param_functions
 
 # =============================================================================
 # Define variables
@@ -40,7 +38,13 @@ display_func = drs_misc.display_func
 # - Note should all have the same inputs and return
 # =============================================================================
 class OutFile:
+    """
+    Do not use OutFile directly - use one of the children classes
+    """
     def __init__(self):
+        """
+        Construct the generic output file class
+        """
         self.classname = 'OutFile'
         self.reference = False
         self.debug = False
@@ -48,6 +52,11 @@ class OutFile:
         self.tellu = False
 
     def copy(self) -> 'OutFile':
+        """
+        Return a new instance (copy) of the OutFile class
+
+        :return: OutFile, a new copy of the outfile
+        """
         new = OutFile()
         return new
 
@@ -103,9 +112,9 @@ class OutFile:
         inbasename = infile.basename
         # infile basename should not be None
         if inbasename is None:
-            # TODO: add to the language db
-            emsg = 'Error: infile.basename must be set when defining infile'
-            raise DrsCodedException('0', '', emsg)
+            # raise error: infile.basename must be set when defining infile
+            eargs = [infile.name, func_name]
+            raise DrsCodedException('00-004-00017', level='error', targs=eargs)
         # get condition to remove input file prefix
         if remove_insuffix is None:
             remove_insuffix = outfile.remove_insuffix
@@ -132,7 +141,7 @@ class OutFile:
         # construct out filename
         inext = infile.filetype
         outext = outfile.filetype
-        outfilename = get_outfilename(params, inbasename, prefix=prefix,
+        outfilename = get_outfilename(inbasename, prefix=prefix,
                                       suffix=suffix, inext=inext, outext=outext,
                                       fiber=fiber)
         # deal with no given path (default)
@@ -152,7 +161,7 @@ class OutFile:
             else:
                 obs_dir = params['OBS_DIR']
             # make sure night name folder exists (create it if not)
-            make_obs_dir(params, obs_dir, outpath)
+            make_obs_dir(obs_dir, outpath)
             # construct absolute path
             abspath = os.path.join(outpath, obs_dir, outfilename)
         else:
@@ -163,10 +172,18 @@ class OutFile:
 
 class GeneralOutFile(OutFile):
     def __init__(self):
+        """
+        Construct the General output file class - this is used in most
+        non-special cases
+        """
         super().__init__()
         self.classname = 'GeneralOutFile'
 
     def copy(self) -> 'GeneralOutFile':
+        """
+        Copy the genera output file
+        :return:
+        """
         new = GeneralOutFile()
         return new
 
@@ -246,7 +263,7 @@ class GeneralOutFile(OutFile):
         # construct out filename
         inext = infile.filetype
         outext = outfile.filetype
-        outfilename = get_outfilename(params, inbasename, prefix=prefix,
+        outfilename = get_outfilename(inbasename, prefix=prefix,
                                       suffix=suffix, inext=inext, outext=outext,
                                       fiber=fiber)
         # deal with no given path (default)
@@ -266,7 +283,7 @@ class GeneralOutFile(OutFile):
             else:
                 obs_dir = params['OBS_DIR']
             # make sure night name folder exists (create it if not)
-            make_obs_dir(params, obs_dir, outpath)
+            make_obs_dir(obs_dir, outpath)
             # construct absolute path
             abspath = os.path.join(outpath, obs_dir, outfilename)
         else:
@@ -276,11 +293,21 @@ class GeneralOutFile(OutFile):
 
 
 class NpyOutFile(GeneralOutFile):
+    """
+    Output file for numpy save files (npy files)
+    """
     def __init__(self):
+        """
+        Construct the numpy save file output class
+        """
         super().__init__()
         self.classname = 'NpyOutFile'
 
     def copy(self) -> 'NpyOutFile':
+        """
+        Copy the numpy save file output class
+        :return:
+        """
         new = NpyOutFile()
         return new
 
@@ -329,12 +356,22 @@ class NpyOutFile(GeneralOutFile):
 
 
 class DebugOutFile(GeneralOutFile):
+    """
+    Output file for debug files (fits files)
+    """
     def __init__(self):
+        """
+        Construct the output file for debug files
+        """
         super().__init__()
         self.debug = True
         self.classname = 'DebugOutFile'
 
     def copy(self) -> 'DebugOutFile':
+        """
+        Copy the output file for debug files
+        :return:
+        """
         new = DebugOutFile()
         return new
 
@@ -383,11 +420,21 @@ class DebugOutFile(GeneralOutFile):
 
 
 class BlankOutFile(OutFile):
+    """
+    Blank output file - output file matches input file
+    """
     def __init__(self):
+        """
+        Construct the blank output file
+        """
         super().__init__()
         self.classname = 'BlankOutFile'
 
     def copy(self) -> 'BlankOutFile':
+        """
+        Make a copy of the output file
+        :return:
+        """
         new = BlankOutFile()
         return new
 
@@ -432,11 +479,21 @@ class BlankOutFile(OutFile):
 
 
 class SetOutFile(OutFile):
+    """
+    Output file where output filename is set manually
+    """
     def __init__(self):
+        """
+        Construct the output file where output filename is set manually
+        """
         super().__init__()
         self.classname = 'SetOutFile'
 
     def copy(self) -> 'SetOutFile':
+        """
+        Copy the output file where output filename is set manually
+        :return:
+        """
         new = SetOutFile()
         return new
 
@@ -507,7 +564,7 @@ class SetOutFile(OutFile):
             # get output night name from params
             obs_dir = params['OBS_DIR']
             # make sure night name folder exists (create it if not)
-            make_obs_dir(params, obs_dir, outpath)
+            make_obs_dir(obs_dir, outpath)
             # construct absolute path
             abspath = os.path.join(outpath, obs_dir, outfilename)
         else:
@@ -518,12 +575,21 @@ class SetOutFile(OutFile):
 
 # noinspection PyMethodOverriding
 class PostOutFile(OutFile):
+    """
+    Post process output file class
+    """
     def __init__(self):
+        """
+        Construct the post process output file
+        """
         super().__init__()
-        self.classname = 'CalibOutFile'
-        self.calib = True
+        self.classname = 'PostOutFile'
 
     def copy(self) -> 'PostOutFile':
+        """
+        Copy the post process output file
+        :return:
+        """
         new = PostOutFile()
         return new
 
@@ -568,12 +634,22 @@ class PostOutFile(OutFile):
 # Specific type classes
 # =============================================================================
 class CalibOutFile(GeneralOutFile):
+    """
+    Calibration output file
+    """
     def __init__(self):
+        """
+        Construct a calibration file output
+        """
         super().__init__()
         self.classname = 'CalibOutFile'
         self.calib = True
 
     def copy(self) -> 'CalibOutFile':
+        """
+        Copy a calirbation file output
+        :return:
+        """
         new = CalibOutFile()
         return new
 
@@ -621,12 +697,22 @@ class CalibOutFile(GeneralOutFile):
 
 
 class TelluOutFile(GeneralOutFile):
+    """
+    A telluric output file class
+    """
     def __init__(self):
+        """
+        Construct a telluric output file
+        """
         super().__init__()
         self.classname = 'TelluOutFile'
         self.tellu = True
 
     def copy(self) -> 'TelluOutFile':
+        """
+        Copy a telluric output file
+        :return:
+        """
         new = TelluOutFile()
         return new
 
@@ -674,36 +760,66 @@ class TelluOutFile(GeneralOutFile):
 
 
 class RefCalibOutFile(CalibOutFile):
+    """
+    A reference calibration output file
+    """
     def __init__(self):
+        """
+        Construct a reference calibration output file
+        """
         super().__init__()
         self.classname = 'RefCalibOutFile'
         self.calib = True
         self.reference = True
 
     def copy(self) -> 'RefCalibOutFile':
+        """
+        Copy a reference calibration output file
+        :return:
+        """
         new = RefCalibOutFile()
         return new
 
 
 class RefTelluOutFile(CalibOutFile):
+    """
+    A reference telluric output file
+    """
     def __init__(self):
+        """
+        Copy a reference telluric output file
+        """
         super().__init__()
         self.classname = 'RefTelluOutFile'
         self.tellu = True
         self.reference = True
 
     def copy(self) -> 'RefTelluOutFile':
+        """
+        Copy a reference telluric output file
+        :return:
+        """
         new = RefTelluOutFile()
         return new
 
 
 class TelluSetOutFile(SetOutFile):
+    """
+    Special telluric output file where filename is set manually
+    """
     def __init__(self):
+        """
+        Construct the special set-filename telluric output file
+        """
         super().__init__()
         self.classname = 'TelluSetOutFile'
         self.tellu = True
 
     def copy(self) -> 'TelluSetOutFile':
+        """
+        Copy the special set-filename telluric output file
+        :return:
+        """
         new = TelluSetOutFile()
         return new
 
@@ -711,8 +827,7 @@ class TelluSetOutFile(SetOutFile):
 # =============================================================================
 # Define user functions
 # =============================================================================
-def get_outfilename(params: ParamDict, infilename: str,
-                    prefix: Union[str, None] = None,
+def get_outfilename(infilename: str, prefix: Union[str, None] = None,
                     suffix: Union[str, None] = None,
                     inext: Union[str, None] = None,
                     outext: Union[str, None] = None,
@@ -721,7 +836,6 @@ def get_outfilename(params: ParamDict, infilename: str,
     Get the output filename from a input filename (with inext) and add a
     prefix/suffix fiber etc
 
-    :param params: ParamDict, paremeter dictionary of constants
     :param infilename: str, the infile name
     :param prefix: str, if set the prefix of the file
     :param suffix: str, if set the suffix of the file
@@ -763,13 +877,11 @@ def get_outfilename(params: ParamDict, infilename: str,
     return outfilename
 
 
-def make_obs_dir(params: ParamDict, obs_dir: Union[str, None],
-                 path: str) -> str:
+def make_obs_dir(obs_dir: Union[str, None], path: str) -> str:
     """
     Make a directory with a night directory given - and also add the directory
     if needed
 
-    :param params: ParamDict, parameter dictionary constants dictionary
     :param obs_dir: str or None, if set add this to the directory path
     :param path: str, the absolute path (above obs_dir level)
 

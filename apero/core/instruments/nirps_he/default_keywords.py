@@ -1,5 +1,5 @@
 """
-Default keywords for instrument
+Default keywords for NIRPS HE
 
 Created on 2019-01-17
 
@@ -218,6 +218,35 @@ KW_OBJ_TEMP = KW_OBJ_TEMP.copy(__NAME__)
 KW_OBJ_TEMP.set(key='OBJTEMP', unit=uu.K, group='raw')
 
 # -----------------------------------------------------------------------------
+# Keys added as early as possible
+# -----------------------------------------------------------------------------
+# define whether a target was observed at night
+KW_NIGHT_OBS = KW_NIGHT_OBS.copy(__NAME__)
+KW_NIGHT_OBS.set(key='DRS_NOBS', comment='Whether target was observed at night',
+                 group='raw-add')
+
+# Define whether a target was observed during civil twilight
+KW_CIV_TWIL = KW_CIV_TWIL.copy(__NAME__)
+KW_CIV_TWIL.set(key='DRSCTWIL', group='raw-add',
+                comment='Whether target was observed during civil twilight')
+
+# Define whether a target was observed during nautical twilight
+KW_NAU_TWIL = KW_NAU_TWIL.copy(__NAME__)
+KW_NAU_TWIL.set(key='DRSNTWIL', group='raw-add',
+                comment='Whether target was observed during nautical twilight')
+
+# Define whether a target was observed during astronomical twilight
+KW_AST_TWIL = KW_AST_TWIL.copy(__NAME__)
+KW_AST_TWIL.set(key='DRSATWIL', group='raw-add',
+                comment='Whether target was observed during astronomical '
+                        'twilight')
+
+# Define the calculated sun elevation during observation
+KW_SUN_ELEV = KW_SUN_ELEV.copy(__NAME__)
+KW_SUN_ELEV.set(key='DRSSUNEL', group='raw-add',
+                comment='The calculated sun elevation during observation')
+
+# -----------------------------------------------------------------------------
 # Object resolution keys
 # -----------------------------------------------------------------------------
 # the object name to be used by the drs (after preprocessing)
@@ -343,8 +372,8 @@ KW_DRS_DSOURCE.set(key='PP_SRCE', unit=uu.K,
 # The date of the source of the DRS object data (after preprocessing)
 KW_DRS_DDATE = KW_DRS_DDATE.copy(__NAME__)
 KW_DRS_DDATE.set(key='PP_DDATE', unit=uu.K,
-                  comment='The date of source of DRS object data',
-                  group='resolve', post_exclude=True)
+                 comment='The date of source of DRS object data',
+                 group='resolve', post_exclude=True)
 
 # -----------------------------------------------------------------------------
 # Define general keywords
@@ -508,7 +537,6 @@ KW_CDBLEAKR.set(key='CDBLEAKR', comment='The cal ref LEAKM file used')
 # time of the ref leak reference calibration file used
 KW_CDTLEAKR = KW_CDTLEAKR.copy(__NAME__)
 KW_CDTLEAKR.set(key='CDTLEAKR', comment='MJDMID of cal ref LEAK file used')
-
 # additional properties of calibration
 KW_C_FLIP = KW_C_FLIP.copy(__NAME__)
 KW_C_FLIP.set(key='CAL_FLIP', comment='Whether the image was flipped from pp')
@@ -520,6 +548,11 @@ KW_C_FTYPE = KW_C_FTYPE.copy(__NAME__)
 KW_C_FTYPE.set(key='CAL_FTYP', comment='What this fiber was identified as')
 KW_FIBER = KW_FIBER.copy(__NAME__)
 KW_FIBER.set(key='FIBER', comment='The fiber name')
+
+# define the sky model used for sky correction
+KW_TDBSKY = KW_TDBSKY.copy(__NAME__)
+KW_TDBSKY.set(key='TDTSKYCO', comment='Sky model used for sky correction')
+
 # -----------------------------------------------------------------------------
 # Define DRS outputs keywords
 # -----------------------------------------------------------------------------
@@ -560,17 +593,17 @@ KW_PPSHIFTY.set(key='DETOFFDY', comment='Pixel offset in y from readout lag',
 # the number of bad pixels found via the intercept (cosmic ray rejection)
 KW_PPC_NBAD_INTE = KW_PPC_NBAD_INTE.copy(__NAME__)
 KW_PPC_NBAD_INTE.set('NBADINTE', comment='No. bad px intercept cosmic reject',
-                post_exclude=True)
+                     post_exclude=True)
 
 # the number of bad pixels found via the slope (cosmic ray rejection)
 KW_PPC_NBAD_SLOPE = KW_PPC_NBAD_SLOPE.copy(__NAME__)
 KW_PPC_NBAD_SLOPE.set('NBADSLOP', comment='No. bad px slope cosmic reject',
-                post_exclude=True)
+                      post_exclude=True)
 
 # the number of bad pixels found with both intercept and slope (cosmic ray)
 KW_PPC_NBAD_BOTH = KW_PPC_NBAD_BOTH.copy(__NAME__)
 KW_PPC_NBAD_BOTH.set('NBADBOTH', comment='No. bad px both cosmic reject',
-                post_exclude=True)
+                     post_exclude=True)
 
 # The number of sigma used to construct pp reference mask
 KW_PP_REF_NSIG = KW_PP_REF_NSIG.copy(__NAME__)
@@ -579,6 +612,22 @@ KW_PP_REF_NSIG.set(key='PPMNSIG', comment='PP reference mask nsig used')
 # Define the key to store the name of the pp reference file used in pp (if used)
 KW_PP_REF_FILE = KW_PP_REF_FILE.copy(__NAME__)
 KW_PP_REF_FILE.set(key='PPMFILE', comment='PP reference mask file used')
+
+# Define the percentile stats for LED flat in pp (50th percentile)
+KW_PP_LED_FLAT_P50 = KW_PP_LED_FLAT_P50.copy(__NAME__)
+KW_PP_LED_FLAT_P50.set(key='PPLEDP50', comment='LED RMS 50th percentile')
+
+# Define the percentile stats for LED flat in pp (16th percentile)
+KW_PP_LED_FLAT_P16 = KW_PP_LED_FLAT_P16.copy(__NAME__)
+KW_PP_LED_FLAT_P16.set(key='PPLEDP16', comment='LED RMS 16th percentile')
+
+# Define the percentile stats for LED flat in pp (84th percentile)
+KW_PP_LED_FLAT_P84 = KW_PP_LED_FLAT_P84.copy(__NAME__)
+KW_PP_LED_FLAT_P84.set(key='PPLEDP84', comment='LED RMS 84th percentile')
+
+# Define the LED flat file used
+KW_PP_LED_FLAT_FILE = KW_PP_LED_FLAT_FILE.copy(__NAME__)
+KW_PP_LED_FLAT_FILE.set(key='PPLEDFIL', comment='LED flat file used')
 
 # -----------------------------------------------------------------------------
 # Define apero_dark variables
@@ -658,6 +707,10 @@ KW_LOC_BCKGRD.set(key=root_loc + 'BCKGRD', comment='mean background [%]',
 KW_LOC_NBO = KW_LOC_NBO.copy(__NAME__)
 KW_LOC_NBO.set(key=root_loc + 'NBO', comment='nb orders localised',
                group='loc')
+
+# Polynomial type for localization
+KW_LOC_POLYT = KW_LOC_POLYT.copy(__NAME__)
+KW_LOC_POLYT.set(key='LOCPOLYT')
 
 # fit degree for order centers
 KW_LOC_DEG_C = KW_LOC_DEG_C.copy(__NAME__)
@@ -747,6 +800,10 @@ KW_EXT_TYPE.set(key='EXT_TYPE', comment='Extract type (E2DS or E2DSFF)')
 # SNR calculated in extraction process (per order)
 KW_EXT_SNR = KW_EXT_SNR.copy(__NAME__)
 KW_EXT_SNR.set(key='EXTSN{0:03d}', comment='Extract: S_N order center')
+
+# Number of orders used in extraction process
+KW_EXT_NBO = KW_EXT_NBO.copy(__NAME__)
+KW_EXT_NBO.set(key='EXT_NBO', comment='Extract: Number of orders used')
 
 # the start order for extraction
 KW_EXT_START = KW_EXT_START.copy(__NAME__)
@@ -974,6 +1031,11 @@ KW_WAVE_DEG = KW_WAVE_DEG.copy(__NAME__)
 KW_WAVE_DEG.set(key='WAVEDEGN', comment='degree of wave polyn fit',
                 parent=None, group='wave')
 
+# wave polynomial type
+KW_WAVE_POLYT = KW_WAVE_POLYT.copy(__NAME__)
+KW_WAVE_POLYT.set(key='WAVEPOLY', comment='type of wave polynomial',
+                  parent=None, group='wave')
+
 # the wave file used
 KW_WAVEFILE = KW_WAVEFILE.copy(__NAME__)
 KW_WAVEFILE.set(key='WAVEFILE', comment='Wavelength solution file used',
@@ -1013,6 +1075,11 @@ KW_CAVITY_WIDTH.set(key='WCAV{0:03d}', comment='Wave cavity polynomial',
 KW_CAVITY_DEG = KW_CAVITY_DEG.copy(__NAME__)
 KW_CAVITY_DEG.set(key='WCAV_DEG', comment='Wave cavity fit degree',
                   parent=None, group='wave')
+
+# define the cavity poly zero point (to be added on when using)
+KW_CAV_PEDESTAL = KW_CAV_PEDESTAL.copy(__NAME__)
+KW_CAV_PEDESTAL.set(key='WCAV_PED', comment='Wave cavity pedestal',
+                    parent=None, group='wave')
 
 # define the mean hc velocity calculated
 KW_WAVE_MEANHC = KW_WAVE_MEANHC.copy(__NAME__)
@@ -1568,6 +1635,29 @@ KW_RES_MAP_RESEFF.set(key='RES_EFF', group='wave-res',
                       comment='Measured effective resolution for this sector')
 
 # -----------------------------------------------------------------------------
+# Define telluric sky model variables
+# -----------------------------------------------------------------------------
+# Defines whether we have a sky correction for the science fiber
+KW_HAS_SKY_SCI = KW_HAS_SKY_SCI.copy(__NAME__)
+KW_HAS_SKY_SCI.set(key='HSKYSCI', group='skymodel',
+                   comment='Sky model calculated for science fiber')
+
+# Defines whether we have a sky correction for the calib fiber
+KW_HAS_SKY_CAL = KW_HAS_SKY_CAL.copy(__NAME__)
+KW_HAS_SKY_CAL.set(key='HSKYCAL', group='skymodel',
+                   comment='Sky model calculated for science fiber')
+
+# Defines which fiber was used for the science fiber sky correction model
+KW_SKY_SCI_FIBER = KW_SKY_SCI_FIBER.copy(__NAME__)
+KW_SKY_SCI_FIBER.set(key='FSKYSCI', group='skymodel',
+                     comment='Sky model fiber used as science fiber')
+
+# Defines which fiber was used for the calib fiber sky correction model
+KW_SKY_CAL_FIBER = KW_SKY_CAL_FIBER.copy(__NAME__)
+KW_SKY_CAL_FIBER.set(key='FSKYCAL', group='skymodel',
+                     comment='Sky model fiber used as calibration fiber')
+
+# -----------------------------------------------------------------------------
 # Define telluric preclean variables
 # -----------------------------------------------------------------------------
 # Define the exponent of water key from telluric preclean process
@@ -1603,6 +1693,12 @@ KW_TELLUP_CCFP_OTHERS.set(key='TLPCPOTR', comment='CCF power of other species')
 KW_TELLUP_DO_PRECLEAN = KW_TELLUP_DO_PRECLEAN.copy(__NAME__)
 KW_TELLUP_DO_PRECLEAN.set(key='TLPDOCLN', comment='tellu preclean done',
                           parent='TELLUP_DO_PRECLEANING')
+
+# Define default water absorption used (tellu pre-cleaning)
+KW_TELLUP_DFLT_WATER = KW_TELLUP_DFLT_WATER.copy(__NAME__)
+KW_TELLUP_DFLT_WATER.set(key='TLPDFH2O',
+                         comment='tellu preclean default h20 abso used',
+                         parent='TELLUP_D_WATER_ABSO')
 
 # Define default water absorption used (tellu pre-cleaning)
 KW_TELLUP_DFLT_WATER = KW_TELLUP_DFLT_WATER.copy(__NAME__)

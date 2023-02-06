@@ -10,15 +10,15 @@ Created on 2021-11-08
 @author: cook
 """
 import os
-from typing import Any, Dict, List, Optional, Union
 from collections import OrderedDict
+from typing import Any, Dict, List, Optional, Union
 
 from apero import lang
 from apero.base import base
 from apero.core import constants
-from apero.core.core import drs_log
 from apero.core.core import drs_database
 from apero.core.core import drs_file
+from apero.core.core import drs_log
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
 from apero.io import drs_path
@@ -50,8 +50,8 @@ textentry = lang.textentry
 # define default reference dir
 DEFAULT_REF_OBSDIR = dict()
 DEFAULT_REF_OBSDIR['SPIROU'] = '2020-08-31'
-DEFAULT_REF_OBSDIR['NIRPS_HA'] = '2022-05-17'
-DEFAULT_REF_OBSDIR['NIRPS_HE'] = '2022-05-17'
+DEFAULT_REF_OBSDIR['NIRPS_HA'] = '2022-11-24'
+DEFAULT_REF_OBSDIR['NIRPS_HE'] = '2022-11-24'
 # define default number of cores
 DEFAULT_CORES = 5
 # define relative output path
@@ -444,22 +444,6 @@ class RunIniFile:
 
         with open(self.outpath, 'w') as ofile:
             ofile.writelines(self.lines)
-
-
-# =============================================================================
-# Define functions
-# =============================================================================
-def get_runfiles(params: ParamDict) -> List[RunIniFile]:
-    """
-    Defines all possible run files
-
-    :param params: ParamDict, parameter dictionary of constants
-
-    :return: list of RunIniFile instances
-    """
-    pass
-
-
 
 
 # =============================================================================

@@ -9,24 +9,19 @@ Created on 2019-12-12 at 09:45
 
 @author: cook
 """
-from astropy import units as uu
-from astropy.io.ascii.core import InconsistentTableError
-from astropy.table import Table
+from typing import Any, Tuple, Union
+
 import numpy as np
 import pandas as pd
-import requests
-import time
-from typing import Any, List, Tuple, Union
-import warnings
+from astropy import units as uu
 
+from apero import lang
 from apero.base import base
-from apero.core.core import drs_text
 from apero.core import constants
 from apero.core import math as mp
 from apero.core.core import drs_database
-from apero.core.instruments.default import pseudo_const
-from apero import lang
 from apero.core.core import drs_log
+from apero.core.core import drs_text
 from apero.io import drs_fits
 
 # =============================================================================
@@ -51,7 +46,7 @@ textentry = lang.textentry
 ObjectDatabase = drs_database.AstrometricDatabase
 # get param dict
 ParamDict = constants.ParamDict
-PseudoConst = pseudo_const.PseudoConstants
+PseudoConst = constants.PseudoConstants
 
 # cache for google sheet
 GOOGLE_TABLES = dict()
@@ -98,16 +93,15 @@ def resolve_target(params: ParamDict, pconst: PseudoConst,
     # -------------------------------------------------------------------------
     # deal with no objname and no header
     if objname is None and header is None:
-        # TODO: add to language database
-        WLOG(params, 'error', 'Must define "objname" or "header"')
+        # print error: Must define ‘objname’ or ‘header’
+        WLOG(params, 'error', textentry('00-010-00011'))
     elif objname is None:
         if hdr_objname in header:
             objname = header[hdr_objname]
         else:
-            # TODO: add to language database
-            emsg = 'Header must be fixed ({0} missing)'
+            # print error: Header must be fixed (header must contain {0})
             eargs = [hdr_objname]
-            WLOG(params, 'error', emsg.format(*eargs))
+            WLOG(params, 'error', textentry('00-010-00012', args=eargs))
             return
     # -------------------------------------------------------------------------
     # find correct name in the database (via objname or aliases)
@@ -169,10 +163,9 @@ def resolve_target(params: ParamDict, pconst: PseudoConst,
             resolved = True
 
         except Exception as e:
-            # TODO: move to lanugage database
-            emsg = 'Cannot use object database entry for {0}.\n\t{1}: {2}'
+            # warn msg: Cannot use object database entry for {0}.\n\t{1}: {2}'
             eargs = [correct_objname, type(e), str(e)]
-            WLOG(params, 'warning', emsg.format(*eargs))
+            WLOG(params, 'warning', textentry('10-010-00008', args=eargs))
             # mark resolved as not complete
             resolved = False
             # placeholders to be filled below
@@ -196,11 +189,9 @@ def resolve_target(params: ParamDict, pconst: PseudoConst,
     # if we still do not have a value use the header values (or default values)
     if not resolved:
         # print warning that we are using the header not the database
-        # TODO: add to language database
-        wmsg = ('Object {0} is not in the object database. Using header values'
-                ' for astrometric parameters')
         wargs = [correct_objname]
-        WLOG(params, 'warning', wmsg.format(*wargs), sublevel=7)
+        WLOG(params, 'warning', textentry('10-010-00005', args=wargs),
+             sublevel=7)
         # get properties from parameters
         # object name is the cleaned object name to be inline database sources
         objname = str(correct_objname)
@@ -327,15 +318,15 @@ def get_obj_reject_list(params: ParamDict) -> np.ndarray:
     reject_id = params['OBJ_LIST_GSHEET_REJECT_LIST_ID']
     # get reject list google sheets
     try:
-        rejecttable = drs_database.get_google_sheet(params, gsheet_url, reject_id)
+        rejecttable = drs_database.get_google_sheet(params, gsheet_url,
+                                                    reject_id)
     # any exception here should return a warning and a empty array
     except Exception as e:
-        # TODO: move to language database
-        wmsg = ('Cannot read reject list {0}. Skipping rejection'
-                '\n\tError {1}: {2}')
+        # warning msg: Cannot read reject list {0}. Skipping rejection
         wargs = [GOOGLE_BASE_URL.format(gsheet_url, reject_id),
                  type(e), str(e)]
-        WLOG(params, 'warning', wmsg.format(*wargs))
+        WLOG(params, 'warning', textentry('10-010-00007', args=wargs),
+             sublevel=3)
         # return empty array
         return np.array([])
     # if we have reject entries deal with them (and their aliases)
@@ -636,16 +627,16 @@ def _convert_units(params: ParamDict, key: str, value: float,
     # get value with current units
     value = value * current_unit
     # try to convert units
+    # noinspection PyBroadException
     try:
         value = value.to(desired_unit)
     except Exception as _:
-        # log error
-        # TODO: move to language database
-        emsg = 'Units for {0} to not match \nCurrent: {1} Desired: {2}'
+        # log error: Units for {0} do not match Current: {1} Desired: {2}
         eargs = [key, current_unit, desired_unit]
-        WLOG(params, 'error', emsg.format(*eargs))
+        WLOG(params, 'error', textentry('00-001-00059', args=eargs))
     # return the updated value
     return float(value.value)
+
 
 # =============================================================================
 # Start of code

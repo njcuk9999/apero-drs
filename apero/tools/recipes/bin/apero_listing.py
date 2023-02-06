@@ -11,12 +11,11 @@ Created on 2019-09-16 at 13:48
 """
 from apero import lang
 from apero.base import base
-from apero.core.core import drs_text
 from apero.core import constants
 from apero.core.core import drs_log
+from apero.core.core import drs_text
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_utils
-
 
 # =============================================================================
 # Define variables
@@ -49,10 +48,7 @@ def main(**kwargs):
     """
     Main function for apero_listing.py
 
-    :param instrument: str, the instrument name
     :param kwargs: additional keyword arguments
-
-    :type instrument: str
 
     :keyword debug: int, debug level (0 for None)
 
@@ -130,7 +126,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return drs_startup.return_locals(params, locals())
+    return locals()
 
 
 # =============================================================================

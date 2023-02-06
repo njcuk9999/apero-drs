@@ -1,3 +1,13 @@
+"""
+Default constants for NO INSTRUMENT
+
+This is the default constants config file
+
+Created on 2019-01-17
+
+@author: cook
+"""
+
 # This is the main config file
 import numpy as np
 
@@ -15,7 +25,8 @@ __all__ = [
     'PP_OBJ_DPRTYPES', 'PP_BADLIST_SSID',
     'PP_BADLIST_SSWB', 'PP_BADLIST_DRS_HKEY', 'PP_BADLIST_SS_VALCOL',
     'PP_BADLIST_SS_MASKCOL', 'PP_HOTPIX_BOXSIZE', 'PP_CORRUPT_HOT_THRES',
-    'PP_NUM_DARK_AMP', 'PP_HOTPIX_FILE', 'PP_TOTAL_AMP_NUM',
+    'PP_NUM_DARK_AMP', 'PP_HOTPIX_FILE', 'PP_AMP_ERROR_MODEL',
+    'PP_LED_FLAT_FILE', 'PP_TOTAL_AMP_NUM',
     'PP_CORRUPT_MED_SIZE', 'PP_NUM_REF_TOP', 'PP_NUM_REF_BOTTOM',
     'PP_NUM_REF_LEFT', 'PP_NUM_REF_RIGHT',
     'PP_RMS_PERCENTILE', 'PP_LOWEST_RMS_PERCENTILE', 'PP_CORRUPT_SNR_HOTPIX',
@@ -24,6 +35,8 @@ __all__ = [
     'PP_COSMIC_BOXSIZE', 'RAW_TO_PP_ROTATION', 'PP_DARK_MED_BINNUM',
     'SKIP_DONE_PP', 'ALLOWED_PPM_TYPES', 'PPM_MASK_NSIG', 'PP_MEDAMP_BINSIZE',
     'PP_BAD_EXPTIME_FRACTION', 'PP_DARK_DPRTYPES', 'PP_DARK_THRES',
+    'PP_CORR_XTALK_AMP_FLUX', 'PP_COR_XTALK_AMP_DFLUX',
+    'PP_COR_XTALK_AMP_D2FLUX', 'PP_NOSCI_CAPC_DPRTYPES',
     # object database settings
     'GL_GAIA_COL_NAME', 'GL_OBJ_COL_NAME', 'GL_ALIAS_COL_NAME',
     'GL_RV_COL_NAME', 'GL_RVREF_COL_NAME', 'GL_TEFF_COL_NAME',
@@ -47,8 +60,8 @@ __all__ = [
     'OBJ_LIST_RESOLVE_FROM_GLIST', 'OBJ_LIST_RESOLVE_FROM_COORDS',
     'OBJ_LIST_GAIA_EPOCH', 'OBJ_LIST_GAIA_PLX_LIM', 'OBJ_LIST_GAIA_MAG_CUT',
     'OBJ_LIST_CROSS_MATCH_RADIUS', 'REJECT_LIST_GOOGLE_SHEET_URL',
-    'REJECT_LIST_GSHEET_MAIN_LIST_ID','GROUP_FILE_LIMIT', 'MAX_CALIB_DTIME',
-    'DO_CALIB_DTIME_CHECK',
+    'REJECT_LIST_GSHEET_MAIN_LIST_ID', 'GROUP_FILE_LIMIT', 'MAX_CALIB_DTIME',
+    'DO_CALIB_DTIME_CHECK', 'NIGHT_DEFINITION',
     # qc constants
     'QC_DARK_TIME', 'QC_MAX_DEAD', 'DARK_QMIN', 'DARK_QMAX',
     'QC_MAX_DARK', 'QC_LOC_MAXFIT_REMOVED_CTR',
@@ -68,6 +81,7 @@ __all__ = [
     'HISTO_BINS', 'HISTO_RANGE_LOW', 'HISTO_RANGE_HIGH',
     'USE_SKYDARK_CORRECTION', 'USE_SKYDARK_ONLY', 'ALLOWED_DARK_TYPES',
     'DARK_REF_MATCH_TIME', 'DARK_REF_MED_SIZE', 'DARK_REF_MAX_FILES',
+    'DARK_REF_MIN_EXPTIME',
     # badpix constants
     'BADPIX_FULL_FLAT', 'BADPIX_FLAT_MED_WID', 'BADPIX_FLAT_CUT_RATIO',
     'BADPIX_ILLUM_CUT', 'BADPIX_MAX_HOTPIX', 'BADPIX_FULL_THRESHOLD',
@@ -81,7 +95,7 @@ __all__ = [
     'LOC_PERCENTILE_FILTER_SIZE',
     'LOC_FIBER_DILATE_ITERATIONS', 'LOC_MIN_ORDER_AREA', 'LOC_WIDTH_POLY_DEG',
     'LOC_CENT_POLY_DEG', 'LOC_RANGE_WID_SUM', 'LOC_RANGE_WID_SUM',
-    'LOC_YDET_MIN', 'LOC_YDET_MAX',
+    'LOC_YDET_MIN', 'LOC_YDET_MAX', 'LOC_NUM_WID_SAMPLES',
     # localisation constants
     'LOC_ORDERP_BOX_SIZE', 'LOC_START_ROW_OFFSET', 'LOC_CENTRAL_COLUMN',
     'LOC_HALF_ORDER_SPACING', 'LOC_MINPEAK_AMPLITUDE', 'LOC_COLUMN_SEP_FITTING',
@@ -212,24 +226,35 @@ __all__ = [
     'WAVE_FP_DV_MAX', 'WAVE_FP_UPDATE_CAVITY', 'WAVE_FP_CAVFIT_MODE',
     'WAVE_FP_LLFIT_MODE', 'WAVE_FP_LLDIF_MIN', 'WAVE_FP_LLDIF_MAX',
     'WAVE_FP_SIGCLIP', 'WAVE_FP_PLOT_MULTI_INIT', 'WAVE_FP_PLOT_MULTI_NBO',
-    'WAVE_FP_DPRLIST',
+    'WAVE_FP_DPRLIST', 'WAVE_FP_FIBERTYPES',
     # wave night constants
     'WAVE_NIGHT_NITERATIONS1', 'WAVE_NIGHT_NITERATIONS2', 'WAVE_NIGHT_DCAVITY',
     'WAVE_NIGHT_HC_SIGCLIP', 'WAVE_NIGHT_MED_ABS_DEV',
     'WAVE_NIGHT_NSIG_FIT_CUT', 'WAVENIGHT_PLT_BINL', 'WAVENIGHT_PLT_BINU',
     'WAVENIGHT_PLT_NBINS',
+    # sky correction constants
+    'SKYMODEL_FILETYPE',  'SKYMODEL_EXT_SNR_ORDERNUM', 'SKYMODEL_MIN_EXPTIME',
+    'SKYMODEL_LINE_SIGMA', 'SKYMODEL_LINE_ERODE_SIZE',
+    'SKYMODEL_LINE_DILATE_SIZE', 'SKYMODEL_WEIGHT_ITERS',
+    'SKYMODEL_WEIGHT_ERODE_SIZE',
+    'ALLOWED_SKYCORR_DPRTYPES', 'SKYCORR_WEIGHT_ITERATIONS',
+    'SKYCORR_LOWPASS_SIZE1', 'SKYCORR_LOWPASS_SIZE2',
+    'SKYCORR_LOWPASS_ITERATIONS', 'SKYCORR_NSIG_THRES',
     # telluric constants
     'TAPAS_FILE', 'TAPAS_FILE_FMT', 'TELLU_CUT_BLAZE_NORM',
     'TELLU_ALLOWED_DPRTYPES', 'TELLURIC_FILETYPE', 'TELLURIC_FIBER_TYPE',
     'TELLU_LIST_DIRECTORY', 'TELLU_WHITELIST_NAME', 'TELLU_BLACKLIST_NAME',
+    'TELLU_ONLY_PRECLEAN',
     # telluric pre-cleaning constants
-    'TELLUP_DO_PRECLEANING', 'TELLUP_CCF_SCAN_RANGE', 'TELLUP_CLEAN_OH_LINES',
+    'TELLUP_DO_PRECLEANING', 'TELLUP_DO_FINITE_RES_CORR',
+    'TELLUP_CCF_SCAN_RANGE', 'TELLUP_CLEAN_OH_LINES',
     'TELLUP_OHLINE_PCA_FILE', 'TELLUP_REMOVE_ORDS', 'TELLUP_SNR_MIN_THRES',
     'TELLUP_OTHERS_CCF_FILE', 'TELLUP_H2O_CCF_FILE', 'TELLUP_DEXPO_CONV_THRES',
     'TELLUP_DEXPO_MAX_ITR', 'TELLUP_ABSO_EXPO_KTHRES',
     'TELLUP_ABSO_EXPO_KWID', 'TELLUP_ABSO_EXPO_KEXP', 'TELLUP_TRANS_THRES',
     'TELLUP_TRANS_SIGLIM', 'TELLUP_FORCE_AIRMASS', 'TELLUP_D_WATER_ABSO',
-    'TELLUP_OTHER_BOUNDS', 'TELLUP_WATER_BOUNDS', 'TELLUP_OHLINE_NBRIGHT',
+    'TELLUP_OTHER_BOUNDS', 'TELLUP_WATER_BOUNDS', 'TELLU_FINITE_RES_ORDER',
+    'TELLUP_OHLINE_NBRIGHT',
     # make telluric constants
     'MKTELLU_BLAZE_PERCENTILE', 'MKTELLU_CUT_BLAZE_NORM', 'TELLU_ABSORBERS',
     'MKTELLU_DEFAULT_CONV_WIDTH', 'MKTELLU_TEMP_MED_FILT',
@@ -249,7 +274,9 @@ __all__ = [
     'MKTEMPLATE_E2DS_ITNUM', 'MKTEMPLATE_E2DS_LOWF_SIZE',
     'MKTEMPLATE_S1D_ITNUM', 'MKTEMPLATE_S1D_LOWF_SIZE', 'MKTEMPLATE_FILESOURCE',
     'MKTEMPLATE_BERVCOR_QCMIN', 'MKTEMPLATE_BERVCOV_CSNR',
-    'MKTEMPLATE_BERVCOV_RES', 'MKTEMPLATE_DEBUG_MODE', 'MKTEMPLATE_MAX_OPEN_FILES',
+    'MKTEMPLATE_BERVCOV_RES', 'MKTEMPLATE_DEBUG_MODE',
+    'MKTEMPLATE_MAX_OPEN_FILES', 'MKTEMPLATE_HOTSTAR_KER_VEL',
+    'MKTEMPLATE_DECONV_ITR_THRES', 'MKTEMPLATE_DECONV_ITR_MAX',
     # ccf constants
     'CCF_MASK_PATH', 'CCF_NO_RV_VAL', 'CCF_MASK_MIN_WEIGHT', 'CCF_MASK_WIDTH',
     'CCF_N_ORD_MAX', 'CCF_DEFAULT_MASK', 'CCF_MASK_UNITS', 'CCF_MASK_FMT',
@@ -258,6 +285,7 @@ __all__ = [
     'CCF_FILL_NAN_KERN_RES', 'CCF_DET_NOISE', 'CCF_FIT_TYPE',
     'CCF_NOISE_SIGDET', 'CCF_NOISE_BOXSIZE', 'CCF_NOISE_THRES',
     'CCF_MAX_CCF_WID_STEP_RATIO', 'CCF_BLAZE_NORM_PERCENTILE',
+    'CCF_NSIG_THRESHOLD', 'CCF_FWHM_SIGCUT',
     'OBJRV_NULL_VAL', 'CCF_MASK_NORMALIZATION', 'CCF_TEFF_MASK_TABLE',
     # general polar constants
     'POLAR_FIBERS', 'POLAR_STOKES_PARAMS', 'POLAR_BERV_CORRECT',
@@ -304,7 +332,6 @@ __all__ = [
     # debug wave plot settings
     'PLOT_WAVE_FIBER_COMPARISON', 'PLOT_WAVE_FIBER_COMP',
     'PLOT_WAVE_WL_CAV', 'PLOT_WAVE_HC_DIFF_HIST', 'PLOT_WAVEREF_EXPECTED',
-
     # debug wave plot settings
     'PLOT_WAVE_HC_GUESS', 'PLOT_WAVE_HC_TFIT_GRID',
     'PLOT_WAVE_HC_BRIGHTEST_LINES', 'PLOT_WAVE_HC_RESMAP',
@@ -316,6 +343,9 @@ __all__ = [
     'PLOT_WAVE_FP_MULTI_ORDER', 'PLOT_WAVE_FP_SINGLE_ORDER',
     'PLOT_WAVENIGHT_ITERPLOT', 'PLOT_WAVENIGHT_HISTPLOT',
     'PLOT_WAVE_RESMAP',
+    # sky corr plot settings
+    'PLOT_TELLU_SKYMODEL_REGION_PLOT', 'PLOT_TELLU_SKYMODEL_MED',
+    'PLOT_TELLU_SKYMODEL_LINEFIT', 'PLOT_TELLU_SKY_CORR_PLOT',
     # debug telluric plot settings
     'PLOT_TELLUP_WAVE_TRANS', 'PLOT_TELLUP_ABSO_SPEC',
     'PLOT_MKTELLU_WAVE_FLUX1', 'PLOT_MKTELLU_WAVE_FLUX2',
@@ -324,15 +354,16 @@ __all__ = [
     'PLOT_FTELLU_RECON_SPLINE1', 'PLOT_FTELLU_RECON_SPLINE2',
     'PLOT_FTELLU_WAVE_SHIFT1', 'PLOT_FTELLU_WAVE_SHIFT2',
     'PLOT_FTELLU_RECON_ABSO1', 'PLOT_FTELLU_RECON_ABSO2',
-    'PLOT_MKTEMP_BERV_COV', 'PLOT_TELLUP_CLEAN_OH',
-    'PLOT_FTELLU_RES_MODEL',
+    'PLOT_MKTEMP_BERV_COV', 'PLOT_MKTEMP_S1D_DECONV',
+    'PLOT_TELLUP_CLEAN_OH', 'PLOT_FTELLU_RES_MODEL',
+    'PLOT_TELLU_FINITE_RES_CORR',
     # debug ccf plot settings
     'PLOT_CCF_RV_FIT_LOOP', 'PLOT_CCF_RV_FIT', 'PLOT_CCF_SWAVE_REF',
     'PLOT_CCF_PHOTON_UNCERT',
     # debug polar plot settings
     'PLOT_POLAR_FIT_CONT', 'PLOT_POLAR_CONTINUUM', 'PLOT_POLAR_RESULTS',
     'PLOT_POLAR_STOKES_I', 'PLOT_POLAR_LSD',
-    # post processing settings
+    # post-processing settings
     'POST_CLEAR_REDUCED', 'POST_OVERWRITE', 'POST_HDREXT_COMMENT_KEY',
     # tool constants
     'REPROCESS_RUN_KEY', 'REPROCESS_OBSDIR_COL', 'REPROCESS_ABSFILECOL',
@@ -586,9 +617,9 @@ OBJ_LIST_GOOGLE_SHEET_URL = Const('OBJ_LIST_GOOGLE_SHEET_URL', value=None,
 # Define the google sheet objname list main list id number (may be set to a
 #     csv file for completely offline reduction)
 OBJ_LIST_GSHEET_MAIN_LIST_ID = Const('OBJ_LIST_GSHEET_MAIN_LIST_ID', value=None,
-                                  dtype=str, source=__NAME__, group=cgroup,
-                                  description='Define the google sheet objname '
-                                              'list main list id number')
+                                     dtype=str, source=__NAME__, group=cgroup,
+                                     description='Define the google sheet objname '
+                                                 'list main list id number')
 
 # Define the google sheet objname list pending list id number (may be set to a
 # #     csv file for completely offline reduction)
@@ -703,15 +734,15 @@ OBJ_LIST_GAIA_MAG_CUT = Const('OBJ_LIST_GAIA_MAG_CUT', value=None, dtype=float,
 
 # Define the google sheet to use for update the reject list
 REJECT_LIST_GOOGLE_SHEET_URL = Const('REJECT_LIST_GOOGLE_SHEET_URL', value=None,
-                                  dtype=str, source=__NAME__, group=cgroup,
-                                  description=('Define the google sheet to use '
-                                               'for crossmatch'))
+                                     dtype=str, source=__NAME__, group=cgroup,
+                                     description=('Define the google sheet to use '
+                                                  'for crossmatch'))
 
 # Define the google sheet id to use for update the reject list
 REJECT_LIST_GSHEET_MAIN_LIST_ID = Const('REJECT_LIST_GSHEET_MAIN_LIST_ID', value=None,
-                                  dtype=str, source=__NAME__, group=cgroup,
-                                  description='Define the google sheet objname '
-                                              'list main list id number')
+                                        dtype=str, source=__NAME__, group=cgroup,
+                                        description='Define the google sheet objname '
+                                                    'list main list id number')
 
 # # Define the odometer code rejection google sheet id
 # ODOCODE_REJECT_GSHEET_ID = Const('ODOCODE_REJECT_GSHEET_ID', value=None,
@@ -726,6 +757,15 @@ REJECT_LIST_GSHEET_MAIN_LIST_ID = Const('REJECT_LIST_GSHEET_MAIN_LIST_ID', value
 #                                   description=('Define the odmeter code '
 #                                                'rejection google sheet '
 #                                                'workbook'))
+
+# Define which twilight to use as the definition of a night observation
+#    ("CIVIL", "NAUTICAL", "ASTRONOMICAL")
+NIGHT_DEFINITION = Const('NIGHT_DEFINITION', value=None, dtype=str,
+                         source=__NAME__, group=cgroup,
+                         options=['CIVIL', 'NAUTICAL', 'ASTRONOMICAL'],
+                         description='Define which twilight to use as the '
+                                     'definition of a night observation'
+                                     '("CIVIL", "NAUTICAL", "ASTRONOMICAL")')
 
 # =============================================================================
 # CALIBRATION: FIBER SETTINGS
@@ -863,8 +903,20 @@ PP_DARK_MED_BINNUM = Const('PP_DARK_MED_BINNUM', value=None, dtype=int,
 #   Defines the pp hot pixel file (located in the data folder)
 PP_HOTPIX_FILE = Const('PP_HOTPIX_FILE', value=None, dtype=str, source=__NAME__,
                        group=cgroup,
-                       description=('Defines the pp hot pixel file (located in '
-                                    'the data folder)'))
+                       description='Defines the pp hot pixel file (located in '
+                                   'the data folder)')
+
+#   Defines the pp amplifier bias model (located in the data folder)
+PP_AMP_ERROR_MODEL = Const('PP_AMP_ERROR_MODEL', value=None, dtype=str,
+                           source=__NAME__, group=cgroup,
+                           description='Defines the pp amplifier bias model '
+                                       '(located in the data folder)')
+
+# Defines the pp led flat file (located in the data folder)
+PP_LED_FLAT_FILE = Const('PP_LED_FLAT_FILE', value=None, dtype=str,
+                         source=__NAME__, group=cgroup,
+                         description='Defines the pp led flat file '
+                                     '(located in the data folder)')
 
 # Define the number of un-illuminated reference pixels at top of image
 PP_NUM_REF_TOP = Const('PP_NUM_REF_TOP', value=None, dtype=int,
@@ -966,9 +1018,9 @@ SKIP_DONE_PP = Const('SKIP_DONE_PP', value=None, dtype=bool,
 
 # Define dark dprtypes for threshold quality control check (PP_DARK_THRES)
 PP_DARK_DPRTYPES = Const('PP_DARK_DPRTYPES', value=None, dtype=str,
-                           source=__NAME__, active=False, group=cgroup,
-                           description='Define dark dprtypes for threshold '
-                                       'quality control check (PP_DARK_THRES)')
+                         source=__NAME__, active=False, group=cgroup,
+                         description='Define dark dprtypes for threshold '
+                                     'quality control check (PP_DARK_THRES)')
 
 # Define the threshold for a suitable dark dprtypes (above this will not be
 #    processed)
@@ -999,6 +1051,42 @@ PP_MEDAMP_BINSIZE = Const('PP_MEDAMP_BINSIZE', value=None, dtype=int,
                                       'smaller than the order footprint on the '
                                       'array as it would lead to a set of NaNs '
                                       'in the downsized image')
+
+# Define the amplitude of the flux-dependent along-readout-axis derivative
+#     component
+PP_CORR_XTALK_AMP_FLUX = Const('PP_CORR_XTALK_AMP_FLUX', value=None,
+                               dtype=float, minimum=0.0, source=__NAME__,
+                               group=cgroup,
+                               description='Define the amplitude of the '
+                                           'flux-dependent along-readout-axis '
+                                           'derivative component')
+
+# Define amplitude of the flux-dependent along-readout-axis 1st derivative
+#     component
+PP_COR_XTALK_AMP_DFLUX = Const('PP_COR_XTALK_AMP_DFLUX', value=None,
+                               dtype=float, minimum=0.0, source=__NAME__,
+                               group=cgroup,
+                               description='Define amplitude of the '
+                                           'flux-dependent along-readout-axis '
+                                           '2nd derivative component')
+
+# Define amplitude of the flux-dependent along-readout-axis 2nd derivative
+#     component
+PP_COR_XTALK_AMP_D2FLUX = Const('PP_COR_XTALK_AMP_D2FLUX', value=None,
+                                dtype=float, minimum=0.0, source=__NAME__,
+                                group=cgroup,
+                                description='Define amplitude of the '
+                                            'flux-dependent along-readout-axis '
+                                            '2nd derivative component')
+
+# Define the partial APERO DPRTYPES which we should not do the science
+#    capacitive coupling
+PP_NOSCI_CAPC_DPRTYPES = Const('PP_NOSCI_CAPC_DPRTYPES', value=None,
+                               dtype=str, source=__NAME__,
+                               group=cgroup,
+                               description='Define the partial APERO DPRTYPES '
+                                           'which we should not do the '
+                                           'science capacitive coupling')
 
 # =============================================================================
 # CALIBRATION: ASTROMETRIC DATABASE SETTINGS
@@ -1134,10 +1222,10 @@ ALLOWED_DARK_TYPES = Const('ALLOWED_DARK_TYPES', value=None, dtype=str,
 
 # Define the maximum time span to combine dark files over (in hours)
 DARK_REF_MATCH_TIME = Const('DARK_REF_MATCH_TIME', value=None,
-                               dtype=float, source=__NAME__, group=cgroup,
-                               description=('Define the maximum time span to '
-                                            'combine dark files over (in '
-                                            'hours)'))
+                            dtype=float, source=__NAME__, group=cgroup,
+                            description=('Define the maximum time span to '
+                                         'combine dark files over (in '
+                                         'hours)'))
 
 # median filter size for dark reference
 DARK_REF_MED_SIZE = Const('DARK_REF_MED_SIZE', value=None, dtype=int,
@@ -1149,6 +1237,13 @@ DARK_REF_MAX_FILES = Const('DARK_REF_MAX_FILES', value=None, dtype=int,
                            source=__NAME__, group=cgroup,
                            description='define the maximum number of files '
                                        'to use in the dark reference')
+
+# define the minimimum allowed exptime for dark files to be used in
+#    dark ref
+DARK_REF_MIN_EXPTIME = Const('DARK_REF_MIN_EXPTIME', value=None, dtype=int,
+                             source=__NAME__, group=cgroup,
+                             description='define the minimimum allowed exptime '
+                                         'for dark files to be used in')
 
 # =============================================================================
 # CALIBRATION: BAD PIXEL MAP SETTINGS
@@ -1259,7 +1354,7 @@ BKGR_KER_AMP = Const('BKGR_KER_AMP', value=None, dtype=float, source=__NAME__,
 #  Background kernel width in x and y [pixels]
 BKGR_KER_WX = Const('BKGR_KER_WX', value=None, dtype=int, source=__NAME__,
                     group=cgroup,
-                    description=('Background kernel width in x [pixels]'))
+                    description='Background kernel width in x [pixels]')
 BKGR_KER_WY = Const('BKGR_KER_WY', value=None, dtype=int, source=__NAME__,
                     group=cgroup,
                     description='Background kernel width in y [pixels]')
@@ -1363,6 +1458,12 @@ LOC_YDET_MAX = Const('LOC_YDET_MIN', value=None, dtype=int, source=__NAME__,
                      description='define the maximum detector position where '
                                  'the centers of the orders should fall '
                                  '(across order direction)')
+
+# define the number of width samples to use in localisation
+LOC_NUM_WID_SAMPLES = Const('LOC_NUM_WID_SAMPLES', value=None, dtype=int,
+                            source=__NAME__, group=cgroup, minimum=1,
+                            description='define the number of width samples to '
+                                        'use in localisation')
 
 # =============================================================================
 # CALIBRATION: LOCALISATION SETTINGS
@@ -1607,11 +1708,11 @@ SHAPE_QC_LTRANS_RES_THRES = Const('SHAPE_QC_LTRANS_RES_THRES', value=None,
                                                'transform'))
 
 # define the maximum number of files to use in the shape reference recipe
-SHAPE_REF_MAX_FILES =  Const('SHAPE_REF_MAX_FILES', value=None,
-                             dtype=int, source=__NAME__, group=cgroup,
-                             description=('define the maximum number of '
-                                          'files to use in the shape '
-                                          'reference recipe'))
+SHAPE_REF_MAX_FILES = Const('SHAPE_REF_MAX_FILES', value=None,
+                            dtype=int, source=__NAME__, group=cgroup,
+                            description=('define the maximum number of '
+                                         'files to use in the shape '
+                                         'reference recipe'))
 
 #  Define the percentile which defines a true FP peak [0-100]
 SHAPE_REF_VALIDFP_PERCENTILE = Const('SHAPE_REF_VALIDFP_PERCENTILE',
@@ -2019,27 +2120,27 @@ FF_PLOT_ORDER = Const('FF_PLOT_ORDER', value=None, dtype=int, source=__NAME__,
 cgroup = 'CALIBRATION: LEAKAGE SETTINGS'
 # Define the types of input file allowed by the leakage reference recipe
 ALLOWED_LEAKREF_TYPES = Const('ALLOWED_LEAKREF_TYPES', value=None, dtype=str,
-                            source=__NAME__, group=cgroup,
-                            description=('Define the types of input file '
-                                         'allowed by the leakage reference '
-                                         'recipe'))
+                              source=__NAME__, group=cgroup,
+                              description=('Define the types of input file '
+                                           'allowed by the leakage reference '
+                                           'recipe'))
 
 # define whether to always extract leak reference files
 #      (i.e. overwrite existing files)
 LEAKREF_ALWAYS_EXTRACT = Const('LEAKREF_ALWAYS_EXTRACT', value=None, dtype=bool,
-                             source=__NAME__, group=cgroup,
-                             description=('define whether to always extract '
-                                          'leak reference files (i.e. overwrite '
-                                          'existing files)'))
+                               source=__NAME__, group=cgroup,
+                               description=('define whether to always extract '
+                                            'leak reference files (i.e. overwrite '
+                                            'existing files)'))
 
 # define the type of file to use for leak reference solution
 #    (currently allowed are 'E2DSFF') - must match with LEAK_EXTRACT_FILE
 LEAKREF_EXTRACT_TYPE = Const('LEAKREF_EXTRACT_TYPE', value=None, dtype=str,
-                           source=__NAME__, group=cgroup,
-                           description=('define the type of file to use for '
-                                        'leak reference solution (currently '
-                                        'allowed are E2DSFF) - must match with '
-                                        'LEAK_EXTRACT_FILE'))
+                             source=__NAME__, group=cgroup,
+                             description=('define the type of file to use for '
+                                          'leak reference solution (currently '
+                                          'allowed are E2DSFF) - must match with '
+                                          'LEAK_EXTRACT_FILE'))
 
 # Define whether we want to correct leakage by default
 CORRECT_LEAKAGE = Const('CORRECT_LEAKAGE', value=None, dtype=str,
@@ -2049,9 +2150,9 @@ CORRECT_LEAKAGE = Const('CORRECT_LEAKAGE', value=None, dtype=str,
 
 # Define DPRTYPE in reference fiber to do correction
 LEAKAGE_REF_TYPES = Const('LEAKAGE_REF_TYPES', value=None, dtype=str,
-                        source=__NAME__, group=cgroup,
-                        description='Define DPRTYPE in reference fiber to do '
-                                    'correction')
+                          source=__NAME__, group=cgroup,
+                          description='Define DPRTYPE in reference fiber to do '
+                                      'correction')
 
 # define the type of file to use for the leak correction (currently allowed are
 #     'E2DS_FILE' or 'E2DSFF_FILE' (linked to recipe definition outputs)
@@ -2092,14 +2193,14 @@ LEAK_NORM_PERCENTILE = Const('LEAK_NORM_PERCENTILE', value=None, dtype=float,
 
 # define the e-width of the smoothing kernel for leak reference
 LEAKREF_WSMOOTH = Const('LEAKREF_WSMOOTH', value=None, dtype=int,
-                      source=__NAME__, minimum=0, group=cgroup,
-                      description=('define the e-width of the smoothing kernel '
-                                   'for leak reference'))
+                        source=__NAME__, minimum=0, group=cgroup,
+                        description=('define the e-width of the smoothing kernel '
+                                     'for leak reference'))
 
 # define the kernel size for leak reference
 LEAKREF_KERSIZE = Const('LEAKREF_KERSIZE', value=None, dtype=float,
-                      source=__NAME__, minimum=0.0, group=cgroup,
-                      description='define the kernel size for leak reference')
+                        source=__NAME__, minimum=0.0, group=cgroup,
+                        description='define the kernel size for leak reference')
 
 # define the lower bound percentile for leak correction
 LEAK_LOW_PERCENTILE = Const('LEAK_LOW_PERCENTILE', value=None, dtype=float,
@@ -2394,10 +2495,10 @@ THERMAL_PLOT_START_ORDER = Const('THERMAL_PLOT_START_ORDER', value=None,
 
 # define the dprtypes for which to apply the excess emissivity file
 THERMAL_EXCESS_DPRTYPES = Const('THERMAL_EXCESS_DPRTYPES', value=None,
-                                 dtype=str, source=__NAME__, group=cgroup,
-                                 description=('define the dprtypes for which '
-                                              'to apply the excess emissivity '
-                                              'file'))
+                                dtype=str, source=__NAME__, group=cgroup,
+                                description=('define the dprtypes for which '
+                                             'to apply the excess emissivity '
+                                             'file'))
 
 # define the thermal emissivity file
 THERMAL_EXCESS_EMISSIVITY_FILE = Const('THERMAL_EXCESS_EMISSIVITY_FILE',
@@ -3446,6 +3547,14 @@ WAVE_FP_DPRLIST = Const('WAVE_FP_DPRLIST', value=None, dtype=str,
                         description=('define the dprtype for generating '
                                      'FPLINES (string list)'))
 
+# define the override for reference fiber for generating FPLINES
+#    None for no override
+WAVE_FP_FIBERTYPES = Const('WAVE_FP_FIBERTYPES', value='None', dtype=str,
+                           source=__NAME__, group=cgroup,
+                           description='define the override for reference '
+                                       'fiber for generating FPLINES (None for '
+                                       'no override)')
+
 # =============================================================================
 # CALIBRATION: WAVE NIGHT SETTINGS
 # =============================================================================
@@ -3509,6 +3618,115 @@ WAVENIGHT_PLT_BINU = Const('WAVENIGHT_PLT_BINU', value=None, dtype=float,
                                         'multiples of rms'))
 
 # =============================================================================
+# OBJECT: SKY CORR SETTINGS
+# =============================================================================
+cgroup = 'OBJECT: SKY CORR SETTINGS'
+
+
+# the OUTPUT type (KW_OUTPUT header key) and DrsFitsFile name required for
+#   input sky files
+SKYMODEL_FILETYPE = Const('SKYMODEL_FILETYPE', value=None, dtype=str,
+                          source=__NAME__,
+                          description='the OUTPUT type (KW_OUTPUT header key) '
+                                      'and DrsFitsFile name required for '
+                                      'input sky files')
+
+# Define the order to get the snr from (for input data qc check)
+SKYMODEL_EXT_SNR_ORDERNUM = Const('SKYMODEL_EXT_SNR_ORDERNUM', value=None,
+                                  dtype=int, source=__NAME__, minimum=0,
+                                  group=cgroup,
+                                  description='Define the order to get the '
+                                              'snr from (for input data qc '
+                                              'check)')
+
+# Define the minimum exptime to use a sky in the model [s]
+SKYMODEL_MIN_EXPTIME = Const('SKYMODEL_MIN_EXPTIME', value=None,
+                             dtype=float, source=__NAME__, minimum=0,
+                             group=cgroup,
+                             description='Define the minimum exptime to use a '
+                                         'sky in the model [s]')
+
+# define the sigma that positive exursions need to have to be identified
+#   as lines
+SKYMODEL_LINE_SIGMA = Const('SKYMODEL_LINE_SIGMA', value=None,
+                            dtype=float, source=__NAME__, minimum=0,
+                            group=cgroup,
+                            description='define the sigma that positive '
+                                        'exursions need to have to be '
+                                        'identified as lines')
+
+# define the erosion size to use on a line
+SKYMODEL_LINE_ERODE_SIZE = Const('SKYMODEL_LINE_ERODE_SIZE', value=None,
+                                 dtype=int, source=__NAME__, minimum=0,
+                                 group=cgroup,
+                                 description='define the erosion size to use '
+                                             'on a line')
+
+# define the dilatation size to use on a line
+SKYMODEL_LINE_DILATE_SIZE = Const('SKYMODEL_LINE_DILATE_SIZE', value=None,
+                                  dtype=int, source=__NAME__, minimum=0,
+                                  group=cgroup,
+                                  description='define the dilatation size to '
+                                              'use on a line')
+
+# define the number of weight iterations to use when construct sky model
+#       weight vector
+SKYMODEL_WEIGHT_ITERS = Const('SKYMODEL_WEIGHT_ITERS', value=None,
+                              dtype=int, source=__NAME__, minimum=1,
+                              group=cgroup,
+                              description='define the number of weight '
+                                          'iterations to use when construct '
+                                          'sky model weight vector')
+
+# define the erosion size for the sky model line weight calculation
+SKYMODEL_WEIGHT_ERODE_SIZE = Const('SKYMODEL_WEIGHT_ERODE_SIZE', value=None,
+                                   dtype=int, source=__NAME__, minimum=0,
+                                   group=cgroup,
+                                   description='define the erosion size for '
+                                               'the sky model line weight '
+                                               'calculation')
+
+# Define the allowed DPRTYPEs for sky correction
+ALLOWED_SKYCORR_DPRTYPES = Const('ALLOWED_SKYCORR_DPRTYPES', value=None,
+                                 dtype=str, source=__NAME__, group=cgroup,
+                                 description='Define the allowed DPRTYPEs for'
+                                             ' sky correction')
+
+# Define the number of iterations used to create sky correction weights
+SKYCORR_WEIGHT_ITERATIONS = Const('SKYCORR_WEIGHT_ITERATIONS', value=None,
+                                  dtype=int, source=__NAME__, group=cgroup,
+                                  description='Define the number of iterations '
+                                              'used to create sky correction '
+                                              'weights')
+
+# Define the size of the fine low pass filter (must be an odd integer)
+SKYCORR_LOWPASS_SIZE1 = Const('SKYCORR_LOWPASS_SIZE1', value=None,
+                              dtype=int, source=__NAME__, group=cgroup,
+                              description='Define the size of the fine low '
+                                          'pass filter (must be an odd '
+                                          'integer)')
+
+# Define the size of the coarse low pass filter (msut be an odd integer)
+SKYCORR_LOWPASS_SIZE2 = Const('SKYCORR_LOWPASS_SIZE2', value=None,
+                              dtype=int, source=__NAME__, group=cgroup,
+                              description='Define the size of the coarse low '
+                                          'pass filter (msut be an odd '
+                                          'integer)')
+
+# Define the number of iterations to use for the coarse low pass filter
+SKYCORR_LOWPASS_ITERATIONS = Const('SKYCORR_LOWPASS_ITERATIONS', value=None,
+                                   dtype=int, source=__NAME__, group=cgroup,
+                                   description='Define the number of iterations'
+                                               ' to use for the coarse low '
+                                               'pass filter')
+
+# Define the number of sigma threshold for sky corr sigma clipping
+SKYCORR_NSIG_THRES = Const('SKYCORR_NSIG_THRES', value=None, dtype=int,
+                           source=__NAME__, group=cgroup,
+                           description='Define the number of sigma threshold '
+                                       'for sky corr sigma clipping')
+
+# =============================================================================
 # OBJECT: TELLURIC SETTINGS
 # =============================================================================
 cgroup = 'OBJECT: TELLURIC SETTINGS'
@@ -3553,6 +3771,12 @@ TELLU_BLACKLIST_NAME = Const('TELLU_BLACKLIST_NAME', value=None, dtype=str,
                              source=__NAME__, group=cgroup,
                              description='Define telluric black list name')
 
+# Force only pre-cleaning (not recommended - only for debugging)
+TELLU_ONLY_PRECLEAN = Const('TELLU_ONLY_PRECLEAN', value=None, dtype=bool,
+                            source=__NAME__, group=cgroup,
+                            description='Force only pre-cleaning (not '
+                                        'recommended - only for debugging)')
+
 # =============================================================================
 # OBJECT: TELLURIC PRE-CLEANING SETTINGS
 # =============================================================================
@@ -3562,6 +3786,13 @@ cgroup = 'OBJECT: TELLURIC PRE-CLEANING SETTINGS'
 TELLUP_DO_PRECLEANING = Const('TELLUP_DO_PRECLEANING', value=None, dtype=bool,
                               source=__NAME__, group=cgroup,
                               description='define whether we do pre-cleaning')
+
+# define whether we do finite resolution correct (if we have a template)
+TELLUP_DO_FINITE_RES_CORR = Const('TELLUP_DO_FINITE_RES_CORR', value=None,
+                                  dtype=bool, source=__NAME__, group=cgroup,
+                                  description='define whether we do finite '
+                                              'resolution correct (if we have '
+                                              'a template)')
 
 # width in km/s for the ccf scan to determine the abso in pre-cleaning
 TELLUP_CCF_SCAN_RANGE = Const('TELLUP_CCF_SCAN_RANGE', value=None, dtype=float,
@@ -3700,6 +3931,12 @@ TELLUP_WATER_BOUNDS = Const('TELLUP_WATER_BOUNDS', value=None, dtype=str,
                                          '(string list) for the exponent of '
                                          'water absorber'))
 
+# set the plot order for the finite resolution plot
+TELLU_FINITE_RES_ORDER = Const('TELLUP_WATER_BOUNDS', value=None, dtype=int,
+                               minimum=0, source=__NAME__, group=cgroup,
+                               description='set the plot order for the finite '
+                                           'resolution plot')
+
 # =============================================================================
 # OBJECT: MAKE TELLURIC SETTINGS
 # =============================================================================
@@ -3820,9 +4057,9 @@ MKTELLU_QC_AIRMASS_DIFF = Const('MKTELLU_QC_AIRMASS_DIFF', value=None,
 
 # define the sigma cut for tellu transmission model
 TELLU_TRANS_MODEL_SIG = Const('TELLU_TRANS_MODEL_SIG', value=None,
-                                dtype=float, source=__NAME__, group=cgroup,
-                                description=('define the sigma cut for tellu '
-                                             'transmission model'))
+                              dtype=float, source=__NAME__, group=cgroup,
+                              description=('define the sigma cut for tellu '
+                                           'transmission model'))
 
 # =============================================================================
 # OBJECT: FIT TELLURIC SETTINGS
@@ -4090,6 +4327,36 @@ MKTEMPLATE_MAX_OPEN_FILES = Const('MKTEMPLATE_MAX_OPEN_FILES', value=50,
                                               'to be allowed into a bin '
                                               '(if not in debug mode)')
 
+# Define the fwhm of hot star convolution kernel size in km/s so it is half
+#     the minimum v sin i of our hot stars
+MKTEMPLATE_HOTSTAR_KER_VEL = Const('MKTEMPLATE_HOTSTAR_KER_VEL', value=None,
+                                   dtype=float, source=__NAME__, group=cgroup,
+                                   description='Define the fwhm of hot star '
+                                               'convolution kernel size in '
+                                               'km/s  so it is half the '
+                                               'minimum v sin i of our hot '
+                                               'stars')
+
+# Define the threshold for the Lucy-Richardson deconvolution steps. This is
+#    the maximum  value of the 99th percentile of the feed-back term
+MKTEMPLATE_DECONV_ITR_THRES = Const('MKTEMPLATE_DECONV_ITR_THRES', value=None,
+                                    dtype=float, source=__NAME__, minimum=0,
+                                    group=cgroup,
+                                    description='Define the threshold for the '
+                                                'Lucy-Richardson deconvolution '
+                                                'steps. This is the maximum '
+                                                'value of the 99th percentile '
+                                                'of the feed-back term')
+
+# Define the max number of iterations to run if the iteration threshold
+#     is not met
+MKTEMPLATE_DECONV_ITR_MAX = Const('MKTEMPLATE_DECONV_ITR_MAX', value=None,
+                                  dtype=float, source=__NAME__, minimum=0,
+                                  group=cgroup,
+                                  description='Define the max number of '
+                                              'iterations to run if the '
+                                              'iteration threshold is not '
+                                              'met')
 
 # =============================================================================
 # CALIBRATION: CCF SETTINGS
@@ -4117,7 +4384,7 @@ OBJRV_NULL_VAL = Const('OBJRV_NULL_VAL', value=1000, dtype=float,
                        source=__NAME__, group=cgroup,
                        description=('Define target rv header null value '
                                     '(values greater than absolute value '
-                                      'are set to zero)'))
+                                    'are set to zero)'))
 
 # Define the default CCF MASK to use (filename or TEFF to decide based on
 #    object temperature) - for TEFF setup see CCF_TEFF_MASK_TABLE file
@@ -4267,6 +4534,18 @@ CCF_BLAZE_NORM_PERCENTILE = Const('CCF_BLAZE_NORM_PERCENTILE', value=None,
                                   description=('Define the percentile the '
                                                'blaze is normalised by before '
                                                'using in CCF calc'))
+
+# Define the minimum number of sigma the peak CCF must have to be acceptable
+CCF_NSIG_THRESHOLD = Const('CCF_NSIG_THRESHOLD', value=None, dtype=float,
+                           source=__NAME__, minimum=0, group=cgroup,
+                           description='Define the minimum number of sigma the '
+                                       'peak CCF must have to be acceptable')
+
+# Define the minimum number of sigma the FWHM of CCF must have to be acceptable
+CCF_FWHM_SIGCUT = Const('CCF_FWHM_SIGCUT', value=None, dtype=float,
+                        source=__NAME__, minimum=0, group=cgroup,
+                        description='Define the minimum number of sigma the '
+                                    'FWHM of CCF must have to be acceptable')
 
 # =============================================================================
 # GENERAL POLARISATION SETTINGS
@@ -4605,33 +4884,33 @@ PLOT_LOC_WIDTH_REGIONS = Const('PLOT_LOC_WIDTH_REGIONS', value=False,
 # turn on localisation fiber doublet paroty plot
 PLOT_LOC_FIBER_DOUBLET_PARITY = Const('PLOT_LOC_FIBER_DOUBLET_PARITY',
                                       value=False, dtype=bool, source=__NAME__,
-                                      user=True,  active=False, group=cgroup,
+                                      user=True, active=False, group=cgroup,
                                       description='turn on localisation fiber '
                                                   'doublet paroty plot')
 
 # turn on localisation gap in orders plot
 PLOT_LOC_GAP_ORDERS = Const('PLOT_LOC_GAP_ORDERS', value=False, dtype=bool,
-                            source=__NAME__, user=True,  active=False,
+                            source=__NAME__, user=True, active=False,
                             group=cgroup,
                             description='turn on localisation gap in orders '
                                         'plot')
 
 # turn on localisation image fit plot
 PLOT_LOC_IMAGE_FIT = Const('PLOT_LOC_IMAGE_FIT', value=False, dtype=bool,
-                            source=__NAME__, user=True,  active=False,
-                            group=cgroup,
-                            description='turn on localisation image fit plot')
+                           source=__NAME__, user=True, active=False,
+                           group=cgroup,
+                           description='turn on localisation image fit plot')
 
 # turn on localisation image corners plot
 PLOT_LOC_IM_CORNER = Const('PLOT_LOC_IM_CORNER', value=False, dtype=bool,
-                            source=__NAME__, user=True,  active=False,
-                            group=cgroup,
-                            description='turn on localisation image corners '
-                                        'plot')
+                           source=__NAME__, user=True, active=False,
+                           group=cgroup,
+                           description='turn on localisation image corners '
+                                       'plot')
 
 # turn on localisation image regions plot
 PLOT_LOC_IM_REGIONS = Const('PLOT_LOC_IM_REGIONS', value=False, dtype=bool,
-                            source=__NAME__, user=True,  active=False,
+                            source=__NAME__, user=True, active=False,
                             group=cgroup,
                             description='turn on localisation image regions '
                                         'plot')
@@ -4915,6 +5194,44 @@ PLOT_WAVENIGHT_HISTPLOT = Const('PLOT_WAVENIGHT_HISTPLOT', value=False,
                                 active=False, group=cgroup,
                                 description='turn on the wave per night '
                                             'hist debug plot')
+# turn on the sky model region plot
+PLOT_TELLU_SKYMODEL_REGION_PLOT = Const('PLOT_TELLU_SKYMODEL_REGION_PLOT',
+                                        value=False, dtype=bool,
+                                        source=__NAME__, user=True,
+                                        active=False, group=cgroup,
+                                        description='turn on the sky model '
+                                                    'region plot')
+
+# turn on the sky model median plot
+PLOT_TELLU_SKYMODEL_MED = Const('PLOT_TELLU_SKYMODEL_MED',
+                                value=False, dtype=bool,
+                                source=__NAME__, user=True,
+                                active=False, group=cgroup,
+                                description='turn on the sky model '
+                                            'median plot')
+
+# turn on the sky model median plot
+PLOT_TELLU_SKYMODEL_LINEFIT = Const('PLOT_TELLU_SKYMODEL_LINEFIT',
+                                    value=False, dtype=bool,
+                                    source=__NAME__, user=True,
+                                    active=False, group=cgroup,
+                                    description='turn on the sky model '
+                                                'median plot')
+
+# turn on the sky model median plot
+PLOT_TELLU_SKYMODEL_LINEFIT = Const('PLOT_TELLU_SKYMODEL_LINEFIT',
+                                    value=False, dtype=bool,
+                                    source=__NAME__, user=True,
+                                    active=False, group=cgroup,
+                                    description='turn on the sky model '
+                                                'median plot')
+
+# turn on the sky correction debug plot
+PLOT_TELLU_SKY_CORR_PLOT = Const('PLOT_TELLU_SKY_CORR_PLOT', value=False,
+                                 dtype=bool, source=__NAME__, user=True,
+                                 active=False, group=cgroup,
+                                 description='turn on the sky correction '
+                                             'debug plot')
 
 # turn on the telluric pre-cleaning ccf debug plot
 PLOT_TELLUP_WAVE_TRANS = Const('PLOT_TELLUP_WAVE_TRANS', value=False,
@@ -4953,9 +5270,9 @@ PLOT_MKTELLU_WAVE_FLUX2 = Const('PLOT_MKTELLU_WAVE_FLUX2', value=False,
 
 # turn on the make tellu model plot
 PLOT_MKTELLU_MODEL = Const('PLOT_MKTELLU_MODEL', value=False,
-                                dtype=bool, source=__NAME__, user=True,
-                                active=False, group=cgroup,
-                                description='turn on the make tellu model plot')
+                           dtype=bool, source=__NAME__, user=True,
+                           active=False, group=cgroup,
+                           description='turn on the make tellu model plot')
 
 # turn on the fit tellu pca component debug plot (in loop)
 PLOT_FTELLU_PCA_COMP1 = Const('PLOT_FTELLU_PCA_COMP1', value=False,
@@ -5021,8 +5338,15 @@ PLOT_FTELLU_RECON_ABSO2 = Const('PLOT_FTELLU_RECON_ABSO12', value=False,
 PLOT_FTELLU_RES_MODEL = Const('PLOT_FTELLU_RES_MODEL', value=False,
                               dtype=bool, source=__NAME__, user=True,
                               active=False, group=cgroup,
-                              description=' turn on the fit tellu res model '
+                              description='turn on the fit tellu res model '
                                           'debug plot')
+
+# turn on the finite resolution correction debug plot
+PLOT_TELLU_FINITE_RES_CORR = Const('PLOT_TELLU_FINITE_RES_CORR', value=False,
+                                   dtype=bool, source=__NAME__, user=True,
+                                   active=False, group=cgroup,
+                                   description='turn on the finite resolution '
+                                               'correction debug plot')
 
 # turn on the berv coverage debug plot
 PLOT_MKTEMP_BERV_COV = Const('PLOT_MKTEMP_BERV_COV', value=False,
@@ -5030,6 +5354,13 @@ PLOT_MKTEMP_BERV_COV = Const('PLOT_MKTEMP_BERV_COV', value=False,
                              active=False, group=cgroup,
                              description='turn on the berv coverage '
                                          'debug plot')
+
+# turn on the template s1d deconvolution plot
+PLOT_MKTEMP_S1D_DECONV = Const('MKTEMP_S1D_DECONV', value=False,
+                               dtype=bool, source=__NAME__, user=True,
+                               active=False, group=cgroup,
+                               description='turn on the template s1d '
+                                           'deconvolution plot')
 
 # turn on the ccf rv fit debug plot (in a loop around orders)
 PLOT_CCF_RV_FIT_LOOP = Const('PLOT_CCF_RV_FIT_LOOP', value=False,

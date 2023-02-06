@@ -7,23 +7,23 @@ Created on 2020-08-2020-08-18 11:25
 
 @author: cook
 """
-import numpy as np
 import os
+import shutil
+import tkinter as tk
+from pathlib import Path
+from tkinter import messagebox
+
+import numpy as np
 import pandas as pd
 from pandastable import Table, TableModel, applyStyle
 from pandastable import dialogs
-from pathlib import Path
-import shutil
-import tkinter as tk
-from tkinter import messagebox
 
 from apero.base import base
 from apero.base import drs_db
+from apero.core import constants
 from apero.core.core import drs_misc
 from apero.core.core import drs_text
-from apero.core import constants
 from apero.tools.module.database import manage_databases
-
 
 # =============================================================================
 # Define variables
@@ -180,11 +180,11 @@ class DatabaseHolder:
         # open fits file
         if kind == 'fits':
             # open ds9
-            open_ds9(self.params, path)
+            open_ds9(path)
 
 
 class DatabaseTable(Table):
-    def __init__(self, parent=None, database_holder: DatabaseHolder=None,
+    def __init__(self, parent=None, database_holder: DatabaseHolder = None,
                  **kwargs):
         Table.__init__(self, parent, **kwargs)
         self.db_hold = database_holder
@@ -240,6 +240,7 @@ class DatabaseTable(Table):
 
         popupmenu = tk.Menu(self, tearoff=0)
 
+        # noinspection PyPep8Naming
         def popupFocusOut(_event):
             _ = _event
             popupmenu.unpost()
@@ -286,6 +287,7 @@ class DatabaseTable(Table):
         applyStyle(popupmenu)
         return popupmenu
 
+    # noinspection PyPep8Naming
     def getaColor(self, oldcolor):
         # TODO: may be removed if bug in pandas table fixed (Issue #183)
         return dialogs.pickColor(self, oldcolor=oldcolor)
@@ -296,6 +298,7 @@ class DatabaseTable(Table):
         self.prevdf = self.model.df.copy()
 
 
+# noinspection PyUnresolvedReferences
 class DatabaseExplorer(tk.Frame):
 
     def __init__(self, parent=None, databases=None):
@@ -509,6 +512,7 @@ class DatabaseExplorer(tk.Frame):
         # top level menu bar
         self.menubar = tk.Menu(self.main)
 
+        # noinspection PyPep8Naming
         def createSubMenu(parent, label, commands):
             menu = tk.Menu(parent, tearoff=0)
             self.menubar.add_cascade(label=label, menu=menu)
@@ -578,7 +582,7 @@ class DatabaseExplorer(tk.Frame):
 # =============================================================================
 # Define worker functions
 # =============================================================================
-def open_ds9(params, path):
+def open_ds9(path):
     # try to find ds9 path
     ds9_path = shutil.which('ds9')
     if drs_text.null_text(ds9_path, ['None', '']):

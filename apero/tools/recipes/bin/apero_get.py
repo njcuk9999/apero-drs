@@ -7,16 +7,14 @@ Created on 2021-06-11
 
 @author: cook
 """
-import numpy as np
 import os
-import shutil
-from typing import Dict, List, Tuple
+from typing import Any, Dict
 
 from apero.base import base
 from apero.core import constants
 from apero.core.core import drs_log
-from apero.core.core import drs_database
 from apero.core.core import drs_text
+from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
 from apero.tools.module.listing import drs_get
 
@@ -32,7 +30,12 @@ __date__ = base.__date__
 __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# Get Recipe class
+DrsRecipe = drs_recipe.DrsRecipe
+# Get parameter class
 ParamDict = constants.ParamDict
+# get time from base
+Time = base.Time
 
 
 # =============================================================================
@@ -42,10 +45,7 @@ def main(**kwargs):
     """
     Main function for apero_explorer.py
 
-    :param instrument: str, the instrument name
     :param kwargs: additional keyword arguments
-
-    :type instrument: str
 
     :keyword debug: int, debug level (0 for None)
 
@@ -70,15 +70,15 @@ def main(**kwargs):
     return drs_startup.end_main(params, llmain, recipe, success, outputs='None')
 
 
-def __main__(recipe, params):
+def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     """
     Main function - using user inputs (or gui inputs) filters files and
     copies them to a new location
 
-    :param instrument: string, the instrument name
-    :type: str
-    :return: returns the local namespace as a dictionary
-    :rtype: dict
+    :param recipe: DrsRecipe, the recipe class using this function
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: dictionary containing the local variables
     """
     # get copy criteria from user inputs
     do_copy = not params['INPUTS']['TEST']
@@ -91,27 +91,49 @@ def __main__(recipe, params):
         current = True
     else:
         current = False
+    # -------------------------------------------------------------------------
     # get inputs from user
     inputs = params['INPUTS']
     use_gui = params['INPUTS']['GUI']
     if use_gui:
         WLOG(params, 'warning', 'Not Implemented yet',
              sublevel=2)
-        return drs_startup.return_locals(params, locals())
+        return locals()
+    # -------------------------------------------------------------------------
     # get filters from user inputs
     kw_objnames = inputs.listp('objnames', dtype=str, required=False)
     kw_dprtypes = inputs.listp('dprtypes', dtype=str, required=False)
     kw_outputs = inputs.listp('outtypes', dtype=str, required=False)
     kw_fibers = inputs.listp('fibers', dtype=str, required=False)
-    # check for None
+    since = inputs.get('SINCE', None)
+    # -------------------------------------------------------------------------
+    # test that since value is a valid time
+    if not drs_text.null_text(since, ['None', '', 'Null']):
+        try:
+            since = Time(since).iso
+            msg = 'Using --since={0}'
+            margs = [since]
+            WLOG(params, '', msg.format(*margs))
+        except Exception as _:
+            # TODO: move to language database
+            emsg = '--since={0} is not a valid time YYYY-MM-DD hh:mm:ss'
+            eargs = [since]
+            WLOG(params, 'error', emsg.format(*eargs))
+    else:
+        since = None
+    # -------------------------------------------------------------------------
+    # check for None / *
     if drs_text.null_text(kw_objnames, ['None', '', 'Null']):
         kw_objnames = None
-    if drs_text.null_text(kw_dprtypes, ['None', '', 'Null']):
+    elif '*' in kw_objnames:
+        kw_objnames = drs_get.all_objects(params)
+    if drs_text.null_text(kw_dprtypes, ['None', '', 'Null', '*']):
         kw_dprtypes = None
-    if drs_text.null_text(kw_outputs, ['None', '', 'Null']):
+    if drs_text.null_text(kw_outputs, ['None', '', 'Null', '*']):
         kw_outputs = None
-    if drs_text.null_text(kw_fibers, ['None', '', 'Null']):
+    if drs_text.null_text(kw_fibers, ['None', '', 'Null', '*']):
         kw_fibers = None
+    # -------------------------------------------------------------------------
     # push filters into dictionary (not object names these are special)
     filters = dict()
     filters['KW_DPRTYPE'] = kw_dprtypes
@@ -119,11 +141,12 @@ def __main__(recipe, params):
     filters['KW_FIBER'] = kw_fibers
     # run basic filter
     indict, outdict = drs_get.basic_filter(params, kw_objnames, filters,
-                                           user_outdir, do_copy, do_symlink)
+                                           user_outdir, do_copy, do_symlink,
+                                           since=since)
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return drs_startup.return_locals(params, locals())
+    return locals()
 
 
 # =============================================================================

@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
-
-# CODE DESCRIPTION HERE
+APERO Exceptions and error handling
 
 Created on 2019-01-24 at 16:33
 
@@ -20,7 +18,6 @@ from typing import Any, Union
 from apero import lang
 from apero.base import base
 from apero.base import drs_base
-
 
 # =============================================================================
 # Define variables
@@ -44,12 +41,16 @@ USED_CONFIG_WARNINGS = []
 # Define exception classes
 # =============================================================================
 class DrsException(Exception):
-    """Raised when config file is incorrect"""
+    """
+    Raised when config file is incorrect
+    """
     pass
 
 
 class Exit(SystemExit):
-    # Raised when exit is called
+    """
+    Raised when exit is called
+    """
     pass
 
 

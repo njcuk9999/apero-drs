@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>apero_extract_nirps_ha &#8212; APERO 0.7.241 documentation</title>
+    <title>apero_extract_nirps_ha &#8212; APERO 0.7.259 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/apero.css" />
@@ -32,7 +32,7 @@
     <!--[if lt IE 9]>
     <script src="_static/css3-mediaqueries.js"></script>
     <![endif]-->
-    <style type="text/css">
+    <style>
       table.right { float: left; margin-left: 20px; }
       table.right td { border: 1px solid #ccc; }
       
@@ -101,7 +101,7 @@
         <li class="right" >
           <a href="rdefinition_LEAKREF.html" title="apero_leak_ref_nirps_ha"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.241 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.259 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../../main/nirps_ha/main_nirps_ha.html" >NIRPS HA documentation</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="recipes.html" accesskey="U">Recipes (NIRPS_HA)</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">apero_extract_nirps_ha</a></li> 
@@ -222,7 +222,7 @@
 <span class="o">--</span><span class="n">ref</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">If</span> <span class="nb">set</span> <span class="n">then</span> <span class="n">recipe</span> <span class="ow">is</span> <span class="n">a</span> <span class="n">reference</span> <span class="n">recipe</span> <span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">g</span><span class="o">.</span> <span class="n">reference</span> <span class="n">recipes</span> <span class="n">write</span> <span class="n">to</span> <span class="n">calibration</span> <span class="n">database</span> <span class="k">as</span> <span class="n">reference</span> <span class="n">calibrations</span><span class="p">)</span>
 <span class="o">--</span><span class="n">crunfile</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Set</span> <span class="n">a</span> <span class="n">run</span> <span class="n">file</span> <span class="n">to</span> <span class="n">override</span> <span class="n">default</span> <span class="n">arguments</span>
 <span class="o">--</span><span class="n">quiet</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Run</span> <span class="n">recipe</span> <span class="n">without</span> <span class="n">start</span> <span class="n">up</span> <span class="n">text</span>
-<span class="o">--</span><span class="n">nosave</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Do</span> <span class="ow">not</span> <span class="n">save</span> <span class="nb">any</span> <span class="n">outputs</span> <span class="p">(</span><span class="n">debug</span><span class="o">/</span><span class="n">information</span> <span class="n">run</span><span class="p">)</span><span class="o">.</span> <span class="n">Note</span> <span class="n">some</span> <span class="n">recipes</span> <span class="n">require</span> <span class="n">other</span> <span class="n">recipesto</span> <span class="n">be</span> <span class="n">run</span><span class="o">.</span> <span class="n">Only</span> <span class="n">use</span> <span class="o">--</span><span class="n">nosave</span> <span class="n">after</span> <span class="n">previous</span> <span class="n">recipe</span> <span class="n">runs</span> <span class="n">have</span> <span class="n">been</span> <span class="n">run</span> <span class="n">successfully</span><span class="o">.</span>
+<span class="o">--</span><span class="n">nosave</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Do</span> <span class="ow">not</span> <span class="n">save</span> <span class="nb">any</span> <span class="n">outputs</span> <span class="p">(</span><span class="n">debug</span><span class="o">/</span><span class="n">information</span> <span class="n">run</span><span class="p">)</span><span class="o">.</span> <span class="n">Note</span> <span class="n">some</span> <span class="n">recipes</span> <span class="n">require</span> <span class="n">other</span> <span class="n">recipesto</span> <span class="n">be</span> <span class="n">run</span><span class="o">.</span> <span class="n">Only</span> <span class="n">use</span> <span class="o">--</span><span class="n">nosave</span> <span class="n">after</span> <span class="n">previous</span> <span class="n">recipe</span> <span class="n">runs</span> <span class="n">have</span> <span class="n">been</span> <span class="n">run</span> <span class="n">successfully</span> <span class="n">at</span> <span class="n">least</span> <span class="n">once</span><span class="o">.</span>
 <span class="o">--</span><span class="n">force_indir</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Force</span> <span class="n">the</span> <span class="n">default</span> <span class="nb">input</span> <span class="n">directory</span> <span class="p">(</span><span class="n">Normally</span> <span class="nb">set</span> <span class="n">by</span> <span class="n">recipe</span><span class="p">)</span>
 <span class="o">--</span><span class="n">force_outdir</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Force</span> <span class="n">the</span> <span class="n">default</span> <span class="n">output</span> <span class="n">directory</span> <span class="p">(</span><span class="n">Normally</span> <span class="nb">set</span> <span class="n">by</span> <span class="n">recipe</span><span class="p">)</span>
 </pre></div>
@@ -385,7 +385,7 @@
         <li class="right" >
           <a href="rdefinition_LEAKREF.html" title="apero_leak_ref_nirps_ha"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.241 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.259 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../../main/nirps_ha/main_nirps_ha.html" >NIRPS HA documentation</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="recipes.html" >Recipes (NIRPS_HA)</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">apero_extract_nirps_ha</a></li> 

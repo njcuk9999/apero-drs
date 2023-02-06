@@ -9,10 +9,11 @@ Created on 2021-06-29
 
 @author: cook
 """
-from astropy.table import Table
-import numpy as np
-import os
 from typing import Optional, List, Union
+
+import numpy as np
+from astropy.table import Table
+
 
 # =============================================================================
 # Define variables
@@ -78,7 +79,6 @@ class MarkDownPage:
                 self.lines += [lineref]
         self.add_newline()
 
-
     def add_back_to_top(self):
         """
         Add a reference to go back to the top of the page
@@ -115,7 +115,7 @@ class MarkDownPage:
     def add_section(self, section_title: str):
         """
         Add a section to a page
-        :param title: str, the title to add
+        :param section_title: str, the title to add
 
         :return: None, updates page
         """
@@ -129,7 +129,7 @@ class MarkDownPage:
     def add_sub_section(self, section_title: str):
         """
         Add a section to a page
-        :param title: str, the title to add
+        :param section_title: str, the title to add
 
         :return: None, updates page
         """
@@ -161,6 +161,7 @@ class MarkDownPage:
         # check abs_path
         if abs_path is not None:
             # if we cannot load table don't add csv-table
+            # noinspection PyBroadException
             try:
                 table = Table.read(abs_path, format='csv')
                 # check length of table

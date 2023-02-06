@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+APERO table functionality
 
-# CODE DESCRIPTION HERE
+Mostly linked to astropy.table
 
 Created on 2019-01-21 at 09:33
 
@@ -17,22 +17,23 @@ Import rules:
     do not import from core.core.drs_argument
     do not import from core.core.drs_database
 """
-from astropy.table import Column, Table, vstack
-from astropy.table import TableMergeError
-from astropy.io.registry import get_formats
-from astropy.io import fits
-from collections import OrderedDict
-import numpy as np
 import os
 import shutil
-from typing import List, Tuple, Type, Union
 import warnings
+from collections import OrderedDict
+from typing import List, Tuple, Type, Union
 
-from apero.base import base
-from apero.core.core import drs_text
-from apero.core import constants
+import numpy as np
+from astropy.io import fits
+from astropy.io.registry import get_formats
+from astropy.table import Column, Table, vstack
+from astropy.table import TableMergeError
+
 from apero import lang
+from apero.base import base
+from apero.core import constants
 from apero.core.core import drs_log
+from apero.core.core import drs_text
 from apero.io import drs_lock
 
 # =============================================================================
@@ -58,7 +59,7 @@ textentry = lang.textentry
 # -----------------------------------------------------------------------------
 # define list of integers
 INTEGERS = (np.int32, np.int64, int)
-STRINGS = (str)
+STRINGS = str
 FLOATS = (np.float32, np.float64, float)
 
 
@@ -208,6 +209,7 @@ def write_table(params: ParamDict, table: Table, filename: str,
         pid = None
     else:
         pid = params['PID']
+
     # -------------------------------------------------------------------------
     # make locked write function
     @drs_lock.synchronized(lock, pid)
@@ -235,6 +237,7 @@ def write_table(params: ParamDict, table: Table, filename: str,
                 # log error
                 _eargs = [type(exception), exception, func_name]
                 WLOG(params, 'error', textentry('01-002-00009', args=_eargs))
+
     # -------------------------------------------------------------------------
     # try to run locked makedirs
     try:
@@ -395,7 +398,7 @@ def print_full_table(params: ParamDict, table: Table):
     # set function
     # _ = display_func('print_full_table', __NAME__)
     # print table
-    tablestrings = table.pformat(max_lines=len(table)*10,
+    tablestrings = table.pformat(max_lines=len(table) * 10,
                                  max_width=9999)
     WLOG(params, '', '=' * len(tablestrings[0]), wrap=False)
     WLOG(params, '', tablestrings, wrap=False)
@@ -614,13 +617,11 @@ def deal_with_missing_end_card(params: ParamDict, filename: str,
     return astropy_table
 
 
-def vstack_cols(params: ParamDict,
-                tablelist: List[Table]) -> Union[Table, None]:
+def vstack_cols(tablelist: List[Table]) -> Union[Table, None]:
     """
     Take a list of Astropy Tables and stack into single Astropy Table
     Note same as core.core.drs_recipe.vstack_cols
 
-    :param params: ParamDict, parameter dictionary of constants
     :param tablelist: list of tables, the tables to stack
     :return:
     """

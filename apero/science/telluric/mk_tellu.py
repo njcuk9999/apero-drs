@@ -8,22 +8,21 @@ Created on 2020-07-2020-07-15 17:56
 @author: cook
 """
 import warnings
+from typing import List, Tuple
 
 import numpy as np
-from typing import List, Tuple
 
 from apero import lang
 from apero.base import base
 from apero.core import constants
-from apero.core.core import drs_log
-from apero.core.core import drs_file
 from apero.core import math as mp
+from apero.core.core import drs_file
+from apero.core.core import drs_log
 from apero.core.utils import drs_recipe
 from apero.io import drs_fits
 from apero.io import drs_table
 from apero.science.calib import wave
 from apero.science.telluric import gen_tellu
-
 
 # =============================================================================
 # Define variables
@@ -55,9 +54,8 @@ pcheck = constants.PCheck(wlog=WLOG)
 def make_trans_cube(params: ParamDict, transfiles: List[str]
                     ) -> Tuple[np.ndarray, drs_fits.Table]:
     # -------------------------------------------------------------------------
-    # print progress
-    # TODO: move to language database
-    WLOG(params, '', 'Making Transmission cube')
+    # print progress: Making Transmission cube
+    WLOG(params, '', textentry('40-019-00054'))
     # get parameters from params
     snr_order = params['MKTELLU_QC_SNR_ORDER']
     water_key = params['KW_TELLUP_EXPO_WATER'][0]
@@ -125,9 +123,8 @@ def make_trans_model(params: ParamDict, transcube: np.ndarray,
     # get a reference trans file from cube (first trans file)
     ref_trans = transcube[:, :, 0]
     # -------------------------------------------------------------------------
-    # print progress
-    # TODO: move to language database
-    WLOG(params, '', 'Calculating Transmission model')
+    # print progress: Calculating Transmission model
+    WLOG(params, '', textentry('40-019-00055'))
     # -------------------------------------------------------------------------
     # sample vectors for the reconstruction
     sample = np.zeros([3, len(expo_water)])
@@ -146,10 +143,9 @@ def make_trans_model(params: ParamDict, transcube: np.ndarray,
     # num_map = np.full_like(ref_trans, np.nan)
     # loop around all orders
     for order_num in range(ref_trans.shape[0]):
-        # print progress
-        # TODO: move to language database
+        # print progress: processing order {0} / {1}
         margs = [order_num, ref_trans.shape[0]]
-        WLOG(params, '', '\tProcessing order {0} / {1}'.format(*margs))
+        WLOG(params, '', textentry('40-019-00056', args=margs))
         # loop around all pixels in order
         for ix in range(ref_trans.shape[1]):
             # get one pixel of the trans_cube for all observations
@@ -166,10 +162,11 @@ def make_trans_model(params: ParamDict, transcube: np.ndarray,
             # loop until no point is an outlier beyond "sigma cut" sigma
             while worst_offender > sigma_cut:
                 # get the linear minimization between trans files and our sample
+                # noinspection PyBroadException
                 try:
                     amp, recon = mp.linear_minimization(trans_slice, sample)
-                except:
-                    pass
+                except Exception as _:
+                    break
                 # work out the sigma between trans slice and recon
                 res = trans_slice - recon
                 est_sig = mp.estimate_sigma(res)
@@ -210,8 +207,8 @@ def make_trans_model(params: ParamDict, transcube: np.ndarray,
     return props
 
 
-def calculate_tellu_res_absorption(params, recipe, image, template,
-                                   template_props, header, refprops, wprops,
+def calculate_tellu_res_absorption(params, recipe, image, template_props,
+                                   header, refprops, wprops,
                                    bprops, tpreprops, **kwargs):
     func_name = __NAME__ + '.calculate_telluric_absoprtion()'
     # get constatns from params/kwargs
@@ -239,7 +236,8 @@ def calculate_tellu_res_absorption(params, recipe, image, template,
     wavemap = wprops['WAVEMAP']
     # get dimensions of data
     nbo, nbpix = image1.shape
-
+    # get the e2ds template
+    template = template_props['TEMP_S2D']
     # ------------------------------------------------------------------
     # Shift the image to the reference grid
     # ------------------------------------------------------------------

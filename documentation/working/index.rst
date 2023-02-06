@@ -18,13 +18,17 @@ APERO Documentation
 .. _apero_doc_main_latest:
 
 ===========================================
-Latest version: 0.7.248
+Latest version: 0.8.001
 ===========================================
 
   APERO is a pipeline designed to reduce astrophysical observations (specifically from echelle spectrographs).
   It is the official pipeline for:
 
   * `SPIROU <https://www.cfht.hawaii.edu/Instruments/SPIRou/>`_ (SPectropolarimeter InfraROUge) on the Canada-France-Hawaii Telescope `CFHT <https://www.cfht.hawaii.edu/>`_.
+
+  APERO Publications:
+
+  * `APERO: A PipelinE to Reduce Observations -- Demonstration with SPIRou <https://arxiv.org/abs/2211.01358>`_
 
   APERO can also be used for:
 

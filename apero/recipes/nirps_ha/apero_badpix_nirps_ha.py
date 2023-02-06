@@ -1,26 +1,30 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+apero_badpix_nirps_ha.py [obs dir] [flat files] [dark files]
 
-# CODE DESCRIPTION HERE
+Bad pixel calibration recipe for NIRPS HA
 
 Created on 2019-05-13 at 11:04
 
 @author: cook
 """
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 import numpy as np
 
-from apero.base import base
 from apero import lang
-from apero.core.core import drs_log
-from apero.core.core import drs_file
-from apero.core.utils import drs_startup
+from apero.base import base
+from apero.core import constants
 from apero.core import math as mp
 from apero.core.core import drs_database
+from apero.core.core import drs_file
+from apero.core.core import drs_log
+from apero.core.utils import drs_recipe
+from apero.core.utils import drs_startup
 from apero.io import drs_image
-from apero.science.calib import badpix
 from apero.science.calib import background
+from apero.science.calib import badpix
 
 # =============================================================================
 # Define variables
@@ -34,6 +38,10 @@ __date__ = base.__date__
 __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# Get Recipe class
+DrsRecipe = drs_recipe.DrsRecipe
+# Get parameter class
+ParamDict = constants.ParamDict
 # Get the text types
 textentry = lang.textentry
 
@@ -47,17 +55,16 @@ textentry = lang.textentry
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(obs_dir=None, flatfiles=None, darkfiles=None, **kwargs):
+def main(obs_dir: Optional[str] = None, flatfiles: Optional[List[str]] = None,
+         darkfiles: Optional[List[str]] = None, **kwargs
+         ) -> Union[Dict[str, Any], Tuple[DrsRecipe, ParamDict]]:
     """
-    Main function for apero_badpix_spirou.py
+    Main function for apero_badpix
 
     :param obs_dir: string, the night name sub-directory
     :param flatfiles: list of strings or string, the list of flat files
     :param darkfiles: list of strings or string, the list of dark files
     :param kwargs: any additional keywords
-
-    :type obs_dir: str
-    :type files: list[str]
 
     :keyword debug: int, debug level (0 for None)
 
@@ -82,13 +89,14 @@ def main(obs_dir=None, flatfiles=None, darkfiles=None, **kwargs):
     return drs_startup.end_main(params, llmain, recipe, success)
 
 
-def __main__(recipe, params):
+def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     """
     Main code: should only call recipe and params (defined from main)
 
-    :param recipe:
-    :param params:
-    :return:
+    :param recipe: DrsRecipe, the recipe class using this function
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: dictionary containing the local variables
     """
     # ----------------------------------------------------------------------
     # Main Code
@@ -268,7 +276,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return drs_startup.return_locals(params, locals())
+    return locals()
 
 
 # =============================================================================

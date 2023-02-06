@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-CODE DESCRIPTION HERE
+APERO core utility and miscellaneous functionality
 
 Created on 2020-10-2020-10-05 17:43
 
@@ -9,21 +9,21 @@ Created on 2020-10-2020-10-05 17:43
 
 """
 from collections import OrderedDict
-import numpy as np
-import pandas as pd
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+import numpy as np
+import pandas as pd
+
 from apero.base import base
+from apero.core import constants
 from apero.core.core import drs_base_classes as base_class
+from apero.core.core import drs_database
 from apero.core.core import drs_exceptions
+from apero.core.core import drs_log
 from apero.core.core import drs_misc
 from apero.core.core import drs_text
-from apero.core.core import drs_log
-from apero.core import constants
-from apero.core.core import drs_database
 from apero.io import drs_fits
-
 
 # =============================================================================
 # Define variables
@@ -61,6 +61,9 @@ FitsHeader = drs_fits.fits.Header
 # Define Classes
 # =============================================================================
 class RecipeLog:
+    """
+    Recipe log class - to store recipe log data
+    """
 
     def __init__(self, name: str, sname: str, params: ParamDict, level: int = 0,
                  logger: Union[None, drs_log.Logger] = None,
@@ -100,6 +103,14 @@ class RecipeLog:
         self.outputdir = str(params['OUTPATH'])
         # the parameter dictionary of constants
         self.params = params
+        # ---------------------------------------------------------------------
+        self.no_log = False
+        # deal with no save --> no log
+        if 'INPUTS' in params:
+            if 'NOSAVE' in params['INPUTS']:
+                if params['INPUTS']['NOSAVE']:
+                    self.no_log = True
+        # ---------------------------------------------------------------------
         # the Logger instances (or None)
         self.wlog = logger
         # set the pid
@@ -109,6 +120,8 @@ class RecipeLog:
         self.utime = Time(self.htime).unix
         self.start_time = str(params['DATE_NOW'])
         self.end_time = 'None'
+        self.log_start = 'None'
+        self.log_end = 'None'
         # set the group name
         self.group = str(params['DRS_GROUP'])
         # set the night name directory (and deal with no value)
@@ -318,7 +331,8 @@ class RecipeLog:
                  all children are stored inside a parent
         """
         # set function name
-        _ = drs_misc.display_func('add_level', __NAME__, self.class_name)
+        # _ = drs_misc.display_func('add_level', __NAME__, self.class_name)
+
         # get new level
         level = self.level + 1
         # create new log
@@ -327,12 +341,15 @@ class RecipeLog:
                            flags=self.flags)
         # copy from parent
         newlog.copy(self)
+        # set log start time
+        newlog.log_start = str(Time.now().iso)
         # record level criteria
         newlog.level_criteria += '{0}={1} '.format(key, value)
         # update the level iteration
         newlog.level_iteration = len(self.set)
         # add newlog to set
         self.set.append(newlog)
+        # ---------------------------------------------------------------------
         # whether to write (update) recipe log file
         if write:
             self.write_logfile()
@@ -416,7 +433,6 @@ class RecipeLog:
 
             ErrorType: ErrorMessage ||
 
-        :param params: ParamDict, the constants parameter dictionary
         :param errortype: Exception or string, the error exception or a string
                           representation of it
         :param errormsg: str, the error message to store
@@ -461,7 +477,10 @@ class RecipeLog:
         # set function name
         _ = drs_misc.display_func('end', __NAME__, self.class_name)
         # add the end time
-        self.end_time = str(Time.now().iso)
+        end_time = str(Time.now().iso)
+        # both log end (for child) and full end time are updated
+        self.log_end = end_time
+        self.end_time = end_time
         # set the ended parameter to True
         if success:
             self.flags['ENDED'] = True
@@ -486,6 +505,9 @@ class RecipeLog:
         # set function name
         _ = drs_misc.display_func('write_logfile', __NAME__,
                                   self.class_name)
+        # do not write log if we have the no log flag
+        if self.no_log:
+            return
         # ---------------------------------------------------------------------
         # remove all entries with this pid
         self.logdbm.remove_pids(self.pid)
@@ -518,7 +540,8 @@ class RecipeLog:
                                     runstring=inst.runstring, args=inst.args,
                                     kwargs=inst.kwargs, skwargs=inst.skwargs,
                                     start_time=inst.start_time,
-                                    end_time=inst.end_time,
+                                    # end time has to be taken from parent
+                                    end_time=self.end_time,
                                     started=inst.started,
                                     passed_all_qc=inst.passed_qc,
                                     qc_string=inst.qc_string,
@@ -539,7 +562,9 @@ class RecipeLog:
                                     swap_total=inst.swap_total,
                                     cpu_usage_start=inst.cpu_usage_start,
                                     cpu_usage_end=inst.cpu_usage_end,
-                                    cpu_num=inst.cpu_num)
+                                    cpu_num=inst.cpu_num,
+                                    log_start=inst.log_start,
+                                    log_end=inst.log_end)
 
     def _make_row(self) -> OrderedDict:
         """
@@ -601,6 +626,8 @@ class RecipeLog:
         row['CPU_USAGE_START'] = self.cpu_usage_start
         row['CPU_USAGE_END'] = self.cpu_usage_end
         row['CPU_NUM'] = self.cpu_num
+        row['LOG_START'] = self.log_start
+        row['LOG_END'] = self.log_end
         # return row
         return row
 
@@ -620,6 +647,12 @@ class RecipeLog:
         self.write_logfile()
 
     def convert_flags(self):
+        """
+        Convert flags from a list to a string (keys separated by |)
+        and decode the flag number from the individual flags
+
+        :return: None, updates flagnum and flagstr
+        """
         self.flagnum = self.flags.decode()
         self.flagstr = '|'.join(list(self.flags.keys()))
 
@@ -644,11 +677,9 @@ class RecipeLog:
         # return rows
         return rows
 
-
     # complex param table return
     ParamTableReturn = Tuple[List[str], List[str], list, List[str], List[str],
                              List[int]]
-
 
     def get_param_table(self) -> ParamTableReturn:
         """
@@ -673,7 +704,7 @@ class RecipeLog:
         # get log keys
         ldb_cols = constants.pload().LOG_DB_COLUMNS()
         log_keys = list(ldb_cols.altnames)
-        log_comments= list(ldb_cols.comments)
+        log_comments = list(ldb_cols.comments)
         # convert the flags
         self.convert_flags()
         # ---------------------------------------------------------------------
@@ -693,7 +724,8 @@ class RecipeLog:
                       self.flagnum, self.flagstr, 1, self.ram_usage_start,
                       self.ram_usage_end, self.ram_total, self.swap_usage_start,
                       self.swap_usage_end, self.swap_total,
-                      self.cpu_usage_start, self.cpu_usage_end, self.cpu_num]
+                      self.cpu_usage_start, self.cpu_usage_end, self.cpu_num,
+                      self.log_start, self.log_end]
         # ---------------------------------------------------------------------
         # loop around all rows and add to params
         for it in range(len(log_keys)):
@@ -777,9 +809,9 @@ def update_index_db(params: ParamDict, block_kind: str,
     # -------------------------------------------------------------------------
     # update index database with raw files
     findexdbm.update_entries(block_kind=block_kind,
-                            exclude_directories=exclude_dirs,
-                            include_directories=include_dirs,
-                            filename=filename, suffix=suffix)
+                             exclude_directories=exclude_dirs,
+                             include_directories=include_dirs,
+                             filename=filename, suffix=suffix)
     # -------------------------------------------------------------------------
     # we need to reset some globally stored variables - these should be
     #   recalculated when used
@@ -793,6 +825,23 @@ def find_files(params: ParamDict, block_kind: str, filters: Dict[str, str],
                columns='ABSPATH',
                findexdbm: Union[FileIndexDatabase, None] = None
                ) -> Union[np.ndarray, pd.DataFrame]:
+    """
+    Find a type of files from the file index database using a set of filters
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param block_kind: str, the block kind (raw/tmp/red etc)
+    :param filters: dict, the column names within the file index database
+                    with which to filter by, the values of the dictionary
+                    filter the database. filters are used with "AND" logic
+    :param columns: str, the columns to return from the database (can use
+                    '*' for all, if a single column is given a numpy array
+                    if returned otherwise a pandas dataframe is returned
+    :param findexdbm: FileIndexDatabase class or None, pass a current
+                      file index database class (otherwise reloaded)
+
+    :return: if one column a numpy 1D array is returned, otherwise a pandas
+             dataframe is returned with all the requested columns
+    """
     # update database
     findexdbm = update_index_db(params, block_kind=block_kind,
                                 findexdbm=findexdbm)
@@ -837,7 +886,8 @@ def uniform_time_list(times: Union[List[float], np.ndarray], number: int
     #    files
     if len(times) <= number:
         return np.ones_like(times).astype(bool)
-
+    # convert times to numpy array
+    times = np.array(times)
     # copy the times to new vector
     times2 = times[np.argsort(times)]
     # loop around until we have N files in times2
@@ -858,6 +908,13 @@ def uniform_time_list(times: Union[List[float], np.ndarray], number: int
 
 
 def display_flag(params: ParamDict):
+    """
+    Print out the binary flags used throughout the logging process
+
+    :param params: ParamDict, parameter dictionary of constants
+
+    :return: None, prints out flags using logger
+    """
     # get inputs
     inputs = params['INPUTS']
     null_text = ['None', '', 'Null']

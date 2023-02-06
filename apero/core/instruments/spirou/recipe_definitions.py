@@ -1,9 +1,19 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+APERO Recipe definitions for SPIROU
+
+Created on 2018-10-31 at 18:06
+
+@author: cook
+"""
+from apero import lang
 from apero.base import base
 from apero.core.core import drs_base_classes as base_class
-from apero.core.utils import drs_recipe
-from apero import lang
-from apero.core.instruments.spirou import file_definitions as files
+from apero.core.instruments.default import recipe_definitions as rd
 from apero.core.instruments.default import grouping
+from apero.core.instruments.spirou import file_definitions as files
+from apero.core.utils import drs_recipe
 
 # =============================================================================
 # Define variables
@@ -27,8 +37,9 @@ sf = base_class.ImportModule('spirou.file_definitions',
 # =============================================================================
 # Commonly used arguments
 # =============================================================================
-obs_dir = dict(name='obs_dir', dtype='obs_dir',
-               helpstr=textentry('OBS_DIR_HELP'))
+obs_dir = rd.obs_dir
+# -----------------------------------------------------------------------------
+plot = rd.plot
 
 # =============================================================================
 # Option definitions
@@ -63,9 +74,6 @@ flipimage = dict(name='--flipimage', dtype='options', default='both',
 fluxunits = dict(name='--fluxunits', dtype='options', default='e-',
                  helpstr=textentry('FLUXUNITS_HELP'), options=['ADU/s', 'e-'])
 # -----------------------------------------------------------------------------
-plot = dict(name='--plot', dtype=int, helpstr=textentry('PLOT_HELP'),
-            default_ref='DRS_PLOT', minimum=0, maximum=3)
-# -----------------------------------------------------------------------------
 resize = dict(name='--resize', dtype='bool', default=True,
               helpstr=textentry('RESIZE_HELP'),
               default_ref='INPUT_RESIZE_IMAGE')
@@ -75,6 +83,9 @@ objname = dict(name='--objname', dtype=str, default='None',
 # -----------------------------------------------------------------------------
 dprtype = dict(name='--dprtype', dtype=str, default='None',
                helpstr=textentry('DPRTYPE_HELP'))
+# -----------------------------------------------------------------------------
+no_in_qc = dict(name='--no_in_qc', dtype='switch', default=False,
+                helpstr='Disable checking the quality control of input files')
 
 # =============================================================================
 # File option definitions
@@ -97,8 +108,8 @@ flatfile = dict(name='--flatfile', dtype='file', default='None',
                 files=[files.out_ff_flat], helpstr=textentry('FLATFILE_HELP'))
 # -----------------------------------------------------------------------------
 fpref = dict(name='--fpref', dtype='file', default='None',
-                files=[files.out_shape_fpref],
-                helpstr=textentry('FPREFFILE_HELP'))
+             files=[files.out_shape_fpref], path='red',
+             helpstr=textentry('FPREFFILE_HELP'))
 # -----------------------------------------------------------------------------
 locofile = dict(name='--locofile', dtype='file', default='None',
                 files=[files.out_loc_loco], helpstr=textentry('LOCOFILE_HELP'))
@@ -171,6 +182,31 @@ raw_recipe = DrsRecipe(__INSTRUMENT__, filemod=sf)
 pp_recipe = DrsRecipe(__INSTRUMENT__, filemod=sf)
 
 # -----------------------------------------------------------------------------
+# apero_pp_ref
+# -----------------------------------------------------------------------------
+# apero_pp_ref = DrsRecipe(__INSTRUMENT__)
+# apero_pp_ref.name = 'apero_pp_ref_{0}.py'.format(INSTRUMENT_ALIAS)
+# apero_pp_ref.shortname = 'PPREF'
+# apero_pp_ref.instrument = __INSTRUMENT__
+# apero_pp_ref.in_block_str = 'raw'
+# apero_pp_ref.out_block_str = 'red'
+# apero_pp_ref.extension = 'fits'
+# apero_pp_ref.reference = True
+# apero_pp_ref.description = textentry('PP_REF_DESC')
+# apero_pp_ref.epilog = textentry('PP_REF_EXAMPLE')
+# apero_pp_ref.recipe_type = 'recipe'
+# apero_pp_ref.recipe_kind = 'pre-reference'
+# apero_pp_ref.set_outputs(PP_REF=files.out_pp_ref,
+#                          PP_LED_FLAT=files.out_pp_led_flat)
+# apero_pp_ref.set_arg(pos=0, **obs_dir)
+# apero_pp_ref.set_kwarg(name='--filetype', dtype=str, default='FLAT_FLAT',
+#                        helpstr=textentry('PP_REF_FILETYPE_HELP'))
+# apero_pp_ref.group_func = grouping.no_group
+# apero_pp_ref.group_column = None
+# # add to recipe
+# recipes.append(apero_pp_ref)
+
+# -----------------------------------------------------------------------------
 # apero_preprocess
 # -----------------------------------------------------------------------------
 apero_preprocess = DrsRecipe(__INSTRUMENT__)
@@ -234,6 +270,7 @@ apero_badpix.set_kwarg(**flipimage)
 apero_badpix.set_kwarg(**fluxunits)
 apero_badpix.set_kwarg(**plot)
 apero_badpix.set_kwarg(**resize)
+apero_badpix.set_kwarg(**no_in_qc)
 apero_badpix.set_min_nfiles('flatfiles', 5)
 apero_badpix.set_min_nfiles('darkfiles', 2)
 apero_badpix.group_func = grouping.group_by_dirname
@@ -272,6 +309,7 @@ apero_dark.set_arg(name='files', dtype='files',
 apero_dark.set_kwarg(**add_db)
 apero_dark.set_kwarg(default=True, **combine)
 apero_dark.set_kwarg(**plot)
+apero_dark.set_kwarg(**no_in_qc)
 apero_dark.set_min_nfiles('files', 2)
 apero_dark.group_func = grouping.group_by_dirname
 apero_dark.group_column = 'REPROCESS_OBSDIR_COL'
@@ -300,6 +338,7 @@ apero_dark_ref.set_kwarg(name='--filetype', dtype=str,
                          helpstr=textentry('DARK_REF_FILETYPE'))
 apero_dark_ref.set_kwarg(**add_db)
 apero_dark_ref.set_kwarg(**plot)
+apero_dark_ref.set_kwarg(**no_in_qc)
 apero_dark_ref.group_func = grouping.no_group
 apero_dark_ref.group_column = None
 # documentation
@@ -347,6 +386,7 @@ apero_loc.set_kwarg(**flipimage)
 apero_loc.set_kwarg(**fluxunits)
 apero_loc.set_kwarg(**plot)
 apero_loc.set_kwarg(**resize)
+apero_loc.set_kwarg(**no_in_qc)
 apero_loc.set_min_nfiles('files', 5)
 apero_loc.group_func = grouping.group_by_dirname
 apero_loc.group_column = 'REPROCESS_OBSDIR_COL'
@@ -381,7 +421,7 @@ apero_shape_ref.set_outputs(FPREF_FILE=files.out_shape_fpref,
                             SHAPE_BDXMAP_FILE=files.out_shape_debug_bdx,
                             DEBUG_BACK=files.debug_back)
 apero_shape_ref.set_debug_plots('SHAPE_DX', 'SHAPE_ANGLE_OFFSET_ALL',
-                                   'SHAPE_ANGLE_OFFSET', 'SHAPE_LINEAR_TPARAMS')
+                                'SHAPE_ANGLE_OFFSET', 'SHAPE_LINEAR_TPARAMS')
 apero_shape_ref.set_summary_plots('SUM_SHAPE_ANGLE_OFFSET')
 apero_shape_ref.set_arg(pos=0, **obs_dir)
 apero_shape_ref.set_kwarg(name='--fpfiles', dtype='files',
@@ -404,11 +444,10 @@ apero_shape_ref.set_kwarg(**fluxunits)
 apero_shape_ref.set_kwarg(**locofile)
 apero_shape_ref.set_kwarg(**plot)
 apero_shape_ref.set_kwarg(**resize)
+apero_shape_ref.set_kwarg(**no_in_qc)
 apero_shape_ref.set_min_nfiles('fpfiles', 5)
 apero_shape_ref.set_min_nfiles('hcfiles', 2)
-apero_shape_ref.set_kwarg(name='--fpref', dtype='files',
-                          files=[files.out_shape_fpref], default='None',
-                          helpstr=textentry('SHAPE_FPREF_HELP'))
+apero_shape_ref.set_kwarg(**fpref)
 apero_shape_ref.group_func = grouping.group_by_dirname
 apero_shape_ref.group_column = 'REPROCESS_OBSDIR_COL'
 # documentation
@@ -454,6 +493,7 @@ apero_shape.set_kwarg(**plot)
 apero_shape.set_kwarg(**resize)
 apero_shape.set_kwarg(**shapexfile)
 apero_shape.set_kwarg(**shapeyfile)
+apero_shape.set_kwarg(**no_in_qc)
 apero_shape.set_min_nfiles('fpfiles', 5)
 apero_shape.set_min_nfiles('hcfiles', 2)
 apero_shape.group_func = grouping.group_by_dirname
@@ -507,6 +547,7 @@ apero_flat.set_kwarg(**resize)
 apero_flat.set_kwarg(**shapexfile)
 apero_flat.set_kwarg(**shapeyfile)
 apero_flat.set_kwarg(**shapelfile)
+apero_flat.set_kwarg(**no_in_qc)
 apero_flat.set_min_nfiles('files', 5)
 apero_flat.group_func = grouping.group_by_dirname
 apero_flat.group_column = 'REPROCESS_OBSDIR_COL'
@@ -560,6 +601,7 @@ apero_thermal.set_kwarg(**shapexfile)
 apero_thermal.set_kwarg(**shapeyfile)
 apero_thermal.set_kwarg(**shapelfile)
 apero_thermal.set_kwarg(**wavefile)
+apero_thermal.set_kwarg(**no_in_qc)
 apero_thermal.set_min_nfiles('files', 2)
 apero_thermal.set_kwarg(name='--forceext', dtype='bool', default=False,
                         default_ref='THERMAL_ALWAYS_EXTRACT',
@@ -595,6 +637,7 @@ apero_leak_ref.set_kwarg(name='--filetype', dtype=str, default='DARK_FP',
                          helpstr=textentry('LEAKREF_HELP_FILETYPE'))
 apero_leak_ref.set_kwarg(**add_db)
 apero_leak_ref.set_kwarg(**plot)
+apero_leak_ref.set_kwarg(**no_in_qc)
 apero_leak_ref.group_func = grouping.no_group
 apero_leak_ref.group_column = None
 # add to recipe
@@ -676,6 +719,7 @@ apero_extract.set_kwarg(**wavefile)
 apero_extract.set_kwarg(name='--force_ref_wave', dtype='bool',
                         default=False,
                         helpstr='Force using the reference wave solution')
+apero_extract.set_kwarg(**no_in_qc)
 apero_extract.group_func = grouping.group_individually
 apero_extract.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
@@ -703,13 +747,14 @@ apero_wave_ref.set_outputs(WAVE_E2DS=files.out_ext_e2dsff,
                            WAVEM_HCLIST=files.out_wave_hclist_ref,
                            WAVEM_FPLIST=files.out_wave_fplist_ref,
                            WAVEM_RES=files.out_wavem_res,
+                           WAVEM_RES_E2DS=files.out_wavem_res_e2ds,
                            CCF_RV=files.out_ccf_fits)
 apero_wave_ref.set_flags(INT_EXT=True, EXT_FOUND=False)
 apero_wave_ref.set_debug_plots('WAVE_WL_CAV', 'WAVE_FIBER_COMPARISON',
-                                  'WAVE_FIBER_COMP', 'WAVE_HC_DIFF_HIST',
-                                  'WAVEREF_EXPECTED', 'EXTRACT_S1D',
-                                  'EXTRACT_S1D_WEIGHT', 'WAVE_RESMAP',
-                                  'CCF_RV_FIT', 'CCF_RV_FIT_LOOP')
+                               'WAVE_FIBER_COMP', 'WAVE_HC_DIFF_HIST',
+                               'WAVEREF_EXPECTED', 'EXTRACT_S1D',
+                               'EXTRACT_S1D_WEIGHT', 'WAVE_RESMAP',
+                               'CCF_RV_FIT', 'CCF_RV_FIT_LOOP')
 apero_wave_ref.set_summary_plots('SUM_WAVE_FIBER_COMP', 'SUM_CCF_RV_FIT')
 apero_wave_ref.set_arg(pos=0, **obs_dir)
 apero_wave_ref.set_kwarg(name='--hcfiles', dtype='files',
@@ -747,6 +792,7 @@ apero_wave_ref.set_kwarg(name='--forceext', dtype='bool',
 apero_wave_ref.set_kwarg(name='--cavityfile', dtype='file', default='None',
                          files=[files.out_waveref_cavity],
                          helpstr=textentry('WAVEREF_CAVFILE_HELP'))
+apero_wave_ref.set_kwarg(**no_in_qc)
 apero_wave_ref.group_func = grouping.group_by_dirname
 apero_wave_ref.group_column = 'REPROCESS_OBSDIR_COL'
 # documentation
@@ -814,6 +860,7 @@ apero_wave_night.set_min_nfiles('hcfiles', 2)
 apero_wave_night.set_kwarg(name='--forceext', dtype='bool',
                            default_ref='WAVE_ALWAYS_EXTRACT',
                            helpstr='WAVE_EXTRACT_HELP')
+apero_wave_night.set_kwarg(**no_in_qc)
 apero_wave_night.group_func = grouping.group_by_dirname
 apero_wave_night.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
@@ -859,10 +906,34 @@ apero_ccf.set_kwarg(name='--masknormmode', dtype='options',
 apero_ccf.set_kwarg(**add_db)
 apero_ccf.set_kwarg(**blazefile)
 apero_ccf.set_kwarg(**plot)
+apero_ccf.set_kwarg(**no_in_qc)
 apero_ccf.group_func = grouping.group_individually
 apero_ccf.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
 recipes.append(apero_ccf)
+
+# -----------------------------------------------------------------------------
+# apero_mk_skymodel
+# -----------------------------------------------------------------------------
+apero_mk_skymodel = DrsRecipe(__INSTRUMENT__)
+apero_mk_skymodel.name = 'apero_mk_skymodel_{0}.py'.format(INSTRUMENT_ALIAS)
+apero_mk_skymodel.shortname = 'MKSKY'
+apero_mk_skymodel.instrument = __INSTRUMENT__
+apero_mk_skymodel.in_block_str = 'red'
+apero_mk_skymodel.out_block_str = 'red'
+apero_mk_skymodel.extension = 'fits'
+apero_mk_skymodel.description = textentry('MKSKY_DESC')
+apero_mk_skymodel.epilog = textentry('MKSKY_EXAMPLE')
+apero_mk_skymodel.recipe_type = 'recipe'
+apero_mk_skymodel.recipe_kind = 'tellu-sky'
+apero_mk_skymodel.set_outputs(SKYMODEL=files.out_sky_model)
+apero_mk_skymodel.set_debug_plots('TELLU_SKYMODEL_REGION_PLOT',
+                                  'TELLU_SKYMODEL_MED',
+                                  'TELLU_SKYMODEL_LINEFIT')
+apero_mk_skymodel.group_func = grouping.no_group
+apero_mk_skymodel.group_column = None
+# add to recipe
+recipes.append(apero_mk_skymodel)
 
 # -----------------------------------------------------------------------------
 # apero_mk_tellu
@@ -880,10 +951,13 @@ apero_mk_tellu.recipe_type = 'recipe'
 apero_mk_tellu.recipe_kind = 'tellu-hotstar'
 apero_mk_tellu.set_outputs(TELLU_CONV=files.out_tellu_conv,
                            TELLU_TRANS=files.out_tellu_trans,
+                           TELLU_SCLEAN=files.out_tellu_sclean,
                            TELLU_PCLEAN=files.out_tellu_pclean)
-apero_mk_tellu.set_debug_plots('MKTELLU_WAVE_FLUX1', 'MKTELLU_WAVE_FLUX2',
+apero_mk_tellu.set_debug_plots('TELLU_SKY_CORR_PLOT',
+                               'MKTELLU_WAVE_FLUX1', 'MKTELLU_WAVE_FLUX2',
                                'TELLUP_WAVE_TRANS', 'TELLUP_ABSO_SPEC',
-                               'TELLUP_CLEAN_OH', 'FTELLU_RECON_SPLINE2')
+                               'TELLUP_CLEAN_OH', 'FTELLU_RECON_SPLINE2',
+                               'TELLU_FINITE_RES_CORR')
 apero_mk_tellu.set_summary_plots('SUM_MKTELLU_WAVE_FLUX',
                                  'SUM_TELLUP_WAVE_TRANS', 'SUM_TELLUP_ABSO_SPEC')
 apero_mk_tellu.set_arg(pos=0, **obs_dir)
@@ -902,6 +976,11 @@ apero_mk_tellu.set_kwarg(name='--use_template', dtype='bool', default=True,
 apero_mk_tellu.set_kwarg(name='--template', dtype='file', default='None',
                          files=[files.out_tellu_template],
                          helpstr=textentry('TEMPLATE_FILE_HELP'))
+apero_mk_tellu.set_kwarg(name='--finiteres', dtype='bool',
+                         default_ref='TELLUP_DO_FINITE_RES_CORR',
+                         helpstr='Whether to do the finite resolution '
+                                 'correction (Always false if no template)')
+apero_mk_tellu.set_kwarg(**no_in_qc)
 apero_mk_tellu.group_func = grouping.group_individually
 apero_mk_tellu.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
@@ -926,48 +1005,11 @@ apero_mk_model.set_debug_plots('MKTELLU_MODEL')
 apero_mk_model.set_summary_plots('SUM_MKTELLU_MODEL')
 apero_mk_model.set_kwarg(**add_db)
 apero_mk_model.set_kwarg(**plot)
+apero_mk_model.set_kwarg(**no_in_qc)
 apero_mk_model.group_func = grouping.no_group
 apero_mk_model.group_column = None
 # add to recipe
 recipes.append(apero_mk_model)
-
-# -----------------------------------------------------------------------------
-# apero_mk_tellu_db
-# -----------------------------------------------------------------------------
-apero_mk_tellu_db = DrsRecipe(__INSTRUMENT__)
-apero_mk_tellu_db.name = 'apero_mk_tellu_db_{0}.py'.format(INSTRUMENT_ALIAS)
-apero_mk_tellu_db.shortname = 'MKTELLDB'
-apero_mk_tellu_db.reference = False
-apero_mk_tellu_db.instrument = __INSTRUMENT__
-apero_mk_tellu_db.in_block_str = 'red'
-apero_mk_tellu_db.out_block_str = 'red'
-apero_mk_tellu_db.extension = 'fits'
-apero_mk_tellu_db.recipe_type = 'recipe'
-apero_mk_tellu_db.recipe_kind = 'tellu-hotstar'
-apero_mk_tellu_db.description = textentry('MKTELLDB_DESC')
-apero_mk_tellu_db.epilog = textentry('MKTELLDB_EXAMPLE')
-apero_mk_tellu_db.set_outputs()
-apero_mk_tellu_db.set_kwarg(name='--cores', dtype=int, default=1,
-                            helpstr=textentry('MKTELLDB_CORES'))
-apero_mk_tellu_db.set_kwarg(name='--filetype', dtype='options',
-                            default_ref='TELLURIC_FILETYPE',
-                            helpstr=textentry('MKTELLDB_FILETYPE'),
-                            options=['EXT_E2DS', 'EXT_E2DS_FF'])
-apero_mk_tellu_db.set_kwarg(name='--fiber', dtype='options',
-                            default_ref='TELLURIC_FIBER_TYPE',
-                            helpstr=textentry('MKTELLDB_FIBER'),
-                            options=['AB', 'A', 'B', 'C'])
-apero_mk_tellu_db.set_kwarg(name='--test', dtype='options', default='None',
-                            options=['True', 'False', '1', '0', 'None'],
-                            helpstr=textentry('PROCESS_TEST_HELP'))
-apero_mk_tellu_db.set_kwarg(**add_db)
-apero_mk_tellu_db.set_kwarg(**blazefile)
-apero_mk_tellu_db.set_kwarg(**plot)
-apero_mk_tellu_db.set_kwarg(**wavefile)
-apero_mk_tellu_db.group_func = grouping.no_group
-apero_mk_tellu_db.group_column = None
-# add to recipe
-recipes.append(apero_mk_tellu_db)
 
 # -----------------------------------------------------------------------------
 # apero_fit_tellu
@@ -991,14 +1033,17 @@ apero_fit_tellu.set_outputs(ABSO_NPY=files.out_tellu_abso_npy,
                             TELLU_RECON=files.out_tellu_recon,
                             RC1D_W_FILE=files.out_tellu_rc1d_w,
                             RC1D_V_FILE=files.out_tellu_rc1d_v,
+                            TELLU_SCLEAN=files.out_tellu_sclean,
                             TELLU_PCLEAN=files.out_tellu_pclean)
-apero_fit_tellu.set_debug_plots('EXTRACT_S1D', 'EXTRACT_S1D_WEIGHT',
+apero_fit_tellu.set_debug_plots('TELLU_SKY_CORR_PLOT',
+                                'EXTRACT_S1D', 'EXTRACT_S1D_WEIGHT',
                                 'FTELLU_PCA_COMP1', 'FTELLU_PCA_COMP2',
                                 'FTELLU_RECON_SPLINE1', 'FTELLU_RECON_SPLINE2',
                                 'FTELLU_WAVE_SHIFT1', 'FTELLU_WAVE_SHIFT2',
                                 'FTELLU_RECON_ABSO1', 'FTELLU_RECON_ABSO2',
                                 'TELLUP_WAVE_TRANS', 'TELLUP_ABSO_SPEC',
-                                'TELLUP_CLEAN_OH', 'FTELLU_RES_MODEL')
+                                'TELLUP_CLEAN_OH', 'FTELLU_RES_MODEL',
+                                'TELLU_FINITE_RES_CORR')
 apero_fit_tellu.set_summary_plots('SUM_EXTRACT_S1D', 'SUM_FTELLU_RECON_ABSO',
                                   'SUM_TELLUP_WAVE_TRANS',
                                   'SUM_TELLUP_ABSO_SPEC',
@@ -1015,6 +1060,10 @@ apero_fit_tellu.set_kwarg(name='--use_template', dtype='bool', default=True,
 apero_fit_tellu.set_kwarg(name='--template', dtype='file', default='None',
                           files=[files.out_tellu_template],
                           helpstr=textentry('TEMPLATE_FILE_HELP'))
+apero_fit_tellu.set_kwarg(name='--finiteres', dtype='bool',
+                          default_ref='TELLUP_DO_FINITE_RES_CORR',
+                          helpstr='Whether to do the finite resolution '
+                                 'correction (Always false if no template)')
 apero_fit_tellu.set_kwarg(name='--onlypreclean', dtype='switch', default=False,
                           helpstr='Only run the precleaning steps '
                                   '(not recommended - for debugging ONLY)')
@@ -1022,51 +1071,11 @@ apero_fit_tellu.set_kwarg(**add_db)
 apero_fit_tellu.set_kwarg(**blazefile)
 apero_fit_tellu.set_kwarg(**plot)
 apero_fit_tellu.set_kwarg(**wavefile)
+apero_fit_tellu.set_kwarg(**no_in_qc)
 apero_fit_tellu.group_func = grouping.group_individually
 apero_fit_tellu.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
 recipes.append(apero_fit_tellu)
-
-# -----------------------------------------------------------------------------
-# apero_fit_tellu_db
-# -----------------------------------------------------------------------------
-apero_fit_tellu_db = DrsRecipe(__INSTRUMENT__)
-apero_fit_tellu_db.name = 'apero_fit_tellu_db_{0}.py'.format(INSTRUMENT_ALIAS)
-apero_fit_tellu_db.shortname = 'FTELLDB'
-apero_fit_tellu_db.reference = False
-apero_fit_tellu_db.instrument = __INSTRUMENT__
-apero_fit_tellu_db.in_block_str = 'red'
-apero_fit_tellu_db.out_block_str = 'red'
-apero_fit_tellu_db.extension = 'fits'
-apero_fit_tellu_db.description = textentry('FTELLUDB_DESC')
-apero_fit_tellu_db.epilog = textentry('FTELLUDB_EXAMPLE')
-apero_fit_tellu_db.recipe_type = 'recipe'
-apero_fit_tellu_db.recipe_kind = 'tellu-science'
-apero_fit_tellu_db.set_outputs()
-apero_fit_tellu_db.set_kwarg(name='--cores', dtype=int, default=1,
-                             helpstr=textentry('FTELLUDB_CORES'))
-apero_fit_tellu_db.set_kwarg(name='--filetype', dtype=str,
-                             default_ref='TELLURIC_FILETYPE',
-                             helpstr=textentry('FTELLUDB_FILETYPE'))
-apero_fit_tellu_db.set_kwarg(name='--fiber', dtype=str,
-                             default_ref='TELLURIC_FIBER_TYPE',
-                             helpstr=textentry('FTELLUDB_FIBER'))
-apero_fit_tellu_db.set_kwarg(name='--objname', dtype=str, default='None',
-                             helpstr=textentry('FTELLUDB_OBJNAME'))
-apero_fit_tellu_db.set_kwarg(name='--dprtype', dtype=str,
-                             default_ref='TELLU_ALLOWED_DPRTYPES',
-                             helpstr=textentry('FTELLUDB_DPRTYPES'))
-apero_fit_tellu_db.set_kwarg(name='--test', dtype='options', default='None',
-                             options=['True', 'False', '1', '0', 'None'],
-                             helpstr=textentry('PROCESS_TEST_HELP'))
-apero_fit_tellu_db.set_kwarg(**add_db)
-apero_fit_tellu_db.set_kwarg(**add_db)
-apero_fit_tellu_db.set_kwarg(**plot)
-apero_fit_tellu_db.set_kwarg(**wavefile)
-apero_fit_tellu_db.group_func = grouping.no_group
-apero_fit_tellu_db.group_column = None
-# add to recipe
-recipes.append(apero_fit_tellu_db)
 
 # -----------------------------------------------------------------------------
 # apero_mk_template
@@ -1085,9 +1094,11 @@ apero_mk_template.recipe_kind = 'tellu'
 apero_mk_template.set_outputs(TELLU_TEMP=files.out_tellu_template,
                               TELLU_BIGCUBE=files.out_tellu_bigcube,
                               TELLU_BIGCUBE0=files.out_tellu_bigcube0,
-                              TELLU_TEMP_S1D=files.out_tellu_s1d_template,
+                              TELLU_TEMP_S1DV=files.out_tellu_s1dv_template,
+                              TELLU_TEMP_S1DW=files.out_tellu_s1dw_template,
                               TELLU_BIGCUBE_S1D=files.out_tellu_s1d_bigcube)
-apero_mk_template.set_debug_plots('EXTRACT_S1D', 'MKTEMP_BERV_COV')
+apero_mk_template.set_debug_plots('EXTRACT_S1D', 'MKTEMP_BERV_COV',
+                                  'MKTEMP_S1D_DECONV')
 apero_mk_template.set_summary_plots('SUM_EXTRACT_S1D', 'SUM_MKTEMP_BERV_COV')
 apero_mk_template.set_arg(name='objname', pos=0, dtype=str,
                           helpstr=textentry('MKTEMP_OBJNAME_HELP'))
@@ -1103,6 +1114,7 @@ apero_mk_template.set_kwarg(**add_db)
 apero_mk_template.set_kwarg(**blazefile)
 apero_mk_template.set_kwarg(**plot)
 apero_mk_template.set_kwarg(**wavefile)
+apero_mk_template.set_kwarg(**no_in_qc)
 apero_mk_template.group_func = grouping.no_group
 apero_mk_template.group_column = None
 # add to recipe
@@ -1178,7 +1190,7 @@ apero_pol.set_kwarg(name='--noqccheck', dtype='switch', default=False,
 apero_pol.set_kwarg(**blazefile)
 apero_pol.set_kwarg(**plot)
 apero_pol.set_kwarg(**wavefile)
-# TODO: Will need custom group function
+apero_pol.set_kwarg(**no_in_qc)
 apero_pol.group_func = grouping.group_by_polar_sequence
 apero_pol.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
@@ -1210,6 +1222,7 @@ apero_postprocess.set_kwarg(name='--skip', dtype='switch',
 apero_postprocess.set_kwarg(name='--clear', dtype='switch',
                             default_ref='POST_CLEAR_REDUCED',
                             helpstr=textentry('OUT_CLEAR_HELP'))
+apero_postprocess.set_kwarg(**no_in_qc)
 apero_postprocess.group_func = grouping.group_individually
 apero_postprocess.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
@@ -1252,19 +1265,26 @@ recipes.append(apero_postprocess)
 #
 #  Note: must add sequences to sequences list to be able to use!
 #
+sci_fiber = 'AB'
+cal_fiber = 'C'
 # -----------------------------------------------------------------------------
 # full seqeunce (reference + nights)
 # -----------------------------------------------------------------------------
 full_seq = drs_recipe.DrsRunSequence('full_seq', __INSTRUMENT__)
+# define schematic file and description file
+full_seq.schematic = 'full_seq.jpg'
+full_seq.description_file = None
 # reference run
+# full_seq.add(apero_pp_ref, recipe_kind='pre-reference',
+#              arguments=dict(obs_dir='RUN_OBS_DIR'))
 full_seq.add(apero_preprocess, recipe_kind='pre-all')
 full_seq.add(apero_dark_ref, ref=True)
 full_seq.add(apero_badpix, name='BADREF', ref=True,
              recipe_kind='calib-reference')
-full_seq.add(apero_loc, name='LOCREFC', files=[files.pp_dark_flat], ref=True,
-             recipe_kind='calib-reference-C')
-full_seq.add(apero_loc, name='LOCREFAB', files=[files.pp_flat_dark], ref=True,
-             recipe_kind='calib-reference-AB')
+full_seq.add(apero_loc, name='LOCREFCAL', files=[files.pp_dark_flat], ref=True,
+             recipe_kind='calib-reference-CAL')
+full_seq.add(apero_loc, name='LOCREFSCI', files=[files.pp_flat_dark], ref=True,
+             recipe_kind='calib-reference-SCI')
 full_seq.add(apero_shape_ref, ref=True)
 full_seq.add(apero_shape, name='SHAPELREF', ref=True,
              recipe_kind='calib-reference')
@@ -1283,10 +1303,10 @@ full_seq.add(apero_thermal, name='THERM_REFT', ref=True,
              calib_required=False)
 # night runs
 full_seq.add(apero_badpix)
-full_seq.add(apero_loc, files=[files.pp_dark_flat], name='LOCC',
-             recipe_kind='calib-night-C')
-full_seq.add(apero_loc, files=[files.pp_flat_dark], name='LOCAB',
-             recipe_kind='calib-night-AB')
+full_seq.add(apero_loc, files=[files.pp_dark_flat], name='LOCCAL',
+             recipe_kind='calib-night-CAL')
+full_seq.add(apero_loc, files=[files.pp_flat_dark], name='LOCSCI',
+             recipe_kind='calib-night-SCI')
 full_seq.add(apero_shape)
 full_seq.add(apero_flat, files=[files.pp_flat_flat])
 # thermal just for the FP_FP and HC_HC files (DARK_DARK_INT)
@@ -1297,57 +1317,62 @@ full_seq.add(apero_wave_night)
 full_seq.add(apero_thermal, name='THERM_T',
              recipe_kind='calib-night-T', files=[files.pp_dark_dark_tel],
              calib_required=False)
-# extract all OBJ_DARK and OBJ_FP
+# extract all science OBJECTS
 full_seq.add(apero_extract, name='EXTALL', recipe_kind='extract-ALL',
-             files=[files.pp_obj_dark, files.pp_obj_fp, files.pp_polar_dark,
-                    files.pp_polar_fp])
-# correct leakage
-# full_seq.add(apero_leak, name='LEAKALL', files=[files.out_ext_e2dsff],
-#              fiber='AB', filters=dict(KW_DPRTYPE=['OBJ_FP', 'POLAR_FP']),
-#              recipe_kind='leak-ALL')
+             files=files.science_pp)
 # telluric recipes
 full_seq.add(apero_mk_tellu, name='MKTELLU1', recipe_kind='tellu-hotstar',
-             files=[files.out_ext_e2dsff], fiber='AB',
+             files=[files.out_ext_e2dsff], fiber=sci_fiber,
              filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
-                          KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_FP',
-                                      'POLAR_DARK']))
+                          KW_DPRTYPE=files.science_dprtypes))
 full_seq.add(apero_mk_model, name='MKTMOD1', recipe_kind='tellu-hotstar')
-full_seq.add(apero_fit_tellu, name='MKTFIT', recipe_kind='tellu-hotstar',
-             files=[files.out_ext_e2dsff], fiber='AB',
+full_seq.add(apero_fit_tellu, name='MKTFIT1', recipe_kind='tellu-hotstar',
+             files=[files.out_ext_e2dsff], fiber=sci_fiber,
              filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
-                          KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_FP',
-                                      'POLAR_DARK']))
-full_seq.add(apero_mk_template, name='MKTEMP',
-             fiber='AB', template_required=True, recipe_kind='tellu-hotstar',
+                          KW_DPRTYPE=files.science_dprtypes))
+full_seq.add(apero_mk_template, name='MKTEMP1',
+             fiber=sci_fiber, template_required=True,
+             recipe_kind='tellu-hotstar',
              arguments=dict(objname='TELLURIC_TARGETS'),
              filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
-                          KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_FP',
-                                      'POLAR_DARK']))
+                          KW_DPRTYPE=files.science_dprtypes))
 full_seq.add(apero_mk_tellu, name='MKTELLU2', files=[files.out_ext_e2dsff],
-             fiber='AB', template_required=True, recipe_kind='tellu-hotstar',
+             fiber=sci_fiber, template_required=True,
+             recipe_kind='tellu-hotstar',
              filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
-                          KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_FP',
-                                      'POLAR_DARK']))
+                          KW_DPRTYPE=files.science_dprtypes))
 full_seq.add(apero_mk_model, name='MKTMOD2', recipe_kind='tellu-hotstar')
+full_seq.add(apero_fit_tellu, name='MKTFIT2', recipe_kind='tellu-hotstar',
+             files=[files.out_ext_e2dsff], fiber=sci_fiber,
+             template_required=True,
+             filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
+                          KW_DPRTYPE=files.science_dprtypes))
+full_seq.add(apero_mk_template, name='MKTEMP2',
+             fiber=sci_fiber, template_required=True,
+             recipe_kind='tellu-hotstar',
+             arguments=dict(objname='TELLURIC_TARGETS'),
+             filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
+                          KW_DPRTYPE=files.science_dprtypes))
+
 full_seq.add(apero_fit_tellu, name='FTFIT1', recipe_kind='tellu-science',
-             files=[files.out_ext_e2dsff], fiber='AB',
+             files=[files.out_ext_e2dsff], fiber=sci_fiber,
              filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
-                          KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_FP',
-                                      'POLAR_DARK']))
-full_seq.add(apero_mk_template, name='FTTEMP',
-             fiber='AB',
+                          KW_DPRTYPE=files.science_dprtypes))
+full_seq.add(apero_mk_template, name='FTTEMP1', fiber=sci_fiber,
              arguments=dict(objname='SCIENCE_TARGETS'),
              filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
-                          KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_FP',
-                                      'POLAR_DARK']),
+                          KW_DPRTYPE=files.science_dprtypes),
              template_required=True, recipe_kind='tellu-science')
 full_seq.add(apero_fit_tellu, name='FTFIT2',
-             files=[files.out_ext_e2dsff], fiber='AB',
+             files=[files.out_ext_e2dsff], fiber=sci_fiber,
              filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
-                          KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_FP',
-                                      'POLAR_DARK']),
+                          KW_DPRTYPE=files.science_dprtypes),
              template_required=True, recipe_kind='tellu-science')
-
+full_seq.add(apero_mk_template, name='FTTEMP2', fiber=sci_fiber,
+             arguments=dict(objname='SCIENCE_TARGETS'),
+             filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
+                          KW_DPRTYPE=files.science_dprtypes),
+             template_required=True, recipe_kind='tellu-science')
 # ccf on all OBJ_DARK / OBJ_FP
 full_seq.add(apero_ccf, files=[files.out_tellu_obj], fiber='AB',
              filters=dict(KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_FP',
@@ -1356,7 +1381,7 @@ full_seq.add(apero_ccf, files=[files.out_tellu_obj], fiber='AB',
 
 # polar sequence on all POLAR_DARK / POLAR_FP
 full_seq.add(apero_pol, rkwargs=dict(exposures=[files.out_tellu_obj]),
-             fiber='AB', recipe_kind='polar-tcorr',
+             fiber=sci_fiber, recipe_kind='polar-tcorr',
              filters=dict(KW_DPRTYPE=['POLAR_FP', 'POLAR_DARK']))
 
 # post processing
@@ -1369,15 +1394,20 @@ full_seq.add(apero_postprocess, name='POSTALL', files=[files.pp_file],
 # limited sequence (reference + nights)
 # -----------------------------------------------------------------------------
 limited_seq = drs_recipe.DrsRunSequence('limited_seq', __INSTRUMENT__)
+# define schematic file and description file
+limited_seq.schematic = 'limited_seq.jpg'
+limited_seq.description_file = None
 # reference run
+# limited_seq.add(apero_pp_ref, recipe_kind='pre-reference',
+#                 arguments=dict(obs_dir='RUN_OBS_DIR'))
 limited_seq.add(apero_preprocess, recipe_kind='pre-all')
 limited_seq.add(apero_dark_ref, ref=True)
 limited_seq.add(apero_badpix, name='BADREF', ref=True,
                 recipe_kind='calib-reference')
-limited_seq.add(apero_loc, name='LOCREFC', files=[files.pp_dark_flat],
-                ref=True, recipe_kind='calib-reference-C')
-limited_seq.add(apero_loc, name='LOCREFAB', files=[files.pp_flat_dark],
-                ref=True, recipe_kind='calib-reference-AB')
+limited_seq.add(apero_loc, name='LOCREFCAL', files=[files.pp_dark_flat],
+                ref=True, recipe_kind='calib-reference-CAL')
+limited_seq.add(apero_loc, name='LOCREFSCI', files=[files.pp_flat_dark],
+                ref=True, recipe_kind='calib-reference-SCI')
 limited_seq.add(apero_shape_ref, ref=True)
 limited_seq.add(apero_shape, name='SHAPELREF', ref=True,
                 recipe_kind='calib-reference')
@@ -1396,10 +1426,10 @@ limited_seq.add(apero_thermal, name='THERM_REFT', ref=True,
                 calib_required=False)
 # night runs
 limited_seq.add(apero_badpix)
-limited_seq.add(apero_loc, files=[files.pp_dark_flat], name='LOCC',
-                recipe_kind='calib-night-C')
-limited_seq.add(apero_loc, files=[files.pp_flat_dark], name='LOCAB',
-                recipe_kind='calib-night-AB')
+limited_seq.add(apero_loc, files=[files.pp_dark_flat], name='LOCCAL',
+                recipe_kind='calib-night-CAL')
+limited_seq.add(apero_loc, files=[files.pp_flat_dark], name='LOCSCI',
+                recipe_kind='calib-night-SCI')
 limited_seq.add(apero_shape)
 limited_seq.add(apero_flat, files=[files.pp_flat_flat])
 # thermal just for the FP_FP and HC_HC files (DARK_DARK_INT)
@@ -1412,74 +1442,70 @@ limited_seq.add(apero_thermal, name='THERM_T',
                 calib_required=False)
 # extract tellurics
 limited_seq.add(apero_extract, name='EXTTELL', recipe_kind='extract-hotstar',
-                files=[files.pp_obj_dark, files.pp_obj_fp, files.pp_polar_fp,
-                       files.pp_polar_dark],
+                files=files.science_pp,
                 filters=dict(KW_OBJNAME='TELLURIC_TARGETS'))
 
 # extract science
 limited_seq.add(apero_extract, name='EXTOBJ', recipe_kind='extract-science',
-                files=[files.pp_obj_dark, files.pp_obj_fp, files.pp_polar_fp,
-                       files.pp_polar_dark],
+                files=files.science_pp,
                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS'))
-
-# correct leakage for any telluric targets that are OBJ_FP
-# limited_seq.add(apero_leak, name='LEAKTELL', recipe_kind='leak-hotstar',
-#                 files=[files.out_ext_e2dsff], fiber='AB',
-#                 filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
-#                              KW_DPRTYPE=['OBJ_FP', 'POLAR_FP']))
-
-# correct leakage for any science targets that are OBJ_FP
-# limited_seq.add(apero_leak, name='LEAKOBJ', recipe_kind='leak-science',
-#                 files=[files.out_ext_e2dsff], fiber='AB',
-#                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
-#                              KW_DPRTYPE=['OBJ_FP', 'POLAR_FP']))
 
 # other telluric recipes
 limited_seq.add(apero_mk_tellu, name='MKTELLU1', recipe_kind='tellu-hotstar',
-                files=[files.out_ext_e2dsff], fiber='AB',
+                files=[files.out_ext_e2dsff], fiber=sci_fiber,
                 filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
-                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
-                                         'POLAR_FP']))
+                             KW_DPRTYPE=files.science_dprtypes))
 limited_seq.add(apero_mk_model, name='MKTMOD1', recipe_kind='tellu-hotstar')
-limited_seq.add(apero_fit_tellu, name='MKTFIT', recipe_kind='tellu-hotstar',
-                files=[files.out_ext_e2dsff], fiber='AB',
+limited_seq.add(apero_fit_tellu, name='MKTFIT1', recipe_kind='tellu-hotstar',
+                files=[files.out_ext_e2dsff], fiber=sci_fiber,
                 filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
-                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
-                                         'POLAR_FP']))
-limited_seq.add(apero_mk_template, name='MKTEMP', recipe_kind='tellu-hotstar',
-                fiber='AB', arguments=dict(objname='TELLURIC_TARGETS'),
+                             KW_DPRTYPE=files.science_dprtypes))
+limited_seq.add(apero_mk_template, name='MKTEMP1', recipe_kind='tellu-hotstar',
+                fiber=sci_fiber, arguments=dict(objname='TELLURIC_TARGETS'),
                 filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
-                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
-                                         'POLAR_FP']),
+                             KW_DPRTYPE=files.science_dprtypes),
                 template_required=True)
-limited_seq.add(apero_mk_tellu, name='MKTELLU2', recipe_kind='tellu-hotstar',
-                files=[files.out_ext_e2dsff], fiber='AB',
+limited_seq.add(apero_fit_tellu, name='MKTFIT2', recipe_kind='tellu-hotstar',
+                files=[files.out_ext_e2dsff], fiber=sci_fiber,
                 filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
-                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
-                                         'POLAR_FP']),
+                             KW_DPRTYPE=files.science_dprtypes))
+limited_seq.add(apero_mk_tellu, name='MKTELLU2', recipe_kind='tellu-hotstar',
+                files=[files.out_ext_e2dsff], fiber=sci_fiber,
+                filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
+                             KW_DPRTYPE=files.science_dprtypes),
                 template_required=True)
 limited_seq.add(apero_mk_model, name='MKTMOD2', recipe_kind='tellu-hotstar')
+limited_seq.add(apero_fit_tellu, name='MKTFIT2', recipe_kind='tellu-hotstar',
+                files=[files.out_ext_e2dsff], fiber='A', template_required=True,
+                filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
+                             KW_DPRTYPE=files.science_dprtypes))
+limited_seq.add(apero_mk_template, name='MKTEMP2', recipe_kind='tellu-hotstar',
+                fiber=sci_fiber, arguments=dict(objname='TELLURIC_TARGETS'),
+                filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
+                             KW_DPRTYPE=files.science_dprtypes),
+                template_required=True)
 
 limited_seq.add(apero_fit_tellu, name='FTFIT1', recipe_kind='tellu-science',
-                files=[files.out_ext_e2dsff], fiber='AB',
+                files=[files.out_ext_e2dsff], fiber=sci_fiber,
                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
-                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
-                                         'POLAR_FP']))
-limited_seq.add(apero_mk_template, name='FTTEMP', recipe_kind='tellu-science',
-                fiber='AB', arguments=dict(objname='SCIENCE_TARGETS'),
+                             KW_DPRTYPE=files.science_dprtypes))
+limited_seq.add(apero_mk_template, name='FTTEMP1', recipe_kind='tellu-science',
+                fiber=sci_fiber, arguments=dict(objname='SCIENCE_TARGETS'),
                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
-                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
-                                         'POLAR_FP']),
+                             KW_DPRTYPE=files.science_dprtypes),
                 template_required=True)
 limited_seq.add(apero_fit_tellu, name='FTFIT2', recipe_kind='tellu-science',
-                files=[files.out_ext_e2dsff], fiber='AB',
+                files=[files.out_ext_e2dsff], fiber=sci_fiber,
                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
-                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
-                                         'POLAR_FP']),
+                             KW_DPRTYPE=files.science_dprtypes),
                 template_required=True)
-
+limited_seq.add(apero_mk_template, name='FTTEMP2', recipe_kind='tellu-science',
+                fiber=sci_fiber, arguments=dict(objname='SCIENCE_TARGETS'),
+                filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
+                             KW_DPRTYPE=files.science_dprtypes),
+                template_required=True)
 # ccf
-limited_seq.add(apero_ccf, files=[files.out_tellu_obj], fiber='AB',
+limited_seq.add(apero_ccf, files=[files.out_tellu_obj], fiber=sci_fiber,
                 recipe_kind='rv-tcorr',
                 filters=dict(KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
                                          'POLAR_FP'],
@@ -1487,7 +1513,7 @@ limited_seq.add(apero_ccf, files=[files.out_tellu_obj], fiber='AB',
 
 # polar sequence on all POLAR_DARK / POLAR_FP
 limited_seq.add(apero_pol, rkwargs=dict(exposures=[files.out_tellu_obj]),
-                recipe_kind='polar-tcorr', fiber='AB',
+                recipe_kind='polar-tcorr', fiber=sci_fiber,
                 filters=dict(KW_DPRTYPE=['POLAR_FP', 'POLAR_DARK'],
                              KW_OBJNAME='SCIENCE_TARGETS'))
 
@@ -1508,9 +1534,11 @@ limited_seq.add(apero_postprocess, name='SCIPOST', files=[files.pp_file],
 # pp sequence (for trigger)
 # -----------------------------------------------------------------------------
 pp_seq = drs_recipe.DrsRunSequence('pp_seq', __INSTRUMENT__)
+# pp_seq.add(apero_pp_ref, recipe_kind='pre-reference')
 pp_seq.add(apero_preprocess)
 
 pp_seq_opt = drs_recipe.DrsRunSequence('pp_seq_opt', __INSTRUMENT__)
+# pp_seq_opt.add(apero_pp_ref, recipe_kind='pre-reference')
 pp_seq_opt.add(apero_preprocess, name='PP_CAL', recipe_kind='pre-cal',
                filters=dict(KW_OBJNAME='CALIB'))
 pp_seq_opt.add(apero_preprocess, name='PP_SCI', recipe_kind='pre-sci',
@@ -1533,50 +1561,59 @@ pp_seq_opt.add(apero_preprocess, name='PP_LFCFP', files=[files.raw_lfc_fp],
                recipe_kind='pre-lfcfp')
 pp_seq_opt.add(apero_preprocess, name='PP_FPLFC', files=[files.raw_fp_lfc],
                recipe_kind='pre-fplfc')
+pp_seq_opt.add(apero_preprocess, name='PP_EVERY',
+               files=[files.raw_file])
 
 # -----------------------------------------------------------------------------
 # reference sequence (for trigger)
 # -----------------------------------------------------------------------------
 ref_seq = drs_recipe.DrsRunSequence('ref_seq', __INSTRUMENT__)
+# define schematic file and description file
+ref_seq.schematic = 'ref_seq.jpg'
+ref_seq.description_file = None
+# add recipes
 ref_seq.add(apero_dark_ref, ref=True)
 ref_seq.add(apero_badpix, name='BADREF', ref=True,
-               recipe_kind='calib-reference')
-ref_seq.add(apero_loc, name='LOCREFC', files=[files.pp_dark_flat],
-               ref=False, recipe_kind='calib-reference-C')
-ref_seq.add(apero_loc, name='LOCREFAB', files=[files.pp_flat_dark],
-               ref=False, recipe_kind='calib-reference-AB')
+            recipe_kind='calib-reference')
+ref_seq.add(apero_loc, name='LOCREFCAL', files=[files.pp_dark_flat],
+            ref=False, recipe_kind='calib-reference-CAL')
+ref_seq.add(apero_loc, name='LOCREFSCI', files=[files.pp_flat_dark],
+            ref=False, recipe_kind='calib-reference-SCI')
 ref_seq.add(apero_shape_ref, ref=True)
 ref_seq.add(apero_shape, name='SHAPELREF', ref=True,
-               recipe_kind='calib-reference')
+            recipe_kind='calib-reference')
 ref_seq.add(apero_flat, name='FLATREF', ref=True,
-               recipe_kind='calib-reference')
+            recipe_kind='calib-reference')
 # thermal just for the FP_FP and HC_HC files (DARK_DARK_INT)
 ref_seq.add(apero_thermal, name='THERM_REFI', ref=True,
-               recipe_kind='calib-reference-I', files=[files.pp_dark_dark_int])
+            recipe_kind='calib-reference-I', files=[files.pp_dark_dark_int])
 ref_seq.add(apero_leak_ref, ref=True)
 ref_seq.add(apero_wave_ref, ref=True,
-               rkwargs=dict(hcfiles=[files.pp_hc1_hc1],
-                            fpfiles=[files.pp_fp_fp]))
+            rkwargs=dict(hcfiles=[files.pp_hc1_hc1],
+                         fpfiles=[files.pp_fp_fp]))
 # thermal for everything else (requires a wave solution)
 ref_seq.add(apero_thermal, name='THERM_REFT', ref=True,
-               recipe_kind='calib-reference-T', files=[files.pp_dark_dark_tel],
-               calib_required=False)
+            recipe_kind='calib-reference-T', files=[files.pp_dark_dark_tel],
+            calib_required=False)
 
 # -----------------------------------------------------------------------------
 # calibration run (for trigger)
 # -----------------------------------------------------------------------------
 calib_seq = drs_recipe.DrsRunSequence('calib_seq', __INSTRUMENT__)
+# define schematic file and description file
+calib_seq.schematic = 'calib_seq.jpg'
+calib_seq.description_file = None
 # night runs
 calib_seq.add(apero_badpix)
-calib_seq.add(apero_loc, files=[files.pp_dark_flat], name='LOCC',
-              recipe_kind='calib-night-C')
-calib_seq.add(apero_loc, files=[files.pp_flat_dark], name='LOCAB',
-              recipe_kind='calib-night-AB')
+calib_seq.add(apero_loc, files=[files.pp_dark_flat], name='LOCCAL',
+              recipe_kind='calib-night-CAL')
+calib_seq.add(apero_loc, files=[files.pp_flat_dark], name='LOCSCI',
+              recipe_kind='calib-night-SCI')
 calib_seq.add(apero_shape)
 calib_seq.add(apero_flat, files=[files.pp_flat_flat])
 # thermal just for the FP_FP and HC_HC files (DARK_DARK_INT)
 calib_seq.add(apero_thermal, name='THERM_I',
-                recipe_kind='calib-night-I', files=[files.pp_dark_dark_int])
+              recipe_kind='calib-night-I', files=[files.pp_dark_dark_int])
 calib_seq.add(apero_wave_night)
 # thermal for everything else (requires a wave solution)
 calib_seq.add(apero_thermal, name='THERM_T',
@@ -1587,48 +1624,49 @@ calib_seq.add(apero_thermal, name='THERM_T',
 # telluric sequence (for trigger)
 # -----------------------------------------------------------------------------
 tellu_seq = drs_recipe.DrsRunSequence('tellu_seq', __INSTRUMENT__)
+# define schematic file and description file
+tellu_seq.schematic = 'tellu_seq.jpg'
+tellu_seq.description_file = None
 # extract science
 tellu_seq.add(apero_extract, name='EXTTELL', recipe_kind='extract-hotstar',
-              files=[files.pp_obj_dark, files.pp_obj_fp, files.pp_polar_dark,
-                     files.pp_polar_fp],
+              files=files.science_pp,
               filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
-                           KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_DARK',
-                                       'POLAR_FP']))
-
-# correct leakage for any telluric targets that are OBJ_FP
-# tellu_seq.add(apero_leak, name='LEAKTELL', recipe_kind='leak-hotstar',
-#               files=[files.out_ext_e2dsff], fiber='AB',
-#               filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
-#                            KW_DPRTYPE=['OBJ_FP', 'POLAR_FP']))
-
+                           KW_DPRTYPE=files.science_dprtypes))
 # other telluric recipes
 tellu_seq.add(apero_mk_tellu, name='MKTELLU1', recipe_kind='tellu-hotstar',
-              files=[files.out_ext_e2dsff], fiber='AB',
+              files=[files.out_ext_e2dsff], fiber=sci_fiber,
               filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
-                           KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
-                                       'POLAR_FP']))
+                           KW_DPRTYPE=files.science_dprtypes))
 tellu_seq.add(apero_mk_model, name='MKTMOD1', recipe_kind='tellu-hotstar')
-tellu_seq.add(apero_fit_tellu, name='MKTFIT', recipe_kind='tellu-hotstar',
-              files=[files.out_ext_e2dsff], fiber='AB',
+tellu_seq.add(apero_fit_tellu, name='MKTFIT1', recipe_kind='tellu-hotstar',
+              files=[files.out_ext_e2dsff], fiber=sci_fiber,
               filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
-                           KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
-                                       'POLAR_FP']))
-
-tellu_seq.add(apero_mk_template, name='MKTEMP', recipe_kind='tellu-hotstar',
-              fiber='AB', files=[files.out_ext_e2dsff],
+                           KW_DPRTYPE=files.science_dprtypes))
+tellu_seq.add(apero_mk_template, name='MKTEMP1', recipe_kind='tellu-hotstar',
+              fiber=sci_fiber, files=[files.out_ext_e2dsff],
               arguments=dict(objname='TELLURIC_TARGETS'),
               filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
-                           KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
-                                       'POLAR_FP']),
+                           KW_DPRTYPE=files.science_dprtypes),
               template_required=True)
 
 tellu_seq.add(apero_mk_tellu, name='MKTELLU2', recipe_kind='tellu-hotstar',
-              fiber='AB', files=[files.out_ext_e2dsff],
+              fiber=sci_fiber, files=[files.out_ext_e2dsff],
               filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
-                           KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
-                                       'POLAR_FP']),
+                           KW_DPRTYPE=files.science_dprtypes),
               template_required=True)
 tellu_seq.add(apero_mk_model, name='MKTMOD2', recipe_kind='tellu-hotstar')
+
+tellu_seq.add(apero_fit_tellu, name='MKTFIT2', recipe_kind='tellu-hotstar',
+              files=[files.out_ext_e2dsff], fiber=sci_fiber,
+              template_required=True,
+              filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
+                           KW_DPRTYPE=files.science_dprtypes))
+tellu_seq.add(apero_mk_template, name='MKTEMP2', recipe_kind='tellu-hotstar',
+              fiber=sci_fiber, files=[files.out_ext_e2dsff],
+              arguments=dict(objname='TELLURIC_TARGETS'),
+              filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
+                           KW_DPRTYPE=files.science_dprtypes),
+              template_required=True)
 #
 # # post processing
 # tellu_seq.add(apero_postprocess, files=[files.pp_file], name='TELLPOST',
@@ -1641,38 +1679,34 @@ tellu_seq.add(apero_mk_model, name='MKTMOD2', recipe_kind='tellu-hotstar')
 # science sequence (for trigger)
 # -----------------------------------------------------------------------------
 science_seq = drs_recipe.DrsRunSequence('science_seq', __INSTRUMENT__)
+# define schematic file and description file
+science_seq.schematic = 'science_seq.jpg'
+science_seq.description_file = None
 # extract science
 science_seq.add(apero_extract, name='EXTOBJ', recipe_kind='extract-science',
-                files=[files.pp_obj_dark, files.pp_obj_fp, files.pp_polar_dark,
-                       files.pp_polar_fp],
+                files=files.science_pp,
                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
-                             KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_DARK',
-                                         'POLAR_FP']))
-
-# correct leakage for any science targets that are OBJ_FP
-# science_seq.add(apero_leak, name='LEAKOBJ', recipe_kind='leak-science',
-#                 files=[files.out_ext_e2dsff], fiber='AB',
-#                 filters=dict(KW_DPRTYPE=['OBJ_FP', 'POLAR_FP'],
-#                              KW_OBJNAME='SCIENCE_TARGETS'))
-
+                             KW_DPRTYPE=files.science_dprtypes))
 science_seq.add(apero_fit_tellu, name='FTFIT1', recipe_kind='tellu-science',
-                files=[files.out_ext_e2dsff], fiber='AB',
+                files=[files.out_ext_e2dsff], fiber=sci_fiber,
                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
-                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
-                                         'POLAR_FP']))
-
-science_seq.add(apero_mk_template, name='FTTEMP', fiber='AB',
+                             KW_DPRTYPE=files.science_dprtypes))
+science_seq.add(apero_mk_template, name='FTTEMP1', fiber=sci_fiber,
                 recipe_kind='tellu-science',
                 arguments=dict(objname='SCIENCE_TARGETS'),
                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
-                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
-                                         'POLAR_FP']),
+                             KW_DPRTYPE=files.science_dprtypes),
                 template_required=True)
 science_seq.add(apero_fit_tellu, name='FTFIT2', recipe_kind='tellu-science',
-                files=[files.out_ext_e2dsff], fiber='AB',
+                files=[files.out_ext_e2dsff], fiber=sci_fiber,
                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
-                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
-                                         'POLAR_FP']),
+                             KW_DPRTYPE=files.science_dprtypes),
+                template_required=True)
+science_seq.add(apero_mk_template, name='FTTEMP2', fiber=sci_fiber,
+                recipe_kind='tellu-science',
+                arguments=dict(objname='SCIENCE_TARGETS'),
+                filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
+                             KW_DPRTYPE=files.science_dprtypes),
                 template_required=True)
 
 # ccf
@@ -1698,16 +1732,13 @@ science_seq.add(apero_postprocess, files=[files.pp_file], name='SCIPOST',
 # -----------------------------------------------------------------------------
 # science sequence (for trigger)
 # -----------------------------------------------------------------------------
-# TODO: TEST THIS
 quick_seq = drs_recipe.DrsRunSequence('quick_seq', __INSTRUMENT__)
 # extract science
 quick_seq.add(apero_extract, name='EXTQUICK', recipe_kind='extract-quick',
-              files=[files.pp_obj_dark, files.pp_obj_fp, files.pp_polar_dark,
-                     files.pp_polar_fp],
-              arguments=dict(quicklook=True, fiber='AB'),
+              files=files.science_pp,
+              arguments=dict(quicklook=True, fiber=sci_fiber),
               filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
-                           KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_DARK',
-                                       'POLAR_FP']))
+                           KW_DPRTYPE=files.science_dprtypes))
 
 # -----------------------------------------------------------------------------
 # blank sequence (for trigger)
@@ -1738,6 +1769,8 @@ eng_seq.add(apero_extract, name='EXT_LFCFP', files=[files.pp_lfc_fp],
             recipe_kind='extract-lfcfp')
 eng_seq.add(apero_extract, name='EXT_FPLFC', files=[files.pp_fp_lfc],
             recipe_kind='extract-fplfc')
+eng_seq.add(apero_extract, name='EXT_EVERY', files=[files.pp_file],
+            recipe_kind='extract-everything')
 
 # -----------------------------------------------------------------------------
 # sequences list

@@ -15,16 +15,15 @@ import shutil
 import sys
 from typing import List, Union
 
+from apero import lang
 from apero.base import base
 from apero.core import constants
 from apero.core.constants import path_definitions
-from apero.core.core import drs_log
 from apero.core.core import drs_database
-from apero.core.instruments.default import pseudo_const
-from apero import lang
+from apero.core.core import drs_log
+from apero.core.utils import drs_data
 from apero.io import drs_lock
 from apero.io import drs_path
-from apero.core.utils import drs_data
 from apero.tools.module.database import manage_databases
 
 # =============================================================================
@@ -39,7 +38,7 @@ __date__ = base.__date__
 __release__ = base.__release__
 # get param dict
 ParamDict = constants.ParamDict
-PseudoConst = pseudo_const.PseudoConstants
+PseudoConst = constants.PseudoConstants
 DatabaseM = drs_database.DatabaseManager
 # Get Logging function
 WLOG = drs_log.wlog
@@ -83,9 +82,11 @@ def is_empty(params: ParamDict, directory: str,
     """
     Find whether a directory is empty (exluding files is "exclude_files" is set)
 
+    :param params: ParamDict, parameter dictionary of constants
     :param directory: str, the directory to check
     :param exclude_files: list or strings or None - the files to exlucde from
                           a directory
+
     :return: bool, True if empty or False otherwise
     """
     if os.path.exists(directory):
@@ -131,9 +132,9 @@ def reset_title(params: ParamDict, name: str):
     # blank lines
     print()
     print()
-    WLOG(params, 'info', '='*50)
+    WLOG(params, 'info', '=' * 50)
     WLOG(params, 'info', textentry('40-502-00012', args=[name]))
-    WLOG(params, 'info', '='*50)
+    WLOG(params, 'info', '=' * 50)
 
 
 def reset_confirmation(params: ParamDict, name: str,
@@ -187,6 +188,7 @@ def reset_tmp_folders(params: ParamDict, log: bool = True, dtimeout: int = 20):
 
     :param params: ParamDict, the parameter dictionary of constants
     :param log: bool, if True logs the removal
+    :param dtimeout: int, number of tries to access the index database
 
     :return: None - resets tmp (preprocessed) directory
     """
@@ -255,6 +257,7 @@ def reset_reduced_folders(params: ParamDict, log: bool = True,
 
     :param params: ParamDict, the parameter dictionary of constants
     :param log: bool, if True logs the removal
+    :param dtimeout: int, number of tries to access the index database
 
     :return: None - resets reduced directory
     """
@@ -322,6 +325,7 @@ def reset_calibdb(params: ParamDict, log: bool = True, dtimeout: int = 20):
 
     :param params: ParamDict, the parameter dictionary of constants
     :param log: bool, if True logs the removal
+    :param dtimeout: int, number of tries to access the index database
 
     :return: None - resets telluDB
     """
@@ -358,6 +362,7 @@ def reset_telludb(params: ParamDict, log: bool = True, dtimeout: int = 20):
 
     :param params: ParamDict, the parameter dictionary of constants
     :param log: bool, if True logs the removal
+    :param dtimeout: int, number of tries to access the index database
 
     :return: None - resets telluDB
     """
@@ -374,7 +379,8 @@ def reset_telludb(params: ParamDict, log: bool = True, dtimeout: int = 20):
     # reset files
     reset_dbdir(params, name, tellu_dir, reset_path, log=log)
     # create telluric database
-    manage_databases.create_telluric_database(pconst, databases, tries=dtimeout)
+    manage_databases.create_telluric_database(params, pconst, databases,
+                                              tries=dtimeout)
     # -------------------------------------------------------------------------
     # remove entries from telluric database
     # -------------------------------------------------------------------------
@@ -390,7 +396,8 @@ def reset_telludb(params: ParamDict, log: bool = True, dtimeout: int = 20):
 def reset_dbdir(params: ParamDict, name: str, db_dir: str,
                 reset_path: str, log: bool = True,
                 empty_first: bool = True,
-                relative_path: Union[str, None] = None):
+                relative_path: Union[str, None] = None,
+                backup: bool = False):
     """
     Resets a database file directory (i.e. calibDB or telluDB)
 
@@ -402,22 +409,30 @@ def reset_dbdir(params: ParamDict, name: str, db_dir: str,
     :param empty_first: bool, if True deletes contents first
     :param relative_path: str or None if set this mean the reset path is inside
                           the ASSETS directory
+    :param backup: bool, if True we backup the files to a sub-directory
+                   before resetting (only if files wouldn't have been
+                   originally overwritten)
 
     :return: None copys files to database file directory
     """
     # log progress
     WLOG(params, '', textentry('40-502-00003', args=[name]))
-    # loop around files and folders in calib_dir
-    if empty_first:
-        remove_all(params, db_dir, log)
-    # remake path
-    if not os.path.exists(db_dir):
-        os.makedirs(db_dir)
     # construct relative path if None given
     if relative_path is None:
         reset_path = os.path.join(params['DRS_DATA_ASSETS'], reset_path)
     else:
         reset_path = os.path.abspath(reset_path)
+    # loop around files and folders in calib_dir
+    if backup:
+        # find files that aren't common between reset_path we backup
+        # then we remove all
+        backup_all_diff(params, reset_path, db_dir)
+
+    elif empty_first:
+        remove_all(params, db_dir, log)
+    # remake path
+    if not os.path.exists(db_dir):
+        os.makedirs(db_dir)
     # copy default data back
     copy_default_db(params, name, db_dir, reset_path)
 
@@ -519,6 +534,7 @@ def reset_out_folders(params: ParamDict, log: bool = True, dtimeout: int = 20):
 
     :param params: ParamDict, the parameter dictionary of constants
     :param log: bool, if True logs the removal
+    :param dtimeout: int, number of tries to access the index database
 
     :return: None - resets reduced directory
     """
@@ -586,6 +602,7 @@ def reset_assets(params: ParamDict, log: bool = True, dtimeout: int = 0):
 
     :param params: ParamDict, parameter dictionary of constants
     :param log: bool - if True logs process
+    :param dtimeout: int, number of tries to access the index database
 
     :return: None - resets assets dir and databases
     """
@@ -598,12 +615,15 @@ def reset_assets(params: ParamDict, log: bool = True, dtimeout: int = 0):
     asset_path = params['DRS_DATA_ASSETS']
     reset_path = os.path.join(params['DRS_RESET_ASSETS_PATH'],
                               params['INSTRUMENT'].lower())
+
     # get reset_path from apero module dir
     abs_reset_path = drs_data.construct_path(params, '', reset_path)
 
     # loop around files and folders in assets dir
+    #   we want to backup any new files the user as copied
+    #   i.e. new masks etc
     reset_dbdir(params, name, asset_path, abs_reset_path, log=log,
-                empty_first=False, relative_path='MODULE')
+                relative_path='MODULE', backup=True)
     # create index databases
     manage_databases.create_fileindex_database(pconst, databases, tries=dtimeout)
     # create log database
@@ -657,6 +677,53 @@ def remove_all(params, path, log=True, skipfiles=None):
         remove_files(params, filename, log, skipfiles)
     # remove dirs
     drs_lock.__remove_empty__(params, path, log=True, remove_head=False)
+
+
+def backup_all_diff(params, old_path, new_path):
+    """
+    Back up all files that are different between paths (based on filename)
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param old_path: str, the old path (things to compare to)
+    :param new_path: str, the new path (things to back up)
+    :return:
+    """
+    # get all files in old_path
+    old_basenames = []
+    for root, dirs, files in os.walk(old_path):
+        for filename in files:
+            old_basenames.append(os.path.basename(filename))
+
+    # find all files in new_path that aren't in old path
+    diff_files = []
+    for root, dirs, files in os.walk(new_path):
+        for filename in files:
+            if os.path.basename(filename) not in old_basenames:
+                diff_files.append(os.path.join(root, filename))
+    # construct backup dir
+    backup_dir = os.path.join(new_path, 'backup')
+    # make a backup dir in the new path
+    if not os.path.exists(backup_dir):
+        os.mkdir(os.path.join(backup_dir))
+    # move all files to here
+    for filename in diff_files:
+        # construct new path
+        new_filename = os.path.join(backup_dir, os.path.basename(filename))
+        # move files
+        print(f'Backing up {filename}')
+        shutil.move(filename, new_filename)
+    # now remove everything in new_path other than backup
+    files = glob.glob(new_path + '/*')
+    # loop around files/directories in new_path
+    for filename in files:
+        # if it is a directory empty it
+        if os.path.isdir(filename):
+            # unless it is the backup directory
+            if filename != backup_dir:
+                remove_all(params, filename)
+        else:
+            print(f'Removing {filename}')
+            os.remove(filename)
 
 
 # noinspection PyBroadException
@@ -779,6 +846,7 @@ def remove_files(params, path, log=True, skipfiles=None):
                  sublevel=2)
     # clear loading message
     TLOG(params, '', '')
+
 
 # =============================================================================
 # Start of code

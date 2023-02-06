@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-NIRPS Files
+APERO DrsFile definitions for NIRPS HE
 
 # For fits files
 
-file_name = drs_finput("name", KW_KEY1="value1", KW_KEY2="value2",
-                       ext=".fits", filename=)
-
+file_name = drs_finput(name, filetype, suffix=, outclass, instrument,
+                       description)
 
 Created on 2018-10-31 at 18:06
 
@@ -16,7 +15,6 @@ Created on 2018-10-31 at 18:06
 from apero.base import base
 from apero.core.core import drs_file
 from apero.core.core import drs_out_file as out
-
 
 # =============================================================================
 # Define variables
@@ -52,7 +50,6 @@ tellu_ofile = out.TelluOutFile()
 reftellu_ofile = out.RefTelluOutFile()
 tellu_set_ofile = out.TelluSetOutFile()
 
-
 # =============================================================================
 # Raw Files
 # =============================================================================
@@ -83,15 +80,26 @@ raw_dark_dark = drs_finput('RAW_DARK_DARK', filetype='.fits',
                            description='Raw sci=DARK calib=DARK file')
 raw_file.addset(raw_dark_dark)
 
-# sky observation (sky dark)
-raw_dark_dark_sky = drs_finput('RAW_DARK_DARK_SKY', filetype='.fits',
+# flux calib sky observation
+raw_flux_sky_sky = drs_finput('RAW_FLUX_SKY_SKY', filetype='.fits',
+                              suffix='', inext='.fits', outclass=blank_ofile,
+                              hkeys=dict(KW_RAW_DPRTYPE='EFF,SKY,SKY',
+                                         KW_RAW_DPRCATG='CALIB',
+                                         KW_INST_MODE=INSTRUMENT_MODE,
+                                         KW_INSTRUMENT=INSTRUMENT_NAME),
+                              description='Raw sci=DARK calib=DARK file')
+raw_file.addset(raw_flux_sky_sky)
+
+# night sky sky observation
+raw_night_sky_sky = drs_finput('RAW_NIGHT_SKY_SKY', filetype='.fits',
                                suffix='', inext='.fits', outclass=blank_ofile,
-                               hkeys=dict(KW_RAW_DPRTYPE='EFF,SKY,SKY',
-                                          KW_RAW_DPRCATG='CALIB',
+                               hkeys=dict(KW_RAW_DPRTYPE='OBJECT,SKY',
+                                          KW_RAW_DPRCATG='SCIENCE',
+                                          KW_NIGHT_OBS=True,
                                           KW_INST_MODE=INSTRUMENT_MODE,
                                           KW_INSTRUMENT=INSTRUMENT_NAME),
-                               description='Raw sci=DARK calib=DARK file')
-raw_file.addset(raw_dark_dark_sky)
+                               description='Raw night sci=SKY calib=SKY file')
+raw_file.addset(raw_night_sky_sky)
 
 # -----------------------------------------------------------------------------
 # raw flat files
@@ -101,7 +109,7 @@ raw_dark_flat = drs_finput('RAW_DARK_FLAT', outclass=blank_ofile, filetype='.fit
                                       KW_RAW_DPRCATG='CALIB',
                                       KW_INST_MODE=INSTRUMENT_MODE,
                                       KW_INSTRUMENT=INSTRUMENT_NAME),
-                          description='Raw sci=DARK calib=FP file')
+                           description='Raw sci=DARK calib=FP file')
 raw_file.addset(raw_dark_flat)
 
 raw_flat_dark = drs_finput('RAW_FLAT_DARK', outclass=blank_ofile,
@@ -262,7 +270,7 @@ raw_sun_dark = drs_finput('RAW_SUN_DARK', outclass=blank_ofile,
                           hkeys=dict(KW_RAW_DPRTYPE='SUN,DARK,G2V',
                                      KW_INST_MODE=INSTRUMENT_MODE,
                                      KW_INSTRUMENT=INSTRUMENT_NAME),
-                        description='Raw sci=SUN calib=DARK file')
+                          description='Raw sci=SUN calib=DARK file')
 raw_file.addset(raw_sun_dark)
 
 raw_fluxstd_sky = drs_finput('RAW_FLUXSTD_SKY', outclass=blank_ofile,
@@ -275,11 +283,11 @@ raw_fluxstd_sky = drs_finput('RAW_FLUXSTD_SKY', outclass=blank_ofile,
 raw_file.addset(raw_fluxstd_sky)
 
 raw_tellu_sky = drs_finput('RAW_TELLU_SKY', outclass=blank_ofile,
-                          filetype='.fits', suffix='', inext='.fits',
-                          hkeys=dict(KW_RAW_DPRTYPE='TELLURIC,SKY',
-                                     KW_INST_MODE=INSTRUMENT_MODE,
-                                     KW_INSTRUMENT=INSTRUMENT_NAME),
-                          description='Raw sci=hot star calib=DARK file')
+                           filetype='.fits', suffix='', inext='.fits',
+                           hkeys=dict(KW_RAW_DPRTYPE='TELLURIC,SKY',
+                                      KW_INST_MODE=INSTRUMENT_MODE,
+                                      KW_INSTRUMENT=INSTRUMENT_NAME),
+                           description='Raw sci=hot star calib=DARK file')
 raw_file.addset(raw_tellu_sky)
 
 # -----------------------------------------------------------------------------
@@ -447,7 +455,7 @@ raw_test_dark_dark_sky = drs_finput('RAW_DARK_DARK_SKY', outclass=blank_ofile,
                                                KW_RAW_DPRCATG='TEST',
                                                KW_INST_MODE=INSTRUMENT_MODE,
                                                KW_INSTRUMENT=INSTRUMENT_NAME),
-                                   description='Raw sci=SKY calib=SKY test file')
+                                    description='Raw sci=SKY calib=SKY test file')
 raw_file.addset(raw_test_dark_dark_sky)
 
 # test dark
@@ -494,12 +502,21 @@ pp_dark_dark = drs_finput('DARK_DARK', filetype='.fits',
                           description='Preprocessed sci=DARK calib=DARK file')
 pp_file.addset(pp_dark_dark)
 
-pp_dark_dark_sky = drs_finput('DARK_DARK_SKY', filetype='.fits',
-                              suffix='_pp', intype=raw_dark_dark_sky,
+pp_flux_sky_sky = drs_finput('DARK_DARK_SKY', filetype='.fits',
+                              suffix='_pp', intype=raw_flux_sky_sky,
                               inext='.fits', outclass=general_ofile,
-                              hkeys=dict(KW_DPRTYPE='DARK_DARK_SKY'),
-                              description='Preprocessed sci=SKY calib=SKY file')
-pp_file.addset(pp_dark_dark_sky)
+                              hkeys=dict(KW_DPRTYPE='FLUX_SKY_SKY'),
+                              description='Preprocessed flux sci=SKY calib=SKY '
+                                          'file')
+pp_file.addset(pp_flux_sky_sky)
+
+pp_night_sky_sky = drs_finput('DARK_DARK_SKY', filetype='.fits',
+                              suffix='_pp', intype=raw_night_sky_sky,
+                              inext='.fits', outclass=general_ofile,
+                              hkeys=dict(KW_DPRTYPE='FLUX_SKY_SKY'),
+                              description='Preprocessed night sci=SKY '
+                                          'calib=SKY file')
+pp_file.addset(pp_night_sky_sky)
 
 # -----------------------------------------------------------------------------
 # flat
@@ -507,7 +524,7 @@ pp_flat_dark = drs_finput('FLAT_DARK', filetype='.fits',
                           suffix='_pp', intype=raw_flat_dark,
                           inext='.fits', outclass=general_ofile,
                           hkeys=dict(KW_DPRTYPE='FLAT_DARK'),
-                           description='Preprocessed sci=FLAT calib=DARK file')
+                          description='Preprocessed sci=FLAT calib=DARK file')
 pp_file.addset(pp_flat_dark)
 
 pp_dark_flat = drs_finput('DARK_FLAT', filetype='.fits',
@@ -573,14 +590,14 @@ pp_file.addset(pp_fp_lfc)
 pp_led_led = drs_finput('LED_LED', hkeys=dict(KW_DPRTYPE='LED_LED'),
                         filetype='.fits', suffix='_pp', intype=raw_led_led,
                         inext='.fits', outclass=general_ofile,
-                       description='Preprocessed sci=LED calib=LED file')
+                        description='Preprocessed sci=LED calib=LED file')
 pp_file.addset(pp_led_led)
 
 # FLAT LED
 pp_flat_led = drs_finput('FLAT_LED', hkeys=dict(KW_DPRTYPE='FLAT_LED'),
                          filetype='.fits', suffix='_pp', intype=raw_flat_led,
                          inext='.fits', outclass=general_ofile,
-                       description='Preprocessed sci=FLAT calib=LED file')
+                         description='Preprocessed sci=FLAT calib=LED file')
 pp_file.addset(pp_flat_led)
 
 # -----------------------------------------------------------------------------
@@ -622,14 +639,14 @@ pp_sun_fp = drs_finput('SUN_FP', hkeys=dict(KW_DPRTYPE='SUN_FP'),
                        filetype='.fits',
                        suffix='_pp', intype=raw_sun_fp,
                        inext='.fits', outclass=general_ofile,
-                        description='Preprocessed sci=SUN calib=FP')
+                       description='Preprocessed sci=SUN calib=FP')
 pp_file.addset(pp_sun_fp)
 
 pp_sun_dark = drs_finput('SUN_DARK', hkeys=dict(KW_DPRTYPE='SUN_DARK'),
                          filetype='.fits',
                          suffix='_pp', intype=raw_sun_dark,
                          inext='.fits', outclass=general_ofile,
-                        description='Preprocessed sci=SUN calib=DARK')
+                         description='Preprocessed sci=SUN calib=DARK')
 pp_file.addset(pp_sun_dark)
 
 pp_fluxstd_sky = drs_finput('FLUXSTD_SKY', hkeys=dict(KW_DPRTYPE='FLUXSTD_SKY'),
@@ -660,8 +677,8 @@ pp_dark_hc1 = drs_finput('DARK_HCONE', hkeys=dict(KW_DPRTYPE='DARK_HCONE'),
                          filetype='.fits',
                          suffix='_pp', intype=raw_dark_hc1,
                          inext='.fits', outclass=general_ofile,
-                          description='Preprocessed sci=DARK calib=Hollow '
-                                      'Cathode file, Uranium Neon lamp')
+                         description='Preprocessed sci=DARK calib=Hollow '
+                                     'Cathode file, Uranium Neon lamp')
 pp_file.addset(pp_dark_hc1)
 
 pp_fp_hc1 = drs_finput('FP_HCONE', hkeys=dict(KW_DPRTYPE='FP_HCONE'),
@@ -779,8 +796,8 @@ pp_test_fp_hc1 = drs_finput('TEST_FP_HCONE',
                             filetype='.fits',
                             suffix='_pp', intype=raw_test_fp_hc1,
                             inext='.fits', outclass=general_ofile,
-                             description='Preprocessed sci=FP calib=Hollow '
-                                         'Cathode test file')
+                            description='Preprocessed sci=FP calib=Hollow '
+                                        'Cathode test file')
 pp_file.addset(pp_test_fp_hc1)
 
 # test hc fp
@@ -795,12 +812,12 @@ pp_file.addset(pp_test_hc1_fp)
 
 # test eff sky
 pp_test_dark_dark_sky = drs_finput('TEST_DARK_DARK_SKY',
-                            hkeys=dict(KW_DPRTYPE='TEST_DARK_DARK_SKY'),
-                            filetype='.fits',
-                            suffix='_pp', intype=raw_test_dark_dark_sky,
-                            inext='.fits', outclass=general_ofile,
-                            description='Preprocessed sci=SKY calib=SKY '
-                                        'test file')
+                                   hkeys=dict(KW_DPRTYPE='TEST_DARK_DARK_SKY'),
+                                   filetype='.fits',
+                                   suffix='_pp', intype=raw_test_dark_dark_sky,
+                                   inext='.fits', outclass=general_ofile,
+                                   description='Preprocessed sci=SKY calib=SKY '
+                                               'test file')
 pp_file.addset(pp_test_dark_dark_sky)
 
 # test dark
@@ -849,9 +866,18 @@ out_pp_ref = drs_finput('PP_REF', hkeys=dict(KW_OUTPUT='PP_REF'),
                         outclass=refcalib_ofile,
                         dbname='calibration', dbkey='PP_REF',
                         description='PP Reference flat calibration file')
+
+out_pp_led_flat = drs_finput('PP_LED_FLAT', hkeys=dict(KW_OUTPUT='PP_LED_FLAT'),
+                             filetype='.fits', intype=[raw_led_led],
+                             suffix='_led_flat', outclass=refcalib_ofile,
+                             dbname='calibration', dbkey='PP_LED',
+                             description='Reference LED flat calibration file')
+
 # add dark outputs to output fileset
 red_file.addset(out_pp_ref)
+red_file.addset(out_pp_led_flat)
 calib_file.addset(out_pp_ref)
+calib_file.addset(out_pp_led_flat)
 
 # -----------------------------------------------------------------------------
 # dark files
@@ -868,14 +894,7 @@ out_dark = drs_finput('DARKI', hkeys=dict(KW_OUTPUT='DARKI'),
                       suffix='_darki',
                       outclass=calib_ofile,
                       dbname='calibration', dbkey='DARKI',
-                          description='Internal dark calibration file')
-
-out_dark_sky = drs_finput('DARKS', hkeys=dict(KW_OUTPUT='DARKS'),
-                          filetype='.fits', intype=pp_dark_dark_sky,
-                          suffix='_darks',
-                          outclass=calib_ofile,
-                          dbname='calibration', dbkey='DARKS',
-                          description='Sky dark calibration file')
+                      description='Internal dark calibration file')
 
 out_dark_ref = drs_finput('DARKREF', hkeys=dict(KW_OUTPUT='DARKREF'),
                           filetype='.fits',
@@ -886,10 +905,8 @@ out_dark_ref = drs_finput('DARKREF', hkeys=dict(KW_OUTPUT='DARKREF'),
                           description='Reference dark calibration file')
 # add dark outputs to output fileset
 red_file.addset(out_dark)
-red_file.addset(out_dark_sky)
 red_file.addset(out_dark_ref)
 calib_file.addset(out_dark)
-calib_file.addset(out_dark_sky)
 calib_file.addset(out_dark_ref)
 
 # -----------------------------------------------------------------------------
@@ -1171,7 +1188,7 @@ out_leak_ref = drs_finput('LEAKREF_E2DS', hkeys=dict(KW_OUTPUT='LEAKREF_E2DS'),
                           fibers=valid_efibers,
                           filetype='.fits',
                           intype=[out_ext_e2ds, out_ext_e2dsff],
-                          suffix='_LEAK_REF',
+                          suffix='_leak_ref',
                           dbname='calibration', dbkey='LEAKREF',
                           outclass=refcalib_ofile,
                           description='Reference leak correction calibration '
@@ -1188,7 +1205,7 @@ out_wavem_sol = drs_finput('WAVESOL_REF',
                            fibers=valid_efibers,
                            filetype='.fits',
                            intype=[out_ext_e2ds, out_ext_e2dsff],
-                           suffix='_WAVESOL_REF',
+                           suffix='_wavesol_ref',
                            dbname='calibration', dbkey='WAVESOL_REF',
                            outclass=refcalib_ofile,
                            description='Reference wavelength solution '
@@ -1266,7 +1283,17 @@ out_wavem_res = drs_finput('WAVERES', hkeys=dict(KW_OUTPUT='WAVE_RES'),
                            outclass=refcalib_ofile,
                            description='Reference wavelength resolution map '
                                        'file')
-
+# resolution e2ds file
+out_wavem_res_e2ds = drs_finput('WAVEM_RES_E2DS',
+                                hkeys=dict(KW_OUTPUT='WAVEM_RES_E2DS'),
+                                fibers=valid_efibers,
+                                filetype='.fits',
+                                intype=[out_ext_e2ds, out_ext_e2dsff],
+                                suffix='_waveref_res_e2ds',
+                                dbname='calibration',
+                                dbkey='WAVR_E2DS', outclass=refcalib_ofile,
+                                description='Reference wavelength resolution '
+                                            'e2ds file')
 # fp global results table
 out_wavem_res_table = drs_input('WAVE_FPRESTAB',
                                 hkeys=dict(KW_OUTPUT='WAVE_FPRESTAB'),
@@ -1293,6 +1320,8 @@ out_wavem_ll_table = drs_input('WAVE_FPLLTABL',
 red_file.addset(out_wavem_res)
 red_file.addset(out_wavem_res_table)
 red_file.addset(out_wavem_ll_table)
+red_file.addset(out_wavem_res_e2ds)
+calib_file.addset(out_wavem_res_e2ds)
 
 # -----------------------------------------------------------------------------
 # wave files
@@ -1339,7 +1368,7 @@ out_wave_ll_table = drs_input('WAVE_FPLLTABL',
                               intype=[out_ext_e2ds, out_ext_e2dsff],
                               suffix='_hc_lines', outclass=calib_ofile,
                               description='Nightly wavelength FP line-list '
-                                           'table')
+                                          'table')
 
 # hc line file from night
 out_wave_hclist = drs_finput('WAVE_HCLIST', hkeys=dict(KW_OUTPUT='WAVE_HCLIST'),
@@ -1372,6 +1401,22 @@ calib_file.addset(out_wave_night)
 # -----------------------------------------------------------------------------
 # define valid fibers for telluric process
 valid_tfibers = ['A']
+
+# cleaned spectrum
+out_sky_model = drs_finput('SKY_MODEL',
+                           hkeys=dict(KW_OUTPUT='SKY_MODEL'),
+                           filetype='.fits', intype=out_ext_e2dsff,
+                           suffix='_sky_model', remove_insuffix=True,
+                           dbname='telluric', dbkey='SKY_MODEL',
+                           outclass=tellu_ofile,
+                           description='Telluric sky model file')
+
+# cleaned spectrum
+out_tellu_sclean = drs_finput('TELLU_SCLEAN',
+                              hkeys=dict(KW_OUTPUT='TELLU_SCLEAN'),
+                              filetype='.fits', intype=out_ext_e2dsff,
+                              suffix='_tellu_sclean.fits', outclass=debug_ofile,
+                              description='Sky-cleaning file')
 
 # cleaned spectrum
 out_tellu_pclean = drs_finput('TELLU_PCLEAN',
@@ -1419,11 +1464,13 @@ out_tellu_model = drs_finput('TRANS_MODEL', hkeys=dict(KW_OUTPUT='TRANS_MODEL'),
                              description='Telluric transmission model file')
 
 # add make_telluric outputs to output fileset
+red_file.addset(out_sky_model)
 red_file.addset(out_tellu_pclean)
 red_file.addset(out_tellu_conv)
 red_file.addset(out_tellu_trans)
 red_file.addset(out_tellu_spl_npy)
 red_file.addset(out_tellu_model)
+tellu_file.addset(out_sky_model)
 tellu_file.addset(out_tellu_pclean)
 tellu_file.addset(out_tellu_conv)
 tellu_file.addset(out_tellu_trans)
@@ -1548,18 +1595,30 @@ out_tellu_bigcube0 = drs_finput('TELLU_BIGCUBE0',
                                 intype=[out_ext_e2dsff, out_tellu_obj],
                                 basename='BigCube0',
                                 outclass=tellu_set_ofile,
-                               description='Telluric object  2D stack file'
-                                           ' (Earth frame)')
+                                description='Telluric object  2D stack file'
+                                            ' (Earth frame)')
 
-# s1d template file (median)
-out_tellu_s1d_template = drs_finput('TELLU_TEMP_S1D',
-                                    hkeys=dict(KW_OUTPUT='TELLU_TEMP_S1D'),
-                                    fibers=valid_tfibers,
-                                    filetype='.fits',
-                                    intype=[out_ext_e2dsff, out_tellu_obj],
-                                    basename='Template_s1d', datatype='table',
-                                    outclass=tellu_set_ofile,
-                                    description='Telluric 1D template file')
+# s1d template file (median) wavelength grid
+out_tellu_s1dw_template = drs_finput('TELLU_TEMP_S1DW',
+                                     hkeys=dict(KW_OUTPUT='TELLU_TEMP_S1DW'),
+                                     fibers=valid_tfibers,
+                                     filetype='.fits',
+                                     intype=[out_ext_e2dsff, out_tellu_obj],
+                                     basename='Template_s1dw', datatype='table',
+                                     dbname='telluric', dbkey='TELLU_TEMP_S1DW',
+                                     outclass=tellu_set_ofile,
+                                     description='Telluric 1D template file')
+
+# s1d template file (median) velocity grid
+out_tellu_s1dv_template = drs_finput('TELLU_TEMP_S1DV',
+                                     hkeys=dict(KW_OUTPUT='TELLU_TEMP_S1DV'),
+                                     fibers=valid_tfibers,
+                                     filetype='.fits',
+                                     intype=[out_ext_e2dsff, out_tellu_obj],
+                                     basename='Template_s1dv', datatype='table',
+                                     dbname='telluric', dbkey='TELLU_TEMP_S1DV',
+                                     outclass=tellu_set_ofile,
+                                     description='Telluric 1D template file')
 
 # s1d cibe file (after shift)
 out_tellu_s1d_bigcube = drs_finput('TELLU_BIGCUBE_S1D',
@@ -1576,9 +1635,12 @@ out_tellu_s1d_bigcube = drs_finput('TELLU_BIGCUBE_S1D',
 red_file.addset(out_tellu_template)
 red_file.addset(out_tellu_bigcube)
 red_file.addset(out_tellu_bigcube0)
-red_file.addset(out_tellu_s1d_template)
+red_file.addset(out_tellu_s1dw_template)
+red_file.addset(out_tellu_s1dv_template)
 red_file.addset(out_tellu_s1d_bigcube)
 tellu_file.addset(out_tellu_template)
+tellu_file.addset(out_tellu_s1dw_template)
+tellu_file.addset(out_tellu_s1dv_template)
 
 # -----------------------------------------------------------------------------
 # ccf
@@ -1761,11 +1823,16 @@ post_t_file.add_ext('RECON_A', out_tellu_recon, pos=4, fiber='A',
                     link='TELLU_A', hlink='KW_IDENTIFIER', block_kind='red',
                     clear_file=True, tag='Recon')
 
-# TODO: If precleaning fails --> no OHLINE file produced
-post_t_file.add_ext('OHLINE', out_tellu_pclean, pos=5, fiber='A',
+post_t_file.add_ext('SKYCORR_SCI', out_tellu_pclean, pos=5, fiber='A',
                     link='TELLU_A', hlink='KW_IDENTIFIER',
-                    block_kind='red', clear_file=True, tag='OHLine',
-                    extname='SKY_MODEL')
+                    block_kind='red', clear_file=True, tag='SKYCORR_SCI',
+                    extname='SKYCORR_SCI')
+
+post_t_file.add_ext('SKYCORR_CAL', out_tellu_pclean, pos=6, fiber='A',
+                    link='TELLU_A', hlink='KW_IDENTIFIER',
+                    block_kind='red', clear_file=True, tag='SKYCORR_CAL',
+                    extname='SKYCORR_CAL')
+
 # move header keys
 post_t_file.add_hkey('KW_VERSION', inheader='TELLU_AB', outheader='PP')
 post_t_file.add_hkey('KW_DRS_DATE_NOW', inheader='TELLU_AB', outheader='PP')

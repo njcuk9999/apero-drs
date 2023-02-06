@@ -1,19 +1,22 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Spirou Files
+APERO DrsFile definitions for SPIROU
 
 # For fits files
 
-file_name = drs_finput("name", KW_KEY1="value1", KW_KEY2="value2",
-                       ext=".fits", filename=)
+file_name = drs_finput(name, filetype, suffix=, outclass, instrument,
+                       description)
 
 
 Created on 2018-10-31 at 18:06
 
 @author: cook
 """
+import os
+
 from apero.base import base
+from apero.core import constants
 from apero.core.core import drs_file
 from apero.core.core import drs_out_file as out
 
@@ -49,7 +52,6 @@ refcalib_ofile = out.RefCalibOutFile()
 tellu_ofile = out.TelluOutFile()
 reftellu_ofile = out.RefTelluOutFile()
 tellu_set_ofile = out.TelluSetOutFile()
-
 
 # =============================================================================
 # Raw Files
@@ -427,8 +429,8 @@ pp_flat_dark = drs_finput('FLAT_DARK', filetype='.fits',
                           suffix='_pp', intype=raw_flat_dark,
                           inext='.fits', outclass=general_ofile,
                           hkeys=dict(KW_DPRTYPE='FLAT_DARK'),
-                           description='Preprocessed sci=FLAT calib=DARK file,'
-                                       ' where dark is an internal dark')
+                          description='Preprocessed sci=FLAT calib=DARK file,'
+                                      ' where dark is an internal dark')
 pp_file.addset(pp_flat_dark)
 
 pp_dark_flat = drs_finput('DARK_FLAT', filetype='.fits',
@@ -443,14 +445,14 @@ pp_flat_flat = drs_finput('FLAT_FLAT', filetype='.fits',
                           suffix='_pp', intype=raw_flat_flat,
                           inext='.fits', outclass=general_ofile,
                           hkeys=dict(KW_DPRTYPE='FLAT_FLAT'),
-                           description='Preprocessed sci=FLAT calib=FLAT file')
+                          description='Preprocessed sci=FLAT calib=FLAT file')
 pp_file.addset(pp_flat_flat)
 
 pp_flat_fp = drs_finput('FLAT_FP', filetype='.fits',
                         suffix='_pp', intype=raw_flat_fp,
                         inext='.fits', outclass=general_ofile,
                         hkeys=dict(KW_DPRTYPE='FLAT_FP'),
-                         description='Preprocessed sci=FLAT calib=FP file')
+                        description='Preprocessed sci=FLAT calib=FP file')
 pp_file.addset(pp_flat_fp)
 # -----------------------------------------------------------------------------
 # align
@@ -458,23 +460,23 @@ pp_dark_fp = drs_finput('DARK_FP', filetype='.fits',
                         suffix='_pp', intype=raw_dark_fp,
                         inext='.fits', outclass=general_ofile,
                         hkeys=dict(KW_DPRTYPE='DARK_FP'),
-                         description='Preprocessed sci=DARK calib=FP file,'
-                                     ' where dark is an internal dark')
+                        description='Preprocessed sci=DARK calib=FP file,'
+                                    ' where dark is an internal dark')
 pp_file.addset(pp_dark_fp)
 
 pp_fp_dark = drs_finput('FP_DARK', filetype='.fits',
                         suffix='_pp', intype=raw_fp_dark,
                         inext='.fits', outclass=general_ofile,
                         hkeys=dict(KW_DPRTYPE='FP_DARK'),
-                         description='Preprocessed sci=FP calib=DARK file, '
-                                     ' where dark is an internal dark')
+                        description='Preprocessed sci=FP calib=DARK file, '
+                                    ' where dark is an internal dark')
 pp_file.addset(pp_fp_dark)
 
 pp_fp_flat = drs_finput('FP_FLAT', filetype='.fits',
                         suffix='_pp', intype=raw_fp_flat,
                         inext='.fits', outclass=general_ofile,
                         hkeys=dict(KW_DPRTYPE='FP_FLAT'),
-                         description='Preprocessed sci=FP calib=FLAT file')
+                        description='Preprocessed sci=FP calib=FLAT file')
 pp_file.addset(pp_fp_flat)
 
 pp_fp_fp = drs_finput('FP_FP', filetype='.fits',
@@ -552,15 +554,20 @@ pp_polar_fp = drs_finput('POLAR_FP', hkeys=dict(KW_DPRTYPE='POLAR_FP'),
                          description='Preprocessed sci=POLAR calib=FP')
 pp_file.addset(pp_polar_fp)
 
+
+# define all science observations
+science_pp = [pp_obj_dark, pp_obj_fp, pp_polar_dark, pp_polar_fp]
+science_dprtypes = ['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK', 'POLAR_FP']
+
 # -----------------------------------------------------------------------------
 #  comparison
 pp_dark_hc1 = drs_finput('DARK_HCONE', hkeys=dict(KW_DPRTYPE='DARK_HCONE'),
                          filetype='.fits',
                          suffix='_pp', intype=raw_dark_hc1,
                          inext='.fits', outclass=general_ofile,
-                          description='Preprocessed sci=DARK calib=Hollow '
-                                      'Cathode file, where dark is an internal '
-                                      'dark, Uranium Neon lamp')
+                         description='Preprocessed sci=DARK calib=Hollow '
+                                     'Cathode file, where dark is an internal '
+                                     'dark, Uranium Neon lamp')
 pp_file.addset(pp_dark_hc1)
 
 pp_dark_hc2 = drs_finput('DARK_HCTWO', hkeys=dict(KW_DPRTYPE='DARK_HCTWO'),
@@ -600,8 +607,8 @@ pp_hc2_fp = drs_finput('HCTWO_FP', hkeys=dict(KW_DPRTYPE='HCTWO_FP'),
                        filetype='.fits',
                        suffix='_pp', intype=raw_hc2_fp,
                        inext='.fits', outclass=general_ofile,
-                        description='Preprocessed sci=Hollow Cathode calib=FP '
-                                    'file, Thorium Argon lamp')
+                       description='Preprocessed sci=Hollow Cathode calib=FP '
+                                   'file, Thorium Argon lamp')
 pp_file.addset(pp_hc2_fp)
 
 pp_hc1_hc1 = drs_finput('HCONE_HCONE', hkeys=dict(KW_DPRTYPE='HCONE_HCONE'),
@@ -617,9 +624,9 @@ pp_hc2_hc2 = drs_finput('HCTWO_HCTWO', hkeys=dict(KW_DPRTYPE='HCTWO_HCTWO'),
                         filetype='.fits',
                         suffix='_pp', intype=raw_hc2_hc2,
                         inext='.fits', outclass=general_ofile,
-                         description='Preprocessed sci=Hollow Cathode '
-                                     'calib=Hollow  Cathode file, Thorium '
-                                     'Argon lamp')
+                        description='Preprocessed sci=Hollow Cathode '
+                                    'calib=Hollow  Cathode file, Thorium '
+                                    'Argon lamp')
 pp_file.addset(pp_hc2_hc2)
 
 pp_hc1_dark = drs_finput('HCONE_DARK', hkeys=dict(KW_DPRTYPE='HCONE_DARK'),
@@ -1030,7 +1037,7 @@ out_leak_ref = drs_finput('LEAKREF_E2DS', hkeys=dict(KW_OUTPUT='LEAKREF_E2DS'),
                           fibers=valid_efibers,
                           filetype='.fits',
                           intype=[out_ext_e2ds, out_ext_e2dsff],
-                          suffix='_LEAK_REF',
+                          suffix='_leak_ref',
                           dbname='calibration', dbkey='LEAKREF',
                           outclass=refcalib_ofile,
                           description='Reference leak correction calibration '
@@ -1047,7 +1054,7 @@ out_wavem_sol = drs_finput('WAVESOL_REF',
                            fibers=valid_efibers,
                            filetype='.fits',
                            intype=[out_ext_e2ds, out_ext_e2dsff],
-                           suffix='_WAVESOL_REF',
+                           suffix='_wavesol_ref',
                            dbname='calibration', dbkey='WAVESOL_REF',
                            outclass=refcalib_ofile,
                            description='Reference wavelength solution '
@@ -1127,6 +1134,17 @@ out_wavem_res = drs_finput('WAVERES', hkeys=dict(KW_OUTPUT='WAVE_RES'),
                            outclass=refcalib_ofile,
                            description='Reference wavelength resolution map '
                                        'file')
+# resolution e2ds file
+out_wavem_res_e2ds = drs_finput('WAVEM_RES_E2DS',
+                                hkeys=dict(KW_OUTPUT='WAVEM_RES_E2DS'),
+                                fibers=valid_efibers,
+                                filetype='.fits',
+                                intype=[out_ext_e2ds, out_ext_e2dsff],
+                                suffix='_waveref_res_e2ds',
+                                dbname='calibration',
+                                dbkey='WAVR_E2DS', outclass=refcalib_ofile,
+                                description='Reference wavelength resolution '
+                                            'e2ds file')
 
 # fp global results table
 out_wavem_res_table = drs_input('WAVE_FPRESTAB',
@@ -1154,6 +1172,8 @@ out_wavem_ll_table = drs_input('WAVE_FPLLTABL',
 red_file.addset(out_wavem_res)
 red_file.addset(out_wavem_res_table)
 red_file.addset(out_wavem_ll_table)
+red_file.addset(out_wavem_res_e2ds)
+calib_file.addset(out_wavem_res_e2ds)
 
 # -----------------------------------------------------------------------------
 # wave files
@@ -1200,7 +1220,7 @@ out_wave_ll_table = drs_input('WAVE_FPLLTABL',
                               intype=[out_ext_e2ds, out_ext_e2dsff],
                               suffix='_hc_lines', outclass=calib_ofile,
                               description='Nightly wavelength FP line-list '
-                                           'table')
+                                          'table')
 
 # hc line file from night
 out_wave_hclist = drs_finput('WAVE_HCLIST', hkeys=dict(KW_OUTPUT='WAVE_HCLIST'),
@@ -1233,6 +1253,22 @@ calib_file.addset(out_wave_night)
 # -----------------------------------------------------------------------------
 # define valid fibers for telluric process
 valid_tfibers = ['AB', 'A', 'B']
+
+# cleaned spectrum
+out_sky_model = drs_finput('SKY_MODEL',
+                           hkeys=dict(KW_OUTPUT='SKY_MODEL'),
+                           filetype='.fits', intype=out_ext_e2dsff,
+                           suffix='_sky_model', remove_insuffix=True,
+                           dbname='telluric', dbkey='SKY_MODEL',
+                           outclass=tellu_ofile,
+                           description='Telluric sky model file')
+
+# cleaned spectrum
+out_tellu_sclean = drs_finput('TELLU_SCLEAN',
+                              hkeys=dict(KW_OUTPUT='TELLU_SCLEAN'),
+                              filetype='.fits', intype=out_ext_e2dsff,
+                              suffix='_tellu_sclean.fits', outclass=debug_ofile,
+                              description='Sky-cleaning file')
 
 # cleaned spectrum
 out_tellu_pclean = drs_finput('TELLU_PCLEAN',
@@ -1280,11 +1316,15 @@ out_tellu_model = drs_finput('TRANS_MODEL', hkeys=dict(KW_OUTPUT='TRANS_MODEL'),
                              description='Telluric transmission model file')
 
 # add make_telluric outputs to output fileset
+red_file.addset(out_sky_model)
+red_file.addset(out_tellu_sclean)
 red_file.addset(out_tellu_pclean)
 red_file.addset(out_tellu_conv)
 red_file.addset(out_tellu_trans)
 red_file.addset(out_tellu_spl_npy)
 red_file.addset(out_tellu_model)
+tellu_file.addset(out_sky_model)
+tellu_file.addset(out_tellu_sclean)
 tellu_file.addset(out_tellu_pclean)
 tellu_file.addset(out_tellu_conv)
 tellu_file.addset(out_tellu_trans)
@@ -1409,18 +1449,30 @@ out_tellu_bigcube0 = drs_finput('TELLU_BIGCUBE0',
                                 intype=[out_ext_e2dsff, out_tellu_obj],
                                 basename='BigCube0',
                                 outclass=tellu_set_ofile,
-                               description='Telluric object  2D stack file'
-                                           ' (Earth frame)')
+                                description='Telluric object  2D stack file'
+                                            ' (Earth frame)')
 
-# s1d template file (median)
-out_tellu_s1d_template = drs_finput('TELLU_TEMP_S1D',
-                                    hkeys=dict(KW_OUTPUT='TELLU_TEMP_S1D'),
-                                    fibers=valid_tfibers,
-                                    filetype='.fits',
-                                    intype=[out_ext_e2dsff, out_tellu_obj],
-                                    basename='Template_s1d', datatype='table',
-                                    outclass=tellu_set_ofile,
-                                    description='Telluric 1D template file')
+# s1d template file (median) wavelength grid
+out_tellu_s1dw_template = drs_finput('TELLU_TEMP_S1DW',
+                                     hkeys=dict(KW_OUTPUT='TELLU_TEMP_S1DW'),
+                                     fibers=valid_tfibers,
+                                     filetype='.fits',
+                                     intype=[out_ext_e2dsff, out_tellu_obj],
+                                     basename='Template_s1dw', datatype='table',
+                                     dbname='telluric', dbkey='TELLU_TEMP_S1DW',
+                                     outclass=tellu_set_ofile,
+                                     description='Telluric 1D template file')
+
+# s1d template file (median) velocity grid
+out_tellu_s1dv_template = drs_finput('TELLU_TEMP_S1DV',
+                                     hkeys=dict(KW_OUTPUT='TELLU_TEMP_S1DV'),
+                                     fibers=valid_tfibers,
+                                     filetype='.fits',
+                                     intype=[out_ext_e2dsff, out_tellu_obj],
+                                     basename='Template_s1dv', datatype='table',
+                                     dbname='telluric', dbkey='TELLU_TEMP_S1DV',
+                                     outclass=tellu_set_ofile,
+                                     description='Telluric 1D template file')
 
 # s1d cibe file (after shift)
 out_tellu_s1d_bigcube = drs_finput('TELLU_BIGCUBE_S1D',
@@ -1437,9 +1489,12 @@ out_tellu_s1d_bigcube = drs_finput('TELLU_BIGCUBE_S1D',
 red_file.addset(out_tellu_template)
 red_file.addset(out_tellu_bigcube)
 red_file.addset(out_tellu_bigcube0)
-red_file.addset(out_tellu_s1d_template)
+red_file.addset(out_tellu_s1dw_template)
+red_file.addset(out_tellu_s1dv_template)
 red_file.addset(out_tellu_s1d_bigcube)
 tellu_file.addset(out_tellu_template)
+tellu_file.addset(out_tellu_s1dw_template)
+tellu_file.addset(out_tellu_s1dv_template)
 
 # -----------------------------------------------------------------------------
 # ccf
@@ -1866,11 +1921,10 @@ post_t_file.add_ext('RECON_AB', out_tellu_recon, pos=4, fiber='AB',
                     link='TELLU_AB', hlink='KW_IDENTIFIER',
                     block_kind='red', clear_file=True, tag='Recon')
 
-# TODO: If precleaning fails --> no OHLINE file produced
 post_t_file.add_ext('OHLINE', out_tellu_pclean, pos=5, fiber='AB',
                     link='TELLU_AB', hlink='KW_IDENTIFIER',
                     block_kind='red', clear_file=True, tag='OHLine',
-                    extname='SKY_MODEL')
+                    extname='PCA_SKY')
 
 post_t_file.add_ext('TELLU_A', out_tellu_obj, pos=6, fiber='A',
                     link='PP', hlink='KW_IDENTIFIER', block_kind='red',
@@ -2042,8 +2096,13 @@ post_file.addset(post_p_file)
 # =============================================================================
 # Other Files
 # =============================================================================
+_params = constants.load()
+ccf_path = os.path.join(_params['DRS_DATA_ASSETS'],
+                        _params['WAVE_CCF_MASK_PATH'])
+# special case where input file may not be in default path directory
 other_ccf_mask_file = drs_input('CCF_MASK', filetype='.mas',
-                                description='CCF mask file')
+                                description='CCF mask file',
+                                inpath=ccf_path)
 
 # =============================================================================
 # End of code

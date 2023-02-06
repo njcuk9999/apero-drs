@@ -1,31 +1,34 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
+apero_pp_ref_nirps_he.py [obs dir]
 
-# CODE DESCRIPTION HERE
+APERO reference file preprocessing for NIRPS HE
 
 Created on 2019-03-05 16:38
+
 @author: ncook
-Version 0.0.1
 """
+from typing import Any, Dict, Optional, Tuple, Union
+
 import numpy as np
 
-from apero.base import base
 from apero import lang
-from apero.core.core import drs_log
-from apero.core.core import drs_file
+from apero.base import base
+from apero.core import constants
 from apero.core.core import drs_database
+from apero.core.core import drs_file
+from apero.core.core import drs_log
+from apero.core.instruments.nirps_he import file_definitions
+from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_utils
-
-from apero.core.instruments.spirou import file_definitions
 from apero.science import preprocessing
-
 
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero_PP_REF_nirps_he.py'
+__NAME__ = 'apero_pp_ref_nirps_he.py'
 __INSTRUMENT__ = 'NIRPS_HE'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
@@ -34,6 +37,10 @@ __date__ = base.__date__
 __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# Get Recipe class
+DrsRecipe = drs_recipe.DrsRecipe
+# Get parameter class
+ParamDict = constants.ParamDict
 # Get the text types
 textentry = lang.textentry
 # Raw prefix
@@ -49,21 +56,17 @@ RAW_PREFIX = file_definitions.raw_prefix
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(obs_dir=None, **kwargs):
+def main(obs_dir: Optional[str] = None, **kwargs
+         ) -> Union[Dict[str, Any], Tuple[DrsRecipe, ParamDict]]:
     """
-    Main function for apero_preprocess_spirou.py
+    Main function for apero_pp_ref
 
     :param obs_dir: string, the night name sub-directory
-    :param files: list of strings or string, the list of files to process
     :param kwargs: any additional keywords
-
-    :type obs_dir: str
-    :type files: list[str]
 
     :keyword debug: int, debug level (0 for None)
 
     :returns: dictionary of the local space
-    :rtype: dict
     """
     # assign function calls (must add positional)
     fkwargs = dict(obs_dir=obs_dir, **kwargs)
@@ -82,13 +85,14 @@ def main(obs_dir=None, **kwargs):
     return drs_startup.end_main(params, llmain, recipe, success, outputs='None')
 
 
-def __main__(recipe, params):
+def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     """
     Main code: should only call recipe and params (defined from main)
 
-    :param recipe:
-    :param params:
-    :return:
+    :param recipe: DrsRecipe, the recipe class using this function
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: dictionary containing the local variables
     """
     # ----------------------------------------------------------------------
     # Main Code
@@ -163,11 +167,14 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # certain keys may not be in some spirou files
         infile = drs_file.fix_header(params, recipe, infile)
+        # get image and header for this file
+        image = infile.get_data()
+        header = infile.get_header()
         # ------------------------------------------------------------------
         # print progress
         WLOG(params, '', textentry('40-010-00014', args=[infile.name]))
         # make order mask
-        mask, props = preprocessing.nirps_order_mask(params, infile.get_data())
+        mask, props = preprocessing.nirps_order_mask(params, image, header)
         # convert to integers
         mask = np.array(mask).astype(int)
         # ------------------------------------------------------------------
@@ -219,9 +226,24 @@ def __main__(recipe, params):
         log1.end()
 
     # ----------------------------------------------------------------------
+    # Create LED flat
+    # ----------------------------------------------------------------------
+    # get raw file definitions
+    raw_led_file = file_definitions.raw_led_led
+    raw_dark_file = file_definitions.raw_dark_dark
+    # create the led flat
+    led_outfile = preprocessing.create_led_flat(params, recipe, raw_led_file,
+                                                raw_dark_file)
+    # ------------------------------------------------------------------
+    # add LED flat to calibration database
+    # ------------------------------------------------------------------
+    # copy the mask to the calibDB
+    calibdbm.add_calib_file(led_outfile)
+
+    # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return drs_startup.return_locals(params, dict(locals()))
+    return locals()
 
 
 # =============================================================================

@@ -8,24 +8,25 @@ Created on 2019-11-02 10:09
 @author: ncook
 Version 0.0.1
 """
-from astropy.table import Table
-import numpy as np
 import os
 import shutil
 import time
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
-from apero.base import base
+import numpy as np
+from astropy.table import Table
+
 from apero import lang
+from apero.base import base
 from apero.core import constants
+from apero.core.core import drs_database
 from apero.core.core import drs_log
 from apero.core.core import drs_misc
 from apero.core.core import drs_text
-from apero.core.core import drs_database
-from apero.core.utils import drs_startup
 from apero.core.utils import drs_recipe
-from apero.tools.recipes.bin import apero_processing
+from apero.core.utils import drs_startup
 from apero.tools.module.processing import drs_processing
+from apero.tools.recipes.bin import apero_processing
 
 # =============================================================================
 # Define variables
@@ -64,7 +65,12 @@ def raw_files(user_indir: str, user_outdir: str, do_copy: bool = False,
     :param user_outdir: str, proposed out raw directory (absolute path)
     :param do_copy: bool, hard copies files
     :param do_symlink: bool, symlinks files (overrides do_copy if True)
-    :return:
+    :param exclude_obs_dir: list of strings or None, if set these files
+                            will not be reduced
+    :param log: bool, if True logs outputs
+    :param replace: bool, if True replaces existing files
+
+    :return: None, copies files
     """
 
     if exclude_obs_dir is None:
@@ -166,7 +172,7 @@ class Trigger:
     def __call__(self):
         # ---------------------------------------------------------------------
         # step 1: sync raw directory
-        #----------------------------------------------------------------------
+        # ----------------------------------------------------------------------
         # print progress
         WLOG(self.params, 'info', 'Creating new symlinks')
         # update raw file symlinks
@@ -328,7 +334,7 @@ class Trigger:
                 condition += f' AND OBS_DIR="{obs_dir}"'
                 # get science files condition (DPRTYPE)
                 subconds = []
-                for dprtype in self.params.listp('PP_OBJ_DPRTYPES',dtype=str):
+                for dprtype in self.params.listp('PP_OBJ_DPRTYPES', dtype=str):
                     subconds.append(f'KW_DPRTYPE="{dprtype}"')
                 condition += ' AND ({0})'.format(' OR '.join(subconds))
                 # get all science files
@@ -430,8 +436,10 @@ def get_recipes(params: ParamDict, runfile: str,
     # copy params
     iparams = params.copy()
     # deal with run file
-    iparams, runtable = drs_startup.read_runfile(iparams, runfile, rkind='run',
-                                                log_overwrite=True)
+    iparams, runtable = drs_startup.read_runfile(iparams, recipe=None,
+                                                 runfile=runfile,
+                                                 rkind='run',
+                                                 log_overwrite=True)
     # get recipe definitions module (for this instrument)
     recipemod = drs_processing._get_recipe_module(iparams, logmsg=False)
     # get all values (upper case) using map function

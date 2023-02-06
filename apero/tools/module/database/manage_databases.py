@@ -7,20 +7,20 @@ Created on 2020-08-2020-08-18 17:13
 
 @author: cook
 """
-from astropy.table import Table, vstack, MaskedColumn
-import numpy as np
 import os
-import pandas as pd
 from typing import Dict, List, Union
 
+import numpy as np
+import pandas as pd
+from astropy.table import Table, vstack, MaskedColumn
+
+from apero import lang
 from apero.base import base
 from apero.base import drs_db
 from apero.core import constants
-from apero.core.instruments.default import pseudo_const
 from apero.core.core import drs_database
 from apero.core.core import drs_log
 from apero.core.core import drs_text
-from apero import lang
 
 # =============================================================================
 # Define variables
@@ -40,7 +40,7 @@ DatabaseM = drs_database.DatabaseManager
 BaseDatabaseM = drs_db.BaseDatabaseManager
 # Get ParamDict
 ParamDict = constants.ParamDict
-PseudoConst = pseudo_const.PseudoConstants
+PseudoConst = constants.PseudoConstants
 # Get Logging function
 WLOG = drs_log.wlog
 # get textentry
@@ -315,7 +315,7 @@ def install_databases(params: ParamDict, skip: Union[List[str], None] = None):
     # -------------------------------------------------------------------------
     # create telluric database
     if 'tellu' not in skip:
-        _ = create_telluric_database(pconst, databases)
+        _ = create_telluric_database(params, pconst, databases)
     # -------------------------------------------------------------------------
     # create index database
     if 'findex' not in skip:
@@ -391,18 +391,22 @@ def create_calibration_database(params: ParamDict, pconst: PseudoConst,
 # =============================================================================
 # Define telluric database functions
 # =============================================================================
-def create_telluric_database(pconst: PseudoConst,
+def create_telluric_database(params: ParamDict, pconst: PseudoConst,
                              databases: Dict[str, DatabaseM],
                              tries: int = 20) -> Database:
     """
     Setup for the telluric database
 
+    :param params: ParamDict, parmaeter dictionary of constants
     :param pconst: Pseudo constants
     :param databases: dictionary of database managers
     :param tries: int, the number of tries before reporting a database error
 
     :returns: database - the telluric database
     """
+    # get parameters from params
+    asset_dir = params['DRS_DATA_ASSETS']
+    reset_path = params['DATABASE_DIR']
     # get columns and ctypes from pconst
     tdb_cols = pconst.TELLURIC_DB_COLUMNS()
     columns = list(tdb_cols.names)
@@ -423,7 +427,16 @@ def create_telluric_database(pconst: PseudoConst,
     # add main table
     telludb.add_table(telludb.tname, columns, ctypes, index_cols=cicols,
                       unique_cols=cuniques)
-    # -------------------------------------------------------------------------
+    # ---------------------------------------------------------------------
+    # construct reset file
+    reset_abspath = os.path.join(asset_dir, reset_path, telludbm.dbreset)
+    # the rest file may not exist - this is okay for the telluric database
+    if os.path.exists(reset_abspath):
+        # get rows from reset file
+        reset_entries = pd.read_csv(reset_abspath, skipinitialspace=True)
+        # add rows from reset text file
+        telludb.add_from_pandas(reset_entries)
+    # ---------------------------------------------------------------------
     return telludb
 
 
@@ -572,6 +585,8 @@ def get_object_database(params: ParamDict, log: bool = True) -> Table:
 
     :return: astropy table, the object database
     """
+    # set function name
+    func_name = __NAME__ + '.get_object_database()'
     # get parameters from params
     gsheet_url = params['OBJ_LIST_GOOGLE_SHEET_URL']
     main_id = params['OBJ_LIST_GSHEET_MAIN_LIST_ID']
@@ -591,11 +606,10 @@ def get_object_database(params: ParamDict, log: bool = True) -> Table:
         try:
             maintable = Table.read(mainpath, format='csv')
         except Exception as e:
-            # TODO: move to language database
-            emsg = ('Error: if OBJ_LIST_GOOGLE_SHEET_URL is local directory'
-                    ' main_id must be a valid csv file. \nError {0}: {1}')
-            eargs = [type(e), str(e)]
-            WLOG(params, 'error', emsg.format(*eargs))
+            # error msg: if OBJ_LIST_GOOGLE_SHEET_URL is local directory
+            #            main_id must be a valid csv file.
+            eargs = [mainpath, type(e), str(e), func_name]
+            WLOG(params, 'error', textentry('09-002-00005', args=eargs))
             maintable = Table()
         # noinspection PyBroadException
         try:
@@ -605,7 +619,8 @@ def get_object_database(params: ParamDict, log: bool = True) -> Table:
     else:
         # get google sheets
         maintable = drs_database.get_google_sheet(params, gsheet_url, main_id)
-        pendtable = drs_database.get_google_sheet(params, gsheet_url, pending_id)
+        pendtable = drs_database.get_google_sheet(params, gsheet_url,
+                                                  pending_id)
     # force types in main table and pend table (so we can join them)
     maintable = _force_column_dtypes(maintable, OBJ_DATA_TYPES)
     pendtable = _force_column_dtypes(pendtable, OBJ_DATA_TYPES)
@@ -816,6 +831,8 @@ def get_reject_database(params: ParamDict, log: bool = True) -> Table:
 
     :return: astropy table, the object database
     """
+    # set function name
+    func_name = __NAME__ + '.get_reject_database()'
     # get parameters from params
     gsheet_url = params['REJECT_LIST_GOOGLE_SHEET_URL']
     main_id = params['REJECT_LIST_GSHEET_MAIN_LIST_ID']
@@ -829,11 +846,10 @@ def get_reject_database(params: ParamDict, log: bool = True) -> Table:
         try:
             maintable = Table.read(mainpath, format='csv')
         except Exception as e:
-            # TODO: move to language database
-            emsg = ('Error: if REJECT_LIST_GOOGLE_SHEET_URL is local directory'
-                    ' main_id must be a valid csv file. \nError {0}: {1}')
-            eargs = [type(e), str(e)]
-            WLOG(params, 'error', emsg.format(*eargs))
+            # error msg: if REJECT_LIST_GOOGLE_SHEET_URL is local directory
+            #            main_id must be a valid csv file
+            eargs = [mainpath, type(e), str(e), func_name]
+            WLOG(params, 'error', textentry('09-002-00006', args=eargs))
             maintable = Table()
     else:
         # get google sheets

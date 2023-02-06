@@ -10,8 +10,9 @@ Created on 2019-07-26 at 09:39
 @author: cook
 """
 from apero.base import base
+from apero.core import constants
 from apero.core.core import drs_log
-from apero.core.core import drs_text
+from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
 from apero.tools.module.testing import drs_stats
 
@@ -28,6 +29,10 @@ __date__ = base.__date__
 __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# Get Recipe class
+DrsRecipe = drs_recipe.DrsRecipe
+# Get parameter class
+ParamDict = constants.ParamDict
 
 
 # =============================================================================
@@ -43,10 +48,7 @@ def main(**kwargs):
     """
     Main function for apero_log_stats.py
 
-    :param instrument: str, the instrument name
     :param kwargs: additional keyword arguments
-
-    :type instrument: str
 
     :keyword debug: int, debug level (0 for None)
 
@@ -70,43 +72,61 @@ def main(**kwargs):
     return drs_startup.end_main(params, llmain, recipe, success, outputs='None')
 
 
-def __main__(recipe, params):
+def __main__(recipe: DrsRecipe, params: ParamDict):
     """
     Main code: should only call recipe and params (defined from main)
 
-    :param recipe:
-    :param params:
-    :return:
+    :param recipe: DrsRecipe, the recipe class using this function
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: dictionary containing the local variables
     """
     # ----------------------------------------------------------------------
     # Main Code
     # ----------------------------------------------------------------------
     # get arguments
-    mode = params['INPUTS']['MODE']
+    mode = params['INPUTS']['MODE'].upper()
     # set up plotting (no plotting before this)
     recipe.plot.set_location()
-    # deal with timing
-    if mode.upper() == 'TIMING':
+    # set output to None initially
+    tout, qout, eout, mout, fout = None, None, None, None, None
+    # ----------------------------------------------------------------------
+    # run the timing stats
+    if 'TIMING' in mode or 'ALL' in mode:
         # add plots to params
         params.set('STATS_TIMING_PLOT', value=True)
         # do the timing stats
-        drs_stats.timing_stats(params, recipe)
-    elif mode.upper() == 'QC':
+        tout = drs_stats.timing_stats(params, recipe)
+    # ----------------------------------------------------------------------
+    # run the qc stats
+    if 'QC' in mode or 'ALL' in mode:
         # add plots to params
         params.set('STAT_QC_RECIPE_PLOT', value=True)
         # do the qc stats
-        drs_stats.qc_stats(params, recipe)
-    elif mode.upper() == 'ERROR':
+        qout = drs_stats.qc_stats(params, recipe)
+    # ----------------------------------------------------------------------
+    # run the error stats
+    if 'ERROR' in mode or 'ALL' in mode:
         # do the error stats
-        drs_stats.error_stats(params)
-    elif mode.upper() == 'MEMORY':
+        eout = drs_stats.error_stats(params)
+    # ----------------------------------------------------------------------
+    # run the memory stats
+    if 'MEMORY' in mode or 'ALL' in mode:
         # do the memory stats
-        drs_stats.memory_stats(params, recipe)
-
+        mout = drs_stats.memory_stats(params, recipe)
+    # ----------------------------------------------------------------------
+    # run the file index stats
+    if 'FINDEX' in mode or 'ALL' in mode:
+        # do the file index stats
+        fout = drs_stats.file_index_stats(params)
+    # ----------------------------------------------------------------------
+    # combine all outputs into a single file that can be compared between
+    #   runs
+    drs_stats.combine_stats(params, [tout, qout, eout, mout, fout])
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return drs_startup.return_locals(params, locals())
+    return locals()
 
 
 # =============================================================================

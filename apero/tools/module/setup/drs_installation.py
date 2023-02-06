@@ -9,20 +9,21 @@ Created on 2019-11-09 10:44
 Version 0.0.1
 """
 import argparse
-from collections import OrderedDict
 import importlib
-import numpy as np
 import os
-from pathlib import Path
 import string
 import sys
+from collections import OrderedDict
+from pathlib import Path
 from typing import Any, List, Dict, Tuple, Union
+
+import numpy as np
 
 from apero import lang
 from apero.base import base
-from apero.core.core import drs_misc
-from apero.core.constants import path_definitions as pathdef
 from apero.core import constants
+from apero.core.constants import path_definitions as pathdef
+from apero.core.core import drs_misc
 
 # =============================================================================
 # Define variables
@@ -160,7 +161,7 @@ def cprint(message: Union[lang.Text, str], colour: str = 'g'):
 def ask(question: str, dtype: Union[str, type, None] = None,
         options: Union[List[Any], None] = None,
         optiondesc: Union[List[str], None] = None, default: Any = None,
-        required: bool = True, color='g'):
+        required: bool = True, color='g') -> Any:
     """
     Ask a question
 
@@ -172,7 +173,9 @@ def ask(question: str, dtype: Union[str, type, None] = None,
                     if required
     :param required: bool, if False and dtype=path does not create a path
                      else does not change anything
-    :return:
+    :param color: str, the color of the text printed out
+
+    :return: the response from the user or the default
     """
     # set up check criteria as True at first
     check = True
@@ -365,13 +368,13 @@ def check_path_arg(name: str, value: Union[str, Path],
 
 
 def user_interface(params: ParamDict, args: argparse.Namespace,
-                   lang: str) -> Tuple[ParamDict, argparse.Namespace]:
+                   user_lang: str) -> Tuple[ParamDict, argparse.Namespace]:
     """
     Ask the user the questions required to install apero
 
     :param params: ParamDict, the parameter dictionary of constants
     :param args: passed from argparse
-    :param lang: str, the language the user requires
+    :param user_lang: str, the language the user requires
 
     :return: tuple, 1. all parameters dict, 2. the argparse namespace
     """
@@ -390,11 +393,11 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
     print('\n')
     # ------------------------------------------------------------------
     # add dev mode to allparams
-    all_params['DEVMODE'] = getattr(args, 'devmode', False)
+    all_params['DEVMODE'] = getattr(args, 'dev', False)
     # add clean warn
-    all_params['CLEANWARN'] = getattr(args, 'cleanwarn', False)
+    all_params['CLEANWARN'] = getattr(args, 'clean_no_warning', False)
     # get whether to ask user about creating directories
-    askcreate = not getattr(args, 'alwayscreate', True)
+    askcreate = not getattr(args, 'always_create', True)
 
     # ------------------------------------------------------------------
     # Step 0: Ask for profile name (if not given)
@@ -430,6 +433,7 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
     userconfig = userconfig.joinpath(profilename)
     # add user config to all_params
     all_params['USERCONFIG'] = userconfig
+    args.config = userconfig
 
     # ------------------------------------------------------------------
     # Step 2: Ask for instrument (from valid instruments)
@@ -460,9 +464,11 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
     # set instrument in all params
     all_params['INSTRUMENT'] = instrument
     all_params.set_source('INSTRUMENT', func_name)
+    args.instrument = instrument
     # TODO: set language
-    all_params['LANGUAGE'] = lang
-    all_params.set_source('LANGUAGE', lang)
+    all_params['LANGUAGE'] = user_lang
+    all_params.set_source('LANGUAGE', user_lang)
+    # args.language = lang
     # ------------------------------------------------------------------
     # Database settings: Choose a database mode
     prompt_db = textentry('40-001-00043')
@@ -485,9 +491,10 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
     if db_type is None:
         db_type = ask(prompt_db, options=[1, 2], dtype='int',
                       optiondesc=options_db)
+        args.database_mode = int(db_type)
     # add the database settings (and ask user if required
     if db_type == 2:
-        all_params = get_mysql_settings(all_params, args)
+        all_params, args = get_mysql_settings(all_params, args)
     else:
         all_params = get_sqlite_settings(all_params)
     # ------------------------------------------------------------------
@@ -506,6 +513,8 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
     # ------------------------------------------------------------------
     # check data path
     promptuser, datadir = check_path_arg('datadir', args.datadir, askcreate)
+    # update args with data dir
+    args.datadir = datadir
 
     # check for data paths in args
     data_prompts, data_values = dict(), dict()
@@ -540,10 +549,13 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
                 # ask question and assign path
                 all_params[path] = ask(question, 'path', default=defaultpath)
                 all_params.set_source(path, __NAME__)
+                # print header
                 cprint(printheader(), 'g')
             else:
                 all_params[path] = argvalue
                 all_params.set_source(path, 'command line')
+            # update args
+            setattr(args, DATA_ARGS[path], all_params[path])
     # ------------------------------------------------------------------
     elif data_promptuser:
         create = False
@@ -570,6 +582,8 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
             dpath = directory.joinpath(default)
             all_params[path] = dpath
             all_params.set_source(path, __NAME__)
+            # update args
+            setattr(args, DATA_ARGS[path], all_params[path])
             # check whether path exists
             if not dpath.exists():
                 cprint(textentry('40-001-00048', args=all_params[path]), 'g')
@@ -585,12 +599,14 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
                 all_params[path] = datadir.joinpath(default)
                 all_params.set_source(path, 'command line + default')
                 pargs = [path, all_params[path]]
+                # print header
                 cprint(textentry('40-001-00049', args=pargs))
             else:
                 # assign path
                 all_params[path] = value
                 all_params.set_source(path, 'command line')
-
+            # update args
+            setattr(args, DATA_ARGS[path], all_params[path])
     # ------------------------------------------------------------------
     # Step 4: Ask for plot mode
     # ------------------------------------------------------------------
@@ -606,6 +622,8 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
                    default=0)
         all_params['DRS_PLOT'] = plot
         all_params.set_source('DRS_PLOT', __NAME__)
+        # update args
+        args.plotmode = plot
         # add header line
         cprint(printheader(), 'g')
     else:
@@ -620,6 +638,8 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
         all_params['CLEAN_INSTALL'] = ask(textentry('INSTALL_CLEAN_MSG'),
                                           dtype='YN')
         all_params.set_source('CLEAN_INSTALL', func_name)
+        # update args
+        args.clean = all_params['CLEAN_INSTALL']
     else:
         cprint(textentry('40-001-00055', args=[args.clean]))
         all_params['CLEAN_INSTALL'] = eval(args.clean)
@@ -632,7 +652,8 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
     return all_params, args
 
 
-def get_mysql_settings(all_params: ParamDict, args: Any) -> ParamDict:
+def get_mysql_settings(all_params: ParamDict,
+                       args: Any) -> Tuple[ParamDict, Any]:
     """
     Ask the user for the MySQL settings
 
@@ -691,6 +712,7 @@ def get_mysql_settings(all_params: ParamDict, args: Any) -> ParamDict:
     # only add response if not None
     if response not in ['None', '', None]:
         all_params['MYSQL']['HOST'] = response
+        args.database_host = response
     # ----------------------------------------------------------------------
     # ask for the username
     if username is not None:
@@ -701,6 +723,7 @@ def get_mysql_settings(all_params: ParamDict, args: Any) -> ParamDict:
     # only add response if not None
     if response not in ['None', '', None]:
         all_params['MYSQL']['USER'] = response
+        args.database_user = response
     # ----------------------------------------------------------------------
     # ask for the password
     if password is not None:
@@ -711,6 +734,7 @@ def get_mysql_settings(all_params: ParamDict, args: Any) -> ParamDict:
     # only add response if not None
     if response not in ['None', '', None]:
         all_params['MYSQL']['PASSWD'] = response
+        args.database_pass = response
     # ----------------------------------------------------------------------
     # ask for the database name
     if name is not None:
@@ -721,15 +745,17 @@ def get_mysql_settings(all_params: ParamDict, args: Any) -> ParamDict:
     # only add response if not None
     if response not in ['None', '', None]:
         all_params['MYSQL']['DATABASE'] = response
+        args.database_name = response
     # ----------------------------------------------------------------------
     # Individual database table settings
-    all_params = mysql_database_tables(args, all_params)
+    all_params, args = mysql_database_tables(args, all_params)
     # ----------------------------------------------------------------------
-    return all_params
+    return all_params, args
 
 
 def mysql_database_tables(args: argparse.Namespace, all_params: ParamDict,
-                          db_ask: bool = True) -> ParamDict:
+                          db_ask: bool = True
+                          ) -> Tuple[ParamDict, argparse.Namespace]:
     """
     Get/ask for the MYSQL database table names
 
@@ -752,13 +778,13 @@ def mysql_database_tables(args: argparse.Namespace, all_params: ParamDict,
         database_ask = [True, True, False, False, False, False, False]
     else:
         database_ask = [False] * 7
-    database_args = ['calibtable', 'tellutable', 'indextable', 'logtable',
-                     'objtable', 'rejecttable', 'langtable']
+    database_args = ['calibtable', 'tellutable', 'findextable', 'logtable',
+                     'astromtable', 'rejecttable', 'langtable']
     # loop around databases
     for db_it in range(len(database_user)):
         # ---------------------------------------------------------------------
-        # db key for all_params
-        dbkey = '{0}_profile'.format(databases_raw[db_it])
+        # db key for all_params - capitalized to match sqlite
+        dbkey = '{0}_profile'.format(databases_raw[db_it]).upper()
         # ---------------------------------------------------------------------
         # deal with command line arguments
         if hasattr(args, database_args[db_it]):
@@ -768,6 +794,7 @@ def mysql_database_tables(args: argparse.Namespace, all_params: ParamDict,
             if response not in ['None', '', None]:
                 # set key
                 all_params['MYSQL'][dbkey] = str(response)
+                setattr(args, database_args[db_it], str(response))
                 # skip asking the question
                 continue
         # ---------------------------------------------------------------------
@@ -785,10 +812,12 @@ def mysql_database_tables(args: argparse.Namespace, all_params: ParamDict,
         # --------------------------------------------------------------------
         if response not in ['None', '', None]:
             all_params['MYSQL'][dbkey] = response
+            setattr(args, database_args[db_it], response)
         else:
             all_params['MYSQL'][dbkey] = all_params['PROFILENAME']
+            setattr(args, database_args[db_it], all_params['PROFILENAME'])
     # ----------------------------------------------------------------------
-    return all_params
+    return all_params, args
 
 
 def get_sqlite_settings(all_params: ParamDict) -> ParamDict:
@@ -947,8 +976,10 @@ def create_shell_scripts(params: ParamDict, all_params: ParamDict) -> ParamDict:
     elif os.name == 'posix':
         setup_infiles = ['{0}.bash.setup'.format(package.lower())]
         setup_infiles += ['{0}.sh.setup'.format(package.lower())]
+        setup_infiles += ['{0}.zsh.setup'.format(package.lower())]
         setup_outfiles = ['{0}.bash.setup'.format(pname.lower())]
         setup_outfiles += ['{0}.sh.setup'.format(pname.lower())]
+        setup_outfiles += ['{0}.zsh.setup'.format(pname.lower())]
     # else generate error message
     else:
         # print error message: Error APERO does not support OS
@@ -1057,9 +1088,9 @@ def clean_install(params: ParamDict, all_params: ParamDict
     reset_args = toolmod.main(quiet=True, warn=cleanwarn, database_timeout=0)
     # deal with a bad reset
     if not reset_args['success']:
-        # TODO: Add to language database
-        cprint('\n\nError resetting database (see above) cannot install apero',
-               'r')
+        # error message: Error resetting database (see above) cannot install
+        #                apero
+        cprint(textentry('40-001-00083'), 'r')
         return None
     # return all params
     return all_params
@@ -1470,7 +1501,7 @@ def update(params: ParamDict, args: argparse.Namespace) -> ParamDict:
         all_params.set_source('CLEAN_INSTALL', func_name)
     # ------------------------------------------------------------------
     # Individual database table settings
-    all_params = mysql_database_tables(args, all_params, db_ask=False)
+    all_params, args = mysql_database_tables(args, all_params, db_ask=False)
     # ------------------------------------------------------------------
     # update base.PARAMS with all params
     base.DPARAMS = update_dparams(all_params, base.DPARAMS)
@@ -1501,8 +1532,8 @@ def update_dparams(aparams: ParamDict,
         return dparams
     # loop around databases
     for dbname in base.DATABASE_NAMES:
-
-        value = aparams['MYSQL'].get(f'{dbname}_profile', None)
+        dbkey = f'{dbname}_profile'.upper()
+        value = aparams['MYSQL'].get(dbkey, None)
         if value is not None:
             dparams['MYSQL'][dbname.upper()]['PROFILE'] = value
     # return dparams

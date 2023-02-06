@@ -14,13 +14,12 @@ import os
 
 from apero.base import base
 from apero.core import constants
-from apero.core.core import drs_log
 from apero.core.core import drs_file
+from apero.core.core import drs_log
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_utils
 from apero.science import extract
 from apero.tools.module.testing import drs_dev
-
 
 # =============================================================================
 # Define variables
@@ -71,8 +70,6 @@ def main(**kwargs):
     Main function for cal_update_berv.py
 
     :param kwargs: additional keyword arguments
-
-    :type instrument: str
 
     :keyword debug: int, debug level (0 for None)
 
@@ -271,7 +268,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return drs_startup.return_locals(params, locals())
+    return locals()
 
 
 # =============================================================================

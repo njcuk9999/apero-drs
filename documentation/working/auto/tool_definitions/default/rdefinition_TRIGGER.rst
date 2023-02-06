@@ -46,12 +46,12 @@ No optional arguments
 
 .. code-block:: 
 
-     --indir[STRING] // The input directory to scan for new data. (This is not the apero defined raw directory)
+     --indir[STRING] // [STRING] The input directory to scan for new data. (This is not the apero defined raw directory)
      --reset // Reset the trigger (default is False and thus we use cached files to speed up trigger). This means after nights are marked done (calib/sci) they will not be reprocessed. Thus --reset to avoid this.
-     --ignore[STRING] // Ignore certain obs_dir (observation directories)  by default all directories in --indir are reduced. Using ignore will ignore certain directories and not add them to the the sym-linked (DRS_DATA_RAW) directory.
-     --wait[1>INT>3600] // Number of second to wait between processing runs. Should not be too low (below 10s its too fast) unless testing, or too high (above 3600s)
-     --calib[STRING] // The run.ini file to use for calibration trigger run
-     --sci[STRING] // The run.ini file to use for science trigger run
+     --ignore[STRING] // [STRING] Ignore certain obs_dir (observation directories) by default all directories in --indir are reduced. Using ignore will ignore certain directories and not add them to the the sym-linked (DRS_DATA_RAW) directory.
+     --wait[1>INT>3600] // [INTEGER] Number of second to wait between processing runs. Should not be too low (below 10s its too fast) unless testing, or too high (above 3600s)
+     --calib[STRING] // [STRING] The run.ini file to use for calibration trigger run
+     --sci[STRING] // [STRING] The run.ini file to use for science trigger run
      --trigger_test // Active test mode (does not run recipes)
 
 
@@ -76,7 +76,7 @@ No optional arguments
      --ref[STRING] // If set then recipe is a reference recipe (e.g. reference recipes write to calibration database as reference calibrations)
      --crunfile[STRING] // Set a run file to override default arguments
      --quiet[STRING] // Run recipe without start up text
-     --nosave[STRING] // Do not save any outputs (debug/information run). Note some recipes require other recipesto be run. Only use --nosave after previous recipe runs have been run successfully.
+     --nosave[STRING] // Do not save any outputs (debug/information run). Note some recipes require other recipesto be run. Only use --nosave after previous recipe runs have been run successfully at least once.
      --force_indir[STRING] // [STRING] Force the default input directory (Normally set by recipe)
      --force_outdir[STRING] // [STRING] Force the default output directory (Normally set by recipe)
 

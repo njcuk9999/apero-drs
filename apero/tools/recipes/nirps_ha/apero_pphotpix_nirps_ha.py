@@ -9,14 +9,15 @@ Created on 2020-04-05 11:44:00
 
 @author: cook
 """
-import numpy as np
 import os
-from scipy.signal import medfilt, convolve2d
-from astropy.table import Table
-from astropy.io import fits
 
-from apero.base import base
+import numpy as np
+from astropy.io import fits
+from astropy.table import Table
+from scipy.signal import medfilt, convolve2d
+
 from apero import lang
+from apero.base import base
 from apero.core import constants
 from apero.core import math as mp
 from apero.core.core import drs_log
@@ -84,9 +85,9 @@ def main(obs_dir=None, darkfile=None, **kwargs):
     """
     Main function for exposuremeter_spirou.py
 
+    :param obs_dir: str, observation directory
+    :param darkfile: str, dark file name
     :param kwargs: additional keyword arguments
-
-    :type instrument: str
 
     :keyword debug: int, debug level (0 for None)
 
@@ -194,7 +195,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return drs_startup.return_locals(params, locals())
+    return locals()
 
 
 # =============================================================================

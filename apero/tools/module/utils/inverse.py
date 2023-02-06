@@ -18,7 +18,6 @@ from apero.core.core import drs_log
 from apero.science.calib import localisation
 from apero.science.calib import shape
 
-
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -58,11 +57,11 @@ def calc_central_localisation(params, fiber, header=None, filename=None):
     # loop around orders
     for order_num in range(lprops['NBO']):
         # get coefficents
-        acc = lprops['CENT_COEFFS'][order_num][::-1]
-        ass = lprops['WID_COEFFS'][order_num][::-1]
+        acc = lprops['CENT_COEFFS'][order_num]
+        ass = lprops['WID_COEFFS'][order_num]
         # get value at xpix center of detector
-        cfit = np.polyval(acc, nbxpix // 2)
-        wfit = np.polyval(ass, nbxpix // 2)
+        cfit = mp.val_cheby(acc, nbxpix // 2, domain=[0, nbxpix])
+        wfit = mp.val_cheby(ass, nbxpix // 2, domain=[0, nbxpix])
         # store to file
         centers.append(cfit)
         widths.append(wfit)

@@ -9,14 +9,12 @@ Created on 2019-07-26 at 09:40
 
 @author: cook
 """
-from apero.base import base
 from apero import lang
+from apero.base import base
 from apero.core import constants
 from apero.core.core import drs_log
 from apero.core.core import drs_text
 from apero.core.utils import drs_startup
-from apero.tools.module.processing import drs_run_ini
-
 
 # =============================================================================
 # Define variables
@@ -37,7 +35,6 @@ textentry = lang.textentry
 RUNDEF_PATH = 'apero.tools.module.processing.instruments.runfiles_{0}'
 
 
-
 # =============================================================================
 # Define functions
 # =============================================================================
@@ -46,8 +43,6 @@ def main(**kwargs):
     Main function for apero_changelog.py
 
     :param kwargs: any additional keywords
-
-    :type preview: bool
 
     :returns: dictionary of the local space
     :rtype: dict
@@ -81,9 +76,12 @@ def __main__(recipe, params):
     # get default run file instances
     run_files = []
     for instrument in instruments:
+        if instruments == 'None':
+            continue
         modname = f'runfile_{instrument.lower()}'
         modpath = RUNDEF_PATH.format(instrument.lower())
         # try to load run def
+        # noinspection PyBroadException
         try:
             rundef = constants.import_module(modname, modpath, quiet=True)
         except Exception as _:
@@ -116,7 +114,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return drs_startup.return_locals(params, locals())
+    return locals()
 
 
 # =============================================================================

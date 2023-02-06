@@ -8,22 +8,29 @@ Created on 2019-03-05 16:37
 @author: ncook
 Version 0.0.1
 """
-import numpy as np
-from pathlib import Path
-from scipy import ndimage
-from typing import Tuple, Union
+import os
 import warnings
+from pathlib import Path
+from typing import Optional, Tuple, Union
+
+import numpy as np
+from astropy.table import Table
+from scipy import ndimage
 
 from apero import lang
 from apero.base import base
 from apero.core import constants
 from apero.core import math as mp
+from apero.core.core import drs_database
+from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.core.core import drs_misc
-from apero.core.core import drs_file
 from apero.core.utils import drs_data
-from apero.core.core import drs_database
+from apero.core.utils import drs_recipe
+from apero.core.utils import drs_utils
 from apero.io import drs_fits
+from apero.io import drs_table
+from apero.science.calib import dark
 
 # =============================================================================
 # Define variables
@@ -39,12 +46,18 @@ __release__ = base.__release__
 WLOG = drs_log.wlog
 # get param dict
 ParamDict = constants.ParamDict
+# get the recipe class
+DrsRecipe = drs_recipe.DrsRecipe
+# get fits file class
+DrsFitsFile = drs_file.DrsFitsFile
 # get display func
 display_func = drs_misc.display_func
 # get the calibration database
 CalibrationDatabase = drs_database.CalibrationDatabase
 # Get the text types
 textentry = lang.textentry
+# alias pcheck
+pcheck = constants.PCheck(wlog=WLOG)
 
 
 # =============================================================================
@@ -493,8 +506,8 @@ def test_for_corrupt_files(params: ParamDict, image: np.ndarray,
     # -------------------------------------------------------------------------
     # first basic check: is the full image nans (has happened before)
     if np.sum(np.isfinite(image)) == 0:
-        # TODO: move to language database
-        WLOG(params, 'warning', 'Full image is NaN - cannot fix')
+        # print warning: Full image is NaN - cannot fix
+        WLOG(params, 'warning', textentry('10-010-00006'), sublevel=8)
         # return nans
         return np.nan, (np.nan, np.nan, np.nan, np.nan), np.nan, np.nan
     # -------------------------------------------------------------------------
@@ -535,7 +548,7 @@ def test_for_corrupt_files(params: ParamDict, image: np.ndarray,
             cube_hotpix[posx, posy] = data_hot
     # only keep the darkest 25% of the pixels
     mask = cube_hotpix[0][0].ravel() < mp.nanpercentile(cube_hotpix[0][0], 25)
-    cube_hotpix = cube_hotpix[:,:,mask]
+    cube_hotpix = cube_hotpix[:, :, mask]
     # remove the dc from background
     for ibox in range(np.sum(mask)):
         cube_hotpix[:, :, ibox] -= mp.nanmedian(cube_hotpix[:, :, ibox])
@@ -577,10 +590,481 @@ def test_for_corrupt_files(params: ParamDict, image: np.ndarray,
     return snr_hotpix, (rms0, rms1, rms2, rms3), dx, dy
 
 
+def construct_led_cube(params: ParamDict, led_files: np.ndarray,
+                       ref_dark: np.ndarray) -> Tuple[np.ndarray, Table]:
+    """
+    Construct the LED cube and LED table
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param led_files: numpy 1D array, list of absolute paths to LED files
+    :param ref_dark: numpy 2D array, the dark to subtract off the LED [ADU/s]
+
+    :return: tuple, 1. the LED file cube, 2. astropy table, the LED table
+    """
+    # number of iterations
+    n_iterations = 5
+    # load first image
+    led_data_0 = drs_fits.readfits(params, led_files[0])
+    # ----------------------------------------------------------------------
+    # storage
+    cube = np.zeros([len(led_files), led_data_0.shape[0], led_data_0.shape[1]])
+    # storage for led table
+    led_time, led_exp, obs_dirs, basenames = [], [], [], []
+    # ----------------------------------------------------------------------
+    # loop around LED files
+    for it, led_file in enumerate(led_files):
+        # print progres
+        # TODO: Add to language database
+        pargs = [it + 1, len(led_files)]
+        WLOG(params, '', '\tLED file {0} of {1}'.format(*pargs))
+        # get the basename from filenames
+        basename = os.path.basename(led_file)
+        # get the path inst
+        path_inst = drs_file.DrsPath(params, abspath=led_file)
+        # load the LED data
+        led_data, led_hdr = drs_fits.readfits(params, led_file, gethdr=True)
+        intercept = drs_fits.readfits(params, led_file, extname='intercept')
+        # ---------------------------------------------------------------------
+        # flag pixel that have an inconsistent intercept with the rest of the
+        #    array
+        med = np.nanmedian(intercept, axis=0)
+        # get the comman pattern
+        common_pattern = np.tile(med, led_data.shape[0]).reshape(led_data.shape)
+        # get the difference between the image and the common pattern
+        diff = intercept - common_pattern
+        # calculate the number of sigmas
+        nsigma = diff / mp.estimate_sigma(diff)
+        # set the flagged pixels to NaN
+        led_data[np.abs(nsigma) > 5] = np.nan
+        # ---------------------------------------------------------------------
+        # remove the dark
+        with warnings.catch_warnings(record=True) as _:
+            led_data2 = led_data - ref_dark
+        # normalize spectrum
+        led_data3 = led_data2 / mp.nanmedian(led_data2)
+
+        # start this value as the median
+        led_med = np.array(led_data3)
+        # as the filtering is a non-linear process, one wants to do it
+        #  iteratively, if you do it just once you end up with a residual from
+        #  the bright fringe of the illumination
+        for iteration in range(n_iterations):
+            # print progres
+            # TODO: Add to language database
+            pargs = [iteration + 1, n_iterations]
+            WLOG(params, '', '\t\tIteration {0} of {1}'.format(*pargs))
+            # median filter square image
+            led_med = led_med / mp.square_medbin(led_med)
+        # ---------------------------------------------------------------------
+        # set everything below 0.5 to nan
+        led_med[led_med < 0.5] = np.nan
+        led_med[led_med > 1.5] = np.nan
+        # ---------------------------------------------------------------------
+        # append to cube
+        cube[it] = led_med
+        # append to lists
+        basenames.append(basename)
+        obs_dirs.append(path_inst.obs_dir)
+        led_time.append(led_hdr[params['KW_MJDATE'][0]])
+        led_exp.append(led_hdr[params['KW_EXPTIME'][0]])
+    # ----------------------------------------------------------------------
+    # Make LED table
+    # ----------------------------------------------------------------------
+    # convert lists to table
+    columns = ['OBS_DIR', 'BASENAME', 'FILENAME', 'MJDATE', 'EXPTIME']
+    values = [obs_dirs, basenames, led_files, led_time, led_exp]
+    # make table using columns and values
+    led_table = drs_table.make_table(params, columns, values)
+    # ----------------------------------------------------------------------
+    # return cube and table
+    return cube, led_table
+
+
+def create_led_flat(params: ParamDict, recipe: DrsRecipe, led_file: DrsFitsFile,
+                    dark_file: DrsFitsFile) -> DrsFitsFile:
+    """
+    Creates the LED flats for use in preprocessing
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param recipe: DrsRecipe, the recipe class that called this function
+    :param led_file: DrsFitsFile class describing the LED file
+    :param dark_file: DrsFitsFile class describing the DARK file
+    :return:
+    """
+    # get the required header keys for led and dark files
+    led_hkeys = dict(led_file.required_header_keys)
+    dark_hkeys = dict(dark_file.required_header_keys)
+    # remove INST_MODE filter
+    # TODO: remove once we have LEDs for HA and HE
+    del led_hkeys['KW_INST_MODE']
+    del dark_hkeys['KW_INST_MODE']
+    # get all files that match these raw file definitions
+    raw_led_files = drs_utils.find_files(params, block_kind='raw',
+                                         filters=led_hkeys)
+    raw_dark_files = drs_utils.find_files(params, block_kind='raw',
+                                          filters=dark_hkeys)
+    # check whether filetype is allowed for instrument
+    rawfiletype = led_file.name
+    # get definition
+    fdkwargs = dict(block_kind='raw', required=False)
+    rawfile = drs_file.get_file_definition(params, rawfiletype, **fdkwargs)
+    # ----------------------------------------------------------------------
+    # print progress
+    WLOG(params, '', 'Creating dark for LED flat')
+    # ----------------------------------------------------------------------
+    # Get all dark file properties
+    # ----------------------------------------------------------------------
+    dark_table = dark.construct_dark_table(params, list(raw_dark_files),
+                                           mode='raw')
+    # ----------------------------------------------------------------------
+    # match files by date and median to produce reference dark
+    # ----------------------------------------------------------------------
+    cargs = [params, dark_table]
+    ref_dark, _ = dark.construct_ref_dark(*cargs)
+    # ----------------------------------------------------------------------
+    # Select our LED files
+    # ----------------------------------------------------------------------
+    # print progress
+    WLOG(params, '', 'Selecting LED files')
+    # loop around led files
+    led_times, infiles, rawfiles = [], [], []
+    for filename in raw_led_files:
+        # read the header
+        hdr = drs_fits.read_header(params, filename)
+        # get the raw time
+        acqtime = float(hdr[params['KW_MJDATE'][0]])
+        # store the times
+        led_times.append(acqtime)
+        # make new raw file
+        infile = rawfile.newcopy(filename=filename, params=params)
+        # read file
+        infile.read_file()
+        # fix header
+        infile = drs_file.fix_header(params, recipe, infile)
+        # append to storage
+        infiles.append(infile)
+        rawfiles.append(infile.basename)
+
+    WLOG(params, '', '\tFound {0} LED files'.format(len(led_times)))
+
+    # ----------------------------------------------------------------------
+    # Create medianed version of LED
+    # ----------------------------------------------------------------------
+    # print progress
+    WLOG(params, '', 'Medianing LED files to produced binned LED')
+    # only keep 10 LED files (uniformly distributed in time)
+    time_mask = drs_utils.uniform_time_list(led_times, 10)
+    led_files = raw_led_files[time_mask]
+    infiles = np.array(infiles)[time_mask]
+    # get cube and led table
+    cube, led_table = construct_led_cube(params, led_files, ref_dark)
+    # led output is the median of the cube
+    led = mp.nanmedian(cube, axis=0)
+    frac_valid = mp.nansum(np.isfinite(cube), axis=0)
+    # led pixels need to be valid at least 90% of the time
+    led[frac_valid < 0.9] = np.nan
+    # normalizing the per column response
+    for col in range(led.shape[1]):
+        led[:, col] = led[:, col] / np.nanmedian(led[:, col])
+    # rms array
+    rms = mp.nanstd(cube, axis=0) / np.sqrt(len(led_files) - 1)
+    # snr array
+    with warnings.catch_warnings(record=True) as _:
+        snr = led / rms
+    # ----------------------------------------------------------------------
+    # Produce stats
+    # ----------------------------------------------------------------------
+    # percentile values
+    with warnings.catch_warnings(record=True) as _:
+        p16, p50, p84 = mp.nanpercentile(rms, [16, 50, 84])
+    # print stats
+    pargs = [p50, p50 - p16, p84 - p50]
+    # TODO: move to language database
+    WLOG(params, '', 'LED FLAT RMS: {0:.3e} +{1:.3e} -{2:.3e}'.format(*pargs))
+    # ----------------------------------------------------------------------
+    # Set the reference pixels to a value of 1
+    # ----------------------------------------------------------------------
+    # keep reference pixels to a value of 1 and not NaN
+    # ref pixels will be set to NaN when we mask outliers as they do not
+    # respond to light
+    led[0:4] = 1
+    led[-4:] = 1
+    led[:, 0:4] = 1
+    led[:, -4:] = 1
+    # -------------------------------------------------------------------------
+    # Combine LEDs for output (hash code)
+    # -------------------------------------------------------------------------
+    # combine leds
+    combfile, combtable = infiles[0].combine(infiles[1:], math=None,
+                                             same_type=True)
+    # -------------------------------------------------------------------------
+    # Save mask image
+    # -------------------------------------------------------------------------
+    outfile = recipe.outputs['PP_LED_FLAT'].newcopy(params=params)
+    # construct out filename
+    outfile.construct_filename(infile=combfile)
+    # copy keys from input file
+    outfile.copy_original_keys(combfile)
+    # add version
+    outfile.add_hkey('KW_PPVERSION', value=params['DRS_VERSION'])
+    # add dates
+    outfile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
+    outfile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
+    # add process id
+    outfile.add_hkey('KW_PID', value=params['PID'])
+    # add input filename
+    outfile.add_hkey_1d('KW_INFILE1', values=rawfiles, dim1name='infile')
+    # add stats
+    outfile.add_hkey('KW_PP_LED_FLAT_P50', value=p50)
+    outfile.add_hkey('KW_PP_LED_FLAT_P16', value=p16)
+    outfile.add_hkey('KW_PP_LED_FLAT_P84', value=p84)
+    # ------------------------------------------------------------------
+    # copy data
+    outfile.data = led
+    # ------------------------------------------------------------------
+    # log that we are saving rotated image
+    wargs = [outfile.filename]
+    WLOG(params, '', textentry('40-010-00015', args=wargs))
+    # define multi lists
+    data_list = [rms, snr, dark_table, led_table, combtable]
+    name_list = ['RMS', 'SNR', 'DARK_TABLE', 'LED_TABLE', 'COMB_TABLE']
+    datatype_list = ['image', 'image', 'image', 'table', 'table', 'table']
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table(recipe, drsfitsfile=outfile)]
+        name_list += ['PARAM_TABLE']
+    # write image to file
+    outfile.write_multi(data_list=data_list, name_list=name_list,
+                        datatype_list=datatype_list,
+                        block_kind=recipe.out_block_str,
+                        runstring=recipe.runstring)
+    # add to output files (for indexing)
+    recipe.add_output_file(outfile)
+    # ------------------------------------------------------------------
+    return outfile
+
+
+def correct_capacitive_coupling(params: ParamDict, image: np.ndarray,
+                                exptime: float) -> np.ndarray:
+    """
+    Correct the capacitive coupling pattern using the amplifier bias model
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param image: np.ndarray, the image to correct
+    :param exptime: float, the exposure time in seconds
+
+    :return: np.ndarray, the corrected image
+    """
+    # get the total number of amplifiers (for this image)
+    total_amps = params['PP_TOTAL_AMP_NUM']
+    # get number of pixels in amplifier
+    pix_in_amp = image.shape[1] // total_amps
+    # get the amplifier error model file
+    amp_slope, amp_intercept = drs_data.load_amp_bias_model(params)
+    # construct the amplifier model
+    amplifier_model = amp_slope + amp_intercept / exptime
+    # storage for correction
+    corr = np.zeros_like(image)
+    # print progress
+    WLOG(params, '', 'Creating correction for capacitive coupling')
+    # loop around amplifiers
+    for amp_it in range(total_amps):
+        # unfold the butterfly pattern
+        if amp_it % 2 == 0:
+            flip = 1
+        else:
+            flip = -1
+        # start and end of the amplifier
+        start = pix_in_amp * amp_it
+        end = pix_in_amp * (amp_it + 1)
+        # add this amplifier to the correction matrix
+        corr[:, start:end] = amplifier_model[:, ::flip]
+    # apply correction
+    image = image - corr
+    # return the corrected image
+    return image
+
+
+def correct_sci_capacitive_coupling(params: ParamDict, image: np.ndarray,
+                                    amp_flux: Optional[float] = None,
+                                    amp_dflux: Optional[float] = None,
+                                    amp_d2flux: Optional[float] = None):
+    """
+    Correct the amplifier capacitive coupling between amplifiers due to
+    science (or calibration) flux
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param image: np.ndarray, the image to be corrected
+    :param amp_flux: optional float, amplitude of the flux-dependent component,
+                     overrides PP_CORR_XTALK_AMP_FLUX from params if set
+    :param amp_dflux: optional float, amplitude of the flux-dependent
+                      along-readout-axis derivative component, overrides
+                      PP_COR_XTALK_AMP_DFLUX from params if set
+    :param amp_d2flux: optional float, amplitude of the flux-dependent
+                       along-readout-axis 2nd derivative component, overrides
+                       PP_COR_XTALK_AMP_DFLUX from params if set
+
+    :return: np.ndarray, the corrected image
+    """
+    # set function name
+    func_name = display_func('correct_sci_capacitive_coupling', __NAME__)
+    # print progress
+    WLOG(params, '', 'Correcting capacitive coupling due to sci/calib flux')
+    # get the amplitudes from constants
+    # TODO: Add values and add to constants
+    amp_flux = pcheck(params, 'PP_CORR_XTALK_AMP_FLUX', func=func_name,
+                      override=amp_flux)
+    amp_dflux = pcheck(params, 'PP_COR_XTALK_AMP_DFLUX', func=func_name,
+                       override=amp_dflux)
+    amp_d2flux = pcheck(params, 'PP_COR_XTALK_AMP_D2FLUX', func=func_name,
+                        override=amp_d2flux)
+    # get the map
+    full_butterfly, _, _, _ = get_butterfly_maps(params, image, amp_flux,
+                                                 amp_dflux, amp_d2flux,
+                                                 fast=True)
+    # correct the image
+    return image - full_butterfly
+
+
+ButterflyReturn = Tuple[np.ndarray, Union[np.ndarray, None],
+                        Union[np.ndarray, None], Union[np.ndarray, None]]
+
+
+def get_butterfly_maps(params: ParamDict, image0: np.ndarray,
+                       amp_flux: float = 1.0, amp_dflux: float = 1.0,
+                       amp_d2flux: float = 1.0,
+                       fast: bool = False) -> ButterflyReturn:
+    """
+    Create full detector "butterfly maps" (repeated but flipped by even/odd
+    amplifier) based on the amplitudes given
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param image0: np.ndarray raw image (unprocessed by APERO) for which we want
+                  to derive the butterfly pattern arising from capacitive
+                  coupling. The image should be an output of the fits2ramp and
+                  not a preprocessed file (_pp file)
+    :param amp_flux: float, amplitude of the flux-dependent component,
+                     is optional only when calculating the amplitudes (defaults
+                     to a value of 1.0)
+    :param amp_dflux: float, amplitude of the flux-dependent along-readout-axis
+                      derivative component is optional only when calculating
+                      the amplitudes (defaults to a value of 1.0)
+    :param amp_d2flux: float, amplitude of the flux-dependent along-readout-axis
+                       2nd derivative component is optional only when
+                       calculating the amplitudes (defaults to a value of 1.0)
+    :param fast: If True only compute the total map (if calculating the
+                 amplitudes do not set this to True)
+
+    :return: tuple, 1. np.ndarray, the full butterfly pattern, 2. np.ndarray or
+             None (if fast=True) the amplitude butterfly pattern, 3. np.ndarray
+             or None (if fast=True) the first derivative butterfly patterhn
+             4. np.ndarray or None (if fast=True) the second derivative
+             butteryfly pattern
+    """
+    # number of amplifier
+    total_amps = params['PP_TOTAL_AMP_NUM']
+    # remove nans
+    image = np.array(image0)
+    # pixel width of each amplifier
+    pix_in_amp = image.shape[1] // total_amps
+    # cube of all amplifiers
+    cube = np.zeros([image.shape[0], pix_in_amp, total_amps])
+    # -------------------------------------------------------------------------
+    # loop around each amplifier and fill in the cube
+    for amp_it in range(total_amps):
+        #  logics for the butterfly symmetry of amplifiers
+        if (amp_it % 2) == 0:
+            flip = 1
+        else:
+            flip = -1
+        # start and end of the amplifier
+        start = pix_in_amp * amp_it
+        end = pix_in_amp * (amp_it + 1)
+        # fill the amplifier cube with amps in the same direction
+        cube[:, :, amp_it] = image[:, start:end][:, ::flip]
+    # -------------------------------------------------------------------------
+    # work out the sum and gradients
+    with warnings.catch_warnings(record=True) as _:
+        avg_amp = -mp.nansum(cube, axis=2)
+        _, grad_y = np.gradient(avg_amp)
+        _, grad_y2 = np.gradient(grad_y)
+    # find finite values
+    good = np.isfinite(avg_amp) & np.isfinite(grad_y) & np.isfinite(grad_y2)
+    # set all non finite values to zero
+    avg_amp[~good] = 0.0
+    grad_y[~good] = 0.0
+    grad_y2[~good] = 0.0
+    # -------------------------------------------------------------------------
+    # storage for the full butterfly
+    image_zeros = np.zeros_like(image)
+    full_butterfly = np.array(image_zeros)
+    # we do not compute the full image of each component and do the sum on the
+    #   ribbons if in fast mode
+    if fast:
+        dy = amp_dflux * grad_y
+        dy2 = amp_d2flux * grad_y2
+        # make the map
+        map_fast = (amp_flux * avg_amp) + dy + dy2
+        # flip the map
+        map_fast_flip = map_fast[:, ::-1]
+        # set the other arrays to None - these are not calculated in fast mode
+        flux_buttefly = None
+        deriv_butterfly = None
+        deriv2_butterfly = None
+        avg_amp_flip = None
+        grad_y_flip = None
+        grad_y2_flip = None
+    else:
+        # set the arrays
+        flux_buttefly = np.array(image_zeros)
+        deriv_butterfly = np.array(image_zeros)
+        deriv2_butterfly = np.array(image_zeros)
+        # calculate the flipped arrays
+        avg_amp_flip = avg_amp[:, ::-1]
+        grad_y_flip = grad_y[:, ::-1]
+        grad_y2_flip = grad_y2[:, ::-1]
+        # set the maps to None
+        map_fast = None
+        map_fast_flip = None
+    # -------------------------------------------------------------------------
+    # loop around the amplifiers
+    for amp_it in range(total_amps):
+        # pixels defining the region of the amplifier
+        start = pix_in_amp * amp_it
+        end = pix_in_amp * (amp_it + 1)
+        #  logics for the butterfly symmetry of amplifiers
+        if not fast:
+            if (amp_it % 2) == 0:
+                flux_buttefly[:, start:end] = avg_amp
+                deriv_butterfly[:, start:end] = grad_y
+                deriv2_butterfly[:, start:end] = grad_y2
+            else:
+                flux_buttefly[:, start:end] = avg_amp_flip
+                deriv_butterfly[:, start:end] = grad_y_flip
+                deriv2_butterfly[:, start:end] = grad_y2_flip
+        else:
+            if (amp_it % 2) == 0:
+                full_butterfly[:, start:end] = map_fast
+            else:
+                full_butterfly[:, start:end] = map_fast_flip
+    # -------------------------------------------------------------------------
+    # if not in fast mode we need to construct the full butterfly
+    if not fast:
+        part1 = amp_flux * flux_buttefly
+        part2 = amp_dflux * deriv_butterfly
+        part3 = amp_d2flux * deriv2_butterfly
+
+        full_butterfly = part1 + part2 + part3
+    # -------------------------------------------------------------------------
+    # return the four vectors (or one vector and Nones in fast mode)
+    return full_butterfly, flux_buttefly, deriv_butterfly, deriv2_butterfly
+
+
 # =============================================================================
 # Define nirps detector functions
 # =============================================================================
 def nirps_correction(params: ParamDict, image: np.ndarray,
+                     header: drs_fits.Header,
                      create_mask: bool = True) -> np.ndarray:
     """
     Pre-processing of NIRPS images with only left/right and top/bottom pixels
@@ -593,6 +1077,9 @@ def nirps_correction(params: ParamDict, image: np.ndarray,
 
     :param params: ParamDict, the parameter dictionary of constants
     :param image: np.ndarray, the image to correct
+    :param create_mask: bool, if True create a mask, otherwise try to read
+                        it from calibration database (and raise error if not
+                        found)
 
     :return: numpy 2D array, the corrected image
     """
@@ -604,6 +1091,11 @@ def nirps_correction(params: ParamDict, image: np.ndarray,
     nbypix, nbxpix = image.shape
     # define the width of amplifiers
     ampwid = nbxpix // namps
+    # get the exposure time from the header
+    exptime = header[params['KW_EXPTIME'][0]]
+    # -------------------------------------------------------------------------
+    # correct the capacitive coupling pattern of dark frames
+    image = correct_capacitive_coupling(params, image, exptime)
     # -------------------------------------------------------------------------
     # before we even get started, we remove top/bottom ref pixels
     # to reduce DC level differences between ampliers
@@ -657,71 +1149,144 @@ def nirps_correction(params: ParamDict, image: np.ndarray,
     else:
         # ---------------------------------------------------------------------
         # get the mask from the flat
-        PP_REF = drs_file.get_file_definition(params, 'PP_REF', block_kind='red')
-        # get the database key for this file
-        dbkey = PP_REF.dbkey
-        # load the database
-        calibdbm = drs_database.CalibrationDatabase(params)
-        calibdbm.load_db()
-        # get mask file
-        ppmaskfile, ppmasktime, _ = calibdbm.get_calib_file(dbkey, nentries=1,
-                                                            no_times=True)
-        # load mask file
-        ppmask = drs_fits.readfits(params, ppmaskfile)
-
-        ppmask = np.array(ppmask, dtype=bool)
-
-        image2[~ppmask] = np.nan
-
+        ppmask, ppfile = get_pp_mask(params)
+        # set the the zero values to NaN
+        image2[ppmask == 0] = np.nan
     # -------------------------------------------------------------------------
     # we find the low level frequencies
     # we bin in regions of binsize x binsize pixels. This CANNOT be
     # smaller than the order footprint on the array
     # as it would lead to a set of NaNs in the downsized
     # image and chaos afterward
+
+    # # find 25th percentile, more robust against outliers
+    # tmp = mp.percentile_bin(image2, binsize, binsize, percentile=50)
+    # # set NaN pixels to zero (for the zoom)
+    # tmp[~np.isfinite(tmp)] = 0.0
+    # # use the zoom to bin the data
+    # lowf = ndimage.zoom(tmp, np.array(image2.shape) // binsize)
+    # # subtract the low frequency
+    # image2 = image2 - lowf
+    # # remove correlated profile in Y axis
+    # yprofile1d = mp.nanmedian(image2, axis=1)
+    # # remove an eventual small zero point or low frequency
+    # zerop = mp.lowpassfilter(yprofile1d, 501)
+    # yprofile1d = yprofile1d - zerop
+    # # pad in two dimensions
+    # yprofile = np.repeat(yprofile1d, nbypix).reshape(nbypix, nbxpix)
+    # # remove from input image
+    # image = image - yprofile
+    # -------------------------------------------------------------------------
+    # 1- correction of slopes and zero points within the median amplifier
+    #    structure
+    # 2- correction of 1st read pixel within each row of the median amplifier
+    # 3- correction of column-wise median structure
+    # 4- masking of deviant columns that cannot be properly corrected
+    # -------------------------------------------------------------------------
     WLOG(params, '', textentry('40-010-00020'))
-    # find 25th percentile, more robust against outliers
-    tmp = mp.percentile_bin(image2, binsize, binsize, percentile=25)
-    # set NaN pixels to zero (for the zoom)
-    tmp[~np.isfinite(tmp)] = 0.0
-    # use the zoom to bin the data
-    lowf = ndimage.zoom(tmp, np.array(image2.shape)//binsize)
-    # subtract the low frequency
-    image2 = image2 - lowf
-    # remove correlated profile in Y axis
-    yprofile1d = mp.nanmedian(image2, axis=1)
-    # remove an eventual small zero point or low frequency
-    zerop = mp.lowpassfilter(yprofile1d, 501)
-    yprofile1d = yprofile1d - zerop
-    # pad in two dimensions
-    yprofile = np.repeat(yprofile1d, nbypix).reshape(nbypix, nbxpix)
-    # remove from input image
-    image = image - yprofile
-    # first pixel of each amplifier
-    amppix = np.arange(namps//2) * ampwid * 2
-    first_col_x = np.append(amppix, amppix - 1 + (ampwid * 2))
-    first_col_x = np.sort(first_col_x)
-    # median-filter the first and last ref pixel, which trace the
-    # behavior of the first-col per amp.
-    med_first = ndimage.median_filter(image[:, 0], 7)
-    med_last = ndimage.median_filter(image[:, -1], 7)
-    amp0 = (med_first + med_last) / 2
-    # subtract first column behavior
-    for col_x in first_col_x:
-        image[:, col_x] = image[:, col_x] - amp0
+    # number of pixels in detector
+    nbypix, nbxpix = image2.shape
+    # high-pass filtering of the image to focus on 1/f noise and column/
+    #    row-level structures
+    image2 = image2 - mp.square_medbin(image2, 6)
+
+    # find indices of pixels to properly flag parts of the amplifiers. Pixels
+    #    at a common xpix value are read at the same moment
+    _, xpix = np.indices(image2.shape)
+    # work out the width of the amplifiers
+    width_amp = nbxpix // namps
+    # get the amplifier position
+    xpix = xpix % (2 * width_amp)
+    # flip the amplifier position for the odd amplifiers
+    odd_amps = xpix > (width_amp - 1)
+    xpix[odd_amps] = (2 * width_amp - 1) - xpix[odd_amps]
+    # get the x pixel positions
+    index = np.arange(nbxpix)
+    # get the amplifier position along x
+    index = index % (2 * width_amp)
+    # flip the amplifier position along x
+    odd_amps = index > (width_amp - 1)
+    index[odd_amps] = (2 * width_amp - 1) - index[odd_amps]
+    # median on first half of the readout within each line
+    med1 = mp.nanmedian(image2[:, index < width_amp // 2], axis=1)
+    # median on 'second' half of the readout within each line
+    med2 = mp.nanmedian(image2[:, index >= width_amp // 2], axis=1)
+    # intercept of common-pattern between amplifiers
+    zp = (med1 + med2) / 2
+    zp = np.repeat(zp, len(zp)).reshape(image2.shape)
+    # slope of common-pattern between amplifiers
+    slope = (med2 - med1) / (width_amp // 2)
+    slope = np.repeat(slope, len(slope)).reshape(image2.shape)
+    # reconstrcut the full pattern
+    corr = (xpix - (width_amp // 2)) * slope + zp
+    # subtract from full image and masked image
+    image = image - corr
+    image2 = image2 - corr
+    # find pixels in first read column and neighbouring valid column
+    amp_pix = np.arange(namps // 2)
+    # calculate start and ending positions
+    width_amp2 = width_amp * 2
+    end = (width_amp * 2) - 1
+    # get these as an array (for each amplifier)
+    in_col = np.append(amp_pix * width_amp2,
+                       amp_pix * width_amp2 + end)
+    out_col = np.append(amp_pix * width_amp2 + 1,
+                        amp_pix * width_amp2 + end - 1)
+    # pixel-wise difference
+    diff1 = image[:, in_col] - image[:, out_col]
+    # find median bad column pattern
+    bad_col_pattern = mp.nanmedian(diff1, axis=1)
+    # subtract the bad column pattern off the pixel-wise difference
+    dd = np.array(diff1)
+    for col in range(len(in_col)):
+        dd[:, col] = dd[:, col] - bad_col_pattern
+    # mask outliers not to be affected by residual flux
+    bad = np.abs(dd) > 3 * mp.estimate_sigma(dd)
+    # remove these bad outliers from pixel-wise difference
+    diff1[bad] = np.nan
+    # median of diff given the bad column values
+    bad_col_pattern = mp.nanmedian(diff1, axis=1)
+    # loop around columns in image and remove bad_col_pattern
+    for col in in_col:
+        image[:, col] = image[:, col] - bad_col_pattern
+        image2[:, col] = image2[:, col] - bad_col_pattern
+
+    # only do these steps if we are not creating a mask
+    if not create_mask:
+        # find residual structures in the cross-order direction
+        tmp = mp.nanmedian(image2, axis=0)
+        # flag eventual bad columns and set to NaN. We could not find a consistent
+        #   way of removing those through filters
+        tmp[tmp / mp.estimate_sigma(tmp) > 10] = np.nan
+        # subtract the replicated median pattern
+        corr = np.tile(tmp, len(tmp)).reshape(image2.shape)
+        # correct science frame
+        image = image - corr
+    # image2 = image2 - corr
+
+    # # first pixel of each amplifier
+    # amppix = np.arange(namps // 2) * ampwid * 2
+    # first_col_x = np.append(amppix, amppix - 1 + (ampwid * 2))
+    # first_col_x = np.sort(first_col_x)
+    # # median-filter the first and last ref pixel, which trace the
+    # # behavior of the first-col per amp.
+    # med_first = ndimage.median_filter(image[:, 0], 7)
+    # med_last = ndimage.median_filter(image[:, -1], 7)
+    # amp0 = (med_first + med_last) / 2
+    # # subtract first column behavior
+    # for col_x in first_col_x:
+    #     image[:, col_x] = image[:, col_x] - amp0
     # return corrected image
     return image
 
 
-def get_pp_mask(params: ParamDict, header: drs_fits.Header,
+def get_pp_mask(params: ParamDict,
                 database: Union[CalibrationDatabase, None] = None
                 ) -> Tuple[np.ndarray, Union[Path, str]]:
     """
     Locate and open the PP mask (for NIRPS)
 
     :param params: ParamDict, parameter dictionary of constants
-    :param header: fits.Header - the header of the input file (to decide which
-                   mask to get from calibration database)
     :param database: Calibration database or None - if set avoids reloading the
                      calibration database
 
@@ -729,9 +1294,9 @@ def get_pp_mask(params: ParamDict, header: drs_fits.Header,
     """
     # _ = display_func('.get_pp_mask', __NAME__)
     # get file instance
-    PP_REF = drs_file.get_file_definition(params, 'PP_REF', block_kind='red')
+    pp_ref = drs_file.get_file_definition(params, 'PP_REF', block_kind='red')
     # get calibration key
-    ppkey = PP_REF.get_dbkey()
+    ppkey = pp_ref.get_dbkey()
     # ---------------------------------------------------------------------
     # load database
     if database is None:
@@ -740,15 +1305,50 @@ def get_pp_mask(params: ParamDict, header: drs_fits.Header,
     else:
         calibdbm = database
     # ---------------------------------------------------------------------
-    # load filename from database
-    fout = calibdbm.get_calib_file(ppkey, header=header, nentries=1,
-                                        required=True)
-    ppfile, _, _ = fout
+    # get mask file
+    ppmaskfile, ppmasktime, _ = calibdbm.get_calib_file(ppkey, nentries=1,
+                                                        no_times=True)
     # ---------------------------------------------------------------------
     # read file
-    mask = drs_fits.readfits(params, ppfile)
+    mask = drs_fits.readfits(params, ppmaskfile)
     # return use_file
-    return mask, ppfile
+    return mask, ppmaskfile
+
+
+def load_led_flat(params: ParamDict,
+                  database: Union[CalibrationDatabase, None] = None
+                  ) -> Tuple[np.ndarray, Union[Path, str]]:
+    """
+    Load the preprocessing LED FLAT image
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param database: Calibration database or None - if set avoids reloading the
+                     calibration database
+
+    :return: either the filename (return_filename=True) or np.ndarray the
+             hot pix image
+    """
+    # get file instance
+    pp_led_flat = drs_file.get_file_definition(params, 'PP_LED_FLAT',
+                                               block_kind='red')
+    # get calibration key
+    led_key = pp_led_flat.get_dbkey()
+    # ---------------------------------------------------------------------
+    # load database
+    if database is None:
+        calibdbm = drs_database.CalibrationDatabase(params)
+        calibdbm.load_db()
+    else:
+        calibdbm = database
+    # ---------------------------------------------------------------------
+    # get mask file
+    led_file, led_time, _ = calibdbm.get_calib_file(led_key, nentries=1,
+                                                    no_times=True)
+    # ---------------------------------------------------------------------
+    # read file
+    led_image = drs_fits.readfits(params, led_file)
+    # return use_file
+    return led_image, led_file
 
 
 def med_amplifiers(image: np.ndarray, namps: int) -> np.ndarray:
@@ -806,31 +1406,30 @@ def med_amplifiers(image: np.ndarray, namps: int) -> np.ndarray:
     return image2
 
 
-def nirps_order_mask(params: ParamDict,
-                     mask_image: np.ndarray) -> Tuple[np.ndarray, ParamDict]:
+def nirps_order_mask(params: ParamDict, mask_image: np.ndarray,
+                     mask_header: drs_fits.Header
+                     ) -> Tuple[np.ndarray, ParamDict]:
     """
     Calculate the mask used for removing the orders (preprocessing correction)
     for NIRPS
 
     :param params: ParamDict - the parameter dictionary of constants
     :param mask_image: np.array, the image to be masked
+    :param mask_header: fits.Header, the header for the image to be masked
+
     :return: tuple, 1. the mask for the image, 2. ParamDict - statistics from
              mask building
     """
     # set function name
     func_name = __NAME__ + '.nirps_order_mask()'
-    # get nsig value
-    nsig = params['PPM_MASK_NSIG']
     # normalise by the median
     image = mask_image - mp.nanmedian(mask_image)
-    # calculate the sigma array (distance away from median)
-    sig_image = mp.nanmedian(np.abs(image))
     # find pixels that are more than nsig absolute deviations from the image
     # median
     # with warnings.catch_warnings(record=True):
     #     mask = image > nsig * sig_image
     # correct the image (as in preprocessing)
-    image2 = nirps_correction(params, image)
+    image2 = nirps_correction(params, image, mask_header)
     # generate a better estimate of the mask (after correction)
     with warnings.catch_warnings(record=True):
         mask = image2 < 0

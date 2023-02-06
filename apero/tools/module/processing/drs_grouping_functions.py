@@ -7,16 +7,16 @@ Created on 2020-12-2020-12-01 12:10
 
 @author: cook
 """
-from astropy.table import Table
-from collections import OrderedDict
 import itertools
-import numpy as np
+from collections import OrderedDict
 from typing import Any, Dict, List, Tuple, Union
+
+import numpy as np
+from astropy.table import Table
 
 from apero.base import base
 from apero.core.core import drs_argument
 from apero.core.core import drs_log
-
 
 # =============================================================================
 # Define variables

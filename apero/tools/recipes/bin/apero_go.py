@@ -28,6 +28,8 @@ __version__ = base.__version__
 __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
+# Get parameter class
+ParamDict = constants.ParamDict
 
 
 # =============================================================================
@@ -49,8 +51,11 @@ def get_args() -> Dict[str, Any]:
     # add the full database
     pargs, pkwargs = rd.go_recipe.proxy_keywordarg('data')
     parser.add_argument(*pargs, **pkwargs)
-
+    # add the all argument
     pargs, pkwargs = rd.go_recipe.proxy_keywordarg('all')
+    parser.add_argument(*pargs, **pkwargs)
+    # add the setup argument
+    pargs, pkwargs = rd.go_recipe.proxy_keywordarg('setup')
     parser.add_argument(*pargs, **pkwargs)
     # loop around block kinds and add arguments
     for block in path_definitions.BLOCKS:
@@ -65,17 +70,8 @@ def get_args() -> Dict[str, Any]:
 
 def main():
     """
-    Main function for apero_listing.py
+    Main function for apero_go.py
 
-    :param instrument: str, the instrument name
-    :param kwargs: additional keyword arguments
-
-    :type instrument: str
-
-    :keyword debug: int, debug level (0 for None)
-
-    :returns: dictionary of the local space
-    :rtype: dict
     """
     # get parameters for this instrument
     params = constants.load()
@@ -85,13 +81,15 @@ def main():
     return __main__(None, params)
 
 
-def __main__(recipe, params):
+def __main__(recipe: None, params: ParamDict) -> Dict[str, Any]:
     """
     Main code: should only call recipe and params (defined from main)
 
-    :param recipe:
-    :param params:
-    :return:
+    :param recipe: None, no recipe needed but kept here to match
+                   other calls to __main__
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: dictionary containing the local variables
     """
     # ----------------------------------------------------------------------
     # Main Code
@@ -101,6 +99,14 @@ def __main__(recipe, params):
     props = dict()
     props['path'] = None
     props['chdir'] = False
+    # ----------------------------------------------------------------------
+    # --setup option
+    # ----------------------------------------------------------------------
+    if 'setup' in params['INPUTS']:
+        if params['INPUTS']['setup']:
+            value = os.environ['DRS_UCONFIG']
+            print('SETUP: {0}'.format(value))
+            return locals()
     # ----------------------------------------------------------------------
     # deal with 'all' argument
     if 'all' in params['INPUTS']:

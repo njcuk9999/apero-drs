@@ -1,27 +1,28 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
-
-# CODE DESCRIPTION HERE
+APERO general math functionality
 
 Created on 2019-05-15 at 12:24
 
 @author: cook
 """
 import copy
+import warnings
+from typing import Any, List, Optional, Tuple, Union
+
 import numpy as np
 from astropy import constants as cc
 from astropy import units as uu
 from scipy.interpolate import InterpolatedUnivariateSpline
+from scipy.ndimage import median_filter, zoom
 from scipy.ndimage.morphology import binary_dilation
+from scipy.optimize import curve_fit
 from scipy.special import erf, erfinv
-from typing import Tuple, Union
 
 from apero.base import base
 from apero.core.core.drs_exceptions import DrsCodedException
 from apero.core.math import fast
-
 
 # =============================================================================
 # Define variables
@@ -184,18 +185,37 @@ def median_absolute_deviation(sigma: float = 1.0) -> float:
     return sigma * np.sqrt(2) * erfinv(0.5)
 
 
+def largest_divisor_below(n1: int, n2: int) -> float:
+    """
+    finds the largest divisor of a large number below a certain limit
+    for 4088 and 9, we would get 8 (511*8 = 4088)
+    Useful to downsize images.
+
+    :param n1: int, first number (larger of the two numbers)
+    :param n2: int, second number (smaller of the two numbers)
+
+    :return: largest divisor of the two numbers
+    """
+    for i in range(n2, 0, -1):
+        if n1 % i == 0:
+            return i
+    # if there is a problem return NaN
+    return np.nan
+
+
 def estimate_sigma(tmp: np.ndarray, sigma=1.0) -> float:
     """
     Return a robust estimate of N sigma away from the mean
 
     :param tmp: np.array (1D) - the data to estimate N sigma of
+    :param sigma: int, number of sigma away from mean (default is 1)
 
-    :return: the 1 sigma value
+    :return: the sigma value
     """
     # get formal definition of N sigma
     sig1 = normal_fraction(sigma)
     # get the 1 sigma as a percentile
-    p1 = (1 - (1-sig1)/2) * 100
+    p1 = (1 - (1 - sig1) / 2) * 100
     # work out the lower and upper percentiles for 1 sigma
     upper = fast.nanpercentile(tmp, p1)
     lower = fast.nanpercentile(tmp, 100 - p1)
@@ -458,45 +478,126 @@ def iuv_spline(x: np.ndarray, y: np.ndarray, **kwargs
     return InterpolatedUnivariateSpline(x, y, **kwargs)
 
 
-def robust_polyfit(x: np.ndarray, y: np.ndarray, degree: int,
-                   nsigcut: float) -> Tuple[np.ndarray, np.ndarray]:
+def robust_chebyfit(xvector: np.ndarray, yvector: np.ndarray, degree: int,
+                    nsigcut: float, domain: List[float]
+                    ) -> Tuple[np.ndarray, np.ndarray]:
     """
-    A robust polyfit (iterating on the residuals) until nsigma is below the
-    nsigcut threshold. Takes care of NaNs before fitting
+    A robust chebyshev polyfit function that iteratively fits a polynomial
+    to the data until the dispersion of values is accounted for by a weight
+    vector. This is equivalent to a soft-edged sigma-clipping
 
-    :param x: np.ndarray, the x array to pass to np.polyval
-    :param y: np.ndarray, the y array to pass to np.polyval
+    :param xvector: np.ndarray, the x array to pass to np.polyval
+    :param yvector: np.ndarray, the y array to pass to np.polyval
     :param degree: int, the degree of polynomial fit passed to np.polyval
     :param nsigcut: float, the threshold sigma required to return result
+    :param domain: list of 2 values mapped to -1 ... 1 for Cheby polynomial
     :return:
     """
-    # set function name
-    # _ = display_func('robust_polyfit', __NAME__)
-    # set up mask
-    keep = np.isfinite(y)
-    # set the nsigmax to infinite
-    nsigmax = np.inf
-    # set the fit as unset at first
+    # Initialize the fit to None
     fit = None
-    # while sigma is greater than sigma cut keep fitting
-    while nsigmax > nsigcut:
-        # calculate the polynomial fit (of the non-NaNs)
-        fit = np.polyfit(x[keep], y[keep], degree)
-        # calculate the residuals of the polynomial fit
-        res = y - np.polyval(fit, x)
-        # work out the new sigma values
+    # Create an array of weights, initialized to 1 for all values
+    good = np.isfinite(yvector) & np.isfinite(xvector)
+    weight = np.ones_like(xvector)
+    # Pre-compute the odd_cut value
+    odd_cut = np.exp(-.5 * nsigcut ** 2)
+    # Initialize an array of weights from the previous iteration,
+    # set to 0 for all values
+    weight_before = np.zeros_like(weight)
+    # Set the maximum number of iterations and initialize the iteration counter
+    nite_max = 20
+    count = 0
+    # Enter a loop that will iterate until either the maximum difference
+    # between the current and previous weights
+    # becomes smaller than a certain threshold, or until the maximum number of
+    # iterations is reached
+    while (np.max(abs(weight - weight_before)) > 1e-9) and (count < nite_max):
+        # Calculate the polynomial fit using the x- and y-values, and the
+        # given degree, weighting the fit by the weights. Weights are computed
+        # from the dispersion to the fit and the sigmax
+        fit = fit_cheby(xvector[good], yvector[good], degree,
+                        domain, weight=weight[good])
+        # Calculate the residuals of the polynomial fit by subtracting the
+        # result of np.polyval from the original y-values
+        res = yvector - val_cheby(fit, xvector, domain)
+        # Calculate the new sigma values as the median absolute deviation of
+        # the residuals
+        sig = fast.nanmedian(np.abs(res[good]))
+        # Calculate the odds of being part of the "valid" values
+        num = np.exp(-0.5 * (res / sig) ** 2) * (1 - odd_cut)
+        # Calculate the odds of being an outlier
+        den = odd_cut + num
+        # Update the weights from the previous iteration
+        weight_before = np.array(weight)
+        # Calculate the new weights as the odds ratio that is fed back to
+        # the fit
+        weight = num / den
+        # Increment the iteration counter
+        count += 1
+    # Set the mask of good values to be those for which there is a 50%
+    # likelihood of being valid
+    keep = np.array(weight > 0.5)
+    # return the fit and keep vectors
+    return fit, keep
+
+
+def robust_polyfit(xvector: np.ndarray, yvector: np.ndarray, degree: int,
+                   nsigcut: float) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    A robust polyfit function that iteratively fits a polynomial to the data until
+    the dispersion of values is accounted for by a weight vector. This is
+    equivalent to a soft-edged sigma-clipping
+
+    :param xvector: np.ndarray, the x array to pass to np.polyval
+    :param yvector: np.ndarray, the y array to pass to np.polyval
+    :param degree: int, the degree of polynomial fit passed to np.polyval
+    :param nsigcut: float, the threshold sigma above which a point is considered
+    and outlier
+    :return: a tuple containing the polynomial fit (as a NumPy array)
+    and a boolean mask of the good values (p>50% of valid)
+    """
+    # Initialize the fit to None
+    fit = None
+    # Create an array of weights, initialized to 1 for all values
+    weight = np.ones_like(xvector)
+    # Pre-compute the odd_cut value
+    odd_cut = np.exp(-.5 * nsigcut ** 2)
+    # Initialize an array of weights from the previous iteration,
+    # set to 0 for all values
+    weight_before = np.zeros_like(weight)
+    # Set the maximum number of iterations and initialize the iteration counter
+    nite_max = 20
+    count = 0
+    # Enter a loop that will iterate until either the maximum difference
+    # between the current and previous weights
+    # becomes smaller than a certain threshold, or until the maximum number of
+    # iterations is reached
+    while (np.max(abs(weight - weight_before)) > 1e-9) and (count < nite_max):
+        # Calculate the polynomial fit using the x- and y-values, and the
+        # given degree, weighting the fit by the weights. Weights are computed
+        # from the dispersion to the fit and the sigmax
+        fit = np.polyfit(xvector, yvector, degree, w=weight)
+        # Calculate the residuals of the polynomial fit by subtracting the
+        # result of np.polyval from the original y-values
+        res = yvector - np.polyval(fit, xvector)
+        # Calculate the new sigma values as the median absolute deviation of
+        # the residuals
         sig = fast.nanmedian(np.abs(res))
-        if sig == 0:
-            nsig = np.zeros_like(res)
-            nsig[res != 0] = np.inf
-        else:
-            nsig = np.abs(res) / sig
-        # work out the maximum sigma
-        nsigmax = np.max(nsig[keep])
-        # re-work out the keep criteria
-        keep = nsig < nsigcut
-    # return the fit and the mask of good values
-    return np.array(fit), np.array(keep)
+        # Calculate the odds of being part of the "valid" values
+        num = np.exp(-0.5 * (res / sig) ** 2) * (1 - odd_cut)
+        # Calculate the odds of being an outlier
+        den = odd_cut + num
+        # Update the weights from the previous iteration
+        weight_before = np.array(weight)
+        # Calculate the new weights as the odds ratio that is fed back to
+        # the fit
+        weight = num / den
+        # Increment the iteration counter
+        count += 1
+    # Set the mask of good values to be those for which there is a 50%
+    # likelihood of being valid
+    keep = np.array(weight > 0.5)
+    # return the fit and keep vectors
+    return fit, keep
 
 
 def robust_nanstd(x: np.ndarray) -> float:
@@ -518,6 +619,63 @@ def robust_nanstd(x: np.ndarray) -> float:
     high = fast.nanpercentile(x, erfvalue)
     # return the 1 sigma value
     return (high - low) / 2.0
+
+
+def fuzzy_curve_fit(func, xvector: np.ndarray, yvector: np.ndarray,
+                    p0: List[float], nsigcut: float = 5.0
+                    ) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Replace scipy.optimize.curve_fit with a sigma clipped version
+
+    :param func: function that is fitted with fuzzy sigma cutting
+    :param xvector: x values to the fitted function
+    :param yvector: y values to the fitted function
+    :param p0: initial values to the fit
+    :param nsigcut: N-sigma fuzzy cut
+    :return: fit to the function and mask of values with p<50% of being valid
+    """
+    # se up the odd mean ratio style cut
+    odd_cut = np.exp(-.5 * nsigcut ** 2)
+    # set up the weights
+    weight = np.ones_like(yvector, dtype=float)
+    weight_before = np.zeros_like(weight, dtype=float)
+    # Set the maximum number of iterations and initialize the iteration counter
+    nite_max = 20
+    nite = 0
+    # Enter a loop that will iterate until either the maximum difference
+    #     between the current and previous weights becomes smaller than a
+    #     certain threshold, or until the maximum number of iterations
+    #     is reached
+    while (np.max(np.abs(weight - weight_before)) > 1e-9) and (nite < nite_max):
+        # sigma starts off as infinite anywhere (1/inf = 0) - we don't want
+        #   nans in the curve_fit
+        sigma = np.full(weight.shape, np.inf)
+        # work out the square of the weights
+        weight2 = weight ** 2
+        mask = weight2 != 0
+        sigma[mask] = 1 / weight2[mask]
+        fit, _ = curve_fit(func, xvector, yvector, p0=p0, sigma=sigma)
+        # Calculate the residuals of the polynomial fit by subtracting the
+        # result of np.polyval from the original y-values
+        res = yvector - func(xvector, *fit)
+        # Calculate the new sigma values as the median absolute deviation of
+        #     the residuals
+        sig = np.nanmedian(np.abs(res))
+        # Calculate the odds of being part of the "valid" values
+        num = np.exp(-0.5 * (res / sig) ** 2) * (1 - odd_cut)
+        # Calculate the odds of being an outlier
+        den = odd_cut + num
+        # Update the weights from the previous iteration
+        weight_before = np.array(weight)
+        # Calculate the new weights as the odds ratio that is fed back to
+        #     the fit
+        weight = num / den
+        # Increment the iteration counter
+        nite += 1
+    # generate a mask of values we are keeping
+    keep = weight > 0.5
+    # return the fit and the keep vector
+    return fit, keep
 
 
 def sinc(x: np.ndarray, amp: float, period: float, lin_center: float,
@@ -690,7 +848,6 @@ def medbin(image: np.ndarray, by: int, bx: int) -> np.ndarray:
 
     :return: the binned numpy array of dimensions (by, bx)
     """
-    # TODO: Question: are "bx" and "by" the right way around?
     # set function name
     func_name = __NAME__ + 'medbin()'
     # get the shape of the image
@@ -712,6 +869,72 @@ def medbin(image: np.ndarray, by: int, bx: int) -> np.ndarray:
     med2 = fast.nanmedian(med1, axis=2)
     # return median-binned array
     return med2
+
+
+def square_medbin(image: np.ndarray, binexpo: int = 8) -> np.ndarray:
+    """
+    Produce a median binned image of a 2**N x 2**N image - scaled back to
+    original 2**N by 2**N size
+
+    :param image: Should be a 2**N,2**N image, returns a smoothed version on a
+    spatial scale equivalent to 2**(N-binexpo)
+    :param binexpo: Exponent for binning.
+        binexpo = 3, filter size 2**N/2**3 pix
+        binexpo = 4, filter size 2**N/2**4 pix
+        binexpo = 5, filter size 2**N/2**5 pix
+        binexpo = 6, filter size 2**N/2**6 pix
+        binexpo = 7, filter size 2**N/2**7 pix
+        binexpo = 8, filter size 2**N/2**8 pix
+        binexpo = 9, filter size 2**N/2**9 pix
+        binexpo = 10, filter size 2**N/2**10 pix
+
+    :return: 2**N,2**N image binned
+    """
+    # set function name
+    func_name = __NAME__ + '.square_medbin()'
+    # calculate 2**N for the shape
+    squ_shape = np.log2(image.shape)
+    # square shape must be integers
+    if squ_shape[0] % 1 != 0 or squ_shape[1] % 1 != 0:
+        # TODO: move to language database
+        emsg = 'Image is not 2**N. Shape={0}'.format(image.shape)
+        raise DrsCodedException('0', 'error', message=emsg, func_name=func_name)
+    if squ_shape[0] != squ_shape[1]:
+        # TODO: move to language database
+        emsg = 'Image is not square. Shape={0}'.format(image.shape)
+        raise DrsCodedException('0', 'error', message=emsg, func_name=func_name)
+
+    # nsize (N)
+    nsize = squ_shape[0]
+
+    # intermediate image with median binned version of input image
+    image2 = np.zeros([2 ** binexpo, 2 ** binexpo])
+    npix = int(2 ** (nsize - binexpo))
+    # loop around both dimensions
+    for ypix_it in range(2 ** binexpo):
+        for xpix_it in range(2 ** binexpo):
+            # get slicing parameters
+            y_start = ypix_it * npix
+            y_end = y_start + npix
+            x_start = xpix_it * npix
+            x_end = x_start + npix
+            # image slice
+            simage = image[y_start:y_end, x_start:x_end]
+            # calculate the median of this slice
+            with warnings.catch_warnings(record=True) as _:
+                image2[ypix_it, xpix_it] = fast.nanmedian(simage)
+    # filter with a 3x3 box
+    image2 = median_filter(image2, size=[3, 3])
+
+    # mask points that are NaNs in the binned image
+    mask = np.array(np.isfinite(image2), dtype=float)
+    image2[~np.isfinite(image2)] = 0
+    image2b = zoom(image2, npix, order=1)
+    mask2 = zoom(mask, npix, order=1)
+    image2b[mask2 < 0.5] = np.nan
+
+    # return image that is scaled back to full size
+    return image2b
 
 
 def lowpassfilter(input_vect: np.ndarray, width: int = 101) -> np.ndarray:
@@ -737,7 +960,7 @@ def lowpassfilter(input_vect: np.ndarray, width: int = 101) -> np.ndarray:
     :param input_vect: numpy 1D vector, vector to low pass
     :param width: int, width (box size) of the low pass filter
 
-    :return:
+    :return: np.array, the low-pass of the input_vector
     """
     # set function name
     # _ = display_func('lowpassfilter', __NAME__)
@@ -806,7 +1029,7 @@ def xpand_mask(mask1: np.ndarray, mask2: np.ndarray) -> np.ndarray:
     sum_prev = 0
     # loop until increment is zero
     while increment != 0:
-        mask1 = np.array((mask2) * (binary_dilation(mask1)))
+        mask1 = np.array(mask2) * binary_dilation(mask1)
         increment = np.sum(mask1) - sum_prev
         sum_prev = np.sum(mask1)
     # return mask1
@@ -842,14 +1065,15 @@ def percentile_bin(image: np.ndarray, bx: int, by: int,
         # loop around the rows (x)
         for b_jt in range(bx):
             # get x,y start,end
-            ystart, yend = b_it * nbypix//by, (b_it+1) * nbypix//by
-            xstart, xend = b_jt * nbxpix//bx, (b_jt+1) * nbxpix//bx
+            ystart, yend = b_it * nbypix // by, (b_it + 1) * nbypix // by
+            xstart, xend = b_jt * nbxpix // bx, (b_jt + 1) * nbxpix // bx
             # slice the image
             imslice = image[ystart:yend, xstart:xend]
             # get the nan percentile
             outimage[b_it, b_jt] = fast.nanpercentile(imslice, percentile)
     # return out image
     return outimage
+
 
 def get_circular_mask(width: int):
     """
@@ -862,9 +1086,9 @@ def get_circular_mask(width: int):
     # start mask off as the indices of a width x width square
     mask = np.indices([width, width])
     # move to center on the center of the circle (and square)
-    mask = mask - width//2
+    mask = mask - width // 2
     # define points inside the circle as True, outside as False
-    circle_mask = np.sqrt(mask[0]**2 + mask[1]**2) < width / 2
+    circle_mask = np.sqrt(mask[0] ** 2 + mask[1] ** 2) < width / 2
     # return the circle mask
     return circle_mask
 
@@ -912,9 +1136,9 @@ def get_ll_from_coefficients(pixel_shift_inter: float,
     for order_num in range(nbo):
         # get the coefficients for this order and flip them
         # (numpy needs them backwards)
-        coeffs = allcoeffs[order_num][::-1]
+        coeffs = allcoeffs[order_num]
         # get the y fit using the coefficients for this order and xfit
-        yfit = np.polyval(coeffs, xfit)
+        yfit = val_cheby(coeffs, xfit, domain=[0, nx])
         # add to line list storage
         ll[order_num, :] = yfit
     # return line list
@@ -1047,6 +1271,53 @@ def relativistic_waveshift(dv: Union[float, np.ndarray],
     corrv = np.sqrt((1 + dv / c) / (1 - dv / c))
     # return correction
     return corrv
+
+
+def fit_cheby(xvector: np.ndarray, yvector: np.ndarray, deg: int,
+              domain: List[float], weight: Optional[np.ndarray] = None
+              ) -> Union[np.ndarray, Any]:
+    """
+    Fit a chebyshev polynomial in form y(x) = T0(x) + T1(x) + ... Tn(x)
+    returns the chebyshev polynomial coefficients
+
+    :param xvector: x value for the fit
+    :param yvector: y value for the fit
+    :param deg: Nth order of the fit
+    :param domain: domain to be transformed to -1 -- 1. This is important to
+                   keep the components orthogonal. You *must* use the same
+                   domain when getting values with val_cheby
+    :param weight: weight applied to each vector element
+
+    :return: coefficients of the chebyshev fit
+    """
+    # transform to a -1 to 1 domain
+    domain_cheby = 2 * (xvector - domain[0]) / (domain[1] - domain[0]) - 1
+    # calcualte the coefficients
+    coeffs = np.polynomial.chebyshev.chebfit(domain_cheby, yvector, deg,
+                                             w=weight)
+    # return the coefficients
+    return coeffs
+
+
+def val_cheby(coeffs: np.ndarray, xvector: Union[np.ndarray, int, float],
+              domain: List[float]) -> Union[np.ndarray, int, float]:
+    """
+    Using the output of fit_cheby calculate the fit to x  (i.e. y(x))
+    where y(x) = T0(x) + T1(x) + ... Tn(x)
+
+    :param coeffs: output from fit_cheby
+    :param xvector: x value for the y values with fit
+    :param domain: domain to be transformed to -1 -- 1. This is important to
+    keep the components orthogonal. For SPIRou orders, the default is 0--4088.
+    You *must* use the same domain when getting values with fit_cheby
+    :return: corresponding y values to the x inputs
+    """
+    # transform to a -1 to 1 domain
+    domain_cheby = 2 * (xvector - domain[0]) / (domain[1] - domain[0]) - 1
+    # fit values using the domain and coefficients
+    yvector = np.polynomial.chebyshev.chebval(domain_cheby, coeffs)
+    # return y vector
+    return yvector
 
 
 # =============================================================================

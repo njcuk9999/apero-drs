@@ -1,27 +1,28 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
-
-# CODE DESCRIPTION HERE
+APERO Cross-correlation radial velocity recipe
 
 Created on 2019-09-19 at 13:16
 
 @author: cook
 """
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 import numpy as np
 
-from apero.base import base
 from apero import lang
+from apero.base import base
 from apero.core import constants
-from apero.core.core import drs_log
-from apero.core.core import drs_file
-from apero.core.utils import drs_startup
 from apero.core.core import drs_database
-from apero.science.calib import flat_blaze
-from apero.science.calib import wave
+from apero.core.core import drs_file
+from apero.core.core import drs_log
+from apero.core.utils import drs_recipe
+from apero.core.utils import drs_startup
 from apero.science import extract
 from apero.science import velocity
+from apero.science.calib import flat_blaze
+from apero.science.calib import wave
 
 # =============================================================================
 # Define variables
@@ -33,12 +34,14 @@ __version__ = base.__version__
 __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
-# get param dict
+# Get Logging function
+WLOG = drs_log.wlog
+# Get Recipe class
+DrsRecipe = drs_recipe.DrsRecipe
+# Get parameter class
 ParamDict = constants.ParamDict
 # get text entry
 textentry = lang.textentry
-# Get Logging function
-WLOG = drs_log.wlog
 
 
 # =============================================================================
@@ -50,9 +53,10 @@ WLOG = drs_log.wlog
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(obs_dir=None, files=None, **kwargs):
+def main(obs_dir: Optional[str] = None, files: Optional[List[str]] = None,
+         **kwargs) -> Union[Dict[str, Any], Tuple[DrsRecipe, ParamDict]]:
     """
-    Main function for apero_ccf_spirou.py
+    Main function for apero_ccf
 
     :param obs_dir: string, the night name sub-directory
     :param files: list of strings or string, the list of files to process
@@ -83,13 +87,14 @@ def main(obs_dir=None, files=None, **kwargs):
     return drs_startup.end_main(params, llmain, recipe, success)
 
 
-def __main__(recipe, params):
+def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     """
     Main code: should only call recipe and params (defined from main)
 
-    :param recipe:
-    :param params:
-    :return:
+    :param recipe: DrsRecipe, the recipe class using this function
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: dictionary containing the local variables
     """
     # ----------------------------------------------------------------------
     # Main Code
@@ -173,8 +178,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # load wavelength solution for this fiber
         wprops = wave.get_wavesolution(params, recipe, fiber=fiber,
-                                       infile=infile, database=calibdbm,
-                                       log=log1)
+                                       infile=infile, database=calibdbm)
         # ------------------------------------------------------------------
         # Get blaze
         # ------------------------------------------------------------------
@@ -192,7 +196,7 @@ def __main__(recipe, params):
             # remove telluric domain below a defined threshold
             #    and return the infile (with infile.data updated)
             targs = [infile, fiber]
-            image = velocity.remove_telluric_domain(params, recipe, *targs)
+            image = velocity.remove_telluric_domain(params, *targs)
         else:
             image = infile.get_data(copy=True)
 
@@ -210,7 +214,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         if has_fp:
             # find the c fiber file
-            infile_r = velocity.locate_reference_file(params, recipe, infile)
+            infile_r = drs_file.locate_calibfiber_file(params, infile)
             # get the wave solution associated with this file
             wprops_r = wave.get_wavesolution(params, recipe, fiber='C',
                                              infile=infile_r,
@@ -355,7 +359,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return drs_startup.return_locals(params, locals())
+    return locals()
 
 
 # =============================================================================

@@ -9,21 +9,21 @@ Created on 2022-01-26
 
 @author: cook
 """
-import numpy as np
-from typing import Dict, List, Optional, Tuple, Union
 import warnings
+from typing import Dict, List, Optional, Tuple, Union
 
+import numpy as np
+
+from apero import lang
 from apero.base import base
 from apero.core import constants
 from apero.core import math as mp
-from apero import lang
+from apero.core.core import drs_database
 from apero.core.core import drs_log, drs_file
 from apero.core.utils import drs_data
 from apero.core.utils import drs_recipe
-from apero.core.core import drs_database
-from apero.science.calib import wave
 from apero.science.calib import gen_calib
-
+from apero.science.calib import wave
 
 # =============================================================================
 # Define variables
@@ -163,7 +163,6 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
     fibertype = pconst.FIBER_DATA_TYPE(dprtype, fiber)
     # ----------------------------------------------------------------------
     # get reference wave map
-    # TODO: Are we sure this should be the reference solution?
     wprops = wave.get_wavesolution(params, recipe, ref=True,
                                    database=database)
     # get the wave solution
@@ -303,10 +302,11 @@ def tcorrect1(params: ParamDict, recipe: DrsRecipe,
               flat: Optional[np.ndarray] = None,
               database: Optional[drs_database.CalibrationDatabase] = None,
               **kwargs) -> Tuple[np.ndarray, ParamDict]:
+    # set function name
+    func_name = display_func('tcorrect1', __NAME__)
     # get parameters from skwargs
     # TODO: remove kwargs
     tapas_thres = kwargs.get('tapas_thres', None)
-    filter_wid = kwargs.get('filter_wid', None)
     torder = kwargs.get('torder', None)
     red_limit = kwargs.get('red_limit', None)
     tapas_file = kwargs.get('tapas_file', None)
@@ -327,7 +327,14 @@ def tcorrect1(params: ParamDict, recipe: DrsRecipe,
     # ----------------------------------------------------------------------
     # deal with rare case that thermal is all zeros
     if mp.nansum(thermal) == 0 or np.sum(np.isfinite(thermal)) == 0:
-        return image
+        # save parameters to param dict
+        therm_props = ParamDict()
+        therm_props['ratio'] = np.nan
+        therm_props['ratio_used'] = 'None'
+        # set source
+        therm_props.set_sources(['ratio', 'ratio_used'], func_name)
+        # return the image and empty thermal props
+        return image, therm_props
     # ----------------------------------------------------------------------
     # load tapas
     tapas, _ = drs_data.load_tapas(params, filename=tapas_file)
@@ -380,6 +387,7 @@ def tcorrect1(params: ParamDict, recipe: DrsRecipe,
     therm_props = ParamDict()
     therm_props['ratio'] = ratio
     therm_props['ratio_used'] = strratio
+    therm_props.set_sources(['ratio', 'ratio_used'], func_name)
     # ----------------------------------------------------------------------
     # return p and corrected image
     return corrected_image, therm_props
@@ -392,6 +400,9 @@ def tcorrect2(params: ParamDict, recipe: DrsRecipe,
               flat: Optional[np.ndarray] = None,
               database: Optional[drs_database.CalibrationDatabase] = None,
               **kwargs) -> Tuple[np.ndarray, ParamDict]:
+    # set function name
+    func_name = display_func('tcorrect2', __NAME__)
+    # get parameters from skwargs
     # TODO: remove kwargs
     envelope_percent = kwargs.get('envelope', None)
     filter_wid = kwargs.get('filter_wid', None)
@@ -418,7 +429,14 @@ def tcorrect2(params: ParamDict, recipe: DrsRecipe,
     # ----------------------------------------------------------------------
     # deal with rare case that thermal is all zeros
     if mp.nansum(thermal) == 0 or np.sum(np.isfinite(thermal)) == 0:
-        return image
+        # save parameters to param dict
+        therm_props = ParamDict()
+        therm_props['ratio'] = np.nan
+        therm_props['ratio_used'] = 'None'
+        # set source
+        therm_props.set_sources(['ratio', 'ratio_used'], func_name)
+        # return the image and empty thermal props
+        return image, therm_props
     # ----------------------------------------------------------------------
     # set up an envelope to measure thermal background in image
     envelope = np.zeros(dim2)
@@ -467,6 +485,8 @@ def tcorrect2(params: ParamDict, recipe: DrsRecipe,
     therm_props = ParamDict()
     therm_props['ratio'] = ratio
     therm_props['ratio_used'] = strratio
+    # set source
+    therm_props.set_sources(['ratio', 'ratio_used'], func_name)
     # ----------------------------------------------------------------------
     # return p and corrected image
     return corrected_image, therm_props

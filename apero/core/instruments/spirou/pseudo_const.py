@@ -1,26 +1,26 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
-
-# CODE DESCRIPTION HERE
+Pseudo constants (function) definitions for SPIROU
 
 Created on 2019-01-18 at 14:44
 
 @author: cook
 """
-import numpy as np
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
+
+import numpy as np
+
 
 from apero.base import base
 from apero.base import drs_db
+from apero.core import constants
 from apero.core.core import drs_base_classes as base_class
+from apero.core.core import drs_exceptions
 from apero.core.core import drs_misc
 from apero.core.core import drs_text
-from apero.core import constants
 from apero.core.instruments.default import pseudo_const
-from apero.core.core import drs_exceptions
 
 # =============================================================================
 # Define variables
@@ -38,8 +38,6 @@ Time, TimeDelta = base.AstropyTime, base.AstropyTimeDelta
 ParamDict = constants.ParamDict
 # Get the Database Columns class
 DatabaseColumns = drs_db.DatabaseColumns
-# get default Constant class
-DefaultConstants = pseudo_const.PseudoConstants
 # get error
 DrsCodedException = drs_exceptions.DrsCodedException
 # get display func
@@ -51,7 +49,7 @@ NULL_TEXT = ['', 'None', 'Null', 'nan', 'inf']
 # =============================================================================
 # Define Constants class (pseudo constants)
 # =============================================================================
-class PseudoConstants(pseudo_const.PseudoConstants):
+class PseudoConstants(pseudo_const.DefaultPseudoConstants):
     # set class name
     class_name = 'PsuedoConstants'
 
@@ -64,7 +62,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         # set function name
         # _ = display_func('__init__', __NAME__, self.class_name)
         # set instrument name
-        self.instrument = instrument
+        super().__init__(instrument)
         # storage of things we don't want to compute twice without need
         self.exclude = ['header_cols', 'index_cols', 'calibration_cols',
                         'telluric_cols', 'logdb_cols', 'objdb_cols',
@@ -292,6 +290,10 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         header, hdict = get_mid_obs_time(params, header, hdict,
                                          filename=filename)
         # ------------------------------------------------------------------
+        # Deal with sun altitude
+        # ------------------------------------------------------------------
+        header, hdict = pseudo_const.get_sun_altitude(params, header, hdict)
+        # ------------------------------------------------------------------
         # Deal with drs mode
         # ------------------------------------------------------------------
         header, hdict = get_drs_mode(params, header, hdict)
@@ -439,9 +441,10 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         # get stokes and exposure number
         stokes = seqlist[0]
         # try to get exposure number
+        # noinspection PyBroadException
         try:
             exp_num = int(seqlist[2].replace(',', ''))
-        except Exception as e:
+        except Exception as _:
             # generate error message
             emsg = 'CMMTSEQ exp_num incorrect'
             emsg += '\n\tExpected {STOKE} exposure {exp_num}, sequence N of M'
@@ -486,6 +489,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
                  and a maximum wavelength of that band
         """
         # storage for bands
+        # noinspection PyListCreation
         bands = []
         # add bands (as tuples for low wave to high wave
         # bands.append([983.0, 1116.0])
@@ -505,6 +509,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         :return orders: array of float pairs for wavelength ranges
         """
         # storage for order ranges
+        # noinspection PyListCreation
         orders = []
         # add ranges as pairs of wavelengths (low wave to high wave)
         orders.append([963.6, 986.0])
@@ -608,6 +613,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         header_cols.add(name='KW_DRS_MODE', datatype='VARCHAR(80)')
         header_cols.add(name='KW_OUTPUT', datatype='VARCHAR(80)',
                         is_index=True)
+        header_cols.add(name='KW_NIGHT_OBS', datatype='INT')
         header_cols.add(name='KW_CMPLTEXP', datatype='VARCHAR(80)')
         header_cols.add(name='KW_NEXP', datatype='VARCHAR(80)')
         header_cols.add(name='KW_VERSION', datatype='VARCHAR(80)')
@@ -637,7 +643,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         keys = ['KW_TARGET_TYPE', 'KW_OBJECTNAME', 'KW_OBSTYPE',
                 'KW_CCAS', 'KW_CREF', 'KW_CALIBWH', 'KW_INSTRUMENT',
                 'KW_DPRTYPE', 'KW_OUTPUT', 'KW_DRS_MODE', 'KW_POLAR_KEY_1',
-                'KW_POLAR_KEY_2']
+                'KW_POLAR_KEY_2', 'KW_NIGHT_OBS']
         return keys
 
     # =========================================================================
@@ -743,7 +749,7 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         else:
             return False
 
-    def FIBER_DOUBLET_PARITY(self, fiber:str) -> Union[int, None]:
+    def FIBER_DOUBLET_PARITY(self, fiber: str) -> Union[int, None]:
         """
         Give the doublt fibers parity - all other fibers should not use this
         function
@@ -852,13 +858,14 @@ class PseudoConstants(pseudo_const.PseudoConstants):
             # get shape
             nbo, ncoeff = coeffs.shape
             # set up acc
-            acc = np.zeros([int(nbo / 2), ncoeff])
+            acc = np.zeros([int(nbo // 2), ncoeff])
             # get sum of 0 to step pixels
             cosum = np.array(coeffs[0:nbo:2, :])
             # add the sum of 1 to step
             cosum = cosum + coeffs[1:nbo:2, :]
             # overwrite values into coeffs array
-            acc[0:int(nbo / 2), :] = (1 / 2) * cosum
+            acc[0:int(nbo // 2), :] = (1 / 2) * cosum
+            nbo = nbo // 2
         # for A we only need the A components
         elif fiber == 'A':
             acc = coeffs[1::2]
@@ -947,6 +954,15 @@ class PseudoConstants(pseudo_const.PseudoConstants):
         # _ = display_func('INDIVIDUAL_FIBERS', __NAME__, self.class_name)
         # list the individual fiber names
         return ['A', 'B', 'C']
+
+    def SKYFIBERS(self) -> Tuple[Union[str, None], Union[str, None]]:
+        """
+        List the sky fibers to use for the science channel and the calib
+        channel
+
+        :return:
+        """
+        return 'AB', None
 
     # =========================================================================
     # DATABASE SETTINGS
@@ -1448,6 +1464,7 @@ def get_special_objname(params: ParamDict, header: Any,
     hdict[kwobjname] = (objname, kwobjcomment)
     # return header and hdict
     return header, hdict
+
 
 
 # =============================================================================

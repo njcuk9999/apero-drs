@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
+APERO base definitions
+
 Some things must be defined once and used throughout the drs
-No functions in here please
+Most functions do not go in here
 
 Created on 2020-08-2020-08-21 19:43
 
@@ -13,15 +15,17 @@ import rules:
 - no imports from apero
 
 """
-from astropy.time import Time, TimeDelta
-from collections import OrderedDict
-import numpy as np
 import os
-from pathlib import Path
 import string
-from typing import Any
 import warnings
+from collections import OrderedDict
+from pathlib import Path
+from typing import Any
+
+import numpy as np
 import yaml
+from astropy.time import Time, TimeDelta
+
 # NOTE: This is built into importlib for python 3.10. Need this package for now
 from importlib_resources import files
 
@@ -31,10 +35,10 @@ from importlib_resources import files
 __PACKAGE__ = 'apero'
 __PATH__ = Path(__file__).parent.parent
 __INSTRUMENT__ = 'None'
-__version__ = '0.7.248'
+__version__ = '0.8.001'
 __author__ = ['N. Cook', 'E. Artigau', 'F. Bouchy', 'M. Hobson', 'C. Moutou',
               'I. Boisse', 'E. Martioli']
-__date__ = '2022-09-02'
+__date__ = '2023-01-30'
 __release__ = 'alpha pre-release'
 # do this once per drs import
 __now__ = Time.now()
@@ -66,6 +70,7 @@ SCRIPTS = ['default_config.py', 'default_constants.py', 'default_keywords.py']
 USCRIPTS = ['user_config.ini', 'user_constants.ini', 'user_keywords.ini']
 PSEUDO_CONST_FILE = 'pseudo_const.py'
 PSEUDO_CONST_CLASS = 'PseudoConstants'
+DEFAULT_PSEUDO_CONST_CLASS = 'DefaultPseudoConstants'
 # absolute paths (from relative paths to here)
 setup_dir = files("apero.setup.data")
 REQ_MAIN = 'requirements.txt'
@@ -155,14 +160,14 @@ COLOURS['UNDERLINE'] = '\033[4m'
 # -----------------------------------------------------------------------------
 # define default flags for all recipes
 DEFAULT_FLAGS = dict(IN_PARALLEL=False, RUNNING=False, ENDED=False,
-                     FROCE_REFWAVE=False)
+                     FORCE_REFWAVE=False)
 # define allowed log flags
 LOG_FLAGS = dict()
 # LOG_FLAG[key] = description
 LOG_FLAGS['IN_PARALLEL'] = 'Recipe was run in parallel'
 LOG_FLAGS['RUNNING'] = 'Recipe is still running and has not ended'
 LOG_FLAGS['ENDED'] = 'Recipe has ended'
-LOG_FLAGS['FROCE_REFWAVE'] = 'Wave solution was forced to reference wave sol'
+LOG_FLAGS['FORCE_REFWAVE'] = 'Wave solution was forced to reference wave sol'
 LOG_FLAGS['OBJ'] = 'Is an OBJECT file'
 LOG_FLAGS['QCPASSED'] = 'Preprocessing passed QC'
 LOG_FLAGS['SCIFIBER'] = 'Localisation recipe used the science fiber'
@@ -173,11 +178,26 @@ LOG_FLAGS['QUICKLOOK'] = 'Extraction is running in quick look mode'
 LOG_FLAGS['EXP_FPLINE'] = 'Extraction has an FP ref fiber and addition outputs'
 LOG_FLAGS['INPUTQC'] = 'Polar inputs passed QC (or were forced to)'
 LOG_FLAGS['ONLYPRECLEAN'] = 'Only do preclean part of telluric correction'
+# -----------------------------------------------------------------------------
+# Hard coded constants that should not be changed ever
+# -----------------------------------------------------------------------------
+# Sun's elevation at civil twilight (degrees)
+CIVIL_TWILIGHT = -6
+# Sun's elevation at nautical twilight (degrees)
+NAUTICAL_TWILIGHT = -12
+# Sun's elevation at astronomical twilight (degrees)
+ASTRONOMIAL_TWILIGHT = -18
+
 
 # =============================================================================
 # Define functions
 # =============================================================================
 def load_database_yaml() -> dict:
+    """
+    Load database yaml file
+
+    :return: dict, the loaded yaml file
+    """
     # check for environmental variable
     if USER_ENV in os.environ:
         # get path
@@ -197,7 +217,12 @@ def load_database_yaml() -> dict:
     raise EnvironmentError(emsg.format(USER_ENV))
 
 
-def load_install_yaml():
+def load_install_yaml() -> dict:
+    """
+    Load installation yaml file
+
+    :return: dict, the loaded installation yaml
+    """
     # check for environmental variable
     if USER_ENV in os.environ:
         # get path
@@ -280,59 +305,60 @@ def create_yamls(allparams: Any):
     # sql lite settings
     database_dict['USE_SQLITE3'] = allparams['SQLITE'].get('USE_SQLITE3', True)
     sqlite3 = dict()
+    sdict = allparams['SQLITE']
     # add database settings
-    sqlite3['HOST'] = allparams['SQLITE'].get('HOST', 'NULL')
-    sqlite3['USER'] = allparams['SQLITE'].get('USER', 'NULL')
-    sqlite3['PASSWD'] = allparams['SQLITE'].get('PASSWD', 'NULL')
-    sqlite3['DATABASE'] = allparams['SQLITE'].get('DATABASE', 'NULL')
+    sqlite3['HOST'] = sdict.get('HOST', 'NULL')
+    sqlite3['USER'] = sdict.get('USER', 'NULL')
+    sqlite3['PASSWD'] = sdict.get('PASSWD', 'NULL')
+    sqlite3['DATABASE'] = sdict.get('DATABASE', 'NULL')
     # add calib database
     calibdb = dict()
-    calibdb['PATH'] = allparams['SQLITE'].get('CALIB_PATH', 'DRS_CALIB_DB')
-    calibdb['NAME'] = allparams['SQLITE'].get('CALIB_NAME', 'calib.db')
-    calibdb['RESET'] = allparams['SQLITE'].get('CALIB_RESET', 'reset.calib.csv')
-    calibdb['PROFILE'] = allparams['SQLITE'].get('CALIB_PROFILE', 'NULL')
+    calibdb['PATH'] = sdict.get('CALIB_PATH', 'DRS_CALIB_DB')
+    calibdb['NAME'] = sdict.get('CALIB_NAME', 'calib.db')
+    calibdb['RESET'] = sdict.get('CALIB_RESET', 'reset.calib.csv')
+    calibdb['PROFILE'] = sdict.get('CALIB_PROFILE', 'NULL')
     sqlite3['CALIB'] = calibdb
     # add tellu database
     telludb = dict()
-    telludb['PATH'] = allparams['SQLITE'].get('TELLU_PATH', 'DRS_TELLU_DB')
-    telludb['NAME'] = allparams['SQLITE'].get('TELLU_NAME', 'tellu.db')
-    telludb['RESET'] = allparams['SQLITE'].get('TELLU_RESET', 'NULL')
-    telludb['PROFILE'] = allparams['SQLITE'].get('TELLU_PROFILE', 'NULL')
+    telludb['PATH'] = sdict.get('TELLU_PATH', 'DRS_TELLU_DB')
+    telludb['NAME'] = sdict.get('TELLU_NAME', 'tellu.db')
+    telludb['RESET'] = sdict.get('TELLU_RESET', 'reset.tellu.csv')
+    telludb['PROFILE'] = sdict.get('TELLU_PROFILE', 'NULL')
     sqlite3['TELLU'] = telludb
     # add index database
     findexdb = dict()
-    findexdb['PATH'] = allparams['SQLITE'].get('IDX_PATH', 'DRS_DATA_ASSETS')
-    findexdb['NAME'] = allparams['SQLITE'].get('IDX_NAME', 'index.db')
-    findexdb['RESET'] = allparams['SQLITE'].get('IDX_RESET', 'NULL')
-    findexdb['PROFILE'] = allparams['SQLITE'].get('IDX_PROFILE', 'NULL')
+    findexdb['PATH'] = sdict.get('FINDEX_PATH', 'DRS_DATA_ASSETS')
+    findexdb['NAME'] = sdict.get('FINDEX_NAME', 'index.db')
+    findexdb['RESET'] = sdict.get('FINDEX_RESET', 'NULL')
+    findexdb['PROFILE'] = sdict.get('FINDEX_PROFILE', 'NULL')
     sqlite3['FINDEX'] = findexdb
     # add log database
     logdb = dict()
-    logdb['PATH'] = allparams['SQLITE'].get('LOG_PATH', 'DRS_DATA_ASSETS')
-    logdb['NAME'] = allparams['SQLITE'].get('LOG_NAME', 'log.db')
-    logdb['RESET'] = allparams['SQLITE'].get('LOG_RESET', 'NULL')
-    logdb['PROFILE'] = allparams['SQLITE'].get('LOG_PROFILE', 'NULL')
+    logdb['PATH'] = sdict.get('LOG_PATH', 'DRS_DATA_ASSETS')
+    logdb['NAME'] = sdict.get('LOG_NAME', 'log.db')
+    logdb['RESET'] = sdict.get('LOG_RESET', 'NULL')
+    logdb['PROFILE'] = sdict.get('LOG_PROFILE', 'NULL')
     sqlite3['LOG'] = logdb
     # add object database
     astromdb = dict()
-    astromdb['PATH'] = allparams['SQLITE'].get('OBJ_PATH', 'DRS_DATA_ASSETS')
-    astromdb['NAME'] = allparams['SQLITE'].get('OBJ_NAME', 'object.db')
-    astromdb['RESET'] = allparams['SQLITE'].get('OBJ_RESET', 'reset.object.csv')
-    astromdb['PROFILE'] = allparams['SQLITE'].get('OBJ_PROFILE', 'NULL')
+    astromdb['PATH'] = sdict.get('ASTROM_PATH', 'DRS_DATA_ASSETS')
+    astromdb['NAME'] = sdict.get('ASTROM_NAME', 'object.db')
+    astromdb['RESET'] = sdict.get('ASTROM_RESET', 'reset.astrom.csv')
+    astromdb['PROFILE'] = sdict.get('ASTROM_PROFILE', 'NULL')
     sqlite3['ASTROM'] = astromdb
     # add reject database
     rejectdb = dict()
-    rejectdb['PATH'] = allparams['SQLITE'].get('REJECT_PATH', 'DRS_DATA_ASSETS')
-    rejectdb['NAME'] = allparams['SQLITE'].get('REJECT_NAME', 'reject.db')
-    rejectdb['RESET'] = allparams['SQLITE'].get('REJECT_RESET', 'NULL')
-    rejectdb['PROFILE'] = allparams['SQLITE'].get('REJECT_PROFILE', 'NULL')
+    rejectdb['PATH'] = sdict.get('REJECT_PATH', 'DRS_DATA_ASSETS')
+    rejectdb['NAME'] = sdict.get('REJECT_NAME', 'reject.db')
+    rejectdb['RESET'] = sdict.get('REJECT_RESET', 'NULL')
+    rejectdb['PROFILE'] = sdict.get('REJECT_PROFILE', 'NULL')
     sqlite3['REJECT'] = rejectdb
     # add language database
     langdb = dict()
-    langdb['PATH'] = allparams['SQLITE'].get('LANG_PATH', 'DRS_DATA_ASSETS')
-    langdb['NAME'] = allparams['SQLITE'].get('LANG_PATH', 'lang.db')
-    langdb['RESET'] = allparams['SQLITE'].get('LANG_PATH', 'NULL')
-    langdb['PROFILE'] = allparams['SQLITE'].get('LANG_PROFILE', 'NULL')
+    langdb['PATH'] = sdict.get('LANG_PATH', 'DRS_DATA_ASSETS')
+    langdb['NAME'] = sdict.get('LANG_PATH', 'lang.db')
+    langdb['RESET'] = sdict.get('LANG_PATH', 'NULL')
+    langdb['PROFILE'] = sdict.get('LANG_PROFILE', 'NULL')
     sqlite3['LANG'] = langdb
     # add sqlite database to database_dict
     database_dict['SQLITE3'] = sqlite3
@@ -342,59 +368,60 @@ def create_yamls(allparams: Any):
     # mysql settings
     database_dict['USE_MYSQL'] = allparams['MYSQL'].get('USE_MYSQL', False)
     mysql = dict()
+    mdict = allparams['MYSQL']
     # add database settings
-    mysql['HOST'] = allparams['MYSQL'].get('HOST', 'localhost')
-    mysql['USER'] = allparams['MYSQL'].get('USER', 'None')
-    mysql['PASSWD'] = allparams['MYSQL'].get('PASSWD', 'None')
-    mysql['DATABASE'] = allparams['MYSQL'].get('DATABASE', 'None')
+    mysql['HOST'] = mdict.get('HOST', 'localhost')
+    mysql['USER'] = mdict.get('USER', 'None')
+    mysql['PASSWD'] = mdict.get('PASSWD', 'None')
+    mysql['DATABASE'] = mdict.get('DATABASE', 'None')
     # add calib database
     calibdb = dict()
-    calibdb['PATH'] = allparams['MYSQL'].get('CALIB_PATH', 'NULL')
-    calibdb['NAME'] = allparams['MYSQL'].get('CALIB_NAME', 'NULL')
-    calibdb['RESET'] = allparams['MYSQL'].get('CALIB_RESET', 'reset.calib.csv')
-    calibdb['PROFILE'] = allparams['MYSQL'].get('CALIB_PROFILE', 'MAIN')
+    calibdb['PATH'] = mdict.get('CALIB_PATH', 'NULL')
+    calibdb['NAME'] = mdict.get('CALIB_NAME', 'NULL')
+    calibdb['RESET'] = mdict.get('CALIB_RESET', 'reset.calib.csv')
+    calibdb['PROFILE'] = mdict.get('CALIB_PROFILE', 'MAIN')
     mysql['CALIB'] = calibdb
     # add tellu database
     telludb = dict()
-    telludb['PATH'] = allparams['MYSQL'].get('TELLU_PATH', 'NULL')
-    telludb['NAME'] = allparams['MYSQL'].get('TELLU_NAME', 'NULL')
-    telludb['RESET'] = allparams['MYSQL'].get('TELLU_RESET', 'NULL')
-    telludb['PROFILE'] = allparams['MYSQL'].get('TELLU_PROFILE', 'MAIN')
+    telludb['PATH'] = mdict.get('TELLU_PATH', 'NULL')
+    telludb['NAME'] = mdict.get('TELLU_NAME', 'NULL')
+    telludb['RESET'] = mdict.get('TELLU_RESET', 'reset.tellu.csv')
+    telludb['PROFILE'] = mdict.get('TELLU_PROFILE', 'MAIN')
     mysql['TELLU'] = telludb
     # add index database
     findexdb = dict()
-    findexdb['PATH'] = allparams['MYSQL'].get('IDX_PATH', 'NULL')
-    findexdb['NAME'] = allparams['MYSQL'].get('IDX_NAME', 'NULL')
-    findexdb['RESET'] = allparams['MYSQL'].get('IDX_RESET', 'NULL')
-    findexdb['PROFILE'] = allparams['MYSQL'].get('IDX_PROFILE', 'MAIN')
+    findexdb['PATH'] = mdict.get('FINDEX_PATH', 'NULL')
+    findexdb['NAME'] = mdict.get('FINDEX_NAME', 'NULL')
+    findexdb['RESET'] = mdict.get('FINDEX_RESET', 'NULL')
+    findexdb['PROFILE'] = mdict.get('FINDEX_PROFILE', 'MAIN')
     mysql['FINDEX'] = findexdb
     # add log database
     logdb = dict()
-    logdb['PATH'] = allparams['MYSQL'].get('LOG_PATH', 'NULL')
-    logdb['NAME'] = allparams['MYSQL'].get('LOG_NAME', 'NULL')
-    logdb['RESET'] = allparams['MYSQL'].get('LOG_RESET', 'NULL')
-    logdb['PROFILE'] = allparams['MYSQL'].get('LOG_PROFILE', 'MAIN')
+    logdb['PATH'] = mdict.get('LOG_PATH', 'NULL')
+    logdb['NAME'] = mdict.get('LOG_NAME', 'NULL')
+    logdb['RESET'] = mdict.get('LOG_RESET', 'NULL')
+    logdb['PROFILE'] = mdict.get('LOG_PROFILE', 'MAIN')
     mysql['LOG'] = logdb
     # add object database
     astromdb = dict()
-    astromdb['PATH'] = allparams['MYSQL'].get('OBJ_PATH', 'NULL')
-    astromdb['NAME'] = allparams['MYSQL'].get('OBJ_NAME', 'NULL')
-    astromdb['RESET'] = allparams['MYSQL'].get('OBJ_RESET', 'reset.object.csv')
-    astromdb['PROFILE'] = allparams['MYSQL'].get('OBJ_PROFILE', 'MAIN')
+    astromdb['PATH'] = mdict.get('ASTROM_PATH', 'NULL')
+    astromdb['NAME'] = mdict.get('ASTROM_NAME', 'NULL')
+    astromdb['RESET'] = mdict.get('ASTROM_RESET', 'reset.astrom.csv')
+    astromdb['PROFILE'] = mdict.get('ASTROM_PROFILE', 'MAIN')
     mysql['ASTROM'] = astromdb
     # add reject database
     rejectdb = dict()
-    rejectdb['PATH'] = allparams['MYSQL'].get('REJECT_PATH', 'NULL')
-    rejectdb['NAME'] = allparams['MYSQL'].get('REJECT_NAME', 'NULL')
-    rejectdb['RESET'] = allparams['MYSQL'].get('REJECT_RESET', 'NULL')
-    rejectdb['PROFILE'] = allparams['MYSQL'].get('REJECT_PROFILE', 'MAIN')
+    rejectdb['PATH'] = mdict.get('REJECT_PATH', 'NULL')
+    rejectdb['NAME'] = mdict.get('REJECT_NAME', 'NULL')
+    rejectdb['RESET'] = mdict.get('REJECT_RESET', 'NULL')
+    rejectdb['PROFILE'] = mdict.get('REJECT_PROFILE', 'MAIN')
     mysql['REJECT'] = rejectdb
     # add language database
     langdb = dict()
-    langdb['PATH'] = allparams['MYSQL'].get('LANG_PATH', 'DRS_DATA_ASSETS')
-    langdb['NAME'] = allparams['MYSQL'].get('LANG_PATH', 'lang.db')
-    langdb['RESET'] = allparams['MYSQL'].get('LANG_PATH', 'NULL')
-    langdb['PROFILE'] = allparams['MYSQL'].get('LANG_PROFILE', 'MAIN')
+    langdb['PATH'] = mdict.get('LANG_PATH', 'DRS_DATA_ASSETS')
+    langdb['NAME'] = mdict.get('LANG_PATH', 'lang.db')
+    langdb['RESET'] = mdict.get('LANG_PATH', 'NULL')
+    langdb['PROFILE'] = mdict.get('LANG_PROFILE', 'MAIN')
     mysql['LANG'] = langdb
     # mysql['PARAMS_PATH'] = 'DRS_DATA_ASSETS'
     database_dict['MYSQL'] = mysql

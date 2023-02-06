@@ -9,12 +9,11 @@ Created on 2019-07-26 at 09:40
 
 @author: cook
 """
-from apero.base import base
 from apero import lang
+from apero.base import base
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
 from apero.tools.module.utils import drs_static
-
 
 # =============================================================================
 # Define variables
@@ -41,8 +40,6 @@ def main(**kwargs):
 
     :param kwargs: any additional keywords
 
-    :type preview: bool
-
     :returns: dictionary of the local space
     :rtype: dict
     """
@@ -64,18 +61,14 @@ def main(**kwargs):
 
 
 def __main__(recipe, params):
-
-
-
     # switch between static files here
     if params['INPUTS']['MODE'] == 'LED_FLAT':
         drs_static.led_flat_static_calib(params)
 
-
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return drs_startup.return_locals(params, locals())
+    return locals()
 
 
 # =============================================================================

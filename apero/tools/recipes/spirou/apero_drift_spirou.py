@@ -7,25 +7,25 @@ Created on 2020-08-2020-08-14 12:48
 
 @author: cook
 """
-import numpy as np
 import os
 
-from apero.base import base
-from apero.core.core import drs_text
+import numpy as np
+
 from apero import lang
+from apero.base import base
 from apero.core import constants
 from apero.core.core import drs_database
-from apero.core.core import drs_log
 from apero.core.core import drs_file
+from apero.core.core import drs_log
+from apero.core.core import drs_text
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_utils
-from apero.io import drs_table
 from apero.io import drs_path
+from apero.io import drs_table
+from apero.science import velocity
 from apero.science.calib import flat_blaze
 from apero.science.calib import wave
-from apero.science import velocity
 from apero.tools.module.testing import drs_dev
-
 
 # =============================================================================
 # Define variables
@@ -309,7 +309,7 @@ def __main__(recipe, params):
     # -------------------------------------------------------------------------
     # End of main code
     # -------------------------------------------------------------------------
-    return drs_startup.return_locals(params, locals())
+    return locals()
 
 
 # =============================================================================

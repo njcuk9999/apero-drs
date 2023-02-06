@@ -14,10 +14,9 @@ import os
 import shutil
 from datetime import datetime
 
-from apero.base import base
 from apero import lang
+from apero.base import base
 from apero.core.core import drs_log
-
 
 # =============================================================================
 # Define variables
@@ -51,7 +50,7 @@ YES_OR_NO = '{0} {1} {2}'.format(textentry('Q_YES'), textentry('OR_TEXT'),
 # =============================================================================
 # Define functions
 # =============================================================================
-def ask_for_new_version(params):
+def ask_for_new_version():
     # log current version
     print(textentry('40-501-00001', args=[__version__]))
     # ask if we wish to change version

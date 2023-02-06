@@ -1,41 +1,42 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+APERO start up functionality
 
-# CODE DESCRIPTION HERE
+dealing with starting a new recipe
 
 Created on 2019-01-19 at 13:37
 
 @author: cook
 """
-import warnings
-from collections import OrderedDict
 import importlib
-import numpy as np
 import os
-from signal import signal, SIGINT
 import sys
 import traceback
+import warnings
+from collections import OrderedDict
+from signal import signal, SIGINT
 from typing import Any, Dict, List, Tuple, Union
 
+import numpy as np
+
 from apero import lang
+from apero import plotting
 from apero.base import base
-from apero.base import drs_db
 from apero.base import drs_base
-from apero.core.core import drs_base_classes as base_class
-from apero.core.core import drs_exceptions
-from apero.core.core import drs_misc
-from apero.core.core import drs_text
+from apero.base import drs_db
 from apero.core import constants
 from apero.core.core import drs_argument
+from apero.core.core import drs_base_classes as base_class
+from apero.core.core import drs_database
+from apero.core.core import drs_exceptions
 from apero.core.core import drs_file
 from apero.core.core import drs_log
+from apero.core.core import drs_misc
+from apero.core.core import drs_text
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_utils
-from apero.core.core import drs_database
 from apero.io import drs_lock
-from apero import plotting
 
 # =============================================================================
 # Define variables
@@ -94,6 +95,7 @@ RUN_KEYS['UPDATE_FILEINDEX_DATABASE'] = True
 RUN_KEYS['UPDATE_IDATABASE_NAMES'] = 'All'
 RUN_KEYS['TELLURIC_TARGETS'] = 'All'
 RUN_KEYS['SCIENCE_TARGETS'] = 'All'
+
 
 # =============================================================================
 # Define functions
@@ -241,6 +243,9 @@ def setup(name: str = 'None', instrument: str = 'None',
     else:
         recipe.params['INPUTS']['PARALLEL'] = False
     # -------------------------------------------------------------------------
+    # get the python stats
+    recipe.params = drs_misc.python_git_stats(recipe.params)
+    # -------------------------------------------------------------------------
     # display (print only no log)
     if (not quiet) and ('instrument' not in recipe.args):
         # display title
@@ -272,7 +277,7 @@ def setup(name: str = 'None', instrument: str = 'None',
         runfile = recipe.params['INPUTS']['CRUNFILE']
         # deal with run file
         if not drs_text.null_text(runfile):
-            recipe.params, _ = read_runfile(recipe.params, runfile,
+            recipe.params, _ = read_runfile(recipe.params, recipe, runfile,
                                             log_overwrite=False)
     # -------------------------------------------------------------------------
     # display
@@ -361,6 +366,10 @@ def setup(name: str = 'None', instrument: str = 'None',
         # print out of the parameters used
         _display_run_time_arguments(recipe, fkwargs, logonly=True)
     # -------------------------------------------------------------------------
+    # deal with plot mode = 4 (special mode that prompts user to select
+    #    which plots to plot)
+    if params['DRS_PLOT'] == 4:
+        params, recipe = plotting.plot_selection(params, recipe)
     # add in the plotter
     if enable_plotter:
         recipe.plot = plotting.Plotter(params, recipe)
@@ -556,22 +565,6 @@ def run(func: Any, recipe: DrsRecipe,
     return llmain, success
 
 
-def return_locals(params: ParamDict, ll: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Deal with returning into ipython (if params['IPYTHON_RETURN'] is True)
-
-    :param params: ParamDict, parameter dictionary of constants
-    :param ll: dictionary, the local namespace in dictionary form - normally
-               called with locals()
-
-    :return: dictionary, the lcoal namespace in dictionary form
-    """
-    # set function name
-    # _ = display_func('return_locals', __NAME__)
-    # else return ll
-    return ll
-
-
 def end_main(params: ParamDict, llmain: Union[Dict[str, Any], None],
              recipe: DrsRecipe, success: bool, outputs: str = 'red',
              end: bool = True, quiet: bool = False,
@@ -612,8 +605,6 @@ def end_main(params: ParamDict, llmain: Union[Dict[str, Any], None],
     :return: the updated parameter dictionary
     :rtype: ParamDict
     """
-    # set function name
-    func_name = display_func('end_main', __NAME__)
     # -------------------------------------------------------------------------
     # get params/plotter from llmain if present
     #     (from __main__ function not main)
@@ -650,7 +641,7 @@ def end_main(params: ParamDict, llmain: Union[Dict[str, Any], None],
         # ---------------------------------------------------------------------
         # deal with logging (if log exists in recipe)
         if success and recipe.log is not None:
-                recipe.log.end()
+            recipe.log.end()
         elif recipe.log is not None:
             recipe.log.end(success=False)
         # ---------------------------------------------------------------------
@@ -696,9 +687,9 @@ def end_main(params: ParamDict, llmain: Union[Dict[str, Any], None],
             outdict['passed'] = bool(llmain['passed'])
         else:
             outdict['passed'] = True
-        # special (shallow) copy from apero_extract
-        if 'e2dsoutputs' in llmain:
-            outdict['e2dsoutputs'] = llmain['e2dsoutputs']
+        # # special (shallow) copy from apero_extract
+        # if 'e2dsoutputs' in llmain:
+        #     outdict['e2dsoutputs'] = llmain['e2dsoutputs']
         # deal with special keys
         if keys is not None:
             for key in keys:
@@ -708,7 +699,16 @@ def end_main(params: ParamDict, llmain: Union[Dict[str, Any], None],
         return outdict
 
 
-def index_files(params, recipe):
+def index_files(params: ParamDict, recipe: DrsRecipe):
+    """
+    Index files in current recipe (via recipe.output_files)
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param recipe: DrsRecipe, the recipe that called this function
+                   used to get output files (recipe.outputfiles)
+
+    :return: None, adds output files to file index
+    """
     # load index database
     findexdb = drs_database.FileIndexDatabase(params)
     findexdb.load_db()
@@ -748,7 +748,7 @@ def index_files(params, recipe):
                 hkeys[rkey] = 'Null'
         # finally add to database
         findexdb.add_entry(outfile, block_kind, recipename, runstring, infiles,
-                          hkeys, used, rawfix)
+                           hkeys, used, rawfix)
 
 
 def copy_kwargs(params: ParamDict, recipe: Union[DrsRecipe, None] = None,
@@ -939,13 +939,14 @@ def group_name(params: ParamDict, suffix: str = 'group') -> str:
     return groupname
 
 
-def read_runfile(params: ParamDict, runfile: str,
-                 rkind: str = 'start',
+def read_runfile(params: ParamDict, recipe: Union[DrsRecipe, None],
+                 runfile: str, rkind: str = 'start',
                  log_overwrite: bool = False) -> Tuple[ParamDict, OrderedDict]:
     """
     Read a provided run file and update params / return the run file sequence
 
     :param params: ParamDict, the parameter dictionary of constants
+    :param recipe: DrsRecipe, the recipe that called this function
     :param runfile: str, the path to the run file
     :param rkind: str, either 'start' for startup or 'run' for processing mode
     :param log_overwrite: bool, if True prevents messages about overwriting
@@ -960,7 +961,7 @@ def read_runfile(params: ParamDict, runfile: str,
     run_dir = params['DRS_DATA_RUN']
     # ----------------------------------------------------------------------
     # check if run file exists
-    if not os.path.exists(runfile):
+    if runfile is not None and not os.path.exists(runfile):
         # construct run file
         runfile = os.path.join(run_dir, runfile)
         # check that it exists
@@ -980,6 +981,8 @@ def read_runfile(params: ParamDict, runfile: str,
     # table storage
     runtable = OrderedDict()
     keytable = OrderedDict()
+    # keep check if we are overwriting any param keys already set
+    overwrite_keys = []
     # ----------------------------------------------------------------------
     # unlock params
     if params.locked:
@@ -987,6 +990,8 @@ def read_runfile(params: ParamDict, runfile: str,
         params.unlock()
     else:
         relock = False
+    # copy params (for comparison)
+    old_params = params.copy()
     # ----------------------------------------------------------------------
     # sort out keys into id keys and values for params
     for it in range(len(keys)):
@@ -1022,6 +1027,8 @@ def read_runfile(params: ParamDict, runfile: str,
                 value = None
             # log if we are overwriting value
             if key in params:
+                # store these
+                overwrite_keys.append(key)
                 # don't log if log overwrite is set to True
                 if log_overwrite:
                     continue
@@ -1030,9 +1037,22 @@ def read_runfile(params: ParamDict, runfile: str,
                     wargs = [key, params[key], value]
                     wmsg = textentry('10-503-00002', args=wargs)
                     WLOG(params, 'warning', wmsg, sublevel=2)
-            # add to params
-            params[key] = value
-            params.set_source(key, func_name)
+                # get instance
+                instance = params.instances[key]
+                # add to parameters (after forcing data type)
+                # noinspection PyBroadException
+                try:
+                    params[key] = instance.dtype(value)
+                    params.set_source(key, func_name)
+                except Exception as _:
+                    # TODO: Add to language database
+                    emsg = ('Run File Error: keyword "{0}"={1} invalid '
+                            '(required "{2}")')
+                    eargs = [key, value, instance.dtype]
+                    WLOG(params, 'error', emsg.format(*eargs))
+            else:
+                params[key] = value
+                params.set_source(key, func_name)
     # ----------------------------------------------------------------------
     if rkind == 'run':
         # push default values (in case we don't have values in run file)
@@ -1163,12 +1183,77 @@ def read_runfile(params: ParamDict, runfile: str,
                 # set value
                 params['UPDATE_OBJ_DATABASE'] = _update_objdb
     # -------------------------------------------------------------------------
+    # deal with recipe arguments
+    if recipe is not None:
+        # we only update at the start of the recipe and if we have keys that
+        #   have been overwritten
+        if rkind == 'start' and len(overwrite_keys) > 0:
+            params = _update_inputs_from_runfile(params, recipe, old_params,
+                                                 log_overwrite=log_overwrite)
+
+    # -------------------------------------------------------------------------
     # relock params
     if relock:
         params.lock()
     # -------------------------------------------------------------------------
     # return parameter dictionary and runtable
     return params, runtable
+
+
+def _update_inputs_from_runfile(params: ParamDict, recipe: DrsRecipe,
+                                old_params: ParamDict,
+                                log_overwrite: bool = False) -> ParamDict:
+    """
+    Update optional inputs from runfile
+
+    If runfile contains parameter dictionary updates and we had kwargs
+    we need to update the default reference and thus maybe update the
+    params['INPUTS'][kwargname] variable
+
+    :param params: ParamDict, parameter dictionary of constants (updated)
+    :param recipe: DrsRecipe, the recipe that called this function
+    :param old_params: ParamDict, parameter dictionary of constants (original)
+    :param log_overwrite: bool, if True does not log change
+
+    :return: ParamDict, the update parameter dictionary
+    """
+    # set function name
+    func_name = display_func('_update_inputs_from_runfile', __NAME__)
+    # loop through keyword arguments
+    for kwargname in recipe.kwargs:
+        # get the argument
+        kwarg = recipe.kwargs[kwargname]
+        # if kwargname not in inputs we don't care
+        if kwargname not in params['INPUTS']:
+            continue
+        # if we were using a default from param reference we must
+        #   update if here
+        if kwarg.default_ref is not None:
+            if kwarg.default_ref in params:
+                # get old, current, new values for comparison
+                currentvalue = params['INPUTS'][kwargname]
+                oldvalue = old_params[kwarg.default_ref]
+                newvalue = params[kwarg.default_ref]
+                # if the current value was not set from the old value
+                #   we just skip this step
+                if currentvalue != oldvalue:
+                    continue
+                # if value hasn't changed continue
+                if newvalue == oldvalue:
+                    continue
+                # else we did assign the value from the default ref
+                #   and thus need to re-assign it now
+                else:
+                    params['INPUTS'][kwargname] = newvalue
+                    params['INPUTS'].set_source(kwargname, func_name)
+                    # print that we are updating values
+                    if not log_overwrite:
+                        # TODO: Add to language database
+                        msg = 'Updating INPUTS[{0}] from {1} to {2}'
+                        margs = [kwargname.upper(), oldvalue, newvalue]
+                        WLOG(params, 'warning', msg.format(*margs), sublevel=1)
+    # -------------------------------------------------------------------------
+    return params
 
 
 # =============================================================================
@@ -1212,7 +1297,7 @@ def _quiet_keys_present(recipe: DrsRecipe, quiet: bool,
     return quiet
 
 
-def _parallel_key_present(fkwargs) -> bool:
+def _parallel_key_present(fkwargs: Dict[str, Any]) -> bool:
     """
     Hack a way to get parallel argument before argparse
 
@@ -1262,10 +1347,14 @@ def _display_drs_title(params: ParamDict, group: Union[str, None] = None,
     title = ' * '
     title += colors.RED1 + ' {0} ' + colors.okgreen + '@{1}'
     title += ' (' + colors.BLUE1 + 'V{2}' + colors.okgreen + ')'
-    title += colors.ENDC
     title = title.format(params['INSTRUMENT'], params['PID'],
                          params['DRS_VERSION'])
-
+    title += '\n' + ' * '
+    title += colors.BLUE1 + ' '*len(params['INSTRUMENT'])
+    title += '  py' + params['PYVERSION']
+    if params['GIT_BRANCH'] != 'Unknown':
+        title += '  git:' + params['GIT_BRANCH']
+    title += colors.ENDC
     # Log title
     _display_title(params, title, group, printonly, logonly)
     # print only
@@ -1413,7 +1502,8 @@ def _display_initial_parameterisation(params: ParamDict,
     # set function name
     # _ = display_func('_display_initial_parameterisation', __NAME__)
     # Add initial parameterisation
-    wmsgs = textentry('\n\tDRS_DATA_RAW: {}'.format(params['DRS_DATA_RAW']))
+    wmsgs = textentry('\n\tDRS_ROOT: {}'.format(params['DRS_ROOT']))
+    wmsgs += textentry('\n\tDRS_DATA_RAW: {}'.format(params['DRS_DATA_RAW']))
     wmsgs += textentry('\n\tDRS_DATA_REDUC: {}'
                        ''.format(params['DRS_DATA_REDUC']))
     wmsgs += textentry('\n\tDRS_DATA_WORKING: {}'
@@ -1622,12 +1712,14 @@ def _display_python_modules() -> str:
     """
 
     # load user requirements
-    packages, versions = np.loadtxt(base.RECOMM_USER, dtype=str,
-                                    delimiter='==', unpack=True)
+    # TODO: can this go back to np.loadtxt once numpy 1.23 bug fixed?
+    packages, versions = np.genfromtxt(base.RECOMM_USER, dtype=str,
+                                       delimiter='==', unpack=True)
     # storage
     storage = textentry('40-000-00017')
     # loop around packages and get versions
     for p_it, package in enumerate(packages):
+        # noinspection PyBroadException
         try:
             with warnings.catch_warnings(record=True) as _:
                 mod = importlib.import_module(package)
@@ -1702,7 +1794,15 @@ def _find_ipython() -> bool:
 # =============================================================================
 # Worker functions
 # =============================================================================
-def _update_input_params(params, args):
+def _update_input_params(params: ParamDict, args: Dict[str, Any]):
+    """
+    Update the input parameter dictionary with new arguments
+
+    :param params: ParamDict, parameter dictionary of constants to update
+    :param args: dict, args to use to update params['INPUTS']
+
+    :return: None, updates params in memory
+    """
     # loop around arguments
     for argname in args:
         # if argument isn't in params['INPUTS'] we don't need to worry about it
@@ -2053,6 +2153,12 @@ def _set_obsdir_from_input(recipe: DrsRecipe,
                            ) -> DrsRecipe:
     """
     Get observation directory from inputs
+
+    :param recipe: DrsRecipe, the recipe to set observation directory in
+    :param fkwargs: dict or None, if given is the command line arguments
+                    look in here for obs_dir (from input)
+
+    :return: DrsRecipe, the updated recipe inputted
     """
     # set function name
     func_name = display_func('_set_obsdir_from_input', __NAME__)
@@ -2069,6 +2175,7 @@ def _set_obsdir_from_input(recipe: DrsRecipe,
     # -------------------------------------------------------------------------
     # check in args
     if check and ('obs_dir' in recipe.args):
+        # noinspection PyBroadException
         try:
             # get position of obs_dir in arguments
             pos = int(recipe.args['obs_dir'].pos) + 1
@@ -2124,10 +2231,9 @@ def _set_force_dirs(recipe: DrsRecipe,
 
     :param recipe: DrsRecipe instance
     :param fkwargs: dictionary: keys to check from function call
+
     :return:
     """
-    # set function name
-    # _ = display_func('_set_force_dirs', __NAME__)
     # ----------------------------------------------------------------------
     # set debug key
     in_block_key = '--force_indir'
@@ -2265,22 +2371,25 @@ def _sort_version(messages: Union[str, None] = None) -> Union[List[str]]:
 
     # add distribution if possible
     try:
-        build = sys.version.split('|')[1].strip()
-        messages += '\n' + textentry('40-001-00014', args=[build])
+        if '|' in sys.version:
+            build = sys.version.split('|')[1].strip()
+            messages += '\n' + textentry('40-001-00014', args=[build])
     except IndexError:
         pass
 
     # add date information if possible
     try:
-        date = sys.version.split('(')[1].split(')')[0].strip()
-        messages += '\n' + textentry('40-001-00015', args=[date])
+        if '(' in sys.version and ')' in sys.version:
+            date = sys.version.split('(')[1].split(')')[0].strip()
+            messages += '\n' + textentry('40-001-00015', args=[date])
     except IndexError:
         pass
 
     # add Other info information if possible
     try:
-        other = sys.version.split('[')[1].split(']')[0].strip()
-        messages += '\n' + textentry('40-001-00016', args=[other])
+        if '[' in sys.version and ']' in sys.version:
+            other = sys.version.split('[')[1].split(']')[0].strip()
+            messages += '\n' + textentry('40-001-00016', args=[other])
     except IndexError:
         pass
 
@@ -2321,6 +2430,7 @@ def _make_dirs(params: ParamDict, path: str):
         pid = None
     else:
         pid = params['PID']
+
     # -------------------------------------------------------------------------
     # make locked makedirs function
     @drs_lock.synchronized(lock, pid + lockfile)
@@ -2339,6 +2449,7 @@ def _make_dirs(params: ParamDict, path: str):
             emsg = textentry('01-000-00001', args=[path, type(e_)])
             emsg += '\n\n' + textentry(string_trackback)
             WLOG(params, 'error', emsg, raise_exception=True, wrap=False)
+
     # -------------------------------------------------------------------------
     # try to run locked makedirs
     try:
@@ -2350,7 +2461,6 @@ def _make_dirs(params: ParamDict, path: str):
         # reset lock
         lock.reset()
         raise e
-
 
 # =============================================================================
 # End of code

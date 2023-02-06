@@ -9,12 +9,11 @@ Created on 2019-01-18 at 15:53
 
 @author: cook
 """
-import numpy as np
 
-from apero.core.math import gen_math
-from apero.core.math import gauss
-from apero.core.math import nan
 from apero.core.math import fast
+from apero.core.math import gauss
+from apero.core.math import gen_math
+from apero.core.math import nan
 
 # =============================================================================
 # Define functions
@@ -31,7 +30,11 @@ fit_gauss_with_slope = gauss.fit_gauss_with_slope
 
 fit2dpoly = gen_math.fit2dpoly
 
+fit_cheby = gen_math.fit_cheby
+
 fitgaussian = gauss.fitgaussian
+
+fuzzy_curve_fit = gen_math.fuzzy_curve_fit
 
 fwhm = gen_math.fwhm
 
@@ -61,6 +64,8 @@ iuv_spline = gen_math.iuv_spline
 
 killnan = nan.killnan
 
+largest_divisor_below = gen_math.largest_divisor_below
+
 lowpassfilter = gen_math.lowpassfilter
 
 measure_box_min_max = gen_math.measure_box_min_max
@@ -87,6 +92,8 @@ nanmedian = fast.nanmedian
 
 nanpad = nan.nanpad
 
+nanchebyfit = nan.nanchebyfit
+
 nanpolyfit = nan.nanpolyfit
 
 nanstd = fast.nanstd
@@ -107,6 +114,8 @@ relativistic_waveshift = gen_math.relativistic_waveshift
 
 robust_nanstd = gen_math.robust_nanstd
 
+robust_chebyfit = gen_math.robust_chebyfit
+
 robust_polyfit = gen_math.robust_polyfit
 
 rot8 = gen_math.rot8
@@ -114,6 +123,12 @@ rot8 = gen_math.rot8
 sinc = gen_math.sinc
 
 sigfig = gen_math.sigfig
+
+square_medbin = gen_math.square_medbin
+
+super_gauss_fast = fast.super_gauss_fast
+
+val_cheby = gen_math.val_cheby
 
 xpand_mask = gen_math.xpand_mask
 

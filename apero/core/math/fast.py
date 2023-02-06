@@ -1,17 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+APERO fast math functions
 
-# CODE DESCRIPTION HERE
+Usually replacing a defined numpy function
 
 Created on 2019-09-18 at 10:53
 
 @author: cook
 """
+from typing import Tuple, Union
+
 import numpy as np
 from scipy import signal
-from typing import Tuple, Union
 
 from apero.base import base
 
@@ -32,6 +33,16 @@ try:
 except Exception as _:
     jit = None
     HAS_NUMBA = False
+
+# try to import numexpr
+# noinspection PyBroadException
+try:
+    import numexpr as ne
+    HAS_NUMEXPR = True
+except Exception as _:
+    ne = None
+    HAS_NUMEXPR = False
+
 
 # =============================================================================
 # Define variables
@@ -359,6 +370,15 @@ def medfilt_1d(a: Union[list, np.ndarray],
 # must catch if we do not have the jit decorator and define our own
 if not HAS_NUMBA:
     def jit(**options):
+        """
+        Proxy jit class - used to replace jit when no jit from numba is
+        available - decorator just returns original function
+
+        :param options: any options that were to be used as part of the
+               decorator
+
+        :return: decorator function
+        """
         # don't use options but they are required to match jit definition
         _ = options
 
@@ -374,7 +394,7 @@ if not HAS_NUMBA:
 
 
 # Set "nopython" mode for best performance, equivalent to @nji
-@jit(nopython=True)
+@jit(nopython=True, fastmath=False)
 def lin_mini(vector: np.ndarray, sample: np.ndarray, mm: np.ndarray,
              v: np.ndarray, sz_sample: Tuple[int], case: int,
              recon: np.ndarray, amps: np.ndarray,
@@ -460,7 +480,7 @@ def lin_mini(vector: np.ndarray, sample: np.ndarray, mm: np.ndarray,
 
 
 # Set "nopython" mode for best performance, equivalent to @nji
-@jit(nopython=True)
+@jit(nopython=True, fastmath=False)
 def odd_ratio_mean(value: np.ndarray, error: np.ndarray,
                    odd_ratio: float = 2e-4, nmax: int = 10,
                    conv_cut=1e-2) -> Tuple[float, float]:
@@ -520,6 +540,37 @@ def odd_ratio_mean(value: np.ndarray, error: np.ndarray,
 
     # return the guess and bulk error
     return guess, bulk_error
+
+
+# =============================================================================
+# numexpr functions
+# =============================================================================
+def super_gauss_fast(xvector: np.ndarray, ew: np.ndarray, expo: np.ndarray):
+    """
+    Super gaussian using numexpr if possible
+
+    ew = (fwhm/2)/(2*np.log(2))**(1/expo)
+    supergauss = exp(-0.5*abs(xvector/ew_string)**expo)
+
+    :param xvector: the xvector points to calculate the super gaussian from
+    :param fwhm: np.ndarray, the full width half max value for the gaussian
+                 at each pixel position
+    :param expo: np.ndarray, the exponent of the super gaussian at each pixel
+                 position
+
+    :return: np.ndarray, the super gaussian profile for xvector, fwhm and expo
+    """
+    # if we have numexpr use it to do this fast
+    if HAS_NUMEXPR:
+        # do not need to reference these using numexpr
+        _ = xvector, expo
+        # need to write as a string
+        calc_string = f'exp(-0.5*abs(xvector/ew)**expo)'
+        # evaluate string in numexpr
+        return ne.evaluate(calc_string)
+    # otherwise we fall back to the slow method
+    else:
+        return np.exp(-0.5*np.abs(xvector/ew)**expo)
 
 
 # =============================================================================

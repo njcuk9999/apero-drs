@@ -7,25 +7,25 @@ Created on 2020-10-2020-10-29 15:40
 
 @author: cook
 """
+import os
+import warnings
+from typing import List, Tuple, Union
+
+import numpy as np
 from astropy import units as uu
 from astropy.coordinates import SkyCoord, Distance
-import numpy as np
-import os
-from typing import List, Tuple, Union
-import warnings
 
-from apero.base import base
-from apero.core.core import drs_exceptions
 from apero import lang
+from apero.base import base
 from apero.core import constants
-from apero.core.core import drs_log
-from apero.core.core import drs_file
 from apero.core import math as mp
+from apero.core.core import drs_exceptions
+from apero.core.core import drs_file
+from apero.core.core import drs_log
+from apero.io import drs_fits
 from apero.io import drs_lock
 from apero.io import drs_path
-from apero.io import drs_fits
 from apero.science.extract import bervest
-
 
 # =============================================================================
 # Define variables
@@ -137,10 +137,9 @@ def get_berv(params: ParamDict, infile: Union[DrsFitsFile, None] = None,
     if berv_props['USE_BERV'] is not None and not force:
         if np.isfinite(berv_props['USE_BERV']):
             # print progress about berv
-            # TODO: move to language database
-            msg = 'Identified object as {0} with BERV = {1:.4f} km/s'
+            # print msg: Identified object as {0} with BERV = {1:.4f} km/s
             margs = [berv_props['OBJNAME'], berv_props['USE_BERV']]
-            WLOG(params, '', msg.format(*margs))
+            WLOG(params, '', textentry('40-016-00035', args=margs))
             # return the berv properties
             return berv_props
     # -------------------------------------------------------------------------
@@ -170,7 +169,7 @@ def get_berv(params: ParamDict, infile: Union[DrsFitsFile, None] = None,
             bervmax = mp.nanmax(np.abs(bervs_))
             # --------------------------------------------------------------
             # calculate berv derivative (add 1 second)
-            deltat = (1*uu.s).to(uu.day).value
+            deltat = (1 * uu.s).to(uu.day).value
             berv1, bjd1 = use_barycorrpy(params,
                                          berv_props['OBS_TIME'] + deltat,
                                          berv_props, iteration=1)
@@ -196,10 +195,9 @@ def get_berv(params: ParamDict, infile: Union[DrsFitsFile, None] = None,
         if berv_props['USE_BERV'] is not None:
             if np.isfinite(berv_props['USE_BERV']):
                 # print progress about berv
-                # TODO: move to language database
-                msg = 'Identified object as {0} with BERV = {1:.4f} km/s'
+                # print msg: Identified object as {0} with BERV = {1:.4f} km/s
                 margs = [berv_props['OBJNAME'], berv_props['USE_BERV']]
-                WLOG(params, '', msg.format(*margs))
+                WLOG(params, '', textentry('40-016-00035', args=margs))
                 # return the berv properties
                 return berv_props
     # -------------------------------------------------------------------------
@@ -225,14 +223,13 @@ def get_berv(params: ParamDict, infile: Union[DrsFitsFile, None] = None,
     # set source
     berv_props['BERVSOURCE'] = 'pyasl'
     berv_props.set_sources(['BERV_EST', 'BJD_EST', 'BERV_MAX_EST', 'DBERV_EST',
-                        'BERVSOURCE'], func_name)
+                            'BERVSOURCE'], func_name)
     # check if we have berv a good berv
     berv_props = assign_use_berv(berv_props)
     # print progress about berv
-    # TODO: move to language database
-    msg = 'Identified object as {0} with BERV = {1:.4f} km/s'
+    # print msg: Identified object as {0} with BERV = {1:.4f} km/s
     margs = [berv_props['OBJNAME'], berv_props['USE_BERV']]
-    WLOG(params, '', msg.format(*margs))
+    WLOG(params, '', textentry('40-016-00035', args=margs))
     # return the berv properties
     return berv_props
 
@@ -244,7 +241,6 @@ def get_keys_from_header(params: ParamDict,
 
     :param params: ParamDict, the parameter dictionary of constants
     :param header: drs_fits.Header - the header instance
-    :param bprops: ParamDict, the BERV properties already loaded
 
     :return: ParamDict, the updated BERV properties
     """
@@ -299,7 +295,7 @@ def get_keys_from_header(params: ParamDict,
     # get the observation time and method parameters
     bprops['OBS_TIME'] = header.get(params['KW_BERV_OBSTIME'][0], np.nan)
     bprops['OBS_TIME_METHOD'] = header.get(params['KW_BERV_OBSTIME_METHOD'][0],
-                                         'None')
+                                           'None')
     bprops.set_source('OBS_TIME', 'header')
     bprops.set_source('OBS_TIME_METHOD', 'header')
     # -------------------------------------------------------------------------
@@ -374,7 +370,7 @@ def assign_use_berv(berv_props: ParamDict, use=True) -> ParamDict:
 
     # need to test if we have no BERV at all
     have_bervest = False
-    if (not have_berv):
+    if not have_berv:
         have_bervest = (berv_est is not None and np.isfinite(berv_est))
         have_bervest &= (bjd_est is not None and np.isfinite(bjd_est))
         have_bervest &= (berv_max_est is not None and np.isfinite(berv_max_est))
@@ -491,6 +487,7 @@ def use_barycorrpy(params: ParamDict, times: np.ndarray, props: ParamDict,
         pid = None
     else:
         pid = params['PID']
+
     # -------------------------------------------------------------------------
     # make locked bervcalc function
     @drs_lock.synchronized(lock, pid)
@@ -499,16 +496,17 @@ def use_barycorrpy(params: ParamDict, times: np.ndarray, props: ParamDict,
         try:
             out1 = barycorrpy.get_BC_vel(JDUTC=times, zmeas=0.0, **bkwargs)
             out2 = barycorrpy.utc_tdb.JDUTC_to_BJDTDB(times, **bkwargs)
-        except Exception as e:
+        except Exception as e1:
             # log error
-            wargs = [type(e), str(e), estimate, func_name]
-            WLOG(params, 'warning', textentry('10-016-00004', args=wargs),
+            wargs1 = [type(e1), str(e1), estimate, func_name]
+            WLOG(params, 'warning', textentry('10-016-00004', args=wargs1),
                  sublevel=8)
-            raise BaryCorrpyException(textentry('10-016-00004', args=wargs))
+            raise BaryCorrpyException(textentry('10-016-00004', args=wargs1))
         # return the bervs and bjds
         bervs = out1[0] / 1000.0
         bjds = out2[0]
         return bervs, bjds
+
     # -------------------------------------------------------------------------
     # try to run locked makedirs
     try:
@@ -532,6 +530,8 @@ def use_pyasl(params: ParamDict, times: Union[np.ndarray, list],
     :param params: ParamDict - parameter dictionary of constants
     :param times: numpy array, the list of times [in julien date]
     :param props: ParamDict - the berv input parameters (ra/dec/pmra/pmde etc)
+    :param quiet: bool, if True does not print warning about using BERV
+                  estimate
     :param berv_est: float, an estimate of the pyasl BERV uncertainties
                      (for logging)
 
@@ -557,14 +557,14 @@ def use_pyasl(params: ParamDict, times: Union[np.ndarray, list],
     # need to propagate ra and dec to J2000
     coords = SkyCoord(ra=props['RA'] * uu.deg, dec=props['DEC'] * uu.deg,
                       distance=distance,
-                      pm_ra_cosdec=props['PMRA'] * uu.mas/uu.yr,
-                      pm_dec=props['PMDE'] * uu.mas/uu.yr,
+                      pm_ra_cosdec=props['PMRA'] * uu.mas / uu.yr,
+                      pm_dec=props['PMDE'] * uu.mas / uu.yr,
                       obstime=Time(props['EPOCH'], format='jd'))
     # work out the delta time between epoch and J2000.0
     j2000 = Time(2000.0, format='decimalyear').jd + 0.5
     delta_time = j2000 - props['EPOCH']
     # get the coordinates in J2000
-    with warnings.catch_warnings(record=True) as w:
+    with warnings.catch_warnings(record=True) as _:
         coords2000 = coords.apply_space_motion(dt=delta_time * uu.day)
     # extract the ra and dec from SkyCoords
     ra2000 = coords2000.ra.value

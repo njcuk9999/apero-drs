@@ -9,16 +9,20 @@ Created on 2019-07-26 at 09:39
 
 @author: cook
 """
-import numpy as np
 from pathlib import Path
+from typing import Any, Dict
+
+import numpy as np
 
 from apero import lang
 from apero.base import base
+from apero.core import constants
 from apero.core.core import drs_log
 from apero.core.core import drs_text
+from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
-from apero.tools.module.database import manage_databases
 from apero.tools.module.database import database_update
+from apero.tools.module.database import manage_databases
 from apero.tools.module.database import manage_db_gui
 
 # =============================================================================
@@ -33,6 +37,10 @@ __date__ = base.__date__
 __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# Get Recipe class
+DrsRecipe = drs_recipe.DrsRecipe
+# Get parameter class
+ParamDict = constants.ParamDict
 # Get the text types
 textentry = lang.textentry
 
@@ -44,10 +52,7 @@ def main(**kwargs):
     """
     Main function for apero_explorer.py
 
-    :param instrument: str, the instrument name
     :param kwargs: additional keyword arguments
-
-    :type instrument: str
 
     :keyword debug: int, debug level (0 for None)
 
@@ -72,26 +77,26 @@ def main(**kwargs):
     return drs_startup.end_main(params, llmain, recipe, success, outputs='None')
 
 
-def __main__(recipe, params):
+def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     """
     Main function - takes the instrument name, index the databases and python
     script (in real time due to any changes in code) and then runs the
     application to find errors
 
-    :param instrument: string, the instrument name
-    :type: str
-    :return: returns the local namespace as a dictionary
-    :rtype: dict
+    :param recipe: DrsRecipe, the recipe class using this function
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: dictionary containing the local variables
     """
     # define null text
     null_text = ['None', '', 'Null']
     # deal with update arguments
     update_calib = params['INPUTS']['CALIBDB']
     update_tellu = params['INPUTS']['TELLUDB']
-    update_index = params['INPUTS']['INDEXDB']
+    update_index = params['INPUTS']['FINDEXDB']
     update_log = params['INPUTS']['LOGDB']
     update_reject = params['INPUTS']['REJECTDB']
-    update_object = params['INPUTS']['OBJDB']
+    update_object = params['INPUTS']['ASTROMDB']
     update = params['INPUTS']['UPDATE']
     reset = params['INPUTS']['RESET']
     # deal with list of update arguments
@@ -105,7 +110,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # End of main code
         # ------------------------------------------------------------------
-        return drs_startup.return_locals(params, locals())
+        return locals()
 
     # ----------------------------------------------------------------------
     # deal with resetting databasee
@@ -115,41 +120,41 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # End of main code
         # ------------------------------------------------------------------
-        return drs_startup.return_locals(params, locals())
+        return locals()
 
     # ----------------------------------------------------------------------
     # deal with updates
     # ----------------------------------------------------------------------
     # deal with full update
     if update:
-        database_update.update_database(params, recipe, dbkind='all')
+        database_update.update_database(params, dbkind='all')
         # ------------------------------------------------------------------
         # End of main code
         # ------------------------------------------------------------------
-        return drs_startup.return_locals(params, locals())
+        return locals()
     # deal with partial update
     if np.any(database_conds):
         # loop around all databases
         for db_it in range(len(database_conds)):
             # if we have been flagged to update - update now
             if database_conds[db_it]:
-                database_update.update_database(params, recipe,
+                database_update.update_database(params,
                                                 dbkind=database_names[db_it])
         # ------------------------------------------------------------------
         # End of main code
         # ------------------------------------------------------------------
-        return drs_startup.return_locals(params, locals())
+        return locals()
 
     # ----------------------------------------------------------------------
     # deal with delete gui
     # ----------------------------------------------------------------------
     if params['INPUTS']['DELETE']:
         # load delete database app
-        manage_db_gui.run_delete_table_app(recipe, params)
+        manage_db_gui.run_delete_table_app(params)
         # ------------------------------------------------------------------
         # End of main code
         # ------------------------------------------------------------------
-        return drs_startup.return_locals(params, locals())
+        return locals()
 
     # ----------------------------------------------------------------------
     # get csv file path
@@ -172,11 +177,11 @@ def __main__(recipe, params):
     if not drs_text.null_text(database_name, null_text):
         # export database
         manage_databases.export_database(params, database_name,
-                                         csvpath)
+                                         str(csvpath))
         # ------------------------------------------------------------------
         # End of main code
         # ------------------------------------------------------------------
-        return drs_startup.return_locals(params, locals())
+        return locals()
     # ----------------------------------------------------------------------
     # deal with import mode
     # ----------------------------------------------------------------------
@@ -188,11 +193,11 @@ def __main__(recipe, params):
     if not drs_text.null_text(database_name, null_text):
         # import csv file into database
         manage_databases.import_database(params, database_name,
-                                         csvpath, joinmode)
+                                         str(csvpath), joinmode)
         # ------------------------------------------------------------------
         # End of main code
         # ------------------------------------------------------------------
-        return drs_startup.return_locals(params, locals())
+        return locals()
 
     # ----------------------------------------------------------------------
     # If we got here user did not define export or import
@@ -203,7 +208,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return drs_startup.return_locals(params, locals())
+    return locals()
 
 
 # =============================================================================

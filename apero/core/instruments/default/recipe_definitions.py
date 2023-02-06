@@ -1,7 +1,16 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+APERO Recipe definitions for NO INSTRUMENT
+
+Created on 2018-10-31 at 18:06
+
+@author: cook
+"""
+from apero import lang
 from apero.base import base
 from apero.core.constants import path_definitions
 from apero.core.utils import drs_recipe
-from apero import lang
 
 # =============================================================================
 # Define variables
@@ -23,7 +32,7 @@ obs_dir = dict(name='obs_dir', dtype='obs_dir',
                helpstr=textentry('OBS_DIR_HELP'))
 # -----------------------------------------------------------------------------
 plot = dict(name='--plot', dtype=int, helpstr=textentry('PLOT_HELP'),
-            default_ref='DRS_PLOT', minimum=0, maximum=3)
+            default_ref='DRS_PLOT', minimum=0, maximum=4)
 
 # =============================================================================
 # List of usable recipes
@@ -106,16 +115,13 @@ astrometric.recipe_kind = 'user'
 astrometric.set_arg(pos=0, name='objects', dtype=str,
                     helpstr=textentry('ASTROMETRIC_OBJ_HELP'))
 astrometric.set_kwarg(name='--overwrite', dtype='switch', default=False,
-                      helpstr='Do not check if object is currently in database.'
-                              ' Overwrite old value.')
+                      helpstr=textentry('ASTROMETRIC_OVERWRITE_HELP'))
 astrometric.set_kwarg(name='--getteff', dtype='switch', default=False,
-                      helpstr='Attempt to get Teff from header value.'
-                              'Requires a raw file of this object and the '
-                              'index database to be up-to-date')
+                      helpstr=textentry('ASTROMETRIC_GETTEFF_HELP'))
 astrometric.set_kwarg(name='--nopmrequired', dtype='switch', default=False,
-                      helpstr='Do not require proper motion (not recommended)')
+                      helpstr=textentry('ASTROMETRIC_NOPM_REQ_HELP'))
 astrometric.set_kwarg(name='--test', dtype='switch', default=False,
-                      helpstr='Run in test mode (do not add to database)')
+                      helpstr=textentry('ASTROMETRIC_TEST_HELP'))
 astrometric.description_file = 'apero_astrometrics.rst'
 
 # -----------------------------------------------------------------------------
@@ -143,17 +149,17 @@ database_mgr.recipe_kind = 'admin'
 database_mgr.set_kwarg(name='--kill', dtype='switch', default=False,
                        helpstr=textentry('DBMGR_KILLARG_HELP'))
 database_mgr.set_kwarg(name='--calibdb', dtype='switch', default=False,
-                       helpstr='Update calibration database')
+                       helpstr=textentry('DBMGR_CALIBDB_HELP'))
 database_mgr.set_kwarg(name='--telludb', dtype='switch', default=False,
-                       helpstr='Update telluric database')
+                       helpstr=textentry('DBMGR_TELLUDB_HELP'))
 database_mgr.set_kwarg(name='--logdb', dtype='switch', default=False,
-                       helpstr='Update log database')
-database_mgr.set_kwarg(name='--indexdb', dtype='switch', default=False,
-                       helpstr='Update index database')
-database_mgr.set_kwarg(name='--objdb', dtype='switch', default=False,
-                       helpstr='Update object database')
+                       helpstr=textentry('DBMGR_LOGDB_HELP'))
+database_mgr.set_kwarg(name='--findexdb', dtype='switch', default=False,
+                       helpstr=textentry('DBMGR_FINDEXDB_HELP'))
+database_mgr.set_kwarg(name='--astromdb', dtype='switch', default=False,
+                       helpstr=textentry('DBMGR_ASTROMDB_HELP'))
 database_mgr.set_kwarg(name='--rejectdb', dtype='switch', default=False,
-                       helpstr='Update rejection database')
+                       helpstr=textentry('DBMGR_REJECTDB_HELP'))
 database_mgr.set_kwarg(name='--update', dtype='switch', default=False,
                        helpstr=textentry('DBMGR_UPDATE_HELP'))
 database_mgr.set_kwarg(name='--csv', dtype=str, default='None',
@@ -168,9 +174,9 @@ database_mgr.set_kwarg(name='--join', dtype='options', default='replace',
                        options=['replace', 'append'],
                        helpstr=textentry('DBMGR_JOIN_HELP'))
 database_mgr.set_kwarg(name='--delete', dtype='switch', default=False,
-                       helpstr='Load up the delete table GUI (MySQL only)')
+                       helpstr=textentry('DBMGR_DELETE_HELP'))
 database_mgr.set_kwarg(name='--reset', dtype='switch', default=False,
-                       helpstr='Reset current databases')
+                       helpstr=textentry('DBMGR_RESET_HELP'))
 database_mgr.description_file = 'apero_database.rst'
 
 # -----------------------------------------------------------------------------
@@ -183,10 +189,7 @@ remake_doc.description = textentry('REMAKE_DOC_DESCRIPTION')
 remake_doc.recipe_type = 'nolog-tool'
 remake_doc.recipe_kind = 'admin'
 remake_doc.set_kwarg(name='--instruments', dtype=str, default='ALL',
-                     helpstr='Which instrument(s) to run this for '
-                             '(default is current instrument) can also write '
-                             'ALL to get all instruments or list instruments '
-                             'separated by a comma')
+                     helpstr=textentry('REMAKE_INSTRUMENT_HELP'))
 remake_doc.set_kwarg(name='--compile', dtype='switch', default=False,
                      helpstr=textentry('REMAKE_DOC_COMPILE_HELP'))
 remake_doc.set_kwarg(name='--upload', dtype='switch', default=False,
@@ -201,8 +204,7 @@ remake_doc.set_kwarg(name='--recipeseq', dtype='switch', default=False,
                      helpstr=textentry('REMAKE_DOC_RECIPESEQ_HELP'))
 remake_doc.set_kwarg(name='--mode', dtype='options', default='both',
                      options=['both', 'html', 'latex'],
-                     helpstr='Which mode to output in "html", "latex" or '
-                             '"both". Default is "both"')
+                     helpstr=textentry('REMAKE_MODE_HELP'))
 remake_doc.description_file = 'apero_documentation.rst'
 
 # -----------------------------------------------------------------------------
@@ -217,12 +219,9 @@ explorer.recipe_kind = 'user'
 explorer.set_kwarg(name='--hash', default=False, dtype='switch',
                    helpstr=textentry('EXPLORER_HASH'))
 explorer.set_kwarg(name='--recipe', default='None', dtype=str,
-                   helpstr='Recipe or shortname for recipe '
-                           '(must used in combination with --flagnum)')
+                   helpstr=textentry('EXPLORER_RECIPE'))
 explorer.set_kwarg(name='--flagnum', default=0, dtype=int,
-                   helpstr='Instead of running explorer converts a binary flag'
-                           ' to a set of binary flags for a recipe '
-                           '(must be used in combination with --recipe)')
+                   helpstr=textentry('EXPLORER_FLAGNUM'))
 
 explorer.description_file = 'apero_explorer.rst'
 
@@ -232,7 +231,7 @@ explorer.description_file = 'apero_explorer.rst'
 get_files.name = 'apero_get.py'
 get_files.shortname = 'GET'
 get_files.instrument = __INSTRUMENT__
-get_files.description = 'Use database to search and copy any files quickly'
+get_files.description = textentry('GET_DESCRIPTION')
 get_files.recipe_type = 'nolog-tool'
 get_files.recipe_kind = 'user'
 get_files.set_kwarg(name='--gui', default=False, dtype='switch',
@@ -252,8 +251,10 @@ get_files.set_kwarg(name='--symlinks', default=False, dtype='switch',
 get_files.set_kwarg(name='--test', default=False, dtype='switch',
                     helpstr=textentry('GET_TEST_HELP'))
 get_files.set_kwarg(name='--failedqc', default=False, dtype='switch',
-                    helpstr='Include files that failed QC. '
-                            'Highly unrecommended')
+                    helpstr=textentry('GET_FAILEDQC_HELP'))
+get_files.set_kwarg(name='--since', default='None', dtype=str,
+                    helpstr='Only get files processed since a certain date '
+                            'YYYY-MM-DD hh:mm:ss')
 get_files.description_file = 'apero_get.rst'
 
 # -----------------------------------------------------------------------------
@@ -269,14 +270,14 @@ go_recipe.set_kwarg(name='--data', dtype='switch', default=False,
                     helpstr=textentry('GO_DATA_HELP'))
 go_recipe.set_kwarg(name='--all', dtype='switch', default=False,
                     helpstr='Display all relevant paths')
+go_recipe.set_kwarg(name='--setup',  dtype='switch', default=False,
+                    helpstr='Display DRS_UCONFIG path')
 # loop around block kinds and add arguments
 for block in path_definitions.BLOCKS:
     go_recipe.set_kwarg(name=f'--{block.argname}',
                         dtype='switch', default=False,
                         helpstr=textentry('GO_BLOCK_HELP', args=[block.name]))
 go_recipe.description_file = 'apero_go.rst'
-
-
 
 # -----------------------------------------------------------------------------
 # apero_langdb.py
@@ -329,18 +330,17 @@ stats.recipe_kind = 'user'
 stats.set_debug_plots('STATS_TIMING_PLOT', 'STAT_QC_RECIPE_PLOT',
                       'STAT_RAM_PLOT')
 stats.set_summary_plots()
-stats.set_kwarg(name='--mode', dtype='options', default='red',
-                   options=['timing', 'qc', 'error', 'memory'],
-                   helpstr='Stats mode. '
-                           'For timing statistics use "timing". '
-                           'For quality control statistics use "qc". '
-                           'For error statistics use "error". '
-                           'For memory statistics use "memory".')
+stats.set_kwarg(name='--mode', dtype=str, default='red',
+                helpstr=textentry('LOGSTAT_MODE_HELP'))
 stats.set_kwarg(name='--plog', dtype=str, default='None',
-                   helpstr='Specify a certain log file (full path)')
+                helpstr=textentry('LOGSTAT_PLOG_HELP'))
 stats.set_kwarg(**plot)
 stats.set_kwarg(name='--sql', dtype=str, default='None',
-                helpstr='specify a SQL WHERE clause to narrow the stats')
+                helpstr=textentry('LOGSTAT_SQL_HELP'))
+stats.set_kwarg(name='--limit', dtype=int, default=0,
+                helpstr='Limit the number of entries in memory plot '
+                        '(any recipe with more than this limit is left '
+                        'out of stats)')
 stats.description_file = 'apero_stats.rst'
 
 # -----------------------------------------------------------------------------
@@ -349,40 +349,27 @@ stats.description_file = 'apero_stats.rst'
 trigger.name = 'apero_trigger.py'
 trigger.shortname = 'TRIGGER'
 trigger.instrument = __INSTRUMENT__
-trigger.description = 'Basic trigger for APERO'
+trigger.description = textentry('TRIGGER_DESCRIPTION')
 trigger.recipe_type = 'nolog-tool'
 trigger.recipe_kind = 'processing'
 trigger.set_debug_plots()
 trigger.set_summary_plots()
 trigger.set_kwarg(name='--indir', dtype=str, default='None',
-                   helpstr='The input directory to scan for new data.'
-                           ' (This is not the apero defined raw directory)')
+                  helpstr=textentry('TRIGGER_INDIR_HELP'))
 trigger.set_kwarg(name='--reset', dtype='switch', default=False,
-                  helpstr='Reset the trigger (default is False and thus we use '
-                          'cached files to speed up trigger). This means '
-                          'after nights are marked done (calib/sci) they will'
-                          ' not be reprocessed. Thus --reset to avoid this.')
+                  helpstr=textentry('TRIGGER_RESET_HELP'))
 trigger.set_kwarg(name='--ignore', dtype=str, default='None',
-                  helpstr='Ignore certain obs_dir (observation directories) '
-                          ' by default all directories in --indir are reduced.'
-                          ' Using ignore will ignore certain directories and '
-                          'not add them to the the sym-linked (DRS_DATA_RAW) '
-                          'directory.')
-trigger.set_kwarg(name='--wait', dtype=int, default=60,
-                  minimum=1, maximum=3600,
-                  helpstr='Number of second to wait between processing '
-                          'runs. Should not be too low (below 10s its too fast)'
-                          ' unless testing, or too high (above 3600s)')
+                  helpstr=textentry('TRIGGER_IGNORE_HELP'))
+trigger.set_kwarg(name='--wait', dtype=int, default=60, minimum=1, maximum=3600,
+                  helpstr=textentry('TRIGGER_WAIT_HELP'))
 trigger.set_kwarg(name='--calib', dtype=str,
                   default='trigger_night_calibrun.ini',
-                  helpstr='The run.ini file to use for calibration trigger run')
-trigger.set_kwarg(name='--sci', dtype=str,
-                  default='trigger_night_scirun.ini',
-                  helpstr='The run.ini file to use for science trigger run')
+                  helpstr=textentry('TRIGGER_CALIB_HELP'))
+trigger.set_kwarg(name='--sci', dtype=str, default='trigger_night_scirun.ini',
+                  helpstr=textentry('TRIGGER_SCI_HELP'))
 trigger.set_kwarg(name='--trigger_test', dtype='switch', default=False,
-                  helpstr='Active test mode (does not run recipes)')
+                  helpstr=textentry('TRIGGER_TEST_HELP'))
 trigger.description_file = 'apero_trigger.rst'
-
 
 # -----------------------------------------------------------------------------
 # apero_precheck.py
@@ -390,27 +377,21 @@ trigger.description_file = 'apero_trigger.rst'
 precheck.name = 'apero_precheck.py'
 precheck.shortname = 'PRECHECK'
 precheck.instrument = __INSTRUMENT__
-# TODO: add to language database
-precheck.description = ('Run a check before running apero processing to check '
-                        'on the number of calibrations, number of telluric '
-                        'and science raw files and/or check if any objects '
-                        'astrometric data are coming from the header')
+precheck.description = textentry('PRECHECK_DESCRIPTION')
 precheck.recipe_type = 'tool'
 precheck.recipe_kind = 'processing'
 precheck.set_arg(pos=0, name='runfile', dtype=str,
                  helpstr=textentry('PROCESS_RUNFILE_HELP'))
 precheck.set_kwarg(name='--obs_dir', dtype=str, default='None',
-                     helpstr=textentry('PROCESS_OBS_DIR_HELP'))
+                   helpstr=textentry('PROCESS_OBS_DIR_HELP'))
 precheck.set_kwarg(name='--exclude_obs_dirs', dtype=str, default='None',
-                     helpstr=textentry('PROCESS_EXCLUDE_OBS_DIRS_HELP'))
+                   helpstr=textentry('PROCESS_EXCLUDE_OBS_DIRS_HELP'))
 precheck.set_kwarg(name='--include_obs_dirs', dtype=str, default='None',
-                     helpstr=textentry('PROCESS_INCLUDE_OBS_DIRS_HELP'))
+                   helpstr=textentry('PROCESS_INCLUDE_OBS_DIRS_HELP'))
 precheck.set_kwarg(name='--no_file_check', dtype='switch', default=False,
-                   helpstr='Check the number of files on disk and '
-                           'flag possible errors')
+                   helpstr=textentry('PRECHECK_NOFILECHECK_HELP'))
 precheck.set_kwarg(name='--no_obj_check', dtype='switch', default=False,
-                   helpstr='Check the object database with current set of '
-                           'raw files and flag possible problems')
+                   helpstr=textentry('PRECHECK_NOOBJCHECK_HELP'))
 precheck.description_file = 'apero_precheck.rst'
 
 # -----------------------------------------------------------------------------
@@ -471,9 +452,8 @@ reset.set_kwarg(name='--log', dtype='bool', default=True,
                 helpstr=textentry('RESET_LOG_HELP'))
 reset.set_kwarg(name='--warn', dtype='bool', default=True,
                 helpstr=textentry('RESET_WARN_HELP'))
-# TODO: move to language database
 reset.set_kwarg(name='--database_timeout', dtype=int, default=0,
-                helpstr='Set the database timeout tries')
+                helpstr=textentry('RESET_DATABASE_TIMEOUT_HELP'))
 reset.description_file = 'apero_reset.rst'
 
 # -----------------------------------------------------------------------------
@@ -482,13 +462,12 @@ reset.description_file = 'apero_reset.rst'
 run_ini.name = 'apero_run_ini.py'
 run_ini.shortname = 'RUN_INI'
 run_ini.instrument = __INSTRUMENT__
-run_ini.description = 'Create default run.ini files for APERO instrument(s)'
+run_ini.description = textentry('RUN_INI_DESCRIPTION')
 run_ini.recipe_type = 'nolog-tool'
 run_ini.recipe_kind = 'admin'
 run_ini.set_kwarg(name='--instrument', dtype='options', default='None',
                   options=base.INSTRUMENTS,
-                  helpstr='Instrument or instruments to create run.ini '
-                          'files for')
+                  helpstr=textentry('RUN_INI_INSTRUMENT_HELP'))
 run_ini.description_file = 'apero_run_ini.rst'
 
 # -----------------------------------------------------------------------------
@@ -497,13 +476,12 @@ run_ini.description_file = 'apero_run_ini.rst'
 static.name = 'apero_static.py'
 static.shortname = 'STATIC'
 static.instrument = __INSTRUMENT__
-static.description = 'Create static files for APERO instrument(s)'
+static.description = textentry('STATIC_DESCRIPTION')
 static.recipe_type = 'nolog-tool'
 static.recipe_kind = 'admin'
 static.set_kwarg(name='--mode', dtype='options', default='None',
-                  options=['LED_FLAT'],
-                  helpstr='Chooses the static file to create',
-                  required=True)
+                 options=['LED_FLAT'],
+                 helpstr=textentry('STATIC_MODE_HELP'), required=True)
 static.description_file = 'apero_static.rst'
 
 # -----------------------------------------------------------------------------
@@ -517,17 +495,15 @@ validate.recipe_type = 'nolog-tool'
 validate.recipe_kind = 'user'
 validate.description_file = 'apero_validate.rst'
 
-
 # -----------------------------------------------------------------------------
 # apero_visu.py
 # -----------------------------------------------------------------------------
 visulise.name = 'apero_visu.py'
 visulise.shortname = 'VISU'
 visulise.instrument = __INSTRUMENT__
-visulise.description = 'APERO visuliser'
+visulise.description = textentry('VISU_DESCRIPTION')
 visulise.recipe_type = 'tool'
 visulise.recipe_kind = 'user'
 visulise.set_kwarg(name='--mode', dtype='options', default='None',
-                   options=['e2ds'],
-                   helpstr='Which type of graph to plot')
+                   options=['e2ds'], helpstr=textentry('VISU_MODE_HELP'))
 visulise.description_file = None

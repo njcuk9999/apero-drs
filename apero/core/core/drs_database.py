@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-CODE DESCRIPTION HERE
+APERO database management functionality
 
 Created on 2020-08-2020-08-18 15:15
 
@@ -18,30 +18,30 @@ only from
 - apero.core.math.*
 - apero.io.drs_fits
 """
-from astropy.table import Table
-from astropy.io.ascii.core import InconsistentTableError
-import numpy as np
 import os
-import pandas as pd
-from pandasql import sqldf
-from pathlib import Path
-import requests
 import shutil
 import time
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
 import warnings
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
+
+import numpy as np
+import pandas as pd
+import requests
+from astropy.io.ascii.core import InconsistentTableError
+from astropy.table import Table
+from pandasql import sqldf
 
 from apero import lang
 from apero.base import base
 from apero.base import drs_db
 from apero.core import constants
 from apero.core.core import drs_exceptions
-from apero.core.core import drs_text
 from apero.core.core import drs_file
 from apero.core.core import drs_log
+from apero.core.core import drs_text
 from apero.io import drs_fits
 from apero.io import drs_path
-
 
 # =============================================================================
 # Define variables
@@ -267,9 +267,10 @@ class DatabaseManager:
     def database_settings(self, kind: str, dparams: Union[dict, None] = None):
         """
         Load the initial database settings
-        :param kind:
-        :param dparams:
-        :return:
+        :param kind: str, the database kind (mysql or sqlite3)
+        :param dparams: dict, the database yaml dictionary
+
+        :return: None updates database settings
         """
         # load database yaml file
         if dparams is None:
@@ -494,7 +495,7 @@ class AstrometricDatabase(DatabaseManager):
         return self.database.count(condition=condition)
 
     def find_objnames(self, pconst: constants.PseudoConstants,
-                      objnames: List[str]) -> List[str]:
+                      objnames: Union[List[str], np.ndarray]) -> List[str]:
         """
         Wrapper around find_objname
 
@@ -947,7 +948,15 @@ class CalibrationDatabase(DatabaseManager):
             # return outfilenames
             return outfilenames, list(filetimes), list(reference)
 
-    def remove_entries(self, condition):
+    def remove_entries(self, condition: str):
+        """
+        Remove row(s) from a database
+
+        :param condition: str, the sql WHERE condition for removing row(s) from
+                          the database
+
+        :return: None, operation on database
+        """
         # set function
         # _ = display_func('remove_entries', __NAME__,
         #                  self.classname)
@@ -1372,7 +1381,15 @@ class TelluricDatabase(DatabaseManager):
             # return outfilenames
             return outfilenames
 
-    def remove_entries(self, condition):
+    def remove_entries(self, condition: str):
+        """
+        Remove row(s) from a database
+
+        :param condition: str, the sql WHERE condition for removing row(s) from
+                          the database
+
+        :return: None, operation on database
+        """
         # set function
         # _ = display_func('remove_entries', __NAME__,
         #                  self.classname)
@@ -1812,7 +1829,15 @@ class FileIndexDatabase(DatabaseManager):
         self.database.set('*', values=values, condition=condition,
                           unique_cols=ucols)
 
-    def remove_entries(self, condition):
+    def remove_entries(self, condition: str):
+        """
+        Remove row(s) from a database
+
+        :param condition: str, the sql WHERE condition for removing row(s) from
+                          the database
+
+        :return: None, operation on database
+        """
         # set function
         # _ = display_func('remove_entries', __NAME__,
         #                  self.classname)
@@ -2064,11 +2089,10 @@ class FileIndexDatabase(DatabaseManager):
                 rm_cond = '(OBS_DIR="{0}" AND FILENAME="{0}")'
                 rm_args = [remove_obs_dirs[r_it], remove_file]
                 rm_conditions.append(rm_cond.format(*rm_args))
-                # print removing file
-                # TODO: move to language database
-                msg = ('\t\tFile no longer on disk - removing from '
-                       'index database: {0}')
-                WLOG(self.params, 'warning', msg.format(remove_file))
+                # print removing file: File no longer on disk - removing from
+                #                file index database: {0}
+                wmsg = textentry('10-002-00008', args=[remove_file])
+                WLOG(self.params, 'warning', wmsg)
 
             # remove entries which no longer exist on disk
             if len(rm_conditions) > 0:
@@ -2157,11 +2181,11 @@ class FileIndexDatabase(DatabaseManager):
                     header = drs_fits.read_header(self.params, str(reqfile),
                                                   log=False)
                 except Exception as e:
-                    # TODO: move to language database
-                    wmsg = 'Skipping file {0}\n\tError {1}: {2}'
+                    # print error message as warning:
+                    #       Skipping file {0}\n\tError {1}: {2}'
                     wargs = [str(reqfile), type(e), str(e)]
-                    WLOG(self.params, 'warning', wmsg.format(*wargs),
-                         sublevel=6)
+                    wmsg = textentry('10-002-00009', args=wargs)
+                    WLOG(self.params, 'warning', wmsg, sublevel=6)
                     continue
                 # loop around required keys
                 for rkey in rkeys:
@@ -2542,7 +2566,9 @@ class LogDatabase(DatabaseManager):
                     swap_total: Union[float, None] = None,
                     cpu_usage_start: Union[float, None] = None,
                     cpu_usage_end: Union[float, None] = None,
-                    cpu_num: Union[int, None] = None):
+                    cpu_num: Union[int, None] = None,
+                    log_start: Union[str, None] = None,
+                    log_end: Union[str, None] = None):
         """
         Add a log entry to database
 
@@ -2591,6 +2617,9 @@ class LogDatabase(DatabaseManager):
                         fail - divided by ||
         :param errors: str, errors found and passed to this entry - divided by
                        ||
+        :param ended: int, 1 if ended, 0 if still running
+        :param flagnum: int, the integer version of the binary flag number
+        :param flagstr: str, the flag strings for each bit of the binary number
         :param used: int, if entry should be used - always 1 for use internally
         :param ram_usage_start: float, RAM usage GB at start of recipe
         :param ram_usage_end: float, RAM usage GB at end of recipe
@@ -2601,6 +2630,8 @@ class LogDatabase(DatabaseManager):
         :param cpu_usage_start: float, CPU usage (percentage) at start of recipe
         :param cpu_usage_end: float, CPU usage (percentrage) at end of recipe
         :param cpu_num: int, number of CPUs at start
+        :param log_start: str, the human time log sub-level started
+        :param log_end: str, the human time log sub-level ended
 
         :return: None - updates database
         """
@@ -2616,7 +2647,7 @@ class LogDatabase(DatabaseManager):
                 clean_error, ended, flagnum, flagstr, used,
                 ram_usage_start, ram_usage_end, ram_total, swap_usage_start,
                 swap_usage_end, swap_total, cpu_usage_start, cpu_usage_end,
-                cpu_num]
+                cpu_num, log_start, log_end]
         # get column names and column datatypes
         ldb_cols = self.pconst.LOG_DB_COLUMNS()
         coltypes = list(ldb_cols.dtypes)
@@ -2644,6 +2675,7 @@ class LogDatabase(DatabaseManager):
                     exclude_obs_dirs: Union[List[str], None] = None,
                     nentries: Union[int, None] = None,
                     condition: Union[str, None] = None,
+                    groupby: Union[str, None] = None,
                     ) -> Union[None, list, tuple, np.ndarray, pd.DataFrame]:
         """
         Get an entry from the index database (can set columns to return, or
@@ -2657,6 +2689,7 @@ class LogDatabase(DatabaseManager):
         :param nentries: int or None, if set limits the number of entries to get
                          back - sorted newest to oldest
         :param condition: str or None, if set the SQL query to add
+        :param groupby: str or None, if set the SQL group by column
 
         :return: the entries of columns, if nentries = 1 returns either that
                  entry (as a tuple) or None, if len(columns) = 1, returns
@@ -2696,13 +2729,17 @@ class LogDatabase(DatabaseManager):
                 subcondition = 'OBS_DIR="{0}"'.format(obs_dir)
                 subconditions.append(subcondition)
             # add to conditions
-            condition += ' AND ({0})'.format(' OR '.join(subconditions))
+            sql['condition'] += ' AND ({0})'.format(' OR '.join(subconditions))
         # ------------------------------------------------------------------
         # deal with blacklist directory set
         if exclude_obs_dirs is not None:
             for obs_dir in exclude_obs_dirs:
                 # add to condition
-                condition += ' AND (OBS_DIR!="{0}")'.format(obs_dir)
+                sql['condition'] += ' AND (OBS_DIR!="{0}")'.format(obs_dir)
+        # ------------------------------------------------------------------
+        # add a group by argument
+        if groupby is not None:
+            sql['groupby'] = groupby
         # ------------------------------------------------------------------
         # add the number of entries to get
         if isinstance(nentries, int):
@@ -2742,7 +2779,15 @@ class LogDatabase(DatabaseManager):
             # return pandas table
             return entries
 
-    def remove_entries(self, condition):
+    def remove_entries(self, condition: str):
+        """
+        Remove row(s) from a database
+
+        :param condition: str, the sql WHERE condition for removing row(s) from
+                          the database
+
+        :return: None, operation on database
+        """
         # set function
         # _ = display_func('remove_entries', __NAME__,
         #                  self.classname)
@@ -2816,7 +2861,13 @@ class RejectDatabase(DatabaseManager):
         """
         Add a reject entry to database
 
+        :param identifier: str, the identifying unique string for this
+                           observation
+        :param pp_flag: bool, if True reject at the preprocessing level
+        :param tel_flag: bool, if True reject at the telluric processing level
+        :param rv_flag: bool, if True reject at the RV processing level
         :param used: int, if entry should be used - always 1 for use internally
+        :param comment:
 
         :return: None - updates database
         """
@@ -2922,7 +2973,15 @@ class RejectDatabase(DatabaseManager):
             # return pandas table
             return entries
 
-    def remove_entries(self, condition):
+    def remove_entries(self, condition: str):
+        """
+        Remove row(s) from a database
+
+        :param condition: str, the sql WHERE condition for removing row(s) from
+                          the database
+
+        :return: None, operation on database
+        """
         # set function
         # _ = display_func('remove_entries', __NAME__,
         #                  self.classname)
@@ -2946,9 +3005,11 @@ class PandasDBStorage:
         """
         Constructs the Pandas database storage class
         """
-        pass
+        self.obs_paths = dict(OBS_PATHS)
+        self.filedbs = dict(FILEDBS)
 
-    def set(self, key: str, value: Any):
+    @staticmethod
+    def set(key: str, value: Any):
         """
         Setter function to store value of "key" globally
 
@@ -2982,7 +3043,8 @@ class PandasDBStorage:
             emsg = 'Key "{0}" not found in {1}'
             raise KeyError(emsg.format(key, self.classname))
 
-    def reset(self, key: Optional[str] = None, subkey: Optional[str] = None):
+    @staticmethod
+    def reset(key: Optional[str] = None, subkey: Optional[str] = None):
         """
         Resets "key" globally to default value / remove subkey
 

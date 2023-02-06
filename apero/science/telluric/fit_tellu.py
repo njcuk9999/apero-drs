@@ -7,26 +7,25 @@ Created on 2020-07-2020-07-15 17:55
 
 @author: cook
 """
-import numpy as np
 import os
 import time
 import warnings
 from typing import Optional
 
+import numpy as np
+
+from apero import lang
 from apero.base import base
 from apero.core import constants
 from apero.core import math as mp
-from apero import lang
 from apero.core.core import drs_log, drs_file
+from apero.core.utils import drs_recipe
 from apero.io import drs_fits
 from apero.io import drs_path
-from apero.io import drs_table
-from apero.core.utils import drs_recipe
+from apero.science import extract
 from apero.science.calib import flat_blaze
 from apero.science.calib import wave
-from apero.science import extract
 from apero.science.telluric import gen_tellu
-
 
 # =============================================================================
 # Define variables
@@ -102,7 +101,7 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, refprops,
                                 path=params['DRS_TELLU_DB'])
     abso1_npy_filename = 'tellu_save1_{0}.npy'.format(recent_filetime)
     abso1_npy.construct_filename(filename=abso1_npy_filename,
-                                path=params['DRS_TELLU_DB'])
+                                 path=params['DRS_TELLU_DB'])
     # noinspection PyBroadException
     try:
         # try loading from file
@@ -299,17 +298,17 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, refprops,
 
 def shift_template(params: ParamDict, recipe: DrsRecipe,
                    image: Optional[np.ndarray],
-                   e2dsimage: Optional[np.ndarray],
-                   refprops: ParamDict, wprops: ParamDict, bprops: ParamDict,
-                   **kwargs):
+                   template_props: ParamDict,
+                   refprops: ParamDict, wprops: ParamDict,
+                   bprops: ParamDict) -> ParamDict:
+
+
     # set function name
     func_name = display_func('shift_template', __NAME__)
-
     # ------------------------------------------------------------------
-    # get constants from params/kwargs
-    # ------------------------------------------------------------------
-    # fit_keep_num = pcheck(params, 'FTELLU_FIT_KEEP_NUM', 'fit_keep_num',
-    #                       kwargs, func_name)
+    # no template - do nothing
+    if not template_props['HAS_TEMPLATE']:
+        return template_props
     # ------------------------------------------------------------------
     # get data from property dictionaries
     # ------------------------------------------------------------------
@@ -328,58 +327,46 @@ def shift_template(params: ParamDict, recipe: DrsRecipe,
     # ------------------------------------------------------------------
     # Interpolate at shifted wavelengths (if we have a e2dsimage)
     # ------------------------------------------------------------------
-    if e2dsimage is not None:
-        # Log that we are shifting the template
-        WLOG(params, '', textentry('40-019-00017'))
-        # set up storage for template
-        #e2dsimage2 = np.zeros(np.product(e2dsimage.shape))
-        # ydim, xdim = e2dsimage.shape
-        # # loop around orders
-        # for order_num in range(ydim):
-        #     # find good (not NaN) pixels
-        #     keep = np.isfinite(e2dsimage[order_num, :])
-        #     # if we have enough values spline them
-        #     if mp.nansum(keep) > fit_keep_num:
-        #         # define keep wave
-        #         keepwave = wavemap_ref[order_num, keep]
-        #         # define keep temp
-        #         keeptemp = e2dsimage[order_num, keep]
-        #         # calculate interpolation for keep temp at keep wave
-        #         spline = mp.iuv_spline(keepwave, keeptemp, ext=3, k=1)
-        #
-        #         waveshift = wavemap_ref[order_num, :] * dvshift
-        #         # interpolate at shifted wavelength
-        #         start = order_num * xdim
-        #         end = order_num * xdim + xdim
-        #         e2dsimage2[start:end] = spline(waveshift)
-
-
-        # interpolate at shifted values
-        dvshift = mp.relativistic_waveshift(dv, units='km/s')
-        # ------------------------------------------------------------------
-        # Shift the e2ds to correct wave frame
-        # ------------------------------------------------------------------
-        # log the shifting of PCA components
-        wargs = [wavefile_ref, wavefile]
-        WLOG(params, '', textentry('40-019-00021', args=wargs))
-        # shift template
-        e2dsimage2 = gen_tellu.wave_to_wave(params, e2dsimage,
-                                            wavemap_ref / dvshift,
-                                            wavemap, reshape=True)
-
-        # debug plot - reconstructed spline (in loop)
-        recipe.plot('FTELLU_RECON_SPLINE1', image=image, wavemap=wavemap,
-                    template=e2dsimage2.ravel(), order=None)
-        # debug plot - reconstructed spline (selected order)
-        recipe.plot('FTELLU_RECON_SPLINE2', image=image, wavemap=wavemap,
-                    template=e2dsimage2.ravel(),
-                    order=params['FTELLU_SPLOT_ORDER'])
-
-    else:
-        e2dsimage2 = None
-
+    # Log that we are shifting the template
+    WLOG(params, '', textentry('40-019-00017'))
+    # interpolate at shifted values
+    dvshift = mp.relativistic_waveshift(dv, units='km/s')
+    # ------------------------------------------------------------------
+    # Shift the e2ds to correct wave frame
+    # ------------------------------------------------------------------
+    # log the shifting of PCA components
+    wargs = [wavefile_ref, wavefile]
+    WLOG(params, '', textentry('40-019-00021', args=wargs))
+    # shift template e2ds
+    template_e2ds = gen_tellu.wave_to_wave(params, template_props['TEMP_S2D'],
+                                           wavemap_ref / dvshift,
+                                           wavemap, reshape=True)
+    # push into 2D vector shape = 1 by len(s1d_table)
+    tmp_wave = np.array([template_props['TEMP_S1D_TABLE']['wavelength']])
+    tmp_s1d = np.array([template_props['TEMP_S1D_TABLE']['flux']])
+    tmp_s1d_deconv = np.array([template_props['TEMP_S1D_TABLE']['deconv']])
+    # shift template s1d
+    template_s1d = gen_tellu.wave_to_wave(params, tmp_s1d,
+                                          tmp_wave / dvshift,
+                                          tmp_wave, reshape=False)
+    template_s1d_deconv = gen_tellu.wave_to_wave(params, tmp_s1d_deconv,
+                                                 tmp_wave / dvshift,
+                                                 tmp_wave, reshape=False)
+    # debug plot - reconstructed spline (in loop)
+    recipe.plot('FTELLU_RECON_SPLINE1', image=image, wavemap=wavemap,
+                template=template_e2ds.ravel(), order=None)
+    # debug plot - reconstructed spline (selected order)
+    recipe.plot('FTELLU_RECON_SPLINE2', image=image, wavemap=wavemap,
+                template=template_e2ds.ravel(),
+                order=params['FTELLU_SPLOT_ORDER'])
+    # -------------------------------------------------------------------------
+    # push back into template props
+    template_props['TEMP_S2D'] = template_e2ds
+    template_props['TEMP_S1D_TABLE']['flux'] = template_s1d
+    template_props['TEMP_S1D_TABLE']['deconv'] = template_s1d_deconv
+    # -------------------------------------------------------------------------
     # return the updated e2ds (if present)
-    return e2dsimage2
+    return template_props
 
 
 def shift_all_to_frame(params, recipe, image, template, bprops, refprops, wprops,
@@ -827,22 +814,27 @@ def calc_recon_and_correct(params, recipe, image, wprops, pca_props, sprops,
 
 
 def calc_res_model(params, recipe, image, image1, trans_props, tpreprops,
-                   refprops, wprops) -> ParamDict:
+                   refprops, wprops, infile,
+                   min_trans: Optional[float] = None) -> ParamDict:
     """
     Calculate the residual model and apply it to the image
 
     :param params: ParamDict, parameter dictionary of constants
     :param recipe:
+    :param image:
     :param image1:
     :param trans_props:
     :param tpreprops:
     :param refprops:
     :param wprops:
-    :param bprops:
+
     :return:
     """
     # set function name
     func_name = display_func('calc_res_model', __NAME__)
+    # get the minimum allowed transmission
+    min_trans = pcheck(params, 'FTELLU_FIT_MIN_TRANS', func=func_name,
+                       override=min_trans)
     # get vectors from transmission model
     zero_res = trans_props['ZERO_RES']
     water_res = trans_props['WATER_RES']
@@ -852,10 +844,10 @@ def calc_res_model(params, recipe, image, image1, trans_props, tpreprops,
     expo_others = tpreprops['EXPO_OTHERS']
     # calculate model for predicted residuals (in reference frame)
     pwater = expo_water * water_res
-    pothers =  expo_others * others_res
+    pothers = expo_others * others_res
     res_model = np.exp(zero_res + pwater + pothers)
     # shift model to image frame
-    wargs = [params, res_model,  refprops['WAVEMAP'], wprops['WAVEMAP']]
+    wargs = [params, res_model, refprops['WAVEMAP'], wprops['WAVEMAP']]
     res_model2 = gen_tellu.wave_to_wave(*wargs, splinek=1)
     # ------------------------------------------------------------------
     # Calculate reconstructed absorption + correct E2DS file
@@ -865,13 +857,21 @@ def calc_res_model(params, recipe, image, image1, trans_props, tpreprops,
     # recon is the absorption model from pre-cleaning multipled by the
     #    residual model
     recon_abso = tpreprops['ABSO_E2DS'] * res_model2
+    # cut out bad transmissions
+    mask = recon_abso < min_trans
+    mask |= recon_abso > (1 + min_trans)
+    # apply to the spectrum and the recon
+    sp_out[mask] = np.nan
+    recon_abso[mask] = np.nan
     # ------------------------------------------------------------------
     # Plot wavelength vs vectors
     # ------------------------------------------------------------------
     # set up plot args
-    pkwargs = dict( wprops=wprops, image=image,
-                image1=image1, sp_out=sp_out, res_model2=res_model2,
-                tpreprops=tpreprops, recon_abso=recon_abso)
+    pkwargs = dict(wprops=wprops, image=image,
+                   image1=image1, sp_out=sp_out, res_model2=res_model2,
+                   tpreprops=tpreprops, recon_abso=recon_abso,
+                   objname = infile.get_hkey('KW_OBJNAME', dtype=str),
+                   dprtype = infile.get_hkey('KW_DPRTYPE', dtype=str))
     # debug plot
     recipe.plot('FTELLU_RES_MODEL', **pkwargs)
     # summary plot
@@ -912,12 +912,37 @@ def correct_other_science(params, recipe, fiber, infile, cprops, rawfiles,
     bout = flat_blaze.get_blaze(params, header, fiber)
     blaze_file, blaze_time, blaze = bout
     # ------------------------------------------------------------------
+    # Correct for sky
+    # ------------------------------------------------------------------
+    # calculate the ratio between this fibers image and the usm of all fibers
+    ratio = mp.nanmedian(image / tpreprops['PRE_SKYCORR_IMAGE'])
+    # print ratio
+    # TODO: Add to language database
+    msg = '\tRatio of individual fiber={0} to sum of all fibers is: {1:.3f}'
+    margs = [fiber, ratio]
+    WLOG(params, '', msg.format(*margs))
+    # deal with out of bounds ratios
+    if not (0.45 < ratio < 0.55):
+        ratio = 0.5
+        # TODO: Add to language database
+        wmsg = ('\tRatio of individual fiber={0} to sum of all fibers is out of'
+                'bounds (0.45 < ratio < 0.55)')
+        wargs = [fiber]
+        WLOG(params, 'warning', wmsg.format(*wargs), sublevel=3)
+    # correct for the sky
+    image1 = image - ratio * tpreprops['SKY_MODEL']
+
+    # ------------------------------------------------------------------
     # Correct spectrum with simple division
     # ------------------------------------------------------------------
     # corrected data is just input data / recon
     # recon here was multiplied by the blazeAB so this needs to be taken into
     #   account again by multipling image by blazeAB (from nprops)
-    scorr = image / cprops['RECON_ABSO']
+    scorr = image1 / cprops['RECON_ABSO']
+    # ------------------------------------------------------------------
+    # Correct for finite resolution
+    # ------------------------------------------------------------------
+    scorr = scorr / tpreprops['TELLU_FINITE_RES']
     # ------------------------------------------------------------------
     # fake nprop dict
     nprops = dict()
@@ -1045,7 +1070,6 @@ def fit_tellu_summary(recipe, it, params, qc_params, tpreprops, fiber):
 def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
                               nprops, wprops, trans_props, cprops,
                               qc_params, template_props, tpreprops, **kwargs):
-    func_name = __NAME__ + '.fit_tellu_write_corrected()'
     # get parameters from cprops
     sp_out = kwargs.get('CORRECTED_SP', cprops['CORRECTED_SP'])
     # ------------------------------------------------------------------
@@ -1094,6 +1118,8 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
     corrfile.add_hkey('KW_TELLUP_DV_OTHERS', value=tpreprops['DV_OTHERS'])
     corrfile.add_hkey('KW_TELLUP_DO_PRECLEAN',
                       value=tpreprops['TELLUP_DO_PRECLEANING'])
+    corrfile.add_hkey('KW_TELLUP_DO_FINITE_RES',
+                      value=tpreprops['FINITE_RES_CORRECTED'])
     corrfile.add_hkey('KW_TELLUP_DFLT_WATER',
                       value=tpreprops['TELLUP_D_WATER_ABSO'])
     corrfile.add_hkey('KW_TELLUP_CCF_SRANGE',
@@ -1361,6 +1387,7 @@ def _remove_absonpy_files(params, path, prefix):
             # debug log removal of other abso files
             WLOG(params, 'debug', textentry('90-019-00002', args=[abspath]))
             # remove file
+            # noinspection PyBroadException
             try:
                 os.remove(abspath)
             except Exception as _:
