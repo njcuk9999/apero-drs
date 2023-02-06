@@ -2086,8 +2086,8 @@ class FileIndexDatabase(DatabaseManager):
             # loop around files to remove
             for r_it, remove_file in enumerate(remove_files):
                 # add remove file condition with obs_dir + filename
-                rm_cond = '(OBS_DIR="{0}" AND FILENAME="{0}")'
-                rm_args = [remove_obs_dirs[r_it], remove_file]
+                rm_cond = '(OBS_DIR="{0}" AND FILENAME="{1}")'
+                rm_args = [remove_obs_dirs[r_it], os.path.basename(remove_file)]
                 rm_conditions.append(rm_cond.format(*rm_args))
                 # print removing file: File no longer on disk - removing from
                 #                file index database: {0}

@@ -502,7 +502,7 @@ pp_dark_dark = drs_finput('DARK_DARK', filetype='.fits',
                           description='Preprocessed sci=DARK calib=DARK file')
 pp_file.addset(pp_dark_dark)
 
-pp_flux_sky_sky = drs_finput('DARK_DARK_SKY', filetype='.fits',
+pp_flux_sky_sky = drs_finput('FLUX_SKY_SKY', filetype='.fits',
                               suffix='_pp', intype=raw_flux_sky_sky,
                               inext='.fits', outclass=general_ofile,
                               hkeys=dict(KW_DPRTYPE='FLUX_SKY_SKY'),
@@ -510,10 +510,10 @@ pp_flux_sky_sky = drs_finput('DARK_DARK_SKY', filetype='.fits',
                                           'file')
 pp_file.addset(pp_flux_sky_sky)
 
-pp_night_sky_sky = drs_finput('DARK_DARK_SKY', filetype='.fits',
+pp_night_sky_sky = drs_finput('NIGHT_SKY_SKY', filetype='.fits',
                               suffix='_pp', intype=raw_night_sky_sky,
                               inext='.fits', outclass=general_ofile,
-                              hkeys=dict(KW_DPRTYPE='FLUX_SKY_SKY'),
+                              hkeys=dict(KW_DPRTYPE='NIGHT_SKY_SKY'),
                               description='Preprocessed night sci=SKY '
                                           'calib=SKY file')
 pp_file.addset(pp_night_sky_sky)
