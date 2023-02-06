@@ -7411,7 +7411,7 @@ def check_input_qc(params: ParamDict, drsfiles: List[DrsFitsFile],
     # do not check if flag is false
     if 'INPUTS' in params:
         if 'NO_IN_QC' in params['INPUTS']:
-            if not drs_text.true_text(params['INPUTS']['NO_IN_QC']):
+            if drs_text.true_text(params['INPUTS']['NO_IN_QC']):
                 return drsfiles
     # -------------------------------------------------------------------------
     # print progress

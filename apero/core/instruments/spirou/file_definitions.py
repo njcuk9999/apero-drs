@@ -554,6 +554,11 @@ pp_polar_fp = drs_finput('POLAR_FP', hkeys=dict(KW_DPRTYPE='POLAR_FP'),
                          description='Preprocessed sci=POLAR calib=FP')
 pp_file.addset(pp_polar_fp)
 
+
+# define all science observations
+science_pp = [pp_obj_dark, pp_obj_fp, pp_polar_dark, pp_polar_fp]
+science_dprtypes = ['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK', 'POLAR_FP']
+
 # -----------------------------------------------------------------------------
 #  comparison
 pp_dark_hc1 = drs_finput('DARK_HCONE', hkeys=dict(KW_DPRTYPE='DARK_HCONE'),
