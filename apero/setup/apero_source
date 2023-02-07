@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+py_output=$(apero_source_wrapped $@)
+
+if [ $? -eq 0 ]; then
+  source $py_output
+fi

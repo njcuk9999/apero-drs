@@ -25,11 +25,15 @@ for path in tools_path.iterdir():
         paths.append(path)
 
 # %%
-scripts = []
+all_files = [get_relative_path("apero/setup/apero_source")]
 for path in paths:
     for f in path.iterdir():
-        if f.is_file() and os.access(f, os.X_OK) and f.name != "__init__.py":
-            scripts.append(os.path.relpath(str(f)))
+        all_files.append(f)
+
+scripts = []
+for f in all_files:
+    if f.is_file() and os.access(f, os.X_OK) and f.name != "__init__.py":
+        scripts.append(os.path.relpath(str(f)))
 
 # %%
 setup(scripts=scripts)
