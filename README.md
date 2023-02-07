@@ -66,6 +66,23 @@ Please see the documentation:
 [Back to top](#apero---a-pipeline-to-reduce-observations)
 
 
+- Sqlite version:
+  - cd {APERO ROOT}
+  - pip install -U -E .
+  - apero_install.py --name={apero profile} --database_mode=1
+- MySQL version:
+  - cd {APERO ROOT}
+  - pip install -U -E ".[mysql]"
+  - apero_install.py --name={apero profile} --database_mode=2
+- Sqlite dev version:
+  - cd {APERO ROOT}
+  - pip install -U -E ".[dev]"
+  - apero_install.py --name={apero profile} --database_mode=1 --dev
+- MySQL dev version:
+  - cd {APERO ROOT}
+  - pip apero_install -U -E ".[dev,mysql]"
+  - apero_install.py --name={apero profile} --database_mode=2 --dev
+
 Please see the documentation:
 - [ONLINE] https://www.astro.umontreal.ca/~cook/apero-drs/main/general/installation.html#setup
 - [LOCAL HTML] documentation/output/main/general/installation.html
