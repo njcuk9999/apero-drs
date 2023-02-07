@@ -23,17 +23,13 @@ from typing import Any, List, Tuple, Union
 from apero.tools.module.setup import drs_installation as install
 from apero.core import constants
 from apero.base import drs_base, base
-
-# TODO: Is this still needed or can we use the DRS (@neil)?
-import setup_lang
-# TODO: Update after moving files
-from utils import catch_sigint
+from apero.setup import setup_lang
+from apero.setup.utils import catch_sigint
 
 # =============================================================================
 # Define variables
 # =============================================================================
-# TODO: Change after moving file
-__NAME__ = 'setup.install.py'
+__NAME__ = 'apero_setup.py'
 __INSTRUMENT__ = 'None'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__

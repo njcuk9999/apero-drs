@@ -1,3 +1,4 @@
 include apero/setup/data/*.txt
 include apero/data/*/*/*.csv
 include apero/lang/*/*.csv
+graft apero/data/*

@@ -1,7 +1,7 @@
 import sys
 from typing import Any
 
-import setup_lang
+from apero.setup import setup_lang
 
 
 lang = setup_lang.LangDict()

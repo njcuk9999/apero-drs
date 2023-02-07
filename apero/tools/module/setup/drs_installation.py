@@ -119,7 +119,7 @@ def get_home_config_dir() -> Path:
 
 def get_home_profiles_path() -> Path:
     home_config_dir = get_home_config_dir()
-    # TODO: Should file name be in var/const somewhere
+    # TODO: Should file name be in var/const somewhere?
     return home_config_dir.joinpath("profiles.yaml")
 
 def read_home_profiles() -> dict:

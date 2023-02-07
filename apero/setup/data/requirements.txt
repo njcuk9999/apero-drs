@@ -3,10 +3,11 @@
 astropy==5.2.1
 astroquery==0.4.6
 barycorrpy==0.4.4
-Bottleneck==1.3.6
+jottleneck==1.3.6
 duckdb==0.6.1
 matplotlib==3.6.3
 GitPython==3.1.30
+# NOTE: This is built into importlib for python 3.10. Need this package for now
 importlib-resources==5.9.0
 numba==0.56.4
 numexpr==2.8.4

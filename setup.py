@@ -55,11 +55,23 @@ for path in binpath.iterdir():
 for path in tools_path.iterdir():
     if path.is_dir():
         paths.append(path)
-# Find all __init__.py files in paths
+# Find all script/executable files in package (except init files)
 scripts = []
 for path in paths:
     for f in path.iterdir():
         if f.is_file() and os.access(f, os.X_OK) and f.name != "__init__.py":
             scripts.append(os.path.relpath(str(f)))
+
+# Include apero_soure shell script in addition to executable Python files
+all_files = [get_relative_path("apero/setup/apero_source")]
+for path in paths:
+    for f in path.iterdir():
+        all_files.append(f)
+
+scripts = []
+for f in all_files:
+    if f.is_file() and os.access(f, os.X_OK) and f.name != "__init__.py":
+        scripts.append(os.path.relpath(str(f)))
+
 # run the python setup using the list of scripts
 setup(scripts=scripts)
