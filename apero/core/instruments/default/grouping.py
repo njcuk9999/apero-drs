@@ -471,6 +471,79 @@ def group_by_polar_sequence(rargs: Dict[str, DrsArgument],
         index database as inputs and must return a list of masks (each mask
         is the same length as the table)
 
+        Uses CMPLTEXP, NEXP, DRSOBJN, observation directory
+
+        CMPLTEXP is the exposure number within the group
+        NEXP is the total number of exposures in the group
+        DRSOBJN is the apero cleaned object name
+
+        We define groups based on sorting all observations in time and the
+        following criteria:
+
+        if observation object name is not the same as the previous one we start
+        a new group
+
+        if observation directory is different start a new group
+
+        if current exposure number is already in group replace that observation
+        with this one
+
+        if current exposure number is greater than the total number of
+        exposures for that group start a new group
+
+        if we have enough entries in a group start a new group
+
+        So  assuming NEXP = 4
+
+            1234 --> group1 = 1234
+
+            123123   -->   group1 = 123    group2 = 123    (if next observation
+            is a different object this would be it, if it were the same obj
+            you may get )
+
+            same obj 1231234  -->   rejects first "1", "2" and "3" and keeps
+                                    last 1,2,3,4
+            diff obj 123 {1234} -->  group1 = 123, group2 = 1234
+
+            11234  -->  rejects the first "1"
+
+            12341  -->  makes a group 1234 and starts a new group with
+                        the last "1"
+
+            12134  --> rejects the first "1"
+
+            12 long gap but no other sequences 34  --> 1234
+
+            same object 12 {1234} 34 1234   -->  reject first "1,2"
+                                                 makes 1234  reject second
+                                                 "3,4" and makes 1234 from
+                                                 last 4
+            diff objects:
+
+                obj1 12  obj2 {1234} obj1 34 obj1 1234  -->  1,2 obj1
+                                                             then 1234 obj2
+                                                             then rejects 3,4
+                                                             obj1 and groups
+                                                             1234 obj1
+
+                obj1 12  obj2 {1234} obj1 34 obj2 1234  -->  1,2 obj1
+                                                             then 1234 obj2
+                                                             group 3,4
+                                                             (possibly with
+                                                             future obj?) and
+                                                             groups 1234 obj2
+
+
+            long gap would be a problem only if same object is in inbetween
+                (doesn't make sense)
+
+            might be problems with 3,4 left over and the same object afterwards
+
+        So its pretty good but there are probably still ways of breaking it.
+        You can always choose manually which files go to EXP1, EXP2, EXP3, EXP4
+        in apero_polar_spirou.py to produce the internal products.
+        and then re-run apero_postprocessing_spirou.py to produce the p.fits
+
         :param table: astropy.table - the inputted "table" sorted to match
                       masks
 
@@ -570,7 +643,7 @@ def group_by_polar_sequence(rargs: Dict[str, DrsArgument],
             #   and set the current mask to zero and reset the current number
             #   to zero
             # ----> add to current group
-            # if we have enough entres (==nexp) ----> start new group after add
+            # if we have enough entries (==nexp) ----> start new group after add
             elif current == num_arr[row]:
                 # add this row to current group
                 current_mask[row] = True

@@ -23,6 +23,7 @@ from collections import UserDict
 from typing import Any, List, Optional, Union
 
 import duckdb
+import numpy as np
 import pandas as pd
 from pandasql import sqldf
 
@@ -411,6 +412,40 @@ class ListDict(UserDict):
         :return: str, the string representation
         """
         return self.__str__()
+
+
+
+class BinaryMatrix():
+    def __init__(self, shape):
+        # store the matrix
+        self.data = np.zeros(shape, dtype=np.uint64)
+        # store keys
+        self.keys = []
+
+    def add_key(self, key):
+        if key not in self.keys:
+            self.keys.append(key)
+
+    def decode(self, key):
+        # get position in array
+        pos = self.keys.index(key)
+        # return the mask for this key
+        return self.data >> pos == 1
+
+    def encode(self, key, mask: np.ndarray):
+        # make a bit mask of uint64
+        bits = np.zeros(mask.shape, dtype=np.uint64)
+        bits[mask] = 1
+        # get position of the key in keys
+        if key not in self.keys:
+            raise ValueError(f'{key} not valid.')
+        # get position in array
+        pos = self.keys.index(key)
+        # add to the data (shift bits and combine with a bit-wise or
+        self.data |= bits << pos
+
+
+
 
 
 class BinaryDict(UserDict):
