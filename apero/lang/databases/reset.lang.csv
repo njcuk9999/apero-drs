@@ -144,17 +144,7 @@ will be removed.
 Note you can always say later to individual cases.  
 
 Note if you have given empty directories you MUST run a clean install to copy the required files to the given directories.","","","INSTALL_CLEAN_MSG","TEXT"
-"None","Add an alias in your ~/.bashrc or ~/.bash_profile or ~/.tcshrc or ~/.profile or ~/.zshrc or ~/.zprofile         
-and then type ""{NAME}"" every time you wish to run apero.          
-
-i.e. for bash              
-alias {NAME}=""source {DRS_UCONFIG}{NAME}.bash.setup""          
-
-i.e. for sh             
-alias {NAME} ""source {DRS_UCONFIG}{NAME}.sh.setup""         
-
-i.e. for zsh              
-alias {NAME} ""source {DRS_UCONFIG}{NAME}.zsh.setup""","","","INSTALL_ALIAS_MSG","TEXT"
+"None","This APERO profile can now be sourced with the command ""source apero_source {NAME}"" or "". apero_source {NAME}"" every time you want to use it.","","","INSTALL_ALIAS_MSG","TEXT"
 "None","For MySQL you must define some parameters, these will take the form:
 
     >> mysql -h {HOSTNAME} -n {USERNAME} -p {PASSWORD}
