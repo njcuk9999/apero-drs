@@ -14,7 +14,6 @@ Import Rules: Cannot use anything other than standard python 3 packages
 
 """
 import csv
-import os
 # NOTE: This is built into importlib for python 3.10. Need this package for now
 from importlib_resources import files
 
@@ -23,8 +22,7 @@ from apero.base import base
 # =============================================================================
 # Define variables
 # =============================================================================
-# TODO: Change after moving file
-__NAME__ = 'setup.setup_lang.py'
+__NAME__ = 'setup_lang.py'
 __INSTRUMENT__ = 'None'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
