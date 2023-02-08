@@ -196,16 +196,11 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     cprops = telluric.make_template_cubes(params, recipe, *cargs,
                                           calibdb=calibdbm)
     # ----------------------------------------------------------------------
-    # deal with QC params failure (do not continue)
+    # deal with QC params failure
     if not np.all(cprops['QC_PARAMS'][3]):
         # print qc failure
-        telluric.mk_template_qc(params, qc_params, cprops['FAIL_MSG'])
-        # update recipe log
-        recipe.log.add_qc(cprops['QC_PARAMS'], True)
-        # update recipe log file
-        recipe.log.end()
-        # end here
-        return locals()
+        qc_params, passed = telluric.mk_template_qc(params, qc_params,
+                                                    cprops['FAIL_MSG'])
     # ----------------------------------------------------------------------
     # Make s1d cubes
     # ----------------------------------------------------------------------
