@@ -1606,8 +1606,8 @@ def _get_hdict(params: ParamDict, dbname: str, drsfile: DrsFileTypes = None,
     # deal with having both hdict and heaader
     if cond1 and cond2:
         # combine
-        hdict = drsfile.hdict
-        header = drsfile.header
+        hdict = _force_apero_header(drsfile.hdict)
+        header = _force_apero_header(drsfile.header)
         # add keys from hdict to header
         for key in hdict:
             # do not look at forbidden keys
@@ -1619,17 +1619,32 @@ def _get_hdict(params: ParamDict, dbname: str, drsfile: DrsFileTypes = None,
         hdict = None
     # deal with only having hdict
     elif cond1:
-        hdict = drsfile.hdict
+        hdict = _force_apero_header(drsfile.hdict)
         header = None
     # deal with only having header
     elif cond2:
         hdict = None
-        header = drsfile.get_header()
+        header = _force_apero_header(drsfile.get_header())
     else:
         eargs = [dbname, drsfile.name, func_name]
         WLOG(params, 'error', textentry('00-001-00027', args=eargs))
         hdict, header = None, None
     return hdict, header
+
+
+def _force_apero_header(header: Union[drs_fits.fits.Header, drs_fits.Header]
+                        ) -> drs_fits.Header:
+    """
+    Force a header to be an apero fits header
+
+    :param header: either an apero fits Header or an astropy fits Header
+
+    :return: the apero fits Header equivalent
+    """
+    if isinstance(header, drs_fits.Header):
+        return header
+    else:
+        return drs_fits.Header(header)
 
 
 def _get_time(params: ParamDict, dbname: str,
