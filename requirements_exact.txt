@@ -36,7 +36,7 @@ imageio==2.25.0
 imagesize==1.4.1
 importlib-metadata==6.0.0
 ipdb==0.13.11
-ipython==8.8.0
+ipython==8.10.0
 jaraco.classes==3.2.3
 jedi==0.18.2
 jeepney==0.8.0
