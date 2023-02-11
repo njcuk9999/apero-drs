@@ -1372,6 +1372,8 @@ pp_seq_opt.add(apero_preprocess, name='PP_FF', files=[files.raw_flat_flat],
                recipe_kind='pre-ff')
 pp_seq_opt.add(apero_preprocess, name='PP_DFP', files=[files.raw_dark_fp],
                recipe_kind='pre-dfp')
+pp_seq_opt.add(apero_preprocess, name='PP_FPD', files=[files.raw_fp_dark],
+               recipe_kind='pre-fpd')
 pp_seq_opt.add(apero_preprocess, name='PP_SKY',
                files=[files.raw_night_sky_sky],
                recipe_kind='pre-sky')
