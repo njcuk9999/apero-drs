@@ -226,6 +226,14 @@ def extract_files(params: ParamDict, recipe: DrsRecipe,
     # if we have a obs_dir then add this to the group name path
     if not drs_text.null_text(params['OBS_SUBDIR'], ['None', '', 'Null']):
         groupname = os.path.join(params['OBS_SUBDIR'], groupname)
+
+    # ------------------------------------------------------------------
+    # Get the correct observation directory
+    # ------------------------------------------------------------------
+    inpath = params['INPATH']
+    obs_dir = os.path.dirname(infile.filename).split(inpath)[1]
+    # remove leading/trailing slashes
+    obs_dir = obs_dir.strip(os.sep)
     # ------------------------------------------------------------------
     # Get the output hc e2ds filename (and check if it exists)
     # ------------------------------------------------------------------
@@ -235,8 +243,11 @@ def extract_files(params: ParamDict, recipe: DrsRecipe,
     e2ds_files = dict()
     # loop around fiber types
     for fiber in fiber_types:
+        # need to copy params and change observation directory
+        tmp_params = params.copy()
+        tmp_params['OBS_DIR'] = obs_dir
         # get copy file instance
-        e2ds_file = outfile.newcopy(params=params, fiber=fiber)
+        e2ds_file = outfile.newcopy(params=tmp_params, fiber=fiber)
         # construct the filename from file instance
         e2ds_file.construct_filename(infile=infile)
         # check whether e2ds file exists
@@ -268,7 +279,10 @@ def extract_files(params: ParamDict, recipe: DrsRecipe,
         kwargs['force_ref_wave'] = force_ref_wave
         # force the input directory (combined files go to reduced dir)
         kwargs['force_indir'] = path_ins.block_kind
-
+        # if CRUNFILE is set add it to the kwargs
+        crunfile = params['INPUTS']['CRUNFILE']
+        if not drs_text.null_text(crunfile, ['', 'None', 'Null']):
+            kwargs['crunfile'] = crunfile
         # push data to extraction code
         data_dict = ParamDict()
         # data_dict['files'] = [infile]
