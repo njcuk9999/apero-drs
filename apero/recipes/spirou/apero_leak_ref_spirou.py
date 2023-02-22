@@ -15,11 +15,9 @@ from apero import lang
 from apero.base import base
 from apero.core import constants
 from apero.core.core import drs_database
-from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
-from apero.core.utils import drs_utils
 from apero.science.calib import leak
 from apero.science.extract import other as extother
 
@@ -98,10 +96,6 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # Main Code
     # ----------------------------------------------------------------------
     mainname = __NAME__ + '._main()'
-    # extract file type from inputs
-    filetypes = params['INPUTS'].listp('FILETYPE', dtype=str)
-    # get allowed dark types
-    allowedtypes = params.listp('ALLOWED_LEAKREF_TYPES', dtype=str)
     # set up plotting (no plotting before this)
     recipe.plot.set_location()
     # load the calibration database
@@ -110,36 +104,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # ----------------------------------------------------------------------
     # Get all dark_fp files for directory
     # ----------------------------------------------------------------------
-    infiles, rawfiles = [], []
-    # check file type
-    for filetype in filetypes:
-        # ------------------------------------------------------------------
-        # check whether filetype is in allowed types
-        if filetype not in allowedtypes:
-            emsg = textentry('01-001-00020', args=[filetype, mainname])
-            for allowedtype in allowedtypes:
-                emsg += '\n\t - "{0}"'.format(allowedtype)
-            WLOG(params, 'error', emsg)
-        # ------------------------------------------------------------------
-        # check whether filetype is allowed for instrument
-        # get definition
-        gkwargs = dict(block_kind='tmp', required=False)
-        darkfpfile = drs_file.get_file_definition(params, filetype, **gkwargs)
-        # deal with defintion not found
-        if darkfpfile is None:
-            eargs = [filetype, recipe.name, mainname]
-            WLOG(params, 'error', textentry('09-010-00001', args=eargs))
-        # ------------------------------------------------------------------
-        # get all "filetype" filenames
-        files = drs_utils.find_files(params, block_kind='tmp',
-                                     filters=dict(KW_DPRTYPE=filetype,
-                                                  OBS_DIR=params['OBS_DIR']))
-        # create infiles
-        for filename in files:
-            infile = darkfpfile.newcopy(filename=filename, params=params)
-            infile.read_file()
-            infiles.append(infile)
-            rawfiles.append(infile.basename)
+    infiles, rawfiles = leak.get_dark_fps(params, recipe)
     # get the number of infiles
     num_files = len(infiles)
     # ----------------------------------------------------------------------

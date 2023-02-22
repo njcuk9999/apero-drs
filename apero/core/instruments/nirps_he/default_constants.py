@@ -1128,6 +1128,10 @@ CORRECT_LEAKAGE.value = True
 LEAKAGE_REF_TYPES = LEAKAGE_REF_TYPES.copy(__NAME__)
 LEAKAGE_REF_TYPES.value = 'FP'
 
+# define the maximum number of files to use in the leak reference
+LEAK_REF_MAX_FILES = LEAK_REF_MAX_FILES.copy(__NAME__)
+LEAK_REF_MAX_FILES.value = 20
+
 # define the type of file to use for the leak correction (currently allowed are
 #     'E2DS_FILE' or 'E2DSFF_FILE' (linked to recipe definition outputs)
 #     must match with LEAKREF_EXTRACT_TYPE

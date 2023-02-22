@@ -667,8 +667,8 @@ def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
             image, hdr = None, None
         # get the shape of the image
         dim1, dim2 = np.array(image.shape).astype(int)
-        # construct clean version of filename
-        clean_filename = filename.replace('.', '_')
+        # clean the filename
+        clean_filename = med_comb_clean_filename(filename)
         # ------------------------------------------------------------------
         # check that dimensions are the same as first file
         if dim1 != mdim1 or dim2 != mdim2:
@@ -717,7 +717,7 @@ def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
         # loop around each ribbon and add to the box
         for f_it, filename in enumerate(files):
             # construct ribbon nmae
-            clean_filename = filename.replace('.', '_')
+            clean_filename = med_comb_clean_filename(filename)
             ribbon_name = '{0}_ribbon{1:06d}.npy'.format(clean_filename, b_it)
             ribbon_path = os.path.join(subfilepath, ribbon_name)
             # load ribbon
@@ -746,6 +746,22 @@ def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
     # ----------------------------------------------------------------------
     # return the out image
     return out_image
+
+
+def med_comb_clean_filename(filename: str) -> str:
+    """
+    Construct a clean version of a filename for the median combine
+
+    :param filename: str, filename to clean
+    :return: str, clean filename
+    """
+    # construct clean version of filename
+    basename = os.path.basename(filename)
+    path = os.path.dirname(filename)
+    # do not clean the path just the base filename
+    clean_basename = basename.replace('.', '_')
+    clean_filename = os.path.join(path, clean_basename)
+    return clean_filename
 
 
 def expand_badpixelmap(params: ParamDict, bad_pixel_map1: np.ndarray

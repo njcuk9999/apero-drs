@@ -108,36 +108,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # ----------------------------------------------------------------------
     # Get all dark_fp files for directory
     # ----------------------------------------------------------------------
-    infiles, rawfiles = [], []
-    # check file type
-    for filetype in filetypes:
-        # ------------------------------------------------------------------
-        # check whether filetype is in allowed types
-        if filetype not in allowedtypes:
-            emsg = textentry('01-001-00020', args=[filetype, mainname])
-            for allowedtype in allowedtypes:
-                emsg += '\n\t - "{0}"'.format(allowedtype)
-            WLOG(params, 'error', emsg)
-        # ------------------------------------------------------------------
-        # check whether filetype is allowed for instrument
-        # get definition
-        gkwargs = dict(block_kind='tmp', required=False)
-        darkfpfile = drs_file.get_file_definition(params, filetype, **gkwargs)
-        # deal with defintion not found
-        if darkfpfile is None:
-            eargs = [filetype, recipe.name, mainname]
-            WLOG(params, 'error', textentry('09-010-00001', args=eargs))
-        # ------------------------------------------------------------------
-        # get all "filetype" filenames
-        files = drs_utils.find_files(params, block_kind='tmp',
-                                     filters=dict(KW_DPRTYPE=filetype,
-                                                  OBS_DIR=params['OBS_DIR']))
-        # create infiles
-        for filename in files:
-            infile = darkfpfile.newcopy(filename=filename, params=params)
-            infile.read_file()
-            infiles.append(infile)
-            rawfiles.append(infile.basename)
+    infiles, rawfiles = leak.get_dark_fps(params, recipe)
     # get the number of infiles
     num_files = len(infiles)
     # ----------------------------------------------------------------------

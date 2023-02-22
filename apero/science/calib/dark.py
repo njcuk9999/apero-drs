@@ -300,7 +300,13 @@ def construct_dark_table(params: ParamDict, filenames: List[str],
         dark_cass_temp.append(float(cass_temp))
         dark_humidity.append(float(humidity))
         dprtypes.append(str(dprtype))
-
+    # ----------------------------------------------------------------------
+    # Deal with no dark files present
+    # ----------------------------------------------------------------------
+    if len(dark_files) == 0:
+        # TODO: add this to language database
+        emsg = 'No valid dark files found'
+        WLOG(params, 'error', emsg)
     # ----------------------------------------------------------------------
     # Only use a certain number of files to limit time taken
     # ----------------------------------------------------------------------

@@ -3163,13 +3163,19 @@ class DrsFitsFile(DrsInputFile):
             if key in filedict:
                 # get rvalue
                 rvalues = rkeys[key]
-                # check if rvalue is list
-                if isinstance(rvalues, str):
-                    rvalues = [rvalues]
                 # set up aux valid
                 valid1 = False
                 # get this value
                 filedictvalue = filedict[key]
+                # check if rvalue is list
+                if isinstance(rvalues, str):
+                    rvalues = [rvalues]
+                # deal with boolean values
+                elif isinstance(rvalues, bool):
+                    if rvalues:
+                        rvalues = '1'
+                    else:
+                        rvalues = '0'
                 # deal with null values
                 if filedictvalue in [None, 'None', '']:
                     valid1 |= True

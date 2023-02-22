@@ -50,8 +50,7 @@ textentry = lang.textentry
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(objname: Optional[str] = None, **kwargs
-         ) -> Union[Dict[str, Any], Tuple[DrsRecipe, ParamDict]]:
+def main(**kwargs) -> Union[Dict[str, Any], Tuple[DrsRecipe, ParamDict]]:
     """
     Main function for apero_mk_template
 
@@ -63,7 +62,7 @@ def main(objname: Optional[str] = None, **kwargs
     :returns: dictionary of the local space
     """
     # assign function calls (must add positional)
-    fkwargs = dict(objname=objname, **kwargs)
+    fkwargs = dict(**kwargs)
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
     recipe, params = drs_startup.setup(__NAME__, __INSTRUMENT__, fkwargs)

@@ -143,6 +143,7 @@ __all__ = [
     'LEAK_1D_EXTRACT_FILES', 'LEAK_BCKGRD_PERCENTILE', 'LEAK_NORM_PERCENTILE',
     'LEAKREF_WSMOOTH', 'LEAKREF_KERSIZE', 'LEAK_LOW_PERCENTILE',
     'LEAK_HIGH_PERCENTILE', 'LEAK_BAD_RATIO_OFFSET', 'LEAKAGE_REF_TYPES',
+    'LEAK_REF_MAX_FILES',
     # extract constants
     'EXT_START_ORDER', 'EXT_END_ORDER', 'EXT_RANGE1', 'EXT_RANGE2',
     'EXT_SKIP_ORDERS', 'EXT_COSMIC_CORRETION', 'EXT_COSMIC_SIGCUT',
@@ -2153,6 +2154,12 @@ LEAKAGE_REF_TYPES = Const('LEAKAGE_REF_TYPES', value=None, dtype=str,
                           source=__NAME__, group=cgroup,
                           description='Define DPRTYPE in reference fiber to do '
                                       'correction')
+
+# define the maximum number of files to use in the leak reference
+LEAK_REF_MAX_FILES = Const('LEAK_REF_MAX_FILES', value=None, dtype=int,
+                          source=__NAME__, group=cgroup, minimum=0,
+                          description='define the maximum number of files to '
+                                      'use in the leak reference')
 
 # define the type of file to use for the leak correction (currently allowed are
 #     'E2DS_FILE' or 'E2DSFF_FILE' (linked to recipe definition outputs)
