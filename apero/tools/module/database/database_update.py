@@ -420,7 +420,7 @@ def remove_db_entries(params: ParamDict, pconst: PseudoConstants,
         for key in keys:
             sub_conditions.append('KEYNAME="{0}"'.format(key))
         # join with an OR and add to full condition
-        conditions.append(f'({0})'.format(' OR '.join(sub_conditions)))
+        conditions.append('({0})'.format(' OR '.join(sub_conditions)))
     # -------------------------------------------------------------------------
     # deal with no conditions (should not happen)
     if len(conditions) == 0:
@@ -455,13 +455,14 @@ def remove_db_entries(params: ParamDict, pconst: PseudoConstants,
     # loop around until user decides something
     # ask user if they wish to continue
     while True:
-        uinput = str(input('Do you wish to remove? [Y]es or [N]o ([V] to '
+        uinput = str(input('\n\nDo you wish to remove? [Y]es or [N]o ([V] to '
                            'view files):\t')).strip()
         # deal with viewing files
         if 'V' in uinput.upper():
             # print table
             for row in range(len(table)):
-                print(table['KEYNAME'][row], table['FILENAME'][row],
+                print(table['KEYNAME'][row], '', '',
+                      table['FILENAME'][row], '', '',
                       table['HUMANTIME'][row])
         elif 'Y' in uinput.upper():
             # log that we are remove entries
@@ -492,6 +493,8 @@ def remove_db_entries(params: ParamDict, pconst: PseudoConstants,
         elif 'N' in uinput.upper():
             # return and do not continue
             return True
+        else:
+            print('Invalid input, please try again')
     # -------------------------------------------------------------------------
     # if we get to here we return with a True (as we do not continue)
     return True
