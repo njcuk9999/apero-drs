@@ -24,6 +24,7 @@ from apero.core import constants
 from apero.core.core import drs_database
 from apero.core.core import drs_file
 from apero.core.core import drs_log
+from apero.core.core import drs_text
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_utils
 from apero.io import drs_table
@@ -72,6 +73,14 @@ def update_database(params: ParamDict, dbkind: str):
     pconst = constants.pload()
     # update calibration database
     if dbkind in ['calib', 'all']:
+
+        # deal with removal of entries
+        if dbkind == 'calib':
+            remove = remove_db_entries(params, pconst, 'calibration')
+            # we do not continue if we are removing entries
+            if remove:
+                return
+        # otherwise we update full calibration database
         WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
         WLOG(params, 'info', textentry('40-006-00007', args=['calibration']),
              colour='magenta')
@@ -79,6 +88,12 @@ def update_database(params: ParamDict, dbkind: str):
         calib_tellu_update(params, pconst, 'calibration')
     # update telluric database
     if dbkind in ['tellu', 'all']:
+        # deal with removal of entries
+        if dbkind == 'tellu':
+            remove = remove_db_entries(params, pconst, 'telluric')
+            # we do not continue if we are removing entries
+            if remove:
+                return
         WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
         WLOG(params, 'info', textentry('40-006-00007', args=['telluric']),
              colour='magenta')
@@ -322,6 +337,164 @@ def log_update(params: ParamDict, pconst: PseudoConstants):
         for lcode in logentries:
             # add this entry
             logdbm.add_entries(*logentries[lcode])
+
+
+def remove_db_entries(params: ParamDict, pconst: PseudoConstants,
+                      db_type: str) -> bool:
+
+    # first check if we have the --since and --keys arguments in INPUTS
+    # if we do then we need to remove entries from the database
+    if 'INPUTS' not in params:
+        # we are not removing keys
+        return False
+    # get keys from inputs
+    since = params['INPUTS']['SINCE']
+    before = params['INPUTS']['BEFORE']
+    keys = params['INPUTS']['KEYS']
+    deletefiles = drs_text.true_text(params['INPUTS']['DELETEFILES'])
+    test = drs_text.true_text(params['INPUTS']['TEST'])
+    # check if either are valid
+    have_since = drs_text.null_text(since, ['None', '', 'Null'])
+    have_keys = drs_text.null_text(keys, ['None', '', 'Null'])
+    have_before = drs_text.null_text(before, ['None', '', 'Null'])
+    # if we do not have either then we are not removing keys
+    if not have_keys and not have_since and not have_before:
+        # we are not removing keys
+        return False
+    # -------------------------------------------------------------------------
+    # get database
+    if db_type == 'calibration':
+        dbmanager = drs_database.CalibrationDatabase(params)
+        path = params['DRS_CALIB_DB']
+    elif db_type == 'telluric':
+        dbmanager = drs_database.TelluricDatabase(params)
+        path = params['DRS_TELLU_DB']
+    else:
+        # TODO: Add to language database
+        emsg = 'Unknown database type: {0}'
+        eargs = [db_type]
+        WLOG(params, 'error', emsg.format(*eargs))
+        return False
+    # load database
+    dbmanager.load_db()
+    # -------------------------------------------------------------------------
+    # deal with condition for removal
+    conditions = []
+    # -------------------------------------------------------------------------
+    # add the since condition
+    if have_since:
+        # convert since parameter from YYYY-MM-DD to unix time
+        try:
+            since_unix = base.Time(since, format='iso').unix
+        except Exception as e:
+            # TODO: Add to language database
+            wmsg = ('Cannot convert --since parameter to unix time: {0}'
+                    '\nError {1}: {2}')
+            wargs = [since, type(e), str(e)]
+            WLOG(params, 'warning', wmsg.format(*wargs))
+            return True
+        # add condition
+        conditions.append('(UNIXTIME > {0})'.format(since_unix))
+    # -------------------------------------------------------------------------
+    # add the before condition
+    if have_before:
+        # convert before parameter from YYYY-MM-DD to unix time
+        try:
+            before_unix = base.Time(before, format='iso').unix
+        except Exception as e:
+            # TODO: Add to language database
+            wmsg = ('Cannot convert --before parameter to unix time: {0}'
+                    '\nError {1}: {2}')
+            wargs = [since, type(e), str(e)]
+            WLOG(params, 'warning', wmsg.format(*wargs))
+            return True
+        # add condition
+        conditions.append('(UNIXTIME < {0})'.format(before_unix))
+    # -------------------------------------------------------------------------
+    # add the keyname condition
+    if have_keys:
+        # get keys
+        keys = keys.split(',')
+        # loop around keys and add to sub conditions
+        sub_conditions = []
+        for key in keys:
+            sub_conditions.append('KEYNAME="{0}"'.format(key))
+        # join with an OR and add to full condition
+        conditions.append(f'({0})'.format(' OR '.join(sub_conditions)))
+    # -------------------------------------------------------------------------
+    # deal with no conditions (should not happen)
+    if len(conditions) == 0:
+        # TODO: Add to language database
+        wmsg = ('No conditions to remove from database. Invalid --since '
+                '--before and --keys arguments')
+        WLOG(params, 'warning', wmsg, sublevel=1)
+        return True
+    # -------------------------------------------------------------------------
+    # convert conditions to a string with the AND operator
+    condition = ' AND '.join(conditions)
+    # -------------------------------------------------------------------------
+    # get a list of entries to remove
+    table = dbmanager.database.get('*', condition=condition, return_table=True)
+    # -------------------------------------------------------------------------
+    # deal with no entries found
+    if len(table) == 0:
+        # TODO: Add to language database
+        wmsg = 'Warning no entries found to remove from database'
+        WLOG(params, 'warning', wmsg, sublevel=1)
+        return True
+    # -------------------------------------------------------------------------
+    # ask user if they wish to remove these entries (or view entries before
+    #     deletion)
+    # get the number of entries
+    nentries = len(table)
+    # display message
+    msg = 'Found {0} entries to remove from database'
+    margs = [nentries]
+    WLOG(params, 'info', msg.format(*margs))
+    # -------------------------------------------------------------------------
+    # loop around until user decides something
+    # ask user if they wish to continue
+    while True:
+        uinput = str(input('Do you wish to remove? [Y]es or [N]o ([V] to '
+                           'view files):\t')).strip()
+        # deal with viewing files
+        if 'V' in uinput.upper():
+            # print table
+            for row in range(len(table)):
+                print(table['KEYNAME'][row], table['FILENAME'][row],
+                      table['HUMANTIME'][row])
+        elif 'Y' in uinput.upper():
+            # log that we are remove entries
+            msg = 'Removing {0} entries from database'
+            margs = [nentries]
+            WLOG(params, 'info', msg.format(*margs))
+            # remove entries
+            if not test:
+                dbmanager.remove_entries(condition)
+            # deal with removing files from disk
+            if drs_text.true_text(deletefiles):
+                # loop around files in table and remove them
+                for row in range(len(table)):
+                    # get filename
+                    filename = table['FILENAME'][row]
+                    # get full path
+                    fullpath = os.path.join(path, filename)
+                    # check if file exists
+                    if os.path.exists(fullpath):
+                        # log that we are removing file from disk
+                        msg = 'Removing file from disk: {0}'
+                        margs = [fullpath]
+                        WLOG(params, '', msg.format(*margs))
+                        # remove file
+                        if not test:
+                            os.remove(fullpath)
+            break
+        elif 'N' in uinput.upper():
+            # return and do not continue
+            return True
+    # -------------------------------------------------------------------------
+    # if we get to here we return with a True (as we do not continue)
+    return True
 
 
 # =============================================================================

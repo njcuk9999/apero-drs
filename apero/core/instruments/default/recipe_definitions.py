@@ -177,6 +177,25 @@ database_mgr.set_kwarg(name='--delete', dtype='switch', default=False,
                        helpstr=textentry('DBMGR_DELETE_HELP'))
 database_mgr.set_kwarg(name='--reset', dtype='switch', default=False,
                        helpstr=textentry('DBMGR_RESET_HELP'))
+# TODO: Add to language database
+database_mgr.set_kwarg(name='--keys', dtype=str, default='None',
+                       helpstr='Keyname of entries to remove (used in '
+                               'combination with --telludb or --calibdb)')
+database_mgr.set_kwarg(name='--since', dtype=str, default='None',
+                       helpstr='Date to remove entries since (used in '
+                                 'combination with --telludb or --calibdb)'
+                               ' format is YYYY-MM-DD or YYYY-MM-DD hh:mm:ss')
+database_mgr.set_kwarg(name='--before', dtype=str, default='None',
+                       helpstr='Date to remove entries before (used in '
+                               'combination with --telludb or --calibdb)'
+                               ' format is YYYY-MM-DD or YYYY-MM-DD hh:mm:ss')
+database_mgr.set_kwarg(name='--deletefiles', dtype='switch', default=False,
+                       helpstr='Whether to delete files from disk when '
+                               'removing entries (using in combination with '
+                               '--telludb or --calibdb and --since / --keys)')
+database_mgr.set_kwarg(name='--test', dtype='switch', default=False,
+                       helpstr='Run the removal of entries in test mode')
+
 database_mgr.description_file = 'apero_database.rst'
 
 # -----------------------------------------------------------------------------
