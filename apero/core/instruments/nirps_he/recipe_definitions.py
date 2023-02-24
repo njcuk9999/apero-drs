@@ -1191,7 +1191,7 @@ full_seq.add(apero_mk_template, name='FTTEMP2', fiber=sci_fiber,
                           KW_DPRTYPE=files.science_dprtypes),
              template_required=True, recipe_kind='tellu-science')
 # ccf on all OBJ_DARK / OBJ_FP
-full_seq.add(apero_ccf, files=[files.out_tellu_obj], fiber='AB',
+full_seq.add(apero_ccf, files=[files.out_tellu_obj], fiber=sci_fiber,
              filters=dict(KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_FP',
                                       'POLAR_DARK']),
              recipe_kind='rv-tcorr')
@@ -1274,7 +1274,8 @@ limited_seq.add(apero_mk_tellu, name='MKTELLU2', recipe_kind='tellu-hotstar',
                 template_required=True)
 limited_seq.add(apero_mk_model, name='MKTMOD2', recipe_kind='tellu-hotstar')
 limited_seq.add(apero_fit_tellu, name='MKTFIT2', recipe_kind='tellu-hotstar',
-                files=[files.out_ext_e2dsff], fiber='A', template_required=True,
+                files=[files.out_ext_e2dsff], fiber=sci_fiber,
+                template_required=True,
                 filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
                              KW_DPRTYPE=files.science_dprtypes))
 limited_seq.add(apero_mk_template, name='MKTEMP2', recipe_kind='tellu-hotstar',
@@ -1489,7 +1490,7 @@ science_seq.add(apero_mk_template, name='FTTEMP2', fiber=sci_fiber,
                 template_required=True)
 
 # ccf
-science_seq.add(apero_ccf, files=[files.out_tellu_obj], fiber='AB',
+science_seq.add(apero_ccf, files=[files.out_tellu_obj], fiber=sci_fiber,
                 recipe_kind='rv-tcorr',
                 filters=dict(KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
                                          'POLAR_FP'],
