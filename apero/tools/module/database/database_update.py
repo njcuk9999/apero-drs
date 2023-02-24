@@ -354,9 +354,9 @@ def remove_db_entries(params: ParamDict, pconst: PseudoConstants,
     deletefiles = drs_text.true_text(params['INPUTS']['DELETEFILES'])
     test = drs_text.true_text(params['INPUTS']['TEST'])
     # check if either are valid
-    have_since = drs_text.null_text(since, ['None', '', 'Null'])
-    have_keys = drs_text.null_text(keys, ['None', '', 'Null'])
-    have_before = drs_text.null_text(before, ['None', '', 'Null'])
+    have_since = not drs_text.null_text(since, ['None', '', 'Null'])
+    have_keys = not drs_text.null_text(keys, ['None', '', 'Null'])
+    have_before = not drs_text.null_text(before, ['None', '', 'Null'])
     # if we do not have either then we are not removing keys
     if not have_keys and not have_since and not have_before:
         # we are not removing keys
