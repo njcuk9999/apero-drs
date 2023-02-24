@@ -843,8 +843,14 @@ def find_files(params: ParamDict, block_kind: str, filters: Dict[str, str],
              dataframe is returned with all the requested columns
     """
     # update database
-    findexdbm = update_index_db(params, block_kind=block_kind,
-                                findexdbm=findexdbm)
+    update_index = True
+    if 'PARALLEL' in params:
+        if params['INPUTS']['PARALLEL']:
+            update_index = False
+    # update index database if required
+    if update_index:
+        findexdbm = update_index_db(params, block_kind=block_kind,
+                                    findexdbm=findexdbm)
     # get columns
     colnames = findexdbm.database.colnames('*')
     # get file list using filters
