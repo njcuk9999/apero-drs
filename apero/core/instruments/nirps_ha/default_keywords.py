@@ -812,7 +812,7 @@ KW_EXT_START.set(key='EXTSTART', comment='Extract: Start order for extraction')
 
 # the end order for extraction
 KW_EXT_END = KW_EXT_END.copy(__NAME__)
-KW_EXT_END.set(key='EXTEND', comment='Extract: End order for extraction')
+KW_EXT_END.set(key='EXT_END', comment='Extract: End order for extraction')
 
 # the upper bound for extraction of order
 KW_EXT_RANGE1 = KW_EXT_RANGE1.copy(__NAME__)

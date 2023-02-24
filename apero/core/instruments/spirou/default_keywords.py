@@ -817,7 +817,7 @@ KW_EXT_START.set(key='EXTSTART', comment='Extract: Start order for extraction')
 
 # the end order for extraction
 KW_EXT_END = KW_EXT_END.copy(__NAME__)
-KW_EXT_END.set(key='EXTEND', comment='Extract: End order for extraction')
+KW_EXT_END.set(key='EXT_END', comment='Extract: End order for extraction')
 
 # the upper bound for extraction of order
 KW_EXT_RANGE1 = KW_EXT_RANGE1.copy(__NAME__)
@@ -2328,7 +2328,7 @@ KW_POL_CONT_TELLMASK.set(key='PCEWL{0:03d}',
 
 # define the lsd origin
 KW_LSD_ORIGIN = KW_LSD_ORIGIN.copy(__NAME__)
-KW_LSD_ORIGIN.set(key='ORIGIN', comment='Origin of this LSD file')
+KW_LSD_ORIGIN.set(key='LSDORIG', comment='Origin of this LSD file')
 
 # define the rv from lsd gaussian fit
 KW_LSD_FIT_RV = KW_LSD_FIT_RV.copy(__NAME__)
