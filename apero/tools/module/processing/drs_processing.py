@@ -1290,15 +1290,18 @@ def generate_ids(params, indexdb, runtable, mod, skiptable, rlist=None,
         msg = 'Analyzed {0} runs. Validated {1} runs. Skipped {2} runs.'
         margs = [len(runlist), len(return_dict), len(runlist) - len(return_dict)]
         WLOG(params, 'info', msg.format(*margs))
+        # sort run objects
+        sorted_run = np.argsort(list(return_dict.keys()))
+        run_values = list(return_dict.values())
+        run_objects = list(np.array(run_values)[sorted_run])
+        # # sort keys into list
         # storage of run objects
-        run_objects = []
-        run_keys = list(return_dict.keys())
-        # sort keys into list
-        for key in tqdm(sorted(run_keys)):
-            # get run object
-            run_object = return_dict[key]
-            # append to run_objects
-            run_objects.append(run_object)
+        # run_objects = []
+        # for it in tqdm(range(len(run_keys))):
+        #     # get run object
+        #     run_object = run_values[it]
+        #     # append to run_objects
+        #     run_objects.append(run_object)
     # -------------------------------------------------------------------------
     # return run objects
     return run_objects
