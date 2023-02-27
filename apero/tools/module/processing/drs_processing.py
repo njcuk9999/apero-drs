@@ -1291,6 +1291,9 @@ def generate_ids(params, indexdb, runtable, mod, skiptable, rlist=None,
         margs = [len(runlist), len(return_dict), len(runlist) - len(return_dict)]
         WLOG(params, 'info', msg.format(*margs))
         # sort run objects
+        print('return_dict --> dict()')
+        rdict = dict(return_dict)
+        print('sorting dictionary')
         sorted_run = np.argsort(list(return_dict.keys()))
         run_values = list(return_dict.values())
         run_objects = list(np.array(run_values)[sorted_run])
