@@ -1139,10 +1139,12 @@ def generate_id(params, it, run_key, run_item, runlist, keylist, inrecipelist,
     input_recipe = inrecipelist[it]
     # log process: validating run
     wargs = [runid, it + 1, len(runlist)]
-    WLOG(params, '', params['DRS_HEADER'])
-    WLOG(params, '', textentry('40-503-00004', args=wargs))
-    WLOG(params, '', params['DRS_HEADER'])
-    WLOG(params, '', textentry('40-503-00013', args=[run_item]))
+    # print out is too heavy for multiprocessing
+    if cores == 1:
+        WLOG(params, '', params['DRS_HEADER'])
+        WLOG(params, '', textentry('40-503-00004', args=wargs))
+        WLOG(params, '', params['DRS_HEADER'])
+        WLOG(params, '', textentry('40-503-00013', args=[run_item]))
     # create run object
     run_object = Run(params, indexdb, run_item, mod=mod,
                      priority=keylist[it], inrecipe=input_recipe)
@@ -1174,8 +1176,14 @@ def generate_id(params, it, run_key, run_item, runlist, keylist, inrecipelist,
     # append to list
     if not skip:
         # log that we have validated run
-        wargs = [runid]
-        WLOG(params, '', textentry('40-503-00005', args=wargs))
+        if cores == 1:
+            wargs = [runid]
+            WLOG(params, '', textentry('40-503-00005', args=wargs))
+        else:
+            # TODO: Add to language database
+            msg = 'Run {0} validated [{1}]'
+            margs = [runid, run_object.runstring]
+            WLOG(params, '', msg.format(*margs))
         # append to run_objects
         if cores == 1:
             return run_object
@@ -1185,8 +1193,14 @@ def generate_id(params, it, run_key, run_item, runlist, keylist, inrecipelist,
     else:
         # log that we have skipped run
         wargs = [runid, reason]
-        WLOG(params, '', textentry('40-503-00006', args=wargs),
-             colour='yellow')
+        if cores == 1:
+            WLOG(params, '', textentry('40-503-00006', args=wargs),
+                 colour='yellow')
+        else:
+            # TODO: Add to language database
+            msg = 'Run {0} skipped [{1}] {2}'
+            margs = [runid, run_object.runstring, reason]
+            WLOG(params, '', msg.format(*margs), colour='yellow')
 
 
 def generate_ids(params, indexdb, runtable, mod, skiptable, rlist=None,
@@ -1240,6 +1254,8 @@ def generate_ids(params, indexdb, runtable, mod, skiptable, rlist=None,
         for g_it in range(ngroups):
             # create group mask
             group = np.arange(g_it * cores, (g_it + 1) * cores)
+            # deal with group numbers in the last group being too large
+            group = group[group < len(runlist)]
             # get a cut down version of runlist (for this batch)
             group_runlist = list(np.array(runlist)[group])
             # process storage
