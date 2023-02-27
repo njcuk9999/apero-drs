@@ -1294,8 +1294,8 @@ def generate_ids(params, indexdb, runtable, mod, skiptable, rlist=None,
         print('return_dict --> dict()')
         rdict = dict(return_dict)
         print('sorting dictionary')
-        sorted_run = np.argsort(list(return_dict.keys()))
-        run_values = list(return_dict.values())
+        sorted_run = np.argsort(list(rdict.keys()))
+        run_values = list(rdict.values())
         run_objects = list(np.array(run_values)[sorted_run])
         # # sort keys into list
         # storage of run objects
