@@ -1228,8 +1228,10 @@ def generate_ids(params, indexdb, runtable, mod, skiptable, rlist=None,
     inrecipelist = list(inrecipes[sortmask])
     # store skip previous runstrings (so it is not recalculated every time)
     skip_storage = dict()
+    # -------------------------------------------------------------------------
     # log progress: Validating ids
     WLOG(params, 'info', textentry('40-503-00015', args=[len(runlist)]))
+    # -------------------------------------------------------------------------
     # deal with a single core (no multiprocessing)
     if cores == 1:
         # iterate through and make run objects
@@ -1242,6 +1244,7 @@ def generate_ids(params, indexdb, runtable, mod, skiptable, rlist=None,
             run_object = generate_id(*args)
             # append to run_objects
             run_objects.append(run_object)
+    # -------------------------------------------------------------------------
     # otherwise multiprocess
     else:
         # import multiprocessing
@@ -1279,6 +1282,7 @@ def generate_ids(params, indexdb, runtable, mod, skiptable, rlist=None,
                 # debug log: MULTIPROCESS - joining job {0}
                 WLOG(params, 'debug', textentry('90-503-00021', args=[pit]))
                 proc.join()
+        # ---------------------------------------------------------------------
         # recreate the run objects list from the return dict
         #    sorted by key
         # print progress
