@@ -1249,14 +1249,16 @@ def generate_ids(params, indexdb, runtable, mod, skiptable, rlist=None,
     else:
         # import multiprocessing
         from multiprocessing import Process, Manager, Event
-        # start process manager
-        manager = Manager()
-        return_dict = manager.dict()
         # get the number of groups
         ngroups = int(np.ceil(len(runlist) / cores))
+
+        rdict = dict()
         # loop around groups
         #   - each group is a unique recipe
         for g_it in range(ngroups):
+            # start process manager
+            manager = Manager()
+            return_dict = manager.dict()
             # create group mask
             group = np.arange(g_it * cores, (g_it + 1) * cores)
             # deal with group numbers in the last group being too large
@@ -1282,18 +1284,20 @@ def generate_ids(params, indexdb, runtable, mod, skiptable, rlist=None,
                 # debug log: MULTIPROCESS - joining job {0}
                 WLOG(params, 'debug', textentry('90-503-00021', args=[pit]))
                 proc.join()
+            # sort run objects and push into rdict (true dictionary)
+            for key in return_dict.keys():
+                rdict[key] = return_dict[key]
+            # delete the manager
+            del manager
         # ---------------------------------------------------------------------
         # recreate the run objects list from the return dict
         #    sorted by key
         # print progress
         # TODO: Add to language database
         msg = 'Analyzed {0} runs. Validated {1} runs. Skipped {2} runs.'
-        margs = [len(runlist), len(return_dict), len(runlist) - len(return_dict)]
+        margs = [len(runlist), len(rdict), len(runlist) - len(rdict)]
         WLOG(params, 'info', msg.format(*margs))
-        # sort run objects
-        print('return_dict --> dict()')
-        rdict = dict(return_dict)
-        print('sorting dictionary')
+        # sort the rdict into a run_object list
         sorted_run = np.argsort(list(rdict.keys()))
         run_values = list(rdict.values())
         run_objects = list(np.array(run_values)[sorted_run])
