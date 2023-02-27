@@ -1279,6 +1279,11 @@ def generate_ids(params, indexdb, runtable, mod, skiptable, rlist=None,
                 proc.join()
         # recreate the run objects list from the return dict
         #    sorted by key
+        # print progress
+        msg = 'Analyzed {0} runs. Validated {1} runs. Skipped {2} runs.'
+        margs = [len(runlist), len(return_dict), len(runlist) - len(return_dict)]
+        WLOG(params, 'info', msg.format(*margs))
+        # sort keys into list
         run_objects = [return_dict[key] for key in sorted(return_dict.keys())]
     # -------------------------------------------------------------------------
     # return run objects
