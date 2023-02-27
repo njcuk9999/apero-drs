@@ -1130,11 +1130,72 @@ def generate_run_table(params, recipe, *args, **kwargs):
 # =============================================================================
 # Define "from id" functions
 # =============================================================================
+def generate_id(params, it, run_key, run_item, runlist, keylist, inrecipelist,
+                indexdb, mod, skiptable, skip_storage, return_dict=None,
+                cores=1):
+    # get runid
+    runid = '{0}{1:05d}'.format(run_key, keylist[it])
+    # get recipe
+    input_recipe = inrecipelist[it]
+    # log process: validating run
+    wargs = [runid, it + 1, len(runlist)]
+    WLOG(params, '', params['DRS_HEADER'])
+    WLOG(params, '', textentry('40-503-00004', args=wargs))
+    WLOG(params, '', params['DRS_HEADER'])
+    WLOG(params, '', textentry('40-503-00013', args=[run_item]))
+    # create run object
+    run_object = Run(params, indexdb, run_item, mod=mod,
+                     priority=keylist[it], inrecipe=input_recipe)
+    # deal with input recipe
+    if input_recipe is None:
+        input_recipe = run_object.recipe
+    # deal with skip
+    skip, reason = skip_run_object(params, run_object, skiptable,
+                                   skip_storage)
+    # ---------------------------------------------------------------------
+    # deal with passing debug
+    if params['DRS_DEBUG'] > 0:
+        dargs = [run_object.runstring, params['DRS_DEBUG']]
+        run_object.runstring = '{0} --debug={1}'.format(*dargs)
+    # ---------------------------------------------------------------------
+    # deal with passing reference argument
+    if input_recipe.reference:
+        dargs = [run_object.runstring, 'True']
+        run_object.runstring = '{0} --ref={1}'.format(*dargs)
+    # ---------------------------------------------------------------------
+    # add run file to argument
+    if not drs_text.null_text(params['INPUTS']['RUNFILE']):
+        dargs = [run_object.runstring, params['INPUTS']['RUNFILE']]
+        run_object.runstring = '{0} --crunfile={1}'.format(*dargs)
+    # ---------------------------------------------------------------------
+    # update run object (runstring should only be updated once here
+    #    otherwise we add arguments multiple times)
+    run_object.update(update_runstring=True)
+    # append to list
+    if not skip:
+        # log that we have validated run
+        wargs = [runid]
+        WLOG(params, '', textentry('40-503-00005', args=wargs))
+        # append to run_objects
+        if cores == 1:
+            return run_object
+        else:
+            return_dict[it] = run_object
+    # else log that we are skipping
+    else:
+        # log that we have skipped run
+        wargs = [runid, reason]
+        WLOG(params, '', textentry('40-503-00006', args=wargs),
+             colour='yellow')
+
+
 def generate_ids(params, indexdb, runtable, mod, skiptable, rlist=None,
                  **kwargs):
     func_name = __NAME__ + '.generate_ids()'
     # get keys from params
     run_key = pcheck(params, 'REPROCESS_RUN_KEY', 'run_key', kwargs, func_name)
+    # get number of cores
+    cores = _get_cores(params)
     # should just need to sort these
     numbers = np.array(list(runtable.keys()))
     commands = np.array(list(runtable.values()))
@@ -1153,60 +1214,57 @@ def generate_ids(params, indexdb, runtable, mod, skiptable, rlist=None,
     skip_storage = dict()
     # log progress: Validating ids
     WLOG(params, 'info', textentry('40-503-00015', args=[len(runlist)]))
-    # iterate through and make run objects
-    run_objects = []
-    for it, run_item in enumerate(runlist):
-        # get runid
-        runid = '{0}{1:05d}'.format(run_key, keylist[it])
-        # get recipe
-        input_recipe = inrecipelist[it]
-        # log process: validating run
-        wargs = [runid, it + 1, len(runlist)]
-        WLOG(params, '', params['DRS_HEADER'])
-        WLOG(params, '', textentry('40-503-00004', args=wargs))
-        WLOG(params, '', params['DRS_HEADER'])
-        WLOG(params, '', textentry('40-503-00013', args=[run_item]))
-        # create run object
-        run_object = Run(params, indexdb, run_item, mod=mod,
-                         priority=keylist[it], inrecipe=input_recipe)
-        # deal with input recipe
-        if input_recipe is None:
-            input_recipe = run_object.recipe
-        # deal with skip
-        skip, reason = skip_run_object(params, run_object, skiptable,
-                                       skip_storage)
-        # ---------------------------------------------------------------------
-        # deal with passing debug
-        if params['DRS_DEBUG'] > 0:
-            dargs = [run_object.runstring, params['DRS_DEBUG']]
-            run_object.runstring = '{0} --debug={1}'.format(*dargs)
-        # ---------------------------------------------------------------------
-        # deal with passing reference argument
-        if input_recipe.reference:
-            dargs = [run_object.runstring, 'True']
-            run_object.runstring = '{0} --ref={1}'.format(*dargs)
-        # ---------------------------------------------------------------------
-        # add run file to argument
-        if not drs_text.null_text(params['INPUTS']['RUNFILE']):
-            dargs = [run_object.runstring, params['INPUTS']['RUNFILE']]
-            run_object.runstring = '{0} --crunfile={1}'.format(*dargs)
-        # ---------------------------------------------------------------------
-        # update run object (runstring should only be updated once here
-        #    otherwise we add arguments multiple times)
-        run_object.update(update_runstring=True)
-        # append to list
-        if not skip:
-            # log that we have validated run
-            wargs = [runid]
-            WLOG(params, '', textentry('40-503-00005', args=wargs))
+    # deal with a single core (no multiprocessing)
+    if cores == 1:
+        # iterate through and make run objects
+        run_objects = []
+        for it, run_item in enumerate(runlist):
+            # set up the arguments
+            args = [params, it, run_key, run_item, runlist, keylist,
+                    inrecipelist, indexdb, mod, skiptable, skip_storage]
+            # run as a single process
+            run_object = generate_id(*args)
             # append to run_objects
             run_objects.append(run_object)
-        # else log that we are skipping
-        else:
-            # log that we have skipped run
-            wargs = [runid, reason]
-            WLOG(params, '', textentry('40-503-00006', args=wargs),
-                 colour='yellow')
+    # otherwise multiprocess
+    else:
+        # import multiprocessing
+        from multiprocessing import Process, Manager, Event
+        # start process manager
+        manager = Manager()
+        return_dict = manager.dict()
+        # get the number of groups
+        ngroups = int(np.ceil(len(runlist) / cores))
+        # loop around groups
+        #   - each group is a unique recipe
+        for g_it in range(ngroups):
+            # create group mask
+            group = np.arange(g_it * cores, (g_it + 1) * cores)
+            # get a cut down version of runlist (for this batch)
+            group_runlist = list(np.array(runlist)[group])
+            # process storage
+            jobs = []
+            # loop around each run
+            for it, run_item in enumerate(group_runlist):
+                # get back the original index
+                jt = (g_it * cores) + it
+                # get args
+                args = [params, jt, run_key, run_item, runlist, keylist,
+                        inrecipelist, indexdb, mod, skiptable, skip_storage,
+                        return_dict, cores]
+                # get parallel process
+                process = Process(target=generate_id, args=args)
+                process.start()
+                jobs.append(process)
+            # do not continue until finished
+            for pit, proc in enumerate(jobs):
+                # debug log: MULTIPROCESS - joining job {0}
+                WLOG(params, 'debug', textentry('90-503-00021', args=[pit]))
+                proc.join()
+        # recreate the run objects list from the return dict
+        #    sorted by key
+        run_objects = [return_dict[key] for key in sorted(return_dict.keys())]
+    # -------------------------------------------------------------------------
     # return run objects
     return run_objects
 
