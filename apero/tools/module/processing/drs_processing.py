@@ -71,7 +71,7 @@ textentry = lang.textentry
 # alias pcheck
 pcheck = constants.PCheck(wlog=WLOG)
 # get tqdm
-tqdm = base.TQDM
+tqdm = base.tqdm_module()
 # get database
 FileIndexDatabase = drs_database.FileIndexDatabase
 # storage for reporting removed engineering directories
