@@ -70,6 +70,8 @@ DrsInputFile = drs_file.DrsInputFile
 textentry = lang.textentry
 # alias pcheck
 pcheck = constants.PCheck(wlog=WLOG)
+# get tqdm
+tqdm = base.TQDM
 # get database
 FileIndexDatabase = drs_database.FileIndexDatabase
 # storage for reporting removed engineering directories
@@ -80,8 +82,8 @@ SPECIAL_LIST_KEYS = drs_recipe.SPECIAL_LIST_KEYS
 OBJNAMECOL = 'KW_OBJNAME'
 # list of arguments to remove from skip check
 SKIP_REMOVE_ARGS = ['--skip', '--program', '--prog', '--debug',
-                    '--verbose' '--plot', '--shortname', '--short'
-                                                         '--rkind', '--recipe_kind', '--parallel', '--crunfile']
+                    '--verbose' '--plot', '--shortname', '--short',
+                    '--rkind', '--recipe_kind', '--parallel', '--crunfile']
 # keep a global copy of plt
 PLT_MOD = None
 
@@ -1284,8 +1286,15 @@ def generate_ids(params, indexdb, runtable, mod, skiptable, rlist=None,
         msg = 'Analyzed {0} runs. Validated {1} runs. Skipped {2} runs.'
         margs = [len(runlist), len(return_dict), len(runlist) - len(return_dict)]
         WLOG(params, 'info', msg.format(*margs))
+        # storage of run objects
+        run_objects = []
+        run_keys = list(return_dict.keys())
         # sort keys into list
-        run_objects = [return_dict[key] for key in sorted(return_dict.keys())]
+        for key in tqdm(sorted(run_keys)):
+            # get run object
+            run_object = return_dict[key]
+            # append to run_objects
+            run_objects.append(run_object)
     # -------------------------------------------------------------------------
     # return run objects
     return run_objects
