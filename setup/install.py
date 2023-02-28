@@ -539,7 +539,9 @@ def main():
     :return:
     """
     global lang
-    # -----------------------------------------------------------------------------
+    # set function name
+    func_name = __NAME__ + '.main()'
+    # -------------------------------------------------------------------------
     # get language argument
     langarg = get_sys_arg('lang')
     if langarg in setup_lang.LANGUAGES:
@@ -594,6 +596,7 @@ def main():
     os.environ['DRS_UCONFIG'] = str(allparams['USERCONFIG'])
     # reload params
     params = constants.load(allparams['INSTRUMENT'], from_file=False)
+    params.set('PID', value='0', source=func_name)
     # ----------------------------------------------------------------------
     # End of user setup
     # ----------------------------------------------------------------------
@@ -635,7 +638,8 @@ def main():
             # raise error
             raise ImportError(lang.error('00-000-00013').format(assets_mod))
     # now check whether we need to download the assets
-    drs_assets.check_assets(params, tarfile=allparams['TARFILE'])
+    drs_assets.check_assets(params, tarfile=allparams['TARFILE'],
+                            force=True)
     # ----------------------------------------------------------------------
     # perform clean install on each instrument if requested
     install.cprint(textentry('40-001-00072'), 'm')

@@ -142,7 +142,8 @@ def upload_assets(params: ParamDict):
     os.system(RSYNC_CMD.format(**rdict))
 
 
-def check_assets(params: ParamDict, tarfile: str = None):
+def check_assets(params: ParamDict, tarfile: str = None,
+                 force: bool = False):
     """
     Check if we need to update assets based on the check sums in the yaml file
 
@@ -167,40 +168,41 @@ def check_assets(params: ParamDict, tarfile: str = None):
     # print progress
     WLOG(params, '', 'Checking assets in {0}'.format(abs_asset_path))
     # update flag (assume we need don't need to update)
-    update = False
-    # check the checksums of the yaml dictionary data
-    for path in yaml_dict['data']:
-        # expected path
-        expected_path = os.path.join(abs_asset_path, path)
-        # check if file exists
-        if not os.path.exists(expected_path):
-            # print warning
-            wmsg = '\tFile does not exist: {0}'
-            wargs = [expected_path]
-            WLOG(params, 'warning', wmsg.format(*wargs), sublevel=1)
-            # flag that we need to update
-            update = True
-            break
-        # expected checksum
-        expected_checksum = yaml_dict['data'][path]
-        # actual checksum
-        actual_checksum = drs_path.calculate_checksum(expected_path)
-        # check if checksums match
-        if expected_checksum != actual_checksum:
-            # print warning
-            wmsg = 'Checksums do not match: {0}'
-            wargs = [expected_path]
-            WLOG(params, 'warning', wmsg.format(*wargs), sublevel=1)
-            # flag that we need to update
-            update = True
-            break
+    update = bool(force)
+    if not update:
+        # check the checksums of the yaml dictionary data
+        for path in yaml_dict['data']:
+            # expected path
+            expected_path = os.path.join(abs_asset_path, path)
+            # check if file exists
+            if not os.path.exists(expected_path):
+                # print warning
+                wmsg = '\tFile does not exist: {0}'
+                wargs = [expected_path]
+                WLOG(params, 'warning', wmsg.format(*wargs), sublevel=1)
+                # flag that we need to update
+                update = True
+                break
+            # expected checksum
+            expected_checksum = yaml_dict['data'][path]
+            # actual checksum
+            actual_checksum = drs_path.calculate_checksum(expected_path)
+            # check if checksums match
+            if expected_checksum != actual_checksum:
+                # print warning
+                wmsg = 'Checksums do not match: {0}'
+                wargs = [expected_path]
+                WLOG(params, 'warning', wmsg.format(*wargs), sublevel=1)
+                # flag that we need to update
+                update = True
+                break
     # -------------------------------------------------------------------------
     # if we don't need to update, return
     if not update:
         # print that everything is up-to-date
         WLOG(params, '', 'Assets are up-to-date')
         return
-    else:
+    elif not force:
         # print that we need to update
         WLOG(params, '', 'Assets need updating', colour='yellow')
     # -------------------------------------------------------------------------
