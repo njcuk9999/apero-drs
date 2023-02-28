@@ -63,10 +63,12 @@ def upload_assets(params: ParamDict):
             if filename.endswith('_assets.tar.gz'):
                 if os.path.exists(filename):
                     os.remove(os.path.join(root, filename))
+                continue
             # remove the checksum yaml files from the directory
             if filename == base.CHECKSUM_FILE:
                 if os.path.exists(filename):
                     os.remove(os.path.join(root, filename))
+                continue
             # get full path to file
             abs_path = os.path.join(root, filename)
             # append to full paths
