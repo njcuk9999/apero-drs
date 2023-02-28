@@ -154,9 +154,9 @@ def check_assets(params: ParamDict, tarfile: str = None):
     :return:
     """
     # get path to yaml file
-    asset_path = params['DRS_RESET_ASSETS_PATH']
+    _asset_path = params['DRS_RESET_ASSETS_PATH']
     # get the absolute path to the assets dir
-    abs_asset_path = drs_data.construct_path(params, '', asset_path)
+    abs_asset_path = drs_data.construct_path(params, '', _asset_path)
     # add the checksum filename
     checksum_path = os.path.join(abs_asset_path, base.CHECKSUM_FILE)
     # read the yaml file
@@ -252,7 +252,7 @@ def check_assets(params: ParamDict, tarfile: str = None):
     WLOG(params, '', f'Extracting tar file: {tarfile}')
     # extract tar file
     try:
-        drs_path.extract_tarfile(tarfile, asset_path)
+        drs_path.extract_tarfile(tarfile, abs_asset_path)
     except Exception as e:
         emsg = 'Cannot extract tar file: {0} \n\t Error {1}: {2}'
         eargs = [tarfile, type(e), str(e)]
