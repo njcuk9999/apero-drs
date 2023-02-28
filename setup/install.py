@@ -231,7 +231,7 @@ def validate():
                 sys.exit()
 
 
-def check_install() -> Tuple[Any, Any, Any, Any]:
+def check_install() -> Tuple[Any, Any, Any]:
     """
     Check for apero installation directory
 
@@ -245,7 +245,6 @@ def check_install() -> Tuple[Any, Any, Any, Any]:
     constants_mod = '{0}.{1}'.format(DRS_PATH, CONSTANTS_PATH)
     install_mod = '{0}.{1}'.format(DRS_PATH, INSTALL_PATH)
     base_mod = '{0}.{1}'.format(DRS_PATH, BASE_PATH)
-    asset_mod = '{0}.{1}'.format(DRS_PATH, ASSET_PATH)
     # try to import the modules
     try:
         constants = importlib.import_module(constants_mod)
@@ -262,11 +261,6 @@ def check_install() -> Tuple[Any, Any, Any, Any]:
     except Exception as _:
         # raise error
         raise ImportError(lang.error('00-000-00013').format(base_mod))
-    try:
-        drs_assets = importlib.import_module(asset_mod)
-    except Exception as _:
-        # raise error
-        raise ImportError(lang.error('00-000-00013').format(asset_mod))
     # add apero to the PYTHONPATH
     if 'PYTHONPATH' in os.environ:
         oldpath = os.environ['PYTHONPATH']
@@ -277,7 +271,7 @@ def check_install() -> Tuple[Any, Any, Any, Any]:
         # add to active path
         sys.path = [str(drs_path)] + sys.path
     # if we have reached this point we can break out of the while loop
-    return constants, install, drs_base, drs_assets
+    return constants, install, drs_base
 
 
 def get_args() -> argparse.Namespace:
@@ -560,14 +554,13 @@ def main():
     # catch Ctrl+C
     signal.signal(signal.SIGINT, catch_sigint)
     # get install paths
-    constants, install, drs_base, drs_assets = check_install()
+    constants, install, drs_base = check_install()
     # this is so we have direct access in IDE to modules
     # noinspection PyBroadException
     try:
         from apero.tools.module.setup import drs_installation as install
         from apero.core import constants
         from apero.base import drs_base
-        from apero.tools.module.setup import drs_assets
     except Exception as _:
         pass
     # update the language dict to use the full proxy database
@@ -632,6 +625,16 @@ def main():
     allparams = install.create_shell_scripts(params, allparams)
     # ----------------------------------------------------------------------
     # download the assets (into github directory)
+    try:
+        from apero.tools.module.setup import drs_assets
+    except Exception as _:
+        assets_mod = '{0}.{1}'.format(DRS_PATH, ASSET_PATH)
+        try:
+            drs_assets = importlib.import_module(assets_mod)
+        except Exception as _:
+            # raise error
+            raise ImportError(lang.error('00-000-00013').format(assets_mod))
+    # now check whether we need to download the assets
     drs_assets.check_assets(params, tarfile=allparams['TARFILE'])
     # ----------------------------------------------------------------------
     # perform clean install on each instrument if requested
