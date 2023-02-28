@@ -9,6 +9,7 @@ Created on 2019-11-09 10:44
 Version 0.0.1
 """
 import os
+
 import wget
 
 from apero.base import base
@@ -32,8 +33,6 @@ __release__ = base.__release__
 ParamDict = constants.ParamDict
 # RSYNC command
 RSYNC_CMD = 'rsync -avuz -e "{SSH}" {INPATH} {USER}@{HOST}:{OUTPATH}'
-# Get Logging function
-WLOG = drs_log.wlog
 
 
 # =============================================================================
@@ -49,11 +48,13 @@ def upload_assets(params: ParamDict):
     """
     # get input directory
     indir = params['INPUTS']['INDIR']
+    # load wlog (must be done inside function)
+    wlog = drs_log.wlog
     # -------------------------------------------------------------------------
     # Step 1: get a list of all files in indir
     # -------------------------------------------------------------------------
     # print progress
-    WLOG(params, '', 'Indexing assets directory')
+    wlog(params, '', 'Indexing assets directory')
     # get a list of all files in indir using os.walk
     abs_paths, rel_paths = [], []
     for root, dirs, files in os.walk(indir):
@@ -79,7 +80,7 @@ def upload_assets(params: ParamDict):
     # Step 2: create the hash codes for all files
     # -------------------------------------------------------------------------
     # print progress
-    WLOG(params, '', 'Creating checksums for all files')
+    wlog(params, '', 'Creating checksums for all files')
     # storage of all paths
     yaml_dict = dict(setup=dict(), data=dict())
     # create a yaml file containing the path relative to indir to all files
@@ -93,7 +94,7 @@ def upload_assets(params: ParamDict):
     # Step 3: Construct the tar filename
     # -------------------------------------------------------------------------
     # print progress
-    WLOG(params, '', 'Constructing tar filename')
+    wlog(params, '', 'Constructing tar filename')
     # get the string unix time now using base.Time
     time_now = base.Time.now()
     unixtime = str(time_now.unix).replace('.', '_')
@@ -116,14 +117,14 @@ def upload_assets(params: ParamDict):
     # add the checksum filename
     checksum_path = os.path.join(abs_asset_path, base.CHECKSUM_FILE)
     # print progress
-    WLOG(params, '', f'Saving yaml file to: {checksum_path}')
+    wlog(params, '', f'Saving yaml file to: {checksum_path}')
     # create yaml file
     base.write_yaml(yaml_dict, checksum_path)
     # -------------------------------------------------------------------------
     # Step 5:  make the tar file (including the yaml)
     # -------------------------------------------------------------------------
     # print progress
-    WLOG(params, '', f'Making tar file: {tar_path}')
+    wlog(params, '', f'Making tar file: {tar_path}')
     # make tar file
     drs_path.make_tarfile(tar_path, indir)
     # -------------------------------------------------------------------------
@@ -137,7 +138,7 @@ def upload_assets(params: ParamDict):
     rdict['INPATH'] = tar_path
     rdict['OUTPATH'] = params['DRS_SSH_ASSETSPATH']
     # print command to rsync
-    WLOG(params, '', RSYNC_CMD.format(**rdict))
+    wlog(params, '', RSYNC_CMD.format(**rdict))
     # run rsync command
     os.system(RSYNC_CMD.format(**rdict))
 
@@ -163,9 +164,11 @@ def check_assets(params: ParamDict, tarfile: str = None):
     checksum_path = os.path.join(abs_asset_path, base.CHECKSUM_FILE)
     # read the yaml file
     yaml_dict = base.load_yaml(checksum_path)
+    # load wlog (must be done inside function)
+    wlog = drs_log.wlog
     # -------------------------------------------------------------------------
     # print progress
-    WLOG(params, '', 'Checking assets in {0}'.format(abs_asset_path))
+    wlog(params, '', 'Checking assets in {0}'.format(abs_asset_path))
     # update flag (assume we need don't need to update)
     update = False
     # check the checksums of the yaml dictionary data
@@ -177,7 +180,7 @@ def check_assets(params: ParamDict, tarfile: str = None):
             # print warning
             wmsg = '\tFile does not exist: {0}'
             wargs = [expected_path]
-            WLOG(params, 'warning', wmsg.format(*wargs), sublevel=1)
+            wlog(params, 'warning', wmsg.format(*wargs), sublevel=1)
             # flag that we need to update
             update = True
             break
@@ -190,7 +193,7 @@ def check_assets(params: ParamDict, tarfile: str = None):
             # print warning
             wmsg = 'Checksums do not match: {0}'
             wargs = [expected_path]
-            WLOG(params, 'warning', wmsg.format(*wargs), sublevel=1)
+            wlog(params, 'warning', wmsg.format(*wargs), sublevel=1)
             # flag that we need to update
             update = True
             break
@@ -198,11 +201,11 @@ def check_assets(params: ParamDict, tarfile: str = None):
     # if we don't need to update, return
     if not update:
         # print that everything is up-to-date
-        WLOG(params, '', 'Assets are up-to-date')
+        wlog(params, '', 'Assets are up-to-date')
         return
     else:
         # print that we need to update
-        WLOG(params, '', 'Assets need updating', colour='yellow')
+        wlog(params, '', 'Assets need updating', colour='yellow')
     # -------------------------------------------------------------------------
     # deal with a local tar file
     local = False
@@ -210,13 +213,13 @@ def check_assets(params: ParamDict, tarfile: str = None):
     if not drs_text.null_text(tarfile, ['None', 'Null', '']):
         if os.path.exists(tarfile):
             # print progress
-            WLOG(params, '', 'Using local assets tar file')
+            wlog(params, '', 'Using local assets tar file')
             # set local flag
             local = True
         else:
             emsg = 'Cannot find local assets tar file: {}'
             eargs = [tarfile]
-            WLOG(params, 'error', emsg.format(*eargs))
+            wlog(params, 'error', emsg.format(*eargs))
     # -------------------------------------------------------------------------
     # deal with non-local tar file
     if not local:
@@ -228,7 +231,7 @@ def check_assets(params: ParamDict, tarfile: str = None):
         # deal with not having the file on disk currently
         if not os.path.exists(tarfile):
             # print progress
-            WLOG(params, '', 'Downloading correct assets tar file')
+            wlog(params, '', 'Downloading correct assets tar file')
             # get the server list
             servers = yaml_dict['setup']['servers']
             # loop around servers and find one that can download our tar file
@@ -237,11 +240,11 @@ def check_assets(params: ParamDict, tarfile: str = None):
                     # print progress
                     msg = 'Attempting downloading tar file from: {0}'
                     margs = [server + server_tarfile]
-                    WLOG(params, '', msg.format(*margs), colour='magenta')
+                    wlog(params, '', msg.format(*margs), colour='magenta')
                     # get the file using wget
                     wget.download(server + server_tarfile, abs_asset_path)
                     # print that the download was successful
-                    WLOG(params, '', 'Download successful', colour='magenta')
+                    wlog(params, '', 'Download successful', colour='magenta')
                     # break if this works
                     break
                 except Exception as _:
@@ -250,27 +253,28 @@ def check_assets(params: ParamDict, tarfile: str = None):
             if not os.path.exists(tarfile):
                 emsg = 'Cannot download assets tar file: {}'
                 eargs = [tarfile]
-                WLOG(params, 'error', emsg.format(*eargs))
+                wlog(params, 'error', emsg.format(*eargs))
         else:
             # print that we are reading from local file
             msg = 'Reading from local tar file: {0}'
             margs = [tarfile]
-            WLOG(params, '', msg.format(*margs))
+            wlog(params, '', msg.format(*margs))
 
     # -------------------------------------------------------------------------
     # Extract the tar file
     # -------------------------------------------------------------------------
     # print progress
-    WLOG(params, '', f'Extracting tar file: {tarfile}')
+    wlog(params, '', f'Extracting tar file: {tarfile}')
     # extract tar file
     try:
         drs_path.extract_tarfile(tarfile, abs_asset_path)
     except Exception as e:
         emsg = 'Cannot extract tar file: {0} \n\t Error {1}: {2}'
         eargs = [tarfile, type(e), str(e)]
-        WLOG(params, 'error', emsg.format(*eargs))
+        wlog(params, 'error', emsg.format(*eargs))
     # -------------------------------------------------------------------------
     return locals()
+
 
 # =============================================================================
 # Start of code

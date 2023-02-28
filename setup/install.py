@@ -615,9 +615,6 @@ def main():
     install.cprint(install.printheader(), 'm')
     print('\n')
     # ----------------------------------------------------------------------
-    # download the assets (into github directory)
-    drs_assets.check_assets(params, tarfile=allparams['TARFILE'])
-    # ----------------------------------------------------------------------
     # get binary paths
     install.cprint(textentry('40-001-00068'), 'm')
     allparams = install.bin_paths(params, allparams)
@@ -633,6 +630,9 @@ def main():
     # create source files to add environmental variables
     install.cprint(textentry('40-001-00071'), 'm')
     allparams = install.create_shell_scripts(params, allparams)
+    # ----------------------------------------------------------------------
+    # download the assets (into github directory)
+    drs_assets.check_assets(params, tarfile=allparams['TARFILE'])
     # ----------------------------------------------------------------------
     # perform clean install on each instrument if requested
     install.cprint(textentry('40-001-00072'), 'm')
