@@ -219,10 +219,10 @@ def check_assets(params: ParamDict, tarfile: str = None):
             try:
                 # print progress
                 msg = 'Attempting downloading tar file from: {0}'
-                margs = [server]
+                margs = [server + server_tarfile]
                 WLOG(params, '', msg.format(*margs), colour='magenta')
                 # get the file using wget
-                wget.download(server + server_tarfile, asset_path)
+                wget.download(server + server_tarfile, abs_asset_path)
                 # print that the download was successful
                 WLOG(params, '', 'Download successful', colour='magenta')
                 # break if this works
@@ -230,7 +230,7 @@ def check_assets(params: ParamDict, tarfile: str = None):
             except Exception as _:
                 pass
         # check that tar file now exists locally
-        tarfile = os.path.join(asset_path, server_tarfile)
+        tarfile = os.path.join(abs_asset_path, server_tarfile)
         # check if tar file exists
         if not os.path.exists(tarfile):
             emsg = 'Cannot download assets tar file: {}'
