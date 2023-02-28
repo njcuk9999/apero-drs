@@ -172,6 +172,11 @@ def check_assets(params: ParamDict, tarfile: str = None):
         expected_path = os.path.join(abs_asset_path, path)
         # check if file exists
         if not os.path.exists(expected_path):
+            # print warning
+            wmsg = '\tFile does not exist: {0}'
+            wargs = [expected_path]
+            WLOG(params, 'warning', wmsg.format(*wargs), sublevel=1)
+            # flag that we need to update
             update = True
             break
         # expected checksum
@@ -180,6 +185,11 @@ def check_assets(params: ParamDict, tarfile: str = None):
         actual_checksum = drs_path.calculate_checksum(expected_path)
         # check if checksums match
         if expected_checksum != actual_checksum:
+            # print warning
+            wmsg = 'Checksums do not match: {0}'
+            wargs = [expected_path]
+            WLOG(params, 'warning', wmsg.format(*wargs), sublevel=1)
+            # flag that we need to update
             update = True
             break
     # -------------------------------------------------------------------------
