@@ -59,10 +59,12 @@ def upload_assets(params: ParamDict):
         for filename in files:
             # remove any assets tar files from the directory
             if filename.endswith('_assets.tar.gz'):
-                os.remove(os.path.join(root, filename))
+                if os.path.exists(filename):
+                    os.remove(os.path.join(root, filename))
             # remove the checksum yaml files from the directory
             if filename == base.CHECKSUM_FILE:
-                os.remove(os.path.join(root, filename))
+                if os.path.exists(filename):
+                    os.remove(os.path.join(root, filename))
             # get full path to file
             abs_path = os.path.join(root, filename)
             # append to full paths
@@ -97,7 +99,7 @@ def upload_assets(params: ParamDict):
     yaml_dict['setup']['tarfile'] = os.path.basename(tar_path)
     yaml_dict['setup']['version'] = base.__version__
     yaml_dict['setup']['vdate'] = base.__date__
-    yaml_dict['setup']['unixtime'] = time_now.unix
+    yaml_dict['setup']['unixtime'] = float(time_now.unix)
     yaml_dict['setup']['humantime'] = time_now.iso
     yaml_dict['setup']['servers'] = params.listp('DRS_ASSETS_URLS', dtype=str)
     # -------------------------------------------------------------------------
