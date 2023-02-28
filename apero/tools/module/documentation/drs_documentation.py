@@ -57,11 +57,6 @@ PDF_FILE = 'apero-docs.pdf'
 # -----------------------------------------------------------------------------
 RSYNC_CMD = 'rsync -avuz -e "{SSH}" {INPATH} {USER}@{HOST}:{OUTPATH}'
 # -----------------------------------------------------------------------------
-SSH_OPTIONS = 'ssh -oport=5822'
-SSH_USER = 'cook'
-SSH_HOST = 'venus.astro.umontreal.ca'
-SSH_PATH = '/home/cook/www/apero-drs/'
-# -----------------------------------------------------------------------------
 # resource directory
 RESOURCE_DIR = '../documentation/working/resources/'
 # define auto directory (where automated files are created)
@@ -920,11 +915,11 @@ def upload(params: ParamDict):
         out_dir += os.sep
     # get rsync dict
     rdict = dict()
-    rdict['SSH'] = SSH_OPTIONS
-    rdict['USER'] = SSH_USER
-    rdict['HOST'] = SSH_HOST
+    rdict['SSH'] = params['DRS_SSH_OPTIONS']
+    rdict['USER'] = params['DRS_SSH_USER']
+    rdict['HOST'] = params['DRS_SSH_HOST']
     rdict['INPATH'] = out_dir
-    rdict['OUTPATH'] = SSH_PATH
+    rdict['OUTPATH'] = params['DRS_SSH_WEBPATH']
     # print command to rsync
     WLOG(params, '', RSYNC_CMD.format(**rdict))
     # run command (will require password)

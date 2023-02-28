@@ -16,8 +16,10 @@ Import rules:
     do not import from core.core.drs_argument
     do not import from core.core.drs_database
 """
+import hashlib
 import os
 import shutil
+import tarfile
 from pathlib import Path
 from typing import Any, List, Optional, Union
 
@@ -496,6 +498,32 @@ def recursive_path_glob(params: ParamDict,
     valid_files = sorted(valid_files)
     # return valid files
     return valid_files
+
+
+def calculate_checksum(filename: str) -> str:
+    """
+    Calculate the checksum of a file
+
+    :param filename: str, the path to the file to calculate the checksum of
+    :return: str, the checksum of the file
+    """
+    hasher = hashlib.md5()
+    with open(filename, 'rb') as f:
+        for chunk in iter(lambda: f.read(4096), b''):
+            hasher.update(chunk)
+    return hasher.hexdigest()
+
+
+def make_tarfile(output_filename: str, source_dir: str):
+    """
+    Make a tar file from a directory
+
+    :param output_filename: the output tar filename
+    :param source_dir: str, the source directory to add to the tar file
+    :return:
+    """
+    with tarfile.open(output_filename, "w:gz") as tar:
+        tar.add(source_dir, arcname=os.path.basename(source_dir))
 
 
 # =============================================================================

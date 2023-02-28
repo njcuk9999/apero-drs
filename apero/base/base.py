@@ -71,6 +71,9 @@ DEFAULT_PSEUDO_CONST_CLASS = 'DefaultPseudoConstants'
 # absolute paths (from relative paths to here)
 RECOMM_USER = __PATH__.parent.joinpath('requirements_current.txt')
 RECOMM_DEV = __PATH__.parent.joinpath('requirements_developer.txt')
+# data checksum filename
+CHECKSUM_FILE = 'checksums.yaml'
+
 # -----------------------------------------------------------------------------
 # warnings
 # -----------------------------------------------------------------------------

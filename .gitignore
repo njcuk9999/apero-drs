@@ -187,3 +187,8 @@ fabric.properties
 *.backup
 # Ignore database files
 *.db
+
+# Ignore instrument data files
+/apero/data/nirps_ha/*
+/apero/data/nirps_he/*
+/apero/data/spirou/*

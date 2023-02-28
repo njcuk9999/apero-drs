@@ -36,6 +36,9 @@ __all__ = [  # global settings
     'DRS_RESET_TELLUDB_PATH', 'DRS_USER_PROGRAM',
     'DRS_PDB_RC_FILE', 'IPYTHON_RETURN', 'ALLOW_BREAKPOINTS',
     'DRS_RESET_RUN_PATH', 'DRS_INSTRUMENTS', 'DRS_PDB_RC_FILENAME',
+    # DRS ASSETS URLS
+    'DRS_ASSETS_URLS', 'DRS_SSH_OPTIONS', 'DRS_SSH_USER', 'DRS_SSH_HOST',
+    'DRS_SSH_WEBPATH', 'DRS_SSH_ASSETSPATH',
     # DATABASE SETTINGS
     'DATABASE_DIR', 'CALIB_DB_MATCH', 'TELLU_DB_MATCH',
     # DISPLAY/LOGGING SETTINGS
@@ -94,7 +97,6 @@ LANGUAGE = Const('LANGUAGE', value=base.DEFAULT_LANG, dtype=str,
                  source=__NAME__, user=True, active=True, group=cgroup,
                  description='Language for DRS messages (if translated)')
 
-
 # Add snapshot parameter table to reduced outputs
 PARAMETER_SNAPSHOT = Const('PARAMETER_SNAPSHOT', value=True, dtype=bool,
                            source=__NAME__, user=True, active=True,
@@ -102,7 +104,6 @@ PARAMETER_SNAPSHOT = Const('PARAMETER_SNAPSHOT', value=True, dtype=bool,
                            description='Add snapshot parameter table to '
                                        'reduced outputs',
                            output=False)
-
 
 # =============================================================================
 # path settings
@@ -415,6 +416,58 @@ DRS_PDB_RC_FILENAME = Const('DRS_PDB_RC_FILENAME', value=base.PDB_RC_FILENAME,
                             output=False)
 
 # =============================================================================
+# DRS ASSETS URLS
+# =============================================================================
+cgroup = 'DRS ASSETS URLS'
+# where the assets tar file can be downloaded from (will be stored in the
+#   yaml file as well - this just controls where the developers upload it to)
+#   links must be publically accessible, separate links with a comma
+DRS_ASSETS_URLS = Const('DRS_ASSETS_URLS',
+                        value='http://apero.exoplanets.ca/assets/',
+                        dtype=str, source=__NAME__, group=cgroup,
+                        description=(' where the assets tar file can be '
+                                     'downloaded from (will be stored in the '
+                                     'yaml file as well - this just controls '
+                                     'where the developers upload it to) '
+                                     'links must be publically accessible, '
+                                     'separate links with a comma'),
+                        output=False)
+
+# Define the ssh options (ssh -oport={port})
+DRS_SSH_OPTIONS = Const('DRS_SSH_OPTIONS', value='ssh -oport=5822',
+                        dtype=str, source=__NAME__, group=cgroup,
+                        description=('Define the ssh options (ssh '
+                                     '-oport={port})'),
+                        output=False)
+
+# Define the ssh user (e.g. cook)
+DRS_SSH_USER = Const('DRS_SSH_USER', value='cook', dtype=str, source=__NAME__,
+                     group=cgroup,
+                     description='Define the ssh user (e.g. cook)',
+                     output=False)
+
+# Define the ssh host (e.g. venus.astro.umontreal.ca)
+DRS_SSH_HOST = Const('DRS_SSH_HOST', value='venus.astro.umontreal.ca',
+                     dtype=str, source=__NAME__, group=cgroup,
+                     description='Define the ssh host (e.g. '
+                                 'venus.astro.umontreal.ca)',
+                     output=False)
+
+# Define the ssh website path
+DRS_SSH_WEBPATH = Const('DRS_SSH_WEBPATH',
+                        value='/export/www/home/cook/www/apero-drs/',
+                        dtype=str, source=__NAME__, group=cgroup,
+                        description='Define the ssh website path',
+                        output=False)
+
+# Define the ssh assets path
+DRS_SSH_ASSETSPATH = Const('DRS_SSH_ASSETSPATH',
+                           value='/export/www/home/cook/www/apero-drs/assets/',
+                           dtype=str, source=__NAME__, group=cgroup,
+                           description='Define the ssh assets path',
+                           output=False)
+
+# =============================================================================
 # DATABASE SETTINGS
 # =============================================================================
 cgroup = 'DATABASE SETTINGS'
@@ -587,7 +640,6 @@ DRS_LOG_EMAIL_AUTH_PATH = Const('DRS_LOG_EMAIL_AUTH_PATH',
                                 description='Define the relative path of the '
                                             'log email oauth file',
                                 output=False)
-
 
 # Define the filename of the log email oauth file
 DRS_LOG_EMAIL_AUTH = Const('DRS_LOG_EMAIL_AUTH', value='apero.drs.oauth2.json',
