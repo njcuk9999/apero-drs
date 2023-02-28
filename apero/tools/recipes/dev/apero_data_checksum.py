@@ -53,7 +53,7 @@ apero_dcheck.kind = 'misc'
 apero_dcheck.set_debug_plots()
 apero_dcheck.set_summary_plots()
 
-apero_dcheck.set_kwarg(name='--indir', dtype='str', default='None',
+apero_dcheck.set_kwarg(name='--indir', dtype=str, default='None',
                        helpstr='Input data directory')
 
 # add recipe to recipe definition
