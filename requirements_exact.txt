@@ -109,6 +109,7 @@ ttkthemes==3.2.2
 urllib3==1.26.14
 wcwidth==0.2.6
 webencodings==0.5.1
+wget==3.2
 xlrd==2.0.1
 xyzservices==2022.9.0
 yagmail==0.15.293

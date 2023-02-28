@@ -123,13 +123,12 @@ def __main__(recipe, params):
     # deal with uploading assets
     if not drs_text.null_text(indir):
         drs_assets.upload_assets(params)
-
     # deal with downloading assets
     else:
-        drs_assets.download_assets(params)
-
-
-
+        # get the tar file from inputs ('None' by default)
+        tarfile = params['INPUTS']['TARFILE']
+        # check the assets and download / update if necessary
+        drs_assets.check_assets(params, tarfile=tarfile)
 
     # -------------------------------------------------------------------------
     # End of main code

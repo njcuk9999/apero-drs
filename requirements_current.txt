@@ -19,6 +19,7 @@ PyYAML==6.0
 scikit-image==0.19.3
 scipy==1.10.0
 tqdm==4.64.1
+wget==3.2
 yagmail==0.15.293
 
 # pip: if using mysql

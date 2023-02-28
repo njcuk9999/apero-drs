@@ -526,6 +526,17 @@ def make_tarfile(output_filename: str, source_dir: str):
         tar.add(source_dir, arcname=os.path.basename(source_dir))
 
 
+def extract_tarfile(tar_filename: str, extract_dir: str):
+    """
+    Extract a tar file to a directory
+
+    :param tar_filename: str, the tar file to extract
+    :param extract_dir: str, the directory to extract the tar file to
+    :return:
+    """
+    with tarfile.open(tar_filename, "r:gz") as tar:
+        tar.extractall(path=extract_dir)
+
 # =============================================================================
 # Start of code
 # =============================================================================

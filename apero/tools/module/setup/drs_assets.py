@@ -9,10 +9,12 @@ Created on 2019-11-09 10:44
 Version 0.0.1
 """
 import os
+import wget
 
 from apero.base import base
 from apero.core import constants
 from apero.core.core import drs_log
+from apero.core.core import drs_text
 from apero.core.utils import drs_data
 from apero.io import drs_path
 
@@ -138,16 +140,96 @@ def upload_assets(params: ParamDict):
     os.system(RSYNC_CMD.format(**rdict))
 
 
-def download_assets(params: ParamDict):
+def check_assets(params: ParamDict, tarfile: str = None):
     """
-    Use assets yaml file to download all data into the github repo
-    (but github repo will ignore all data changes)
+    Check if we need to update assets based on the check sums in the yaml file
 
-    :param params:
+    If any file does not exist or any file needs updating use assets yaml file
+    to download all data into the github repo (but github repo will ignore
+    all data changes)
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param tarfile: str, optional, name of tar file to download
+
     :return:
     """
-
-    pass
+    # get path to yaml file
+    asset_path = params['DRS_RESET_ASSETS_PATH']
+    # get the absolute path to the assets dir
+    abs_asset_path = drs_data.construct_path(params, '', asset_path)
+    # add the checksum filename
+    checksum_path = os.path.join(abs_asset_path, base.CHECKSUM_FILE)
+    # read the yaml file
+    yaml_dict = base.load_yaml(checksum_path)
+    # -------------------------------------------------------------------------
+    # update flag (assume we need don't need to update)
+    update = False
+    # check the checksums of the yaml dictionary data
+    for path in yaml_dict['data']:
+        # expected path
+        expected_path = os.path.join(abs_asset_path, path)
+        # check if file exists
+        if not os.path.exists(expected_path):
+            update = True
+            break
+        # expected checksum
+        expected_checksum = yaml_dict['data'][path]
+        # actual checksum
+        actual_checksum = drs_path.calculate_checksum(expected_path)
+        # check if checksums match
+        if expected_checksum != actual_checksum:
+            update = True
+            break
+    # -------------------------------------------------------------------------
+    # if we don't need to update, return
+    if not update:
+        return
+    # -------------------------------------------------------------------------
+    # deal with a local tar file
+    local = False
+    # check for valid tar file
+    if not drs_text.null_text(tarfile):
+        if os.path.exists(tarfile):
+           local = True
+        else:
+            emsg = 'Cannot find local assets tar file: {}'
+            eargs = [tarfile]
+            WLOG(params, 'error', emsg.format(*eargs))
+    # -------------------------------------------------------------------------
+    # deal with non-local tar file
+    if not local:
+        # get the tar file name
+        server_tarfile = yaml_dict['setup']['tarfile']
+        # get the server list
+        servers = yaml_dict['setup']['servers']
+        # loop around servers and find one that can download our tar file
+        for server in servers:
+            try:
+                wget.download(server + server_tarfile, asset_path)
+                # break if this works
+                break
+            except Exception as _:
+                pass
+        # check that tar file now exists locally
+        tarfile = os.path.join(asset_path, server_tarfile)
+        # check if tar file exists
+        if not os.path.exists(tarfile):
+            emsg = 'Cannot download assets tar file: {}'
+            eargs = [tarfile]
+            WLOG(params, 'error', emsg.format(*eargs))
+    # -------------------------------------------------------------------------
+    # Extract the tar file
+    # -------------------------------------------------------------------------
+    # print progress
+    WLOG(params, '', f'Extracting tar file: {tarfile}')
+    # extract tar file
+    try:
+        drs_path.extract_tarfile(tarfile, asset_path)
+    except Exception as e:
+        emsg = 'Cannot extract tar file: {0} \n\t Error {1}: {2}'
+        eargs = [tarfile, type(e), str(e)]
+        WLOG(params, 'error', emsg.format(*eargs))
+    # -------------------------------------------------------------------------
 
 
 # =============================================================================
