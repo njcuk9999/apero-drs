@@ -208,34 +208,43 @@ def check_assets(params: ParamDict, tarfile: str = None):
     # -------------------------------------------------------------------------
     # deal with non-local tar file
     if not local:
-        # print progress
-        WLOG(params, '', 'Downloading correct assets tar file')
+
         # get the tar file name
         server_tarfile = yaml_dict['setup']['tarfile']
-        # get the server list
-        servers = yaml_dict['setup']['servers']
-        # loop around servers and find one that can download our tar file
-        for server in servers:
-            try:
-                # print progress
-                msg = 'Attempting downloading tar file from: {0}'
-                margs = [server + server_tarfile]
-                WLOG(params, '', msg.format(*margs), colour='magenta')
-                # get the file using wget
-                wget.download(server + server_tarfile, abs_asset_path)
-                # print that the download was successful
-                WLOG(params, '', 'Download successful', colour='magenta')
-                # break if this works
-                break
-            except Exception as _:
-                pass
         # check that tar file now exists locally
         tarfile = os.path.join(abs_asset_path, server_tarfile)
-        # check if tar file exists
+        # deal with not having the file on disk currently
         if not os.path.exists(tarfile):
-            emsg = 'Cannot download assets tar file: {}'
-            eargs = [tarfile]
-            WLOG(params, 'error', emsg.format(*eargs))
+            # print progress
+            WLOG(params, '', 'Downloading correct assets tar file')
+            # get the server list
+            servers = yaml_dict['setup']['servers']
+            # loop around servers and find one that can download our tar file
+            for server in servers:
+                try:
+                    # print progress
+                    msg = 'Attempting downloading tar file from: {0}'
+                    margs = [server + server_tarfile]
+                    WLOG(params, '', msg.format(*margs), colour='magenta')
+                    # get the file using wget
+                    wget.download(server + server_tarfile, abs_asset_path)
+                    # print that the download was successful
+                    WLOG(params, '', 'Download successful', colour='magenta')
+                    # break if this works
+                    break
+                except Exception as _:
+                    pass
+            # check if tar file exists
+            if not os.path.exists(tarfile):
+                emsg = 'Cannot download assets tar file: {}'
+                eargs = [tarfile]
+                WLOG(params, 'error', emsg.format(*eargs))
+        else:
+            # print that we are reading from local file
+            msg = 'Reading from local tar file: {0}'
+            margs = [tarfile]
+            WLOG(params, '', msg.format(*margs))
+
     # -------------------------------------------------------------------------
     # Extract the tar file
     # -------------------------------------------------------------------------
