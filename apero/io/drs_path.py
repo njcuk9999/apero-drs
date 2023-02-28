@@ -514,7 +514,9 @@ def calculate_checksum(filename: str) -> str:
     return hasher.hexdigest()
 
 
-def make_tarfile(output_filename: str, source_dir: str):
+def make_tarfile(output_filename: str, source_dir: str,
+                 exclude_prefixes: Optional[List[str]] = None,
+                 exclude_suffixes: Optional[List[str]] = None):
     """
     Make a tar file from a directory
 
@@ -522,8 +524,36 @@ def make_tarfile(output_filename: str, source_dir: str):
     :param source_dir: str, the source directory to add to the tar file
     :return:
     """
+    # deal with default values
+    if exclude_prefixes is None:
+        exclude_prefixes = []
+    if exclude_suffixes is None:
+        exclude_suffixes = []
+    # define function to use in tar.add
+    def should_be_excluded(tarinfo: Any) -> Any:
+        """
+        Lambda function to exclude file prefixes and suffixes from tar file
+
+        :param tarinfo: Any, the tarinfo object to check
+        :return: None (if file is rejected) or the tarinfo object to check
+        """
+        exclude_file = False
+        for prefix in exclude_prefixes:
+            if tarinfo.name.startswith(prefix):
+                exclude_file |= True
+        for suffix in exclude_suffixes:
+            if tarinfo.name.endswith(suffix):
+                exclude_file |= True
+        # return None if file is to be excluded
+        if exclude_file:
+            return None
+        # return the input if file is to be kept
+        else:
+            return tarinfo
+    # make the tar file
     with tarfile.open(output_filename, "w:gz") as tar:
-        tar.add(source_dir, arcname=os.path.basename(source_dir))
+        tar.add(source_dir, arcname=os.path.basename(source_dir),
+                filter=should_be_excluded)
 
 
 def extract_tarfile(tar_filename: str, extract_dir: str):

@@ -125,7 +125,7 @@ def upload_assets(params: ParamDict):
     # print progress
     WLOG(params, '', f'Making tar file: {tar_path}')
     # make tar file
-    drs_path.make_tarfile(tar_path, indir)
+    drs_path.make_tarfile(tar_path, indir, exclude_suffixes=['_assets.tar.gz'])
     # -------------------------------------------------------------------------
     # Step 6: Upload the tar file using rsync
     # -------------------------------------------------------------------------
