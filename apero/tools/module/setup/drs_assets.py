@@ -163,7 +163,7 @@ def check_assets(params: ParamDict, tarfile: str = None):
     yaml_dict = base.load_yaml(checksum_path)
     # -------------------------------------------------------------------------
     # print progress
-    WLOG(params, '', 'Checking assets')
+    WLOG(params, '', 'Checking assets in {0}'.format(abs_asset_path))
     # update flag (assume we need don't need to update)
     update = False
     # check the checksums of the yaml dictionary data
