@@ -638,8 +638,7 @@ def main():
             # raise error
             raise ImportError(lang.error('00-000-00013').format(assets_mod))
     # now check whether we need to download the assets
-    drs_assets.check_assets(params, tarfile=allparams['TARFILE'],
-                            force=True)
+    drs_assets.check_assets(params, tarfile=allparams['TARFILE'])
     # ----------------------------------------------------------------------
     # perform clean install on each instrument if requested
     install.cprint(textentry('40-001-00072'), 'm')
