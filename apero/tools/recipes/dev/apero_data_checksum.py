@@ -114,7 +114,7 @@ def __main__(recipe, params):
     # get input directory
     indir = params['INPUTS']['INDIR']
     # deal with uploading assets
-    if not drs_text.null_text(indir):
+    if not drs_text.null_text(indir, ['None', 'Null', '']):
         # deal with input directory not existing
         if not os.path.exists(indir):
             msg = 'Input directory {0} does not exist'

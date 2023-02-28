@@ -162,6 +162,8 @@ def check_assets(params: ParamDict, tarfile: str = None):
     # read the yaml file
     yaml_dict = base.load_yaml(checksum_path)
     # -------------------------------------------------------------------------
+    # print progress
+    WLOG(params, '', 'Checking assets')
     # update flag (assume we need don't need to update)
     update = False
     # check the checksums of the yaml dictionary data
@@ -183,14 +185,22 @@ def check_assets(params: ParamDict, tarfile: str = None):
     # -------------------------------------------------------------------------
     # if we don't need to update, return
     if not update:
+        # print that everything is up-to-date
+        WLOG(params, '', 'Assets are up-to-date')
         return
+    else:
+        # print that we need to update
+        WLOG(params, '', 'Assets need updating')
     # -------------------------------------------------------------------------
     # deal with a local tar file
     local = False
     # check for valid tar file
     if not drs_text.null_text(tarfile):
         if os.path.exists(tarfile):
-           local = True
+            # print progress
+            WLOG(params, '', 'Using local assets tar file')
+            # set local flag
+            local = True
         else:
             emsg = 'Cannot find local assets tar file: {}'
             eargs = [tarfile]
@@ -198,6 +208,8 @@ def check_assets(params: ParamDict, tarfile: str = None):
     # -------------------------------------------------------------------------
     # deal with non-local tar file
     if not local:
+        # print progress
+        WLOG(params, '', 'Downloading correct assets tar file')
         # get the tar file name
         server_tarfile = yaml_dict['setup']['tarfile']
         # get the server list
@@ -230,7 +242,7 @@ def check_assets(params: ParamDict, tarfile: str = None):
         eargs = [tarfile, type(e), str(e)]
         WLOG(params, 'error', emsg.format(*eargs))
     # -------------------------------------------------------------------------
-
+    return locals()
 
 # =============================================================================
 # Start of code
