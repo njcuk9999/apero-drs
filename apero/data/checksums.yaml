@@ -1,4 +1,5 @@
 data:
+  checksums.yaml: dc99fda8c7f280f11b6a04c2e5648cc2
   core/README.md: 80b66c526549af6d3bd24d7be6ec53ad
   core/apero.drs.oauth2.json: 73d2a327cfc47cd53554b83d5b83f022
   core/barycorrpy/finals2000A.all: 490dfe47d34c047dd9ba18b3b1bffca1
@@ -172,10 +173,10 @@ data:
   spirou/telluric/trans_h2o_abso_ccf.mas: 3467d02a8ea1ea056980bcbd1e86d30b
   spirou/telluric/trans_others_abso_ccf.mas: ed6f602b746534c5018bde1b952631ff
 setup:
-  humantime: '2023-02-28 16:20:36.109'
+  humantime: '2023-02-28 18:31:16.411'
   servers:
   - http://apero.exoplanets.ca/assets/
-  tarfile: 1677601236_109371_assets.tar.gz
-  unixtime: 1677601236.109371
+  tarfile: 1677609076_410977_assets.tar.gz
+  unixtime: 1677609076.410977
   vdate: '2023-01-30'
   version: 0.8.001
