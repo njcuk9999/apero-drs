@@ -240,6 +240,8 @@ def check_assets(params: ParamDict, tarfile: str = None):
                     WLOG(params, '', msg.format(*margs), colour='magenta')
                     # get the file using wget
                     wget.download(server + server_tarfile, abs_asset_path)
+                    # new line after wget print out
+                    print('')
                     # print that the download was successful
                     WLOG(params, '', 'Download successful', colour='magenta')
                     # break if this works
