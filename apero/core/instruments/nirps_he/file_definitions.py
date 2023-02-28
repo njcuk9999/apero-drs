@@ -1754,7 +1754,22 @@ post_s_file.add_column('S1D_W', out_tellu_sc1d_w,
                        incol='eflux', outcol='FluxErrATelluCorrected',
                        fiber='A', required=False,
                        block_kind='red', clear_file=True)
-
+# TODO: from telluric database?
+post_s_file.add_column('S1D_W', out_tellu_rc1d_w, fiber='A',
+                       incol='SKYC_flux', outcol='SkyCorr',
+                       required=False, block_kind='red', clear_file=True)
+# TODO: from telluric database?
+post_s_file.add_column('S1D_W', out_tellu_rc1d_w, fiber='A',
+                       incol='SKYC_eflux', outcol='SkyCorrErr',
+                       required=False, block_kind='red', clear_file=True)
+# TODO: from telluric database?
+post_s_file.add_column('S1D_W', out_tellu_rc1d_w, fiber='A',
+                       incol='FRES_flux', outcol='FiniteRes',
+                       required=False, block_kind='red', clear_file=True)
+# TODO: from telluric database?
+post_s_file.add_column('S1D_W', out_tellu_rc1d_w, fiber='A',
+                       incol='FRES_eflux', outcol='FiniteResErr',
+                       required=False, block_kind='red', clear_file=True)
 # s1d w is a composite table
 post_s_file.add_ext('S1D_V', 'table', pos=2, block_kind='red',
                     link='PP', hlink='KW_IDENTIFIER',
@@ -1789,6 +1804,22 @@ post_s_file.add_column('S1D_V', out_tellu_sc1d_v,
                        incol='eflux', outcol='FluxErrATelluCorrected',
                        fiber='A', required=False,
                        block_kind='red', clear_file=True)
+# TODO: from telluric database?
+post_s_file.add_column('S1D_V', out_tellu_rc1d_v, fiber='A',
+                       incol='SKYC_flux', outcol='SkyCorr',
+                       required=False, block_kind='red', clear_file=True)
+# TODO: from telluric database?
+post_s_file.add_column('S1D_V', out_tellu_rc1d_v, fiber='A',
+                       incol='SKYC_eflux', outcol='SkyCorrErr',
+                       required=False, block_kind='red', clear_file=True)
+# TODO: from telluric database?
+post_s_file.add_column('S1D_V', out_tellu_rc1d_v, fiber='A',
+                       incol='FRES_flux', outcol='FiniteRes',
+                       required=False, block_kind='red', clear_file=True)
+# TODO: from telluric database?
+post_s_file.add_column('S1D_V', out_tellu_rc1d_v, fiber='A',
+                       incol='FRES_eflux', outcol='FiniteResErr',
+                       required=False, block_kind='red', clear_file=True)
 # move header keys
 post_s_file.add_hkey('KW_VERSION', inheader='S1D_W', outheader='PP')
 post_s_file.add_hkey('KW_DRS_DATE_NOW', inheader='S1D_W', outheader='PP')

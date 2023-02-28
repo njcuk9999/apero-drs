@@ -1270,7 +1270,8 @@ def fit_tellu_write_corrected_s1d(params, recipe, infile, corrfile, fiber,
 
 
 def fit_tellu_write_recon(params, recipe, infile, corrfile, fiber, cprops,
-                          rcwprops, rcvprops):
+                          rcwprops, rcvprops, skycwprops, skycvprops,
+                          freswprops, fresvprops):
     # ------------------------------------------------------------------
     # get new copy of the corrected s1d_w file
     reconfile = recipe.outputs['TELLU_RECON'].newcopy(params=params,
@@ -1313,9 +1314,22 @@ def fit_tellu_write_recon(params, recipe, infile, corrfile, fiber, cprops,
     rc1dwfile.add_hkey('KW_OUTPUT', value=rc1dwfile.name)
     # add new header keys
     rc1dwfile = extract.add_s1d_keys(rc1dwfile, rcwprops)
+    # -------------------------------------------------------------------------
+    # get the wavelength bin table
+    wtable = rcwprops['S1DTABLE'].copy()
+    # add the prefix 'recon' to all columns
+    for colname in wtable.colnames:
+        wtable.rename_column(colname, 'RECON_' + colname)
+    # add the skycorr columns with prefix SKYCORR_
+    for colname in skycwprops['S1DTABLE']:
+        wtable['SKYC_' + colname] = skycwprops['S1DTABLE'][colname]
+    # add the frescorr columns with prefix FRES_CORR_
+    for colname in freswprops['S1DTABLE']:
+        wtable['FRES_' + colname] = freswprops['S1DTABLE'][colname]
     # copy data
-    rc1dwfile.data = rcwprops['S1DTABLE']
-    # must change the datatpye to 'table'
+    rc1dwfile.data = wtable
+    # -------------------------------------------------------------------------
+    # must change the datatype to 'table'
     rc1dwfile.datatype = 'table'
     # log that we are saving s1d table
     wargs = ['wave', rc1dwfile.filename]
@@ -1346,9 +1360,22 @@ def fit_tellu_write_recon(params, recipe, infile, corrfile, fiber, cprops,
     rc1dvfile.add_hkey('KW_OUTPUT', value=rc1dvfile.name)
     # add new header keys
     rc1dvfile = extract.add_s1d_keys(rc1dvfile, rcvprops)
+    # -------------------------------------------------------------------------
+    # get the wavelength bin table
+    vtable = rcwprops['S1DTABLE'].copy()
+    # add the prefix 'recon' to all columns
+    for colname in vtable.colnames:
+        vtable.rename_column(colname, 'RECON_' + colname)
+    # add the skycorr columns with prefix SKYCORR_
+    for colname in skycvprops['S1DTABLE']:
+        vtable['SKYC_' + colname] = skycvprops['S1DTABLE'][colname]
+    # add the frescorr columns with prefix FRES_CORR_
+    for colname in fresvprops['S1DTABLE']:
+        vtable['FRES_' + colname] = fresvprops['S1DTABLE'][colname]
     # copy data
-    rc1dvfile.data = rcvprops['S1DTABLE']
-    # must change the datatpye to 'table'
+    rc1dvfile.data = vtable
+    # -------------------------------------------------------------------------
+    # must change the datatype to 'table'
     rc1dvfile.datatype = 'table'
     # log that we are saving s1d table
     wargs = ['velocity', rc1dvfile.filename]
