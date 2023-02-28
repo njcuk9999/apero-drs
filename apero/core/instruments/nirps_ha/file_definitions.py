@@ -95,7 +95,7 @@ raw_night_sky_sky = drs_finput('RAW_NIGHT_SKY_SKY', filetype='.fits',
                                suffix='', inext='.fits', outclass=blank_ofile,
                                hkeys=dict(KW_RAW_DPRTYPE='OBJECT,SKY',
                                           KW_RAW_DPRCATG='SCIENCE',
-                                          KW_NIGHT_OBS=True,
+                                          KW_NIGHT_OBS='1',
                                           KW_INST_MODE=INSTRUMENT_MODE,
                                           KW_INSTRUMENT=INSTRUMENT_NAME),
                                description='Raw night sci=SKY calib=SKY file')

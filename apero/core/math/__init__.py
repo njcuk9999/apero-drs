@@ -128,6 +128,8 @@ square_medbin = gen_math.square_medbin
 
 super_gauss_fast = fast.super_gauss_fast
 
+super_gauss = gauss.super_gauss
+
 val_cheby = gen_math.val_cheby
 
 xpand_mask = gen_math.xpand_mask

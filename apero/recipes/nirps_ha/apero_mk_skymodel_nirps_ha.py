@@ -100,7 +100,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     calibdbm.load_db()
     telludbm = drs_database.TelluricDatabase(params)
     telludbm.load_db()
-
+    # set plot location
+    recipe.plot.set_location()
     # ----------------------------------------------------------------------
     # find all sky files
     # ----------------------------------------------------------------------
@@ -112,8 +113,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     sky_files_cal, infile_cal = telluric.find_night_skyfiles(params, cal_fiber,
                                                              filetype)
     # only keep files that match between the two
-    margs = [sky_files_sci, sky_files_cal, sci_fiber, cal_fiber,
-             infile_sci, infile_cal]
+    margs = [sky_files_sci, sky_files_cal, sci_fiber, cal_fiber]
     sky_files_sci, sky_files_cal = telluric.skymodel_matchfiles(*margs)
     # print progress
     # TODO: Add to language database

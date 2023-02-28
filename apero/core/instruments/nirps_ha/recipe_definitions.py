@@ -864,6 +864,8 @@ apero_mk_skymodel.set_kwarg(name='--filetype', dtype='options',
                             default_ref='SKYMODEL_FILETYPE',
                             helpstr=textentry('MKTEMP_FILETYPE'),
                             options=['EXT_E2DS', 'EXT_E2DS_FF'])
+apero_mk_skymodel.set_kwarg(**add_db)
+apero_mk_skymodel.set_kwarg(**plot)
 apero_mk_skymodel.group_func = grouping.no_group
 apero_mk_skymodel.group_column = None
 # add to recipe

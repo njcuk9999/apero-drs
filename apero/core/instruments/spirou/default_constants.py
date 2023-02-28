@@ -2103,6 +2103,10 @@ SKYMODEL_MIN_EXPTIME =  SKYMODEL_MIN_EXPTIME.copy(__NAME__)
 SKYMODEL_MIN_EXPTIME.value = 300
 SKYMODEL_MIN_EXPTIME.author = base.AUTHORS['EA']
 
+# Define the maximum number of files to have open simultaneously
+SKYMODEL_MAX_OPEN_FILES = SKYMODEL_MAX_OPEN_FILES.copy(__NAME__)
+SKYMODEL_MAX_OPEN_FILES.value = 10
+
 # define the sigma that positive exursions need to have to be identified
 #   as lines
 SKYMODEL_LINE_SIGMA = SKYMODEL_LINE_SIGMA.copy(__NAME__)

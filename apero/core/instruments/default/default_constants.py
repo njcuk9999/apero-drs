@@ -235,9 +235,9 @@ __all__ = [
     'WAVENIGHT_PLT_NBINS',
     # sky correction constants
     'SKYMODEL_FILETYPE',  'SKYMODEL_EXT_SNR_ORDERNUM', 'SKYMODEL_MIN_EXPTIME',
-    'SKYMODEL_LINE_SIGMA', 'SKYMODEL_LINE_ERODE_SIZE',
-    'SKYMODEL_LINE_DILATE_SIZE', 'SKYMODEL_WEIGHT_ITERS',
-    'SKYMODEL_WEIGHT_ERODE_SIZE',
+    'SKYMODEL_MAX_OPEN_FILES', 'SKYMODEL_LINE_SIGMA',
+    'SKYMODEL_LINE_ERODE_SIZE', 'SKYMODEL_LINE_DILATE_SIZE',
+    'SKYMODEL_WEIGHT_ITERS', 'SKYMODEL_WEIGHT_ERODE_SIZE',
     'ALLOWED_SKYCORR_DPRTYPES', 'SKYCORR_WEIGHT_ITERATIONS',
     'SKYCORR_LOWPASS_SIZE1', 'SKYCORR_LOWPASS_SIZE2',
     'SKYCORR_LOWPASS_ITERATIONS', 'SKYCORR_NSIG_THRES',
@@ -3652,6 +3652,13 @@ SKYMODEL_MIN_EXPTIME = Const('SKYMODEL_MIN_EXPTIME', value=None,
                              group=cgroup,
                              description='Define the minimum exptime to use a '
                                          'sky in the model [s]')
+
+# Define the maximum number of files to have open simultaneously
+SKYMODEL_MAX_OPEN_FILES = Const('SKYMODEL_MAX_OPEN_FILES', value=None,
+                                dtype=int, source=__NAME__, minimum=1,
+                                group=cgroup,
+                                description='Define the maximum number of '
+                                            'files to have open simultaneously')
 
 # define the sigma that positive exursions need to have to be identified
 #   as lines
