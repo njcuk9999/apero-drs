@@ -112,7 +112,7 @@ def __main__(recipe, params):
     mainname = __NAME__ + '._main()'
     # -------------------------------------------------------------------------
     # get input directory
-    indir = params['INPUT']['INDIR']
+    indir = params['INPUTS']['INDIR']
     # deal with input directory not existing
     if not os.path.exists(indir):
         msg = 'Input directory {0} does not exist'

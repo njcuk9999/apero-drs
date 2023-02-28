@@ -46,7 +46,7 @@ def upload_assets(params: ParamDict):
     :return:
     """
     # get input directory
-    indir = params['INPUT']['INDIR']
+    indir = params['INPUTS']['INDIR']
     # -------------------------------------------------------------------------
     # Step 1: get a list of all files in indir
     # -------------------------------------------------------------------------
