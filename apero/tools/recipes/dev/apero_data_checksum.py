@@ -113,15 +113,15 @@ def __main__(recipe, params):
     # -------------------------------------------------------------------------
     # get input directory
     indir = params['INPUTS']['INDIR']
-    # deal with input directory not existing
-    if not os.path.exists(indir):
-        msg = 'Input directory {0} does not exist'
-        margs = [indir]
-        WLOG(params, 'error', msg.format(*margs))
-        return locals()
-
     # deal with uploading assets
     if not drs_text.null_text(indir):
+        # deal with input directory not existing
+        if not os.path.exists(indir):
+            msg = 'Input directory {0} does not exist'
+            margs = [indir]
+            WLOG(params, 'error', msg.format(*margs))
+            return locals()
+        # upload assets
         drs_assets.upload_assets(params)
     # deal with downloading assets
     else:
