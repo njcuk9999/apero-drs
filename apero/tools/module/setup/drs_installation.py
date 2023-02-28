@@ -344,9 +344,10 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
     all_params['DEVMODE'] = getattr(args, 'dev', False)
     # add clean warn
     all_params['CLEANWARN'] = getattr(args, 'clean_no_warning', False)
+    # add tar file
+    all_params['TARFILE'] = getattr(args, 'tar_file', None)
     # get whether to ask user about creating directories
     askcreate = not getattr(args, 'always_create', True)
-
     # ------------------------------------------------------------------
     # Step 0: Ask for profile name (if not given)
     # ------------------------------------------------------------------
@@ -1572,6 +1573,8 @@ def update(params: ParamDict, args: argparse.Namespace) -> ParamDict:
     all_params['DEVMODE'] = getattr(args, 'devmode', False)
     # add clean warn
     all_params['CLEANWARN'] = getattr(args, 'cleanwarn', False)
+    # add tar file
+    all_params['TARFILE'] = getattr(args, 'tar_file', None)
     # ----------------------------------------------------------------------
     # deal with having a profile name
     if args.name in ['None', None, '']:
