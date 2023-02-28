@@ -55,7 +55,9 @@ apero_dcheck.set_summary_plots()
 
 apero_dcheck.set_kwarg(name='--indir', dtype=str, default='None',
                        helpstr='Input data directory')
-
+apero_dcheck.set_kwarg(name='--tarfile', dtype=str, default='None',
+                       helpstr='Force a local assets tar file to be used '
+                               '(If correct does not download from server)')
 # add recipe to recipe definition
 RMOD.add(apero_dcheck)
 
