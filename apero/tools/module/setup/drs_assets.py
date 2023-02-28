@@ -190,12 +190,12 @@ def check_assets(params: ParamDict, tarfile: str = None):
         return
     else:
         # print that we need to update
-        WLOG(params, '', 'Assets need updating')
+        WLOG(params, '', 'Assets need updating', colour='yellow')
     # -------------------------------------------------------------------------
     # deal with a local tar file
     local = False
     # check for valid tar file
-    if not drs_text.null_text(tarfile):
+    if not drs_text.null_text(tarfile, ['None', 'Null', '']):
         if os.path.exists(tarfile):
             # print progress
             WLOG(params, '', 'Using local assets tar file')
@@ -217,7 +217,14 @@ def check_assets(params: ParamDict, tarfile: str = None):
         # loop around servers and find one that can download our tar file
         for server in servers:
             try:
+                # print progress
+                msg = 'Attempting downloading tar file from: {0}'
+                margs = [server]
+                WLOG(params, '', msg.format(*margs), colour='magenta')
+                # get the file using wget
                 wget.download(server + server_tarfile, asset_path)
+                # print that the download was successful
+                WLOG(params, '', 'Download successful', colour='magenta')
                 # break if this works
                 break
             except Exception as _:
