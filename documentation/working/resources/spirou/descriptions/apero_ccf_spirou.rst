@@ -8,7 +8,7 @@ challenges appeared. The near-infrared domain is plagued with telluric absorptio
 some wavelength domains are expected to have significant excess noise levels. Deep or saturated telluric lines cannot
 be corrected and are better left as gaps (represented as \NAN) in the spectrum that are fixed for the entire time
 series considered. When computing a CCF, how does one account for gaps in the data? The star's yearly line of sight
-variations will cause this gap to shift against the stellar spectrum by up to :math:`\pm`32 :math:`kms^{-1}` depending
+variations will cause this gap to shift against the stellar spectrum by up to :math:`\pm 32 kms^{-1}` depending
 on ecliptic latitude. In the optical, one can simply reject the entire domain affected by the gap (64 :math:`kms^{-1}`
 plus the gap width); however, at optical wavelengths, deep absorption lines are sufficiently sparse that the overall
 loss in wavelength domain due to telluric absorption is small, which is not the case in the near-infrared.

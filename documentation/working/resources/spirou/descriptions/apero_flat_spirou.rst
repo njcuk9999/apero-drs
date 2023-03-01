@@ -38,7 +38,7 @@ Once we have a set of parameters the blaze function for this order is :math:`\te
 for this order. The original `E2DS` order is then divided by the blaze function and this is used as the flat profile.
 A standard deviation of the flat is also calculated for quality control purposes. This process is repeated for each
 order producing a full blaze and flat profile (:math:`49\times4088`) for the input `FLAT_FLAT` files. To avoid
-erroneous contributions to the flat any outlier pixels (outside 10:math:`\sigma or within :math:`\pm`0.2 of unity)
+erroneous contributions to the flat any outlier pixels (outside 10:math:`\sigma` or within :math:`\pm`0.2 of unity)
 are set to NaN. Note that the multiplication of the blaze and the flat is equivalent to the full response function of
 the detector. For some orders (#34 and #74), there is a large residual at one edge of the blaze falloff.
 This is due to the mismatch between the analytical function used and the actual profile; the flat-field correction

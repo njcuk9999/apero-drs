@@ -33,6 +33,6 @@ other hand, corresponds to a change in the cavity length of the FP, due in part 
 which may happen between nights. Meanwhile, for fibers A, B, and C we fit nothing and use the fiber AB wavelength
 cavity coefficients. The FP mask for quality control is also not re-generated. Therefore all cross-correlations
 between fibers AB and A, B, and C are done relative to the reference night wavelength solution (however we only check
-quality control on AB-A, AB-B, and AB-C). As with the reference wavelength solution recipe, a wavelength
-solution for each fiber, and the FP and HC lines founds during the process, are then saved to the calibration database
-for use throughout APERO.
+quality control on :math:`AB-A`, :math:`AB-B`, :math:`AB-C`). As with the reference wavelength solution recipe, a
+wavelength solution for each fiber, and the FP and HC lines founds during the process, are then saved to the
+calibration database for use throughout APERO.

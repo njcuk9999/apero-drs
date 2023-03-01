@@ -8,7 +8,7 @@ been an overall reshuffling of the logic. As such we present an overview of the 
 
 The reference wavelength solution recipe takes preprocessed `FP_FP` and `HC_HC` files (as many as given by the user or
 as many as occur on the nights being used via `apero_processing`) from the reference night. It combines the `FP_FP` and
-`HC_HC` files into a single `FP_FP` and a single `HC_HC file (via a median combination of the images). These combined
+`HC_HC` files into a single `FP_FP` and a single `HC_HC` file (via a median combination of the images). These combined
 `FP_FP` and `HC_HC` files are then extracted.
 
 We first consider the combined flux in fibers A and B (the AB fiber). We locate the `HC_HC` lines, starting with a

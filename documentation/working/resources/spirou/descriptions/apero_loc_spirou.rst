@@ -13,7 +13,7 @@ weighted box median, shown in equation:
 
 .. math::
 
-    IM_{\text{orderp } j} = \left\{ \begin{array}{ll}
+    IM_{\text{orderp } j} = \left\{ \begin{array}
       \text{MED}(IM_{j=0:j=k+1}):     & k < 5            \\
       \text{MED}(IM_{j=k-5:j=4088}):  & k > 4088 - 5     \\
       \text{MED}(IM_{j=k-5:j=k+5+1}): & \text{otherwise} \\

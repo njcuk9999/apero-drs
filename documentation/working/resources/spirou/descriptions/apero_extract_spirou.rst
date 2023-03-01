@@ -41,7 +41,7 @@ uses the astrometric parameters fed in at the preprocessing level. The calculati
 estimate for the BERV itself and the corrected or barycentric Julian Date (BJD) at the mid-exposure time. barycorrpy
 has a precision better than the :math:`cm s^{-1}` level. We also estimate the maximum BERV value for this object
 across the year. If for any reason the BERV calculation fails with barycorrpy we calculate an estimate of the BERV
-(precise to :math:`\sim`10:math:`m s^{-1}`, modified from PyAstronomy.pyasl.baryvel; a python implementation of helcorr)
+(precise to :math:`\sim 10 m s^{-1}`, modified from PyAstronomy.pyasl.baryvel; a python implementation of helcorr)
 and flag that an estimated BERV correction was calculated. This estimated BERV is not precise enough for PRV work but
 is sufficient to allow for acceptable telluric correction.
 

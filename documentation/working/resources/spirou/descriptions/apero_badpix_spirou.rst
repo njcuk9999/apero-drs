@@ -12,8 +12,8 @@ in the `FLAT_FLAT` by using Equation:
 
     M_{\text{flat } i,j} = \left\{ \begin{array}
       1 : & FLAT_{i,j} \text{ is not finite} \\
-      1 : & \mid (FLAT_{i,j} / FLAT_{\text{med } i,j}) - 1 \mid > \text{cut\_ratio} \\
-      1 : & FLAT_{\text{med } i,j} < \text{illum\_cut} \\
+      1 : & \mid (FLAT_{i,j} / FLAT_{\text{med } i,j}) - 1 \mid > \text{cut_ratio} \\
+      1 : & FLAT_{\text{med } i,j} < \text{illum_cut} \\
       0 : & \text{otherwise} \\
     \end{array} \right.
 
