@@ -64,15 +64,13 @@ Then, this model is subtracted from the original science observation for each of
 order-by-order:
 
 .. math::
+        ratio_{i} = \frac{\Sigma(L[C]_{i}S[C]_{i})}{\Sigma(S[C]_{i}^2)}
 
-     \begin{array}{cc}
-        ratio_{i} = \frac{\Sigma(L[C]_{i}S[C]_{i})}{\Sigma(S[C]_{i}^2)} \\
-        \\
-        scale_{i} = \frac{L[AB,A,B]_{i}}{ratio_{i}} \\
-        \\
-        S[AB,A,B]_{i,corr} = S[AB,A,B]_{i} - scale_{i} \\
+.. math::
+        scale_{i} = \frac{L[AB,A,B]_{i}}{ratio_{i}}
 
-    \end{array}
+.. math::
+        S[AB,A,B]_{i,corr} = S[AB,A,B]_{i} - scale_{i}
 
 where L[C] is the model of the FP from the leak reference recipe, S[C] is the 2D extracted spectrum in the reference
 fiber (fiber C), L[AB,A,B] is the model of the contamination from the FP from the leak reference recipe in the science
@@ -101,7 +99,6 @@ we can safely use any flux with a transmission of order zero to scale the therma
 value.
 
 .. math::
-
         mask = \left\{ \begin{array}{cl}
         1: & TAPAS < 0.01  \\
         0: & \text{otherwise} \\
@@ -124,12 +121,10 @@ not in the HC or FP peaks). This is then converted into a ratio and scaled to th
 
 
 .. math::
+        ratio = median\left( \frac{TI[AB,A,B,C]}{P_{10}(TI[AB,A,B,C])} \right)
 
-    \begin{array}{cc}
-        ratio = median\left( \frac{TI[AB,A,B,C]}{P_{10}(TI[AB,A,B,C])} \right) \\
-        \\
-        S[AB,A,B,C]_{corr} = S[AB,A,B,C] - \frac{TI[AB,A,B,C]}{ratio} \\
-    \end{array}
+.. math::
+        S[AB,A,B,C]_{corr} = S[AB,A,B,C] - \frac{TI[AB,A,B,C]}{ratio}
 
 where :math:`P_{10}` is the 10th percentile value, TI[AB,A,B,C] is a nightly extracted `DARK_DARK_INT` spectrum
 (median filtered with a width of 101 pixels), S[AB,A,B,C] denotes the 2D extracted spectrum prior to correction and

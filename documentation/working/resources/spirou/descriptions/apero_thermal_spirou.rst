@@ -25,7 +25,8 @@ Considering that the telescope and front-end temperature change through the nigh
 correction that is adjusted per frame (this is done as part of the extraction recipe). While the slope of the black
 body contribution changes very little over the :math:`2.1-2.5 \mu m` domain, within which the thermal background is
 significant, the amplitude of the contribution varies by a factor of >2 between nights (typically a factor 2 for
-every :math:`8^\circ`C) and needs to be adjusted for individual observations. While we have no external measurement of
+every :math:`8^\circ`
+C) and needs to be adjusted for individual observations. While we have no external measurement of
 the thermal background, there are a number of completely saturated telluric water absorption features
 :math:`2.4-2.5 \mu m` that provide a measure of the total thermal emission seen by SPIRou. These regions are used to
 scale the thermal background model such that they have a median flux of zero.
