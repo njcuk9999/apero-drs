@@ -10,7 +10,7 @@ in the `FLAT_FLAT` by using Equation:
 
 .. math::
 
-    M_{\text{flat } i,j} = \left\{ \begin{array}{cl}
+    M_{\text{flat } i,j} = \left\{ \begin{array}
       1 : & FLAT_{i,j} \text{ is not finite} \\
       1 : & \mid (FLAT_{i,j} / FLAT_{\text{med } i,j}) - 1 \mid > \text{cut\_ratio} \\
       1 : & FLAT_{\text{med } i,j} < \text{illum\_cut} \\
@@ -28,7 +28,7 @@ For the `DARK_DARK` image, bad pixels are identified using Equation:
 
 .. math::
 
-    M_{\text{dark } i,j} = \left\{ \begin{array}{cl}
+    M_{\text{dark } i,j} = \left\{ \begin{array}
       1 : & DARK_{i,j} \text{ is not finite} \\
       1 : & DARK_{i,j} > 5.0 \text{ADU/s}  \\
       0 : & \text{otherwise} \\
@@ -45,7 +45,7 @@ are also identified using Equation:
 
 .. math::
 
-    M_{\text{full-flat } i,j} = \left\{ \begin{array}{cl}
+    M_{\text{full-flat } i,j} = \left\{ \begin{array}
       1 : & \mid FULLFLAT_{i,j} - 1 \mid > 0.3  \\
       0 : & \text{otherwise} \\
     \end{array} \right.
