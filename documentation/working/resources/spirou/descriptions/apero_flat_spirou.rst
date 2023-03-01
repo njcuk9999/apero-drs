@@ -17,15 +17,17 @@ flux less than 0.05 the 95th percentile flux value or greater than 2 times the 9
 removed. Each `FLAT_FLAT` `E2DS` order is then fit with a sinc function:
 
 .. math::
+        \text{B}_i = AS(sin(\theta)/\theta)^2
 
-     \begin{array}{cc}
-        \text{B}_i = AS(sin(\theta)/\theta)^2 \\
-        \\
-        S = 1 + s(x_i - L) \\
-        \theta = \pi \bar{x_i} / P \\
+.. math::
+        S = 1 + s(x_i - L)
 
+.. math::
+        \theta = \pi \bar{x_i} / P
+
+.. math::
         \bar{x_i} = (x_i - L) + Q(x_i - L)^2 + C(x_i - L)^3
-    \end{array}
+
 
 where :math:`\text{B}_i` is the blaze model for the ith `E2DS` order, A is the amplitude of the sinc function, P is
 the period of the sinc function, s is the slope of the sinc function, :math:`x_i` is the flux vector of the `E2DS`
