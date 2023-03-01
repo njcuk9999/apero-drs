@@ -12,8 +12,7 @@ The first step in the localization code is to take the combined and calibrated `
 weighted box median, shown in equation:
 
 .. math::
-
-    IM_{\text{orderp } j} = \left\{ \begin{array}
+    IM_{\text{orderp } j} = \left\{ \begin{array}{ll}
       \text{MED}(IM_{j=0:j=k+1}):     & k < 5            \\
       \text{MED}(IM_{j=k-5:j=4088}):  & k > 4088 - 5     \\
       \text{MED}(IM_{j=k-5:j=k+5+1}): & \text{otherwise} \\
