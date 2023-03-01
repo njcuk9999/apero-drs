@@ -158,7 +158,7 @@ latex_elements = {
         \usepackage{dirtree}
         \usepackage{listings}
         \usepackage{rotating}
-        \usepackage{tasks}
+        %% \usepackage{tasks}
         \usepackage[normalem]{ulem}
         \usepackage{capt-of}
         \usepackage{xspace}
