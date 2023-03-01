@@ -99,10 +99,10 @@ we can safely use any flux with a transmission of order zero to scale the therma
 value.
 
 .. math::
-        mask = \left\{ \begin{array}
+        mask = \left\{ \begin{array}{cl}
         1: & TAPAS < 0.01  \\
         0: & \text{otherwise} \\
-        \end{array} \right.
+        \end{array} \right. \\
 
 .. math::
         ratio = median\left( \frac{TT[AB,A,B,C]\times mask}{S[AB,A,B,C] \times mask} \right)
