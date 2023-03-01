@@ -1125,6 +1125,27 @@ class DrsRecipe(object):
                     return True
         return False
 
+    # default schematic file name
+    def default_sfile(self) -> str:
+        """
+        Default schematic file name
+
+        :return: str, the schematic file name
+        """
+        # get the recipe name without py extension
+        name = self.name.strip('.py')
+        return '{0}_schematic.jpg'.format(name)
+
+    def default_rfile(self) -> str:
+        """
+        Default rst description file name
+
+        :return: str, the schematic file name
+        """
+        # get the recipe name without py extension
+        name = self.name.strip('.py')
+        return '{0}.rst'.format(name)
+
     # =========================================================================
     # Reprocessing methods
     # =========================================================================
@@ -2165,6 +2186,10 @@ def filter_values(values: List[str], filter_list: List[str],
     return valid_values
 
 
+
+# =============================================================================
+# Define other functions
+# =============================================================================
 def _summary_args(args: Dict[str, Any], argkind: str = 'pos') -> str:
     """
     A string representation for args or kwargs for DrsRunSequence.summary
@@ -2219,6 +2244,9 @@ def lambda_plot(*args, **kwargs):
     """
     _ = args, kwargs
     pass
+
+
+
 
 # =============================================================================
 # End of code

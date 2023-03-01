@@ -232,8 +232,8 @@ apero_preprocess.set_kwarg(name='--skip', dtype='bool', default=False,
 apero_preprocess.group_func = grouping.group_individually
 apero_preprocess.group_column = 'REPROCESS_OBSDIR_COL'
 # documentation
-apero_preprocess.schematic = 'apero_preproces_spirou_schematic.jpg'
-apero_preprocess.description_file = 'apero_preprocess_spirou.rst'
+apero_preprocess.schematic = apero_preprocess.default_sfile()
+apero_preprocess.description_file = apero_preprocess.default_rfile()
 # add to recipe
 recipes.append(apero_preprocess)
 
@@ -276,7 +276,8 @@ apero_badpix.set_min_nfiles('darkfiles', 2)
 apero_badpix.group_func = grouping.group_by_dirname
 apero_badpix.group_column = 'REPROCESS_OBSDIR_COL'
 # documentation
-apero_badpix.schematic = 'apero_badpix_spirou_schematic.jpg'
+apero_badpix.schematic = apero_badpix.default_sfile()
+apero_badpix.description_file = apero_badpix.default_rfile()
 # add to recipe
 recipes.append(apero_badpix)
 
@@ -342,7 +343,8 @@ apero_dark_ref.set_kwarg(**no_in_qc)
 apero_dark_ref.group_func = grouping.no_group
 apero_dark_ref.group_column = None
 # documentation
-apero_dark_ref.schematic = 'apero_dark_ref_spirou_schematic.jpg'
+apero_dark_ref.schematic = apero_dark_ref.default_sfile()
+apero_dark_ref.description_file = apero_dark_ref.default_rfile()
 # add to recipe
 recipes.append(apero_dark_ref)
 
@@ -391,7 +393,8 @@ apero_loc.set_min_nfiles('files', 5)
 apero_loc.group_func = grouping.group_by_dirname
 apero_loc.group_column = 'REPROCESS_OBSDIR_COL'
 # documentation
-apero_loc.schematic = 'apero_loc_spirou_schematic.jpg'
+apero_loc.schematic = apero_loc.default_sfile()
+apero_loc.description_file = apero_loc.default_rfile()
 # add to recipe
 recipes.append(apero_loc)
 
