@@ -5,7 +5,7 @@ Dark reference calibration
 As \spirou has no moving internal parts for increased stability, one cannot move the fiber out of view and
 independently measure the detector's dark current. Thus dark frames are non-trivial to construct, as there are
 two independent contributions to the `dark' image, one arising from the dark current of the science arrays and
-the other from thermal emission. This problem is mainly seen in the $K$ band and is shared with any PRV spectrograph
+the other from thermal emission. This problem is mainly seen in the K band and is shared with any PRV spectrograph
 for which the fiber thermal emission is commensurate with the per-pixel dark current.
 
 The thermal background manifests itself as a very low-level contribution (typically 0.015 e-/s/pixel), well below

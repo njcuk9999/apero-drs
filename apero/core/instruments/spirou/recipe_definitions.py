@@ -454,7 +454,8 @@ apero_shape_ref.set_kwarg(**fpref)
 apero_shape_ref.group_func = grouping.group_by_dirname
 apero_shape_ref.group_column = 'REPROCESS_OBSDIR_COL'
 # documentation
-apero_shape_ref.schematic = 'apero_shape_ref_spirou_schematic.jpg'
+apero_shape_ref.schematic = apero_shape_ref.default_sfile()
+apero_shape_ref.description_file = apero_shape_ref.default_rfile()
 # add to recipe
 recipes.append(apero_shape_ref)
 
@@ -502,7 +503,8 @@ apero_shape.set_min_nfiles('hcfiles', 2)
 apero_shape.group_func = grouping.group_by_dirname
 apero_shape.group_column = 'REPROCESS_OBSDIR_COL'
 # documentation
-apero_shape.schematic = 'apero_shape_spirou_schematic.jpg'
+apero_shape.schematic = apero_shape.default_sfile()
+apero_shape.description_file = apero_shape.default_rfile()
 # add to recipe
 recipes.append(apero_shape)
 
@@ -555,7 +557,8 @@ apero_flat.set_min_nfiles('files', 5)
 apero_flat.group_func = grouping.group_by_dirname
 apero_flat.group_column = 'REPROCESS_OBSDIR_COL'
 # documentation
-apero_flat.schematic = 'apero_flat_spirou_schematic.jpg'
+apero_flat.schematic = apero_flat.default_sfile()
+apero_flat.description_file = apero_flat.default_rfile()
 # add to recipe
 recipes.append(apero_flat)
 
@@ -612,7 +615,8 @@ apero_thermal.set_kwarg(name='--forceext', dtype='bool', default=False,
 apero_thermal.group_func = grouping.group_by_dirname
 apero_thermal.group_column = 'REPROCESS_OBSDIR_COL'
 # documentation
-apero_thermal.schematic = 'apero_thermal_spirou_schematic.jpg'
+apero_thermal.schematic = apero_thermal.default_sfile()
+apero_thermal.description_file = apero_thermal.default_rfile()
 # add to recipe
 recipes.append(apero_thermal)
 
@@ -643,6 +647,9 @@ apero_leak_ref.set_kwarg(**plot)
 apero_leak_ref.set_kwarg(**no_in_qc)
 apero_leak_ref.group_func = grouping.no_group
 apero_leak_ref.group_column = None
+# documentation
+# apero_leak_ref.schematic = apero_thermal.default_sfile()
+apero_leak_ref.description_file = apero_leak_ref.default_rfile()
 # add to recipe
 recipes.append(apero_leak_ref)
 
@@ -725,6 +732,9 @@ apero_extract.set_kwarg(name='--force_ref_wave', dtype='bool',
 apero_extract.set_kwarg(**no_in_qc)
 apero_extract.group_func = grouping.group_individually
 apero_extract.group_column = 'REPROCESS_OBSDIR_COL'
+# documentation
+# apero_extract.schematic = apero_extract.default_sfile()
+apero_extract.description_file = apero_extract.default_rfile()
 # add to recipe
 recipes.append(apero_extract)
 
@@ -799,7 +809,8 @@ apero_wave_ref.set_kwarg(**no_in_qc)
 apero_wave_ref.group_func = grouping.group_by_dirname
 apero_wave_ref.group_column = 'REPROCESS_OBSDIR_COL'
 # documentation
-apero_wave_ref.schematic = 'apero_wave_ref_spirou_schematic.jpg'
+apero_wave_ref.schematic = apero_wave_ref.default_sfile()
+apero_wave_ref.description_file = apero_wave_ref.default_rfile()
 # add to recipe
 recipes.append(apero_wave_ref)
 
@@ -866,6 +877,9 @@ apero_wave_night.set_kwarg(name='--forceext', dtype='bool',
 apero_wave_night.set_kwarg(**no_in_qc)
 apero_wave_night.group_func = grouping.group_by_dirname
 apero_wave_night.group_column = 'REPROCESS_OBSDIR_COL'
+# documentation
+# apero_wave_night.schematic = apero_wave_night.default_sfile()
+apero_wave_night.description_file = apero_wave_night.default_rfile()
 # add to recipe
 recipes.append(apero_wave_night)
 
@@ -912,6 +926,9 @@ apero_ccf.set_kwarg(**plot)
 apero_ccf.set_kwarg(**no_in_qc)
 apero_ccf.group_func = grouping.group_individually
 apero_ccf.group_column = 'REPROCESS_OBSDIR_COL'
+# documentation
+# apero_ccf.schematic = apero_ccf.default_sfile()
+apero_ccf.description_file = apero_ccf.default_rfile()
 # add to recipe
 recipes.append(apero_ccf)
 
