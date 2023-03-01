@@ -99,15 +99,17 @@ we can safely use any flux with a transmission of order zero to scale the therma
 value.
 
 .. math::
-        mask = \left\{ \begin{array}{cl}
+        mask = \left\{ \begin{array}
         1: & TAPAS < 0.01  \\
         0: & \text{otherwise} \\
-        \end{array} \right. \\
-        \\
-        ratio = median\left( \frac{TT[AB,A,B,C]\times mask}{S[AB,A,B,C] \times mask} \right) \\
-        \\
-        S[AB,A,B,C]_{corr} = S[AB,A,B,C] - \frac{TT[AB,A,B,C]}{ratio} \\
-        \end{array}
+        \end{array} \right.
+
+.. math::
+        ratio = median\left( \frac{TT[AB,A,B,C]\times mask}{S[AB,A,B,C] \times mask} \right)
+
+.. math::
+        S[AB,A,B,C]_{corr} = S[AB,A,B,C] - \frac{TT[AB,A,B,C]}{ratio}
+
 
 where TAPAS is the TAPAS spectrum, TT[AB,A,B,C] is a nightly extracted `DARK_DARK_TEL` spectrum, S[AB,A,B,C] denotes
 the 2D extracted spectrum prior to correction and :math:`S[AB,A,B]_{corr}` denotes the thermally corrected 2D extracted
