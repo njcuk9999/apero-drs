@@ -153,6 +153,15 @@ latex_elements = {
         \usepackage{color}
         \usepackage{transparent}
         \usepackage{eso-pic}
+        \usepackage{multirow}
+        \usepackage{booktabs}
+        \usepackage{dirtree}
+        \usepackage{listings}
+        \usepackage{rotating}
+        \usepackage{tasks}
+        \usepackage[normalem]{ulem}
+        \usepackage{capt-of}
+        \usepackage{xspace}
         %% \usepackage{lipsum}
 
         \usepackage{footnotebackref} %%link at the footnote to go to the place of footnote in the text

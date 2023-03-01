@@ -9,11 +9,10 @@ single `DARK_DARK` and a single `FLAT_FLAT` (via a median combination of the ima
 in the `FLAT_FLAT` by using Equation:
 
 .. math::
-
-    M_{\text{flat } i,j} = \left\{ \begin{array}
+    M_{\text{flat } i,j} = \left\{ \begin{array}{cl}
       1 : & FLAT_{i,j} \text{ is not finite} \\
-      1 : & \mid (FLAT_{i,j} / FLAT_{\text{med } i,j}) - 1 \mid > \text{cut_ratio} \\
-      1 : & FLAT_{\text{med } i,j} < \text{illum_cut} \\
+      1 : & \mid (FLAT_{i,j} / FLAT_{\text{med } i,j}) - 1 \mid > \text{cut\_ratio} \\
+      1 : & FLAT_{\text{med } i,j} < \text{illum\_cut} \\
       0 : & \text{otherwise} \\
     \end{array} \right.
 
@@ -27,8 +26,7 @@ Thus :math:`M_{\text{flat}}` is a Boolean flag map of bad pixels on the flat ima
 For the `DARK_DARK` image, bad pixels are identified using Equation:
 
 .. math::
-
-    M_{\text{dark } i,j} = \left\{ \begin{array}
+    M_{\text{dark } i,j} = \left\{ \begin{array}{cl}
       1 : & DARK_{i,j} \text{ is not finite} \\
       1 : & DARK_{i,j} > 5.0 \text{ADU/s}  \\
       0 : & \text{otherwise} \\
@@ -44,8 +42,7 @@ In addition to this bad pixels in a full detector engineering flat (FULLFLAT tak
 are also identified using Equation:
 
 .. math::
-
-    M_{\text{full-flat } i,j} = \left\{ \begin{array}
+    M_{\text{full-flat } i,j} = \left\{ \begin{array}{cl}
       1 : & \mid FULLFLAT_{i,j} - 1 \mid > 0.3  \\
       0 : & \text{otherwise} \\
     \end{array} \right.
@@ -53,6 +50,6 @@ are also identified using Equation:
 where :math:`FULLFLAT_{i,j}` is the flux in ith row jth column of the full detector engineering flat.
 Thus :math:`M_{\text{full-flat}}` is a Boolean flag map of bad pixels on the full detector engineering flat image.
 We chose 0.3 as this flagged the defective regions identified manually on the detector.
-The 1:math:`\sigma` dispersion of the full detector engineering flat image is 2 percent.
+The :math:`1 \sigma` dispersion of the full detector engineering flat image is 2 percent.
 
 These three bad pixel maps are then combined into a single bad pixel map.
