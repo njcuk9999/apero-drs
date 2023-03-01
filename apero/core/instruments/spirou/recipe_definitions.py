@@ -1213,6 +1213,9 @@ apero_pol.set_kwarg(**wavefile)
 apero_pol.set_kwarg(**no_in_qc)
 apero_pol.group_func = grouping.group_by_polar_sequence
 apero_pol.group_column = 'REPROCESS_OBSDIR_COL'
+# documentation
+# apero_pol.schematic = apero_pol.default_sfile()
+apero_pol.description_file = apero_pol.default_rfile()
 # add to recipe
 recipes.append(apero_pol)
 
