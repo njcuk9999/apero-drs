@@ -957,7 +957,7 @@ def get_butterfly_maps(params: ParamDict, image0: np.ndarray,
 
     :return: tuple, 1. np.ndarray, the full butterfly pattern, 2. np.ndarray or
              None (if fast=True) the amplitude butterfly pattern, 3. np.ndarray
-             or None (if fast=True) the first derivative butterfly patterhn
+             or None (if fast=True) the first derivative butterfly pattern
              4. np.ndarray or None (if fast=True) the second derivative
              butteryfly pattern
     """
