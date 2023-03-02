@@ -8,8 +8,7 @@ profiles. Each polarimetric measurement is performed by 4 exposures obtained wit
 orientations (see Section 3.1 of Donati et al. 2020).
 
 .. list-table:: Index positions of the Fresnel rhombs (RHB1 and RHB2) for exposures taken in each observing mode of SPIRou.
-
-    :widths: auto
+    :widths: 20, 10, 10, 10, 10, 10, 10, 10, 10
     :header-rows: 2
 
     * - Observing

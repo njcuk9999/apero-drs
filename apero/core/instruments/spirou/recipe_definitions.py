@@ -1003,6 +1003,9 @@ apero_mk_tellu.set_kwarg(name='--finiteres', dtype='bool',
 apero_mk_tellu.set_kwarg(**no_in_qc)
 apero_mk_tellu.group_func = grouping.group_individually
 apero_mk_tellu.group_column = 'REPROCESS_OBSDIR_COL'
+# documentation
+# apero_mk_tellu.schematic = apero_mk_tellu.default_sfile()
+apero_mk_tellu.description_file = apero_mk_tellu.default_rfile()
 # add to recipe
 recipes.append(apero_mk_tellu)
 
@@ -1028,6 +1031,9 @@ apero_mk_model.set_kwarg(**plot)
 apero_mk_model.set_kwarg(**no_in_qc)
 apero_mk_model.group_func = grouping.no_group
 apero_mk_model.group_column = None
+# documentation
+# apero_mk_model.schematic = apero_mk_model.default_sfile()
+apero_mk_model.description_file = apero_mk_model.default_rfile()
 # add to recipe
 recipes.append(apero_mk_model)
 
@@ -1094,6 +1100,9 @@ apero_fit_tellu.set_kwarg(**wavefile)
 apero_fit_tellu.set_kwarg(**no_in_qc)
 apero_fit_tellu.group_func = grouping.group_individually
 apero_fit_tellu.group_column = 'REPROCESS_OBSDIR_COL'
+# documentation
+# apero_fit_tellu.schematic = apero_fit_tellu.default_sfile()
+apero_fit_tellu.description_file = apero_fit_tellu.default_rfile()
 # add to recipe
 recipes.append(apero_fit_tellu)
 
@@ -1137,6 +1146,9 @@ apero_mk_template.set_kwarg(**wavefile)
 apero_mk_template.set_kwarg(**no_in_qc)
 apero_mk_template.group_func = grouping.no_group
 apero_mk_template.group_column = None
+# documentation
+# apero_mk_template.schematic = apero_mk_template.default_sfile()
+apero_mk_template.description_file = apero_mk_template.default_rfile()
 # add to recipe
 recipes.append(apero_mk_template)
 
@@ -1248,6 +1260,9 @@ apero_postprocess.set_kwarg(name='--clear', dtype='switch',
 apero_postprocess.set_kwarg(**no_in_qc)
 apero_postprocess.group_func = grouping.group_individually
 apero_postprocess.group_column = 'REPROCESS_OBSDIR_COL'
+# documentation
+# apero_postprocess.schematic = apero_postprocess.default_sfile()
+apero_postprocess.description_file = apero_postprocess.default_rfile()
 # add to recipe
 recipes.append(apero_postprocess)
 
