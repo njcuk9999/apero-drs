@@ -62,7 +62,7 @@ the LBL products are computed separately. The CCF file consists of the CCF gener
 (by default this is between :math:`\pm 300 ms^{-1}` in steps of 0.5 :math:`m s^{-1}`) for each order and a combined
 CCF for the same radial velocity elements. The files are identified with a single odometer code at the time of
 observation followed by a v.fits suffix. Once the LBL module is able to be used with APERO it will add an extension
-to the v.fits (the rdb extension described in the LBL documentation).
+to the v.fits (the rdb extension described in the `LBL documentation <https://lbl.exoplanets.ca>`_.).
 
 Polarimetric product (p.fits)
 --------------------------------

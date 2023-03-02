@@ -23,9 +23,9 @@ and red edges of the H band, which are affected by telluric water absorption.
 We opted for a CCF that correlates weighted delta functions against the spectrum but set the weight to zero when
 reaching a point below 0.5 telluric transmission (where unity is no telluric absorption). This is done on a
 spectrum-to-spectrum basis, to minimize the effective throughput losses. This CCF measurement is performed per
-spectrum using one of the 3 standard masks available in \APERO depending on the star's temperature (GL846, Gl699,
+spectrum using one of the 3 standard masks available in APERO depending on the star's temperature (GL846, Gl699,
 Gl905 respectively for Teff >3500 K, 3000-3500 K, <3000 K. We derive per-order as well as global CCFs. These data
 products are useful to confirm the systemic velocity of the star, avoiding eventual target misidentifying, as well
 as for flagging spectroscopic binaries. For time-series analysis, it can be significantly improved upon by using
 all observations to perform a spectral cleaning to obtain a much cleaner CCF or through completely different methods,
-such as the line-by-line algorithm.
+such as the `line-by-line algorithm <https://lbl.exoplanets.ca>`_.

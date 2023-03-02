@@ -2,7 +2,7 @@
 Polarimetry
 ================================
 
-The polarimetry module for APERO was adapted from the [spirou-polarimetry](https://github.com/edermartioli/spirou-polarimetry).
+The polarimetry module for APERO was adapted from the `spirou-polarimetry <https://github.com/edermartioli/spirou-polarimetry>`_.
 SPIRou as a polarimeter can measure either circular (Stokes V) or linear (Stokes Q or U) polarization in the line
 profiles. Each polarimetric measurement is performed by 4 exposures obtained with the Fresnel rhombs set at different
 orientations (see Section 3.1 of Donati et al. 2020).
