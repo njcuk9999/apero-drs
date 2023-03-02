@@ -172,10 +172,10 @@ data:
   spirou/telluric/trans_h2o_abso_ccf.mas: 3467d02a8ea1ea056980bcbd1e86d30b
   spirou/telluric/trans_others_abso_ccf.mas: ed6f602b746534c5018bde1b952631ff
 setup:
-  humantime: '2023-02-28 18:31:16.411'
+  humantime: '2023-02-28 20:26:28.889'
   servers:
   - http://apero.exoplanets.ca/assets/
-  tarfile: 1677609076_410977_assets.tar.gz
-  unixtime: 1677609076.410977
+  tarfile: 1677615988_889243_assets.tar.gz
+  unixtime: 1677615988.889243
   vdate: '2023-01-30'
   version: 0.8.001
