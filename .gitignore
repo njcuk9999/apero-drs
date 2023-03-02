@@ -187,3 +187,6 @@ fabric.properties
 *.backup
 # Ignore database files
 *.db
+
+# ignore _assets.tar.gz file in apero/data directory
+/apero/data/*_assets.tar.gz
