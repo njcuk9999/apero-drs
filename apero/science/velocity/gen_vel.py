@@ -1434,8 +1434,10 @@ def write_ccf(params, recipe, infile, props, rawfiles, combine, qc_params,
     ccf_file.add_hkey('KW_CCF_MEAN_CONSTRAST', value=props['MEAN_CONTRAST'])
     ccf_file.add_hkey('KW_CCF_MEAN_FWHM', value=props['MEAN_FWHM'])
     ccf_file.add_hkey('KW_CCF_TOT_LINES', value=props['TOT_LINE'])
-    ccf_file.add_hkey('KW_CCF_DVRMS_SP', value=props['TOT_SPEC_RMS'])
-    ccf_file.add_hkey('KW_CCF_DVRMS_CC', value=props['MEAN_RV_NOISE'])
+    ccf_file.add_hkey('KW_CCF_DVRMS_SP',
+                      value=np.round(props['TOT_SPEC_RMS'], 4))
+    ccf_file.add_hkey('KW_CCF_DVRMS_CC',
+                      value=np.round(props['MEAN_RV_NOISE'], 4))
     # ----------------------------------------------------------------------
     # add constants used to process
     ccf_file.add_hkey('KW_CCF_MASK', value=props['CCF_MASK'])
