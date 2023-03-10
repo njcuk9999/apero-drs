@@ -1579,7 +1579,7 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
             # we could use a better sigma-clipping, but this is hard with a
             # small number of lines
             # -----------------------------------------------------------------
-            # get a temporary wave sol
+            # now do this for real with the best offset
             wave_tmp = cavity_per_order / ordfp_peak_num
             # fit this wave solution
             wave_fit = np.polyfit(ordfp_pix_meas, wave_tmp, wavesol_fit_degree)
@@ -1590,6 +1590,7 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
             sigma_hc_res = mp.robust_nanstd(residual)
             err = np.ones_like(residual)*sigma_hc_res
             med_hc_res, err_med_hc_res = mp.odd_ratio_mean(residual, err)
+            # -----------------------------------------------------------------
             # work out a robust sigma of the residuals
             # convert to a velocity [km/s]
             sigma_hc_res_kms = sigma_hc_res * speed_of_light
@@ -3019,7 +3020,8 @@ def wave_meas_diff(params: ParamDict, ref_fiber: str,
             # -----------------------------------------------------------------
             # deal with matching lines
             #    assumes 1. they are sorted by peakn 2. there are no duplicates
-            mask1, mask2 = match_fplines(ref_orders, ref_peakn, orders, peakn)
+            mask1, mask2 = match_fplines(params, ref_orders, ref_peakn,
+                                         orders, peakn)
             # -----------------------------------------------------------------
             # get dv for wave meas between reference fiber and this fiber
             wratio = mp.nanmedian(ref_wmeas[mask1] / wmeas[mask2])
@@ -3036,7 +3038,7 @@ def wave_meas_diff(params: ParamDict, ref_fiber: str,
     return rvs_all
 
 
-def match_fplines(orders1: np.ndarray, peakn1: np.ndarray,
+def match_fplines(params: ParamDict, orders1: np.ndarray, peakn1: np.ndarray,
                   orders2: np.ndarray, peakn2: np.ndarray
                   ) -> Tuple[np.ndarray, np.ndarray]:
     """
@@ -3051,32 +3053,24 @@ def match_fplines(orders1: np.ndarray, peakn1: np.ndarray,
     """
     mask1 = []
     mask2 = []
-    # this has to be done per order to avoid matching between orders
-    for order_num in set(orders1):
-        # get the masks for each set of orders
-        order_mask1 = order_num == orders1
-        order_mask2 = order_num == orders2
-        # get the peak numbering for this order
-        opeakn1 = peakn1[order_mask1]
-        opeakn2 = peakn2[order_mask2]
-        # get the minimum length of two lists
-        minlen = np.min([len(opeakn1), len(opeakn2)])
-        # work out the offset beween the two lists
-        offset = int(np.median(opeakn1[:minlen] - opeakn2[:minlen]))
-        # if offset is negative list 2 needs offsetting
-        if offset < 0:
-            indices1 = np.arange(minlen + offset)
-            indices2 = indices1 - offset
-        # if offset is positive list 1 needs offsetting
-        elif offset > 0:
-            indices2 = np.arange(minlen - offset)
-            indices1 = indices2 + offset
-        # if offset is zero nothing needs offsetting
-        else:
-            indices1, indices2 = np.arange(minlen), np.arange(minlen)
-        # add to the two masks we are returning
-        mask1 += list(indices1)
-        mask2 += list(indices2)
+    # loop around all peak numbers
+    for it in range(len(peakn1)):
+        # get the peak number and order
+        i_peak = peakn1[it]
+        i_order = orders1[it]
+        # find all matches
+        good = np.where((peakn2 == i_peak) & (orders2 == i_order))[0]
+        # if we have no matches, continue
+        if len(good) == 0:
+            continue
+        # if we have multiple matches, raise an error
+        if len(good) > 1:
+            emsg = 'Multiple matches found for peak {0} in '
+            emsg += 'order {1} in fiber 2'
+            WLOG(params, 'error', emsg.format(i_peak, i_order))
+        # append to masks
+        mask1.append(it)
+        mask2.append(good[0])
     # return masks as numpy arrays
     return np.array(mask1), np.array(mask2)
 
