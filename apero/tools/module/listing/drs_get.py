@@ -239,8 +239,14 @@ def all_objects(params):
     findexdb = drs_database.FileIndexDatabase(params)
     findexdb.load_db()
     # return all object names
-    return findexdb.get_unique(column='KW_OBJNAME',
-                               condition='BLOCK_KIND="raw"')
+    objs =  findexdb.get_unique(column='KW_OBJNAME',
+                                condition='BLOCK_KIND="raw"')
+    # print number of objects found
+    msg = 'Found {0} raw objects in file index database'
+    margs = [len(objs)]
+    WLOG(params, 'info', msg.format(*margs))
+    # return objects
+    return objs
 
 
 # =============================================================================

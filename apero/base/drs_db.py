@@ -394,8 +394,12 @@ class Database:
             command += " WHERE {} ".format(condition)
         # execute result
         result = self.execute(command, fetch=True)
+        # flatten result
+        items = [item for sublist in result for item in sublist]
+        # remove None from items
+        items = [item for item in items if item is not None]
         # return unique result
-        return np.unique(result)
+        return np.array(list(set(items)))
 
     def get(self, columns: str, table: Optional[str] = None,
             condition: Optional[str] = None, sort_by: Optional[str] = None,
