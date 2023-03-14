@@ -3,20 +3,20 @@
 
 <!doctype html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>apero_pol_spirou &#8212; APERO 0.7.259 documentation</title>
+    <title>apero_pol_spirou &#8212; APERO 0.8.001 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/apero.css" />
     
     <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
-    <script src="../../../_static/jquery.js"></script>
-    <script src="../../../_static/underscore.js"></script>
     <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/sphinx_highlight.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../../../_static/bizstyle.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
@@ -101,7 +101,7 @@
         <li class="right" >
           <a href="rdefinition_MKTEMP.html" title="apero_mk_template_spirou"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.259 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.8.001 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../../main/spirou/main_spirou.html" >SPIRou documentation</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="recipes.html" accesskey="U">Recipes (SPIROU)</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">apero_pol_spirou</a></li> 
@@ -109,10 +109,17 @@
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../../../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../../../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">apero_pol_spirou</a><ul>
-<li><a class="reference internal" href="#description">1. Description</a></li>
+<li><a class="reference internal" href="#description">1. Description</a><ul>
+<li><a class="reference internal" href="#polarimetry">Polarimetry</a><ul>
+<li><a class="reference internal" href="#least-squares-deconvolution">Least-Squares Deconvolution</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li><a class="reference internal" href="#schematic">2. Schematic</a></li>
 <li><a class="reference internal" href="#usage">3. Usage</a></li>
 <li><a class="reference internal" href="#optional-arguments">4. Optional Arguments</a></li>
@@ -125,12 +132,17 @@
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="rdefinition_MKTEMP.html"
-                        title="previous chapter">apero_mk_template_spirou</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="rdefinition_OBJPOST.html"
-                        title="next chapter">apero_postprocess_spirou</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="rdefinition_MKTEMP.html"
+                          title="previous chapter">apero_mk_template_spirou</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="rdefinition_OBJPOST.html"
+                          title="next chapter">apero_postprocess_spirou</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -147,7 +159,7 @@
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
 
@@ -157,18 +169,198 @@
           <div class="body" role="main">
             
   <section id="apero-pol-spirou">
-<span id="recipes-spirou-polar"></span><h1>apero_pol_spirou<a class="headerlink" href="#apero-pol-spirou" title="Permalink to this headline">¶</a></h1>
+<span id="recipes-spirou-polar"></span><h1>apero_pol_spirou<a class="headerlink" href="#apero-pol-spirou" title="Permalink to this heading">¶</a></h1>
 <section id="description">
-<h2>1. Description<a class="headerlink" href="#description" title="Permalink to this headline">¶</a></h2>
+<h2>1. Description<a class="headerlink" href="#description" title="Permalink to this heading">¶</a></h2>
 <p>SHORTNAME: POLAR</p>
-<p>No description set</p>
+<section id="polarimetry">
+<h3>Polarimetry<a class="headerlink" href="#polarimetry" title="Permalink to this heading">¶</a></h3>
+<p>The polarimetry module for APERO was adapted from the [spirou-polarimetry](<a class="reference external" href="https://github.com/edermartioli/spirou-polarimetry">https://github.com/edermartioli/spirou-polarimetry</a>).
+SPIRou as a polarimeter can measure either circular (Stokes V) or linear (Stokes Q or U) polarization in the line
+profiles. Each polarimetric measurement is performed by 4 exposures obtained with the Fresnel rhombs set at different
+orientations (see Section 3.1 of Donati et al. 2020).</p>
+<table class="docutils align-default" id="id3">
+<caption><span class="caption-text">Index positions of the Fresnel rhombs (RHB1 and RHB2) for exposures taken in each observing mode of SPIRou.</span><a class="headerlink" href="#id3" title="Permalink to this table">¶</a></caption>
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 10.0%" />
+<col style="width: 10.0%" />
+<col style="width: 10.0%" />
+<col style="width: 10.0%" />
+<col style="width: 10.0%" />
+<col style="width: 10.0%" />
+<col style="width: 10.0%" />
+<col style="width: 10.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Observing</p></th>
+<th class="head"><p>Exp1</p></th>
+<th class="head"><p>Exp1</p></th>
+<th class="head"><p>Exp2</p></th>
+<th class="head"><p>Exp2</p></th>
+<th class="head"><p>Exp3</p></th>
+<th class="head"><p>Exp3</p></th>
+<th class="head"><p>Exp4</p></th>
+<th class="head"><p>Exp4</p></th>
+</tr>
+<tr class="row-even"><th class="head"><p>mode</p></th>
+<th class="head"><p>RHB1</p></th>
+<th class="head"><p>RHB2</p></th>
+<th class="head"><p>RHB1</p></th>
+<th class="head"><p>RHB2</p></th>
+<th class="head"><p>RHB1</p></th>
+<th class="head"><p>RHB2</p></th>
+<th class="head"><p>RHB1</p></th>
+<th class="head"><p>RHB2</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-odd"><td><p>Stokes IU</p></td>
+<td><p>P16</p></td>
+<td><p>P2</p></td>
+<td><p>P16</p></td>
+<td><p>P14</p></td>
+<td><p>P4</p></td>
+<td><p>P2</p></td>
+<td><p>P4</p></td>
+<td><p>P14</p></td>
+</tr>
+<tr class="row-even"><td><p>Stokes IQ</p></td>
+<td><p>P2</p></td>
+<td><p>P14</p></td>
+<td><p>P2</p></td>
+<td><p>P2</p></td>
+<td><p>P14</p></td>
+<td><p>P14</p></td>
+<td><p>P14</p></td>
+<td><p>P2</p></td>
+</tr>
+<tr class="row-odd"><td><p>Stokes IV</p></td>
+<td><p>P14</p></td>
+<td><p>P16</p></td>
+<td><p>P2</p></td>
+<td><p>P16</p></td>
+<td><p>P2</p></td>
+<td><p>P4</p></td>
+<td><p>P14</p></td>
+<td><p>P4</p></td>
+</tr>
+</tbody>
+</table>
+<p>In the Table above we provide the index position of each Fresnel rhomb, as they appear in the FITS header, for each
+exposure in the corresponding polarimetric mode.</p>
+<p>These indices are used by APERO to recognize exposures within a polarimetric sequence, and then correctly apply the
+method introduced by Donati et al. 1997 to calculate polarimetric spectra.</p>
+<p>The polarization spectra of SPIrou are calculated using the technique introduced by Donati et al. 1997, which is
+summarized as follows.  Let <span class="math notranslate nohighlight">\(f_{i\parallel}\)</span> and <span class="math notranslate nohighlight">\(f_{i\perp}\)</span> be the extracted flux in a given spectral
+element of fiber A and B channels, where <span class="math notranslate nohighlight">\(i=\{1,2,3,4\}\)</span> gives the exposure number in the polarimetric sequence.
+Note that the extracted flux can be either the extracted spectrum or the extracted telluric corrected spectrum; by
+default in APERO, we use the telluric corrected spectrum. The total flux of unpolarized light (Stokes I) is calculated
+by the sum of fluxes in the two channels and in all exposures, i.e.,</p>
+<div class="math notranslate nohighlight">
+\[F_{I} = \sum_{i=1}^{4}{(f_{i\parallel} + f_{i\perp})}\]</div>
+<p>Let us define the ratio of polarized fluxes as</p>
+<div class="math notranslate nohighlight">
+\[r_{i} = \frac{f_{i\parallel}}{f_{i\perp}}\]</div>
+<p>which gives a relative measurement of the flux between the two orthogonal polarization states. In an ideal system,
+:math`r=1` means completely unpolarized light, and other values provide the amount (or the degree) of polarization that
+can be calculated as in Equation 1 of Donati et al. 1997, i.e.,</p>
+<div class="math notranslate nohighlight">
+\[P = \frac{f_{\parallel} - f_{\perp}}{f_{\parallel} + f_{\perp}} = \frac{r - 1}{r + 1}\]</div>
+<p>Therefore, in principle, one could obtain the amount of polarization with a single exposure. However, this measurement
+is not optimal, since it only records the two states of polarization at the same time but not at the same pixel.
+To obtain a measurement that records the same state of polarization at the same pixel, it suffices to take a second
+exposure with one of the quarter-wave analyzers rotated by <span class="math notranslate nohighlight">\(90^{\circ}\)</span> with respect to the first exposure,
+consisting  of the 2-exposure mode. One can also use the 4-exposure (2 pairs) mode, where the polarization state in
+the two channels is swapped between pairs, which better corrects for slight deviations of retarders from nominal
+characteristics (retardance and orientation) and also corrects for the differences in transmission between the two
+channels caused, for example, by different throughput of the two fibers, or by a small optical misalignment.
+For this reason, SPIRou only operates in the 4-exposure mode, which is accomplished by rotating the analyzers
+accordingly in each exposure, as detailed in the table above. The equation to calculate the degree of
+polarization for the 4-exposure mode can be obtained in two different ways, by using the Difference method or by the
+Ratio method, as defined in sections 3.3 and 3.4 of Bagnulo et al. 2009 and also in Equation 3 of Donati et al. 1997.
+The degree of polarization for a given Stokes parameter <span class="math notranslate nohighlight">\(X=\{U, Q, V\}\)</span> in the Difference method is calculated by</p>
+<div class="math notranslate nohighlight">
+\[P_{X} =  \frac{1}{4}\sum_{k=1}^{2}{\left(\frac{r_{2k-1}-1}{r_{2k-1}+1} - \frac{r_{2k}-1}{r_{2k}+1}\right)}\]</div>
+<p>and for the Ratio method the degree of polarization is given by</p>
+<div class="math notranslate nohighlight">
+\[P_{X} =  \frac{(\prod_{k=1}^{2}{r_{2k-1}/r_{2k}})^{1/4} - 1}{(\prod_{k=1}^{2}{r_{2k-1}/r_{2k}})^{1/4} + 1}\]</div>
+<p>Another advantage of using two pairs of exposures is that one can calculate the null polarization (NULL1 and NULL2) as
+in equations 20 and 26 of Bagnulo et al. 2009, which provides a way to quantify the amount of spurious polarization.
+The null polarization for the Difference method is given by</p>
+<div class="math notranslate nohighlight">
+\[NULL_{X} =  \frac{1}{4}\sum_{k=1}^{2}{\left[(-1)^{k-1}\left(\frac{r_{2k-1}-1}{r_{2k-1}+1} - \frac{r_{2k}-1}{r_{2k}+1}\right)\right]}\]</div>
+<p>and for the Ratio method the null polarization is given by</p>
+<div class="math notranslate nohighlight">
+\[NULL_{X} = \frac{\left(\prod_{k=1}^{2}{r_{2k-1}/r_{2k}}\right)^{\frac{(-1)^{k-1}}{4}} - 1}{\left(\prod_{k=1}^{2}{r_{2k-1}/r_{2k}}\right)^{\frac{(-1)^{k-1}}{4}} + 1}\]</div>
+<p>Finally, the uncertainties of polarimetric measurements can be calculated from the extracted fluxes and their
+uncertainties (denoted here by <span class="math notranslate nohighlight">\(\sigma\)</span>) by equations A3 and A10 of Bagnulo et al. 2009. In the Difference
+method, the variance for each spectral element is given by</p>
+<div class="math notranslate nohighlight">
+\[\sigma_{X}^{2} = \frac{1}{16} \sum_{i=1}^{4}{ \left\{ \left[ \frac{2 f_{i\parallel} f_{i\perp}}{(f_{i\parallel} + f_{i\perp})^{2}} \right]^{2}   \left[ \frac{\sigma_{i\parallel}^{2}}{f_{i\parallel}^{2}} + \frac{\sigma_{i\perp}^{2}}{f_{i\perp}^{2}} \right] \right\} }\]</div>
+<p>and in the Ratio method the variance is given in terms of the flux ratio $r_{i}$, i.e.,</p>
+<div class="math notranslate nohighlight">
+\[\sigma_{X}^{2} = \frac{\left( \frac{r_{1}}{r_{2}} \frac{r_{4}}{r_{3}} \right)^{1/2}} { 4 \left[ \left( \frac{r_{1}}{r_{2}} \frac{r_{4}}{r_{3}} \right)^{1/4} + 1\right]^{4}} \sum_{i=1}^{4}{\left[ \frac{\sigma_{i\parallel}^{2}}{f_{i\parallel}^{2}} + \frac{\sigma_{i\perp}^{2}}{f_{i\perp}^{2}} \right]}\]</div>
+<p>Applying this formalism to SPIRou spectra, we obtain values that vary continuously throughout the spectrum and are
+systematically above or below zero for each spectrum, which we refer to here as the <a href="#id1"><span class="problematic" id="id2">`</span></a>continuum polarization’.
+For general scientific applications with SPIRou, this continuum polarization is actually spurious as it reflects
+small differences in the injection between  beams, and must therefore be fitted and removed. This step is mandatory
+before performing measurements in spectral lines. APERO applies an iterative sigma-clip algorithm to fit either a
+polynomial or a spline to model the continuum polarization.</p>
+<section id="least-squares-deconvolution">
+<h4>Least-Squares Deconvolution<a class="headerlink" href="#least-squares-deconvolution" title="Permalink to this heading">¶</a></h4>
+<p>The least-squares deconvolution method (LSD) is an efficient technique that combines the signal from thousands of
+spectral lines retaining the same line profile information to obtain a mean velocity profile for the intensity,
+polarization, and null spectra.  A common application of this technique concerns the measurement of the Zeeman split
+into Stokes V (circularly polarized) profiles. The Zeeman split is a physical process where electronic transitions
+occurring in the presence of a magnetic field have their main energy transition level split into two additional levels,
+forming a double line in the intensity spectrum. An interesting feature of these lines is that they are circularly
+polarized and their polarizations have opposite signs. Therefore, by observing the circularly polarized spectrum one
+can obtain a characteristic Stokes V profile that provides a way to detect and characterize the magnetism in stellar
+photospheres with great sensitivity.</p>
+<p>APERO implements the LSD calculations using the formalism introduced by Donati et al. 1997, summarized as follows.
+Let us first consider the weight of a given spectral line i, <span class="math notranslate nohighlight">\(w_{i} = g_{i} \lambda_{i} d_{i}\)</span>, where g is the
+Landé factor (magnetic sensitivity), <span class="math notranslate nohighlight">\(\lambda\)</span> is the central wavelength, and d is the line depth.
+Then one can construct the line pattern function</p>
+<div class="math notranslate nohighlight">
+\[M(v)= \sum_{i=1}^{N_{l}}{w\delta(v - v_{i})}\]</div>
+<p>where <span class="math notranslate nohighlight">\(N_{l}\)</span> is the number of spectral lines considered in the analysis, <span class="math notranslate nohighlight">\(\delta\)</span> is the Dirac function,
+and v is the velocity. The transformation from wavelength (<span class="math notranslate nohighlight">\(\lambda\)</span>) to velocity space is performed by the
+relation <span class="math notranslate nohighlight">\(dv/d\lambda = c / \lambda\)</span>, where c is the speed of light.</p>
+<p>The LSD profile is calculated by the following matrix equation:</p>
+<div class="math notranslate nohighlight">
+\[\rm{\bf Z} = \left( \rm{\bf M}^{t}.\rm{\bf S}^{2}.\rm{\bf M} \right)^{-1} \rm{\bf M}^{t} . \rm{\bf S}^{2} . \rm{\bf P}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\rm{\bf P}\)</span> is the polarimetric spectrum, and <span class="math notranslate nohighlight">\(\rm{\bf S}\)</span> is the covariance matrix, a diagonal
+matrix where each element in the diagonal is given by <span class="math notranslate nohighlight">\(S_{jj}=1/\sigma_{j}\)</span>, with <span class="math notranslate nohighlight">\(\sigma_{j}\)</span> being the
+uncertainty in the polarimetric spectrum.</p>
+<p>Note that one can also calculate the null polarization LSD profile by substituting the polarimetric spectrum
+<span class="math notranslate nohighlight">\(\rm{\bf P}\)</span> by the null spectrum <span class="math notranslate nohighlight">\(\rm{\bf N}\)</span>.  The intensity LSD is also possible, by using the flux
+spectrum <span class="math notranslate nohighlight">\(\rm{\bf F}\)</span>, but in this case the line weight is simply given by the line depth,
+i.e, <span class="math notranslate nohighlight">\(w_{i} = d_{i}\)</span>.</p>
+<p>In practice, LSD requires a few important steps to be executed by APERO. First, each individual spectrum is cleaned
+using a sigma-clip rejection algorithm to minimize the impact of outliers in the LSD profile. Then we set a grid of
+velocities to calculate the LSD profile, where the grid is defined by the following parameters: an initial velocity,
+<span class="math notranslate nohighlight">\(v_{0}\)</span>, a final velocity, <span class="math notranslate nohighlight">\(v_{f}\)</span>, and the total number of points in the grid, <span class="math notranslate nohighlight">\(N_{v}\)</span>.</p>
+<p>Next, a fast and accurate method is necessary to project the spectral values onto the velocity grid. Finally, an
+appropriate catalog of spectral lines (line mask) needs to be adopted for the LSD calculations. APERO selects the
+line mask from a repository of masks, where the selection is based on the proximity to the effective temperature of
+the star observed.  The APERO masks are computed using the VALD catalog (Piskunov et al. 1995) and a MARCS model
+atmosphere (Gustafsson et al. 2008) with an effective temperature ranging from 2500 to 5000 K in steps of 500 K, and
+the same surface gravity of <span class="math notranslate nohighlight">\(\log g=5.0\)</span> dex. The lines that are effectively used in the LSD analysis are
+selected with line depths above a given threshold, which is set to 3% by default and with a Lande factor of
+<span class="math notranslate nohighlight">\(g_{\rm eff}&gt;0\)</span>, resulting in a total of approximately 2500 atomic lines that cover the full spectral range of
+SPIRou.</p>
+<p>The LSD analysis is not computed in a standard automated run of APERO but the module is supplied and can be activated
+with the use of a single keyword in the APERO profiles or run after processing.</p>
+</section>
+</section>
 </section>
 <section id="schematic">
-<h2>2. Schematic<a class="headerlink" href="#schematic" title="Permalink to this headline">¶</a></h2>
+<h2>2. Schematic<a class="headerlink" href="#schematic" title="Permalink to this heading">¶</a></h2>
 <p>No schematic set</p>
 </section>
 <section id="usage">
-<h2>3. Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
+<h2>3. Usage<a class="headerlink" href="#usage" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">apero_pol_spirou</span><span class="o">.</span><span class="n">py</span> <span class="p">{</span><span class="n">obs_dir</span><span class="p">}[</span><span class="n">STRING</span><span class="p">]</span> <span class="p">{</span><span class="n">options</span><span class="p">}</span>
 </pre></div>
 </div>
@@ -177,7 +369,7 @@
 </div>
 </section>
 <section id="optional-arguments">
-<h2>4. Optional Arguments<a class="headerlink" href="#optional-arguments" title="Permalink to this headline">¶</a></h2>
+<h2>4. Optional Arguments<a class="headerlink" href="#optional-arguments" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">--</span><span class="n">exposures</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">EXT_E2DS_FF</span><span class="p">,</span><span class="n">TELLU_OBJ</span><span class="p">]</span> <span class="o">//</span> <span class="n">List</span> <span class="n">of</span> <span class="n">exposures</span> <span class="n">to</span> <span class="n">add</span> <span class="p">(</span><span class="n">order</span> <span class="n">determined</span> <span class="n">by</span> <span class="n">recipe</span><span class="p">)</span>
 <span class="o">--</span><span class="n">exp1</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">EXT_E2DS_FF</span><span class="p">,</span><span class="n">TELLU_OBJ</span><span class="p">]</span> <span class="o">//</span> <span class="n">Override</span> <span class="nb">input</span> <span class="n">exposure</span> <span class="mi">1</span>
 <span class="o">--</span><span class="n">exp2</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">EXT_E2DS_FF</span><span class="p">,</span><span class="n">TELLU_OBJ</span><span class="p">]</span> <span class="o">//</span> <span class="n">Override</span> <span class="nb">input</span> <span class="n">exposure</span> <span class="mi">2</span>
@@ -190,13 +382,14 @@
 <span class="o">--</span><span class="n">lsd</span> <span class="o">//</span> <span class="n">Run</span> <span class="n">LSD</span> <span class="n">analysis</span>
 <span class="o">--</span><span class="n">noqccheck</span> <span class="o">//</span> <span class="n">Do</span> <span class="ow">not</span> <span class="n">check</span> <span class="n">quality</span> <span class="n">control</span> <span class="n">of</span> <span class="n">inputs</span>
 <span class="o">--</span><span class="n">blazefile</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">FF_BLAZE</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Define</span> <span class="n">a</span> <span class="n">custom</span> <span class="n">file</span> <span class="n">to</span> <span class="n">use</span> <span class="k">for</span> <span class="n">blaze</span> <span class="n">correction</span><span class="o">.</span> <span class="n">If</span> <span class="n">unset</span> <span class="n">uses</span> <span class="n">closest</span> <span class="n">file</span> <span class="kn">from</span> <span class="nn">calibDB.</span> <span class="n">Checks</span> <span class="k">for</span> <span class="n">an</span> <span class="n">absolute</span> <span class="n">path</span> <span class="ow">and</span> <span class="n">then</span> <span class="n">checks</span> <span class="n">directory</span> <span class="p">(</span><span class="n">CALIBDB</span><span class="o">=</span><span class="n">BADPIX</span><span class="p">)</span>
-<span class="o">--</span><span class="n">plot</span><span class="p">[</span><span class="mi">0</span><span class="o">&gt;</span><span class="n">INT</span><span class="o">&gt;</span><span class="mi">3</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">INTEGER</span><span class="p">]</span> <span class="n">Plot</span> <span class="n">level</span><span class="o">.</span> <span class="mi">0</span> <span class="o">=</span> <span class="n">off</span><span class="p">,</span> <span class="mi">1</span> <span class="o">=</span> <span class="n">interactively</span><span class="p">,</span> <span class="mi">2</span> <span class="o">=</span> <span class="n">save</span> <span class="n">to</span> <span class="n">file</span>
+<span class="o">--</span><span class="n">plot</span><span class="p">[</span><span class="mi">0</span><span class="o">&gt;</span><span class="n">INT</span><span class="o">&gt;</span><span class="mi">4</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">INTEGER</span><span class="p">]</span> <span class="n">Plot</span> <span class="n">level</span><span class="o">.</span> <span class="mi">0</span> <span class="o">=</span> <span class="n">off</span><span class="p">,</span> <span class="mi">1</span> <span class="o">=</span> <span class="n">interactively</span><span class="p">,</span> <span class="mi">2</span> <span class="o">=</span> <span class="n">save</span> <span class="n">to</span> <span class="n">file</span>
 <span class="o">--</span><span class="n">wavefile</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">WAVESOL_REF</span><span class="p">,</span><span class="n">WAVE_NIGHT</span><span class="p">,</span><span class="n">WAVESOL_DEFAULT</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Define</span> <span class="n">a</span> <span class="n">custom</span> <span class="n">file</span> <span class="n">to</span> <span class="n">use</span> <span class="k">for</span> <span class="n">the</span> <span class="n">wave</span> <span class="n">solution</span><span class="o">.</span> <span class="n">If</span> <span class="n">unset</span> <span class="n">uses</span> <span class="n">closest</span> <span class="n">file</span> <span class="kn">from</span> <span class="nn">header</span> <span class="ow">or</span> <span class="n">calibDB</span> <span class="p">(</span><span class="n">depending</span> <span class="n">on</span> <span class="n">setup</span><span class="p">)</span><span class="o">.</span> <span class="n">Checks</span> <span class="k">for</span> <span class="n">an</span> <span class="n">absolute</span> <span class="n">path</span> <span class="ow">and</span> <span class="n">then</span> <span class="n">checks</span> <span class="n">directory</span>
+<span class="o">--</span><span class="n">no_in_qc</span> <span class="o">//</span> <span class="n">Disable</span> <span class="n">checking</span> <span class="n">the</span> <span class="n">quality</span> <span class="n">control</span> <span class="n">of</span> <span class="nb">input</span> <span class="n">files</span>
 </pre></div>
 </div>
 </section>
 <section id="special-arguments">
-<h2>5. Special Arguments<a class="headerlink" href="#special-arguments" title="Permalink to this headline">¶</a></h2>
+<h2>5. Special Arguments<a class="headerlink" href="#special-arguments" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">--</span><span class="n">xhelp</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Extended</span> <span class="n">help</span> <span class="n">menu</span> <span class="p">(</span><span class="k">with</span> <span class="nb">all</span> <span class="n">advanced</span> <span class="n">arguments</span><span class="p">)</span>
 <span class="o">--</span><span class="n">debug</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Activates</span> <span class="n">debug</span> <span class="n">mode</span> <span class="p">(</span><span class="n">Advanced</span> <span class="n">mode</span> <span class="p">[</span><span class="n">INTEGER</span><span class="p">]</span> <span class="n">value</span> <span class="n">must</span> <span class="n">be</span> <span class="n">an</span> <span class="n">integer</span> <span class="n">greater</span> <span class="n">than</span> <span class="mi">0</span><span class="p">,</span> <span class="n">setting</span> <span class="n">the</span> <span class="n">debug</span> <span class="n">level</span><span class="p">)</span>
 <span class="o">--</span><span class="n">listing</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Lists</span> <span class="n">the</span> <span class="n">night</span> <span class="n">name</span> <span class="n">directories</span> <span class="ow">in</span> <span class="n">the</span> <span class="nb">input</span> <span class="n">directory</span> <span class="k">if</span> <span class="n">used</span> <span class="n">without</span> <span class="n">a</span> <span class="s1">&#39;directory&#39;</span> <span class="n">argument</span> <span class="ow">or</span> <span class="n">lists</span> <span class="n">the</span> <span class="n">files</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">given</span> <span class="s1">&#39;directory&#39;</span> <span class="p">(</span><span class="k">if</span> <span class="n">defined</span><span class="p">)</span><span class="o">.</span> <span class="n">Only</span> <span class="n">lists</span> <span class="n">up</span> <span class="n">to</span> <span class="mi">15</span> <span class="n">files</span><span class="o">/</span><span class="n">directories</span>
@@ -218,23 +411,15 @@
 </div>
 </section>
 <section id="output-directory">
-<h2>6. Output directory<a class="headerlink" href="#output-directory" title="Permalink to this headline">¶</a></h2>
+<h2>6. Output directory<a class="headerlink" href="#output-directory" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">DRS_DATA_REDUC</span> <span class="o">//</span> <span class="n">Default</span><span class="p">:</span> <span class="s2">&quot;red&quot;</span> <span class="n">directory</span>
 </pre></div>
 </div>
 </section>
 <section id="output-files">
-<h2>7. Output files<a class="headerlink" href="#output-files" title="Permalink to this headline">¶</a></h2>
-<table class="csvtable docutils align-default" id="id1">
-<caption><span class="caption-text">Outputs</span><a class="headerlink" href="#id1" title="Permalink to this table">¶</a></caption>
-<colgroup>
-<col style="width: 17%" />
-<col style="width: 17%" />
-<col style="width: 17%" />
-<col style="width: 17%" />
-<col style="width: 17%" />
-<col style="width: 17%" />
-</colgroup>
+<h2>7. Output files<a class="headerlink" href="#output-files" title="Permalink to this heading">¶</a></h2>
+<table class="csvtable docutils align-default" id="id4">
+<caption><span class="caption-text">Outputs</span><a class="headerlink" href="#id4" title="Permalink to this table">¶</a></caption>
 <thead>
 <tr class="row-odd"><th class="head"><p>name</p></th>
 <th class="head"><p>description</p></th>
@@ -347,7 +532,7 @@
 </table>
 </section>
 <section id="debug-plots">
-<h2>8. Debug plots<a class="headerlink" href="#debug-plots" title="Permalink to this headline">¶</a></h2>
+<h2>8. Debug plots<a class="headerlink" href="#debug-plots" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">POLAR_FIT_CONT</span>
 <span class="n">POLAR_CONTINUUM</span>
 <span class="n">POLAR_RESULTS</span>
@@ -359,7 +544,7 @@
 </div>
 </section>
 <section id="summary-plots">
-<h2>9. Summary plots<a class="headerlink" href="#summary-plots" title="Permalink to this headline">¶</a></h2>
+<h2>9. Summary plots<a class="headerlink" href="#summary-plots" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SUM_EXTRACT_S1D</span>
 </pre></div>
 </div>
@@ -385,7 +570,7 @@
         <li class="right" >
           <a href="rdefinition_MKTEMP.html" title="apero_mk_template_spirou"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.259 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.8.001 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../../main/spirou/main_spirou.html" >SPIRou documentation</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="recipes.html" >Recipes (SPIROU)</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">apero_pol_spirou</a></li> 
@@ -393,7 +578,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2019, Neil Cook.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 6.1.3.
     </div>
   </body>
 </html>

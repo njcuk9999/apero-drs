@@ -15,7 +15,7 @@ apero_thermal_spirou
 SHORTNAME: THERM
 
 
-No description set
+.. include:: ../../../resources/spirou/descriptions/apero_thermal_spirou.rst
 
 
 ********************************************************************************
@@ -68,12 +68,13 @@ No description set
      --fluxunits[ADU/s,e-] // [STRING] Output units for flux
      --locofile[FILE:LOC_LOCO] // [STRING] Sets the LOCO file used to get the coefficients (CALIBDB=LOC_{fiber})
      --orderpfile[FILE:LOC_ORDERP] // [STRING] Sets the Order Profile file used to get the coefficients (CALIBDB=ORDER_PROFILE_{fiber}
-     --plot[0>INT>3] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
+     --plot[0>INT>4] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
      --resize[True/False] // [BOOLEAN] Whether to resize image
      --shapex[FILE:SHAPE_X] // [STRING] Sets the SHAPE DXMAP file used to get the dx correction map (CALIBDB=SHAPEX)
      --shapey[FILE:SHAPE_Y] // [STRING] Sets the SHAPE DYMAP file used to get the dy correction map (CALIBDB=SHAPEY)
      --shapel[FILE:SHAPEL] // [STRING] Sets the SHAPE local file used to get the local transforms (CALIBDB = SHAPEL)
      --wavefile[FILE:WAVESOL_REF,WAVE_NIGHT,WAVESOL_DEFAULT] // [STRING] Define a custom file to use for the wave solution. If unset uses closest file from header or calibDB (depending on setup). Checks for an absolute path and then checks directory
+     --no_in_qc // Disable checking the quality control of input files
      --forceext[True/False] // THERMAL_EXTRACT_HELP
 
 

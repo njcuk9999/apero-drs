@@ -15,6 +15,7 @@ This section describes all the NIRPS_HA recipes to use with APERO.
     :maxdepth: 1
     :caption: NIRPS_HA recipes
 
+    rdefinition_PPREF.rst
     rdefinition_PP.rst
     rdefinition_BAD.rst
     rdefinition_DARK.rst
@@ -27,10 +28,13 @@ This section describes all the NIRPS_HA recipes to use with APERO.
     rdefinition_EXT.rst
     rdefinition_WAVEREF.rst
     rdefinition_WAVE.rst
+    rdefinition_CCF.rst
+    rdefinition_MKSKY.rst
     rdefinition_MKTELL.rst
     rdefinition_MKMODEL.rst
     rdefinition_FTELLU.rst
     rdefinition_MKTEMP.rst
+    rdefinition_OBJPOST.rst
 
 .. only:: html
 

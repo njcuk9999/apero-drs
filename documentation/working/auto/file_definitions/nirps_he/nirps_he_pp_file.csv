@@ -1,6 +1,7 @@
 name,description,HDR[DPRTYPE],file type,suffix,input file
 DARK_DARK,Preprocessed sci=DARK calib=DARK file,DARK_DARK,.fits,_pp,RAW_DARK_DARK
-DARK_DARK_SKY,Preprocessed sci=SKY calib=SKY file,DARK_DARK_SKY,.fits,_pp,RAW_DARK_DARK_SKY
+FLUX_SKY_SKY,Preprocessed flux sci=SKY calib=SKY file,FLUX_SKY_SKY,.fits,_pp,RAW_FLUX_SKY_SKY
+NIGHT_SKY_SKY,Preprocessed night sci=SKY calib=SKY file,NIGHT_SKY_SKY,.fits,_pp,RAW_NIGHT_SKY_SKY
 FLAT_DARK,Preprocessed sci=FLAT calib=DARK file,FLAT_DARK,.fits,_pp,RAW_FLAT_DARK
 DARK_FLAT,Preprocessed sci=DARK calib=FLAT file,DARK_FLAT,.fits,_pp,RAW_DARK_FLAT
 FLAT_FLAT,Preprocessed sci=FLAT calib=FLAT file,FLAT_FLAT,.fits,_pp,RAW_FLAT_FLAT

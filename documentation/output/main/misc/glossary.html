@@ -3,20 +3,19 @@
 
 <!doctype html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Glossary &#8212; APERO 0.7.259 documentation</title>
+    <title>Glossary &#8212; APERO 0.8.001 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/apero.css" />
     
     <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
     <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
     <script src="../../_static/bizstyle.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
@@ -101,14 +100,15 @@
         <li class="right" >
           <a href="pythoninstallation.html" title="Python installation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.7.259 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.8.001 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Glossary</a></li> 
       </ul>
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">Glossary</a><ul>
 <li><a class="reference internal" href="#detailed-constants">Detailed Constants</a></li>
 <li><a class="reference internal" href="#detailed-keywords">Detailed Keywords</a></li>
@@ -119,12 +119,17 @@
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="pythoninstallation.html"
-                        title="previous chapter">Python installation</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="updates.html"
-                        title="next chapter">Update notes</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="pythoninstallation.html"
+                          title="previous chapter">Python installation</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="updates.html"
+                          title="next chapter">Update notes</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -141,7 +146,7 @@
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
 
@@ -151,13 +156,13 @@
           <div class="body" role="main">
             
   <section id="glossary">
-<span id="id1"></span><h1>Glossary<a class="headerlink" href="#glossary" title="Permalink to this headline">¶</a></h1>
+<span id="id1"></span><h1>Glossary<a class="headerlink" href="#glossary" title="Permalink to this heading">¶</a></h1>
 <section id="detailed-constants">
-<span id="glossary-constants"></span><h2>Detailed Constants<a class="headerlink" href="#detailed-constants" title="Permalink to this headline">¶</a></h2>
+<span id="glossary-constants"></span><h2>Detailed Constants<a class="headerlink" href="#detailed-constants" title="Permalink to this heading">¶</a></h2>
 <p>These are usually defined in the instruments <code class="file docutils literal notranslate"><span class="pre">default_config.py</span></code> and
 <code class="file docutils literal notranslate"><span class="pre">default_constants.py</span></code> scripts and are overwritten in the <code class="file docutils literal notranslate"><span class="pre">user_config.ini</span></code> and
 :file`user_constant.ini` files.</p>
-<dl class="glossary simple">
+<dl class="simple glossary">
 <dt id="term-DRS_ROOT">DRS_ROOT<a class="headerlink" href="#term-DRS_ROOT" title="Permalink to this term">¶</a></dt><dd><ul class="simple">
 <li><p>This is the path where apero-drs was installed (via github)</p></li>
 <li><p>a suggested directory is <code class="file docutils literal notranslate"><span class="pre">/home/user/bin/apero-drs</span></code></p></li>
@@ -178,11 +183,11 @@ temporary numpy file type (<code class="xref py py-meth docutils literal notrans
 </dl>
 </section>
 <section id="detailed-keywords">
-<h2>Detailed Keywords<a class="headerlink" href="#detailed-keywords" title="Permalink to this headline">¶</a></h2>
+<h2>Detailed Keywords<a class="headerlink" href="#detailed-keywords" title="Permalink to this heading">¶</a></h2>
 <p>These are usually defined in the instruments <code class="file docutils literal notranslate"><span class="pre">default_keywords.py</span></code> script.
 These keywords control what keys are read from fits headers and also what
 keys and comments are saved to fits headers.</p>
-<dl class="glossary simple">
+<dl class="simple glossary">
 <dt id="term-KW_GAIA_ID">KW_GAIA_ID<a class="headerlink" href="#term-KW_GAIA_ID" title="Permalink to this term">¶</a></dt><dd><ul class="simple">
 <li><p>This is the gaia id key from the header</p></li>
 <li><p>The header value should contain a valid gaia id</p></li>
@@ -208,8 +213,8 @@ e.g. <code class="xref py py-meth docutils literal notranslate"><span class="pre
 </dl>
 </section>
 <section id="general">
-<span id="glossary-main"></span><h2>General<a class="headerlink" href="#general" title="Permalink to this headline">¶</a></h2>
-<dl class="glossary simple">
+<span id="glossary-main"></span><h2>General<a class="headerlink" href="#general" title="Permalink to this heading">¶</a></h2>
+<dl class="simple glossary">
 <dt id="term-block_kind">block_kind<a class="headerlink" href="#term-block_kind" title="Permalink to this term">¶</a></dt><dd><ul class="simple">
 <li><p>this is the type of file we have related to the various data directories</p></li>
 <li><p>valid block kinds are: “raw”, “tmp”, “red”, “calib”, “tellu”</p></li>
@@ -315,8 +320,8 @@ they need to be unique from the recipes themselves).</p></li>
 </dl>
 </section>
 <section id="constants-autogen">
-<h2>Constants (Autogen)<a class="headerlink" href="#constants-autogen" title="Permalink to this headline">¶</a></h2>
-<dl class="glossary simple">
+<h2>Constants (Autogen)<a class="headerlink" href="#constants-autogen" title="Permalink to this heading">¶</a></h2>
+<dl class="simple glossary">
 <dt id="term-ALLOWED_DARK_TYPES">ALLOWED_DARK_TYPES<a class="headerlink" href="#term-ALLOWED_DARK_TYPES" title="Permalink to this term">¶</a></dt><dd><ul class="simple">
 <li><p>Description: Define the allowed DPRTYPES for finding files for DARK_MASTER will only find those types define by filetype but filetype must be one of theses (strings separated by commas)</p></li>
 <li><p>Type: str</p></li>
@@ -3792,8 +3797,8 @@ they need to be unique from the recipes themselves).</p></li>
 </dl>
 </section>
 <section id="keywords-autogen">
-<h2>Keywords (Autogen)<a class="headerlink" href="#keywords-autogen" title="Permalink to this headline">¶</a></h2>
-<dl class="glossary simple">
+<h2>Keywords (Autogen)<a class="headerlink" href="#keywords-autogen" title="Permalink to this heading">¶</a></h2>
+<dl class="simple glossary">
 <dt id="term-KW_ACQTIME">KW_ACQTIME<a class="headerlink" href="#term-KW_ACQTIME" title="Permalink to this term">¶</a></dt><dd><ul class="simple">
 <li><p>Description: define the HEADER key for acquisition time Note must set the date format in KW_ACQTIME_FMT</p></li>
 </ul>
@@ -5962,13 +5967,13 @@ they need to be unique from the recipes themselves).</p></li>
         <li class="right" >
           <a href="pythoninstallation.html" title="Python installation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.7.259 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.8.001 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Glossary</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2019, Neil Cook.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 6.1.3.
     </div>
   </body>
 </html>

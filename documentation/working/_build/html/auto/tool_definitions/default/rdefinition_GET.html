@@ -3,20 +3,19 @@
 
 <!doctype html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>apero_get &#8212; APERO 0.7.259 documentation</title>
+    <title>apero_get &#8212; APERO 0.8.001 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/apero.css" />
     
     <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
-    <script src="../../../_static/jquery.js"></script>
-    <script src="../../../_static/underscore.js"></script>
     <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/sphinx_highlight.js"></script>
     <script src="../../../_static/bizstyle.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
@@ -101,7 +100,7 @@
         <li class="right" >
           <a href="rdefinition_EXPLO.html" title="apero_explorer"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.259 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.8.001 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../../main/general/main_general.html" >General User documentation</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="tools.html" accesskey="U">User tools</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">apero_get</a></li> 
@@ -109,8 +108,9 @@
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../../../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../../../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">apero_get</a><ul>
 <li><a class="reference internal" href="#description">1. Description</a><ul>
 <li><a class="reference internal" href="#some-examples">1.1 Some examples</a></li>
@@ -128,12 +128,17 @@
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="rdefinition_EXPLO.html"
-                        title="previous chapter">apero_explorer</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="rdefinition_GO.html"
-                        title="next chapter">apero_go</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="rdefinition_EXPLO.html"
+                          title="previous chapter">apero_explorer</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="rdefinition_GO.html"
+                          title="next chapter">apero_go</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -150,7 +155,7 @@
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
 
@@ -160,16 +165,16 @@
           <div class="body" role="main">
             
   <section id="apero-get">
-<span id="user-tools-default-get"></span><h1>apero_get<a class="headerlink" href="#apero-get" title="Permalink to this headline">¶</a></h1>
+<span id="user-tools-default-get"></span><h1>apero_get<a class="headerlink" href="#apero-get" title="Permalink to this heading">¶</a></h1>
 <section id="description">
-<h2>1. Description<a class="headerlink" href="#description" title="Permalink to this headline">¶</a></h2>
+<h2>1. Description<a class="headerlink" href="#description" title="Permalink to this heading">¶</a></h2>
 <p>SHORTNAME: GET</p>
 <p>The apero_get recipe is a quick and efficient way of copying (or linking to) data from the
 main data directories of apero.</p>
 <p>apero_get allow the user to select a specific file or files based on:</p>
 <ul class="simple">
 <li><p>object name: (using the –objnames argument), this select only files with
-the given object name</p></li>
+the given object name (Can use the * to get all objects in separate directories)</p></li>
 <li><p>output file type: (using the –outtypes argument), this selects only files
 with the given output (see file definitions, i.e. <a class="reference internal" href="../../file_definitions/spirou/files.html#spirou-file-def"><span class="std std-ref">file definitions for SPIROU</span></a>)
 (the name column) for the specific values for each file</p></li>
@@ -193,7 +198,7 @@ reduction and wanting a consistent dataset (where a normal raw directory may be 
 </div>
 </div></blockquote>
 <section id="some-examples">
-<h3>1.1 Some examples<a class="headerlink" href="#some-examples" title="Permalink to this headline">¶</a></h3>
+<h3>1.1 Some examples<a class="headerlink" href="#some-examples" title="Permalink to this heading">¶</a></h3>
 <ul>
 <li><p>Example 1: Copy all extracted 2D spectra, telluric corrected 2D spectra and telluric reconstructed absorption files for fiber AB for Gl699  to /home/test/apero-files/</p>
 <blockquote>
@@ -230,14 +235,25 @@ reduction and wanting a consistent dataset (where a normal raw directory may be 
 </div>
 </div></blockquote>
 </li>
-<li><p>Example 6: Copy all telluric corrected 2D spectra for fibers A and B for many objects to /home/test/apero-files/</p>
+<li><dl>
+<dt>Example 6: Copy all science observations for extracted 2D spectra.</dt><dd><blockquote>
+<div><p>Note SPIROU does not use OBJ_SKY and NIRPS does not use POL_FP,POL_DARK but this command covers both instruments.
+Warning this may copy a LOT of objects. Run with –test first!</p>
+</div></blockquote>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">apero_get</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="n">objnames</span><span class="o">=*</span> <span class="o">--</span><span class="n">outtypes</span><span class="o">=</span><span class="n">EXT_E2DS_FF</span> <span class="o">--</span><span class="n">outpath</span><span class="o">=/</span><span class="n">spirou</span><span class="o">/</span><span class="n">cook</span><span class="o">/</span><span class="n">test</span> <span class="o">--</span><span class="n">dprtypes</span><span class="o">=</span><span class="n">OBJ_FP</span><span class="p">,</span><span class="n">OBJ_DARK</span><span class="p">,</span><span class="n">OBJ_SKY</span><span class="p">,</span><span class="n">POLAR_FP</span><span class="p">,</span><span class="n">POL_DARK</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</li>
+<li><p>Example 7: Copy all telluric corrected 2D spectra for fibers A and B for many objects to /home/test/apero-files/</p>
 <blockquote>
 <div><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">apero_get</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="n">outtypes</span> <span class="n">TELLU_OBJ</span> <span class="o">--</span><span class="n">fibers</span><span class="o">=</span><span class="n">A</span><span class="p">,</span><span class="n">B</span> <span class="o">--</span><span class="n">outpath</span><span class="o">=/</span><span class="n">home</span><span class="o">/</span><span class="n">test</span><span class="o">/</span><span class="n">apero</span><span class="o">-</span><span class="n">files</span><span class="o">/</span> <span class="o">--</span><span class="n">objnames</span><span class="o">=</span><span class="n">EXLUP</span><span class="p">,</span><span class="n">V830TAU</span><span class="p">,</span><span class="n">BDP23_2063B</span><span class="p">,</span><span class="n">HD_96064_BC</span><span class="p">,</span><span class="n">G_272M127</span><span class="p">,</span><span class="n">J23453034P4104001</span><span class="p">,</span><span class="n">ROSS_1050</span><span class="p">,</span><span class="n">ROSS_477</span><span class="p">,</span><span class="n">TOI1759</span><span class="p">,</span><span class="n">G_75M55</span><span class="p">,</span><span class="n">TWA25</span><span class="p">,</span><span class="n">GL846</span><span class="p">,</span><span class="n">HD_207966B</span><span class="p">,</span><span class="n">J00372598P5133072</span><span class="p">,</span><span class="n">J23181789P4617214</span><span class="p">,</span><span class="n">TYC_4384M1735M1</span><span class="p">,</span><span class="n">V2247OPH</span><span class="p">,</span><span class="mi">2</span><span class="n">MASSJ11021804P1630333</span><span class="p">,</span><span class="n">BDP04_4988</span><span class="p">,</span><span class="n">BDP08_4887</span><span class="p">,</span><span class="n">GJ494</span><span class="p">,</span><span class="n">GL270</span><span class="p">,</span><span class="n">GL338B</span><span class="p">,</span><span class="n">GL536</span><span class="p">,</span><span class="n">GL212</span><span class="p">,</span><span class="n">GL410</span><span class="p">,</span><span class="n">HD_263175B</span><span class="p">,</span><span class="n">NLTT46858</span><span class="p">,</span><span class="n">OTSER</span><span class="p">,</span><span class="n">BDP05_3409</span><span class="p">,</span><span class="n">GL412A</span><span class="p">,</span><span class="n">GL514</span><span class="p">,</span><span class="n">GJ3305</span><span class="p">,</span><span class="n">GJ1026A</span><span class="p">,</span><span class="n">LP_831M68</span><span class="p">,</span><span class="n">HD_154363B</span><span class="p">,</span><span class="n">HD_31867B</span><span class="p">,</span><span class="n">NLTT45473</span><span class="p">,</span><span class="n">GL205</span><span class="p">,</span><span class="n">GL686</span><span class="p">,</span><span class="n">GL880</span><span class="p">,</span><span class="n">WOLF_209</span><span class="p">,</span><span class="n">GL378</span><span class="p">,</span><span class="n">J20412815P5725473</span><span class="p">,</span><span class="n">DHTAUB</span><span class="p">,</span><span class="n">DOTAU</span><span class="p">,</span><span class="n">TWA13A</span><span class="p">,</span><span class="n">TWA13B</span><span class="p">,</span><span class="n">AUMIC</span><span class="p">,</span><span class="n">G_114M10</span><span class="p">,</span><span class="n">NLTT36190</span><span class="p">,</span><span class="n">HD_31412B</span><span class="p">,</span><span class="n">HD_46375B</span><span class="p">,</span><span class="n">LP_733M99</span><span class="p">,</span><span class="n">GJ3470</span><span class="p">,</span><span class="n">G_145M11</span><span class="p">,</span><span class="n">G_230M31</span><span class="p">,</span><span class="mi">18</span><span class="n">_PUP_B</span><span class="p">,</span><span class="n">G_270M12</span><span class="p">,</span><span class="n">GJ3192A</span><span class="p">,</span><span class="n">HD_164595B</span><span class="p">,</span><span class="n">HD_50281B</span><span class="p">,</span><span class="n">L_657M32</span><span class="p">,</span><span class="n">NLTT39578</span><span class="p">,</span><span class="n">SIGCRBC</span><span class="p">,</span><span class="n">JH_223</span><span class="p">,</span><span class="n">GL411</span><span class="p">,</span><span class="n">XZTAU</span><span class="p">,</span><span class="n">GL15A</span><span class="p">,</span><span class="n">GL382</span><span class="p">,</span><span class="n">TWA7</span><span class="p">,</span><span class="n">V347AUR</span><span class="p">,</span><span class="n">HD_213519B</span><span class="p">,</span><span class="n">WOLF_1450</span><span class="p">,</span><span class="n">GL752A</span><span class="p">,</span><span class="n">G_270M164</span><span class="p">,</span><span class="n">G_28M21</span><span class="p">,</span><span class="n">GL687</span><span class="p">,</span><span class="n">GL48</span><span class="p">,</span><span class="n">GL617B</span><span class="p">,</span><span class="n">GJ1026B</span><span class="p">,</span><span class="n">ROSS_555</span><span class="p">,</span><span class="n">G_106M36</span><span class="p">,</span><span class="n">GL317</span><span class="p">,</span><span class="n">GL362</span><span class="p">,</span><span class="n">GL725B</span><span class="p">,</span><span class="n">GL849</span><span class="p">,</span><span class="n">GL876</span><span class="p">,</span><span class="n">HD_4271B</span><span class="p">,</span><span class="n">NLTT44569</span><span class="p">,</span><span class="n">NLTT45430</span><span class="p">,</span><span class="n">UCAC4_538M053123</span><span class="p">,</span><span class="n">V_CW_UMA</span><span class="p">,</span><span class="n">G240M52</span><span class="p">,</span><span class="n">GJ1105</span><span class="p">,</span><span class="n">GJ4333</span><span class="p">,</span><span class="n">GL15B</span><span class="p">,</span><span class="n">GL480</span><span class="p">,</span><span class="n">HD_6660B</span><span class="p">,</span><span class="n">PM_J08402P3127</span><span class="p">,</span><span class="n">G_275M2</span><span class="p">,</span><span class="n">J04510138P3127238</span><span class="p">,</span><span class="n">TYC_3980M1081M1</span><span class="p">,</span><span class="n">CEBOO</span><span class="p">,</span><span class="n">GL251</span><span class="p">,</span><span class="n">GL436</span><span class="p">,</span><span class="n">GL581</span><span class="p">,</span><span class="n">GL725A</span><span class="p">,</span><span class="n">PM_J09553M2715</span><span class="p">,</span><span class="n">EPIC_248131102</span><span class="p">,</span><span class="n">GJ768_1B</span><span class="p">,</span><span class="n">TOI732</span><span class="p">,</span><span class="n">EV_LAC</span><span class="p">,</span><span class="n">G_102M4</span><span class="p">,</span><span class="n">G_232M62</span><span class="p">,</span><span class="n">NLTT35712</span><span class="p">,</span><span class="n">GJ1148</span><span class="p">,</span><span class="n">GJ3378</span><span class="p">,</span><span class="n">GL169_1A</span><span class="p">,</span><span class="n">GL445</span><span class="p">,</span><span class="n">LP_128M32</span><span class="p">,</span><span class="n">NLTT40692</span><span class="p">,</span><span class="n">GJ4338</span><span class="p">,</span><span class="n">NLTT37349</span><span class="p">,</span><span class="n">GJ1103</span><span class="p">,</span><span class="n">GJ1214</span><span class="p">,</span><span class="n">GJ1256</span><span class="p">,</span><span class="n">GJ1289</span><span class="p">,</span><span class="n">GJ490B</span><span class="p">,</span><span class="n">GJ669B</span><span class="p">,</span><span class="n">GL166C</span><span class="p">,</span><span class="n">K2_25</span><span class="p">,</span><span class="n">GJ1151</span><span class="p">,</span><span class="n">GJ1154</span><span class="p">,</span><span class="n">GJ4274</span><span class="p">,</span><span class="n">GJ493_1</span><span class="p">,</span><span class="n">GJ4063</span><span class="p">,</span><span class="n">GL408</span><span class="p">,</span><span class="n">GL699</span><span class="p">,</span><span class="n">UCAC3_226M217434</span><span class="p">,</span><span class="n">GJ3789</span><span class="p">,</span><span class="n">HD_183870B</span><span class="p">,</span><span class="n">GL905</span><span class="p">,</span><span class="n">LP_071M082</span><span class="p">,</span><span class="n">PM_J18482P0741</span><span class="p">,</span><span class="n">GJ1286</span><span class="p">,</span><span class="n">GJ1002</span><span class="p">,</span><span class="n">G_139M12</span><span class="p">,</span><span class="n">GJ4071</span><span class="p">,</span><span class="n">PM_J21463P3813</span><span class="p">,</span><span class="mi">20</span><span class="n">_LMI_B</span><span class="p">,</span><span class="n">GL412B</span><span class="p">,</span><span class="n">GJ3622</span><span class="p">,</span><span class="n">GJ1111</span><span class="p">,</span><span class="mi">1</span><span class="n">RXSJ173353_5P165515</span><span class="p">,</span><span class="n">GJ1245B</span><span class="p">,</span><span class="n">TRAPPIST1</span><span class="p">,</span><span class="n">J1835379P325954</span><span class="p">,</span><span class="n">TVLM_513M46</span>
 </pre></div>
 </div>
 </div></blockquote>
 </li>
-<li><p>Example 7: For LBL copy these files (or change the objnames as appropriate)</p>
+<li><p>Example 8: For LBL copy these files (or change the objnames as appropriate)</p>
 <blockquote>
 <div><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">apero_get</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="n">outpath</span> <span class="o">/</span><span class="n">space</span><span class="o">/</span><span class="n">spirou</span><span class="o">/</span><span class="n">obj_fullv07254</span> <span class="o">--</span><span class="n">outtypes</span> <span class="n">TELLU_OBJ</span><span class="p">,</span><span class="n">TELLU_PCLEAN</span><span class="p">,</span><span class="n">TELLU_RECON</span><span class="p">,</span><span class="n">TELLU_TEMP_S1D</span><span class="p">,</span><span class="n">TELLU_TEMP</span><span class="p">,</span><span class="n">EXT_E2DS_FF</span> <span class="o">--</span><span class="n">objnames</span> <span class="n">GJ4071</span><span class="p">,</span><span class="n">GJ4338</span><span class="p">,</span><span class="n">DHTAUB</span><span class="p">,</span><span class="n">GL686</span><span class="p">,</span><span class="n">K2_25</span><span class="p">,</span><span class="mi">18</span><span class="n">_PUP_B</span><span class="p">,</span><span class="mi">1</span><span class="n">RXSJ173353_5P165515</span><span class="p">,</span><span class="mi">20</span><span class="n">_LMI_B</span><span class="p">,</span><span class="mi">42</span><span class="n">_PEG</span><span class="p">,</span><span class="mi">51</span><span class="n">_PEG</span><span class="p">,</span><span class="mi">55</span><span class="n">CNCB</span><span class="p">,</span><span class="mi">72</span><span class="n">_OPH</span><span class="p">,</span><span class="n">AUMIC</span><span class="p">,</span><span class="n">BDP04_4988</span><span class="p">,</span><span class="n">BDP05_3409</span><span class="p">,</span><span class="n">BDP08_4887</span><span class="p">,</span><span class="n">BDP23_2063B</span><span class="p">,</span><span class="n">BPTAU</span><span class="p">,</span><span class="n">CITAU</span><span class="p">,</span><span class="n">DGTAU</span><span class="p">,</span><span class="n">DOTAU</span><span class="p">,</span><span class="mi">2</span><span class="n">MASS_J04372171P2651014</span><span class="p">,</span><span class="n">EV_LAC</span><span class="p">,</span><span class="n">EXLUP</span><span class="p">,</span><span class="n">FUORI</span><span class="p">,</span><span class="n">G240M52</span><span class="p">,</span><span class="n">GJ1002</span><span class="p">,</span><span class="n">GJ1012</span><span class="p">,</span><span class="n">GJ1026A</span><span class="p">,</span><span class="n">GJ1026B</span><span class="p">,</span><span class="n">GJ1103</span><span class="p">,</span><span class="n">GJ1105</span><span class="p">,</span><span class="n">GJ1111</span><span class="p">,</span><span class="n">GJ1148</span><span class="p">,</span><span class="n">GJ1151</span><span class="p">,</span><span class="n">GJ1154</span><span class="p">,</span><span class="n">GJ1214</span><span class="p">,</span><span class="n">GJ1245B</span><span class="p">,</span><span class="n">GJ1256</span><span class="p">,</span><span class="n">GJ1286</span><span class="p">,</span><span class="n">GJ1289</span><span class="p">,</span><span class="n">GJ3192A</span><span class="p">,</span><span class="n">GJ3305</span><span class="p">,</span><span class="n">GJ3378</span><span class="p">,</span><span class="n">GJ3470</span><span class="p">,</span><span class="n">GJ3622</span><span class="p">,</span><span class="n">GJ3789</span><span class="p">,</span><span class="n">GJ4063</span><span class="p">,</span><span class="n">GJ4274</span><span class="p">,</span><span class="n">GJ4333</span><span class="p">,</span><span class="n">GJ490B</span><span class="p">,</span><span class="n">GJ493_1</span><span class="p">,</span><span class="n">GJ494</span><span class="p">,</span><span class="n">GJ669B</span><span class="p">,</span><span class="n">GJ768_1B</span><span class="p">,</span><span class="n">GL15A</span><span class="p">,</span><span class="n">GL15B</span><span class="p">,</span><span class="n">GL166C</span><span class="p">,</span><span class="n">GL169_1A</span><span class="p">,</span><span class="n">GL205</span><span class="p">,</span><span class="n">GL212</span><span class="p">,</span><span class="n">GL251</span><span class="p">,</span><span class="n">GL270</span><span class="p">,</span><span class="n">GL317</span><span class="p">,</span><span class="n">GL338B</span><span class="p">,</span><span class="n">GL362</span><span class="p">,</span><span class="n">GL378</span><span class="p">,</span><span class="n">GL382</span><span class="p">,</span><span class="n">GL388</span><span class="p">,</span><span class="n">GL406</span><span class="p">,</span><span class="n">GL408</span><span class="p">,</span><span class="n">GL410</span><span class="p">,</span><span class="n">GL411</span><span class="p">,</span><span class="n">GL412A</span><span class="p">,</span><span class="n">GL412B</span><span class="p">,</span><span class="n">GL436</span><span class="p">,</span><span class="n">GL445</span><span class="p">,</span><span class="n">GL447</span><span class="p">,</span><span class="n">GL48</span><span class="p">,</span><span class="n">GL480</span><span class="p">,</span><span class="n">GL514</span><span class="p">,</span><span class="n">GL536</span><span class="p">,</span><span class="n">GL581</span><span class="p">,</span><span class="n">GL617B</span><span class="p">,</span><span class="n">GL687</span><span class="p">,</span><span class="n">GL699</span><span class="p">,</span><span class="n">GL725A</span><span class="p">,</span><span class="n">GL725B</span><span class="p">,</span><span class="n">GL752A</span><span class="p">,</span><span class="n">GL846</span><span class="p">,</span><span class="n">GL849</span><span class="p">,</span><span class="n">GL876</span><span class="p">,</span><span class="n">GL880</span><span class="p">,</span><span class="n">GL905</span><span class="p">,</span><span class="n">GMAUR</span><span class="p">,</span><span class="n">GQLUP</span><span class="p">,</span><span class="n">G_102M4</span><span class="p">,</span><span class="n">G_106M36</span><span class="p">,</span><span class="n">G_114M10</span><span class="p">,</span><span class="n">G_145M11</span><span class="p">,</span><span class="n">G_230M31</span><span class="p">,</span><span class="n">G_232M62</span><span class="p">,</span><span class="n">G_270M12</span><span class="p">,</span><span class="n">G_270M164</span><span class="p">,</span><span class="n">G_272M127</span><span class="p">,</span><span class="n">G_275M2</span><span class="p">,</span><span class="n">G_28M21</span><span class="p">,</span><span class="n">G_75M55</span><span class="p">,</span><span class="n">HATP11</span><span class="p">,</span><span class="n">HD_189733</span><span class="p">,</span><span class="n">HD_133112</span><span class="p">,</span><span class="n">HD_154363B</span><span class="p">,</span><span class="n">HD_164595B</span><span class="p">,</span><span class="n">HD_183870B</span><span class="p">,</span><span class="n">HD_185603</span><span class="p">,</span><span class="n">HD_207966B</span><span class="p">,</span><span class="n">HD_213519B</span><span class="p">,</span><span class="n">HD_263175B</span><span class="p">,</span><span class="n">HD_31412B</span><span class="p">,</span><span class="n">HD_31867B</span><span class="p">,</span><span class="n">HD_4271B</span><span class="p">,</span><span class="n">HD_46375B</span><span class="p">,</span><span class="n">HD_50281B</span><span class="p">,</span><span class="n">HD_6660B</span><span class="p">,</span><span class="n">HD_96064_BC</span><span class="p">,</span><span class="n">J00372598P5133072</span><span class="p">,</span><span class="n">J04510138P3127238</span><span class="p">,</span><span class="n">J20412815P5725473</span><span class="p">,</span><span class="n">J23181789P4617214</span><span class="p">,</span><span class="n">J23453034P4104001</span><span class="p">,</span><span class="n">JH_223</span><span class="p">,</span><span class="n">K2_33</span><span class="p">,</span><span class="n">LKCA4</span><span class="p">,</span><span class="n">LP_071M082</span><span class="p">,</span><span class="n">LP_128M32</span><span class="p">,</span><span class="n">LP_733M99</span><span class="p">,</span><span class="n">LP_831M68</span><span class="p">,</span><span class="n">L_657M32</span><span class="p">,</span><span class="n">NLTT35712</span><span class="p">,</span><span class="n">NLTT36190</span><span class="p">,</span><span class="n">NLTT37349</span><span class="p">,</span><span class="n">NLTT39578</span><span class="p">,</span><span class="n">NLTT40692</span><span class="p">,</span><span class="n">NLTT44569</span><span class="p">,</span><span class="n">NLTT45430</span><span class="p">,</span><span class="n">NLTT45473</span><span class="p">,</span><span class="n">NLTT46858</span><span class="p">,</span><span class="n">PM_J08402P3127</span><span class="p">,</span><span class="n">PM_J09553M2715</span><span class="p">,</span><span class="n">PM_J18482P0741</span><span class="p">,</span><span class="n">PM_J21463P3813</span><span class="p">,</span><span class="n">ROSS_1050</span><span class="p">,</span><span class="n">ROSS_477</span><span class="p">,</span><span class="n">ROSS_555</span><span class="p">,</span><span class="n">RULUP</span><span class="p">,</span><span class="n">RYLUP</span><span class="p">,</span><span class="n">RYTAU</span><span class="p">,</span><span class="n">SIGCRBC</span><span class="p">,</span><span class="n">TAUBOO</span><span class="p">,</span><span class="n">TOI1728</span><span class="p">,</span><span class="n">TOI1759</span><span class="p">,</span><span class="n">TOI2136</span><span class="p">,</span><span class="n">TOI732</span><span class="p">,</span><span class="n">TOI1452</span><span class="p">,</span><span class="n">TOI1695</span><span class="p">,</span><span class="n">TOI442</span><span class="p">,</span><span class="n">TOI736</span><span class="p">,</span><span class="n">TRAPPIST1</span><span class="p">,</span><span class="n">TVLM_513M46</span><span class="p">,</span><span class="n">TWA13A</span><span class="p">,</span><span class="n">TWA13B</span><span class="p">,</span><span class="n">TWA25</span><span class="p">,</span><span class="n">TWA7</span><span class="p">,</span><span class="n">TW_HYA</span><span class="p">,</span><span class="n">TYC_3980M1081M1</span><span class="p">,</span><span class="n">TYC_3154M921M1</span><span class="p">,</span><span class="n">TYC_4384M1735M1</span><span class="p">,</span><span class="n">UCAC3_226M217434</span><span class="p">,</span><span class="n">UCAC4_538M053123</span><span class="p">,</span><span class="n">V1298TAU</span><span class="p">,</span><span class="n">V2129OPH</span><span class="p">,</span><span class="n">V2247OPH</span><span class="p">,</span><span class="n">V347AUR</span><span class="p">,</span><span class="n">V410TAU</span><span class="p">,</span><span class="n">V830TAU</span><span class="p">,</span><span class="n">WASP127</span><span class="p">,</span><span class="n">WASP69</span><span class="p">,</span><span class="n">WASP80</span><span class="p">,</span><span class="n">WASP11</span><span class="p">,</span><span class="n">WASP52</span><span class="p">,</span><span class="n">WASP12</span><span class="p">,</span><span class="n">WOLF_1450</span><span class="p">,</span><span class="n">WOLF_209</span><span class="p">,</span><span class="n">XZTAU</span><span class="p">,</span><span class="n">TOI727</span><span class="p">,</span><span class="n">TOI4860</span><span class="p">,</span><span class="n">SKY</span><span class="p">,</span><span class="n">WASP33</span><span class="p">,</span><span class="n">BDM11_2741</span><span class="p">,</span><span class="n">UCAC2_44133324</span><span class="p">,</span><span class="n">WASP39</span>
 
@@ -250,18 +266,18 @@ reduction and wanting a consistent dataset (where a normal raw directory may be 
 </section>
 </section>
 <section id="schematic">
-<h2>2. Schematic<a class="headerlink" href="#schematic" title="Permalink to this headline">¶</a></h2>
+<h2>2. Schematic<a class="headerlink" href="#schematic" title="Permalink to this heading">¶</a></h2>
 <p>No schematic set</p>
 </section>
 <section id="usage">
-<h2>3. Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
+<h2>3. Usage<a class="headerlink" href="#usage" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">apero_get</span><span class="o">.</span><span class="n">py</span> <span class="p">{</span><span class="n">options</span><span class="p">}</span>
 </pre></div>
 </div>
 <p>No optional arguments</p>
 </section>
 <section id="optional-arguments">
-<h2>4. Optional Arguments<a class="headerlink" href="#optional-arguments" title="Permalink to this headline">¶</a></h2>
+<h2>4. Optional Arguments<a class="headerlink" href="#optional-arguments" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">--</span><span class="n">gui</span> <span class="o">//</span> <span class="n">Use</span> <span class="n">a</span> <span class="n">gui</span> <span class="n">to</span> <span class="nb">filter</span> <span class="n">files</span> <span class="p">(</span><span class="n">Currently</span> <span class="ow">not</span> <span class="n">ready</span><span class="p">)</span>
 <span class="o">--</span><span class="n">objnames</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">The</span> <span class="nb">object</span> <span class="n">names</span> <span class="n">separated</span> <span class="n">by</span> <span class="n">a</span> <span class="n">comma</span><span class="o">.</span> <span class="n">Use</span> <span class="s1">&#39;&#39;</span> <span class="k">for</span> <span class="n">objects</span> <span class="k">with</span> <span class="n">whitespaces</span> <span class="n">i</span><span class="o">.</span><span class="n">e</span> <span class="s1">&#39;obj1,obj2,obj 3&#39;</span>
 <span class="o">--</span><span class="n">dprtypes</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">The</span> <span class="n">DPRTYPES</span> <span class="n">to</span> <span class="n">use</span> <span class="p">(</span><span class="n">multiple</span> <span class="n">dprtypes</span> <span class="n">combined</span> <span class="k">with</span> <span class="n">OR</span> <span class="n">logic</span><span class="p">)</span> <span class="n">separate</span> <span class="n">dprtypes</span> <span class="k">with</span> <span class="n">commas</span><span class="o">.</span> <span class="n">Leaving</span> <span class="n">blank</span> <span class="n">will</span> <span class="ow">not</span> <span class="n">use</span> <span class="n">DPRTYPE</span> <span class="n">to</span> <span class="nb">filter</span> <span class="n">files</span><span class="o">.</span>
@@ -271,11 +287,12 @@ reduction and wanting a consistent dataset (where a normal raw directory may be 
 <span class="o">--</span><span class="n">symlinks</span> <span class="o">//</span> <span class="n">Create</span> <span class="n">symlinks</span> <span class="n">to</span> <span class="n">the</span> <span class="n">file</span> <span class="n">instead</span> <span class="n">of</span> <span class="n">copying</span>
 <span class="o">--</span><span class="n">test</span> <span class="o">//</span> <span class="n">Does</span> <span class="ow">not</span> <span class="n">copy</span> <span class="n">files</span> <span class="o">-</span> <span class="n">prints</span> <span class="n">copy</span> <span class="k">as</span> <span class="n">a</span> <span class="n">debug</span> <span class="n">test</span><span class="o">.</span> <span class="n">Recommended</span> <span class="k">for</span> <span class="n">first</span> <span class="n">time</span> <span class="n">use</span><span class="o">.</span>
 <span class="o">--</span><span class="n">failedqc</span> <span class="o">//</span> <span class="n">Include</span> <span class="n">files</span> <span class="n">that</span> <span class="n">failed</span> <span class="n">QC</span><span class="o">.</span> <span class="n">Highly</span> <span class="n">unrecommended</span><span class="o">.</span>
+<span class="o">--</span><span class="n">since</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Only</span> <span class="n">get</span> <span class="n">files</span> <span class="n">processed</span> <span class="n">since</span> <span class="n">a</span> <span class="n">certain</span> <span class="n">date</span> <span class="n">YYYY</span><span class="o">-</span><span class="n">MM</span><span class="o">-</span><span class="n">DD</span> <span class="n">hh</span><span class="p">:</span><span class="n">mm</span><span class="p">:</span><span class="n">ss</span>
 </pre></div>
 </div>
 </section>
 <section id="special-arguments">
-<h2>5. Special Arguments<a class="headerlink" href="#special-arguments" title="Permalink to this headline">¶</a></h2>
+<h2>5. Special Arguments<a class="headerlink" href="#special-arguments" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">--</span><span class="n">xhelp</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Extended</span> <span class="n">help</span> <span class="n">menu</span> <span class="p">(</span><span class="k">with</span> <span class="nb">all</span> <span class="n">advanced</span> <span class="n">arguments</span><span class="p">)</span>
 <span class="o">--</span><span class="n">debug</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Activates</span> <span class="n">debug</span> <span class="n">mode</span> <span class="p">(</span><span class="n">Advanced</span> <span class="n">mode</span> <span class="p">[</span><span class="n">INTEGER</span><span class="p">]</span> <span class="n">value</span> <span class="n">must</span> <span class="n">be</span> <span class="n">an</span> <span class="n">integer</span> <span class="n">greater</span> <span class="n">than</span> <span class="mi">0</span><span class="p">,</span> <span class="n">setting</span> <span class="n">the</span> <span class="n">debug</span> <span class="n">level</span><span class="p">)</span>
 <span class="o">--</span><span class="n">listing</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Lists</span> <span class="n">the</span> <span class="n">night</span> <span class="n">name</span> <span class="n">directories</span> <span class="ow">in</span> <span class="n">the</span> <span class="nb">input</span> <span class="n">directory</span> <span class="k">if</span> <span class="n">used</span> <span class="n">without</span> <span class="n">a</span> <span class="s1">&#39;directory&#39;</span> <span class="n">argument</span> <span class="ow">or</span> <span class="n">lists</span> <span class="n">the</span> <span class="n">files</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">given</span> <span class="s1">&#39;directory&#39;</span> <span class="p">(</span><span class="k">if</span> <span class="n">defined</span><span class="p">)</span><span class="o">.</span> <span class="n">Only</span> <span class="n">lists</span> <span class="n">up</span> <span class="n">to</span> <span class="mi">15</span> <span class="n">files</span><span class="o">/</span><span class="n">directories</span>
@@ -297,21 +314,21 @@ reduction and wanting a consistent dataset (where a normal raw directory may be 
 </div>
 </section>
 <section id="output-directory">
-<h2>6. Output directory<a class="headerlink" href="#output-directory" title="Permalink to this headline">¶</a></h2>
+<h2>6. Output directory<a class="headerlink" href="#output-directory" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">DRS_DATA_REDUC</span> <span class="o">//</span> <span class="n">Default</span><span class="p">:</span> <span class="s2">&quot;red&quot;</span> <span class="n">directory</span>
 </pre></div>
 </div>
 </section>
 <section id="output-files">
-<h2>7. Output files<a class="headerlink" href="#output-files" title="Permalink to this headline">¶</a></h2>
+<h2>7. Output files<a class="headerlink" href="#output-files" title="Permalink to this heading">¶</a></h2>
 <p>N/A</p>
 </section>
 <section id="debug-plots">
-<h2>8. Debug plots<a class="headerlink" href="#debug-plots" title="Permalink to this headline">¶</a></h2>
+<h2>8. Debug plots<a class="headerlink" href="#debug-plots" title="Permalink to this heading">¶</a></h2>
 <p>No debug plots.</p>
 </section>
 <section id="summary-plots">
-<h2>9. Summary plots<a class="headerlink" href="#summary-plots" title="Permalink to this headline">¶</a></h2>
+<h2>9. Summary plots<a class="headerlink" href="#summary-plots" title="Permalink to this heading">¶</a></h2>
 <p>No summary plots.</p>
 </section>
 </section>
@@ -335,7 +352,7 @@ reduction and wanting a consistent dataset (where a normal raw directory may be 
         <li class="right" >
           <a href="rdefinition_EXPLO.html" title="apero_explorer"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.259 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.8.001 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../../main/general/main_general.html" >General User documentation</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="tools.html" >User tools</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">apero_get</a></li> 
@@ -343,7 +360,7 @@ reduction and wanting a consistent dataset (where a normal raw directory may be 
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2019, Neil Cook.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 6.1.3.
     </div>
   </body>
 </html>

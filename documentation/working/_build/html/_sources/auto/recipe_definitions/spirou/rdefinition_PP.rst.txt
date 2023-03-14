@@ -25,7 +25,7 @@ SHORTNAME: PP
 
 .. only:: html
 
-    .. image:: ../../../_static/yed/spirou/apero_preproces_spirou_schematic.jpg
+    .. image:: ../../../_static/yed/spirou/apero_preprocess_spirou_schematic.jpg
         :width: 100%
         :align: center
 

@@ -52,8 +52,9 @@ No schematic set
      --fiber[A,B] // [STRING] optional, the fiber type to use when processing files
      --database[True/False] // [BOOLEAN] Whether to add outputs to calibration database
      --blazefile[FILE:FF_BLAZE] // [STRING] Define a custom file to use for blaze correction. If unset uses closest file from calibDB. Checks for an absolute path and then checks directory (CALIBDB=BADPIX)
-     --plot[0>INT>3] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
+     --plot[0>INT>4] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
      --wavefile[FILE:WAVESOL_REF,WAVE_NIGHT,WAVESOL_DEFAULT] // [STRING] Define a custom file to use for the wave solution. If unset uses closest file from header or calibDB (depending on setup). Checks for an absolute path and then checks directory
+     --no_in_qc // Disable checking the quality control of input files
 
 
 ********************************************************************************
@@ -112,6 +113,7 @@ No schematic set
 
     EXTRACT_S1D
     MKTEMP_BERV_COV
+    MKTEMP_S1D_DECONV
 
 
 ********************************************************************************

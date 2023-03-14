@@ -15,7 +15,7 @@ apero_ccf_spirou
 SHORTNAME: CCF
 
 
-No description set
+.. include:: ../../../resources/spirou/descriptions/apero_ccf_spirou.rst
 
 
 ********************************************************************************
@@ -56,7 +56,8 @@ No schematic set
      --masknormmode[None,all,order] // [STRING] Define the type of normalization to apply to ccf masks, all normalized across all orders, order normalizes independently for each order, None applies no mask normalization
      --database[True/False] // [BOOLEAN] Whether to add outputs to calibration database
      --blazefile[FILE:FF_BLAZE] // [STRING] Define a custom file to use for blaze correction. If unset uses closest file from calibDB. Checks for an absolute path and then checks directory (CALIBDB=BADPIX)
-     --plot[0>INT>3] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
+     --plot[0>INT>4] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
+     --no_in_qc // Disable checking the quality control of input files
 
 
 ********************************************************************************

@@ -33,7 +33,7 @@ EXT_S1D_V,1D stitched spectrum (constant velocity binning),EXT_S1D_V,.fits,_s1d_
 EXT_FPLIST,FP lines identified from extracted FP fiber,EXT_FPLIST,.fits,_ext_fplines,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
 THERMALI_E2DS,"Extracted sci=DARK calib=DARK thermal calibration file, where dark is an internal dark",THERMALI_E2DS,.fits,_thermal_e2ds_int,--,"AB, A, B, C",DARK_DARK_INT
 THERMALT_E2DS,"Extracted sci=DARK calib=DARK thermal calibration file, where dark is a telescope dark",THERMALT_E2DS,.fits,_thermal_e2ds_tel,--,"AB, A, B, C",DARK_DARK_TEL
-LEAKREF_E2DS,Reference leak correction calibration file,LEAKREF_E2DS,.fits,_LEAK_REF,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
+LEAKREF_E2DS,Reference leak correction calibration file,LEAKREF_E2DS,.fits,_leak_ref,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
 WAVESOL_REF,Reference wavelength solution calibration file,WAVESOL_REF,.fits,_wavesol_ref,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
 WAVE_HCLIST_REF,Reference list of Hollow cathode lines calibration file,WAVE_HCLIST_REF,.fits,_waveref_hclines,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
 WAVE_FPLIST_REF,Reference list of FP liens calibration file,WAVE_FPLIST_REF,.fits,_waveref_fplines,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
@@ -42,6 +42,7 @@ WAVESOL_DEFAULT,Default wavelength solution calibration file,WAVESOL_DEFAULT,.fi
 WAVERES,Reference wavelength resolution map file,WAVE_RES,.fits,_waveref_resmap,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
 WAVE_FPRESTAB,Reference wavelength resolution table,--,.tbl,--,apero_wave_results,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
 WAVE_FPLLTABL,Reference wavelength FP line-list table,--,.tbl,_mhc_lines,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
+WAVEM_RES_E2DS,Reference wavelength resolution e2ds file,WAVEM_RES_E2DS,.fits,_waveref_res_e2ds,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
 WAVE_NIGHT,Nightly wavelength solution calibration file,WAVE_NIGHT,.fits,_wave_night,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
 WAVEHCLL,Nightly HC line list calibration file,--,.dat,_linelist,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
 WAVERES,Nightly wavelength resolution map file,WAVE_RES,.fits,_wave_res,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
@@ -49,6 +50,8 @@ WAVE_FPRESTAB,Nightly wavelength resolutiontable,--,.tbl,--,apero_wave_results,"
 WAVE_FPLLTABL,Nightly wavelength FP line-list table,--,.tbl,_hc_lines,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
 WAVE_HCLIST,Nightly wavelength Hollow cathodeline-list table,WAVE_HCLIST,.fits,_wave_hclines,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
 WAVE_FPLIST,Nightly wavelength FP line-list calibration file,WAVE_FPLIST,.fits,_wave_fplines,--,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
+SKY_MODEL,Telluric sky model file,SKY_MODEL,.fits,_sky_model,--,--,EXT_E2DS_FF
+TELLU_SCLEAN,Sky-cleaning file,TELLU_SCLEAN,.fits,_tellu_sclean.fits,--,--,EXT_E2DS_FF
 TELLU_PCLEAN,Telluric pre-cleaning file,TELLU_PCLEAN,.fits,_tellu_pclean,--,"AB, A, B",EXT_E2DS_FF
 TELLU_CONV,--,--,.npy,_tellu_conv,--,"AB, A, B","WAVESOL_REF, WAVE_NIGHT, WAVESOL_DEFAULT"
 TELLU_TRANS,Telluric transmission file,TELLU_TRANS,.fits,_tellu_trans,--,"AB, A, B",EXT_E2DS_FF
@@ -64,7 +67,8 @@ RC1D_V_FILE,Telluric reconstructed 1D absorption file (constant velocity binning
 TELLU_TEMP,Telluric 2D template file,TELLU_TEMP,.fits,--,Template,"AB, A, B","EXT_E2DS_FF, TELLU_OBJ"
 TELLU_BIGCUBE,Telluric object 2D stack file (star frame),TELLU_BIGCUBE,.fits,--,BigCube,"AB, A, B","EXT_E2DS_FF, TELLU_OBJ"
 TELLU_BIGCUBE0,Telluric object  2D stack file (Earth frame),TELLU_BIGCUBE0,.fits,--,BigCube0,"AB, A, B","EXT_E2DS_FF, TELLU_OBJ"
-TELLU_TEMP_S1D,Telluric 1D template file,TELLU_TEMP_S1D,.fits,--,Template_s1d,"AB, A, B","EXT_E2DS_FF, TELLU_OBJ"
+TELLU_TEMP_S1DW,Telluric 1D template file,TELLU_TEMP_S1DW,.fits,--,Template_s1dw,"AB, A, B","EXT_E2DS_FF, TELLU_OBJ"
+TELLU_TEMP_S1DV,Telluric 1D template file,TELLU_TEMP_S1DV,.fits,--,Template_s1dv,"AB, A, B","EXT_E2DS_FF, TELLU_OBJ"
 TELLU_BIGCUBE_S1D,Telluric object 1D stack file (Earth frame),TELLU_BIGCUBE_S1D,.fits,--,BigCube_s1d,"AB, A, B","EXT_E2DS_FF, TELLU_OBJ"
 CCF_RV,Cross-correlation RV results file,CCF_RV,.fits,_ccf,--,"AB, A, B, C","EXT_E2DS_FF, TELLU_OBJ"
 POL_DEG,Polarimetry 2D degree of polarisation file,POL_DEG,.fits,_pol,--,--,"EXT_E2DS_FF, TELLU_OBJ"

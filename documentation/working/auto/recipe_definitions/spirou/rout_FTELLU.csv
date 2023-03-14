@@ -7,4 +7,5 @@ SC1D_V_FILE,Telluric corrected extracted 1D spectrum (constant velocity binning)
 TELLU_RECON,Telluric reconstructed 2D absorption file,TELLU_RECON,.fits,_e2dsff_recon,--,"AB, A, B",telluric,TELLU_RECON,EXT_E2DS_FF
 RC1D_W_FILE,Telluric reconstructed 1D absorption file (constant wavelength binning),RC1D_W_FILE,.fits,_s1d_w_recon,--,"AB, A, B",--,--,EXT_E2DS_FF
 RC1D_V_FILE,Telluric reconstructed 1D absorption file (constant velocity binning),RC1D_V_FILE,.fits,_s1d_v_recon,--,"AB, A, B",--,--,EXT_E2DS_FF
+TELLU_SCLEAN,Sky-cleaning file,TELLU_SCLEAN,.fits,_tellu_sclean.fits,--,--,--,--,EXT_E2DS_FF
 TELLU_PCLEAN,Telluric pre-cleaning file,TELLU_PCLEAN,.fits,_tellu_pclean,--,"AB, A, B",telluric,TELLU_PCLEAN,EXT_E2DS_FF

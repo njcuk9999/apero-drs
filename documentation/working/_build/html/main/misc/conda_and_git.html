@@ -3,20 +3,19 @@
 
 <!doctype html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Useful guide on conda and git &#8212; APERO 0.7.259 documentation</title>
+    <title>Useful guide on conda and git &#8212; APERO 0.8.001 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/apero.css" />
     
     <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
     <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
     <script src="../../_static/bizstyle.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
@@ -101,15 +100,16 @@
         <li class="right" >
           <a href="mysql_database_commands.html" title="MySQL example commands"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.7.259 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.8.001 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../developer/main_dev.html" accesskey="U">Developer how to guide</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Useful guide on conda and git</a></li> 
       </ul>
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">Useful guide on conda and git</a><ul>
 <li><a class="reference internal" href="#conda">conda</a></li>
 <li><a class="reference internal" href="#miniconda-installation">miniconda installation</a></li>
@@ -120,12 +120,17 @@
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="mysql_database_commands.html"
-                        title="previous chapter">MySQL example commands</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="pythoninstallation.html"
-                        title="next chapter">Python installation</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="mysql_database_commands.html"
+                          title="previous chapter">MySQL example commands</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="pythoninstallation.html"
+                          title="next chapter">Python installation</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -142,7 +147,7 @@
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
 
@@ -152,9 +157,9 @@
           <div class="body" role="main">
             
   <section id="useful-guide-on-conda-and-git">
-<span id="conda-git"></span><h1>Useful guide on conda and git<a class="headerlink" href="#useful-guide-on-conda-and-git" title="Permalink to this headline">¶</a></h1>
+<span id="conda-git"></span><h1>Useful guide on conda and git<a class="headerlink" href="#useful-guide-on-conda-and-git" title="Permalink to this heading">¶</a></h1>
 <section id="conda">
-<h2>conda<a class="headerlink" href="#conda" title="Permalink to this headline">¶</a></h2>
+<h2>conda<a class="headerlink" href="#conda" title="Permalink to this heading">¶</a></h2>
 <p>Conda is a package manager. We use conda specifically to install a python
 environment where all python pacakges are managed and contained to ensure
 maximum compatibility. For python conda comes in two main flavours “anaconda”
@@ -163,13 +168,13 @@ miniconda only contains standard python packages. We only use and recommend
 miniconda throughout APERO.</p>
 </section>
 <section id="miniconda-installation">
-<h2>miniconda installation<a class="headerlink" href="#miniconda-installation" title="Permalink to this headline">¶</a></h2>
+<h2>miniconda installation<a class="headerlink" href="#miniconda-installation" title="Permalink to this heading">¶</a></h2>
 <p>Miniconda can be installed as follows:</p>
 <ol class="arabic simple">
 <li><p>download miniconda from here: <a class="reference external" href="https://docs.conda.io/en/latest/miniconda.html">https://docs.conda.io/en/latest/miniconda.html</a>
 for your OS. I.e. for linux 64 bit</p></li>
 </ol>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>wget<span class="w"> </span>https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
 </pre></div>
 </div>
 <ol class="arabic simple" start="2">
@@ -178,7 +183,7 @@ conda initialization to your profile (e.g. <cite>source ~/.bashrc).
 You should make sure you do this
 (or run `conda init</cite> before any other steps)</p></li>
 </ol>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash Miniconda3-latest-Linux-x86_64.sh
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>Miniconda3-latest-Linux-x86_64.sh
 </pre></div>
 </div>
 <ol class="arabic simple" start="3">
@@ -186,21 +191,21 @@ You should make sure you do this
 </ol>
 </section>
 <section id="useful-conda-commands">
-<h2>useful conda commands<a class="headerlink" href="#useful-conda-commands" title="Permalink to this headline">¶</a></h2>
+<h2>useful conda commands<a class="headerlink" href="#useful-conda-commands" title="Permalink to this heading">¶</a></h2>
 <p>The main commands you may want to use with conda are:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda deactivate
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>deactivate
 </pre></div>
 </div>
 <p>which stops/unloads (deactivating) the current conda environment, but not all
 environments. Run this may times over to get out of all environments before
 starting/loading (activating) a new environment. You cannot break anything from
 running the deactivation command many times, so use as many times as you like!</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda activate <span class="o">{</span>env name<span class="o">}</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>activate<span class="w"> </span><span class="o">{</span>env<span class="w"> </span>name<span class="o">}</span>
 </pre></div>
 </div>
 <p>which starts/loads/activates the environment “env name”. You must be in
 this environment to use and install python modules.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda create --name <span class="o">{</span>env name<span class="o">}</span> <span class="nv">python</span><span class="o">=</span><span class="m">3</span>.9.7
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>create<span class="w"> </span>--name<span class="w"> </span><span class="o">{</span>env<span class="w"> </span>name<span class="o">}</span><span class="w"> </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.9.7
 </pre></div>
 </div>
 <p>which creates a new environment (called “env name”) for python version 3.9.7
@@ -208,22 +213,22 @@ in this case. Replace the 3.9.7 with your chosen python version (use 3.9 for the
 most recent version of 3.9 etc) leaving this out will use the most recent
 version of python for your conda (conda update conda may be required to get the
 most recent version of python).</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda env remove --name <span class="o">{</span>env name<span class="o">}</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>env<span class="w"> </span>remove<span class="w"> </span>--name<span class="w"> </span><span class="o">{</span>env<span class="w"> </span>name<span class="o">}</span>
 </pre></div>
 </div>
 <p>which deletes the environment called “env name”. You cannot do this if you are
 inside this environment (so must use the deactivate comment first).</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda env list
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>env<span class="w"> </span>list
 </pre></div>
 </div>
 <p>which shows you which environment you are in and which conda environments exist</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda update conda
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>update<span class="w"> </span>conda
 </pre></div>
 </div>
 <p>which updates conda to the most recent version.</p>
 </section>
 <section id="git">
-<h2>git<a class="headerlink" href="#git" title="Permalink to this headline">¶</a></h2>
+<h2>git<a class="headerlink" href="#git" title="Permalink to this heading">¶</a></h2>
 <p>Git is a version management system.
 Github is an online platform using git.
 Git is set up in a “tree” system where you have the <cite>main</cite> or <cite>master</cite> branch
@@ -233,43 +238,43 @@ merged into the main branch at some point in the future. Note branches can
 also have branches coming off them.</p>
 </section>
 <section id="some-git-commands">
-<h2>some git commands<a class="headerlink" href="#some-git-commands" title="Permalink to this headline">¶</a></h2>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git clone <span class="o">{</span>url<span class="o">}</span>
-git clone <span class="o">{</span>url<span class="o">}</span> <span class="o">{</span>directory name<span class="o">}</span>
-git clone <span class="o">{</span>ur<span class="o">}</span> -branch <span class="o">{</span>branch name<span class="o">}</span>
+<h2>some git commands<a class="headerlink" href="#some-git-commands" title="Permalink to this heading">¶</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span><span class="o">{</span>url<span class="o">}</span>
+git<span class="w"> </span>clone<span class="w"> </span><span class="o">{</span>url<span class="o">}</span><span class="w"> </span><span class="o">{</span>directory<span class="w"> </span>name<span class="o">}</span>
+git<span class="w"> </span>clone<span class="w"> </span><span class="o">{</span>ur<span class="o">}</span><span class="w"> </span>-branch<span class="w"> </span><span class="o">{</span>branch<span class="w"> </span>name<span class="o">}</span>
 </pre></div>
 </div>
 <p>where url is taken from a github repository, directory name is the directory
 name on disk to call the top level directory taken from github and
 branch name is the name of the branch you wish to start at (by default this is
 <cite>master</cite> or <cite>main</cite>.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git branch
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>branch
 </pre></div>
 </div>
 <p>shows which branches are currently available locally and which branch you are
 currently on</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git checkout <span class="o">{</span>branch name<span class="o">}</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>checkout<span class="w"> </span><span class="o">{</span>branch<span class="w"> </span>name<span class="o">}</span>
 </pre></div>
 </div>
 <p>moves from your current branch to a new branch (called “branch name”). You can
 only do this if there are no uncommited changes.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git add <span class="o">{</span>filename<span class="o">}</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>add<span class="w"> </span><span class="o">{</span>filename<span class="o">}</span>
 </pre></div>
 </div>
 <p>add a new file to be tracked by git</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git commit -m <span class="s2">&quot;message&quot;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;message&quot;</span>
 </pre></div>
 </div>
 <p>commit changes to the current branch</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git push
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>push
 </pre></div>
 </div>
 <p>Send changes to github (from the local git repository)</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git pull
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>pull
 </pre></div>
 </div>
 <p>Get changes from github and update the local git repository</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git stash
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>stash
 </pre></div>
 </div>
 <p>Remove all local uncommited changes and reset to the last commited local version
@@ -296,14 +301,14 @@ this can be useful to allow pulling from github.</p>
         <li class="right" >
           <a href="mysql_database_commands.html" title="MySQL example commands"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.7.259 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.8.001 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../developer/main_dev.html" >Developer how to guide</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Useful guide on conda and git</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2019, Neil Cook.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 6.1.3.
     </div>
   </body>
 </html>

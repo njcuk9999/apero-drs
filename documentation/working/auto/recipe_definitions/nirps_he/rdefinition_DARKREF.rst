@@ -48,7 +48,8 @@ No optional arguments
 
      --filetype[STRING] // Current allowed types: DARK_DARK
      --database[True/False] // [BOOLEAN] Whether to add outputs to calibration database
-     --plot[0>INT>3] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
+     --plot[0>INT>4] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
+     --no_in_qc // Disable checking the quality control of input files
 
 
 ********************************************************************************

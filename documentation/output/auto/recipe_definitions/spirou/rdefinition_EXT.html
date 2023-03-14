@@ -3,20 +3,20 @@
 
 <!doctype html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>apero_extract_spirou &#8212; APERO 0.7.259 documentation</title>
+    <title>apero_extract_spirou &#8212; APERO 0.8.001 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/apero.css" />
     
     <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
-    <script src="../../../_static/jquery.js"></script>
-    <script src="../../../_static/underscore.js"></script>
     <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/sphinx_highlight.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../../../_static/bizstyle.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
@@ -101,7 +101,7 @@
         <li class="right" >
           <a href="rdefinition_LEAKREF.html" title="apero_leak_ref_spirou"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.259 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.8.001 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../../main/spirou/main_spirou.html" >SPIRou documentation</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="recipes.html" accesskey="U">Recipes (SPIROU)</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">apero_extract_spirou</a></li> 
@@ -109,10 +109,21 @@
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../../../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../../../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">apero_extract_spirou</a><ul>
-<li><a class="reference internal" href="#description">1. Description</a></li>
+<li><a class="reference internal" href="#description">1. Description</a><ul>
+<li><a class="reference internal" href="#extraction">Extraction</a><ul>
+<li><a class="reference internal" href="#optimal-extraction">Optimal extraction</a></li>
+<li><a class="reference internal" href="#berv-correction">BERV correction</a></li>
+<li><a class="reference internal" href="#leak-correction">Leak Correction</a></li>
+<li><a class="reference internal" href="#thermal-correction">Thermal correction</a></li>
+<li><a class="reference internal" href="#s1d-generation">S1D generation</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li><a class="reference internal" href="#schematic">2. Schematic</a></li>
 <li><a class="reference internal" href="#usage">3. Usage</a></li>
 <li><a class="reference internal" href="#optional-arguments">4. Optional Arguments</a></li>
@@ -125,12 +136,17 @@
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="rdefinition_LEAKREF.html"
-                        title="previous chapter">apero_leak_ref_spirou</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="rdefinition_WAVEREF.html"
-                        title="next chapter">apero_wave_ref_spirou</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="rdefinition_LEAKREF.html"
+                          title="previous chapter">apero_leak_ref_spirou</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="rdefinition_WAVEREF.html"
+                          title="next chapter">apero_wave_ref_spirou</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -147,7 +163,7 @@
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
 
@@ -157,18 +173,141 @@
           <div class="body" role="main">
             
   <section id="apero-extract-spirou">
-<span id="recipes-spirou-ext"></span><h1>apero_extract_spirou<a class="headerlink" href="#apero-extract-spirou" title="Permalink to this headline">¶</a></h1>
+<span id="recipes-spirou-ext"></span><h1>apero_extract_spirou<a class="headerlink" href="#apero-extract-spirou" title="Permalink to this heading">¶</a></h1>
 <section id="description">
-<h2>1. Description<a class="headerlink" href="#description" title="Permalink to this headline">¶</a></h2>
+<h2>1. Description<a class="headerlink" href="#description" title="Permalink to this heading">¶</a></h2>
 <p>SHORTNAME: EXT</p>
-<p>No description set</p>
+<section id="extraction">
+<h3>Extraction<a class="headerlink" href="#extraction" title="Permalink to this heading">¶</a></h3>
+<p>The extraction recipe takes any preprocessed file (as many as given by the user but in general just one single file).
+The files are combined (if requested) and are calibrated using our standard image calibration technique. Once
+calibrated, the correct (closest in time) order profile (<cite>ORDERP</cite>), positions of the orders (<cite>LOCO</cite>), <cite>SHAPELOCAL</cite>,
+shape reference (x and y maps), and wavelength solution are loaded for each fiber (AB, A, B, and C). The order profiles
+and input image are transformed to the reference FP grid using the affine transformation, and using the shape x and y
+maps the image is corrected for the slicer geometry, the tilt and the bending due to the echelle orders.</p>
+<p>The extraction recipe then extracts the flux (using optimal extraction), calculates the barycentric correction,
+corrects contamination from the reference fiber (if an FP is present in the reference fiber), corrects for the flat,
+corrects for the thermal contribution and generates the 1D spectrum.</p>
+<section id="optimal-extraction">
+<h4>Optimal extraction<a class="headerlink" href="#optimal-extraction" title="Permalink to this heading">¶</a></h4>
+<p>Once the image and the order profile (from localization) have been corrected for the slicer geometry and curvature of
+the echelle orders we extract out the combined flux in the science channels (fibers A and B) to create a fiber AB,
+as well as extracting out the flux in A and B (for polarization work) and C separately (for the reference fiber
+calibrations). As the orders are already straightened we use just the localization coefficient value at the center of
+the image to extract vertically along each order. We then divide the image by the order profile to provide a weighting
+across the order (i.e., an optimal extraction, Horne et al. 1986}). The final step of the optimal extraction is to sum
+vertically across the columns accounting for cosmic rays by using a sigma clip <span class="math notranslate nohighlight">\(|flux|&gt;10\sigma\)</span> away from the
+median value for that column. This creates our <cite>E2DS</cite> (extracted 2D spectrum) and for SPIRou, this leads to images
+with 49 orders and 4088 pixels along the orders.</p>
+</section>
+<section id="berv-correction">
+<h4>BERV correction<a class="headerlink" href="#berv-correction" title="Permalink to this heading">¶</a></h4>
+<p>Ideally, any stellar spectrum observed would be measured from a point stationary with respect to the barycenter of the
+Solar System (Wright et al. 2014). However, ground-based observations are subject to: the orbit of the Earth, the
+rotation of the Earth, precession and other Earth motions, and to a lesser extent gravitation time dilation,
+leap-second offsets, and factors affecting the star itself (i.e., parallax, proper motions, etc). We use the term BERV
+(Barycentric Earth Radial Velocity) hereinafter to collect all these terms into a single measurement which can be used
+to correct a specific spectrum at a specific point in time. We calculate the BERV using the barycorrpy package, which
+uses the astrometric parameters fed in at the preprocessing level. The calculation from barycorrpy includes the
+estimate for the BERV itself and the corrected or barycentric Julian Date (BJD) at the mid-exposure time. barycorrpy
+has a precision better than the <span class="math notranslate nohighlight">\(cm s^{-1}\)</span> level. We also estimate the maximum BERV value for this object
+across the year. If for any reason the BERV calculation fails with barycorrpy we calculate an estimate of the BERV
+(precise to <span class="math notranslate nohighlight">\(\sim 10 m s^{-1}\)</span>, modified from PyAstronomy.pyasl.baryvel; a python implementation of helcorr)
+and flag that an estimated BERV correction was calculated. This estimated BERV is not precise enough for PRV work but
+is sufficient to allow for acceptable telluric correction.</p>
+</section>
+<section id="leak-correction">
+<h4>Leak Correction<a class="headerlink" href="#leak-correction" title="Permalink to this heading">¶</a></h4>
+<p>For scientific observations, the reference fiber either has a DARK or an FP illuminating the pixels in this fiber.
+For PRV an FP allows a simultaneous RV measurement of an FP alongside the measurement of the stellar RV; this allows
+precise tracking of the instrumental drift when the simultaneous FP is compared to the <cite>FP_FP</cite> from the nightly
+wavelength solution calibration. However, light from the FP has been shown to slightly contaminate the science fibers
+and thus we provide a correction for such calibration.</p>
+<p>During the reference sequence  many <cite>DARK_FP</cite> are combined (and extracted) to form a model of the light seen in the
+science fibers when no light (other than the contribution from the DARK) was present as well as an extracted reference
+fiber measurement of the FP flux that caused said contamination in the science fibers. Using these models, the
+contamination measured in the science channels of the reference leak recipe is then scaled to the flux of the
+simultaneous FP of the observation (using the extracted flux from this scientific observation we are trying to correct).
+Then, this model is subtracted from the original science observation for each of the science fibers (AB or A or B),
+order-by-order:</p>
+<div class="math notranslate nohighlight">
+\[ratio_{i} = \frac{\Sigma(L[C]_{i}S[C]_{i})}{\Sigma(S[C]_{i}^2)}\]</div>
+<div class="math notranslate nohighlight">
+\[scale_{i} = \frac{L[AB,A,B]_{i}}{ratio_{i}}\]</div>
+<div class="math notranslate nohighlight">
+\[S[AB,A,B]_{i,corr} = S[AB,A,B]_{i} - scale_{i}\]</div>
+<p>where L[C] is the model of the FP from the leak reference recipe, S[C] is the 2D extracted spectrum in the reference
+fiber (fiber C), L[AB,A,B] is the model of the contamination from the FP from the leak reference recipe in the science
+fibers (either AB or A or B), S[AB,A,B] is the 2D extracted flux in the science fibers (either AB or A or B),
+S[AB,A,B]_{corr} denotes the leak-corrected 2D extracted spectrum in the science fibers (either AB or A or B) and
+i denotes that this is done order-by-order.</p>
+</section>
+<section id="thermal-correction">
+<h4>Thermal correction<a class="headerlink" href="#thermal-correction" title="Permalink to this heading">¶</a></h4>
+<p>The reference dark, applied during the standard image calibration phase, removes the high-frequency components of the
+dark; however, the thermal contribution still remains (and varies on a night-by-night basis). For this reason, we use
+nightly extracted <cite>DARK_DARK</cite> files to model the thermal contribution present in an observation during the night.
+The thermal correction model comes in two flavors, one for science observations where we assume there is some sort of
+continuum to the spectrum and telluric contamination as well as a small contribution arising from the Earth’s
+atmosphere itself, and one for HC or FP extractions where these assumptions are not true.</p>
+<p>In the case where we have a scientific observation, a <cite>DARK_DARK_TEL</cite> (where the calibration fiber sees the cold source
+and the science fibers see the mirror covers) is used. The extracted <cite>DARK_DARK_TEL</cite>  is then median filtered with a
+width of 101 pixels (on a per-order basis). This width was chosen to be big enough to capture large-scale structures
+in the dark and not be significantly affected by readout noise. A fit is then made to the red most orders
+(<span class="math notranslate nohighlight">\(&gt;2450 nm\)</span>) using only flux lower than 0.01 from a transmission spectrum from the Transmissions of the
+AtmosPhere for AStromomical data tool (TAPAS) – i.e., a domain where transmission is basically zero. We assume that
+we can safely use any flux with a transmission of order zero to scale the thermal background to this zero transmission
+value.</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}mask = \left\{ \begin{array}{cl}
+1: &amp; TAPAS &lt; 0.01  \\
+0: &amp; \text{otherwise} \\
+\end{array} \right. \\\end{split}\]</div>
+<div class="math notranslate nohighlight">
+\[ratio = median\left( \frac{TT[AB,A,B,C]\times mask}{S[AB,A,B,C] \times mask} \right)\]</div>
+<div class="math notranslate nohighlight">
+\[S[AB,A,B,C]_{corr} = S[AB,A,B,C] - \frac{TT[AB,A,B,C]}{ratio}\]</div>
+<p>where TAPAS is the TAPAS spectrum, TT[AB,A,B,C] is a nightly extracted <cite>DARK_DARK_TEL</cite> spectrum, S[AB,A,B,C] denotes
+the 2D extracted spectrum prior to correction and <span class="math notranslate nohighlight">\(S[AB,A,B]_{corr}\)</span> denotes the thermally corrected 2D extracted
+spectrum.</p>
+<p>In the case where we have an HC or an FP observation, a <cite>DARK_DARK_INT</cite> (where all three fibers see only the cold source,
+not the sky nor the mirror covers) is used. The extracted <cite>DARK_DARK_INT</cite> is then median filtered (again with a width
+of 101 pixels on a per-order basis) and a fit is made using an envelope to measure the thermal background in the
+reddest orders (<span class="math notranslate nohighlight">\(&gt;2450\, nm\)</span>). The envelope is constructed by using the flux below the 10th percentile (i.e.,
+not in the HC or FP peaks). This is then converted into a ratio and scaled to the observation we are correcting.</p>
+<div class="math notranslate nohighlight">
+\[ratio = median\left( \frac{TI[AB,A,B,C]}{P_{10}(TI[AB,A,B,C])} \right)\]</div>
+<div class="math notranslate nohighlight">
+\[S[AB,A,B,C]_{corr} = S[AB,A,B,C] - \frac{TI[AB,A,B,C]}{ratio}\]</div>
+<p>where <span class="math notranslate nohighlight">\(P_{10}\)</span> is the 10th percentile value, TI[AB,A,B,C] is a nightly extracted <cite>DARK_DARK_INT</cite> spectrum
+(median filtered with a width of 101 pixels), S[AB,A,B,C] denotes the 2D extracted spectrum prior to correction and
+<span class="math notranslate nohighlight">\(S[AB,A,B]_{corr}\)</span> denotes the thermally corrected 2D extracted spectrum.</p>
+</section>
+<section id="s1d-generation">
+<h4>S1D generation<a class="headerlink" href="#s1d-generation" title="Permalink to this heading">¶</a></h4>
+<p>The <cite>E2DS</cite> and <cite>E2DSFF</cite> formats are not necessarily the most convenient for science analysis, having duplicated
+wavelength coverage at order overlap and slightly varying velocity sampling with each order and between orders.
+We therefore transform the <cite>E2DSFF</cite> file into the <cite>S1D</cite> format. The <cite>S1D</cite> is sampled on a constant grid for all
+objects. We have two differing <cite>S1D</cite> formats, one with a uniform step in wavelength (0.05 nm/pixel) and one with a
+constant step in velocity (1 <span class="math notranslate nohighlight">\(km s^{-1}\)</span>/pixel), both being sampled between 965 nm and 2500 nm. Numerically,
+to construct the <cite>S1D</cite>, we use as an input the <cite>E2DSFF</cite> file prior to blaze correction and the blaze file as inputs.
+We create two <cite>S1D</cite> vectors, one corresponding to the total flux and one corresponding to the total blaze on the
+destination wavelength grid. We use a 5th order polynomial spline to project the flux of a given order onto the flux
+grid and perform the same operation with the blaze onto the weight vector. We do not consider the blaze below 20% of
+the peak blaze value and values on the destination wavelength grids that are out of the order’s range are set to zero.
+We loop through orders and sum the contribution of each order onto the respective destination grids for the <cite>E2DSFF</cite>
+science flux and blaze. Note that the <cite>S1D</cite> generation only depends on the blaze calibration. As such any spectrum
+(regardless of emission lines, low flux, or strong bands) can be converted to <cite>S1D</cite> format and we generate <cite>S1D</cite> for
+<cite>HC_HC</cite> and <cite>FP_FP</cite> as well as science targets.</p>
+</section>
+</section>
 </section>
 <section id="schematic">
-<h2>2. Schematic<a class="headerlink" href="#schematic" title="Permalink to this headline">¶</a></h2>
+<h2>2. Schematic<a class="headerlink" href="#schematic" title="Permalink to this heading">¶</a></h2>
 <p>No schematic set</p>
 </section>
 <section id="usage">
-<h2>3. Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
+<h2>3. Usage<a class="headerlink" href="#usage" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">apero_extract_spirou</span><span class="o">.</span><span class="n">py</span> <span class="p">{</span><span class="n">obs_dir</span><span class="p">}[</span><span class="n">STRING</span><span class="p">]</span> <span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">DRS_PP</span><span class="p">]</span> <span class="p">{</span><span class="n">options</span><span class="p">}</span>
 </pre></div>
 </div>
@@ -178,7 +317,7 @@
 </div>
 </section>
 <section id="optional-arguments">
-<h2>4. Optional Arguments<a class="headerlink" href="#optional-arguments" title="Permalink to this headline">¶</a></h2>
+<h2>4. Optional Arguments<a class="headerlink" href="#optional-arguments" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">--</span><span class="n">quicklook</span><span class="p">[</span><span class="kc">True</span><span class="o">/</span><span class="kc">False</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">BOOLEAN</span><span class="p">]</span> <span class="n">Sets</span> <span class="n">whether</span> <span class="n">extraction</span> <span class="n">done</span> <span class="ow">in</span> <span class="n">quick</span> <span class="n">look</span> <span class="n">mode</span>
 <span class="o">--</span><span class="n">badpixfile</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">BADPIX</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Define</span> <span class="n">a</span> <span class="n">custom</span> <span class="n">file</span> <span class="n">to</span> <span class="n">use</span> <span class="k">for</span> <span class="n">bad</span> <span class="n">pixel</span> <span class="n">correction</span><span class="o">.</span> <span class="n">Checks</span> <span class="k">for</span> <span class="n">an</span> <span class="n">absolute</span> <span class="n">path</span> <span class="ow">and</span> <span class="n">then</span> <span class="n">checks</span> <span class="n">directory</span>
 <span class="o">--</span><span class="n">badcorr</span><span class="p">[</span><span class="kc">True</span><span class="o">/</span><span class="kc">False</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">BOOLEAN</span><span class="p">]</span> <span class="n">Whether</span> <span class="n">to</span> <span class="n">correct</span> <span class="k">for</span> <span class="n">the</span> <span class="n">bad</span> <span class="n">pixel</span> <span class="n">file</span>
@@ -196,7 +335,7 @@
 <span class="o">--</span><span class="n">flatfile</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">FF_FLAT</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Define</span> <span class="n">a</span> <span class="n">custom</span> <span class="n">file</span> <span class="n">to</span> <span class="n">use</span> <span class="k">for</span> <span class="n">flat</span> <span class="n">correction</span><span class="o">.</span> <span class="n">If</span> <span class="n">unset</span> <span class="n">uses</span> <span class="n">closest</span> <span class="n">file</span> <span class="kn">from</span> <span class="nn">calibDB.</span> <span class="n">Checks</span> <span class="k">for</span> <span class="n">an</span> <span class="n">absolute</span> <span class="n">path</span> <span class="ow">and</span> <span class="n">then</span> <span class="n">checks</span> <span class="n">directory</span>
 <span class="o">--</span><span class="n">locofile</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">LOC_LOCO</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Sets</span> <span class="n">the</span> <span class="n">LOCO</span> <span class="n">file</span> <span class="n">used</span> <span class="n">to</span> <span class="n">get</span> <span class="n">the</span> <span class="n">coefficients</span> <span class="p">(</span><span class="n">CALIBDB</span><span class="o">=</span><span class="n">LOC_</span><span class="p">{</span><span class="n">fiber</span><span class="p">})</span>
 <span class="o">--</span><span class="n">orderpfile</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">LOC_ORDERP</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Sets</span> <span class="n">the</span> <span class="n">Order</span> <span class="n">Profile</span> <span class="n">file</span> <span class="n">used</span> <span class="n">to</span> <span class="n">get</span> <span class="n">the</span> <span class="n">coefficients</span> <span class="p">(</span><span class="n">CALIBDB</span><span class="o">=</span><span class="n">ORDER_PROFILE_</span><span class="p">{</span><span class="n">fiber</span><span class="p">}</span>
-<span class="o">--</span><span class="n">plot</span><span class="p">[</span><span class="mi">0</span><span class="o">&gt;</span><span class="n">INT</span><span class="o">&gt;</span><span class="mi">3</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">INTEGER</span><span class="p">]</span> <span class="n">Plot</span> <span class="n">level</span><span class="o">.</span> <span class="mi">0</span> <span class="o">=</span> <span class="n">off</span><span class="p">,</span> <span class="mi">1</span> <span class="o">=</span> <span class="n">interactively</span><span class="p">,</span> <span class="mi">2</span> <span class="o">=</span> <span class="n">save</span> <span class="n">to</span> <span class="n">file</span>
+<span class="o">--</span><span class="n">plot</span><span class="p">[</span><span class="mi">0</span><span class="o">&gt;</span><span class="n">INT</span><span class="o">&gt;</span><span class="mi">4</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">INTEGER</span><span class="p">]</span> <span class="n">Plot</span> <span class="n">level</span><span class="o">.</span> <span class="mi">0</span> <span class="o">=</span> <span class="n">off</span><span class="p">,</span> <span class="mi">1</span> <span class="o">=</span> <span class="n">interactively</span><span class="p">,</span> <span class="mi">2</span> <span class="o">=</span> <span class="n">save</span> <span class="n">to</span> <span class="n">file</span>
 <span class="o">--</span><span class="n">resize</span><span class="p">[</span><span class="kc">True</span><span class="o">/</span><span class="kc">False</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">BOOLEAN</span><span class="p">]</span> <span class="n">Whether</span> <span class="n">to</span> <span class="n">resize</span> <span class="n">image</span>
 <span class="o">--</span><span class="n">shapex</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">SHAPE_X</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Sets</span> <span class="n">the</span> <span class="n">SHAPE</span> <span class="n">DXMAP</span> <span class="n">file</span> <span class="n">used</span> <span class="n">to</span> <span class="n">get</span> <span class="n">the</span> <span class="n">dx</span> <span class="n">correction</span> <span class="nb">map</span> <span class="p">(</span><span class="n">CALIBDB</span><span class="o">=</span><span class="n">SHAPEX</span><span class="p">)</span>
 <span class="o">--</span><span class="n">shapey</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">SHAPE_Y</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Sets</span> <span class="n">the</span> <span class="n">SHAPE</span> <span class="n">DYMAP</span> <span class="n">file</span> <span class="n">used</span> <span class="n">to</span> <span class="n">get</span> <span class="n">the</span> <span class="n">dy</span> <span class="n">correction</span> <span class="nb">map</span> <span class="p">(</span><span class="n">CALIBDB</span><span class="o">=</span><span class="n">SHAPEY</span><span class="p">)</span>
@@ -206,11 +345,12 @@
 <span class="o">--</span><span class="n">thermalfile</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">THERMALI_E2DS</span><span class="p">,</span><span class="n">THERMALT_E2DS</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Sets</span> <span class="n">the</span> <span class="n">Thermal</span> <span class="n">correction</span> <span class="n">file</span> <span class="n">to</span> <span class="n">use</span> <span class="p">(</span><span class="n">CAILBDB</span> <span class="o">=</span> <span class="n">THERMAL_</span><span class="p">{</span><span class="n">fiber</span><span class="p">})</span>
 <span class="o">--</span><span class="n">wavefile</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">WAVESOL_REF</span><span class="p">,</span><span class="n">WAVE_NIGHT</span><span class="p">,</span><span class="n">WAVESOL_DEFAULT</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Define</span> <span class="n">a</span> <span class="n">custom</span> <span class="n">file</span> <span class="n">to</span> <span class="n">use</span> <span class="k">for</span> <span class="n">the</span> <span class="n">wave</span> <span class="n">solution</span><span class="o">.</span> <span class="n">If</span> <span class="n">unset</span> <span class="n">uses</span> <span class="n">closest</span> <span class="n">file</span> <span class="kn">from</span> <span class="nn">header</span> <span class="ow">or</span> <span class="n">calibDB</span> <span class="p">(</span><span class="n">depending</span> <span class="n">on</span> <span class="n">setup</span><span class="p">)</span><span class="o">.</span> <span class="n">Checks</span> <span class="k">for</span> <span class="n">an</span> <span class="n">absolute</span> <span class="n">path</span> <span class="ow">and</span> <span class="n">then</span> <span class="n">checks</span> <span class="n">directory</span>
 <span class="o">--</span><span class="n">force_ref_wave</span><span class="p">[</span><span class="kc">True</span><span class="o">/</span><span class="kc">False</span><span class="p">]</span> <span class="o">//</span> <span class="n">Force</span> <span class="n">using</span> <span class="n">the</span> <span class="n">reference</span> <span class="n">wave</span> <span class="n">solution</span>
+<span class="o">--</span><span class="n">no_in_qc</span> <span class="o">//</span> <span class="n">Disable</span> <span class="n">checking</span> <span class="n">the</span> <span class="n">quality</span> <span class="n">control</span> <span class="n">of</span> <span class="nb">input</span> <span class="n">files</span>
 </pre></div>
 </div>
 </section>
 <section id="special-arguments">
-<h2>5. Special Arguments<a class="headerlink" href="#special-arguments" title="Permalink to this headline">¶</a></h2>
+<h2>5. Special Arguments<a class="headerlink" href="#special-arguments" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">--</span><span class="n">xhelp</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Extended</span> <span class="n">help</span> <span class="n">menu</span> <span class="p">(</span><span class="k">with</span> <span class="nb">all</span> <span class="n">advanced</span> <span class="n">arguments</span><span class="p">)</span>
 <span class="o">--</span><span class="n">debug</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Activates</span> <span class="n">debug</span> <span class="n">mode</span> <span class="p">(</span><span class="n">Advanced</span> <span class="n">mode</span> <span class="p">[</span><span class="n">INTEGER</span><span class="p">]</span> <span class="n">value</span> <span class="n">must</span> <span class="n">be</span> <span class="n">an</span> <span class="n">integer</span> <span class="n">greater</span> <span class="n">than</span> <span class="mi">0</span><span class="p">,</span> <span class="n">setting</span> <span class="n">the</span> <span class="n">debug</span> <span class="n">level</span><span class="p">)</span>
 <span class="o">--</span><span class="n">listing</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Lists</span> <span class="n">the</span> <span class="n">night</span> <span class="n">name</span> <span class="n">directories</span> <span class="ow">in</span> <span class="n">the</span> <span class="nb">input</span> <span class="n">directory</span> <span class="k">if</span> <span class="n">used</span> <span class="n">without</span> <span class="n">a</span> <span class="s1">&#39;directory&#39;</span> <span class="n">argument</span> <span class="ow">or</span> <span class="n">lists</span> <span class="n">the</span> <span class="n">files</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">given</span> <span class="s1">&#39;directory&#39;</span> <span class="p">(</span><span class="k">if</span> <span class="n">defined</span><span class="p">)</span><span class="o">.</span> <span class="n">Only</span> <span class="n">lists</span> <span class="n">up</span> <span class="n">to</span> <span class="mi">15</span> <span class="n">files</span><span class="o">/</span><span class="n">directories</span>
@@ -232,24 +372,15 @@
 </div>
 </section>
 <section id="output-directory">
-<h2>6. Output directory<a class="headerlink" href="#output-directory" title="Permalink to this headline">¶</a></h2>
+<h2>6. Output directory<a class="headerlink" href="#output-directory" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">DRS_DATA_REDUC</span> <span class="o">//</span> <span class="n">Default</span><span class="p">:</span> <span class="s2">&quot;red&quot;</span> <span class="n">directory</span>
 </pre></div>
 </div>
 </section>
 <section id="output-files">
-<h2>7. Output files<a class="headerlink" href="#output-files" title="Permalink to this headline">¶</a></h2>
+<h2>7. Output files<a class="headerlink" href="#output-files" title="Permalink to this heading">¶</a></h2>
 <table class="csvtable docutils align-default" id="id1">
 <caption><span class="caption-text">Outputs</span><a class="headerlink" href="#id1" title="Permalink to this table">¶</a></caption>
-<colgroup>
-<col style="width: 14%" />
-<col style="width: 14%" />
-<col style="width: 14%" />
-<col style="width: 14%" />
-<col style="width: 14%" />
-<col style="width: 14%" />
-<col style="width: 14%" />
-</colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>name</p></th>
 <th class="head"><p>description</p></th>
@@ -345,7 +476,7 @@
 </table>
 </section>
 <section id="debug-plots">
-<h2>8. Debug plots<a class="headerlink" href="#debug-plots" title="Permalink to this headline">¶</a></h2>
+<h2>8. Debug plots<a class="headerlink" href="#debug-plots" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">FLAT_ORDER_FIT_EDGES1</span>
 <span class="n">FLAT_ORDER_FIT_EDGES2</span>
 <span class="n">FLAT_BLAZE_ORDER1</span>
@@ -360,7 +491,7 @@
 </div>
 </section>
 <section id="summary-plots">
-<h2>9. Summary plots<a class="headerlink" href="#summary-plots" title="Permalink to this headline">¶</a></h2>
+<h2>9. Summary plots<a class="headerlink" href="#summary-plots" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SUM_FLAT_ORDER_FIT_EDGES</span>
 <span class="n">SUM_EXTRACT_SP_ORDER</span>
 <span class="n">SUM_EXTRACT_S1D</span>
@@ -388,7 +519,7 @@
         <li class="right" >
           <a href="rdefinition_LEAKREF.html" title="apero_leak_ref_spirou"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.259 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.8.001 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../../main/spirou/main_spirou.html" >SPIRou documentation</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="recipes.html" >Recipes (SPIROU)</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">apero_extract_spirou</a></li> 
@@ -396,7 +527,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2019, Neil Cook.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 6.1.3.
     </div>
   </body>
 </html>

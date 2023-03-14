@@ -1,3 +1,3 @@
 name,description,HDR[DRSOUTID],file type,suffix,fibers,dbname,dbkey,input file
 EXT_E2DS,Extracted 2D spectrum,EXT_E2DS,.fits,_e2ds,"A, B",--,--,DRS_PP
-LEAKREF_E2DS,Reference leak correction calibration file,LEAKREF_E2DS,.fits,_LEAK_REF,"A, B",calibration,LEAKREF,"EXT_E2DS, EXT_E2DS_FF"
+LEAKREF_E2DS,Reference leak correction calibration file,LEAKREF_E2DS,.fits,_leak_ref,"A, B",calibration,LEAKREF,"EXT_E2DS, EXT_E2DS_FF"

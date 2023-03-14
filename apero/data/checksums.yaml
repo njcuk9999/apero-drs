@@ -43,7 +43,7 @@ data:
   nirps_ha/reset/telludb/tapas_all_sp.fits.gz: 06f8b2cc920f9c954dba574071891500
   nirps_ha/telluric/tapas_all_sp.fits.gz: 06f8b2cc920f9c954dba574071891500
   nirps_ha/telluric/tellu_blacklist.txt: 611adccf40280cc2d2f0a6eb1319528a
-  nirps_ha/telluric/tellu_whitelist.txt: da7ba348092b091f9726f9da89af63b3
+  nirps_ha/telluric/tellu_whitelist.txt: 4ba4debe3f1ad4c2ba24d48956cf7c99
   nirps_ha/telluric/trans_h2o_abso_ccf.mas: 3467d02a8ea1ea056980bcbd1e86d30b
   nirps_ha/telluric/trans_others_abso_ccf.mas: ed6f602b746534c5018bde1b952631ff
   nirps_he/README.md: 8846dfe7a4f8c286704758ef40d2234c
@@ -87,7 +87,7 @@ data:
   nirps_he/reset/telludb/tapas_all_sp.fits.gz: 06f8b2cc920f9c954dba574071891500
   nirps_he/telluric/tapas_all_sp.fits.gz: 06f8b2cc920f9c954dba574071891500
   nirps_he/telluric/tellu_blacklist.txt: 611adccf40280cc2d2f0a6eb1319528a
-  nirps_he/telluric/tellu_whitelist.txt: da7ba348092b091f9726f9da89af63b3
+  nirps_he/telluric/tellu_whitelist.txt: 4ba4debe3f1ad4c2ba24d48956cf7c99
   nirps_he/telluric/trans_h2o_abso_ccf.mas: 3467d02a8ea1ea056980bcbd1e86d30b
   nirps_he/telluric/trans_others_abso_ccf.mas: ed6f602b746534c5018bde1b952631ff
   spirou/README.md: 508d5400db17d7d16524903a442b434e
@@ -172,10 +172,10 @@ data:
   spirou/telluric/trans_h2o_abso_ccf.mas: 3467d02a8ea1ea056980bcbd1e86d30b
   spirou/telluric/trans_others_abso_ccf.mas: ed6f602b746534c5018bde1b952631ff
 setup:
-  humantime: '2023-02-28 20:26:28.889'
+  humantime: '2023-03-02 16:55:56.715'
   servers:
   - http://apero.exoplanets.ca/assets/
-  tarfile: 1677615988_889243_assets.tar.gz
-  unixtime: 1677615988.889243
+  tarfile: 1677776156_714933_assets.tar.gz
+  unixtime: 1677776156.714933
   vdate: '2023-01-30'
   version: 0.8.001

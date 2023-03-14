@@ -1,4 +1,5 @@
 name,description,HDR[DRSOUTID],file type,suffix,basename,fibers,dbname,dbkey,input file
+SKY_MODEL,Telluric sky model file,SKY_MODEL,.fits,_sky_model,--,--,telluric,SKY_MODEL,EXT_E2DS_FF
 TELLU_PCLEAN,Telluric pre-cleaning file,TELLU_PCLEAN,.fits,_tellu_pclean,--,A,telluric,TELLU_PCLEAN,EXT_E2DS_FF
 TELLU_CONV,--,--,.npy,_tellu_conv,--,A,telluric,TELLU_CONV,"WAVESOL_REF, WAVE_NIGHT, WAVESOL_DEFAULT"
 TELLU_TRANS,Telluric transmission file,TELLU_TRANS,.fits,_tellu_trans,--,A,telluric,TELLU_TRANS,EXT_E2DS_FF
@@ -7,3 +8,5 @@ TRANS_MODEL,Telluric transmission model file,TRANS_MODEL,.fits,--,trans_model_{0
 TELLU_OBJ,Telluric corrected extracted 2D spectrum,TELLU_OBJ,.fits,_e2dsff_tcorr,--,A,telluric,TELLU_OBJ,EXT_E2DS_FF
 TELLU_RECON,Telluric reconstructed 2D absorption file,TELLU_RECON,.fits,_e2dsff_recon,--,A,telluric,TELLU_RECON,EXT_E2DS_FF
 TELLU_TEMP,Telluric 2D template file,TELLU_TEMP,.fits,--,Template,A,telluric,TELLU_TEMP,"EXT_E2DS_FF, TELLU_OBJ"
+TELLU_TEMP_S1DW,Telluric 1D template file,TELLU_TEMP_S1DW,.fits,--,Template_s1dw,A,telluric,TELLU_TEMP_S1DW,"EXT_E2DS_FF, TELLU_OBJ"
+TELLU_TEMP_S1DV,Telluric 1D template file,TELLU_TEMP_S1DV,.fits,--,Template_s1dv,A,telluric,TELLU_TEMP_S1DV,"EXT_E2DS_FF, TELLU_OBJ"

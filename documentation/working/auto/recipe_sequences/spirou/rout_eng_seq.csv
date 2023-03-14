@@ -8,3 +8,4 @@ ORDER,RECIPE,SHORTNAME,RECIPE KIND,REF RECIPE,ARGS
 7,apero_extract_spirou.py,EXT_FPD,extract-fpd,No,{files}=[FP_DARK]
 8,apero_extract_spirou.py,EXT_LFCFP,extract-lfcfp,No,{files}=[LFC_FP]
 9,apero_extract_spirou.py,EXT_FPLFC,extract-fplfc,No,{files}=[FP_LFC]
+10,apero_extract_spirou.py,EXT_EVERY,extract-everything,No,{files}=[DRS_PP]

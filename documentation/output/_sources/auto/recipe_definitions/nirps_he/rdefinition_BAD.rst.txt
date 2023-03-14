@@ -54,8 +54,9 @@ No schematic set
      --combine[True/False] // [BOOLEAN] Whether to combine fits files in file list or to process them separately
      --flipimage[None,x,y,both] // [BOOLEAN] Whether to flip fits image
      --fluxunits[ADU/s,e-] // [STRING] Output units for flux
-     --plot[0>INT>3] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
+     --plot[0>INT>4] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
      --resize[True/False] // [BOOLEAN] Whether to resize image
+     --no_in_qc // Disable checking the quality control of input files
 
 
 ********************************************************************************

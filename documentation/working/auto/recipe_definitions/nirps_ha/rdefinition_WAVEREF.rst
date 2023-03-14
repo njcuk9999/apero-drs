@@ -63,7 +63,7 @@ No schematic set
      --fluxunits[ADU/s,e-] // [STRING] Output units for flux
      --locofile[FILE:LOC_LOCO] // [STRING] Sets the LOCO file used to get the coefficients (CALIBDB=LOC_{fiber})
      --orderpfile[FILE:LOC_ORDERP] // [STRING] Sets the Order Profile file used to get the coefficients (CALIBDB=ORDER_PROFILE_{fiber}
-     --plot[0>INT>3] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
+     --plot[0>INT>4] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
      --resize[True/False] // [BOOLEAN] Whether to resize image
      --shapex[FILE:SHAPE_X] // [STRING] Sets the SHAPE DXMAP file used to get the dx correction map (CALIBDB=SHAPEX)
      --shapey[FILE:SHAPE_Y] // [STRING] Sets the SHAPE DYMAP file used to get the dy correction map (CALIBDB=SHAPEY)
@@ -71,6 +71,7 @@ No schematic set
      --wavefile[FILE:WAVESOL_REF,WAVE_NIGHT,WAVESOL_DEFAULT] // [STRING] Define a custom file to use for the wave solution. If unset uses closest file from header or calibDB (depending on setup). Checks for an absolute path and then checks directory
      --forceext[True/False] // WAVE_EXTRACT_HELP
      --cavityfile[FILE:WAVEREF_CAV] // WAVEREF_CAVFILE_HELP
+     --no_in_qc // Disable checking the quality control of input files
 
 
 ********************************************************************************

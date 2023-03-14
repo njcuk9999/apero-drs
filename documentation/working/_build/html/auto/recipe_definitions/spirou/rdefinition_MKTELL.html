@@ -3,25 +3,24 @@
 
 <!doctype html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>apero_mk_tellu_spirou &#8212; APERO 0.7.259 documentation</title>
+    <title>apero_mk_tellu_spirou &#8212; APERO 0.8.001 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/apero.css" />
     
     <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
-    <script src="../../../_static/jquery.js"></script>
-    <script src="../../../_static/underscore.js"></script>
     <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/sphinx_highlight.js"></script>
     <script src="../../../_static/bizstyle.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
     <link rel="next" title="apero_mk_model_spirou" href="rdefinition_MKMODEL.html" />
-    <link rel="prev" title="apero_ccf_spirou" href="rdefinition_CCF.html" />
+    <link rel="prev" title="apero_mk_skymodel_spirou" href="rdefinition_MKSKY.html" />
     <link href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,700'
           rel='stylesheet' type='text/css' />
     <link rel="stylesheet" href="_static/images/fonta/css/font-awesome.min.css">
@@ -99,9 +98,9 @@
           <a href="rdefinition_MKMODEL.html" title="apero_mk_model_spirou"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="rdefinition_CCF.html" title="apero_ccf_spirou"
+          <a href="rdefinition_MKSKY.html" title="apero_mk_skymodel_spirou"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.259 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.8.001 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../../main/spirou/main_spirou.html" >SPIRou documentation</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="recipes.html" accesskey="U">Recipes (SPIROU)</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">apero_mk_tellu_spirou</a></li> 
@@ -109,10 +108,14 @@
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../../../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../../../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">apero_mk_tellu_spirou</a><ul>
-<li><a class="reference internal" href="#description">1. Description</a></li>
+<li><a class="reference internal" href="#description">1. Description</a><ul>
+<li><a class="reference internal" href="#residual-transmission-of-hot-stars-mktellu">Residual transmission of hot stars (mktellu)</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#schematic">2. Schematic</a></li>
 <li><a class="reference internal" href="#usage">3. Usage</a></li>
 <li><a class="reference internal" href="#optional-arguments">4. Optional Arguments</a></li>
@@ -125,12 +128,17 @@
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="rdefinition_CCF.html"
-                        title="previous chapter">apero_ccf_spirou</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="rdefinition_MKMODEL.html"
-                        title="next chapter">apero_mk_model_spirou</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="rdefinition_MKSKY.html"
+                          title="previous chapter">apero_mk_skymodel_spirou</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="rdefinition_MKMODEL.html"
+                          title="next chapter">apero_mk_model_spirou</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -147,7 +155,7 @@
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
 
@@ -157,18 +165,30 @@
           <div class="body" role="main">
             
   <section id="apero-mk-tellu-spirou">
-<span id="recipes-spirou-mktell"></span><h1>apero_mk_tellu_spirou<a class="headerlink" href="#apero-mk-tellu-spirou" title="Permalink to this headline">¶</a></h1>
+<span id="recipes-spirou-mktell"></span><h1>apero_mk_tellu_spirou<a class="headerlink" href="#apero-mk-tellu-spirou" title="Permalink to this heading">¶</a></h1>
 <section id="description">
-<h2>1. Description<a class="headerlink" href="#description" title="Permalink to this headline">¶</a></h2>
+<h2>1. Description<a class="headerlink" href="#description" title="Permalink to this heading">¶</a></h2>
 <p>SHORTNAME: MKTELL</p>
-<p>No description set</p>
+<section id="residual-transmission-of-hot-stars-mktellu">
+<h3>Residual transmission of hot stars (mktellu)<a class="headerlink" href="#residual-transmission-of-hot-stars-mktellu" title="Permalink to this heading">¶</a></h3>
+<p>The residual transmission recipe takes a single hot star observation (an extracted, flat-fielded 2D spectrum).
+The first step is a pre-cleaning correction which essentially removes the bulk of the telluric absorption, producing
+a corrected 2D spectrum as well as an absorption spectrum, sky model, and an estimate of the water and dry components
+of the absorption (Artigau in prep). The pre-cleaning uses a stellar template, if available, to better measure the
+water and dry components. The corrected 2D spectrum is then normalized by the 95$^{th}$ percentile of the blaze per
+order and the residual transmission map is created by using a low-pass filter (per order) on the hot star (and
+dividing by a template if present).</p>
+<p>We make sure the pre-cleaning was successful (i.e., the water component exponent is between 0.1 and 15 and the dry
+component exponent is between 0.8 and 3.0) and check that the SNR for each order is above a $100$; subsequently, the
+hot star residual transmission maps are added to the telluric database.</p>
+</section>
 </section>
 <section id="schematic">
-<h2>2. Schematic<a class="headerlink" href="#schematic" title="Permalink to this headline">¶</a></h2>
+<h2>2. Schematic<a class="headerlink" href="#schematic" title="Permalink to this heading">¶</a></h2>
 <p>No schematic set</p>
 </section>
 <section id="usage">
-<h2>3. Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
+<h2>3. Usage<a class="headerlink" href="#usage" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">apero_mk_tellu_spirou</span><span class="o">.</span><span class="n">py</span> <span class="p">{</span><span class="n">obs_dir</span><span class="p">}[</span><span class="n">STRING</span><span class="p">]</span> <span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">EXT_E2DS</span><span class="p">,</span><span class="n">EXT_E2DS_FF</span><span class="p">]</span> <span class="p">{</span><span class="n">options</span><span class="p">}</span>
 </pre></div>
 </div>
@@ -178,18 +198,20 @@
 </div>
 </section>
 <section id="optional-arguments">
-<h2>4. Optional Arguments<a class="headerlink" href="#optional-arguments" title="Permalink to this headline">¶</a></h2>
+<h2>4. Optional Arguments<a class="headerlink" href="#optional-arguments" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">--</span><span class="n">database</span><span class="p">[</span><span class="kc">True</span><span class="o">/</span><span class="kc">False</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">BOOLEAN</span><span class="p">]</span> <span class="n">Whether</span> <span class="n">to</span> <span class="n">add</span> <span class="n">outputs</span> <span class="n">to</span> <span class="n">calibration</span> <span class="n">database</span>
 <span class="o">--</span><span class="n">blazefile</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">FF_BLAZE</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Define</span> <span class="n">a</span> <span class="n">custom</span> <span class="n">file</span> <span class="n">to</span> <span class="n">use</span> <span class="k">for</span> <span class="n">blaze</span> <span class="n">correction</span><span class="o">.</span> <span class="n">If</span> <span class="n">unset</span> <span class="n">uses</span> <span class="n">closest</span> <span class="n">file</span> <span class="kn">from</span> <span class="nn">calibDB.</span> <span class="n">Checks</span> <span class="k">for</span> <span class="n">an</span> <span class="n">absolute</span> <span class="n">path</span> <span class="ow">and</span> <span class="n">then</span> <span class="n">checks</span> <span class="n">directory</span> <span class="p">(</span><span class="n">CALIBDB</span><span class="o">=</span><span class="n">BADPIX</span><span class="p">)</span>
-<span class="o">--</span><span class="n">plot</span><span class="p">[</span><span class="mi">0</span><span class="o">&gt;</span><span class="n">INT</span><span class="o">&gt;</span><span class="mi">3</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">INTEGER</span><span class="p">]</span> <span class="n">Plot</span> <span class="n">level</span><span class="o">.</span> <span class="mi">0</span> <span class="o">=</span> <span class="n">off</span><span class="p">,</span> <span class="mi">1</span> <span class="o">=</span> <span class="n">interactively</span><span class="p">,</span> <span class="mi">2</span> <span class="o">=</span> <span class="n">save</span> <span class="n">to</span> <span class="n">file</span>
+<span class="o">--</span><span class="n">plot</span><span class="p">[</span><span class="mi">0</span><span class="o">&gt;</span><span class="n">INT</span><span class="o">&gt;</span><span class="mi">4</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">INTEGER</span><span class="p">]</span> <span class="n">Plot</span> <span class="n">level</span><span class="o">.</span> <span class="mi">0</span> <span class="o">=</span> <span class="n">off</span><span class="p">,</span> <span class="mi">1</span> <span class="o">=</span> <span class="n">interactively</span><span class="p">,</span> <span class="mi">2</span> <span class="o">=</span> <span class="n">save</span> <span class="n">to</span> <span class="n">file</span>
 <span class="o">--</span><span class="n">wavefile</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">WAVESOL_REF</span><span class="p">,</span><span class="n">WAVE_NIGHT</span><span class="p">,</span><span class="n">WAVESOL_DEFAULT</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Define</span> <span class="n">a</span> <span class="n">custom</span> <span class="n">file</span> <span class="n">to</span> <span class="n">use</span> <span class="k">for</span> <span class="n">the</span> <span class="n">wave</span> <span class="n">solution</span><span class="o">.</span> <span class="n">If</span> <span class="n">unset</span> <span class="n">uses</span> <span class="n">closest</span> <span class="n">file</span> <span class="kn">from</span> <span class="nn">header</span> <span class="ow">or</span> <span class="n">calibDB</span> <span class="p">(</span><span class="n">depending</span> <span class="n">on</span> <span class="n">setup</span><span class="p">)</span><span class="o">.</span> <span class="n">Checks</span> <span class="k">for</span> <span class="n">an</span> <span class="n">absolute</span> <span class="n">path</span> <span class="ow">and</span> <span class="n">then</span> <span class="n">checks</span> <span class="n">directory</span>
 <span class="o">--</span><span class="n">use_template</span><span class="p">[</span><span class="kc">True</span><span class="o">/</span><span class="kc">False</span><span class="p">]</span> <span class="o">//</span> <span class="n">Whether</span> <span class="n">to</span> <span class="n">use</span> <span class="n">the</span> <span class="n">template</span> <span class="n">provided</span> <span class="kn">from</span> <span class="nn">the</span> <span class="n">telluric</span> <span class="n">database</span>
 <span class="o">--</span><span class="n">template</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">TELLU_TEMP</span><span class="p">]</span> <span class="o">//</span> <span class="n">Filename</span> <span class="n">of</span> <span class="n">the</span> <span class="n">custom</span> <span class="n">template</span> <span class="n">to</span> <span class="n">use</span> <span class="p">(</span><span class="n">instead</span> <span class="n">of</span> <span class="kn">from</span> <span class="nn">telluric</span> <span class="n">database</span><span class="p">)</span>
+<span class="o">--</span><span class="n">finiteres</span><span class="p">[</span><span class="kc">True</span><span class="o">/</span><span class="kc">False</span><span class="p">]</span> <span class="o">//</span> <span class="n">Whether</span> <span class="n">to</span> <span class="n">do</span> <span class="n">the</span> <span class="n">finite</span> <span class="n">resolution</span> <span class="n">correction</span> <span class="p">(</span><span class="n">Always</span> <span class="n">false</span> <span class="k">if</span> <span class="n">no</span> <span class="n">template</span><span class="p">)</span>
+<span class="o">--</span><span class="n">no_in_qc</span> <span class="o">//</span> <span class="n">Disable</span> <span class="n">checking</span> <span class="n">the</span> <span class="n">quality</span> <span class="n">control</span> <span class="n">of</span> <span class="nb">input</span> <span class="n">files</span>
 </pre></div>
 </div>
 </section>
 <section id="special-arguments">
-<h2>5. Special Arguments<a class="headerlink" href="#special-arguments" title="Permalink to this headline">¶</a></h2>
+<h2>5. Special Arguments<a class="headerlink" href="#special-arguments" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">--</span><span class="n">xhelp</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Extended</span> <span class="n">help</span> <span class="n">menu</span> <span class="p">(</span><span class="k">with</span> <span class="nb">all</span> <span class="n">advanced</span> <span class="n">arguments</span><span class="p">)</span>
 <span class="o">--</span><span class="n">debug</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Activates</span> <span class="n">debug</span> <span class="n">mode</span> <span class="p">(</span><span class="n">Advanced</span> <span class="n">mode</span> <span class="p">[</span><span class="n">INTEGER</span><span class="p">]</span> <span class="n">value</span> <span class="n">must</span> <span class="n">be</span> <span class="n">an</span> <span class="n">integer</span> <span class="n">greater</span> <span class="n">than</span> <span class="mi">0</span><span class="p">,</span> <span class="n">setting</span> <span class="n">the</span> <span class="n">debug</span> <span class="n">level</span><span class="p">)</span>
 <span class="o">--</span><span class="n">listing</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Lists</span> <span class="n">the</span> <span class="n">night</span> <span class="n">name</span> <span class="n">directories</span> <span class="ow">in</span> <span class="n">the</span> <span class="nb">input</span> <span class="n">directory</span> <span class="k">if</span> <span class="n">used</span> <span class="n">without</span> <span class="n">a</span> <span class="s1">&#39;directory&#39;</span> <span class="n">argument</span> <span class="ow">or</span> <span class="n">lists</span> <span class="n">the</span> <span class="n">files</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">given</span> <span class="s1">&#39;directory&#39;</span> <span class="p">(</span><span class="k">if</span> <span class="n">defined</span><span class="p">)</span><span class="o">.</span> <span class="n">Only</span> <span class="n">lists</span> <span class="n">up</span> <span class="n">to</span> <span class="mi">15</span> <span class="n">files</span><span class="o">/</span><span class="n">directories</span>
@@ -211,26 +233,15 @@
 </div>
 </section>
 <section id="output-directory">
-<h2>6. Output directory<a class="headerlink" href="#output-directory" title="Permalink to this headline">¶</a></h2>
+<h2>6. Output directory<a class="headerlink" href="#output-directory" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">DRS_DATA_REDUC</span> <span class="o">//</span> <span class="n">Default</span><span class="p">:</span> <span class="s2">&quot;red&quot;</span> <span class="n">directory</span>
 </pre></div>
 </div>
 </section>
 <section id="output-files">
-<h2>7. Output files<a class="headerlink" href="#output-files" title="Permalink to this headline">¶</a></h2>
+<h2>7. Output files<a class="headerlink" href="#output-files" title="Permalink to this heading">¶</a></h2>
 <table class="csvtable docutils align-default" id="id1">
 <caption><span class="caption-text">Outputs</span><a class="headerlink" href="#id1" title="Permalink to this table">¶</a></caption>
-<colgroup>
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-</colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>name</p></th>
 <th class="head"><p>description</p></th>
@@ -264,7 +275,17 @@
 <td><p>TELLU_TRANS</p></td>
 <td><p>EXT_E2DS_FF</p></td>
 </tr>
-<tr class="row-even"><td><p>TELLU_PCLEAN</p></td>
+<tr class="row-even"><td><p>TELLU_SCLEAN</p></td>
+<td><p>Sky-cleaning file</p></td>
+<td><p>TELLU_SCLEAN</p></td>
+<td><p>.fits</p></td>
+<td><p>_tellu_sclean.fits</p></td>
+<td><p>–</p></td>
+<td><p>–</p></td>
+<td><p>–</p></td>
+<td><p>EXT_E2DS_FF</p></td>
+</tr>
+<tr class="row-odd"><td><p>TELLU_PCLEAN</p></td>
 <td><p>Telluric pre-cleaning file</p></td>
 <td><p>TELLU_PCLEAN</p></td>
 <td><p>.fits</p></td>
@@ -278,18 +299,20 @@
 </table>
 </section>
 <section id="debug-plots">
-<h2>8. Debug plots<a class="headerlink" href="#debug-plots" title="Permalink to this headline">¶</a></h2>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">MKTELLU_WAVE_FLUX1</span>
+<h2>8. Debug plots<a class="headerlink" href="#debug-plots" title="Permalink to this heading">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">TELLU_SKY_CORR_PLOT</span>
+<span class="n">MKTELLU_WAVE_FLUX1</span>
 <span class="n">MKTELLU_WAVE_FLUX2</span>
 <span class="n">TELLUP_WAVE_TRANS</span>
 <span class="n">TELLUP_ABSO_SPEC</span>
 <span class="n">TELLUP_CLEAN_OH</span>
 <span class="n">FTELLU_RECON_SPLINE2</span>
+<span class="n">TELLU_FINITE_RES_CORR</span>
 </pre></div>
 </div>
 </section>
 <section id="summary-plots">
-<h2>9. Summary plots<a class="headerlink" href="#summary-plots" title="Permalink to this headline">¶</a></h2>
+<h2>9. Summary plots<a class="headerlink" href="#summary-plots" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SUM_MKTELLU_WAVE_FLUX</span>
 <span class="n">SUM_TELLUP_WAVE_TRANS</span>
 <span class="n">SUM_TELLUP_ABSO_SPEC</span>
@@ -315,9 +338,9 @@
           <a href="rdefinition_MKMODEL.html" title="apero_mk_model_spirou"
              >next</a> |</li>
         <li class="right" >
-          <a href="rdefinition_CCF.html" title="apero_ccf_spirou"
+          <a href="rdefinition_MKSKY.html" title="apero_mk_skymodel_spirou"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.259 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.8.001 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../../main/spirou/main_spirou.html" >SPIRou documentation</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="recipes.html" >Recipes (SPIROU)</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">apero_mk_tellu_spirou</a></li> 
@@ -325,7 +348,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2019, Neil Cook.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 6.1.3.
     </div>
   </body>
 </html>

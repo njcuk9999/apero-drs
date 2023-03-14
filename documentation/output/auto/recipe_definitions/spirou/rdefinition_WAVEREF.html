@@ -3,20 +3,20 @@
 
 <!doctype html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>apero_wave_ref_spirou &#8212; APERO 0.7.259 documentation</title>
+    <title>apero_wave_ref_spirou &#8212; APERO 0.8.001 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/apero.css" />
     
     <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
-    <script src="../../../_static/jquery.js"></script>
-    <script src="../../../_static/underscore.js"></script>
     <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/sphinx_highlight.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../../../_static/bizstyle.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
@@ -101,7 +101,7 @@
         <li class="right" >
           <a href="rdefinition_EXT.html" title="apero_extract_spirou"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.259 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.8.001 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../../main/spirou/main_spirou.html" >SPIRou documentation</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="recipes.html" accesskey="U">Recipes (SPIROU)</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">apero_wave_ref_spirou</a></li> 
@@ -109,10 +109,14 @@
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../../../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../../../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">apero_wave_ref_spirou</a><ul>
-<li><a class="reference internal" href="#description">1. Description</a></li>
+<li><a class="reference internal" href="#description">1. Description</a><ul>
+<li><a class="reference internal" href="#wavelength-solution-reference-calibration">Wavelength solution reference calibration</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#schematic">2. Schematic</a></li>
 <li><a class="reference internal" href="#usage">3. Usage</a></li>
 <li><a class="reference internal" href="#optional-arguments">4. Optional Arguments</a></li>
@@ -125,12 +129,17 @@
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="rdefinition_EXT.html"
-                        title="previous chapter">apero_extract_spirou</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="rdefinition_WAVE.html"
-                        title="next chapter">apero_wave_night_spirou</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="rdefinition_EXT.html"
+                          title="previous chapter">apero_extract_spirou</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="rdefinition_WAVE.html"
+                          title="next chapter">apero_wave_night_spirou</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -147,7 +156,7 @@
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
 
@@ -157,18 +166,74 @@
           <div class="body" role="main">
             
   <section id="apero-wave-ref-spirou">
-<span id="recipes-spirou-waveref"></span><h1>apero_wave_ref_spirou<a class="headerlink" href="#apero-wave-ref-spirou" title="Permalink to this headline">¶</a></h1>
+<span id="recipes-spirou-waveref"></span><h1>apero_wave_ref_spirou<a class="headerlink" href="#apero-wave-ref-spirou" title="Permalink to this heading">¶</a></h1>
 <section id="description">
-<h2>1. Description<a class="headerlink" href="#description" title="Permalink to this headline">¶</a></h2>
+<h2>1. Description<a class="headerlink" href="#description" title="Permalink to this heading">¶</a></h2>
 <p>SHORTNAME: WAVEREF</p>
-<p>No description set</p>
+<section id="wavelength-solution-reference-calibration">
+<h3>Wavelength solution reference calibration<a class="headerlink" href="#wavelength-solution-reference-calibration" title="Permalink to this heading">¶</a></h3>
+<p>The wavelength solution generation follows the general idea of (Hobson et al 2021) however since publication there has
+been an overall reshuffling of the logic. As such we present an overview of the process here but refer the reader to
+(Hobson et al 2021) for further specific details.</p>
+<p>The reference wavelength solution recipe takes preprocessed <cite>FP_FP</cite> and <cite>HC_HC</cite> files (as many as given by the user or
+as many as occur on the nights being used via <cite>apero_processing</cite>) from the reference night. It combines the <cite>FP_FP</cite> and
+<cite>HC_HC</cite> files into a single <cite>FP_FP</cite> and a single <cite>HC_HC</cite> file (via a median combination of the images). These combined
+<cite>FP_FP</cite> and <cite>HC_HC</cite> files are then extracted.</p>
+<p>We first consider the combined flux in fibers A and B (the AB fiber). We locate the <cite>HC_HC</cite> lines, starting with a
+line list generated as in (Hobson et al 2021), fitting each peak with a Gaussian and measuring the position of the
+peak, and inferring peak wavelength from an initial guess at the wavelength solution from physical models. The first
+time this HC finding is performed we allow for a global offset between the current <cite>HC_HC</cite> file and the initial guess
+at the wavelength solution (this is important when our reference night is far in time from when our initial
+wavelength solution data was taken).</p>
+<p>For the <cite>FP_FP</cite> AB fiber, a similar process is followed. However, instead of a single Gaussian, an Airy function is
+used (to account for the previous and following FP peak in the fitting process):</p>
+<div class="math notranslate nohighlight">
+\[F_{airy} = A\left( 0.5 \left(1 + \frac{2\pi(x-x_0)}{w} \right) \right)^{\beta} + DC\]</div>
+<p>where F is the modeled flux of the FP, A is the amplitude of the FP peak, <span class="math notranslate nohighlight">\(x_0\)</span> is the central position of the
+FP peak, w is the period of the FP in pixel space, <span class="math notranslate nohighlight">\(\beta\)</span> is the shape factor of the FP peak and DC is a
+constant offset. Once we have found all HC and FP lines in the AB fiber we calculate the wavelength solution.</p>
+<p>The accurate wavelength solution for reference night is then found through the following steps:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>From FP peak spacing within each order, derive an effective cavity length per order.</p></li>
+<li><p>Fit the chromatic dependency of the cavity with a 5th order polynomial and keep that cavity in a reference file;
+through the life of the instrument, we will assume that cavity changes are achromatic relative to this polynomial.</p></li>
+<li><p>From the chromatic cavity solution, we find the FP order value of each peak, typically numbering from ~600 to
+~24500 respectively at long and short wavelength ends of the SPIRou domain.</p></li>
+<li><p>From the peak numbering, which is known to be an integer, we can refine the wavelength solution within each
+order. This solution is kept as a reference wavelength solution.</p></li>
+</ul>
+</div></blockquote>
+<p>The finding of the fiber AB HC and FP lines and the calculation of the wavelength solution is repeated multiple times
+(in an iterative process). We essentially forget the locations of the HC and FP lines and re-find them as if we
+hadn’t found them before, only this time instead of the initial guess wavelength solution we use the previous
+iteration’s calculated solution and the previous iterations calculated cavity width fit as a starting point.</p>
+<p>Finally, after three iterations, which is sufficient to converge to floating point accuracy, we re-find the HC and FP
+lines for the AB fiber one last time using the final reference wavelength solution and final cavity width fit. We also
+make an estimate of the resolution, splitting the detector into a grid of 3$times$3 and using all HC lines in each
+sector to estimate the line profile and thus the resolution of each sector. We then process each fiber (A, B, and C)
+in a similar manner to the AB fiber (finding HC and FP lines from the extracted images and calculating the wavelength
+solution) the only difference being we do not fit the cavity width nor do we fit the chromatic term; we force the
+coefficients to be the ones found with the AB fiber.</p>
+<p>For quality control purposes we calculate an FP binary mask using the cavity width fit and use this to perform a
+cross-correlation function between the mask and the extracted FP for all fibers (AB, A, B, and C). We use the
+cross-correlation function to measure the shift of the wavelength solutions measured in fiber AB compared to
+fibers A, B, and C and confirm that this is less than 2 <span class="math notranslate nohighlight">\(ms^{-1}\)</span>. As a second quality control, we match FP
+lines (found previously) between the fibers and directly calculate the difference in velocity between these lines as
+a second metric on the radial velocity shift between the fibers’ wavelength solutions. Note that typically for the
+reference night the value of these quality control metrics is around 10-20 <span class="math notranslate nohighlight">\(cms^{-1}\)</span> between fibers
+(i.e. <span class="math notranslate nohighlight">\(AB-A\)</span>, <span class="math notranslate nohighlight">\(AB-B\)</span>, <span class="math notranslate nohighlight">\(AB-C\)</span>).</p>
+<p>The reference wavelength solution file (<cite>REFWAVE</cite>) for each fiber, a cavity fit file, and a table of all HC and FP
+lines found are then saved to the calibration database for use throughout APERO. A resolution map is also saved.
+The <cite>HC_HC</cite> and <cite>FP_FP</cite> extracted files have their headers updated with the reference wavelength solution.</p>
+</section>
 </section>
 <section id="schematic">
-<h2>2. Schematic<a class="headerlink" href="#schematic" title="Permalink to this headline">¶</a></h2>
+<h2>2. Schematic<a class="headerlink" href="#schematic" title="Permalink to this heading">¶</a></h2>
 <a class="reference internal image-reference" href="../../../_images/apero_wave_ref_spirou_schematic.jpg"><img alt="../../../_images/apero_wave_ref_spirou_schematic.jpg" class="align-center" src="../../../_images/apero_wave_ref_spirou_schematic.jpg" style="width: 100%;" /></a>
 </section>
 <section id="usage">
-<h2>3. Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
+<h2>3. Usage<a class="headerlink" href="#usage" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">apero_wave_ref_spirou</span><span class="o">.</span><span class="n">py</span> <span class="p">{</span><span class="n">obs_dir</span><span class="p">}[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">--</span><span class="n">hcfiles</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">HCONE_HCONE</span><span class="p">]</span> <span class="o">--</span><span class="n">fpfiles</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">FP_FP</span><span class="p">]</span> <span class="p">{</span><span class="n">options</span><span class="p">}</span>
 </pre></div>
 </div>
@@ -179,7 +244,7 @@
 </div>
 </section>
 <section id="optional-arguments">
-<h2>4. Optional Arguments<a class="headerlink" href="#optional-arguments" title="Permalink to this headline">¶</a></h2>
+<h2>4. Optional Arguments<a class="headerlink" href="#optional-arguments" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">--</span><span class="n">database</span><span class="p">[</span><span class="kc">True</span><span class="o">/</span><span class="kc">False</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">BOOLEAN</span><span class="p">]</span> <span class="n">Whether</span> <span class="n">to</span> <span class="n">add</span> <span class="n">outputs</span> <span class="n">to</span> <span class="n">calibration</span> <span class="n">database</span>
 <span class="o">--</span><span class="n">badpixfile</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">BADPIX</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Define</span> <span class="n">a</span> <span class="n">custom</span> <span class="n">file</span> <span class="n">to</span> <span class="n">use</span> <span class="k">for</span> <span class="n">bad</span> <span class="n">pixel</span> <span class="n">correction</span><span class="o">.</span> <span class="n">Checks</span> <span class="k">for</span> <span class="n">an</span> <span class="n">absolute</span> <span class="n">path</span> <span class="ow">and</span> <span class="n">then</span> <span class="n">checks</span> <span class="n">directory</span>
 <span class="o">--</span><span class="n">badcorr</span><span class="p">[</span><span class="kc">True</span><span class="o">/</span><span class="kc">False</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">BOOLEAN</span><span class="p">]</span> <span class="n">Whether</span> <span class="n">to</span> <span class="n">correct</span> <span class="k">for</span> <span class="n">the</span> <span class="n">bad</span> <span class="n">pixel</span> <span class="n">file</span>
@@ -193,7 +258,7 @@
 <span class="o">--</span><span class="n">fluxunits</span><span class="p">[</span><span class="n">ADU</span><span class="o">/</span><span class="n">s</span><span class="p">,</span><span class="n">e</span><span class="o">-</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Output</span> <span class="n">units</span> <span class="k">for</span> <span class="n">flux</span>
 <span class="o">--</span><span class="n">locofile</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">LOC_LOCO</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Sets</span> <span class="n">the</span> <span class="n">LOCO</span> <span class="n">file</span> <span class="n">used</span> <span class="n">to</span> <span class="n">get</span> <span class="n">the</span> <span class="n">coefficients</span> <span class="p">(</span><span class="n">CALIBDB</span><span class="o">=</span><span class="n">LOC_</span><span class="p">{</span><span class="n">fiber</span><span class="p">})</span>
 <span class="o">--</span><span class="n">orderpfile</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">LOC_ORDERP</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Sets</span> <span class="n">the</span> <span class="n">Order</span> <span class="n">Profile</span> <span class="n">file</span> <span class="n">used</span> <span class="n">to</span> <span class="n">get</span> <span class="n">the</span> <span class="n">coefficients</span> <span class="p">(</span><span class="n">CALIBDB</span><span class="o">=</span><span class="n">ORDER_PROFILE_</span><span class="p">{</span><span class="n">fiber</span><span class="p">}</span>
-<span class="o">--</span><span class="n">plot</span><span class="p">[</span><span class="mi">0</span><span class="o">&gt;</span><span class="n">INT</span><span class="o">&gt;</span><span class="mi">3</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">INTEGER</span><span class="p">]</span> <span class="n">Plot</span> <span class="n">level</span><span class="o">.</span> <span class="mi">0</span> <span class="o">=</span> <span class="n">off</span><span class="p">,</span> <span class="mi">1</span> <span class="o">=</span> <span class="n">interactively</span><span class="p">,</span> <span class="mi">2</span> <span class="o">=</span> <span class="n">save</span> <span class="n">to</span> <span class="n">file</span>
+<span class="o">--</span><span class="n">plot</span><span class="p">[</span><span class="mi">0</span><span class="o">&gt;</span><span class="n">INT</span><span class="o">&gt;</span><span class="mi">4</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">INTEGER</span><span class="p">]</span> <span class="n">Plot</span> <span class="n">level</span><span class="o">.</span> <span class="mi">0</span> <span class="o">=</span> <span class="n">off</span><span class="p">,</span> <span class="mi">1</span> <span class="o">=</span> <span class="n">interactively</span><span class="p">,</span> <span class="mi">2</span> <span class="o">=</span> <span class="n">save</span> <span class="n">to</span> <span class="n">file</span>
 <span class="o">--</span><span class="n">resize</span><span class="p">[</span><span class="kc">True</span><span class="o">/</span><span class="kc">False</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">BOOLEAN</span><span class="p">]</span> <span class="n">Whether</span> <span class="n">to</span> <span class="n">resize</span> <span class="n">image</span>
 <span class="o">--</span><span class="n">shapex</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">SHAPE_X</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Sets</span> <span class="n">the</span> <span class="n">SHAPE</span> <span class="n">DXMAP</span> <span class="n">file</span> <span class="n">used</span> <span class="n">to</span> <span class="n">get</span> <span class="n">the</span> <span class="n">dx</span> <span class="n">correction</span> <span class="nb">map</span> <span class="p">(</span><span class="n">CALIBDB</span><span class="o">=</span><span class="n">SHAPEX</span><span class="p">)</span>
 <span class="o">--</span><span class="n">shapey</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">SHAPE_Y</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Sets</span> <span class="n">the</span> <span class="n">SHAPE</span> <span class="n">DYMAP</span> <span class="n">file</span> <span class="n">used</span> <span class="n">to</span> <span class="n">get</span> <span class="n">the</span> <span class="n">dy</span> <span class="n">correction</span> <span class="nb">map</span> <span class="p">(</span><span class="n">CALIBDB</span><span class="o">=</span><span class="n">SHAPEY</span><span class="p">)</span>
@@ -201,11 +266,12 @@
 <span class="o">--</span><span class="n">wavefile</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">WAVESOL_REF</span><span class="p">,</span><span class="n">WAVE_NIGHT</span><span class="p">,</span><span class="n">WAVESOL_DEFAULT</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Define</span> <span class="n">a</span> <span class="n">custom</span> <span class="n">file</span> <span class="n">to</span> <span class="n">use</span> <span class="k">for</span> <span class="n">the</span> <span class="n">wave</span> <span class="n">solution</span><span class="o">.</span> <span class="n">If</span> <span class="n">unset</span> <span class="n">uses</span> <span class="n">closest</span> <span class="n">file</span> <span class="kn">from</span> <span class="nn">header</span> <span class="ow">or</span> <span class="n">calibDB</span> <span class="p">(</span><span class="n">depending</span> <span class="n">on</span> <span class="n">setup</span><span class="p">)</span><span class="o">.</span> <span class="n">Checks</span> <span class="k">for</span> <span class="n">an</span> <span class="n">absolute</span> <span class="n">path</span> <span class="ow">and</span> <span class="n">then</span> <span class="n">checks</span> <span class="n">directory</span>
 <span class="o">--</span><span class="n">forceext</span><span class="p">[</span><span class="kc">True</span><span class="o">/</span><span class="kc">False</span><span class="p">]</span> <span class="o">//</span> <span class="n">WAVE_EXTRACT_HELP</span>
 <span class="o">--</span><span class="n">cavityfile</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">WAVEREF_CAV</span><span class="p">]</span> <span class="o">//</span> <span class="n">WAVEREF_CAVFILE_HELP</span>
+<span class="o">--</span><span class="n">no_in_qc</span> <span class="o">//</span> <span class="n">Disable</span> <span class="n">checking</span> <span class="n">the</span> <span class="n">quality</span> <span class="n">control</span> <span class="n">of</span> <span class="nb">input</span> <span class="n">files</span>
 </pre></div>
 </div>
 </section>
 <section id="special-arguments">
-<h2>5. Special Arguments<a class="headerlink" href="#special-arguments" title="Permalink to this headline">¶</a></h2>
+<h2>5. Special Arguments<a class="headerlink" href="#special-arguments" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">--</span><span class="n">xhelp</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Extended</span> <span class="n">help</span> <span class="n">menu</span> <span class="p">(</span><span class="k">with</span> <span class="nb">all</span> <span class="n">advanced</span> <span class="n">arguments</span><span class="p">)</span>
 <span class="o">--</span><span class="n">debug</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Activates</span> <span class="n">debug</span> <span class="n">mode</span> <span class="p">(</span><span class="n">Advanced</span> <span class="n">mode</span> <span class="p">[</span><span class="n">INTEGER</span><span class="p">]</span> <span class="n">value</span> <span class="n">must</span> <span class="n">be</span> <span class="n">an</span> <span class="n">integer</span> <span class="n">greater</span> <span class="n">than</span> <span class="mi">0</span><span class="p">,</span> <span class="n">setting</span> <span class="n">the</span> <span class="n">debug</span> <span class="n">level</span><span class="p">)</span>
 <span class="o">--</span><span class="n">listing</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Lists</span> <span class="n">the</span> <span class="n">night</span> <span class="n">name</span> <span class="n">directories</span> <span class="ow">in</span> <span class="n">the</span> <span class="nb">input</span> <span class="n">directory</span> <span class="k">if</span> <span class="n">used</span> <span class="n">without</span> <span class="n">a</span> <span class="s1">&#39;directory&#39;</span> <span class="n">argument</span> <span class="ow">or</span> <span class="n">lists</span> <span class="n">the</span> <span class="n">files</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">given</span> <span class="s1">&#39;directory&#39;</span> <span class="p">(</span><span class="k">if</span> <span class="n">defined</span><span class="p">)</span><span class="o">.</span> <span class="n">Only</span> <span class="n">lists</span> <span class="n">up</span> <span class="n">to</span> <span class="mi">15</span> <span class="n">files</span><span class="o">/</span><span class="n">directories</span>
@@ -227,26 +293,15 @@
 </div>
 </section>
 <section id="output-directory">
-<h2>6. Output directory<a class="headerlink" href="#output-directory" title="Permalink to this headline">¶</a></h2>
+<h2>6. Output directory<a class="headerlink" href="#output-directory" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">DRS_DATA_REDUC</span> <span class="o">//</span> <span class="n">Default</span><span class="p">:</span> <span class="s2">&quot;red&quot;</span> <span class="n">directory</span>
 </pre></div>
 </div>
 </section>
 <section id="output-files">
-<h2>7. Output files<a class="headerlink" href="#output-files" title="Permalink to this headline">¶</a></h2>
+<h2>7. Output files<a class="headerlink" href="#output-files" title="Permalink to this heading">¶</a></h2>
 <table class="csvtable docutils align-default" id="id1">
 <caption><span class="caption-text">Outputs</span><a class="headerlink" href="#id1" title="Permalink to this table">¶</a></caption>
-<colgroup>
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-</colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>name</p></th>
 <th class="head"><p>description</p></th>
@@ -320,7 +375,17 @@
 <td><p>–</p></td>
 <td><p>EXT_E2DS, EXT_E2DS_FF</p></td>
 </tr>
-<tr class="row-even"><td><p>CCF_RV</p></td>
+<tr class="row-even"><td><p>WAVEM_RES_E2DS</p></td>
+<td><p>Reference wavelength resolution e2ds file</p></td>
+<td><p>WAVEM_RES_E2DS</p></td>
+<td><p>.fits</p></td>
+<td><p>_waveref_res_e2ds</p></td>
+<td><p>AB, A, B, C</p></td>
+<td><p>calibration</p></td>
+<td><p>WAVR_E2DS</p></td>
+<td><p>EXT_E2DS, EXT_E2DS_FF</p></td>
+</tr>
+<tr class="row-odd"><td><p>CCF_RV</p></td>
 <td><p>Cross-correlation RV results file</p></td>
 <td><p>CCF_RV</p></td>
 <td><p>.fits</p></td>
@@ -334,7 +399,7 @@
 </table>
 </section>
 <section id="debug-plots">
-<h2>8. Debug plots<a class="headerlink" href="#debug-plots" title="Permalink to this headline">¶</a></h2>
+<h2>8. Debug plots<a class="headerlink" href="#debug-plots" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">WAVE_WL_CAV</span>
 <span class="n">WAVE_FIBER_COMPARISON</span>
 <span class="n">WAVE_FIBER_COMP</span>
@@ -349,7 +414,7 @@
 </div>
 </section>
 <section id="summary-plots">
-<h2>9. Summary plots<a class="headerlink" href="#summary-plots" title="Permalink to this headline">¶</a></h2>
+<h2>9. Summary plots<a class="headerlink" href="#summary-plots" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SUM_WAVE_FIBER_COMP</span>
 <span class="n">SUM_CCF_RV_FIT</span>
 </pre></div>
@@ -376,7 +441,7 @@
         <li class="right" >
           <a href="rdefinition_EXT.html" title="apero_extract_spirou"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.259 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.8.001 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../../main/spirou/main_spirou.html" >SPIRou documentation</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="recipes.html" >Recipes (SPIROU)</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">apero_wave_ref_spirou</a></li> 
@@ -384,7 +449,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2019, Neil Cook.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 6.1.3.
     </div>
   </body>
 </html>

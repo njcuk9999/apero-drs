@@ -3,20 +3,20 @@
 
 <!doctype html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>apero_shape_ref_spirou &#8212; APERO 0.7.259 documentation</title>
+    <title>apero_shape_ref_spirou &#8212; APERO 0.8.001 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/apero.css" />
     
     <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
-    <script src="../../../_static/jquery.js"></script>
-    <script src="../../../_static/underscore.js"></script>
     <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/sphinx_highlight.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../../../_static/bizstyle.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
@@ -101,7 +101,7 @@
         <li class="right" >
           <a href="rdefinition_LOC.html" title="apero_loc_spirou"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.259 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.8.001 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../../main/spirou/main_spirou.html" >SPIRou documentation</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="recipes.html" accesskey="U">Recipes (SPIROU)</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">apero_shape_ref_spirou</a></li> 
@@ -109,10 +109,14 @@
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../../../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../../../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">apero_shape_ref_spirou</a><ul>
-<li><a class="reference internal" href="#description">1. Description</a></li>
+<li><a class="reference internal" href="#description">1. Description</a><ul>
+<li><a class="reference internal" href="#shape-reference-calibration">Shape reference calibration</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#schematic">2. Schematic</a></li>
 <li><a class="reference internal" href="#usage">3. Usage</a></li>
 <li><a class="reference internal" href="#optional-arguments">4. Optional Arguments</a></li>
@@ -125,12 +129,17 @@
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="rdefinition_LOC.html"
-                        title="previous chapter">apero_loc_spirou</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="rdefinition_SHAPE.html"
-                        title="next chapter">apero_shape_spirou</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="rdefinition_LOC.html"
+                          title="previous chapter">apero_loc_spirou</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="rdefinition_SHAPE.html"
+                          title="next chapter">apero_shape_spirou</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -147,7 +156,7 @@
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
 
@@ -157,18 +166,66 @@
           <div class="body" role="main">
             
   <section id="apero-shape-ref-spirou">
-<span id="recipes-spirou-shaperef"></span><h1>apero_shape_ref_spirou<a class="headerlink" href="#apero-shape-ref-spirou" title="Permalink to this headline">¶</a></h1>
+<span id="recipes-spirou-shaperef"></span><h1>apero_shape_ref_spirou<a class="headerlink" href="#apero-shape-ref-spirou" title="Permalink to this heading">¶</a></h1>
 <section id="description">
-<h2>1. Description<a class="headerlink" href="#description" title="Permalink to this headline">¶</a></h2>
+<h2>1. Description<a class="headerlink" href="#description" title="Permalink to this heading">¶</a></h2>
 <p>SHORTNAME: SHAPEREF</p>
-<p>No description set</p>
+<section id="shape-reference-calibration">
+<h3>Shape reference calibration<a class="headerlink" href="#shape-reference-calibration" title="Permalink to this heading">¶</a></h3>
+<p>In PRV measurements, constraining the exact position of orders on the science array, both in the spectral and
+spatial dimensions, is key as the position of our spectra on this science array encodes the sought-after velocity of
+the star. The diffraction orders of SPIRou, and nearly all PRV spectrographs, follow curved lines, and the image
+slicer has a 4-point structure that is not parallel to the pixel grid.</p>
+<p>Within the APERO framework, we decided to split the problem into two parts: a reference shape calibration and a
+nightly shape calibration. For the reference step, we constrain the bulk motion, as defined through an affine
+transformation and register all frames to a common pixel grid to well below the equivalent of 1 <span class="math notranslate nohighlight">\(ms^{-1}\)</span>.
+We perform the order localization and subsequent steps on a nightly basis as it has the significant advantage that
+registered frames have all orders at the same position to a very small fraction of a pixel. Furthermore, having
+registered frames allows for better error handling within APERO; one does not expect pixel-level motions between
+calibrations after this step.</p>
+<p>The reference shape recipe takes preprocessed <cite>FP_FP</cite> and <cite>HC_HC</cite> files (as many as given by the user or as many as
+occur on the nights being used via <cite>apero_processing</cite>). The reference shape recipe combines the <cite>FP_FP</cite> files into a
+single <cite>FP_FP</cite> file and the <cite>HC_HC</cite> files into a single <cite>HC_HC</cite> file (via a median combination of the images).
+After combining, the <cite>FP_FP</cite> and <cite>HC_HC</cite> images are calibrated using our standard image calibration technique.
+In addition to the combined <cite>FP_FP</cite> and <cite>HC_HC</cite>, we create a reference FP image. This reference FP image is created
+by selecting a subset of 100 <cite>FP_FP</cite> files (uniformly distributed across nights) and combining these with a median.
+This reference FP image is then saved to the calibration database for use throughout APERO.</p>
+<p>The registration through affine transformations is done using the`FP_FP` calibrations. We take the combined <cite>FP_FP</cite>
+files and localize in the 2D frame the position of each FP peak and measure the position of the peak maxima.
+Considering the 3 SPIRou fibers and 4 slices (i.e., 12 2D peaks per FP line), this means there are &gt;100000 peaks on
+the science array. These are taken as reference positions. For each calibration sequence, we then find the affine
+transformation that minimizes the RMS between the position of the FP and the FP reference image calibration.
+The resulting affine transformation consists of a bulk shift in dx, dy, and a <span class="math notranslate nohighlight">\(2\times2\)</span> matrix that encodes
+rotation, scale, and shear. These values are kept and can be useful to identify shifts in the optics (e.g., after
+earthquakes or thermal cycles) as well as very slight changes in plate scale and angular position of the array which
+can be of interest in understanding the impact of engineering work onto the science data products.
+For example, we can readily measure a <span class="math notranslate nohighlight">\(10^{-5}\)</span> fractional change in the SPIRou plate scale following a
+maintenance thermal cycle of the instrument; the ratio of the point-to-point RMS to the median of the plate scale
+value is at the <span class="math notranslate nohighlight">\(1.7\times10^{-7}\)</span> level. The interpolations between pixel grids are done with a 3rd
+order spline.  We note that changes in the FP cavity length arise from a number of reasons such as gas leakage and
+temperature and will lead to a motion of FP peaks on the array that is not due to a physical motion of the array or
+optical elements within the cryostat. Considering that typical drifts are at the <span class="math notranslate nohighlight">\(\sim0.3\)</span>,m/s/day level,
+to first order this leads to a typical <span class="math notranslate nohighlight">\(10^{-9}\)</span>/day fractional increase in the plate scale along the dispersion
+direction. This effectively leads to a minute change in the effective dispersion of the extracted file wavelength
+solution. As this change is common to both the FP, the HC, and the science data, it is accounted for when computing
+the wavelength solution and cavity length change.</p>
+<p>Once the affine transformation has been applied, images are registered to a common grid (the reference FP image).
+We then construct a transform that makes the orders straight and corrects for slicer structure in the dispersion
+direction. This leads to the construction of two maps corresponding to x and y offsets that need to be applied to an
+image to transform it into a rectified image from which a trace extraction can be performed directly through a 1-D
+collapse in the direction perpendicular to the dispersion of a rectangular box around the order. The y direction map
+is computed from the order-localization polynomials. The x direction map is determined by first collapsing the
+straightened orders of a <cite>FP_FP</cite> calibration and cross-correlating each of the spectral direction pixel rows to find
+its offset relative to the collapsed-extracted spectrum. The x and y offsets are then saved to the calibration
+database for use throughout APERO.</p>
+</section>
 </section>
 <section id="schematic">
-<h2>2. Schematic<a class="headerlink" href="#schematic" title="Permalink to this headline">¶</a></h2>
+<h2>2. Schematic<a class="headerlink" href="#schematic" title="Permalink to this heading">¶</a></h2>
 <a class="reference internal image-reference" href="../../../_images/apero_shape_ref_spirou_schematic.jpg"><img alt="../../../_images/apero_shape_ref_spirou_schematic.jpg" class="align-center" src="../../../_images/apero_shape_ref_spirou_schematic.jpg" style="width: 100%;" /></a>
 </section>
 <section id="usage">
-<h2>3. Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
+<h2>3. Usage<a class="headerlink" href="#usage" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">apero_shape_ref_spirou</span><span class="o">.</span><span class="n">py</span> <span class="p">{</span><span class="n">obs_dir</span><span class="p">}[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">--</span><span class="n">fpfiles</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">FP_FP</span><span class="p">]</span> <span class="o">--</span><span class="n">hcfiles</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">HCONE_HCONE</span><span class="p">]</span> <span class="p">{</span><span class="n">options</span><span class="p">}</span>
 </pre></div>
 </div>
@@ -179,7 +236,7 @@
 </div>
 </section>
 <section id="optional-arguments">
-<h2>4. Optional Arguments<a class="headerlink" href="#optional-arguments" title="Permalink to this headline">¶</a></h2>
+<h2>4. Optional Arguments<a class="headerlink" href="#optional-arguments" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">--</span><span class="n">database</span><span class="p">[</span><span class="kc">True</span><span class="o">/</span><span class="kc">False</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">BOOLEAN</span><span class="p">]</span> <span class="n">Whether</span> <span class="n">to</span> <span class="n">add</span> <span class="n">outputs</span> <span class="n">to</span> <span class="n">calibration</span> <span class="n">database</span>
 <span class="o">--</span><span class="n">badpixfile</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">BADPIX</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Define</span> <span class="n">a</span> <span class="n">custom</span> <span class="n">file</span> <span class="n">to</span> <span class="n">use</span> <span class="k">for</span> <span class="n">bad</span> <span class="n">pixel</span> <span class="n">correction</span><span class="o">.</span> <span class="n">Checks</span> <span class="k">for</span> <span class="n">an</span> <span class="n">absolute</span> <span class="n">path</span> <span class="ow">and</span> <span class="n">then</span> <span class="n">checks</span> <span class="n">directory</span>
 <span class="o">--</span><span class="n">badcorr</span><span class="p">[</span><span class="kc">True</span><span class="o">/</span><span class="kc">False</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">BOOLEAN</span><span class="p">]</span> <span class="n">Whether</span> <span class="n">to</span> <span class="n">correct</span> <span class="k">for</span> <span class="n">the</span> <span class="n">bad</span> <span class="n">pixel</span> <span class="n">file</span>
@@ -190,14 +247,15 @@
 <span class="o">--</span><span class="n">flipimage</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">both</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">BOOLEAN</span><span class="p">]</span> <span class="n">Whether</span> <span class="n">to</span> <span class="n">flip</span> <span class="n">fits</span> <span class="n">image</span>
 <span class="o">--</span><span class="n">fluxunits</span><span class="p">[</span><span class="n">ADU</span><span class="o">/</span><span class="n">s</span><span class="p">,</span><span class="n">e</span><span class="o">-</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Output</span> <span class="n">units</span> <span class="k">for</span> <span class="n">flux</span>
 <span class="o">--</span><span class="n">locofile</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">LOC_LOCO</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Sets</span> <span class="n">the</span> <span class="n">LOCO</span> <span class="n">file</span> <span class="n">used</span> <span class="n">to</span> <span class="n">get</span> <span class="n">the</span> <span class="n">coefficients</span> <span class="p">(</span><span class="n">CALIBDB</span><span class="o">=</span><span class="n">LOC_</span><span class="p">{</span><span class="n">fiber</span><span class="p">})</span>
-<span class="o">--</span><span class="n">plot</span><span class="p">[</span><span class="mi">0</span><span class="o">&gt;</span><span class="n">INT</span><span class="o">&gt;</span><span class="mi">3</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">INTEGER</span><span class="p">]</span> <span class="n">Plot</span> <span class="n">level</span><span class="o">.</span> <span class="mi">0</span> <span class="o">=</span> <span class="n">off</span><span class="p">,</span> <span class="mi">1</span> <span class="o">=</span> <span class="n">interactively</span><span class="p">,</span> <span class="mi">2</span> <span class="o">=</span> <span class="n">save</span> <span class="n">to</span> <span class="n">file</span>
+<span class="o">--</span><span class="n">plot</span><span class="p">[</span><span class="mi">0</span><span class="o">&gt;</span><span class="n">INT</span><span class="o">&gt;</span><span class="mi">4</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">INTEGER</span><span class="p">]</span> <span class="n">Plot</span> <span class="n">level</span><span class="o">.</span> <span class="mi">0</span> <span class="o">=</span> <span class="n">off</span><span class="p">,</span> <span class="mi">1</span> <span class="o">=</span> <span class="n">interactively</span><span class="p">,</span> <span class="mi">2</span> <span class="o">=</span> <span class="n">save</span> <span class="n">to</span> <span class="n">file</span>
 <span class="o">--</span><span class="n">resize</span><span class="p">[</span><span class="kc">True</span><span class="o">/</span><span class="kc">False</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">BOOLEAN</span><span class="p">]</span> <span class="n">Whether</span> <span class="n">to</span> <span class="n">resize</span> <span class="n">image</span>
-<span class="o">--</span><span class="n">fpref</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">REF_FP</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Define</span> <span class="n">a</span> <span class="n">custom</span> <span class="n">file</span> <span class="n">to</span> <span class="n">use</span> <span class="k">for</span> <span class="n">the</span> <span class="n">FP</span> <span class="n">reference</span> <span class="p">(</span><span class="n">skips</span> <span class="n">the</span> <span class="n">FP</span> <span class="n">reference</span> <span class="n">step</span><span class="p">)</span> <span class="o">-</span> <span class="n">this</span> <span class="n">file</span> <span class="n">must</span> <span class="n">have</span> <span class="n">been</span> <span class="n">produced</span> <span class="n">by</span> <span class="n">a</span> <span class="n">previous</span> <span class="n">run</span> <span class="n">of</span> <span class="n">cal_shape_reference</span>
+<span class="o">--</span><span class="n">no_in_qc</span> <span class="o">//</span> <span class="n">Disable</span> <span class="n">checking</span> <span class="n">the</span> <span class="n">quality</span> <span class="n">control</span> <span class="n">of</span> <span class="nb">input</span> <span class="n">files</span>
+<span class="o">--</span><span class="n">fpref</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">REF_FP</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Sets</span> <span class="n">the</span> <span class="n">FP</span> <span class="n">reference</span> <span class="n">file</span> <span class="n">to</span> <span class="n">use</span> <span class="p">(</span><span class="n">CALIBDB</span> <span class="o">=</span> <span class="n">FPREF</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
 <section id="special-arguments">
-<h2>5. Special Arguments<a class="headerlink" href="#special-arguments" title="Permalink to this headline">¶</a></h2>
+<h2>5. Special Arguments<a class="headerlink" href="#special-arguments" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">--</span><span class="n">xhelp</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Extended</span> <span class="n">help</span> <span class="n">menu</span> <span class="p">(</span><span class="k">with</span> <span class="nb">all</span> <span class="n">advanced</span> <span class="n">arguments</span><span class="p">)</span>
 <span class="o">--</span><span class="n">debug</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Activates</span> <span class="n">debug</span> <span class="n">mode</span> <span class="p">(</span><span class="n">Advanced</span> <span class="n">mode</span> <span class="p">[</span><span class="n">INTEGER</span><span class="p">]</span> <span class="n">value</span> <span class="n">must</span> <span class="n">be</span> <span class="n">an</span> <span class="n">integer</span> <span class="n">greater</span> <span class="n">than</span> <span class="mi">0</span><span class="p">,</span> <span class="n">setting</span> <span class="n">the</span> <span class="n">debug</span> <span class="n">level</span><span class="p">)</span>
 <span class="o">--</span><span class="n">listing</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Lists</span> <span class="n">the</span> <span class="n">night</span> <span class="n">name</span> <span class="n">directories</span> <span class="ow">in</span> <span class="n">the</span> <span class="nb">input</span> <span class="n">directory</span> <span class="k">if</span> <span class="n">used</span> <span class="n">without</span> <span class="n">a</span> <span class="s1">&#39;directory&#39;</span> <span class="n">argument</span> <span class="ow">or</span> <span class="n">lists</span> <span class="n">the</span> <span class="n">files</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">given</span> <span class="s1">&#39;directory&#39;</span> <span class="p">(</span><span class="k">if</span> <span class="n">defined</span><span class="p">)</span><span class="o">.</span> <span class="n">Only</span> <span class="n">lists</span> <span class="n">up</span> <span class="n">to</span> <span class="mi">15</span> <span class="n">files</span><span class="o">/</span><span class="n">directories</span>
@@ -219,25 +277,15 @@
 </div>
 </section>
 <section id="output-directory">
-<h2>6. Output directory<a class="headerlink" href="#output-directory" title="Permalink to this headline">¶</a></h2>
+<h2>6. Output directory<a class="headerlink" href="#output-directory" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">DRS_DATA_REDUC</span> <span class="o">//</span> <span class="n">Default</span><span class="p">:</span> <span class="s2">&quot;red&quot;</span> <span class="n">directory</span>
 </pre></div>
 </div>
 </section>
 <section id="output-files">
-<h2>7. Output files<a class="headerlink" href="#output-files" title="Permalink to this headline">¶</a></h2>
+<h2>7. Output files<a class="headerlink" href="#output-files" title="Permalink to this heading">¶</a></h2>
 <table class="csvtable docutils align-default" id="id1">
 <caption><span class="caption-text">Outputs</span><a class="headerlink" href="#id1" title="Permalink to this table">¶</a></caption>
-<colgroup>
-<col style="width: 13%" />
-<col style="width: 13%" />
-<col style="width: 13%" />
-<col style="width: 13%" />
-<col style="width: 13%" />
-<col style="width: 13%" />
-<col style="width: 13%" />
-<col style="width: 13%" />
-</colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>name</p></th>
 <th class="head"><p>description</p></th>
@@ -335,7 +383,7 @@
 </table>
 </section>
 <section id="debug-plots">
-<h2>8. Debug plots<a class="headerlink" href="#debug-plots" title="Permalink to this headline">¶</a></h2>
+<h2>8. Debug plots<a class="headerlink" href="#debug-plots" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SHAPE_DX</span>
 <span class="n">SHAPE_ANGLE_OFFSET_ALL</span>
 <span class="n">SHAPE_ANGLE_OFFSET</span>
@@ -344,7 +392,7 @@
 </div>
 </section>
 <section id="summary-plots">
-<h2>9. Summary plots<a class="headerlink" href="#summary-plots" title="Permalink to this headline">¶</a></h2>
+<h2>9. Summary plots<a class="headerlink" href="#summary-plots" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SUM_SHAPE_ANGLE_OFFSET</span>
 </pre></div>
 </div>
@@ -370,7 +418,7 @@
         <li class="right" >
           <a href="rdefinition_LOC.html" title="apero_loc_spirou"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.259 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.8.001 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../../main/spirou/main_spirou.html" >SPIRou documentation</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="recipes.html" >Recipes (SPIROU)</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">apero_shape_ref_spirou</a></li> 
@@ -378,7 +426,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2019, Neil Cook.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 6.1.3.
     </div>
   </body>
 </html>

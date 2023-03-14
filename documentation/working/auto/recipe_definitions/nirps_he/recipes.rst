@@ -28,10 +28,13 @@ This section describes all the NIRPS_HE recipes to use with APERO.
     rdefinition_EXT.rst
     rdefinition_WAVEREF.rst
     rdefinition_WAVE.rst
+    rdefinition_CCF.rst
+    rdefinition_MKSKY.rst
     rdefinition_MKTELL.rst
     rdefinition_MKMODEL.rst
     rdefinition_FTELLU.rst
     rdefinition_MKTEMP.rst
+    rdefinition_OBJPOST.rst
 
 .. only:: html
 

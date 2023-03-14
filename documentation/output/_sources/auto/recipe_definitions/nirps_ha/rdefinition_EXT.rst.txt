@@ -55,6 +55,7 @@ No schematic set
      --backsub[True/False] // [BOOLEAN] Whether to do background subtraction
      --blazefile[FILE:FF_BLAZE] // [STRING] Define a custom file to use for blaze correction. If unset uses closest file from calibDB. Checks for an absolute path and then checks directory (CALIBDB=BADPIX)
      --combine[True/False] // [BOOLEAN] Whether to combine fits files in file list or to process them separately
+     --combine_method[STRING] // Method to combine files (if --combine=True)
      --objname[STRING] // Sets the object name to extract (filters input files)
      --dprtype[STRING] // [STRING] Sets the DPRTYPE to extract (filters input files)
      --darkfile[FILE:DARKREF] // [STRING] The Dark file to use (CALIBDB=DARKM)
@@ -65,7 +66,7 @@ No schematic set
      --flatfile[FILE:FF_FLAT] // [STRING] Define a custom file to use for flat correction. If unset uses closest file from calibDB. Checks for an absolute path and then checks directory
      --locofile[FILE:LOC_LOCO] // [STRING] Sets the LOCO file used to get the coefficients (CALIBDB=LOC_{fiber})
      --orderpfile[FILE:LOC_ORDERP] // [STRING] Sets the Order Profile file used to get the coefficients (CALIBDB=ORDER_PROFILE_{fiber}
-     --plot[0>INT>3] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
+     --plot[0>INT>4] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
      --resize[True/False] // [BOOLEAN] Whether to resize image
      --shapex[FILE:SHAPE_X] // [STRING] Sets the SHAPE DXMAP file used to get the dx correction map (CALIBDB=SHAPEX)
      --shapey[FILE:SHAPE_Y] // [STRING] Sets the SHAPE DYMAP file used to get the dy correction map (CALIBDB=SHAPEY)
@@ -73,6 +74,7 @@ No schematic set
      --leakcorr[True/False] // [BOOLEAN] Sets whether to do the leak correction (else defaults to CORRECT_LEAKAGE value in constants)
      --wavefile[FILE:WAVESOL_REF,WAVE_NIGHT,WAVESOL_DEFAULT] // [STRING] Define a custom file to use for the wave solution. If unset uses closest file from header or calibDB (depending on setup). Checks for an absolute path and then checks directory
      --force_ref_wave[True/False] // Force using the reference wave solution
+     --no_in_qc // Disable checking the quality control of input files
 
 
 ********************************************************************************

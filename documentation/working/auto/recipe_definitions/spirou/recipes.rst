@@ -29,11 +29,10 @@ This section describes all the SPIROU recipes to use with APERO.
     rdefinition_WAVEREF.rst
     rdefinition_WAVE.rst
     rdefinition_CCF.rst
+    rdefinition_MKSKY.rst
     rdefinition_MKTELL.rst
     rdefinition_MKMODEL.rst
-    rdefinition_MKTELLDB.rst
     rdefinition_FTELLU.rst
-    rdefinition_FTELLDB.rst
     rdefinition_MKTEMP.rst
     rdefinition_POLAR.rst
     rdefinition_OBJPOST.rst

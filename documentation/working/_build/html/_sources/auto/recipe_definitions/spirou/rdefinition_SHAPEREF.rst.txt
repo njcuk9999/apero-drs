@@ -15,7 +15,7 @@ apero_shape_ref_spirou
 SHORTNAME: SHAPEREF
 
 
-No description set
+.. include:: ../../../resources/spirou/descriptions/apero_shape_ref_spirou.rst
 
 
 ********************************************************************************
@@ -67,9 +67,10 @@ No description set
      --flipimage[None,x,y,both] // [BOOLEAN] Whether to flip fits image
      --fluxunits[ADU/s,e-] // [STRING] Output units for flux
      --locofile[FILE:LOC_LOCO] // [STRING] Sets the LOCO file used to get the coefficients (CALIBDB=LOC_{fiber})
-     --plot[0>INT>3] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
+     --plot[0>INT>4] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
      --resize[True/False] // [BOOLEAN] Whether to resize image
-     --fpref[FILE:REF_FP] // [STRING] Define a custom file to use for the FP reference (skips the FP reference step) - this file must have been produced by a previous run of cal_shape_reference
+     --no_in_qc // Disable checking the quality control of input files
+     --fpref[FILE:REF_FP] // [STRING] Sets the FP reference file to use (CALIBDB = FPREF)
 
 
 ********************************************************************************

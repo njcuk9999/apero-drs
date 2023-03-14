@@ -1,8 +1,8 @@
 ORDER,RECIPE,SHORTNAME,RECIPE KIND,REF RECIPE,ARGS,KWARGS
 1,apero_dark_ref_nirps_ha.py,DARKREF,calib-reference,Yes,,
 2,apero_badpix_nirps_ha.py,BADREF,calib-reference,Yes,,
-3,apero_loc_nirps_ha.py,LOCREFB,calib-reference-B,Yes,{files}=[DARK_FLAT],
-4,apero_loc_nirps_ha.py,LOCREFA,calib-reference-A,Yes,{files}=[FLAT_DARK],
+3,apero_loc_nirps_ha.py,LOCREFCAL,calib-reference-CAL,No,{files}=[DARK_FLAT],
+4,apero_loc_nirps_ha.py,LOCREFSCI,calib-reference-SCI,No,{files}=[FLAT_DARK],
 5,apero_shape_ref_nirps_ha.py,SHAPEREF,calib-reference,Yes,,
 6,apero_shape_nirps_ha.py,SHAPELREF,calib-reference,Yes,,
 7,apero_flat_nirps_ha.py,FLATREF,calib-reference,Yes,,

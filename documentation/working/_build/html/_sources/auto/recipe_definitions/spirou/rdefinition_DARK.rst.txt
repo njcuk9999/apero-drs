@@ -51,7 +51,8 @@ No schematic set
 
      --database[True/False] // [BOOLEAN] Whether to add outputs to calibration database
      --combine[True/False] // [BOOLEAN] Whether to combine fits files in file list or to process them separately
-     --plot[0>INT>3] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
+     --plot[0>INT>4] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
+     --no_in_qc // Disable checking the quality control of input files
 
 
 ********************************************************************************

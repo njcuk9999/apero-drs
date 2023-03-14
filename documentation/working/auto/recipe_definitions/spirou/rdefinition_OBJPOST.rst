@@ -15,7 +15,7 @@ apero_postprocess_spirou
 SHORTNAME: OBJPOST
 
 
-No description set
+.. include:: ../../../resources/spirou/descriptions/apero_postprocess_spirou.rst
 
 
 ********************************************************************************
@@ -51,6 +51,7 @@ No schematic set
 
      --skip // Overwrites post processed files if they exist (default is False)
      --clear // Clear the reduced folder after post-processing. WARNING removes all files from the reduced directory.
+     --no_in_qc // Disable checking the quality control of input files
 
 
 ********************************************************************************

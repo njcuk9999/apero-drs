@@ -51,11 +51,13 @@ No schematic set
 
      --use_template[True/False] // Whether to use the template provided from the telluric database
      --template[FILE:TELLU_TEMP] // Filename of the custom template to use (instead of from telluric database)
+     --finiteres[True/False] // Whether to do the finite resolution correction (Always false if no template)
      --onlypreclean // Only run the precleaning steps (not recommended - for debugging ONLY)
      --database[True/False] // [BOOLEAN] Whether to add outputs to calibration database
      --blazefile[FILE:FF_BLAZE] // [STRING] Define a custom file to use for blaze correction. If unset uses closest file from calibDB. Checks for an absolute path and then checks directory (CALIBDB=BADPIX)
-     --plot[0>INT>3] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
+     --plot[0>INT>4] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
      --wavefile[FILE:WAVESOL_REF,WAVE_NIGHT,WAVESOL_DEFAULT] // [STRING] Define a custom file to use for the wave solution. If unset uses closest file from header or calibDB (depending on setup). Checks for an absolute path and then checks directory
+     --no_in_qc // Disable checking the quality control of input files
 
 
 ********************************************************************************
@@ -112,6 +114,7 @@ No schematic set
 
 .. code-block:: 
 
+    TELLU_SKY_CORR_PLOT
     EXTRACT_S1D
     EXTRACT_S1D_WEIGHT
     FTELLU_PCA_COMP1
@@ -126,6 +129,7 @@ No schematic set
     TELLUP_ABSO_SPEC
     TELLUP_CLEAN_OH
     FTELLU_RES_MODEL
+    TELLU_FINITE_RES_CORR
 
 
 ********************************************************************************
