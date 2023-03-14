@@ -421,9 +421,13 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         header_cols.add(name='KW_TARGET_TYPE', datatype='VARCHAR(80)')
         header_cols.add(name='KW_MID_OBS_TIME', datatype='DOUBLE',
                         is_index=True)
-        header_cols.add(name='KW_OBJECTNAME', datatype='VARCHAR(80)')
+        # cleaned object name
         header_cols.add(name='KW_OBJNAME', datatype='VARCHAR(80)',
                         is_index=True)
+        # raw object name
+        header_cols.add(name='KW_OBJECTNAME', datatype='VARCHAR(80)')
+        # other raw object name
+        header_cols.add(name='KW_OBJECTNAME2', datatype='VARCHAR(80)')
         header_cols.add(name='KW_OBSTYPE', datatype='VARCHAR(80)')
         header_cols.add(name='KW_EXPTIME', datatype='DOUBLE')
         header_cols.add(name='KW_INSTRUMENT', datatype='VARCHAR(80)')
@@ -465,6 +469,7 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         keys = ['KW_TARGET_TYPE', 'KW_OBJECTNAME', 'KW_OBSTYPE',
                 'KW_RAW_DPRTYPE', 'KW_RAW_DPRCATG', 'KW_INSTRUMENT',
                 'KW_INST_MODE', 'KW_DPRTYPE', 'KW_OUTPUT', 'KW_NIGHT_OBS']
+                'KW_INST_MODE', 'KW_DPRTYPE', 'KW_OUTPUT', 'KW_OBJECTNAME2']
         return keys
 
     # =========================================================================

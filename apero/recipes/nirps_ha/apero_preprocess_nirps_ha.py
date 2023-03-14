@@ -208,7 +208,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         snr_hotpix, rms_list = [], []
         shiftdx, shiftdy = 0, 0
         fail, fail_qcparams = False, []
-        qc_params = [[], [], [], [], []]
+        qc_params = [[], [], [], []]
         # do this iteratively as if there is a shift need to re-workout QC
         for iteration in range(2):
             # get pass condition
