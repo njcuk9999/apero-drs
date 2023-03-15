@@ -38,12 +38,73 @@ UpdateDict = Union[List[Dict[str, Any]], Dict[str, Any]]
 # =============================================================================
 # Define functions
 # =============================================================================
-class Database:
+class AperoDatabaseException(Exception):
+    """
+    Database exception
+    """
+    pass
+
+
+class AperoDatabaseError(AperoDatabaseException):
+    def __init__(self, message: Union[str, None] = None,
+                 errorobj: Any = None, url: str = None,
+                 func_name: Union[str, None] = None):
+        """
+        Construct the Database Error instance
+
+        :param message: str a mesage to pass / print
+        :param errorobj: the error instance (or anything else)
+        :param url: str, the database URL
+        :param func_name: str, the function name where error occured
+        """
+        self.message = message
+        self.errorobj = errorobj
+        self.url = url
+        self.func_name = func_name
+        # call super class
+        super().__init__(message)
+
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state (for pickle)
+        return state
+
+    def __setstate__(self, state):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+
+    def __str__(self):
+        """
+        Standard __str__ return (used in raising as Exception)
+        :return:
+        """
+        emsg = drs_base.BETEXT['00-002-00028']
+        if self.url is not None:
+            emsg += drs_base.BETEXT['00-002-00029']
+        if self.func_name is not None:
+            emsg += drs_base.BETEXT['00-002-00030']
+        return emsg.format(self.message, self.url, self.func_name)
+
+
+class AperoDatabase:
     def __init__(self, url, verbose: bool = False,
                  tablename: Optional[str] = None):
         """
 
         """
+        # set the class name
+        self.classname = 'AperoDatabase'
         # store the uri used
         self.url = url
         # store verboseness
@@ -100,15 +161,116 @@ class Database:
         if not database_exists(self.engine.url):
             create_database(self.engine.url)
 
-    def add_table(self, name: str,
+    def add_table(self, tablename: str,
                   columns: List[sqlalchemy.Column],
                   indexes: List[sqlalchemy.Index] = None):
+        """
+        Add a table to the database
+
+        :param tablename: str, the name of the table
+        :param columns: list of sqlalchemy.Column instances
+        :param indexes: Optional, list of sqlalchemy.Index instances
+        :return:
+        """
+        # check to see if table name exists in database
+        inspector = sqlalchemy.inspect(self.engine)
+        # remove current table if adding a table
+        if inspector.has_table(tablename):
+            self.delete_table(tablename)
         # define the meta data
         metadata = sqlalchemy.MetaData()
         # create the table
-        _ = sqlalchemy.Table(name, metadata, *columns, *indexes)
+        _ = sqlalchemy.Table(tablename, metadata, *columns, *indexes)
         # create table
         metadata.create_all(self.engine)
+
+    def count(self, tablename: Optional[str] = None,
+              condition: Optional[str] = None) -> int:
+        """
+        Counts the number of rows in table. If condition is set
+        counts just these rows
+
+        :param table: A str which specifies which table within the database to
+                   retrieve data from.  If there is only one table to pick
+                   from, this may be left as None to use it automatically.
+        :param condition: Filter results using a SQL conditions string
+                       -- see examples, and possibly this
+                       useful tutorial:
+                           https://www.sqlitetutorial.net/sqlite-where/.
+                       If None, no results will be filtered out.
+
+        :return: int, the count
+        """
+        # define the meta data
+        metadata = sqlalchemy.MetaData()
+        metadata.reflect(bind=self.engine)
+        # get the table name
+        if tablename is None:
+            tablename = self.tablename
+        # create a table to fill
+        sqltable = sqlalchemy.Table(tablename, metadata)
+        # Create a session
+        Session = sqlalchemy.orm.sessionmaker(bind=self.engine)
+        # ---------------------------------------------------------------------
+        with Session() as session:
+            # set up query
+            query = session.query(sqlalchemy.func.count())
+            # add the table to select from
+            query = query.select_from(sqltable)
+            # if we have a condition filter by it
+            if condition is not None:
+                query = query.filter(sqlalchemy.text(condition))
+            # get the count
+            count = query.scalar()
+        # ---------------------------------------------------------------------
+        # return the count
+        return count
+
+    def unique(self, column: str, tablename: Optional[str] = None,
+               condition: Optional[str] = None) -> np.ndarray:
+        """
+        Get the unique values for a column (with condition if set)
+
+        :param column: a string containing the comma-separated columns to
+             retrieve from the database.  You may also apply basic
+             math functions and aggregators to the columns
+             ( see examples below).
+             "*" retrieves all available columns.
+        :param tablename: A str which specifies which table within the database to
+                   retrieve data from.  If there is only one table to pick
+                   from, this may be left as None to use it automatically.
+        :param condition: Filter results using a SQL conditions string
+                       -- see examples, and possibly this
+                       useful tutorial:
+                           https://www.sqlitetutorial.net/sqlite-where/.
+                       If None, no results will be filtered out.
+
+        :return:
+        """
+        # define the meta data
+        metadata = sqlalchemy.MetaData()
+        metadata.reflect(bind=self.engine)
+        # get the table name
+        if tablename is None:
+            tablename = self.tablename
+        # create a table to fill
+        sqltable = sqlalchemy.Table(tablename, metadata)
+        # add the table to select from
+        query = sqltable.select().with_only_columns(getattr(sqltable.c, column))
+        # deal with where condition
+        if condition is not None:
+            query = query.where(sqlalchemy.text(condition))
+        # make sure we only get unique values
+        query = query.distinct()
+        # get the unique values
+        with self.engine.begin() as conn:
+            result = conn.execute(query).fetchall()
+        # flatten result
+        items = [item for sublist in result for item in sublist]
+        # remove None from items
+        items = [item for item in items if item is not None]
+        # return unique result
+        return np.array(list(set(items)))
 
     def get(self, columns: str, tablename: Optional[str] = None,
             condition: Optional[str] = None,
@@ -171,18 +333,18 @@ class Database:
         """
         # define the meta data
         metadata = sqlalchemy.MetaData()
+        metadata.reflect(bind=self.engine)
         # get the table name
         if tablename is None:
             tablename = self.tablename
         # create a table to fill
-        sqltable = sqlalchemy.Table(tablename, metadata, autoload=True,
-                                    autoload_with=self.engine)
+        sqltable = sqlalchemy.Table(tablename, metadata)
         # create a query statement
         if columns == '*':
-            query = sqlalchemy.select([sqltable])
+            query = sqltable.select()
         else:
             sqlcols = [getattr(sqltable.c, col) for col in columns.split(',')]
-            query = sqlalchemy.select(sqlcols)
+            query = sqltable.select().with_only_columns(*sqlcols)
         # ---------------------------------------------------------------------
         # add condition
         if condition is not None:
@@ -206,11 +368,23 @@ class Database:
         if max_rows is not None:
             query = query.limit(max_rows)
         # ---------------------------------------------------------------------
+        # add the group by statement
+        if groupby is not None:
+            query = query.group_by(groupby)
+        # ---------------------------------------------------------------------
         # execute the query
         with self.engine.begin() as conn:
             result = conn.execute(query)
-            # get the results
-            rows = result.fetchall()
+            # get the results as a list
+            if return_pandas:
+                rows = pd.DataFrame(result.fetchall(), columns=result.keys())
+            elif return_table:
+                rows = pd.DataFrame(result.fetchall(), columns=result.keys())
+                rows = AstropyTable.from_pandas(rows)
+            elif return_array:
+                rows = np.array(result.fetchall())
+            else:
+                rows = result.fetchall()
         # ---------------------------------------------------------------------
         return rows
 
@@ -251,12 +425,12 @@ class Database:
         """
         # define the meta data
         metadata = sqlalchemy.MetaData()
+        metadata.reflect(bind=self.engine)
         # get the table name
         if tablename is None:
             tablename = self.tablename
         # create a table to fill
-        sqltable = sqlalchemy.Table(tablename, metadata, autoload=True,
-                                    autoload_with=self.engine)
+        sqltable = sqlalchemy.Table(tablename, metadata)
         # ---------------------------------------------------------------------
         # create an update query statement
         update_query = sqlalchemy.update(sqltable)
@@ -325,12 +499,12 @@ class Database:
         """
         # define the meta data
         metadata = sqlalchemy.MetaData()
+        metadata.reflect(bind=self.engine)
         # get the table name
         if tablename is None:
             tablename = self.tablename
         # create a table to fill
-        sqltable = sqlalchemy.Table(tablename, metadata, autoload=True,
-                                    autoload_with=self.engine)
+        sqltable = sqlalchemy.Table(tablename, metadata)
         # ---------------------------------------------------------------------
         # create an update query statement
         insert_query = sqlalchemy.insert(sqltable)
@@ -376,12 +550,12 @@ class Database:
         """
         # define the meta data
         metadata = sqlalchemy.MetaData()
+        metadata.reflect(bind=self.engine)
         # get the table name
         if tablename is None:
             tablename = self.tablename
         # create a table to fill
-        sqltable = sqlalchemy.Table(tablename, metadata, autoload=True,
-                                    autoload_with=self.engine)
+        sqltable = sqlalchemy.Table(tablename, metadata)
         # ---------------------------------------------------------------------
         # set up a delete query
         delete_query = sqlalchemy.delete(sqltable)
@@ -414,14 +588,20 @@ class Database:
                                       exceptionname='DatabaseError',
                                       exception=func_name)
         # ---------------------------------------------------------------------
+        # check to see if table name exists in database
+        inspector = sqlalchemy.inspect(self.engine)
+        # cannot delete if table does not exist
+        if not inspector.has_table(tablename):
+            return
+        # ---------------------------------------------------------------------
         # define the meta data
         metadata = sqlalchemy.MetaData()
+        metadata.reflect(bind=self.engine)
         # get the table name
         if tablename is None:
             tablename = self.tablename
         # create a table to fill
-        sqltable = sqlalchemy.Table(tablename, metadata, autoload=True,
-                                    autoload_with=self.engine)
+        sqltable = sqlalchemy.Table(tablename, metadata)
         # ---------------------------------------------------------------------
         # execute the query
         with self.engine.begin() as _:
@@ -437,20 +617,88 @@ class Database:
                          taken or an SQL keyword.
         """
         # ---------------------------------------------------------------------
-        # define the meta data
-        metadata = sqlalchemy.MetaData(bind=self.engine)
-        # create a table to fill
-        oldtable = sqlalchemy.Table(old_name, metadata, autoload=True)
-        # copy the parameters of old_table to create a new table
-        newtable = sqlalchemy.Table(new_name, metadata, *oldtable.columns,
-                                    extend_existing=True)
-
-        metadata.create_all(bind=self.engine, tables=[newtable])
+        # define command
+        # TODO: Question: Does this work with all SQL dialects?
+        # noinspection SqlDialectInspection,SqlNoDataSourceInspection
+        command = 'ALTER TABLE {} RENAME TO {}'.format(old_name, new_name)
+        # ---------------------------------------------------------------------
         # execute the query
         with self.engine.begin() as conn:
-            conn.execute.execute(newtable.insert().from_select(oldtable.columns,
-                                                     oldtable.select()))
-        metadata.drop_all(bind=self.engine, tables=[oldtable])
+            conn.execute(sqlalchemy.text(command))
+        # ---------------------------------------------------------------------
+        # if old_name is the current tablename then change it the new_name
+        if old_name == self.tablename:
+            self.tablename = new_name
+
+    def colnames(self, columns: str,
+                 tablename: Optional[str] = None) -> List[str]:
+        """
+        Get the column names from table (i.e. deal with * or columns separated
+        by commas)
+
+        :param columns: str, comma separate set of column names or *
+        :param table: str, the name of the Table
+
+        :return: list of strings, the column names
+        """
+        # define the meta data
+        metadata = sqlalchemy.MetaData()
+        metadata.reflect(bind=self.engine)
+        # get the table name
+        if tablename is None:
+            tablename = self.tablename
+        # create a table to fill
+        sqltable = sqlalchemy.Table(tablename, metadata)
+        # ---------------------------------------------------------------------
+        # create a dictionary of the columns and values
+        if columns == '*':
+            columns = [col.name for col in sqltable.columns]
+        else:
+            columns.split(',')
+        # ---------------------------------------------------------------------
+        return columns
+
+    def _infer_table_(self, tablename: Optional[str] = None) -> str:
+        """
+        Infer the table from the database
+
+        :param tablename: str, the name of the table
+
+        :return: sqlalchemy.Table
+        """
+        # set function name
+        func_name = '{0}.{1}.{2}()'.format(__NAME__, self.classname,
+                                           '_infer_table_')
+        # ---------------------------------------------------------------------
+        # use an inspector to get a list of table names
+        inspector = sqlalchemy.inspect(self.engine)
+        # get the table names
+        table_names = inspector.get_table_names()
+        # ---------------------------------------------------------------------
+        # if we have a tablename set the return this
+        if self.tablename is not None:
+            if self.tablename in table_names:
+                return self.tablename
+        # if the argument tablename is a string return this
+        if isinstance(tablename, str):
+            if tablename in table_names:
+                return tablename
+        # ---------------------------------------------------------------------
+        if len(table_names) != 1:
+            # log error: pick one -- table cannot be None
+            ecode = '00-002-00041'
+            emsg = drs_base.BETEXT[ecode]
+            # get string list of tables
+            strtables = ''
+            for _table in table_names:
+                strtables += '\n\t\t- ' + _table
+            # add error args
+            eargs = [self.url, strtables, func_name]
+            # log base error
+            raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                      exceptionname='AperoDatabaseError',
+                                      exception=AperoDatabaseError)
+        return table_names[0]
 
 
 # =============================================================================
@@ -462,7 +710,7 @@ if __name__ == "__main__":
 
     db_uri = 'mysql+pymysql://spirou:Covid19!@rali:3306/test'
 
-    database = Database(db_uri)
+    database = AperoDatabase(db_uri)
 
     database.add_database()
 
@@ -484,7 +732,6 @@ if __name__ == "__main__":
 
     rows = database.get(columns='id,name,age')
 
-    database.rename_table('users', 'users2')
 
 
 
