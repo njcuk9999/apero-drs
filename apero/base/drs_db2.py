@@ -35,6 +35,7 @@ __release__ = base.__release__
 
 UpdateDict = Union[List[Dict[str, Any]], Dict[str, Any]]
 
+
 # =============================================================================
 # Define functions
 # =============================================================================
@@ -141,7 +142,7 @@ class AperoDatabase:
         # update dict with state
         self.__dict__.update(state)
         # re-create engine after pickle
-        self.engine = sqlalchemy.create_engine(self.url, echo=self.verbose )
+        self.engine = sqlalchemy.create_engine(self.url, echo=self.verbose)
 
     def __str__(self):
         """
@@ -190,9 +191,10 @@ class AperoDatabase:
         Counts the number of rows in table. If condition is set
         counts just these rows
 
-        :param table: A str which specifies which table within the database to
-                   retrieve data from.  If there is only one table to pick
-                   from, this may be left as None to use it automatically.
+        :param tablename: A str which specifies which table within the
+                   database to retrieve data from.  If there is only one
+                   table to pick from, this may be left as None to use it
+                   automatically.
         :param condition: Filter results using a SQL conditions string
                        -- see examples, and possibly this
                        useful tutorial:
@@ -210,9 +212,9 @@ class AperoDatabase:
         # create a table to fill
         sqltable = sqlalchemy.Table(tablename, metadata)
         # Create a session
-        Session = sqlalchemy.orm.sessionmaker(bind=self.engine)
+        sessionmaker = sqlalchemy.orm.sessionmaker(bind=self.engine)
         # ---------------------------------------------------------------------
-        with Session() as session:
+        with sessionmaker() as session:
             # set up query
             query = session.query(sqlalchemy.func.count())
             # add the table to select from
@@ -287,9 +289,10 @@ class AperoDatabase:
                      math functions and aggregators to the columns
                      ( see examples below).
                      "*" retrieves all available columns.
-        :param table: A str which specifies which table within the database to
-                   retrieve data from.  If there is only one table to pick
-                   from, this may be left as None to use it automatically.
+        :param tablename: A str which specifies which table within the
+                          database to retrieve data from.  If there is only
+                          one table to pick from, this may be left as None to
+                          use it automatically.
         :param condition: Filter results using a SQL conditions string
                        -- see examples, and possibly this
                        useful tutorial:
@@ -408,9 +411,10 @@ class AperoDatabase:
         :param condition: An SQL condition string to identify the rows to be
                           modified.  This may be set to None to apply the
                           modification to all rows.
-        :param table: A str which specifies which table within the database to
-                   retrieve data from.  If there is only one table to pick
-                   from, this may be left as None to use it automatically.
+        :param tablename: A str which specifies which table within the
+                          database to retrieve data from.  If there is only
+                          one table to pick from, this may be left as None
+                          to use it automatically.
         :param unique_cols: list of strings or None, if set this is columns that
                             are used to form the unique hash for specifying
                             unique rows
@@ -479,12 +483,10 @@ class AperoDatabase:
                        given to set the value to the result of a SQL statement
                        given by the bytestring.  If there is only one value,
                        putting in a list is optional.
-        :param condition: An SQL condition string to identify the rows to be
-                          modified.  This may be set to None to apply the
-                          modification to all rows.
-        :param table: A str which specifies which table within the database to
-                   retrieve data from.  If there is only one table to pick
-                   from, this may be left as None to use it automatically.
+        :param tablename: A str which specifies which table within the
+                          database to retrieve data from.  If there is only
+                          one table to pick from, this may be left as None to
+                          use it automatically.
         :param unique_cols: list of strings or None, if set this is columns that
                             are used to form the unique hash for specifying
                             unique rows
@@ -538,10 +540,10 @@ class AperoDatabase:
         """
         Delete a row from the table
 
-        :param table: A str which specifies which table within the database
-                      to retrieve data from.  If there is only one table to
-                      pick from, this may be left as None to use it
-                      automatically
+        :param tablename: A str which specifies which table within the database
+                          to retrieve data from.  If there is only one table to
+                          pick from, this may be left as None to use it
+                          automatically
         :param condition: An SQL condition string to identify the rows to be
                           modified.  This may be set to None to apply the
                           modification to all rows.
@@ -573,8 +575,8 @@ class AperoDatabase:
         Deletes a table from the database, erasing all contained data
         permenantly!
 
-        :param name: The name of the table to be deleted.
-                     See Database.tables for a list of eligible tables.
+        :param tablename: The name of the table to be deleted.
+                          See Database.tables for a list of eligible tables.
         """
         func_name = __NAME__ + '.Database.delete_table()'
         # make sure table is a string
@@ -637,7 +639,7 @@ class AperoDatabase:
         by commas)
 
         :param columns: str, comma separate set of column names or *
-        :param table: str, the name of the Table
+        :param tablename: str, the name of the Table
 
         :return: list of strings, the column names
         """
@@ -708,32 +710,29 @@ class AperoDatabase:
 if __name__ == "__main__":
     # ----------------------------------------------------------------------
 
-    db_uri = 'mysql+pymysql://spirou:Covid19!@rali:3306/test'
+    _db_uri = 'mysql+pymysql://spirou:Covid19!@rali:3306/test'
 
-    database = AperoDatabase(db_uri)
+    _database = AperoDatabase(_db_uri)
 
-    database.add_database()
+    _database.add_database()
 
-    columns = [sqlalchemy.Column('id', sqlalchemy.Integer, primary_key=True),
-               sqlalchemy.Column('name', sqlalchemy.String(128), unique=True),
-               sqlalchemy.Column('age', sqlalchemy.Integer)]
-    indexes = [sqlalchemy.Index('idx_users_name_age', 'name', 'age')]
+    _columns = [sqlalchemy.Column('id', sqlalchemy.Integer, primary_key=True),
+                sqlalchemy.Column('name', sqlalchemy.String(128), unique=True),
+                sqlalchemy.Column('age', sqlalchemy.Integer)]
+    _indexes = [sqlalchemy.Index('idx_users_name_age', 'name', 'age')]
 
-    database.delete_table('users')
-    database.add_table('users', columns, indexes)
+    _database.delete_table('users')
+    _database.add_table('users', _columns, _indexes)
 
-    database.tablename = 'users'
+    _database.tablename = 'users'
 
-    database.add_row(insert_dict=[{'id': 1, 'name': 'test1', 'age': 11},
-                                  {'id': 2, 'name': 'test2', 'age': 22},
-                                  {'id': 3, 'name': 'test3', 'age': 33}])
+    _database.add_row(insert_dict=[{'id': 1, 'name': 'test1', 'age': 11},
+                                   {'id': 2, 'name': 'test2', 'age': 22},
+                                   {'id': 3, 'name': 'test3', 'age': 33}])
 
-    database.add_row(insert_dict={'id': 4, 'name': 'test4', 'age': 44})
+    _database.add_row(insert_dict={'id': 4, 'name': 'test4', 'age': 44})
 
-    rows = database.get(columns='id,name,age')
-
-
-
+    _rows = _database.get(columns='id,name,age')
 
 # =============================================================================
 # End of code
