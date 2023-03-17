@@ -468,7 +468,7 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         """
         keys = ['KW_TARGET_TYPE', 'KW_OBJECTNAME', 'KW_OBSTYPE',
                 'KW_RAW_DPRTYPE', 'KW_RAW_DPRCATG', 'KW_INSTRUMENT',
-                'KW_INST_MODE', 'KW_DPRTYPE', 'KW_OUTPUT', 'KW_NIGHT_OBS']
+                'KW_INST_MODE', 'KW_DPRTYPE', 'KW_OUTPUT', 'KW_NIGHT_OBS',
                 'KW_INST_MODE', 'KW_DPRTYPE', 'KW_OUTPUT', 'KW_OBJECTNAME2']
         return keys
 
