@@ -86,7 +86,3 @@ Other
    main/misc/updates.rst
    main/misc/udem.rst
 
-.. sidebar-links::
-   main/misc/udem.rst
-
-:github:
