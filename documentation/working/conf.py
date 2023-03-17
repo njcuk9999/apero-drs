@@ -38,11 +38,17 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.ifconfig',
               'sphinx.ext.viewcode',
               'sphinx.ext.githubpages',
+              'sphinx_toolbox.sidebar_links',
+              'sphinx_toolbox.github',
               ]  # 'sphinx.ext.autosectionlabel']
 
 # make sure to add the prefix
 # autoselectionlabel_prefix_document = True
 # autoselectionlabel_maxdepth = 5
+
+
+github_username = 'njcuk9999'
+github_repository = 'apero-drs'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

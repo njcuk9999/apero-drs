@@ -13,7 +13,7 @@ SPIROU
 2) `QC data working group <https://github.com/njcuk9999/spirou_py3/wiki/spirou-qc>`_
 3) `Extraction/telluric data working group <https://github.com/njcuk9999/spirou_py3/wiki/spirou-et>`_
 4) `Radial velocity data working group <https://github.com/njcuk9999/spirou_py3/wiki/spirou-rv>`_
-5) `ARI <http://apero.exoplanets.ca/ari/spirou>`_ <password protected)
+5) `ARI <http://apero.exoplanets.ca/ari/spirou>`_ (password protected)
 
 NIRPS
 -------------------------

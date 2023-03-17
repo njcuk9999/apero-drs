@@ -84,13 +84,9 @@ Other
    main/misc/pythoninstallation.rst
    main/misc/glossary.rst
    main/misc/updates.rst
-
-===========================================
-UdeM
-===========================================
-
-.. toctree::
-   :maxdepth: 1
-   :titlesonly:
-
    main/misc/udem.rst
+
+.. sidebar-links
+   main/misc/udem.rst
+
+:github:
