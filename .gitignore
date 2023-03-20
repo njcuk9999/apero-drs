@@ -188,6 +188,10 @@ fabric.properties
 # Ignore database files
 *.db
 
+# Ignore documentation files
+/documentation/output/*
+/documentation/working/_build/*
+
 # Ignore instrument data files
 /apero/data/nirps_ha/*
 /apero/data/nirps_he/*
