@@ -148,7 +148,7 @@
     
 
 \title{APERO Documentation}
-\date{Mar 02, 2023}
+\date{Mar 17, 2023}
 \release{0.8.001}
 \author{Neil Cook}
 \newcommand{\sphinxlogo}{\sphinxincludegraphics{apero_logo.png}\par}
@@ -11967,7 +11967,7 @@ Gl905 respectively for Teff \textgreater{}3500 K, 3000\sphinxhyphen{}3500 K, \te
 products are useful to confirm the systemic velocity of the star, avoiding eventual target misidentifying, as well
 as for flagging spectroscopic binaries. For time\sphinxhyphen{}series analysis, it can be significantly improved upon by using
 all observations to perform a spectral cleaning to obtain a much cleaner CCF or through completely different methods,
-such as the line\sphinxhyphen{}by\sphinxhyphen{}line algorithm.
+such as the \sphinxhref{https://lbl.exoplanets.ca}{line\sphinxhyphen{}by\sphinxhyphen{}line algorithm}.
 
 
 \subparagraph{2. Schematic}
@@ -12112,156 +12112,6 @@ EXT\_E2DS\_FF, TELLU\_OBJ
 \PYG{n}{SUM\PYGZus{}CCF\PYGZus{}PHOTON\PYGZus{}UNCERT}
 \PYG{n}{SUM\PYGZus{}CCF\PYGZus{}RV\PYGZus{}FIT}
 \end{sphinxVerbatim}
-
-\sphinxstepscope
-
-
-\paragraph{apero\_mk\_skymodel\_spirou}
-\label{\detokenize{auto/recipe_definitions/spirou/rdefinition_MKSKY:apero-mk-skymodel-spirou}}\label{\detokenize{auto/recipe_definitions/spirou/rdefinition_MKSKY:recipes-spirou-mksky}}\label{\detokenize{auto/recipe_definitions/spirou/rdefinition_MKSKY::doc}}
-
-\subparagraph{1. Description}
-\label{\detokenize{auto/recipe_definitions/spirou/rdefinition_MKSKY:description}}
-\sphinxAtStartPar
-SHORTNAME: MKSKY
-
-\sphinxAtStartPar
-No description set
-
-
-\subparagraph{2. Schematic}
-\label{\detokenize{auto/recipe_definitions/spirou/rdefinition_MKSKY:schematic}}
-\sphinxAtStartPar
-No schematic set
-
-
-\subparagraph{3. Usage}
-\label{\detokenize{auto/recipe_definitions/spirou/rdefinition_MKSKY:usage}}
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{n}{apero\PYGZus{}mk\PYGZus{}skymodel\PYGZus{}spirou}\PYG{o}{.}\PYG{n}{py} \PYG{p}{\PYGZob{}}\PYG{n}{options}\PYG{p}{\PYGZcb{}}
-\end{sphinxVerbatim}
-
-\sphinxAtStartPar
-No optional arguments
-
-
-\subparagraph{4. Optional Arguments}
-\label{\detokenize{auto/recipe_definitions/spirou/rdefinition_MKSKY:optional-arguments}}
-\sphinxAtStartPar
-No optional arguments
-
-
-\subparagraph{5. Special Arguments}
-\label{\detokenize{auto/recipe_definitions/spirou/rdefinition_MKSKY:special-arguments}}
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{xhelp}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Extended} \PYG{n}{help} \PYG{n}{menu} \PYG{p}{(}\PYG{k}{with} \PYG{n+nb}{all} \PYG{n}{advanced} \PYG{n}{arguments}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{debug}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Activates} \PYG{n}{debug} \PYG{n}{mode} \PYG{p}{(}\PYG{n}{Advanced} \PYG{n}{mode} \PYG{p}{[}\PYG{n}{INTEGER}\PYG{p}{]} \PYG{n}{value} \PYG{n}{must} \PYG{n}{be} \PYG{n}{an} \PYG{n}{integer} \PYG{n}{greater} \PYG{n}{than} \PYG{l+m+mi}{0}\PYG{p}{,} \PYG{n}{setting} \PYG{n}{the} \PYG{n}{debug} \PYG{n}{level}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{listing}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Lists} \PYG{n}{the} \PYG{n}{night} \PYG{n}{name} \PYG{n}{directories} \PYG{o+ow}{in} \PYG{n}{the} \PYG{n+nb}{input} \PYG{n}{directory} \PYG{k}{if} \PYG{n}{used} \PYG{n}{without} \PYG{n}{a} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{directory}\PYG{l+s+s1}{\PYGZsq{}} \PYG{n}{argument} \PYG{o+ow}{or} \PYG{n}{lists} \PYG{n}{the} \PYG{n}{files} \PYG{o+ow}{in} \PYG{n}{the} \PYG{n}{given} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{directory}\PYG{l+s+s1}{\PYGZsq{}} \PYG{p}{(}\PYG{k}{if} \PYG{n}{defined}\PYG{p}{)}\PYG{o}{.} \PYG{n}{Only} \PYG{n}{lists} \PYG{n}{up} \PYG{n}{to} \PYG{l+m+mi}{15} \PYG{n}{files}\PYG{o}{/}\PYG{n}{directories}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{listingall}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Lists} \PYG{n}{ALL} \PYG{n}{the} \PYG{n}{night} \PYG{n}{name} \PYG{n}{directories} \PYG{o+ow}{in} \PYG{n}{the} \PYG{n+nb}{input} \PYG{n}{directory} \PYG{k}{if} \PYG{n}{used} \PYG{n}{without} \PYG{n}{a} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{directory}\PYG{l+s+s1}{\PYGZsq{}} \PYG{n}{argument} \PYG{o+ow}{or} \PYG{n}{lists} \PYG{n}{the} \PYG{n}{files} \PYG{o+ow}{in} \PYG{n}{the} \PYG{n}{given} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{directory}\PYG{l+s+s1}{\PYGZsq{}} \PYG{p}{(}\PYG{k}{if} \PYG{n}{defined}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{version}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Displays} \PYG{n}{the} \PYG{n}{current} \PYG{n}{version} \PYG{n}{of} \PYG{n}{this} \PYG{n}{recipe}\PYG{o}{.}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{info}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Displays} \PYG{n}{the} \PYG{n}{short} \PYG{n}{version} \PYG{n}{of} \PYG{n}{the} \PYG{n}{help} \PYG{n}{menu}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{program}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{n}{The} \PYG{n}{name} \PYG{n}{of} \PYG{n}{the} \PYG{n}{program} \PYG{n}{to} \PYG{n}{display} \PYG{o+ow}{and} \PYG{n}{use} \PYG{p}{(}\PYG{n}{mostly} \PYG{k}{for} \PYG{n}{logging} \PYG{n}{purpose}\PYG{p}{)} \PYG{n}{log} \PYG{n}{becomes} \PYG{n}{date} \PYG{o}{|} \PYG{p}{\PYGZob{}}\PYG{n}{THIS} \PYG{n}{STRING}\PYG{p}{\PYGZcb{}} \PYG{o}{|} \PYG{n}{Message}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{recipe\PYGZus{}kind}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{n}{The} \PYG{n}{recipe} \PYG{n}{kind} \PYG{k}{for} \PYG{n}{this} \PYG{n}{recipe} \PYG{n}{run} \PYG{p}{(}\PYG{n}{normally} \PYG{n}{only} \PYG{n}{used} \PYG{o+ow}{in} \PYG{n}{apero\PYGZus{}processing}\PYG{o}{.}\PYG{n}{py}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{parallel}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{BOOL}\PYG{p}{]} \PYG{n}{If} \PYG{k+kc}{True} \PYG{n}{this} \PYG{o+ow}{is} \PYG{n}{a} \PYG{n}{run} \PYG{o+ow}{in} \PYG{n}{parellel} \PYG{o}{\PYGZhy{}} \PYG{n}{disable} \PYG{n}{some} \PYG{n}{features} \PYG{p}{(}\PYG{n}{normally} \PYG{n}{only} \PYG{n}{used} \PYG{o+ow}{in} \PYG{n}{apero\PYGZus{}processing}\PYG{o}{.}\PYG{n}{py}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{shortname}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{n}{Set} \PYG{n}{a} \PYG{n}{shortname} \PYG{k}{for} \PYG{n}{a} \PYG{n}{recipe} \PYG{n}{to} \PYG{n}{distinguish} \PYG{n}{it} \PYG{k+kn}{from} \PYG{n+nn}{other} \PYG{n}{runs} \PYG{o}{\PYGZhy{}} \PYG{n}{this} \PYG{o+ow}{is} \PYG{n}{mainly} \PYG{k}{for} \PYG{n}{use} \PYG{k}{with} \PYG{n}{apero} \PYG{n}{processing} \PYG{n}{but} \PYG{n}{will} \PYG{n}{appear} \PYG{o+ow}{in} \PYG{n}{the} \PYG{n}{log} \PYG{n}{database}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{idebug}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{BOOLEAN}\PYG{p}{]} \PYG{n}{If} \PYG{k+kc}{True} \PYG{n}{always} \PYG{n}{returns} \PYG{n}{to} \PYG{n}{ipython} \PYG{p}{(}\PYG{o+ow}{or} \PYG{n}{python}\PYG{p}{)} \PYG{n}{at} \PYG{n}{end} \PYG{p}{(}\PYG{n}{via} \PYG{n}{ipdb} \PYG{o+ow}{or} \PYG{n}{pdb}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{ref}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{If} \PYG{n+nb}{set} \PYG{n}{then} \PYG{n}{recipe} \PYG{o+ow}{is} \PYG{n}{a} \PYG{n}{reference} \PYG{n}{recipe} \PYG{p}{(}\PYG{n}{e}\PYG{o}{.}\PYG{n}{g}\PYG{o}{.} \PYG{n}{reference} \PYG{n}{recipes} \PYG{n}{write} \PYG{n}{to} \PYG{n}{calibration} \PYG{n}{database} \PYG{k}{as} \PYG{n}{reference} \PYG{n}{calibrations}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{crunfile}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Set} \PYG{n}{a} \PYG{n}{run} \PYG{n}{file} \PYG{n}{to} \PYG{n}{override} \PYG{n}{default} \PYG{n}{arguments}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{quiet}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Run} \PYG{n}{recipe} \PYG{n}{without} \PYG{n}{start} \PYG{n}{up} \PYG{n}{text}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{nosave}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Do} \PYG{o+ow}{not} \PYG{n}{save} \PYG{n+nb}{any} \PYG{n}{outputs} \PYG{p}{(}\PYG{n}{debug}\PYG{o}{/}\PYG{n}{information} \PYG{n}{run}\PYG{p}{)}\PYG{o}{.} \PYG{n}{Note} \PYG{n}{some} \PYG{n}{recipes} \PYG{n}{require} \PYG{n}{other} \PYG{n}{recipesto} \PYG{n}{be} \PYG{n}{run}\PYG{o}{.} \PYG{n}{Only} \PYG{n}{use} \PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{nosave} \PYG{n}{after} \PYG{n}{previous} \PYG{n}{recipe} \PYG{n}{runs} \PYG{n}{have} \PYG{n}{been} \PYG{n}{run} \PYG{n}{successfully} \PYG{n}{at} \PYG{n}{least} \PYG{n}{once}\PYG{o}{.}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{force\PYGZus{}indir}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{n}{Force} \PYG{n}{the} \PYG{n}{default} \PYG{n+nb}{input} \PYG{n}{directory} \PYG{p}{(}\PYG{n}{Normally} \PYG{n+nb}{set} \PYG{n}{by} \PYG{n}{recipe}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{force\PYGZus{}outdir}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{n}{Force} \PYG{n}{the} \PYG{n}{default} \PYG{n}{output} \PYG{n}{directory} \PYG{p}{(}\PYG{n}{Normally} \PYG{n+nb}{set} \PYG{n}{by} \PYG{n}{recipe}\PYG{p}{)}
-\end{sphinxVerbatim}
-
-
-\subparagraph{6. Output directory}
-\label{\detokenize{auto/recipe_definitions/spirou/rdefinition_MKSKY:output-directory}}
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{n}{DRS\PYGZus{}DATA\PYGZus{}REDUC} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Default}\PYG{p}{:} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{red}\PYG{l+s+s2}{\PYGZdq{}} \PYG{n}{directory}
-\end{sphinxVerbatim}
-
-
-\subparagraph{7. Output files}
-\label{\detokenize{auto/recipe_definitions/spirou/rdefinition_MKSKY:output-files}}
-
-\begin{savenotes}\sphinxattablestart
-\sphinxthistablewithglobalstyle
-\centering
-\sphinxcapstartof{table}
-\sphinxthecaptionisattop
-\sphinxcaption{Outputs}\label{\detokenize{auto/recipe_definitions/spirou/rdefinition_MKSKY:id1}}
-\sphinxaftertopcaption
-\begin{tabulary}{\linewidth}[t]{TTTTTTTT}
-\sphinxtoprule
-\sphinxstyletheadfamily 
-\sphinxAtStartPar
-name
-&\sphinxstyletheadfamily 
-\sphinxAtStartPar
-description
-&\sphinxstyletheadfamily 
-\sphinxAtStartPar
-HDR{[}DRSOUTID{]}
-&\sphinxstyletheadfamily 
-\sphinxAtStartPar
-file type
-&\sphinxstyletheadfamily 
-\sphinxAtStartPar
-suffix
-&\sphinxstyletheadfamily 
-\sphinxAtStartPar
-dbname
-&\sphinxstyletheadfamily 
-\sphinxAtStartPar
-dbkey
-&\sphinxstyletheadfamily 
-\sphinxAtStartPar
-input file
-\\
-\sphinxmidrule
-\sphinxtableatstartofbodyhook
-\sphinxAtStartPar
-SKY\_MODEL
-&
-\sphinxAtStartPar
-Telluric sky model file
-&
-\sphinxAtStartPar
-SKY\_MODEL
-&
-\sphinxAtStartPar
-.fits
-&
-\sphinxAtStartPar
-\_sky\_model
-&
-\sphinxAtStartPar
-telluric
-&
-\sphinxAtStartPar
-SKY\_MODEL
-&
-\sphinxAtStartPar
-EXT\_E2DS\_FF
-\\
-\sphinxbottomrule
-\end{tabulary}
-\sphinxtableafterendhook\par
-\sphinxattableend\end{savenotes}
-
-
-\subparagraph{8. Debug plots}
-\label{\detokenize{auto/recipe_definitions/spirou/rdefinition_MKSKY:debug-plots}}
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{n}{TELLU\PYGZus{}SKYMODEL\PYGZus{}REGION\PYGZus{}PLOT}
-\PYG{n}{TELLU\PYGZus{}SKYMODEL\PYGZus{}MED}
-\PYG{n}{TELLU\PYGZus{}SKYMODEL\PYGZus{}LINEFIT}
-\end{sphinxVerbatim}
-
-
-\subparagraph{9. Summary plots}
-\label{\detokenize{auto/recipe_definitions/spirou/rdefinition_MKSKY:summary-plots}}
-\sphinxAtStartPar
-No summary plots.
 
 \sphinxstepscope
 
@@ -13513,7 +13363,7 @@ SHORTNAME: POLAR
 \subparagraph{Polarimetry}
 \label{\detokenize{auto/recipe_definitions/spirou/rdefinition_POLAR:polarimetry}}
 \sphinxAtStartPar
-The polarimetry module for APERO was adapted from the {[}spirou\sphinxhyphen{}polarimetry{]}(\sphinxurl{https://github.com/edermartioli/spirou-polarimetry}).
+The polarimetry module for APERO was adapted from the \sphinxhref{https://github.com/edermartioli/spirou-polarimetry}{spirou\sphinxhyphen{}polarimetry}.
 SPIRou as a polarimeter can measure either circular (Stokes V) or linear (Stokes Q or U) polarization in the line
 profiles. Each polarimetric measurement is performed by 4 exposures obtained with the Fresnel rhombs set at different
 orientations (see Section 3.1 of Donati et al. 2020).
@@ -14332,7 +14182,7 @@ the LBL products are computed separately. The CCF file consists of the CCF gener
 (by default this is between \(\pm 300 ms^{-1}\) in steps of 0.5 \(m s^{-1}\)) for each order and a combined
 CCF for the same radial velocity elements. The files are identified with a single odometer code at the time of
 observation followed by a v.fits suffix. Once the LBL module is able to be used with APERO it will add an extension
-to the v.fits (the rdb extension described in the LBL documentation).
+to the v.fits (the rdb extension described in the \sphinxhref{https://lbl.exoplanets.ca}{LBL documentation}.).
 
 
 \subparagraph{Polarimetric product (p.fits)}
@@ -26474,314 +26324,6 @@ EXT\_E2DS\_FF, TELLU\_OBJ
 \sphinxstepscope
 
 
-\paragraph{apero\_ccf\_nirps\_he}
-\label{\detokenize{auto/recipe_definitions/nirps_he/rdefinition_CCF:apero-ccf-nirps-he}}\label{\detokenize{auto/recipe_definitions/nirps_he/rdefinition_CCF:recipes-nirps-he-ccf}}\label{\detokenize{auto/recipe_definitions/nirps_he/rdefinition_CCF::doc}}
-
-\subparagraph{1. Description}
-\label{\detokenize{auto/recipe_definitions/nirps_he/rdefinition_CCF:description}}
-\sphinxAtStartPar
-SHORTNAME: CCF
-
-\sphinxAtStartPar
-No description set
-
-
-\subparagraph{2. Schematic}
-\label{\detokenize{auto/recipe_definitions/nirps_he/rdefinition_CCF:schematic}}
-\sphinxAtStartPar
-No schematic set
-
-
-\subparagraph{3. Usage}
-\label{\detokenize{auto/recipe_definitions/nirps_he/rdefinition_CCF:usage}}
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{n}{apero\PYGZus{}ccf\PYGZus{}nirps\PYGZus{}he}\PYG{o}{.}\PYG{n}{py} \PYG{p}{\PYGZob{}}\PYG{n}{obs\PYGZus{}dir}\PYG{p}{\PYGZcb{}}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{p}{[}\PYG{n}{FILE}\PYG{p}{:}\PYG{n}{EXT\PYGZus{}E2DS}\PYG{p}{,}\PYG{n}{EXT\PYGZus{}E2DS\PYGZus{}FF}\PYG{p}{,}\PYG{n}{TELLU\PYGZus{}OBJ}\PYG{p}{]} \PYG{p}{\PYGZob{}}\PYG{n}{options}\PYG{p}{\PYGZcb{}}
-\end{sphinxVerbatim}
-
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{p}{\PYGZob{}}\PYG{n}{obs\PYGZus{}dir}\PYG{p}{\PYGZcb{}}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{OBS\PYGZus{}DIR\PYGZus{}HELP}
-\PYG{p}{[}\PYG{n}{FILE}\PYG{p}{:}\PYG{n}{EXT\PYGZus{}E2DS}\PYG{p}{,}\PYG{n}{EXT\PYGZus{}E2DS\PYGZus{}FF}\PYG{p}{,}\PYG{n}{TELLU\PYGZus{}OBJ}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{o}{/}\PYG{n}{STRINGS}\PYG{p}{]} \PYG{n}{A} \PYG{n+nb}{list} \PYG{n}{of} \PYG{n}{fits} \PYG{n}{files} \PYG{n}{to} \PYG{n}{use} \PYG{n}{separated} \PYG{n}{by} \PYG{n}{spaces}\PYG{o}{.} \PYG{n}{Currently} \PYG{n}{allowed} \PYG{n}{types}\PYG{p}{:} \PYG{n}{E2DS}\PYG{p}{,} \PYG{n}{E2DSFF}\PYG{p}{,} \PYG{n}{TELLU\PYGZus{}OBJ} \PYG{p}{(}\PYG{n}{For} \PYG{n}{dprtype} \PYG{o}{=} \PYG{n}{OBJ\PYGZus{}FP}\PYG{p}{,} \PYG{n}{OBJ\PYGZus{}DARK}\PYG{p}{)}
-\end{sphinxVerbatim}
-
-
-\subparagraph{4. Optional Arguments}
-\label{\detokenize{auto/recipe_definitions/nirps_he/rdefinition_CCF:optional-arguments}}
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{mask}\PYG{p}{[}\PYG{n}{FILE}\PYG{p}{:}\PYG{n}{CCF\PYGZus{}MASK}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{n}{Define} \PYG{n}{the} \PYG{n}{filename} \PYG{n}{to} \PYG{n}{the} \PYG{n}{CCF} \PYG{n}{mask} \PYG{n}{to} \PYG{n}{use}\PYG{o}{.} \PYG{n}{Can} \PYG{n}{be} \PYG{n}{full} \PYG{n}{path} \PYG{o+ow}{or} \PYG{n}{a} \PYG{n}{file} \PYG{o+ow}{in} \PYG{n}{the} \PYG{o}{.}\PYG{o}{/}\PYG{n}{data}\PYG{o}{/}\PYG{n}{spirou}\PYG{o}{/}\PYG{n}{ccf}\PYG{o}{/} \PYG{n}{folder}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{rv}\PYG{p}{[}\PYG{n}{FLOAT}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{FLOAT}\PYG{p}{]} \PYG{n}{The} \PYG{n}{target} \PYG{n}{RV} \PYG{n}{to} \PYG{n}{use} \PYG{k}{as} \PYG{n}{a} \PYG{n}{center} \PYG{k}{for} \PYG{n}{the} \PYG{n}{CCF} \PYG{n}{fit} \PYG{p}{(}\PYG{o+ow}{in} \PYG{n}{km}\PYG{o}{/}\PYG{n}{s}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{width}\PYG{p}{[}\PYG{n}{FLOAT}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{FLOAT}\PYG{p}{]} \PYG{n}{The} \PYG{n}{CCF} \PYG{n}{width} \PYG{n}{to} \PYG{n}{use} \PYG{k}{for} \PYG{n}{the} \PYG{n}{CCF} \PYG{n}{fit} \PYG{p}{(}\PYG{o+ow}{in} \PYG{n}{km}\PYG{o}{/}\PYG{n}{s}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{step}\PYG{p}{[}\PYG{n}{FLOAT}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{FLOAT}\PYG{p}{]} \PYG{n}{The} \PYG{n}{CCF} \PYG{n}{step} \PYG{n}{to} \PYG{n}{use} \PYG{k}{for} \PYG{n}{the} \PYG{n}{CCF} \PYG{n}{fit} \PYG{p}{(}\PYG{o+ow}{in} \PYG{n}{km}\PYG{o}{/}\PYG{n}{s}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{masknormmode}\PYG{p}{[}\PYG{k+kc}{None}\PYG{p}{,}\PYG{n+nb}{all}\PYG{p}{,}\PYG{n}{order}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{n}{Define} \PYG{n}{the} \PYG{n+nb}{type} \PYG{n}{of} \PYG{n}{normalization} \PYG{n}{to} \PYG{n}{apply} \PYG{n}{to} \PYG{n}{ccf} \PYG{n}{masks}\PYG{p}{,} \PYG{n+nb}{all} \PYG{n}{normalized} \PYG{n}{across} \PYG{n+nb}{all} \PYG{n}{orders}\PYG{p}{,} \PYG{n}{order} \PYG{n}{normalizes} \PYG{n}{independently} \PYG{k}{for} \PYG{n}{each} \PYG{n}{order}\PYG{p}{,} \PYG{k+kc}{None} \PYG{n}{applies} \PYG{n}{no} \PYG{n}{mask} \PYG{n}{normalization}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{database}\PYG{p}{[}\PYG{k+kc}{True}\PYG{o}{/}\PYG{k+kc}{False}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{BOOLEAN}\PYG{p}{]} \PYG{n}{Whether} \PYG{n}{to} \PYG{n}{add} \PYG{n}{outputs} \PYG{n}{to} \PYG{n}{calibration} \PYG{n}{database}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{blazefile}\PYG{p}{[}\PYG{n}{FILE}\PYG{p}{:}\PYG{n}{FF\PYGZus{}BLAZE}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{n}{Define} \PYG{n}{a} \PYG{n}{custom} \PYG{n}{file} \PYG{n}{to} \PYG{n}{use} \PYG{k}{for} \PYG{n}{blaze} \PYG{n}{correction}\PYG{o}{.} \PYG{n}{If} \PYG{n}{unset} \PYG{n}{uses} \PYG{n}{closest} \PYG{n}{file} \PYG{k+kn}{from} \PYG{n+nn}{calibDB}\PYG{n+nn}{.} \PYG{n}{Checks} \PYG{k}{for} \PYG{n}{an} \PYG{n}{absolute} \PYG{n}{path} \PYG{o+ow}{and} \PYG{n}{then} \PYG{n}{checks} \PYG{n}{directory} \PYG{p}{(}\PYG{n}{CALIBDB}\PYG{o}{=}\PYG{n}{BADPIX}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{plot}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{o}{\PYGZgt{}}\PYG{n}{INT}\PYG{o}{\PYGZgt{}}\PYG{l+m+mi}{4}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{INTEGER}\PYG{p}{]} \PYG{n}{Plot} \PYG{n}{level}\PYG{o}{.} \PYG{l+m+mi}{0} \PYG{o}{=} \PYG{n}{off}\PYG{p}{,} \PYG{l+m+mi}{1} \PYG{o}{=} \PYG{n}{interactively}\PYG{p}{,} \PYG{l+m+mi}{2} \PYG{o}{=} \PYG{n}{save} \PYG{n}{to} \PYG{n}{file}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{no\PYGZus{}in\PYGZus{}qc} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Disable} \PYG{n}{checking} \PYG{n}{the} \PYG{n}{quality} \PYG{n}{control} \PYG{n}{of} \PYG{n+nb}{input} \PYG{n}{files}
-\end{sphinxVerbatim}
-
-
-\subparagraph{5. Special Arguments}
-\label{\detokenize{auto/recipe_definitions/nirps_he/rdefinition_CCF:special-arguments}}
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{xhelp}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Extended} \PYG{n}{help} \PYG{n}{menu} \PYG{p}{(}\PYG{k}{with} \PYG{n+nb}{all} \PYG{n}{advanced} \PYG{n}{arguments}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{debug}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Activates} \PYG{n}{debug} \PYG{n}{mode} \PYG{p}{(}\PYG{n}{Advanced} \PYG{n}{mode} \PYG{p}{[}\PYG{n}{INTEGER}\PYG{p}{]} \PYG{n}{value} \PYG{n}{must} \PYG{n}{be} \PYG{n}{an} \PYG{n}{integer} \PYG{n}{greater} \PYG{n}{than} \PYG{l+m+mi}{0}\PYG{p}{,} \PYG{n}{setting} \PYG{n}{the} \PYG{n}{debug} \PYG{n}{level}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{listing}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Lists} \PYG{n}{the} \PYG{n}{night} \PYG{n}{name} \PYG{n}{directories} \PYG{o+ow}{in} \PYG{n}{the} \PYG{n+nb}{input} \PYG{n}{directory} \PYG{k}{if} \PYG{n}{used} \PYG{n}{without} \PYG{n}{a} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{directory}\PYG{l+s+s1}{\PYGZsq{}} \PYG{n}{argument} \PYG{o+ow}{or} \PYG{n}{lists} \PYG{n}{the} \PYG{n}{files} \PYG{o+ow}{in} \PYG{n}{the} \PYG{n}{given} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{directory}\PYG{l+s+s1}{\PYGZsq{}} \PYG{p}{(}\PYG{k}{if} \PYG{n}{defined}\PYG{p}{)}\PYG{o}{.} \PYG{n}{Only} \PYG{n}{lists} \PYG{n}{up} \PYG{n}{to} \PYG{l+m+mi}{15} \PYG{n}{files}\PYG{o}{/}\PYG{n}{directories}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{listingall}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Lists} \PYG{n}{ALL} \PYG{n}{the} \PYG{n}{night} \PYG{n}{name} \PYG{n}{directories} \PYG{o+ow}{in} \PYG{n}{the} \PYG{n+nb}{input} \PYG{n}{directory} \PYG{k}{if} \PYG{n}{used} \PYG{n}{without} \PYG{n}{a} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{directory}\PYG{l+s+s1}{\PYGZsq{}} \PYG{n}{argument} \PYG{o+ow}{or} \PYG{n}{lists} \PYG{n}{the} \PYG{n}{files} \PYG{o+ow}{in} \PYG{n}{the} \PYG{n}{given} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{directory}\PYG{l+s+s1}{\PYGZsq{}} \PYG{p}{(}\PYG{k}{if} \PYG{n}{defined}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{version}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Displays} \PYG{n}{the} \PYG{n}{current} \PYG{n}{version} \PYG{n}{of} \PYG{n}{this} \PYG{n}{recipe}\PYG{o}{.}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{info}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Displays} \PYG{n}{the} \PYG{n}{short} \PYG{n}{version} \PYG{n}{of} \PYG{n}{the} \PYG{n}{help} \PYG{n}{menu}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{program}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{n}{The} \PYG{n}{name} \PYG{n}{of} \PYG{n}{the} \PYG{n}{program} \PYG{n}{to} \PYG{n}{display} \PYG{o+ow}{and} \PYG{n}{use} \PYG{p}{(}\PYG{n}{mostly} \PYG{k}{for} \PYG{n}{logging} \PYG{n}{purpose}\PYG{p}{)} \PYG{n}{log} \PYG{n}{becomes} \PYG{n}{date} \PYG{o}{|} \PYG{p}{\PYGZob{}}\PYG{n}{THIS} \PYG{n}{STRING}\PYG{p}{\PYGZcb{}} \PYG{o}{|} \PYG{n}{Message}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{recipe\PYGZus{}kind}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{n}{The} \PYG{n}{recipe} \PYG{n}{kind} \PYG{k}{for} \PYG{n}{this} \PYG{n}{recipe} \PYG{n}{run} \PYG{p}{(}\PYG{n}{normally} \PYG{n}{only} \PYG{n}{used} \PYG{o+ow}{in} \PYG{n}{apero\PYGZus{}processing}\PYG{o}{.}\PYG{n}{py}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{parallel}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{BOOL}\PYG{p}{]} \PYG{n}{If} \PYG{k+kc}{True} \PYG{n}{this} \PYG{o+ow}{is} \PYG{n}{a} \PYG{n}{run} \PYG{o+ow}{in} \PYG{n}{parellel} \PYG{o}{\PYGZhy{}} \PYG{n}{disable} \PYG{n}{some} \PYG{n}{features} \PYG{p}{(}\PYG{n}{normally} \PYG{n}{only} \PYG{n}{used} \PYG{o+ow}{in} \PYG{n}{apero\PYGZus{}processing}\PYG{o}{.}\PYG{n}{py}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{shortname}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{n}{Set} \PYG{n}{a} \PYG{n}{shortname} \PYG{k}{for} \PYG{n}{a} \PYG{n}{recipe} \PYG{n}{to} \PYG{n}{distinguish} \PYG{n}{it} \PYG{k+kn}{from} \PYG{n+nn}{other} \PYG{n}{runs} \PYG{o}{\PYGZhy{}} \PYG{n}{this} \PYG{o+ow}{is} \PYG{n}{mainly} \PYG{k}{for} \PYG{n}{use} \PYG{k}{with} \PYG{n}{apero} \PYG{n}{processing} \PYG{n}{but} \PYG{n}{will} \PYG{n}{appear} \PYG{o+ow}{in} \PYG{n}{the} \PYG{n}{log} \PYG{n}{database}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{idebug}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{BOOLEAN}\PYG{p}{]} \PYG{n}{If} \PYG{k+kc}{True} \PYG{n}{always} \PYG{n}{returns} \PYG{n}{to} \PYG{n}{ipython} \PYG{p}{(}\PYG{o+ow}{or} \PYG{n}{python}\PYG{p}{)} \PYG{n}{at} \PYG{n}{end} \PYG{p}{(}\PYG{n}{via} \PYG{n}{ipdb} \PYG{o+ow}{or} \PYG{n}{pdb}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{ref}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{If} \PYG{n+nb}{set} \PYG{n}{then} \PYG{n}{recipe} \PYG{o+ow}{is} \PYG{n}{a} \PYG{n}{reference} \PYG{n}{recipe} \PYG{p}{(}\PYG{n}{e}\PYG{o}{.}\PYG{n}{g}\PYG{o}{.} \PYG{n}{reference} \PYG{n}{recipes} \PYG{n}{write} \PYG{n}{to} \PYG{n}{calibration} \PYG{n}{database} \PYG{k}{as} \PYG{n}{reference} \PYG{n}{calibrations}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{crunfile}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Set} \PYG{n}{a} \PYG{n}{run} \PYG{n}{file} \PYG{n}{to} \PYG{n}{override} \PYG{n}{default} \PYG{n}{arguments}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{quiet}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Run} \PYG{n}{recipe} \PYG{n}{without} \PYG{n}{start} \PYG{n}{up} \PYG{n}{text}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{nosave}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Do} \PYG{o+ow}{not} \PYG{n}{save} \PYG{n+nb}{any} \PYG{n}{outputs} \PYG{p}{(}\PYG{n}{debug}\PYG{o}{/}\PYG{n}{information} \PYG{n}{run}\PYG{p}{)}\PYG{o}{.} \PYG{n}{Note} \PYG{n}{some} \PYG{n}{recipes} \PYG{n}{require} \PYG{n}{other} \PYG{n}{recipesto} \PYG{n}{be} \PYG{n}{run}\PYG{o}{.} \PYG{n}{Only} \PYG{n}{use} \PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{nosave} \PYG{n}{after} \PYG{n}{previous} \PYG{n}{recipe} \PYG{n}{runs} \PYG{n}{have} \PYG{n}{been} \PYG{n}{run} \PYG{n}{successfully} \PYG{n}{at} \PYG{n}{least} \PYG{n}{once}\PYG{o}{.}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{force\PYGZus{}indir}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{n}{Force} \PYG{n}{the} \PYG{n}{default} \PYG{n+nb}{input} \PYG{n}{directory} \PYG{p}{(}\PYG{n}{Normally} \PYG{n+nb}{set} \PYG{n}{by} \PYG{n}{recipe}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{force\PYGZus{}outdir}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{n}{Force} \PYG{n}{the} \PYG{n}{default} \PYG{n}{output} \PYG{n}{directory} \PYG{p}{(}\PYG{n}{Normally} \PYG{n+nb}{set} \PYG{n}{by} \PYG{n}{recipe}\PYG{p}{)}
-\end{sphinxVerbatim}
-
-
-\subparagraph{6. Output directory}
-\label{\detokenize{auto/recipe_definitions/nirps_he/rdefinition_CCF:output-directory}}
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{n}{DRS\PYGZus{}DATA\PYGZus{}REDUC} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Default}\PYG{p}{:} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{red}\PYG{l+s+s2}{\PYGZdq{}} \PYG{n}{directory}
-\end{sphinxVerbatim}
-
-
-\subparagraph{7. Output files}
-\label{\detokenize{auto/recipe_definitions/nirps_he/rdefinition_CCF:output-files}}
-
-\begin{savenotes}\sphinxattablestart
-\sphinxthistablewithglobalstyle
-\centering
-\sphinxcapstartof{table}
-\sphinxthecaptionisattop
-\sphinxcaption{Outputs}\label{\detokenize{auto/recipe_definitions/nirps_he/rdefinition_CCF:id1}}
-\sphinxaftertopcaption
-\begin{tabulary}{\linewidth}[t]{TTTTTTT}
-\sphinxtoprule
-\sphinxstyletheadfamily 
-\sphinxAtStartPar
-name
-&\sphinxstyletheadfamily 
-\sphinxAtStartPar
-description
-&\sphinxstyletheadfamily 
-\sphinxAtStartPar
-HDR{[}DRSOUTID{]}
-&\sphinxstyletheadfamily 
-\sphinxAtStartPar
-file type
-&\sphinxstyletheadfamily 
-\sphinxAtStartPar
-suffix
-&\sphinxstyletheadfamily 
-\sphinxAtStartPar
-fibers
-&\sphinxstyletheadfamily 
-\sphinxAtStartPar
-input file
-\\
-\sphinxmidrule
-\sphinxtableatstartofbodyhook
-\sphinxAtStartPar
-CCF\_RV
-&
-\sphinxAtStartPar
-Cross\sphinxhyphen{}correlation RV results file
-&
-\sphinxAtStartPar
-CCF\_RV
-&
-\sphinxAtStartPar
-.fits
-&
-\sphinxAtStartPar
-\_ccf
-&
-\sphinxAtStartPar
-A, B
-&
-\sphinxAtStartPar
-EXT\_E2DS\_FF, TELLU\_OBJ
-\\
-\sphinxbottomrule
-\end{tabulary}
-\sphinxtableafterendhook\par
-\sphinxattableend\end{savenotes}
-
-
-\subparagraph{8. Debug plots}
-\label{\detokenize{auto/recipe_definitions/nirps_he/rdefinition_CCF:debug-plots}}
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{n}{CCF\PYGZus{}RV\PYGZus{}FIT}
-\PYG{n}{CCF\PYGZus{}RV\PYGZus{}FIT\PYGZus{}LOOP}
-\PYG{n}{CCF\PYGZus{}SWAVE\PYGZus{}REF}
-\PYG{n}{CCF\PYGZus{}PHOTON\PYGZus{}UNCERT}
-\end{sphinxVerbatim}
-
-
-\subparagraph{9. Summary plots}
-\label{\detokenize{auto/recipe_definitions/nirps_he/rdefinition_CCF:summary-plots}}
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{n}{SUM\PYGZus{}CCF\PYGZus{}PHOTON\PYGZus{}UNCERT}
-\PYG{n}{SUM\PYGZus{}CCF\PYGZus{}RV\PYGZus{}FIT}
-\end{sphinxVerbatim}
-
-\sphinxstepscope
-
-
-\paragraph{apero\_mk\_skymodel\_nirps\_he}
-\label{\detokenize{auto/recipe_definitions/nirps_he/rdefinition_MKSKY:apero-mk-skymodel-nirps-he}}\label{\detokenize{auto/recipe_definitions/nirps_he/rdefinition_MKSKY:recipes-nirps-he-mksky}}\label{\detokenize{auto/recipe_definitions/nirps_he/rdefinition_MKSKY::doc}}
-
-\subparagraph{1. Description}
-\label{\detokenize{auto/recipe_definitions/nirps_he/rdefinition_MKSKY:description}}
-\sphinxAtStartPar
-SHORTNAME: MKSKY
-
-\sphinxAtStartPar
-No description set
-
-
-\subparagraph{2. Schematic}
-\label{\detokenize{auto/recipe_definitions/nirps_he/rdefinition_MKSKY:schematic}}
-\sphinxAtStartPar
-No schematic set
-
-
-\subparagraph{3. Usage}
-\label{\detokenize{auto/recipe_definitions/nirps_he/rdefinition_MKSKY:usage}}
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{n}{apero\PYGZus{}mk\PYGZus{}skymodel\PYGZus{}nirps\PYGZus{}he}\PYG{o}{.}\PYG{n}{py} \PYG{p}{\PYGZob{}}\PYG{n}{options}\PYG{p}{\PYGZcb{}}
-\end{sphinxVerbatim}
-
-\sphinxAtStartPar
-No optional arguments
-
-
-\subparagraph{4. Optional Arguments}
-\label{\detokenize{auto/recipe_definitions/nirps_he/rdefinition_MKSKY:optional-arguments}}
-\sphinxAtStartPar
-No optional arguments
-
-
-\subparagraph{5. Special Arguments}
-\label{\detokenize{auto/recipe_definitions/nirps_he/rdefinition_MKSKY:special-arguments}}
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{xhelp}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Extended} \PYG{n}{help} \PYG{n}{menu} \PYG{p}{(}\PYG{k}{with} \PYG{n+nb}{all} \PYG{n}{advanced} \PYG{n}{arguments}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{debug}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Activates} \PYG{n}{debug} \PYG{n}{mode} \PYG{p}{(}\PYG{n}{Advanced} \PYG{n}{mode} \PYG{p}{[}\PYG{n}{INTEGER}\PYG{p}{]} \PYG{n}{value} \PYG{n}{must} \PYG{n}{be} \PYG{n}{an} \PYG{n}{integer} \PYG{n}{greater} \PYG{n}{than} \PYG{l+m+mi}{0}\PYG{p}{,} \PYG{n}{setting} \PYG{n}{the} \PYG{n}{debug} \PYG{n}{level}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{listing}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Lists} \PYG{n}{the} \PYG{n}{night} \PYG{n}{name} \PYG{n}{directories} \PYG{o+ow}{in} \PYG{n}{the} \PYG{n+nb}{input} \PYG{n}{directory} \PYG{k}{if} \PYG{n}{used} \PYG{n}{without} \PYG{n}{a} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{directory}\PYG{l+s+s1}{\PYGZsq{}} \PYG{n}{argument} \PYG{o+ow}{or} \PYG{n}{lists} \PYG{n}{the} \PYG{n}{files} \PYG{o+ow}{in} \PYG{n}{the} \PYG{n}{given} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{directory}\PYG{l+s+s1}{\PYGZsq{}} \PYG{p}{(}\PYG{k}{if} \PYG{n}{defined}\PYG{p}{)}\PYG{o}{.} \PYG{n}{Only} \PYG{n}{lists} \PYG{n}{up} \PYG{n}{to} \PYG{l+m+mi}{15} \PYG{n}{files}\PYG{o}{/}\PYG{n}{directories}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{listingall}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Lists} \PYG{n}{ALL} \PYG{n}{the} \PYG{n}{night} \PYG{n}{name} \PYG{n}{directories} \PYG{o+ow}{in} \PYG{n}{the} \PYG{n+nb}{input} \PYG{n}{directory} \PYG{k}{if} \PYG{n}{used} \PYG{n}{without} \PYG{n}{a} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{directory}\PYG{l+s+s1}{\PYGZsq{}} \PYG{n}{argument} \PYG{o+ow}{or} \PYG{n}{lists} \PYG{n}{the} \PYG{n}{files} \PYG{o+ow}{in} \PYG{n}{the} \PYG{n}{given} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{directory}\PYG{l+s+s1}{\PYGZsq{}} \PYG{p}{(}\PYG{k}{if} \PYG{n}{defined}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{version}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Displays} \PYG{n}{the} \PYG{n}{current} \PYG{n}{version} \PYG{n}{of} \PYG{n}{this} \PYG{n}{recipe}\PYG{o}{.}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{info}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Displays} \PYG{n}{the} \PYG{n}{short} \PYG{n}{version} \PYG{n}{of} \PYG{n}{the} \PYG{n}{help} \PYG{n}{menu}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{program}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{n}{The} \PYG{n}{name} \PYG{n}{of} \PYG{n}{the} \PYG{n}{program} \PYG{n}{to} \PYG{n}{display} \PYG{o+ow}{and} \PYG{n}{use} \PYG{p}{(}\PYG{n}{mostly} \PYG{k}{for} \PYG{n}{logging} \PYG{n}{purpose}\PYG{p}{)} \PYG{n}{log} \PYG{n}{becomes} \PYG{n}{date} \PYG{o}{|} \PYG{p}{\PYGZob{}}\PYG{n}{THIS} \PYG{n}{STRING}\PYG{p}{\PYGZcb{}} \PYG{o}{|} \PYG{n}{Message}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{recipe\PYGZus{}kind}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{n}{The} \PYG{n}{recipe} \PYG{n}{kind} \PYG{k}{for} \PYG{n}{this} \PYG{n}{recipe} \PYG{n}{run} \PYG{p}{(}\PYG{n}{normally} \PYG{n}{only} \PYG{n}{used} \PYG{o+ow}{in} \PYG{n}{apero\PYGZus{}processing}\PYG{o}{.}\PYG{n}{py}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{parallel}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{BOOL}\PYG{p}{]} \PYG{n}{If} \PYG{k+kc}{True} \PYG{n}{this} \PYG{o+ow}{is} \PYG{n}{a} \PYG{n}{run} \PYG{o+ow}{in} \PYG{n}{parellel} \PYG{o}{\PYGZhy{}} \PYG{n}{disable} \PYG{n}{some} \PYG{n}{features} \PYG{p}{(}\PYG{n}{normally} \PYG{n}{only} \PYG{n}{used} \PYG{o+ow}{in} \PYG{n}{apero\PYGZus{}processing}\PYG{o}{.}\PYG{n}{py}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{shortname}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{n}{Set} \PYG{n}{a} \PYG{n}{shortname} \PYG{k}{for} \PYG{n}{a} \PYG{n}{recipe} \PYG{n}{to} \PYG{n}{distinguish} \PYG{n}{it} \PYG{k+kn}{from} \PYG{n+nn}{other} \PYG{n}{runs} \PYG{o}{\PYGZhy{}} \PYG{n}{this} \PYG{o+ow}{is} \PYG{n}{mainly} \PYG{k}{for} \PYG{n}{use} \PYG{k}{with} \PYG{n}{apero} \PYG{n}{processing} \PYG{n}{but} \PYG{n}{will} \PYG{n}{appear} \PYG{o+ow}{in} \PYG{n}{the} \PYG{n}{log} \PYG{n}{database}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{idebug}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{BOOLEAN}\PYG{p}{]} \PYG{n}{If} \PYG{k+kc}{True} \PYG{n}{always} \PYG{n}{returns} \PYG{n}{to} \PYG{n}{ipython} \PYG{p}{(}\PYG{o+ow}{or} \PYG{n}{python}\PYG{p}{)} \PYG{n}{at} \PYG{n}{end} \PYG{p}{(}\PYG{n}{via} \PYG{n}{ipdb} \PYG{o+ow}{or} \PYG{n}{pdb}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{ref}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{If} \PYG{n+nb}{set} \PYG{n}{then} \PYG{n}{recipe} \PYG{o+ow}{is} \PYG{n}{a} \PYG{n}{reference} \PYG{n}{recipe} \PYG{p}{(}\PYG{n}{e}\PYG{o}{.}\PYG{n}{g}\PYG{o}{.} \PYG{n}{reference} \PYG{n}{recipes} \PYG{n}{write} \PYG{n}{to} \PYG{n}{calibration} \PYG{n}{database} \PYG{k}{as} \PYG{n}{reference} \PYG{n}{calibrations}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{crunfile}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Set} \PYG{n}{a} \PYG{n}{run} \PYG{n}{file} \PYG{n}{to} \PYG{n}{override} \PYG{n}{default} \PYG{n}{arguments}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{quiet}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Run} \PYG{n}{recipe} \PYG{n}{without} \PYG{n}{start} \PYG{n}{up} \PYG{n}{text}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{nosave}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Do} \PYG{o+ow}{not} \PYG{n}{save} \PYG{n+nb}{any} \PYG{n}{outputs} \PYG{p}{(}\PYG{n}{debug}\PYG{o}{/}\PYG{n}{information} \PYG{n}{run}\PYG{p}{)}\PYG{o}{.} \PYG{n}{Note} \PYG{n}{some} \PYG{n}{recipes} \PYG{n}{require} \PYG{n}{other} \PYG{n}{recipesto} \PYG{n}{be} \PYG{n}{run}\PYG{o}{.} \PYG{n}{Only} \PYG{n}{use} \PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{nosave} \PYG{n}{after} \PYG{n}{previous} \PYG{n}{recipe} \PYG{n}{runs} \PYG{n}{have} \PYG{n}{been} \PYG{n}{run} \PYG{n}{successfully} \PYG{n}{at} \PYG{n}{least} \PYG{n}{once}\PYG{o}{.}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{force\PYGZus{}indir}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{n}{Force} \PYG{n}{the} \PYG{n}{default} \PYG{n+nb}{input} \PYG{n}{directory} \PYG{p}{(}\PYG{n}{Normally} \PYG{n+nb}{set} \PYG{n}{by} \PYG{n}{recipe}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{force\PYGZus{}outdir}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{n}{Force} \PYG{n}{the} \PYG{n}{default} \PYG{n}{output} \PYG{n}{directory} \PYG{p}{(}\PYG{n}{Normally} \PYG{n+nb}{set} \PYG{n}{by} \PYG{n}{recipe}\PYG{p}{)}
-\end{sphinxVerbatim}
-
-
-\subparagraph{6. Output directory}
-\label{\detokenize{auto/recipe_definitions/nirps_he/rdefinition_MKSKY:output-directory}}
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{n}{DRS\PYGZus{}DATA\PYGZus{}REDUC} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Default}\PYG{p}{:} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{red}\PYG{l+s+s2}{\PYGZdq{}} \PYG{n}{directory}
-\end{sphinxVerbatim}
-
-
-\subparagraph{7. Output files}
-\label{\detokenize{auto/recipe_definitions/nirps_he/rdefinition_MKSKY:output-files}}
-
-\begin{savenotes}\sphinxattablestart
-\sphinxthistablewithglobalstyle
-\centering
-\sphinxcapstartof{table}
-\sphinxthecaptionisattop
-\sphinxcaption{Outputs}\label{\detokenize{auto/recipe_definitions/nirps_he/rdefinition_MKSKY:id1}}
-\sphinxaftertopcaption
-\begin{tabulary}{\linewidth}[t]{TTTTTTTT}
-\sphinxtoprule
-\sphinxstyletheadfamily 
-\sphinxAtStartPar
-name
-&\sphinxstyletheadfamily 
-\sphinxAtStartPar
-description
-&\sphinxstyletheadfamily 
-\sphinxAtStartPar
-HDR{[}DRSOUTID{]}
-&\sphinxstyletheadfamily 
-\sphinxAtStartPar
-file type
-&\sphinxstyletheadfamily 
-\sphinxAtStartPar
-suffix
-&\sphinxstyletheadfamily 
-\sphinxAtStartPar
-dbname
-&\sphinxstyletheadfamily 
-\sphinxAtStartPar
-dbkey
-&\sphinxstyletheadfamily 
-\sphinxAtStartPar
-input file
-\\
-\sphinxmidrule
-\sphinxtableatstartofbodyhook
-\sphinxAtStartPar
-SKY\_MODEL
-&
-\sphinxAtStartPar
-Telluric sky model file
-&
-\sphinxAtStartPar
-SKY\_MODEL
-&
-\sphinxAtStartPar
-.fits
-&
-\sphinxAtStartPar
-\_sky\_model
-&
-\sphinxAtStartPar
-telluric
-&
-\sphinxAtStartPar
-SKY\_MODEL
-&
-\sphinxAtStartPar
-EXT\_E2DS\_FF
-\\
-\sphinxbottomrule
-\end{tabulary}
-\sphinxtableafterendhook\par
-\sphinxattableend\end{savenotes}
-
-
-\subparagraph{8. Debug plots}
-\label{\detokenize{auto/recipe_definitions/nirps_he/rdefinition_MKSKY:debug-plots}}
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{n}{TELLU\PYGZus{}SKYMODEL\PYGZus{}REGION\PYGZus{}PLOT}
-\PYG{n}{TELLU\PYGZus{}SKYMODEL\PYGZus{}MED}
-\PYG{n}{TELLU\PYGZus{}SKYMODEL\PYGZus{}LINEFIT}
-\end{sphinxVerbatim}
-
-
-\subparagraph{9. Summary plots}
-\label{\detokenize{auto/recipe_definitions/nirps_he/rdefinition_MKSKY:summary-plots}}
-\sphinxAtStartPar
-No summary plots.
-
-\sphinxstepscope
-
-
 \paragraph{apero\_mk\_tellu\_nirps\_he}
 \label{\detokenize{auto/recipe_definitions/nirps_he/rdefinition_MKTELL:apero-mk-tellu-nirps-he}}\label{\detokenize{auto/recipe_definitions/nirps_he/rdefinition_MKTELL:recipes-nirps-he-mktell}}\label{\detokenize{auto/recipe_definitions/nirps_he/rdefinition_MKTELL::doc}}
 
@@ -27964,95 +27506,6 @@ EXT\_E2DS\_FF, TELLU\_OBJ
 \PYG{n}{SUM\PYGZus{}EXTRACT\PYGZus{}S1D}
 \PYG{n}{SUM\PYGZus{}MKTEMP\PYGZus{}BERV\PYGZus{}COV}
 \end{sphinxVerbatim}
-
-\sphinxstepscope
-
-
-\paragraph{apero\_postprocess\_nirps\_he}
-\label{\detokenize{auto/recipe_definitions/nirps_he/rdefinition_OBJPOST:apero-postprocess-nirps-he}}\label{\detokenize{auto/recipe_definitions/nirps_he/rdefinition_OBJPOST:recipes-nirps-he-objpost}}\label{\detokenize{auto/recipe_definitions/nirps_he/rdefinition_OBJPOST::doc}}
-
-\subparagraph{1. Description}
-\label{\detokenize{auto/recipe_definitions/nirps_he/rdefinition_OBJPOST:description}}
-\sphinxAtStartPar
-SHORTNAME: OBJPOST
-
-\sphinxAtStartPar
-No description set
-
-
-\subparagraph{2. Schematic}
-\label{\detokenize{auto/recipe_definitions/nirps_he/rdefinition_OBJPOST:schematic}}
-\sphinxAtStartPar
-No schematic set
-
-
-\subparagraph{3. Usage}
-\label{\detokenize{auto/recipe_definitions/nirps_he/rdefinition_OBJPOST:usage}}
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{n}{apero\PYGZus{}postprocess\PYGZus{}nirps\PYGZus{}he}\PYG{o}{.}\PYG{n}{py} \PYG{p}{\PYGZob{}}\PYG{n}{obs\PYGZus{}dir}\PYG{p}{\PYGZcb{}}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{p}{[}\PYG{n}{FILE}\PYG{p}{:}\PYG{n}{DRS\PYGZus{}PP}\PYG{p}{]} \PYG{p}{\PYGZob{}}\PYG{n}{options}\PYG{p}{\PYGZcb{}}
-\end{sphinxVerbatim}
-
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{p}{\PYGZob{}}\PYG{n}{obs\PYGZus{}dir}\PYG{p}{\PYGZcb{}}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{OBS\PYGZus{}DIR\PYGZus{}HELP}
-\PYG{p}{[}\PYG{n}{FILE}\PYG{p}{:}\PYG{n}{DRS\PYGZus{}PP}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{o}{/}\PYG{n}{STRINGS}\PYG{p}{]} \PYG{n}{A} \PYG{n+nb}{list} \PYG{n}{of} \PYG{n}{fits} \PYG{n}{files} \PYG{n}{to} \PYG{n}{use} \PYG{n}{separated} \PYG{n}{by} \PYG{n}{spaces}\PYG{o}{.}
-\end{sphinxVerbatim}
-
-
-\subparagraph{4. Optional Arguments}
-\label{\detokenize{auto/recipe_definitions/nirps_he/rdefinition_OBJPOST:optional-arguments}}
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{skip} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Overwrites} \PYG{n}{post} \PYG{n}{processed} \PYG{n}{files} \PYG{k}{if} \PYG{n}{they} \PYG{n}{exist} \PYG{p}{(}\PYG{n}{default} \PYG{o+ow}{is} \PYG{k+kc}{False}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{clear} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Clear} \PYG{n}{the} \PYG{n}{reduced} \PYG{n}{folder} \PYG{n}{after} \PYG{n}{post}\PYG{o}{\PYGZhy{}}\PYG{n}{processing}\PYG{o}{.} \PYG{n}{WARNING} \PYG{n}{removes} \PYG{n+nb}{all} \PYG{n}{files} \PYG{k+kn}{from} \PYG{n+nn}{the} \PYG{n}{reduced} \PYG{n}{directory}\PYG{o}{.}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{no\PYGZus{}in\PYGZus{}qc} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Disable} \PYG{n}{checking} \PYG{n}{the} \PYG{n}{quality} \PYG{n}{control} \PYG{n}{of} \PYG{n+nb}{input} \PYG{n}{files}
-\end{sphinxVerbatim}
-
-
-\subparagraph{5. Special Arguments}
-\label{\detokenize{auto/recipe_definitions/nirps_he/rdefinition_OBJPOST:special-arguments}}
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{xhelp}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Extended} \PYG{n}{help} \PYG{n}{menu} \PYG{p}{(}\PYG{k}{with} \PYG{n+nb}{all} \PYG{n}{advanced} \PYG{n}{arguments}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{debug}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Activates} \PYG{n}{debug} \PYG{n}{mode} \PYG{p}{(}\PYG{n}{Advanced} \PYG{n}{mode} \PYG{p}{[}\PYG{n}{INTEGER}\PYG{p}{]} \PYG{n}{value} \PYG{n}{must} \PYG{n}{be} \PYG{n}{an} \PYG{n}{integer} \PYG{n}{greater} \PYG{n}{than} \PYG{l+m+mi}{0}\PYG{p}{,} \PYG{n}{setting} \PYG{n}{the} \PYG{n}{debug} \PYG{n}{level}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{listing}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Lists} \PYG{n}{the} \PYG{n}{night} \PYG{n}{name} \PYG{n}{directories} \PYG{o+ow}{in} \PYG{n}{the} \PYG{n+nb}{input} \PYG{n}{directory} \PYG{k}{if} \PYG{n}{used} \PYG{n}{without} \PYG{n}{a} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{directory}\PYG{l+s+s1}{\PYGZsq{}} \PYG{n}{argument} \PYG{o+ow}{or} \PYG{n}{lists} \PYG{n}{the} \PYG{n}{files} \PYG{o+ow}{in} \PYG{n}{the} \PYG{n}{given} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{directory}\PYG{l+s+s1}{\PYGZsq{}} \PYG{p}{(}\PYG{k}{if} \PYG{n}{defined}\PYG{p}{)}\PYG{o}{.} \PYG{n}{Only} \PYG{n}{lists} \PYG{n}{up} \PYG{n}{to} \PYG{l+m+mi}{15} \PYG{n}{files}\PYG{o}{/}\PYG{n}{directories}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{listingall}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Lists} \PYG{n}{ALL} \PYG{n}{the} \PYG{n}{night} \PYG{n}{name} \PYG{n}{directories} \PYG{o+ow}{in} \PYG{n}{the} \PYG{n+nb}{input} \PYG{n}{directory} \PYG{k}{if} \PYG{n}{used} \PYG{n}{without} \PYG{n}{a} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{directory}\PYG{l+s+s1}{\PYGZsq{}} \PYG{n}{argument} \PYG{o+ow}{or} \PYG{n}{lists} \PYG{n}{the} \PYG{n}{files} \PYG{o+ow}{in} \PYG{n}{the} \PYG{n}{given} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{directory}\PYG{l+s+s1}{\PYGZsq{}} \PYG{p}{(}\PYG{k}{if} \PYG{n}{defined}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{version}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Displays} \PYG{n}{the} \PYG{n}{current} \PYG{n}{version} \PYG{n}{of} \PYG{n}{this} \PYG{n}{recipe}\PYG{o}{.}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{info}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Displays} \PYG{n}{the} \PYG{n}{short} \PYG{n}{version} \PYG{n}{of} \PYG{n}{the} \PYG{n}{help} \PYG{n}{menu}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{program}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{n}{The} \PYG{n}{name} \PYG{n}{of} \PYG{n}{the} \PYG{n}{program} \PYG{n}{to} \PYG{n}{display} \PYG{o+ow}{and} \PYG{n}{use} \PYG{p}{(}\PYG{n}{mostly} \PYG{k}{for} \PYG{n}{logging} \PYG{n}{purpose}\PYG{p}{)} \PYG{n}{log} \PYG{n}{becomes} \PYG{n}{date} \PYG{o}{|} \PYG{p}{\PYGZob{}}\PYG{n}{THIS} \PYG{n}{STRING}\PYG{p}{\PYGZcb{}} \PYG{o}{|} \PYG{n}{Message}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{recipe\PYGZus{}kind}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{n}{The} \PYG{n}{recipe} \PYG{n}{kind} \PYG{k}{for} \PYG{n}{this} \PYG{n}{recipe} \PYG{n}{run} \PYG{p}{(}\PYG{n}{normally} \PYG{n}{only} \PYG{n}{used} \PYG{o+ow}{in} \PYG{n}{apero\PYGZus{}processing}\PYG{o}{.}\PYG{n}{py}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{parallel}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{BOOL}\PYG{p}{]} \PYG{n}{If} \PYG{k+kc}{True} \PYG{n}{this} \PYG{o+ow}{is} \PYG{n}{a} \PYG{n}{run} \PYG{o+ow}{in} \PYG{n}{parellel} \PYG{o}{\PYGZhy{}} \PYG{n}{disable} \PYG{n}{some} \PYG{n}{features} \PYG{p}{(}\PYG{n}{normally} \PYG{n}{only} \PYG{n}{used} \PYG{o+ow}{in} \PYG{n}{apero\PYGZus{}processing}\PYG{o}{.}\PYG{n}{py}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{shortname}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{n}{Set} \PYG{n}{a} \PYG{n}{shortname} \PYG{k}{for} \PYG{n}{a} \PYG{n}{recipe} \PYG{n}{to} \PYG{n}{distinguish} \PYG{n}{it} \PYG{k+kn}{from} \PYG{n+nn}{other} \PYG{n}{runs} \PYG{o}{\PYGZhy{}} \PYG{n}{this} \PYG{o+ow}{is} \PYG{n}{mainly} \PYG{k}{for} \PYG{n}{use} \PYG{k}{with} \PYG{n}{apero} \PYG{n}{processing} \PYG{n}{but} \PYG{n}{will} \PYG{n}{appear} \PYG{o+ow}{in} \PYG{n}{the} \PYG{n}{log} \PYG{n}{database}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{idebug}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{BOOLEAN}\PYG{p}{]} \PYG{n}{If} \PYG{k+kc}{True} \PYG{n}{always} \PYG{n}{returns} \PYG{n}{to} \PYG{n}{ipython} \PYG{p}{(}\PYG{o+ow}{or} \PYG{n}{python}\PYG{p}{)} \PYG{n}{at} \PYG{n}{end} \PYG{p}{(}\PYG{n}{via} \PYG{n}{ipdb} \PYG{o+ow}{or} \PYG{n}{pdb}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{ref}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{If} \PYG{n+nb}{set} \PYG{n}{then} \PYG{n}{recipe} \PYG{o+ow}{is} \PYG{n}{a} \PYG{n}{reference} \PYG{n}{recipe} \PYG{p}{(}\PYG{n}{e}\PYG{o}{.}\PYG{n}{g}\PYG{o}{.} \PYG{n}{reference} \PYG{n}{recipes} \PYG{n}{write} \PYG{n}{to} \PYG{n}{calibration} \PYG{n}{database} \PYG{k}{as} \PYG{n}{reference} \PYG{n}{calibrations}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{crunfile}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Set} \PYG{n}{a} \PYG{n}{run} \PYG{n}{file} \PYG{n}{to} \PYG{n}{override} \PYG{n}{default} \PYG{n}{arguments}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{quiet}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Run} \PYG{n}{recipe} \PYG{n}{without} \PYG{n}{start} \PYG{n}{up} \PYG{n}{text}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{nosave}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Do} \PYG{o+ow}{not} \PYG{n}{save} \PYG{n+nb}{any} \PYG{n}{outputs} \PYG{p}{(}\PYG{n}{debug}\PYG{o}{/}\PYG{n}{information} \PYG{n}{run}\PYG{p}{)}\PYG{o}{.} \PYG{n}{Note} \PYG{n}{some} \PYG{n}{recipes} \PYG{n}{require} \PYG{n}{other} \PYG{n}{recipesto} \PYG{n}{be} \PYG{n}{run}\PYG{o}{.} \PYG{n}{Only} \PYG{n}{use} \PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{nosave} \PYG{n}{after} \PYG{n}{previous} \PYG{n}{recipe} \PYG{n}{runs} \PYG{n}{have} \PYG{n}{been} \PYG{n}{run} \PYG{n}{successfully} \PYG{n}{at} \PYG{n}{least} \PYG{n}{once}\PYG{o}{.}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{force\PYGZus{}indir}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{n}{Force} \PYG{n}{the} \PYG{n}{default} \PYG{n+nb}{input} \PYG{n}{directory} \PYG{p}{(}\PYG{n}{Normally} \PYG{n+nb}{set} \PYG{n}{by} \PYG{n}{recipe}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{force\PYGZus{}outdir}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{n}{Force} \PYG{n}{the} \PYG{n}{default} \PYG{n}{output} \PYG{n}{directory} \PYG{p}{(}\PYG{n}{Normally} \PYG{n+nb}{set} \PYG{n}{by} \PYG{n}{recipe}\PYG{p}{)}
-\end{sphinxVerbatim}
-
-
-\subparagraph{6. Output directory}
-\label{\detokenize{auto/recipe_definitions/nirps_he/rdefinition_OBJPOST:output-directory}}
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{n}{DRS\PYGZus{}DATA\PYGZus{}OUT} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Default}\PYG{p}{:} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{out}\PYG{l+s+s2}{\PYGZdq{}} \PYG{n}{directory}
-\end{sphinxVerbatim}
-
-
-\subparagraph{7. Output files}
-\label{\detokenize{auto/recipe_definitions/nirps_he/rdefinition_OBJPOST:output-files}}
-\sphinxAtStartPar
-N/A
-
-
-\subparagraph{8. Debug plots}
-\label{\detokenize{auto/recipe_definitions/nirps_he/rdefinition_OBJPOST:debug-plots}}
-\sphinxAtStartPar
-No debug plots.
-
-
-\subparagraph{9. Summary plots}
-\label{\detokenize{auto/recipe_definitions/nirps_he/rdefinition_OBJPOST:summary-plots}}
-\sphinxAtStartPar
-No summary plots.
 
 \sphinxstepscope
 
@@ -36581,180 +36034,6 @@ For information on how to run these recipes (either individually or with the pro
 \sphinxstepscope
 
 
-\paragraph{apero\_pp\_ref\_nirps\_ha}
-\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_PPREF:apero-pp-ref-nirps-ha}}\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_PPREF:recipes-nirps-ha-ppref}}\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_PPREF::doc}}
-
-\subparagraph{1. Description}
-\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_PPREF:description}}
-\sphinxAtStartPar
-SHORTNAME: PPREF
-
-\sphinxAtStartPar
-No description set
-
-
-\subparagraph{2. Schematic}
-\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_PPREF:schematic}}
-\sphinxAtStartPar
-No schematic set
-
-
-\subparagraph{3. Usage}
-\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_PPREF:usage}}
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{n}{apero\PYGZus{}pp\PYGZus{}ref\PYGZus{}nirps\PYGZus{}ha}\PYG{o}{.}\PYG{n}{py} \PYG{p}{\PYGZob{}}\PYG{n}{obs\PYGZus{}dir}\PYG{p}{\PYGZcb{}}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{p}{\PYGZob{}}\PYG{n}{options}\PYG{p}{\PYGZcb{}}
-\end{sphinxVerbatim}
-
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{p}{\PYGZob{}}\PYG{n}{obs\PYGZus{}dir}\PYG{p}{\PYGZcb{}}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{OBS\PYGZus{}DIR\PYGZus{}HELP}
-\end{sphinxVerbatim}
-
-
-\subparagraph{4. Optional Arguments}
-\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_PPREF:optional-arguments}}
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{filetype}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{PP\PYGZus{}REF\PYGZus{}FILETYPE\PYGZus{}HELP}
-\end{sphinxVerbatim}
-
-
-\subparagraph{5. Special Arguments}
-\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_PPREF:special-arguments}}
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{xhelp}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Extended} \PYG{n}{help} \PYG{n}{menu} \PYG{p}{(}\PYG{k}{with} \PYG{n+nb}{all} \PYG{n}{advanced} \PYG{n}{arguments}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{debug}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Activates} \PYG{n}{debug} \PYG{n}{mode} \PYG{p}{(}\PYG{n}{Advanced} \PYG{n}{mode} \PYG{p}{[}\PYG{n}{INTEGER}\PYG{p}{]} \PYG{n}{value} \PYG{n}{must} \PYG{n}{be} \PYG{n}{an} \PYG{n}{integer} \PYG{n}{greater} \PYG{n}{than} \PYG{l+m+mi}{0}\PYG{p}{,} \PYG{n}{setting} \PYG{n}{the} \PYG{n}{debug} \PYG{n}{level}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{listing}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Lists} \PYG{n}{the} \PYG{n}{night} \PYG{n}{name} \PYG{n}{directories} \PYG{o+ow}{in} \PYG{n}{the} \PYG{n+nb}{input} \PYG{n}{directory} \PYG{k}{if} \PYG{n}{used} \PYG{n}{without} \PYG{n}{a} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{directory}\PYG{l+s+s1}{\PYGZsq{}} \PYG{n}{argument} \PYG{o+ow}{or} \PYG{n}{lists} \PYG{n}{the} \PYG{n}{files} \PYG{o+ow}{in} \PYG{n}{the} \PYG{n}{given} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{directory}\PYG{l+s+s1}{\PYGZsq{}} \PYG{p}{(}\PYG{k}{if} \PYG{n}{defined}\PYG{p}{)}\PYG{o}{.} \PYG{n}{Only} \PYG{n}{lists} \PYG{n}{up} \PYG{n}{to} \PYG{l+m+mi}{15} \PYG{n}{files}\PYG{o}{/}\PYG{n}{directories}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{listingall}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Lists} \PYG{n}{ALL} \PYG{n}{the} \PYG{n}{night} \PYG{n}{name} \PYG{n}{directories} \PYG{o+ow}{in} \PYG{n}{the} \PYG{n+nb}{input} \PYG{n}{directory} \PYG{k}{if} \PYG{n}{used} \PYG{n}{without} \PYG{n}{a} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{directory}\PYG{l+s+s1}{\PYGZsq{}} \PYG{n}{argument} \PYG{o+ow}{or} \PYG{n}{lists} \PYG{n}{the} \PYG{n}{files} \PYG{o+ow}{in} \PYG{n}{the} \PYG{n}{given} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{directory}\PYG{l+s+s1}{\PYGZsq{}} \PYG{p}{(}\PYG{k}{if} \PYG{n}{defined}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{version}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Displays} \PYG{n}{the} \PYG{n}{current} \PYG{n}{version} \PYG{n}{of} \PYG{n}{this} \PYG{n}{recipe}\PYG{o}{.}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{info}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Displays} \PYG{n}{the} \PYG{n}{short} \PYG{n}{version} \PYG{n}{of} \PYG{n}{the} \PYG{n}{help} \PYG{n}{menu}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{program}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{n}{The} \PYG{n}{name} \PYG{n}{of} \PYG{n}{the} \PYG{n}{program} \PYG{n}{to} \PYG{n}{display} \PYG{o+ow}{and} \PYG{n}{use} \PYG{p}{(}\PYG{n}{mostly} \PYG{k}{for} \PYG{n}{logging} \PYG{n}{purpose}\PYG{p}{)} \PYG{n}{log} \PYG{n}{becomes} \PYG{n}{date} \PYG{o}{|} \PYG{p}{\PYGZob{}}\PYG{n}{THIS} \PYG{n}{STRING}\PYG{p}{\PYGZcb{}} \PYG{o}{|} \PYG{n}{Message}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{recipe\PYGZus{}kind}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{n}{The} \PYG{n}{recipe} \PYG{n}{kind} \PYG{k}{for} \PYG{n}{this} \PYG{n}{recipe} \PYG{n}{run} \PYG{p}{(}\PYG{n}{normally} \PYG{n}{only} \PYG{n}{used} \PYG{o+ow}{in} \PYG{n}{apero\PYGZus{}processing}\PYG{o}{.}\PYG{n}{py}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{parallel}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{BOOL}\PYG{p}{]} \PYG{n}{If} \PYG{k+kc}{True} \PYG{n}{this} \PYG{o+ow}{is} \PYG{n}{a} \PYG{n}{run} \PYG{o+ow}{in} \PYG{n}{parellel} \PYG{o}{\PYGZhy{}} \PYG{n}{disable} \PYG{n}{some} \PYG{n}{features} \PYG{p}{(}\PYG{n}{normally} \PYG{n}{only} \PYG{n}{used} \PYG{o+ow}{in} \PYG{n}{apero\PYGZus{}processing}\PYG{o}{.}\PYG{n}{py}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{shortname}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{n}{Set} \PYG{n}{a} \PYG{n}{shortname} \PYG{k}{for} \PYG{n}{a} \PYG{n}{recipe} \PYG{n}{to} \PYG{n}{distinguish} \PYG{n}{it} \PYG{k+kn}{from} \PYG{n+nn}{other} \PYG{n}{runs} \PYG{o}{\PYGZhy{}} \PYG{n}{this} \PYG{o+ow}{is} \PYG{n}{mainly} \PYG{k}{for} \PYG{n}{use} \PYG{k}{with} \PYG{n}{apero} \PYG{n}{processing} \PYG{n}{but} \PYG{n}{will} \PYG{n}{appear} \PYG{o+ow}{in} \PYG{n}{the} \PYG{n}{log} \PYG{n}{database}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{idebug}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{BOOLEAN}\PYG{p}{]} \PYG{n}{If} \PYG{k+kc}{True} \PYG{n}{always} \PYG{n}{returns} \PYG{n}{to} \PYG{n}{ipython} \PYG{p}{(}\PYG{o+ow}{or} \PYG{n}{python}\PYG{p}{)} \PYG{n}{at} \PYG{n}{end} \PYG{p}{(}\PYG{n}{via} \PYG{n}{ipdb} \PYG{o+ow}{or} \PYG{n}{pdb}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{ref}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{If} \PYG{n+nb}{set} \PYG{n}{then} \PYG{n}{recipe} \PYG{o+ow}{is} \PYG{n}{a} \PYG{n}{reference} \PYG{n}{recipe} \PYG{p}{(}\PYG{n}{e}\PYG{o}{.}\PYG{n}{g}\PYG{o}{.} \PYG{n}{reference} \PYG{n}{recipes} \PYG{n}{write} \PYG{n}{to} \PYG{n}{calibration} \PYG{n}{database} \PYG{k}{as} \PYG{n}{reference} \PYG{n}{calibrations}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{crunfile}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Set} \PYG{n}{a} \PYG{n}{run} \PYG{n}{file} \PYG{n}{to} \PYG{n}{override} \PYG{n}{default} \PYG{n}{arguments}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{quiet}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Run} \PYG{n}{recipe} \PYG{n}{without} \PYG{n}{start} \PYG{n}{up} \PYG{n}{text}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{nosave}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Do} \PYG{o+ow}{not} \PYG{n}{save} \PYG{n+nb}{any} \PYG{n}{outputs} \PYG{p}{(}\PYG{n}{debug}\PYG{o}{/}\PYG{n}{information} \PYG{n}{run}\PYG{p}{)}\PYG{o}{.} \PYG{n}{Note} \PYG{n}{some} \PYG{n}{recipes} \PYG{n}{require} \PYG{n}{other} \PYG{n}{recipesto} \PYG{n}{be} \PYG{n}{run}\PYG{o}{.} \PYG{n}{Only} \PYG{n}{use} \PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{nosave} \PYG{n}{after} \PYG{n}{previous} \PYG{n}{recipe} \PYG{n}{runs} \PYG{n}{have} \PYG{n}{been} \PYG{n}{run} \PYG{n}{successfully} \PYG{n}{at} \PYG{n}{least} \PYG{n}{once}\PYG{o}{.}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{force\PYGZus{}indir}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{n}{Force} \PYG{n}{the} \PYG{n}{default} \PYG{n+nb}{input} \PYG{n}{directory} \PYG{p}{(}\PYG{n}{Normally} \PYG{n+nb}{set} \PYG{n}{by} \PYG{n}{recipe}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{force\PYGZus{}outdir}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{n}{Force} \PYG{n}{the} \PYG{n}{default} \PYG{n}{output} \PYG{n}{directory} \PYG{p}{(}\PYG{n}{Normally} \PYG{n+nb}{set} \PYG{n}{by} \PYG{n}{recipe}\PYG{p}{)}
-\end{sphinxVerbatim}
-
-
-\subparagraph{6. Output directory}
-\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_PPREF:output-directory}}
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{n}{DRS\PYGZus{}DATA\PYGZus{}REDUC} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Default}\PYG{p}{:} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{red}\PYG{l+s+s2}{\PYGZdq{}} \PYG{n}{directory}
-\end{sphinxVerbatim}
-
-
-\subparagraph{7. Output files}
-\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_PPREF:output-files}}
-
-\begin{savenotes}\sphinxattablestart
-\sphinxthistablewithglobalstyle
-\centering
-\sphinxcapstartof{table}
-\sphinxthecaptionisattop
-\sphinxcaption{Outputs}\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_PPREF:id1}}
-\sphinxaftertopcaption
-\begin{tabulary}{\linewidth}[t]{TTTTTTTT}
-\sphinxtoprule
-\sphinxstyletheadfamily 
-\sphinxAtStartPar
-name
-&\sphinxstyletheadfamily 
-\sphinxAtStartPar
-description
-&\sphinxstyletheadfamily 
-\sphinxAtStartPar
-HDR{[}DRSOUTID{]}
-&\sphinxstyletheadfamily 
-\sphinxAtStartPar
-file type
-&\sphinxstyletheadfamily 
-\sphinxAtStartPar
-suffix
-&\sphinxstyletheadfamily 
-\sphinxAtStartPar
-dbname
-&\sphinxstyletheadfamily 
-\sphinxAtStartPar
-dbkey
-&\sphinxstyletheadfamily 
-\sphinxAtStartPar
-input file
-\\
-\sphinxmidrule
-\sphinxtableatstartofbodyhook
-\sphinxAtStartPar
-PP\_REF
-&
-\sphinxAtStartPar
-PP Reference flat calibration file
-&
-\sphinxAtStartPar
-PP\_REF
-&
-\sphinxAtStartPar
-.fits
-&
-\sphinxAtStartPar
-\_ppref
-&
-\sphinxAtStartPar
-calibration
-&
-\sphinxAtStartPar
-PP\_REF
-&
-\sphinxAtStartPar
-RAW\_FLAT\_FLAT
-\\
-\sphinxhline
-\sphinxAtStartPar
-PP\_LED\_FLAT
-&
-\sphinxAtStartPar
-Reference LED flat calibration file
-&
-\sphinxAtStartPar
-PP\_LED\_FLAT
-&
-\sphinxAtStartPar
-.fits
-&
-\sphinxAtStartPar
-\_led\_flat
-&
-\sphinxAtStartPar
-calibration
-&
-\sphinxAtStartPar
-PP\_LED
-&
-\sphinxAtStartPar
-RAW\_LED\_LED
-\\
-\sphinxbottomrule
-\end{tabulary}
-\sphinxtableafterendhook\par
-\sphinxattableend\end{savenotes}
-
-
-\subparagraph{8. Debug plots}
-\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_PPREF:debug-plots}}
-\sphinxAtStartPar
-No debug plots.
-
-
-\subparagraph{9. Summary plots}
-\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_PPREF:summary-plots}}
-\sphinxAtStartPar
-No summary plots.
-
-\sphinxstepscope
-
-
 \paragraph{apero\_preprocess\_nirps\_ha}
 \label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_PP:apero-preprocess-nirps-ha}}\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_PP:recipes-nirps-ha-pp}}\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_PP::doc}}
 
@@ -39794,317 +39073,6 @@ EXT\_E2DS\_FF, TELLU\_OBJ
 \sphinxstepscope
 
 
-\paragraph{apero\_ccf\_nirps\_ha}
-\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_CCF:apero-ccf-nirps-ha}}\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_CCF:recipes-nirps-ha-ccf}}\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_CCF::doc}}
-
-\subparagraph{1. Description}
-\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_CCF:description}}
-\sphinxAtStartPar
-SHORTNAME: CCF
-
-\sphinxAtStartPar
-No description set
-
-
-\subparagraph{2. Schematic}
-\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_CCF:schematic}}
-\sphinxAtStartPar
-No schematic set
-
-
-\subparagraph{3. Usage}
-\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_CCF:usage}}
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{n}{apero\PYGZus{}ccf\PYGZus{}nirps\PYGZus{}ha}\PYG{o}{.}\PYG{n}{py} \PYG{p}{\PYGZob{}}\PYG{n}{obs\PYGZus{}dir}\PYG{p}{\PYGZcb{}}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{p}{[}\PYG{n}{FILE}\PYG{p}{:}\PYG{n}{EXT\PYGZus{}E2DS}\PYG{p}{,}\PYG{n}{EXT\PYGZus{}E2DS\PYGZus{}FF}\PYG{p}{,}\PYG{n}{TELLU\PYGZus{}OBJ}\PYG{p}{]} \PYG{p}{\PYGZob{}}\PYG{n}{options}\PYG{p}{\PYGZcb{}}
-\end{sphinxVerbatim}
-
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{p}{\PYGZob{}}\PYG{n}{obs\PYGZus{}dir}\PYG{p}{\PYGZcb{}}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{OBS\PYGZus{}DIR\PYGZus{}HELP}
-\PYG{p}{[}\PYG{n}{FILE}\PYG{p}{:}\PYG{n}{EXT\PYGZus{}E2DS}\PYG{p}{,}\PYG{n}{EXT\PYGZus{}E2DS\PYGZus{}FF}\PYG{p}{,}\PYG{n}{TELLU\PYGZus{}OBJ}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{o}{/}\PYG{n}{STRINGS}\PYG{p}{]} \PYG{n}{A} \PYG{n+nb}{list} \PYG{n}{of} \PYG{n}{fits} \PYG{n}{files} \PYG{n}{to} \PYG{n}{use} \PYG{n}{separated} \PYG{n}{by} \PYG{n}{spaces}\PYG{o}{.} \PYG{n}{Currently} \PYG{n}{allowed} \PYG{n}{types}\PYG{p}{:} \PYG{n}{E2DS}\PYG{p}{,} \PYG{n}{E2DSFF}\PYG{p}{,} \PYG{n}{TELLU\PYGZus{}OBJ} \PYG{p}{(}\PYG{n}{For} \PYG{n}{dprtype} \PYG{o}{=} \PYG{n}{OBJ\PYGZus{}FP}\PYG{p}{,} \PYG{n}{OBJ\PYGZus{}DARK}\PYG{p}{)}
-\end{sphinxVerbatim}
-
-
-\subparagraph{4. Optional Arguments}
-\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_CCF:optional-arguments}}
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{mask}\PYG{p}{[}\PYG{n}{FILE}\PYG{p}{:}\PYG{n}{CCF\PYGZus{}MASK}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{n}{Define} \PYG{n}{the} \PYG{n}{filename} \PYG{n}{to} \PYG{n}{the} \PYG{n}{CCF} \PYG{n}{mask} \PYG{n}{to} \PYG{n}{use}\PYG{o}{.} \PYG{n}{Can} \PYG{n}{be} \PYG{n}{full} \PYG{n}{path} \PYG{o+ow}{or} \PYG{n}{a} \PYG{n}{file} \PYG{o+ow}{in} \PYG{n}{the} \PYG{o}{.}\PYG{o}{/}\PYG{n}{data}\PYG{o}{/}\PYG{n}{spirou}\PYG{o}{/}\PYG{n}{ccf}\PYG{o}{/} \PYG{n}{folder}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{rv}\PYG{p}{[}\PYG{n}{FLOAT}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{FLOAT}\PYG{p}{]} \PYG{n}{The} \PYG{n}{target} \PYG{n}{RV} \PYG{n}{to} \PYG{n}{use} \PYG{k}{as} \PYG{n}{a} \PYG{n}{center} \PYG{k}{for} \PYG{n}{the} \PYG{n}{CCF} \PYG{n}{fit} \PYG{p}{(}\PYG{o+ow}{in} \PYG{n}{km}\PYG{o}{/}\PYG{n}{s}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{width}\PYG{p}{[}\PYG{n}{FLOAT}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{FLOAT}\PYG{p}{]} \PYG{n}{The} \PYG{n}{CCF} \PYG{n}{width} \PYG{n}{to} \PYG{n}{use} \PYG{k}{for} \PYG{n}{the} \PYG{n}{CCF} \PYG{n}{fit} \PYG{p}{(}\PYG{o+ow}{in} \PYG{n}{km}\PYG{o}{/}\PYG{n}{s}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{step}\PYG{p}{[}\PYG{n}{FLOAT}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{FLOAT}\PYG{p}{]} \PYG{n}{The} \PYG{n}{CCF} \PYG{n}{step} \PYG{n}{to} \PYG{n}{use} \PYG{k}{for} \PYG{n}{the} \PYG{n}{CCF} \PYG{n}{fit} \PYG{p}{(}\PYG{o+ow}{in} \PYG{n}{km}\PYG{o}{/}\PYG{n}{s}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{masknormmode}\PYG{p}{[}\PYG{k+kc}{None}\PYG{p}{,}\PYG{n+nb}{all}\PYG{p}{,}\PYG{n}{order}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{n}{Define} \PYG{n}{the} \PYG{n+nb}{type} \PYG{n}{of} \PYG{n}{normalization} \PYG{n}{to} \PYG{n}{apply} \PYG{n}{to} \PYG{n}{ccf} \PYG{n}{masks}\PYG{p}{,} \PYG{n+nb}{all} \PYG{n}{normalized} \PYG{n}{across} \PYG{n+nb}{all} \PYG{n}{orders}\PYG{p}{,} \PYG{n}{order} \PYG{n}{normalizes} \PYG{n}{independently} \PYG{k}{for} \PYG{n}{each} \PYG{n}{order}\PYG{p}{,} \PYG{k+kc}{None} \PYG{n}{applies} \PYG{n}{no} \PYG{n}{mask} \PYG{n}{normalization}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{database}\PYG{p}{[}\PYG{k+kc}{True}\PYG{o}{/}\PYG{k+kc}{False}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{BOOLEAN}\PYG{p}{]} \PYG{n}{Whether} \PYG{n}{to} \PYG{n}{add} \PYG{n}{outputs} \PYG{n}{to} \PYG{n}{calibration} \PYG{n}{database}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{blazefile}\PYG{p}{[}\PYG{n}{FILE}\PYG{p}{:}\PYG{n}{FF\PYGZus{}BLAZE}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{n}{Define} \PYG{n}{a} \PYG{n}{custom} \PYG{n}{file} \PYG{n}{to} \PYG{n}{use} \PYG{k}{for} \PYG{n}{blaze} \PYG{n}{correction}\PYG{o}{.} \PYG{n}{If} \PYG{n}{unset} \PYG{n}{uses} \PYG{n}{closest} \PYG{n}{file} \PYG{k+kn}{from} \PYG{n+nn}{calibDB}\PYG{n+nn}{.} \PYG{n}{Checks} \PYG{k}{for} \PYG{n}{an} \PYG{n}{absolute} \PYG{n}{path} \PYG{o+ow}{and} \PYG{n}{then} \PYG{n}{checks} \PYG{n}{directory} \PYG{p}{(}\PYG{n}{CALIBDB}\PYG{o}{=}\PYG{n}{BADPIX}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{plot}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{o}{\PYGZgt{}}\PYG{n}{INT}\PYG{o}{\PYGZgt{}}\PYG{l+m+mi}{4}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{INTEGER}\PYG{p}{]} \PYG{n}{Plot} \PYG{n}{level}\PYG{o}{.} \PYG{l+m+mi}{0} \PYG{o}{=} \PYG{n}{off}\PYG{p}{,} \PYG{l+m+mi}{1} \PYG{o}{=} \PYG{n}{interactively}\PYG{p}{,} \PYG{l+m+mi}{2} \PYG{o}{=} \PYG{n}{save} \PYG{n}{to} \PYG{n}{file}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{no\PYGZus{}in\PYGZus{}qc} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Disable} \PYG{n}{checking} \PYG{n}{the} \PYG{n}{quality} \PYG{n}{control} \PYG{n}{of} \PYG{n+nb}{input} \PYG{n}{files}
-\end{sphinxVerbatim}
-
-
-\subparagraph{5. Special Arguments}
-\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_CCF:special-arguments}}
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{xhelp}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Extended} \PYG{n}{help} \PYG{n}{menu} \PYG{p}{(}\PYG{k}{with} \PYG{n+nb}{all} \PYG{n}{advanced} \PYG{n}{arguments}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{debug}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Activates} \PYG{n}{debug} \PYG{n}{mode} \PYG{p}{(}\PYG{n}{Advanced} \PYG{n}{mode} \PYG{p}{[}\PYG{n}{INTEGER}\PYG{p}{]} \PYG{n}{value} \PYG{n}{must} \PYG{n}{be} \PYG{n}{an} \PYG{n}{integer} \PYG{n}{greater} \PYG{n}{than} \PYG{l+m+mi}{0}\PYG{p}{,} \PYG{n}{setting} \PYG{n}{the} \PYG{n}{debug} \PYG{n}{level}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{listing}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Lists} \PYG{n}{the} \PYG{n}{night} \PYG{n}{name} \PYG{n}{directories} \PYG{o+ow}{in} \PYG{n}{the} \PYG{n+nb}{input} \PYG{n}{directory} \PYG{k}{if} \PYG{n}{used} \PYG{n}{without} \PYG{n}{a} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{directory}\PYG{l+s+s1}{\PYGZsq{}} \PYG{n}{argument} \PYG{o+ow}{or} \PYG{n}{lists} \PYG{n}{the} \PYG{n}{files} \PYG{o+ow}{in} \PYG{n}{the} \PYG{n}{given} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{directory}\PYG{l+s+s1}{\PYGZsq{}} \PYG{p}{(}\PYG{k}{if} \PYG{n}{defined}\PYG{p}{)}\PYG{o}{.} \PYG{n}{Only} \PYG{n}{lists} \PYG{n}{up} \PYG{n}{to} \PYG{l+m+mi}{15} \PYG{n}{files}\PYG{o}{/}\PYG{n}{directories}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{listingall}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Lists} \PYG{n}{ALL} \PYG{n}{the} \PYG{n}{night} \PYG{n}{name} \PYG{n}{directories} \PYG{o+ow}{in} \PYG{n}{the} \PYG{n+nb}{input} \PYG{n}{directory} \PYG{k}{if} \PYG{n}{used} \PYG{n}{without} \PYG{n}{a} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{directory}\PYG{l+s+s1}{\PYGZsq{}} \PYG{n}{argument} \PYG{o+ow}{or} \PYG{n}{lists} \PYG{n}{the} \PYG{n}{files} \PYG{o+ow}{in} \PYG{n}{the} \PYG{n}{given} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{directory}\PYG{l+s+s1}{\PYGZsq{}} \PYG{p}{(}\PYG{k}{if} \PYG{n}{defined}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{version}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Displays} \PYG{n}{the} \PYG{n}{current} \PYG{n}{version} \PYG{n}{of} \PYG{n}{this} \PYG{n}{recipe}\PYG{o}{.}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{info}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Displays} \PYG{n}{the} \PYG{n}{short} \PYG{n}{version} \PYG{n}{of} \PYG{n}{the} \PYG{n}{help} \PYG{n}{menu}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{program}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{n}{The} \PYG{n}{name} \PYG{n}{of} \PYG{n}{the} \PYG{n}{program} \PYG{n}{to} \PYG{n}{display} \PYG{o+ow}{and} \PYG{n}{use} \PYG{p}{(}\PYG{n}{mostly} \PYG{k}{for} \PYG{n}{logging} \PYG{n}{purpose}\PYG{p}{)} \PYG{n}{log} \PYG{n}{becomes} \PYG{n}{date} \PYG{o}{|} \PYG{p}{\PYGZob{}}\PYG{n}{THIS} \PYG{n}{STRING}\PYG{p}{\PYGZcb{}} \PYG{o}{|} \PYG{n}{Message}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{recipe\PYGZus{}kind}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{n}{The} \PYG{n}{recipe} \PYG{n}{kind} \PYG{k}{for} \PYG{n}{this} \PYG{n}{recipe} \PYG{n}{run} \PYG{p}{(}\PYG{n}{normally} \PYG{n}{only} \PYG{n}{used} \PYG{o+ow}{in} \PYG{n}{apero\PYGZus{}processing}\PYG{o}{.}\PYG{n}{py}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{parallel}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{BOOL}\PYG{p}{]} \PYG{n}{If} \PYG{k+kc}{True} \PYG{n}{this} \PYG{o+ow}{is} \PYG{n}{a} \PYG{n}{run} \PYG{o+ow}{in} \PYG{n}{parellel} \PYG{o}{\PYGZhy{}} \PYG{n}{disable} \PYG{n}{some} \PYG{n}{features} \PYG{p}{(}\PYG{n}{normally} \PYG{n}{only} \PYG{n}{used} \PYG{o+ow}{in} \PYG{n}{apero\PYGZus{}processing}\PYG{o}{.}\PYG{n}{py}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{shortname}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{n}{Set} \PYG{n}{a} \PYG{n}{shortname} \PYG{k}{for} \PYG{n}{a} \PYG{n}{recipe} \PYG{n}{to} \PYG{n}{distinguish} \PYG{n}{it} \PYG{k+kn}{from} \PYG{n+nn}{other} \PYG{n}{runs} \PYG{o}{\PYGZhy{}} \PYG{n}{this} \PYG{o+ow}{is} \PYG{n}{mainly} \PYG{k}{for} \PYG{n}{use} \PYG{k}{with} \PYG{n}{apero} \PYG{n}{processing} \PYG{n}{but} \PYG{n}{will} \PYG{n}{appear} \PYG{o+ow}{in} \PYG{n}{the} \PYG{n}{log} \PYG{n}{database}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{idebug}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{BOOLEAN}\PYG{p}{]} \PYG{n}{If} \PYG{k+kc}{True} \PYG{n}{always} \PYG{n}{returns} \PYG{n}{to} \PYG{n}{ipython} \PYG{p}{(}\PYG{o+ow}{or} \PYG{n}{python}\PYG{p}{)} \PYG{n}{at} \PYG{n}{end} \PYG{p}{(}\PYG{n}{via} \PYG{n}{ipdb} \PYG{o+ow}{or} \PYG{n}{pdb}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{ref}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{If} \PYG{n+nb}{set} \PYG{n}{then} \PYG{n}{recipe} \PYG{o+ow}{is} \PYG{n}{a} \PYG{n}{reference} \PYG{n}{recipe} \PYG{p}{(}\PYG{n}{e}\PYG{o}{.}\PYG{n}{g}\PYG{o}{.} \PYG{n}{reference} \PYG{n}{recipes} \PYG{n}{write} \PYG{n}{to} \PYG{n}{calibration} \PYG{n}{database} \PYG{k}{as} \PYG{n}{reference} \PYG{n}{calibrations}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{crunfile}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Set} \PYG{n}{a} \PYG{n}{run} \PYG{n}{file} \PYG{n}{to} \PYG{n}{override} \PYG{n}{default} \PYG{n}{arguments}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{quiet}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Run} \PYG{n}{recipe} \PYG{n}{without} \PYG{n}{start} \PYG{n}{up} \PYG{n}{text}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{nosave}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Do} \PYG{o+ow}{not} \PYG{n}{save} \PYG{n+nb}{any} \PYG{n}{outputs} \PYG{p}{(}\PYG{n}{debug}\PYG{o}{/}\PYG{n}{information} \PYG{n}{run}\PYG{p}{)}\PYG{o}{.} \PYG{n}{Note} \PYG{n}{some} \PYG{n}{recipes} \PYG{n}{require} \PYG{n}{other} \PYG{n}{recipesto} \PYG{n}{be} \PYG{n}{run}\PYG{o}{.} \PYG{n}{Only} \PYG{n}{use} \PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{nosave} \PYG{n}{after} \PYG{n}{previous} \PYG{n}{recipe} \PYG{n}{runs} \PYG{n}{have} \PYG{n}{been} \PYG{n}{run} \PYG{n}{successfully} \PYG{n}{at} \PYG{n}{least} \PYG{n}{once}\PYG{o}{.}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{force\PYGZus{}indir}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{n}{Force} \PYG{n}{the} \PYG{n}{default} \PYG{n+nb}{input} \PYG{n}{directory} \PYG{p}{(}\PYG{n}{Normally} \PYG{n+nb}{set} \PYG{n}{by} \PYG{n}{recipe}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{force\PYGZus{}outdir}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{n}{Force} \PYG{n}{the} \PYG{n}{default} \PYG{n}{output} \PYG{n}{directory} \PYG{p}{(}\PYG{n}{Normally} \PYG{n+nb}{set} \PYG{n}{by} \PYG{n}{recipe}\PYG{p}{)}
-\end{sphinxVerbatim}
-
-
-\subparagraph{6. Output directory}
-\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_CCF:output-directory}}
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{n}{DRS\PYGZus{}DATA\PYGZus{}REDUC} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Default}\PYG{p}{:} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{red}\PYG{l+s+s2}{\PYGZdq{}} \PYG{n}{directory}
-\end{sphinxVerbatim}
-
-
-\subparagraph{7. Output files}
-\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_CCF:output-files}}
-
-\begin{savenotes}\sphinxattablestart
-\sphinxthistablewithglobalstyle
-\centering
-\sphinxcapstartof{table}
-\sphinxthecaptionisattop
-\sphinxcaption{Outputs}\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_CCF:id1}}
-\sphinxaftertopcaption
-\begin{tabulary}{\linewidth}[t]{TTTTTTT}
-\sphinxtoprule
-\sphinxstyletheadfamily 
-\sphinxAtStartPar
-name
-&\sphinxstyletheadfamily 
-\sphinxAtStartPar
-description
-&\sphinxstyletheadfamily 
-\sphinxAtStartPar
-HDR{[}DRSOUTID{]}
-&\sphinxstyletheadfamily 
-\sphinxAtStartPar
-file type
-&\sphinxstyletheadfamily 
-\sphinxAtStartPar
-suffix
-&\sphinxstyletheadfamily 
-\sphinxAtStartPar
-fibers
-&\sphinxstyletheadfamily 
-\sphinxAtStartPar
-input file
-\\
-\sphinxmidrule
-\sphinxtableatstartofbodyhook
-\sphinxAtStartPar
-CCF\_RV
-&
-\sphinxAtStartPar
-Cross\sphinxhyphen{}correlation RV results file
-&
-\sphinxAtStartPar
-CCF\_RV
-&
-\sphinxAtStartPar
-.fits
-&
-\sphinxAtStartPar
-\_ccf
-&
-\sphinxAtStartPar
-A, B
-&
-\sphinxAtStartPar
-EXT\_E2DS\_FF, TELLU\_OBJ
-\\
-\sphinxbottomrule
-\end{tabulary}
-\sphinxtableafterendhook\par
-\sphinxattableend\end{savenotes}
-
-
-\subparagraph{8. Debug plots}
-\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_CCF:debug-plots}}
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{n}{CCF\PYGZus{}RV\PYGZus{}FIT}
-\PYG{n}{CCF\PYGZus{}RV\PYGZus{}FIT\PYGZus{}LOOP}
-\PYG{n}{CCF\PYGZus{}SWAVE\PYGZus{}REF}
-\PYG{n}{CCF\PYGZus{}PHOTON\PYGZus{}UNCERT}
-\end{sphinxVerbatim}
-
-
-\subparagraph{9. Summary plots}
-\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_CCF:summary-plots}}
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{n}{SUM\PYGZus{}CCF\PYGZus{}PHOTON\PYGZus{}UNCERT}
-\PYG{n}{SUM\PYGZus{}CCF\PYGZus{}RV\PYGZus{}FIT}
-\end{sphinxVerbatim}
-
-\sphinxstepscope
-
-
-\paragraph{apero\_mk\_skymodel\_nirps\_ha}
-\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_MKSKY:apero-mk-skymodel-nirps-ha}}\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_MKSKY:recipes-nirps-ha-mksky}}\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_MKSKY::doc}}
-
-\subparagraph{1. Description}
-\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_MKSKY:description}}
-\sphinxAtStartPar
-SHORTNAME: MKSKY
-
-\sphinxAtStartPar
-No description set
-
-
-\subparagraph{2. Schematic}
-\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_MKSKY:schematic}}
-\sphinxAtStartPar
-No schematic set
-
-
-\subparagraph{3. Usage}
-\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_MKSKY:usage}}
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{n}{apero\PYGZus{}mk\PYGZus{}skymodel\PYGZus{}nirps\PYGZus{}ha}\PYG{o}{.}\PYG{n}{py} \PYG{p}{\PYGZob{}}\PYG{n}{options}\PYG{p}{\PYGZcb{}}
-\end{sphinxVerbatim}
-
-\sphinxAtStartPar
-No optional arguments
-
-
-\subparagraph{4. Optional Arguments}
-\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_MKSKY:optional-arguments}}
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{filetype}\PYG{p}{[}\PYG{n}{EXT\PYGZus{}E2DS}\PYG{p}{,}\PYG{n}{EXT\PYGZus{}E2DS\PYGZus{}FF}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{n}{optional}\PYG{p}{,} \PYG{n}{the} \PYG{n}{filetype} \PYG{p}{(}\PYG{n}{KW\PYGZus{}OUTPUT}\PYG{p}{)} \PYG{n}{to} \PYG{n}{use} \PYG{n}{when} \PYG{n}{processing} \PYG{n}{files}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{database}\PYG{p}{[}\PYG{k+kc}{True}\PYG{o}{/}\PYG{k+kc}{False}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{BOOLEAN}\PYG{p}{]} \PYG{n}{Whether} \PYG{n}{to} \PYG{n}{add} \PYG{n}{outputs} \PYG{n}{to} \PYG{n}{calibration} \PYG{n}{database}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{plot}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{o}{\PYGZgt{}}\PYG{n}{INT}\PYG{o}{\PYGZgt{}}\PYG{l+m+mi}{4}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{INTEGER}\PYG{p}{]} \PYG{n}{Plot} \PYG{n}{level}\PYG{o}{.} \PYG{l+m+mi}{0} \PYG{o}{=} \PYG{n}{off}\PYG{p}{,} \PYG{l+m+mi}{1} \PYG{o}{=} \PYG{n}{interactively}\PYG{p}{,} \PYG{l+m+mi}{2} \PYG{o}{=} \PYG{n}{save} \PYG{n}{to} \PYG{n}{file}
-\end{sphinxVerbatim}
-
-
-\subparagraph{5. Special Arguments}
-\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_MKSKY:special-arguments}}
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{xhelp}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Extended} \PYG{n}{help} \PYG{n}{menu} \PYG{p}{(}\PYG{k}{with} \PYG{n+nb}{all} \PYG{n}{advanced} \PYG{n}{arguments}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{debug}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Activates} \PYG{n}{debug} \PYG{n}{mode} \PYG{p}{(}\PYG{n}{Advanced} \PYG{n}{mode} \PYG{p}{[}\PYG{n}{INTEGER}\PYG{p}{]} \PYG{n}{value} \PYG{n}{must} \PYG{n}{be} \PYG{n}{an} \PYG{n}{integer} \PYG{n}{greater} \PYG{n}{than} \PYG{l+m+mi}{0}\PYG{p}{,} \PYG{n}{setting} \PYG{n}{the} \PYG{n}{debug} \PYG{n}{level}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{listing}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Lists} \PYG{n}{the} \PYG{n}{night} \PYG{n}{name} \PYG{n}{directories} \PYG{o+ow}{in} \PYG{n}{the} \PYG{n+nb}{input} \PYG{n}{directory} \PYG{k}{if} \PYG{n}{used} \PYG{n}{without} \PYG{n}{a} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{directory}\PYG{l+s+s1}{\PYGZsq{}} \PYG{n}{argument} \PYG{o+ow}{or} \PYG{n}{lists} \PYG{n}{the} \PYG{n}{files} \PYG{o+ow}{in} \PYG{n}{the} \PYG{n}{given} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{directory}\PYG{l+s+s1}{\PYGZsq{}} \PYG{p}{(}\PYG{k}{if} \PYG{n}{defined}\PYG{p}{)}\PYG{o}{.} \PYG{n}{Only} \PYG{n}{lists} \PYG{n}{up} \PYG{n}{to} \PYG{l+m+mi}{15} \PYG{n}{files}\PYG{o}{/}\PYG{n}{directories}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{listingall}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Lists} \PYG{n}{ALL} \PYG{n}{the} \PYG{n}{night} \PYG{n}{name} \PYG{n}{directories} \PYG{o+ow}{in} \PYG{n}{the} \PYG{n+nb}{input} \PYG{n}{directory} \PYG{k}{if} \PYG{n}{used} \PYG{n}{without} \PYG{n}{a} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{directory}\PYG{l+s+s1}{\PYGZsq{}} \PYG{n}{argument} \PYG{o+ow}{or} \PYG{n}{lists} \PYG{n}{the} \PYG{n}{files} \PYG{o+ow}{in} \PYG{n}{the} \PYG{n}{given} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{directory}\PYG{l+s+s1}{\PYGZsq{}} \PYG{p}{(}\PYG{k}{if} \PYG{n}{defined}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{version}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Displays} \PYG{n}{the} \PYG{n}{current} \PYG{n}{version} \PYG{n}{of} \PYG{n}{this} \PYG{n}{recipe}\PYG{o}{.}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{info}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Displays} \PYG{n}{the} \PYG{n}{short} \PYG{n}{version} \PYG{n}{of} \PYG{n}{the} \PYG{n}{help} \PYG{n}{menu}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{program}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{n}{The} \PYG{n}{name} \PYG{n}{of} \PYG{n}{the} \PYG{n}{program} \PYG{n}{to} \PYG{n}{display} \PYG{o+ow}{and} \PYG{n}{use} \PYG{p}{(}\PYG{n}{mostly} \PYG{k}{for} \PYG{n}{logging} \PYG{n}{purpose}\PYG{p}{)} \PYG{n}{log} \PYG{n}{becomes} \PYG{n}{date} \PYG{o}{|} \PYG{p}{\PYGZob{}}\PYG{n}{THIS} \PYG{n}{STRING}\PYG{p}{\PYGZcb{}} \PYG{o}{|} \PYG{n}{Message}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{recipe\PYGZus{}kind}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{n}{The} \PYG{n}{recipe} \PYG{n}{kind} \PYG{k}{for} \PYG{n}{this} \PYG{n}{recipe} \PYG{n}{run} \PYG{p}{(}\PYG{n}{normally} \PYG{n}{only} \PYG{n}{used} \PYG{o+ow}{in} \PYG{n}{apero\PYGZus{}processing}\PYG{o}{.}\PYG{n}{py}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{parallel}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{BOOL}\PYG{p}{]} \PYG{n}{If} \PYG{k+kc}{True} \PYG{n}{this} \PYG{o+ow}{is} \PYG{n}{a} \PYG{n}{run} \PYG{o+ow}{in} \PYG{n}{parellel} \PYG{o}{\PYGZhy{}} \PYG{n}{disable} \PYG{n}{some} \PYG{n}{features} \PYG{p}{(}\PYG{n}{normally} \PYG{n}{only} \PYG{n}{used} \PYG{o+ow}{in} \PYG{n}{apero\PYGZus{}processing}\PYG{o}{.}\PYG{n}{py}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{shortname}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{n}{Set} \PYG{n}{a} \PYG{n}{shortname} \PYG{k}{for} \PYG{n}{a} \PYG{n}{recipe} \PYG{n}{to} \PYG{n}{distinguish} \PYG{n}{it} \PYG{k+kn}{from} \PYG{n+nn}{other} \PYG{n}{runs} \PYG{o}{\PYGZhy{}} \PYG{n}{this} \PYG{o+ow}{is} \PYG{n}{mainly} \PYG{k}{for} \PYG{n}{use} \PYG{k}{with} \PYG{n}{apero} \PYG{n}{processing} \PYG{n}{but} \PYG{n}{will} \PYG{n}{appear} \PYG{o+ow}{in} \PYG{n}{the} \PYG{n}{log} \PYG{n}{database}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{idebug}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{BOOLEAN}\PYG{p}{]} \PYG{n}{If} \PYG{k+kc}{True} \PYG{n}{always} \PYG{n}{returns} \PYG{n}{to} \PYG{n}{ipython} \PYG{p}{(}\PYG{o+ow}{or} \PYG{n}{python}\PYG{p}{)} \PYG{n}{at} \PYG{n}{end} \PYG{p}{(}\PYG{n}{via} \PYG{n}{ipdb} \PYG{o+ow}{or} \PYG{n}{pdb}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{ref}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{If} \PYG{n+nb}{set} \PYG{n}{then} \PYG{n}{recipe} \PYG{o+ow}{is} \PYG{n}{a} \PYG{n}{reference} \PYG{n}{recipe} \PYG{p}{(}\PYG{n}{e}\PYG{o}{.}\PYG{n}{g}\PYG{o}{.} \PYG{n}{reference} \PYG{n}{recipes} \PYG{n}{write} \PYG{n}{to} \PYG{n}{calibration} \PYG{n}{database} \PYG{k}{as} \PYG{n}{reference} \PYG{n}{calibrations}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{crunfile}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Set} \PYG{n}{a} \PYG{n}{run} \PYG{n}{file} \PYG{n}{to} \PYG{n}{override} \PYG{n}{default} \PYG{n}{arguments}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{quiet}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Run} \PYG{n}{recipe} \PYG{n}{without} \PYG{n}{start} \PYG{n}{up} \PYG{n}{text}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{nosave}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Do} \PYG{o+ow}{not} \PYG{n}{save} \PYG{n+nb}{any} \PYG{n}{outputs} \PYG{p}{(}\PYG{n}{debug}\PYG{o}{/}\PYG{n}{information} \PYG{n}{run}\PYG{p}{)}\PYG{o}{.} \PYG{n}{Note} \PYG{n}{some} \PYG{n}{recipes} \PYG{n}{require} \PYG{n}{other} \PYG{n}{recipesto} \PYG{n}{be} \PYG{n}{run}\PYG{o}{.} \PYG{n}{Only} \PYG{n}{use} \PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{nosave} \PYG{n}{after} \PYG{n}{previous} \PYG{n}{recipe} \PYG{n}{runs} \PYG{n}{have} \PYG{n}{been} \PYG{n}{run} \PYG{n}{successfully} \PYG{n}{at} \PYG{n}{least} \PYG{n}{once}\PYG{o}{.}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{force\PYGZus{}indir}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{n}{Force} \PYG{n}{the} \PYG{n}{default} \PYG{n+nb}{input} \PYG{n}{directory} \PYG{p}{(}\PYG{n}{Normally} \PYG{n+nb}{set} \PYG{n}{by} \PYG{n}{recipe}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{force\PYGZus{}outdir}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{n}{Force} \PYG{n}{the} \PYG{n}{default} \PYG{n}{output} \PYG{n}{directory} \PYG{p}{(}\PYG{n}{Normally} \PYG{n+nb}{set} \PYG{n}{by} \PYG{n}{recipe}\PYG{p}{)}
-\end{sphinxVerbatim}
-
-
-\subparagraph{6. Output directory}
-\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_MKSKY:output-directory}}
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{n}{DRS\PYGZus{}DATA\PYGZus{}REDUC} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Default}\PYG{p}{:} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{red}\PYG{l+s+s2}{\PYGZdq{}} \PYG{n}{directory}
-\end{sphinxVerbatim}
-
-
-\subparagraph{7. Output files}
-\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_MKSKY:output-files}}
-
-\begin{savenotes}\sphinxattablestart
-\sphinxthistablewithglobalstyle
-\centering
-\sphinxcapstartof{table}
-\sphinxthecaptionisattop
-\sphinxcaption{Outputs}\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_MKSKY:id1}}
-\sphinxaftertopcaption
-\begin{tabulary}{\linewidth}[t]{TTTTTTTT}
-\sphinxtoprule
-\sphinxstyletheadfamily 
-\sphinxAtStartPar
-name
-&\sphinxstyletheadfamily 
-\sphinxAtStartPar
-description
-&\sphinxstyletheadfamily 
-\sphinxAtStartPar
-HDR{[}DRSOUTID{]}
-&\sphinxstyletheadfamily 
-\sphinxAtStartPar
-file type
-&\sphinxstyletheadfamily 
-\sphinxAtStartPar
-suffix
-&\sphinxstyletheadfamily 
-\sphinxAtStartPar
-dbname
-&\sphinxstyletheadfamily 
-\sphinxAtStartPar
-dbkey
-&\sphinxstyletheadfamily 
-\sphinxAtStartPar
-input file
-\\
-\sphinxmidrule
-\sphinxtableatstartofbodyhook
-\sphinxAtStartPar
-SKY\_MODEL
-&
-\sphinxAtStartPar
-Telluric sky model file
-&
-\sphinxAtStartPar
-SKY\_MODEL
-&
-\sphinxAtStartPar
-.fits
-&
-\sphinxAtStartPar
-\_sky\_model
-&
-\sphinxAtStartPar
-telluric
-&
-\sphinxAtStartPar
-SKY\_MODEL
-&
-\sphinxAtStartPar
-EXT\_E2DS\_FF
-\\
-\sphinxbottomrule
-\end{tabulary}
-\sphinxtableafterendhook\par
-\sphinxattableend\end{savenotes}
-
-
-\subparagraph{8. Debug plots}
-\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_MKSKY:debug-plots}}
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{n}{TELLU\PYGZus{}SKYMODEL\PYGZus{}REGION\PYGZus{}PLOT}
-\PYG{n}{TELLU\PYGZus{}SKYMODEL\PYGZus{}MED}
-\PYG{n}{TELLU\PYGZus{}SKYMODEL\PYGZus{}LINEFIT}
-\end{sphinxVerbatim}
-
-
-\subparagraph{9. Summary plots}
-\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_MKSKY:summary-plots}}
-\sphinxAtStartPar
-No summary plots.
-
-\sphinxstepscope
-
-
 \paragraph{apero\_mk\_tellu\_nirps\_ha}
 \label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_MKTELL:apero-mk-tellu-nirps-ha}}\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_MKTELL:recipes-nirps-ha-mktell}}\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_MKTELL::doc}}
 
@@ -41287,95 +40255,6 @@ EXT\_E2DS\_FF, TELLU\_OBJ
 \PYG{n}{SUM\PYGZus{}EXTRACT\PYGZus{}S1D}
 \PYG{n}{SUM\PYGZus{}MKTEMP\PYGZus{}BERV\PYGZus{}COV}
 \end{sphinxVerbatim}
-
-\sphinxstepscope
-
-
-\paragraph{apero\_postprocess\_nirps\_ha}
-\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_OBJPOST:apero-postprocess-nirps-ha}}\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_OBJPOST:recipes-nirps-ha-objpost}}\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_OBJPOST::doc}}
-
-\subparagraph{1. Description}
-\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_OBJPOST:description}}
-\sphinxAtStartPar
-SHORTNAME: OBJPOST
-
-\sphinxAtStartPar
-No description set
-
-
-\subparagraph{2. Schematic}
-\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_OBJPOST:schematic}}
-\sphinxAtStartPar
-No schematic set
-
-
-\subparagraph{3. Usage}
-\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_OBJPOST:usage}}
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{n}{apero\PYGZus{}postprocess\PYGZus{}nirps\PYGZus{}ha}\PYG{o}{.}\PYG{n}{py} \PYG{p}{\PYGZob{}}\PYG{n}{obs\PYGZus{}dir}\PYG{p}{\PYGZcb{}}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{p}{[}\PYG{n}{FILE}\PYG{p}{:}\PYG{n}{DRS\PYGZus{}PP}\PYG{p}{]} \PYG{p}{\PYGZob{}}\PYG{n}{options}\PYG{p}{\PYGZcb{}}
-\end{sphinxVerbatim}
-
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{p}{\PYGZob{}}\PYG{n}{obs\PYGZus{}dir}\PYG{p}{\PYGZcb{}}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{OBS\PYGZus{}DIR\PYGZus{}HELP}
-\PYG{p}{[}\PYG{n}{FILE}\PYG{p}{:}\PYG{n}{DRS\PYGZus{}PP}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{o}{/}\PYG{n}{STRINGS}\PYG{p}{]} \PYG{n}{A} \PYG{n+nb}{list} \PYG{n}{of} \PYG{n}{fits} \PYG{n}{files} \PYG{n}{to} \PYG{n}{use} \PYG{n}{separated} \PYG{n}{by} \PYG{n}{spaces}\PYG{o}{.}
-\end{sphinxVerbatim}
-
-
-\subparagraph{4. Optional Arguments}
-\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_OBJPOST:optional-arguments}}
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{skip} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Overwrites} \PYG{n}{post} \PYG{n}{processed} \PYG{n}{files} \PYG{k}{if} \PYG{n}{they} \PYG{n}{exist} \PYG{p}{(}\PYG{n}{default} \PYG{o+ow}{is} \PYG{k+kc}{False}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{clear} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Clear} \PYG{n}{the} \PYG{n}{reduced} \PYG{n}{folder} \PYG{n}{after} \PYG{n}{post}\PYG{o}{\PYGZhy{}}\PYG{n}{processing}\PYG{o}{.} \PYG{n}{WARNING} \PYG{n}{removes} \PYG{n+nb}{all} \PYG{n}{files} \PYG{k+kn}{from} \PYG{n+nn}{the} \PYG{n}{reduced} \PYG{n}{directory}\PYG{o}{.}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{no\PYGZus{}in\PYGZus{}qc} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Disable} \PYG{n}{checking} \PYG{n}{the} \PYG{n}{quality} \PYG{n}{control} \PYG{n}{of} \PYG{n+nb}{input} \PYG{n}{files}
-\end{sphinxVerbatim}
-
-
-\subparagraph{5. Special Arguments}
-\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_OBJPOST:special-arguments}}
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{xhelp}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Extended} \PYG{n}{help} \PYG{n}{menu} \PYG{p}{(}\PYG{k}{with} \PYG{n+nb}{all} \PYG{n}{advanced} \PYG{n}{arguments}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{debug}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Activates} \PYG{n}{debug} \PYG{n}{mode} \PYG{p}{(}\PYG{n}{Advanced} \PYG{n}{mode} \PYG{p}{[}\PYG{n}{INTEGER}\PYG{p}{]} \PYG{n}{value} \PYG{n}{must} \PYG{n}{be} \PYG{n}{an} \PYG{n}{integer} \PYG{n}{greater} \PYG{n}{than} \PYG{l+m+mi}{0}\PYG{p}{,} \PYG{n}{setting} \PYG{n}{the} \PYG{n}{debug} \PYG{n}{level}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{listing}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Lists} \PYG{n}{the} \PYG{n}{night} \PYG{n}{name} \PYG{n}{directories} \PYG{o+ow}{in} \PYG{n}{the} \PYG{n+nb}{input} \PYG{n}{directory} \PYG{k}{if} \PYG{n}{used} \PYG{n}{without} \PYG{n}{a} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{directory}\PYG{l+s+s1}{\PYGZsq{}} \PYG{n}{argument} \PYG{o+ow}{or} \PYG{n}{lists} \PYG{n}{the} \PYG{n}{files} \PYG{o+ow}{in} \PYG{n}{the} \PYG{n}{given} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{directory}\PYG{l+s+s1}{\PYGZsq{}} \PYG{p}{(}\PYG{k}{if} \PYG{n}{defined}\PYG{p}{)}\PYG{o}{.} \PYG{n}{Only} \PYG{n}{lists} \PYG{n}{up} \PYG{n}{to} \PYG{l+m+mi}{15} \PYG{n}{files}\PYG{o}{/}\PYG{n}{directories}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{listingall}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Lists} \PYG{n}{ALL} \PYG{n}{the} \PYG{n}{night} \PYG{n}{name} \PYG{n}{directories} \PYG{o+ow}{in} \PYG{n}{the} \PYG{n+nb}{input} \PYG{n}{directory} \PYG{k}{if} \PYG{n}{used} \PYG{n}{without} \PYG{n}{a} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{directory}\PYG{l+s+s1}{\PYGZsq{}} \PYG{n}{argument} \PYG{o+ow}{or} \PYG{n}{lists} \PYG{n}{the} \PYG{n}{files} \PYG{o+ow}{in} \PYG{n}{the} \PYG{n}{given} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{directory}\PYG{l+s+s1}{\PYGZsq{}} \PYG{p}{(}\PYG{k}{if} \PYG{n}{defined}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{version}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Displays} \PYG{n}{the} \PYG{n}{current} \PYG{n}{version} \PYG{n}{of} \PYG{n}{this} \PYG{n}{recipe}\PYG{o}{.}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{info}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Displays} \PYG{n}{the} \PYG{n}{short} \PYG{n}{version} \PYG{n}{of} \PYG{n}{the} \PYG{n}{help} \PYG{n}{menu}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{program}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{n}{The} \PYG{n}{name} \PYG{n}{of} \PYG{n}{the} \PYG{n}{program} \PYG{n}{to} \PYG{n}{display} \PYG{o+ow}{and} \PYG{n}{use} \PYG{p}{(}\PYG{n}{mostly} \PYG{k}{for} \PYG{n}{logging} \PYG{n}{purpose}\PYG{p}{)} \PYG{n}{log} \PYG{n}{becomes} \PYG{n}{date} \PYG{o}{|} \PYG{p}{\PYGZob{}}\PYG{n}{THIS} \PYG{n}{STRING}\PYG{p}{\PYGZcb{}} \PYG{o}{|} \PYG{n}{Message}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{recipe\PYGZus{}kind}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{n}{The} \PYG{n}{recipe} \PYG{n}{kind} \PYG{k}{for} \PYG{n}{this} \PYG{n}{recipe} \PYG{n}{run} \PYG{p}{(}\PYG{n}{normally} \PYG{n}{only} \PYG{n}{used} \PYG{o+ow}{in} \PYG{n}{apero\PYGZus{}processing}\PYG{o}{.}\PYG{n}{py}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{parallel}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{BOOL}\PYG{p}{]} \PYG{n}{If} \PYG{k+kc}{True} \PYG{n}{this} \PYG{o+ow}{is} \PYG{n}{a} \PYG{n}{run} \PYG{o+ow}{in} \PYG{n}{parellel} \PYG{o}{\PYGZhy{}} \PYG{n}{disable} \PYG{n}{some} \PYG{n}{features} \PYG{p}{(}\PYG{n}{normally} \PYG{n}{only} \PYG{n}{used} \PYG{o+ow}{in} \PYG{n}{apero\PYGZus{}processing}\PYG{o}{.}\PYG{n}{py}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{shortname}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{n}{Set} \PYG{n}{a} \PYG{n}{shortname} \PYG{k}{for} \PYG{n}{a} \PYG{n}{recipe} \PYG{n}{to} \PYG{n}{distinguish} \PYG{n}{it} \PYG{k+kn}{from} \PYG{n+nn}{other} \PYG{n}{runs} \PYG{o}{\PYGZhy{}} \PYG{n}{this} \PYG{o+ow}{is} \PYG{n}{mainly} \PYG{k}{for} \PYG{n}{use} \PYG{k}{with} \PYG{n}{apero} \PYG{n}{processing} \PYG{n}{but} \PYG{n}{will} \PYG{n}{appear} \PYG{o+ow}{in} \PYG{n}{the} \PYG{n}{log} \PYG{n}{database}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{idebug}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{BOOLEAN}\PYG{p}{]} \PYG{n}{If} \PYG{k+kc}{True} \PYG{n}{always} \PYG{n}{returns} \PYG{n}{to} \PYG{n}{ipython} \PYG{p}{(}\PYG{o+ow}{or} \PYG{n}{python}\PYG{p}{)} \PYG{n}{at} \PYG{n}{end} \PYG{p}{(}\PYG{n}{via} \PYG{n}{ipdb} \PYG{o+ow}{or} \PYG{n}{pdb}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{ref}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{If} \PYG{n+nb}{set} \PYG{n}{then} \PYG{n}{recipe} \PYG{o+ow}{is} \PYG{n}{a} \PYG{n}{reference} \PYG{n}{recipe} \PYG{p}{(}\PYG{n}{e}\PYG{o}{.}\PYG{n}{g}\PYG{o}{.} \PYG{n}{reference} \PYG{n}{recipes} \PYG{n}{write} \PYG{n}{to} \PYG{n}{calibration} \PYG{n}{database} \PYG{k}{as} \PYG{n}{reference} \PYG{n}{calibrations}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{crunfile}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Set} \PYG{n}{a} \PYG{n}{run} \PYG{n}{file} \PYG{n}{to} \PYG{n}{override} \PYG{n}{default} \PYG{n}{arguments}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{quiet}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Run} \PYG{n}{recipe} \PYG{n}{without} \PYG{n}{start} \PYG{n}{up} \PYG{n}{text}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{nosave}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Do} \PYG{o+ow}{not} \PYG{n}{save} \PYG{n+nb}{any} \PYG{n}{outputs} \PYG{p}{(}\PYG{n}{debug}\PYG{o}{/}\PYG{n}{information} \PYG{n}{run}\PYG{p}{)}\PYG{o}{.} \PYG{n}{Note} \PYG{n}{some} \PYG{n}{recipes} \PYG{n}{require} \PYG{n}{other} \PYG{n}{recipesto} \PYG{n}{be} \PYG{n}{run}\PYG{o}{.} \PYG{n}{Only} \PYG{n}{use} \PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{nosave} \PYG{n}{after} \PYG{n}{previous} \PYG{n}{recipe} \PYG{n}{runs} \PYG{n}{have} \PYG{n}{been} \PYG{n}{run} \PYG{n}{successfully} \PYG{n}{at} \PYG{n}{least} \PYG{n}{once}\PYG{o}{.}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{force\PYGZus{}indir}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{n}{Force} \PYG{n}{the} \PYG{n}{default} \PYG{n+nb}{input} \PYG{n}{directory} \PYG{p}{(}\PYG{n}{Normally} \PYG{n+nb}{set} \PYG{n}{by} \PYG{n}{recipe}\PYG{p}{)}
-\PYG{o}{\PYGZhy{}}\PYG{o}{\PYGZhy{}}\PYG{n}{force\PYGZus{}outdir}\PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{o}{/}\PYG{o}{/} \PYG{p}{[}\PYG{n}{STRING}\PYG{p}{]} \PYG{n}{Force} \PYG{n}{the} \PYG{n}{default} \PYG{n}{output} \PYG{n}{directory} \PYG{p}{(}\PYG{n}{Normally} \PYG{n+nb}{set} \PYG{n}{by} \PYG{n}{recipe}\PYG{p}{)}
-\end{sphinxVerbatim}
-
-
-\subparagraph{6. Output directory}
-\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_OBJPOST:output-directory}}
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{n}{DRS\PYGZus{}DATA\PYGZus{}OUT} \PYG{o}{/}\PYG{o}{/} \PYG{n}{Default}\PYG{p}{:} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{out}\PYG{l+s+s2}{\PYGZdq{}} \PYG{n}{directory}
-\end{sphinxVerbatim}
-
-
-\subparagraph{7. Output files}
-\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_OBJPOST:output-files}}
-\sphinxAtStartPar
-N/A
-
-
-\subparagraph{8. Debug plots}
-\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_OBJPOST:debug-plots}}
-\sphinxAtStartPar
-No debug plots.
-
-
-\subparagraph{9. Summary plots}
-\label{\detokenize{auto/recipe_definitions/nirps_ha/rdefinition_OBJPOST:summary-plots}}
-\sphinxAtStartPar
-No summary plots.
 
 \sphinxstepscope
 
@@ -115340,6 +114219,78 @@ Added initial files. {[}Neil Cook{]}
 Updated title of readme. {[}Neil Cook{]}
 
 \end{itemize}
+
+
+\chapter{UdeM}
+\label{\detokenize{index:udem}}
+\sphinxstepscope
+
+
+\section{University of Montreal Documentation}
+\label{\detokenize{main/misc/udem:university-of-montreal-documentation}}\label{\detokenize{main/misc/udem::doc}}
+\sphinxAtStartPar
+This documentation is also available on the \sphinxhref{https://github.com/njcuk9999/apero-drs/wiki/udem}{APERO github wiki}.
+
+\sphinxAtStartPar
+For password: Ask Neil, Etienne, Frederique, Charles, Thomas
+
+
+\subsection{SPIROU}
+\label{\detokenize{main/misc/udem:spirou}}\begin{enumerate}
+\sphinxsetlistlabels{\arabic}{enumi}{enumii}{}{)}%
+\item {} 
+\sphinxAtStartPar
+\sphinxhref{https://github.com/njcuk9999/spirou\_py3/wiki/spirou-general}{General}
+
+\item {} 
+\sphinxAtStartPar
+\sphinxhref{https://github.com/njcuk9999/spirou\_py3/wiki/spirou-qc}{QC data working group}
+
+\item {} 
+\sphinxAtStartPar
+\sphinxhref{https://github.com/njcuk9999/spirou\_py3/wiki/spirou-et}{Extraction/telluric data working group}
+
+\item {} 
+\sphinxAtStartPar
+\sphinxhref{https://github.com/njcuk9999/spirou\_py3/wiki/spirou-rv}{Radial velocity data working group}
+
+\item {} 
+\sphinxAtStartPar
+\sphinxhref{http://apero.exoplanets.ca/ari/spirou}{ARI} (password protected)
+
+\end{enumerate}
+
+
+\subsection{NIRPS}
+\label{\detokenize{main/misc/udem:nirps}}\begin{enumerate}
+\sphinxsetlistlabels{\arabic}{enumi}{enumii}{}{)}%
+\item {} 
+\sphinxAtStartPar
+\sphinxhref{https://github.com/njcuk9999/spirou\_py3/wiki/nirps-general}{General}
+
+\item {} 
+\sphinxAtStartPar
+\sphinxhref{https://github.com/njcuk9999/spirou\_py3/wiki/nirps-qc}{QC data working group}
+
+\item {} 
+\sphinxAtStartPar
+\sphinxhref{https://github.com/njcuk9999/spirou\_py3/wiki/nirps-et}{Extraction/telluric data working group}
+
+\item {} 
+\sphinxAtStartPar
+\sphinxhref{https://github.com/njcuk9999/spirou\_py3/wiki/nirps-rv}{Radial velocity data working group}
+
+\item {} 
+\sphinxAtStartPar
+\sphinxhref{http://apero.exoplanets.ca/ari/nirps}{ARI} (password protected)
+
+\end{enumerate}
+
+
+\subsection{Admin}
+\label{\detokenize{main/misc/udem:admin}}
+\sphinxAtStartPar
+\sphinxhref{http://apero.exoplanets.ca/udem/admin}{Admin} (password protected)
 
 
 

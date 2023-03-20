@@ -1,0 +1,201 @@
+
+
+
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>Shape reference calibration &#8212; APERO 0.8.001 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/bizstyle.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/apero.css" />
+    
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/sphinx_highlight.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../../../_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,700'
+          rel='stylesheet' type='text/css' />
+    <link rel="stylesheet" href="_static/images/fonta/css/font-awesome.min.css">
+
+
+
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!--[if lt IE 9]>
+    <script src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+    <style>
+      table.right { float: left; margin-left: 20px; }
+      table.right td { border: 1px solid #ccc; }
+      
+    </style>
+    <script>
+      // intelligent scrolling of the sidebar content
+      $(window).scroll(function() {
+        var sb = $('.sphinxsidebarwrapper');
+        var win = $(window);
+        var sbh = sb.height();
+        var offset = $('.sphinxsidebar').position()['top'];
+        var wintop = win.scrollTop();
+        var winbot = wintop + win.innerHeight();
+        var curtop = sb.position()['top'];
+        var curbot = curtop + sbh;
+        // does sidebar fit in window?
+        if (sbh < win.innerHeight()) {
+          // yes: easy case -- always keep at the top
+          sb.css('top', $u.min([$u.max([0, wintop - offset - 10]),
+                                $(document).height() - sbh - 200]));
+        } else {
+          // no: only scroll if top/bottom edge of sidebar is at
+          // top/bottom edge of window
+          if (curtop > wintop && curbot > winbot) {
+            sb.css('top', $u.max([wintop - offset - 10, 0]));
+          } else if (curtop < wintop && curbot < winbot) {
+            sb.css('top', $u.min([winbot - sbh - offset - 20,
+                                  $(document).height() - sbh - 200]));
+          }
+        }
+      });
+    </script>
+
+  </head><body>
+<div class="pageheader">
+
+  <ul>
+    <li><a title="Home" href="../../../index.html">
+        <i class="fa fa-home fa-3x" aria-hidden="true"></i></a></li>
+    <li><a title="install" href="../../../user/general/installation.html">
+        <i class="fa fa-cog fa-3x" aria-hidden="true"></i></a></li>
+    <li><a title="github" href="https://github.com/njcuk9999/apero-drs">
+        <i class="fa fa-git-square fa-3x" aria-hidden="true"></i></a></li>
+    <li><a title="download pdf" href="../../../apero-docs.pdf">
+        <i class="fa fa-download fa-3x" aria-hidden="true"></i></a></li>
+    <li><a title="UdeM" href="/main/misc/udem.html">
+        <i class="fa fa-university fa-3x" aria-hidden="true"></i></a></li>
+  </ul>
+    <div>
+    <a href="../../../index.html">
+      <img src="../../../_static/images/apero_logo.png" alt="APERO" />
+    </a>
+    <br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A PipelinE to Reduce Observations
+    </div>
+
+</div>
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.8.001 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Shape reference calibration</a></li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../../_sources/resources/spirou/descriptions/apero_shape_ref_spirou.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="shape-reference-calibration">
+<h1>Shape reference calibration<a class="headerlink" href="#shape-reference-calibration" title="Permalink to this heading">¶</a></h1>
+<p>In PRV measurements, constraining the exact position of orders on the science array, both in the spectral and
+spatial dimensions, is key as the position of our spectra on this science array encodes the sought-after velocity of
+the star. The diffraction orders of SPIRou, and nearly all PRV spectrographs, follow curved lines, and the image
+slicer has a 4-point structure that is not parallel to the pixel grid.</p>
+<p>Within the APERO framework, we decided to split the problem into two parts: a reference shape calibration and a
+nightly shape calibration. For the reference step, we constrain the bulk motion, as defined through an affine
+transformation and register all frames to a common pixel grid to well below the equivalent of 1 <span class="math notranslate nohighlight">\(ms^{-1}\)</span>.
+We perform the order localization and subsequent steps on a nightly basis as it has the significant advantage that
+registered frames have all orders at the same position to a very small fraction of a pixel. Furthermore, having
+registered frames allows for better error handling within APERO; one does not expect pixel-level motions between
+calibrations after this step.</p>
+<p>The reference shape recipe takes preprocessed <cite>FP_FP</cite> and <cite>HC_HC</cite> files (as many as given by the user or as many as
+occur on the nights being used via <cite>apero_processing</cite>). The reference shape recipe combines the <cite>FP_FP</cite> files into a
+single <cite>FP_FP</cite> file and the <cite>HC_HC</cite> files into a single <cite>HC_HC</cite> file (via a median combination of the images).
+After combining, the <cite>FP_FP</cite> and <cite>HC_HC</cite> images are calibrated using our standard image calibration technique.
+In addition to the combined <cite>FP_FP</cite> and <cite>HC_HC</cite>, we create a reference FP image. This reference FP image is created
+by selecting a subset of 100 <cite>FP_FP</cite> files (uniformly distributed across nights) and combining these with a median.
+This reference FP image is then saved to the calibration database for use throughout APERO.</p>
+<p>The registration through affine transformations is done using the`FP_FP` calibrations. We take the combined <cite>FP_FP</cite>
+files and localize in the 2D frame the position of each FP peak and measure the position of the peak maxima.
+Considering the 3 SPIRou fibers and 4 slices (i.e., 12 2D peaks per FP line), this means there are &gt;100000 peaks on
+the science array. These are taken as reference positions. For each calibration sequence, we then find the affine
+transformation that minimizes the RMS between the position of the FP and the FP reference image calibration.
+The resulting affine transformation consists of a bulk shift in dx, dy, and a <span class="math notranslate nohighlight">\(2\times2\)</span> matrix that encodes
+rotation, scale, and shear. These values are kept and can be useful to identify shifts in the optics (e.g., after
+earthquakes or thermal cycles) as well as very slight changes in plate scale and angular position of the array which
+can be of interest in understanding the impact of engineering work onto the science data products.
+For example, we can readily measure a <span class="math notranslate nohighlight">\(10^{-5}\)</span> fractional change in the SPIRou plate scale following a
+maintenance thermal cycle of the instrument; the ratio of the point-to-point RMS to the median of the plate scale
+value is at the <span class="math notranslate nohighlight">\(1.7\times10^{-7}\)</span> level. The interpolations between pixel grids are done with a 3rd
+order spline.  We note that changes in the FP cavity length arise from a number of reasons such as gas leakage and
+temperature and will lead to a motion of FP peaks on the array that is not due to a physical motion of the array or
+optical elements within the cryostat. Considering that typical drifts are at the <span class="math notranslate nohighlight">\(\sim0.3\)</span>,m/s/day level,
+to first order this leads to a typical <span class="math notranslate nohighlight">\(10^{-9}\)</span>/day fractional increase in the plate scale along the dispersion
+direction. This effectively leads to a minute change in the effective dispersion of the extracted file wavelength
+solution. As this change is common to both the FP, the HC, and the science data, it is accounted for when computing
+the wavelength solution and cavity length change.</p>
+<p>Once the affine transformation has been applied, images are registered to a common grid (the reference FP image).
+We then construct a transform that makes the orders straight and corrects for slicer structure in the dispersion
+direction. This leads to the construction of two maps corresponding to x and y offsets that need to be applied to an
+image to transform it into a rectified image from which a trace extraction can be performed directly through a 1-D
+collapse in the direction perpendicular to the dispersion of a rectangular box around the order. The y direction map
+is computed from the order-localization polynomials. The x direction map is determined by first collapsing the
+straightened orders of a <cite>FP_FP</cite> calibration and cross-correlating each of the spectral direction pixel rows to find
+its offset relative to the collapsed-extracted spectrum. The x and y offsets are then saved to the calibration
+database for use throughout APERO.</p>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.8.001 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Shape reference calibration</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2019, Neil Cook.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 6.1.3.
+    </div>
+  </body>
+</html>
