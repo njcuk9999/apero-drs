@@ -35,8 +35,9 @@ __release__ = base.__release__
 # unique hash column
 UHASH_COL = 'UHASH'
 # ReturnType of the update dictionary
-UpdateDict = Union[List[Dict[str, Any]], Dict[str, Any]]
+UpdateDictReturn = Union[List[Dict[str, Any]], Dict[str, Any]]
 
+DEBUG = True
 
 # =============================================================================
 # Define functions
@@ -189,6 +190,13 @@ class AperoDatabase:
             # add the hash columns to columns
             columns.append(hash_col)
         # ----------------------------------------------------------------------
+        # deal with indexes being None
+        if indexes is None:
+            indexes = []
+        # deal with uniques being None
+        if uniques is None:
+            uniques = []
+        # ----------------------------------------------------------------------
         # check to see if table name exists in database
         inspector = sqlalchemy.inspect(self.engine)
         # remove current table if adding a table
@@ -197,7 +205,7 @@ class AperoDatabase:
         # define the meta data
         metadata = sqlalchemy.MetaData()
         # create the table
-        _ = sqlalchemy.Table(tablename, metadata, *columns, *indexes)
+        _ = sqlalchemy.Table(tablename, metadata, *columns, *indexes, *uniques)
         # create table
         metadata.create_all(self.engine)
 
@@ -410,7 +418,7 @@ class AperoDatabase:
     def set(self, columns: Optional[Union[str, List[str]]] = None,
             values: Optional[Union[str, List[str]]] = None,
             tablename: Optional[str] = None, condition: Optional[str] = None,
-            update_dict: Optional[UpdateDict] = None):
+            update_dict: Optional[UpdateDictReturn] = None):
         """
         Changes the data in existing rows.
 
@@ -463,22 +471,22 @@ class AperoDatabase:
         if columns == '*':
             columns = [col.name for col in sqltable.columns]
         # ---------------------------------------------------------------------
-        # add the hash column
-        if len(unique_cols) > 0:
-            columns, values = drs_db._hash_col(columns, values, unique_cols)
-            # condition based on only on unique_col
-            condition = '{0}={1}'.format(columns[-1], values[-1])
-        # ---------------------------------------------------------------------
         # make the update dictionary
         if update_dict is None and values is not None:
             update_dict = {col: val for col, val in zip(columns, values)}
         # ---------------------------------------------------------------------
+        # add the hash column
+        if len(unique_cols) > 0:
+            update_dict = _hash_col(update_dict, unique_cols)
+            # condition based on only on unique_col
+            condition = '{0}="{1}"'.format(UHASH_COL, update_dict[UHASH_COL])
+        # ---------------------------------------------------------------------
         # add condition
         if condition is not None:
-            update_query = update_query.where(sqlalchemy.text(condition))
+           update_query = update_query.where(sqlalchemy.text(condition))
         # ---------------------------------------------------------------------
         # add values to update
-        update_query.values(update_dict)
+        update_query = update_query.values(update_dict)
         # ---------------------------------------------------------------------
         # execute the query
         with self.engine.begin() as conn:
@@ -487,7 +495,7 @@ class AperoDatabase:
     def add_row(self, values: Optional[List[object]] = None,
                 tablename: Optional[str] = None,
                 columns: Union[str, List[str]] = "*",
-                insert_dict: Optional[UpdateDict] = None):
+                insert_dict: Optional[UpdateDictReturn] = None):
         """
         Changes the data in existing rows.
 
@@ -533,7 +541,11 @@ class AperoDatabase:
         # ---------------------------------------------------------------------
         # create a dictionary of the columns and values
         if columns is None:
-            columns = list(insert_dict.keys())
+            if isinstance(insert_dict, list):
+                columns = list(insert_dict[0].keys())
+                values = [list(d.values()) for d in insert_dict]
+            else:
+                columns = list(insert_dict.keys())
         if columns == '*':
             columns = [col.name for col in sqltable.columns]
         # ---------------------------------------------------------------------
@@ -543,17 +555,27 @@ class AperoDatabase:
         # ---------------------------------------------------------------------
         # add the hash column
         if len(unique_cols) > 0:
-            columns, values = drs_db._hash_col(columns, values, unique_cols)
-            # update update_dict
-            if insert_dict is not None:
-                insert_dict[columns[-1]] = values[-1]
+            insert_dict = _hash_col(insert_dict, unique_cols)
         # ---------------------------------------------------------------------
         # add values to update
         insert_query = insert_query.values(insert_dict)
         # ---------------------------------------------------------------------
         # execute the query
         with self.engine.begin() as conn:
-            conn.execute(insert_query)
+            try:
+                conn.execute(insert_query)
+            except sqlalchemy.exc.IntegrityError:
+                # need to deal with insert_dict being a list
+                #   in this case we have to add each row individually
+                #   then check each of those rows to see if they exist
+                if isinstance(insert_dict, list):
+                    for insert_dict_it in insert_dict:
+                        self.add_row(insert_dict=insert_dict_it)
+                # otherwise we set the row based on the hash. There should be
+                #    no cases where we have unique columns and no HASH column
+                else:
+                    # if the row already exists, update it
+                    self.set(update_dict=insert_dict, condition=None)
 
     def delete_rows(self, tablename: Optional[str] = None,
                     condition: Optional[str] = None):
@@ -681,8 +703,7 @@ class AperoDatabase:
         return columns
 
     def add_from_pandas(self, df: pd.DataFrame, tablename: Optional[str] = None,
-                        if_exists: str = 'append', index: bool = False,
-                        unique_cols: Optional[List[str]] = None):
+                        if_exists: str = 'append', index: bool = False):
         """
         Use pandas to add rows to database
 
@@ -707,20 +728,16 @@ class AperoDatabase:
         func_name = __NAME__ + '.Database.add_from_pandas()'
         # ---------------------------------------------------------------------
         # deal with empty unique column list
-        if unique_cols is not None and len(unique_cols) == 0:
-            unique_cols = None
+        # get a list of the unique columns
+        unique_cols = self._unique_cols(tablename)
         # need to add uhash column
-        if unique_cols is not None:
+        if len(unique_cols) > 0:
             df = drs_db._hash_df(df, unique_cols)
         # ---------------------------------------------------------------------
         # try to add pandas dataframe to table
         with self.engine.begin() as conn:
             try:
                 df.to_sql(tablename, conn, if_exists=if_exists, index=index)
-                # pandas removes uniqueness of columns - need to readd this
-                #   constraint if unique_cols is not None
-                if unique_cols is not None and len(unique_cols) > 0:
-                    self._add_unique_uhash_col(tablename)
             except Exception as e:
                 # log error: Pandas.to_sql
                 ecode = '00-002-00047'
@@ -787,30 +804,6 @@ class AperoDatabase:
                                       exception=AperoDatabaseError)
         return table_names[0]
 
-    def _add_unique_uhash_col(self, tablename: Optional[str] = None):
-        """
-        Add a unique hash column to the table
-
-        :param tablename: str, the name of the table
-        """
-        # TODO: Test if this actually works
-        # ---------------------------------------------------------------------
-        # get the table
-        table = self._infer_table_(tablename)
-        # ---------------------------------------------------------------------
-        # add a unique hash column
-        with self.engine.begin() as conn:
-            # need to make sure UHASH is a VARCHAR(64)
-            command = 'ALTER TABLE {0} MODIFY COLUMN {1} VARCHAR(64);'
-            command = command.format(table, UHASH_COL)
-            # run the modify column command
-            conn.execute(command)
-            # now create sql command to make the column unique
-            command = "ALTER TABLE {0} ADD UNIQUE ({1});"
-            command = command.format(table, UHASH_COL)
-            # run the modify column command
-            conn.execute(command)
-
     def _unique_cols(self, tablename: Optional[str] = None,
                      columns: Optional[List[sqlalchemy.Column]] = None
                      ) -> List[str]:
@@ -826,19 +819,102 @@ class AperoDatabase:
             unique_cols = []
             for _col in columns:
                 if _col.unique:
+                    # do not add uhash column to unique columns
+                    if _col == UHASH_COL:
+                        continue
                     unique_cols.append(_col.name)
             # return a list of unique columns
             return unique_cols
         # ---------------------------------------------------------------------
+        # get tablename
+        if tablename is None:
+            tablename = self._infer_table_()
         # define an inspector
         inspector = sqlalchemy.inspect(self.engine)
         # find all unique columns
         unique_cols = set()
         for _entry in inspector.get_unique_constraints(tablename):
             for _col in _entry['column_names']:
+                # do not have uhash column to unique columns
+                if _col == UHASH_COL:
+                    continue
                 unique_cols.add(_col)
         # return a list of unique columns
         return list(unique_cols)
+
+
+def _hash_col(insert_dict: UpdateDictReturn,
+              unique_cols: List[str],
+              return_string: bool = False
+              ) -> Union[UpdateDictReturn, str, List[str]]:
+    """
+    Generate a hash from a list of unique columns
+
+    :param columns: list of column names
+    :param values: list of values (without the hash column)
+    :param unique_cols: list of column names to construct the hash
+
+    :return: either a str or list of strings (if return_string is True) or a
+             an insert dict (dictionary or list of dictionaries)
+    """
+    # store the positions in values of unique columns
+    hash_strings = []
+    # -------------------------------------------------------------------------
+    # deal with insert dict as dictionary (not a list)
+    if isinstance(insert_dict, dict):
+        is_dict = True
+        insert_dict = [insert_dict]
+    else:
+        is_dict = False
+    # -------------------------------------------------------------------------
+    # loop around entries in insert_Dict
+    for it in range(len(insert_dict)):
+        # reset the values going into the hash
+        hash_value = ''
+        # store a list of columns (only use columns once)
+        used_cols = []
+        # get the columns and values from dict
+        columns = list(insert_dict[it].keys())
+        values = list(insert_dict[it].values())
+        # loop around unique columns
+        for unique_col in set(unique_cols):
+            # they may be lists
+            cols = unique_col.split(',')
+            # loop around these
+            for col in cols:
+                # find the col in columns
+                if col in columns:
+                    # get the position in columns where the value is
+                    pos = np.where(np.array(columns) == col)[0][0]
+                    # generate the hash value
+                    hash_value += str(values[pos])
+                    # add column to used columns
+                    used_cols.append(col)
+        # generate hash from string combination of values
+        hash_strings.append(drs_base.generate_hash(hash_value, 32))
+    # -------------------------------------------------------------------------
+    # if return string return hash
+    if return_string:
+        if is_dict:
+            return hash_strings[0]
+        else:
+            return hash_strings
+    # -------------------------------------------------------------------------
+    # add to the values
+    if is_dict:
+        # we want to return a dictionary
+        insert_dict = insert_dict[0]
+        # add the hash column (or overwrite it if it exists)
+        insert_dict[UHASH_COL] = hash_strings[0]
+        # return the insert_dict as a dictionary
+        return insert_dict
+    else:
+        # loop around insert dictionary
+        for it in range(len(insert_dict)):
+            # add the hash column to each insert dictionary
+            insert_dict[it][UHASH_COL] = hash_strings[it]
+        # return insert dictionary
+        return insert_dict
 
 
 # =============================================================================
@@ -850,12 +926,11 @@ if __name__ == "__main__":
 
     _db_uri = 'mysql+pymysql://spirou:Covid19!@rali:3306/test'
 
-    _database = AperoDatabase(_db_uri)
+    _database = AperoDatabase(_db_uri, verbose=DEBUG)
 
     _database.add_database()
 
-    _columns = [sqlalchemy.Column('id', sqlalchemy.Integer, primary_key=True),
-                sqlalchemy.Column('name', sqlalchemy.String(128), unique=True),
+    _columns = [sqlalchemy.Column('name', sqlalchemy.String(128), unique=True),
                 sqlalchemy.Column('age', sqlalchemy.Integer)]
     _indexes = [sqlalchemy.Index('idx_users_name_age', 'name', 'age')]
     _uniques = [sqlalchemy.UniqueConstraint('name', name='uix_name')]
@@ -866,24 +941,23 @@ if __name__ == "__main__":
 
     _database.tablename = 'users'
 
-    _database.add_row(insert_dict=[{'id': 1, 'name': 'test1', 'age': 11},
-                                   {'id': 2, 'name': 'test2', 'age': 22},
-                                   {'id': 3, 'name': 'test3', 'age': 33}])
+    _database.add_row(insert_dict=[{'name': 'test1', 'age': 11},
+                                   {'name': 'test2', 'age': 22},
+                                   {'name': 'test3', 'age': 33}])
 
-    _database.add_row(insert_dict={'id': 4, 'name': 'test4', 'age': 44})
+    _database.add_row(insert_dict={'name': 'test4', 'age': 44})
 
-    _rows = _database.get(columns='id,name,age')
+    _rows = _database.get(columns='name,age')
 
     # create a pandas dataframe
     df = pd.DataFrame()
     # add id, name, age columns and add test values
-    df['id'] = [101, 102, 103, 104]
     df['name'] = ['test101', 'test102', 'test103', 'test104']
     df['age'] = [110, 220, 330, 440]
 
     # test the add from pandas functionality
-    _database.add_from_pandas(df, 'users', if_exists='append', index=False)
-
+    _database.add_row(insert_dict=dict(name='test1', age=89))
+    _database.add_row(insert_dict=dict(name='test5', age=5))
 
 
 # =============================================================================

@@ -510,6 +510,7 @@ class AstrometricDatabase(DatabaseManager):
         # return the filled out list
         return out_objnames
 
+
     def find_objname(self, pconst: constants.PseudoConstants,
                      objname: str) -> Tuple[str, bool]:
         """
