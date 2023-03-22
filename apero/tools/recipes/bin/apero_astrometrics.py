@@ -174,6 +174,9 @@ def __main__(recipe, params):
                 margs = [a_it + 1, ','.join(astro_obj.aliases.split('|'))]
                 WLOG(params, '', msg.format(*margs), colour='yellow')
                 WLOG(params, '', '')
+        # --------------------------------------------------------------------
+        # make sure we add all aliases without white space
+        astro_obj.all_aliases()
 
     # -------------------------------------------------------------------------
     # add to google sheet
