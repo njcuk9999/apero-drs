@@ -361,7 +361,9 @@ def check_files(params: ParamDict,
     # convert objname_inputs to char array
     objarray = np.char.array(objname_inputs).upper()
     # deal with objname filter
-    if 'NONE' in objarray:
+    if len(objarray) == 0:
+        skip = skip or False
+    elif 'NONE' in objarray:
         skip = skip or False
     elif 'NULL' in objarray:
         skip = skip or False
