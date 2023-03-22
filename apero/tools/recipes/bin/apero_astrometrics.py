@@ -176,7 +176,8 @@ def __main__(recipe, params):
                 WLOG(params, '', '')
         # --------------------------------------------------------------------
         # make sure we add all aliases without white space
-        astro_obj.all_aliases()
+        for astro_obj in astro_objs:
+            astro_obj.all_aliases()
 
     # -------------------------------------------------------------------------
     # add to google sheet
