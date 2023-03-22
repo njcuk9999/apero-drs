@@ -86,6 +86,11 @@ def __main__(recipe, params):
     rawobjs = params['INPUTS'].listp('OBJECTS', dtype=str)
     # get the overwrite parameter
     overwrite = params['INPUTS']['OVERWRITE']
+    # get the check parameter
+    check = params['INPUTS']['CHECK']
+    if check:
+        drs_astrometrics.check_database(params)
+        return locals()
     # ----------------------------------------------------------------------
     # step 1: Is object in database?
     # ----------------------------------------------------------------------

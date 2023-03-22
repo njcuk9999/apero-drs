@@ -122,6 +122,8 @@ astrometric.set_kwarg(name='--nopmrequired', dtype='switch', default=False,
                       helpstr=textentry('ASTROMETRIC_NOPM_REQ_HELP'))
 astrometric.set_kwarg(name='--test', dtype='switch', default=False,
                       helpstr=textentry('ASTROMETRIC_TEST_HELP'))
+astrometric.set_kwarg(name='--check', dtype='switch', default=False,
+                      helpstr='Check object database for basic errors')
 astrometric.description_file = 'apero_astrometrics.rst'
 
 # -----------------------------------------------------------------------------

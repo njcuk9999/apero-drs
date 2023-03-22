@@ -20,6 +20,8 @@ from typing import Dict, List, Optional, Tuple, Union
 import gspread_pandas as gspd
 import numpy as np
 import pandas as pd
+from astropy import units as uu
+from astropy.coordinates import SkyCoord
 from astropy.table import Row
 from astroquery.simbad import Simbad
 
@@ -88,6 +90,8 @@ TEXT2 = ('{{"refresh_token": "{0}", "token_uri": "https://oauth2.googleap'
          '"https://www.googleapis.com/auth/spreadsheets"]}}')
 # treat these as null values
 NULL_TEXT = ['None', '--', 'None', '']
+# separation defined as too much
+SEPARATION = 0.1
 
 
 # =============================================================================
@@ -671,6 +675,135 @@ def query_simbad(params: ParamDict, rawobjname: str,
             astroobjs.append(astroobj)
     # return the list of astrometric objects
     return astroobjs, reason
+
+
+def check_database(params: ParamDict):
+    # ---------------------------------------------------------------------
+    # Update the object database (recommended only for full reprocessing)
+    # check that we have entries in the object database
+    manage_databases.object_db_populated(params)
+    # log progress
+    WLOG(params, '', textentry('40-503-00039'))
+    # update database
+    manage_databases.update_object_database(params, log=False)
+    # ---------------------------------------------------------------------
+    # load the object database after updating
+    objdbm = ObjectDatabase(params)
+    objdbm.load_db()
+    # ---------------------------------------------------------------------
+    # print that we are getting the full table
+    WLOG(params, 'info', 'Accessing full local object database...')
+    # get the full table
+    atable = objdbm.get_entries()
+
+    # get an array of all sky coordinates
+    skycoords = SkyCoord(atable['RA_DEG'], atable['DEC_DEG'], unit='deg')
+    # ---------------------------------------------------------------------
+    # loop around all items in the table
+    for row in range(len(atable)):
+        # get the first row
+        row_data = atable.iloc[row]
+        # get the required columns
+        objname, aliases = row_data['OBJNAME'], row_data['ALIASES']
+        # print progress
+        msg = 'Checking object {0} ({1}/{2})'
+        margs = [objname, row + 1, len(atable)]
+        WLOG(params, '', msg.format(*margs))
+        # -----------------------------------------------------------------
+        # Check 1: check that the object name is not in any row or alias
+        # -----------------------------------------------------------------
+        # print progress
+        WLOG(params, '', '\t- Checking OBJNAME', colour='magenta')
+        # check the objname
+        _check_objname(params, objname, row, atable, kind='OBJNAME')
+        # -----------------------------------------------------------------
+        # Check 2: check that aliases
+        # -----------------------------------------------------------------
+        # get aliases
+        alias_list = aliases.split('|')
+        # print progress
+        msg = '\t- Checking ALIASES [N={0}]'
+        margs = [len(alias_list)]
+        WLOG(params, '', msg.format(*margs), colour='magenta')
+        # loop around all aliases
+        for alias in alias_list:
+            # check the alias
+            _check_objname(params, alias, row, atable, kind='ALIAS')
+        # -----------------------------------------------------------------
+        # Check 3: ra and dec cross-match
+        # -----------------------------------------------------------------
+        # print progress
+        WLOG(params, '', '\t- Checking crossmatch', colour='magenta')
+        # do cross-match
+        _check_crossmatch(params, objname, row, skycoords, atable)
+
+
+def _check_objname(params: ParamDict, objname: str, row: int,
+                   atable: pd.DataFrame, kind: str = 'OBJNAME'):
+    """
+    Check that the object name is not in any row or alias
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param objname: str, object name to check
+    :param row: int, row number of object name
+    :param atable: pd.DataFrame, object database table
+    :param kind: str, kind of name to check (OBJNAME or ALIAS)
+
+    :return: None, gives warning if there is a detected problem
+    """
+    # loop around all rows
+    for row_it in range(len(atable)):
+        # skip self comparison
+        if row_it == row:
+            continue
+        # get objname for row_it
+        objname_it = atable.iloc[row_it]['OBJNAME']
+        # check for objname in OBJNAME
+        if objname == objname_it:
+            # add problem to list
+            problem = (f'\t\t{kind}: {objname} duplicated in '
+                       f'OBJNAME:{objname_it}]')
+            WLOG(params, 'warning', problem, sublevel=1)
+        # check for objname in ALIASES
+        for alias in atable.iloc[row_it]['ALIASES'].split('|'):
+            if objname == alias:
+                # add problem to list
+                problem = (f'\t\t{kind}: {objname} duplicated in '
+                           f'ALIAS:{objname_it}]')
+                WLOG(params, 'warning', problem, sublevel=1)
+
+
+def _check_crossmatch(params: ParamDict, objname: str, row: int,
+                      skycoords: SkyCoord, atable: pd.DataFrame):
+    """
+    Check for cross-matches in the database (ra/dec < separation)
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param objname: str, the object name for this row
+    :param row: int, the row number
+    :param skycoords: SkyCoord, the sky coordinates for all rows
+    :param atable: pd.DataFrame, the full object database
+
+    :return: None, gives warning if there is a detected problem
+    """
+    # make SkyCoord from astropy
+    coord = skycoords[row]
+    # get separation in arc seconds
+    separations = coord.separation(skycoords).to(uu.arcsec).value
+    # loop around all rows
+    for row_it in range(len(skycoords)):
+        # skip self comparison
+        if row_it == row:
+            continue
+        # get the ra and dec
+        objname_it = atable.iloc[row_it]['OBJNAME']
+        # get separation in arc seconds
+        sep = separations[row_it]
+        # check for cross-match
+        if sep < SEPARATION:
+            problem = (f'\t\t{objname} too close {objname_it} '
+                       f'sep={sep:.3f} arcsec)')
+            WLOG(params, 'warning', problem, sublevel=1)
 
 
 def query_database(params, rawobjnames: List[str],
