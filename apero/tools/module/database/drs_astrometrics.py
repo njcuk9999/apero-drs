@@ -588,7 +588,7 @@ class AstroObj:
         margs = [self.teff, self.teff_source]
         WLOG(params, '', msg.format(*margs))
 
-    def all_aliases(self) -> str:
+    def all_aliases(self) :
         """
         We need to add all aliases without the _ and space characters so that
         these are also matched to
@@ -603,7 +603,7 @@ class AstroObj:
             new_alias = alias.replace(' ', '').replace('_', '')
             new_aliases.append(new_alias)
 
-        return self.aliases + '|' + '|'.join(new_aliases)
+        self.aliases += '|' + '|'.join(new_aliases)
 
 
 def query_simbad(params: ParamDict, rawobjname: str,
