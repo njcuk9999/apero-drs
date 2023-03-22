@@ -505,8 +505,9 @@ class AstrometricDatabase(DatabaseManager):
         """
         out_objnames = []
         for objname in objnames:
-            out_objname, _ = self.find_objname(pconst, objname)
-            out_objnames.append(out_objname)
+            out_objname, found = self.find_objname(pconst, objname)
+            if found:
+                out_objnames.append(out_objname)
         # return the filled out list
         return out_objnames
 
@@ -542,6 +543,9 @@ class AstrometricDatabase(DatabaseManager):
         found = False
         # clean the input objname
         cobjname = pconst.DRS_OBJ_NAME(objname)
+        # deal with a null object (should not continue)
+        if cobjname == 'Null':
+            return '', False
         # sql obj condition
         sql_obj_cond = 'OBJNAME="{0}" AND USED=1'.format(cobjname)
         # look for object name in database
@@ -562,6 +566,7 @@ class AstrometricDatabase(DatabaseManager):
                 for alias in aliases[row].split('|'):
                     if pconst.DRS_OBJ_NAME(alias) == cobjname:
                         found = True
+                        print(alias)
                         break
                 # stop looping if we have found our object
                 if found:
