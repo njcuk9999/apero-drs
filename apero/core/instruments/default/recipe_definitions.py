@@ -257,6 +257,11 @@ get_files.set_kwarg(name='--failedqc', default=False, dtype='switch',
 get_files.set_kwarg(name='--since', default='None', dtype=str,
                     helpstr='Only get files processed since a certain date '
                             'YYYY-MM-DD hh:mm:ss')
+get_files.set_kwarg(name='--obsdir', default='None', dtype=str,
+                    helpstr='Only get files from a certain observation '
+                            'directory')
+get_files.set_kwarg(name='--pi_name', default='None', dtype=str,
+                    helpstr='Only get files from a certain PI')
 get_files.description_file = 'apero_get.rst'
 
 # -----------------------------------------------------------------------------
