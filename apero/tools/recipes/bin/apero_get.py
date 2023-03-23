@@ -106,7 +106,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     kw_outputs = inputs.listp('outtypes', dtype=str, required=False)
     kw_fibers = inputs.listp('fibers', dtype=str, required=False)
     since = inputs.get('SINCE', None)
-    kw_obsdir = inputs.listp('OBS_DIR', dtype=str, required=False)
+    kw_obsdir = inputs.listp('OBSDIR', dtype=str, required=False)
     kw_pi_name = inputs.listp('PI_NAME', dtype=str, required=False)
     # -------------------------------------------------------------------------
     # test that since value is a valid time
