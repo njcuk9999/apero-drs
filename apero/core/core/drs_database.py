@@ -566,7 +566,6 @@ class AstrometricDatabase(DatabaseManager):
                 for alias in aliases[row].split('|'):
                     if pconst.DRS_OBJ_NAME(alias) == cobjname:
                         found = True
-                        print(alias)
                         break
                 # stop looping if we have found our object
                 if found:

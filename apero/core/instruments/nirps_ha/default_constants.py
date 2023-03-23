@@ -1608,7 +1608,8 @@ WAVE_CCF_RV_THRES_QC.value = 20.0    # 0.5 (spirou value)
 # =============================================================================
 # Define the line list file (located in the DRS_WAVE_DATA directory)
 WAVE_LINELIST_FILE = WAVE_LINELIST_FILE.copy(__NAME__)
-WAVE_LINELIST_FILE.value = 'catalogue_UNe.csv'  # 'catalogue_UNe.dat'
+WAVE_LINELIST_FILE.value = 'catalogue_UNe_update230322.csv'  # 'catalogue_UNe.dat'
+WAVE_LINELIST_FILE.author = base.AUTHORS['EA']
 
 # Define the line list file format (must be astropy.table format)
 WAVE_LINELIST_FMT = WAVE_LINELIST_FMT.copy(__NAME__)
