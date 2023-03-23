@@ -370,7 +370,7 @@ def construct_ref_dark(params: ParamDict, dark_table: Table,
     # get temporary output dir
     outdir = os.path.dirname(filenames[lastpos])
     # cannot and should not use the raw directory
-    outdir = outdir.replace(params['DRS_RAW_DIR'], params['DRS_DATA_WORKING'])
+    outdir = outdir.replace(params['DRS_DATA_RAW'], params['DRS_DATA_WORKING'])
     # -------------------------------------------------------------------------
     # Read individual files and sum groups
     # -------------------------------------------------------------------------
