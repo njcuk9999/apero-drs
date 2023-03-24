@@ -588,7 +588,7 @@ def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
     subfilepath = os.path.join(outdir, subdir)
     # create subdir
     if not os.path.exists(subfilepath):
-        os.mkdir(subfilepath)
+        os.makedirs(subfilepath)
     # get the number of files
     numfiles = len(files)
     # ----------------------------------------------------------------------
