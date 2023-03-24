@@ -481,7 +481,7 @@ def npy_filelist(params: ParamDict, name: str, index: int,
     # create subdir
     if not os.path.exists(filepath):
         WLOG(params, '', 'Creating directory: {0}'.format(filepath))
-        os.mkdir(filepath)
+        os.makedirs(filepath)
     # construct absolute path to file
     abspath = os.path.join(filepath, filename)
     # save to disk
