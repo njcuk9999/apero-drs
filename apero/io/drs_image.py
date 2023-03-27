@@ -705,7 +705,7 @@ def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
     # ----------------------------------------------------------------------
     # delete the sub directory
     if os.path.exists(subfilepath):
-        os.remove(subfilepath)
+        os.rmdir(subfilepath)
     # ----------------------------------------------------------------------
     # return the out image
     return out_image
