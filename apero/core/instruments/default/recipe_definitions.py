@@ -262,6 +262,9 @@ get_files.set_kwarg(name='--obsdir', default='None', dtype=str,
                             'directory')
 get_files.set_kwarg(name='--pi_name', default='None', dtype=str,
                     helpstr='Only get files from a certain PI')
+get_files.set_kwarg(name='--nosubdir', default=False, dtype='switch',
+                    helpstr='Do not put files into a sub-directory. '
+                            'Only use thes outpath')
 get_files.description_file = 'apero_get.rst'
 
 # -----------------------------------------------------------------------------

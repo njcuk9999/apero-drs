@@ -108,6 +108,10 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     since = inputs.get('SINCE', None)
     kw_obsdir = inputs.listp('OBSDIR', dtype=str, required=False)
     kw_pi_name = inputs.listp('PI_NAME', dtype=str, required=False)
+    if drs_text.true_text(inputs['NOSUBDIR']):
+        nosubdir = True
+    else:
+        nosubdir = False
     # -------------------------------------------------------------------------
     # test that since value is a valid time
     if not drs_text.null_text(since, ['None', '', 'Null']):
@@ -150,7 +154,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # run basic filter
     indict, outdict = drs_get.basic_filter(params, kw_objnames, filters,
                                            user_outdir, do_copy, do_symlink,
-                                           since=since)
+                                           since=since, nosubdir=nosubdir)
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
