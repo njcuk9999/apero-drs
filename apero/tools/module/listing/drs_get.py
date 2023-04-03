@@ -231,7 +231,7 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
             if do_symlink:
                 if not os.path.exists(outpath):
                     os.symlink(inpath, outpath)
-            elif do_copy:
+            else:
                 shutil.copy(inpath, outpath)
 
     return all_inpaths, all_outpaths
