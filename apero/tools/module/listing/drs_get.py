@@ -228,10 +228,10 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
             # print copy string
             WLOG(params, '', copystr, wrap=False)
             # copy
-            if do_symlink:
+            if do_symlink and do_copy:
                 if not os.path.exists(outpath):
                     os.symlink(inpath, outpath)
-            else:
+            elif do_copy:
                 shutil.copy(inpath, outpath)
 
     return all_inpaths, all_outpaths
