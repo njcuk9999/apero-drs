@@ -106,6 +106,12 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     kw_outputs = inputs.listp('outtypes', dtype=str, required=False)
     kw_fibers = inputs.listp('fibers', dtype=str, required=False)
     since = inputs.get('SINCE', None)
+    kw_obsdir = inputs.listp('OBSDIR', dtype=str, required=False)
+    kw_pi_name = inputs.listp('PI_NAME', dtype=str, required=False)
+    if drs_text.true_text(inputs['NOSUBDIR']):
+        nosubdir = True
+    else:
+        nosubdir = False
     # -------------------------------------------------------------------------
     # test that since value is a valid time
     if not drs_text.null_text(since, ['None', '', 'Null']):
@@ -133,16 +139,22 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         kw_outputs = None
     if drs_text.null_text(kw_fibers, ['None', '', 'Null', '*']):
         kw_fibers = None
+    if drs_text.null_text(kw_obsdir, ['None', '', 'Null', '*']):
+        kw_obsdir = None
+    if drs_text.null_text(kw_pi_name, ['None', '', 'Null', '*']):
+        kw_pi_name = None
     # -------------------------------------------------------------------------
     # push filters into dictionary (not object names these are special)
     filters = dict()
     filters['KW_DPRTYPE'] = kw_dprtypes
     filters['KW_OUTPUT'] = kw_outputs
     filters['KW_FIBER'] = kw_fibers
+    filters['OBS_DIR'] = kw_obsdir
+    filters['KW_PI_NAME'] = kw_pi_name
     # run basic filter
     indict, outdict = drs_get.basic_filter(params, kw_objnames, filters,
                                            user_outdir, do_copy, do_symlink,
-                                           since=since)
+                                           since=since, nosubdir=nosubdir)
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------

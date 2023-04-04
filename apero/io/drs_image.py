@@ -25,6 +25,7 @@ from scipy.ndimage.morphology import binary_erosion, binary_dilation
 from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core.constants import path_definitions
 from apero.core import math as mp
 from apero.core.core import drs_log
 from apero.core.core import drs_misc
@@ -51,6 +52,10 @@ textentry = lang.textentry
 pcheck = constants.PCheck(wlog=WLOG)
 # Get function string
 display_func = drs_log.display_func
+# get block paths
+params = constants.load()
+block_func = lambda block: block(params).path
+block_paths = list(map(block_func, path_definitions.BLOCKS))
 
 
 # =============================================================================
@@ -481,7 +486,7 @@ def npy_filelist(params: ParamDict, name: str, index: int,
     # create subdir
     if not os.path.exists(filepath):
         WLOG(params, '', 'Creating directory: {0}'.format(filepath))
-        os.mkdir(filepath)
+        os.makedirs(filepath)
     # construct absolute path to file
     abspath = os.path.join(filepath, filename)
     # save to disk
@@ -524,7 +529,8 @@ def npy_fileclean(params: ParamDict, filenames: Union[List[str], None],
     # delete the sub directory
     while os.path.exists(filepath):
         WLOG(params, '', 'Removing directory: {0}'.format(filepath))
-        os.removedirs(filepath)
+        if filepath not in block_paths:
+            os.rmdir(filepath)
 
 
 def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
@@ -605,7 +611,7 @@ def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
     subfilepath = os.path.join(outdir, subdir)
     # create subdir
     if not os.path.exists(subfilepath):
-        os.mkdir(subfilepath)
+        os.makedirs(subfilepath)
     # get the number of files
     numfiles = len(files)
     # ----------------------------------------------------------------------
@@ -624,8 +630,8 @@ def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
     # deal with only having 1 file
     if numfiles == 1:
         # delete the sub directory
-        if os.path.exists(subfilepath):
-            os.removedirs(subfilepath)
+        if os.path.exists(subfilepath) and subfilepath not in block_paths:
+            os.rmdir(subfilepath)
         # ------------------------------------------------------------------
         # deal with no fkwargs
         if fkwargs is None:
@@ -742,7 +748,8 @@ def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
     # ----------------------------------------------------------------------
     # delete the sub directory
     if os.path.exists(subfilepath):
-        os.removedirs(subfilepath)
+        if subfilepath not in block_paths:
+            os.rmdir(subfilepath)
     # ----------------------------------------------------------------------
     # return the out image
     return out_image

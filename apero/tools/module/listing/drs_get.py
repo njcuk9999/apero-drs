@@ -45,7 +45,7 @@ textentry = lang.textentry
 def basic_filter(params: ParamDict, kw_objnames: List[str],
                  filters: Dict[str, List[str]], user_outdir: str,
                  do_copy: bool = True, do_symlink: bool = False,
-                 since: Optional[str] = None
+                 since: Optional[str] = None, nosubdir: bool = False,
                  ) -> Tuple[Dict[str, List[str]], Dict[str, List[str]]]:
     """
     The basic filter function - copies files into OBJNAME directories
@@ -180,7 +180,10 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
     # loop around objects with files
     for objname in database_inpaths:
         # output directory for objname
-        outdir = os.path.join(user_outdir, objname)
+        if nosubdir:
+            outdir = str(user_outdir)
+        else:
+            outdir = os.path.join(user_outdir, objname)
         # print progress: Adding outpaths for KW_OBJNAME={0}
         WLOG(params, '', textentry('40-509-00006', args=[objname]))
         # add object name to storage
@@ -225,8 +228,9 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
             # print copy string
             WLOG(params, '', copystr, wrap=False)
             # copy
-            if do_symlink:
-                os.symlink(inpath, outpath)
+            if do_symlink and do_copy:
+                if not os.path.exists(outpath):
+                    os.symlink(inpath, outpath)
             elif do_copy:
                 shutil.copy(inpath, outpath)
 

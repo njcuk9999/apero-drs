@@ -937,7 +937,8 @@ def square_medbin(image: np.ndarray, binexpo: int = 8) -> np.ndarray:
     return image2b
 
 
-def lowpassfilter(input_vect: np.ndarray, width: int = 101) -> np.ndarray:
+def lowpassfilter(input_vect: np.ndarray, width: int = 101,
+                  k=1, frac_valid_min=0) -> np.ndarray:
     """
     Computes a low-pass filter of an input vector.
 
@@ -959,6 +960,12 @@ def lowpassfilter(input_vect: np.ndarray, width: int = 101) -> np.ndarray:
 
     :param input_vect: numpy 1D vector, vector to low pass
     :param width: int, width (box size) of the low pass filter
+    :param k: int, order of the spline interpolation
+    :param frac_valid_min: float, minimum fraction of valid pixels in a
+                           'width' domain to compute the low pass filter.
+                           If the fraction of valid pixels is below this value,
+                           the low pass filter is not computed and the value
+                           is interpolated over.
 
     :return: np.array, the low-pass of the input_vector
     """
@@ -988,7 +995,7 @@ def lowpassfilter(input_vect: np.ndarray, width: int = 101) -> np.ndarray:
         if len(pixval) < 3:
             continue
         # if no finite value, skip
-        if np.max(np.isfinite(input_vect[pixval])) == 0:
+        if np.mean(np.isfinite(input_vect[pixval])) <= frac_valid_min:
             continue
         # mean position along vector and NaN median value of
         # points at those positions
@@ -1010,7 +1017,7 @@ def lowpassfilter(input_vect: np.ndarray, width: int = 101) -> np.ndarray:
         xmed = xmed2
         ymed = ymed2
     # splining the vector
-    spline = InterpolatedUnivariateSpline(xmed, ymed, k=1, ext=3)
+    spline = InterpolatedUnivariateSpline(xmed, ymed, k=k, ext=3)
     lowpass = spline(np.arange(len(input_vect)))
     # return the low pass filtered input vector
     return lowpass
