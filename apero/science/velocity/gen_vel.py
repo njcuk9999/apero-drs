@@ -1215,6 +1215,16 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
             ccf_norm_all.append(np.nan)
             continue
         # ------------------------------------------------------------------
+        # remove slope from ccf
+        if fit_type == 0:
+            # fit a slope to the CCF
+            slope_fit, _ = mp.robust_polyfit(rv_ccf, ccf_ord, 1, 5)
+            # calculate the correction of the CCF by a slope
+            corr = np.polyval(slope_fit, rv_ccf)
+            corr = corr / np.mean(corr)
+            # correct the ccf_ord by the slope correction
+            ccf_ord = ccf_ord / corr
+        # ------------------------------------------------------------------
         # TODO -- check that its ok to remove the normalization
         # TODO -- this should preserve the stellar flux weighting
         # normalise each orders CCF to median
