@@ -239,6 +239,8 @@ def calculate_tellu_res_absorption(params, recipe, image, template_props,
     # get the e2ds template
     template = template_props['TEMP_S2D']
     # ------------------------------------------------------------------
+    # TODO: Load TAPAS
+    # ------------------------------------------------------------------
     # Shift the image to the reference grid
     # ------------------------------------------------------------------
     image1 = gen_tellu.wave_to_wave(params, image1, wavemap, mwavemap)
@@ -297,12 +299,29 @@ def calculate_tellu_res_absorption(params, recipe, image, template_props,
     # first guess at the SED estimate for the hot start (we guess with a
     #   spectrum full of ones
     sed = np.ones_like(mwavemap)
-    # then we correct with out first estimate of the absorption
+    # then we correct without first estimate of the absorption
     for order_num in range(image1.shape[0]):
         # get the smoothing size from wconv
         smooth = int(wconv[order_num])
-        # median filter
-        sed[order_num] = mp.lowpassfilter(image1[order_num], smooth)
+        # mask of outlier regions (floats for lowpass filter)
+        mask = np.ones_like(image1[order_num])
+        # set all NaNs in the image to NaN in the mask
+        mask[np.isnan(image1[order_num])] = np.nan
+        # loop around two iterations - for stability
+        for ite in range(2):
+            # calculate the SED model using this the masked image (low pass)
+            sed_tmp = mp.lowpassfilter(image1[order_num] * mask, smooth, k=2,
+                                       frac_valid_min=0.5)
+            # calculate the difference between the image and the sed
+            diff = image1[order_num] - sed_tmp
+            # estimate the simga of the difference between image and sed
+            sig = mp.estimate_sigma(diff)
+            # update the mask to remove 3 sigma outliers
+            mask[np.abs(diff) > 3 * sig] = np.nan
+        # -----------------------------------------------------------------
+        # Do one final iteration for the final SED using the mask
+        sed[order_num] = mp.lowpassfilter(image1[order_num] * mask, smooth, k=2,
+                                          frac_valid_min=0.5)
     # ---------------------------------------------------------------------
     # plot mk tellu wave flux plot for specified orders
     for order_num in plot_order_nums:
