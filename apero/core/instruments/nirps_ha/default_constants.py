@@ -2534,7 +2534,7 @@ CCF_DEFAULT_WIDTH.value = 300.0
 
 # Define the computations steps of the CCF [km/s]
 CCF_DEFAULT_STEP = CCF_DEFAULT_STEP.copy(__NAME__)
-CCF_DEFAULT_STEP.value = 0.5
+CCF_DEFAULT_STEP.value = 0.25
 
 #   The value of the noise for wave dv rms calculation
 #       snr = flux/sqrt(flux + noise^2)
@@ -2553,7 +2553,7 @@ CCF_NOISE_THRES.value = 1.0e9
 #  Define the number of orders (from zero to ccf_num_orders_max) to use
 #      to calculate the CCF and RV
 CCF_N_ORD_MAX = CCF_N_ORD_MAX.copy(__NAME__)
-CCF_N_ORD_MAX.value = 48
+CCF_N_ORD_MAX.value = 71
 
 # Allowed input DPRTYPES for input  for CCF recipe
 CCF_ALLOWED_DPRTYPES = CCF_ALLOWED_DPRTYPES.copy(__NAME__)
