@@ -1259,11 +1259,13 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     props['CCFPOWER_WATER'] = water_ccfpower
     props['CCFPOWER_OTHERS'] = others_ccfpower
     props['QC_PARAMS'] = qc_params
+    props['SPL_TAPAS_WATER'] = spl_water
+    props['SPL_TAPAS_OTHERS'] = spl_others
     # set sources
     keys = ['CORRECTED_E2DS', 'TRANS_MASK', 'ABSO_E2DS', 'EXPO_WATER',
             'EXPO_OTHERS', 'DV_WATER', 'DV_OTHERS', 'CCFPOWER_WATER',
             'CCFPOWER_OTHERS', 'QC_PARAMS', 'SKY_MODEL', 'PRE_SKYCORR_IMAGE',
-            'FINITE_RES_CORRECTED']
+            'FINITE_RES_CORRECTED', 'SPL_TAPAS_WATER', 'SPL_TAPAS_OTHERS']
     props.set_sources(keys, func_name)
     # ----------------------------------------------------------------------
     # add constants used (can come from kwargs)
@@ -1873,11 +1875,13 @@ def qc_exit_tellu_preclean(params, recipe, image, image_e2ds_ini, infile,
     props['CCFPOWER_WATER'] = np.nan
     props['CCFPOWER_OTHERS'] = np.nan
     props['QC_PARAMS'] = qc_params
+    props['SPL_TAPAS_WATER'] = spl_water
+    props['SPL_TAPAS_OTHERS'] = spl_others
     # set sources
     keys = ['CORRECTED_E2DS', 'TRANS_MASK', 'ABSO_E2DS', 'EXPO_WATER',
             'EXPO_OTHERS', 'DV_WATER', 'DV_OTHERS', 'CCFPOWER_WATER',
             'CCFPOWER_OTHERS', 'QC_PARAMS', 'SKY_MODEL', 'PRE_SKYCORR_IMAGE',
-            'FINITE_RES_CORRECTED']
+            'FINITE_RES_CORRECTED', 'SPL_TAPAS_WATER', 'SPL_TAPAS_OTHERS']
     props.set_sources(keys, func_name)
     # ----------------------------------------------------------------------
     # add constants used (can come from kwargs)
