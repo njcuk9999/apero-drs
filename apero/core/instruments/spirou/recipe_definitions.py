@@ -1313,6 +1313,7 @@ full_seq.add(apero_mk_template, name='MKTEMP1',
              arguments=dict(objname='TELLURIC_TARGETS'),
              filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
                           KW_DPRTYPE=files.science_dprtypes))
+
 full_seq.add(apero_mk_tellu, name='MKTELLU2', files=[files.out_ext_e2dsff],
              fiber=sci_fiber, template_required=True,
              recipe_kind='tellu-hotstar',
@@ -1442,10 +1443,7 @@ limited_seq.add(apero_mk_template, name='MKTEMP1', recipe_kind='tellu-hotstar',
                 filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
                              KW_DPRTYPE=files.science_dprtypes),
                 template_required=True)
-limited_seq.add(apero_fit_tellu, name='MKTFIT2', recipe_kind='tellu-hotstar',
-                files=[files.out_ext_e2dsff], fiber=sci_fiber,
-                filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
-                             KW_DPRTYPE=files.science_dprtypes))
+
 limited_seq.add(apero_mk_tellu, name='MKTELLU2', recipe_kind='tellu-hotstar',
                 files=[files.out_ext_e2dsff], fiber=sci_fiber,
                 filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
@@ -1610,6 +1608,7 @@ tellu_seq.add(apero_extract, name='EXTTELL', recipe_kind='extract-hotstar',
               files=files.science_pp,
               filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
                            KW_DPRTYPE=files.science_dprtypes))
+
 # other telluric recipes
 tellu_seq.add(apero_mk_tellu, name='MKTELLU1', recipe_kind='tellu-hotstar',
               files=[files.out_ext_e2dsff], fiber=sci_fiber,
@@ -1633,7 +1632,6 @@ tellu_seq.add(apero_mk_tellu, name='MKTELLU2', recipe_kind='tellu-hotstar',
                            KW_DPRTYPE=files.science_dprtypes),
               template_required=True)
 tellu_seq.add(apero_mk_model, name='MKTMOD2', recipe_kind='tellu-hotstar')
-
 tellu_seq.add(apero_fit_tellu, name='MKTFIT2', recipe_kind='tellu-hotstar',
               files=[files.out_ext_e2dsff], fiber=sci_fiber,
               template_required=True,
