@@ -364,7 +364,7 @@ def calculate_tellu_res_absorption(params, recipe, image, template_props,
                 # TODO: Add to language database
                 wmsg = 'Skipping order {0} [No good values]. SED set to NaN'
                 wargs = [order_num]
-                WLOG(params, 'warnings', wmsg.format(*wargs), sublevel=3)
+                WLOG(params, 'warning', wmsg.format(*wargs), sublevel=3)
                 # flag that this is a bad order
                 bad_order = True
         # final guess of the SED
