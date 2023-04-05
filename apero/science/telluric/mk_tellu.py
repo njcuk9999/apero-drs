@@ -360,15 +360,16 @@ def calculate_tellu_res_absorption(params, recipe, image, template_props,
                 # applying a correction to the image2
                 image2[order_num] = image2[order_num] - correction
             else:
-                # log that we are skipping this order
-                # TODO: Add to language database
-                wmsg = 'Skipping order {0} [No good values]. SED set to NaN'
-                wargs = [order_num]
-                WLOG(params, 'warning', wmsg.format(*wargs), sublevel=3)
                 # flag that this is a bad order
                 bad_order = True
         # final guess of the SED
         if bad_order:
+            # log that we are skipping this order
+            # TODO: Add to language database
+            wmsg = 'Skipping order {0} [No good values]. SED set to NaN'
+            wargs = [order_num]
+            WLOG(params, 'warning', wmsg.format(*wargs), sublevel=3)
+            # set the SED to NaN
             sed[order_num] = np.full(image2.shape[1], np.nan)
         else:
             sed[order_num] = mp.lowpassfilter(image2[order_num] * mask, smooth,
