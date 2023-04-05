@@ -324,7 +324,7 @@ def calculate_tellu_res_absorption(params, recipe, image, template_props,
         for ite in range(2):
             # calculate the SED model using this the masked image (low pass)
             sed_tmp = mp.lowpassfilter(image2[order_num] * mask, smooth, k=2,
-                                       frac_valid_min=0.5)
+                                       frac_valid_min=0.1)
             # calculate the difference between the image and the sed
             diff = image2[order_num] - sed_tmp
             # estimate the simga of the difference between image and sed
@@ -334,7 +334,7 @@ def calculate_tellu_res_absorption(params, recipe, image, template_props,
             # -----------------------------------------------------------------
             # Do one final iteration for the final SED using the mask
             sed_tmp = mp.lowpassfilter(image2[order_num] * mask, smooth, k=2,
-                                              frac_valid_min=0.5)
+                                              frac_valid_min=0.1)
             # -----------------------------------------------------------------
             # Logic here:
             # We look for correlation between residuals and initidual absorption
@@ -373,7 +373,7 @@ def calculate_tellu_res_absorption(params, recipe, image, template_props,
             sed[order_num] = np.full(image2.shape[1], np.nan)
         else:
             sed[order_num] = mp.lowpassfilter(image2[order_num] * mask, smooth,
-                                              k=2, frac_valid_min=0.5)
+                                              k=2, frac_valid_min=0.1)
     # ---------------------------------------------------------------------
     # plot mk tellu wave flux plot for specified orders
     for order_num in plot_order_nums:
