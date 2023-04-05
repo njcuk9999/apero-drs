@@ -314,8 +314,10 @@ def calculate_tellu_res_absorption(params, recipe, image, template_props,
         mask = np.ones_like(image2[order_num])
         # set all NaNs in the image to NaN in the mask
         mask[np.isnan(image2[order_num])] = np.nan
+        # get the tapas transmission for this order
+        tapas_trans_ord = tapas_trans[order_num]
         # set all transmission below 0.5 to NaN in the mask
-        mask[tapas_trans < 0.5] = np.nan
+        mask[tapas_trans_ord < 0.5] = np.nan
         # loop around two iterations - for stability
         for ite in range(2):
             # calculate the SED model using this the masked image (low pass)
@@ -348,8 +350,8 @@ def calculate_tellu_res_absorption(params, recipe, image, template_props,
             # Mask of finite values
             good = np.isfinite(diff)
             # Fit the residuals to the absorption
-            fit,_ = mp.robust_polyfit(tapas_trans[good], diff[good], 1, 5)
-            correction = np.polyval(fit, tapas_trans)
+            fit,_ = mp.robust_polyfit(tapas_trans_ord[good], diff[good], 1, 5)
+            correction = np.polyval(fit, tapas_trans_ord)
             # applying a correction to the image2
             image2[order_num] = image2[order_num] - correction
         # final guess of the SED
