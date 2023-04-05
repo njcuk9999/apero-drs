@@ -349,11 +349,14 @@ def calculate_tellu_res_absorption(params, recipe, image, template_props,
             diff = (image2[order_num] - sed_tmp)
             # Mask of finite values
             good = np.isfinite(diff)
-            # Fit the residuals to the absorption
-            fit,_ = mp.robust_polyfit(tapas_trans_ord[good], diff[good], 1, 5)
-            correction = np.polyval(fit, tapas_trans_ord)
-            # applying a correction to the image2
-            image2[order_num] = image2[order_num] - correction
+            # must have some valid points
+            if np.sum(good) > 0:
+                # Fit the residuals to the absorption
+                fit,_ = mp.robust_polyfit(tapas_trans_ord[good], diff[good],
+                                          degree=1, nsigcut=5)
+                correction = np.polyval(fit, tapas_trans_ord)
+                # applying a correction to the image2
+                image2[order_num] = image2[order_num] - correction
         # final guess of the SED
         sed[order_num] = mp.lowpassfilter(image2[order_num] * mask, smooth,
                                           k=2, frac_valid_min=0.5)
