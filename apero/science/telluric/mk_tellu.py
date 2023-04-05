@@ -318,6 +318,8 @@ def calculate_tellu_res_absorption(params, recipe, image, template_props,
         tapas_trans_ord = tapas_trans[order_num]
         # set all transmission below 0.5 to NaN in the mask
         mask[tapas_trans_ord < 0.5] = np.nan
+        # flag for a bad order
+        bad_order = False
         # loop around two iterations - for stability
         for ite in range(2):
             # calculate the SED model using this the masked image (low pass)
@@ -357,9 +359,19 @@ def calculate_tellu_res_absorption(params, recipe, image, template_props,
                 correction = np.polyval(fit, tapas_trans_ord)
                 # applying a correction to the image2
                 image2[order_num] = image2[order_num] - correction
+            else:
+                # log that we are skipping this order
+                wmsg = 'Skipping order {0} [No good values]. SED set to NaN'
+                wargs = [order_num]
+                WLOG(params, 'warnings', wmsg.format(*wargs), sublevel=3)
+                # flag that this is a bad order
+                bad_order = True
         # final guess of the SED
-        sed[order_num] = mp.lowpassfilter(image2[order_num] * mask, smooth,
-                                          k=2, frac_valid_min=0.5)
+        if bad_order:
+            sed[order_num] = np.full(image2.shape[1], np.nan)
+        else:
+            sed[order_num] = mp.lowpassfilter(image2[order_num] * mask, smooth,
+                                              k=2, frac_valid_min=0.5)
     # ---------------------------------------------------------------------
     # plot mk tellu wave flux plot for specified orders
     for order_num in plot_order_nums:
