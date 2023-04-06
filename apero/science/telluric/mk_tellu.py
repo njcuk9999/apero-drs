@@ -308,6 +308,11 @@ def calculate_tellu_res_absorption(params, recipe, image, template_props,
     image2 = np.array(image1)
     # then we correct without first estimate of the absorption
     for order_num in range(image2.shape[0]):
+        # print progress
+        # TODO: Move to language database
+        msg = 'Low pass filtering of hot star to create SED order {0} of {1}'
+        margs = [order_num, image2.shape[0] - 1]
+        WLOG(params, '', msg.format(*margs))
         # get the smoothing size from wconv
         smooth = int(wconv[order_num])
         # mask of outlier regions (floats for lowpass filter)
@@ -317,24 +322,39 @@ def calculate_tellu_res_absorption(params, recipe, image, template_props,
         # get the tapas transmission for this order
         tapas_trans_ord = tapas_trans[order_num]
         # set all transmission below 0.5 to NaN in the mask
-        mask[tapas_trans_ord < 0.5] = np.nan
+        # mask[tapas_trans_ord < 0.5] = np.nan
         # flag for a bad order
         bad_order = False
         # loop around two iterations - for stability
-        for ite in range(2):
-            # calculate the SED model using this the masked image (low pass)
-            sed_tmp = mp.lowpassfilter(image2[order_num] * mask, smooth, k=2,
-                                       frac_valid_min=0.5)
-            # calculate the difference between the image and the sed
-            diff = image2[order_num] - sed_tmp
-            # estimate the simga of the difference between image and sed
-            sig = mp.estimate_sigma(diff)
-            # update the mask to remove 3 sigma outliers
-            mask[np.abs(diff) > 3 * sig] = np.nan
-            # -----------------------------------------------------------------
-            # Do one final iteration for the final SED using the mask
-            sed_tmp = mp.lowpassfilter(image2[order_num] * mask, smooth, k=2,
-                                              frac_valid_min=0.5)
+        for ite in range(3):
+            # flag nan pixels
+            valid = np.isfinite(image2[order_num])
+            # flag that this is a bad order
+            if np.sum(valid) < 2:
+                bad_order = True
+                continue
+            # on the first iteration
+            if ite ==0:
+                # on the first iteration just fit a slope
+                fit,_ = mp.robust_polyfit(mwavemap[order_num][valid],
+                                          image2[order_num][valid], 1, 5)
+                # SED is the slope of the hot star spectrum
+                sed_tmp = np.polyval(fit,mwavemap[order_num])
+            # otherwise low pass the spectrum
+            else:
+                # calculate the SED model using this the masked image (low pass)
+                sed_tmp = mp.lowpassfilter(image2[order_num] * mask, smooth,
+                                           k=2, frac_valid_min=0.1)
+                # calculate the difference between the image and the sed
+                diff = image2[order_num] - sed_tmp
+                # estimate the simga of the difference between image and sed
+                sig = mp.estimate_sigma(diff)
+                # update the mask to remove 3 sigma outliers
+                mask[np.abs(diff) > 2 * sig] = np.nan
+                # -------------------------------------------------------------
+                # Do one final iteration for the final SED using the mask
+                sed_tmp = mp.lowpassfilter(image2[order_num] * mask, smooth,
+                                           k=2, frac_valid_min=0.1)
             # -----------------------------------------------------------------
             # Logic here:
             # We look for correlation between residuals and initidual absorption
@@ -362,6 +382,7 @@ def calculate_tellu_res_absorption(params, recipe, image, template_props,
             else:
                 # flag that this is a bad order
                 bad_order = True
+        # ---------------------------------------------------------------------
         # final guess of the SED
         if bad_order:
             # log that we are skipping this order
@@ -373,8 +394,8 @@ def calculate_tellu_res_absorption(params, recipe, image, template_props,
             sed[order_num] = np.full(image2.shape[1], np.nan)
         else:
             sed[order_num] = mp.lowpassfilter(image2[order_num] * mask, smooth,
-                                              k=2, frac_valid_min=0.5)
-    # ---------------------------------------------------------------------
+                                              k=2, frac_valid_min=0.1)
+    # -------------------------------------------------------------------------
     # plot mk tellu wave flux plot for specified orders
     for order_num in plot_order_nums:
         # plot debug plot
