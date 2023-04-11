@@ -92,14 +92,14 @@ def update_database(params: ParamDict, dbkind: str):
         WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
         log_update(params, pconst)
     # update index database
-    if dbkind in ['index', 'all']:
+    if dbkind in ['findex', 'all']:
         WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
         WLOG(params, 'info', textentry('40-006-00007', args=['index']),
              colour='magenta')
         WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
         index_update(params)
 
-    if dbkind in ['object', 'all']:
+    if dbkind in ['astrom', 'all']:
         WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
         WLOG(params, 'info', textentry('40-006-00007', args=['object']),
              colour='magenta')
