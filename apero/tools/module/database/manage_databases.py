@@ -300,41 +300,49 @@ def list_databases(params: ParamDict) -> Dict[str, DatabaseM]:
     return databases
 
 
-def install_databases(params: ParamDict, skip: Union[List[str], None] = None):
+def install_databases(params: ParamDict, skip: Union[List[str], None] = None,
+                      dbkind: Union[str, List[str]] = 'all'):
     # deal with skip
     if skip is None:
         skip = []
+    # deal with dbkind == 'all'
+    if dbkind == 'all':
+        runs = ['calib', 'tellu', 'findex', 'log', 'astrom', 'reject', 'lang']
+    elif isinstance(dbkind, str):
+        runs = [dbkind]
+    else:
+        runs = dbkind
     # get database paths
     databases = list_databases(params)
     # load pseudo constants
     pconst = constants.pload()
     # -------------------------------------------------------------------------
     # create calibration database
-    if 'calib' not in skip:
+    if 'calib' not in skip and 'calib' in runs:
         _ = create_calibration_database(params, pconst, databases)
     # -------------------------------------------------------------------------
     # create telluric database
-    if 'tellu' not in skip:
+    if 'tellu' not in skip and 'tellu' in runs:
         _ = create_telluric_database(params, pconst, databases)
     # -------------------------------------------------------------------------
     # create index database
-    if 'findex' not in skip:
+    if 'findex' not in skip and 'findex' in runs:
         _ = create_fileindex_database(pconst, databases)
     # -------------------------------------------------------------------------
     # create log database
-    if 'log' not in skip:
+    if 'log' not in skip and 'log' in runs:
         _ = create_log_database(pconst, databases)
     # -------------------------------------------------------------------------
     # create object database
-    if 'astrom' not in skip:
+    if 'astrom' not in skip and 'astrom' in runs:
         _ = create_object_database(params, pconst, databases)
     # -------------------------------------------------------------------------
     # create reject database
-    if 'reject' not in skip:
+    if 'reject' not in skip and 'reject' in runs:
         _ = create_reject_database(params, pconst, databases)
     # -------------------------------------------------------------------------
     # create language database
-    if 'lang' not in skip:
+    if 'lang' not in skip and 'lang' in runs:
         _ = create_lang_database(databases)
 
 
