@@ -150,20 +150,15 @@ database_mgr.recipe_type = 'nolog-tool'
 database_mgr.recipe_kind = 'admin'
 database_mgr.set_kwarg(name='--kill', dtype='switch', default=False,
                        helpstr=textentry('DBMGR_KILLARG_HELP'))
-database_mgr.set_kwarg(name='--calibdb', dtype='switch', default=False,
-                       helpstr=textentry('DBMGR_CALIBDB_HELP'))
-database_mgr.set_kwarg(name='--telludb', dtype='switch', default=False,
-                       helpstr=textentry('DBMGR_TELLUDB_HELP'))
-database_mgr.set_kwarg(name='--logdb', dtype='switch', default=False,
-                       helpstr=textentry('DBMGR_LOGDB_HELP'))
-database_mgr.set_kwarg(name='--findexdb', dtype='switch', default=False,
-                       helpstr=textentry('DBMGR_FINDEXDB_HELP'))
-database_mgr.set_kwarg(name='--astromdb', dtype='switch', default=False,
-                       helpstr=textentry('DBMGR_ASTROMDB_HELP'))
-database_mgr.set_kwarg(name='--rejectdb', dtype='switch', default=False,
-                       helpstr=textentry('DBMGR_REJECTDB_HELP'))
+database_mgr.set_kwarg(name='--dbkind', dtype=str, default='all',
+                       options=['all', 'calib', 'tellu', 'findex', 'log',
+                                'astrom', 'reject', 'lang'],
+                       helpstr='Database kind to update or reset. Must use in'
+                               'conjuction with --update or --reset')
 database_mgr.set_kwarg(name='--update', dtype='switch', default=False,
                        helpstr=textentry('DBMGR_UPDATE_HELP'))
+database_mgr.set_kwarg(name='--reset', dtype='switch', default=False,
+                       helpstr=textentry('DBMGR_RESET_HELP'))
 database_mgr.set_kwarg(name='--csv', dtype=str, default='None',
                        helpstr=textentry('DBMGR_CSVARG_HELP'))
 database_mgr.set_kwarg(name='--exportdb', dtype='options', default='None',
@@ -177,8 +172,7 @@ database_mgr.set_kwarg(name='--join', dtype='options', default='replace',
                        helpstr=textentry('DBMGR_JOIN_HELP'))
 database_mgr.set_kwarg(name='--delete', dtype='switch', default=False,
                        helpstr=textentry('DBMGR_DELETE_HELP'))
-database_mgr.set_kwarg(name='--reset', dtype='switch', default=False,
-                       helpstr=textentry('DBMGR_RESET_HELP'))
+
 database_mgr.description_file = 'apero_database.rst'
 
 # -----------------------------------------------------------------------------

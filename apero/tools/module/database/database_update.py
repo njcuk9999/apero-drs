@@ -114,14 +114,15 @@ def update_database(params: ParamDict, dbkind: str):
         manage_databases.update_reject_database(params)
 
 
-def reset_databases(params: ParamDict):
+def reset_databases(params: ParamDict, dbkind):
     """
     Reset all database to installation point
 
     :param params: ParamDict, parameter dictionary of constants
+    :param dbkind: str, the type of database (i.e. all, calib, tellu, log etc)
     :return:
     """
-    manage_databases.install_databases(params)
+    manage_databases.install_databases(params, dbkind)
 
 
 def calib_tellu_update(params: ParamDict, pconst: PseudoConstants,
