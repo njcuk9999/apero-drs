@@ -142,6 +142,10 @@ KW_NEXP.set(key='NEXP', comment='Total number of exposures within the sequence',
 KW_PI_NAME = KW_PI_NAME.copy(__NAME__)
 KW_PI_NAME.set(key='PI_NAME', comment='The PI of the program', group='raw')
 
+# define the run id HEADER key
+KW_RUN_ID = KW_RUN_ID.copy(__NAME__)
+KW_RUN_ID.set(key='QRUNID', comment='queue run id', group='raw')
+
 # define the instrument HEADER key
 KW_INSTRUMENT = KW_INSTRUMENT.copy(__NAME__)
 KW_INSTRUMENT.set(key='INSTRUME', comment='Instrument Name', group='raw')

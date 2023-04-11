@@ -614,6 +614,7 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         header_cols.add(name='KW_PPVERSION', datatype='VARCHAR(80)')
         header_cols.add(name='KW_DRS_DATE_NOW', datatype='VARCHAR(80)')
         header_cols.add(name='KW_PI_NAME', datatype='VARCHAR(80)')
+        header_cols.add(name='KW_RUN_ID', datatype='VARCHAR(80)')
         header_cols.add(name='KW_PID', datatype='VARCHAR(80)',
                         is_index=True)
         header_cols.add(name='KW_FIBER', datatype='VARCHAR(80)')
