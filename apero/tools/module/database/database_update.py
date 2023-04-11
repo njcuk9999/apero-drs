@@ -122,7 +122,7 @@ def reset_databases(params: ParamDict, dbkind):
     :param dbkind: str, the type of database (i.e. all, calib, tellu, log etc)
     :return:
     """
-    manage_databases.install_databases(params, dbkind)
+    manage_databases.install_databases(params, dbkind=dbkind)
 
 
 def calib_tellu_update(params: ParamDict, pconst: PseudoConstants,
