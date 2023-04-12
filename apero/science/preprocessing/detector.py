@@ -807,6 +807,8 @@ def create_led_flat(params: ParamDict, recipe: DrsRecipe, led_file: DrsFitsFile,
     outfile.copy_original_keys(combfile)
     # add version
     outfile.add_hkey('KW_PPVERSION', value=params['DRS_VERSION'])
+    # add output file
+    outfile.add_hkey('KW_OUTPUT', value=outfile.name)
     # add dates
     outfile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
     outfile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])

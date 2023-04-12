@@ -215,7 +215,7 @@ def reset_tmp_folders(params: ParamDict, log: bool = True, dtimeout: int = 20):
         # load pseudo constants
         pconst = constants.pload()
         # create index database
-        manage_databases.create_fileindex_database(pconst, databases,
+        manage_databases.create_fileindex_database(params, pconst, databases,
                                                    tries=dtimeout)
         # get index database
         findexdb = drs_database.FileIndexDatabase(params)
@@ -239,7 +239,8 @@ def reset_tmp_folders(params: ParamDict, log: bool = True, dtimeout: int = 20):
         # load pseudo constants
         pconst = constants.pload()
         # create index database
-        manage_databases.create_log_database(pconst, databases, tries=dtimeout)
+        manage_databases.create_log_database(params, pconst, databases,
+                                             tries=dtimeout)
         # get log database
         logdb = drs_database.LogDatabase(params)
         # load index database
@@ -284,7 +285,7 @@ def reset_reduced_folders(params: ParamDict, log: bool = True,
         # load pseudo constants
         pconst = constants.pload()
         # create index database
-        manage_databases.create_fileindex_database(pconst, databases,
+        manage_databases.create_fileindex_database(params, pconst, databases,
                                                    tries=dtimeout)
         # get index database
         indexdb = drs_database.FileIndexDatabase(params)
@@ -308,7 +309,8 @@ def reset_reduced_folders(params: ParamDict, log: bool = True,
         # load pseudo constants
         pconst = constants.pload()
         # create index database
-        manage_databases.create_log_database(pconst, databases, tries=dtimeout)
+        manage_databases.create_log_database(params, pconst, databases,
+                                             tries=dtimeout)
         # get log database
         logdb = drs_database.LogDatabase(params)
         # load index database
@@ -561,7 +563,7 @@ def reset_out_folders(params: ParamDict, log: bool = True, dtimeout: int = 20):
         # load pseudo constants
         pconst = constants.pload()
         # create index database
-        manage_databases.create_fileindex_database(pconst, databases,
+        manage_databases.create_fileindex_database(params, pconst, databases,
                                                    tries=dtimeout)
         # get index database
         indexdb = drs_database.FileIndexDatabase(params)
@@ -585,7 +587,8 @@ def reset_out_folders(params: ParamDict, log: bool = True, dtimeout: int = 20):
         # load pseudo constants
         pconst = constants.pload()
         # create index database
-        manage_databases.create_log_database(pconst, databases, tries=dtimeout)
+        manage_databases.create_log_database(params, pconst, databases,
+                                             tries=dtimeout)
         # get log database
         logdb = drs_database.LogDatabase(params)
         # load index database
@@ -625,9 +628,11 @@ def reset_assets(params: ParamDict, log: bool = True, dtimeout: int = 0):
     reset_dbdir(params, name, asset_path, abs_reset_path, log=log,
                 relative_path='MODULE', backup=True)
     # create index databases
-    manage_databases.create_fileindex_database(pconst, databases, tries=dtimeout)
+    manage_databases.create_fileindex_database(params, pconst, databases,
+                                               tries=dtimeout)
     # create log database
-    manage_databases.create_log_database(pconst, databases, tries=dtimeout)
+    manage_databases.create_log_database(params, pconst, databases,
+                                         tries=dtimeout)
     # create object database
     manage_databases.create_object_database(params, pconst, databases,
                                             tries=dtimeout)
@@ -635,7 +640,7 @@ def reset_assets(params: ParamDict, log: bool = True, dtimeout: int = 0):
     manage_databases.create_reject_database(params, pconst, databases,
                                             tries=dtimeout)
     # create language database
-    manage_databases.create_lang_database(databases, tries=dtimeout)
+    manage_databases.create_lang_database(params, databases, tries=dtimeout)
 
 
 def remove_all(params, path, log=True, skipfiles=None):
