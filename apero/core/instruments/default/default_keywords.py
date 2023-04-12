@@ -19,7 +19,8 @@ __all__ = [  # input keys
     'KW_OBJRAPM', 'KW_OBJDECPM', 'KW_RDNOISE', 'KW_GAIN', 'KW_EXPTIME',
     'KW_UTC_OBS', 'KW_EXPTIME_UNITS', 'KW_OBSTYPE', 'KW_CCAS', 'KW_EXPREQ',
     'KW_CREF', 'KW_CDEN', 'KW_CMMTSEQ', 'KW_AIRMASS', 'KW_MJDEND', 'KW_MJDATE',
-    'KW_CMPLTEXP', 'KW_NEXP', 'KW_PI_NAME', 'KW_PLX', 'KW_CALIBWH',
+    'KW_CMPLTEXP', 'KW_NEXP', 'KW_PI_NAME', 'KW_RUN_ID',
+    'KW_PLX', 'KW_CALIBWH',
     'KW_TARGET_TYPE', 'KW_WEATHER_TOWER_TEMP', 'KW_CASS_TEMP',
     'KW_HUMIDITY', 'KW_INPUTRV', 'KW_OBJ_TEMP',
     'KW_POLAR_KEY_1', 'KW_POLAR_KEY_2',
@@ -319,6 +320,10 @@ KW_NEXP = Keyword('KW_NEXP', key='NULL', dtype=int, source=__NAME__,
 # define the pi name HEADER key
 KW_PI_NAME = Keyword('KW_PI_NAME', key='NULL', dtype=str, source=__NAME__,
                      description='define the pi name HEADER key')
+
+# define the run id HEADER key
+KW_RUN_ID = Keyword('KW_RUN_ID', key='NULL', dtype=str, source=__NAME__,
+                     description='define the run id HEADER key')
 
 # define the instrument HEADER key
 KW_INSTRUMENT = Keyword('KW_INSTRUMENT', key='NULL', dtype=str, source=__NAME__,

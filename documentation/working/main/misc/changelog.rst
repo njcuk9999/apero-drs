@@ -1,6 +1,138 @@
 Changelog
 =========
 
+0.8.001 (2023-01-30)
+--------------------
+- [APERO] update README.md (move developer and main to v0.7.275) [Neil
+  Cook]
+- [APERO] fix typo `apero.science.telluric.gen_tellu.py` - image.shape[0]
+  --> range(image.shape[0]) [njcuk9999]
+- [APERO] update date / version / documentation. [Neil Cook]
+
+
+0.7.279 (2023-04-06)
+--------------------
+- [APERO] update run.ini scripts. [Neil Cook]
+- [APERO] `apero.science.telluric.mk_tellu.py` - adjust for the slope.
+  [Neil Cook]
+- [APERO] `apero.science.telluric.mk_tellu.py` - change `frac_valid_min`.
+  [Neil Cook]
+- [APERO] `apero.science.mk_tellu` - only have the warning once per order.
+  [Neil Cook]
+- [APERO] `apero.science.mk_tellu` - correct typo 'warnings'-->'warning'
+  [Neil Cook]
+- [APERO] `apero.science.mk_tellu` - need to deal with bad orders (set to
+  NaN) in SED. [Neil Cook]
+- [APERO] `apero.science.mk_tellu` - need to deal with bad orders (set to
+  NaN) in SED. [Neil Cook]
+- [APERO] `apero.science.mk_tellu` - must have some valid points in order
+  to correct image order. [Neil Cook]
+- [APERO] `apero.science.mk_tellu` - `tapas_trans` needs to be per order
+  (typo) [Neil Cook]
+- [APERO] `apero.core.instruments.*.recipe_definitions.py` - fix order of
+  the telluric correction. [Neil Cook]
+- [APERO] `apero.science.telluric.mk_tellu` - add an additional step to
+  use the tapas transmission to fit the sed residuals to the
+  transmission (iteratively) [njcuk9999]
+- [NIRPS] add ccf for `nirps_ha` and `nirps_he` with slope fit to ccf
+  [SPIROU] add slope fit to ccf. [Neil Cook]
+- [APERO] `apero.science.telluric.mk_tellu` - update lowpassfilter + trans
+  file SED creation (filter 3 sigma outliers in hot star SED)
+  [njcuk9999]
+- [APERO] `apero.science.telluric.gen_tellu.py` - add `tapas_water` and
+  `tapas_other` splines to preclean props. [Neil Cook]
+- [APERO] `apero.tools.recipe.bin.apero_get.py` - copy if not doing
+  symlink. [Neil Cook]
+- [APERO] `apero.tools.recipe.bin.apero_get.py` - copy if not doing
+  symlink. [Neil Cook]
+
+
+0.7.278 (2023-03-29)
+--------------------
+- [APERO] `apero.tools.recipe.bin.apero_get.py` - add nosubdir argument
+  and fix error when symlinks exist. [Neil Cook]
+- [APERO] `apero.io.drs_image.py` - do not use removedirs use rmdir - do
+  not remove block dirs. [Neil Cook]
+- [APERO] `apero.io.drs_image.py` - do not use removedirs use rmdir. [Neil
+  Cook]
+- [APERO] `apero.io.drs_image.py` - do not use removedirs. [Neil Cook]
+- [APERO] `apero.io.drs_image.py`: change mkdir --> makedirs. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.276-live' into
+  v0.7.276-live. [Neil Cook]
+- [APERO] `tools.recipes.bin.apero_get.py` - add --obsdir and `--pi_name` to
+  arguments. [Neil Cook]
+- [APERO] `tools.recipes.bin.apero_get.py` - add --obsdir and `--pi_name` to
+  arguments. [Neil Cook]
+- [APERO] `apero.io.drs_image.py`: change mkdir --> makedirs. [Neil Cook]
+- [NIRPS] `apero.science.calib.dark.py` - fix typo `DRS_RAW_DIR` to
+  `DRS_DATA_RAW`. [Neil Cook]
+- [NIRPS] add new UNe catalogue for NIRPS-HA and `NIRPS_HE`. [Neil Cook]
+- [NIRPS] add new UNe catalogue for NIRPS-HA and `NIRPS_HE`. [Neil Cook]
+- [APERO] update apero astrometrics with a --check mode to check current
+  database for duplicates (name, alias, ra+dec crossmatch) [njcuk9999]
+- [APERO] update apero astrometrics to give aliases with and without
+  spaces/underscores. [njcuk9999]
+- [APERO] update apero astrometrics to give aliases with and without
+  spaces/underscores. [njcuk9999]
+- [APERO] update apero astrometrics to give aliases with and without
+  spaces/underscores. [njcuk9999]
+- Merge remote-tracking branch 'origin/v0.7.276-live' into
+  v0.7.276-live. [njcuk9999]
+- [APERO] BUGFIX: bug when aliases end with "|" (matches "None" and
+  "Null" thus when there is a null it matches the object with "|" at
+  end. [njcuk9999]
+
+
+0.7.277 (2023-03-14)
+--------------------
+- [APERO] apero.core.core - properly delete files from database. [Neil
+  Cook]
+- [APERO] apero.core.utils - deal with switch arguments in function call
+  kwargs (return on True missing) [Neil Cook]
+- [APERO] aupdate whitelists for nirps. [njcuk9999]
+- [APERO] `apero.base.drs_db.py` - remove None's from list and get via a
+  set (quicker than np.unique) [njcuk9999]
+- Merge remote-tracking branch 'origin/v0.7.276-live' into
+  v0.7.276-live. [njcuk9999]
+- [APERO] `apero.science.telluric.gen_tellu.py` - Provide better error for
+  tellu preclean CCF curve fit crash + add error to lang database. [Neil
+  Cook]
+- [APERO] `apero.science.calib.wave.py` - fix wave sol DV[AB-A] problem.
+  [njcuk9999]
+- Merge remote-tracking branch 'origin/v0.7.276-live' into
+  v0.7.276-live. [njcuk9999]
+- [APERO] `apero.recipes.*.apero_preprocess_*.py` - fix bug when `qc_params`
+  fails. [Neil Cook]
+- [APERO] cannot and should not write large median npy files into raw
+  directory. [Neil Cook]
+- [APERO] update run.ini files. [Neil Cook]
+- [NIRPS] `psuedo_const.py` - need OBJECTNAME2 otherwise telluric,sky
+  files fail. [Neil Cook]
+- [APERO] `apero_preprocess_spirou.py` - error when qc fils in
+  preprocessing. [njcuk9999]
+- [NIRPS] `pseudo_const.py` - must have `KW_OBJECTNAME2` in the database.
+  [njcuk9999]
+- [NIRPS] `apero.science.velocity.gen_vel.py` - reduce number of decimials
+  in DVRMS to get full comment. [njcuk9999]
+- [NIRPS] update telluric hot star list. [njcuk9999]
+- [APERO] do not update database if we are in parallel mode where we
+  assume all files are in database and database has been updated
+  externally. [Neil Cook]
+- [APERO] fix MKFIT2 (should be AB not A --> use `sci_fiber)` [Neil Cook]
+
+
+0.7.276 (2023-02-09)
+--------------------
+- Merge remote-tracking branch 'origin/v0.7.276-live' into
+  v0.7.276-live. [njcuk9999]
+- Allow creation of templates even if qc fails. [Neil Cook]
+- [APERO] `apero.core.core.drs_database.py` - fix a problem with headers
+  being of wrong type for s1d. [njcuk9999]
+- [APERO] allow processing of LED tests (requires a switch to turn off
+  input qc check) [Neil Cook]
+- `Apero.core.instruments.spirou.recipe_definitions.py` - allow `PP_EVERY`
+  and `EXT_EVERY` for spirou. [Neil Cook]
+
 
 0.8.001 (2023-01-30)
 --------------------
