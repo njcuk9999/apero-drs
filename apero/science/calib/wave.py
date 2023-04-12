@@ -3782,6 +3782,8 @@ def write_resolution_map(params: ParamDict, recipe: DrsRecipe,
     # ------------------------------------------------------------------
     # copy keys from hcwavefile
     rf_e2ds.copy_header(resfile)
+    # set output key
+    rf_e2ds.add_hkey('KW_OUTPUT', value=rf_e2ds.name)
     # set data
     rf_e2ds.data = wprops['RES_E2DS_AMP']
     rf_e2ds.datatype = 'image'
