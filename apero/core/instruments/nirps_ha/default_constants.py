@@ -2860,7 +2860,7 @@ REPROCESS_REINDEX_BLOCKS.value = 'raw,tmp,red,out'
 
 # Define whether to use multiprocess Pool or Process
 REPROCESS_MP_TYPE = REPROCESS_MP_TYPE.copy(__NAME__)
-REPROCESS_MP_TYPE.value = 'pool'
+REPROCESS_MP_TYPE.value = 'process'
 
 # Key for use in run files
 REPROCESS_RUN_KEY = REPROCESS_RUN_KEY.copy(__NAME__)
