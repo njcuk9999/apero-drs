@@ -187,6 +187,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         outfile.copy_original_keys(infile)
         # add version
         outfile.add_hkey('KW_PPVERSION', value=params['DRS_VERSION'])
+        # add output file
+        outfile.add_hkey('KW_OUTPUT', value=outfile.name)
         # add dates
         outfile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
         outfile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
