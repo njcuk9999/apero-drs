@@ -190,6 +190,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         # Get out file and check skip
         # ------------------------------------------------------------------
+        # print progress
+        WLOG(params, '', 'Loading drs output file')
         # get the output drs file
         oargs = [params, recipe, infile, recipe.outputs['PP_FILE'], RAW_PREFIX]
         found, outfile = prep.drs_outfile_id(*oargs)
