@@ -1298,6 +1298,8 @@ def deal_with_bad_file_single(filename: str, ext: Optional[int] = None,
                 ekwargs = dict(codeid='01-001-00014', level='error',
                                targs=eargs, func_name=func_name)
                 raise drs_base_classes.DrsCodedException(**ekwargs)
+            else:
+                print('Try {0} to open {1}'.format(it, filename))
     # deal with having an extension number
     if ext is not None:
         if flavour == 'data':
