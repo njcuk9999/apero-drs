@@ -122,7 +122,7 @@ def reset_databases(params: ParamDict, dbkind):
     :param dbkind: str, the type of database (i.e. all, calib, tellu, log etc)
     :return:
     """
-    manage_databases.install_databases(params, dbkind=dbkind)
+    manage_databases.install_databases(params, dbkind=dbkind, verbose=True)
 
 
 def calib_tellu_update(params: ParamDict, pconst: PseudoConstants,
@@ -359,6 +359,10 @@ def _log_update(pconst: PseudoConstants,
         key = 'rlog.{0}'.format(logkey)
         # get value
         logvalue = logdict.get(key, 'NULL')
+        # by definition these must have ended (even if the ptable says
+        #     otherwise)
+        if logkey == 'ENDED':
+            logvalue = 1
         # append value to values
         logvalues.append(logvalue)
     # generate unique log code

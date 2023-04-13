@@ -301,7 +301,8 @@ def list_databases(params: ParamDict) -> Dict[str, DatabaseM]:
 
 
 def install_databases(params: ParamDict, skip: Union[List[str], None] = None,
-                      dbkind: Union[str, List[str]] = 'all'):
+                      dbkind: Union[str, List[str]] = 'all',
+                      verbose: bool = False):
     # deal with skip
     if skip is None:
         skip = []
@@ -319,31 +320,34 @@ def install_databases(params: ParamDict, skip: Union[List[str], None] = None,
     # -------------------------------------------------------------------------
     # create calibration database
     if 'calib' not in skip and 'calib' in runs:
-        _ = create_calibration_database(params, pconst, databases)
+        _ = create_calibration_database(params, pconst, databases,
+                                        verbose=verbose)
     # -------------------------------------------------------------------------
     # create telluric database
     if 'tellu' not in skip and 'tellu' in runs:
-        _ = create_telluric_database(params, pconst, databases)
+        _ = create_telluric_database(params, pconst, databases,
+                                     verbose=verbose)
     # -------------------------------------------------------------------------
     # create index database
     if 'findex' not in skip and 'findex' in runs:
-        _ = create_fileindex_database(pconst, databases)
+        _ = create_fileindex_database(params, pconst, databases,
+                                      verbose=verbose)
     # -------------------------------------------------------------------------
     # create log database
     if 'log' not in skip and 'log' in runs:
-        _ = create_log_database(pconst, databases)
+        _ = create_log_database(params, pconst, databases, verbose=verbose)
     # -------------------------------------------------------------------------
     # create object database
     if 'astrom' not in skip and 'astrom' in runs:
-        _ = create_object_database(params, pconst, databases)
+        _ = create_object_database(params, pconst, databases, verbose=verbose)
     # -------------------------------------------------------------------------
     # create reject database
     if 'reject' not in skip and 'reject' in runs:
-        _ = create_reject_database(params, pconst, databases)
+        _ = create_reject_database(params, pconst, databases, verbose=verbose)
     # -------------------------------------------------------------------------
     # create language database
     if 'lang' not in skip and 'lang' in runs:
-        _ = create_lang_database(databases)
+        _ = create_lang_database(params, databases, verbose=verbose)
 
 
 # =============================================================================
@@ -351,7 +355,8 @@ def install_databases(params: ParamDict, skip: Union[List[str], None] = None,
 # =============================================================================
 def create_calibration_database(params: ParamDict, pconst: PseudoConst,
                                 databases: Dict[str, DatabaseM],
-                                tries: int = 20) -> Database:
+                                tries: int = 20,
+                                verbose: bool = False) -> Database:
     """
     Setup for the calibration database
 
@@ -382,9 +387,13 @@ def create_calibration_database(params: ParamDict, pconst: PseudoConst,
     if calibdb.tname in calibdb.tables:
         calibdb.backup()
         calibdb.delete_table(calibdb.tname)
+        if verbose:
+            WLOG(params, '', 'Deleted calibration database')
     # add main table
     calibdb.add_table(calibdb.tname, columns, ctypes, index_cols=cicols,
                       unique_cols=cuniques)
+    if verbose:
+        WLOG(params, '', 'Created calibration database')
     # ---------------------------------------------------------------------
     # construct reset file
     reset_abspath = os.path.join(asset_dir, reset_path, calibdbm.dbreset)
@@ -401,7 +410,8 @@ def create_calibration_database(params: ParamDict, pconst: PseudoConst,
 # =============================================================================
 def create_telluric_database(params: ParamDict, pconst: PseudoConst,
                              databases: Dict[str, DatabaseM],
-                             tries: int = 20) -> Database:
+                             tries: int = 20,
+                             verbose: bool = False) -> Database:
     """
     Setup for the telluric database
 
@@ -432,9 +442,13 @@ def create_telluric_database(params: ParamDict, pconst: PseudoConst,
     if telludb.tname in telludb.tables:
         telludb.backup()
         telludb.delete_table(telludb.tname)
+        if verbose:
+            WLOG(params, '', 'Deleted telluric database')
     # add main table
     telludb.add_table(telludb.tname, columns, ctypes, index_cols=cicols,
                       unique_cols=cuniques)
+    if verbose:
+        WLOG(params, '', 'Created telluric database')
     # ---------------------------------------------------------------------
     # construct reset file
     reset_abspath = os.path.join(asset_dir, reset_path, telludbm.dbreset)
@@ -451,9 +465,10 @@ def create_telluric_database(params: ParamDict, pconst: PseudoConst,
 # =============================================================================
 # Define index database functions
 # =============================================================================
-def create_fileindex_database(pconst: PseudoConst,
+def create_fileindex_database(params: ParamDict, pconst: PseudoConst,
                               databases: Dict[str, DatabaseM],
-                              tries: int = 20) -> Database:
+                              tries: int = 20,
+                              verbose: bool = False) -> Database:
     """
     Setup for the file index database
 
@@ -482,9 +497,13 @@ def create_fileindex_database(pconst: PseudoConst,
     if indexdb.tname in indexdb.tables:
         indexdb.backup()
         indexdb.delete_table(indexdb.tname)
+        if verbose:
+            WLOG(params, '', 'Deleted file index database')
     # add main table
     indexdb.add_table(indexdb.tname, columns, ctypes, unique_cols=cuniques,
                       index_cols=cicols, index_groups=cigroups)
+    if verbose:
+        WLOG(params, '', 'Created file index database')
     # -------------------------------------------------------------------------
     return indexdb
 
@@ -492,9 +511,10 @@ def create_fileindex_database(pconst: PseudoConst,
 # =============================================================================
 # Define log database functions
 # =============================================================================
-def create_log_database(pconst: PseudoConst,
+def create_log_database(params: ParamDict, pconst: PseudoConst,
                         databases: Dict[str, DatabaseM],
-                        tries: int = 20) -> Database:
+                        tries: int = 20,
+                        verbose: bool = False) -> Database:
     """
     Setup for the index database
 
@@ -520,8 +540,12 @@ def create_log_database(pconst: PseudoConst,
     if logdb.tname in logdb.tables:
         logdb.backup()
         logdb.delete_table(logdb.tname)
+        if verbose:
+            WLOG(params, '', 'Deleted recipe log database')
     # add main table
     logdb.add_table(logdb.tname, columns, ctypes, index_cols=cicols)
+    if verbose:
+        WLOG(params, '', 'Created recipe log database')
     # -------------------------------------------------------------------------
     return logdb
 
@@ -531,7 +555,8 @@ def create_log_database(pconst: PseudoConst,
 # =============================================================================
 def create_object_database(params: ParamDict, pconst: PseudoConst,
                            databases: Dict[str, DatabaseM],
-                           tries: int = 20) -> Database:
+                           tries: int = 20,
+                           verbose: bool = False) -> Database:
     """
     Setup for the calibration database
 
@@ -560,9 +585,13 @@ def create_object_database(params: ParamDict, pconst: PseudoConst,
     if objectdb.tname in objectdb.tables:
         objectdb.backup()
         objectdb.delete_table(objectdb.tname)
+        if verbose:
+            WLOG(params, '', 'Deleted astrometric database')
     # add main table
     objectdb.add_table(objectdb.tname, columns, ctypes, unique_cols=cuniques,
                        index_cols=cindexs)
+    if verbose:
+        WLOG(params, '', 'Created astrometric database')
     # ---------------------------------------------------------------------
     # update object database from google sheet(s)
     update_object_database(params)
@@ -724,7 +753,8 @@ def update_object_database(params: ParamDict, log: bool = True):
 # =============================================================================
 def create_reject_database(params: ParamDict, pconst: PseudoConst,
                            databases: Dict[str, DatabaseM],
-                           tries: int = 20) -> Database:
+                           tries: int = 20,
+                           verbose: bool = False) -> Database:
     """
     Setup for the reject database
 
@@ -753,9 +783,13 @@ def create_reject_database(params: ParamDict, pconst: PseudoConst,
     if rejectdb.tname in rejectdb.tables:
         rejectdb.backup()
         rejectdb.delete_table(rejectdb.tname)
+        if verbose:
+            WLOG(params, '', 'Deleted reject database')
     # add main table
     rejectdb.add_table(rejectdb.tname, columns, ctypes, unique_cols=cuniques,
                        index_cols=cindexs)
+    if verbose:
+        WLOG(params, '', 'Created reject database')
     # ---------------------------------------------------------------------
     # update object database from google sheet(s)
     update_reject_database(params)
@@ -872,8 +906,10 @@ def get_reject_database(params: ParamDict, log: bool = True) -> Table:
 # =============================================================================
 # Define language database functions
 # =============================================================================
-def create_lang_database(databases: Dict[str, Union[DatabaseM, BaseDatabaseM]],
-                         tries: int = 20) -> Database:
+def create_lang_database(params: Union[None, ParamDict],
+                         databases: Dict[str, Union[DatabaseM, BaseDatabaseM]],
+                         tries: int = 20,
+                         verbose: bool = False) -> Database:
     """
     Setup for the index database
 
@@ -897,8 +933,12 @@ def create_lang_database(databases: Dict[str, Union[DatabaseM, BaseDatabaseM]],
     if langdb.tname in langdb.tables:
         langdb.backup()
         langdb.delete_table(langdb.tname)
+        if verbose and params is not None:
+            WLOG(params, '', 'Deleted language database')
     # add main table
     langdb.add_table(langdb.tname, columns, ctypes, index_cols=cicols)
+    if verbose and params is not None:
+        WLOG(params, '', 'Created language database')
     # ---------------------------------------------------------------------
     # add rows from reset text file for default file
     # ---------------------------------------------------------------------
