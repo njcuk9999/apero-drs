@@ -176,6 +176,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         WLOG(params, '', 'Loading RAMP [intercept,intercept,errslope,inttime]')
         # get data from file instance
         datalist = infile.get_data(copy=True, extensions=[1, 2, 3, 4])
+        # print progress
+        WLOG(params, '', '\tLoaded {0}'.format(infile.filename))
         # get flux image from the data list
         image = datalist[0]
         # get intercept from the data list
