@@ -107,14 +107,14 @@ def update_database(params: ParamDict, dbkind: str):
         WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
         log_update(params, pconst)
     # update index database
-    if dbkind in ['index', 'all']:
+    if dbkind in ['findex', 'all']:
         WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
         WLOG(params, 'info', textentry('40-006-00007', args=['index']),
              colour='magenta')
         WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
         index_update(params)
 
-    if dbkind in ['object', 'all']:
+    if dbkind in ['astrom', 'all']:
         WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
         WLOG(params, 'info', textentry('40-006-00007', args=['object']),
              colour='magenta')
@@ -129,14 +129,15 @@ def update_database(params: ParamDict, dbkind: str):
         manage_databases.update_reject_database(params)
 
 
-def reset_databases(params: ParamDict):
+def reset_databases(params: ParamDict, dbkind):
     """
     Reset all database to installation point
 
     :param params: ParamDict, parameter dictionary of constants
+    :param dbkind: str, the type of database (i.e. all, calib, tellu, log etc)
     :return:
     """
-    manage_databases.install_databases(params)
+    manage_databases.install_databases(params, dbkind=dbkind, verbose=True)
 
 
 def calib_tellu_update(params: ParamDict, pconst: PseudoConstants,
@@ -534,6 +535,10 @@ def _log_update(pconst: PseudoConstants,
         key = 'rlog.{0}'.format(logkey)
         # get value
         logvalue = logdict.get(key, 'NULL')
+        # by definition these must have ended (even if the ptable says
+        #     otherwise)
+        if logkey == 'ENDED':
+            logvalue = 1
         # append value to values
         logvalues.append(logvalue)
     # generate unique log code

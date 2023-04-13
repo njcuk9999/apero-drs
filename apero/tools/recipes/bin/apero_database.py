@@ -91,18 +91,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # define null text
     null_text = ['None', '', 'Null']
     # deal with update arguments
-    update_calib = params['INPUTS']['CALIBDB']
-    update_tellu = params['INPUTS']['TELLUDB']
-    update_index = params['INPUTS']['FINDEXDB']
-    update_log = params['INPUTS']['LOGDB']
-    update_reject = params['INPUTS']['REJECTDB']
-    update_object = params['INPUTS']['ASTROMDB']
     update = params['INPUTS']['UPDATE']
     reset = params['INPUTS']['RESET']
-    # deal with list of update arguments
-    database_conds = [update_calib, update_tellu, update_index, update_log,
-                      update_reject, update_object]
-    database_names = ['calib', 'tellu', 'findex', 'log', 'reject', 'object']
+    dbkind = params['INPUTS']['DBKIND']
     # deal with killing sleeping processes
     if params['INPUTS']['KILL']:
         # kill all user processes in the database that have been running for
@@ -116,7 +107,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # deal with resetting databasee
     # ----------------------------------------------------------------------
     if reset:
-        database_update.reset_databases(params)
+        database_update.reset_databases(params, dbkind=dbkind)
         # ------------------------------------------------------------------
         # End of main code
         # ------------------------------------------------------------------
@@ -127,19 +118,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # ----------------------------------------------------------------------
     # deal with full update
     if update:
-        database_update.update_database(params, dbkind='all')
-        # ------------------------------------------------------------------
-        # End of main code
-        # ------------------------------------------------------------------
-        return locals()
-    # deal with partial update
-    if np.any(database_conds):
-        # loop around all databases
-        for db_it in range(len(database_conds)):
-            # if we have been flagged to update - update now
-            if database_conds[db_it]:
-                database_update.update_database(params,
-                                                dbkind=database_names[db_it])
+        database_update.update_database(params, dbkind=dbkind)
         # ------------------------------------------------------------------
         # End of main code
         # ------------------------------------------------------------------
