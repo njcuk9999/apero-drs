@@ -196,10 +196,11 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         # any pixel with less than 2 reads has no ramp fitting - set to NaN
         image[datalist[2] < 2] = np.nan
-
         # ------------------------------------------------------------------
         # Get out file and check skip
         # ------------------------------------------------------------------
+        # print progress
+        WLOG(params, '', 'Loading drs output file')
         # get the output drs file
         oargs = [params, recipe, infile, recipe.outputs['PP_FILE'], RAW_PREFIX]
         found, outfile = prep.drs_outfile_id(*oargs)
