@@ -1366,9 +1366,9 @@ ref_seq.add(apero_dark_ref, ref=True)
 ref_seq.add(apero_badpix, name='BADREF', ref=True,
             recipe_kind='calib-reference')
 ref_seq.add(apero_loc, name='LOCREFCAL', files=[files.pp_dark_flat],
-            ref=False, recipe_kind='calib-reference-CAL')
+            ref=True, recipe_kind='calib-reference-CAL')
 ref_seq.add(apero_loc, name='LOCREFSCI', files=[files.pp_flat_dark],
-            ref=False, recipe_kind='calib-reference-SCI')
+            ref=True, recipe_kind='calib-reference-SCI')
 ref_seq.add(apero_shape_ref, ref=True)
 ref_seq.add(apero_shape, name='SHAPELREF', ref=True,
             recipe_kind='calib-reference')
