@@ -1093,6 +1093,13 @@ def ask_for_teff(astro_obj: AstroObj) -> AstroObj:
             question3 = 'Enter source for Teff (leave blank for no source)'
             teff_source = drs_installation.ask(question3, required=False,
                                                dtype=str)
+            # deal with teff source more than 60 characters
+            while len(teff_source) > 60:
+                question3 = ('Source text cannot be > 60 characters. '
+                             '\nEnter source for Teff '
+                             '(leave blank for no source)')
+                teff_source = drs_installation.ask(question3, required=False,
+                                                   dtype=str)
             # get user /host
             nargs = [getpass.getuser(), socket.gethostname()]
             teff_user = 'via {0}@{1}'.format(*nargs)
