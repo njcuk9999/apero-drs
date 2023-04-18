@@ -140,6 +140,24 @@ class MarkDownPage:
         self.lines += ['^' * length]
         self.add_newline()
 
+    def add_divider(self, color, height):
+        """
+        Add a divider to a page using the raw html feature
+
+        :return: None, updates
+        """
+        # define the style text
+        styletxt = ''
+        styletxt += 'width:100%;'
+        styletxt += f'height:{height}px;'
+        styletxt += f'background-color:{color};'
+        styletxt += 'border:none;'
+        # add the divider
+        self.add_newline()
+        self.lines += ['.. raw:: html', '']
+        self.lines += [f'    <hr style="{styletxt}" />']
+        self.add_newline()
+
     def add_csv_table(self, title: str, csv_file: str,
                       abs_path: Union[str, None] = None,
                       widths: Union[List[str], None] = None,
