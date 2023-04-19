@@ -260,10 +260,8 @@ class MarkDownPage:
         # deal with image vs figwidth
         if inline:
             directive = 'image'
-            widthname = 'width'
         else:
             directive = 'figure'
-            widthname = 'figwidth'
         # ----------------------------------------------------------------------
         self.add_newline()
         self.lines += ['.. only:: html']
