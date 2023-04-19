@@ -246,7 +246,7 @@ class MarkDownPage:
         self.add_newline()
 
     def add_image(self, filename: str, width: Optional[int] = None,
-                  align: str = 'center', floating: bool = False):
+                  align: str = 'center', inline: bool = False):
         """
         Add image to the markdown page
 
@@ -257,12 +257,20 @@ class MarkDownPage:
 
         :return: None, updates page
         """
+        # deal with image vs figwidth
+        if inline:
+            directive = 'image'
+            widthname = 'width'
+        else:
+            directive = 'figure'
+            widthname = 'figwidth'
+        # ----------------------------------------------------------------------
         self.add_newline()
         self.lines += ['.. only:: html']
         self.add_newline()
-        self.lines += ['    .. image:: {0}'.format(filename)]
+        self.lines += ['    .. {0}:: {1}'.format(directive, filename)]
         if width is not None:
-            self.lines += ['        :width: {0}%'.format(width)]
+            self.lines += ['        :{0}: {1}%'.format(widthname, width)]
         if align is not None:
             self.lines += ['        :align: {0}'.format(align)]
         self.add_newline()
@@ -270,9 +278,6 @@ class MarkDownPage:
         self.add_newline()
         self.lines += ['    This section can only currently be viewed in the '
                        'html documentation.']
-        # this stops paragraphs wrapping around image
-        if not floating:
-            self.lines += ['    ..container::']
 
     def include_file(self, filename: str):
         """
