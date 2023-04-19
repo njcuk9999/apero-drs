@@ -246,7 +246,7 @@ class MarkDownPage:
         self.add_newline()
 
     def add_image(self, filename: str, width: Optional[int] = None,
-                  align: str = 'center'):
+                  align: str = 'center', floating: bool = False):
         """
         Add image to the markdown page
 
@@ -260,11 +260,13 @@ class MarkDownPage:
         self.add_newline()
         self.lines += ['.. only:: html']
         self.add_newline()
-        self.lines += ['    .. image:: {0}'.format(filename)]
+        if not floating:
+            self.lines == ['    ..container::']
+        self.lines += ['        .. image:: {0}'.format(filename)]
         if width is not None:
-            self.lines += ['        :width: {0}%'.format(width)]
+            self.lines += ['            :width: {0}%'.format(width)]
         if align is not None:
-            self.lines += ['        :align: {0}'.format(align)]
+            self.lines += ['            :align: {0}'.format(align)]
         self.add_newline()
         self.lines += ['.. only:: latex']
         self.add_newline()
