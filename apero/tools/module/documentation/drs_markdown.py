@@ -269,8 +269,10 @@ class MarkDownPage:
         self.lines += ['.. only:: html']
         self.add_newline()
         self.lines += ['    .. {0}:: {1}'.format(directive, filename)]
+        if not inline:
+            self.lines += ['        :figwidth: 100%']
         if width is not None:
-            self.lines += ['        :{0}: {1}%'.format(widthname, width)]
+            self.lines += ['        :width: {0}%'.format(width)]
         if align is not None:
             self.lines += ['        :align: {0}'.format(align)]
         self.add_newline()
