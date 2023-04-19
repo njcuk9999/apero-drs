@@ -229,12 +229,27 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
             WLOG(params, '', copystr, wrap=False)
             # copy
             if do_symlink and do_copy:
-                if not os.path.exists(outpath):
-                    os.symlink(inpath, outpath)
+                remove_previous(outpath)
+                os.symlink(inpath, outpath)
             elif do_copy:
+                remove_previous(outpath)
                 shutil.copy(inpath, outpath)
 
     return all_inpaths, all_outpaths
+
+
+def remove_previous(outpath: str):
+    """
+    Deal with removing previous file (whether it is a hard link or symlink)
+    :param outpath: str, file to check
+    :return:
+    """
+    if not os.path.exists(outpath):
+        return
+    if os.path.islink(outpath):
+        os.unlink(outpath)
+    else:
+        os.remove(outpath)
 
 
 def all_objects(params):
