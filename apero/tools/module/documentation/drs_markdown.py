@@ -260,18 +260,19 @@ class MarkDownPage:
         self.add_newline()
         self.lines += ['.. only:: html']
         self.add_newline()
-        if not floating:
-            self.lines == ['    ..container::']
-        self.lines += ['        .. image:: {0}'.format(filename)]
+        self.lines += ['    .. image:: {0}'.format(filename)]
         if width is not None:
-            self.lines += ['            :width: {0}%'.format(width)]
+            self.lines += ['        :width: {0}%'.format(width)]
         if align is not None:
-            self.lines += ['            :align: {0}'.format(align)]
+            self.lines += ['        :align: {0}'.format(align)]
         self.add_newline()
         self.lines += ['.. only:: latex']
         self.add_newline()
         self.lines += ['    This section can only currently be viewed in the '
                        'html documentation.']
+        # this stops paragraphs wrapping around image
+        if not floating:
+            self.lines += ['    ..container::']
 
     def include_file(self, filename: str):
         """
