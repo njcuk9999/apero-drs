@@ -121,9 +121,8 @@ class MarkDownPage:
         """
         self.add_newline()
         length = np.max([len(section_title) + 2, 80])
-        self.lines += ['*' * length]
         self.lines += [section_title]
-        self.lines += ['*' * length]
+        self.lines += ['=' * length]
         self.add_newline()
 
     def add_sub_section(self, section_title: str):
@@ -135,7 +134,19 @@ class MarkDownPage:
         """
         self.add_newline()
         length = np.max([len(section_title) + 2, 80])
-        self.lines += ['^' * length]
+        self.lines += [section_title]
+        self.lines += ['-' * length]
+        self.add_newline()
+
+    def add_sub_sub_section(self, section_title: str):
+        """
+        Add a section to a page
+        :param section_title: str, the title to add
+
+        :return: None, updates page
+        """
+        self.add_newline()
+        length = np.max([len(section_title) + 2, 80])
         self.lines += [section_title]
         self.lines += ['^' * length]
         self.add_newline()
