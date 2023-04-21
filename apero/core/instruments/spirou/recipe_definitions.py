@@ -1353,8 +1353,7 @@ full_seq.add(apero_mk_template, name='FTTEMP2', fiber=sci_fiber,
              template_required=True, recipe_kind='tellu-science')
 # ccf on all OBJ_DARK / OBJ_FP
 full_seq.add(apero_ccf, files=[files.out_tellu_obj], fiber=sci_fiber,
-             filters=dict(KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_FP',
-                                      'POLAR_DARK']),
+             filters=dict(KW_DPRTYPE=files.science_dprtypes),
              recipe_kind='rv-tcorr')
 
 # polar sequence on all POLAR_DARK / POLAR_FP
@@ -1365,8 +1364,7 @@ full_seq.add(apero_pol, rkwargs=dict(exposures=[files.out_tellu_obj]),
 # post processing
 full_seq.add(apero_postprocess, name='POSTALL', files=[files.pp_file],
              recipe_kind='post-all',
-             filters=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_FP',
-                                      'POLAR_DARK']))
+             filters=dict(KW_DPRTYPE=files.science_dprtypes))
 
 # -----------------------------------------------------------------------------
 # limited sequence (reference + nights)
@@ -1483,8 +1481,7 @@ limited_seq.add(apero_mk_template, name='FTTEMP2', recipe_kind='tellu-science',
 # ccf
 limited_seq.add(apero_ccf, files=[files.out_tellu_obj], fiber=sci_fiber,
                 recipe_kind='rv-tcorr',
-                filters=dict(KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
-                                         'POLAR_FP'],
+                filters=dict(KW_DPRTYPE=files.science_dprtypes,
                              KW_OBJNAME='SCIENCE_TARGETS'))
 
 # polar sequence on all POLAR_DARK / POLAR_FP
@@ -1496,14 +1493,12 @@ limited_seq.add(apero_pol, rkwargs=dict(exposures=[files.out_tellu_obj]),
 # # post processing
 # limited_seq.add(apero_postprocess, name='TELLPOST', files=[files.pp_file],
 #                 recipe_kind='post-hotstar',
-#                 filters=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_DARK',
-#                                          'POLAR_FP'],
+#                 filters=dict(KW_DPRTYPE=files.science_dprtypes,
 #                              KW_OBJNAME='TELLURIC_TARGETS'))
 
 limited_seq.add(apero_postprocess, name='SCIPOST', files=[files.pp_file],
                 recipe_kind='post-science',
-                filters=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_DARK',
-                                         'POLAR_FP'],
+                filters=dict(KW_DPRTYPE=files.science_dprtypes,
                              KW_OBJNAME='SCIENCE_TARGETS'))
 
 # -----------------------------------------------------------------------------
@@ -1647,8 +1642,7 @@ tellu_seq.add(apero_mk_template, name='MKTEMP2', recipe_kind='tellu-hotstar',
 # # post processing
 # tellu_seq.add(apero_postprocess, files=[files.pp_file], name='TELLPOST',
 #               recipe_kind='post-hotstar',
-#               filters=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_DARK',
-#                                        'POLAR_FP'],
+#               filters=dict(KW_DPRTYPE=files.science_dprtypes,
 #                            KW_OBJNAME='TELLURIC_TARGETS'))
 
 # -----------------------------------------------------------------------------
@@ -1688,8 +1682,7 @@ science_seq.add(apero_mk_template, name='FTTEMP2', fiber=sci_fiber,
 # ccf
 science_seq.add(apero_ccf, files=[files.out_tellu_obj], fiber=sci_fiber,
                 recipe_kind='rv-tcorr',
-                filters=dict(KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
-                                         'POLAR_FP'],
+                filters=dict(KW_DPRTYPE=files.science_dprtypes,
                              KW_OBJNAME='SCIENCE_TARGETS'))
 
 # polar sequence on all POLAR_DARK / POLAR_FP
@@ -1701,8 +1694,7 @@ science_seq.add(apero_pol, rkwargs=dict(exposures=[files.out_tellu_obj]),
 # post processing
 science_seq.add(apero_postprocess, files=[files.pp_file], name='SCIPOST',
                 recipe_kind='post-science',
-                filters=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_DARK',
-                                         'POLAR_FP'],
+                filters=dict(KW_DPRTYPE=files.science_dprtypes,
                              KW_OBJNAME='SCIENCE_TARGETS'))
 
 # -----------------------------------------------------------------------------
