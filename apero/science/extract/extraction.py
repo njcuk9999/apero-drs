@@ -207,9 +207,6 @@ def extract_blaze_flat(params: ParamDict, eprops: ParamDict, fiber: str,
                         func_name)
     blaze_bpercentile = pcheck(params, 'FF_BLAZE_BPERCENTILE',
                                'blaze_bpercentile', kwargs, func_name)
-
-    image_pixel_size = pcheck(params, 'IMAGE_PIXEL_SIZE', 'image_pixel_size',
-                                 kwargs, func_name)
     flat_highpass_size = pcheck(params, 'FF_HIGH_PASS_SIZE',
                                 'flat_highpass_size', kwargs, func_name)
     # ----------------------------------------------------------------------
@@ -248,11 +245,9 @@ def extract_blaze_flat(params: ParamDict, eprops: ParamDict, fiber: str,
     # ----------------------------------------------------------------------
     # low pass the flat
     # ----------------------------------------------------------------------
-    # calculate the pixel filter size
-    pixel_filter = flat_highpass_size / image_pixel_size
     # loop around each order and remove the low frequency component of the flat
     for order_num in range(nbo):
-        flat = flat / mp.lowpassfilter(flat, width=pixel_filter)
+        flat = flat / mp.lowpassfilter(flat, width=flat_highpass_size)
     # ----------------------------------------------------------------------
     # store extraction properties in parameter dictionary
     eprops['E2DS'] = e2ds
