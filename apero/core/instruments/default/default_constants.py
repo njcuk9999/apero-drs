@@ -135,8 +135,8 @@ __all__ = [
     # flat constants
     'FF_BLAZE_HALF_WINDOW', 'FF_BLAZE_THRESHOLD', 'FF_BLAZE_DEGREE',
     'FF_RMS_SKIP_ORDERS', 'QC_FF_MAX_RMS', 'FF_PLOT_ORDER',
-    'FF_BLAZE_SCUT', 'FF_BLAZE_SIGFIT', 'FF_BLAZE_BPERCENTILE',
-    'FF_BLAZE_NITER', 'FF_BLAZE_SINC_MED_SIZE',
+    'FF_HIGH_PASS_SIZE', 'FF_BLAZE_SCUT', 'FF_BLAZE_SIGFIT',
+    'FF_BLAZE_BPERCENTILE', 'FF_BLAZE_NITER', 'FF_BLAZE_SINC_MED_SIZE',
     # leakage constants
     'ALLOWED_LEAKREF_TYPES', 'LEAKREF_ALWAYS_EXTRACT', 'LEAKREF_EXTRACT_TYPE',
     'CORRECT_LEAKAGE', 'LEAK_EXTRACT_FILE', 'LEAK_2D_EXTRACT_FILES',
@@ -744,7 +744,7 @@ REJECT_LIST_GSHEET_MAIN_LIST_ID = Const('REJECT_LIST_GSHEET_MAIN_LIST_ID', value
 #                                  dtype=str, source=__NAME__, group=cgroup,
 #                                  description=('Define the odometer code '
 #                                               'rejection google sheet id'))
-# 
+#
 # # Define the odmeter code rejection google sheet workbook
 # ODOCODE_REJECT_GSHEET_NUM = Const('ODOCODE_REJECT_GSHEET_NUM', value=int,
 #                                   dtype=str, source=__NAME__, minimum=0,
@@ -2100,6 +2100,13 @@ QC_FF_MAX_RMS = Const('QC_FF_MAX_RMS', value=None, dtype=float, source=__NAME__,
 FF_PLOT_ORDER = Const('FF_PLOT_ORDER', value=None, dtype=int, source=__NAME__,
                       group=cgroup,
                       description='Define the order to plot in summary plots')
+
+
+# Define the high pass filter size in km/s
+FF_HIGH_PASS_SIZE = Const('FF_HIGH_PASS_SIZE', value=None, dtype=float,
+                          source=__NAME__, group=cgroup,
+                          description='Define the high pass filter size in '
+                                      'km/s')
 
 # =============================================================================
 # CALIBRATION: LEAKAGE SETTINGS
