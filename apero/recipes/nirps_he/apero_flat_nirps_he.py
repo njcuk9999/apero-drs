@@ -114,7 +114,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # combine input images if required
     elif params['INPUT_COMBINE_IMAGES']:
         # get combined file
-        cond = drs_file.combine(params, recipe, infiles, math='median')
+        cond = drs_file.combine(params, recipe, infiles, math='sum',
+                                same_type=False)
         infiles = [cond[0]]
         combine = True
     else:
