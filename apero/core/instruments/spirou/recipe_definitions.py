@@ -528,7 +528,9 @@ apero_flat.set_debug_plots('FLAT_ORDER_FIT_EDGES1', 'FLAT_ORDER_FIT_EDGES2',
 apero_flat.set_summary_plots('SUM_FLAT_ORDER_FIT_EDGES', 'SUM_FLAT_BLAZE_ORDER')
 apero_flat.set_arg(pos=0, **obs_dir)
 apero_flat.set_arg(name='files', dtype='files', filelogic='exclusive',
-                   files=[files.pp_flat_flat], pos='1+',
+                   files=[files.pp_flat_flat, files.pp_dark_flat,
+                          files.pp_flat_dark],
+                   pos='1+',
                    helpstr=textentry('FILES_HELP') + textentry('FLAT_FILES_HELP'))
 apero_flat.set_kwarg(**add_db)
 apero_flat.set_kwarg(**badfile)
@@ -1040,7 +1042,7 @@ apero_fit_tellu.set_kwarg(name='--template', dtype='file', default='None',
 apero_fit_tellu.set_kwarg(name='--finiteres', dtype='bool',
                           default_ref='TELLUP_DO_FINITE_RES_CORR',
                           helpstr='Whether to do the finite resolution '
-                                 'correction (Always false if no template)')
+                                  'correction (Always false if no template)')
 apero_fit_tellu.set_kwarg(name='--onlypreclean', dtype='switch', default=False,
                           helpstr='Only run the precleaning steps '
                                   '(not recommended - for debugging ONLY)')
@@ -1285,7 +1287,8 @@ full_seq.add(apero_loc, files=[files.pp_dark_flat], name='LOCCAL',
 full_seq.add(apero_loc, files=[files.pp_flat_dark], name='LOCSCI',
              recipe_kind='calib-night-SCI')
 full_seq.add(apero_shape)
-full_seq.add(apero_flat, files=[files.pp_flat_flat])
+full_seq.add(apero_flat, files=[files.pp_flat_flat, files.pp_dark_flat,
+                                files.pp_flat_dark])
 # thermal just for the FP_FP and HC_HC files (DARK_DARK_INT)
 full_seq.add(apero_thermal, name='THERM_I',
              recipe_kind='calib-night-I', files=[files.pp_dark_dark_int])
@@ -1407,7 +1410,9 @@ limited_seq.add(apero_loc, files=[files.pp_dark_flat], name='LOCCAL',
 limited_seq.add(apero_loc, files=[files.pp_flat_dark], name='LOCSCI',
                 recipe_kind='calib-night-SCI')
 limited_seq.add(apero_shape)
-limited_seq.add(apero_flat, files=[files.pp_flat_flat])
+limited_seq.add(apero_flat,
+                files=[files.pp_flat_flat, files.pp_dark_flat,
+                       files.pp_flat_dark])
 # thermal just for the FP_FP and HC_HC files (DARK_DARK_INT)
 limited_seq.add(apero_thermal, name='THERM_I',
                 recipe_kind='calib-night-I', files=[files.pp_dark_dark_int])
@@ -1581,7 +1586,9 @@ calib_seq.add(apero_loc, files=[files.pp_dark_flat], name='LOCCAL',
 calib_seq.add(apero_loc, files=[files.pp_flat_dark], name='LOCSCI',
               recipe_kind='calib-night-SCI')
 calib_seq.add(apero_shape)
-calib_seq.add(apero_flat, files=[files.pp_flat_flat])
+calib_seq.add(apero_flat,
+              files=[files.pp_flat_flat, files.pp_dark_flat,
+                     files.pp_flat_dark])
 # thermal just for the FP_FP and HC_HC files (DARK_DARK_INT)
 calib_seq.add(apero_thermal, name='THERM_I',
               recipe_kind='calib-night-I', files=[files.pp_dark_dark_int])

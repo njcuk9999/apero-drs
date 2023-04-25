@@ -367,7 +367,9 @@ apero_loc.set_debug_plots('LOC_WIDTH_REGIONS', 'LOC_FIBER_DOUBLET_PARITY',
 apero_loc.set_summary_plots('SUM_LOC_IM_FIT', 'SUM_LOC_IM_CORNER')
 apero_loc.set_arg(pos=0, **obs_dir)
 apero_loc.set_arg(name='files', dtype='files', filelogic='exclusive',
-                  files=[files.pp_dark_flat, files.pp_flat_dark], pos='1+',
+                  files=[files.pp_dark_flat, files.pp_flat_dark,
+                         files.calib_flat_dark, files.calib_dark_flat],
+                  pos='1+',
                   helpstr=textentry('FILES_HELP') + textentry('LOC_FILES_HELP'))
 apero_loc.set_kwarg(**add_db)
 apero_loc.set_kwarg(**badfile)
@@ -519,7 +521,10 @@ apero_flat.set_debug_plots('FLAT_ORDER_FIT_EDGES1', 'FLAT_ORDER_FIT_EDGES2',
 apero_flat.set_summary_plots('SUM_FLAT_ORDER_FIT_EDGES', 'SUM_FLAT_BLAZE_ORDER')
 apero_flat.set_arg(pos=0, **obs_dir)
 apero_flat.set_arg(name='files', dtype='files', filelogic='exclusive',
-                   files=[files.pp_flat_flat], pos='1+',
+                   files=[files.pp_flat_flat, files.pp_dark_flat,
+                          files.pp_flat_dark, files.calib_flat_dark,
+                          files.calib_dark_flat],
+                   pos='1+',
                    helpstr=textentry('FILES_HELP') + textentry('FLAT_FILES_HELP'))
 apero_flat.set_kwarg(**add_db)
 apero_flat.set_kwarg(**badfile)
@@ -970,7 +975,7 @@ apero_fit_tellu.set_kwarg(name='--template', dtype='file', default='None',
 apero_fit_tellu.set_kwarg(name='--finiteres', dtype='bool',
                           default_ref='TELLUP_DO_FINITE_RES_CORR',
                           helpstr='Whether to do the finite resolution '
-                                 'correction (Always false if no template)')
+                                  'correction (Always false if no template)')
 apero_fit_tellu.set_kwarg(name='--onlypreclean', dtype='switch', default=False,
                           helpstr='Only run the precleaning steps '
                                   '(not recommended - for debugging ONLY)')
@@ -1112,10 +1117,12 @@ full_seq.add(apero_preprocess, recipe_kind='pre-all')
 full_seq.add(apero_dark_ref, ref=True)
 full_seq.add(apero_badpix, name='BADREF', ref=True,
              recipe_kind='calib-reference')
-full_seq.add(apero_loc, name='LOCREFCAL', files=[files.pp_dark_flat], ref=True,
-             recipe_kind='calib-reference-CAL')
-full_seq.add(apero_loc, name='LOCREFSCI', files=[files.pp_flat_dark], ref=True,
-             recipe_kind='calib-reference-SCI')
+full_seq.add(apero_loc, name='LOCREFCAL',
+             files=[files.pp_dark_flat, files.calib_dark_flat],
+             ref=True, recipe_kind='calib-reference-CAL')
+full_seq.add(apero_loc, name='LOCREFSCI',
+             files=[files.pp_flat_dark, files.calib_flat_dark],
+             ref=True, recipe_kind='calib-reference-SCI')
 full_seq.add(apero_shape_ref, ref=True)
 full_seq.add(apero_shape, name='SHAPELREF', ref=True,
              recipe_kind='calib-reference')
@@ -1127,12 +1134,14 @@ full_seq.add(apero_wave_ref, ref=True,
                           fpfiles=[files.pp_fp_fp]))
 # night runs
 full_seq.add(apero_badpix)
-full_seq.add(apero_loc, files=[files.pp_dark_flat], name='LOCCAL',
-             recipe_kind='calib-night-CAL')
-full_seq.add(apero_loc, files=[files.pp_flat_dark], name='LOCSCI',
-             recipe_kind='calib-night-SCI')
+full_seq.add(apero_loc, files=[files.pp_dark_flat, files.calib_dark_flat],
+             name='LOCCAL', recipe_kind='calib-night-CAL')
+full_seq.add(apero_loc, files=[files.pp_flat_dark, files.calib_flat_dark],
+             name='LOCSCI', recipe_kind='calib-night-SCI')
 full_seq.add(apero_shape)
-full_seq.add(apero_flat, files=[files.pp_flat_flat])
+full_seq.add(apero_flat, files=[files.pp_flat_flat, files.pp_dark_flat,
+                                files.pp_flat_dark, files.calib_flat_dark,
+                                files.calib_dark_flat])
 full_seq.add(apero_wave_night)
 # extract all science OBJECTS
 full_seq.add(apero_extract, name='EXTALL', recipe_kind='extract-ALL',
@@ -1215,9 +1224,11 @@ limited_seq.add(apero_preprocess, recipe_kind='pre-all')
 limited_seq.add(apero_dark_ref, ref=True)
 limited_seq.add(apero_badpix, name='BADREF', ref=True,
                 recipe_kind='calib-reference')
-limited_seq.add(apero_loc, name='LOCREFCAL', files=[files.pp_dark_flat],
+limited_seq.add(apero_loc, name='LOCREFCAL',
+                files=[files.pp_dark_flat, files.calib_dark_flat],
                 ref=True, recipe_kind='calib-reference-CAL')
-limited_seq.add(apero_loc, name='LOCREFSCI', files=[files.pp_flat_dark],
+limited_seq.add(apero_loc, name='LOCREFSCI',
+                files=[files.pp_flat_dark, files.calib_flat_dark],
                 ref=True, recipe_kind='calib-reference-SCI')
 limited_seq.add(apero_shape_ref, ref=True)
 limited_seq.add(apero_shape, name='SHAPELREF', ref=True,
@@ -1230,12 +1241,17 @@ limited_seq.add(apero_wave_ref, ref=True,
                              fpfiles=[files.pp_fp_fp]))
 # night runs
 limited_seq.add(apero_badpix)
-limited_seq.add(apero_loc, files=[files.pp_dark_flat], name='LOCCAL',
-                recipe_kind='calib-night-CAL')
-limited_seq.add(apero_loc, files=[files.pp_flat_dark], name='LOCSCI',
-                recipe_kind='calib-night-SCI')
+limited_seq.add(apero_loc,
+                files=[files.pp_dark_flat, files.calib_dark_flat],
+                name='LOCCAL', recipe_kind='calib-night-CAL')
+limited_seq.add(apero_loc,
+                files=[files.pp_flat_dark, files.calib_flat_dark],
+                name='LOCSCI', recipe_kind='calib-night-SCI')
 limited_seq.add(apero_shape)
-limited_seq.add(apero_flat, files=[files.pp_flat_flat])
+limited_seq.add(apero_flat,
+                files=[files.pp_flat_flat, files.pp_dark_flat,
+                       files.pp_flat_dark, files.calib_flat_dark,
+                       files.calib_dark_flat])
 limited_seq.add(apero_wave_night)
 # extract tellurics
 limited_seq.add(apero_extract, name='EXTTELL', recipe_kind='extract-hotstar',
@@ -1266,7 +1282,8 @@ limited_seq.add(apero_mk_template, name='MKTEMP1', recipe_kind='tellu-hotstar',
 limited_seq.add(apero_mk_tellu, name='MKTELLU2', recipe_kind='tellu-hotstar',
                 files=[files.out_ext_e2dsff], fiber=sci_fiber,
                 filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
-                             KW_DPRTYPE=files.science_dprtypes))
+                             KW_DPRTYPE=files.science_dprtypes),
+                template_required=True)
 limited_seq.add(apero_mk_model, name='MKTMOD2', recipe_kind='tellu-hotstar')
 limited_seq.add(apero_fit_tellu, name='MKTFIT2', recipe_kind='tellu-hotstar',
                 files=[files.out_ext_e2dsff], fiber=sci_fiber,
@@ -1361,9 +1378,11 @@ ref_seq.description_file = None
 ref_seq.add(apero_dark_ref, ref=True)
 ref_seq.add(apero_badpix, name='BADREF', ref=True,
             recipe_kind='calib-reference')
-ref_seq.add(apero_loc, name='LOCREFCAL', files=[files.pp_dark_flat],
+ref_seq.add(apero_loc, name='LOCREFCAL',
+            files=[files.pp_dark_flat, files.calib_dark_flat],
             ref=True, recipe_kind='calib-reference-CAL')
-ref_seq.add(apero_loc, name='LOCREFSCI', files=[files.pp_flat_dark],
+ref_seq.add(apero_loc, name='LOCREFSCI',
+            files=[files.pp_flat_dark, files.calib_flat_dark],
             ref=True, recipe_kind='calib-reference-SCI')
 ref_seq.add(apero_shape_ref, ref=True)
 ref_seq.add(apero_shape, name='SHAPELREF', ref=True,
@@ -1384,12 +1403,15 @@ calib_seq.schematic = 'calib_seq.jpg'
 calib_seq.description_file = None
 # night runs
 calib_seq.add(apero_badpix)
-calib_seq.add(apero_loc, files=[files.pp_dark_flat], name='LOCCAL',
-              recipe_kind='calib-night-CAL')
-calib_seq.add(apero_loc, files=[files.pp_flat_dark], name='LOCSCI',
-              recipe_kind='calib-night-SCI')
+calib_seq.add(apero_loc, files=[files.pp_dark_flat, files.calib_dark_flat],
+              name='LOCCAL', recipe_kind='calib-night-CAL')
+calib_seq.add(apero_loc, files=[files.pp_flat_dark, files.calib_flat_dark],
+              name='LOCSCI', recipe_kind='calib-night-SCI')
 calib_seq.add(apero_shape)
-calib_seq.add(apero_flat, files=[files.pp_flat_flat])
+calib_seq.add(apero_flat,
+              files=[files.pp_flat_flat, files.pp_dark_flat,
+                     files.pp_flat_dark, files.calib_flat_dark,
+                     files.calib_dark_flat])
 calib_seq.add(apero_wave_night)
 
 # -----------------------------------------------------------------------------
