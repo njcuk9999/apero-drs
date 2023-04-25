@@ -207,6 +207,8 @@ def extract_blaze_flat(params: ParamDict, eprops: ParamDict, fiber: str,
                         func_name)
     blaze_bpercentile = pcheck(params, 'FF_BLAZE_BPERCENTILE',
                                'blaze_bpercentile', kwargs, func_name)
+    flat_highpass_size = pcheck(params, 'FF_HIGH_PASS_SIZE',
+                                'flat_highpass_size', kwargs, func_name)
     # ----------------------------------------------------------------------
     # get arrays from eprops
     e2ds = eprops['E2DS']
@@ -240,6 +242,12 @@ def extract_blaze_flat(params: ParamDict, eprops: ParamDict, fiber: str,
         flat[order_num] = flati
         blaze[order_num] = blazei
         rms[order_num] = rmsi
+    # ----------------------------------------------------------------------
+    # low pass the flat
+    # ----------------------------------------------------------------------
+    # loop around each order and remove the low frequency component of the flat
+    for order_num in range(nbo):
+        flat = flat / mp.lowpassfilter(flat, width=flat_highpass_size)
     # ----------------------------------------------------------------------
     # store extraction properties in parameter dictionary
     eprops['E2DS'] = e2ds
