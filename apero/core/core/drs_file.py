@@ -3235,6 +3235,8 @@ class DrsFitsFile(DrsInputFile):
             cond2 = self.header is not None
             if cond1 and cond2:
                 return True
+        else:
+            cond1, cond2 = False, False
         # get params
         params = self.params
         # check that filename is set
@@ -3248,9 +3250,25 @@ class DrsFitsFile(DrsInputFile):
         # default to fits-image
         else:
             fmt = 'fits-image'
+        # ---------------------------------------------------------------------
         # read the fits file
-        dout = drs_fits.readfits(params, self.filename, getdata=True,
-                                 gethdr=True, fmt=fmt, ext=ext)
+        # ---------------------------------------------------------------------
+        # we need to decide what to load, otherwise changes made to self.data
+        #   and self.header will be lost previous to this
+        # if cond1 is True we just need the header
+        if cond1:
+            _hdr = drs_fits.readfits(params, self.filename, getdata=False,
+                                     gethdr=True, fmt=fmt, ext=ext)
+            dout = [self.data, _hdr]
+        # if cond2 is True we just need the data
+        elif cond2:
+            _data = drs_fits.readfits(params, self.filename, getdata=True,
+                                      gethdr=False, fmt=fmt, ext=ext)
+            dout = [_data, self.header]
+        # otherwise we load both
+        else:
+            dout = drs_fits.readfits(params, self.filename, getdata=True,
+                                     gethdr=True, fmt=fmt, ext=ext)
         # deal with copying
         if copy:
             if self.datatype == 'table':
