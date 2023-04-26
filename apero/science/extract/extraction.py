@@ -247,7 +247,9 @@ def extract_blaze_flat(params: ParamDict, eprops: ParamDict, fiber: str,
     # ----------------------------------------------------------------------
     # loop around each order and remove the low frequency component of the flat
     for order_num in range(nbo):
-        flat = flat / mp.lowpassfilter(flat, width=flat_highpass_size)
+        order_low_pass = mp.lowpassfilter(flat[order_num],
+                                          width=flat_highpass_size)
+        flat[order_num] = flat[order_num] / order_low_pass
     # ----------------------------------------------------------------------
     # store extraction properties in parameter dictionary
     eprops['E2DS'] = e2ds

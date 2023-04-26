@@ -7578,6 +7578,19 @@ def check_input_dprtypes(params: ParamDict, recipe: Any,
                     '\n\tCurrent DPRTYPES are: {1}')
             eargs = [ref_dprtype, ', '.join(dprtypes)]
             WLOG(params, 'error', emsg.format(*eargs))
+        elif valid:
+            # storage of first (ref file type)
+            file0 = None
+            # store all other files
+            others = []
+            # loop around all files and find one example of a ref file
+            for pos in range(len(dprtypes)):
+                if dprtypes[pos] == ref_dprtype and file0 is None:
+                    file0 = infiles[pos]
+                else:
+                    others.append(infiles[pos])
+            # order files with the first file being a ref file type
+            infiles = [file0] + others
     # -------------------------------------------------------------------------
     # deal with no valid models
     if np.sum(validity) == 0:
@@ -7587,6 +7600,11 @@ def check_input_dprtypes(params: ParamDict, recipe: Any,
             emsg += emsg
         # raise the error
         WLOG(params, 'error', emsgs)
+    # deal with multiple valid models
+    elif np.sum(validity) > 1:
+        # TODO: Add to language database
+        emsg = 'Multiple valid file models. File DPRTYPEs need checking'
+        WLOG(params, 'error', emsg)
     # -------------------------------------------------------------------------
     # return the infiles
     return infiles
