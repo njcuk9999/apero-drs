@@ -388,6 +388,9 @@ apero_loc.set_kwarg(**plot)
 apero_loc.set_kwarg(**resize)
 apero_loc.set_kwarg(**no_in_qc)
 apero_loc.set_min_nfiles('files', 5)
+apero_loc.set_min_nfiles('files', 1)
+# define the number of files we should use at maximum
+apero_loc.limit = 50
 # define grouping functions
 apero_loc.group_func = grouping.group_by_dirname
 apero_loc.group_column = 'REPROCESS_OBSDIR_COL'
@@ -552,7 +555,11 @@ apero_flat.set_kwarg(**shapeyfile)
 apero_flat.set_kwarg(**shapelfile)
 apero_flat.set_kwarg(**no_in_qc)
 apero_flat.set_min_nfiles('files', 5)
+# define the number of files we should use at maximum
+apero_flat.limit = 50
 # define file model restrictions
+# TODO: This still does not stop the user from using the wrong files
+#       for FLAT_FLAT as they could just use all DARK_FLAT or all FLAT_DARK
 apero_flat.file_model['FLAT_FLAT'] = [files.pp_flat_flat, files.pp_dark_flat,
                                       files.pp_flat_dark]
 # define grouping functions

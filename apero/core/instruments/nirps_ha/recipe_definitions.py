@@ -383,6 +383,8 @@ apero_loc.set_kwarg(**fluxunits)
 apero_loc.set_kwarg(**plot)
 apero_loc.set_kwarg(**resize)
 apero_loc.set_min_nfiles('files', 1)
+# define the number of files we should use at maximum
+apero_loc.limit = 50
 # define file model restrictions
 apero_loc.file_model['DARK_FLAT'] = [files.pp_dark_flat, files.calib_dark_flat]
 apero_loc.file_model['FLAT_DARK'] = [files.pp_flat_dark, files.calib_flat_dark]
@@ -549,6 +551,8 @@ apero_flat.set_kwarg(**shapeyfile)
 apero_flat.set_kwarg(**shapelfile)
 apero_flat.set_kwarg(**no_in_qc)
 apero_flat.set_min_nfiles('files', 1)
+# define the number of files we should use at maximum
+apero_flat.limit = 50
 # define file model restrictions
 # TODO: This still does not stop the user from using the wrong files
 #       for FLAT_FLAT as they could just use all DARK_FLAT or all FLAT_DARK
