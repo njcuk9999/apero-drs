@@ -552,7 +552,7 @@ apero_flat.set_kwarg(**shapelfile)
 apero_flat.set_kwarg(**no_in_qc)
 apero_flat.set_min_nfiles('files', 1)
 # define the number of files we should use at maximum
-apero_flat.limit = 50
+apero_flat.limit = 100
 # define file model restrictions
 # TODO: This still does not stop the user from using the wrong files
 #       for FLAT_FLAT as they could just use all DARK_FLAT or all FLAT_DARK
