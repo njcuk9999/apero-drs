@@ -7563,11 +7563,12 @@ def check_input_dprtypes(params: ParamDict, recipe: Any,
             if valid:
                 # read the header
                 infile.read_header()
+                # append original dprtype to dprtypes
+                dprtypes.append(str(infile.header[dprtype_hkey]))
                 # force the dprtype to the reference dprtype
                 #    (just for use in this recipe run not permanently)
                 infile.header[dprtype_hkey] = (ref_dprtype, dprtype_hcomment)
-                # append to dprtypes
-                dprtypes.append(infile.header[dprtype_hkey])
+
         # append to validity
         validity.append(valid)
         # we have to raise exception if ref_dprtype is not in dprtypes but
