@@ -2748,7 +2748,10 @@ def group_run_files2(params: ParamDict, recipe: DrsRecipe,
     :return:
     """
     # get hard upper limit for number of files in a group
-    limit = params['GROUP_FILE_LIMIT']
+    if recipe.limit is not None:
+        limit = recipe.limit
+    else:
+        limit = params['GROUP_FILE_LIMIT']
     # get grouping function
     group_function = recipe.group_func
     # deal with reference
