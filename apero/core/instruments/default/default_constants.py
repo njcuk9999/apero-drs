@@ -2103,7 +2103,7 @@ FF_PLOT_ORDER = Const('FF_PLOT_ORDER', value=None, dtype=int, source=__NAME__,
 
 
 # Define the high pass filter size in km/s
-FF_HIGH_PASS_SIZE = Const('FF_HIGH_PASS_SIZE', value=None, dtype=float,
+FF_HIGH_PASS_SIZE = Const('FF_HIGH_PASS_SIZE', value=None, dtype=int,
                           source=__NAME__, group=cgroup,
                           description='Define the high pass filter size in '
                                       'km/s')
