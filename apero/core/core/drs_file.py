@@ -7750,7 +7750,8 @@ def get_another_fiber_file(params: ParamDict, outfile: DrsFitsFile,
 
 def combine(params: ParamDict, recipe: Any,
             infiles: List[DrsFitsFile], math: str = 'average',
-            same_type: bool = True, save: bool = True
+            same_type: bool = True, save: bool = True,
+            test_similarity: bool = True
             ) -> Union[Tuple[DrsFitsFile, Table], Tuple[None, None]]:
     """
     Takes a list of infiles and combines them (infiles must be DrsFitsFiles)
@@ -7830,7 +7831,8 @@ def combine(params: ParamDict, recipe: Any,
     # make new infile using math
     infile0 = infiles[0].newcopy(params=params)
     outfile, outtable = infile0.combine(infiles[1:], math, same_type,
-                                        path=abspath)
+                                        path=abspath,
+                                        test_similarity=test_similarity)
     # update params in outfile
     outfile.params = params
     # update the number of files
