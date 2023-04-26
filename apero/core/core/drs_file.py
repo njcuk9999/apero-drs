@@ -7482,6 +7482,98 @@ def check_input_qc(params: ParamDict, drsfiles: List[DrsFitsFile],
     return valid_drsfiles
 
 
+def check_input_dprtypes(params: ParamDict, recipe: Any,
+                         infiles: List[DrsFitsFile],
+                         required_ref: bool = True) -> List[DrsFitsFile]:
+    """
+    Check that the input dprtypes conform to one of the models within the
+    recipe
+
+    This is done by checking the DPRTYPE header key
+    if all files are in the file model group then we force the DPRTYPE to be
+    the file model reference DPRTYPE, otherwise if all the files are in none
+    of the file models we raise an error
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param recipe: Recipe, the recipe instance that called this function
+    :param infiles: List of DrsFitsFile, the input files to check
+
+    :raises: DrsException if not file model is valid for all files
+    :return: List of DrsFitsFile, the input files (with updated DPRTYPEs)
+    """
+    # TODO: This still does not stop the user from using the wrong files
+    #       for FLAT_FLAT as they could just use all DARK_FLAT or all FLAT_DARK
+    #       for now required_ref is used but as long as we have FLAT in both
+    #       channels it should work
+    #       Also there is no reference to different exposure times / nd filters
+    #       etc - so maybe we need to do something more advanced here
+    # deal with no file model
+    if len(recipe.file_model) == 0:
+        return infiles
+    # get the dprtype header key
+    dprtype_hkey = params['KW_DPRTYPE'][0]
+    dprtype_hcomment = params['KW_DPRTYPE'][2]
+    # storage for an error message
+    error_msgs = []
+    # storage validity of all file models
+    validity = []
+    # -------------------------------------------------------------------------
+    # if we have files loop around the dictionary.
+    #    The dictionary key is the DPRTYPE we will force in the headers
+    #    we expect all infiles to only be in one of these groups
+    #    an error must be generated if this is not the case
+    for ref_dprtype in recipe.file_model:
+        # flag that all files are valid for one of the file models
+        valid = True
+        # store dprtypes
+        dprtypes = []
+        # get the names of the infiles
+        ref_names = list(map(lambda x: x.name, recipe.file_model[ref_dprtype]))
+        # loop around the infiles
+        for infile in infiles:
+            # if infile is not a class in ref_infiles we have a problem
+            if infile.name not in ref_names:
+                # this file is invalid
+                valid &= False
+                # TODO: Add to language database
+                emsg = ('Input file {0} not in recipe file model'
+                        '\n\tValid files are: {1}')
+                eargs = [infile.name, ', '.join(ref_names)]
+                # append to error messages
+                error_msgs.append(emsg.format(*eargs))
+            # only if valid do we try changing the dprtype
+            if valid:
+                # read the header
+                infile.read_header()
+                # force the dprtype to the reference dprtype
+                #    (just for use in this recipe run not permanently)
+                infile.header[dprtype_hkey] = (ref_dprtype, dprtype_hcomment)
+                # append to dprtypes
+                dprtypes.append(infile.header[dprtype_hkey])
+        # append to validity
+        validity.append(valid)
+        # we have to raise exception if ref_dprtype is not in dprtypes but
+        #   all files are valid individually
+        if valid and ref_dprtype not in dprtypes:
+            # TODO: Add to language database
+            emsg = ('Reference DPRTYPE {0} not in input files '
+                    '\n\tCurrent DPRTYPES are: {1}')
+            eargs = [ref_dprtype, ', '.join(dprtypes)]
+            WLOG(params, 'error', emsg.format(*eargs))
+    # -------------------------------------------------------------------------
+    # deal with no valid models
+    if np.sum(validity) == 0:
+        # loop round and print errors
+        emsgs = ''
+        for emsg in error_msgs:
+            emsg += emsg
+        # raise the error
+        WLOG(params, 'error', emsgs)
+    # -------------------------------------------------------------------------
+    # return the infiles
+    return infiles
+
+
 def get_file_definition(params: ParamDict, name: str,
                         block_kind: str = 'raw',
                         instrument: Union[str, None] = None,

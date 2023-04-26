@@ -252,6 +252,17 @@ def save_tmp_orderps_file(params: ParamDict, recipe: DrsRecipe,
                                     dymap=sprops['SHAPEY'], )
         # copy full header from order profile
         orderpsfile.copy_header(header=orderhdr)
+        # add version
+        orderpsfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
+        # add dates
+        orderpsfile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
+        orderpsfile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
+        # add process id
+        orderpsfile.add_hkey('KW_PID', value=params['PID'])
+        # add output tag
+        orderpsfile.add_hkey('KW_OUTPUT', value=orderpsfile.name)
+        orderpsfile.add_hkey('KW_FIBER', value=fiber)
+        # add the shape keys
         orderpsfile.add_hkey('KW_CDBSHAPEL', value=sprops['SHAPELFILE'])
         orderpsfile.add_hkey('KW_CDTSHAPEL', value=sprops['SHAPELTIME'])
         orderpsfile.add_hkey('KW_CDBSHAPEDX', value=sprops['SHAPEXFILE'])
