@@ -527,7 +527,7 @@ apero_flat.set_debug_plots('FLAT_ORDER_FIT_EDGES1', 'FLAT_ORDER_FIT_EDGES2',
                            'FLAT_BLAZE_ORDER1', 'FLAT_BLAZE_ORDER2')
 apero_flat.set_summary_plots('SUM_FLAT_ORDER_FIT_EDGES', 'SUM_FLAT_BLAZE_ORDER')
 apero_flat.set_arg(pos=0, **obs_dir)
-apero_flat.set_arg(name='files', dtype='files', filelogic='exclusive',
+apero_flat.set_arg(name='files', dtype='files',
                    files=[files.pp_flat_flat, files.pp_dark_flat,
                           files.pp_flat_dark],
                    pos='1+',
