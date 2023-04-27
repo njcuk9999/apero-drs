@@ -121,9 +121,8 @@ class MarkDownPage:
         """
         self.add_newline()
         length = np.max([len(section_title) + 2, 80])
-        self.lines += ['*' * length]
         self.lines += [section_title]
-        self.lines += ['*' * length]
+        self.lines += ['=' * length]
         self.add_newline()
 
     def add_sub_section(self, section_title: str):
@@ -135,15 +134,46 @@ class MarkDownPage:
         """
         self.add_newline()
         length = np.max([len(section_title) + 2, 80])
-        self.lines += ['^' * length]
+        self.lines += [section_title]
+        self.lines += ['-' * length]
+        self.add_newline()
+
+    def add_sub_sub_section(self, section_title: str):
+        """
+        Add a section to a page
+        :param section_title: str, the title to add
+
+        :return: None, updates page
+        """
+        self.add_newline()
+        length = np.max([len(section_title) + 2, 80])
         self.lines += [section_title]
         self.lines += ['^' * length]
+        self.add_newline()
+
+    def add_divider(self, color, height):
+        """
+        Add a divider to a page using the raw html feature
+
+        :return: None, updates
+        """
+        # define the style text
+        styletxt = ''
+        styletxt += 'width:100%;'
+        styletxt += f'height:{height}px;'
+        styletxt += f'background-color:{color};'
+        styletxt += 'border:none;'
+        # add the divider
+        self.add_newline()
+        self.lines += ['.. raw:: html', '']
+        self.lines += [f'    <hr style="{styletxt}" />']
         self.add_newline()
 
     def add_csv_table(self, title: str, csv_file: str,
                       abs_path: Union[str, None] = None,
                       widths: Union[List[str], None] = None,
-                      width: Union[int, None] = None):
+                      width: Union[int, None] = None,
+                      cssclass: str = 'csvtable'):
         """
         Create a csv table in the markdown page
 
@@ -181,7 +211,7 @@ class MarkDownPage:
             if widths is not None:
                 self.lines += ['   :widths: {0}'.format(', '.join(widths))]
             self.lines += ['   :header-rows: 1']
-            self.lines += ['   :class: csvtable']
+            self.lines += ['   :class: {0}'.format(cssclass)]
             self.add_newline()
         else:
             self.add_newline()
@@ -217,7 +247,7 @@ class MarkDownPage:
         self.add_newline()
 
     def add_image(self, filename: str, width: Optional[int] = None,
-                  align: str = 'center'):
+                  align: str = 'center', inline: bool = False):
         """
         Add image to the markdown page
 
@@ -228,10 +258,18 @@ class MarkDownPage:
 
         :return: None, updates page
         """
+        # deal with image vs figwidth
+        if inline:
+            directive = 'image'
+        else:
+            directive = 'figure'
+        # ----------------------------------------------------------------------
         self.add_newline()
         self.lines += ['.. only:: html']
         self.add_newline()
-        self.lines += ['    .. image:: {0}'.format(filename)]
+        self.lines += ['    .. {0}:: {1}'.format(directive, filename)]
+        if not inline:
+            self.lines += ['        :figwidth: 100%']
         if width is not None:
             self.lines += ['        :width: {0}%'.format(width)]
         if align is not None:

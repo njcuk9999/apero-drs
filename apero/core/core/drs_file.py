@@ -3241,6 +3241,8 @@ class DrsFitsFile(DrsInputFile):
             cond2 = self.header is not None
             if cond1 and cond2:
                 return True
+        else:
+            cond1, cond2 = False, False
         # get params
         params = self.params
         # check that filename is set
@@ -3254,9 +3256,25 @@ class DrsFitsFile(DrsInputFile):
         # default to fits-image
         else:
             fmt = 'fits-image'
+        # ---------------------------------------------------------------------
         # read the fits file
-        dout = drs_fits.readfits(params, self.filename, getdata=True,
-                                 gethdr=True, fmt=fmt, ext=ext)
+        # ---------------------------------------------------------------------
+        # we need to decide what to load, otherwise changes made to self.data
+        #   and self.header will be lost previous to this
+        # if cond1 is True we just need the header
+        if cond1:
+            _hdr = drs_fits.readfits(params, self.filename, getdata=False,
+                                     gethdr=True, fmt=fmt, ext=ext)
+            dout = [self.data, _hdr]
+        # if cond2 is True we just need the data
+        elif cond2:
+            _data = drs_fits.readfits(params, self.filename, getdata=True,
+                                      gethdr=False, fmt=fmt, ext=ext)
+            dout = [_data, self.header]
+        # otherwise we load both
+        else:
+            dout = drs_fits.readfits(params, self.filename, getdata=True,
+                                     gethdr=True, fmt=fmt, ext=ext)
         # deal with copying
         if copy:
             if self.datatype == 'table':
@@ -7488,6 +7506,117 @@ def check_input_qc(params: ParamDict, drsfiles: List[DrsFitsFile],
     return valid_drsfiles
 
 
+def check_input_dprtypes(params: ParamDict, recipe: Any,
+                         infiles: List[DrsFitsFile],
+                         required_ref: bool = True) -> List[DrsFitsFile]:
+    """
+    Check that the input dprtypes conform to one of the models within the
+    recipe
+
+    This is done by checking the DPRTYPE header key
+    if all files are in the file model group then we force the DPRTYPE to be
+    the file model reference DPRTYPE, otherwise if all the files are in none
+    of the file models we raise an error
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param recipe: Recipe, the recipe instance that called this function
+    :param infiles: List of DrsFitsFile, the input files to check
+
+    :raises: DrsException if not file model is valid for all files
+    :return: List of DrsFitsFile, the input files (with updated DPRTYPEs)
+    """
+    # TODO: This still does not stop the user from using the wrong files
+    #       for FLAT_FLAT as they could just use all DARK_FLAT or all FLAT_DARK
+    #       for now required_ref is used but as long as we have FLAT in both
+    #       channels it should work
+    #       Also there is no reference to different exposure times / nd filters
+    #       etc - so maybe we need to do something more advanced here
+    # deal with no file model
+    if len(recipe.file_model) == 0:
+        return infiles
+    # get the dprtype header key
+    dprtype_hkey = params['KW_DPRTYPE'][0]
+    dprtype_hcomment = params['KW_DPRTYPE'][2]
+    # storage for an error message
+    error_msgs = []
+    # storage validity of all file models
+    validity = []
+    # -------------------------------------------------------------------------
+    # if we have files loop around the dictionary.
+    #    The dictionary key is the DPRTYPE we will force in the headers
+    #    we expect all infiles to only be in one of these groups
+    #    an error must be generated if this is not the case
+    for ref_dprtype in recipe.file_model:
+        # flag that all files are valid for one of the file models
+        valid = True
+        # store dprtypes
+        dprtypes = []
+        # get the names of the infiles
+        ref_names = list(map(lambda x: x.name, recipe.file_model[ref_dprtype]))
+        # loop around the infiles
+        for infile in infiles:
+            # if infile is not a class in ref_infiles we have a problem
+            if infile.name not in ref_names:
+                # this file is invalid
+                valid &= False
+                # TODO: Add to language database
+                emsg = ('Input file {0} not in recipe file model'
+                        '\n\tValid files are: {1}')
+                eargs = [infile.name, ', '.join(ref_names)]
+                # append to error messages
+                error_msgs.append(emsg.format(*eargs))
+            # only if valid do we try changing the dprtype
+            if valid:
+                # read the header
+                infile.read_header()
+                # append original dprtype to dprtypes
+                dprtypes.append(str(infile.header[dprtype_hkey]))
+                # force the dprtype to the reference dprtype
+                #    (just for use in this recipe run not permanently)
+                infile.header[dprtype_hkey] = (ref_dprtype, dprtype_hcomment)
+
+        # append to validity
+        validity.append(valid)
+        # we have to raise exception if ref_dprtype is not in dprtypes but
+        #   all files are valid individually
+        if valid and ref_dprtype not in dprtypes:
+            # TODO: Add to language database
+            emsg = ('Reference DPRTYPE {0} not in input files '
+                    '\n\tCurrent DPRTYPES are: {1}')
+            eargs = [ref_dprtype, ', '.join(dprtypes)]
+            WLOG(params, 'error', emsg.format(*eargs))
+        elif valid:
+            # storage of first (ref file type)
+            file0 = None
+            # store all other files
+            others = []
+            # loop around all files and find one example of a ref file
+            for pos in range(len(dprtypes)):
+                if dprtypes[pos] == ref_dprtype and file0 is None:
+                    file0 = infiles[pos]
+                else:
+                    others.append(infiles[pos])
+            # order files with the first file being a ref file type
+            infiles = [file0] + others
+    # -------------------------------------------------------------------------
+    # deal with no valid models
+    if np.sum(validity) == 0:
+        # loop round and print errors
+        emsgs = ''
+        for emsg in error_msgs:
+            emsg += emsg
+        # raise the error
+        WLOG(params, 'error', emsgs)
+    # deal with multiple valid models
+    elif np.sum(validity) > 1:
+        # TODO: Add to language database
+        emsg = 'Multiple valid file models. File DPRTYPEs need checking'
+        WLOG(params, 'error', emsg)
+    # -------------------------------------------------------------------------
+    # return the infiles
+    return infiles
+
+
 def get_file_definition(params: ParamDict, name: str,
                         block_kind: str = 'raw',
                         instrument: Union[str, None] = None,
@@ -7646,7 +7775,8 @@ def get_another_fiber_file(params: ParamDict, outfile: DrsFitsFile,
 
 def combine(params: ParamDict, recipe: Any,
             infiles: List[DrsFitsFile], math: str = 'average',
-            same_type: bool = True, save: bool = True
+            same_type: bool = True, save: bool = True,
+            test_similarity: bool = True
             ) -> Union[Tuple[DrsFitsFile, Table], Tuple[None, None]]:
     """
     Takes a list of infiles and combines them (infiles must be DrsFitsFiles)
@@ -7726,11 +7856,15 @@ def combine(params: ParamDict, recipe: Any,
     # make new infile using math
     infile0 = infiles[0].newcopy(params=params)
     outfile, outtable = infile0.combine(infiles[1:], math, same_type,
-                                        path=abspath)
+                                        path=abspath,
+                                        test_similarity=test_similarity)
     # update params in outfile
     outfile.params = params
     # update the number of files
-    outfile.numfiles = len(infiles)
+    if math in ['sum', '+', 'add']:
+        outfile.numfiles = len(infiles)
+    else:
+        outfile.numfiles = 1
     # define multi lists
     data_list = [outtable]
     datatype_list = ['table']
@@ -7969,10 +8103,15 @@ def combine_hkey(values: List[Any], method: str, math: str) -> Any:
 
     :return: Any, single value of the combined type or None if not combinable
     """
+    # deal with method == math (set method == to the math directly)
+    if method == 'math':
+        method = str(math)
     # noinspection PyBroadException
     try:
         if method in ['mean', 'average']:
             return mp.nanmean(values)
+        if method in ['median', 'med']:
+            return mp.nanmedian(values)
         if method in ['sum', 'add']:
             return mp.nansum(values)
         if method in ['minimum', 'min']:
@@ -7982,7 +8121,7 @@ def combine_hkey(values: List[Any], method: str, math: str) -> Any:
         # flux correction has to use the math from combining the image
         if method == 'flux':
             # if we want to sum the data
-            if math in ['sum', 'add', '+', 'average', 'mean']:
+            if math in ['sum', 'add', '+']:
                 return mp.nansum(values) * np.sqrt(len(values))
             elif math in ['average', 'mean']:
                 return mp.nanmean(values) / np.sqrt(len(values))

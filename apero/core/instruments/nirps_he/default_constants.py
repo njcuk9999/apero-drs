@@ -1103,6 +1103,11 @@ QC_FF_MAX_RMS.value = 1.0
 FF_PLOT_ORDER = FF_PLOT_ORDER.copy(__NAME__)
 FF_PLOT_ORDER.value = 4
 
+# Define the high pass filter size in pixels
+FF_HIGH_PASS_SIZE = FF_HIGH_PASS_SIZE.copy(__NAME__)
+FF_HIGH_PASS_SIZE.value = 501
+FF_HIGH_PASS_SIZE.author = base.AUTHORS['EA']
+
 # =============================================================================
 # CALIBRATION: LEAKAGE SETTINGS
 # =============================================================================
@@ -2929,7 +2934,7 @@ REPROCESS_REINDEX_BLOCKS.value = 'raw,tmp,red,out'
 
 # Define whether to use multiprocess Pool or Process
 REPROCESS_MP_TYPE = REPROCESS_MP_TYPE.copy(__NAME__)
-REPROCESS_MP_TYPE.value = 'pool'
+REPROCESS_MP_TYPE.value = 'process'
 
 # Key for use in run files
 REPROCESS_RUN_KEY = REPROCESS_RUN_KEY.copy(__NAME__)

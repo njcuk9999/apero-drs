@@ -97,23 +97,30 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # Main Code
     # ----------------------------------------------------------------------
     mainname = __NAME__ + '._main()'
-    # get files
-    infiles = params['INPUTS']['FILES'][1]
     # check qc
+    if 'files' in params['DATA_DICT']:
+        infiles = params['DATA_DICT']['files']
+    else:
+        # get files
+        infiles = params['INPUTS']['FILES'][1]
+    # check the quality control from input files
     infiles = drs_file.check_input_qc(params, infiles, 'files')
+    # loc is run twice we need to check that all input files can be used
+    #  together and we are not mixing both types
+    infiles = drs_file.check_input_dprtypes(params, recipe, infiles)
     # get list of filenames (for output)
     rawfiles = []
     for infile in infiles:
         rawfiles.append(infile.basename)
     # deal with input data from function
     if 'files' in params['DATA_DICT']:
-        infiles = params['DATA_DICT']['files']
         rawfiles = params['DATA_DICT']['rawfiles']
         combine = params['DATA_DICT']['combine']
     # combine input images if required
     elif params['INPUT_COMBINE_IMAGES']:
         # get combined file
-        cond = drs_file.combine(params, recipe, infiles, math='median')
+        cond = drs_file.combine(params, recipe, infiles, math='median',
+                                same_type=False)
         infiles = [cond[0]]
         combine = True
     else:

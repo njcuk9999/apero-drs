@@ -72,6 +72,7 @@ def main(obs_dir: Optional[str] = None, files: Optional[List[str]] = None,
     :keyword debug: int, debug level (0 for None)
 
     :returns: dictionary of the local space
+    :rtype: dict
     """
     # assign function calls (must add positional)
     fkwargs = dict(obs_dir=obs_dir, files=files, **kwargs)
@@ -131,6 +132,15 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ge this iterations file
         file_instance = infiles[it]
         # ------------------------------------------------------------------
+        # Check that file is not in bad list
+        # ------------------------------------------------------------------
+        # find out if file is flagged as bad
+        reject_file = prep.reject_infile(params, file_instance.get_header())
+        # deal with bad files
+        if reject_file:
+            WLOG(params, 'warning', textentry('10-503-00022'), sublevel=2)
+
+        # ------------------------------------------------------------------
         # Fix the header
         # ------------------------------------------------------------------
         # certain keys may not be in some spirou files
@@ -151,6 +161,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             infile.header = prep.resolve_target(params, pconst,
                                                 header=infile.header,
                                                 database=objdbm)
+            # set flag for passing qc
+            log1.update_flags(OBJ=True)
         # ------------------------------------------------------------------
         # if it wasn't found skip this file, if it was print a message
         if cond:
@@ -158,14 +170,17 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             WLOG(params, 'info', textentry('40-010-00001', args=eargs))
         else:
             eargs = [infile.filename]
-            WLOG(params, 'info', textentry('40-010-00002', args=eargs))
+            WLOG(params, 'error', textentry('40-010-00002', args=eargs))
             continue
+        # ------------------------------------------------------------------
+        # print progress
+        WLOG(params, '', 'Loading RAMP [intercept,inttime,errslope]')
         # get data from file instance
         datalist = infile.get_data(copy=True, extensions=[1, 2, 3])
+        # print progress
+        WLOG(params, '', '\tLoaded {0}'.format(infile.filename))
         # get flux image from the data list
         image = datalist[0]
-
-        # ------------------------------------------------------------------
         # get intercept from the data list
         intercept = datalist[1]
         # get frame time
@@ -187,6 +202,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         # Get out file and check skip
         # ------------------------------------------------------------------
+        # print progress
+        WLOG(params, '', 'Loading drs output file')
         # get the output drs file
         oargs = [params, recipe, infile, recipe.outputs['PP_FILE'], RAW_PREFIX]
         found, outfile = prep.drs_outfile_id(*oargs)
@@ -205,6 +222,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ----------------------------------------------------------------------
         # Check for pixel shift and/or corrupted files
         # ----------------------------------------------------------------------
+        # print progress
+        WLOG(params, '', 'Checking for pixel shift and/or corrupted files')
         # storage
         snr_hotpix, rms_list = [], []
         shiftdx, shiftdy = 0, 0
@@ -289,6 +308,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         # correct image
         # ------------------------------------------------------------------
+        # print progress
+        WLOG(params, '', 'Applying NIRPS detector corrections')
         # nirps correction for preprocessing (specific to NIRPS)
         image = prep.nirps_correction(params, image, infile.header,
                                       create_mask=False)
@@ -300,6 +321,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                 sci_capc_corr = False
         # correct between amplifier capacity coupling from science flux
         if sci_capc_corr:
+            # print progress
+            WLOG(params, '', 'Applying sci capactivitive coupling correction')
             image = prep.correct_sci_capacitive_coupling(params, image)
 
         # ----------------------------------------------------------------------

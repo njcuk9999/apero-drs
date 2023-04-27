@@ -653,6 +653,9 @@ def obj_check(params: ParamDict, findexdbm: Optional[FileIndexDatabase] = None):
     # ---------------------------------------------------------------------
     # get original names for objects
     orig_names = []
+    last_runid = []
+    last_pi_name = []
+    last_obs_date = []
     # Print progress: Finding all original names for each unfound object
     WLOG(params, 'info', textentry('40-503-00058'))
     # loop around
@@ -664,6 +667,21 @@ def obj_check(params: ParamDict, findexdbm: Optional[FileIndexDatabase] = None):
         orig_name = findexdbm.get_unique('KW_OBJECTNAME', condition=condition)
         # append to list
         orig_names.append(list(orig_name))
+        # -----------------------------------------------------------------
+        # get the runid, piname and obs date for the most recent raw file with
+        #   this name
+        # define the columns to get from the file index database
+        columns = 'KW_RUN_ID,KW_PI_NAME,OBS_DIR'
+        # get the most recent raw file with this object name
+        last_obj = findexdbm.database.get(columns, condition=condition,
+                                          sort_by='KW_MID_OBS_TIME',
+                                          sort_descending=True,
+                                          max_rows=1)
+        # push into the last_runid, last_pi_name and last_obs_date lists
+        last_runid.append(last_obj[0][0])
+        last_pi_name.append(last_obj[0][1])
+        last_obs_date.append(last_obj[0][2])
+
     # ---------------------------------------------------------------------
     # print any remaining objects
     # print msg: Objects that will use the header for astrometrics are:
@@ -678,8 +696,10 @@ def obj_check(params: ParamDict, findexdbm: Optional[FileIndexDatabase] = None):
         # loop around objects and put on a new line
         for it in range(len(unfound_objects)):
             # print the object
-            msg = '\t{0}\t{1:30s}\t(APERO: {2})'
-            margs = [it + 1, ' or '.join(orig_names[it]), unfound_objects[it]]
+            msg = ('\t{0}\t{1:30s}\t(APERO: {2})'
+                   '\tLAST[{3}, {4}, {5}]')
+            margs = [it + 1, ' or '.join(orig_names[it]), unfound_objects[it],
+                     last_runid[it], last_pi_name[it], last_obs_date[it]]
             WLOG(params, 'warning', msg.format(*margs), sublevel=8)
         # print a note that some objects are in ignore list
         if len(reject_list) > 0:

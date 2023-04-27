@@ -186,6 +186,10 @@ class DrsRecipe(object):
         self.summary_plots = []
         # set the minimum number of files (for processing)
         self.minimum_files = dict()
+        # define a limit on number of files to process per recipe (at maximum)
+        self.limit = None
+        # set the file model
+        self.file_model: Dict[str, List[DrsInputFile]] = dict()
         # the plotter class
         self.plot = None
         # set the log class
@@ -1059,6 +1063,12 @@ class DrsRecipe(object):
         self.minimum_files = dict()
         for key in recipe.minimum_files:
             self.minimum_files[key] = int(recipe.minimum_files[key])
+        # copy the limit
+        self.limit = copy.deepcopy(recipe.limit)
+        # copy file model
+        self.file_model = dict()
+        for key in recipe.file_model:
+            self.file_model[key] = recipe.file_model[key]
         # set up the input validation (should be True to check arguments)
         self.input_validation = recipe.input_validation
         # whether calibration is required (used in precheck)

@@ -58,7 +58,7 @@ KW_GAIN.set(key='HIERARCH ESO DET OUT1 CONAD',
 KW_EXPTIME = KW_EXPTIME.copy(__NAME__)
 KW_EXPTIME.set(key='EXPTIME', unit=uu.s,
                comment='[sec] Integration time',
-               combine_method='sum', group='raw')
+               combine_method='math', group='raw')
 
 # define the required exposure time HEADER key (used to get value only)
 # NIRPS-CHANGE: Do we have this for NIRPS?
@@ -66,7 +66,7 @@ KW_EXPTIME.set(key='EXPTIME', unit=uu.s,
 KW_EXPREQ = KW_EXPREQ.copy(__NAME__)
 KW_EXPREQ.set(key='EXPTIME', unit=uu.s,
               comment='[sec] Requested integration time',
-              combine_method='sum', group='raw')
+              combine_method='math', group='raw')
 
 # define the observation type HEADER key
 KW_OBSTYPE = KW_OBSTYPE.copy(__NAME__)
