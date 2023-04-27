@@ -729,11 +729,25 @@ class RecipeLog:
         # ---------------------------------------------------------------------
         # loop around all rows and add to params
         for it in range(len(log_keys)):
+            # ended will be zero as we are inside a recipe
+            #   for the rlog table we assume the recipe finished
+            #   (otherwise we would have to update the header at some point
+            #   after the recipe finished)
+            if log_keys[it].endswith('ENDED'):
+                value = 1
+            else:
+                value = log_values[it]
+            # set the name (from log key)
             names.append(log_keys[it])
+            # set the parameter kind (rlog)
             param_kinds.append('rlog')
-            values.append(log_values[it])
+            # set the value
+            values.append(value)
+            # set the source of the value
             source.append(func_name)
+            # set the description using the log comments
             description.append(log_comments[it])
+            # set the count to 1 (always 1)
             count.append(1)
         # ---------------------------------------------------------------------
         # return lists
