@@ -8104,6 +8104,8 @@ def combine_hkey(values: List[Any], method: str, math: str) -> Any:
     try:
         if method in ['mean', 'average']:
             return mp.nanmean(values)
+        if method in ['median', 'med']:
+            return mp.nanmedian(values)
         if method in ['sum', 'add']:
             return mp.nansum(values)
         if method in ['minimum', 'min']:
