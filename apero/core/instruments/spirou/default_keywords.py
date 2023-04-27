@@ -83,13 +83,13 @@ KW_FRMTIME.set(key='FRMTIME', comment='[sec] Frame time, cadence of IR reads',
 # define the exposure time HEADER key (used to get value only)
 KW_EXPTIME = KW_EXPTIME.copy(__NAME__)
 KW_EXPTIME.set(key='EXPTIME', unit=uu.s, comment='[sec] Integration time',
-               combine_method='sum', group='raw')
+               combine_method='math', group='raw')
 
 # define the required exposure time HEADER key (used to get value only)
 KW_EXPREQ = KW_EXPREQ.copy(__NAME__)
 KW_EXPREQ.set(key='EXPREQ', unit=uu.s,
               comment='[sec] Requested integration time',
-              combine_method='sum', group='raw')
+              combine_method='math', group='raw')
 
 # define the observation type HEADER key
 KW_OBSTYPE = KW_OBSTYPE.copy(__NAME__)
