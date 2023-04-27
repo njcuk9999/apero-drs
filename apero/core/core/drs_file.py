@@ -8097,6 +8097,9 @@ def combine_hkey(values: List[Any], method: str, math: str) -> Any:
 
     :return: Any, single value of the combined type or None if not combinable
     """
+    # deal with method == math (set method == to the math directly)
+    if method == 'math':
+        method = str(math)
     # noinspection PyBroadException
     try:
         if method in ['mean', 'average']:
@@ -8110,7 +8113,7 @@ def combine_hkey(values: List[Any], method: str, math: str) -> Any:
         # flux correction has to use the math from combining the image
         if method == 'flux':
             # if we want to sum the data
-            if math in ['sum', 'add', '+', 'average', 'mean']:
+            if math in ['sum', 'add', '+']:
                 return mp.nansum(values) * np.sqrt(len(values))
             elif math in ['average', 'mean']:
                 return mp.nanmean(values) / np.sqrt(len(values))
