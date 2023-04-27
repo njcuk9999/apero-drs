@@ -7855,7 +7855,10 @@ def combine(params: ParamDict, recipe: Any,
     # update params in outfile
     outfile.params = params
     # update the number of files
-    outfile.numfiles = len(infiles)
+    if math in ['sum', '+', 'add']:
+        outfile.numfiles = len(infiles)
+    else:
+        outfile.numfiles = 1
     # define multi lists
     data_list = [outtable]
     datatype_list = ['table']
