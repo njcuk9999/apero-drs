@@ -2,6 +2,104 @@ Changelog
 =========
 
 
+0.7.282 (2023-04-27)
+--------------------
+- [APERO] `apero.core.utils.drs_utils.py` - fix ended=0 in rlog. [Neil
+  Cook]
+- [APERO] correct typo (median missing from methods) [Neil Cook]
+- [APERO] fix logic when using mean (exptime should be a mean) [Neil
+  Cook]
+- [APERO] change all means for sums (for saturation flagging) [Neil
+  Cook]
+- [APERO] increase number of allowed flat files to 100 + add dprtypes
+  before forcing dprtype. [Neil Cook]
+- [APERO] Need first file to be a ref dprtype file (from file model)
+  [Neil Cook]
+- [APERO] cannot test type of file for flats (now we are combining)
+  [Neil Cook]
+- [APERO] FF HIGH PASS must be an integer. [Neil Cook]
+- [APERO] do not reload the header or data if already loaded (otherwise
+  we can't override header keys) [Neil Cook]
+- [APERO] raise the limit on max number of files for `apero_loc` and
+  `apero_flat`. [Neil Cook]
+- [NIRPS] need to deal with multiple file definitions for `flat_dark` and
+  `dark_flat`. [Neil Cook]
+- [NIRPS] need to deal with multiple file definitions for `flat_dark` and
+  `dark_flat`. [Neil Cook]
+- [NIRPS] need to deal with multiple file definitions for `flat_dark` and
+  `dark_flat`. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.279-live' into
+  v0.7.279-live. [Neil Cook]
+- [APERO] add source of `FF_HIGH_PASS_SIZE`. [Neil Cook]
+- [APERO] flat field high pass - adjust the value to 501 pixels (for all
+  instruments) [Neil Cook]
+- [APERO] low pass the flat to remove low frequency components.
+  [njcuk9999]
+- [APERO] use the `dark_flats` and `flat_darks` in the flat recipe (combine
+  with a sum) --> increased SNR. [Neil Cook]
+
+
+0.7.281 (2023-04-21)
+--------------------
+- [APERO] replace `KW_DPRTYPES` spirou list with the nirps list (prevented
+  ccfs for `OBJ_SKY` and `TELLU_SKY)` [Neil Cook]
+- [APERO] `drs_markdown.py` - add custom cssclass to `add_csv_table`. [Neil
+  Cook]
+- `Drs_markdown.py` - deal with floating image vs one in a container.
+  [Neil Cook]
+- `Drs_markdown.py` - deal with floating image vs one in a container.
+  [Neil Cook]
+- `Drs_markdown.py` - deal with floating image vs one in a container.
+  [Neil Cook]
+- `Drs_markdown.py` - deal with floating image vs one in a container.
+  [Neil Cook]
+- `Drs_markdown.py` - deal with floating image vs one in a container.
+  [Neil Cook]
+- [APERO] `apero_get.py` - deal with removing hard and symlinks better.
+  [Neil Cook]
+- [APERO] `documentation.conf.py` - do not limit body to a max width of
+  800. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.279-live' into
+  v0.7.279-live. [Neil Cook]
+- [APERO] `drs_markdown.py` - `add_divider` in markdown function. [Neil
+  Cook]
+- Merge remote-tracking branch 'origin/v0.7.279-live' into
+  v0.7.279-live. [Neil Cook]
+- [APERO] precheck: add runid/pi/obs-dir to objects with astrometric
+  entry. [Neil Cook]
+- [APERO] `drs_markdown` - properly format section and sub section and add
+  sub sub section. [Neil Cook]
+- [APERO] `ref_seq` `apero_loc` should have ref=True. [Neil Cook]
+
+
+0.7.280 (2023-04-13)
+--------------------
+- [APERO] add extra `apero_preprocess` printouts to `nirps_he` and spirou.
+  [Neil Cook]
+- [APERO] add debug print out for trying to open via while loop. [Neil
+  Cook]
+- [APERO] `apero.recipes.*.apero_preprocess_*` - add more logging
+  messages. [Neil Cook]
+- [APERO] `apero.recipes.*.apero_preprocess_*` - add more logging
+  messages. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.279-live' into
+  v0.7.279-live. [Neil Cook]
+- [NIRPS] add DRSOUTID for res file e2ds. [Neil Cook]
+- [APERO] `pp_ref` add correct keys to `pp_ref` files for calib db (cannot
+  update using database otherwise) [Neil Cook]
+- [APERO] make `apero_database.py` --reset and --update more verbose + fix
+  ended=0 in recipe log update. [Neil Cook]
+- [APERO] change back to process. [Neil Cook]
+- [APERO] `apero.tools.module.database.database_update.py` - add dbkind
+  argument. [Neil Cook]
+- [APERO] change how the --update and --rest work with
+  `apero_database.py`. [Neil Cook]
+- [APERO] change how the --update and --rest work with
+  `apero_database.py`. [Neil Cook]
+- [APERO] use pool instead of process. [Neil Cook]
+- [APERO] update version and add run id to index database. [Neil Cook]
+
+
 0.7.279 (2023-04-06)
 --------------------
 - [APERO] update run.ini scripts. [Neil Cook]
