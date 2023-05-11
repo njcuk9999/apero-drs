@@ -567,8 +567,8 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
 
     # 1. snr < snr_min_thres (pos = 0)
     qc_values.append(np.nan)
-    qc_names.append('EXTSNR')
-    qc_logic.append('EXTSNR < {0}'.format(snr_min_thres))
+    qc_names.append('MED[EXTSNR]')
+    qc_logic.append('MED[EXTSNR] < {0}'.format(snr_min_thres))
     qc_pass.append(np.nan)
     # 2. ccf is NaN (pos = 1)
     qc_values.append(np.nan)
@@ -751,7 +751,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
             order_mask = orders == order_num
             # apply low snr mask to spectrum
             spectrum[order_mask] = np.nan
-    # for numerical stabiility, remove NaNs. Setting to zero biases a bit
+    # for numerical stability, remove NaNs. Setting to zero biases a bit
     # the CCF, but this should be OK after we converge
     spectrum[~np.isfinite(spectrum)] = 0.0
     spectrum[spectrum < 0.0] = 0.0
