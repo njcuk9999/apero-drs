@@ -31,7 +31,7 @@ bokeh==3.0.3
 gitchangelog==3.0.4
 gspread-pandas==3.2.2
 ipdb==0.13.11
-ipython==8.8.0
+ipython==8.10.0
 Sphinx==6.1.3
 sphinx-toolbox==3.4.0
 ttkthemes==3.2.2
