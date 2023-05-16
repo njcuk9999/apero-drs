@@ -1650,13 +1650,13 @@ KW_TELLUP_DO_PRECLEAN.set(key='TLPDOCLN', comment='tellu preclean done',
 # Define default water absorption used (tellu pre-cleaning)
 KW_TELLUP_DFLT_WATER = KW_TELLUP_DFLT_WATER.copy(__NAME__)
 KW_TELLUP_DFLT_WATER.set(key='TLPDFH2O',
-                         comment='tellu preclean default h20 abso used',
+                         comment='tellu preclean default H2O abso used',
                          parent='TELLUP_D_WATER_ABSO')
 
 # Define default water absorption used (tellu pre-cleaning)
 KW_TELLUP_DFLT_WATER = KW_TELLUP_DFLT_WATER.copy(__NAME__)
 KW_TELLUP_DFLT_WATER.set(key='TLPDFH2O',
-                         comment='tellu preclean default h20 abso used',
+                         comment='tellu preclean default H2O abso used',
                          parent='TELLUP_D_WATER_ABSO')
 
 # Define ccf scan range that was used (tellu pre-cleaning)
@@ -1843,7 +1843,7 @@ KW_FTELLU_NPC = KW_FTELLU_NPC.copy(__NAME__)
 KW_FTELLU_NPC.set(key='FTT_NPC',
                   comment='ftellu Number of principal components used')
 
-# The number of trans files used in pc fit (closest in expo h20/others)
+# The number of trans files used in pc fit (closest in expo H2O/others)
 KW_FTELLU_NTRANS = KW_FTELLU_NTRANS.copy(__NAME__)
 KW_FTELLU_NTRANS.set(key='FTT_NTRS',
                      comment='ftellu NUmber of trans files used in pc fit')

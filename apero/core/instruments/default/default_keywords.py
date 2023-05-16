@@ -2056,11 +2056,11 @@ KW_MKMODEL_SIGCUT = Keyword('KW_MKMODEL_NFILES', key='NULL', dtype=float,
 KW_FTELLU_NPC = Keyword('KW_FTELLU_NPC', key='NULL', dtype=int, source=__NAME__,
                         description='The number of principle components used')
 
-# The number of trans files used in pc fit (closest in expo h20/others)
+# The number of trans files used in pc fit (closest in expo H2O/others)
 KW_FTELLU_NTRANS = Keyword('KW_FTELLU_NTRANS', key='NULL', dtype=int,
                            source=__NAME__,
                            description=('The number of trans files used in pc '
-                                        'fit (closest in expo h20/others)'))
+                                        'fit (closest in expo H2O/others)'))
 
 # whether we added first derivative to principal components
 KW_FTELLU_ADD_DPC = Keyword('KW_FTELLU_ADD_DPC', key='NULL', dtype=bool,
