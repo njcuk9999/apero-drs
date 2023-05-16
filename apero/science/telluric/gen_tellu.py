@@ -356,7 +356,7 @@ def get_sp_linelists(params, **kwargs):
 def mask_bad_regions(params: ParamDict,
                      image: np.ndarray, wavemap: np.ndarray,
                      pconst: Optional[DPseudoConsts] = None,
-                     bad_regions: Optional[Tuple[float, float]]= None
+                     bad_regions: Optional[Tuple[float, float]] = None
                      ) -> np.ndarray:
     """
     Mask bad regions based on the wave map
@@ -469,7 +469,6 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     :param combine:
     :param calibdbm:
     :param telludbm:
-    :param template:
 
     :return:
     """
@@ -826,6 +825,8 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     wmask_others = wmask_others[mmask_others]
     ll_mask_s_water = ll_mask_s_water[mmask_water]
     wmask_water = wmask_water[mmask_water]
+    # storage for amplitudes
+    amp_water_arr, amp_others_arr = np.array([]), np.array([])
     # loop around until convergence or 20th iteration
     while (dexpo > dexpo_thres) and (iteration < max_iterations):
         # set up a qc flag
@@ -839,6 +840,8 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
                               res_expo=res_expo, dv_abso=dv_abso,
                               wavestart=wavestart,
                               waveend=waveend, dvgrid=dvgrid)
+        # avoid division by very small values
+        trans[trans < 0.01] = 0.01
         # divide spectrum by transmission
         spectrum_tmp = spectrum / (trans * template2)
         # only keep valid pixels (non NaNs)
@@ -875,11 +878,11 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
             # compute for others
             lothers = np.array(ll_mask_s_others) * scaling
             tmp_others = spline(lothers) * np.array(wmask_others)
-            ccf_others[d_it] = mp.nanmean(tmp_others[tmp_others != 0.0])
+            ccf_others[d_it] = mp.nansum(tmp_others[tmp_others != 0.0])
             # computer for water
             lwater = np.array(ll_mask_s_water) * scaling
             tmp_water = spline(lwater) * wmask_water
-            ccf_water[d_it] = mp.nanmean(tmp_water[tmp_water != 0.0])
+            ccf_water[d_it] = mp.nansum(tmp_water[tmp_water != 0.0])
 
         # ------------------------------------------------------------------
         # subtract the median of the ccf outside the core of the gaussian.
@@ -904,25 +907,33 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
 
         # ---------------------------------------------------------------------
         # remove a polynomial fit (remove continuum of the CCF) for water
-        cont = np.abs(drange)>np.max(np.abs(drange))/2
-        ccf_water -= np.nanmedian(ccf_water[cont])
-        ccf_others -= np.nanmedian(ccf_others[cont])
+        # this is now a normalized CCF we subtract a 1 so it becomes centered
+        # on zeri
+        cont = np.abs(drange) > np.max(np.abs(drange)) / 4
+        # ccf_water /= np.nanmedian(ccf_water[cont])
+        # ccf_others /= np.nanmedian(ccf_others[cont])
 
-        #water_coeffs, _ = mp.robust_polyfit(drange, ccf_water, 2, 3)
-        #ccf_water = ccf_water - np.polyval(water_coeffs, drange)
+        water_coeffs, _ = mp.robust_polyfit(drange[cont], ccf_water[cont],
+                                            2, 3)
+        ccf_water = (ccf_water / np.polyval(water_coeffs, drange)) - 1
         # remove a polynomial fit (remove continuum of the CCF) for water
-        #others_coeffs, _ = mp.robust_polyfit(drange, ccf_others, 2, 3)
-        #ccf_others = ccf_others - np.polyval(others_coeffs, drange)
+        others_coeffs, _ = mp.robust_polyfit(drange[cont], ccf_others[cont],
+                                             2, 3)
+        ccf_others = (ccf_others / np.polyval(others_coeffs, drange)) - 1
 
         # ------------------------------------------------------------------
         # get the amplitude of the middle of the CCF
         # work out the internal part mask
         internal_mask = np.abs(drange) < ccf_control_radius
-        amp_water = mp.nansum(ccf_water[internal_mask])
+        amp_water = mp.nanmean(ccf_water[internal_mask])
         if not force_airmass:
-            amp_others = mp.nansum(ccf_others[internal_mask])
+            amp_others = mp.nanmean(ccf_others[internal_mask])
         else:
             amp_others = 0.0
+        # TODO: Add to language database
+        msg = '\t\tamp_water={0:.3f} amp_others={0:3f}'
+        margs = [amp_water, amp_others]
+        WLOG(params, '', msg.format(*margs))
         # ------------------------------------------------------------------
         # count the number of NaNs in the CCF
         num_nan_ccf = np.sum(~np.isfinite(ccf_water))
@@ -962,7 +973,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
             try:
                 # noinspection PyTupleAssignmentBalance
                 popt, pconv = curve_fit(mp.gauss_function_nodc, drange,
-                                        ccf_others,  p0=others_guess)
+                                        ccf_others, p0=others_guess)
             except RuntimeError:
                 eargs = ['others', water_guess]
                 WLOG(params, 'error', textentry('09-019-00006', args=eargs))
@@ -1015,6 +1026,11 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
             # move exponent by an increment to get the right exponent
             next_expo_water = expo_water - amp_water_arr[-1] * slope_water
 
+            if not force_airmass:
+                next_expo_others = expo_others - amp_others_arr[-1] * slope_others
+            else:
+                next_expo_others = hdr_airmass
+
             # feedback loop is excessive we cannot have expo_water negative
             if next_expo_water < 0:
                 expo_water = expo_water / 2
@@ -1022,20 +1038,23 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
             else:
                 expo_water = next_expo_water
 
-            if not force_airmass:
-                expo_others -= amp_others_arr[-1] * slope_others
+            if next_expo_others < 0:
+                expo_others = expo_others / 2
+                slope_others = slope_others / 2
+            else:
+                expo_others = next_expo_others
 
             # # if we have over 5 iterations we fit a 2nd order polynomial
             # # to the lowest 5 amplitudes
             if iteration > 5:
                 # fit the last 4 amplitudes for others
-                fit_others = np.polyfit(amp_others_arr[-4:],expo_others_arr[-4:],2)
+                fit_others = np.polyfit(amp_others_arr[-4:], expo_others_arr[-4:], 2)
                 # fit the last 4 ampliters for water
-                fit_water = np.polyfit(amp_water_arr[-4:],expo_water_arr[-4:],2)
+                fit_water = np.polyfit(amp_water_arr[-4:], expo_water_arr[-4:], 2)
                 # take the slope of the derivative as the slope (others)
-                slope_others = np.polyval(np.polyder(fit_others),0)
+                slope_others = np.polyval(np.polyder(fit_others), 0)
                 # take the slope of the derivative as the slope (water)
-                slope_water = np.polyval(np.polyder(fit_water),0)
+                slope_water = np.polyval(np.polyder(fit_water), 0)
 
             #     if not force_airmass:
             #         # get others lists as array and sort them
@@ -1082,8 +1101,14 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         # ------------------------------------------------------------------
         # finally add one to the iterator
         iteration += 1
-
     # ----------------------------------------------------------------------
+    # work out the SNR for the CCF
+    snr_others = -amp_others_arr[0] / mp.estimate_sigma(ccf_others)
+    snr_water = -amp_water_arr[0] / mp.estimate_sigma(ccf_water)
+    # TODO: Add to language database
+    msg = 'SNR_others={:.2f} SNR_water={:.2f}'
+    margs = [snr_others, snr_water]
+    WLOG(params, '', msg.format(*margs))
     # deal with lower bounds for other species
     if expo_others < others_bounds[0]:
         # update qc params
@@ -1224,7 +1249,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         finite_res_e2ds = finite_res_correction(params, template_props,
                                                 wave_e2ds, res_s1d_fwhm,
                                                 res_s1d_expo, expo_others,
-                                                expo_water,  spl_others,
+                                                expo_water, spl_others,
                                                 spl_water, dvgrid)
         # correction the spectrum
         corrected_e2ds = corrected_e2ds / finite_res_e2ds
@@ -1726,7 +1751,6 @@ def finite_res_correction(params: ParamDict, template_props: ParamDict,
     return finite_res_e2ds
 
 
-
 def qc_exit_tellu_preclean(params, recipe, image, image_e2ds_ini, infile,
                            wavemap, qc_params, sky_model, res_e2ds_fwhm,
                            res_e2ds_expo, template_props, wave_e2ds,
@@ -1742,8 +1766,6 @@ def qc_exit_tellu_preclean(params, recipe, image, image_e2ds_ini, infile,
     :param qc_params:
     :param sky_model:
     :param database:
-    :param res_fwhm:
-    :param res_expo:
 
     :return:
     """
@@ -2252,37 +2274,23 @@ def read_tellu_preclean(params, recipe, infile, fiber, database=None):
 # =============================================================================
 # Database functions
 # =============================================================================
-
 # for: load_tellu_file
-LoadTelluFileReturn = Union[  # if return filename
-    str,
-    # if return_filename + return_source
-    Tuple[str, str],
-    # default
-    Tuple[Union[np.ndarray, Table, None],
-          Union[drs_fits.Header, None],
-          str],
-    # if return_source
-    Tuple[Union[np.ndarray, Table, None],
-          Union[drs_fits.Header, None],
-          str, str],
-    # if nentries > 1
-    List[str],
-    # if nentries > 1 + return source
-    Tuple[List[str], str],
-    # if nentries > 1 + default
-    Tuple[List[Union[np.ndarray, Table, None]],
-          List[Union[drs_fits.Header, None]],
-          List[str]],
-    # if nentries > 1 + return source
-    Tuple[List[Union[np.ndarray, None]],
-          List[Union[drs_fits.Header, None]],
-          List[str], str],
-    # if None + return source
-    Tuple[None, None, None, str],
-    # if None
-    Tuple[None, None, None]
-]
+LoadTelluFileReturn = Union[str,
+                            Tuple[str, str],
+                            Tuple[Union[np.ndarray, Table, None],
+                                  Union[drs_fits.Header, None],str],
+                            Tuple[Union[np.ndarray, Table, None],
+                                  Union[drs_fits.Header, None], str, str],
+                            List[str],
+                            Tuple[List[str], str],
+                            Tuple[List[Union[np.ndarray, Table, None]],
+                            List[Union[drs_fits.Header, None]],
+                            List[str]],
+                            Tuple[List[Union[np.ndarray, None]],
+                            List[Union[drs_fits.Header, None]],
+                            List[str], str],
+                            Tuple[None, None, None, str],
+                            Tuple[None, None, None]]
 
 
 def load_tellu_file(params: ParamDict, key: str,
