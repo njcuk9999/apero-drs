@@ -2285,7 +2285,7 @@ FTELLU_NUM_PRINCIPLE_COMP = FTELLU_NUM_PRINCIPLE_COMP.copy(__NAME__)
 FTELLU_NUM_PRINCIPLE_COMP.value = 5
 
 # The number of transmission files to use in the PCA fit (use this number of
-#    trans files closest in expo_h20 and expo_water
+#    trans files closest in expo_H2O and expo_water
 FTELLU_NUM_TRANS = FTELLU_NUM_TRANS.copy(__NAME__)
 FTELLU_NUM_TRANS.value = 50
 
