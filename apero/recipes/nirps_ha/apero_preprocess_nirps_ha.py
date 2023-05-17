@@ -199,6 +199,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # any pixel with less than 2 reads has no ramp fitting - set to NaN
         image[datalist[2] < 2] = np.nan
         # ------------------------------------------------------------------
+        # add postmeter statistics
+        postmeter_props = prep.postermeter_stats(params, infile.filename, ext=4)
+        # ------------------------------------------------------------------
         # Get out file and check skip
         # ------------------------------------------------------------------
         # print progress
@@ -412,6 +415,13 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # Add the LED flat file used
         outfile.add_hkey('KW_PP_LED_FLAT_FILE',
                          value=os.path.basename(led_file))
+        # Add the posemeter keys
+        outfile.add_hkey('KW_PP_MJD_FLUX',
+                         value=postmeter_props['PP_MJD_FLUX'])
+        outfile.add_hkey('KW_PP_RMS_POSE',
+                         value=postmeter_props['PP_MED_FLUX_DIFF'])
+        outfile.add_hkey('KW_PP_MED_POSE',
+                         value=postmeter_props['PP_RMS_FLUX_DIFF'])
         # ------------------------------------------------------------------
         # copy data
         outfile.data = image

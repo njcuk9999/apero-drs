@@ -53,8 +53,9 @@ __all__ = [  # input keys
     # preprocess keys
     'KW_PPSHIFTX', 'KW_PPSHIFTY', 'KW_PP_REF_NSIG', 'KW_PP_REF_FILE',
     'KW_PP_LED_FLAT_P50', 'KW_PP_LED_FLAT_P16', 'KW_PP_LED_FLAT_P84',
-    'KW_PP_LED_FLAT_FILE',
-    'KW_PPC_NBAD_INTE', 'KW_PPC_NBAD_SLOPE', 'KW_PPC_NBAD_BOTH',
+    'KW_PP_LED_FLAT_FILE', 'KW_PP_MJD_FLUX', 'KW_PP_RMS_POSE',
+    'KW_PP_MED_POSE', 'KW_PPC_NBAD_INTE', 'KW_PPC_NBAD_SLOPE',
+    'KW_PPC_NBAD_BOTH',
     # dark keys
     'KW_DARK_DEAD', 'KW_DARK_MED', 'KW_DARK_B_DEAD',
     'KW_DARK_B_MED', 'KW_DARK_R_DEAD', 'KW_DARK_R_MED', 'KW_DARK_CUT',
@@ -795,6 +796,24 @@ KW_PP_LED_FLAT_P84 = Keyword('KW_PP_LED_FLAT_P84', key='NULL', dtype=float,
 KW_PP_LED_FLAT_FILE = Keyword('KW_PP_LED_FLAT_FILE', key='NULL', dtype=str,
                               source=__NAME__,
                               description='Define the LED flat file used')
+
+# Define the flux-weighted mid-exposure [Expert use only]
+KW_PP_MJD_FLUX = Keyword('KW_PP_LED_FLAT_FILE', key='NULL', dtype=str,
+                         source=__NAME__,
+                         description='Define the flux-weighted mid-exposure '
+                                     '[Expert use only]')
+
+# Define fractional RMS of posemteter [Expert use only]
+KW_PP_RMS_POSE = Keyword('KW_PP_LED_FLAT_FILE', key='NULL', dtype=str,
+                              source=__NAME__,
+                              description='Define fractional RMS of posemteter '
+                                          '[Expert use only]')
+
+# Define median flux in posemeter [Expert use only]
+KW_PP_MED_POSE = Keyword('KW_PP_LED_FLAT_FILE', key='NULL', dtype=str,
+                              source=__NAME__,
+                              description='Define median flux in posemeter '
+                                          '[Expert use only]')
 
 # -----------------------------------------------------------------------------
 # Define apero_dark variables
