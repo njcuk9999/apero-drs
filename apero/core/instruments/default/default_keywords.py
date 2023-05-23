@@ -55,8 +55,9 @@ __all__ = [  # input keys
     # preprocess keys
     'KW_PPSHIFTX', 'KW_PPSHIFTY', 'KW_PP_REF_NSIG', 'KW_PP_REF_FILE',
     'KW_PP_LED_FLAT_P50', 'KW_PP_LED_FLAT_P16', 'KW_PP_LED_FLAT_P84',
-    'KW_PP_LED_FLAT_FILE',
-    'KW_PPC_NBAD_INTE', 'KW_PPC_NBAD_SLOPE', 'KW_PPC_NBAD_BOTH',
+    'KW_PP_LED_FLAT_FILE', 'KW_PP_MJD_FLUX', 'KW_PP_RMS_POSE',
+    'KW_PP_MED_POSE', 'KW_PPC_NBAD_INTE', 'KW_PPC_NBAD_SLOPE',
+    'KW_PPC_NBAD_BOTH',
     # dark keys
     'KW_DARK_DEAD', 'KW_DARK_MED', 'KW_DARK_B_DEAD',
     'KW_DARK_B_MED', 'KW_DARK_R_DEAD', 'KW_DARK_R_MED', 'KW_DARK_CUT',
@@ -827,6 +828,24 @@ KW_PP_LED_FLAT_P84 = Keyword('KW_PP_LED_FLAT_P84', key='NULL', dtype=float,
 KW_PP_LED_FLAT_FILE = Keyword('KW_PP_LED_FLAT_FILE', key='NULL', dtype=str,
                               source=__NAME__,
                               description='Define the LED flat file used')
+
+# Define the flux-weighted mid-exposure [Expert use only]
+KW_PP_MJD_FLUX = Keyword('KW_PP_LED_FLAT_FILE', key='NULL', dtype=str,
+                         source=__NAME__,
+                         description='Define the flux-weighted mid-exposure '
+                                     '[Expert use only]')
+
+# Define fractional RMS of posemteter [Expert use only]
+KW_PP_RMS_POSE = Keyword('KW_PP_LED_FLAT_FILE', key='NULL', dtype=str,
+                              source=__NAME__,
+                              description='Define fractional RMS of posemteter '
+                                          '[Expert use only]')
+
+# Define median flux in posemeter [Expert use only]
+KW_PP_MED_POSE = Keyword('KW_PP_LED_FLAT_FILE', key='NULL', dtype=str,
+                              source=__NAME__,
+                              description='Define median flux in posemeter '
+                                          '[Expert use only]')
 
 # -----------------------------------------------------------------------------
 # Define apero_dark variables
@@ -2115,11 +2134,11 @@ KW_MKMODEL_SIGCUT = Keyword('KW_MKMODEL_NFILES', key='NULL', dtype=float,
 KW_FTELLU_NPC = Keyword('KW_FTELLU_NPC', key='NULL', dtype=int, source=__NAME__,
                         description='The number of principle components used')
 
-# The number of trans files used in pc fit (closest in expo h20/others)
+# The number of trans files used in pc fit (closest in expo H2O/others)
 KW_FTELLU_NTRANS = Keyword('KW_FTELLU_NTRANS', key='NULL', dtype=int,
                            source=__NAME__,
                            description=('The number of trans files used in pc '
-                                        'fit (closest in expo h20/others)'))
+                                        'fit (closest in expo H2O/others)'))
 
 # whether we added first derivative to principal components
 KW_FTELLU_ADD_DPC = Keyword('KW_FTELLU_ADD_DPC', key='NULL', dtype=bool,

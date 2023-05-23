@@ -635,6 +635,21 @@ KW_PP_LED_FLAT_P84.set(key='PPLEDP84', comment='LED RMS 84th percentile')
 KW_PP_LED_FLAT_FILE = KW_PP_LED_FLAT_FILE.copy(__NAME__)
 KW_PP_LED_FLAT_FILE.set(key='PPLEDFIL', comment='LED flat file used')
 
+# Define the flux-weighted mid-exposure [Expert use only]
+KW_PP_MJD_FLUX = KW_PP_MJD_FLUX.copy(__NAME__)
+KW_PP_MJD_FLUX.set(key='MJD_FLUX',
+                   comment='flux-weighted mid-exposure [Expert use only]')
+
+# Define fractional RMS of posemteter [Expert use only]
+KW_PP_RMS_POSE = KW_PP_RMS_POSE.copy(__NAME__)
+KW_PP_RMS_POSE.set(key='RMS_POSE ',
+                   comment='flux-weighted mid-exposure [Expert use only]')
+
+# Define median flux in posemeter [Expert use only]
+KW_PP_MED_POSE = KW_PP_MED_POSE.copy(__NAME__)
+KW_PP_MED_POSE.set(key='MED_POSE',
+                   comment='flux-weighted mid-exposure [Expert use only]')
+
 # -----------------------------------------------------------------------------
 # Define apero_dark variables
 # -----------------------------------------------------------------------------
@@ -1708,7 +1723,7 @@ KW_TELLUP_DO_PRECLEAN.set(key='TLPDOFRC', comment='tellu finite res corr done',
 # Define default water absorption used (tellu pre-cleaning)
 KW_TELLUP_DFLT_WATER = KW_TELLUP_DFLT_WATER.copy(__NAME__)
 KW_TELLUP_DFLT_WATER.set(key='TLPDFH2O',
-                         comment='tellu preclean default h20 abso used',
+                         comment='tellu preclean default H2O abso used',
                          parent='TELLUP_D_WATER_ABSO')
 
 # Define ccf scan range that was used (tellu pre-cleaning)
@@ -1895,7 +1910,7 @@ KW_FTELLU_NPC = KW_FTELLU_NPC.copy(__NAME__)
 KW_FTELLU_NPC.set(key='FTT_NPC',
                   comment='ftellu Number of principal components used')
 
-# The number of trans files used in pc fit (closest in expo h20/others)
+# The number of trans files used in pc fit (closest in expo H2O/others)
 KW_FTELLU_NTRANS = KW_FTELLU_NTRANS.copy(__NAME__)
 KW_FTELLU_NTRANS.set(key='FTT_NTRS',
                      comment='ftellu NUmber of trans files used in pc fit')

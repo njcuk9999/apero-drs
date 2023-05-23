@@ -4111,13 +4111,13 @@ FTELLU_NUM_PRINCIPLE_COMP = Const('FTELLU_NUM_PRINCIPLE_COMP', value=None,
                                               'components to use in PCA fit')
 
 # The number of transmission files to use in the PCA fit (use this number of
-#    trans files closest in expo_h20 and expo_water
+#    trans files closest in expo_H2O and expo_water
 FTELLU_NUM_TRANS = Const('FTELLU_NUM_TRANS', value=None, dtype=int,
                          source=__NAME__, minimum=1,
                          user=True, active=False, group=cgroup,
                          description='The number of transmission files to use '
                                      'in the PCA fit (use this number of '
-                                     'trans files closest in expo_h20 and '
+                                     'trans files closest in expo_H2O and '
                                      'expo_water')
 
 # Define whether to add the first derivative and broadening factor to the

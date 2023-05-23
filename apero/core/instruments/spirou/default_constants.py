@@ -2249,7 +2249,7 @@ TELLUP_REMOVE_ORDS.value = '45, 46, 47, 48'
 
 # define the minimum snr to accept orders for pre-cleaning fit
 TELLUP_SNR_MIN_THRES = TELLUP_SNR_MIN_THRES.copy(__NAME__)
-TELLUP_SNR_MIN_THRES.value = 10.0
+TELLUP_SNR_MIN_THRES.value = 3.0
 
 # define the telluric trans other abso CCF file
 TELLUP_OTHERS_CCF_FILE = TELLUP_OTHERS_CCF_FILE.copy(__NAME__)
@@ -2395,14 +2395,14 @@ FTELLU_QC_SNR_ORDER.value = 33
 #  Define the minimum SNR for order "QC_TELLU_SNR_ORDER" that will be
 #      accepted to the telluDB
 FTELLU_QC_SNR_MIN = MKTELLU_QC_SNR_MIN.copy(__NAME__)
-FTELLU_QC_SNR_MIN.value = 15
+FTELLU_QC_SNR_MIN.value = 3
 
 # The number of principle components to use in PCA fit
 FTELLU_NUM_PRINCIPLE_COMP = FTELLU_NUM_PRINCIPLE_COMP.copy(__NAME__)
 FTELLU_NUM_PRINCIPLE_COMP.value = 5
 
 # The number of transmission files to use in the PCA fit (use this number of
-#    trans files closest in expo_h20 and expo_water
+#    trans files closest in expo_H2O and expo_water
 FTELLU_NUM_TRANS = FTELLU_NUM_TRANS.copy(__NAME__)
 FTELLU_NUM_TRANS.value = 50
 
