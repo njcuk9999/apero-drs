@@ -844,6 +844,118 @@ class AperoDatabase:
         return list(unique_cols)
 
 
+class DatabaseColumns:
+    def __init__(self, name_prefix: Optional[str] = None):
+        """
+        SQL database columns definition
+
+        """
+        self.names = []
+        self.datatypes = []
+        self.dtypes = []
+        self.unique_cols = []
+        self.index_cols = []
+        self.name_prefix = name_prefix
+        self.altnames = []
+        self.comments = []
+        self.index_groups = []
+
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state
+        return state
+
+    def __setstate__(self, state: dict):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+
+    def add(self, name: str, datatype: str, is_unique: bool = False,
+            is_index: bool = False, comment: Optional[str] = None):
+        """
+        Add a column to the database
+
+        :param name: str, the name of the column
+        :param datatype: str, the sql data type e.g. FLOAT, REAL, INT, CHAR,
+                         VARCHAR, TEXT, BLOB
+        :param is_unique: bool, if True this column is flagged as unique
+        :param is_index: bool, if True this column is indexed
+        :param comment: str (optional), if set this is the comment associated
+                        with this column
+
+        :return: None
+        """
+        self.names.append(name)
+        self.datatypes.append(datatype)
+        self.dtypes.append(self._dtyper(datatype))
+        if is_unique:
+            self.unique_cols.append(name)
+        if is_index:
+            self.index_cols.append(name)
+        self.comments.append(comment)
+        if self.name_prefix is not None:
+            self.altnames.append('{0}{1}'.format(self.name_prefix, name))
+
+    def __add__(self, other: 'DatabaseColumns'):
+        """
+        Add one Database Column list to another
+
+        :param other: DatabaseColumns instance to be added to self
+
+        :return: None
+        """
+        new = DatabaseColumns(name_prefix=self.name_prefix)
+        # add to names
+        new.names = self.names + other.names
+        new.datatypes = self.datatypes + other.datatypes
+        new.dtypes = self.dtypes + other.dtypes
+        new.unique_cols = self.unique_cols + other.unique_cols
+        new.index_cols = self.index_cols + other.index_cols
+        new.comments = self.comments + other.comments
+        new.altnames = self.altnames + other.altnames
+        # return the new
+        return new
+
+    @staticmethod
+    def _dtyper(datatype):
+        """
+        Translate sql data types into python data types
+        """
+        if datatype == 'INT':
+            return int
+        if datatype == 'FLOAT':
+            return float
+        if datatype in ['TEXT', 'BLOB']:
+            return str
+        if datatype.startswith('VARCHAR'):
+            return str
+        # default is to cast to string
+        return str
+
+    def get_index_groups(self) -> Union[List[List[str]], None]:
+        """
+        get the index groups - return None if empty
+        :return:
+        """
+        if len(self.index_groups) == 0:
+            return None
+        else:
+            return self.index_groups
+
+
+# =============================================================================
+# Working functions
+# =============================================================================
 def _hash_col(insert_dict: UpdateDictReturn,
               unique_cols: List[str],
               return_string: bool = False
