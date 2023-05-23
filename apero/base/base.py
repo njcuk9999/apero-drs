@@ -94,6 +94,7 @@ DATABASE_COL_CLASS = ['CALIBRATION_DB_COLUMNS', 'TELLURIC_DB_COLUMNS',
                       'FILEINDEX_DB_COLUMNS', 'LOG_DB_COLUMNS',
                       'ASTROMETRIC_DB_COLUMNS', None, 'REJECT_DB_COLUMNS']
 DEFAULT_DATABASE_PORT = 3306
+DEFAULT_PATH_MAXC = 1024
 # -----------------------------------------------------------------------------
 # language settings
 # -----------------------------------------------------------------------------
