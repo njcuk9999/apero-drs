@@ -1081,7 +1081,7 @@ if __name__ == "__main__":
 
     _columns = [sqlalchemy.Column('name', sqlalchemy.String(128), unique=True),
                 sqlalchemy.Column('age', sqlalchemy.Integer)]
-    _indexes = [sqlalchemy.Index('idx_users_name_age', 'name', 'age', 'weight')]
+    _indexes = [sqlalchemy.Index('idx_users_name_age', 'name', 'age')]
     _uniques = [sqlalchemy.UniqueConstraint('name', name='uix_name')]
 
     _database.delete_table('users')
