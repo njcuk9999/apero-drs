@@ -1061,7 +1061,8 @@ if __name__ == "__main__":
     _database.add_database()
 
     _columns = [sqlalchemy.Column('name', sqlalchemy.String(128), unique=True),
-                sqlalchemy.Column('age', sqlalchemy.Integer)]
+                sqlalchemy.Column('age', sqlalchemy.Integer),
+                sqlalchemy.Column('weight', sqlalchemy.Float)]
     _indexes = [sqlalchemy.Index('idx_users_name_age', 'name', 'age')]
     _uniques = [sqlalchemy.UniqueConstraint('name', name='uix_name')]
 
