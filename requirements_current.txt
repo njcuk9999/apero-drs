@@ -25,3 +25,4 @@ yagmail==0.15.293
 # pip: if using mysql
 mysql-connector-python==8.0.33
 SQLAlchemy==2.0.15
+sqlalchemy_utils==0.41.1
