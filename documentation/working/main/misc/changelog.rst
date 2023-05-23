@@ -2,6 +2,27 @@ Changelog
 =========
 
 
+0.7.283 (2023-05-23)
+--------------------
+- Update python modules. [njcuk9999]
+- [NIRPS] add posemeter values for nirps (mjd, rms, med) to header in
+  preprocessing. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.282-live' into
+  v0.7.282-live. [Neil Cook]
+- [APERO] Lower limits for QC in `fit_tellu` (catch bad snr in template
+  creation) [Neil Cook]
+- [APERO] H20 to H2O. [Neil Cook]
+- [NIRPS] Addd new CCF masks for NIRPS-HA and NIRPS-HE (based on
+  `lbl_ccf_masks)` [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.282-stable-test' into
+  v0.7.282-stable-test. [Neil Cook]
+- Merge branch 'v0.7.279-live' into v0.7.282-stable-test. [Neil Cook]
+- `Drs_markdown.py` - allow sectionname to be None. [Neil Cook]
+- [APERO] only process the ccf for files that pass qc. [Neil Cook]
+- [APERO] change the QCC for SNR preclean label. [Neil Cook]
+- [APERO] update version. [Neil Cook]
+
+
 0.7.282 (2023-04-27)
 --------------------
 - [APERO] `apero.core.utils.drs_utils.py` - fix ended=0 in rlog. [Neil
