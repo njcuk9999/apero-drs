@@ -93,6 +93,7 @@ DATABASE_FULLNAMES = ['calibration', 'telluric', 'file index', 'recipe log',
 DATABASE_COL_CLASS = ['CALIBRATION_DB_COLUMNS', 'TELLURIC_DB_COLUMNS',
                       'FILEINDEX_DB_COLUMNS', 'LOG_DB_COLUMNS',
                       'ASTROMETRIC_DB_COLUMNS', None, 'REJECT_DB_COLUMNS']
+DEFAULT_DATABASE_PORT = 3306
 # -----------------------------------------------------------------------------
 # language settings
 # -----------------------------------------------------------------------------

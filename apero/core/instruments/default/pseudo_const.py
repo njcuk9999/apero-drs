@@ -42,7 +42,7 @@ NOT_IMPLEMENTED = ('Definition Error: Must be overwritten in instrument '
                    'pseudo_const not {0} \n\t i.e. in apero.core.'
                    'instruments.spirou.pseudoconst.py \n\t method = {1}')
 # get database columns
-DatabaseColumns = drs_db.DatabaseColumns
+DatabaseColumns = drs_db.AperoDatabaseColumns
 # get display func
 display_func = drs_misc.display_func
 # define bad characters for objects (alpha numeric + "_")

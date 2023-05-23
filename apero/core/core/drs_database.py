@@ -107,16 +107,14 @@ class DatabaseManager:
     Apero Database Manager class (basically abstract)
     """
     # define attribute types
-    path: Union[Path, str, None]
-    database: Union[drs_db.Database, None]
+    database: Union[drs_db.AperoDatabase, None]
 
-    def __init__(self, params: ParamDict, check: bool = False):
+    def __init__(self, params: ParamDict, pconst: Any = None):
         """
         Construct the Database Manager
 
         :param params: ParamDict, parameter dictionary of constants
-        :param check: bool, if True makes sure database file exists (otherwise
-                      assumes it is) - base class does nothing
+        :param pconst: Psuedo constants class for instrument
         """
         # save class name
         self.classname = 'DatabaseManager'
@@ -124,12 +122,14 @@ class DatabaseManager:
         # _ = display_func('__init__', __NAME__, self.classname)
         # save params for use throughout
         self.params = params
+        self.pconst = pconst
         self.instrument = base.IPARAMS['INSTRUMENT']
         # get pconst (for use throughout)
         self.pconst = constants.pload()
         # set name
         self.name = 'DatabaseManager'
         self.kind = 'None'
+        self.columns = None
         self.dbtype = None
         # set parameters
         self.dbhost = None
@@ -137,86 +137,12 @@ class DatabaseManager:
         self.dbpath = None
         self.dbname = None
         self.dbreset = None
-        # check does nothing
-        _ = check
-        # set path
-        self.path = None
+        self.dbpass = None
+        self.dbport = None
+        # sqlalchemy URL
+        self.dburl = None
         # set unloaded database
         self.database = None
-
-    def set_path(self, kind: str, check: bool = True,
-                 dparams: Union[dict, None] = None):
-        """
-        Set the path for the database
-
-        :param kind: str, the kind of datatable
-        :param check: bool, if True the filename has to exist
-        :param dparams: dict or None, if set this is the database dictionary
-
-        :return: None, sets self.path
-        """
-        # set function
-        func_name = display_func('set_path', __NAME__,
-                                 self.classname)
-
-        # deal with no instrument (i.e. no database)
-        if self.instrument == 'None':
-            return
-        # load database settings
-        self.database_settings(kind=kind, dparams=dparams)
-
-        # ---------------------------------------------------------------------
-        # deal with path for SQLITE3
-        # ---------------------------------------------------------------------
-        if self.dbtype == 'SQLITE3':
-            # get directory name
-            dirname = str(self.dbpath)
-            # deal with dir name being a parameter key (multiple depths allowed)
-            while dirname in self.params:
-                dirname = self.params[dirname]
-            # deal with dirname still being a parameter
-            # noinspection PyBroadException
-            try:
-                dirname = Path(dirname)
-            except Exception as _:
-                # log error: Directory {0} invalid for database: {1}
-                eargs = [dirname, self.name, func_name]
-                emsg = textentry('00-002-00016', args=eargs)
-                WLOG(self.params, 'error', emsg)
-                return
-            # check for directory
-            if not dirname.exists() and check:
-                # log error: Directory {0} does not exist (database = {1})
-                eargs = [dirname, self.name, func_name]
-                emsg = textentry('00-002-00017', args=eargs)
-                WLOG(self.params, 'error', emsg)
-                return
-            # -----------------------------------------------------------------
-            # add filename
-            # -----------------------------------------------------------------
-            # get directory name
-            filename = str(self.dbname)
-            # deal with filename being a parameter key (multiple depths allowed)
-            while filename in self.params:
-                filename = self.params[filename]
-            # add to dirname
-            abspath = dirname.joinpath(filename)
-            if not abspath.exists() and check:
-                # log error: Directory {0} does not exist (database = {1})
-                eargs = [abspath, self.name, func_name]
-                emsg = textentry('00-002-00018', args=eargs)
-                WLOG(self.params, 'error', emsg)
-                return
-            # set path
-            self.path = abspath
-        # ---------------------------------------------------------------------
-        # deal with path for MySQL (only for printing)
-        # ---------------------------------------------------------------------
-        elif self.dbtype == 'MYSQL':
-            self.path = '{0}@{1}'.format(self.dbuser, self.dbhost)
-        else:
-            emsg = 'Database type "{0}" invalid'
-            WLOG(self.params, 'error', emsg.format(self.dbtype))
 
     def load_db(self, check: bool = False, log: bool = False):
         """
@@ -239,10 +165,10 @@ class DatabaseManager:
             return
         # log that we are loading database
         if log:
-            margs = [self.name, self.path]
+            margs = [self.name, self.dburl]
             WLOG(self.params, 'info', textentry('40-006-00005', args=margs))
         # load database
-        self.database = drs_db.database_wrapper(self.kind, self.path)
+        self.database = drs_db.AperoDatabase(self.dburl, tablename=self.dbtable)
 
     def __str__(self):
         """
@@ -252,7 +178,7 @@ class DatabaseManager:
         # set function
         # _ = display_func('__str__', __NAME__, self.classname)
         # return string representation
-        return '{0}[{1}]'.format(self.classname, self.path)
+        return '{0}[{1}]'.format(self.classname, self.dburl)
 
     def __repr__(self):
         """
@@ -272,46 +198,51 @@ class DatabaseManager:
 
         :return: None updates database settings
         """
+        # deal with no instrument (i.e. no database)
+        if self.instrument == 'None':
+            return
         # load database yaml file
         if dparams is None:
             ddict = base.DPARAMS
         else:
             ddict = dict(dparams)
         # get correct sub-dictionary
-        if ddict['USE_MYSQL']:
-            sdict = ddict['MYSQL']
-            self.dbtype = 'MYSQL'
-            self.dbhost = sdict['HOST']
-            self.dbuser = sdict['USER']
+        self.dbtype = ddict['TYPE']
+        self.dbhost = ddict['HOST']
+        self.dbuser = ddict['USER']
+        self.dbpass = ddict['PASS']
+        if 'PORT' in ddict:
+            self.dbport = ddict['PORT']
         else:
-            sdict = ddict['SQLITE3']
-            self.dbtype = 'SQLITE3'
+            self.dbport = base.DEFAULT_DATABASE_PORT
         # kind must be one of the following
         if kind not in DATABASE_NAMES:
             raise ValueError('kind=={0} invalid'.format(kind))
         # for yaml kind is uppercase
         ykind = kind.upper()
         # set name/path/reset based on ddict
-        self.dbname = sdict[ykind]['NAME']
-        self.dbpath = sdict[ykind]['PATH']
-        if drs_text.null_text(sdict[ykind]['RESET'], ['None']):
+        self.dbtable = ddict[ykind]['NAME']
+        if drs_text.null_text(ddict[ykind]['RESET'], ['None']):
             self.dbreset = None
         else:
-            self.dbreset = sdict[ykind]['RESET']
+            self.dbreset = ddict[ykind]['RESET']
+        # set path
+        self.dburl = (f'{self.dbtype}://{self.dbuser}:{self.dbpass}'
+                      f'@{self.dbhost}:{self.dbport}/{self.dbtable}')
 
 
 # =============================================================================
 # Object database
 # =============================================================================
 class AstrometricDatabase(DatabaseManager):
-    def __init__(self, params: ParamDict, check: bool = True,
-                 dparams: Union[dict, None] = None):
+    def __init__(self, params: ParamDict, pconst: Any,
+                 dparams: Optional[dict] = None):
         """
         Constructor of the Astrometric Database class
 
         :param params: ParamDict, parameter dictionary of constants
-        :param check: bool, if True makes sure database file exists (otherwise
-                      assumes it is)
+        :param dparams: dict, optional, the database yaml dictionary
+                        (parse if preloaded, otherwise reloads)
 
         :return: None
         """
@@ -320,12 +251,14 @@ class AstrometricDatabase(DatabaseManager):
         # set function
         # _ = display_func('__init__', __NAME__, self.classname)
         # construct super class
-        DatabaseManager.__init__(self, params)
+        DatabaseManager.__init__(self, params, pconst)
         # set name
         self.name = 'astrom'
         self.kind = 'astrom'
+        self.columns = self.pconst.ASTROMETRIC_DB_COLUMNS()
+        self.colnames = self.columns.names
         # set path
-        self.set_path(kind=self.kind, check=check, dparams=dparams)
+        self.database_settings(kind=self.kind, dparams=dparams)
 
     def get_entries(self, columns: str = '*',
                     nentries: Union[int, None] = None,
@@ -457,9 +390,6 @@ class AstrometricDatabase(DatabaseManager):
                   pmra, pmra_s, pmde, pmde_s, plx, plx_s, rv, rv_s, gmag,
                   gmag_s, bpmag, bpmag_s, rpmag, rpmag_s, epoch, epoch_s,
                   teff, teff_s]
-        # get unique columns
-        objdb_cols = self.pconst.ASTROMETRIC_DB_COLUMNS()
-        ucols = list(objdb_cols.unique_cols)
         # deal with null values
         for it, value in enumerate(values):
             if value is None:
@@ -476,17 +406,10 @@ class AstrometricDatabase(DatabaseManager):
             values.append(aliases_s)
         # add used
         values.append(used)
+        # create insert dictionary
+        insert_dict = dict(zip(self.colnames, values))
         # try to add a new row
-        try:
-            self.database.add_row(values, columns='*', unique_cols=ucols)
-        # if row already exists then update that row (based on Gaia ID and
-        #   objname)
-        except drs_db.UniqueEntryException:
-            # condition comes from uhash - so set to None here (to remember)
-            condition = None
-            # update row in database
-            self.database.set('*', values=values, condition=condition,
-                              unique_cols=ucols)
+        self.database.add_row(insert_dict=insert_dict)
 
     def count(self, condition: Union[str, None] = None) -> int:
         """
@@ -558,7 +481,7 @@ class AstrometricDatabase(DatabaseManager):
             full_table = self.get_entries('OBJNAME, ALIASES',
                                           condition=condition)
             aliases = full_table['ALIASES']
-            # set row to zero as a place holder
+            # set row to zero as a placeholder
             row = 0
             # loop around each row in the table
             for row in range(len(aliases)):
@@ -586,13 +509,11 @@ class AstrometricDatabase(DatabaseManager):
 # Define specific file databases
 # =============================================================================
 class CalibrationDatabase(DatabaseManager):
-    def __init__(self, params: ParamDict, check: bool = True):
+    def __init__(self, params: ParamDict):
         """
         Constructor of the Calibration Database class
 
         :param params: ParamDict, parameter dictionary of constants
-        :param check: bool, if True makes sure database file exists (otherwise
-                      assumes it is)
 
         :return: None
         """
@@ -605,8 +526,10 @@ class CalibrationDatabase(DatabaseManager):
         # set name
         self.name = 'calibration'
         self.kind = 'calib'
+        self.columns = self.pconst.CALIBRATION_DB_COLUMNS()
+        self.colnames = self.columns.names
         # set path
-        self.set_path(kind=self.kind, check=check)
+        self.database_settings(kind=self.kind)
         # set database directory
         self.filedir = Path(str(self.params['DRS_CALIB_DB']))
 
@@ -633,9 +556,6 @@ class CalibrationDatabase(DatabaseManager):
         # deal with no instrument
         if self.instrument == 'None':
             return
-        # get unique columns
-        calibdb_cols = self.pconst.CALIBRATION_DB_COLUMNS()
-        ucols = list(calibdb_cols.unique_cols)
         # ------------------------------------------------------------------
         # get header and hdict
         hdict, header = _get_hdict(self.params, self.name, drsfile)
@@ -679,17 +599,10 @@ class CalibrationDatabase(DatabaseManager):
         # add entry to database
         values = [key, fiber, is_super, filename, human_time, unix_time, pid,
                   pdate, used]
+        # create insert dictionary
+        insert_dict = dict(zip(self.colnames, values))
         # try to add a new row
-        try:
-            self.database.add_row(values, columns='*', unique_cols=ucols)
-        # if row already exists then update that row (based on Gaia ID and
-        #   objname)
-        except drs_db.UniqueEntryException:
-            # condition comes from uhash - so set to None here (to remember)
-            condition = None
-            # update row in database
-            self.database.set('*', values=values, condition=condition,
-                              unique_cols=ucols)
+        self.database.add_row(insert_dict=insert_dict)
         # update parameter table (if fits file)
         if isinstance(drsfile, DrsFitsFile):
             drsfile.update_param_table('CALIB_DB_ENTRY',
@@ -735,13 +648,11 @@ class CalibrationDatabase(DatabaseManager):
         sql['condition'] = 'KEYNAME = "{0}"'.format(key)
         # condition for used
         sql['condition'] += ' AND USED = 1'
-
         # get unix time
         if hasattr(filetime, 'unix'):
             utime = filetime.unix
         else:
             utime = None
-
         # condition for fiber
         if fiber is not None:
             sql['condition'] += ' AND FIBER = "{0}"'.format(fiber)
@@ -995,8 +906,10 @@ class TelluricDatabase(DatabaseManager):
         # set name
         self.name = 'telluric'
         self.kind = 'tellu'
+        self.columns = self.pconst.TELLURIC_DB_COLUMNS()
+        self.colnames = self.columns.names
         # set path
-        self.set_path(kind=self.kind, check=check)
+        self.database_settings(kind=self.kind)
         # set database directory
         self.filedir = Path(str(self.params['DRS_TELLU_DB']))
 
@@ -1103,17 +1016,10 @@ class TelluricDatabase(DatabaseManager):
         # add entry to database
         values = [key, fiber, is_super, filename, human_time, unix_time,
                   objname, airmass, tau_water, tau_others, pid, pdate, used]
+        # get insert dictionary
+        insert_dict = dict(zip(self.colnames, values))
         # try to add a new row
-        try:
-            self.database.add_row(values, columns='*', unique_cols=ucols)
-        # if row already exists then update that row (based on Gaia ID and
-        #   objname)
-        except drs_db.UniqueEntryException:
-            # condition comes from uhash - so set to None here (to remember)
-            condition = None
-            # update row in database
-            self.database.set('*', values=values, condition=condition,
-                              unique_cols=ucols)
+        self.database.add_row(insert_dict=insert_dict)
         # update parameter table (if fits file)
         if isinstance(drsfile, DrsFitsFile):
             drsfile.update_param_table('TELLU_DB_ENTRY',

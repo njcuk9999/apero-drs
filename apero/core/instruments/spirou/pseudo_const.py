@@ -37,7 +37,7 @@ Time, TimeDelta = base.AstropyTime, base.AstropyTimeDelta
 # Get Parmeter Dictionary class
 ParamDict = constants.ParamDict
 # Get the Database Columns class
-DatabaseColumns = drs_db.DatabaseColumns
+DatabaseColumns = drs_db.AperoDatabaseColumns
 # get error
 DrsCodedException = drs_exceptions.DrsCodedException
 # get display func

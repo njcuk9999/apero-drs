@@ -844,7 +844,7 @@ class AperoDatabase:
         return list(unique_cols)
 
 
-class DatabaseColumns:
+class AperoDatabaseColumns:
     def __init__(self, name_prefix: Optional[str] = None):
         """
         SQL database columns definition
@@ -906,7 +906,7 @@ class DatabaseColumns:
         if self.name_prefix is not None:
             self.altnames.append('{0}{1}'.format(self.name_prefix, name))
 
-    def __add__(self, other: 'DatabaseColumns'):
+    def __add__(self, other: 'AperoDatabaseColumns'):
         """
         Add one Database Column list to another
 
@@ -914,7 +914,7 @@ class DatabaseColumns:
 
         :return: None
         """
-        new = DatabaseColumns(name_prefix=self.name_prefix)
+        new = AperoDatabaseColumns(name_prefix=self.name_prefix)
         # add to names
         new.names = self.names + other.names
         new.datatypes = self.datatypes + other.datatypes
@@ -1081,7 +1081,7 @@ if __name__ == "__main__":
 
     _columns = [sqlalchemy.Column('name', sqlalchemy.String(128), unique=True),
                 sqlalchemy.Column('age', sqlalchemy.Integer)]
-    _indexes = [sqlalchemy.Index('idx_users_name_age', 'name', 'age')]
+    _indexes = [sqlalchemy.Index('idx_users_name_age', 'name', 'age', 'weight')]
     _uniques = [sqlalchemy.UniqueConstraint('name', name='uix_name')]
 
     _database.delete_table('users')
@@ -1094,7 +1094,7 @@ if __name__ == "__main__":
                                    {'name': 'test2', 'age': 22},
                                    {'name': 'test3', 'age': 33}])
 
-    _database.add_row(insert_dict={'name': 'test4', 'age': 44})
+    _database.add_row(insert_dict={'name': 'test4', 'age': 44, 'weight': 10})
 
     _rows = _database.get(columns='name,age')
 
