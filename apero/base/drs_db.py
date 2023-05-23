@@ -852,13 +852,14 @@ class AperoDatabaseColumns:
         """
         self.names = []
         self.datatypes = []
-        self.dtypes = []
-        self.unique_cols = []
-        self.index_cols = []
+
         self.name_prefix = name_prefix
         self.altnames = []
         self.comments = []
-        self.index_groups = []
+
+        self.columns = []
+        self.indexes = []
+        self.uniques = []
 
     def __getstate__(self) -> dict:
         """
@@ -880,7 +881,7 @@ class AperoDatabaseColumns:
         # update dict with state
         self.__dict__.update(state)
 
-    def add(self, name: str, datatype: str, is_unique: bool = False,
+    def add(self, name: str, datatype: Any, is_unique: bool = False,
             is_index: bool = False, comment: Optional[str] = None):
         """
         Add a column to the database
@@ -896,15 +897,18 @@ class AperoDatabaseColumns:
         :return: None
         """
         self.names.append(name)
-        self.datatypes.append(datatype)
-        self.dtypes.append(self._dtyper(datatype))
-        if is_unique:
-            self.unique_cols.append(name)
-        if is_index:
-            self.index_cols.append(name)
         self.comments.append(comment)
         if self.name_prefix is not None:
             self.altnames.append('{0}{1}'.format(self.name_prefix, name))
+        # add sqlalchemy column
+        self.columns.append(sqlalchemy.Column(name, datatype))
+        # deal with being an index
+        if is_index:
+            self.indexes.append(sqlalchemy.Index(f'idx_{name}', name))
+        # deal with being unique)
+        if is_unique:
+            self.uniques.append(sqlalchemy.UniqueConstraint(name,
+                                                            name=f'uix_{name}'))
 
     def __add__(self, other: 'AperoDatabaseColumns'):
         """
@@ -918,39 +922,16 @@ class AperoDatabaseColumns:
         # add to names
         new.names = self.names + other.names
         new.datatypes = self.datatypes + other.datatypes
-        new.dtypes = self.dtypes + other.dtypes
-        new.unique_cols = self.unique_cols + other.unique_cols
-        new.index_cols = self.index_cols + other.index_cols
+
         new.comments = self.comments + other.comments
         new.altnames = self.altnames + other.altnames
+
+        new.columns = self.columns + other.columns
+        new.indexes = self.indexes + other.indexes
+        new.uniques = self.uniques + other.uniques
+
         # return the new
         return new
-
-    @staticmethod
-    def _dtyper(datatype):
-        """
-        Translate sql data types into python data types
-        """
-        if datatype == 'INT':
-            return int
-        if datatype == 'FLOAT':
-            return float
-        if datatype in ['TEXT', 'BLOB']:
-            return str
-        if datatype.startswith('VARCHAR'):
-            return str
-        # default is to cast to string
-        return str
-
-    def get_index_groups(self) -> Union[List[List[str]], None]:
-        """
-        get the index groups - return None if empty
-        :return:
-        """
-        if len(self.index_groups) == 0:
-            return None
-        else:
-            return self.index_groups
 
 
 # =============================================================================

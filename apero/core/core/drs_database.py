@@ -122,20 +122,23 @@ class DatabaseManager:
         # _ = display_func('__init__', __NAME__, self.classname)
         # save params for use throughout
         self.params = params
-        self.pconst = pconst
+        if pconst is None:
+            # get pconst (for use throughout)
+            self.pconst = constants.pload()
+        else:
+            self.pconst = pconst
         self.instrument = base.IPARAMS['INSTRUMENT']
-        # get pconst (for use throughout)
-        self.pconst = constants.pload()
         # set name
         self.name = 'DatabaseManager'
         self.kind = 'None'
-        self.columns = None
         self.dbtype = None
+        self.columns = None
+        self.colnames = []
         # set parameters
         self.dbhost = None
         self.dbuser = None
         self.dbpath = None
-        self.dbname = None
+        self.dbtable = None
         self.dbreset = None
         self.dbpass = None
         self.dbport = None
@@ -169,6 +172,27 @@ class DatabaseManager:
             WLOG(self.params, 'info', textentry('40-006-00005', args=margs))
         # load database
         self.database = drs_db.AperoDatabase(self.dburl, tablename=self.dbtable)
+
+    def __setstate__(self, state):
+        # update dict with state
+        self.__dict__.update(state)
+        # read attributes not in state
+        self.pconst = constants.pload()
+
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # what to exclude from state
+        exclude = ['pconst']
+        # need a dictionary for pickle
+        state = dict()
+        for key, item in self.__dict__.items():
+            if key not in exclude:
+                state[key] = item
+        # return dictionary state
+        return state
 
     def __str__(self):
         """
@@ -229,6 +253,27 @@ class DatabaseManager:
         # set path
         self.dburl = (f'{self.dbtype}://{self.dbuser}:{self.dbpass}'
                       f'@{self.dbhost}:{self.dbport}/{self.dbtable}')
+
+    def check_columns(self, dictionary: dict):
+        """
+        Check the columns all exist in the database (based on pconst definition)
+
+        :raises: drs_db.AperoDatabaseException, if a column is not found
+        :param dictionary: dict, the dictionary to check (will be used as
+                           index_dict or update_dict in drs_db)
+        :return: None
+        """
+        # deal with no columns set
+        if self.columns is None:
+            return
+        if len(self.colnames) == 0:
+            return
+        # look through all dictionary keys and compare to self.colnames
+        for key in dictionary:
+            if key not in self.colnames:
+                emsg = 'Column "{0}" not in database columns for {1}'
+                eargs = [key, self.classname]
+                raise drs_db.AperoDatabaseError(message=emsg.format(*eargs))
 
 
 # =============================================================================
@@ -434,7 +479,6 @@ class AstrometricDatabase(DatabaseManager):
         # return the filled out list
         return out_objnames
 
-
     def find_objname(self, pconst: constants.PseudoConstants,
                      objname: str) -> Tuple[str, bool]:
         """
@@ -509,7 +553,7 @@ class AstrometricDatabase(DatabaseManager):
 # Define specific file databases
 # =============================================================================
 class CalibrationDatabase(DatabaseManager):
-    def __init__(self, params: ParamDict):
+    def __init__(self, params: ParamDict, pconst: Any):
         """
         Constructor of the Calibration Database class
 
@@ -522,7 +566,7 @@ class CalibrationDatabase(DatabaseManager):
         # set function
         # _ = display_func('__init__', __NAME__, self.classname)
         # construct super class
-        DatabaseManager.__init__(self, params)
+        DatabaseManager.__init__(self, params, pconst)
         # set name
         self.name = 'calibration'
         self.kind = 'calib'
@@ -563,7 +607,7 @@ class CalibrationDatabase(DatabaseManager):
         # get file key
         dbkey = _get_dbkey(self.params, drsfile, self.name)
         # check dbname
-        _get_dbname(self.params, drsfile, self.name)
+        _get_dbtable(self.params, drsfile, self.name)
         # get fiber
         fiber = _get_hkey(self.params, 'KW_FIBER', hdict, header)
         # get super definition
@@ -586,27 +630,28 @@ class CalibrationDatabase(DatabaseManager):
                           verbose=verbose)
         # ------------------------------------------------------------------
         # get entries in correct format
-        key = str(dbkey).strip()
-        is_super = is_super
-        fiber = str(fiber)
-        filename = str(drsfile.basename).strip()
-        human_time = str(header_time.iso)
-        unix_time = str(header_time.unix).strip()
-        pid = str(self.params['PID'])
-        pdate = str(self.params['DATE_NOW'])
-        used = 1
+        insert_dict = dict()
+        insert_dict['KEYNAME'] = str(dbkey).strip()
+        insert_dict['FIBER'] = str(fiber)
+        insert_dict['REFCAL'] = int(is_super)
+        insert_dict['FILENAME'] = str(drsfile.basename).strip()
+        insert_dict['HUMAN_TIME'] = str(header_time.iso)
+        insert_dict['UNIXTIME'] = str(header_time.unix)
+        insert_dict['PID'] = str(self.params['PID'])
+        insert_dict['PDATE'] = str(self.params['DATE_NOW'])
+        insert_dict['USED'] = 1
         # ------------------------------------------------------------------
-        # add entry to database
-        values = [key, fiber, is_super, filename, human_time, unix_time, pid,
-                  pdate, used]
-        # create insert dictionary
-        insert_dict = dict(zip(self.colnames, values))
+        # check that we are adding the correct columns (i.e. all columns
+        #   are in database)
+        self.check_columns(insert_dict)
+        # ------------------------------------------------------------------
         # try to add a new row
         self.database.add_row(insert_dict=insert_dict)
         # update parameter table (if fits file)
         if isinstance(drsfile, DrsFitsFile):
             drsfile.update_param_table('CALIB_DB_ENTRY',
-                                       param_kind='calib', values=values)
+                                       param_kind='calib',
+                                       values=list(insert_dict.values()))
 
     def get_calib_entry(self, columns: str, key: str,
                         fiber: Union[str, None] = None,
@@ -887,13 +932,11 @@ class CalibrationDatabase(DatabaseManager):
 
 
 class TelluricDatabase(DatabaseManager):
-    def __init__(self, params: ParamDict, check: bool = True):
+    def __init__(self, params: ParamDict, pconst: Any):
         """
         Constructor of the Telluric Database class
 
         :param params: ParamDict, parameter dictionary of constants
-        :param check: bool, if True makes sure database file exists (otherwise
-                      assumes it is)
 
         :return: None
         """
@@ -902,7 +945,7 @@ class TelluricDatabase(DatabaseManager):
         # set function
         # _ = display_func('__init__', __NAME__, self.classname)
         # construct super class
-        DatabaseManager.__init__(self, params)
+        DatabaseManager.__init__(self, params, pconst)
         # set name
         self.name = 'telluric'
         self.kind = 'tellu'
@@ -950,9 +993,6 @@ class TelluricDatabase(DatabaseManager):
         # deal with no database
         if self.database is None:
             self.load_db()
-        # get unique columns
-        telludb_cols = self.pconst.TELLURIC_DB_COLUMNS()
-        ucols = list(telludb_cols.unique_cols)
         # ------------------------------------------------------------------
         # get header and hdict
         hdict, header = _get_hdict(self.params, self.name, drsfile)
@@ -960,7 +1000,7 @@ class TelluricDatabase(DatabaseManager):
         # get file key
         dbkey = _get_dbkey(self.params, drsfile, self.name)
         # check dbname
-        _get_dbname(self.params, drsfile, self.name)
+        _get_dbtable(self.params, drsfile, self.name)
         # get fiber
         fiber = _get_hkey(self.params, 'KW_FIBER', hdict, header)
         # get super definition
@@ -998,32 +1038,32 @@ class TelluricDatabase(DatabaseManager):
                           verbose=verbose)
         # ------------------------------------------------------------------
         # get entries in correct format
-        key = str(dbkey).strip()
-        is_super = is_super
-        fiber = str(fiber)
-        filename = str(drsfile.basename).strip()
-        human_time = str(header_time.iso)
-        unix_time = str(header_time.unix).strip()
-        pid = str(self.params['PID'])
-        pdate = str(self.params['DATE_NOW'])
-        used = 1
-        # deal with no tau_water/tau_other being None (should be float)
-        # if tau_water is None:
-        #     tau_water = 'None'
-        # if tau_others is None:
-        #     tau_others = 'None'
+        insert_dict = dict()
+        insert_dict['KEYNAME'] = str(dbkey).strip()
+        insert_dict['FIBER'] = str(fiber).strip()
+        insert_dict['REFCAL'] = int(is_super)
+        insert_dict['FILENAME'] = str(drsfile.basename).strip()
+        insert_dict['HUMANTIME'] = str(header_time.iso)
+        insert_dict['UNIXTIME'] = str(header_time.unix)
+        insert_dict['OBJECT'] = objname
+        insert_dict['AIRMASS'] = airmass
+        insert_dict['TAU_WATER'] = tau_water
+        insert_dict['TAU_OTHERS'] = tau_others
+        insert_dict['PID'] = str(self.params['PID'])
+        insert_dict['PDATE'] = str(self.params['DATE_NOW'])
+        insert_dict['USED'] = 1
         # ------------------------------------------------------------------
-        # add entry to database
-        values = [key, fiber, is_super, filename, human_time, unix_time,
-                  objname, airmass, tau_water, tau_others, pid, pdate, used]
-        # get insert dictionary
-        insert_dict = dict(zip(self.colnames, values))
+        # check that we are adding the correct columns (i.e. all columns
+        #   are in database)
+        self.check_columns(insert_dict)
+        # ------------------------------------------------------------------
         # try to add a new row
         self.database.add_row(insert_dict=insert_dict)
         # update parameter table (if fits file)
         if isinstance(drsfile, DrsFitsFile):
             drsfile.update_param_table('TELLU_DB_ENTRY',
-                                       param_kind='tellu', values=values)
+                                       param_kind='tellu',
+                                       values=list(insert_dict.values()))
 
     def get_tellu_entry(self, columns: str, key: str,
                         fiber: Union[str, None] = None,
@@ -1338,7 +1378,7 @@ def _get_dbkey(params: ParamDict, drsfile: DrsFileTypes, dbmname: str) -> str:
         return 'None'
 
 
-def _get_dbname(params: ParamDict, drsfile: DrsFileTypes, dbmname: str) -> bool:
+def _get_dbtable(params: ParamDict, drsfile: DrsFileTypes, dbmname: str) -> bool:
     """
     Check the dbname attribute from a drsfile matches the database type
 
@@ -1351,8 +1391,8 @@ def _get_dbname(params: ParamDict, drsfile: DrsFileTypes, dbmname: str) -> bool:
     # set function
     func_name = display_func('_get_dbname', __NAME__)
     # get dbname from drsfile
-    if hasattr(drsfile, 'dbname'):
-        dbname = drsfile.dbname.upper()
+    if hasattr(drsfile, 'dbtable'):
+        dbname = drsfile.dbtable.upper()
         # test db name against this database
         if dbname != dbmname.upper():
             eargs = [drsfile.name, dbname, dbmname.upper(), drsfile.filename,
@@ -1592,13 +1632,11 @@ def _get_time(params: ParamDict, dbname: str,
 # =============================================================================
 class FileIndexDatabase(DatabaseManager):
 
-    def __init__(self, params: ParamDict, check: bool = True):
+    def __init__(self, params: ParamDict, pconst: Any):
         """
         Constructor of the Index Database class
 
         :param params: ParamDict, parameter dictionary of constants
-        :param check: bool, if True makes sure database file exists (otherwise
-                      assumes it is)
 
         :return: None
         """
@@ -1607,12 +1645,16 @@ class FileIndexDatabase(DatabaseManager):
         # set function
         # _ = display_func('__init__', __NAME__, self.classname)
         # construct super class
-        DatabaseManager.__init__(self, params)
+        DatabaseManager.__init__(self, params, pconst)
         # set name
         self.name = 'findex'
         self.kind = 'findex'
+        self.columns = self.pconst.FILEINDEX_DB_COLUMNS()
+        self.colnames = self.columns.names
+        self.hcolumns = self.pconst.FILEINDEX_HEADER_COLS()
+        self.hcolnames = self.hcolumns.names
         # set path
-        self.set_path(kind=self.kind, check=check)
+        self.database_settings(kind=self.kind)
         # store whether an update has been done
         self.update_entries_params = []
 
@@ -1685,11 +1727,8 @@ class FileIndexDatabase(DatabaseManager):
         iheader_cols = self.pconst.FILEINDEX_HEADER_COLS()
         rkeys = list(iheader_cols.names)
         rtypes = list(iheader_cols.dtypes)
-        # get unique columns
-        idb_cols = self.pconst.FILEINDEX_DB_COLUMNS()
-        ucols = list(idb_cols.unique_cols)
         # store values in correct order for database.add_row
-        hvalues = []
+        hvalues = dict()
         # deal with no hkeys
         if hkeys is None:
             hkeys = dict()
@@ -1705,55 +1744,54 @@ class FileIndexDatabase(DatabaseManager):
                     value = hkeys[hkey]
                     # deal with a null value
                     if drs_text.null_text(value, ['None', 'Null']):
-                        hvalues.append('NULL')
+                        hvalues[hkey] = 'NULL'
                     else:
                         # try to case and append
-                        hvalues.append(dtype(value))
+                        hvalues[hkey] = dtype(value)
                 except Exception as _:
                     wargs = [self.name, hkey, hkeys[hkey],
                              rtypes[h_it], func_name]
                     wmsg = textentry('10-002-00003', args=wargs)
                     WLOG(self.params, 'warning', wmsg, sublevel=2)
-                    hvalues.append('NULL')
+                    hvalues[hkey] = 'NULL'
             else:
-                hvalues.append('NULL')
+                hvalues[hkey] = 'NULL'
         # ------------------------------------------------------------------
-        # get values for database
-        path = str(basefile.abspath)
-        obs_dir = str(basefile.obs_dir)
-        basename = str(basefile.basename)
+        # create insert dictionary
+        insert_dict = dict()
+        insert_dict['ABSPATH'] = str(basefile.abspath)
+        insert_dict['OBS_DIR'] = str(basefile.obs_dir)
+        insert_dict['FILENAME'] = str(basefile.basename)
+        insert_dict['BLOCK_KIND'] = block_kind
+        insert_dict['LAST_MODIFIED'] = float(last_modified)
+        insert_dict['RECIPE'] = str(recipe)
+        insert_dict['RUNSTRING'] = str(runstring)
+        insert_dict['INFILES'] = str(infiles)
+        # push header values into insert dictionary
+        for hkey in self.hcolnames:
+            insert_dict[hkey] = hvalues[hkey]
+        insert_dict['USED'] = used
+        insert_dict['RAWFIX'] = rawfix
         # ------------------------------------------------------------------
         # check for entry already in database
-        condition = '(OBS_DIR="{0}")'.format(obs_dir)
+        condition = '(OBS_DIR="{0}")'.format(insert_dict['OBS_DIR'])
         condition += ' AND (BLOCK_KIND="{0}")'.format(block_kind)
-        condition += ' AND (FILENAME="{0}")'.format(basename)
+        condition += ' AND (FILENAME="{0}")'.format(insert_dict['FILENAME'])
+        # ------------------------------------------------------------------
+        # check that we are adding the correct columns (i.e. all columns
+        #   are in database)
+        self.check_columns(insert_dict)
+        # ------------------------------------------------------------------
         # count number of entries for this
         num_rows = self.database.count(condition=condition)
         # if we don't have an entry we add a row
         if num_rows == 0:
-            # add new entry to database
-            values = [path, obs_dir, basename, block_kind, float(last_modified),
-                      str(recipe), str(runstring), str(infiles)]
-            values += hvalues + [used, rawfix]
-            # add row
-            try:
-                self.database.add_row(values, unique_cols=ucols)
-                return
-            # if this is called we need to set instead of adding
-            except drs_db.UniqueEntryException:
-                # if and only if this error we can pass and try using set
-                pass
-
-        # else we update the row using "set" instead of adding
-        # add new entry to database
-        values = [path, obs_dir, basename, block_kind, float(last_modified),
-                  str(recipe), str(runstring), str(infiles)]
-        values += hvalues + [used, rawfix]
-        # condition comes from uhash - so set to None here (to remember)
-        condition = None
-        # update row in database
-        self.database.set('*', values=values, condition=condition,
-                          unique_cols=ucols)
+            self.database.add_row(insert_dict=insert_dict)
+        else:
+            # condition comes from uhash - so set to None here (to remember)
+            condition = None
+            # update row in database
+            self.database.set(update_dict=insert_dict, condition=condition)
 
     def remove_entries(self, condition: str):
         """
@@ -2043,10 +2081,7 @@ class FileIndexDatabase(DatabaseManager):
         # get unique columns
         idb_cols = self.pconst.FILEINDEX_DB_COLUMNS()
         ikeys = list(idb_cols.names)
-        itypes = list(idb_cols.datatypes)
-        ucols = list(idb_cols.unique_cols)
-        icols = list(idb_cols.index_cols)
-        igroups = idb_cols.get_index_groups()
+        ucols = list(idb_cols.uniques)
         # need to add hash key if required
         if len(ucols) > 0:
             ikeys += [drs_db.UHASH_COL]
@@ -2065,11 +2100,12 @@ class FileIndexDatabase(DatabaseManager):
             # if yes delete table and recreate
             if 'Y' in userinput.upper():
                 # remove table
-                self.database.delete_table(self.database.tname)
+                self.database.delete_table(self.database.tablename)
                 # add new empty table
-                self.database.add_table(self.database.tname, ikeys, itypes,
-                                        unique_cols=ucols, index_cols=icols,
-                                        index_groups=igroups)
+                self.database.add_table(self.database.tablename,
+                                        self.columns.columns,
+                                        self.columns.uniques,
+                                        self.columns.indexes)
                 # reload database
                 self.load_db()
                 # update all entries for raw index entries
@@ -2415,13 +2451,11 @@ def _get_files(params: ParamDict, path: Union[Path, str], block_kind: str,
 # Define Log database
 # =============================================================================
 class LogDatabase(DatabaseManager):
-    def __init__(self, params: ParamDict, check: bool = True):
+    def __init__(self, params: ParamDict, pconst: Any):
         """
         Constructor of the Log Database class
 
         :param params: ParamDict, parameter dictionary of constants
-        :param check: bool, if True makes sure database file exists (otherwise
-                      assumes it is)
 
         :return: None
         """
@@ -2430,12 +2464,12 @@ class LogDatabase(DatabaseManager):
         # set function
         # _ = display_func('__init__', __NAME__, self.classname)
         # construct super class
-        DatabaseManager.__init__(self, params)
+        DatabaseManager.__init__(self, params, pconst)
         # set name
         self.name = 'log'
         self.kind = 'log'
         # set path
-        self.set_path(kind=self.kind, check=check)
+        self.database_settings(kind=self.kind)
 
     def remove_pids(self, pid: str):
         """
@@ -2756,13 +2790,11 @@ def _clean_error(errors: Union[str, None]) -> Union[str, None]:
 # Define reject database
 # =============================================================================
 class RejectDatabase(DatabaseManager):
-    def __init__(self, params: ParamDict, check: bool = True):
+    def __init__(self, params: ParamDict, pconst: Any):
         """
         Constructor of the Reject Database class
 
         :param params: ParamDict, parameter dictionary of constants
-        :param check: bool, if True makes sure database file exists (otherwise
-                      assumes it is)
 
         :return: None
         """
@@ -2771,12 +2803,12 @@ class RejectDatabase(DatabaseManager):
         # set function
         # _ = display_func('__init__', __NAME__, self.classname)
         # construct super class
-        DatabaseManager.__init__(self, params)
+        DatabaseManager.__init__(self, params, pconst)
         # set name
         self.name = 'reject'
         self.kind = 'reject'
         # set path
-        self.set_path(kind=self.kind, check=check)
+        self.database_settings(kind=self.kind)
 
     def add_entries(self, identifier: Optional[str] = None,
                     pp_flag: Optional[bool] = None,

@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any, List, Optional, Tuple, Union
 
 import numpy as np
+import sqlalchemy
 
 from apero.base import base
 from apero.base import drs_db
@@ -415,41 +416,41 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
             return self.header_cols
         # set keyts
         header_cols = DatabaseColumns()
-        header_cols.add(name='KW_DATE_OBS', datatype='VARCHAR(80)')
-        header_cols.add(name='KW_MJDATE', datatype='VARCHAR(80)')
-        header_cols.add(name='KW_TARGET_TYPE', datatype='VARCHAR(80)')
-        header_cols.add(name='KW_MID_OBS_TIME', datatype='DOUBLE',
+        header_cols.add(name='KW_DATE_OBS', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_MJDATE', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_TARGET_TYPE', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_MID_OBS_TIME', datatype=sqlalchemy.Float,
                         is_index=True)
         # cleaned object name
-        header_cols.add(name='KW_OBJNAME', datatype='VARCHAR(80)',
+        header_cols.add(name='KW_OBJNAME', datatype=sqlalchemy.String(80),
                         is_index=True)
         # raw object name
-        header_cols.add(name='KW_OBJECTNAME', datatype='VARCHAR(80)')
+        header_cols.add(name='KW_OBJECTNAME', datatype=sqlalchemy.String(80))
         # other raw object name
-        header_cols.add(name='KW_OBJECTNAME2', datatype='VARCHAR(80)')
-        header_cols.add(name='KW_OBSTYPE', datatype='VARCHAR(80)')
-        header_cols.add(name='KW_EXPTIME', datatype='DOUBLE')
-        header_cols.add(name='KW_INSTRUMENT', datatype='VARCHAR(80)')
-        header_cols.add(name='KW_INST_MODE', datatype='VARCHAR(80)')
-        header_cols.add(name='KW_RAW_DPRTYPE', datatype='VARCHAR(80)')
-        header_cols.add(name='KW_RAW_DPRCATG', datatype='VARCHAR(80)')
-        header_cols.add(name='KW_DPRTYPE', datatype='VARCHAR(80)',
+        header_cols.add(name='KW_OBJECTNAME2', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_OBSTYPE', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_EXPTIME', datatype=sqlalchemy.Float)
+        header_cols.add(name='KW_INSTRUMENT', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_INST_MODE', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_RAW_DPRTYPE', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_RAW_DPRCATG', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_DPRTYPE', datatype=sqlalchemy.String(80),
                         is_index=True)
-        header_cols.add(name='KW_DRS_MODE', datatype='VARCHAR(80)')
-        header_cols.add(name='KW_OUTPUT', datatype='VARCHAR(80)',
+        header_cols.add(name='KW_DRS_MODE', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_OUTPUT', datatype=sqlalchemy.String(80),
                         is_index=True)
-        header_cols.add(name='KW_NIGHT_OBS', datatype='INT')
-        header_cols.add(name='KW_CMPLTEXP', datatype='VARCHAR(80)')
-        header_cols.add(name='KW_NEXP', datatype='VARCHAR(80)')
-        header_cols.add(name='KW_VERSION', datatype='VARCHAR(80)')
-        header_cols.add(name='KW_PPVERSION', datatype='VARCHAR(80)')
-        header_cols.add(name='KW_DRS_DATE_NOW', datatype='VARCHAR(80)')
-        header_cols.add(name='KW_PI_NAME', datatype='VARCHAR(80)')
-        header_cols.add(name='KW_RUN_ID', datatype='VARCHAR(80)')
-        header_cols.add(name='KW_PID', datatype='VARCHAR(80)',
+        header_cols.add(name='KW_NIGHT_OBS', datatype=sqlalchemy.Integer)
+        header_cols.add(name='KW_CMPLTEXP', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_NEXP', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_VERSION', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_PPVERSION', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_DRS_DATE_NOW', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_PI_NAME', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_RUN_ID', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_PID', datatype=sqlalchemy.String(80),
                         is_index=True)
-        header_cols.add(name='KW_FIBER', datatype='VARCHAR(80)')
-        header_cols.add(name='KW_IDENTIFIER', datatype='VARCHAR(80)',
+        header_cols.add(name='KW_FIBER', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_IDENTIFIER', datatype=sqlalchemy.String(80),
                         is_index=True)
         # check that filedef keys are present
         for fkey in self.FILEDEF_HEADER_KEYS():
@@ -835,7 +836,7 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         index_cols.add(name='OBS_DIR', datatype='VARCHAR(200)', is_index=True)
         index_cols.add(name='FILENAME', is_index=True, datatype='VARCHAR(200)')
         index_cols.add(name='BLOCK_KIND', is_index=True, datatype='VARCHAR(20)')
-        index_cols.add(name='LAST_MODIFIED', datatype='DOUBLE')
+        index_cols.add(name='LAST_MODIFIED', datatype=sqlalchemy.Float)
         index_cols.add(name='RECIPE', datatype='VARCHAR(200)')
         index_cols.add(name='RUNSTRING', datatype='TEXT')
         index_cols.add(name='INFILES', datatype='TEXT')
