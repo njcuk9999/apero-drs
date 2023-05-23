@@ -1405,7 +1405,7 @@ def clean_ohline_pca(params, recipe, image, wavemap, **kwargs):
     # to adjust them
     ew_weight = 2.5 * params['FWHM_PIXEL_LSF']
     # region of which we will compute the weight falloff of a bright sky line
-    width = np.int(ew_weight * 4)
+    width = int(ew_weight * 4)
     # sky amplitude correction
     amp_sky = np.ones_like(sky_model)
     # weight vector to have a seamless falloff of the sky weight
