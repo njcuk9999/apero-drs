@@ -832,26 +832,35 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
             return self.index_cols
         # column definitions
         index_cols = DatabaseColumns()
-        index_cols.add(name='ABSPATH', datatype='TEXT', is_unique=True)
-        index_cols.add(name='OBS_DIR', datatype='VARCHAR(200)', is_index=True)
-        index_cols.add(name='FILENAME', is_index=True, datatype='VARCHAR(200)')
-        index_cols.add(name='BLOCK_KIND', is_index=True, datatype='VARCHAR(20)')
+        index_cols.add(name='ABSPATH', is_unique=True,
+                       datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC))
+        index_cols.add(name='OBS_DIR', datatype=sqlalchemy.String(200),
+                       is_index=True)
+        index_cols.add(name='FILENAME', is_index=True,
+                       datatype=sqlalchemy.String(200))
+        index_cols.add(name='BLOCK_KIND', is_index=True,
+                       datatype=sqlalchemy.String(20))
         index_cols.add(name='LAST_MODIFIED', datatype=sqlalchemy.Float)
-        index_cols.add(name='RECIPE', datatype='VARCHAR(200)')
-        index_cols.add(name='RUNSTRING', datatype='TEXT')
-        index_cols.add(name='INFILES', datatype='TEXT')
+        index_cols.add(name='RECIPE', datatype=sqlalchemy.String(200))
+        index_cols.add(name='RUNSTRING',
+                       datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC))
+        index_cols.add(name='INFILES',
+                       datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC))
         # get header keys
         header_columns = self.FILEINDEX_HEADER_COLS()
         # add header columns to index columns
         index_cols += header_columns
         # add extra columns
-        index_cols.add(name='USED', datatype='INT')
-        index_cols.add(name='RAWFIX', datatype='INT')
+        index_cols.add(name='USED', datatype=sqlalchemy.Integer)
+        index_cols.add(name='RAWFIX', datatype=sqlalchemy.Integer)
         # manage index groups
-        index_cols.index_groups.append(['BLOCK_KIND', 'OBS_DIR', 'USED'])
-        index_cols.index_groups.append(['OBS_DIR', 'BLOCK_KIND'])
-        # return columns and column types
-        self.index_cols = index_cols
+        index_cols.uniques.append(sqlalchemy.Index('idx_block_obs_used',
+                                                   'BLOCK_KIND', 'OBS_DIR',
+                                                   'USED'))
+        index_cols.uniques.append(sqlalchemy.Index('idx_block_obs_filename',
+                                                   'BLOCK_KIND', 'OBS_DIR',
+                                                   'FILENAME'))
+        # return column object
         return index_cols
 
     def GET_EPOCH(self, params, header) -> float:
