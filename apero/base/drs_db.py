@@ -107,10 +107,10 @@ class AperoDatabaseError(AperoDatabaseException):
 
 
 class AperoDatabase:
-    def __init__(self, url, verbose: bool = False,
-                 tablename: Optional[str] = None):
+    def __init__(self, url, tablename: Union[str, None],
+                 verbose: bool = False,):
         """
-
+        APERO Database class
         """
         # set the class name
         self.classname = 'AperoDatabase'
@@ -1464,7 +1464,7 @@ if __name__ == "__main__":
 
     _db_uri = 'mysql+pymysql://spirou:Covid19!@rali:3306/test'
 
-    _database = AperoDatabase(_db_uri, verbose=DEBUG)
+    _database = AperoDatabase(_db_uri, verbose=DEBUG, tablename=None)
 
     _database.add_database()
 

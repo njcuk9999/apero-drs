@@ -57,7 +57,7 @@ DATABASE2['USE'] = np.ones_like(DATABASE2['X']).astype(bool)
 # =============================================================================
 class DatabaseHolder:
     def __init__(self, params, name, kind, path=None, df=None, url=None,
-                 hash_col: bool = False):
+                 tablename=None, hash_col: bool = False):
         self.name = name
         self.kind = kind
         self.path = path
@@ -68,6 +68,7 @@ class DatabaseHolder:
         self.changed = False
         self.hash_col = hash_col
         self.hash_data = None
+        self.tablename = tablename
         self.url = url
 
     def load_dataframe(self, reload=False):
@@ -75,8 +76,8 @@ class DatabaseHolder:
         if isinstance(self.df, pd.DataFrame) and (not reload):
             return
         # if we don't have path we have a problem
-        if self.path is None and self.url is None:
-            emsg = 'Database "{0}" must have path, url or df set'
+        if self.path is None and (self.url is None or self.tablename is None):
+            emsg = 'Database "{0}" must have path, url+tablename or df set'
             raise ValueError(emsg.format(self.name))
 
         if str(self.path).endswith('.csv'):
@@ -86,7 +87,7 @@ class DatabaseHolder:
                 self.empty = True
         else:
             # start database
-            database = drs_db.AperoDatabase(self.url, tablename=self.name)
+            database = drs_db.AperoDatabase(self.url, tablename=self.tablename)
             # try to get database (as a pandas table)
             try:
                 dataframe = database.get('*', return_pandas=True)

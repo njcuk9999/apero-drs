@@ -126,6 +126,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         name = NAMES[key]
         # load database holder
         databases[name] = database_gui.DatabaseHolder(params, name=name,
+                                                      tablename=database.dbtable,
                                                       kind=database.kind,
                                                       url=database.dburl,
                                                       hash_col=hash_col)
