@@ -236,7 +236,7 @@ class DatabaseManager:
         self.dbtype = ddict['TYPE']
         self.dbhost = ddict['HOST']
         self.dbuser = ddict['USER']
-        self.dbpass = ddict['PASS']
+        self.dbpass = ddict['PASSWD']
         if 'PORT' in ddict:
             self.dbport = ddict['PORT']
         else:
