@@ -484,6 +484,7 @@ class AperoDatabase:
         if columns is None:
             columns = list(update_dict.keys())
         if columns == '*':
+            # noinspection PyUnresolvedReferences
             columns = [col.name for col in sqltable.columns]
         # ---------------------------------------------------------------------
         # make the update dictionary
@@ -561,6 +562,7 @@ class AperoDatabase:
             else:
                 columns = list(insert_dict.keys())
         if columns == '*':
+            # noinspection PyUnresolvedReferences
             columns = [col.name for col in sqltable.columns]
         # ---------------------------------------------------------------------
         # make the update dictionary
@@ -710,6 +712,7 @@ class AperoDatabase:
         # ---------------------------------------------------------------------
         # create a dictionary of the columns and values
         if columns == '*':
+            # noinspection PyTypeChecker
             columns = [col.name for col in sqltable.columns]
         else:
             columns.split(',')
@@ -765,11 +768,13 @@ class AperoDatabase:
                                           exception=AperoDatabaseError)
 
     def backup(self):
+        _ = self
         # TODO: Can we add this?
         emsg = 'The backup method is not implemented'
         NotImplemented(emsg)
 
     def reload_from_backup(self):
+        _ = self
         # TODO: Can we add this?
         emsg = 'The reload_from_backup method is not implemented'
         NotImplemented(emsg)
@@ -993,14 +998,13 @@ class DatabaseManager:
         # set unloaded database
         self.database = None
 
-    def load_db(self, check: bool = False, log: bool = False):
+    def load_db(self, check: bool = False):
         """
         Load the database class and connect to SQL database
 
         :param check: if True will reload the database even if already defined
                       else if we Database.database is set this function does
                       nothing
-        :param log: if True prints that we are loading database
 
         :return:
         """
@@ -1278,13 +1282,13 @@ class LanguageDatabase(DatabaseManager):
         func_name = '{0}.{1}.{2}()'.format(__NAME__, self.classname,
                                            'get_dict')
         # get all rows
-        df = self.database.get('*', return_pandas=True)
+        dataframe = self.database.get('*', return_pandas=True)
         # set up storage
         storage = dict()
         # loop around dataframe rows
-        for row in range(len(df)):
+        for row in range(len(dataframe)):
             # get data for row
-            rowdata = df.iloc[row]
+            rowdata = dataframe.iloc[row]
             # get text
             if language not in rowdata:
                 rowtext = rowdata[base.DEFAULT_LANG]
@@ -1475,10 +1479,10 @@ if __name__ == "__main__":
     _rows = _database.get(columns='name,age')
 
     # create a pandas dataframe
-    df = pd.DataFrame()
+    _df = pd.DataFrame()
     # add id, name, age columns and add test values
-    df['name'] = ['test101', 'test102', 'test103', 'test104']
-    df['age'] = [110, 220, 330, 440]
+    _df['name'] = ['test101', 'test102', 'test103', 'test104']
+    _df['age'] = [110, 220, 330, 440]
 
     # test the add from pandas functionality
     _database.add_row(insert_dict=dict(name='test1', age=89))

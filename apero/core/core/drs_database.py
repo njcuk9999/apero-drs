@@ -238,9 +238,12 @@ class AstrometricDatabase(DatabaseManager):
         :param epoch: float, the Gaia epoch (2015.5)
         :param teff: float, the temperature in K
         :param teff_s: str, the source of Teff
+        :param sp_type: str, the spectral type
+        :param sp_type_s: str, the source of sp_type
         :param aliases: list of strings or string, any other names this
                         target can have
         :param used: int, whether to use entries or not (normally ste manually)
+        :param notes: str, any notes/comments about this object
 
         :return: None - updates database
         """
@@ -253,8 +256,8 @@ class AstrometricDatabase(DatabaseManager):
             daliases = 'None'
         # create insert dict
         insert_dict = dict()
-        insert_dict['OBJNAME'] = drs_db._deal_with_null(objname)
-        insert_dict['ORIGINAL_NAME'] = drs_db._deal_with_null(objname_s)
+        insert_dict['OBJNAME'] = drs_db.deal_with_null(objname)
+        insert_dict['ORIGINAL_NAME'] = drs_db.deal_with_null(objname_s)
         insert_dict['ALIASES'] = daliases
         insert_dict['RA_DEG'] = ra
         insert_dict['RA_SOURCE'] = ra_s
@@ -271,9 +274,9 @@ class AstrometricDatabase(DatabaseManager):
         insert_dict['RV_SOURCE'] = rv_s
         insert_dict['TEFF'] = teff
         insert_dict['TEFF_SOURCE'] = teff_s
-        insert_dict['SP_TYPE'] = drs_db._deal_with_null(sp_type)
-        insert_dict['SP_TYPE_SOURCE'] = drs_db._deal_with_null(sp_type_s)
-        insert_dict['NOTES'] = drs_db._deal_with_null(notes)
+        insert_dict['SP_TYPE'] = drs_db.deal_with_null(sp_type)
+        insert_dict['SP_TYPE_SOURCE'] = drs_db.deal_with_null(sp_type_s)
+        insert_dict['NOTES'] = drs_db.deal_with_null(notes)
         insert_dict['USED'] = used
         insert_dict['DATE_ADDED'] = Time.now().iso
         # ------------------------------------------------------------------
@@ -2415,8 +2418,8 @@ class LogDatabase(DatabaseManager):
         :param ram_usage_start: float, RAM usage GB at start of recipe
         :param ram_usage_end: float, RAM usage GB at end of recipe
         :param ram_total: float, RAM total at start of recipe
-        :param swap_usage_start: float, SWAP usage GB at start of recipe
-        :param swap_usage_end: float, SWAP usage GB at end of recipe
+        :param swapusage_start: float, SWAP usage GB at start of recipe
+        :param swapusage_end: float, SWAP usage GB at end of recipe
         :param swap_total: float, SWAP total at start of recipe
         :param cpu_usage_start: float, CPU usage (percentage) at start of recipe
         :param cpu_usage_end: float, CPU usage (percentrage) at end of recipe
