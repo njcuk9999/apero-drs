@@ -35,6 +35,7 @@ from pandasql import sqldf
 from apero import lang
 from apero.base import base
 from apero.base import drs_db
+from apero.base.drs_db import DatabaseManager
 from apero.core import constants
 from apero.core.core import drs_exceptions
 from apero.core.core import drs_file
@@ -89,9 +90,6 @@ FILEDBS = dict()
 OBS_NAMES = dict()
 # define reserved object names
 RESERVED_OBJ_NAMES = ['CALIB', 'SKY', 'TEST']
-# define database names
-DATABASE_NAMES = ['calib', 'tellu', 'findex', 'log', 'astrom', 'lang',
-                  'reject']
 # cache for google sheet
 GOOGLE_TABLES = dict()
 # define standard google base url
@@ -102,186 +100,6 @@ GOOGLE_BASE_URL = ('https://docs.google.com/spreadsheets/d/{}/gviz/'
 # =============================================================================
 # Define classes
 # =============================================================================
-class DatabaseManager:
-    """
-    Apero Database Manager class (basically abstract)
-    """
-    # define attribute types
-    database: Union[drs_db.AperoDatabase, None]
-
-    def __init__(self, params: ParamDict, pconst: Any = None):
-        """
-        Construct the Database Manager
-
-        :param params: ParamDict, parameter dictionary of constants
-        :param pconst: Psuedo constants class for instrument
-        """
-        # save class name
-        self.classname = 'DatabaseManager'
-        # set function
-        # _ = display_func('__init__', __NAME__, self.classname)
-        # save params for use throughout
-        self.params = params
-        if pconst is None:
-            # get pconst (for use throughout)
-            self.pconst = constants.pload()
-        else:
-            self.pconst = pconst
-        self.instrument = base.IPARAMS['INSTRUMENT']
-        # set name
-        self.name = 'DatabaseManager'
-        self.kind = 'None'
-        self.dbtype = None
-        self.columns = None
-        self.colnames = []
-        # set parameters
-        self.dbhost = None
-        self.dbuser = None
-        self.dbpath = None
-        self.dbtable = None
-        self.dbreset = None
-        self.dbpass = None
-        self.dbport = None
-        # sqlalchemy URL
-        self.dburl = None
-        # set unloaded database
-        self.database = None
-
-    def load_db(self, check: bool = False, log: bool = False):
-        """
-        Load the database class and connect to SQL database
-
-        :param check: if True will reload the database even if already defined
-                      else if we Database.database is set this function does
-                      nothing
-        :param log: if True prints that we are loading database
-
-        :return:
-        """
-        # set function
-        # _ = display_func('load_db', __NAME__, self.classname)
-        # if we already have database do nothing
-        if (self.database is not None) and (not check):
-            return
-        # deal with no instrument
-        if self.instrument == 'None':
-            return
-        # update the database parameters
-        self.database_settings(self.kind)
-        # log that we are loading database
-        if log:
-            margs = [self.name, self.dburl]
-            WLOG(self.params, 'info', textentry('40-006-00005', args=margs))
-        # load database
-        self.database = drs_db.AperoDatabase(self.dburl, tablename=self.dbtable)
-
-    def __setstate__(self, state):
-        # update dict with state
-        self.__dict__.update(state)
-        # read attributes not in state
-        self.pconst = constants.pload()
-
-    def __getstate__(self) -> dict:
-        """
-        For when we have to pickle the class
-        :return:
-        """
-        # what to exclude from state
-        exclude = ['pconst']
-        # need a dictionary for pickle
-        state = dict()
-        for key, item in self.__dict__.items():
-            if key not in exclude:
-                state[key] = item
-        # return dictionary state
-        return state
-
-    def __str__(self):
-        """
-        Return the string representation of the class
-        :return:
-        """
-        # set function
-        # _ = display_func('__str__', __NAME__, self.classname)
-        # return string representation
-        return '{0}[{1}]'.format(self.classname, self.dburl)
-
-    def __repr__(self):
-        """
-        Return the string representation of the class
-        :return:
-        """
-        # set function
-        # _ = display_func('__repr__', __NAME__, self.classname)
-        # return string representation
-        return self.__str__()
-
-    def database_settings(self, kind: str, dparams: Union[dict, None] = None):
-        """
-        Load the initial database settings
-        :param kind: str, the database kind (mysql or sqlite3)
-        :param dparams: dict, the database yaml dictionary
-
-        :return: None updates database settings
-        """
-        # deal with no instrument (i.e. no database)
-        if self.instrument == 'None':
-            return
-        # load database yaml file
-        if dparams is None:
-            ddict = base.DPARAMS
-        else:
-            ddict = dict(dparams)
-        # get correct sub-dictionary
-        self.dbtype = ddict['TYPE']
-        self.dbhost = ddict['HOST']
-        self.dbuser = ddict['USER']
-        self.dbpass = ddict['PASSWD']
-        if 'PORT' in ddict:
-            self.dbport = ddict['PORT']
-        else:
-            self.dbport = base.DEFAULT_DATABASE_PORT
-        # kind must be one of the following
-        if kind not in DATABASE_NAMES:
-            raise ValueError('kind=={0} invalid'.format(kind))
-        # for yaml kind is uppercase
-        ykind = kind.upper()
-        # set table name
-        dbname = ddict[ykind]['NAME']
-        profile = ddict[ykind]['PROFILE']
-        if dbname.endswith('_db'):
-            self.dbtable = dbname
-        else:
-            self.dbtable = '{0}_{1}_db'.format(dbname, profile)
-        # set reset path
-        if drs_text.null_text(ddict[ykind]['RESET'], ['None']):
-            self.dbreset = None
-        else:
-            self.dbreset = ddict[ykind]['RESET']
-        # set url
-        self.dburl = (f'{self.dbtype}://{self.dbuser}:{self.dbpass}'
-                      f'@{self.dbhost}:{self.dbport}/{self.dbtable}')
-
-    def check_columns(self, dictionary: dict):
-        """
-        Check the columns all exist in the database (based on pconst definition)
-
-        :raises: drs_db.AperoDatabaseException, if a column is not found
-        :param dictionary: dict, the dictionary to check (will be used as
-                           index_dict or update_dict in drs_db)
-        :return: None
-        """
-        # deal with no columns set
-        if self.columns is None:
-            return
-        if len(self.colnames) == 0:
-            return
-        # look through all dictionary keys and compare to self.colnames
-        for key in dictionary:
-            if key not in self.colnames:
-                emsg = 'Column "{0}" not in database columns for {1}'
-                eargs = [key, self.classname]
-                raise drs_db.AperoDatabaseError(message=emsg.format(*eargs))
 
 
 # =============================================================================
@@ -301,8 +119,9 @@ class AstrometricDatabase(DatabaseManager):
         """
         # save class name
         self.classname = 'AstrometricDatabase'
-        # set function
-        # _ = display_func('__init__', __NAME__, self.classname)
+        # deal with no pconst
+        if pconst is None:
+            pconst = constants.pload()
         # construct super class
         DatabaseManager.__init__(self, params, pconst)
         # set name
@@ -389,26 +208,21 @@ class AstrometricDatabase(DatabaseManager):
             return entries
 
     def add_entry(self, objname: str, objname_s: str,
-                  gaia_id: str, gaia_id_s: str,
                   ra: float, ra_s: str, dec: float, dec_s: str,
                   pmra: Union[float, None] = None, pmra_s: str = 'None',
                   pmde: Union[float, None] = None, pmde_s: str = 'None',
                   plx: Union[float, None] = None, plx_s: str = 'None',
                   rv: Union[float, None] = None, rv_s: str = 'None',
-                  gmag: Union[float, None] = None, gmag_s: str = 'None',
-                  bpmag: Union[float, None] = None, bpmag_s: str = 'None',
-                  rpmag: Union[float, None] = None, rpmag_s: str = 'None',
-                  epoch: Union[float, None] = None, epoch_s: str = 'None',
+                  epoch: Union[float, None] = None,
                   teff: Union[float, None] = None, teff_s: str = 'None',
+                  sp_type: Union[str, None] = None, sp_type_s: str = 'None',
                   aliases: Union[List[str], str, None] = None,
-                  aliases_s: str = 'None', used: int = 1):
+                  used: int = 1, notes: str = ''):
         """
         Add an object to the object database
 
         :param objname: str, the primary object name (SIMBAD name)
         :param objname_s: str, source of objname
-        :param gaia_id: str, the Gaia ID (from Gaia DR2)
-        :param gaia_id_s: str, source of Gaia ID
         :param ra: float, the Gaia right ascension of an object (in degrees)
         :param ra_s: str, source of ra
         :param dec: float, the Gaia declination of an object (in degrees)
@@ -421,46 +235,51 @@ class AstrometricDatabase(DatabaseManager):
         :param plx_s: str, source of plx
         :param rv: float, the RV in km/s
         :param rv_s: str, source of rv
-        :param gmag: float, the Gaia G magnitude
-        :param gmag_s: str, source of gmag
-        :param bpmag: float, the Gaia BP magnitude
-        :param bpmag_s: str, the source of bpmag
-        :param rpmag: float, the Gaia RP magniutde
-        :param rpmag_s: str, the source of rpmag
         :param epoch: float, the Gaia epoch (2015.5)
-        :param epoch_s: str, the source of epoch
         :param teff: float, the temperature in K
         :param teff_s: str, the source of Teff
         :param aliases: list of strings or string, any other names this
                         target can have
-        :param aliases_s: str, the source of aliases
         :param used: int, whether to use entries or not (normally ste manually)
 
         :return: None - updates database
         """
-        # deal with values
-        values = [objname, objname_s, gaia_id, gaia_id_s, ra, ra_s, dec, dec_s,
-                  pmra, pmra_s, pmde, pmde_s, plx, plx_s, rv, rv_s, gmag,
-                  gmag_s, bpmag, bpmag_s, rpmag, rpmag_s, epoch, epoch_s,
-                  teff, teff_s]
-        # deal with null values
-        for it, value in enumerate(values):
-            if value is None:
-                values[it] = 'None'
         # deal with aliases
         if isinstance(aliases, str):
-            values.append(aliases)
-            values.append(aliases_s)
+            daliases = aliases
         elif isinstance(aliases, list):
-            values.append('|'.join(aliases))
-            values.append(aliases_s)
+            daliases = '|'.join(aliases)
         else:
-            values.append('None')
-            values.append(aliases_s)
-        # add used
-        values.append(used)
-        # create insert dictionary
-        insert_dict = dict(zip(self.colnames, values))
+            daliases = 'None'
+        # create insert dict
+        insert_dict = dict()
+        insert_dict['OBJNAME'] = drs_db._deal_with_null(objname)
+        insert_dict['ORIGINAL_NAME'] = drs_db._deal_with_null(objname_s)
+        insert_dict['ALIASES'] = daliases
+        insert_dict['RA_DEG'] = ra
+        insert_dict['RA_SOURCE'] = ra_s
+        insert_dict['DEC_DEG'] = dec
+        insert_dict['DEC_SOURCE'] = dec_s
+        insert_dict['EPOCH'] = epoch
+        insert_dict['PMRA'] = pmra
+        insert_dict['PMRA_SOURCE'] = pmra_s
+        insert_dict['PMDE'] = pmde
+        insert_dict['PMDE_SOURCE'] = pmde_s
+        insert_dict['PLX'] = plx
+        insert_dict['PLX_SOURCE'] = plx_s
+        insert_dict['RV'] = rv
+        insert_dict['RV_SOURCE'] = rv_s
+        insert_dict['TEFF'] = teff
+        insert_dict['TEFF_SOURCE'] = teff_s
+        insert_dict['SP_TYPE'] = drs_db._deal_with_null(sp_type)
+        insert_dict['SP_TYPE_SOURCE'] = drs_db._deal_with_null(sp_type_s)
+        insert_dict['NOTES'] = drs_db._deal_with_null(notes)
+        insert_dict['USED'] = used
+        insert_dict['DATE_ADDED'] = Time.now().iso
+        # ------------------------------------------------------------------
+        # check that we are adding the correct columns (i.e. all columns
+        #   are in database)
+        self.check_columns(insert_dict)
         # try to add a new row
         self.database.add_row(insert_dict=insert_dict)
 
@@ -571,8 +390,9 @@ class CalibrationDatabase(DatabaseManager):
         """
         # save class name
         self.classname = 'CalibrationDatabaseManager'
-        # set function
-        # _ = display_func('__init__', __NAME__, self.classname)
+        # deal with no pconst
+        if pconst is None:
+            pconst = constants.pload()
         # construct super class
         DatabaseManager.__init__(self, params, pconst)
         # set name
@@ -950,8 +770,9 @@ class TelluricDatabase(DatabaseManager):
         """
         # save class name
         self.classname = 'TelluricDatabaseManager'
-        # set function
-        # _ = display_func('__init__', __NAME__, self.classname)
+        # deal with no pconst
+        if pconst is None:
+            pconst = constants.pload()
         # construct super class
         DatabaseManager.__init__(self, params, pconst)
         # set name
@@ -1650,8 +1471,9 @@ class FileIndexDatabase(DatabaseManager):
         """
         # save class name
         self.classname = 'FileIndexDatabaseManager'
-        # set function
-        # _ = display_func('__init__', __NAME__, self.classname)
+        # deal with no pconst
+        if pconst is None:
+            pconst = constants.pload()
         # construct super class
         DatabaseManager.__init__(self, params, pconst)
         # set name
@@ -2469,8 +2291,9 @@ class LogDatabase(DatabaseManager):
         """
         # save class name
         self.classname = 'LogDatabaseManager'
-        # set function
-        # _ = display_func('__init__', __NAME__, self.classname)
+        # deal with no pconst
+        if pconst is None:
+            pconst = constants.pload()
         # construct super class
         DatabaseManager.__init__(self, params, pconst)
         # set name
@@ -2529,8 +2352,8 @@ class LogDatabase(DatabaseManager):
                     ram_usage_start: Union[float, None] = None,
                     ram_usage_end: Union[float, None] = None,
                     ram_total: Union[float, None] = None,
-                    swap_usage_start: Union[float, None] = None,
-                    swap_usage_end: Union[float, None] = None,
+                    swapusage_start: Union[float, None] = None,
+                    swapusage_end: Union[float, None] = None,
                     swap_total: Union[float, None] = None,
                     cpu_usage_start: Union[float, None] = None,
                     cpu_usage_end: Union[float, None] = None,
@@ -2605,38 +2428,61 @@ class LogDatabase(DatabaseManager):
         """
         # need to clean error to put into database
         clean_error = _clean_error(errors)
-        # get correct order
-        keys = [recipe, sname, block_kind, recipe_type, recipe_kind,
-                program_name, pid, htime, unixtime, group, level, sublevel,
-                levelcrit, inpath, outpath, obs_dir, logfile, plotdir,
-                runstring, args, kwargs, skwargs, start_time, end_time,
-                started, passed_all_qc,
-                qc_string, qc_names, qc_values, qc_logic, qc_pass,
-                clean_error, ended, flagnum, flagstr, used,
-                ram_usage_start, ram_usage_end, ram_total, swap_usage_start,
-                swap_usage_end, swap_total, cpu_usage_start, cpu_usage_end,
-                cpu_num, log_start, log_end]
-        # get column names and column datatypes
-        ldb_cols = self.pconst.LOG_DB_COLUMNS()
-        coltypes = list(ldb_cols.dtypes)
-        # storage of values
-        values = []
-        # loop around values
-        for it in range(len(keys)):
-            # deal with unset key
-            if drs_text.null_text(keys[it], ['None', '']):
-                values.append('None')
-            else:
-                # noinspection PyBroadException
-                try:
-                    # get data type
-                    dtype = coltypes[it]
-                    # append forcing data type
-                    values.append(dtype(keys[it]))
-                except Exception as _:
-                    values.append('None')
+        # get insert dictionary
+        insert_dict = dict()
+        insert_dict['RECIPE'] = drs_db.deal_with_null(recipe)
+        insert_dict['SNAME'] = drs_db.deal_with_null(sname)
+        insert_dict['BLOCK_KIND'] = drs_db.deal_with_null(block_kind)
+        insert_dict['RECIPE_TYPE'] = drs_db.deal_with_null(recipe_type)
+        insert_dict['RECIPE_KIND'] = drs_db.deal_with_null(recipe_kind)
+        insert_dict['PROGRAM_NAME'] = drs_db.deal_with_null(program_name)
+        insert_dict['PID'] = drs_db.deal_with_null(pid)
+        insert_dict['HUMANTIME'] = drs_db.deal_with_null(htime)
+        insert_dict['UNIXTIME'] = drs_db.deal_with_null(unixtime)
+        insert_dict['GROUPNAME'] = drs_db.deal_with_null(group)
+        insert_dict['LEVEL'] = drs_db.deal_with_null(level)
+        insert_dict['SUBLEVEL'] = drs_db.deal_with_null(sublevel)
+        insert_dict['LEVELCRIT'] = drs_db.deal_with_null(levelcrit)
+        insert_dict['INPATH'] = drs_db.deal_with_null(inpath)
+        insert_dict['OUTPATH'] = drs_db.deal_with_null(outpath)
+        insert_dict['OBS_DIR'] = drs_db.deal_with_null(obs_dir)
+        insert_dict['LOGFILE'] = drs_db.deal_with_null(logfile)
+        insert_dict['PLOTDIR'] = drs_db.deal_with_null(plotdir)
+        insert_dict['RUNSTRING'] = drs_db.deal_with_null(runstring)
+        insert_dict['ARGS'] = drs_db.deal_with_null(args)
+        insert_dict['KWARGS'] = drs_db.deal_with_null(kwargs)
+        insert_dict['SKWARGS'] = drs_db.deal_with_null(skwargs)
+        insert_dict['START_TIME'] = drs_db.deal_with_null(start_time)
+        insert_dict['END_TIME'] = drs_db.deal_with_null(end_time)
+        insert_dict['STARTED'] = drs_db.deal_with_null(started)
+        insert_dict['PASSED_ALL_QC'] = drs_db.deal_with_null(passed_all_qc)
+        insert_dict['QC_STRING'] = drs_db.deal_with_null(qc_string)
+        insert_dict['QC_NAMES'] = drs_db.deal_with_null(qc_names)
+        insert_dict['QC_VALUES'] = drs_db.deal_with_null(qc_values)
+        insert_dict['QC_LOGIC'] = drs_db.deal_with_null(qc_logic)
+        insert_dict['QC_PASS'] = drs_db.deal_with_null(qc_pass)
+        insert_dict['ERRORMSGS'] = drs_db.deal_with_null(clean_error)
+        insert_dict['ENDED'] = drs_db.deal_with_null(ended)
+        insert_dict['FLAGNUM'] = drs_db.deal_with_null(flagnum)
+        insert_dict['FLAGSTR'] = drs_db.deal_with_null(flagstr)
+        insert_dict['USED'] = drs_db.deal_with_null(used)
+        insert_dict['RAM_USAGE_START'] = drs_db.deal_with_null(ram_usage_start)
+        insert_dict['RAM_USAGE_END'] = drs_db.deal_with_null(ram_usage_end)
+        insert_dict['RAM_TOTAL'] = drs_db.deal_with_null(ram_total)
+        insert_dict['SWAP_USAGE_START'] = drs_db.deal_with_null(swapusage_start)
+        insert_dict['SWAP_USAGE_END'] = drs_db.deal_with_null(swapusage_end)
+        insert_dict['SWAP_TOTAL'] = drs_db.deal_with_null(swap_total)
+        insert_dict['CPU_USAGE_START'] = drs_db.deal_with_null(cpu_usage_start)
+        insert_dict['CPU_USAGE_END'] = drs_db.deal_with_null(cpu_usage_end)
+        insert_dict['CPU_NUM'] = drs_db.deal_with_null(cpu_num)
+        insert_dict['LOG_START'] = drs_db.deal_with_null(log_start)
+        insert_dict['LOG_END'] = drs_db.deal_with_null(log_end)
+        # ------------------------------------------------------------------
+        # check that we are adding the correct columns (i.e. all columns
+        #   are in database)
+        self.check_columns(insert_dict)
         # add row to database
-        self.database.add_row(values)
+        self.database.add_row(insert_dict=insert_dict)
 
     def get_entries(self, columns: str = '*',
                     include_obs_dirs: Union[List[str], None] = None,
@@ -2808,8 +2654,9 @@ class RejectDatabase(DatabaseManager):
         """
         # save class name
         self.classname = 'RejectDatabaseManager'
-        # set function
-        # _ = display_func('__init__', __NAME__, self.classname)
+        # deal with no pconst
+        if pconst is None:
+            pconst = constants.pload()
         # construct super class
         DatabaseManager.__init__(self, params, pconst)
         # set name
@@ -2837,29 +2684,21 @@ class RejectDatabase(DatabaseManager):
 
         :return: None - updates database
         """
-        # get correct order
-        keys = [identifier, pp_flag, tel_flag, rv_flag, used, comment]
-        # get column names and column datatypes
-        rdb_cols = self.pconst.REJECT_DB_COLUMNS()
-        coltypes = list(rdb_cols.dtypes)
-        # storage of values
-        values = []
-        # loop around values
-        for it in range(len(keys)):
-            # deal with unset key
-            if drs_text.null_text(keys[it], ['None', '']):
-                values.append('None')
-            else:
-                # noinspection PyBroadException
-                try:
-                    # get data type
-                    dtype = coltypes[it]
-                    # append forcing data type
-                    values.append(dtype(keys[it]))
-                except Exception as _:
-                    values.append('None')
+        # fill insert dict
+        insert_dict = dict()
+        insert_dict['IDENTIFIER'] = drs_db.deal_with_null(identifier)
+        insert_dict['PP_FLAG'] = drs_db.deal_with_null(pp_flag)
+        insert_dict['TEL'] = drs_db.deal_with_null(tel_flag)
+        insert_dict['RV'] = drs_db.deal_with_null(rv_flag)
+        insert_dict['USED'] = drs_db.deal_with_null(used)
+        insert_dict['DATE_ADDED'] = Time.now().iso
+        insert_dict['COMMENT'] = drs_db.deal_with_null(comment)
+        # ------------------------------------------------------------------
+        # check that we are adding the correct columns (i.e. all columns
+        #   are in database)
+        self.check_columns(insert_dict)
         # add row to database
-        self.database.add_row(values)
+        self.database.add_row(insert_dict=insert_dict)
 
     def get_entries(self, columns: str = '*',
                     nentries: Union[int, None] = None,

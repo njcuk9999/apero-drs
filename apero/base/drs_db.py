@@ -39,6 +39,9 @@ UHASH_COL = 'UHASH'
 UpdateDictReturn = Union[List[Dict[str, Any]], Dict[str, Any]]
 
 DEBUG = True
+# define database names
+DATABASE_NAMES = ['calib', 'tellu', 'findex', 'log', 'astrom', 'lang',
+                  'reject']
 
 
 # =============================================================================
@@ -210,6 +213,17 @@ class AperoDatabase:
         _ = sqlalchemy.Table(tablename, metadata, *columns, *indexes, *uniques)
         # create table
         metadata.create_all(self.engine)
+
+    def get_tables(self):
+        """
+        Get a list of tables in the database
+
+        :return:
+        """
+        # get inspector
+        inspector = sqlalchemy.inspect(self.engine)
+        # get table names
+        return inspector.get_table_names()
 
     def count(self, tablename: Optional[str] = None,
               condition: Optional[str] = None) -> int:
@@ -935,6 +949,369 @@ class AperoDatabaseColumns:
 
 
 # =============================================================================
+# Define base databases
+# =============================================================================
+class DatabaseManager:
+    """
+    Apero Database Manager class (basically abstract)
+    """
+    # define attribute types
+    database: Union[AperoDatabase, None]
+
+    def __init__(self, params: Any = None, pconst: Any = None):
+        """
+        Construct the Database Manager
+
+        :param params: ParamDict, parameter dictionary of constants
+        :param pconst: Psuedo constants class for instrument
+        """
+        # save class name
+        self.classname = 'DatabaseManager'
+        # set function
+        # _ = display_func('__init__', __NAME__, self.classname)
+        # save params for use throughout
+        self.params = params
+        self.pcont = pconst
+        self.instrument = base.IPARAMS['INSTRUMENT']
+        # set name
+        self.name = 'DatabaseManager'
+        self.kind = 'None'
+        self.dbtype = None
+        self.columns = None
+        self.colnames = []
+        # set parameters
+        self.dbhost = None
+        self.dbuser = None
+        self.dbpath = None
+        self.dbtable = None
+        self.dbreset = None
+        self.dbpass = None
+        self.dbname = None
+        self.dbport = None
+        # sqlalchemy URL
+        self.dburl = None
+        # set unloaded database
+        self.database = None
+
+    def load_db(self, check: bool = False, log: bool = False):
+        """
+        Load the database class and connect to SQL database
+
+        :param check: if True will reload the database even if already defined
+                      else if we Database.database is set this function does
+                      nothing
+        :param log: if True prints that we are loading database
+
+        :return:
+        """
+        # set function
+        # _ = display_func('load_db', __NAME__, self.classname)
+        # if we already have database do nothing
+        if (self.database is not None) and (not check):
+            return
+        # deal with no instrument
+        if self.instrument == 'None':
+            return
+        # update the database parameters
+        self.database_settings(self.kind)
+        # load database
+        self.database = AperoDatabase(self.dburl, tablename=self.dbtable)
+
+    def __setstate__(self, state):
+        # update dict with state
+        self.__dict__.update(state)
+        # read attributes not in state
+        self.pconst = None
+
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # what to exclude from state
+        exclude = ['pconst']
+        # need a dictionary for pickle
+        state = dict()
+        for key, item in self.__dict__.items():
+            if key not in exclude:
+                state[key] = item
+        # return dictionary state
+        return state
+
+    def __str__(self):
+        """
+        Return the string representation of the class
+        :return:
+        """
+        # set function
+        # _ = display_func('__str__', __NAME__, self.classname)
+        # return string representation
+        return '{0}[{1}]'.format(self.classname, self.dburl)
+
+    def __repr__(self):
+        """
+        Return the string representation of the class
+        :return:
+        """
+        # set function
+        # _ = display_func('__repr__', __NAME__, self.classname)
+        # return string representation
+        return self.__str__()
+
+    def database_settings(self, kind: str, dparams: Union[dict, None] = None):
+        """
+        Load the initial database settings
+        :param kind: str, the database kind (mysql or sqlite3)
+        :param dparams: dict, the database yaml dictionary
+
+        :return: None updates database settings
+        """
+        # deal with no instrument (i.e. no database)
+        if self.instrument == 'None':
+            return
+        # load database yaml file
+        if dparams is None:
+            ddict = base.DPARAMS
+        else:
+            ddict = dict(dparams)
+        # get correct sub-dictionary
+        self.dbtype = ddict['TYPE']
+        self.dbhost = ddict['HOST']
+        self.dbuser = ddict['USER']
+        self.dbpass = ddict['PASSWD']
+        self.dbname = ddict['DATABASE']
+        if 'PORT' in ddict:
+            self.dbport = ddict['PORT']
+        else:
+            self.dbport = base.DEFAULT_DATABASE_PORT
+        # kind must be one of the following
+        if kind not in DATABASE_NAMES:
+            raise ValueError('kind=={0} invalid'.format(kind))
+        # for yaml kind is uppercase
+        ykind = kind.upper()
+        # set table name
+        dbname = ddict[ykind]['NAME']
+        profile = ddict[ykind]['PROFILE']
+        if dbname.endswith('_db'):
+            self.dbtable = dbname
+        else:
+            self.dbtable = '{0}_{1}_db'.format(dbname, profile)
+        # set reset path
+        if ddict[ykind]['RESET'] in [None, 'None', 'Null', '']:
+            self.dbreset = None
+        else:
+            self.dbreset = ddict[ykind]['RESET']
+        # set url
+        self.dburl = (f'{self.dbtype}://{self.dbuser}:{self.dbpass}'
+                      f'@{self.dbhost}:{self.dbport}/{self.dbname}')
+
+    def check_columns(self, dictionary: dict):
+        """
+        Check the columns all exist in the database (based on pconst definition)
+
+        :raises: drs_db.AperoDatabaseException, if a column is not found
+        :param dictionary: dict, the dictionary to check (will be used as
+                           index_dict or update_dict in drs_db)
+        :return: None
+        """
+        # deal with no columns set
+        if self.columns is None:
+            return
+        if len(self.colnames) == 0:
+            return
+        # look through all dictionary keys and compare to self.colnames
+        for key in dictionary:
+            if key not in self.colnames:
+                emsg = 'Column "{0}" not in database columns for {1}'
+                eargs = [key, self.classname]
+                raise AperoDatabaseError(message=emsg.format(*eargs))
+
+
+class LanguageDatabase(DatabaseManager):
+    def __init__(self):
+        """
+        Constructor of the Language Database class
+
+        :return: None
+        """
+        # call super class
+        super().__init__()
+        # save class name
+        self.classname = 'LanguageDatabaseManager'
+        # set function
+        _ = '{0}.{1}.{2}()'.format(__NAME__, self.classname, '__init__')
+        # set instrument name
+        self.instrument = base.IPARAMS.get('INSTRUMENT', 'None')
+        # set name
+        self.name = 'language'
+        self.kind = 'LANG'
+        # define columns
+        self.columns = AperoDatabaseColumns()
+        # add key columns
+        self.columns.add(name='KEYNAME', datatype=sqlalchemy.String(80),
+                         is_index=True)
+        self.columns.add(name='KIND', datatype=sqlalchemy.String(25))
+        self.columns.add(name='KEYDESC',
+                         datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC))
+        self.columns.add(name='ARGUMENTS',
+                         datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC))
+        # add language columns
+        for lang in base.LANGUAGES:
+            self.columns.add(name=lang,
+                             datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC))
+        # other paths
+        self.databasefile = ''
+        self.resetfile = ''
+        self.instruement_resetfile = ''
+        # set path
+        self.database_settings(kind=self.kind)
+
+    LanguageEntry = Union[tuple, pd.DataFrame, np.ndarray, AstropyTable, None]
+
+    def get_entry(self, columns: str, key: str) -> LanguageEntry:
+        """
+        Get an entry from the language database
+
+        :param columns: str, the columns to return (can be '*' for all)
+        :param key: str, the unique key that defines the entry (KEYNAME)
+
+        :return: tuple, dataframe, numpy array, Table or None, the value(s) of
+                 the entry for given columns
+        """
+        # set function
+        _ = '{0}.{1}.{2}()'.format(__NAME__, self.classname, '__init__')
+        # deal with no instrument set
+        if self.instrument == 'None':
+            return None
+        # deal with having the possibility of more than one column
+        colnames = self.database.colnames(columns)
+        # set up kwargs from database query
+        sql = dict()
+        # set up sql kwargs
+        sql['sort_by'] = None
+        sql['sort_descending'] = True
+        # condition for key
+        sql['condition'] = 'KEYNAME = "{0}"'.format(key)
+        # return only 1 row
+        sql['max_rows'] = 1
+        # do sql query
+        entries = self.database.get(columns, **sql)
+        # return filename
+        if len(entries) == 1:
+            if len(colnames) == 1:
+                return entries[0][0]
+            else:
+                return entries[0]
+        else:
+            return None
+
+    def add_entry(self, key: str, kind: str, comment: str,
+                  arguments: Union[str, None] = None,
+                  textdict: Union[Dict[str, str], None] = None):
+        """
+        Add a language entry
+
+        :param key: str, the key name for the language entry
+        :param kind: str, the language entry tag (HELP, TEXT, ERROR, WARNING,
+                     INFO, ALL, GRAPH, DEBUG)
+        :param comment: a description of this key (in english)
+        :param arguments: None or argument
+        :param textdict:
+
+        :return:
+        """
+        # set function
+        func_name = '{0}.{1}.{2}()'.format(__NAME__, self.classname,
+                                           'add_entry')
+        # deal with bad key
+        cond1 = drs_base.base_func(drs_base.base_null_text, func_name, key,
+                                   ['None', 'NULL', ''])
+        if cond1:
+            return
+        # check kind
+        if kind not in ['HELP', 'TEXT', 'ERROR', 'WARNING', 'INFO', 'ALL',
+                        'GRAPH', 'DEBUG']:
+            emsg = ('Kind = {0} not valid for Language database\n\t'
+                    'Function = {1}')
+            raise AperoDatabaseException(emsg.format(kind, func_name))
+        # check arguments
+        if arguments is None:
+            arguments = 'NULL'
+        # ---------------------------------------------------------------------
+        # construct insert_dict
+        insert_dict = dict()
+        insert_dict['KEYNAME'] = key
+        insert_dict['KIND'] = kind
+        insert_dict['KEYDESC'] = comment
+        insert_dict['ARGUMENTS'] = arguments
+        # ---------------------------------------------------------------------
+        # add languages
+        if textdict is not None:
+            for language in base.LANGUAGES:
+                if language in textdict:
+                    # get text for this language
+                    dbtext = str(textdict[language])
+                    # replace all " with ' (to avoid conflicts)
+                    dbtext = dbtext.replace('"', "'")
+                    # add to insert dict
+                    insert_dict[language] = deal_with_null(dbtext)
+                else:
+                    insert_dict[language] = 'NULL'
+        else:
+            for language in base.LANGUAGES:
+                insert_dict[language] = 'NULL'
+        # ---------------------------------------------------------------------
+        # add row to database
+        self.database.add_row(insert_dict=insert_dict)
+
+    def get_dict(self, language: str) -> dict:
+        """
+        Get a dictionary representation of the database (only use if never
+        writing to the database in a run)
+
+        :param language: str, the language to use
+
+        :return: dict, the dictionary representation of the database
+                 keys are 'KEYNAME'
+        """
+        # set function
+        func_name = '{0}.{1}.{2}()'.format(__NAME__, self.classname,
+                                           'get_dict')
+        # get all rows
+        df = self.database.get('*', return_pandas=True)
+        # set up storage
+        storage = dict()
+        # loop around dataframe rows
+        for row in range(len(df)):
+            # get data for row
+            rowdata = df.iloc[row]
+            # get text
+            if language not in rowdata:
+                rowtext = rowdata[base.DEFAULT_LANG]
+
+            else:
+                cond1 = drs_base.base_func(drs_base.base_null_text,
+                                           func_name, rowdata[language],
+                                           ['None', 'NULL', ''])
+                if cond1:
+                    rowtext = rowdata[base.DEFAULT_LANG]
+                else:
+                    rowtext = rowdata[language]
+            # if we still have a null entry do not add this row to storage
+            cond2 = drs_base.base_func(drs_base.base_null_text, func_name,
+                                       rowtext, ['None', 'NULL', ''])
+            if cond2:
+                continue
+            # encode rowtext with escape chars
+            rowtext = rowtext.replace(r'\n', '\n')
+            rowtext = rowtext.replace(r'\t', '\t')
+            # push to storage
+            storage[rowdata['KEYNAME']] = rowtext
+        # return dictionary storage
+        return storage
+
+
+# =============================================================================
 # Working functions
 # =============================================================================
 def _hash_col(insert_dict: UpdateDictReturn,
@@ -1045,6 +1422,23 @@ def _hash_df(dataframe: pd.DataFrame, unique_cols: List[str]) -> pd.DataFrame:
     # -------------------------------------------------------------------------
     # return dataframe
     return dataframe
+
+
+def deal_with_null(value: Any = None):
+    """
+    Deal with null values in entry to database
+
+    :param value: str, the value to check
+    :return:
+    """
+    # deal with None directly
+    if value is None:
+        return 'None'
+    # deal with other nulls
+    if value in ['None', 'Null', '']:
+        return 'None'
+    # otherwise return value
+    return value
 
 
 # =============================================================================

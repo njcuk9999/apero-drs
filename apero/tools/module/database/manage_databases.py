@@ -8,7 +8,7 @@ Created on 2020-08-2020-08-18 17:13
 @author: cook
 """
 import os
-from typing import Dict, List, Union
+from typing import Dict, List, Literal, Union
 
 import numpy as np
 import pandas as pd
@@ -35,7 +35,7 @@ __release__ = base.__release__
 # get tqdm from base
 tqdm = base.TQDM
 # Get database definition
-Database = drs_db.Database
+Database = drs_db.AperoDatabase
 DatabaseM = drs_database.DatabaseManager
 BaseDatabaseM = drs_db.BaseDatabaseManager
 # Get ParamDict
@@ -197,7 +197,8 @@ def export_database(params: ParamDict, database_name: str,
 
 
 def import_database(params: ParamDict, database_name: str,
-                    infilename: str, joinmode: str = 'replace'):
+                    infilename: str,
+                    joinmode: Literal["fail", "replace", "append"] = 'replace'):
     """
     Imports a given csv file "infilename" to database "database_name"
 
@@ -255,15 +256,6 @@ def import_database(params: ParamDict, database_name: str,
     # load csv file into pandas table
     df = pd.read_csv(infilename)
     # -------------------------------------------------------------------
-    # get unique columns
-    dbcol = pconst.GET_DB_COLS(db.database.tname)
-    # deal with database column
-    if dbcol is not None:
-        ucols = dbcol.unique_cols
-    # else we assume ucols is None
-    else:
-        ucols = None
-    # -------------------------------------------------------------------
     # Push into database
     # -------------------------------------------------------------------
     # print log
@@ -274,20 +266,21 @@ def import_database(params: ParamDict, database_name: str,
     # log
     WLOG(params, '', wmsg)
     # add pandas table to database
-    db.database.add_from_pandas(df, if_exists=joinmode, unique_cols=ucols)
+    db.database.add_from_pandas(df, if_exists=joinmode)
 
 
 def list_databases(params: ParamDict) -> Dict[str, DatabaseM]:
     # set up storage
     databases = dict()
+    pconst = constants.pload()
     # get databases from managers (later databases)
-    calibdbm = drs_database.CalibrationDatabase(params, check=False)
-    telludbm = drs_database.TelluricDatabase(params, check=False)
-    findexdbm = drs_database.FileIndexDatabase(params, check=False)
-    logdbm = drs_database.LogDatabase(params, check=False)
-    objectdbm = drs_database.AstrometricDatabase(params, check=False)
-    rejectdbm = drs_database.RejectDatabase(params, check=False)
-    landdbm = drs_db.LanguageDatabase(check=False)
+    calibdbm = drs_database.CalibrationDatabase(params, pconst)
+    telludbm = drs_database.TelluricDatabase(params, pconst)
+    findexdbm = drs_database.FileIndexDatabase(params, pconst)
+    logdbm = drs_database.LogDatabase(params, pconst)
+    objectdbm = drs_database.AstrometricDatabase(params, pconst)
+    rejectdbm = drs_database.RejectDatabase(params, pconst)
+    landdbm = drs_db.LanguageDatabase()
     # add to storage
     databases['calib'] = calibdbm
     databases['tellu'] = telludbm
@@ -725,27 +718,26 @@ def update_object_database(params: ParamDict, log: bool = True):
     # -------------------------------------------------------------------------
     # get columns and ctypes from pconst
     objdb_cols = pconst.ASTROMETRIC_DB_COLUMNS()
-    columns = list(objdb_cols.names)
-    ctypes = list(objdb_cols.datatypes)
-    cuniques = list(objdb_cols.unique_cols)
-    cindexs = list(objdb_cols.index_cols)
     # -------------------------------------------------------------------------
     # construct directory
     objectdbm = databases['astrom']
     # -------------------------------------------------------------------------
     # make database
-    objectdb = drs_db.database_wrapper(objectdbm.kind, objectdbm.path)
+    objectdb = drs_db.AperoDatabase(objectdbm.dburl,
+                                    tablename=objectdbm.dbtable)
     # -------------------------------------------------------------------------
     # remove table if it already exists
-    if objectdb.tname in objectdb.tables:
+    if objectdb.tablename in objectdb.tables:
         objectdb.backup()
-        objectdb.delete_table(objectdb.tname)
+        objectdb.delete_table(objectdb.tablename)
     # add main table
-    objectdb.add_table(objectdb.tname, columns, ctypes, unique_cols=cuniques,
-                       index_cols=cindexs)
+    objectdb.add_table(objectdb.tablename,
+                       columns=objdb_cols.columns,
+                       indexes=objdb_cols.indexes,
+                       uniques=objdb_cols.uniques)
     # ---------------------------------------------------------------------
     # add rows from pandas dataframe
-    objectdb.add_from_pandas(df, unique_cols=cuniques)
+    objectdb.add_from_pandas(df, tablename=objectdb.tablename)
 
 
 # =============================================================================
