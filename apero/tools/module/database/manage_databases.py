@@ -37,7 +37,6 @@ tqdm = base.TQDM
 # Get database definition
 Database = drs_db.AperoDatabase
 DatabaseM = drs_database.DatabaseManager
-BaseDatabaseM = drs_db.BaseDatabaseManager
 # Get ParamDict
 ParamDict = constants.ParamDict
 PseudoConst = constants.PseudoConstants
@@ -95,58 +94,54 @@ def kill(params: ParamDict, timeout: int = 60):
     """
     # get database parameters from base
     dparams = base.DPARAMS
-    # deal with mysql
-    if dparams['USE_MYSQL']:
-        # get path
-        path = ''
-        # get hostname / user / password
-        host = dparams['MYSQL']['HOST']
-        user = dparams['MYSQL']['USER']
-        userdb = dparams['MYSQL']['DATABASE']
-        passwd = dparams['MYSQL']['PASSWD']
-        databasename = 'information_schema'
-        tablename = 'processlist'
-        # wrap in a try (this may not always work
-        # noinspection PyBroadException
-        try:
-            # get database connection
-            infodb = drs_db.MySQLDatabase(path=path, host=host, user=user,
-                                          passwd=passwd,
-                                          database=databasename,
-                                          tablename=tablename,
-                                          absolute_table_name=True)
-            # set up condition: only this users processes and only from the
-            #   required database and that have been active for more than
-            #   60 seconds
-            cargs = [user, userdb, timeout]
-            condition = 'USER="{0}" AND DB="{1}" AND TIME > {2}'.format(*cargs)
-            # log condition
-            WLOG(params, '', 'Condition')
-            WLOG(params, '', '\t' + condition)
-            # get all processes that were started by user
-            table = infodb.get('*', condition=condition, return_pandas=True)
-            # get ids from table
-            ids = list(table['ID'].values)
-            # log how many ids found
-            WLOG(params, '', 'Found {0} processes'.format(len(ids)))
-            # try to kill processes
-            for _id in ids:
-                # set up command
-                command = 'kill {0}'.format(_id)
-                # execute command
-                # noinspection PyBroadException
-                try:
-                    infodb.execute(command, False)
-                    # log killing
-                    WLOG(params, '', '\t' + command)
-                except Exception as _:
-                    continue
-            # close the connection
-            # noinspection PyProtectedMember
-            infodb._conn_.close()
-        # just return if there is an exception
-        except Exception as _:
-            return
+    # construct a generic database manager
+    dbm = DatabaseM(params)
+    # get hostname / user / password
+    dbm.dbtype = dparams['TYPE']
+    dbm.dbhost = dparams['HOST']
+    dbm.dbuser = dparams['USER']
+    dbm.dbname = dparams['DATABASE']
+    dbm.dbpass = dparams['PASSWD']
+    dbm.dbtable = 'information_schema'
+    tablename = 'processlist'
+    # set the database url
+    dbm.set_dburl()
+    # wrap in a try (this may not always work
+    # noinspection PyBroadException
+    try:
+        # set update a database
+        database = drs_db.AperoDatabase(dbm.dburl, tablename=tablename)
+        # set up condition: only this users processes and only from the
+        #   required database and that have been active for more than
+        #   60 seconds
+        cargs = [dbm.dbuser, dbm.dbname, timeout]
+        condition = 'USER="{0}" AND DB="{1}" AND TIME > {2}'.format(*cargs)
+        # log condition
+        WLOG(params, '', 'Condition')
+        WLOG(params, '', '\t' + condition)
+        # get all processes that were started by user
+        table = database.get('*', condition=condition, return_pandas=True)
+        # get ids from table
+        ids = list(table['ID'].values)
+        # log how many ids found
+        WLOG(params, '', 'Found {0} processes'.format(len(ids)))
+        # try to kill processes
+        for _id in ids:
+            # set up command
+            command = 'kill {0}'.format(_id)
+            # execute command
+            # noinspection PyBroadException
+            try:
+                with database.engine.connect() as connection:
+                    connection.execute(command)
+                # log killing
+                WLOG(params, '', '\t' + command)
+            except Exception as _:
+                continue
+
+    # just return if there is an exception
+    except Exception as _:
+        return
 
 
 def export_database(params: ParamDict, database_name: str,
@@ -212,8 +207,6 @@ def import_database(params: ParamDict, database_name: str,
 
     :return: None, writes to database
     """
-    # get pconst
-    pconst = constants.pload()
     # ----------------------------------------------------------------------
     # get database list
     databases = list_databases(params)
@@ -348,7 +341,6 @@ def install_databases(params: ParamDict, skip: Union[List[str], None] = None,
 # =============================================================================
 def create_calibration_database(params: ParamDict, pconst: PseudoConst,
                                 databases: Dict[str, DatabaseM],
-                                tries: int = 20,
                                 verbose: bool = False) -> Database:
     """
     Setup for the calibration database
@@ -356,7 +348,7 @@ def create_calibration_database(params: ParamDict, pconst: PseudoConst,
     :param params: ParamDict, the parameter dictionary of constants
     :param pconst: Pseudo constants
     :param databases: dictionary of database managers
-    :param tries: int, the number of tries before reporting a database error
+    :param verbose: bool, if True print more messages
 
     :returns: database - the telluric database
     """
@@ -365,26 +357,24 @@ def create_calibration_database(params: ParamDict, pconst: PseudoConst,
     reset_path = params['DATABASE_DIR']
     # get columns and ctypes from pconst
     cdb_cols = pconst.CALIBRATION_DB_COLUMNS()
-    columns = list(cdb_cols.names)
-    ctypes = list(cdb_cols.datatypes)
-    cuniques = list(cdb_cols.unique_cols)
-    cicols = list(cdb_cols.index_cols)
     # -------------------------------------------------------------------------
     # construct directory
     calibdbm = databases['calib']
     # -------------------------------------------------------------------------
     # make database
-    calibdb = drs_db.database_wrapper(calibdbm.kind, calibdbm.path, tries=tries)
+    calibdb = drs_db.AperoDatabase(calibdbm.dburl, tablename=calibdbm.dbtable)
     # -------------------------------------------------------------------------
     # remove table if it already exists
-    if calibdb.tname in calibdb.tables:
+    if calibdb.tablename in calibdb.get_tables():
         calibdb.backup()
-        calibdb.delete_table(calibdb.tname)
+        calibdb.delete_table(calibdb.tablename)
         if verbose:
             WLOG(params, '', 'Deleted calibration database')
     # add main table
-    calibdb.add_table(calibdb.tname, columns, ctypes, index_cols=cicols,
-                      unique_cols=cuniques)
+    calibdb.add_table(calibdb.tablename,
+                      columns=cdb_cols.columns,
+                      indexes=cdb_cols.indexes,
+                      uniques=cdb_cols.uniques)
     if verbose:
         WLOG(params, '', 'Created calibration database')
     # ---------------------------------------------------------------------
@@ -403,7 +393,6 @@ def create_calibration_database(params: ParamDict, pconst: PseudoConst,
 # =============================================================================
 def create_telluric_database(params: ParamDict, pconst: PseudoConst,
                              databases: Dict[str, DatabaseM],
-                             tries: int = 20,
                              verbose: bool = False) -> Database:
     """
     Setup for the telluric database
@@ -411,7 +400,7 @@ def create_telluric_database(params: ParamDict, pconst: PseudoConst,
     :param params: ParamDict, parmaeter dictionary of constants
     :param pconst: Pseudo constants
     :param databases: dictionary of database managers
-    :param tries: int, the number of tries before reporting a database error
+    :param verbose: bool, if True print more messages
 
     :returns: database - the telluric database
     """
@@ -420,26 +409,24 @@ def create_telluric_database(params: ParamDict, pconst: PseudoConst,
     reset_path = params['DATABASE_DIR']
     # get columns and ctypes from pconst
     tdb_cols = pconst.TELLURIC_DB_COLUMNS()
-    columns = list(tdb_cols.names)
-    ctypes = list(tdb_cols.datatypes)
-    cuniques = list(tdb_cols.unique_cols)
-    cicols = list(tdb_cols.index_cols)
     # -------------------------------------------------------------------------
     # construct directory
     telludbm = databases['tellu']
     # -------------------------------------------------------------------------
     # make database
-    telludb = drs_db.database_wrapper(telludbm.kind, telludbm.path, tries=tries)
+    telludb = drs_db.AperoDatabase(telludbm.dburl, tablename=telludbm.dbtable)
     # -------------------------------------------------------------------------
     # remove table if it already exists
-    if telludb.tname in telludb.tables:
+    if telludb.tablename in telludb.get_tables():
         telludb.backup()
-        telludb.delete_table(telludb.tname)
+        telludb.delete_table(telludb.tablename)
         if verbose:
             WLOG(params, '', 'Deleted telluric database')
     # add main table
-    telludb.add_table(telludb.tname, columns, ctypes, index_cols=cicols,
-                      unique_cols=cuniques)
+    telludb.add_table(telludb.tablename,
+                      columns=tdb_cols.columns,
+                      indexes=tdb_cols.indexes,
+                      uniques=tdb_cols.uniques)
     if verbose:
         WLOG(params, '', 'Created telluric database')
     # ---------------------------------------------------------------------
@@ -460,41 +447,37 @@ def create_telluric_database(params: ParamDict, pconst: PseudoConst,
 # =============================================================================
 def create_fileindex_database(params: ParamDict, pconst: PseudoConst,
                               databases: Dict[str, DatabaseM],
-                              tries: int = 20,
                               verbose: bool = False) -> Database:
     """
     Setup for the file index database
 
+    :param params: ParamDict, parameter dictionary of constants
     :param pconst: Pseudo constants
     :param databases: dictionary of database managers
-    :param tries: int, the number of tries before reporting a database error
+    :param verbose: bool, if True print more messages
 
     :returns: database - the telluric database
     """
     # get columns and ctypes from pconst
     idb_cols = pconst.FILEINDEX_DB_COLUMNS()
-    columns = list(idb_cols.names)
-    ctypes = list(idb_cols.datatypes)
-    cuniques = list(idb_cols.unique_cols)
-    cicols = list(idb_cols.index_cols)
-    cigroups = idb_cols.get_index_groups()
     # -------------------------------------------------------------------------
     # construct directory
     findexdbm = databases['findex']
     # -------------------------------------------------------------------------
     # make database
-    indexdb = drs_db.database_wrapper(findexdbm.kind, findexdbm.path,
-                                      tries=tries)
+    indexdb = drs_db.AperoDatabase(findexdbm.dburl, tablename=findexdbm.dbtable)
     # -------------------------------------------------------------------------
     # remove table if it already exists
-    if indexdb.tname in indexdb.tables:
+    if indexdb.tablename in indexdb.get_tables():
         indexdb.backup()
-        indexdb.delete_table(indexdb.tname)
+        indexdb.delete_table(indexdb.tablename)
         if verbose:
             WLOG(params, '', 'Deleted file index database')
     # add main table
-    indexdb.add_table(indexdb.tname, columns, ctypes, unique_cols=cuniques,
-                      index_cols=cicols, index_groups=cigroups)
+    indexdb.add_table(indexdb.tablename,
+                      columns=idb_cols.columns,
+                      indexes=idb_cols.indexes,
+                      uniques=idb_cols.uniques)
     if verbose:
         WLOG(params, '', 'Created file index database')
     # -------------------------------------------------------------------------
@@ -506,37 +489,37 @@ def create_fileindex_database(params: ParamDict, pconst: PseudoConst,
 # =============================================================================
 def create_log_database(params: ParamDict, pconst: PseudoConst,
                         databases: Dict[str, DatabaseM],
-                        tries: int = 20,
                         verbose: bool = False) -> Database:
     """
     Setup for the index database
 
+    :param params: ParamDict, parameter dictionary of constants
     :param pconst: Pseudo constants
     :param databases: dictionary of database managers
-    :param tries: int, the number of tries before reporting a database error
+    :param verbose: bool, if True print more messages
 
     :returns: database - the telluric database
     """
     # get columns and ctypes from pconst
     ldb_cols = pconst.LOG_DB_COLUMNS()
-    columns = list(ldb_cols.names)
-    ctypes = list(ldb_cols.datatypes)
-    cicols = list(ldb_cols.index_cols)
     # -------------------------------------------------------------------------
     # construct directory
     logdbm = databases['log']
     # -------------------------------------------------------------------------
     # make database
-    logdb = drs_db.database_wrapper(logdbm.kind, logdbm.path, tries=tries)
+    logdb = drs_db.AperoDatabase(logdbm.dburl, tablename=logdbm.dbtable)
     # -------------------------------------------------------------------------
     # remove table if it already exists
-    if logdb.tname in logdb.tables:
+    if logdb.tablename in logdb.get_tables():
         logdb.backup()
-        logdb.delete_table(logdb.tname)
+        logdb.delete_table(logdb.tablename)
         if verbose:
             WLOG(params, '', 'Deleted recipe log database')
     # add main table
-    logdb.add_table(logdb.tname, columns, ctypes, index_cols=cicols)
+    logdb.add_table(logdb.tablename,
+                    columns=ldb_cols.columns,
+                    indexes=ldb_cols.indexes,
+                    uniques=ldb_cols.uniques)
     if verbose:
         WLOG(params, '', 'Created recipe log database')
     # -------------------------------------------------------------------------
@@ -548,7 +531,6 @@ def create_log_database(params: ParamDict, pconst: PseudoConst,
 # =============================================================================
 def create_object_database(params: ParamDict, pconst: PseudoConst,
                            databases: Dict[str, DatabaseM],
-                           tries: int = 20,
                            verbose: bool = False) -> Database:
     """
     Setup for the calibration database
@@ -556,33 +538,31 @@ def create_object_database(params: ParamDict, pconst: PseudoConst,
     :param params: ParamDict, the parameter dictionary of constants
     :param pconst: Pseudo constants
     :param databases: dictionary of database managers
-    :param tries: int, the number of tries before reporting a database error
+    :param verbose: bool, if True print more messages
 
     :returns: database - the telluric database
     """
     # get columns and ctypes from pconst
     objdb_cols = pconst.ASTROMETRIC_DB_COLUMNS()
-    columns = list(objdb_cols.names)
-    ctypes = list(objdb_cols.datatypes)
-    cuniques = list(objdb_cols.unique_cols)
-    cindexs = list(objdb_cols.index_cols)
     # -------------------------------------------------------------------------
     # construct directory
     objectdbm = databases['astrom']
     # -------------------------------------------------------------------------
     # make database
-    objectdb = drs_db.database_wrapper(objectdbm.kind, objectdbm.path,
-                                       tries=tries)
+    objectdb = drs_db.AperoDatabase(objectdbm.dburl,
+                                    tablename=objectdbm.dbtable)
     # -------------------------------------------------------------------------
     # remove table if it already exists
-    if objectdb.tname in objectdb.tables:
+    if objectdb.tablename in objectdb.get_tables():
         objectdb.backup()
-        objectdb.delete_table(objectdb.tname)
+        objectdb.delete_table(objectdb.tablename)
         if verbose:
             WLOG(params, '', 'Deleted astrometric database')
     # add main table
-    objectdb.add_table(objectdb.tname, columns, ctypes, unique_cols=cuniques,
-                       index_cols=cindexs)
+    objectdb.add_table(objectdb.tablename,
+                       columns=objdb_cols.columns,
+                       indexes=objdb_cols.indexes,
+                       uniques=objdb_cols.uniques)
     if verbose:
         WLOG(params, '', 'Created astrometric database')
     # ---------------------------------------------------------------------
@@ -727,7 +707,7 @@ def update_object_database(params: ParamDict, log: bool = True):
                                     tablename=objectdbm.dbtable)
     # -------------------------------------------------------------------------
     # remove table if it already exists
-    if objectdb.tablename in objectdb.tables:
+    if objectdb.tablename in objectdb.get_tables():
         objectdb.backup()
         objectdb.delete_table(objectdb.tablename)
     # add main table
@@ -745,7 +725,6 @@ def update_object_database(params: ParamDict, log: bool = True):
 # =============================================================================
 def create_reject_database(params: ParamDict, pconst: PseudoConst,
                            databases: Dict[str, DatabaseM],
-                           tries: int = 20,
                            verbose: bool = False) -> Database:
     """
     Setup for the reject database
@@ -753,33 +732,31 @@ def create_reject_database(params: ParamDict, pconst: PseudoConst,
     :param params: ParamDict, the parameter dictionary of constants
     :param pconst: Pseudo constants
     :param databases: dictionary of database managers
-    :param tries: int, the number of tries before reporting a database error
+    :param verbose: bool, if True print more messages
 
     :returns: database - the telluric database
     """
     # get columns and ctypes from pconst
     rejectdb_cols = pconst.REJECT_DB_COLUMNS()
-    columns = list(rejectdb_cols.names)
-    ctypes = list(rejectdb_cols.datatypes)
-    cuniques = list(rejectdb_cols.unique_cols)
-    cindexs = list(rejectdb_cols.index_cols)
     # -------------------------------------------------------------------------
     # construct directory
     rejectdbm = databases['reject']
     # -------------------------------------------------------------------------
     # make database
-    rejectdb = drs_db.database_wrapper(rejectdbm.kind, rejectdbm.path,
-                                       tries=tries)
+    rejectdb = drs_db.AperoDatabase(rejectdbm.dburl,
+                                    tablename=rejectdbm.dbtable)
     # -------------------------------------------------------------------------
     # remove table if it already exists
-    if rejectdb.tname in rejectdb.tables:
+    if rejectdb.tablename in rejectdb.get_tables():
         rejectdb.backup()
-        rejectdb.delete_table(rejectdb.tname)
+        rejectdb.delete_table(rejectdb.tablename)
         if verbose:
             WLOG(params, '', 'Deleted reject database')
     # add main table
-    rejectdb.add_table(rejectdb.tname, columns, ctypes, unique_cols=cuniques,
-                       index_cols=cindexs)
+    rejectdb.add_table(rejectdb.tablename,
+                       columns=rejectdb_cols.columns,
+                       indexes=rejectdb_cols.indexes,
+                       uniques=rejectdb_cols.uniques)
     if verbose:
         WLOG(params, '', 'Created reject database')
     # ---------------------------------------------------------------------
@@ -832,27 +809,25 @@ def update_reject_database(params: ParamDict, log: bool = True):
     # -------------------------------------------------------------------------
     # get columns and ctypes from pconst
     rejectdb_cols = pconst.REJECT_DB_COLUMNS()
-    columns = list(rejectdb_cols.names)
-    ctypes = list(rejectdb_cols.datatypes)
-    cuniques = list(rejectdb_cols.unique_cols)
-    cindexs = list(rejectdb_cols.index_cols)
     # -------------------------------------------------------------------------
     # construct directory
     rejectdbm = databases['reject']
     # -------------------------------------------------------------------------
     # make database
-    rejectdb = drs_db.database_wrapper(rejectdbm.kind, rejectdbm.path)
+    rejectdb = drs_db.AperoDatabase(rejectdbm.dburl, tablename=rejectdbm.dbtable)
     # -------------------------------------------------------------------------
     # remove table if it already exists
-    if rejectdb.tname in rejectdb.tables:
+    if rejectdb.tablename in rejectdb.get_tables():
         rejectdb.backup()
-        rejectdb.delete_table(rejectdb.tname)
+        rejectdb.delete_table(rejectdb.tablename)
     # add main table
-    rejectdb.add_table(rejectdb.tname, columns, ctypes, unique_cols=cuniques,
-                       index_cols=cindexs)
+    rejectdb.add_table(rejectdb.tablename,
+                       columns=rejectdb_cols.columns,
+                       indexes=rejectdb_cols.indexes,
+                       uniques=rejectdb_cols.uniques)
     # ---------------------------------------------------------------------
     # add rows from pandas dataframe
-    rejectdb.add_from_pandas(df, unique_cols=cuniques)
+    rejectdb.add_from_pandas(df)
 
 
 def get_reject_database(params: ParamDict, log: bool = True) -> Table:
@@ -899,14 +874,14 @@ def get_reject_database(params: ParamDict, log: bool = True) -> Table:
 # Define language database functions
 # =============================================================================
 def create_lang_database(params: Union[None, ParamDict],
-                         databases: Dict[str, Union[DatabaseM, BaseDatabaseM]],
-                         tries: int = 20,
+                         databases: Dict[str, DatabaseM],
                          verbose: bool = False) -> Database:
     """
     Setup for the index database
 
+    :param params: ParamDict, the parameter dictionary of constants
     :param databases: dictionary of database managers
-    :param tries: int, the number of tries before reporting a database error
+    :param verbose: bool, if True print messages
 
     :returns: database - the telluric database
     """
@@ -916,19 +891,20 @@ def create_lang_database(params: Union[None, ParamDict],
     assert isinstance(langdbm, drs_db.LanguageDatabase)
     # -------------------------------------------------------------------------
     # make database
-    langdb = drs_db.database_wrapper(langdbm.kind, langdbm.path, tries=tries)
+    langdb = Database(langdbm.dburl, tablename=langdbm.dbtable)
+    # get columns
     lang_cols = langdbm.columns
-    columns = list(lang_cols.names)
-    ctypes = list(lang_cols.datatypes)
-    cicols = list(lang_cols.index_cols)
     # -------------------------------------------------------------------------
-    if langdb.tname in langdb.tables:
+    if langdb.tablename in langdb.get_tables():
         langdb.backup()
-        langdb.delete_table(langdb.tname)
+        langdb.delete_table(langdb.tablename)
         if verbose and params is not None:
             WLOG(params, '', 'Deleted language database')
     # add main table
-    langdb.add_table(langdb.tname, columns, ctypes, index_cols=cicols)
+    langdb.add_table(langdb.tablename,
+                     columns=lang_cols.columns,
+                     indexes=lang_cols.indexes,
+                     uniques=lang_cols.uniques)
     if verbose and params is not None:
         WLOG(params, '', 'Created language database')
     # ---------------------------------------------------------------------

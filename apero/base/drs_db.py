@@ -743,6 +743,9 @@ class AperoDatabase:
         """
         # set function name
         func_name = __NAME__ + '.Database.add_from_pandas()'
+        # deal with no table name
+        if tablename is None:
+            tablename = self.tablename
         # ---------------------------------------------------------------------
         # deal with empty unique column list
         # get a list of the unique columns
@@ -1105,6 +1108,10 @@ class DatabaseManager:
             self.dbreset = None
         else:
             self.dbreset = ddict[ykind]['RESET']
+        # set url
+        self.set_dburl()
+
+    def set_dburl(self):
         # set url
         self.dburl = (f'{self.dbtype}://{self.dbuser}:{self.dbpass}'
                       f'@{self.dbhost}:{self.dbport}/{self.dbname}')
