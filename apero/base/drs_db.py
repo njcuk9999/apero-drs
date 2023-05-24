@@ -1095,7 +1095,7 @@ class DatabaseManager:
             self.dbport = base.DEFAULT_DATABASE_PORT
         # kind must be one of the following
         if kind is not None:
-            if kind not in DATABASE_NAMES:
+            if kind.lower() not in DATABASE_NAMES:
                 raise ValueError('kind=={0} invalid'.format(kind))
             # for yaml kind is uppercase
             ykind = kind.upper()
