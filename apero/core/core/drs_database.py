@@ -166,6 +166,8 @@ class DatabaseManager:
         # deal with no instrument
         if self.instrument == 'None':
             return
+        # update the database parameters
+        self.database_settings(self.kind)
         # log that we are loading database
         if log:
             margs = [self.name, self.dburl]
