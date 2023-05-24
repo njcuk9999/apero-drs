@@ -118,12 +118,16 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # push into database holder
     databases = dict()
     for key in dbs:
+        # get database for this key
+        database = dbs[key]
+        # load database
+        database.load_db()
         # get name
         name = NAMES[key]
         # load database holder
         databases[name] = database_gui.DatabaseHolder(params, name=name,
-                                                      kind=dbs[key].kind,
-                                                      url=Path(dbs[key].dburl),
+                                                      kind=database.kind,
+                                                      url=database.dburl,
                                                       hash_col=hash_col)
     # construct app
     app = database_gui.DatabaseExplorer(databases=databases)
