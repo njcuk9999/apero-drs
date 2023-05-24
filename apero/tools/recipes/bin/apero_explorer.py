@@ -120,8 +120,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     for key in dbs:
         # get database for this key
         database = dbs[key]
-        # load database
-        database.load_db()
+        # load database settings
+        database.database_settings()
         # get name
         name = NAMES[key]
         # load database holder

@@ -86,7 +86,7 @@ class DatabaseHolder:
                 self.empty = True
         else:
             # start database
-            database = drs_db.AperoDatabase(self.url)
+            database = drs_db.AperoDatabase(self.url, tablename=self.name)
             # try to get database (as a pandas table)
             try:
                 dataframe = database.get('*', return_pandas=True)
@@ -603,8 +603,9 @@ if __name__ == "__main__":
     # push into database holder
     _databases = dict()
     for _key in _dbs:
+        _dbs[_key].database_settings()
         _databases[_key] = DatabaseHolder(_params, _key, _dbs[_key].kind,
-                                          url=Path(_dbs[_key].dburl))
+                                          url=_dbs[_key].dburl)
     # construct app
     app = DatabaseExplorer(databases=_databases)
     # launch the app
