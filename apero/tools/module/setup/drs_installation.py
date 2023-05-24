@@ -417,35 +417,9 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
     # TODO: set language
     all_params['LANGUAGE'] = user_lang
     all_params.set_source('LANGUAGE', user_lang)
-    # args.language = lang
     # ------------------------------------------------------------------
-    # Database settings: Choose a database mode
-    prompt_db = textentry('40-001-00043')
-    # options are: 1. sqlite 2. mysql
-    options_db = [str(textentry('40-001-00044')),
-                  str(textentry('40-001-00045'))]
-    # ask which mode the user wants for databases
-    db_type = None
-    if hasattr(args, 'database_mode'):
-        if args.database_mode is not None:
-            # force to str
-            database_mode = str(args.database_mode).upper()
-            # check for mysql
-            if database_mode in ['2', 'MYSQL']:
-                db_type = 2
-            # check for sql
-            elif database_mode == '1' or 'SQL' in database_mode:
-                db_type = 1
-    # if db_type is still None prompt the user
-    if db_type is None:
-        db_type = ask(prompt_db, options=[1, 2], dtype='int',
-                      optiondesc=options_db)
-        args.database_mode = int(db_type)
     # add the database settings (and ask user if required
-    if db_type == 2:
-        all_params, args = get_mysql_settings(all_params, args)
-    else:
-        all_params = get_sqlite_settings(all_params)
+    all_params, args = get_database_settings(all_params, args)
     # ------------------------------------------------------------------
     cprint('\n' + printheader(), 'm')
     cprint(textentry('40-001-00046', args=[instrument]), 'm')
@@ -600,10 +574,10 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
     return all_params, args
 
 
-def get_mysql_settings(all_params: ParamDict,
-                       args: Any) -> Tuple[ParamDict, Any]:
+def get_database_settings(all_params: ParamDict,
+                          args: Any) -> Tuple[ParamDict, Any]:
     """
-    Ask the user for the MySQL settings
+    Ask the user for the database settings
 
     :param all_params: dict, the user all parameter dictionary
     :param args: args from argparse parser
@@ -611,15 +585,16 @@ def get_mysql_settings(all_params: ParamDict,
     :return: dict, the updated all parameter dictionary
     """
     # start a dictionary for database
-    all_params['SQLITE'] = dict()
-    all_params['MYSQL'] = dict()
-    # only sqlite setting
-    all_params['SQLITE']['USE_SQLITE3'] = False
-    all_params['MYSQL']['USE_MYSQL'] = True
+    all_params['DATABASE'] = dict()
     # ----------------------------------------------------------------------
     # set values to None
-    host, username, password, name, profile = None, None, None, None, None
+    dtype, host, username, password = None, None, None, None
+    name, profile = None, None
     # check for parameters in args
+    # check type
+    if hasattr(args, 'database_type'):
+        if args.database_type is not None:
+            dtype = str(args.database_type)
     # check host
     if hasattr(args, 'database_host'):
         if args.database_host is not None:
@@ -636,10 +611,6 @@ def get_mysql_settings(all_params: ParamDict,
     if hasattr(args, 'database_name'):
         if args.database_name is not None:
             name = str(args.database_name)
-    # check apero profile
-    if hasattr(args, 'database_pro'):
-        if args.database_pro is not None:
-            profile = str(args.database_pro)
     # check if any are still None
     prompt_user = False
     if host is None or username is None or password is None:
@@ -651,6 +622,16 @@ def get_mysql_settings(all_params: ParamDict,
     if prompt_user:
         cprint(textentry('INSTALL_DB_MSG'), 'g')
     # ----------------------------------------------------------------------
+    if dtype is not None and dtype in base.SUPPORTED_DATABASES:
+        response = str(dtype)
+    else:
+        response = ask(textentry('40-001-00056', args='DATABASE TYPE'),
+                       dtype=str, options=base.SUPPORTED_DATABASES)
+    # only add response if not None
+    if response not in ['None', '', None]:
+        all_params['DATABASE']['TYPE'] = response
+        args.database_host = response
+    # ----------------------------------------------------------------------
     # ask for the host name
     if host is not None:
         response = str(host)
@@ -659,7 +640,7 @@ def get_mysql_settings(all_params: ParamDict,
         response = ask(textentry('40-001-00056', args='HOSTNAME'), dtype=str)
     # only add response if not None
     if response not in ['None', '', None]:
-        all_params['MYSQL']['HOST'] = response
+        all_params['DATABASE']['HOST'] = response
         args.database_host = response
     # ----------------------------------------------------------------------
     # ask for the username
@@ -670,7 +651,7 @@ def get_mysql_settings(all_params: ParamDict,
         response = ask(textentry('40-001-00056', args='USERNAME'), dtype=str)
     # only add response if not None
     if response not in ['None', '', None]:
-        all_params['MYSQL']['USER'] = response
+        all_params['DATABASE']['USER'] = response
         args.database_user = response
     # ----------------------------------------------------------------------
     # ask for the password
@@ -681,7 +662,7 @@ def get_mysql_settings(all_params: ParamDict,
         response = ask(textentry('40-001-00056', args='PASSWD'), dtype=str)
     # only add response if not None
     if response not in ['None', '', None]:
-        all_params['MYSQL']['PASSWD'] = response
+        all_params['DATABASE']['PASSWD'] = response
         args.database_pass = response
     # ----------------------------------------------------------------------
     # ask for the database name
@@ -692,20 +673,20 @@ def get_mysql_settings(all_params: ParamDict,
         response = ask(textentry('40-001-00057'), dtype=str)
     # only add response if not None
     if response not in ['None', '', None]:
-        all_params['MYSQL']['DATABASE'] = response
+        all_params['DATABASE']['DATABASE'] = response
         args.database_name = response
     # ----------------------------------------------------------------------
     # Individual database table settings
-    all_params, args = mysql_database_tables(args, all_params)
+    all_params, args = database_tables(args, all_params)
     # ----------------------------------------------------------------------
     return all_params, args
 
 
-def mysql_database_tables(args: argparse.Namespace, all_params: ParamDict,
-                          db_ask: bool = True
-                          ) -> Tuple[ParamDict, argparse.Namespace]:
+def database_tables(args: argparse.Namespace, all_params: ParamDict,
+                    db_ask: bool = True
+                    ) -> Tuple[ParamDict, argparse.Namespace]:
     """
-    Get/ask for the MYSQL database table names
+    Get/ask for the database table names
 
     :param args: argparse.Namespace - the argparse namespace
     :param all_params: ParamDict, the installation parameter dictionary
@@ -714,9 +695,6 @@ def mysql_database_tables(args: argparse.Namespace, all_params: ParamDict,
 
     :return: ParamDict, the installation parameter dictionary
     """
-    # deal with not having mysql section
-    if 'MYSQL' not in all_params:
-        all_params['MYSQL'] = dict()
     # ----------------------------------------------------------------------
     # Individual database table settings
     # ----------------------------------------------------------------------
@@ -731,7 +709,7 @@ def mysql_database_tables(args: argparse.Namespace, all_params: ParamDict,
     # loop around databases
     for db_it in range(len(database_user)):
         # ---------------------------------------------------------------------
-        # db key for all_params - capitalized to match sqlite
+        # db key for all_params - capitalized
         dbkey = '{0}_profile'.format(databases_raw[db_it]).upper()
         # ---------------------------------------------------------------------
         # deal with command line arguments
@@ -741,7 +719,7 @@ def mysql_database_tables(args: argparse.Namespace, all_params: ParamDict,
             # only deal with non Null values
             if response not in ['None', '', None]:
                 # set key
-                all_params['MYSQL'][dbkey] = str(response)
+                all_params['DATABASE'][dbkey] = str(response)
                 setattr(args, database_args[db_it], str(response))
                 # skip asking the question
                 continue
@@ -759,32 +737,13 @@ def mysql_database_tables(args: argparse.Namespace, all_params: ParamDict,
             response = None
         # --------------------------------------------------------------------
         if response not in ['None', '', None]:
-            all_params['MYSQL'][dbkey] = response
+            all_params['DATABASE'][dbkey] = response
             setattr(args, database_args[db_it], response)
         else:
-            all_params['MYSQL'][dbkey] = all_params['PROFILENAME']
+            all_params['DATABASE'][dbkey] = all_params['PROFILENAME']
             setattr(args, database_args[db_it], all_params['PROFILENAME'])
     # ----------------------------------------------------------------------
     return all_params, args
-
-
-def get_sqlite_settings(all_params: ParamDict) -> ParamDict:
-    """
-    Set the SQLITE settings (all default - no user input)
-    Here in case in future we need to ask user for settings
-
-    :param all_params: dict, the user all parameter dictionary
-
-    :return: dict, the updated all parameter dictionary
-    """
-    # start a dictionary for database
-    all_params['SQLITE'] = dict()
-    all_params['MYSQL'] = dict()
-    # only mysql setting
-    all_params['SQLITE']['USE_SQLITE3'] = True
-    all_params['MYSQL']['USE_MYSQL'] = False
-    # ----------------------------------------------------------------------
-    return all_params
 
 
 def clean_profile_name(inname: str) -> str:
@@ -1618,7 +1577,7 @@ def update(params: ParamDict, args: argparse.Namespace) -> ParamDict:
         all_params.set_source('CLEAN_INSTALL', func_name)
     # ------------------------------------------------------------------
     # Individual database table settings
-    all_params, args = mysql_database_tables(args, all_params, db_ask=False)
+    all_params, args = database_tables(args, all_params, db_ask=False)
     # ------------------------------------------------------------------
     # update base.PARAMS with all params
     base.DPARAMS = update_dparams(all_params, base.DPARAMS)
@@ -1634,7 +1593,7 @@ def update_dparams(aparams: ParamDict,
                    dparams: Dict[str, Any]) -> Dict[str, Any]:
     """
     Update the database dictionary, this is required so we can then pass it to
-    the normal function - but with MYSQL parameters updated from "aprams"
+    the normal function - but with database parameters updated from "aprams"
     (the installation parameter dictionary)
 
     :param aparams: ParamDict, the installation parameter dictionary
@@ -1644,15 +1603,12 @@ def update_dparams(aparams: ParamDict,
              update base.DPARAMS - but this is left to the function call
              incase it is required in other situations
     """
-    # deal with no settings to update
-    if 'MYSQL' not in aparams:
-        return dparams
     # loop around databases
     for dbname in base.DATABASE_NAMES:
         dbkey = f'{dbname}_profile'.upper()
-        value = aparams['MYSQL'].get(dbkey, None)
+        value = aparams['DATABASE'].get(dbkey, None)
         if value is not None:
-            dparams['MYSQL'][dbname.upper()]['PROFILE'] = value
+            dparams['DATABASE'][dbname.upper()]['PROFILE'] = value
     # return dparams
     return dparams
 
@@ -1669,56 +1625,28 @@ def update_db_settings(aparams: ParamDict) -> ParamDict:
     # read the database settings for current profile
     dparams = base.DPARAMS
     # ------------------------------------------------------------------
-    # set the sqlite settings
+    # Database Settings
     # ------------------------------------------------------------------
-    aparams['SQLITE'] = dict()
-    # add whether we are using the sqlite3 database
-    aparams['SQLITE']['USE_SQLITE3'] = dparams['USE_SQLITE3']
+    aparams['DATABASE'] = dict()
     # add database settings
-    aparams['SQLITE']['HOST'] = dparams['SQLITE3']['HOST']
-    aparams['SQLITE']['USER'] = dparams['SQLITE3']['USER']
-    aparams['SQLITE']['PASSWD'] = dparams['SQLITE3']['PASSWD']
-    aparams['SQLITE']['DATABASE'] = dparams['SQLITE3']['DATABASE']
+    aparams['DATABASE']['HOST'] = dparams['DATABASE']['HOST']
+    aparams['DATABASE']['USER'] = dparams['DATABASE']['USER']
+    aparams['DATABASE']['PASSWD'] = dparams['DATABASE']['PASSWD']
+    aparams['DATABASE']['DATABASE'] = dparams['DATABASE']['DATABASE']
     # add database parameters
     # loop around databases
     for dbname in base.DATABASE_NAMES:
         # yaml is upper case
         ydbname = dbname.upper()
         # get correct dictionary
-        sdict = dparams['SQLITE3'][ydbname]
+        sdict = dparams['DATABASE'][ydbname]
         # add calib database
-        aparams['SQLITE'][f'{ydbname}_PATH'] = sdict['PATH']
-        aparams['SQLITE'][f'{ydbname}_NAME'] = sdict['NAME']
+        aparams['DATABASE'][f'{ydbname}_NAME'] = sdict['NAME']
         if 'RESET' in sdict:
-            aparams['SQLITE'][f'{ydbname}_RESET'] = sdict['RESET']
-        aparams['SQLITE'][f'{ydbname}_PROFILE'] = sdict['PROFILE']
-
+            aparams['DATABASE'][f'{ydbname}_RESET'] = sdict['RESET']
+        aparams['DATABASE'][f'{ydbname}_PROFILE'] = sdict['PROFILE']
     # ------------------------------------------------------------------
-    # MySQL Settings
-    # ------------------------------------------------------------------
-    aparams['MYSQL'] = dict()
-    # add whether we are using the sqlite3 database
-    aparams['MYSQL']['USE_MYSQL'] = dparams['USE_MYSQL']
-    # add database settings
-    aparams['MYSQL']['HOST'] = dparams['MYSQL']['HOST']
-    aparams['MYSQL']['USER'] = dparams['MYSQL']['USER']
-    aparams['MYSQL']['PASSWD'] = dparams['MYSQL']['PASSWD']
-    aparams['MYSQL']['DATABASE'] = dparams['MYSQL']['DATABASE']
-    # add database parameters
-    # loop around databases
-    for dbname in base.DATABASE_NAMES:
-        # yaml is upper case
-        ydbname = dbname.upper()
-        # get correct dictionary
-        sdict = dparams['MYSQL'][ydbname]
-        # add calib database
-        aparams['MYSQL'][f'{ydbname}_PATH'] = sdict['PATH']
-        aparams['MYSQL'][f'{ydbname}_NAME'] = sdict['NAME']
-        if 'RESET' in sdict:
-            aparams['MYSQL'][f'{ydbname}_RESET'] = sdict['RESET']
-        aparams['MYSQL'][f'{ydbname}_PROFILE'] = sdict['PROFILE']
-    # ------------------------------------------------------------------
-    # return the update all_params (now with the SQLITE and MYSQL dictionaries)
+    # return the update all_params
     return aparams
 
 

@@ -246,13 +246,19 @@ class DatabaseManager:
             raise ValueError('kind=={0} invalid'.format(kind))
         # for yaml kind is uppercase
         ykind = kind.upper()
-        # set name/path/reset based on ddict
-        self.dbtable = ddict[ykind]['NAME']
+        # set table name
+        dbname = ddict[ykind]['NAME']
+        profile = ddict[ykind]['PROFILE']
+        if dbname.endswith('_db'):
+            self.dbtable = dbname
+        else:
+            self.dbtable = '{0}_{1}_db'.format(dbname, profile)
+        # set reset path
         if drs_text.null_text(ddict[ykind]['RESET'], ['None']):
             self.dbreset = None
         else:
             self.dbreset = ddict[ykind]['RESET']
-        # set path
+        # set url
         self.dburl = (f'{self.dbtype}://{self.dbuser}:{self.dbpass}'
                       f'@{self.dbhost}:{self.dbport}/{self.dbtable}')
 

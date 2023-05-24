@@ -1519,7 +1519,7 @@ def _display_initial_parameterisation(params: ParamDict,
     for source in np.sort(params['DRS_CONFIG']):
         wmsgs += textentry('\n\tDRS_CONFIG: {0}'.format(source))
     # add database settings
-    wmsgs = _display_database_settings(params, wmsgs)
+    wmsgs = _display_database_settings(wmsgs)
     # add others
     wmsgs += textentry('\n\tPRINT_LEVEL: {}'.format(params['DRS_PRINT_LEVEL']))
     wmsgs += textentry('\n\tLOG_LEVEL: {}'.format(params['DRS_LOG_LEVEL']))
@@ -1536,58 +1536,33 @@ def _display_initial_parameterisation(params: ParamDict,
          logonly=logonly)
 
 
-def _display_database_settings(params: ParamDict,
-                               wmsgs: lang.Text) -> lang.Text:
+def _display_database_settings(wmsgs: lang.Text) -> lang.Text:
     """
     Display database settings
 
-    :param params: ParamDict, the parameter dictionary of constants
     :param wmsgs: the current lang.Text instance
 
     :return: lang.Text, the updated lang.Text instance
     """
     dparams = base.DPARAMS
-
     # -------------------------------------------------------------------------
-    # SQLITE DISPLAY
+    # SQL DISPLAY
     # -------------------------------------------------------------------------
-    if dparams['USE_SQLITE3']:
-        # get sub dictionary
-        aparams = dparams['SQLITE3']
-        # add database type
-        wmsgs += textentry('\n\tDATABASE: SQLITE3')
-        # loop around database names
-        for dbname in base.DATABASE_NAMES:
-            # get yaml key
-            ydbname = dbname.upper()
-            # get database path
-            if aparams[ydbname]['PATH'] in params:
-                path = params[aparams[ydbname]['PATH']]
-            else:
-                path = aparams[ydbname]['PATH']
-            # construct full path to database
-            fullpath = os.path.join(path, aparams[ydbname]['NAME'])
-            # add to wmsgs
-            dargs = [dbname, fullpath]
-            wmsgs += textentry('\n\tDATABASE-{0}: {1}'.format(*dargs))
-    # -------------------------------------------------------------------------
-    # MYSQL DISPLAY
-    # -------------------------------------------------------------------------
-    elif dparams['USE_MYSQL']:
-        # get sub dictionary
-        aparams = dparams['MYSQL']
-        # add database type
-        wmsgs += textentry('\n\tDATABASE: MYSQL')
-        # loop around database names
-        for dbname in base.DATABASE_NAMES:
-            # get yaml key
-            ydbname = dbname.upper()
-            # construct table name
-            tablename = '{0}_{1}_db'.format(dbname, aparams[ydbname]['PROFILE'])
-            # add to wmsgs
-            dargs = [dbname, aparams['DATABASE'], aparams['HOST'],
-                     tablename]
-            wmsgs += textentry('\n\tDATABASE-{0}: {1}@{2}:{3}'.format(*dargs))
+    # add database type
+    wmsgs += textentry('\n\tDATABASE: MYSQL')
+    # loop around database names
+    for dbname in base.DATABASE_NAMES:
+        # get yaml key
+        ydbname = dbname.upper()
+        # get database name and profile
+        dbname = dparams[ydbname]['NAME']
+        profile = dparams[ydbname]['PROFILE']
+        # construct table name
+        tablename = '{0}_{1}_db'.format(dbname, profile)
+        # add to wmsgs
+        dargs = [dbname, dparams['DATABASE'], dparams['HOST'],
+                 tablename]
+        wmsgs += textentry('\n\tDATABASE-{0}: {1}@{2}:{3}'.format(*dargs))
     # return lang.text updated (or not if no database was used)
     return wmsgs
 
