@@ -36,7 +36,7 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 
-Database = drs_db.Database
+Database = drs_db.AperoDatabase
 # Define an empty table
 EMPTY_DATABASE = pd.DataFrame()
 EMPTY_DATABASE['NONE'] = ['No data found']
@@ -56,7 +56,7 @@ DATABASE2['USE'] = np.ones_like(DATABASE2['X']).astype(bool)
 # Define classes
 # =============================================================================
 class DatabaseHolder:
-    def __init__(self, params, name, kind, path=None, df=None,
+    def __init__(self, params, name, kind, path=None, df=None, url=None,
                  hash_col: bool = False):
         self.name = name
         self.kind = kind
@@ -68,6 +68,7 @@ class DatabaseHolder:
         self.changed = False
         self.hash_col = hash_col
         self.hash_data = None
+        self.url = None
 
     def load_dataframe(self, reload=False):
         # if we already have the dataframe don't load it
@@ -85,7 +86,7 @@ class DatabaseHolder:
                 self.empty = True
         else:
             # start database
-            database = drs_db.database_wrapper(self.kind, self.path)
+            database = drs_db.AperoDatabase(self.url)
             # try to get database (as a pandas table)
             try:
                 dataframe = database.get('*', return_pandas=True)
@@ -95,7 +96,7 @@ class DatabaseHolder:
                         self.hash_data = np.array(dataframe[drs_db.UHASH_COL])
                         del dataframe[drs_db.UHASH_COL]
 
-            except drs_db.DatabaseError as _:
+            except drs_db.AperoDatabaseError as _:
                 dataframe = []
             if len(dataframe) == 0:
                 self.df = None
@@ -111,25 +112,14 @@ class DatabaseHolder:
         if df is None:
             return
         # start database
-        database = drs_db.database_wrapper(self.kind, self.path)
-        # get unique columns
-        idb_cols = self.pconst.GET_DB_COLS(database.tname)
-        # if tname was valid we now have a DatabaseColumn class and can get
-        #    unique cols from this
-        if idb_cols is not None:
-            ucols = idb_cols.unique_cols
-        else:
-            ucols = None
-
+        database = drs_db.AperoDatabase(self.url)
         # add back hash column if not present
         if drs_db.UHASH_COL not in df and self.hash_data is not None:
             df[drs_db.UHASH_COL] = self.hash_data
-
         # print we are saving database
         print('Saving database {0}'.format(self.name))
         # push dataframe to replace SQL table
-        database.add_from_pandas(df, if_exists='replace', index=False,
-                                 unique_cols=ucols)
+        database.add_from_pandas(df, tablename=database.tablename)
         # print we are saving database
         print('Saved {0} database'.format(self.name))
 

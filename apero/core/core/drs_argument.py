@@ -3265,7 +3265,7 @@ def valid_obs_dir(params: ParamDict, indexdb: FileIndexDatabase,
     if update_index:
         indexdb.update_entries(block_kind=block_inst.block_kind)
     # assert database is in indexdb
-    assert isinstance(indexdb.database, drs_db.Database)
+    assert isinstance(indexdb.database, drs_db.AperoDatabase)
     # set up condition
     condition = 'BLOCK_KIND="{0}"'.format(block_inst.block_kind)
     # load directory names
@@ -3442,7 +3442,7 @@ def valid_file(params: ParamDict, indexdb: FileIndexDatabase,
     if update_index:
         indexdb.update_entries(block_kind=obs_dir.block_kind)
     # assert database is in indexdb
-    assert isinstance(indexdb.database, drs_db.Database)
+    assert isinstance(indexdb.database, drs_db.AperoDatabase)
     # set up condition
     condition = 'BLOCK_KIND="{0}"'.format(obs_dir.block_kind)
     # add obs_dir if present

@@ -1001,13 +1001,14 @@ class DatabaseManager:
         # set unloaded database
         self.database = None
 
-    def load_db(self, check: bool = False):
+    def load_db(self, check: bool = False, dparams: Optional[dict] = None):
         """
         Load the database class and connect to SQL database
 
         :param check: if True will reload the database even if already defined
                       else if we Database.database is set this function does
                       nothing
+        :param dparams: dict, the database yaml dictionary
 
         :return:
         """
@@ -1020,7 +1021,7 @@ class DatabaseManager:
         if self.instrument == 'None':
             return
         # update the database parameters
-        self.database_settings(self.kind)
+        self.database_settings(self.kind, dparams)
         # load database
         self.database = AperoDatabase(self.dburl, tablename=self.dbtable)
 
@@ -1065,7 +1066,8 @@ class DatabaseManager:
         # return string representation
         return self.__str__()
 
-    def database_settings(self, kind: str, dparams: Union[dict, None] = None):
+    def database_settings(self, kind: Optional[str] = None,
+                          dparams: Optional[dict] = None):
         """
         Load the initial database settings
         :param kind: str, the database kind (mysql or sqlite3)
@@ -1092,22 +1094,23 @@ class DatabaseManager:
         else:
             self.dbport = base.DEFAULT_DATABASE_PORT
         # kind must be one of the following
-        if kind not in DATABASE_NAMES:
-            raise ValueError('kind=={0} invalid'.format(kind))
-        # for yaml kind is uppercase
-        ykind = kind.upper()
-        # set table name
-        dbname = ddict[ykind]['NAME']
-        profile = ddict[ykind]['PROFILE']
-        if dbname.endswith('_db'):
-            self.dbtable = dbname
-        else:
-            self.dbtable = '{0}_{1}_db'.format(dbname, profile)
-        # set reset path
-        if ddict[ykind]['RESET'] in [None, 'None', 'Null', '']:
-            self.dbreset = None
-        else:
-            self.dbreset = ddict[ykind]['RESET']
+        if kind is not None:
+            if kind not in DATABASE_NAMES:
+                raise ValueError('kind=={0} invalid'.format(kind))
+                # for yaml kind is uppercase
+                ykind = kind.upper()
+                # set table name
+                dbname = ddict[ykind]['NAME']
+                profile = ddict[ykind]['PROFILE']
+                if dbname.endswith('_db'):
+                    self.dbtable = dbname
+                else:
+                    self.dbtable = '{0}_{1}_db'.format(dbname, profile)
+                # set reset path
+                if ddict[ykind]['RESET'] in [None, 'None', 'Null', '']:
+                    self.dbreset = None
+                else:
+                    self.dbreset = ddict[ykind]['RESET']
         # set url
         self.set_dburl()
 

@@ -58,7 +58,7 @@ class DeleteTables(ThemedTk):
         # this container contains all the pages
         self.container = tk.Frame(self)
         self.container.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-        self.container.grid_rowconfigure(0,  weight=1)
+        self.container.grid_rowconfigure(0, weight=1)
         self.container.grid_columnconfigure(0, weight=1)
         # the pages
         self.current = 0
@@ -165,14 +165,18 @@ class Page1(StartPage):
 
 
 def get_db_tables():
-    # get the database settings
+    # get database parameters from base
     dparams = base.DPARAMS
+    # construct a generic database manager
+    dbm = drs_db.DatabaseManager()
+    dbm.kind = None
+    dbm.dbtable = 'processlist'
+    # set the database url
+    dbm.load_db(dparams=dparams)
     # if we are dealing with mysql we have tables to delete
     if dparams['USE_MYSQL']:
-        # get generic database access
-        db = drs_db.database_wrapper('None', path='None')
-        # get the tables
-        db_tables = db.execute('SHOW TABLES;', fetch=True)
+        # get tables
+        db_tables = dbm.database.get_tables()
         # clean up the output
         out_tables = []
         for db_table in db_tables:
@@ -186,19 +190,18 @@ def get_db_tables():
 def delete_db_tables(tables):
     # get the database settings
     dparams = base.DPARAMS
-    # if we are dealing with mysql we have tables to delete
-    if dparams['USE_MYSQL']:
-        # get generic database access
-        db = drs_db.database_wrapper('None', path='None')
-        # clean up the output
-        out_tables = []
-        for table in tables:
-            # delete the table
-            db.delete_table(table)
-        # return these tables
-        return out_tables
-    else:
-        return []
+    # construct a generic database manager
+    dbm = drs_db.DatabaseManager()
+    dbm.kind = None
+    # set the database url
+    dbm.load_db(dparams=dparams)
+    # clean up the output
+    out_tables = []
+    for table in tables:
+        # delete the table
+        dbm.database.delete_table(table)
+    # return these tables
+    return out_tables
 
 
 def run_delete_table_app(params: ParamDict) -> DeleteTables:

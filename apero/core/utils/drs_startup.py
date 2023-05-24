@@ -467,7 +467,7 @@ def run(func: Any, recipe: DrsRecipe,
                 recipe.log.add_error(type(e), str(e))
             # reset the lock directory
             drs_lock.reset_lock_dir(params)
-        except drs_db.DatabaseError as e:
+        except drs_db.AperoDatabaseError as e:
             WLOG(params, 'error', e.message, raise_exception=False)
             # on debug exit was not a success
             success = False

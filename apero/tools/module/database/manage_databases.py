@@ -96,21 +96,15 @@ def kill(params: ParamDict, timeout: int = 60):
     dparams = base.DPARAMS
     # construct a generic database manager
     dbm = DatabaseM(params)
-    # get hostname / user / password
-    dbm.dbtype = dparams['TYPE']
-    dbm.dbhost = dparams['HOST']
-    dbm.dbuser = dparams['USER']
-    dbm.dbname = dparams['DATABASE']
-    dbm.dbpass = dparams['PASSWD']
-    dbm.dbtable = 'information_schema'
-    tablename = 'processlist'
+    dbm.kind = None
+    dbm.dbtable = 'processlist'
     # set the database url
-    dbm.set_dburl()
+    dbm.load_db(dparams=dparams)
     # wrap in a try (this may not always work
     # noinspection PyBroadException
     try:
         # set update a database
-        database = drs_db.AperoDatabase(dbm.dburl, tablename=tablename)
+        database = dbm.database
         # set up condition: only this users processes and only from the
         #   required database and that have been active for more than
         #   60 seconds
