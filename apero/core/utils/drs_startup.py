@@ -255,7 +255,7 @@ def setup(name: str = 'None', instrument: str = 'None',
     TLOG(recipe.params, '', 'Loading Arguments. Please wait...')
     # -------------------------------------------------------------------------
     # load index database manager
-    findexdb = drs_database.FileIndexDatabase(recipe.params, check=False)
+    findexdb = drs_database.FileIndexDatabase(recipe.params)
     # interface between "recipe", "fkwargs" and command line (via argparse)
     recipe.recipe_setup(findexdb, fkwargs)
     # -------------------------------------------------------------------------
