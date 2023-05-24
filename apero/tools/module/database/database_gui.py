@@ -68,7 +68,7 @@ class DatabaseHolder:
         self.changed = False
         self.hash_col = hash_col
         self.hash_data = None
-        self.url = None
+        self.url = url
 
     def load_dataframe(self, reload=False):
         # if we already have the dataframe don't load it
