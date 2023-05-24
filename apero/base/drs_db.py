@@ -979,7 +979,7 @@ class DatabaseManager:
         # _ = display_func('__init__', __NAME__, self.classname)
         # save params for use throughout
         self.params = params
-        self.pcont = pconst
+        self.pconst = pconst
         self.instrument = base.IPARAMS['INSTRUMENT']
         # set name
         self.name = 'DatabaseManager'
@@ -1097,20 +1097,20 @@ class DatabaseManager:
         if kind is not None:
             if kind not in DATABASE_NAMES:
                 raise ValueError('kind=={0} invalid'.format(kind))
-                # for yaml kind is uppercase
-                ykind = kind.upper()
-                # set table name
-                dbname = ddict[ykind]['NAME']
-                profile = ddict[ykind]['PROFILE']
-                if dbname.endswith('_db'):
-                    self.dbtable = dbname
-                else:
-                    self.dbtable = '{0}_{1}_db'.format(dbname, profile)
-                # set reset path
-                if ddict[ykind]['RESET'] in [None, 'None', 'Null', '']:
-                    self.dbreset = None
-                else:
-                    self.dbreset = ddict[ykind]['RESET']
+            # for yaml kind is uppercase
+            ykind = kind.upper()
+            # set table name
+            dbname = ddict[ykind]['NAME']
+            profile = ddict[ykind]['PROFILE']
+            if dbname.endswith('_db'):
+                self.dbtable = dbname
+            else:
+                self.dbtable = '{0}_{1}_db'.format(dbname, profile)
+            # set reset path
+            if ddict[ykind]['RESET'] in [None, 'None', 'Null', '']:
+                self.dbreset = None
+            else:
+                self.dbreset = ddict[ykind]['RESET']
         # set url
         self.set_dburl()
 
