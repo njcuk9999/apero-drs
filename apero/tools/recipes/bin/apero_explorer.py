@@ -123,7 +123,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # load database holder
         databases[name] = database_gui.DatabaseHolder(params, name=name,
                                                       kind=dbs[key].kind,
-                                                      path=Path(dbs[key].path),
+                                                      url=Path(dbs[key].dburl),
                                                       hash_col=hash_col)
     # construct app
     app = database_gui.DatabaseExplorer(databases=databases)

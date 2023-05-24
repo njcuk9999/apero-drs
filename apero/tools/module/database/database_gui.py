@@ -75,8 +75,8 @@ class DatabaseHolder:
         if isinstance(self.df, pd.DataFrame) and (not reload):
             return
         # if we don't have path we have a problem
-        if self.path is None:
-            emsg = 'Database "{0}" must have path or df set'
+        if self.path is None and self.url is None:
+            emsg = 'Database "{0}" must have path, url or df set'
             raise ValueError(emsg.format(self.name))
 
         if str(self.path).endswith('.csv'):
@@ -604,7 +604,7 @@ if __name__ == "__main__":
     _databases = dict()
     for _key in _dbs:
         _databases[_key] = DatabaseHolder(_params, _key, _dbs[_key].kind,
-                                          path=Path(_dbs[_key].path))
+                                          url=Path(_dbs[_key].dburl))
     # construct app
     app = DatabaseExplorer(databases=_databases)
     # launch the app
