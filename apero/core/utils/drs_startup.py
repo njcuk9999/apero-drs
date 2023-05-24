@@ -1549,7 +1549,7 @@ def _display_database_settings(wmsgs: lang.Text) -> lang.Text:
     # SQL DISPLAY
     # -------------------------------------------------------------------------
     # add database type
-    wmsgs += textentry('\n\tDATABASE: MYSQL')
+    wmsgs += textentry('\n\tDATABASE: {0}'.format(dparams['TYPE']))
     # loop around database names
     for dbname in base.DATABASE_NAMES:
         # get yaml key
