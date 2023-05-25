@@ -113,7 +113,7 @@ class DatabaseHolder:
         if df is None:
             return
         # start database
-        database = drs_db.AperoDatabase(self.url)
+        database = drs_db.AperoDatabase(self.url, self.tablename)
         # add back hash column if not present
         if drs_db.UHASH_COL not in df and self.hash_data is not None:
             df[drs_db.UHASH_COL] = self.hash_data
