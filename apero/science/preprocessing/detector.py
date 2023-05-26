@@ -1459,7 +1459,7 @@ def postermeter_stats(params: ParamDict, filename: str, ext: int) -> ParamDict:
     func_name = display_func('postermeter_stats', __NAME__)
     # get the flux diff and mjd
     try:
-        table = drs_table.read_table(params, filename, fmt='fits', ext=ext)
+        table = drs_table.read_table(params, filename, fmt='fits', hdu=ext)
         # work out the flux difference between fibers
         flux_diff = table['FIBRE1'] - table['FIBRE2']
         # get the time in mjd
