@@ -277,6 +277,7 @@ __all__ = [
     'CCF_MASK_PATH', 'CCF_NO_RV_VAL', 'CCF_MASK_MIN_WEIGHT', 'CCF_MASK_WIDTH',
     'CCF_N_ORD_MAX', 'CCF_DEFAULT_MASK', 'CCF_MASK_UNITS', 'CCF_MASK_FMT',
     'CCF_DEFAULT_WIDTH', 'CCF_DEFAULT_STEP', 'CCF_ALLOWED_DPRTYPES',
+    'CCF_VALID_FP_DPRTYPES',
     'CCF_CORRECT_TELLU_TYPES', 'CCF_TELLU_THRES', 'CCF_FILL_NAN_KERN_SIZE',
     'CCF_FILL_NAN_KERN_RES', 'CCF_DET_NOISE', 'CCF_FIT_TYPE',
     'CCF_NOISE_SIGDET', 'CCF_NOISE_BOXSIZE', 'CCF_NOISE_THRES',
@@ -1037,7 +1038,6 @@ PP_MEDAMP_BINSIZE = Const('PP_MEDAMP_BINSIZE', value=None, dtype=int,
                                       'smaller than the order footprint on the '
                                       'array as it would lead to a set of NaNs '
                                       'in the downsized image')
-
 
 # Define the amplitude of the flux-dependent along-readout-axis derivative
 #     component
@@ -2100,7 +2100,6 @@ QC_FF_MAX_RMS = Const('QC_FF_MAX_RMS', value=None, dtype=float, source=__NAME__,
 FF_PLOT_ORDER = Const('FF_PLOT_ORDER', value=None, dtype=int, source=__NAME__,
                       group=cgroup,
                       description='Define the order to plot in summary plots')
-
 
 # Define the high pass filter size in km/s
 FF_HIGH_PASS_SIZE = Const('FF_HIGH_PASS_SIZE', value=None, dtype=int,
@@ -3862,7 +3861,7 @@ TELLUP_WATER_BOUNDS = Const('TELLUP_WATER_BOUNDS', value=None, dtype=str,
 
 # set the plot order for the finite resolution plot
 TELLU_FINITE_RES_ORDER = Const('TELLUP_WATER_BOUNDS', value=None, dtype=int,
-                               minimum=0,  source=__NAME__, group=cgroup,
+                               minimum=0, source=__NAME__, group=cgroup,
                                description='set the plot order for the finite '
                                            'resolution plot')
 
@@ -4280,12 +4279,12 @@ MKTEMPLATE_DECONV_ITR_THRES = Const('MKTEMPLATE_DECONV_ITR_THRES', value=None,
 # Define the max number of iterations to run if the iteration threshold
 #     is not met
 MKTEMPLATE_DECONV_ITR_MAX = Const('MKTEMPLATE_DECONV_ITR_MAX', value=None,
-                                    dtype=float, source=__NAME__, minimum=0,
-                                    group=cgroup,
-                                    description='Define the max number of '
-                                                'iterations to run if the '
-                                                'iteration threshold is not '
-                                                'met')
+                                  dtype=float, source=__NAME__, minimum=0,
+                                  group=cgroup,
+                                  description='Define the max number of '
+                                              'iterations to run if the '
+                                              'iteration threshold is not '
+                                              'met')
 
 # =============================================================================
 # CALIBRATION: CCF SETTINGS
@@ -4406,6 +4405,13 @@ CCF_ALLOWED_DPRTYPES = Const('CCF_ALLOWED_DPRTYPES', value=None, dtype=str,
                              description='Allowed input DPRTYPES for input '
                                          'for CCF recipe')
 
+# Valid DPRTYPES for FP in calibration fiber
+CCF_VALID_FP_DPRTYPES = Const('CCF_VALID_FP_DPRTYPES', value=None, dtype=str,
+                              source=__NAME__, user=True, active=False,
+                              group=cgroup,
+                              description='Valid DPRTYPES for FP in calibration '
+                                          'fiber')
+
 # Define the KW_OUTPUT types that are valid telluric corrected spectra
 CCF_CORRECT_TELLU_TYPES = Const('CCF_CORRECT_TELLU_TYPES', value=None,
                                 dtype=str, source=__NAME__, group=cgroup,
@@ -4470,13 +4476,11 @@ CCF_NSIG_THRESHOLD = Const('CCF_NSIG_THRESHOLD', value=None, dtype=float,
                            description='Define the minimum number of sigma the '
                                        'peak CCF must have to be acceptable')
 
-
 # Define the minimum number of sigma the FWHM of CCF must have to be acceptable
 CCF_FWHM_SIGCUT = Const('CCF_FWHM_SIGCUT', value=None, dtype=float,
                         source=__NAME__, minimum=0, group=cgroup,
                         description='Define the minimum number of sigma the '
                                     'FWHM of CCF must have to be acceptable')
-
 
 # =============================================================================
 # GENERAL POLARISATION SETTINGS

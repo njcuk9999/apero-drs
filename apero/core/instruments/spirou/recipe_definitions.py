@@ -975,10 +975,12 @@ apero_ccf.set_outputs(CCF_RV=files.out_ccf_fits)
 ccf_dict = dict()
 ccf_dict['fibers'] = ref_fibers + cal_fibers
 ccf_dict['DPRTYPE'] = dict()
-ccf_dict['DPRTYPE'][cal_fiber] = 'FP'
+for fiber in ref_fibers:
+    ccf_dict['DPRTYPE'][fiber] = 'CCF_ALLOWED_DPRTYPES'
+ccf_dict['DPRTYPE'][cal_fiber] = 'CCF_VALID_FP_DPRTYPES'
 ccf_dict['ARG'] = dict()
 ccf_dict['ARG'][ref_fiber] = 'mask'
-ccf_dict['ARG'][cal_fiber] = 'mask'
+ccf_dict['ARG'][cal_fiber] = 'mask_fp'
 apero_ccf.set_output_data(CCF_RV=ccf_dict)
 apero_ccf.set_debug_plots('CCF_RV_FIT', 'CCF_RV_FIT_LOOP', 'CCF_SWAVE_REF',
                           'CCF_PHOTON_UNCERT')
@@ -1031,7 +1033,6 @@ apero_mk_tellu.set_outputs(TELLU_CONV=files.out_tellu_conv,
                            TELLU_PCLEAN=files.out_tellu_pclean)
 mktellu_dict = dict()
 mktellu_dict['fibers'] = ref_fiber
-mktellu_dict['OBJNAME'] = 'HOTSTAR'
 mktellu_dict['EXCLUDE'] = 'TELLU_BLACKLIST_NAME'
 mktellu_dict['INCLUDE'] = 'TELLU_WHITELIST_NAME'
 apero_mk_tellu.set_output_data(TELLU_CONV=mktellu_dict,
