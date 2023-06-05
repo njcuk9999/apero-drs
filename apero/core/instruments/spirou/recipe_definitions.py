@@ -717,7 +717,8 @@ extract_dict['LOG_FLAG'] = dict()
 extract_dict['LOG_FLAG']['None'] = ['QUICKLOOK']
 extract_dict['ARG'] = dict(zip(extract_dict['fibers'],
                                ['fiber'] * len(extract_dict['fibers'])))
-fplines_dict = dict(extract_dict)
+fplines_dict = dict()
+fplines_dict['fibers'] = sci_fibers + cal_fibers
 fplines_dict['LOG_FLAG'] = dict()
 fplines_dict['LOG_FLAG'][cal_fiber] = 'EXP_FPLINE'
 qextract_dict = dict()
