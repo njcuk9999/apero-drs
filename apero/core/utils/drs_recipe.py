@@ -779,7 +779,7 @@ class DrsRecipe(object):
             if isinstance(kwargs[kwarg], DrsInputFile):
                 self.outputs[kwarg] = kwargs[kwarg]
 
-    def set_output_data(self, **kwargs: Dict[str, Any]):
+    def set_output_data(self, **kwargs):
         """
         Set the output files
 
