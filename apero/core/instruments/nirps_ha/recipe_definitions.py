@@ -906,7 +906,9 @@ apero_ccf.set_outputs(CCF_RV=files.out_ccf_fits)
 ccf_dict = dict()
 ccf_dict['fibers'] = ref_fibers + cal_fibers
 ccf_dict['DPRTYPE'] = dict()
-ccf_dict['DPRTYPE'][cal_fiber] = 'FP'
+for fiber in ref_fibers:
+    ccf_dict['DPRTYPE'][fiber] = 'CCF_ALLOWED_DPRTYPES'
+ccf_dict['DPRTYPE'][cal_fiber] = 'CCF_VALID_FP_DPRTYPES'
 ccf_dict['ARG'] = dict()
 ccf_dict['ARG'][ref_fiber] = 'mask'
 ccf_dict['ARG'][cal_fiber] = 'mask'
