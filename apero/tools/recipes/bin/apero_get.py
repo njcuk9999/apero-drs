@@ -17,6 +17,7 @@ from apero.core.core import drs_text
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
 from apero.tools.module.listing import drs_get
+from apero.tools.module.setup import drs_assets
 
 # =============================================================================
 # Define variables
@@ -98,6 +99,13 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     if use_gui:
         WLOG(params, 'warning', 'Not Implemented yet',
              sublevel=2)
+        return locals()
+    # -------------------------------------------------------------------------
+    # get input from user
+    get_assets = drs_text.true_text(inputs['ASSETS'])
+    # get assets
+    if get_assets:
+        drs_assets.check_assets(params)
         return locals()
     # -------------------------------------------------------------------------
     # get filters from user inputs

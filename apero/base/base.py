@@ -313,36 +313,43 @@ def create_yamls(allparams: Any):
     calibdb = dict()
     calibdb['NAME'] = ddict.get('CALIB_NAME', 'calib')
     calibdb['RESET'] = ddict.get('CALIB_RESET', 'reset.calib.csv')
+    calibdb['PROFILE'] = ddict.get('CALIB_PROFILE', 'NULL')
     database_dict['CALIB'] = calibdb
     # add tellu database
     telludb = dict()
     telludb['NAME'] = ddict.get('TELLU_NAME', 'tellu')
     telludb['RESET'] = ddict.get('TELLU_RESET', 'reset.tellu.csv')
+    telludb['PROFILE'] = ddict.get('TELLU_PROFILE', 'NULL')
     database_dict['TELLU'] = telludb
     # add index database
     findexdb = dict()
     findexdb['NAME'] = ddict.get('FINDEX_NAME', 'findex')
     findexdb['RESET'] = ddict.get('FINDEX_RESET', 'NULL')
+    findexdb['PROFILE'] = ddict.get('FINDEX_PROFILE', 'NULL')
     database_dict['FINDEX'] = findexdb
     # add log database
     logdb = dict()
     logdb['NAME'] = ddict.get('LOG_NAME', 'log')
     logdb['RESET'] = ddict.get('LOG_RESET', 'NULL')
+    logdb['PROFILE'] = ddict.get('LOG_PROFILE', 'NULL')
     database_dict['LOG'] = logdb
     # add object database
     astromdb = dict()
     astromdb['NAME'] = ddict.get('ASTROM_NAME', 'astrom')
     astromdb['RESET'] = ddict.get('ASTROM_RESET', 'reset.astrom.csv')
+    astromdb['PROFILE'] = ddict.get('ASTROM_PROFILE', 'NULL')
     database_dict['ASTROM'] = astromdb
     # add reject database
     rejectdb = dict()
     rejectdb['NAME'] = ddict.get('REJECT_NAME', 'reject')
     rejectdb['RESET'] = ddict.get('REJECT_RESET', 'NULL')
+    rejectdb['PROFILE'] = ddict.get('REJECT_PROFILE', 'NULL')
     database_dict['REJECT'] = rejectdb
     # add language database
     langdb = dict()
     langdb['NAME'] = ddict.get('LANG_PATH', 'lang')
     langdb['RESET'] = ddict.get('LANG_PATH', 'NULL')
+    langdb['PROFILE'] = ddict.get('LANG_PROFILE', 'NULL')
     database_dict['LANG'] = langdb
     # write database
     write_yaml(database_dict, str(database_path))

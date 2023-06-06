@@ -248,6 +248,8 @@ get_files.instrument = __INSTRUMENT__
 get_files.description = textentry('GET_DESCRIPTION')
 get_files.recipe_type = 'nolog-tool'
 get_files.recipe_kind = 'user'
+get_files.set_kwarg(name='--assets', dtype='switch', default=False,
+                    helpstr='Download the assets to the github directory')
 get_files.set_kwarg(name='--gui', default=False, dtype='switch',
                     helpstr=textentry('GET_GUI_HELP'))
 get_files.set_kwarg(name='--objnames', dtype=str, default='None',

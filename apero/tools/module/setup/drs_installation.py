@@ -1576,6 +1576,8 @@ def update(params: ParamDict, args: argparse.Namespace) -> ParamDict:
         all_params['CLEAN_INSTALL'] = False
         all_params.set_source('CLEAN_INSTALL', func_name)
     # ------------------------------------------------------------------
+    # setup a database dictionary
+    all_params['DATABASE'] = dict()
     # Individual database table settings
     all_params, args = database_tables(args, all_params, db_ask=False)
     # ------------------------------------------------------------------
@@ -1608,7 +1610,7 @@ def update_dparams(aparams: ParamDict,
         dbkey = f'{dbname}_profile'.upper()
         value = aparams['DATABASE'].get(dbkey, None)
         if value is not None:
-            dparams['DATABASE'][dbname.upper()]['PROFILE'] = value
+            dparams[dbname.upper()]['PROFILE'] = value
     # return dparams
     return dparams
 
@@ -1629,17 +1631,18 @@ def update_db_settings(aparams: ParamDict) -> ParamDict:
     # ------------------------------------------------------------------
     aparams['DATABASE'] = dict()
     # add database settings
-    aparams['DATABASE']['HOST'] = dparams['DATABASE']['HOST']
-    aparams['DATABASE']['USER'] = dparams['DATABASE']['USER']
-    aparams['DATABASE']['PASSWD'] = dparams['DATABASE']['PASSWD']
-    aparams['DATABASE']['DATABASE'] = dparams['DATABASE']['DATABASE']
+    aparams['DATABASE']['HOST'] = dparams['HOST']
+    aparams['DATABASE']['USER'] = dparams['USER']
+    aparams['DATABASE']['PASSWD'] = dparams['PASSWD']
+    aparams['DATABASE']['DATABASE'] = dparams['DATABASE']
+    aparams['DATABASE']['TYPE'] = dparams['TYPE']
     # add database parameters
     # loop around databases
     for dbname in base.DATABASE_NAMES:
         # yaml is upper case
         ydbname = dbname.upper()
         # get correct dictionary
-        sdict = dparams['DATABASE'][ydbname]
+        sdict = dparams[ydbname]
         # add calib database
         aparams['DATABASE'][f'{ydbname}_NAME'] = sdict['NAME']
         if 'RESET' in sdict:
