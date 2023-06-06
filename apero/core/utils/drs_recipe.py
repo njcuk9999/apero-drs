@@ -181,6 +181,7 @@ class DrsRecipe(object):
         self.optional_args = []
         self.special_args = []
         self.outputs = dict()
+        self.output_fibers = dict()
         self.output_files = dict()
         self.debug_plots = []
         self.summary_plots = []
@@ -778,6 +779,25 @@ class DrsRecipe(object):
             if isinstance(kwargs[kwarg], DrsInputFile):
                 self.outputs[kwarg] = kwargs[kwarg]
 
+    def set_output_data(self, **kwargs):
+        """
+        Set the output files
+
+        :param kwargs: all keywords values should be a DrsFitsFile
+                       i.e. file1=DrsInputFile()
+
+        :return: None - updates DrsRecipe.outputs
+        """
+        # set function name
+        # _ = display_func('set_outputs', __NAME__,
+        #                  self.class_name)
+        # loop around kwargs
+        for kwarg in kwargs:
+            # make sure kwarg is in self.outputs
+            if kwarg in self.outputs:
+                # set fibers
+                self.output_fibers[kwarg] = kwargs[kwarg]
+
     def set_inputs(self):
         """
         Set the recipes input arguments (rargs), input keyword arguments
@@ -1043,15 +1063,20 @@ class DrsRecipe(object):
         self.required_args = list(recipe.required_args)
         self.optional_args = list(recipe.optional_args)
         self.special_args = list(recipe.special_args)
-        # deal with copying file outputs
+        # deal with copying file outputs / output fibers
         if self.outputs is None:
             self.outputs = None
+            self.output_fibers = None
         else:
             self.outputs = dict()
             for output in recipe.outputs:
                 oldoutput = recipe.outputs[output]
                 newouput = oldoutput.completecopy(oldoutput)
                 self.outputs[output] = newouput
+                # add to output fibers
+                if output in recipe.output_fibers:
+                    output_fiber = copy.deepcopy(recipe.output_fibers[output])
+                    self.output_fibers[output] = output_fiber
         # copy plotter
         self.plot = recipe.plot
         # copy logger
