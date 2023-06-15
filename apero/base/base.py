@@ -35,7 +35,7 @@ __INSTRUMENT__ = 'None'
 __version__ = '0.8.001'
 __author__ = ['N. Cook', 'E. Artigau', 'F. Bouchy', 'M. Hobson', 'C. Moutou',
               'I. Boisse', 'E. Martioli']
-__date__ = '2023-05-23'
+__date__ = '2023-06-15'
 __release__ = 'alpha pre-release'
 # do this once per drs import
 __now__ = Time.now()
@@ -159,7 +159,7 @@ COLOURS['UNDERLINE'] = '\033[4m'
 # -----------------------------------------------------------------------------
 # define default flags for all recipes
 DEFAULT_FLAGS = dict(IN_PARALLEL=False, RUNNING=False, ENDED=False,
-                     FORCE_REFWAVE=False)
+                     FORCE_REFWAVE=False, USER_FIBERS=False)
 # define allowed log flags
 LOG_FLAGS = dict()
 # LOG_FLAG[key] = description
@@ -173,6 +173,7 @@ LOG_FLAGS['SCIFIBER'] = 'Localisation recipe used the science fiber'
 LOG_FLAGS['REFFIBER'] = 'Localisation recipe used the reference fiber'
 LOG_FLAGS['INT_EXT'] = 'An internal extraction is done in this recipe'
 LOG_FLAGS['EXT_FOUND'] = 'Extracted files for internal extraction were found.'
+LOG_FLAGS['USER_FIBERS'] = 'User changed the expected fibers'
 LOG_FLAGS['QUICKLOOK'] = 'Extraction is running in quick look mode'
 LOG_FLAGS['EXP_FPLINE'] = 'Extraction has an FP ref fiber and addition outputs'
 LOG_FLAGS['INPUTQC'] = 'Polar inputs passed QC (or were forced to)'
