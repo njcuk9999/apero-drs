@@ -2,6 +2,20 @@ Changelog
 =========
 
 
+0.7.284 (2023-06-14)
+--------------------
+- [APERO] update binary flags. [Neil Cook]
+- [APERO] add fiber defintiions to recipe definitions. [Neil Cook]
+- [APERO] add fiber defintiions to recipe definitions. [Neil Cook]
+- [APERO] add fiber defintiions to recipe definitions. [Neil Cook]
+- [NIRPS] `apero.science.preprocessing.detector.py` - fix `read_table`
+  ext-->hdu. [Neil Cook]
+- [APERO] `apero.tools.module.processing.drs_processing.py` - parallelize
+  the validation. [Neil Cook]
+- [APERO] remove use of np.int (depricated) [Neil Cook]
+- Update date/version/changelog. [njcuk9999]
+
+
 0.7.283 (2023-05-23)
 --------------------
 - Update python modules. [njcuk9999]

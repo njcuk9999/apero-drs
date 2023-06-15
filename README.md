@@ -1,6 +1,6 @@
 # APERO - A PipelinE to Reduce Observations
 
-Last updated: 2023-05-23
+Last updated: 2023-06-15
 
 Please see the documentation:
 - [ONLINE] https://www.astro.umontreal.ca/~cook/apero-drs/index.html
@@ -26,20 +26,20 @@ Using the Github Action [Repo Visualizer](https://github.com/githubocto/repo-vis
 ##  1 Latest version
 [Back to top](#apero---a-pipeline-to-reduce-observations)
 
-- main (long term stable) V0.7.275 (2023-01-30)
+- main (long term stable) V0.7.275 (2023-06-15)
     ```
     This is the version currently recommended for all general use. It may not
     contain the most up-to-date features until long term support and stability can
     be verified.
     ```
-- developer (tested) V0.7.283 (2023-05-23)
+- developer (tested) V0.7.284 (2023-06-15)
     ```
     Note the developer version should have been tested and semi-stable but not
     ready for full sets of processing and defintely not for release for
     non-developers or for data put on archives. Some changes may not be
     in this version that are in the working version.
     ```
-- stable-test (tested) V0.7.283 (2023-05-23)
+- stable-test (tested) V0.7.284 (2023-06-15)
     ```
     Notrmally up-to-date with the live version has been or is currently
     being tested for stability
