@@ -553,7 +553,7 @@ def quality_control2(params: ParamDict, qc_params: list, image: np.ndarray,
     """
     # set passed variable and fail message list
     fail_msg = []
-    qc_values, qc_names, qc_logic, qc_pass = qc_params
+    qc_names, qc_values, qc_logic, qc_pass = qc_params
     # get paramters from params
     dark_types = params.listp('PP_DARK_DPRTYPES', dtype=str)
     dark_thres = params['PP_DARK_THRES']

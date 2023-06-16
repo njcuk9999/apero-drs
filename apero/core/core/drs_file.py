@@ -4892,7 +4892,7 @@ class DrsFitsFile(DrsInputFile):
         params = self.params
         # deal with qcparams = None
         if qcparams is None:
-            qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
+            qc_names, qc_values, qc_logic, qc_pass = [], [], [], []
             # add to qc header lists
             qc_pass.append(1)
             qc_values.append('None')
