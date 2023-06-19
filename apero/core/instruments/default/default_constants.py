@@ -5371,7 +5371,7 @@ REPROCESS_REINDEX_BLOCKS = Const('REPROCESS_REINDEX_BLOCKS', value=None,
 REPROCESS_MP_TYPE = Const('REPROCESS_MP_TYPE', value=None, dtype=str,
                           source=__NAME__, group=cgroup,
                           user=True, active=True,
-                          options=['pool', 'process'],
+                          options=['pool', 'process', 'pathos'],
                           description='Define whether to use multiprocess '
                                       '"pool" or "process"')
 
