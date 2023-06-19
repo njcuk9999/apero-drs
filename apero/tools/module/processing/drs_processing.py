@@ -859,8 +859,7 @@ def generate_run_list(params, findexdbm: FileIndexDatabase, runtable,
     # all runtable elements should now be in recipe list
     _check_runtable(params, runtable, recipemod)
     # return Run instances for each runtable element
-    return generate_ids(params, findexdbm, runtable, recipemod, skiptable,
-                        rlist)
+    return generate_ids(params, findexdbm, runtable, skiptable, rlist)
 
 
 def process_run_list(params: ParamDict, runlist, group=None,
@@ -1207,7 +1206,7 @@ def generate_id(params, it, run_key, run_item, runlist, keylist, inrecipelist,
             WLOG(params, '', msg.format(*margs), colour='yellow')
 
 
-def generate_ids(params, indexdb, runtable, mod, skiptable, rlist=None,
+def generate_ids(params, indexdb, runtable, skiptable, rlist=None,
                  **kwargs):
     func_name = __NAME__ + '.generate_ids()'
     # get keys from params
