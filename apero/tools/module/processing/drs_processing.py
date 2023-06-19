@@ -431,7 +431,7 @@ class Run:
         # need to re-find and set recipe and recipe modd
         self.reload_recipe()
 
-    def reload_recipe(self):
+    def reload_recipe(self, recipe_name=None):
         # deal with no pickable recipe name
         if self.pickle_recipe_name is None:
             return
@@ -445,6 +445,23 @@ class Run:
         self.recipe, _ = drs_startup.find_recipe(**fkwargs)
         # recipe mod in this sense is the recipe.main
         self.recipemod = self.recipe.main
+
+
+# =============================================================================
+# Define pickle functions
+# =============================================================================
+def reload_recipe(params, recipename):
+    # reload excluded attributes
+    pconst = constants.pload(params['INSTRUMENT'])
+    # load the recipe mod
+    rmod = pconst.RECIPEMOD()
+    # set up the arguments to find the recipe
+    fkwargs = dict(name=recipename, instrument=params['INSTRUMENT'],
+                   mod=rmod)
+    # set recipe
+    recipe, _ = drs_startup.find_recipe(**fkwargs)
+    # return recipe and index database
+    return recipe
 
 
 # =============================================================================
@@ -875,6 +892,13 @@ def process_run_list(params: ParamDict, runlist, group=None,
         WLOG(params, 'info', textentry('40-503-00016'))
         # run as linear process
         rdict = _linear_process(params, runlist, group=group)
+    # use pathos to multiprocess
+    elif params['REPROCESS_MP_TYPE'].lower() == 'pathos':
+        # log process: Running with N cores
+        WLOG(params, 'info', textentry('40-503-00017', args=[cores]))
+        # run as multiple processes
+        rdict = _multi_process_pathos(params, runlist, cores=cores,
+                                      groupname=group, findexdbm=findexdbm)
     # use pool to continue parallelization
     elif params['REPROCESS_MP_TYPE'].lower() == 'pool':
         # log process: Running with N cores
@@ -1131,13 +1155,18 @@ def generate_run_table(params, recipe, *args, **kwargs):
 # =============================================================================
 # Define "from id" functions
 # =============================================================================
-def generate_id(params, it, run_key, run_item, runlist, keylist, inrecipelist,
-                indexdb, skiptable, skip_storage, return_dict=None,
-                cores=1):
+def generate_id(params, it, run_key, run_item, runlist, keylist, inrecipe_name,
+                skiptable, skip_storage, return_dict=None,
+                cores=1) -> Dict[int, Any]:
     # get runid
     runid = '{0}{1:05d}'.format(run_key, keylist[it])
+    # get index database
+    indexdb = FileIndexDatabase(params)
     # get recipe
-    input_recipe = inrecipelist[it]
+    input_recipe = reload_recipe(params, inrecipe_name)
+    # deal with no return dict
+    if return_dict is None:
+        return_dict = dict()
     # log process: validating run
     wargs = [runid, it + 1, len(runlist)]
     # print out is too heavy for multiprocessing
@@ -1147,7 +1176,7 @@ def generate_id(params, it, run_key, run_item, runlist, keylist, inrecipelist,
         WLOG(params, '', params['DRS_HEADER'])
         WLOG(params, '', textentry('40-503-00013', args=[run_item]))
     # get recipe definitions module (for this instrument)
-    recipemod = _get_recipe_module(params)
+    recipemod = _get_recipe_module(params, logmsg=False)
     # create run object
     run_object = Run(params, indexdb, run_item, mod=recipemod,
                      priority=keylist[it], inrecipe=input_recipe)
@@ -1188,10 +1217,7 @@ def generate_id(params, it, run_key, run_item, runlist, keylist, inrecipelist,
             margs = [runid, run_object.runstring]
             WLOG(params, '', msg.format(*margs))
         # append to run_objects
-        if cores == 1:
-            return run_object
-        else:
-            return_dict[it] = run_object
+        return_dict[it] = run_object
     # else log that we are skipping
     else:
         # log that we have skipped run
@@ -1204,6 +1230,7 @@ def generate_id(params, it, run_key, run_item, runlist, keylist, inrecipelist,
             msg = 'Run {0} skipped [{1}] {2}'
             margs = [runid, run_object.runstring, reason]
             WLOG(params, '', msg.format(*margs), colour='yellow')
+    return return_dict
 
 
 def generate_ids(params, indexdb, runtable, skiptable, rlist=None,
@@ -1236,83 +1263,165 @@ def generate_ids(params, indexdb, runtable, skiptable, rlist=None,
     # deal with a single core (no multiprocessing)
     if cores == 1:
         # iterate through and make run objects
-        run_objects = []
+        rdict = dict()
         for it, run_item in enumerate(runlist):
+            inrecipename = inrecipelist[it].name
             # set up the arguments
             args = [params, it, run_key, run_item, runlist, keylist,
-                    inrecipelist, indexdb, skiptable, skip_storage]
+                    inrecipename, skiptable, skip_storage]
             # run as a single process
-            run_object = generate_id(*args)
+            results = generate_id(*args)
             # append to run_objects
-            run_objects.append(run_object)
+            for key in results:
+                rdict[key] = results[key]
     # -------------------------------------------------------------------------
     # otherwise multiprocess
+    # -------------------------------------------------------------------------
+    # use pathos to multiprocess
+    elif params['REPROCESS_MP_TYPE'].lower() == 'pathos':
+        rdict = _multi_process_gen_ids_pathos(params, run_key, runlist, cores,
+                                              keylist, inrecipelist,
+                                              skiptable, skip_storage)
+    # use pool to continue parallelization
+    elif params['REPROCESS_MP_TYPE'].lower() == 'pool':
+        rdict = _multi_process_gen_ids_pool(params, run_key, runlist, cores,
+                                            keylist, inrecipelist,
+                                            skiptable, skip_storage)
+    # use Process to continue parallelization
     else:
-        # import multiprocessing
-        from multiprocessing import Process, Manager, Event
-        # get the number of groups
-        ngroups = int(np.ceil(len(runlist) / cores))
-
-        rdict = dict()
-        # loop around groups
-        #   - each group is a unique recipe
-        for g_it in range(ngroups):
-            # start process manager
-            manager = Manager()
-            return_dict = manager.dict()
-            # create group mask
-            group = np.arange(g_it * cores, (g_it + 1) * cores)
-            # deal with group numbers in the last group being too large
-            group = group[group < len(runlist)]
-            # get a cut down version of runlist (for this batch)
-            group_runlist = list(np.array(runlist)[group])
-            # process storage
-            jobs = []
-            # loop around each run
-            for it, run_item in enumerate(group_runlist):
-                # get back the original index
-                jt = (g_it * cores) + it
-                # get args
-                args = [params, jt, run_key, run_item, runlist, keylist,
-                        inrecipelist, indexdb, skiptable, skip_storage,
-                        return_dict, cores]
-                # get parallel process
-                process = Process(target=generate_id, args=args)
-                process.start()
-                jobs.append(process)
-            # do not continue until finished
-            for pit, proc in enumerate(jobs):
-                # debug log: MULTIPROCESS - joining job {0}
-                WLOG(params, 'debug', textentry('90-503-00021', args=[pit]))
-                proc.join()
-            # sort run objects and push into rdict (true dictionary)
-            for key in return_dict.keys():
-                rdict[key] = return_dict[key]
-            # delete the manager
-            del manager
-        # ---------------------------------------------------------------------
-        # recreate the run objects list from the return dict
-        #    sorted by key
-        # print progress
-        # TODO: Add to language database
-        msg = 'Analyzed {0} runs. Validated {1} runs. Skipped {2} runs.'
-        margs = [len(runlist), len(rdict), len(runlist) - len(rdict)]
-        WLOG(params, 'info', msg.format(*margs))
-        # sort the rdict into a run_object list
-        sorted_run = np.argsort(list(rdict.keys()))
-        run_values = list(rdict.values())
-        run_objects = list(np.array(run_values)[sorted_run])
-        # # sort keys into list
-        # storage of run objects
-        # run_objects = []
-        # for it in tqdm(range(len(run_keys))):
-        #     # get run object
-        #     run_object = run_values[it]
-        #     # append to run_objects
-        #     run_objects.append(run_object)
+        # run as multiple processes
+        rdict = _multi_process_gen_ids_process(params, run_key, runlist, cores,
+                                               keylist, inrecipelist,
+                                               skiptable, skip_storage)
+    # ---------------------------------------------------------------------
+    # recreate the run objects list from the return dict
+    #    sorted by key
+    # print progress
+    # TODO: Add to language database
+    msg = 'Analyzed {0} runs. Validated {1} runs. Skipped {2} runs.'
+    margs = [len(runlist), len(rdict), len(runlist) - len(rdict)]
+    WLOG(params, 'info', msg.format(*margs))
+    # sort the rdict into a run_object list
+    sorted_run = np.argsort(list(rdict.keys()))
+    run_values = list(rdict.values())
+    run_objects = list(np.array(run_values)[sorted_run])
+    # # sort keys into list
+    # storage of run objects
+    # run_objects = []
+    # for it in tqdm(range(len(run_keys))):
+    #     # get run object
+    #     run_object = run_values[it]
+    #     # append to run_objects
+    #     run_objects.append(run_object)
     # -------------------------------------------------------------------------
     # return run objects
     return run_objects
+
+
+def _multi_process_gen_ids_pathos(params, run_key, runlist, cores,
+                                  keylist, inrecipelist, skiptable,
+                                  skip_storage):
+    # deal with Pool specific imports
+    from pathos.pools import ParallelPool as Pool
+    return_dict = dict()
+    # set up the pool
+    pool = Pool(ncpus=cores, maxtasksperchild=1)
+    # list of params for each entry
+    params_per_process = []
+    # populate params for each sub group
+    for it, run_item in enumerate(runlist):
+        inrecipename = inrecipelist[it].name
+        args = [params, it, run_key, run_item, runlist, keylist,
+                inrecipename, skiptable, skip_storage, return_dict, cores]
+        params_per_process.append(args)
+    # transpose the params axis
+    params_per_process2 = list(zip(*params_per_process))
+    # start parellel jobs
+    results = pool.map(generate_id, *params_per_process2)
+    # Casting the ppmap generator to a list forces each result to be
+    # evaluated.  When done immediately after the jobs are submitted,
+    # our program twiddles its thumbs while the work is finished.
+    results = list(results)
+    # fudge back into return dictionary
+    for row in range(len(results)):
+        for key in results[row]:
+            return_dict[key] = results[key]
+    # return return_dict
+    return dict(return_dict)
+
+
+def _multi_process_gen_ids_pool(params, run_key, runlist, cores,
+                                keylist, inrecipelist, skiptable,
+                                skip_storage):
+    # deal with Pool specific imports
+    from multiprocessing import get_context
+
+    return_dict = dict()
+    # list of params for each entry
+    params_per_process = []
+    # populate params for each sub group
+    for it, run_item in enumerate(runlist):
+        inrecipename = inrecipelist[it].name
+        args = [params, it, run_key, run_item, runlist, keylist,
+                inrecipename, skiptable, skip_storage, return_dict, cores]
+        params_per_process.append(args)
+    # start parellel jobs
+    with get_context('spawn').Pool(cores, maxtasksperchild=1) as pool:
+        results = pool.starmap(generate_id, params_per_process)
+    # fudge back into return dictionary
+    for row in range(len(results)):
+        for key in results[row]:
+            return_dict[key] = results[key]
+    # return return_dict
+    return dict(return_dict)
+
+
+def _multi_process_gen_ids_process(params, run_key, runlist, cores,
+                                   keylist, inrecipelist, skiptable,
+                                   skip_storage):
+    # import multiprocessing
+    from multiprocessing import Process, Manager, Event
+    # get the number of groups
+    ngroups = int(np.ceil(len(runlist) / cores))
+
+    rdict = dict()
+    # loop around groups
+    #   - each group is a unique recipe
+    for g_it in range(ngroups):
+        # start process manager
+        manager = Manager()
+        return_dict = manager.dict()
+        # create group mask
+        group = np.arange(g_it * cores, (g_it + 1) * cores)
+        # deal with group numbers in the last group being too large
+        group = group[group < len(runlist)]
+        # get a cut down version of runlist (for this batch)
+        group_runlist = list(np.array(runlist)[group])
+        # process storage
+        jobs = []
+        # loop around each run
+        for it, run_item in enumerate(group_runlist):
+            # get back the original index
+            jt = (g_it * cores) + it
+            # get args
+            inrecipename = inrecipelist[jt].name
+            args = [params, jt, run_key, run_item, runlist, keylist,
+                    inrecipename, skiptable, skip_storage, return_dict, cores]
+            # get parallel process
+            process = Process(target=generate_id, args=args)
+            process.start()
+            jobs.append(process)
+        # do not continue until finished
+        for pit, proc in enumerate(jobs):
+            # debug log: MULTIPROCESS - joining job {0}
+            WLOG(params, 'debug', textentry('90-503-00021', args=[pit]))
+            proc.join()
+        # sort run objects and push into rdict (true dictionary)
+        for key in return_dict.keys():
+            rdict[key] = return_dict[key]
+        # delete the manager
+        del manager
+    return rdict
 
 
 def skip_run_object(params, runobj, skiptable, skip_storage):
@@ -2287,6 +2396,60 @@ def _multi_process_pool(params, runlist, cores, groupname=None,
         if not params['TEST_RUN']:
             update_index_db(params, findexdbm=findexdbm)
 
+    # return return_dict
+    return dict(return_dict)
+
+
+def _multi_process_pathos(params, runlist, cores, groupname=None,
+                          findexdbm: Optional[FileIndexDatabase] = None):
+    # first try to group tasks (now just by recipe)
+    grouplist, groupnames = _group_tasks2(runlist)
+    # set up the dictionary
+    return_dict = dict()
+    # deal with Pool specific imports
+    from pathos.pools import ParallelPool as Pool
+    # loop around groups
+    #   - each group is a unique recipe
+    for g_it, groupnum in enumerate(grouplist):
+        # get this groups values
+        group = grouplist[groupnum]
+        # log progress
+        _group_progress(params, g_it, grouplist, groupnames[groupnum])
+        # set up the pool
+        pool = Pool(cores, maxtasksperchild=1)
+        # # skip groups if event is set
+        # if event is not None and event.is_set():
+        #     # log that we are skipping group
+        #     WLOG(params, 'warning', textentry('10-000-00001'), sublevel=6)
+        #     continue
+        # list of params for each entry
+        params_per_process = []
+        # populate params for each sub group
+        for r_it, runlist_group in enumerate(group):
+            args = [params, [runlist_group], r_it + 1,
+                    cores, None, groupname]
+            params_per_process.append(args)
+        # transpose the params axis
+        params_per_process2 = list(zip(*params_per_process))
+        # start parellel jobs
+        results = pool.map(generate_id, *params_per_process2)
+        # Casting the ppmap generator to a list forces each result to be
+        # evaluated.  When done immediately after the jobs are submitted,
+        # our program twiddles its thumbs while the work is finished.
+        results = list(results)
+        # fudge back into return dictionary
+        for row in range(len(results)):
+            for key in results[row]:
+                return_dict[key] = results[row][key]
+        # ---------------------------------------------------------------------
+        # update the index database (taking into account include/exclude lists)
+        #    we have to loop around block kinds to prevent recipe from updating
+        #    the index database every time a new recipe starts
+        # this is really important as we have disabled updating for parallel
+        #  runs to make it more efficient
+        # do not update if we are running a test
+        if not params['TEST_RUN']:
+            update_index_db(params, findexdbm=findexdbm)
     # return return_dict
     return dict(return_dict)
 
