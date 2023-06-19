@@ -1133,7 +1133,7 @@ def generate_run_table(params, recipe, *args, **kwargs):
 # Define "from id" functions
 # =============================================================================
 def generate_id(params, it, run_key, run_item, runlist, keylist, inrecipelist,
-                indexdb, mod, skiptable, skip_storage, return_dict=None,
+                indexdb, skiptable, skip_storage, return_dict=None,
                 cores=1):
     # get runid
     runid = '{0}{1:05d}'.format(run_key, keylist[it])
@@ -1147,8 +1147,10 @@ def generate_id(params, it, run_key, run_item, runlist, keylist, inrecipelist,
         WLOG(params, '', textentry('40-503-00004', args=wargs))
         WLOG(params, '', params['DRS_HEADER'])
         WLOG(params, '', textentry('40-503-00013', args=[run_item]))
+    # get recipe definitions module (for this instrument)
+    recipemod = _get_recipe_module(params)
     # create run object
-    run_object = Run(params, indexdb, run_item, mod=mod,
+    run_object = Run(params, indexdb, run_item, mod=recipemod,
                      priority=keylist[it], inrecipe=input_recipe)
     # deal with input recipe
     if input_recipe is None:
@@ -1239,7 +1241,7 @@ def generate_ids(params, indexdb, runtable, mod, skiptable, rlist=None,
         for it, run_item in enumerate(runlist):
             # set up the arguments
             args = [params, it, run_key, run_item, runlist, keylist,
-                    inrecipelist, indexdb, mod, skiptable, skip_storage]
+                    inrecipelist, indexdb, skiptable, skip_storage]
             # run as a single process
             run_object = generate_id(*args)
             # append to run_objects
@@ -1273,7 +1275,7 @@ def generate_ids(params, indexdb, runtable, mod, skiptable, rlist=None,
                 jt = (g_it * cores) + it
                 # get args
                 args = [params, jt, run_key, run_item, runlist, keylist,
-                        inrecipelist, indexdb, mod, skiptable, skip_storage,
+                        inrecipelist, indexdb, skiptable, skip_storage,
                         return_dict, cores]
                 # get parallel process
                 process = Process(target=generate_id, args=args)
