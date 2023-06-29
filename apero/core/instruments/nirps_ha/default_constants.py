@@ -2867,9 +2867,15 @@ POST_HDREXT_COMMENT_KEY.value = 'KW_IDENTIFIER'
 REPROCESS_REINDEX_BLOCKS = REPROCESS_REINDEX_BLOCKS.copy(__NAME__)
 REPROCESS_REINDEX_BLOCKS.value = 'raw,tmp,red,out'
 
-# Define whether to use multiprocess Pool or Process
+# Define whether to use multiprocess "pool" or "process" or use "linear"
+#     mode when parallelising recipes
 REPROCESS_MP_TYPE = REPROCESS_MP_TYPE.copy(__NAME__)
 REPROCESS_MP_TYPE.value = 'process'
+
+# Define whether to use multiprocess "pool" or "process" or use "linear"
+#     mode when validating recipes
+REPROCESS_MP_TYPE_VAL = REPROCESS_MP_TYPE_VAL.copy(__NAME__)
+REPROCESS_MP_TYPE_VAL.value = 'process'
 
 # Key for use in run files
 REPROCESS_RUN_KEY = REPROCESS_RUN_KEY.copy(__NAME__)

@@ -368,8 +368,8 @@ __all__ = [
     'REPROCESS_REJECT_SQL', 'REPROCESS_OBJ_SCI_SQL',
     'SUMMARY_LATEX_PDF', 'EXPMETER_MIN_LAMBDA', 'EXPMETER_MAX_LAMBDA',
     'EXPMETER_TELLU_THRES', 'REPROCESS_PINAMECOL', 'DRIFT_DPRTYPES',
-    'DRIFT_DPR_FIBER_TYPE', 'REPROCESS_MP_TYPE', 'REPROCESS_REINDEX_BLOCKS',
-    'REPROCESS_OBJECT_TYPES'
+    'DRIFT_DPR_FIBER_TYPE', 'REPROCESS_MP_TYPE', 'REPROCESS_MP_TYPE_VAL',
+    'REPROCESS_REINDEX_BLOCKS', 'REPROCESS_OBJECT_TYPES'
 ]
 
 # set name
@@ -5367,13 +5367,25 @@ REPROCESS_REINDEX_BLOCKS = Const('REPROCESS_REINDEX_BLOCKS', value=None,
                                              'kinds that have (or could be) '
                                              'manually changed')
 
-# Define whether to use multiprocess Pool or Process
+# Define whether to use multiprocess "pool" or "process" or use "linear"
+#     mode when parallelising recipes
 REPROCESS_MP_TYPE = Const('REPROCESS_MP_TYPE', value=None, dtype=str,
                           source=__NAME__, group=cgroup,
                           user=True, active=True,
-                          options=['pool', 'process', 'pathos'],
+                          options=['linear', 'pool', 'process', 'pathos'],
                           description='Define whether to use multiprocess '
-                                      '"pool" or "process"')
+                                      '"pool" or "process" or use "linear" '
+                                      'mode when parallelising recipes')
+
+# Define whether to use multiprocess "pool" or "process" or use "linear"
+#     mode when validating recipes
+REPROCESS_MP_TYPE_VAL = Const('REPROCESS_MP_TYPE_VAL', value=None, dtype=str,
+                          source=__NAME__, group=cgroup,
+                          user=True, active=True,
+                          options=['linear', 'pool', 'process', 'pathos'],
+                          description='Define whether to use multiprocess '
+                                      '"pool" or "process" or use "linear" '
+                                      'mode when validating recipes')
 
 # Key for use in run files
 REPROCESS_RUN_KEY = Const('REPROCESS_RUN_KEY', value=None, dtype=str,
