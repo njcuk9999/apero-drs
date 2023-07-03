@@ -887,7 +887,7 @@ def process_run_list(params: ParamDict, runlist, group=None,
     cores = _get_cores(params)
     # pipe to correct module
     # do not use parallelization
-    if cores == 1:
+    if cores == 1 or params['REPROCESS_MP_TYPE'].lower() == 'linear':
         # log process: Running with 1 core
         WLOG(params, 'info', textentry('40-503-00016'))
         # run as linear process
@@ -907,12 +907,17 @@ def process_run_list(params: ParamDict, runlist, group=None,
         rdict = _multi_process_pool(params, runlist, cores=cores,
                                     groupname=group, findexdbm=findexdbm)
     # use Process to continue parallelization
-    else:
+    elif params['REPROCESS_MP_TYPE'].lower() == 'process':
         # log process: Running with N cores
         WLOG(params, 'info', textentry('40-503-00017', args=[cores]))
         # run as multiple processes
         rdict = _multi_process_process(params, runlist, cores=cores,
                                        groupname=group, findexdbm=findexdbm)
+    else:
+        # log process: Running with 1 core
+        WLOG(params, 'info', textentry('40-503-00016'))
+        # run as linear process
+        rdict = _linear_process(params, runlist, group=group)
     # end a timer
     process_end = time.time()
     # remove lock files
@@ -1261,7 +1266,7 @@ def generate_ids(params, indexdb, runtable, skiptable, rlist=None,
     WLOG(params, 'info', textentry('40-503-00015', args=[len(runlist)]))
     # -------------------------------------------------------------------------
     # deal with a single core (no multiprocessing)
-    if cores == 1:
+    if cores == 1 or params['REPROCESS_MP_TYPE_VAL'].lower() == 'linear':
         # iterate through and make run objects
         rdict = dict()
         for it, run_item in enumerate(runlist):
@@ -1278,21 +1283,34 @@ def generate_ids(params, indexdb, runtable, skiptable, rlist=None,
     # otherwise multiprocess
     # -------------------------------------------------------------------------
     # use pathos to multiprocess
-    elif params['REPROCESS_MP_TYPE'].lower() == 'pathos':
+    elif params['REPROCESS_MP_TYPE_VAL'].lower() == 'pathos':
         rdict = _multi_process_gen_ids_pathos(params, run_key, runlist, cores,
                                               keylist, inrecipelist,
                                               skiptable, skip_storage)
     # use pool to continue parallelization
-    elif params['REPROCESS_MP_TYPE'].lower() == 'pool':
+    elif params['REPROCESS_MP_TYPE_VAL'].lower() == 'pool':
         rdict = _multi_process_gen_ids_pool(params, run_key, runlist, cores,
                                             keylist, inrecipelist,
                                             skiptable, skip_storage)
     # use Process to continue parallelization
-    else:
+    elif params['REPROCESS_MP_TYPE_VAL'].lower() == 'process':
         # run as multiple processes
         rdict = _multi_process_gen_ids_process(params, run_key, runlist, cores,
                                                keylist, inrecipelist,
                                                skiptable, skip_storage)
+    else:
+        # iterate through and make run objects
+        rdict = dict()
+        for it, run_item in enumerate(runlist):
+            inrecipename = inrecipelist[it].name
+            # set up the arguments
+            args = [params, it, run_key, run_item, runlist, keylist,
+                    inrecipename, skiptable, skip_storage]
+            # run as a single process
+            results = generate_id(*args)
+            # append to run_objects
+            for key in results:
+                rdict[key] = results[key]
     # ---------------------------------------------------------------------
     # recreate the run objects list from the return dict
     #    sorted by key
