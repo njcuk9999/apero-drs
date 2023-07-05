@@ -40,6 +40,7 @@ from apero.core.core import drs_exceptions
 from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.core.core import drs_text
+from apero.core.core import drs_misc
 from apero.io import drs_fits
 from apero.io import drs_path
 
@@ -740,7 +741,6 @@ class CalibrationDatabase(DatabaseManager):
             utime = filetime.unix
         else:
             utime = None
-
         # condition for fiber
         if fiber is not None:
             sql['condition'] += ' AND FIBER = "{0}"'.format(fiber)
@@ -817,7 +817,8 @@ class CalibrationDatabase(DatabaseManager):
                        nentries: Union[str, int] = 1,
                        required: bool = True,
                        no_times: bool = False,
-                       fiber: Union[str, None] = None) -> CALIB_FILE_RTN:
+                       fiber: Union[str, None] = None,
+                       bintimes: bool = False) -> CALIB_FILE_RTN:
         """
         Handles getting a filename from calibration database (from filename,
         user input, or key in SQL database
@@ -845,6 +846,7 @@ class CalibrationDatabase(DatabaseManager):
                          files
         :param fiber: str or None, if set sets the fiber to use - if no fiber
                       required do not set
+        :param bintimes: bool, if True will bin files by midnight/midday
 
         :return:
         """
@@ -868,6 +870,13 @@ class CalibrationDatabase(DatabaseManager):
                                        header)
             # need to get filetime
             filetime = _get_time(self.params, self.name, hdict, header)
+            # bin files by midnight/midday
+            if bintimes:
+                # get the the fraction of the day to bin to (0 = midnight
+                # before observation, 0.5 = noon, and 1.0 = midnight after
+                day_frac = self.params['CALIB_DB_DAYFRAC']
+                # modify the filetime to be the binned time
+                filetime = drs_misc.bin_by_time(self.params, filetime, day_frac)
         # ---------------------------------------------------------------------
         # deal with default time mode
         if timemode is None:

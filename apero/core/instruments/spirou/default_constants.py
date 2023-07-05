@@ -116,6 +116,16 @@ DO_CALIB_DTIME_CHECK.value = True
 MAX_CALIB_DTIME = MAX_CALIB_DTIME.copy(__NAME__)
 MAX_CALIB_DTIME.value = 7.0
 
+# define whether the user wants to bin the calibration times to a specific
+#   day fraction (i.e. midnight, midday) using CALIB_DB_DAYFRAC
+CALIB_BIN_IN_TIME = CALIB_BIN_IN_TIME.copy(__NAME__)
+CALIB_BIN_IN_TIME.value = True
+
+# Define the the fraction of the day to bin to (0 = midnight  before
+#     observation, 0.5 = noon, and 1.0 = midnight after
+CALIB_DB_DAYFRAC = CALIB_DB_DAYFRAC.copy(__NAME__)
+CALIB_DB_DAYFRAC.value = 0.0
+
 # Define the threshold under which a file should not be combined
 #  (metric is compared to the median of all files 1 = perfect, 0 = noise)
 COMBINE_METRIC_THRESHOLD1 = COMBINE_METRIC_THRESHOLD1.copy(__NAME__)

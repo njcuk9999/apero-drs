@@ -98,6 +98,9 @@ def get_waveref_filename(params: ParamDict, fiber: str,
     pconst = constants.pload()
     # deal with fibers that we don't have
     usefiber = pconst.FIBER_WAVE_TYPES(fiber)
+    # get whether the user wants to bin the calibration times to a specific
+    #   day fraction (i.e. midnight, midday) using CALIB_DB_DAYFRAC
+    bintimes = params['CALIB_BIN_IN_TIME']
     # ------------------------------------------------------------------------
     # load database
     if database is None:
@@ -122,7 +125,8 @@ def get_waveref_filename(params: ParamDict, fiber: str,
         # ---------------------------------------------------------------------
         # load reference key
         fout = calibdbm.get_calib_file(key, no_times=True, nentries=1,
-                                       required=False, fiber=usefiber)
+                                       required=False, fiber=usefiber,
+                                       bintimes=bintimes)
         filename, _, _ = fout
         # stop loop if we have found our reference file
         if filename is not None:
