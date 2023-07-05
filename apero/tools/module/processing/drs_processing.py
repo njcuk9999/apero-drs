@@ -1381,7 +1381,7 @@ def _multi_process_gen_ids_pool(params, run_key, runlist, cores,
     for it, run_item in enumerate(runlist):
         inrecipename = inrecipelist[it].name
         args = [params, it, run_key, run_item, runlist, keylist,
-                inrecipename, skiptable, skip_storage, return_dict, cores]
+                inrecipename, skiptable, skip_storage, dict(), cores]
         params_per_process.append(args)
     # start parellel jobs
     with get_context('spawn').Pool(cores, maxtasksperchild=1) as pool:
@@ -1389,7 +1389,7 @@ def _multi_process_gen_ids_pool(params, run_key, runlist, cores,
     # fudge back into return dictionary
     for row in range(len(results)):
         for key in results[row]:
-            return_dict[key] = results[key]
+            return_dict[key] = results[row][key]
     # return return_dict
     return dict(return_dict)
 
