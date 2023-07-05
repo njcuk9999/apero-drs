@@ -541,6 +541,30 @@ def get_relative_folder(package: Union[None, str],
                               package, folder, required)
 
 
+def bin_by_time(params: Any, time_value: Time, day_frac: float) -> Time:
+    """
+    Bin a time by the local time of the site to a specific point in the day
+    (by day_frac where 0 = midnight before observation, 0.5 = noon, and 1.0 =
+    midnight after observation)
+
+    :param params: ParamDict, the parameter dictionary of constants, containing
+                   at least OBS_LONG, the longitude of the observatory in
+                   degrees
+    :param time_value: astropy.Time, the time to bin (in UTC)
+    :param day_frac: float, the fraction of the day to bin to (0 = midnight
+                     before observation, 0.5 = noon, and 1.0 = midnight after
+    :return:
+    """
+    # get the longitude of the site
+    longitude = params['OBS_LONG']
+    # calculate the bin_time for this site (as a fraction of a day)
+    local_bin_time = ((longitude + 360) / 360 + day_frac) % 1
+    # get the binned time for time_value
+    binned_time_value = np.round(time_value.mjd + local_bin_time).astype(int)
+    # return the binned time
+    print(Time(binned_time_value, format='mjd').iso)
+
+
 # =============================================================================
 # Start of code
 # =============================================================================

@@ -177,6 +177,9 @@ class CalibFile:
         self.mode = mode
         # get mjdmid key
         mjdmid_key = params['KW_MID_OBS_TIME'][0]
+        # get whether the user wants to bin the calibration times to a specific
+        #   day fraction (i.e. midnight, midday) using CALIB_DB_DAYFRAC
+        bintimes = params['CALIB_BIN_IN_TIME']
         # ---------------------------------------------------------------------
         # first try to get file from inputs
         fout = drs_data.get_file_from_inputs(params, 'calibration',
@@ -219,7 +222,8 @@ class CalibFile:
             # load filename from database
             fout = database.get_calib_file(key, header=inheader, timemode=mode,
                                            nentries=n_entries,
-                                           required=required, fiber=fiber)
+                                           required=required, fiber=fiber,
+                                           bintimes=bintimes)
             # deal with outputs of get calib file
             self.filename, self.mjdmid, self.reference = fout
             self.source = 'calibDB'

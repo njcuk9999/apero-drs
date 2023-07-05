@@ -61,7 +61,7 @@ __all__ = [
     'OBJ_LIST_GAIA_EPOCH', 'OBJ_LIST_GAIA_PLX_LIM', 'OBJ_LIST_GAIA_MAG_CUT',
     'OBJ_LIST_CROSS_MATCH_RADIUS', 'REJECT_LIST_GOOGLE_SHEET_URL',
     'REJECT_LIST_GSHEET_MAIN_LIST_ID', 'GROUP_FILE_LIMIT', 'MAX_CALIB_DTIME',
-    'DO_CALIB_DTIME_CHECK',
+    'DO_CALIB_DTIME_CHECK', 'CALIB_BIN_IN_TIME', 'CALIB_DB_DAYFRAC',
     # qc constants
     'QC_DARK_TIME', 'QC_MAX_DEAD', 'DARK_QMIN', 'DARK_QMAX',
     'QC_MAX_DARK', 'QC_LOC_MAXFIT_REMOVED_CTR',
@@ -532,13 +532,6 @@ GROUP_FILE_LIMIT = Const('GROUP_FILE_LIMIT', value=None, dtype=int,
                          description='Define the maximum number of files that '
                                      'can be used in a group')
 
-# Define whether we check the calibration and observation separation
-DO_CALIB_DTIME_CHECK = Const('DO_CALIB_DTIME_CHECK', value=None, dtype=bool,
-                             source=__NAME__, group=cgroup,
-                             description='Define whether we check the '
-                                         'calibration and observation '
-                                         'separation')
-
 # Define the maximum time (in days) that a calibration can be separated from
 #   an observation in order to use it
 MAX_CALIB_DTIME = Const('MAX_CALIB_DTIME', value=None, dtype=float,
@@ -546,6 +539,31 @@ MAX_CALIB_DTIME = Const('MAX_CALIB_DTIME', value=None, dtype=float,
                         description='Define the maximum time (in days) that a '
                                     'calibration can be separated from an '
                                     'observation in order to use it')
+
+# Define whether we check the calibration and observation separation
+DO_CALIB_DTIME_CHECK = Const('DO_CALIB_DTIME_CHECK', value=None, dtype=bool,
+                             source=__NAME__, group=cgroup,
+                             description='Define whether we check the '
+                                         'calibration and observation '
+                                         'separation')
+
+# define whether the user wants to bin the calibration times to a specific
+#   day fraction (i.e. midnight, midday) using CALIB_DB_DAYFRAC
+CALIB_BIN_IN_TIME = Const('CALIB_BIN_IN_TIME', value=None, dtype=str,
+                          source=__NAME__, group=cgroup,
+                          description=('# define whether the user wants to '
+                                       'bin the calibration times to a '
+                                       'specific day fraction (i.e. midnight,'
+                                       ' midday) using CALIB_DB_DAYFRAC'))
+
+# Define the the fraction of the day to bin to (0 = midnight  before
+#     observation, 0.5 = noon, and 1.0 = midnight after
+CALIB_DB_DAYFRAC = Const('CALIB_DB_DAYFRAC', value=None, dtype=float,
+                         source=__NAME__, group=cgroup, minimum=0.0,
+                         maximum=1.0,
+                         description=('Define the the fraction of the day to '
+                                      '(0 = midnight  before observation, '
+                                      ' 0.5 = noon, and 1.0 = midnight after'))
 
 # Define the threshold under which a file should not be combined
 #  (metric is compared to the median of all files 1 = perfect, 0 = noise)
