@@ -558,11 +558,13 @@ def bin_by_time(params: Any, time_value: Time, day_frac: float) -> Time:
     # get the longitude of the site
     longitude = params['OBS_LONG']
     # calculate the bin_time for this site (as a fraction of a day)
-    local_bin_time = ((longitude + 360) / 360 - day_frac) % 1
+    local_bin_time = ((-longitude + 360) / 360 + day_frac) % 1
     # get the binned time for time_value
-    binned_time_value = np.round(time_value.mjd + local_bin_time).astype(int)
+    binned_time_value = np.round(time_value.mjd - local_bin_time).astype(int)
+    # need local binned time
+    local_binned_time_value = binned_time_value + local_bin_time
     # return the binned time
-    return Time(binned_time_value, format='mjd')
+    return Time(local_binned_time_value, format='mjd')
 
 
 # =============================================================================
