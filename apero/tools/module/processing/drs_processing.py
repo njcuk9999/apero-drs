@@ -1913,7 +1913,7 @@ def conditional_list(strlist: List[str], key: str, logic: str,
 
 
 def gen_global_condition(params: ParamDict, indexdb: FileIndexDatabase,
-                         reject_list: List[str]) -> str:
+                         reject_list: List[str], log: bool = True) -> str:
     """
     Generate the global conditions (based on run.ini) that will affect the
     sql conditions on all recipes i.e.:
@@ -1936,7 +1936,8 @@ def gen_global_condition(params: ParamDict, indexdb: FileIndexDatabase,
     # ------------------------------------------------------------------
     if not params['USE_ENGINEERING']:
         # log that we are checking engineering nights
-        WLOG(params, '', textentry('40-503-00035'))
+        if log:
+            WLOG(params, '', textentry('40-503-00035'))
         # get sub condition for engineering nights
         subcondition = _remove_engineering(params, indexdb, condition)
         # add to conditions
@@ -1963,8 +1964,9 @@ def gen_global_condition(params: ParamDict, indexdb: FileIndexDatabase,
         condition = conditional_list(exclude_obs_dirs, 'OBS_DIR', 'exclude',
                                      condition)
         # log blacklist
-        wargs = [' ,'.join(exclude_obs_dirs)]
-        WLOG(params, '', textentry('40-503-00026', args=wargs))
+        if log:
+            wargs = [' ,'.join(exclude_obs_dirs)]
+            WLOG(params, '', textentry('40-503-00026', args=wargs))
         # get length of database at this point
         idb_len = indexdb.database.count(condition=condition)
         # deal with empty database (after conditions)
@@ -1986,8 +1988,9 @@ def gen_global_condition(params: ParamDict, indexdb: FileIndexDatabase,
         condition = conditional_list(include_obs_dirs, 'OBS_DIR', 'include',
                                      condition)
         # log whitelist
-        wargs = [', '.join(include_obs_dirs)]
-        WLOG(params, '', textentry('40-503-00027', args=wargs))
+        if log:
+            wargs = [', '.join(include_obs_dirs)]
+            WLOG(params, '', textentry('40-503-00027', args=wargs))
         # get length of database at this point
         idb_len = indexdb.database.count(condition=condition)
         # deal with empty database (after conditions)
@@ -2009,8 +2012,9 @@ def gen_global_condition(params: ParamDict, indexdb: FileIndexDatabase,
         condition = conditional_list(pi_names, 'KW_PI_NAME', 'include',
                                      condition)
         # log pi name
-        wargs = [' ,'.join(pi_names)]
-        WLOG(params, '', textentry('40-503-00029', args=wargs))
+        if log:
+            wargs = [' ,'.join(pi_names)]
+            WLOG(params, '', textentry('40-503-00029', args=wargs))
         # get length of database at this point
         idb_len = indexdb.database.count(condition=condition)
         # deal with empty database (after conditions)
@@ -2032,7 +2036,8 @@ def gen_global_condition(params: ParamDict, indexdb: FileIndexDatabase,
 
         if not drs_text.null_text(reject_criteria, ['None', '', 'Null']):
             # log progress
-            WLOG(params, '', textentry('40-503-00036'))
+            if log:
+                WLOG(params, '', textentry('40-503-00036'))
             # store sub-conditions
             subs = []
             # add to global conditions
