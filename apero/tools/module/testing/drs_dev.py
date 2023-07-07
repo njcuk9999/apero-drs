@@ -78,7 +78,7 @@ class RecipeDefinition:
         mod = constants.import_module(func_name, modules[0], full=True)
         # add to recipes
         self.recipes = mod.get().recipes
-        self.mod = mod.get()
+        self.recipemod = mod.get()
 
     def add(self, *args):
         """
