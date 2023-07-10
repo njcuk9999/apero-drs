@@ -106,7 +106,7 @@ out_recipe = drs_recipe(__INSTRUMENT__)
 # -----------------------------------------------------------------------------
 # apero_astrometrics.py
 # -----------------------------------------------------------------------------
-astrometric.name = 'apero_astrometric.py'
+astrometric.name = 'apero_astrometrics.py'
 astrometric.shortname = 'ASTROM'
 astrometric.instrument = __INSTRUMENT__
 astrometric.description = textentry('ASTROMETRIC_DESCRIPTION')
