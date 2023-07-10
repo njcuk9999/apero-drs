@@ -1161,7 +1161,7 @@ def generate_run_table(params, recipe, *args, **kwargs):
 # Define "from id" functions
 # =============================================================================
 def generate_id(params, it, run_key, run_item, runlist, keylist, input_recipe,
-                indexdb, skiptable, skip_storage, cores=1) -> Dict[int, Any]:
+                indexdb, recipemod, skiptable, skip_storage, cores=1) -> Dict[int, Any]:
     # get runid
     runid = '{0}{1:05d}'.format(run_key, keylist[it])
     # deal with no return dict
@@ -1174,8 +1174,6 @@ def generate_id(params, it, run_key, run_item, runlist, keylist, input_recipe,
         WLOG(params, '', textentry('40-503-00004', args=wargs))
         WLOG(params, '', params['DRS_HEADER'])
         WLOG(params, '', textentry('40-503-00013', args=[run_item]))
-    # get recipe definitions module (for this instrument)
-    recipemod = _get_recipe_module(params, logmsg=False)
     # create run object
     run_object = Run(params, indexdb, run_item, mod=recipemod,
                      priority=keylist[it], inrecipe=input_recipe)
@@ -1253,6 +1251,8 @@ def generate_ids(params, indexdb, runtable, skiptable, rlist=None,
     runlist = list(commands[sortmask])
     keylist = list(numbers[sortmask])
     inrecipelist = list(inrecipes[sortmask])
+    # get recipe definitions module (for this instrument)
+    recipemod = _get_recipe_module(params, logmsg=False)
     # store skip previous runstrings (so it is not recalculated every time)
     skip_storage = dict()
     # -------------------------------------------------------------------------
@@ -1266,7 +1266,7 @@ def generate_ids(params, indexdb, runtable, skiptable, rlist=None,
         for it, run_item in enumerate(runlist):
             # set up the arguments
             args = [params, it, run_key, run_item, runlist, keylist,
-                    inrecipelist[it], indexdb, skiptable, skip_storage]
+                    inrecipelist[it], indexdb, recipemod, skiptable, skip_storage]
             # run as a single process
             results = generate_id(*args)
             # append to run_objects
