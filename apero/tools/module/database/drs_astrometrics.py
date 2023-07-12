@@ -1011,17 +1011,32 @@ def ask_for_name(params: ParamDict, astro_obj: AstroObj) -> AstroObj:
     cond = drs_installation.ask(question1, dtype='YN', color='m')
     # if user want to modify name let them
     if cond:
-        # ask for new name
-        question2 = f'Enter new main name for "{name}"'
-        rawuname = drs_installation.ask(question2, dtype=str)
-
-        # must add the old name to the aliases
-        astro_obj.aliases += f'|{astro_obj.objname}'
-        # update the name and objname
-        astro_obj.name = pconst.DRS_OBJ_NAME(rawuname)
-        astro_obj.objname = astro_obj.name
-        # log change of name
-        WLOG(params, '', f'\t Object name set to: {astro_obj.name}')
+        # set rawuname to be empty at first
+        rawuname = ''
+        # loop until user gives a name or types "X"
+        while len(rawuname) < 3:
+            # ask for new name
+            question2 = (f'Enter new main name for "{name}" '
+                         f'[Type X to use "{name}" and skip renaming]')
+            rawuname = drs_installation.ask(question2, dtype=str)
+            # deal with skipping
+            if rawuname.upper() == 'X':
+                return astro_obj
+            # try to clean name
+            rawuname = pconst.DRS_OBJ_NAME(rawuname)
+            # deal with names that are too short
+            if len(rawuname) < 3:
+                wmsg = ('Name must be at least 3 characters long. '
+                        'Please try again')
+                WLOG(params, 'warning', wmsg)
+                continue
+            # must add the old name to the aliases
+            astro_obj.aliases += f'|{astro_obj.objname}'
+            # update the name and objname
+            astro_obj.name = rawuname
+            astro_obj.objname = astro_obj.name
+            # log change of name
+            WLOG(params, '', f'\t Object name set to: {astro_obj.name}')
     # return the original or update astro_obj
     return astro_obj
 
