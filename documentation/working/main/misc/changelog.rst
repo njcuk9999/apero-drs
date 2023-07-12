@@ -4,6 +4,13 @@ Changelog
 
 0.7.286 (2023-07-12)
 --------------------
+- Merge remote-tracking branch 'origin/v0.7.286-live' into
+  v0.7.286-live. [Neil Cook]
+- Merge branch 'v0.7.285-live' into v0.7.286-live. [Neil Cook]
+- `Drs_astrometrics.py` - make sure the user can't enter a blank name to
+  replace the current name (and that name must be 3 characters long at
+  least). [Neil Cook]
+- [APERO] update date/version/changelog/notes. [Neil Cook]
 - Merge branch 'v0.7.285-live' into v0.7.286-live. [Neil Cook]
 - `Drs_processing.py` - add change to return of `_linear_generate_id`. [Neil
   Cook]

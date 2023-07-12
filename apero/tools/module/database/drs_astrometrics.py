@@ -1152,7 +1152,8 @@ def add_obj_to_sheet(params: ParamDict, astro_objs: List[AstroObj]):
         margs = [astro_obj.objname]
         WLOG(params, '', msg.format(*margs))
         # add to dataframe
-        dataframe = dataframe.append(astro_obj.to_dataframe())
+        dataframe = pd.concat([dataframe, astro_obj.to_dataframe()],
+                              ignore_index=True)
     # -------------------------------------------------------------------------
     # deal with test run
     if 'TEST' in params['INPUTS']:
@@ -1167,7 +1168,7 @@ def add_obj_to_sheet(params: ParamDict, astro_objs: List[AstroObj]):
         # fill empty
         empty_dataframe[col] = [''] * 10
     # append empty rows to dataframe
-    dataframe = dataframe.append(empty_dataframe)
+    dataframe = pd.concat([dataframe, empty_dataframe], ignore_index=True)
     # -------------------------------------------------------------------------
     # print progress
     msg = 'Pushing all objects to google-sheet'
