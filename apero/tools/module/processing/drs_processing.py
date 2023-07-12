@@ -1179,7 +1179,8 @@ def _linear_generate_id(params: ParamDict, it: int, run_key: str,
                         run_item: str, runlist: List[str], keylist: List[int],
                         input_recipe, indexdb: FileIndexDatabase,
                         recipemod: Any, skiptable: Table,
-                        skip_storage: dict, cores: int = 1) -> Dict[int, Any]:
+                        skip_storage: dict, cores: int = 1
+                        ) -> Dict[int, Run]:
     """
     Linear run of a single validation step
 
