@@ -2,6 +2,63 @@ Changelog
 =========
 
 
+0.7.286 (2023-07-12)
+--------------------
+- Merge branch 'v0.7.285-live' into v0.7.286-live. [Neil Cook]
+- Drs_processing.py - add change to return of _linear_generate_id. [Neil
+  Cook]
+- Merge branch 'v0.7.285-live' into v0.7.286-live. [Neil Cook]
+- [APERO] recode parallelisation of validation step. [Neil Cook]
+- [APERO] push back recipemod. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.285-live' into
+  v0.7.285-live. [Neil Cook]
+- Apero.tools.module.testing.drs_dev.py - update
+  self.mod-->self.recipemod. [Neil Cook]
+- Move around drs_precheck.py functions + fix typo in apero_astrometrics
+  (apero_astrometric-->apero_astrometrics) [Neil Cook]
+- Move around drs_precheck.py functions + fix typo in apero_astrometrics
+  (apero_astrometric-->apero_astrometrics) [Neil Cook]
+- [APERO] upgrade validation multiprocessing [UNFINISHED, UNTESTED]
+  [Neil Cook]
+- [APERO] fix getting binned time. [Neil Cook]
+- [APERO] update getting calibrations - now bin time to local midnight
+  (all observations from the same day will use a calibration closest to
+  the same point - local midnight) [UNFINISHED] [Neil Cook]
+- [APERO] update getting calibrations - now bin time to local midnight
+  (all observations from the same day will use a calibration closest to
+  the same point - local midnight) [UNFINISHED] [Neil Cook]
+
+
+0.7.285 (2023-07-05)
+--------------------
+- [APERO] update pool (to fix error) [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.285-live' into
+  v0.7.285-live. [Neil Cook]
+
+  # Conflicts:
+  #	apero/core/instruments/default/default_constants.py
+  #	apero/tools/module/processing/drs_processing.py
+- [APERO] add REPROCESS_MP_TYPE_VAL (multiprocess valid recipes) and
+  allow linear/process/pool (now difference from multiprocess run
+  recipes with  REPROCESS_MP_TYPE) [Neil Cook]
+- [APERO] attempt to fix pickling issues (mac only problem) [Neil Cook]
+- [APERO] drs_processing.py - try a fix for pickling on Mac (define
+  recipemod inside parallel function = generate_id) [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.285-live' into
+  v0.7.285-live. [Neil Cook]
+- [APERO] fix pp QCC key order. [Neil Cook]
+- [APERO] drs_processing.py - try a fix for pickling on Mac (define
+  recipemod inside parallel function = generate_id) [Neil Cook]
+- [APERO] attempt to fix pickling issues (mac only problem) [Neil Cook]
+- [APERO] drs_processing.py - try a fix for pickling on Mac (define
+  recipemod inside parallel function = generate_id) [Neil Cook]
+- [APERO] fix pp QCC key order. [Neil Cook]
+- [APERO] drs_processing.py - try a fix for pickling on Mac (define
+  recipemod inside parallel function = generate_id) Issue #702. [Neil
+  Cook]
+- [APERO] update date/version/changelog. [Neil Cook]
+
+
 0.7.284 (2023-06-14)
 --------------------
 - [APERO] update binary flags. [Neil Cook]
