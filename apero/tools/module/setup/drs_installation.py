@@ -1310,6 +1310,8 @@ def create_ufiles(params: ParamDict, devmode: bool,
     # ------------------------------------------------------------------
     # dev groups
     dev_groups = dict()
+    # flag for all groups
+    all_groups = False
     # ------------------------------------------------------------------
     # loop around all parameters and find which need to be added
     #  to config file and const file
@@ -1348,10 +1350,22 @@ def create_ufiles(params: ParamDict, devmode: bool,
         # ------------------------------------------------------------------
         # deal with asking the user for groups in devmode
         if devmode and user is False:
+            # -----------------------------------------------------------------
+            # ask user to add all groups
+            if ask_user:
+                cprint(printheader(), 'g')
+                msg = 'Do you want to add all groups to the config file?'
+                umessage = msg
+                all_groups = ask(umessage, dtype='YN')
+            else:
+                all_groups = True
+            # -----------------------------------------------------------------
             # deal with first time seeing this group
             if group not in dev_groups:
+                if all_groups:
+                    output = True
                 # ask user for output
-                if ask_user:
+                elif ask_user:
                     cprint(printheader(), 'g')
                     umessage = textentry('40-001-00063', args=[group, kind])
                     output = ask(umessage, dtype='YN')
