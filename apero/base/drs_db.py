@@ -1653,6 +1653,10 @@ class SQLiteDatabase(Database):
         :return:
         """
         func_name = '{0}.{1}.{2}()'.format(__NAME__, self.classname, 'backup')
+        # check that tname exists - if it doesn't don't try to backup
+        self._update_table_list_()
+        if self.tname not in self.tables:
+            return
         # construct backup path
         backup_path = str(self.path).replace('.db', 'backup.db')
         # remove old backup
@@ -2380,6 +2384,10 @@ class MySQLDatabase(Database):
 
         :return:
         """
+        # check that tname exists - if it doesn't don't try to backup
+        self._update_table_list_()
+        if self.tname not in self.tables:
+            return
         # construct backup path
         if self.backup_path is None:
             return

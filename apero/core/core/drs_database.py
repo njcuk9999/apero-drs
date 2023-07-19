@@ -496,19 +496,47 @@ class AstrometricDatabase(DatabaseManager):
         return self.database.count(condition=condition)
 
     def find_objnames(self, pconst: constants.PseudoConstants,
-                      objnames: Union[List[str], np.ndarray]) -> List[str]:
+                      objnames: Union[List[str], np.ndarray],
+                      allow_empty: bool,
+                      listname: Optional[str] = None
+                      ) -> List[str]:
         """
         Wrapper around find_objname
 
         :param pconst: psuedo constants - used to clean the object name
         :param objnames: list of str, a list of object names to clean and fimd
+        :param allow_empty: bool, if True allows not objects to be found
+                            if False will raise an error
+        :param listname: str, the name of the objnames list (for error messages)
         :return:
         """
+        func_name = display_func('find_objnames', __NAME__, self.classname)
+        # deal with objnames not being a list or a
+        if not isinstance(objnames, (list, np.ndarray)):
+            objnames = [objnames]
+        # loop around objects
         out_objnames = []
         for objname in objnames:
             out_objname, found = self.find_objname(pconst, objname)
             if found:
                 out_objnames.append(out_objname)
+        # ---------------------------------------------------------------------
+        # deal with no entries and not expecting an empty list return
+        if len(out_objnames) == 0 and not allow_empty:
+            # deal with name of object list
+            if listname is None:
+                listname = func_name
+            else:
+                listname = f'{listname} ({func_name})'
+            # log error: No objects found in astrometric database.
+            emsg = 'No objects found in astrometric database.'
+            emsg += '\n\tPlease add objects to the astrometric database.'
+            emsg += '\n\tListname="{0}"'
+            eargs = [listname]
+            # report the error
+            WLOG(self.params, 'error', emsg.format(*eargs))
+            return []
+        # ---------------------------------------------------------------------
         # return the filled out list
         return out_objnames
 
