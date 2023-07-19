@@ -1333,10 +1333,12 @@ BKGR_NO_SUBTRACTION = Const('BKGR_NO_SUBTRACTION', value=None, dtype=bool,
                                          'measurement (True or False)'))
 
 #  Kernel amplitude determined from drs_local_scatter.py
+#    If zero the scattering is skipped
 BKGR_KER_AMP = Const('BKGR_KER_AMP', value=None, dtype=float, source=__NAME__,
                      group=cgroup,
                      description=('Kernel amplitude determined from '
-                                  'drs_local_scatter.py'))
+                                  'drs_local_scatter.py, '
+                                  'If zero the scattering is skipped'))
 
 #  Background kernel width in x and y [pixels]
 BKGR_KER_WX = Const('BKGR_KER_WX', value=None, dtype=int, source=__NAME__,
