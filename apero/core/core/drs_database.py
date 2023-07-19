@@ -527,12 +527,13 @@ class AstrometricDatabase(DatabaseManager):
             if listname is None:
                 listname = func_name
             else:
-                listname = f'{listname} ({func_name})'
+                listname = f'"{listname}" ({func_name})'
             # log error: No objects found in astrometric database.
             emsg = 'No objects found in astrometric database.'
             emsg += '\n\tPlease add objects to the astrometric database.'
-            emsg += '\n\tListname="{0}"'
-            eargs = [listname]
+            emsg += '\n\tListname={0}'
+            emsg += '\n\tObjnames: "{1}"'
+            eargs = [listname, ', '.join(objnames)]
             # report the error
             WLOG(self.params, 'error', emsg.format(*eargs))
             return []

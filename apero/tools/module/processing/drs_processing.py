@@ -3580,6 +3580,15 @@ def _get_filters(params: ParamDict, srecipe: DrsRecipe,
                     clist = objdbm.find_objnames(pconst, tellu_include_list,
                                                  allow_empty=False,
                                                  listname='TELLURIC_TARGETS')
+                    # deal with different length than when we started
+                    if len(clist) != len(tellu_include_list):
+                        emsg = ('Could not find all objects in '
+                                '{0} in astrometric database. '
+                                'Please check {0}, add missing objects to '
+                                'astrometric database or remove from {0} '
+                                'and try again. \n\t objnames={1}')
+                        eargs = ['TELLURIC_TARGETS', tellu_include_list]
+                        WLOG(params, 'error', emsg.format(*eargs))
                     # add cleaned obj list to filters
                     filters[key] = list(clist)
                 else:
@@ -3595,6 +3604,15 @@ def _get_filters(params: ParamDict, srecipe: DrsRecipe,
                     clist = objdbm.find_objnames(pconst, objlist,
                                                  allow_empty=False,
                                                  listname='SCIENCE_TARGETS')
+                    # deal with different length than when we started
+                    if len(clist) != len(objlist):
+                        emsg = ('Could not find all objects in '
+                                '{0} in astrometric database. '
+                                'Please check {0}, add missing objects to '
+                                'astrometric database or remove from {0} '
+                                'and try again. \n\t objnames={1}')
+                        eargs = ['SCIENCE_TARGETS', objlist]
+                        WLOG(params, 'error', emsg.format(*eargs))
                     # add cleaned obj list to filters
                     filters[key] = list(clist)
                     # update science targets
