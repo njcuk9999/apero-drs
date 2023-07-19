@@ -3587,10 +3587,11 @@ def _get_filters(params: ParamDict, srecipe: DrsRecipe,
                                 'Please check {0}, add missing objects to '
                                 'astrometric database or remove from {0} '
                                 'and try again. \n\t objnames={1}')
-                        eargs = ['TELLURIC_TARGETS', tellu_include_list]
+                        eargs = ['TELLURIC_TARGETS',
+                                 ','.join(tellu_include_list)]
                         WLOG(params, 'error', emsg.format(*eargs))
                     # add cleaned obj list to filters
-                    filters[key] = list(clist)
+                    filters[key] = list(np.unique(clist))
                 else:
                     continue
             # else assume we have a special list that is a string list
@@ -3611,19 +3612,19 @@ def _get_filters(params: ParamDict, srecipe: DrsRecipe,
                                 'Please check {0}, add missing objects to '
                                 'astrometric database or remove from {0} '
                                 'and try again. \n\t objnames={1}')
-                        eargs = ['SCIENCE_TARGETS', objlist]
+                        eargs = ['SCIENCE_TARGETS', ', '.join(objlist)]
                         WLOG(params, 'error', emsg.format(*eargs))
                     # add cleaned obj list to filters
-                    filters[key] = list(clist)
+                    filters[key] = list(np.unique(clist))
                     # update science targets
-                    params.set('SCIENCE_TARGETS', value=', '.join(clist))
+                    params.set('SCIENCE_TARGETS', value=','.join(clist))
                 else:
                     # note we need to update this list to match
                     # the cleaning that is done in preprocessing
                     clist = objdbm.find_objnames(pconst, objlist,
                                                  allow_empty=True)
                     # add cleaned obj list to filters
-                    filters[key] = list(clist)
+                    filters[key] = list(np.unique(clist))
             else:
                 continue
         # else assume we have a straight string to look for (if it is a valid
