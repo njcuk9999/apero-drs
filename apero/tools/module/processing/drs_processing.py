@@ -3577,7 +3577,9 @@ def _get_filters(params: ParamDict, srecipe: DrsRecipe,
                     tellu_include_list = telluric.get_tellu_include_list(params)
                     # note we need to update this list to match
                     # the cleaning that is done in preprocessing
-                    clist = objdbm.find_objnames(pconst, tellu_include_list)
+                    clist = objdbm.find_objnames(pconst, tellu_include_list,
+                                                 allow_empty=False,
+                                                 listname='TELLURIC_TARGETS')
                     # add cleaned obj list to filters
                     filters[key] = list(clist)
                 else:
@@ -3586,14 +3588,24 @@ def _get_filters(params: ParamDict, srecipe: DrsRecipe,
             #   (i.e. SCIENCE_TARGETS = "target1, target2, target3"
             elif isinstance(user_filter, str):
                 objlist = _split_string_list(user_filter, allow_whitespace=True)
-                # note we need to update this list to match
-                # the cleaning that is done in preprocessing
-                clist = objdbm.find_objnames(pconst, objlist)
-                # add cleaned obj list to filters
-                filters[key] = list(clist)
+
                 if value == 'SCIENCE_TARGETS':
+                    # note we need to update this list to match
+                    # the cleaning that is done in preprocessing
+                    clist = objdbm.find_objnames(pconst, objlist,
+                                                 allow_empty=False,
+                                                 listname='SCIENCE_TARGETS')
+                    # add cleaned obj list to filters
+                    filters[key] = list(clist)
                     # update science targets
                     params.set('SCIENCE_TARGETS', value=', '.join(clist))
+                else:
+                    # note we need to update this list to match
+                    # the cleaning that is done in preprocessing
+                    clist = objdbm.find_objnames(pconst, objlist,
+                                                 allow_empty=True)
+                    # add cleaned obj list to filters
+                    filters[key] = list(clist)
             else:
                 continue
         # else assume we have a straight string to look for (if it is a valid
@@ -3657,6 +3669,11 @@ def _get_filters(params: ParamDict, srecipe: DrsRecipe,
                 elif params.instances[_filter].group not in ['raw', 'ppraw']:
                     # delete if not raw
                     del filters[_filter]
+    # -------------------------------------------------------------------------
+    # remove filters that are empty
+    for _filter in filters:
+        if len(filters[_filter]) == 0:
+            del filters[_filter]
     # -------------------------------------------------------------------------
     # return filters
     return filters
