@@ -608,7 +608,7 @@ BADPIX_DILATE_SIZE.value = 9
 # =============================================================================
 #    Width of the box to produce the background mask
 BKGR_BOXSIZE = BKGR_BOXSIZE.copy(__NAME__)
-BKGR_BOXSIZE.value = 32
+BKGR_BOXSIZE.value = 256
 
 #    Do background percentile to compute minimum value (%)
 BKGR_PERCENTAGE = BKGR_PERCENTAGE.copy(__NAME__)
@@ -628,8 +628,9 @@ BKGR_NO_SUBTRACTION = BKGR_NO_SUBTRACTION.copy(__NAME__)
 BKGR_NO_SUBTRACTION.value = False
 
 #    Kernel amplitude determined from drs_local_scatter.py
+#    If zero the scattering is skipped
 BKGR_KER_AMP = BKGR_KER_AMP.copy(__NAME__)
-BKGR_KER_AMP.value = 1e9
+BKGR_KER_AMP.value = 0
 
 #    Background kernel width in in x and y [pixels]
 BKGR_KER_WX = BKGR_KER_WX.copy(__NAME__)

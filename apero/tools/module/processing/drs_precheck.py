@@ -89,7 +89,7 @@ def calib_check(params: ParamDict, recipe: DrsRecipe, tstars: List[str],
         WLOG(params, 'info', params['DRS_HEADER'])
     # get calibration files grouped by recipe
     cout = get_raw_seq_files(params, recipemodule, tstars, ostars,
-                             sequence='calib_seq')
+                             sequence='calib_seq', log=log)
     calib_files, calib_recipes, calib_args = cout
     # loop around each night and check for all calibration files
     for uobsdir in uobsdirs:
@@ -487,7 +487,7 @@ RawSeqReturn = Tuple[Dict[str, Dict[str, List[DrsFitsFile]]],
 
 def get_raw_seq_files(params: ParamDict, recipemod,
                       tstars: List[str], ostars: List[str],
-                      sequence: str) -> RawSeqReturn:
+                      sequence: str, log: bool = True) -> RawSeqReturn:
     """
     Get a dictionary of recipes where each entry is a dictionary of arguments
     where each entry is a list of possible raw files
@@ -505,7 +505,8 @@ def get_raw_seq_files(params: ParamDict, recipemod,
     :return: dictionary
     """
     # print progress: Getting file types for sequence={0}
-    WLOG(params, '', textentry('40-503-00056', args=[sequence]))
+    if log:
+        WLOG(params, '', textentry('40-503-00056', args=[sequence]))
     # -------------------------------------------------------------------------
     # get template list (if required)
     # -------------------------------------------------------------------------
@@ -523,7 +524,7 @@ def get_raw_seq_files(params: ParamDict, recipemod,
         return dict(), dict(), dict()
     # generate sequence
     seq.process_adds(params, tstars=list(tstars), ostars=list(ostars),
-                     template_stars=template_object_list)
+                     template_stars=template_object_list, logmsg=log)
     # storage of calib files
     seq_files = dict()
     seq_instances = dict()

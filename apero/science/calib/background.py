@@ -274,12 +274,16 @@ def correction(recipe: DrsRecipe, params: ParamDict, infile: DrsFitsFile,
             return np.array(image)
     else:
         # ------------------------------------------------------------------
-        # measure local background
-        scattered_light = correct_local_background(params, image)
-        # we extract a median order profile for the center of the image
-        local_background_correction = scattered_light / amp_ker
-        # correct the image for local background
-        image1 = image - local_background_correction
+        if amp_ker > 0:
+            # measure local background
+            scattered_light = correct_local_background(params, image)
+            # we extract a median order profile for the center of the image
+            local_background_correction = scattered_light / amp_ker
+            # correct the image for local background
+            image1 = image - local_background_correction
+        else:
+            image1 = np.array(image)
+            local_background_correction = np.zeros_like(image)
         # ------------------------------------------------------------------
         # log process
         WLOG(params, '', textentry('40-012-00009', args=[bkgrdfile]))
