@@ -721,8 +721,10 @@ class PandasLikeDatabase:
             command += " WHERE {} ".format(condition)
         # run command
         df = self.execute(command)
+        # get count
+        count = df['COUNT(*)'].values[0]
         # return result
-        return int(df.iloc[0])
+        return int(count)
 
     def get_index_entries(self, columns: str,
                           condition: Optional[str] = None):
