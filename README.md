@@ -26,13 +26,13 @@ Using the Github Action [Repo Visualizer](https://github.com/githubocto/repo-vis
 ##  1 Latest version
 [Back to top](#apero---a-pipeline-to-reduce-observations)
 
-- main (long term stable) V0.7.275 (2023-06-15)
+- main (long term stable) V0.7.286 (2023-07-12)
     ```
     This is the version currently recommended for all general use. It may not
     contain the most up-to-date features until long term support and stability can
     be verified.
     ```
-- developer (tested) V0.7.284 (2023-06-15)
+- developer (tested) V0.7.286 (2023-07-12)
     ```
     Note the developer version should have been tested and semi-stable but not
     ready for full sets of processing and defintely not for release for
@@ -44,7 +44,7 @@ Using the Github Action [Repo Visualizer](https://github.com/githubocto/repo-vis
     Notrmally up-to-date with the live version has been or is currently
     being tested for stability
     ```
-- live (untested) V0.8.??? (2022-01-30)
+- live (untested) V0.8.??? (2022-01-30) V0.7.287 (2022-07-20)
     ```
     Note the live version will be the most up-to-date version but has not been
     tested for stability - use at own risk.
