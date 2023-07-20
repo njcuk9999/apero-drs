@@ -628,6 +628,7 @@ BKGR_NO_SUBTRACTION = BKGR_NO_SUBTRACTION.copy(__NAME__)
 BKGR_NO_SUBTRACTION.value = False
 
 #    background kernel amplitude
+#    If zero the scattering is skipped
 BKGR_KER_AMP = BKGR_KER_AMP.copy(__NAME__)
 BKGR_KER_AMP.value = 47
 
