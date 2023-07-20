@@ -283,6 +283,7 @@ def correction(recipe: DrsRecipe, params: ParamDict, infile: DrsFitsFile,
             image1 = image - local_background_correction
         else:
             image1 = np.array(image)
+            local_background_correction = np.zeros_like(image)
         # ------------------------------------------------------------------
         # log process
         WLOG(params, '', textentry('40-012-00009', args=[bkgrdfile]))
