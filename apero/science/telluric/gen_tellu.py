@@ -81,7 +81,8 @@ def id_hot_star(params: ParamDict, objname: str) -> bool:
 def get_tellu_include_list(params: ParamDict,
                            assets_dir: Union[str, None] = None,
                            tellu_dir: Union[str, None] = None,
-                           tellu_include_file: Union[str, None] = None
+                           tellu_include_file: Union[str, None] = None,
+                           all_objects: Optional[List[str]] = None
                            ) -> List[str]:
     func_name = __NAME__ + '.get_whitelist()'
     # get pseudo constants
@@ -103,6 +104,11 @@ def get_tellu_include_list(params: ParamDict,
                                         dtype=str)
     # must clean names
     whitelist = objdbm.find_objnames(pconst, whitelist, allow_empty=True)
+
+    # deal with all objects filter
+    if all_objects is not None:
+        mask = np.in1d(whitelist, all_objects)
+        whitelist = list(np.array(whitelist)[mask])
     # return the whitelist
     return whitelist
 

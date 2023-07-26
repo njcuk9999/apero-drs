@@ -10,7 +10,7 @@ Created on 2020-07-2020-07-15 17:58
 import os
 import warnings
 from collections import OrderedDict
-from typing import Dict, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 from astropy import constants as cc
@@ -916,8 +916,8 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
 
 
 def list_current_templates(params: ParamDict,
-                           telludb: Union[TelluricDatabase, None] = None
-                           ) -> np.array:
+                           telludb: Union[TelluricDatabase, None] = None,
+                           all_objects: Union[List[str]] = None) -> np.array:
     """
     Get a list of current templates from the telluric database
 
@@ -934,8 +934,14 @@ def list_current_templates(params: ParamDict,
     telludb.load_db()
     # get a list of all templates
     objnames = telludb.get_tellu_entry('OBJECT', key='TELLU_TEMP')
+    # get unique objects
+    uobjnames = set(objnames)
+    # deal with all objects filter
+    if all_objects is not None:
+        mask = np.in1d(uobjnames, all_objects)
+        uobjnames = list(np.array(uobjnames)[mask])
     # return the unique set of object names
-    return np.unique(objnames)
+    return uobjnames
 
 
 def calculate_berv_coverage(params: ParamDict, recipe: DrsRecipe,

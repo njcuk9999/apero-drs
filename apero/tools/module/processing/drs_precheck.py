@@ -395,17 +395,19 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
     # -------------------------------------------------------------------------
     # get the conditions based on params
     # -------------------------------------------------------------------------
-    condition = drs_processing.gen_global_condition(params, findexdbm,
+    condition, _ = drs_processing.gen_global_condition(params, findexdbm,
                                                     odo_reject_list)
     # get unique observations directories
     uobsdirs = findexdbm.get_unique('OBS_DIR', condition=condition)
     # -------------------------------------------------------------------------
     # get telluric stars and non-telluric stars
     # -------------------------------------------------------------------------
+    # get a list of all objects from the file index database
+    all_objects = drs_processing.get_uobjs_from_findex(params, findexdbm)
     # get all telluric stars
-    tstars = telluric.get_tellu_include_list(params)
+    tstars = telluric.get_tellu_include_list(params, all_objects=all_objects)
     # get all other stars
-    ostars = drs_processing.get_non_telluric_stars(params, findexdbm, tstars)
+    ostars = drs_processing.get_non_telluric_stars(params, all_objects, tstars)
     # -------------------------------------------------------------------------
     # get a list of telluric files and science files
     # -------------------------------------------------------------------------
