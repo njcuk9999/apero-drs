@@ -867,6 +867,46 @@ def generate_run_list(params: ParamDict, findexdbm: FileIndexDatabase,
     # need to update table object names to match preprocessing
     #   table can be None if coming from e.g fit_tellu_db
 
+    # -------------------------------------------------------------------------
+    # get odometer reject list (if required)
+    # -------------------------------------------------------------------------
+    # get whether the user wants to use reject list
+    _use_reject = params['USE_REJECTLIST']
+    # get the odometer reject list
+    reject_list = []
+    if not drs_text.null_text(_use_reject, ['', 'None']):
+        if drs_text.true_text(_use_reject):
+            reject_list = prep.get_file_reject_list(params)
+    # define the reference conditions (that affect all recipes)
+    ref_condition, req_obs_dirs = gen_global_condition(params, findexdbm,
+                                                       reject_list)
+    # -------------------------------------------------------------------------
+    # get telluric stars and non-telluric stars
+    # -------------------------------------------------------------------------
+    # get a list of all objects from the file index database
+    all_objects = get_uobjs_from_findex(params, findexdbm, req_obs_dirs)
+    # get all telluric stars
+    tstars = telluric.get_tellu_include_list(params, all_objects=all_objects)
+    # get all other stars
+    ostars = get_non_telluric_stars(params, all_objects, tstars)
+    # -------------------------------------------------------------------------
+    # get template list (if required)
+    # -------------------------------------------------------------------------
+    # get whether to recalculate templates
+    _recal_templates = params['RECAL_TEMPLATES']
+    # get a list of object names with templates
+    template_stars = []
+    if not drs_text.null_text(_recal_templates, ['', 'None']):
+        if not drs_text.true_text(_recal_templates):
+            lckwargs = dict(all_objects=all_objects)
+            template_stars = telluric.list_current_templates(params, **lckwargs)
+            # print statement that we have been told not to recalculate
+            #   tempaltes and x many templates found
+            if len(template_stars) > 0:
+                wargs = [len(template_stars)]
+                WLOG(params, 'warning', textentry('10-503-00023', args=wargs),
+                     sublevel=2)
+    # -------------------------------------------------------------------------
     # get recipe definitions module (for this instrument)
     recipemod = _get_recipe_module(params)
     # get all values (upper case) using map function
@@ -884,7 +924,10 @@ def generate_run_list(params: ParamDict, findexdbm: FileIndexDatabase,
             WLOG(params, 'info', textentry('40-503-00009', args=[sequence[0]]))
             # generate new runs for sequence
             newruns = _generate_run_from_sequence(params, sequence,
-                                                  findexdbm)
+                                                  findexdbm, tstars=tstars,
+                                                  ostars=ostars,
+                                                  template_stars=template_stars,
+                                                  ref_condition=ref_condition)
             # update runtable with sequence generation
             runtable, rlist = update_run_table(sequence, runtable, newruns,
                                                rlist)
@@ -1748,41 +1791,12 @@ def _check_for_sequences(rvalues, mod):
 def _generate_run_from_sequence(params: ParamDict, sequence,
                                 indexdb: FileIndexDatabase,
                                 return_recipes: bool = False,
-                                logmsg: bool = True):
+                                logmsg: bool = True,
+                                tstars: Union[List[str], None] = None,
+                                ostars: Union[List[str], None] = None,
+                                template_stars: Union[List[str], None] = None,
+                                ref_condition: str = ''):
     func_name = __NAME__ + '.generate_run_from_sequence()'
-    # -------------------------------------------------------------------------
-    # get telluric stars and non-telluric stars
-    # -------------------------------------------------------------------------
-    # get all telluric stars
-    tstars = telluric.get_tellu_include_list(params)
-    # get all other stars
-    ostars = get_non_telluric_stars(params, indexdb, tstars)
-    # -------------------------------------------------------------------------
-    # get odometer reject list (if required)
-    # -------------------------------------------------------------------------
-    # get whether the user wants to use reject list
-    _use_reject = params['USE_REJECTLIST']
-    # get the odometer reject list
-    reject_list = []
-    if not drs_text.null_text(_use_reject, ['', 'None']):
-        if drs_text.true_text(_use_reject):
-            reject_list = prep.get_file_reject_list(params)
-    # -------------------------------------------------------------------------
-    # get template list (if required)
-    # -------------------------------------------------------------------------
-    # get whether to recalculate templates
-    _recal_templates = params['RECAL_TEMPLATES']
-    # get a list of object names with templates
-    template_object_list = []
-    if not drs_text.null_text(_recal_templates, ['', 'None']):
-        if not drs_text.true_text(_recal_templates):
-            template_object_list = telluric.list_current_templates(params)
-            # print statement that we have been told not to recalculate
-            #   tempaltes and x many templates found
-            if len(template_object_list) > 0:
-                wargs = [len(template_object_list)]
-                WLOG(params, 'warning', textentry('10-503-00023', args=wargs),
-                     sublevel=2)
     # -------------------------------------------------------------------------
     # get filemod and recipe mod
     pconst = constants.pload()
@@ -1790,7 +1804,7 @@ def _generate_run_from_sequence(params: ParamDict, sequence,
     recipemod = pconst.RECIPEMOD()
     # generate sequence
     sequence[1].process_adds(params, tstars=list(tstars), ostars=list(ostars),
-                             template_stars=template_object_list,
+                             template_stars=template_stars,
                              logmsg=logmsg)
     # get the sequence recipe list
     srecipelist = sequence[1].sequence
@@ -1799,9 +1813,6 @@ def _generate_run_from_sequence(params: ParamDict, sequence,
         return srecipelist
     # storage for new runs to add
     newruns = []
-    # define the reference conditions (that affect all recipes)
-    ref_condition = gen_global_condition(params, indexdb,
-                                         reject_list)
     # ------------------------------------------------------------------
     # check we have rows left
     # ------------------------------------------------------------------
@@ -2114,7 +2125,8 @@ def conditional_list(strlist: List[str], key: str, logic: str,
 
 
 def gen_global_condition(params: ParamDict, indexdb: FileIndexDatabase,
-                         reject_list: List[str], log: bool = True) -> str:
+                         reject_list: List[str], log: bool = True
+                         ) -> Tuple[str, List[str]]:
     """
     Generate the global conditions (based on run.ini) that will affect the
     sql conditions on all recipes i.e.:
@@ -2132,6 +2144,8 @@ def gen_global_condition(params: ParamDict, indexdb: FileIndexDatabase,
     """
     # set up an sql condition that will get more complex as we go down
     condition = 'BLOCK_KIND="raw"'
+    # set up a list of obsdirs to keep (Empty = keep all)
+    list_of_obsdirs = []
     # ------------------------------------------------------------------
     # filer out engineering directories
     # ------------------------------------------------------------------
@@ -2185,6 +2199,8 @@ def gen_global_condition(params: ParamDict, indexdb: FileIndexDatabase,
     if not drs_text.null_text(params['INCLUDE_OBS_DIRS'], ['', 'All', 'None']):
         # get white list from params
         include_obs_dirs = params.listp('INCLUDE_OBS_DIRS', dtype=str)
+        # add to the list of observation directories to keep
+        list_of_obsdirs += include_obs_dirs
         # add included obs dirs to condition
         condition = conditional_list(include_obs_dirs, 'OBS_DIR', 'include',
                                      condition)
@@ -2251,11 +2267,17 @@ def gen_global_condition(params: ParamDict, indexdb: FileIndexDatabase,
             subcondition = ' OR '.join(subs)
             # add to global condition (in reverse - we don't want these)
             condition += ' AND NOT ({0})'.format(subcondition)
+
+
+    # ------------------------------------------------------------------
+    # deal with RUN_OBS_DIR being set
+    if not drs_text.null_text(params['RUN_OBS_DIR'], ['', 'All', 'None']):
+        list_of_obsdirs += [params['RUN_OBS_DIR']]
     # ------------------------------------------------------------------
     # Return global condition
     # ------------------------------------------------------------------
     # return the condition
-    return condition
+    return condition, list_of_obsdirs
 
 
 # =============================================================================
@@ -3441,7 +3463,36 @@ def vstack_cols(tablelist: List[Table]) -> Union[Table, None]:
 # =============================================================================
 # Define working functions
 # =============================================================================
-def get_non_telluric_stars(params, indexdb: FileIndexDatabase,
+def get_uobjs_from_findex(params: ParamDict, indexdb: FileIndexDatabase,
+                          req_obs_dirs: Optional[List[str]] = None):
+    # ----------------------------------------------------------------------
+    # define the conditions for objects
+    dprtypes = params.listp('PP_OBJ_DPRTYPES', dtype=str)
+    # get the dprtype condition
+    subcond = []
+    for dprtype in dprtypes:
+        subcond.append('KW_DPRTYPE="{0}"'.format(dprtype))
+    condition = '({0})'.format(' OR '.join(subcond))
+    # deal with required observation directories
+    if req_obs_dirs is not None:
+        # get a sub cond
+        subcond = []
+        # loop around required observation directories
+        for req_obs_dir in req_obs_dirs:
+            subcond.append(f'{OBJNAMECOL}="{req_obs_dir}"')
+        # add to condition
+        condition += f' AND ({(" OR ".join(subcond))}) '
+    # ----------------------------------------------------------------------
+    # obstype must be OBJECT
+    condition += params['REPROCESS_OBJ_SCI_SQL']
+    # get columns from index database
+    raw_objects = indexdb.get_entries(OBJNAMECOL, block_kind='raw',
+                                      condition=condition)
+    # ----------------------------------------------------------------------
+    return raw_objects
+
+
+def get_non_telluric_stars(params: ParamDict, all_objects: List[str],
                            tstars: List[str]) -> List[str]:
     """
     Takes a table and gets all objects (OBJ_DARK and OBJ_FP) that are not in
@@ -3457,27 +3508,14 @@ def get_non_telluric_stars(params, indexdb: FileIndexDatabase,
     # deal with no tstars
     if drs_text.null_text(tstars, ['None', '']):
         tstars = []
-    # define the conditions for objects
-    dprtypes = params.listp('PP_OBJ_DPRTYPES', dtype=str)
-    # get the dprtype condition
-    subcond = []
-    for dprtype in dprtypes:
-        subcond.append('KW_DPRTYPE="{0}"'.format(dprtype))
-    condition = '({0})'.format(' OR '.join(subcond))
-    # obstype must be OBJECT
-    condition += params['REPROCESS_OBJ_SCI_SQL']
-    # get columns from index database
-    raw_objects = indexdb.get_entries(OBJNAMECOL, block_kind='raw',
-                                      condition=condition)
+    # ----------------------------------------------------------------------
     # deal with no table
     #    (can happen when coming from mk_tellu_db or fit_tellu_db etc)
-    if len(raw_objects) == 0:
+    if len(all_objects) == 0:
         return []
     # ----------------------------------------------------------------------
     # lets narrow down our list
     # ----------------------------------------------------------------------
-    # make a unique list of names
-    all_objects = np.unique(raw_objects)
     # now find all those not in tstars
     other_objects = []
     # loop around all objects

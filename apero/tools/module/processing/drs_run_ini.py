@@ -316,10 +316,14 @@ class RunIniFile:
         findexdbm.load_db()
         # get a list of object names with templates
         template_olist = []
+        # get a list of all objects from the file index database
+        all_objects = drs_processing.get_uobjs_from_findex(self.params,
+                                                           findexdbm)
         # get all telluric stars
-        tstars = telluric.get_tellu_include_list(self.params)
+        tstars = telluric.get_tellu_include_list(self.params,
+                                                 all_objects=all_objects)
         # get all other stars
-        ostars = drs_processing.get_non_telluric_stars(self.params, findexdbm,
+        ostars = drs_processing.get_non_telluric_stars(self.params, all_objects,
                                                        tstars)
         # ----------------------------------------------------------------------
         recipes, shortnames = [], []
