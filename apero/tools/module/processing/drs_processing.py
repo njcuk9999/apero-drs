@@ -1873,11 +1873,11 @@ def _generate_run_from_sequence(params: ParamDict, sequence,
         # only do this for recipes with flag "template_required"
         if srecipe.template_required:
             # only continue if we have objects with templates
-            if len(template_object_list) > 0:
+            if len(template_stars) > 0:
                 # store sub-conditions
                 subs = []
                 # add to global conditions
-                for objname in template_object_list:
+                for objname in template_stars:
                     # build sub-condition
                     subs += ['KW_OBJNAME="{0}"'.format(objname)]
                 # generate full subcondition
@@ -2124,7 +2124,7 @@ def conditional_list(strlist: List[str], key: str, logic: str,
     return condition
 
 
-def gen_global_condition(params: ParamDict, indexdb: FileIndexDatabase,
+def gen_global_condition(params: ParamDict, findexdbm: FileIndexDatabase,
                          reject_list: List[str], log: bool = True
                          ) -> Tuple[str, List[str]]:
     """
@@ -2143,7 +2143,9 @@ def gen_global_condition(params: ParamDict, indexdb: FileIndexDatabase,
     :return: str, the sql global condition to apply to all recipes
     """
     # set up an sql condition that will get more complex as we go down
-    condition = 'BLOCK_KIND="raw"'
+    raw_condition = 'BLOCK_KIND="raw"'
+    # start condition off with the raw condition
+    condition = str(raw_condition)
     # set up a list of obsdirs to keep (Empty = keep all)
     list_of_obsdirs = []
     # ------------------------------------------------------------------
@@ -2154,11 +2156,11 @@ def gen_global_condition(params: ParamDict, indexdb: FileIndexDatabase,
         if log:
             WLOG(params, '', textentry('40-503-00035'))
         # get sub condition for engineering nights
-        subcondition = _remove_engineering(params, indexdb, condition)
+        subcondition = _remove_engineering(params, findexdbm, condition)
         # add to conditions
         condition += subcondition
         # get length of database at this point
-        idb_len = indexdb.database.count(condition=condition)
+        idb_len = findexdbm.database.count(condition=condition)
         # deal with empty database (after conditions)
         if idb_len == 0:
             WLOG(params, 'warning', textentry('10-503-00016'), sublevel=8)
@@ -2183,7 +2185,7 @@ def gen_global_condition(params: ParamDict, indexdb: FileIndexDatabase,
             wargs = [' ,'.join(exclude_obs_dirs)]
             WLOG(params, '', textentry('40-503-00026', args=wargs))
         # get length of database at this point
-        idb_len = indexdb.database.count(condition=condition)
+        idb_len = findexdbm.database.count(condition=condition)
         # deal with empty database (after conditions)
         if idb_len == 0:
             WLOG(params, 'warning', textentry('10-503-00006'), sublevel=8)
@@ -2209,7 +2211,7 @@ def gen_global_condition(params: ParamDict, indexdb: FileIndexDatabase,
             wargs = [', '.join(include_obs_dirs)]
             WLOG(params, '', textentry('40-503-00027', args=wargs))
         # get length of database at this point
-        idb_len = indexdb.database.count(condition=condition)
+        idb_len = findexdbm.database.count(condition=condition)
         # deal with empty database (after conditions)
         if idb_len == 0:
             WLOG(params, 'warning', textentry('10-503-00007'), sublevel=8)
@@ -2233,7 +2235,7 @@ def gen_global_condition(params: ParamDict, indexdb: FileIndexDatabase,
             wargs = [' ,'.join(pi_names)]
             WLOG(params, '', textentry('40-503-00029', args=wargs))
         # get length of database at this point
-        idb_len = indexdb.database.count(condition=condition)
+        idb_len = findexdbm.database.count(condition=condition)
         # deal with empty database (after conditions)
         if idb_len == 0:
             WLOG(params, 'warning', textentry('10-503-00015'), sublevel=8)
@@ -2267,12 +2269,15 @@ def gen_global_condition(params: ParamDict, indexdb: FileIndexDatabase,
             subcondition = ' OR '.join(subs)
             # add to global condition (in reverse - we don't want these)
             condition += ' AND NOT ({0})'.format(subcondition)
-
-
     # ------------------------------------------------------------------
     # deal with RUN_OBS_DIR being set
     if not drs_text.null_text(params['RUN_OBS_DIR'], ['', 'All', 'None']):
         list_of_obsdirs += [params['RUN_OBS_DIR']]
+    # ------------------------------------------------------------------
+    # deal with empty list of observation directories (set to all obsdirs)
+    if len(list_of_obsdirs) == 0:
+        list_of_obsdirs = findexdbm.database.unique('OBS_DIR',
+                                                   condition=raw_condition)
     # ------------------------------------------------------------------
     # Return global condition
     # ------------------------------------------------------------------
@@ -3464,7 +3469,8 @@ def vstack_cols(tablelist: List[Table]) -> Union[Table, None]:
 # Define working functions
 # =============================================================================
 def get_uobjs_from_findex(params: ParamDict, indexdb: FileIndexDatabase,
-                          req_obs_dirs: Optional[List[str]] = None):
+                          req_obs_dirs: Optional[List[str]] = None
+                          ) -> List[str]:
     # ----------------------------------------------------------------------
     # define the conditions for objects
     dprtypes = params.listp('PP_OBJ_DPRTYPES', dtype=str)
@@ -3474,12 +3480,12 @@ def get_uobjs_from_findex(params: ParamDict, indexdb: FileIndexDatabase,
         subcond.append('KW_DPRTYPE="{0}"'.format(dprtype))
     condition = '({0})'.format(' OR '.join(subcond))
     # deal with required observation directories
-    if req_obs_dirs is not None:
+    if req_obs_dirs is not None and len(req_obs_dirs) > 0:
         # get a sub cond
         subcond = []
         # loop around required observation directories
         for req_obs_dir in req_obs_dirs:
-            subcond.append(f'{OBJNAMECOL}="{req_obs_dir}"')
+            subcond.append(f'OBS_DIR="{req_obs_dir}"')
         # add to condition
         condition += f' AND ({(" OR ".join(subcond))}) '
     # ----------------------------------------------------------------------
@@ -3489,7 +3495,7 @@ def get_uobjs_from_findex(params: ParamDict, indexdb: FileIndexDatabase,
     raw_objects = indexdb.get_entries(OBJNAMECOL, block_kind='raw',
                                       condition=condition)
     # ----------------------------------------------------------------------
-    return raw_objects
+    return list(set(raw_objects))
 
 
 def get_non_telluric_stars(params: ParamDict, all_objects: List[str],
