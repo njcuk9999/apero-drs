@@ -155,7 +155,11 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
         # ---------------------------------------------------------------------
         if filter_qc:
             # get all pids where passed_all_qc is PASSED_ALL_QC is True
-            lpids = logdbm.database.unique('PID', condition='PASSED_ALL_QC!=0')
+            ltable = logdbm.get_entries('PID, PASSED_ALL_QC')
+            # find all pids that are not zero (nulls, nans and 1s)
+            lmask = ~(ltable['PASSED_ALL_QC'] == 0)
+            # get a unique list of pids that do not fail QC
+            lpids = list(set(ltable[lmask]['PID']))
             # mask out any files that fail qc
             mask = np.in1d(ipids, lpids)
         else:
