@@ -662,7 +662,8 @@ def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
             ribbon = np.array(image[bins[b_it]: bins[b_it + 1]])
             # construct ribbon nmae
             ribbon_name = '{0}_ribbon{1:06d}.npy'.format(clean_filename, b_it)
-            ribbon_path = os.path.join(subfilepath, ribbon_name)
+            base_ribbon_name = os.path.basename(ribbon_name)
+            ribbon_path = os.path.join(subfilepath, base_ribbon_name)
             # save ribbon to file
             # log: Saving file: {0}
             WLOG(params, '', textentry('40-000-00013', args=[ribbon_path]))
