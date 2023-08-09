@@ -104,7 +104,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     kwargs['instrument'] = params['INSTRUMENT']
     kwargs['data_dir'] = params['LBL_PATH']
     kwargs['data_type'] = 'APERO'
-    kwargs['skip_done'] = params['INPUTS']['SKIP_DONE']
+    kwargs['skip_done'] = params['INPUTS'].get('SKIP_DONE', False)
     # -------------------------------------------------------------------------
     # try to import lbl (may not exist)
     try:
