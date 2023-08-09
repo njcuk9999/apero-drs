@@ -529,6 +529,10 @@ KW_FIBER.set(key='FIBER', comment='The fiber name')
 KW_TDBSKY = KW_TDBSKY.copy(__NAME__)
 KW_TDBSKY.set(key='TDTSKYCO', comment='Sky model used for sky correction')
 
+# define the measured effective readout noise
+KW_EFF_RON = KW_EFF_RON.copy(__NAME__)
+KW_EFF_RON.set(key='EFFRON', comment='Measured eff readout noise before ext')
+
 # -----------------------------------------------------------------------------
 # Define DRS outputs keywords
 # -----------------------------------------------------------------------------
