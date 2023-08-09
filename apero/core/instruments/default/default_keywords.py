@@ -705,6 +705,10 @@ KW_THERM_RATIO_U = Keyword('KW_THERM_RATIO_U', key='NULL', dtype=str,
 KW_TDBSKY = Keyword('KW_TDBSKY', key='NULL', dtype=str, source=__NAME__,
                     description='the sky model used for sky correction')
 
+# define the measured effective readout noise
+KW_EFF_RON = Keyword('KW_EFF_RON', key='NULL', dtype=str, source=__NAME__,
+                     description='The measured eff readout noise before ext')
+
 # -----------------------------------------------------------------------------
 # Define DRS outputs keywords
 # -----------------------------------------------------------------------------

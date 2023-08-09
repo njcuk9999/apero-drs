@@ -580,22 +580,25 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
     else:
         image3 = np.array(image2)
         badpfile, badtime = 'None', np.nan
+
     # ----------------------------------------------------------------------
     # image 4 is corrected for background
     # ----------------------------------------------------------------------
+    # load background file from inputs/calibdb
+    cfile = CalibFile()
+    cfile.load_calib_file(params, backkey, header, filename=backfile,
+                          userinputkey='BACKFILE', return_filename=True,
+                          database=calibdbm)
+    bkgrdfile, backtime = cfile.filename, cfile.mjdmid
+
     if correctback:
-        # load background file from inputs/calibdb
-        cfile = CalibFile()
-        cfile.load_calib_file(params, backkey, header, filename=backfile,
-                              userinputkey='BACKFILE', return_filename=True,
-                              database=calibdbm)
-        bkgrdfile, backtime = cfile.filename, cfile.mjdmid
         # correct image for background
         image4 = background.correction(recipe, params, infile, image3,
                                        bkgrdfile=bkgrdfile)
     else:
         image4 = np.array(image3)
         bkgrdfile, backtime = 'None', np.nan
+
     # ----------------------------------------------------------------------
     # image 4 may need to normalise by a percentile
     # ----------------------------------------------------------------------
@@ -639,6 +642,13 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
     image5[mask] = np.nan
 
     # ----------------------------------------------------------------------
+    # Measure effective read out noise
+    # ----------------------------------------------------------------------
+    # calculate effective readout noise
+    eff_readout_noise = measure_effective_readout_noise(params, image5,
+                                                        bkgrdfile=bkgrdfile)
+
+    # ----------------------------------------------------------------------
     # make properties dictionary
     # ----------------------------------------------------------------------
     props = ParamDict()
@@ -646,6 +656,7 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
     props['FILENAME'] = infile.filename
     props['BASENAME'] = infile.basename
     props['SIGDET'] = sigdet
+    props['EFF_RON'] = eff_readout_noise
     props['EXPTIME'] = exptime
     props['GAIN'] = gain
     props['DPRTYPE'] = dprtype
@@ -669,12 +680,26 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
     keys = ['FILENAME', 'BASENAME', 'SIGDET', 'EXPTIME', 'GAIN', 'DPRTYPE',
             'SHAPE', 'DARKFILE', 'DARKTIME', 'BADPFILE', 'BADTIME', 'BACKFILE',
             'BACKTIME', 'FLIPPED', 'CONVERT_E', 'RESIZED', 'NORMALISED',
-            'CLEANED']
+            'CLEANED', 'EFF_RON']
     props.set_sources(keys, func_name)
 
     # ----------------------------------------------------------------------
     # return image 5
     return props, image5
+
+
+def measure_effective_readout_noise(params: ParamDict, image: np.ndarray,
+                                    bkgrdfile: str):
+    # get bad pixel file
+    bkgrdimage = drs_fits.readfits(params, bkgrdfile)
+    # create mask from badpixmask
+    bmap = np.array(bkgrdimage, dtype=bool)
+    tmp = image[bmap] # keep only background pixels
+    # effective point-to-point RMS. Sqrt 2 comes from the differences
+    # only preserves pix-to-pix RMS and removes low frequencies
+    sig = mp.robust_nanstd(np.diff(tmp))/np.sqrt(2)
+    # return effective readout noise
+    return sig
 
 
 def add_calibs_to_header(outfile: DrsFitsFile,

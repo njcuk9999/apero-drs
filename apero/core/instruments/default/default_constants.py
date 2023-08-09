@@ -153,6 +153,7 @@ __all__ = [
     'EXT_BERV_BARYCORRPY_DIR', 'EXT_BERV_IERSFILE', 'EXT_BERV_IERS_A_URL',
     'EXT_BERV_LEAPDIR', 'EXT_BERV_LEAPUPDATE', 'EXTRACT_PLOT_ORDER',
     'EXTRACT_S1D_PLOT_ZOOM1', 'EXTRACT_S1D_PLOT_ZOOM2', 'EXT_QUICK_LOOK',
+    'EXT_QC_EFF_RON_FACTOR',
     # thermal constants
     'THERMAL_CORRECT', 'THERMAL_ALWAYS_EXTRACT', 'THERMAL_EXTRACT_TYPE',
     'THERMAL_CORRETION_TYPE1', 'THERMAL_CORRETION_TYPE2', 'THERMAL_ORDER',
@@ -2244,6 +2245,14 @@ EXT_QUICK_LOOK = Const('EXT_QUICK_LOOK', value=None, dtype=bool,
                        description=('Whether extraction code is done in quick '
                                     'look mode (do not use for final '
                                     'products)'))
+
+# Define how many times larger than the sigdet the measured effective readout
+#     is allow to be
+EXT_QC_EFF_RON_FACTOR = Const('EXT_QC_EFF_RON_FACTOR', value=None, dtype=float,
+                              source=__NAME__, group=cgroup,
+                              description='Define how many times larger than '
+                                          'the sigdet the measured effective '
+                                          'readout is allow to be')
 
 #  Start order of the extraction in apero_flat if None starts from 0
 EXT_START_ORDER = Const('EXT_START_ORDER', value=None, dtype=int,
