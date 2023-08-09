@@ -558,6 +558,10 @@ KW_THERM_RATIO_U = KW_THERM_RATIO_U.copy(__NAME__)
 KW_THERM_RATIO_U.set(key='THRM_RU',
                      comment='Ratio method used for thermal correction')
 
+# define the measured effective readout noise
+KW_EFF_RON = KW_EFF_RON.copy(__NAME__)
+KW_EFF_RON.set(key='EFFRON', comment='Measured eff readout noise before ext')
+
 # -----------------------------------------------------------------------------
 # Define DRS outputs keywords
 # -----------------------------------------------------------------------------
