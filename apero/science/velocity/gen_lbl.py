@@ -58,13 +58,13 @@ def run_apero_get(params: ParamDict):
     # TODO get from yaml file
     lbl_in_path = params['LBL_PATH']
     # APERO file definition out types
-    lbl_outtypes = params.listp('LBL_FILE_DEFS', dtype=str)
+    lbl_outtypes = params['LBL_FILE_DEFS']
     # APERO DPRTYPE for lbl science files
-    lbl_dprtypes = params.listp('LBL_DPRTYPES', dtype=str)
+    lbl_dprtypes = params['LBL_DPRTYPES']
     # APERO DPRTYPE for lbl template files
-    lbl_template_outtypes = params.listp('LBL_TEMPLATE_FILE_DEFS', dtype=str)
+    lbl_template_outtypes = params['LBL_TEMPLATE_FILE_DEFS']
     # APERO DPRTYPE for lbl simultaneous FP files
-    simfp_dprtypes = params.listp('LBL_SIM_FP_DPRTYPES', dtype=str)
+    simfp_dprtypes = params['LBL_SIM_FP_DPRTYPES']
     # whether we are copying with symlinks
     lbl_symlinks = params['LBL_SYMLINKS']
     # whether we are in test mode
@@ -137,9 +137,9 @@ def find_friend(params: ParamDict, objname: str) -> str:
     # TODO: v0.8 change this to use the astrometric database
     #       with a FRIEND column
     # get dictionary of friends (key = objname, value = friend teff)
-    friend = params.dictp('LBL_FRIENDS', dtype=float)
-    friend_names = np.array(friend.keys())
-    friend_teffs = np.array(friend.values())
+    friends = params.dictp('LBL_FRIENDS', dtype=float)
+    friend_names = np.array(list(friends.keys()))
+    friend_teffs = np.array(list(friends.values()))
     # get the teff of this object
     teff = find_teff(params, objname)
     # find the closest friend

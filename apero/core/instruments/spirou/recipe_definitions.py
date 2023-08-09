@@ -1344,6 +1344,8 @@ apero_lbl_ref.description = 'LBL Setup and reference recipe (Run before any othe
 apero_lbl_ref.epilog = ''
 apero_lbl_ref.recipe_type = 'recipe'
 apero_lbl_ref.recipe_kind = 'post'
+apero_lbl_ref.set_kwarg(name='--test', dtype='switch',
+                        default=False, helpstr='Run in test mode')
 apero_lbl_ref.group_func = grouping.no_group
 apero_lbl_ref.group_column = None
 # add to recipe
