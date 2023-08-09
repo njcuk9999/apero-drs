@@ -359,6 +359,9 @@ __all__ = [
     # debug polar plot settings
     'PLOT_POLAR_FIT_CONT', 'PLOT_POLAR_CONTINUUM', 'PLOT_POLAR_RESULTS',
     'PLOT_POLAR_STOKES_I', 'PLOT_POLAR_LSD',
+    # LBL settings
+    'LBL_FILE_DEFS', 'LBL_DPRTYPES', 'LBL_TEMPLATE_FILE_DEFS',
+    'LBL_SIM_FP_DPRTYPES', 'LBL_SYMLINKS', 'LBL_FRIENDS',
     # post-processing settings
     'POST_CLEAR_REDUCED', 'POST_OVERWRITE', 'POST_HDREXT_COMMENT_KEY',
     # tool constants
@@ -5345,6 +5348,47 @@ PLOT_POLAR_LSD = Const('PLOT_POLAR_LSD', value=False,
                        dtype=bool, source=__NAME__, user=True, active=False,
                        group=cgroup,
                        description='turn on the polar lsd debug plot')
+
+# =============================================================================
+# LBL SETTINGS
+# =============================================================================
+cgroup = 'LBL SETTINGS'
+# Define the file definition type (DRSOUTID) for LBL input files
+LBL_FILE_DEFS = Const('LBL_FILE_DEFS', value=None, dtype=str, source=__NAME__,
+                      user=False, active=True, group=cgroup,
+                      description='Define the file definition type (DRSOUTID) '
+                                    'for LBL input files')
+
+# Define the dprtype for science files for LBL
+LBL_DPRTYPES = Const('LBL_DPRTYPES', value=None, dtype=str, source=__NAME__,
+                     user=False, active=True, group=cgroup,
+                     description='Define the dprtype for science files for LBL')
+
+# Define the file definition type (DRSOUTID) for lbl input template
+LBL_TEMPLATE_FILE_DEFS = Const('LBL_TEMPLATE_FILE_DEFS', value=None,
+                               dtype=str, source=__NAME__, user=False,
+                               active=True, group=cgroup,
+                               description='Define the file definition type '
+                                           '(DRSOUTID) for lbl input template')
+
+# Define the DPRTYPE for simultaneous FP files for lbl input
+LBL_SIM_FP_DPRTYPES = Const('LBL_SIM_FP_DPRTYPES', value=None, dtype=str,
+                            source=__NAME__, user=False, active=True,
+                            group=cgroup,
+                            description='Define the DPRTYPE for simultaneous '
+                                        'FP files for lbl input')
+
+# Define whether the LBL directory should use symlinks
+LBL_SYMLINKS = Const('LBL_SYMLINKS', value=False, dtype=bool, source=__NAME__,
+                     user=True, active=True, group=cgroup,
+                     description='Define whether the LBL directory should use '
+                                 'symlinks')
+
+# Define the dictionary of friend and friend teffs for LBL
+LBL_FRIENDS = Const('LBL_FRIENDS', value=None, dtype=dict, source=__NAME__,
+                    user=False, active=True, group=cgroup,
+                    description='Define the dictionary of friend and friend '
+                                'teffs for LBL')
 
 # =============================================================================
 # POST PROCESS SETTINGS

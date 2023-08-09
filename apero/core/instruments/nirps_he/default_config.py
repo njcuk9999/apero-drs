@@ -101,6 +101,10 @@ DRS_DATA_RUN.value = '/drs/nirps_he/data/run'
 DRS_DATA_ASSETS = DRS_DATA_ASSETS.copy(__NAME__)
 DRS_DATA_ASSETS.value = '/drs/nirps_he/data/assets'
 
+# Define the lbl directory
+LBL_PATH = LBL_PATH.copy(__NAME__)
+LBL_PATH.value = '/drs/nirps_he/data/lbl'
+
 # =============================================================================
 # DATABASE SETTINGS
 # =============================================================================
