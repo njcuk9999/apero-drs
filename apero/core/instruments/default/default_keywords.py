@@ -41,7 +41,7 @@ __all__ = [  # input keys
     'KW_DRS_DATE', 'KW_C_FLIP', 'KW_C_CVRTE',
     'KW_C_RESIZE', 'KW_DRS_DATE_NOW', 'KW_C_FTYPE', 'KW_FIBER',
     'KW_THERM_RATIO', 'KW_THERM_RATIO_U', 'KW_MID_OBS_TIME',
-    'KW_MID_OBSTIME_METHOD', 'KW_TDBSKY',
+    'KW_MID_OBSTIME_METHOD', 'KW_TDBSKY', 'KW_EFF_RON',
     # calibration file header keys
     'KW_CDBDARK', 'KW_CDTDARK', 'KW_CDBBAD', 'KW_CDTBAD',
     'KW_CDBBACK', 'KW_CDTBACK', 'KW_CDBORDP', 'KW_CDTORDP',
