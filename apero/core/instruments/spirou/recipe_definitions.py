@@ -1329,6 +1329,81 @@ apero_pol.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
 recipes.append(apero_pol)
 
+
+# -----------------------------------------------------------------------------
+# apero_lbl_ref
+# -----------------------------------------------------------------------------
+apero_lbl_ref = DrsRecipe(__INSTRUMENT__)
+apero_lbl_ref.name = 'apero_lbl_ref_{0}.py'.format(INSTRUMENT_ALIAS)
+apero_lbl_ref.shortname = 'LBLREF'
+apero_lbl_ref.instrument = __INSTRUMENT__
+apero_lbl_ref.in_block_str = 'red'
+apero_lbl_ref.out_block_str = 'lbl'
+apero_lbl_ref.extension = 'fits'
+apero_lbl_ref.description = 'LBL Setup and reference recipe (Run before any other LBL steps)'
+apero_lbl_ref.epilog = ''
+apero_lbl_ref.recipe_type = 'recipe'
+apero_lbl_ref.recipe_kind = 'post'
+apero_lbl_ref.group_func = grouping.no_group
+apero_lbl_ref.group_column = None
+
+# -----------------------------------------------------------------------------
+# apero_lbl_mask
+# -----------------------------------------------------------------------------
+apero_lbl_mask = DrsRecipe(__INSTRUMENT__)
+apero_lbl_mask.name = 'apero_lbl_mask_{0}.py'.format(INSTRUMENT_ALIAS)
+apero_lbl_mask.shortname = 'LBLMASK'
+apero_lbl_mask.instrument = __INSTRUMENT__
+apero_lbl_mask.in_block_str = 'red'
+apero_lbl_mask.out_block_str = 'lbl'
+apero_lbl_mask.extension = 'fits'
+apero_lbl_mask.description = 'Create LBL mask'
+apero_lbl_mask.epilog = ''
+apero_lbl_mask.recipe_type = 'recipe'
+apero_lbl_mask.recipe_kind = 'post'
+apero_lbl_mask.set_arg(name='objname', pos=0, dtype=str,
+                       helpstr=textentry('MKTEMP_OBJNAME_HELP'))
+apero_lbl_mask.group_func = grouping.no_group
+apero_lbl_mask.group_column = None
+
+# -----------------------------------------------------------------------------
+# apero_lbl_compute
+# -----------------------------------------------------------------------------
+apero_lbl_compute = DrsRecipe(__INSTRUMENT__)
+apero_lbl_compute.name = 'apero_lbl_compute_{0}.py'.format(INSTRUMENT_ALIAS)
+apero_lbl_compute.shortname = 'LBLCOMPUTE'
+apero_lbl_compute.instrument = __INSTRUMENT__
+apero_lbl_compute.in_block_str = 'red'
+apero_lbl_compute.out_block_str = 'lbl'
+apero_lbl_compute.extension = 'fits'
+apero_lbl_compute.description = 'Run LBL compute'
+apero_lbl_compute.epilog = ''
+apero_lbl_compute.recipe_type = 'recipe'
+apero_lbl_compute.recipe_kind = 'post'
+apero_lbl_compute.set_arg(name='objname', pos=0, dtype=str,
+                          helpstr=textentry('MKTEMP_OBJNAME_HELP'))
+apero_lbl_compute.group_func = grouping.no_group
+apero_lbl_compute.group_column = None
+
+# -----------------------------------------------------------------------------
+# apero_lbl_compile
+# -----------------------------------------------------------------------------
+apero_lbl_compile = DrsRecipe(__INSTRUMENT__)
+apero_lbl_compile.name = 'apero_lbl_compile_{0}.py'.format(INSTRUMENT_ALIAS)
+apero_lbl_compile.shortname = 'LBLCOMPILE'
+apero_lbl_compile.instrument = __INSTRUMENT__
+apero_lbl_compile.in_block_str = 'red'
+apero_lbl_compile.out_block_str = 'lbl'
+apero_lbl_compile.extension = 'fits'
+apero_lbl_compile.description = 'Run LBL compute'
+apero_lbl_compile.epilog = ''
+apero_lbl_compile.recipe_type = 'recipe'
+apero_lbl_compile.recipe_kind = 'post'
+apero_lbl_compile.set_arg(name='objname', pos=0, dtype=str,
+                          helpstr=textentry('MKTEMP_OBJNAME_HELP'))
+apero_lbl_compile.group_func = grouping.no_group
+apero_lbl_compile.group_column = None
+
 # -----------------------------------------------------------------------------
 # apero_postprocess
 # -----------------------------------------------------------------------------
@@ -1898,7 +1973,43 @@ eng_seq.add(apero_extract, name='EXT_EVERY', files=[files.pp_file],
             recipe_kind='extract-everything')
 
 # -----------------------------------------------------------------------------
+# lbl sequences
+# -----------------------------------------------------------------------------
+lbl_seq = drs_recipe.DrsRunSequence('lbl_seq', __INSTRUMENT__)
+
+# lbl ref
+lbl_seq.add(apero_lbl_ref, name='LBLREF', recipe_kind='lbl-ref')
+
+# lbl mask (FP)
+lbl_seq.add(apero_lbl_mask, name='LBLMASK', recipe_kind='lbl-mask-fp',
+            arguments=dict(objname='FP'))
+
+# lbl compute (FP)
+lbl_seq.add(apero_lbl_compute, name='LBLCOMPUTE', recipe_kind='lbl-compute-fp',
+            arguments=dict(objname='FP'))
+
+# lbl compile (FP)
+lbl_seq.add(apero_lbl_compile, name='LBLCOMPILE', recipe_kind='lbl-compile-fp',
+            arguments=dict(objname='FP'))
+
+# lbl mask (SCIENCE)
+lbl_seq.add(apero_lbl_mask, name='LBLMASK', recipe_kind='lbl-mask-sci',
+            arguments=dict(objname='SCIENCE_TARGETS'),
+            filters=dict(KW_OBJNAME='SCIENCE_TARGETS'))
+
+# lbl compute (SCIENCE)
+lbl_seq.add(apero_lbl_compute, name='LBLCOMPUTE', recipe_kind='lbl-compute-sci',
+            arguments=dict(objname='SCIENCE_TARGETS'),
+            filters=dict(KW_OBJNAME='SCIENCE_TARGETS'))
+
+# lbl compile (SCIENCE)
+lbl_seq.add(apero_lbl_compile, name='LBLCOMPILE', recipe_kind='lbl-compile-sci',
+            arguments=dict(objname='SCIENCE_TARGETS'),
+            filters=dict(KW_OBJNAME='SCIENCE_TARGETS'))
+
+
+# -----------------------------------------------------------------------------
 # sequences list
 # -----------------------------------------------------------------------------
 sequences = [pp_seq, pp_seq_opt, full_seq, limited_seq, ref_seq, calib_seq,
-             tellu_seq, science_seq, quick_seq, blank_seq, eng_seq]
+             tellu_seq, science_seq, quick_seq, blank_seq, eng_seq, lbl_seq]

@@ -3122,6 +3122,35 @@ PLOT_POLAR_LSD = PLOT_POLAR_LSD.copy(__NAME__)
 PLOT_POLAR_LSD.value = True
 
 # =============================================================================
+# LBL SETTINGS
+# =============================================================================
+cgroup = 'LBL SETTINGS'
+# Define the file definition type (DRSOUTID) for LBL input files
+LBL_FILE_DEFS = LBL_FILE_DEFS.copy(__NAME__)
+LBL_FILE_DEFS.value = 'TELLU_OBJ'
+
+# Define the dprtype for science files for LBL
+LBL_DPRTYPES = LBL_DPRTYPES.copy(__NAME__)
+LBL_DPRTYPES.value = 'OBJ_FP,OBJ_DARK,POLAR_FP,POLAR_DARK'
+
+# Define the file definition type (DRSOUTID) for lbl input template
+LBL_TEMPLATE_FILE_DEFS = LBL_TEMPLATE_FILE_DEFS.copy(__NAME__)
+LBL_TEMPLATE_FILE_DEFS.value = 'TELLU_TEMP,TELLU_TEMP_S1DV'
+
+# Define the DPRTYPE for simultaneous FP files for lbl input
+LBL_SIM_FP_DPRTYPES = LBL_SIM_FP_DPRTYPES.copy(__NAME__)
+LBL_SIM_FP_DPRTYPES.value = 'OBJ_FP'
+
+# Define whether the LBL directory should use symlinks
+LBL_SYMLINKS = LBL_SYMLINKS.copy(__NAME__)
+LBL_SYMLINKS.value = True
+
+# Define the dictionary of friend and friend teffs for LBL
+LBL_FRIENDS = LBL_FRIENDS.copy(__NAME__)
+LBL_FRIENDS.value = '{"GL846": 3900, "GL699": 3200, "GL905": 2900}'
+
+
+# =============================================================================
 # POST PROCESS SETTINGS
 # =============================================================================
 # Define whether (by deafult) to clear reduced directory
