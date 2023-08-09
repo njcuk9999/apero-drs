@@ -134,7 +134,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     try:
         # setup object and template names
         object_science = str(objname)
-        object_template = str(objname)
+        object_template = str(friend)
         # print progress
         msg = 'Running LBL compile for {0}_{1}'
         margs = [object_science, object_template]
