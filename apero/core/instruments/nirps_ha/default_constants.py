@@ -2889,6 +2889,19 @@ LBL_SYMLINKS.value = True
 LBL_FRIENDS = LBL_FRIENDS.copy(__NAME__)
 LBL_FRIENDS.value = '{"HD85512": 4411, "GL514": 3750, "GJ2066": 3557, "GL699": 3257, "PROXIMA": 2900}'
 
+# Define the specific data types (where objname is the data type) for LBL
+LBL_SPECIFIC_DATATYPES = LBL_SPECIFIC_DATATYPES.copy(__NAME__)
+LBL_SPECIFIC_DATATYPES.value = 'FP, LFC'
+
+# Define objnames for which we should recalculate template if it doesn't
+#   exist (must include FP)
+LBL_RECAL_TEMPLATE = LBL_RECAL_TEMPLATE.copy(__NAME__)
+LBL_RECAL_TEMPLATE.value = 'FP, LFC'
+
+# Define which object names should be run through LBL compute in parellel
+#   i.e. break in to Ncore chunks (comma separated list)
+LBL_MULTI_OBJLIST = LBL_MULTI_OBJLIST.copy(__NAME__)
+LBL_MULTI_OBJLIST.value = 'FP'
 
 # =============================================================================
 # POST PROCESS SETTINGS

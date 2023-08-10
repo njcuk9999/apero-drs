@@ -3265,6 +3265,8 @@ def group_run_files2(params: ParamDict, recipe: DrsRecipe,
 
     :return:
     """
+    # get number of cores
+    cores = _get_cores(params)
     # get hard upper limit for number of files in a group
     if recipe.limit is not None:
         limit = recipe.limit
@@ -3287,7 +3289,8 @@ def group_run_files2(params: ParamDict, recipe: DrsRecipe,
         return group_function(recipe.args, recipe.kwargs,
                               argdict, kwargdict,
                               group_column=group_column,
-                              ref=ref, limit=limit)
+                              ref=ref, limit=limit, params=params,
+                              cores=cores)
     # if we don't have one give warning
     else:
         # Log warning: No runs produced for {0} - No group function given'

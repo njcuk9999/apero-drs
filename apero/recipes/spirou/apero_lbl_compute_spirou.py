@@ -102,8 +102,16 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     kwargs = dict()
     kwargs['instrument'] = params['INSTRUMENT']
     kwargs['data_dir'] = params['LBL_PATH']
-    kwargs['data_type'] = 'APERO'
-    kwargs['skip_done'] = params['INPUTS'].get('SKIP_DONE', False)
+    kwargs['data_source'] = 'APERO'
+    kwargs['skip_done'] = params['INPUTS'].get('SKIP_DONE', True)
+    # deal with data type
+    if objname in params.listp('LBL_SPECIFIC_DATATYPES', dtype=str):
+        kwargs['data_type'] = objname
+    else:
+        kwargs['data_type'] = 'SCIENCE'
+    # add the iteration and total number of iterations keyword
+    kwargs['iteration'] = params['INPUTS']['ITERATION']
+    kwargs['total'] = params['INPUTS']['TOTAL_ITERATIONS']
     # -------------------------------------------------------------------------
     # try to import lbl (may not exist)
     try:
@@ -134,7 +142,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     try:
         # setup object and template names
         object_science = str(objname)
-        object_template = str(objname)
+        object_template = str(friend)
         # print progress
         msg = 'Running LBL compute for {0}_{1}'
         margs = [object_science, object_template]

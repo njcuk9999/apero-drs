@@ -1388,7 +1388,14 @@ apero_lbl_compute.recipe_type = 'recipe'
 apero_lbl_compute.recipe_kind = 'post'
 apero_lbl_compute.set_arg(name='objname', pos=0, dtype=str,
                           helpstr=textentry('MKTEMP_OBJNAME_HELP'))
-apero_lbl_compute.group_func = grouping.no_group
+apero_lbl_compute.set_kwarg(name='--iteration', dtype=int,
+                            default=-1,
+                            helpstr='Iteration number (for multiprocessing)')
+apero_lbl_compute.set_kwarg(name='--total', dtype=int,
+                            default=-1,
+                            helpstr='Total number of iterations '
+                                    '(for multiprocessing)')
+apero_lbl_compute.group_func = grouping.lbl_compute_group
 apero_lbl_compute.group_column = None
 # add to recipe
 recipes.append(apero_lbl_compute)
