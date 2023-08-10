@@ -95,6 +95,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     mainname = __NAME__ + '._main()'
     # get object name
     objname = params['INPUTS']['OBJNAME']
+    # get the objects for which to calculate a template
+    recal_template = params.listp('LBL_RECAL_TEMPLATE', dtype=str)
     # get teff for this object
     teff = gen_lbl.find_teff(params, objname)
     # get friend for this object name
@@ -103,16 +105,42 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     kwargs = dict()
     kwargs['instrument'] = params['INSTRUMENT']
     kwargs['data_dir'] = params['LBL_PATH']
-    kwargs['data_type'] = 'APERO'
-    kwargs['skip_done'] = params['INPUTS'].get('SKIP_DONE', False)
+    kwargs['data_source'] = 'APERO'
+    skip_done = params['INPUTS'].get('SKIP_DONE', True)
+    # deal with data type
+    if objname in params.listp('LBL_SPECIFIC_DATATYPES', dtype=str):
+        kwargs['data_type'] = objname
+    else:
+        kwargs['data_type'] = 'SCIENCE'
     # -------------------------------------------------------------------------
     # try to import lbl (may not exist)
     try:
+        from lbl.recipe import lbl_template
         from lbl.recipes import lbl_mask
     except ImportError:
         emsg = 'Cannot run LBL (not installed) please install LBL'
         WLOG(params, 'error', emsg)
         return locals()
+    # -------------------------------------------------------------------------
+    if objname in recal_template:
+        # run lbl template for self
+        try:
+            # setup object and template names
+            object_science = str(objname)
+            object_template = str(objname)
+            # print progress
+            msg = 'Running LBL template for {0}_{1}'
+            margs = [object_science, object_template]
+            WLOG(params, 'info', msg.format(*margs))
+            # run compute
+            lbltemp = lbl_mask.main(object_science=object_science,
+                                    object_template=object_template,
+                                    overwrite=False, **kwargs)
+        except Exception as e:
+            emsg = 'LBL Excecption {0}: {1}'
+            WLOG(params, 'error', emsg.format(type(e), str(e)))
+    else:
+        lbltemp = None
     # -------------------------------------------------------------------------
     # run lbl compute for self
     try:
@@ -126,7 +154,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # run compute
         lblself = lbl_mask.main(object_science=object_science,
                                 object_template=object_template,
-                                object_teff=teff, **kwargs)
+                                object_teff=teff,
+                                skip_done=skip_done,
+                                **kwargs)
     except Exception as e:
         emsg = 'LBL Excecption {0}: {1}'
         WLOG(params, 'error', emsg.format(type(e), str(e)))

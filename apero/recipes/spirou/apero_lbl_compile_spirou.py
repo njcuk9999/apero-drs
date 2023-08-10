@@ -102,8 +102,13 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     kwargs = dict()
     kwargs['instrument'] = params['INSTRUMENT']
     kwargs['data_dir'] = params['LBL_PATH']
-    kwargs['data_type'] = 'APERO'
-    kwargs['skip_done'] = params['INPUTS'].get('SKIP_DONE', False)
+    kwargs['data_source'] = 'APERO'
+    kwargs['skip_done'] = params['INPUTS'].get('SKIP_DONE', True)
+    # deal with data type
+    if objname in params.listp('LBL_SPECIFIC_DATATYPES', dtype=str):
+        kwargs['data_type'] = objname
+    else:
+        kwargs['data_type'] = 'SCIENCE'
     # -------------------------------------------------------------------------
     # try to import lbl (may not exist)
     try:

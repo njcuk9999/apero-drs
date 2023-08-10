@@ -363,6 +363,7 @@ __all__ = [
     # LBL settings
     'LBL_FILE_DEFS', 'LBL_DPRTYPES', 'LBL_TEMPLATE_FILE_DEFS',
     'LBL_SIM_FP_DPRTYPES', 'LBL_SYMLINKS', 'LBL_FRIENDS',
+    'LBL_SPECIFIC_DATATYPES', 'LBL_MULTI_OBJLIST',
     # post-processing settings
     'POST_CLEAR_REDUCED', 'POST_OVERWRITE', 'POST_HDREXT_COMMENT_KEY',
     # tool constants
@@ -5394,10 +5395,37 @@ LBL_SYMLINKS = Const('LBL_SYMLINKS', value=False, dtype=bool, source=__NAME__,
                                  'symlinks')
 
 # Define the dictionary of friend and friend teffs for LBL
-LBL_FRIENDS = Const('LBL_FRIENDS', value=None, dtype=dict, source=__NAME__,
+LBL_FRIENDS = Const('LBL_FRIENDS', value=None, dtype=str, source=__NAME__,
                     user=False, active=True, group=cgroup,
                     description='Define the dictionary of friend and friend '
                                 'teffs for LBL')
+
+# Define the specific data types (where objname is the data type) for LBL
+LBL_SPECIFIC_DATATYPES = Const('LBL_SPECIFIC_DATATYPES', value=None,
+                               dtype=str, source=__NAME__, user=False,
+                               active=True, group=cgroup,
+                               description='Define the specific data types '
+                                            '(where objname is the data type) '
+                                            'for LBL')
+
+# Define objnames for which we should recalculate template if it doesn't
+#   exist (must include FP)
+LBL_RECAL_TEMPLATE = Const('LBL_RECAL_TEMPLATE', value=None, dtype=str,
+                           source=__NAME__, user=False, active=True,
+                           group=cgroup,
+                           description='Define objnames for which we should '
+                                        'recalculate template if it doesn\'t '
+                                        'exist (must include FP)')
+
+# Define which object names should be run through LBL compute in parellel
+#   i.e. break in to Ncore chunks (comma separated list)
+LBL_MULTI_OBJLIST = Const('LBL_MULTI_OBJLIST', value=None, dtype=str,
+                          source=__NAME__, user=False, active=True,
+                          group=cgroup,
+                          description='Define which object names should be '
+                                      ' run through LBL compute in parellel '
+                                      ' i.e. break in to Ncore chunks '
+                                      '(comma separated list)')
 
 # =============================================================================
 # POST PROCESS SETTINGS
