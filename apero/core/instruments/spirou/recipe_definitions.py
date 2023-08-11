@@ -1365,8 +1365,8 @@ apero_lbl_mask.description = 'Create LBL mask'
 apero_lbl_mask.epilog = ''
 apero_lbl_mask.recipe_type = 'recipe'
 apero_lbl_mask.recipe_kind = 'post'
-apero_lbl_mask.outputs(LBL_MASK=files.lbl_mask_file,
-                       LBL_TEMPLATE=files.lbl_template_file)
+apero_lbl_mask.set_outputs(LBL_MASK=files.lbl_mask_file,
+                           LBL_TEMPLATE=files.lbl_template_file)
 apero_lbl_mask.set_arg(name='objname', pos=0, dtype=str,
                        helpstr=textentry('MKTEMP_OBJNAME_HELP'))
 apero_lbl_mask.group_func = grouping.no_group
@@ -1388,7 +1388,7 @@ apero_lbl_compute.description = 'Run LBL compute'
 apero_lbl_compute.epilog = ''
 apero_lbl_compute.recipe_type = 'recipe'
 apero_lbl_compute.recipe_kind = 'post'
-apero_lbl_compute.outputs(LBL_FITS=files.lbl_fits_file)
+apero_lbl_compute.set_outputs(LBL_FITS=files.lbl_fits_file)
 apero_lbl_compute.set_arg(name='objname', pos=0, dtype=str,
                           helpstr=textentry('MKTEMP_OBJNAME_HELP'))
 apero_lbl_compute.set_kwarg(name='--iteration', dtype=int,
@@ -1417,12 +1417,12 @@ apero_lbl_compile.description = 'Run LBL compute'
 apero_lbl_compile.epilog = ''
 apero_lbl_compile.recipe_type = 'recipe'
 apero_lbl_compile.recipe_kind = 'post'
-apero_lbl_compile.outputs(LBL_RDB=files.lbl_rdb_file,
-                          LBL_RDB_FITS=files.lbl_rdb_fits_file,
-                          LBL_RDB2_FILE=files.lbl_rdb2_file,
-                          LBL_RDB_DRIFT_FILE=files.lbl_rdb_drift_file,
-                          LBL_RDB2_DRIFT_FILE=files.lbl_rdb2_drift_file,
-                          LBL_DRIFT=files.lbl_drift_file)
+apero_lbl_compile.set_outputs(LBL_RDB=files.lbl_rdb_file,
+                              LBL_RDB_FITS=files.lbl_rdb_fits_file,
+                              LBL_RDB2_FILE=files.lbl_rdb2_file,
+                              LBL_RDB_DRIFT_FILE=files.lbl_rdb_drift_file,
+                              LBL_RDB2_DRIFT_FILE=files.lbl_rdb2_drift_file,
+                              LBL_DRIFT=files.lbl_drift_file)
 apero_lbl_compile.set_arg(name='objname', pos=0, dtype=str,
                           helpstr=textentry('MKTEMP_OBJNAME_HELP'))
 apero_lbl_compile.group_func = grouping.no_group

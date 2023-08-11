@@ -1395,7 +1395,7 @@ class DrsRecipe(object):
             # add the rest as separate arguments
             for value in values:
                 # finally append the string to str_arg_list
-                self.str_arg_list.append(value)
+                self.str_arg_list.append(str(value))
         else:
             strarg = [arg.argname, values]
             self.str_arg_list.append(strfmt.format(*strarg))

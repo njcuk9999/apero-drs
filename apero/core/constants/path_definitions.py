@@ -245,7 +245,7 @@ class LBLPath(BlockPath):
     description: lang.Text = 'LBL reduction path'
     name: str = 'lbl'
     key: str = 'LBL_PATH'
-    argname: str = 'outdir'
+    argname: str = 'lbldir'
 
     def __init__(self, params, check: bool = True):
         """
