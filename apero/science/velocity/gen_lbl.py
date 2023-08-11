@@ -11,6 +11,7 @@ Created on 2019-08-21 at 12:28
 """
 
 import os
+from typing import Optional
 
 import numpy as np
 
@@ -18,6 +19,7 @@ from apero import lang
 from apero.base import base
 from apero.core import constants
 from apero.core.core import drs_database
+from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.core.utils import drs_recipe
 from apero.tools.recipes.bin import apero_get
@@ -38,6 +40,8 @@ WLOG = drs_log.wlog
 DrsRecipe = drs_recipe.DrsRecipe
 # Get parameter class
 ParamDict = constants.ParamDict
+# Get Input File class
+DrsInputFile = drs_file.DrsInputFile
 # Get the text types
 textentry = lang.textentry
 
@@ -167,10 +171,62 @@ def find_teff(params: ParamDict, objname: str) -> float:
     try:
         teff = float(teff)
     except Exception as _:
+        # TODO: Add to language database
         emsg = 'Not Teff found for {0}'.format(objname)
         WLOG(params, 'error', emsg)
     # return the teff
     return teff
+
+
+def add_output(params: ParamDict, recipe: DrsRecipe, drsfile: DrsInputFile,
+               inprefix: Optional[str] = None,
+               insuffix: Optional[str] = None,
+               objname: Optional[str] = None,
+               tempname: Optional[str] = None):
+    """
+    Add an output file to the file index database
+
+    :param params: ParamDict, paremeter dictionary of constants
+    :param recipe: DrsRecipe, the recipe instance that called this function
+    :param drsfile: DrsInputFile, the input file definition
+    :param inprefix: str or None, the file prefix identifier
+                     i.e. {identifier}_pp_e2dsff_tcorr_AB_
+    :param insuffix: str or None, the file suffix to add (optional)
+    :param objname: str, the object name
+    :param tempname: str, the template name
+    :return:
+    """
+    # get file index database
+    findexdbm = drs_database.FileIndexDatabase(params)
+    # deal with wrong drsfile (drsfile.outclass must have lbl_file attribute)
+    if not hasattr(drsfile.outclass, 'lbl_file'):
+        # TODO: Add to language database
+        emsg = 'File definition {0} must have an lbl outclass (lbl_ofile)'
+        eargs = [drsfile.name]
+        WLOG(params, 'error', emsg.format(*eargs))
+    # get kwargs for lbl_file
+    kwargs = dict()
+    kwargs['objname'] = objname
+    kwargs['tempname'] = tempname
+    kwargs['inprefix'] = inprefix
+    kwargs['insuffix'] = insuffix
+    # construct the base filename
+    filename= drsfile.outclass.lbl_file(params, drsfile, **kwargs)
+    # if file does not exist do not add to the file index database
+    if not os.path.exists(filename) and drsfile.required:
+        # TODO: Add to language database
+        emsg = 'Expected LBL file does not exist: {0}'
+        eargs = [filename]
+        WLOG(params, 'error', emsg.format(*eargs))
+    # convert absolute path to a drs path
+    basefile = drs_file.DrsPath(params, abspath=filename)
+    # print progres
+    # TODO: Add to language database
+    msg = 'Adding file to file index database: {0}'
+    margs = [filename]
+    WLOG(params, '', msg.format(*margs))
+    # add file to index database
+    findexdbm.add_entry(basefile, 'lbl', recipe.name)
 
 
 # =============================================================================

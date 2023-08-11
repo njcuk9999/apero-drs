@@ -104,7 +104,7 @@ BlockPath = pathdef.BlockPath
 # get out file class
 OutFileTypes = Union[out.OutFile, out.GeneralOutFile, out.NpyOutFile,
 out.DebugOutFile, out.BlankOutFile, out.CalibOutFile,
-out.RefCalibOutFile, out.SetOutFile, out.PostOutFile,
+out.RefCalibOutFile, out.SetOutFile, out.LBLOutFile, out.PostOutFile,
 None]
 
 
@@ -637,7 +637,8 @@ class DrsInputFile:
                  instrument: Optional[str] = None,
                  nosave: Optional[bool] = False,
                  description: Union[str, None] = None,
-                 inpath: Union[str, None] = None):
+                 inpath: Union[str, None] = None,
+                 required: bool = True):
         """
         Create a DRS Input File object
 
@@ -662,7 +663,7 @@ class DrsInputFile:
                        i.e. if this is a pp file the intype would be a raw file
         :param path: string, the path to save the file to (when writing)
                      this may be left blank and defaults to the recipe default
-                     (recommended in most cases) - ma be relative
+                     (recommended in most cases) - may be relative
         :param basename: string, the basename (i.e. filename without path) for
                          the file
         :param inputdir: string, the input directory (associated with an input
@@ -710,6 +711,8 @@ class DrsInputFile:
         :param inpath: str or None, if set is a directory to look for the file
                        in - this is in exceptional cases and overrides normal
                        functionality
+        :param required: bool, if True this file is always expectedt to exist
+                         if recipe ran correctly
 
         - Parent class for Drs Fits File object (DrsFitsFile)
         """
@@ -785,6 +788,8 @@ class DrsInputFile:
         self.inpath = inpath
         # set a flag that no save is active
         self.nosave = nosave
+        # required flag
+        self.required = required
 
     def __getstate__(self) -> dict:
         """
@@ -1936,7 +1941,8 @@ class DrsFitsFile(DrsInputFile):
                  instrument: Optional[str] = None,
                  nosave: Optional[bool] = False,
                  description: Union[str, None] = None,
-                 inpath: Union[str, None] = None):
+                 inpath: Union[str, None] = None,
+                 required: bool = True):
         """
         Create a DRS Input File object
 
@@ -2004,6 +2010,8 @@ class DrsFitsFile(DrsInputFile):
         :param inpath: str or None, if set is a directory to look for the file
                        in - this is in exceptional cases and overrides normal
                        functionality
+        :param required: bool, if True this file is always expectedt to exist
+                         if recipe ran correctly
 
         - Parent class for Drs Fits File object (DrsFitsFile)
         """
@@ -2021,7 +2029,7 @@ class DrsFitsFile(DrsInputFile):
                               dbkey, rkeys, numfiles, shape, hdict,
                               output_dict, datatype, dtype, is_combined,
                               combined_list, infiles, s1d, hkeys, instrument,
-                              nosave, description, inpath)
+                              nosave, description, inpath, required)
         # if ext in kwargs then we have a file extension to check
         self.filetype = filetype
         # set the input extension type
@@ -2106,6 +2114,8 @@ class DrsFitsFile(DrsInputFile):
             self.s1d = []
         else:
             self.s1d = s1d
+        # set the required flag
+        self.required = required
 
     def __getstate__(self) -> dict:
         """
@@ -2209,7 +2219,8 @@ class DrsFitsFile(DrsInputFile):
                 instrument: Optional[str] = None,
                 nosave: Optional[bool] = None,
                 description: Optional[str] = None,
-                inpath: Union[str, None] = None):
+                inpath: Union[str, None] = None,
+                required: bool = True):
         """
         Create a new copy of DRS Input File object - unset parameters come
         from current instance of Drs Input File
@@ -2286,6 +2297,8 @@ class DrsFitsFile(DrsInputFile):
         :param inpath: str or None, if set is a directory to look for the file
                        in - this is in exceptional cases and overrides normal
                        functionality
+        :param required: bool, if True this file is always expectedt to exist
+                         if recipe ran correctly
 
         - Parent class for Drs Fits File object (DrsFitsFile)
         """
@@ -2299,7 +2312,7 @@ class DrsFitsFile(DrsInputFile):
                             outclass, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, infiles, s1d, hkeys,
-                            instrument, nosave, description, inpath)
+                            instrument, nosave, description, inpath, required)
 
     def string_output(self) -> str:
         """
@@ -2371,7 +2384,8 @@ class DrsFitsFile(DrsInputFile):
                   instrument: Optional[str] = None,
                   nosave: Optional[bool] = None,
                   description: Union[str, None] = None,
-                  inpath: Union[str, None] = None):
+                  inpath: Union[str, None] = None,
+                  required: bool = True):
         """
         Copy most keys from drsfile (other arguments override attributes coming
         from drfile (or self)
@@ -2449,6 +2463,8 @@ class DrsFitsFile(DrsInputFile):
         :param inpath: str or None, if set is a directory to look for the file
                in - this is in exceptional cases and overrides normal
                functionality
+        :param required: bool, if True this file is always expectedt to exist
+                         if recipe ran correctly
         """
         # set function name
         func_name = display_func('copyother', __NAME__,
@@ -2462,8 +2478,8 @@ class DrsFitsFile(DrsInputFile):
                             obs_dir, data, header, fileset, filesetnames,
                             outclass, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
-                            is_combined, combined_list, s1d, hkeys, instrument,
-                            nosave, description, inpath)
+                            is_combined, combined_list, infiles, s1d, hkeys,
+                            instrument, nosave, description, inpath, required)
 
     def completecopy(self, drsfile,
                      name: Union[str, None] = None,
@@ -2503,7 +2519,8 @@ class DrsFitsFile(DrsInputFile):
                      instrument: Optional[str] = None,
                      nosave: Optional[bool] = None,
                      description: Union[str, None] = None,
-                     inpath: Union[str, None] = None):
+                     inpath: Union[str, None] = None,
+                     required: bool = True):
         """
         Copy all keys from drsfile (unless other arguments set - these override
         copy from drsfile)
@@ -2581,6 +2598,8 @@ class DrsFitsFile(DrsInputFile):
         :param inpath: str or None, if set is a directory to look for the file
                in - this is in exceptional cases and overrides normal
                functionality
+        :param required: bool, if True this file is always expectedt to exist
+                         if recipe ran correctly
         """
         # set function name
         # _ = display_func('completecopy', __NAME__, self.class_name)
@@ -2592,7 +2611,7 @@ class DrsFitsFile(DrsInputFile):
                             outclass, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, infiles, s1d, hkeys,
-                            instrument, nosave, description, inpath)
+                            instrument, nosave, description, inpath, required)
 
     # -------------------------------------------------------------------------
     # file checking
@@ -5141,7 +5160,8 @@ class DrsNpyFile(DrsInputFile):
                  instrument: Optional[str] = None,
                  nosave: Optional[bool] = False,
                  description: Union[str, None] = None,
-                 inpath: Union[str, None] = None):
+                 inpath: Union[str, None] = None,
+                 required: bool = True):
         """
         Create a DRS Npy File Input object
 
@@ -5191,6 +5211,8 @@ class DrsNpyFile(DrsInputFile):
         :param inpath: str or None, if set is a directory to look for the file
                        in - this is in exceptional cases and overrides normal
                        functionality
+        :param required: bool, if True this file is always expectedt to exist
+                 if recipe ran correctly
         """
         # set class name
         self.class_name = 'DrsNpyFile'
@@ -5206,8 +5228,8 @@ class DrsNpyFile(DrsInputFile):
                               fileset, filesetnames, outclass, inext, dbname,
                               dbkey, rkeys, numfiles, shape, hdict,
                               output_dict, datatype, dtype, is_combined,
-                              combined_list, s1d, hkeys, instrument,
-                              nosave, description, inpath)
+                              combined_list, infiles, s1d, hkeys, instrument,
+                              nosave, description, inpath, required)
         # these keys are not set in DrsInputFile
         self.inext = inext
         # get tag
@@ -6255,7 +6277,8 @@ class DrsOutFile(DrsInputFile):
         self.name = name
         # get super init
         DrsInputFile.__init__(self, name, filetype, suffix, outclass=outclass,
-                              inext=inext, instrument=instrument, inpath=inpath)
+                              inext=inext, instrument=instrument, inpath=inpath,
+                              required=required)
         # store extensions
         self.extensions = dict()
         self.header_add = dict()
@@ -8693,7 +8716,8 @@ def _copydrsfile(drsfileclass,
                  instrument: Optional[str] = None,
                  nosave: Optional[bool] = None,
                  description: Union[str, None] = None,
-                 inpath: Union[str, None] = None):
+                 inpath: Union[str, None] = None,
+                 required: bool = True):
     """
     Global copier of file instance
 
@@ -8775,6 +8799,8 @@ def _copydrsfile(drsfileclass,
     :param inpath: str or None, if set is a directory to look for the file
                    in - this is in exceptional cases and overrides normal
                    functionality
+    :param required: bool, if True this file is always expectedt to exist
+                     if recipe ran correctly
 
     - Parent class for Drs Fits File object (DrsFitsFile)
     """
