@@ -14,9 +14,10 @@ import os
 import sys
 import traceback
 import warnings
+import re
 from collections import OrderedDict
 from signal import signal, SIGINT
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -1710,11 +1711,18 @@ def _display_python_modules() -> str:
 
     :return: string, a string representation of the python modules
     """
-
     # load user requirements
-    # TODO: can this go back to np.loadtxt once numpy 1.23 bug fixed?
-    packages, versions = np.genfromtxt(base.RECOMM_USER, dtype=str,
-                                       delimiter='==', unpack=True)
+    packages, versions, sources = [], [], []
+
+    with open(base.RECOMM_USER, 'r') as requirements_file:
+        for line in requirements_file:
+            if line.strip() and not line.strip().startswith('#'):
+                package, source, version = extract_package_info(line)
+                if package is not None:
+                    packages.append(package)
+                    versions.append(version)
+                    sources.append(source)
+
     # storage
     storage = textentry('40-000-00017')
     # loop around packages and get versions
@@ -1729,14 +1737,43 @@ def _display_python_modules() -> str:
                 version = mod.__version__
                 # get required version
                 rversion = versions[p_it]
-                # add to string storage (for return)
-                pargs = [package, version, rversion]
-                storage += '\n\t{0}: {1}  (req: {2})'.format(*pargs)
+                roperator = sources[p_it]
+                # deal with requirements using the @ operator
+                if roperator == '@':
+                    pargs = [package, version, versions[p_it]]
+                    storage += '\n\t{0}: {1} ({2})'.format(*pargs)
+                # otherwise deal with other operators
+                else:
+                    # add to string storage (for return)
+                    pargs = [package, version, roperator, rversion]
+                    storage += '\n\t{0}: {1}  (req{2}{3})'.format(*pargs)
         except Exception as _:
             continue
 
     # return string
     return storage
+
+
+def extract_package_info(line: str
+                         ) -> Tuple[Optional[str], Optional[str], Optional[str]]:
+    # match string like 'package @ URL'
+    match_string = r'^\s*([\w-]+)\s*@.*'
+    # Check if the line has the format 'package @ URL'
+    if re.match(match_string, line):
+        package_name = line.split('@')[0].strip()
+        source = line.split('@')[1].strip()
+        return package_name, '@', source
+
+    # match string like 'package == version_spec'
+    match_string = r'^([\w-]+)\s*(?:(==|>=|<=|>|<)\s*([\w\d.\-]+))?.*'
+    # Check if the line has the format 'package version_spec'
+    package_info = re.match(match_string, line)
+    if package_info:
+        package_name = package_info.group(1)
+        version_operator = package_info.group(2)
+        version = package_info.group(3)
+        return package_name, version_operator, version
+    return None, None, None
 
 
 # =============================================================================

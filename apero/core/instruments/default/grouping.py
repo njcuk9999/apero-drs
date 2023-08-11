@@ -691,13 +691,11 @@ def lbl_compute_group(rargs: Dict[str, DrsArgument],
         for core in range(cores):
             # copy the run instance
             run_inst2 = run_inst.copy()
-            # get the total number of cores
-            total = int(cores)
-            # get the iteration number
-            iteration = core + 1
             # add value to dictionary
-            run_inst2.dictionary['total'] = total
-            run_inst2.dictionary['iteration'] = iteration
+            # total is the total number of cores
+            run_inst2.dictionary['total'] = str(cores)
+            # iteration is the core number (starting at zero)
+            run_inst2.dictionary['iteration'] = str(core)
             # append to run instances
             new_run_instances.append(run_inst2)
     # add iteration and total to arg_order

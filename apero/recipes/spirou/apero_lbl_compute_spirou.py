@@ -12,21 +12,23 @@ Created on 2023-08-09 at 11:14
 
 @author: cook
 """
-from typing import Any, Dict, List, Optional, Tuple, Union
+import os
+import sys
+from typing import Any, Dict, Optional, Tuple, Union
 
 from apero import lang
 from apero.base import base
 from apero.core import constants
 from apero.core.core import drs_log
+from apero.core.instruments.spirou import file_definitions as files
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
 from apero.science.velocity import gen_lbl
-from apero.core.instruments.spirou import file_definitions as files
 
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero_lbl_ref_spirou.py'
+__NAME__ = 'apero_lbl_compute_spirou.py'
 __INSTRUMENT__ = 'SPIROU'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
@@ -52,10 +54,10 @@ textentry = lang.textentry
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(obs_dir: Optional[str] = None, files: Optional[List[str]] = None,
+def main(objname: Optional[str] = None,
          **kwargs) -> Union[Dict[str, Any], Tuple[DrsRecipe, ParamDict]]:
     """
-    Main function for apero_flat_spirou.py
+    Main function for apero_lbl_compute
 
     :param obs_dir: string, the night name sub-directory
     :param files: list of strings or string, the list of files to process
@@ -66,7 +68,7 @@ def main(obs_dir: Optional[str] = None, files: Optional[List[str]] = None,
     :returns: dictionary of the local space
     """
     # assign function calls (must add positional)
-    fkwargs = dict(obs_dir=obs_dir, files=files, **kwargs)
+    fkwargs = dict(objname=objname, **kwargs)
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
     recipe, params = drs_startup.setup(__NAME__, __INSTRUMENT__, fkwargs)
@@ -110,11 +112,13 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         data_type = 'SCIENCE'
     # add the iteration and total number of iterations keyword
     kwargs['iteration'] = params['INPUTS']['ITERATION']
-    kwargs['total'] = params['INPUTS']['TOTAL_ITERATIONS']
+    kwargs['total'] = params['INPUTS']['TOTAL']
     # -------------------------------------------------------------------------
     # try to import lbl (may not exist)
     try:
         from lbl.recipes import lbl_compute
+        # remove any current arguments from sys.argv
+        sys.argv = [__NAME__]
     except ImportError:
         emsg = 'Cannot run LBL (not installed) please install LBL'
         WLOG(params, 'error', emsg)
@@ -133,13 +137,18 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         lblself = lbl_compute.main(object_science=object_science,
                                    object_template=object_template,
                                    data_type=data_type, **kwargs)
-        # get mask type
+        # get science files
         science_files = lblself['science_files']
         # add output file(s) to database
         for science_file in science_files:
+            # get science file base name
+            basename = os.path.basename(science_file)
+            # remove .fits from basename
+            basename = basename.replace('.fits', '')
+            # add to database
             gen_lbl.add_output(params, recipe,
                                drsfile=files.lbl_fits_file,
-                               inprefix=object_science,
+                               inprefix=basename,
                                objname=object_science,
                                tempname=object_template)
     except Exception as e:
@@ -165,13 +174,18 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         lblfriend = lbl_compute.main(object_science=object_science,
                                      object_template=object_template,
                                      data_type=data_type, **kwargs)
-        # get mask type
+        # get science files
         science_files = lblfriend['science_files']
         # add output file(s) to database
         for science_file in science_files:
+            # get science file base name
+            basename = os.path.basename(science_file)
+            # remove .fits from basename
+            basename = basename.replace('.fits', '')
+            # add to database
             gen_lbl.add_output(params, recipe,
                                drsfile=files.lbl_fits_file,
-                               inprefix=object_science,
+                               inprefix=basename,
                                objname=object_science,
                                tempname=object_template)
     except Exception as e:

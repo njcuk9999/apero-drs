@@ -11,6 +11,7 @@ Created on 2023-08-09 at 11:14
 
 @author: cook
 """
+import sys
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from apero import lang
@@ -51,10 +52,10 @@ textentry = lang.textentry
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(obs_dir: Optional[str] = None, files: Optional[List[str]] = None,
+def main(objname: Optional[str] = None,
          **kwargs) -> Union[Dict[str, Any], Tuple[DrsRecipe, ParamDict]]:
     """
-    Main function for apero_flat_spirou.py
+    Main function for apero_lbl_compute
 
     :param obs_dir: string, the night name sub-directory
     :param files: list of strings or string, the list of files to process
@@ -65,7 +66,7 @@ def main(obs_dir: Optional[str] = None, files: Optional[List[str]] = None,
     :returns: dictionary of the local space
     """
     # assign function calls (must add positional)
-    fkwargs = dict(obs_dir=obs_dir, files=files, **kwargs)
+    fkwargs = dict(objname=objname, **kwargs)
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
     recipe, params = drs_startup.setup(__NAME__, __INSTRUMENT__, fkwargs)
@@ -98,10 +99,6 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     objname = params['INPUTS']['OBJNAME']
     # get the objects for which to calculate a template
     recal_template = params.listp('LBL_RECAL_TEMPLATE', dtype=str)
-    # get teff for this object
-    teff = gen_lbl.find_teff(params, objname)
-    # get friend for this object name
-    friend = gen_lbl.find_friend(params, objname)
     # set up arguments for lbl
     kwargs = dict()
     kwargs['instrument'] = params['INSTRUMENT']
@@ -110,14 +107,20 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     skip_done = params['INPUTS'].get('SKIP_DONE', True)
     # deal with data type
     if objname in params.listp('LBL_SPECIFIC_DATATYPES', dtype=str):
-        kwargs['data_type'] = objname
+        data_type = objname
+        # Just set Teff to room temperature for non-science data
+        teff = 300
     else:
-        kwargs['data_type'] = 'SCIENCE'
+        data_type = 'SCIENCE'
+        # get teff for this object
+        teff = gen_lbl.find_teff(params, objname)
     # -------------------------------------------------------------------------
     # try to import lbl (may not exist)
     try:
-        from lbl.recipe import lbl_template
+        from lbl.recipes import lbl_template
         from lbl.recipes import lbl_mask
+        # remove any current arguments from sys.argv
+        sys.argv = [__NAME__]
     except ImportError:
         # TODO: Add to language database
         emsg = 'Cannot run LBL (not installed) please install LBL'
@@ -136,14 +139,15 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             margs = [object_science, object_template]
             WLOG(params, 'info', msg.format(*margs))
             # run compute
-            lblrtn = lbl_mask.main(object_science=object_science,
-                                   object_template=object_template,
-                                   overwrite=False, **kwargs)
-            # add output file(s) to database
+            lblrtn = lbl_template.main(object_science=object_science,
+                                       object_template=object_template,
+                                       overwrite=False, data_type=data_type,
+                                       **kwargs)
+            # add output file(s) to database (no tempname used as
+            # template=objname)
             gen_lbl.add_output(params, recipe,
                                drsfile=files.lbl_template_file,
-                               objname=object_science,
-                               tempname=object_template)
+                               objname=object_science, tempname='')
 
         except Exception as e:
             # TODO: Add to language database
@@ -166,18 +170,19 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         lblrtn = lbl_mask.main(object_science=object_science,
                                object_template=object_template,
                                object_teff=teff,
-                               skip_done=skip_done,
+                               skip_done=skip_done, data_type=data_type,
                                **kwargs)
         # get mask type
-        lblparams = lblrtn['params'].inst.params
+        lblparams = lblrtn['inst'].params
         # get the in suffix (mask type) based on lbl data type from lbl params
-        insuffix = lblparams[f'{kwargs["data_type"]}_MASK_TYPE']
-        # add output file(s) to database
+        mask_type = lblparams[f'{data_type.upper()}_MASK_TYPE']
+        insuffix = f'_{mask_type}'
+        # add output file(s) to database (no tempname used as
+        # template=objname)
         gen_lbl.add_output(params, recipe,
                            drsfile=files.lbl_mask_file,
                            insuffix=insuffix,
-                           objname=object_science,
-                           tempname=object_template)
+                           objname=object_science, tempname='')
     except Exception as e:
         # TODO: Add to language database
         emsg = 'LBL Excecption {0}: {1}'

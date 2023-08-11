@@ -11,7 +11,7 @@ Created on 2019-08-21 at 12:28
 """
 
 import os
-from typing import Optional
+from typing import Any, Dict, Optional
 
 import numpy as np
 
@@ -22,6 +22,7 @@ from apero.core.core import drs_database
 from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.core.utils import drs_recipe
+from apero.io import drs_fits
 from apero.tools.recipes.bin import apero_get
 
 # =============================================================================
@@ -172,7 +173,7 @@ def find_teff(params: ParamDict, objname: str) -> float:
         teff = float(teff)
     except Exception as _:
         # TODO: Add to language database
-        emsg = 'Not Teff found for {0}'.format(objname)
+        emsg = 'No Teff found for {0}'.format(objname)
         WLOG(params, 'error', emsg)
     # return the teff
     return teff
@@ -225,8 +226,52 @@ def add_output(params: ParamDict, recipe: DrsRecipe, drsfile: DrsInputFile,
     msg = 'Adding file to file index database: {0}'
     margs = [filename]
     WLOG(params, '', msg.format(*margs))
+    # construct hkeys
+    hkeys = fake_hkeys(params, filename, drsfile, objname, tempname)
     # add file to index database
-    findexdbm.add_entry(basefile, 'lbl', recipe.name)
+    findexdbm.add_entry(basefile, 'lbl', recipe.name,
+                        runstring=recipe.runstring, hkeys=hkeys)
+
+
+
+def fake_hkeys(params: ParamDict, filename: str, drsfile: DrsInputFile,
+               objname: Optional[str] = None,
+               tempname: Optional[str] = None) -> Dict[str, Any]:
+    # get rkeys from pseudo constants
+    pconst = constants.pload()
+    iheader_cols = pconst.FILEINDEX_HEADER_COLS()
+    rkeys = list(iheader_cols.names)
+    # key to add to hkeys (if required by instrument)
+    pkeys = dict()
+    # if we are dealing with a fits file can get keys from the header
+    if filename.endswith('.fits'):
+        hdr = drs_fits.read_header(params, filename)
+        for key in rkeys:
+            # deal with drs keys
+            if key in params:
+                drskey = params[key][0]
+            else:
+                drskey = str(key)
+            # get key from header
+            if drskey in list(hdr.keys()):
+                pkeys[key] = hdr[drskey]
+    # overwrite objectnames (if objname and tempname are valid)
+    if objname is not None and tempname is not None and len(tempname) > 0:
+        obj_temp = f'LBL[{objname}_{tempname}]'
+        pkeys['KW_OBJECTNAME'] = obj_temp
+        pkeys['KW_OBJECTNAME2'] = obj_temp
+    else:
+        obj_temp = f'LBL[{objname}]'
+        pkeys['KW_OBJECTNAME'] = obj_temp
+        pkeys['KW_OBJECTNAME2'] = obj_temp
+    # overwrite keys
+    pkeys['KW_OBJNAME'] = objname
+    pkeys['KW_INSTRUMENT'] = params['INSTRUMENT']
+    pkeys['KW_OUTPUT'] = drsfile.name
+    pkeys['KW_PID'] = params['PID']
+    pkeys['KW_DRS_DATE_NOW'] = params['DATE_NOW']
+    # return pkeys
+    return pkeys
 
 
 # =============================================================================

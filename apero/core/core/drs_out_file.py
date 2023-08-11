@@ -605,6 +605,8 @@ class LBLOutFile(OutFile):
         # set up path
         path = os.path.join(params['LBL_PATH'],
                             drsfile.path.replace('/', os.sep))
+        # deal with path requiring the object or template name
+        path = path.format(obj=objname, temp=tempname)
         # give error if filetype is not defined
         if drsfile.filetype is None:
             emsg = 'LBL file definition must have a filetype'
@@ -619,7 +621,8 @@ class LBLOutFile(OutFile):
             basename = drsfile.basename.format(obj=objname, temp=tempname)
 
         elif drsfile.suffix is not None:
-            basename = '{0}{1}'.format(inprefix, drsfile.suffix)
+            suffix = drsfile.suffix.format(obj=objname, temp=tempname)
+            basename = '{0}{1}'.format(inprefix, suffix)
 
         else:
             emsg = 'LBL file definition must have a basename or suffix'

@@ -1653,7 +1653,7 @@ lbl_fibers = ['AB']
 # lbl template file
 lbl_template_file = drs_input('LBL_TEMPLATE', path='templates',
                               filetype='.fits',
-                              basename='Template_s1dv_{obj}_sc1d_v_file_AB.fits',
+                              basename='Template_s1dv_{obj}_sc1d_v_file_AB',
                               datatype='table',
                               outclass=lbl_ofile,
                               description='Telluric 1D template file',
