@@ -136,7 +136,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # add output file(s) to database
         for drsfile in recipe.outputs:
             # do not check for a drift file unless we have an FP run
-            if data_type != 'FP' and drsfile == 'LBLDRIFT':
+            if data_type != 'FP' and drsfile == 'LBL_DRIFT':
                 continue
             # get required criteria
             gen_lbl.add_output(params, recipe,

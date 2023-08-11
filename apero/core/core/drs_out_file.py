@@ -51,6 +51,24 @@ class OutFile:
         self.calib = False
         self.tellu = False
 
+    def __str__(self) -> str:
+        # storage for flags
+        flags = []
+        # add flags
+        if self.reference:
+            flags.append('ref')
+        if self.debug:
+            flags.append('debug')
+        if self.calib:
+            flags.append('calib')
+        if self.tellu:
+            flags.append('tellu')
+        # return string representation
+        return f'{self.classname}[{",".join(flags)}]'
+
+    def __repr__(self) -> str:
+        return self.__str__()
+
     def copy(self) -> 'OutFile':
         """
         Return a new instance (copy) of the OutFile class
@@ -583,6 +601,14 @@ class LBLOutFile(OutFile):
         """
         super().__init__()
         self.classname = 'LBLOutFile'
+
+    def copy(self) -> 'LBLOutFile':
+        """
+        Copy the output file where output filename is set manually
+        :return:
+        """
+        new = LBLOutFile()
+        return new
 
     def lbl_file(self, params: ParamDict, drsfile: Any,
                  inprefix: Optional[str] = None,

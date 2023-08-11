@@ -216,15 +216,21 @@ def add_output(params: ParamDict, recipe: DrsRecipe, drsfile: DrsInputFile,
     # if file does not exist do not add to the file index database
     if not os.path.exists(filename) and drsfile.required:
         # TODO: Add to language database
-        emsg = 'Expected LBL file does not exist: {0}'
-        eargs = [filename]
+        emsg = 'Expected {0} does not exist: {1}'
+        eargs = [drsfile.name, filename]
         WLOG(params, 'error', emsg.format(*eargs))
+    elif not os.path.exists(filename):
+        # TODO: Add to language database
+        wmsg = 'Skipping {0}, does not exist and not required: {1}'
+        wargs = [drsfile.name, filename]
+        WLOG(params, 'warning', wmsg.format(*wargs), sublevel=1)
+        return
     # convert absolute path to a drs path
     basefile = drs_file.DrsPath(params, abspath=filename)
     # print progres
     # TODO: Add to language database
-    msg = 'Adding file to file index database: {0}'
-    margs = [filename]
+    msg = 'Adding {0} to file index database: {1}'
+    margs = [drsfile.name, filename]
     WLOG(params, '', msg.format(*margs))
     # construct hkeys
     hkeys = fake_hkeys(params, filename, drsfile, objname, tempname)
