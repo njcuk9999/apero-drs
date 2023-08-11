@@ -638,7 +638,7 @@ class DrsInputFile:
                  nosave: Optional[bool] = False,
                  description: Union[str, None] = None,
                  inpath: Union[str, None] = None,
-                 required: bool = True):
+                 required: Union[bool, None] = None):
         """
         Create a DRS Input File object
 
@@ -789,7 +789,10 @@ class DrsInputFile:
         # set a flag that no save is active
         self.nosave = nosave
         # required flag
-        self.required = required
+        if required is None:
+            self.required = True
+        else:
+            self.required = required
 
     def __getstate__(self) -> dict:
         """
@@ -1942,7 +1945,7 @@ class DrsFitsFile(DrsInputFile):
                  nosave: Optional[bool] = False,
                  description: Union[str, None] = None,
                  inpath: Union[str, None] = None,
-                 required: bool = True):
+                 required: Union[bool, None] = None):
         """
         Create a DRS Input File object
 
@@ -2220,7 +2223,7 @@ class DrsFitsFile(DrsInputFile):
                 nosave: Optional[bool] = None,
                 description: Optional[str] = None,
                 inpath: Union[str, None] = None,
-                required: bool = True):
+                required: Union[bool, None] = None):
         """
         Create a new copy of DRS Input File object - unset parameters come
         from current instance of Drs Input File
@@ -2385,7 +2388,7 @@ class DrsFitsFile(DrsInputFile):
                   nosave: Optional[bool] = None,
                   description: Union[str, None] = None,
                   inpath: Union[str, None] = None,
-                  required: bool = True):
+                  required: Union[bool, None] = None):
         """
         Copy most keys from drsfile (other arguments override attributes coming
         from drfile (or self)
@@ -2520,7 +2523,7 @@ class DrsFitsFile(DrsInputFile):
                      nosave: Optional[bool] = None,
                      description: Union[str, None] = None,
                      inpath: Union[str, None] = None,
-                     required: bool = True):
+                     required: Union[bool, None] = None):
         """
         Copy all keys from drsfile (unless other arguments set - these override
         copy from drsfile)
@@ -5161,7 +5164,7 @@ class DrsNpyFile(DrsInputFile):
                  nosave: Optional[bool] = False,
                  description: Union[str, None] = None,
                  inpath: Union[str, None] = None,
-                 required: bool = True):
+                 required: Union[bool, None] = None):
         """
         Create a DRS Npy File Input object
 
@@ -8717,7 +8720,7 @@ def _copydrsfile(drsfileclass,
                  nosave: Optional[bool] = None,
                  description: Union[str, None] = None,
                  inpath: Union[str, None] = None,
-                 required: bool = True):
+                 required: Union[bool, None] = None):
     """
     Global copier of file instance
 
@@ -8955,6 +8958,9 @@ def _copydrsfile(drsfileclass,
     # set in path
     if inpath is None:
         inpath = deepcopy(instance2.inpath)
+    # copy required
+    if required is None:
+        required = deepcopy(instance2.required)
     # return new instance
     return drsfileclass(name, filetype, suffix, remove_insuffix, prefix,
                         fibers, fiber, params, filename, intype, path,
@@ -8963,7 +8969,7 @@ def _copydrsfile(drsfileclass,
                         dbkey, rkeys, numfiles, shape, hdict,
                         output_dict, datatype, dtype, is_combined,
                         combined_list, infiles, s1d, new_hkeys, instrument,
-                        nosave, description, inpath)
+                        nosave, description, inpath, required)
 
 # =============================================================================
 # End of code
