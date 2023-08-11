@@ -8,7 +8,7 @@ Created on 2019-03-21 at 18:35
 @author: cook
 """
 import os
-from typing import Any, Tuple, Union
+from typing import Any, Optional, Tuple, Union
 
 from apero.base import base
 from apero.core.constants import param_functions
@@ -573,7 +573,74 @@ class SetOutFile(OutFile):
         return abspath
 
 
-# noinspection PyMethodOverriding
+class LBLOutFile(OutFile):
+    """
+    LBL output file class
+    """
+    def __init__(self):
+        """
+        Construct the post process output file
+        """
+        super().__init__()
+        self.classname = 'LBLOutFile'
+
+    def lbl_file(self, params: ParamDict, drsfile: Any,
+                 inprefix: Optional[str] = None,
+                 insuffix: Optional[str] = None,
+                 objname: Optional[str] = None,
+                 tempname: Optional[str] = None) -> str:
+        """
+        A way to construct the predicted path of an lbl output file
+
+        :param params: ParamDict, paremeter dictionary of constants
+        :param drsfile: DrsInputFile, the input file definition
+        :param inprefix: str or None, the file prefix identifier
+                         i.e. {identifier}_pp_e2dsff_tcorr_AB_
+        :param insuffix: str or None, the file suffix to add (optional)
+        :param objname: str, the object name
+        :param tempname: str, the template name
+
+        :return: str, the absolute path to the file
+        """
+        # set up path
+        path = os.path.join(params['LBL_PATH'],
+                            drsfile.path.replace('/', os.sep))
+        # give error if filetype is not defined
+        if drsfile.filetype is None:
+            emsg = 'LBL file definition must have a filetype'
+            # TODO: Change to DrsCodedException
+            raise ValueError(emsg)
+
+        if drsfile.basename is not None:
+            if objname is None or tempname is None:
+                # TODO: Change to DrsCodedException
+                emsg = 'LBL file definition must have objname and tempname'
+                raise ValueError(emsg)
+            basename = drsfile.basename.format(obj=objname, temp=tempname)
+
+        elif drsfile.suffix is not None:
+            basename = '{0}{1}'.format(inprefix, drsfile.suffix)
+
+        else:
+            emsg = 'LBL file definition must have a basename or suffix'
+            # TODO: Change to DrsCodedException
+            raise ValueError(emsg)
+        # ---------------------------------------------------------------------
+        # add the in suffix if given
+        if insuffix is not None:
+            basename += insuffix
+        # ---------------------------------------------------------------------
+        # add the extension
+        basename += drsfile.filetype
+        # ---------------------------------------------------------------------
+        # construct full path to file
+        filename = os.path.join(path, basename)
+        # ---------------------------------------------------------------------
+        # return filename
+        return filename
+
+
+    # noinspection PyMethodOverriding
 class PostOutFile(OutFile):
     """
     Post process output file class
@@ -593,6 +660,7 @@ class PostOutFile(OutFile):
         new = PostOutFile()
         return new
 
+    # noinspection PyMethodOverriding
     def construct(self, params: ParamDict, drsfile: Any, identifier: str,
                   obs_dir: Union[str, None] = None) -> Tuple[str, str]:
         """

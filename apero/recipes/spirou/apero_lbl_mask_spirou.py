@@ -20,6 +20,7 @@ from apero.core.core import drs_log
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
 from apero.science.velocity import gen_lbl
+from apero.core.instruments.spirou import file_definitions as files
 
 # =============================================================================
 # Define variables
@@ -118,6 +119,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         from lbl.recipe import lbl_template
         from lbl.recipes import lbl_mask
     except ImportError:
+        # TODO: Add to language database
         emsg = 'Cannot run LBL (not installed) please install LBL'
         WLOG(params, 'error', emsg)
         return locals()
@@ -129,16 +131,25 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             object_science = str(objname)
             object_template = str(objname)
             # print progress
+            # TODO: Add to language database
             msg = 'Running LBL template for {0}_{1}'
             margs = [object_science, object_template]
             WLOG(params, 'info', msg.format(*margs))
             # run compute
-            lbltemp = lbl_mask.main(object_science=object_science,
-                                    object_template=object_template,
-                                    overwrite=False, **kwargs)
+            lblrtn = lbl_mask.main(object_science=object_science,
+                                   object_template=object_template,
+                                   overwrite=False, **kwargs)
+            # add output file(s) to database
+            gen_lbl.add_output(params, recipe,
+                               drsfile=files.lbl_template_file,
+                               objname=object_science,
+                               tempname=object_template)
+
         except Exception as e:
+            # TODO: Add to language database
             emsg = 'LBL Excecption {0}: {1}'
-            WLOG(params, 'error', emsg.format(type(e), str(e)))
+            eargs = [type(e), str(e)]
+            WLOG(params, 'error', emsg.format(*eargs))
     else:
         lbltemp = None
     # -------------------------------------------------------------------------
@@ -152,14 +163,26 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         margs = [object_science, object_template]
         WLOG(params, 'info', msg.format(*margs))
         # run compute
-        lblself = lbl_mask.main(object_science=object_science,
-                                object_template=object_template,
-                                object_teff=teff,
-                                skip_done=skip_done,
-                                **kwargs)
+        lblrtn = lbl_mask.main(object_science=object_science,
+                               object_template=object_template,
+                               object_teff=teff,
+                               skip_done=skip_done,
+                               **kwargs)
+        # get mask type
+        lblparams = lblrtn['params'].inst.params
+        # get the in suffix (mask type) based on lbl data type from lbl params
+        insuffix = lblparams[f'{kwargs["data_type"]}_MASK_TYPE']
+        # add output file(s) to database
+        gen_lbl.add_output(params, recipe,
+                           drsfile=files.lbl_mask_file,
+                           insuffix=insuffix,
+                           objname=object_science,
+                           tempname=object_template)
     except Exception as e:
+        # TODO: Add to language database
         emsg = 'LBL Excecption {0}: {1}'
-        WLOG(params, 'error', emsg.format(type(e), str(e)))
+        eargs = [type(e), str(e)]
+        WLOG(params, 'error', emsg.format(*eargs))
 
     # ----------------------------------------------------------------------
     # End of main code

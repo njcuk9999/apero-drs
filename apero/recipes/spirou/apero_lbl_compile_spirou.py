@@ -96,8 +96,6 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     mainname = __NAME__ + '._main()'
     # get object name
     objname = params['INPUTS']['OBJNAME']
-    # get friend for this object name
-    friend = gen_lbl.find_friend(params, objname)
     # set up arguments for lbl
     kwargs = dict()
     kwargs['instrument'] = params['INSTRUMENT']
@@ -106,9 +104,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     kwargs['skip_done'] = params['INPUTS'].get('SKIP_DONE', True)
     # deal with data type
     if objname in params.listp('LBL_SPECIFIC_DATATYPES', dtype=str):
-        kwargs['data_type'] = objname
+        data_type = objname
     else:
-        kwargs['data_type'] = 'SCIENCE'
+        data_type = 'SCIENCE'
     # -------------------------------------------------------------------------
     # try to import lbl (may not exist)
     try:
@@ -130,13 +128,31 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # run compute
         lblself = lbl_compile.main(object_science=object_science,
                                    object_template=object_template,
-                                   **kwargs)
+                                   data_type=data_type, **kwargs)
+        # ---------------------------------------------------------------------
+        # add output file(s) to database
+        for drsfile in recipe.outputs:
+            # do not check for a drift file unless we have an FP run
+            if data_type != 'FP' and drsfile == 'LBLDRIFT':
+                continue
+            # get required criteria
+            gen_lbl.add_output(params, recipe,
+                               drsfile=recipe.outputs[drsfile],
+                               inprefix=object_science,
+                               objname=object_science,
+                               tempname=object_template)
     except Exception as e:
         emsg = 'LBL Excecption {0}: {1}'
         WLOG(params, 'error', emsg.format(type(e), str(e)))
     # -------------------------------------------------------------------------
-    # run lbl compute for friend
+    # stop here if we do not have a science frame
+    if data_type != 'SCIENCE':
+        return locals()
+    # -------------------------------------------------------------------------
+    # run lbl compile for friend
     try:
+        # get friend for this object name
+        friend = gen_lbl.find_friend(params, objname)
         # setup object and template names
         object_science = str(objname)
         object_template = str(friend)
@@ -146,8 +162,20 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         WLOG(params, 'info', msg.format(*margs))
         # run compute
         lblfriend = lbl_compile.main(object_science=object_science,
-                                   object_template=object_template,
-                                   **kwargs)
+                                     object_template=object_template,
+                                     data_type=data_type, **kwargs)
+        # ---------------------------------------------------------------------
+        # add output file(s) to database
+        for drsfile in recipe.outputs:
+            # do not check for a drift file unless we have an FP run
+            if data_type != 'FP' and drsfile == 'LBLDRIFT':
+                continue
+            # get required criteria
+            gen_lbl.add_output(params, recipe,
+                               drsfile=recipe.outputs[drsfile],
+                               inprefix=object_science,
+                               objname=object_science,
+                               tempname=object_template)
     except Exception as e:
         emsg = 'LBL Excecption {0}: {1}'
         WLOG(params, 'error', emsg.format(type(e), str(e)))
