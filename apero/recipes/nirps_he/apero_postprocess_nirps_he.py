@@ -24,7 +24,7 @@ from apero.core.utils import drs_startup
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero_postprocess_spirou.py'
+__NAME__ = 'apero_postprocess_nirps_he.py'
 __INSTRUMENT__ = 'NIRPS_HE'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
