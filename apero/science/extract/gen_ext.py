@@ -815,6 +815,8 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     e2dsfffile.infiles = list(hfiles)
     # add extraction type (does not change for future files)
     e2dsfffile.add_hkey('KW_EXT_TYPE', value=e2dsfffile.name)
+    # add effective readout noise
+    e2dsfile.add_hkey('KW_EFF_RON', value=eprops['EFF_RON'])
     # set output key
     e2dsfffile.add_hkey('KW_OUTPUT', value=e2dsfffile.name)
     # need to use different thermal ratio keys if we have corrected thermal
