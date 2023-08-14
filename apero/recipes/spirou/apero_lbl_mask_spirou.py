@@ -128,11 +128,11 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         return locals()
     # -------------------------------------------------------------------------
     if objname in recal_template:
+        # setup object and template names
+        object_science = str(objname)
+        object_template = str(objname)
         # run lbl template for self
         try:
-            # setup object and template names
-            object_science = str(objname)
-            object_template = str(objname)
             # print progress
             # TODO: Add to language database
             msg = 'Running LBL template for {0}_{1}'
@@ -151,17 +151,17 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
 
         except Exception as e:
             # TODO: Add to language database
-            emsg = 'LBL Excecption {0}: {1}'
-            eargs = [type(e), str(e)]
+            emsg = 'LBL Template Exception [{0}_{1}] {2}: {3}'
+            eargs = [object_science, object_template, type(e), str(e)]
             WLOG(params, 'error', emsg.format(*eargs))
     else:
         lbltemp = None
     # -------------------------------------------------------------------------
+    # setup object and template names
+    object_science = str(objname)
+    object_template = str(objname)
     # run lbl compute for self
     try:
-        # setup object and template names
-        object_science = str(objname)
-        object_template = str(objname)
         # print progress
         msg = 'Running LBL mask for {0}_{1}'
         margs = [object_science, object_template]
@@ -185,8 +185,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                            objname=object_science, tempname='')
     except Exception as e:
         # TODO: Add to language database
-        emsg = 'LBL Excecption {0}: {1}'
-        eargs = [type(e), str(e)]
+        emsg = 'LBL Mask Exception [{0}_{1}] {2}: {3}'
+        eargs = [object_science, object_template, type(e), str(e)]
         WLOG(params, 'error', emsg.format(*eargs))
 
     # ----------------------------------------------------------------------

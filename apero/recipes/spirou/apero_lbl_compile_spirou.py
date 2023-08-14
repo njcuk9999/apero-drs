@@ -122,11 +122,11 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # store errors for reporting later
     errors = []
     # -------------------------------------------------------------------------
+    # setup object and template names
+    object_science = str(objname)
+    object_template = str(objname)
     # run lbl compute for self
     try:
-        # setup object and template names
-        object_science = str(objname)
-        object_template = str(objname)
         # print progress
         msg = 'Running LBL compile for {0}_{1}'
         margs = [object_science, object_template]
@@ -148,23 +148,23 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                                objname=object_science,
                                tempname=object_template)
     except Exception as e:
-        emsg = 'LBL Excecption {0}: {1}'
-        eargs = [type(e), str(e)]
+        emsg = 'LBL Compile Exception [{0}_{1}] {2}: {3}'
+        eargs = [object_science, object_template, type(e), str(e)]
         errors.append(emsg.format(*eargs))
     # -------------------------------------------------------------------------
     # stop here if we do not have a science frame
     if data_type != 'SCIENCE':
-        emsg = 'Cannot run LBL (not installed) please install LBL'
-        WLOG(params, 'error', emsg)
+        if len(errors) == 1:
+            WLOG(params, 'warning', errors[0])
         return locals()
     # -------------------------------------------------------------------------
+    # get friend for this object name
+    friend = gen_lbl.find_friend(params, objname)
+    # setup object and template names
+    object_science = str(objname)
+    object_template = str(friend)
     # run lbl compile for friend
     try:
-        # get friend for this object name
-        friend = gen_lbl.find_friend(params, objname)
-        # setup object and template names
-        object_science = str(objname)
-        object_template = str(friend)
         # print progress
         msg = 'Running LBL compile for {0}_{1}'
         margs = [object_science, object_template]
@@ -186,12 +186,15 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                                objname=object_science,
                                tempname=object_template)
     except Exception as e:
-        emsg = 'LBL Excecption {0}: {1}'
-        eargs = [type(e), str(e)]
+        emsg = 'LBL Compile Exception [{0}_{1}] {2}: {3}'
+        eargs = [object_science, object_template, type(e), str(e)]
         errors.append(emsg.format(*eargs))
+    # ----------------------------------------------------------------------
     # report errors
-    if len(errors) > 0:
+    if len(errors) == 2:
         WLOG(params, 'error', '\n\n'.join(errors))
+    elif len(errors) == 1:
+        WLOG(params, 'warning', errors[0])
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
