@@ -1392,10 +1392,10 @@ apero_lbl_compute.set_outputs(LBL_FITS=files.lbl_fits_file)
 apero_lbl_compute.set_arg(name='objname', pos=0, dtype=str,
                           helpstr=textentry('MKTEMP_OBJNAME_HELP'))
 apero_lbl_compute.set_kwarg(name='--iteration', dtype=int,
-                            default=-1,
+                            default=-1, reprocess=True,
                             helpstr='Iteration number (for multiprocessing)')
 apero_lbl_compute.set_kwarg(name='--total', dtype=int,
-                            default=-1,
+                            default=-1, reprocess=True,
                             helpstr='Total number of iterations '
                                     '(for multiprocessing)')
 apero_lbl_compute.group_func = grouping.lbl_compute_group
