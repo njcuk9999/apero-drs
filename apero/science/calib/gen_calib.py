@@ -495,7 +495,7 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
     # Get basic image properties
     sigdet = infile.get_hkey('KW_RDNOISE')
     exptime = infile.get_hkey('KW_EXPTIME')
-    gain = infile.get_hkey('KW_GAIN')
+    gain = params['EFFGAIN']
     dprtype = infile.get_hkey('KW_DPRTYPE', dtype=str)
     saturate = pconst.SATURATION(params, infile.get_header())
     frmtime = pconst.FRAME_TIME(params, infile.get_header())

@@ -124,6 +124,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         WLOG(params, 'error', emsg)
         return locals()
     # -------------------------------------------------------------------------
+    # store errors for reporting later
+    errors = []
+    # -------------------------------------------------------------------------
     # run lbl compute for self
     try:
         # setup object and template names
@@ -153,10 +156,15 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                                tempname=object_template)
     except Exception as e:
         emsg = 'LBL Excecption {0}: {1}'
-        WLOG(params, 'error', emsg.format(type(e), str(e)))
+        eargs = [type(e), str(e)]
+        errors.append(emsg.format(*eargs))
     # -------------------------------------------------------------------------
     # stop here if we do not have a science frame
     if data_type != 'SCIENCE':
+        # report errors
+        if len(errors) > 0:
+            WLOG(params, 'error', '\n\n'.join(errors))
+        # End of main code
         return locals()
     # -------------------------------------------------------------------------
     # run lbl compute for friend
@@ -190,7 +198,13 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                                tempname=object_template)
     except Exception as e:
         emsg = 'LBL Excecption {0}: {1}'
-        WLOG(params, 'error', emsg.format(type(e), str(e)))
+        eargs = [type(e), str(e)]
+        errors.append(emsg.format(*eargs))
+
+    # report errors
+    if len(errors) > 0:
+        WLOG(params, 'error', '\n\n'.join(errors))
+
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------

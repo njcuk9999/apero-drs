@@ -217,7 +217,7 @@ def convert_to_e(params: ParamDict, image: np.ndarray,
     # set function name
     func_name = display_func('convert_to_e', __NAME__)
     # get constants from params / kwargs
-    _gain = pcheck(params, 'GAIN', func=func_name, override=gain)
+    _gain = pcheck(params, 'EFFGAIN', func=func_name, override=gain)
     _exptime = pcheck(params, 'EXPTIME', func=func_name, override=exptime)
     # correct image
     newimage = image * _gain * _exptime

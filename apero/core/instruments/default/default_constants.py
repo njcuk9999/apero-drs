@@ -32,7 +32,7 @@ __all__ = [
     'PP_RMS_PERCENTILE', 'PP_LOWEST_RMS_PERCENTILE', 'PP_CORRUPT_SNR_HOTPIX',
     'PP_CORRUPT_RMS_THRES', 'PP_COSMIC_NOISE_ESTIMATE', 'PP_COSMIC_VARCUT1',
     'PP_COSMIC_VARCUT2', 'PP_COSMIC_INTCUT1', 'PP_COSMIC_INTCUT2',
-    'PP_COSMIC_BOXSIZE', 'RAW_TO_PP_ROTATION', 'PP_DARK_MED_BINNUM',
+    'PP_COSMIC_BOXSIZE', 'RAW_TO_PP_ROTATION', 'EFFGAIN', 'PP_DARK_MED_BINNUM',
     'SKIP_DONE_PP', 'ALLOWED_PPM_TYPES', 'PPM_MASK_NSIG', 'PP_MEDAMP_BINSIZE',
     'PP_BAD_EXPTIME_FRACTION', 'PP_DARK_DPRTYPES', 'PP_DARK_THRES',
     'PP_CORR_XTALK_AMP_FLUX', 'PP_COR_XTALK_AMP_DFLUX',
@@ -444,6 +444,12 @@ RAW_TO_PP_ROTATION = Const('RAW_TO_PP_ROTATION', dtype=int, value=None,
                                        'rotate 90 deg clock-wise, '
                                        '\n\tnrot >=8 -> performs a modulo '
                                        '8 anyway')
+
+# Measured detector gain in all places that use gain
+EFFGAIN = Const('EFFGAIN', dtype=float, value=None, source=__NAME__,
+                group=cgroup, minimum=0,
+                description='Measured detector gain in all places that use '
+                            'gain')
 
 # Define raw image size (mostly just used as a check and in places where we
 #   don't have access to this information) in x dim
