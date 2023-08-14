@@ -60,7 +60,7 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
                          mapf='list', dtype=int)
     sigdet = pcheck(props, 'SIGDET', 'sigdet', kwargs, func_name)
     eff_ron = pcheck(props, 'EFF_RON', 'eff_ron', kwargs, func_name)
-    gain = pcheck(props, 'GAIN', 'gain', kwargs, func_name)
+    gain = pcheck(props, 'EFFGAIN', 'gain', kwargs, func_name)
     cosmic = pcheck(params, 'EXT_COSMIC_CORRETION', 'cosmic', kwargs, func_name)
     cosmic_sigcut = pcheck(params, 'EXT_COSMIC_SIGCUT', 'cosmic_sigcuit',
                            kwargs, func_name)

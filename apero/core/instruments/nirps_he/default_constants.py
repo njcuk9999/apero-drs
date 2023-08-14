@@ -54,6 +54,10 @@ CALIB_DB_FORCE_WAVESOL.value = False
 RAW_TO_PP_ROTATION = RAW_TO_PP_ROTATION.copy(__NAME__)
 RAW_TO_PP_ROTATION.value = 5
 
+# Measured detector gain in all places that use gain
+EFFGAIN = EFFGAIN.copy(__NAME__)
+EFFGAIN.value = 1.15
+
 # Define raw image size (mostly just used as a check and in places where we
 #   don't have access to this information)
 IMAGE_X_FULL = IMAGE_X_FULL.copy(__NAME__)
