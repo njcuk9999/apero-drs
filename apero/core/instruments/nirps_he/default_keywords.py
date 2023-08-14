@@ -25,7 +25,7 @@ __release__ = base.__release__
 # Define the header key that uniquely identifies the file
 #     (i.e. an odometer code)
 KW_IDENTIFIER = KW_IDENTIFIER.copy(__NAME__)
-KW_IDENTIFIER.set(key='FILENAME',
+KW_IDENTIFIER.set(key='ARCFILE',
                   comment='filename anticipated by fitspipe server',
                   group='raw')
 
