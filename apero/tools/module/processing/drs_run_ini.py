@@ -58,7 +58,8 @@ DEFAULT_CORES = 5
 OUTPATH = 'data/{instrument}/reset/runs/'
 # template
 TEMPLATE = 'tools/resources/run_ini/run_{instrument}.ini'
-# define groups of recipes
+# define groups of recipes (each group is a list of recipe_kind from recipe
+#   definitions)
 GROUPS = dict()
 GROUPS['preprocessing'] = ['pre']
 GROUPS['reference calibration'] = ['calib-reference']
@@ -67,6 +68,7 @@ GROUPS['extraction'] = ['extract']
 GROUPS['telluric'] = ['tellu']
 GROUPS['radial velocity'] = ['rv']
 GROUPS['polar'] = ['polar']
+GROUPS['lbl'] = ['lbl']
 GROUPS['postprocessing'] = ['post']
 # define keys which should not be found as recipe RUN_ keys
 EXCLUDE_RUN_KEYS = ['RUN_NAME', 'RUN_OBS_DIR']
@@ -248,6 +250,7 @@ class RunIniFile:
         # step 3: generate run text and skip text
         # ---------------------------------------------------------------------
         # get list of recipe groups for this set of sequences
+        #   based on recipe_kind and GROUPS defined above
         groups = self._generate_recipe_list(mode='group')
         # storage for the run and skip text
         run_text, skip_text = '', ''

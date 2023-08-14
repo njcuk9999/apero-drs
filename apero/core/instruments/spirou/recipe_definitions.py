@@ -1343,7 +1343,7 @@ apero_lbl_ref.extension = 'fits'
 apero_lbl_ref.description = 'LBL Setup and reference recipe (Run before any other LBL steps)'
 apero_lbl_ref.epilog = ''
 apero_lbl_ref.recipe_type = 'recipe'
-apero_lbl_ref.recipe_kind = 'post'
+apero_lbl_ref.recipe_kind = 'lbl'
 apero_lbl_ref.set_kwarg(name='--test', dtype='switch',
                         default=False, helpstr='Run in test mode')
 apero_lbl_ref.group_func = grouping.no_group
@@ -1364,7 +1364,7 @@ apero_lbl_mask.extension = 'fits'
 apero_lbl_mask.description = 'Create LBL mask'
 apero_lbl_mask.epilog = ''
 apero_lbl_mask.recipe_type = 'recipe'
-apero_lbl_mask.recipe_kind = 'post'
+apero_lbl_mask.recipe_kind = 'lbl'
 apero_lbl_mask.set_outputs(LBL_MASK=files.lbl_mask_file,
                            LBL_TEMPLATE=files.lbl_template_file)
 apero_lbl_mask.set_arg(name='objname', pos=0, dtype=str,
@@ -1387,7 +1387,7 @@ apero_lbl_compute.extension = 'fits'
 apero_lbl_compute.description = 'Run LBL compute'
 apero_lbl_compute.epilog = ''
 apero_lbl_compute.recipe_type = 'recipe'
-apero_lbl_compute.recipe_kind = 'post'
+apero_lbl_compute.recipe_kind = 'lbl'
 apero_lbl_compute.set_outputs(LBL_FITS=files.lbl_fits_file)
 apero_lbl_compute.set_arg(name='objname', pos=0, dtype=str,
                           helpstr=textentry('MKTEMP_OBJNAME_HELP'))
@@ -1416,7 +1416,7 @@ apero_lbl_compile.extension = 'fits'
 apero_lbl_compile.description = 'Run LBL compute'
 apero_lbl_compile.epilog = ''
 apero_lbl_compile.recipe_type = 'recipe'
-apero_lbl_compile.recipe_kind = 'post'
+apero_lbl_compile.recipe_kind = 'lbl'
 apero_lbl_compile.set_outputs(LBL_RDB=files.lbl_rdb_file,
                               LBL_RDB_FITS=files.lbl_rdb_fits_file,
                               LBL_RDB2_FILE=files.lbl_rdb2_file,
@@ -1747,12 +1747,41 @@ limited_seq.add(apero_pol, rkwargs=dict(exposures=[files.out_tellu_obj]),
                 filters=dict(KW_DPRTYPE=['POLAR_FP', 'POLAR_DARK'],
                              KW_OBJNAME='SCIENCE_TARGETS'))
 
-# # post processing
-# limited_seq.add(apero_postprocess, name='TELLPOST', files=[files.pp_file],
-#                 recipe_kind='post-hotstar',
-#                 filters=dict(KW_DPRTYPE=files.science_dprtypes,
-#                              KW_OBJNAME='TELLURIC_TARGETS'))
+# lbl ref
+limited_seq.add(apero_lbl_ref, name='LBLREF', recipe_kind='lbl-ref')
 
+# lbl mask (FP)
+limited_seq.add(apero_lbl_mask, name='LBLMASK_FP', recipe_kind='lbl-mask-fp',
+            arguments=dict(objname='FP'))
+
+# lbl compute (FP)
+limited_seq.add(apero_lbl_compute, name='LBLCOMPUTE_FP',
+            recipe_kind='lbl-compute-fp',
+            arguments=dict(objname='FP'))
+
+# lbl compile (FP)
+limited_seq.add(apero_lbl_compile, name='LBLCOMPILE_FP',
+            recipe_kind='lbl-compile-fp',
+            arguments=dict(objname='FP'))
+
+# lbl mask (SCIENCE)
+limited_seq.add(apero_lbl_mask, name='LBLMASK_SCI', recipe_kind='lbl-mask-sci',
+            arguments=dict(objname='SCIENCE_TARGETS'),
+            filters=dict(KW_OBJNAME='SCIENCE_TARGETS'))
+
+# lbl compute (SCIENCE)
+limited_seq.add(apero_lbl_compute, name='LBLCOMPUTE_SCI',
+            recipe_kind='lbl-compute-sci',
+            arguments=dict(objname='SCIENCE_TARGETS'),
+            filters=dict(KW_OBJNAME='SCIENCE_TARGETS'))
+
+# lbl compile (SCIENCE)
+limited_seq.add(apero_lbl_compile, name='LBLCOMPILE_SCI',
+            recipe_kind='lbl-compile-sci',
+            arguments=dict(objname='SCIENCE_TARGETS'),
+            filters=dict(KW_OBJNAME='SCIENCE_TARGETS'))
+
+# # post processing
 limited_seq.add(apero_postprocess, name='SCIPOST', files=[files.pp_file],
                 recipe_kind='post-science',
                 filters=dict(KW_DPRTYPE=files.science_dprtypes,
