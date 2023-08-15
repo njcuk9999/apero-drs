@@ -612,17 +612,17 @@ KW_PP_LED_FLAT_FILE.set(key='PPLEDFIL', comment='LED flat file used')
 # Define the flux-weighted mid-exposure [Expert use only]
 KW_PP_MJD_FLUX = KW_PP_MJD_FLUX.copy(__NAME__)
 KW_PP_MJD_FLUX.set(key='MJD_FLUX',
-                   comment='flux-weighted mid-exposure [Expert use only]')
+                   comment='weighted flux in posemeter [Expert use only]')
 
 # Define fractional RMS of posemteter [Expert use only]
 KW_PP_RMS_POSE = KW_PP_RMS_POSE.copy(__NAME__)
 KW_PP_RMS_POSE.set(key='RMS_POSE ',
-                   comment='flux-weighted mid-exposure [Expert use only]')
+                   comment='RMS of flux in posemeter [Expert use only]')
 
 # Define median flux in posemeter [Expert use only]
 KW_PP_MED_POSE = KW_PP_MED_POSE.copy(__NAME__)
 KW_PP_MED_POSE.set(key='MED_POSE',
-                   comment='flux-weighted mid-exposure [Expert use only]')
+                   comment='Median flux in posemeter [Expert use only]')
 
 # -----------------------------------------------------------------------------
 # Define apero_dark variables
