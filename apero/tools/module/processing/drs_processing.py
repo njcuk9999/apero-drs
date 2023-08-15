@@ -83,7 +83,8 @@ OBJNAMECOL = 'KW_OBJNAME'
 # list of arguments to remove from skip check
 SKIP_REMOVE_ARGS = ['--skip', '--program', '--prog', '--debug',
                     '--verbose' '--plot', '--shortname', '--short',
-                    '--rkind', '--recipe_kind', '--parallel', '--crunfile']
+                    '--rkind', '--recipe_kind', '--parallel',
+                    '--crunfile', '--nosave']
 # keep a global copy of plt
 PLT_MOD = None
 
@@ -560,7 +561,7 @@ def generate_skip_table(params):
 
 
 def skip_clean_arguments(runstring: str,
-                         additional_args: Optional[List[str]] = None):
+                         additional_args: Optional[List[str]] = None) -> str:
     """
     Clean arguments for skip check - these are arguments that may change
     between otherwise identical runs
@@ -588,7 +589,12 @@ def skip_clean_arguments(runstring: str,
         for remove_arg in skip_remove_args:
             if arg.startswith(remove_arg):
                 mask[it] = False
-    return ' '.join(args[mask])
+    # join arguments
+    clean_runstring = ' '.join(args[mask])
+    # remove = from runstring (should be space)
+    clean_runstring = clean_runstring.replace('=', ' ')
+    # return clean runstring
+    return clean_runstring
 
 
 def skip_remove_non_required_args(runstrings, runobj):
@@ -3265,6 +3271,8 @@ def group_run_files2(params: ParamDict, recipe: DrsRecipe,
 
     :return:
     """
+    # get number of cores
+    cores = _get_cores(params)
     # get hard upper limit for number of files in a group
     if recipe.limit is not None:
         limit = recipe.limit
@@ -3287,7 +3295,8 @@ def group_run_files2(params: ParamDict, recipe: DrsRecipe,
         return group_function(recipe.args, recipe.kwargs,
                               argdict, kwargdict,
                               group_column=group_column,
-                              ref=ref, limit=limit)
+                              ref=ref, limit=limit, params=params,
+                              cores=cores)
     # if we don't have one give warning
     else:
         # Log warning: No runs produced for {0} - No group function given'

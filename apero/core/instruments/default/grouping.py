@@ -615,6 +615,109 @@ def group_by_polar_sequence(rargs: Dict[str, DrsArgument],
     return runs
 
 
+def lbl_compute_group(rargs: Dict[str, DrsArgument],
+                      rkwargs: Dict[str, DrsArgument],
+                      argdict: Dict[str, ArgDictType],
+                      kwargdict: Dict[str, ArgDictType],
+                      **kwargs) -> RunType:
+    """
+    For objname = FP   sets iteration and total arguments
+    based on number of cores given
+
+    For all other objnames acts like "no_group"
+
+    :param rargs:
+    :param rkwargs:
+    :param argdict:
+    :param kwargdict:
+    :param kwargs:
+    :return:
+    """
+
+    # get params from kwargs
+    params = kwargs['params']
+    # get values from params
+    cores = kwargs['cores']
+    objlist = params.listp('LBL_MULTI_OBJLIST', dtype=str)
+
+    # make sure this is not used for recipes that do not have the correct
+    #  arguments
+    cond1 = 'objname' in rargs
+    cond2 = 'total' in rkwargs
+    cond3 = 'iteration' in rkwargs
+
+    # if any of these conditions are not met run no_group
+    if not cond1 or not cond2 or not cond3:
+        return no_group(rargs, rkwargs, argdict, kwargdict, **kwargs)
+
+    # if object name is not in object list run no_group
+    if argdict['objname'] not in objlist:
+        return no_group(rargs, rkwargs, argdict, kwargdict, **kwargs)
+    # ----------------------------------------------------------------------
+    # define runs
+    run_instances = []
+    # ----------------------------------------------------------------------
+    # first we need to find the file arguments
+    # ----------------------------------------------------------------------
+    fout = drsgf.find_file_args(rargs, rkwargs, argdict, kwargdict)
+    file_args, non_file_args, alldict = fout
+    # define the first file_arg columns
+    if len(file_args) != 0:
+        raise ValueError('Must have 0 file arguements')
+    # ----------------------------------------------------------------------
+    # Now figure out the order these arguments should be added
+    # ----------------------------------------------------------------------
+    arg_order = drsgf.get_argposorder(rargs, rkwargs, argdict, kwargdict)
+    # ----------------------------------------------------------------------
+    # Make a run instance
+    # ----------------------------------------------------------------------
+    run_inst = drsgf.RunInstance(rargs, rkwargs)
+    run_inst.group_column = None
+    run_inst.group = None
+    run_instances.append(run_inst)
+
+    # ----------------------------------------------------------------------
+    # deal with non-file arguments
+    # ----------------------------------------------------------------------
+    run_instances = drsgf.get_non_file_args(non_file_args, alldict,
+                                            run_instances)
+    # ----------------------------------------------------------------------
+    # add the total and iteration arguments based on the number of cores
+    # ----------------------------------------------------------------------
+    new_run_instances = []
+    # loop around run instances
+    for run_inst in run_instances:
+        # loop around cores - one group per core
+        for core in range(cores):
+            # copy the run instance
+            run_inst2 = run_inst.copy()
+            # add value to dictionary
+            # total is the total number of cores
+            run_inst2.dictionary['total'] = str(cores)
+            # iteration is the core number (starting at zero)
+            run_inst2.dictionary['iteration'] = str(core)
+            # append to run instances
+            new_run_instances.append(run_inst2)
+    # add iteration and total to arg_order
+    arg_order += ['iteration', 'total']
+    # ----------------------------------------------------------------------
+    # convert in to run list of dictionaries
+    # ----------------------------------------------------------------------
+    runs = []
+    # loop around instances
+    for run_inst in new_run_instances:
+        # create run dict
+        rundict = OrderedDict()
+        # loop around arguments in correct order
+        for key in arg_order:
+            rundict[key] = run_inst.dictionary[key]
+        # add this run dictionary to runs
+        runs.append(rundict)
+    # return the run instances
+    return runs
+
+
+
 def _is_numeric(array: Union[list, np.ndarray, Iterable]) -> np.ndarray:
     """
     Create a mask of only numerical values in an array

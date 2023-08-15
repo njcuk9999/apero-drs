@@ -41,7 +41,7 @@ __all__ = [  # input keys
     'KW_DRS_DATE', 'KW_C_FLIP', 'KW_C_CVRTE',
     'KW_C_RESIZE', 'KW_DRS_DATE_NOW', 'KW_C_FTYPE', 'KW_FIBER',
     'KW_THERM_RATIO', 'KW_THERM_RATIO_U', 'KW_MID_OBS_TIME',
-    'KW_MID_OBSTIME_METHOD', 'KW_TDBSKY',
+    'KW_MID_OBSTIME_METHOD', 'KW_TDBSKY', 'KW_EFF_RON',
     # calibration file header keys
     'KW_CDBDARK', 'KW_CDTDARK', 'KW_CDBBAD', 'KW_CDTBAD',
     'KW_CDBBACK', 'KW_CDTBACK', 'KW_CDBORDP', 'KW_CDTORDP',
@@ -704,6 +704,10 @@ KW_THERM_RATIO_U = Keyword('KW_THERM_RATIO_U', key='NULL', dtype=str,
 # define the sky model used for sky correction
 KW_TDBSKY = Keyword('KW_TDBSKY', key='NULL', dtype=str, source=__NAME__,
                     description='the sky model used for sky correction')
+
+# define the measured effective readout noise
+KW_EFF_RON = Keyword('KW_EFF_RON', key='NULL', dtype=str, source=__NAME__,
+                     description='The measured eff readout noise before ext')
 
 # -----------------------------------------------------------------------------
 # Define DRS outputs keywords

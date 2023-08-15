@@ -193,6 +193,11 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     tns_run_spirou.modify('TRIGGER_RUN', True)
     tns_run_spirou.modify('USE_ENGINEERING', True)
     run_files.append(tns_run_spirou)
+    # lbl run
+    lbl_run_spirou = RunIniFile(params, 'SPIROU', 'lbl_run')
+    lbl_run_spirou.append_sequence('lbl_seq')
+    run_files.append(lbl_run_spirou)
+
     # batch run
     # TODO: put back in
     # batch_run_spirou = RunIniFile(params, 'SPIROU', 'batch_run')

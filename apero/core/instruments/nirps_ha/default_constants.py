@@ -55,6 +55,10 @@ CALIB_DB_FORCE_WAVESOL.value = False
 RAW_TO_PP_ROTATION = RAW_TO_PP_ROTATION.copy(__NAME__)
 RAW_TO_PP_ROTATION.value = 5
 
+# Measured detector gain in all places that use gain
+EFFGAIN = EFFGAIN.copy(__NAME__)
+EFFGAIN.value = 1.15
+
 # Define raw image size (mostly just used as a check and in places where we
 #   don't have access to this information)
 IMAGE_X_FULL = IMAGE_X_FULL.copy(__NAME__)
@@ -1188,6 +1192,11 @@ LEAK_BAD_RATIO_OFFSET.value = 0.1
 #       final products)
 EXT_QUICK_LOOK = EXT_QUICK_LOOK.copy(__NAME__)
 EXT_QUICK_LOOK.value = False
+
+# Define how many times larger than the sigdet the measured effective readout
+#     is allow to be
+EXT_QC_EFF_RON_FACTOR = EXT_QC_EFF_RON_FACTOR.copy(__NAME__)
+EXT_QC_EFF_RON_FACTOR.value = 2.0
 
 #    Start order of the extraction in apero_flat if None starts from 0
 EXT_START_ORDER = EXT_START_ORDER.copy(__NAME__)
@@ -2854,6 +2863,49 @@ PLOT_CCF_SWAVE_REF.value = False
 # turn on the ccf photon uncertainty debug plot
 PLOT_CCF_PHOTON_UNCERT = PLOT_CCF_PHOTON_UNCERT.copy(__NAME__)
 PLOT_CCF_PHOTON_UNCERT.value = True
+
+
+# =============================================================================
+# LBL SETTINGS
+# =============================================================================
+cgroup = 'LBL SETTINGS'
+# Define the file definition type (DRSOUTID) for LBL input files
+LBL_FILE_DEFS = LBL_FILE_DEFS.copy(__NAME__)
+LBL_FILE_DEFS.value = 'TELLU_OBJ'
+
+# Define the dprtype for science files for LBL
+LBL_DPRTYPES = LBL_DPRTYPES.copy(__NAME__)
+LBL_DPRTYPES.value = 'OBJ_FP,OBJ_DARK,POLAR_FP,POLAR_DARK'
+
+# Define the file definition type (DRSOUTID) for lbl input template
+LBL_TEMPLATE_FILE_DEFS = LBL_TEMPLATE_FILE_DEFS.copy(__NAME__)
+LBL_TEMPLATE_FILE_DEFS.value = 'TELLU_TEMP,TELLU_TEMP_S1DV'
+
+# Define the DPRTYPE for simultaneous FP files for lbl input
+LBL_SIM_FP_DPRTYPES = LBL_SIM_FP_DPRTYPES.copy(__NAME__)
+LBL_SIM_FP_DPRTYPES.value = 'OBJ_FP'
+
+# Define whether the LBL directory should use symlinks
+LBL_SYMLINKS = LBL_SYMLINKS.copy(__NAME__)
+LBL_SYMLINKS.value = True
+
+# Define the dictionary of friend and friend teffs for LBL
+LBL_FRIENDS = LBL_FRIENDS.copy(__NAME__)
+LBL_FRIENDS.value = '{"HD85512": 4411, "GL514": 3750, "GJ2066": 3557, "GL699": 3257, "PROXIMA": 2900}'
+
+# Define the specific data types (where objname is the data type) for LBL
+LBL_SPECIFIC_DATATYPES = LBL_SPECIFIC_DATATYPES.copy(__NAME__)
+LBL_SPECIFIC_DATATYPES.value = 'FP, LFC'
+
+# Define objnames for which we should recalculate template if it doesn't
+#   exist (must include FP)
+LBL_RECAL_TEMPLATE = LBL_RECAL_TEMPLATE.copy(__NAME__)
+LBL_RECAL_TEMPLATE.value = 'FP, LFC'
+
+# Define which object names should be run through LBL compute in parellel
+#   i.e. break in to Ncore chunks (comma separated list)
+LBL_MULTI_OBJLIST = LBL_MULTI_OBJLIST.copy(__NAME__)
+LBL_MULTI_OBJLIST.value = 'FP'
 
 # =============================================================================
 # POST PROCESS SETTINGS

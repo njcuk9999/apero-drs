@@ -144,7 +144,7 @@ KW_PI_NAME.set(key='PI_NAME', comment='The PI of the program', group='raw')
 
 # define the run id HEADER key
 KW_RUN_ID = KW_RUN_ID.copy(__NAME__)
-KW_RUN_ID.set(key='QRUNID', comment='queue run id', group='raw')
+KW_RUN_ID.set(key='RUNID', comment='queue run id', group='raw')
 
 # define the instrument HEADER key
 KW_INSTRUMENT = KW_INSTRUMENT.copy(__NAME__)
@@ -557,6 +557,10 @@ KW_THERM_RATIO.set(key='THRM_RAT', comment='Ratio 1 used for thermal correction'
 KW_THERM_RATIO_U = KW_THERM_RATIO_U.copy(__NAME__)
 KW_THERM_RATIO_U.set(key='THRM_RU',
                      comment='Ratio method used for thermal correction')
+
+# define the measured effective readout noise
+KW_EFF_RON = KW_EFF_RON.copy(__NAME__)
+KW_EFF_RON.set(key='EFFRON', comment='Measured eff readout noise before ext')
 
 # -----------------------------------------------------------------------------
 # Define DRS outputs keywords
