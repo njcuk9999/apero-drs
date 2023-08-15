@@ -3924,7 +3924,7 @@ class DrsFitsFile(DrsInputFile):
         # check that data is read
         self.check_read()
         # get combine metric types
-        combine_metric_1_types = params.listp('COMBINE_METRIC1_TYPES',
+        comb_metric_1_types = params.listp('COMBINE_METRIC1_TYPES',
                                               dtype=str)
         # set new data to this files data
         data = np.array(self.data)
@@ -3970,7 +3970,7 @@ class DrsFitsFile(DrsInputFile):
                 metric = np.nan
                 metric_threshold = np.nan
                 passed = True
-            elif self.get_hkey('KW_DPRTYPE') in combine_metric_1_types:
+            elif self.get_hkey('KW_DPRTYPE', dtype=str) in comb_metric_1_types:
                 # compute metric 1
                 cout = combine_metric_1(params, row, image1, datacube0)
                 metric, metric_threshold, passed = cout

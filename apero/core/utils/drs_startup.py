@@ -2406,26 +2406,33 @@ def _sort_version(messages: Union[str, None] = None) -> Union[List[str]]:
     # add version info to messages
     messages += '\n' + textentry('40-001-00013', args=[version])
 
+    # get system version info
+    sysversion = sys.version
+
     # add distribution if possible
-    try:
-        build = sys.version.split('|')[1].strip()
-        messages += '\n' + textentry('40-001-00014', args=[build])
-    except IndexError:
-        pass
+    if '|' in sysversion:
+        try:
+            build = sysversion.split('|')[1].strip()
+            messages += '\n' + textentry('40-001-00014', args=[build])
+        except IndexError:
+            pass
 
     # add date information if possible
-    try:
-        date = sys.version.split('(')[1].split(')')[0].strip()
-        messages += '\n' + textentry('40-001-00015', args=[date])
-    except IndexError:
-        pass
+    if '(' in sysversion and ')' in sysversion:
+        try:
+
+            date = sysversion.split('(')[1].split(')')[0].strip()
+            messages += '\n' + textentry('40-001-00015', args=[date])
+        except IndexError:
+            pass
 
     # add Other info information if possible
-    try:
-        other = sys.version.split('[')[1].split(']')[0].strip()
-        messages += '\n' + textentry('40-001-00016', args=[other])
-    except IndexError:
-        pass
+    if '[' in sysversion and ']' in sysversion:
+        try:
+            other = sysversion.split('[')[1].split(']')[0].strip()
+            messages += '\n' + textentry('40-001-00016', args=[other])
+        except IndexError:
+            pass
 
     # return updated messages
     return messages
