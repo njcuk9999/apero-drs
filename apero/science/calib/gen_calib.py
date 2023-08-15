@@ -657,6 +657,7 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
     props['BASENAME'] = infile.basename
     props['SIGDET'] = sigdet
     props['EFF_RON'] = eff_readout_noise
+    props['EFF_GAIN'] = gain
     props['EXPTIME'] = exptime
     props['GAIN'] = gain
     props['DPRTYPE'] = dprtype
@@ -680,7 +681,7 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
     keys = ['FILENAME', 'BASENAME', 'SIGDET', 'EXPTIME', 'GAIN', 'DPRTYPE',
             'SHAPE', 'DARKFILE', 'DARKTIME', 'BADPFILE', 'BADTIME', 'BACKFILE',
             'BACKTIME', 'FLIPPED', 'CONVERT_E', 'RESIZED', 'NORMALISED',
-            'CLEANED', 'EFF_RON']
+            'CLEANED', 'EFF_RON', 'EFF_GAIN']
     props.set_sources(keys, func_name)
 
     # ----------------------------------------------------------------------

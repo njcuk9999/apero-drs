@@ -60,7 +60,7 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
                          mapf='list', dtype=int)
     sigdet = pcheck(props, 'SIGDET', 'sigdet', kwargs, func_name)
     eff_ron = pcheck(props, 'EFF_RON', 'eff_ron', kwargs, func_name)
-    gain = pcheck(props, 'EFFGAIN', 'gain', kwargs, func_name)
+    gain = pcheck(props, 'EFF_GAIN', 'gain', kwargs, func_name)
     cosmic = pcheck(params, 'EXT_COSMIC_CORRETION', 'cosmic', kwargs, func_name)
     cosmic_sigcut = pcheck(params, 'EXT_COSMIC_SIGCUT', 'cosmic_sigcuit',
                            kwargs, func_name)
@@ -185,6 +185,7 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
     props['GAIN'] = gain
     props['SIGDET'] = sigdet
     props['EFF_RON'] = eff_ron
+    props['EFF_GAIN'] = gain
     props['COSMIC'] = cosmic
     props['COSMIC_SIGCUT'] = cosmic_sigcut
     props['COSMIC_THRESHOLD'] = cosmic_thres
@@ -193,7 +194,7 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
     # add source
     keys = ['E2DS', 'E2DSLL', 'E2DSCC', 'SNR', 'N_COSMIC', 'FLUX_VAL', 'FIBER',
             'START_ORDER', 'END_ORDER', 'RANGE1', 'RANGE2', 'SKIP_ORDERS',
-            'GAIN', 'SIGDET', 'EFF_RON', 'COSMIC', 'COSMIC_SIGCUT',
+            'GAIN', 'SIGDET', 'EFF_RON', 'EFF_GAIN', 'COSMIC', 'COSMIC_SIGCUT',
             'COSMIC_THRESHOLD', 'SAT_QC', 'SAT_LEVEL']
     props.set_sources(keys, func_name)
     # return property parameter dictionary
