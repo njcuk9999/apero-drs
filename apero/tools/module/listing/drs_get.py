@@ -248,10 +248,10 @@ def remove_previous(outpath: str):
     :param outpath: str, file to check
     :return:
     """
-    if not os.path.exists(outpath):
-        return
     if os.path.islink(outpath):
         os.unlink(outpath)
+    elif not os.path.exists(outpath):
+        return
     else:
         os.remove(outpath)
 
