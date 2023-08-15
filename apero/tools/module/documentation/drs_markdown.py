@@ -203,6 +203,9 @@ class MarkDownPage:
                 del table
             except Exception as _:
                 table_has_rows = False
+        # deal with csv file being None
+        if csv_file is None:
+            table_has_rows = False
         # only add csv table if we have rows
         if table_has_rows:
             self.add_newline()

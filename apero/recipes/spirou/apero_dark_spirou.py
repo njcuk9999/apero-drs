@@ -150,7 +150,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # get expsoure time
         exptime = infile.get_hkey('KW_EXPTIME')
         # get gain
-        gain = infile.get_hkey('KW_GAIN')
+        gain = params['EFFGAIN']
         # get data type
         dprtype = infile.get_hkey('KW_DPRTYPE', dtype=str)
         # ------------------------------------------------------------------

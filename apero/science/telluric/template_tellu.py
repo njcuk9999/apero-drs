@@ -935,7 +935,7 @@ def list_current_templates(params: ParamDict,
     # get a list of all templates
     objnames = telludb.get_tellu_entry('OBJECT', key='TELLU_TEMP')
     # get unique objects
-    uobjnames = set(objnames)
+    uobjnames = np.array(list(set(objnames)))
     # deal with all objects filter
     if all_objects is not None:
         mask = np.in1d(uobjnames, all_objects)

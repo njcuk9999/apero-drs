@@ -241,6 +241,9 @@ class Logger:
             params.set_source('PID', func_name)
             # Cannot add this to language pack - no p defined!
             DrsCodedWarning('10-005-00005', 'warning', func_name=func_name)
+        # if params is still None load it
+        if params is None:
+            params = constants.load()
         # deal with no PID
         if 'PID' not in params:
             params['PID'] = None

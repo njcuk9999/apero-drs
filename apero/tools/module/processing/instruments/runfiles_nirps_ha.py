@@ -189,6 +189,10 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     tns_run_nirps_ha.modify('TRIGGER_RUN', True)
     tns_run_nirps_ha.modify('USE_ENGINEERING', True)
     run_files.append(tns_run_nirps_ha)
+    # lbl run
+    lbl_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'lbl_run')
+    lbl_run_nirps_ha.append_sequence('lbl_seq')
+    run_files.append(lbl_run_nirps_ha)
     # batch run
     # batch_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'batch_run')
     # batch_run_nirps_ha.add_sequence_as_command('limited_seq')

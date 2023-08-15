@@ -2,6 +2,54 @@ Changelog
 =========
 
 
+0.7.287 (2023-08-08)
+--------------------
+- [APERO] Correct that ribbon cannot load in raw file path. [Neil Cook]
+- [APERO] Correct that ribbon cannot save in raw file path. [Neil Cook]
+- [APERO] fix apero_get and null/nan passed_all_qc column. [Neil Cook]
+- [APERO] apero_get if PASSED_ALL_QC is Null we should accept it as
+  passed QC (as we don't know otherwise) [Neil Cook]
+- [APERO] drs_markdown.py - if csv_file is None our table does not have
+  rows. [Neil Cook]
+- [SPRIOU] Correct the RUNID key (was QRUNID now RUNID) [Neil Cook]
+- [APERO] apero_processing.py - fix issues with which objects go into
+  templates (now only those that are in the obsdirs that are given), if
+  none are given use all obs_dir (we cannot use the astrom list of
+  targets as this contains many objects that don't exist for an
+  instrument) [Neil Cook]
+- Deal with processing obsdirs better [UNFINISHED, UNTESTED] [Neil Cook]
+- [APERO] do not require params['INPUTS']['PARALLEL'] instead set it to
+  False if not present. [Neil Cook]
+- [APERO] apero_ccf_spirou.py - fix bug where OBJ_DARK and POLAR_DARK
+  files crash CCF code. [Neil Cook]
+- [APERO] apero.core.core.drs_base_classes.py - remove FutureWarning
+  calling in on a single element (now get count and then force to int)
+  [Neil Cook]
+- Merge branch 'main' into v0.7.287-live. [Neil Cook]
+- [APERO] update readme. [Neil Cook]
+- Merge branch 'v0.7.285-live' into v0.7.286-live. [Neil Cook]
+- Apero.science.calib.background.py - add in local_background_correction
+  image even if not calculating. [Neil Cook]
+- [NIRPS] Modify the BKGR_BOXSIZE and BKGR_KER_AMP (does not affect
+  SPIROU) [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.285-live' into
+  v0.7.285-live. [Neil Cook]
+- Drs_precheck, drs_processing.py - allow logging to be turned off (for
+  apero_checks) [Neil Cook]
+- [APERO] find_objnames can return an empty list, deal with each use
+  case and report error if we do not want this to be empty. [Neil Cook]
+- [APERO] find_objnames can return an empty list, deal with each use
+  case and report error if we do not want this to be empty. [Neil Cook]
+- [APERO] find_objnames can return an empty list, deal with each use
+  case and report error if we do not want this to be empty. [Neil Cook]
+- [APERO] install.py - in dev mode ask user to add all groups. [Neil
+  Cook]
+- [APERO] install.py - in dev mode ask user to add all groups. [Neil
+  Cook]
+- [APERO] drs_astrometrics.py - fix using dataframe.append (should be
+  pd.concat) [Neil Cook]
+
+
 0.7.286 (2023-07-12)
 --------------------
 - Merge remote-tracking branch 'origin/v0.7.286-live' into
