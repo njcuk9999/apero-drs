@@ -595,9 +595,10 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
         # correct image for background
         image4 = background.correction(recipe, params, infile, image3,
                                        bkgrdfile=bkgrdfile)
+        bkgrdfile_used = str(bkgrdfile)
     else:
         image4 = np.array(image3)
-        bkgrdfile, backtime = 'None', np.nan
+        bkgrdfile_used, backtime = 'None', np.nan
 
     # ----------------------------------------------------------------------
     # image 4 may need to normalise by a percentile
@@ -667,7 +668,7 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
     props['DARKTIME'] = darktime
     props['BADPFILE'] = badpfile
     props['BADTIME'] = badtime
-    props['BACKFILE'] = bkgrdfile
+    props['BACKFILE'] = bkgrdfile_used
     props['BACKTIME'] = backtime
     props['FLIPPED'] = flip
     props['CONVERT_E'] = converte
