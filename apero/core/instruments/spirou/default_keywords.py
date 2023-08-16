@@ -63,7 +63,7 @@ KW_UTC_OBS.set(key='UTC-OBS', comment='Time at start of observation (UTC)',
 # define the read noise HEADER key a.k.a sigdet (used to get value only)
 KW_RDNOISE = KW_RDNOISE.copy(__NAME__)
 KW_RDNOISE.set(key='RDNOISE', comment='Read noise (electrons)',
-               combine_method='flux', group='raw')
+               combine_method='noise', group='raw')
 
 # define the gain HEADER key (used to get value only)
 KW_GAIN = KW_GAIN.copy(__NAME__)
