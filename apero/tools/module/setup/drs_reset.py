@@ -530,6 +530,66 @@ def reset_run(params: ParamDict, log: bool = True):
     reset_dbdir(params, name, run_dir, reset_path, log=log, empty_first=False)
 
 
+def reset_lbl_folders(params: ParamDict, log: bool = True, dtimeout: int = 20):
+    # log progress
+    WLOG(params, '', textentry('40-502-00003', args=['lbl']))
+    # remove files from reduced folder
+    lbl_dir = params['LBL_PATH']
+    # loop around files and folders in reduced dir
+    remove_all(params, lbl_dir, log=log)
+    # remake path
+    if not os.path.exists(lbl_dir):
+        os.makedirs(lbl_dir)
+    # -------------------------------------------------------------------------
+    # remove entries from index database
+    # -------------------------------------------------------------------------
+    # get index database
+    indexdb = drs_database.FileIndexDatabase(params)
+    # load index database
+    indexdb.load_db()
+    # check that table is in database
+    if not indexdb.database.tname_in_db():
+        # get database paths
+        databases = manage_databases.list_databases(params)
+        # load pseudo constants
+        pconst = constants.pload()
+        # create index database
+        manage_databases.create_fileindex_database(params, pconst, databases,
+                                                   tries=dtimeout)
+        # get index database
+        indexdb = drs_database.FileIndexDatabase(params)
+        # load index database
+        indexdb.load_db()
+    # set up condition
+    condition = 'BLOCK_KIND="lbl"'
+    # remove entries
+    indexdb.remove_entries(condition=condition)
+    # -------------------------------------------------------------------------
+    # remove entries from log database
+    # -------------------------------------------------------------------------
+    # get log database
+    logdb = drs_database.LogDatabase(params)
+    # load index database
+    logdb.load_db()
+    # check that table is in database
+    if not logdb.database.tname_in_db():
+        # get database paths
+        databases = manage_databases.list_databases(params)
+        # load pseudo constants
+        pconst = constants.pload()
+        # create index database
+        manage_databases.create_log_database(params, pconst, databases,
+                                             tries=dtimeout)
+        # get log database
+        logdb = drs_database.LogDatabase(params)
+        # load index database
+        logdb.load_db()
+    # set up condition
+    condition = 'BLOCK_KIND="lbl"'
+    # remove entries
+    logdb.remove_entries(condition=condition)
+
+
 def reset_out_folders(params: ParamDict, log: bool = True, dtimeout: int = 20):
     """
     Resets the reduced directory
