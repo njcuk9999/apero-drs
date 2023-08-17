@@ -185,6 +185,17 @@ def __main__(recipe, params):
         WLOG(params, '', textentry('40-502-00013', args=['Run']))
     # ----------------------------------------------------------------------
     # progress
+    drs_reset.reset_title(params, 'LBL')
+    # plot folder
+    if warn:
+        reset8 = drs_reset.reset_confirmation(params, 'LBL',
+                                              params['LBL_PATH'])
+    if reset8:
+        drs_reset.reset_lbl_folders(params, log, dtimeout=database_timeout)
+    else:
+        WLOG(params, '', textentry('40-502-00013', args=['LBL']))
+    # ----------------------------------------------------------------------
+    # progress
     drs_reset.reset_title(params, 'Out')
     # plot folder
     if warn:
@@ -193,7 +204,7 @@ def __main__(recipe, params):
     if reset8:
         drs_reset.reset_out_folders(params, log, dtimeout=database_timeout)
     else:
-        WLOG(params, '', textentry('40-502-00013', args=['Run']))
+        WLOG(params, '', textentry('40-502-00013', args=['Out']))
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
