@@ -11,7 +11,7 @@ Created on 2019-08-21 at 12:28
 """
 
 import os
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -238,6 +238,133 @@ def add_output(params: ParamDict, recipe: DrsRecipe, drsfile: DrsInputFile,
     findexdbm.add_entry(basefile, 'lbl', recipe.name,
                         runstring=recipe.runstring, hkeys=hkeys)
 
+
+def lbl_ref_qc(params: ParamDict) -> Tuple[List[list], int]:
+    """
+    The lbl ref qc
+
+    :param params: ParamDict, parameter dictionary of constants
+
+    :return: tuple, 1. the qc lists, 2. if passed 1 else 0
+    """
+    # set passed variable and fail message list
+    fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
+    # no quality control currently
+    qc_values.append('None')
+    qc_names.append('None')
+    qc_logic.append('None')
+    qc_pass.append(1)
+    # ------------------------------------------------------------------
+    # finally log the failed messages and set QC = 1 if we pass the
+    # quality control QC = 0 if we fail quality control
+    if np.sum(qc_pass) == len(qc_pass):
+        WLOG(params, 'info', textentry('40-005-10001'))
+        passed = 1
+    else:
+        for farg in fail_msg:
+            WLOG(params, 'warning', textentry('40-005-10002') + farg,
+                 sublevel=6)
+        passed = 0
+    # store in qc_params
+    qc_params = [qc_names, qc_values, qc_logic, qc_pass]
+    # return qc_params and passed
+    return qc_params, passed
+
+
+def lbl_mask_qc(params: ParamDict) -> Tuple[List[list], int]:
+    """
+    The lbl mask qc
+
+    :param params: ParamDict, parameter dictionary of constants
+
+    :return: tuple, 1. the qc lists, 2. if passed 1 else 0
+    """
+    # set passed variable and fail message list
+    fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
+    # no quality control currently
+    qc_values.append('None')
+    qc_names.append('None')
+    qc_logic.append('None')
+    qc_pass.append(1)
+    # ------------------------------------------------------------------
+    # finally log the failed messages and set QC = 1 if we pass the
+    # quality control QC = 0 if we fail quality control
+    if np.sum(qc_pass) == len(qc_pass):
+        WLOG(params, 'info', textentry('40-005-10001'))
+        passed = 1
+    else:
+        for farg in fail_msg:
+            WLOG(params, 'warning', textentry('40-005-10002') + farg,
+                 sublevel=6)
+        passed = 0
+    # store in qc_params
+    qc_params = [qc_names, qc_values, qc_logic, qc_pass]
+    # return qc_params and passed
+    return qc_params, passed
+
+
+def lbl_compute_qc(params: ParamDict) -> Tuple[List[list], int]:
+    """
+    The lbl compute qc
+
+    :param params: ParamDict, parameter dictionary of constants
+
+    :return: tuple, 1. the qc lists, 2. if passed 1 else 0
+    """
+    # set passed variable and fail message list
+    fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
+    # no quality control currently
+    qc_values.append('None')
+    qc_names.append('None')
+    qc_logic.append('None')
+    qc_pass.append(1)
+    # ------------------------------------------------------------------
+    # finally log the failed messages and set QC = 1 if we pass the
+    # quality control QC = 0 if we fail quality control
+    if np.sum(qc_pass) == len(qc_pass):
+        WLOG(params, 'info', textentry('40-005-10001'))
+        passed = 1
+    else:
+        for farg in fail_msg:
+            WLOG(params, 'warning', textentry('40-005-10002') + farg,
+                 sublevel=6)
+        passed = 0
+    # store in qc_params
+    qc_params = [qc_names, qc_values, qc_logic, qc_pass]
+    # return qc_params and passed
+    return qc_params, passed
+
+
+def lbl_compile_qc(params: ParamDict) -> Tuple[List[list], int]:
+    """
+    The lbl compile qc
+
+    :param params: ParamDict, parameter dictionary of constants
+
+    :return: tuple, 1. the qc lists, 2. if passed 1 else 0
+    """
+    # set passed variable and fail message list
+    fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
+    # no quality control currently
+    qc_values.append('None')
+    qc_names.append('None')
+    qc_logic.append('None')
+    qc_pass.append(1)
+    # ------------------------------------------------------------------
+    # finally log the failed messages and set QC = 1 if we pass the
+    # quality control QC = 0 if we fail quality control
+    if np.sum(qc_pass) == len(qc_pass):
+        WLOG(params, 'info', textentry('40-005-10001'))
+        passed = 1
+    else:
+        for farg in fail_msg:
+            WLOG(params, 'warning', textentry('40-005-10002') + farg,
+                 sublevel=6)
+        passed = 0
+    # store in qc_params
+    qc_params = [qc_names, qc_values, qc_logic, qc_pass]
+    # return qc_params and passed
+    return qc_params, passed
 
 
 def fake_hkeys(params: ParamDict, filename: str, drsfile: DrsInputFile,

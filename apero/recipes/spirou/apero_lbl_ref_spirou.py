@@ -100,7 +100,12 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     #          symlink tcorr to science
     #          symlink FP
     gen_lbl.run_apero_get(params)
-
+    # --------------------------------------------------------------
+    # Quality control
+    # --------------------------------------------------------------
+    qc_params, passed = gen_lbl.lbl_ref_qc(params)
+    # update recipe log
+    recipe.log.add_qc(qc_params, passed)
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------

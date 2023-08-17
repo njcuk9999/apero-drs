@@ -206,7 +206,12 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         WLOG(params, 'error', '\n\n'.join(errors))
     elif len(errors) == 1:
         WLOG(params, 'warning', errors[0])
-
+    # --------------------------------------------------------------
+    # Quality control
+    # --------------------------------------------------------------
+    qc_params, passed = gen_lbl.lbl_compile_qc(params)
+    # update recipe log
+    recipe.log.add_qc(qc_params, passed)
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
