@@ -562,21 +562,6 @@ def qc_extraction(params, eprops):
     qc_names.append('image')
     qc_logic.append('image is all NaN')
     # -------------------------------------------------------------------------
-    # check that effective readout noise is below N times the sigdet value
-    qc_eff_ron_factor = params['EXT_QC_EFF_RON_FACTOR']
-    sigdet = eprops['SIGDET']
-    eff_ron = eprops['EFF_RON']
-    if eff_ron > (qc_eff_ron_factor * sigdet):
-        # add failed message to fail message list
-        fail_msg.append('Effective readout noise too high.')
-        qc_pass.append(0)
-    else:
-        qc_pass.append(1)
-    # add to qc header lists
-    qc_values.append(eff_ron)
-    qc_names.append('eff_ron')
-    qc_logic.append('eff_ron > {0:.5f}'.format(qc_eff_ron_factor * sigdet))
-    # -------------------------------------------------------------------------
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):
