@@ -2995,7 +2995,8 @@ class LanguageDatabase(BaseDatabaseManager):
             # if we still have a null entry do not add this row to storage
             cond2 = drs_base.base_func(drs_base.base_null_text, func_name,
                                        rowtext, ['None', 'NULL', ''])
-            if cond2:
+            cond3 = str(rowtext).lower() in ['nan', 'inf']
+            if cond2 or cond3:
                 continue
             # encode rowtext with escape chars
             rowtext = rowtext.replace(r'\n', '\n')
