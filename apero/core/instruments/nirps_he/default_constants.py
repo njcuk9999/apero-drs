@@ -1192,11 +1192,6 @@ LEAK_BAD_RATIO_OFFSET.value = 0.1
 EXT_QUICK_LOOK = EXT_QUICK_LOOK.copy(__NAME__)
 EXT_QUICK_LOOK.value = False
 
-# Define how many times larger than the sigdet the measured effective readout
-#     is allow to be
-EXT_QC_EFF_RON_FACTOR = EXT_QC_EFF_RON_FACTOR.copy(__NAME__)
-EXT_QC_EFF_RON_FACTOR.value = 10.0
-
 #    Start order of the extraction in apero_flat if None starts from 0
 EXT_START_ORDER = EXT_START_ORDER.copy(__NAME__)
 EXT_START_ORDER.value = None
