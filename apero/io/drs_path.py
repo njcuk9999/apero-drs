@@ -247,6 +247,9 @@ def copytree(src: Union[str, Path], dst: Union[str, Path]):
             # get input file path
             infile = Path(root).joinpath(filename)
             outfile = Path(outroot).joinpath(filename)
+            # remove file if it exists
+            if os.path.exists(outfile):
+                os.remove(outfile)
             # copy file
             shutil.copy(str(infile), str(outfile))
 

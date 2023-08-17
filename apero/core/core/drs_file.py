@@ -8154,6 +8154,22 @@ def combine_hkey(values: List[Any], method: str, math: str) -> Any:
             # else return an empty value
             else:
                 return None
+        # if header key is a noise
+        if method == 'noise':
+            # if we want to sum the data
+            if math in ['sum', 'add', '+']:
+                return np.sqrt(np.nansum(np.array(values) ** 2))
+            elif math in ['average', 'mean']:
+                return np.sqrt(np.nansum(np.array(values) ** 2)) / len(values)
+            # elif if median
+            elif math in ['median', 'med']:
+                return np.sqrt(np.nansum(np.array(values) ** 2)) / len(values)
+            # deal with math == None
+            elif math == 'None':
+                return values[0]
+            # else return an empty value
+            else:
+                return None
         # if method is in None --> return None
         if method in [None, 'None', '']:
             return None
