@@ -1196,7 +1196,7 @@ EXT_QUICK_LOOK.value = False
 # Define how many times larger than the sigdet the measured effective readout
 #     is allow to be
 EXT_QC_EFF_RON_FACTOR = EXT_QC_EFF_RON_FACTOR.copy(__NAME__)
-EXT_QC_EFF_RON_FACTOR.value = 2.0
+EXT_QC_EFF_RON_FACTOR.value = 10.0
 
 #    Start order of the extraction in apero_flat if None starts from 0
 EXT_START_ORDER = EXT_START_ORDER.copy(__NAME__)
