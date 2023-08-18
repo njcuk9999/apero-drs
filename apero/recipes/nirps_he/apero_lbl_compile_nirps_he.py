@@ -155,6 +155,11 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # stop here if we do not have a science frame
     if data_type != 'SCIENCE':
         if len(errors) == 1:
+            # Quality control
+            qc_params, passed = gen_lbl.lbl_compile_qc(params)
+            # update recipe log
+            recipe.log.add_qc(qc_params, passed)
+            # report errors
             WLOG(params, 'warning', errors[0])
         return locals()
     # -------------------------------------------------------------------------
