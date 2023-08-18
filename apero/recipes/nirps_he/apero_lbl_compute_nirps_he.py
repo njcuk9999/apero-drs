@@ -200,18 +200,18 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         emsg = 'LBL Compute Exception [{0}_{1}] {2}: {3}'
         eargs = [object_science, object_template, type(e), str(e)]
         errors.append(emsg.format(*eargs))
-    # ----------------------------------------------------------------------
-    # report errors
-    if len(errors) == 2:
-        WLOG(params, 'error', '\n\n'.join(errors))
-    elif len(errors) == 1:
-        WLOG(params, 'warning', errors[0])
     # --------------------------------------------------------------
     # Quality control
     # --------------------------------------------------------------
     qc_params, passed = gen_lbl.lbl_compile_qc(params)
     # update recipe log
     recipe.log.add_qc(qc_params, passed)
+    # ----------------------------------------------------------------------
+    # report errors
+    if len(errors) == 2:
+        WLOG(params, 'error', '\n\n'.join(errors))
+    elif len(errors) == 1:
+        WLOG(params, 'warning', errors[0])
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
