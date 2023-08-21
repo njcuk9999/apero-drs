@@ -11,6 +11,7 @@ Created on 2022-02-07
 """
 import os
 import shutil
+import tarfile
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
@@ -45,7 +46,9 @@ textentry = lang.textentry
 def basic_filter(params: ParamDict, kw_objnames: List[str],
                  filters: Dict[str, List[str]], user_outdir: str,
                  do_copy: bool = True, do_symlink: bool = False,
-                 since: Optional[str] = None, nosubdir: bool = False,
+                 tarfilename: Optional[str] = None,
+                 since: Optional[str] = None, latest: Optional[str] = None,
+                 nosubdir: bool = False,
                  ) -> Tuple[Dict[str, List[str]], Dict[str, List[str]]]:
     """
     The basic filter function - copies files into OBJNAME directories
@@ -60,6 +63,11 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
     :param user_outdir: str, the output directory
     :param do_copy: bool, if True copies files (else just prints)
     :param do_symlink: bool, if True creates symlink instead of copying files
+    :param tarfilename: str, if not None make a tar file instead of copying files/
+                    creating symlinks
+
+    :param since: str, if not None only copy files since this date
+    :param latest: str, if not None only copy up to this date
 
     :return: Tuple, 1. dict, for each objname a list of input file locations
                     2. dict, for each objname a list of output file locations
@@ -82,6 +90,12 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
     WLOG(params, '', textentry('40-509-00001', args='log'))
     logdbm = drs_database.LogDatabase(params)
     logdbm.load_db()
+    # -------------------------------------------------------------------------
+    # deal with tar file name
+    if tarfilename is not None:
+        tarpath = os.path.join(user_outdir, tarfilename)
+    else:
+        tarpath = None
     # -------------------------------------------------------------------------
     # create reference condition
     master_condition = ''
@@ -112,6 +126,13 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
     # -------------------------------------------------------------------------
     if since is not None:
         subcondition = '(KW_DRS_DATE_NOW > \'{0}\')'.format(since)
+        if len(master_condition) == 0:
+            master_condition = subcondition
+        else:
+            master_condition += f' AND {subcondition}'
+    # -------------------------------------------------------------------------
+    if latest is not None:
+        subcondition = '(KW_DRS_DATE_NOW <= \'{0}\')'.format(latest)
         if len(master_condition) == 0:
             master_condition = subcondition
         else:
@@ -226,16 +247,37 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
             # get in and out path
             inpath = all_inpaths[objname][row]
             outpath = all_outpaths[objname][row]
-            # print string
-            copyargs = [row + 1, len(all_inpaths[objname]), outpath]
-            copystr = '[{0}/{1}] --> {2}'.format(*copyargs)
-            # print copy string
-            WLOG(params, '', copystr, wrap=False)
+
+            # -----------------------------------------------------------------
+            # deal with tar
+            if tarpath is not None:
+                # print string
+                copyargs = [row + 1, len(all_inpaths[objname]), outpath]
+                copystr = '[{0}/{1}] --> TAR[{2}]'.format(*copyargs)
+                # print copy string
+                WLOG(params, '', copystr, wrap=False)
+                # add to tar file
+                with tarfile.open(tarpath, 'a') as tarfile_obj:
+                    tarfile_obj.add(inpath)
+                continue
+            # -----------------------------------------------------------------
             # copy
             if do_symlink and do_copy:
+                # print string
+                copyargs = [row + 1, len(all_inpaths[objname]), outpath]
+                copystr = '[{0}/{1}] --> SYM[{2}]'.format(*copyargs)
+                # print copy string
+                WLOG(params, '', copystr, wrap=False)
+                # remove and symlink
                 remove_previous(outpath)
                 os.symlink(inpath, outpath)
             elif do_copy:
+                # print string
+                copyargs = [row + 1, len(all_inpaths[objname]), outpath]
+                copystr = '[{0}/{1}] --> CP[{2}]'.format(*copyargs)
+                # print copy string
+                WLOG(params, '', copystr, wrap=False)
+                # remove and copy
                 remove_previous(outpath)
                 shutil.copy(inpath, outpath)
 

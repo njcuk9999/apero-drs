@@ -91,6 +91,21 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         current = True
     else:
         current = False
+
+    if drs_text.true_text(params['INPUTS']['NOSUBDIR']):
+        nosubdir = True
+    else:
+        nosubdir = False
+    # -------------------------------------------------------------------------
+    # deal with tar files
+    if drs_text.true_text(params['INPUTS']['TAR']):
+        tarfile = params['INPUTS']['TARFILE']
+        # overwrite symlink, copy and nosubdir arguments
+        do_symlink = False
+        do_copy = True
+        nosubdir = True
+    else:
+        tarfile = None
     # -------------------------------------------------------------------------
     # get inputs from user
     inputs = params['INPUTS']
@@ -106,12 +121,11 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     kw_outputs = inputs.listp('outtypes', dtype=str, required=False)
     kw_fibers = inputs.listp('fibers', dtype=str, required=False)
     since = inputs.get('SINCE', None)
+    latest = inputs.get('LATEST', None)
     kw_obsdir = inputs.listp('OBSDIR', dtype=str, required=False)
     kw_pi_name = inputs.listp('PI_NAME', dtype=str, required=False)
-    if drs_text.true_text(inputs['NOSUBDIR']):
-        nosubdir = True
-    else:
-        nosubdir = False
+    kw_runids = inputs.listp('RUNID', dtype=str, required=False)
+
     # -------------------------------------------------------------------------
     # test that since value is a valid time
     if not drs_text.null_text(since, ['None', '', 'Null']):
@@ -128,6 +142,21 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     else:
         since = None
     # -------------------------------------------------------------------------
+    # test that since value is a valid time
+    if not drs_text.null_text(since, ['None', '', 'Null']):
+        try:
+            latest = Time(since).iso
+            msg = 'Using --latest={0}'
+            margs = [latest]
+            WLOG(params, '', msg.format(*margs))
+        except Exception as _:
+            # TODO: move to language database
+            emsg = '--latest={0} is not a valid time YYYY-MM-DD hh:mm:ss'
+            eargs = [latest]
+            WLOG(params, 'error', emsg.format(*eargs))
+    else:
+        latest = None
+    # -------------------------------------------------------------------------
     # check for None / *
     if drs_text.null_text(kw_objnames, ['None', '', 'Null']):
         kw_objnames = None
@@ -143,6 +172,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         kw_obsdir = None
     if drs_text.null_text(kw_pi_name, ['None', '', 'Null', '*']):
         kw_pi_name = None
+    if drs_text.null_text(kw_runids, ['None', '', 'Null', '*']):
+        kw_runids = None
     # -------------------------------------------------------------------------
     # push filters into dictionary (not object names these are special)
     filters = dict()
@@ -151,10 +182,13 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     filters['KW_FIBER'] = kw_fibers
     filters['OBS_DIR'] = kw_obsdir
     filters['KW_PI_NAME'] = kw_pi_name
+    filters['KW_RUN_ID'] = kw_runids
     # run basic filter
     indict, outdict = drs_get.basic_filter(params, kw_objnames, filters,
                                            user_outdir, do_copy, do_symlink,
-                                           since=since, nosubdir=nosubdir)
+                                           tarfile=tarfile,
+                                           since=since, latest=latest,
+                                           nosubdir=nosubdir)
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
