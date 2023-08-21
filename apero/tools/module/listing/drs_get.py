@@ -15,6 +15,7 @@ import tarfile
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
+from astropy.time import Time
 
 from apero import lang
 from apero.base import base
@@ -47,8 +48,8 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
                  filters: Dict[str, List[str]], user_outdir: str,
                  do_copy: bool = True, do_symlink: bool = False,
                  tarfilename: Optional[str] = None,
-                 since: Optional[str] = None, latest: Optional[str] = None,
-                 nosubdir: bool = False,
+                 since: Optional[Time] = None, latest: Optional[Time] = None,
+                 timekey: str = 'observed', nosubdir: bool = False,
                  ) -> Tuple[Dict[str, List[str]], Dict[str, List[str]]]:
     """
     The basic filter function - copies files into OBJNAME directories
@@ -68,6 +69,7 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
 
     :param since: str, if not None only copy files since this date
     :param latest: str, if not None only copy up to this date
+    :param timekey: str, the time key to use (observed or processed)
 
     :return: Tuple, 1. dict, for each objname a list of input file locations
                     2. dict, for each objname a list of output file locations
@@ -124,15 +126,29 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
         else:
             master_condition += ' AND ({0})'.format(' OR '.join(subconditions))
     # -------------------------------------------------------------------------
+    # deal with time key and going from iso to mjd
+    if timekey == 'processed':
+        time_col = 'KW_DRS_DATE_NOW'
+        if since is not None:
+            since = since.iso
+        if latest is not None:
+            latest = latest.iso
+    else:
+        time_col = 'KW_DATE_OBS'
+        if since is not None:
+            since = since.mjd
+        if latest is not None:
+            latest = latest.mjd
+    # -------------------------------------------------------------------------
     if since is not None:
-        subcondition = '(KW_DRS_DATE_NOW > \'{0}\')'.format(since)
+        subcondition = '({0} > \'{1}\')'.format(time_col, since)
         if len(master_condition) == 0:
             master_condition = subcondition
         else:
             master_condition += f' AND {subcondition}'
     # -------------------------------------------------------------------------
     if latest is not None:
-        subcondition = '(KW_DRS_DATE_NOW <= \'{0}\')'.format(latest)
+        subcondition = '({0} <= \'{1}\')'.format(time_col, latest)
         if len(master_condition) == 0:
             master_condition = subcondition
         else:
