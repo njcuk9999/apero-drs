@@ -100,7 +100,7 @@ def __main__(recipe, params):
         reset0a = drs_reset.reset_confirmation(params, 'Assets',
                                               params['DRS_DATA_ASSETS'])
     # all databases (can be within assets dir this is why we ask here)
-    if warn:
+    if warn and reset0a:
         reset0b = drs_reset.reset_confirmation(params, 'All databases')
 
     if reset0a:
