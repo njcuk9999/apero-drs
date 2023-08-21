@@ -659,7 +659,8 @@ def reset_out_folders(params: ParamDict, log: bool = True, dtimeout: int = 20):
     logdb.remove_entries(condition=condition)
 
 
-def reset_assets(params: ParamDict, log: bool = True, dtimeout: int = 0):
+def reset_assets(params: ParamDict, log: bool = True, dtimeout: int = 0,
+                 reset_dbs: bool = True):
     """
     Reset the Assets directory (including re-creating databases)
 
@@ -687,20 +688,22 @@ def reset_assets(params: ParamDict, log: bool = True, dtimeout: int = 0):
     #   i.e. new masks etc
     reset_dbdir(params, name, asset_path, abs_reset_path, log=log,
                 relative_path='MODULE', backup=True)
-    # create index databases
-    manage_databases.create_fileindex_database(params, pconst, databases,
-                                               tries=dtimeout)
-    # create log database
-    manage_databases.create_log_database(params, pconst, databases,
-                                         tries=dtimeout)
-    # create object database
-    manage_databases.create_object_database(params, pconst, databases,
-                                            tries=dtimeout)
-    # create reject database
-    manage_databases.create_reject_database(params, pconst, databases,
-                                            tries=dtimeout)
-    # create language database
-    manage_databases.create_lang_database(params, databases, tries=dtimeout)
+    # if user wants to reset all databases we do this here
+    if reset_dbs:
+        # create index databases
+        manage_databases.create_fileindex_database(params, pconst, databases,
+                                                   tries=dtimeout)
+        # create log database
+        manage_databases.create_log_database(params, pconst, databases,
+                                             tries=dtimeout)
+        # create object database
+        manage_databases.create_object_database(params, pconst, databases,
+                                                tries=dtimeout)
+        # create reject database
+        manage_databases.create_reject_database(params, pconst, databases,
+                                                tries=dtimeout)
+        # create language database
+        manage_databases.create_lang_database(params, databases, tries=dtimeout)
 
 
 def remove_all(params, path, log=True, skipfiles=None):
