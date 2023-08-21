@@ -130,25 +130,25 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
     if timekey == 'processed':
         time_col = 'KW_DRS_DATE_NOW'
         if since is not None:
-            since = since.iso
+            since = f'\'{since.iso}\''
         if latest is not None:
-            latest = latest.iso
+            latest = f'\'{latest.iso}\''
     else:
-        time_col = 'KW_DATE_OBS'
+        time_col = 'KW_MJDATE'
         if since is not None:
             since = since.mjd
         if latest is not None:
             latest = latest.mjd
     # -------------------------------------------------------------------------
     if since is not None:
-        subcondition = '({0} > \'{1}\')'.format(time_col, since)
+        subcondition = '({0} > {1})'.format(time_col, since)
         if len(master_condition) == 0:
             master_condition = subcondition
         else:
             master_condition += f' AND {subcondition}'
     # -------------------------------------------------------------------------
     if latest is not None:
-        subcondition = '({0} <= \'{1}\')'.format(time_col, latest)
+        subcondition = '({0} <= {1})'.format(time_col, latest)
         if len(master_condition) == 0:
             master_condition = subcondition
         else:
