@@ -266,7 +266,7 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
 
             # -----------------------------------------------------------------
             # deal with tar
-            if tarpath is not None:
+            if tarpath is not None and do_copy:
                 # print string
                 copyargs = [row + 1, len(all_inpaths[objname]), outpath]
                 copystr = '[{0}/{1}] --> TAR[{2}]'.format(*copyargs)
