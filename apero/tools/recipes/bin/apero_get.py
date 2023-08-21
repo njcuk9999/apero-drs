@@ -143,9 +143,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         since = None
     # -------------------------------------------------------------------------
     # test that since value is a valid time
-    if not drs_text.null_text(since, ['None', '', 'Null']):
+    if not drs_text.null_text(latest, ['None', '', 'Null']):
         try:
-            latest = Time(since).iso
+            latest = Time(latest).iso
             msg = 'Using --latest={0}'
             margs = [latest]
             WLOG(params, '', msg.format(*margs))
