@@ -90,17 +90,22 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Perform resets
     # ----------------------------------------------------------------------
-    reset0, reset1, reset2, reset3 = True, True, True, True
+    reset0a, reset0b, reset1, reset2, reset3 = True, True, True, True, True
     reset4, reset5, reset6, reset7, reset8 = True, True, True, True, True
     # ----------------------------------------------------------------------
     # progress
     drs_reset.reset_title(params, 'Assets')
     # assets folder
     if warn:
-        reset0 = drs_reset.reset_confirmation(params, 'Assets',
+        reset0a = drs_reset.reset_confirmation(params, 'Assets',
                                               params['DRS_DATA_ASSETS'])
-    if reset0:
-        drs_reset.reset_assets(params, dtimeout=database_timeout)
+    # all databases (can be within assets dir this is why we ask here)
+    if warn:
+        reset0b = drs_reset.reset_confirmation(params, 'All databases')
+
+    if reset0a:
+        drs_reset.reset_assets(params, dtimeout=database_timeout,
+                               reset_dbs=reset0b)
     else:
         WLOG(params, '', textentry('40-502-00013', args=['Assets']))
     # ----------------------------------------------------------------------
