@@ -232,6 +232,17 @@ get_files.recipe_type = 'nolog-tool'
 get_files.recipe_kind = 'user'
 get_files.set_kwarg(name='--gui', default=False, dtype='switch',
                     helpstr=textentry('GET_GUI_HELP'))
+get_files.set_kwarg(name='--outpath', dtype=str, default='None',
+                    helpstr=textentry('GET_OUTPATH_HELP'))
+get_files.set_kwarg(name='--symlinks', default=False, dtype='switch',
+                    helpstr=textentry('GET_SYMLINKS_HELP'))
+get_files.set_kwarg(name='--tar', default=False, dtype='switch',
+                    helpstr='Whether to create a tar instead of copying files.'
+                            'Must also provide the --tarfile argument')
+get_files.set_kwarg(name='--tarfile', default='None', dtype=str,
+                    helpstr='The name of the tar file to create. Must also '
+                            'provide the --tar argument')
+# file filters
 get_files.set_kwarg(name='--objnames', dtype=str, default='None',
                     helpstr=textentry('GET_OBJNAME_HELP'))
 get_files.set_kwarg(name='--dprtypes', dtype=str, default='None',
@@ -240,15 +251,10 @@ get_files.set_kwarg(name='--outtypes', dtype=str, default='None',
                     helpstr=textentry('GET_OUTTYPES_HELP'))
 get_files.set_kwarg(name='--fibers', dtype=str, default='None',
                     helpstr=textentry('GET_FIBERS_HELP'))
-get_files.set_kwarg(name='--outpath', dtype=str, default='None',
-                    helpstr=textentry('GET_OUTPATH_HELP'))
-get_files.set_kwarg(name='--symlinks', default=False, dtype='switch',
-                    helpstr=textentry('GET_SYMLINKS_HELP'))
-get_files.set_kwarg(name='--test', default=False, dtype='switch',
-                    helpstr=textentry('GET_TEST_HELP'))
-get_files.set_kwarg(name='--failedqc', default=False, dtype='switch',
-                    helpstr=textentry('GET_FAILEDQC_HELP'))
 get_files.set_kwarg(name='--since', default='None', dtype=str,
+                    helpstr='Only get files processed since a certain date '
+                            'YYYY-MM-DD hh:mm:ss')
+get_files.set_kwarg(name='--latest', default='None', dtype=str,
                     helpstr='Only get files processed since a certain date '
                             'YYYY-MM-DD hh:mm:ss')
 get_files.set_kwarg(name='--obsdir', default='None', dtype=str,
@@ -256,9 +262,17 @@ get_files.set_kwarg(name='--obsdir', default='None', dtype=str,
                             'directory')
 get_files.set_kwarg(name='--pi_name', default='None', dtype=str,
                     helpstr='Only get files from a certain PI')
+get_files.set_kwarg(name='--runid', default='None', dtype=str,
+                    helpstr='Only get files from certain run ids')
+# advanced options
+get_files.set_kwarg(name='--failedqc', default=False, dtype='switch',
+                    helpstr=textentry('GET_FAILEDQC_HELP'))
 get_files.set_kwarg(name='--nosubdir', default=False, dtype='switch',
                     helpstr='Do not put files into a sub-directory. '
                             'Only use thes outpath')
+get_files.set_kwarg(name='--test', default=False, dtype='switch',
+                    helpstr=textentry('GET_TEST_HELP'))
+
 get_files.description_file = 'apero_get.rst'
 
 # -----------------------------------------------------------------------------
