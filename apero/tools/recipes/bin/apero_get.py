@@ -102,7 +102,6 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         tarfilename = params['INPUTS']['TARFILE']
         # overwrite symlink, copy and nosubdir arguments
         do_symlink = False
-        do_copy = True
         nosubdir = True
     else:
         tarfilename = None
