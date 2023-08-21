@@ -122,15 +122,15 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     kw_fibers = inputs.listp('fibers', dtype=str, required=False)
     since = inputs.get('SINCE', None)
     latest = inputs.get('LATEST', None)
+    timekey = inputs.get('TIMEKEY', 'observed')
     kw_obsdir = inputs.listp('OBSDIR', dtype=str, required=False)
     kw_pi_name = inputs.listp('PI_NAME', dtype=str, required=False)
     kw_runids = inputs.listp('RUNID', dtype=str, required=False)
-
     # -------------------------------------------------------------------------
     # test that since value is a valid time
     if not drs_text.null_text(since, ['None', '', 'Null']):
         try:
-            since = Time(since).iso
+            since = Time(since)
             msg = 'Using --since={0}'
             margs = [since]
             WLOG(params, '', msg.format(*margs))
@@ -145,7 +145,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # test that since value is a valid time
     if not drs_text.null_text(latest, ['None', '', 'Null']):
         try:
-            latest = Time(latest).iso
+            latest = Time(latest)
             msg = 'Using --latest={0}'
             margs = [latest]
             WLOG(params, '', msg.format(*margs))

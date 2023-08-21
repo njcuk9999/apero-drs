@@ -251,12 +251,18 @@ get_files.set_kwarg(name='--outtypes', dtype=str, default='None',
                     helpstr=textentry('GET_OUTTYPES_HELP'))
 get_files.set_kwarg(name='--fibers', dtype=str, default='None',
                     helpstr=textentry('GET_FIBERS_HELP'))
+
 get_files.set_kwarg(name='--since', default='None', dtype=str,
                     helpstr='Only get files processed since a certain date '
                             'YYYY-MM-DD hh:mm:ss')
 get_files.set_kwarg(name='--latest', default='None', dtype=str,
                     helpstr='Only get files processed since a certain date '
                             'YYYY-MM-DD hh:mm:ss')
+get_files.set_kwarg(name='--timekey', default='observed', dtype='options',
+                    options=['processed', 'observed'],
+                    helpstr='Whether to use the processed or observed time in'
+                            ' the since and latest arguments (applies to both)')
+
 get_files.set_kwarg(name='--obsdir', default='None', dtype=str,
                     helpstr='Only get files from a certain observation '
                             'directory')
