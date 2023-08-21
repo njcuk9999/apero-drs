@@ -150,7 +150,7 @@ database_mgr.recipe_type = 'nolog-tool'
 database_mgr.recipe_kind = 'admin'
 database_mgr.set_kwarg(name='--kill', dtype='switch', default=False,
                        helpstr=textentry('DBMGR_KILLARG_HELP'))
-database_mgr.set_kwarg(name='--dbkind', dtype=str, default='all',
+database_mgr.set_kwarg(name='--dbkind', dtype='options', default='all',
                        options=['all', 'calib', 'tellu', 'findex', 'log',
                                 'astrom', 'reject', 'lang'],
                        helpstr='Database kind to update or reset. Must use in'
