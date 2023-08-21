@@ -189,6 +189,11 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                                            tarfilename=tarfilename,
                                            since=since, latest=latest,
                                            nosubdir=nosubdir)
+
+    # -------------------------------------------------------------------------
+    # push some variables to params
+    params.set('INDICT', indict)
+    params.set('OUTDICT', outdict)
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
