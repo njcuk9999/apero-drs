@@ -99,13 +99,13 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # -------------------------------------------------------------------------
     # deal with tar files
     if drs_text.true_text(params['INPUTS']['TAR']):
-        tarfile = params['INPUTS']['TARFILE']
+        tarfilename = params['INPUTS']['TARFILE']
         # overwrite symlink, copy and nosubdir arguments
         do_symlink = False
         do_copy = True
         nosubdir = True
     else:
-        tarfile = None
+        tarfilename = None
     # -------------------------------------------------------------------------
     # get inputs from user
     inputs = params['INPUTS']
@@ -186,7 +186,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # run basic filter
     indict, outdict = drs_get.basic_filter(params, kw_objnames, filters,
                                            user_outdir, do_copy, do_symlink,
-                                           tarfile=tarfile,
+                                           tarfilename=tarfilename,
                                            since=since, latest=latest,
                                            nosubdir=nosubdir)
     # ----------------------------------------------------------------------
