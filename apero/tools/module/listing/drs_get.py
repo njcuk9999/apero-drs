@@ -258,7 +258,7 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
                 WLOG(params, '', copystr, wrap=False)
                 # add to tar file
                 with tarfile.open(tarpath, 'a') as tarfile_obj:
-                    tarfile_obj.add(inpath)
+                    tarfile_obj.add(inpath, arcname=os.path.basename(inpath))
                 continue
             # -----------------------------------------------------------------
             # copy
