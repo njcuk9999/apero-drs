@@ -45,11 +45,25 @@ ParamDict = constants.ParamDict
 DrsInputFile = drs_file.DrsInputFile
 # Get the text types
 textentry = lang.textentry
-
+# LBL directories
+LBL_DIRS = ['calib', 'lblrdb', 'lblreftable', 'log', 'masks', 'models',
+            'plots', 'science', 'templates']
 
 # =============================================================================
 # Define functions
 # =============================================================================
+def run_mkdirs(params: ParamDict):
+    # get the lbl path
+    lbl_in_path = params['LBL_PATH']
+    # loop around directories
+    for directory in LBL_DIRS:
+        # construct path
+        path = os.path.join(lbl_in_path, directory)
+        # check if path exists and make directory if not
+        if not os.path.exists(path):
+            os.makedirs(path)
+
+
 def run_apero_get(params: ParamDict):
     """
     Run the apero get on all profiles
@@ -59,8 +73,7 @@ def run_apero_get(params: ParamDict):
     :returns: None, copies or symlinks files to params['LBL_PATH']
     """
     pconst = constants.pload()
-
-    # TODO get from yaml file
+    # get the lbl path
     lbl_in_path = params['LBL_PATH']
     # APERO file definition out types
     lbl_outtypes = params['LBL_FILE_DEFS']

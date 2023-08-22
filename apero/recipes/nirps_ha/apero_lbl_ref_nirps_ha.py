@@ -93,8 +93,11 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # Main Code
     # ----------------------------------------------------------------------
     mainname = __NAME__ + '._main()'
+    # step 1: make all directories (lbl is bad at multiprocessing and
+    #         creating directories
+    gen_lbl.run_mkdirs(params)
 
-    # step 1: use apero get to copy files to lbl directory
+    # step 2: use apero get to copy files to lbl directory
     #          symlink blaze to calib
     #          symlink wave to calib
     #          symlink tcorr to science
