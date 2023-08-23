@@ -58,11 +58,20 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     mini_run1_spirou.rkey('REF_OBS_DIR', '2019-04-20')
     mini_run1_spirou.rkey('SCIENCE_TARGETS', 'Gl699')
     mini_run1_spirou.append_sequence('limited_seq')
+    # do not skip any steps of the lbl
+    mini_run1_spirou.modify('SKIP_LBLREF', False)
+    mini_run1_spirou.modify('SKIP_LBLMASK_SCI', False)
+    mini_run1_spirou.modify('SKIP_LBLCOMPUTE_SCI', False)
+    mini_run1_spirou.modify('SKIP_LBLCOMPILE_SCI', False)
     run_files.append(mini_run1_spirou)
     # mini run 2
     mini_run2_spirou = RunIniFile(params, 'SPIROU', 'mini_run2')
     mini_run2_spirou.rkey('SCIENCE_TARGETS', 'Gl699')
     mini_run2_spirou.append_sequence('limited_seq')
+    mini_run2_spirou.modify('SKIP_LBLREF', False)
+    mini_run2_spirou.modify('SKIP_LBLMASK_SCI', False)
+    mini_run2_spirou.modify('SKIP_LBLCOMPUTE_SCI', False)
+    mini_run2_spirou.modify('SKIP_LBLCOMPILE_SCI', False)
     run_files.append(mini_run2_spirou)
     # quick run
     quick_run_spirou = RunIniFile(params, 'SPIROU', 'quick_run')
@@ -196,6 +205,12 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     # lbl run
     lbl_run_spirou = RunIniFile(params, 'SPIROU', 'lbl_run')
     lbl_run_spirou.append_sequence('lbl_seq')
+    # do not skip any steps of the lbl
+    lbl_run_spirou.modify('SKIP_LBLREF', False)
+    lbl_run_spirou.modify('SKIP_LBLMASK_SCI', False)
+    lbl_run_spirou.modify('SKIP_LBLCOMPUTE_SCI', False)
+    lbl_run_spirou.modify('SKIP_LBLCOMPILE_SCI', False)
+
     run_files.append(lbl_run_spirou)
 
     # batch run

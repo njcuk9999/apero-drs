@@ -2868,7 +2868,7 @@ LBL_FILE_DEFS.value = 'TELLU_OBJ'
 
 # Define the dprtype for science files for LBL
 LBL_DPRTYPES = LBL_DPRTYPES.copy(__NAME__)
-LBL_DPRTYPES.value = 'OBJ_FP,OBJ_DARK,POLAR_FP,POLAR_DARK'
+LBL_DPRTYPES.value = 'OBJ_DARK, OBJ_FP, OBJ_SKY, TELLU_SKY, FLUXSTD_SKY'
 
 # Define the file definition type (DRSOUTID) for lbl input template
 LBL_TEMPLATE_FILE_DEFS = LBL_TEMPLATE_FILE_DEFS.copy(__NAME__)
