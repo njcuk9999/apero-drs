@@ -254,6 +254,8 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
     # -------------------------------------------------------------------------
     # deal with tar
     if tarpath is not None and do_copy:
+        # count files added
+        nfiles = 0
         # add to tar file
         with tarfile.open(tarpath, 'w:gz') as tarfile_obj:
             # loop around objects
@@ -275,8 +277,14 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
                     # print copy string
                     WLOG(params, '', copystr, wrap=False)
                     tarfile_obj.add(inpath, arcname=os.path.basename(inpath))
+                    # add to count
+                    nfiles += 1
                     continue
-
+        # remove tarpath if no files
+        if nfiles == 0:
+            if os.path.exists(tarpath):
+                os.remove(tarpath)
+        # return all in paths and out paths
         return all_inpaths, all_outpaths
 
     # -------------------------------------------------------------------------
