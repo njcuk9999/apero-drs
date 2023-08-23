@@ -56,6 +56,11 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     # mini run
     mini_run_nirps_he = RunIniFile(params, 'NIRPS_HE', 'mini_run')
     mini_run_nirps_he.append_sequence('limited_seq')
+    # do not skip any steps of the lbl
+    mini_run_nirps_he.modify('SKIP_LBLREF', False)
+    mini_run_nirps_he.modify('SKIP_LBLMASK_SCI', False)
+    mini_run_nirps_he.modify('SKIP_LBLCOMPUTE_SCI', False)
+    mini_run_nirps_he.modify('SKIP_LBLCOMPILE_SCI', False)
     run_files.append(mini_run_nirps_he)
     # quick run
     quick_run_nirps_he = RunIniFile(params, 'NIRPS_HE', 'quick_run')
@@ -191,6 +196,12 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     # lbl run
     lbl_run_nirps_he = RunIniFile(params, 'NIRPS_HE', 'lbl_run')
     lbl_run_nirps_he.append_sequence('lbl_seq')
+    # do not skip any steps of the lbl
+    lbl_run_nirps_he.modify('SKIP_LBLREF', False)
+    lbl_run_nirps_he.modify('SKIP_LBLMASK_SCI', False)
+    lbl_run_nirps_he.modify('SKIP_LBLCOMPUTE_SCI', False)
+    lbl_run_nirps_he.modify('SKIP_LBLCOMPILE_SCI', False)
+
     run_files.append(lbl_run_nirps_he)
     # batch run
     # batch_run_nirps_he = RunIniFile(params, 'NIRPS_HE', 'batch_run')
