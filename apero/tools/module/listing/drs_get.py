@@ -250,6 +250,36 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
             if not os.path.exists(outdir) and do_copy:
                 os.mkdir(outdir)
     # -------------------------------------------------------------------------
+    # tar files
+    # -------------------------------------------------------------------------
+    # deal with tar
+    if tarpath is not None and do_copy:
+        # add to tar file
+        with tarfile.open(tarpath, 'w:gz') as tarfile_obj:
+            # loop around objects
+            for objname in all_inpaths:
+                WLOG(params, '', '')
+                WLOG(params, '', params['DRS_HEADER'])
+                WLOG(params, '', textentry('40-509-00008', args=[objname]))
+                WLOG(params, '', params['DRS_HEADER'])
+                WLOG(params, '', '')
+                # loop around files
+                for row in range(len(all_inpaths[objname])):
+                    # get in and out path
+                    inpath = all_inpaths[objname][row]
+                    outpath = all_outpaths[objname][row]
+                    # ---------------------------------------------------------
+                    # print string
+                    copyargs = [row + 1, len(all_inpaths[objname]), outpath]
+                    copystr = '[{0}/{1}] --> TAR[{2}]'.format(*copyargs)
+                    # print copy string
+                    WLOG(params, '', copystr, wrap=False)
+                    tarfile_obj.add(inpath, arcname=os.path.basename(inpath))
+                    continue
+
+        return all_inpaths, all_outpaths
+
+    # -------------------------------------------------------------------------
     # Copy files
     # -------------------------------------------------------------------------
     for objname in all_inpaths:
@@ -263,19 +293,6 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
             # get in and out path
             inpath = all_inpaths[objname][row]
             outpath = all_outpaths[objname][row]
-
-            # -----------------------------------------------------------------
-            # deal with tar
-            if tarpath is not None and do_copy:
-                # print string
-                copyargs = [row + 1, len(all_inpaths[objname]), outpath]
-                copystr = '[{0}/{1}] --> TAR[{2}]'.format(*copyargs)
-                # print copy string
-                WLOG(params, '', copystr, wrap=False)
-                # add to tar file
-                with tarfile.open(tarpath, 'a') as tarfile_obj:
-                    tarfile_obj.add(inpath, arcname=os.path.basename(inpath))
-                continue
             # -----------------------------------------------------------------
             # copy
             if do_symlink and do_copy:
