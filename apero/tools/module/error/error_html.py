@@ -12,7 +12,7 @@ Created on {DATE}
 
 import json
 import os
-from typing import Dict, List, Union
+from typing import Dict, List, Tuple, Union
 
 from astropy.time import Time
 from astropy.table import Table
@@ -291,7 +291,8 @@ def python_str_to_html_str(value):
 
 def filtered_html_table(outlist: Dict[int, Dict[str, Union[str, List[str]]]],
                         col_names: List[str],
-                        col_types: List[str]):
+                        col_types: List[str],
+                        clean: bool = True):
     """
     Generate a html page with a table of data that can be filtered by column
     values.
@@ -303,17 +304,18 @@ def filtered_html_table(outlist: Dict[int, Dict[str, Union[str, List[str]]]],
     :return:
     """
     # -------------------------------------------------------------------------
-    print('Cleaning table data')
-    # clean up outlist
-    for idnumber in tqdm(outlist):
-        for c_it, column_name in enumerate(col_names):
-            if col_types[c_it] == 'list':
-                for r_it, row in enumerate(outlist[idnumber][column_name]):
-                    value = python_str_to_html_str(row)
-                    outlist[idnumber][column_name][r_it] = value
-            else:
-                value = python_str_to_html_str(outlist[idnumber][column_name])
-                outlist[idnumber][column_name] = value
+    if clean:
+        print('Cleaning table data')
+        # clean up outlist
+        for idnumber in tqdm(outlist):
+            for c_it, column_name in enumerate(col_names):
+                if col_types[c_it] == 'list':
+                    for r_it, row in enumerate(outlist[idnumber][column_name]):
+                        value = python_str_to_html_str(row)
+                        outlist[idnumber][column_name][r_it] = value
+                else:
+                    value = python_str_to_html_str(outlist[idnumber][column_name])
+                    outlist[idnumber][column_name] = value
     # -------------------------------------------------------------------------
     print('Generating html page')
     # get the column headers text in html format
@@ -408,17 +410,42 @@ def filtered_html_table(outlist: Dict[int, Dict[str, Union[str, List[str]]]],
 
 
 def table_to_outlist(table: Table,
-                     col_names: List[str]) -> Dict[int, Dict[str, str]]:
+                     in_col_names: List[str],
+                     out_col_names: List[str] = None,
+                     out_types: List[str] = None
+                     ) -> Tuple[Dict[int, Dict[str, str]], List[str], List[str]]:
+    """
+    Turn an astropy table into an outlist (for use in the html code)
+
+    :param table:
+    :param in_col_names:
+    :param out_col_names:
+    :param out_types:
+    :return:
+    """
+    # deal with no out column names
+    if out_col_names is None:
+        out_col_names = list(in_col_names)
+    # deal with no out column types
+    if out_types is None:
+        out_types = ['str'] * len(out_col_names)
     # storage for return dictionary
     outlist = dict()
+    outcols, outtypes = [], []
     # loop around rows in the table
     for it in range(len(table)):
         outlist[it + 1] = dict()
         # loop around columns
-        for column in col_names:
-            outlist[it + 1][column] = str(table[column][it])
+        for c_it, column in enumerate(in_col_names):
+            if column not in table.colnames:
+                continue
+            out_col = out_col_names[c_it]
+            outlist[it + 1][out_col] = str(table[column][it])
+            # save final used column names and types
+            outcols.append(out_col)
+            outtypes.append(out_types[c_it])
 
-    return outlist
+    return outlist, outcols, outtypes
 
 
 
