@@ -522,7 +522,7 @@ class Database:
             # if astropy table request return it as one (need the cursor for
             #    columns)
             if return_table:
-                return self._to_astropy_table(result, colnames=columns)
+                return self._to_astropy_table(self._to_pandas(command))
             # else just return the result as is (a tuple)
             return result
 
@@ -1045,8 +1045,7 @@ class Database:
         emsg = 'Please abstract method with SQLiteDatabase or MySQLDatabase'
         NotImplemented(emsg)
 
-    def _to_astropy_table(self, result, table: Optional[str] = None,
-                          colnames: str = '*') -> Table:
+    def _to_astropy_table(self, result) -> Table:
         """
         Convert result to astropy table
 
@@ -1055,14 +1054,15 @@ class Database:
         """
         # set function name
         func_name = __NAME__ + '.Database._to_astropy_table()'
-        # get columns
-        columns = self.colnames(colnames, table=table)
         # set up table
         table = Table()
-        for it, col in enumerate(columns):
+        for it, col in enumerate(result.columns):
             # noinspection PyBroadException
             try:
-                table[col] = list(map(lambda x: str(x[it]), result))
+                if result[col].dtype in [int, float, bool]:
+                    table[col] = np.array(result[col])
+                else:
+                    table[col] = list(map(lambda x: str(x), list(result[col])))
             except Exception as e:
                 # log error: Cannot convert command to astropy table
                 ecode = '00-002-00042'
