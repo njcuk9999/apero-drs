@@ -15,6 +15,7 @@ import os
 from typing import Dict, List, Union
 
 from astropy.time import Time
+from astropy.table import Table
 from tqdm import tqdm
 
 from apero.base import base
@@ -403,6 +404,22 @@ def filtered_html_table(outlist: Dict[int, Dict[str, Union[str, List[str]]]],
         </script>
     """
     return html_content
+
+
+
+def table_to_outlist(table: Table,
+                     col_names: List[str]) -> Dict[int, Dict[str, str]]:
+    # storage for return dictionary
+    outlist = dict()
+    # loop around rows in the table
+    for it in range(len(table)):
+        outlist[it + 1] = dict()
+        # loop around columns
+        for column in col_names:
+            outlist[it + 1][column] = str(table[column][it])
+
+    return outlist
+
 
 
 # =============================================================================
