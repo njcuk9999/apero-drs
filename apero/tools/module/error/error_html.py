@@ -340,8 +340,6 @@ def filtered_html_table(outlist: Dict[int, Dict[str, Union[str, List[str]]]],
     render_col_str = '\n'.join(render_data_cols)
 
     html_content = f"""
-        <h1>Job Status Report</h1>
-
         <div>
             <label for="filterSelect">Filter by column:</label>
             <select id="filterSelect"></select>
@@ -407,6 +405,40 @@ def filtered_html_table(outlist: Dict[int, Dict[str, Union[str, List[str]]]],
     """
     return html_content
 
+
+def full_page_html(title: str, html_body: str) -> str:
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            table {{
+                font-family: Arial, sans-serif;
+                border-collapse: collapse;
+                width: 100%;
+            }}
+            th, td {{
+                border: 1px solid #dddddd;
+                text-align: left;
+                padding: 8px;
+            }}
+            th {{
+                background-color: #f2f2f2;
+            }}
+            #loading {{
+                text-align: center;
+            }}
+        </style>
+    </head>
+    <body>
+    <h1>{title}</h1>
+
+    {html_body}
+
+    </body>
+    </html>
+    """
+    return html_content
 
 
 def table_to_outlist(table: Table,
