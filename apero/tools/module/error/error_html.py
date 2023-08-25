@@ -292,7 +292,8 @@ def python_str_to_html_str(value):
 def filtered_html_table(outlist: Dict[int, Dict[str, Union[str, List[str]]]],
                         col_names: List[str],
                         col_types: List[str],
-                        clean: bool = True):
+                        clean: bool = True,
+                        log: bool = True):
     """
     Generate a html page with a table of data that can be filtered by column
     values.
@@ -305,7 +306,8 @@ def filtered_html_table(outlist: Dict[int, Dict[str, Union[str, List[str]]]],
     """
     # -------------------------------------------------------------------------
     if clean:
-        print('Cleaning table data')
+        if log:
+            print('Cleaning table data')
         # clean up outlist
         for idnumber in tqdm(outlist):
             for c_it, column_name in enumerate(col_names):
@@ -317,7 +319,8 @@ def filtered_html_table(outlist: Dict[int, Dict[str, Union[str, List[str]]]],
                     value = python_str_to_html_str(outlist[idnumber][column_name])
                     outlist[idnumber][column_name] = value
     # -------------------------------------------------------------------------
-    print('Generating html page')
+    if log:
+        print('Generating html page')
     # get the column headers text in html format
     column_headers = "\n".join([f'<th>{col}</th>' for col in col_names])
 
@@ -326,8 +329,11 @@ def filtered_html_table(outlist: Dict[int, Dict[str, Union[str, List[str]]]],
     render_data_cols = []
 
     for c_it, column_name in enumerate(col_names):
+        if col_types[c_it] == 'url':
+            render_data_cols.append(f'<td><a href="${{row.{column_name}}}"'
+                                    f'>link</a></td>')
         if col_types[c_it] == 'list':
-            filter_data_cols.append(f'row.{column_name}.join("")'
+            filter_data_cols.append(f'\nrow.{column_name}.join("")'
                                     f'.toLowerCase().includes(filterValue)')
             render_data_cols.append(f'<td>${{row.{column_name}'
                                     f'.join("<br>")}}</td>')
