@@ -474,8 +474,9 @@ def table_to_outlist(table: Table,
             out_col = out_col_names[c_it]
             outlist[it + 1][out_col] = str(table[column][it])
             # save final used column names and types
-            outcols.append(out_col)
-            outtypes.append(out_types[c_it])
+            if out_col not in outcols:
+                outcols.append(out_col)
+                outtypes.append(out_types[c_it])
 
     return outlist, outcols, outtypes
 
