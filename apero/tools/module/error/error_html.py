@@ -12,7 +12,7 @@ Created on {DATE}
 
 import json
 import os
-from typing import Dict, List, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union
 
 from astropy.time import Time
 from astropy.table import Table
@@ -108,9 +108,10 @@ def to_yaml_dict(save_path, save_name, group_date, yaml_dict):
     base.write_yaml(yaml_dict, os.path.join(yaml_path, yaml_file))
 
 
-def from_outlist(save_path: str, outlist: dict):
-    for item in tqdm(outlist):
-
+def from_outlist(save_path: str, outlist: Dict[int, Dict[str, Any]]):
+    for row in tqdm(outlist):
+        # get item from row
+        item = outlist[row]
         # create dictionary for saving to yaml
         yaml_dict = dict()
 
