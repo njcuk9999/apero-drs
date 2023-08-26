@@ -332,7 +332,7 @@ def filtered_html_table(outlist: Dict[int, Dict[str, Union[str, List[str]]]],
         if col_types[c_it] == 'url':
             render_data_cols.append(f'<td><a href="${{row.{column_name}}}"'
                                     f'>link</a></td>')
-        if col_types[c_it] == 'list':
+        elif col_types[c_it] == 'list':
             filter_data_cols.append(f'\nrow.{column_name}.join("")'
                                     f'.toLowerCase().includes(filterValue)')
             render_data_cols.append(f'<td>${{row.{column_name}'
