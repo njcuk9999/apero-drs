@@ -294,7 +294,8 @@ def filtered_html_table(outlist: Dict[int, Dict[str, Union[str, List[str]]]],
                         col_names: List[str],
                         col_types: List[str],
                         clean: bool = True,
-                        log: bool = True):
+                        log: bool = True,
+                        table_class: str = ''):
     """
     Generate a html page with a table of data that can be filtered by column
     values.
@@ -357,7 +358,7 @@ def filtered_html_table(outlist: Dict[int, Dict[str, Union[str, List[str]]]],
 
         <br><br>
 
-        <table id="jobTable">
+        <table id="jobTable" {table_class}>
             <tr>
                 """ + column_headers + """
             </tr>
@@ -413,12 +414,21 @@ def filtered_html_table(outlist: Dict[int, Dict[str, Union[str, List[str]]]],
     return html_content
 
 
-def full_page_html(title: str, html_body: str) -> str:
+def full_page_html(title: str, html_body: str = '', html_table: str = '',
+                   css: str = None) -> str:
+    # deal with css provided
+    if css is not None:
+        css_content = f'<link rel="stylesheet" type="text/css" href="{css}">'
+    else:
+        css_content = ''
+
     html_content = f"""
     <!DOCTYPE html>
     <html>
     <head>
-        <style>
+            {css_content}
+            
+            <style>
             table {{
                 font-family: Arial, sans-serif;
                 border-collapse: collapse;
@@ -441,6 +451,8 @@ def full_page_html(title: str, html_body: str) -> str:
     <h1>{title}</h1>
 
     {html_body}
+    
+    {html_table}
 
     </body>
     </html>
