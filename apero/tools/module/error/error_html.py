@@ -398,8 +398,11 @@ def filtered_html_table(outlist: Dict[int, Dict[str, Union[str, List[str]]]],
                     </tr>
                 `;
 
-                data.forEach(row => {
+                data.forEach((row, index) => {
                     const newRow = table.insertRow();
+                    // Check if the index is odd or even and assign the appropriate class
+                    newRow.className = index % 2 === 0 ? "row-even" : "row-odd";
+                    
                     newRow.innerHTML = `
                         """ + render_col_str + """
                     `;
