@@ -331,17 +331,16 @@ def filtered_html_table(outlist: Dict[int, Dict[str, Union[str, List[str]]]],
     render_data_cols = []
 
     for c_it, column_name in enumerate(col_names):
-        if col_types[c_it] == 'url':
-            render_data_cols.append(f'<td><a href="${{row.{column_name}}}"'
-                                    f'>link</a></td>')
-        elif col_types[c_it] == 'list':
-            filter_data_cols.append(f'\nrow.{column_name}.join("")'
-                                    f'.toLowerCase().includes(filterValue)')
+        if col_types[c_it] == 'list':
+            filter_data_cols.append(f'\n(selectedColumn === "{column_name}" && '
+                                    f'"row.{column_name}.join("")'
+                                    f'.toLowerCase().includes(filterValue))')
             render_data_cols.append(f'<td>${{row.{column_name}'
                                     f'.join("<br>")}}</td>')
         else:
-            filter_data_cols.append(f'\nrow.{column_name}'
-                                    f'.toLowerCase().includes(filterValue)')
+            filter_data_cols.append(f'\n(selectedColumn === "{column_name}" && '
+                                    f'row.{column_name}'
+                                    f'.toLowerCase().includes(filterValue))')
             render_data_cols.append(f'<td>${{row.{column_name}}}</td>')
     # push into string format
     filter_col_str = ' ||'.join(filter_data_cols)
@@ -384,6 +383,7 @@ def filtered_html_table(outlist: Dict[int, Dict[str, Union[str, List[str]]]],
 
             function loadFilteredRows() {
                 const filterValue = filterInput.value.toLowerCase();
+                const selectedColumn = filterSelect.value;
                 const filteredData = Object.values(outlist).filter(row => 
                     """ + filter_col_str + """
                 );
