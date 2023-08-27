@@ -414,13 +414,20 @@ def filtered_html_table(outlist: Dict[int, Dict[str, Union[str, List[str]]]],
     return html_content
 
 
-def full_page_html(title: str, html_body: str = '', html_table: str = '',
-                   css: str = None) -> str:
+def full_page_html(html_body1: str = '', html_table: str = '',
+                   html_body2: str = '',
+                   css: Union[str, List[str]] = None) -> str:
     # deal with css provided
+    css_content = ''
     if css is not None:
-        css_content = f'<link rel="stylesheet" type="text/css" href="{css}">'
-    else:
-        css_content = ''
+        if isinstance(css, str):
+
+            css_content = (f'<link rel="stylesheet" type="text/css" '
+                           f'href="{css}">')
+        elif isinstance(css, list):
+            for css_file in css:
+                css_content += (f'\n<link rel="stylesheet" type="text/css" '
+                                f'href="{css_file}">')
 
     html_content = f"""
     <!DOCTYPE html>
@@ -448,11 +455,12 @@ def full_page_html(title: str, html_body: str = '', html_table: str = '',
         </style>
     </head>
     <body>
-    <h1>{title}</h1>
 
-    {html_body}
+    {html_body1}
     
     {html_table}
+
+    {html_body2}
 
     </body>
     </html>
