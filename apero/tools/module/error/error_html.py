@@ -95,7 +95,7 @@ def pid_to_time(pid: str = None) -> Union[str, None]:
         # return obs-dir
         return time
     except Exception as _:
-        raise ValueError(f'pid = {pid} invalid')
+        return None
 
 
 def to_yaml_dict(save_path, save_name, group_date, yaml_dict):
