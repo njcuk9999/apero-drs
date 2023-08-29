@@ -70,7 +70,7 @@ def apero_group_to_date(apero_group: str) -> str:
         raise ValueError(f'apero group = {apero_group} invalid')
 
 
-def pid_to_time(pid: str) -> str:
+def pid_to_time(pid: str = None) -> Union[str, None]:
     """
     Take a pid string and convert to a date string
 
@@ -81,6 +81,8 @@ def pid_to_time(pid: str) -> str:
 
     :return: str, the time YYYY-mm-dd HH:MM:SS.SSS the pid was run
     """
+    if pid is None:
+        return None
     try:
         # get the unix string
         raw_unix_str = pid.split('-')[1]
@@ -128,10 +130,10 @@ def from_outlist(save_path: str, outlist: Dict[int, Dict[str, Any]]):
         yaml_dict['SHORTNAME'] = shortname
         # ---------------------------------------------------------------------
         # get runstring
-        yaml_dict['RUNSTRING'] = item['RUNSTRING']
+        yaml_dict['RUNSTRING'] = item.get('RUNSTRING', 'Unknown')
         # ---------------------------------------------------------------------
         # get pid
-        yaml_dict['PID'] = item['PID']
+        yaml_dict['PID'] = item.get('PID', None)
         # ---------------------------------------------------------------------
         # get time
         yaml_dict['TIME'] = pid_to_time(item['PID'])
