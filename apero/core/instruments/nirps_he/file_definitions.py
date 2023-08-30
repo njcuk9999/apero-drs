@@ -1650,12 +1650,12 @@ red_file.addset(out_ccf_fits)
 # =============================================================================
 # LBL processed Files
 # =============================================================================
-lbl_fibers = ['AB']
+lbl_fibers = ['A']
 
 # lbl template file
 lbl_template_file = drs_input('LBL_TEMPLATE', path='templates',
                               filetype='.fits',
-                              basename='Template_s1dv_{obj}_sc1d_v_file_AB',
+                              basename='Template_s1dv_{obj}_sc1d_v_file_A',
                               datatype='table',
                               outclass=lbl_ofile,
                               description='Telluric 1D template file',
@@ -1776,8 +1776,8 @@ post_e_file.add_ext('BLAZE_B', out_ff_blaze, pos=6, fiber='B',
                     block_kind='red', link='EXT_B', hlink='CALIB::BLAZE',
                     tag='BlazeB')
 # move header keys
-post_e_file.add_hkey('KW_VERSION', inheader='EXT_AB', outheader='PP')
-post_e_file.add_hkey('KW_DRS_DATE_NOW', inheader='EXT_AB', outheader='PP')
+post_e_file.add_hkey('KW_VERSION', inheader='EXT_A', outheader='PP')
+post_e_file.add_hkey('KW_DRS_DATE_NOW', inheader='EXT_A', outheader='PP')
 # add to post processed file set
 post_file.addset(post_e_file)
 
@@ -1904,8 +1904,8 @@ post_t_file.add_ext('SKYCORR_CAL', out_tellu_pclean, pos=6, fiber='A',
                     extname='SKYCORR_CAL')
 
 # move header keys
-post_t_file.add_hkey('KW_VERSION', inheader='TELLU_AB', outheader='PP')
-post_t_file.add_hkey('KW_DRS_DATE_NOW', inheader='TELLU_AB', outheader='PP')
+post_t_file.add_hkey('KW_VERSION', inheader='TELLU_A', outheader='PP')
+post_t_file.add_hkey('KW_DRS_DATE_NOW', inheader='TELLU_A', outheader='PP')
 # add to post processed file set
 post_file.addset(post_t_file)
 
