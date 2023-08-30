@@ -2184,6 +2184,7 @@ def update_smart_fp_mask(params: ParamDict, cavity: np.ndarray, **kwargs):
         return
     # ----------------------------------------------------------------------
     # construct output filename
+    # TODO: this is bad idea, if assets dir is reset this file is deleted
     outfile = os.path.join(assetdir, ccfpath, ccfmask)
     # ----------------------------------------------------------------------
     # start with a broader range of FP N values and clip later on
