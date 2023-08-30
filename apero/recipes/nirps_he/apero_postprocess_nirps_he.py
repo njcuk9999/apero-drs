@@ -17,7 +17,7 @@ from apero.base import base
 from apero.core import constants
 from apero.core.core import drs_database
 from apero.core.core import drs_log
-from apero.core.instruments.spirou import file_definitions as fd
+from apero.core.instruments.nirps_he import file_definitions as fd
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
 
