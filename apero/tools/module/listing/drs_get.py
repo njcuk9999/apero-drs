@@ -12,7 +12,7 @@ Created on 2022-02-07
 import os
 import shutil
 import tarfile
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 from astropy.time import Time
@@ -23,6 +23,7 @@ from apero.core import constants
 from apero.core.core import drs_database
 from apero.core.core import drs_log
 from apero.core.core import drs_text
+from apero.core.utils import drs_recipe
 
 # =============================================================================
 # Define variables
@@ -37,6 +38,7 @@ __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 ParamDict = constants.ParamDict
+DrsRecipe = drs_recipe.DrsRecipe
 # Get the text types
 textentry = lang.textentry
 
@@ -353,6 +355,37 @@ def all_objects(params):
     WLOG(params, 'info', msg.format(*margs))
     # return objects
     return objs
+
+
+def fiber_by_output(kw_fibers: Union[List[str], None],
+                    kw_outputs: Union[List[str], None]
+                    ) -> Union[List[str], None]:
+    # if we have no outputs just return the fibers
+    if kw_outputs is None:
+        return kw_fibers
+    # if fibers is already None just return it
+    if kw_fibers is None:
+        return None
+    # load psuedo constants
+    pconst = constants.pload()
+    filemod = pconst.FILEMOD().get()
+    # get filesets
+    filedefs = [filemod.raw_file, filemod.pp_file, filemod.red_file,
+                filemod.post_file]
+    # get all drs output ids that do not have fiber set
+    no_fiber_drsoutids = []
+    # loop around
+    for filedef in filedefs:
+        for drs_file in filedef.fileset:
+            if drs_file.fibers is None:
+                no_fiber_drsoutids.append(drs_file.name)
+    # now deal with outputs that our in our list
+    # if we have one output in out list return kw_fibers = None
+    for kw_output in kw_outputs:
+        if kw_output in no_fiber_drsoutids:
+            return None
+    # if we get to here we return kw_fibers
+    return kw_fibers
 
 
 # =============================================================================
