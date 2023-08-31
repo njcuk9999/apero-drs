@@ -174,6 +174,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     if drs_text.null_text(kw_runids, ['None', '', 'Null', '*']):
         kw_runids = None
     # -------------------------------------------------------------------------
+    # deal with some Kw_outputs not using fibers (fibers will be set to None)
+    kw_fibers = drs_get.fiber_by_output(kw_fibers, kw_outputs)
+    # -------------------------------------------------------------------------
     # push filters into dictionary (not object names these are special)
     filters = dict()
     filters['KW_DPRTYPE'] = kw_dprtypes
