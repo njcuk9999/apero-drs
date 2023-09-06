@@ -705,8 +705,8 @@ class PostOutFile(OutFile):
         # set function name
         # _ = display_func('post_file', __NAME__)
         # ---------------------------------------------------------------------
-        # set filename to identifer
-        filename = str(identifier)
+        # set filename to identifer and remove extension
+        filename = str(identifier).replace('.fits', '')
         # ---------------------------------------------------------------------
         # remove input suffix (extension) from identifier
         if drsfile.inext is not None:
