@@ -2,6 +2,121 @@ Changelog
 =========
 
 
+0.7.288 (2023-08-30)
+--------------------
+- [NIRPS] remove AB from file_Definitions of nirps he and ha. [Neil
+  Cook]
+- [NIRPS] fix which definitions are used for apero_postprocess for
+  nirps-he and nirps-ha. [Neil Cook]
+- [APERO] apero_get - fix pid. [Neil Cook]
+- Error_html.py - fix pid_to_time to allow no pid. [Neil Cook]
+- [APERO] error_html.py - fix links in date table. [Neil Cook]
+- [APERO] error_html.py - fix filtering. [Neil Cook]
+- [APERO] error_html.py - fix filtering. [Neil Cook]
+- [APERO] add roweven and rowodd. [Neil Cook]
+- [APERO] error_html.py - fix html styling for recipe page. [Neil Cook]
+- [APERO] error_html.py - fix problem with from_outlist. [Neil Cook]
+- [APERO] error_html.py - fix problem with from_outlist. [Neil Cook]
+- Start error html work. [Neil Cook]
+- Start error html work. [Neil Cook]
+- Start error html work. [Neil Cook]
+- [APERO] add some error handling functions. [Neil Cook]
+- [APERO] - add a add_html function to markdown functions. [Neil Cook]
+- Start error html work. [Neil Cook]
+- [APERO] - add a add_html function to markdown functions. [Neil Cook]
+- [APERO] add some error handling functions. [Neil Cook]
+- [APERO] correct making a tar with no files. [Neil Cook]
+- [APERO] apero_get.py - make tars actually a tar.gz. [Neil Cook]
+- [APERO] correct dprtype for LBL NIRPS + make default run.ini files set
+  lbl steps skip=False. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.287-live' into
+  v0.7.287-live. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.287-live' into
+  v0.7.287-live. [Neil Cook]
+- [APERO] apero_get - fix arguments. [Neil Cook]
+- Listing.drs_get.py - change DRS_DATE_OBS to KW_MJDATE (for matching on
+  observed time) [Neil Cook]
+- [APERO] apero_get - add a timekey to switch between processed and
+  observed. [Neil Cook]
+- [APERO] apero_get - add indict and outdict (for return analysis) [Neil
+  Cook]
+- [APERO] apero_get - fix tar file addition. [Neil Cook]
+- [APERO] apero_get - fix tar file addition. [Neil Cook]
+- [APERO] apero_get - fix tar file addition. [Neil Cook]
+- [APERO] reset - ask before reseting all databases. [Neil Cook]
+- [APERO] reset - ask before reseting all databases. [Neil Cook]
+- [APERO] update arg on apero_database. [Neil Cook]
+- [APERO] Update apero_get.py (allow tar creation, filter by runid and
+  get files up to a certain date) [Neil Cook]
+- [APERO] apero_lbl_ref_nirps_ha.py - create directories before
+  parallelisation. [Neil Cook]
+- [APERO] apero_lbl - for FP do QC. [Neil Cook]
+- [APERO] do lbl_compute qc before error reporting. [Neil Cook]
+- [APERO] Add LBL to apero_reset.py. [Neil Cook]
+- [APERO] add qc to lbl (for now they always pass) [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.287-live' into
+  v0.7.287-live. [Neil Cook]
+- Merge branch 'v0.7.286-stable-test' into v0.7.287-live. [Neil Cook]
+- [APERO] can no longer use append for dataframes use pd.concat instead
+  (already implemented in v0.7.287) fixes issue #710. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.287-live' into
+  v0.7.287-live. [Neil Cook]
+- [APERO] fix to language database - if row is Nan skip. [Neil Cook]
+- [APERO] remove EFFRON < 10* RON as a QC parameter. [Neil Cook]
+- [APERO] update QC limit to 10 * RON. [Neil Cook]
+- [APERO] add noise combination method. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.287-live' into
+  v0.7.287-live. [Neil Cook]
+- Merge branch 'v0.7.287-live' of github.com:njcuk9999/apero-drs into
+  v0.7.287-live. [Neil Cook]
+- Fix broken links not being replaced. [Neil Cook]
+- Deal with more copy paths existing (overwrite or remove before copy)
+  [Neil Cook]
+- [APERO] update requirements (downgrade mysql-connector-python) [Neil
+  Cook]
+- Merge remote-tracking branch 'origin/v0.7.287-live' into
+  v0.7.287-live. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.287-live' into
+  v0.7.287-live. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.287-live' into
+  v0.7.287-live. [Neil Cook]
+- [APERO] fix problem with eff_ron. [Neil Cook]
+- [APERO] correct gain --> EFF_GAIN. [Neil Cook]
+- Apero.core.instruments.nirps_* - update comments on MJD_FLUX, RMS_POS,
+  MED_POS. [Neil Cook]
+- Apero.core.utils.drs_recipe.py - revert forcing value to a string in
+  self.str_arg_list. [Neil Cook]
+- Apero.core.utils.drs_recipe.py - revert forcing value to a string in
+  self.str_arg_list. [Neil Cook]
+- [NIRPS] update KW_IDENTIFIER. [Neil Cook]
+- Add keyword EFF_RON to headers. [Neil Cook]
+- Add keyword EFF_RON to headers. [Neil Cook]
+- Setup/install.py - update now we have lbl in the requirements. [Neil
+  Cook]
+- Add lbl + postprocess recipes to nirps_he and nirps_ha. [Neil Cook]
+- Update run.ini files. [Neil Cook]
+- Update run.ini files with LBL and and post_procesing file for nirps.
+  [Neil Cook]
+- [APERO/LBL] Deal with errors and skipping better. [Neil Cook]
+- Make Gain a constant (do not use from header) [Neil Cook]
+- Continue work on running lbl from APERO (test running) [Neil Cook]
+- Continue work on running lbl from APERO (test running) [Neil Cook]
+- Continue work on running lbl from APERO (add lbl files to file index
+  database) [Neil Cook]
+- Continue work on running lbl from APERO. [Neil Cook]
+- Merge branch 'v0.7.287-stable-test' into v0.7.287-live. [Neil Cook]
+- Add keyword EFF_RON to headers. [Neil Cook]
+- Continue work on running lbl from APERO. [Neil Cook]
+- Merge branch 'v0.7.287-stable-test' into v0.7.287-live. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.287-stable-test' into
+  v0.7.287-stable-test. [Neil Cook]
+- Measure effective readout noise in order to better calculate SNR. Add
+  QC if effective readout noise > 2 * sigdet. [Neil Cook]
+- Continue work on running lbl from APERO. [Neil Cook]
+- Allow LBL to be run from APERO [UNFINISHED & UNTESTED] [Neil Cook]
+- Update date/version/changelog/readme. [Neil Cook]
+
+
 0.7.287 (2023-08-08)
 --------------------
 - [APERO] Correct that ribbon cannot load in raw file path. [Neil Cook]
