@@ -102,7 +102,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     kwargs['instrument'] = params['INSTRUMENT']
     kwargs['data_dir'] = params['LBL_PATH']
     kwargs['data_source'] = 'APERO'
-    kwargs['skip_done'] = params['INPUTS'].get('SKIP_DONE', True)
+    kwargs['skip_done'] = params['INPUTS'].get('SKIP_DONE', False)
     # deal with data type
     if objname in params.listp('LBL_SPECIFIC_DATATYPES', dtype=str):
         data_type = objname
