@@ -194,6 +194,7 @@ def calib_check(params: ParamDict, recipe: DrsRecipe, tstars: List[str],
     # -------------------------------------------------------------------------
     return calib_count, calib_times, bad_calib_nights
 
+
 SciTelluCheckReturn = Tuple[Dict[str, dict], Dict[str, dict],
                             Dict[str, np.ndarray], List[str]]
 
@@ -399,6 +400,8 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
                                                     odo_reject_list)
     # get unique observations directories
     uobsdirs = findexdbm.get_unique('OBS_DIR', condition=condition)
+    # sort uobsdirs alphabetically
+    uobsdirs = np.sort(uobsdirs)
     # -------------------------------------------------------------------------
     # get telluric stars and non-telluric stars
     # -------------------------------------------------------------------------
