@@ -93,6 +93,7 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     run_files.append(calib_run_nirps_ha)
     # complete run
     complete_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'complete_run')
+    complete_run_nirps_ha.skip_default = False
     complete_run_nirps_ha.append_sequence('full_seq')
     run_files.append(complete_run_nirps_ha)
     # reference calib run

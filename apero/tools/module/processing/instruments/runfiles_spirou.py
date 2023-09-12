@@ -106,6 +106,7 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     # complete run
     complete_run_spirou = RunIniFile(params, 'SPIROU', 'complete_run')
     complete_run_spirou.append_sequence('full_seq')
+    complete_run_spirou.skip_default = False
     complete_run_spirou.modify('CORES', -5)
     run_files.append(complete_run_spirou)
     # reference calib run
