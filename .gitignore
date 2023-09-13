@@ -188,5 +188,8 @@ fabric.properties
 # Ignore database files
 *.db
 
+# Ignore lock file
+lock.lock
+
 # ignore _assets.tar.gz file in apero/data directory
 /apero/data/*_assets.tar.gz
