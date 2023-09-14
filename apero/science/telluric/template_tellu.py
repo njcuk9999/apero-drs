@@ -789,11 +789,20 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
             # add to cube storage
             # ------------------------------------------------------------------
             # add the shifted data to big_cube
-            big_cube_tmp[:, it] = simage
+            big_cube_tmp[:, it] = np.array(simage)
+            # ------------------------------------------------------------------
+            # clean up
+            del infile
+            del image
+            del image2
+            del image3
+            del wave3a
+            del wave3b
+            del simage
+
         # ------------------------------------------------------------------
         # add to cube storage
         # ------------------------------------------------------------------
-
         # deal with having no bins (no extra median)
         if not flag_bin:
             # add the shifted data to big_cube
@@ -821,8 +830,15 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
                 sig = (p84 - p16) / 2  # 1-sigma excursion
                 # add the shifted data to big_cube
                 big_n[:, p_it] = np.sum(np.isfinite(big_cube_tmp), axis=1)
-                big_errors[:, p_it] = sig / np.sqrt(big_n[:, p_it] - 1)
-                big_cube[:, p_it] = p50
+                big_errors[:, p_it] = np.array(sig) / np.sqrt(big_n[:, p_it] - 1)
+                big_cube[:, p_it] = np.array(p50)
+        # ---------------------------------------------------------------
+        # clean up
+        del median
+        del ratio
+        del big_cube_tmp
+        del p16, p50, p84
+        del sig
 
     # ------------------------------------------------------------------
     # Iterate until low frequency noise is gone
