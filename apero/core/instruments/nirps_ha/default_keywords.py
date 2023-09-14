@@ -123,7 +123,7 @@ KW_PI_NAME.set(key='HIERARCH ESO OBS PI-COI NAME',
 
 # define the run id HEADER key
 KW_RUN_ID = KW_RUN_ID.copy(__NAME__)
-KW_RUN_ID.set(key='HIERARCH ESO OBS PROG ID ',
+KW_RUN_ID.set(key='HIERARCH ESO OBS PROG ID',
               comment='ESO program identification', group='raw')
 
 # define the instrument HEADER key
