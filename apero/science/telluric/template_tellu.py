@@ -239,7 +239,7 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
             # read data
             infile.read_file(copy=True)
             # get image and set up shifted image
-            image = infile.get_data(copy=True)
+            image = np.array(infile.get_data(copy=True))
             # normalise image by the normalised blaze
             image2 = image / nprops['NBLAZE']
             # ------------------------------------------------------------------
@@ -301,9 +301,14 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
             # add to cube storage
             # ------------------------------------------------------------------
             # add the shifted data to big_cube
-            big_cube_tmp[:, :, it] = simage
+            big_cube_tmp[:, :, it] = np.array(simage)
             # add the original data to big_cube0
-            big_cube0_tmp[:, :, it] = image2
+            big_cube0_tmp[:, :, it] = np.array(image2)
+            # -----------------------------------------------------------------
+            # clean up
+            del infile
+            del simage
+            del image2
 
         # ------------------------------------------------------------------
         # add to cube storage
@@ -320,6 +325,10 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
             big_cube[:, :, p_it] = mp.nanmedian(big_cube_tmp, axis=2)
             # add the original data to big_cube0
             big_cube0[:, :, p_it] = mp.nanmedian(big_cube0_tmp, axis=2)
+        # -----------------------------------------------------------------
+        # clean up
+        del big_cube_tmp
+        del big_cube0_tmp
 
     # ------------------------------------------------------------------
     # Deal with BERV coverage
@@ -563,8 +572,6 @@ def template_bcols(params: ParamDict, b_cols: Dict[str, list],
     b_cols['WAVETIME'].append(infile.get_hkey('KW_CDTWAVE', **bkwargs))
     # add the bin number for this file
     b_cols['TEMPLATE_BIN'].append(templatenum)
-    # remove the infile
-    del infile
     # return table dict
     return b_cols
 
