@@ -13,6 +13,7 @@ from collections import OrderedDict
 from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
+from astropy.io import fits
 from astropy import constants as cc
 from astropy import units as uu
 from astropy.table import Table
@@ -728,11 +729,19 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
             # log progres: reading file: {0}
             wargs = [infile.filename]
             WLOG(params, '', textentry('40-019-00033', args=wargs))
+
+            # TODO: This is a test
+            # manually open the file inside a with (we must close the fits file here)
+            with fits.open(infile.filename) as fitsfile:
+                image = np.array(fitsfile[1].data['flux'])
+                wavemap = np.array(fitsfile[1].data['wavelength'])
+
+            # TODO: This is the original code
             # read data
-            infile.read_file(copy=True)
-            # get image and set up shifted image
-            image = np.array(infile.get_data()['flux'])
-            wavemap = np.array(infile.get_data()['wavelength'])
+            # infile.read_file(copy=True)
+            # # get image and set up shifted image
+            # image = np.array(infile.get_data()['flux'])
+            # wavemap = np.array(infile.get_data()['wavelength'])
 
             # normalise image by the normalised blaze
             image2 = image / mp.nanmedian(image)
