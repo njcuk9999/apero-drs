@@ -125,6 +125,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     kw_obsdir = inputs.listp('OBSDIR', dtype=str, required=False)
     kw_pi_name = inputs.listp('PI_NAME', dtype=str, required=False)
     kw_runids = inputs.listp('RUNID', dtype=str, required=False)
+    sizelimit = inputs.get('SIZELIMIT', None)
     # -------------------------------------------------------------------------
     # test that since value is a valid time
     if not drs_text.null_text(since, ['None', '', 'Null']):
@@ -190,7 +191,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                                            user_outdir, do_copy, do_symlink,
                                            tarfilename=tarfilename,
                                            since=since, latest=latest,
-                                           nosubdir=nosubdir)
+                                           nosubdir=nosubdir,
+                                           sizelimit=sizelimit)
 
     # -------------------------------------------------------------------------
     # push some variables to params
