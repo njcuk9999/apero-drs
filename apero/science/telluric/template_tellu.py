@@ -841,13 +841,14 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
                 big_n[:, p_it] = np.sum(np.isfinite(big_cube_tmp), axis=1)
                 big_errors[:, p_it] = np.array(sig) / np.sqrt(big_n[:, p_it] - 1)
                 big_cube[:, p_it] = np.array(p50)
-        # ---------------------------------------------------------------
+            # ---------------------------------------------------------------
+            # clean up
+            del median
+            del ratio
+            del p16, p50, p84
+            del sig
         # clean up
-        del median
-        del ratio
         del big_cube_tmp
-        del p16, p50, p84
-        del sig
 
     # ------------------------------------------------------------------
     # Iterate until low frequency noise is gone
