@@ -52,6 +52,7 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
                  tarfilename: Optional[str] = None,
                  since: Optional[Time] = None, latest: Optional[Time] = None,
                  timekey: str = 'observed', nosubdir: bool = False,
+                 sizelimit: int = None
                  ) -> Tuple[Dict[str, List[str]], Dict[str, List[str]]]:
     """
     The basic filter function - copies files into OBJNAME directories
@@ -72,6 +73,10 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
     :param since: str, if not None only copy files since this date
     :param latest: str, if not None only copy up to this date
     :param timekey: str, the time key to use (observed or processed)
+    :param nosubdir: bool, if True does not create subdirectories for each
+                     object name
+    :param sizelimit: int, if not None only copy files up to this size limit
+                      in GB
 
     :return: Tuple, 1. dict, for each objname a list of input file locations
                     2. dict, for each objname a list of output file locations
@@ -252,6 +257,12 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
             if not os.path.exists(outdir) and do_copy:
                 os.mkdir(outdir)
     # -------------------------------------------------------------------------
+    # deal with file limit
+    # -------------------------------------------------------------------------
+    # first deal with checking total size of files
+    if sizelimit is not None:
+        check_size_limit(params, all_inpaths, sizelimit)
+    # -------------------------------------------------------------------------
     # tar files
     # -------------------------------------------------------------------------
     # deal with tar
@@ -386,6 +397,40 @@ def fiber_by_output(kw_fibers: Union[List[str], None],
             return None
     # if we get to here we return kw_fibers
     return kw_fibers
+
+
+def check_size_limit(params: ParamDict, inpaths: Dict[str, List[str]],
+                     sizelimit: int):
+    """
+    Check that the total size of files does not exceed the size limit
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param inpaths: dictionary, for each objname a list of input file locations
+    :param sizelimit: int, a file limit in GBs
+
+    :raises: WLOG error if total size of files exceeds limit
+    :return:
+    """
+    # deal with bad size limit
+    if sizelimit in ['None', None, '', 'Null']:
+        return
+    # deal with bad size limit
+    if sizelimit <= 0:
+        return
+    # store total size in bytes
+    total_size = 0
+    # loop around all objects and all files and add to the total size
+    for key in inpaths:
+        for path in inpaths[key]:
+            total_size += os.path.getsize(path)
+    # convert to GB
+    total_size = total_size / (1024 ** 3)
+    # deal with total size being too large
+    if total_size > sizelimit:
+        # print warning
+        eargs = [total_size, sizelimit]
+        emsg = ('Total size of files ({0:.3f} GB) exceeds limit ({1:.3f} GB)')
+        WLOG(params, 'error', emsg.format(*eargs))
 
 
 # =============================================================================
