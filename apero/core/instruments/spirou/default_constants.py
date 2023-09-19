@@ -3143,7 +3143,7 @@ LBL_TEMPLATE_FILE_DEFS.value = 'TELLU_TEMP,TELLU_TEMP_S1DV'
 
 # Define the DPRTYPE for simultaneous FP files for lbl input
 LBL_SIM_FP_DPRTYPES = LBL_SIM_FP_DPRTYPES.copy(__NAME__)
-LBL_SIM_FP_DPRTYPES.value = 'OBJ_FP'
+LBL_SIM_FP_DPRTYPES.value = 'OBJ_FP,POLAR_FP'
 
 # Define whether the LBL directory should use symlinks
 LBL_SYMLINKS = LBL_SYMLINKS.copy(__NAME__)

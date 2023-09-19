@@ -278,6 +278,8 @@ get_files.set_kwarg(name='--nosubdir', default=False, dtype='switch',
                             'Only use thes outpath')
 get_files.set_kwarg(name='--test', default=False, dtype='switch',
                     helpstr=textentry('GET_TEST_HELP'))
+get_files.set_kwarg(name='--sizelimit', default=0, dtype=int,
+                    helpstr='Limit the size of output tarfile (in GB)')
 
 get_files.description_file = 'apero_get.rst'
 
