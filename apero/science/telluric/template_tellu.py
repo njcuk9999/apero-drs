@@ -13,6 +13,7 @@ from collections import OrderedDict
 from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
+from astropy.io import fits
 from astropy import constants as cc
 from astropy import units as uu
 from astropy.table import Table
@@ -239,7 +240,7 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
             # read data
             infile.read_file(copy=True)
             # get image and set up shifted image
-            image = infile.get_data(copy=True)
+            image = np.array(infile.get_data(copy=True))
             # normalise image by the normalised blaze
             image2 = image / nprops['NBLAZE']
             # ------------------------------------------------------------------
@@ -301,9 +302,14 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
             # add to cube storage
             # ------------------------------------------------------------------
             # add the shifted data to big_cube
-            big_cube_tmp[:, :, it] = simage
+            big_cube_tmp[:, :, it] = np.array(simage)
             # add the original data to big_cube0
-            big_cube0_tmp[:, :, it] = image2
+            big_cube0_tmp[:, :, it] = np.array(image2)
+            # -----------------------------------------------------------------
+            # clean up
+            del infile
+            del simage
+            del image2
 
         # ------------------------------------------------------------------
         # add to cube storage
@@ -320,6 +326,10 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
             big_cube[:, :, p_it] = mp.nanmedian(big_cube_tmp, axis=2)
             # add the original data to big_cube0
             big_cube0[:, :, p_it] = mp.nanmedian(big_cube0_tmp, axis=2)
+        # -----------------------------------------------------------------
+        # clean up
+        del big_cube_tmp
+        del big_cube0_tmp
 
     # ------------------------------------------------------------------
     # Deal with BERV coverage
@@ -563,8 +573,6 @@ def template_bcols(params: ParamDict, b_cols: Dict[str, list],
     b_cols['WAVETIME'].append(infile.get_hkey('KW_CDTWAVE', **bkwargs))
     # add the bin number for this file
     b_cols['TEMPLATE_BIN'].append(templatenum)
-    # remove the infile
-    del infile
     # return table dict
     return b_cols
 
@@ -721,11 +729,19 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
             # log progres: reading file: {0}
             wargs = [infile.filename]
             WLOG(params, '', textentry('40-019-00033', args=wargs))
+
+            # TODO: This is a test
+            # manually open the file inside a with (we must close the fits file here)
+            with fits.open(infile.filename) as fitsfile:
+                image = np.array(fitsfile[1].data['flux'])
+                wavemap = np.array(fitsfile[1].data['wavelength'])
+
+            # TODO: This is the original code
             # read data
-            infile.read_file(copy=True)
-            # get image and set up shifted image
-            image = np.array(infile.get_data()['flux'])
-            wavemap = np.array(infile.get_data()['wavelength'])
+            # infile.read_file(copy=True)
+            # # get image and set up shifted image
+            # image = np.array(infile.get_data()['flux'])
+            # wavemap = np.array(infile.get_data()['wavelength'])
 
             # normalise image by the normalised blaze
             image2 = image / mp.nanmedian(image)
@@ -782,11 +798,20 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
             # add to cube storage
             # ------------------------------------------------------------------
             # add the shifted data to big_cube
-            big_cube_tmp[:, it] = simage
+            big_cube_tmp[:, it] = np.array(simage)
+            # ------------------------------------------------------------------
+            # clean up
+            del infile
+            del image
+            del image2
+            del image3
+            del wave3a
+            del wave3b
+            del simage
+
         # ------------------------------------------------------------------
         # add to cube storage
         # ------------------------------------------------------------------
-
         # deal with having no bins (no extra median)
         if not flag_bin:
             # add the shifted data to big_cube
@@ -814,8 +839,16 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
                 sig = (p84 - p16) / 2  # 1-sigma excursion
                 # add the shifted data to big_cube
                 big_n[:, p_it] = np.sum(np.isfinite(big_cube_tmp), axis=1)
-                big_errors[:, p_it] = sig / np.sqrt(big_n[:, p_it] - 1)
-                big_cube[:, p_it] = p50
+                big_errors[:, p_it] = np.array(sig) / np.sqrt(big_n[:, p_it] - 1)
+                big_cube[:, p_it] = np.array(p50)
+            # ---------------------------------------------------------------
+            # clean up
+            del median
+            del ratio
+            del p16, p50, p84
+            del sig
+        # clean up
+        del big_cube_tmp
 
     # ------------------------------------------------------------------
     # Iterate until low frequency noise is gone
