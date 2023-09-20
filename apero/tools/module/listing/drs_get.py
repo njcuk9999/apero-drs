@@ -41,6 +41,8 @@ ParamDict = constants.ParamDict
 DrsRecipe = drs_recipe.DrsRecipe
 # Get the text types
 textentry = lang.textentry
+# ALLOWED NULL COLUMNS
+NULL_COLS = ['KW_RUN_ID', 'KW_PI_NAME']
 
 
 # =============================================================================
@@ -127,6 +129,9 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
         # deal with no valid sub-conditions
         if len(subconditions) == 0:
             continue
+        # deal with null columns
+        if _filter in NULL_COLS:
+            subconditions.append('({0} IS NULL)'.format(_filter))
         # add to condition
         if len(master_condition) == 0:
             master_condition += '({0})'.format(' OR '.join(subconditions))
