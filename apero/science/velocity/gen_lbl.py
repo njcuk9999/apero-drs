@@ -249,7 +249,7 @@ def add_output(params: ParamDict, recipe: DrsRecipe,
     WLOG(params, '', msg.format(*margs))
     # construct hkeys
     hkeys = fake_hkeys(params, filename, header_fits_file,
-                       data_type, drsfile, objname, tempname)
+                       drsfile, objname, tempname)
     # add file to index database
     findexdbm.add_entry(basefile, 'lbl', recipe.name,
                         runstring=recipe.runstring, hkeys=hkeys)
