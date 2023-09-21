@@ -149,7 +149,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             # remove .fits from basename
             basename = basename.replace('.fits', '')
             # add to database
-            gen_lbl.add_output(params, recipe,
+            gen_lbl.add_output(params, recipe, header_fits_file=None,
                                drsfile=files.lbl_fits_file,
                                inprefix=basename,
                                objname=object_science,
@@ -195,7 +195,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             # remove .fits from basename
             basename = basename.replace('.fits', '')
             # add to database
-            gen_lbl.add_output(params, recipe,
+            gen_lbl.add_output(params, recipe, header_fits_file=None,
                                drsfile=files.lbl_fits_file,
                                inprefix=basename,
                                objname=object_science,
