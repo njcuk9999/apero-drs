@@ -145,7 +145,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                                        **kwargs)
             # add output file(s) to database (no tempname used as
             # template=objname)
-            gen_lbl.add_output(params, recipe,
+            gen_lbl.add_output(params, recipe, header_fits_file=None,
                                drsfile=files.lbl_template_file,
                                objname=object_science, tempname='')
 
@@ -179,7 +179,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         insuffix = f'_{mask_type}'
         # add output file(s) to database (no tempname used as
         # template=objname)
-        gen_lbl.add_output(params, recipe,
+        gen_lbl.add_output(params, recipe, header_fits_file=None,
                            drsfile=files.lbl_mask_file,
                            insuffix=insuffix,
                            objname=object_science, tempname='')
