@@ -97,6 +97,11 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # Main Code
     # ----------------------------------------------------------------------
     mainname = __NAME__ + '._main()'
+    # get program name
+    if params['INPUTS']['PROGRAM'] not in ['None', None, '']:
+        program = params['INPUTS']['PROGRAM']
+    else:
+        program = None
     # get object name
     objname = params['INPUTS']['OBJNAME']
     # set up arguments for lbl
@@ -113,6 +118,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # add the iteration and total number of iterations keyword
     kwargs['iteration'] = params['INPUTS']['ITERATION']
     kwargs['total'] = params['INPUTS']['TOTAL']
+    kwargs['program'] = program
     # -------------------------------------------------------------------------
     # try to import lbl (may not exist)
     try:

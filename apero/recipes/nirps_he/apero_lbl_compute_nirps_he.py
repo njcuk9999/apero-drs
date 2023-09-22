@@ -97,6 +97,11 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # Main Code
     # ----------------------------------------------------------------------
     mainname = __NAME__ + '._main()'
+    # get program name
+    if params['INPUTS']['PROGRAM'] not in ['None', None, '']:
+        program = params['INPUTS']['PROGRAM']
+    else:
+        program = None
     # get object name
     objname = params['INPUTS']['OBJNAME']
     # set up arguments for lbl
@@ -105,6 +110,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     kwargs['data_dir'] = params['LBL_PATH']
     kwargs['data_source'] = 'APERO'
     kwargs['skip_done'] = params['INPUTS'].get('SKIP_DONE', True)
+    kwargs['program'] = program
     # deal with data type
     if objname in params.listp('LBL_SPECIFIC_DATATYPES', dtype=str):
         data_type = objname
