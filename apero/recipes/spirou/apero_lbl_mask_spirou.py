@@ -149,6 +149,10 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                                        object_template=object_template,
                                        overwrite=False, data_type=data_type,
                                        **kwargs)
+            # log messages from lbl
+            WLOG(params, 'info', 'Adding LBL log to apero log')
+            for msg in lblrtn.get('logmsg', []):
+                WLOG(params, '', msg, logonly=True)
             # add output file(s) to database (no tempname used as
             # template=objname)
             gen_lbl.add_output(params, recipe, header_fits_file=None,
@@ -178,6 +182,10 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                                object_teff=teff,
                                skip_done=skip_done, data_type=data_type,
                                **kwargs)
+        # log messages from lbl
+        WLOG(params, 'info', 'Adding LBL log to apero log')
+        for msg in lblrtn.get('logmsg', []):
+            WLOG(params, '', msg, logonly=True)
         # get mask type
         lblparams = lblrtn['inst'].params
         # get the in suffix (mask type) based on lbl data type from lbl params

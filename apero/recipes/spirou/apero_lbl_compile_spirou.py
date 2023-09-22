@@ -143,6 +143,10 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         lblself = lbl_compile.main(object_science=object_science,
                                    object_template=object_template,
                                    data_type=data_type, **kwargs)
+        # log messages from lbl
+        WLOG(params, 'info', 'Adding LBL log to apero log')
+        for msg in lblself.get('logmsg', []):
+            WLOG(params, '', msg, logonly=True)
         # ---------------------------------------------------------------------
         # get lbl compile input files
         lblrv_files = np.sort(lblself['lblrv_files'])
@@ -191,6 +195,10 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         lblfriend = lbl_compile.main(object_science=object_science,
                                      object_template=object_template,
                                      data_type=data_type, **kwargs)
+        # log messages from lbl
+        WLOG(params, 'info', 'Adding LBL log to apero log')
+        for msg in lblfriend.get('logmsg', []):
+            WLOG(params, '', msg, logonly=True)
         # ---------------------------------------------------------------------
         # get lbl compile input files
         lblrv_files = np.sort(lblfriend['lblrv_files'])
