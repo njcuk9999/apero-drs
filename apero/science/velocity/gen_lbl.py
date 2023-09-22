@@ -397,7 +397,7 @@ def fake_hkeys(params: ParamDict, filename: str,
     # key to add to hkeys (if required by instrument)
     pkeys = dict()
     # if we are dealing with a fits file can get keys from the header
-    if filename.endswith('.fits'):
+    if filename.endswith('.fits') and header_fits_file is None:
         header_fits_file = filename
     # deal with header_fits_file being None
     if header_fits_file is None:
