@@ -146,6 +146,10 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         lblself = lbl_compute.main(object_science=object_science,
                                    object_template=object_template,
                                    data_type=data_type, **kwargs)
+        # log messages from lbl
+        WLOG(params, 'info', 'Adding LBL log to apero log')
+        for msg in lblself.get('logmsg', []):
+            WLOG(params, '', msg, logonly=True)
         # get science files
         science_files = lblself['science_files']
         # add output file(s) to database
@@ -192,6 +196,10 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         lblfriend = lbl_compute.main(object_science=object_science,
                                      object_template=object_template,
                                      data_type=data_type, **kwargs)
+        # log messages from lbl
+        WLOG(params, 'info', 'Adding LBL log to apero log')
+        for msg in lblfriend.get('logmsg', []):
+            WLOG(params, '', msg, logonly=True)
         # get science files
         science_files = lblfriend['science_files']
         # add output file(s) to database
