@@ -2785,6 +2785,8 @@ class LogDatabase(DatabaseManager):
                 # add subcondition
                 subcondition = 'OBS_DIR="{0}"'.format(obs_dir)
                 subconditions.append(subcondition)
+            # must include "other" for OBS_DIR
+            subconditions.append('OBS_DIR="other"')
             # add to conditions
             sql['condition'] += ' AND ({0})'.format(' OR '.join(subconditions))
         # ------------------------------------------------------------------
