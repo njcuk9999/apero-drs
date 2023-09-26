@@ -11,7 +11,7 @@ Created on 2019-08-21 at 12:28
 """
 
 import os
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -192,7 +192,9 @@ def find_teff(params: ParamDict, objname: str) -> float:
     return teff
 
 
-def add_output(params: ParamDict, recipe: DrsRecipe, drsfile: DrsInputFile,
+def add_output(params: ParamDict, recipe: DrsRecipe,
+               header_fits_file: Union[str, None],
+               drsfile: DrsInputFile,
                inprefix: Optional[str] = None,
                insuffix: Optional[str] = None,
                objname: Optional[str] = None,
@@ -225,7 +227,7 @@ def add_output(params: ParamDict, recipe: DrsRecipe, drsfile: DrsInputFile,
     kwargs['inprefix'] = inprefix
     kwargs['insuffix'] = insuffix
     # construct the base filename
-    filename= drsfile.outclass.lbl_file(params, drsfile, **kwargs)
+    filename = drsfile.outclass.lbl_file(params, drsfile, **kwargs)
     # if file does not exist do not add to the file index database
     if not os.path.exists(filename) and drsfile.required:
         # TODO: Add to language database
@@ -246,7 +248,8 @@ def add_output(params: ParamDict, recipe: DrsRecipe, drsfile: DrsInputFile,
     margs = [drsfile.name, filename]
     WLOG(params, '', msg.format(*margs))
     # construct hkeys
-    hkeys = fake_hkeys(params, filename, drsfile, objname, tempname)
+    hkeys = fake_hkeys(params, filename, header_fits_file,
+                       drsfile, objname, tempname)
     # add file to index database
     findexdbm.add_entry(basefile, 'lbl', recipe.name,
                         runstring=recipe.runstring, hkeys=hkeys)
@@ -380,9 +383,13 @@ def lbl_compile_qc(params: ParamDict) -> Tuple[List[list], int]:
     return qc_params, passed
 
 
-def fake_hkeys(params: ParamDict, filename: str, drsfile: DrsInputFile,
+def fake_hkeys(params: ParamDict, filename: str,
+               header_fits_file: Union[str, None],
+               drsfile: DrsInputFile,
                objname: Optional[str] = None,
                tempname: Optional[str] = None) -> Dict[str, Any]:
+    # set function name
+    func_name = __NAME__ + '.fake_hkeys()'
     # get rkeys from pseudo constants
     pconst = constants.pload()
     iheader_cols = pconst.FILEINDEX_HEADER_COLS()
@@ -390,17 +397,25 @@ def fake_hkeys(params: ParamDict, filename: str, drsfile: DrsInputFile,
     # key to add to hkeys (if required by instrument)
     pkeys = dict()
     # if we are dealing with a fits file can get keys from the header
-    if filename.endswith('.fits'):
-        hdr = drs_fits.read_header(params, filename)
-        for key in rkeys:
-            # deal with drs keys
-            if key in params:
-                drskey = params[key][0]
-            else:
-                drskey = str(key)
-            # get key from header
-            if drskey in list(hdr.keys()):
-                pkeys[key] = hdr[drskey]
+    if filename.endswith('.fits') and header_fits_file is None:
+        header_fits_file = filename
+    # deal with header_fits_file being None
+    if header_fits_file is None:
+        emsg = ('Must provide a header_fits_file argument for non-fits file.'
+                '\n\tfilename = {0}\n\tfunction = {1}')
+        eargs = [filename, func_name]
+        WLOG(params, 'error', emsg.format(*eargs))
+    # get header from selected
+    hdr = drs_fits.read_header(params, header_fits_file)
+    for key in rkeys:
+        # deal with drs keys
+        if key in params:
+            drskey = params[key][0]
+        else:
+            drskey = str(key)
+        # get key from header
+        if drskey in list(hdr.keys()):
+            pkeys[key] = hdr[drskey]
     # overwrite objectnames (if objname and tempname are valid)
     if objname is not None and tempname is not None and len(tempname) > 0:
         obj_temp = f'LBL[{objname}_{tempname}]'
@@ -410,6 +425,10 @@ def fake_hkeys(params: ParamDict, filename: str, drsfile: DrsInputFile,
         obj_temp = f'LBL[{objname}]'
         pkeys['KW_OBJECTNAME'] = obj_temp
         pkeys['KW_OBJECTNAME2'] = obj_temp
+
+    # need to add KW_DPRTYPE, KW_PI_NAME, KW_RUN_ID, KW_FIBER
+
+
     # overwrite keys
     pkeys['KW_OBJNAME'] = objname
     pkeys['KW_INSTRUMENT'] = params['INSTRUMENT']

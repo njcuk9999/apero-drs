@@ -97,6 +97,11 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # Main Code
     # ----------------------------------------------------------------------
     mainname = __NAME__ + '._main()'
+    # get program name
+    if params['INPUTS']['PROGRAM'] not in ['None', None, '']:
+        program = params['INPUTS']['PROGRAM']
+    else:
+        program = None
     # get object name
     objname = params['INPUTS']['OBJNAME']
     # set up arguments for lbl
@@ -105,6 +110,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     kwargs['data_dir'] = params['LBL_PATH']
     kwargs['data_source'] = 'APERO'
     kwargs['skip_done'] = params['INPUTS'].get('SKIP_DONE', True)
+    kwargs['program'] = program
     # deal with data type
     if objname in params.listp('LBL_SPECIFIC_DATATYPES', dtype=str):
         data_type = objname
@@ -140,6 +146,10 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         lblself = lbl_compute.main(object_science=object_science,
                                    object_template=object_template,
                                    data_type=data_type, **kwargs)
+        # log messages from lbl
+        WLOG(params, 'info', 'Adding LBL log to apero log')
+        for msg in lblself.get('logmsg', []):
+            WLOG(params, '', msg, logonly=True)
         # get science files
         science_files = lblself['science_files']
         # add output file(s) to database
@@ -149,7 +159,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             # remove .fits from basename
             basename = basename.replace('.fits', '')
             # add to database
-            gen_lbl.add_output(params, recipe,
+            gen_lbl.add_output(params, recipe, header_fits_file=None,
                                drsfile=files.lbl_fits_file,
                                inprefix=basename,
                                objname=object_science,
@@ -186,6 +196,10 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         lblfriend = lbl_compute.main(object_science=object_science,
                                      object_template=object_template,
                                      data_type=data_type, **kwargs)
+        # log messages from lbl
+        WLOG(params, 'info', 'Adding LBL log to apero log')
+        for msg in lblfriend.get('logmsg', []):
+            WLOG(params, '', msg, logonly=True)
         # get science files
         science_files = lblfriend['science_files']
         # add output file(s) to database
@@ -195,7 +209,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             # remove .fits from basename
             basename = basename.replace('.fits', '')
             # add to database
-            gen_lbl.add_output(params, recipe,
+            gen_lbl.add_output(params, recipe, header_fits_file=None,
                                drsfile=files.lbl_fits_file,
                                inprefix=basename,
                                objname=object_science,
