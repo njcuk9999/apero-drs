@@ -95,6 +95,11 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # Main Code
     # ----------------------------------------------------------------------
     mainname = __NAME__ + '._main()'
+    # get program name
+    if params['INPUTS']['PROGRAM'] not in ['None', None, '']:
+        program = params['INPUTS']['PROGRAM']
+    else:
+        program = None
     # get object name
     objname = params['INPUTS']['OBJNAME']
     # get the objects for which to calculate a template
@@ -105,6 +110,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     kwargs['data_dir'] = params['LBL_PATH']
     kwargs['data_source'] = 'APERO'
     skip_done = params['INPUTS'].get('SKIP_DONE', True)
+    kwargs['program'] = program
     # deal with data type
     if objname in params.listp('LBL_SPECIFIC_DATATYPES', dtype=str):
         data_type = objname
@@ -143,9 +149,13 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                                        object_template=object_template,
                                        overwrite=False, data_type=data_type,
                                        **kwargs)
+            # log messages from lbl
+            WLOG(params, 'info', 'Adding LBL log to apero log')
+            for msg in lblrtn.get('logmsg', []):
+                WLOG(params, '', msg, logonly=True)
             # add output file(s) to database (no tempname used as
             # template=objname)
-            gen_lbl.add_output(params, recipe,
+            gen_lbl.add_output(params, recipe, header_fits_file=None,
                                drsfile=files.lbl_template_file,
                                objname=object_science, tempname='')
 
@@ -172,6 +182,10 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                                object_teff=teff,
                                skip_done=skip_done, data_type=data_type,
                                **kwargs)
+        # log messages from lbl
+        WLOG(params, 'info', 'Adding LBL log to apero log')
+        for msg in lblrtn.get('logmsg', []):
+            WLOG(params, '', msg, logonly=True)
         # get mask type
         lblparams = lblrtn['inst'].params
         # get the in suffix (mask type) based on lbl data type from lbl params
@@ -179,7 +193,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         insuffix = f'_{mask_type}'
         # add output file(s) to database (no tempname used as
         # template=objname)
-        gen_lbl.add_output(params, recipe,
+        gen_lbl.add_output(params, recipe, header_fits_file=None,
                            drsfile=files.lbl_mask_file,
                            insuffix=insuffix,
                            objname=object_science, tempname='')
