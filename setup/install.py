@@ -15,10 +15,11 @@ Import Rules: Cannot use anything other than standard python 3 packages
 import argparse
 import importlib
 import os
+import re
 import signal
 import sys
 from pathlib import Path
-from typing import Any, List, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import setup_lang
 
@@ -153,7 +154,48 @@ def catch_sigint(signal_received: Any, frame: Any):
     sys.exit()
 
 
-def validate():
+def extract_package_info(line: str
+                         ) -> Tuple[Optional[str], Optional[str], Optional[str]]:
+    # match string like 'package @ URL'
+    match_string = r'^\s*([\w-]+)\s*@.*'
+    # Check if the line has the format 'package @ URL'
+    if re.match(match_string, line):
+        package_name = line.split('@')[0].strip()
+        source = line.split('@')[1].strip()
+        return package_name, '@', source
+
+    # match string like 'package == version_spec'
+    match_string = r'^([\w-]+)\s*(?:(==|>=|<=|>|<)\s*([\w\d.\-]+))?.*'
+    # Check if the line has the format 'package version_spec'
+    package_info = re.match(match_string, line)
+    if package_info:
+        package_name = package_info.group(1)
+        version_operator = package_info.group(2)
+        version = package_info.group(3)
+        return package_name, version_operator, version
+    return None, None, None
+
+
+
+def load_requirements(requirements_file: Union[str, Path]
+                      ) -> Dict[str, Tuple[str, str]]:
+    # store modules
+    modules = dict()
+    # open the requirements file
+    with open(requirements_file, 'r') as req_file:
+        lines = req_file.readlines()
+    # loop around all lines
+    for line in lines:
+        # skip blank and commented lines
+        if line.strip() and not line.strip().startswith('#'):
+            package_name, version_operator, version = extract_package_info(line)
+            if package_name is not None:
+                modules[package_name] = (version_operator, version)
+    # return the modules
+    return modules
+
+
+def validate(devmode: bool = False):
     """
     Check whether users system satisfies all python module requirements
 
@@ -173,32 +215,28 @@ def validate():
     user_req_file = Path(filepath).parent.parent.joinpath(REQ_USER)
     dev_req_file = Path(filepath).parent.parent.joinpath(REQ_DEV)
     # get lists of modules
-    user_req = load_requirements(user_req_file)
-    dev_mode = [False] * len(user_req)
-    dev_req = load_requirements(dev_req_file)
-    dev_mode += [True] * len(dev_req)
-    modules = user_req + dev_req
+    if devmode:
+        modules = load_requirements(dev_req_file)
+    else:
+        modules = load_requirements(user_req_file)
+
     # storage of checked modules
     checked = []
     # log check: Module check
     print(lang['40-001-00076'])
+    # all checks passed
+    passed = True
     # ------------------------------------------------------------------
     # loop around required modules to check
     # ------------------------------------------------------------------
-    for m_it, module in enumerate(modules):
+    for modname in modules:
         # remove end of lines
-        module = module.replace('\n', '')
-        # get module name
-        try:
-            modname = module.split('==')[0]
-            modversion = module.split('==')[1].split('.')
-        except Exception as e:
-            # Module name "{0}" error {1}: {2}'
-            emsg = lang.error('00-000-00010')
-            eargs = [module, type(e), str(e)]
-            raise IndexError(emsg.format(*eargs))
+        operator, version = modules[modname]
+        # skip operators we cannot check
+        if operator not in ['==', '>=', '<=', '>', '<']:
+            continue
         # get suggested installation module
-        suggested = lang['40-001-00077'].format(module)
+        suggested = 'pip install {0}{1}{2}'.format(modname, operator, version)
         # deal with modules with different import name
         if modname in module_translation:
             if isinstance(module_translation[modname], tuple):
@@ -217,18 +255,17 @@ def validate():
             imod = importlib.import_module(modname)
             # --------------------------------------------------------------
             # check the version
-            check_version(module, imod, modversion, suggested,
-                          required=not dev_mode[m_it])
+            check_version(modname, imod, version.split('.'), suggested)
         # --------------------------------------------------------------
         except Exception as _:
-            if dev_mode[m_it]:
-                # {0} recommends {1} to be installed (dev only)'
-                print(lang['40-001-00078'].format(DRS_PATH, module, suggested))
-            else:
-                # Fatal Error: {0} requires module {1} to be installed
-                eargs = [DRS_PATH, module, suggested]
-                print(lang.error('00-000-00011').format(*eargs))
-                sys.exit()
+            # Fatal Error: {0} requires module {1} to be installed
+            eargs = [DRS_PATH, modname, suggested]
+            print(lang.error('00-000-00011').format(*eargs))
+            passed = False
+    # only break if we have a failed module
+    if not passed:
+        print('Module check did not pass')
+        sys.exit()
 
 
 def check_install() -> Tuple[Any, Any, Any]:
@@ -324,6 +361,8 @@ def get_args() -> argparse.Namespace:
                         help=lang['INSTALL_ASSETDIR_HELP'])
     parser.add_argument('--logdir', action='store', dest='logdir',
                         help=lang['INSTALL_LOGDIR_HELP'])
+    parser.add_argument('--lbldir', action='store', dest='lbldir',
+                        help='LBL Directory')
     parser.add_argument('--always_create', action='store', dest='always_create',
                         help='Always create directories that do not exist. '
                              'Do not prompt.')
@@ -426,30 +465,6 @@ def save_args(args: argparse.Namespace):
     return path
 
 
-def load_requirements(filename: Union[str, Path]) -> List[str]:
-    """
-    Load requirements from file
-
-    :return: list of strings, return a list of required modules and versions
-             (from a pip style requirements.txt)
-    """
-    # storage for list of modules
-    modules = []
-    # open requirements file
-    with open(filename, 'r') as rfile:
-        lines = rfile.readlines()
-    # get modules from lines in requirements file
-    for line in lines:
-        if len(line.strip()) == 0:
-            continue
-        if line.startswith('#'):
-            continue
-        else:
-            modules.append(line)
-    # return modules
-    return modules
-
-
 def check_version(module: str, imod: Any, rversionlist: Union[List[str], None],
                   suggested: str, required: bool = True):
     """
@@ -522,8 +537,7 @@ def check_version(module: str, imod: Any, rversionlist: Union[List[str], None],
             print(lang['40-001-00079'].format(*args))
         elif not passed:
             # print: Fatal Error: {0} requires module {1} ({3} < {2})
-            print(lang.error('40-001-00080').format(*args))
-            sys.exit()
+            raise ImportError(lang.error('00-000-00011').format(*args))
         else:
             # print: Passed: {1} ({3} >= {2})
             print(lang['40-001-00081'].format(*args))
@@ -552,7 +566,10 @@ def main():
     # ----------------------------------------------------------------------
     # deal with validation
     if not get_sys_arg('--skip') and not get_sys_arg('--help', 'switch'):
-        validate()
+        if get_sys_arg('--dev'):
+            validate(dev=True)
+        else:
+            validate()
     # catch Ctrl+C
     signal.signal(signal.SIGINT, catch_sigint)
     # get install paths

@@ -157,7 +157,7 @@ class MarkDownPage:
         """
         Add a divider to a page using the raw html feature
 
-        :return: None, updates
+        :return: None, updates self.lines
         """
         # define the style text
         styletxt = ''
@@ -170,6 +170,20 @@ class MarkDownPage:
         self.lines += ['.. raw:: html', '']
         self.lines += [f'    <hr style="{styletxt}" />']
         self.add_newline()
+
+    def add_html(self, htmllines: List[str]):
+        """
+        Add raw html to a page
+
+        :param htmllines: list of strings, the html lines to add
+
+        :return: None, updates self.lines
+        """
+        self.lines += ['.. raw:: html']
+        self.add_newline()
+        for htmlline in htmllines:
+            self.lines += '    ' + htmlline
+        self.add_newline(2)
 
     def add_csv_table(self, title: str, csv_file: str,
                       abs_path: Union[str, None] = None,
@@ -203,6 +217,9 @@ class MarkDownPage:
                 del table
             except Exception as _:
                 table_has_rows = False
+        # deal with csv file being None
+        if csv_file is None:
+            table_has_rows = False
         # only add csv table if we have rows
         if table_has_rows:
             self.add_newline()

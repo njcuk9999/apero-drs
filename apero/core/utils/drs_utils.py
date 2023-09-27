@@ -798,7 +798,7 @@ def update_index_db(params: ParamDict, block_kind: str,
     # check whether we are updating the index
     update_index = True
     if 'INPUTS' in params:
-        if params['INPUTS']['PARALLEL']:
+        if params['INPUTS'].get('PARALLEL', False):
             update_index = False
     if not update_index:
         return findexdbm

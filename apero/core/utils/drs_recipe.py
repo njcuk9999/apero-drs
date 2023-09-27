@@ -111,11 +111,10 @@ class DrsRecipe(object):
         # else name is correct
         else:
             self.name = str(name)
-        # get pconst
-        self.pconst = constants.pload()
         # set drs file module related to this recipe
         if filemod is None:
-            self.filemod = self.pconst.FILEMOD()
+            # get pconst
+            self.filemod = constants.pload().FILEMOD()
         else:
             self.filemod = filemod.copy()
         # get drs parameters (will be loaded later)
@@ -219,7 +218,7 @@ class DrsRecipe(object):
         # set function name
         # _ = display_func('__getstate__', __NAME__, self.class_name)
         # exclude keys
-        exclude = ['pconst', 'filemod', 'recipemod']
+        exclude = ['drs_pconstant', 'filemod', 'recipemod']
         # set state to __dict__
         state = dict()
         for key, item in self.__dict__.items():
@@ -240,10 +239,12 @@ class DrsRecipe(object):
         # update dict with state
         self.__dict__.update(state)
         # get pconst
-        self.pconst = constants.pload(self.instrument)
+        pconst = constants.pload(self.params['INSTRUMENT'])
+        # set drs pconstant
+        self.drs_pconstant = pconst
         # set drs file module related to this recipe
-        self.filemod = self.pconst.FILEMOD()
-        self.recipemod = self.pconst.RECIPEMOD()
+        self.filemod = pconst.FILEMOD()
+        self.recipemod = pconst.RECIPEMOD()
 
     def __str__(self) -> str:
         """
@@ -1246,7 +1247,8 @@ class DrsRecipe(object):
                             # make sure there are no white spaces
                             value = np.char.strip(value)
                             # deal with object name cleaning
-                            value = objdbm.find_objnames(pconst, value)
+                            value = objdbm.find_objnames(pconst, value,
+                                                         allow_empty=True)
                         # need to filter list by tstars and ostars
                         # (if not in either list means they are not on disk)
                         all_objs = list(ostars) + list(tstars)
@@ -1414,7 +1416,7 @@ class DrsRecipe(object):
             # add the rest as separate arguments
             for value in values:
                 # finally append the string to str_arg_list
-                self.str_arg_list.append(value)
+                self.str_arg_list.append(str(value))
         else:
             strarg = [arg.argname, values]
             self.str_arg_list.append(strfmt.format(*strarg))

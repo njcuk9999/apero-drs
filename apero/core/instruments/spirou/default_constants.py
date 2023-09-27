@@ -53,6 +53,10 @@ CALIB_DB_FORCE_WAVESOL.value = False
 RAW_TO_PP_ROTATION = RAW_TO_PP_ROTATION.copy(__NAME__)
 RAW_TO_PP_ROTATION.value = 3
 
+# Measured detector gain in all places that use gain
+EFFGAIN = EFFGAIN.copy(__NAME__)
+EFFGAIN.value = 0.999
+
 # Define raw image size (mostly just used as a check and in places where we
 #   don't have access to this information)
 IMAGE_X_FULL = IMAGE_X_FULL.copy(__NAME__)
@@ -115,6 +119,16 @@ DO_CALIB_DTIME_CHECK.value = True
 #   an observation in order to use it
 MAX_CALIB_DTIME = MAX_CALIB_DTIME.copy(__NAME__)
 MAX_CALIB_DTIME.value = 7.0
+
+# define whether the user wants to bin the calibration times to a specific
+#   day fraction (i.e. midnight, midday) using CALIB_DB_DAYFRAC
+CALIB_BIN_IN_TIME = CALIB_BIN_IN_TIME.copy(__NAME__)
+CALIB_BIN_IN_TIME.value = True
+
+# Define the the fraction of the day to bin to (0 = midnight  before
+#     observation, 0.5 = noon, and 1.0 = midnight after
+CALIB_DB_DAYFRAC = CALIB_DB_DAYFRAC.copy(__NAME__)
+CALIB_DB_DAYFRAC.value = 0.0
 
 # Define the threshold under which a file should not be combined
 #  (metric is compared to the median of all files 1 = perfect, 0 = noise)
@@ -624,6 +638,7 @@ BKGR_NO_SUBTRACTION = BKGR_NO_SUBTRACTION.copy(__NAME__)
 BKGR_NO_SUBTRACTION.value = False
 
 #    background kernel amplitude
+#    If zero the scattering is skipped
 BKGR_KER_AMP = BKGR_KER_AMP.copy(__NAME__)
 BKGR_KER_AMP.value = 47
 
@@ -3213,6 +3228,48 @@ PLOT_POLAR_LSD = PLOT_POLAR_LSD.copy(__NAME__)
 PLOT_POLAR_LSD.value = True
 
 # =============================================================================
+# LBL SETTINGS
+# =============================================================================
+cgroup = 'LBL SETTINGS'
+# Define the file definition type (DRSOUTID) for LBL input files
+LBL_FILE_DEFS = LBL_FILE_DEFS.copy(__NAME__)
+LBL_FILE_DEFS.value = 'TELLU_OBJ'
+
+# Define the dprtype for science files for LBL
+LBL_DPRTYPES = LBL_DPRTYPES.copy(__NAME__)
+LBL_DPRTYPES.value = 'OBJ_FP,OBJ_DARK,POLAR_FP,POLAR_DARK'
+
+# Define the file definition type (DRSOUTID) for lbl input template
+LBL_TEMPLATE_FILE_DEFS = LBL_TEMPLATE_FILE_DEFS.copy(__NAME__)
+LBL_TEMPLATE_FILE_DEFS.value = 'TELLU_TEMP,TELLU_TEMP_S1DV'
+
+# Define the DPRTYPE for simultaneous FP files for lbl input
+LBL_SIM_FP_DPRTYPES = LBL_SIM_FP_DPRTYPES.copy(__NAME__)
+LBL_SIM_FP_DPRTYPES.value = 'OBJ_FP,POLAR_FP'
+
+# Define whether the LBL directory should use symlinks
+LBL_SYMLINKS = LBL_SYMLINKS.copy(__NAME__)
+LBL_SYMLINKS.value = True
+
+# Define the dictionary of friend and friend teffs for LBL
+LBL_FRIENDS = LBL_FRIENDS.copy(__NAME__)
+LBL_FRIENDS.value = '{"GL846": 3900, "GL699": 3200, "GL905": 2900}'
+
+# Define the specific data types (where objname is the data type) for LBL
+LBL_SPECIFIC_DATATYPES = LBL_SPECIFIC_DATATYPES.copy(__NAME__)
+LBL_SPECIFIC_DATATYPES.value = 'FP, LFC'
+
+# Define objnames for which we should recalculate template if it doesn't
+#   exist (must include FP)
+LBL_RECAL_TEMPLATE = LBL_RECAL_TEMPLATE.copy(__NAME__)
+LBL_RECAL_TEMPLATE.value = 'FP, LFC'
+
+# Define which object names should be run through LBL compute in parellel
+#   i.e. break in to Ncore chunks (comma separated list)
+LBL_MULTI_OBJLIST = LBL_MULTI_OBJLIST.copy(__NAME__)
+LBL_MULTI_OBJLIST.value = 'FP'
+
+# =============================================================================
 # POST PROCESS SETTINGS
 # =============================================================================
 # Define whether (by deafult) to clear reduced directory
@@ -3235,9 +3292,15 @@ POST_HDREXT_COMMENT_KEY.value = 'KW_IDENTIFIER'
 REPROCESS_REINDEX_BLOCKS = REPROCESS_REINDEX_BLOCKS.copy(__NAME__)
 REPROCESS_REINDEX_BLOCKS.value = 'raw,tmp,red,out'
 
-# Define whether to use multiprocess Pool or Process
+# Define whether to use multiprocess "pool" or "process" or use "linear"
+#     mode when parallelising recipes
 REPROCESS_MP_TYPE = REPROCESS_MP_TYPE.copy(__NAME__)
 REPROCESS_MP_TYPE.value = 'process'
+
+# Define whether to use multiprocess "pool" or "process" or use "linear"
+#     mode when validating recipes
+REPROCESS_MP_TYPE_VAL = REPROCESS_MP_TYPE_VAL.copy(__NAME__)
+REPROCESS_MP_TYPE_VAL.value = 'process'
 
 # Key for use in run files
 REPROCESS_RUN_KEY = REPROCESS_RUN_KEY.copy(__NAME__)

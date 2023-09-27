@@ -197,3 +197,9 @@ fabric.properties
 /apero/data/nirps_he/*
 /apero/data/spirou/*
 /apero/data/*tar.gz
+
+# Ignore lock file
+lock.lock
+
+# ignore _assets.tar.gz file in apero/data directory
+/apero/data/*_assets.tar.gz

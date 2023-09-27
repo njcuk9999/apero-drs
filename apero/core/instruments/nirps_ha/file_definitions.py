@@ -43,6 +43,7 @@ blank_ofile = out.BlankOutFile()
 general_ofile = out.GeneralOutFile()
 debug_ofile = out.DebugOutFile()
 set_ofile = out.SetOutFile()
+lbl_ofile = out.LBLOutFile()
 post_ofile = out.PostOutFile()
 calib_ofile = out.CalibOutFile()
 refcalib_ofile = out.RefCalibOutFile()
@@ -1660,6 +1661,86 @@ out_ccf_fits = drs_finput('CCF_RV', hkeys=dict(KW_OUTPUT='CCF_RV'),
 red_file.addset(out_ccf_fits)
 
 # =============================================================================
+# LBL processed Files
+# =============================================================================
+lbl_fibers = ['A']
+
+# lbl template file
+lbl_template_file = drs_input('LBL_TEMPLATE', path='templates',
+                              filetype='.fits',
+                              basename='Template_s1dv_{obj}_sc1d_v_file_A',
+                              datatype='table',
+                              outclass=lbl_ofile,
+                              description='Telluric 1D template file',
+                              required=False)
+
+# lbl mask file
+lbl_mask_file = drs_input('LBL_MASK',
+                          filetype='.fits', path='masks',
+                          basename='{obj}', datatype='table',
+                          outclass=lbl_ofile,
+                          description='Telluric mask file')
+
+# lbl fits files
+lbl_fits_file = drs_finput('LBL_FITS', filetype='.fits',
+                           path='lblrv/{obj}_{temp}/',
+                           suffix='_{obj}_{temp}_lbl',
+                           datatype='table',
+                           outclass=lbl_ofile, instrument=__INSTRUMENT__,
+                           description='LBL line list fits files')
+
+# lbl rdb file
+lbl_rdb_file = drs_input('LBL_RDB',
+                         filetype='.rdb', path='lblrdb',
+                         basename='lbl_{obj}_{temp}', datatype='table',
+                         outclass=lbl_ofile,
+                         description='LBL rdb file (RVs) in ascii-rdb format')
+
+# lbl rdb fits file
+lbl_rdb_fits_file = drs_input('LBL_RDB_FITS',
+                              filetype='.fits', path='lblrdb',
+                              basename='lbl_{obj}_{temp}', datatype='table',
+                              outclass=lbl_ofile,
+                              description='LBL rdb file (RVs) in fits format')
+
+# lbl rdb2 file
+lbl_rdb2_file = drs_input('LBL_RDB2',
+                         filetype='.rdb', path='lblrdb',
+                         basename='lbl2_{obj}_{temp}', datatype='table',
+                         outclass=lbl_ofile,
+                         description='LBL binned per night rdb file (RVs)')
+
+# lbl drift file
+lbl_drift_file = drs_input('LBL_DRIFT',
+                           filetype='.rdb', path='lblrdb',
+                           basename='drift',
+                           datatype='table',
+                           outclass=lbl_ofile,
+                           description='LBL drift file (calculated from FPs)',
+                           required=False)
+
+
+# lbl rdb file with drift
+lbl_rdb_drift_file = drs_input('LBL_RDB_DRIFT',
+                               filetype='.rdb', path='lblrdb',
+                               basename='lbl_{obj}_{temp}_drift',
+                               datatype='table',
+                               outclass=lbl_ofile,
+                               description='LBL Drift corrected rdb file',
+                               required=False)
+
+
+# lbl rdb2 file with drift
+lbl_rdb2_drift_file = drs_input('LBL_RDB2_DRIFT',
+                               filetype='.rdb', path='lblrdb',
+                               basename='lbl2_{obj}_{temp}_drift',
+                               datatype='table',
+                               outclass=lbl_ofile,
+                               description='LBL Drift corrected binned '
+                                           'rdb file',
+                               required=False)
+
+# =============================================================================
 # Post processed Files
 # =============================================================================
 # generic post processed file
@@ -1708,8 +1789,8 @@ post_e_file.add_ext('BLAZE_B', out_ff_blaze, pos=6, fiber='B',
                     block_kind='red', link='EXT_B', hlink='CALIB::BLAZE',
                     tag='BlazeB')
 # move header keys
-post_e_file.add_hkey('KW_VERSION', inheader='EXT_AB', outheader='PP')
-post_e_file.add_hkey('KW_DRS_DATE_NOW', inheader='EXT_AB', outheader='PP')
+post_e_file.add_hkey('KW_VERSION', inheader='EXT_A', outheader='PP')
+post_e_file.add_hkey('KW_DRS_DATE_NOW', inheader='EXT_A', outheader='PP')
 # add to post processed file set
 post_file.addset(post_e_file)
 
@@ -1867,8 +1948,8 @@ post_t_file.add_ext('SKYCORR_CAL', out_tellu_pclean, pos=6, fiber='A',
                     extname='SKYCORR_CAL')
 
 # move header keys
-post_t_file.add_hkey('KW_VERSION', inheader='TELLU_AB', outheader='PP')
-post_t_file.add_hkey('KW_DRS_DATE_NOW', inheader='TELLU_AB', outheader='PP')
+post_t_file.add_hkey('KW_VERSION', inheader='TELLU_A', outheader='PP')
+post_t_file.add_hkey('KW_DRS_DATE_NOW', inheader='TELLU_A', outheader='PP')
 # add to post processed file set
 post_file.addset(post_t_file)
 

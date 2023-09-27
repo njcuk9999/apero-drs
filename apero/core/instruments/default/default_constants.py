@@ -32,7 +32,7 @@ __all__ = [
     'PP_RMS_PERCENTILE', 'PP_LOWEST_RMS_PERCENTILE', 'PP_CORRUPT_SNR_HOTPIX',
     'PP_CORRUPT_RMS_THRES', 'PP_COSMIC_NOISE_ESTIMATE', 'PP_COSMIC_VARCUT1',
     'PP_COSMIC_VARCUT2', 'PP_COSMIC_INTCUT1', 'PP_COSMIC_INTCUT2',
-    'PP_COSMIC_BOXSIZE', 'RAW_TO_PP_ROTATION', 'PP_DARK_MED_BINNUM',
+    'PP_COSMIC_BOXSIZE', 'RAW_TO_PP_ROTATION', 'EFFGAIN', 'PP_DARK_MED_BINNUM',
     'SKIP_DONE_PP', 'ALLOWED_PPM_TYPES', 'PPM_MASK_NSIG', 'PP_MEDAMP_BINSIZE',
     'PP_BAD_EXPTIME_FRACTION', 'PP_DARK_DPRTYPES', 'PP_DARK_THRES',
     'PP_CORR_XTALK_AMP_FLUX', 'PP_COR_XTALK_AMP_DFLUX',
@@ -61,7 +61,8 @@ __all__ = [
     'OBJ_LIST_GAIA_EPOCH', 'OBJ_LIST_GAIA_PLX_LIM', 'OBJ_LIST_GAIA_MAG_CUT',
     'OBJ_LIST_CROSS_MATCH_RADIUS', 'REJECT_LIST_GOOGLE_SHEET_URL',
     'REJECT_LIST_GSHEET_MAIN_LIST_ID', 'GROUP_FILE_LIMIT', 'MAX_CALIB_DTIME',
-    'DO_CALIB_DTIME_CHECK', 'NIGHT_DEFINITION',
+    'DO_CALIB_DTIME_CHECK', 'CALIB_BIN_IN_TIME', 'CALIB_DB_DAYFRAC',
+    'NIGHT_DEFINITION',
     # qc constants
     'QC_DARK_TIME', 'QC_MAX_DEAD', 'DARK_QMIN', 'DARK_QMAX',
     'QC_MAX_DARK', 'QC_LOC_MAXFIT_REMOVED_CTR',
@@ -365,6 +366,10 @@ __all__ = [
     # debug polar plot settings
     'PLOT_POLAR_FIT_CONT', 'PLOT_POLAR_CONTINUUM', 'PLOT_POLAR_RESULTS',
     'PLOT_POLAR_STOKES_I', 'PLOT_POLAR_LSD',
+    # LBL settings
+    'LBL_FILE_DEFS', 'LBL_DPRTYPES', 'LBL_TEMPLATE_FILE_DEFS',
+    'LBL_SIM_FP_DPRTYPES', 'LBL_SYMLINKS', 'LBL_FRIENDS',
+    'LBL_SPECIFIC_DATATYPES', 'LBL_RECAL_TEMPLATE', 'LBL_MULTI_OBJLIST',
     # post-processing settings
     'POST_CLEAR_REDUCED', 'POST_OVERWRITE', 'POST_HDREXT_COMMENT_KEY',
     # tool constants
@@ -374,8 +379,8 @@ __all__ = [
     'REPROCESS_REJECT_SQL', 'REPROCESS_OBJ_SCI_SQL',
     'SUMMARY_LATEX_PDF', 'EXPMETER_MIN_LAMBDA', 'EXPMETER_MAX_LAMBDA',
     'EXPMETER_TELLU_THRES', 'REPROCESS_PINAMECOL', 'DRIFT_DPRTYPES',
-    'DRIFT_DPR_FIBER_TYPE', 'REPROCESS_MP_TYPE', 'REPROCESS_REINDEX_BLOCKS',
-    'REPROCESS_OBJECT_TYPES'
+    'DRIFT_DPR_FIBER_TYPE', 'REPROCESS_MP_TYPE', 'REPROCESS_MP_TYPE_VAL',
+    'REPROCESS_REINDEX_BLOCKS', 'REPROCESS_OBJECT_TYPES'
 ]
 
 # set name
@@ -445,6 +450,12 @@ RAW_TO_PP_ROTATION = Const('RAW_TO_PP_ROTATION', dtype=int, value=None,
                                        'rotate 90 deg clock-wise, '
                                        '\n\tnrot >=8 -> performs a modulo '
                                        '8 anyway')
+
+# Measured detector gain in all places that use gain
+EFFGAIN = Const('EFFGAIN', dtype=float, value=None, source=__NAME__,
+                group=cgroup, minimum=0,
+                description='Measured detector gain in all places that use '
+                            'gain')
 
 # Define raw image size (mostly just used as a check and in places where we
 #   don't have access to this information) in x dim
@@ -538,13 +549,6 @@ GROUP_FILE_LIMIT = Const('GROUP_FILE_LIMIT', value=None, dtype=int,
                          description='Define the maximum number of files that '
                                      'can be used in a group')
 
-# Define whether we check the calibration and observation separation
-DO_CALIB_DTIME_CHECK = Const('DO_CALIB_DTIME_CHECK', value=None, dtype=bool,
-                             source=__NAME__, group=cgroup,
-                             description='Define whether we check the '
-                                         'calibration and observation '
-                                         'separation')
-
 # Define the maximum time (in days) that a calibration can be separated from
 #   an observation in order to use it
 MAX_CALIB_DTIME = Const('MAX_CALIB_DTIME', value=None, dtype=float,
@@ -552,6 +556,31 @@ MAX_CALIB_DTIME = Const('MAX_CALIB_DTIME', value=None, dtype=float,
                         description='Define the maximum time (in days) that a '
                                     'calibration can be separated from an '
                                     'observation in order to use it')
+
+# Define whether we check the calibration and observation separation
+DO_CALIB_DTIME_CHECK = Const('DO_CALIB_DTIME_CHECK', value=None, dtype=bool,
+                             source=__NAME__, group=cgroup,
+                             description='Define whether we check the '
+                                         'calibration and observation '
+                                         'separation')
+
+# define whether the user wants to bin the calibration times to a specific
+#   day fraction (i.e. midnight, midday) using CALIB_DB_DAYFRAC
+CALIB_BIN_IN_TIME = Const('CALIB_BIN_IN_TIME', value=None, dtype=str,
+                          source=__NAME__, group=cgroup,
+                          description=('# define whether the user wants to '
+                                       'bin the calibration times to a '
+                                       'specific day fraction (i.e. midnight,'
+                                       ' midday) using CALIB_DB_DAYFRAC'))
+
+# Define the the fraction of the day to bin to (0 = midnight  before
+#     observation, 0.5 = noon, and 1.0 = midnight after
+CALIB_DB_DAYFRAC = Const('CALIB_DB_DAYFRAC', value=None, dtype=float,
+                         source=__NAME__, group=cgroup, minimum=0.0,
+                         maximum=1.0,
+                         description=('Define the the fraction of the day to '
+                                      '(0 = midnight  before observation, '
+                                      ' 0.5 = noon, and 1.0 = midnight after'))
 
 # Define the threshold under which a file should not be combined
 #  (metric is compared to the median of all files 1 = perfect, 0 = noise)
@@ -1348,10 +1377,12 @@ BKGR_NO_SUBTRACTION = Const('BKGR_NO_SUBTRACTION', value=None, dtype=bool,
                                          'measurement (True or False)'))
 
 #  Kernel amplitude determined from drs_local_scatter.py
+#    If zero the scattering is skipped
 BKGR_KER_AMP = Const('BKGR_KER_AMP', value=None, dtype=float, source=__NAME__,
                      group=cgroup,
                      description=('Kernel amplitude determined from '
-                                  'drs_local_scatter.py'))
+                                  'drs_local_scatter.py, '
+                                  'If zero the scattering is skipped'))
 
 #  Background kernel width in x and y [pixels]
 BKGR_KER_WX = Const('BKGR_KER_WX', value=None, dtype=int, source=__NAME__,
@@ -5451,6 +5482,74 @@ PLOT_POLAR_LSD = Const('PLOT_POLAR_LSD', value=False,
                        description='turn on the polar lsd debug plot')
 
 # =============================================================================
+# LBL SETTINGS
+# =============================================================================
+cgroup = 'LBL SETTINGS'
+# Define the file definition type (DRSOUTID) for LBL input files
+LBL_FILE_DEFS = Const('LBL_FILE_DEFS', value=None, dtype=str, source=__NAME__,
+                      user=False, active=True, group=cgroup,
+                      description='Define the file definition type (DRSOUTID) '
+                                    'for LBL input files')
+
+# Define the dprtype for science files for LBL
+LBL_DPRTYPES = Const('LBL_DPRTYPES', value=None, dtype=str, source=__NAME__,
+                     user=False, active=True, group=cgroup,
+                     description='Define the dprtype for science files for LBL')
+
+# Define the file definition type (DRSOUTID) for lbl input template
+LBL_TEMPLATE_FILE_DEFS = Const('LBL_TEMPLATE_FILE_DEFS', value=None,
+                               dtype=str, source=__NAME__, user=False,
+                               active=True, group=cgroup,
+                               description='Define the file definition type '
+                                           '(DRSOUTID) for lbl input template')
+
+# Define the DPRTYPE for simultaneous FP files for lbl input
+LBL_SIM_FP_DPRTYPES = Const('LBL_SIM_FP_DPRTYPES', value=None, dtype=str,
+                            source=__NAME__, user=False, active=True,
+                            group=cgroup,
+                            description='Define the DPRTYPE for simultaneous '
+                                        'FP files for lbl input')
+
+# Define whether the LBL directory should use symlinks
+LBL_SYMLINKS = Const('LBL_SYMLINKS', value=False, dtype=bool, source=__NAME__,
+                     user=True, active=True, group=cgroup,
+                     description='Define whether the LBL directory should use '
+                                 'symlinks')
+
+# Define the dictionary of friend and friend teffs for LBL
+LBL_FRIENDS = Const('LBL_FRIENDS', value=None, dtype=str, source=__NAME__,
+                    user=False, active=True, group=cgroup,
+                    description='Define the dictionary of friend and friend '
+                                'teffs for LBL')
+
+# Define the specific data types (where objname is the data type) for LBL
+LBL_SPECIFIC_DATATYPES = Const('LBL_SPECIFIC_DATATYPES', value=None,
+                               dtype=str, source=__NAME__, user=False,
+                               active=True, group=cgroup,
+                               description='Define the specific data types '
+                                            '(where objname is the data type) '
+                                            'for LBL')
+
+# Define objnames for which we should recalculate template if it doesn't
+#   exist (must include FP)
+LBL_RECAL_TEMPLATE = Const('LBL_RECAL_TEMPLATE', value=None, dtype=str,
+                           source=__NAME__, user=False, active=True,
+                           group=cgroup,
+                           description='Define objnames for which we should '
+                                        'recalculate template if it doesn\'t '
+                                        'exist (must include FP)')
+
+# Define which object names should be run through LBL compute in parellel
+#   i.e. break in to Ncore chunks (comma separated list)
+LBL_MULTI_OBJLIST = Const('LBL_MULTI_OBJLIST', value=None, dtype=str,
+                          source=__NAME__, user=False, active=True,
+                          group=cgroup,
+                          description='Define which object names should be '
+                                      ' run through LBL compute in parellel '
+                                      ' i.e. break in to Ncore chunks '
+                                      '(comma separated list)')
+
+# =============================================================================
 # POST PROCESS SETTINGS
 # =============================================================================
 cgroup = 'POST PROCESS SETTINGS'
@@ -5491,13 +5590,25 @@ REPROCESS_REINDEX_BLOCKS = Const('REPROCESS_REINDEX_BLOCKS', value=None,
                                              'kinds that have (or could be) '
                                              'manually changed')
 
-# Define whether to use multiprocess Pool or Process
+# Define whether to use multiprocess "pool" or "process" or use "linear"
+#     mode when parallelising recipes
 REPROCESS_MP_TYPE = Const('REPROCESS_MP_TYPE', value=None, dtype=str,
                           source=__NAME__, group=cgroup,
                           user=True, active=True,
                           options=['pool', 'process'],
                           description='Define whether to use multiprocess '
-                                      '"pool" or "process"')
+                                      '"pool" or "process" or use "linear" '
+                                      'mode when parallelising recipes')
+
+# Define whether to use multiprocess "pool" or "process" or use "linear"
+#     mode when validating recipes
+REPROCESS_MP_TYPE_VAL = Const('REPROCESS_MP_TYPE_VAL', value=None, dtype=str,
+                          source=__NAME__, group=cgroup,
+                          user=True, active=True,
+                          options=['linear', 'pool', 'process', 'pathos'],
+                          description='Define whether to use multiprocess '
+                                      '"pool" or "process" or use "linear" '
+                                      'mode when validating recipes')
 
 # Key for use in run files
 REPROCESS_RUN_KEY = Const('REPROCESS_RUN_KEY', value=None, dtype=str,

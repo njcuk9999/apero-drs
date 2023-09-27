@@ -25,7 +25,7 @@ __release__ = base.__release__
 # Define the header key that uniquely identifies the file
 #     (i.e. an odometer code)
 KW_IDENTIFIER = KW_IDENTIFIER.copy(__NAME__)
-KW_IDENTIFIER.set(key='FILENAME',
+KW_IDENTIFIER.set(key='ARCFILE',
                   comment='filename anticipated by fitspipe server',
                   group='raw')
 
@@ -123,7 +123,7 @@ KW_PI_NAME.set(key='HIERARCH ESO OBS PI-COI NAME',
 
 # define the run id HEADER key
 KW_RUN_ID = KW_RUN_ID.copy(__NAME__)
-KW_RUN_ID.set(key='HIERARCH ESO OBS PROG ID ',
+KW_RUN_ID.set(key='HIERARCH ESO OBS PROG ID',
               comment='ESO program identification', group='raw')
 
 # define the instrument HEADER key
@@ -558,6 +558,10 @@ KW_FIBER.set(key='FIBER', comment='The fiber name')
 KW_TDBSKY = KW_TDBSKY.copy(__NAME__)
 KW_TDBSKY.set(key='TDTSKYCO', comment='Sky model used for sky correction')
 
+# define the measured effective readout noise
+KW_EFF_RON = KW_EFF_RON.copy(__NAME__)
+KW_EFF_RON.set(key='EFFRON', comment='Measured eff readout noise before ext')
+
 # -----------------------------------------------------------------------------
 # Define DRS outputs keywords
 # -----------------------------------------------------------------------------
@@ -637,17 +641,17 @@ KW_PP_LED_FLAT_FILE.set(key='PPLEDFIL', comment='LED flat file used')
 # Define the flux-weighted mid-exposure [Expert use only]
 KW_PP_MJD_FLUX = KW_PP_MJD_FLUX.copy(__NAME__)
 KW_PP_MJD_FLUX.set(key='MJD_FLUX',
-                   comment='flux-weighted mid-exposure [Expert use only]')
+                   comment='weighted flux in posemeter [Expert use only]')
 
 # Define fractional RMS of posemteter [Expert use only]
 KW_PP_RMS_POSE = KW_PP_RMS_POSE.copy(__NAME__)
 KW_PP_RMS_POSE.set(key='RMS_POSE ',
-                   comment='flux-weighted mid-exposure [Expert use only]')
+                   comment='RMS of flux in posemeter [Expert use only]')
 
 # Define median flux in posemeter [Expert use only]
 KW_PP_MED_POSE = KW_PP_MED_POSE.copy(__NAME__)
 KW_PP_MED_POSE.set(key='MED_POSE',
-                   comment='flux-weighted mid-exposure [Expert use only]')
+                   comment='Median flux in posemeter [Expert use only]')
 
 # -----------------------------------------------------------------------------
 # Define apero_dark variables

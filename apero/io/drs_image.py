@@ -207,7 +207,7 @@ def convert_to_e(params: ParamDict, image: np.ndarray,
                 gain: float, the gain of the image
     :param image: numpy array (2D), the image
 
-    :param gain: float, if set overrides params['GAIN'], used as the gain
+    :param gain: float, if set overrides params['EFF_GAIN'], used as the gain
                    to multiple the image by
     :param exptime: float, if set overrides params['EXPTIME'], used as the
                       exposure time the image is multiplied by
@@ -217,7 +217,7 @@ def convert_to_e(params: ParamDict, image: np.ndarray,
     # set function name
     func_name = display_func('convert_to_e', __NAME__)
     # get constants from params / kwargs
-    _gain = pcheck(params, 'GAIN', func=func_name, override=gain)
+    _gain = pcheck(params, 'EFF_GAIN', func=func_name, override=gain)
     _exptime = pcheck(params, 'EXPTIME', func=func_name, override=exptime)
     # correct image
     newimage = image * _gain * _exptime
@@ -699,7 +699,8 @@ def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
             ribbon = np.array(image[bins[b_it]: bins[b_it + 1]])
             # construct ribbon nmae
             ribbon_name = '{0}_ribbon{1:06d}.npy'.format(clean_filename, b_it)
-            ribbon_path = os.path.join(subfilepath, ribbon_name)
+            base_ribbon_name = os.path.basename(ribbon_name)
+            ribbon_path = os.path.join(subfilepath, base_ribbon_name)
             # save ribbon to file
             # log: Saving file: {0}
             WLOG(params, '', textentry('40-000-00013', args=[ribbon_path]))
@@ -725,7 +726,8 @@ def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
             # construct ribbon nmae
             clean_filename = med_comb_clean_filename(filename)
             ribbon_name = '{0}_ribbon{1:06d}.npy'.format(clean_filename, b_it)
-            ribbon_path = os.path.join(subfilepath, ribbon_name)
+            base_ribbon_name = os.path.basename(ribbon_name)
+            ribbon_path = os.path.join(subfilepath, base_ribbon_name)
             # load ribbon
             # log: Loading file: {0}
             WLOG(params, '', textentry('40-000-00015', args=[ribbon_path]))

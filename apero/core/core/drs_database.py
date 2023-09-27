@@ -41,6 +41,7 @@ from apero.core.core import drs_exceptions
 from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.core.core import drs_text
+from apero.core.core import drs_misc
 from apero.io import drs_fits
 from apero.io import drs_path
 
@@ -293,19 +294,48 @@ class AstrometricDatabase(DatabaseManager):
         return self.database.count(condition=condition)
 
     def find_objnames(self, pconst: constants.PseudoConstants,
-                      objnames: Union[List[str], np.ndarray]) -> List[str]:
+                      objnames: Union[List[str], np.ndarray],
+                      allow_empty: bool,
+                      listname: Optional[str] = None
+                      ) -> List[str]:
         """
         Wrapper around find_objname
 
         :param pconst: psuedo constants - used to clean the object name
         :param objnames: list of str, a list of object names to clean and fimd
+        :param allow_empty: bool, if True allows not objects to be found
+                            if False will raise an error
+        :param listname: str, the name of the objnames list (for error messages)
         :return:
         """
+        func_name = display_func('find_objnames', __NAME__, self.classname)
+        # deal with objnames not being a list or a
+        if not isinstance(objnames, (list, np.ndarray)):
+            objnames = [objnames]
+        # loop around objects
         out_objnames = []
         for objname in objnames:
             out_objname, found = self.find_objname(pconst, objname)
             if found:
                 out_objnames.append(out_objname)
+        # ---------------------------------------------------------------------
+        # deal with no entries and not expecting an empty list return
+        if len(out_objnames) == 0 and not allow_empty:
+            # deal with name of object list
+            if listname is None:
+                listname = func_name
+            else:
+                listname = f'"{listname}" ({func_name})'
+            # log error: No objects found in astrometric database.
+            emsg = 'No objects found in astrometric database.'
+            emsg += '\n\tPlease add objects to the astrometric database.'
+            emsg += '\n\tListname={0}'
+            emsg += '\n\tObjnames: "{1}"'
+            eargs = [listname, ', '.join(objnames)]
+            # report the error
+            WLOG(self.params, 'error', emsg.format(*eargs))
+            return []
+        # ---------------------------------------------------------------------
         # return the filled out list
         return out_objnames
 
@@ -605,7 +635,8 @@ class CalibrationDatabase(DatabaseManager):
                        nentries: Union[str, int] = 1,
                        required: bool = True,
                        no_times: bool = False,
-                       fiber: Union[str, None] = None) -> CALIB_FILE_RTN:
+                       fiber: Union[str, None] = None,
+                       bintimes: bool = False) -> CALIB_FILE_RTN:
         """
         Handles getting a filename from calibration database (from filename,
         user input, or key in SQL database
@@ -633,6 +664,7 @@ class CalibrationDatabase(DatabaseManager):
                          files
         :param fiber: str or None, if set sets the fiber to use - if no fiber
                       required do not set
+        :param bintimes: bool, if True will bin files by midnight/midday
 
         :return:
         """
@@ -656,6 +688,13 @@ class CalibrationDatabase(DatabaseManager):
                                        header)
             # need to get filetime
             filetime = _get_time(self.params, self.name, hdict, header)
+            # bin files by midnight/midday
+            if bintimes:
+                # get the the fraction of the day to bin to (0 = midnight
+                # before observation, 0.5 = noon, and 1.0 = midnight after
+                day_frac = self.params['CALIB_DB_DAYFRAC']
+                # modify the filetime to be the binned time
+                filetime = drs_misc.bin_by_time(self.params, filetime, day_frac)
         # ---------------------------------------------------------------------
         # deal with default time mode
         if timemode is None:
@@ -2545,6 +2584,8 @@ class LogDatabase(DatabaseManager):
                 # add subcondition
                 subcondition = 'OBS_DIR="{0}"'.format(obs_dir)
                 subconditions.append(subcondition)
+            # must include "other" for OBS_DIR
+            subconditions.append('OBS_DIR="other"')
             # add to conditions
             sql['condition'] += ' AND ({0})'.format(' OR '.join(subconditions))
         # ------------------------------------------------------------------

@@ -8,6 +8,13 @@
 Created on 2023-03-14 at 11:27
 
 @author: cook
+
+# import rules
+
+only from:
+    - apero.base.base
+    - apero.base.drs_base
+
 """
 from typing import Any, Dict, List, Literal, Optional, Union
 
@@ -45,7 +52,7 @@ DATABASE_NAMES = ['calib', 'tellu', 'findex', 'log', 'astrom', 'lang',
 
 
 # =============================================================================
-# Define functions
+# Define classes
 # =============================================================================
 class AperoDatabaseException(Exception):
     """
@@ -1314,7 +1321,8 @@ class LanguageDatabase(DatabaseManager):
             # if we still have a null entry do not add this row to storage
             cond2 = drs_base.base_func(drs_base.base_null_text, func_name,
                                        rowtext, ['None', 'NULL', ''])
-            if cond2:
+            cond3 = str(rowtext).lower() in ['nan', 'inf']
+            if cond2 or cond3:
                 continue
             # encode rowtext with escape chars
             rowtext = rowtext.replace(r'\n', '\n')

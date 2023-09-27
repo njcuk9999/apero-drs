@@ -11,9 +11,11 @@ Created on 2022-02-07
 """
 import os
 import shutil
-from typing import Dict, List, Optional, Tuple
+import tarfile
+from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
+from astropy.time import Time
 
 from apero import lang
 from apero.base import base
@@ -21,6 +23,7 @@ from apero.core import constants
 from apero.core.core import drs_database
 from apero.core.core import drs_log
 from apero.core.core import drs_text
+from apero.core.utils import drs_recipe
 
 # =============================================================================
 # Define variables
@@ -35,8 +38,11 @@ __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 ParamDict = constants.ParamDict
+DrsRecipe = drs_recipe.DrsRecipe
 # Get the text types
 textentry = lang.textentry
+# ALLOWED NULL COLUMNS
+NULL_COLS = ['KW_RUN_ID', 'KW_PI_NAME']
 
 
 # =============================================================================
@@ -45,7 +51,10 @@ textentry = lang.textentry
 def basic_filter(params: ParamDict, kw_objnames: List[str],
                  filters: Dict[str, List[str]], user_outdir: str,
                  do_copy: bool = True, do_symlink: bool = False,
-                 since: Optional[str] = None, nosubdir: bool = False,
+                 tarfilename: Optional[str] = None,
+                 since: Optional[Time] = None, latest: Optional[Time] = None,
+                 timekey: str = 'observed', nosubdir: bool = False,
+                 sizelimit: int = None
                  ) -> Tuple[Dict[str, List[str]], Dict[str, List[str]]]:
     """
     The basic filter function - copies files into OBJNAME directories
@@ -60,6 +69,16 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
     :param user_outdir: str, the output directory
     :param do_copy: bool, if True copies files (else just prints)
     :param do_symlink: bool, if True creates symlink instead of copying files
+    :param tarfilename: str, if not None make a tar file instead of copying files/
+                    creating symlinks
+
+    :param since: str, if not None only copy files since this date
+    :param latest: str, if not None only copy up to this date
+    :param timekey: str, the time key to use (observed or processed)
+    :param nosubdir: bool, if True does not create subdirectories for each
+                     object name
+    :param sizelimit: int, if not None only copy files up to this size limit
+                      in GB
 
     :return: Tuple, 1. dict, for each objname a list of input file locations
                     2. dict, for each objname a list of output file locations
@@ -83,6 +102,12 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
     logdbm = drs_database.LogDatabase(params)
     logdbm.load_db()
     # -------------------------------------------------------------------------
+    # deal with tar file name
+    if tarfilename is not None:
+        tarpath = os.path.join(user_outdir, tarfilename)
+    else:
+        tarpath = None
+    # -------------------------------------------------------------------------
     # create reference condition
     master_condition = ''
     # loop around filters
@@ -104,14 +129,38 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
         # deal with no valid sub-conditions
         if len(subconditions) == 0:
             continue
+        # deal with null columns
+        if _filter in NULL_COLS:
+            subconditions.append('({0} IS NULL)'.format(_filter))
         # add to condition
         if len(master_condition) == 0:
             master_condition += '({0})'.format(' OR '.join(subconditions))
         else:
             master_condition += ' AND ({0})'.format(' OR '.join(subconditions))
     # -------------------------------------------------------------------------
+    # deal with time key and going from iso to mjd
+    if timekey == 'processed':
+        time_col = 'KW_DRS_DATE_NOW'
+        if since is not None:
+            since = f'\'{since.iso}\''
+        if latest is not None:
+            latest = f'\'{latest.iso}\''
+    else:
+        time_col = 'KW_MJDATE'
+        if since is not None:
+            since = since.mjd
+        if latest is not None:
+            latest = latest.mjd
+    # -------------------------------------------------------------------------
     if since is not None:
-        subcondition = '(KW_DRS_DATE_NOW > \'{0}\')'.format(since)
+        subcondition = '({0} > {1})'.format(time_col, since)
+        if len(master_condition) == 0:
+            master_condition = subcondition
+        else:
+            master_condition += f' AND {subcondition}'
+    # -------------------------------------------------------------------------
+    if latest is not None:
+        subcondition = '({0} <= {1})'.format(time_col, latest)
         if len(master_condition) == 0:
             master_condition = subcondition
         else:
@@ -155,7 +204,11 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
         # ---------------------------------------------------------------------
         if filter_qc:
             # get all pids where passed_all_qc is PASSED_ALL_QC is True
-            lpids = logdbm.database.unique('PID', condition='PASSED_ALL_QC=1')
+            ltable = logdbm.get_entries('PID, PASSED_ALL_QC')
+            # find all pids that are not zero (nulls, nans and 1s)
+            lmask = ~(ltable['PASSED_ALL_QC'] == 0)
+            # get a unique list of pids that do not fail QC
+            lpids = list(set(ltable[lmask]['PID']))
             # mask out any files that fail qc
             mask = np.in1d(ipids, lpids)
         else:
@@ -209,6 +262,50 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
             if not os.path.exists(outdir) and do_copy:
                 os.mkdir(outdir)
     # -------------------------------------------------------------------------
+    # deal with file limit
+    # -------------------------------------------------------------------------
+    # first deal with checking total size of files
+    if sizelimit is not None:
+        check_size_limit(params, all_inpaths, sizelimit)
+    # -------------------------------------------------------------------------
+    # tar files
+    # -------------------------------------------------------------------------
+    # deal with tar
+    if tarpath is not None and do_copy:
+        # count files added
+        nfiles = 0
+        # add to tar file
+        with tarfile.open(tarpath, 'w:gz') as tarfile_obj:
+            # loop around objects
+            for objname in all_inpaths:
+                WLOG(params, '', '')
+                WLOG(params, '', params['DRS_HEADER'])
+                WLOG(params, '', textentry('40-509-00008', args=[objname]))
+                WLOG(params, '', params['DRS_HEADER'])
+                WLOG(params, '', '')
+                # loop around files
+                for row in range(len(all_inpaths[objname])):
+                    # get in and out path
+                    inpath = all_inpaths[objname][row]
+                    outpath = all_outpaths[objname][row]
+                    # ---------------------------------------------------------
+                    # print string
+                    copyargs = [row + 1, len(all_inpaths[objname]), outpath]
+                    copystr = '[{0}/{1}] --> TAR[{2}]'.format(*copyargs)
+                    # print copy string
+                    WLOG(params, '', copystr, wrap=False)
+                    tarfile_obj.add(inpath, arcname=os.path.basename(inpath))
+                    # add to count
+                    nfiles += 1
+                    continue
+        # remove tarpath if no files
+        if nfiles == 0:
+            if os.path.exists(tarpath):
+                os.remove(tarpath)
+        # return all in paths and out paths
+        return all_inpaths, all_outpaths
+
+    # -------------------------------------------------------------------------
     # Copy files
     # -------------------------------------------------------------------------
     for objname in all_inpaths:
@@ -222,16 +319,24 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
             # get in and out path
             inpath = all_inpaths[objname][row]
             outpath = all_outpaths[objname][row]
-            # print string
-            copyargs = [row + 1, len(all_inpaths[objname]), outpath]
-            copystr = '[{0}/{1}] --> {2}'.format(*copyargs)
-            # print copy string
-            WLOG(params, '', copystr, wrap=False)
+            # -----------------------------------------------------------------
             # copy
             if do_symlink and do_copy:
+                # print string
+                copyargs = [row + 1, len(all_inpaths[objname]), outpath]
+                copystr = '[{0}/{1}] --> SYM[{2}]'.format(*copyargs)
+                # print copy string
+                WLOG(params, '', copystr, wrap=False)
+                # remove and symlink
                 remove_previous(outpath)
                 os.symlink(inpath, outpath)
             elif do_copy:
+                # print string
+                copyargs = [row + 1, len(all_inpaths[objname]), outpath]
+                copystr = '[{0}/{1}] --> CP[{2}]'.format(*copyargs)
+                # print copy string
+                WLOG(params, '', copystr, wrap=False)
+                # remove and copy
                 remove_previous(outpath)
                 shutil.copy(inpath, outpath)
 
@@ -244,10 +349,10 @@ def remove_previous(outpath: str):
     :param outpath: str, file to check
     :return:
     """
-    if not os.path.exists(outpath):
-        return
     if os.path.islink(outpath):
         os.unlink(outpath)
+    elif not os.path.exists(outpath):
+        return
     else:
         os.remove(outpath)
 
@@ -266,6 +371,71 @@ def all_objects(params):
     WLOG(params, 'info', msg.format(*margs))
     # return objects
     return objs
+
+
+def fiber_by_output(kw_fibers: Union[List[str], None],
+                    kw_outputs: Union[List[str], None]
+                    ) -> Union[List[str], None]:
+    # if we have no outputs just return the fibers
+    if kw_outputs is None:
+        return kw_fibers
+    # if fibers is already None just return it
+    if kw_fibers is None:
+        return None
+    # load psuedo constants
+    pconst = constants.pload()
+    filemod = pconst.FILEMOD().get()
+    # get filesets
+    filedefs = [filemod.raw_file, filemod.pp_file, filemod.red_file,
+                filemod.post_file]
+    # get all drs output ids that do not have fiber set
+    no_fiber_drsoutids = []
+    # loop around
+    for filedef in filedefs:
+        for drs_file in filedef.fileset:
+            if drs_file.fibers is None:
+                no_fiber_drsoutids.append(drs_file.name)
+    # now deal with outputs that our in our list
+    # if we have one output in out list return kw_fibers = None
+    for kw_output in kw_outputs:
+        if kw_output in no_fiber_drsoutids:
+            return None
+    # if we get to here we return kw_fibers
+    return kw_fibers
+
+
+def check_size_limit(params: ParamDict, inpaths: Dict[str, List[str]],
+                     sizelimit: int):
+    """
+    Check that the total size of files does not exceed the size limit
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param inpaths: dictionary, for each objname a list of input file locations
+    :param sizelimit: int, a file limit in GBs
+
+    :raises: WLOG error if total size of files exceeds limit
+    :return:
+    """
+    # deal with bad size limit
+    if sizelimit in ['None', None, '', 'Null']:
+        return
+    # deal with bad size limit
+    if sizelimit <= 0:
+        return
+    # store total size in bytes
+    total_size = 0
+    # loop around all objects and all files and add to the total size
+    for key in inpaths:
+        for path in inpaths[key]:
+            total_size += os.path.getsize(path)
+    # convert to GB
+    total_size = total_size / (1024 ** 3)
+    # deal with total size being too large
+    if total_size > sizelimit:
+        # print warning
+        eargs = [total_size, sizelimit]
+        emsg = ('Total size of files ({0:.3f} GB) exceeds limit ({1:.3f} GB)')
+        WLOG(params, 'error', emsg.format(*eargs))
 
 
 # =============================================================================

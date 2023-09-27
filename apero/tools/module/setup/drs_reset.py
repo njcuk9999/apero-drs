@@ -530,6 +530,66 @@ def reset_run(params: ParamDict, log: bool = True):
     reset_dbdir(params, name, run_dir, reset_path, log=log, empty_first=False)
 
 
+def reset_lbl_folders(params: ParamDict, log: bool = True, dtimeout: int = 20):
+    # log progress
+    WLOG(params, '', textentry('40-502-00003', args=['lbl']))
+    # remove files from reduced folder
+    lbl_dir = params['LBL_PATH']
+    # loop around files and folders in reduced dir
+    remove_all(params, lbl_dir, log=log)
+    # remake path
+    if not os.path.exists(lbl_dir):
+        os.makedirs(lbl_dir)
+    # -------------------------------------------------------------------------
+    # remove entries from index database
+    # -------------------------------------------------------------------------
+    # get index database
+    indexdb = drs_database.FileIndexDatabase(params)
+    # load index database
+    indexdb.load_db()
+    # check that table is in database
+    if not indexdb.database.tname_in_db():
+        # get database paths
+        databases = manage_databases.list_databases(params)
+        # load pseudo constants
+        pconst = constants.pload()
+        # create index database
+        manage_databases.create_fileindex_database(params, pconst, databases,
+                                                   tries=dtimeout)
+        # get index database
+        indexdb = drs_database.FileIndexDatabase(params)
+        # load index database
+        indexdb.load_db()
+    # set up condition
+    condition = 'BLOCK_KIND="lbl"'
+    # remove entries
+    indexdb.remove_entries(condition=condition)
+    # -------------------------------------------------------------------------
+    # remove entries from log database
+    # -------------------------------------------------------------------------
+    # get log database
+    logdb = drs_database.LogDatabase(params)
+    # load index database
+    logdb.load_db()
+    # check that table is in database
+    if not logdb.database.tname_in_db():
+        # get database paths
+        databases = manage_databases.list_databases(params)
+        # load pseudo constants
+        pconst = constants.pload()
+        # create index database
+        manage_databases.create_log_database(params, pconst, databases,
+                                             tries=dtimeout)
+        # get log database
+        logdb = drs_database.LogDatabase(params)
+        # load index database
+        logdb.load_db()
+    # set up condition
+    condition = 'BLOCK_KIND="lbl"'
+    # remove entries
+    logdb.remove_entries(condition=condition)
+
+
 def reset_out_folders(params: ParamDict, log: bool = True, dtimeout: int = 20):
     """
     Resets the reduced directory
@@ -599,7 +659,8 @@ def reset_out_folders(params: ParamDict, log: bool = True, dtimeout: int = 20):
     logdb.remove_entries(condition=condition)
 
 
-def reset_assets(params: ParamDict, log: bool = True, dtimeout: int = 0):
+def reset_assets(params: ParamDict, log: bool = True, dtimeout: int = 0,
+                 reset_dbs: bool = True):
     """
     Reset the Assets directory (including re-creating databases)
 
@@ -627,20 +688,22 @@ def reset_assets(params: ParamDict, log: bool = True, dtimeout: int = 0):
     #   i.e. new masks etc
     reset_dbdir(params, name, asset_path, abs_reset_path, log=log,
                 relative_path='MODULE', backup=True)
-    # create index databases
-    manage_databases.create_fileindex_database(params, pconst, databases,
-                                               tries=dtimeout)
-    # create log database
-    manage_databases.create_log_database(params, pconst, databases,
-                                         tries=dtimeout)
-    # create object database
-    manage_databases.create_object_database(params, pconst, databases,
-                                            tries=dtimeout)
-    # create reject database
-    manage_databases.create_reject_database(params, pconst, databases,
-                                            tries=dtimeout)
-    # create language database
-    manage_databases.create_lang_database(params, databases, tries=dtimeout)
+    # if user wants to reset all databases we do this here
+    if reset_dbs:
+        # create index databases
+        manage_databases.create_fileindex_database(params, pconst, databases,
+                                                   tries=dtimeout)
+        # create log database
+        manage_databases.create_log_database(params, pconst, databases,
+                                             tries=dtimeout)
+        # create object database
+        manage_databases.create_object_database(params, pconst, databases,
+                                                tries=dtimeout)
+        # create reject database
+        manage_databases.create_reject_database(params, pconst, databases,
+                                                tries=dtimeout)
+        # create language database
+        manage_databases.create_lang_database(params, databases, tries=dtimeout)
 
 
 def remove_all(params, path, log=True, skipfiles=None):

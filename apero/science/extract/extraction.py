@@ -59,7 +59,8 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
     skip_orders = pcheck(params, 'EXT_SKIP_ORDERS', 'skip', kwargs, func_name,
                          mapf='list', dtype=int)
     sigdet = pcheck(props, 'SIGDET', 'sigdet', kwargs, func_name)
-    gain = pcheck(props, 'GAIN', 'gain', kwargs, func_name)
+    eff_ron = pcheck(props, 'EFF_RON', 'eff_ron', kwargs, func_name)
+    gain = pcheck(props, 'EFF_GAIN', 'gain', kwargs, func_name)
     cosmic = pcheck(params, 'EXT_COSMIC_CORRETION', 'cosmic', kwargs, func_name)
     cosmic_sigcut = pcheck(params, 'EXT_COSMIC_SIGCUT', 'cosmic_sigcuit',
                            kwargs, func_name)
@@ -135,7 +136,7 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
             # --------------------------------------------------------------
             # calculate the signal to noise ratio
             snri, fluxi = calculate_snr(e2dsi, blaze_size, range1, range2,
-                                        sigdet)
+                                        eff_ron)
             # --------------------------------------------------------------
             # log process (for fiber # and order # S/N = , cosmics = )
             if cosmic:
@@ -183,6 +184,8 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
     props['SKIP_ORDERS'] = skip_orders
     props['GAIN'] = gain
     props['SIGDET'] = sigdet
+    props['EFF_RON'] = eff_ron
+    props['EFF_GAIN'] = gain
     props['COSMIC'] = cosmic
     props['COSMIC_SIGCUT'] = cosmic_sigcut
     props['COSMIC_THRESHOLD'] = cosmic_thres
@@ -191,8 +194,8 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
     # add source
     keys = ['E2DS', 'E2DSLL', 'E2DSCC', 'SNR', 'N_COSMIC', 'FLUX_VAL', 'FIBER',
             'START_ORDER', 'END_ORDER', 'RANGE1', 'RANGE2', 'SKIP_ORDERS',
-            'GAIN', 'SIGDET', 'COSMIC', 'COSMIC_SIGCUT', 'COSMIC_THRESHOLD',
-            'SAT_QC', 'SAT_LEVEL']
+            'GAIN', 'SIGDET', 'EFF_RON', 'EFF_GAIN', 'COSMIC', 'COSMIC_SIGCUT',
+            'COSMIC_THRESHOLD', 'SAT_QC', 'SAT_LEVEL']
     props.set_sources(keys, func_name)
     # return property parameter dictionary
     return props
@@ -385,7 +388,7 @@ def extraction(simage, orderp, pos, r1, r2, cosmic_sigcut):
     return spe, spelong, cpt, coslong
 
 
-def calculate_snr(e2ds, blaze_width, r1, r2, sigdet):
+def calculate_snr(e2ds, blaze_width, r1, r2, eff_ron):
     # get the central pixel position
     cent_pos = int(len(e2ds) / 2)
     # get the blaze window size
@@ -394,7 +397,7 @@ def calculate_snr(e2ds, blaze_width, r1, r2, sigdet):
     # get the average flux in the blaze window
     flux = mp.nansum(e2ds[blaze_lower:blaze_upper] / (2 * blaze_width))
     # calculate the noise
-    noise = sigdet * np.sqrt(r1 + r2)
+    noise = eff_ron * np.sqrt(r1 + r2)
     # calculate the snr ratio = flux / sqrt(flux + noise**2)
     snr = flux / np.sqrt(flux + noise ** 2)
     # return snr

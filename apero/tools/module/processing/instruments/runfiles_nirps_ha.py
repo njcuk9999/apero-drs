@@ -56,6 +56,10 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     # mini run
     mini_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'mini_run')
     mini_run_nirps_ha.append_sequence('limited_seq')
+    mini_run_nirps_ha.modify('SKIP_LBLREF', False)
+    mini_run_nirps_ha.modify('SKIP_LBLMASK_SCI', False)
+    mini_run_nirps_ha.modify('SKIP_LBLCOMPUTE_SCI', False)
+    mini_run_nirps_ha.modify('SKIP_LBLCOMPILE_SCI', False)
     run_files.append(mini_run_nirps_ha)
     # quick run
     quick_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'quick_run')
@@ -89,6 +93,7 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     run_files.append(calib_run_nirps_ha)
     # complete run
     complete_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'complete_run')
+    complete_run_nirps_ha.skip_default = False
     complete_run_nirps_ha.append_sequence('full_seq')
     run_files.append(complete_run_nirps_ha)
     # reference calib run
@@ -189,6 +194,15 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     tns_run_nirps_ha.modify('TRIGGER_RUN', True)
     tns_run_nirps_ha.modify('USE_ENGINEERING', True)
     run_files.append(tns_run_nirps_ha)
+    # lbl run
+    lbl_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'lbl_run')
+    lbl_run_nirps_ha.append_sequence('lbl_seq')
+    # do not skip any steps of the lbl
+    lbl_run_nirps_ha.modify('SKIP_LBLREF', False)
+    lbl_run_nirps_ha.modify('SKIP_LBLMASK_SCI', False)
+    lbl_run_nirps_ha.modify('SKIP_LBLCOMPUTE_SCI', False)
+    lbl_run_nirps_ha.modify('SKIP_LBLCOMPILE_SCI', False)
+    run_files.append(lbl_run_nirps_ha)
     # batch run
     # batch_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'batch_run')
     # batch_run_nirps_ha.add_sequence_as_command('limited_seq')
