@@ -13,7 +13,7 @@ numpy==1.24.3
 pandas==2.0.1
 pandastable==0.13.1
 pandasql==0.7.3
-Pillow==9.5.0
+Pillow==10.0.1
 psutil==5.9.4
 PyYAML==6.0
 scikit-image==0.19.3
