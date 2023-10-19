@@ -111,6 +111,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     kwargs['data_source'] = 'APERO'
     kwargs['skip_done'] = params['INPUTS'].get('SKIP_DONE', False)
     kwargs['program'] = program
+    kwargs['RESPROJ_TABLES'] = gen_lbl.dtemp(params)
     # deal with data type
     if objname in params.listp('LBL_SPECIFIC_DATATYPES', dtype=str):
         data_type = objname

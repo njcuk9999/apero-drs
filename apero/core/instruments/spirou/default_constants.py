@@ -3167,6 +3167,10 @@ LBL_RECAL_TEMPLATE.value = 'FP, LFC'
 LBL_MULTI_OBJLIST = LBL_MULTI_OBJLIST.copy(__NAME__)
 LBL_MULTI_OBJLIST.value = 'FP'
 
+# Define the DTEMP gradient files
+LBL_DTEMP = LBL_DTEMP.copy(__NAME__)
+LBL_DTEMP.value = '{"DTEMP3000": "temperature_gradient_3000.fits", "DTEMP3500": "temperature_gradient_3500.fits", "DTEMP4000": "temperature_gradient_4000.fits", "DTEMP4500": "temperature_gradient_4500.fits", "DTEMP5000": "temperature_gradient_5000.fits", "DTEMP5500": "temperature_gradient_5500.fits", "DTEMP6000": "temperature_gradient_6000.fits"}'
+
 # =============================================================================
 # POST PROCESS SETTINGS
 # =============================================================================

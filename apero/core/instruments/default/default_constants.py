@@ -363,6 +363,7 @@ __all__ = [
     'LBL_FILE_DEFS', 'LBL_DPRTYPES', 'LBL_TEMPLATE_FILE_DEFS',
     'LBL_SIM_FP_DPRTYPES', 'LBL_SYMLINKS', 'LBL_FRIENDS',
     'LBL_SPECIFIC_DATATYPES', 'LBL_RECAL_TEMPLATE', 'LBL_MULTI_OBJLIST',
+    'LBL_DTEMP',
     # post-processing settings
     'POST_CLEAR_REDUCED', 'POST_OVERWRITE', 'POST_HDREXT_COMMENT_KEY',
     # tool constants
@@ -5423,6 +5424,11 @@ LBL_MULTI_OBJLIST = Const('LBL_MULTI_OBJLIST', value=None, dtype=str,
                                       ' run through LBL compute in parellel '
                                       ' i.e. break in to Ncore chunks '
                                       '(comma separated list)')
+
+# Define the DTEMP gradient files
+LBL_DTEMP = Const('LBL_DTEMP', value=None, dtype=dict,
+                  source=__NAME__, user=False, active=True, group=cgroup,
+                  description='Define the DTEMP gradient files')
 
 # =============================================================================
 # POST PROCESS SETTINGS
