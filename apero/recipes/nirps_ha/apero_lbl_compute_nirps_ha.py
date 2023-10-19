@@ -119,6 +119,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     kwargs['iteration'] = params['INPUTS']['ITERATION']
     kwargs['total'] = params['INPUTS']['TOTAL']
     kwargs['program'] = program
+    kwargs['RESPROJ_TABLES'] = gen_lbl.dtemp(params)
     # -------------------------------------------------------------------------
     # try to import lbl (may not exist)
     try:
