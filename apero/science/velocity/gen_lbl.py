@@ -456,6 +456,7 @@ def dtemp(params: ParamDict) -> Union[Dict[str, str], None]:
 
     # deal with models directory not existing
     if not os.path.exists(models_dir):
+        WLOG(params, 'warning', 'No DTEMP files found. Skipping.', sublevel=1)
         return None
     # storage for output files
     valid_dtemp_files = dict()
@@ -465,8 +466,12 @@ def dtemp(params: ParamDict) -> Union[Dict[str, str], None]:
             valid_dtemp_files[dtemp_key] = dtemp_keys[dtemp_key]
     # deal with no files found
     if len(valid_dtemp_files) == 0:
+        WLOG(params, 'warning', 'No DTEMP files found. Skipping.', sublevel=1)
         return None
     else:
+        msg = '{0} DTEMP files found.'
+        margs = [len(valid_dtemp_files)]
+        WLOG(params, 'info', msg.format(*margs))
         return valid_dtemp_files
 
 
