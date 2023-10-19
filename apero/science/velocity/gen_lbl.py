@@ -460,9 +460,11 @@ def dtemp(params: ParamDict) -> Union[Dict[str, str], None]:
         return None
     # storage for output files
     valid_dtemp_files = dict()
+    # get files in models directory
+    model_dir_files = os.listdir(models_dir)
     # loop around files
     for dtemp_key in dtemp_keys:
-        if dtemp_keys[dtemp_key] in models_dir:
+        if dtemp_keys[dtemp_key] in model_dir_files:
             valid_dtemp_files[dtemp_key] = dtemp_keys[dtemp_key]
     # deal with no files found
     if len(valid_dtemp_files) == 0:
