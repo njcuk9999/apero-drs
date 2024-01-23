@@ -374,7 +374,11 @@ __all__ = [
     'SUMMARY_LATEX_PDF', 'EXPMETER_MIN_LAMBDA', 'EXPMETER_MAX_LAMBDA',
     'EXPMETER_TELLU_THRES', 'REPROCESS_PINAMECOL', 'DRIFT_DPRTYPES',
     'DRIFT_DPR_FIBER_TYPE', 'REPROCESS_MP_TYPE', 'REPROCESS_MP_TYPE_VAL',
-    'REPROCESS_REINDEX_BLOCKS', 'REPROCESS_OBJECT_TYPES'
+    'REPROCESS_REINDEX_BLOCKS', 'REPROCESS_OBJECT_TYPES',
+    # ari constants
+    'ARI_USER', 'ARI_NCORES', 'ARI_WAVE_RANGES',
+    'ARI_SSH_COPY', 'ARI_RESET', 'ARI_FILTER_OBJECTS',
+    'ARI_FILTER_OBJECTS_LIST', 'ARI_HEADER_PROPS',
 ]
 
 # set name
@@ -5611,6 +5615,53 @@ DRIFT_DPR_FIBER_TYPE = Const('DRIFT_DPR_FIBER_TYPE', value=None, dtype=str,
                              source=__NAME__, group=cgroup,
                              description=('Define the fiber dprtype allowed '
                                           'for drift measurement (only FP)'))
+
+# =============================================================================
+# ARI SETTINGS
+# =============================================================================
+# Define the ari user name
+ARI_USER = Const('ARI_USER', value=None, dtype=str, source=__NAME__,
+                 group=cgroup,
+                 description='Define the ari user name')
+
+# Define the ari number of cores
+ARI_NCORES = Const('ARI_NCORES', value=None, dtype=int, source=__NAME__,
+                   group=cgroup,
+                   description='Define the ari number of cores')
+
+# Define the ari spectrum wavelength ranges in nm
+ARI_WAVE_RANGES = Const('ARI_WAVE_RANGES', value=None, dtype=dict,
+                        source=__NAME__, group=cgroup,
+                        description='Define the ari spectrum wavelength '
+                                    'ranges in nm')
+
+# Define the ari ssh properties to copy the website to
+ARI_SSH_COPY = Const('ARI_SSH_COPY', value=None, dtype=dict, source=__NAME__,
+                     group=cgroup,
+                     description='Define the ari ssh properties to copy the '
+                                 'website to')
+
+# Define whether to reset the ari working directory
+ARI_RESET = Const('ARI_RESET', value=False, dtype=bool, source=__NAME__,
+                  group=cgroup,
+                  description='Define whether to reset the ari working '
+                              'directory')
+
+# Define whether to filter by objects
+ARI_FILTER_OBJECTS = Const('ARI_FILTER_OBJECTS', value=None, dtype=str,
+                           source=__NAME__, group=cgroup,
+                           description='Define whether to filter by objects')
+
+# Define the list of objects to filter in ari
+ARI_FILTER_OBJECTS_LIST = Const('ARI_FILTER_OBJECTS_LIST', value=None,
+                                dtype=list, source=__NAME__, group=cgroup,
+                                description='Define the list of objects to '
+                                            'filter in ari')
+
+# Define the header key props for ari
+ARI_HEADER_PROPS = Const('ARI_HEADER_PROPS', value=None, dtype=dict,
+                         source=__NAME__, group=cgroup,
+                         description='Define the header key props for ari')
 
 # =============================================================================
 #  End of configuration file

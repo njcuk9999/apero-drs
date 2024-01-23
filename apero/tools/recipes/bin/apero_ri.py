@@ -15,7 +15,7 @@ from apero.core import constants
 from apero.core.core import drs_log
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
-from apero.tools.module.ari import ari_core
+from apero.tools.module.ari import ari_general as ari
 
 
 # =============================================================================
@@ -90,37 +90,54 @@ def __main__(recipe: DrsRecipe, params: ParamDict):
     # ----------------------------------------------------------------------
     # step 1: setup
     # ----------------------------------------------------------------------
-    # read parameters from yaml file
-    ari_params = ari_core.load_ari_params(params)
+    # read parameters from yaml file and push into parameter dictionary
+    params = ari.load_ari_params(params)
 
     # ----------------------------------------------------------------------
     # step 2: previous data
     # ----------------------------------------------------------------------
     # get previous object data from store
-    object_list = ari_core.load_previous_objects(params)
+    object_classes = ari.load_previous_objects(params)
     # get previous recipe data from store
-    recipe_list = ari_core.load_previous_recipes(params)
+    recipe_classes = ari.load_previous_recipes(params)
 
     # ----------------------------------------------------------------------
     # step 3: find new data
     # ----------------------------------------------------------------------
+    # find new data for objects
+    object_classes = ari.find_new_objects(params, object_classes)
+    # find new entries for recipes
+    recipe_classes = ari.find_new_recipes(params, recipe_classes)
 
     # ----------------------------------------------------------------------
     # step 4: compile new data
     # ----------------------------------------------------------------------
+    # compile object data
+    object_classes = ari.compile_object_data(params, object_classes)
+    # compile recipe data
+    recipe_classes = ari.compile_recipe_data(params, recipe_classes)
 
     # ----------------------------------------------------------------------
     # step 5: write pages
     # ----------------------------------------------------------------------
+    # write object pages
+    ari.write_object_pages(params, object_classes)
+    # write recipe pages
+    ari.write_recipe_pages(params, recipe_classes)
 
     # ----------------------------------------------------------------------
     # step 6: compile pages
     # ----------------------------------------------------------------------
+    # compile object pages
+    ari.compile_object_pages(params)
+    # compile recipe pages
+    ari.compile_recipe_pages(params)
 
     # ----------------------------------------------------------------------
     # step 7: upload
     # ----------------------------------------------------------------------
-
+    # upload
+    ari.upload(params)
 
     # ----------------------------------------------------------------------
     # End of main code

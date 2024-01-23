@@ -19,7 +19,8 @@ __all__ = [  # global settings
     # path settings
     'DRS_ROOT', 'DRS_DATA_RAW', 'DRS_DATA_REDUC', 'DRS_DATA_OUT',
     'DRS_CALIB_DB', 'DRS_TELLU_DB', 'DRS_DATA_MSG', 'DRS_DATA_WORKING',
-    'DRS_DATA_RUN', 'DRS_DATA_MSG_FULL', 'DRS_DATA_ASSETS', 'LBL_PATH',
+    'DRS_DATA_RUN', 'DRS_DATA_MSG_FULL', 'DRS_DATA_ASSETS', 'DRS_DATA_OTHER',
+    'LBL_PATH',
     # General properites
     'DRS_VERSION', 'AUTHORS', 'DRS_RELEASE', 'DRS_DATE', 'LANGUAGE',
     # Instrument/Observatory Constants
@@ -178,6 +179,12 @@ DRS_DATA_ASSETS = Const('DRS_DATA_ASSETS', dtype='path', source=__NAME__,
                         user=True, active=True, group=cgroup,
                         value='./apero-data/assets',
                         description='Define the assets directory')
+
+#   Define the other directory
+DRS_DATA_OTHER = Const('DRS_DATA_OTHER', dtype='path', source=__NAME__,
+                       user=True, active=True, group=cgroup,
+                       value='./apero-data/other',
+                       description='Define the other directory')
 
 #   Define the LBL directory
 LBL_PATH = Const('LBL_PATH', dtype='path', source=__NAME__, user=True,
