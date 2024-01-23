@@ -56,6 +56,8 @@ def load_ari_params(params: ParamDict) -> ParamDict:
 
     :return: ari_params: dict, the ari parameters
     """
+    # set the function name
+    func_name = __NAME__ + '.load_ari_params()'
     # get arguments from recipe call (via params['INPUTS'])
     profile_yaml = params['INPUTS']['profile']
     obs_dir = params['INPUTS']['obsdir']
@@ -115,6 +117,40 @@ def load_ari_params(params: ParamDict) -> ParamDict:
             return params
         # push value into params
         params.set(key=param_key, value=value, source=profile_yaml)
+
+    # ----------------------------------------------------------------------
+    # clean user profile
+    params.set('ARI_USER', value=params['ARI_USER'].replace(' ', '_'),
+               source=func_name)
+    # ----------------------------------------------------------------------
+    # build some ARI paths for use throughout
+    # ----------------------------------------------------------------------
+    # over all ari directory
+    ari_dir = os.path.join(params['DRS_DATA_OTHER'], 'ari')
+    # ARI object yaml directory
+    ari_obj_yamls = os.path.join(ari_dir, 'object_yamls')
+    # ARI recipe yaml directory
+    ari_recipe_yamls = os.path.join(ari_dir, 'recipe_yamls')
+    # ARI object page directory
+    ari_obj_pages = os.path.join(ari_dir, 'object_pages')
+    # ARI recipe page directory
+    ari_recipe_pages = os.path.join(ari_dir, 'recipe_pages')
+    # ARI working directory (for sphinx)
+    ari_working_dir = os.path.join(ari_dir, 'working')
+    # ----------------------------------------------------------------------
+    # update parameter dictionary with these constants
+    params.set('ARI_DIR', value=ari_dir, source=func_name)
+    params.set('ARI_OBJ_YAMLS', value=ari_obj_yamls, source=func_name)
+    params.set('ARI_RECIPE_YAMLS', value=ari_recipe_yamls, source=func_name)
+    params.set('ARI_OBJ_PAGES', value=ari_obj_pages, source=func_name)
+    params.set('ARI_RECIPE_PAGES', value=ari_recipe_pages, source=func_name)
+    params.set('ARI_WORKING_DIR', value=ari_working_dir, source=func_name)
+    # ----------------------------------------------------------------------
+    # make sure these directories exist
+    for path in [ari_dir, ari_obj_yamls, ari_recipe_yamls, ari_obj_pages,
+                 ari_recipe_pages, ari_working_dir]:
+        if not os.path.exists(path):
+            os.makedirs(path)
     # ----------------------------------------------------------------------
     # return the ari parameters
     return params
@@ -264,6 +300,9 @@ def _get_object_table(params: ParamDict) -> pd.DataFrame:
                                         condition=condition)
     # return the object_table
     return object_table
+
+
+
 
 
 # -----------------------------------------------------------------------------

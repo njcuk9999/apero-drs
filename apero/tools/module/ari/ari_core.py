@@ -11,11 +11,12 @@ Created on 2024-01-23 at 10:56
 """
 import copy
 import os
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
 from astropy.time import Time
+from astropy.io import fits
 
 from apero.base import base
 from apero.core import constants
@@ -84,6 +85,12 @@ LBL_FILENAMES = ['lbl_{0}_{1}.rdb', 'lbl2_{0}_{1}.rdb',
 LBL_FILE_DESC = ['RDB file', 'RDB2 file', 'Drift file', 'Drift2 file',
                  'LBL RDB fits file']
 LBL_DOWNLOAD = [True, True, True, True, False]
+
+# -----------------------------------------------------------------------------
+# Processing variables
+# -----------------------------------------------------------------------------
+# define which parellisation mode to run in
+MULTI = 'Process'
 
 
 # =============================================================================
@@ -353,7 +360,6 @@ class AriObject:
         # flag for whether we have polar files
         self.has_polar: bool = False
         # set up yaml file
-        self.yaml_path: str = os.path.join('ari', 'object_yamls')
         self.yaml_filename: str = f'{self.objname}.yaml'
         # whether we need to update this
         self.update: bool = False
@@ -367,6 +373,13 @@ class AriObject:
         # last processed of all files for this object
         self.last_processed: Optional[Time] = None
 
+
+        # ---------------------------------------------------------------------
+        # other parameters
+        # ---------------------------------------------------------------------
+        # store the required header info
+        self.header_dict = dict()
+
     def add_astrometrics(self, table):
         self.ra = table['RA_DEG']
         self.dec = table['DEC_DEG']
@@ -374,6 +387,8 @@ class AriObject:
         self.sptype = table['SP_TYPE']
 
     def add_files_stats(self, indexdbm, logdbm):
+        # keep track of whether we need to update
+        update = False
         # loop around raw files
         for key in self.filetypes:
             # get iterations filetype
@@ -381,14 +396,18 @@ class AriObject:
             # count files and get lists of files
             filetype.count_files(self.objname, indexdbm, logdbm, self.filetypes)
             # deal with update
-            self.update = bool(filetype.update)
-            # if we are not updating to not continue
-            if not self.update:
-                return
+            update = update or bool(filetype.update)
             # if there are no entries we have no raw files for this object
             if key == 'raw':
                 if filetype.num == 0:
                     return
+        # ------------------------------------------------------------------
+        # if we do not need to update stop here
+        if not update:
+            self.update = False
+            return
+        else:
+            self.update = True
         # ------------------------------------------------------------------
         # Add a dpr type column
         dprtypes = indexdbm.get_entries('KW_DPRTYPE',
@@ -409,13 +428,59 @@ class AriObject:
         else:
             self.last_processed = None
 
+    def populate_header_dict(self):
+        """
+        Populate the header dictionary with the required header keys
+        :return:
+        """
+        # loop around COUNT COLS and populate header dict
+        for key in self.filetypes:
+            # check file kind in headers
+            if key not in self.headers:
+                continue
+            # get the header keys
+            self.get_header_keys(self.headers[key], self.filetypes[key].files)
+
+    def get_header_keys(self, keys: Dict[str, Dict[str, str]], files: List[str]):
+        """
+        Get the header keys from the files
+        :param keys: dictionary of keys to get (with their properties)
+        :param files: list of files (for error reporting)
+        :return:
+        """
+
+        # deal with no keys
+        if len(keys) == 0:
+            return
+        # get an array of length of the files for each key
+        for keydict in keys:
+            # get key
+            kstore = keys[keydict]
+            dtype = kstore.get('dtype', None)
+            timefmt = kstore.get('timefmt', None)
+            unit = kstore.get('unit', None)
+            # deal with no files
+            if len(files) == 0:
+                self.header_dict[keydict] = None
+            elif dtype == 'float' and timefmt is None and unit is None:
+                self.header_dict[keydict] = np.full(len(files), np.nan)
+            elif unit is not None:
+                null_list = [np.nan] * len(files)
+                self.header_dict[keydict] = uu.Quantity(null_list, unit)
+            else:
+                self.header_dict[keydict] = np.array([None] * len(files))
+        # loop around files and populate the header_dict
+        for pos, filename in enumerate(files):
+            header = fits.getheader(filename)
+            for keydict in keys:
+                # get value (for header dict)
+                value = _header_value(keys[keydict], header, filename)
+                # set value in header dict
+                self.header_dict[keydict][pos] = value
+
     def save_to_disk(self, params: ParamDict):
         # make full yaml path
-        yaml_root = params['DRS_DATA_OTHER']
-        yaml_path = os.path.join(yaml_root, self.yaml_path)
-        # check if yaml directory exists
-        if not os.path.exists(yaml_path):
-            os.makedirs(yaml_path)
+        yaml_path = params['ARI_OBJ_YAMLS']
         # check if yaml file exists
         yaml_abs_path = os.path.join(yaml_path, self.yaml_filename)
         # return if yaml file does not exist and remove if it does
@@ -449,11 +514,7 @@ class AriObject:
 
     def load_from_disk(self, params: ParamDict):
         # make full yaml path
-        yaml_root = params['DRS_DATA_OTHER']
-        yaml_path = os.path.join(yaml_root, self.yaml_path)
-        # check if yaml directory exists
-        if not os.path.exists(yaml_path):
-            os.makedirs(yaml_path)
+        yaml_path = params['ARI_OBJ_YAMLS']
         # check if yaml file exists
         yaml_abs_path = os.path.join(yaml_path, self.yaml_filename)
         # ---------------------------------------------------------------------
@@ -600,6 +661,70 @@ def _filter_pids(findex_table: pd.DataFrame, logdbm: Any) -> np.ndarray:
             passed[row] = True
     # return the passed mask
     return passed
+
+
+def _header_value(keydict: Dict[str, str], header: fits.Header,
+                  filename: str):
+    # get properties of header key
+    key = keydict['key']
+    unit = keydict.get('unit', None)
+    dtype = keydict.get('dtype', None)
+    timefmt = keydict.get('timefmt', None)
+    # -------------------------------------------------------------------------
+    # get raw value from header
+    rawvalue = header.get(key, None)
+    # deal with no value
+    if rawvalue is None:
+        if "fallback" in keydict:
+            rawvalue = keydict["fallback"]
+            if rawvalue is None:
+                if dtype == 'float':
+                    rawvalue = np.nan
+                elif dtype == 'str':
+                    rawvalue = "N.A."
+                else:
+                    # Hard to define an unambiguous value for other types.
+                    # Leaving as unsupported until the need arises.
+                    raise TypeError('Null (None) fallback value unsupported'
+                                    f' for dtype {dtype} (key {key})'
+                                    f'\n\tFile: {filename}'
+                    )
+        else:
+            raise ValueError(f'HeaderKey: {key} not found in header'
+                             ' and no fallback specified in config'
+                             f'\n\tFile: {filename}')
+    # -------------------------------------------------------------------------
+    # deal with dtype
+    if dtype is not None:
+        try:
+            if dtype == 'int':
+                rawvalue = int(rawvalue)
+            elif dtype == 'float':
+                rawvalue = float(rawvalue)
+            elif dtype == 'bool':
+                rawvalue = bool(rawvalue)
+        except Exception as _:
+            raise ValueError(f'HeaderDtype: {dtype} not valid for '
+                             f'{key}={rawvalue}\n\tFile: {filename}')
+    # -------------------------------------------------------------------------
+    # deal with time
+    if timefmt is not None:
+        try:
+            return Time(rawvalue, format=timefmt)
+        except Exception as _:
+            raise ValueError(f'HeaderTime: {timefmt} not valid for '
+                             f'{key}={rawvalue}\n\tFile: {filename}')
+    # -------------------------------------------------------------------------
+    # deal with units
+    if unit is not None:
+        try:
+            rawvalue = uu.Quantity(rawvalue, unit)
+        except ValueError:
+            raise ValueError(f'HeaderUnit: {unit} not valid for '
+                             f'{key}={rawvalue}\n\tFile: {filename}')
+    # -------------------------------------------------------------------------
+    # return the raw value
+    return rawvalue
 
 
 # =============================================================================
