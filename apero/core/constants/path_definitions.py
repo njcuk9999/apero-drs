@@ -241,6 +241,24 @@ class OutPath(BlockPath):
         self.fileset = 'out_file'
 
 
+class OtherPath(BlockPath):
+    description: lang.Text = 'Other files reduction path'
+    name: str = 'other'
+    key: str = 'DRS_DATA_OTHER'
+    argname: str = 'otherdir'
+
+    def __init__(self, params, check: bool = True):
+        """
+        Construct the raw block path (input data)
+
+        :param params: ParamDict, the parameter dictionary of constants
+        :param check: if True raises error when path does not exist
+        """
+        super().__init__(params, self.name, self.key, indexing=True,
+                         logging=False, check=check)
+        self.has_obs_dirs = False
+
+
 class LBLPath(BlockPath):
     description: lang.Text = 'LBL reduction path'
     name: str = 'lbl'
@@ -334,7 +352,7 @@ class LogPath(BlockPath):
 
 # define the block kinds as a list of classes
 BLOCKS = [RawPath, TmpPath, ReducedPath, CalibPath, TelluPath, OutPath,
-          AssetPath, PlotPath, RunPath, LogPath, LBLPath]
+          AssetPath, PlotPath, RunPath, LogPath, OtherPath, LBLPath]
 
 # =============================================================================
 # Start of code
