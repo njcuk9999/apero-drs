@@ -332,6 +332,18 @@ class MarkDownPage:
 # =============================================================================
 # Define functions
 # =============================================================================
+def make_url(value: str, url: str) -> str:
+    """
+    Make a url from a value and a url
+    """
+    return f':ref:`{value} <{url}>`'
+
+
+def make_download(value: str, url: str) -> str:
+    """
+    Make a download link from a value and a url
+    """
+    return f':download:`{value} <{url}>`'
 
 
 # =============================================================================

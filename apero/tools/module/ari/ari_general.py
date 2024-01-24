@@ -11,7 +11,8 @@ Created on 2024-01-22 at 10:25
 """
 import os
 import platform
-from typing import Any, Dict, List, Optional
+import string
+from typing import Dict, Tuple
 
 import numpy as np
 import pandas as pd
@@ -19,10 +20,11 @@ from tqdm import tqdm
 
 from apero.base import base
 from apero.core import constants
-from apero.core.core import drs_log
 from apero.core.core import drs_database
+from apero.core.core import drs_log
+from apero.core.core import drs_misc
 from apero.tools.module.ari import ari_core
-
+from apero.tools.module.ari import ari_pages
 
 # =============================================================================
 # Define variables
@@ -43,6 +45,7 @@ WLOG = drs_log.wlog
 AriObject = ari_core.AriObject
 AriRecipe = ari_core.AriRecipe
 FileType = ari_core.FileType
+TableFile = ari_pages.TableFile
 
 
 # =============================================================================
@@ -120,13 +123,15 @@ def load_ari_params(params: ParamDict) -> ParamDict:
 
     # ----------------------------------------------------------------------
     # clean user profile
-    params.set('ARI_USER', value=params['ARI_USER'].replace(' ', '_'),
-               source=func_name)
+    for char in string.punctuation:
+        params.set('ARI_USER', value=params['ARI_USER'].replace(char, '_'),
+                   source=func_name)
     # ----------------------------------------------------------------------
     # build some ARI paths for use throughout
     # ----------------------------------------------------------------------
     # over all ari directory
-    ari_dir = os.path.join(params['DRS_DATA_OTHER'], 'ari')
+    ari_dir = os.path.join(params['DRS_DATA_OTHER'], 'ari',
+                           str(params['ARI_USER']))
     # ARI object yaml directory
     ari_obj_yamls = os.path.join(ari_dir, 'object_yamls')
     # ARI recipe yaml directory
@@ -135,8 +140,10 @@ def load_ari_params(params: ParamDict) -> ParamDict:
     ari_obj_pages = os.path.join(ari_dir, 'object_pages')
     # ARI recipe page directory
     ari_recipe_pages = os.path.join(ari_dir, 'recipe_pages')
-    # ARI working directory (for sphinx)
-    ari_working_dir = os.path.join(ari_dir, 'working')
+
+    # ARI default working
+    dworking_rel = os.path.join('tools', 'resources', 'ari', 'working')
+    dworking = drs_misc.get_relative_folder(base.__PACKAGE__, dworking_rel)
     # ----------------------------------------------------------------------
     # update parameter dictionary with these constants
     params.set('ARI_DIR', value=ari_dir, source=func_name)
@@ -144,11 +151,11 @@ def load_ari_params(params: ParamDict) -> ParamDict:
     params.set('ARI_RECIPE_YAMLS', value=ari_recipe_yamls, source=func_name)
     params.set('ARI_OBJ_PAGES', value=ari_obj_pages, source=func_name)
     params.set('ARI_RECIPE_PAGES', value=ari_recipe_pages, source=func_name)
-    params.set('ARI_WORKING_DIR', value=ari_working_dir, source=func_name)
+    params.set('ARI_DWORKING_DIR', value=dworking, source=func_name)
     # ----------------------------------------------------------------------
     # make sure these directories exist
     for path in [ari_dir, ari_obj_yamls, ari_recipe_yamls, ari_obj_pages,
-                 ari_recipe_pages, ari_working_dir]:
+                 ari_recipe_pages]:
         if not os.path.exists(path):
             os.makedirs(path)
     # ----------------------------------------------------------------------
@@ -225,8 +232,18 @@ def find_new_objects(params: ParamDict, object_classes: Dict[str, AriObject]
         # add files stats
         obj_class.add_files_stats(indexdbm, logdbm)
     # -------------------------------------------------------------------------
+    # final step is to remove any objects that have no raw files
+    new_object_classes = dict()
+    # loop around objects
+    for objname in list(object_classes.keys()):
+        # get object class
+        obj_class = object_classes[objname]
+        # check if we have raw files
+        if obj_class.filetypes['raw'].num > 0:
+            new_object_classes[objname] = obj_class
+    # -------------------------------------------------------------------------
     # return object classes
-    return object_classes
+    return new_object_classes
 
 
 def find_new_recipes(params: ParamDict, recipe_classes: Dict[str, AriRecipe]
@@ -235,31 +252,48 @@ def find_new_recipes(params: ParamDict, recipe_classes: Dict[str, AriRecipe]
 
 
 def compile_object_data(params: ParamDict, object_classes: Dict[str, AriObject]
-                        ) -> Dict[str, AriObject]:
-    return object_classes
+                        ) -> Tuple[Dict[str, AriObject], TableFile]:
+
+    # add object pages
+    ari_pages.add_obj_pages(params, object_classes)
+    # make the object table page
+    object_table = ari_pages.make_obj_table(params, object_classes)
+
+    return object_classes, object_table
 
 
 def compile_recipe_data(params: ParamDict, recipe_classes: Dict[str, AriRecipe]
-                        ) -> Dict[str, AriRecipe]:
-    return recipe_classes
+                        ) -> Tuple[Dict[str, AriRecipe], TableFile]:
+
+    # add the recipe pages
+
+    # make the recipe tablepage
+    recipe_table = TableFile.null_table(params)
+
+    return recipe_classes, recipe_table
 
 
-def write_object_pages(params: ParamDict,
-                       object_classes: Dict[str, AriObject]) -> None:
-    pass
 
+def save_yamls(params: ParamDict, object_classes: Dict[str, AriObject],
+                recipe_classes: Dict[str, AriRecipe]):
 
-def write_recipe_pages(params: ParamDict,
-                       recipe_classes: Dict[str, AriRecipe]) -> None:
-    pass
-
-
-def compile_object_pages(params: ParamDict) -> None:
-    pass
-
-
-def compile_recipe_pages(params: ParamDict) -> None:
-    pass
+    # -------------------------------------------------------------------------
+    # Deal with objects
+    # -------------------------------------------------------------------------
+    for objname in object_classes:
+        # get object class
+        obj_class = object_classes[objname]
+        # save yaml
+        obj_class.save_to_disk(params)
+    # -------------------------------------------------------------------------
+    # Deal with recipes
+    # -------------------------------------------------------------------------
+    for recipename in recipe_classes:
+        # get recipe class
+        recipe_class = recipe_classes[recipename]
+        # save yaml
+        # recipe_class.save_to_disk(params)
+        pass
 
 
 def upload(params: ParamDict) -> None:
