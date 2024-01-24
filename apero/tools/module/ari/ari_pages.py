@@ -232,7 +232,7 @@ def _add_obj_page(it: int, key: str, params: ParamDict,
     # get the page reference
     page_ref = f'{ari_user}_object_page_{objname}'
     # get the table reference
-    table_ref = 'object_table'
+    table_ref = f'{ari_user}_object_table'
     # get the sections references
     spectrum_section_ref = f'spectrum_{ari_user}_objpage_{objname}'
     lbl_section_ref = f'lbl_{ari_user}_objpage_{objname}'
@@ -794,7 +794,7 @@ def make_index_page(params: ParamDict):
     # add title
     index_page.add_title('APERO Reduction Interface (ARI)')
     # TODO: This really needs to be all profiles
-    profile_files = [ari_user]
+    profile_files = [os.path.join(ari_user, 'profile.rst')]
     # -------------------------------------------------------------------------
     # Add basic text
     # construct text to add
@@ -819,16 +819,16 @@ def make_index_page(params: ParamDict):
     # add table of contents
     index_page.add_table_of_contents(profile_files)
     # -------------------------------------------------------------------------
-    index_page.add_section('Objects index')
-    index_page.add_newline()
-    index_page.add_text('Object by object index. '
-                        'Links to all profiles and finding charts')
-    index_page.add_newline()
-    index_page.add_text('Please note this includes objects not currently '
-                        'observed.')
-    index_page.add_newline()
-    index_page.add_table_of_contents(items=['obj_index.rst'],
-                                     sectionname=None)
+    # index_page.add_section('Objects index')
+    # index_page.add_newline()
+    # index_page.add_text('Object by object index. '
+    #                     'Links to all profiles and finding charts')
+    # index_page.add_newline()
+    # index_page.add_text('Please note this includes objects not currently '
+    #                     'observed.')
+    # index_page.add_newline()
+    # index_page.add_table_of_contents(items=['obj_index.rst'],
+    #                                  sectionname=None)
     # -------------------------------------------------------------------------
     # save index page
     index_page.write_page(os.path.join(index_path, 'index.rst'))
@@ -871,28 +871,28 @@ def make_profile_page(params: ParamDict, tables: List[TableFile]):
     for table in tables:
         if not table.null:
             table_names.append(table.name)
-            table_files.append(table.ref)
+            table_files.append(table.rst_filename)
             table_urls.append(table.ref)
 
     # add table of contents to profile page
-    # profile_page.add_table_of_contents(table_files)
+    profile_page.add_table_of_contents(table_files)
 
-    # add list of urls
-    if len(table_urls) > 0:
-        # add a section
-        profile_page.add_newline()
-        profile_page.add_text('Contents: ')
-        profile_page.add_newline()
-        # add the urls as a list
-        for table_it in range(len(table_urls)):
-            # get url from table urls
-            url = table_urls[table_it]
-            title = table_names[table_it]
-            # add the url
-            profile_page.lines += [f'* `{title} <{url}>`_']
-            # add a new line
-            profile_page.add_newline()
-        profile_page.add_newline()
+    # # add list of urls
+    # if len(table_urls) > 0:
+    #     # add a section
+    #     profile_page.add_newline()
+    #     profile_page.add_text('Contents: ')
+    #     profile_page.add_newline()
+    #     # add the urls as a list
+    #     for table_it in range(len(table_urls)):
+    #         # get url from table urls
+    #         url = table_urls[table_it]
+    #         title = table_names[table_it]
+    #         # add the url
+    #         profile_page.lines += [f'* `{title} <{url}>`_']
+    #         # add a new line
+    #         profile_page.add_newline()
+    #     profile_page.add_newline()
     # save profile page
     profile_page.write_page(os.path.join(profile_path, profile_name))
 
