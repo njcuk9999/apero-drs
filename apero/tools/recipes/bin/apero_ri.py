@@ -16,7 +16,7 @@ from apero.core.core import drs_log
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
 from apero.tools.module.ari import ari_general as ari
-
+from apero.tools.module.ari import ari_pages as arip
 
 # =============================================================================
 # Define variables
@@ -110,32 +110,32 @@ def __main__(recipe: DrsRecipe, params: ParamDict):
     recipe_classes = ari.find_new_recipes(params, recipe_classes)
 
     # ----------------------------------------------------------------------
-    # step 4: compile new data
+    # step 4: compile new data and write pages
     # ----------------------------------------------------------------------
     # compile object data
-    object_classes = ari.compile_object_data(params, object_classes)
+    object_classes, object_table = ari.compile_object_data(params,
+                                                           object_classes)
     # compile recipe data
-    recipe_classes = ari.compile_recipe_data(params, recipe_classes)
+    recipe_classes, recipe_table = ari.compile_recipe_data(params,
+                                                           recipe_classes)
 
     # ----------------------------------------------------------------------
-    # step 5: write pages
+    # step 5: make top level pages and compile
     # ----------------------------------------------------------------------
-    # write object pages
-    ari.write_object_pages(params, object_classes)
-    # write recipe pages
-    ari.write_recipe_pages(params, recipe_classes)
+    # make index page
+    arip.make_index_page(params)
+
+    # make profile page
+    arip.make_profile_page(params, tables=[object_table, recipe_table])
+
+    # run sphinx build
+    arip.compile(params)
 
     # ----------------------------------------------------------------------
-    # step 6: compile pages
+    # step 6: save yamls and upload
     # ----------------------------------------------------------------------
-    # compile object pages
-    ari.compile_object_pages(params)
-    # compile recipe pages
-    ari.compile_recipe_pages(params)
-
-    # ----------------------------------------------------------------------
-    # step 7: upload
-    # ----------------------------------------------------------------------
+    # save object data
+    ari.save_yamls(params, object_classes, recipe_classes)
     # upload
     ari.upload(params)
 
