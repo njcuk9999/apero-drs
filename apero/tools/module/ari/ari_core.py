@@ -67,7 +67,6 @@ OBJ_TO_YAML['dprtypes'] = 'DPRTYPES'
 OBJ_TO_YAML['last_processed'] = 'LAST_PROCESSED'
 OBJ_TO_YAML['lbl_templates'] = 'LBL_TEMPLATES'
 OBJ_TO_YAML['lbl_select'] = 'LBL_SELECT'
-OBJ_TO_YAML['lbl_stats_files'] = 'LBL_STATS_FILES'
 OBJ_TO_YAML['spec_plot_path'] = 'SPEC_PLOT_PATH'
 OBJ_TO_YAML['spec_stats_table'] = 'SPEC_STATS_TABLE'
 OBJ_TO_YAML['spec_rlink_table'] = 'SPEC_RLINK_TABLE'
@@ -323,16 +322,26 @@ class FileType:
         self.name = yaml_dict['name']
         # the block kind (i.e. raw, tmp, red, out)
         self.block_kind = yaml_dict['block_kind']
+        if self.block_kind in ['Null', 'None']:
+            self.block_kind = None
         # the file type (DRSOUTID)
         self.kw_output = yaml_dict['kw_output']
+        if self.kw_output in ['Null', 'None']:
+            self.kw_output = None
         # the fiber type
         self.fiber = yaml_dict['fiber']
+        if self.fiber in ['Null', 'None']:
+            self.fiber = None
         # whether to count the files
         self.count = yaml_dict['count']
         # whether there is a chain (i.e. this file was created from another)
         self.chain = yaml_dict['chain']
+        if self.chain in ['Null', 'None']:
+            self.chain = None
         # the sql condition used
         self.cond = yaml_dict['cond']
+        if self.cond in ['Null', 'None']:
+            self.cond = None
         # list of file paths --> numpy array
         self.files = np.array(yaml_dict['files'])
         # list of booleans (for the mask) --> numpy array
@@ -389,13 +398,16 @@ class FileType:
         # ------------------------------------------------------------------
         # Construct the condition for the query
         # ------------------------------------------------------------------
-        cond = f'KW_OBJNAME="{objname}"'
-        if self.block_kind is not None:
-            cond += f' AND BLOCK_KIND="{self.block_kind}"'
-        if self.kw_output is not None:
-            cond += f' AND KW_OUTPUT="{self.kw_output}"'
-        if self.fiber is not None:
-            cond += f' AND KW_FIBER="{self.fiber}"'
+        if self.cond in [None, 'None', 'Null']:
+            cond = f'KW_OBJNAME="{objname}"'
+            if self.block_kind is not None:
+                cond += f' AND BLOCK_KIND="{self.block_kind}"'
+            if self.kw_output is not None:
+                cond += f' AND KW_OUTPUT="{self.kw_output}"'
+            if self.fiber is not None:
+                cond += f' AND KW_FIBER="{self.fiber}"'
+        else:
+            cond = str(self.cond)
         # ------------------------------------------------------------------
         # run counting conditions using indexdbm
         # ------------------------------------------------------------------

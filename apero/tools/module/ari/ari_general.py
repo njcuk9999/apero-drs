@@ -239,8 +239,10 @@ def find_new_objects(params: ParamDict, object_classes: Dict[str, AriObject]
         # get object class
         obj_class = object_classes[objname]
         # check if we have raw files
-        if obj_class.filetypes['raw'].num > 0:
-            new_object_classes[objname] = obj_class
+        if obj_class.filetypes['raw'].num == 0:
+            continue
+        # add object instances to final list of object classes
+        new_object_classes[objname] = obj_class
     # -------------------------------------------------------------------------
     # return object classes
     return new_object_classes

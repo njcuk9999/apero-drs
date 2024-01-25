@@ -225,6 +225,9 @@ def _add_obj_page(it: int, key: str, params: ParamDict,
                   object_classes: Dict[str, AriObject]):
     # get object
     object_class = object_classes[key]
+    # do not recalculate object page if we are not updating
+    if not object_class.update:
+        return
     # get the object name for this row
     objname = object_class.objname
     # get the ari user
@@ -328,7 +331,7 @@ def add_obj_pages(params: ParamDict, object_classes: Dict[str, AriObject]):
     # deal with no entries in object table
     if len(object_classes) == 0:
         # print progress
-        WLOG(params, '', 'No objects found in object table')
+        WLOG(params, '', 'No new objects found in object table')
         # return empty table
         return object_classes
     # -------------------------------------------------------------------------
@@ -905,12 +908,21 @@ def compile(params: ParamDict):
     # copy over working directory from resources
     content = glob.glob(os.path.join(resources_dir, '*'))
     for element in content:
-
+        # get the path to copy to
         new_element = element.replace(resources_dir, working_dir)
-
+        # deal with files
         if os.path.isfile(element):
+            # deal with old file existing
+            if os.path.exists(new_element):
+                os.remove(new_element)
+            # copy new file
             shutil.copy(element, new_element)
+        # deal with directories
         else:
+            # deal with old directory existing
+            if os.path.exists(new_element):
+                shutil.rmtree(new_element)
+            # copy new directory
             shutil.copytree(element, new_element)
     # ------------------------------------------------------------------
     # get current directory
