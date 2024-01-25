@@ -17,6 +17,7 @@ from typing import Any, Dict, List, Tuple, Union
 import numpy as np
 from astropy.table import Table
 from astropy.time import Time
+from bs4 import BeautifulSoup
 
 from apero import lang
 from apero.base import base
@@ -60,10 +61,22 @@ class TableFile:
         self.null = False
         self.name = name.lower()
         self.user = params['ARI_USER']
+        self.title = f'{name.lower} ({self.user})'
+        self.machinename = self.name.replace(' ', '_').upper()
         self.params = params
-        self.ref: str = self.user + '_' + self.name.replace(' ', '_')
+        self.ref: str = self.user + '_' + self.machinename
         self.csv_filename = name.replace(' ', '_') + '.csv'
         self.rst_filename = self.csv_filename.replace('.csv', '.rst')
+        # this is just for table files where we generate the html without
+        #   sphinx
+        self.html_filename = self.csv_filename.replace('.csv', '.html')
+        # we need the recipe table page to be in the recipe pages directory
+        if 'recipe' in name.lower():
+            self.html_path = os.path.join('recipe_pages',
+                                          self.html_filename)
+        else:
+            self.html_path = os.path.join(self.html_filename)
+
         self.csv_path = os.path.join(params['ARI_DIR'], self.csv_filename)
         self.rst_path = os.path.join(params['ARI_DIR'], self.rst_filename)
         self.rst_ref_path = self.rst_filename
@@ -108,7 +121,7 @@ class TableFile:
                                          cssclass='csvtable2')
             elif 'recipe' in self.name:
                 # add the recipe tables
-                add_recipe_tables(self.params, table, self.name)
+                add_recipe_tables(self.params, table, self.machinename)
         else:
             # if we have no table then add a message
             table_page.add_text('No table created.')
@@ -580,7 +593,7 @@ def objpage_timeseries(params: ParamDict, page: Any, name: str, ref: str,
 # =============================================================================
 # Recipe functions
 # =============================================================================
-def recipe_date_table(table: Table, table_name: str,
+def recipe_date_table(table: Table, machine_name: str
                       ) -> Tuple[Table, List[str], List[str], np.ndarray]:
     """
     Create the date table which links to each date page
@@ -599,7 +612,7 @@ def recipe_date_table(table: Table, table_name: str,
     for col in date_colnames:
         date_dict[col] = []
     # get table name
-    table_filename = table_name.lower()
+    table_filename = machine_name.lower()
     # loop around rows in table
     for row in range(len(table)):
         # convert start time into a YYYY-MM-DD
@@ -635,7 +648,9 @@ def recipe_date_table(table: Table, table_name: str,
     return date_table, date_colnames, date_coltypes, table_dates
 
 
-def add_recipe_tables(params: ParamDict, table: Table, table_name: str):
+def add_recipe_tables(params: ParamDict, table: Table, machine_name: str):
+    # set function name
+    funcname = __NAME__ + '.add_recipe_tables()'
     # get the ari user
     ari_user = params['ARI_USER']
     # set html body
@@ -675,7 +690,7 @@ def add_recipe_tables(params: ParamDict, table: Table, table_name: str):
     <p> Note the date is the date processed NOT the observation directory 
         (or night directory)</p>
     <br>
-    <p><a href="../rst/profile.html">Back to profile page ({PROFILE})</a></p>
+    <p><a href="../profile.html">Back to profile page ({PROFILE})</a></p>
     <br>
     <p> 
     A list of known errors can be found 
@@ -705,9 +720,15 @@ def add_recipe_tables(params: ParamDict, table: Table, table_name: str):
     # make path
     table_path = params['ARI_RECIPE_PAGES']
     # get table name
-    table_filename = table_name.lower()
+    table_filename = machine_name.lower()
+    # construct the html paths to copy to after compiling
+    html_table_path1 = str(os.path.join(params['DRS_DATA_OTHER'], 'ari',
+                                        '_build', 'html', ari_user))
+    html_table_path2 = str(os.path.join(html_table_path1, 'recipe_pages'))
+    # storage of html files
+    added_html_files = []
     # split the table into sub-tables based on start date
-    dout = recipe_date_table(table, table_name)
+    dout = recipe_date_table(table, machine_name)
     date_table, date_colnames, date_coltypes, table_dates = dout
     # loop around sub tables
     for date in date_table['DATE']:
@@ -718,8 +739,8 @@ def add_recipe_tables(params: ParamDict, table: Table, table_name: str):
         # get the filename to create
         subtable_filename = f'{table_filename}_{date.replace("-", "_")}'
         # get html col names
-        html_out_col_names = ari_core.HTML_OUTCOL_NAMES[table_name]
-        html_col_types = ari_core.HTML_COL_TYPES[table_name]
+        html_out_col_names = ari_core.HTML_OUTCOL_NAMES[machine_name]
+        html_col_types = ari_core.HTML_COL_TYPES[machine_name]
         # convert table to outlist
         tout = error_html.table_to_outlist(subtable, html_out_col_names,
                                            out_types=html_col_types)
@@ -734,7 +755,7 @@ def add_recipe_tables(params: ParamDict, table: Table, table_name: str):
         if not os.path.exists(table_path):
             os.makedirs(table_path)
         # construct local path to save html to
-        subtable_html = os.path.join(table_path, f'{subtable_filename}.html')
+        subtable_html1 = os.path.join(table_path, f'{subtable_filename}.html')
         # build html page
 
         html_title = 'Recipe log for {0} ({1})'.format(date, ari_user)
@@ -753,14 +774,18 @@ def add_recipe_tables(params: ParamDict, table: Table, table_name: str):
                                                  html_body2=html_body2,
                                                  css=ccs_files)
         # write html page
-        with open(subtable_html, 'w') as wfile:
+        with open(subtable_html1, 'w') as wfile:
             wfile.write(html_content)
+
 
     # -------------------------------------------------------------------------
     # make recipe table
     # -------------------------------------------------------------------------
     # construct local path to save html to
-    table_html = os.path.join(table_path, f'{table_filename.lower()}.html')
+    table_html1 = os.path.join(table_path, f'{table_filename.lower()}.html')
+    # construct html path to save html to copy to after compiling
+    table_html2 = os.path.join(html_table_path1,
+                               f'{table_filename.lower()}.html')
     # convert table to outlist
     tout = error_html.table_to_outlist(date_table, date_colnames,
                                        out_types=date_coltypes)
@@ -780,8 +805,15 @@ def add_recipe_tables(params: ParamDict, table: Table, table_name: str):
                                              html_body2=html_body2,
                                              css=ccs_files)
     # write html page
-    with open(table_html, 'w') as wfile:
+    with open(table_html1, 'w') as wfile:
         wfile.write(html_content)
+    # add recipe pages html directory store
+    added_html_files.append([table_path, html_table_path2])
+    # update ari_extras with these html files
+    ari_extras = list(params['ARI_EXTRAS'])
+    ari_extras += added_html_files
+    # push by into params
+    params.set('ARI_EXTRAS', ari_extras, source=funcname)
 
 
 # =============================================================================
@@ -873,29 +905,32 @@ def make_profile_page(params: ParamDict, tables: List[TableFile]):
     table_names, table_files, table_urls = [], [], []
     for table in tables:
         if not table.null:
-            table_names.append(table.name)
-            table_files.append(table.rst_filename)
-            table_urls.append(table.ref)
+            if table.machinename.upper() in ari_core.CONTENTS_TABLES:
+                table_files.append(table.rst_filename)
+            elif table.machinename.upper() in ari_core.OTHER_TABLES:
+                table_names.append(table.title)
+                table_urls.append(table.html_path)
 
     # add table of contents to profile page
-    profile_page.add_table_of_contents(table_files)
+    if len(table_files) > 0:
+        profile_page.add_table_of_contents(table_files)
 
-    # # add list of urls
-    # if len(table_urls) > 0:
-    #     # add a section
-    #     profile_page.add_newline()
-    #     profile_page.add_text('Contents: ')
-    #     profile_page.add_newline()
-    #     # add the urls as a list
-    #     for table_it in range(len(table_urls)):
-    #         # get url from table urls
-    #         url = table_urls[table_it]
-    #         title = table_names[table_it]
-    #         # add the url
-    #         profile_page.lines += [f'* `{title} <{url}>`_']
-    #         # add a new line
-    #         profile_page.add_newline()
-    #     profile_page.add_newline()
+    # add list of urls
+    if len(table_urls) > 0:
+        # add a section
+        profile_page.add_newline()
+        profile_page.add_text('Other: ')
+        profile_page.add_newline()
+        # add the urls as a list
+        for table_it in range(len(table_urls)):
+            # get url from table urls
+            url = table_urls[table_it]
+            title = table_names[table_it]
+            # add the url
+            profile_page.lines += [f'* `{title} <{url}>`_']
+            # add a new line
+            profile_page.add_newline()
+        profile_page.add_newline()
     # save profile page
     profile_page.write_page(os.path.join(profile_path, profile_name))
 
@@ -910,20 +945,8 @@ def compile(params: ParamDict):
     for element in content:
         # get the path to copy to
         new_element = element.replace(resources_dir, working_dir)
-        # deal with files
-        if os.path.isfile(element):
-            # deal with old file existing
-            if os.path.exists(new_element):
-                os.remove(new_element)
-            # copy new file
-            shutil.copy(element, new_element)
-        # deal with directories
-        else:
-            # deal with old directory existing
-            if os.path.exists(new_element):
-                shutil.rmtree(new_element)
-            # copy new directory
-            shutil.copytree(element, new_element)
+        # copy
+        ari_core.copy_element(element, new_element)
     # ------------------------------------------------------------------
     # get current directory
     cwd = os.getcwd()
@@ -945,9 +968,79 @@ def compile(params: ParamDict):
     # make html using sphinx
     os.system('make html')
     # ------------------------------------------------------------------
+    # copy extras (directory generated html files - not by sphinx)
+    for extra in params['ARI_EXTRAS']:
+        old_path, new_path = extra
+        ari_core.copy_element(old_path, new_path)
+    # ------------------------------------------------------------------
     # change back to current directory
     os.chdir(cwd)
 
+
+
+def add_other_reductions(params: ParamDict):
+
+    # get the base_path page (above ari_dir level)
+    base_path = str(os.path.join(params['DRS_DATA_OTHER'], 'ari',
+                                        '_build', 'html'))
+    # index.html file
+    index_html = os.path.join(base_path, 'index.html')
+    # define the userlist yaml file
+    userlist_yaml = os.path.join(base_path, 'user.yaml')
+
+    # download the userlist.txt file and copy it over userlist_yaml
+
+    # open the userlist.yaml file
+    if os.path.exists(userlist_yaml):
+        userlist = base.load_yaml(userlist_yaml)
+    # if it doesn't exist just assume it is blank
+    else:
+        userlist = dict()
+    # -------------------------------------------------------------------------
+    # get the usernames for this instrument
+    if params['INSTRUMENT'] not in userlist:
+        usernames = set()
+    else:
+        usernames = set(userlist[params['INSTRUMENT']])
+    # add the current ari username to the list
+    usernames.add(params['ARI_USER'])
+    # -------------------------------------------------------------------------
+    # load the index
+    with open(index_html, 'r') as rfile:
+        index = rfile.read()
+    # Parse the HTML content using beautiful soup
+    soup = BeautifulSoup(index, 'html.parser')
+    # get the div for the content we want to change
+    contents_div = soup.find('div', {'class': 'toctree-wrapper compound'})
+    # find the lists in div and remove them
+    for contents_li in contents_div.find_all('li'):
+        contents_li.decompose()
+    # remove the ul from contents_div
+    for contents_ul in contents_div.find_all('ul'):
+        contents_ul.decompose()
+    # remove all br from contents_div
+    for contents_br in contents_div.find_all('br'):
+        contents_br.decompose()
+    # now add the new usernames
+    for username in usernames:
+        # create a new item
+        new_item = soup.new_tag('li', **{'class': 'toctree-l1'})
+        # create a new link
+        new_link = soup.new_tag('a', href=f'{username}/profile.html')
+        # add the link text
+        new_link.string = username
+        # add the link to the item
+        new_item.append(new_link)
+        # append the new item to the contents_div
+        contents_div.append(new_item)
+    # save over the index.html
+    with open(index_html, 'w') as wfile:
+        wfile.write(str(soup))
+    # -------------------------------------------------------------------------
+    # add the username to the userlist
+    userlist[params['INSTRUMENT']] = list(usernames)
+    # save the userlist
+    base.write_yaml(userlist, userlist_yaml)
 
 
 
