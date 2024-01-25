@@ -98,16 +98,12 @@ def __main__(recipe: DrsRecipe, params: ParamDict):
     # ----------------------------------------------------------------------
     # get previous object data from store
     object_classes = ari.load_previous_objects(params)
-    # get previous recipe data from store
-    recipe_classes = ari.load_previous_recipes(params)
 
     # ----------------------------------------------------------------------
     # step 3: find new data
     # ----------------------------------------------------------------------
     # find new data for objects
     object_classes = ari.find_new_objects(params, object_classes)
-    # find new entries for recipes
-    recipe_classes = ari.find_new_recipes(params, recipe_classes)
 
     # ----------------------------------------------------------------------
     # step 4: compile new data and write pages
@@ -116,9 +112,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict):
     object_classes, object_table = ari.compile_object_data(params,
                                                            object_classes)
     # compile recipe data
-    recipe_classes, recipe_table = ari.compile_recipe_data(params,
-                                                           recipe_classes)
-
+    recipe_table = ari.compile_recipe_data(params)
     # ----------------------------------------------------------------------
     # step 5: make top level pages and compile
     # ----------------------------------------------------------------------
@@ -130,13 +124,19 @@ def __main__(recipe: DrsRecipe, params: ParamDict):
 
     # run sphinx build
     arip.compile(params)
+    # add in other reductions
+    # TODO: Get user list from web-server
+    arip.add_other_reductions(params)
 
     # ----------------------------------------------------------------------
     # step 6: save yamls and upload
     # ----------------------------------------------------------------------
     # save object data
-    ari.save_yamls(params, object_classes, recipe_classes)
+    ari.save_yamls(params, object_classes)
     # upload
+    # TODO: Fill this out
+    # TODO: Deal with passwords
+    # TODO: Deal with instruments
     ari.upload(params)
 
     # ----------------------------------------------------------------------

@@ -154,7 +154,7 @@ MAX_NUM_CCF = 100
 MULTI = 'Process'
 
 # -----------------------------------------------------------------------------
-# Object page variables
+# Page variables
 # -----------------------------------------------------------------------------
 # object page styling
 DIVIDER_COLOR = '#FFA500'
@@ -178,6 +178,10 @@ TIME_SERIES_COLS = ['Obs Dir', 'First obs mid',
                     'Last obs mid', 'Number of ext', 'Number of tcorr',
                     'Seeing', 'Airmass',
                     'Mean Exptime', 'Total Exptime', 'DPRTYPEs', None, None]
+# Which tables are Contents tables (linked to via .rst)
+CONTENTS_TABLES = ['OBJECT_TABLE']
+# Which tables are Other tables (linked to via .html)
+OTHER_TABLES = ['RECIPE_TABLE']
 
 # -----------------------------------------------------------------------------
 # Google variables
@@ -481,6 +485,10 @@ class FileType:
         # deal with qc = False --> return only non qc files
         else:
             return vector[~self.qc_mask]
+
+
+class RecipeEntry:
+    pass
 
 
 class AriObject:
@@ -1591,7 +1599,55 @@ class AriObject:
 
 
 class AriRecipe:
-    pass
+    def __init__(self):
+        self.obsdir = None
+        self.numtotal = None
+        self.numfail = None
+        self.link = None
+        self.recipes = dict()
+        self.yamlfile = None
+
+    @staticmethod
+    def from_yaml(yaml_abs_path):
+        # load yaml file into dictionary
+        yaml_dict = base.load_yaml(yaml_abs_path)
+        # create instance of AriRecipe
+        ari_recipe = AriRecipe()
+        # store the yaml file
+        ari_recipe.yamlfile = yaml_abs_path
+        # store the obsdir
+        ari_recipe.obsdir = yaml_dict['obsdir']
+        # store the numtotal
+        ari_recipe.numtotal = yaml_dict['numtotal']
+        # store the numfail
+        ari_recipe.numfail = yaml_dict['numfail']
+        # store the link
+        ari_recipe.link = yaml_dict['link']
+        # get the recipes
+        ari_recipe.recipes = yaml_dict['recipes']
+
+    def save_yaml(self, params: ParamDict):
+        # get the recipe yaml directory
+        yaml_path = params['ARI_RECIPE_YAMLS']
+        # construct the filename
+        self.yamlfile = str(os.path.join(yaml_path, self.obsdir + '.yaml'))
+        # ----------------------------------------------------------------------
+        # create the yaml dictionary
+        yaml_dict = dict()
+        # store the obsdir
+        yaml_dict['obsdir'] = self.obsdir
+        # store the numtotal
+        yaml_dict['numtotal'] = self.numtotal
+        # store the numfail
+        yaml_dict['numfail'] = self.numfail
+        # store the link
+        yaml_dict['link'] = self.link
+        # store the recipes
+        yaml_dict['recipes'] = self.recipes
+        # ----------------------------------------------------------------------
+        # save the yaml file
+        base.write_yaml(yaml_dict, self.yamlfile)
+
 
 
 # =============================================================================
@@ -2793,6 +2849,23 @@ def download_table(files: List[str], descriptions: List[str],
     down_table = Table(down_dict2)
     # write to file as csv file
     down_table.write(item_path, format='ascii.csv', overwrite=True)
+
+
+def copy_element(old_element, new_element):
+    # deal with files
+    if os.path.isfile(old_element):
+        # deal with old file existing
+        if os.path.exists(new_element):
+            os.remove(new_element)
+        # copy new file
+        shutil.copy(old_element, new_element)
+    # deal with directories
+    else:
+        # deal with old directory existing
+        if os.path.exists(new_element):
+            shutil.rmtree(new_element)
+        # copy new directory
+        shutil.copytree(old_element, new_element)
 
 
 # =============================================================================
