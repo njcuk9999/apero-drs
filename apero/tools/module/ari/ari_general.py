@@ -251,8 +251,18 @@ def find_new_objects(params: ParamDict, object_classes: Dict[str, AriObject]
 
 def compile_object_data(params: ParamDict, object_classes: Dict[str, AriObject]
                         ) -> Tuple[Dict[str, AriObject], TableFile]:
+    # log progress
+    WLOG(params, '', 'Counting LBL files')
+    # add the lbl count
+    object_classes = ari_core.add_lbl_count(params, object_classes)
+    # -------------------------------------------------------------------------
+    # print progress
+    WLOG(params, '', 'Creating Object pages')
     # add object pages
     ari_pages.add_obj_pages(params, object_classes)
+    # -------------------------------------------------------------------------
+    # print progress
+    WLOG(params, '', 'Creating Object Table page')
     # make the object table page
     object_table = ari_pages.make_obj_table(params, object_classes)
 
