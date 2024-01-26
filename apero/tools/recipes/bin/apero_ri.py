@@ -96,47 +96,59 @@ def __main__(recipe: DrsRecipe, params: ParamDict):
     # ----------------------------------------------------------------------
     # step 2: previous data
     # ----------------------------------------------------------------------
+    # print progress
+    WLOG(params, 'info', 'Loading previous object data')
     # get previous object data from store
     object_classes = ari.load_previous_objects(params)
 
     # ----------------------------------------------------------------------
     # step 3: find new data
     # ----------------------------------------------------------------------
+    # print progress
+    WLOG(params, 'info', 'Finding new object data')
     # find new data for objects
     object_classes = ari.find_new_objects(params, object_classes)
 
     # ----------------------------------------------------------------------
     # step 4: compile new data and write pages
     # ----------------------------------------------------------------------
+    # print progress
+    WLOG(params, 'info', 'Compiling new data and writing pages')
     # compile object data
     object_classes, object_table = ari.compile_object_data(params,
                                                            object_classes)
     # compile recipe data
     recipe_table = ari.compile_recipe_data(params)
+
     # ----------------------------------------------------------------------
     # step 5: make top level pages and compile
     # ----------------------------------------------------------------------
+    # print progress
+    WLOG(params, 'info', 'Making top level pages and compiling')
     # make index page
     arip.make_index_page(params)
 
     # make profile page
     arip.make_profile_page(params, tables=[object_table, recipe_table])
-
+    # print progress
+    WLOG(params, 'info', 'Compiling sphinx build')
     # run sphinx build
-    arip.compile(params)
+    arip.sphinx_compile(params)
+    # print progress
+    WLOG(params, 'info', 'Adding other htmls')
     # add in other reductions
-    # TODO: Get user list from web-server
     arip.add_other_reductions(params)
 
     # ----------------------------------------------------------------------
     # step 6: save yamls and upload
     # ----------------------------------------------------------------------
+    # print progress
+    WLOG(params, 'info', 'Saving yaml files and uploading')
     # save object data
     ari.save_yamls(params, object_classes)
+    # print progress
+    WLOG(params, 'info', 'Uploading yaml files')
     # upload
-    # TODO: Fill this out
-    # TODO: Deal with passwords
-    # TODO: Deal with instruments
     ari.upload(params)
 
     # ----------------------------------------------------------------------
