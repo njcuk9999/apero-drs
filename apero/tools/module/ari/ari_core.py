@@ -51,6 +51,7 @@ WLOG = drs_log.wlog
 # -----------------------------------------------------------------------------
 # mapping of yaml keys to param dict keys
 YAML_TO_PARAM = dict()
+YAML_TO_PARAM['settings.instrument'] = 'ARI_INSTRUMENT'
 YAML_TO_PARAM['settings.username'] = 'ARI_USER'
 YAML_TO_PARAM['settings.N_CORES'] = 'ARI_NCORES'
 YAML_TO_PARAM['settings.SpecWave'] = 'ARI_WAVE_RANGES'
