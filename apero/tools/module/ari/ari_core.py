@@ -1704,7 +1704,7 @@ def ari_filetypes(params: ParamDict) -> Dict[str, FileType]:
 
 def get_has_polar(params: ParamDict) -> bool:
     # get polar condition
-    has_polar = HAS_POLAR[params['ARI_INSTRUMENT']]
+    has_polar = HAS_POLAR[params['INSTRUMENT']]
     # return has polar
     return has_polar
 
