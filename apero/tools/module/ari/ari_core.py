@@ -1978,6 +1978,9 @@ def add_lbl_count(params: ParamDict, object_classes: Dict[str, AriObject]
     for objname in tqdm(object_classes):
         # get the object class for this objname
         object_class = object_classes[objname]
+        # skip those that aren't being updated
+        if not object_class.update:
+            continue
         # ---------------------------------------------------------------------
         # LBL RV files
         # ---------------------------------------------------------------------
