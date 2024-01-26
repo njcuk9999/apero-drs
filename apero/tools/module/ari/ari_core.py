@@ -1105,8 +1105,7 @@ class AriObject:
             # get the plot file for this objname+template
             lbl_pfile = lbl_objtmps[lbl_objtmp][plot_file]
             # load rdb file
-            rdb_table = drs_table.read_table(params, lbl_pfile, fmt='ascii.rdb',
-                                             hdu=1)
+            rdb_table = drs_table.read_table(params, lbl_pfile, fmt='ascii.rdb')
             # get the values required
             lbl_props['rjd'] = np.array(rdb_table['rjd'])
             lbl_props['vrad'] = np.array(rdb_table['vrad'])
@@ -1226,7 +1225,7 @@ class AriObject:
             self.lbl_dwn_table[lbl_objtmp] = dwn_base_name
         # ---------------------------------------------------------------------
         # set the lbl combinations
-        self.lbl_combinations = lbl_objtmps.keys()
+        self.lbl_combinations = list(lbl_objtmps.keys())
 
     # -------------------------------------------------------------------------
     # CCF functions
@@ -1978,9 +1977,6 @@ def add_lbl_count(params: ParamDict, object_classes: Dict[str, AriObject]
     for objname in tqdm(object_classes):
         # get the object class for this objname
         object_class = object_classes[objname]
-        # skip those that aren't being updated
-        if not object_class.update:
-            continue
         # ---------------------------------------------------------------------
         # LBL RV files
         # ---------------------------------------------------------------------
@@ -2011,9 +2007,18 @@ def add_lbl_count(params: ParamDict, object_classes: Dict[str, AriObject]
         # get strings to add to storage
         _select = templates[select]
         _count = int(counts[select])
+        # --------------------------------------------------------------------
+        # deal with the update (do not update if there are no difference
+        # in files)
+        if _count != object_class.filetypes['lbl.fits']:
+            object_class.update = True
+        else:
+            continue
+        # --------------------------------------------------------------------
         # add the counts to the object class
         object_class.lbl_templates = templates
         object_class.lbl_select = _select
+        # --------------------------------------------------------------------
         # set the number of files
         object_class.filetypes['lbl.fits'].num = _count
         # ---------------------------------------------------------------------
