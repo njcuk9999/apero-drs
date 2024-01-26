@@ -376,7 +376,7 @@ __all__ = [
     'DRIFT_DPR_FIBER_TYPE', 'REPROCESS_MP_TYPE', 'REPROCESS_MP_TYPE_VAL',
     'REPROCESS_REINDEX_BLOCKS', 'REPROCESS_OBJECT_TYPES',
     # ari constants
-    'ARI_USER', 'ARI_NCORES', 'ARI_WAVE_RANGES',
+    'ARI_INSTRUMENT', 'ARI_USER', 'ARI_NCORES', 'ARI_WAVE_RANGES',
     'ARI_SSH_COPY', 'ARI_RESET', 'ARI_FILTER_OBJECTS',
     'ARI_FILTER_OBJECTS_LIST', 'ARI_HEADER_PROPS',
 ]
@@ -5619,6 +5619,11 @@ DRIFT_DPR_FIBER_TYPE = Const('DRIFT_DPR_FIBER_TYPE', value=None, dtype=str,
 # =============================================================================
 # ARI SETTINGS
 # =============================================================================
+# Define the ari instrument (may be different from the apero instrument)
+ARI_INSTRUMENT = Const('ARI_INSTRUMENT', value=None, dtype=str,
+                       source=__NAME__, group=cgroup,
+                       description='Define the ari instrument (may be different'
+                                   ' from the apero instrument)')
 # Define the ari user name
 ARI_USER = Const('ARI_USER', value=None, dtype=str, source=__NAME__,
                  group=cgroup,
