@@ -318,7 +318,8 @@ def upload(params: ParamDict) -> None:
     # get the ssh directory
     ssh_directory = params['ARI_SSH_COPY']['directory']
     # download the userlist.txt file and copy it over userlist_yaml
-    remote_path = str(os.path.join(ssh_directory, params['INSTRUMENT'].lower()))
+    remote_path = str(os.path.join(ssh_directory,
+                                   params['ARI_INSTRUMENT'].lower()))
     # change permission of all files and directories
     os.system(f'chmod 777 -R {base_path}')
     # make sure we copy contents not directory

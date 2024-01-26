@@ -983,7 +983,8 @@ def add_other_reductions(params: ParamDict):
     # get the ssh directory
     ssh_directory = params['ARI_SSH_COPY']['directory']
     # download the userlist.txt file and copy it over userlist_yaml
-    remote_path = str(os.path.join(ssh_directory, params['INSTRUMENT'].lower(),
+    remote_path = str(os.path.join(ssh_directory,
+                                   params['ARI_INSTRUMENT'].lower(),
                                    userlist_file))
     # get file
     ari_core.do_rsync(params, mode='get', path_in=remote_path,
@@ -996,10 +997,10 @@ def add_other_reductions(params: ParamDict):
         userlist = dict()
     # -------------------------------------------------------------------------
     # get the usernames for this instrument
-    if params['INSTRUMENT'] not in userlist:
+    if params['ARI_INSTRUMENT'] not in userlist:
         usernames = set()
     else:
-        usernames = set(userlist[params['INSTRUMENT']])
+        usernames = set(userlist[params['ARI_INSTRUMENT']])
     # add the current ari username to the list
     usernames.add(params['ARI_USER'])
     # -------------------------------------------------------------------------
@@ -1036,7 +1037,7 @@ def add_other_reductions(params: ParamDict):
         wfile.write(str(soup))
     # -------------------------------------------------------------------------
     # add the username to the userlist
-    userlist[params['INSTRUMENT']] = list(usernames)
+    userlist[params['ARI_INSTRUMENT']] = list(usernames)
     # save the userlist
     base.write_yaml(userlist, userlist_yaml)
 
