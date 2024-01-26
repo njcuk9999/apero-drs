@@ -5369,7 +5369,7 @@ cgroup = 'LBL SETTINGS'
 LBL_FILE_DEFS = Const('LBL_FILE_DEFS', value=None, dtype=str, source=__NAME__,
                       user=False, active=True, group=cgroup,
                       description='Define the file definition type (DRSOUTID) '
-                                    'for LBL input files')
+                                  'for LBL input files')
 
 # Define the dprtype for science files for LBL
 LBL_DPRTYPES = Const('LBL_DPRTYPES', value=None, dtype=str, source=__NAME__,
@@ -5407,8 +5407,8 @@ LBL_SPECIFIC_DATATYPES = Const('LBL_SPECIFIC_DATATYPES', value=None,
                                dtype=str, source=__NAME__, user=False,
                                active=True, group=cgroup,
                                description='Define the specific data types '
-                                            '(where objname is the data type) '
-                                            'for LBL')
+                                           '(where objname is the data type) '
+                                           'for LBL')
 
 # Define objnames for which we should recalculate template if it doesn't
 #   exist (must include FP)
@@ -5416,8 +5416,8 @@ LBL_RECAL_TEMPLATE = Const('LBL_RECAL_TEMPLATE', value=None, dtype=str,
                            source=__NAME__, user=False, active=True,
                            group=cgroup,
                            description='Define objnames for which we should '
-                                        'recalculate template if it doesn\'t '
-                                        'exist (must include FP)')
+                                       'recalculate template if it doesn\'t '
+                                       'exist (must include FP)')
 
 # Define which object names should be run through LBL compute in parellel
 #   i.e. break in to Ncore chunks (comma separated list)
@@ -5488,12 +5488,12 @@ REPROCESS_MP_TYPE = Const('REPROCESS_MP_TYPE', value=None, dtype=str,
 # Define whether to use multiprocess "pool" or "process" or use "linear"
 #     mode when validating recipes
 REPROCESS_MP_TYPE_VAL = Const('REPROCESS_MP_TYPE_VAL', value=None, dtype=str,
-                          source=__NAME__, group=cgroup,
-                          user=True, active=True,
-                          options=['linear', 'pool', 'process', 'pathos'],
-                          description='Define whether to use multiprocess '
-                                      '"pool" or "process" or use "linear" '
-                                      'mode when validating recipes')
+                              source=__NAME__, group=cgroup,
+                              user=True, active=True,
+                              options=['linear', 'pool', 'process', 'pathos'],
+                              description='Define whether to use multiprocess '
+                                          '"pool" or "process" or use "linear" '
+                                          'mode when validating recipes')
 
 # Key for use in run files
 REPROCESS_RUN_KEY = Const('REPROCESS_RUN_KEY', value=None, dtype=str,

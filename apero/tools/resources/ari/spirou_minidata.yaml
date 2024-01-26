@@ -7,7 +7,7 @@ settings:
   # This should be similar to the apero profile name and indicate
   #   where the data was reduced
   #   e.g. spirou_online_udem
-  username: spirou_test_nb19
+  username: spirou_test2_nb19
   # number of cores to use in multiprocessing steps
   N_CORES: 1
   # Spectrum wavelength ranges in nm
@@ -25,8 +25,9 @@ settings:
       - 2164
       - 2169
   # SSH PATH to copy the website to
+  #    Must have ssh keys set up (no prompt for password given)
   ssh:
-    directory: /export/www/home/cook/www/apero-drs/
+    directory: /export/www/home/cook/www/apero-drs/ari2/
     user: cook
     host: venus.astro.umontreal.ca
     options: ssh -oport=5822

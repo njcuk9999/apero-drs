@@ -275,7 +275,10 @@ class FileType:
         # the sql condition used
         yaml_dict['cond'] = str(self.cond)
         # numpy array of file paths --> list
-        yaml_dict['files'] = list(self.files)
+        files = []
+        for filename in self.files:
+            files.append(str(filename))
+        yaml_dict['files'] = files
         # numpy array of booleans (for the mask) --> list
         if self.qc_mask is not None:
             qc_mask_list = []
@@ -285,7 +288,10 @@ class FileType:
         else:
             yaml_dict['qc_mask'] = None
         # numpy array of observation directories --> list
-        yaml_dict['obsdirs'] = list(self.obsdirs)
+        obsdirs = []
+        for obsdir in self.obsdirs:
+            obsdirs.append(str(obsdir))
+        yaml_dict['obsdirs'] = obsdirs
         # ------------------------------------------------------------------
         # deal with processed times being a list of astropy Time objects
         if len(self.processed_times) == 0:
@@ -1649,7 +1655,6 @@ class AriRecipe:
         base.write_yaml(yaml_dict, self.yamlfile)
 
 
-
 # =============================================================================
 # Define functions
 # =============================================================================
@@ -2866,6 +2871,39 @@ def copy_element(old_element, new_element):
             shutil.rmtree(new_element)
         # copy new directory
         shutil.copytree(old_element, new_element)
+
+
+def do_rsync(params: ParamDict, mode: str, path_in: str, path_out: str,
+             required=True):
+    # --------------------------------------------------------------------------
+    # get the correct rsync command
+    if mode == 'get':
+        rsync_cmd = RSYNC_CMD_IN
+    elif mode == 'send':
+        rsync_cmd = RSYNC_CMD_OUT
+    else:
+        WLOG(params, 'error', 'Mode not recognized (must be "get" or "send")')
+        return
+    # --------------------------------------------------------------------------
+    # get the ssh command
+    ssh_dict = dict()
+    ssh_dict['SSH'] = params['ARI_SSH_COPY']['options']
+    ssh_dict['USER'] = params['ARI_SSH_COPY']['user']
+    ssh_dict['HOST'] = params['ARI_SSH_COPY']['host']
+    ssh_dict['INPATH'] = path_in
+    ssh_dict['OUTPATH'] = path_out
+    # --------------------------------------------------------------------------
+    # try to do the rsync
+    try:
+        msg = 'Running rsync command: {0}'
+        margs = [rsync_cmd.format(**ssh_dict)]
+        WLOG(params, '', msg.format(*margs))
+        os.system(rsync_cmd.format(**ssh_dict))
+    except Exception as e:
+        msg = 'Failed to rsync file from/to ari\n\t{0}:{1}'
+        margs = [type(e), str(e)]
+        if required:
+            WLOG(params, 'error', msg.format(margs))
 
 
 # =============================================================================

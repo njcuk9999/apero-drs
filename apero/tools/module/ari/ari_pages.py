@@ -11,7 +11,6 @@ Created on 2024-01-23 at 15:52
 """
 import glob
 import os
-import shutil
 from typing import Any, Dict, List, Tuple, Union
 
 import numpy as np
@@ -61,7 +60,7 @@ class TableFile:
         self.null = False
         self.name = name.lower()
         self.user = params['ARI_USER']
-        self.title = f'{name.lower} ({self.user})'
+        self.title = f'{name.lower()} ({self.user})'
         self.machinename = self.name.replace(' ', '_').upper()
         self.params = params
         self.ref: str = self.user + '_' + self.machinename
@@ -598,8 +597,8 @@ def recipe_date_table(table: Table, machine_name: str
     """
     Create the date table which links to each date page
 
-    :param table:
-    :param table_name:
+    :param table: astropy.table.Table, the table of all recipes
+    :param machine_name: str, the machine readible name for the table
     :return:
     """
     # define the columns (passed back to main code)
@@ -694,7 +693,7 @@ def add_recipe_tables(params: ParamDict, table: Table, machine_name: str):
     <br>
     <p> 
     A list of known errors can be found 
-    <a href="""+ari_core.KNOWN_ERRORS_SHEET+""""">here</a>
+    <a href=""" + ari_core.KNOWN_ERRORS_SHEET + """"">here</a>
     <br>
     Please report any errors missing.
     </p>
@@ -777,15 +776,11 @@ def add_recipe_tables(params: ParamDict, table: Table, machine_name: str):
         with open(subtable_html1, 'w') as wfile:
             wfile.write(html_content)
 
-
     # -------------------------------------------------------------------------
     # make recipe table
     # -------------------------------------------------------------------------
     # construct local path to save html to
     table_html1 = os.path.join(table_path, f'{table_filename.lower()}.html')
-    # construct html path to save html to copy to after compiling
-    table_html2 = os.path.join(html_table_path1,
-                               f'{table_filename.lower()}.html')
     # convert table to outlist
     tout = error_html.table_to_outlist(date_table, date_colnames,
                                        out_types=date_coltypes)
@@ -869,7 +864,6 @@ def make_index_page(params: ParamDict):
     index_page.write_page(os.path.join(index_path, 'index.rst'))
 
 
-
 def make_profile_page(params: ParamDict, tables: List[TableFile]):
     # get ari user
     ari_user = params['ARI_USER']
@@ -935,7 +929,7 @@ def make_profile_page(params: ParamDict, tables: List[TableFile]):
     profile_page.write_page(os.path.join(profile_path, profile_name))
 
 
-def compile(params: ParamDict):
+def sphinx_compile(params: ParamDict):
     # get the working directory path
     working_dir = os.path.dirname(params['ARI_DIR'])
     # get the resources default working directory path
@@ -977,19 +971,23 @@ def compile(params: ParamDict):
     os.chdir(cwd)
 
 
-
 def add_other_reductions(params: ParamDict):
-
     # get the base_path page (above ari_dir level)
     base_path = str(os.path.join(params['DRS_DATA_OTHER'], 'ari',
-                                        '_build', 'html'))
+                                 '_build', 'html'))
     # index.html file
     index_html = os.path.join(base_path, 'index.html')
     # define the userlist yaml file
-    userlist_yaml = os.path.join(base_path, 'user.yaml')
-
+    userlist_file = 'user.yaml'
+    userlist_yaml = os.path.join(base_path, userlist_file)
+    # get the ssh directory
+    ssh_directory = params['ARI_SSH_COPY']['directory']
     # download the userlist.txt file and copy it over userlist_yaml
-
+    remote_path = str(os.path.join(ssh_directory, params['INSTRUMENT'].lower(),
+                                   userlist_file))
+    # get file
+    ari_core.do_rsync(params, mode='get', path_in=remote_path,
+                      path_out=userlist_yaml)
     # open the userlist.yaml file
     if os.path.exists(userlist_yaml):
         userlist = base.load_yaml(userlist_yaml)
@@ -1041,7 +1039,6 @@ def add_other_reductions(params: ParamDict):
     userlist[params['INSTRUMENT']] = list(usernames)
     # save the userlist
     base.write_yaml(userlist, userlist_yaml)
-
 
 
 # =============================================================================

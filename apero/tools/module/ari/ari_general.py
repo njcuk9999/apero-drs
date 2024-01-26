@@ -9,7 +9,6 @@ Created on 2024-01-22 at 10:25
 
 @author: cook
 """
-import glob
 import os
 import platform
 import string
@@ -98,17 +97,19 @@ def load_ari_params(params: ParamDict) -> ParamDict:
     for key in ari_core.YAML_TO_PARAM:
         if '.' in key:
             key1, key2 = key.split('.')
+            # noinspection PyBroadException
             try:
                 value = ari_params[key1][key2]
-            except Exception as e:
+            except Exception as _:
                 emsg = 'Yaml file {0} does not contain key'
                 eargs = [profile_yaml]
                 WLOG(params, 'error', emsg.format(*eargs))
                 return params
         else:
+            # noinspection PyBroadException
             try:
                 value = ari_params[key]
-            except Exception as e:
+            except Exception as _:
                 emsg = 'Yaml file {0} does not contain key'
                 eargs = [profile_yaml]
                 WLOG(params, 'error', emsg.format(*eargs))
@@ -250,7 +251,6 @@ def find_new_objects(params: ParamDict, object_classes: Dict[str, AriObject]
 
 def compile_object_data(params: ParamDict, object_classes: Dict[str, AriObject]
                         ) -> Tuple[Dict[str, AriObject], TableFile]:
-
     # add object pages
     ari_pages.add_obj_pages(params, object_classes)
     # make the object table page
@@ -312,7 +312,24 @@ def save_yamls(params: ParamDict, object_classes: Dict[str, AriObject]):
 
 
 def upload(params: ParamDict) -> None:
-    pass
+    # get the base_path page (above ari_dir level)
+    base_path = str(os.path.join(params['DRS_DATA_OTHER'], 'ari',
+                                 '_build', 'html'))
+    # get the ssh directory
+    ssh_directory = params['ARI_SSH_COPY']['directory']
+    # download the userlist.txt file and copy it over userlist_yaml
+    remote_path = str(os.path.join(ssh_directory, params['INSTRUMENT'].lower()))
+    # change permission of all files and directories
+    os.system(f'chmod 777 -R {base_path}')
+    # make sure we copy contents not directory
+    if not base_path.endswith(os.sep):
+        base_path += os.sep
+    # make sure we copy contents not directory
+    if not remote_path.endswith(os.sep):
+        remote_path += os.sep
+    # get file
+    ari_core.do_rsync(params, mode='send', path_in=base_path,
+                      path_out=remote_path)
 
 
 # -----------------------------------------------------------------------------
@@ -351,13 +368,9 @@ def _get_object_table(params: ParamDict) -> pd.DataFrame:
     return object_table
 
 
-
-
-
 # -----------------------------------------------------------------------------
 # Recipe worker functions
 # -----------------------------------------------------------------------------
-
 
 
 # =============================================================================
