@@ -105,7 +105,7 @@ pp_recipe = drs_recipe(__INSTRUMENT__)
 out_recipe = drs_recipe(__INSTRUMENT__)
 
 # -----------------------------------------------------------------------------
-# apero_reset.py
+# apero_ri.py
 # -----------------------------------------------------------------------------
 ari.name = 'apero_ri.py'
 ari.shortname = 'ARI'
@@ -497,6 +497,29 @@ reset.set_kwarg(name='--warn', dtype='bool', default=True,
                 helpstr=textentry('RESET_WARN_HELP'))
 reset.set_kwarg(name='--database_timeout', dtype=int, default=0,
                 helpstr=textentry('RESET_DATABASE_TIMEOUT_HELP'))
+reset.set_kwarg(name='--only_assets', dtype='bool', default=False,
+                helpstr='Reset only the assets directory')
+reset.set_kwarg(name='--only_tmp', dtype='bool', default=False,
+                helpstr='Reset only the tmp directory')
+reset.set_kwarg(name='--only_red', dtype='bool', default=False,
+                helpstr='Reset only the reduced directory')
+reset.set_kwarg(name='--only_calib', dtype='bool', default=False,
+                helpstr='Reset only the calibration directory')
+reset.set_kwarg(name='--only_tellu', dtype='bool', default=False,
+                helpstr='Reset only the telluric directory')
+reset.set_kwarg(name='--only_log', dtype='bool', default=False,
+                helpstr='Reset only the log directory')
+reset.set_kwarg(name='--only_plot', dtype='bool', default=False,
+                helpstr='Reset only the plot directory')
+reset.set_kwarg(name='--only_run', dtype='bool', default=False,
+                helpstr='Reset only the run directory')
+reset.set_kwarg(name='--only_lbl', dtype='bool', default=False,
+                helpstr='Reset only the lbl directory')
+reset.set_kwarg(name='--only_out', dtype='bool', default=False,
+                helpstr='Reset only the out directory')
+reset.set_kwarg(name='--only_other', dtype='bool', default=False,
+                helpstr='Reset only the other directory')
+
 reset.description_file = 'apero_reset.rst'
 
 

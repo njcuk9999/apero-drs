@@ -2975,23 +2975,6 @@ def download_table(files: List[str], descriptions: List[str],
     down_table.write(item_path, format='ascii.csv', overwrite=True)
 
 
-def copy_element(old_element, new_element):
-    # deal with files
-    if os.path.isfile(old_element):
-        # deal with old file existing
-        if os.path.exists(new_element):
-            os.remove(new_element)
-        # copy new file
-        shutil.copy(old_element, new_element)
-    # deal with directories
-    else:
-        # deal with old directory existing
-        if os.path.exists(new_element):
-            shutil.rmtree(new_element)
-        # copy new directory
-        shutil.copytree(old_element, new_element)
-
-
 def do_rsync(params: ParamDict, mode: str, path_in: str, path_out: str,
              required=True):
     # --------------------------------------------------------------------------

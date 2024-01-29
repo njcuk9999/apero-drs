@@ -22,6 +22,7 @@ from apero import lang
 from apero.base import base
 from apero.core import constants
 from apero.core.core import drs_log
+from apero.io import drs_path
 from apero.tools.module.ari import ari_core
 from apero.tools.module.documentation import drs_markdown
 from apero.tools.module.error import error_html
@@ -940,7 +941,7 @@ def sphinx_compile(params: ParamDict):
         # get the path to copy to
         new_element = element.replace(resources_dir, working_dir)
         # copy
-        ari_core.copy_element(element, new_element)
+        drs_path.copy_element(element, new_element)
     # ------------------------------------------------------------------
     # get current directory
     cwd = os.getcwd()
@@ -965,7 +966,7 @@ def sphinx_compile(params: ParamDict):
     # copy extras (directory generated html files - not by sphinx)
     for extra in params['ARI_EXTRAS']:
         old_path, new_path = extra
-        ari_core.copy_element(old_path, new_path)
+        drs_path.copy_element(old_path, new_path)
     # ------------------------------------------------------------------
     # change back to current directory
     os.chdir(cwd)
