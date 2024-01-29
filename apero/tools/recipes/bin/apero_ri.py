@@ -10,6 +10,8 @@ Created on 2019-07-26 at 09:39
 
 @author: cook
 """
+from typing import Optional
+
 from apero.base import base
 from apero.core import constants
 from apero.core.core import drs_log
@@ -45,10 +47,12 @@ ParamDict = constants.ParamDict
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(**kwargs):
+def main(profile: Optional[str] = None, **kwargs):
     """
     Main function for apero_log_stats.py
 
+    :param profile: str, the profile to use (either an absolute path or a
+                    relative path from the other/ari-config directory)
     :param kwargs: additional keyword arguments
 
     :keyword debug: int, debug level (0 for None)
@@ -57,7 +61,7 @@ def main(**kwargs):
     :rtype: dict
     """
     # assign function calls (must add positional)
-    fkwargs = dict(**kwargs)
+    fkwargs = dict(profile=profile, **kwargs)
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
     recipe, params = drs_startup.setup(__NAME__, __INSTRUMENT__, fkwargs)

@@ -66,6 +66,24 @@ def load_ari_params(params: ParamDict) -> ParamDict:
     profile_yaml = params['INPUTS']['profile']
     obs_dir = params['INPUTS']['obsdir']
     # ----------------------------------------------------------------------
+    # if the profile yaml file does not exist try looking in the other
+    #  directory
+    if not os.path.exists(profile_yaml):
+        # get yaml file basename
+        profile_basename = os.path.basename(profile_yaml)
+        # attempt to find the yaml profile file in the other/ari-config dir
+        trial_path = os.path.join(params['DRS_DATA_OTHER'], 'ari-config',
+                                  profile_basename)
+        # deal with the trial path not existing
+        if not os.path.exists(trial_path):
+            emsg = 'Cannot find profile file. Tried: {0} and {1}'
+            eargs = [profile_yaml, trial_path]
+            WLOG(params, 'error', emsg.format(*eargs))
+            return params
+        # otherwise set profile yaml to trial path
+        else:
+            profile_yaml = str(trial_path)
+    # ----------------------------------------------------------------------
     # load yaml file into raw_params
     if os.path.exists(profile_yaml):
         try:

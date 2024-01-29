@@ -706,6 +706,41 @@ def reset_assets(params: ParamDict, log: bool = True, dtimeout: int = 0,
         manage_databases.create_lang_database(params, databases, tries=dtimeout)
 
 
+def reset_other_folder(params: ParamDict, log: bool = True):
+    """
+    Reset the Assets directory (including re-creating databases)
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param log: bool - if True logs process
+    :param dtimeout: int, number of tries to access the index database
+
+    :return: None - resets assets dir and databases
+    """
+    # Get the other data directory (place to copy to)
+    other_path = params['DRS_DATA_OTHER']
+    # get the reset dictionary
+    #    key = tuple
+    #    1: relative (to APERO) in directory
+    #    2: out file/dir name to add to other_path
+    reset_dict = params['ARI_RESET_DICT']
+    # copy over files/directories to the other directory
+    for path_name in list(reset_dict.keys()):
+        # get original path
+        rel_old_path = reset_dict[path_name][0]
+        # construct path (assuming it is relative
+        old_path = drs_path.get_relative_folder(params, base.__PACKAGE__,
+                                                rel_old_path)
+        # construct new path
+        new_path = str(os.path.join(other_path, reset_dict[path_name][1]))
+        # try to copy the file
+        try:
+            drs_path.copy_element(old_path, new_path)
+        except Exception as e:
+            emsg = 'Error copying {0} to other directory {1}. \n\t {2}: {3}'
+            eargs = [path_name, other_path, type(e), str(e)]
+            WLOG(params, '', emsg.format(*eargs))
+
+
 def remove_all(params, path, log=True, skipfiles=None):
     # deal with no skipfiles being defined
     if skipfiles is None:
