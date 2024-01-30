@@ -991,6 +991,10 @@ def _force_column_dtypes(table: Table, coltype: Dict[str, type]) -> Table:
     """
     # loop around columns and force types
     for col in table.colnames:
+        # if we do not define this column remove it
+        if col not in coltype:
+            del table[col]
+            continue
         # strings are a pain have to do them manually
         if hasattr(table[col], 'mask'):
             mask = table[col].mask
