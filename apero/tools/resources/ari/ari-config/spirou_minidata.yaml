@@ -37,13 +37,18 @@ settings:
   #   command set from command line)
   obsdir: None
   # whether to filter by objects
-  filter objects: False
+  filter objects: True
   # objects to filter by
   objects:
     - GL699
     - TRAPPIST1
     - GL514
     - HD189733
+  # finding charts options
+  finding charts:
+    create: True
+    reset: False
+    yaml: finder.yaml
 # -----------------------------------------------------------------------------
 # Header keys
 headers:

@@ -13,7 +13,7 @@ import copy
 import glob
 import os
 import shutil
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -62,6 +62,7 @@ YAML_TO_PARAM['settings.ssh'] = 'ARI_SSH_COPY'
 YAML_TO_PARAM['settings.reset'] = 'ARI_RESET'
 YAML_TO_PARAM['settings.filter objects'] = 'ARI_FILTER_OBJECTS'
 YAML_TO_PARAM['settings.objects'] = 'ARI_FILTER_OBJECTS_LIST'
+YAML_TO_PARAM['settings.finding charts'] = 'ARI_FINDING_CHARTS'
 YAML_TO_PARAM['headers'] = 'ARI_HEADER_PROPS'
 # mapping of AriObject keys to yaml dump
 OBJ_TO_YAML = dict()
@@ -134,6 +135,9 @@ OBJTABLE_COLS['last_obs'] = 'Last observed'
 OBJTABLE_COLS['last_proc'] = 'Last Processed'
 # polar columns (only used for instruments that use polarimetry)
 POLAR_COLS = ['POL', 'pfits']
+
+# Finder columns
+FINDER_COLUMNS = ['Target', 'PDF', 'Last updated']
 
 # -----------------------------------------------------------------------------
 # File variables
@@ -223,11 +227,12 @@ HTML_INCOL_NAMES['RECIPE_TABLE'] = LOG_COLUMNS
 HTML_OUTCOL_NAMES = dict()
 HTML_OUTCOL_NAMES['OBJECT_TABLE'] = list(OBJTABLE_COLS.values())
 HTML_OUTCOL_NAMES['RECIPE_TABLE'] = LOG_COLUMNS
+HTML_OUTCOL_NAMES['FINDER_TABLE'] = FINDER_COLUMNS
 # define the html col types for each table ('str' or 'list')
 HTML_COL_TYPES = dict()
 HTML_COL_TYPES['OBJECT_TABLE'] = ['str'] * len(HTML_OUTCOL_NAMES['OBJECT_TABLE'])
 HTML_COL_TYPES['RECIPE_TABLE'] = ['str'] * len(HTML_OUTCOL_NAMES['RECIPE_TABLE'])
-
+HTML_COL_TYPES['FINDER_TABLE'] = ['str'] * len(HTML_OUTCOL_NAMES['FINDER_TABLE'])
 
 # =============================================================================
 # Define classes
@@ -763,7 +768,7 @@ class AriObject:
         spec_props['SC1D'] = self.filetypes['sc1d']
         # ---------------------------------------------------------------------
         # object properties
-        spec_props['COORD_URL'] = f'indexing_{self.objname}'
+        spec_props['COORD_URL'] = f'../../../finder/{self.objname}.pdf'
         spec_props['RA'] = self.ra
         spec_props['Dec'] = self.dec
         spec_props['Teff'] = self.teff
@@ -1472,7 +1477,7 @@ class AriObject:
             # construct the save path for ext files
             ext_file = f'ext_file_list_{obs_dir}_{self.objname}.txt'
             ext_path = os.path.join(obj_save_path, ext_file)
-            ext_rel_path = os.path.join(obj_save_path, ext_file)
+            ext_rel_path = ext_file
             create_file_list(ext_files, ext_path)
             ext_download = drs_markdown.make_download('[download]',
                                                       ext_rel_path)
@@ -1480,7 +1485,7 @@ class AriObject:
             # construct the save path for the tcorr files
             tcorr_file = f'tcorr_file_list_{obs_dir}_{self.objname}.txt'
             tcorr_path = os.path.join(obj_save_path, tcorr_file)
-            tcorr_rel_path = os.path.join(obj_save_path, tcorr_file)
+            tcorr_rel_path = tcorr_file
             create_file_list(tcorr_files, tcorr_path)
             tcorr_download = drs_markdown.make_download('[download]',
                                                         tcorr_rel_path)
@@ -1858,7 +1863,7 @@ def spec_stats_table(spec_props: Dict[str, Any], stat_path: str, title: str):
     stat_dict = dict(Description=[], Value=[])
     # Add RA and Dec
     stat_dict['Description'].append('Coordinates')
-    coordstr = drs_markdown.make_url('[FINDER CHART]', coord_url)
+    coordstr = f'`[FINDER CHART] <{coord_url}>`_'
     stat_dict['Value'].append(f'({ra},{dec})..... {coordstr}')
     # Add Teff
     stat_dict['Description'].append('Teff')
@@ -3006,6 +3011,53 @@ def do_rsync(params: ParamDict, mode: str, path_in: str, path_out: str,
         margs = [type(e), str(e)]
         if required:
             WLOG(params, 'error', msg.format(margs))
+
+
+def find_finder_charts(path: str, objname: str) -> Tuple[List[str], List[str]]:
+    """
+    Find finder charts for this object
+    :param path: str, the path to the finder charts directory
+    :param objname: str, the object name to locate
+    :return:
+    """
+    # expected directory name
+    expected_dir = os.path.join(path, objname)
+    # deal with no directory --> no finder files
+    if not os.path.exists(expected_dir):
+        return [], []
+    # storage for list of files
+    list_of_files = []
+    list_of_descs = []
+    # loop around filenames
+    for filename in os.listdir(expected_dir):
+        # only include APERO finder charts
+        if not filename.startswith('APERO_finder_chart_'):
+            continue
+        # only include pdf files
+        if not filename.endswith('.pdf'):
+            continue
+        # get the finder desc
+        description = filename.split(objname)[-1]
+        description = description.strip('_')
+        description = description.replace('_', '-').replace('.pdf', '')
+        # append to list
+        list_of_files.append(os.path.join(expected_dir, filename))
+        list_of_descs.append(description)
+    # return the list of files
+    return list_of_files, list_of_descs
+
+
+def make_finder_download_table(entry, objname, item_save_path, item_rel_path,
+                               down_save_path, down_rel_path):
+    # get the download base name
+    dwn_base_name = f'finder_download_{objname}.txt'
+    # get the download table path
+    item_path = os.path.join(item_save_path, dwn_base_name)
+    # compute the download table
+    download_table(entry['find_files'], entry['find_descs'],
+                   item_path, down_rel_path,
+                   down_save_path, title='Finder charts')
+    return item_rel_path + dwn_base_name
 
 
 # =============================================================================

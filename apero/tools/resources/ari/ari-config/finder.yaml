@@ -1,0 +1,53 @@
+NIRPS:
+  # define time in years before and after "obs date" to plot trail for
+  DTMIN: -6
+  DTMAX: 6
+  DTVAL: 3
+  # define the field of view (in arcsec)
+  FIELD_OF_VIEW:
+    G:
+      - 77.6
+      - 77.6
+    J:
+      - 18.2
+      - 18.2
+  # the scale factor of one band (others will be matched)
+  SCALE_FACTOR:
+    G: 1.5
+  # the pixel scale (in arcsec/pixel)
+  PIXEL_SCALE:
+    G: 0.1514
+    J: 0.1514
+  # Transform the image (rotation) in degrees
+  TRANSFORM_ROTATE:
+    #  180 + 90 - 37.4
+    G: 232.6
+    #  180 + 90 - 37.4 + 90
+    J: 322.6
+  # FWHM (arcsec)
+  FWHM:
+    G: 2.0
+    J: 2.0
+  # 1-sgiam magnitude limit
+  SIGMA_LIMIT:
+    G: 18
+    J: 15
+    H: 15
+    K: 15
+  # mag limit above 1-sigma limit for null sources
+  MAG_LIMIT: -1
+  # max proper motion to search for (arcsec/yr)
+  MAX_PM: 11
+  # scale bar size (arcsec)
+  SCALE_SIZE: 10
+  # compass size (fraction of image)
+  COMPASS_FRAC: 0.075
+  # flip the image in x
+  FLIP_X:
+    G: True
+    J: True
+  # flip the image in y
+  FLIP_Y:
+    G: False
+    J: False
+
