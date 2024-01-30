@@ -42,6 +42,11 @@ settings:
   objects:
     - PROXIMA
     - GL699
+  # finding charts options
+  finding charts:
+    create: False
+    reset: False
+    yaml: finder.yaml
 # -----------------------------------------------------------------------------
 # Header keys
 headers:

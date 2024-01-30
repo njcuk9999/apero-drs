@@ -21,6 +21,7 @@ from bs4 import BeautifulSoup
 from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core.core import drs_database
 from apero.core.core import drs_log
 from apero.io import drs_path
 from apero.tools.module.ari import ari_core
@@ -272,6 +273,9 @@ def _add_obj_page(it: int, key: str, params: ParamDict,
     # ---------------------------------------------------------------------
     # create ARI object page
     object_page = drs_markdown.MarkDownPage(page_ref)
+    # state that this page does not have a paranet (as it is accessed via table)
+    object_page.add_text(':orphan:')
+    object_page.add_newline()
     # add title
     object_page.add_title(f'{objname} ({ari_user})')
     # ---------------------------------------------------------------------
@@ -648,6 +652,120 @@ def recipe_date_table(table: Table, machine_name: str
     return date_table, date_colnames, date_coltypes, table_dates
 
 
+
+# =============================================================================
+# Finder functions
+# =============================================================================
+def add_finder_table(params: ParamDict, data_dict: Dict[str, str]):
+    # set function name
+    funcname = __NAME__ + '.add_recipe_tables()'
+    # get the ari user
+    ari_user = params['ARI_USER']
+    # set html body
+    # Take directly from one of the sphinx pages (this is a massive hack)
+    html_body1 = """
+      <div class="pageheader">
+
+      <ul>
+      <li><a title="Home" href="http://apero.exoplanets.ca">
+          <i class="fa fa-home fa-3x" aria-hidden="true"></i></a></li>
+      <li><a title="install" href="http://apero.exoplanets.ca/user/general/installation">
+          <i class="fa fa-cog fa-3x" aria-hidden="true"></i></a></li>
+      <li><a title="github" href="https://github.com/njcuk9999/apero-drs">
+          <i class="fa fa-git-square fa-3x" aria-hidden="true"></i></a></li>
+      <li><a title="download paper" href="https://ui.adsabs.harvard.edu/abs/2022PASP..134k4509C">
+          <i class="fa fa-file-pdf-o fa-3x" aria-hidden="true"></i></a></li>
+      <li><a title="UdeM" href="http://apero.exoplanets.ca/main/misc/udem.html">
+          <i class="fa fa-university fa-3x" aria-hidden="true"></i></a></li>
+    </ul>
+
+      <div>
+      <a href="http://apero.exoplanets.ca">
+        <img src="../_static/images/apero_logo.png" alt="APERO" />
+      </a>
+      <br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A PipelinE to Reduce Observations
+      </div>
+
+      </div>
+
+      <div class="document">
+        <div class="documentwrapper">
+          <div class="bodywrapper">
+            <div class="body" role="main">
+
+      <h1>{TITLE}</h1>
+      <p> Note this table contains all objects in the APERO astrometrics 
+      database, not only objects currently observed or planned to be observed.</p>
+      <br>
+      <p><a href="../index.html">Back to index page/a></p>
+      <br>
+
+      """
+
+    html_body2 = """
+              <div class="clearer"></div>
+            </div>
+          </div>
+        </div>
+        <div class="clearer"></div>
+      </div>
+      """
+    # set html table class
+    table_class = 'class="csvtable2 docutils align-default"'
+    # css to include
+    ccs_files = ['../_static/pygments.css',
+                 '../_static/bizstyle.css',
+                 '../_static/apero.css']
+    # make path
+    table_path = os.path.join(params['DRS_DATA_OTHER'], 'finder')
+    # construct the html paths to copy to after compiling
+    html_table_path = str(os.path.join(params['DRS_DATA_OTHER'], 'ari',
+                                       '_build', 'html', 'finder'))
+    # storage of html files
+    added_html_files = []
+    # define the columns (passed back to main code)
+    date_colnames = ['Target', 'PDF', 'Last updated']
+    date_coltypes = ['str', 'str', 'str']
+    data_table = Table()
+    for col in date_colnames:
+        data_table[col] = data_dict[col]
+    # -------------------------------------------------------------------------
+    # make recipe table
+    # -------------------------------------------------------------------------
+    # construct local path to save html to
+    table_html1 = os.path.join(table_path, 'index.html')
+    # convert table to outlist
+    tout = error_html.table_to_outlist(data_table, date_colnames,
+                                       out_types=date_coltypes)
+    outlist, t_colnames, t_coltype = tout
+    # convert outlist to a html/javascript table
+    html_table = error_html.filtered_html_table(outlist,
+                                                t_colnames,
+                                                t_coltype,
+                                                clean=False, log=False,
+                                                table_class=table_class)
+    # build html page
+    html_title = 'Finder Charts'
+    html_body1_filled = html_body1.format(TITLE=html_title,
+                                          PROFILE=ari_user)
+    html_content = error_html.full_page_html(html_body1=html_body1_filled,
+                                             html_table=html_table,
+                                             html_body2=html_body2,
+                                             css=ccs_files)
+    # write html page
+    with open(table_html1, 'w') as wfile:
+        wfile.write(html_content)
+    # add recipe pages html directory store
+    added_html_files.append([table_path, html_table_path])
+    # update ari_extras with these html files
+    ari_extras = list(params['ARI_EXTRAS'])
+    ari_extras += added_html_files
+    # push by into params extras (to add whole directory)
+    params.set('ARI_EXTRAS', ari_extras, source=funcname)
+
+
+
 def add_recipe_tables(params: ParamDict, table: Table, machine_name: str):
     # set function name
     funcname = __NAME__ + '.add_recipe_tables()'
@@ -815,137 +933,60 @@ def add_recipe_tables(params: ParamDict, table: Table, machine_name: str):
 # =============================================================================
 # Object index page
 # =============================================================================
-def compile_obj_index_page(gsettings: dict, settings: dict,
-                           oprops: Dict[str, Dict[str, ObjectData]]):
-    from apero.tools.module.documentation import drs_markdown
-    from apero.core import constants
-    from apero.core.core import drs_database
-    from apero.core.utils import drs_startup
-    from apero.base.base import TQDM as tqdm
-    # get the parameter dictionary of constants from apero
-    params = constants.load()
-    # set apero pid
-    params['PID'], params['DATE_NOW'] = drs_startup.assign_pid()
-    # print progress
-    # generate place to save figures
-    item_save_path = settings['OBJ_INDEX_ITEM']
-    item_rel_path = f'{_OBJ_INDEX_DIR}/{_ITEM_DIR}/'
-    down_save_path = settings['OBJ_INDEX_DOWN']
-    down_rel_path = f'{_OBJ_INDEX_DIR}/{_DOWN_DIR}/'
-    # -------------------------------------------------------------------------
+def make_obj_index_page(params: ParamDict):
     # load object database
     objdbm = drs_database.AstrometricDatabase(params)
     objdbm.load_db()
     # get all objects
     objnames = objdbm.get_entries('OBJNAME')
-    # storage for outputs
-    objdict = dict()
-    # loop around objects and create a section for each
-    for objname in tqdm(objnames):
-        entry = dict()
-        entry['profile_items'] = []
-        entry['profile_names'] = []
-        entry['find_files'] = []
-        entry['find_descs'] = []
-        # ---------------------------------------------------------------------
-        # add profile reference links for this object
-        # ---------------------------------------------------------------------
-        for apero_profile_name in oprops:
-            # look in this profile
-            oprops_profile = oprops[apero_profile_name]
-            # deal with no reduction for this profile
-            if len(oprops_profile) == 0:
-                continue
-            # skip missing objects
-            if objname not in oprops_profile:
-                continue
-            # get object class for this objname
-            object_class = oprops_profile[objname]
-            # add to entry
-            entry['profile_items'].append(object_class.objpageref)
-            entry['profile_names'].append(apero_profile_name)
-        # ---------------------------------------------------------------------
-        # find finder charts
-        # ---------------------------------------------------------------------
-        if gsettings['find directory'] not in [None, 'None', 'Null', '']:
-            # get find directory
-            find_path = gsettings['find directory']
-            # look for objname in this directory
-            find_files, find_descs = find_finder_charts(find_path, objname)
-            # push to entry
-            entry['find_files'] = find_files
-            entry['find_descs'] = find_descs
 
-        # ---------------------------------------------------------------------
-        # generate finder chart download table
-        # ---------------------------------------------------------------------
-        if len(entry['find_files']) > 0:
-            # make download table and store table to add
-            fd_args = [entry, objname, item_save_path, item_rel_path,
-                       down_save_path, down_rel_path]
-            entry['find_table'] = make_finder_download_table(*fd_args)
-        # deal with no finder charts
+    # get finding chart parameters
+    finder_create = params['ARI_FINDER_PARAMS']['create']
+    finder_reset = params['ARI_FINDER_PARAMS']['reset']
+    finder_yaml = params['ARI_FINDER_PARAMS']['yaml']
+
+    # construct the finder directory path
+    finder_dir = os.path.join(params['DRS_DATA_OTHER'], 'finder')
+
+    # search for all objects in finder directory
+    pdfs = glob.glob(os.path.join(finder_dir, '*.pdf'))
+
+    # create dictionary to store finder charts for html table
+    finder_dict = dict()
+    finder_dict['Target'] = []
+    finder_dict['PDF'] = []
+    finder_dict['Last updated'] = []
+    finder_dict['Found'] = []
+
+    # loop around object names
+    for objname in objnames:
+
+        finder_dict['Target'].append(objname)
+
+        # construct pdf path
+        pdf_path = os.path.join(finder_dir, f'{objname}.pdf')
+
+        # if we have a finder chart, do not recreate it
+        if os.path.exists(pdf_path):
+            finder_dict['PDF'].append(f'{objname}.pdf')
+            finder_dict['Found'].append('True')
+            last_updated_unix = os.path.getmtime(pdf_path)
+            last_updated_iso = Time(last_updated_unix, format='unix').iso
+            finder_dict['Last updated'].append(str(last_updated_iso))
+
+
+
         else:
-            entry['find_table'] = None
-        # ---------------------------------------------------------------------
-        # add to stroage
-        objdict[objname] = entry
-    # -------------------------------------------------------------------------
-    # create ARI index page
-    obj_index_page = drs_markdown.MarkDownPage('object_index')
-    # add title
-    obj_index_page.add_title('APERO Reduction Interface (ARI) '
-                             'Object Index Page')
-    # -------------------------------------------------------------------------
-    # Add basic text
-    # construct text to add
-    obj_index_page.add_text('Object Index')
-    obj_index_page.add_newline()
-    obj_index_page.add_text('Object by object index. '
-                            'Links to all profiles and finding charts')
-    obj_index_page.add_newline()
-    obj_index_page.add_text('Please note: Your object may be under another '
-                            'name. Please check `here <https://docs.google.com/'
-                            'spreadsheets/d/'
-                            '1dOogfEwC7wAagjVFdouB1Y1JdF9Eva4uDW6CTZ8x2FM/'
-                            'edit?usp=sharing>`_, the name displayed in '
-                            'ARI will be the first column [OBJNAME]')
-    obj_index_page.add_newline()
-    obj_index_page.add_text('If you have any issues please report using '
-                            '`this sheet <https://docs.google.com/spreadsheets/d/1Ea_WEFTlTCbth'
-                            'R24aaQm4KaleIteLuXLgn4RiNBnEqs/edit?usp=sharing>`_.')
-    obj_index_page.add_newline()
-    # -------------------------------------------------------------------------
-    # loop around objects and create a section for each
-    for objname in objdict:
-        # get this iterations entry
-        entry = objdict[objname]
-        # add reference to this section
-        obj_index_page.add_reference(f'indexing_{objname}')
-        # add section
-        obj_index_page.add_section(objname)
-        # add table of contents
-        if len(entry['profile_items']) > 0:
-            obj_index_page.add_newline()
-            obj_index_page.add_table_of_contents(items=entry['profile_items'],
-                                                 sectionname=None)
-        else:
-            obj_index_page.add_newline()
-            obj_index_page.add_text('Currently not reduced under any profile')
-        # add the finder chart table
-        if entry['find_table'] is not None:
-            obj_index_page.add_newline()
-            # add the finder chart table
-            obj_index_page.add_csv_table('', entry['find_table'],
-                                         cssclass='csvtable2')
-        else:
-            obj_index_page.add_newline()
-            obj_index_page.add_text('Currently no finder chart')
-        obj_index_page.add_newline()
-    # -------------------------------------------------------------------------
-    # save index page
-    obj_index_file = os.path.join(settings['WORKING'], 'obj_index.rst')
-    obj_index_page.write_page(obj_index_file)
+            finder_dict['PDF'].append('None')
+            finder_dict['Found'].append('False')
+            finder_dict['Last updated'].append('None')
+
+
+
+
+
+    pass
+
 
 
 # =============================================================================
@@ -984,18 +1025,14 @@ def make_index_page(params: ParamDict):
     index_page.add_newline()
     # -------------------------------------------------------------------------
     # add table of contents
-    index_page.add_table_of_contents(profile_files)
+    index_page.add_table_of_contents(profile_files, sectionname='Reductions:')
     # -------------------------------------------------------------------------
-    # index_page.add_section('Objects index')
-    # index_page.add_newline()
-    # index_page.add_text('Object by object index. '
-    #                     'Links to all profiles and finding charts')
-    # index_page.add_newline()
-    # index_page.add_text('Please note this includes objects not currently '
-    #                     'observed.')
-    # index_page.add_newline()
-    # index_page.add_table_of_contents(items=['obj_index.rst'],
-    #                                  sectionname=None)
+    index_page.add_section('Finder charts')
+    index_page.add_newline()
+    index_page.add_text('Please note this includes objects not currently '
+                        'observed.')
+    index_page.add_newline()
+    index_page.lines += [f'* `Object index page <finder/index.html>`_']
     # -------------------------------------------------------------------------
     # save index page
     index_page.write_page(os.path.join(index_path, 'index.rst'))
