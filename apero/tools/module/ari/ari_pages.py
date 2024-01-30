@@ -813,6 +813,142 @@ def add_recipe_tables(params: ParamDict, table: Table, machine_name: str):
 
 
 # =============================================================================
+# Object index page
+# =============================================================================
+def compile_obj_index_page(gsettings: dict, settings: dict,
+                           oprops: Dict[str, Dict[str, ObjectData]]):
+    from apero.tools.module.documentation import drs_markdown
+    from apero.core import constants
+    from apero.core.core import drs_database
+    from apero.core.utils import drs_startup
+    from apero.base.base import TQDM as tqdm
+    # get the parameter dictionary of constants from apero
+    params = constants.load()
+    # set apero pid
+    params['PID'], params['DATE_NOW'] = drs_startup.assign_pid()
+    # print progress
+    # generate place to save figures
+    item_save_path = settings['OBJ_INDEX_ITEM']
+    item_rel_path = f'{_OBJ_INDEX_DIR}/{_ITEM_DIR}/'
+    down_save_path = settings['OBJ_INDEX_DOWN']
+    down_rel_path = f'{_OBJ_INDEX_DIR}/{_DOWN_DIR}/'
+    # -------------------------------------------------------------------------
+    # load object database
+    objdbm = drs_database.AstrometricDatabase(params)
+    objdbm.load_db()
+    # get all objects
+    objnames = objdbm.get_entries('OBJNAME')
+    # storage for outputs
+    objdict = dict()
+    # loop around objects and create a section for each
+    for objname in tqdm(objnames):
+        entry = dict()
+        entry['profile_items'] = []
+        entry['profile_names'] = []
+        entry['find_files'] = []
+        entry['find_descs'] = []
+        # ---------------------------------------------------------------------
+        # add profile reference links for this object
+        # ---------------------------------------------------------------------
+        for apero_profile_name in oprops:
+            # look in this profile
+            oprops_profile = oprops[apero_profile_name]
+            # deal with no reduction for this profile
+            if len(oprops_profile) == 0:
+                continue
+            # skip missing objects
+            if objname not in oprops_profile:
+                continue
+            # get object class for this objname
+            object_class = oprops_profile[objname]
+            # add to entry
+            entry['profile_items'].append(object_class.objpageref)
+            entry['profile_names'].append(apero_profile_name)
+        # ---------------------------------------------------------------------
+        # find finder charts
+        # ---------------------------------------------------------------------
+        if gsettings['find directory'] not in [None, 'None', 'Null', '']:
+            # get find directory
+            find_path = gsettings['find directory']
+            # look for objname in this directory
+            find_files, find_descs = find_finder_charts(find_path, objname)
+            # push to entry
+            entry['find_files'] = find_files
+            entry['find_descs'] = find_descs
+
+        # ---------------------------------------------------------------------
+        # generate finder chart download table
+        # ---------------------------------------------------------------------
+        if len(entry['find_files']) > 0:
+            # make download table and store table to add
+            fd_args = [entry, objname, item_save_path, item_rel_path,
+                       down_save_path, down_rel_path]
+            entry['find_table'] = make_finder_download_table(*fd_args)
+        # deal with no finder charts
+        else:
+            entry['find_table'] = None
+        # ---------------------------------------------------------------------
+        # add to stroage
+        objdict[objname] = entry
+    # -------------------------------------------------------------------------
+    # create ARI index page
+    obj_index_page = drs_markdown.MarkDownPage('object_index')
+    # add title
+    obj_index_page.add_title('APERO Reduction Interface (ARI) '
+                             'Object Index Page')
+    # -------------------------------------------------------------------------
+    # Add basic text
+    # construct text to add
+    obj_index_page.add_text('Object Index')
+    obj_index_page.add_newline()
+    obj_index_page.add_text('Object by object index. '
+                            'Links to all profiles and finding charts')
+    obj_index_page.add_newline()
+    obj_index_page.add_text('Please note: Your object may be under another '
+                            'name. Please check `here <https://docs.google.com/'
+                            'spreadsheets/d/'
+                            '1dOogfEwC7wAagjVFdouB1Y1JdF9Eva4uDW6CTZ8x2FM/'
+                            'edit?usp=sharing>`_, the name displayed in '
+                            'ARI will be the first column [OBJNAME]')
+    obj_index_page.add_newline()
+    obj_index_page.add_text('If you have any issues please report using '
+                            '`this sheet <https://docs.google.com/spreadsheets/d/1Ea_WEFTlTCbth'
+                            'R24aaQm4KaleIteLuXLgn4RiNBnEqs/edit?usp=sharing>`_.')
+    obj_index_page.add_newline()
+    # -------------------------------------------------------------------------
+    # loop around objects and create a section for each
+    for objname in objdict:
+        # get this iterations entry
+        entry = objdict[objname]
+        # add reference to this section
+        obj_index_page.add_reference(f'indexing_{objname}')
+        # add section
+        obj_index_page.add_section(objname)
+        # add table of contents
+        if len(entry['profile_items']) > 0:
+            obj_index_page.add_newline()
+            obj_index_page.add_table_of_contents(items=entry['profile_items'],
+                                                 sectionname=None)
+        else:
+            obj_index_page.add_newline()
+            obj_index_page.add_text('Currently not reduced under any profile')
+        # add the finder chart table
+        if entry['find_table'] is not None:
+            obj_index_page.add_newline()
+            # add the finder chart table
+            obj_index_page.add_csv_table('', entry['find_table'],
+                                         cssclass='csvtable2')
+        else:
+            obj_index_page.add_newline()
+            obj_index_page.add_text('Currently no finder chart')
+        obj_index_page.add_newline()
+    # -------------------------------------------------------------------------
+    # save index page
+    obj_index_file = os.path.join(settings['WORKING'], 'obj_index.rst')
+    obj_index_page.write_page(obj_index_file)
+
+
+# =============================================================================
 # General functions
 # =============================================================================
 def make_index_page(params: ParamDict):
