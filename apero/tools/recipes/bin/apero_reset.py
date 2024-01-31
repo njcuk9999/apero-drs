@@ -86,43 +86,27 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Must check that we are not inside an apero directory
     drs_reset.check_cwd(params)
-
     # ----------------------------------------------------------------------
     # setup resets
     # ----------------------------------------------------------------------
+    # set up the different types of reset
+    names = ['assets', 'tmp', 'red', 'calib', 'tellu', 'log',
+             'plot', 'run', 'lbl', 'out', 'other']
     # set up True criteria
     # set up default resets
-    resets = ['assets', 'tmp', 'red', 'calib', 'tellu', 'log',
-             'plot', 'run', 'lbl', 'out', 'other']
+    resets = list(names)
     # set up default warnings
     if warn:
-        warns = ['assets', 'tmp', 'red', 'calib', 'tellu', 'log',
-                 'plot', 'run', 'lbl', 'out', 'other']
+        warns = list(names)
     else:
         warns = []
+    # ----------------------------------------------------------------------
     # deal with --only options
-    if params['INPUTS']['only_assets']:
-        resets, warns = ['assets'], ['assets']
-    if params['INPUTS']['only_tmp']:
-        resets, warns = ['tmp'], ['tmp']
-    if params['INPUTS']['only_red']:
-        resets, warns = ['red'], ['red']
-    if params['INPUTS']['only_calib']:
-        resets, warns = ['calib'], ['calib']
-    if params['INPUTS']['only_tellu']:
-        resets, warns = ['tellu'], ['tellu']
-    if params['INPUTS']['only_log']:
-        resets, warns = ['log'], ['log']
-    if params['INPUTS']['only_plot'] :
-        resets, warns = ['plot'], ['plot']
-    if params['INPUTS']['only_run']:
-        resets, warns = ['run'], ['run']
-    if params['INPUTS']['only_lbl']:
-        resets, warns = ['lbl'], ['lbl']
-    if params['INPUTS']['only_out']:
-        resets, warns = ['out'], ['out']
-    if params['INPUTS']['only_other']:
-        resets, warns = ['other'], ['other']
+    for name in names:
+        if params['INPUTS'][f'only_{name}']:
+            resets = [name]
+            if warn:
+                warns = [name]
     # ----------------------------------------------------------------------
     # Perform resets
     # ----------------------------------------------------------------------

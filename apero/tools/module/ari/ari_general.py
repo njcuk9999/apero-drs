@@ -387,12 +387,9 @@ def _get_object_table(params: ParamDict) -> pd.DataFrame:
     astrodbm = drs_database.AstrometricDatabase(params)
     astrodbm.load_db()
     # -------------------------------------------------------------------------
-    # get astrometric columns
-    astrom_cols = ari_core.ASTROMETRIC_COLUMNS
     # log that we are loading
     # get the object table from the astrometric database
-    object_table = astrodbm.get_entries(columns=','.join(astrom_cols),
-                                        condition=condition)
+    object_table = astrodbm.get_entries(condition=condition)
     # return the object_table
     return object_table
 

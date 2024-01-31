@@ -234,6 +234,7 @@ HTML_COL_TYPES['OBJECT_TABLE'] = ['str'] * len(HTML_OUTCOL_NAMES['OBJECT_TABLE']
 HTML_COL_TYPES['RECIPE_TABLE'] = ['str'] * len(HTML_OUTCOL_NAMES['RECIPE_TABLE'])
 HTML_COL_TYPES['FINDER_TABLE'] = ['str'] * len(HTML_OUTCOL_NAMES['FINDER_TABLE'])
 
+
 # =============================================================================
 # Define classes
 # =============================================================================
@@ -510,12 +511,26 @@ class AriObject:
     def __init__(self, objname: str, filetypes: Dict[str, FileType]):
         # get the object name
         self.objname = objname
-        self.ra: Optional[float] = None
-        self.dec: Optional[float] = None
-        self.teff: Optional[float] = None
+        self.ra: Optional[str] = None
+        self.dec: Optional[str] = None
+        self.teff: Optional[str] = None
         self.sptype: Optional[str] = None
+        self.aliases: Optional[str] = None
+        self.pmra: Optional[str] = None
+        self.pmde: Optional[str] = None
+        self.plx: Optional[str] = None
+        self.rv: Optional[str] = None
 
-        # ---------------------------------------------------------------------
+        self.ra_source: Optional[str] = None
+        self.dec_source: Optional[str] = None
+        self.teff_source: Optional[str] = None
+        self.sp_source: Optional[str] = None
+        self.pmra_source: Optional[str] = None
+        self.pmde_source: Optional[str] = None
+        self.plx_source: Optional[str] = None
+        self.rv_source: Optional[str] = None
+
+        # ----------------------------s-----------------------------------------
         # Add files as copy of filetype class
         # ---------------------------------------------------------------------
         self.filetypes: Dict[str, FileType] = dict()
@@ -547,6 +562,8 @@ class AriObject:
         for lblfilekey in LBL_STAT_FILES:
             self.lbl_stat_files[lblfilekey] = dict()
         # ---------------------------------------------------------------------
+        # get target output parameters
+        self.target_stats_table: Optional[str] = None
         # get spectrum output parameters (for page integration)
         self.spec_plot_path: Optional[str] = None
         self.spec_stats_table: Optional[str] = None
@@ -576,10 +593,30 @@ class AriObject:
         self.header_dict = dict()
 
     def add_astrometrics(self, table):
-        self.ra = table['RA_DEG']
-        self.dec = table['DEC_DEG']
-        self.teff = table['TEFF']
-        self.sptype = table['SP_TYPE']
+        self.ra = str(table["RA_DEG"])
+        self.ra_source = str(table['RA_SOURCE'])
+        self.dec = str(table["DEC_DEG"])
+        self.dec_source = str(table['DEC_SOURCE'])
+        self.teff = str(table["TEFF"])
+        self.teff_source = str(table['TEFF_SOURCE'])
+        self.sptype = str(table["SP_TYPE"])
+        self.sp_source = str(table['SP_SOURCE'])
+        self.pmra = str(table["PMRA"])
+        self.pmra_source = str(table['PMRA_SOURCE'])
+        self.pmde = str(table["PMDE"])
+        self.pmde_source = str(table['PMDE_SOURCE'])
+        self.plx = str(table["PLX"])
+        self.plx_source = str(table['PLX_SOURCE'])
+        self.rv = str(table["RV"])
+        self.rv_source = str(table['RV_SOURCE'])
+
+        alias_list = table['ALIASES'].split('|')
+        self.aliases = ',   '.join(alias_list)
+
+        # aliases can start with a * replace them with the html
+        self.aliases = self.aliases.replace('*', '\*')
+
+        # TODO: Add Keywords, vsini etc when available
 
     def add_files_stats(self, indexdbm, logdbm):
         # keep track of whether we need to update
@@ -747,6 +784,41 @@ class AriObject:
                 self.filetypes[key].load_dump(yaml_dict['FileType'][key])
 
     # -------------------------------------------------------------------------
+    # Target functions
+    # -------------------------------------------------------------------------
+    def get_target_parameters(self, params: ParamDict):
+        # set up the object page
+        obj_save_path = os.path.join(params['ARI_OBJ_PAGES'], self.objname)
+        # ---------------------------------------------------------------------
+        # storage for spectrum values
+        target_props = dict()
+        # object properties
+        target_props['COORD_URL'] = f'../../../finder/{self.objname}.pdf'
+        target_props['RA'] = f'{self.ra} [deg] ({self.ra_source})'
+        target_props['Dec'] = f'{self.dec} [deg] ({self.dec_source})'
+        target_props['Teff'] = f'{self.teff} [K] ({self.teff_source})'
+        target_props['Spectral Type'] = f'{self.sptype} ({self.sp_source})'
+        target_props['Proper motion RA'] = f'{self.pmra} [mas/yr] ({self.pmra_source})'
+        target_props['Proper motion Dec'] = f'{self.pmde} [mas/yr] ({self.pmde_source})'
+        target_props['Parallax'] = f'{self.plx} [mas/yr] ({self.plx_source})'
+        target_props['RV'] = f'{self.rv} [mas/yr] ({self.rv_source})'
+        target_props['Aliases'] = self.aliases
+
+        # -----------------------------------------------------------------
+        # construct the stats
+        # -----------------------------------------------------------------
+        # get the stats base name
+        target_base_name = 'target_stat_' + self.objname + '.txt'
+        # get the stat path
+        target_path = os.path.join(obj_save_path, target_base_name)
+        # compute the stats
+        target_stats_table(target_props, target_path,
+                           title='Target Information')
+        # -----------------------------------------------------------------
+        # update the paths
+        self.target_stats_table = target_base_name
+
+    # -------------------------------------------------------------------------
     # Spectrum functions
     # -------------------------------------------------------------------------
     def get_spec_parameters(self, params: ParamDict):
@@ -767,12 +839,7 @@ class AriObject:
         spec_props['S1D'] = self.filetypes['s1d']
         spec_props['SC1D'] = self.filetypes['sc1d']
         # ---------------------------------------------------------------------
-        # object properties
-        spec_props['COORD_URL'] = f'../../../finder/{self.objname}.pdf'
-        spec_props['RA'] = self.ra
-        spec_props['Dec'] = self.dec
-        spec_props['Teff'] = self.teff
-        spec_props['Spectral Type'] = self.sptype
+
         spec_props['DPRTYPES'] = self.dprtypes
         # ---------------------------------------------------------------------
         # header dict alias
@@ -1717,6 +1784,70 @@ def get_has_polar(params: ParamDict) -> bool:
 
 
 # =============================================================================
+# Target info page functions
+# =============================================================================
+def target_stats_table(target_props: Dict[str, Any], stat_path: str,
+                       title: str):
+
+    # get parameters from props
+    coord_url = target_props['COORD_URL']
+    ra, dec = target_props['RA'], target_props['Dec']
+    teff, spt = target_props['Teff'], target_props['Spectral Type']
+    pmra = target_props['Proper motion RA']
+    pmde = target_props['Proper motion Dec']
+    plx = target_props['Parallax']
+    rv = target_props['RV']
+    aliases = target_props['Aliases']
+
+    # --------------------------------------------------------------------------
+    # construct the stats table
+    # --------------------------------------------------------------------------
+    # start with a stats dictionary
+    target_dict = dict(Description=[], Value=[])
+    # Add RA
+    target_dict['Description'].append('RA')
+    target_dict['Value'].append(ra)
+    # Add Dec
+    target_dict['Description'].append('Dec')
+    target_dict['Value'].append(dec)
+    # Finder chart
+    target_dict['Description'].append('Finder chart')
+    target_dict['Value'].append(f'`[FINDER CHART] <{coord_url}>`_')
+    # Add Teff
+    target_dict['Description'].append('Teff')
+    target_dict['Value'].append(teff)
+    # Add Spectral type
+    target_dict['Description'].append('Spectral Type')
+    target_dict['Value'].append(spt)
+    # Add proper motion (RA)
+    target_dict['Description'].append('Proper Motion (RA)')
+    target_dict['Value'].append(pmra)
+    # Add proper motion (Dec)
+    target_dict['Description'].append('Proper Motion (Dec)')
+    target_dict['Value'].append(pmde)
+    # Add parallax
+    target_dict['Description'].append('Parallax')
+    target_dict['Value'].append(plx)
+    # Add radial velocity
+    target_dict['Description'].append('Radial Velocity')
+    target_dict['Value'].append(rv)
+    # Add aliases
+    target_dict['Description'].append('Aliases')
+    target_dict['Value'].append(aliases)
+
+    # --------------------------------------------------------------------------
+    # change the columns names
+    target_dict2 = dict()
+    target_dict2[title] = target_dict['Description']
+    target_dict2[' '] = target_dict['Value']
+    # --------------------------------------------------------------------------
+    # convert to table
+    target_table = Table(target_dict2)
+    # write to file as csv file
+    target_table.write(stat_path, format='ascii.csv', overwrite=True)
+
+
+# =============================================================================
 # Spectrum page functions
 # =============================================================================
 def spec_plot(spec_props: Dict[str, Any], plot_path: str, plot_title: str):
@@ -1843,9 +1974,6 @@ def spec_stats_table(spec_props: Dict[str, Any], stat_path: str, title: str):
     version_pp = spec_props['PP_VERSION']
     version_ext = spec_props['EXT_VERSION']
     version_tcorr = spec_props['TCORR_VERSION']
-    coord_url = spec_props['COORD_URL']
-    ra, dec = spec_props['RA'], spec_props['Dec']
-    teff, spt = spec_props['Teff'], spec_props['Spectral Type']
     dprtypes = spec_props['DPRTYPES']
     # --------------------------------------------------------------------------
     # Calculate stats
@@ -1861,16 +1989,6 @@ def spec_stats_table(spec_props: Dict[str, Any], stat_path: str, title: str):
     # --------------------------------------------------------------------------
     # start with a stats dictionary
     stat_dict = dict(Description=[], Value=[])
-    # Add RA and Dec
-    stat_dict['Description'].append('Coordinates')
-    coordstr = f'`[FINDER CHART] <{coord_url}>`_'
-    stat_dict['Value'].append(f'({ra},{dec})..... {coordstr}')
-    # Add Teff
-    stat_dict['Description'].append('Teff')
-    stat_dict['Value'].append(teff)
-    # Add Spectral type
-    stat_dict['Description'].append('Spectral Type')
-    stat_dict['Value'].append(spt)
     # Add dprtypes
     stat_dict['Description'].append('DPRTYPES')
     stat_dict['Value'].append(dprtypes)
