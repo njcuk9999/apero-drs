@@ -212,7 +212,7 @@ def create_finder_chart(params: ParamDict, objname: str,
     :return:
     """
     # print progress
-    WLOG(params, 'Creating finder ')
+    WLOG(params, '', 'Creating finder ')
     # get directory to save finder charts to
     directory = params['ARI_FINDER']['directory']
     # set up arguments
