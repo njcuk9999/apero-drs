@@ -198,6 +198,11 @@ def load_previous_objects(params: ParamDict) -> Dict[str, AriObject]:
     obj_classes = dict()
     # loop around objects in astrometric table
     for row, objname in enumerate(astrometric_obj_list[ari_core.OBJECT_COLUMN]):
+        # if we are filtering skip other objects
+        if params['Creating finder']:
+            if objname not in  params['ARI_FILTER_OBJECTS_LIST']:
+                continue
+        # create object class
         obj_class = AriObject(objname, filetypes=filetypes)
         # add astrometric data
         obj_class.add_astrometrics(astrometric_obj_list.iloc[row])
@@ -246,6 +251,10 @@ def find_new_objects(params: ParamDict, object_classes: Dict[str, AriObject]
     # for each object we run several counts
     # loop around objects in the object table
     for objname in tqdm(list(object_classes.keys())):
+        # if we are filtering skip other objects
+        if params['Creating finder']:
+            if objname not in  params['ARI_FILTER_OBJECTS_LIST']:
+                continue
         # get object class
         obj_class = object_classes[objname]
         # add files stats
