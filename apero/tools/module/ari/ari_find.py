@@ -131,12 +131,14 @@ def load_params(params: ParamDict) -> ParamDict:
         params.set('ARI_FINDER', value=finder_dict, source=func_name)
         # return params
         return params
-    if not os.path.exists(finder_path):
+    elif not os.path.exists(finder_path):
         finder_dict['create'] = False
         # push the directory into params
         params.set('ARI_FINDER', value=finder_dict, source=func_name)
         # return params
         return params
+    else:
+        finder_dict['create'] = True
     # ----------------------------------------------------------------------
     # load the yaml
     raw_dict = base.load_yaml(finder_path)
