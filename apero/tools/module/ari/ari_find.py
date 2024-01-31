@@ -196,7 +196,7 @@ def load_params(params: ParamDict) -> ParamDict:
     # max_pm should be in arcsec / yr
     finder_dict['MAX_PM'] *= uu.arcsec / uu.yr
     # scale bar should be in arcsec
-    finder_dict['SCALE_BAR'] *= uu.arcsec
+    finder_dict['SCALE_SIZE'] *= uu.arcsec
     # push the directory into params
     params.set('ARI_FINDER', value=finder_dict, source=func_name)
     # return params
