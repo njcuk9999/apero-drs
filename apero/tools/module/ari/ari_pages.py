@@ -252,6 +252,7 @@ def _add_obj_page(it: int, key: str, params: ParamDict,
     # get the table reference
     table_ref = f'{ari_user}_object_table'
     # get the sections references
+    object_section_ref = f'object_{ari_user}_objpage_{objname}'
     spectrum_section_ref = f'spectrum_{ari_user}_objpage_{objname}'
     lbl_section_ref = f'lbl_{ari_user}_objpage_{objname}'
     ccf_section_ref = f'ccf_{ari_user}_objpage_{objname}'
@@ -293,41 +294,45 @@ def _add_obj_page(it: int, key: str, params: ParamDict,
     # table of contents
     # ---------------------------------------------------------------------
     # Add the names of the sections
-    names = ['Spectrum', 'LBL', 'CCF', 'Time series']
+    names = ['Target info', 'Spectrum', 'LBL', 'CCF', 'Time series']
     # add the links to the pages
-    items = [spectrum_section_ref, lbl_section_ref, ccf_section_ref,
-             timeseries_section_ref]
+    items = [object_section_ref, spectrum_section_ref, lbl_section_ref,
+             ccf_section_ref, timeseries_section_ref]
     # add table of contents
     object_page.add_table_of_contents(items=items, names=names)
     object_page.add_newline(nlines=3)
+    # ---------------------------------------------------------------------
+    # Target information section
+    # ---------------------------------------------------------------------
+    objpage_targetinfo(params, object_page, names[0], items[0], object_class)
     # ---------------------------------------------------------------------
     # Spectrum section
     # ---------------------------------------------------------------------
     # print progress
     # wlog(params, '', f'\t\tCreating spectrum section')
     # add spectrum section
-    objpage_spectrum(params, object_page, names[0], items[0], object_class)
+    objpage_spectrum(params, object_page, names[1], items[1], object_class)
     # ---------------------------------------------------------------------
     # LBL section
     # ---------------------------------------------------------------------
     # print progress
     # wlog(params, '', f'\t\tCreating LBL section')
     # add LBL section
-    objpage_lbl(params, object_page, names[1], items[1], object_class)
+    objpage_lbl(params, object_page, names[2], items[2], object_class)
     # ---------------------------------------------------------------------
     # CCF section
     # ---------------------------------------------------------------------
     # print progress
     # wlog(params, '', f'\t\tCreating CCF section')
     # add CCF section
-    objpage_ccf(params, object_page, names[2], items[2], object_class)
+    objpage_ccf(params, object_page, names[3], items[3], object_class)
     # ---------------------------------------------------------------------
     # Time series section
     # ---------------------------------------------------------------------
     # print progress
     # wlog(params, '', f'\t\tCreating time series section')
     # add time series section
-    objpage_timeseries(params, object_page, names[3], items[3], object_class)
+    objpage_timeseries(params, object_page, names[4], items[4], object_class)
     # ---------------------------------------------------------------------
     # write object page
     # ---------------------------------------------------------------------
@@ -423,6 +428,25 @@ def add_obj_pages(params: ParamDict, object_classes: Dict[str, AriObject]):
     # -------------------------------------------------------------------------
     # return the object table
     return object_classes
+
+
+def objpage_targetinfo(params: ParamDict, page: Any, name: str, ref: str,
+                     object_instance: AriObject):
+    # add divider
+    # page.add_divider(color=DIVIDER_COLOR, height=DIVIDER_HEIGHT)
+    # add a reference to this section
+    page.add_reference(ref)
+    # add the section heading
+    page.add_section(name)
+    # ------------------------------------------------------------------
+    # get the target parameters
+    object_instance.get_target_parameters(params)
+    # ------------------------------------------------------------------
+    # add stats
+    if object_instance.target_stats_table is not None:
+        # add the stats table
+        page.add_csv_table('', object_instance.target_stats_table,
+                           cssclass='csvtable2')
 
 
 def objpage_spectrum(params: ParamDict, page: Any, name: str, ref: str,
@@ -1183,6 +1207,9 @@ def add_other_reductions(params: ParamDict):
         usernames = set(userlist[params['ARI_INSTRUMENT']])
     # add the current ari username to the list
     usernames.add(params['ARI_USER'])
+    # turn usernames into a list and sort it
+    usernames = list(usernames)
+    usernames.sort()
     # -------------------------------------------------------------------------
     # load the index
     with open(index_html, 'r') as rfile:

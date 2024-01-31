@@ -37,7 +37,7 @@ settings:
   #   command set from command line)
   obsdir: None
   # whether to filter by objects
-  filter objects: True
+  filter objects: False
   # objects to filter by
   objects:
     - GL699
