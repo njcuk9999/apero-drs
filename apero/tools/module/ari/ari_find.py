@@ -391,7 +391,7 @@ def make_finder_chart(params: ParamDict, objname: str, date: Time,
     # noinspection PyTypeChecker
     plot_map1(params, frame3, image3, wcs3, obs_coords,
               'Gaia [No rotation]', field_of_view['G'],
-              field_of_view['G'],
+              pixel_scale['G'],
               scale_factor=field_of_view['G'])
     # plot the 2mass map
     # noinspection PyTypeChecker
