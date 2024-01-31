@@ -238,27 +238,6 @@ def create_finder_chart(params: ParamDict, objname: str,
 # =============================================================================
 # Worker functions
 # =============================================================================
-def construct_savepath(directory: str, date: Time, objname: str) -> str:
-    """
-    Get the pdf savepath
-    :param directory:
-    :param date:
-    :param objname:
-    :return:
-    """
-    # strtime
-    strtime = f'{date.datetime.year}_{date.datetime.month}'
-    # create directory
-    save_directory = os.path.join(directory, objname)
-    if not os.path.exists(save_directory):
-        os.makedirs(save_directory)
-    # construct filename
-    save_filename = f'APERO_finder_chart_{objname}_{strtime}.pdf'
-    # construct absolute path
-    abspath = os.path.join(save_directory, save_filename)
-    # return the absolute path
-    return abspath
-
 
 def from_apero_objtable(it: int, object_table: pd.DataFrame) -> Dict[str, Any]:
     """
@@ -415,8 +394,10 @@ def make_finder_chart(params: ParamDict, objname: str, date: Time,
     fig2.suptitle(title)
     fig3.suptitle(title)
     fig4.suptitle(title)
-    # construct absolute path
-    abspath = construct_savepath(directory, date, objname)
+    # get directory to save finder charts to
+    directory = params['ARI_FINDER']['directory']
+    # check whether file already exists
+    abspath = os.path.join(directory, f'{objname}.pdf')
     # write pdf pages
     with PdfPages(abspath) as pp:
         fig1.savefig(pp, format='pdf')
