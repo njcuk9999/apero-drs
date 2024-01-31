@@ -25,6 +25,7 @@ from apero.core.core import drs_database
 from apero.core.core import drs_log
 from apero.io import drs_path
 from apero.tools.module.ari import ari_core
+from apero.tools.module.ari import ari_find
 from apero.tools.module.documentation import drs_markdown
 from apero.tools.module.error import error_html
 
@@ -656,7 +657,7 @@ def recipe_date_table(table: Table, machine_name: str
 # =============================================================================
 # Finder functions
 # =============================================================================
-def add_finder_table(params: ParamDict, data_dict: Dict[str, str]):
+def add_finder_table(params: ParamDict, data_dict: Dict[str, Any]):
     # set function name
     funcname = __NAME__ + '.add_recipe_tables()'
     # get the ari user
@@ -698,7 +699,7 @@ def add_finder_table(params: ParamDict, data_dict: Dict[str, str]):
       <p> Note this table contains all objects in the APERO astrometrics 
       database, not only objects currently observed or planned to be observed.</p>
       <br>
-      <p><a href="../index.html">Back to index page/a></p>
+      <p><a href="../index.html">Back to index page</a></p>
       <br>
 
       """
@@ -718,14 +719,14 @@ def add_finder_table(params: ParamDict, data_dict: Dict[str, str]):
                  '../_static/bizstyle.css',
                  '../_static/apero.css']
     # make path
-    table_path = os.path.join(params['DRS_DATA_OTHER'], 'finder')
+    table_path = params['ARI_FINDER']['directory']
     # construct the html paths to copy to after compiling
     html_table_path = str(os.path.join(params['DRS_DATA_OTHER'], 'ari',
                                        '_build', 'html', 'finder'))
     # storage of html files
     added_html_files = []
     # define the columns (passed back to main code)
-    date_colnames = ['Target', 'PDF', 'Last updated']
+    date_colnames = ['Target', 'PDF', 'Updated']
     date_coltypes = ['str', 'str', 'str']
     data_table = Table()
     for col in date_colnames:
@@ -933,60 +934,65 @@ def add_recipe_tables(params: ParamDict, table: Table, machine_name: str):
 # =============================================================================
 # Object index page
 # =============================================================================
-def make_obj_index_page(params: ParamDict):
+def make_finder_page(params: ParamDict):
     # load object database
     objdbm = drs_database.AstrometricDatabase(params)
     objdbm.load_db()
     # get all objects
-    objnames = objdbm.get_entries('OBJNAME')
-
-    # get finding chart parameters
-    finder_create = params['ARI_FINDER_PARAMS']['create']
-    finder_reset = params['ARI_FINDER_PARAMS']['reset']
-    finder_yaml = params['ARI_FINDER_PARAMS']['yaml']
-
-    # construct the finder directory path
-    finder_dir = os.path.join(params['DRS_DATA_OTHER'], 'finder')
-
-    # search for all objects in finder directory
-    pdfs = glob.glob(os.path.join(finder_dir, '*.pdf'))
-
+    object_table = objdbm.get_entries()
+    # get list of object names
+    objnames = list(object_table['OBJNAME'])
+    # load finder chart parameters
+    params = ari_find.load_params(params)
+    # get the finder directory
+    finder_dir = params['ARI_FINDER']['directory']
     # create dictionary to store finder charts for html table
     finder_dict = dict()
     finder_dict['Target'] = []
     finder_dict['PDF'] = []
-    finder_dict['Last updated'] = []
+    finder_dict['Updated'] = []
     finder_dict['Found'] = []
-
     # loop around object names
-    for objname in objnames:
-
+    for it, objname in enumerate(objnames):
+        # get the target name
         finder_dict['Target'].append(objname)
-
         # construct pdf path
         pdf_path = os.path.join(finder_dir, f'{objname}.pdf')
-
-        # if we have a finder chart, do not recreate it
-        if os.path.exists(pdf_path):
+        # if we are being asked to reset create a new finder chart
+        if params['ARI_FINDER']['reset']:
+            # create a new finder chart
+            ari_find.create_finder_chart(params, objname, it, object_table)
+            # add to finder_dict
             finder_dict['PDF'].append(f'{objname}.pdf')
             finder_dict['Found'].append('True')
             last_updated_unix = os.path.getmtime(pdf_path)
             last_updated_iso = Time(last_updated_unix, format='unix').iso
-            finder_dict['Last updated'].append(str(last_updated_iso))
-
-
-
-        else:
-            finder_dict['PDF'].append('None')
+            finder_dict['Updated'].append(str(last_updated_iso))
+        # else if we have a finder chart, do not recreate it
+        elif os.path.exists(pdf_path):
+            finder_dict['PDF'].append(f'{objname}.pdf')
+            finder_dict['Found'].append('True')
+            last_updated_unix = os.path.getmtime(pdf_path)
+            last_updated_iso = Time(last_updated_unix, format='unix').iso
+            finder_dict['Updated'].append(str(last_updated_iso))
+        # else if we are told not to create a finder chart then do not create
+        elif not params['ARI_FINDER']['create']:
+            finder_dict['PDF'].append('No finder chart')
             finder_dict['Found'].append('False')
-            finder_dict['Last updated'].append('None')
-
-
-
-
-
-    pass
-
+            finder_dict['Updated'].append('None')
+        # otherwise we do not have a finder chart, so create one
+        else:
+            # create a new finder chart
+            ari_find.create_finder_chart(params, objname, it, object_table)
+            # add to finder_dict
+            finder_dict['PDF'].append(f'{objname}.pdf')
+            finder_dict['Found'].append('True')
+            last_updated_unix = os.path.getmtime(pdf_path)
+            last_updated_iso = Time(last_updated_unix, format='unix').iso
+            finder_dict['Updated'].append(str(last_updated_iso))
+    # -------------------------------------------------------------------------
+    # make html finder page
+    add_finder_table(params, finder_dict)
 
 
 # =============================================================================
@@ -1032,7 +1038,7 @@ def make_index_page(params: ParamDict):
     index_page.add_text('Please note this includes objects not currently '
                         'observed.')
     index_page.add_newline()
-    index_page.lines += [f'* `Object index page <finder/index.html>`_']
+    index_page.lines += [f'* `Finder chart table <finder/index.html>`_']
     # -------------------------------------------------------------------------
     # save index page
     index_page.write_page(os.path.join(index_path, 'index.rst'))
