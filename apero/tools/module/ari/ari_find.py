@@ -802,6 +802,7 @@ def plot_map1(params: ParamDict, frame, image, wcs, obs_coords, title,
     # get parameters from params
     compass_frac = params['ARI_FINDER']['COMPASS_FRAC']
     scale_size = params['ARI_FINDER']['SCALE_SIZE']
+    pixel_scale_all = params['ARI_FINDER']['PIXEL_SCALE']
     # plot image
     frame.imshow(image, origin='lower', vmin=np.arcsinh(-3),
                  vmax=np.arcsinh(200),
@@ -871,7 +872,7 @@ def plot_map1(params: ParamDict, frame, image, wcs, obs_coords, title,
     # plot scale bar
     # -------------------------------------------------------------------------
     # get the length of the scale in pixels
-    length = (scale_size / pixel_scale['G']).value
+    length = (scale_size / pixel_scale_all['G']).value
 
     x_scale_px = 0.1 * image.shape[0]
     y_scale_px = 0.1 * image.shape[1]
