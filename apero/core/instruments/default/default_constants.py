@@ -378,7 +378,8 @@ __all__ = [
     # ari constants
     'ARI_INSTRUMENT', 'ARI_USER', 'ARI_NCORES', 'ARI_WAVE_RANGES',
     'ARI_SSH_COPY', 'ARI_RESET', 'ARI_FILTER_OBJECTS',
-    'ARI_FILTER_OBJECTS_LIST', 'ARI_HEADER_PROPS', 'ARI_RESET_DICT',
+    'ARI_FILTER_OBJECTS_LIST', 'ARI_HEADER_PROPS', 'ARI_FINDING_CHARTS',
+    'ARI_RESET_DICT',
 ]
 
 # set name
@@ -5667,6 +5668,12 @@ ARI_FILTER_OBJECTS_LIST = Const('ARI_FILTER_OBJECTS_LIST', value=None,
 ARI_HEADER_PROPS = Const('ARI_HEADER_PROPS', value=None, dtype=dict,
                          source=__NAME__, group=cgroup,
                          description='Define the header key props for ari')
+
+# Define the finding charts dictionary for ari
+ARI_FINDING_CHARTS = Const('ARI_FINDING_CHARTS', value=None, dtype=dict,
+                           source=__NAME__, group=cgroup,
+                           description='Define the finding charts dictionary '
+                                       'for ari')
 
 # Define the ARI reset directory (relative paths to copy into the "other"
 #   directory on installation/reset)

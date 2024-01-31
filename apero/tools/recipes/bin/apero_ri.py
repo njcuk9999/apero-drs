@@ -131,9 +131,10 @@ def __main__(recipe: DrsRecipe, params: ParamDict):
     WLOG(params, 'info', 'Making top level pages and compiling')
     # make index page
     arip.make_index_page(params)
-
     # make profile page
     arip.make_profile_page(params, tables=[object_table, recipe_table])
+    # make finder page
+    arip.make_finder_page(params)
     # print progress
     WLOG(params, 'info', 'Compiling sphinx build')
     # run sphinx build
