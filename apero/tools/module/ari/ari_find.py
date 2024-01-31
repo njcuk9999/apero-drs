@@ -392,7 +392,7 @@ def make_finder_chart(params: ParamDict, objname: str, date: Time,
     plot_map1(params, frame3, image3, wcs3, obs_coords,
               'Gaia [No rotation]', field_of_view['G'],
               pixel_scale['G'],
-              scale_factor=field_of_view['G'])
+              scale_factor=scale_factor['G'])
     # plot the 2mass map
     # noinspection PyTypeChecker
     plot_map1(params, frame4, image4, wcs4, obs_coords,
