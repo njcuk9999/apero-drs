@@ -966,6 +966,8 @@ def make_finder_page(params: ParamDict):
     object_table = objdbm.get_entries()
     # get list of object names
     objnames = list(object_table['OBJNAME'])
+    # sort object names in alphabetical order
+    objnames = np.sort(objnames)
     # load finder chart parameters
     params = ari_find.load_params(params)
     # get the finder directory
