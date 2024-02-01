@@ -622,7 +622,7 @@ class AstroObj:
         count, optionsdesc, values, refs = 0, [], [], []
         for count, uteff in enumerate(uteffs):
             # add option string
-            optionstr = '{0} {1} [OBS_DIR={2}]'
+            optionstr = '{0} {1} [Header:OBS_DIR={2}]'
             optionarg = [uteff, prop_unit, last_instance[uteff]]
             optionsdesc.append(optionstr.format(*optionarg))
             # add value
@@ -659,6 +659,8 @@ class AstroObj:
             # get the simbad columns
             value_col = PROPERTY_SIMBAD_COL[property][0]
             ref_col = PROPERTY_SIMBAD_COL[property][1]
+            # get unit
+            prop_unit = PROPERTY_UNITS[property]
         # get uncertainty if present
         if property in PROPERTY_UNCERTAINTY:
             uncertainty_col = PROPERTY_UNCERTAINTY[property]
@@ -724,15 +726,15 @@ class AstroObj:
                 value = (qtable[value_col][row], uncertainty)
                 ref = qtable[ref_col][row]
                 # add the option
-                option = '{0}+/-{1} [Bibcode={2}]'
-                option = option.format(value[0], value[1], ref)
+                option = '{0}+/-{1} {2} [Bibcode={3}]'
+                option = option.format(value[0], value[1], prop_unit, ref)
             else:
                 # get the value
                 value = qtable[value_col][row]
                 ref = qtable[ref_col][row]
                 # add the option
-                option = '{0} [Bibcode={1}]'
-                option = option.format(value, ref)
+                option = '{0} {1} [Bibcode={2}]'
+                option = option.format(value, prop_unit, ref)
             # check if reference matches one of our preferred bibcodes
             if ref in bibcodes:
                 option += ' ** Preferred **'
