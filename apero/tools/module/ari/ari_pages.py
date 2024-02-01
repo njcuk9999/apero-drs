@@ -751,7 +751,7 @@ def add_finder_table(params: ParamDict, data_dict: Dict[str, Any]):
     added_html_files = []
     # define the columns (passed back to main code)
     date_colnames = ['Target', 'PDF', 'Updated']
-    date_coltypes = ['str', 'str', 'str']
+    date_coltypes = ['str', 'url', 'str']
     data_table = Table()
     for col in date_colnames:
         data_table[col] = data_dict[col]
@@ -981,22 +981,21 @@ def make_finder_page(params: ParamDict):
         # get the target name
         finder_dict['Target'].append(objname)
         # construct pdf path
-        pdf_path = os.path.join(finder_dir, f'{objname}.pdf')
-        # set up url
-        pdf_url = '<a href="{0}">{1}</a>'.format(f'{objname}.pdf', f'{objname}.pdf')
+        pdf_name = f'{objname}.pdf'
+        pdf_path = os.path.join(finder_dir, pdf_name)
         # if we are being asked to reset create a new finder chart
         if params['ARI_FINDER']['reset']:
             # create a new finder chart
             ari_find.create_finder_chart(params, objname, it, object_table)
             # add to finder_dict
-            finder_dict['PDF'].append(pdf_url)
+            finder_dict['PDF'].append(pdf_name)
             finder_dict['Found'].append('True')
             last_updated_unix = os.path.getmtime(pdf_path)
             last_updated_iso = Time(last_updated_unix, format='unix').iso
             finder_dict['Updated'].append(str(last_updated_iso))
         # else if we have a finder chart, do not recreate it
         elif os.path.exists(pdf_path):
-            finder_dict['PDF'].append(pdf_url)
+            finder_dict['PDF'].append(pdf_name)
             finder_dict['Found'].append('True')
             last_updated_unix = os.path.getmtime(pdf_path)
             last_updated_iso = Time(last_updated_unix, format='unix').iso
@@ -1011,7 +1010,7 @@ def make_finder_page(params: ParamDict):
             # create a new finder chart
             ari_find.create_finder_chart(params, objname, it, object_table)
             # add to finder_dict
-            finder_dict['PDF'].append(pdf_url)
+            finder_dict['PDF'].append(pdf_name)
             finder_dict['Found'].append('True')
             last_updated_unix = os.path.getmtime(pdf_path)
             last_updated_iso = Time(last_updated_unix, format='unix').iso
