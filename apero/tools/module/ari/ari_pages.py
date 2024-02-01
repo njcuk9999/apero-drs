@@ -982,19 +982,21 @@ def make_finder_page(params: ParamDict):
         finder_dict['Target'].append(objname)
         # construct pdf path
         pdf_path = os.path.join(finder_dir, f'{objname}.pdf')
+        # set up url
+        pdf_url = drs_markdown.make_url(f'{objname}.pdf', f'{objname}.pdf')
         # if we are being asked to reset create a new finder chart
         if params['ARI_FINDER']['reset']:
             # create a new finder chart
             ari_find.create_finder_chart(params, objname, it, object_table)
             # add to finder_dict
-            finder_dict['PDF'].append(f'{objname}.pdf')
+            finder_dict['PDF'].append(pdf_url)
             finder_dict['Found'].append('True')
             last_updated_unix = os.path.getmtime(pdf_path)
             last_updated_iso = Time(last_updated_unix, format='unix').iso
             finder_dict['Updated'].append(str(last_updated_iso))
         # else if we have a finder chart, do not recreate it
         elif os.path.exists(pdf_path):
-            finder_dict['PDF'].append(f'{objname}.pdf')
+            finder_dict['PDF'].append(pdf_url)
             finder_dict['Found'].append('True')
             last_updated_unix = os.path.getmtime(pdf_path)
             last_updated_iso = Time(last_updated_unix, format='unix').iso
@@ -1009,7 +1011,7 @@ def make_finder_page(params: ParamDict):
             # create a new finder chart
             ari_find.create_finder_chart(params, objname, it, object_table)
             # add to finder_dict
-            finder_dict['PDF'].append(f'{objname}.pdf')
+            finder_dict['PDF'].append(pdf_url)
             finder_dict['Found'].append('True')
             last_updated_unix = os.path.getmtime(pdf_path)
             last_updated_iso = Time(last_updated_unix, format='unix').iso
