@@ -51,10 +51,12 @@ __all__ = [
     'IMAGE_FRAME_TIME', 'ALL_POLAR_RHOMB_POS',
     # general calib constants
     'COMBINE_METRIC_THRESHOLD1', 'CAVITY_1M_FILE', 'CAVITY_LL_FILE',
+    'SIMBAD_TAP_URL',
     'OBJ_LIST_GAIA_URL', 'CALIB_CHECK_FP_PERCENTILE', 'CALIB_CHECK_FP_THRES',
     'CALIB_CHECK_FP_CENT_SIZE', 'COMBINE_METRIC1_TYPES',
     'OBJ_LIST_GOOGLE_SHEET_URL', 'OBJ_LIST_GSHEET_MAIN_LIST_ID',
     'OBJ_LIST_GSHEET_PEND_LIST_ID', 'OBJ_LIST_GSHEET_REJECT_LIST_ID',
+    'OBJ_LIST_GSHEET_BIBCODE_ID',
     'OBJ_LIST_GSHEET_USER_URL', 'OBJ_LIST_GSHEET_USER_ID',
     'OBJ_LIST_RESOLVE_FROM_DATABASE', 'OBJ_LIST_RESOLVE_FROM_GAIAID',
     'OBJ_LIST_RESOLVE_FROM_GLIST', 'OBJ_LIST_RESOLVE_FROM_COORDS',
@@ -631,6 +633,12 @@ CALIB_CHECK_FP_CENT_SIZE = Const('CALIB_CHECK_FP_CENT_SIZE', value=None,
                                  description=('define the check FP center '
                                               'image size [px]'))
 
+# Define the SIMBAD TAP url
+SIMBAD_TAP_URL = Const('SIMBAD_TAP_URL', value=None, dtype=str, source=__NAME__,
+                       group=cgroup,
+                          description='Define the SIMBAD TAP url')
+
+
 # Define the TAP Gaia URL (for use in crossmatching to Gaia via astroquery)
 OBJ_LIST_GAIA_URL = Const('OBJ_LIST_GAIA_URL', value=None, dtype=str,
                           source=__NAME__, group=cgroup,
@@ -666,6 +674,14 @@ OBJ_LIST_GSHEET_REJECT_LIST_ID = Const('OBJ_LIST_GSHEET_REJECT_LIST_ID',
                                        description='Define the google sheet '
                                                    'objname list reject list '
                                                    'id number')
+
+# Define the google sheet bibcode id number
+OBJ_LIST_GSHEET_BIBCODE_ID = Const('OBJ_LIST_GSHEET_BIBCODE_ID',
+                                   value=None, dtype=str, source=__NAME__,
+                                   group=cgroup,
+                                   description='Define the google sheet '
+                                               'bibcode id number')
+
 
 # Define the google sheet user url object list (None for no user list)
 #     (may be set to a directory for completely offline reduction)

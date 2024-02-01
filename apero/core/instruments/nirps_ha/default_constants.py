@@ -166,6 +166,10 @@ CALIB_CHECK_FP_THRES.value = 100
 CALIB_CHECK_FP_CENT_SIZE = CALIB_CHECK_FP_CENT_SIZE.copy(__NAME__)
 CALIB_CHECK_FP_CENT_SIZE.value = 100
 
+# Define the SIMBAD TAP url
+SIMBAD_TAP_URL = SIMBAD_TAP_URL.copy(__NAME__)
+SIMBAD_TAP_URL.value = 'http://simbad.cds.unistra.fr/simbad/sim-tap'
+
 # Define the TAP Gaia URL (for use in crossmatching to Gaia via astroquery)
 OBJ_LIST_GAIA_URL = OBJ_LIST_GAIA_URL.copy(__NAME__)
 OBJ_LIST_GAIA_URL.value = 'https://gea.esac.esa.int/tap-server/tap'
@@ -188,6 +192,10 @@ OBJ_LIST_GSHEET_PEND_LIST_ID.value = '623506317'
 # Define the google sheet objname list reject list id number
 OBJ_LIST_GSHEET_REJECT_LIST_ID = OBJ_LIST_GSHEET_REJECT_LIST_ID.copy(__NAME__)
 OBJ_LIST_GSHEET_REJECT_LIST_ID.value = '2006484513'
+
+# Define the google sheet bibcode id number
+OBJ_LIST_GSHEET_BIBCODE_ID = OBJ_LIST_GSHEET_BIBCODE_ID.copy(__NAME__)
+OBJ_LIST_GSHEET_BIBCODE_ID.value = '956956617'
 
 # Define the google sheet user url object list (None for no user list)
 #     (may be set to a directory for completely offline reduction)
