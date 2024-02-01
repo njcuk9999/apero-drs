@@ -983,7 +983,7 @@ def make_finder_page(params: ParamDict):
         # construct pdf path
         pdf_path = os.path.join(finder_dir, f'{objname}.pdf')
         # set up url
-        pdf_url = drs_markdown.make_url(f'{objname}.pdf', f'{objname}.pdf')
+        pdf_url = '<a href="{0}">{1}</a>'.format(f'{objname}.pdf', f'{objname}.pdf')
         # if we are being asked to reset create a new finder chart
         if params['ARI_FINDER']['reset']:
             # create a new finder chart
