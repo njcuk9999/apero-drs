@@ -1513,9 +1513,12 @@ def _display_initial_parameterisation(params: ParamDict,
     wmsgs += textentry('\n\tDRS_TELLU_DB: {}'.format(params['DRS_TELLU_DB']))
     wmsgs += textentry('\n\tDRS_DATA_ASSETS: {}'
                        ''.format(params['DRS_DATA_ASSETS']))
+    wmsgs += textentry('\n\tDRS_DATA_OUT: {}'.format(params['DRS_DATA_OUT']))
     wmsgs += textentry('\n\tDRS_DATA_MSG: {}'.format(params['DRS_DATA_MSG']))
     wmsgs += textentry('\n\tDRS_DATA_RUN: {}'.format(params['DRS_DATA_RUN']))
     wmsgs += textentry('\n\tDRS_DATA_PLOT: {}'.format(params['DRS_DATA_PLOT']))
+    wmsgs += textentry('\n\tDRS_DATA_OTHER: {}'.format(params['DRS_DATA_OTHER']))
+    wmsgs += textentry('\n\tLBL_PATH: {}'.format(params['LBL_PATH']))
     # add config sources
     for source in np.sort(params['DRS_CONFIG']):
         wmsgs += textentry('\n\tDRS_CONFIG: {0}'.format(source))
