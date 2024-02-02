@@ -290,7 +290,6 @@ def check_path_arg(name: str, value: Union[str, Path],
     :return: tuple, 1. whether to prompt the user for another path (i.e. they
              didn't want to create the path, 2. the value of the path
     """
-    promptuser = True
     # check if user config is None (i.e. set from cmd line)
     if value is not None:
         cprint(textentry('40-001-00040', args=[name, value]))
@@ -311,6 +310,8 @@ def check_path_arg(name: str, value: Union[str, Path],
         # if path exists we do not need to prompt user
         else:
             promptuser = False
+    else:
+        promptuser = ask_to_create
     # return prompt usr and value
     return promptuser, value
 
@@ -346,6 +347,8 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
     all_params['CLEANWARN'] = getattr(args, 'clean_no_warning', False)
     # get whether to ask user about creating directories
     askcreate = not getattr(args, 'always_create', True)
+    all_params['ASK_CREATE'] = askcreate
+    all_params.set_source('ASK_CREATE', func_name)
 
     # ------------------------------------------------------------------
     # Step 0: Ask for profile name (if not given)
@@ -866,13 +869,14 @@ def create_configs(params: ParamDict, all_params: ParamDict) -> ParamDict:
     userconfig = all_params['USERCONFIG']
     # get dev mode
     devmode = all_params['DEVMODE']
+    askcreate = all_params['ASK_CREATE']
     # create install config
     base.create_yamls(all_params)
     # reload dictionaries connected to yaml files
     base.IPARAMS = base.load_install_yaml()
     base.DPARAMS = base.load_database_yaml()
     # create user config
-    config_lines, const_lines = create_ufiles(params, devmode)
+    config_lines, const_lines = create_ufiles(params, devmode, askcreate)
     # write / update config and const
     uconfig = ufile_write(params, config_lines, userconfig, UCONFIG,
                           'config')
