@@ -137,7 +137,7 @@ def __main__(recipe, params):
     # Object check
     # -------------------------------------------------------------------------
     if obj_check:
-        drs_precheck.obj_check(params, findexdbm)
+        _ = drs_precheck.obj_check(params, findexdbm)
 
     # -------------------------------------------------------------------------
     # End of main code
