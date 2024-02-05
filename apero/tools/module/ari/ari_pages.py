@@ -972,6 +972,9 @@ def make_finder_page(params: ParamDict):
     params = ari_find.load_params(params)
     # get the finder directory
     finder_dir = params['ARI_FINDER']['directory']
+    # copy finder charts from online to local directory (to avoid doing them
+    #   again)
+    ari_find.copy_finder_charts(params)
     # create dictionary to store finder charts for html table
     finder_dict = dict()
     finder_dict['Target'] = []
