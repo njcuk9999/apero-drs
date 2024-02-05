@@ -2133,7 +2133,7 @@ def add_lbl_count(params: ParamDict, object_classes: Dict[str, AriObject]
         # --------------------------------------------------------------------
         # deal with the update (do not update if there are no difference
         # in files)
-        if _count != object_class.filetypes['lbl.fits']:
+        if _count != object_class.filetypes['lbl.fits'].num:
             object_class.update = True
         else:
             continue
