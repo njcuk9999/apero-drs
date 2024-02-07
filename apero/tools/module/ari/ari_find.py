@@ -30,6 +30,8 @@ from tqdm import tqdm
 from apero.base import base
 from apero.core import constants
 from apero.core.core import drs_log
+from apero.tools.module.ari import ari_core
+
 
 # =============================================================================
 # Define variables
@@ -203,6 +205,25 @@ def load_params(params: ParamDict) -> ParamDict:
     params.set('ARI_FINDER', value=finder_dict, source=func_name)
     # return params
     return params
+
+
+def copy_finder_charts(params: ParamDict):
+    # get the finder directory
+    finder_dir = params['ARI_FINDER']['directory']
+    # get the ssh directory
+    ssh_directory = params['ARI_SSH_COPY']['directory']
+    # get the remote finder directory
+    remote_path = str(os.path.join(ssh_directory,
+                                   params['ARI_INSTRUMENT'].lower(),
+                                   'finder'))
+    # make sure we copy contents not directory
+    if not remote_path.endswith(os.sep):
+        remote_path += os.sep
+    # do the copy
+    ari_core.do_rsync(params, mode='get',
+                      path_in=remote_path,
+                      path_out=finder_dir,
+                      required=False)
 
 
 def create_finder_chart(params: ParamDict, objname: str,
