@@ -13,6 +13,7 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 from astropy.table import Table
+from tqdm import tqdm
 
 from apero import lang
 from apero.base import base
@@ -739,10 +740,8 @@ def obj_check(params: ParamDict, findexdbm: Optional[FileIndexDatabase] = None,
     # Print progress: Finding all original names for each unfound object
     if log:
         WLOG(params, 'info', textentry('40-503-00058'))
-    # whether we use the tqdm module
-    tqdm_log = base.tqdm_module(use=log)
     # loop around
-    for unfound_object in tqdm_log(unfound_objects):
+    for unfound_object in tqdm(unfound_objects):
         # condition for this target
         condition = 'KW_OBJNAME="{0}" AND BLOCK_KIND="raw"'
         condition = condition.format(unfound_object)
