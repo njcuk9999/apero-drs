@@ -102,6 +102,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     mainname = __NAME__ + '._main()'
     # get files
     infiles = params['INPUTS']['FILES'][1]
+    # check qc
+    infiles = drs_file.check_input_qc(params, infiles, 'files')
     # get list of filenames (for output)
     rawfiles = []
     for infile in infiles:
@@ -155,7 +157,10 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             # continue
             continue
         # flag whether calibration fiber is FP
-        has_fp = dprtype.upper().split('_')[1] == 'FP'
+        if dprtype in params.listp('CCF_VALID_FP_DPRTYPES'):
+            has_fp = True
+        else:
+            has_fp = False
         # ------------------------------------------------------------------
         # get fiber from infile
         fiber = infile.get_fiber(header=header)

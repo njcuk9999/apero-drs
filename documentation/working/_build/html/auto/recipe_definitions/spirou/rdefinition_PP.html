@@ -3,20 +3,19 @@
 
 <!doctype html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>apero_preprocess_spirou &#8212; APERO 0.7.259 documentation</title>
+    <title>apero_preprocess_spirou &#8212; APERO 0.8.001 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/apero.css" />
     
     <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
-    <script src="../../../_static/jquery.js"></script>
-    <script src="../../../_static/underscore.js"></script>
     <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/sphinx_highlight.js"></script>
     <script src="../../../_static/bizstyle.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
@@ -78,6 +77,8 @@
         <i class="fa fa-git-square fa-3x" aria-hidden="true"></i></a></li>
     <li><a title="download pdf" href="../../../apero-docs.pdf">
         <i class="fa fa-download fa-3x" aria-hidden="true"></i></a></li>
+    <li><a title="UdeM" href="/main/misc/udem.html">
+        <i class="fa fa-university fa-3x" aria-hidden="true"></i></a></li>
   </ul>
     <div>
     <a href="../../../index.html">
@@ -101,7 +102,7 @@
         <li class="right" >
           <a href="recipes.html" title="Recipes (SPIROU)"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.259 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.8.001 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../../main/spirou/main_spirou.html" >SPIRou documentation</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="recipes.html" accesskey="U">Recipes (SPIROU)</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">apero_preprocess_spirou</a></li> 
@@ -109,8 +110,9 @@
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../../../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../../../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">apero_preprocess_spirou</a><ul>
 <li><a class="reference internal" href="#description">1. Description</a><ul>
 <li><a class="reference internal" href="#pre-processing">Pre-processing</a><ul>
@@ -137,12 +139,17 @@
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="recipes.html"
-                        title="previous chapter">Recipes (SPIROU)</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="rdefinition_BAD.html"
-                        title="next chapter">apero_badpix_spirou</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="recipes.html"
+                          title="previous chapter">Recipes (SPIROU)</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="rdefinition_BAD.html"
+                          title="next chapter">apero_badpix_spirou</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -159,7 +166,7 @@
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
 
@@ -169,17 +176,17 @@
           <div class="body" role="main">
             
   <section id="apero-preprocess-spirou">
-<span id="recipes-spirou-pp"></span><h1>apero_preprocess_spirou<a class="headerlink" href="#apero-preprocess-spirou" title="Permalink to this headline">¶</a></h1>
+<span id="recipes-spirou-pp"></span><h1>apero_preprocess_spirou<a class="headerlink" href="#apero-preprocess-spirou" title="Permalink to this heading">¶</a></h1>
 <section id="description">
-<h2>1. Description<a class="headerlink" href="#description" title="Permalink to this headline">¶</a></h2>
+<h2>1. Description<a class="headerlink" href="#description" title="Permalink to this heading">¶</a></h2>
 <p>SHORTNAME: PP</p>
 <section id="pre-processing">
-<h3>Pre-processing<a class="headerlink" href="#pre-processing" title="Permalink to this headline">¶</a></h3>
+<h3>Pre-processing<a class="headerlink" href="#pre-processing" title="Permalink to this heading">¶</a></h3>
 <p>The raw images (those retrieved from the telescope after the ramp fitting algorithm has been run) require some preliminary
 processing to remove detector artifacts that are due to the detector. These artifacts are documented in this section.
 Note all frames independent of DPRTYPE are preprocessed in the same manner before any other step of APERO is run.</p>
 <section id="header-fixes-and-object-resolution">
-<h4>Header fixes and object resolution<a class="headerlink" href="#header-fixes-and-object-resolution" title="Permalink to this headline">¶</a></h4>
+<h4>Header fixes and object resolution<a class="headerlink" href="#header-fixes-and-object-resolution" title="Permalink to this heading">¶</a></h4>
 <p>The SPIRou header provides the required information to process files. However, to facilitate data reduction a few header keys are added and updated.</p>
 <p>The first header key we add is the APERO object name (DRSOBJN), this header key is the object name used throughout APERO.
 In general, it is the object name taken from the raw input file but all punctuation and white spaces are removed and replaced
@@ -203,7 +210,7 @@ of the same DRSOBJN where possible. This local database of object names can be u
 or inform users when updates have been made. All reductions of a single DRSOBJN should always be done with a single set of astrometric parameters.</p>
 </section>
 <section id="file-corruption-check">
-<h4>File corruption check<a class="headerlink" href="#file-corruption-check" title="Permalink to this headline">¶</a></h4>
+<h4>File corruption check<a class="headerlink" href="#file-corruption-check" title="Permalink to this heading">¶</a></h4>
 <p>Not every raw file contains good data. For example, a rare occurrence where the detector acquisition system has a synchronization
 issue in retrieving the pixel stream leads to a 1-pixel offset of the readout. Therefore as part of the pre-processing, we check for
 corrupt files. We do this by comparing images to a list of known hot pixels. We verify that hot pixels are at the expected position.
@@ -212,7 +219,7 @@ Missed lines or columns at the edge of the array are replaced by NAN values. Thi
 4-pixel edge of the array consists of non-light-sensitive reference pixels.</p>
 </section>
 <section id="top-and-bottom-pixel-correction">
-<h4>Top and bottom pixel correction<a class="headerlink" href="#top-and-bottom-pixel-correction" title="Permalink to this headline">¶</a></h4>
+<h4>Top and bottom pixel correction<a class="headerlink" href="#top-and-bottom-pixel-correction" title="Permalink to this heading">¶</a></h4>
 <p>The first part of the correlated noise filtering accounts for gradients along the slow axis of the amplifier readout by removing
 the slope between the first and last read reference pixels within each amplifier. We take a median of the amplifier <cite>bottom</cite> and <cite>top</cite>
 reference pixels and subtract for each amplifier the slope between these regions. This accounts for fluctuations in the detector
@@ -222,7 +229,7 @@ between amplifiers cannot be corrected as it overlaps with science data and cann
 limiting factor for the fainter targets observed with SPIRou.</p>
 </section>
 <section id="median-filter-dark-amplifiers">
-<h4>Median filter dark amplifiers<a class="headerlink" href="#median-filter-dark-amplifiers" title="Permalink to this headline">¶</a></h4>
+<h4>Median filter dark amplifiers<a class="headerlink" href="#median-filter-dark-amplifiers" title="Permalink to this heading">¶</a></h4>
 <p>High-frequency common-mode noise between amplifiers is removed by using side reference pixels. We take <cite>left</cite> and <cite>right</cite> reference pixels
 and median the 8 lateral reference pixels into a 4088-pixel long <cite>fast axis</cite> reference unilluminated pixel. This measurement of
 the common noise is a combination of both pixel-to-pixel readout noise and actual 1/f noise that we are attempting to remove.
@@ -232,7 +239,7 @@ the 1/f noise. The optimal median filter size was found to be 32 pixels. Once fi
 all columns of the science array.</p>
 </section>
 <section id="f-noise-correction">
-<h4>1/f noise correction<a class="headerlink" href="#f-noise-correction" title="Permalink to this headline">¶</a></h4>
+<h4>1/f noise correction<a class="headerlink" href="#f-noise-correction" title="Permalink to this heading">¶</a></h4>
 <p>While the lower frequency component of the common-mode 1/.f noise is handled using non-light-sensitive reference pixels,
 the large (~800-pixel wide beyond K-band orders) region of the SPIRou array that is not illuminated by diffraction orders allows
 for a measurement of the high-frequency component of the common mode. While the region does see some large-scale scattered light from
@@ -243,7 +250,7 @@ pixels (4 on each side) available for each along-the-dispersion-axis position. W
 further reducing the contribution of common-mode noise in illuminated pixels.</p>
 </section>
 <section id="cosmic-ray-rejection">
-<h4>Cosmic ray rejection<a class="headerlink" href="#cosmic-ray-rejection" title="Permalink to this headline">¶</a></h4>
+<h4>Cosmic ray rejection<a class="headerlink" href="#cosmic-ray-rejection" title="Permalink to this heading">¶</a></h4>
 <blockquote>
 <div><p>Cosmic rays hits are easier to flag with infrared arrays than they are with CCD data sets due to the acquisition through multiple</p>
 </div></blockquote>
@@ -263,18 +270,18 @@ and discrepant values indicate that photons within a given pixel do not follow a
 the intercept value with expected statistics is used to further flag invalid pixels within a ramp.</p>
 </section>
 <section id="rotation-of-image">
-<h4>Rotation of image<a class="headerlink" href="#rotation-of-image" title="Permalink to this headline">¶</a></h4>
+<h4>Rotation of image<a class="headerlink" href="#rotation-of-image" title="Permalink to this heading">¶</a></h4>
 <p>The pre-processed images are then rotated to match the HARPS orientation. This is a legacy change left over from when some algorithms
 shared a common ancestry with the HARPS DRS pipeline. For SPIRou data this is equivalent to a 90-degree clockwise rotation.</p>
 </section>
 </section>
 </section>
 <section id="schematic">
-<h2>2. Schematic<a class="headerlink" href="#schematic" title="Permalink to this headline">¶</a></h2>
-<a class="reference internal image-reference" href="../../../_images/apero_preproces_spirou_schematic.jpg"><img alt="../../../_images/apero_preproces_spirou_schematic.jpg" class="align-center" src="../../../_images/apero_preproces_spirou_schematic.jpg" style="width: 100%;" /></a>
+<h2>2. Schematic<a class="headerlink" href="#schematic" title="Permalink to this heading">¶</a></h2>
+<a class="reference internal image-reference" href="_static/yed/spirou/apero_preprocess_spirou_schematic.jpg"><img alt="_static/yed/spirou/apero_preprocess_spirou_schematic.jpg" class="align-center" src="_static/yed/spirou/apero_preprocess_spirou_schematic.jpg" style="width: 100%;" /></a>
 </section>
 <section id="usage">
-<h2>3. Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
+<h2>3. Usage<a class="headerlink" href="#usage" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">apero_preprocess_spirou</span><span class="o">.</span><span class="n">py</span> <span class="p">{</span><span class="n">obs_dir</span><span class="p">}[</span><span class="n">STRING</span><span class="p">]</span> <span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">DRS_RAW</span><span class="p">]</span> <span class="p">{</span><span class="n">options</span><span class="p">}</span>
 </pre></div>
 </div>
@@ -284,13 +291,13 @@ shared a common ancestry with the HARPS DRS pipeline. For SPIRou data this is eq
 </div>
 </section>
 <section id="optional-arguments">
-<h2>4. Optional Arguments<a class="headerlink" href="#optional-arguments" title="Permalink to this headline">¶</a></h2>
+<h2>4. Optional Arguments<a class="headerlink" href="#optional-arguments" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">--</span><span class="n">skip</span><span class="p">[</span><span class="kc">True</span><span class="o">/</span><span class="kc">False</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">BOOLEAN</span><span class="p">]</span> <span class="n">If</span> <span class="kc">True</span> <span class="n">skips</span> <span class="n">preprocessed</span> <span class="n">files</span> <span class="n">that</span> <span class="n">are</span> <span class="n">already</span> <span class="n">found</span>
 </pre></div>
 </div>
 </section>
 <section id="special-arguments">
-<h2>5. Special Arguments<a class="headerlink" href="#special-arguments" title="Permalink to this headline">¶</a></h2>
+<h2>5. Special Arguments<a class="headerlink" href="#special-arguments" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">--</span><span class="n">xhelp</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Extended</span> <span class="n">help</span> <span class="n">menu</span> <span class="p">(</span><span class="k">with</span> <span class="nb">all</span> <span class="n">advanced</span> <span class="n">arguments</span><span class="p">)</span>
 <span class="o">--</span><span class="n">debug</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Activates</span> <span class="n">debug</span> <span class="n">mode</span> <span class="p">(</span><span class="n">Advanced</span> <span class="n">mode</span> <span class="p">[</span><span class="n">INTEGER</span><span class="p">]</span> <span class="n">value</span> <span class="n">must</span> <span class="n">be</span> <span class="n">an</span> <span class="n">integer</span> <span class="n">greater</span> <span class="n">than</span> <span class="mi">0</span><span class="p">,</span> <span class="n">setting</span> <span class="n">the</span> <span class="n">debug</span> <span class="n">level</span><span class="p">)</span>
 <span class="o">--</span><span class="n">listing</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Lists</span> <span class="n">the</span> <span class="n">night</span> <span class="n">name</span> <span class="n">directories</span> <span class="ow">in</span> <span class="n">the</span> <span class="nb">input</span> <span class="n">directory</span> <span class="k">if</span> <span class="n">used</span> <span class="n">without</span> <span class="n">a</span> <span class="s1">&#39;directory&#39;</span> <span class="n">argument</span> <span class="ow">or</span> <span class="n">lists</span> <span class="n">the</span> <span class="n">files</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">given</span> <span class="s1">&#39;directory&#39;</span> <span class="p">(</span><span class="k">if</span> <span class="n">defined</span><span class="p">)</span><span class="o">.</span> <span class="n">Only</span> <span class="n">lists</span> <span class="n">up</span> <span class="n">to</span> <span class="mi">15</span> <span class="n">files</span><span class="o">/</span><span class="n">directories</span>
@@ -312,22 +319,15 @@ shared a common ancestry with the HARPS DRS pipeline. For SPIRou data this is eq
 </div>
 </section>
 <section id="output-directory">
-<h2>6. Output directory<a class="headerlink" href="#output-directory" title="Permalink to this headline">¶</a></h2>
+<h2>6. Output directory<a class="headerlink" href="#output-directory" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">DRS_DATA_WORKING</span> <span class="o">//</span> <span class="n">Default</span><span class="p">:</span> <span class="s2">&quot;tmp&quot;</span> <span class="n">directory</span>
 </pre></div>
 </div>
 </section>
 <section id="output-files">
-<h2>7. Output files<a class="headerlink" href="#output-files" title="Permalink to this headline">¶</a></h2>
+<h2>7. Output files<a class="headerlink" href="#output-files" title="Permalink to this heading">¶</a></h2>
 <table class="csvtable docutils align-default" id="id1">
 <caption><span class="caption-text">Outputs</span><a class="headerlink" href="#id1" title="Permalink to this table">¶</a></caption>
-<colgroup>
-<col style="width: 20%" />
-<col style="width: 20%" />
-<col style="width: 20%" />
-<col style="width: 20%" />
-<col style="width: 20%" />
-</colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>name</p></th>
 <th class="head"><p>description</p></th>
@@ -347,11 +347,11 @@ shared a common ancestry with the HARPS DRS pipeline. For SPIRou data this is eq
 </table>
 </section>
 <section id="debug-plots">
-<h2>8. Debug plots<a class="headerlink" href="#debug-plots" title="Permalink to this headline">¶</a></h2>
+<h2>8. Debug plots<a class="headerlink" href="#debug-plots" title="Permalink to this heading">¶</a></h2>
 <p>No debug plots.</p>
 </section>
 <section id="summary-plots">
-<h2>9. Summary plots<a class="headerlink" href="#summary-plots" title="Permalink to this headline">¶</a></h2>
+<h2>9. Summary plots<a class="headerlink" href="#summary-plots" title="Permalink to this heading">¶</a></h2>
 <p>No summary plots.</p>
 </section>
 </section>
@@ -375,7 +375,7 @@ shared a common ancestry with the HARPS DRS pipeline. For SPIRou data this is eq
         <li class="right" >
           <a href="recipes.html" title="Recipes (SPIROU)"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.259 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.8.001 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../../main/spirou/main_spirou.html" >SPIRou documentation</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="recipes.html" >Recipes (SPIROU)</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">apero_preprocess_spirou</a></li> 
@@ -383,7 +383,7 @@ shared a common ancestry with the HARPS DRS pipeline. For SPIRou data this is eq
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2019, Neil Cook.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 6.1.3.
     </div>
   </body>
 </html>

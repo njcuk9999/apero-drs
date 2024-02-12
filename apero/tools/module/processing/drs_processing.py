@@ -70,6 +70,8 @@ DrsInputFile = drs_file.DrsInputFile
 textentry = lang.textentry
 # alias pcheck
 pcheck = constants.PCheck(wlog=WLOG)
+# get tqdm
+tqdm = base.tqdm_module()
 # get database
 FileIndexDatabase = drs_database.FileIndexDatabase
 # storage for reporting removed engineering directories
@@ -80,8 +82,9 @@ SPECIAL_LIST_KEYS = drs_recipe.SPECIAL_LIST_KEYS
 OBJNAMECOL = 'KW_OBJNAME'
 # list of arguments to remove from skip check
 SKIP_REMOVE_ARGS = ['--skip', '--program', '--prog', '--debug',
-                    '--verbose' '--plot', '--shortname', '--short'
-                                                         '--rkind', '--recipe_kind', '--parallel', '--crunfile']
+                    '--verbose' '--plot', '--shortname', '--short',
+                    '--rkind', '--recipe_kind', '--parallel',
+                    '--crunfile', '--nosave']
 # keep a global copy of plt
 PLT_MOD = None
 
@@ -95,7 +98,6 @@ class Run:
                  priority: int = 0, inrecipe=None):
         self.params = params
         self.indexdb = indexdb
-        self.pconst = constants.pload(params['INSTRUMENT'])
         self.runstring = runstring
         self.priority = priority
         self.args = []
@@ -233,13 +235,15 @@ class Run:
         """
         # get args
         self.args = self.runstring.split(' ')
+        # get pconst
+        pconst = constants.pload(self.params['INSTRUMENT'])
         # the first argument must be the recipe name
         self.recipename = self.args[0]
         # find the recipe
         if self.recipe is None:
             self.recipe, self.module = self.find_recipe(self.module)
             # get filemod and recipe mod
-            self.recipe.filemod = self.pconst.FILEMOD()
+            self.recipe.filemod = pconst.FILEMOD()
         # import the recipe module
         self.recipemod = self.recipe.main
         # turn off the input validation
@@ -405,7 +409,7 @@ class Run:
         if self.recipe is not None:
             self.pickle_recipe_name = self.recipe.name
         # what to exclude from state (may not be pickle-able)
-        exclude = ['pconst', 'indexdb', 'recipe', 'recipemod']
+        exclude = ['indexdb', 'recipe', 'recipemod']
         # need a dictionary for pickle
         state = dict()
         for key, item in self.__dict__.items():
@@ -424,7 +428,6 @@ class Run:
         # update dict with state
         self.__dict__.update(state)
         # reload excluded attributes
-        self.pconst = constants.pload(self.params['INSTRUMENT'])
         self.indexdb = FileIndexDatabase(self.params)
         # need to re-find and set recipe and recipe modd
         self.reload_recipe()
@@ -433,8 +436,10 @@ class Run:
         # deal with no pickable recipe name
         if self.pickle_recipe_name is None:
             return
+        # get pconst
+        pconst = constants.pload(self.params['INSTRUMENT'])
         # load the recipe mod
-        rmod = self.pconst.RECIPEMOD()
+        rmod = pconst.RECIPEMOD()
         # set up the arguments to find the recipe
         fkwargs = dict(name=self.pickle_recipe_name,
                        instrument=self.params['INSTRUMENT'],
@@ -443,6 +448,23 @@ class Run:
         self.recipe, _ = drs_startup.find_recipe(**fkwargs)
         # recipe mod in this sense is the recipe.main
         self.recipemod = self.recipe.main
+
+
+# =============================================================================
+# Define pickle functions
+# =============================================================================
+def reload_recipe(params, recipename):
+    # reload excluded attributes
+    pconst = constants.pload(params['INSTRUMENT'])
+    # load the recipe mod
+    rmod = pconst.RECIPEMOD()
+    # set up the arguments to find the recipe
+    fkwargs = dict(name=recipename, instrument=params['INSTRUMENT'],
+                   mod=rmod)
+    # set recipe
+    recipe, _ = drs_startup.find_recipe(**fkwargs)
+    # return recipe and index database
+    return recipe
 
 
 # =============================================================================
@@ -539,7 +561,7 @@ def generate_skip_table(params):
 
 
 def skip_clean_arguments(runstring: str,
-                         additional_args: Optional[List[str]] = None):
+                         additional_args: Optional[List[str]] = None) -> str:
     """
     Clean arguments for skip check - these are arguments that may change
     between otherwise identical runs
@@ -567,7 +589,12 @@ def skip_clean_arguments(runstring: str,
         for remove_arg in skip_remove_args:
             if arg.startswith(remove_arg):
                 mask[it] = False
-    return ' '.join(args[mask])
+    # join arguments
+    clean_runstring = ' '.join(args[mask])
+    # remove = from runstring (should be space)
+    clean_runstring = clean_runstring.replace('=', ' ')
+    # return clean runstring
+    return clean_runstring
 
 
 def skip_remove_non_required_args(runstrings, runobj):
@@ -826,13 +853,66 @@ def update_index_db(params: ParamDict,
                                               findexdbm=findexdbm)
 
 
-def generate_run_list(params, findexdbm: FileIndexDatabase, runtable,
-                      skiptable):
+def generate_run_list(params: ParamDict, findexdbm: FileIndexDatabase,
+                      runtable: Dict[int, str],
+                      skiptable: Optional[Table]) -> List[Run]:
+    """
+    Generate a list of runs for use in apero_processing
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param findexdbm: FileIndexDatabase, the file index database instance
+    :param runtable: dictionary, where keys are ids and values are the run
+                     strings
+    :param skiptable: astropy.Table, a table of recipes + cleaned runstrings,
+                      if recipe + runstring in this list we skip it.
+
+    :return: A list of validated Run instances
+    """
     # print progress: generating run list
     WLOG(params, 'info', textentry('40-503-00011'))
     # need to update table object names to match preprocessing
     #   table can be None if coming from e.g fit_tellu_db
 
+    # -------------------------------------------------------------------------
+    # get odometer reject list (if required)
+    # -------------------------------------------------------------------------
+    # get whether the user wants to use reject list
+    _use_reject = params['USE_REJECTLIST']
+    # get the odometer reject list
+    reject_list = []
+    if not drs_text.null_text(_use_reject, ['', 'None']):
+        if drs_text.true_text(_use_reject):
+            reject_list = prep.get_file_reject_list(params)
+    # define the reference conditions (that affect all recipes)
+    ref_condition, req_obs_dirs = gen_global_condition(params, findexdbm,
+                                                       reject_list)
+    # -------------------------------------------------------------------------
+    # get telluric stars and non-telluric stars
+    # -------------------------------------------------------------------------
+    # get a list of all objects from the file index database
+    all_objects = get_uobjs_from_findex(params, findexdbm, req_obs_dirs)
+    # get all telluric stars
+    tstars = telluric.get_tellu_include_list(params, all_objects=all_objects)
+    # get all other stars
+    ostars = get_non_telluric_stars(params, all_objects, tstars)
+    # -------------------------------------------------------------------------
+    # get template list (if required)
+    # -------------------------------------------------------------------------
+    # get whether to recalculate templates
+    _recal_templates = params['RECAL_TEMPLATES']
+    # get a list of object names with templates
+    template_stars = []
+    if not drs_text.null_text(_recal_templates, ['', 'None']):
+        if not drs_text.true_text(_recal_templates):
+            lckwargs = dict(all_objects=all_objects)
+            template_stars = telluric.list_current_templates(params, **lckwargs)
+            # print statement that we have been told not to recalculate
+            #   tempaltes and x many templates found
+            if len(template_stars) > 0:
+                wargs = [len(template_stars)]
+                WLOG(params, 'warning', textentry('10-503-00023', args=wargs),
+                     sublevel=2)
+    # -------------------------------------------------------------------------
     # get recipe definitions module (for this instrument)
     recipemod = _get_recipe_module(params)
     # get all values (upper case) using map function
@@ -850,15 +930,17 @@ def generate_run_list(params, findexdbm: FileIndexDatabase, runtable,
             WLOG(params, 'info', textentry('40-503-00009', args=[sequence[0]]))
             # generate new runs for sequence
             newruns = _generate_run_from_sequence(params, sequence,
-                                                  findexdbm)
+                                                  findexdbm, tstars=tstars,
+                                                  ostars=ostars,
+                                                  template_stars=template_stars,
+                                                  ref_condition=ref_condition)
             # update runtable with sequence generation
             runtable, rlist = update_run_table(sequence, runtable, newruns,
                                                rlist)
     # all runtable elements should now be in recipe list
     _check_runtable(params, runtable, recipemod)
     # return Run instances for each runtable element
-    return generate_ids(params, findexdbm, runtable, recipemod, skiptable,
-                        rlist)
+    return generate_ids(params, findexdbm, runtable, skiptable, rlist)
 
 
 def process_run_list(params: ParamDict, runlist, group=None,
@@ -869,11 +951,18 @@ def process_run_list(params: ParamDict, runlist, group=None,
     cores = _get_cores(params)
     # pipe to correct module
     # do not use parallelization
-    if cores == 1:
+    if cores == 1 or params['REPROCESS_MP_TYPE'].lower() == 'linear':
         # log process: Running with 1 core
         WLOG(params, 'info', textentry('40-503-00016'))
         # run as linear process
         rdict = _linear_process(params, runlist, group=group)
+    # use pathos to multiprocess
+    elif params['REPROCESS_MP_TYPE'].lower() == 'pathos':
+        # log process: Running with N cores
+        WLOG(params, 'info', textentry('40-503-00017', args=[cores]))
+        # run as multiple processes
+        rdict = _multi_process_pathos(params, runlist, cores=cores,
+                                      groupname=group, findexdbm=findexdbm)
     # use pool to continue parallelization
     elif params['REPROCESS_MP_TYPE'].lower() == 'pool':
         # log process: Running with N cores
@@ -882,12 +971,17 @@ def process_run_list(params: ParamDict, runlist, group=None,
         rdict = _multi_process_pool(params, runlist, cores=cores,
                                     groupname=group, findexdbm=findexdbm)
     # use Process to continue parallelization
-    else:
+    elif params['REPROCESS_MP_TYPE'].lower() == 'process':
         # log process: Running with N cores
         WLOG(params, 'info', textentry('40-503-00017', args=[cores]))
         # run as multiple processes
         rdict = _multi_process_process(params, runlist, cores=cores,
                                        groupname=group, findexdbm=findexdbm)
+    else:
+        # log process: Running with 1 core
+        WLOG(params, 'info', textentry('40-503-00016'))
+        # run as linear process
+        rdict = _linear_process(params, runlist, group=group)
     # end a timer
     process_end = time.time()
     # remove lock files
@@ -1130,11 +1224,121 @@ def generate_run_table(params, recipe, *args, **kwargs):
 # =============================================================================
 # Define "from id" functions
 # =============================================================================
-def generate_ids(params, indexdb, runtable, mod, skiptable, rlist=None,
-                 **kwargs):
+def _linear_generate_id(params: ParamDict, it: int, run_key: str,
+                        run_item: str, runlist: List[str], keylist: List[int],
+                        input_recipe, indexdb: FileIndexDatabase,
+                        recipemod: Any, skiptable: Table,
+                        skip_storage: dict, cores: int = 1
+                        ) -> Dict[int, Run]:
+    """
+    Linear run of a single validation step
+
+    :param params:
+    :param it:
+    :param run_key:
+    :param run_item:
+    :param runlist:
+    :param keylist:
+    :param input_recipe:
+    :param indexdb:
+    :param recipemod:
+    :param skiptable:
+    :param skip_storage:
+    :param cores:
+    :return:
+    """
+    # get runid
+    runid = '{0}{1:05d}'.format(run_key, keylist[it])
+    # deal with no return dict
+    return_dict = dict()
+    # log process: validating run
+    wargs = [runid, it + 1, len(runlist)]
+    # print out is too heavy for multiprocessing
+    if cores == 1:
+        WLOG(params, '', params['DRS_HEADER'])
+        WLOG(params, '', textentry('40-503-00004', args=wargs))
+        WLOG(params, '', params['DRS_HEADER'])
+        WLOG(params, '', textentry('40-503-00013', args=[run_item]))
+    # create run object
+    run_object = Run(params, indexdb, run_item, mod=recipemod,
+                     priority=keylist[it], inrecipe=input_recipe)
+    # deal with input recipe
+    if input_recipe is None:
+        input_recipe = run_object.recipe
+    # deal with skip
+    skip, reason = skip_run_object(params, run_object, skiptable,
+                                   skip_storage)
+    # ---------------------------------------------------------------------
+    # deal with passing debug
+    if params['DRS_DEBUG'] > 0:
+        dargs = [run_object.runstring, params['DRS_DEBUG']]
+        run_object.runstring = '{0} --debug={1}'.format(*dargs)
+    # ---------------------------------------------------------------------
+    # deal with passing reference argument
+    if input_recipe.reference:
+        dargs = [run_object.runstring, 'True']
+        run_object.runstring = '{0} --ref={1}'.format(*dargs)
+    # ---------------------------------------------------------------------
+    # add run file to argument
+    if not drs_text.null_text(params['INPUTS']['RUNFILE']):
+        dargs = [run_object.runstring, params['INPUTS']['RUNFILE']]
+        run_object.runstring = '{0} --crunfile={1}'.format(*dargs)
+    # ---------------------------------------------------------------------
+    # update run object (runstring should only be updated once here
+    #    otherwise we add arguments multiple times)
+    run_object.update(update_runstring=True)
+    # append to list
+    if not skip:
+        # log that we have validated run
+        if cores == 1:
+            wargs = [runid]
+            WLOG(params, '', textentry('40-503-00005', args=wargs))
+        else:
+            # TODO: Add to language database
+            msg = 'Run {0} validated [{1}]'
+            margs = [runid, run_object.runstring]
+            WLOG(params, '', msg.format(*margs))
+        # append to run_objects
+        return_dict[it] = run_object
+    # else log that we are skipping
+    else:
+        # log that we have skipped run
+        wargs = [runid, reason]
+        if cores == 1:
+            WLOG(params, '', textentry('40-503-00006', args=wargs),
+                 colour='yellow')
+        else:
+            # TODO: Add to language database
+            msg = 'Run {0} skipped [{1}] {2}'
+            margs = [runid, run_object.runstring, reason]
+            WLOG(params, '', msg.format(*margs), colour='yellow')
+    return return_dict
+
+
+def generate_ids(params: ParamDict, indexdb: FileIndexDatabase,
+                 runtable: Dict[int, str], skiptable: Table,
+                 rlist: Optional[Dict[str, DrsRecipe]] = None,
+                 run_key: Optional[str] = None) -> List[Run]:
+    """
+    Generate the run ids and valid recipes (and remove those to skip)
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param indexdb: FileIndexDatabase instance, the file index database
+    :param runtable: dictionary of strings, the runs of each recipe
+    :param skiptable: astropy.Table, a table of recipes + cleaned runstrings,
+                      if recipe + runstring in this list we skip it.
+    :param rlist: optional list of DrsRecipes, if present is a list of
+                 DrsRecipes matching the entries in runtable
+    :param run_key: optional str, if present overrides REPROCESS_RUN_KEY from
+                    params
+
+    :return: A list of validated Run instances
+    """
     func_name = __NAME__ + '.generate_ids()'
     # get keys from params
-    run_key = pcheck(params, 'REPROCESS_RUN_KEY', 'run_key', kwargs, func_name)
+    run_key = pcheck(params, 'REPROCESS_RUN_KEY', func_name, override=run_key)
+    # get number of cores
+    cores = _get_cores(params)
     # should just need to sort these
     numbers = np.array(list(runtable.keys()))
     commands = np.array(list(runtable.values()))
@@ -1149,66 +1353,343 @@ def generate_ids(params, indexdb, runtable, mod, skiptable, rlist=None,
     runlist = list(commands[sortmask])
     keylist = list(numbers[sortmask])
     inrecipelist = list(inrecipes[sortmask])
+    # get recipe definitions module (for this instrument)
+    recipemod = _get_recipe_module(params, logmsg=False)
     # store skip previous runstrings (so it is not recalculated every time)
     skip_storage = dict()
+    # -------------------------------------------------------------------------
     # log progress: Validating ids
     WLOG(params, 'info', textentry('40-503-00015', args=[len(runlist)]))
-    # iterate through and make run objects
-    run_objects = []
-    for it, run_item in enumerate(runlist):
-        # get runid
-        runid = '{0}{1:05d}'.format(run_key, keylist[it])
-        # get recipe
-        input_recipe = inrecipelist[it]
-        # log process: validating run
-        wargs = [runid, it + 1, len(runlist)]
-        WLOG(params, '', params['DRS_HEADER'])
-        WLOG(params, '', textentry('40-503-00004', args=wargs))
-        WLOG(params, '', params['DRS_HEADER'])
-        WLOG(params, '', textentry('40-503-00013', args=[run_item]))
-        # create run object
-        run_object = Run(params, indexdb, run_item, mod=mod,
-                         priority=keylist[it], inrecipe=input_recipe)
-        # deal with input recipe
-        if input_recipe is None:
-            input_recipe = run_object.recipe
-        # deal with skip
-        skip, reason = skip_run_object(params, run_object, skiptable,
-                                       skip_storage)
-        # ---------------------------------------------------------------------
-        # deal with passing debug
-        if params['DRS_DEBUG'] > 0:
-            dargs = [run_object.runstring, params['DRS_DEBUG']]
-            run_object.runstring = '{0} --debug={1}'.format(*dargs)
-        # ---------------------------------------------------------------------
-        # deal with passing reference argument
-        if input_recipe.reference:
-            dargs = [run_object.runstring, 'True']
-            run_object.runstring = '{0} --ref={1}'.format(*dargs)
-        # ---------------------------------------------------------------------
-        # add run file to argument
-        if not drs_text.null_text(params['INPUTS']['RUNFILE']):
-            dargs = [run_object.runstring, params['INPUTS']['RUNFILE']]
-            run_object.runstring = '{0} --crunfile={1}'.format(*dargs)
-        # ---------------------------------------------------------------------
-        # update run object (runstring should only be updated once here
-        #    otherwise we add arguments multiple times)
-        run_object.update(update_runstring=True)
-        # append to list
-        if not skip:
-            # log that we have validated run
-            wargs = [runid]
-            WLOG(params, '', textentry('40-503-00005', args=wargs))
+    # -------------------------------------------------------------------------
+    # deal with a single core (no multiprocessing)
+    if cores == 1 or params['REPROCESS_MP_TYPE_VAL'].lower() == 'linear':
+        # iterate through and make run objects
+        rdict = dict()
+        for it, run_item in enumerate(runlist):
+            # set up the arguments
+            args = [params, it, run_key, run_item, runlist, keylist,
+                    inrecipelist[it], indexdb, recipemod, skiptable,
+                    skip_storage]
+            # run as a single process
+            results = _linear_generate_id(*args)
             # append to run_objects
-            run_objects.append(run_object)
-        # else log that we are skipping
-        else:
-            # log that we have skipped run
-            wargs = [runid, reason]
-            WLOG(params, '', textentry('40-503-00006', args=wargs),
-                 colour='yellow')
+            for key in results:
+                rdict[key] = results[key]
+    # -------------------------------------------------------------------------
+    # otherwise multiprocess
+    # -------------------------------------------------------------------------
+    else:
+        # setup storage
+        rdict = dict()
+        # group by recipe and split into N=cores per recipe
+        groups = _group_gen_ids(keylist, inrecipelist, cores)
+        # loop around groups (recipes)
+        for group in groups:
+            # use pathos to multiprocess
+            if params['REPROCESS_MP_TYPE_VAL'].lower() == 'pathos':
+                results = _multi_process_gen_ids_pathos(params, groups[group],
+                                                        run_key, runlist, cores,
+                                                        keylist, inrecipelist,
+                                                        skiptable)
+            # use pool to continue parallelization
+            elif params['REPROCESS_MP_TYPE_VAL'].lower() == 'pool':
+                results = _multi_process_gen_ids_pool(params, groups[group],
+                                                      run_key, runlist, cores,
+                                                      keylist, inrecipelist,
+                                                      skiptable)
+            # use Process to continue parallelization
+            elif params['REPROCESS_MP_TYPE_VAL'].lower() == 'process':
+                # run as multiple processes
+                results = _multi_process_gen_ids_process(params, groups[group],
+                                                         run_key, runlist, cores,
+                                                         keylist, inrecipelist,
+                                                         skiptable)
+            else:
+                # TODO: Move to language database
+                emsg = 'Unknown multiprocessing type: {0}'
+                eargs = [params['REPROCESS_MP_TYPE_VAL']]
+                WLOG(params, 'error', emsg.format(*eargs))
+                continue
+            # push into rdict
+            for key in results:
+                rdict[key] = results[key]
+    # ---------------------------------------------------------------------
+    # recreate the run objects list from the return dict
+    #    sorted by key
+    # print progress
+    # TODO: Add to language database
+    msg = 'Analyzed {0} runs. Validated {1} runs. Skipped {2} runs.'
+    margs = [len(runlist), len(rdict), len(runlist) - len(rdict)]
+    WLOG(params, 'info', msg.format(*margs))
+    # sort the rdict into a run_object list
+    sorted_run = np.argsort(list(rdict.keys()))
+    run_values = list(rdict.values())
+    run_objects = list(np.array(run_values)[sorted_run])
+    # # sort keys into list
+    # storage of run objects
+    # run_objects = []
+    # for it in tqdm(range(len(run_keys))):
+    #     # get run object
+    #     run_object = run_values[it]
+    #     # append to run_objects
+    #     run_objects.append(run_object)
+    # -------------------------------------------------------------------------
     # return run objects
     return run_objects
+
+
+def _group_gen_ids(inkeylist: List[int], inrecipelist: List[DrsRecipe],
+                   cores=1) -> Dict[str, List[np.ndarray]]:
+    """
+    Group all ids in keylist by reipce and then in to N=cores groups
+
+    :param inkeylist: List of integers, the keys to sort
+    :param inrecipelist: List of DrsRecipe instances, the recipes to divide
+                         groups by
+    :param cores: int, the number of cores, each recipe has N=cores number of
+                  groups (or less)
+
+    :return: dictionary where each key is a recipe name and each value is a
+             list of numpy arrays, where each numpy array contains the keys
+             to process on a single core at a single time
+    """
+    # the group storage
+    groups = dict()
+    # force inkeylist to be an array
+    inkeylist = np.array(inkeylist)
+    # get a unique list of recipes
+    urecipes = set(map(lambda x: x.name, inrecipelist))
+    # loop around unique recipes (each recipe has to be its own group)
+    for urecipe in urecipes:
+        # find all keys where the recipe is this urecipe
+        mask = np.array(list(map(lambda x: x.name == urecipe, inrecipelist)))
+        # make each group a list (to send to each core)
+        groups[urecipe] = []
+        # sort into N=cores groups
+        groupnum = inkeylist[mask] % cores
+        # push each key into a group
+        for group in np.unique(groupnum):
+            groups[urecipe].append(inkeylist[mask][groupnum == group])
+    # return the groups
+    return groups
+
+
+def _multi_generate_id(params: ParamDict, subgroup: np.ndarray,
+                       run_key: str, runlist: List[str], keylist: List[int],
+                       inrecipelist: List[DrsRecipe], skiptable: Table,
+                       return_dict: Any, cores: int) -> Dict[int, Any]:
+    """
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param subgroup: numpy array, contains a list of id keys, these ids must
+                      be in keylist and correspond to the validations to be
+                      done on a single core, the length of groupkeys should be
+                      the number of cores given
+    :param run_key: str, the run key prefix i.e. {run_key}{key}
+                e.g. we get ID000001
+    :param runlist: list of str, the runstring for each id (length must match
+                    keylist)
+    :param keylist: list of int, the full list of ids (same length as runlist)
+    :param inrecipelist: list of DrsRecipe, one DrsRecipe class instance for
+                         each id in keylist
+    :param skiptable: astropy.Table, a table of recipes + cleaned runstrings,
+                      if recipe + runstring in this list we skip it.
+    :param return_dict: None or a dictionary manager to save the return
+                        dict to
+    :param cores: int, the number of cores to use
+
+    :return: dictionary, the return dict or a dictionary where each key is an
+             id and the value is the DrsRecipe
+    """
+    # get recipe definitions module (for this instrument)
+    recipemod = _get_recipe_module(params, logmsg=False)
+    # get the file index database
+    indexdb = FileIndexDatabase(params)
+    # set up a skip storage (so we don't redo things we don't have to many
+    #  times)
+    skip_storage = dict()
+    # return dictionary
+    if return_dict is None:
+        return_dict = dict()
+    # loop around keys
+    for it in subgroup:
+        # generate results for this iteration
+        results = _linear_generate_id(params, it, run_key, runlist[it], runlist,
+                                      keylist, inrecipelist[it], indexdb,
+                                      recipemod, skiptable, skip_storage, cores)
+        # push back into results
+        for key in results:
+            return_dict[key] = results[key]
+    # return all ids
+    return return_dict
+
+
+def _multi_process_gen_ids_pathos(params: ParamDict,
+                                  groupkeys: List[np.ndarray],
+                                  run_key: str, runlist: List[str],
+                                  cores: int, keylist: List[int],
+                                  inrecipelist: List[DrsRecipe],
+                                  skiptable: Table) -> Dict[str, Any]:
+    """
+    Takes all the groups of run files and validates them using
+    pathos.Pool.map
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param groupkeys: list of numpy arrays, each np.ndarray contains a list
+                      of id keys, these ids must be in keylist and correspond
+                      to the validations to be done on a single core, the
+                      length of groupkeys should be the number of cores
+                      given
+    :param run_key: str, the run key prefix i.e. {run_key}{key}
+                    e.g. we get ID000001
+    :param runlist: list of str, the runstring for each id (length must match
+                    keylist)
+    :param cores: int, the number of cores to use
+    :param keylist: list of int, the full list of ids (same length as runlist)
+    :param inrecipelist: list of DrsRecipe, one DrsRecipe class instance for
+                         each id in keylist
+    :param skiptable: astropy.Table, a table of recipes + cleaned runstrings,
+                      if recipe + runstring in this list we skip it.
+
+    :return: Dict, where each key is an id and the value is the DrsRecipe
+    """
+    # deal with Pool specific imports
+    from pathos.pools import ParallelPool as Pool
+    # set up the pool
+    pool = Pool(ncpus=cores, maxtasksperchild=1)
+    # list of params for each entry
+    params_per_process = []
+    # populate params for each sub group
+    for groupkey in groupkeys:
+        args = [params, groupkey, run_key, runlist, keylist,
+                inrecipelist, skiptable, None, cores]
+        params_per_process.append(args)
+    # transpose the params axis
+    params_per_process2 = list(zip(*params_per_process))
+    # start parallel jobs
+    results = pool.map(_multi_generate_id, *params_per_process2)
+    # Casting the ppmap generator to a list forces each result to be
+    # evaluated.  When done immediately after the jobs are submitted,
+    # our program twiddles its thumbs while the work is finished.
+    results = list(results)
+    return_dict = dict()
+    # fudge back into return dictionary
+    for row in range(len(results)):
+        for key in results[row]:
+            return_dict[key] = results[key]
+    # return return_dict
+    return dict(return_dict)
+
+
+def _multi_process_gen_ids_pool(params: ParamDict,
+                                groupkeys: List[np.ndarray],
+                                run_key: str, runlist: List[str],
+                                cores: int, keylist: List[int],
+                                inrecipelist: List[DrsRecipe],
+                                skiptable: Table) -> Dict[str, Any]:
+    """
+    Takes all the groups of run files and validates them using
+    multiprocessing.Pool.starmap
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param groupkeys: list of numpy arrays, each np.ndarray contains a list
+                      of id keys, these ids must be in keylist and correspond
+                      to the validations to be done on a single core, the
+                      length of groupkeys should be the number of cores
+                      given
+    :param run_key: str, the run key prefix i.e. {run_key}{key}
+                    e.g. we get ID000001
+    :param runlist: list of str, the runstring for each id (length must match
+                    keylist)
+    :param cores: int, the number of cores to use
+    :param keylist: list of int, the full list of ids (same length as runlist)
+    :param inrecipelist: list of DrsRecipe, one DrsRecipe class instance for
+                         each id in keylist
+    :param skiptable: astropy.Table, a table of recipes + cleaned runstrings,
+                      if recipe + runstring in this list we skip it.
+
+    :return: Dict, where each key is an id and the value is the DrsRecipe
+    """
+    # deal with Pool specific imports
+    from multiprocessing import get_context
+
+    return_dict = dict()
+    # list of params for each entry
+    params_per_process = []
+    # populate params for each sub group
+    for groupkey in groupkeys:
+        args = [params, groupkey, run_key, runlist, keylist,
+                inrecipelist, skiptable, None, cores]
+        params_per_process.append(args)
+    # start parallel jobs
+    with get_context('spawn').Pool(cores, maxtasksperchild=1) as pool:
+        results = pool.starmap(_multi_generate_id, params_per_process)
+    # fudge back into return dictionary
+    for row in range(len(results)):
+        for key in results[row]:
+            return_dict[key] = results[row][key]
+    # return return_dict
+    return dict(return_dict)
+
+
+def _multi_process_gen_ids_process(params: ParamDict,
+                                   groupkeys: List[np.ndarray],
+                                   run_key: str, runlist: List[str],
+                                   cores: int, keylist: List[int],
+                                   inrecipelist: List[DrsRecipe],
+                                   skiptable: Table) -> Dict[str, Any]:
+    """
+    Takes all the groups of run files and validates them using
+    multiprocessing.Process
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param groupkeys: list of numpy arrays, each np.ndarray contains a list
+                      of id keys, these ids must be in keylist and correspond
+                      to the validations to be done on a single core, the
+                      length of groupkeys should be the number of cores
+                      given
+    :param run_key: str, the run key prefix i.e. {run_key}{key}
+                    e.g. we get ID000001
+    :param runlist: list of str, the runstring for each id (length must match
+                    keylist)
+    :param cores: int, the number of cores to use
+    :param keylist: list of int, the full list of ids (same length as runlist)
+    :param inrecipelist: list of DrsRecipe, one DrsRecipe class instance for
+                         each id in keylist
+    :param skiptable: astropy.Table, a table of recipes + cleaned runstrings,
+                      if recipe + runstring in this list we skip it.
+
+    :return: Dict, where each key is an id and the value is the DrsRecipe
+    """
+    # import multiprocessing
+    from multiprocessing import Process, Manager
+    # storage for the return dictionary
+    rdict = dict()
+    # loop around each run
+    for groupkey in groupkeys:
+        # process storage
+        jobs = []
+        # start process manager
+        manager = Manager()
+        return_dict = manager.dict()
+        # get the arguments for this group
+        args = [params, groupkey, run_key, runlist, keylist,
+                inrecipelist, skiptable, return_dict, cores]
+        # get parallel process
+        process = Process(target=_multi_generate_id, args=args)
+        process.start()
+        jobs.append(process)
+        # do not continue until finished
+        for pit, proc in enumerate(jobs):
+            # debug log: MULTIPROCESS - joining job {0}
+            WLOG(params, 'debug', textentry('90-503-00021', args=[pit]))
+            proc.join()
+        # sort run objects and push into rdict (true dictionary)
+        for key in return_dict.keys():
+            rdict[key] = return_dict[key]
+        # delete the manager
+        del manager
+    return rdict
 
 
 def skip_run_object(params, runobj, skiptable, skip_storage):
@@ -1316,41 +1797,12 @@ def _check_for_sequences(rvalues, mod):
 def _generate_run_from_sequence(params: ParamDict, sequence,
                                 indexdb: FileIndexDatabase,
                                 return_recipes: bool = False,
-                                logmsg: bool = True):
+                                logmsg: bool = True,
+                                tstars: Union[List[str], None] = None,
+                                ostars: Union[List[str], None] = None,
+                                template_stars: Union[List[str], None] = None,
+                                ref_condition: str = ''):
     func_name = __NAME__ + '.generate_run_from_sequence()'
-    # -------------------------------------------------------------------------
-    # get telluric stars and non-telluric stars
-    # -------------------------------------------------------------------------
-    # get all telluric stars
-    tstars = telluric.get_tellu_include_list(params)
-    # get all other stars
-    ostars = get_non_telluric_stars(params, indexdb, tstars)
-    # -------------------------------------------------------------------------
-    # get odometer reject list (if required)
-    # -------------------------------------------------------------------------
-    # get whether the user wants to use reject list
-    _use_reject = params['USE_REJECTLIST']
-    # get the odometer reject list
-    reject_list = []
-    if not drs_text.null_text(_use_reject, ['', 'None']):
-        if drs_text.true_text(_use_reject):
-            reject_list = prep.get_file_reject_list(params)
-    # -------------------------------------------------------------------------
-    # get template list (if required)
-    # -------------------------------------------------------------------------
-    # get whether to recalculate templates
-    _recal_templates = params['RECAL_TEMPLATES']
-    # get a list of object names with templates
-    template_object_list = []
-    if not drs_text.null_text(_recal_templates, ['', 'None']):
-        if not drs_text.true_text(_recal_templates):
-            template_object_list = telluric.list_current_templates(params)
-            # print statement that we have been told not to recalculate
-            #   tempaltes and x many templates found
-            if len(template_object_list) > 0:
-                wargs = [len(template_object_list)]
-                WLOG(params, 'warning', textentry('10-503-00023', args=wargs),
-                     sublevel=2)
     # -------------------------------------------------------------------------
     # get filemod and recipe mod
     pconst = constants.pload()
@@ -1358,7 +1810,7 @@ def _generate_run_from_sequence(params: ParamDict, sequence,
     recipemod = pconst.RECIPEMOD()
     # generate sequence
     sequence[1].process_adds(params, tstars=list(tstars), ostars=list(ostars),
-                             template_stars=template_object_list,
+                             template_stars=template_stars,
                              logmsg=logmsg)
     # get the sequence recipe list
     srecipelist = sequence[1].sequence
@@ -1367,9 +1819,6 @@ def _generate_run_from_sequence(params: ParamDict, sequence,
         return srecipelist
     # storage for new runs to add
     newruns = []
-    # define the reference conditions (that affect all recipes)
-    ref_condition = gen_global_condition(params, indexdb,
-                                         reject_list)
     # ------------------------------------------------------------------
     # check we have rows left
     # ------------------------------------------------------------------
@@ -1430,11 +1879,11 @@ def _generate_run_from_sequence(params: ParamDict, sequence,
         # only do this for recipes with flag "template_required"
         if srecipe.template_required:
             # only continue if we have objects with templates
-            if len(template_object_list) > 0:
+            if len(template_stars) > 0:
                 # store sub-conditions
                 subs = []
                 # add to global conditions
-                for objname in template_object_list:
+                for objname in template_stars:
                     # build sub-condition
                     subs += ['KW_OBJNAME="{0}"'.format(objname)]
                 # generate full subcondition
@@ -1681,8 +2130,9 @@ def conditional_list(strlist: List[str], key: str, logic: str,
     return condition
 
 
-def gen_global_condition(params: ParamDict, indexdb: FileIndexDatabase,
-                         reject_list: List[str]) -> str:
+def gen_global_condition(params: ParamDict, findexdbm: FileIndexDatabase,
+                         reject_list: List[str], log: bool = True
+                         ) -> Tuple[str, List[str]]:
     """
     Generate the global conditions (based on run.ini) that will affect the
     sql conditions on all recipes i.e.:
@@ -1699,19 +2149,24 @@ def gen_global_condition(params: ParamDict, indexdb: FileIndexDatabase,
     :return: str, the sql global condition to apply to all recipes
     """
     # set up an sql condition that will get more complex as we go down
-    condition = 'BLOCK_KIND="raw"'
+    raw_condition = 'BLOCK_KIND="raw"'
+    # start condition off with the raw condition
+    condition = str(raw_condition)
+    # set up a list of obsdirs to keep (Empty = keep all)
+    list_of_obsdirs = []
     # ------------------------------------------------------------------
     # filer out engineering directories
     # ------------------------------------------------------------------
     if not params['USE_ENGINEERING']:
         # log that we are checking engineering nights
-        WLOG(params, '', textentry('40-503-00035'))
+        if log:
+            WLOG(params, '', textentry('40-503-00035'))
         # get sub condition for engineering nights
-        subcondition = _remove_engineering(params, indexdb, condition)
+        subcondition = _remove_engineering(params, findexdbm, condition)
         # add to conditions
         condition += subcondition
         # get length of database at this point
-        idb_len = indexdb.database.count(condition=condition)
+        idb_len = findexdbm.database.count(condition=condition)
         # deal with empty database (after conditions)
         if idb_len == 0:
             WLOG(params, 'warning', textentry('10-503-00016'), sublevel=8)
@@ -1732,10 +2187,11 @@ def gen_global_condition(params: ParamDict, indexdb: FileIndexDatabase,
         condition = conditional_list(exclude_obs_dirs, 'OBS_DIR', 'exclude',
                                      condition)
         # log blacklist
-        wargs = [' ,'.join(exclude_obs_dirs)]
-        WLOG(params, '', textentry('40-503-00026', args=wargs))
+        if log:
+            wargs = [' ,'.join(exclude_obs_dirs)]
+            WLOG(params, '', textentry('40-503-00026', args=wargs))
         # get length of database at this point
-        idb_len = indexdb.database.count(condition=condition)
+        idb_len = findexdbm.database.count(condition=condition)
         # deal with empty database (after conditions)
         if idb_len == 0:
             WLOG(params, 'warning', textentry('10-503-00006'), sublevel=8)
@@ -1751,14 +2207,17 @@ def gen_global_condition(params: ParamDict, indexdb: FileIndexDatabase,
     if not drs_text.null_text(params['INCLUDE_OBS_DIRS'], ['', 'All', 'None']):
         # get white list from params
         include_obs_dirs = params.listp('INCLUDE_OBS_DIRS', dtype=str)
+        # add to the list of observation directories to keep
+        list_of_obsdirs += include_obs_dirs
         # add included obs dirs to condition
         condition = conditional_list(include_obs_dirs, 'OBS_DIR', 'include',
                                      condition)
         # log whitelist
-        wargs = [', '.join(include_obs_dirs)]
-        WLOG(params, '', textentry('40-503-00027', args=wargs))
+        if log:
+            wargs = [', '.join(include_obs_dirs)]
+            WLOG(params, '', textentry('40-503-00027', args=wargs))
         # get length of database at this point
-        idb_len = indexdb.database.count(condition=condition)
+        idb_len = findexdbm.database.count(condition=condition)
         # deal with empty database (after conditions)
         if idb_len == 0:
             WLOG(params, 'warning', textentry('10-503-00007'), sublevel=8)
@@ -1778,10 +2237,11 @@ def gen_global_condition(params: ParamDict, indexdb: FileIndexDatabase,
         condition = conditional_list(pi_names, 'KW_PI_NAME', 'include',
                                      condition)
         # log pi name
-        wargs = [' ,'.join(pi_names)]
-        WLOG(params, '', textentry('40-503-00029', args=wargs))
+        if log:
+            wargs = [' ,'.join(pi_names)]
+            WLOG(params, '', textentry('40-503-00029', args=wargs))
         # get length of database at this point
-        idb_len = indexdb.database.count(condition=condition)
+        idb_len = findexdbm.database.count(condition=condition)
         # deal with empty database (after conditions)
         if idb_len == 0:
             WLOG(params, 'warning', textentry('10-503-00015'), sublevel=8)
@@ -1801,7 +2261,8 @@ def gen_global_condition(params: ParamDict, indexdb: FileIndexDatabase,
 
         if not drs_text.null_text(reject_criteria, ['None', '', 'Null']):
             # log progress
-            WLOG(params, '', textentry('40-503-00036'))
+            if log:
+                WLOG(params, '', textentry('40-503-00036'))
             # store sub-conditions
             subs = []
             # add to global conditions
@@ -1815,10 +2276,19 @@ def gen_global_condition(params: ParamDict, indexdb: FileIndexDatabase,
             # add to global condition (in reverse - we don't want these)
             condition += ' AND NOT ({0})'.format(subcondition)
     # ------------------------------------------------------------------
+    # deal with RUN_OBS_DIR being set
+    if not drs_text.null_text(params['RUN_OBS_DIR'], ['', 'All', 'None']):
+        list_of_obsdirs += [params['RUN_OBS_DIR']]
+    # ------------------------------------------------------------------
+    # deal with empty list of observation directories (set to all obsdirs)
+    if len(list_of_obsdirs) == 0:
+        list_of_obsdirs = findexdbm.database.unique('OBS_DIR',
+                                                   condition=raw_condition)
+    # ------------------------------------------------------------------
     # Return global condition
     # ------------------------------------------------------------------
     # return the condition
-    return condition
+    return condition, list_of_obsdirs
 
 
 # =============================================================================
@@ -2183,6 +2653,60 @@ def _multi_process_pool(params, runlist, cores, groupname=None,
         if not params['TEST_RUN']:
             update_index_db(params, findexdbm=findexdbm)
 
+    # return return_dict
+    return dict(return_dict)
+
+
+def _multi_process_pathos(params, runlist, cores, groupname=None,
+                          findexdbm: Optional[FileIndexDatabase] = None):
+    # first try to group tasks (now just by recipe)
+    grouplist, groupnames = _group_tasks2(runlist)
+    # set up the dictionary
+    return_dict = dict()
+    # deal with Pool specific imports
+    from pathos.pools import ParallelPool as Pool
+    # loop around groups
+    #   - each group is a unique recipe
+    for g_it, groupnum in enumerate(grouplist):
+        # get this groups values
+        group = grouplist[groupnum]
+        # log progress
+        _group_progress(params, g_it, grouplist, groupnames[groupnum])
+        # set up the pool
+        pool = Pool(cores, maxtasksperchild=1)
+        # # skip groups if event is set
+        # if event is not None and event.is_set():
+        #     # log that we are skipping group
+        #     WLOG(params, 'warning', textentry('10-000-00001'), sublevel=6)
+        #     continue
+        # list of params for each entry
+        params_per_process = []
+        # populate params for each sub group
+        for r_it, runlist_group in enumerate(group):
+            args = [params, [runlist_group], r_it + 1,
+                    cores, None, groupname]
+            params_per_process.append(args)
+        # transpose the params axis
+        params_per_process2 = list(zip(*params_per_process))
+        # start parellel jobs
+        results = pool.map(_linear_process, *params_per_process2)
+        # Casting the ppmap generator to a list forces each result to be
+        # evaluated.  When done immediately after the jobs are submitted,
+        # our program twiddles its thumbs while the work is finished.
+        results = list(results)
+        # fudge back into return dictionary
+        for row in range(len(results)):
+            for key in results[row]:
+                return_dict[key] = results[row][key]
+        # ---------------------------------------------------------------------
+        # update the index database (taking into account include/exclude lists)
+        #    we have to loop around block kinds to prevent recipe from updating
+        #    the index database every time a new recipe starts
+        # this is really important as we have disabled updating for parallel
+        #  runs to make it more efficient
+        # do not update if we are running a test
+        if not params['TEST_RUN']:
+            update_index_db(params, findexdbm=findexdbm)
     # return return_dict
     return dict(return_dict)
 
@@ -2747,8 +3271,13 @@ def group_run_files2(params: ParamDict, recipe: DrsRecipe,
 
     :return:
     """
+    # get number of cores
+    cores = _get_cores(params)
     # get hard upper limit for number of files in a group
-    limit = params['GROUP_FILE_LIMIT']
+    if recipe.limit is not None:
+        limit = recipe.limit
+    else:
+        limit = params['GROUP_FILE_LIMIT']
     # get grouping function
     group_function = recipe.group_func
     # deal with reference
@@ -2766,7 +3295,8 @@ def group_run_files2(params: ParamDict, recipe: DrsRecipe,
         return group_function(recipe.args, recipe.kwargs,
                               argdict, kwargdict,
                               group_column=group_column,
-                              ref=ref, limit=limit)
+                              ref=ref, limit=limit, params=params,
+                              cores=cores)
     # if we don't have one give warning
     else:
         # Log warning: No runs produced for {0} - No group function given'
@@ -2947,7 +3477,37 @@ def vstack_cols(tablelist: List[Table]) -> Union[Table, None]:
 # =============================================================================
 # Define working functions
 # =============================================================================
-def get_non_telluric_stars(params, indexdb: FileIndexDatabase,
+def get_uobjs_from_findex(params: ParamDict, indexdb: FileIndexDatabase,
+                          req_obs_dirs: Optional[List[str]] = None
+                          ) -> List[str]:
+    # ----------------------------------------------------------------------
+    # define the conditions for objects
+    dprtypes = params.listp('PP_OBJ_DPRTYPES', dtype=str)
+    # get the dprtype condition
+    subcond = []
+    for dprtype in dprtypes:
+        subcond.append('KW_DPRTYPE="{0}"'.format(dprtype))
+    condition = '({0})'.format(' OR '.join(subcond))
+    # deal with required observation directories
+    if req_obs_dirs is not None and len(req_obs_dirs) > 0:
+        # get a sub cond
+        subcond = []
+        # loop around required observation directories
+        for req_obs_dir in req_obs_dirs:
+            subcond.append(f'OBS_DIR="{req_obs_dir}"')
+        # add to condition
+        condition += f' AND ({(" OR ".join(subcond))}) '
+    # ----------------------------------------------------------------------
+    # obstype must be OBJECT
+    condition += params['REPROCESS_OBJ_SCI_SQL']
+    # get columns from index database
+    raw_objects = indexdb.get_entries(OBJNAMECOL, block_kind='raw',
+                                      condition=condition)
+    # ----------------------------------------------------------------------
+    return list(set(raw_objects))
+
+
+def get_non_telluric_stars(params: ParamDict, all_objects: List[str],
                            tstars: List[str]) -> List[str]:
     """
     Takes a table and gets all objects (OBJ_DARK and OBJ_FP) that are not in
@@ -2963,27 +3523,14 @@ def get_non_telluric_stars(params, indexdb: FileIndexDatabase,
     # deal with no tstars
     if drs_text.null_text(tstars, ['None', '']):
         tstars = []
-    # define the conditions for objects
-    dprtypes = params.listp('PP_OBJ_DPRTYPES', dtype=str)
-    # get the dprtype condition
-    subcond = []
-    for dprtype in dprtypes:
-        subcond.append('KW_DPRTYPE="{0}"'.format(dprtype))
-    condition = '({0})'.format(' OR '.join(subcond))
-    # obstype must be OBJECT
-    condition += params['REPROCESS_OBJ_SCI_SQL']
-    # get columns from index database
-    raw_objects = indexdb.get_entries(OBJNAMECOL, block_kind='raw',
-                                      condition=condition)
+    # ----------------------------------------------------------------------
     # deal with no table
     #    (can happen when coming from mk_tellu_db or fit_tellu_db etc)
-    if len(raw_objects) == 0:
+    if len(all_objects) == 0:
         return []
     # ----------------------------------------------------------------------
     # lets narrow down our list
     # ----------------------------------------------------------------------
-    # make a unique list of names
-    all_objects = np.unique(raw_objects)
     # now find all those not in tstars
     other_objects = []
     # loop around all objects
@@ -3088,23 +3635,54 @@ def _get_filters(params: ParamDict, srecipe: DrsRecipe,
                     tellu_include_list = telluric.get_tellu_include_list(params)
                     # note we need to update this list to match
                     # the cleaning that is done in preprocessing
-                    clist = objdbm.find_objnames(pconst, tellu_include_list)
+                    clist = objdbm.find_objnames(pconst, tellu_include_list,
+                                                 allow_empty=False,
+                                                 listname='TELLURIC_TARGETS')
+                    # deal with different length than when we started
+                    if len(clist) != len(tellu_include_list):
+                        emsg = ('Could not find all objects in '
+                                '{0} in astrometric database. '
+                                'Please check {0}, add missing objects to '
+                                'astrometric database or remove from {0} '
+                                'and try again. \n\t objnames={1}')
+                        eargs = ['TELLURIC_TARGETS',
+                                 ','.join(tellu_include_list)]
+                        WLOG(params, 'error', emsg.format(*eargs))
                     # add cleaned obj list to filters
-                    filters[key] = list(clist)
+                    filters[key] = list(np.unique(clist))
                 else:
                     continue
             # else assume we have a special list that is a string list
             #   (i.e. SCIENCE_TARGETS = "target1, target2, target3"
             elif isinstance(user_filter, str):
                 objlist = _split_string_list(user_filter, allow_whitespace=True)
-                # note we need to update this list to match
-                # the cleaning that is done in preprocessing
-                clist = objdbm.find_objnames(pconst, objlist)
-                # add cleaned obj list to filters
-                filters[key] = list(clist)
+
                 if value == 'SCIENCE_TARGETS':
+                    # note we need to update this list to match
+                    # the cleaning that is done in preprocessing
+                    clist = objdbm.find_objnames(pconst, objlist,
+                                                 allow_empty=False,
+                                                 listname='SCIENCE_TARGETS')
+                    # deal with different length than when we started
+                    if len(clist) != len(objlist):
+                        emsg = ('Could not find all objects in '
+                                '{0} in astrometric database. '
+                                'Please check {0}, add missing objects to '
+                                'astrometric database or remove from {0} '
+                                'and try again. \n\t objnames={1}')
+                        eargs = ['SCIENCE_TARGETS', ', '.join(objlist)]
+                        WLOG(params, 'error', emsg.format(*eargs))
+                    # add cleaned obj list to filters
+                    filters[key] = list(np.unique(clist))
                     # update science targets
-                    params.set('SCIENCE_TARGETS', value=', '.join(clist))
+                    params.set('SCIENCE_TARGETS', value=','.join(clist))
+                else:
+                    # note we need to update this list to match
+                    # the cleaning that is done in preprocessing
+                    clist = objdbm.find_objnames(pconst, objlist,
+                                                 allow_empty=True)
+                    # add cleaned obj list to filters
+                    filters[key] = list(np.unique(clist))
             else:
                 continue
         # else assume we have a straight string to look for (if it is a valid
@@ -3168,6 +3746,11 @@ def _get_filters(params: ParamDict, srecipe: DrsRecipe,
                 elif params.instances[_filter].group not in ['raw', 'ppraw']:
                     # delete if not raw
                     del filters[_filter]
+    # -------------------------------------------------------------------------
+    # remove filters that are empty
+    for _filter in filters:
+        if len(filters[_filter]) == 0:
+            del filters[_filter]
     # -------------------------------------------------------------------------
     # return filters
     return filters
@@ -3839,6 +4422,7 @@ def _gen_run(params: ParamDict, rundict: Dict[str, ArgDictType],
                 # find position in combinations
                 pos = np.where(pkeys == argname)[0][0]
                 # get value from combinations
+                # noinspection PyUnresolvedReferences
                 value = combination[pos]
             else:
                 value = rundict[argname]

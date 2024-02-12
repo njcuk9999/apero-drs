@@ -46,6 +46,7 @@ blank_ofile = out.BlankOutFile()
 general_ofile = out.GeneralOutFile()
 debug_ofile = out.DebugOutFile()
 set_ofile = out.SetOutFile()
+lbl_ofile = out.LBLOutFile()
 post_ofile = out.PostOutFile()
 calib_ofile = out.CalibOutFile()
 refcalib_ofile = out.RefCalibOutFile()
@@ -1645,6 +1646,87 @@ red_file.addset(out_stokesi_s1dw)
 red_file.addset(out_stokesi_s1dv)
 
 # =============================================================================
+# LBL processed Files
+# =============================================================================
+lbl_fibers = ['AB']
+
+# lbl template file
+lbl_template_file = drs_input('LBL_TEMPLATE', path='templates',
+                              filetype='.fits',
+                              basename='Template_s1dv_{obj}_sc1d_v_file_AB',
+                              datatype='table',
+                              outclass=lbl_ofile,
+                              description='Telluric 1D template file',
+                              required=False)
+
+# lbl mask file
+lbl_mask_file = drs_input('LBL_MASK',
+                          filetype='.fits', path='masks',
+                          basename='{obj}', datatype='table',
+                          outclass=lbl_ofile,
+                          description='Telluric mask file')
+
+# lbl fits files
+lbl_fits_file = drs_finput('LBL_FITS', filetype='.fits',
+                           path='lblrv/{obj}_{temp}/',
+                           suffix='_{obj}_{temp}_lbl',
+                           datatype='table',
+                           outclass=lbl_ofile, instrument=__INSTRUMENT__,
+                           description='LBL line list fits files')
+
+# lbl rdb file
+lbl_rdb_file = drs_input('LBL_RDB',
+                         filetype='.rdb', path='lblrdb',
+                         basename='lbl_{obj}_{temp}', datatype='table',
+                         outclass=lbl_ofile,
+                         description='LBL rdb file (RVs) in ascii-rdb format')
+
+# lbl rdb fits file
+lbl_rdb_fits_file = drs_input('LBL_RDB_FITS',
+                              filetype='.fits', path='lblrdb',
+                              basename='lbl_{obj}_{temp}', datatype='table',
+                              outclass=lbl_ofile,
+                              description='LBL rdb file (RVs) in fits format')
+
+# lbl rdb2 file
+lbl_rdb2_file = drs_input('LBL_RDB2',
+                         filetype='.rdb', path='lblrdb',
+                         basename='lbl2_{obj}_{temp}', datatype='table',
+                         outclass=lbl_ofile,
+                         description='LBL binned per night rdb file (RVs)')
+
+# lbl drift file
+lbl_drift_file = drs_input('LBL_DRIFT',
+                           filetype='.rdb', path='lblrdb',
+                           basename='drift',
+                           datatype='table',
+                           outclass=lbl_ofile,
+                           description='LBL drift file (calculated from FPs)',
+                           required=False)
+
+
+# lbl rdb file with drift
+lbl_rdb_drift_file = drs_input('LBL_RDB_DRIFT',
+                               filetype='.rdb', path='lblrdb',
+                               basename='lbl_{obj}_{temp}_drift',
+                               datatype='table',
+                               outclass=lbl_ofile,
+                               description='LBL Drift corrected rdb file',
+                               required=False)
+
+
+# lbl rdb2 file with drift
+lbl_rdb2_drift_file = drs_input('LBL_RDB2_DRIFT',
+                               filetype='.rdb', path='lblrdb',
+                               basename='lbl2_{obj}_{temp}_drift',
+                               datatype='table',
+                               outclass=lbl_ofile,
+                               description='LBL Drift corrected binned '
+                                           'rdb file',
+                               required=False)
+
+
+# =============================================================================
 # Post processed Files
 # =============================================================================
 # generic post processed file
@@ -1806,7 +1888,22 @@ post_s_file.add_column('S1D_W', out_tellu_rc1d_w, fiber='AB',
 post_s_file.add_column('S1D_W', out_tellu_rc1d_w, fiber='AB',
                        incol='eflux', outcol='ReconErr',
                        required=False, block_kind='red', clear_file=True)
-
+# TODO: from telluric database?
+post_s_file.add_column('S1D_W', out_tellu_rc1d_w, fiber='AB',
+                       incol='SKYC_flux', outcol='SkyCorr',
+                       required=False, block_kind='red', clear_file=True)
+# TODO: from telluric database?
+post_s_file.add_column('S1D_W', out_tellu_rc1d_w, fiber='AB',
+                       incol='SKYC_eflux', outcol='SkyCorrErr',
+                       required=False, block_kind='red', clear_file=True)
+# TODO: from telluric database?
+post_s_file.add_column('S1D_W', out_tellu_rc1d_w, fiber='AB',
+                       incol='FRES_flux', outcol='FiniteRes',
+                       required=False, block_kind='red', clear_file=True)
+# TODO: from telluric database?
+post_s_file.add_column('S1D_W', out_tellu_rc1d_w, fiber='AB',
+                       incol='FRES_eflux', outcol='FiniteResErr',
+                       required=False, block_kind='red', clear_file=True)
 # s1d w is a composite table
 post_s_file.add_ext('S1D_V', 'table', pos=2, block_kind='red',
                     link='PP', hlink='KW_IDENTIFIER',
@@ -1880,12 +1977,29 @@ post_s_file.add_column('S1D_V', out_tellu_sc1d_v,
                        block_kind='red', clear_file=True)
 # TODO: from telluric database?
 post_s_file.add_column('S1D_V', out_tellu_rc1d_v, fiber='AB',
-                       incol='flux', outcol='Recon',
+                       incol='RECON_flux', outcol='Recon',
                        required=False, block_kind='red', clear_file=True)
 # TODO: from telluric database?
 post_s_file.add_column('S1D_V', out_tellu_rc1d_v, fiber='AB',
-                       incol='eflux', outcol='ReconErr',
+                       incol='RECON_eflux', outcol='ReconErr',
                        required=False, block_kind='red', clear_file=True)
+# TODO: from telluric database?
+post_s_file.add_column('S1D_V', out_tellu_rc1d_v, fiber='AB',
+                       incol='SKYC_flux', outcol='SkyCorr',
+                       required=False, block_kind='red', clear_file=True)
+# TODO: from telluric database?
+post_s_file.add_column('S1D_V', out_tellu_rc1d_v, fiber='AB',
+                       incol='SKYC_eflux', outcol='SkyCorrErr',
+                       required=False, block_kind='red', clear_file=True)
+# TODO: from telluric database?
+post_s_file.add_column('S1D_V', out_tellu_rc1d_v, fiber='AB',
+                       incol='FRES_flux', outcol='FiniteRes',
+                       required=False, block_kind='red', clear_file=True)
+# TODO: from telluric database?
+post_s_file.add_column('S1D_V', out_tellu_rc1d_v, fiber='AB',
+                       incol='FRES_eflux', outcol='FiniteResErr',
+                       required=False, block_kind='red', clear_file=True)
+
 
 # move header keys
 post_s_file.add_hkey('KW_VERSION', inheader='S1D_W', outheader='PP')

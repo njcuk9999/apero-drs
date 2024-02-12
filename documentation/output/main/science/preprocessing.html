@@ -3,20 +3,19 @@
 
 <!doctype html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>Preprocessing functionality &#8212; APERO 0.7.259 documentation</title>
+    <title>Preprocessing functionality &#8212; APERO 0.8.001 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/apero.css" />
     
     <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
     <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
     <script src="../../_static/bizstyle.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
@@ -78,6 +77,8 @@
         <i class="fa fa-git-square fa-3x" aria-hidden="true"></i></a></li>
     <li><a title="download pdf" href="../../apero-docs.pdf">
         <i class="fa fa-download fa-3x" aria-hidden="true"></i></a></li>
+    <li><a title="UdeM" href="/main/misc/udem.html">
+        <i class="fa fa-university fa-3x" aria-hidden="true"></i></a></li>
   </ul>
     <div>
     <a href="../../index.html">
@@ -101,7 +102,7 @@
         <li class="right" >
           <a href="calib.html" title="Preprocessing functionality"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.7.259 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.8.001 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../general/main_general.html" >General User documentation</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="../general/deep.html" accesskey="U">APERO in depth</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Preprocessing functionality</a></li> 
@@ -109,8 +110,9 @@
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">Preprocessing functionality</a><ul>
 <li><a class="reference internal" href="#raw-file-header-fixing">Raw file header fixing</a></li>
 <li><a class="reference internal" href="#raw-file-identification">Raw file identification</a></li>
@@ -119,12 +121,17 @@
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="calib.html"
-                        title="previous chapter">Preprocessing functionality</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="../../auto/tool_definitions/default/tools.html"
-                        title="next chapter">User tools</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="calib.html"
+                          title="previous chapter">Preprocessing functionality</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="../../auto/tool_definitions/default/tools.html"
+                          title="next chapter">User tools</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -141,7 +148,7 @@
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
 
@@ -151,9 +158,9 @@
           <div class="body" role="main">
             
   <section id="preprocessing-functionality">
-<span id="science-preprocessing"></span><h1>Preprocessing functionality<a class="headerlink" href="#preprocessing-functionality" title="Permalink to this headline">¶</a></h1>
+<span id="science-preprocessing"></span><h1>Preprocessing functionality<a class="headerlink" href="#preprocessing-functionality" title="Permalink to this heading">¶</a></h1>
 <section id="raw-file-header-fixing">
-<span id="science-preprocessing-header-fixes"></span><h2>Raw file header fixing<a class="headerlink" href="#raw-file-header-fixing" title="Permalink to this headline">¶</a></h2>
+<span id="science-preprocessing-header-fixes"></span><h2>Raw file header fixing<a class="headerlink" href="#raw-file-header-fixing" title="Permalink to this heading">¶</a></h2>
 <p>The header fixes are controlled via <code class="xref py py-meth docutils literal notranslate"><span class="pre">apero.core.core.drs_file.fix_header()</span></code>
 which in turn uses the <a class="reference internal" href="../misc/glossary.html#term-PseudoConst"><span class="xref std std-term">PseudoConst</span></a> method <code class="xref py py-meth docutils literal notranslate"><span class="pre">HEADER_FIXES()</span></code>.
 This is defined for each instrument
@@ -167,7 +174,7 @@ This is defined for each instrument
 </ul>
 </section>
 <section id="raw-file-identification">
-<span id="science-preprocessing-file-identification"></span><h2>Raw file identification<a class="headerlink" href="#raw-file-identification" title="Permalink to this headline">¶</a></h2>
+<span id="science-preprocessing-file-identification"></span><h2>Raw file identification<a class="headerlink" href="#raw-file-identification" title="Permalink to this heading">¶</a></h2>
 <p>This takes a given input file and checks it against the instrument <a class="reference internal" href="../misc/glossary.html#term-file-definitions"><span class="xref std std-term">file-definitions</span></a>.
 The <a class="reference internal" href="../misc/glossary.html#term-file-definitions"><span class="xref std std-term">file-definitions</span></a> give all the criteria by which an input file can be
 matched as a specific drs file type.</p>
@@ -177,7 +184,7 @@ a tuple - whether the file was found in the instruments definition and the
 drs file type (<a class="reference internal" href="../misc/glossary.html#term-DrsInputFile"><span class="xref std std-term">DrsInputFile</span></a> instance)</p>
 </section>
 <section id="gaia-id-and-object-finding">
-<span id="science-preprocessing-object-finding"></span><h2>Gaia ID and object finding<a class="headerlink" href="#gaia-id-and-object-finding" title="Permalink to this headline">¶</a></h2>
+<span id="science-preprocessing-object-finding"></span><h2>Gaia ID and object finding<a class="headerlink" href="#gaia-id-and-object-finding" title="Permalink to this heading">¶</a></h2>
 <p>We assume the header either has a Gaia ID column (defined by the <a class="reference internal" href="../misc/glossary.html#term-2"><span class="xref std std-term">KW_GAIA_ID</span></a> keyword)
 or a valid object name (defined by the <a class="reference internal" href="../misc/glossary.html#term-3"><span class="xref std std-term">KW_OBJECTNAME</span></a> keyword).</p>
 <p>We then attempt to resolve parameters in the following order</p>
@@ -232,7 +239,7 @@ may lead to inconsistent data sets.</p>
         <li class="right" >
           <a href="calib.html" title="Preprocessing functionality"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.7.259 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.8.001 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../general/main_general.html" >General User documentation</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="../general/deep.html" >APERO in depth</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Preprocessing functionality</a></li> 
@@ -240,7 +247,7 @@ may lead to inconsistent data sets.</p>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2019, Neil Cook.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 6.1.3.
     </div>
   </body>
 </html>

@@ -101,6 +101,14 @@ DRS_DATA_RUN.value = '/drs/spirou/data/run'
 DRS_DATA_ASSETS = DRS_DATA_ASSETS.copy(__NAME__)
 DRS_DATA_ASSETS.value = '/drs/spirou/data/assets'
 
+#   Define the other directory
+DRS_DATA_OTHER = DRS_DATA_OTHER.copy(__NAME__)
+DRS_DATA_OTHER.value = '/drs/spirou/data/other'
+
+# Define the lbl directory
+LBL_PATH = LBL_PATH.copy(__NAME__)
+LBL_PATH.value = '/drs/spirou/data/lbl'
+
 # =============================================================================
 # DATABASE SETTINGS
 # =============================================================================

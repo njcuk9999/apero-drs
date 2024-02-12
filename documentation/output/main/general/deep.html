@@ -3,20 +3,19 @@
 
 <!doctype html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>APERO in depth &#8212; APERO 0.7.259 documentation</title>
+    <title>APERO in depth &#8212; APERO 0.8.001 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/apero.css" />
     
     <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
     <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
     <script src="../../_static/bizstyle.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
@@ -78,6 +77,8 @@
         <i class="fa fa-git-square fa-3x" aria-hidden="true"></i></a></li>
     <li><a title="download pdf" href="../../apero-docs.pdf">
         <i class="fa fa-download fa-3x" aria-hidden="true"></i></a></li>
+    <li><a title="UdeM" href="/main/misc/udem.html">
+        <i class="fa fa-university fa-3x" aria-hidden="true"></i></a></li>
   </ul>
     <div>
     <a href="../../index.html">
@@ -101,15 +102,16 @@
         <li class="right" >
           <a href="todo.html" title="TODO"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.7.259 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.8.001 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="main_general.html" accesskey="U">General User documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">APERO in depth</a></li> 
       </ul>
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">APERO in depth</a><ul>
 <li><a class="reference internal" href="#the-base-module">The base module</a></li>
 <li><a class="reference internal" href="#the-core-module">The core module</a></li>
@@ -123,12 +125,17 @@
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="todo.html"
-                        title="previous chapter">TODO</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="../science/calib.html"
-                        title="next chapter">Preprocessing functionality</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="todo.html"
+                          title="previous chapter">TODO</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="../science/calib.html"
+                          title="next chapter">Preprocessing functionality</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -145,7 +152,7 @@
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
 
@@ -155,27 +162,27 @@
           <div class="body" role="main">
             
   <section id="apero-in-depth">
-<span id="deep"></span><h1>APERO in depth<a class="headerlink" href="#apero-in-depth" title="Permalink to this headline">¶</a></h1>
+<span id="deep"></span><h1>APERO in depth<a class="headerlink" href="#apero-in-depth" title="Permalink to this heading">¶</a></h1>
 <section id="the-base-module">
-<h2>The base module<a class="headerlink" href="#the-base-module" title="Permalink to this headline">¶</a></h2>
+<h2>The base module<a class="headerlink" href="#the-base-module" title="Permalink to this heading">¶</a></h2>
 <p>The base module contains very basic functionality and is kept at a bare
 minimum, in general sub-modules and scripts in here cannot use other APERO
 functionality (hence the less functionality in here the better).</p>
 </section>
 <section id="the-core-module">
-<h2>The core module<a class="headerlink" href="#the-core-module" title="Permalink to this headline">¶</a></h2>
+<h2>The core module<a class="headerlink" href="#the-core-module" title="Permalink to this heading">¶</a></h2>
 <p>This is where the core functionality is stored. In general all core functionality
 should be instrument independent, however there is a separate sub-module specifically
 for instrument dependent code (and default settings).</p>
 </section>
 <section id="the-io-module">
-<h2>The io module<a class="headerlink" href="#the-io-module" title="Permalink to this headline">¶</a></h2>
+<h2>The io module<a class="headerlink" href="#the-io-module" title="Permalink to this heading">¶</a></h2>
 <p>This is the input/output module. In general these should not use any functionality
 from APERO and instead are modules that have independent pieces of code or use
 other python modules related to the input and output of files (reading, writing etc.).</p>
 </section>
 <section id="the-language-module">
-<h2>The language module<a class="headerlink" href="#the-language-module" title="Permalink to this headline">¶</a></h2>
+<h2>The language module<a class="headerlink" href="#the-language-module" title="Permalink to this heading">¶</a></h2>
 <p>This module has all the functionality referring to the language database (except
 the database itself which is a base module). The language functionality refers to
 the use of the print codes and relating them to a specific language - i.e. no user
@@ -183,16 +190,16 @@ text should be written into the codes instead should be referred to via codes to
 text in the langauge database.</p>
 </section>
 <section id="the-plotting-module">
-<h2>The plotting module<a class="headerlink" href="#the-plotting-module" title="Permalink to this headline">¶</a></h2>
+<h2>The plotting module<a class="headerlink" href="#the-plotting-module" title="Permalink to this heading">¶</a></h2>
 <p>All plotting functionality should be located in here and called from any recipe
 when required. In theory no plotting code should be located elsewhere in APERO.</p>
 </section>
 <section id="the-recipe-module">
-<h2>The Recipe module<a class="headerlink" href="#the-recipe-module" title="Permalink to this headline">¶</a></h2>
+<h2>The Recipe module<a class="headerlink" href="#the-recipe-module" title="Permalink to this heading">¶</a></h2>
 <p>This is where the recipes for each instrument are stored.</p>
 </section>
 <section id="the-science-module">
-<h2>The science module<a class="headerlink" href="#the-science-module" title="Permalink to this headline">¶</a></h2>
+<h2>The science module<a class="headerlink" href="#the-science-module" title="Permalink to this heading">¶</a></h2>
 <p>The science module contains all functionality related to astrophysics
 algorithms. It is divided into sub-modules as follows: calibration
 functionality (“calib”), extraction functionality (“extract”), polarimetry
@@ -207,7 +214,7 @@ functionality (“velocity”).</p>
 </div>
 </section>
 <section id="the-tools-module">
-<h2>The tools module<a class="headerlink" href="#the-tools-module" title="Permalink to this headline">¶</a></h2>
+<h2>The tools module<a class="headerlink" href="#the-tools-module" title="Permalink to this heading">¶</a></h2>
 <p>This is where the tools are stored - their recipes and the sub-module
 functionality to use them.</p>
 </section>
@@ -232,14 +239,14 @@ functionality to use them.</p>
         <li class="right" >
           <a href="todo.html" title="TODO"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.7.259 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.8.001 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="main_general.html" >General User documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">APERO in depth</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2019, Neil Cook.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 6.1.3.
     </div>
   </body>
 </html>

@@ -25,7 +25,7 @@ __release__ = base.__release__
 # Define the header key that uniquely identifies the file
 #     (i.e. an odometer code)
 KW_IDENTIFIER = KW_IDENTIFIER.copy(__NAME__)
-KW_IDENTIFIER.set(key='FILENAME',
+KW_IDENTIFIER.set(key='ARCFILE',
                   comment='filename anticipated by fitspipe server',
                   group='raw')
 
@@ -58,7 +58,7 @@ KW_GAIN.set(key='HIERARCH ESO DET OUT1 CONAD',
 KW_EXPTIME = KW_EXPTIME.copy(__NAME__)
 KW_EXPTIME.set(key='EXPTIME', unit=uu.s,
                comment='[sec] Integration time',
-               combine_method='sum', group='raw')
+               combine_method='math', group='raw')
 
 # define the required exposure time HEADER key (used to get value only)
 # NIRPS-CHANGE: Do we have this for NIRPS?
@@ -66,7 +66,7 @@ KW_EXPTIME.set(key='EXPTIME', unit=uu.s,
 KW_EXPREQ = KW_EXPREQ.copy(__NAME__)
 KW_EXPREQ.set(key='EXPTIME', unit=uu.s,
               comment='[sec] Requested integration time',
-              combine_method='sum', group='raw')
+              combine_method='math', group='raw')
 
 # define the observation type HEADER key
 KW_OBSTYPE = KW_OBSTYPE.copy(__NAME__)
@@ -120,6 +120,11 @@ KW_NEXP.set(key='HIERARCH ESO TPL NEXP',
 KW_PI_NAME = KW_PI_NAME.copy(__NAME__)
 KW_PI_NAME.set(key='HIERARCH ESO OBS PI-COI NAME',
                comment='The PI of the program', group='raw')
+
+# define the run id HEADER key
+KW_RUN_ID = KW_RUN_ID.copy(__NAME__)
+KW_RUN_ID.set(key='HIERARCH ESO OBS PROG ID',
+              comment='ESO program identification', group='raw')
 
 # define the instrument HEADER key
 KW_INSTRUMENT = KW_INSTRUMENT.copy(__NAME__)
@@ -554,6 +559,10 @@ KW_FIBER.set(key='FIBER', comment='The fiber name')
 KW_TDBSKY = KW_TDBSKY.copy(__NAME__)
 KW_TDBSKY.set(key='TDTSKYCO', comment='Sky model used for sky correction')
 
+# define the measured effective readout noise
+KW_EFF_RON = KW_EFF_RON.copy(__NAME__)
+KW_EFF_RON.set(key='EFFRON', comment='Measured eff readout noise before ext')
+
 # -----------------------------------------------------------------------------
 # Define DRS outputs keywords
 # -----------------------------------------------------------------------------
@@ -629,6 +638,21 @@ KW_PP_LED_FLAT_P84.set(key='PPLEDP84', comment='LED RMS 84th percentile')
 # Define the LED flat file used
 KW_PP_LED_FLAT_FILE = KW_PP_LED_FLAT_FILE.copy(__NAME__)
 KW_PP_LED_FLAT_FILE.set(key='PPLEDFIL', comment='LED flat file used')
+
+# Define the flux-weighted mid-exposure [Expert use only]
+KW_PP_MJD_FLUX = KW_PP_MJD_FLUX.copy(__NAME__)
+KW_PP_MJD_FLUX.set(key='MJD_FLUX',
+                   comment='weighted flux in posemeter [Expert use only]')
+
+# Define fractional RMS of posemteter [Expert use only]
+KW_PP_RMS_POSE = KW_PP_RMS_POSE.copy(__NAME__)
+KW_PP_RMS_POSE.set(key='RMS_POSE ',
+                   comment='RMS of flux in posemeter [Expert use only]')
+
+# Define median flux in posemeter [Expert use only]
+KW_PP_MED_POSE = KW_PP_MED_POSE.copy(__NAME__)
+KW_PP_MED_POSE.set(key='MED_POSE',
+                   comment='Median flux in posemeter [Expert use only]')
 
 # -----------------------------------------------------------------------------
 # Define apero_dark variables
@@ -812,7 +836,7 @@ KW_EXT_START.set(key='EXTSTART', comment='Extract: Start order for extraction')
 
 # the end order for extraction
 KW_EXT_END = KW_EXT_END.copy(__NAME__)
-KW_EXT_END.set(key='EXTEND', comment='Extract: End order for extraction')
+KW_EXT_END.set(key='EXT_END', comment='Extract: End order for extraction')
 
 # the upper bound for extraction of order
 KW_EXT_RANGE1 = KW_EXT_RANGE1.copy(__NAME__)
@@ -1703,7 +1727,7 @@ KW_TELLUP_DO_PRECLEAN.set(key='TLPDOFRC', comment='tellu finite res corr done',
 # Define default water absorption used (tellu pre-cleaning)
 KW_TELLUP_DFLT_WATER = KW_TELLUP_DFLT_WATER.copy(__NAME__)
 KW_TELLUP_DFLT_WATER.set(key='TLPDFH2O',
-                         comment='tellu preclean default h20 abso used',
+                         comment='tellu preclean default H2O abso used',
                          parent='TELLUP_D_WATER_ABSO')
 
 # Define ccf scan range that was used (tellu pre-cleaning)
@@ -1890,7 +1914,7 @@ KW_FTELLU_NPC = KW_FTELLU_NPC.copy(__NAME__)
 KW_FTELLU_NPC.set(key='FTT_NPC',
                   comment='ftellu Number of principal components used')
 
-# The number of trans files used in pc fit (closest in expo h20/others)
+# The number of trans files used in pc fit (closest in expo H2O/others)
 KW_FTELLU_NTRANS = KW_FTELLU_NTRANS.copy(__NAME__)
 KW_FTELLU_NTRANS.set(key='FTT_NTRS',
                      comment='ftellu NUmber of trans files used in pc fit')

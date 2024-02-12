@@ -252,6 +252,17 @@ def save_tmp_orderps_file(params: ParamDict, recipe: DrsRecipe,
                                     dymap=sprops['SHAPEY'], )
         # copy full header from order profile
         orderpsfile.copy_header(header=orderhdr)
+        # add version
+        orderpsfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
+        # add dates
+        orderpsfile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
+        orderpsfile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
+        # add process id
+        orderpsfile.add_hkey('KW_PID', value=params['PID'])
+        # add output tag
+        orderpsfile.add_hkey('KW_OUTPUT', value=orderpsfile.name)
+        orderpsfile.add_hkey('KW_FIBER', value=fiber)
+        # add the shape keys
         orderpsfile.add_hkey('KW_CDBSHAPEL', value=sprops['SHAPELFILE'])
         orderpsfile.add_hkey('KW_CDTSHAPEL', value=sprops['SHAPELTIME'])
         orderpsfile.add_hkey('KW_CDBSHAPEDX', value=sprops['SHAPEXFILE'])
@@ -550,7 +561,7 @@ def qc_extraction(params, eprops):
     qc_values.append('NaN')
     qc_names.append('image')
     qc_logic.append('image is all NaN')
-    # --------------------------------------------------------------
+    # -------------------------------------------------------------------------
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):
@@ -713,6 +724,8 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     # ----------------------------------------------------------------------
     # add extraction type (does not change for future files)
     e2dsfile.add_hkey('KW_EXT_TYPE', value=e2dsfile.name)
+    # add effective readout noise
+    e2dsfile.add_hkey('KW_EFF_RON', value=eprops['EFF_RON'])
     # add SNR parameters to header
     e2dsfile.add_hkey_1d('KW_EXT_SNR', values=eprops['SNR'],
                          dim1name='order')
@@ -995,6 +1008,8 @@ def write_extraction_files_ql(params, recipe, infile, rawfiles, combine, fiber,
     # ----------------------------------------------------------------------
     # add extraction type (does not change for future files)
     e2dsfile.add_hkey('KW_EXT_TYPE', value=e2dsfile.name)
+    # add effective readout noise
+    e2dsfile.add_hkey('KW_EFF_RON', value=eprops['EFF_RON'])
     # add SNR parameters to header
     e2dsfile.add_hkey_1d('KW_EXT_SNR', values=eprops['SNR'],
                          dim1name='order')

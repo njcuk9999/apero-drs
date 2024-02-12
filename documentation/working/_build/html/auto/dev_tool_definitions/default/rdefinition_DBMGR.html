@@ -3,20 +3,19 @@
 
 <!doctype html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>apero_database &#8212; APERO 0.7.259 documentation</title>
+    <title>apero_database &#8212; APERO 0.8.001 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/apero.css" />
     
     <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
-    <script src="../../../_static/jquery.js"></script>
-    <script src="../../../_static/underscore.js"></script>
     <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/sphinx_highlight.js"></script>
     <script src="../../../_static/bizstyle.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
@@ -78,6 +77,8 @@
         <i class="fa fa-git-square fa-3x" aria-hidden="true"></i></a></li>
     <li><a title="download pdf" href="../../../apero-docs.pdf">
         <i class="fa fa-download fa-3x" aria-hidden="true"></i></a></li>
+    <li><a title="UdeM" href="/main/misc/udem.html">
+        <i class="fa fa-university fa-3x" aria-hidden="true"></i></a></li>
   </ul>
     <div>
     <a href="../../../index.html">
@@ -101,7 +102,7 @@
         <li class="right" >
           <a href="rdefinition_CLOG.html" title="apero_changelog"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.259 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.8.001 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../../main/developer/main_dev.html" >Developer how to guide</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="dev_tools.html" accesskey="U">Dev tools</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">apero_database</a></li> 
@@ -109,8 +110,9 @@
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../../../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../../../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">apero_database</a><ul>
 <li><a class="reference internal" href="#description">1. Description</a></li>
 <li><a class="reference internal" href="#schematic">2. Schematic</a></li>
@@ -125,12 +127,17 @@
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="rdefinition_CLOG.html"
-                        title="previous chapter">apero_changelog</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="rdefinition_LANG.html"
-                        title="next chapter">apero_langdb</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="rdefinition_CLOG.html"
+                          title="previous chapter">apero_changelog</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="rdefinition_LANG.html"
+                          title="next chapter">apero_langdb</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -147,7 +154,7 @@
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
 
@@ -157,9 +164,9 @@
           <div class="body" role="main">
             
   <section id="apero-database">
-<span id="dev-tools-default-dbmgr"></span><h1>apero_database<a class="headerlink" href="#apero-database" title="Permalink to this headline">¶</a></h1>
+<span id="dev-tools-default-dbmgr"></span><h1>apero_database<a class="headerlink" href="#apero-database" title="Permalink to this heading">¶</a></h1>
 <section id="description">
-<h2>1. Description<a class="headerlink" href="#description" title="Permalink to this headline">¶</a></h2>
+<h2>1. Description<a class="headerlink" href="#description" title="Permalink to this heading">¶</a></h2>
 <p>SHORTNAME: DBMGR</p>
 <p>The apero_database recipe gives some ways to manage the local SQL/MySQL databases and tables.</p>
 <p>The options are:</p>
@@ -216,18 +223,18 @@ backed up</p>
 </ul>
 </section>
 <section id="schematic">
-<h2>2. Schematic<a class="headerlink" href="#schematic" title="Permalink to this headline">¶</a></h2>
+<h2>2. Schematic<a class="headerlink" href="#schematic" title="Permalink to this heading">¶</a></h2>
 <p>No schematic set</p>
 </section>
 <section id="usage">
-<h2>3. Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
+<h2>3. Usage<a class="headerlink" href="#usage" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">apero_database</span><span class="o">.</span><span class="n">py</span> <span class="p">{</span><span class="n">options</span><span class="p">}</span>
 </pre></div>
 </div>
 <p>No optional arguments</p>
 </section>
 <section id="optional-arguments">
-<h2>4. Optional Arguments<a class="headerlink" href="#optional-arguments" title="Permalink to this headline">¶</a></h2>
+<h2>4. Optional Arguments<a class="headerlink" href="#optional-arguments" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">--</span><span class="n">kill</span> <span class="o">//</span> <span class="n">Use</span> <span class="n">this</span> <span class="n">when</span> <span class="n">database</span> <span class="ow">is</span> <span class="n">stuck</span> <span class="ow">and</span> <span class="n">you</span> <span class="n">have</span> <span class="n">no</span> <span class="n">other</span> <span class="n">opens</span> <span class="p">(</span><span class="n">mysql</span> <span class="n">only</span><span class="p">)</span>
 <span class="o">--</span><span class="n">calibdb</span> <span class="o">//</span> <span class="n">Update</span> <span class="n">calibration</span> <span class="n">database</span>
 <span class="o">--</span><span class="n">telludb</span> <span class="o">//</span> <span class="n">Update</span> <span class="n">telluric</span> <span class="n">database</span>
@@ -242,11 +249,16 @@ backed up</p>
 <span class="o">--</span><span class="n">join</span><span class="p">[</span><span class="n">replace</span><span class="p">,</span><span class="n">append</span><span class="p">]</span> <span class="o">//</span> <span class="n">How</span> <span class="n">to</span> <span class="n">add</span> <span class="n">the</span> <span class="n">csv</span> <span class="n">file</span> <span class="n">to</span> <span class="n">database</span><span class="p">:</span> <span class="n">append</span> <span class="n">adds</span> <span class="nb">all</span> <span class="n">lines</span> <span class="n">to</span> <span class="n">the</span> <span class="n">end</span> <span class="n">of</span> <span class="n">current</span> <span class="n">database</span><span class="p">,</span> <span class="n">replace</span> <span class="n">removes</span> <span class="nb">all</span> <span class="n">previous</span> <span class="n">lines</span> <span class="kn">from</span> <span class="nn">database.</span> <span class="n">Default</span> <span class="ow">is</span> <span class="n">replace</span><span class="o">.</span>
 <span class="o">--</span><span class="n">delete</span> <span class="o">//</span> <span class="n">Load</span> <span class="n">up</span> <span class="n">the</span> <span class="n">delete</span> <span class="n">table</span> <span class="n">GUI</span> <span class="p">(</span><span class="n">MySQL</span> <span class="n">only</span><span class="p">)</span>
 <span class="o">--</span><span class="n">reset</span> <span class="o">//</span> <span class="n">Reset</span> <span class="n">current</span> <span class="n">databases</span>
+<span class="o">--</span><span class="n">keys</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Keyname</span> <span class="n">of</span> <span class="n">entries</span> <span class="n">to</span> <span class="n">remove</span> <span class="p">(</span><span class="n">used</span> <span class="ow">in</span> <span class="n">combination</span> <span class="k">with</span> <span class="o">--</span><span class="n">telludb</span> <span class="ow">or</span> <span class="o">--</span><span class="n">calibdb</span><span class="p">)</span>
+<span class="o">--</span><span class="n">since</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Date</span> <span class="n">to</span> <span class="n">remove</span> <span class="n">entries</span> <span class="n">since</span> <span class="p">(</span><span class="n">used</span> <span class="ow">in</span> <span class="n">combination</span> <span class="k">with</span> <span class="o">--</span><span class="n">telludb</span> <span class="ow">or</span> <span class="o">--</span><span class="n">calibdb</span><span class="p">)</span> <span class="nb">format</span> <span class="ow">is</span> <span class="n">YYYY</span><span class="o">-</span><span class="n">MM</span><span class="o">-</span><span class="n">DD</span> <span class="ow">or</span> <span class="n">YYYY</span><span class="o">-</span><span class="n">MM</span><span class="o">-</span><span class="n">DD</span> <span class="n">hh</span><span class="p">:</span><span class="n">mm</span><span class="p">:</span><span class="n">ss</span>
+<span class="o">--</span><span class="n">before</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Date</span> <span class="n">to</span> <span class="n">remove</span> <span class="n">entries</span> <span class="n">before</span> <span class="p">(</span><span class="n">used</span> <span class="ow">in</span> <span class="n">combination</span> <span class="k">with</span> <span class="o">--</span><span class="n">telludb</span> <span class="ow">or</span> <span class="o">--</span><span class="n">calibdb</span><span class="p">)</span> <span class="nb">format</span> <span class="ow">is</span> <span class="n">YYYY</span><span class="o">-</span><span class="n">MM</span><span class="o">-</span><span class="n">DD</span> <span class="ow">or</span> <span class="n">YYYY</span><span class="o">-</span><span class="n">MM</span><span class="o">-</span><span class="n">DD</span> <span class="n">hh</span><span class="p">:</span><span class="n">mm</span><span class="p">:</span><span class="n">ss</span>
+<span class="o">--</span><span class="n">deletefiles</span> <span class="o">//</span> <span class="n">Whether</span> <span class="n">to</span> <span class="n">delete</span> <span class="n">files</span> <span class="kn">from</span> <span class="nn">disk</span> <span class="n">when</span> <span class="n">removing</span> <span class="n">entries</span> <span class="p">(</span><span class="n">using</span> <span class="ow">in</span> <span class="n">combination</span> <span class="k">with</span> <span class="o">--</span><span class="n">telludb</span> <span class="ow">or</span> <span class="o">--</span><span class="n">calibdb</span> <span class="ow">and</span> <span class="o">--</span><span class="n">since</span> <span class="o">/</span> <span class="o">--</span><span class="n">keys</span><span class="p">)</span>
+<span class="o">--</span><span class="n">test</span> <span class="o">//</span> <span class="n">Run</span> <span class="n">the</span> <span class="n">removal</span> <span class="n">of</span> <span class="n">entries</span> <span class="ow">in</span> <span class="n">test</span> <span class="n">mode</span>
 </pre></div>
 </div>
 </section>
 <section id="special-arguments">
-<h2>5. Special Arguments<a class="headerlink" href="#special-arguments" title="Permalink to this headline">¶</a></h2>
+<h2>5. Special Arguments<a class="headerlink" href="#special-arguments" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">--</span><span class="n">xhelp</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Extended</span> <span class="n">help</span> <span class="n">menu</span> <span class="p">(</span><span class="k">with</span> <span class="nb">all</span> <span class="n">advanced</span> <span class="n">arguments</span><span class="p">)</span>
 <span class="o">--</span><span class="n">debug</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Activates</span> <span class="n">debug</span> <span class="n">mode</span> <span class="p">(</span><span class="n">Advanced</span> <span class="n">mode</span> <span class="p">[</span><span class="n">INTEGER</span><span class="p">]</span> <span class="n">value</span> <span class="n">must</span> <span class="n">be</span> <span class="n">an</span> <span class="n">integer</span> <span class="n">greater</span> <span class="n">than</span> <span class="mi">0</span><span class="p">,</span> <span class="n">setting</span> <span class="n">the</span> <span class="n">debug</span> <span class="n">level</span><span class="p">)</span>
 <span class="o">--</span><span class="n">listing</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Lists</span> <span class="n">the</span> <span class="n">night</span> <span class="n">name</span> <span class="n">directories</span> <span class="ow">in</span> <span class="n">the</span> <span class="nb">input</span> <span class="n">directory</span> <span class="k">if</span> <span class="n">used</span> <span class="n">without</span> <span class="n">a</span> <span class="s1">&#39;directory&#39;</span> <span class="n">argument</span> <span class="ow">or</span> <span class="n">lists</span> <span class="n">the</span> <span class="n">files</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">given</span> <span class="s1">&#39;directory&#39;</span> <span class="p">(</span><span class="k">if</span> <span class="n">defined</span><span class="p">)</span><span class="o">.</span> <span class="n">Only</span> <span class="n">lists</span> <span class="n">up</span> <span class="n">to</span> <span class="mi">15</span> <span class="n">files</span><span class="o">/</span><span class="n">directories</span>
@@ -268,21 +280,21 @@ backed up</p>
 </div>
 </section>
 <section id="output-directory">
-<h2>6. Output directory<a class="headerlink" href="#output-directory" title="Permalink to this headline">¶</a></h2>
+<h2>6. Output directory<a class="headerlink" href="#output-directory" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">DRS_DATA_REDUC</span> <span class="o">//</span> <span class="n">Default</span><span class="p">:</span> <span class="s2">&quot;red&quot;</span> <span class="n">directory</span>
 </pre></div>
 </div>
 </section>
 <section id="output-files">
-<h2>7. Output files<a class="headerlink" href="#output-files" title="Permalink to this headline">¶</a></h2>
+<h2>7. Output files<a class="headerlink" href="#output-files" title="Permalink to this heading">¶</a></h2>
 <p>N/A</p>
 </section>
 <section id="debug-plots">
-<h2>8. Debug plots<a class="headerlink" href="#debug-plots" title="Permalink to this headline">¶</a></h2>
+<h2>8. Debug plots<a class="headerlink" href="#debug-plots" title="Permalink to this heading">¶</a></h2>
 <p>No debug plots.</p>
 </section>
 <section id="summary-plots">
-<h2>9. Summary plots<a class="headerlink" href="#summary-plots" title="Permalink to this headline">¶</a></h2>
+<h2>9. Summary plots<a class="headerlink" href="#summary-plots" title="Permalink to this heading">¶</a></h2>
 <p>No summary plots.</p>
 </section>
 </section>
@@ -306,7 +318,7 @@ backed up</p>
         <li class="right" >
           <a href="rdefinition_CLOG.html" title="apero_changelog"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.259 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.8.001 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../../main/developer/main_dev.html" >Developer how to guide</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="dev_tools.html" >Dev tools</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">apero_database</a></li> 
@@ -314,7 +326,7 @@ backed up</p>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2019, Neil Cook.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 6.1.3.
     </div>
   </body>
 </html>

@@ -471,6 +471,79 @@ def group_by_polar_sequence(rargs: Dict[str, DrsArgument],
         index database as inputs and must return a list of masks (each mask
         is the same length as the table)
 
+        Uses CMPLTEXP, NEXP, DRSOBJN, observation directory
+
+        CMPLTEXP is the exposure number within the group
+        NEXP is the total number of exposures in the group
+        DRSOBJN is the apero cleaned object name
+
+        We define groups based on sorting all observations in time and the
+        following criteria:
+
+        if observation object name is not the same as the previous one we start
+        a new group
+
+        if observation directory is different start a new group
+
+        if current exposure number is already in group replace that observation
+        with this one
+
+        if current exposure number is greater than the total number of
+        exposures for that group start a new group
+
+        if we have enough entries in a group start a new group
+
+        So  assuming NEXP = 4
+
+            1234 --> group1 = 1234
+
+            123123   -->   group1 = 123    group2 = 123    (if next observation
+            is a different object this would be it, if it were the same obj
+            you may get )
+
+            same obj 1231234  -->   rejects first "1", "2" and "3" and keeps
+                                    last 1,2,3,4
+            diff obj 123 {1234} -->  group1 = 123, group2 = 1234
+
+            11234  -->  rejects the first "1"
+
+            12341  -->  makes a group 1234 and starts a new group with
+                        the last "1"
+
+            12134  --> rejects the first "1"
+
+            12 long gap but no other sequences 34  --> 1234
+
+            same object 12 {1234} 34 1234   -->  reject first "1,2"
+                                                 makes 1234  reject second
+                                                 "3,4" and makes 1234 from
+                                                 last 4
+            diff objects:
+
+                obj1 12  obj2 {1234} obj1 34 obj1 1234  -->  1,2 obj1
+                                                             then 1234 obj2
+                                                             then rejects 3,4
+                                                             obj1 and groups
+                                                             1234 obj1
+
+                obj1 12  obj2 {1234} obj1 34 obj2 1234  -->  1,2 obj1
+                                                             then 1234 obj2
+                                                             group 3,4
+                                                             (possibly with
+                                                             future obj?) and
+                                                             groups 1234 obj2
+
+
+            long gap would be a problem only if same object is in inbetween
+                (doesn't make sense)
+
+            might be problems with 3,4 left over and the same object afterwards
+
+        So its pretty good but there are probably still ways of breaking it.
+        You can always choose manually which files go to EXP1, EXP2, EXP3, EXP4
+        in apero_polar_spirou.py to produce the internal products.
+        and then re-run apero_postprocessing_spirou.py to produce the p.fits
+
         :param table: astropy.table - the inputted "table" sorted to match
                       masks
 
@@ -570,7 +643,7 @@ def group_by_polar_sequence(rargs: Dict[str, DrsArgument],
             #   and set the current mask to zero and reset the current number
             #   to zero
             # ----> add to current group
-            # if we have enough entres (==nexp) ----> start new group after add
+            # if we have enough entries (==nexp) ----> start new group after add
             elif current == num_arr[row]:
                 # add this row to current group
                 current_mask[row] = True
@@ -613,6 +686,109 @@ def group_by_polar_sequence(rargs: Dict[str, DrsArgument],
     # -------------------------------------------------------------------------
     # return the groups
     return runs
+
+
+def lbl_compute_group(rargs: Dict[str, DrsArgument],
+                      rkwargs: Dict[str, DrsArgument],
+                      argdict: Dict[str, ArgDictType],
+                      kwargdict: Dict[str, ArgDictType],
+                      **kwargs) -> RunType:
+    """
+    For objname = FP   sets iteration and total arguments
+    based on number of cores given
+
+    For all other objnames acts like "no_group"
+
+    :param rargs:
+    :param rkwargs:
+    :param argdict:
+    :param kwargdict:
+    :param kwargs:
+    :return:
+    """
+
+    # get params from kwargs
+    params = kwargs['params']
+    # get values from params
+    cores = kwargs['cores']
+    objlist = params.listp('LBL_MULTI_OBJLIST', dtype=str)
+
+    # make sure this is not used for recipes that do not have the correct
+    #  arguments
+    cond1 = 'objname' in rargs
+    cond2 = 'total' in rkwargs
+    cond3 = 'iteration' in rkwargs
+
+    # if any of these conditions are not met run no_group
+    if not cond1 or not cond2 or not cond3:
+        return no_group(rargs, rkwargs, argdict, kwargdict, **kwargs)
+
+    # if object name is not in object list run no_group
+    if argdict['objname'] not in objlist:
+        return no_group(rargs, rkwargs, argdict, kwargdict, **kwargs)
+    # ----------------------------------------------------------------------
+    # define runs
+    run_instances = []
+    # ----------------------------------------------------------------------
+    # first we need to find the file arguments
+    # ----------------------------------------------------------------------
+    fout = drsgf.find_file_args(rargs, rkwargs, argdict, kwargdict)
+    file_args, non_file_args, alldict = fout
+    # define the first file_arg columns
+    if len(file_args) != 0:
+        raise ValueError('Must have 0 file arguements')
+    # ----------------------------------------------------------------------
+    # Now figure out the order these arguments should be added
+    # ----------------------------------------------------------------------
+    arg_order = drsgf.get_argposorder(rargs, rkwargs, argdict, kwargdict)
+    # ----------------------------------------------------------------------
+    # Make a run instance
+    # ----------------------------------------------------------------------
+    run_inst = drsgf.RunInstance(rargs, rkwargs)
+    run_inst.group_column = None
+    run_inst.group = None
+    run_instances.append(run_inst)
+
+    # ----------------------------------------------------------------------
+    # deal with non-file arguments
+    # ----------------------------------------------------------------------
+    run_instances = drsgf.get_non_file_args(non_file_args, alldict,
+                                            run_instances)
+    # ----------------------------------------------------------------------
+    # add the total and iteration arguments based on the number of cores
+    # ----------------------------------------------------------------------
+    new_run_instances = []
+    # loop around run instances
+    for run_inst in run_instances:
+        # loop around cores - one group per core
+        for core in range(cores):
+            # copy the run instance
+            run_inst2 = run_inst.copy()
+            # add value to dictionary
+            # total is the total number of cores
+            run_inst2.dictionary['total'] = str(cores)
+            # iteration is the core number (starting at zero)
+            run_inst2.dictionary['iteration'] = str(core)
+            # append to run instances
+            new_run_instances.append(run_inst2)
+    # add iteration and total to arg_order
+    arg_order += ['iteration', 'total']
+    # ----------------------------------------------------------------------
+    # convert in to run list of dictionaries
+    # ----------------------------------------------------------------------
+    runs = []
+    # loop around instances
+    for run_inst in new_run_instances:
+        # create run dict
+        rundict = OrderedDict()
+        # loop around arguments in correct order
+        for key in arg_order:
+            rundict[key] = run_inst.dictionary[key]
+        # add this run dictionary to runs
+        runs.append(rundict)
+    # return the run instances
+    return runs
+
 
 
 def _is_numeric(array: Union[list, np.ndarray, Iterable]) -> np.ndarray:

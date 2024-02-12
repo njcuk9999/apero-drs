@@ -187,3 +187,19 @@ fabric.properties
 *.backup
 # Ignore database files
 *.db
+
+# Ignore documentation files
+/documentation/output/*
+/documentation/working/_build/*
+
+# Ignore instrument data files
+/apero/data/nirps_ha/*
+/apero/data/nirps_he/*
+/apero/data/spirou/*
+/apero/data/*tar.gz
+
+# Ignore lock file
+lock.lock
+
+# ignore _assets.tar.gz file in apero/data directory
+/apero/data/*_assets.tar.gz

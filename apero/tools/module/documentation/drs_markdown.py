@@ -57,7 +57,7 @@ class MarkDownPage:
 
     def add_table_of_contents(self, items: List[str],
                               names: Optional[List[str]] = None,
-                              sectionname: str = 'Contents',
+                              sectionname: Optional[str] = 'Contents',
                               maxdepth: int = 1):
 
         self.add_newline()
@@ -65,14 +65,16 @@ class MarkDownPage:
         if names is None:
             self.lines += ['.. toctree::']
             self.lines += ['    :maxdepth: {0}'.format(maxdepth)]
-            self.lines += ['    :caption: {0}'.format(sectionname)]
+            if sectionname is not None:
+                self.lines += ['    :caption: {0}'.format(sectionname)]
             self.add_newline()
             for it in range(len(items)):
                 self.lines += ['    {0}'.format(items[it])]
         # names means we have references to other pages
         else:
             # add contents section
-            self.add_section(sectionname)
+            if sectionname is not None:
+                self.add_section(sectionname)
             # loop around names and items and add to contents list
             for it in range(len(names)):
                 lineref = '* :ref:`{0} <{1}>`'.format(names[it], items[it])
@@ -121,9 +123,8 @@ class MarkDownPage:
         """
         self.add_newline()
         length = np.max([len(section_title) + 2, 80])
-        self.lines += ['*' * length]
         self.lines += [section_title]
-        self.lines += ['*' * length]
+        self.lines += ['=' * length]
         self.add_newline()
 
     def add_sub_section(self, section_title: str):
@@ -135,15 +136,60 @@ class MarkDownPage:
         """
         self.add_newline()
         length = np.max([len(section_title) + 2, 80])
-        self.lines += ['^' * length]
+        self.lines += [section_title]
+        self.lines += ['-' * length]
+        self.add_newline()
+
+    def add_sub_sub_section(self, section_title: str):
+        """
+        Add a section to a page
+        :param section_title: str, the title to add
+
+        :return: None, updates page
+        """
+        self.add_newline()
+        length = np.max([len(section_title) + 2, 80])
         self.lines += [section_title]
         self.lines += ['^' * length]
         self.add_newline()
 
+    def add_divider(self, color, height):
+        """
+        Add a divider to a page using the raw html feature
+
+        :return: None, updates self.lines
+        """
+        # define the style text
+        styletxt = ''
+        styletxt += 'width:100%;'
+        styletxt += f'height:{height}px;'
+        styletxt += f'background-color:{color};'
+        styletxt += 'border:none;'
+        # add the divider
+        self.add_newline()
+        self.lines += ['.. raw:: html', '']
+        self.lines += [f'    <hr style="{styletxt}" />']
+        self.add_newline()
+
+    def add_html(self, htmllines: List[str]):
+        """
+        Add raw html to a page
+
+        :param htmllines: list of strings, the html lines to add
+
+        :return: None, updates self.lines
+        """
+        self.lines += ['.. raw:: html']
+        self.add_newline()
+        for htmlline in htmllines:
+            self.lines += '    ' + htmlline
+        self.add_newline(2)
+
     def add_csv_table(self, title: str, csv_file: str,
                       abs_path: Union[str, None] = None,
                       widths: Union[List[str], None] = None,
-                      width: Union[int, None] = None):
+                      width: Union[int, None] = None,
+                      cssclass: str = 'csvtable'):
         """
         Create a csv table in the markdown page
 
@@ -171,6 +217,9 @@ class MarkDownPage:
                 del table
             except Exception as _:
                 table_has_rows = False
+        # deal with csv file being None
+        if csv_file is None:
+            table_has_rows = False
         # only add csv table if we have rows
         if table_has_rows:
             self.add_newline()
@@ -181,7 +230,7 @@ class MarkDownPage:
             if widths is not None:
                 self.lines += ['   :widths: {0}'.format(', '.join(widths))]
             self.lines += ['   :header-rows: 1']
-            self.lines += ['   :class: csvtable']
+            self.lines += ['   :class: {0}'.format(cssclass)]
             self.add_newline()
         else:
             self.add_newline()
@@ -217,7 +266,7 @@ class MarkDownPage:
         self.add_newline()
 
     def add_image(self, filename: str, width: Optional[int] = None,
-                  align: str = 'center'):
+                  align: str = 'center', inline: bool = False):
         """
         Add image to the markdown page
 
@@ -228,10 +277,18 @@ class MarkDownPage:
 
         :return: None, updates page
         """
+        # deal with image vs figwidth
+        if inline:
+            directive = 'image'
+        else:
+            directive = 'figure'
+        # ----------------------------------------------------------------------
         self.add_newline()
         self.lines += ['.. only:: html']
         self.add_newline()
-        self.lines += ['    .. image:: {0}'.format(filename)]
+        self.lines += ['    .. {0}:: {1}'.format(directive, filename)]
+        if not inline:
+            self.lines += ['        :figwidth: 100%']
         if width is not None:
             self.lines += ['        :width: {0}%'.format(width)]
         if align is not None:
@@ -275,6 +332,18 @@ class MarkDownPage:
 # =============================================================================
 # Define functions
 # =============================================================================
+def make_url(value: str, url: str) -> str:
+    """
+    Make a url from a value and a url
+    """
+    return f':ref:`{value} <{url}>`'
+
+
+def make_download(value: str, url: str) -> str:
+    """
+    Make a download link from a value and a url
+    """
+    return f':download:`{value} <{url}>`'
 
 
 # =============================================================================

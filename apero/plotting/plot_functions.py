@@ -3667,23 +3667,23 @@ def plot_regions_sky_model(plotter: Plotter, graph: Graph,
     waveref = sky_props['WAVEMAP']
     waverefr = sky_props['WAVEMAPR']
     med = sky_props['MED']
-    med_e2ds = med.reshape(waveref)
+    med_e2ds = med.reshape(waveref.shape)
     # ------------------------------------------------------------------
     # set up plot
-    fig, frames = graph.set_figure(plotter, nrows=1, ncols=1)
+    fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
     # plot science fiber
     for order_num in range(waveref.shape[0]):
         if order_num % 2 == 0:
             color = 'r'
         else:
             color = 'b'
-        frames[0].plot(waveref[order_num], med_e2ds[order_num], alpha=0.5,
+        frame.plot(waveref[order_num], med_e2ds[order_num], alpha=0.5,
                        color=color)
 
-    frames[0].plot(waverefr[regions != 0], med[regions != 0], color='g',
+    frame.plot(waverefr[regions != 0], med[regions != 0], color='g',
                    marker='o', ls='None', alpha=0.3)
 
-    frames[0].set(xlabel='Wavelength [nm]', ylabel='Median flux')
+    frame.set(xlabel='Wavelength [nm]', ylabel='Median flux')
     # ------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)

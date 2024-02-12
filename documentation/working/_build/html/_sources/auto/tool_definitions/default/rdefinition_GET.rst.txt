@@ -55,6 +55,7 @@ No optional arguments
      --symlinks // Create symlinks to the file instead of copying
      --test // Does not copy files - prints copy as a debug test. Recommended for first time use.
      --failedqc // Include files that failed QC. Highly unrecommended.
+     --since[STRING] // Only get files processed since a certain date YYYY-MM-DD hh:mm:ss
 
 
 ********************************************************************************

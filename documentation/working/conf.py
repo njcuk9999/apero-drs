@@ -38,11 +38,17 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.ifconfig',
               'sphinx.ext.viewcode',
               'sphinx.ext.githubpages',
+              'sphinx_toolbox.sidebar_links',
+              'sphinx_toolbox.github',
               ]  # 'sphinx.ext.autosectionlabel']
 
 # make sure to add the prefix
 # autoselectionlabel_prefix_document = True
 # autoselectionlabel_maxdepth = 5
+
+
+github_username = 'njcuk9999'
+github_repository = 'apero-drs'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -59,6 +65,15 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 #
 html_theme = 'bizstyle'
 user_agent = 'Mozilla/5.0 (X11; Linux x86_64; rv:25.0) Gecko/20100101 Firefox/25.0'
+
+
+html_theme_options = {
+    # Disable showing the sidebar. Defaults to 'false'
+    'nosidebar': False,
+    # set the max body width
+    'body_max_width': 'none',
+}
+
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -153,6 +168,15 @@ latex_elements = {
         \usepackage{color}
         \usepackage{transparent}
         \usepackage{eso-pic}
+        \usepackage{multirow}
+        \usepackage{booktabs}
+        \usepackage{dirtree}
+        \usepackage{listings}
+        \usepackage{rotating}
+        %% \usepackage{tasks}
+        \usepackage[normalem]{ulem}
+        \usepackage{capt-of}
+        \usepackage{xspace}
         %% \usepackage{lipsum}
 
         \usepackage{footnotebackref} %%link at the footnote to go to the place of footnote in the text

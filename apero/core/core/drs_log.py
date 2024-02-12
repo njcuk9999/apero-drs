@@ -241,6 +241,9 @@ class Logger:
             params.set_source('PID', func_name)
             # Cannot add this to language pack - no p defined!
             DrsCodedWarning('10-005-00005', 'warning', func_name=func_name)
+        # if params is still None load it
+        if params is None:
+            params = constants.load()
         # deal with no PID
         if 'PID' not in params:
             params['PID'] = None
@@ -377,8 +380,9 @@ class Logger:
             logfilepath = get_logfilepath(self, params)
             # loop around raw messages
             for mess in raw_messages2:
-                # Get the time now in human readable format
-                human_time = time.get_hhmmss_now()
+                # Get the time now in human-readable format
+                #   For log this is YYYY-MM-DD HH:MM:SS
+                human_time = time.get_time_now()
                 # clean up log message (no colour codes)
                 mess = _clean_message(mess)
                 # storage for cmds

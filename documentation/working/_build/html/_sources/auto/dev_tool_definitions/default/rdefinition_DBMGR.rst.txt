@@ -60,6 +60,11 @@ No optional arguments
      --join[replace,append] // How to add the csv file to database: append adds all lines to the end of current database, replace removes all previous lines from database. Default is replace.
      --delete // Load up the delete table GUI (MySQL only)
      --reset // Reset current databases
+     --keys[STRING] // Keyname of entries to remove (used in combination with --telludb or --calibdb)
+     --since[STRING] // Date to remove entries since (used in combination with --telludb or --calibdb) format is YYYY-MM-DD or YYYY-MM-DD hh:mm:ss
+     --before[STRING] // Date to remove entries before (used in combination with --telludb or --calibdb) format is YYYY-MM-DD or YYYY-MM-DD hh:mm:ss
+     --deletefiles // Whether to delete files from disk when removing entries (using in combination with --telludb or --calibdb and --since / --keys)
+     --test // Run the removal of entries in test mode
 
 
 ********************************************************************************

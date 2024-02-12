@@ -3,20 +3,20 @@
 
 <!doctype html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>apero_thermal_spirou &#8212; APERO 0.7.259 documentation</title>
+    <title>apero_thermal_spirou &#8212; APERO 0.8.001 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/apero.css" />
     
     <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
-    <script src="../../../_static/jquery.js"></script>
-    <script src="../../../_static/underscore.js"></script>
     <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/sphinx_highlight.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../../../_static/bizstyle.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
@@ -78,6 +78,8 @@
         <i class="fa fa-git-square fa-3x" aria-hidden="true"></i></a></li>
     <li><a title="download pdf" href="../../../apero-docs.pdf">
         <i class="fa fa-download fa-3x" aria-hidden="true"></i></a></li>
+    <li><a title="UdeM" href="/main/misc/udem.html">
+        <i class="fa fa-university fa-3x" aria-hidden="true"></i></a></li>
   </ul>
     <div>
     <a href="../../../index.html">
@@ -101,7 +103,7 @@
         <li class="right" >
           <a href="rdefinition_FF.html" title="apero_flat_spirou"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.259 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.8.001 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../../main/spirou/main_spirou.html" >SPIRou documentation</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="recipes.html" accesskey="U">Recipes (SPIROU)</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">apero_thermal_spirou</a></li> 
@@ -109,10 +111,14 @@
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../../../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../../../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">apero_thermal_spirou</a><ul>
-<li><a class="reference internal" href="#description">1. Description</a></li>
+<li><a class="reference internal" href="#description">1. Description</a><ul>
+<li><a class="reference internal" href="#thermal-calibration">Thermal calibration</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#schematic">2. Schematic</a></li>
 <li><a class="reference internal" href="#usage">3. Usage</a></li>
 <li><a class="reference internal" href="#optional-arguments">4. Optional Arguments</a></li>
@@ -125,12 +131,17 @@
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="rdefinition_FF.html"
-                        title="previous chapter">apero_flat_spirou</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="rdefinition_LEAKREF.html"
-                        title="next chapter">apero_leak_ref_spirou</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="rdefinition_FF.html"
+                          title="previous chapter">apero_flat_spirou</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="rdefinition_LEAKREF.html"
+                          title="next chapter">apero_leak_ref_spirou</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -147,7 +158,7 @@
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
 
@@ -157,18 +168,49 @@
           <div class="body" role="main">
             
   <section id="apero-thermal-spirou">
-<span id="recipes-spirou-therm"></span><h1>apero_thermal_spirou<a class="headerlink" href="#apero-thermal-spirou" title="Permalink to this headline">¶</a></h1>
+<span id="recipes-spirou-therm"></span><h1>apero_thermal_spirou<a class="headerlink" href="#apero-thermal-spirou" title="Permalink to this heading">¶</a></h1>
 <section id="description">
-<h2>1. Description<a class="headerlink" href="#description" title="Permalink to this headline">¶</a></h2>
+<h2>1. Description<a class="headerlink" href="#description" title="Permalink to this heading">¶</a></h2>
 <p>SHORTNAME: THERM</p>
-<p>No description set</p>
+<section id="thermal-calibration">
+<h3>Thermal calibration<a class="headerlink" href="#thermal-calibration" title="Permalink to this heading">¶</a></h3>
+<p>The nightly thermal recipe takes preprocessed <cite>DARK_DARK_INT</cite> files or <cite>DARK_DARK_TEL</cite> files (as many as given by
+the user or as many as occur on each of the nights being used via <cite>apero_processing</cite>). It combines the <cite>DARK_DARK_INT</cite>
+or <cite>DARK_DARK_TEL</cite> files into a single <cite>DARK_DARK_INT</cite> or <cite>DARK_DARK_TEL</cite> respectively (via a median combination of
+the images). These combined <cite>DARK_DARK_INT</cite> or <cite>DARK_DARK_TEL</cite> files are then extracted.</p>
+<p>The thermal background seen by SPIRou in a science exposure is the sum of the black body contribution of the sky, the
+Cassegrain unit (at the temperature of the telescope), the calibration unit (for the reference channel), and the
+thermal emission of the hermetic feedthroughs that connect the fibers into the cryostat. A small contribution also
+arises from the Earth’s atmosphere itself. This emissivity is proportional to one minus the telluric transmission at
+the corresponding wavelength and if left unaccounted for in the thermal model would lead to emission-like features in
+the thermal-corrected spectrum in the strongest absorption lines. From a series of sky-dark frames, we measured that
+the median additional emissivity from the saturated absorption line is at the 4% level of the black body envelope.
+We account for the additional contribution by using a median sky absorption spectrum and adding a small contribution
+proportional to the excess emissivity due to the Earth’s atmosphere in strong absorption lines. Note this contribution
+is only added for the <cite>DARK_DARK_TEL</cite> files (as the <cite>DARK_DARK_INT</cite> images do not see the sky). For this reason, we
+split generating the thermal calibration files into two steps: we generate the <cite>DARK_DARK_INT</cite> thermal calibration
+files, then after a wavelength solution has been generated we generate the <cite>DARK_DARK_TEL</cite> thermal calibration files
+(which require a nightly wavelength solution to add the contribution due to the emission-like features).</p>
+<p>Considering that the telescope and front-end temperature change through the night, one needs to apply a thermal
+correction that is adjusted per frame (this is done as part of the extraction recipe). While the slope of the black
+body contribution changes very little over the <span class="math notranslate nohighlight">\(2.1-2.5 \mu m\)</span> domain, within which the thermal background is
+significant, the amplitude of the contribution varies by a factor of &gt;2 between nights (typically a factor 2 for
+every <span class="math notranslate nohighlight">\(8^\circ\)</span>
+C) and needs to be adjusted for individual observations. While we have no external measurement of
+the thermal background, there are a number of completely saturated telluric water absorption features
+<span class="math notranslate nohighlight">\(2.4-2.5 \mu m\)</span> that provide a measure of the total thermal emission seen by SPIRou. These regions are used to
+scale the thermal background model such that they have a median flux of zero.</p>
+<p>The thermal calibration files (<cite>THERMALI</cite> and <cite>THERMALT</cite>) are then saved to the calibration database for use
+throughout APERO. The <cite>THERMALI</cite> calibrations are used for correcting internal lamp spectra (i.e., other calibrations)
+and <cite>THERMALT</cite> calibrations are used to correct all science spectra.</p>
+</section>
 </section>
 <section id="schematic">
-<h2>2. Schematic<a class="headerlink" href="#schematic" title="Permalink to this headline">¶</a></h2>
+<h2>2. Schematic<a class="headerlink" href="#schematic" title="Permalink to this heading">¶</a></h2>
 <a class="reference internal image-reference" href="../../../_images/apero_thermal_spirou_schematic.jpg"><img alt="../../../_images/apero_thermal_spirou_schematic.jpg" class="align-center" src="../../../_images/apero_thermal_spirou_schematic.jpg" style="width: 100%;" /></a>
 </section>
 <section id="usage">
-<h2>3. Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
+<h2>3. Usage<a class="headerlink" href="#usage" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">apero_thermal_spirou</span><span class="o">.</span><span class="n">py</span> <span class="p">{</span><span class="n">obs_dir</span><span class="p">}[</span><span class="n">STRING</span><span class="p">]</span> <span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">DARK_DARK_INT</span><span class="p">,</span><span class="n">DARK_DARK_TEL</span><span class="p">]</span> <span class="p">{</span><span class="n">options</span><span class="p">}</span>
 </pre></div>
 </div>
@@ -178,7 +220,7 @@
 </div>
 </section>
 <section id="optional-arguments">
-<h2>4. Optional Arguments<a class="headerlink" href="#optional-arguments" title="Permalink to this headline">¶</a></h2>
+<h2>4. Optional Arguments<a class="headerlink" href="#optional-arguments" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">--</span><span class="n">database</span><span class="p">[</span><span class="kc">True</span><span class="o">/</span><span class="kc">False</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">BOOLEAN</span><span class="p">]</span> <span class="n">Whether</span> <span class="n">to</span> <span class="n">add</span> <span class="n">outputs</span> <span class="n">to</span> <span class="n">calibration</span> <span class="n">database</span>
 <span class="o">--</span><span class="n">badpixfile</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">BADPIX</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Define</span> <span class="n">a</span> <span class="n">custom</span> <span class="n">file</span> <span class="n">to</span> <span class="n">use</span> <span class="k">for</span> <span class="n">bad</span> <span class="n">pixel</span> <span class="n">correction</span><span class="o">.</span> <span class="n">Checks</span> <span class="k">for</span> <span class="n">an</span> <span class="n">absolute</span> <span class="n">path</span> <span class="ow">and</span> <span class="n">then</span> <span class="n">checks</span> <span class="n">directory</span>
 <span class="o">--</span><span class="n">badcorr</span><span class="p">[</span><span class="kc">True</span><span class="o">/</span><span class="kc">False</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">BOOLEAN</span><span class="p">]</span> <span class="n">Whether</span> <span class="n">to</span> <span class="n">correct</span> <span class="k">for</span> <span class="n">the</span> <span class="n">bad</span> <span class="n">pixel</span> <span class="n">file</span>
@@ -191,18 +233,19 @@
 <span class="o">--</span><span class="n">fluxunits</span><span class="p">[</span><span class="n">ADU</span><span class="o">/</span><span class="n">s</span><span class="p">,</span><span class="n">e</span><span class="o">-</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Output</span> <span class="n">units</span> <span class="k">for</span> <span class="n">flux</span>
 <span class="o">--</span><span class="n">locofile</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">LOC_LOCO</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Sets</span> <span class="n">the</span> <span class="n">LOCO</span> <span class="n">file</span> <span class="n">used</span> <span class="n">to</span> <span class="n">get</span> <span class="n">the</span> <span class="n">coefficients</span> <span class="p">(</span><span class="n">CALIBDB</span><span class="o">=</span><span class="n">LOC_</span><span class="p">{</span><span class="n">fiber</span><span class="p">})</span>
 <span class="o">--</span><span class="n">orderpfile</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">LOC_ORDERP</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Sets</span> <span class="n">the</span> <span class="n">Order</span> <span class="n">Profile</span> <span class="n">file</span> <span class="n">used</span> <span class="n">to</span> <span class="n">get</span> <span class="n">the</span> <span class="n">coefficients</span> <span class="p">(</span><span class="n">CALIBDB</span><span class="o">=</span><span class="n">ORDER_PROFILE_</span><span class="p">{</span><span class="n">fiber</span><span class="p">}</span>
-<span class="o">--</span><span class="n">plot</span><span class="p">[</span><span class="mi">0</span><span class="o">&gt;</span><span class="n">INT</span><span class="o">&gt;</span><span class="mi">3</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">INTEGER</span><span class="p">]</span> <span class="n">Plot</span> <span class="n">level</span><span class="o">.</span> <span class="mi">0</span> <span class="o">=</span> <span class="n">off</span><span class="p">,</span> <span class="mi">1</span> <span class="o">=</span> <span class="n">interactively</span><span class="p">,</span> <span class="mi">2</span> <span class="o">=</span> <span class="n">save</span> <span class="n">to</span> <span class="n">file</span>
+<span class="o">--</span><span class="n">plot</span><span class="p">[</span><span class="mi">0</span><span class="o">&gt;</span><span class="n">INT</span><span class="o">&gt;</span><span class="mi">4</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">INTEGER</span><span class="p">]</span> <span class="n">Plot</span> <span class="n">level</span><span class="o">.</span> <span class="mi">0</span> <span class="o">=</span> <span class="n">off</span><span class="p">,</span> <span class="mi">1</span> <span class="o">=</span> <span class="n">interactively</span><span class="p">,</span> <span class="mi">2</span> <span class="o">=</span> <span class="n">save</span> <span class="n">to</span> <span class="n">file</span>
 <span class="o">--</span><span class="n">resize</span><span class="p">[</span><span class="kc">True</span><span class="o">/</span><span class="kc">False</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">BOOLEAN</span><span class="p">]</span> <span class="n">Whether</span> <span class="n">to</span> <span class="n">resize</span> <span class="n">image</span>
 <span class="o">--</span><span class="n">shapex</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">SHAPE_X</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Sets</span> <span class="n">the</span> <span class="n">SHAPE</span> <span class="n">DXMAP</span> <span class="n">file</span> <span class="n">used</span> <span class="n">to</span> <span class="n">get</span> <span class="n">the</span> <span class="n">dx</span> <span class="n">correction</span> <span class="nb">map</span> <span class="p">(</span><span class="n">CALIBDB</span><span class="o">=</span><span class="n">SHAPEX</span><span class="p">)</span>
 <span class="o">--</span><span class="n">shapey</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">SHAPE_Y</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Sets</span> <span class="n">the</span> <span class="n">SHAPE</span> <span class="n">DYMAP</span> <span class="n">file</span> <span class="n">used</span> <span class="n">to</span> <span class="n">get</span> <span class="n">the</span> <span class="n">dy</span> <span class="n">correction</span> <span class="nb">map</span> <span class="p">(</span><span class="n">CALIBDB</span><span class="o">=</span><span class="n">SHAPEY</span><span class="p">)</span>
 <span class="o">--</span><span class="n">shapel</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">SHAPEL</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Sets</span> <span class="n">the</span> <span class="n">SHAPE</span> <span class="n">local</span> <span class="n">file</span> <span class="n">used</span> <span class="n">to</span> <span class="n">get</span> <span class="n">the</span> <span class="n">local</span> <span class="n">transforms</span> <span class="p">(</span><span class="n">CALIBDB</span> <span class="o">=</span> <span class="n">SHAPEL</span><span class="p">)</span>
 <span class="o">--</span><span class="n">wavefile</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">WAVESOL_REF</span><span class="p">,</span><span class="n">WAVE_NIGHT</span><span class="p">,</span><span class="n">WAVESOL_DEFAULT</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Define</span> <span class="n">a</span> <span class="n">custom</span> <span class="n">file</span> <span class="n">to</span> <span class="n">use</span> <span class="k">for</span> <span class="n">the</span> <span class="n">wave</span> <span class="n">solution</span><span class="o">.</span> <span class="n">If</span> <span class="n">unset</span> <span class="n">uses</span> <span class="n">closest</span> <span class="n">file</span> <span class="kn">from</span> <span class="nn">header</span> <span class="ow">or</span> <span class="n">calibDB</span> <span class="p">(</span><span class="n">depending</span> <span class="n">on</span> <span class="n">setup</span><span class="p">)</span><span class="o">.</span> <span class="n">Checks</span> <span class="k">for</span> <span class="n">an</span> <span class="n">absolute</span> <span class="n">path</span> <span class="ow">and</span> <span class="n">then</span> <span class="n">checks</span> <span class="n">directory</span>
+<span class="o">--</span><span class="n">no_in_qc</span> <span class="o">//</span> <span class="n">Disable</span> <span class="n">checking</span> <span class="n">the</span> <span class="n">quality</span> <span class="n">control</span> <span class="n">of</span> <span class="nb">input</span> <span class="n">files</span>
 <span class="o">--</span><span class="n">forceext</span><span class="p">[</span><span class="kc">True</span><span class="o">/</span><span class="kc">False</span><span class="p">]</span> <span class="o">//</span> <span class="n">THERMAL_EXTRACT_HELP</span>
 </pre></div>
 </div>
 </section>
 <section id="special-arguments">
-<h2>5. Special Arguments<a class="headerlink" href="#special-arguments" title="Permalink to this headline">¶</a></h2>
+<h2>5. Special Arguments<a class="headerlink" href="#special-arguments" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">--</span><span class="n">xhelp</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Extended</span> <span class="n">help</span> <span class="n">menu</span> <span class="p">(</span><span class="k">with</span> <span class="nb">all</span> <span class="n">advanced</span> <span class="n">arguments</span><span class="p">)</span>
 <span class="o">--</span><span class="n">debug</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Activates</span> <span class="n">debug</span> <span class="n">mode</span> <span class="p">(</span><span class="n">Advanced</span> <span class="n">mode</span> <span class="p">[</span><span class="n">INTEGER</span><span class="p">]</span> <span class="n">value</span> <span class="n">must</span> <span class="n">be</span> <span class="n">an</span> <span class="n">integer</span> <span class="n">greater</span> <span class="n">than</span> <span class="mi">0</span><span class="p">,</span> <span class="n">setting</span> <span class="n">the</span> <span class="n">debug</span> <span class="n">level</span><span class="p">)</span>
 <span class="o">--</span><span class="n">listing</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Lists</span> <span class="n">the</span> <span class="n">night</span> <span class="n">name</span> <span class="n">directories</span> <span class="ow">in</span> <span class="n">the</span> <span class="nb">input</span> <span class="n">directory</span> <span class="k">if</span> <span class="n">used</span> <span class="n">without</span> <span class="n">a</span> <span class="s1">&#39;directory&#39;</span> <span class="n">argument</span> <span class="ow">or</span> <span class="n">lists</span> <span class="n">the</span> <span class="n">files</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">given</span> <span class="s1">&#39;directory&#39;</span> <span class="p">(</span><span class="k">if</span> <span class="n">defined</span><span class="p">)</span><span class="o">.</span> <span class="n">Only</span> <span class="n">lists</span> <span class="n">up</span> <span class="n">to</span> <span class="mi">15</span> <span class="n">files</span><span class="o">/</span><span class="n">directories</span>
@@ -224,26 +267,15 @@
 </div>
 </section>
 <section id="output-directory">
-<h2>6. Output directory<a class="headerlink" href="#output-directory" title="Permalink to this headline">¶</a></h2>
+<h2>6. Output directory<a class="headerlink" href="#output-directory" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">DRS_DATA_REDUC</span> <span class="o">//</span> <span class="n">Default</span><span class="p">:</span> <span class="s2">&quot;red&quot;</span> <span class="n">directory</span>
 </pre></div>
 </div>
 </section>
 <section id="output-files">
-<h2>7. Output files<a class="headerlink" href="#output-files" title="Permalink to this headline">¶</a></h2>
+<h2>7. Output files<a class="headerlink" href="#output-files" title="Permalink to this heading">¶</a></h2>
 <table class="csvtable docutils align-default" id="id1">
 <caption><span class="caption-text">Outputs</span><a class="headerlink" href="#id1" title="Permalink to this table">¶</a></caption>
-<colgroup>
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-</colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>name</p></th>
 <th class="head"><p>description</p></th>
@@ -291,11 +323,11 @@
 </table>
 </section>
 <section id="debug-plots">
-<h2>8. Debug plots<a class="headerlink" href="#debug-plots" title="Permalink to this headline">¶</a></h2>
+<h2>8. Debug plots<a class="headerlink" href="#debug-plots" title="Permalink to this heading">¶</a></h2>
 <p>No debug plots.</p>
 </section>
 <section id="summary-plots">
-<h2>9. Summary plots<a class="headerlink" href="#summary-plots" title="Permalink to this headline">¶</a></h2>
+<h2>9. Summary plots<a class="headerlink" href="#summary-plots" title="Permalink to this heading">¶</a></h2>
 <p>No summary plots.</p>
 </section>
 </section>
@@ -319,7 +351,7 @@
         <li class="right" >
           <a href="rdefinition_FF.html" title="apero_flat_spirou"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.259 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.8.001 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../../main/spirou/main_spirou.html" >SPIRou documentation</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="recipes.html" >Recipes (SPIROU)</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">apero_thermal_spirou</a></li> 
@@ -327,7 +359,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2019, Neil Cook.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 6.1.3.
     </div>
   </body>
 </html>

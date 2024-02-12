@@ -63,7 +63,7 @@ KW_UTC_OBS.set(key='UTC-OBS', comment='Time at start of observation (UTC)',
 # define the read noise HEADER key a.k.a sigdet (used to get value only)
 KW_RDNOISE = KW_RDNOISE.copy(__NAME__)
 KW_RDNOISE.set(key='RDNOISE', comment='Read noise (electrons)',
-               combine_method='flux', group='raw')
+               combine_method='noise', group='raw')
 
 # define the gain HEADER key (used to get value only)
 KW_GAIN = KW_GAIN.copy(__NAME__)
@@ -83,13 +83,13 @@ KW_FRMTIME.set(key='FRMTIME', comment='[sec] Frame time, cadence of IR reads',
 # define the exposure time HEADER key (used to get value only)
 KW_EXPTIME = KW_EXPTIME.copy(__NAME__)
 KW_EXPTIME.set(key='EXPTIME', unit=uu.s, comment='[sec] Integration time',
-               combine_method='sum', group='raw')
+               combine_method='math', group='raw')
 
 # define the required exposure time HEADER key (used to get value only)
 KW_EXPREQ = KW_EXPREQ.copy(__NAME__)
 KW_EXPREQ.set(key='EXPREQ', unit=uu.s,
               comment='[sec] Requested integration time',
-              combine_method='sum', group='raw')
+              combine_method='math', group='raw')
 
 # define the observation type HEADER key
 KW_OBSTYPE = KW_OBSTYPE.copy(__NAME__)
@@ -141,6 +141,10 @@ KW_NEXP.set(key='NEXP', comment='Total number of exposures within the sequence',
 # define the pi name HEADER key
 KW_PI_NAME = KW_PI_NAME.copy(__NAME__)
 KW_PI_NAME.set(key='PI_NAME', comment='The PI of the program', group='raw')
+
+# define the run id HEADER key
+KW_RUN_ID = KW_RUN_ID.copy(__NAME__)
+KW_RUN_ID.set(key='RUNID', comment='queue run id', group='raw')
 
 # define the instrument HEADER key
 KW_INSTRUMENT = KW_INSTRUMENT.copy(__NAME__)
@@ -583,6 +587,10 @@ KW_THERM_RATIO_U = KW_THERM_RATIO_U.copy(__NAME__)
 KW_THERM_RATIO_U.set(key='THRM_RU',
                      comment='Ratio method used for thermal correction')
 
+# define the measured effective readout noise
+KW_EFF_RON = KW_EFF_RON.copy(__NAME__)
+KW_EFF_RON.set(key='EFFRON', comment='Measured eff readout noise before ext')
+
 # -----------------------------------------------------------------------------
 # Define DRS outputs keywords
 # -----------------------------------------------------------------------------
@@ -817,7 +825,7 @@ KW_EXT_START.set(key='EXTSTART', comment='Extract: Start order for extraction')
 
 # the end order for extraction
 KW_EXT_END = KW_EXT_END.copy(__NAME__)
-KW_EXT_END.set(key='EXTEND', comment='Extract: End order for extraction')
+KW_EXT_END.set(key='EXT_END', comment='Extract: End order for extraction')
 
 # the upper bound for extraction of order
 KW_EXT_RANGE1 = KW_EXT_RANGE1.copy(__NAME__)
@@ -1703,13 +1711,13 @@ KW_TELLUP_DO_PRECLEAN.set(key='TLPDOCLN', comment='tellu preclean done',
 # Define default water absorption used (tellu pre-cleaning)
 KW_TELLUP_DFLT_WATER = KW_TELLUP_DFLT_WATER.copy(__NAME__)
 KW_TELLUP_DFLT_WATER.set(key='TLPDFH2O',
-                         comment='tellu preclean default h20 abso used',
+                         comment='tellu preclean default H2O abso used',
                          parent='TELLUP_D_WATER_ABSO')
 
 # Define default water absorption used (tellu pre-cleaning)
 KW_TELLUP_DFLT_WATER = KW_TELLUP_DFLT_WATER.copy(__NAME__)
 KW_TELLUP_DFLT_WATER.set(key='TLPDFH2O',
-                         comment='tellu preclean default h20 abso used',
+                         comment='tellu preclean default H2O abso used',
                          parent='TELLUP_D_WATER_ABSO')
 
 # Define ccf scan range that was used (tellu pre-cleaning)
@@ -1896,7 +1904,7 @@ KW_FTELLU_NPC = KW_FTELLU_NPC.copy(__NAME__)
 KW_FTELLU_NPC.set(key='FTT_NPC',
                   comment='ftellu Number of principal components used')
 
-# The number of trans files used in pc fit (closest in expo h20/others)
+# The number of trans files used in pc fit (closest in expo H2O/others)
 KW_FTELLU_NTRANS = KW_FTELLU_NTRANS.copy(__NAME__)
 KW_FTELLU_NTRANS.set(key='FTT_NTRS',
                      comment='ftellu NUmber of trans files used in pc fit')
@@ -2328,7 +2336,7 @@ KW_POL_CONT_TELLMASK.set(key='PCEWL{0:03d}',
 
 # define the lsd origin
 KW_LSD_ORIGIN = KW_LSD_ORIGIN.copy(__NAME__)
-KW_LSD_ORIGIN.set(key='ORIGIN', comment='Origin of this LSD file')
+KW_LSD_ORIGIN.set(key='LSDORIG', comment='Origin of this LSD file')
 
 # define the rv from lsd gaussian fit
 KW_LSD_FIT_RV = KW_LSD_FIT_RV.copy(__NAME__)

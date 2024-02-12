@@ -421,6 +421,27 @@ def fitgaussian(x: np.ndarray, y: np.ndarray,
         return pfit
 
 
+def super_gauss(x: np.ndarray, center: float, amp: float, fwhm: float,
+                expo: float, zp: float) -> np.ndarray:
+    """
+    Super Gaussian function centered and with a zero point
+
+    0.5 = exp(-0.5*((fwhm/2)/ew)^expo)
+    np.log(0.5) = -0.5*((fwhm/2)/ew)^expo
+    2*np.log(2) = ((fwhm/2)/ew)^expo
+
+    :param x: numpy array (1D), the x values for the super gaussian
+    :param center: float, the center of the super gaussian
+    :param amp: float, the amplitude of the super gaussian
+    :param fwhm: float, the full width at half maximum of the super gaussian
+    :param expo: float, the exponent of the super gaussian
+    :param zp: float, the zero point of the super gaussian
+
+    :return: numpy array (1D), the super gaussian values for the given x values
+    """
+    ew = (fwhm / 2) / (2 * np.log(2)) ** (1 / expo)
+    return np.exp(-0.5 * np.abs((x - center) / ew) ** np.abs(expo)) * amp + zp
+
 # =============================================================================
 # Start of code
 # =============================================================================

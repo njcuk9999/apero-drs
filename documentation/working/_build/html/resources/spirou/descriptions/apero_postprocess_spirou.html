@@ -1,0 +1,246 @@
+
+
+
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>Post processing &#8212; APERO 0.8.001 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/bizstyle.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/apero.css" />
+    
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/sphinx_highlight.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../../../_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,700'
+          rel='stylesheet' type='text/css' />
+    <link rel="stylesheet" href="_static/images/fonta/css/font-awesome.min.css">
+
+
+
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!--[if lt IE 9]>
+    <script src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+    <style>
+      table.right { float: left; margin-left: 20px; }
+      table.right td { border: 1px solid #ccc; }
+      
+    </style>
+    <script>
+      // intelligent scrolling of the sidebar content
+      $(window).scroll(function() {
+        var sb = $('.sphinxsidebarwrapper');
+        var win = $(window);
+        var sbh = sb.height();
+        var offset = $('.sphinxsidebar').position()['top'];
+        var wintop = win.scrollTop();
+        var winbot = wintop + win.innerHeight();
+        var curtop = sb.position()['top'];
+        var curbot = curtop + sbh;
+        // does sidebar fit in window?
+        if (sbh < win.innerHeight()) {
+          // yes: easy case -- always keep at the top
+          sb.css('top', $u.min([$u.max([0, wintop - offset - 10]),
+                                $(document).height() - sbh - 200]));
+        } else {
+          // no: only scroll if top/bottom edge of sidebar is at
+          // top/bottom edge of window
+          if (curtop > wintop && curbot > winbot) {
+            sb.css('top', $u.max([wintop - offset - 10, 0]));
+          } else if (curtop < wintop && curbot < winbot) {
+            sb.css('top', $u.min([winbot - sbh - offset - 20,
+                                  $(document).height() - sbh - 200]));
+          }
+        }
+      });
+    </script>
+
+  </head><body>
+<div class="pageheader">
+
+  <ul>
+    <li><a title="Home" href="../../../index.html">
+        <i class="fa fa-home fa-3x" aria-hidden="true"></i></a></li>
+    <li><a title="install" href="../../../user/general/installation.html">
+        <i class="fa fa-cog fa-3x" aria-hidden="true"></i></a></li>
+    <li><a title="github" href="https://github.com/njcuk9999/apero-drs">
+        <i class="fa fa-git-square fa-3x" aria-hidden="true"></i></a></li>
+    <li><a title="download pdf" href="../../../apero-docs.pdf">
+        <i class="fa fa-download fa-3x" aria-hidden="true"></i></a></li>
+    <li><a title="UdeM" href="/main/misc/udem.html">
+        <i class="fa fa-university fa-3x" aria-hidden="true"></i></a></li>
+  </ul>
+    <div>
+    <a href="../../../index.html">
+      <img src="../../../_static/images/apero_logo.png" alt="APERO" />
+    </a>
+    <br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A PipelinE to Reduce Observations
+    </div>
+
+</div>
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.8.001 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Post processing</a></li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../../../index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Post processing</a><ul>
+<li><a class="reference internal" href="#d-extraction-product-e-fits">2D extraction product (e.fits)</a></li>
+<li><a class="reference internal" href="#d-telluric-corrected-product-t-fits">2D telluric corrected product (t.fits)</a></li>
+<li><a class="reference internal" href="#d-extraction-and-1d-telluric-corrected-product-s-fits">1D extraction and 1D telluric corrected product (s.fits)</a></li>
+<li><a class="reference internal" href="#velocity-product-v-fits">Velocity product (v.fits)</a></li>
+<li><a class="reference internal" href="#polarimetric-product-p-fits">Polarimetric product (p.fits)</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../../_sources/resources/spirou/descriptions/apero_postprocess_spirou.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="post-processing">
+<h1>Post processing<a class="headerlink" href="#post-processing" title="Permalink to this heading">¶</a></h1>
+<p>The final data products that go to PIs are composite files of many of the outputs of APERO. For SPIRou, these are
+sent to the Canadian Data Astronomy Center (CADC, accessible from <a class="reference external" href="https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/">https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/</a>) but
+are only produced for science targets and hot stars (i.e., <cite>OBJ_FP</cite>, <cite>OBJ_DARK</cite>, <cite>POLAR_FP</cite>, and <cite>POLAR_DARK</cite>) and not
+for calibrations by default. There are currently five post-processing files each linked to a single odometer code.
+These are the 2D extracted output (e.fits), the 2D telluric corrected output (t.fits), the 1D output (s.fits), the
+velocity output (v.fits), and the polarimetric outputs (p.fits). A summary of the CADC output files is available in
+table below.</p>
+<table class="docutils align-default" id="id1">
+<caption><span class="caption-text">Science ready outputs sent to the Canadian Data Astronomy Center, CADC).</span><a class="headerlink" href="#id1" title="Permalink to this table">¶</a></caption>
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>File</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>(odometer)e.fits</p></td>
+<td><p>2D extracted spectrum for fibers AB, A, B, C, wavelength solution, and blaze</p></td>
+</tr>
+<tr class="row-odd"><td><p>(odometer)s.fits</p></td>
+<td><p>1D extracted spectrum for fibers AB, A, B, C, and telluric corrected spectrum if available</p></td>
+</tr>
+<tr class="row-even"><td><p>(odometer)t.fits</p></td>
+<td><p>2D telluric corrected spectrum for fiber AB, A, B, wavelength solution, blaze, and reconstructed atmospheric transmission</p></td>
+</tr>
+<tr class="row-odd"><td><p>(odometer)v.fits</p></td>
+<td><p>combined and per order CCFs for fitting the radial velocity of the star</p></td>
+</tr>
+<tr class="row-even"><td><p>(odometer)p.fits</p></td>
+<td><p>polarimetric products (Polarimetric flux, Stokes I, Null vectors, wavelength solution, and blaze)</p></td>
+</tr>
+</tbody>
+</table>
+<section id="d-extraction-product-e-fits">
+<h2>2D extraction product (e.fits)<a class="headerlink" href="#d-extraction-product-e-fits" title="Permalink to this heading">¶</a></h2>
+<p>These are the combined extracted products. All extensions are two-dimensional spectra of size <span class="math notranslate nohighlight">\(4088\times49\)</span>.
+The e.fits file contains the extracted spectrum for each order for each fiber and the matching wavelength and blaze
+solution for each order and each fiber. The files are identified with a single odometer generated at the time of
+observation followed by an e.fits suffix.</p>
+</section>
+<section id="d-telluric-corrected-product-t-fits">
+<h2>2D telluric corrected product (t.fits)<a class="headerlink" href="#d-telluric-corrected-product-t-fits" title="Permalink to this heading">¶</a></h2>
+<p>These are the combined telluric-corrected products. All extensions are two-dimensional spectra of size
+<span class="math notranslate nohighlight">\(4088\times49\)</span>. The t.fits file contains the telluric corrected spectrum for each order and each fiber and the
+matching wavelength and blaze solution for each order and each fiber. The files are identified with a single odometer
+code at the time of observation followed by a t.fits suffix.</p>
+</section>
+<section id="d-extraction-and-1d-telluric-corrected-product-s-fits">
+<h2>1D extraction and 1D telluric corrected product (s.fits)<a class="headerlink" href="#d-extraction-and-1d-telluric-corrected-product-s-fits" title="Permalink to this heading">¶</a></h2>
+<p>These are the combined 1D spectrum products and consist of two tables. The two tables consist of the 1D spectrum in 1.
+velocity units and 2. wavelength units. They each consist of the following columns: the wavelength solution, the
+extracted flux in AB, A, B, and C, the telluric corrected flux in fibers AB, A, and B (if available), and the
+associated uncertainties for each flux column.  The files are identified with a single odometer code at the time of
+observation followed by an s.fits suffix.</p>
+</section>
+<section id="velocity-product-v-fits">
+<h2>Velocity product (v.fits)<a class="headerlink" href="#velocity-product-v-fits" title="Permalink to this heading">¶</a></h2>
+<p>The velocity products are packaged into the v.fits file. Currently, only the CCF values are added as an extension as
+the LBL products are computed separately. The CCF file consists of the CCF generated for each radial velocity element
+(by default this is between <span class="math notranslate nohighlight">\(\pm 300 ms^{-1}\)</span> in steps of 0.5 <span class="math notranslate nohighlight">\(m s^{-1}\)</span>) for each order and a combined
+CCF for the same radial velocity elements. The files are identified with a single odometer code at the time of
+observation followed by a v.fits suffix. Once the LBL module is able to be used with APERO it will add an extension
+to the v.fits (the rdb extension described in the <a class="reference external" href="https://lbl.exoplanets.ca">LBL documentation</a>.).</p>
+</section>
+<section id="polarimetric-product-p-fits">
+<h2>Polarimetric product (p.fits)<a class="headerlink" href="#polarimetric-product-p-fits" title="Permalink to this heading">¶</a></h2>
+<p>These are the combined polarimetric products. The p.fits file consists of eight image extensions and three table
+extensions. The first two tables are the 1D representations of the 2D polarimetric products (listed in the extensions
+above) in 1. velocity units and 2. wavelength units. They each consist of the following columns: the wavelength
+solution, the polarimetric flux, the Stokes I flux, the Null 1 and 2 fluxes, and the associated uncertainties on each
+flux column. The third table lists the configuration parameters used to run APERO. Although polarimetric products
+are the combination of at least 4 odometer codes, files are associated with a single odometer code (the first in the
+sequence at the time of observation) followed by a p.fits suffix.</p>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.8.001 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Post processing</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2019, Neil Cook.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 6.1.3.
+    </div>
+  </body>
+</html>

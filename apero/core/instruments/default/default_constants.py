@@ -32,7 +32,7 @@ __all__ = [
     'PP_RMS_PERCENTILE', 'PP_LOWEST_RMS_PERCENTILE', 'PP_CORRUPT_SNR_HOTPIX',
     'PP_CORRUPT_RMS_THRES', 'PP_COSMIC_NOISE_ESTIMATE', 'PP_COSMIC_VARCUT1',
     'PP_COSMIC_VARCUT2', 'PP_COSMIC_INTCUT1', 'PP_COSMIC_INTCUT2',
-    'PP_COSMIC_BOXSIZE', 'RAW_TO_PP_ROTATION', 'PP_DARK_MED_BINNUM',
+    'PP_COSMIC_BOXSIZE', 'RAW_TO_PP_ROTATION', 'EFFGAIN', 'PP_DARK_MED_BINNUM',
     'SKIP_DONE_PP', 'ALLOWED_PPM_TYPES', 'PPM_MASK_NSIG', 'PP_MEDAMP_BINSIZE',
     'PP_BAD_EXPTIME_FRACTION', 'PP_DARK_DPRTYPES', 'PP_DARK_THRES',
     'PP_CORR_XTALK_AMP_FLUX', 'PP_COR_XTALK_AMP_DFLUX',
@@ -51,17 +51,20 @@ __all__ = [
     'IMAGE_FRAME_TIME', 'ALL_POLAR_RHOMB_POS',
     # general calib constants
     'COMBINE_METRIC_THRESHOLD1', 'CAVITY_1M_FILE', 'CAVITY_LL_FILE',
+    'SIMBAD_TAP_URL',
     'OBJ_LIST_GAIA_URL', 'CALIB_CHECK_FP_PERCENTILE', 'CALIB_CHECK_FP_THRES',
     'CALIB_CHECK_FP_CENT_SIZE', 'COMBINE_METRIC1_TYPES',
     'OBJ_LIST_GOOGLE_SHEET_URL', 'OBJ_LIST_GSHEET_MAIN_LIST_ID',
     'OBJ_LIST_GSHEET_PEND_LIST_ID', 'OBJ_LIST_GSHEET_REJECT_LIST_ID',
+    'OBJ_LIST_GSHEET_BIBCODE_ID',
     'OBJ_LIST_GSHEET_USER_URL', 'OBJ_LIST_GSHEET_USER_ID',
     'OBJ_LIST_RESOLVE_FROM_DATABASE', 'OBJ_LIST_RESOLVE_FROM_GAIAID',
     'OBJ_LIST_RESOLVE_FROM_GLIST', 'OBJ_LIST_RESOLVE_FROM_COORDS',
     'OBJ_LIST_GAIA_EPOCH', 'OBJ_LIST_GAIA_PLX_LIM', 'OBJ_LIST_GAIA_MAG_CUT',
     'OBJ_LIST_CROSS_MATCH_RADIUS', 'REJECT_LIST_GOOGLE_SHEET_URL',
     'REJECT_LIST_GSHEET_MAIN_LIST_ID', 'GROUP_FILE_LIMIT', 'MAX_CALIB_DTIME',
-    'DO_CALIB_DTIME_CHECK', 'NIGHT_DEFINITION',
+    'DO_CALIB_DTIME_CHECK', 'CALIB_BIN_IN_TIME', 'CALIB_DB_DAYFRAC',
+    'NIGHT_DEFINITION',
     # qc constants
     'QC_DARK_TIME', 'QC_MAX_DEAD', 'DARK_QMIN', 'DARK_QMAX',
     'QC_MAX_DARK', 'QC_LOC_MAXFIT_REMOVED_CTR',
@@ -135,14 +138,15 @@ __all__ = [
     # flat constants
     'FF_BLAZE_HALF_WINDOW', 'FF_BLAZE_THRESHOLD', 'FF_BLAZE_DEGREE',
     'FF_RMS_SKIP_ORDERS', 'QC_FF_MAX_RMS', 'FF_PLOT_ORDER',
-    'FF_BLAZE_SCUT', 'FF_BLAZE_SIGFIT', 'FF_BLAZE_BPERCENTILE',
-    'FF_BLAZE_NITER', 'FF_BLAZE_SINC_MED_SIZE',
+    'FF_HIGH_PASS_SIZE', 'FF_BLAZE_SCUT', 'FF_BLAZE_SIGFIT',
+    'FF_BLAZE_BPERCENTILE', 'FF_BLAZE_NITER', 'FF_BLAZE_SINC_MED_SIZE',
     # leakage constants
     'ALLOWED_LEAKREF_TYPES', 'LEAKREF_ALWAYS_EXTRACT', 'LEAKREF_EXTRACT_TYPE',
     'CORRECT_LEAKAGE', 'LEAK_EXTRACT_FILE', 'LEAK_2D_EXTRACT_FILES',
     'LEAK_1D_EXTRACT_FILES', 'LEAK_BCKGRD_PERCENTILE', 'LEAK_NORM_PERCENTILE',
     'LEAKREF_WSMOOTH', 'LEAKREF_KERSIZE', 'LEAK_LOW_PERCENTILE',
     'LEAK_HIGH_PERCENTILE', 'LEAK_BAD_RATIO_OFFSET', 'LEAKAGE_REF_TYPES',
+    'LEAK_REF_MAX_FILES',
     # extract constants
     'EXT_START_ORDER', 'EXT_END_ORDER', 'EXT_RANGE1', 'EXT_RANGE2',
     'EXT_SKIP_ORDERS', 'EXT_COSMIC_CORRETION', 'EXT_COSMIC_SIGCUT',
@@ -234,9 +238,9 @@ __all__ = [
     'WAVENIGHT_PLT_NBINS',
     # sky correction constants
     'SKYMODEL_FILETYPE',  'SKYMODEL_EXT_SNR_ORDERNUM', 'SKYMODEL_MIN_EXPTIME',
-    'SKYMODEL_LINE_SIGMA', 'SKYMODEL_LINE_ERODE_SIZE',
-    'SKYMODEL_LINE_DILATE_SIZE', 'SKYMODEL_WEIGHT_ITERS',
-    'SKYMODEL_WEIGHT_ERODE_SIZE',
+    'SKYMODEL_MAX_OPEN_FILES', 'SKYMODEL_LINE_SIGMA',
+    'SKYMODEL_LINE_ERODE_SIZE', 'SKYMODEL_LINE_DILATE_SIZE',
+    'SKYMODEL_WEIGHT_ITERS', 'SKYMODEL_WEIGHT_ERODE_SIZE',
     'ALLOWED_SKYCORR_DPRTYPES', 'SKYCORR_WEIGHT_ITERATIONS',
     'SKYCORR_LOWPASS_SIZE1', 'SKYCORR_LOWPASS_SIZE2',
     'SKYCORR_LOWPASS_ITERATIONS', 'SKYCORR_NSIG_THRES',
@@ -281,6 +285,7 @@ __all__ = [
     'CCF_MASK_PATH', 'CCF_NO_RV_VAL', 'CCF_MASK_MIN_WEIGHT', 'CCF_MASK_WIDTH',
     'CCF_N_ORD_MAX', 'CCF_DEFAULT_MASK', 'CCF_MASK_UNITS', 'CCF_MASK_FMT',
     'CCF_DEFAULT_WIDTH', 'CCF_DEFAULT_STEP', 'CCF_ALLOWED_DPRTYPES',
+    'CCF_VALID_FP_DPRTYPES',
     'CCF_CORRECT_TELLU_TYPES', 'CCF_TELLU_THRES', 'CCF_FILL_NAN_KERN_SIZE',
     'CCF_FILL_NAN_KERN_RES', 'CCF_DET_NOISE', 'CCF_FIT_TYPE',
     'CCF_NOISE_SIGDET', 'CCF_NOISE_BOXSIZE', 'CCF_NOISE_THRES',
@@ -363,6 +368,11 @@ __all__ = [
     # debug polar plot settings
     'PLOT_POLAR_FIT_CONT', 'PLOT_POLAR_CONTINUUM', 'PLOT_POLAR_RESULTS',
     'PLOT_POLAR_STOKES_I', 'PLOT_POLAR_LSD',
+    # LBL settings
+    'LBL_FILE_DEFS', 'LBL_DPRTYPES', 'LBL_TEMPLATE_FILE_DEFS',
+    'LBL_SIM_FP_DPRTYPES', 'LBL_SYMLINKS', 'LBL_FRIENDS',
+    'LBL_SPECIFIC_DATATYPES', 'LBL_RECAL_TEMPLATE', 'LBL_MULTI_OBJLIST',
+    'LBL_DTEMP',
     # post-processing settings
     'POST_CLEAR_REDUCED', 'POST_OVERWRITE', 'POST_HDREXT_COMMENT_KEY',
     # tool constants
@@ -372,8 +382,13 @@ __all__ = [
     'REPROCESS_REJECT_SQL', 'REPROCESS_OBJ_SCI_SQL',
     'SUMMARY_LATEX_PDF', 'EXPMETER_MIN_LAMBDA', 'EXPMETER_MAX_LAMBDA',
     'EXPMETER_TELLU_THRES', 'REPROCESS_PINAMECOL', 'DRIFT_DPRTYPES',
-    'DRIFT_DPR_FIBER_TYPE', 'REPROCESS_MP_TYPE', 'REPROCESS_REINDEX_BLOCKS',
-    'REPROCESS_OBJECT_TYPES'
+    'DRIFT_DPR_FIBER_TYPE', 'REPROCESS_MP_TYPE', 'REPROCESS_MP_TYPE_VAL',
+    'REPROCESS_REINDEX_BLOCKS', 'REPROCESS_OBJECT_TYPES',
+    # ari constants
+    'ARI_INSTRUMENT', 'ARI_USER', 'ARI_NCORES', 'ARI_WAVE_RANGES',
+    'ARI_SSH_COPY', 'ARI_RESET', 'ARI_FILTER_OBJECTS',
+    'ARI_FILTER_OBJECTS_LIST', 'ARI_HEADER_PROPS', 'ARI_FINDING_CHARTS',
+    'ARI_RESET_DICT',
 ]
 
 # set name
@@ -443,6 +458,12 @@ RAW_TO_PP_ROTATION = Const('RAW_TO_PP_ROTATION', dtype=int, value=None,
                                        'rotate 90 deg clock-wise, '
                                        '\n\tnrot >=8 -> performs a modulo '
                                        '8 anyway')
+
+# Measured detector gain in all places that use gain
+EFFGAIN = Const('EFFGAIN', dtype=float, value=None, source=__NAME__,
+                group=cgroup, minimum=0,
+                description='Measured detector gain in all places that use '
+                            'gain')
 
 # Define raw image size (mostly just used as a check and in places where we
 #   don't have access to this information) in x dim
@@ -536,13 +557,6 @@ GROUP_FILE_LIMIT = Const('GROUP_FILE_LIMIT', value=None, dtype=int,
                          description='Define the maximum number of files that '
                                      'can be used in a group')
 
-# Define whether we check the calibration and observation separation
-DO_CALIB_DTIME_CHECK = Const('DO_CALIB_DTIME_CHECK', value=None, dtype=bool,
-                             source=__NAME__, group=cgroup,
-                             description='Define whether we check the '
-                                         'calibration and observation '
-                                         'separation')
-
 # Define the maximum time (in days) that a calibration can be separated from
 #   an observation in order to use it
 MAX_CALIB_DTIME = Const('MAX_CALIB_DTIME', value=None, dtype=float,
@@ -550,6 +564,31 @@ MAX_CALIB_DTIME = Const('MAX_CALIB_DTIME', value=None, dtype=float,
                         description='Define the maximum time (in days) that a '
                                     'calibration can be separated from an '
                                     'observation in order to use it')
+
+# Define whether we check the calibration and observation separation
+DO_CALIB_DTIME_CHECK = Const('DO_CALIB_DTIME_CHECK', value=None, dtype=bool,
+                             source=__NAME__, group=cgroup,
+                             description='Define whether we check the '
+                                         'calibration and observation '
+                                         'separation')
+
+# define whether the user wants to bin the calibration times to a specific
+#   day fraction (i.e. midnight, midday) using CALIB_DB_DAYFRAC
+CALIB_BIN_IN_TIME = Const('CALIB_BIN_IN_TIME', value=None, dtype=str,
+                          source=__NAME__, group=cgroup,
+                          description=('# define whether the user wants to '
+                                       'bin the calibration times to a '
+                                       'specific day fraction (i.e. midnight,'
+                                       ' midday) using CALIB_DB_DAYFRAC'))
+
+# Define the the fraction of the day to bin to (0 = midnight  before
+#     observation, 0.5 = noon, and 1.0 = midnight after
+CALIB_DB_DAYFRAC = Const('CALIB_DB_DAYFRAC', value=None, dtype=float,
+                         source=__NAME__, group=cgroup, minimum=0.0,
+                         maximum=1.0,
+                         description=('Define the the fraction of the day to '
+                                      '(0 = midnight  before observation, '
+                                      ' 0.5 = noon, and 1.0 = midnight after'))
 
 # Define the threshold under which a file should not be combined
 #  (metric is compared to the median of all files 1 = perfect, 0 = noise)
@@ -601,6 +640,12 @@ CALIB_CHECK_FP_CENT_SIZE = Const('CALIB_CHECK_FP_CENT_SIZE', value=None,
                                  description=('define the check FP center '
                                               'image size [px]'))
 
+# Define the SIMBAD TAP url
+SIMBAD_TAP_URL = Const('SIMBAD_TAP_URL', value=None, dtype=str, source=__NAME__,
+                       group=cgroup,
+                          description='Define the SIMBAD TAP url')
+
+
 # Define the TAP Gaia URL (for use in crossmatching to Gaia via astroquery)
 OBJ_LIST_GAIA_URL = Const('OBJ_LIST_GAIA_URL', value=None, dtype=str,
                           source=__NAME__, group=cgroup,
@@ -636,6 +681,14 @@ OBJ_LIST_GSHEET_REJECT_LIST_ID = Const('OBJ_LIST_GSHEET_REJECT_LIST_ID',
                                        description='Define the google sheet '
                                                    'objname list reject list '
                                                    'id number')
+
+# Define the google sheet bibcode id number
+OBJ_LIST_GSHEET_BIBCODE_ID = Const('OBJ_LIST_GSHEET_BIBCODE_ID',
+                                   value=None, dtype=str, source=__NAME__,
+                                   group=cgroup,
+                                   description='Define the google sheet '
+                                               'bibcode id number')
+
 
 # Define the google sheet user url object list (None for no user list)
 #     (may be set to a directory for completely offline reduction)
@@ -749,7 +802,7 @@ REJECT_LIST_GSHEET_MAIN_LIST_ID = Const('REJECT_LIST_GSHEET_MAIN_LIST_ID', value
 #                                  dtype=str, source=__NAME__, group=cgroup,
 #                                  description=('Define the odometer code '
 #                                               'rejection google sheet id'))
-# 
+#
 # # Define the odmeter code rejection google sheet workbook
 # ODOCODE_REJECT_GSHEET_NUM = Const('ODOCODE_REJECT_GSHEET_NUM', value=int,
 #                                   dtype=str, source=__NAME__, minimum=0,
@@ -1346,10 +1399,12 @@ BKGR_NO_SUBTRACTION = Const('BKGR_NO_SUBTRACTION', value=None, dtype=bool,
                                          'measurement (True or False)'))
 
 #  Kernel amplitude determined from drs_local_scatter.py
+#    If zero the scattering is skipped
 BKGR_KER_AMP = Const('BKGR_KER_AMP', value=None, dtype=float, source=__NAME__,
                      group=cgroup,
                      description=('Kernel amplitude determined from '
-                                  'drs_local_scatter.py'))
+                                  'drs_local_scatter.py, '
+                                  'If zero the scattering is skipped'))
 
 #  Background kernel width in x and y [pixels]
 BKGR_KER_WX = Const('BKGR_KER_WX', value=None, dtype=int, source=__NAME__,
@@ -2114,6 +2169,12 @@ FF_PLOT_ORDER = Const('FF_PLOT_ORDER', value=None, dtype=int, source=__NAME__,
                       group=cgroup,
                       description='Define the order to plot in summary plots')
 
+# Define the high pass filter size in km/s
+FF_HIGH_PASS_SIZE = Const('FF_HIGH_PASS_SIZE', value=None, dtype=int,
+                          source=__NAME__, group=cgroup,
+                          description='Define the high pass filter size in '
+                                      'km/s')
+
 # =============================================================================
 # CALIBRATION: LEAKAGE SETTINGS
 # =============================================================================
@@ -2153,6 +2214,12 @@ LEAKAGE_REF_TYPES = Const('LEAKAGE_REF_TYPES', value=None, dtype=str,
                           source=__NAME__, group=cgroup,
                           description='Define DPRTYPE in reference fiber to do '
                                       'correction')
+
+# define the maximum number of files to use in the leak reference
+LEAK_REF_MAX_FILES = Const('LEAK_REF_MAX_FILES', value=None, dtype=int,
+                          source=__NAME__, group=cgroup, minimum=0,
+                          description='define the maximum number of files to '
+                                      'use in the leak reference')
 
 # define the type of file to use for the leak correction (currently allowed are
 #     'E2DS_FILE' or 'E2DSFF_FILE' (linked to recipe definition outputs)
@@ -3646,6 +3713,13 @@ SKYMODEL_MIN_EXPTIME = Const('SKYMODEL_MIN_EXPTIME', value=None,
                              description='Define the minimum exptime to use a '
                                          'sky in the model [s]')
 
+# Define the maximum number of files to have open simultaneously
+SKYMODEL_MAX_OPEN_FILES = Const('SKYMODEL_MAX_OPEN_FILES', value=None,
+                                dtype=int, source=__NAME__, minimum=1,
+                                group=cgroup,
+                                description='Define the maximum number of '
+                                            'files to have open simultaneously')
+
 # define the sigma that positive exursions need to have to be identified
 #   as lines
 SKYMODEL_LINE_SIGMA = Const('SKYMODEL_LINE_SIGMA', value=None,
@@ -4090,13 +4164,13 @@ FTELLU_NUM_PRINCIPLE_COMP = Const('FTELLU_NUM_PRINCIPLE_COMP', value=None,
                                               'components to use in PCA fit')
 
 # The number of transmission files to use in the PCA fit (use this number of
-#    trans files closest in expo_h20 and expo_water
+#    trans files closest in expo_H2O and expo_water
 FTELLU_NUM_TRANS = Const('FTELLU_NUM_TRANS', value=None, dtype=int,
                          source=__NAME__, minimum=1,
                          user=True, active=False, group=cgroup,
                          description='The number of transmission files to use '
                                      'in the PCA fit (use this number of '
-                                     'trans files closest in expo_h20 and '
+                                     'trans files closest in expo_H2O and '
                                      'expo_water')
 
 # Define whether to add the first derivative and broadening factor to the
@@ -4476,6 +4550,13 @@ CCF_ALLOWED_DPRTYPES = Const('CCF_ALLOWED_DPRTYPES', value=None, dtype=str,
                              group=cgroup,
                              description='Allowed input DPRTYPES for input '
                                          'for CCF recipe')
+
+# Valid DPRTYPES for FP in calibration fiber
+CCF_VALID_FP_DPRTYPES = Const('CCF_VALID_FP_DPRTYPES', value=None, dtype=str,
+                              source=__NAME__, user=True, active=False,
+                              group=cgroup,
+                              description='Valid DPRTYPES for FP in calibration '
+                                          'fiber')
 
 # Define the KW_OUTPUT types that are valid telluric corrected spectra
 CCF_CORRECT_TELLU_TYPES = Const('CCF_CORRECT_TELLU_TYPES', value=None,
@@ -5423,6 +5504,79 @@ PLOT_POLAR_LSD = Const('PLOT_POLAR_LSD', value=False,
                        description='turn on the polar lsd debug plot')
 
 # =============================================================================
+# LBL SETTINGS
+# =============================================================================
+cgroup = 'LBL SETTINGS'
+# Define the file definition type (DRSOUTID) for LBL input files
+LBL_FILE_DEFS = Const('LBL_FILE_DEFS', value=None, dtype=str, source=__NAME__,
+                      user=False, active=True, group=cgroup,
+                      description='Define the file definition type (DRSOUTID) '
+                                  'for LBL input files')
+
+# Define the dprtype for science files for LBL
+LBL_DPRTYPES = Const('LBL_DPRTYPES', value=None, dtype=str, source=__NAME__,
+                     user=False, active=True, group=cgroup,
+                     description='Define the dprtype for science files for LBL')
+
+# Define the file definition type (DRSOUTID) for lbl input template
+LBL_TEMPLATE_FILE_DEFS = Const('LBL_TEMPLATE_FILE_DEFS', value=None,
+                               dtype=str, source=__NAME__, user=False,
+                               active=True, group=cgroup,
+                               description='Define the file definition type '
+                                           '(DRSOUTID) for lbl input template')
+
+# Define the DPRTYPE for simultaneous FP files for lbl input
+LBL_SIM_FP_DPRTYPES = Const('LBL_SIM_FP_DPRTYPES', value=None, dtype=str,
+                            source=__NAME__, user=False, active=True,
+                            group=cgroup,
+                            description='Define the DPRTYPE for simultaneous '
+                                        'FP files for lbl input')
+
+# Define whether the LBL directory should use symlinks
+LBL_SYMLINKS = Const('LBL_SYMLINKS', value=False, dtype=bool, source=__NAME__,
+                     user=True, active=True, group=cgroup,
+                     description='Define whether the LBL directory should use '
+                                 'symlinks')
+
+# Define the dictionary of friend and friend teffs for LBL
+LBL_FRIENDS = Const('LBL_FRIENDS', value=None, dtype=str, source=__NAME__,
+                    user=False, active=True, group=cgroup,
+                    description='Define the dictionary of friend and friend '
+                                'teffs for LBL')
+
+# Define the specific data types (where objname is the data type) for LBL
+LBL_SPECIFIC_DATATYPES = Const('LBL_SPECIFIC_DATATYPES', value=None,
+                               dtype=str, source=__NAME__, user=False,
+                               active=True, group=cgroup,
+                               description='Define the specific data types '
+                                           '(where objname is the data type) '
+                                           'for LBL')
+
+# Define objnames for which we should recalculate template if it doesn't
+#   exist (must include FP)
+LBL_RECAL_TEMPLATE = Const('LBL_RECAL_TEMPLATE', value=None, dtype=str,
+                           source=__NAME__, user=False, active=True,
+                           group=cgroup,
+                           description='Define objnames for which we should '
+                                       'recalculate template if it doesn\'t '
+                                       'exist (must include FP)')
+
+# Define which object names should be run through LBL compute in parellel
+#   i.e. break in to Ncore chunks (comma separated list)
+LBL_MULTI_OBJLIST = Const('LBL_MULTI_OBJLIST', value=None, dtype=str,
+                          source=__NAME__, user=False, active=True,
+                          group=cgroup,
+                          description='Define which object names should be '
+                                      ' run through LBL compute in parellel '
+                                      ' i.e. break in to Ncore chunks '
+                                      '(comma separated list)')
+
+# Define the DTEMP gradient files
+LBL_DTEMP = Const('LBL_DTEMP', value=None, dtype=dict,
+                  source=__NAME__, user=False, active=True, group=cgroup,
+                  description='Define the DTEMP gradient files')
+
+# =============================================================================
 # POST PROCESS SETTINGS
 # =============================================================================
 cgroup = 'POST PROCESS SETTINGS'
@@ -5463,13 +5617,25 @@ REPROCESS_REINDEX_BLOCKS = Const('REPROCESS_REINDEX_BLOCKS', value=None,
                                              'kinds that have (or could be) '
                                              'manually changed')
 
-# Define whether to use multiprocess Pool or Process
+# Define whether to use multiprocess "pool" or "process" or use "linear"
+#     mode when parallelising recipes
 REPROCESS_MP_TYPE = Const('REPROCESS_MP_TYPE', value=None, dtype=str,
                           source=__NAME__, group=cgroup,
                           user=True, active=True,
                           options=['pool', 'process'],
                           description='Define whether to use multiprocess '
-                                      '"pool" or "process"')
+                                      '"pool" or "process" or use "linear" '
+                                      'mode when parallelising recipes')
+
+# Define whether to use multiprocess "pool" or "process" or use "linear"
+#     mode when validating recipes
+REPROCESS_MP_TYPE_VAL = Const('REPROCESS_MP_TYPE_VAL', value=None, dtype=str,
+                              source=__NAME__, group=cgroup,
+                              user=True, active=True,
+                              options=['linear', 'pool', 'process', 'pathos'],
+                              description='Define whether to use multiprocess '
+                                          '"pool" or "process" or use "linear" '
+                                          'mode when validating recipes')
 
 # Key for use in run files
 REPROCESS_RUN_KEY = Const('REPROCESS_RUN_KEY', value=None, dtype=str,
@@ -5591,6 +5757,77 @@ DRIFT_DPR_FIBER_TYPE = Const('DRIFT_DPR_FIBER_TYPE', value=None, dtype=str,
                              source=__NAME__, group=cgroup,
                              description=('Define the fiber dprtype allowed '
                                           'for drift measurement (only FP)'))
+
+# =============================================================================
+# ARI SETTINGS
+# =============================================================================
+# Define the ari instrument (may be different from the apero instrument)
+ARI_INSTRUMENT = Const('ARI_INSTRUMENT', value=None, dtype=str,
+                       source=__NAME__, group=cgroup,
+                       description='Define the ari instrument (may be different'
+                                   ' from the apero instrument)')
+# Define the ari user name
+ARI_USER = Const('ARI_USER', value=None, dtype=str, source=__NAME__,
+                 group=cgroup,
+                 description='Define the ari user name')
+
+# Define the ari number of cores
+ARI_NCORES = Const('ARI_NCORES', value=None, dtype=int, source=__NAME__,
+                   group=cgroup,
+                   description='Define the ari number of cores')
+
+# Define the ari spectrum wavelength ranges in nm
+ARI_WAVE_RANGES = Const('ARI_WAVE_RANGES', value=None, dtype=dict,
+                        source=__NAME__, group=cgroup,
+                        description='Define the ari spectrum wavelength '
+                                    'ranges in nm')
+
+# Define the ari ssh properties to copy the website to
+ARI_SSH_COPY = Const('ARI_SSH_COPY', value=None, dtype=dict, source=__NAME__,
+                     group=cgroup,
+                     description='Define the ari ssh properties to copy the '
+                                 'website to')
+
+# Define whether to reset the ari working directory
+ARI_RESET = Const('ARI_RESET', value=False, dtype=bool, source=__NAME__,
+                  group=cgroup,
+                  description='Define whether to reset the ari working '
+                              'directory')
+
+# Define whether to filter by objects
+ARI_FILTER_OBJECTS = Const('ARI_FILTER_OBJECTS', value=None, dtype=str,
+                           source=__NAME__, group=cgroup,
+                           description='Define whether to filter by objects')
+
+# Define the list of objects to filter in ari
+ARI_FILTER_OBJECTS_LIST = Const('ARI_FILTER_OBJECTS_LIST', value=None,
+                                dtype=list, source=__NAME__, group=cgroup,
+                                description='Define the list of objects to '
+                                            'filter in ari')
+
+# Define the header key props for ari
+ARI_HEADER_PROPS = Const('ARI_HEADER_PROPS', value=None, dtype=dict,
+                         source=__NAME__, group=cgroup,
+                         description='Define the header key props for ari')
+
+# Define the finding charts dictionary for ari
+ARI_FINDING_CHARTS = Const('ARI_FINDING_CHARTS', value=None, dtype=dict,
+                           source=__NAME__, group=cgroup,
+                           description='Define the finding charts dictionary '
+                                       'for ari')
+
+# Define the ARI reset directory (relative paths to copy into the "other"
+#   directory on installation/reset)
+ari_reset_dict = dict()
+ari_reset_dict['sphinx-setup'] = ('tools/resources/ari/working',
+                                  'ari')
+ari_reset_dict['ari-setup'] = ('tools/resources/ari/ari-config',
+                               'ari-config')
+ARI_RESET_DICT = Const('ARI_RESET_DICT', value=ari_reset_dict,
+                       dtype=dict, source=__NAME__, group=cgroup,
+                       description='Define the ARI reset directory (relative '
+                                      'paths to copy into the "other" directory '
+                                      'on installation/reset)')
 
 # =============================================================================
 #  End of configuration file

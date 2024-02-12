@@ -50,8 +50,7 @@ textentry = lang.textentry
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(objname: Optional[str] = None, **kwargs
-         ) -> Union[Dict[str, Any], Tuple[DrsRecipe, ParamDict]]:
+def main(**kwargs) -> Union[Dict[str, Any], Tuple[DrsRecipe, ParamDict]]:
     """
     Main function for apero_mk_template
 
@@ -63,7 +62,7 @@ def main(objname: Optional[str] = None, **kwargs
     :returns: dictionary of the local space
     """
     # assign function calls (must add positional)
-    fkwargs = dict(objname=objname, **kwargs)
+    fkwargs = dict(**kwargs)
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
     recipe, params = drs_startup.setup(__NAME__, __INSTRUMENT__, fkwargs)
@@ -101,7 +100,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     calibdbm.load_db()
     telludbm = drs_database.TelluricDatabase(params)
     telludbm.load_db()
-
+    # set plot location
+    recipe.plot.set_location()
     # ----------------------------------------------------------------------
     # find all sky files
     # ----------------------------------------------------------------------
@@ -113,8 +113,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     sky_files_cal, infile_cal = telluric.find_night_skyfiles(params, cal_fiber,
                                                              filetype)
     # only keep files that match between the two
-    margs = [sky_files_sci, sky_files_cal, sci_fiber, cal_fiber,
-             infile_sci, infile_cal]
+    margs = [sky_files_sci, sky_files_cal, sci_fiber, cal_fiber]
     sky_files_sci, sky_files_cal = telluric.skymodel_matchfiles(*margs)
     # print progress
     # TODO: Add to language database

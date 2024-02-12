@@ -23,6 +23,8 @@ from apero.core import math as mp
 from apero.core.core import drs_database
 from apero.core.core import drs_log, drs_file
 from apero.core.utils import drs_recipe
+from apero.core.utils import drs_utils
+from apero.io import drs_fits
 from apero.science.calib import gen_calib
 from apero.science.calib import wave
 from apero.science.extract import gen_ext
@@ -63,6 +65,80 @@ display_func = drs_log.display_func
 # =============================================================================
 # Define leakage functions
 # =============================================================================
+def get_dark_fps(params: ParamDict, recipe: DrsRecipe,
+                 max_files: Optional[int] = None
+                 ) -> Tuple[List[DrsFitsFile], List[str]]:
+    """
+    Get dark files for leakage reference, selecting LEAK_REF_MAX_FILES files
+    uniformly distributed in time
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param recipe: DrsRecipe, the recipe that called this function
+    :param max_files: optional int, the maximum number of files to return
+                      if set overrides LEAK_REF_MAX_FILES from params
+
+    :return: tuple, 1. list of infiles, 2. list of raw file names
+    """
+    # set function name
+    func_name = display_func('get_dark_fps', __NAME__)
+    # extract file type from inputs
+    filetypes = params['INPUTS'].listp('FILETYPE', dtype=str)
+    # get allowed dark types
+    allowedtypes = params.listp('ALLOWED_LEAKREF_TYPES', dtype=str)
+    # get max number of files
+    max_num_files = pcheck(params, 'LEAK_REF_MAX_FILES', func=func_name,
+                           override=max_files)
+    # storage for return
+    infiles, rawfiles = [], []
+    # check file type
+    for filetype in filetypes:
+        # ------------------------------------------------------------------
+        # check whether filetype is in allowed types
+        if filetype not in allowedtypes:
+            emsg = textentry('01-001-00020', args=[filetype, func_name])
+            for allowedtype in allowedtypes:
+                emsg += '\n\t - "{0}"'.format(allowedtype)
+            WLOG(params, 'error', emsg)
+        # ------------------------------------------------------------------
+        # check whether filetype is allowed for instrument
+        # get definition
+        gkwargs = dict(block_kind='tmp', required=False)
+        darkfpfile = drs_file.get_file_definition(params, filetype, **gkwargs)
+        # deal with defintion not found
+        if darkfpfile is None:
+            eargs = [filetype, recipe.name, func_name]
+            WLOG(params, 'error', textentry('09-010-00001', args=eargs))
+        # ------------------------------------------------------------------
+        # get all "filetype" filenames
+        files = drs_utils.find_files(params, block_kind='tmp',
+                                     filters=dict(KW_DPRTYPE=filetype))
+        # ------------------------------------------------------------------
+        # loop through all files and get time from headers
+        times = []
+        for filename in files:
+            # read the header
+            hdr = drs_fits.read_header(params, filename)
+            # deal with mid_obs_time (will not be set in raw files)
+            acqtime = hdr[params['KW_MJDATE'][0]]
+            # append time
+            times.append(acqtime)
+        # ----------------------------------------------------------------------
+        # Only use a certain number of files to limit time taken
+        # ----------------------------------------------------------------------
+        time_mask = drs_utils.uniform_time_list(times, max_num_files)
+        # mask all files by time mask
+        files = np.array(files)[time_mask]
+        # ------------------------------------------------------------------
+        # create infiles
+        for filename in files:
+            infile = darkfpfile.newcopy(filename=filename, params=params)
+            infile.read_header()
+            infiles.append(infile)
+            rawfiles.append(infile.basename)
+    # return infiles and rawfiles
+    return infiles, rawfiles
+
+
 def correct_ref_dark_fp(params: ParamDict, extractdict: ParamDict,
                         bckgrd_percentile: Optional[int] = None,
                         norm_percentile: Optional[int] = None,

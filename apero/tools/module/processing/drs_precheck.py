@@ -12,6 +12,7 @@ Created on 2021-11-08
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
+from astropy.table import Table
 from tqdm import tqdm
 
 from apero import lang
@@ -56,74 +57,44 @@ textentry = lang.textentry
 # =============================================================================
 # Define file checking functions
 # =============================================================================
-def file_check(params: ParamDict, recipe: DrsRecipe,
-               findexdbm: Optional[FileIndexDatabase] = None):
+def calib_check(params: ParamDict, recipe: DrsRecipe, tstars: List[str],
+                ostars: List[str], uobsdirs: np.ndarray, condition: str,
+                findexdbm: FileIndexDatabase, log: bool = True
+                ) -> Tuple[Dict[str, dict], Dict[str, list], List[str]]:
     """
-    Check the current index database for possible problems in the raw file set
+    Check for calibration files
 
-    :param params: ParamDict, the parameter dictionary of constants
-    :param recipe: DrsRecipe instance, the recipe that called this function
-    :param findexdbm: IndexDatabase instance or None (will load index database)
+    :param params: ParamDict, parameter dictionary of constants
+    :param recipe: Recipe, the recipe instance that called this function
+    :param tstars: list of hot (telluric) stars
+    :param ostars: list of science targets
+    :param uobsdirs: numpy array of strings, the unique observation directories
+    :param condition: str, the SQL condition to use
+    :param findexdbm: FileIndexDatabase, the file index database
+    :param log: bool, if True prints messages to screen (default True)
 
-    :return: None, prints to screen
+    :return: tuple, 1. the calibration count for each obsdir
+                    2. the calibration times for each obsdir
+                    3. a list of bad calibration nights
     """
-    # deal with not having index database
-    if findexdbm is None:
-        # construct the index database instance
-        findexdbm = FileIndexDatabase(params)
-        findexdbm.load_db()
-    # -------------------------------------------------------------------------
-    # get odometer reject list (if required)
-    # -------------------------------------------------------------------------
-    # get whether the user wants to use reject list
-    _use_odo_reject = params['USE_REJECTLIST']
-    # get the odometer reject list
-    odo_reject_list = []
-    if not drs_text.null_text(_use_odo_reject, ['', 'None']):
-        if drs_text.true_text(_use_odo_reject):
-            odo_reject_list = prep.get_file_reject_list(params)
-    # -------------------------------------------------------------------------
-    # get the conditions based on params
-    # -------------------------------------------------------------------------
-    condition = drs_processing.gen_global_condition(params, findexdbm,
-                                                    odo_reject_list)
-    # get unique observations directories
-    uobsdirs = findexdbm.get_unique('OBS_DIR', condition=condition)
-    # get the recipe module for this instrument
-    recipemodule = recipe.recipemod.get()
-    filemodule = recipe.filemod.get()
-    # get the generic raw file type
-    generic_raw_file = filemodule.raw_file
     # store calibs (for each observation directory)
     calib_count = dict()
     calib_times = dict()
-    # store hot stars  (for each observation directory)
-    tellu_count = dict()
-    # store science targets (for each observation directory)
-    science_count = dict()
-    # store a list of possible bad nights
-    bad_calib_nights, engineering_nights = [], []
-    sci_times = dict()
-    # -------------------------------------------------------------------------
-    # get telluric stars and non-telluric stars
-    # -------------------------------------------------------------------------
-    # get all telluric stars
-    tstars = telluric.get_tellu_include_list(params)
-    # get all other stars
-    ostars = drs_processing.get_non_telluric_stars(params, findexdbm, tstars)
-    # -------------------------------------------------------------------------
-    # get a list of calibration files
-    # -------------------------------------------------------------------------
+    bad_calib_nights = []
+    # get the recipe module for this instrument
+    recipemodule = recipe.recipemod.get()
     # print progress
-    WLOG(params, 'info', params['DRS_HEADER'])
-    WLOG(params, 'info', textentry('40-503-00047'))
-    WLOG(params, 'info', params['DRS_HEADER'])
+    if log:
+        WLOG(params, 'info', params['DRS_HEADER'])
+        WLOG(params, 'info', textentry('40-503-00047'))
+        WLOG(params, 'info', params['DRS_HEADER'])
     # get calibration files grouped by recipe
     cout = get_raw_seq_files(params, recipemodule, tstars, ostars,
-                             sequence='calib_seq')
+                             sequence='calib_seq', log=log)
     calib_files, calib_recipes, calib_args = cout
     # loop around each night and check for all calibration files
     for uobsdir in uobsdirs:
+        uobsdir = str(uobsdir)
         # assume we are not missing any calibrations
         missing = False
         # ---------------------------------------------------------------------
@@ -131,7 +102,7 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
         if uobsdir == 'other':
             continue
         # else print observation directory
-        else:
+        elif log:
             # print msg: Processing observation directory: {0}
             WLOG(params, 'info', textentry('40-503-00048', args=[uobsdir]),
                  colour='magenta')
@@ -180,10 +151,12 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
                         # ---------------------------------------------------------
                         # print if missing
                         if count == 0 and srecipe.calib_required:
-                            # print warning: MISSING {0} OBS_DIR={1} RECIPE={2})
-                            wargs = [drsfile, uobsdir, recipe_name]
-                            wmsg = textentry('10-503-00025', args=wargs)
-                            WLOG(params, 'warning', wmsg, sublevel=2)
+                            if log:
+                                # print warning: MISSING {0} OBS_DIR={1}
+                                #                RECIPE={2})
+                                wargs = [drsfile, uobsdir, recipe_name]
+                                wmsg = textentry('10-503-00025', args=wargs)
+                                WLOG(params, 'warning', wmsg, sublevel=2)
                             missing = True
                 # deal with inclusive files (combine drsfiles)
                 else:
@@ -207,23 +180,66 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
                     calib_times[uobsdir] += list(np.unique(mjdmids[dmask]))
                     # print if missing
                     if count == 0 and srecipe.calib_required:
-                        # print warning: MISSING {0} OBS_DIR={1} RECIPE={2})
-                        wargs = [drsfilenames, uobsdir, recipe_name]
-                        wmsg = textentry('10-503-00025', args=wargs)
-                        WLOG(params, 'warning', wmsg, sublevel=2)
+                        if log:
+                            # print warning: MISSING {0} OBS_DIR={1} RECIPE={2})
+                            wargs = [drsfilenames, uobsdir, recipe_name]
+                            wmsg = textentry('10-503-00025', args=wargs)
+                            WLOG(params, 'warning', wmsg, sublevel=2)
                         missing = True
         if not missing:
             # print msg: Minimum number of calibrations found
-            WLOG(params, '', textentry('40-503-00049'))
+            if log:
+                WLOG(params, '', textentry('40-503-00049'))
         else:
             bad_calib_nights.append(uobsdir)
+    # -------------------------------------------------------------------------
+    return calib_count, calib_times, bad_calib_nights
+
+
+SciTelluCheckReturn = Tuple[Dict[str, dict], Dict[str, dict],
+                            Dict[str, np.ndarray], List[str]]
+
+def sci_tellu_check(params: ParamDict, recipe: DrsRecipe, tstars: List[str],
+                    ostars: List[str], uobsdirs: np.ndarray,
+                    findexdbm: FileIndexDatabase, log: bool = True
+                    ) -> SciTelluCheckReturn:
+    """
+    Check for science/telluric (hotstar) files
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param recipe: Recipe, the recipe instance that called this function
+    :param tstars: list of hot (telluric) stars
+    :param ostars: list of science targets
+    :param uobsdirs: numpy array of strings, the unique observation directories
+    :param condition: str, the SQL condition to use
+    :param findexdbm: FileIndexDatabase, the file index database
+    :param log: bool, if True prints messages to screen (default True)
+
+    :return: tuple, 1. the science file count for each obsdir
+                    2. the telluric (hotstar) file count for each obsdir
+                    2. the science file times for each obsdir
+                    3. a list of engineering nights
+    """
+    # store hot stars  (for each observation directory)
+    tellu_count = dict()
+    # store science targets (for each observation directory)
+    science_count = dict()
+    # store a list of possible bad nights
+    engineering_nights = []
+    sci_times = dict()
+    # get the recipe module for this instrument
+    recipemodule = recipe.recipemod.get()
+    filemodule = recipe.filemod.get()
+    # get the generic raw file type
+    generic_raw_file = filemodule.raw_file
     # -------------------------------------------------------------------------
     # get a list of telluric files and science files
     # -------------------------------------------------------------------------
     # print msg: Analysing telluric and science raw files on disk
-    WLOG(params, 'info', params['DRS_HEADER'])
-    WLOG(params, 'info', textentry('40-503-00050'))
-    WLOG(params, 'info', params['DRS_HEADER'])
+    if log:
+        WLOG(params, 'info', params['DRS_HEADER'])
+        WLOG(params, 'info', textentry('40-503-00050'))
+        WLOG(params, 'info', params['DRS_HEADER'])
     # get telluric raw files
     tout = get_raw_seq_files(params, recipemodule, tstars, ostars,
                              sequence='tellu_seq')
@@ -246,7 +262,7 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
     for srecipe in rm_list:
         del tellu_files[srecipe]
     # report if None found
-    if len(tellu_files) == 0:
+    if len(tellu_files) == 0 and log:
         # log a warning if None found:
         #   No telluric RUN instances in run file "{0}". Skipping
         wargs = [params['INPUTS']['RUNFILE']]
@@ -265,7 +281,7 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
     # remove bad recipes from tellu_files
     for srecipe in rm_list:
         del sci_files[srecipe]
-    if len(sci_files) == 0:
+    if len(sci_files) == 0 and log:
         # log a warning if None found:
         #   No science RUN instances in run file "{0}". Skipping
         wargs = [params['INPUTS']['RUNFILE']]
@@ -278,6 +294,7 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
     # loop around each observation directory and check for all
     #     telluric/science files
     for uobsdir in uobsdirs:
+        uobsdir = str(uobsdir)
         # add observation directory to storage
         tellu_count[uobsdir] = dict()
         science_count[uobsdir] = dict()
@@ -289,7 +306,7 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
         if uobsdir == 'other':
             continue
         # else print observation directory
-        else:
+        elif log:
             margs = [uobsdir]
             WLOG(params, 'info', textentry('40-503-00048', args=margs),
                  colour='magenta')
@@ -311,8 +328,9 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
             # print outs
             if tcount > 0:
                 # print msg: Found {0} {1} telluic files'
-                margs = [tcount, drsfile]
-                WLOG(params, '', textentry('40-503-00051', args=margs))
+                if log:
+                    margs = [tcount, drsfile]
+                    WLOG(params, '', textentry('40-503-00051', args=margs))
                 # we are not missing all telluric files
                 t_missing = False
 
@@ -332,11 +350,11 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
                 # we are not missing all science files
                 s_missing = False
 
-        if t_missing:
+        if t_missing and log:
             # print msg: No telluric files found for observation directory {0}
             WLOG(params, 'warning', textentry('10-503-00028', args=[uobsdir]),
                  sublevel=2)
-        if s_missing:
+        if s_missing and log:
             # print msg: No science files found for observation directory {0}
             WLOG(params, 'warning', textentry('10-503-00029', args=[uobsdir]),
                  sublevel=2)
@@ -347,6 +365,64 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
             sci_times[uobsdir] = np.array([])
         else:
             sci_times[uobsdir] = np.array(rtable['KW_MID_OBS_TIME'])
+
+    return science_count, tellu_count, sci_times, engineering_nights
+
+def file_check(params: ParamDict, recipe: DrsRecipe,
+               findexdbm: Optional[FileIndexDatabase] = None):
+    """
+    Check the current index database for possible problems in the raw file set
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param recipe: DrsRecipe instance, the recipe that called this function
+    :param findexdbm: IndexDatabase instance or None (will load index database)
+
+    :return: None, prints to screen
+    """
+    # deal with not having index database
+    if findexdbm is None:
+        # construct the index database instance
+        findexdbm = FileIndexDatabase(params)
+        findexdbm.load_db()
+    # -------------------------------------------------------------------------
+    # get odometer reject list (if required)
+    # -------------------------------------------------------------------------
+    # get whether the user wants to use reject list
+    _use_odo_reject = params['USE_REJECTLIST']
+    # get the odometer reject list
+    odo_reject_list = []
+    if not drs_text.null_text(_use_odo_reject, ['', 'None']):
+        if drs_text.true_text(_use_odo_reject):
+            odo_reject_list = prep.get_file_reject_list(params)
+    # -------------------------------------------------------------------------
+    # get the conditions based on params
+    # -------------------------------------------------------------------------
+    condition, _ = drs_processing.gen_global_condition(params, findexdbm,
+                                                    odo_reject_list)
+    # get unique observations directories
+    uobsdirs = findexdbm.get_unique('OBS_DIR', condition=condition)
+    # sort uobsdirs alphabetically
+    uobsdirs = np.sort(uobsdirs)
+    # -------------------------------------------------------------------------
+    # get telluric stars and non-telluric stars
+    # -------------------------------------------------------------------------
+    # get a list of all objects from the file index database
+    all_objects = drs_processing.get_uobjs_from_findex(params, findexdbm)
+    # get all telluric stars
+    tstars = telluric.get_tellu_include_list(params, all_objects=all_objects)
+    # get all other stars
+    ostars = drs_processing.get_non_telluric_stars(params, all_objects, tstars)
+    # -------------------------------------------------------------------------
+    # get a list of telluric files and science files
+    # -------------------------------------------------------------------------
+    sout = sci_tellu_check(params, recipe, tstars, ostars, uobsdirs, findexdbm)
+    science_count, tellu_count, sci_times, engineering_nights = sout
+    # -------------------------------------------------------------------------
+    # get a list of calibration files
+    # -------------------------------------------------------------------------
+    cout = calib_check(params, recipe, tstars,  ostars, uobsdirs,
+                       condition, findexdbm)
+    calib_count, calib_times, bad_calib_nights = cout
     # -------------------------------------------------------------------------
     # Work out possible bad obs directories
     # -------------------------------------------------------------------------
@@ -417,7 +493,7 @@ RawSeqReturn = Tuple[Dict[str, Dict[str, List[DrsFitsFile]]],
 
 def get_raw_seq_files(params: ParamDict, recipemod,
                       tstars: List[str], ostars: List[str],
-                      sequence: str) -> RawSeqReturn:
+                      sequence: str, log: bool = True) -> RawSeqReturn:
     """
     Get a dictionary of recipes where each entry is a dictionary of arguments
     where each entry is a list of possible raw files
@@ -435,7 +511,8 @@ def get_raw_seq_files(params: ParamDict, recipemod,
     :return: dictionary
     """
     # print progress: Getting file types for sequence={0}
-    WLOG(params, '', textentry('40-503-00056', args=[sequence]))
+    if log:
+        WLOG(params, '', textentry('40-503-00056', args=[sequence]))
     # -------------------------------------------------------------------------
     # get template list (if required)
     # -------------------------------------------------------------------------
@@ -453,7 +530,7 @@ def get_raw_seq_files(params: ParamDict, recipemod,
         return dict(), dict(), dict()
     # generate sequence
     seq.process_adds(params, tstars=list(tstars), ostars=list(ostars),
-                     template_stars=template_object_list)
+                     template_stars=template_object_list, logmsg=log)
     # storage of calib files
     seq_files = dict()
     seq_instances = dict()
@@ -578,7 +655,8 @@ def _get_rawfile(drsfile: DrsFitsFile):
 # =============================================================================
 # Define object checking functions
 # =============================================================================
-def obj_check(params: ParamDict, findexdbm: Optional[FileIndexDatabase] = None):
+def obj_check(params: ParamDict, findexdbm: Optional[FileIndexDatabase] = None,
+              log: bool = True) -> Table:
     """
     Check the index database for unique objects and display which of these
     are not in the object database currently (and not in the rejection list)
@@ -589,9 +667,10 @@ def obj_check(params: ParamDict, findexdbm: Optional[FileIndexDatabase] = None):
     :return: None, prints to screen
     """
     # print progress
-    WLOG(params, 'info', params['DRS_HEADER'])
-    WLOG(params, 'info', 'Checking current set of object names')
-    WLOG(params, 'info', params['DRS_HEADER'])
+    if log:
+        WLOG(params, 'info', params['DRS_HEADER'])
+        WLOG(params, 'info', 'Checking current set of object names')
+        WLOG(params, 'info', params['DRS_HEADER'])
     # ---------------------------------------------------------------------
     # get psuedo constants
     pconst = constants.pload()
@@ -607,7 +686,8 @@ def obj_check(params: ParamDict, findexdbm: Optional[FileIndexDatabase] = None):
     # update the database if required
     if params['UPDATE_OBJ_DATABASE']:
         # log progress
-        WLOG(params, '', textentry('40-503-00039'))
+        if log:
+            WLOG(params, '', textentry('40-503-00039'))
         # update database
         manage_databases.update_object_database(params, log=False)
     # ---------------------------------------------------------------------
@@ -620,7 +700,7 @@ def obj_check(params: ParamDict, findexdbm: Optional[FileIndexDatabase] = None):
     has_entries = manage_databases.reject_db_populated(params)
     # update the database if required
     if params['UPDATE_REJECT_DATABASE'] or not has_entries:
-        manage_databases.update_reject_database(params)
+        manage_databases.update_reject_database(params, log=log)
     # ---------------------------------------------------------------------
     # only find science / hot star objects
     sci_dprtypes = params.listp('PP_OBJ_DPRTYPES', dtype=str)
@@ -633,8 +713,9 @@ def obj_check(params: ParamDict, findexdbm: Optional[FileIndexDatabase] = None):
     uobjnames = findexdbm.get_unique('KW_OBJNAME', condition=condition)
     # ---------------------------------------------------------------------
     # print progress: Preparing list of unique objects from file index database
-    margs = [len(uobjnames)]
-    WLOG(params, '', textentry('40-503-00057', args=margs))
+    if log:
+        margs = [len(uobjnames)]
+        WLOG(params, '', textentry('40-503-00057', args=margs))
     # get the object rejection list
     reject_list = prep.get_obj_reject_list(params)
     # store list of objects not found in the database currently
@@ -653,8 +734,12 @@ def obj_check(params: ParamDict, findexdbm: Optional[FileIndexDatabase] = None):
     # ---------------------------------------------------------------------
     # get original names for objects
     orig_names = []
+    last_runid = []
+    last_pi_name = []
+    last_obs_date = []
     # Print progress: Finding all original names for each unfound object
-    WLOG(params, 'info', textentry('40-503-00058'))
+    if log:
+        WLOG(params, 'info', textentry('40-503-00058'))
     # loop around
     for unfound_object in tqdm(unfound_objects):
         # condition for this target
@@ -664,28 +749,60 @@ def obj_check(params: ParamDict, findexdbm: Optional[FileIndexDatabase] = None):
         orig_name = findexdbm.get_unique('KW_OBJECTNAME', condition=condition)
         # append to list
         orig_names.append(list(orig_name))
+        # -----------------------------------------------------------------
+        # get the runid, piname and obs date for the most recent raw file with
+        #   this name
+        # define the columns to get from the file index database
+        columns = 'KW_RUN_ID,KW_PI_NAME,OBS_DIR'
+        # get the most recent raw file with this object name
+        last_obj = findexdbm.database.get(columns, condition=condition,
+                                          sort_by='KW_MID_OBS_TIME',
+                                          sort_descending=True,
+                                          max_rows=1)
+        # push into the last_runid, last_pi_name and last_obs_date lists
+        last_runid.append(last_obj[0][0])
+        last_pi_name.append(last_obj[0][1])
+        last_obs_date.append(last_obj[0][2])
+
     # ---------------------------------------------------------------------
     # print any remaining objects
-    # print msg: Objects that will use the header for astrometrics are:
-    WLOG(params, '', textentry('40-503-00059'), colour='magenta', wrap=False)
-    # deal with having no unfound objects
-    if len(unfound_objects) == 0:
-        # print that all objects were found
-        # print msg: All objects found (or in ignore list)!
-        WLOG(params, '', textentry('40-503-00060'))
-    # else we print the unfound objects
-    else:
-        # loop around objects and put on a new line
-        for it in range(len(unfound_objects)):
-            # print the object
-            msg = '\t{0}\t{1:30s}\t(APERO: {2})'
-            margs = [it + 1, ' or '.join(orig_names[it]), unfound_objects[it]]
-            WLOG(params, 'warning', msg.format(*margs), sublevel=8)
-        # print a note that some objects are in ignore list
-        if len(reject_list) > 0:
-            # print msg: Note {0} objects are in the ignore list/ignore aliases
-            margs = [len(reject_list)]
-            WLOG(params, 'info', textentry('40-503-00061', args=margs))
+    if log:
+        # print msg: Objects that will use the header for astrometrics are:
+        WLOG(params, '', textentry('40-503-00059'), colour='magenta',
+             wrap=False)
+        # deal with having no unfound objects
+        if len(unfound_objects) == 0:
+            # print that all objects were found
+            # print msg: All objects found (or in ignore list)!
+            WLOG(params, '', textentry('40-503-00060'))
+        # else we print the unfound objects
+        else:
+            # loop around objects and put on a new line
+            for it in range(len(unfound_objects)):
+                # print the object
+                msg = ('\t{0}\t{1:30s}\t(APERO: {2})'
+                       '\tLAST[{3}, {4}, {5}]')
+                margs = [it + 1, ' or '.join(orig_names[it]),
+                         unfound_objects[it],
+                         last_runid[it], last_pi_name[it],
+                         last_obs_date[it]]
+                WLOG(params, 'warning', msg.format(*margs), sublevel=8)
+            # print a note that some objects are in ignore list
+            if len(reject_list) > 0:
+                # print msg: Note {0} objects are in the ignore list/ignore
+                # aliases
+                margs = [len(reject_list)]
+                WLOG(params, 'info', textentry('40-503-00061', args=margs))
+
+    # create a table of unfound objects
+    unfound_table = Table()
+    unfound_table['Original Names'] = orig_names
+    unfound_table['Apero Name'] = unfound_objects
+    unfound_table['Last Run ID'] = last_runid
+    unfound_table['Last PI Name'] = last_pi_name
+    unfound_table['Last Obs Date'] = last_obs_date
+    # return the unfound table
+    return unfound_table
 
 
 # =============================================================================

@@ -25,6 +25,7 @@ from scipy.ndimage.morphology import binary_erosion, binary_dilation
 from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core.constants import path_definitions
 from apero.core import math as mp
 from apero.core.core import drs_log
 from apero.core.core import drs_misc
@@ -51,6 +52,10 @@ textentry = lang.textentry
 pcheck = constants.PCheck(wlog=WLOG)
 # Get function string
 display_func = drs_log.display_func
+# get block paths
+params = constants.load()
+block_func = lambda block: block(params).path
+block_paths = list(map(block_func, path_definitions.BLOCKS))
 
 
 # =============================================================================
@@ -202,7 +207,7 @@ def convert_to_e(params: ParamDict, image: np.ndarray,
                 gain: float, the gain of the image
     :param image: numpy array (2D), the image
 
-    :param gain: float, if set overrides params['GAIN'], used as the gain
+    :param gain: float, if set overrides params['EFF_GAIN'], used as the gain
                    to multiple the image by
     :param exptime: float, if set overrides params['EXPTIME'], used as the
                       exposure time the image is multiplied by
@@ -212,7 +217,7 @@ def convert_to_e(params: ParamDict, image: np.ndarray,
     # set function name
     func_name = display_func('convert_to_e', __NAME__)
     # get constants from params / kwargs
-    _gain = pcheck(params, 'GAIN', func=func_name, override=gain)
+    _gain = pcheck(params, 'EFF_GAIN', func=func_name, override=gain)
     _exptime = pcheck(params, 'EXPTIME', func=func_name, override=exptime)
     # correct image
     newimage = image * _gain * _exptime
@@ -481,7 +486,7 @@ def npy_filelist(params: ParamDict, name: str, index: int,
     # create subdir
     if not os.path.exists(filepath):
         WLOG(params, '', 'Creating directory: {0}'.format(filepath))
-        os.mkdir(filepath)
+        os.makedirs(filepath)
     # construct absolute path to file
     abspath = os.path.join(filepath, filename)
     # save to disk
@@ -524,7 +529,8 @@ def npy_fileclean(params: ParamDict, filenames: Union[List[str], None],
     # delete the sub directory
     while os.path.exists(filepath):
         WLOG(params, '', 'Removing directory: {0}'.format(filepath))
-        os.removedirs(filepath)
+        if filepath not in block_paths:
+            os.rmdir(filepath)
 
 
 def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
@@ -605,7 +611,7 @@ def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
     subfilepath = os.path.join(outdir, subdir)
     # create subdir
     if not os.path.exists(subfilepath):
-        os.mkdir(subfilepath)
+        os.makedirs(subfilepath)
     # get the number of files
     numfiles = len(files)
     # ----------------------------------------------------------------------
@@ -624,8 +630,8 @@ def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
     # deal with only having 1 file
     if numfiles == 1:
         # delete the sub directory
-        if os.path.exists(subfilepath):
-            os.removedirs(subfilepath)
+        if os.path.exists(subfilepath) and subfilepath not in block_paths:
+            os.rmdir(subfilepath)
         # ------------------------------------------------------------------
         # deal with no fkwargs
         if fkwargs is None:
@@ -667,8 +673,8 @@ def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
             image, hdr = None, None
         # get the shape of the image
         dim1, dim2 = np.array(image.shape).astype(int)
-        # construct clean version of filename
-        clean_filename = filename.replace('.', '_')
+        # clean the filename
+        clean_filename = med_comb_clean_filename(filename)
         # ------------------------------------------------------------------
         # check that dimensions are the same as first file
         if dim1 != mdim1 or dim2 != mdim2:
@@ -693,7 +699,8 @@ def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
             ribbon = np.array(image[bins[b_it]: bins[b_it + 1]])
             # construct ribbon nmae
             ribbon_name = '{0}_ribbon{1:06d}.npy'.format(clean_filename, b_it)
-            ribbon_path = os.path.join(subfilepath, ribbon_name)
+            base_ribbon_name = os.path.basename(ribbon_name)
+            ribbon_path = os.path.join(subfilepath, base_ribbon_name)
             # save ribbon to file
             # log: Saving file: {0}
             WLOG(params, '', textentry('40-000-00013', args=[ribbon_path]))
@@ -717,9 +724,10 @@ def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
         # loop around each ribbon and add to the box
         for f_it, filename in enumerate(files):
             # construct ribbon nmae
-            clean_filename = filename.replace('.', '_')
+            clean_filename = med_comb_clean_filename(filename)
             ribbon_name = '{0}_ribbon{1:06d}.npy'.format(clean_filename, b_it)
-            ribbon_path = os.path.join(subfilepath, ribbon_name)
+            base_ribbon_name = os.path.basename(ribbon_name)
+            ribbon_path = os.path.join(subfilepath, base_ribbon_name)
             # load ribbon
             # log: Loading file: {0}
             WLOG(params, '', textentry('40-000-00015', args=[ribbon_path]))
@@ -742,10 +750,27 @@ def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
     # ----------------------------------------------------------------------
     # delete the sub directory
     if os.path.exists(subfilepath):
-        os.removedirs(subfilepath)
+        if subfilepath not in block_paths:
+            os.rmdir(subfilepath)
     # ----------------------------------------------------------------------
     # return the out image
     return out_image
+
+
+def med_comb_clean_filename(filename: str) -> str:
+    """
+    Construct a clean version of a filename for the median combine
+
+    :param filename: str, filename to clean
+    :return: str, clean filename
+    """
+    # construct clean version of filename
+    basename = os.path.basename(filename)
+    path = os.path.dirname(filename)
+    # do not clean the path just the base filename
+    clean_basename = basename.replace('.', '_')
+    clean_filename = os.path.join(path, clean_basename)
+    return clean_filename
 
 
 def expand_badpixelmap(params: ParamDict, bad_pixel_map1: np.ndarray

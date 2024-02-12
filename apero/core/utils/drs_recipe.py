@@ -111,11 +111,10 @@ class DrsRecipe(object):
         # else name is correct
         else:
             self.name = str(name)
-        # get pconst
-        self.pconst = constants.pload()
         # set drs file module related to this recipe
         if filemod is None:
-            self.filemod = self.pconst.FILEMOD()
+            # get pconst
+            self.filemod = constants.pload().FILEMOD()
         else:
             self.filemod = filemod.copy()
         # get drs parameters (will be loaded later)
@@ -181,11 +180,16 @@ class DrsRecipe(object):
         self.optional_args = []
         self.special_args = []
         self.outputs = dict()
+        self.output_fibers = dict()
         self.output_files = dict()
         self.debug_plots = []
         self.summary_plots = []
         # set the minimum number of files (for processing)
         self.minimum_files = dict()
+        # define a limit on number of files to process per recipe (at maximum)
+        self.limit = None
+        # set the file model
+        self.file_model: Dict[str, List[DrsInputFile]] = dict()
         # the plotter class
         self.plot = None
         # set the log class
@@ -214,7 +218,7 @@ class DrsRecipe(object):
         # set function name
         # _ = display_func('__getstate__', __NAME__, self.class_name)
         # exclude keys
-        exclude = ['pconst', 'filemod', 'recipemod']
+        exclude = ['drs_pconstant', 'filemod', 'recipemod']
         # set state to __dict__
         state = dict()
         for key, item in self.__dict__.items():
@@ -235,10 +239,12 @@ class DrsRecipe(object):
         # update dict with state
         self.__dict__.update(state)
         # get pconst
-        self.pconst = constants.pload(self.instrument)
+        pconst = constants.pload(self.params['INSTRUMENT'])
+        # set drs pconstant
+        self.drs_pconstant = pconst
         # set drs file module related to this recipe
-        self.filemod = self.pconst.FILEMOD()
-        self.recipemod = self.pconst.RECIPEMOD()
+        self.filemod = pconst.FILEMOD()
+        self.recipemod = pconst.RECIPEMOD()
 
     def __str__(self) -> str:
         """
@@ -774,6 +780,25 @@ class DrsRecipe(object):
             if isinstance(kwargs[kwarg], DrsInputFile):
                 self.outputs[kwarg] = kwargs[kwarg]
 
+    def set_output_data(self, **kwargs):
+        """
+        Set the output files
+
+        :param kwargs: all keywords values should be a DrsFitsFile
+                       i.e. file1=DrsInputFile()
+
+        :return: None - updates DrsRecipe.outputs
+        """
+        # set function name
+        # _ = display_func('set_outputs', __NAME__,
+        #                  self.class_name)
+        # loop around kwargs
+        for kwarg in kwargs:
+            # make sure kwarg is in self.outputs
+            if kwarg in self.outputs:
+                # set fibers
+                self.output_fibers[kwarg] = kwargs[kwarg]
+
     def set_inputs(self):
         """
         Set the recipes input arguments (rargs), input keyword arguments
@@ -1039,15 +1064,20 @@ class DrsRecipe(object):
         self.required_args = list(recipe.required_args)
         self.optional_args = list(recipe.optional_args)
         self.special_args = list(recipe.special_args)
-        # deal with copying file outputs
+        # deal with copying file outputs / output fibers
         if self.outputs is None:
             self.outputs = None
+            self.output_fibers = None
         else:
             self.outputs = dict()
             for output in recipe.outputs:
                 oldoutput = recipe.outputs[output]
                 newouput = oldoutput.completecopy(oldoutput)
                 self.outputs[output] = newouput
+                # add to output fibers
+                if output in recipe.output_fibers:
+                    output_fiber = copy.deepcopy(recipe.output_fibers[output])
+                    self.output_fibers[output] = output_fiber
         # copy plotter
         self.plot = recipe.plot
         # copy logger
@@ -1059,6 +1089,12 @@ class DrsRecipe(object):
         self.minimum_files = dict()
         for key in recipe.minimum_files:
             self.minimum_files[key] = int(recipe.minimum_files[key])
+        # copy the limit
+        self.limit = copy.deepcopy(recipe.limit)
+        # copy file model
+        self.file_model = dict()
+        for key in recipe.file_model:
+            self.file_model[key] = recipe.file_model[key]
         # set up the input validation (should be True to check arguments)
         self.input_validation = recipe.input_validation
         # whether calibration is required (used in precheck)
@@ -1125,6 +1161,27 @@ class DrsRecipe(object):
                     return True
         return False
 
+    # default schematic file name
+    def default_sfile(self) -> str:
+        """
+        Default schematic file name
+
+        :return: str, the schematic file name
+        """
+        # get the recipe name without py extension
+        name = self.name.strip('.py')
+        return '{0}_schematic.jpg'.format(name)
+
+    def default_rfile(self) -> str:
+        """
+        Default rst description file name
+
+        :return: str, the schematic file name
+        """
+        # get the recipe name without py extension
+        name = self.name.strip('.py')
+        return '{0}.rst'.format(name)
+
     # =========================================================================
     # Reprocessing methods
     # =========================================================================
@@ -1190,7 +1247,8 @@ class DrsRecipe(object):
                             # make sure there are no white spaces
                             value = np.char.strip(value)
                             # deal with object name cleaning
-                            value = objdbm.find_objnames(pconst, value)
+                            value = objdbm.find_objnames(pconst, value,
+                                                         allow_empty=True)
                         # need to filter list by tstars and ostars
                         # (if not in either list means they are not on disk)
                         all_objs = list(ostars) + list(tstars)
@@ -1346,6 +1404,7 @@ class DrsRecipe(object):
             if arg.props['action'] == 'store_true':
                 if drs_text.true_text(values) and not arg.default:
                     self.str_arg_list.append(arg.argname)
+                    return
                 else:
                     return
         # ----------------------------------------------------------------------
@@ -1357,7 +1416,7 @@ class DrsRecipe(object):
             # add the rest as separate arguments
             for value in values:
                 # finally append the string to str_arg_list
-                self.str_arg_list.append(value)
+                self.str_arg_list.append(str(value))
         else:
             strarg = [arg.argname, values]
             self.str_arg_list.append(strfmt.format(*strarg))
@@ -2165,6 +2224,10 @@ def filter_values(values: List[str], filter_list: List[str],
     return valid_values
 
 
+
+# =============================================================================
+# Define other functions
+# =============================================================================
 def _summary_args(args: Dict[str, Any], argkind: str = 'pos') -> str:
     """
     A string representation for args or kwargs for DrsRunSequence.summary
@@ -2219,6 +2282,9 @@ def lambda_plot(*args, **kwargs):
     """
     _ = args, kwargs
     pass
+
+
+
 
 # =============================================================================
 # End of code

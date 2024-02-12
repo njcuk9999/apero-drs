@@ -3,20 +3,20 @@
 
 <!doctype html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>apero_loc_spirou &#8212; APERO 0.7.259 documentation</title>
+    <title>apero_loc_spirou &#8212; APERO 0.8.001 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/apero.css" />
     
     <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
-    <script src="../../../_static/jquery.js"></script>
-    <script src="../../../_static/underscore.js"></script>
     <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/sphinx_highlight.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../../../_static/bizstyle.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
@@ -78,6 +78,8 @@
         <i class="fa fa-git-square fa-3x" aria-hidden="true"></i></a></li>
     <li><a title="download pdf" href="../../../apero-docs.pdf">
         <i class="fa fa-download fa-3x" aria-hidden="true"></i></a></li>
+    <li><a title="UdeM" href="/main/misc/udem.html">
+        <i class="fa fa-university fa-3x" aria-hidden="true"></i></a></li>
   </ul>
     <div>
     <a href="../../../index.html">
@@ -101,7 +103,7 @@
         <li class="right" >
           <a href="rdefinition_DARKREF.html" title="apero_dark_ref_spirou"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.259 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.8.001 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../../main/spirou/main_spirou.html" >SPIRou documentation</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="recipes.html" accesskey="U">Recipes (SPIROU)</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">apero_loc_spirou</a></li> 
@@ -109,10 +111,14 @@
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../../../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../../../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">apero_loc_spirou</a><ul>
-<li><a class="reference internal" href="#description">1. Description</a></li>
+<li><a class="reference internal" href="#description">1. Description</a><ul>
+<li><a class="reference internal" href="#localization-calibration">Localization calibration</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#schematic">2. Schematic</a></li>
 <li><a class="reference internal" href="#usage">3. Usage</a></li>
 <li><a class="reference internal" href="#optional-arguments">4. Optional Arguments</a></li>
@@ -125,12 +131,17 @@
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="rdefinition_DARKREF.html"
-                        title="previous chapter">apero_dark_ref_spirou</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="rdefinition_SHAPEREF.html"
-                        title="next chapter">apero_shape_ref_spirou</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="rdefinition_DARKREF.html"
+                          title="previous chapter">apero_dark_ref_spirou</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="rdefinition_SHAPEREF.html"
+                          title="next chapter">apero_shape_ref_spirou</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -147,7 +158,7 @@
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
 
@@ -157,18 +168,73 @@
           <div class="body" role="main">
             
   <section id="apero-loc-spirou">
-<span id="recipes-spirou-loc"></span><h1>apero_loc_spirou<a class="headerlink" href="#apero-loc-spirou" title="Permalink to this headline">¶</a></h1>
+<span id="recipes-spirou-loc"></span><h1>apero_loc_spirou<a class="headerlink" href="#apero-loc-spirou" title="Permalink to this heading">¶</a></h1>
 <section id="description">
-<h2>1. Description<a class="headerlink" href="#description" title="Permalink to this headline">¶</a></h2>
+<h2>1. Description<a class="headerlink" href="#description" title="Permalink to this heading">¶</a></h2>
 <p>SHORTNAME: LOC</p>
-<p>No description set</p>
+<section id="localization-calibration">
+<h3>Localization calibration<a class="headerlink" href="#localization-calibration" title="Permalink to this heading">¶</a></h3>
+<p>The localization recipe takes preprocessed <cite>DARK_FLAT</cite> or <cite>FLAT_DARK</cite> files (as many as given by the user or as many as
+occur on the nights being used via Aprocessing). It is run twice, once for the C fiber localization (with a set of
+<cite>DARK_FLAT</cite>) and once for the AB fiber localization (with a set of <cite>FLAT_DARK</cite>). It combines the <cite>DARK_FLAT</cite> files or the
+<cite>FLAT_DARK</cite> files into a single <cite>DARK_FLAT</cite> or <cite>FLAT_DARK</cite> (via a median combination of the images). After combining, the
+images are calibrated using our standard image calibration technique.</p>
+<p>The first step in the localization code is to take the combined and calibrated <cite>DARK_FLAT</cite> or <cite>FLAT_DARK</cite> and apply a
+weighted box median, shown in equation:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}IM_{\text{orderp } j} = \left\{ \begin{array}{ll}
+  \text{MED}(IM_{j=0:j=k+1}):     &amp; k &lt; 5            \\
+  \text{MED}(IM_{j=k-5:j=4088}):  &amp; k &gt; 4088 - 5     \\
+  \text{MED}(IM_{j=k-5:j=k+5+1}): &amp; \text{otherwise} \\
+\end{array} \right.\end{split}\]</div>
+<p>where <span class="math notranslate nohighlight">\(IM_{\text{orderp } j}\)</span> is the order profile flux for all rows in the jth column,
+<span class="math notranslate nohighlight">\(IM_{j=x:j=y}\)</span> is the combined, calibrated <cite>DARK_FLAT</cite> or <cite>FLAT_DARK</cite>, that spans all columns from
+<span class="math notranslate nohighlight">\(j=x\)</span> to <span class="math notranslate nohighlight">\(j=y\)</span>, and k is the column index number and ranges from <span class="math notranslate nohighlight">\(j=0\)</span> to <span class="math notranslate nohighlight">\(j=4088\)</span>.</p>
+<p>This produces the order profile image of the <cite>DARK_FLAT</cite> or <cite>FLAT_DARK</cite> which is used for the optimal extraction
+and to locate the orders.</p>
+<p>To locate the orders we use the scikit <cite>measure.label</cite> algorithm which labels connected regions.
+Two pixels are defined as connected when both themselves and their neighbors have the same value.
+We use a connectivity value of 2 meaning that any of the 8 surrounding pixels can be neighbors if they share
+the same value.</p>
+<p>In order to facilitate the labeling we first perform a 95th percentile of a box (of size <span class="math notranslate nohighlight">\(25\times25\)</span> pixels)
+across the whole image, as true illuminated pixels’ flux is location-dependent. We set a threshold at half that value
+and label all pixels above this threshold as one and all pixels below this to a value of zero. We then perform the
+<cite>measure.label</cite> on this Boolean map (referred to from this point on as <span class="math notranslate nohighlight">\(Mask_{orders}\)</span>).
+This is just a first guess of the order positions and usually returns many labeled regions that are not true orders.</p>
+<p>To remove bad labels we first remove any labeled region with less than 500 pixels. We then remove any pixel within a
+labeled region that has a flux value less than 0.05 times the 95th percentile of all pixels in that given labeled
+region and remove this pixel from <span class="math notranslate nohighlight">\(Mask_{orders}\)</span>. We then median filter each row of <span class="math notranslate nohighlight">\(Mask_{orders}\)</span> to
+clean up the labeled edges and apply a binary dilation (scipy <cite>ndimage.binary_dilation</cite>) algorithm.
+This binary dilation essentially merges labeled regions that are close to each other together by expanding regions
+marked with ones around the edges of these regions. After <span class="math notranslate nohighlight">\(Mask_{orders}\)</span> has been updated we re-run the
+labeling algorithm. As a final filtering step, we remove any region center that does not overlap with the central
+part of the image in the along-order direction (i.e., the center <span class="math notranslate nohighlight">\(\pm\)</span> half the width of the detector,
+2044 <span class="math notranslate nohighlight">\(\pm\)</span> 1022 pixels).</p>
+<p>Once we have the final set of labeled regions we use :math:<a href="#id1"><span class="problematic" id="id2">`</span></a>Mask_{orders} on each order to fit a polynomial fit
+(of degree 3) to the pixel positions in that labeled region forcing continuity between orders by fitting each
+coefficient across the orders. We also use the :math:<a href="#id3"><span class="problematic" id="id4">`</span></a>Mask_{orders} pixel positions to linearly fit the width of
+each order.</p>
+<p>For a <cite>DARK_FLAT</cite>, this produces polynomial fits and coefficients for 49 orders for the C fiber.
+For a <cite>FLAT_DARK</cite> input, this produces polynomial fits and coefficients for 98 orders (49 orders for A and 49 orders
+for B). These polynomial coefficients for the positions of the orders and the widths of the orders are then converted
+into values as a function of position across each order.</p>
+<p>As part of quality control we check that:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>the number of orders is consistent with the required number of orders (49 for fiber C, 98 for fibers A+B).</p></li>
+<li><p>the across-order value at the center of the detector is always larger than the value of the previous order</p></li>
+</ul>
+</div></blockquote>
+<p>The order profile (ORDERP), locations of the orders (LOCO), and widths of the orders are saved to the calibration
+database (if both quality control criteria are met) for use throughout APERO.</p>
+</section>
 </section>
 <section id="schematic">
-<h2>2. Schematic<a class="headerlink" href="#schematic" title="Permalink to this headline">¶</a></h2>
+<h2>2. Schematic<a class="headerlink" href="#schematic" title="Permalink to this heading">¶</a></h2>
 <a class="reference internal image-reference" href="../../../_images/apero_loc_spirou_schematic.jpg"><img alt="../../../_images/apero_loc_spirou_schematic.jpg" class="align-center" src="../../../_images/apero_loc_spirou_schematic.jpg" style="width: 100%;" /></a>
 </section>
 <section id="usage">
-<h2>3. Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
+<h2>3. Usage<a class="headerlink" href="#usage" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">apero_loc_spirou</span><span class="o">.</span><span class="n">py</span> <span class="p">{</span><span class="n">obs_dir</span><span class="p">}[</span><span class="n">STRING</span><span class="p">]</span> <span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">DARK_FLAT</span><span class="p">,</span><span class="n">FLAT_DARK</span><span class="p">]</span> <span class="p">{</span><span class="n">options</span><span class="p">}</span>
 </pre></div>
 </div>
@@ -178,7 +244,7 @@
 </div>
 </section>
 <section id="optional-arguments">
-<h2>4. Optional Arguments<a class="headerlink" href="#optional-arguments" title="Permalink to this headline">¶</a></h2>
+<h2>4. Optional Arguments<a class="headerlink" href="#optional-arguments" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">--</span><span class="n">database</span><span class="p">[</span><span class="kc">True</span><span class="o">/</span><span class="kc">False</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">BOOLEAN</span><span class="p">]</span> <span class="n">Whether</span> <span class="n">to</span> <span class="n">add</span> <span class="n">outputs</span> <span class="n">to</span> <span class="n">calibration</span> <span class="n">database</span>
 <span class="o">--</span><span class="n">badpixfile</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">BADPIX</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Define</span> <span class="n">a</span> <span class="n">custom</span> <span class="n">file</span> <span class="n">to</span> <span class="n">use</span> <span class="k">for</span> <span class="n">bad</span> <span class="n">pixel</span> <span class="n">correction</span><span class="o">.</span> <span class="n">Checks</span> <span class="k">for</span> <span class="n">an</span> <span class="n">absolute</span> <span class="n">path</span> <span class="ow">and</span> <span class="n">then</span> <span class="n">checks</span> <span class="n">directory</span>
 <span class="o">--</span><span class="n">badcorr</span><span class="p">[</span><span class="kc">True</span><span class="o">/</span><span class="kc">False</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">BOOLEAN</span><span class="p">]</span> <span class="n">Whether</span> <span class="n">to</span> <span class="n">correct</span> <span class="k">for</span> <span class="n">the</span> <span class="n">bad</span> <span class="n">pixel</span> <span class="n">file</span>
@@ -188,13 +254,14 @@
 <span class="o">--</span><span class="n">darkcorr</span><span class="p">[</span><span class="kc">True</span><span class="o">/</span><span class="kc">False</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">BOOLEAN</span><span class="p">]</span> <span class="n">Whether</span> <span class="n">to</span> <span class="n">correct</span> <span class="k">for</span> <span class="n">the</span> <span class="n">dark</span> <span class="n">file</span>
 <span class="o">--</span><span class="n">flipimage</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">both</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">BOOLEAN</span><span class="p">]</span> <span class="n">Whether</span> <span class="n">to</span> <span class="n">flip</span> <span class="n">fits</span> <span class="n">image</span>
 <span class="o">--</span><span class="n">fluxunits</span><span class="p">[</span><span class="n">ADU</span><span class="o">/</span><span class="n">s</span><span class="p">,</span><span class="n">e</span><span class="o">-</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Output</span> <span class="n">units</span> <span class="k">for</span> <span class="n">flux</span>
-<span class="o">--</span><span class="n">plot</span><span class="p">[</span><span class="mi">0</span><span class="o">&gt;</span><span class="n">INT</span><span class="o">&gt;</span><span class="mi">3</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">INTEGER</span><span class="p">]</span> <span class="n">Plot</span> <span class="n">level</span><span class="o">.</span> <span class="mi">0</span> <span class="o">=</span> <span class="n">off</span><span class="p">,</span> <span class="mi">1</span> <span class="o">=</span> <span class="n">interactively</span><span class="p">,</span> <span class="mi">2</span> <span class="o">=</span> <span class="n">save</span> <span class="n">to</span> <span class="n">file</span>
+<span class="o">--</span><span class="n">plot</span><span class="p">[</span><span class="mi">0</span><span class="o">&gt;</span><span class="n">INT</span><span class="o">&gt;</span><span class="mi">4</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">INTEGER</span><span class="p">]</span> <span class="n">Plot</span> <span class="n">level</span><span class="o">.</span> <span class="mi">0</span> <span class="o">=</span> <span class="n">off</span><span class="p">,</span> <span class="mi">1</span> <span class="o">=</span> <span class="n">interactively</span><span class="p">,</span> <span class="mi">2</span> <span class="o">=</span> <span class="n">save</span> <span class="n">to</span> <span class="n">file</span>
 <span class="o">--</span><span class="n">resize</span><span class="p">[</span><span class="kc">True</span><span class="o">/</span><span class="kc">False</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">BOOLEAN</span><span class="p">]</span> <span class="n">Whether</span> <span class="n">to</span> <span class="n">resize</span> <span class="n">image</span>
+<span class="o">--</span><span class="n">no_in_qc</span> <span class="o">//</span> <span class="n">Disable</span> <span class="n">checking</span> <span class="n">the</span> <span class="n">quality</span> <span class="n">control</span> <span class="n">of</span> <span class="nb">input</span> <span class="n">files</span>
 </pre></div>
 </div>
 </section>
 <section id="special-arguments">
-<h2>5. Special Arguments<a class="headerlink" href="#special-arguments" title="Permalink to this headline">¶</a></h2>
+<h2>5. Special Arguments<a class="headerlink" href="#special-arguments" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">--</span><span class="n">xhelp</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Extended</span> <span class="n">help</span> <span class="n">menu</span> <span class="p">(</span><span class="k">with</span> <span class="nb">all</span> <span class="n">advanced</span> <span class="n">arguments</span><span class="p">)</span>
 <span class="o">--</span><span class="n">debug</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Activates</span> <span class="n">debug</span> <span class="n">mode</span> <span class="p">(</span><span class="n">Advanced</span> <span class="n">mode</span> <span class="p">[</span><span class="n">INTEGER</span><span class="p">]</span> <span class="n">value</span> <span class="n">must</span> <span class="n">be</span> <span class="n">an</span> <span class="n">integer</span> <span class="n">greater</span> <span class="n">than</span> <span class="mi">0</span><span class="p">,</span> <span class="n">setting</span> <span class="n">the</span> <span class="n">debug</span> <span class="n">level</span><span class="p">)</span>
 <span class="o">--</span><span class="n">listing</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Lists</span> <span class="n">the</span> <span class="n">night</span> <span class="n">name</span> <span class="n">directories</span> <span class="ow">in</span> <span class="n">the</span> <span class="nb">input</span> <span class="n">directory</span> <span class="k">if</span> <span class="n">used</span> <span class="n">without</span> <span class="n">a</span> <span class="s1">&#39;directory&#39;</span> <span class="n">argument</span> <span class="ow">or</span> <span class="n">lists</span> <span class="n">the</span> <span class="n">files</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">given</span> <span class="s1">&#39;directory&#39;</span> <span class="p">(</span><span class="k">if</span> <span class="n">defined</span><span class="p">)</span><span class="o">.</span> <span class="n">Only</span> <span class="n">lists</span> <span class="n">up</span> <span class="n">to</span> <span class="mi">15</span> <span class="n">files</span><span class="o">/</span><span class="n">directories</span>
@@ -216,26 +283,15 @@
 </div>
 </section>
 <section id="output-directory">
-<h2>6. Output directory<a class="headerlink" href="#output-directory" title="Permalink to this headline">¶</a></h2>
+<h2>6. Output directory<a class="headerlink" href="#output-directory" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">DRS_DATA_REDUC</span> <span class="o">//</span> <span class="n">Default</span><span class="p">:</span> <span class="s2">&quot;red&quot;</span> <span class="n">directory</span>
 </pre></div>
 </div>
 </section>
 <section id="output-files">
-<h2>7. Output files<a class="headerlink" href="#output-files" title="Permalink to this headline">¶</a></h2>
-<table class="csvtable docutils align-default" id="id1">
-<caption><span class="caption-text">Outputs</span><a class="headerlink" href="#id1" title="Permalink to this table">¶</a></caption>
-<colgroup>
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-</colgroup>
+<h2>7. Output files<a class="headerlink" href="#output-files" title="Permalink to this heading">¶</a></h2>
+<table class="csvtable docutils align-default" id="id5">
+<caption><span class="caption-text">Outputs</span><a class="headerlink" href="#id5" title="Permalink to this table">¶</a></caption>
 <thead>
 <tr class="row-odd"><th class="head"><p>name</p></th>
 <th class="head"><p>description</p></th>
@@ -303,7 +359,7 @@
 </table>
 </section>
 <section id="debug-plots">
-<h2>8. Debug plots<a class="headerlink" href="#debug-plots" title="Permalink to this headline">¶</a></h2>
+<h2>8. Debug plots<a class="headerlink" href="#debug-plots" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">LOC_WIDTH_REGIONS</span>
 <span class="n">LOC_FIBER_DOUBLET_PARITY</span>
 <span class="n">LOC_GAP_ORDERS</span>
@@ -314,7 +370,7 @@
 </div>
 </section>
 <section id="summary-plots">
-<h2>9. Summary plots<a class="headerlink" href="#summary-plots" title="Permalink to this headline">¶</a></h2>
+<h2>9. Summary plots<a class="headerlink" href="#summary-plots" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SUM_LOC_IM_FIT</span>
 <span class="n">SUM_LOC_IM_CORNER</span>
 </pre></div>
@@ -341,7 +397,7 @@
         <li class="right" >
           <a href="rdefinition_DARKREF.html" title="apero_dark_ref_spirou"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.259 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.8.001 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../../main/spirou/main_spirou.html" >SPIRou documentation</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="recipes.html" >Recipes (SPIROU)</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">apero_loc_spirou</a></li> 
@@ -349,7 +405,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2019, Neil Cook.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 6.1.3.
     </div>
   </body>
 </html>

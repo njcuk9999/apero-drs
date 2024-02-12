@@ -16,8 +16,10 @@ Import rules:
     do not import from core.core.drs_argument
     do not import from core.core.drs_database
 """
+import hashlib
 import os
 import shutil
+import tarfile
 from pathlib import Path
 from typing import Any, List, Optional, Union
 
@@ -247,6 +249,9 @@ def copytree(src: Union[str, Path], dst: Union[str, Path]):
             # get input file path
             infile = Path(root).joinpath(filename)
             outfile = Path(outroot).joinpath(filename)
+            # remove file if it exists
+            if os.path.exists(outfile):
+                os.remove(outfile)
             # copy file
             shutil.copy(str(infile), str(outfile))
 
@@ -280,6 +285,32 @@ def copyfile(params: ParamDict, src: str, dst: str, log: bool = True):
     else:
         eargs = [src, dst, func_name]
         WLOG(params, 'error', textentry('00-004-00005', args=eargs))
+
+
+def copy_element(old_element: str, new_element: str):
+    """
+    Copies element (path) from old_element to new_element
+    The element can either be a directory or a file
+
+    :param old_element: str, the directory or file to copy from
+    :param new_element: str, the directory or file to copy to
+
+    :return: None, copies old_element to new_element
+    """
+    # deal with files
+    if os.path.isfile(old_element):
+        # deal with old file existing
+        if os.path.exists(new_element):
+            os.remove(new_element)
+        # copy new file
+        shutil.copy(old_element, new_element)
+    # deal with directories
+    else:
+        # deal with old directory existing
+        if os.path.exists(new_element):
+            shutil.rmtree(new_element)
+        # copy new directory
+        shutil.copytree(old_element, new_element)
 
 
 def numpy_load(filename: str) -> Any:
@@ -497,6 +528,73 @@ def recursive_path_glob(params: ParamDict,
     # return valid files
     return valid_files
 
+
+def calculate_checksum(filename: str) -> str:
+    """
+    Calculate the checksum of a file
+
+    :param filename: str, the path to the file to calculate the checksum of
+    :return: str, the checksum of the file
+    """
+    hasher = hashlib.md5()
+    with open(filename, 'rb') as f:
+        for chunk in iter(lambda: f.read(4096), b''):
+            hasher.update(chunk)
+    return hasher.hexdigest()
+
+
+def make_tarfile(output_filename: str, source_dir: str,
+                 exclude_prefixes: Optional[List[str]] = None,
+                 exclude_suffixes: Optional[List[str]] = None):
+    """
+    Make a tar file from a directory
+
+    :param output_filename: the output tar filename
+    :param source_dir: str, the source directory to add to the tar file
+    :return:
+    """
+    # deal with default values
+    if exclude_prefixes is None:
+        exclude_prefixes = []
+    if exclude_suffixes is None:
+        exclude_suffixes = []
+    # define function to use in tar.add
+    def should_be_excluded(tarinfo: Any) -> Any:
+        """
+        Lambda function to exclude file prefixes and suffixes from tar file
+
+        :param tarinfo: Any, the tarinfo object to check
+        :return: None (if file is rejected) or the tarinfo object to check
+        """
+        exclude_file = False
+        for prefix in exclude_prefixes:
+            if tarinfo.name.startswith(prefix):
+                exclude_file |= True
+        for suffix in exclude_suffixes:
+            if tarinfo.name.endswith(suffix):
+                exclude_file |= True
+        # return None if file is to be excluded
+        if exclude_file:
+            return None
+        # return the input if file is to be kept
+        else:
+            return tarinfo
+    # make the tar file
+    with tarfile.open(output_filename, "w:gz") as tar:
+        tar.add(source_dir, arcname=os.path.basename(source_dir),
+                filter=should_be_excluded)
+
+
+def extract_tarfile(tar_filename: str, extract_dir: str):
+    """
+    Extract a tar file to a directory
+
+    :param tar_filename: str, the tar file to extract
+    :param extract_dir: str, the directory to extract the tar file to
+    :return:
+    """
+    with tarfile.open(tar_filename, "r:gz") as tar:
+        tar.extractall(path=extract_dir)
 
 # =============================================================================
 # Start of code

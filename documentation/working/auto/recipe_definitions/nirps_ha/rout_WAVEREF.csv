@@ -5,4 +5,5 @@ WAVEREF_CAV,Reference wavelength cavity width polynomial calibration file,WAVERE
 WAVE_HCLIST_REF,Reference list of Hollow cathode lines calibration file,WAVE_HCLIST_REF,.fits,_waveref_hclines,"A, B",calibration,WAVEHCL,"EXT_E2DS, EXT_E2DS_FF"
 WAVE_FPLIST_REF,--,WAVE_FPLIST_REF,.fits,_waveref_fplines,"A, B",calibration,WAVEFPL,"EXT_E2DS, EXT_E2DS_FF"
 WAVERES,Reference wavelength resolution map file,WAVE_RES,.fits,_waveref_resmap,"A, B",--,--,"EXT_E2DS, EXT_E2DS_FF"
+WAVEM_RES_E2DS,Reference wavelength resolution e2ds file,WAVEM_RES_E2DS,.fits,_waveref_res_e2ds,"A, B",calibration,WAVR_E2DS,"EXT_E2DS, EXT_E2DS_FF"
 CCF_RV,Cross-correlation RV results file,CCF_RV,.fits,_ccf,"A, B",--,--,"EXT_E2DS_FF, TELLU_OBJ"

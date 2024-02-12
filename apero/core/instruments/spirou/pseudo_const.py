@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any, List, Optional, Tuple, Union
 
 import numpy as np
-
+import sqlalchemy
 
 from apero.base import base
 from apero.base import drs_db
@@ -37,7 +37,7 @@ Time, TimeDelta = base.AstropyTime, base.AstropyTimeDelta
 # Get Parmeter Dictionary class
 ParamDict = constants.ParamDict
 # Get the Database Columns class
-DatabaseColumns = drs_db.DatabaseColumns
+DatabaseColumns = drs_db.AperoDatabaseColumns
 # get error
 DrsCodedException = drs_exceptions.DrsCodedException
 # get display func
@@ -586,44 +586,45 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
             return self.header_cols
         # set keyts
         header_cols = DatabaseColumns()
-        header_cols.add(name='KW_DATE_OBS', datatype='VARCHAR(80)')
-        header_cols.add(name='KW_UTC_OBS', datatype='VARCHAR(80)')
-        header_cols.add(name='KW_ACQTIME', datatype='DOUBLE')
-        header_cols.add(name='KW_TARGET_TYPE', datatype='VARCHAR(80)')
-        header_cols.add(name='KW_MID_OBS_TIME', datatype='DOUBLE',
+        header_cols.add(name='KW_DATE_OBS', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_UTC_OBS', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_ACQTIME', datatype=sqlalchemy.Float)
+        header_cols.add(name='KW_TARGET_TYPE', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_MID_OBS_TIME', datatype=sqlalchemy.Float,
                         is_index=True)
         # cleaned object name
-        header_cols.add(name='KW_OBJNAME', datatype='VARCHAR(80)',
+        header_cols.add(name='KW_OBJNAME', datatype=sqlalchemy.String(80),
                         is_index=True)
         # raw object name
-        header_cols.add(name='KW_OBJECTNAME', datatype='VARCHAR(80)')
+        header_cols.add(name='KW_OBJECTNAME', datatype=sqlalchemy.String(80))
         # other raw object name
-        header_cols.add(name='KW_OBJECTNAME2', datatype='VARCHAR(80)')
-        header_cols.add(name='KW_OBSTYPE', datatype='VARCHAR(80)')
-        header_cols.add(name='KW_EXPTIME', datatype='DOUBLE')
-        header_cols.add(name='KW_INSTRUMENT', datatype='VARCHAR(80)')
-        header_cols.add(name='KW_CCAS', datatype='VARCHAR(80)')
-        header_cols.add(name='KW_CREF', datatype='VARCHAR(80)')
-        header_cols.add(name='KW_CDEN', datatype='VARCHAR(80)')
-        header_cols.add(name='KW_CALIBWH', datatype='VARCHAR(80)')
-        header_cols.add(name='KW_POLAR_KEY_1', datatype='VARCHAR(80)')
-        header_cols.add(name='KW_POLAR_KEY_2', datatype='VARCHAR(80)')
-        header_cols.add(name='KW_DPRTYPE', datatype='VARCHAR(80)',
+        header_cols.add(name='KW_OBJECTNAME2', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_OBSTYPE', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_EXPTIME', datatype=sqlalchemy.Float)
+        header_cols.add(name='KW_INSTRUMENT', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_CCAS', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_CREF', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_CDEN', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_CALIBWH', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_POLAR_KEY_1', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_POLAR_KEY_2', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_DPRTYPE', datatype=sqlalchemy.String(80),
                         is_index=True)
-        header_cols.add(name='KW_DRS_MODE', datatype='VARCHAR(80)')
-        header_cols.add(name='KW_OUTPUT', datatype='VARCHAR(80)',
+        header_cols.add(name='KW_DRS_MODE', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_OUTPUT', datatype=sqlalchemy.String(80),
                         is_index=True)
-        header_cols.add(name='KW_NIGHT_OBS', datatype='INT')
-        header_cols.add(name='KW_CMPLTEXP', datatype='VARCHAR(80)')
-        header_cols.add(name='KW_NEXP', datatype='VARCHAR(80)')
-        header_cols.add(name='KW_VERSION', datatype='VARCHAR(80)')
-        header_cols.add(name='KW_PPVERSION', datatype='VARCHAR(80)')
-        header_cols.add(name='KW_DRS_DATE_NOW', datatype='VARCHAR(80)')
-        header_cols.add(name='KW_PI_NAME', datatype='VARCHAR(80)')
-        header_cols.add(name='KW_PID', datatype='VARCHAR(80)',
+        header_cols.add(name='KW_NIGHT_OBS', datatype=sqlalchemy.Integer)
+        header_cols.add(name='KW_CMPLTEXP', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_NEXP', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_VERSION', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_PPVERSION', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_DRS_DATE_NOW', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_PI_NAME', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_RUN_ID', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_PID', datatype=sqlalchemy.String(80),
                         is_index=True)
-        header_cols.add(name='KW_FIBER', datatype='VARCHAR(80)')
-        header_cols.add(name='KW_IDENTIFIER', datatype='VARCHAR(80)',
+        header_cols.add(name='KW_FIBER', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_IDENTIFIER', datatype=sqlalchemy.String(80),
                         is_index=True)
         # check that filedef keys are present
         for fkey in self.FILEDEF_HEADER_KEYS():
@@ -994,26 +995,35 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
             return self.index_cols
         # column definitions
         index_cols = DatabaseColumns()
-        index_cols.add(name='ABSPATH', datatype='TEXT', is_unique=True)
-        index_cols.add(name='OBS_DIR', datatype='VARCHAR(200)', is_index=True)
-        index_cols.add(name='FILENAME', is_index=True, datatype='VARCHAR(200)')
-        index_cols.add(name='BLOCK_KIND', is_index=True, datatype='VARCHAR(20)')
-        index_cols.add(name='LAST_MODIFIED', datatype='DOUBLE')
-        index_cols.add(name='RECIPE', datatype='VARCHAR(200)')
-        index_cols.add(name='RUNSTRING', datatype='TEXT')
-        index_cols.add(name='INFILES', datatype='TEXT')
+        index_cols.add(name='ABSPATH', is_unique=True,
+                       datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC))
+        index_cols.add(name='OBS_DIR', datatype=sqlalchemy.String(200),
+                       is_index=True)
+        index_cols.add(name='FILENAME', is_index=True,
+                       datatype=sqlalchemy.String(200))
+        index_cols.add(name='BLOCK_KIND', is_index=True,
+                       datatype=sqlalchemy.String(20))
+        index_cols.add(name='LAST_MODIFIED', datatype=sqlalchemy.Float)
+        index_cols.add(name='RECIPE', datatype=sqlalchemy.String(200))
+        index_cols.add(name='RUNSTRING',
+                       datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC))
+        index_cols.add(name='INFILES',
+                       datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC))
         # get header keys
         header_columns = self.FILEINDEX_HEADER_COLS()
         # add header columns to index columns
         index_cols += header_columns
         # add extra columns
-        index_cols.add(name='USED', datatype='INT')
-        index_cols.add(name='RAWFIX', datatype='INT')
+        index_cols.add(name='USED', datatype=sqlalchemy.Integer)
+        index_cols.add(name='RAWFIX', datatype=sqlalchemy.Integer)
         # manage index groups
-        index_cols.index_groups.append(['BLOCK_KIND', 'OBS_DIR', 'USED'])
-        index_cols.index_groups.append(['OBS_DIR', 'BLOCK_KIND'])
-        # return columns and column types
-        self.index_cols = index_cols
+        index_cols.uniques.append(sqlalchemy.Index('idx_block_obs_used',
+                                                   'BLOCK_KIND', 'OBS_DIR',
+                                                   'USED'))
+        index_cols.uniques.append(sqlalchemy.Index('idx_block_obs_filename',
+                                                   'BLOCK_KIND', 'OBS_DIR',
+                                                   'FILENAME'))
+        # return column object
         return index_cols
 
     def GET_EPOCH(self, params, header) -> float:

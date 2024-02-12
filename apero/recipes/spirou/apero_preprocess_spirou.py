@@ -68,9 +68,6 @@ def main(obs_dir: Optional[str] = None, files: Optional[List[str]] = None,
     :param files: list of strings or string, the list of files to process
     :param kwargs: any additional keywords
 
-    :type obs_dir: str
-    :type files: list[str]
-
     :keyword debug: int, debug level (0 for None)
 
     :returns: dictionary of the local space
@@ -172,10 +169,15 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             WLOG(params, 'info', textentry('40-010-00001', args=eargs))
         else:
             eargs = [infile.filename]
-            WLOG(params, 'info', textentry('40-010-00002', args=eargs))
+            WLOG(params, 'error', textentry('40-010-00002', args=eargs))
             continue
+        # ------------------------------------------------------------------
+        # print progress
+        WLOG(params, '', 'Loading RAMP [intercept,intercept,errslope,inttime]')
         # get data from file instance
         datalist = infile.get_data(copy=True, extensions=[1, 2, 3, 4])
+        # print progress
+        WLOG(params, '', '\tLoaded {0}'.format(infile.filename))
         # get flux image from the data list
         image = datalist[0]
         # get intercept from the data list
@@ -190,6 +192,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         # Get out file and check skip
         # ------------------------------------------------------------------
+        # print progress
+        WLOG(params, '', 'Loading drs output file')
         # get the output drs file
         oargs = [params, recipe, infile, recipe.outputs['PP_FILE'], RAW_PREFIX]
         found, outfile = prep.drs_outfile_id(*oargs)
@@ -208,11 +212,13 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ----------------------------------------------------------------------
         # Check for pixel shift and/or corrupted files
         # ----------------------------------------------------------------------
+        # print progress
+        WLOG(params, '', 'Checking for pixel shift and/or corrupted files')
         # storage
         snr_hotpix, rms_list = [], []
         shiftdx, shiftdy = 0, 0
         fail, fail_qcparams = False, []
-        qc_params = [[], [], [], [], []]
+        qc_params = [[], [], [], []]
         # do this iteratively as if there is a shift need to re-workout QC
         for iteration in range(2):
             # get pass condition
@@ -295,6 +301,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         # correct image
         # ------------------------------------------------------------------
+        # print progress
+        WLOG(params, '', 'Applying detector corrections')
         # get the exposure time from the header
         exptime = infile.header[params['KW_EXPTIME'][0]]
         # correct the capacitive coupling pattern
@@ -330,6 +338,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                 sci_capc_corr = False
         # correct between amplifier capacity coupling from science flux
         if sci_capc_corr:
+            # print progress
+            WLOG(params, '', 'Applying sci capactivitive coupling correction')
             image = prep.correct_sci_capacitive_coupling(params, image)
 
         # ------------------------------------------------------------------

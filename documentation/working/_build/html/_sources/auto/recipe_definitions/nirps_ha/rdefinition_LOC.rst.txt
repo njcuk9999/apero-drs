@@ -58,7 +58,7 @@ No schematic set
      --darkcorr[True/False] // [BOOLEAN] Whether to correct for the dark file
      --flipimage[None,x,y,both] // [BOOLEAN] Whether to flip fits image
      --fluxunits[ADU/s,e-] // [STRING] Output units for flux
-     --plot[0>INT>3] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
+     --plot[0>INT>4] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
      --resize[True/False] // [BOOLEAN] Whether to resize image
 
 

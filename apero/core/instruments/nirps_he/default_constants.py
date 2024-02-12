@@ -54,6 +54,10 @@ CALIB_DB_FORCE_WAVESOL.value = False
 RAW_TO_PP_ROTATION = RAW_TO_PP_ROTATION.copy(__NAME__)
 RAW_TO_PP_ROTATION.value = 5
 
+# Measured detector gain in all places that use gain
+EFFGAIN = EFFGAIN.copy(__NAME__)
+EFFGAIN.value = 1.15
+
 # Define raw image size (mostly just used as a check and in places where we
 #   don't have access to this information)
 IMAGE_X_FULL = IMAGE_X_FULL.copy(__NAME__)
@@ -122,6 +126,16 @@ DO_CALIB_DTIME_CHECK.value = True
 MAX_CALIB_DTIME = MAX_CALIB_DTIME.copy(__NAME__)
 MAX_CALIB_DTIME.value = 7.0
 
+# define whether the user wants to bin the calibration times to a specific
+#   day fraction (i.e. midnight, midday) using CALIB_DB_DAYFRAC
+CALIB_BIN_IN_TIME = CALIB_BIN_IN_TIME.copy(__NAME__)
+CALIB_BIN_IN_TIME.value = True
+
+# Define the the fraction of the day to bin to (0 = midnight  before
+#     observation, 0.5 = noon, and 1.0 = midnight after
+CALIB_DB_DAYFRAC = CALIB_DB_DAYFRAC.copy(__NAME__)
+CALIB_DB_DAYFRAC.value = 0.0
+
 # Define the threshold under which a file should not be combined
 #  (metric is compared to the median of all files 1 = perfect, 0 = noise)
 COMBINE_METRIC_THRESHOLD1 = COMBINE_METRIC_THRESHOLD1.copy(__NAME__)
@@ -151,6 +165,10 @@ CALIB_CHECK_FP_THRES.value = 100
 CALIB_CHECK_FP_CENT_SIZE = CALIB_CHECK_FP_CENT_SIZE.copy(__NAME__)
 CALIB_CHECK_FP_CENT_SIZE.value = 100
 
+# Define the SIMBAD TAP url
+SIMBAD_TAP_URL = SIMBAD_TAP_URL.copy(__NAME__)
+SIMBAD_TAP_URL.value = 'http://simbad.cds.unistra.fr/simbad/sim-tap'
+
 # Define the TAP Gaia URL (for use in crossmatching to Gaia via astroquery)
 OBJ_LIST_GAIA_URL = OBJ_LIST_GAIA_URL.copy(__NAME__)
 OBJ_LIST_GAIA_URL.value = 'https://gea.esac.esa.int/tap-server/tap'
@@ -173,6 +191,10 @@ OBJ_LIST_GSHEET_PEND_LIST_ID.value = '623506317'
 # Define the google sheet objname list reject list id number
 OBJ_LIST_GSHEET_REJECT_LIST_ID = OBJ_LIST_GSHEET_REJECT_LIST_ID.copy(__NAME__)
 OBJ_LIST_GSHEET_REJECT_LIST_ID.value = '2006484513'
+
+# Define the google sheet bibcode id number
+OBJ_LIST_GSHEET_BIBCODE_ID = OBJ_LIST_GSHEET_BIBCODE_ID.copy(__NAME__)
+OBJ_LIST_GSHEET_BIBCODE_ID.value = '956956617'
 
 # Define the google sheet user url object list (None for no user list)
 #     (may be set to a directory for completely offline reduction)
@@ -603,7 +625,7 @@ BADPIX_DILATE_SIZE.value = 9
 # =============================================================================
 #    Width of the box to produce the background mask
 BKGR_BOXSIZE = BKGR_BOXSIZE.copy(__NAME__)
-BKGR_BOXSIZE.value = 32
+BKGR_BOXSIZE.value = 256
 
 #    Do background percentile to compute minimum value (%)
 BKGR_PERCENTAGE = BKGR_PERCENTAGE.copy(__NAME__)
@@ -623,8 +645,9 @@ BKGR_NO_SUBTRACTION = BKGR_NO_SUBTRACTION.copy(__NAME__)
 BKGR_NO_SUBTRACTION.value = False
 
 #    Kernel amplitude determined from drs_local_scatter.py
+#    If zero the scattering is skipped
 BKGR_KER_AMP = BKGR_KER_AMP.copy(__NAME__)
-BKGR_KER_AMP.value = 1e9
+BKGR_KER_AMP.value = 0
 
 #    Background kernel width in in x and y [pixels]
 BKGR_KER_WX = BKGR_KER_WX.copy(__NAME__)
@@ -1103,6 +1126,11 @@ QC_FF_MAX_RMS.value = 1.0
 FF_PLOT_ORDER = FF_PLOT_ORDER.copy(__NAME__)
 FF_PLOT_ORDER.value = 4
 
+# Define the high pass filter size in pixels
+FF_HIGH_PASS_SIZE = FF_HIGH_PASS_SIZE.copy(__NAME__)
+FF_HIGH_PASS_SIZE.value = 501
+FF_HIGH_PASS_SIZE.author = base.AUTHORS['EA']
+
 # =============================================================================
 # CALIBRATION: LEAKAGE SETTINGS
 # =============================================================================
@@ -1127,6 +1155,10 @@ CORRECT_LEAKAGE.value = True
 # Define DPRTYPE in reference fiber to do correction
 LEAKAGE_REF_TYPES = LEAKAGE_REF_TYPES.copy(__NAME__)
 LEAKAGE_REF_TYPES.value = 'FP'
+
+# define the maximum number of files to use in the leak reference
+LEAK_REF_MAX_FILES = LEAK_REF_MAX_FILES.copy(__NAME__)
+LEAK_REF_MAX_FILES.value = 20
 
 # define the type of file to use for the leak correction (currently allowed are
 #     'E2DS_FILE' or 'E2DSFF_FILE' (linked to recipe definition outputs)
@@ -1605,7 +1637,8 @@ WAVE_CCF_RV_THRES_QC.author = base.AUTHORS['EA']
 # =============================================================================
 # Define the line list file (located in the DRS_WAVE_DATA directory)
 WAVE_LINELIST_FILE = WAVE_LINELIST_FILE.copy(__NAME__)
-WAVE_LINELIST_FILE.value = 'catalogue_UNe.csv'  # 'catalogue_UNe.dat'
+WAVE_LINELIST_FILE.value = 'catalogue_UNe_update230322.csv'  # 'catalogue_UNe.dat'
+WAVE_LINELIST_FILE.author = base.AUTHORS['EA']
 
 # Define the line list file format (must be astropy.table format)
 WAVE_LINELIST_FMT = WAVE_LINELIST_FMT.copy(__NAME__)
@@ -2037,6 +2070,10 @@ SKYMODEL_MIN_EXPTIME =  SKYMODEL_MIN_EXPTIME.copy(__NAME__)
 SKYMODEL_MIN_EXPTIME.value = 300
 SKYMODEL_MIN_EXPTIME.author = base.AUTHORS['EA']
 
+# Define the maximum number of files to have open simultaneously
+SKYMODEL_MAX_OPEN_FILES = SKYMODEL_MAX_OPEN_FILES.copy(__NAME__)
+SKYMODEL_MAX_OPEN_FILES.value = 10
+
 # define the sigma that positive exursions need to have to be identified
 #   as lines
 SKYMODEL_LINE_SIGMA = SKYMODEL_LINE_SIGMA.copy(__NAME__)
@@ -2174,7 +2211,7 @@ TELLUP_REMOVE_ORDS.value = '47, 48'
 
 # define the minimum snr to accept orders for pre-cleaning fit
 TELLUP_SNR_MIN_THRES = TELLUP_SNR_MIN_THRES.copy(__NAME__)
-TELLUP_SNR_MIN_THRES.value = 10.0
+TELLUP_SNR_MIN_THRES.value = 3.0
 
 # define the telluric trans other abso CCF file
 TELLUP_OTHERS_CCF_FILE = TELLUP_OTHERS_CCF_FILE.copy(__NAME__)
@@ -2321,14 +2358,14 @@ FTELLU_QC_SNR_ORDER.value = 64
 #  Define the minimum SNR for order "QC_TELLU_SNR_ORDER" that will be
 #      accepted to the telluDB
 FTELLU_QC_SNR_MIN = MKTELLU_QC_SNR_MIN.copy(__NAME__)
-FTELLU_QC_SNR_MIN.value = 15
+FTELLU_QC_SNR_MIN.value = 3
 
 # The number of principle components to use in PCA fit
 FTELLU_NUM_PRINCIPLE_COMP = FTELLU_NUM_PRINCIPLE_COMP.copy(__NAME__)
 FTELLU_NUM_PRINCIPLE_COMP.value = 5
 
 # The number of transmission files to use in the PCA fit (use this number of
-#    trans files closest in expo_h20 and expo_water
+#    trans files closest in expo_H2O and expo_water
 FTELLU_NUM_TRANS = FTELLU_NUM_TRANS.copy(__NAME__)
 FTELLU_NUM_TRANS.value = 50
 
@@ -2525,7 +2562,7 @@ CCF_DEFAULT_WIDTH.value = 300.0
 
 # Define the computations steps of the CCF [km/s]
 CCF_DEFAULT_STEP = CCF_DEFAULT_STEP.copy(__NAME__)
-CCF_DEFAULT_STEP.value = 0.5
+CCF_DEFAULT_STEP.value = 0.25
 
 #   The value of the noise for wave dv rms calculation
 #       snr = flux/sqrt(flux + noise^2)
@@ -2544,11 +2581,14 @@ CCF_NOISE_THRES.value = 1.0e9
 #  Define the number of orders (from zero to ccf_num_orders_max) to use
 #      to calculate the CCF and RV
 CCF_N_ORD_MAX = CCF_N_ORD_MAX.copy(__NAME__)
-CCF_N_ORD_MAX.value = 48
+CCF_N_ORD_MAX.value = 71
 
 # Allowed input DPRTYPES for input  for CCF recipe
 CCF_ALLOWED_DPRTYPES = CCF_ALLOWED_DPRTYPES.copy(__NAME__)
 CCF_ALLOWED_DPRTYPES.value = 'OBJ_DARK, OBJ_FP, OBJ_SKY, TELLU_SKY, FLUXSTD_SKY'
+
+# Valid DPRTYPES for FP in calibration fiber = CCF_VALID_FP_DPRTYPES.copy(__NAME__)
+CCF_VALID_FP_DPRTYPES.value = 'OBJ_FP'
 
 # Define the KW_OUTPUT types that are valid telluric corrected spectra
 CCF_CORRECT_TELLU_TYPES = CCF_CORRECT_TELLU_TYPES.copy(__NAME__)
@@ -2896,6 +2936,52 @@ PLOT_CCF_PHOTON_UNCERT = PLOT_CCF_PHOTON_UNCERT.copy(__NAME__)
 PLOT_CCF_PHOTON_UNCERT.value = True
 
 # =============================================================================
+# LBL SETTINGS
+# =============================================================================
+cgroup = 'LBL SETTINGS'
+# Define the file definition type (DRSOUTID) for LBL input files
+LBL_FILE_DEFS = LBL_FILE_DEFS.copy(__NAME__)
+LBL_FILE_DEFS.value = 'TELLU_OBJ'
+
+# Define the dprtype for science files for LBL
+LBL_DPRTYPES = LBL_DPRTYPES.copy(__NAME__)
+LBL_DPRTYPES.value = 'OBJ_DARK, OBJ_FP, OBJ_SKY, TELLU_SKY, FLUXSTD_SKY'
+
+# Define the file definition type (DRSOUTID) for lbl input template
+LBL_TEMPLATE_FILE_DEFS = LBL_TEMPLATE_FILE_DEFS.copy(__NAME__)
+LBL_TEMPLATE_FILE_DEFS.value = 'TELLU_TEMP,TELLU_TEMP_S1DV'
+
+# Define the DPRTYPE for simultaneous FP files for lbl input
+LBL_SIM_FP_DPRTYPES = LBL_SIM_FP_DPRTYPES.copy(__NAME__)
+LBL_SIM_FP_DPRTYPES.value = 'OBJ_FP'
+
+# Define whether the LBL directory should use symlinks
+LBL_SYMLINKS = LBL_SYMLINKS.copy(__NAME__)
+LBL_SYMLINKS.value = True
+
+# Define the dictionary of friend and friend teffs for LBL
+LBL_FRIENDS = LBL_FRIENDS.copy(__NAME__)
+LBL_FRIENDS.value = '{"HD85512": 4411,"GJ9425": 4060,"GL514": 3750,"GJ2066": 3557,"GJ581": 3413,"GJ643": 3306, "GJ3737": 3257, "GL699": 3224, "PROXIMA": 2900}'
+
+# Define the specific data types (where objname is the data type) for LBL
+LBL_SPECIFIC_DATATYPES = LBL_SPECIFIC_DATATYPES.copy(__NAME__)
+LBL_SPECIFIC_DATATYPES.value = 'FP, LFC'
+
+# Define objnames for which we should recalculate template if it doesn't
+#   exist (must include FP)
+LBL_RECAL_TEMPLATE = LBL_RECAL_TEMPLATE.copy(__NAME__)
+LBL_RECAL_TEMPLATE.value = 'FP, LFC'
+
+# Define which object names should be run through LBL compute in parellel
+#   i.e. break in to Ncore chunks (comma separated list)
+LBL_MULTI_OBJLIST = LBL_MULTI_OBJLIST.copy(__NAME__)
+LBL_MULTI_OBJLIST.value = 'FP'
+
+# Define the DTEMP gradient files
+LBL_DTEMP = LBL_DTEMP.copy(__NAME__)
+LBL_DTEMP.value = '{"DTEMP3000": "temperature_gradient_3000.fits", "DTEMP3500": "temperature_gradient_3500.fits", "DTEMP4000": "temperature_gradient_4000.fits", "DTEMP4500": "temperature_gradient_4500.fits", "DTEMP5000": "temperature_gradient_5000.fits", "DTEMP5500": "temperature_gradient_5500.fits", "DTEMP6000": "temperature_gradient_6000.fits"}'
+
+# =============================================================================
 # POST PROCESS SETTINGS
 # =============================================================================
 # Define whether (by deafult) to clear reduced directory
@@ -2918,9 +3004,15 @@ POST_HDREXT_COMMENT_KEY.value = 'KW_IDENTIFIER'
 REPROCESS_REINDEX_BLOCKS = REPROCESS_REINDEX_BLOCKS.copy(__NAME__)
 REPROCESS_REINDEX_BLOCKS.value = 'raw,tmp,red,out'
 
-# Define whether to use multiprocess Pool or Process
+# Define whether to use multiprocess "pool" or "process" or use "linear"
+#     mode when parallelising recipes
 REPROCESS_MP_TYPE = REPROCESS_MP_TYPE.copy(__NAME__)
 REPROCESS_MP_TYPE.value = 'process'
+
+# Define whether to use multiprocess "pool" or "process" or use "linear"
+#     mode when validating recipes
+REPROCESS_MP_TYPE_VAL = REPROCESS_MP_TYPE_VAL.copy(__NAME__)
+REPROCESS_MP_TYPE_VAL.value = 'process'
 
 # Key for use in run files
 REPROCESS_RUN_KEY = REPROCESS_RUN_KEY.copy(__NAME__)

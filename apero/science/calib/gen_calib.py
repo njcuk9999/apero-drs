@@ -177,6 +177,9 @@ class CalibFile:
         self.mode = mode
         # get mjdmid key
         mjdmid_key = params['KW_MID_OBS_TIME'][0]
+        # get whether the user wants to bin the calibration times to a specific
+        #   day fraction (i.e. midnight, midday) using CALIB_DB_DAYFRAC
+        bintimes = params['CALIB_BIN_IN_TIME']
         # ---------------------------------------------------------------------
         # first try to get file from inputs
         fout = drs_data.get_file_from_inputs(params, 'calibration',
@@ -219,7 +222,8 @@ class CalibFile:
             # load filename from database
             fout = database.get_calib_file(key, header=inheader, timemode=mode,
                                            nentries=n_entries,
-                                           required=required, fiber=fiber)
+                                           required=required, fiber=fiber,
+                                           bintimes=bintimes)
             # deal with outputs of get calib file
             self.filename, self.mjdmid, self.reference = fout
             self.source = 'calibDB'
@@ -348,7 +352,8 @@ def check_files(params: ParamDict,
     objname_inputs = params['INPUTS']['OBJNAME'].split(',')
     # clean (capitalize and remove white spaces)
     dprtype_inputs = drs_text.clean_strings(dprtype_inputs)
-    objname_inputs = objdbm.find_objnames(pconst, objname_inputs)
+    objname_inputs = objdbm.find_objnames(pconst, objname_inputs,
+                                          allow_empty=True)
     # ----------------------------------------------------------------------
     # log checking file info
     wargs = [dprtype, objname]
@@ -361,7 +366,9 @@ def check_files(params: ParamDict,
     # convert objname_inputs to char array
     objarray = np.char.array(objname_inputs).upper()
     # deal with objname filter
-    if 'NONE' in objarray:
+    if len(objarray) == 0:
+        skip = skip or False
+    elif 'NONE' in objarray:
         skip = skip or False
     elif 'NULL' in objarray:
         skip = skip or False
@@ -488,7 +495,7 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
     # Get basic image properties
     sigdet = infile.get_hkey('KW_RDNOISE')
     exptime = infile.get_hkey('KW_EXPTIME')
-    gain = infile.get_hkey('KW_GAIN')
+    gain = params['EFFGAIN']
     dprtype = infile.get_hkey('KW_DPRTYPE', dtype=str)
     saturate = pconst.SATURATION(params, infile.get_header())
     frmtime = pconst.FRAME_TIME(params, infile.get_header())
@@ -573,22 +580,26 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
     else:
         image3 = np.array(image2)
         badpfile, badtime = 'None', np.nan
+
     # ----------------------------------------------------------------------
     # image 4 is corrected for background
     # ----------------------------------------------------------------------
+    # load background file from inputs/calibdb
+    cfile = CalibFile()
+    cfile.load_calib_file(params, backkey, header, filename=backfile,
+                          userinputkey='BACKFILE', return_filename=True,
+                          database=calibdbm)
+    bkgrdfile, backtime = cfile.filename, cfile.mjdmid
+
     if correctback:
-        # load background file from inputs/calibdb
-        cfile = CalibFile()
-        cfile.load_calib_file(params, backkey, header, filename=backfile,
-                              userinputkey='BACKFILE', return_filename=True,
-                              database=calibdbm)
-        bkgrdfile, backtime = cfile.filename, cfile.mjdmid
         # correct image for background
         image4 = background.correction(recipe, params, infile, image3,
                                        bkgrdfile=bkgrdfile)
+        bkgrdfile_used = str(bkgrdfile)
     else:
         image4 = np.array(image3)
-        bkgrdfile, backtime = 'None', np.nan
+        bkgrdfile_used, backtime = 'None', np.nan
+
     # ----------------------------------------------------------------------
     # image 4 may need to normalise by a percentile
     # ----------------------------------------------------------------------
@@ -632,6 +643,13 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
     image5[mask] = np.nan
 
     # ----------------------------------------------------------------------
+    # Measure effective read out noise
+    # ----------------------------------------------------------------------
+    # calculate effective readout noise
+    eff_readout_noise = measure_effective_readout_noise(params, image5,
+                                                        bkgrdfile=bkgrdfile)
+
+    # ----------------------------------------------------------------------
     # make properties dictionary
     # ----------------------------------------------------------------------
     props = ParamDict()
@@ -639,6 +657,8 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
     props['FILENAME'] = infile.filename
     props['BASENAME'] = infile.basename
     props['SIGDET'] = sigdet
+    props['EFF_RON'] = eff_readout_noise
+    props['EFF_GAIN'] = gain
     props['EXPTIME'] = exptime
     props['GAIN'] = gain
     props['DPRTYPE'] = dprtype
@@ -648,7 +668,7 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
     props['DARKTIME'] = darktime
     props['BADPFILE'] = badpfile
     props['BADTIME'] = badtime
-    props['BACKFILE'] = bkgrdfile
+    props['BACKFILE'] = bkgrdfile_used
     props['BACKTIME'] = backtime
     props['FLIPPED'] = flip
     props['CONVERT_E'] = converte
@@ -662,12 +682,26 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
     keys = ['FILENAME', 'BASENAME', 'SIGDET', 'EXPTIME', 'GAIN', 'DPRTYPE',
             'SHAPE', 'DARKFILE', 'DARKTIME', 'BADPFILE', 'BADTIME', 'BACKFILE',
             'BACKTIME', 'FLIPPED', 'CONVERT_E', 'RESIZED', 'NORMALISED',
-            'CLEANED']
+            'CLEANED', 'EFF_RON', 'EFF_GAIN']
     props.set_sources(keys, func_name)
 
     # ----------------------------------------------------------------------
     # return image 5
     return props, image5
+
+
+def measure_effective_readout_noise(params: ParamDict, image: np.ndarray,
+                                    bkgrdfile: str):
+    # get bad pixel file
+    bkgrdimage = drs_fits.readfits(params, bkgrdfile)
+    # create mask from badpixmask
+    bmap = np.array(bkgrdimage, dtype=bool)
+    tmp = image[bmap] # keep only background pixels
+    # effective point-to-point RMS. Sqrt 2 comes from the differences
+    # only preserves pix-to-pix RMS and removes low frequencies
+    sig = mp.robust_nanstd(np.diff(tmp))/np.sqrt(2)
+    # return effective readout noise
+    return sig
 
 
 def add_calibs_to_header(outfile: DrsFitsFile,

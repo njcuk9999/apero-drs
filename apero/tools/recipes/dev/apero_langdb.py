@@ -97,7 +97,7 @@ def main():
         landdbm = drs_db.LanguageDatabase(check=False)
         databases['lang'] = landdbm
         # create the database
-        manage_databases.create_lang_database(databases)
+        manage_databases.create_lang_database(None, databases)
         # return None
         return
 
@@ -109,7 +109,7 @@ def main():
         landdbm = drs_db.LanguageDatabase(check=False)
         databases['lang'] = landdbm
         # create the database
-        manage_databases.create_lang_database(databases)
+        manage_databases.create_lang_database(None, databases)
 
     else:
         print('No option selected. See --help for options')

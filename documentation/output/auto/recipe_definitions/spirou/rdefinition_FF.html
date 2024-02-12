@@ -3,20 +3,20 @@
 
 <!doctype html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>apero_flat_spirou &#8212; APERO 0.7.259 documentation</title>
+    <title>apero_flat_spirou &#8212; APERO 0.8.001 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/apero.css" />
     
     <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
-    <script src="../../../_static/jquery.js"></script>
-    <script src="../../../_static/underscore.js"></script>
     <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/sphinx_highlight.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../../../_static/bizstyle.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
@@ -78,6 +78,8 @@
         <i class="fa fa-git-square fa-3x" aria-hidden="true"></i></a></li>
     <li><a title="download pdf" href="../../../apero-docs.pdf">
         <i class="fa fa-download fa-3x" aria-hidden="true"></i></a></li>
+    <li><a title="UdeM" href="/main/misc/udem.html">
+        <i class="fa fa-university fa-3x" aria-hidden="true"></i></a></li>
   </ul>
     <div>
     <a href="../../../index.html">
@@ -101,7 +103,7 @@
         <li class="right" >
           <a href="rdefinition_SHAPE.html" title="apero_shape_spirou"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.259 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.8.001 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../../main/spirou/main_spirou.html" >SPIRou documentation</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="recipes.html" accesskey="U">Recipes (SPIROU)</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">apero_flat_spirou</a></li> 
@@ -109,10 +111,14 @@
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../../../index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="../../../index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">apero_flat_spirou</a><ul>
-<li><a class="reference internal" href="#description">1. Description</a></li>
+<li><a class="reference internal" href="#description">1. Description</a><ul>
+<li><a class="reference internal" href="#flat-and-blaze-calibration">Flat and Blaze calibration</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#schematic">2. Schematic</a></li>
 <li><a class="reference internal" href="#usage">3. Usage</a></li>
 <li><a class="reference internal" href="#optional-arguments">4. Optional Arguments</a></li>
@@ -125,12 +131,17 @@
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="rdefinition_SHAPE.html"
-                        title="previous chapter">apero_shape_spirou</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="rdefinition_THERM.html"
-                        title="next chapter">apero_thermal_spirou</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="rdefinition_SHAPE.html"
+                          title="previous chapter">apero_shape_spirou</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="rdefinition_THERM.html"
+                          title="next chapter">apero_thermal_spirou</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -147,7 +158,7 @@
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
 
@@ -157,18 +168,56 @@
           <div class="body" role="main">
             
   <section id="apero-flat-spirou">
-<span id="recipes-spirou-ff"></span><h1>apero_flat_spirou<a class="headerlink" href="#apero-flat-spirou" title="Permalink to this headline">¶</a></h1>
+<span id="recipes-spirou-ff"></span><h1>apero_flat_spirou<a class="headerlink" href="#apero-flat-spirou" title="Permalink to this heading">¶</a></h1>
 <section id="description">
-<h2>1. Description<a class="headerlink" href="#description" title="Permalink to this headline">¶</a></h2>
+<h2>1. Description<a class="headerlink" href="#description" title="Permalink to this heading">¶</a></h2>
 <p>SHORTNAME: FF</p>
-<p>No description set</p>
+<section id="flat-and-blaze-calibration">
+<h3>Flat and Blaze calibration<a class="headerlink" href="#flat-and-blaze-calibration" title="Permalink to this heading">¶</a></h3>
+<p>An essential part of the extraction process is calibrating the flat field response (removing the effect of the
+pixel-to-pixel sensitivity variations) and calculating the blaze function. The blaze can be seen visually in the raw
+and preprocessed images as a darkening of the orders, especially at the blue end, towards the sides of the detector
+(in the along-order direction).</p>
+<p>The nightly flat recipe takes preprocessed <cite>FLAT_FLAT</cite> files (as many as given by the user or as many as occur on
+each night being used via <cite>apero_processing</cite>). It combines the <cite>FLAT_FLAT</cite> files into a single <cite>FLAT_FLAT</cite> per night
+(via a median combination of the images). After combining, the <cite>FLAT_FLAT</cite> images are calibrated using our standard
+image calibration technique. The combined, calibrated <cite>FLAT_FLAT</cite> file is then extracted (using the same extraction
+algorithms presented in Section ref{sec:extraction}). The rest of the flat and blaze recipe is handled per order.
+Once extracted, the <cite>E2DS</cite> (<span class="math notranslate nohighlight">\(49\times4088\)</span>) is median filtered (with a width of 25 pixels) and all pixels with
+flux less than 0.05 the 95th percentile flux value or greater than 2 times the 95th percentile flux value are
+removed. Each <cite>FLAT_FLAT</cite> <cite>E2DS</cite> order is then fit with a sinc function:</p>
+<div class="math notranslate nohighlight">
+\[\text{B}_i = AS(sin(\theta)/\theta)^2\]</div>
+<div class="math notranslate nohighlight">
+\[S = 1 + s(x_i - L)\]</div>
+<div class="math notranslate nohighlight">
+\[\theta = \pi \bar{x_i} / P\]</div>
+<div class="math notranslate nohighlight">
+\[\bar{x_i} = (x_i - L) + Q(x_i - L)^2 + C(x_i - L)^3\]</div>
+<p>where <span class="math notranslate nohighlight">\(\text{B}_i\)</span> is the blaze model for the ith <cite>E2DS</cite> order, A is the amplitude of the sinc function, P is
+the period of the sinc function, s is the slope of the sinc function, <span class="math notranslate nohighlight">\(x_i\)</span> is the flux vector of the <cite>E2DS</cite>
+order, L is the linear center of the sinc function, Q is a quadratic scale term, and C is a cubic scale term.
+The terms fit in the sinc function are A, P, L, Q, C and s as a function of <span class="math notranslate nohighlight">\(x_i\)</span>.</p>
+<p>Once we have a set of parameters the blaze function for this order is <span class="math notranslate nohighlight">\(\text{B}_i\)</span> for all values of the flux
+for this order. The original <cite>E2DS</cite> order is then divided by the blaze function and this is used as the flat profile.
+A standard deviation of the flat is also calculated for quality control purposes. This process is repeated for each
+order producing a full blaze and flat profile (<span class="math notranslate nohighlight">\(49\times4088\)</span>) for the input <cite>FLAT_FLAT</cite> files. To avoid
+erroneous contributions to the flat any outlier pixels (outside 10:math:<cite>sigma</cite> or within :math:<a href="#id1"><span class="problematic" id="id2">`</span></a>pm`0.2 of unity)
+are set to NaN. Note that the multiplication of the blaze and the flat is equivalent to the full response function of
+the detector. For some orders (#34 and #74), there is a large residual at one edge of the blaze falloff.
+This is due to the mismatch between the analytical function used and the actual profile; the flat-field correction
+accounts for this mismatch.</p>
+<p>For quality control, we check that the standard deviation of the flat for each order is less than 0.05. The flat
+(<cite>FLAT</cite>) and blaze (<cite>BLAZE</cite>) profiles are then saved to the calibration database (if the quality control criteria are
+met) for use throughout APERO.</p>
+</section>
 </section>
 <section id="schematic">
-<h2>2. Schematic<a class="headerlink" href="#schematic" title="Permalink to this headline">¶</a></h2>
+<h2>2. Schematic<a class="headerlink" href="#schematic" title="Permalink to this heading">¶</a></h2>
 <a class="reference internal image-reference" href="../../../_images/apero_flat_spirou_schematic.jpg"><img alt="../../../_images/apero_flat_spirou_schematic.jpg" class="align-center" src="../../../_images/apero_flat_spirou_schematic.jpg" style="width: 100%;" /></a>
 </section>
 <section id="usage">
-<h2>3. Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
+<h2>3. Usage<a class="headerlink" href="#usage" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">apero_flat_spirou</span><span class="o">.</span><span class="n">py</span> <span class="p">{</span><span class="n">obs_dir</span><span class="p">}[</span><span class="n">STRING</span><span class="p">]</span> <span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">FLAT_FLAT</span><span class="p">]</span> <span class="p">{</span><span class="n">options</span><span class="p">}</span>
 </pre></div>
 </div>
@@ -178,7 +227,7 @@
 </div>
 </section>
 <section id="optional-arguments">
-<h2>4. Optional Arguments<a class="headerlink" href="#optional-arguments" title="Permalink to this headline">¶</a></h2>
+<h2>4. Optional Arguments<a class="headerlink" href="#optional-arguments" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">--</span><span class="n">database</span><span class="p">[</span><span class="kc">True</span><span class="o">/</span><span class="kc">False</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">BOOLEAN</span><span class="p">]</span> <span class="n">Whether</span> <span class="n">to</span> <span class="n">add</span> <span class="n">outputs</span> <span class="n">to</span> <span class="n">calibration</span> <span class="n">database</span>
 <span class="o">--</span><span class="n">badpixfile</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">BADPIX</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Define</span> <span class="n">a</span> <span class="n">custom</span> <span class="n">file</span> <span class="n">to</span> <span class="n">use</span> <span class="k">for</span> <span class="n">bad</span> <span class="n">pixel</span> <span class="n">correction</span><span class="o">.</span> <span class="n">Checks</span> <span class="k">for</span> <span class="n">an</span> <span class="n">absolute</span> <span class="n">path</span> <span class="ow">and</span> <span class="n">then</span> <span class="n">checks</span> <span class="n">directory</span>
 <span class="o">--</span><span class="n">badcorr</span><span class="p">[</span><span class="kc">True</span><span class="o">/</span><span class="kc">False</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">BOOLEAN</span><span class="p">]</span> <span class="n">Whether</span> <span class="n">to</span> <span class="n">correct</span> <span class="k">for</span> <span class="n">the</span> <span class="n">bad</span> <span class="n">pixel</span> <span class="n">file</span>
@@ -191,16 +240,17 @@
 <span class="o">--</span><span class="n">fluxunits</span><span class="p">[</span><span class="n">ADU</span><span class="o">/</span><span class="n">s</span><span class="p">,</span><span class="n">e</span><span class="o">-</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Output</span> <span class="n">units</span> <span class="k">for</span> <span class="n">flux</span>
 <span class="o">--</span><span class="n">locofile</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">LOC_LOCO</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Sets</span> <span class="n">the</span> <span class="n">LOCO</span> <span class="n">file</span> <span class="n">used</span> <span class="n">to</span> <span class="n">get</span> <span class="n">the</span> <span class="n">coefficients</span> <span class="p">(</span><span class="n">CALIBDB</span><span class="o">=</span><span class="n">LOC_</span><span class="p">{</span><span class="n">fiber</span><span class="p">})</span>
 <span class="o">--</span><span class="n">orderpfile</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">LOC_ORDERP</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Sets</span> <span class="n">the</span> <span class="n">Order</span> <span class="n">Profile</span> <span class="n">file</span> <span class="n">used</span> <span class="n">to</span> <span class="n">get</span> <span class="n">the</span> <span class="n">coefficients</span> <span class="p">(</span><span class="n">CALIBDB</span><span class="o">=</span><span class="n">ORDER_PROFILE_</span><span class="p">{</span><span class="n">fiber</span><span class="p">}</span>
-<span class="o">--</span><span class="n">plot</span><span class="p">[</span><span class="mi">0</span><span class="o">&gt;</span><span class="n">INT</span><span class="o">&gt;</span><span class="mi">3</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">INTEGER</span><span class="p">]</span> <span class="n">Plot</span> <span class="n">level</span><span class="o">.</span> <span class="mi">0</span> <span class="o">=</span> <span class="n">off</span><span class="p">,</span> <span class="mi">1</span> <span class="o">=</span> <span class="n">interactively</span><span class="p">,</span> <span class="mi">2</span> <span class="o">=</span> <span class="n">save</span> <span class="n">to</span> <span class="n">file</span>
+<span class="o">--</span><span class="n">plot</span><span class="p">[</span><span class="mi">0</span><span class="o">&gt;</span><span class="n">INT</span><span class="o">&gt;</span><span class="mi">4</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">INTEGER</span><span class="p">]</span> <span class="n">Plot</span> <span class="n">level</span><span class="o">.</span> <span class="mi">0</span> <span class="o">=</span> <span class="n">off</span><span class="p">,</span> <span class="mi">1</span> <span class="o">=</span> <span class="n">interactively</span><span class="p">,</span> <span class="mi">2</span> <span class="o">=</span> <span class="n">save</span> <span class="n">to</span> <span class="n">file</span>
 <span class="o">--</span><span class="n">resize</span><span class="p">[</span><span class="kc">True</span><span class="o">/</span><span class="kc">False</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">BOOLEAN</span><span class="p">]</span> <span class="n">Whether</span> <span class="n">to</span> <span class="n">resize</span> <span class="n">image</span>
 <span class="o">--</span><span class="n">shapex</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">SHAPE_X</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Sets</span> <span class="n">the</span> <span class="n">SHAPE</span> <span class="n">DXMAP</span> <span class="n">file</span> <span class="n">used</span> <span class="n">to</span> <span class="n">get</span> <span class="n">the</span> <span class="n">dx</span> <span class="n">correction</span> <span class="nb">map</span> <span class="p">(</span><span class="n">CALIBDB</span><span class="o">=</span><span class="n">SHAPEX</span><span class="p">)</span>
 <span class="o">--</span><span class="n">shapey</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">SHAPE_Y</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Sets</span> <span class="n">the</span> <span class="n">SHAPE</span> <span class="n">DYMAP</span> <span class="n">file</span> <span class="n">used</span> <span class="n">to</span> <span class="n">get</span> <span class="n">the</span> <span class="n">dy</span> <span class="n">correction</span> <span class="nb">map</span> <span class="p">(</span><span class="n">CALIBDB</span><span class="o">=</span><span class="n">SHAPEY</span><span class="p">)</span>
 <span class="o">--</span><span class="n">shapel</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">SHAPEL</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Sets</span> <span class="n">the</span> <span class="n">SHAPE</span> <span class="n">local</span> <span class="n">file</span> <span class="n">used</span> <span class="n">to</span> <span class="n">get</span> <span class="n">the</span> <span class="n">local</span> <span class="n">transforms</span> <span class="p">(</span><span class="n">CALIBDB</span> <span class="o">=</span> <span class="n">SHAPEL</span><span class="p">)</span>
+<span class="o">--</span><span class="n">no_in_qc</span> <span class="o">//</span> <span class="n">Disable</span> <span class="n">checking</span> <span class="n">the</span> <span class="n">quality</span> <span class="n">control</span> <span class="n">of</span> <span class="nb">input</span> <span class="n">files</span>
 </pre></div>
 </div>
 </section>
 <section id="special-arguments">
-<h2>5. Special Arguments<a class="headerlink" href="#special-arguments" title="Permalink to this headline">¶</a></h2>
+<h2>5. Special Arguments<a class="headerlink" href="#special-arguments" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">--</span><span class="n">xhelp</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Extended</span> <span class="n">help</span> <span class="n">menu</span> <span class="p">(</span><span class="k">with</span> <span class="nb">all</span> <span class="n">advanced</span> <span class="n">arguments</span><span class="p">)</span>
 <span class="o">--</span><span class="n">debug</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Activates</span> <span class="n">debug</span> <span class="n">mode</span> <span class="p">(</span><span class="n">Advanced</span> <span class="n">mode</span> <span class="p">[</span><span class="n">INTEGER</span><span class="p">]</span> <span class="n">value</span> <span class="n">must</span> <span class="n">be</span> <span class="n">an</span> <span class="n">integer</span> <span class="n">greater</span> <span class="n">than</span> <span class="mi">0</span><span class="p">,</span> <span class="n">setting</span> <span class="n">the</span> <span class="n">debug</span> <span class="n">level</span><span class="p">)</span>
 <span class="o">--</span><span class="n">listing</span><span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">Lists</span> <span class="n">the</span> <span class="n">night</span> <span class="n">name</span> <span class="n">directories</span> <span class="ow">in</span> <span class="n">the</span> <span class="nb">input</span> <span class="n">directory</span> <span class="k">if</span> <span class="n">used</span> <span class="n">without</span> <span class="n">a</span> <span class="s1">&#39;directory&#39;</span> <span class="n">argument</span> <span class="ow">or</span> <span class="n">lists</span> <span class="n">the</span> <span class="n">files</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">given</span> <span class="s1">&#39;directory&#39;</span> <span class="p">(</span><span class="k">if</span> <span class="n">defined</span><span class="p">)</span><span class="o">.</span> <span class="n">Only</span> <span class="n">lists</span> <span class="n">up</span> <span class="n">to</span> <span class="mi">15</span> <span class="n">files</span><span class="o">/</span><span class="n">directories</span>
@@ -222,26 +272,15 @@
 </div>
 </section>
 <section id="output-directory">
-<h2>6. Output directory<a class="headerlink" href="#output-directory" title="Permalink to this headline">¶</a></h2>
+<h2>6. Output directory<a class="headerlink" href="#output-directory" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">DRS_DATA_REDUC</span> <span class="o">//</span> <span class="n">Default</span><span class="p">:</span> <span class="s2">&quot;red&quot;</span> <span class="n">directory</span>
 </pre></div>
 </div>
 </section>
 <section id="output-files">
-<h2>7. Output files<a class="headerlink" href="#output-files" title="Permalink to this headline">¶</a></h2>
-<table class="csvtable docutils align-default" id="id1">
-<caption><span class="caption-text">Outputs</span><a class="headerlink" href="#id1" title="Permalink to this table">¶</a></caption>
-<colgroup>
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-</colgroup>
+<h2>7. Output files<a class="headerlink" href="#output-files" title="Permalink to this heading">¶</a></h2>
+<table class="csvtable docutils align-default" id="id3">
+<caption><span class="caption-text">Outputs</span><a class="headerlink" href="#id3" title="Permalink to this table">¶</a></caption>
 <thead>
 <tr class="row-odd"><th class="head"><p>name</p></th>
 <th class="head"><p>description</p></th>
@@ -309,7 +348,7 @@
 </table>
 </section>
 <section id="debug-plots">
-<h2>8. Debug plots<a class="headerlink" href="#debug-plots" title="Permalink to this headline">¶</a></h2>
+<h2>8. Debug plots<a class="headerlink" href="#debug-plots" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">FLAT_ORDER_FIT_EDGES1</span>
 <span class="n">FLAT_ORDER_FIT_EDGES2</span>
 <span class="n">FLAT_BLAZE_ORDER1</span>
@@ -318,7 +357,7 @@
 </div>
 </section>
 <section id="summary-plots">
-<h2>9. Summary plots<a class="headerlink" href="#summary-plots" title="Permalink to this headline">¶</a></h2>
+<h2>9. Summary plots<a class="headerlink" href="#summary-plots" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SUM_FLAT_ORDER_FIT_EDGES</span>
 <span class="n">SUM_FLAT_BLAZE_ORDER</span>
 </pre></div>
@@ -345,7 +384,7 @@
         <li class="right" >
           <a href="rdefinition_SHAPE.html" title="apero_shape_spirou"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.7.259 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">APERO 0.8.001 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../../main/spirou/main_spirou.html" >SPIRou documentation</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="recipes.html" >Recipes (SPIROU)</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">apero_flat_spirou</a></li> 
@@ -353,7 +392,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2019, Neil Cook.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 6.1.3.
     </div>
   </body>
 </html>

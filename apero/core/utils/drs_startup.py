@@ -14,9 +14,10 @@ import os
 import sys
 import traceback
 import warnings
+import re
 from collections import OrderedDict
 from signal import signal, SIGINT
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -255,7 +256,7 @@ def setup(name: str = 'None', instrument: str = 'None',
     TLOG(recipe.params, '', 'Loading Arguments. Please wait...')
     # -------------------------------------------------------------------------
     # load index database manager
-    findexdb = drs_database.FileIndexDatabase(recipe.params, check=False)
+    findexdb = drs_database.FileIndexDatabase(recipe.params)
     # interface between "recipe", "fkwargs" and command line (via argparse)
     recipe.recipe_setup(findexdb, fkwargs)
     # -------------------------------------------------------------------------
@@ -467,7 +468,7 @@ def run(func: Any, recipe: DrsRecipe,
                 recipe.log.add_error(type(e), str(e))
             # reset the lock directory
             drs_lock.reset_lock_dir(params)
-        except drs_db.DatabaseError as e:
+        except drs_db.AperoDatabaseError as e:
             WLOG(params, 'error', e.message, raise_exception=False)
             # on debug exit was not a success
             success = False
@@ -1512,14 +1513,17 @@ def _display_initial_parameterisation(params: ParamDict,
     wmsgs += textentry('\n\tDRS_TELLU_DB: {}'.format(params['DRS_TELLU_DB']))
     wmsgs += textentry('\n\tDRS_DATA_ASSETS: {}'
                        ''.format(params['DRS_DATA_ASSETS']))
+    wmsgs += textentry('\n\tDRS_DATA_OUT: {}'.format(params['DRS_DATA_OUT']))
     wmsgs += textentry('\n\tDRS_DATA_MSG: {}'.format(params['DRS_DATA_MSG']))
     wmsgs += textentry('\n\tDRS_DATA_RUN: {}'.format(params['DRS_DATA_RUN']))
     wmsgs += textentry('\n\tDRS_DATA_PLOT: {}'.format(params['DRS_DATA_PLOT']))
+    wmsgs += textentry('\n\tDRS_DATA_OTHER: {}'.format(params['DRS_DATA_OTHER']))
+    wmsgs += textentry('\n\tLBL_PATH: {}'.format(params['LBL_PATH']))
     # add config sources
     for source in np.sort(params['DRS_CONFIG']):
         wmsgs += textentry('\n\tDRS_CONFIG: {0}'.format(source))
     # add database settings
-    wmsgs = _display_database_settings(params, wmsgs)
+    wmsgs = _display_database_settings(wmsgs)
     # add others
     wmsgs += textentry('\n\tPRINT_LEVEL: {}'.format(params['DRS_PRINT_LEVEL']))
     wmsgs += textentry('\n\tLOG_LEVEL: {}'.format(params['DRS_LOG_LEVEL']))
@@ -1536,58 +1540,33 @@ def _display_initial_parameterisation(params: ParamDict,
          logonly=logonly)
 
 
-def _display_database_settings(params: ParamDict,
-                               wmsgs: lang.Text) -> lang.Text:
+def _display_database_settings(wmsgs: lang.Text) -> lang.Text:
     """
     Display database settings
 
-    :param params: ParamDict, the parameter dictionary of constants
     :param wmsgs: the current lang.Text instance
 
     :return: lang.Text, the updated lang.Text instance
     """
     dparams = base.DPARAMS
-
     # -------------------------------------------------------------------------
-    # SQLITE DISPLAY
+    # SQL DISPLAY
     # -------------------------------------------------------------------------
-    if dparams['USE_SQLITE3']:
-        # get sub dictionary
-        aparams = dparams['SQLITE3']
-        # add database type
-        wmsgs += textentry('\n\tDATABASE: SQLITE3')
-        # loop around database names
-        for dbname in base.DATABASE_NAMES:
-            # get yaml key
-            ydbname = dbname.upper()
-            # get database path
-            if aparams[ydbname]['PATH'] in params:
-                path = params[aparams[ydbname]['PATH']]
-            else:
-                path = aparams[ydbname]['PATH']
-            # construct full path to database
-            fullpath = os.path.join(path, aparams[ydbname]['NAME'])
-            # add to wmsgs
-            dargs = [dbname, fullpath]
-            wmsgs += textentry('\n\tDATABASE-{0}: {1}'.format(*dargs))
-    # -------------------------------------------------------------------------
-    # MYSQL DISPLAY
-    # -------------------------------------------------------------------------
-    elif dparams['USE_MYSQL']:
-        # get sub dictionary
-        aparams = dparams['MYSQL']
-        # add database type
-        wmsgs += textentry('\n\tDATABASE: MYSQL')
-        # loop around database names
-        for dbname in base.DATABASE_NAMES:
-            # get yaml key
-            ydbname = dbname.upper()
-            # construct table name
-            tablename = '{0}_{1}_db'.format(dbname, aparams[ydbname]['PROFILE'])
-            # add to wmsgs
-            dargs = [dbname, aparams['DATABASE'], aparams['HOST'],
-                     tablename]
-            wmsgs += textentry('\n\tDATABASE-{0}: {1}@{2}:{3}'.format(*dargs))
+    # add database type
+    wmsgs += textentry('\n\tDATABASE: {0}'.format(dparams['TYPE']))
+    # loop around database names
+    for dbname in base.DATABASE_NAMES:
+        # get yaml key
+        ydbname = dbname.upper()
+        # get database name and profile
+        dbname = dparams[ydbname]['NAME']
+        profile = dparams[ydbname]['PROFILE']
+        # construct table name
+        tablename = '{0}_{1}_db'.format(dbname, profile)
+        # add to wmsgs
+        dargs = [dbname, dparams['DATABASE'], dparams['HOST'],
+                 tablename]
+        wmsgs += textentry('\n\tDATABASE-{0}: {1}@{2}:{3}'.format(*dargs))
     # return lang.text updated (or not if no database was used)
     return wmsgs
 
@@ -1710,11 +1689,18 @@ def _display_python_modules() -> str:
 
     :return: string, a string representation of the python modules
     """
-
     # load user requirements
-    # TODO: can this go back to np.loadtxt once numpy 1.23 bug fixed?
-    packages, versions = np.genfromtxt(base.RECOMM_USER, dtype=str,
-                                       delimiter='==', unpack=True)
+    packages, versions, sources = [], [], []
+
+    with open(base.RECOMM_USER, 'r') as requirements_file:
+        for line in requirements_file:
+            if line.strip() and not line.strip().startswith('#'):
+                package, source, version = extract_package_info(line)
+                if package is not None:
+                    packages.append(package)
+                    versions.append(version)
+                    sources.append(source)
+
     # storage
     storage = textentry('40-000-00017')
     # loop around packages and get versions
@@ -1729,14 +1715,43 @@ def _display_python_modules() -> str:
                 version = mod.__version__
                 # get required version
                 rversion = versions[p_it]
-                # add to string storage (for return)
-                pargs = [package, version, rversion]
-                storage += '\n\t{0}: {1}  (req: {2})'.format(*pargs)
+                roperator = sources[p_it]
+                # deal with requirements using the @ operator
+                if roperator == '@':
+                    pargs = [package, version, versions[p_it]]
+                    storage += '\n\t{0}: {1} ({2})'.format(*pargs)
+                # otherwise deal with other operators
+                else:
+                    # add to string storage (for return)
+                    pargs = [package, version, roperator, rversion]
+                    storage += '\n\t{0}: {1}  (req{2}{3})'.format(*pargs)
         except Exception as _:
             continue
 
     # return string
     return storage
+
+
+def extract_package_info(line: str
+                         ) -> Tuple[Optional[str], Optional[str], Optional[str]]:
+    # match string like 'package @ URL'
+    match_string = r'^\s*([\w-]+)\s*@.*'
+    # Check if the line has the format 'package @ URL'
+    if re.match(match_string, line):
+        package_name = line.split('@')[0].strip()
+        source = line.split('@')[1].strip()
+        return package_name, '@', source
+
+    # match string like 'package == version_spec'
+    match_string = r'^([\w-]+)\s*(?:(==|>=|<=|>|<)\s*([\w\d.\-]+))?.*'
+    # Check if the line has the format 'package version_spec'
+    package_info = re.match(match_string, line)
+    if package_info:
+        package_name = package_info.group(1)
+        version_operator = package_info.group(2)
+        version = package_info.group(3)
+        return package_name, version_operator, version
+    return None, None, None
 
 
 # =============================================================================
@@ -2369,29 +2384,33 @@ def _sort_version(messages: Union[str, None] = None) -> Union[List[str]]:
     # add version info to messages
     messages += '\n' + textentry('40-001-00013', args=[version])
 
+    # get system version info
+    sysversion = sys.version
+
     # add distribution if possible
-    try:
-        if '|' in sys.version:
-            build = sys.version.split('|')[1].strip()
+    if '|' in sysversion:
+        try:
+            build = sysversion.split('|')[1].strip()
             messages += '\n' + textentry('40-001-00014', args=[build])
-    except IndexError:
-        pass
+        except IndexError:
+            pass
 
     # add date information if possible
-    try:
-        if '(' in sys.version and ')' in sys.version:
-            date = sys.version.split('(')[1].split(')')[0].strip()
+    if '(' in sysversion and ')' in sysversion:
+        try:
+
+            date = sysversion.split('(')[1].split(')')[0].strip()
             messages += '\n' + textentry('40-001-00015', args=[date])
-    except IndexError:
-        pass
+        except IndexError:
+            pass
 
     # add Other info information if possible
-    try:
-        if '[' in sys.version and ']' in sys.version:
-            other = sys.version.split('[')[1].split(']')[0].strip()
+    if '[' in sysversion and ']' in sysversion:
+        try:
+            other = sysversion.split('[')[1].split(']')[0].strip()
             messages += '\n' + textentry('40-001-00016', args=[other])
-    except IndexError:
-        pass
+        except IndexError:
+            pass
 
     # return updated messages
     return messages

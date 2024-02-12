@@ -48,6 +48,7 @@ No optional arguments
 
      --data // Find the current data directory
      --all // Display all relevant paths
+     --setup // Display DRS_UCONFIG path
      --rawdir // Find the current raw data directory
      --tmpdir // Find the current tmp data directory
      --reddir // Find the current red data directory

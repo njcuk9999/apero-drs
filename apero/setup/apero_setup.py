@@ -15,10 +15,11 @@ and apero (i.e. no numpy, no astropy etc)
 import argparse
 import importlib
 import os
+import re
 import signal
 import sys
 from pathlib import Path
-from typing import Any, List, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from apero.tools.module.setup import drs_installation as install
 from apero.core import constants
@@ -43,6 +44,8 @@ CONSTANTS_PATH = 'core.constants'
 INSTALL_PATH = 'tools.module.setup.drs_installation'
 # define the drs_base path for language dict
 BASE_PATH = 'base.drs_base'
+# define the drs_asset  path for assets function
+ASSET_PATH = 'tools.module.setup.drs_assets'
 # Requirement files
 REQ_USER = 'requirements_current.txt'
 REQ_DEV = 'requirements_developer.txt'
@@ -127,23 +130,19 @@ def validate():
     checked = []
     # log check: Module check
     print(lang['40-001-00076'])
+    # all checks passed
+    passed = True
     # ------------------------------------------------------------------
     # loop around required modules to check
     # ------------------------------------------------------------------
-    for m_it, module in enumerate(modules):
+    for modname in modules:
         # remove end of lines
-        module = module.replace('\n', '')
-        # get module name
-        try:
-            modname = module.split('==')[0]
-            modversion = module.split('==')[1].split('.')
-        except Exception as e:
-            # Module name "{0}" error {1}: {2}'
-            emsg = lang.error('00-000-00010')
-            eargs = [module, type(e), str(e)]
-            raise IndexError(emsg.format(*eargs))
+        operator, version = modules[modname]
+        # skip operators we cannot check
+        if operator not in ['==', '>=', '<=', '>', '<']:
+            continue
         # get suggested installation module
-        suggested = lang['40-001-00077'].format(module)
+        suggested = 'pip install {0}{1}{2}'.format(modname, operator, version)
         # deal with modules with different import name
         if modname in module_translation:
             if isinstance(module_translation[modname], tuple):
@@ -226,9 +225,17 @@ def get_args() -> argparse.Namespace:
                         help=lang['INSTALL_ASSETDIR_HELP'])
     parser.add_argument('--logdir', action='store', dest='logdir',
                         help=lang['INSTALL_LOGDIR_HELP'])
+    parser.add_argument('--otherdir', action='store', dest='otherdir',
+                        help='Other Directory')
+    parser.add_argument('--lbldir', action='store', dest='lbldir',
+                        help='LBL Directory')
     parser.add_argument('--always_create', action='store', dest='always_create',
                         help='Always create directories that do not exist. '
                              'Do not prompt.')
+    # add tar file for assets
+    parser.add_argument('--assets_tar', action='store', dest='tar_file',
+                        help='Path to the assets tar file '
+                             '(if not set downloads from servers)')
     # add plot mode argument
     parser.add_argument('--plotmode', action='store', dest='plotmode',
                         help=lang['INSTALL_PLOTMODE_HELP'],
@@ -324,30 +331,6 @@ def save_args(args: argparse.Namespace):
     return path
 
 
-def load_requirements(filename: Union[str, Path]) -> List[str]:
-    """
-    Load requirements from file
-
-    :return: list of strings, return a list of required modules and versions
-             (from a pip style requirements.txt)
-    """
-    # storage for list of modules
-    modules = []
-    # open requirements file
-    with open(filename, 'r') as rfile:
-        lines = rfile.readlines()
-    # get modules from lines in requirements file
-    for line in lines:
-        if len(line.strip()) == 0:
-            continue
-        if line.startswith('#'):
-            continue
-        else:
-            modules.append(line)
-    # return modules
-    return modules
-
-
 def check_version(module: str, imod: Any, rversionlist: Union[List[str], None],
                   suggested: str, required: bool = True):
     """
@@ -420,8 +403,7 @@ def check_version(module: str, imod: Any, rversionlist: Union[List[str], None],
             print(lang['40-001-00079'].format(*args))
         elif not passed:
             # print: Fatal Error: {0} requires module {1} ({3} < {2})
-            print(lang.error('40-001-00080').format(*args))
-            sys.exit()
+            raise ImportError(lang.error('00-000-00011').format(*args))
         else:
             # print: Passed: {1} ({3} >= {2})
             print(lang['40-001-00081'].format(*args))
@@ -437,7 +419,9 @@ def main():
     :return:
     """
     global lang
-    # -----------------------------------------------------------------------------
+    # set function name
+    func_name = __NAME__ + '.main()'
+    # -------------------------------------------------------------------------
     # get language argument
     langarg = get_sys_arg('lang')
     if langarg in setup_lang.LANGUAGES:
@@ -448,7 +432,10 @@ def main():
     # ----------------------------------------------------------------------
     # deal with validation
     if not get_sys_arg('--skip') and not get_sys_arg('--help', 'switch'):
-        validate()
+        if get_sys_arg('--dev'):
+            validate(dev=True)
+        else:
+            validate()
     # catch Ctrl+C
     signal.signal(signal.SIGINT, catch_sigint)
     # update the language dict to use the full proxy database
@@ -482,6 +469,7 @@ def main():
     os.environ['DRS_UCONFIG'] = str(allparams['USERCONFIG'])
     # reload params
     params = constants.load(allparams['INSTRUMENT'], from_file=False)
+    params.set('PID', value='0', source=func_name)
     # ----------------------------------------------------------------------
     # End of user setup
     # ----------------------------------------------------------------------
@@ -516,6 +504,19 @@ def main():
     # create source files to add environmental variables
     install.cprint(textentry('40-001-00071'), 'm')
     allparams = install.create_shell_scripts(params, allparams)
+    # ----------------------------------------------------------------------
+    # download the assets (into github directory)
+    try:
+        from apero.tools.module.setup import drs_assets
+    except Exception as _:
+        assets_mod = '{0}.{1}'.format(DRS_PATH, ASSET_PATH)
+        try:
+            drs_assets = importlib.import_module(assets_mod)
+        except Exception as _:
+            # raise error
+            raise ImportError(lang.error('00-000-00013').format(assets_mod))
+    # now check whether we need to download the assets
+    drs_assets.check_assets(params, tarfile=allparams['TARFILE'])
     # ----------------------------------------------------------------------
     # perform clean install on each instrument if requested
     install.cprint(textentry('40-001-00072'), 'm')

@@ -59,10 +59,11 @@ No schematic set
      --flipimage[None,x,y,both] // [BOOLEAN] Whether to flip fits image
      --fluxunits[ADU/s,e-] // [STRING] Output units for flux
      --fpref[FILE:REF_FP] // [STRING] Sets the FP reference file to use (CALIBDB = FPREF)
-     --plot[0>INT>3] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
+     --plot[0>INT>4] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
      --resize[True/False] // [BOOLEAN] Whether to resize image
      --shapex[FILE:SHAPE_X] // [STRING] Sets the SHAPE DXMAP file used to get the dx correction map (CALIBDB=SHAPEX)
      --shapey[FILE:SHAPE_Y] // [STRING] Sets the SHAPE DYMAP file used to get the dy correction map (CALIBDB=SHAPEY)
+     --no_in_qc // Disable checking the quality control of input files
 
 
 ********************************************************************************

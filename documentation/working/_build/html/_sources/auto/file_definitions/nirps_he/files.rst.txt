@@ -35,8 +35,8 @@ Contents
 
 .. csv-table:: 1. Raw Files file definition table
    :file: nirps_he_raw_file.csv
-   :width: 116%
-   :widths: 9, 34, 9, 9, 9, 9, 9
+   :width: 133%
+   :widths: 8, 31, 8, 8, 8, 8, 8, 8
    :header-rows: 1
    :class: csvtable
 

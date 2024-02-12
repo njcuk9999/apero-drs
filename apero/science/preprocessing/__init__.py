@@ -63,6 +63,8 @@ resolve_target = gen_pp.resolve_target
 
 test_for_corrupt_files = detector.test_for_corrupt_files
 
+postermeter_stats = detector.postermeter_stats
+
 # =============================================================================
 # End of code
 # =============================================================================

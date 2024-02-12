@@ -104,7 +104,7 @@ BlockPath = pathdef.BlockPath
 # get out file class
 OutFileTypes = Union[out.OutFile, out.GeneralOutFile, out.NpyOutFile,
 out.DebugOutFile, out.BlankOutFile, out.CalibOutFile,
-out.RefCalibOutFile, out.SetOutFile, out.PostOutFile,
+out.RefCalibOutFile, out.SetOutFile, out.LBLOutFile, out.PostOutFile,
 None]
 
 
@@ -637,7 +637,8 @@ class DrsInputFile:
                  instrument: Optional[str] = None,
                  nosave: Optional[bool] = False,
                  description: Union[str, None] = None,
-                 inpath: Union[str, None] = None):
+                 inpath: Union[str, None] = None,
+                 required: Union[bool, None] = None):
         """
         Create a DRS Input File object
 
@@ -662,7 +663,7 @@ class DrsInputFile:
                        i.e. if this is a pp file the intype would be a raw file
         :param path: string, the path to save the file to (when writing)
                      this may be left blank and defaults to the recipe default
-                     (recommended in most cases) - ma be relative
+                     (recommended in most cases) - may be relative
         :param basename: string, the basename (i.e. filename without path) for
                          the file
         :param inputdir: string, the input directory (associated with an input
@@ -710,6 +711,8 @@ class DrsInputFile:
         :param inpath: str or None, if set is a directory to look for the file
                        in - this is in exceptional cases and overrides normal
                        functionality
+        :param required: bool, if True this file is always expectedt to exist
+                         if recipe ran correctly
 
         - Parent class for Drs Fits File object (DrsFitsFile)
         """
@@ -785,6 +788,11 @@ class DrsInputFile:
         self.inpath = inpath
         # set a flag that no save is active
         self.nosave = nosave
+        # required flag
+        if required is None:
+            self.required = True
+        else:
+            self.required = required
 
     def __getstate__(self) -> dict:
         """
@@ -1936,7 +1944,8 @@ class DrsFitsFile(DrsInputFile):
                  instrument: Optional[str] = None,
                  nosave: Optional[bool] = False,
                  description: Union[str, None] = None,
-                 inpath: Union[str, None] = None):
+                 inpath: Union[str, None] = None,
+                 required: Union[bool, None] = None):
         """
         Create a DRS Input File object
 
@@ -2004,6 +2013,8 @@ class DrsFitsFile(DrsInputFile):
         :param inpath: str or None, if set is a directory to look for the file
                        in - this is in exceptional cases and overrides normal
                        functionality
+        :param required: bool, if True this file is always expectedt to exist
+                         if recipe ran correctly
 
         - Parent class for Drs Fits File object (DrsFitsFile)
         """
@@ -2021,7 +2032,7 @@ class DrsFitsFile(DrsInputFile):
                               dbkey, rkeys, numfiles, shape, hdict,
                               output_dict, datatype, dtype, is_combined,
                               combined_list, infiles, s1d, hkeys, instrument,
-                              nosave, description, inpath)
+                              nosave, description, inpath, required)
         # if ext in kwargs then we have a file extension to check
         self.filetype = filetype
         # set the input extension type
@@ -2106,6 +2117,8 @@ class DrsFitsFile(DrsInputFile):
             self.s1d = []
         else:
             self.s1d = s1d
+        # set the required flag
+        self.required = required
 
     def __getstate__(self) -> dict:
         """
@@ -2209,7 +2222,8 @@ class DrsFitsFile(DrsInputFile):
                 instrument: Optional[str] = None,
                 nosave: Optional[bool] = None,
                 description: Optional[str] = None,
-                inpath: Union[str, None] = None):
+                inpath: Union[str, None] = None,
+                required: Union[bool, None] = None):
         """
         Create a new copy of DRS Input File object - unset parameters come
         from current instance of Drs Input File
@@ -2286,6 +2300,8 @@ class DrsFitsFile(DrsInputFile):
         :param inpath: str or None, if set is a directory to look for the file
                        in - this is in exceptional cases and overrides normal
                        functionality
+        :param required: bool, if True this file is always expectedt to exist
+                         if recipe ran correctly
 
         - Parent class for Drs Fits File object (DrsFitsFile)
         """
@@ -2299,7 +2315,7 @@ class DrsFitsFile(DrsInputFile):
                             outclass, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, infiles, s1d, hkeys,
-                            instrument, nosave, description, inpath)
+                            instrument, nosave, description, inpath, required)
 
     def string_output(self) -> str:
         """
@@ -2371,7 +2387,8 @@ class DrsFitsFile(DrsInputFile):
                   instrument: Optional[str] = None,
                   nosave: Optional[bool] = None,
                   description: Union[str, None] = None,
-                  inpath: Union[str, None] = None):
+                  inpath: Union[str, None] = None,
+                  required: Union[bool, None] = None):
         """
         Copy most keys from drsfile (other arguments override attributes coming
         from drfile (or self)
@@ -2449,6 +2466,8 @@ class DrsFitsFile(DrsInputFile):
         :param inpath: str or None, if set is a directory to look for the file
                in - this is in exceptional cases and overrides normal
                functionality
+        :param required: bool, if True this file is always expectedt to exist
+                         if recipe ran correctly
         """
         # set function name
         func_name = display_func('copyother', __NAME__,
@@ -2462,8 +2481,8 @@ class DrsFitsFile(DrsInputFile):
                             obs_dir, data, header, fileset, filesetnames,
                             outclass, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
-                            is_combined, combined_list, s1d, hkeys, instrument,
-                            nosave, description, inpath)
+                            is_combined, combined_list, infiles, s1d, hkeys,
+                            instrument, nosave, description, inpath, required)
 
     def completecopy(self, drsfile,
                      name: Union[str, None] = None,
@@ -2503,7 +2522,8 @@ class DrsFitsFile(DrsInputFile):
                      instrument: Optional[str] = None,
                      nosave: Optional[bool] = None,
                      description: Union[str, None] = None,
-                     inpath: Union[str, None] = None):
+                     inpath: Union[str, None] = None,
+                     required: Union[bool, None] = None):
         """
         Copy all keys from drsfile (unless other arguments set - these override
         copy from drsfile)
@@ -2581,6 +2601,8 @@ class DrsFitsFile(DrsInputFile):
         :param inpath: str or None, if set is a directory to look for the file
                in - this is in exceptional cases and overrides normal
                functionality
+        :param required: bool, if True this file is always expectedt to exist
+                         if recipe ran correctly
         """
         # set function name
         # _ = display_func('completecopy', __NAME__, self.class_name)
@@ -2592,7 +2614,7 @@ class DrsFitsFile(DrsInputFile):
                             outclass, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, infiles, s1d, hkeys,
-                            instrument, nosave, description, inpath)
+                            instrument, nosave, description, inpath, required)
 
     # -------------------------------------------------------------------------
     # file checking
@@ -3163,13 +3185,19 @@ class DrsFitsFile(DrsInputFile):
             if key in filedict:
                 # get rvalue
                 rvalues = rkeys[key]
-                # check if rvalue is list
-                if isinstance(rvalues, str):
-                    rvalues = [rvalues]
                 # set up aux valid
                 valid1 = False
                 # get this value
                 filedictvalue = filedict[key]
+                # check if rvalue is list
+                if isinstance(rvalues, str):
+                    rvalues = [rvalues]
+                # deal with boolean values
+                elif isinstance(rvalues, bool):
+                    if rvalues:
+                        rvalues = '1'
+                    else:
+                        rvalues = '0'
                 # deal with null values
                 if filedictvalue in [None, 'None', '']:
                     valid1 |= True
@@ -3235,6 +3263,8 @@ class DrsFitsFile(DrsInputFile):
             cond2 = self.header is not None
             if cond1 and cond2:
                 return True
+        else:
+            cond1, cond2 = False, False
         # get params
         params = self.params
         # check that filename is set
@@ -3248,9 +3278,25 @@ class DrsFitsFile(DrsInputFile):
         # default to fits-image
         else:
             fmt = 'fits-image'
+        # ---------------------------------------------------------------------
         # read the fits file
-        dout = drs_fits.readfits(params, self.filename, getdata=True,
-                                 gethdr=True, fmt=fmt, ext=ext)
+        # ---------------------------------------------------------------------
+        # we need to decide what to load, otherwise changes made to self.data
+        #   and self.header will be lost previous to this
+        # if cond1 is True we just need the header
+        if cond1:
+            _hdr = drs_fits.readfits(params, self.filename, getdata=False,
+                                     gethdr=True, fmt=fmt, ext=ext)
+            dout = [self.data, _hdr]
+        # if cond2 is True we just need the data
+        elif cond2:
+            _data = drs_fits.readfits(params, self.filename, getdata=True,
+                                      gethdr=False, fmt=fmt, ext=ext)
+            dout = [_data, self.header]
+        # otherwise we load both
+        else:
+            dout = drs_fits.readfits(params, self.filename, getdata=True,
+                                     gethdr=True, fmt=fmt, ext=ext)
         # deal with copying
         if copy:
             if self.datatype == 'table':
@@ -3884,7 +3930,7 @@ class DrsFitsFile(DrsInputFile):
         # check that data is read
         self.check_read()
         # get combine metric types
-        combine_metric_1_types = params.listp('COMBINE_METRIC1_TYPES',
+        comb_metric_1_types = params.listp('COMBINE_METRIC1_TYPES',
                                               dtype=str)
         # set new data to this files data
         data = np.array(self.data)
@@ -3930,7 +3976,7 @@ class DrsFitsFile(DrsInputFile):
                 metric = np.nan
                 metric_threshold = np.nan
                 passed = True
-            elif self.get_hkey('KW_DPRTYPE') in combine_metric_1_types:
+            elif self.get_hkey('KW_DPRTYPE', dtype=str) in comb_metric_1_types:
                 # compute metric 1
                 cout = combine_metric_1(params, row, image1, datacube0)
                 metric, metric_threshold, passed = cout
@@ -4874,7 +4920,7 @@ class DrsFitsFile(DrsInputFile):
         params = self.params
         # deal with qcparams = None
         if qcparams is None:
-            qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
+            qc_names, qc_values, qc_logic, qc_pass = [], [], [], []
             # add to qc header lists
             qc_pass.append(1)
             qc_values.append('None')
@@ -5123,7 +5169,8 @@ class DrsNpyFile(DrsInputFile):
                  instrument: Optional[str] = None,
                  nosave: Optional[bool] = False,
                  description: Union[str, None] = None,
-                 inpath: Union[str, None] = None):
+                 inpath: Union[str, None] = None,
+                 required: Union[bool, None] = None):
         """
         Create a DRS Npy File Input object
 
@@ -5173,6 +5220,8 @@ class DrsNpyFile(DrsInputFile):
         :param inpath: str or None, if set is a directory to look for the file
                        in - this is in exceptional cases and overrides normal
                        functionality
+        :param required: bool, if True this file is always expectedt to exist
+                 if recipe ran correctly
         """
         # set class name
         self.class_name = 'DrsNpyFile'
@@ -5188,8 +5237,8 @@ class DrsNpyFile(DrsInputFile):
                               fileset, filesetnames, outclass, inext, dbname,
                               dbkey, rkeys, numfiles, shape, hdict,
                               output_dict, datatype, dtype, is_combined,
-                              combined_list, s1d, hkeys, instrument,
-                              nosave, description, inpath)
+                              combined_list, infiles, s1d, hkeys, instrument,
+                              nosave, description, inpath, required)
         # these keys are not set in DrsInputFile
         self.inext = inext
         # get tag
@@ -6237,7 +6286,8 @@ class DrsOutFile(DrsInputFile):
         self.name = name
         # get super init
         DrsInputFile.__init__(self, name, filetype, suffix, outclass=outclass,
-                              inext=inext, instrument=instrument, inpath=inpath)
+                              inext=inext, instrument=instrument, inpath=inpath,
+                              required=required)
         # store extensions
         self.extensions = dict()
         self.header_add = dict()
@@ -7482,6 +7532,117 @@ def check_input_qc(params: ParamDict, drsfiles: List[DrsFitsFile],
     return valid_drsfiles
 
 
+def check_input_dprtypes(params: ParamDict, recipe: Any,
+                         infiles: List[DrsFitsFile],
+                         required_ref: bool = True) -> List[DrsFitsFile]:
+    """
+    Check that the input dprtypes conform to one of the models within the
+    recipe
+
+    This is done by checking the DPRTYPE header key
+    if all files are in the file model group then we force the DPRTYPE to be
+    the file model reference DPRTYPE, otherwise if all the files are in none
+    of the file models we raise an error
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param recipe: Recipe, the recipe instance that called this function
+    :param infiles: List of DrsFitsFile, the input files to check
+
+    :raises: DrsException if not file model is valid for all files
+    :return: List of DrsFitsFile, the input files (with updated DPRTYPEs)
+    """
+    # TODO: This still does not stop the user from using the wrong files
+    #       for FLAT_FLAT as they could just use all DARK_FLAT or all FLAT_DARK
+    #       for now required_ref is used but as long as we have FLAT in both
+    #       channels it should work
+    #       Also there is no reference to different exposure times / nd filters
+    #       etc - so maybe we need to do something more advanced here
+    # deal with no file model
+    if len(recipe.file_model) == 0:
+        return infiles
+    # get the dprtype header key
+    dprtype_hkey = params['KW_DPRTYPE'][0]
+    dprtype_hcomment = params['KW_DPRTYPE'][2]
+    # storage for an error message
+    error_msgs = []
+    # storage validity of all file models
+    validity = []
+    # -------------------------------------------------------------------------
+    # if we have files loop around the dictionary.
+    #    The dictionary key is the DPRTYPE we will force in the headers
+    #    we expect all infiles to only be in one of these groups
+    #    an error must be generated if this is not the case
+    for ref_dprtype in recipe.file_model:
+        # flag that all files are valid for one of the file models
+        valid = True
+        # store dprtypes
+        dprtypes = []
+        # get the names of the infiles
+        ref_names = list(map(lambda x: x.name, recipe.file_model[ref_dprtype]))
+        # loop around the infiles
+        for infile in infiles:
+            # if infile is not a class in ref_infiles we have a problem
+            if infile.name not in ref_names:
+                # this file is invalid
+                valid &= False
+                # TODO: Add to language database
+                emsg = ('Input file {0} not in recipe file model'
+                        '\n\tValid files are: {1}')
+                eargs = [infile.name, ', '.join(ref_names)]
+                # append to error messages
+                error_msgs.append(emsg.format(*eargs))
+            # only if valid do we try changing the dprtype
+            if valid:
+                # read the header
+                infile.read_header()
+                # append original dprtype to dprtypes
+                dprtypes.append(str(infile.header[dprtype_hkey]))
+                # force the dprtype to the reference dprtype
+                #    (just for use in this recipe run not permanently)
+                infile.header[dprtype_hkey] = (ref_dprtype, dprtype_hcomment)
+
+        # append to validity
+        validity.append(valid)
+        # we have to raise exception if ref_dprtype is not in dprtypes but
+        #   all files are valid individually
+        if valid and ref_dprtype not in dprtypes:
+            # TODO: Add to language database
+            emsg = ('Reference DPRTYPE {0} not in input files '
+                    '\n\tCurrent DPRTYPES are: {1}')
+            eargs = [ref_dprtype, ', '.join(dprtypes)]
+            WLOG(params, 'error', emsg.format(*eargs))
+        elif valid:
+            # storage of first (ref file type)
+            file0 = None
+            # store all other files
+            others = []
+            # loop around all files and find one example of a ref file
+            for pos in range(len(dprtypes)):
+                if dprtypes[pos] == ref_dprtype and file0 is None:
+                    file0 = infiles[pos]
+                else:
+                    others.append(infiles[pos])
+            # order files with the first file being a ref file type
+            infiles = [file0] + others
+    # -------------------------------------------------------------------------
+    # deal with no valid models
+    if np.sum(validity) == 0:
+        # loop round and print errors
+        emsgs = ''
+        for emsg in error_msgs:
+            emsg += emsg
+        # raise the error
+        WLOG(params, 'error', emsgs)
+    # deal with multiple valid models
+    elif np.sum(validity) > 1:
+        # TODO: Add to language database
+        emsg = 'Multiple valid file models. File DPRTYPEs need checking'
+        WLOG(params, 'error', emsg)
+    # -------------------------------------------------------------------------
+    # return the infiles
+    return infiles
+
+
 def get_file_definition(params: ParamDict, name: str,
                         block_kind: str = 'raw',
                         instrument: Union[str, None] = None,
@@ -7640,7 +7801,8 @@ def get_another_fiber_file(params: ParamDict, outfile: DrsFitsFile,
 
 def combine(params: ParamDict, recipe: Any,
             infiles: List[DrsFitsFile], math: str = 'average',
-            same_type: bool = True, save: bool = True
+            same_type: bool = True, save: bool = True,
+            test_similarity: bool = True
             ) -> Union[Tuple[DrsFitsFile, Table], Tuple[None, None]]:
     """
     Takes a list of infiles and combines them (infiles must be DrsFitsFiles)
@@ -7720,11 +7882,15 @@ def combine(params: ParamDict, recipe: Any,
     # make new infile using math
     infile0 = infiles[0].newcopy(params=params)
     outfile, outtable = infile0.combine(infiles[1:], math, same_type,
-                                        path=abspath)
+                                        path=abspath,
+                                        test_similarity=test_similarity)
     # update params in outfile
     outfile.params = params
     # update the number of files
-    outfile.numfiles = len(infiles)
+    if math in ['sum', '+', 'add']:
+        outfile.numfiles = len(infiles)
+    else:
+        outfile.numfiles = 1
     # define multi lists
     data_list = [outtable]
     datatype_list = ['table']
@@ -7963,10 +8129,15 @@ def combine_hkey(values: List[Any], method: str, math: str) -> Any:
 
     :return: Any, single value of the combined type or None if not combinable
     """
+    # deal with method == math (set method == to the math directly)
+    if method == 'math':
+        method = str(math)
     # noinspection PyBroadException
     try:
         if method in ['mean', 'average']:
             return mp.nanmean(values)
+        if method in ['median', 'med']:
+            return mp.nanmedian(values)
         if method in ['sum', 'add']:
             return mp.nansum(values)
         if method in ['minimum', 'min']:
@@ -7976,13 +8147,29 @@ def combine_hkey(values: List[Any], method: str, math: str) -> Any:
         # flux correction has to use the math from combining the image
         if method == 'flux':
             # if we want to sum the data
-            if math in ['sum', 'add', '+', 'average', 'mean']:
+            if math in ['sum', 'add', '+']:
                 return mp.nansum(values) * np.sqrt(len(values))
             elif math in ['average', 'mean']:
                 return mp.nanmean(values) / np.sqrt(len(values))
             # elif if median
             elif math in ['median', 'med']:
                 return mp.nanmedian(values) / np.sqrt(len(values))
+            # deal with math == None
+            elif math == 'None':
+                return values[0]
+            # else return an empty value
+            else:
+                return None
+        # if header key is a noise
+        if method == 'noise':
+            # if we want to sum the data
+            if math in ['sum', 'add', '+']:
+                return np.sqrt(np.nansum(np.array(values) ** 2))
+            elif math in ['average', 'mean']:
+                return np.sqrt(np.nansum(np.array(values) ** 2)) / len(values)
+            # elif if median
+            elif math in ['median', 'med']:
+                return np.sqrt(np.nansum(np.array(values) ** 2)) / len(values)
             # deal with math == None
             elif math == 'None':
                 return values[0]
@@ -8554,7 +8741,8 @@ def _copydrsfile(drsfileclass,
                  instrument: Optional[str] = None,
                  nosave: Optional[bool] = None,
                  description: Union[str, None] = None,
-                 inpath: Union[str, None] = None):
+                 inpath: Union[str, None] = None,
+                 required: Union[bool, None] = None):
     """
     Global copier of file instance
 
@@ -8636,6 +8824,8 @@ def _copydrsfile(drsfileclass,
     :param inpath: str or None, if set is a directory to look for the file
                    in - this is in exceptional cases and overrides normal
                    functionality
+    :param required: bool, if True this file is always expectedt to exist
+                     if recipe ran correctly
 
     - Parent class for Drs Fits File object (DrsFitsFile)
     """
@@ -8790,6 +8980,9 @@ def _copydrsfile(drsfileclass,
     # set in path
     if inpath is None:
         inpath = deepcopy(instance2.inpath)
+    # copy required
+    if required is None:
+        required = deepcopy(instance2.required)
     # return new instance
     return drsfileclass(name, filetype, suffix, remove_insuffix, prefix,
                         fibers, fiber, params, filename, intype, path,
@@ -8798,7 +8991,7 @@ def _copydrsfile(drsfileclass,
                         dbkey, rkeys, numfiles, shape, hdict,
                         output_dict, datatype, dtype, is_combined,
                         combined_list, infiles, s1d, new_hkeys, instrument,
-                        nosave, description, inpath)
+                        nosave, description, inpath, required)
 
 # =============================================================================
 # End of code

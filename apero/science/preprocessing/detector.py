@@ -44,6 +44,8 @@ __date__ = base.__date__
 __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# Get time from base
+Time = base.Time
 # get param dict
 ParamDict = constants.ParamDict
 # get the recipe class
@@ -807,6 +809,8 @@ def create_led_flat(params: ParamDict, recipe: DrsRecipe, led_file: DrsFitsFile,
     outfile.copy_original_keys(combfile)
     # add version
     outfile.add_hkey('KW_PPVERSION', value=params['DRS_VERSION'])
+    # add output file
+    outfile.add_hkey('KW_OUTPUT', value=outfile.name)
     # add dates
     outfile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
     outfile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
@@ -957,7 +961,7 @@ def get_butterfly_maps(params: ParamDict, image0: np.ndarray,
 
     :return: tuple, 1. np.ndarray, the full butterfly pattern, 2. np.ndarray or
              None (if fast=True) the amplitude butterfly pattern, 3. np.ndarray
-             or None (if fast=True) the first derivative butterfly patterhn
+             or None (if fast=True) the first derivative butterfly pattern
              4. np.ndarray or None (if fast=True) the second derivative
              butteryfly pattern
     """
@@ -1439,6 +1443,48 @@ def nirps_order_mask(params: ParamDict, mask_image: np.ndarray,
     props.set_source('PPM_MASK_NSIG', func_name)
     # return mask
     return mask, props
+
+
+def postermeter_stats(params: ParamDict, filename: str, ext: int) -> ParamDict:
+    """
+    Calculate the statistics for the postermeter data
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param filename: str, the filename to read
+    :param ext: int, the extension to read
+
+    :return: ParamDict, the postmeter statistics
+    """
+    # set function name
+    func_name = display_func('postermeter_stats', __NAME__)
+    # get the flux diff and mjd
+    try:
+        table = drs_table.read_table(params, filename, fmt='fits', hdu=ext)
+        # work out the flux difference between fibers
+        flux_diff = table['FIBRE1'] - table['FIBRE2']
+        # get the time in mjd
+        mjd = Time(table['TIME'], format='jd').mjd
+        # work out the sum of this (as weights)
+        flux_diff_sum = mp.nansum(flux_diff)
+        # work out the weighted mean
+        mjd_flux = mp.nansum(flux_diff * mjd) / flux_diff_sum
+        # work out the rms and meidan flux diff
+        med_flux_diff = mp.nanmedian(flux_diff)
+        rms_flux_diff = mp.nanstd(flux_diff)
+    except Exception as _:
+        mjd_flux = np.nan
+        med_flux_diff = np.nan
+        rms_flux_diff = np.nan
+    # push into parameter dictionary
+    props = ParamDict()
+    props['PP_MJD_FLUX'] = mjd_flux
+    props['PP_MED_FLUX_DIFF'] = med_flux_diff
+    props['PP_RMS_FLUX_DIFF'] = rms_flux_diff
+    # set source
+    props.set_sources(['PP_MJD_FLUX', 'PP_MED_FLUX_DIFF', 'PP_RMS_FLUX_DIFF'],
+                      func_name)
+    # return the props
+    return props
 
 
 # =============================================================================

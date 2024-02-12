@@ -19,7 +19,8 @@ __all__ = [  # input keys
     'KW_OBJRAPM', 'KW_OBJDECPM', 'KW_RDNOISE', 'KW_GAIN', 'KW_EXPTIME',
     'KW_UTC_OBS', 'KW_EXPTIME_UNITS', 'KW_OBSTYPE', 'KW_CCAS', 'KW_EXPREQ',
     'KW_CREF', 'KW_CDEN', 'KW_CMMTSEQ', 'KW_AIRMASS', 'KW_MJDEND', 'KW_MJDATE',
-    'KW_CMPLTEXP', 'KW_NEXP', 'KW_PI_NAME', 'KW_PLX', 'KW_CALIBWH',
+    'KW_CMPLTEXP', 'KW_NEXP', 'KW_PI_NAME', 'KW_RUN_ID',
+    'KW_PLX', 'KW_CALIBWH',
     'KW_TARGET_TYPE', 'KW_WEATHER_TOWER_TEMP', 'KW_CASS_TEMP',
     'KW_HUMIDITY', 'KW_INPUTRV', 'KW_OBJ_TEMP',
     'KW_POLAR_KEY_1', 'KW_POLAR_KEY_2',
@@ -42,7 +43,7 @@ __all__ = [  # input keys
     'KW_DRS_DATE', 'KW_C_FLIP', 'KW_C_CVRTE',
     'KW_C_RESIZE', 'KW_DRS_DATE_NOW', 'KW_C_FTYPE', 'KW_FIBER',
     'KW_THERM_RATIO', 'KW_THERM_RATIO_U', 'KW_MID_OBS_TIME',
-    'KW_MID_OBSTIME_METHOD', 'KW_TDBSKY',
+    'KW_MID_OBSTIME_METHOD', 'KW_TDBSKY', 'KW_EFF_RON',
     # calibration file header keys
     'KW_CDBDARK', 'KW_CDTDARK', 'KW_CDBBAD', 'KW_CDTBAD',
     'KW_CDBBACK', 'KW_CDTBACK', 'KW_CDBORDP', 'KW_CDTORDP',
@@ -54,8 +55,9 @@ __all__ = [  # input keys
     # preprocess keys
     'KW_PPSHIFTX', 'KW_PPSHIFTY', 'KW_PP_REF_NSIG', 'KW_PP_REF_FILE',
     'KW_PP_LED_FLAT_P50', 'KW_PP_LED_FLAT_P16', 'KW_PP_LED_FLAT_P84',
-    'KW_PP_LED_FLAT_FILE',
-    'KW_PPC_NBAD_INTE', 'KW_PPC_NBAD_SLOPE', 'KW_PPC_NBAD_BOTH',
+    'KW_PP_LED_FLAT_FILE', 'KW_PP_MJD_FLUX', 'KW_PP_RMS_POSE',
+    'KW_PP_MED_POSE', 'KW_PPC_NBAD_INTE', 'KW_PPC_NBAD_SLOPE',
+    'KW_PPC_NBAD_BOTH',
     # dark keys
     'KW_DARK_DEAD', 'KW_DARK_MED', 'KW_DARK_B_DEAD',
     'KW_DARK_B_MED', 'KW_DARK_R_DEAD', 'KW_DARK_R_MED', 'KW_DARK_CUT',
@@ -319,6 +321,10 @@ KW_NEXP = Keyword('KW_NEXP', key='NULL', dtype=int, source=__NAME__,
 # define the pi name HEADER key
 KW_PI_NAME = Keyword('KW_PI_NAME', key='NULL', dtype=str, source=__NAME__,
                      description='define the pi name HEADER key')
+
+# define the run id HEADER key
+KW_RUN_ID = Keyword('KW_RUN_ID', key='NULL', dtype=str, source=__NAME__,
+                     description='define the run id HEADER key')
 
 # define the instrument HEADER key
 KW_INSTRUMENT = Keyword('KW_INSTRUMENT', key='NULL', dtype=str, source=__NAME__,
@@ -731,6 +737,10 @@ KW_THERM_RATIO_U = Keyword('KW_THERM_RATIO_U', key='NULL', dtype=str,
 KW_TDBSKY = Keyword('KW_TDBSKY', key='NULL', dtype=str, source=__NAME__,
                     description='the sky model used for sky correction')
 
+# define the measured effective readout noise
+KW_EFF_RON = Keyword('KW_EFF_RON', key='NULL', dtype=str, source=__NAME__,
+                     description='The measured eff readout noise before ext')
+
 # -----------------------------------------------------------------------------
 # Define DRS outputs keywords
 # -----------------------------------------------------------------------------
@@ -822,6 +832,24 @@ KW_PP_LED_FLAT_P84 = Keyword('KW_PP_LED_FLAT_P84', key='NULL', dtype=float,
 KW_PP_LED_FLAT_FILE = Keyword('KW_PP_LED_FLAT_FILE', key='NULL', dtype=str,
                               source=__NAME__,
                               description='Define the LED flat file used')
+
+# Define the flux-weighted mid-exposure [Expert use only]
+KW_PP_MJD_FLUX = Keyword('KW_PP_LED_FLAT_FILE', key='NULL', dtype=str,
+                         source=__NAME__,
+                         description='Define the flux-weighted mid-exposure '
+                                     '[Expert use only]')
+
+# Define fractional RMS of posemteter [Expert use only]
+KW_PP_RMS_POSE = Keyword('KW_PP_LED_FLAT_FILE', key='NULL', dtype=str,
+                              source=__NAME__,
+                              description='Define fractional RMS of posemteter '
+                                          '[Expert use only]')
+
+# Define median flux in posemeter [Expert use only]
+KW_PP_MED_POSE = Keyword('KW_PP_LED_FLAT_FILE', key='NULL', dtype=str,
+                              source=__NAME__,
+                              description='Define median flux in posemeter '
+                                          '[Expert use only]')
 
 # -----------------------------------------------------------------------------
 # Define apero_dark variables
@@ -2110,11 +2138,11 @@ KW_MKMODEL_SIGCUT = Keyword('KW_MKMODEL_NFILES', key='NULL', dtype=float,
 KW_FTELLU_NPC = Keyword('KW_FTELLU_NPC', key='NULL', dtype=int, source=__NAME__,
                         description='The number of principle components used')
 
-# The number of trans files used in pc fit (closest in expo h20/others)
+# The number of trans files used in pc fit (closest in expo H2O/others)
 KW_FTELLU_NTRANS = Keyword('KW_FTELLU_NTRANS', key='NULL', dtype=int,
                            source=__NAME__,
                            description=('The number of trans files used in pc '
-                                        'fit (closest in expo h20/others)'))
+                                        'fit (closest in expo H2O/others)'))
 
 # whether we added first derivative to principal components
 KW_FTELLU_ADD_DPC = Keyword('KW_FTELLU_ADD_DPC', key='NULL', dtype=bool,

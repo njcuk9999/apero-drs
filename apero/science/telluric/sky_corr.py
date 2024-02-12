@@ -96,7 +96,7 @@ def find_night_skyfiles(params: ParamDict, fiber: Union[str, None],
     #    for the specific filetype
     sky_files = drs_utils.find_files(params, block_kind='red',
                                      filters=dict(KW_TARGET_TYPE='SKY',
-                                                  KW_NIGHT_OBS=True,
+                                                  KW_NIGHT_OBS='1',
                                                   KW_OUTPUT=filetype,
                                                   KW_FIBER=fiber))
     # deal with no science files
@@ -170,8 +170,8 @@ def skymodel_table(params: ParamDict, sky_files: Union[List[str], None],
                        override=snr_order)
     min_exptime = pcheck(params, 'SKYMODEL_MIN_EXPTIME', func=func_name,
                          override=min_exptime)
-    max_bins = pcheck(params, 'SKYMODEL_MAX_BIN', func=func_name,
-                      override=max_files)
+    max_files = pcheck(params, 'SKYMODEL_MAX_OPEN_FILES', func=func_name,
+                       override=max_files)
     # get fiber from ref file
     fiber = reffile.fiber
     # -------------------------------------------------------------------------
@@ -237,7 +237,9 @@ def skymodel_table(params: ParamDict, sky_files: Union[List[str], None],
     # -------------------------------------------------------------------------
     # calculate bin number and assign bin for all remaining objects
     nfiles = len(sky_table)
-    nbins = np.min([nfiles, max_bins])
+    # work out the maximum number of bins given the maximum number of files
+    nbins = np.max([nfiles // max_files, 1])
+    # assign bin number
     sky_table['BIN_NUM'] = (nbins * np.arange(nfiles)) // nfiles
     # -------------------------------------------------------------------------
     # update ref infile (use the latest file)
@@ -287,8 +289,8 @@ def skymodel_combine_func(image: np.ndarray, hdr: drs_fits.Header,
         # apply this to the image
         limage = image[order_num] - lowpass
         # spline on the reference wave grid
-        ispline = mp.iuv_spline(wavemap, limage[order_num],
-                                     ext=1, k=3)
+        ispline = mp.iuv_spline(wavemap[order_num], limage,
+                                ext=1, k=3)
         # get image on reference wave grid
         image[order_num] = np.array(ispline(refwavemap[order_num]))
     # return the image
@@ -329,16 +331,17 @@ def skymodel_cube(recipe: DrsRecipe, params: ParamDict,
         margs = [fiber]
         WLOG(params, '', msg.format(*margs))
         # get sky filenames
-        sky_files = sky_table['FILENAMES']
+        sky_files = np.array(sky_table['FILENAME'])
         # get bins
-        sky_bins = sky_table['BIN_NUM']
+        sky_bins = np.array(sky_table['BIN_NUM'])
         # set up median storage
-        cube = np.zeros([nbins, np.prodict(refwavemap.shape)])
+        cube = np.zeros([nbins, np.product(refwavemap.shape)])
         # loop around files
         for it in range(len(sky_files)):
             # print analysing file
             msg = '\tAdding sky file {0}/{1}'
             margs = [it + 1, len(sky_files)]
+            WLOG(params, '', msg.format(*margs))
             # read image and header
             image, hdr = drs_fits.readfits(params, sky_files[it], gethdr=True)
             # lowpass + shift image
@@ -438,7 +441,7 @@ def identify_sky_line_regions(params: ParamDict, sky_props: ParamDict,
     #   orders
     regions = np.zeros_like(regions, dtype=int)
     # find unique valid regions
-    valid_regions = set(regions)
+    valid_regions = set(regions_magic)
     valid_regions.remove(0)
     # loop around regions and fill
     for region in valid_regions:
@@ -481,11 +484,12 @@ def calc_skymodel(params: ParamDict, sky_props_sci: ParamDict,
     has_sci = True
     # -------------------------------------------------------------------------
     # get pixel positions
-    order_pix, x_pix = np.indices(waveref)
+    order_pix, x_pix = np.indices(waveref.shape)
     # ravel 2D arrays
     regions_rav = regions.ravel()
     order_pix_rav = order_pix.ravel()
     x_pix_rav = x_pix.ravel()
+    waveref_rav = waveref.ravel()
     # get unique regions
     unique_regions = set(regions)
     unique_regions.remove(0)
@@ -503,7 +507,7 @@ def calc_skymodel(params: ParamDict, sky_props_sci: ParamDict,
         # get length of the region
         region_length = np.sum(region_mask)
         # get the wavelength for this region
-        region_wave = waveref[region_mask]
+        region_wave = waveref_rav[region_mask]
         # make lists for this region
         all_sci, all_cal = [], []
         # construct new cubes by loop around all binned files
@@ -536,21 +540,19 @@ def calc_skymodel(params: ParamDict, sky_props_sci: ParamDict,
             # get the fwhm of the line
             guess = [0, np.max(med_sci), 4.0, 2.0, 0.0]
             # fit using curve fit
-            fitcoeffs, _ = curve_fit(mp.super_gauss_fast, dvstep, med_sci,
-                                     p0=guess)
+            fitcoeffs, _ = curve_fit(mp.super_gauss, dvstep, med_sci, p0=guess)
             # get the fwhm
             fwhm_all.append(fitcoeffs[2])
             # get the mean pixel position for this region
             xpix_all.append(np.mean(x_pix_rav[region_mask]))
             # work out fit using fit coefficients
-            model =  mp.super_gauss_fast(dvstep, *fitcoeffs)
+            model =  mp.super_gauss(dvstep, *fitcoeffs)
             # get the number of sigma this fit has away from the data
             nsig = fitcoeffs[1] / mp.nanstd(med_sci - model)
             nsig_all.append(nsig)
         # if we can't fit this region we skip it
         except:
             pass
-
     # -------------------------------------------------------------------------
     # only keep lines more prominent than 5 sigma
     keep = np.array(nsig_all) > 5
@@ -564,7 +566,7 @@ def calc_skymodel(params: ParamDict, sky_props_sci: ParamDict,
     # iterate a few times to produce weights
     for _ in range(weight_iterations):
         # erode the weights
-        weights2 = binary_erosion(weights2, structure=erode_size)
+        weights2 = binary_erosion(weights2, structure=np.ones(erode_size))
         # add these to the final weights
         weights += np.array(weights2)
     # normalize weights
@@ -645,6 +647,9 @@ def write_skymodel(recipe: DrsRecipe, params: ParamDict,
     # construct the filename from file instance
     skymodel_file.construct_filename(infile=infile)
     # ------------------------------------------------------------------
+    # copy keys from input file
+    skymodel_file.copy_original_keys(infile, exclude_groups='wave')
+    # ------------------------------------------------------------------
     # add version
     skymodel_file.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
     # add dates
@@ -663,7 +668,9 @@ def write_skymodel(recipe: DrsRecipe, params: ParamDict,
     # set data = sky
     skymodel_file.data = sky_props['SKYMODEL_SCI']
     # log that we are saving s1d table
-    WLOG(params, '', textentry('40-019-00029', args=[skymodel_file.filename]))
+    msg = 'Saving sky model file to: {0}'
+    margs = [skymodel_file.filename]
+    WLOG(params, '', msg.format(*margs))
     # define multi lists
     data_list = [sky_props['SKYMODEL_CAL'],  sky_props['WAVEMAP'],
                  sky_props['REGION_ID'],  sky_props['WEIGHTS'],

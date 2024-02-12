@@ -1215,6 +1215,16 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
             ccf_norm_all.append(np.nan)
             continue
         # ------------------------------------------------------------------
+        # remove slope from ccf
+        if fit_type == 0:
+            # fit a slope to the CCF
+            slope_fit, _ = mp.robust_polyfit(rv_ccf, ccf_ord, 1, 5)
+            # calculate the correction of the CCF by a slope
+            corr = np.polyval(slope_fit, rv_ccf)
+            corr = corr / np.mean(corr)
+            # correct the ccf_ord by the slope correction
+            ccf_ord = ccf_ord / corr
+        # ------------------------------------------------------------------
         # TODO -- check that its ok to remove the normalization
         # TODO -- this should preserve the stellar flux weighting
         # normalise each orders CCF to median
@@ -1434,8 +1444,10 @@ def write_ccf(params, recipe, infile, props, rawfiles, combine, qc_params,
     ccf_file.add_hkey('KW_CCF_MEAN_CONSTRAST', value=props['MEAN_CONTRAST'])
     ccf_file.add_hkey('KW_CCF_MEAN_FWHM', value=props['MEAN_FWHM'])
     ccf_file.add_hkey('KW_CCF_TOT_LINES', value=props['TOT_LINE'])
-    ccf_file.add_hkey('KW_CCF_DVRMS_SP', value=props['TOT_SPEC_RMS'])
-    ccf_file.add_hkey('KW_CCF_DVRMS_CC', value=props['MEAN_RV_NOISE'])
+    ccf_file.add_hkey('KW_CCF_DVRMS_SP',
+                      value=np.round(props['TOT_SPEC_RMS'], 4))
+    ccf_file.add_hkey('KW_CCF_DVRMS_CC',
+                      value=np.round(props['MEAN_RV_NOISE'], 4))
     # ----------------------------------------------------------------------
     # add constants used to process
     ccf_file.add_hkey('KW_CCF_MASK', value=props['CCF_MASK'])

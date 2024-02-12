@@ -13,6 +13,7 @@ import sys
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
+import sqlalchemy
 from astropy import coordinates as coord
 from astropy import units as uu
 from astropy.table import Table
@@ -42,7 +43,7 @@ NOT_IMPLEMENTED = ('Definition Error: Must be overwritten in instrument '
                    'pseudo_const not {0} \n\t i.e. in apero.core.'
                    'instruments.spirou.pseudoconst.py \n\t method = {1}')
 # get database columns
-DatabaseColumns = drs_db.DatabaseColumns
+DatabaseColumns = drs_db.AperoDatabaseColumns
 # get display func
 display_func = drs_misc.display_func
 # define bad characters for objects (alpha numeric + "_")
@@ -1146,19 +1147,21 @@ class DefaultPseudoConstants:
             return self.calibration_cols
         # set columns
         calib_columns = DatabaseColumns()
-        calib_columns.add(name='KEYNAME', datatype='VARCHAR(20)',
+        calib_columns.add(name='KEYNAME', datatype=sqlalchemy.String(20),
                           is_index=True, is_unique=True)
-        calib_columns.add(name='FIBER', datatype='VARCHAR(10)',
+        calib_columns.add(name='FIBER', datatype=sqlalchemy.String(10),
                           is_unique=True)
-        calib_columns.add(name='REFCAL', datatype='INT',
+        calib_columns.add(name='REFCAL', datatype=sqlalchemy.Integer,
                           is_unique=True)
-        calib_columns.add(name='FILENAME', datatype='VARCHAR(200)',
+        calib_columns.add(name='FILENAME', datatype=sqlalchemy.String(200),
                           is_unique=True)
-        calib_columns.add(name='HUMANTIME', datatype='VARCHAR(50)')
-        calib_columns.add(name='UNIXTIME', datatype='DOUBLE', is_index=True)
-        calib_columns.add(name='PID', datatype='VARCHAR(80)', is_index=True)
-        calib_columns.add(name='PDATE', datatype='VARCHAR(50)')
-        calib_columns.add(name='USED', datatype='INT')
+        calib_columns.add(name='HUMANTIME', datatype=sqlalchemy.String(50))
+        calib_columns.add(name='UNIXTIME', is_index=True,
+                          datatype=sqlalchemy.Float)
+        calib_columns.add(name='PID', is_index=True,
+                          datatype=sqlalchemy.String(80))
+        calib_columns.add(name='PDATE', datatype=sqlalchemy.String(50))
+        calib_columns.add(name='USED', datatype=sqlalchemy.Integer)
         # return columns
         self.calibration_cols = calib_columns
         return calib_columns
@@ -1175,23 +1178,26 @@ class DefaultPseudoConstants:
             return self.telluric_cols
         # set columns
         tellu_columns = DatabaseColumns()
-        tellu_columns.add(name='KEYNAME', datatype='VARCHAR(20)', is_index=True,
-                          is_unique=True)
-        tellu_columns.add(name='FIBER', datatype='VARCHAR(5)',
-                          is_unique=True)
-        tellu_columns.add(name='REFCAL', datatype='INT',
-                          is_unique=True)
-        tellu_columns.add(name='FILENAME', datatype='VARCHAR(200)',
-                          is_unique=True)
-        tellu_columns.add(name='HUMANTIME', datatype='VARCHAR(50)')
-        tellu_columns.add(name='UNIXTIME', datatype='DOUBLE', is_index=True)
-        tellu_columns.add(name='OBJECT', datatype='VARCHAR(80)', is_index=True)
-        tellu_columns.add(name='AIRMASS', datatype='DOUBLE')
-        tellu_columns.add(name='TAU_WATER', datatype='DOUBLE')
-        tellu_columns.add(name='TAU_OTHERS', datatype='DOUBLE')
-        tellu_columns.add(name='PID', datatype='VARCHAR(80)', is_index=True)
-        tellu_columns.add(name='PDATE', datatype='VARCHAR(50)')
-        tellu_columns.add(name='USED', datatype='INT')
+        tellu_columns.add(name='KEYNAME', is_index=True, is_unique=True,
+                          datatype=sqlalchemy.String(20))
+        tellu_columns.add(name='FIBER', is_unique=True,
+                          datatype=sqlalchemy.String(10))
+        tellu_columns.add(name='REFCAL', is_unique=True,
+                          datatype=sqlalchemy.Integer)
+        tellu_columns.add(name='FILENAME', is_unique=True,
+                          datatype=sqlalchemy.String(200))
+        tellu_columns.add(name='HUMANTIME', datatype=sqlalchemy.String(50))
+        tellu_columns.add(name='UNIXTIME', is_index=True,
+                          datatype=sqlalchemy.Float)
+        tellu_columns.add(name='OBJECT', is_index=True,
+                          datatype=sqlalchemy.String(80))
+        tellu_columns.add(name='AIRMASS', datatype=sqlalchemy.Float)
+        tellu_columns.add(name='TAU_WATER',  datatype=sqlalchemy.Float)
+        tellu_columns.add(name='TAU_OTHERS', datatype=sqlalchemy.Float)
+        tellu_columns.add(name='PID', is_index=True,
+                          datatype=sqlalchemy.String(80))
+        tellu_columns.add(name='PDATE', datatype=sqlalchemy.String(50))
+        tellu_columns.add(name='USED', datatype=sqlalchemy.Integer)
         # return columns and ctypes
         self.telluric_cols = tellu_columns
         return tellu_columns
@@ -1222,28 +1228,35 @@ class DefaultPseudoConstants:
             return self.index_cols
         # column definitions
         index_cols = DatabaseColumns()
-
-        index_cols.add(name='ABSPATH', datatype='TEXT', is_unique=True)
-        index_cols.add(name='OBS_DIR', datatype='VARCHAR(200)',
+        index_cols.add(name='ABSPATH', is_unique=True,
+                       datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC))
+        index_cols.add(name='OBS_DIR', datatype=sqlalchemy.String(200),
                        is_index=True)
-        index_cols.add(name='FILENAME', is_index=True, datatype='VARCHAR(200)')
-        index_cols.add(name='BLOCK_KIND', is_index=True, datatype='VARCHAR(20)')
-        index_cols.add(name='LAST_MODIFIED', datatype='DOUBLE')
-        index_cols.add(name='RECIPE', datatype='VARCHAR(200)')
-        index_cols.add(name='RUNSTRING', datatype='TEXT')
-        index_cols.add(name='INFILES', datatype='TEXT')
+        index_cols.add(name='FILENAME', is_index=True,
+                       datatype=sqlalchemy.String(200))
+        index_cols.add(name='BLOCK_KIND', is_index=True,
+                       datatype=sqlalchemy.String(20))
+        index_cols.add(name='LAST_MODIFIED', datatype=sqlalchemy.Float)
+        index_cols.add(name='RECIPE', datatype=sqlalchemy.String(200))
+        index_cols.add(name='RUNSTRING',
+                       datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC))
+        index_cols.add(name='INFILES',
+                       datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC))
         # get header keys
         header_columns = self.FILEINDEX_HEADER_COLS()
         # add header columns to index columns
         index_cols += header_columns
         # add extra columns
-        index_cols.add(name='USED', datatype='INT')
-        index_cols.add(name='RAWFIX', datatype='INT')
+        index_cols.add(name='USED', datatype=sqlalchemy.Integer)
+        index_cols.add(name='RAWFIX', datatype=sqlalchemy.Integer)
         # manage index groups
-        index_cols.index_groups.append(['BLOCK_KIND', 'OBS_DIR', 'USED'])
-        index_cols.index_groups.append(['BLOCK_KIND', 'OBS_DIR', 'FILENAME'])
-        # return columns and column types
-        self.index_cols = index_cols
+        index_cols.uniques.append(sqlalchemy.Index('idx_block_obs_used',
+                                                   'BLOCK_KIND', 'OBS_DIR',
+                                                   'USED'))
+        index_cols.uniques.append(sqlalchemy.Index('idx_block_obs_filename',
+                                                   'BLOCK_KIND', 'OBS_DIR',
+                                                   'FILENAME'))
+        # return column object
         return index_cols
 
     def REJECT_DB_COLUMNS(self) -> DatabaseColumns:
@@ -1259,21 +1272,22 @@ class DefaultPseudoConstants:
             return self.rejectdb_cols
         # set columns (dictionary form for clarity
         rejectdb_cols = DatabaseColumns(name_prefix='rlog.')
-        rejectdb_cols.add(name='IDENTIFIER', datatype='VARCHAR(255)',
-                          is_index=True,
+        rejectdb_cols.add(name='IDENTIFIER', is_index=True,
+                          datatype=sqlalchemy.String(255),
                           comment='Identifier column')
-        rejectdb_cols.add(name='PP', datatype='INT',
+        rejectdb_cols.add(name='PP', datatype=sqlalchemy.Integer,
                           comment='Whether this file should not be '
                                   'preprocessed')
-        rejectdb_cols.add(name='TEL', datatype='INT',
+        rejectdb_cols.add(name='TEL', datatype=sqlalchemy.Integer,
                           comment='Whether this file should be used for '
                                   'telluric')
-        rejectdb_cols.add(name='RV', datatype='INT',
+        rejectdb_cols.add(name='RV', datatype=sqlalchemy.Integer,
                           comment='Whether this file should be used for RV')
-        rejectdb_cols.add(name='USED', datatype='INT',
+        rejectdb_cols.add(name='USED', datatype=sqlalchemy.Integer,
                           comment='Whether flags should be used')
-        rejectdb_cols.add(name='DATE_ADDED', datatype='VARCHAR(26)')
-        rejectdb_cols.add(name='COMMENT', datatype='TEXT')
+        rejectdb_cols.add(name='DATE_ADDED', datatype=sqlalchemy.String(30))
+        rejectdb_cols.add(name='COMMENT',
+                          datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC))
         # return columns and ctypes
         self.rejectdb_cols = rejectdb_cols
         return rejectdb_cols
@@ -1291,101 +1305,120 @@ class DefaultPseudoConstants:
             return self.logdb_cols
         # set columns (dictionary form for clarity
         log_columns = DatabaseColumns(name_prefix='rlog.')
-        log_columns.add(name='RECIPE', datatype='VARCHAR(200)',
+        log_columns.add(name='RECIPE', datatype=sqlalchemy.String(200),
                         comment='Recipe name from recipe log')
-        log_columns.add(name='SHORTNAME', datatype='VARCHAR(20)',
+        log_columns.add(name='SHORTNAME', datatype=sqlalchemy.String(20),
                         comment='Recipe shortname from recipe log')
         log_columns.add(name='BLOCK_KIND', is_index=True,
-                        datatype='VARCHAR(20)', comment='Recipe block type')
-        log_columns.add(name='RECIPE_TYPE', datatype='VARCHAR(80)',
+                        datatype=sqlalchemy.String(20),
+                        comment='Recipe block type')
+        log_columns.add(name='RECIPE_TYPE', datatype=sqlalchemy.String(80),
                         comment='Recipe type')
-        log_columns.add(name='RECIPE_KIND', datatype='VARCHAR(80)',
+        log_columns.add(name='RECIPE_KIND', datatype=sqlalchemy.String(80),
                         comment='Recipe kind')
-        log_columns.add(name='PROGRAM_NAME', datatype='VARCHAR(80)',
+        log_columns.add(name='PROGRAM_NAME', datatype=sqlalchemy.String(80),
                         comment='Recipe Program Name')
-        log_columns.add(name='PID', datatype='VARCHAR(80)', is_index=True,
+        log_columns.add(name='PID', datatype=sqlalchemy.String(80),
+                        is_index=True,
                         comment='Recipe drs process id number')
-        log_columns.add(name='HUMANTIME', datatype='VARCHAR(25)',
+        log_columns.add(name='HUMANTIME', datatype=sqlalchemy.String(25),
                         comment='Recipe process time (human format)')
-        log_columns.add(name='UNIXTIME', datatype='DOUBLE', is_index=True,
+        log_columns.add(name='UNIXTIME', datatype=sqlalchemy.Float,
+                        is_index=True,
                         comment='Recipe process time (unix format)')
-        log_columns.add(name='GROUPNAME', datatype='VARCHAR(200)',
+        log_columns.add(name='GROUPNAME', datatype=sqlalchemy.String(200),
                         comment='Recipe group name')
-        log_columns.add(name='LEVEL', datatype='INT',
+        log_columns.add(name='LEVEL', datatype=sqlalchemy.Integer,
                         comment='Recipe level name')
-        log_columns.add(name='SUBLEVEL', datatype='INT',
+        log_columns.add(name='SUBLEVEL', datatype=sqlalchemy.Integer,
                         comment='Recipe sub-level name')
-        log_columns.add(name='LEVELCRIT', datatype='VARCHAR(80)',
+        log_columns.add(name='LEVELCRIT', datatype=sqlalchemy.String(80),
                         comment='Recipe level/sub level description')
-        log_columns.add(name='INPATH', datatype='TEXT',
+        log_columns.add(name='INPATH',
+                        datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC),
                         comment='Recipe inputs path')
-        log_columns.add(name='OUTPATH', datatype='TEXT',
+        log_columns.add(name='OUTPATH',
+                        datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC),
                         comment='Recipe outputs path')
-        log_columns.add(name='OBS_DIR', datatype='VARCHAR(200)', is_index=True,
+        log_columns.add(name='OBS_DIR', datatype=sqlalchemy.String(200),
+                        is_index=True,
                         comment='Recipe observation directory')
-        log_columns.add(name='LOGFILE', datatype='TEXT',
+        log_columns.add(name='LOGFILE',
+                        datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC),
                         comment='Recipe log file path')
-        log_columns.add(name='PLOTDIR', datatype='TEXT',
+        log_columns.add(name='PLOTDIR',
+                        datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC),
                         comment='Recipe plot file path')
-        log_columns.add(name='RUNSTRING', datatype='TEXT',
+        log_columns.add(name='RUNSTRING',
+                        datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC),
                         comment='Recipe run string')
-        log_columns.add(name='ARGS', datatype='TEXT',
+        log_columns.add(name='ARGS',
+                        datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC),
                         comment='Recipe argument list')
-        log_columns.add(name='KWARGS', datatype='TEXT',
+        log_columns.add(name='KWARGS',
+                        datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC),
                         comment='Recipe keyword argument list')
-        log_columns.add(name='SKWARGS', datatype='TEXT',
+        log_columns.add(name='SKWARGS',
+                        datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC),
                         comment='Recipe special argument list')
-        log_columns.add(name='START_TIME', datatype='VARCHAR(25)',
+        log_columns.add(name='START_TIME', datatype=sqlalchemy.String(25),
                         comment='Recipe start time YYYY-mm-dd HH:MM:SS.SSS')
-        log_columns.add(name='END_TIME', datatype='VARCHAR(25)',
+        log_columns.add(name='END_TIME', datatype=sqlalchemy.String(25),
                         comment='Recipe end time YYYY-mm-dd HH:MM:SS.SSS')
-        log_columns.add(name='STARTED', datatype='INT',
+        log_columns.add(name='STARTED', datatype=sqlalchemy.Integer,
                         comment='flag recipe started')
-        log_columns.add(name='PASSED_ALL_QC', datatype='INT',
+        log_columns.add(name='PASSED_ALL_QC', datatype=sqlalchemy.Integer,
                         comment='flag recipe passed all quality control')
-        log_columns.add(name='QC_STRING', datatype='TEXT',
+        log_columns.add(name='QC_STRING',
+                        datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC),
                         comment='full quality control string')
-        log_columns.add(name='QC_NAMES', datatype='TEXT',
+        log_columns.add(name='QC_NAMES',
+                        datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC),
                         comment='full quality control names')
-        log_columns.add(name='QC_VALUES', datatype='TEXT',
+        log_columns.add(name='QC_VALUES',
+                        datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC),
                         comment='full quality control values')
-        log_columns.add(name='QC_LOGIC', datatype='TEXT',
+        log_columns.add(name='QC_LOGIC',
+                        datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC),
                         comment='full quality control logic')
-        log_columns.add(name='QC_PASS', datatype='TEXT',
+        log_columns.add(name='QC_PASS',
+                        datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC),
                         comment='full quality control pass/fail')
-        log_columns.add(name='ERRORMSGS', datatype='TEXT',
+        log_columns.add(name='ERRORMSGS',
+                        datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC),
                         comment='recipe errors')
-        log_columns.add(name='ENDED', datatype='INT',
+        log_columns.add(name='ENDED', datatype=sqlalchemy.Integer,
                         comment='flag for recipe ended '
                                 '(false at time of writing)')
-        log_columns.add(name='FLAGNUM', datatype='INT',
+        log_columns.add(name='FLAGNUM', datatype=sqlalchemy.Integer,
                         comment='binary flag decimal number')
-        log_columns.add(name='FLAGSTR', datatype='TEXT',
+        log_columns.add(name='FLAGSTR',
+                        datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC),
                         comment='binary flag names (one for each binary flag)')
-        log_columns.add(name='USED', datatype='INT',
+        log_columns.add(name='USED', datatype=sqlalchemy.Integer,
                         comment='Whether file should be used (always true)')
-        log_columns.add(name='RAM_USAGE_START', datatype='DOUBLE',
+        log_columns.add(name='RAM_USAGE_START', datatype=sqlalchemy.Float,
                         comment='RAM usuage at start of recipe / GB')
-        log_columns.add(name='RAM_USAGE_END', datatype='DOUBLE',
+        log_columns.add(name='RAM_USAGE_END', datatype=sqlalchemy.Float,
                         comment='RAM usuage at end of recipe / GB')
-        log_columns.add(name='RAW_TOTAL', datatype='DOUBLE',
+        log_columns.add(name='RAW_TOTAL', datatype=sqlalchemy.Float,
                         comment='Total RAM at start')
-        log_columns.add(name='SWAP_USAGE_START', datatype='DOUBLE',
+        log_columns.add(name='SWAP_USAGE_START', datatype=sqlalchemy.Float,
                         comment='SWAP usuage at start of recipe / GB')
-        log_columns.add(name='SWAP_USAGE_END', datatype='DOUBLE',
+        log_columns.add(name='SWAP_USAGE_END', datatype=sqlalchemy.Float,
                         comment='SWAP usuage at end of recipe / GB')
-        log_columns.add(name='SWAP_TOTAL', datatype='DOUBLE',
+        log_columns.add(name='SWAP_TOTAL', datatype=sqlalchemy.Float,
                         comment='Total SWAP at start')
-        log_columns.add(name='CPU_USAGE_START', datatype='DOUBLE',
+        log_columns.add(name='CPU_USAGE_START', datatype=sqlalchemy.Float,
                         comment='CPU usage at the start  or recipe (percent)')
-        log_columns.add(name='CPU_USAGE_END', datatype='DOUBLE',
+        log_columns.add(name='CPU_USAGE_END', datatype=sqlalchemy.Float,
                         comment='CPU usage at the end  or recipe (percent)')
-        log_columns.add(name='CPU_NUM', datatype='INT',
+        log_columns.add(name='CPU_NUM', datatype=sqlalchemy.Integer,
                         comment='Total number of CPUs at start')
-        log_columns.add(name='LOG_START', datatype='VARCHAR(25)',
+        log_columns.add(name='LOG_START', datatype=sqlalchemy.String(25),
                         comment='log sub-level start time '
                                 'YYYY-mm-dd HH:MM:SS.SSS')
-        log_columns.add(name='LOG_END', datatype='VARCHAR(25)',
+        log_columns.add(name='LOG_END', datatype=sqlalchemy.String(25),
                         comment='Log sub-level end time '
                                 'YYYY-mm-dd HH:MM:SS.SSS')
 
@@ -1406,30 +1439,32 @@ class DefaultPseudoConstants:
             return self.objdb_cols
         # set columns
         obj_columns = DatabaseColumns()
-        obj_columns.add(name='OBJNAME', datatype='VARCHAR(80)', is_index=True,
-                        is_unique=True)
-        obj_columns.add(name='ORIGINAL_NAME', datatype='VARCHAR(80)')
-        obj_columns.add(name='ALIASES', datatype='TEXT')
-        obj_columns.add(name='RA_DEG', datatype='DOUBLE')
-        obj_columns.add(name='RA_SOURCE', datatype='VARCHAR(80)')
-        obj_columns.add(name='DEC_DEG', datatype='DOUBLE')
-        obj_columns.add(name='DEC_SOURCE', datatype='VARCHAR(80)')
-        obj_columns.add(name='EPOCH', datatype='DOUBLE')
-        obj_columns.add(name='PMRA', datatype='DOUBLE')
-        obj_columns.add(name='PMRA_SOURCE', datatype='VARCHAR(80)')
-        obj_columns.add(name='PMDE', datatype='DOUBLE')
-        obj_columns.add(name='PMDE_SOURCE', datatype='VARCHAR(80)')
-        obj_columns.add(name='PLX', datatype='DOUBLE')
-        obj_columns.add(name='PLX_SOURCE', datatype='VARCHAR(80)')
-        obj_columns.add(name='RV', datatype='DOUBLE')
-        obj_columns.add(name='RV_SOURCE', datatype='VARCHAR(80)')
-        obj_columns.add(name='TEFF', datatype='DOUBLE')
-        obj_columns.add(name='TEFF_SOURCE', datatype='VARCHAR(80)')
-        obj_columns.add(name='SP_TYPE', datatype='VARCHAR(80)')
-        obj_columns.add(name='SP_SOURCE', datatype='VARCHAR(80)')
-        obj_columns.add(name='NOTES', datatype='TEXT')
-        obj_columns.add(name='USED', datatype='INT')
-        obj_columns.add(name='DATE_ADDED', datatype='VARCHAR(26)')
+        obj_columns.add(name='OBJNAME', datatype=sqlalchemy.String(80),
+                        is_index=True, is_unique=True)
+        obj_columns.add(name='ORIGINAL_NAME', datatype=sqlalchemy.String(80))
+        obj_columns.add(name='ALIASES',
+                        datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC))
+        obj_columns.add(name='RA_DEG', datatype=sqlalchemy.Float)
+        obj_columns.add(name='RA_SOURCE', datatype=sqlalchemy.String(80))
+        obj_columns.add(name='DEC_DEG', datatype=sqlalchemy.Float)
+        obj_columns.add(name='DEC_SOURCE', datatype=sqlalchemy.String(80))
+        obj_columns.add(name='EPOCH', datatype=sqlalchemy.Float)
+        obj_columns.add(name='PMRA', datatype=sqlalchemy.Float)
+        obj_columns.add(name='PMRA_SOURCE', datatype=sqlalchemy.String(80))
+        obj_columns.add(name='PMDE', datatype=sqlalchemy.Float)
+        obj_columns.add(name='PMDE_SOURCE', datatype=sqlalchemy.String(80))
+        obj_columns.add(name='PLX', datatype=sqlalchemy.Float)
+        obj_columns.add(name='PLX_SOURCE', datatype=sqlalchemy.String(80))
+        obj_columns.add(name='RV', datatype=sqlalchemy.Float)
+        obj_columns.add(name='RV_SOURCE', datatype=sqlalchemy.String(80))
+        obj_columns.add(name='TEFF', datatype=sqlalchemy.Float)
+        obj_columns.add(name='TEFF_SOURCE', datatype=sqlalchemy.String(80))
+        obj_columns.add(name='SP_TYPE', datatype=sqlalchemy.String(80))
+        obj_columns.add(name='SP_SOURCE', datatype=sqlalchemy.String(80))
+        obj_columns.add(name='NOTES',
+                        datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC))
+        obj_columns.add(name='USED', datatype=sqlalchemy.Integer)
+        obj_columns.add(name='DATE_ADDED', datatype=sqlalchemy.String(30))
         # return columns and ctypes
         self.objdb_cols = obj_columns
         return obj_columns

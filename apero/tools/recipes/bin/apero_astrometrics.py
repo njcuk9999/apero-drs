@@ -21,7 +21,7 @@ from apero.tools.module.setup import drs_installation
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero_astrometric.py'
+__NAME__ = 'apero_astrometrics.py'
 __INSTRUMENT__ = 'None'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
@@ -86,6 +86,11 @@ def __main__(recipe, params):
     rawobjs = params['INPUTS'].listp('OBJECTS', dtype=str)
     # get the overwrite parameter
     overwrite = params['INPUTS']['OVERWRITE']
+    # get the check parameter
+    check = params['INPUTS']['CHECK']
+    if check:
+        drs_astrometrics.check_database(params)
+        return locals()
     # ----------------------------------------------------------------------
     # step 1: Is object in database?
     # ----------------------------------------------------------------------
@@ -174,6 +179,10 @@ def __main__(recipe, params):
                 margs = [a_it + 1, ','.join(astro_obj.aliases.split('|'))]
                 WLOG(params, '', msg.format(*margs), colour='yellow')
                 WLOG(params, '', '')
+        # --------------------------------------------------------------------
+        # make sure we add all aliases without white space
+        for astro_obj in astro_objs:
+            astro_obj.all_aliases()
 
     # -------------------------------------------------------------------------
     # add to google sheet

@@ -40,6 +40,7 @@ plot = dict(name='--plot', dtype=int, helpstr=textentry('PLOT_HELP'),
 drs_recipe = drs_recipe.DrsRecipe
 
 # Below one must define all recipes and put into the "recipes" list
+ari = drs_recipe(__INSTRUMENT__)
 astrometric = drs_recipe(__INSTRUMENT__)
 changelog = drs_recipe(__INSTRUMENT__)
 explorer = drs_recipe(__INSTRUMENT__)
@@ -62,7 +63,7 @@ validate = drs_recipe(__INSTRUMENT__)
 visulise = drs_recipe(__INSTRUMENT__)
 
 # push into a list
-recipes = [astrometric, changelog, database_mgr, explorer,
+recipes = [ari, astrometric, changelog, database_mgr, explorer,
            get_files, go_recipe, langdb, listing,
            precheck, processing,
            remake_db, remake_doc, req_check, reset, run_ini,
@@ -104,9 +105,25 @@ pp_recipe = drs_recipe(__INSTRUMENT__)
 out_recipe = drs_recipe(__INSTRUMENT__)
 
 # -----------------------------------------------------------------------------
+# apero_ri.py
+# -----------------------------------------------------------------------------
+ari.name = 'apero_ri.py'
+ari.shortname = 'ARI'
+ari.instrument = __INSTRUMENT__
+ari.description = 'Run the ARI (APERO reduction interface)'
+ari.recipe_type = 'nolog-tool'
+ari.recipe_kind = 'user'
+ari.set_arg(pos=0, name='profile', dtype=str,
+                   helpstr='ARI yaml file to use')
+ari.set_kwarg(name='--obsdir', dtype=str, default='None',
+              helpstr=textentry('OBS_DIR_HELP'))
+ari.description_file = 'apero_ri.rst'
+
+
+# -----------------------------------------------------------------------------
 # apero_astrometrics.py
 # -----------------------------------------------------------------------------
-astrometric.name = 'apero_astrometric.py'
+astrometric.name = 'apero_astrometrics.py'
 astrometric.shortname = 'ASTROM'
 astrometric.instrument = __INSTRUMENT__
 astrometric.description = textentry('ASTROMETRIC_DESCRIPTION')
@@ -122,6 +139,8 @@ astrometric.set_kwarg(name='--nopmrequired', dtype='switch', default=False,
                       helpstr=textentry('ASTROMETRIC_NOPM_REQ_HELP'))
 astrometric.set_kwarg(name='--test', dtype='switch', default=False,
                       helpstr=textentry('ASTROMETRIC_TEST_HELP'))
+astrometric.set_kwarg(name='--check', dtype='switch', default=False,
+                      helpstr='Check object database for basic errors')
 astrometric.description_file = 'apero_astrometrics.rst'
 
 # -----------------------------------------------------------------------------
@@ -148,20 +167,15 @@ database_mgr.recipe_type = 'nolog-tool'
 database_mgr.recipe_kind = 'admin'
 database_mgr.set_kwarg(name='--kill', dtype='switch', default=False,
                        helpstr=textentry('DBMGR_KILLARG_HELP'))
-database_mgr.set_kwarg(name='--calibdb', dtype='switch', default=False,
-                       helpstr=textentry('DBMGR_CALIBDB_HELP'))
-database_mgr.set_kwarg(name='--telludb', dtype='switch', default=False,
-                       helpstr=textentry('DBMGR_TELLUDB_HELP'))
-database_mgr.set_kwarg(name='--logdb', dtype='switch', default=False,
-                       helpstr=textentry('DBMGR_LOGDB_HELP'))
-database_mgr.set_kwarg(name='--findexdb', dtype='switch', default=False,
-                       helpstr=textentry('DBMGR_FINDEXDB_HELP'))
-database_mgr.set_kwarg(name='--astromdb', dtype='switch', default=False,
-                       helpstr=textentry('DBMGR_ASTROMDB_HELP'))
-database_mgr.set_kwarg(name='--rejectdb', dtype='switch', default=False,
-                       helpstr=textentry('DBMGR_REJECTDB_HELP'))
+database_mgr.set_kwarg(name='--dbkind', dtype='options', default='all',
+                       options=['all', 'calib', 'tellu', 'findex', 'log',
+                                'astrom', 'reject', 'lang'],
+                       helpstr='Database kind to update or reset. Must use in'
+                               'conjuction with --update or --reset')
 database_mgr.set_kwarg(name='--update', dtype='switch', default=False,
                        helpstr=textentry('DBMGR_UPDATE_HELP'))
+database_mgr.set_kwarg(name='--reset', dtype='switch', default=False,
+                       helpstr=textentry('DBMGR_RESET_HELP'))
 database_mgr.set_kwarg(name='--csv', dtype=str, default='None',
                        helpstr=textentry('DBMGR_CSVARG_HELP'))
 database_mgr.set_kwarg(name='--exportdb', dtype='options', default='None',
@@ -175,8 +189,25 @@ database_mgr.set_kwarg(name='--join', dtype='options', default='replace',
                        helpstr=textentry('DBMGR_JOIN_HELP'))
 database_mgr.set_kwarg(name='--delete', dtype='switch', default=False,
                        helpstr=textentry('DBMGR_DELETE_HELP'))
-database_mgr.set_kwarg(name='--reset', dtype='switch', default=False,
-                       helpstr=textentry('DBMGR_RESET_HELP'))
+# TODO: Add to language database
+database_mgr.set_kwarg(name='--keys', dtype=str, default='None',
+                       helpstr='Keyname of entries to remove (used in '
+                               'combination with --telludb or --calibdb)')
+database_mgr.set_kwarg(name='--since', dtype=str, default='None',
+                       helpstr='Date to remove entries since (used in '
+                                 'combination with --telludb or --calibdb)'
+                               ' format is YYYY-MM-DD or YYYY-MM-DD hh:mm:ss')
+database_mgr.set_kwarg(name='--before', dtype=str, default='None',
+                       helpstr='Date to remove entries before (used in '
+                               'combination with --telludb or --calibdb)'
+                               ' format is YYYY-MM-DD or YYYY-MM-DD hh:mm:ss')
+database_mgr.set_kwarg(name='--deletefiles', dtype='switch', default=False,
+                       helpstr='Whether to delete files from disk when '
+                               'removing entries (using in combination with '
+                               '--telludb or --calibdb and --since / --keys)')
+database_mgr.set_kwarg(name='--test', dtype='switch', default=False,
+                       helpstr='Run the removal of entries in test mode')
+
 database_mgr.description_file = 'apero_database.rst'
 
 # -----------------------------------------------------------------------------
@@ -234,8 +265,21 @@ get_files.instrument = __INSTRUMENT__
 get_files.description = textentry('GET_DESCRIPTION')
 get_files.recipe_type = 'nolog-tool'
 get_files.recipe_kind = 'user'
+get_files.set_kwarg(name='--assets', dtype='switch', default=False,
+                    helpstr='Download the assets to the github directory')
 get_files.set_kwarg(name='--gui', default=False, dtype='switch',
                     helpstr=textentry('GET_GUI_HELP'))
+get_files.set_kwarg(name='--outpath', dtype=str, default='None',
+                    helpstr=textentry('GET_OUTPATH_HELP'))
+get_files.set_kwarg(name='--symlinks', default=False, dtype='switch',
+                    helpstr=textentry('GET_SYMLINKS_HELP'))
+get_files.set_kwarg(name='--tar', default=False, dtype='switch',
+                    helpstr='Whether to create a tar instead of copying files.'
+                            'Must also provide the --tarfile argument')
+get_files.set_kwarg(name='--tarfile', default='None', dtype=str,
+                    helpstr='The name of the tar file to create. Must also '
+                            'provide the --tar argument')
+# file filters
 get_files.set_kwarg(name='--objnames', dtype=str, default='None',
                     helpstr=textentry('GET_OBJNAME_HELP'))
 get_files.set_kwarg(name='--dprtypes', dtype=str, default='None',
@@ -244,17 +288,36 @@ get_files.set_kwarg(name='--outtypes', dtype=str, default='None',
                     helpstr=textentry('GET_OUTTYPES_HELP'))
 get_files.set_kwarg(name='--fibers', dtype=str, default='None',
                     helpstr=textentry('GET_FIBERS_HELP'))
-get_files.set_kwarg(name='--outpath', dtype=str, default='None',
-                    helpstr=textentry('GET_OUTPATH_HELP'))
-get_files.set_kwarg(name='--symlinks', default=False, dtype='switch',
-                    helpstr=textentry('GET_SYMLINKS_HELP'))
-get_files.set_kwarg(name='--test', default=False, dtype='switch',
-                    helpstr=textentry('GET_TEST_HELP'))
-get_files.set_kwarg(name='--failedqc', default=False, dtype='switch',
-                    helpstr=textentry('GET_FAILEDQC_HELP'))
+
 get_files.set_kwarg(name='--since', default='None', dtype=str,
                     helpstr='Only get files processed since a certain date '
                             'YYYY-MM-DD hh:mm:ss')
+get_files.set_kwarg(name='--latest', default='None', dtype=str,
+                    helpstr='Only get files processed since a certain date '
+                            'YYYY-MM-DD hh:mm:ss')
+get_files.set_kwarg(name='--timekey', default='observed', dtype='options',
+                    options=['processed', 'observed'],
+                    helpstr='Whether to use the processed or observed time in'
+                            ' the since and latest arguments (applies to both)')
+
+get_files.set_kwarg(name='--obsdir', default='None', dtype=str,
+                    helpstr='Only get files from a certain observation '
+                            'directory')
+get_files.set_kwarg(name='--pi_name', default='None', dtype=str,
+                    helpstr='Only get files from a certain PI')
+get_files.set_kwarg(name='--runid', default='None', dtype=str,
+                    helpstr='Only get files from certain run ids')
+# advanced options
+get_files.set_kwarg(name='--failedqc', default=False, dtype='switch',
+                    helpstr=textentry('GET_FAILEDQC_HELP'))
+get_files.set_kwarg(name='--nosubdir', default=False, dtype='switch',
+                    helpstr='Do not put files into a sub-directory. '
+                            'Only use thes outpath')
+get_files.set_kwarg(name='--test', default=False, dtype='switch',
+                    helpstr=textentry('GET_TEST_HELP'))
+get_files.set_kwarg(name='--sizelimit', default=0, dtype=int,
+                    helpstr='Limit the size of output tarfile (in GB)')
+
 get_files.description_file = 'apero_get.rst'
 
 # -----------------------------------------------------------------------------
@@ -454,7 +517,31 @@ reset.set_kwarg(name='--warn', dtype='bool', default=True,
                 helpstr=textentry('RESET_WARN_HELP'))
 reset.set_kwarg(name='--database_timeout', dtype=int, default=0,
                 helpstr=textentry('RESET_DATABASE_TIMEOUT_HELP'))
+reset.set_kwarg(name='--only_assets', dtype='bool', default=False,
+                helpstr='Reset only the assets directory')
+reset.set_kwarg(name='--only_tmp', dtype='bool', default=False,
+                helpstr='Reset only the tmp directory')
+reset.set_kwarg(name='--only_red', dtype='bool', default=False,
+                helpstr='Reset only the reduced directory')
+reset.set_kwarg(name='--only_calib', dtype='bool', default=False,
+                helpstr='Reset only the calibration directory')
+reset.set_kwarg(name='--only_tellu', dtype='bool', default=False,
+                helpstr='Reset only the telluric directory')
+reset.set_kwarg(name='--only_log', dtype='bool', default=False,
+                helpstr='Reset only the log directory')
+reset.set_kwarg(name='--only_plot', dtype='bool', default=False,
+                helpstr='Reset only the plot directory')
+reset.set_kwarg(name='--only_run', dtype='bool', default=False,
+                helpstr='Reset only the run directory')
+reset.set_kwarg(name='--only_lbl', dtype='bool', default=False,
+                helpstr='Reset only the lbl directory')
+reset.set_kwarg(name='--only_out', dtype='bool', default=False,
+                helpstr='Reset only the out directory')
+reset.set_kwarg(name='--only_other', dtype='bool', default=False,
+                helpstr='Reset only the other directory')
+
 reset.description_file = 'apero_reset.rst'
+
 
 # -----------------------------------------------------------------------------
 # apero_run_ini.py

@@ -3,20 +3,19 @@
 
 <!doctype html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>APERO Documentation &#8212; APERO 0.7.259 documentation</title>
+    <title>APERO Documentation &#8212; APERO 0.8.001 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="_static/apero.css" />
     
     <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-    <script src="_static/jquery.js"></script>
-    <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
     <script src="_static/bizstyle.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -79,6 +78,8 @@
         <i class="fa fa-git-square fa-3x" aria-hidden="true"></i></a></li>
     <li><a title="download pdf" href="apero-docs.pdf">
         <i class="fa fa-download fa-3x" aria-hidden="true"></i></a></li>
+    <li><a title="UdeM" href="/main/misc/udem.html">
+        <i class="fa fa-university fa-3x" aria-hidden="true"></i></a></li>
   </ul>
     <div>
     <a href="#">
@@ -99,27 +100,32 @@
         <li class="right" >
           <a href="main/general/main_general.html" title="General User documentation"
              accesskey="N">next</a> |</li>
-        <li class="nav-item nav-item-0"><a href="#">APERO 0.7.259 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="#">APERO 0.8.001 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">APERO Documentation</a></li> 
       </ul>
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="#">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="#">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">APERO Documentation</a><ul>
-<li><a class="reference internal" href="#latest-version-0-7-259">Latest version: 0.7.259</a></li>
+<li><a class="reference internal" href="#latest-version-0-8-001">Latest version: 0.8.001</a></li>
 <li><a class="reference internal" href="#overview">Overview</a></li>
 <li><a class="reference internal" href="#instrument-documentation">Instrument documentation</a></li>
 <li><a class="reference internal" href="#developer-documentation">Developer documentation</a></li>
 <li><a class="reference internal" href="#other">Other</a></li>
+<li><a class="reference internal" href="#udem">UdeM</a></li>
 </ul>
 </li>
 </ul>
 
-  <h4>Next topic</h4>
-  <p class="topless"><a href="main/general/main_general.html"
-                        title="next chapter">General User documentation</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="main/general/main_general.html"
+                          title="next chapter">General User documentation</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -136,7 +142,7 @@
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
 
@@ -146,14 +152,18 @@
           <div class="body" role="main">
             
   <section id="apero-documentation">
-<span id="apero-doc-main"></span><h1>APERO Documentation<a class="headerlink" href="#apero-documentation" title="Permalink to this headline">¶</a></h1>
-<section id="latest-version-0-7-259">
-<span id="apero-doc-main-latest"></span><h2>Latest version: 0.7.259<a class="headerlink" href="#latest-version-0-7-259" title="Permalink to this headline">¶</a></h2>
+<span id="apero-doc-main"></span><h1>APERO Documentation<a class="headerlink" href="#apero-documentation" title="Permalink to this heading">¶</a></h1>
+<section id="latest-version-0-8-001">
+<span id="apero-doc-main-latest"></span><h2>Latest version: 0.8.001<a class="headerlink" href="#latest-version-0-8-001" title="Permalink to this heading">¶</a></h2>
 <blockquote>
 <div><p>APERO is a pipeline designed to reduce astrophysical observations (specifically from echelle spectrographs).
 It is the official pipeline for:</p>
 <ul class="simple">
 <li><p><a class="reference external" href="https://www.cfht.hawaii.edu/Instruments/SPIRou/">SPIROU</a> (SPectropolarimeter InfraROUge) on the Canada-France-Hawaii Telescope <a class="reference external" href="https://www.cfht.hawaii.edu/">CFHT</a>.</p></li>
+</ul>
+<p>APERO Publications:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://arxiv.org/abs/2211.01358">APERO: A PipelinE to Reduce Observations – Demonstration with SPIRou</a></p></li>
 </ul>
 <p>APERO can also be used for:</p>
 <ul class="simple">
@@ -163,7 +173,7 @@ It is the official pipeline for:</p>
 </div></blockquote>
 </section>
 <section id="overview">
-<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this heading">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="main/general/main_general.html">General User documentation</a><ul>
@@ -179,7 +189,7 @@ It is the official pipeline for:</p>
 </div>
 </section>
 <section id="instrument-documentation">
-<h2>Instrument documentation<a class="headerlink" href="#instrument-documentation" title="Permalink to this headline">¶</a></h2>
+<h2>Instrument documentation<a class="headerlink" href="#instrument-documentation" title="Permalink to this heading">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="main/spirou/main_spirou.html">SPIRou documentation</a><ul>
@@ -216,7 +226,7 @@ It is the official pipeline for:</p>
 </div>
 </section>
 <section id="developer-documentation">
-<h2>Developer documentation<a class="headerlink" href="#developer-documentation" title="Permalink to this headline">¶</a></h2>
+<h2>Developer documentation<a class="headerlink" href="#developer-documentation" title="Permalink to this heading">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="main/developer/main_dev.html">Developer how to guide</a><ul>
@@ -230,7 +240,7 @@ It is the official pipeline for:</p>
 </div>
 </section>
 <section id="other">
-<span id="apero-doc-main-other"></span><h2>Other<a class="headerlink" href="#other" title="Permalink to this headline">¶</a></h2>
+<span id="apero-doc-main-other"></span><h2>Other<a class="headerlink" href="#other" title="Permalink to this heading">¶</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
 <li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
@@ -241,6 +251,14 @@ It is the official pipeline for:</p>
 <li class="toctree-l1"><a class="reference internal" href="main/misc/pythoninstallation.html">Python installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="main/misc/glossary.html">Glossary</a></li>
 <li class="toctree-l1"><a class="reference internal" href="main/misc/updates.html">Update notes</a></li>
+</ul>
+</div>
+</section>
+<section id="udem">
+<h2>UdeM<a class="headerlink" href="#udem" title="Permalink to this heading">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="main/misc/udem.html">University of Montreal Documentation</a></li>
 </ul>
 </div>
 </section>
@@ -262,13 +280,13 @@ It is the official pipeline for:</p>
         <li class="right" >
           <a href="main/general/main_general.html" title="General User documentation"
              >next</a> |</li>
-        <li class="nav-item nav-item-0"><a href="#">APERO 0.7.259 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="#">APERO 0.8.001 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">APERO Documentation</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2019, Neil Cook.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 6.1.3.
     </div>
   </body>
 </html>

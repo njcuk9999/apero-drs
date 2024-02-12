@@ -239,6 +239,8 @@ def calculate_tellu_res_absorption(params, recipe, image, template_props,
     # get the e2ds template
     template = template_props['TEMP_S2D']
     # ------------------------------------------------------------------
+    # TODO: Load TAPAS
+    # ------------------------------------------------------------------
     # Shift the image to the reference grid
     # ------------------------------------------------------------------
     image1 = gen_tellu.wave_to_wave(params, image1, wavemap, mwavemap)
@@ -294,16 +296,106 @@ def calculate_tellu_res_absorption(params, recipe, image, template_props,
     # ------------------------------------------------------------------
     # Low pass filtering of hot star (create SED)
     # ------------------------------------------------------------------
+    # get the tapas water and others on the reference wavelength grid
+    tapas_water = tpreprops['SPL_TAPAS_WATER'](mwavemap)
+    tapas_others = tpreprops['SPL_TAPAS_OTHERS'](mwavemap)
+    # work out the total transmission for tapas
+    tapas_trans = tapas_water * tapas_others
     # first guess at the SED estimate for the hot start (we guess with a
-    #   spectrum full of ones
+    #   spectrum full of ones, to be updated with the best guess of the SED
     sed = np.ones_like(mwavemap)
-    # then we correct with out first estimate of the absorption
-    for order_num in range(image1.shape[0]):
+    # copy image1 for sed model
+    image2 = np.array(image1)
+    # then we correct without first estimate of the absorption
+    for order_num in range(image2.shape[0]):
+        # print progress
+        # TODO: Move to language database
+        msg = 'Low pass filtering of hot star to create SED order {0} of {1}'
+        margs = [order_num, image2.shape[0] - 1]
+        WLOG(params, '', msg.format(*margs))
         # get the smoothing size from wconv
         smooth = int(wconv[order_num])
-        # median filter
-        sed[order_num] = mp.lowpassfilter(image1[order_num], smooth)
-    # ---------------------------------------------------------------------
+        # mask of outlier regions (floats for lowpass filter)
+        mask = np.ones_like(image2[order_num])
+        # set all NaNs in the image to NaN in the mask
+        mask[np.isnan(image2[order_num])] = np.nan
+        # get the tapas transmission for this order
+        tapas_trans_ord = tapas_trans[order_num]
+        # set all transmission below 0.5 to NaN in the mask
+        # mask[tapas_trans_ord < 0.5] = np.nan
+        # flag for a bad order
+        bad_order = False
+        # loop around two iterations - for stability
+        for ite in range(3):
+            # flag nan pixels
+            valid = np.isfinite(image2[order_num])
+            # flag that this is a bad order
+            if np.sum(valid) < 2:
+                bad_order = True
+                continue
+            # on the first iteration
+            if ite ==0:
+                # on the first iteration just fit a slope
+                fit,_ = mp.robust_polyfit(mwavemap[order_num][valid],
+                                          image2[order_num][valid], 1, 5)
+                # SED is the slope of the hot star spectrum
+                sed_tmp = np.polyval(fit,mwavemap[order_num])
+            # otherwise low pass the spectrum
+            else:
+                # calculate the SED model using this the masked image (low pass)
+                sed_tmp = mp.lowpassfilter(image2[order_num] * mask, smooth,
+                                           k=2, frac_valid_min=0.1)
+                # calculate the difference between the image and the sed
+                diff = image2[order_num] - sed_tmp
+                # estimate the simga of the difference between image and sed
+                sig = mp.estimate_sigma(diff)
+                # update the mask to remove 3 sigma outliers
+                mask[np.abs(diff) > 2 * sig] = np.nan
+                # -------------------------------------------------------------
+                # Do one final iteration for the final SED using the mask
+                sed_tmp = mp.lowpassfilter(image2[order_num] * mask, smooth,
+                                           k=2, frac_valid_min=0.1)
+            # -----------------------------------------------------------------
+            # Logic here:
+            # We look for correlation between residuals and initidual absorption
+            # this traces systematic trends. In the deep ~1.4 micron band, there
+            # is a systematic trend in the residuals, where absorption
+            # correlates linearly with residuals. We therefore perform a
+            # linear fit to the residuals, and subtract this from the estimate
+            # in the residuals from image2. This avoids systematic biases where
+            # we always get (mostly) negative residuals that create spurious
+            # structures in the SED.
+            # -----------------------------------------------------------------
+            # Residual of the best-guess residual decorrelated from absorption
+            # to the best-guess SED.
+            diff = (image2[order_num] - sed_tmp)
+            # Mask of finite values
+            good = np.isfinite(diff)
+            # must have some valid points
+            if np.sum(good) > 0:
+                # Fit the residuals to the absorption
+                fit,_ = mp.robust_polyfit(tapas_trans_ord[good], diff[good],
+                                          degree=1, nsigcut=5)
+                correction = np.polyval(fit, tapas_trans_ord)
+                # applying a correction to the image2
+                image2[order_num] = image2[order_num] - correction
+            else:
+                # flag that this is a bad order
+                bad_order = True
+        # ---------------------------------------------------------------------
+        # final guess of the SED
+        if bad_order:
+            # log that we are skipping this order
+            # TODO: Add to language database
+            wmsg = 'Skipping order {0} [No good values]. SED set to NaN'
+            wargs = [order_num]
+            WLOG(params, 'warning', wmsg.format(*wargs), sublevel=3)
+            # set the SED to NaN
+            sed[order_num] = np.full(image2.shape[1], np.nan)
+        else:
+            sed[order_num] = mp.lowpassfilter(image2[order_num] * mask, smooth,
+                                              k=2, frac_valid_min=0.1)
+    # -------------------------------------------------------------------------
     # plot mk tellu wave flux plot for specified orders
     for order_num in plot_order_nums:
         # plot debug plot
