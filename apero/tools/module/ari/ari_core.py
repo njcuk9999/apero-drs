@@ -789,6 +789,7 @@ class AriObject:
     def get_target_parameters(self, params: ParamDict):
         # set up the object page
         obj_save_path = os.path.join(params['ARI_OBJ_PAGES'], self.objname)
+        ari_user = params['ARI_USER']
         # ---------------------------------------------------------------------
         # storage for spectrum values
         target_props = dict()
@@ -808,7 +809,7 @@ class AriObject:
         # construct the stats
         # -----------------------------------------------------------------
         # get the stats base name
-        target_base_name = 'target_stat_' + self.objname + '.txt'
+        target_base_name = f'target_stat_{self.objname}_{ari_user}.txt'
         # get the stat path
         target_path = os.path.join(obj_save_path, target_base_name)
         # compute the stats
@@ -824,6 +825,7 @@ class AriObject:
     def get_spec_parameters(self, params: ParamDict):
         # set up the object page
         obj_save_path = os.path.join(params['ARI_OBJ_PAGES'], self.objname)
+        ari_user = params['ARI_USER']
         # get the extracted files
         ext_files = self.filetypes['ext'].get_files()
         # don't go here if ext files are not present
@@ -1022,7 +1024,7 @@ class AriObject:
         # plot the figure
         # -----------------------------------------------------------------
         # get the plot base name
-        plot_base_name = 'spec_plot_' + self.objname + '.png'
+        plot_base_name = f'spec_plot_{self.objname}_{ari_user}.png'
         # get the plot path
         plot_path = os.path.join(obj_save_path, plot_base_name)
         # plot the lbl figure
@@ -1031,15 +1033,15 @@ class AriObject:
         # construct the stats
         # -----------------------------------------------------------------
         # get the stats base name
-        stat_base_name = 'spec_stat_' + self.objname + '.txt'
+        stat_base_name = f'spec_stat_{self.objname}_{ari_user}.txt'
         # get the stat path
         stat_path = os.path.join(obj_save_path, stat_base_name)
         # compute the stats
         spec_stats_table(spec_props, stat_path, title='Spectrum Information')
         # -----------------------------------------------------------------
         # construct the header file
-        ext_header_file = os.path.join(obj_save_path,
-                                       f'ext2d_header_{self.objname}_file.csv')
+        ext_header_filename = f'ext2d_header_{self.objname}_{ari_user}_file.csv'
+        ext_header_file = os.path.join(obj_save_path, ext_header_filename)
         create_header_file(spec_props['EXT'].get_files(qc=True),
                            self.headers, 'ext', self.header_dict,
                            ext_header_file)
@@ -1047,7 +1049,7 @@ class AriObject:
         # Create the request link table for this object
         # -----------------------------------------------------------------
         # get the rlink base name
-        rlink_base_name = 'spec_rlink_' + self.objname + '.txt'
+        rlink_base_name = f'spec_rlink_{self.objname}_{ari_user}.txt'
         # get the rlink table path
         rlink_item_path = os.path.join(obj_save_path, rlink_base_name)
         # define the keys in spec_props that contain rlinks to add
@@ -1075,26 +1077,26 @@ class AriObject:
         # Create the file lists for this object
         # -----------------------------------------------------------------
         # construct the save path for ext files (2D)
-        ext2d_file = os.path.join(obj_save_path,
-                                  f'ext2d_{self.objname}_file_list.txt')
+        ext2d_filename = f'ext2d_{self.objname}_{ari_user}_file_list.txt'
+        ext2d_file = os.path.join(obj_save_path, ext2d_filename)
         create_file_list(spec_props['EXT'].get_files(qc=True), ext2d_file)
         # construct the save path for ext files (1D)
-        ext1d_file = os.path.join(obj_save_path,
-                                  f'ext1d_{self.objname}_file_list.txt')
+        ext1d_filename = f'ext1d_{self.objname}_{ari_user}_file_list.txt'
+        ext1d_file = os.path.join(obj_save_path, ext1d_filename)
         create_file_list(spec_props['S1D'].get_files(qc=True), ext1d_file)
         # construct the save path for the tcorr files (2D)
-        tcorr2d_file = os.path.join(obj_save_path,
-                                    f'tcorr2d_{self.objname}_file_list.txt')
+        tcorr2d_filename = f'tcorr2d_{self.objname}_{ari_user}_file_list.txt'
+        tcorr2d_file = os.path.join(obj_save_path, tcorr2d_filename)
         create_file_list(spec_props['TCORR'].get_files(qc=True), tcorr2d_file)
         # construct the save path for the tcorr files (1D)
-        tcorr1d_file = os.path.join(obj_save_path,
-                                    f'tcorr1d_{self.objname}_file_list.txt')
+        tcorr1d_filename = f'tcorr1d_{self.objname}_{ari_user}_file_list.txt'
+        tcorr1d_file = os.path.join(obj_save_path, tcorr1d_filename)
         create_file_list(spec_props['SC1D'].get_files(qc=True), tcorr1d_file)
         # -----------------------------------------------------------------
         # construct the download table
         # -----------------------------------------------------------------
         # get the download base name
-        dwn_base_name = 'spec_download_' + self.objname + '.txt'
+        dwn_base_name = f'spec_download_{self.objname}_{ari_user}.txt'
         # get the download table path
         dwn_item_path = os.path.join(obj_save_path, dwn_base_name)
         # define the download files
@@ -1126,6 +1128,7 @@ class AriObject:
         """
         # set up the object page
         obj_save_path = os.path.join(params['ARI_OBJ_PAGES'], self.objname)
+        ari_user = params['ARI_USER']
         # get lbl rdb files
         lbl_files = dict()
         for filetype in LBL_FILETYPES:
@@ -1215,7 +1218,7 @@ class AriObject:
             # plot the figure
             # -----------------------------------------------------------------
             # get the plot base name
-            plot_base_name = 'lbl_plot_' + lbl_objtmp + '.png'
+            plot_base_name = f'lbl_plot_{lbl_objtmp}_{ari_user}.png'
             # get the plot path
             plot_path = os.path.join(obj_save_path, plot_base_name)
             # plot the lbl figure
@@ -1225,7 +1228,7 @@ class AriObject:
             # construct the stats
             # -----------------------------------------------------------------
             # get the stats base name
-            stat_base_name = 'lbl_stat_' + lbl_objtmp + '.txt'
+            stat_base_name = f'lbl_stat_{lbl_objtmp}_{ari_user}.txt'
             # get the stat path
             stat_path = os.path.join(obj_save_path, stat_base_name)
             # compute the stats
@@ -1234,7 +1237,7 @@ class AriObject:
             # Create the request link table for this object
             # -----------------------------------------------------------------
             # get the rlink base name
-            rlink_base_name = 'lbl_rlink_' + self.objname + '.txt'
+            rlink_base_name = f'lbl_rlink_{lbl_objtmp}_{ari_user}.txt'
             # get the rlink table path
             rlink_item_path = os.path.join(obj_save_path, rlink_base_name)
             # define the keys in spec_props that contain rlinks to add
@@ -1253,7 +1256,7 @@ class AriObject:
             # construct the download table
             # -----------------------------------------------------------------
             # get the download base name
-            dwn_base_name = 'lbl_download_' + lbl_objtmp + '.txt'
+            dwn_base_name = f'lbl_download_{lbl_objtmp}_{ari_user}.txt'
             # get the download table path
             dwn_item_path = os.path.join(obj_save_path, dwn_base_name)
             # define the download files
@@ -1305,6 +1308,7 @@ class AriObject:
     def get_ccf_parameters(self, params: ParamDict):
         # set up the object page
         obj_save_path = os.path.join(params['ARI_OBJ_PAGES'], self.objname)
+        ari_user = params['ARI_USER']
         # get ccf files
         ccf_files = self.filetypes['ccf'].get_files(qc=True)
         # don't go here is lbl rdb files are not present
@@ -1385,7 +1389,7 @@ class AriObject:
         # plot the figure
         # -----------------------------------------------------------------
         # get the plot base name
-        plot_base_name = 'ccf_plot_' + self.objname + '.png'
+        plot_base_name = f'ccf_plot_{self.objname}_{ari_user}.png'
         # get the plot path
         plot_path = os.path.join(obj_save_path, plot_base_name)
         # set the plot title
@@ -1396,7 +1400,7 @@ class AriObject:
         # construct the stats
         # -----------------------------------------------------------------
         # get the stats base name
-        stat_base_name = 'ccf_stat_' + self.objname + '.txt'
+        stat_base_name = f'ccf_stat_{self.objname}_{ari_user}.txt'
         # get the stat path
         stat_path = os.path.join(obj_save_path, stat_base_name)
         # compute the stats
@@ -1405,7 +1409,7 @@ class AriObject:
         # Create the request link table for this object
         # -----------------------------------------------------------------
         # get the rlink base name
-        rlink_base_name = 'ccf_rlink_' + self.objname + '.txt'
+        rlink_base_name = f'ccf_rlink_{self.objname}_{ari_user}.txt'
         # get the rlink table path
         rlink_item_path = os.path.join(obj_save_path, rlink_base_name)
         # define the keys in spec_props that contain rlinks to add
@@ -1419,14 +1423,14 @@ class AriObject:
         # Create the file lists for this object
         # -----------------------------------------------------------------
         # construct the save path for ccf files
-        ccf_file = os.path.join(obj_save_path,
-                                f'ccf_{self.objname}_file_list.txt')
+        ccf_filename = f'ccf_{self.objname}_{ari_user}_file_list.txt'
+        ccf_file = os.path.join(obj_save_path, ccf_filename)
         create_file_list(ccf_files, ccf_file)
         # -----------------------------------------------------------------
         # construct the download table
         # -----------------------------------------------------------------
         # get the download base name
-        dwn_base_name = 'ccf_download_' + self.objname + '.txt'
+        dwn_base_name = f'ccf_download_{self.objname}_{ari_user}.txt'
         # get the download table path
         dwn_item_path = os.path.join(obj_save_path, dwn_base_name)
         # define the download files
@@ -1449,6 +1453,7 @@ class AriObject:
     def get_time_series_parameters(self, params: ParamDict):
         # set up the object page
         obj_save_path = os.path.join(params['ARI_OBJ_PAGES'], self.objname)
+        ari_user = params['ARI_USER']
         # get ext files
         ftypes = self.filetypes
         ext_files_all = ftypes['ext'].get_files(qc=True)
@@ -1542,7 +1547,8 @@ class AriObject:
             # Create the file lists for this object
             # -----------------------------------------------------------------
             # construct the save path for ext files
-            ext_file = f'ext_file_list_{obs_dir}_{self.objname}.txt'
+            ext_file = (f'ext_file_list_{obs_dir}_{self.objname}'
+                        f'_{ari_user}.txt')
             ext_path = os.path.join(obj_save_path, ext_file)
             ext_rel_path = ext_file
             create_file_list(ext_files, ext_path)
@@ -1550,7 +1556,8 @@ class AriObject:
                                                       ext_rel_path)
             ext_value = f'{len(ext_files)} {ext_download}'
             # construct the save path for the tcorr files
-            tcorr_file = f'tcorr_file_list_{obs_dir}_{self.objname}.txt'
+            tcorr_file = (f'tcorr_file_list_{obs_dir}_{self.objname}'
+                          f'_{ari_user}.txt')
             tcorr_path = os.path.join(obj_save_path, tcorr_file)
             tcorr_rel_path = tcorr_file
             create_file_list(tcorr_files, tcorr_path)
@@ -1607,7 +1614,8 @@ class AriObject:
         # construct the stats
         # -----------------------------------------------------------------
         # get the stats base name
-        time_series_base_name = 'time_series_stat_' + self.objname + '.txt'
+        time_series_base_name = (f'time_series_stat_{self.objname}'
+                                 f'_{ari_user}.txt')
         # get the stat path
         stat_path = os.path.join(obj_save_path, time_series_base_name)
         # compute the stats
