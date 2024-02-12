@@ -643,8 +643,7 @@ CALIB_CHECK_FP_CENT_SIZE = Const('CALIB_CHECK_FP_CENT_SIZE', value=None,
 # Define the SIMBAD TAP url
 SIMBAD_TAP_URL = Const('SIMBAD_TAP_URL', value=None, dtype=str, source=__NAME__,
                        group=cgroup,
-                          description='Define the SIMBAD TAP url')
-
+                       description='Define the SIMBAD TAP url')
 
 # Define the TAP Gaia URL (for use in crossmatching to Gaia via astroquery)
 OBJ_LIST_GAIA_URL = Const('OBJ_LIST_GAIA_URL', value=None, dtype=str,
@@ -688,7 +687,6 @@ OBJ_LIST_GSHEET_BIBCODE_ID = Const('OBJ_LIST_GSHEET_BIBCODE_ID',
                                    group=cgroup,
                                    description='Define the google sheet '
                                                'bibcode id number')
-
 
 # Define the google sheet user url object list (None for no user list)
 #     (may be set to a directory for completely offline reduction)
@@ -3990,20 +3988,25 @@ TELLUP_D_WATER_ABSO = Const('TELLUP_D_WATER_ABSO', value=None,
                                          'high-snr targets later'))
 
 # set the lower and upper bounds (String list) for the exponent of
-#  the other species of absorbers
+#  the other species of absorbers as a ratio to the airmass
+#  i.e. value/airmass compared to bound
 TELLUP_OTHER_BOUNDS = Const('TELLUP_OTHER_BOUNDS', value=None, dtype=str,
                             source=__NAME__, group=cgroup,
-                            description=('set the lower and upper bounds '
-                                         '(String list) for the exponent of '
-                                         'the other species of absorbers'))
+                            description='set the lower and upper bounds '
+                                        '(String list) for the exponent of '
+                                        'the other species of absorbers as a '
+                                        'ratio to the airmass i.e. '
+                                        'value/airmass compared to bound')
 
 # set the lower and upper bounds (string list) for the exponent of
-#  water absorber
+#  water absorber as a ratio to the airmass i.e. value/airmass compared to bound
 TELLUP_WATER_BOUNDS = Const('TELLUP_WATER_BOUNDS', value=None, dtype=str,
                             source=__NAME__, group=cgroup,
-                            description=('set the lower and upper bounds '
-                                         '(string list) for the exponent of '
-                                         'water absorber'))
+                            description='set the lower and upper bounds '
+                                        '(string list) for the exponent of '
+                                        'water absorber as a ratio to the '
+                                        'airmass i.e. value/airmass compared '
+                                        'to bound')
 
 # set the plot order for the finite resolution plot
 TELLU_FINITE_RES_ORDER = Const('TELLUP_WATER_BOUNDS', value=None, dtype=int,
@@ -5826,8 +5829,8 @@ ari_reset_dict['ari-setup'] = ('tools/resources/ari/ari-config',
 ARI_RESET_DICT = Const('ARI_RESET_DICT', value=ari_reset_dict,
                        dtype=dict, source=__NAME__, group=cgroup,
                        description='Define the ARI reset directory (relative '
-                                      'paths to copy into the "other" directory '
-                                      'on installation/reset)')
+                                   'paths to copy into the "other" directory '
+                                   'on installation/reset)')
 
 # =============================================================================
 #  End of configuration file

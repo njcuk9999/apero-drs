@@ -582,15 +582,15 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     qc_pass.append(np.nan)
     # 3. exponent for others out of bounds (pos = 2 and 3)
     qc_values += [np.nan, np.nan]
-    qc_names += ['EXPO_OTHERS L', 'EXPO_OTHERS U']
-    qc_logic += ['EXPO_OTHERS L < {0}'.format(others_bounds[0]),
-                 'EXPO_OTHERS U > {0}'.format(others_bounds[1])]
+    qc_names += ['EXPO_OTHERS/AIRMASS L', 'EXPO_OTHERS/AIRMASS U']
+    qc_logic += ['EXPO_OTHERS/AIRMASS L < {0}'.format(others_bounds[0]),
+                 'EXPO_OTHERS/AIRMASS U > {0}'.format(others_bounds[1])]
     qc_pass += [np.nan, np.nan]
     # 4. exponent for water  out of bounds (pos 4 and 5)
     qc_values += [np.nan, np.nan]
-    qc_names += ['EXPO_WATER L', 'EXPO_WATER U']
-    qc_logic += ['EXPO_WATER L < {0}'.format(water_bounds[0]),
-                 'EXPO_WATER U > {0}'.format(water_bounds[1])]
+    qc_names += ['EXPO_WATER/AIRMASS L', 'EXPO_WATER/AIRMASS U']
+    qc_logic += ['EXPO_WATER/AIRMASS L < {0}'.format(water_bounds[0]),
+                 'EXPO_WATER/AIRMASS U > {0}'.format(water_bounds[1])]
     qc_pass += [np.nan, np.nan]
     # 5. max iterations exceeded (pos = 6)
     qc_values.append(np.nan)
@@ -1116,45 +1116,45 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     margs = [snr_others, snr_water]
     WLOG(params, '', msg.format(*margs))
     # deal with lower bounds for other species
-    if expo_others < others_bounds[0]:
+    if expo_others/hdr_airmass < others_bounds[0]:
         # update qc params
-        qc_values[2] = float(expo_others)
+        qc_values[2] = float(expo_others)/hdr_airmass
         qc_pass[2] = 0
         # flag qc as failed and break
         flag_qc = True
     else:
-        qc_values[2] = float(expo_others)
+        qc_values[2] = float(expo_others)/hdr_airmass
         qc_pass[2] = 1
     # deal with upper bounds for other species
-    if expo_others > others_bounds[1]:
+    if expo_others/hdr_airmass > others_bounds[1]:
         # update qc params
-        qc_values[3] = float(expo_others)
+        qc_values[3] = float(expo_others)/hdr_airmass
         qc_pass[3] = 0
         # flag qc as failed and break
         flag_qc = True
     else:
-        qc_values[3] = float(expo_others)
+        qc_values[3] = float(expo_others)/hdr_airmass
         qc_pass[3] = 1
     # --------------------------------------------------------------
     # deal with lower bounds for water
-    if expo_water < water_bounds[0]:
+    if expo_water/hdr_airmass < water_bounds[0]:
         # update qc params
-        qc_values[4] = float(expo_water)
+        qc_values[4] = float(expo_water)/hdr_airmass
         qc_pass[4] = 0
         # flag qc as failed and break
         flag_qc = True
     else:
-        qc_values[4] = float(expo_water)
+        qc_values[4] = float(expo_water)/hdr_airmass
         qc_pass[4] = 1
     # deal with upper bounds for water
-    if expo_water > water_bounds[1]:
+    if expo_water/hdr_airmass > water_bounds[1]:
         # update qc params
-        qc_values[5] = float(expo_water)
+        qc_values[5] = float(expo_water)/hdr_airmass
         qc_pass[5] = 0
         # flag qc as failed and break
         flag_qc = True
     else:
-        qc_values[5] = float(expo_water)
+        qc_values[5] = float(expo_water)/hdr_airmass
         qc_pass[5] = 1
     # ----------------------------------------------------------------------
     # deal with iterations hitting the max (no convergence)
