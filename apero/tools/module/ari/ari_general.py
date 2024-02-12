@@ -182,6 +182,10 @@ def load_ari_params(params: ParamDict) -> ParamDict:
         if not os.path.exists(path):
             os.makedirs(path)
     # ----------------------------------------------------------------------
+    # deal with command line reset
+    if params['INPUTS']['reset']:
+        params.set('ARI_RESET', value=True, source=func_name)
+    # ----------------------------------------------------------------------
     # return the ari parameters
     return params
 
