@@ -287,6 +287,32 @@ def copyfile(params: ParamDict, src: str, dst: str, log: bool = True):
         WLOG(params, 'error', textentry('00-004-00005', args=eargs))
 
 
+def copy_element(old_element: str, new_element: str):
+    """
+    Copies element (path) from old_element to new_element
+    The element can either be a directory or a file
+
+    :param old_element: str, the directory or file to copy from
+    :param new_element: str, the directory or file to copy to
+
+    :return: None, copies old_element to new_element
+    """
+    # deal with files
+    if os.path.isfile(old_element):
+        # deal with old file existing
+        if os.path.exists(new_element):
+            os.remove(new_element)
+        # copy new file
+        shutil.copy(old_element, new_element)
+    # deal with directories
+    else:
+        # deal with old directory existing
+        if os.path.exists(new_element):
+            shutil.rmtree(new_element)
+        # copy new directory
+        shutil.copytree(old_element, new_element)
+
+
 def numpy_load(filename: str) -> Any:
     """
     do np.load (but with some added tries when it fails - i.e. with pickle

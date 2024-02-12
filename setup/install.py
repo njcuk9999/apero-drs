@@ -361,6 +361,8 @@ def get_args() -> argparse.Namespace:
                         help=lang['INSTALL_ASSETDIR_HELP'])
     parser.add_argument('--logdir', action='store', dest='logdir',
                         help=lang['INSTALL_LOGDIR_HELP'])
+    parser.add_argument('--otherdir', action='store', dest='otherdir',
+                        help='Other Directory')
     parser.add_argument('--lbldir', action='store', dest='lbldir',
                         help='LBL Directory')
     parser.add_argument('--always_create', action='store', dest='always_create',

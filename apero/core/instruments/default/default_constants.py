@@ -51,10 +51,12 @@ __all__ = [
     'IMAGE_FRAME_TIME', 'ALL_POLAR_RHOMB_POS',
     # general calib constants
     'COMBINE_METRIC_THRESHOLD1', 'CAVITY_1M_FILE', 'CAVITY_LL_FILE',
+    'SIMBAD_TAP_URL',
     'OBJ_LIST_GAIA_URL', 'CALIB_CHECK_FP_PERCENTILE', 'CALIB_CHECK_FP_THRES',
     'CALIB_CHECK_FP_CENT_SIZE', 'COMBINE_METRIC1_TYPES',
     'OBJ_LIST_GOOGLE_SHEET_URL', 'OBJ_LIST_GSHEET_MAIN_LIST_ID',
     'OBJ_LIST_GSHEET_PEND_LIST_ID', 'OBJ_LIST_GSHEET_REJECT_LIST_ID',
+    'OBJ_LIST_GSHEET_BIBCODE_ID',
     'OBJ_LIST_GSHEET_USER_URL', 'OBJ_LIST_GSHEET_USER_ID',
     'OBJ_LIST_RESOLVE_FROM_DATABASE', 'OBJ_LIST_RESOLVE_FROM_GAIAID',
     'OBJ_LIST_RESOLVE_FROM_GLIST', 'OBJ_LIST_RESOLVE_FROM_COORDS',
@@ -370,6 +372,7 @@ __all__ = [
     'LBL_FILE_DEFS', 'LBL_DPRTYPES', 'LBL_TEMPLATE_FILE_DEFS',
     'LBL_SIM_FP_DPRTYPES', 'LBL_SYMLINKS', 'LBL_FRIENDS',
     'LBL_SPECIFIC_DATATYPES', 'LBL_RECAL_TEMPLATE', 'LBL_MULTI_OBJLIST',
+    'LBL_DTEMP',
     # post-processing settings
     'POST_CLEAR_REDUCED', 'POST_OVERWRITE', 'POST_HDREXT_COMMENT_KEY',
     # tool constants
@@ -380,7 +383,12 @@ __all__ = [
     'SUMMARY_LATEX_PDF', 'EXPMETER_MIN_LAMBDA', 'EXPMETER_MAX_LAMBDA',
     'EXPMETER_TELLU_THRES', 'REPROCESS_PINAMECOL', 'DRIFT_DPRTYPES',
     'DRIFT_DPR_FIBER_TYPE', 'REPROCESS_MP_TYPE', 'REPROCESS_MP_TYPE_VAL',
-    'REPROCESS_REINDEX_BLOCKS', 'REPROCESS_OBJECT_TYPES'
+    'REPROCESS_REINDEX_BLOCKS', 'REPROCESS_OBJECT_TYPES',
+    # ari constants
+    'ARI_INSTRUMENT', 'ARI_USER', 'ARI_NCORES', 'ARI_WAVE_RANGES',
+    'ARI_SSH_COPY', 'ARI_RESET', 'ARI_FILTER_OBJECTS',
+    'ARI_FILTER_OBJECTS_LIST', 'ARI_HEADER_PROPS', 'ARI_FINDING_CHARTS',
+    'ARI_RESET_DICT',
 ]
 
 # set name
@@ -632,6 +640,12 @@ CALIB_CHECK_FP_CENT_SIZE = Const('CALIB_CHECK_FP_CENT_SIZE', value=None,
                                  description=('define the check FP center '
                                               'image size [px]'))
 
+# Define the SIMBAD TAP url
+SIMBAD_TAP_URL = Const('SIMBAD_TAP_URL', value=None, dtype=str, source=__NAME__,
+                       group=cgroup,
+                          description='Define the SIMBAD TAP url')
+
+
 # Define the TAP Gaia URL (for use in crossmatching to Gaia via astroquery)
 OBJ_LIST_GAIA_URL = Const('OBJ_LIST_GAIA_URL', value=None, dtype=str,
                           source=__NAME__, group=cgroup,
@@ -667,6 +681,14 @@ OBJ_LIST_GSHEET_REJECT_LIST_ID = Const('OBJ_LIST_GSHEET_REJECT_LIST_ID',
                                        description='Define the google sheet '
                                                    'objname list reject list '
                                                    'id number')
+
+# Define the google sheet bibcode id number
+OBJ_LIST_GSHEET_BIBCODE_ID = Const('OBJ_LIST_GSHEET_BIBCODE_ID',
+                                   value=None, dtype=str, source=__NAME__,
+                                   group=cgroup,
+                                   description='Define the google sheet '
+                                               'bibcode id number')
+
 
 # Define the google sheet user url object list (None for no user list)
 #     (may be set to a directory for completely offline reduction)
@@ -5489,7 +5511,7 @@ cgroup = 'LBL SETTINGS'
 LBL_FILE_DEFS = Const('LBL_FILE_DEFS', value=None, dtype=str, source=__NAME__,
                       user=False, active=True, group=cgroup,
                       description='Define the file definition type (DRSOUTID) '
-                                    'for LBL input files')
+                                  'for LBL input files')
 
 # Define the dprtype for science files for LBL
 LBL_DPRTYPES = Const('LBL_DPRTYPES', value=None, dtype=str, source=__NAME__,
@@ -5527,8 +5549,8 @@ LBL_SPECIFIC_DATATYPES = Const('LBL_SPECIFIC_DATATYPES', value=None,
                                dtype=str, source=__NAME__, user=False,
                                active=True, group=cgroup,
                                description='Define the specific data types '
-                                            '(where objname is the data type) '
-                                            'for LBL')
+                                           '(where objname is the data type) '
+                                           'for LBL')
 
 # Define objnames for which we should recalculate template if it doesn't
 #   exist (must include FP)
@@ -5536,8 +5558,8 @@ LBL_RECAL_TEMPLATE = Const('LBL_RECAL_TEMPLATE', value=None, dtype=str,
                            source=__NAME__, user=False, active=True,
                            group=cgroup,
                            description='Define objnames for which we should '
-                                        'recalculate template if it doesn\'t '
-                                        'exist (must include FP)')
+                                       'recalculate template if it doesn\'t '
+                                       'exist (must include FP)')
 
 # Define which object names should be run through LBL compute in parellel
 #   i.e. break in to Ncore chunks (comma separated list)
@@ -5548,6 +5570,11 @@ LBL_MULTI_OBJLIST = Const('LBL_MULTI_OBJLIST', value=None, dtype=str,
                                       ' run through LBL compute in parellel '
                                       ' i.e. break in to Ncore chunks '
                                       '(comma separated list)')
+
+# Define the DTEMP gradient files
+LBL_DTEMP = Const('LBL_DTEMP', value=None, dtype=dict,
+                  source=__NAME__, user=False, active=True, group=cgroup,
+                  description='Define the DTEMP gradient files')
 
 # =============================================================================
 # POST PROCESS SETTINGS
@@ -5603,12 +5630,12 @@ REPROCESS_MP_TYPE = Const('REPROCESS_MP_TYPE', value=None, dtype=str,
 # Define whether to use multiprocess "pool" or "process" or use "linear"
 #     mode when validating recipes
 REPROCESS_MP_TYPE_VAL = Const('REPROCESS_MP_TYPE_VAL', value=None, dtype=str,
-                          source=__NAME__, group=cgroup,
-                          user=True, active=True,
-                          options=['linear', 'pool', 'process', 'pathos'],
-                          description='Define whether to use multiprocess '
-                                      '"pool" or "process" or use "linear" '
-                                      'mode when validating recipes')
+                              source=__NAME__, group=cgroup,
+                              user=True, active=True,
+                              options=['linear', 'pool', 'process', 'pathos'],
+                              description='Define whether to use multiprocess '
+                                          '"pool" or "process" or use "linear" '
+                                          'mode when validating recipes')
 
 # Key for use in run files
 REPROCESS_RUN_KEY = Const('REPROCESS_RUN_KEY', value=None, dtype=str,
@@ -5730,6 +5757,77 @@ DRIFT_DPR_FIBER_TYPE = Const('DRIFT_DPR_FIBER_TYPE', value=None, dtype=str,
                              source=__NAME__, group=cgroup,
                              description=('Define the fiber dprtype allowed '
                                           'for drift measurement (only FP)'))
+
+# =============================================================================
+# ARI SETTINGS
+# =============================================================================
+# Define the ari instrument (may be different from the apero instrument)
+ARI_INSTRUMENT = Const('ARI_INSTRUMENT', value=None, dtype=str,
+                       source=__NAME__, group=cgroup,
+                       description='Define the ari instrument (may be different'
+                                   ' from the apero instrument)')
+# Define the ari user name
+ARI_USER = Const('ARI_USER', value=None, dtype=str, source=__NAME__,
+                 group=cgroup,
+                 description='Define the ari user name')
+
+# Define the ari number of cores
+ARI_NCORES = Const('ARI_NCORES', value=None, dtype=int, source=__NAME__,
+                   group=cgroup,
+                   description='Define the ari number of cores')
+
+# Define the ari spectrum wavelength ranges in nm
+ARI_WAVE_RANGES = Const('ARI_WAVE_RANGES', value=None, dtype=dict,
+                        source=__NAME__, group=cgroup,
+                        description='Define the ari spectrum wavelength '
+                                    'ranges in nm')
+
+# Define the ari ssh properties to copy the website to
+ARI_SSH_COPY = Const('ARI_SSH_COPY', value=None, dtype=dict, source=__NAME__,
+                     group=cgroup,
+                     description='Define the ari ssh properties to copy the '
+                                 'website to')
+
+# Define whether to reset the ari working directory
+ARI_RESET = Const('ARI_RESET', value=False, dtype=bool, source=__NAME__,
+                  group=cgroup,
+                  description='Define whether to reset the ari working '
+                              'directory')
+
+# Define whether to filter by objects
+ARI_FILTER_OBJECTS = Const('ARI_FILTER_OBJECTS', value=None, dtype=str,
+                           source=__NAME__, group=cgroup,
+                           description='Define whether to filter by objects')
+
+# Define the list of objects to filter in ari
+ARI_FILTER_OBJECTS_LIST = Const('ARI_FILTER_OBJECTS_LIST', value=None,
+                                dtype=list, source=__NAME__, group=cgroup,
+                                description='Define the list of objects to '
+                                            'filter in ari')
+
+# Define the header key props for ari
+ARI_HEADER_PROPS = Const('ARI_HEADER_PROPS', value=None, dtype=dict,
+                         source=__NAME__, group=cgroup,
+                         description='Define the header key props for ari')
+
+# Define the finding charts dictionary for ari
+ARI_FINDING_CHARTS = Const('ARI_FINDING_CHARTS', value=None, dtype=dict,
+                           source=__NAME__, group=cgroup,
+                           description='Define the finding charts dictionary '
+                                       'for ari')
+
+# Define the ARI reset directory (relative paths to copy into the "other"
+#   directory on installation/reset)
+ari_reset_dict = dict()
+ari_reset_dict['sphinx-setup'] = ('tools/resources/ari/working',
+                                  'ari')
+ari_reset_dict['ari-setup'] = ('tools/resources/ari/ari-config',
+                               'ari-config')
+ARI_RESET_DICT = Const('ARI_RESET_DICT', value=ari_reset_dict,
+                       dtype=dict, source=__NAME__, group=cgroup,
+                       description='Define the ARI reset directory (relative '
+                                      'paths to copy into the "other" directory '
+                                      'on installation/reset)')
 
 # =============================================================================
 #  End of configuration file

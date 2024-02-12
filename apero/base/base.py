@@ -356,7 +356,7 @@ def create_yamls(allparams: Any):
     write_yaml(database_dict, str(database_path))
 
 
-def tqdm_module():
+def tqdm_module(use: bool = True):
     """
     Get the tqdm module in on or off mode
 
@@ -367,7 +367,7 @@ def tqdm_module():
         _ = kwargs
         return args[0]
     # if we want to use tqdm then use it
-    if 'USE_TQDM' in IPARAMS:
+    if 'USE_TQDM' in IPARAMS and use:
         if IPARAMS['USE_TQDM']:
             from tqdm import tqdm as _tqdm
 

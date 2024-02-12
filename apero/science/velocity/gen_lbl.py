@@ -439,6 +439,44 @@ def fake_hkeys(params: ParamDict, filename: str,
     return pkeys
 
 
+# TODO: When dtemp is automatically in LBL this will not need to check
+#       files on disk (that currently need to be copied manually)
+def dtemp(params: ParamDict) -> Union[Dict[str, str], None]:
+    """
+    Add the DTEMP RESPROJ_TABLES
+
+    :param params: ParamDict, parameter dictionary of constants
+
+    :return:
+    """
+    # get the dictionary of dtemp files
+    dtemp_keys = params.dictp('LBL_DTEMP')
+    # get the model directory
+    models_dir = os.path.join(params['LBL_PATH'], 'models')
+
+    # deal with models directory not existing
+    if not os.path.exists(models_dir):
+        WLOG(params, 'warning', 'No DTEMP files found. Skipping.', sublevel=1)
+        return None
+    # storage for output files
+    valid_dtemp_files = dict()
+    # get files in models directory
+    model_dir_files = os.listdir(models_dir)
+    # loop around files
+    for dtemp_key in dtemp_keys:
+        if dtemp_keys[dtemp_key] in model_dir_files:
+            valid_dtemp_files[dtemp_key] = dtemp_keys[dtemp_key]
+    # deal with no files found
+    if len(valid_dtemp_files) == 0:
+        WLOG(params, 'warning', 'No DTEMP files found. Skipping.', sublevel=1)
+        return None
+    else:
+        msg = '{0} DTEMP files found.'
+        margs = [len(valid_dtemp_files)]
+        WLOG(params, 'info', msg.format(*margs))
+        return valid_dtemp_files
+
+
 # =============================================================================
 # Start of code
 # =============================================================================

@@ -678,6 +678,32 @@ class ParamDict(CaseInDict):
         # return keys
         return return_keys
 
+    def key_filter(self, substring: str) -> 'ParamDict':
+        """
+        Returns a sub parameter dictionary with only keys that contain
+        the substring
+
+        :param substring: string, the sub-string to look for in all keys
+
+        :type substring: str
+
+        :return: ParamDict, a sub parameter dictionary with only keys that
+                 contain the substring
+        """
+        # get list of keys
+        keys = self.contains(substring)
+        # create a new parameter dictionary with just these keys
+        sub_params = ParamDict()
+        # loop around found keys and return sub_params
+        for key in keys:
+            sub_params.set(key, self[key], source=str(self.sources[key]),
+                           instance=self.instances[key],
+                           record_use=False)
+        # return sub params
+        return sub_params
+
+
+
     def endswith(self, substring: str) -> List[str]:
         """
         Return all keys that end with this substring

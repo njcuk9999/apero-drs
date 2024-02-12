@@ -86,130 +86,169 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Must check that we are not inside an apero directory
     drs_reset.check_cwd(params)
-
+    # ----------------------------------------------------------------------
+    # setup resets
+    # ----------------------------------------------------------------------
+    # set up the different types of reset
+    names = ['assets', 'tmp', 'red', 'calib', 'tellu', 'log',
+             'plot', 'run', 'lbl', 'out', 'other']
+    # set up True criteria
+    # set up default resets
+    resets = list(names)
+    # set up default warnings
+    if warn:
+        warns = list(names)
+    else:
+        warns = []
+    # ----------------------------------------------------------------------
+    # deal with --only options
+    for name in names:
+        if params['INPUTS'][f'only_{name}']:
+            resets = [name]
+            if warn:
+                warns = [name]
     # ----------------------------------------------------------------------
     # Perform resets
     # ----------------------------------------------------------------------
-    reset0a, reset0b, reset1, reset2, reset3 = True, True, True, True, True
-    reset4, reset5, reset6, reset7, reset8 = True, True, True, True, True
-    # ----------------------------------------------------------------------
     # progress
     drs_reset.reset_title(params, 'Assets')
+    reset = True
+    reset_dbs = True
     # assets folder
-    if warn:
-        reset0a = drs_reset.reset_confirmation(params, 'Assets',
+    if 'assets' in warns:
+        reset = drs_reset.reset_confirmation(params, 'Assets',
                                               params['DRS_DATA_ASSETS'])
     # all databases (can be within assets dir this is why we ask here)
-    if warn and reset0a:
-        reset0b = drs_reset.reset_confirmation(params, 'All databases')
+    if 'assets' in warns and 'assets' in resets and reset:
+        reset_dbs = drs_reset.reset_confirmation(params, 'All databases')
 
-    if reset0a:
+    if 'assets' in resets and reset:
         drs_reset.reset_assets(params, dtimeout=database_timeout,
-                               reset_dbs=reset0b)
+                               reset_dbs=reset_dbs)
     else:
         WLOG(params, '', textentry('40-502-00013', args=['Assets']))
     # ----------------------------------------------------------------------
     # progress
-    drs_reset.reset_title(params, 'Tmp')
+    drs_reset.reset_title(params, 'tmp')
+    reset = True
     # tmp folder
-    if warn:
-        reset1 = drs_reset.reset_confirmation(params, 'Working',
+    if 'tmp' in warns:
+        reset = drs_reset.reset_confirmation(params, 'Working',
                                               params['DRS_DATA_WORKING'])
-    if reset1:
+    if 'tmp' in resets and reset:
         drs_reset.reset_tmp_folders(params, log, dtimeout=database_timeout)
     else:
         WLOG(params, '', textentry('40-502-00013', args=['Tmp']))
     # ----------------------------------------------------------------------
     # progress
     drs_reset.reset_title(params, 'Reduced')
+    reset = True
     # reduced folder
-    if warn:
-        reset2 = drs_reset.reset_confirmation(params, 'Reduced',
+    if 'red' in warns:
+        reset = drs_reset.reset_confirmation(params, 'Reduced',
                                               params['DRS_DATA_REDUC'])
-    if reset2:
+    if 'red' in resets and reset:
         drs_reset.reset_reduced_folders(params, log, dtimeout=database_timeout)
     else:
         WLOG(params, '', textentry('40-502-00013', args=['Reduced']))
     # ----------------------------------------------------------------------
     # progress
     drs_reset.reset_title(params, 'Calibration')
+    reset = True
     # calibration folder
-    if warn:
-        reset3 = drs_reset.reset_confirmation(params, 'Calibration',
+    if 'calib' in warns:
+        reset = drs_reset.reset_confirmation(params, 'Calibration',
                                               params['DRS_CALIB_DB'])
-    if reset3:
+    if 'calib' in resets and reset:
         drs_reset.reset_calibdb(params, log, dtimeout=database_timeout)
     else:
         WLOG(params, '', '\tNot resetting CalibDB files.')
     # ----------------------------------------------------------------------
     # progress
     drs_reset.reset_title(params, 'Telluric')
+    reset = True
     # telluric folder
-    if warn:
-        reset4 = drs_reset.reset_confirmation(params, 'Telluric',
+    if 'tellu' in warns:
+        reset = drs_reset.reset_confirmation(params, 'Telluric',
                                               params['DRS_TELLU_DB'])
-    if reset4:
+    if 'tellu' in resets and reset:
         drs_reset.reset_telludb(params, log, dtimeout=database_timeout)
     else:
         WLOG(params, '', textentry('40-502-00013', args=['Telluric']))
     # ----------------------------------------------------------------------
     # progress
     drs_reset.reset_title(params, 'Log')
+    reset = True
     # deal with files to skip
     exclude_files = [drs_log.get_logfilepath(WLOG, params)]
     # log folder
-    if warn:
-        reset5 = drs_reset.reset_confirmation(params, 'Log',
+    if 'log' in warns:
+        reset = drs_reset.reset_confirmation(params, 'Log',
                                               params['DRS_DATA_MSG'],
                                               exclude_files=exclude_files)
-    if reset5:
+    if 'log' in resets and reset:
         drs_reset.reset_log(params, exclude_files)
     else:
         WLOG(params, '', textentry('40-502-00013', args=['Log']))
     # ----------------------------------------------------------------------
     # progress
     drs_reset.reset_title(params, 'Plot')
+    reset = True
     # plot folder
-    if warn:
-        reset6 = drs_reset.reset_confirmation(params, 'Plotting',
-                                              params['DRS_DATA_PLOT'])
-    if reset6:
+    if 'plot' in warns:
+        reset = drs_reset.reset_confirmation(params, 'Plotting',
+                                             params['DRS_DATA_PLOT'])
+    if 'plot' in resets and reset:
         drs_reset.reset_plot(params)
     else:
         WLOG(params, '', textentry('40-502-00013', args=['Plot']))
     # ----------------------------------------------------------------------
     # progress
     drs_reset.reset_title(params, 'Run')
+    reset = True
     # plot folder
-    if warn:
-        reset7 = drs_reset.reset_confirmation(params, 'Run',
+    if 'run' in warns:
+        reset = drs_reset.reset_confirmation(params, 'Run',
                                               params['DRS_DATA_RUN'])
-    if reset7:
+    if 'run' in resets and reset:
         drs_reset.reset_run(params)
     else:
         WLOG(params, '', textentry('40-502-00013', args=['Run']))
     # ----------------------------------------------------------------------
     # progress
     drs_reset.reset_title(params, 'LBL')
+    reset = True
     # plot folder
-    if warn:
-        reset8 = drs_reset.reset_confirmation(params, 'LBL',
+    if 'lbl' in warns:
+        reset = drs_reset.reset_confirmation(params, 'LBL',
                                               params['LBL_PATH'])
-    if reset8:
+    if 'lbl' in resets and reset:
         drs_reset.reset_lbl_folders(params, log, dtimeout=database_timeout)
     else:
         WLOG(params, '', textentry('40-502-00013', args=['LBL']))
     # ----------------------------------------------------------------------
     # progress
     drs_reset.reset_title(params, 'Out')
+    reset = True
     # plot folder
-    if warn:
-        reset8 = drs_reset.reset_confirmation(params, 'Out',
+    if 'out' in warns:
+        reset = drs_reset.reset_confirmation(params, 'Out',
                                               params['DRS_DATA_OUT'])
-    if reset8:
+    if 'out' in resets and reset:
         drs_reset.reset_out_folders(params, log, dtimeout=database_timeout)
     else:
         WLOG(params, '', textentry('40-502-00013', args=['Out']))
+    # ----------------------------------------------------------------------
+    # progress
+    drs_reset.reset_title(params, 'Other')
+    reset = True
+    if 'other' in warns:
+        reset = drs_reset.reset_confirmation(params, 'Other',
+                                              params['DRS_DATA_OTHER'])
+    if 'other' in resets and reset:
+        drs_reset.reset_other_folder(params, log)
+    else:
+        WLOG(params, '', textentry('40-502-00013', args=['Other']))
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------

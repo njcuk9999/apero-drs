@@ -12,6 +12,7 @@ Created on 2021-11-08
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
+from astropy.table import Table
 from tqdm import tqdm
 
 from apero import lang
@@ -654,7 +655,8 @@ def _get_rawfile(drsfile: DrsFitsFile):
 # =============================================================================
 # Define object checking functions
 # =============================================================================
-def obj_check(params: ParamDict, findexdbm: Optional[FileIndexDatabase] = None):
+def obj_check(params: ParamDict, findexdbm: Optional[FileIndexDatabase] = None,
+              log: bool = True) -> Table:
     """
     Check the index database for unique objects and display which of these
     are not in the object database currently (and not in the rejection list)
@@ -665,9 +667,10 @@ def obj_check(params: ParamDict, findexdbm: Optional[FileIndexDatabase] = None):
     :return: None, prints to screen
     """
     # print progress
-    WLOG(params, 'info', params['DRS_HEADER'])
-    WLOG(params, 'info', 'Checking current set of object names')
-    WLOG(params, 'info', params['DRS_HEADER'])
+    if log:
+        WLOG(params, 'info', params['DRS_HEADER'])
+        WLOG(params, 'info', 'Checking current set of object names')
+        WLOG(params, 'info', params['DRS_HEADER'])
     # ---------------------------------------------------------------------
     # get psuedo constants
     pconst = constants.pload()
@@ -683,7 +686,8 @@ def obj_check(params: ParamDict, findexdbm: Optional[FileIndexDatabase] = None):
     # update the database if required
     if params['UPDATE_OBJ_DATABASE']:
         # log progress
-        WLOG(params, '', textentry('40-503-00039'))
+        if log:
+            WLOG(params, '', textentry('40-503-00039'))
         # update database
         manage_databases.update_object_database(params, log=False)
     # ---------------------------------------------------------------------
@@ -696,7 +700,7 @@ def obj_check(params: ParamDict, findexdbm: Optional[FileIndexDatabase] = None):
     has_entries = manage_databases.reject_db_populated(params)
     # update the database if required
     if params['UPDATE_REJECT_DATABASE'] or not has_entries:
-        manage_databases.update_reject_database(params)
+        manage_databases.update_reject_database(params, log=log)
     # ---------------------------------------------------------------------
     # only find science / hot star objects
     sci_dprtypes = params.listp('PP_OBJ_DPRTYPES', dtype=str)
@@ -709,8 +713,9 @@ def obj_check(params: ParamDict, findexdbm: Optional[FileIndexDatabase] = None):
     uobjnames = findexdbm.get_unique('KW_OBJNAME', condition=condition)
     # ---------------------------------------------------------------------
     # print progress: Preparing list of unique objects from file index database
-    margs = [len(uobjnames)]
-    WLOG(params, '', textentry('40-503-00057', args=margs))
+    if log:
+        margs = [len(uobjnames)]
+        WLOG(params, '', textentry('40-503-00057', args=margs))
     # get the object rejection list
     reject_list = prep.get_obj_reject_list(params)
     # store list of objects not found in the database currently
@@ -733,7 +738,8 @@ def obj_check(params: ParamDict, findexdbm: Optional[FileIndexDatabase] = None):
     last_pi_name = []
     last_obs_date = []
     # Print progress: Finding all original names for each unfound object
-    WLOG(params, 'info', textentry('40-503-00058'))
+    if log:
+        WLOG(params, 'info', textentry('40-503-00058'))
     # loop around
     for unfound_object in tqdm(unfound_objects):
         # condition for this target
@@ -760,28 +766,43 @@ def obj_check(params: ParamDict, findexdbm: Optional[FileIndexDatabase] = None):
 
     # ---------------------------------------------------------------------
     # print any remaining objects
-    # print msg: Objects that will use the header for astrometrics are:
-    WLOG(params, '', textentry('40-503-00059'), colour='magenta', wrap=False)
-    # deal with having no unfound objects
-    if len(unfound_objects) == 0:
-        # print that all objects were found
-        # print msg: All objects found (or in ignore list)!
-        WLOG(params, '', textentry('40-503-00060'))
-    # else we print the unfound objects
-    else:
-        # loop around objects and put on a new line
-        for it in range(len(unfound_objects)):
-            # print the object
-            msg = ('\t{0}\t{1:30s}\t(APERO: {2})'
-                   '\tLAST[{3}, {4}, {5}]')
-            margs = [it + 1, ' or '.join(orig_names[it]), unfound_objects[it],
-                     last_runid[it], last_pi_name[it], last_obs_date[it]]
-            WLOG(params, 'warning', msg.format(*margs), sublevel=8)
-        # print a note that some objects are in ignore list
-        if len(reject_list) > 0:
-            # print msg: Note {0} objects are in the ignore list/ignore aliases
-            margs = [len(reject_list)]
-            WLOG(params, 'info', textentry('40-503-00061', args=margs))
+    if log:
+        # print msg: Objects that will use the header for astrometrics are:
+        WLOG(params, '', textentry('40-503-00059'), colour='magenta',
+             wrap=False)
+        # deal with having no unfound objects
+        if len(unfound_objects) == 0:
+            # print that all objects were found
+            # print msg: All objects found (or in ignore list)!
+            WLOG(params, '', textentry('40-503-00060'))
+        # else we print the unfound objects
+        else:
+            # loop around objects and put on a new line
+            for it in range(len(unfound_objects)):
+                # print the object
+                msg = ('\t{0}\t{1:30s}\t(APERO: {2})'
+                       '\tLAST[{3}, {4}, {5}]')
+                margs = [it + 1, ' or '.join(orig_names[it]),
+                         unfound_objects[it],
+                         last_runid[it], last_pi_name[it],
+                         last_obs_date[it]]
+                WLOG(params, 'warning', msg.format(*margs), sublevel=8)
+            # print a note that some objects are in ignore list
+            if len(reject_list) > 0:
+                # print msg: Note {0} objects are in the ignore list/ignore
+                # aliases
+                margs = [len(reject_list)]
+                WLOG(params, 'info', textentry('40-503-00061', args=margs))
+
+    # create a table of unfound objects
+    unfound_table = Table()
+    unfound_table['Original Names'] = orig_names
+    unfound_table['Apero Name'] = unfound_objects
+    unfound_table['Last Run ID'] = last_runid
+    unfound_table['Last PI Name'] = last_pi_name
+    unfound_table['Last Obs Date'] = last_obs_date
+    # return the unfound table
+    return unfound_table
 
 
 # =============================================================================

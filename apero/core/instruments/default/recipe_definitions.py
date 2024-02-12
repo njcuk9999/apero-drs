@@ -40,6 +40,7 @@ plot = dict(name='--plot', dtype=int, helpstr=textentry('PLOT_HELP'),
 drs_recipe = drs_recipe.DrsRecipe
 
 # Below one must define all recipes and put into the "recipes" list
+ari = drs_recipe(__INSTRUMENT__)
 astrometric = drs_recipe(__INSTRUMENT__)
 changelog = drs_recipe(__INSTRUMENT__)
 explorer = drs_recipe(__INSTRUMENT__)
@@ -62,7 +63,7 @@ validate = drs_recipe(__INSTRUMENT__)
 visulise = drs_recipe(__INSTRUMENT__)
 
 # push into a list
-recipes = [astrometric, changelog, database_mgr, explorer,
+recipes = [ari, astrometric, changelog, database_mgr, explorer,
            get_files, go_recipe, langdb, listing,
            precheck, processing,
            remake_db, remake_doc, req_check, reset, run_ini,
@@ -102,6 +103,22 @@ recipes = [astrometric, changelog, database_mgr, explorer,
 raw_recipe = drs_recipe(__INSTRUMENT__)
 pp_recipe = drs_recipe(__INSTRUMENT__)
 out_recipe = drs_recipe(__INSTRUMENT__)
+
+# -----------------------------------------------------------------------------
+# apero_ri.py
+# -----------------------------------------------------------------------------
+ari.name = 'apero_ri.py'
+ari.shortname = 'ARI'
+ari.instrument = __INSTRUMENT__
+ari.description = 'Run the ARI (APERO reduction interface)'
+ari.recipe_type = 'nolog-tool'
+ari.recipe_kind = 'user'
+ari.set_arg(pos=0, name='profile', dtype=str,
+                   helpstr='ARI yaml file to use')
+ari.set_kwarg(name='--obsdir', dtype=str, default='None',
+              helpstr=textentry('OBS_DIR_HELP'))
+ari.description_file = 'apero_ri.rst'
+
 
 # -----------------------------------------------------------------------------
 # apero_astrometrics.py
@@ -500,7 +517,31 @@ reset.set_kwarg(name='--warn', dtype='bool', default=True,
                 helpstr=textentry('RESET_WARN_HELP'))
 reset.set_kwarg(name='--database_timeout', dtype=int, default=0,
                 helpstr=textentry('RESET_DATABASE_TIMEOUT_HELP'))
+reset.set_kwarg(name='--only_assets', dtype='bool', default=False,
+                helpstr='Reset only the assets directory')
+reset.set_kwarg(name='--only_tmp', dtype='bool', default=False,
+                helpstr='Reset only the tmp directory')
+reset.set_kwarg(name='--only_red', dtype='bool', default=False,
+                helpstr='Reset only the reduced directory')
+reset.set_kwarg(name='--only_calib', dtype='bool', default=False,
+                helpstr='Reset only the calibration directory')
+reset.set_kwarg(name='--only_tellu', dtype='bool', default=False,
+                helpstr='Reset only the telluric directory')
+reset.set_kwarg(name='--only_log', dtype='bool', default=False,
+                helpstr='Reset only the log directory')
+reset.set_kwarg(name='--only_plot', dtype='bool', default=False,
+                helpstr='Reset only the plot directory')
+reset.set_kwarg(name='--only_run', dtype='bool', default=False,
+                helpstr='Reset only the run directory')
+reset.set_kwarg(name='--only_lbl', dtype='bool', default=False,
+                helpstr='Reset only the lbl directory')
+reset.set_kwarg(name='--only_out', dtype='bool', default=False,
+                helpstr='Reset only the out directory')
+reset.set_kwarg(name='--only_other', dtype='bool', default=False,
+                helpstr='Reset only the other directory')
+
 reset.description_file = 'apero_reset.rst'
+
 
 # -----------------------------------------------------------------------------
 # apero_run_ini.py
