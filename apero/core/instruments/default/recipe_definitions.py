@@ -117,6 +117,8 @@ ari.set_arg(pos=0, name='profile', dtype=str,
                    helpstr='ARI yaml file to use')
 ari.set_kwarg(name='--obsdir', dtype=str, default='None',
               helpstr=textentry('OBS_DIR_HELP'))
+ari.set_kwarg(name='--reset', dtype='switch', default=False,
+              helpstr='Reset ARI')
 ari.description_file = 'apero_ri.rst'
 
 
