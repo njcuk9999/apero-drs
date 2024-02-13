@@ -645,7 +645,7 @@ class AriObject:
         dprtypes = indexdbm.get_entries('KW_DPRTYPE',
                                         condition=self.filetypes['pp'].cond)
         # get unique dprtypes
-        udprtypes = get_unqiue(dprtypes, exclude=[None, 'Unknown'])
+        udprtypes = get_unique(dprtypes, exclude=[None, 'Unknown'])
         # push into self
         self.dprtypes = ','.join(udprtypes)
         # ------------------------------------------------------------------
@@ -881,7 +881,7 @@ class AriObject:
             spec_props['FIRST_PP'] = Time(np.min(hdict['PP_MJDMID'])).iso
             spec_props['LAST_PP'] = Time(np.max(hdict['PP_MJDMID'])).iso
             spec_props['LAST_PP_PROC'] = Time(np.max(hdict['PP_PROC'])).iso
-            u_pp_version = get_unqiue(hdict['PP_VERSION'], str, exclude=[None])
+            u_pp_version = get_unique(hdict['PP_VERSION'], str, exclude=[None])
             spec_props['PP_VERSION'] = ','.join(u_pp_version)
         else:
             spec_props['FIRST_PP'] = None
@@ -893,7 +893,7 @@ class AriObject:
             spec_props['FIRST_EXT'] = Time(np.min(hdict['EXT_MJDMID'])).iso
             spec_props['LAST_EXT'] = Time(np.max(hdict['EXT_MJDMID'])).iso
             spec_props['LAST_EXT_PROC'] = Time(np.max(hdict['EXT_PROC'])).iso
-            u_ext_version = get_unqiue(hdict['EXT_VERSION'], str, exclude=[None])
+            u_ext_version = get_unique(hdict['EXT_VERSION'], str, exclude=[None])
             spec_props['EXT_VERSION'] = ','.join(u_ext_version)
         else:
             spec_props['FIRST_EXT'] = None
