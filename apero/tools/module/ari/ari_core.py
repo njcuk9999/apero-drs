@@ -3203,7 +3203,8 @@ def get_unique(values, dtype, exclude: Optional[List[Any]] = None) -> List[Any]:
         exclude = []
     # loop around excludes
     for exclude_value in exclude:
-        uniques.remove(exclude_value)
+        if exclude_value in uniques:
+            uniques.remove(exclude_value)
     # push all into a single dtype
     forced_uniques = [dtype(_unique) for _unique in uniques]
     # return uniques of single data type
