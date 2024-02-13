@@ -644,7 +644,10 @@ class AriObject:
         # Add a dpr type column
         dprtypes = indexdbm.get_entries('KW_DPRTYPE',
                                         condition=self.filetypes['pp'].cond)
-        self.dprtypes = ','.join(list(np.unique(dprtypes)))
+        # get unique dprtypes
+        udprtypes = get_unqiue(dprtypes, exclude=[None, 'Unknown'])
+        # push into self
+        self.dprtypes = ','.join(udprtypes)
         # ------------------------------------------------------------------
         # get all filetype last processing times
         all_last_processed = []
@@ -878,7 +881,8 @@ class AriObject:
             spec_props['FIRST_PP'] = Time(np.min(hdict['PP_MJDMID'])).iso
             spec_props['LAST_PP'] = Time(np.max(hdict['PP_MJDMID'])).iso
             spec_props['LAST_PP_PROC'] = Time(np.max(hdict['PP_PROC'])).iso
-            spec_props['PP_VERSION'] = ','.join(list(np.unique(hdict['PP_VERSION'])))
+            u_pp_version = get_unqiue(hdict['PP_VERSION'], str, exclude=[None])
+            spec_props['PP_VERSION'] = ','.join(u_pp_version)
         else:
             spec_props['FIRST_PP'] = None
             spec_props['LAST_PP'] = None
@@ -889,7 +893,8 @@ class AriObject:
             spec_props['FIRST_EXT'] = Time(np.min(hdict['EXT_MJDMID'])).iso
             spec_props['LAST_EXT'] = Time(np.max(hdict['EXT_MJDMID'])).iso
             spec_props['LAST_EXT_PROC'] = Time(np.max(hdict['EXT_PROC'])).iso
-            spec_props['EXT_VERSION'] = ','.join(list(np.unique(hdict['EXT_VERSION'])))
+            u_ext_version = get_unqiue(hdict['EXT_VERSION'], str, exclude=[None])
+            spec_props['EXT_VERSION'] = ','.join(u_ext_version)
         else:
             spec_props['FIRST_EXT'] = None
             spec_props['LAST_EXT'] = None
@@ -900,7 +905,8 @@ class AriObject:
             spec_props['FIRST_TCORR'] = Time(np.min(hdict['TCORR_MJDMID'])).iso
             spec_props['LAST_TCORR'] = Time(np.max(hdict['TCORR_MJDMID'])).iso
             spec_props['LAST_TCORR_PROC'] = Time(np.max(hdict['TCORR_PROC'])).iso
-            spec_props['TCORR_VERSION'] = ','.join(list(np.unique(hdict['TCORR_VERSION'])))
+            u_tcorr_version = get_unique(hdict['TCORR_VERSION'], str, exclude=[None])
+            spec_props['TCORR_VERSION'] = ','.join(u_tcorr_version)
         else:
             spec_props['FIRST_TCORR'] = None
             spec_props['LAST_TCORR'] = None
@@ -1336,7 +1342,8 @@ class AriObject:
         ccf_props['LAST_CCF_PROC'] = Time(np.max(hdict['CCF_PROC'])).iso
         # -----------------------------------------------------------------
         # ccf version
-        ccf_props['CCF_VERSION'] = ','.join(list(np.unique(hdict['CCF_VERSION'])))
+        u_ccf_version = get_unique(hdict['CCF_VERSION'], str, exclude=[None])
+        ccf_props['CCF_VERSION'] = ','.join(u_ccf_version)
         # -----------------------------------------------------------------
         # standard request keyword args
         rkwargs = dict(fiber='Science fiber',
@@ -1537,7 +1544,9 @@ class AriObject:
             snyh = np.mean(snyh_vec[obs_mask_ext])
             snyh = '{:.3f}'.format(snyh)
             # get the dprtypes
-            dprtype = ','.join(list(np.unique(dprtype_vec[obs_mask_ext])))
+            udprtypes = get_unique(dprtype_vec[obs_mask_ext], str,
+                                   exclude=['None', 'Unknown'])
+            dprtype = ','.join(udprtypes)
             # -----------------------------------------------------------------
             # Create the ext and tellu for this object
             # -----------------------------------------------------------------
@@ -3184,6 +3193,21 @@ def make_finder_download_table(entry, objname, item_save_path, item_rel_path,
                    item_path, down_rel_path,
                    down_save_path, title='Finder charts')
     return item_rel_path + dwn_base_name
+
+
+def get_unique(values, dtype, exclude: Optional[List[Any]] = None) -> List[Any]:
+    # get unique dprtypes
+    uniques = list(set(values))
+    # deal with no excludes
+    if exclude is None:
+        exclude = []
+    # loop around excludes
+    for exclude_value in exclude:
+        uniques.remove(exclude_value)
+    # push all into a single dtype
+    forced_uniques = [dtype(_unique) for _unique in uniques]
+    # return uniques of single data type
+    return forced_uniques
 
 
 # =============================================================================
