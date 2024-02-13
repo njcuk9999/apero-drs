@@ -645,7 +645,7 @@ class AriObject:
         dprtypes = indexdbm.get_entries('KW_DPRTYPE',
                                         condition=self.filetypes['pp'].cond)
         # get unique dprtypes
-        udprtypes = get_unique(dprtypes, exclude=[None, 'Unknown'])
+        udprtypes = get_unique(dprtypes, str, exclude=[None, 'Unknown'])
         # push into self
         self.dprtypes = ','.join(udprtypes)
         # ------------------------------------------------------------------
