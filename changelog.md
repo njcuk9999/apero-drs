@@ -2,6 +2,188 @@ Changelog
 =========
 
 
+0.7.289 (2024-02-13)
+--------------------
+- [APERO] apero_ri.py - Fix for unique values containing None. [Neil
+  Cook]
+- [APERO] apero_ri.py - Fix for unique values containing None. [Neil
+  Cook]
+- [APERO] apero_ri.py - Fix for unique values containing None. [Neil
+  Cook]
+- [APERO] apero_ri.py - Fix for unique values containing None. [Neil
+  Cook]
+- [APERO] add spirou_offline_udem profile to ARI. [Neil Cook]
+- [ARI] Add a reset to apero_ri.py. [Neil Cook]
+- [APERO] ari_core.py - add ari_user to all files/tables/graphs. [Neil
+  Cook]
+- [APERO] TElluric airmass limit too low [was 3 now a ratio compared to
+  the airmass] (Issue https://github.com/njcuk9999/apero-
+  utils/issues/203) [Neil Cook]
+- Merge branch 'main' into v0.7.289-live. [Neil Cook]
+- [APERO] update due to security vulnerability. [Neil Cook]
+- Merge branch 'main' into v0.7.289-live. [Neil Cook]
+- Merge pull request #730 from njcuk9999/dependabot/pip/pillow-10.0.1.
+  [Neil Cook]
+
+  Bump pillow from 9.5.0 to 10.0.1
+- Bump pillow from 9.5.0 to 10.0.1. [dependabot[bot]]
+
+  Bumps [pillow](https://github.com/python-pillow/Pillow) from 9.5.0 to 10.0.1.
+  - [Release notes](https://github.com/python-pillow/Pillow/releases)
+  - [Changelog](https://github.com/python-pillow/Pillow/blob/main/CHANGES.rst)
+  - [Commits](https://github.com/python-pillow/Pillow/compare/9.5.0...10.0.1)
+
+  ---
+  updated-dependencies:
+  - dependency-name: pillow
+    dependency-type: direct:production
+  ...
+- Merge pull request #731 from
+  njcuk9999/dependabot/pip/gitpython-3.1.37. [Neil Cook]
+
+  Bump gitpython from 3.1.31 to 3.1.37
+- Bump gitpython from 3.1.31 to 3.1.37. [dependabot[bot]]
+
+  Bumps [gitpython](https://github.com/gitpython-developers/GitPython) from 3.1.31 to 3.1.37.
+  - [Release notes](https://github.com/gitpython-developers/GitPython/releases)
+  - [Changelog](https://github.com/gitpython-developers/GitPython/blob/main/CHANGES)
+  - [Commits](https://github.com/gitpython-developers/GitPython/compare/3.1.31...3.1.37)
+
+  ---
+  updated-dependencies:
+  - dependency-name: gitpython
+    dependency-type: direct:production
+  ...
+- Merge remote-tracking branch 'origin/v0.7.289-live' into
+  v0.7.289-live. [Neil Cook]
+- [APERO] ari-core.py - fix the lbl count on files. [Neil Cook]
+- [APERO] apero_ri - fix bug with finder charts. [Neil Cook]
+- [APERO-CHECKS] fix astrom_test (must update database) [Neil Cook]
+- Apero_prechecks: remove logging when log=False. [Neil Cook]
+- [APERO] apero_precheck.py - return a table and stop logging. [Neil
+  Cook]
+- [APERO] install.py - fix problems with prompts when using all from
+  command line arguments (Issue #743) [Neil Cook]
+- [APERO] ari_pages.py - try to correct pdf url in table. [Neil Cook]
+- [APERO] aeri_pages.py - try to correct pdf url in table. [Neil Cook]
+- [APERO] aeri_pages.py - make link to pdf. [Neil Cook]
+- [APERO] aeri_pages.py - make link to pdf. [Neil Cook]
+- [APERO] Fix that flat recipe writes E2DSLL when DEBUG_E2DSLL_FILE =
+  False (Issue #740) [Neil Cook]
+- [APERO] Fix that wave recipes require the debug file to exist (to
+  update their headers) Issue #740. [Neil Cook]
+- [APERO] Add DRS_DATA_OUT, DRS_DATA_OTHER and LBL_PATH to the startup
+  printout (apero.core.utils.drs_startup.py)  Issue #732. [Neil Cook]
+- [APERO] astrometrics - add properties from simbad (with preferred
+  bibcodes) [Neil Cook]
+- [APERO] astrometrics - add properties from simbad (with preferred
+  bibcodes) [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.289-live' into
+  v0.7.289-live. [Neil Cook]
+- [APERO] fix plot_map1 argument (ari finding) [Neil Cook]
+- [APERO] fix bug in ARI_FINDER params. [Neil Cook]
+- [APERO] fix plot_map1 argument (ari finding) [Neil Cook]
+- [APERO] fix bug in ARI_FINDER params. [Neil Cook]
+- [APERO] fix the filtering of objects. [Neil Cook]
+- [APERO] fix the filtering of objects. [Neil Cook]
+- [APERO] fix the WLOG. [Neil Cook]
+- [APERO] fix the finder_dict not having create. [Neil Cook]
+- [APERO] fix finder chart SCALE_BAR --> SCALE_SIZE. [Neil Cook]
+- [APERO] add finder charts to ari. [Neil Cook]
+- [APERO] work on putting finding charts in ARI. [Neil Cook]
+- [APERO] work on putting finding charts in ARI. [Neil Cook]
+- Manual_trigger.py - add an option to override the run.ini file from
+  the command line. [Neil Cook]
+- Merge branch 'developer' into v0.7.289-live. [Neil Cook]
+- [APERO] update readme versions. [Neil Cook]
+- [APERO] manage_databases.py - remove dependency on google-sheet
+  columns (future safe) [Neil Cook]
+- [APERO] fix finding model files. [Neil Cook]
+- [APERO] report on using DTEMP. [Neil Cook]
+- [APERO] manage_databases.py - remove dependency on google-sheet
+  columns (future safe) [Neil Cook]
+- [APERO] continue work to add ARI to apero tools - add live paths.
+  [Neil Cook]
+- [APERO] continue work to add ARI to apero tools. [Neil Cook]
+- [APERO] continue work to add ARI to apero tools. [Neil Cook]
+- [APERO] continue work to add ARI to apero tools. [Neil Cook]
+- [APERO] continue work to add ARI to apero tools. [Neil Cook]
+- [APERO] continue work to add ARI to apero tools. [Neil Cook]
+- [APERO] continue work to add ARI to apero tools. [Neil Cook]
+- [APERO] continue work to add ARI to apero tools. [Neil Cook]
+- [APERO] continue work to add ARI to apero tools. [Neil Cook]
+- [APERO] continue work to add ARI to apero tools. [Neil Cook]
+- [APERO] continue work to add ARI to apero tools. [Neil Cook]
+- [APERO] continue work to add ARI to apero tools. [Neil Cook]
+- [APERO] continue work to add ARI to apero tools. [Neil Cook]
+- [APERO] continue work to add ARI to apero tools. [Neil Cook]
+- [APERO] continue work to add ARI to apero tools. [Neil Cook]
+- [APERO] continue work to add ARI to apero tools. [Neil Cook]
+- [APERO] continue work to add ARI to apero tools. [Neil Cook]
+- [APERO] start work to add ARI to apero tools. [Neil Cook]
+- [APERO] add option for dtemp to apero-lbl. [Neil Cook]
+- [APERO] update requirements_current.txt to match
+  requirements_developer.txt (Should solve Issue #729) [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.288-stable-test' into
+  v0.7.288-stable-test. [Neil Cook]
+- [APERO] add lbl log messages to apero log. [Neil Cook]
+- [APERO] lbl codes - send --program to lbl. [Neil Cook]
+- [APERO] lbl codes - send --program to lbl. [Neil Cook]
+- [APERO] apero.science.velocity.gen_lbl.py - only use filename if
+  header_fits_file is None. [Neil Cook]
+- [APERO] apero.science.velocity.gen_lbl.py - fix typo. [Neil Cook]
+- [APERO] update lbl "add_output" to better fill the database from
+  header files (for compile use last lblrv input file) [Neil Cook]
+- [APERO] apero.core.core.drs_database.py - fix problem with
+  INCLUDE_OBS_DIRS and missing the "other" directory. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.288-stable-test' into
+  v0.7.288-stable-test. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.288-stable-test' into
+  v0.7.288-stable-test. [Neil Cook]
+- Add a lock file in the checks to avoid uploading to google sheet at
+  the same time. [Neil Cook]
+- [APERO] apero.tools.module.listing.drs_get.py - deal better with
+  KW_RUN_ID and KW_PI_NAME being NULL. [Neil Cook]
+- [APERO] template_tellu.py - fix typo - del variables inside if
+  statement. [Neil Cook]
+- [APERO] apero_get.py - introduce way to impose file size limit which
+  raises error if failed. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.288-live' into
+  v0.7.288-live. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.288-live' into
+  v0.7.288-live. [Neil Cook]
+- Apero.science.telluric.template_tellu.py - open files manually to
+  avoid memory error (Issue #706) [Neil Cook]
+- [APERO] apero.core.instruments.spirou.default_constants.py - fix the
+  dprtypes allowed for sim_fp (missing POLAR_FP) - should fix Issue
+  #722. [Neil Cook]
+- Merge branch 'v0.7.288-stable-test' into v0.7.288-live. [Neil Cook]
+- [APERO] install.py - fix --lbldir argument (should fix Issue #722)
+  [Neil Cook]
+- Apero.science.telluric.template_tellu.py - do some more clean up.
+  [Neil Cook]
+- [APERO] apero.science.telluric.template_tellu.py - try to stop memory
+  leak in template creation. [Neil Cook]
+- [APERO] remove whitespace from HIERARCH ESO OBS PROG ID
+  default_keywords.py. [Neil Cook]
+- [APERO] update all run.ini files in assets (Issue
+  https://github.com/njcuk9999/apero-drs/issues/720 and
+  https://github.com/njcuk9999/apero-utils/issues/181) [Neil Cook]
+- [APERO] set complete_run.ini SKIP_XXX to False by default (Issue
+  https://github.com/njcuk9999/apero-drs/issues/720 and
+  https://github.com/njcuk9999/apero-utils/issues/181) [Neil Cook]
+- [APERO] sort precheck file directories alphabetically (issue
+  https://github.com/njcuk9999/apero-utils/issues/130) [Neil Cook]
+- [APERO] apero_lbl_compile - skip done should be False - we should
+  always recompute lbl_compile. [Neil Cook]
+- Merge branch 'v0.7.287-live' into v0.7.288-live. [Neil Cook]
+- [APERO] fix apero_get that when DRSOUTID is given fiber is changed if
+  no fiber present in a DRSOUTID. [Neil Cook]
+- Listing.drs_get.py - remove fits from any identifer for the filename.
+  [Neil Cook]
+- [APERO] update date/version/changelog. [Neil Cook]
+
+
 0.7.288 (2023-08-30)
 --------------------
 - [NIRPS] remove AB from file_Definitions of nirps he and ha. [Neil
