@@ -629,6 +629,8 @@ class AriObject:
             filetype.count_files(self.objname, indexdbm, logdbm, self.filetypes)
             # deal with update
             update = update or bool(filetype.update)
+            # push back into filetypes
+            self.filetypes[key] = filetype
             # if there are no entries we have no raw files for this object
             if key == 'raw':
                 if filetype.num == 0:
@@ -641,13 +643,16 @@ class AriObject:
         else:
             self.update = True
         # ------------------------------------------------------------------
-        # Add a dpr type column
-        dprtypes = indexdbm.get_entries('KW_DPRTYPE',
-                                        condition=self.filetypes['pp'].cond)
-        # get unique dprtypes
-        udprtypes = get_unique(dprtypes, str, exclude=[None, 'Unknown'])
-        # push into self
-        self.dprtypes = ','.join(udprtypes)
+        if self.filetypes['pp'].cond is None:
+            self.dprtypes = ''
+        else:
+            # Add a dpr type column
+            dprtypes = indexdbm.get_entries('KW_DPRTYPE',
+                                            condition=self.filetypes['pp'].cond)
+            # get unique dprtypes
+            udprtypes = get_unique(dprtypes, str, exclude=[None, 'Unknown'])
+            # push into self
+            self.dprtypes = ','.join(udprtypes)
         # ------------------------------------------------------------------
         # get all filetype last processing times
         all_last_processed = []
