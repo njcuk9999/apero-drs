@@ -789,6 +789,47 @@ class AperoDatabase:
         emsg = 'The reload_from_backup method is not implemented'
         NotImplemented(emsg)
 
+    def duplicate(self, old_database: 'AperoDatabase'):
+        """
+        Duplicate the database from another database
+
+        :param old_database: Database, the old database to duplicate
+        :return:
+        """
+        # TODO: Test this (from 0.7.289) - UNTESTED
+        # remove the current new table
+        self.delete_table(self.tablename)
+        # define the meta data
+        metadata = sqlalchemy.MetaData()
+        metadata.reflect(bind=self.engine)
+        # create a new table like the original table
+        old_table = sqlalchemy.Table(old_database.tablename, metadata,
+                                     autoload=True)
+        new_table = old_table.tometadata(metadata)
+        new_table.metadata = metadata
+        # create table
+        metadata.create_all(self.engine)
+        # copy data from old table to new table
+        with self.engine.begin() as conn:
+            conn.execute(new_table.insert().from_select('*', old_table.select()))
+
+    def replace_paths(self, oldpath: str, newpath: str, colname: str):
+        # TODO: Test this (from 0.7.289) - UNTESTED
+        # define the meta data
+        metadata = sqlalchemy.MetaData()
+        metadata.reflect(bind=self.engine)
+        # create a new table like the original table
+        table = sqlalchemy.Table(self.tablename, metadata, autoload=True)
+        # set up the update dictionary
+        udict = dict()
+        udict[colname] = (sqlalchemy.update(table.c[colname], None)
+                          .corresponding_column.with_variant(newpath, type_=None))
+        # create the update statement
+        update_cmd = sqlalchemy.update(table).values(udict)
+        # execute the update
+        with self.engine.begin() as conn:
+            conn.execute(update_cmd.where(table.c[colname].like(f'{oldpath}%')))
+
     # -------------------------------------------------------------------------
     # Private Methods
     # -------------------------------------------------------------------------
