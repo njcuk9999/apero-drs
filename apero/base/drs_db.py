@@ -1110,7 +1110,7 @@ class Database:
         emsg = 'Please abstract method with SQLiteDatabase or MySQLDatabase'
         NotImplemented(emsg)
 
-    def duplicate(self, old_database: 'MySQLDatabase'):
+    def duplicate(self, old_database: Union['Database']):
         """
         Duplicate the database from another database
 
@@ -1126,6 +1126,8 @@ class Database:
 
         :param oldpath: str, the old path to replace
         :param newpath: str, the new path to replace with
+        :param colname: str, the column name to replace paths in
+
         :return:
         """
         emsg = 'Please abstract method with SQLiteDatabase or MySQLDatabase'
@@ -1723,7 +1725,7 @@ class SQLiteDatabase(Database):
                 backup_conn.close()
                 conn.close()
 
-    def duplicate(self, old_database: 'MySQLDatabase'):
+    def duplicate(self, old_database: Union['Database', 'MySQLDatabase']):
         """
         Duplicate the database from another database
 
@@ -1746,6 +1748,8 @@ class SQLiteDatabase(Database):
 
         :param oldpath: str, the old path to replace
         :param newpath: str, the new path to replace with
+        :param colname: str, the column name to replace paths in
+
         :return:
         """
         # construct command
@@ -1788,7 +1792,8 @@ class SQLiteDatabase(Database):
 class MySQLDatabase(Database):
     # A wrapper for a MySQL database.
     def __init__(self, path: str, host: str, user: str, passwd: str,
-                 database: str, tablename: str, verbose: bool = False,
+                 database: str, tablename: Union[str, None],
+                 verbose: bool = False,
                  absolute_table_name: bool = False,
                  tries: int = 20):
         """
@@ -2489,7 +2494,7 @@ class MySQLDatabase(Database):
         # add pandas table to database
         self.add_from_pandas(df, if_exists='replace', unique_cols=ucols)
 
-    def duplicate(self, old_database: 'MySQLDatabase'):
+    def duplicate(self, old_database: Union['Database', 'SQLiteDatabase']):
         """
         Duplicate the database from another database
 
@@ -2512,6 +2517,8 @@ class MySQLDatabase(Database):
 
         :param oldpath: str, the old path to replace
         :param newpath: str, the new path to replace with
+        :param colname: str, the column name to replace paths in
+
         :return:
         """
         # construct command
