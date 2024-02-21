@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+APERO base database functionality
 
-# CODE DESCRIPTION HERE
+The direct interface with SQL
 
 Created on 2023-03-14 at 11:27
 

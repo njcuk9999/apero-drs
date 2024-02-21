@@ -254,7 +254,7 @@ class OtherPath(BlockPath):
         :param params: ParamDict, the parameter dictionary of constants
         :param check: if True raises error when path does not exist
         """
-        super().__init__(params, self.name, self.key, indexing=True,
+        super().__init__(params, self.name, self.key, indexing=False,
                          logging=False, check=check)
         self.has_obs_dirs = False
 

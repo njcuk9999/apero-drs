@@ -24,7 +24,7 @@ yagmail==0.15.293
 lbl @ git+https://github.com/njcuk9999/lbl.git@developer
 
 # pip: if using mysql
-mysql-connector-python==8.0.20
+mysql-connector-python==8.3.0
 SQLAlchemy==2.0.15
 sqlalchemy_utils==0.41.1
 
