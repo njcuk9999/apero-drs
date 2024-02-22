@@ -17,6 +17,7 @@ only from:
 
 """
 from typing import Any, Dict, List, Literal, Optional, Union
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -129,6 +130,8 @@ class AperoDatabase:
         self.engine = sqlalchemy.create_engine(url, echo=verbose)
         # define the table name
         self.tablename = tablename
+        # define backup path
+        self.backup_path = None
 
     def __getstate__(self) -> dict:
         """
@@ -180,7 +183,7 @@ class AperoDatabase:
     def add_table(self, tablename: str,
                   columns: List[sqlalchemy.Column],
                   indexes: List[sqlalchemy.Index] = None,
-                  uniques: List[sqlalchemy.UniqueConstraint] = None):
+                  uniques: List[str] = None):
         """
         Add a table to the database
 
@@ -191,23 +194,52 @@ class AperoDatabase:
 
         :return:
         """
+
+        # ----------------------------------------------------------------------
+        # re-create the columns (just name and type)
+        new_columns = []
+        for col in columns:
+            # deal with uniqueness
+            unique_arg = col.unique
+            # add the new column
+            new_columns.append(sqlalchemy.Column(col.name, col.type,
+                                                 unique=unique_arg))
+        # ----------------------------------------------------------------------
+        # re-create the indexes (just name and columns)
+        if indexes is not None:
+            new_indexes = []
+            for _index in indexes:
+                # Create new Index object without the table attribute
+                index_columns = list(_index.expressions)
+                new_index = sqlalchemy.Index(_index.name, *index_columns)
+                new_indexes.append(new_index)
+        else:
+            new_indexes = None
+        # ----------------------------------------------------------------------
+        # deal with uniques
+        if uniques is None:
+            new_uniques = []
+        else:
+            constraint_name = 'uq_' + '_'.join(uniques)
+            new_uniques = [sqlalchemy.UniqueConstraint(*uniques,
+                                                       name=constraint_name)]
         # ----------------------------------------------------------------------
         # get a list of unique columns
-        unique_cols = self._unique_cols(columns=columns)
+        unique_cols = self._unique_cols(columns=new_columns)
+        # add the columsn from uniques
+        unique_cols = list(set(unique_cols + uniques))
         # deal with adding the hash columns
         if len(unique_cols) > 0:
             # create a hash column
             hash_col = sqlalchemy.Column(UHASH_COL, sqlalchemy.String(64),
                                          unique=True)
             # add the hash columns to columns
-            columns.append(hash_col)
+            new_columns.append(hash_col)
         # ----------------------------------------------------------------------
         # deal with indexes being None
-        if indexes is None:
-            indexes = []
-        # deal with uniques being None
-        if uniques is None:
-            uniques = []
+        if new_indexes is None:
+            new_indexes = []
+
         # ----------------------------------------------------------------------
         # check to see if table name exists in database
         inspector = sqlalchemy.inspect(self.engine)
@@ -217,7 +249,8 @@ class AperoDatabase:
         # define the meta data
         metadata = sqlalchemy.MetaData()
         # create the table
-        _ = sqlalchemy.Table(tablename, metadata, *columns, *indexes, *uniques)
+        _ = sqlalchemy.Table(tablename, metadata, *new_columns, *new_indexes,
+                             *new_uniques)
         # create table
         metadata.create_all(self.engine)
 
@@ -231,6 +264,19 @@ class AperoDatabase:
         inspector = sqlalchemy.inspect(self.engine)
         # get table names
         return inspector.get_table_names()
+
+    def has_table(self, tablename: str):
+        """
+        Check if a table exists in the database
+
+        :param tablename: str, the name of the table
+
+        :return: bool, True if table exists, False otherwise
+        """
+        # get inspector
+        inspector = sqlalchemy.inspect(self.engine)
+        # check if table exists
+        return inspector.has_table(tablename)
 
     def count(self, tablename: Optional[str] = None,
               condition: Optional[str] = None) -> int:
@@ -393,7 +439,12 @@ class AperoDatabase:
         if columns == '*':
             query = sqltable.select()
         else:
-            sqlcols = [getattr(sqltable.c, col) for col in columns.split(',')]
+            # get column instances matching our input columns
+            sqlcols = []
+            for col in columns.split(','):
+                col = col.strip()
+                sqlcols.append(getattr(sqltable.c, col))
+            # run query only with these columns
             query = sqltable.select().with_only_columns(*sqlcols)
         # ---------------------------------------------------------------------
         # add condition
@@ -498,6 +549,15 @@ class AperoDatabase:
         if update_dict is None and values is not None:
             update_dict = {col: val for col, val in zip(columns, values)}
         # ---------------------------------------------------------------------
+        # deal with NaN/None/Null values
+        if update_dict is not None:
+            for key, value in update_dict.items():
+                if value in [None, np.nan]:
+                    update_dict[key] = sqlalchemy.null()
+                elif isinstance(value, str):
+                    if value.lower() in ['null', 'none', 'nan']:
+                        update_dict[key] = sqlalchemy.null()
+        # ---------------------------------------------------------------------
         # add the hash column
         if len(unique_cols) > 0:
             update_dict = _hash_col(update_dict, unique_cols)
@@ -575,6 +635,15 @@ class AperoDatabase:
         # make the update dictionary
         if insert_dict is None and values is not None:
             insert_dict = {col: val for col, val in zip(columns, values)}
+        # ---------------------------------------------------------------------
+        # deal with NaN/None/Null values
+        if insert_dict is not None:
+            for key, value in insert_dict.items():
+                if value in [None, np.nan]:
+                    insert_dict[key] = sqlalchemy.null()
+                elif isinstance(value, str):
+                    if value.lower() in ['null', 'none', 'nan']:
+                        insert_dict[key] = sqlalchemy.null()
         # ---------------------------------------------------------------------
         # add the hash column
         if len(unique_cols) > 0:
@@ -778,16 +847,28 @@ class AperoDatabase:
                                           exception=AperoDatabaseError)
 
     def backup(self):
-        _ = self
-        # TODO: Can we add this?
-        emsg = 'The backup method is not implemented'
-        NotImplemented(emsg)
+        """
+        Backup the database to a csv file
+        """
+        # construct backup path
+        if self.backup_path is None:
+            return
+        # get the full database
+        full_dataframe = self.get(columns='*', return_pandas=True)
+        # save as csv to backup path
+        full_dataframe.to_csv(self.backup_path, index=False)
 
     def reload_from_backup(self):
-        _ = self
-        # TODO: Can we add this?
-        emsg = 'The reload_from_backup method is not implemented'
-        NotImplemented(emsg)
+        """
+        Reload the database from a csv file
+        """
+        # construct backup path
+        if self.backup_path is None:
+            return
+        # load csv using pandas
+        full_dataframe = pd.read_csv(self.backup_path)
+        # add to database
+        self.add_from_pandas(full_dataframe, if_exists='replace')
 
     def duplicate(self, old_database: 'AperoDatabase'):
         """
@@ -927,9 +1008,9 @@ class AperoDatabaseColumns:
         self.altnames = []
         self.comments = []
 
-        self.columns = []
-        self.indexes = []
-        self.uniques = []
+        self.columns: List[sqlalchemy.Column] = []
+        self.indexes: List[sqlalchemy.Index] = []
+        self.uniques: List[str] = []
 
     def __getstate__(self) -> dict:
         """
@@ -975,10 +1056,9 @@ class AperoDatabaseColumns:
         # deal with being an index
         if is_index:
             self.indexes.append(sqlalchemy.Index(f'idx_{name}', name))
-        # deal with being unique)
+        # deal with being unique
         if is_unique:
-            self.uniques.append(sqlalchemy.UniqueConstraint(name,
-                                                            name=f'uix_{name}'))
+            self.uniques.append(name)
 
     def __add__(self, other: 'AperoDatabaseColumns'):
         """
@@ -998,10 +1078,39 @@ class AperoDatabaseColumns:
 
         new.columns = self.columns + other.columns
         new.indexes = self.indexes + other.indexes
-        new.uniques = self.uniques + other.uniques
 
         # return the new
         return new
+
+    def get_datatype(self, column: str) -> Any:
+        """
+        Get the datatype for a column
+
+        :param column: str, the name of the column
+
+        :return: Any, the datatype for the column
+        """
+        # do not bother if we don't have this column name
+        if column not in self.names:
+            return None
+        # get index
+        index = self.names.index(column)
+        # get the sqlalchemy datatype
+        stype = self.columns[index].type
+        # test strings
+        if isinstance(stype, (sqlalchemy.String, sqlalchemy.Text)):
+            return str
+        # test integers
+        if isinstance(stype, sqlalchemy.Integer):
+            return int
+        # test floats
+        if isinstance(stype, sqlalchemy.Float):
+            return float
+        # test boolean
+        if isinstance(stype, sqlalchemy.Boolean):
+            return bool
+        # if we get here return None
+        return None
 
 
 # =============================================================================
@@ -1225,8 +1334,10 @@ class LanguageDatabase(DatabaseManager):
         self.databasefile = ''
         self.resetfile = ''
         self.instruement_resetfile = ''
-        # set path
+        # set database settings
         self.database_settings(kind=self.kind)
+        # set path settings
+        self.path_definitions()
 
     LanguageEntry = Union[tuple, pd.DataFrame, np.ndarray, AstropyTable, None]
 
@@ -1373,6 +1484,27 @@ class LanguageDatabase(DatabaseManager):
         # return dictionary storage
         return storage
 
+    def path_definitions(self):
+        """
+        Sets up the path definitions required to load language database
+        :return:
+        """
+        # set function
+        func_name = '{0}.{1}.{2}()'.format(__NAME__, self.classname,
+                                           'path_definitions')
+        # get the package name
+        package = base.__PACKAGE__
+        # get the relative path for the database
+        lang_path = base.LANG_DEFAULT_PATH
+        # get the absolute path for the language database
+        abs_lang_path = drs_base.base_func(drs_base.base_get_relative_folder,
+                                           func_name, package, lang_path)
+        abs_lang_path = Path(abs_lang_path)
+        # set absolute path
+        self.databasefile = abs_lang_path.joinpath(base.LANG_DB_FILE)
+        self.resetfile = abs_lang_path.joinpath(base.LANG_DB_RESET)
+        instrument_reset = base.LANG_DB_RESET_INST.format(self.instrument)
+        self.instruement_resetfile = abs_lang_path.joinpath(instrument_reset)
 
 # =============================================================================
 # Working functions
@@ -1521,7 +1653,6 @@ if __name__ == "__main__":
                 sqlalchemy.Column('age', sqlalchemy.Integer),
                 sqlalchemy.Column('weight', sqlalchemy.Float)]
     _indexes = [sqlalchemy.Index('idx_users_name_age', 'name', 'age')]
-    _uniques = [sqlalchemy.UniqueConstraint('name', name='uix_name')]
 
     _database.delete_table('users')
     _database.delete_table('users2')

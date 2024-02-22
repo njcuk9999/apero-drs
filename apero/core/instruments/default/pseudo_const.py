@@ -1250,10 +1250,10 @@ class DefaultPseudoConstants:
         index_cols.add(name='USED', datatype=sqlalchemy.Integer)
         index_cols.add(name='RAWFIX', datatype=sqlalchemy.Integer)
         # manage index groups
-        index_cols.uniques.append(sqlalchemy.Index('idx_block_obs_used',
+        index_cols.indexes.append(sqlalchemy.Index('idx_block_obs_used',
                                                    'BLOCK_KIND', 'OBS_DIR',
                                                    'USED'))
-        index_cols.uniques.append(sqlalchemy.Index('idx_block_obs_filename',
+        index_cols.indexes.append(sqlalchemy.Index('idx_block_obs_filename',
                                                    'BLOCK_KIND', 'OBS_DIR',
                                                    'FILENAME'))
         # return column object
@@ -1401,7 +1401,7 @@ class DefaultPseudoConstants:
                         comment='RAM usuage at start of recipe / GB')
         log_columns.add(name='RAM_USAGE_END', datatype=sqlalchemy.Float,
                         comment='RAM usuage at end of recipe / GB')
-        log_columns.add(name='RAW_TOTAL', datatype=sqlalchemy.Float,
+        log_columns.add(name='RAM_TOTAL', datatype=sqlalchemy.Float,
                         comment='Total RAM at start')
         log_columns.add(name='SWAP_USAGE_START', datatype=sqlalchemy.Float,
                         comment='SWAP usuage at start of recipe / GB')
@@ -1442,8 +1442,7 @@ class DefaultPseudoConstants:
         obj_columns.add(name='OBJNAME', datatype=sqlalchemy.String(80),
                         is_index=True, is_unique=True)
         obj_columns.add(name='ORIGINAL_NAME', datatype=sqlalchemy.String(80))
-        obj_columns.add(name='ALIASES',
-                        datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC))
+        obj_columns.add(name='ALIASES', datatype=sqlalchemy.Text)
         obj_columns.add(name='RA_DEG', datatype=sqlalchemy.Float)
         obj_columns.add(name='RA_SOURCE', datatype=sqlalchemy.String(80))
         obj_columns.add(name='DEC_DEG', datatype=sqlalchemy.Float)
@@ -1461,8 +1460,7 @@ class DefaultPseudoConstants:
         obj_columns.add(name='TEFF_SOURCE', datatype=sqlalchemy.String(80))
         obj_columns.add(name='SP_TYPE', datatype=sqlalchemy.String(80))
         obj_columns.add(name='SP_SOURCE', datatype=sqlalchemy.String(80))
-        obj_columns.add(name='NOTES',
-                        datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC))
+        obj_columns.add(name='NOTES', datatype=sqlalchemy.Text)
         obj_columns.add(name='USED', datatype=sqlalchemy.Integer)
         obj_columns.add(name='DATE_ADDED', datatype=sqlalchemy.String(30))
         # return columns and ctypes

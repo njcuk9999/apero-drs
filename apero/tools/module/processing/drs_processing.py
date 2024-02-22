@@ -2847,10 +2847,11 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
         # load pconst
         pconst = constants.pload()
         icols = pconst.FILEINDEX_DB_COLUMNS()
+
         # get index column data types
         index_coltypes = dict()
         for c_it, col in enumerate(icols.names):
-            index_coltypes[col] = icols.dtypes
+            index_coltypes[col] = icols.get_datatype(col)
 
         # ------------------------------------------------------------------
         # Now we need to get the files and assign

@@ -390,7 +390,7 @@ class AstrometricDatabase(DatabaseManager):
             # loop around each row in the table
             for row in range(len(aliases)):
                 # loop around aliases until we find the alias
-                for alias in aliases[row].split('|'):
+                for alias in str(aliases[row]).split('|'):
                     if pconst.DRS_OBJ_NAME(alias) == cobjname:
                         found = True
                         break
@@ -1598,7 +1598,6 @@ class FileIndexDatabase(DatabaseManager):
         # get allowed header keys
         iheader_cols = self.pconst.FILEINDEX_HEADER_COLS()
         rkeys = list(iheader_cols.names)
-        rtypes = list(iheader_cols.dtypes)
         # store values in correct order for database.add_row
         hvalues = dict()
         # deal with no hkeys
@@ -1608,10 +1607,12 @@ class FileIndexDatabase(DatabaseManager):
         #  keys - if not there set to 'None'
         for h_it, hkey in enumerate(rkeys):
             if hkey in hkeys:
+                # get data type
+                dtype = self.columns.get_datatype(hkey)
+                if dtype is None:
+                    continue
                 # noinspection PyBroadException
                 try:
-                    # get data type
-                    dtype = rtypes[h_it]
                     # get value
                     value = hkeys[hkey]
                     # deal with a null value
@@ -1622,7 +1623,7 @@ class FileIndexDatabase(DatabaseManager):
                         hvalues[hkey] = dtype(value)
                 except Exception as _:
                     wargs = [self.name, hkey, hkeys[hkey],
-                             rtypes[h_it], func_name]
+                             dtype, func_name]
                     wmsg = textentry('10-002-00003', args=wargs)
                     WLOG(self.params, 'warning', wmsg, sublevel=2)
                     hvalues[hkey] = 'NULL'
@@ -1753,24 +1754,25 @@ class FileIndexDatabase(DatabaseManager):
         # get allowed header keys
         iheader_cols = self.pconst.FILEINDEX_HEADER_COLS()
         rkeys = list(iheader_cols.names)
-        rtypes = list(iheader_cols.dtypes)
         # deal with filter by header keys
         if hkeys is not None and isinstance(hkeys, dict):
             # loop around each valid header key in index database
             for h_it, hkey in enumerate(rkeys):
                 # if we have the key in our header keys
                 if hkey in hkeys:
+                    # get data type
+                    dtype = self.columns.get_datatype(hkey)
+                    if dtype is None:
+                        continue
                     # noinspection PyBroadException
                     try:
-                        # get data type
-                        dtype = rtypes[h_it]
                         # try to case and add to condition
                         hargs = [hkey, dtype, hkeys[hkey]]
                         condition = drs_file.index_hkey_condition(*hargs)
                         sql['condition'] += condition
                     except Exception as _:
                         wargs = [self.name, hkey, hkeys[hkey],
-                                 rtypes[h_it], func_name]
+                                 dtype, func_name]
                         wmsg = textentry('10-002-00003', args=wargs)
                         WLOG(self.params, 'warning', wmsg)
         # ------------------------------------------------------------------
@@ -1976,8 +1978,8 @@ class FileIndexDatabase(DatabaseManager):
                 # add new empty table
                 self.database.add_table(self.database.tablename,
                                         self.columns.columns,
-                                        self.columns.uniques,
-                                        self.columns.indexes)
+                                        self.columns.indexes,
+                                        self.columns.uniques)
                 # reload database
                 self.load_db()
                 # update all entries for raw index entries
@@ -2394,8 +2396,8 @@ class LogDatabase(DatabaseManager):
                     ram_usage_start: Union[float, None] = None,
                     ram_usage_end: Union[float, None] = None,
                     ram_total: Union[float, None] = None,
-                    swapusage_start: Union[float, None] = None,
-                    swapusage_end: Union[float, None] = None,
+                    swap_usage_start: Union[float, None] = None,
+                    swap_usage_end: Union[float, None] = None,
                     swap_total: Union[float, None] = None,
                     cpu_usage_start: Union[float, None] = None,
                     cpu_usage_end: Union[float, None] = None,
@@ -2457,8 +2459,8 @@ class LogDatabase(DatabaseManager):
         :param ram_usage_start: float, RAM usage GB at start of recipe
         :param ram_usage_end: float, RAM usage GB at end of recipe
         :param ram_total: float, RAM total at start of recipe
-        :param swapusage_start: float, SWAP usage GB at start of recipe
-        :param swapusage_end: float, SWAP usage GB at end of recipe
+        :param swap_usage_start: float, SWAP usage GB at start of recipe
+        :param swap_usage_end: float, SWAP usage GB at end of recipe
         :param swap_total: float, SWAP total at start of recipe
         :param cpu_usage_start: float, CPU usage (percentage) at start of recipe
         :param cpu_usage_end: float, CPU usage (percentrage) at end of recipe
@@ -2473,7 +2475,7 @@ class LogDatabase(DatabaseManager):
         # get insert dictionary
         insert_dict = dict()
         insert_dict['RECIPE'] = drs_db.deal_with_null(recipe)
-        insert_dict['SNAME'] = drs_db.deal_with_null(sname)
+        insert_dict['SHORTNAME'] = drs_db.deal_with_null(sname)
         insert_dict['BLOCK_KIND'] = drs_db.deal_with_null(block_kind)
         insert_dict['RECIPE_TYPE'] = drs_db.deal_with_null(recipe_type)
         insert_dict['RECIPE_KIND'] = drs_db.deal_with_null(recipe_kind)
@@ -2511,8 +2513,8 @@ class LogDatabase(DatabaseManager):
         insert_dict['RAM_USAGE_START'] = drs_db.deal_with_null(ram_usage_start)
         insert_dict['RAM_USAGE_END'] = drs_db.deal_with_null(ram_usage_end)
         insert_dict['RAM_TOTAL'] = drs_db.deal_with_null(ram_total)
-        insert_dict['SWAP_USAGE_START'] = drs_db.deal_with_null(swapusage_start)
-        insert_dict['SWAP_USAGE_END'] = drs_db.deal_with_null(swapusage_end)
+        insert_dict['SWAP_USAGE_START'] = drs_db.deal_with_null(swap_usage_start)
+        insert_dict['SWAP_USAGE_END'] = drs_db.deal_with_null(swap_usage_end)
         insert_dict['SWAP_TOTAL'] = drs_db.deal_with_null(swap_total)
         insert_dict['CPU_USAGE_START'] = drs_db.deal_with_null(cpu_usage_start)
         insert_dict['CPU_USAGE_END'] = drs_db.deal_with_null(cpu_usage_end)

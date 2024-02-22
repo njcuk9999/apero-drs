@@ -290,7 +290,6 @@ def check_path_arg(name: str, value: Union[str, Path],
     :return: tuple, 1. whether to prompt the user for another path (i.e. they
              didn't want to create the path, 2. the value of the path
     """
-    promptuser = True
     # check if user config is None (i.e. set from cmd line)
     if value is not None:
         cprint(textentry('40-001-00040', args=[name, value]))
@@ -631,7 +630,8 @@ def get_database_settings(all_params: ParamDict,
         response = str(dtype)
     else:
         response = ask(textentry('40-001-00056', args='DATABASE TYPE'),
-                       dtype=str, options=base.SUPPORTED_DATABASES)
+                       dtype=str, options=base.SUPPORTED_DATABASES,
+                       optiondesc=base.SUPPORTED_DATABASES)
     # only add response if not None
     if response not in ['None', '', None]:
         all_params['DATABASE']['TYPE'] = response

@@ -117,14 +117,13 @@ def __main__(recipe, params):
     # assets folder
     if 'assets' in warns:
         reset = drs_reset.reset_confirmation(params, 'Assets',
-                                              params['DRS_DATA_ASSETS'])
+                                             params['DRS_DATA_ASSETS'])
     # all databases (can be within assets dir this is why we ask here)
     if 'assets' in warns and 'assets' in resets and reset:
         reset_dbs = drs_reset.reset_confirmation(params, 'All databases')
 
     if 'assets' in resets and reset:
-        drs_reset.reset_assets(params, dtimeout=database_timeout,
-                               reset_dbs=reset_dbs)
+        drs_reset.reset_assets(params, reset_dbs=reset_dbs)
     else:
         WLOG(params, '', textentry('40-502-00013', args=['Assets']))
     # ----------------------------------------------------------------------
@@ -134,9 +133,9 @@ def __main__(recipe, params):
     # tmp folder
     if 'tmp' in warns:
         reset = drs_reset.reset_confirmation(params, 'Working',
-                                              params['DRS_DATA_WORKING'])
+                                             params['DRS_DATA_WORKING'])
     if 'tmp' in resets and reset:
-        drs_reset.reset_tmp_folders(params, log, dtimeout=database_timeout)
+        drs_reset.reset_tmp_folders(params, log)
     else:
         WLOG(params, '', textentry('40-502-00013', args=['Tmp']))
     # ----------------------------------------------------------------------
@@ -146,9 +145,9 @@ def __main__(recipe, params):
     # reduced folder
     if 'red' in warns:
         reset = drs_reset.reset_confirmation(params, 'Reduced',
-                                              params['DRS_DATA_REDUC'])
+                                             params['DRS_DATA_REDUC'])
     if 'red' in resets and reset:
-        drs_reset.reset_reduced_folders(params, log, dtimeout=database_timeout)
+        drs_reset.reset_reduced_folders(params, log)
     else:
         WLOG(params, '', textentry('40-502-00013', args=['Reduced']))
     # ----------------------------------------------------------------------
@@ -158,9 +157,9 @@ def __main__(recipe, params):
     # calibration folder
     if 'calib' in warns:
         reset = drs_reset.reset_confirmation(params, 'Calibration',
-                                              params['DRS_CALIB_DB'])
+                                             params['DRS_CALIB_DB'])
     if 'calib' in resets and reset:
-        drs_reset.reset_calibdb(params, log, dtimeout=database_timeout)
+        drs_reset.reset_calibdb(params, log)
     else:
         WLOG(params, '', '\tNot resetting CalibDB files.')
     # ----------------------------------------------------------------------
@@ -170,9 +169,9 @@ def __main__(recipe, params):
     # telluric folder
     if 'tellu' in warns:
         reset = drs_reset.reset_confirmation(params, 'Telluric',
-                                              params['DRS_TELLU_DB'])
+                                             params['DRS_TELLU_DB'])
     if 'tellu' in resets and reset:
-        drs_reset.reset_telludb(params, log, dtimeout=database_timeout)
+        drs_reset.reset_telludb(params, log)
     else:
         WLOG(params, '', textentry('40-502-00013', args=['Telluric']))
     # ----------------------------------------------------------------------
@@ -184,8 +183,8 @@ def __main__(recipe, params):
     # log folder
     if 'log' in warns:
         reset = drs_reset.reset_confirmation(params, 'Log',
-                                              params['DRS_DATA_MSG'],
-                                              exclude_files=exclude_files)
+                                             params['DRS_DATA_MSG'],
+                                             exclude_files=exclude_files)
     if 'log' in resets and reset:
         drs_reset.reset_log(params, exclude_files)
     else:
@@ -209,7 +208,7 @@ def __main__(recipe, params):
     # plot folder
     if 'run' in warns:
         reset = drs_reset.reset_confirmation(params, 'Run',
-                                              params['DRS_DATA_RUN'])
+                                             params['DRS_DATA_RUN'])
     if 'run' in resets and reset:
         drs_reset.reset_run(params)
     else:
@@ -221,9 +220,9 @@ def __main__(recipe, params):
     # plot folder
     if 'lbl' in warns:
         reset = drs_reset.reset_confirmation(params, 'LBL',
-                                              params['LBL_PATH'])
+                                             params['LBL_PATH'])
     if 'lbl' in resets and reset:
-        drs_reset.reset_lbl_folders(params, log, dtimeout=database_timeout)
+        drs_reset.reset_lbl_folders(params, log)
     else:
         WLOG(params, '', textentry('40-502-00013', args=['LBL']))
     # ----------------------------------------------------------------------
@@ -233,9 +232,9 @@ def __main__(recipe, params):
     # plot folder
     if 'out' in warns:
         reset = drs_reset.reset_confirmation(params, 'Out',
-                                              params['DRS_DATA_OUT'])
+                                             params['DRS_DATA_OUT'])
     if 'out' in resets and reset:
-        drs_reset.reset_out_folders(params, log, dtimeout=database_timeout)
+        drs_reset.reset_out_folders(params, log)
     else:
         WLOG(params, '', textentry('40-502-00013', args=['Out']))
     # ----------------------------------------------------------------------
@@ -244,7 +243,7 @@ def __main__(recipe, params):
     reset = True
     if 'other' in warns:
         reset = drs_reset.reset_confirmation(params, 'Other',
-                                              params['DRS_DATA_OTHER'])
+                                             params['DRS_DATA_OTHER'])
     if 'other' in resets and reset:
         drs_reset.reset_other_folder(params, log)
     else:

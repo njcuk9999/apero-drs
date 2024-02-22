@@ -855,10 +855,10 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         index_cols.add(name='USED', datatype=sqlalchemy.Integer)
         index_cols.add(name='RAWFIX', datatype=sqlalchemy.Integer)
         # manage index groups
-        index_cols.uniques.append(sqlalchemy.Index('idx_block_obs_used',
+        index_cols.indexes.append(sqlalchemy.Index('idx_block_obs_used',
                                                    'BLOCK_KIND', 'OBS_DIR',
                                                    'USED'))
-        index_cols.uniques.append(sqlalchemy.Index('idx_block_obs_filename',
+        index_cols.indexes.append(sqlalchemy.Index('idx_block_obs_filename',
                                                    'BLOCK_KIND', 'OBS_DIR',
                                                    'FILENAME'))
         # return column object

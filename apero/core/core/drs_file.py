@@ -3828,7 +3828,9 @@ class DrsFitsFile(DrsInputFile):
         # get required keys for index database
         iheader_cols = pconst.FILEINDEX_HEADER_COLS()
         hkeys = list(iheader_cols.names)
-        htypes = list(iheader_cols.dtypes)
+        htypes = []
+        for col in hkeys:
+            htypes.append(col.get_datatype(col))
         # ---------------------------------------------------------------------
         # deal with absolute path of file
         self.output_dict['ABSPATH'] = str(self.filename)

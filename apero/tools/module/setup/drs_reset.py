@@ -184,13 +184,12 @@ def reset_confirmation(params: ParamDict, name: str,
         return False
 
 
-def reset_tmp_folders(params: ParamDict, log: bool = True, dtimeout: int = 20):
+def reset_tmp_folders(params: ParamDict, log: bool = True):
     """
     Reset the "tmp" (preprocessed directories)
 
     :param params: ParamDict, the parameter dictionary of constants
     :param log: bool, if True logs the removal
-    :param dtimeout: int, number of tries to access the index database
 
     :return: None - resets tmp (preprocessed) directory
     """
@@ -211,14 +210,13 @@ def reset_tmp_folders(params: ParamDict, log: bool = True, dtimeout: int = 20):
     # load index database
     findexdb.load_db()
     # check that table is in database
-    if not findexdb.database.tname_in_db():
+    if not findexdb.database.has_table(findexdb.database.tablename):
         # get database paths
         databases = manage_databases.list_databases(params)
         # load pseudo constants
         pconst = constants.pload()
         # create index database
-        manage_databases.create_fileindex_database(params, pconst, databases,
-                                                   tries=dtimeout)
+        manage_databases.create_fileindex_database(params, pconst, databases)
         # get index database
         findexdb = drs_database.FileIndexDatabase(params)
         # load index database
@@ -235,14 +233,13 @@ def reset_tmp_folders(params: ParamDict, log: bool = True, dtimeout: int = 20):
     # load index database
     logdb.load_db()
     # check that table is in database
-    if not logdb.database.tname_in_db():
+    if not logdb.database.has_table(logdb.database.tablename):
         # get database paths
         databases = manage_databases.list_databases(params)
         # load pseudo constants
         pconst = constants.pload()
         # create index database
-        manage_databases.create_log_database(params, pconst, databases,
-                                             tries=dtimeout)
+        manage_databases.create_log_database(params, pconst, databases)
         # get log database
         logdb = drs_database.LogDatabase(params)
         # load index database
@@ -253,14 +250,12 @@ def reset_tmp_folders(params: ParamDict, log: bool = True, dtimeout: int = 20):
     logdb.remove_entries(condition=condition)
 
 
-def reset_reduced_folders(params: ParamDict, log: bool = True,
-                          dtimeout: int = 20):
+def reset_reduced_folders(params: ParamDict, log: bool = True):
     """
     Resets the reduced directory
 
     :param params: ParamDict, the parameter dictionary of constants
     :param log: bool, if True logs the removal
-    :param dtimeout: int, number of tries to access the index database
 
     :return: None - resets reduced directory
     """
@@ -281,14 +276,13 @@ def reset_reduced_folders(params: ParamDict, log: bool = True,
     # load index database
     indexdb.load_db()
     # check that table is in database
-    if not indexdb.database.tname_in_db():
+    if not indexdb.database.has_table(indexdb.database.tablename):
         # get database paths
         databases = manage_databases.list_databases(params)
         # load pseudo constants
         pconst = constants.pload()
         # create index database
-        manage_databases.create_fileindex_database(params, pconst, databases,
-                                                   tries=dtimeout)
+        manage_databases.create_fileindex_database(params, pconst, databases)
         # get index database
         indexdb = drs_database.FileIndexDatabase(params)
         # load index database
@@ -305,14 +299,13 @@ def reset_reduced_folders(params: ParamDict, log: bool = True,
     # load index database
     logdb.load_db()
     # check that table is in database
-    if not logdb.database.tname_in_db():
+    if not logdb.database.has_table(logdb.database.tablename):
         # get database paths
         databases = manage_databases.list_databases(params)
         # load pseudo constants
         pconst = constants.pload()
         # create index database
-        manage_databases.create_log_database(params, pconst, databases,
-                                             tries=dtimeout)
+        manage_databases.create_log_database(params, pconst, databases)
         # get log database
         logdb = drs_database.LogDatabase(params)
         # load index database
@@ -323,13 +316,12 @@ def reset_reduced_folders(params: ParamDict, log: bool = True,
     logdb.remove_entries(condition=condition)
 
 
-def reset_calibdb(params: ParamDict, log: bool = True, dtimeout: int = 20):
+def reset_calibdb(params: ParamDict, log: bool = True):
     """
     Wrapper for reset_dbdir - specifically for calibDB
 
     :param params: ParamDict, the parameter dictionary of constants
     :param log: bool, if True logs the removal
-    :param dtimeout: int, number of tries to access the index database
 
     :return: None - resets telluDB
     """
@@ -346,8 +338,7 @@ def reset_calibdb(params: ParamDict, log: bool = True, dtimeout: int = 20):
     # reset files
     reset_dbdir(params, name, calib_dir, reset_path, log=log)
     # create calibration database
-    manage_databases.create_calibration_database(params, pconst, databases,
-                                                 tries=dtimeout)
+    manage_databases.create_calibration_database(params, pconst, databases)
     # -------------------------------------------------------------------------
     # remove entries from calibration database
     # -------------------------------------------------------------------------
@@ -360,13 +351,12 @@ def reset_calibdb(params: ParamDict, log: bool = True, dtimeout: int = 20):
     calibdb.remove_entries(condition=condition)
 
 
-def reset_telludb(params: ParamDict, log: bool = True, dtimeout: int = 20):
+def reset_telludb(params: ParamDict, log: bool = True):
     """
     Wrapper for reset_dbdir - specifically for telluDB
 
     :param params: ParamDict, the parameter dictionary of constants
     :param log: bool, if True logs the removal
-    :param dtimeout: int, number of tries to access the index database
 
     :return: None - resets telluDB
     """
@@ -383,8 +373,7 @@ def reset_telludb(params: ParamDict, log: bool = True, dtimeout: int = 20):
     # reset files
     reset_dbdir(params, name, tellu_dir, reset_path, log=log)
     # create telluric database
-    manage_databases.create_telluric_database(params, pconst, databases,
-                                              tries=dtimeout)
+    manage_databases.create_telluric_database(params, pconst, databases)
     # -------------------------------------------------------------------------
     # remove entries from telluric database
     # -------------------------------------------------------------------------
@@ -532,7 +521,7 @@ def reset_run(params: ParamDict, log: bool = True):
     reset_dbdir(params, name, run_dir, reset_path, log=log, empty_first=False)
 
 
-def reset_lbl_folders(params: ParamDict, log: bool = True, dtimeout: int = 20):
+def reset_lbl_folders(params: ParamDict, log: bool = True):
     # log progress
     WLOG(params, '', textentry('40-502-00003', args=['lbl']))
     # remove files from reduced folder
@@ -546,18 +535,17 @@ def reset_lbl_folders(params: ParamDict, log: bool = True, dtimeout: int = 20):
     # remove entries from index database
     # -------------------------------------------------------------------------
     # get index database
-    indexdb = drs_database.FileIndexDatabase(params)
+    findexdb = drs_database.FileIndexDatabase(params)
     # load index database
-    indexdb.load_db()
+    findexdb.load_db()
     # check that table is in database
-    if not indexdb.database.tname_in_db():
+    if not findexdb.database.has_table(findexdb.database.tablename):
         # get database paths
         databases = manage_databases.list_databases(params)
         # load pseudo constants
         pconst = constants.pload()
         # create index database
-        manage_databases.create_fileindex_database(params, pconst, databases,
-                                                   tries=dtimeout)
+        manage_databases.create_fileindex_database(params, pconst, databases)
         # get index database
         indexdb = drs_database.FileIndexDatabase(params)
         # load index database
@@ -565,7 +553,7 @@ def reset_lbl_folders(params: ParamDict, log: bool = True, dtimeout: int = 20):
     # set up condition
     condition = 'BLOCK_KIND="lbl"'
     # remove entries
-    indexdb.remove_entries(condition=condition)
+    findexdb.remove_entries(condition=condition)
     # -------------------------------------------------------------------------
     # remove entries from log database
     # -------------------------------------------------------------------------
@@ -574,14 +562,13 @@ def reset_lbl_folders(params: ParamDict, log: bool = True, dtimeout: int = 20):
     # load index database
     logdb.load_db()
     # check that table is in database
-    if not logdb.database.tname_in_db():
+    if not logdb.database.has_table(logdb.database.tablename):
         # get database paths
         databases = manage_databases.list_databases(params)
         # load pseudo constants
         pconst = constants.pload()
         # create index database
-        manage_databases.create_log_database(params, pconst, databases,
-                                             tries=dtimeout)
+        manage_databases.create_log_database(params, pconst, databases)
         # get log database
         logdb = drs_database.LogDatabase(params)
         # load index database
@@ -592,13 +579,12 @@ def reset_lbl_folders(params: ParamDict, log: bool = True, dtimeout: int = 20):
     logdb.remove_entries(condition=condition)
 
 
-def reset_out_folders(params: ParamDict, log: bool = True, dtimeout: int = 20):
+def reset_out_folders(params: ParamDict, log: bool = True):
     """
     Resets the reduced directory
 
     :param params: ParamDict, the parameter dictionary of constants
     :param log: bool, if True logs the removal
-    :param dtimeout: int, number of tries to access the index database
 
     :return: None - resets reduced directory
     """
@@ -615,26 +601,25 @@ def reset_out_folders(params: ParamDict, log: bool = True, dtimeout: int = 20):
     # remove entries from index database
     # -------------------------------------------------------------------------
     # get index database
-    indexdb = drs_database.FileIndexDatabase(params)
+    findexdb = drs_database.FileIndexDatabase(params)
     # load index database
-    indexdb.load_db()
+    findexdb.load_db()
     # check that table is in database
-    if not indexdb.database.tname_in_db():
+    if not findexdb.database.has_table(findexdb.database.tablename):
         # get database paths
         databases = manage_databases.list_databases(params)
         # load pseudo constants
         pconst = constants.pload()
         # create index database
-        manage_databases.create_fileindex_database(params, pconst, databases,
-                                                   tries=dtimeout)
+        manage_databases.create_fileindex_database(params, pconst, databases)
         # get index database
-        indexdb = drs_database.FileIndexDatabase(params)
+        findexdb = drs_database.FileIndexDatabase(params)
         # load index database
-        indexdb.load_db()
+        findexdb.load_db()
     # set up condition
     condition = 'BLOCK_KIND="out"'
     # remove entries
-    indexdb.remove_entries(condition=condition)
+    findexdb.remove_entries(condition=condition)
     # -------------------------------------------------------------------------
     # remove entries from log database
     # -------------------------------------------------------------------------
@@ -643,14 +628,13 @@ def reset_out_folders(params: ParamDict, log: bool = True, dtimeout: int = 20):
     # load index database
     logdb.load_db()
     # check that table is in database
-    if not logdb.database.tname_in_db():
+    if not logdb.database.has_table(logdb.database.tablename):
         # get database paths
         databases = manage_databases.list_databases(params)
         # load pseudo constants
         pconst = constants.pload()
         # create index database
-        manage_databases.create_log_database(params, pconst, databases,
-                                             tries=dtimeout)
+        manage_databases.create_log_database(params, pconst, databases)
         # get log database
         logdb = drs_database.LogDatabase(params)
         # load index database
@@ -661,14 +645,13 @@ def reset_out_folders(params: ParamDict, log: bool = True, dtimeout: int = 20):
     logdb.remove_entries(condition=condition)
 
 
-def reset_assets(params: ParamDict, log: bool = True, dtimeout: int = 0,
-                 reset_dbs: bool = True):
+def reset_assets(params: ParamDict, log: bool = True, reset_dbs: bool = True):
     """
     Reset the Assets directory (including re-creating databases)
 
     :param params: ParamDict, parameter dictionary of constants
     :param log: bool - if True logs process
-    :param dtimeout: int, number of tries to access the index database
+    :param reset_dbs: bool - if True resets all databases
 
     :return: None - resets assets dir and databases
     """
@@ -683,7 +666,7 @@ def reset_assets(params: ParamDict, log: bool = True, dtimeout: int = 0,
                               params['INSTRUMENT'].lower())
 
     # get reset_path from apero module dir
-    abs_reset_path = drs_data.construct_path(params, '', reset_path)
+    abs_reset_path = drs_data.construct_path(params, '', str(reset_path))
 
     # loop around files and folders in assets dir
     #   we want to backup any new files the user as copied
@@ -693,19 +676,15 @@ def reset_assets(params: ParamDict, log: bool = True, dtimeout: int = 0,
     # if user wants to reset all databases we do this here
     if reset_dbs:
         # create index databases
-        manage_databases.create_fileindex_database(params, pconst, databases,
-                                                   tries=dtimeout)
+        manage_databases.create_fileindex_database(params, pconst, databases)
         # create log database
-        manage_databases.create_log_database(params, pconst, databases,
-                                             tries=dtimeout)
+        manage_databases.create_log_database(params, pconst, databases)
         # create object database
-        manage_databases.create_object_database(params, pconst, databases,
-                                                tries=dtimeout)
+        manage_databases.create_object_database(params, pconst, databases)
         # create reject database
-        manage_databases.create_reject_database(params, pconst, databases,
-                                                tries=dtimeout)
+        manage_databases.create_reject_database(params, pconst, databases)
         # create language database
-        manage_databases.create_lang_database(params, databases, tries=dtimeout)
+        manage_databases.create_lang_database(params, databases)
 
 
 def reset_other_folder(params: ParamDict, log: bool = True):
@@ -714,10 +693,10 @@ def reset_other_folder(params: ParamDict, log: bool = True):
 
     :param params: ParamDict, parameter dictionary of constants
     :param log: bool - if True logs process
-    :param dtimeout: int, number of tries to access the index database
 
     :return: None - resets assets dir and databases
     """
+    _ = log
     # Get the other data directory (place to copy to)
     other_path = params['DRS_DATA_OTHER']
     # get the reset dictionary
@@ -1009,7 +988,6 @@ def get_filelist(params: ParamDict, obsdir: Optional[str] = None,
 
 
 def remove_files_from_disk(params: ParamDict, filetable: Table) -> int:
-
     # get the test criteria
     test = params['INPUTS']['test']
     # deal with tqdm and print outs
@@ -1038,7 +1016,6 @@ def remove_files_from_disk(params: ParamDict, filetable: Table) -> int:
                      sublevel=2)
     # return count
     return filecount
-
 
 
 def remove_files_from_databases(params: ParamDict, filetable: Table,
@@ -1140,7 +1117,7 @@ def remove_files_from_databases(params: ParamDict, filetable: Table,
     findexdb.load_db()
     # log removal
     WLOG(params, '', 'Removing entries from index database with condition: '
-                      '\n\t{0}'.format(file_cond))
+                     '\n\t{0}'.format(file_cond))
     # add to db counts
     db_counts['findexdb'] = findexdb.database.count(condition=file_cond)
     # remove entries
