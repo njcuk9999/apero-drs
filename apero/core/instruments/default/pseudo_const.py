@@ -1157,7 +1157,7 @@ class DefaultPseudoConstants:
                           is_unique=True)
         calib_columns.add(name='HUMANTIME', datatype=sqlalchemy.String(50))
         calib_columns.add(name='UNIXTIME', is_index=True,
-                          datatype=sqlalchemy.Float)
+                          datatype=sqlalchemy.Double)
         calib_columns.add(name='PID', is_index=True,
                           datatype=sqlalchemy.String(80))
         calib_columns.add(name='PDATE', datatype=sqlalchemy.String(50))
@@ -1188,12 +1188,12 @@ class DefaultPseudoConstants:
                           datatype=sqlalchemy.String(200))
         tellu_columns.add(name='HUMANTIME', datatype=sqlalchemy.String(50))
         tellu_columns.add(name='UNIXTIME', is_index=True,
-                          datatype=sqlalchemy.Float)
+                          datatype=sqlalchemy.Double)
         tellu_columns.add(name='OBJECT', is_index=True,
                           datatype=sqlalchemy.String(80))
-        tellu_columns.add(name='AIRMASS', datatype=sqlalchemy.Float)
-        tellu_columns.add(name='TAU_WATER',  datatype=sqlalchemy.Float)
-        tellu_columns.add(name='TAU_OTHERS', datatype=sqlalchemy.Float)
+        tellu_columns.add(name='AIRMASS', datatype=sqlalchemy.Double)
+        tellu_columns.add(name='TAU_WATER',  datatype=sqlalchemy.Double)
+        tellu_columns.add(name='TAU_OTHERS', datatype=sqlalchemy.Double)
         tellu_columns.add(name='PID', is_index=True,
                           datatype=sqlalchemy.String(80))
         tellu_columns.add(name='PDATE', datatype=sqlalchemy.String(50))
@@ -1236,7 +1236,7 @@ class DefaultPseudoConstants:
                        datatype=sqlalchemy.String(200))
         index_cols.add(name='BLOCK_KIND', is_index=True,
                        datatype=sqlalchemy.String(20))
-        index_cols.add(name='LAST_MODIFIED', datatype=sqlalchemy.Float)
+        index_cols.add(name='LAST_MODIFIED', datatype=sqlalchemy.Double)
         index_cols.add(name='RECIPE', datatype=sqlalchemy.String(200))
         index_cols.add(name='RUNSTRING',
                        datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC))
@@ -1256,6 +1256,8 @@ class DefaultPseudoConstants:
         index_cols.indexes.append(sqlalchemy.Index('idx_block_obs_filename',
                                                    'BLOCK_KIND', 'OBS_DIR',
                                                    'FILENAME'))
+        # manage unique groups
+        index_cols.uniques.append('ABSPATH')
         # return column object
         return index_cols
 
@@ -1323,7 +1325,7 @@ class DefaultPseudoConstants:
                         comment='Recipe drs process id number')
         log_columns.add(name='HUMANTIME', datatype=sqlalchemy.String(25),
                         comment='Recipe process time (human format)')
-        log_columns.add(name='UNIXTIME', datatype=sqlalchemy.Float,
+        log_columns.add(name='UNIXTIME', datatype=sqlalchemy.Double,
                         is_index=True,
                         comment='Recipe process time (unix format)')
         log_columns.add(name='GROUPNAME', datatype=sqlalchemy.String(200),
@@ -1397,21 +1399,21 @@ class DefaultPseudoConstants:
                         comment='binary flag names (one for each binary flag)')
         log_columns.add(name='USED', datatype=sqlalchemy.Integer,
                         comment='Whether file should be used (always true)')
-        log_columns.add(name='RAM_USAGE_START', datatype=sqlalchemy.Float,
+        log_columns.add(name='RAM_USAGE_START', datatype=sqlalchemy.Double,
                         comment='RAM usuage at start of recipe / GB')
-        log_columns.add(name='RAM_USAGE_END', datatype=sqlalchemy.Float,
+        log_columns.add(name='RAM_USAGE_END', datatype=sqlalchemy.Double,
                         comment='RAM usuage at end of recipe / GB')
-        log_columns.add(name='RAM_TOTAL', datatype=sqlalchemy.Float,
+        log_columns.add(name='RAM_TOTAL', datatype=sqlalchemy.Double,
                         comment='Total RAM at start')
-        log_columns.add(name='SWAP_USAGE_START', datatype=sqlalchemy.Float,
+        log_columns.add(name='SWAP_USAGE_START', datatype=sqlalchemy.Double,
                         comment='SWAP usuage at start of recipe / GB')
-        log_columns.add(name='SWAP_USAGE_END', datatype=sqlalchemy.Float,
+        log_columns.add(name='SWAP_USAGE_END', datatype=sqlalchemy.Double,
                         comment='SWAP usuage at end of recipe / GB')
-        log_columns.add(name='SWAP_TOTAL', datatype=sqlalchemy.Float,
+        log_columns.add(name='SWAP_TOTAL', datatype=sqlalchemy.Double,
                         comment='Total SWAP at start')
-        log_columns.add(name='CPU_USAGE_START', datatype=sqlalchemy.Float,
+        log_columns.add(name='CPU_USAGE_START', datatype=sqlalchemy.Double,
                         comment='CPU usage at the start  or recipe (percent)')
-        log_columns.add(name='CPU_USAGE_END', datatype=sqlalchemy.Float,
+        log_columns.add(name='CPU_USAGE_END', datatype=sqlalchemy.Double,
                         comment='CPU usage at the end  or recipe (percent)')
         log_columns.add(name='CPU_NUM', datatype=sqlalchemy.Integer,
                         comment='Total number of CPUs at start')
@@ -1443,20 +1445,20 @@ class DefaultPseudoConstants:
                         is_index=True, is_unique=True)
         obj_columns.add(name='ORIGINAL_NAME', datatype=sqlalchemy.String(80))
         obj_columns.add(name='ALIASES', datatype=sqlalchemy.Text)
-        obj_columns.add(name='RA_DEG', datatype=sqlalchemy.Float)
+        obj_columns.add(name='RA_DEG', datatype=sqlalchemy.Double)
         obj_columns.add(name='RA_SOURCE', datatype=sqlalchemy.String(80))
-        obj_columns.add(name='DEC_DEG', datatype=sqlalchemy.Float)
+        obj_columns.add(name='DEC_DEG', datatype=sqlalchemy.Double)
         obj_columns.add(name='DEC_SOURCE', datatype=sqlalchemy.String(80))
-        obj_columns.add(name='EPOCH', datatype=sqlalchemy.Float)
-        obj_columns.add(name='PMRA', datatype=sqlalchemy.Float)
+        obj_columns.add(name='EPOCH', datatype=sqlalchemy.Double)
+        obj_columns.add(name='PMRA', datatype=sqlalchemy.Double)
         obj_columns.add(name='PMRA_SOURCE', datatype=sqlalchemy.String(80))
-        obj_columns.add(name='PMDE', datatype=sqlalchemy.Float)
+        obj_columns.add(name='PMDE', datatype=sqlalchemy.Double)
         obj_columns.add(name='PMDE_SOURCE', datatype=sqlalchemy.String(80))
-        obj_columns.add(name='PLX', datatype=sqlalchemy.Float)
+        obj_columns.add(name='PLX', datatype=sqlalchemy.Double)
         obj_columns.add(name='PLX_SOURCE', datatype=sqlalchemy.String(80))
-        obj_columns.add(name='RV', datatype=sqlalchemy.Float)
+        obj_columns.add(name='RV', datatype=sqlalchemy.Double)
         obj_columns.add(name='RV_SOURCE', datatype=sqlalchemy.String(80))
-        obj_columns.add(name='TEFF', datatype=sqlalchemy.Float)
+        obj_columns.add(name='TEFF', datatype=sqlalchemy.Double)
         obj_columns.add(name='TEFF_SOURCE', datatype=sqlalchemy.String(80))
         obj_columns.add(name='SP_TYPE', datatype=sqlalchemy.String(80))
         obj_columns.add(name='SP_SOURCE', datatype=sqlalchemy.String(80))

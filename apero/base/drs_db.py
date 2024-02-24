@@ -1104,7 +1104,7 @@ class AperoDatabaseColumns:
         if isinstance(stype, sqlalchemy.Integer):
             return int
         # test floats
-        if isinstance(stype, sqlalchemy.Float):
+        if isinstance(stype, (sqlalchemy.Float, sqlalchemy.Double)):
             return float
         # test boolean
         if isinstance(stype, sqlalchemy.Boolean):
@@ -1651,7 +1651,7 @@ if __name__ == "__main__":
 
     _columns = [sqlalchemy.Column('name', sqlalchemy.String(128), unique=True),
                 sqlalchemy.Column('age', sqlalchemy.Integer),
-                sqlalchemy.Column('weight', sqlalchemy.Float)]
+                sqlalchemy.Column('weight', sqlalchemy.Double)]
     _indexes = [sqlalchemy.Index('idx_users_name_age', 'name', 'age')]
 
     _database.delete_table('users')

@@ -3830,7 +3830,7 @@ class DrsFitsFile(DrsInputFile):
         hkeys = list(iheader_cols.names)
         htypes = []
         for col in hkeys:
-            htypes.append(col.get_datatype(col))
+            htypes.append(iheader_cols.get_datatype(col))
         # ---------------------------------------------------------------------
         # deal with absolute path of file
         self.output_dict['ABSPATH'] = str(self.filename)
