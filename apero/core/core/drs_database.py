@@ -497,7 +497,7 @@ class CalibrationDatabase(DatabaseManager):
         insert_dict['REFCAL'] = int(is_super)
         insert_dict['FILENAME'] = str(drsfile.basename).strip()
         insert_dict['HUMAN_TIME'] = str(header_time.iso)
-        insert_dict['UNIXTIME'] = str(header_time.unix)
+        insert_dict['UNIXTIME'] = float(header_time.unix)
         insert_dict['PID'] = str(self.params['PID'])
         insert_dict['PDATE'] = str(self.params['DATE_NOW'])
         insert_dict['USED'] = 1
@@ -915,7 +915,7 @@ class TelluricDatabase(DatabaseManager):
         insert_dict['REFCAL'] = int(is_super)
         insert_dict['FILENAME'] = str(drsfile.basename).strip()
         insert_dict['HUMANTIME'] = str(header_time.iso)
-        insert_dict['UNIXTIME'] = str(header_time.unix)
+        insert_dict['UNIXTIME'] = float(header_time.unix)
         insert_dict['OBJECT'] = objname
         insert_dict['AIRMASS'] = airmass
         insert_dict['TAU_WATER'] = tau_water
@@ -1584,7 +1584,7 @@ class FileIndexDatabase(DatabaseManager):
                 rawfix = 1
         # ------------------------------------------------------------------
         # get last modified time for file (need absolute path)
-        last_modified = basefile.to_path().stat().st_mtime
+        last_modified = float(basefile.to_path().stat().st_mtime)
         # get recipe
         if drs_text.null_text(recipe, ['None', 'Null']):
             recipe = 'Unknown'
@@ -2078,13 +2078,15 @@ class FileIndexDatabase(DatabaseManager):
             for rkey in rkeys:
                 # get drs key
                 drs_key = self.params[rkey][0]
+                # get data type
+                dtype = iheader_cols.get_datatype(rkey)
                 # get value from table for rkey
                 value = table[rkey].iloc[row]
                 # populate header
                 if value is None:
                     header[drs_key] = 'Null'
                 else:
-                    header[drs_key] = value
+                    header[drs_key] = dtype(value)
             # fix header (with new keys in)
             header, _ = drs_file.fix_header(self.params, recipe, header=header,
                                             check_aliases=True, objdbm=objdbm)
@@ -2305,9 +2307,10 @@ def _get_files(params: ParamDict, path: Union[Path, str], block_kind: str,
             # only do this condition if last modified was defined
             if lmodcond:
                 # get last modified time
-                ftime = filename.stat().st_mtime
+                ftime = float(filename.stat().st_mtime)
                 # only continue if ftime is equal to the one given
-                if ftime == lmod[strfilename]:
+                #  we only need precision at 1e-2 seconds
+                if np.round(ftime, 2) == np.round(lmod[strfilename], 2):
                     continue
             # else if we do not have a last modified vector just skip
             #    this file

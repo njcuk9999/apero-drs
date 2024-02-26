@@ -26,6 +26,7 @@ from astropy.table import Table as AstropyTable
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy_utils import database_exists, create_database
+from sqlalchemy.types import TypeDecorator, Numeric
 
 from apero.base import base
 from apero.base import drs_base
@@ -112,6 +113,17 @@ class AperoDatabaseError(AperoDatabaseException):
         if self.func_name is not None:
             emsg += drs_base.BETEXT['00-002-00030']
         return emsg.format(self.message, self.url, self.func_name)
+
+
+# Custom type for storing Unix timestamps as floats
+class AperoFloat(TypeDecorator):
+    impl = Numeric
+
+    def process_bind_param(self, value, dialect):
+        return value
+
+    def process_result_value(self, value, dialect):
+        return float(value)
 
 
 class AperoDatabase:
@@ -1651,7 +1663,9 @@ if __name__ == "__main__":
 
     _columns = [sqlalchemy.Column('name', sqlalchemy.String(128), unique=True),
                 sqlalchemy.Column('age', sqlalchemy.Integer),
-                sqlalchemy.Column('weight', sqlalchemy.Double)]
+                sqlalchemy.Column('weight',
+                                  sqlalchemy.Float(precision=32,
+                                                   asdecimal=False))]
     _indexes = [sqlalchemy.Index('idx_users_name_age', 'name', 'age')]
 
     _database.delete_table('users')

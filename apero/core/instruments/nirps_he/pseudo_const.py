@@ -419,7 +419,7 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         header_cols.add(name='KW_DATE_OBS', datatype=sqlalchemy.String(80))
         header_cols.add(name='KW_MJDATE', datatype=sqlalchemy.String(80))
         header_cols.add(name='KW_TARGET_TYPE', datatype=sqlalchemy.String(80))
-        header_cols.add(name='KW_MID_OBS_TIME', datatype=sqlalchemy.Double,
+        header_cols.add(name='KW_MID_OBS_TIME', datatype=pseudo_const.LONG_FLOAT,
                         is_index=True)
         # cleaned object name
         header_cols.add(name='KW_OBJNAME', datatype=sqlalchemy.String(80),
@@ -429,7 +429,7 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         # other raw object name
         header_cols.add(name='KW_OBJECTNAME2', datatype=sqlalchemy.String(80))
         header_cols.add(name='KW_OBSTYPE', datatype=sqlalchemy.String(80))
-        header_cols.add(name='KW_EXPTIME', datatype=sqlalchemy.Double)
+        header_cols.add(name='KW_EXPTIME', datatype=pseudo_const.LONG_FLOAT)
         header_cols.add(name='KW_INSTRUMENT', datatype=sqlalchemy.String(80))
         header_cols.add(name='KW_INST_MODE', datatype=sqlalchemy.String(80))
         header_cols.add(name='KW_RAW_DPRTYPE', datatype=sqlalchemy.String(80))
@@ -840,7 +840,7 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
                        datatype=sqlalchemy.String(200))
         index_cols.add(name='BLOCK_KIND', is_index=True,
                        datatype=sqlalchemy.String(20))
-        index_cols.add(name='LAST_MODIFIED', datatype=sqlalchemy.Double)
+        index_cols.add(name='LAST_MODIFIED', datatype=pseudo_const.LONG_FLOAT)
         index_cols.add(name='RECIPE', datatype=sqlalchemy.String(200))
         index_cols.add(name='RUNSTRING',
                        datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC))
