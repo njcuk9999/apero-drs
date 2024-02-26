@@ -524,38 +524,39 @@ def flat_blaze_write(params: ParamDict, recipe: DrsRecipe, infile: DrsFitsFile,
     # --------------------------------------------------------------
     # Store E2DSLL in file
     # --------------------------------------------------------------
-    # get a new copy of the blaze file
-    e2dsllfile = recipe.outputs['E2DSLL_FILE'].newcopy(params=params,
-                                                       fiber=fiber)
-    # construct the filename from file instance
-    e2dsllfile.construct_filename(infile=infile)
-    # copy header from blaze file
-    e2dsllfile.copy_hdict(blazefile)
-    # set in files
-    e2dsllfile.infiles = list(hfiles)
-    # set output key
-    e2dsllfile.add_hkey('KW_OUTPUT', value=e2dsllfile.name)
-    # copy data
-    e2dsllfile.data = eprops['E2DSLL']
-    # --------------------------------------------------------------
-    # log that we are saving rotated image
-    WLOG(params, '',
-         textentry('40-015-00005', args=[e2dsllfile.filename]))
-    # define multi lists
-    data_list, name_list = [eprops['E2DSCC']], ['E2DSLL', 'E2DSCC']
-    datatype_list = ['image']
-    # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
-        data_list += [params.snapshot_table(recipe, drsfitsfile=e2dsllfile)]
-        name_list += ['PARAM_TABLE']
-        datatype_list += ['table']
-    # write image to file
-    e2dsllfile.write_multi(data_list=data_list, name_list=name_list,
-                           datatype_list=datatype_list,
-                           block_kind=recipe.out_block_str,
-                           runstring=recipe.runstring)
-    # add to output files (for indexing)
-    recipe.add_output_file(e2dsllfile)
+    if params['DEBUG_E2DSLL_FILE']:
+        # get a new copy of the blaze file
+        e2dsllfile = recipe.outputs['E2DSLL_FILE'].newcopy(params=params,
+                                                           fiber=fiber)
+        # construct the filename from file instance
+        e2dsllfile.construct_filename(infile=infile)
+        # copy header from blaze file
+        e2dsllfile.copy_hdict(blazefile)
+        # set in files
+        e2dsllfile.infiles = list(hfiles)
+        # set output key
+        e2dsllfile.add_hkey('KW_OUTPUT', value=e2dsllfile.name)
+        # copy data
+        e2dsllfile.data = eprops['E2DSLL']
+        # --------------------------------------------------------------
+        # log that we are saving rotated image
+        WLOG(params, '',
+             textentry('40-015-00005', args=[e2dsllfile.filename]))
+        # define multi lists
+        data_list, name_list = [eprops['E2DSCC']], ['E2DSLL', 'E2DSCC']
+        datatype_list = ['image']
+        # snapshot of parameters
+        if params['PARAMETER_SNAPSHOT']:
+            data_list += [params.snapshot_table(recipe, drsfitsfile=e2dsllfile)]
+            name_list += ['PARAM_TABLE']
+            datatype_list += ['table']
+        # write image to file
+        e2dsllfile.write_multi(data_list=data_list, name_list=name_list,
+                               datatype_list=datatype_list,
+                               block_kind=recipe.out_block_str,
+                               runstring=recipe.runstring)
+        # add to output files (for indexing)
+        recipe.add_output_file(e2dsllfile)
     # return out file
     return blazefile, flatfile
 
