@@ -3071,6 +3071,9 @@ def get_google_sheet(params: ParamDict, sheet_id: str, worksheet: int = 0,
         eargs = [url, type(e), str(e), func_name]
         WLOG(params, 'error', textentry('00-010-00009', args=eargs))
         return Table()
+    # deal with no rows in table
+    if '\n' not in rawdata.text:
+        return Table()
     # convert rawdata input table
     with warnings.catch_warnings(record=True) as _:
         tries = 0
