@@ -1056,6 +1056,10 @@ def check_database(params: ParamDict):
 
     # get an array of all sky coordinates
     skycoords = SkyCoord(atable['RA_DEG'], atable['DEC_DEG'], unit='deg')
+
+    # ---------------------------------------------------------------------
+    # storage for objects with problems
+    all_objects = dict()
     # ---------------------------------------------------------------------
     # loop around all items in the table
     for row in range(len(atable)):
@@ -1063,6 +1067,8 @@ def check_database(params: ParamDict):
         row_data = atable.iloc[row]
         # get the required columns
         objname, aliases = row_data['OBJNAME'], row_data['ALIASES']
+        # add to bad objects
+        all_objects[objname] = []
         # print progress
         msg = 'Checking object {0} ({1}/{2})'
         margs = [objname, row + 1, len(atable)]
@@ -1073,7 +1079,8 @@ def check_database(params: ParamDict):
         # print progress
         WLOG(params, '', '\t- Checking OBJNAME', colour='magenta')
         # check the objname
-        _check_objname(params, objname, row, atable, kind='OBJNAME')
+        all_objects = _check_objname(params, all_objects, objname, row, atable,
+                                     kind='OBJNAME')
         # -----------------------------------------------------------------
         # Check 2: check that aliases
         # -----------------------------------------------------------------
@@ -1086,18 +1093,41 @@ def check_database(params: ParamDict):
         # loop around all aliases
         for alias in alias_list:
             # check the alias
-            _check_objname(params, alias, row, atable, kind='ALIAS')
+            all_objects = _check_objname(params, all_objects, alias, row,
+                                         atable, kind='ALIAS')
         # -----------------------------------------------------------------
         # Check 3: ra and dec cross-match
         # -----------------------------------------------------------------
         # print progress
         WLOG(params, '', '\t- Checking crossmatch', colour='magenta')
         # do cross-match
-        _check_crossmatch(params, objname, row, skycoords, atable)
+        all_objects = _check_crossmatch(params, all_objects, objname, row,
+                                        skycoords, atable)
+    # ---------------------------------------------------------------------
+    # remove any good objects (no entries in dictionary)
+    bad_objects = dict()
+    for objname in all_objects:
+        if len(all_objects[objname]) > 0:
+            bad_objects[objname] = all_objects[objname]
+    # ---------------------------------------------------------------------
+    # save bad object list to disk (via a yaml)
+    bad_object_path = os.path.join(params['DRS_DATA_OTHER'], 'astrometrics')
+    # make sure the directory exists
+    if not os.path.exists(bad_object_path):
+        os.makedirs(bad_object_path)
+    # get time now in fits format (YYYY-MM-DDTHH:MM:SS)
+    time_now = Time.now().fits
+    # construct full path
+    bad_object_file = os.path.join(bad_object_path,
+                                   f'bad_objects_{time_now}.yaml')
+    # write yaml file
+    base.write_yaml(bad_objects, bad_object_file)
 
 
-def _check_objname(params: ParamDict, objname: str, row: int,
-                   atable: pd.DataFrame, kind: str = 'OBJNAME'):
+def _check_objname(params: ParamDict, bad_objs: Dict[str, List[str]],
+                   objname: str, row: int,
+                   atable: pd.DataFrame,
+                   kind: str = 'OBJNAME') -> Dict[str, List[str]]:
     """
     Check that the object name is not in any row or alias
 
@@ -1122,6 +1152,8 @@ def _check_objname(params: ParamDict, objname: str, row: int,
             problem = (f'\t\t{kind}: {objname} duplicated in '
                        f'OBJNAME:{objname_it}]')
             WLOG(params, 'warning', problem, sublevel=1)
+            # append to problem list
+            bad_objs[objname].append(problem)
         # check for objname in ALIASES
         for alias in atable.iloc[row_it]['ALIASES'].split('|'):
             if objname == alias:
@@ -1129,10 +1161,15 @@ def _check_objname(params: ParamDict, objname: str, row: int,
                 problem = (f'\t\t{kind}: {objname} duplicated in '
                            f'ALIAS:{objname_it}]')
                 WLOG(params, 'warning', problem, sublevel=1)
+                # append to problem list
+                bad_objs[objname].append(problem)
+    # return the bad objects
+    return bad_objs
 
 
-def _check_crossmatch(params: ParamDict, objname: str, row: int,
-                      skycoords: SkyCoord, atable: pd.DataFrame):
+def _check_crossmatch(params: ParamDict, bad_objs: Dict[str, List[str]],
+                      objname: str, row: int, skycoords: SkyCoord,
+                      atable: pd.DataFrame) -> Dict[str, List[str]]:
     """
     Check for cross-matches in the database (ra/dec < separation)
 
@@ -1162,6 +1199,10 @@ def _check_crossmatch(params: ParamDict, objname: str, row: int,
             problem = (f'\t\t{objname} too close {objname_it} '
                        f'sep={sep:.3f} arcsec)')
             WLOG(params, 'warning', problem, sublevel=1)
+            # append to problem list
+            bad_objs[objname].append(problem)
+    # return the bad objects
+    return bad_objs
 
 
 def query_database(params, rawobjnames: List[str],
