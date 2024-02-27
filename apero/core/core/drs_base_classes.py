@@ -723,6 +723,8 @@ class PandasLikeDatabase:
         """
         self.namespace = dict(data=data)
         self.tablename = 'data'
+        # intial condition which created the input dataframe
+        self.condition = None
 
     def execute(self, command: str) -> pd.DataFrame:
         """

@@ -52,6 +52,8 @@ DEBUG = True
 # define database names
 DATABASE_NAMES = ['calib', 'tellu', 'findex', 'log', 'astrom', 'lang',
                   'reject']
+# sqlalchemy definitions to use elsewhere
+SA_TEXT = sqlalchemy.text
 
 
 # =============================================================================

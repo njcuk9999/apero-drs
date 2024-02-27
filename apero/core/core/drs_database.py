@@ -569,7 +569,7 @@ class CalibrationDatabase(DatabaseManager):
             # sort by:
             #       ABS(UNIXTIME - FILETIME)
             sql['condition'] += ' AND UNIXTIME - {0} < 0'.format(utime)
-            sql['sort_by'] = 'abs(UNIXTIME - {0})'.format(utime)
+            sql['sort_by'] = drs_db.SA_TEXT('abs(UNIXTIME - {0})'.format(utime))
             sql['sort_descending'] = False
         elif timemode == 'newer' and utime is not None:
             # condition:
@@ -577,12 +577,12 @@ class CalibrationDatabase(DatabaseManager):
             # sort by:
             #       ABS(UNIXTIME - FILETIME)
             sql['condition'] += ' AND UNIXTIME - {0} > 0'.format(utime)
-            sql['sort_by'] = 'abs(UNIXTIME - {0})'.format(utime)
+            sql['sort_by'] = drs_db.SA_TEXT('abs(UNIXTIME - {0})'.format(utime))
             sql['sort_descending'] = False
         elif utime is not None:
             # sort by:
             #       ABS(UNIXTIME - FILETIME)
-            sql['sort_by'] = 'abs(UNIXTIME - {0})'.format(utime)
+            sql['sort_by'] = drs_db.SA_TEXT('abs(UNIXTIME - {0})'.format(utime))
             sql['sort_descending'] = False
         else:
             # sort by: UNIXTIME
@@ -718,7 +718,7 @@ class CalibrationDatabase(DatabaseManager):
             filenames = None
             filetimes = np.nan
             reference = False
-        elif isinstance(ctable, tuple):
+        elif isinstance(ctable, (tuple, list)):
             # get filename
             filenames = str(ctable[0])
             # get file time (unix)

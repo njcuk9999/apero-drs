@@ -523,6 +523,8 @@ class _CheckFiles(DrsAction):
                  (raises exception if invalid)
         :raises: drs_exceptions.LogExit
         """
+        # set the function name
+        func_name = display_func('_check_files', __NAME__, self.class_name)
         # ---------------------------------------------------------------------
         # deal with single string -> list of strings
         if isinstance(value, str):
@@ -556,6 +558,38 @@ class _CheckFiles(DrsAction):
         # get recipe args and kwargs
         rargs = self.recipe.args
         rkwargs = self.recipe.kwargs
+        # check whether we are updating the index
+        update_index = True
+        if 'INPUTS' in params:
+            # if we are in parallel do not update here - assume parent has updated
+            #    index database
+            if params['INPUTS']['PARALLEL']:
+                update_index = False
+        # ---------------------------------------------------------------------
+        # deal with database (either getting + updating or coming from stored)
+        # -------------------------------------------------------------------------
+        # deal with instrument == 'None'
+        if self.indexdb.instrument == 'None':
+            eargs = [argname, self.indexdb.name, func_name]
+            WLOG(params, 'error', textentry('09-001-00032', args=eargs))
+        elif self.indexdb.database is None:
+            # try to load database
+            self.indexdb.load_db()
+        # update database with entries
+        if update_index:
+            self.indexdb.update_entries(block_kind=obs_dir.block_kind)
+        # assert database is in indexdb
+        assert isinstance(self.indexdb.database, drs_db.AperoDatabase)
+        # set up condition
+        condition = 'BLOCK_KIND="{0}"'.format(obs_dir.block_kind)
+        # add obs_dir if present
+        if not drs_text.null_text(obs_dir.obs_dir, ['None', '', 'Null']):
+            condition += ' AND OBS_DIR="{0}"'.format(obs_dir.obs_dir)
+        # get filedb
+        # TODO: Do we really need to get all entries for this night??
+        dbtable = self.indexdb.get_entries('*', condition=condition)
+        filedb = PandasLikeDatabase(dbtable)
+        filedb.condition = condition
         # ---------------------------------------------------------------------
         # storage of files and types
         files, types = [], []
@@ -566,7 +600,7 @@ class _CheckFiles(DrsAction):
                 out = valid_file_no_db(params, self.recipe, argname, _value,
                                        rargs, rkwargs, obs_dir, types)
             else:
-                out = valid_file(params, self.indexdb, argname, _value,
+                out = valid_file(params, filedb, argname, _value,
                                  rargs, rkwargs, obs_dir, types)
             # append to storage
             files += out[0]
@@ -3377,7 +3411,7 @@ def valid_file_no_db(params: ParamDict, recipe: Any,
 
 
 # noinspection PyBroadException
-def valid_file(params: ParamDict, indexdb: FileIndexDatabase,
+def valid_file(params: ParamDict, filedb: PandasLikeDatabase,
                argname: str, filename: str, rargs: Dict[str, DrsArgument],
                rkwargs: Dict[str, DrsArgument], obs_dir: drs_file.DrsPath,
                types: List[DrsInputFile]) -> ValidFileType:
@@ -3394,10 +3428,6 @@ def valid_file(params: ParamDict, indexdb: FileIndexDatabase,
     :param types: List[DrsInputFile] - the drs file types for all files
                   currently found
     """
-    # set function name
-    func_name = display_func('_valid_file', __NAME__)
-    # load database if required
-    indexdb.load_db()
     # get the argument that we are checking the file of
     arg = _get_arg(rargs, rkwargs, argname)
     drsfiles = arg.files
@@ -3408,13 +3438,6 @@ def valid_file(params: ParamDict, indexdb: FileIndexDatabase,
             return _inpath_file(params, argname, filename, drsfile)
     # get the drs logic
     drs_logic = arg.filelogic
-    # check whether we are updating the index
-    update_index = True
-    if 'INPUTS' in params:
-        # if we are in parallel do not update here - assume parent has updated
-        #    index database
-        if params['INPUTS']['PARALLEL']:
-            update_index = False
     # deal with arg.path set
     obs_dir = _check_arg_path(params, arg, obs_dir)
     # ---------------------------------------------------------------------
@@ -3428,30 +3451,7 @@ def valid_file(params: ParamDict, indexdb: FileIndexDatabase,
     # clean up
     filename = filename.strip()
 
-    # -------------------------------------------------------------------------
-    # deal with database (either getting + updating or coming from stored)
-    # -------------------------------------------------------------------------
-    # deal with instrument == 'None'
-    if indexdb.instrument == 'None':
-        eargs = [argname, indexdb.name, func_name]
-        WLOG(params, 'error', textentry('09-001-00032', args=eargs))
-    elif indexdb.database is None:
-        # try to load database
-        indexdb.load_db()
-    # update database with entries
-    if update_index:
-        indexdb.update_entries(block_kind=obs_dir.block_kind)
-    # assert database is in indexdb
-    assert isinstance(indexdb.database, drs_db.AperoDatabase)
-    # set up condition
-    condition = 'BLOCK_KIND="{0}"'.format(obs_dir.block_kind)
-    # add obs_dir if present
-    if not drs_text.null_text(obs_dir.obs_dir, ['None', '', 'Null']):
-        condition += ' AND OBS_DIR="{0}"'.format(obs_dir.obs_dir)
-    # get filedb
-    # TODO: Do we really need to get all entries for this night??
-    dbtable = indexdb.get_entries('*', condition=condition)
-    filedb = PandasLikeDatabase(dbtable)
+    # ---------------------------------------------------------------------
     # deal with wildcards
     if '*' in filename:
         # make filename sql-like
@@ -3461,13 +3461,12 @@ def valid_file(params: ParamDict, indexdb: FileIndexDatabase,
     else:
         # make a path cond
         pathcond = 'FILENAME="{0}"'
-
     # ---------------------------------------------------------------------
     # Step 2: Check whether filename itself is in database
     # ---------------------------------------------------------------------
     # check for filename in paths
     basename = os.path.basename(str(filename))
-    condition1 = condition + ' AND ' + pathcond.format(basename)
+    condition1 = filedb.condition + ' AND ' + pathcond.format(basename)
     # count number of paths that meet this condition
     if filedb.count(condition=condition1) > 0:
         # now check fits keys (or pass if not fits)
@@ -3488,7 +3487,7 @@ def valid_file(params: ParamDict, indexdb: FileIndexDatabase,
     # get absolute path
     abspath = file_inst.abspath
     # check for filename in paths
-    condition1 = condition + ' AND ' + pathcond.format(abspath)
+    condition1 = filedb.condition + ' AND ' + pathcond.format(abspath)
     # count number of paths that meet this condition
     if filedb.count(condition=condition1) > 0:
         # now check fits keys (or pass if not fits)
