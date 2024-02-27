@@ -5450,7 +5450,7 @@ LBL_MULTI_OBJLIST = Const('LBL_MULTI_OBJLIST', value=None, dtype=str,
                                       '(comma separated list)')
 
 # Define the DTEMP gradient files
-LBL_DTEMP = Const('LBL_DTEMP', value=None, dtype=dict,
+LBL_DTEMP = Const('LBL_DTEMP', value=None, dtype=str,
                   source=__NAME__, user=False, active=True, group=cgroup,
                   description='Define the DTEMP gradient files')
 

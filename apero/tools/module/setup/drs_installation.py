@@ -15,7 +15,7 @@ import string
 import sys
 from collections import OrderedDict
 from pathlib import Path
-from typing import Any, List, Dict, Tuple, Union
+from typing import Any, List, Dict, Optional, Tuple, Union
 
 import numpy as np
 
@@ -109,7 +109,8 @@ def cprint(message: Union[lang.Text, str], colour: str = 'g'):
 def ask(question: str, dtype: Union[str, type, None] = None,
         options: Union[List[Any], None] = None,
         optiondesc: Union[List[str], None] = None, default: Any = None,
-        required: bool = True, color='g') -> Any:
+        required: bool = True, color='g',
+        stringlimit: Optional[int] = None) -> Any:
     """
     Ask a question
 
@@ -269,6 +270,14 @@ def ask(question: str, dtype: Union[str, type, None] = None,
                 optionstr = ortxt.join(np.array(options, dtype=str))
                 cprint(textentry('40-001-00039', args=[optionstr]), 'y')
                 check = True
+        # deal with string and string limit
+        if dtype == str and stringlimit is not None:
+            if len(uinput) > stringlimit:
+                msg = 'String length must be less than {0} characters'
+                margs = [stringlimit]
+                cprint(msg.format(*margs), 'y')
+                check = True
+                continue
 
     # deal with returning default
     if uinput == '' and default is not None:
@@ -279,7 +288,8 @@ def ask(question: str, dtype: Union[str, type, None] = None,
 
 
 def check_path_arg(name: str, value: Union[str, Path],
-                   ask_to_create: bool = True) -> Tuple[bool, Path]:
+                   ask_to_create: bool = True,
+                   from_cmd: bool = True) -> Tuple[bool, Path]:
     """
     Check whether path exists and ask user to create it if it doesn't
 
@@ -292,7 +302,8 @@ def check_path_arg(name: str, value: Union[str, Path],
     """
     # check if user config is None (i.e. set from cmd line)
     if value is not None:
-        cprint(textentry('40-001-00040', args=[name, value]))
+        if from_cmd:
+            cprint(textentry('40-001-00040', args=[name, value]))
         # create path
         value = Path(value)
         # check if value exists
@@ -305,7 +316,7 @@ def check_path_arg(name: str, value: Union[str, Path],
                 promptuser = False
             # make the directory if we are not going to prompt the user
             if not promptuser:
-                cprint('\tMaking dir {0}: {1}'.format(name, value))
+                cprint('\t\tMaking dir {0}: {1}'.format(name, value))
                 os.makedirs(value)
         # if path exists we do not need to prompt user
         else:
@@ -546,11 +557,26 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
             question, default = DATA_PATHS[path]
             value = data_values[path]
             if value is None and datadir is not None:
-                all_params[path] = datadir.joinpath(default)
+                # create path from datadir
+                path_from_datadir = datadir.joinpath(default)
+                # add to all params
+                all_params[path] = path_from_datadir
                 all_params.set_source(path, 'command line + default')
                 pargs = [path, all_params[path]]
                 # print header
                 cprint(textentry('40-001-00049', args=pargs))
+                # check path exists
+                check_path_arg(path, path_from_datadir, askcreate,
+                               from_cmd=False)
+            # deal with the case where we have no value and no way to guess it
+            elif value is None:
+                # raise error as datadir and value are both None
+                eargs = [path, DATA_ARGS[path]]
+                emsg = ('Cannot create {0}, when using cmd lines args must set'
+                        ' either --{1} or --datadir')
+                cprint(emsg.format(*eargs), 'red')
+                sys.exit()
+            # we have a value -- use it
             else:
                 # assign path
                 all_params[path] = value
@@ -729,7 +755,7 @@ def mysql_database_tables(args: argparse.Namespace, all_params: ParamDict,
     else:
         database_ask = [False] * 7
     database_args = ['calibtable', 'tellutable', 'findextable', 'logtable',
-                     'astromtable', 'rejecttable', 'langtable']
+                     'astromtable', 'langtable', 'rejecttable']
     # loop around databases
     for db_it in range(len(database_user)):
         # ---------------------------------------------------------------------
