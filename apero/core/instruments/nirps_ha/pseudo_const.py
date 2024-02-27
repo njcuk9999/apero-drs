@@ -844,9 +844,9 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         index_cols.add(name='LAST_MODIFIED', datatype=pseudo_const.LONG_FLOAT)
         index_cols.add(name='RECIPE', datatype=sqlalchemy.String(200))
         index_cols.add(name='RUNSTRING',
-                       datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC))
+                       datatype=sqlalchemy.TEXT)
         index_cols.add(name='INFILES',
-                       datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC))
+                       datatype=sqlalchemy.TEXT)
         # get header keys
         header_columns = self.FILEINDEX_HEADER_COLS()
         # add header columns to index columns

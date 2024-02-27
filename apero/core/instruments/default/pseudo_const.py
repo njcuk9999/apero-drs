@@ -51,8 +51,8 @@ BAD_OBJ_CHARS = [' '] + list(string.punctuation.replace('_', ''))
 # null text
 NULL_TEXT = ['', 'None', 'Null']
 # define float sqlalchemy column types (forcing them to be floats on return)
-SHORT_FLOAT = sqlalchemy.Float(precision=32)
-LONG_FLOAT = sqlalchemy.Float(precision=53)
+SHORT_FLOAT = drs_db.AperoFloat(precision=32, asdecimal=False)
+LONG_FLOAT = drs_db.AperoFloat(precision=53, asdecimal=False)
 
 
 # =============================================================================
@@ -1242,9 +1242,9 @@ class DefaultPseudoConstants:
         index_cols.add(name='LAST_MODIFIED', datatype=LONG_FLOAT)
         index_cols.add(name='RECIPE', datatype=sqlalchemy.String(200))
         index_cols.add(name='RUNSTRING',
-                       datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC))
+                       datatype=sqlalchemy.TEXT)
         index_cols.add(name='INFILES',
-                       datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC))
+                       datatype=sqlalchemy.TEXT)
         # get header keys
         header_columns = self.FILEINDEX_HEADER_COLS()
         # add header columns to index columns
@@ -1292,7 +1292,7 @@ class DefaultPseudoConstants:
                           comment='Whether flags should be used')
         rejectdb_cols.add(name='DATE_ADDED', datatype=sqlalchemy.String(30))
         rejectdb_cols.add(name='COMMENT',
-                          datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC))
+                          datatype=sqlalchemy.TEXT)
         # return columns and ctypes
         self.rejectdb_cols = rejectdb_cols
         return rejectdb_cols
@@ -1340,31 +1340,31 @@ class DefaultPseudoConstants:
         log_columns.add(name='LEVELCRIT', datatype=sqlalchemy.String(80),
                         comment='Recipe level/sub level description')
         log_columns.add(name='INPATH',
-                        datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC),
+                        datatype=sqlalchemy.TEXT,
                         comment='Recipe inputs path')
         log_columns.add(name='OUTPATH',
-                        datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC),
+                        datatype=sqlalchemy.TEXT,
                         comment='Recipe outputs path')
         log_columns.add(name='OBS_DIR', datatype=sqlalchemy.String(200),
                         is_index=True,
                         comment='Recipe observation directory')
         log_columns.add(name='LOGFILE',
-                        datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC),
+                        datatype=sqlalchemy.TEXT,
                         comment='Recipe log file path')
         log_columns.add(name='PLOTDIR',
-                        datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC),
+                        datatype=sqlalchemy.TEXT,
                         comment='Recipe plot file path')
         log_columns.add(name='RUNSTRING',
-                        datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC),
+                        datatype=sqlalchemy.TEXT,
                         comment='Recipe run string')
         log_columns.add(name='ARGS',
-                        datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC),
+                        datatype=sqlalchemy.TEXT,
                         comment='Recipe argument list')
         log_columns.add(name='KWARGS',
-                        datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC),
+                        datatype=sqlalchemy.TEXT,
                         comment='Recipe keyword argument list')
         log_columns.add(name='SKWARGS',
-                        datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC),
+                        datatype=sqlalchemy.TEXT,
                         comment='Recipe special argument list')
         log_columns.add(name='START_TIME', datatype=sqlalchemy.String(25),
                         comment='Recipe start time YYYY-mm-dd HH:MM:SS.SSS')
@@ -1375,22 +1375,22 @@ class DefaultPseudoConstants:
         log_columns.add(name='PASSED_ALL_QC', datatype=sqlalchemy.Integer,
                         comment='flag recipe passed all quality control')
         log_columns.add(name='QC_STRING',
-                        datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC),
+                        datatype=sqlalchemy.TEXT,
                         comment='full quality control string')
         log_columns.add(name='QC_NAMES',
-                        datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC),
+                        datatype=sqlalchemy.TEXT,
                         comment='full quality control names')
         log_columns.add(name='QC_VALUES',
-                        datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC),
+                        datatype=sqlalchemy.TEXT,
                         comment='full quality control values')
         log_columns.add(name='QC_LOGIC',
-                        datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC),
+                        datatype=sqlalchemy.TEXT,
                         comment='full quality control logic')
         log_columns.add(name='QC_PASS',
-                        datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC),
+                        datatype=sqlalchemy.TEXT,
                         comment='full quality control pass/fail')
         log_columns.add(name='ERRORMSGS',
-                        datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC),
+                        datatype=sqlalchemy.TEXT,
                         comment='recipe errors')
         log_columns.add(name='ENDED', datatype=sqlalchemy.Integer,
                         comment='flag for recipe ended '
@@ -1398,7 +1398,7 @@ class DefaultPseudoConstants:
         log_columns.add(name='FLAGNUM', datatype=sqlalchemy.Integer,
                         comment='binary flag decimal number')
         log_columns.add(name='FLAGSTR',
-                        datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC),
+                        datatype=sqlalchemy.TEXT,
                         comment='binary flag names (one for each binary flag)')
         log_columns.add(name='USED', datatype=sqlalchemy.Integer,
                         comment='Whether file should be used (always true)')

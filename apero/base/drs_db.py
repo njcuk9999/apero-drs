@@ -18,15 +18,16 @@ only from:
 """
 from typing import Any, Dict, List, Literal, Optional, Union
 from pathlib import Path
+from decimal import Decimal
 
 import numpy as np
 import pandas as pd
 import sqlalchemy
 from astropy.table import Table as AstropyTable
+from sqlalchemy import Dialect
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy_utils import database_exists, create_database
-from sqlalchemy.types import TypeDecorator, Numeric
 
 from apero.base import base
 from apero.base import drs_base
@@ -116,14 +117,22 @@ class AperoDatabaseError(AperoDatabaseException):
 
 
 # Custom type for storing Unix timestamps as floats
-class AperoFloat(TypeDecorator):
-    impl = Numeric
+class AperoFloat(sqlalchemy.types.TypeDecorator):
+    impl = sqlalchemy.Float
 
     def process_bind_param(self, value, dialect):
-        return value
+        if value is not None:
+            return float(value)
 
     def process_result_value(self, value, dialect):
-        return float(value)
+        if value is not None:
+            return float(value)
+
+    def result_processor(self, dialect: Dialect, coltype: Any):
+        def process(value):
+            if value is not None:
+                return float(value)
+        return process
 
 
 class AperoDatabase:
@@ -488,16 +497,18 @@ class AperoDatabase:
         # execute the query
         with self.engine.begin() as conn:
             result = conn.execute(query)
+            # annoying hack to avoid decimal types (cast to floats)
+            prows = _process_rows(result.fetchall())
             # get the results as a list
             if return_pandas:
-                rows = pd.DataFrame(result.fetchall(), columns=result.keys())
+                rows = pd.DataFrame(prows, columns=result.keys())
             elif return_table:
-                rows = pd.DataFrame(result.fetchall(), columns=result.keys())
+                rows = pd.DataFrame(prows, columns=result.keys())
                 rows = AstropyTable.from_pandas(rows)
             elif return_array:
-                rows = np.array(result.fetchall())
+                rows = np.array(prows)
             else:
-                rows = result.fetchall()
+                rows = prows
         # ---------------------------------------------------------------------
         return rows
 
@@ -803,7 +814,7 @@ class AperoDatabase:
             # noinspection PyTypeChecker
             columns = [col.name for col in sqltable.columns]
         else:
-            columns.split(',')
+            columns = columns.split(',')
         # ---------------------------------------------------------------------
         return columns
 
@@ -1118,11 +1129,14 @@ class AperoDatabaseColumns:
         # test floats
         if isinstance(stype, (sqlalchemy.Float, sqlalchemy.Double)):
             return float
+        # test apero float
+        if isinstance(stype, AperoFloat):
+            return float
         # test boolean
         if isinstance(stype, sqlalchemy.Boolean):
             return bool
         # if we get here return None
-        return None
+        raise ValueError('Datatype not understood')
 
 
 # =============================================================================
@@ -1335,13 +1349,13 @@ class LanguageDatabase(DatabaseManager):
                          is_index=True)
         self.columns.add(name='KIND', datatype=sqlalchemy.String(25))
         self.columns.add(name='KEYDESC',
-                         datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC))
+                         datatype=sqlalchemy.TEXT)
         self.columns.add(name='ARGUMENTS',
-                         datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC))
+                         datatype=sqlalchemy.TEXT)
         # add language columns
         for lang in base.LANGUAGES:
             self.columns.add(name=lang,
-                             datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC))
+                             datatype=sqlalchemy.TEXT)
         # other paths
         self.databasefile = ''
         self.resetfile = ''
@@ -1646,6 +1660,23 @@ def deal_with_null(value: Any = None):
         return 'None'
     # otherwise return value
     return value
+
+
+def _process_rows(rows):
+    """
+    Annoying hack to
+    """
+    processed_rows = []
+    for row in rows:
+        processed_row = []
+        for value in row:
+            # Check if the value is a Decimal instance
+            if isinstance(value, Decimal):
+                processed_row.append(float(value))
+            else:
+                processed_row.append(value)
+        processed_rows.append(processed_row)
+    return processed_rows
 
 
 # =============================================================================

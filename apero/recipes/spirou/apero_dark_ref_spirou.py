@@ -120,8 +120,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                                      filters=dict(KW_DPRTYPE=filetype))
         # append to filenames
         filenames += list(files)
-    # convert to numpy array
-    filenames = np.array(filenames)
+    # convert to numpy array (and only keep unique filenames)
+    filenames = np.unique(filenames)
 
     # deal with no files found
     if len(filenames) == 0:

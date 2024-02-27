@@ -496,7 +496,7 @@ class CalibrationDatabase(DatabaseManager):
         insert_dict['FIBER'] = str(fiber)
         insert_dict['REFCAL'] = int(is_super)
         insert_dict['FILENAME'] = str(drsfile.basename).strip()
-        insert_dict['HUMAN_TIME'] = str(header_time.iso)
+        insert_dict['HUMANTIME'] = str(header_time.iso)
         insert_dict['UNIXTIME'] = float(header_time.unix)
         insert_dict['PID'] = str(self.params['PID'])
         insert_dict['PDATE'] = str(self.params['DATE_NOW'])
@@ -1262,8 +1262,8 @@ def _get_dbtable(params: ParamDict, drsfile: DrsFileTypes, dbmname: str) -> bool
     # set function
     func_name = display_func('_get_dbname', __NAME__)
     # get dbname from drsfile
-    if hasattr(drsfile, 'dbtable'):
-        dbname = drsfile.dbtable.upper()
+    if hasattr(drsfile, 'dbname'):
+        dbname = drsfile.dbname.upper()
         # test db name against this database
         if dbname != dbmname.upper():
             eargs = [drsfile.name, dbname, dbmname.upper(), drsfile.filename,
@@ -1272,7 +1272,9 @@ def _get_dbtable(params: ParamDict, drsfile: DrsFileTypes, dbmname: str) -> bool
             return False
     else:
         eargs = [drsfile.name, dbmname, func_name]
-        WLOG(params, 'error', textentry('00-008-00012', args=eargs))
+        emsg = ('Drsfile {0} cannot use database "{1}". Check file_definitions'
+                '\n\tFunction = {2}')
+        WLOG(params, 'error', emsg.format(*eargs))
         return False
     # if we are here return True --> success
     return True

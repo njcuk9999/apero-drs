@@ -58,6 +58,8 @@ module_translation['GitPython'] = 'git'
 module_translation['Bottleneck'] = 'bottleneck'
 module_translation['SQLAlchemy'] = 'sqlalchemy'
 module_translation['Sphinx'] = 'sphinx'
+module_translation['ipython'] = 'IPython'
+module_translation['gspread-pandas'] = 'gspread_pandas'
 # start the language dictionary
 lang = setup_lang.LangDict()
 
@@ -569,7 +571,7 @@ def main():
     # deal with validation
     if not get_sys_arg('--skip') and not get_sys_arg('--help', 'switch'):
         if get_sys_arg('--dev'):
-            validate(dev=True)
+            validate(devmode=True)
         else:
             validate()
     # catch Ctrl+C
