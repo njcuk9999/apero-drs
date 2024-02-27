@@ -821,7 +821,8 @@ class AstroObj:
             # ask for source
             source_question = 'Enter the {0} source [40 character limit]'
             source_question = source_question.format(property)
-            uinput_source = drs_installation.ask(source_question, dtype=str)
+            uinput_source = drs_installation.ask(source_question, dtype=str,
+                                                 stringlimit=40)
             # set Teff value
             final_value = uinput
             final_value_err = uinput_err
@@ -1441,48 +1442,6 @@ def ask_for_aliases(params: ParamDict, astro_obj: AstroObj) -> AstroObj:
         # ---------------------------------------------------------------------
         # log change of name
         WLOG(params, '', f'\n\tUpdated aliases:{aliaslist}')
-    # return the original or update astro_obj
-    return astro_obj
-
-
-def ask_for_teff(astro_obj: AstroObj) -> AstroObj:
-    """
-    Ask the user whether they wish to update Teff manually
-
-    :param astro_obj: AstroObj
-
-    :return: update AstroObj
-    """
-    if astro_obj.teff is None:
-        question1 = '\nAdd Teff for object [K]?'
-        cond = drs_installation.ask(question1, dtype='YN', color='m')
-        if cond:
-            # Ask user for Teff
-            question2 = 'Enter Teff in K'
-            rawteff = drs_installation.ask(question2, dtype=float)
-            # add to astro_obj
-            astro_obj.teff = rawteff
-            # Ask for source
-            question3 = 'Enter source for Teff (leave blank for no source)'
-            teff_source = drs_installation.ask(question3, required=False,
-                                               dtype=str)
-            # deal with teff source more than 60 characters
-            while len(teff_source) > 60:
-                question3 = ('Source text cannot be > 60 characters. '
-                             '\nEnter source for Teff '
-                             '(leave blank for no source)')
-                teff_source = drs_installation.ask(question3, required=False,
-                                                   dtype=str)
-            # get user /host
-            nargs = [getpass.getuser(), socket.gethostname()]
-            teff_user = 'via {0}@{1}'.format(*nargs)
-            # deal with adding teff source
-            if drs_text.null_text(teff_source, ['None', '', 'Null']):
-                teff_source = teff_user
-            else:
-                teff_source += f' ({teff_user})'
-            # set teff source
-            astro_obj.teff_source = teff_source
     # return the original or update astro_obj
     return astro_obj
 

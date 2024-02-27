@@ -15,7 +15,7 @@ import string
 import sys
 from collections import OrderedDict
 from pathlib import Path
-from typing import Any, List, Dict, Tuple, Union
+from typing import Any, List, Dict, Optional, Tuple, Union
 
 import numpy as np
 
@@ -109,7 +109,8 @@ def cprint(message: Union[lang.Text, str], colour: str = 'g'):
 def ask(question: str, dtype: Union[str, type, None] = None,
         options: Union[List[Any], None] = None,
         optiondesc: Union[List[str], None] = None, default: Any = None,
-        required: bool = True, color='g') -> Any:
+        required: bool = True, color='g',
+        stringlimit: Optional[int] = None) -> Any:
     """
     Ask a question
 
@@ -269,6 +270,14 @@ def ask(question: str, dtype: Union[str, type, None] = None,
                 optionstr = ortxt.join(np.array(options, dtype=str))
                 cprint(textentry('40-001-00039', args=[optionstr]), 'y')
                 check = True
+        # deal with string and string limit
+        if dtype == str and stringlimit is not None:
+            if len(uinput) > stringlimit:
+                msg = 'String length must be less than {0} characters'
+                margs = [stringlimit]
+                cprint(msg.format(*margs), 'y')
+                check = True
+                continue
 
     # deal with returning default
     if uinput == '' and default is not None:
