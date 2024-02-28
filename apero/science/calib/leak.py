@@ -111,7 +111,8 @@ def get_dark_fps(params: ParamDict, recipe: DrsRecipe,
         # ------------------------------------------------------------------
         # get all "filetype" filenames
         files = drs_utils.find_files(params, block_kind='tmp',
-                                     filters=dict(KW_DPRTYPE=filetype))
+                                     filters=dict(KW_DPRTYPE=filetype,
+                                                  OBS_DIR=params['OBS_DIR']))
         # ------------------------------------------------------------------
         # loop through all files and get time from headers
         times = []

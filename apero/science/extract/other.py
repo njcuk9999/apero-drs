@@ -230,8 +230,21 @@ def extract_files(params: ParamDict, recipe: DrsRecipe,
     # ------------------------------------------------------------------
     # Get the correct observation directory
     # ------------------------------------------------------------------
+    # get in and out paths (thw two places a file can be)
     inpath = params['INPATH']
-    obs_dir = os.path.dirname(infile.filename).split(inpath)[1]
+    outpath = params['OUTPATH']
+    # get the observation directory if infile is in the outpath
+    if outpath in infile.filename:
+        obs_dir = os.path.dirname(infile.filename).split(outpath)[1]
+    # get the observation directory if infile is in the inpath
+    elif inpath in infile.filename:
+        obs_dir = os.path.dirname(infile.filename).split(inpath)[1]
+    # otherwise deal with error
+    else:
+        emsg = 'Input file {0} not in input or output path'
+        eargs = [infile.filename, inpath, outpath, func_name]
+        WLOG(params, 'error', emsg.format(*eargs))
+        obs_dir = ''
     # remove leading/trailing slashes
     obs_dir = obs_dir.strip(os.sep)
     # ------------------------------------------------------------------

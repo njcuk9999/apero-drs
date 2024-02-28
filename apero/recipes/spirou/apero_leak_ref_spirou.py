@@ -104,6 +104,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # ----------------------------------------------------------------------
     # Get all dark_fp files for directory
     # ----------------------------------------------------------------------
+    # Note we can only get these from the reference directory as other
+    # nights require processing calibrations first
     infiles, rawfiles = leak.get_dark_fps(params, recipe)
     # get the number of infiles
     num_files = len(infiles)
