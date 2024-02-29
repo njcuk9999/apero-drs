@@ -6093,7 +6093,6 @@ class DrsOutFileExtension:
         pconst = constants.pload()
         iheader_cols = pconst.FILEINDEX_HEADER_COLS()
         rkeys = list(iheader_cols.names)
-        rtypes = list(iheader_cols.dtypes)
         # define table column parameters
         drsfiles = self.table_drsfiles
         incolumns = self.table_in_colnames
@@ -6148,7 +6147,7 @@ class DrsOutFileExtension:
                     # if we have the key in our header keys
                     if hkey in hkeys:
                         # get data type
-                        dtype = rtypes[h_it]
+                        dtype = iheader_cols.get_datatype(hkey)
                         # try to case and add to condition
                         hargs = [hkey, dtype, hkeys[hkey]]
                         # add to condition
@@ -6646,7 +6645,6 @@ class DrsOutFile(DrsInputFile):
         pconst = constants.pload()
         iheader_cols = pconst.FILEINDEX_HEADER_COLS()
         rkeys = list(iheader_cols.names)
-        rtypes = list(iheader_cols.dtypes)
         # must have primary filename set
         if self.extensions[0].filename is None:
             # log error and return
@@ -6843,7 +6841,7 @@ class DrsOutFile(DrsInputFile):
                         # if we have the key in our header keys
                         if hkey in hkeys:
                             # get data type
-                            dtype = rtypes[h_it]
+                            dtype = iheader_cols.get_datatype(hkey)
                             # try to case and add to condition
                             hargs = [hkey, dtype, hkeys[hkey]]
                             # add to condition

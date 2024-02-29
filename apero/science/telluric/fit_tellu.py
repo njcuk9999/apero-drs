@@ -1321,10 +1321,10 @@ def fit_tellu_write_recon(params, recipe, infile, corrfile, fiber, cprops,
     for colname in wtable.colnames:
         wtable.rename_column(colname, 'RECON_' + colname)
     # add the skycorr columns with prefix SKYCORR_
-    for colname in skycwprops['S1DTABLE']:
+    for colname in skycwprops['S1DTABLE'].colnames:
         wtable['SKYC_' + colname] = skycwprops['S1DTABLE'][colname]
     # add the frescorr columns with prefix FRES_CORR_
-    for colname in freswprops['S1DTABLE']:
+    for colname in freswprops['S1DTABLE'].colnames:
         wtable['FRES_' + colname] = freswprops['S1DTABLE'][colname]
     # copy data
     rc1dwfile.data = wtable
@@ -1362,15 +1362,15 @@ def fit_tellu_write_recon(params, recipe, infile, corrfile, fiber, cprops,
     rc1dvfile = extract.add_s1d_keys(rc1dvfile, rcvprops)
     # -------------------------------------------------------------------------
     # get the wavelength bin table
-    vtable = rcwprops['S1DTABLE'].copy()
+    vtable = rcvprops['S1DTABLE'].copy()
     # add the prefix 'recon' to all columns
     for colname in vtable.colnames:
         vtable.rename_column(colname, 'RECON_' + colname)
     # add the skycorr columns with prefix SKYCORR_
-    for colname in skycvprops['S1DTABLE']:
+    for colname in skycvprops['S1DTABLE'].colnames:
         vtable['SKYC_' + colname] = skycvprops['S1DTABLE'][colname]
     # add the frescorr columns with prefix FRES_CORR_
-    for colname in fresvprops['S1DTABLE']:
+    for colname in fresvprops['S1DTABLE'].colnames:
         vtable['FRES_' + colname] = fresvprops['S1DTABLE'][colname]
     # copy data
     rc1dvfile.data = vtable

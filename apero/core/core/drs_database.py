@@ -1012,7 +1012,8 @@ class TelluricDatabase(DatabaseManager):
             # sort by:
             #       ABS(UNIXTIME - FILETIME)
             sql['condition'] += ' AND UNIXTIME - {0} < 0'.format(filetime.unix)
-            sql['sort_by'] = 'abs(UNIXTIME - {0})'.format(filetime.unix)
+            sql['sort_by'] = drs_db.SA_TEXT('abs(UNIXTIME - {0})'
+                                            ''.format(filetime.unix))
             sql['sort_descending'] = False
         elif timemode == 'newer' and filetime is not None:
             # condition:
@@ -1020,12 +1021,14 @@ class TelluricDatabase(DatabaseManager):
             # sort by:
             #       ABS(UNIXTIME - FILETIME)
             sql['condition'] += ' AND UNIXTIME - {0} > 0'.format(filetime.unix)
-            sql['sort_by'] = 'abs(UNIXTIME - {0})'.format(filetime.unix)
+            sql['sort_by'] = drs_db.SA_TEXT('abs(UNIXTIME - {0})'
+                                            ''.format(filetime.unix))
             sql['sort_descending'] = False
         elif filetime is not None:
             # sort by:
             #       ABS(UNIXTIME - FILETIME)
-            sql['sort_by'] = 'abs(UNIXTIME - {0})'.format(filetime.unix)
+            sql['sort_by'] = drs_db.SA_TEXT('abs(UNIXTIME - {0})'
+                                            ''.format(filetime.unix))
             sql['sort_descending'] = False
         else:
             # sort by: UNIXTIME
