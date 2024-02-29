@@ -8,11 +8,15 @@ data:
   nirps_ha/calib/catalogue_UNe.csv: 3b9947633b151b5d95559088a19c614c
   nirps_ha/calib/catalogue_UNe_old.csv: a60ee67707eeeb23326033e767381685
   nirps_ha/calib/catalogue_UNe_update210915.csv: f3d6a70fec916599f10f4363dc3245f9
+  nirps_ha/calib/catalogue_UNe_update230322.csv: 6fca7ca4b83561d290c587bf52ac2e13
   nirps_ha/calib/cavity_length_ll_fit.dat: e6a0e55ca9a6d6a6a456be5cae8a1d7d
   nirps_ha/calib/cavity_length_m_fit.dat: 246f81d50d22ae8410d6a52869c0b103
+  nirps_ha/ccf_masks/GL514_neg.fits: 045b14d7cbe4f04b2225fa57ea48c38b
   nirps_ha/ccf_masks/GL699_neg.fits: dd1be88fae8a81316c0c38962bb91620
   nirps_ha/ccf_masks/GL846_neg.fits: b1946289fcbf041f76bbf26cec123b2c
   nirps_ha/ccf_masks/GL905_neg.fits: a279cb5131c0047b52c17ca905ad6e90
+  nirps_ha/ccf_masks/HD85512_neg.fits: e524f002a7826cd57b47af2a6a41f8df
+  nirps_ha/ccf_masks/PROXIMA_neg.fits: 8e554857c427831b380e26de83a094e4
   nirps_ha/ccf_masks/README.md: 881e095b31a8736bbe6560ba44e2395e
   nirps_ha/ccf_masks/masque_sept18_andres_trans50.mas: 8b58b4cbd37a5d3d81f5167f528767b0
   nirps_ha/ccf_masks/teff_masks.csv: 1328b94a5528e8f903abd99d64b1a904
@@ -30,6 +34,7 @@ data:
   nirps_ha/reset/runs/calib_run.ini: 8d245aaecc0f93c09b5a7ecf5191631c
   nirps_ha/reset/runs/complete_run.ini: e04da00146edf0dd240d0fe41f8656b9
   nirps_ha/reset/runs/helios_run.ini: 7b0c9ab7f5518e1dbe947d15a6801267
+  nirps_ha/reset/runs/lbl_run.ini: 5b4a3deb68caeb54c3aa42d6c5abdcfc
   nirps_ha/reset/runs/mini_run.ini: eba586702f7e58cd429d9cd9db51c366
   nirps_ha/reset/runs/other_run.ini: 6b5101e9e67659547f10825985029480
   nirps_ha/reset/runs/quick_run.ini: e5ec1ac4078e67a123836bb025ebc12a
@@ -52,11 +57,15 @@ data:
   nirps_he/calib/catalogue_UNe_old.csv: a60ee67707eeeb23326033e767381685
   nirps_he/calib/catalogue_UNe_update210915.csv: f3d6a70fec916599f10f4363dc3245f9
   nirps_he/calib/catalogue_UNe_update221114.csv: c01cbf204073a2c5f5247127fea9744c
+  nirps_he/calib/catalogue_UNe_update230322.csv: 6fca7ca4b83561d290c587bf52ac2e13
   nirps_he/calib/cavity_length_ll_fit.dat: e6a0e55ca9a6d6a6a456be5cae8a1d7d
   nirps_he/calib/cavity_length_m_fit.dat: 246f81d50d22ae8410d6a52869c0b103
+  nirps_he/ccf_masks/GL514_neg.fits: 045b14d7cbe4f04b2225fa57ea48c38b
   nirps_he/ccf_masks/GL699_neg.fits: dd1be88fae8a81316c0c38962bb91620
   nirps_he/ccf_masks/GL846_neg.fits: b1946289fcbf041f76bbf26cec123b2c
   nirps_he/ccf_masks/GL905_neg.fits: a279cb5131c0047b52c17ca905ad6e90
+  nirps_he/ccf_masks/HD85512_neg.fits: e524f002a7826cd57b47af2a6a41f8df
+  nirps_he/ccf_masks/PROXIMA_neg.fits: 8e554857c427831b380e26de83a094e4
   nirps_he/ccf_masks/README.md: 881e095b31a8736bbe6560ba44e2395e
   nirps_he/ccf_masks/masque_sept18_andres_trans50.mas: 8b58b4cbd37a5d3d81f5167f528767b0
   nirps_he/ccf_masks/teff_masks.csv: 1328b94a5528e8f903abd99d64b1a904
@@ -74,6 +83,7 @@ data:
   nirps_he/reset/runs/calib_run.ini: 8d245aaecc0f93c09b5a7ecf5191631c
   nirps_he/reset/runs/complete_run.ini: e04da00146edf0dd240d0fe41f8656b9
   nirps_he/reset/runs/helios_run.ini: 7b0c9ab7f5518e1dbe947d15a6801267
+  nirps_he/reset/runs/lbl_run.ini: 5b4a3deb68caeb54c3aa42d6c5abdcfc
   nirps_he/reset/runs/mini_run.ini: eba586702f7e58cd429d9cd9db51c366
   nirps_he/reset/runs/other_run.ini: 6b5101e9e67659547f10825985029480
   nirps_he/reset/runs/quick_run.ini: e5ec1ac4078e67a123836bb025ebc12a
@@ -96,6 +106,7 @@ data:
   spirou/calib/catalogue_UNe_0.5_long.csv: 203964e6351be6c82dfb62e60b916a74
   spirou/calib/catalogue_UNe_0.5_short.csv: a60ee67707eeeb23326033e767381685
   spirou/calib/catalogue_UNe_update210915.csv: f3d6a70fec916599f10f4363dc3245f9
+  spirou/calib/catalogue_UNe_update230322.csv: 6fca7ca4b83561d290c587bf52ac2e13
   spirou/calib/cavity_length_ll_fit.dat: 9ae5391083459e3fa376644244b436e6
   spirou/calib/cavity_length_m_fit.dat: 8fb7dd4ac57586171201ffd49e0fb0ac
   spirou/calib/excess_emissivity.csv: a2edb3adee6a9f4911273558a41ed55a
@@ -154,6 +165,7 @@ data:
   spirou/reset/runs/blank_run.ini: 3516617ea2a75313bc6153288014414b
   spirou/reset/runs/calib_run.ini: 3cfb2deb3f559ccab8f2588add0d94e7
   spirou/reset/runs/complete_run.ini: 6869b268f7a687ea595bdcfc9f489837
+  spirou/reset/runs/lbl_run.ini: 2271b2ddd6aa5955ff20478b8a0fcf5f
   spirou/reset/runs/master_calib_run.ini: b671eb82e83cb390df0b2ed1948501f5
   spirou/reset/runs/mini_run1.ini: 567f611f205029bdbb9894c90fac2ecb
   spirou/reset/runs/mini_run2.ini: 8125dbabb17f61ec534c79a51fae2a1b
@@ -172,10 +184,10 @@ data:
   spirou/telluric/trans_h2o_abso_ccf.mas: 3467d02a8ea1ea056980bcbd1e86d30b
   spirou/telluric/trans_others_abso_ccf.mas: ed6f602b746534c5018bde1b952631ff
 setup:
-  humantime: '2023-03-02 16:55:56.715'
+  humantime: '2024-02-29 21:12:01.114'
   servers:
   - http://apero.exoplanets.ca/assets/
-  tarfile: 1677776156_714933_assets.tar.gz
-  unixtime: 1677776156.714933
-  vdate: '2023-01-30'
+  tarfile: 1709241121_114114_assets.tar.gz
+  unixtime: 1709241121.114114
+  vdate: '2024-02-14'
   version: 0.8.001

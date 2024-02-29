@@ -97,15 +97,15 @@ PandasLikeDatabase = drs_base_classes.PandasLikeDatabaseDuckDB
 # -----------------------------------------------------------------------------
 # define complex typing
 QCParamList = Union[Tuple[List[str], List[Any], List[str], List[int]],
-List[Union[List[str], List[int], List[Any]]]]
+                    List[Union[List[str], List[int], List[Any]]]]
 # -----------------------------------------------------------------------------
 # path definitions
 BlockPath = pathdef.BlockPath
 # get out file class
 OutFileTypes = Union[out.OutFile, out.GeneralOutFile, out.NpyOutFile,
-out.DebugOutFile, out.BlankOutFile, out.CalibOutFile,
-out.RefCalibOutFile, out.SetOutFile, out.LBLOutFile, out.PostOutFile,
-None]
+                     out.DebugOutFile, out.BlankOutFile, out.CalibOutFile,
+                     out.RefCalibOutFile, out.SetOutFile, out.LBLOutFile,
+                     out.PostOutFile, None]
 
 
 # =============================================================================
@@ -3933,7 +3933,7 @@ class DrsFitsFile(DrsInputFile):
         self.check_read()
         # get combine metric types
         comb_metric_1_types = params.listp('COMBINE_METRIC1_TYPES',
-                                              dtype=str)
+                                           dtype=str)
         # set new data to this files data
         data = np.array(self.data)
         # --------------------------------------------------------------------
@@ -7370,7 +7370,6 @@ class DrsOutFile(DrsInputFile):
         # get required keys for index database
         iheader_cols = pconst.FILEINDEX_HEADER_COLS()
         hkeys = list(iheader_cols.names)
-        htypes = list(iheader_cols.dtypes)
         # deal with absolute path of file
         self.output_dict['ABSPATH'] = str(self.filename)
         # deal with night name of file
@@ -7421,7 +7420,7 @@ class DrsOutFile(DrsInputFile):
             else:
                 dkey = str(key)
             # get dtype
-            dtype = htypes[it]
+            dtype = iheader_cols.get_datatype(key)
             # set found
             found = False
             # add key if in hdict (priority)

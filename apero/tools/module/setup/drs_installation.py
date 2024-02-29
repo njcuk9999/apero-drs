@@ -1580,6 +1580,9 @@ def update(params: ParamDict, args: argparse.Namespace) -> ParamDict:
     all_params['CLEANWARN'] = getattr(args, 'cleanwarn', False)
     # add tar file
     all_params['TARFILE'] = getattr(args, 'tar_file', None)
+    # get whether to ask user about creating directories
+    askcreate = not getattr(args, 'always_create', True)
+    all_params['ASK_CREATE'] = askcreate
     # ----------------------------------------------------------------------
     # deal with having a profile name
     if args.name in ['None', None, '']:

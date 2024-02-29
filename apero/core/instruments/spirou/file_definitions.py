@@ -1882,11 +1882,11 @@ post_s_file.add_column('S1D_W', out_tellu_sc1d_w,
                        block_kind='red', clear_file=True)
 
 post_s_file.add_column('S1D_W', out_tellu_rc1d_w, fiber='AB',
-                       incol='flux', outcol='Recon',
+                       incol='RECON_flux', outcol='Recon',
                        required=False, block_kind='red', clear_file=True)
 
 post_s_file.add_column('S1D_W', out_tellu_rc1d_w, fiber='AB',
-                       incol='eflux', outcol='ReconErr',
+                       incol='RECON_eflux', outcol='ReconErr',
                        required=False, block_kind='red', clear_file=True)
 # TODO: from telluric database?
 post_s_file.add_column('S1D_W', out_tellu_rc1d_w, fiber='AB',
