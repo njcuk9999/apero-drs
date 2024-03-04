@@ -1305,6 +1305,8 @@ apero_mk_template.group_column = None
 # documentation
 # apero_mk_template.schematic = apero_mk_template.default_sfile()
 apero_mk_template.description_file = apero_mk_template.default_rfile()
+# special: don't skip on qc fail
+apero_mk_template.dont_skip_on_qc_fail = True
 # add to recipe
 recipes.append(apero_mk_template)
 
