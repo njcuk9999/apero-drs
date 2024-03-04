@@ -1250,6 +1250,8 @@ apero_mk_template.set_kwarg(**wavefile)
 apero_mk_template.set_kwarg(**no_in_qc)
 apero_mk_template.group_func = grouping.no_group
 apero_mk_template.group_column = None
+# special: don't skip on qc fail
+apero_mk_template.dont_skip_on_qc_fail = True
 # add to recipe
 recipes.append(apero_mk_template)
 
