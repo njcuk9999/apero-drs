@@ -1094,7 +1094,8 @@ def check_database(params: ParamDict):
         for alias in alias_list:
             # check the alias
             all_objects = _check_objname(params, all_objects, alias, row,
-                                         atable, kind='ALIAS')
+                                         atable, kind='ALIAS',
+                                         dict_objname=objname)
         # -----------------------------------------------------------------
         # Check 3: ra and dec cross-match
         # -----------------------------------------------------------------
@@ -1126,8 +1127,8 @@ def check_database(params: ParamDict):
 
 def _check_objname(params: ParamDict, bad_objs: Dict[str, List[str]],
                    objname: str, row: int,
-                   atable: pd.DataFrame,
-                   kind: str = 'OBJNAME') -> Dict[str, List[str]]:
+                   atable: pd.DataFrame, kind: str = 'OBJNAME',
+                   dict_objname: Optional[str] = None) -> Dict[str, List[str]]:
     """
     Check that the object name is not in any row or alias
 
@@ -1139,6 +1140,8 @@ def _check_objname(params: ParamDict, bad_objs: Dict[str, List[str]],
 
     :return: None, gives warning if there is a detected problem
     """
+    if dict_objname is None:
+        dict_objname = str(objname)
     # loop around all rows
     for row_it in range(len(atable)):
         # skip self comparison
@@ -1153,7 +1156,7 @@ def _check_objname(params: ParamDict, bad_objs: Dict[str, List[str]],
                        f'OBJNAME:{objname_it}]')
             WLOG(params, 'warning', problem, sublevel=1)
             # append to problem list
-            bad_objs[objname].append(problem)
+            bad_objs[dict_objname].append(problem)
         # check for objname in ALIASES
         for alias in atable.iloc[row_it]['ALIASES'].split('|'):
             if objname == alias:
@@ -1162,7 +1165,7 @@ def _check_objname(params: ParamDict, bad_objs: Dict[str, List[str]],
                            f'ALIAS:{objname_it}]')
                 WLOG(params, 'warning', problem, sublevel=1)
                 # append to problem list
-                bad_objs[objname].append(problem)
+                bad_objs[dict_objname].append(problem)
     # return the bad objects
     return bad_objs
 
