@@ -209,6 +209,8 @@ class DrsRecipe(object):
         self.flags = BinaryDict()
         for key in base.DEFAULT_FLAGS:
             self.flags[key] = base.DEFAULT_FLAGS[key]
+        # define whether to not skip on qc failure (default is False)
+        self.dont_skip_on_qc_fail = False
 
     def __getstate__(self) -> dict:
         """
@@ -1104,6 +1106,8 @@ class DrsRecipe(object):
         self.description_file = copy.deepcopy(recipe.description_file)
         # copy the binary flags
         self.flags = recipe.flags.copy()
+        # define whether to not skip on qc failure (default is False)
+        self.dont_skip_on_qc_fail = bool(recipe.dont_skip_on_qc_fail)
 
     def proxy_keywordarg(self, kwargname: str
                          ) -> Tuple[List[Any], Dict[str, Any]]:

@@ -534,19 +534,25 @@ def generate_skip_table(params):
     # need to remove those that didn't end
     condition = 'ENDED = 1'
     # get runstrings
-    table = logdbm.get_entries('RECIPE, RUNSTRING',
+    table = logdbm.get_entries('RECIPE, RUNSTRING, PASSED_ALL_QC',
                                include_obs_dirs=include_list,
                                exclude_obs_dirs=exclude_list,
                                condition=condition)
     recipes = np.array(table['RECIPE'])
     runstrings = np.array(table['RUNSTRING'])
-    arguments = []
+    passed_qc = np.array(table['PASSED_ALL_QC'])
+    arguments, qc_passed = [], []
     # loop around runstrings
-    for runstring in runstrings:
+    for row, runstring in enumerate(runstrings):
         # clean run string
         clean_runstring = skip_clean_arguments(runstring)
         # append only clean arguments
         arguments.append(clean_runstring.strip())
+        # append qcs
+        if str(passed_qc[row]).upper() in ['1', 'TRUE']:
+            qc_passed.append(True)
+        else:
+            qc_passed.append(False)
     # deal with nothing to skip
     if len(recipes) == 0:
         return None
@@ -554,6 +560,7 @@ def generate_skip_table(params):
     skip_table = Table()
     skip_table['RECIPE'] = recipes
     skip_table['RUNSTRING'] = arguments
+    skip_table['PASSED_QC'] = qc_passed
     # log number of runs found
     WLOG(params, '', textentry('90-503-00018', args=[len(skip_table)]))
     # return skip table
@@ -1267,7 +1274,7 @@ def _linear_generate_id(params: ParamDict, it: int, run_key: str,
         input_recipe = run_object.recipe
     # deal with skip
     skip, reason = skip_run_object(params, run_object, skiptable,
-                                   skip_storage)
+                                   skip_storage, input_recipe)
     # ---------------------------------------------------------------------
     # deal with passing debug
     if params['DRS_DEBUG'] > 0:
@@ -1692,7 +1699,7 @@ def _multi_process_gen_ids_process(params: ParamDict,
     return rdict
 
 
-def skip_run_object(params, runobj, skiptable, skip_storage):
+def skip_run_object(params, runobj, skiptable, skip_storage, input_recipe):
     # get recipe and runstring
     recipe = runobj.recipe
     # ----------------------------------------------------------------------
@@ -1733,8 +1740,18 @@ def skip_run_object(params, runobj, skiptable, skip_storage):
                 return False, None
             # else check for clean_runstring in runstrings
             elif clean_runstring in runstrings:
-                # User set skip to 'True' and argument previously used
-                return True, textentry('40-503-00032')
+                # get the location of clean_runstring in runstrings
+                pos = list(runstrings).index(clean_runstring)
+                # deal with qc criteria
+                qc_failed = not skiptable['PASSED_QC'][pos]
+                dont_skip_on_qc_fail = input_recipe.dont_skip_on_qc_fail
+                # we don't skip on qc failures in these recipes even if they
+                #   were run before
+                if qc_failed and dont_skip_on_qc_fail:
+                    return False, None
+                else:
+                    # User set skip to 'True' and argument previously used
+                    return True, textentry('40-503-00032')
             else:
                 return False, None
         else:

@@ -150,7 +150,9 @@ class AperoDatabase:
         # store verboseness
         self.verbose = verbose
         # define the engine to use
-        self.engine = sqlalchemy.create_engine(url, echo=verbose)
+        self.engine = sqlalchemy.create_engine(url, echo=verbose,
+                                               pool_pre_ping=True,
+                                               pool_recycle=1200)
         # define the table name
         self.tablename = tablename
         # define backup path
@@ -183,7 +185,9 @@ class AperoDatabase:
         # update dict with state
         self.__dict__.update(state)
         # re-create engine after pickle
-        self.engine = sqlalchemy.create_engine(self.url, echo=self.verbose)
+        self.engine = sqlalchemy.create_engine(self.url, echo=self.verbose,
+                                               pool_pre_ping=True,
+                                               pool_recycle=1200)
 
     def __str__(self):
         """
@@ -577,7 +581,9 @@ class AperoDatabase:
         # deal with NaN/None/Null values
         if update_dict is not None:
             for key, value in update_dict.items():
-                if value in [None, np.nan]:
+                if isinstance(value, sqlalchemy.Null):
+                    update_dict[key] = sqlalchemy.null()
+                elif value in [None, np.nan]:
                     update_dict[key] = sqlalchemy.null()
                 elif isinstance(value, str):
                     if value.lower() in ['null', 'none', 'nan']:
