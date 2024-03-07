@@ -649,7 +649,7 @@ class DrsRecipe(object):
                                    required=required, reprocess=reprocess)
         except DrsCodedException as e:
             WLOG(None, 'error', e.get_text())
-            sys.exit(0)
+            raise SystemExit()
         # make arg parser properties
         argument.make_properties()
         # recast name
@@ -756,7 +756,7 @@ class DrsRecipe(object):
                                           reprocess=reprocess)
         except DrsCodedException as e:
             WLOG(None, 'error', e.get_text())
-            sys.exit(0)
+            raise SystemExit()
         # make arg parser properties
         keywordargument.make_properties()
         # recast name
@@ -1503,7 +1503,7 @@ class DrsRecipe(object):
             spec = DrsArgument(name, kind='special', altnames=props['altnames'])
         except DrsCodedException as e:
             WLOG(None, 'error', e.get_text())
-            sys.exit(0)
+            raise SystemExit()
         spec.assign_properties(props)
         spec.skip = skip
         spec.helpstr = props['help']
