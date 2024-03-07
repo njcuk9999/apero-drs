@@ -14,7 +14,6 @@ Created on 2019-08-06 at 11:57
 """
 import itertools
 import os
-import sys
 import time
 import warnings
 from collections import OrderedDict
@@ -1848,7 +1847,8 @@ def _generate_run_from_sequence(params: ParamDict, sequence,
         # get response for how to continue (skip or exit)
         response = prompt()
         if not response:
-            sys.exit()
+            WLOG(params, 'error', 'User chose to exit')
+            raise SystemExit()
     # log that we are processing recipes
     if logmsg:
         WLOG(params, 'info', textentry('40-503-00037', args=[idb_len]))
@@ -1931,7 +1931,8 @@ def _generate_run_from_sequence(params: ParamDict, sequence,
                 if response:
                     continue
                 else:
-                    sys.exit()
+                    WLOG(params, 'error', 'User chose to exit')
+                    raise SystemExit()
             # mask table by observation directory
             condition += ' AND OBS_DIR="{0}"'.format(obs_dir)
         # ------------------------------------------------------------------
@@ -1957,7 +1958,8 @@ def _generate_run_from_sequence(params: ParamDict, sequence,
             if response:
                 continue
             else:
-                sys.exit()
+                WLOG(params, 'error', 'User chose to exit')
+                raise SystemExit()
         # ------------------------------------------------------------------
         # deal with filters defined in recipe
         # ------------------------------------------------------------------
@@ -2160,9 +2162,11 @@ def gen_global_condition(params: ParamDict, findexdbm: FileIndexDatabase,
     - filtering rejected odometer codes
 
     :param params: ParamDict, the parameter dictionary of constants
-    :param indexdb: IndexDatabase instance, the index database instance
+    :param findexdbm: IndexDatabase instance, the index database instance
     :param reject_list: list or strings, the list of rejected odometer
                             codes
+    :param log: bool, whether to log progress
+
     :return: str, the sql global condition to apply to all recipes
     """
     # set up an sql condition that will get more complex as we go down
@@ -2192,7 +2196,8 @@ def gen_global_condition(params: ParamDict, findexdbm: FileIndexDatabase,
             if response:
                 pass
             else:
-                sys.exit()
+                WLOG(params, 'error', 'User chose to exit')
+                raise SystemExit()
     # ------------------------------------------------------------------
     # deal with black lists
     # ------------------------------------------------------------------
@@ -2217,7 +2222,8 @@ def gen_global_condition(params: ParamDict, findexdbm: FileIndexDatabase,
             if response:
                 pass
             else:
-                sys.exit()
+                WLOG(params, 'error', 'User chose to exit')
+                raise SystemExit()
     # ------------------------------------------------------------------
     # deal with white list
     # ------------------------------------------------------------------
@@ -2243,7 +2249,8 @@ def gen_global_condition(params: ParamDict, findexdbm: FileIndexDatabase,
             if response:
                 pass
             else:
-                sys.exit()
+                WLOG(params, 'error', 'User chose to exit')
+                raise SystemExit()
     # ------------------------------------------------------------------
     # deal with pi name filter
     # ------------------------------------------------------------------
@@ -2267,7 +2274,8 @@ def gen_global_condition(params: ParamDict, findexdbm: FileIndexDatabase,
             if response:
                 pass
             else:
-                sys.exit()
+                WLOG(params, 'error', 'User chose to exit')
+                raise SystemExit()
     # ------------------------------------------------------------------
     # Deal with reject list
     # ------------------------------------------------------------------
@@ -2300,7 +2308,7 @@ def gen_global_condition(params: ParamDict, findexdbm: FileIndexDatabase,
     # deal with empty list of observation directories (set to all obsdirs)
     if len(list_of_obsdirs) == 0:
         list_of_obsdirs = findexdbm.database.unique('OBS_DIR',
-                                                   condition=raw_condition)
+                                                    condition=raw_condition)
     # ------------------------------------------------------------------
     # Return global condition
     # ------------------------------------------------------------------
@@ -3532,7 +3540,7 @@ def get_non_telluric_stars(params: ParamDict, all_objects: List[str],
     tstars (telluric stars)
 
     :param params:
-    :param indexdb:
+    :param all_objects:
     :param tstars:
     :return:
     """
@@ -4545,7 +4553,7 @@ def _find_next_group(argname: str, drstable: Table,
     if np.sum(~mask) == 0:
         return None, usedgroups
     # get the next group
-    group = ugroups[~mask][0]
+    group = str(ugroups[~mask][0])
     # find rows in this group
     mask = groups == group
     # add group to used groups
