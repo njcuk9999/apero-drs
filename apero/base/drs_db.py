@@ -684,21 +684,21 @@ class AperoDatabase:
         insert_query = insert_query.values(insert_dict)
         # ---------------------------------------------------------------------
         # execute the query
-        with self.engine.begin() as conn:
-            try:
+        try:
+            with self.engine.begin() as conn:
                 conn.execute(insert_query)
-            except IntegrityError:
-                # need to deal with insert_dict being a list
-                #   in this case we have to add each row individually
-                #   then check each of those rows to see if they exist
-                if isinstance(insert_dict, list):
-                    for insert_dict_it in insert_dict:
-                        self.add_row(insert_dict=insert_dict_it)
-                # otherwise we set the row based on the hash. There should be
-                #    no cases where we have unique columns and no HASH column
-                else:
-                    # if the row already exists, update it
-                    self.set(update_dict=insert_dict, condition=None)
+        except IntegrityError:
+            # need to deal with insert_dict being a list
+            #   in this case we have to add each row individually
+            #   then check each of those rows to see if they exist
+            if isinstance(insert_dict, list):
+                for insert_dict_it in insert_dict:
+                    self.add_row(insert_dict=insert_dict_it)
+            # otherwise we set the row based on the hash. There should be
+            #    no cases where we have unique columns and no HASH column
+            else:
+                # if the row already exists, update it
+                self.set(update_dict=insert_dict, condition=None)
 
     def delete_rows(self, tablename: Optional[str] = None,
                     condition: Optional[str] = None):
