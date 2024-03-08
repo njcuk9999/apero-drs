@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="Docutils 0.19: https://docutils.sourceforge.io/" name="generator"/>
+<title>APERO Reduction Interface (ARI) — APERO Reduction Interface 0.7.289 documentation</title>
+<link href="_static/pygments.css" rel="stylesheet" type="text/css"/>
+<link href="_static/bizstyle.css" rel="stylesheet" type="text/css"/>
+<link href="_static/apero.css" rel="stylesheet" type="text/css"/>
+<script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+<script src="_static/doctools.js"></script>
+<script src="_static/sphinx_highlight.js"></script>
+<script src="_static/bizstyle.js"></script>
+<link href="genindex.html" rel="index" title="Index"/>
+<link href="search.html" rel="search" title="Search"/>
+<link href="nirps_he_online_udem/profile.html" rel="next" title="nirps_he_online_udem"/>
+<link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,700" rel="stylesheet" type="text/css"/>
+<link href="_static/images/fonta/css/font-awesome.min.css" rel="stylesheet"/>
+<meta content="width=device-width,initial-scale=1.0" name="viewport"/>
+<!--[if lt IE 9]>
+    <script src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+<style>
+      table.right { float: left; margin-left: 20px; }
+      table.right td { border: 1px solid #ccc; }
+      
+      .related { display: inline-block; }
+      
+    </style>
+<script>
+      // intelligent scrolling of the sidebar content
+      $(window).scroll(function() {
+        var sb = $('.sphinxsidebarwrapper');
+        var win = $(window);
+        var sbh = sb.height();
+        var offset = $('.sphinxsidebar').position()['top'];
+        var wintop = win.scrollTop();
+        var winbot = wintop + win.innerHeight();
+        var curtop = sb.position()['top'];
+        var curbot = curtop + sbh;
+        // does sidebar fit in window?
+        if (sbh < win.innerHeight()) {
+          // yes: easy case -- always keep at the top
+          sb.css('top', $u.min([$u.max([0, wintop - offset - 10]),
+                                $(document).height() - sbh - 200]));
+        } else {
+          // no: only scroll if top/bottom edge of sidebar is at
+          // top/bottom edge of window
+          if (curtop > wintop && curbot > winbot) {
+            sb.css('top', $u.max([wintop - offset - 10, 0]));
+          } else if (curtop < wintop && curbot < winbot) {
+            sb.css('top', $u.min([winbot - sbh - offset - 20,
+                                  $(document).height() - sbh - 200]));
+          }
+        }
+      });
+    </script>
+    <link rel="stylesheet" href="_static/style.css">
+</head>
+<body>
+
+<div class="pageheader">
+<ul>
+<li><a href="http://apero.exoplanets.ca" title="Home">
+<i aria-hidden="true" class="fa fa-home fa-3x"></i></a></li>
+<li><a href="http://apero.exoplanets.ca/user/general/installation" title="install">
+<i aria-hidden="true" class="fa fa-cog fa-3x"></i></a></li>
+<li><a href="https://github.com/njcuk9999/apero-drs" title="github">
+<i aria-hidden="true" class="fa fa-git-square fa-3x"></i></a></li>
+<li><a href="https://ui.adsabs.harvard.edu/abs/2022PASP..134k4509C" title="download paper">
+<i aria-hidden="true" class="fa fa-file-pdf-o fa-3x"></i></a></li>
+<li><a href="http://apero.exoplanets.ca/main/misc/udem.html" title="UdeM">
+<i aria-hidden="true" class="fa fa-university fa-3x"></i></a></li>
+</ul>
+<div>
+<a href="http://apero.exoplanets.ca">
+<img alt="APERO" src="_static/images/apero_logo.png"/>
+</a>
+<br/>
+              A PipelinE to Reduce Observations
+    </div>
+</div>
+<div aria-label="related navigation" class="related" role="navigation">
+<h3>Navigation</h3>
+<ul>
+<li class="right" style="margin-right: 10px">
+<a accesskey="I" href="genindex.html" title="General Index">index</a></li>
+<li class="right">
+<a accesskey="N" href="nirps_he_online_udem/profile.html" title="nirps_he_online_udem">next</a> |</li>
+<li class="nav-item nav-item-0"><a href="#">APERO Reduction Interface 0.7.289 documentation</a> »</li>
+<li class="nav-item nav-item-this"><a href="">APERO Reduction Interface (ARI)</a></li>
+</ul>
+</div>
+<div aria-label="main navigation" class="sphinxsidebar" role="navigation">
+<div class="sphinxsidebarwrapper">
+<div>
+<h3><a href="#">Table of Contents</a></h3>
+<ul>
+<li><a class="reference internal" href="#">APERO Reduction Interface (ARI)</a><ul>
+<li><a class="reference internal" href="#finder-charts">Finder charts</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div>
+<h4>Next topic</h4>
+<p class="topless"><a href="nirps_he_online_udem/profile.html" title="next chapter">nirps_he_online_udem</a></p>
+</div>
+<div aria-label="source link" role="note">
+<h3>This Page</h3>
+<ul class="this-page-menu">
+<li><a href="_sources/index.rst.txt" rel="nofollow">Show Source</a></li>
+</ul>
+</div>
+<div id="searchbox" role="search" style="display: none">
+<h3 id="searchlabel">Quick search</h3>
+<div class="searchformwrapper">
+<form action="search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" spellcheck="false" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+</div>
+</div>
+
+<div class="document">
+<div class="documentwrapper">
+<div class="bodywrapper">
+<div class="body" role="main">
+
+<script src="login.js"></script>
+<script>EnableContent()</script>
+
+<h1>Forgotten the Username/Password?</h1>
+
+<h2>Please contact:</h2>
+<ul>
+<li>neil.cook@umontreal.ca</li>
+<li>etienne.artigau@umontreal.ca</li>
+<li>charles.cadieux.1@umontreal.ca</li>
+<li>frederique.baron@umontreal.ca</li>
+</ul>
+
+
+<h2> Click <a href="mailto:neil.cook@umontreal.ca;etienne.artigau@umontreal.ca;charles.cadieux.1@umontreal.ca;frederique.baron@umontreal.ca?subject=Require%20access%20to%20ARI&body=Dear%20all%2C%0A%0AI%20require%20access%20to%20ARI%20for%20instrument%20%7Binstrument%7D.%0A">here</a> to send email (via mailto) </h2>
+
+<div class="clearer"></div>
+</div>
+</div>
+</div>
+<div class="clearer"></div>
+</div>
+
+<div aria-label="related navigation" class="related" role="navigation">
+<h3>Navigation</h3>
+<ul>
+<li class="right" style="margin-right: 10px">
+<a href="genindex.html" title="General Index">index</a></li>
+<li class="right">
+<a href="nirps_he_online_udem/profile.html" title="nirps_he_online_udem">next</a> |</li>
+<li class="nav-item nav-item-0"><a href="#">APERO Reduction Interface 0.7.289 documentation</a> »</li>
+<li class="nav-item nav-item-this"><a href="">APERO Reduction Interface (ARI)</a></li>
+</ul>
+</div>
+<div class="footer" role="contentinfo">
+        © Copyright 2024, Neil Cook.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.0.1.
+    </div>
+
+</body>
+</html>
+
+
+
+
