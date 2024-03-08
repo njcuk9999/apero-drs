@@ -1616,6 +1616,10 @@ def update(params: ParamDict, args: argparse.Namespace) -> ParamDict:
     all_params['DEVMODE'] = getattr(args, 'devmode', False)
     # add clean warn
     all_params['CLEANWARN'] = getattr(args, 'cleanwarn', False)
+    # for update we shouldn't be creating anything but if we are we should
+    # ask about it
+    all_params['ASK_CREATE'] = True
+    all_params.set_source('ASK_CREATE', func_name)
     # ----------------------------------------------------------------------
     # deal with having a profile name
     if args.name in ['None', None, '']:
