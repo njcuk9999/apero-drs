@@ -1,3 +1,0 @@
-ORDER,RECIPE,SHORTNAME,RECIPE KIND,REF RECIPE,ARGS
-1,apero_preprocess_nirps_he.py,PP_SUN,pre-sun,No,"{files}=[RAW_SUN_FP, RAW_SUN_DARK]"
-2,apero_extract_nirps_he.py,EXT_SUN,extract-sun,No,"{files}=[SUN_FP, SUN_DARK]"

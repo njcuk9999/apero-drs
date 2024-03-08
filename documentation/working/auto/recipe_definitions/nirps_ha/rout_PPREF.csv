@@ -1,3 +1,0 @@
-name,description,HDR[DRSOUTID],file type,suffix,dbname,dbkey,input file
-PP_REF,PP Reference flat calibration file,PP_REF,.fits,_ppref,calibration,PP_REF,RAW_FLAT_FLAT
-PP_LED_FLAT,Reference LED flat calibration file,PP_LED_FLAT,.fits,_led_flat,calibration,PP_LED,RAW_LED_LED

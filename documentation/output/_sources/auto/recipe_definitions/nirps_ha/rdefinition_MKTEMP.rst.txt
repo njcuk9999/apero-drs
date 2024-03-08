@@ -3,13 +3,12 @@
 
 
 ################################################################################
-apero_mk_template_nirps_ha
+apero_mk_template_spirou
 ################################################################################
 
 
-********************************************************************************
 1. Description
-********************************************************************************
+================================================================================
 
 
 SHORTNAME: MKTEMP
@@ -18,48 +17,44 @@ SHORTNAME: MKTEMP
 No description set
 
 
-********************************************************************************
 2. Schematic
-********************************************************************************
+================================================================================
 
 
 No schematic set
 
 
-********************************************************************************
 3. Usage
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 
 
-    apero_mk_template_nirps_ha.py {objname}[STRING] {options}
+    apero_mk_template_spirou.py {objname}[STRING] {options}
 
 
 .. code-block:: 
 
-     {objname}[STRING] // [STRING] The object name to process
+     {objname}[STRING] // MKTEMP_OBJNAME_HELP
 
 
-********************************************************************************
 4. Optional Arguments
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 
 
-     --filetype[EXT_E2DS,EXT_E2DS_FF] // [STRING] optional, the filetype (KW_OUTPUT) to use when processing files
-     --fiber[A,B] // [STRING] optional, the fiber type to use when processing files
+     --filetype[EXT_E2DS,EXT_E2DS_FF] // MKTEMP_FILETYPE
+     --fiber[AB,A,B,C] // MKTEMP_FIBER
      --database[True/False] // [BOOLEAN] Whether to add outputs to calibration database
-     --blazefile[FILE:FF_BLAZE] // [STRING] Define a custom file to use for blaze correction. If unset uses closest file from calibDB. Checks for an absolute path and then checks directory (CALIBDB=BADPIX)
+     --blazefile[FILE:FF_BLAZE] // BLAZEFILE_HELP
      --plot[0>INT>4] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
-     --wavefile[FILE:WAVESOL_REF,WAVE_NIGHT,WAVESOL_DEFAULT] // [STRING] Define a custom file to use for the wave solution. If unset uses closest file from header or calibDB (depending on setup). Checks for an absolute path and then checks directory
+     --wavefile[FILE:WAVESOL_REF,WAVE_NIGHT,WAVESOL_DEFAULT] // WAVEFILE_HELP
      --no_in_qc // Disable checking the quality control of input files
 
 
-********************************************************************************
 5. Special Arguments
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 
@@ -83,9 +78,8 @@ No schematic set
      --force_outdir[STRING] // [STRING] Force the default output directory (Normally set by recipe)
 
 
-********************************************************************************
 6. Output directory
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 
@@ -93,9 +87,8 @@ No schematic set
     DRS_DATA_REDUC // Default: "red" directory
 
 
-********************************************************************************
 7. Output files
-********************************************************************************
+================================================================================
 
 
 .. csv-table:: Outputs
@@ -104,9 +97,8 @@ No schematic set
    :class: csvtable
 
 
-********************************************************************************
 8. Debug plots
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 
@@ -116,9 +108,8 @@ No schematic set
     MKTEMP_S1D_DECONV
 
 
-********************************************************************************
 9. Summary plots
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 

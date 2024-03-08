@@ -53,11 +53,11 @@ WAVE_FPLIST,Nightly wavelength FP line-list calibration file,WAVE_FPLIST,.fits,_
 SKY_MODEL,Telluric sky model file,SKY_MODEL,.fits,_sky_model,--,--,EXT_E2DS_FF
 TELLU_SCLEAN,Sky-cleaning file,TELLU_SCLEAN,.fits,_tellu_sclean.fits,--,--,EXT_E2DS_FF
 TELLU_PCLEAN,Telluric pre-cleaning file,TELLU_PCLEAN,.fits,_tellu_pclean,--,"AB, A, B",EXT_E2DS_FF
-TELLU_CONV,--,--,.npy,_tellu_conv,--,"AB, A, B","WAVESOL_REF, WAVE_NIGHT, WAVESOL_DEFAULT"
+TELLU_CONV,Telluric convolution file,--,.npy,_tellu_conv,--,"AB, A, B","WAVESOL_REF, WAVE_NIGHT, WAVESOL_DEFAULT"
 TELLU_TRANS,Telluric transmission file,TELLU_TRANS,.fits,_tellu_trans,--,"AB, A, B",EXT_E2DS_FF
-TELLU_TAPAS,--,--,.npy,--,tapas_spl.npy,--,--
+TELLU_TAPAS,Telluric TAPAS spline file,--,.npy,--,tapas_spl.npy,--,--
 TRANS_MODEL,Telluric transmission model file,TRANS_MODEL,.fits,--,trans_model_{0},"AB, A, B",--
-ABSO_NPY,--,--,.npy,--,tellu_save.npy,--,--
+ABSO_NPY,Telluric absorption temporary file 1,--,.npy,--,tellu_save.npy,--,--
 TELLU_OBJ,Telluric corrected extracted 2D spectrum,TELLU_OBJ,.fits,_e2dsff_tcorr,--,"AB, A, B",EXT_E2DS_FF
 SC1D_W_FILE,Telluric corrected extracted 1D spectrum (constant wavelength binning),SC1D_W_FILE,.fits,_s1d_w_tcorr,--,"AB, A, B",EXT_E2DS_FF
 SC1D_V_FILE,Telluric corrected extracted 1D spectrum (constant velocity binning),SC1D_V_FILE,.fits,_s1d_v_tcorr,--,"AB, A, B",EXT_E2DS_FF

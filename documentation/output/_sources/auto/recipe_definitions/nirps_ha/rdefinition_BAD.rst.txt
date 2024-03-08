@@ -3,13 +3,12 @@
 
 
 ################################################################################
-apero_badpix_nirps_ha
+apero_badpix_spirou
 ################################################################################
 
 
-********************************************************************************
 1. Description
-********************************************************************************
+================================================================================
 
 
 SHORTNAME: BAD
@@ -18,50 +17,46 @@ SHORTNAME: BAD
 No description set
 
 
-********************************************************************************
 2. Schematic
-********************************************************************************
+================================================================================
 
 
 No schematic set
 
 
-********************************************************************************
 3. Usage
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 
 
-    apero_badpix_nirps_ha.py {obs_dir}[STRING] --flatfiles[FILE:FLAT_FLAT] --darkfiles[FILE:DARK_DARK] {options}
+    apero_badpix_spirou.py {obs_dir}[STRING] --flatfiles[FILE:FLAT_FLAT] --darkfiles[FILE:DARK_DARK_TEL,DARK_DARK_INT] {options}
 
 
 .. code-block:: 
 
      {obs_dir}[STRING] // OBS_DIR_HELP
-     --flatfiles[FILE:FLAT_FLAT] // Current allowed types: FLAT_FLAT
-     --darkfiles[FILE:DARK_DARK] // Current allowed types: DARK_DARK
+     --flatfiles[FILE:FLAT_FLAT] // BADPIX_FLATFILE_HELP
+     --darkfiles[FILE:DARK_DARK_TEL,DARK_DARK_INT] // BADPIX_DARKFILE_HELP
 
 
-********************************************************************************
 4. Optional Arguments
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 
 
      --database[True/False] // [BOOLEAN] Whether to add outputs to calibration database
-     --combine[True/False] // [BOOLEAN] Whether to combine fits files in file list or to process them separately
-     --flipimage[None,x,y,both] // [BOOLEAN] Whether to flip fits image
-     --fluxunits[ADU/s,e-] // [STRING] Output units for flux
+     --combine[True/False] // COMBINE_HELP
+     --flipimage[None,x,y,both] // FLIPIMAGE_HELP
+     --fluxunits[ADU/s,e-] // FLUXUNITS_HELP
      --plot[0>INT>4] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
-     --resize[True/False] // [BOOLEAN] Whether to resize image
+     --resize[True/False] // RESIZE_HELP
      --no_in_qc // Disable checking the quality control of input files
 
 
-********************************************************************************
 5. Special Arguments
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 
@@ -85,9 +80,8 @@ No schematic set
      --force_outdir[STRING] // [STRING] Force the default output directory (Normally set by recipe)
 
 
-********************************************************************************
 6. Output directory
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 
@@ -95,9 +89,8 @@ No schematic set
     DRS_DATA_REDUC // Default: "red" directory
 
 
-********************************************************************************
 7. Output files
-********************************************************************************
+================================================================================
 
 
 .. csv-table:: Outputs
@@ -106,9 +99,8 @@ No schematic set
    :class: csvtable
 
 
-********************************************************************************
 8. Debug plots
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 
@@ -116,9 +108,8 @@ No schematic set
     BADPIX_MAP
 
 
-********************************************************************************
 9. Summary plots
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 

@@ -7,9 +7,8 @@ apero_fit_tellu_spirou
 ################################################################################
 
 
-********************************************************************************
 1. Description
-********************************************************************************
+================================================================================
 
 
 SHORTNAME: FTELLU
@@ -18,17 +17,15 @@ SHORTNAME: FTELLU
 .. include:: ../../../resources/spirou/descriptions/apero_fit_tellu_spirou.rst
 
 
-********************************************************************************
 2. Schematic
-********************************************************************************
+================================================================================
 
 
 No schematic set
 
 
-********************************************************************************
 3. Usage
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 
@@ -39,30 +36,28 @@ No schematic set
 .. code-block:: 
 
      {obs_dir}[STRING] // OBS_DIR_HELP
-     [FILE:EXT_E2DS,EXT_E2DS_FF] // [STRING/STRINGS] A list of fits files to use separated by spaces. Currently  allowed types: E2DS, E2DSFF
+     [FILE:EXT_E2DS,EXT_E2DS_FF] // [STRING/STRINGS] A list of fits files to use separated by spaces. FTELLU_FILES_HELP
 
 
-********************************************************************************
 4. Optional Arguments
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 
 
-     --use_template[True/False] // Whether to use the template provided from the telluric database
-     --template[FILE:TELLU_TEMP] // Filename of the custom template to use (instead of from telluric database)
+     --use_template[True/False] // USE_TEMP_HELP
+     --template[FILE:TELLU_TEMP] // TEMPLATE_FILE_HELP
      --finiteres[True/False] // Whether to do the finite resolution correction (Always false if no template)
      --onlypreclean // Only run the precleaning steps (not recommended - for debugging ONLY)
      --database[True/False] // [BOOLEAN] Whether to add outputs to calibration database
-     --blazefile[FILE:FF_BLAZE] // [STRING] Define a custom file to use for blaze correction. If unset uses closest file from calibDB. Checks for an absolute path and then checks directory (CALIBDB=BADPIX)
+     --blazefile[FILE:FF_BLAZE] // BLAZEFILE_HELP
      --plot[0>INT>4] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
-     --wavefile[FILE:WAVESOL_REF,WAVE_NIGHT,WAVESOL_DEFAULT] // [STRING] Define a custom file to use for the wave solution. If unset uses closest file from header or calibDB (depending on setup). Checks for an absolute path and then checks directory
+     --wavefile[FILE:WAVESOL_REF,WAVE_NIGHT,WAVESOL_DEFAULT] // WAVEFILE_HELP
      --no_in_qc // Disable checking the quality control of input files
 
 
-********************************************************************************
 5. Special Arguments
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 
@@ -86,9 +81,8 @@ No schematic set
      --force_outdir[STRING] // [STRING] Force the default output directory (Normally set by recipe)
 
 
-********************************************************************************
 6. Output directory
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 
@@ -96,9 +90,8 @@ No schematic set
     DRS_DATA_REDUC // Default: "red" directory
 
 
-********************************************************************************
 7. Output files
-********************************************************************************
+================================================================================
 
 
 .. csv-table:: Outputs
@@ -107,9 +100,8 @@ No schematic set
    :class: csvtable
 
 
-********************************************************************************
 8. Debug plots
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 
@@ -132,9 +124,8 @@ No schematic set
     TELLU_FINITE_RES_CORR
 
 
-********************************************************************************
 9. Summary plots
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 

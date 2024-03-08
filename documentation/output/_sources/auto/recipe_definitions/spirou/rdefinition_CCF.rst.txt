@@ -7,9 +7,8 @@ apero_ccf_spirou
 ################################################################################
 
 
-********************************************************************************
 1. Description
-********************************************************************************
+================================================================================
 
 
 SHORTNAME: CCF
@@ -18,17 +17,15 @@ SHORTNAME: CCF
 .. include:: ../../../resources/spirou/descriptions/apero_ccf_spirou.rst
 
 
-********************************************************************************
 2. Schematic
-********************************************************************************
+================================================================================
 
 
 No schematic set
 
 
-********************************************************************************
 3. Usage
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 
@@ -39,30 +36,28 @@ No schematic set
 .. code-block:: 
 
      {obs_dir}[STRING] // OBS_DIR_HELP
-     [FILE:EXT_E2DS,EXT_E2DS_FF,TELLU_OBJ] // [STRING/STRINGS] A list of fits files to use separated by spaces. Currently allowed types: E2DS, E2DSFF, TELLU_OBJ (For dprtype = OBJ_FP, OBJ_DARK)
+     [FILE:EXT_E2DS,EXT_E2DS_FF,TELLU_OBJ] // [STRING/STRINGS] A list of fits files to use separated by spaces. CCF_FILES_HELP
 
 
-********************************************************************************
 4. Optional Arguments
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 
 
-     --mask[FILE:CCF_MASK] // [STRING] Define the filename to the CCF mask to use. Can be full path or a file in the ./data/spirou/ccf/ folder
-     --rv[FLOAT] // [FLOAT] The target RV to use as a center for the CCF fit (in km/s)
-     --width[FLOAT] // [FLOAT] The CCF width to use for the CCF fit (in km/s)
-     --step[FLOAT] // [FLOAT] The CCF step to use for the CCF fit (in km/s)
-     --masknormmode[None,all,order] // [STRING] Define the type of normalization to apply to ccf masks, all normalized across all orders, order normalizes independently for each order, None applies no mask normalization
+     --mask[FILE:CCF_MASK] // CCF_MASK_HELP
+     --rv[FLOAT] // CCF_RV_HELP
+     --width[FLOAT] // CCF_WIDTH_HELP
+     --step[FLOAT] // CCF_STEP_HELP
+     --masknormmode[None,all,order] // CCF_MASK_NORM_HELP
      --database[True/False] // [BOOLEAN] Whether to add outputs to calibration database
-     --blazefile[FILE:FF_BLAZE] // [STRING] Define a custom file to use for blaze correction. If unset uses closest file from calibDB. Checks for an absolute path and then checks directory (CALIBDB=BADPIX)
+     --blazefile[FILE:FF_BLAZE] // BLAZEFILE_HELP
      --plot[0>INT>4] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
      --no_in_qc // Disable checking the quality control of input files
 
 
-********************************************************************************
 5. Special Arguments
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 
@@ -86,9 +81,8 @@ No schematic set
      --force_outdir[STRING] // [STRING] Force the default output directory (Normally set by recipe)
 
 
-********************************************************************************
 6. Output directory
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 
@@ -96,9 +90,8 @@ No schematic set
     DRS_DATA_REDUC // Default: "red" directory
 
 
-********************************************************************************
 7. Output files
-********************************************************************************
+================================================================================
 
 
 .. csv-table:: Outputs
@@ -107,9 +100,8 @@ No schematic set
    :class: csvtable
 
 
-********************************************************************************
 8. Debug plots
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 
@@ -120,9 +112,8 @@ No schematic set
     CCF_PHOTON_UNCERT
 
 
-********************************************************************************
 9. Summary plots
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 

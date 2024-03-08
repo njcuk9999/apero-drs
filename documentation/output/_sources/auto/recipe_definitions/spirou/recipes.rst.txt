@@ -35,6 +35,10 @@ This section describes all the SPIROU recipes to use with APERO.
     rdefinition_FTELLU.rst
     rdefinition_MKTEMP.rst
     rdefinition_POLAR.rst
+    rdefinition_LBLREF.rst
+    rdefinition_LBLMASK.rst
+    rdefinition_LBLCOMPUTE.rst
+    rdefinition_LBLCOMPILE.rst
     rdefinition_OBJPOST.rst
 
 .. only:: html

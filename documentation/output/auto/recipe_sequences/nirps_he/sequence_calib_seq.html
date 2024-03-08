@@ -75,9 +75,11 @@
         <i class="fa fa-cog fa-3x" aria-hidden="true"></i></a></li>
     <li><a title="github" href="https://github.com/njcuk9999/apero-drs">
         <i class="fa fa-git-square fa-3x" aria-hidden="true"></i></a></li>
-    <li><a title="download pdf" href="../../../apero-docs.pdf">
+    <li><a title="download documentation" href="../../../apero-docs.pdf">
         <i class="fa fa-download fa-3x" aria-hidden="true"></i></a></li>
-    <li><a title="UdeM" href="/main/misc/udem.html">
+    <li><a title="download paper" href="https://ui.adsabs.harvard.edu/abs/2022PASP..134k4509C">
+        <i class="fa fa-file-pdf-o fa-3x" aria-hidden="true"></i></a></li>
+    <li><a title="UdeM" href="http://apero.exoplanets.ca/main/misc/udem.html">
         <i class="fa fa-university fa-3x" aria-hidden="true"></i></a></li>
   </ul>
     <div>
@@ -178,46 +180,60 @@
 </thead>
 <tbody>
 <tr class="row-even"><td><p>1</p></td>
-<td><p>apero_badpix_nirps_he.py</p></td>
+<td><p>apero_badpix_spirou.py</p></td>
 <td><p>BAD</p></td>
 <td><p>calib-night</p></td>
 <td><p>No</p></td>
 <td></td>
 </tr>
 <tr class="row-odd"><td><p>2</p></td>
-<td><p>apero_loc_nirps_he.py</p></td>
+<td><p>apero_loc_spirou.py</p></td>
 <td><p>LOCCAL</p></td>
 <td><p>calib-night-CAL</p></td>
 <td><p>No</p></td>
 <td><p>{files}=[DARK_FLAT]</p></td>
 </tr>
 <tr class="row-even"><td><p>3</p></td>
-<td><p>apero_loc_nirps_he.py</p></td>
+<td><p>apero_loc_spirou.py</p></td>
 <td><p>LOCSCI</p></td>
 <td><p>calib-night-SCI</p></td>
 <td><p>No</p></td>
 <td><p>{files}=[FLAT_DARK]</p></td>
 </tr>
 <tr class="row-odd"><td><p>4</p></td>
-<td><p>apero_shape_nirps_he.py</p></td>
+<td><p>apero_shape_spirou.py</p></td>
 <td><p>SHAPE</p></td>
 <td><p>calib-night</p></td>
 <td><p>No</p></td>
 <td></td>
 </tr>
 <tr class="row-even"><td><p>5</p></td>
-<td><p>apero_flat_nirps_he.py</p></td>
+<td><p>apero_flat_spirou.py</p></td>
 <td><p>FF</p></td>
 <td><p>calib-night</p></td>
 <td><p>No</p></td>
-<td><p>{files}=[FLAT_FLAT]</p></td>
+<td><p>{files}=[FLAT_FLAT, DARK_FLAT, FLAT_DARK]</p></td>
 </tr>
 <tr class="row-odd"><td><p>6</p></td>
-<td><p>apero_wave_night_nirps_he.py</p></td>
+<td><p>apero_thermal_spirou.py</p></td>
+<td><p>THERM_I</p></td>
+<td><p>calib-night-I</p></td>
+<td><p>No</p></td>
+<td><p>{files}=[DARK_DARK_INT]</p></td>
+</tr>
+<tr class="row-even"><td><p>7</p></td>
+<td><p>apero_wave_night_spirou.py</p></td>
 <td><p>WAVE</p></td>
 <td><p>calib-night</p></td>
 <td><p>No</p></td>
 <td></td>
+</tr>
+<tr class="row-odd"><td><p>8</p></td>
+<td><p>apero_thermal_spirou.py</p></td>
+<td><p>THERM_T</p></td>
+<td><p>calib-night-T</p></td>
+<td><p>No</p></td>
+<td><p>{files}=[DARK_DARK_TEL]</p></td>
 </tr>
 </tbody>
 </table>
@@ -251,7 +267,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2019, Neil Cook.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 6.1.3.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.0.1.
     </div>
   </body>
 </html>

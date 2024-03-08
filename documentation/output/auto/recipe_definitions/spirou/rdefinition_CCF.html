@@ -20,7 +20,7 @@
     <script src="../../../_static/bizstyle.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
-    <link rel="next" title="apero_mk_tellu_spirou" href="rdefinition_MKTELL.html" />
+    <link rel="next" title="apero_mk_skymodel_spirou" href="rdefinition_MKSKY.html" />
     <link rel="prev" title="apero_wave_night_spirou" href="rdefinition_WAVE.html" />
     <link href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,700'
           rel='stylesheet' type='text/css' />
@@ -76,9 +76,11 @@
         <i class="fa fa-cog fa-3x" aria-hidden="true"></i></a></li>
     <li><a title="github" href="https://github.com/njcuk9999/apero-drs">
         <i class="fa fa-git-square fa-3x" aria-hidden="true"></i></a></li>
-    <li><a title="download pdf" href="../../../apero-docs.pdf">
+    <li><a title="download documentation" href="../../../apero-docs.pdf">
         <i class="fa fa-download fa-3x" aria-hidden="true"></i></a></li>
-    <li><a title="UdeM" href="/main/misc/udem.html">
+    <li><a title="download paper" href="https://ui.adsabs.harvard.edu/abs/2022PASP..134k4509C">
+        <i class="fa fa-file-pdf-o fa-3x" aria-hidden="true"></i></a></li>
+    <li><a title="UdeM" href="http://apero.exoplanets.ca/main/misc/udem.html">
         <i class="fa fa-university fa-3x" aria-hidden="true"></i></a></li>
   </ul>
     <div>
@@ -98,7 +100,7 @@
           <a href="../../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="rdefinition_MKTELL.html" title="apero_mk_tellu_spirou"
+          <a href="rdefinition_MKSKY.html" title="apero_mk_skymodel_spirou"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="rdefinition_WAVE.html" title="apero_wave_night_spirou"
@@ -139,8 +141,8 @@
   </div>
   <div>
     <h4>Next topic</h4>
-    <p class="topless"><a href="rdefinition_MKTELL.html"
-                          title="next chapter">apero_mk_tellu_spirou</a></p>
+    <p class="topless"><a href="rdefinition_MKSKY.html"
+                          title="next chapter">apero_mk_skymodel_spirou</a></p>
   </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
@@ -211,19 +213,19 @@ such as the <a class="reference external" href="https://lbl.exoplanets.ca">line-
 </pre></div>
 </div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="n">obs_dir</span><span class="p">}[</span><span class="n">STRING</span><span class="p">]</span> <span class="o">//</span> <span class="n">OBS_DIR_HELP</span>
-<span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">EXT_E2DS</span><span class="p">,</span><span class="n">EXT_E2DS_FF</span><span class="p">,</span><span class="n">TELLU_OBJ</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="o">/</span><span class="n">STRINGS</span><span class="p">]</span> <span class="n">A</span> <span class="nb">list</span> <span class="n">of</span> <span class="n">fits</span> <span class="n">files</span> <span class="n">to</span> <span class="n">use</span> <span class="n">separated</span> <span class="n">by</span> <span class="n">spaces</span><span class="o">.</span> <span class="n">Currently</span> <span class="n">allowed</span> <span class="n">types</span><span class="p">:</span> <span class="n">E2DS</span><span class="p">,</span> <span class="n">E2DSFF</span><span class="p">,</span> <span class="n">TELLU_OBJ</span> <span class="p">(</span><span class="n">For</span> <span class="n">dprtype</span> <span class="o">=</span> <span class="n">OBJ_FP</span><span class="p">,</span> <span class="n">OBJ_DARK</span><span class="p">)</span>
+<span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">EXT_E2DS</span><span class="p">,</span><span class="n">EXT_E2DS_FF</span><span class="p">,</span><span class="n">TELLU_OBJ</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="o">/</span><span class="n">STRINGS</span><span class="p">]</span> <span class="n">A</span> <span class="nb">list</span> <span class="n">of</span> <span class="n">fits</span> <span class="n">files</span> <span class="n">to</span> <span class="n">use</span> <span class="n">separated</span> <span class="n">by</span> <span class="n">spaces</span><span class="o">.</span> <span class="n">CCF_FILES_HELP</span>
 </pre></div>
 </div>
 </section>
 <section id="optional-arguments">
 <h2>4. Optional Arguments<a class="headerlink" href="#optional-arguments" title="Permalink to this heading">¶</a></h2>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">--</span><span class="n">mask</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">CCF_MASK</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Define</span> <span class="n">the</span> <span class="n">filename</span> <span class="n">to</span> <span class="n">the</span> <span class="n">CCF</span> <span class="n">mask</span> <span class="n">to</span> <span class="n">use</span><span class="o">.</span> <span class="n">Can</span> <span class="n">be</span> <span class="n">full</span> <span class="n">path</span> <span class="ow">or</span> <span class="n">a</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">the</span> <span class="o">./</span><span class="n">data</span><span class="o">/</span><span class="n">spirou</span><span class="o">/</span><span class="n">ccf</span><span class="o">/</span> <span class="n">folder</span>
-<span class="o">--</span><span class="n">rv</span><span class="p">[</span><span class="n">FLOAT</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">FLOAT</span><span class="p">]</span> <span class="n">The</span> <span class="n">target</span> <span class="n">RV</span> <span class="n">to</span> <span class="n">use</span> <span class="k">as</span> <span class="n">a</span> <span class="n">center</span> <span class="k">for</span> <span class="n">the</span> <span class="n">CCF</span> <span class="n">fit</span> <span class="p">(</span><span class="ow">in</span> <span class="n">km</span><span class="o">/</span><span class="n">s</span><span class="p">)</span>
-<span class="o">--</span><span class="n">width</span><span class="p">[</span><span class="n">FLOAT</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">FLOAT</span><span class="p">]</span> <span class="n">The</span> <span class="n">CCF</span> <span class="n">width</span> <span class="n">to</span> <span class="n">use</span> <span class="k">for</span> <span class="n">the</span> <span class="n">CCF</span> <span class="n">fit</span> <span class="p">(</span><span class="ow">in</span> <span class="n">km</span><span class="o">/</span><span class="n">s</span><span class="p">)</span>
-<span class="o">--</span><span class="n">step</span><span class="p">[</span><span class="n">FLOAT</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">FLOAT</span><span class="p">]</span> <span class="n">The</span> <span class="n">CCF</span> <span class="n">step</span> <span class="n">to</span> <span class="n">use</span> <span class="k">for</span> <span class="n">the</span> <span class="n">CCF</span> <span class="n">fit</span> <span class="p">(</span><span class="ow">in</span> <span class="n">km</span><span class="o">/</span><span class="n">s</span><span class="p">)</span>
-<span class="o">--</span><span class="n">masknormmode</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span><span class="nb">all</span><span class="p">,</span><span class="n">order</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Define</span> <span class="n">the</span> <span class="nb">type</span> <span class="n">of</span> <span class="n">normalization</span> <span class="n">to</span> <span class="n">apply</span> <span class="n">to</span> <span class="n">ccf</span> <span class="n">masks</span><span class="p">,</span> <span class="nb">all</span> <span class="n">normalized</span> <span class="n">across</span> <span class="nb">all</span> <span class="n">orders</span><span class="p">,</span> <span class="n">order</span> <span class="n">normalizes</span> <span class="n">independently</span> <span class="k">for</span> <span class="n">each</span> <span class="n">order</span><span class="p">,</span> <span class="kc">None</span> <span class="n">applies</span> <span class="n">no</span> <span class="n">mask</span> <span class="n">normalization</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">--</span><span class="n">mask</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">CCF_MASK</span><span class="p">]</span> <span class="o">//</span> <span class="n">CCF_MASK_HELP</span>
+<span class="o">--</span><span class="n">rv</span><span class="p">[</span><span class="n">FLOAT</span><span class="p">]</span> <span class="o">//</span> <span class="n">CCF_RV_HELP</span>
+<span class="o">--</span><span class="n">width</span><span class="p">[</span><span class="n">FLOAT</span><span class="p">]</span> <span class="o">//</span> <span class="n">CCF_WIDTH_HELP</span>
+<span class="o">--</span><span class="n">step</span><span class="p">[</span><span class="n">FLOAT</span><span class="p">]</span> <span class="o">//</span> <span class="n">CCF_STEP_HELP</span>
+<span class="o">--</span><span class="n">masknormmode</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span><span class="nb">all</span><span class="p">,</span><span class="n">order</span><span class="p">]</span> <span class="o">//</span> <span class="n">CCF_MASK_NORM_HELP</span>
 <span class="o">--</span><span class="n">database</span><span class="p">[</span><span class="kc">True</span><span class="o">/</span><span class="kc">False</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">BOOLEAN</span><span class="p">]</span> <span class="n">Whether</span> <span class="n">to</span> <span class="n">add</span> <span class="n">outputs</span> <span class="n">to</span> <span class="n">calibration</span> <span class="n">database</span>
-<span class="o">--</span><span class="n">blazefile</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">FF_BLAZE</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">STRING</span><span class="p">]</span> <span class="n">Define</span> <span class="n">a</span> <span class="n">custom</span> <span class="n">file</span> <span class="n">to</span> <span class="n">use</span> <span class="k">for</span> <span class="n">blaze</span> <span class="n">correction</span><span class="o">.</span> <span class="n">If</span> <span class="n">unset</span> <span class="n">uses</span> <span class="n">closest</span> <span class="n">file</span> <span class="kn">from</span> <span class="nn">calibDB.</span> <span class="n">Checks</span> <span class="k">for</span> <span class="n">an</span> <span class="n">absolute</span> <span class="n">path</span> <span class="ow">and</span> <span class="n">then</span> <span class="n">checks</span> <span class="n">directory</span> <span class="p">(</span><span class="n">CALIBDB</span><span class="o">=</span><span class="n">BADPIX</span><span class="p">)</span>
+<span class="o">--</span><span class="n">blazefile</span><span class="p">[</span><span class="n">FILE</span><span class="p">:</span><span class="n">FF_BLAZE</span><span class="p">]</span> <span class="o">//</span> <span class="n">BLAZEFILE_HELP</span>
 <span class="o">--</span><span class="n">plot</span><span class="p">[</span><span class="mi">0</span><span class="o">&gt;</span><span class="n">INT</span><span class="o">&gt;</span><span class="mi">4</span><span class="p">]</span> <span class="o">//</span> <span class="p">[</span><span class="n">INTEGER</span><span class="p">]</span> <span class="n">Plot</span> <span class="n">level</span><span class="o">.</span> <span class="mi">0</span> <span class="o">=</span> <span class="n">off</span><span class="p">,</span> <span class="mi">1</span> <span class="o">=</span> <span class="n">interactively</span><span class="p">,</span> <span class="mi">2</span> <span class="o">=</span> <span class="n">save</span> <span class="n">to</span> <span class="n">file</span>
 <span class="o">--</span><span class="n">no_in_qc</span> <span class="o">//</span> <span class="n">Disable</span> <span class="n">checking</span> <span class="n">the</span> <span class="n">quality</span> <span class="n">control</span> <span class="n">of</span> <span class="nb">input</span> <span class="n">files</span>
 </pre></div>
@@ -315,7 +317,7 @@ such as the <a class="reference external" href="https://lbl.exoplanets.ca">line-
           <a href="../../../genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="rdefinition_MKTELL.html" title="apero_mk_tellu_spirou"
+          <a href="rdefinition_MKSKY.html" title="apero_mk_skymodel_spirou"
              >next</a> |</li>
         <li class="right" >
           <a href="rdefinition_WAVE.html" title="apero_wave_night_spirou"
@@ -328,7 +330,7 @@ such as the <a class="reference external" href="https://lbl.exoplanets.ca">line-
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2019, Neil Cook.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 6.1.3.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.0.1.
     </div>
   </body>
 </html>

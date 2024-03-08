@@ -7,9 +7,8 @@ apero_pol_spirou
 ################################################################################
 
 
-********************************************************************************
 1. Description
-********************************************************************************
+================================================================================
 
 
 SHORTNAME: POLAR
@@ -18,17 +17,15 @@ SHORTNAME: POLAR
 .. include:: ../../../resources/spirou/descriptions/apero_pol_spirou.rst
 
 
-********************************************************************************
 2. Schematic
-********************************************************************************
+================================================================================
 
 
 No schematic set
 
 
-********************************************************************************
 3. Usage
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 
@@ -41,9 +38,8 @@ No schematic set
      {obs_dir}[STRING] // OBS_DIR_HELP
 
 
-********************************************************************************
 4. Optional Arguments
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 
@@ -59,15 +55,14 @@ No schematic set
      --output_lsd[STRING] // Output LSD file
      --lsd // Run LSD analysis
      --noqccheck // Do not check quality control of inputs
-     --blazefile[FILE:FF_BLAZE] // [STRING] Define a custom file to use for blaze correction. If unset uses closest file from calibDB. Checks for an absolute path and then checks directory (CALIBDB=BADPIX)
+     --blazefile[FILE:FF_BLAZE] // BLAZEFILE_HELP
      --plot[0>INT>4] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
-     --wavefile[FILE:WAVESOL_REF,WAVE_NIGHT,WAVESOL_DEFAULT] // [STRING] Define a custom file to use for the wave solution. If unset uses closest file from header or calibDB (depending on setup). Checks for an absolute path and then checks directory
+     --wavefile[FILE:WAVESOL_REF,WAVE_NIGHT,WAVESOL_DEFAULT] // WAVEFILE_HELP
      --no_in_qc // Disable checking the quality control of input files
 
 
-********************************************************************************
 5. Special Arguments
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 
@@ -91,9 +86,8 @@ No schematic set
      --force_outdir[STRING] // [STRING] Force the default output directory (Normally set by recipe)
 
 
-********************************************************************************
 6. Output directory
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 
@@ -101,9 +95,8 @@ No schematic set
     DRS_DATA_REDUC // Default: "red" directory
 
 
-********************************************************************************
 7. Output files
-********************************************************************************
+================================================================================
 
 
 .. csv-table:: Outputs
@@ -112,9 +105,8 @@ No schematic set
    :class: csvtable
 
 
-********************************************************************************
 8. Debug plots
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 
@@ -128,9 +120,8 @@ No schematic set
     EXTRACT_S1D
 
 
-********************************************************************************
 9. Summary plots
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 

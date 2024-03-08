@@ -1,3 +1,2 @@
 ORDER,RECIPE,SHORTNAME,RECIPE KIND,REF RECIPE
-1,apero_pp_ref_nirps_ha.py,PPREF,pre-reference,Yes
-2,apero_preprocess_nirps_ha.py,PP,pre,No
+1,apero_preprocess_spirou.py,PP,pre,No

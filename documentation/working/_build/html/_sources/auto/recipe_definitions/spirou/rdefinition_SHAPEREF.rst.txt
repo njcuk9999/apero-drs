@@ -7,9 +7,8 @@ apero_shape_ref_spirou
 ################################################################################
 
 
-********************************************************************************
 1. Description
-********************************************************************************
+================================================================================
 
 
 SHORTNAME: SHAPEREF
@@ -18,14 +17,14 @@ SHORTNAME: SHAPEREF
 .. include:: ../../../resources/spirou/descriptions/apero_shape_ref_spirou.rst
 
 
-********************************************************************************
 2. Schematic
-********************************************************************************
+================================================================================
 
 
 .. only:: html
 
-    .. image:: ../../../_static/yed/spirou/apero_shape_ref_spirou_schematic.jpg
+    .. figure:: ../../../_static/yed/spirou/apero_shape_ref_spirou_schematic.jpg
+        :figwidth: 100%
         :width: 100%
         :align: center
 
@@ -33,9 +32,8 @@ SHORTNAME: SHAPEREF
 
     This section can only currently be viewed in the html documentation.
 
-********************************************************************************
 3. Usage
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 
@@ -46,36 +44,34 @@ SHORTNAME: SHAPEREF
 .. code-block:: 
 
      {obs_dir}[STRING] // OBS_DIR_HELP
-     --fpfiles[FILE:FP_FP] // Current allowed types: FP_FP
-     --hcfiles[FILE:HCONE_HCONE] // Current allowed types: HC_HC
+     --fpfiles[FILE:FP_FP] // SHAPE_FPFILES_HELP
+     --hcfiles[FILE:HCONE_HCONE] // SHAPE_HCFILES_HELP
 
 
-********************************************************************************
 4. Optional Arguments
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 
 
      --database[True/False] // [BOOLEAN] Whether to add outputs to calibration database
-     --badpixfile[FILE:BADPIX] // [STRING] Define a custom file to use for bad pixel correction. Checks for an absolute path and then checks directory
-     --badcorr[True/False] // [BOOLEAN] Whether to correct for the bad pixel file
-     --backsub[True/False] // [BOOLEAN] Whether to do background subtraction
-     --combine[True/False] // [BOOLEAN] Whether to combine fits files in file list or to process them separately
-     --darkfile[FILE:DARKREF] // [STRING] The Dark file to use (CALIBDB=DARKM)
-     --darkcorr[True/False] // [BOOLEAN] Whether to correct for the dark file
-     --flipimage[None,x,y,both] // [BOOLEAN] Whether to flip fits image
-     --fluxunits[ADU/s,e-] // [STRING] Output units for flux
-     --locofile[FILE:LOC_LOCO] // [STRING] Sets the LOCO file used to get the coefficients (CALIBDB=LOC_{fiber})
+     --badpixfile[FILE:BADPIX] // BADFILE_HELP
+     --badcorr[True/False] // DOBAD_HELP
+     --backsub[True/False] // BACKSUB_HELP
+     --combine[True/False] // COMBINE_HELP
+     --darkfile[FILE:DARKREF] // DARKFILE_HELP
+     --darkcorr[True/False] // DODARK_HELP
+     --flipimage[None,x,y,both] // FLIPIMAGE_HELP
+     --fluxunits[ADU/s,e-] // FLUXUNITS_HELP
+     --locofile[FILE:LOC_LOCO] // LOCOFILE_HELP
      --plot[0>INT>4] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
-     --resize[True/False] // [BOOLEAN] Whether to resize image
+     --resize[True/False] // RESIZE_HELP
      --no_in_qc // Disable checking the quality control of input files
-     --fpref[FILE:REF_FP] // [STRING] Sets the FP reference file to use (CALIBDB = FPREF)
+     --fpref[FILE:REF_FP] // FPREFFILE_HELP
 
 
-********************************************************************************
 5. Special Arguments
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 
@@ -99,9 +95,8 @@ SHORTNAME: SHAPEREF
      --force_outdir[STRING] // [STRING] Force the default output directory (Normally set by recipe)
 
 
-********************************************************************************
 6. Output directory
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 
@@ -109,9 +104,8 @@ SHORTNAME: SHAPEREF
     DRS_DATA_REDUC // Default: "red" directory
 
 
-********************************************************************************
 7. Output files
-********************************************************************************
+================================================================================
 
 
 .. csv-table:: Outputs
@@ -120,9 +114,8 @@ SHORTNAME: SHAPEREF
    :class: csvtable
 
 
-********************************************************************************
 8. Debug plots
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 
@@ -133,9 +126,8 @@ SHORTNAME: SHAPEREF
     SHAPE_LINEAR_TPARAMS
 
 
-********************************************************************************
 9. Summary plots
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 

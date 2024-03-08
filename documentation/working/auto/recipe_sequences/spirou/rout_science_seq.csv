@@ -6,4 +6,4 @@ ORDER,RECIPE,SHORTNAME,RECIPE KIND,REF RECIPE,FIBER,FILTERS,ARGS,KWARGS
 5,apero_mk_template_spirou.py,FTTEMP2,tellu-science,No,AB,"KW_OBJNAME: SCIENCE_TARGETS |br| KW_DPRTYPE: OBJ_DARK, OBJ_FP, POLAR_DARK, POLAR_FP",,
 6,apero_ccf_spirou.py,CCF,rv-tcorr,No,AB,"KW_DPRTYPE: OBJ_DARK, OBJ_FP, POLAR_DARK, POLAR_FP |br| KW_OBJNAME: SCIENCE_TARGETS",{files}=[TELLU_OBJ],
 7,apero_pol_spirou.py,POLAR,polar-tcorr,No,AB,"KW_DPRTYPE: POLAR_FP, POLAR_DARK |br| KW_OBJNAME: SCIENCE_TARGETS",,--exposures=[TELLU_OBJ]
-8,apero_postprocess_spirou.py,SCIPOST,post-science,No,--,"KW_DPRTYPE: OBJ_FP, OBJ_DARK, POLAR_DARK, POLAR_FP |br| KW_OBJNAME: SCIENCE_TARGETS",{files}=[DRS_PP],
+8,apero_postprocess_spirou.py,SCIPOST,post-science,No,--,"KW_DPRTYPE: OBJ_DARK, OBJ_FP, POLAR_DARK, POLAR_FP |br| KW_OBJNAME: SCIENCE_TARGETS",{files}=[DRS_PP],

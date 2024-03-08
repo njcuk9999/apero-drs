@@ -1,6 +1,6 @@
 name,description,HDR[DRSOUTID],file type,suffix,basename,fibers,dbname,dbkey,input file
-ABSO_NPY,--,--,.npy,--,tellu_save.npy,--,--,--,--
-ABSO1_NPY,--,--,.npy,--,tellu_save1.npy,--,--,--,--
+ABSO_NPY,Telluric absorption temporary file 1,--,.npy,--,tellu_save.npy,--,--,--,--
+ABSO1_NPY,Telluric absorption temporary file 2,--,.npy,--,tellu_save1.npy,--,--,--,--
 TELLU_OBJ,Telluric corrected extracted 2D spectrum,TELLU_OBJ,.fits,_e2dsff_tcorr,--,"AB, A, B",telluric,TELLU_OBJ,EXT_E2DS_FF
 SC1D_W_FILE,Telluric corrected extracted 1D spectrum (constant wavelength binning),SC1D_W_FILE,.fits,_s1d_w_tcorr,--,"AB, A, B",--,--,EXT_E2DS_FF
 SC1D_V_FILE,Telluric corrected extracted 1D spectrum (constant velocity binning),SC1D_V_FILE,.fits,_s1d_v_tcorr,--,"AB, A, B",--,--,EXT_E2DS_FF

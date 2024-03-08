@@ -7,9 +7,8 @@ apero_thermal_spirou
 ################################################################################
 
 
-********************************************************************************
 1. Description
-********************************************************************************
+================================================================================
 
 
 SHORTNAME: THERM
@@ -18,14 +17,14 @@ SHORTNAME: THERM
 .. include:: ../../../resources/spirou/descriptions/apero_thermal_spirou.rst
 
 
-********************************************************************************
 2. Schematic
-********************************************************************************
+================================================================================
 
 
 .. only:: html
 
-    .. image:: ../../../_static/yed/spirou/apero_thermal_spirou_schematic.jpg
+    .. figure:: ../../../_static/yed/spirou/apero_thermal_spirou_schematic.jpg
+        :figwidth: 100%
         :width: 100%
         :align: center
 
@@ -33,9 +32,8 @@ SHORTNAME: THERM
 
     This section can only currently be viewed in the html documentation.
 
-********************************************************************************
 3. Usage
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 
@@ -46,41 +44,39 @@ SHORTNAME: THERM
 .. code-block:: 
 
      {obs_dir}[STRING] // OBS_DIR_HELP
-     [FILE:DARK_DARK_INT,DARK_DARK_TEL] // [STRING/STRINGS] A list of fits files to use separated by spaces. Current accepts all preprocessed filetypes. All files used will be combined into a single frame.
+     [FILE:DARK_DARK_INT,DARK_DARK_TEL] // [STRING/STRINGS] A list of fits files to use separated by spaces. EXTRACT_FILES_HELP
 
 
-********************************************************************************
 4. Optional Arguments
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 
 
      --database[True/False] // [BOOLEAN] Whether to add outputs to calibration database
-     --badpixfile[FILE:BADPIX] // [STRING] Define a custom file to use for bad pixel correction. Checks for an absolute path and then checks directory
-     --badcorr[True/False] // [BOOLEAN] Whether to correct for the bad pixel file
-     --backsub[True/False] // [BOOLEAN] Whether to do background subtraction
-     --combine[True/False] // [BOOLEAN] Whether to combine fits files in file list or to process them separately
-     --darkfile[FILE:DARKREF] // [STRING] The Dark file to use (CALIBDB=DARKM)
-     --darkcorr[True/False] // [BOOLEAN] Whether to correct for the dark file
-     --fiber[ALL,AB,A,B,C] // [STRING] Define which fibers to extract
-     --flipimage[None,x,y,both] // [BOOLEAN] Whether to flip fits image
-     --fluxunits[ADU/s,e-] // [STRING] Output units for flux
-     --locofile[FILE:LOC_LOCO] // [STRING] Sets the LOCO file used to get the coefficients (CALIBDB=LOC_{fiber})
-     --orderpfile[FILE:LOC_ORDERP] // [STRING] Sets the Order Profile file used to get the coefficients (CALIBDB=ORDER_PROFILE_{fiber}
+     --badpixfile[FILE:BADPIX] // BADFILE_HELP
+     --badcorr[True/False] // DOBAD_HELP
+     --backsub[True/False] // BACKSUB_HELP
+     --combine[True/False] // COMBINE_HELP
+     --darkfile[FILE:DARKREF] // DARKFILE_HELP
+     --darkcorr[True/False] // DODARK_HELP
+     --fiber[ALL,AB,A,B,C] // EXTFIBER_HELP
+     --flipimage[None,x,y,both] // FLIPIMAGE_HELP
+     --fluxunits[ADU/s,e-] // FLUXUNITS_HELP
+     --locofile[FILE:LOC_LOCO] // LOCOFILE_HELP
+     --orderpfile[FILE:LOC_ORDERP] // ORDERPFILE_HELP
      --plot[0>INT>4] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
-     --resize[True/False] // [BOOLEAN] Whether to resize image
-     --shapex[FILE:SHAPE_X] // [STRING] Sets the SHAPE DXMAP file used to get the dx correction map (CALIBDB=SHAPEX)
-     --shapey[FILE:SHAPE_Y] // [STRING] Sets the SHAPE DYMAP file used to get the dy correction map (CALIBDB=SHAPEY)
-     --shapel[FILE:SHAPEL] // [STRING] Sets the SHAPE local file used to get the local transforms (CALIBDB = SHAPEL)
-     --wavefile[FILE:WAVESOL_REF,WAVE_NIGHT,WAVESOL_DEFAULT] // [STRING] Define a custom file to use for the wave solution. If unset uses closest file from header or calibDB (depending on setup). Checks for an absolute path and then checks directory
+     --resize[True/False] // RESIZE_HELP
+     --shapex[FILE:SHAPE_X] // SHAPEXFILE_HELP
+     --shapey[FILE:SHAPE_Y] // SHAPEYFILE_HELP
+     --shapel[FILE:SHAPEL] // SHAPELFILE_HELP
+     --wavefile[FILE:WAVESOL_REF,WAVE_NIGHT,WAVESOL_DEFAULT] // WAVEFILE_HELP
      --no_in_qc // Disable checking the quality control of input files
      --forceext[True/False] // THERMAL_EXTRACT_HELP
 
 
-********************************************************************************
 5. Special Arguments
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 
@@ -104,9 +100,8 @@ SHORTNAME: THERM
      --force_outdir[STRING] // [STRING] Force the default output directory (Normally set by recipe)
 
 
-********************************************************************************
 6. Output directory
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 
@@ -114,9 +109,8 @@ SHORTNAME: THERM
     DRS_DATA_REDUC // Default: "red" directory
 
 
-********************************************************************************
 7. Output files
-********************************************************************************
+================================================================================
 
 
 .. csv-table:: Outputs
@@ -125,17 +119,15 @@ SHORTNAME: THERM
    :class: csvtable
 
 
-********************************************************************************
 8. Debug plots
-********************************************************************************
+================================================================================
 
 
 No debug plots.
 
 
-********************************************************************************
 9. Summary plots
-********************************************************************************
+================================================================================
 
 
 No summary plots.

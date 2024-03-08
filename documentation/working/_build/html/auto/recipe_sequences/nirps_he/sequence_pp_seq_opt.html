@@ -75,9 +75,11 @@
         <i class="fa fa-cog fa-3x" aria-hidden="true"></i></a></li>
     <li><a title="github" href="https://github.com/njcuk9999/apero-drs">
         <i class="fa fa-git-square fa-3x" aria-hidden="true"></i></a></li>
-    <li><a title="download pdf" href="../../../apero-docs.pdf">
+    <li><a title="download documentation" href="../../../apero-docs.pdf">
         <i class="fa fa-download fa-3x" aria-hidden="true"></i></a></li>
-    <li><a title="UdeM" href="/main/misc/udem.html">
+    <li><a title="download paper" href="https://ui.adsabs.harvard.edu/abs/2022PASP..134k4509C">
+        <i class="fa fa-file-pdf-o fa-3x" aria-hidden="true"></i></a></li>
+    <li><a title="UdeM" href="http://apero.exoplanets.ca/main/misc/udem.html">
         <i class="fa fa-university fa-3x" aria-hidden="true"></i></a></li>
   </ul>
     <div>
@@ -179,111 +181,103 @@
 </thead>
 <tbody>
 <tr class="row-even"><td><p>1</p></td>
-<td><p>apero_pp_ref_nirps_he.py</p></td>
-<td><p>PPREF</p></td>
-<td><p>pre-reference</p></td>
-<td><p>Yes</p></td>
-<td><p>–</p></td>
-<td></td>
-</tr>
-<tr class="row-odd"><td><p>2</p></td>
-<td><p>apero_preprocess_nirps_he.py</p></td>
+<td><p>apero_preprocess_spirou.py</p></td>
 <td><p>PP_CAL</p></td>
 <td><p>pre-cal</p></td>
 <td><p>No</p></td>
-<td><p>KW_RAW_DPRCATG: CALIB</p></td>
+<td><p>KW_OBJNAME: CALIB</p></td>
 <td></td>
 </tr>
-<tr class="row-even"><td><p>3</p></td>
-<td><p>apero_preprocess_nirps_he.py</p></td>
+<tr class="row-odd"><td><p>2</p></td>
+<td><p>apero_preprocess_spirou.py</p></td>
 <td><p>PP_SCI</p></td>
 <td><p>pre-sci</p></td>
 <td><p>No</p></td>
 <td><p>KW_OBJNAME: SCIENCE_TARGETS</p></td>
 <td></td>
 </tr>
-<tr class="row-odd"><td><p>4</p></td>
-<td><p>apero_preprocess_nirps_he.py</p></td>
+<tr class="row-even"><td><p>3</p></td>
+<td><p>apero_preprocess_spirou.py</p></td>
 <td><p>PP_TEL</p></td>
 <td><p>pre-tel</p></td>
 <td><p>No</p></td>
 <td><p>KW_OBJNAME: TELLURIC_TARGETS</p></td>
 <td></td>
 </tr>
-<tr class="row-even"><td><p>5</p></td>
-<td><p>apero_preprocess_nirps_he.py</p></td>
+<tr class="row-odd"><td><p>4</p></td>
+<td><p>apero_preprocess_spirou.py</p></td>
 <td><p>PP_HC1HC1</p></td>
 <td><p>pre-hchc</p></td>
 <td><p>No</p></td>
 <td><p>–</p></td>
 <td><p>{files}=[RAW_HCONE_HCONE]</p></td>
 </tr>
-<tr class="row-odd"><td><p>6</p></td>
-<td><p>apero_preprocess_nirps_he.py</p></td>
+<tr class="row-even"><td><p>5</p></td>
+<td><p>apero_preprocess_spirou.py</p></td>
 <td><p>PP_FPFP</p></td>
 <td><p>pre-fpfp</p></td>
 <td><p>No</p></td>
 <td><p>–</p></td>
 <td><p>{files}=[RAW_FP_FP]</p></td>
 </tr>
-<tr class="row-even"><td><p>7</p></td>
-<td><p>apero_preprocess_nirps_he.py</p></td>
+<tr class="row-odd"><td><p>6</p></td>
+<td><p>apero_preprocess_spirou.py</p></td>
 <td><p>PP_FF</p></td>
 <td><p>pre-ff</p></td>
 <td><p>No</p></td>
 <td><p>–</p></td>
 <td><p>{files}=[RAW_FLAT_FLAT]</p></td>
 </tr>
-<tr class="row-odd"><td><p>8</p></td>
-<td><p>apero_preprocess_nirps_he.py</p></td>
+<tr class="row-even"><td><p>7</p></td>
+<td><p>apero_preprocess_spirou.py</p></td>
 <td><p>PP_DFP</p></td>
 <td><p>pre-dfp</p></td>
 <td><p>No</p></td>
 <td><p>–</p></td>
 <td><p>{files}=[RAW_DARK_FP]</p></td>
 </tr>
-<tr class="row-even"><td><p>9</p></td>
-<td><p>apero_preprocess_nirps_he.py</p></td>
+<tr class="row-odd"><td><p>8</p></td>
+<td><p>apero_preprocess_spirou.py</p></td>
 <td><p>PP_FPD</p></td>
 <td><p>pre-fpd</p></td>
 <td><p>No</p></td>
 <td><p>–</p></td>
 <td><p>{files}=[RAW_FP_DARK]</p></td>
 </tr>
-<tr class="row-odd"><td><p>10</p></td>
-<td><p>apero_preprocess_nirps_he.py</p></td>
+<tr class="row-even"><td><p>9</p></td>
+<td><p>apero_preprocess_spirou.py</p></td>
 <td><p>PP_SKY</p></td>
 <td><p>pre-sky</p></td>
 <td><p>No</p></td>
 <td><p>–</p></td>
-<td><p>{files}=[RAW_NIGHT_SKY_SKY]</p></td>
+<td><p>{files}=[RAW_DARK_DARK_SKY]</p></td>
 </tr>
-<tr class="row-even"><td><p>11</p></td>
-<td><p>apero_preprocess_nirps_he.py</p></td>
+<tr class="row-odd"><td><p>10</p></td>
+<td><p>apero_preprocess_spirou.py</p></td>
 <td><p>PP_LFC</p></td>
 <td><p>pre-lfc</p></td>
 <td><p>No</p></td>
 <td><p>–</p></td>
 <td><p>{files}=[RAW_LFC_LFC]</p></td>
 </tr>
-<tr class="row-odd"><td><p>12</p></td>
-<td><p>apero_preprocess_nirps_he.py</p></td>
+<tr class="row-even"><td><p>11</p></td>
+<td><p>apero_preprocess_spirou.py</p></td>
 <td><p>PP_LFCFP</p></td>
 <td><p>pre-lfcfp</p></td>
 <td><p>No</p></td>
 <td><p>–</p></td>
 <td><p>{files}=[RAW_LFC_FP]</p></td>
 </tr>
-<tr class="row-even"><td><p>13</p></td>
-<td><p>apero_preprocess_nirps_he.py</p></td>
+<tr class="row-odd"><td><p>12</p></td>
+<td><p>apero_preprocess_spirou.py</p></td>
 <td><p>PP_FPLFC</p></td>
 <td><p>pre-fplfc</p></td>
 <td><p>No</p></td>
 <td><p>–</p></td>
 <td><p>{files}=[RAW_FP_LFC]</p></td>
 </tr>
-<tr class="row-odd"><td><p>14</p></td>
-<td><p>apero_preprocess_nirps_he.py</p></td>
+<tr class="row-even"><td><p>13</p></td>
+<td><p>apero_preprocess_spirou.py</p></td>
 <td><p>PP_EVERY</p></td>
 <td><p>pre</p></td>
 <td><p>No</p></td>
@@ -322,7 +316,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2019, Neil Cook.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 6.1.3.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.0.1.
     </div>
   </body>
 </html>

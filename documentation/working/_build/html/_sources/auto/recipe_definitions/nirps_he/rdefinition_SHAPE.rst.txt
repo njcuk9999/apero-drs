@@ -3,13 +3,12 @@
 
 
 ################################################################################
-apero_shape_nirps_he
+apero_shape_spirou
 ################################################################################
 
 
-********************************************************************************
 1. Description
-********************************************************************************
+================================================================================
 
 
 SHORTNAME: SHAPE
@@ -18,57 +17,53 @@ SHORTNAME: SHAPE
 No description set
 
 
-********************************************************************************
 2. Schematic
-********************************************************************************
+================================================================================
 
 
 No schematic set
 
 
-********************************************************************************
 3. Usage
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 
 
-    apero_shape_nirps_he.py {obs_dir}[STRING] [FILE:FP_FP] {options}
+    apero_shape_spirou.py {obs_dir}[STRING] [FILE:FP_FP] {options}
 
 
 .. code-block:: 
 
      {obs_dir}[STRING] // OBS_DIR_HELP
-     [FILE:FP_FP] // Current allowed types: FP_FP
+     [FILE:FP_FP] // SHAPE_FPFILES_HELP
 
 
-********************************************************************************
 4. Optional Arguments
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 
 
      --database[True/False] // [BOOLEAN] Whether to add outputs to calibration database
-     --badpixfile[FILE:BADPIX] // [STRING] Define a custom file to use for bad pixel correction. Checks for an absolute path and then checks directory
-     --badcorr[True/False] // [BOOLEAN] Whether to correct for the bad pixel file
-     --backsub[True/False] // [BOOLEAN] Whether to do background subtraction
-     --combine[True/False] // [BOOLEAN] Whether to combine fits files in file list or to process them separately
-     --darkfile[FILE:DARKREF] // [STRING] The Dark file to use (CALIBDB=DARKM)
-     --darkcorr[True/False] // [BOOLEAN] Whether to correct for the dark file
-     --flipimage[None,x,y,both] // [BOOLEAN] Whether to flip fits image
-     --fluxunits[ADU/s,e-] // [STRING] Output units for flux
-     --fpref[FILE:REF_FP] // [STRING] Sets the FP reference file to use (CALIBDB = FPREF)
+     --badpixfile[FILE:BADPIX] // BADFILE_HELP
+     --badcorr[True/False] // DOBAD_HELP
+     --backsub[True/False] // BACKSUB_HELP
+     --combine[True/False] // COMBINE_HELP
+     --darkfile[FILE:DARKREF] // DARKFILE_HELP
+     --darkcorr[True/False] // DODARK_HELP
+     --flipimage[None,x,y,both] // FLIPIMAGE_HELP
+     --fluxunits[ADU/s,e-] // FLUXUNITS_HELP
+     --fpref[FILE:REF_FP] // FPREFFILE_HELP
      --plot[0>INT>4] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
-     --resize[True/False] // [BOOLEAN] Whether to resize image
-     --shapex[FILE:SHAPE_X] // [STRING] Sets the SHAPE DXMAP file used to get the dx correction map (CALIBDB=SHAPEX)
-     --shapey[FILE:SHAPE_Y] // [STRING] Sets the SHAPE DYMAP file used to get the dy correction map (CALIBDB=SHAPEY)
+     --resize[True/False] // RESIZE_HELP
+     --shapex[FILE:SHAPE_X] // SHAPEXFILE_HELP
+     --shapey[FILE:SHAPE_Y] // SHAPEYFILE_HELP
      --no_in_qc // Disable checking the quality control of input files
 
 
-********************************************************************************
 5. Special Arguments
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 
@@ -92,9 +87,8 @@ No schematic set
      --force_outdir[STRING] // [STRING] Force the default output directory (Normally set by recipe)
 
 
-********************************************************************************
 6. Output directory
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 
@@ -102,9 +96,8 @@ No schematic set
     DRS_DATA_REDUC // Default: "red" directory
 
 
-********************************************************************************
 7. Output files
-********************************************************************************
+================================================================================
 
 
 .. csv-table:: Outputs
@@ -113,9 +106,8 @@ No schematic set
    :class: csvtable
 
 
-********************************************************************************
 8. Debug plots
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 
@@ -124,9 +116,8 @@ No schematic set
     SHAPE_LINEAR_TPARAMS
 
 
-********************************************************************************
 9. Summary plots
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 

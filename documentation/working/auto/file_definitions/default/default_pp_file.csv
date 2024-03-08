@@ -1,1 +1,32 @@
-
+name,description,file type,suffix,input file
+DARK_DARK_INT,"Preprocessed sci=DARK calib=DARK file, where dark is an internal dark",.fits,_pp,RAW_DARK_DARK_INT
+DARK_DARK_TEL,"Preprocessed sci=DARK calib=DARK file, where dark is a telescope dark",.fits,_pp,RAW_DARK_DARK_TEL
+DARK_DARK_SKY,"Preprocessed sci=DARK calib=DARK file, where dark is a sky dark",.fits,_pp,RAW_DARK_DARK_SKY
+DARK_FP_SKY,"Preprocessed sci=DARK calib=FP file, where dark is an internal dark",.fits,_pp,RAW_DARK_FP_SKY
+FLAT_DARK,"Preprocessed sci=FLAT calib=DARK file, where dark is an internal dark",.fits,_pp,RAW_FLAT_DARK
+DARK_FLAT,"Preprocessed sci=DARK calib=FLAT file, where dark is an internal dark",.fits,_pp,RAW_DARK_FLAT
+FLAT_FLAT,Preprocessed sci=FLAT calib=FLAT file,.fits,_pp,RAW_FLAT_FLAT
+FLAT_FP,Preprocessed sci=FLAT calib=FP file,.fits,_pp,RAW_FLAT_FP
+DARK_FP,"Preprocessed sci=DARK calib=FP file, where dark is an internal dark",.fits,_pp,RAW_DARK_FP
+FP_DARK,"Preprocessed sci=FP calib=DARK file,  where dark is an internal dark",.fits,_pp,RAW_FP_DARK
+FP_FLAT,Preprocessed sci=FP calib=FLAT file,.fits,_pp,RAW_FP_FLAT
+FP_FP,Preprocessed sci=FP calib=FP file,.fits,_pp,RAW_FP_FP
+LFC_LFC,Preprocessed sci=LFC calib=LFC file,.fits,_pp,RAW_LFC_LFC
+LFC_FP,Preprocessed sci=LFC calib=FP file,.fits,_pp,RAW_LFC_FP
+FP_LFC,Preprocessed sci=FP calib=LFC file,.fits,_pp,RAW_FP_LFC
+OBJ_DARK,"Preprocessed sci=OBJ calib=DARK file, where dark is an internal dark",.fits,_pp,RAW_OBJ_DARK
+OBJ_FP,Preprocessed sci=OBJ calib=FP file,.fits,_pp,RAW_OBJ_FP
+OBJ_HCONE,"Preprocessed sci=OBJ calib=Hollow Cathode file, Uranium Neon lamp",.fits,_pp,RAW_OBJ_HCONE
+OBJ_HCTWO,"Preprocessed sci=OBJ calib=Hollow Cathode file, Thorium Argon lamp",.fits,_pp,RAW_OBJ_HCTWO
+POLAR_DARK,"Preprocessed sci=POLAR calib=DARK, where dark is an internal dark",.fits,_pp,RAW_POLAR_DARK
+POLAR_FP,Preprocessed sci=POLAR calib=FP,.fits,_pp,RAW_POLAR_FP
+DARK_HCONE,"Preprocessed sci=DARK calib=Hollow Cathode file, where dark is an internal dark, Uranium Neon lamp",.fits,_pp,RAW_DARK_HCONE
+DARK_HCTWO,"Preprocessed sci=DARK calib=Hollow  Cathode file, where dark is an internal dark, Thorium Argon lamp",.fits,_pp,RAW_DARK_HCTWO
+FP_HCONE,"Preprocessed sci=FP calib=Hollow Cathode file, Uranium Neon lamp",.fits,_pp,RAW_FP_HCONE
+FP_HCTWO,"Preprocessed sci=FP calib=Hollow Cathode file, Thorium Argon lamp",.fits,_pp,RAW_FP_HCTWO
+HCONE_FP,"Preprocessed sci=Hollow Cathode calib=FP file, Uranium Neion lamp",.fits,_pp,RAW_HCONE_FP
+HCTWO_FP,"Preprocessed sci=Hollow Cathode calib=FP file, Thorium Argon lamp",.fits,_pp,RAW_HCTWO_FP
+HCONE_HCONE,"Preprocessed sci=Hollow Cathode calib=Hollow Cathode file, Uranium Neon lamp",.fits,_pp,RAW_HCONE_HCONE
+HCTWO_HCTWO,"Preprocessed sci=Hollow Cathode calib=Hollow  Cathode file, Thorium Argon lamp",.fits,_pp,RAW_HCTWO_HCTWO
+HCONE_DARK,"Preprocessed sci=Hollow Cathode calib=DARK file, where dark is an internal dark, Uranium Neon lamp",.fits,_pp,RAW_HCONE_DARK
+HCTWO_DARK,"Preprocessed sci=Hollow Cathode calib=DARK file, where dark is an internal dark, Thorium Argon lamp",.fits,_pp,RAW_HCTWO_DARK

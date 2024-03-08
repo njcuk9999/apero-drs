@@ -26,7 +26,7 @@ For information on individual recipes see :ref:`here <recipe_nirps_he>`.
     sequence_quick_seq.rst
     sequence_blank_seq.rst
     sequence_eng_seq.rst
-    sequence_helios_seq.rst
+    sequence_lbl_seq.rst
 
 .. only:: html
 

@@ -13,8 +13,8 @@ SPIROU
 2) `QC data working group <https://github.com/njcuk9999/spirou_py3/wiki/spirou-qc>`_
 3) `Extraction/telluric data working group <https://github.com/njcuk9999/spirou_py3/wiki/spirou-et>`_
 4) `Radial velocity data working group <https://github.com/njcuk9999/spirou_py3/wiki/spirou-rv>`_
-5) `ARI (external) <http://apero.exoplanets.ca/ari/spirou>`_ (password protected)
-6) `ARI (internal) <http://apero.exoplanets.ca/ari/internal/spirou>`_ (password protected)
+5) `ARI <http://apero.exoplanets.ca/ari/home/index.html>`_ (password protected)
+
 
 NIRPS
 -------------------------
@@ -23,10 +23,9 @@ NIRPS
 2) `QC data working group <https://github.com/njcuk9999/spirou_py3/wiki/nirps-qc>`_
 3) `Extraction/telluric data working group <https://github.com/njcuk9999/spirou_py3/wiki/nirps-et>`_
 4) `Radial velocity data working group <https://github.com/njcuk9999/spirou_py3/wiki/nirps-rv>`_
-5) `ARI (external) <http://apero.exoplanets.ca/ari/nirps>`_ (password protected)
-6) `ARI (internal) <http://apero.exoplanets.ca/ari/internal/nirps>`_ (password protected)
+5) `ARI <http://apero.exoplanets.ca/ari/home/index.html>`_ (password protected)
 
 Admin
 -------------------------
 
-`Admin <http://apero.exoplanets.ca/udem/admin>`_ (password protected)
+`Admin page via ARI <http://apero.exoplanets.ca/ari/home/index.html>`_ (password protected)

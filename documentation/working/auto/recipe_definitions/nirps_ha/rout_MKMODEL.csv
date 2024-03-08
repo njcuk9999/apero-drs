@@ -1,2 +1,2 @@
 name,description,HDR[DRSOUTID],file type,basename,fibers,dbname,dbkey
-TRANS_MODEL,Telluric transmission model file,TRANS_MODEL,.fits,trans_model_{0},A,telluric,TELLU_MODEL
+TRANS_MODEL,Telluric transmission model file,TRANS_MODEL,.fits,trans_model_{0},"AB, A, B",telluric,TELLU_MODEL

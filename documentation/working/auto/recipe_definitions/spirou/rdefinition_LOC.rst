@@ -7,9 +7,8 @@ apero_loc_spirou
 ################################################################################
 
 
-********************************************************************************
 1. Description
-********************************************************************************
+================================================================================
 
 
 SHORTNAME: LOC
@@ -18,14 +17,14 @@ SHORTNAME: LOC
 .. include:: ../../../resources/spirou/descriptions/apero_loc_spirou.rst
 
 
-********************************************************************************
 2. Schematic
-********************************************************************************
+================================================================================
 
 
 .. only:: html
 
-    .. image:: ../../../_static/yed/spirou/apero_loc_spirou_schematic.jpg
+    .. figure:: ../../../_static/yed/spirou/apero_loc_spirou_schematic.jpg
+        :figwidth: 100%
         :width: 100%
         :align: center
 
@@ -33,9 +32,8 @@ SHORTNAME: LOC
 
     This section can only currently be viewed in the html documentation.
 
-********************************************************************************
 3. Usage
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 
@@ -46,33 +44,31 @@ SHORTNAME: LOC
 .. code-block:: 
 
      {obs_dir}[STRING] // OBS_DIR_HELP
-     [FILE:DARK_FLAT,FLAT_DARK] // [STRING/STRINGS] A list of fits files to use separated by spaces. Current allowed types: DARK_FLAT OR FLAT_DARK but not both (exclusive)
+     [FILE:DARK_FLAT,FLAT_DARK] // [STRING/STRINGS] A list of fits files to use separated by spaces. LOC_FILES_HELP
 
 
-********************************************************************************
 4. Optional Arguments
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 
 
      --database[True/False] // [BOOLEAN] Whether to add outputs to calibration database
-     --badpixfile[FILE:BADPIX] // [STRING] Define a custom file to use for bad pixel correction. Checks for an absolute path and then checks directory
-     --badcorr[True/False] // [BOOLEAN] Whether to correct for the bad pixel file
-     --backsub[True/False] // [BOOLEAN] Whether to do background subtraction
-     --combine[True/False] // [BOOLEAN] Whether to combine fits files in file list or to process them separately
-     --darkfile[FILE:DARKREF] // [STRING] The Dark file to use (CALIBDB=DARKM)
-     --darkcorr[True/False] // [BOOLEAN] Whether to correct for the dark file
-     --flipimage[None,x,y,both] // [BOOLEAN] Whether to flip fits image
-     --fluxunits[ADU/s,e-] // [STRING] Output units for flux
+     --badpixfile[FILE:BADPIX] // BADFILE_HELP
+     --badcorr[True/False] // DOBAD_HELP
+     --backsub[True/False] // BACKSUB_HELP
+     --combine[True/False] // COMBINE_HELP
+     --darkfile[FILE:DARKREF] // DARKFILE_HELP
+     --darkcorr[True/False] // DODARK_HELP
+     --flipimage[None,x,y,both] // FLIPIMAGE_HELP
+     --fluxunits[ADU/s,e-] // FLUXUNITS_HELP
      --plot[0>INT>4] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
-     --resize[True/False] // [BOOLEAN] Whether to resize image
+     --resize[True/False] // RESIZE_HELP
      --no_in_qc // Disable checking the quality control of input files
 
 
-********************************************************************************
 5. Special Arguments
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 
@@ -96,9 +92,8 @@ SHORTNAME: LOC
      --force_outdir[STRING] // [STRING] Force the default output directory (Normally set by recipe)
 
 
-********************************************************************************
 6. Output directory
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 
@@ -106,9 +101,8 @@ SHORTNAME: LOC
     DRS_DATA_REDUC // Default: "red" directory
 
 
-********************************************************************************
 7. Output files
-********************************************************************************
+================================================================================
 
 
 .. csv-table:: Outputs
@@ -117,9 +111,8 @@ SHORTNAME: LOC
    :class: csvtable
 
 
-********************************************************************************
 8. Debug plots
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 
@@ -132,9 +125,8 @@ SHORTNAME: LOC
     LOC_IM_REGIONS
 
 
-********************************************************************************
 9. Summary plots
-********************************************************************************
+================================================================================
 
 
 .. code-block:: 
