@@ -88,6 +88,9 @@ Other
 ===========================================
 UdeM
 ===========================================
+
+* `APERO Reduction Interface (ARI) <http://apero.exoplanets.ca/ari/index.html>`_
+
 .. toctree::
    :maxdepth: 2
    :titlesonly:
