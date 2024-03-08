@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+</head>
+<body>
+    <h2>Login</h2>
+    <form id="loginForm">
+        <label for="username">Username:</label><br>
+        <input type="text" id="username" name="username" required><br>
+        <label for="password">Password:</label><br>
+        <input type="password" id="password" name="password" required><br><br>
+        <input type="submit" value="Login">
+    </form>
+
+    <script>
+        document.getElementById("loginForm").addEventListener("submit", function(event) {
+            event.preventDefault(); // Prevent form submission
+
+            // Retrieve username and password from the form
+            var username = document.getElementById("username").value;
+            var password = document.getElementById("password").value;
+
+            // Load user credentials from JSON file
+            fetch('user_credentials.json')
+                .then(response => response.json())
+                .then(users => {
+                    // Find user by username
+                    var user = users.find(u => u.username === username);
+
+                    if (user) {
+                        // Hash the submitted password
+                        var hashedSubmittedPassword = hashPassword(password);
+
+                        // Compare hashed passwords
+                        if (hashedSubmittedPassword === user.password) {
+                            // Login successful
+                            sessionStorage.setItem("loggedInUser", username);
+                            alert("Logged in successfully as " + username);
+                            // Close the pop-up window
+                            window.close();
+                        } else {
+                            // Invalid password
+                            alert("Invalid password");
+                        }
+                    } else {
+                        // User not found
+                        alert("User not found");
+                    }
+                })
+                .catch(error => console.error('Error loading user credentials:', error));
+        });
+
+        function hashPassword(password) {
+            // Generate SHA-256 hash of the password
+            var hash = CryptoJS.SHA256(password);
+            // Convert the hash to hexadecimal representation
+            return hash.toString(CryptoJS.enc.Hex);
+        }
+    </script>
+</body>
+</html>
+
