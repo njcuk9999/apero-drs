@@ -31,6 +31,8 @@ settings:
     user: cook
     host: venus.astro.umontreal.ca
     options: ssh -oport=5822
+  # html group for login
+  group: spirou
   # whether to reset the working directory
   reset: False
   # which observation directory to run on (None will use all or look for
