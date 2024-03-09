@@ -1110,6 +1110,29 @@ class Database:
         emsg = 'Please abstract method with SQLiteDatabase or MySQLDatabase'
         NotImplemented(emsg)
 
+    def duplicate(self, old_database: Union['Database']):
+        """
+        Duplicate the database from another database
+
+        :param old_database: MySQLDatabase, the old database to duplicate
+        :return:
+        """
+        emsg = 'Please abstract method with SQLiteDatabase or MySQLDatabase'
+        NotImplemented(emsg)
+
+    def replace_paths(self, oldpath: str, newpath: str, colname: str):
+        """
+        Replace paths in the database
+
+        :param oldpath: str, the old path to replace
+        :param newpath: str, the new path to replace with
+        :param colname: str, the column name to replace paths in
+
+        :return:
+        """
+        emsg = 'Please abstract method with SQLiteDatabase or MySQLDatabase'
+        NotImplemented(emsg)
+
 
 class DatabaseColumns:
     def __init__(self, name_prefix: Optional[str] = None):
@@ -1702,6 +1725,39 @@ class SQLiteDatabase(Database):
                 backup_conn.close()
                 conn.close()
 
+    def duplicate(self, old_database: Union['Database', 'MySQLDatabase']):
+        """
+        Duplicate the database from another database
+
+        :param old_database: MySQLDatabase, the old database to duplicate
+        :return:
+        """
+        # remove the current new table
+        self.delete_table(self.tname)
+        # create a new table like the original table
+        cmd = 'CREATE TABLE {0} LIKE {1}'.format(self.tname, old_database.tname)
+        self.execute(cmd, fetch=False)
+        # update the new table from the old table
+        cmd = 'INSERT INTO {0} SELECT * FROM {1}'.format(self.tname,
+                                                         old_database.tname)
+        self.execute(cmd, fetch=False)
+
+    def replace_paths(self, oldpath: str, newpath: str, colname: str):
+        """
+        Replace paths in the database
+
+        :param oldpath: str, the old path to replace
+        :param newpath: str, the new path to replace with
+        :param colname: str, the column name to replace paths in
+
+        :return:
+        """
+        # construct command
+        command = 'UPDATE {0} SET {1} = REPLACE({1}, "{2}", "{3}");'
+        command = command.format(self.tname, colname, oldpath, newpath)
+        # execute command
+        self.execute(command, fetch=False)
+
     def lock(self):
         """
         Lock the database (until unlock is done)
@@ -1736,7 +1792,8 @@ class SQLiteDatabase(Database):
 class MySQLDatabase(Database):
     # A wrapper for a MySQL database.
     def __init__(self, path: str, host: str, user: str, passwd: str,
-                 database: str, tablename: str, verbose: bool = False,
+                 database: str, tablename: Union[str, None],
+                 verbose: bool = False,
                  absolute_table_name: bool = False,
                  tries: int = 20):
         """
@@ -2436,6 +2493,39 @@ class MySQLDatabase(Database):
         df = pd.read_csv(self.backup_path)
         # add pandas table to database
         self.add_from_pandas(df, if_exists='replace', unique_cols=ucols)
+
+    def duplicate(self, old_database: Union['Database', 'SQLiteDatabase']):
+        """
+        Duplicate the database from another database
+
+        :param old_database: MySQLDatabase, the old database to duplicate
+        :return:
+        """
+        # remove the current new table
+        self.delete_table(self.tname)
+        # create a new table like the original table
+        cmd = 'CREATE TABLE {0} LIKE {1}'.format(self.tname, old_database.tname)
+        self.execute(cmd, fetch=False)
+        # update the new table from the old table
+        cmd = 'INSERT INTO {0} SELECT * FROM {1}'.format(self.tname,
+                                                         old_database.tname)
+        self.execute(cmd, fetch=False)
+
+    def replace_paths(self, oldpath: str, newpath: str, colname: str):
+        """
+        Replace paths in the database
+
+        :param oldpath: str, the old path to replace
+        :param newpath: str, the new path to replace with
+        :param colname: str, the column name to replace paths in
+
+        :return:
+        """
+        # construct command
+        command = 'UPDATE {0} SET {1} = REPLACE({1}, "{2}", "{3}");'
+        command = command.format(self.tname, colname, oldpath, newpath)
+        # execute command
+        self.execute(command, fetch=False)
 
 
 # =============================================================================

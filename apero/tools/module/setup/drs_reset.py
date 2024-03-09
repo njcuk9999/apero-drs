@@ -13,7 +13,9 @@ import glob
 import os
 import shutil
 import sys
-from typing import List, Union
+from typing import Dict, List, Optional, Tuple, Union
+
+from astropy.table import Table
 
 from apero import lang
 from apero.base import base
@@ -50,7 +52,7 @@ DEBUG = False
 
 
 # =============================================================================
-# Define functions
+# Define reset functions
 # =============================================================================
 def check_cwd(params: ParamDict):
     """
@@ -949,6 +951,203 @@ def remove_files(params, path, log=True, skipfiles=None):
                  sublevel=2)
     # clear loading message
     TLOG(params, '', '')
+
+
+# =============================================================================
+# Define remove functions
+# =============================================================================
+def get_filelist(params: ParamDict, obsdir: Optional[str] = None,
+                 fileprefix: Optional[str] = None,
+                 filesuffix: Optional[str] = None) -> Tuple[Table, str]:
+    """
+    Get a list of files from the index database that match either the obsdir
+    and/or the file prefix/file suffix
+
+    :param params:
+    :param obsdir:
+    :param fileprefix:
+    :param filesuffix:
+    :return:
+    """
+    # get index database
+    indexdbm = drs_database.FileIndexDatabase(params)
+    # load if required
+    indexdbm.load_db()
+    # set up condition (do not remove raw files)
+    condition = 'BLOCK_KIND!="raw" AND '
+    # construct condition
+    subconditions = []
+    # construct condition
+    if obsdir is not None:
+        subconditions.append('OBS_DIR="{0}"'.format(obsdir))
+    if fileprefix is not None:
+        subconditions.append('FILENAME LIKE "{0}%"'.format(fileprefix))
+    if filesuffix is not None:
+        subconditions.append('FILENAME LIKE "%{0}"'.format(filesuffix))
+    # if we have no subconditions return empty list
+    if len(subconditions) == 0:
+        wmsg = ('obsdir, fileprefix or filesuffix must be defined. '
+                'No files added')
+        WLOG(params, 'warning', wmsg)
+        return Table(), condition
+    # join subconditions
+    condition += ' AND '.join(subconditions)
+    # print progress
+    msg = 'Querying index database for files with condition: \n\t{0}'
+    WLOG(params, '', msg.format(condition))
+    # columns required
+    columns = 'ABSPATH, FILENAME, KW_PID'
+    # run query
+    findex_table = indexdbm.get_entries(columns, condition=condition)
+    # print how many files found that match condition
+    msg = 'Found {0} files that match condition'
+    WLOG(params, '', msg.format(len(findex_table)))
+    # convert to astropy table
+    findex_table = Table.from_pandas(findex_table)
+    # return list of files
+    return findex_table, condition
+
+
+def remove_files_from_disk(params: ParamDict, filetable: Table) -> int:
+
+    # get the test criteria
+    test = params['INPUTS']['test']
+    # deal with tqdm and print outs
+    tqdm = base.tqdm_module(use=not test)
+    # get absolute file list from table
+    absfilelist = filetable['ABSPATH']
+    # file count
+    filecount = 0
+    # loop around each file
+    for absfile in tqdm(absfilelist):
+        # if in debug mode just log
+        if test:
+            WLOG(params, '', '\t\tRemoved {0}'.format(absfile))
+            # count as file removed
+            filecount += 1
+        # else remove file
+        else:
+            try:
+                os.remove(absfile)
+                # count as file removed
+                filecount += 1
+            except Exception as e:
+                # Log warning: Cannot remove path: {0} \n\t {1}: {2}'
+                wargs = [absfile, type(e), str(e)]
+                WLOG(params, 'warning', textentry('10-502-00002', args=wargs),
+                     sublevel=2)
+    # return count
+    return filecount
+
+
+
+def remove_files_from_databases(params: ParamDict, filetable: Table,
+                                file_cond: str) -> Dict[str, int]:
+    # get the test criteria
+    test = params['INPUTS']['test']
+    # set up a dictionary of ints to count how many files removed from each
+    db_counts: Dict[str, int] = dict()
+    # deal with tqdm and print outs
+    tqdm = base.tqdm_module(use=not test)
+    # -------------------------------------------------------------------------
+    # get unique filenames
+    ufilenames = set(filetable['FILENAME'])
+    # remove None (this should not happen)
+    if None in ufilenames:
+        ufilenames.remove(None)
+    # -------------------------------------------------------------------------
+    # get unique pids
+    upids = set(filetable['KW_PID'])
+    # remove "None" from upids
+    if None in upids:
+        upids.remove(None)
+    # -------------------------------------------------------------------------
+    # then deal with the calibration database --> remove entries with the
+    # same filename)
+    calibdbm = drs_database.CalibrationDatabase(params)
+    # load if required
+    calibdbm.load_db()
+    # log removal
+    WLOG(params, '', 'Removing entries from calibration database')
+    # start counter
+    db_counts['calibdb'] = 0
+    # we need to loop over all files and remove them one by one from the
+    # database
+    for ufilename in tqdm(ufilenames):
+        # construct condition
+        cal_cond = 'FILENAME="{0}"'.format(ufilename)
+        # add to db counts
+        db_counts['calibdb'] += calibdbm.database.count(condition=cal_cond)
+        # remove entry
+        if not test:
+            calibdbm.remove_entries(condition=cal_cond)
+        else:
+            # log removal
+            WLOG(params, '', '\tRemoving file: {0}'.format(ufilename))
+
+    # -------------------------------------------------------------------------
+    # then deal with the telluric database --> remove entries with the
+    # same filename)
+    telludbm = drs_database.TelluricDatabase(params)
+    # load if required
+    telludbm.load_db()
+    # log removal
+    WLOG(params, '', 'Removing entries from telluric database')
+    # start counter
+    db_counts['telludb'] = 0
+    # we need to loop over all files and remove them one by one from the
+    # database
+    for ufilename in tqdm(ufilenames):
+        # construct condition
+        tel_cond = 'FILENAME="{0}"'.format(ufilename)
+        # add to db counts
+        db_counts['telludb'] += telludbm.database.count(condition=tel_cond)
+        # remove entry
+        if not test:
+            telludbm.remove_entries(condition=tel_cond)
+        else:
+            # log removal
+            WLOG(params, '', '\tRemoving file: {0}'.format(ufilename))
+
+    # -------------------------------------------------------------------------
+    # for the log database we remove entries with the same PIDs
+    logdbm = drs_database.LogDatabase(params)
+    # load if required
+    logdbm.load_db()
+    # log removal
+    WLOG(params, '', 'Removing entries from log database')
+    # start counter
+    db_counts['logdb'] = 0
+    # we need to loop over all pids and remove them one by one from the
+    # database
+    for upid in tqdm(upids):
+        # construct condition
+        log_cond = 'PID="{0}"'.format(upid)
+        # add to db counts
+        db_counts['logdb'] += logdbm.database.count(condition=log_cond)
+        # remove entry
+        if not test:
+            logdbm.remove_entries(condition=log_cond)
+        else:
+            # log removal
+            WLOG(params, '', '\tRemoving PID: {0}'.format(upid))
+
+    # -------------------------------------------------------------------------
+    # last deal with index database (easy --> remove entries with the same
+    # condition we used to find files)
+    findexdb = drs_database.FileIndexDatabase(params)
+    # load index database
+    findexdb.load_db()
+    # log removal
+    WLOG(params, '', 'Removing entries from index database with condition: '
+                      '\n\t{0}'.format(file_cond))
+    # add to db counts
+    db_counts['findexdb'] = findexdb.database.count(condition=file_cond)
+    # remove entries
+    if not test:
+        findexdb.remove_entries(condition=file_cond)
+    # return counts
+    return db_counts
 
 
 # =============================================================================
