@@ -27,10 +27,12 @@ settings:
   # SSH PATH to copy the website to
   #    Must have ssh keys set up (no prompt for password given)
   ssh:
-    directory: /export/www/home/cook/www/apero-drs/ari/
+    directory: /export/www/home/cook/www/apero-drs/ari/internal/
     user: cook
     host: venus.astro.umontreal.ca
     options: ssh -oport=5822
+  # html group for login
+  group: nirpslocal
   # whether to reset the working directory
   reset: False
   # which observation directory to run on (None will use all or look for

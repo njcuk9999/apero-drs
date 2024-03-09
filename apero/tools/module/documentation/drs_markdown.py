@@ -171,7 +171,7 @@ class MarkDownPage:
         self.lines += [f'    <hr style="{styletxt}" />']
         self.add_newline()
 
-    def add_html(self, htmllines: List[str]):
+    def add_html(self, htmllines: Union[List[str], str]):
         """
         Add raw html to a page
 
@@ -179,10 +179,12 @@ class MarkDownPage:
 
         :return: None, updates self.lines
         """
+        if isinstance(htmllines, str):
+            htmllines = [htmllines]
         self.lines += ['.. raw:: html']
         self.add_newline()
         for htmlline in htmllines:
-            self.lines += '    ' + htmlline
+            self.lines += ['    ' + htmlline]
         self.add_newline(2)
 
     def add_csv_table(self, title: str, csv_file: str,

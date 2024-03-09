@@ -96,6 +96,8 @@ class TableFile:
         # add object table
         title = f'{self.name} ({self.user})'
         table_page.add_title(title)
+        # add page access
+        table_page.add_html(add_page_access(self.params['ARI_GROUP']))
         # -----------------------------------------------------------------
         # Add basic text
         # construct text to add
@@ -280,6 +282,8 @@ def _add_obj_page(it: int, key: str, params: ParamDict,
     object_page.add_newline()
     # add title
     object_page.add_title(f'{objname} ({ari_user})')
+    # add page access
+    object_page.add_html(add_page_access(params['ARI_GROUP']))
     # ---------------------------------------------------------------------
     # Add basic text
     # construct text to add
@@ -736,6 +740,12 @@ def add_finder_table(params: ParamDict, data_dict: Dict[str, Any]):
         <div class="clearer"></div>
       </div>
       """
+
+    html_body2 += """
+    <script src="/ari/home/login.js"></script>
+    <script>EnableContent()</script>
+    """
+
     # set html table class
     table_class = 'class="csvtable2 docutils align-default"'
     # css to include
@@ -853,6 +863,10 @@ def add_recipe_tables(params: ParamDict, table: Table, machine_name: str):
       </div>
       <div class="clearer"></div>
     </div>
+    """
+    html_body2 += """
+    <script src="/ari/home/login.js"></script>
+    <script>EnableContent()</script>
     """
     # set html table class
     table_class = 'class="csvtable2 docutils align-default"'
@@ -1040,6 +1054,9 @@ def make_index_page(params: ParamDict):
     # TODO: This really needs to be all profiles
     profile_files = [os.path.join(ari_user, 'profile.rst')]
     # -------------------------------------------------------------------------
+    # add page access
+    index_page.add_html(add_page_access(params['ARI_GROUP']))
+    # -------------------------------------------------------------------------
     # Add basic text
     # construct text to add
     index_page.add_text('This is the APERO Reduction Interface (ARI).')
@@ -1085,6 +1102,8 @@ def make_profile_page(params: ParamDict, tables: List[TableFile]):
     profile_page = drs_markdown.MarkDownPage(ari_user)
     # add title
     profile_page.add_title(ari_user)
+    # add page access
+    profile_page.add_html(add_page_access(params['ARI_GROUP']))
     # -----------------------------------------------------------------
     # Add basic text
     # construct text to add
@@ -1253,6 +1272,22 @@ def add_other_reductions(params: ParamDict):
     userlist[params['ARI_INSTRUMENT']] = list(usernames)
     # save the userlist
     base.write_yaml(userlist, userlist_yaml)
+
+
+def add_page_access(group_name: str) -> List[str]:
+    """
+    This locks the page to only be accessible by the group name
+    i.e. via log in
+
+    :param group_name: str, the group name to lock the page to
+
+    :return: str, the html code to add
+    """
+    htmllines = []
+    htmllines += ['<script src="/ari/home/login.js"></script>']
+    htmllines += [f'<script>pageAccess("{group_name}", "/ari/home/index.html")</script>']
+
+    return htmllines
 
 
 # =============================================================================

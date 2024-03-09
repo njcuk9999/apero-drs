@@ -1729,7 +1729,7 @@ def finite_res_correction(params: ParamDict, template_props: ParamDict,
     finite_error_numer = variable_res_conv(s1d_wave,
                                            s1d_deconv * s1d_abso,
                                            res_s1d_fwhm, res_s1d_expo)
-    # telluric spectrum as we observe it, infinite resolutino abso gets
+    # telluric spectrum as we observe it, infinite resolution abso gets
     #     convolved
     finite_error_denom = variable_res_conv(s1d_wave, s1d_abso,
                                            res_s1d_fwhm, res_s1d_expo)

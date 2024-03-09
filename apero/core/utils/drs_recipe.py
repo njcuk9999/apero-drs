@@ -209,6 +209,8 @@ class DrsRecipe(object):
         self.flags = BinaryDict()
         for key in base.DEFAULT_FLAGS:
             self.flags[key] = base.DEFAULT_FLAGS[key]
+        # define whether to not skip on qc failure (default is False)
+        self.dont_skip_on_qc_fail = False
 
     def __getstate__(self) -> dict:
         """
@@ -647,7 +649,7 @@ class DrsRecipe(object):
                                    required=required, reprocess=reprocess)
         except DrsCodedException as e:
             WLOG(None, 'error', e.get_text())
-            sys.exit(0)
+            raise SystemExit()
         # make arg parser properties
         argument.make_properties()
         # recast name
@@ -754,7 +756,7 @@ class DrsRecipe(object):
                                           reprocess=reprocess)
         except DrsCodedException as e:
             WLOG(None, 'error', e.get_text())
-            sys.exit(0)
+            raise SystemExit()
         # make arg parser properties
         keywordargument.make_properties()
         # recast name
@@ -1104,6 +1106,8 @@ class DrsRecipe(object):
         self.description_file = copy.deepcopy(recipe.description_file)
         # copy the binary flags
         self.flags = recipe.flags.copy()
+        # define whether to not skip on qc failure (default is False)
+        self.dont_skip_on_qc_fail = bool(recipe.dont_skip_on_qc_fail)
 
     def proxy_keywordarg(self, kwargname: str
                          ) -> Tuple[List[Any], Dict[str, Any]]:
@@ -1499,7 +1503,7 @@ class DrsRecipe(object):
             spec = DrsArgument(name, kind='special', altnames=props['altnames'])
         except DrsCodedException as e:
             WLOG(None, 'error', e.get_text())
-            sys.exit(0)
+            raise SystemExit()
         spec.assign_properties(props)
         spec.skip = skip
         spec.helpstr = props['help']

@@ -55,6 +55,7 @@ processing = drs_recipe(__INSTRUMENT__)
 remake_db = drs_recipe(__INSTRUMENT__)
 remake_doc = drs_recipe(__INSTRUMENT__)
 req_check = drs_recipe(__INSTRUMENT__)
+remove = drs_recipe(__INSTRUMENT__)
 reset = drs_recipe(__INSTRUMENT__)
 run_ini = drs_recipe(__INSTRUMENT__)
 static = drs_recipe(__INSTRUMENT__)
@@ -66,7 +67,7 @@ visulise = drs_recipe(__INSTRUMENT__)
 recipes = [ari, astrometric, changelog, database_mgr, explorer,
            get_files, go_recipe, langdb, listing,
            precheck, processing,
-           remake_db, remake_doc, req_check, reset, run_ini,
+           remake_db, remake_doc, req_check, remove, reset, run_ini,
            static, stats, trigger, validate, visulise]
 
 # =============================================================================
@@ -114,13 +115,12 @@ ari.description = 'Run the ARI (APERO reduction interface)'
 ari.recipe_type = 'nolog-tool'
 ari.recipe_kind = 'user'
 ari.set_arg(pos=0, name='profile', dtype=str,
-                   helpstr='ARI yaml file to use')
+            helpstr='ARI yaml file to use')
 ari.set_kwarg(name='--obsdir', dtype=str, default='None',
               helpstr=textentry('OBS_DIR_HELP'))
 ari.set_kwarg(name='--reset', dtype='switch', default=False,
               helpstr='Reset ARI')
 ari.description_file = 'apero_ri.rst'
-
 
 # -----------------------------------------------------------------------------
 # apero_astrometrics.py
@@ -315,7 +315,7 @@ go_recipe.set_kwarg(name='--data', dtype='switch', default=False,
                     helpstr=textentry('GO_DATA_HELP'))
 go_recipe.set_kwarg(name='--all', dtype='switch', default=False,
                     helpstr='Display all relevant paths')
-go_recipe.set_kwarg(name='--setup',  dtype='switch', default=False,
+go_recipe.set_kwarg(name='--setup', dtype='switch', default=False,
                     helpstr='Display DRS_UCONFIG path')
 # loop around block kinds and add arguments
 for block in path_definitions.BLOCKS:
@@ -487,6 +487,30 @@ req_check.description_file = 'apero_dependencies.rst'
 # -----------------------------------------------------------------------------
 # apero_reset.py
 # -----------------------------------------------------------------------------
+remove.name = 'apero_remove.py'
+remove.shortname = 'REMOVE'
+remove.instrument = __INSTRUMENT__
+remove.description = 'The APERO file/directory remove tool'
+remove.recipe_type = 'nolog-tool'
+remove.recipe_kind = 'user'
+remove.set_kwarg(name='--obsdir', dtype=str, default='None',
+                 helpstr='Delete all instances of a certain observation '
+                         'directory from disk and databases')
+remove.set_kwarg(name='--file_prefix', dtype=str, default='None',
+                 helpstr='Delete all instances of a certain file prefix '
+                         'from disk and databases')
+remove.set_kwarg(name='--file_suffix', dtype=str, default='None',
+                 helpstr='Delete all instances of a certain file suffix '
+                         'from disk and databases')
+remove.set_kwarg(name='--test', dtype='options', default='None',
+                 options=['True', 'False', '1', '0', 'None'],
+                 helpstr='Whether to run in test mode (recommended first time)')
+remove.set_kwarg(name='--warn', dtype='bool', default=True,
+                 helpstr='Whether to warn the user we are not in test mode.')
+
+# -----------------------------------------------------------------------------
+# apero_reset.py
+# -----------------------------------------------------------------------------
 reset.name = 'apero_reset.py'
 reset.shortname = 'RESET'
 reset.instrument = __INSTRUMENT__
@@ -523,7 +547,6 @@ reset.set_kwarg(name='--only_other', dtype='bool', default=False,
                 helpstr='Reset only the other directory')
 
 reset.description_file = 'apero_reset.rst'
-
 
 # -----------------------------------------------------------------------------
 # apero_run_ini.py
