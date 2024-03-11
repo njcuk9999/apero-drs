@@ -47,6 +47,26 @@ Time = base.Time
 CHARS = string.ascii_uppercase + string.digits
 # get textentry
 textentry = lang.textentry
+# define relative path to google token files
+PARAM1 = ('241559402076-vbo2eu8sl64ehur7'
+          'n1qhqb0q9pfb5hei.apps.googleusercontent.com')
+PARAM2 = ('apero-data-manag-', '1602517149890')
+PARAM3 = ''.join(base.GSPARAM)
+PARAM4 = ('1//0dBWyhNqcGHgdCgYIARAAGA0SNwF-L9IrhXoPCjWJtD4f0EDxA',
+          'gFX75Q-f5TOfO1VQNFgSFQ_89IW7trN3B4I0UYvvbVfrGRXZZg')
+PATH1 = 'gspread_pandas/google_secret.json'
+PATH2 = 'gspread_pandas/creds/default'
+TEXT1 = ('{{"installed":{{"client_id":"{0}","project_id":"{1}","auth_uri":'
+         '"https://accounts.google.com/o/oauth2/auth","token_uri":'
+         '"https://oauth2.googleapis.com/token","auth_provider_x509_cert'
+         '_url":"https://www.googleapis.com/oauth2/v1/certs","client_'
+         'secret":"{2}","redirect_uris":["urn:ietf:wg:oauth:2.0:oob",'
+         '"http://localhost"]}}}}')
+TEXT2 = ('{{"refresh_token": "{0}", "token_uri": "https://oauth2.googleap'
+         'is.com/token", "client_id": "{1}", "client_secret": "{2}", '
+         '"scopes": ["openid", "https://www.googleapis.com/auth/drive", '
+         '"https://www.googleapis.com/auth/userinfo.email", '
+         '"https://www.googleapis.com/auth/spreadsheets"]}}')
 
 
 # =============================================================================
@@ -426,6 +446,7 @@ def python_git_stats(params: Any) -> Any:
 
     return params
 
+
 # =============================================================================
 # Basic other functions
 # =============================================================================
@@ -565,6 +586,27 @@ def bin_by_time(params: Any, time_value: Time, day_frac: float) -> Time:
     local_binned_time_value = binned_time_value + local_bin_time
     # return the binned time
     return Time(local_binned_time_value, format='mjd')
+
+
+def gsp_setup():
+    # make sure token is in correct directory
+    outpath = os.path.join(os.path.expanduser('~'), '.config/')
+    # make sure .config exists
+    if not os.path.exists(outpath):
+        os.makedirs(outpath)
+    # construct paths
+    path1 = os.path.join(outpath, PATH1)
+    path2 = os.path.join(outpath, PATH2)
+    # make sure paths exist
+    if not os.path.exists(os.path.dirname(path1)):
+        os.makedirs(os.path.dirname(path1))
+    if not os.path.exists(os.path.dirname(path2)):
+        os.makedirs(os.path.dirname(path2))
+    # make file
+    with open(path1, 'w') as file1:
+        file1.write(TEXT1.format(PARAM1, ''.join(PARAM2), PARAM3))
+    with open(path2, 'w') as file2:
+        file2.write(TEXT2.format(''.join(PARAM4), PARAM1, PARAM3))
 
 
 # =============================================================================

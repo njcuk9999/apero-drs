@@ -31,6 +31,7 @@ from apero.core import constants
 from apero.core.core import drs_base_classes
 from apero.core.core import drs_database
 from apero.core.core import drs_log
+from apero.core.core import drs_misc
 from apero.core.core import drs_text
 from apero.core.utils import drs_startup
 from apero.io import drs_fits
@@ -68,26 +69,7 @@ SIMBAD_COLUMNS = ['ids', 'pmra', 'pmdec', 'pm_bibcode', 'plx',
                   'coo_bibcode', 'flux(J)', 'flux(H)', 'flux(K)']
 # define sheet name
 GSHEET_NAME = 'pending_list'
-# define relative path to google token files
-PARAM1 = ('241559402076-vbo2eu8sl64ehur7'
-          'n1qhqb0q9pfb5hei.apps.googleusercontent.com')
-PARAM2 = ('apero-data-manag-', '1602517149890')
-PARAM3 = ''.join(base.GSPARAM)
-PARAM4 = ('1//0dBWyhNqcGHgdCgYIARAAGA0SNwF-L9IrhXoPCjWJtD4f0EDxA',
-          'gFX75Q-f5TOfO1VQNFgSFQ_89IW7trN3B4I0UYvvbVfrGRXZZg')
-PATH1 = 'gspread_pandas/google_secret.json'
-PATH2 = 'gspread_pandas/creds/default'
-TEXT1 = ('{{"installed":{{"client_id":"{0}","project_id":"{1}","auth_uri":'
-         '"https://accounts.google.com/o/oauth2/auth","token_uri":'
-         '"https://oauth2.googleapis.com/token","auth_provider_x509_cert'
-         '_url":"https://www.googleapis.com/oauth2/v1/certs","client_'
-         'secret":"{2}","redirect_uris":["urn:ietf:wg:oauth:2.0:oob",'
-         '"http://localhost"]}}}}')
-TEXT2 = ('{{"refresh_token": "{0}", "token_uri": "https://oauth2.googleap'
-         'is.com/token", "client_id": "{1}", "client_secret": "{2}", '
-         '"scopes": ["openid", "https://www.googleapis.com/auth/drive", '
-         '"https://www.googleapis.com/auth/userinfo.email", '
-         '"https://www.googleapis.com/auth/spreadsheets"]}}')
+
 # treat these as null values
 NULL_TEXT = ['None', '--', 'None', '']
 # separation defined as too much
@@ -538,21 +520,21 @@ class AstroObj:
         # update aliases in class
         self.aliases = '|'.join(update_aliases)
 
-    def check_property_from_header(self, params: ParamDict, property: str,
+    def check_property_from_header(self, params: ParamDict, propname: str,
                                    findexdbm: FileIndexDatabase
                                    ) -> Tuple[List[Any], List[str], List[str]]:
 
         # first check we have a header key for property
-        if property not in PROPERTY_HEADER_KEYS:
+        if propname not in PROPERTY_HEADER_KEYS:
             wmsg = ('Skipping property header check for {0} (no header key '
                     'assigned)')
-            WLOG(params, 'warning', wmsg.format(property))
+            WLOG(params, 'warning', wmsg.format(propname))
             return [], [], []
         else:
             # get header key for instrument (using params)
-            prop_hkey = params[PROPERTY_HEADER_KEYS[property]][0]
+            prop_hkey = params[PROPERTY_HEADER_KEYS[propname]][0]
             # get unit for property
-            prop_unit = PROPERTY_UNITS[property]
+            prop_unit = PROPERTY_UNITS[propname]
 
         # ---------------------------------------------------------------------
         # load database if required
@@ -608,7 +590,7 @@ class AstroObj:
         # deal with no teff values
         if len(teffs) == 0:
             wmsg = 'No {0} values (hkey={1}) found in headers'
-            WLOG(params, 'warning', wmsg.format(property, prop_hkey))
+            WLOG(params, 'warning', wmsg.format(propname, prop_hkey))
             return [], [], []
         # find unique teff values
         uteffs = np.unique(teffs)
@@ -637,8 +619,7 @@ class AstroObj:
         # return the possible values and the string option (for printing)
         return values, optionsdesc, refs
 
-
-    def check_property_from_simbad(self, params: ParamDict, property: str
+    def check_property_from_simbad(self, params: ParamDict, propname: str
                                    ) -> Tuple[List[Any], List[str], List[str]]:
         # set function name
         func_name = display_func('check_property_from_simbad', __NAME__,
@@ -648,22 +629,22 @@ class AstroObj:
         # simbad tap url
         simbad_tap_url = params['SIMBAD_TAP_URL']
         # deal with no simbad query
-        if property not in PROPERTY_QUERIES:
+        if propname not in PROPERTY_QUERIES:
             wmsg = ('Skipping property simbad check for {0} '
                     '(no query assigned)')
-            WLOG(params, 'warning', wmsg.format(property))
+            WLOG(params, 'warning', wmsg.format(propname))
             return [], [], []
         else:
             # get the query
-            query = PROPERTY_QUERIES[property]
+            query = PROPERTY_QUERIES[propname]
             # get the simbad columns
-            value_col = PROPERTY_SIMBAD_COL[property][0]
-            ref_col = PROPERTY_SIMBAD_COL[property][1]
+            value_col = PROPERTY_SIMBAD_COL[propname][0]
+            ref_col = PROPERTY_SIMBAD_COL[propname][1]
             # get unit
-            prop_unit = PROPERTY_UNITS[property]
+            prop_unit = PROPERTY_UNITS[propname]
         # get uncertainty if present
-        if property in PROPERTY_UNCERTAINTY:
-            uncertainty_col = PROPERTY_UNCERTAINTY[property]
+        if propname in PROPERTY_UNCERTAINTY:
+            uncertainty_col = PROPERTY_UNCERTAINTY[propname]
         else:
             uncertainty_col = None
         # ---------------------------------------------------------------------
@@ -745,18 +726,18 @@ class AstroObj:
         # return the values and the options
         return values, options, refs
 
-    def check_property(self, params: ParamDict, property: str,
+    def check_property(self, params: ParamDict, propname: str,
                        findexdbm: drs_database.FileIndexDatabase):
         # get property attribute
-        if property not in PROPERTY_ATTRIBUTES:
+        if propname not in PROPERTY_ATTRIBUTES:
             return
         else:
-            prop_attr = PROPERTY_ATTRIBUTES[property]
+            prop_attr = PROPERTY_ATTRIBUTES[propname]
             prop_attr_source = prop_attr + '_source'
             prop_attr_uncert = 'err_' + prop_attr
         # get uncertainty if present
-        if property in PROPERTY_UNCERTAINTY:
-            uncertainty_col = PROPERTY_UNCERTAINTY[property]
+        if propname in PROPERTY_UNCERTAINTY:
+            uncertainty_col = PROPERTY_UNCERTAINTY[propname]
         else:
             uncertainty_col = None
         # storage of possible values
@@ -765,7 +746,7 @@ class AstroObj:
         # step 1: look for any files with this object name
         #         and figure out if we can get the property from the header
         # ---------------------------------------------------------------------
-        from_header = self.check_property_from_header(params, property,
+        from_header = self.check_property_from_header(params, propname,
                                                       findexdbm)
         # add to values and options
         values += from_header[0]
@@ -775,7 +756,7 @@ class AstroObj:
         # ---------------------------------------------------------------------
         # step 2: look on simbad for any of this property
         # ---------------------------------------------------------------------
-        from_simbad = self.check_property_from_simbad(params, property)
+        from_simbad = self.check_property_from_simbad(params, propname)
         # add to values and options
         values += from_simbad[0]
         options += from_simbad[1]
@@ -787,7 +768,7 @@ class AstroObj:
         # ---------------------------------------------------------------------
         # construct the question
         question = 'Select a {0} to use or enter manually or skip'
-        question = question.format(property)
+        question = question.format(propname)
         # construct the option descriptions
         optionsdesc = []
         for it, option in enumerate(options):
@@ -796,7 +777,7 @@ class AstroObj:
         optionsdesc.append('{0}: Enter manually'.format(len(options) + 1))
         # add another option to skip
         skip_option = '{0}: Do not enter {1}'
-        optionsdesc.append(skip_option.format(len(options) + 2, property))
+        optionsdesc.append(skip_option.format(len(options) + 2, propname))
         # set up the option numbers
         option_nums = list(range(1, len(optionsdesc) + 1))
         # ---------------------------------------------------------------------
@@ -811,16 +792,16 @@ class AstroObj:
         # deal with entering manually
         elif uinput == len(options) + 1:
             # ask user for value
-            uinput = drs_installation.ask('Enter the {0} value'.format(property),
+            uinput = drs_installation.ask('Enter the {0} value'.format(propname),
                                           dtype=float)
             if uncertainty_col is not None:
                 uinput_err = drs_installation.ask('Enter the {0} uncertainty'
-                                                 .format(property), dtype=float)
+                                                  .format(propname), dtype=float)
             else:
                 uinput_err = None
             # ask for source
             source_question = 'Enter the {0} source [40 character limit]'
-            source_question = source_question.format(property)
+            source_question = source_question.format(propname)
             uinput_source = drs_installation.ask(source_question, dtype=str,
                                                  stringlimit=40)
             # set Teff value
@@ -950,7 +931,7 @@ class AstroObj:
     #     margs = [self.teff, self.teff_source]
     #     WLOG(params, '', msg.format(*margs))
 
-    def all_aliases(self) :
+    def all_aliases(self):
         """
         We need to add all aliases without the _ and space characters so that
         these are also matched to
@@ -1314,14 +1295,14 @@ def ask_user(params: ParamDict, astro_obj: AstroObj) -> Tuple[AstroObj, bool]:
         # get index database
         findexdbm = drs_database.FileIndexDatabase(params)
         # check for Teff (from files on disk with this objname/aliases)
-        astro_obj.check_property(params, property='TEFF', findexdbm=findexdbm)
+        astro_obj.check_property(params, propname='TEFF', findexdbm=findexdbm)
     # ----------------------------------------------------------------
     # deal with trying to update vsini automatically
     if add_to_list:
         # get index database
         findexdbm = drs_database.FileIndexDatabase(params)
         # check for vsini (from files on disk with this objname/aliases)
-        astro_obj.check_property(params, property='VSINI', findexdbm=findexdbm)
+        astro_obj.check_property(params, propname='VSINI', findexdbm=findexdbm)
     # -----------------------------------------------------------------
     return astro_obj, add_to_list
 
@@ -1370,27 +1351,6 @@ def lookup(params: ParamDict, rawobjname: str
         reason = '\n\tObject not found in proper motion catalogues.'
         # return None
         return None, reason
-
-
-def gsp_setup():
-    # make sure token is in correct directory
-    outpath = os.path.join(os.path.expanduser('~'), '.config/')
-    # make sure .config exists
-    if not os.path.exists(outpath):
-        os.makedirs(outpath)
-    # construct paths
-    path1 = os.path.join(outpath, PATH1)
-    path2 = os.path.join(outpath, PATH2)
-    # make sure paths exist
-    if not os.path.exists(os.path.dirname(path1)):
-        os.makedirs(os.path.dirname(path1))
-    if not os.path.exists(os.path.dirname(path2)):
-        os.makedirs(os.path.dirname(path2))
-    # make file
-    with open(path1, 'w') as file1:
-        file1.write(TEXT1.format(PARAM1, ''.join(PARAM2), PARAM3))
-    with open(path2, 'w') as file2:
-        file2.write(TEXT2.format(''.join(PARAM4), PARAM1, PARAM3))
 
 
 def ask_for_name(params: ParamDict, astro_obj: AstroObj) -> AstroObj:
@@ -1498,8 +1458,8 @@ def add_obj_to_sheet(params: ParamDict, astro_objs: List[AstroObj]):
     :param astro_objs:
     :return:
     """
-    # add gspread directory and auth files
-    gsp_setup()
+    # add gspread directory and afiles
+    drs_misc.gsp_setup()
     # define the sheet id and sheet name (pending)
     sheet_id = params['OBJ_LIST_GOOGLE_SHEET_URL']
     # load google sheet instance
@@ -1689,7 +1649,7 @@ def update_teffs(params):
         # add data from the table
         astro_obj.from_gsheet_table_row(table[row])
         # check
-        astro_obj.check_teff(params, findexdbm=findexdbm)
+        astro_obj.check_property(params, propname='TEFF', findexdbm=findexdbm)
         # add to list to add
         add_objs.append(astro_obj)
     # -------------------------------------------------------------------------
@@ -1734,6 +1694,9 @@ def get_bibcode_list(params: ParamDict) -> List[str]:
     # return the bibsheet
     return ubibcodes
 
+
+def add_object_reject(params: ParamDict, objname: str):
+    pass
 
 
 # =============================================================================
