@@ -13,6 +13,7 @@ body {
     margin: 0 auto;
     min-width: 1200px;
     max-width: 2048px;
+    display: none;
 }
 
 .wy-nav-content {

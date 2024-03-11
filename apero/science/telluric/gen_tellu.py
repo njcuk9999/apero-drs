@@ -732,8 +732,10 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     # remove snr from these orders (due to thermal background)
     for order_num in remove_orders:
         snr[order_num] = 0.0
+    # make a mask of thermal orders above 1.8
+    wave_mask = mp.nanmedian(wave_e2ds, axis=1) < 1800
     # make sure the median snr is above the min snr requirement
-    if mp.nanmedian(snr) < snr_min_thres:
+    if mp.nanmedian(snr[wave_mask]) < snr_min_thres:
         # update qc params
         qc_values[0] = mp.nanmedian(snr)
         qc_pass[0] = 0
@@ -746,7 +748,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
                                       template_props, wave_e2ds, res_s1d_fwhm,
                                       res_s1d_expo, database=telludbm)
     else:
-        qc_values[0] = mp.nanmedian(snr)
+        qc_values[0] = mp.nanmedian(snr[wave_mask])
         qc_pass[0] = 1
     # mask all orders below min snr
     for order_num in range(nbo):
@@ -861,7 +863,8 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         # ------------------------------------------------------------------
         # apply some cuts to very discrepant points. These will be set to zero
         #   not to bias the CCF too much
-        cut = mp.nanmedian(np.abs(spectrum_tmp)) * trans_siglim
+        cutmask = np.abs(spectrum_tmp[spectrum_tmp!=0])
+        cut = mp.nanmedian(cutmask) * trans_siglim
         # set NaN and infinite values to zero
         # spectrum_tmp[~np.isfinite(spectrum_tmp)] = 0.0
         valid &= np.isfinite(spectrum_tmp)

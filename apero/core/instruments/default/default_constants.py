@@ -386,7 +386,7 @@ __all__ = [
     'REPROCESS_REINDEX_BLOCKS', 'REPROCESS_OBJECT_TYPES',
     # ari constants
     'ARI_INSTRUMENT', 'ARI_USER', 'ARI_NCORES', 'ARI_WAVE_RANGES',
-    'ARI_SSH_COPY', 'ARI_RESET', 'ARI_FILTER_OBJECTS',
+    'ARI_SSH_COPY', 'ARI_GROUP', 'ARI_RESET', 'ARI_FILTER_OBJECTS',
     'ARI_FILTER_OBJECTS_LIST', 'ARI_HEADER_PROPS', 'ARI_FINDING_CHARTS',
     'ARI_RESET_DICT',
 ]
@@ -5790,6 +5790,12 @@ ARI_SSH_COPY = Const('ARI_SSH_COPY', value=None, dtype=dict, source=__NAME__,
                      group=cgroup,
                      description='Define the ari ssh properties to copy the '
                                  'website to')
+
+# Define the ari group (For login access to pages)
+ARI_GROUP = Const('ARI_GROUP', value=None, dtype=str, source=__NAME__,
+                     group=cgroup,
+                     description='Define the ari group (For login access to '
+                                 'pages)')
 
 # Define whether to reset the ari working directory
 ARI_RESET = Const('ARI_RESET', value=False, dtype=bool, source=__NAME__,
