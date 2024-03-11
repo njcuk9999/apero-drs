@@ -62,7 +62,8 @@ __all__ = [
     'OBJ_LIST_RESOLVE_FROM_GLIST', 'OBJ_LIST_RESOLVE_FROM_COORDS',
     'OBJ_LIST_GAIA_EPOCH', 'OBJ_LIST_GAIA_PLX_LIM', 'OBJ_LIST_GAIA_MAG_CUT',
     'OBJ_LIST_CROSS_MATCH_RADIUS', 'REJECT_LIST_GOOGLE_SHEET_URL',
-    'REJECT_LIST_GSHEET_MAIN_LIST_ID', 'GROUP_FILE_LIMIT', 'MAX_CALIB_DTIME',
+    'REJECT_LIST_GSHEET_MAIN_LIST_ID', 'REJECT_LIST_GSHEET_SHEET_NAME',
+    'GROUP_FILE_LIMIT', 'MAX_CALIB_DTIME',
     'DO_CALIB_DTIME_CHECK', 'CALIB_BIN_IN_TIME', 'CALIB_DB_DAYFRAC',
     'NIGHT_DEFINITION',
     # qc constants
@@ -792,8 +793,16 @@ REJECT_LIST_GOOGLE_SHEET_URL = Const('REJECT_LIST_GOOGLE_SHEET_URL', value=None,
 # Define the google sheet id to use for update the reject list
 REJECT_LIST_GSHEET_MAIN_LIST_ID = Const('REJECT_LIST_GSHEET_MAIN_LIST_ID', value=None,
                                         dtype=str, source=__NAME__, group=cgroup,
-                                        description='Define the google sheet objname '
-                                                    'list main list id number')
+                                        description='Define the google sheet '
+                                                    'objname list main list id '
+                                                    'number')
+
+# Define the google sheet name to use for the reject list
+REJECT_LIST_GSHEET_SHEET_NAME = Const('REJECT_LIST_GSHEET_SHEET_NAME',
+                                      value=None,
+                                      dtype=str, source=__NAME__, group=cgroup,
+                                      description='Define the google sheet name'
+                                                  ' to use for the reject list')
 
 # # Define the odometer code rejection google sheet id
 # ODOCODE_REJECT_GSHEET_ID = Const('ODOCODE_REJECT_GSHEET_ID', value=None,

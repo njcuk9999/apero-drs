@@ -55,6 +55,7 @@ processing = drs_recipe(__INSTRUMENT__)
 remake_db = drs_recipe(__INSTRUMENT__)
 remake_doc = drs_recipe(__INSTRUMENT__)
 req_check = drs_recipe(__INSTRUMENT__)
+reject = drs_recipe(__INSTRUMENT__)
 remove = drs_recipe(__INSTRUMENT__)
 reset = drs_recipe(__INSTRUMENT__)
 run_ini = drs_recipe(__INSTRUMENT__)
@@ -66,8 +67,8 @@ visulise = drs_recipe(__INSTRUMENT__)
 # push into a list
 recipes = [ari, astrometric, changelog, database_mgr, explorer,
            get_files, go_recipe, langdb, listing,
-           precheck, processing,
-           remake_db, remake_doc, req_check, remove, reset, run_ini,
+           precheck, processing, remake_db, remake_doc, req_check,
+           reject, remove, reset, run_ini,
            static, stats, trigger, validate, visulise]
 
 # =============================================================================
@@ -503,6 +504,31 @@ req_check.description = textentry('DEPENDENCIES_DESCRIPTION')
 req_check.recipe_type = 'nolog-tool'
 req_check.recipe_kind = 'admin'
 req_check.description_file = 'apero_dependencies.rst'
+
+# -----------------------------------------------------------------------------
+# apero_reject.py
+# -----------------------------------------------------------------------------
+reject.name = 'apero_reject.py'
+reject.shortname = 'REJET'
+reject.instrument = __INSTRUMENT__
+reject.description = ('Add a object or file to the object or file reject list '
+                      'online.')
+reject.recipe_type = 'nolog-tool'
+reject.recipe_kind = 'user'
+reject.set_kwarg(name='--identifier', dtype=str, default='None',
+                 helpstr='Add a specific file identifier to the file reject '
+                         'list. E.g. for spirou this is the odocode, for '
+                         'nirps this is raw the filename')
+reject.set_kwarg(name='--objname', dtype=str, default='None',
+                 helpstr='Add a specific object name to the object reject list')
+reject.set_kwarg(name='--autofill', dtype=str, default='None',
+                 helpstr='Autofill the questions asked. '
+                         'For identifier this is PP,TEL,RV,COMMENT '
+                         'e.g. 1,1,1,bad target '
+                         'For objname this is ALIASES,NOTES '
+                         'e.g. alias1|alias2|alias3,Not a real target')
+reject.set_kwarg(name='--test', dtype='bool', default=False,
+                 helpstr='Whether to run in test mode (recommended first time)')
 
 # -----------------------------------------------------------------------------
 # apero_reset.py

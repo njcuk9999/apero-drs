@@ -254,6 +254,10 @@ REJECT_LIST_GOOGLE_SHEET_URL.value = '1gvMp1nHmEcKCUpxsTxkx-5m115mLuQIGHhxJCyVoZ
 REJECT_LIST_GSHEET_MAIN_LIST_ID = REJECT_LIST_GSHEET_MAIN_LIST_ID.copy(__NAME__)
 REJECT_LIST_GSHEET_MAIN_LIST_ID.value = '1847598400'
 
+# Define the google sheet name to use for the reject list
+REJECT_LIST_GSHEET_SHEET_NAME = REJECT_LIST_GSHEET_SHEET_NAME.copy(__NAME__)
+REJECT_LIST_GSHEET_SHEET_NAME.value = 'NIRPS_HE'
+
 # Define which twilight to use as the definition of a night observation
 #    ("CIVIL", "NAUTICAL", "ASTRONOMICAL")
 NIGHT_DEFINITION = NIGHT_DEFINITION.copy(__NAME__)

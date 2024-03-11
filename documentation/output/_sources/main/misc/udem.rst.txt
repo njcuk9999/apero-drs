@@ -28,4 +28,4 @@ NIRPS
 Admin
 -------------------------
 
-`Admin <http://apero.exoplanets.ca/udem/admin>`_ (password protected)
+`Admin page via ARI <http://apero.exoplanets.ca/ari/home/index.html>`_ (password protected)
