@@ -7,6 +7,8 @@ Created on 2024-03-11 at 11:15
 
 @author: cook
 """
+from typing import Tuple
+
 import numpy as np
 import pandas as pd
 import gspread_pandas as gspd
@@ -45,6 +47,14 @@ display_func = drs_log.display_func
 # Define functions
 # =============================================================================
 def add_file_reject(params: ParamDict, identifier: str):
+    """
+    Add an identifier to the file reject list
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param identifier: str, the identifier to reject
+
+    :return: None, updates the file reject list
+    """
     # add gspread directory and afiles
     drs_misc.gsp_setup()
     # get whether we are in a test
@@ -80,7 +90,7 @@ def add_file_reject(params: ParamDict, identifier: str):
         autofill_list = autofill.split(',')
         # check we have 4 values
         if len(autofill_list) != 4:
-            WLOG(params, 'error', 'Autofill must have 4 comma separated values')
+            WLOG(params, 'error', 'Autofill must be in form PP,TEL,RV,COMMENT')
             return
         # get the values
         pp_str, tel_str, rv_str, comment = autofill_list
@@ -121,7 +131,17 @@ def add_file_reject(params: ParamDict, identifier: str):
     WLOG(params, '', msg.format(identifier))
 
 
-def ask_user_for_reject_info(identifer: str):
+def ask_user_for_reject_info(identifer: str) -> Tuple[int, int, int, str]:
+    """
+    Ask the user for the rejection information
+
+    :param identifer: str, the identifer to reject
+
+    :return: Tuple, 1. int, 1 if rejected at PP stage, 0 otherwise
+                    2. int, 1 if rejected at TEL stage, 0 otherwise
+                    3. int, 1 if rejected at RV stage, 0 otherwise
+                    4. str, the comment for the rejection
+    """
     # ask the user for the rejection information
     tests = ['PP', 'TEL', 'RV']
     logic_values = []
