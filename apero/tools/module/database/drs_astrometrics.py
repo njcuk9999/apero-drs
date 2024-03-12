@@ -34,6 +34,7 @@ from apero.core.core import drs_log
 from apero.core.core import drs_misc
 from apero.core.core import drs_text
 from apero.core.utils import drs_startup
+from apero.core.instruments.default import pseudo_const
 from apero.io import drs_fits
 from apero.science import preprocessing as prep
 from apero.tools.module.database import manage_databases
@@ -1684,6 +1685,13 @@ def very_similar_obj_names(pconst, objname1: str, objname2: str) -> bool:
 
 
 def get_bibcode_list(params: ParamDict) -> List[str]:
+    """
+    Get the unique list of bibcodes from the astrometric google sheet
+
+    :param params: ParamDict, parameter dictionary of constants
+
+    :return: list of strings, the unique list of bibcodes
+    """
     # get properties from parameters
     gsheet_url = params['OBJ_LIST_GOOGLE_SHEET_URL']
     bibsheet_id = params['OBJ_LIST_GSHEET_BIBCODE_ID']
@@ -1696,7 +1704,108 @@ def get_bibcode_list(params: ParamDict) -> List[str]:
 
 
 def add_object_reject(params: ParamDict, objname: str):
-    pass
+    """
+    Add an object to the astrometric reject list
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param objname: str, the object name to add to the reject list
+
+    :return: None, adds object to the astrometric reject list
+    """
+    # add gspread directory and afiles
+    drs_misc.gsp_setup()
+    # get whether we are in a test
+    test = params['INPUTS']['test']
+    # check whether we have an auto fill
+    autofill = params['INPUTS']['autofill']
+    # define the sheet id and sheet name
+    sheet_id = params['OBJ_LIST_GOOGLE_SHEET_URL']
+    # get the google sheet name
+    sheet_name = 'reject_list'
+    # load google sheet instance
+    google_sheet = gspd.spread.Spread(sheet_id)
+    # convert google sheet to pandas dataframe
+    dataframe = google_sheet.sheet_to_df(index=0, sheet=sheet_name)
+    # get the object column
+    object_column = np.array(dataframe['OBJNAME']).astype(str)
+    # get the alias column
+    alias_column = np.array(dataframe['ALIASES']).astype(str)
+    # ----------------------------------------------------------------------
+    # clean input object name
+    apero_objname = pseudo_const.clean_object(objname)
+    # ----------------------------------------------------------------------
+    # object in object column
+    cond1 = (objname in object_column) or (apero_objname in object_column)
+    # if we an object in the reject list report
+    if cond1:
+        # make a mask for the identifier
+        mask = (object_column == objname) | (object_column == apero_objname)
+        # get the comment for the identifier
+        comment = np.array(dataframe['NOTES'])[mask][0]
+
+        msg = 'Object {0} (APERO={1}) already in reject list with comment: {2}'
+        margs = [objname, apero_objname, comment]
+        WLOG(params, '', msg.format(*margs), colour='magenta')
+        return
+    # ----------------------------------------------------------------------
+    # object in alias column
+    cond2, row = False, -1
+    for r_it, alias in enumerate(alias_column):
+        alias_list = alias.split('|')
+        if objname in alias_list or apero_objname in alias_list:
+            cond2 = True
+            row = r_it
+            break
+    # ----------------------------------------------------------------------
+    # if in the aliases
+    if cond2:
+        # get the object name
+        objname = object_column[row]
+        # get the comment for the identifier
+        comment = np.array(dataframe['NOTES'])[row]
+
+        msg = 'Object {0} (APERO={1}) already in reject list with comment: {2}'
+        margs = [objname, apero_objname, comment]
+        WLOG(params, '', msg.format(*margs), colour='magenta')
+        return
+    # ----------------------------------------------------------------------
+    # if we have autofill use it
+    if autofill not in [None, 'None']:
+        # split the auto fill into ALIASES,NOTES
+        autofill_list = autofill.split(',')
+        # check we have 2 values
+        if len(autofill_list) != 2:
+            emsg = 'Auto fill must be in the form ALIASES,NOTES'
+            WLOG(params, 'error', emsg)
+            return
+        # get the values
+        aliases, notes = autofill_list
+    else:
+        # get the aliases
+        question = ('Enter aliases for object={0} (APERO={1}) separate '
+                    'aliases by a "|"  e.g. GL699 | Barnard Star | GL 699')
+        qargs = [objname, apero_objname]
+        aliases = drs_installation.ask(question.format(*qargs), dtype=str)
+        # get the comment
+        question = 'Enter a comment to reject object={0} (APERO={1})'
+        qargs = [objname, apero_objname]
+        notes = drs_installation.ask(question.format(*qargs), dtype=str)
+    # ----------------------------------------------------------------------
+    # now we can add to the dataframe
+    new_row = dict(OBJNAME=[apero_objname], ORIGINAL_NAME=[objname],
+                   ALIASES=[aliases], NOTES=[notes], USED=[1])
+    # add to dataframe
+    dataframe = pd.concat([dataframe, pd.DataFrame(new_row)], ignore_index=True)
+    # print progress
+    msg = 'Pushing object={0} (APERO={1}) to reject list google-sheet'
+    WLOG(params, '', msg.format(objname, apero_objname))
+    # push dataframe back to server
+    if not test:
+        google_sheet.df_to_sheet(dataframe, index=False, replace=True,
+                                 sheet=sheet_name)
+    # print progress
+    msg = 'object={0} (APERO={1}) added to reject list google-sheet'
+    WLOG(params, '', msg.format(objname, apero_objname))
 
 
 # =============================================================================
