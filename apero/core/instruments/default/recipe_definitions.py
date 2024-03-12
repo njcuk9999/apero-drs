@@ -489,7 +489,7 @@ req_check.description_file = 'apero_dependencies.rst'
 # apero_reject.py
 # -----------------------------------------------------------------------------
 reject.name = 'apero_reject.py'
-reject.shortname = 'REJET'
+reject.shortname = 'REJECT'
 reject.instrument = __INSTRUMENT__
 reject.description = ('Add a object or file to the object or file reject list '
                       'online.')
