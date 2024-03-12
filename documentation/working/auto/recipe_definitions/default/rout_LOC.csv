@@ -1,0 +1,6 @@
+name,description,file type,suffix,fibers,dbname,dbkey,input file
+LOC_ORDERP,Localisation: Order profile calibration file,.fits,_order_profile,"AB, C",calibration,ORDER_PROFILE,"FLAT_DARK, DARK_FLAT"
+LOC_LOCO,Localisation: Position polynomial calibration file,.fits,_loco,"AB, C",calibration,LOC,"FLAT_DARK, DARK_FLAT"
+LOC_FWHM,Localisation: Width polynomial calibration file,.fits,_fwhm-order,"AB, C",--,--,"FLAT_DARK, DARK_FLAT"
+LOC_SUP,Localisation: Position superpositionimage calibration file,.fits,_with-order,"AB, C",--,--,"FLAT_DARK, DARK_FLAT"
+DEBUG_BACK,Individual file background map,.fits,_background.fits,--,--,--,DRS_PP

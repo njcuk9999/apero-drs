@@ -1,0 +1,11 @@
+name,description,file type,suffix,fibers,input file
+EXT_E2DS,Extracted 2D spectrum,.fits,_e2ds,"AB, A, B, C",DRS_PP
+EXT_E2DS_FF,Extracted + flat-fielded 2D spectrum,.fits,_e2dsff,"AB, A, B, C",DRS_PP
+EXT_E2DS_LL,Pre-extracted straighted stacked spectrum,.fits,_e2dsll,"AB, A, B, C","DRS_PP, FLAT_FLAT"
+EXT_S1D_W,1D stitched spectrum (constant wavelength binning),.fits,_s1d_w,"AB, A, B, C",DRS_PP
+EXT_S1D_V,1D stitched spectrum (constant velocity binning),.fits,_s1d_v,"AB, A, B, C",DRS_PP
+ORDERP_STRAIGHT,Straightened order profile for an individual image,.fits,_orderps,"AB, A, B, C",SHAPEL
+DEBUG_BACK,Individual file background map,.fits,_background.fits,--,DRS_PP
+EXT_FPLIST,FP lines identified from extracted FP fiber,.fits,_ext_fplines,"AB, A, B, C","EXT_E2DS, EXT_E2DS_FF"
+QL_E2DS,Extracted 2D spectrum (quick output),.fits,_q2ds,"AB, A, B, C",DRS_PP
+QL_E2DS_FF,Extracted + flat-fielded 2D spectrum (quick output),.fits,_q2dsff,"AB, A, B, C",DRS_PP

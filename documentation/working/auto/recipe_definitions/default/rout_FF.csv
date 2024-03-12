@@ -1,0 +1,6 @@
+name,description,file type,suffix,fibers,dbname,dbkey,input file
+FF_FLAT,Flat calibration file,.fits,_flat,"AB, A, B, C",calibration,FLAT,FLAT_FLAT
+FF_BLAZE,Blaze calibration file,.fits,_blaze,"AB, A, B, C",calibration,BLAZE,FLAT_FLAT
+EXT_E2DS_LL,Pre-extracted straighted stacked spectrum,.fits,_e2dsll,"AB, A, B, C",--,--,"DRS_PP, FLAT_FLAT"
+ORDERP_STRAIGHT,Straightened order profile for an individual image,.fits,_orderps,"AB, A, B, C",--,--,SHAPEL
+DEBUG_BACK,Individual file background map,.fits,_background.fits,--,--,--,DRS_PP

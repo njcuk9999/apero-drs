@@ -1,0 +1,2 @@
+name,description,file type,suffix,dbname,dbkey,input file
+DARKREF,Reference dark calibration file,.fits,_dark_ref,calibration,DARKREF,"DARK_DARK_TEL, DARK_DARK_INT"

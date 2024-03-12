@@ -1,0 +1,4 @@
+name,description,file type,suffix,fibers,dbname,dbkey,input file
+EXT_E2DS_FF,Extracted + flat-fielded 2D spectrum,.fits,_e2dsff,"AB, A, B, C",--,--,DRS_PP
+THERMALI_E2DS,"Extracted sci=DARK calib=DARK thermal calibration file, where dark is an internal dark",.fits,_thermal_e2ds_int,"AB, A, B, C",calibration,THERMALI,DARK_DARK_INT
+THERMALT_E2DS,"Extracted sci=DARK calib=DARK thermal calibration file, where dark is a telescope dark",.fits,_thermal_e2ds_tel,"AB, A, B, C",calibration,THERMALT,DARK_DARK_TEL

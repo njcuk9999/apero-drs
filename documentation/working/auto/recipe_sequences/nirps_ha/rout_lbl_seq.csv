@@ -1,0 +1,8 @@
+ORDER,RECIPE,SHORTNAME,RECIPE KIND,REF RECIPE,FILTERS
+1,apero_lbl_ref_spirou.py,LBLREF,lbl-ref,No,--
+2,apero_lbl_mask_spirou.py,LBLMASK_FP,lbl-mask-fp,No,--
+3,apero_lbl_compute_spirou.py,LBLCOMPUTE_FP,lbl-compute-fp,No,--
+4,apero_lbl_compile_spirou.py,LBLCOMPILE_FP,lbl-compile-fp,No,--
+5,apero_lbl_mask_spirou.py,LBLMASK_SCI,lbl-mask-sci,No,KW_OBJNAME: SCIENCE_TARGETS
+6,apero_lbl_compute_spirou.py,LBLCOMPUTE_SCI,lbl-compute-sci,No,KW_OBJNAME: SCIENCE_TARGETS
+7,apero_lbl_compile_spirou.py,LBLCOMPILE_SCI,lbl-compile-sci,No,KW_OBJNAME: SCIENCE_TARGETS

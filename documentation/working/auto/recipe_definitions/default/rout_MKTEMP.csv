@@ -1,0 +1,7 @@
+name,description,file type,basename,fibers,dbname,dbkey,input file
+TELLU_TEMP,Telluric 2D template file,.fits,Template,"AB, A, B",telluric,TELLU_TEMP,"EXT_E2DS_FF, TELLU_OBJ"
+TELLU_BIGCUBE,Telluric object 2D stack file (star frame),.fits,BigCube,"AB, A, B",--,--,"EXT_E2DS_FF, TELLU_OBJ"
+TELLU_BIGCUBE0,Telluric object  2D stack file (Earth frame),.fits,BigCube0,"AB, A, B",--,--,"EXT_E2DS_FF, TELLU_OBJ"
+TELLU_TEMP_S1DV,Telluric 1D template file,.fits,Template_s1dv,"AB, A, B",telluric,TELLU_TEMP_S1DV,"EXT_E2DS_FF, TELLU_OBJ"
+TELLU_TEMP_S1DW,Telluric 1D template file,.fits,Template_s1dw,"AB, A, B",telluric,TELLU_TEMP_S1DW,"EXT_E2DS_FF, TELLU_OBJ"
+TELLU_BIGCUBE_S1D,Telluric object 1D stack file (Earth frame),.fits,BigCube_s1d,"AB, A, B",--,--,"EXT_E2DS_FF, TELLU_OBJ"
