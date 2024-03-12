@@ -2,8 +2,68 @@ Changelog
 =========
 
 
-0.7.289 (2024-02-13)
+0.7.289 (2024-03-12)
 --------------------
+- [APERO] correct typo. [Neil Cook]
+- [APERO] Add --objname to reject code (Issue https://github.com/users/n
+  jcuk9999/projects/7/views/5?pane=issue&itemId=54972211) [Neil Cook]
+- [APERO] Add --identifier to reject code (Issue https://github.com/user
+  s/njcuk9999/projects/7/views/5?pane=issue&itemId=54972211) [TODO:
+  objname] [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.289-live' into
+  v0.7.289-live. [Neil Cook]
+- [APERO] update neesd `ASK_CREATE`. [Neil Cook]
+- [APERO] add ari-home content. [Neil Cook]
+- [APERO] add ari-home content. [Neil Cook]
+- [APERO] update ARI with new login procedure. [Neil Cook]
+- [APERO] update offline and minidata paths. [Neil Cook]
+- [APERO] Remove sys.exit and replace with WLOG(params, 'error', ...) +
+  raise SystemExit() [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.289-live' into
+  v0.7.289-live. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.289-live' into
+  v0.7.289-live. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.289-live' into
+  v0.7.289-live. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.289-live' into
+  v0.7.289-live. [Neil Cook]
+- [APERO] add extra object to tellu whitelist. [Neil Cook]
+- [APERO] bug fix - deal with recalculating templates when qc fails.
+  [Neil Cook]
+- [APERO] astrometric check - write bad objects to file. [Neil Cook]
+- [APERO] add extra object to tellu whitelist. [Neil Cook]
+- [APERO] astrometric check - write bad objects to file. [Neil Cook]
+- [APERO] bug fix - deal with recalculating templates when qc fails
+  (Issue https://github.com/njcuk9999/apero-utils/issues/218) [Neil
+  Cook]
+- [APERO] fix typo. [Neil Cook]
+- [APERO] astrometric check - write bad objects to file. [Neil Cook]
+- [APERO] astrometric check - write bad objects to file. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.289-live' into
+  v0.7.289-live. [Neil Cook]
+- [APERO] fix teff source limit (Issue
+  https://github.com/njcuk9999/apero-utils/issues/215) [Neil Cook]
+- [APERO] fix for having datadir defined and not `LBL_PATH` or
+  `DRS_DATA_OTHER` - we didn't create directories (Issue #748), also fixed
+  dev mode for installation not working. [Neil Cook]
+- [APERO] bug fix - deal with no rows in table for astrometric pending
+  table. [Neil Cook]
+- [APERO] upgrade requirements on mysql-connector-python to 8.3.0 (Issue
+  #707) [Neil Cook]
+- [APERO] `apero_remove.py` - add `apero_remove` code to remove `obs_dir`
+  and/or file prefix/suffix. [Neil Cook]
+- [APERO] `apero.base.drs_db.py` - corrections for duplicate and
+  `replace_paths` functionality. [Neil Cook]
+- [APERO] add a duplicate and `replace_paths` function to the database
+  classes (to support copying) [Neil Cook]
+- [APERO] `database_update.py` - remove some blank spaces. [Neil Cook]
+- `Apero.science.telluric.gen_tellu.py` - add wave mask to only reject snr
+  in orders smaller than 1800um for all instruments. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.289-live' into
+  v0.7.289-live. [Neil Cook]
+- [APERO] update version/changelog/documentation. [Neil Cook]
+- [APERO-ARI] fix when we have no data adding dprtypes to object. [Neil
+  Cook]
 - [APERO] `apero_ri.py` - Fix for unique values containing None. [Neil
   Cook]
 - [APERO] `apero_ri.py` - Fix for unique values containing None. [Neil
