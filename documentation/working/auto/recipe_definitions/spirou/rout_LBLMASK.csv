@@ -1,3 +1,0 @@
-name,description,file type,basename
-LBL_MASK,Telluric mask file,.fits,{obj}
-LBL_TEMPLATE,Telluric 1D template file,.fits,Template_s1dv_{obj}_sc1d_v_file_AB

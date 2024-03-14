@@ -28,13 +28,15 @@ Latest version: 0.8.001
 
   APERO Publications:
 
-  * `APERO: A PipelinE to Reduce Observations -- Demonstration with SPIRou <https://arxiv.org/abs/2211.01358>`_
+  * `APERO: A PipelinE to Reduce Observations -- Demonstration with SPIRou <https://iopscience.iop.org/article/10.1088/1538-3873/ac9e74>`_
 
-  APERO can also be used for:
+  APERO is also be used by:
 
-  * NIRPS HE (Currently under construction)
-  * NIRPS HA (Currently under construction)
+  * `NIRPS HE <https://www.astro.umontreal.ca/nirps>`_
+  * `NIRPS HA <https://www.astro.umontreal.ca/nirps>`_
 
+
+  The Line-by-line code for precision radial velocity (`Artigau et al. 2022 <https://iopscience.iop.org/article/10.3847/1538-3881/ac7ce6>`_) is also integrated into APERO.
 
 ===========================================
 Overview

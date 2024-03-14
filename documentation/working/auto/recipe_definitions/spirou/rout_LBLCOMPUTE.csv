@@ -1,2 +1,0 @@
-name,description,file type,suffix
-LBL_FITS,LBL line list fits files,.fits,_{obj}_{temp}_lbl

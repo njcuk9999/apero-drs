@@ -1,9 +1,0 @@
-name,description,file type,suffix,fibers,dbname,dbkey,input file
-EXT_E2DS_FF,Extracted + flat-fielded 2D spectrum,.fits,_e2dsff,"AB, A, B, C",--,--,DRS_PP
-WAVESOL_REF,Reference wavelength solution calibration file,.fits,_wavesol_ref,"AB, A, B, C",calibration,WAVESOL_REF,"EXT_E2DS, EXT_E2DS_FF"
-WAVEREF_CAV,Reference wavelength cavity width polynomial calibration file,.fits,_waveref_cav_,AB,calibration,WAVECAV,"EXT_E2DS, EXT_E2DS_FF"
-WAVE_HCLIST_REF,Reference list of Hollow cathode lines calibration file,.fits,_waveref_hclines,"AB, A, B, C",calibration,WAVEHCL,"EXT_E2DS, EXT_E2DS_FF"
-WAVE_FPLIST_REF,Reference list of FP liens calibration file,.fits,_waveref_fplines,"AB, A, B, C",calibration,WAVEFPL,"EXT_E2DS, EXT_E2DS_FF"
-WAVERES,Reference wavelength resolution map file,.fits,_waveref_resmap,"AB, A, B, C",--,--,"EXT_E2DS, EXT_E2DS_FF"
-WAVEM_RES_E2DS,Reference wavelength resolution e2ds file,.fits,_waveref_res_e2ds,"AB, A, B, C",calibration,WAVR_E2DS,"EXT_E2DS, EXT_E2DS_FF"
-CCF_RV,Cross-correlation RV results file,.fits,_ccf,"AB, A, B, C",--,--,"EXT_E2DS_FF, TELLU_OBJ"

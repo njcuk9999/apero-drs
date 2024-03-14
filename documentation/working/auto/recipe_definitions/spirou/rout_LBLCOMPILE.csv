@@ -1,7 +1,0 @@
-name,description,file type,basename
-LBL_RDB,LBL rdb file (RVs) in ascii-rdb format,.rdb,lbl_{obj}_{temp}
-LBL_RDB_FITS,LBL rdb file (RVs) in fits format,.fits,lbl_{obj}_{temp}
-LBL_RDB2,LBL binned per night rdb file (RVs),.rdb,lbl2_{obj}_{temp}
-LBL_RDB_DRIFT,LBL Drift corrected rdb file,.rdb,lbl_{obj}_{temp}_drift
-LBL_RDB2_DRIFT,LBL Drift corrected binned rdb file,.rdb,lbl2_{obj}_{temp}_drift
-LBL_DRIFT,LBL drift file (calculated from FPs),.rdb,drift

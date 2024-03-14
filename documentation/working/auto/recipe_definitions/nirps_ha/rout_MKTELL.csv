@@ -1,5 +1,0 @@
-name,description,HDR[DRSOUTID],file type,suffix,fibers,dbname,dbkey,input file
-TELLU_CONV,Telluric convolution file,--,.npy,_tellu_conv,"AB, A, B",telluric,TELLU_CONV,"WAVESOL_REF, WAVE_NIGHT, WAVESOL_DEFAULT"
-TELLU_TRANS,Telluric transmission file,TELLU_TRANS,.fits,_tellu_trans,"AB, A, B",telluric,TELLU_TRANS,EXT_E2DS_FF
-TELLU_SCLEAN,Sky-cleaning file,TELLU_SCLEAN,.fits,_tellu_sclean.fits,--,--,--,EXT_E2DS_FF
-TELLU_PCLEAN,Telluric pre-cleaning file,TELLU_PCLEAN,.fits,_tellu_pclean,"AB, A, B",telluric,TELLU_PCLEAN,EXT_E2DS_FF

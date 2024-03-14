@@ -30,11 +30,9 @@ Contents
 --------------------------------------------------------------------------------
 
 
-.. csv-table:: 1. Raw Files file definition table
-   :file: default_raw_file.csv
-   :widths: 22, 75
-   :header-rows: 1
-   :class: csvtable
+
+N/A
+
 
 .. |br| raw:: html
 
@@ -57,11 +55,9 @@ Contents
 --------------------------------------------------------------------------------
 
 
-.. csv-table:: 2. Preprocesed files file definition table
-   :file: default_pp_file.csv
-   :widths: 11, 40, 11, 11, 19
-   :header-rows: 1
-   :class: csvtable
+
+N/A
+
 
 
 "HDR[XXX]" denotes key from file header
@@ -81,12 +77,9 @@ Contents
 --------------------------------------------------------------------------------
 
 
-.. csv-table:: 3. Reduced Files file definition table
-   :file: default_red_file.csv
-   :width: 116%
-   :widths: 9, 32, 9, 9, 9, 9, 15
-   :header-rows: 1
-   :class: csvtable
+
+N/A
+
 
 
 "HDR[XXX]" denotes key from file header
@@ -106,12 +99,9 @@ Contents
 --------------------------------------------------------------------------------
 
 
-.. csv-table:: 4. Calibration files file definition table
-   :file: default_calib_file.csv
-   :width: 133%
-   :widths: 8, 29, 8, 8, 8, 8, 8, 14
-   :header-rows: 1
-   :class: csvtable
+
+N/A
+
 
 
 "HDR[XXX]" denotes key from file header
@@ -131,12 +121,9 @@ Contents
 --------------------------------------------------------------------------------
 
 
-.. csv-table:: 5. Telluric files file definition table
-   :file: default_tellu_file.csv
-   :width: 150%
-   :widths: 7, 26, 7, 7, 7, 7, 7, 7, 12
-   :header-rows: 1
-   :class: csvtable
+
+N/A
+
 
 
 "HDR[XXX]" denotes key from file header
@@ -156,12 +143,9 @@ Contents
 --------------------------------------------------------------------------------
 
 
-.. csv-table:: 6. Post-processed files file definition table
-   :file: default_post_file.csv
-   :width: 133%
-   :widths: 8, 31, 8, 8, 8, 8, 8, 8
-   :header-rows: 1
-   :class: csvtable
+
+N/A
+
 
 
 "HDR[XXX]" denotes key from file header

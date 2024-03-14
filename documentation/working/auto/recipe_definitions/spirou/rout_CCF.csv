@@ -1,2 +1,0 @@
-name,description,HDR[DRSOUTID],file type,suffix,fibers,input file
-CCF_RV,Cross-correlation RV results file,CCF_RV,.fits,_ccf,"AB, A, B, C","EXT_E2DS_FF, TELLU_OBJ"

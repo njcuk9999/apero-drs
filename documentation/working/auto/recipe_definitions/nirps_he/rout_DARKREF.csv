@@ -1,2 +1,0 @@
-name,description,HDR[DRSOUTID],file type,suffix,dbname,dbkey,input file
-DARKREF,Reference dark calibration file,DARKREF,.fits,_dark_ref,calibration,DARKREF,"DARK_DARK_TEL, DARK_DARK_INT"

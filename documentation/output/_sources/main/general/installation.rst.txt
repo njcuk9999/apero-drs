@@ -36,11 +36,8 @@ Clone from `github <https://github.com/njcuk9999/apero-drs>`_
 
     .. code-block:: bash
 
-        git clone https://github.com/njcuk9999/apero-drs
+        git clone git@github.com:njcuk9999/apero-drs.git
 
-
-This may take some time (in future most of the data required will be a separate download), 
-and we still have many (now redundant) files from the spirou_py3 repository.
 
 .. _installation-choose-branch:
 
@@ -51,7 +48,7 @@ Change to the `{DRS_ROOT}` directory
 
 Choose which branch:
 
-* master version
+* main version
       This is the version currently recommended for all general use. 
       It may not contain the most up-to-date features until long term support 
       and stability can be verified.
@@ -60,8 +57,8 @@ Choose which branch:
 
       .. code-block:: bash
 
-        git checkout master
-        git pull origin master
+        git checkout main
+        git pull origin main
 
 * developer version
       Note the developer version should have been tested and semi-stable but 
@@ -284,6 +281,12 @@ For details about the splash screen click :ref:`here <startup_splash>`.
 Updating from github
 ====================================================================================
 
+The cleanest way to update is to create a new conda environment and install
+as above, however this will require a complete re-reduction (recommended but
+could take a long time), therefore you can use the following steps to update
+your current conda environment and APERO installation.
+
+
 1. Choose a branch (as in :ref:`installation-choose-branch`)
 
 2. Update the branch (pull from github)
@@ -292,7 +295,33 @@ Updating from github
 
         git pull origin {branch}
 
-3. Make sure you are in an APERO profile
+3. Update the requirements
+
+    .. code-block:: bash
+
+        pip install -r requirements_current.txt
+
+    or if are working in developer mode
+
+    .. code-block:: bash
+
+        pip install -r requirements_developer.txt
+
+    Note that lbl will not currently update with this command to install lbl
+      use the following command
+
+    .. code-block:: bash
+
+        pip install git+https://github.com/njcuk9999/lbl.git@main --upgrade
+
+    or if are working in developer mode
+
+    .. code-block:: bash
+
+        pip install git+
+
+
+4. Make sure you are in an APERO profile
 
     .. code-block:: bash
 
@@ -317,15 +346,10 @@ Updating from github
         setup_njc_200903
 
 
-4. Update using the installation script
+5. Update using the installation script
 
     .. code-block:: bash
 
         python setup/install.py --update
 
-This will use all current settings and update the 
-
-
-.. only:: html
-
-  :ref:`Back to top <installation>`
+This will use all current settings and update the

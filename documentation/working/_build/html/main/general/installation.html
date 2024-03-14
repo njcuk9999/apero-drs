@@ -192,12 +192,10 @@ as <a class="reference internal" href="../misc/glossary.html#term-0"><span class
 <h3>Clone<a class="headerlink" href="#clone" title="Permalink to this heading">¶</a></h3>
 <p>Clone from <a class="reference external" href="https://github.com/njcuk9999/apero-drs">github</a></p>
 <blockquote>
-<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/njcuk9999/apero-drs
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>git@github.com:njcuk9999/apero-drs.git
 </pre></div>
 </div>
 </div></blockquote>
-<p>This may take some time (in future most of the data required will be a separate download),
-and we still have many (now redundant) files from the spirou_py3 repository.</p>
 </section>
 <section id="choose-branch">
 <span id="installation-choose-branch"></span><h3>Choose branch<a class="headerlink" href="#choose-branch" title="Permalink to this heading">¶</a></h3>
@@ -205,12 +203,12 @@ and we still have many (now redundant) files from the spirou_py3 repository.</p>
 <p>Choose which branch:</p>
 <ul>
 <li><dl>
-<dt>master version</dt><dd><p>This is the version currently recommended for all general use.
+<dt>main version</dt><dd><p>This is the version currently recommended for all general use.
 It may not contain the most up-to-date features until long term support
 and stability can be verified.</p>
 <p>Change to this branch with</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>checkout<span class="w"> </span>master
-git<span class="w"> </span>pull<span class="w"> </span>origin<span class="w"> </span>master
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>checkout<span class="w"> </span>main
+git<span class="w"> </span>pull<span class="w"> </span>origin<span class="w"> </span>main
 </pre></div>
 </div>
 </dd>
@@ -402,11 +400,37 @@ installation and letting you know everything is good to run APERO recipes and to
 </section>
 <section id="updating-from-github">
 <span id="installation-update"></span><h2>Updating from github<a class="headerlink" href="#updating-from-github" title="Permalink to this heading">¶</a></h2>
+<p>The cleanest way to update is to create a new conda environment and install
+as above, however this will require a complete re-reduction (recommended but
+could take a long time), therefore you can use the following steps to update
+your current conda environment and APERO installation.</p>
 <ol class="arabic">
 <li><p>Choose a branch (as in <a class="reference internal" href="#installation-choose-branch"><span class="std std-ref">Choose branch</span></a>)</p></li>
 <li><p>Update the branch (pull from github)</p>
 <blockquote>
 <div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>pull<span class="w"> </span>origin<span class="w"> </span><span class="o">{</span>branch<span class="o">}</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>Update the requirements</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements_current.txt
+</pre></div>
+</div>
+<p>or if are working in developer mode</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements_developer.txt
+</pre></div>
+</div>
+<dl class="simple">
+<dt>Note that lbl will not currently update with this command to install lbl</dt><dd><p>use the following command</p>
+</dd>
+</dl>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>git+https://github.com/njcuk9999/lbl.git@main<span class="w"> </span>--upgrade
+</pre></div>
+</div>
+<p>or if are working in developer mode</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>git+
 </pre></div>
 </div>
 </div></blockquote>
@@ -439,7 +463,6 @@ installation and letting you know everything is good to run APERO recipes and to
 </li>
 </ol>
 <p>This will use all current settings and update the</p>
-<p><a class="reference internal" href="#installation"><span class="std std-ref">Back to top</span></a></p>
 </section>
 </section>
 

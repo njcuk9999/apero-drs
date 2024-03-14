@@ -1,5 +1,0 @@
-name,description,file type,suffix,dbname,dbkey,input file
-SHAPEL,Nightly shape calibration files,.fits,_shapel,calibration,SHAPEL,FP_FP
-SHAPEL_IN_FP,Input FP file for nightly shape comparison,.fits,_shapel_in_fp.fits,--,--,FP_FP
-SHAPEL_OUT_FP,Output FP file for nightly shape comparison,.fits,_shapel_out_fp.fits,--,--,FP_FP
-DEBUG_BACK,Individual file background map,.fits,_background.fits,--,--,DRS_PP
