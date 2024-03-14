@@ -105,7 +105,8 @@ def __main__(recipe, params):
         # constants.load sets default to None we want this back to default
         if instrument == 'default':
             iparams.set('INSTRUMENT', instrument)
-            recipe.params.set('INSTRUMENT', instrument)
+        # make sure the recipe is set to the correct instrument
+        recipe.params.set('INSTRUMENT', instrument)
         # re-get params and recipe
         recipe.reload(instrument)
         # ---------------------------------------------------------------------
