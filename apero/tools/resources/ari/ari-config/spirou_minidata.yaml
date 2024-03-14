@@ -92,6 +92,11 @@ headers:
       key: DPRTYPE
       label: 'DPR TYPE'
       dtype: str
+    BERV:
+      key: BERV
+      label: BERV
+      unit: km/s
+      dtype: float
     EXT_SEEING:
       key: WDSEEMED
       label: Seeing at start
