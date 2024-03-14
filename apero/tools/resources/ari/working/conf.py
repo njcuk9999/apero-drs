@@ -76,4 +76,5 @@ html_static_path = ['_static']
 
 # add custom css
 def setup(app):
+    app.add_css_file('images/fonta/css/font-awesome.css')  # font css
     app.add_css_file('apero.css')  # give a filename you created.
