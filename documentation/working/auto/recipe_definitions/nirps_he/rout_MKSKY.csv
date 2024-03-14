@@ -1,0 +1,2 @@
+name,description,HDR[DRSOUTID],file type,suffix,dbname,dbkey,input file
+SKY_MODEL,Telluric sky model file,SKY_MODEL,.fits,_sky_model,telluric,SKY_MODEL,EXT_E2DS_FF

@@ -1,0 +1,6 @@
+name,description,HDR[DRSOUTID],file type,suffix,fibers,dbname,dbkey,input file
+FF_FLAT,Flat calibration file,FF_FLAT,.fits,_flat,"A, B",calibration,FLAT,FLAT_FLAT
+FF_BLAZE,Blaze calibration file,FF_BLAZE,.fits,_blaze,"A, B",calibration,BLAZE,FLAT_FLAT
+EXT_E2DS_LL,Pre-extracted straighted stacked spectrum,EXT_E2DS_LL,.fits,_e2dsll,"A, B",--,--,"DRS_PP, FLAT_FLAT"
+ORDERP_STRAIGHT,Straightened order profile for an individual image,ORDERP_STRAIGHT,.fits,_orderps,"A, B",--,--,SHAPEL
+DEBUG_BACK,Individual file background map,DEBUG_BACK,.fits,_background.fits,--,--,--,DRS_PP
