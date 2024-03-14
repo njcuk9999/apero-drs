@@ -12,10 +12,11 @@ This section provides a general guide to using APERO.
 
    installation.rst
    ../default/using_apero.rst
-   known_issues.rst
-   todo.rst
    deep.rst
    ../../auto/tool_definitions/default/tools.rst
+
+    * `Known issues <https://docs.google.com/spreadsheets/d/15Gu_aY6h9Esw1uTF8Y5JCHl6m7191AviJNTPkbeTiQE/edit#gid=1844191498>`_
+    * `TODO <https://github.com/users/njcuk9999/projects/7/>`_
 
 
 --------------------------------------------------------------------------------
