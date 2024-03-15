@@ -693,18 +693,6 @@ def add_finder_table(params: ParamDict, data_dict: Dict[str, Any]):
     # set html body
     # Take directly from one of the sphinx pages (this is a massive hack)
     html_body1 = """
-      <div class="related" role="navigation" aria-label="related navigation">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="http://apero.exoplanets.ca/" title="Home">Home</a></li>
-        <li class="right" style="margin-right: 10px">
-          <a href="http://apero.exoplanets.ca/genindex.html" title="General Index"
-             accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="http://apero.exoplanets.ca/ari/home">APERO Reduction interface</a> &#187;</li>
-      </ul>
-    </div>
-    
       <div class="pageheader">
 
       <ul>
@@ -729,6 +717,18 @@ def add_finder_table(params: ParamDict, data_dict: Dict[str, Any]):
       </div>
 
       </div>
+
+      <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="http://apero.exoplanets.ca/" title="Home">Home</a></li>
+        <li class="right" style="margin-right: 10px">
+          <a href="http://apero.exoplanets.ca/genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="http://apero.exoplanets.ca/ari/home">APERO Reduction interface</a> &#187;</li>
+      </ul>
+    </div>
 
       <div class="document">
         <div class="documentwrapper">
@@ -834,19 +834,7 @@ def add_recipe_tables(params: ParamDict, table: Table, machine_name: str):
     ari_user = params['ARI_USER']
     # set html body
     # Take directly from one of the sphinx pages (this is a massive hack)
-    html_body1 = """
-    <div class="related" role="navigation" aria-label="related navigation">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="http://apero.exoplanets.ca/" title="Home">Home</a></li>
-        <li class="right" style="margin-right: 10px">
-          <a href="http://apero.exoplanets.ca/genindex.html" title="General Index"
-             accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="http://apero.exoplanets.ca/ari/home">APERO Reduction interface</a> &#187;</li>
-      </ul>
-    </div>
-    
+    html_body1 = """   
     <div class="pageheader">
 
     <ul>
@@ -870,6 +858,18 @@ def add_recipe_tables(params: ParamDict, table: Table, machine_name: str):
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A PipelinE to Reduce Observations
     </div>
 
+    </div>
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="http://apero.exoplanets.ca/" title="Home">Home</a></li>
+        <li class="right" style="margin-right: 10px">
+          <a href="http://apero.exoplanets.ca/genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="http://apero.exoplanets.ca/ari/home">APERO Reduction interface</a> &#187;</li>
+      </ul>
     </div>
 
     <div class="document">
@@ -922,10 +922,10 @@ def add_recipe_tables(params: ParamDict, table: Table, machine_name: str):
     # set html table class
     table_class = 'class="csvtable2 docutils align-default"'
     # css to include
-    css_files = ['../_static/pygments.css',
-                 '../_static/bizstyle.css',
-                 '../_static/images/fonta/css/font-awesome.css',
-                 '../_static/apero.css']
+    css_files = ['../../_static/pygments.css',
+                 '../../_static/bizstyle.css',
+                 '../../_static/images/fonta/css/font-awesome.css',
+                 '../../_static/apero.css']
     # make path
     table_path = params['ARI_RECIPE_PAGES']
     # get table name
