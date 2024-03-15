@@ -758,6 +758,14 @@ def add_finder_table(params: ParamDict, data_dict: Dict[str, Any]):
     
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="http://apero.exoplanets.ca/" title="Home">Home</a></li>
+        <li class="right" style="margin-right: 10px">
+          <a href="http://apero.exoplanets.ca/genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="http://apero.exoplanets.ca/ari/home">APERO Reduction interface</a> &#187;</li>
+      </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright {0}, Neil Cook.
@@ -899,6 +907,14 @@ def add_recipe_tables(params: ParamDict, table: Table, machine_name: str):
     
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="http://apero.exoplanets.ca/" title="Home">Home</a></li>
+        <li class="right" style="margin-right: 10px">
+          <a href="http://apero.exoplanets.ca/genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="http://apero.exoplanets.ca/ari/home">APERO Reduction interface</a> &#187;</li>
+      </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright {0}, Neil Cook.
