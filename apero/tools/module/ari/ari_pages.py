@@ -749,8 +749,9 @@ def add_finder_table(params: ParamDict, data_dict: Dict[str, Any]):
     # set html table class
     table_class = 'class="csvtable2 docutils align-default"'
     # css to include
-    ccs_files = ['../_static/pygments.css',
+    css_files = ['../_static/pygments.css',
                  '../_static/bizstyle.css',
+                 '../_static/images/fonta/css/font-awesome.css',
                  '../_static/apero.css']
     # make path
     table_path = params['ARI_FINDER']['directory']
@@ -787,7 +788,7 @@ def add_finder_table(params: ParamDict, data_dict: Dict[str, Any]):
     html_content = error_html.full_page_html(html_body1=html_body1_filled,
                                              html_table=html_table,
                                              html_body2=html_body2,
-                                             css=ccs_files)
+                                             css=css_files)
     # write html page
     with open(table_html1, 'w') as wfile:
         wfile.write(html_content)
@@ -871,9 +872,10 @@ def add_recipe_tables(params: ParamDict, table: Table, machine_name: str):
     # set html table class
     table_class = 'class="csvtable2 docutils align-default"'
     # css to include
-    ccs_files = ['../../_static/pygments.css',
-                 '../../_static/bizstyle.css',
-                 '../../_static/apero.css']
+    css_files = ['../_static/pygments.css',
+                 '../_static/bizstyle.css',
+                 '../_static/images/fonta/css/font-awesome.css',
+                 '../_static/apero.css']
     # make path
     table_path = params['ARI_RECIPE_PAGES']
     # get table name
@@ -929,7 +931,7 @@ def add_recipe_tables(params: ParamDict, table: Table, machine_name: str):
         html_content = error_html.full_page_html(html_body1=html_body1_filled,
                                                  html_table=html_table,
                                                  html_body2=html_body2,
-                                                 css=ccs_files)
+                                                 css=css_files)
         # write html page
         with open(subtable_html1, 'w') as wfile:
             wfile.write(html_content)
@@ -956,7 +958,7 @@ def add_recipe_tables(params: ParamDict, table: Table, machine_name: str):
     html_content = error_html.full_page_html(html_body1=html_body1_filled,
                                              html_table=html_table,
                                              html_body2=html_body2,
-                                             css=ccs_files)
+                                             css=css_files)
     # write html page
     with open(table_html1, 'w') as wfile:
         wfile.write(html_content)
