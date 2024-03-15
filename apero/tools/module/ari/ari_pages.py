@@ -720,7 +720,6 @@ def add_finder_table(params: ParamDict, data_dict: Dict[str, Any]):
 
       <div class="document">
         <div class="documentwrapper">
-          <div class="bodywrapper">
             <div class="body" role="main">
 
       <h1>{TITLE}</h1>
@@ -736,7 +735,6 @@ def add_finder_table(params: ParamDict, data_dict: Dict[str, Any]):
               <div class="clearer"></div>
             </div>
           </div>
-        </div>
         <div class="clearer"></div>
       </div>
       """
@@ -744,7 +742,14 @@ def add_finder_table(params: ParamDict, data_dict: Dict[str, Any]):
     html_body2 += """
     <script src="/ari/home/login.js"></script>
     <script>EnableContent()</script>
-    """
+    
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright {0}, Neil Cook.
+    </div>
+    """.format(Time.now().datetime.year)
 
     # set html table class
     table_class = 'class="csvtable2 docutils align-default"'
@@ -837,7 +842,6 @@ def add_recipe_tables(params: ParamDict, table: Table, machine_name: str):
 
     <div class="document">
       <div class="documentwrapper">
-        <div class="bodywrapper">
           <div class="body" role="main">
 
     <h1>{TITLE}</h1>
@@ -858,17 +862,23 @@ def add_recipe_tables(params: ParamDict, table: Table, machine_name: str):
     """
 
     html_body2 = """
-            <div class="clearer"></div>
+              <div class="clearer"></div>
+            </div>
           </div>
-        </div>
+        <div class="clearer"></div>
       </div>
-      <div class="clearer"></div>
-    </div>
-    """
+      """
     html_body2 += """
     <script src="/ari/home/login.js"></script>
     <script>EnableContent()</script>
-    """
+    
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright {0}, Neil Cook.
+    </div>
+    """.format(Time.now().datetime.year)
     # set html table class
     table_class = 'class="csvtable2 docutils align-default"'
     # css to include
