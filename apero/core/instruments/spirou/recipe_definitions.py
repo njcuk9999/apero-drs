@@ -90,7 +90,7 @@ objname = dict(name='--objname', dtype=str, default='None',
 dprtype = dict(name='--dprtype', dtype=str, default='None',
                helpstr=textentry('DPRTYPE_HELP'))
 # -----------------------------------------------------------------------------
-no_in_qc = dict(name='--no_in_qc', dtype='switch', default=False,
+no_in_qc = dict(name='--no_in_qc', dtype='switch',
                 helpstr='Disable checking the quality control of input files')
 
 # =============================================================================
@@ -232,7 +232,7 @@ apero_preprocess.set_arg(pos=0, **obs_dir)
 apero_preprocess.set_arg(name='files', dtype='files', pos='1+',
                          files=[files.raw_file],
                          helpstr=textentry('PREPROCESS_UFILES_HELP'), limit=1)
-apero_preprocess.set_kwarg(name='--skip', dtype='bool', default=False,
+apero_preprocess.set_kwarg(name='--skip', dtype='bool',
                            helpstr=textentry('PPSKIP_HELP'),
                            default_ref='SKIP_DONE_PP')
 apero_preprocess.group_func = grouping.group_individually
@@ -649,9 +649,9 @@ apero_thermal.set_kwarg(**shapelfile)
 apero_thermal.set_kwarg(**wavefile)
 apero_thermal.set_kwarg(**no_in_qc)
 apero_thermal.set_min_nfiles('files', 2)
-apero_thermal.set_kwarg(name='--forceext', dtype='bool', default=False,
+apero_thermal.set_kwarg(name='--forceext', dtype='bool',
                         default_ref='THERMAL_ALWAYS_EXTRACT',
-                        helpstr='THERMAL_EXTRACT_HELP')
+                        helpstr=textentry('THERMAL_EXTRACT_HELP'))
 apero_thermal.group_func = grouping.group_by_dirname
 apero_thermal.group_column = 'REPROCESS_OBSDIR_COL'
 # documentation
@@ -757,7 +757,7 @@ apero_extract.set_arg(name='files', dtype='files', pos='1+',
                       helpstr=(textentry('FILES_HELP') +
                                textentry('EXTRACT_FILES_HELP')),
                       limit=1)
-apero_extract.set_kwarg(name='--quicklook', dtype='bool', default=False,
+apero_extract.set_kwarg(name='--quicklook', dtype='bool',
                         helpstr=textentry('QUICK_LOOK_EXT_HELP'),
                         default_ref='EXT_QUICK_LOOK')
 apero_extract.set_kwarg(**badfile)
@@ -792,8 +792,7 @@ apero_extract.set_kwarg(name='--thermal', dtype='bool', default=True,
                         default_ref='THERMAL_CORRECT')
 apero_extract.set_kwarg(**thermalfile)
 apero_extract.set_kwarg(**wavefile)
-apero_extract.set_kwarg(name='--force_ref_wave', dtype='bool',
-                        default=False,
+apero_extract.set_kwarg(name='--force_ref_wave', dtype='switch',
                         helpstr='Force using the reference wave solution')
 apero_extract.set_kwarg(**no_in_qc)
 apero_extract.group_func = grouping.group_individually
@@ -1238,7 +1237,7 @@ apero_fit_tellu.set_kwarg(name='--finiteres', dtype='bool',
                           default_ref='TELLUP_DO_FINITE_RES_CORR',
                           helpstr='Whether to do the finite resolution '
                                   'correction (Always false if no template)')
-apero_fit_tellu.set_kwarg(name='--onlypreclean', dtype='switch', default=False,
+apero_fit_tellu.set_kwarg(name='--onlypreclean', dtype='switch',
                           helpstr='Only run the precleaning steps '
                                   '(not recommended - for debugging ONLY)')
 apero_fit_tellu.set_kwarg(**add_db)
@@ -1374,8 +1373,8 @@ apero_pol.set_kwarg(name='--output', altnames=['-o'], dtype=str,
 apero_pol.set_kwarg(name='--output_lsd', altnames=['-l'], dtype=str,
                     helpstr='Output LSD file', default='None')
 apero_pol.set_kwarg(name='--lsd', altnames=['-L'], dtype='switch',
-                    default=False, helpstr='Run LSD analysis')
-apero_pol.set_kwarg(name='--noqccheck', dtype='switch', default=False,
+                    helpstr='Run LSD analysis')
+apero_pol.set_kwarg(name='--noqccheck', dtype='switch',
                     helpstr='Do not check quality control of inputs')
 apero_pol.set_kwarg(**blazefile)
 apero_pol.set_kwarg(**plot)
@@ -1405,7 +1404,7 @@ apero_lbl_ref.epilog = ''
 apero_lbl_ref.recipe_type = 'recipe'
 apero_lbl_ref.recipe_kind = 'lbl'
 apero_lbl_ref.set_kwarg(name='--test', dtype='switch',
-                        default=False, helpstr='Run in test mode')
+                        helpstr='Run in test mode')
 apero_lbl_ref.group_func = grouping.no_group
 apero_lbl_ref.group_column = None
 # add to recipe
@@ -1510,10 +1509,10 @@ apero_postprocess.set_arg(name='files', dtype='files', pos='1+',
                           filelogic='exclusive',
                           helpstr=(textentry('FILES_HELP')),
                           limit=1)
-apero_postprocess.set_kwarg(name='--skip', dtype='switch',
+apero_postprocess.set_kwarg(name='--skip', dtype='bool',
                             default_ref='POST_OVERWRITE',
                             helpstr=textentry('OUT_OVERWRITE_HELP'))
-apero_postprocess.set_kwarg(name='--clear', dtype='switch',
+apero_postprocess.set_kwarg(name='--clear', dtype='bool',
                             default_ref='POST_CLEAR_REDUCED',
                             helpstr=textentry('OUT_CLEAR_HELP'))
 apero_postprocess.set_kwarg(**no_in_qc)

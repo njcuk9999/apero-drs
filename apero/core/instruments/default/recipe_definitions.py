@@ -119,7 +119,7 @@ ari.set_arg(pos=0, name='profile', dtype=str,
             helpstr='ARI yaml file to use')
 ari.set_kwarg(name='--obsdir', dtype=str, default='None',
               helpstr=textentry('OBS_DIR_HELP'))
-ari.set_kwarg(name='--reset', dtype='switch', default=False,
+ari.set_kwarg(name='--reset', dtype='switch',
               helpstr='Reset ARI')
 ari.description_file = 'apero_ri.rst'
 
@@ -134,15 +134,15 @@ astrometric.recipe_type = 'tool'
 astrometric.recipe_kind = 'user'
 astrometric.set_arg(pos=0, name='objects', dtype=str,
                     helpstr=textentry('ASTROMETRIC_OBJ_HELP'))
-astrometric.set_kwarg(name='--overwrite', dtype='switch', default=False,
+astrometric.set_kwarg(name='--overwrite', dtype='switch',
                       helpstr=textentry('ASTROMETRIC_OVERWRITE_HELP'))
-astrometric.set_kwarg(name='--getteff', dtype='switch', default=False,
+astrometric.set_kwarg(name='--getteff', dtype='switch',
                       helpstr=textentry('ASTROMETRIC_GETTEFF_HELP'))
-astrometric.set_kwarg(name='--nopmrequired', dtype='switch', default=False,
+astrometric.set_kwarg(name='--nopmrequired', dtype='switch',
                       helpstr=textentry('ASTROMETRIC_NOPM_REQ_HELP'))
-astrometric.set_kwarg(name='--test', dtype='switch', default=False,
+astrometric.set_kwarg(name='--test', dtype='switch',
                       helpstr=textentry('ASTROMETRIC_TEST_HELP'))
-astrometric.set_kwarg(name='--check', dtype='switch', default=False,
+astrometric.set_kwarg(name='--check', dtype='switch',
                       helpstr='Check object database for basic errors')
 astrometric.description_file = 'apero_astrometrics.rst'
 
@@ -155,7 +155,7 @@ changelog.instrument = __INSTRUMENT__
 changelog.description = textentry('CHANGELOG_DESCRIPTION')
 changelog.recipe_type = 'nolog-tool'
 changelog.recipe_kind = 'admin'
-changelog.set_arg(pos=0, name='preview', dtype='bool',
+changelog.set_arg(pos=0, name='preview', dtype='switch',
                   helpstr=textentry('PREVIEW_HELP'))
 changelog.description_file = 'apero_changelog.rst'
 
@@ -168,16 +168,16 @@ database_mgr.instrument = __INSTRUMENT__
 database_mgr.description = textentry('DBMGR_DESCRIPTION')
 database_mgr.recipe_type = 'nolog-tool'
 database_mgr.recipe_kind = 'admin'
-database_mgr.set_kwarg(name='--kill', dtype='switch', default=False,
+database_mgr.set_kwarg(name='--kill', dtype='switch',
                        helpstr=textentry('DBMGR_KILLARG_HELP'))
 database_mgr.set_kwarg(name='--dbkind', dtype='options', default='all',
                        options=['all', 'calib', 'tellu', 'findex', 'log',
                                 'astrom', 'reject', 'lang'],
                        helpstr='Database kind to update or reset. Must use in'
                                'conjuction with --update or --reset')
-database_mgr.set_kwarg(name='--update', dtype='switch', default=False,
+database_mgr.set_kwarg(name='--update', dtype='switch',
                        helpstr=textentry('DBMGR_UPDATE_HELP'))
-database_mgr.set_kwarg(name='--reset', dtype='switch', default=False,
+database_mgr.set_kwarg(name='--reset', dtype='switch',
                        helpstr=textentry('DBMGR_RESET_HELP'))
 database_mgr.set_kwarg(name='--csv', dtype=str, default='None',
                        helpstr=textentry('DBMGR_CSVARG_HELP'))
@@ -190,7 +190,7 @@ database_mgr.set_kwarg(name='--importdb', dtype='options', default='None',
 database_mgr.set_kwarg(name='--join', dtype='options', default='replace',
                        options=['replace', 'append'],
                        helpstr=textentry('DBMGR_JOIN_HELP'))
-database_mgr.set_kwarg(name='--delete', dtype='switch', default=False,
+database_mgr.set_kwarg(name='--delete', dtype='switch',
                        helpstr=textentry('DBMGR_DELETE_HELP'))
 # TODO: Add to language database
 database_mgr.set_kwarg(name='--keys', dtype=str, default='None',
@@ -204,11 +204,11 @@ database_mgr.set_kwarg(name='--before', dtype=str, default='None',
                        helpstr='Date to remove entries before (used in '
                                'combination with --telludb or --calibdb)'
                                ' format is YYYY-MM-DD or YYYY-MM-DD hh:mm:ss')
-database_mgr.set_kwarg(name='--deletefiles', dtype='switch', default=False,
+database_mgr.set_kwarg(name='--deletefiles', dtype='switch',
                        helpstr='Whether to delete files from disk when '
                                'removing entries (using in combination with '
                                '--telludb or --calibdb and --since / --keys)')
-database_mgr.set_kwarg(name='--test', dtype='switch', default=False,
+database_mgr.set_kwarg(name='--test', dtype='switch',
                        helpstr='Run the removal of entries in test mode')
 
 database_mgr.description_file = 'apero_database.rst'
@@ -224,17 +224,17 @@ remake_doc.recipe_type = 'nolog-tool'
 remake_doc.recipe_kind = 'admin'
 remake_doc.set_kwarg(name='--instruments', dtype=str, default='ALL',
                      helpstr=textentry('REMAKE_INSTRUMENT_HELP'))
-remake_doc.set_kwarg(name='--compile', dtype='switch', default=False,
+remake_doc.set_kwarg(name='--compile', dtype='switch',
                      helpstr=textentry('REMAKE_DOC_COMPILE_HELP'))
-remake_doc.set_kwarg(name='--upload', dtype='switch', default=False,
+remake_doc.set_kwarg(name='--upload', dtype='switch',
                      helpstr=textentry('REMAKE_DOC_UPLOADARG_HELP'))
-remake_doc.set_kwarg(name='--all', dtype='switch', default=False,
+remake_doc.set_kwarg(name='--all', dtype='switch',
                      helpstr='--filedef --recipedef and --recipeseq')
-remake_doc.set_kwarg(name='--filedef', dtype='switch', default=False,
+remake_doc.set_kwarg(name='--filedef', dtype='switch',
                      helpstr=textentry('REMAKE_DOC_FILEDEF_HELP'))
-remake_doc.set_kwarg(name='--recipedef', dtype='switch', default=False,
+remake_doc.set_kwarg(name='--recipedef', dtype='switch',
                      helpstr=textentry('REMAKE_DOC_RECIPEDEF_HELP'))
-remake_doc.set_kwarg(name='--recipeseq', dtype='switch', default=False,
+remake_doc.set_kwarg(name='--recipeseq', dtype='switch',
                      helpstr=textentry('REMAKE_DOC_RECIPESEQ_HELP'))
 remake_doc.set_kwarg(name='--mode', dtype='options', default='both',
                      options=['both', 'html', 'latex'],
@@ -250,7 +250,7 @@ explorer.instrument = __INSTRUMENT__
 explorer.description = textentry('EXPLORER_DESCRIPTION')
 explorer.recipe_type = 'nolog-tool'
 explorer.recipe_kind = 'user'
-explorer.set_kwarg(name='--hash', default=False, dtype='switch',
+explorer.set_kwarg(name='--hash', dtype='switch',
                    helpstr=textentry('EXPLORER_HASH'))
 explorer.set_kwarg(name='--recipe', default='None', dtype=str,
                    helpstr=textentry('EXPLORER_RECIPE'))
@@ -268,15 +268,15 @@ get_files.instrument = __INSTRUMENT__
 get_files.description = textentry('GET_DESCRIPTION')
 get_files.recipe_type = 'nolog-tool'
 get_files.recipe_kind = 'user'
-get_files.set_kwarg(name='--assets', dtype='switch', default=False,
+get_files.set_kwarg(name='--assets', dtype='switch',
                     helpstr='Download the assets to the github directory')
-get_files.set_kwarg(name='--gui', default=False, dtype='switch',
+get_files.set_kwarg(name='--gui', dtype='switch',
                     helpstr=textentry('GET_GUI_HELP'))
 get_files.set_kwarg(name='--outpath', dtype=str, default='None',
                     helpstr=textentry('GET_OUTPATH_HELP'))
-get_files.set_kwarg(name='--symlinks', default=False, dtype='switch',
+get_files.set_kwarg(name='--symlinks', dtype='switch',
                     helpstr=textentry('GET_SYMLINKS_HELP'))
-get_files.set_kwarg(name='--tar', default=False, dtype='switch',
+get_files.set_kwarg(name='--tar', dtype='switch',
                     helpstr='Whether to create a tar instead of copying files.'
                             'Must also provide the --tarfile argument')
 get_files.set_kwarg(name='--tarfile', default='None', dtype=str,
@@ -311,12 +311,12 @@ get_files.set_kwarg(name='--pi_name', default='None', dtype=str,
 get_files.set_kwarg(name='--runid', default='None', dtype=str,
                     helpstr='Only get files from certain run ids')
 # advanced options
-get_files.set_kwarg(name='--failedqc', default=False, dtype='switch',
+get_files.set_kwarg(name='--failedqc', dtype='switch',
                     helpstr=textentry('GET_FAILEDQC_HELP'))
-get_files.set_kwarg(name='--nosubdir', default=False, dtype='switch',
+get_files.set_kwarg(name='--nosubdir', dtype='switch',
                     helpstr='Do not put files into a sub-directory. '
                             'Only use thes outpath')
-get_files.set_kwarg(name='--test', default=False, dtype='switch',
+get_files.set_kwarg(name='--test', dtype='switch',
                     helpstr=textentry('GET_TEST_HELP'))
 get_files.set_kwarg(name='--sizelimit', default=0, dtype=int,
                     helpstr='Limit the size of output tarfile (in GB)')
@@ -332,16 +332,15 @@ go_recipe.instrument = __INSTRUMENT__
 go_recipe.description = textentry('GO_DESCRIPTION')
 go_recipe.recipe_type = 'nolog-tool'
 go_recipe.recipe_kind = 'user'
-go_recipe.set_kwarg(name='--data', dtype='switch', default=False,
+go_recipe.set_kwarg(name='--data', dtype='switch',
                     helpstr=textentry('GO_DATA_HELP'))
-go_recipe.set_kwarg(name='--all', dtype='switch', default=False,
+go_recipe.set_kwarg(name='--all', dtype='switch',
                     helpstr='Display all relevant paths')
-go_recipe.set_kwarg(name='--setup', dtype='switch', default=False,
+go_recipe.set_kwarg(name='--setup', dtype='switch',
                     helpstr='Display DRS_UCONFIG path')
 # loop around block kinds and add arguments
 for block in path_definitions.BLOCKS:
-    go_recipe.set_kwarg(name=f'--{block.argname}',
-                        dtype='switch', default=False,
+    go_recipe.set_kwarg(name=f'--{block.argname}', dtype='switch',
                         helpstr=textentry('GO_BLOCK_HELP', args=[block.name]))
 go_recipe.description_file = 'apero_go.rst'
 
@@ -355,12 +354,12 @@ langdb.instrument = __INSTRUMENT__
 langdb.description = textentry('LANGDB_DESC')
 langdb.recipe_type = 'nolog-tool'
 langdb.recipe_kind = 'admin'
-langdb.set_kwarg(name='--find', dtype='switch', default=False,
+langdb.set_kwarg(name='--find', dtype='switch',
                  helpstr=textentry('LANGDB_FIND_HELP'))
 langdb.set_kwarg(name='--update', altnames=['--upgrade'],
-                 dtype='switch', default=False,
+                 dtype='switch',
                  helpstr=textentry('LANGDB_UPDATE_HELP'))
-langdb.set_kwarg(name='--reload', dtype='switch', default=False,
+langdb.set_kwarg(name='--reload', dtype='switch',
                  helpstr=textentry('LANGDB_RELOAD_HELP'))
 langdb.description_file = 'apero_langdb.rst'
 
@@ -422,7 +421,7 @@ trigger.set_debug_plots()
 trigger.set_summary_plots()
 trigger.set_kwarg(name='--indir', dtype=str, default='None',
                   helpstr=textentry('TRIGGER_INDIR_HELP'))
-trigger.set_kwarg(name='--reset', dtype='switch', default=False,
+trigger.set_kwarg(name='--reset', dtype='switch',
                   helpstr=textentry('TRIGGER_RESET_HELP'))
 trigger.set_kwarg(name='--ignore', dtype=str, default='None',
                   helpstr=textentry('TRIGGER_IGNORE_HELP'))
@@ -433,7 +432,7 @@ trigger.set_kwarg(name='--calib', dtype=str,
                   helpstr=textentry('TRIGGER_CALIB_HELP'))
 trigger.set_kwarg(name='--sci', dtype=str, default='trigger_night_scirun.ini',
                   helpstr=textentry('TRIGGER_SCI_HELP'))
-trigger.set_kwarg(name='--trigger_test', dtype='switch', default=False,
+trigger.set_kwarg(name='--trigger_test', dtype='switch',
                   helpstr=textentry('TRIGGER_TEST_HELP'))
 trigger.description_file = 'apero_trigger.rst'
 
@@ -454,9 +453,9 @@ precheck.set_kwarg(name='--exclude_obs_dirs', dtype=str, default='None',
                    helpstr=textentry('PROCESS_EXCLUDE_OBS_DIRS_HELP'))
 precheck.set_kwarg(name='--include_obs_dirs', dtype=str, default='None',
                    helpstr=textentry('PROCESS_INCLUDE_OBS_DIRS_HELP'))
-precheck.set_kwarg(name='--no_file_check', dtype='switch', default=False,
+precheck.set_kwarg(name='--no_file_check', dtype='switch',
                    helpstr=textentry('PRECHECK_NOFILECHECK_HELP'))
-precheck.set_kwarg(name='--no_obj_check', dtype='switch', default=False,
+precheck.set_kwarg(name='--no_obj_check', dtype='switch',
                    helpstr=textentry('PRECHECK_NOOBJCHECK_HELP'))
 precheck.description_file = 'apero_precheck.rst'
 
@@ -484,7 +483,7 @@ processing.set_kwarg(name='--cores', dtype=str, default='None',
 processing.set_kwarg(name='--test', dtype='options', default='None',
                      options=['True', 'False', '1', '0', 'None'],
                      helpstr=textentry('PROCESS_TEST_HELP'))
-processing.set_kwarg(name='--trigger', dtype='bool', default=False,
+processing.set_kwarg(name='--trigger', dtype='switch',
                      helpstr=textentry('PROCESS_TRIGGER_HELP'))
 processing.set_kwarg(name='--science_targets', dtype=str, default='None',
                      helpstr=textentry('PROCESS_SCI_TARGETS'))
@@ -527,7 +526,7 @@ reject.set_kwarg(name='--autofill', dtype=str, default='None',
                          'e.g. 1,1,1,bad target '
                          'For objname this is ALIASES,NOTES '
                          'e.g. alias1|alias2|alias3,Not a real target')
-reject.set_kwarg(name='--test', dtype='bool', default=False,
+reject.set_kwarg(name='--test', dtype='switch',
                  helpstr='Whether to run in test mode (recommended first time)')
 
 # -----------------------------------------------------------------------------
@@ -551,7 +550,7 @@ remove.set_kwarg(name='--file_suffix', dtype=str, default='None',
 remove.set_kwarg(name='--test', dtype='options', default='None',
                  options=['True', 'False', '1', '0', 'None'],
                  helpstr='Whether to run in test mode (recommended first time)')
-remove.set_kwarg(name='--warn', dtype='bool', default=True,
+remove.set_kwarg(name='--nowarn', dtype='switch',
                  helpstr='Whether to warn the user we are not in test mode.')
 
 # -----------------------------------------------------------------------------
@@ -563,33 +562,33 @@ reset.instrument = __INSTRUMENT__
 reset.description = textentry('RESET_DESCRIPTION')
 reset.recipe_type = 'nolog-tool'
 reset.recipe_kind = 'user'
-reset.set_kwarg(name='--log', dtype='bool', default=True,
+reset.set_kwarg(name='--nolog', dtype='switch',
                 helpstr=textentry('RESET_LOG_HELP'))
-reset.set_kwarg(name='--warn', dtype='bool', default=True,
+reset.set_kwarg(name='--nowarn', dtype='switch',
                 helpstr=textentry('RESET_WARN_HELP'))
 reset.set_kwarg(name='--database_timeout', dtype=int, default=0,
                 helpstr=textentry('RESET_DATABASE_TIMEOUT_HELP'))
-reset.set_kwarg(name='--only_assets', dtype='bool', default=False,
+reset.set_kwarg(name='--only_assets', dtype='switch',
                 helpstr='Reset only the assets directory')
-reset.set_kwarg(name='--only_tmp', dtype='bool', default=False,
+reset.set_kwarg(name='--only_tmp', dtype='switch',
                 helpstr='Reset only the tmp directory')
-reset.set_kwarg(name='--only_red', dtype='bool', default=False,
+reset.set_kwarg(name='--only_red', dtype='switch',
                 helpstr='Reset only the reduced directory')
-reset.set_kwarg(name='--only_calib', dtype='bool', default=False,
+reset.set_kwarg(name='--only_calib', dtype='switch',
                 helpstr='Reset only the calibration directory')
-reset.set_kwarg(name='--only_tellu', dtype='bool', default=False,
+reset.set_kwarg(name='--only_tellu', dtype='switch',
                 helpstr='Reset only the telluric directory')
-reset.set_kwarg(name='--only_log', dtype='bool', default=False,
+reset.set_kwarg(name='--only_log', dtype='switch',
                 helpstr='Reset only the log directory')
-reset.set_kwarg(name='--only_plot', dtype='bool', default=False,
+reset.set_kwarg(name='--only_plot', dtype='switch',
                 helpstr='Reset only the plot directory')
-reset.set_kwarg(name='--only_run', dtype='bool', default=False,
+reset.set_kwarg(name='--only_run', dtype='switch',
                 helpstr='Reset only the run directory')
-reset.set_kwarg(name='--only_lbl', dtype='bool', default=False,
+reset.set_kwarg(name='--only_lbl', dtype='switch',
                 helpstr='Reset only the lbl directory')
-reset.set_kwarg(name='--only_out', dtype='bool', default=False,
+reset.set_kwarg(name='--only_out', dtype='switch',
                 helpstr='Reset only the out directory')
-reset.set_kwarg(name='--only_other', dtype='bool', default=False,
+reset.set_kwarg(name='--only_other', dtype='switch',
                 helpstr='Reset only the other directory')
 
 reset.description_file = 'apero_reset.rst'

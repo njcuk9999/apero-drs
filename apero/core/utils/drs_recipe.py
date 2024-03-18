@@ -742,6 +742,27 @@ class DrsRecipe(object):
         # deal with no name
         if name is None:
             name = 'Kwarg{0}'.format(len(self.args) + 1)
+        # deal with switch (default is always False)
+        if dtype == 'switch':
+            # deal with switch having a "default" argument
+            if default is not None:
+                # TODO: Add to language database
+                emsg = ('Switch {0}:{1} cannot use a default value. '
+                        'A Switch always has False as the default value')
+                eargs = [self.name, name]
+                raise base_class.DrsCodedException('0', level='error',
+                                                   message=emsg.format(*eargs))
+            # deal with switch having a "default_ref" argument
+            if default_ref is not None:
+                # TODO: Add to language database
+                emsg = ('Switch {0}:{1} cannot use a default_ref value. '
+                        'A Switch always has False as the default value')
+                eargs = [self.name, name]
+                raise base_class.DrsCodedException('0', level='error',
+                                                   message=emsg.format(*eargs))
+            # make sure switch values are set to the only values they can have
+            default = False
+            default_ref = None
         # create keyword argument
         try:
             keywordargument = DrsArgument(name, kind='kwarg', pos=None,

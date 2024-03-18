@@ -83,7 +83,7 @@ def __main__(recipe, params):
     obsdir = params['INPUTS']['obsdir']
     fileprefix = params['INPUTS']['file_prefix']
     filesuffix = params['INPUTS']['file_suffix']
-    warn = params['INPUTS']['warn']
+    warn = not params['INPUTS']['nowarn']
 
     # if any are set to 'None' then set to None
     if obsdir == 'None':

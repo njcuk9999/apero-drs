@@ -80,8 +80,8 @@ def __main__(recipe, params):
     # Main Code
     # ----------------------------------------------------------------------
     # get log and warn from inputs
-    log = params['INPUTS']['log']
-    warn = params['INPUTS']['warn']
+    log = not params['INPUTS']['nolog']
+    warn = not params['INPUTS']['nowarn']
     database_timeout = params['INPUTS']['DATABASE_TIMEOUT']
     # ----------------------------------------------------------------------
     # Must check that we are not inside an apero directory
