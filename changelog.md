@@ -8,9 +8,8 @@ Changelog
 - [APERO] fix typo apero.science.telluric.gen_tellu.py - image.shape[0]
   --> range(image.shape[0]) [njcuk9999]
 - [APERO] update date / version / documentation. [Neil Cook]
-
-
 0.7.289 (2024-03-12)
+- 
 --------------------
 - [APERO] correct typo. [Neil Cook]
 - [APERO] Add --objname to reject code (Issue https://github.com/users/n
@@ -413,7 +412,6 @@ Changelog
   Cook]
 - [APERO] drs_astrometrics.py - fix using dataframe.append (should be
   pd.concat) [Neil Cook]
-
 
 
 0.7.286 (2023-07-12)

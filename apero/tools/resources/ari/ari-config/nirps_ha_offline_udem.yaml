@@ -90,6 +90,11 @@ headers:
       key: DPRTYPE
       label: 'DPR TYPE'
       dtype: str
+    BERV:
+      key: BERV
+      label: BERV
+      unit: km/s
+      dtype: float
     EXT_SEEING:
       key: HIERARCH ESO TEL AMBI FWHM START
       label: Seeing at start
