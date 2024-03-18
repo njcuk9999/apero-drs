@@ -4584,6 +4584,7 @@ class DrsFitsFile(DrsInputFile):
         # return updated header
         return header
 
+
     def add_hkey(self, key: Union[str, None] = None,
                  keyword: Union[list, None] = None, value: Any = None,
                  comment: Union[str, None] = None,
@@ -4889,6 +4890,45 @@ class DrsFitsFile(DrsInputFile):
                 comm = '{0} {1}={2} {3}={4}'.format(*cargs)
                 # add to header dictionary
                 self.hdict[keyname] = (value, comm)
+
+    def add_core_hkeys(self, params: Optional[ParamDict] = None):
+        """
+        Add the core header keys to the header (every DRS fits file should
+        have at least these)
+
+        :param params: Optional ParamDict, if we have the parameter dictionary
+                       use it to get the parameters, otherwise guess them
+
+        :return: None, updates the header
+        """
+        if params is None:
+            params = dict()
+        # ----------------------------------------------------------------------
+        # add version
+        version = params.get('DRS_VERSION', __version__)
+        self.add_hkey('KW_VERSION', value=version)
+        # ----------------------------------------------------------------------
+        # add drs date
+        drs_date = params.get('DRS_DATE', __date__)
+        self.add_hkey('KW_DRS_DATE', value=drs_date)
+        # ----------------------------------------------------------------------
+        # add date now
+        date_now = params.get('DATE_NOW', base.Time.now().iso)
+        self.add_hkey('KW_DRS_DATE_NOW', value=date_now)
+        # ----------------------------------------------------------------------
+        # add process id
+        pid = params.get('PID', 'Unknown')
+        self.add_hkey('KW_PID', value=pid)
+        # ----------------------------------------------------------------------
+        # add output tag
+        self.add_hkey('KW_OUTPUT', value=self.name)
+        # ----------------------------------------------------------------------
+        # add config run.ini file (if given)
+        if 'INPUTS' in params:
+            crunfile = params['INPUTS'].get('CRUNFILE', 'Not set')
+        else:
+            crunfile = 'Not set'
+        self.add_hkey('KW_CRUNFILE', value=crunfile)
 
     def add_qckeys(self, qcparams: Union[QCParamList, None] = None):
         """
@@ -7891,13 +7931,8 @@ def combine(params: ParamDict, recipe: Any,
     name_list = ['COMBINE_TABLE']
     # add input files
     outfile.infiles = list(basenames)
-    # add version
-    outfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
-    # add dates
-    outfile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
-    outfile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
-    # add process id
-    outfile.add_hkey('KW_PID', value=params['PID'])
+    # add core values (that should be in all headers)
+    outfile.add_core_hkeys(params)
     # deal with writing to disk (default)
     if save:
         # snapshot of parameters

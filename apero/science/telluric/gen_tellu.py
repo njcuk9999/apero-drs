@@ -1965,15 +1965,8 @@ def tellu_preclean_write(params, recipe, infile, rawfiles, fiber, combine,
     # ------------------------------------------------------------------
     # copy keys from input file
     tpclfile.copy_original_keys(infile)
-    # add version
-    tpclfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
-    # add dates
-    tpclfile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
-    tpclfile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
-    # add process id
-    tpclfile.add_hkey('KW_PID', value=params['PID'])
-    # add output tag
-    tpclfile.add_hkey('KW_OUTPUT', value=tpclfile.name)
+    # add core values (that should be in all headers)
+    tpclfile.add_core_hkeys(params)
     # add input files (and deal with combining or not combining)
     if combine:
         infiles = rawfiles

@@ -189,14 +189,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             WLOG(params, '', textentry('40-016-00022', args=wargs))
             # Update keywords
             # --------------------------------------------------------------
-            # add version
-            thermal_file.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
-            # add dates
-            thermal_file.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
-            # add process id
-            thermal_file.add_hkey('KW_PID', value=params['PID'])
-            # add output tag
-            thermal_file.add_hkey('KW_OUTPUT', value=thermal_file.name)
+            # add core values (that should be in all headers)
+            thermal_file.add_core_hkeys(params)
+            # add fiber
             thermal_file.add_hkey('KW_FIBER', value=fiber)
             # define multi lists
             data_list, name_list = [], []

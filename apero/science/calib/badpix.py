@@ -421,15 +421,8 @@ def write_files(params: ParamDict, recipe: DrsRecipe, flatfile: DrsFitsFile,
     # define header keys for output file
     # copy keys from input file
     badpixfile.copy_original_keys(flatfile)
-    # add version
-    badpixfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
-    # add dates
-    badpixfile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
-    badpixfile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
-    # add process id
-    badpixfile.add_hkey('KW_PID', value=params['PID'])
-    # add output tag
-    badpixfile.add_hkey('KW_OUTPUT', value=badpixfile.name)
+    # add core values (that should be in all headers)
+    badpixfile.add_core_hkeys(params)
     # add input files
     if combine:
         hfiles1, hfiles2 = rawflatfiles, rawdarkfiles

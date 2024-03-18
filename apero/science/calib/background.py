@@ -405,12 +405,8 @@ def debug_file(recipe: DrsRecipe, params: ParamDict, infile: DrsFitsFile,
     debug_back.construct_filename(infile=infile, check=False)
     # copy keys from input file
     debug_back.copy_original_keys(infile)
-    # add version
-    debug_back.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
-    # add process id
-    debug_back.add_hkey('KW_PID', value=params['PID'])
-    # add output tag
-    debug_back.add_hkey('KW_OUTPUT', value=debug_back.name)
+    # add core values (that should be in all headers)
+    debug_back.add_core_hkeys(params)
     # add extention info
     kws1 = ['EXTDESC1', 'CORRECTED', 'Corrected image']
     kws2 = ['EXTDESC2', 'ORIGINAL', 'Original image']

@@ -1958,15 +1958,8 @@ def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
     polfile.copy_original_keys(cfile, exclude_groups='wave')
     # get update wave properties for header
     polfile = wave.add_wave_keys(polfile, wprops)
-    # add version
-    polfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
-    # add dates
-    polfile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
-    polfile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
-    # add process id
-    polfile.add_hkey('KW_PID', value=params['PID'])
-    # add output tag
-    polfile.add_hkey('KW_OUTPUT', value=polfile.name)
+    # add core values (that should be in all headers)
+    polfile.add_core_hkeys(params)
     # must set the KW_IDENTIFIER (equal to the first file)
     identifier0 = infile0.get_hkey('KW_IDENTIFIER', dtype=str)
     polfile.add_hkey('KW_IDENTIFIER', value=identifier0)

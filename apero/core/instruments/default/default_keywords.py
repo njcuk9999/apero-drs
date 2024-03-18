@@ -37,7 +37,7 @@ __all__ = [  # input keys
     'KW_VERSION', 'KW_PPVERSION', 'KW_DPRTYPE', 'KW_PID', 'KW_DRS_MODE',
     'KW_INFILE1', 'KW_INFILE2', 'KW_INFILE3', 'KW_DRS_MODE',
     'KW_DRS_QC', 'KW_DRS_QC_VAL', 'KW_DRS_QC_NAME', 'KW_DRS_QC_LOGIC',
-    'KW_DRS_QC_PASS', 'KW_DATE_OBS', 'KW_OUTPUT',
+    'KW_DRS_QC_PASS', 'KW_DATE_OBS', 'KW_OUTPUT', 'KW_CRUNFILE',
     'KW_DRS_DATE', 'KW_C_FLIP', 'KW_C_CVRTE',
     'KW_C_RESIZE', 'KW_DRS_DATE_NOW', 'KW_C_FTYPE', 'KW_FIBER',
     'KW_THERM_RATIO', 'KW_THERM_RATIO_U', 'KW_MID_OBS_TIME',
@@ -715,6 +715,10 @@ KW_EFF_RON = Keyword('KW_EFF_RON', key='NULL', dtype=str, source=__NAME__,
 # the output key for drs outputs
 KW_OUTPUT = Keyword('KW_OUTPUT', key='NULL', dtype=str, source=__NAME__,
                     description='the output key for drs outputs')
+
+# the config run file used (if given)
+KW_CRUNFILE = Keyword('KW_CRUNFILE', key='NULL', dtype=str, source=__NAME__,
+                      description='the config run file used (if given)')
 
 # -----------------------------------------------------------------------------
 # Define qc variables

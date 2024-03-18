@@ -414,15 +414,9 @@ def flat_blaze_write(params: ParamDict, recipe: DrsRecipe, infile: DrsFitsFile,
     # define header keys for output file
     # copy keys from input file
     blazefile.copy_original_keys(infile)
-    # add version
-    blazefile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
-    # add dates
-    blazefile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
-    blazefile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
-    # add process id
-    blazefile.add_hkey('KW_PID', value=params['PID'])
-    # add output tag
-    blazefile.add_hkey('KW_OUTPUT', value=blazefile.name)
+    # add core values (that should be in all headers)
+    blazefile.add_core_hkeys(params)
+    # add fiber
     blazefile.add_hkey('KW_FIBER', value=fiber)
     # add input files (and deal with combining or not combining)
     if combine:

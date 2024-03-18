@@ -3273,15 +3273,9 @@ def write_wavesol(params: ParamDict, recipe: DrsRecipe, fiber: str,
     # ----------------------------------------------------------------------
     # copy original keys from fp file
     wavefile.copy_original_keys(fpfile)
-    # add version
-    wavefile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
-    # add dates
-    wavefile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
-    wavefile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
-    # add process id
-    wavefile.add_hkey('KW_PID', value=params['PID'])
-    # add output tag
-    wavefile.add_hkey('KW_OUTPUT', value=wavefile.name)
+    # add core values (that should be in all headers)
+    wavefile.add_core_hkeys(params)
+    # add fiber
     wavefile.add_hkey('KW_FIBER', value=fiber)
     # ------------------------------------------------------------------
     # set input header keys

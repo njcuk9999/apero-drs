@@ -252,15 +252,9 @@ def save_tmp_orderps_file(params: ParamDict, recipe: DrsRecipe,
                                     dymap=sprops['SHAPEY'], )
         # copy full header from order profile
         orderpsfile.copy_header(header=orderhdr)
-        # add version
-        orderpsfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
-        # add dates
-        orderpsfile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
-        orderpsfile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
-        # add process id
-        orderpsfile.add_hkey('KW_PID', value=params['PID'])
-        # add output tag
-        orderpsfile.add_hkey('KW_OUTPUT', value=orderpsfile.name)
+        # add core values (that should be in all headers)
+        orderpsfile.add_core_hkeys(params)
+        # add fiber
         orderpsfile.add_hkey('KW_FIBER', value=fiber)
         # add the shape keys
         orderpsfile.add_hkey('KW_CDBSHAPEL', value=sprops['SHAPELFILE'])
@@ -649,15 +643,9 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     # define header keys for output file
     # copy keys from input file (excluding loc)
     e2dsfile.copy_original_keys(infile, exclude_groups=['loc'])
-    # add version
-    e2dsfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
-    # add dates
-    e2dsfile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
-    e2dsfile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
-    # add process id
-    e2dsfile.add_hkey('KW_PID', value=params['PID'])
-    # add output tag
-    e2dsfile.add_hkey('KW_OUTPUT', value=e2dsfile.name)
+    # add core values (that should be in all headers)
+    e2dsfile.add_core_hkeys(params)
+    # add fiber
     e2dsfile.add_hkey('KW_FIBER', value=fiber)
     # add input files (and deal with combining or not combining)
     if combine:
@@ -955,15 +943,9 @@ def write_extraction_files_ql(params, recipe, infile, rawfiles, combine, fiber,
     # define header keys for output file
     # copy keys from input file (excluding loc)
     e2dsfile.copy_original_keys(infile, exclude_groups=['loc'])
-    # add version
-    e2dsfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
-    # add dates
-    e2dsfile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
-    e2dsfile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
-    # add process id
-    e2dsfile.add_hkey('KW_PID', value=params['PID'])
-    # add output tag
-    e2dsfile.add_hkey('KW_OUTPUT', value=e2dsfile.name)
+    # add core values (that should be in all headers)
+    e2dsfile.add_core_hkeys(params)
+    # add fiber
     e2dsfile.add_hkey('KW_FIBER', value=fiber)
     # add input files (and deal with combining or not combining)
     if combine:

@@ -590,6 +590,8 @@ def ref_dark_fp_cube(params: ParamDict, recipe: DrsRecipe,
         outfile.construct_filename(infile=extfile)
         # copy keys from input file
         outfile.copy_original_keys(extfile)
+        # add core values (that should be in all headers)
+        outfile.add_core_hkeys(params)
         # add median cube to outfile instance
         outfile.data = extfile.data
         # add to median cube storage
@@ -639,15 +641,9 @@ def save_uncorrected_ext_fp(params: ParamDict, recipe: DrsRecipe,
     # define header keys for output file
     # copy keys from input file (excluding loc)
     e2dsfile.copy_original_keys(infile, exclude_groups=['loc'])
-    # add version
-    e2dsfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
-    # add dates
-    e2dsfile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
-    e2dsfile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
-    # add process id
-    e2dsfile.add_hkey('KW_PID', value=params['PID'])
-    # add output tag
-    e2dsfile.add_hkey('KW_OUTPUT', value=e2dsfile.name)
+    # add core values (that should be in all headers)
+    e2dsfile.add_core_hkeys(params)
+    # add fiber
     e2dsfile.add_hkey('KW_FIBER', value=fiber)
     # copy data
     e2dsfile.data = eprops['LEAKCORR']
@@ -870,15 +866,8 @@ def write_leak_ref(params: ParamDict, recipe: DrsRecipe, rawfiles: List[str],
         # data is already added as well
         # so just need other keys
         # ------------------------------------------------------------------
-        # add version
-        outfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
-        # add dates
-        outfile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
-        outfile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
-        # add process id
-        outfile.add_hkey('KW_PID', value=params['PID'])
-        # add output tag
-        outfile.add_hkey('KW_OUTPUT', value=outfile.name)
+        # add core values (that should be in all headers)
+        outfile.add_core_hkeys(params)
         # add input files
         outfile.add_hkey_1d('KW_INFILE1', values=rawfiles, dim1name='file')
         # add input files to outfile

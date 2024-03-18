@@ -252,6 +252,9 @@ def __main__(recipe, params):
             # update header
             infile1.copy_original_keys(infile1, forbid_keys=False,
                                        allkeys=True)
+            # add core values (that should be in all headers)
+            infile1.add_core_hkeys(params)
+            # add the berv keys
             extract.add_berv_keys(params, infile1, bprops)
             # define multi lists
             data_list, name_list = [], []
