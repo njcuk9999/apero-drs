@@ -1085,15 +1085,8 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
     # ------------------------------------------------------------------
     # copy keys from input file
     corrfile.copy_original_keys(infile)
-    # add version
-    corrfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
-    # add dates
-    corrfile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
-    corrfile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
-    # add process id
-    corrfile.add_hkey('KW_PID', value=params['PID'])
-    # add output tag
-    corrfile.add_hkey('KW_OUTPUT', value=corrfile.name)
+    # add core values (that should be in all headers)
+    corrfile.add_core_hkeys(params)
     # add input files (and deal with combining or not combining)
     if combine:
         hfiles = rawfiles

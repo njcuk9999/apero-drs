@@ -495,15 +495,8 @@ def write_reference_files(params: ParamDict, recipe: DrsRecipe,
     # define header keys for output file
     # copy keys from input file
     outfile.copy_original_keys(reffile)
-    # add version
-    outfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
-    # add dates
-    outfile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
-    outfile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
-    # add process id
-    outfile.add_hkey('KW_PID', value=params['PID'])
-    # add output tag
-    outfile.add_hkey('KW_OUTPUT', value=outfile.name)
+    # add core values (that should be in all headers)
+    outfile.add_core_hkeys(params)
     # add qc parameters
     outfile.add_qckeys(qc_params)
     # ------------------------------------------------------------------
@@ -664,15 +657,8 @@ def dark_write_files(params: ParamDict, recipe: DrsRecipe, dprtype: str,
     # define header keys for output file
     # copy keys from input file
     outfile.copy_original_keys(infile)
-    # add version
-    outfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
-    # add dates
-    outfile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
-    outfile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
-    # add process id
-    outfile.add_hkey('KW_PID', value=params['PID'])
-    # add output tag
-    outfile.add_hkey('KW_OUTPUT', value=outfile.name)
+    # add core values (that should be in all headers)
+    outfile.add_core_hkeys(params)
     # add input files (and deal with combining or not combining)
     if combine:
         hfiles = rawfiles

@@ -385,13 +385,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # define header keys for output file
         # copy keys from input file
         outfile.copy_original_keys(infile)
-        # add version
-        outfile.add_hkey('KW_PPVERSION', value=params['DRS_VERSION'])
-        # add dates
-        outfile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
-        outfile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
-        # add process id
-        outfile.add_hkey('KW_PID', value=params['PID'])
+        # add core values (that should be in all headers)
+        outfile.add_core_hkeys(params)
         # add input filename
         outfile.add_hkey_1d('KW_INFILE1', values=[infile.basename],
                             dim1name='infile')

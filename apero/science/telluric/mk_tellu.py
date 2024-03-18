@@ -638,17 +638,10 @@ def mk_tellu_write_trans_file(params, recipe, infile, rawfiles, fiber, combine,
     # ------------------------------------------------------------------
     # copy keys from input file
     transfile.copy_original_keys(infile, exclude_groups='wave')
+    # add core values (that should be in all headers)
+    transfile.add_core_hkeys(params)
     # add wave keys
     transfile = wave.add_wave_keys(transfile, refprops)
-    # add version
-    transfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
-    # add dates
-    transfile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
-    transfile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
-    # add process id
-    transfile.add_hkey('KW_PID', value=params['PID'])
-    # add output tag
-    transfile.add_hkey('KW_OUTPUT', value=transfile.name)
     # add input files (and deal with combining or not combining)
     if combine:
         hfiles = rawfiles
@@ -769,15 +762,8 @@ def mk_write_model(params: ParamDict, recipe: DrsRecipe, infile: DrsFitsFile,
     # ------------------------------------------------------------------
     # copy keys from input file
     model_file.copy_original_keys(infile, exclude_groups='wave')
-    # add version
-    model_file.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
-    # add dates
-    model_file.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
-    model_file.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
-    # add process id
-    model_file.add_hkey('KW_PID', value=params['PID'])
-    # add output tag
-    model_file.add_hkey('KW_OUTPUT', value=model_file.name)
+    # add core values (that should be in all headers)
+    model_file.add_core_hkeys(params)
     # add qc parameters
     model_file.add_qckeys(qc_params)
     # add constants

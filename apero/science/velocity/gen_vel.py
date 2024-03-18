@@ -1419,15 +1419,8 @@ def write_ccf(params, recipe, infile, props, rawfiles, combine, qc_params,
     # define header keys for output file
     # copy keys from input file
     ccf_file.copy_original_keys(infile)
-    # add version
-    ccf_file.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
-    # add dates
-    ccf_file.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
-    ccf_file.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
-    # add process id
-    ccf_file.add_hkey('KW_PID', value=params['PID'])
-    # add output tag
-    ccf_file.add_hkey('KW_OUTPUT', value=ccf_file.name)
+    # add core values (that should be in all headers)
+    ccf_file.add_core_hkeys(params)
     # add input files (and deal with combining or not combining)
     if combine:
         hfiles = rawfiles

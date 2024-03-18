@@ -1143,15 +1143,9 @@ def write_localisation_files(params: ParamDict, recipe: DrsRecipe,
     # define header keys for output file
     # copy keys from input file
     orderpfile.copy_original_keys(infile)
-    # add version
-    orderpfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
-    # add dates
-    orderpfile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
-    orderpfile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
-    # add process id
-    orderpfile.add_hkey('KW_PID', value=params['PID'])
-    # add output tag
-    orderpfile.add_hkey('KW_OUTPUT', value=orderpfile.name)
+    # add core values (that should be in all headers)
+    orderpfile.add_core_hkeys(params)
+    # add fiber
     orderpfile.add_hkey('KW_FIBER', value=fiber)
     # add input files (and deal with combining or not combining)
     if combine:
@@ -1193,15 +1187,9 @@ def write_localisation_files(params: ParamDict, recipe: DrsRecipe,
     # define header keys for output file
     # copy keys from input file
     loco1file.copy_original_keys(infile)
-    # add version
-    loco1file.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
-    # add dates
-    loco1file.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
-    loco1file.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
-    # add process id
-    loco1file.add_hkey('KW_PID', value=params['PID'])
-    # add output tag
-    loco1file.add_hkey('KW_OUTPUT', value=loco1file.name)
+    # add core values (that should be in all headers)
+    loco1file.add_core_hkeys(params)
+    # add fiber
     loco1file.add_hkey('KW_FIBER', value=fiber)
     # add input files (and deal with combining or not combining)
     if combine:

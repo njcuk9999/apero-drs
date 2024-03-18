@@ -1089,15 +1089,8 @@ def skyclean_write(params: ParamDict, recipe: DrsRecipe, infile: DrsFitsFile,
     # -------------------------------------------------------------------------
     # copy keys from input file
     skyfile.copy_original_keys(infile)
-    # add version
-    skyfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
-    # add dates
-    skyfile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
-    skyfile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
-    # add process id
-    skyfile.add_hkey('KW_PID', value=params['PID'])
-    # add output tag
-    skyfile.add_hkey('KW_OUTPUT', value=skyfile.name)
+    # add core values (that should be in all headers)
+    skyfile.add_core_hkeys(params)
     # add input files (and deal with combining or not combining)
     if combine:
         infiles = rawfiles

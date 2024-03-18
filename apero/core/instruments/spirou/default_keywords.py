@@ -594,8 +594,13 @@ KW_EFF_RON.set(key='EFFRON', comment='Measured eff readout noise before ext')
 # -----------------------------------------------------------------------------
 # Define DRS outputs keywords
 # -----------------------------------------------------------------------------
+# the DRS output identification code
 KW_OUTPUT = KW_OUTPUT.copy(__NAME__)
 KW_OUTPUT.set(key='DRSOUTID', comment='DRS output identification code')
+
+# the config run file used (if given)
+KW_CRUNFILE = KW_CRUNFILE.copy(__NAME__)
+KW_CRUNFILE.set(key='CRUNFILE', comment='Config run file used')
 
 # -----------------------------------------------------------------------------
 # Define qc variables

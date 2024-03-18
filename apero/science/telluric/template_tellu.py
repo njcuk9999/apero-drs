@@ -1283,15 +1283,8 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     # template_file.copy_original_keys(infile, exclude_groups='wave')
     # add wave keys
     template_file = wave.add_wave_keys(template_file, wprops)
-    # add version
-    template_file.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
-    # add dates
-    template_file.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
-    template_file.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
-    # add process id
-    template_file.add_hkey('KW_PID', value=params['PID'])
-    # add output tag
-    template_file.add_hkey('KW_OUTPUT', value=template_file.name)
+    # add core values (that should be in all headers)
+    template_file.add_core_hkeys(params)
     # add qc parameters
     template_file.add_qckeys(qc_params)
     # deal with number of files total + used
@@ -1443,17 +1436,10 @@ def mk_1d_template_write(params, recipe, infile, props, filetype, fiber,
     template_file.copy_original_keys(infile, exclude_groups='wave')
     template_file.copy_hdict(template_2d_file)
     template_file.copy_header(template_2d_file)
+    # add core values (that should be in all headers)
+    template_file.add_core_hkeys(params)
     # add wave keys
     template_file = wave.add_wave_keys(template_file, wprops)
-    # add version
-    template_file.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
-    # add dates
-    template_file.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
-    template_file.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
-    # add process id
-    template_file.add_hkey('KW_PID', value=params['PID'])
-    # add output tag
-    template_file.add_hkey('KW_OUTPUT', value=template_file.name)
     # add qc parameters
     template_file.add_qckeys(qc_params)
     # set data
