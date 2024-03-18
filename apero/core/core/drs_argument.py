@@ -1420,7 +1420,7 @@ class _ExtendedHelp(DrsAction):
         :param kwargs: keyword arguments passed to argparse.Action.__init__
         """
         # set class name
-        self.class_name = '_ActivateDebug'
+        self.class_name = '_ExtendedHelp'
         # define recipe and parser as None (overwritten in __call__)
         self.recipe = None
         self.parser = None
@@ -1454,7 +1454,7 @@ class _ExtendedHelp(DrsAction):
         String representation of this class
         :return:
         """
-        return '_ActivateDebug[DrsAction]'
+        return '_ExtendedHelp[DrsAction]'
 
     def _print_extended_help(self):
         """
