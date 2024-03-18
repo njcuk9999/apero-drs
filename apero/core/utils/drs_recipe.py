@@ -1508,6 +1508,9 @@ class DrsRecipe(object):
         spec.skip = skip
         spec.helpstr = props['help']
         self.specialargs[name] = spec
+        # deal with switches
+        if props['action'] == 'store_true':
+            spec.dtype = 'switch'
 
     def drs_usage(self, output: str = 'default'
                   ) -> Union[str, Tuple[str, dict, dict, dict]]:
@@ -1657,6 +1660,18 @@ class DrsRecipe(object):
                     else:
                         basefile = Path(strfiles[f_it]).name
                         self.runstring += '{0} '.format(basefile)
+            # deal with switch arguments
+            elif arg.dtype == 'switch':
+                # skip Nones
+                if iarg in ['None', None, '']:
+                    continue
+                # only add if value is different from default
+                if iarg:
+                    inputstr += '{0} || '.format(argname)
+                    # add to run string
+                    if kind != 'arg':
+                        self.runstring += '{0} '.format(argname)
+            # else we just add the name=value
             else:
                 inputstr += '{0}={1} || '.format(argname, iarg)
                 # skip Nones

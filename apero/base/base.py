@@ -17,6 +17,7 @@ import rules:
 """
 import os
 import string
+import sys
 import warnings
 from collections import OrderedDict
 from pathlib import Path
@@ -176,6 +177,18 @@ LOG_FLAGS['ONLYPRECLEAN'] = 'Only do preclean part of telluric correction'
 # =============================================================================
 # Define functions
 # =============================================================================
+class BaseAperoError(Exception):
+    """
+    This error should only be used for errors that are expected and
+    give a clear indiciation on what the user should do. No traceback will be
+    given to keep it clear and consise.
+    """
+    def __init__(self, message):
+        # remove traceback - we want a clear message to the user
+        sys.tracebacklimit = 0
+        super().__init__(message)
+
+
 def load_database_yaml() -> dict:
     """
     Load database yaml file
@@ -194,11 +207,11 @@ def load_database_yaml() -> dict:
             return load_yaml(path)
         else:
             # raise an error
-            emsg = 'Core Error: {0}={1} does not exist'
-            raise EnvironmentError(emsg.format(USER_ENV, path))
+            emsg = '{0}={1} does not exist'
+            raise BaseAperoError(emsg.format(USER_ENV, path))
     # else raise except (cannot come from database)
-    emsg = 'Core Error: {0} must be set (please run setup script)'
-    raise EnvironmentError(emsg.format(USER_ENV))
+    emsg = '{0} must be set (please run setup script or add {0} to your PATH)'
+    raise BaseAperoError(emsg.format(USER_ENV))
 
 
 def load_install_yaml() -> dict:
@@ -219,11 +232,11 @@ def load_install_yaml() -> dict:
             return load_yaml(path)
         else:
             # raise an error
-            emsg = 'Core Error: {0}={1} does not exist'
-            raise EnvironmentError(emsg.format(USER_ENV, path))
+            emsg = '{0}={1} does not exist'
+            raise BaseAperoError(emsg.format(USER_ENV, path))
     # else raise except (cannot come from database)
-    emsg = 'Core Error: {0} must be set (please run setup script)'
-    raise EnvironmentError(emsg.format(USER_ENV))
+    emsg = '{0} must be set (please run setup script or add {0} to your PATH)'
+    raise BaseAperoError(emsg.format(USER_ENV))
 
 
 def load_yaml(filename: str) -> dict:
