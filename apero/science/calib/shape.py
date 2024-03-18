@@ -1895,15 +1895,8 @@ def write_shape_ref_files(params, recipe, fpfile, hcfile, rawfpfiles,
     # define header keys for output file
     # copy keys from input file
     outfile1.copy_original_keys(fpfile)
-    # add version
-    outfile1.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
-    # add dates
-    outfile1.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
-    outfile1.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
-    # add process id
-    outfile1.add_hkey('KW_PID', value=params['PID'])
-    # add output tag
-    outfile1.add_hkey('KW_OUTPUT', value=outfile1.name)
+    # add core values (that should be in all headers)
+    outfile1.add_core_hkeys(params)
     # add input files (and deal with combining or not combining)
     # deal with not having hc or fp files
     if hcfile is None:
@@ -2097,15 +2090,8 @@ def write_shape_ref_files(params, recipe, fpfile, hcfile, rawfpfiles,
             debugfile3.copy_original_keys(hcfile)
             # add in files
             debugfile3.infiles = list(outfile1.infiles)
-            # add version
-            debugfile3.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
-            # add dates
-            debugfile3.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
-            debugfile3.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
-            # add process id
-            debugfile3.add_hkey('KW_PID', value=params['PID'])
-            # add output tag
-            debugfile3.add_hkey('KW_OUTPUT', value=debugfile3.name)
+            # add core values (that should be in all headers)
+            debugfile3.add_core_hkeys(params)
             # add input files (and deal with combining or not combining)
             debugfile3.add_hkey_1d('KW_INFILE1', values=rawhcfiles,
                                    dim1name='hcfiles')
@@ -2284,15 +2270,8 @@ def write_shape_local_files(params, recipe, infile, combine, rawfiles, props,
     # define header keys for output file
     # copy keys from input file
     outfile.copy_original_keys(infile)
-    # add version
-    outfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
-    # add dates
-    outfile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
-    outfile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
-    # add process id
-    outfile.add_hkey('KW_PID', value=params['PID'])
-    # add output tag
-    outfile.add_hkey('KW_OUTPUT', value=outfile.name)
+    # add core values (that should be in all headers)
+    outfile.add_core_hkeys(params)
     # add input files (and deal with combining or not combining)
     if combine:
         hfiles = rawfiles
