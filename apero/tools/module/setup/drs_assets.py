@@ -266,7 +266,7 @@ def check_assets(params: ParamDict, tarfile: str = None):
     WLOG(params, '', f'Extracting tar file: {tarfile}')
     # extract tar file
     try:
-        drs_path.extract_tarfile(tarfile, abs_asset_path)
+        drs_path.extract_tarfile(tarfile, os.path.dirname(abs_asset_path))
     except Exception as e:
         emsg = 'Cannot extract tar file: {0} \n\t Error {1}: {2}'
         eargs = [tarfile, type(e), str(e)]

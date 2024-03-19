@@ -48,13 +48,19 @@ apero_dcheck.in_block_str = 'red'
 apero_dcheck.out_block_str = 'red'
 apero_dcheck.extension = 'fits'
 apero_dcheck.description = ('Developer functionality dealing with creating'
-                               ' checksums for data files')
+                            ' checksums for data files. If run with no '
+                            'arguments this just checks whether the current '
+                            'assets directory is up to date. If run with '
+                            '--indir it will update the checksums and tar. '
+                            'If run with --tarfile it will use that tar file '
+                            ' to update the assets directory')
 apero_dcheck.kind = 'misc'
 apero_dcheck.set_debug_plots()
 apero_dcheck.set_summary_plots()
 
 apero_dcheck.set_kwarg(name='--indir', dtype=str, default='None',
-                       helpstr='Input data directory')
+                       helpstr='Input data directory. If set recreates '
+                               'checksums and tar file from --indir')
 apero_dcheck.set_kwarg(name='--tarfile', dtype=str, default='None',
                        helpstr='Force a local assets tar file to be used '
                                '(If correct does not download from server)')
