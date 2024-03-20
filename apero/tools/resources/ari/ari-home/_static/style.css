@@ -22,6 +22,7 @@ button {
   width: 100%;
 }
 
+
 button:hover {
   opacity: 0.8;
 }
@@ -31,6 +32,12 @@ button:hover {
   width: auto;
   padding: 10px 18px;
   background-color: #f44336;
+}
+
+.instbtn {
+  width: auto;
+  padding: 10px 18px;
+  background-color: #4DA6FF;
 }
 
 /* Center the image and position the close button */

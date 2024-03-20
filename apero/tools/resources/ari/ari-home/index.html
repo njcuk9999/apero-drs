@@ -137,7 +137,7 @@
 
 <br>
 <div>
-<button id="loginButton" onclick="openModal()" style="width:auto;">Login</button>
+<button id="loginButton" onclick="openModal('none')" style="width:auto;">Login</button>
 <button onclick="logout()" style="width:auto;">Logout</button>
 <p>
 </div>
@@ -173,7 +173,7 @@
 <script>mainLogin()</script>
 <br>
 
-<p>Please select a reduction below.</p>
+<p>Please select a reduction:</p>
 
 
 
@@ -187,6 +187,15 @@
 <div id="notloggedin"></div>
 
 <script>ListPages()</script>
+
+
+<br>
+<br>
+<br>
+
+<p>Or login with a generic account:</p>
+<button id="loginButtonInst" onclick="openModal('spirou')" class="instbtn">SPIRou Login</button>
+<button id="loginButtonInst" onclick="openModal('nirps')" class="instbtn">NIRPS Login</button>
 
 <div class="clearer"></div>
 </div>
