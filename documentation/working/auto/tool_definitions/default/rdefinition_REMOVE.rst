@@ -45,8 +45,8 @@ No optional arguments
      --obsdir[STRING] // Delete all instances of a certain observation directory from disk and databases
      --file_prefix[STRING] // Delete all instances of a certain file prefix from disk and databases
      --file_suffix[STRING] // Delete all instances of a certain file suffix from disk and databases
-     --test[True,False,1,0,None] // Whether to run in test mode (recommended first time)
-     --warn[True/False] // Whether to warn the user we are not in test mode.
+     --test // Whether to run in test mode (recommended first time)
+     --nowarn // Whether to warn the user we are not in test mode.
 
 
 5. Special Arguments
@@ -69,7 +69,7 @@ No optional arguments
      --ref[STRING] // If set then recipe is a reference recipe (e.g. reference recipes write to calibration database as reference calibrations)
      --crunfile[STRING] // Set a run file to override default arguments
      --quiet[STRING] // Run recipe without start up text
-     --nosave[STRING] // Do not save any outputs (debug/information run). Note some recipes require other recipesto be run. Only use --nosave after previous recipe runs have been run successfully at least once.
+     --nosave // Do not save any outputs (debug/information run). Note some recipes require other recipesto be run. Only use --nosave after previous recipe runs have been run successfully at least once.
      --force_indir[STRING] // [STRING] Force the default input directory (Normally set by recipe)
      --force_outdir[STRING] // [STRING] Force the default output directory (Normally set by recipe)
 

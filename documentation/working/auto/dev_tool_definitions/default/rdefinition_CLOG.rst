@@ -30,12 +30,12 @@ No schematic set
 
 .. code-block:: 
 
-    apero_changelog.py {preview}[True/False] {options}
+    apero_changelog.py {preview} {options}
 
 
 .. code-block:: 
 
-     {preview}[True/False] // [BOOLEAN] If True previews the changelog before making any changes if False makes changes without preview
+     {preview} // [BOOLEAN] If True previews the changelog before making any changes if False makes changes without preview
 
 
 4. Optional Arguments
@@ -65,7 +65,7 @@ No optional arguments
      --ref[STRING] // If set then recipe is a reference recipe (e.g. reference recipes write to calibration database as reference calibrations)
      --crunfile[STRING] // Set a run file to override default arguments
      --quiet[STRING] // Run recipe without start up text
-     --nosave[STRING] // Do not save any outputs (debug/information run). Note some recipes require other recipesto be run. Only use --nosave after previous recipe runs have been run successfully at least once.
+     --nosave // Do not save any outputs (debug/information run). Note some recipes require other recipesto be run. Only use --nosave after previous recipe runs have been run successfully at least once.
      --force_indir[STRING] // [STRING] Force the default input directory (Normally set by recipe)
      --force_outdir[STRING] // [STRING] Force the default output directory (Normally set by recipe)
 

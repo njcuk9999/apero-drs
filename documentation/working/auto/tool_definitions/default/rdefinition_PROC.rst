@@ -50,7 +50,7 @@ No schematic set
      --include_obs_dirs[STRING] // PROCESS_INCLUDE_OBS_DIRS_HELP
      --cores[STRING] // [INTEGER] Number of cores to use in processing
      --test[True,False,1,0,None] // [BOOLEAN] If True does not process any files just prints an output of what recipes would be run
-     --trigger[True/False] // [BOOLEAN] If True activates trigger mode (i.e. will stop processing at the first point we do not find required files). Note one must define --night in trigger mode
+     --trigger // [BOOLEAN] If True activates trigger mode (i.e. will stop processing at the first point we do not find required files). Note one must define --night in trigger mode
      --science_targets[STRING] // [STRING] A list of object names to process as science targets (if unsets default to the run.in file) must be separated by a comma and surrounded with speech-marks i.e. 'target1,target2,target3'
      --telluric_targets[STRING] // [STRING] A list of object names to process as telluric targets (if unsets default to the run.in file) must be separated by a commas and surrounded with speech-marks i.e. 'target1,target2,target3'
      --update_objdb[STRING] // Update the object database - only recommended if doing a full reprocess with all data.
@@ -76,7 +76,7 @@ No schematic set
      --ref[STRING] // If set then recipe is a reference recipe (e.g. reference recipes write to calibration database as reference calibrations)
      --crunfile[STRING] // Set a run file to override default arguments
      --quiet[STRING] // Run recipe without start up text
-     --nosave[STRING] // Do not save any outputs (debug/information run). Note some recipes require other recipesto be run. Only use --nosave after previous recipe runs have been run successfully at least once.
+     --nosave // Do not save any outputs (debug/information run). Note some recipes require other recipesto be run. Only use --nosave after previous recipe runs have been run successfully at least once.
      --force_indir[STRING] // [STRING] Force the default input directory (Normally set by recipe)
      --force_outdir[STRING] // [STRING] Force the default output directory (Normally set by recipe)
 

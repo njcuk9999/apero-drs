@@ -45,7 +45,7 @@ No optional arguments
      --identifier[STRING] // Add a specific file identifier to the file reject list. E.g. for spirou this is the odocode, for nirps this is raw the filename
      --objname[STRING] // Add a specific object name to the object reject list
      --autofill[STRING] // Autofill the questions asked. For identifier this is PP,TEL,RV,COMMENT e.g. 1,1,1,bad target For objname this is ALIASES,NOTES e.g. alias1|alias2|alias3,Not a real target
-     --test[True/False] // Whether to run in test mode (recommended first time)
+     --test // Whether to run in test mode (recommended first time)
 
 
 5. Special Arguments
@@ -68,7 +68,7 @@ No optional arguments
      --ref[STRING] // If set then recipe is a reference recipe (e.g. reference recipes write to calibration database as reference calibrations)
      --crunfile[STRING] // Set a run file to override default arguments
      --quiet[STRING] // Run recipe without start up text
-     --nosave[STRING] // Do not save any outputs (debug/information run). Note some recipes require other recipesto be run. Only use --nosave after previous recipe runs have been run successfully at least once.
+     --nosave // Do not save any outputs (debug/information run). Note some recipes require other recipesto be run. Only use --nosave after previous recipe runs have been run successfully at least once.
      --force_indir[STRING] // [STRING] Force the default input directory (Normally set by recipe)
      --force_outdir[STRING] // [STRING] Force the default output directory (Normally set by recipe)
 

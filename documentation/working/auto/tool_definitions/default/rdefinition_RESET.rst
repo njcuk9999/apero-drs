@@ -42,20 +42,20 @@ No optional arguments
 
 .. code-block:: 
 
-     --log[True/False] // [BOOLEAN] If True logs the reset else is quite
-     --warn[True/False] // [BOOLEAN] If True asks for user to type 'YES' before each reset
+     --nolog // [BOOLEAN] If True logs the reset else is quite
+     --nowarn // [BOOLEAN] If True asks for user to type 'YES' before each reset
      --database_timeout[INT] // [INTEGER] Set the database timeout number of tries
-     --only_assets[True/False] // Reset only the assets directory
-     --only_tmp[True/False] // Reset only the tmp directory
-     --only_red[True/False] // Reset only the reduced directory
-     --only_calib[True/False] // Reset only the calibration directory
-     --only_tellu[True/False] // Reset only the telluric directory
-     --only_log[True/False] // Reset only the log directory
-     --only_plot[True/False] // Reset only the plot directory
-     --only_run[True/False] // Reset only the run directory
-     --only_lbl[True/False] // Reset only the lbl directory
-     --only_out[True/False] // Reset only the out directory
-     --only_other[True/False] // Reset only the other directory
+     --only_assets // Reset only the assets directory
+     --only_tmp // Reset only the tmp directory
+     --only_red // Reset only the reduced directory
+     --only_calib // Reset only the calibration directory
+     --only_tellu // Reset only the telluric directory
+     --only_log // Reset only the log directory
+     --only_plot // Reset only the plot directory
+     --only_run // Reset only the run directory
+     --only_lbl // Reset only the lbl directory
+     --only_out // Reset only the out directory
+     --only_other // Reset only the other directory
 
 
 5. Special Arguments
@@ -78,7 +78,7 @@ No optional arguments
      --ref[STRING] // If set then recipe is a reference recipe (e.g. reference recipes write to calibration database as reference calibrations)
      --crunfile[STRING] // Set a run file to override default arguments
      --quiet[STRING] // Run recipe without start up text
-     --nosave[STRING] // Do not save any outputs (debug/information run). Note some recipes require other recipesto be run. Only use --nosave after previous recipe runs have been run successfully at least once.
+     --nosave // Do not save any outputs (debug/information run). Note some recipes require other recipesto be run. Only use --nosave after previous recipe runs have been run successfully at least once.
      --force_indir[STRING] // [STRING] Force the default input directory (Normally set by recipe)
      --force_outdir[STRING] // [STRING] Force the default output directory (Normally set by recipe)
 

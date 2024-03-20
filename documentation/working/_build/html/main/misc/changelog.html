@@ -70,22 +70,25 @@
 <div class="pageheader">
 
   <ul>
-    <li><a title="Home" href="../../index.html">
+    <li><a title="Home" href="http://apero.exoplanets.ca/">
         <i class="fa fa-home fa-3x" aria-hidden="true"></i></a></li>
-    <li><a title="install" href="../../user/general/installation.html">
+    <li><a title="install" href="http://apero.exoplanets.ca/user/general/installation.html">
         <i class="fa fa-cog fa-3x" aria-hidden="true"></i></a></li>
     <li><a title="github" href="https://github.com/njcuk9999/apero-drs">
         <i class="fa fa-git-square fa-3x" aria-hidden="true"></i></a></li>
-    <li><a title="download documentation" href="../../apero-docs.pdf">
+    <li><a title="download documentation" href="http://apero.exoplanets.ca/apero-docs.pdf">
         <i class="fa fa-download fa-3x" aria-hidden="true"></i></a></li>
     <li><a title="download paper" href="https://ui.adsabs.harvard.edu/abs/2022PASP..134k4509C">
         <i class="fa fa-file-pdf-o fa-3x" aria-hidden="true"></i></a></li>
     <li><a title="UdeM" href="http://apero.exoplanets.ca/main/misc/udem.html">
         <i class="fa fa-university fa-3x" aria-hidden="true"></i></a></li>
+    <li><a title="ARI" href="http://apero.exoplanets.ca/ari/home/">
+        <i class="fa fa-database fa-3x" aria-hidden="true"></i>
+    </a></li>
   </ul>
     <div>
-    <a href="../../index.html">
-      <img src="../../_static/images/apero_logo.png" alt="APERO" />
+    <a href="http://apero.exoplanets.ca/">
+      <img src="http://apero.exoplanets.ca/_static/images/apero_logo.png" alt="APERO" />
     </a>
     <br>
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A PipelinE to Reduce Observations
@@ -128,8 +131,68 @@ Cook]</p></li>
 </ul>
 </section>
 <section id="id2">
-<h2>0.7.289 (2024-02-13)<a class="headerlink" href="#id2" title="Permalink to this heading">¶</a></h2>
+<h2>0.7.289 (2024-03-12)<a class="headerlink" href="#id2" title="Permalink to this heading">¶</a></h2>
 <ul>
+<li><p>[APERO] correct typo. [Neil Cook]</p></li>
+<li><p>[APERO] Add –objname to reject code (Issue <a class="reference external" href="https://github.com/users/n">https://github.com/users/n</a>
+jcuk9999/projects/7/views/5?pane=issue&amp;itemId=54972211) [Neil Cook]</p></li>
+<li><p>[APERO] Add –identifier to reject code (Issue <a class="reference external" href="https://github.com/user">https://github.com/user</a>
+s/njcuk9999/projects/7/views/5?pane=issue&amp;itemId=54972211) [TODO:
+objname] [Neil Cook]</p></li>
+<li><p>Merge remote-tracking branch ‘origin/v0.7.289-live’ into
+v0.7.289-live. [Neil Cook]</p></li>
+<li><p>[APERO] update neesd <cite>ASK_CREATE</cite>. [Neil Cook]</p></li>
+<li><p>[APERO] add ari-home content. [Neil Cook]</p></li>
+<li><p>[APERO] add ari-home content. [Neil Cook]</p></li>
+<li><p>[APERO] update ARI with new login procedure. [Neil Cook]</p></li>
+<li><p>[APERO] update offline and minidata paths. [Neil Cook]</p></li>
+<li><p>[APERO] Remove sys.exit and replace with WLOG(params, ‘error’, …) +
+raise SystemExit() [Neil Cook]</p></li>
+<li><p>Merge remote-tracking branch ‘origin/v0.7.289-live’ into
+v0.7.289-live. [Neil Cook]</p></li>
+<li><p>Merge remote-tracking branch ‘origin/v0.7.289-live’ into
+v0.7.289-live. [Neil Cook]</p></li>
+<li><p>Merge remote-tracking branch ‘origin/v0.7.289-live’ into
+v0.7.289-live. [Neil Cook]</p></li>
+<li><p>Merge remote-tracking branch ‘origin/v0.7.289-live’ into
+v0.7.289-live. [Neil Cook]</p></li>
+<li><p>[APERO] add extra object to tellu whitelist. [Neil Cook]</p></li>
+<li><p>[APERO] bug fix - deal with recalculating templates when qc fails.
+[Neil Cook]</p></li>
+<li><p>[APERO] astrometric check - write bad objects to file. [Neil Cook]</p></li>
+<li><p>[APERO] add extra object to tellu whitelist. [Neil Cook]</p></li>
+<li><p>[APERO] astrometric check - write bad objects to file. [Neil Cook]</p></li>
+<li><p>[APERO] bug fix - deal with recalculating templates when qc fails
+(Issue <a class="reference external" href="https://github.com/njcuk9999/apero-utils/issues/218">https://github.com/njcuk9999/apero-utils/issues/218</a>) [Neil
+Cook]</p></li>
+<li><p>[APERO] fix typo. [Neil Cook]</p></li>
+<li><p>[APERO] astrometric check - write bad objects to file. [Neil Cook]</p></li>
+<li><p>[APERO] astrometric check - write bad objects to file. [Neil Cook]</p></li>
+<li><p>Merge remote-tracking branch ‘origin/v0.7.289-live’ into
+v0.7.289-live. [Neil Cook]</p></li>
+<li><p>[APERO] fix teff source limit (Issue
+<a class="reference external" href="https://github.com/njcuk9999/apero-utils/issues/215">https://github.com/njcuk9999/apero-utils/issues/215</a>) [Neil Cook]</p></li>
+<li><p>[APERO] fix for having datadir defined and not <cite>LBL_PATH</cite> or
+<cite>DRS_DATA_OTHER</cite> - we didn’t create directories (Issue #748), also fixed
+dev mode for installation not working. [Neil Cook]</p></li>
+<li><p>[APERO] bug fix - deal with no rows in table for astrometric pending
+table. [Neil Cook]</p></li>
+<li><p>[APERO] upgrade requirements on mysql-connector-python to 8.3.0 (Issue
+#707) [Neil Cook]</p></li>
+<li><p>[APERO] <cite>apero_remove.py</cite> - add <cite>apero_remove</cite> code to remove <cite>obs_dir</cite>
+and/or file prefix/suffix. [Neil Cook]</p></li>
+<li><p>[APERO] <cite>apero.base.drs_db.py</cite> - corrections for duplicate and
+<cite>replace_paths</cite> functionality. [Neil Cook]</p></li>
+<li><p>[APERO] add a duplicate and <cite>replace_paths</cite> function to the database
+classes (to support copying) [Neil Cook]</p></li>
+<li><p>[APERO] <cite>database_update.py</cite> - remove some blank spaces. [Neil Cook]</p></li>
+<li><p><cite>Apero.science.telluric.gen_tellu.py</cite> - add wave mask to only reject snr
+in orders smaller than 1800um for all instruments. [Neil Cook]</p></li>
+<li><p>Merge remote-tracking branch ‘origin/v0.7.289-live’ into
+v0.7.289-live. [Neil Cook]</p></li>
+<li><p>[APERO] update version/changelog/documentation. [Neil Cook]</p></li>
+<li><p>[APERO-ARI] fix when we have no data adding dprtypes to object. [Neil
+Cook]</p></li>
 <li><p>[APERO] <cite>apero_ri.py</cite> - Fix for unique values containing None. [Neil
 Cook]</p></li>
 <li><p>[APERO] <cite>apero_ri.py</cite> - Fix for unique values containing None. [Neil

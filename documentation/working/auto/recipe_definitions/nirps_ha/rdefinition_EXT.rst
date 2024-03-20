@@ -69,7 +69,7 @@ No schematic set
      --shapel[FILE:SHAPEL] // SHAPELFILE_HELP
      --leakcorr[True/False] // LEAKCORR_HELP
      --wavefile[FILE:WAVESOL_REF,WAVE_NIGHT,WAVESOL_DEFAULT] // WAVEFILE_HELP
-     --force_ref_wave[True/False] // Force using the reference wave solution
+     --force_ref_wave // Force using the reference wave solution
      --no_in_qc // Disable checking the quality control of input files
 
 
@@ -93,7 +93,7 @@ No schematic set
      --ref[STRING] // If set then recipe is a reference recipe (e.g. reference recipes write to calibration database as reference calibrations)
      --crunfile[STRING] // Set a run file to override default arguments
      --quiet[STRING] // Run recipe without start up text
-     --nosave[STRING] // Do not save any outputs (debug/information run). Note some recipes require other recipesto be run. Only use --nosave after previous recipe runs have been run successfully at least once.
+     --nosave // Do not save any outputs (debug/information run). Note some recipes require other recipesto be run. Only use --nosave after previous recipe runs have been run successfully at least once.
      --force_indir[STRING] // [STRING] Force the default input directory (Normally set by recipe)
      --force_outdir[STRING] // [STRING] Force the default output directory (Normally set by recipe)
 
