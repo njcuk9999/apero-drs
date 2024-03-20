@@ -1,5 +1,12 @@
-function openModal() {
-  document.getElementById("loginModal").style.display = "block";
+function openModal(username) {
+
+	document.getElementById("loginModal").style.display = "block";
+
+	if (!(username === 'none')) {
+		var inputElement = document.getElementById("uname");
+		inputElement.placeholder = username
+		inputElement.value = username;
+	}
 }
 
 function closeModal() {

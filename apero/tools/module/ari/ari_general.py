@@ -373,9 +373,9 @@ def upload(params: ParamDict) -> None:
     ari_core.do_rsync(params, mode='send', path_in=base_path,
                       path_out=remote_path)
     # get home path
-    home_path = str(os.path.join(params['DRS_DATA_OTHER'], 'ari-home'))
+    home_path = str(os.path.join(params['DRS_DATA_OTHER'], 'ari-home', os.sep))
     # download the userlist.txt file and copy it over userlist_yaml
-    remote_home_path = str(os.path.join(ssh_directory, 'home'))
+    remote_home_path = str(os.path.join(ssh_directory, 'home/'))
     # send the home directory
     ari_core.do_rsync(params, mode='send', path_in=home_path,
                       path_out=remote_home_path)
