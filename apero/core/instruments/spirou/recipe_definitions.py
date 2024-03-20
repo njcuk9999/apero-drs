@@ -1853,10 +1853,16 @@ limited_seq.add(apero_postprocess, name='SCIPOST', files=[files.pp_file],
 # pp sequence (for trigger)
 # -----------------------------------------------------------------------------
 pp_seq = drs_recipe.DrsRunSequence('pp_seq', __INSTRUMENT__)
+# define schematic file and description file
+pp_seq.schematic = None
+pp_seq.description_file = 'pp_seq_{0}.rst'.format(__INSTRUMENT__)
 # pp_seq.add(apero_pp_ref, recipe_kind='pre-reference')
 pp_seq.add(apero_preprocess)
 
 pp_seq_opt = drs_recipe.DrsRunSequence('pp_seq_opt', __INSTRUMENT__)
+# define schematic file and description file
+pp_seq_opt.schematic = None
+pp_seq_opt.description_file = 'pp_seq_opt_{0}.rst'.format(__INSTRUMENT__)
 # pp_seq_opt.add(apero_pp_ref, recipe_kind='pre-reference')
 pp_seq_opt.add(apero_preprocess, name='PP_CAL', recipe_kind='pre-cal',
                filters=dict(KW_OBJNAME='CALIB'))

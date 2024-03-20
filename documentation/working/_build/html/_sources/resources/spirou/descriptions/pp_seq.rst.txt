@@ -1,1 +1,1 @@
-This is a pp seq test
+Run apero_preprocess on every raw fits file.
