@@ -5841,6 +5841,7 @@ ari_reset_dict['sphinx-setup'] = ('tools/resources/ari/working',
                                   'ari')
 ari_reset_dict['ari-setup'] = ('tools/resources/ari/ari-config',
                                'ari-config')
+ari_reset_dict['ari-home'] = ('tools/resources/ari/ari-home', 'ari-home')
 ARI_RESET_DICT = Const('ARI_RESET_DICT', value=ari_reset_dict,
                        dtype=dict, source=__NAME__, group=cgroup,
                        description='Define the ARI reset directory (relative '
