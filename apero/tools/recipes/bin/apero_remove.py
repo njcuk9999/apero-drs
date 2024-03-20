@@ -92,8 +92,6 @@ def __main__(recipe, params):
         fileprefix = None
     if filesuffix == 'None':
         filesuffix = None
-    if params['INPUTS']['test'] == 'None':
-        params['INPUTS'].set('test', value=False)
     # deal with non test mode - ask the user
     if not params['INPUTS']['test'] and warn:
         msg = ('Warning this will remove files from disk and the database '

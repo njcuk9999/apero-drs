@@ -547,8 +547,7 @@ remove.set_kwarg(name='--file_prefix', dtype=str, default='None',
 remove.set_kwarg(name='--file_suffix', dtype=str, default='None',
                  helpstr='Delete all instances of a certain file suffix '
                          'from disk and databases')
-remove.set_kwarg(name='--test', dtype='options', default='None',
-                 options=['True', 'False', '1', '0', 'None'],
+remove.set_kwarg(name='--test', dtype='switch',
                  helpstr='Whether to run in test mode (recommended first time)')
 remove.set_kwarg(name='--nowarn', dtype='switch',
                  helpstr='Whether to warn the user we are not in test mode.')
