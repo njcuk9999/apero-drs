@@ -23,6 +23,7 @@ from apero.base import base
 from apero.core import constants
 from apero.core.core import drs_database
 from apero.core.core import drs_log
+from apero.core.core import drs_misc
 from apero.io import drs_path
 from apero.tools.module.ari import ari_core
 from apero.tools.module.ari import ari_find
@@ -50,6 +51,8 @@ textentry = lang.textentry
 AriObject = ari_core.AriObject
 AriRecipe = ari_core.AriRecipe
 FileType = ari_core.FileType
+# Get location of page navigation html
+PAGE_NAV_HTML = '../documentation/working/_templates/layout.html'
 
 
 # =============================================================================
@@ -685,41 +688,37 @@ def recipe_date_table(table: Table, machine_name: str
 # =============================================================================
 # Finder functions
 # =============================================================================
+def html_page_nav():
+
+    layout_path = drs_misc.get_relative_folder(__PACKAGE__, PAGE_NAV_HTML)
+    # read the file
+    with open(layout_path, 'r') as lpage:
+        layout_html = lpage.read()
+    # get the block containing the page header
+    nav_html = layout_html.split('{% block header %}')[-1]
+    nav_html = nav_html.split('{% endblock %}')[0]
+    # return this nav page
+    return nav_html
+
+
 def add_finder_table(params: ParamDict, data_dict: Dict[str, Any]):
     # set function name
     funcname = __NAME__ + '.add_recipe_tables()'
     # get the ari user
     ari_user = params['ARI_USER']
+    # get nav html
+    nav_html = html_page_nav()
     # set html body
     # Take directly from one of the sphinx pages (this is a massive hack)
     html_body1 = """
 
       <div class="pageheader">
 
-      <ul>
-      <li><a title="Home" href="http://apero.exoplanets.ca">
-          <i class="fa fa-home fa-3x" aria-hidden="true"></i></a></li>
-      <li><a title="install" href="http://apero.exoplanets.ca/user/general/installation">
-          <i class="fa fa-cog fa-3x" aria-hidden="true"></i></a></li>
-      <li><a title="github" href="https://github.com/njcuk9999/apero-drs">
-          <i class="fa fa-git-square fa-3x" aria-hidden="true"></i></a></li>
-      <li><a title="download paper" href="https://ui.adsabs.harvard.edu/abs/2022PASP..134k4509C">
-          <i class="fa fa-file-pdf-o fa-3x" aria-hidden="true"></i></a></li>
-      <li><a title="UdeM" href="http://apero.exoplanets.ca/main/misc/udem.html">
-          <i class="fa fa-university fa-3x" aria-hidden="true"></i></a></li>
-    </ul>
-
-      <div>
-      <a href="http://apero.exoplanets.ca">
-        <img src="../_static/images/apero_logo.png" alt="APERO" />
-      </a>
-      <br>
-      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A PipelinE to Reduce Observations
-      </div>
+      {NAV_HTML}
 
       </div>
 
-    <div class="related" role="navigation" aria-label="related navigation">
+      <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -809,7 +808,8 @@ def add_finder_table(params: ParamDict, data_dict: Dict[str, Any]):
                                                 table_class=table_class)
     # build html page
     html_title = 'Finder Charts'
-    html_body1_filled = html_body1.format(TITLE=html_title,
+    html_body1_filled = html_body1.format(NAV_HTML=nav_html,
+                                          TITLE=html_title,
                                           PROFILE=ari_user)
     html_content = error_html.full_page_html(html_body1=html_body1_filled,
                                              html_table=html_table,
@@ -833,33 +833,17 @@ def add_recipe_tables(params: ParamDict, table: Table, machine_name: str):
     funcname = __NAME__ + '.add_recipe_tables()'
     # get the ari user
     ari_user = params['ARI_USER']
+    # get nav html
+    nav_html = html_page_nav()
     # set html body
     # Take directly from one of the sphinx pages (this is a massive hack)
     html_body1 = """
-    <div class="pageheader">
 
-    <ul>
-    <li><a title="Home" href="http://apero.exoplanets.ca">
-        <i class="fa fa-home fa-3x" aria-hidden="true"></i></a></li>
-    <li><a title="install" href="http://apero.exoplanets.ca/user/general/installation">
-        <i class="fa fa-cog fa-3x" aria-hidden="true"></i></a></li>
-    <li><a title="github" href="https://github.com/njcuk9999/apero-drs">
-        <i class="fa fa-git-square fa-3x" aria-hidden="true"></i></a></li>
-    <li><a title="download paper" href="https://ui.adsabs.harvard.edu/abs/2022PASP..134k4509C">
-        <i class="fa fa-file-pdf-o fa-3x" aria-hidden="true"></i></a></li>
-    <li><a title="UdeM" href="http://apero.exoplanets.ca/main/misc/udem.html">
-        <i class="fa fa-university fa-3x" aria-hidden="true"></i></a></li>
-  </ul>
+      <div class="pageheader">
 
-    <div>
-    <a href="http://apero.exoplanets.ca">
-      <img src="../../_static/images/apero_logo.png" alt="APERO" />
-    </a>
-    <br>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A PipelinE to Reduce Observations
-    </div>
+      {NAV_HTML}
 
-    </div>
+      </div>
 
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
@@ -971,7 +955,8 @@ def add_recipe_tables(params: ParamDict, table: Table, machine_name: str):
         # build html page
 
         html_title = 'Recipe log for {0} ({1})'.format(date, ari_user)
-        html_body1_filled = html_body1.format(TITLE=html_title,
+        html_body1_filled = html_body1.format(NAV_HTML=nav_html,
+                                              TITLE=html_title,
                                               PROFILE=ari_user)
 
         html_body1_filled += f"""
