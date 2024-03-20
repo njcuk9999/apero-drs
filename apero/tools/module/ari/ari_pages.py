@@ -991,7 +991,8 @@ def add_recipe_tables(params: ParamDict, table: Table, machine_name: str):
                                                 table_class=table_class)
     # build html page
     html_title = 'Recipe log ({0})'.format(ari_user)
-    html_body1_filled = html_body1.format(TITLE=html_title,
+    html_body1_filled = html_body1.format(NAV_HTML=nav_html,
+                                          TITLE=html_title,
                                           PROFILE=ari_user)
     html_content = error_html.full_page_html(html_body1=html_body1_filled,
                                              html_table=html_table,
