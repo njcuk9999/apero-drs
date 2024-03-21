@@ -7,8 +7,26 @@ apero_precheck
 ################################################################################
 
 
+
+Contents
+================================================================================
+
+* :ref:`1. Description <desc_default_PRECHECK>`
+* :ref:`2. Schematic <schematic_default_PRECHECK>`
+* :ref:`3. Usage <usage_default_PRECHECK>`
+* :ref:`4. Optional Arguments <optargs_default_PRECHECK>`
+* :ref:`5. Special Arguments <spargs_default_PRECHECK>`
+* :ref:`6. Output directory <outdir_default_PRECHECK>`
+* :ref:`7. Output files <outfiles_default_PRECHECK>`
+* :ref:`8. Debug plots <debugplots_default_PRECHECK>`
+* :ref:`9. Summary plots <summaryplots_default_PRECHECK>`
+
+
 1. Description
 ================================================================================
+
+
+.. _desc_default_PRECHECK:
 
 
 SHORTNAME: PRECHECK
@@ -21,11 +39,17 @@ SHORTNAME: PRECHECK
 ================================================================================
 
 
+.. _schematic_default_PRECHECK:
+
+
 No schematic set
 
 
 3. Usage
 ================================================================================
+
+
+.. _usage_default_PRECHECK:
 
 
 .. code-block:: 
@@ -42,6 +66,9 @@ No schematic set
 ================================================================================
 
 
+.. _optargs_default_PRECHECK:
+
+
 .. code-block:: 
 
      --obs_dir[STRING] // PROCESS_OBS_DIR_HELP
@@ -53,6 +80,9 @@ No schematic set
 
 5. Special Arguments
 ================================================================================
+
+
+.. _spargs_default_PRECHECK:
 
 
 .. code-block:: 
@@ -80,6 +110,9 @@ No schematic set
 ================================================================================
 
 
+.. _outdir_default_PRECHECK:
+
+
 .. code-block:: 
 
     DRS_DATA_REDUC // Default: "red" directory
@@ -87,6 +120,9 @@ No schematic set
 
 7. Output files
 ================================================================================
+
+
+.. _outfiles_default_PRECHECK:
 
 
 
@@ -98,11 +134,17 @@ N/A
 ================================================================================
 
 
+.. _debugplots_default_PRECHECK:
+
+
 No debug plots.
 
 
 9. Summary plots
 ================================================================================
+
+
+.. _summaryplots_default_PRECHECK:
 
 
 No summary plots.

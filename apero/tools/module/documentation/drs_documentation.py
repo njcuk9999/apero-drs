@@ -521,8 +521,27 @@ def make_definitions(params: ParamDict, srecipes: List[DrsRecipe],
         name = summary['NAME'].strip('.py')
         markdown.add_title(f'{name}')
         # ---------------------------------------------------------------------
+        # set refname and name
+        refnames = ['desc_{0}_{1}'.format(instrument.lower(), summary['SHORTNAME']),
+                    'schematic_{0}_{1}'.format(instrument.lower(), summary['SHORTNAME']),
+                    'usage_{0}_{1}'.format(instrument.lower(), summary['SHORTNAME']),
+                    'optargs_{0}_{1}'.format(instrument.lower(), summary['SHORTNAME']),
+                    'spargs_{0}_{1}'.format(instrument.lower(), summary['SHORTNAME']),
+                    'outdir_{0}_{1}'.format(instrument.lower(), summary['SHORTNAME']),
+                    'outfiles_{0}_{1}'.format(instrument.lower(), summary['SHORTNAME']),
+                    'debugplots_{0}_{1}'.format(instrument.lower(), summary['SHORTNAME']),
+                    'summaryplots_{0}_{1}'.format(instrument.lower(), summary['SHORTNAME'])]
+        names = ['1. Description', '2. Schematic', '3. Usage',
+                 '4. Optional Arguments', '5. Special Arguments',
+                 '6. Output directory', '7. Output files', '8. Debug plots',
+                 '9. Summary plots']
+        # add table of contents
+        markdown.add_table_of_contents(refnames, names)
+        # ---------------------------------------------------------------------
         # add section: description
-        markdown.add_section('1. Description')
+        markdown.add_section(names[0])
+        # add reference
+        markdown.add_reference(refnames[0])
         # add shortname
         markdown.add_text('SHORTNAME: {0}'.format(summary['SHORTNAME']))
         # add description
@@ -535,7 +554,9 @@ def make_definitions(params: ParamDict, srecipes: List[DrsRecipe],
             markdown.add_text('No description set')
         # ---------------------------------------------------------------------
         # add section: schematic
-        markdown.add_section('2. Schematic')
+        markdown.add_section(names[1])
+        # add reference
+        markdown.add_reference(refnames[1])
         # add schematic image
         if summary['SCHEMATIC_FILE'] is not None and schem_path is not None:
             # get schematic path
@@ -547,7 +568,9 @@ def make_definitions(params: ParamDict, srecipes: List[DrsRecipe],
             markdown.add_text('No schematic set')
         # ---------------------------------------------------------------------
         # add section: usage
-        markdown.add_section('3. Usage')
+        markdown.add_section(names[2])
+        # add reference
+        markdown.add_reference(refnames[2])
         # add code block for run
         markdown.add_code_block('', [summary['USAGE']])
         # add code block for positional arguments
@@ -557,7 +580,9 @@ def make_definitions(params: ParamDict, srecipes: List[DrsRecipe],
             markdown.add_text('No optional arguments')
         # ---------------------------------------------------------------------
         # add section: optional arguments
-        markdown.add_section('4. Optional Arguments')
+        markdown.add_section(names[3])
+        # add reference
+        markdown.add_reference(refnames[3])
         # add code block for run
         if len(summary['LOPT']) > 0:
             markdown.add_code_block('', summary['LOPT'])
@@ -565,7 +590,9 @@ def make_definitions(params: ParamDict, srecipes: List[DrsRecipe],
             markdown.add_text('No optional arguments')
         # ---------------------------------------------------------------------
         # add section: special arguments
-        markdown.add_section('5. Special Arguments')
+        markdown.add_section(names[4])
+        # add reference
+        markdown.add_reference(refnames[4])
         # add code block for run
         if len(summary['LSOPT']) > 0:
             markdown.add_code_block('', summary['LSOPT'])
@@ -573,18 +600,24 @@ def make_definitions(params: ParamDict, srecipes: List[DrsRecipe],
             markdown.add_text('No special arguments')
         # ---------------------------------------------------------------------
         # add section: output directory
-        markdown.add_section('6. Output directory')
+        markdown.add_section(names[5])
+        # add reference
+        markdown.add_reference(refnames[5])
         # add code block for run
         markdown.add_code_block('', [summary['OUTDIR']])
         # ---------------------------------------------------------------------
         # add section: output directory
-        markdown.add_section('7. Output files')
+        markdown.add_section(names[6])
+        # add reference
+        markdown.add_reference(refnames[6])
         # add code block for run
         markdown.add_csv_table('Outputs', summary['OUTTABLE'],
                                abs_path=summary['OUTTABLE-ABS'])
         # ---------------------------------------------------------------------
         # add section: output directory
-        markdown.add_section('8. Debug plots')
+        markdown.add_section(names[7])
+        # add reference
+        markdown.add_reference(refnames[7])
         # add code block for run
         if len(summary['DEBUG_PLOTS']) > 0:
             markdown.add_code_block('', summary['DEBUG_PLOTS'])
@@ -592,7 +625,9 @@ def make_definitions(params: ParamDict, srecipes: List[DrsRecipe],
             markdown.add_text('No debug plots.')
         # ---------------------------------------------------------------------
         # add section: output directory
-        markdown.add_section('9. Summary plots')
+        markdown.add_section(names[8])
+        # add reference
+        markdown.add_reference(refnames[8])
         # add code block for run
         if len(summary['SUMMARY_PLOTS']) > 0:
             markdown.add_code_block('', summary['SUMMARY_PLOTS'])
@@ -725,6 +760,18 @@ def compile_recipe_sequences(params: ParamDict, recipe: DrsRecipe):
         name = summary['NAME']
         markdown.add_title(f'{name}')
         # ---------------------------------------------------------------------
+        # set up sections
+        refnames = ['desc_{0}_{1}'.format(instrument.lower(), name),
+                    'schematic_{0}_{1}'.format(instrument.lower(), name),
+                    'recipes_{0}_{1}'.format(instrument.lower(), name)]
+        names = ['1. Description', '2. Schematic', '3. Recipes in sequence']
+        # ---------------------------------------------------------------------
+        # add table of contents
+        markdown.add_table_of_contents(refnames, names)
+        # add section: schematic
+        markdown.add_section(names[0])
+        # add reference
+        markdown.add_reference(refnames[0])
         # add description
         if summary['DESCRIPTION_FILE'] is not None and desc_path is not None:
             # combine relative path with description file
@@ -735,7 +782,9 @@ def compile_recipe_sequences(params: ParamDict, recipe: DrsRecipe):
             markdown.add_text('No description set')
         # ---------------------------------------------------------------------
         # add section: schematic
-        markdown.add_section('2. Schematic')
+        markdown.add_section(names[1])
+        # add reference
+        markdown.add_reference(refnames[1])
         # add schematic image
         if summary['SCHEMATIC_FILE'] is not None and schem_path is not None:
             # get schematic path
@@ -747,7 +796,9 @@ def compile_recipe_sequences(params: ParamDict, recipe: DrsRecipe):
             markdown.add_text('No schematic set')
         # ---------------------------------------------------------------------
         # add section: output directory
-        markdown.add_section('3. Recipes in sequence')
+        markdown.add_section(names[2])
+        # add reference
+        markdown.add_reference(refnames[2])
         # add code block for run
         markdown.add_csv_table('Recipes', summary['OUTTABLE'],
                                abs_path=summary['OUTTABLE-ABS'])

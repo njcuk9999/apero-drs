@@ -7,8 +7,26 @@ apero_get
 ################################################################################
 
 
+
+Contents
+================================================================================
+
+* :ref:`1. Description <desc_default_GET>`
+* :ref:`2. Schematic <schematic_default_GET>`
+* :ref:`3. Usage <usage_default_GET>`
+* :ref:`4. Optional Arguments <optargs_default_GET>`
+* :ref:`5. Special Arguments <spargs_default_GET>`
+* :ref:`6. Output directory <outdir_default_GET>`
+* :ref:`7. Output files <outfiles_default_GET>`
+* :ref:`8. Debug plots <debugplots_default_GET>`
+* :ref:`9. Summary plots <summaryplots_default_GET>`
+
+
 1. Description
 ================================================================================
+
+
+.. _desc_default_GET:
 
 
 SHORTNAME: GET
@@ -21,11 +39,17 @@ SHORTNAME: GET
 ================================================================================
 
 
+.. _schematic_default_GET:
+
+
 No schematic set
 
 
 3. Usage
 ================================================================================
+
+
+.. _usage_default_GET:
 
 
 .. code-block:: 
@@ -38,6 +62,9 @@ No optional arguments
 
 4. Optional Arguments
 ================================================================================
+
+
+.. _optargs_default_GET:
 
 
 .. code-block:: 
@@ -68,6 +95,9 @@ No optional arguments
 ================================================================================
 
 
+.. _spargs_default_GET:
+
+
 .. code-block:: 
 
      --xhelp[STRING] // Extended help menu (with all advanced arguments)
@@ -93,6 +123,9 @@ No optional arguments
 ================================================================================
 
 
+.. _outdir_default_GET:
+
+
 .. code-block:: 
 
     DRS_DATA_REDUC // Default: "red" directory
@@ -100,6 +133,9 @@ No optional arguments
 
 7. Output files
 ================================================================================
+
+
+.. _outfiles_default_GET:
 
 
 
@@ -111,11 +147,17 @@ N/A
 ================================================================================
 
 
+.. _debugplots_default_GET:
+
+
 No debug plots.
 
 
 9. Summary plots
 ================================================================================
+
+
+.. _summaryplots_default_GET:
 
 
 No summary plots.

@@ -7,8 +7,26 @@ apero_explorer
 ################################################################################
 
 
+
+Contents
+================================================================================
+
+* :ref:`1. Description <desc_default_EXPLO>`
+* :ref:`2. Schematic <schematic_default_EXPLO>`
+* :ref:`3. Usage <usage_default_EXPLO>`
+* :ref:`4. Optional Arguments <optargs_default_EXPLO>`
+* :ref:`5. Special Arguments <spargs_default_EXPLO>`
+* :ref:`6. Output directory <outdir_default_EXPLO>`
+* :ref:`7. Output files <outfiles_default_EXPLO>`
+* :ref:`8. Debug plots <debugplots_default_EXPLO>`
+* :ref:`9. Summary plots <summaryplots_default_EXPLO>`
+
+
 1. Description
 ================================================================================
+
+
+.. _desc_default_EXPLO:
 
 
 SHORTNAME: EXPLO
@@ -21,11 +39,17 @@ SHORTNAME: EXPLO
 ================================================================================
 
 
+.. _schematic_default_EXPLO:
+
+
 No schematic set
 
 
 3. Usage
 ================================================================================
+
+
+.. _usage_default_EXPLO:
 
 
 .. code-block:: 
@@ -40,6 +64,9 @@ No optional arguments
 ================================================================================
 
 
+.. _optargs_default_EXPLO:
+
+
 .. code-block:: 
 
      --hash // Display all hash columns (hidden by default)
@@ -49,6 +76,9 @@ No optional arguments
 
 5. Special Arguments
 ================================================================================
+
+
+.. _spargs_default_EXPLO:
 
 
 .. code-block:: 
@@ -76,6 +106,9 @@ No optional arguments
 ================================================================================
 
 
+.. _outdir_default_EXPLO:
+
+
 .. code-block:: 
 
     DRS_DATA_REDUC // Default: "red" directory
@@ -83,6 +116,9 @@ No optional arguments
 
 7. Output files
 ================================================================================
+
+
+.. _outfiles_default_EXPLO:
 
 
 
@@ -94,11 +130,17 @@ N/A
 ================================================================================
 
 
+.. _debugplots_default_EXPLO:
+
+
 No debug plots.
 
 
 9. Summary plots
 ================================================================================
+
+
+.. _summaryplots_default_EXPLO:
 
 
 No summary plots.

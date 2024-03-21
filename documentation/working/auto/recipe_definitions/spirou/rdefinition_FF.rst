@@ -7,8 +7,26 @@ apero_flat_spirou
 ################################################################################
 
 
+
+Contents
+================================================================================
+
+* :ref:`1. Description <desc_spirou_FF>`
+* :ref:`2. Schematic <schematic_spirou_FF>`
+* :ref:`3. Usage <usage_spirou_FF>`
+* :ref:`4. Optional Arguments <optargs_spirou_FF>`
+* :ref:`5. Special Arguments <spargs_spirou_FF>`
+* :ref:`6. Output directory <outdir_spirou_FF>`
+* :ref:`7. Output files <outfiles_spirou_FF>`
+* :ref:`8. Debug plots <debugplots_spirou_FF>`
+* :ref:`9. Summary plots <summaryplots_spirou_FF>`
+
+
 1. Description
 ================================================================================
+
+
+.. _desc_spirou_FF:
 
 
 SHORTNAME: FF
@@ -19,6 +37,9 @@ SHORTNAME: FF
 
 2. Schematic
 ================================================================================
+
+
+.. _schematic_spirou_FF:
 
 
 .. only:: html
@@ -36,6 +57,9 @@ SHORTNAME: FF
 ================================================================================
 
 
+.. _usage_spirou_FF:
+
+
 .. code-block:: 
 
     apero_flat_spirou.py {obs_dir}[STRING] [FILE:FLAT_FLAT,DARK_FLAT,FLAT_DARK] {options}
@@ -49,6 +73,9 @@ SHORTNAME: FF
 
 4. Optional Arguments
 ================================================================================
+
+
+.. _optargs_spirou_FF:
 
 
 .. code-block:: 
@@ -77,6 +104,9 @@ SHORTNAME: FF
 ================================================================================
 
 
+.. _spargs_spirou_FF:
+
+
 .. code-block:: 
 
      --xhelp[STRING] // Extended help menu (with all advanced arguments)
@@ -102,6 +132,9 @@ SHORTNAME: FF
 ================================================================================
 
 
+.. _outdir_spirou_FF:
+
+
 .. code-block:: 
 
     DRS_DATA_REDUC // Default: "red" directory
@@ -109,6 +142,9 @@ SHORTNAME: FF
 
 7. Output files
 ================================================================================
+
+
+.. _outfiles_spirou_FF:
 
 
 .. csv-table:: Outputs
@@ -121,6 +157,9 @@ SHORTNAME: FF
 ================================================================================
 
 
+.. _debugplots_spirou_FF:
+
+
 .. code-block:: 
 
     FLAT_ORDER_FIT_EDGES1
@@ -131,6 +170,9 @@ SHORTNAME: FF
 
 9. Summary plots
 ================================================================================
+
+
+.. _summaryplots_spirou_FF:
 
 
 .. code-block:: 

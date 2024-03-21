@@ -7,8 +7,26 @@ apero_extract_spirou
 ################################################################################
 
 
+
+Contents
+================================================================================
+
+* :ref:`1. Description <desc_spirou_EXT>`
+* :ref:`2. Schematic <schematic_spirou_EXT>`
+* :ref:`3. Usage <usage_spirou_EXT>`
+* :ref:`4. Optional Arguments <optargs_spirou_EXT>`
+* :ref:`5. Special Arguments <spargs_spirou_EXT>`
+* :ref:`6. Output directory <outdir_spirou_EXT>`
+* :ref:`7. Output files <outfiles_spirou_EXT>`
+* :ref:`8. Debug plots <debugplots_spirou_EXT>`
+* :ref:`9. Summary plots <summaryplots_spirou_EXT>`
+
+
 1. Description
 ================================================================================
+
+
+.. _desc_spirou_EXT:
 
 
 SHORTNAME: EXT
@@ -21,11 +39,17 @@ SHORTNAME: EXT
 ================================================================================
 
 
+.. _schematic_spirou_EXT:
+
+
 No schematic set
 
 
 3. Usage
 ================================================================================
+
+
+.. _usage_spirou_EXT:
 
 
 .. code-block:: 
@@ -41,6 +65,9 @@ No schematic set
 
 4. Optional Arguments
 ================================================================================
+
+
+.. _optargs_spirou_EXT:
 
 
 .. code-block:: 
@@ -79,6 +106,9 @@ No schematic set
 ================================================================================
 
 
+.. _spargs_spirou_EXT:
+
+
 .. code-block:: 
 
      --xhelp[STRING] // Extended help menu (with all advanced arguments)
@@ -104,6 +134,9 @@ No schematic set
 ================================================================================
 
 
+.. _outdir_spirou_EXT:
+
+
 .. code-block:: 
 
     DRS_DATA_REDUC // Default: "red" directory
@@ -111,6 +144,9 @@ No schematic set
 
 7. Output files
 ================================================================================
+
+
+.. _outfiles_spirou_EXT:
 
 
 .. csv-table:: Outputs
@@ -121,6 +157,9 @@ No schematic set
 
 8. Debug plots
 ================================================================================
+
+
+.. _debugplots_spirou_EXT:
 
 
 .. code-block:: 
@@ -139,6 +178,9 @@ No schematic set
 
 9. Summary plots
 ================================================================================
+
+
+.. _summaryplots_spirou_EXT:
 
 
 .. code-block:: 

@@ -7,6 +7,22 @@ pp_seq_opt
 ################################################################################
 
 
+
+Contents
+================================================================================
+
+* :ref:`1. Description <desc_nirps_he_pp_seq_opt>`
+* :ref:`2. Schematic <schematic_nirps_he_pp_seq_opt>`
+* :ref:`3. Recipes in sequence <recipes_nirps_he_pp_seq_opt>`
+
+
+1. Description
+================================================================================
+
+
+.. _desc_nirps_he_pp_seq_opt:
+
+
 No description set
 
 
@@ -14,11 +30,17 @@ No description set
 ================================================================================
 
 
+.. _schematic_nirps_he_pp_seq_opt:
+
+
 No schematic set
 
 
 3. Recipes in sequence
 ================================================================================
+
+
+.. _recipes_nirps_he_pp_seq_opt:
 
 
 .. csv-table:: Recipes

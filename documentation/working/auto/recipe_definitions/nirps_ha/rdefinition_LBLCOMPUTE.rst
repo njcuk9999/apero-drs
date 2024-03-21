@@ -7,8 +7,26 @@ apero_lbl_compute_nirps_ha
 ################################################################################
 
 
+
+Contents
+================================================================================
+
+* :ref:`1. Description <desc_nirps_ha_LBLCOMPUTE>`
+* :ref:`2. Schematic <schematic_nirps_ha_LBLCOMPUTE>`
+* :ref:`3. Usage <usage_nirps_ha_LBLCOMPUTE>`
+* :ref:`4. Optional Arguments <optargs_nirps_ha_LBLCOMPUTE>`
+* :ref:`5. Special Arguments <spargs_nirps_ha_LBLCOMPUTE>`
+* :ref:`6. Output directory <outdir_nirps_ha_LBLCOMPUTE>`
+* :ref:`7. Output files <outfiles_nirps_ha_LBLCOMPUTE>`
+* :ref:`8. Debug plots <debugplots_nirps_ha_LBLCOMPUTE>`
+* :ref:`9. Summary plots <summaryplots_nirps_ha_LBLCOMPUTE>`
+
+
 1. Description
 ================================================================================
+
+
+.. _desc_nirps_ha_LBLCOMPUTE:
 
 
 SHORTNAME: LBLCOMPUTE
@@ -21,11 +39,17 @@ No description set
 ================================================================================
 
 
+.. _schematic_nirps_ha_LBLCOMPUTE:
+
+
 No schematic set
 
 
 3. Usage
 ================================================================================
+
+
+.. _usage_nirps_ha_LBLCOMPUTE:
 
 
 .. code-block:: 
@@ -42,6 +66,9 @@ No schematic set
 ================================================================================
 
 
+.. _optargs_nirps_ha_LBLCOMPUTE:
+
+
 .. code-block:: 
 
      --iteration[INT] // Iteration number (for multiprocessing)
@@ -50,6 +77,9 @@ No schematic set
 
 5. Special Arguments
 ================================================================================
+
+
+.. _spargs_nirps_ha_LBLCOMPUTE:
 
 
 .. code-block:: 
@@ -77,6 +107,9 @@ No schematic set
 ================================================================================
 
 
+.. _outdir_nirps_ha_LBLCOMPUTE:
+
+
 .. code-block:: 
 
     LBL_PATH // Default: "lbl" directory
@@ -84,6 +117,9 @@ No schematic set
 
 7. Output files
 ================================================================================
+
+
+.. _outfiles_nirps_ha_LBLCOMPUTE:
 
 
 .. csv-table:: Outputs
@@ -96,11 +132,17 @@ No schematic set
 ================================================================================
 
 
+.. _debugplots_nirps_ha_LBLCOMPUTE:
+
+
 No debug plots.
 
 
 9. Summary plots
 ================================================================================
+
+
+.. _summaryplots_nirps_ha_LBLCOMPUTE:
 
 
 No summary plots.

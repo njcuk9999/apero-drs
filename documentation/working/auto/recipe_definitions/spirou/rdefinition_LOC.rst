@@ -7,8 +7,26 @@ apero_loc_spirou
 ################################################################################
 
 
+
+Contents
+================================================================================
+
+* :ref:`1. Description <desc_spirou_LOC>`
+* :ref:`2. Schematic <schematic_spirou_LOC>`
+* :ref:`3. Usage <usage_spirou_LOC>`
+* :ref:`4. Optional Arguments <optargs_spirou_LOC>`
+* :ref:`5. Special Arguments <spargs_spirou_LOC>`
+* :ref:`6. Output directory <outdir_spirou_LOC>`
+* :ref:`7. Output files <outfiles_spirou_LOC>`
+* :ref:`8. Debug plots <debugplots_spirou_LOC>`
+* :ref:`9. Summary plots <summaryplots_spirou_LOC>`
+
+
 1. Description
 ================================================================================
+
+
+.. _desc_spirou_LOC:
 
 
 SHORTNAME: LOC
@@ -19,6 +37,9 @@ SHORTNAME: LOC
 
 2. Schematic
 ================================================================================
+
+
+.. _schematic_spirou_LOC:
 
 
 .. only:: html
@@ -36,6 +57,9 @@ SHORTNAME: LOC
 ================================================================================
 
 
+.. _usage_spirou_LOC:
+
+
 .. code-block:: 
 
     apero_loc_spirou.py {obs_dir}[STRING] [FILE:DARK_FLAT,FLAT_DARK] {options}
@@ -49,6 +73,9 @@ SHORTNAME: LOC
 
 4. Optional Arguments
 ================================================================================
+
+
+.. _optargs_spirou_LOC:
 
 
 .. code-block:: 
@@ -69,6 +96,9 @@ SHORTNAME: LOC
 
 5. Special Arguments
 ================================================================================
+
+
+.. _spargs_spirou_LOC:
 
 
 .. code-block:: 
@@ -96,6 +126,9 @@ SHORTNAME: LOC
 ================================================================================
 
 
+.. _outdir_spirou_LOC:
+
+
 .. code-block:: 
 
     DRS_DATA_REDUC // Default: "red" directory
@@ -103,6 +136,9 @@ SHORTNAME: LOC
 
 7. Output files
 ================================================================================
+
+
+.. _outfiles_spirou_LOC:
 
 
 .. csv-table:: Outputs
@@ -113,6 +149,9 @@ SHORTNAME: LOC
 
 8. Debug plots
 ================================================================================
+
+
+.. _debugplots_spirou_LOC:
 
 
 .. code-block:: 
@@ -127,6 +166,9 @@ SHORTNAME: LOC
 
 9. Summary plots
 ================================================================================
+
+
+.. _summaryplots_spirou_LOC:
 
 
 .. code-block:: 

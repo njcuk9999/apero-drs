@@ -7,8 +7,26 @@ apero_postprocess_nirps_ha
 ################################################################################
 
 
+
+Contents
+================================================================================
+
+* :ref:`1. Description <desc_nirps_ha_OBJPOST>`
+* :ref:`2. Schematic <schematic_nirps_ha_OBJPOST>`
+* :ref:`3. Usage <usage_nirps_ha_OBJPOST>`
+* :ref:`4. Optional Arguments <optargs_nirps_ha_OBJPOST>`
+* :ref:`5. Special Arguments <spargs_nirps_ha_OBJPOST>`
+* :ref:`6. Output directory <outdir_nirps_ha_OBJPOST>`
+* :ref:`7. Output files <outfiles_nirps_ha_OBJPOST>`
+* :ref:`8. Debug plots <debugplots_nirps_ha_OBJPOST>`
+* :ref:`9. Summary plots <summaryplots_nirps_ha_OBJPOST>`
+
+
 1. Description
 ================================================================================
+
+
+.. _desc_nirps_ha_OBJPOST:
 
 
 SHORTNAME: OBJPOST
@@ -21,11 +39,17 @@ No description set
 ================================================================================
 
 
+.. _schematic_nirps_ha_OBJPOST:
+
+
 No schematic set
 
 
 3. Usage
 ================================================================================
+
+
+.. _usage_nirps_ha_OBJPOST:
 
 
 .. code-block:: 
@@ -43,6 +67,9 @@ No schematic set
 ================================================================================
 
 
+.. _optargs_nirps_ha_OBJPOST:
+
+
 .. code-block:: 
 
      --skip[True/False] // OUT_OVERWRITE_HELP
@@ -52,6 +79,9 @@ No schematic set
 
 5. Special Arguments
 ================================================================================
+
+
+.. _spargs_nirps_ha_OBJPOST:
 
 
 .. code-block:: 
@@ -79,6 +109,9 @@ No schematic set
 ================================================================================
 
 
+.. _outdir_nirps_ha_OBJPOST:
+
+
 .. code-block:: 
 
     DRS_DATA_OUT // Default: "out" directory
@@ -86,6 +119,9 @@ No schematic set
 
 7. Output files
 ================================================================================
+
+
+.. _outfiles_nirps_ha_OBJPOST:
 
 
 
@@ -97,11 +133,17 @@ N/A
 ================================================================================
 
 
+.. _debugplots_nirps_ha_OBJPOST:
+
+
 No debug plots.
 
 
 9. Summary plots
 ================================================================================
+
+
+.. _summaryplots_nirps_ha_OBJPOST:
 
 
 No summary plots.

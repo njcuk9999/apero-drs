@@ -7,8 +7,26 @@ apero_stats
 ################################################################################
 
 
+
+Contents
+================================================================================
+
+* :ref:`1. Description <desc_default_STAT>`
+* :ref:`2. Schematic <schematic_default_STAT>`
+* :ref:`3. Usage <usage_default_STAT>`
+* :ref:`4. Optional Arguments <optargs_default_STAT>`
+* :ref:`5. Special Arguments <spargs_default_STAT>`
+* :ref:`6. Output directory <outdir_default_STAT>`
+* :ref:`7. Output files <outfiles_default_STAT>`
+* :ref:`8. Debug plots <debugplots_default_STAT>`
+* :ref:`9. Summary plots <summaryplots_default_STAT>`
+
+
 1. Description
 ================================================================================
+
+
+.. _desc_default_STAT:
 
 
 SHORTNAME: STAT
@@ -21,11 +39,17 @@ SHORTNAME: STAT
 ================================================================================
 
 
+.. _schematic_default_STAT:
+
+
 No schematic set
 
 
 3. Usage
 ================================================================================
+
+
+.. _usage_default_STAT:
 
 
 .. code-block:: 
@@ -40,6 +64,9 @@ No optional arguments
 ================================================================================
 
 
+.. _optargs_default_STAT:
+
+
 .. code-block:: 
 
      --mode[STRING] // [STRING] Stats mode. Any combination of the following (separated by a comma, no white spaces). For all use all. For timing statistics use "timing". For quality control statistics use "qc". For error statistics use "error". For memory statistics use "memory". For file index use findex.  I.e. --mode=qc,memory  runs the qc and memory stats.
@@ -51,6 +78,9 @@ No optional arguments
 
 5. Special Arguments
 ================================================================================
+
+
+.. _spargs_default_STAT:
 
 
 .. code-block:: 
@@ -78,6 +108,9 @@ No optional arguments
 ================================================================================
 
 
+.. _outdir_default_STAT:
+
+
 .. code-block:: 
 
     DRS_DATA_REDUC // Default: "red" directory
@@ -85,6 +118,9 @@ No optional arguments
 
 7. Output files
 ================================================================================
+
+
+.. _outfiles_default_STAT:
 
 
 
@@ -96,6 +132,9 @@ N/A
 ================================================================================
 
 
+.. _debugplots_default_STAT:
+
+
 .. code-block:: 
 
     STATS_TIMING_PLOT
@@ -105,6 +144,9 @@ N/A
 
 9. Summary plots
 ================================================================================
+
+
+.. _summaryplots_default_STAT:
 
 
 No summary plots.

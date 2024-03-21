@@ -7,8 +7,26 @@ apero_mk_skymodel_spirou
 ################################################################################
 
 
+
+Contents
+================================================================================
+
+* :ref:`1. Description <desc_spirou_MKSKY>`
+* :ref:`2. Schematic <schematic_spirou_MKSKY>`
+* :ref:`3. Usage <usage_spirou_MKSKY>`
+* :ref:`4. Optional Arguments <optargs_spirou_MKSKY>`
+* :ref:`5. Special Arguments <spargs_spirou_MKSKY>`
+* :ref:`6. Output directory <outdir_spirou_MKSKY>`
+* :ref:`7. Output files <outfiles_spirou_MKSKY>`
+* :ref:`8. Debug plots <debugplots_spirou_MKSKY>`
+* :ref:`9. Summary plots <summaryplots_spirou_MKSKY>`
+
+
 1. Description
 ================================================================================
+
+
+.. _desc_spirou_MKSKY:
 
 
 SHORTNAME: MKSKY
@@ -21,11 +39,17 @@ No description set
 ================================================================================
 
 
+.. _schematic_spirou_MKSKY:
+
+
 No schematic set
 
 
 3. Usage
 ================================================================================
+
+
+.. _usage_spirou_MKSKY:
 
 
 .. code-block:: 
@@ -40,11 +64,17 @@ No optional arguments
 ================================================================================
 
 
+.. _optargs_spirou_MKSKY:
+
+
 No optional arguments
 
 
 5. Special Arguments
 ================================================================================
+
+
+.. _spargs_spirou_MKSKY:
 
 
 .. code-block:: 
@@ -72,6 +102,9 @@ No optional arguments
 ================================================================================
 
 
+.. _outdir_spirou_MKSKY:
+
+
 .. code-block:: 
 
     DRS_DATA_REDUC // Default: "red" directory
@@ -79,6 +112,9 @@ No optional arguments
 
 7. Output files
 ================================================================================
+
+
+.. _outfiles_spirou_MKSKY:
 
 
 .. csv-table:: Outputs
@@ -91,6 +127,9 @@ No optional arguments
 ================================================================================
 
 
+.. _debugplots_spirou_MKSKY:
+
+
 .. code-block:: 
 
     TELLU_SKYMODEL_REGION_PLOT
@@ -100,6 +139,9 @@ No optional arguments
 
 9. Summary plots
 ================================================================================
+
+
+.. _summaryplots_spirou_MKSKY:
 
 
 No summary plots.

@@ -7,8 +7,26 @@ apero_badpix_spirou
 ################################################################################
 
 
+
+Contents
+================================================================================
+
+* :ref:`1. Description <desc_spirou_BAD>`
+* :ref:`2. Schematic <schematic_spirou_BAD>`
+* :ref:`3. Usage <usage_spirou_BAD>`
+* :ref:`4. Optional Arguments <optargs_spirou_BAD>`
+* :ref:`5. Special Arguments <spargs_spirou_BAD>`
+* :ref:`6. Output directory <outdir_spirou_BAD>`
+* :ref:`7. Output files <outfiles_spirou_BAD>`
+* :ref:`8. Debug plots <debugplots_spirou_BAD>`
+* :ref:`9. Summary plots <summaryplots_spirou_BAD>`
+
+
 1. Description
 ================================================================================
+
+
+.. _desc_spirou_BAD:
 
 
 SHORTNAME: BAD
@@ -19,6 +37,9 @@ SHORTNAME: BAD
 
 2. Schematic
 ================================================================================
+
+
+.. _schematic_spirou_BAD:
 
 
 .. only:: html
@@ -34,6 +55,9 @@ SHORTNAME: BAD
 
 3. Usage
 ================================================================================
+
+
+.. _usage_spirou_BAD:
 
 
 .. code-block:: 
@@ -52,6 +76,9 @@ SHORTNAME: BAD
 ================================================================================
 
 
+.. _optargs_spirou_BAD:
+
+
 .. code-block:: 
 
      --database[True/False] // [BOOLEAN] Whether to add outputs to calibration database
@@ -65,6 +92,9 @@ SHORTNAME: BAD
 
 5. Special Arguments
 ================================================================================
+
+
+.. _spargs_spirou_BAD:
 
 
 .. code-block:: 
@@ -92,6 +122,9 @@ SHORTNAME: BAD
 ================================================================================
 
 
+.. _outdir_spirou_BAD:
+
+
 .. code-block:: 
 
     DRS_DATA_REDUC // Default: "red" directory
@@ -99,6 +132,9 @@ SHORTNAME: BAD
 
 7. Output files
 ================================================================================
+
+
+.. _outfiles_spirou_BAD:
 
 
 .. csv-table:: Outputs
@@ -111,6 +147,9 @@ SHORTNAME: BAD
 ================================================================================
 
 
+.. _debugplots_spirou_BAD:
+
+
 .. code-block:: 
 
     BADPIX_MAP
@@ -118,6 +157,9 @@ SHORTNAME: BAD
 
 9. Summary plots
 ================================================================================
+
+
+.. _summaryplots_spirou_BAD:
 
 
 .. code-block:: 

@@ -7,8 +7,26 @@ apero_shape_ref_spirou
 ################################################################################
 
 
+
+Contents
+================================================================================
+
+* :ref:`1. Description <desc_spirou_SHAPEREF>`
+* :ref:`2. Schematic <schematic_spirou_SHAPEREF>`
+* :ref:`3. Usage <usage_spirou_SHAPEREF>`
+* :ref:`4. Optional Arguments <optargs_spirou_SHAPEREF>`
+* :ref:`5. Special Arguments <spargs_spirou_SHAPEREF>`
+* :ref:`6. Output directory <outdir_spirou_SHAPEREF>`
+* :ref:`7. Output files <outfiles_spirou_SHAPEREF>`
+* :ref:`8. Debug plots <debugplots_spirou_SHAPEREF>`
+* :ref:`9. Summary plots <summaryplots_spirou_SHAPEREF>`
+
+
 1. Description
 ================================================================================
+
+
+.. _desc_spirou_SHAPEREF:
 
 
 SHORTNAME: SHAPEREF
@@ -19,6 +37,9 @@ SHORTNAME: SHAPEREF
 
 2. Schematic
 ================================================================================
+
+
+.. _schematic_spirou_SHAPEREF:
 
 
 .. only:: html
@@ -36,6 +57,9 @@ SHORTNAME: SHAPEREF
 ================================================================================
 
 
+.. _usage_spirou_SHAPEREF:
+
+
 .. code-block:: 
 
     apero_shape_ref_spirou.py {obs_dir}[STRING] --fpfiles[FILE:FP_FP] --hcfiles[FILE:HCONE_HCONE] {options}
@@ -50,6 +74,9 @@ SHORTNAME: SHAPEREF
 
 4. Optional Arguments
 ================================================================================
+
+
+.. _optargs_spirou_SHAPEREF:
 
 
 .. code-block:: 
@@ -72,6 +99,9 @@ SHORTNAME: SHAPEREF
 
 5. Special Arguments
 ================================================================================
+
+
+.. _spargs_spirou_SHAPEREF:
 
 
 .. code-block:: 
@@ -99,6 +129,9 @@ SHORTNAME: SHAPEREF
 ================================================================================
 
 
+.. _outdir_spirou_SHAPEREF:
+
+
 .. code-block:: 
 
     DRS_DATA_REDUC // Default: "red" directory
@@ -106,6 +139,9 @@ SHORTNAME: SHAPEREF
 
 7. Output files
 ================================================================================
+
+
+.. _outfiles_spirou_SHAPEREF:
 
 
 .. csv-table:: Outputs
@@ -118,6 +154,9 @@ SHORTNAME: SHAPEREF
 ================================================================================
 
 
+.. _debugplots_spirou_SHAPEREF:
+
+
 .. code-block:: 
 
     SHAPE_DX
@@ -128,6 +167,9 @@ SHORTNAME: SHAPEREF
 
 9. Summary plots
 ================================================================================
+
+
+.. _summaryplots_spirou_SHAPEREF:
 
 
 .. code-block:: 

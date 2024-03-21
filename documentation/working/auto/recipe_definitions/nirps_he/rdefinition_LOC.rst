@@ -7,8 +7,26 @@ apero_loc_nirps_he
 ################################################################################
 
 
+
+Contents
+================================================================================
+
+* :ref:`1. Description <desc_nirps_he_LOC>`
+* :ref:`2. Schematic <schematic_nirps_he_LOC>`
+* :ref:`3. Usage <usage_nirps_he_LOC>`
+* :ref:`4. Optional Arguments <optargs_nirps_he_LOC>`
+* :ref:`5. Special Arguments <spargs_nirps_he_LOC>`
+* :ref:`6. Output directory <outdir_nirps_he_LOC>`
+* :ref:`7. Output files <outfiles_nirps_he_LOC>`
+* :ref:`8. Debug plots <debugplots_nirps_he_LOC>`
+* :ref:`9. Summary plots <summaryplots_nirps_he_LOC>`
+
+
 1. Description
 ================================================================================
+
+
+.. _desc_nirps_he_LOC:
 
 
 SHORTNAME: LOC
@@ -21,11 +39,17 @@ No description set
 ================================================================================
 
 
+.. _schematic_nirps_he_LOC:
+
+
 No schematic set
 
 
 3. Usage
 ================================================================================
+
+
+.. _usage_nirps_he_LOC:
 
 
 .. code-block:: 
@@ -41,6 +65,9 @@ No schematic set
 
 4. Optional Arguments
 ================================================================================
+
+
+.. _optargs_nirps_he_LOC:
 
 
 .. code-block:: 
@@ -61,6 +88,9 @@ No schematic set
 
 5. Special Arguments
 ================================================================================
+
+
+.. _spargs_nirps_he_LOC:
 
 
 .. code-block:: 
@@ -88,6 +118,9 @@ No schematic set
 ================================================================================
 
 
+.. _outdir_nirps_he_LOC:
+
+
 .. code-block:: 
 
     DRS_DATA_REDUC // Default: "red" directory
@@ -95,6 +128,9 @@ No schematic set
 
 7. Output files
 ================================================================================
+
+
+.. _outfiles_nirps_he_LOC:
 
 
 .. csv-table:: Outputs
@@ -105,6 +141,9 @@ No schematic set
 
 8. Debug plots
 ================================================================================
+
+
+.. _debugplots_nirps_he_LOC:
 
 
 .. code-block:: 
@@ -119,6 +158,9 @@ No schematic set
 
 9. Summary plots
 ================================================================================
+
+
+.. _summaryplots_nirps_he_LOC:
 
 
 .. code-block:: 

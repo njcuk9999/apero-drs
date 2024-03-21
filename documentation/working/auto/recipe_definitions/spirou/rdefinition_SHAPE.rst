@@ -7,8 +7,26 @@ apero_shape_spirou
 ################################################################################
 
 
+
+Contents
+================================================================================
+
+* :ref:`1. Description <desc_spirou_SHAPE>`
+* :ref:`2. Schematic <schematic_spirou_SHAPE>`
+* :ref:`3. Usage <usage_spirou_SHAPE>`
+* :ref:`4. Optional Arguments <optargs_spirou_SHAPE>`
+* :ref:`5. Special Arguments <spargs_spirou_SHAPE>`
+* :ref:`6. Output directory <outdir_spirou_SHAPE>`
+* :ref:`7. Output files <outfiles_spirou_SHAPE>`
+* :ref:`8. Debug plots <debugplots_spirou_SHAPE>`
+* :ref:`9. Summary plots <summaryplots_spirou_SHAPE>`
+
+
 1. Description
 ================================================================================
+
+
+.. _desc_spirou_SHAPE:
 
 
 SHORTNAME: SHAPE
@@ -19,6 +37,9 @@ SHORTNAME: SHAPE
 
 2. Schematic
 ================================================================================
+
+
+.. _schematic_spirou_SHAPE:
 
 
 .. only:: html
@@ -36,6 +57,9 @@ SHORTNAME: SHAPE
 ================================================================================
 
 
+.. _usage_spirou_SHAPE:
+
+
 .. code-block:: 
 
     apero_shape_spirou.py {obs_dir}[STRING] [FILE:FP_FP] {options}
@@ -49,6 +73,9 @@ SHORTNAME: SHAPE
 
 4. Optional Arguments
 ================================================================================
+
+
+.. _optargs_spirou_SHAPE:
 
 
 .. code-block:: 
@@ -72,6 +99,9 @@ SHORTNAME: SHAPE
 
 5. Special Arguments
 ================================================================================
+
+
+.. _spargs_spirou_SHAPE:
 
 
 .. code-block:: 
@@ -99,6 +129,9 @@ SHORTNAME: SHAPE
 ================================================================================
 
 
+.. _outdir_spirou_SHAPE:
+
+
 .. code-block:: 
 
     DRS_DATA_REDUC // Default: "red" directory
@@ -106,6 +139,9 @@ SHORTNAME: SHAPE
 
 7. Output files
 ================================================================================
+
+
+.. _outfiles_spirou_SHAPE:
 
 
 .. csv-table:: Outputs
@@ -118,6 +154,9 @@ SHORTNAME: SHAPE
 ================================================================================
 
 
+.. _debugplots_spirou_SHAPE:
+
+
 .. code-block:: 
 
     SHAPEL_ZOOM_SHIFT
@@ -126,6 +165,9 @@ SHORTNAME: SHAPE
 
 9. Summary plots
 ================================================================================
+
+
+.. _summaryplots_spirou_SHAPE:
 
 
 .. code-block:: 

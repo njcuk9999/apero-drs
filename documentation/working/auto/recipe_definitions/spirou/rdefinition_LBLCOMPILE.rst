@@ -7,8 +7,26 @@ apero_lbl_compile_spirou
 ################################################################################
 
 
+
+Contents
+================================================================================
+
+* :ref:`1. Description <desc_spirou_LBLCOMPILE>`
+* :ref:`2. Schematic <schematic_spirou_LBLCOMPILE>`
+* :ref:`3. Usage <usage_spirou_LBLCOMPILE>`
+* :ref:`4. Optional Arguments <optargs_spirou_LBLCOMPILE>`
+* :ref:`5. Special Arguments <spargs_spirou_LBLCOMPILE>`
+* :ref:`6. Output directory <outdir_spirou_LBLCOMPILE>`
+* :ref:`7. Output files <outfiles_spirou_LBLCOMPILE>`
+* :ref:`8. Debug plots <debugplots_spirou_LBLCOMPILE>`
+* :ref:`9. Summary plots <summaryplots_spirou_LBLCOMPILE>`
+
+
 1. Description
 ================================================================================
+
+
+.. _desc_spirou_LBLCOMPILE:
 
 
 SHORTNAME: LBLCOMPILE
@@ -21,11 +39,17 @@ No description set
 ================================================================================
 
 
+.. _schematic_spirou_LBLCOMPILE:
+
+
 No schematic set
 
 
 3. Usage
 ================================================================================
+
+
+.. _usage_spirou_LBLCOMPILE:
 
 
 .. code-block:: 
@@ -42,11 +66,17 @@ No schematic set
 ================================================================================
 
 
+.. _optargs_spirou_LBLCOMPILE:
+
+
 No optional arguments
 
 
 5. Special Arguments
 ================================================================================
+
+
+.. _spargs_spirou_LBLCOMPILE:
 
 
 .. code-block:: 
@@ -74,6 +104,9 @@ No optional arguments
 ================================================================================
 
 
+.. _outdir_spirou_LBLCOMPILE:
+
+
 .. code-block:: 
 
     LBL_PATH // Default: "lbl" directory
@@ -81,6 +114,9 @@ No optional arguments
 
 7. Output files
 ================================================================================
+
+
+.. _outfiles_spirou_LBLCOMPILE:
 
 
 .. csv-table:: Outputs
@@ -93,11 +129,17 @@ No optional arguments
 ================================================================================
 
 
+.. _debugplots_spirou_LBLCOMPILE:
+
+
 No debug plots.
 
 
 9. Summary plots
 ================================================================================
+
+
+.. _summaryplots_spirou_LBLCOMPILE:
 
 
 No summary plots.

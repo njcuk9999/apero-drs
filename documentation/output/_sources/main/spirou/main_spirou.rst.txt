@@ -1,6 +1,16 @@
 
 .. _spirou_main:
 
+===========================================
+Contents
+===========================================
+
+* :ref:`SPIRou documentation <spirou_doc>`
+* :ref:`Detailed documentation <spirou_ddoc>`
+
+
+.. _spirou_doc:
+
 ************************************************************************************
 SPIRou documentation
 ************************************************************************************
@@ -47,6 +57,8 @@ for input into APERO.
 
     This section can only currently be viewed in the html documentation.
 
+
+.. _spirou_ddoc:
 
 Detailed documentation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

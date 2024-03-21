@@ -7,8 +7,26 @@ apero_dark_ref_nirps_ha
 ################################################################################
 
 
+
+Contents
+================================================================================
+
+* :ref:`1. Description <desc_nirps_ha_DARKREF>`
+* :ref:`2. Schematic <schematic_nirps_ha_DARKREF>`
+* :ref:`3. Usage <usage_nirps_ha_DARKREF>`
+* :ref:`4. Optional Arguments <optargs_nirps_ha_DARKREF>`
+* :ref:`5. Special Arguments <spargs_nirps_ha_DARKREF>`
+* :ref:`6. Output directory <outdir_nirps_ha_DARKREF>`
+* :ref:`7. Output files <outfiles_nirps_ha_DARKREF>`
+* :ref:`8. Debug plots <debugplots_nirps_ha_DARKREF>`
+* :ref:`9. Summary plots <summaryplots_nirps_ha_DARKREF>`
+
+
 1. Description
 ================================================================================
+
+
+.. _desc_nirps_ha_DARKREF:
 
 
 SHORTNAME: DARKREF
@@ -21,11 +39,17 @@ No description set
 ================================================================================
 
 
+.. _schematic_nirps_ha_DARKREF:
+
+
 No schematic set
 
 
 3. Usage
 ================================================================================
+
+
+.. _usage_nirps_ha_DARKREF:
 
 
 .. code-block:: 
@@ -40,6 +64,9 @@ No optional arguments
 ================================================================================
 
 
+.. _optargs_nirps_ha_DARKREF:
+
+
 .. code-block:: 
 
      --filetype[STRING] // DARK_REF_FILETYPE
@@ -50,6 +77,9 @@ No optional arguments
 
 5. Special Arguments
 ================================================================================
+
+
+.. _spargs_nirps_ha_DARKREF:
 
 
 .. code-block:: 
@@ -77,6 +107,9 @@ No optional arguments
 ================================================================================
 
 
+.. _outdir_nirps_ha_DARKREF:
+
+
 .. code-block:: 
 
     DRS_DATA_REDUC // Default: "red" directory
@@ -84,6 +117,9 @@ No optional arguments
 
 7. Output files
 ================================================================================
+
+
+.. _outfiles_nirps_ha_DARKREF:
 
 
 .. csv-table:: Outputs
@@ -96,11 +132,17 @@ No optional arguments
 ================================================================================
 
 
+.. _debugplots_nirps_ha_DARKREF:
+
+
 No debug plots.
 
 
 9. Summary plots
 ================================================================================
+
+
+.. _summaryplots_nirps_ha_DARKREF:
 
 
 No summary plots.

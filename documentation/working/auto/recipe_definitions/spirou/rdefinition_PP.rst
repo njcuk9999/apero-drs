@@ -7,8 +7,26 @@ apero_preprocess_spirou
 ################################################################################
 
 
+
+Contents
+================================================================================
+
+* :ref:`1. Description <desc_spirou_PP>`
+* :ref:`2. Schematic <schematic_spirou_PP>`
+* :ref:`3. Usage <usage_spirou_PP>`
+* :ref:`4. Optional Arguments <optargs_spirou_PP>`
+* :ref:`5. Special Arguments <spargs_spirou_PP>`
+* :ref:`6. Output directory <outdir_spirou_PP>`
+* :ref:`7. Output files <outfiles_spirou_PP>`
+* :ref:`8. Debug plots <debugplots_spirou_PP>`
+* :ref:`9. Summary plots <summaryplots_spirou_PP>`
+
+
 1. Description
 ================================================================================
+
+
+.. _desc_spirou_PP:
 
 
 SHORTNAME: PP
@@ -19,6 +37,9 @@ SHORTNAME: PP
 
 2. Schematic
 ================================================================================
+
+
+.. _schematic_spirou_PP:
 
 
 .. only:: html
@@ -36,6 +57,9 @@ SHORTNAME: PP
 ================================================================================
 
 
+.. _usage_spirou_PP:
+
+
 .. code-block:: 
 
     apero_preprocess_spirou.py {obs_dir}[STRING] [FILE:DRS_RAW] {options}
@@ -51,6 +75,9 @@ SHORTNAME: PP
 ================================================================================
 
 
+.. _optargs_spirou_PP:
+
+
 .. code-block:: 
 
      --skip[True/False] // [BOOLEAN] If True skips preprocessed files that are already found
@@ -58,6 +85,9 @@ SHORTNAME: PP
 
 5. Special Arguments
 ================================================================================
+
+
+.. _spargs_spirou_PP:
 
 
 .. code-block:: 
@@ -85,6 +115,9 @@ SHORTNAME: PP
 ================================================================================
 
 
+.. _outdir_spirou_PP:
+
+
 .. code-block:: 
 
     DRS_DATA_WORKING // Default: "tmp" directory
@@ -92,6 +125,9 @@ SHORTNAME: PP
 
 7. Output files
 ================================================================================
+
+
+.. _outfiles_spirou_PP:
 
 
 .. csv-table:: Outputs
@@ -104,11 +140,17 @@ SHORTNAME: PP
 ================================================================================
 
 
+.. _debugplots_spirou_PP:
+
+
 No debug plots.
 
 
 9. Summary plots
 ================================================================================
+
+
+.. _summaryplots_spirou_PP:
 
 
 No summary plots.

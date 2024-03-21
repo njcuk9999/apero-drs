@@ -7,8 +7,26 @@ apero_mk_template_spirou
 ################################################################################
 
 
+
+Contents
+================================================================================
+
+* :ref:`1. Description <desc_spirou_MKTEMP>`
+* :ref:`2. Schematic <schematic_spirou_MKTEMP>`
+* :ref:`3. Usage <usage_spirou_MKTEMP>`
+* :ref:`4. Optional Arguments <optargs_spirou_MKTEMP>`
+* :ref:`5. Special Arguments <spargs_spirou_MKTEMP>`
+* :ref:`6. Output directory <outdir_spirou_MKTEMP>`
+* :ref:`7. Output files <outfiles_spirou_MKTEMP>`
+* :ref:`8. Debug plots <debugplots_spirou_MKTEMP>`
+* :ref:`9. Summary plots <summaryplots_spirou_MKTEMP>`
+
+
 1. Description
 ================================================================================
+
+
+.. _desc_spirou_MKTEMP:
 
 
 SHORTNAME: MKTEMP
@@ -21,11 +39,17 @@ SHORTNAME: MKTEMP
 ================================================================================
 
 
+.. _schematic_spirou_MKTEMP:
+
+
 No schematic set
 
 
 3. Usage
 ================================================================================
+
+
+.. _usage_spirou_MKTEMP:
 
 
 .. code-block:: 
@@ -42,6 +66,9 @@ No schematic set
 ================================================================================
 
 
+.. _optargs_spirou_MKTEMP:
+
+
 .. code-block:: 
 
      --filetype[EXT_E2DS,EXT_E2DS_FF] // MKTEMP_FILETYPE
@@ -55,6 +82,9 @@ No schematic set
 
 5. Special Arguments
 ================================================================================
+
+
+.. _spargs_spirou_MKTEMP:
 
 
 .. code-block:: 
@@ -82,6 +112,9 @@ No schematic set
 ================================================================================
 
 
+.. _outdir_spirou_MKTEMP:
+
+
 .. code-block:: 
 
     DRS_DATA_REDUC // Default: "red" directory
@@ -89,6 +122,9 @@ No schematic set
 
 7. Output files
 ================================================================================
+
+
+.. _outfiles_spirou_MKTEMP:
 
 
 .. csv-table:: Outputs
@@ -101,6 +137,9 @@ No schematic set
 ================================================================================
 
 
+.. _debugplots_spirou_MKTEMP:
+
+
 .. code-block:: 
 
     EXTRACT_S1D
@@ -110,6 +149,9 @@ No schematic set
 
 9. Summary plots
 ================================================================================
+
+
+.. _summaryplots_spirou_MKTEMP:
 
 
 .. code-block:: 

@@ -7,11 +7,30 @@ calib_seq
 ################################################################################
 
 
-No description set
+
+Contents
+================================================================================
+
+* :ref:`1. Description <desc_spirou_calib_seq>`
+* :ref:`2. Schematic <schematic_spirou_calib_seq>`
+* :ref:`3. Recipes in sequence <recipes_spirou_calib_seq>`
+
+
+1. Description
+================================================================================
+
+
+.. _desc_spirou_calib_seq:
+
+
+.. include:: ../../../resources/spirou/descriptions/calib_seq_spirou.rst
 
 
 2. Schematic
 ================================================================================
+
+
+.. _schematic_spirou_calib_seq:
 
 
 .. only:: html
@@ -27,6 +46,9 @@ No description set
 
 3. Recipes in sequence
 ================================================================================
+
+
+.. _recipes_spirou_calib_seq:
 
 
 .. csv-table:: Recipes

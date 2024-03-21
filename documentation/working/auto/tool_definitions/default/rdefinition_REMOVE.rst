@@ -7,8 +7,26 @@ apero_remove
 ################################################################################
 
 
+
+Contents
+================================================================================
+
+* :ref:`1. Description <desc_default_REMOVE>`
+* :ref:`2. Schematic <schematic_default_REMOVE>`
+* :ref:`3. Usage <usage_default_REMOVE>`
+* :ref:`4. Optional Arguments <optargs_default_REMOVE>`
+* :ref:`5. Special Arguments <spargs_default_REMOVE>`
+* :ref:`6. Output directory <outdir_default_REMOVE>`
+* :ref:`7. Output files <outfiles_default_REMOVE>`
+* :ref:`8. Debug plots <debugplots_default_REMOVE>`
+* :ref:`9. Summary plots <summaryplots_default_REMOVE>`
+
+
 1. Description
 ================================================================================
+
+
+.. _desc_default_REMOVE:
 
 
 SHORTNAME: REMOVE
@@ -21,11 +39,17 @@ No description set
 ================================================================================
 
 
+.. _schematic_default_REMOVE:
+
+
 No schematic set
 
 
 3. Usage
 ================================================================================
+
+
+.. _usage_default_REMOVE:
 
 
 .. code-block:: 
@@ -40,6 +64,9 @@ No optional arguments
 ================================================================================
 
 
+.. _optargs_default_REMOVE:
+
+
 .. code-block:: 
 
      --obsdir[STRING] // Delete all instances of a certain observation directory from disk and databases
@@ -51,6 +78,9 @@ No optional arguments
 
 5. Special Arguments
 ================================================================================
+
+
+.. _spargs_default_REMOVE:
 
 
 .. code-block:: 
@@ -78,6 +108,9 @@ No optional arguments
 ================================================================================
 
 
+.. _outdir_default_REMOVE:
+
+
 .. code-block:: 
 
     DRS_DATA_REDUC // Default: "red" directory
@@ -85,6 +118,9 @@ No optional arguments
 
 7. Output files
 ================================================================================
+
+
+.. _outfiles_default_REMOVE:
 
 
 
@@ -96,11 +132,17 @@ N/A
 ================================================================================
 
 
+.. _debugplots_default_REMOVE:
+
+
 No debug plots.
 
 
 9. Summary plots
 ================================================================================
+
+
+.. _summaryplots_default_REMOVE:
 
 
 No summary plots.

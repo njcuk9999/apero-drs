@@ -7,8 +7,26 @@ apero_badpix_nirps_he
 ################################################################################
 
 
+
+Contents
+================================================================================
+
+* :ref:`1. Description <desc_nirps_he_BAD>`
+* :ref:`2. Schematic <schematic_nirps_he_BAD>`
+* :ref:`3. Usage <usage_nirps_he_BAD>`
+* :ref:`4. Optional Arguments <optargs_nirps_he_BAD>`
+* :ref:`5. Special Arguments <spargs_nirps_he_BAD>`
+* :ref:`6. Output directory <outdir_nirps_he_BAD>`
+* :ref:`7. Output files <outfiles_nirps_he_BAD>`
+* :ref:`8. Debug plots <debugplots_nirps_he_BAD>`
+* :ref:`9. Summary plots <summaryplots_nirps_he_BAD>`
+
+
 1. Description
 ================================================================================
+
+
+.. _desc_nirps_he_BAD:
 
 
 SHORTNAME: BAD
@@ -21,11 +39,17 @@ No description set
 ================================================================================
 
 
+.. _schematic_nirps_he_BAD:
+
+
 No schematic set
 
 
 3. Usage
 ================================================================================
+
+
+.. _usage_nirps_he_BAD:
 
 
 .. code-block:: 
@@ -44,6 +68,9 @@ No schematic set
 ================================================================================
 
 
+.. _optargs_nirps_he_BAD:
+
+
 .. code-block:: 
 
      --database[True/False] // [BOOLEAN] Whether to add outputs to calibration database
@@ -57,6 +84,9 @@ No schematic set
 
 5. Special Arguments
 ================================================================================
+
+
+.. _spargs_nirps_he_BAD:
 
 
 .. code-block:: 
@@ -84,6 +114,9 @@ No schematic set
 ================================================================================
 
 
+.. _outdir_nirps_he_BAD:
+
+
 .. code-block:: 
 
     DRS_DATA_REDUC // Default: "red" directory
@@ -91,6 +124,9 @@ No schematic set
 
 7. Output files
 ================================================================================
+
+
+.. _outfiles_nirps_he_BAD:
 
 
 .. csv-table:: Outputs
@@ -103,6 +139,9 @@ No schematic set
 ================================================================================
 
 
+.. _debugplots_nirps_he_BAD:
+
+
 .. code-block:: 
 
     BADPIX_MAP
@@ -110,6 +149,9 @@ No schematic set
 
 9. Summary plots
 ================================================================================
+
+
+.. _summaryplots_nirps_he_BAD:
 
 
 .. code-block:: 

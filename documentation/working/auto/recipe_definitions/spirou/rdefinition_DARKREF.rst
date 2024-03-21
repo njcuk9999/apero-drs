@@ -7,8 +7,26 @@ apero_dark_ref_spirou
 ################################################################################
 
 
+
+Contents
+================================================================================
+
+* :ref:`1. Description <desc_spirou_DARKREF>`
+* :ref:`2. Schematic <schematic_spirou_DARKREF>`
+* :ref:`3. Usage <usage_spirou_DARKREF>`
+* :ref:`4. Optional Arguments <optargs_spirou_DARKREF>`
+* :ref:`5. Special Arguments <spargs_spirou_DARKREF>`
+* :ref:`6. Output directory <outdir_spirou_DARKREF>`
+* :ref:`7. Output files <outfiles_spirou_DARKREF>`
+* :ref:`8. Debug plots <debugplots_spirou_DARKREF>`
+* :ref:`9. Summary plots <summaryplots_spirou_DARKREF>`
+
+
 1. Description
 ================================================================================
+
+
+.. _desc_spirou_DARKREF:
 
 
 SHORTNAME: DARKREF
@@ -19,6 +37,9 @@ SHORTNAME: DARKREF
 
 2. Schematic
 ================================================================================
+
+
+.. _schematic_spirou_DARKREF:
 
 
 .. only:: html
@@ -36,6 +57,9 @@ SHORTNAME: DARKREF
 ================================================================================
 
 
+.. _usage_spirou_DARKREF:
+
+
 .. code-block:: 
 
     apero_dark_ref_spirou.py {options}
@@ -48,6 +72,9 @@ No optional arguments
 ================================================================================
 
 
+.. _optargs_spirou_DARKREF:
+
+
 .. code-block:: 
 
      --filetype[STRING] // DARK_REF_FILETYPE
@@ -58,6 +85,9 @@ No optional arguments
 
 5. Special Arguments
 ================================================================================
+
+
+.. _spargs_spirou_DARKREF:
 
 
 .. code-block:: 
@@ -85,6 +115,9 @@ No optional arguments
 ================================================================================
 
 
+.. _outdir_spirou_DARKREF:
+
+
 .. code-block:: 
 
     DRS_DATA_REDUC // Default: "red" directory
@@ -92,6 +125,9 @@ No optional arguments
 
 7. Output files
 ================================================================================
+
+
+.. _outfiles_spirou_DARKREF:
 
 
 .. csv-table:: Outputs
@@ -104,11 +140,17 @@ No optional arguments
 ================================================================================
 
 
+.. _debugplots_spirou_DARKREF:
+
+
 No debug plots.
 
 
 9. Summary plots
 ================================================================================
+
+
+.. _summaryplots_spirou_DARKREF:
 
 
 No summary plots.

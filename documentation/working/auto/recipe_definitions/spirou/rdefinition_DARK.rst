@@ -7,8 +7,26 @@ apero_dark_spirou
 ################################################################################
 
 
+
+Contents
+================================================================================
+
+* :ref:`1. Description <desc_spirou_DARK>`
+* :ref:`2. Schematic <schematic_spirou_DARK>`
+* :ref:`3. Usage <usage_spirou_DARK>`
+* :ref:`4. Optional Arguments <optargs_spirou_DARK>`
+* :ref:`5. Special Arguments <spargs_spirou_DARK>`
+* :ref:`6. Output directory <outdir_spirou_DARK>`
+* :ref:`7. Output files <outfiles_spirou_DARK>`
+* :ref:`8. Debug plots <debugplots_spirou_DARK>`
+* :ref:`9. Summary plots <summaryplots_spirou_DARK>`
+
+
 1. Description
 ================================================================================
+
+
+.. _desc_spirou_DARK:
 
 
 SHORTNAME: DARK
@@ -21,11 +39,17 @@ No description set
 ================================================================================
 
 
+.. _schematic_spirou_DARK:
+
+
 No schematic set
 
 
 3. Usage
 ================================================================================
+
+
+.. _usage_spirou_DARK:
 
 
 .. code-block:: 
@@ -43,6 +67,9 @@ No schematic set
 ================================================================================
 
 
+.. _optargs_spirou_DARK:
+
+
 .. code-block:: 
 
      --database[True/False] // [BOOLEAN] Whether to add outputs to calibration database
@@ -53,6 +80,9 @@ No schematic set
 
 5. Special Arguments
 ================================================================================
+
+
+.. _spargs_spirou_DARK:
 
 
 .. code-block:: 
@@ -80,6 +110,9 @@ No schematic set
 ================================================================================
 
 
+.. _outdir_spirou_DARK:
+
+
 .. code-block:: 
 
     DRS_DATA_REDUC // Default: "red" directory
@@ -87,6 +120,9 @@ No schematic set
 
 7. Output files
 ================================================================================
+
+
+.. _outfiles_spirou_DARK:
 
 
 .. csv-table:: Outputs
@@ -99,6 +135,9 @@ No schematic set
 ================================================================================
 
 
+.. _debugplots_spirou_DARK:
+
+
 .. code-block:: 
 
     DARK_IMAGE_REGIONS
@@ -107,6 +146,9 @@ No schematic set
 
 9. Summary plots
 ================================================================================
+
+
+.. _summaryplots_spirou_DARK:
 
 
 .. code-block:: 

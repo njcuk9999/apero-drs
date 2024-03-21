@@ -7,8 +7,26 @@ apero_lbl_mask_spirou
 ################################################################################
 
 
+
+Contents
+================================================================================
+
+* :ref:`1. Description <desc_spirou_LBLMASK>`
+* :ref:`2. Schematic <schematic_spirou_LBLMASK>`
+* :ref:`3. Usage <usage_spirou_LBLMASK>`
+* :ref:`4. Optional Arguments <optargs_spirou_LBLMASK>`
+* :ref:`5. Special Arguments <spargs_spirou_LBLMASK>`
+* :ref:`6. Output directory <outdir_spirou_LBLMASK>`
+* :ref:`7. Output files <outfiles_spirou_LBLMASK>`
+* :ref:`8. Debug plots <debugplots_spirou_LBLMASK>`
+* :ref:`9. Summary plots <summaryplots_spirou_LBLMASK>`
+
+
 1. Description
 ================================================================================
+
+
+.. _desc_spirou_LBLMASK:
 
 
 SHORTNAME: LBLMASK
@@ -21,11 +39,17 @@ No description set
 ================================================================================
 
 
+.. _schematic_spirou_LBLMASK:
+
+
 No schematic set
 
 
 3. Usage
 ================================================================================
+
+
+.. _usage_spirou_LBLMASK:
 
 
 .. code-block:: 
@@ -42,11 +66,17 @@ No schematic set
 ================================================================================
 
 
+.. _optargs_spirou_LBLMASK:
+
+
 No optional arguments
 
 
 5. Special Arguments
 ================================================================================
+
+
+.. _spargs_spirou_LBLMASK:
 
 
 .. code-block:: 
@@ -74,6 +104,9 @@ No optional arguments
 ================================================================================
 
 
+.. _outdir_spirou_LBLMASK:
+
+
 .. code-block:: 
 
     LBL_PATH // Default: "lbl" directory
@@ -81,6 +114,9 @@ No optional arguments
 
 7. Output files
 ================================================================================
+
+
+.. _outfiles_spirou_LBLMASK:
 
 
 .. csv-table:: Outputs
@@ -93,11 +129,17 @@ No optional arguments
 ================================================================================
 
 
+.. _debugplots_spirou_LBLMASK:
+
+
 No debug plots.
 
 
 9. Summary plots
 ================================================================================
+
+
+.. _summaryplots_spirou_LBLMASK:
 
 
 No summary plots.

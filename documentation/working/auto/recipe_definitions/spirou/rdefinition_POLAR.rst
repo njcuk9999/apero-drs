@@ -7,8 +7,26 @@ apero_pol_spirou
 ################################################################################
 
 
+
+Contents
+================================================================================
+
+* :ref:`1. Description <desc_spirou_POLAR>`
+* :ref:`2. Schematic <schematic_spirou_POLAR>`
+* :ref:`3. Usage <usage_spirou_POLAR>`
+* :ref:`4. Optional Arguments <optargs_spirou_POLAR>`
+* :ref:`5. Special Arguments <spargs_spirou_POLAR>`
+* :ref:`6. Output directory <outdir_spirou_POLAR>`
+* :ref:`7. Output files <outfiles_spirou_POLAR>`
+* :ref:`8. Debug plots <debugplots_spirou_POLAR>`
+* :ref:`9. Summary plots <summaryplots_spirou_POLAR>`
+
+
 1. Description
 ================================================================================
+
+
+.. _desc_spirou_POLAR:
 
 
 SHORTNAME: POLAR
@@ -21,11 +39,17 @@ SHORTNAME: POLAR
 ================================================================================
 
 
+.. _schematic_spirou_POLAR:
+
+
 No schematic set
 
 
 3. Usage
 ================================================================================
+
+
+.. _usage_spirou_POLAR:
 
 
 .. code-block:: 
@@ -40,6 +64,9 @@ No schematic set
 
 4. Optional Arguments
 ================================================================================
+
+
+.. _optargs_spirou_POLAR:
 
 
 .. code-block:: 
@@ -63,6 +90,9 @@ No schematic set
 
 5. Special Arguments
 ================================================================================
+
+
+.. _spargs_spirou_POLAR:
 
 
 .. code-block:: 
@@ -90,6 +120,9 @@ No schematic set
 ================================================================================
 
 
+.. _outdir_spirou_POLAR:
+
+
 .. code-block:: 
 
     DRS_DATA_REDUC // Default: "red" directory
@@ -97,6 +130,9 @@ No schematic set
 
 7. Output files
 ================================================================================
+
+
+.. _outfiles_spirou_POLAR:
 
 
 .. csv-table:: Outputs
@@ -107,6 +143,9 @@ No schematic set
 
 8. Debug plots
 ================================================================================
+
+
+.. _debugplots_spirou_POLAR:
 
 
 .. code-block:: 
@@ -122,6 +161,9 @@ No schematic set
 
 9. Summary plots
 ================================================================================
+
+
+.. _summaryplots_spirou_POLAR:
 
 
 .. code-block:: 

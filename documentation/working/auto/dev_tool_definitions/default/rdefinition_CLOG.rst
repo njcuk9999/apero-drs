@@ -7,8 +7,26 @@ apero_changelog
 ################################################################################
 
 
+
+Contents
+================================================================================
+
+* :ref:`1. Description <desc_default_CLOG>`
+* :ref:`2. Schematic <schematic_default_CLOG>`
+* :ref:`3. Usage <usage_default_CLOG>`
+* :ref:`4. Optional Arguments <optargs_default_CLOG>`
+* :ref:`5. Special Arguments <spargs_default_CLOG>`
+* :ref:`6. Output directory <outdir_default_CLOG>`
+* :ref:`7. Output files <outfiles_default_CLOG>`
+* :ref:`8. Debug plots <debugplots_default_CLOG>`
+* :ref:`9. Summary plots <summaryplots_default_CLOG>`
+
+
 1. Description
 ================================================================================
+
+
+.. _desc_default_CLOG:
 
 
 SHORTNAME: CLOG
@@ -21,11 +39,17 @@ SHORTNAME: CLOG
 ================================================================================
 
 
+.. _schematic_default_CLOG:
+
+
 No schematic set
 
 
 3. Usage
 ================================================================================
+
+
+.. _usage_default_CLOG:
 
 
 .. code-block:: 
@@ -42,11 +66,17 @@ No schematic set
 ================================================================================
 
 
+.. _optargs_default_CLOG:
+
+
 No optional arguments
 
 
 5. Special Arguments
 ================================================================================
+
+
+.. _spargs_default_CLOG:
 
 
 .. code-block:: 
@@ -74,6 +104,9 @@ No optional arguments
 ================================================================================
 
 
+.. _outdir_default_CLOG:
+
+
 .. code-block:: 
 
     DRS_DATA_REDUC // Default: "red" directory
@@ -81,6 +114,9 @@ No optional arguments
 
 7. Output files
 ================================================================================
+
+
+.. _outfiles_default_CLOG:
 
 
 
@@ -92,11 +128,17 @@ N/A
 ================================================================================
 
 
+.. _debugplots_default_CLOG:
+
+
 No debug plots.
 
 
 9. Summary plots
 ================================================================================
+
+
+.. _summaryplots_default_CLOG:
 
 
 No summary plots.

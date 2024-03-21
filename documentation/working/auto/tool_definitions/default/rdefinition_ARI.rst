@@ -7,8 +7,26 @@ apero_ri
 ################################################################################
 
 
+
+Contents
+================================================================================
+
+* :ref:`1. Description <desc_default_ARI>`
+* :ref:`2. Schematic <schematic_default_ARI>`
+* :ref:`3. Usage <usage_default_ARI>`
+* :ref:`4. Optional Arguments <optargs_default_ARI>`
+* :ref:`5. Special Arguments <spargs_default_ARI>`
+* :ref:`6. Output directory <outdir_default_ARI>`
+* :ref:`7. Output files <outfiles_default_ARI>`
+* :ref:`8. Debug plots <debugplots_default_ARI>`
+* :ref:`9. Summary plots <summaryplots_default_ARI>`
+
+
 1. Description
 ================================================================================
+
+
+.. _desc_default_ARI:
 
 
 SHORTNAME: ARI
@@ -21,11 +39,17 @@ SHORTNAME: ARI
 ================================================================================
 
 
+.. _schematic_default_ARI:
+
+
 No schematic set
 
 
 3. Usage
 ================================================================================
+
+
+.. _usage_default_ARI:
 
 
 .. code-block:: 
@@ -42,6 +66,9 @@ No schematic set
 ================================================================================
 
 
+.. _optargs_default_ARI:
+
+
 .. code-block:: 
 
      --obsdir[STRING] // OBS_DIR_HELP
@@ -50,6 +77,9 @@ No schematic set
 
 5. Special Arguments
 ================================================================================
+
+
+.. _spargs_default_ARI:
 
 
 .. code-block:: 
@@ -77,6 +107,9 @@ No schematic set
 ================================================================================
 
 
+.. _outdir_default_ARI:
+
+
 .. code-block:: 
 
     DRS_DATA_REDUC // Default: "red" directory
@@ -84,6 +117,9 @@ No schematic set
 
 7. Output files
 ================================================================================
+
+
+.. _outfiles_default_ARI:
 
 
 
@@ -95,11 +131,17 @@ N/A
 ================================================================================
 
 
+.. _debugplots_default_ARI:
+
+
 No debug plots.
 
 
 9. Summary plots
 ================================================================================
+
+
+.. _summaryplots_default_ARI:
 
 
 No summary plots.

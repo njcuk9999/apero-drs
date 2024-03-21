@@ -7,11 +7,30 @@ science_seq
 ################################################################################
 
 
-No description set
+
+Contents
+================================================================================
+
+* :ref:`1. Description <desc_spirou_science_seq>`
+* :ref:`2. Schematic <schematic_spirou_science_seq>`
+* :ref:`3. Recipes in sequence <recipes_spirou_science_seq>`
+
+
+1. Description
+================================================================================
+
+
+.. _desc_spirou_science_seq:
+
+
+.. include:: ../../../resources/spirou/descriptions/science_seq_spirou.rst
 
 
 2. Schematic
 ================================================================================
+
+
+.. _schematic_spirou_science_seq:
 
 
 .. only:: html
@@ -27,6 +46,9 @@ No description set
 
 3. Recipes in sequence
 ================================================================================
+
+
+.. _recipes_spirou_science_seq:
 
 
 .. csv-table:: Recipes

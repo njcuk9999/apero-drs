@@ -7,8 +7,26 @@ apero_wave_night_spirou
 ################################################################################
 
 
+
+Contents
+================================================================================
+
+* :ref:`1. Description <desc_spirou_WAVE>`
+* :ref:`2. Schematic <schematic_spirou_WAVE>`
+* :ref:`3. Usage <usage_spirou_WAVE>`
+* :ref:`4. Optional Arguments <optargs_spirou_WAVE>`
+* :ref:`5. Special Arguments <spargs_spirou_WAVE>`
+* :ref:`6. Output directory <outdir_spirou_WAVE>`
+* :ref:`7. Output files <outfiles_spirou_WAVE>`
+* :ref:`8. Debug plots <debugplots_spirou_WAVE>`
+* :ref:`9. Summary plots <summaryplots_spirou_WAVE>`
+
+
 1. Description
 ================================================================================
+
+
+.. _desc_spirou_WAVE:
 
 
 SHORTNAME: WAVE
@@ -21,11 +39,17 @@ SHORTNAME: WAVE
 ================================================================================
 
 
+.. _schematic_spirou_WAVE:
+
+
 No schematic set
 
 
 3. Usage
 ================================================================================
+
+
+.. _usage_spirou_WAVE:
 
 
 .. code-block:: 
@@ -42,6 +66,9 @@ No schematic set
 
 4. Optional Arguments
 ================================================================================
+
+
+.. _optargs_spirou_WAVE:
 
 
 .. code-block:: 
@@ -72,6 +99,9 @@ No schematic set
 ================================================================================
 
 
+.. _spargs_spirou_WAVE:
+
+
 .. code-block:: 
 
      --xhelp[STRING] // Extended help menu (with all advanced arguments)
@@ -97,6 +127,9 @@ No schematic set
 ================================================================================
 
 
+.. _outdir_spirou_WAVE:
+
+
 .. code-block:: 
 
     DRS_DATA_REDUC // Default: "red" directory
@@ -104,6 +137,9 @@ No schematic set
 
 7. Output files
 ================================================================================
+
+
+.. _outfiles_spirou_WAVE:
 
 
 .. csv-table:: Outputs
@@ -114,6 +150,9 @@ No schematic set
 
 8. Debug plots
 ================================================================================
+
+
+.. _debugplots_spirou_WAVE:
 
 
 .. code-block:: 
@@ -132,6 +171,9 @@ No schematic set
 
 9. Summary plots
 ================================================================================
+
+
+.. _summaryplots_spirou_WAVE:
 
 
 .. code-block:: 

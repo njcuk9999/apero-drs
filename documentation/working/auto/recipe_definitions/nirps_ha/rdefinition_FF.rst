@@ -7,8 +7,26 @@ apero_flat_nirps_ha
 ################################################################################
 
 
+
+Contents
+================================================================================
+
+* :ref:`1. Description <desc_nirps_ha_FF>`
+* :ref:`2. Schematic <schematic_nirps_ha_FF>`
+* :ref:`3. Usage <usage_nirps_ha_FF>`
+* :ref:`4. Optional Arguments <optargs_nirps_ha_FF>`
+* :ref:`5. Special Arguments <spargs_nirps_ha_FF>`
+* :ref:`6. Output directory <outdir_nirps_ha_FF>`
+* :ref:`7. Output files <outfiles_nirps_ha_FF>`
+* :ref:`8. Debug plots <debugplots_nirps_ha_FF>`
+* :ref:`9. Summary plots <summaryplots_nirps_ha_FF>`
+
+
 1. Description
 ================================================================================
+
+
+.. _desc_nirps_ha_FF:
 
 
 SHORTNAME: FF
@@ -21,11 +39,17 @@ No description set
 ================================================================================
 
 
+.. _schematic_nirps_ha_FF:
+
+
 No schematic set
 
 
 3. Usage
 ================================================================================
+
+
+.. _usage_nirps_ha_FF:
 
 
 .. code-block:: 
@@ -41,6 +65,9 @@ No schematic set
 
 4. Optional Arguments
 ================================================================================
+
+
+.. _optargs_nirps_ha_FF:
 
 
 .. code-block:: 
@@ -69,6 +96,9 @@ No schematic set
 ================================================================================
 
 
+.. _spargs_nirps_ha_FF:
+
+
 .. code-block:: 
 
      --xhelp[STRING] // Extended help menu (with all advanced arguments)
@@ -94,6 +124,9 @@ No schematic set
 ================================================================================
 
 
+.. _outdir_nirps_ha_FF:
+
+
 .. code-block:: 
 
     DRS_DATA_REDUC // Default: "red" directory
@@ -101,6 +134,9 @@ No schematic set
 
 7. Output files
 ================================================================================
+
+
+.. _outfiles_nirps_ha_FF:
 
 
 .. csv-table:: Outputs
@@ -113,6 +149,9 @@ No schematic set
 ================================================================================
 
 
+.. _debugplots_nirps_ha_FF:
+
+
 .. code-block:: 
 
     FLAT_ORDER_FIT_EDGES1
@@ -123,6 +162,9 @@ No schematic set
 
 9. Summary plots
 ================================================================================
+
+
+.. _summaryplots_nirps_ha_FF:
 
 
 .. code-block:: 

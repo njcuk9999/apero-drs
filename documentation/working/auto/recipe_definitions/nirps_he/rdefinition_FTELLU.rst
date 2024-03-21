@@ -7,8 +7,26 @@ apero_fit_tellu_nirps_he
 ################################################################################
 
 
+
+Contents
+================================================================================
+
+* :ref:`1. Description <desc_nirps_he_FTELLU>`
+* :ref:`2. Schematic <schematic_nirps_he_FTELLU>`
+* :ref:`3. Usage <usage_nirps_he_FTELLU>`
+* :ref:`4. Optional Arguments <optargs_nirps_he_FTELLU>`
+* :ref:`5. Special Arguments <spargs_nirps_he_FTELLU>`
+* :ref:`6. Output directory <outdir_nirps_he_FTELLU>`
+* :ref:`7. Output files <outfiles_nirps_he_FTELLU>`
+* :ref:`8. Debug plots <debugplots_nirps_he_FTELLU>`
+* :ref:`9. Summary plots <summaryplots_nirps_he_FTELLU>`
+
+
 1. Description
 ================================================================================
+
+
+.. _desc_nirps_he_FTELLU:
 
 
 SHORTNAME: FTELLU
@@ -21,11 +39,17 @@ No description set
 ================================================================================
 
 
+.. _schematic_nirps_he_FTELLU:
+
+
 No schematic set
 
 
 3. Usage
 ================================================================================
+
+
+.. _usage_nirps_he_FTELLU:
 
 
 .. code-block:: 
@@ -43,6 +67,9 @@ No schematic set
 ================================================================================
 
 
+.. _optargs_nirps_he_FTELLU:
+
+
 .. code-block:: 
 
      --use_template[True/False] // USE_TEMP_HELP
@@ -58,6 +85,9 @@ No schematic set
 
 5. Special Arguments
 ================================================================================
+
+
+.. _spargs_nirps_he_FTELLU:
 
 
 .. code-block:: 
@@ -85,6 +115,9 @@ No schematic set
 ================================================================================
 
 
+.. _outdir_nirps_he_FTELLU:
+
+
 .. code-block:: 
 
     DRS_DATA_REDUC // Default: "red" directory
@@ -92,6 +125,9 @@ No schematic set
 
 7. Output files
 ================================================================================
+
+
+.. _outfiles_nirps_he_FTELLU:
 
 
 .. csv-table:: Outputs
@@ -102,6 +138,9 @@ No schematic set
 
 8. Debug plots
 ================================================================================
+
+
+.. _debugplots_nirps_he_FTELLU:
 
 
 .. code-block:: 
@@ -126,6 +165,9 @@ No schematic set
 
 9. Summary plots
 ================================================================================
+
+
+.. _summaryplots_nirps_he_FTELLU:
 
 
 .. code-block:: 

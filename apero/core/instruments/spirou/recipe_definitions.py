@@ -1566,7 +1566,7 @@ recipes.append(apero_postprocess)
 full_seq = drs_recipe.DrsRunSequence('full_seq', __INSTRUMENT__)
 # define schematic file and description file
 full_seq.schematic = 'full_seq.jpg'
-full_seq.description_file = 'full_seq_{0}.rst'.format(__INSTRUMENT__)
+full_seq.description_file = 'full_seq_{0}.rst'.format(__INSTRUMENT__.lower())
 # reference run
 # full_seq.add(apero_pp_ref, recipe_kind='pre-reference',
 #              arguments=dict(obs_dir='RUN_OBS_DIR'))
@@ -1689,7 +1689,7 @@ full_seq.add(apero_postprocess, name='POSTALL', files=[files.pp_file],
 limited_seq = drs_recipe.DrsRunSequence('limited_seq', __INSTRUMENT__)
 # define schematic file and description file
 limited_seq.schematic = 'limited_seq.jpg'
-limited_seq.description_file = 'limited_seq_{0}.rst'.format(__INSTRUMENT__)
+limited_seq.description_file = 'limited_seq_{0}.rst'.format(__INSTRUMENT__.lower())
 # reference run
 # limited_seq.add(apero_pp_ref, recipe_kind='pre-reference',
 #                 arguments=dict(obs_dir='RUN_OBS_DIR'))
@@ -1855,14 +1855,14 @@ limited_seq.add(apero_postprocess, name='SCIPOST', files=[files.pp_file],
 pp_seq = drs_recipe.DrsRunSequence('pp_seq', __INSTRUMENT__)
 # define schematic file and description file
 pp_seq.schematic = None
-pp_seq.description_file = 'pp_seq_{0}.rst'.format(__INSTRUMENT__)
+pp_seq.description_file = 'pp_seq_{0}.rst'.format(__INSTRUMENT__.lower())
 # pp_seq.add(apero_pp_ref, recipe_kind='pre-reference')
 pp_seq.add(apero_preprocess)
 
 pp_seq_opt = drs_recipe.DrsRunSequence('pp_seq_opt', __INSTRUMENT__)
 # define schematic file and description file
 pp_seq_opt.schematic = None
-pp_seq_opt.description_file = 'pp_seq_opt_{0}.rst'.format(__INSTRUMENT__)
+pp_seq_opt.description_file = 'pp_seq_opt_{0}.rst'.format(__INSTRUMENT__.lower())
 # pp_seq_opt.add(apero_pp_ref, recipe_kind='pre-reference')
 pp_seq_opt.add(apero_preprocess, name='PP_CAL', recipe_kind='pre-cal',
                filters=dict(KW_OBJNAME='CALIB'))
@@ -1897,7 +1897,7 @@ pp_seq_opt.add(apero_preprocess, name='PP_EVERY',
 ref_seq = drs_recipe.DrsRunSequence('ref_seq', __INSTRUMENT__)
 # define schematic file and description file
 ref_seq.schematic = 'ref_seq.jpg'
-ref_seq.description_file = 'ref_seq_{0}.rst'.format(__INSTRUMENT__)
+ref_seq.description_file = 'ref_seq_{0}.rst'.format(__INSTRUMENT__.lower())
 # add recipes
 ref_seq.add(apero_dark_ref, ref=True)
 ref_seq.add(apero_badpix, name='BADREF', ref=True,
@@ -1929,7 +1929,7 @@ ref_seq.add(apero_thermal, name='THERM_REFT', ref=True,
 calib_seq = drs_recipe.DrsRunSequence('calib_seq', __INSTRUMENT__)
 # define schematic file and description file
 calib_seq.schematic = 'calib_seq.jpg'
-calib_seq.description_file = 'calib_seq_{0}.rst'.format(__INSTRUMENT__)
+calib_seq.description_file = 'calib_seq_{0}.rst'.format(__INSTRUMENT__.lower())
 # night runs
 calib_seq.add(apero_badpix)
 calib_seq.add(apero_loc, files=[files.pp_dark_flat], name='LOCCAL',
@@ -1955,7 +1955,7 @@ calib_seq.add(apero_thermal, name='THERM_T',
 tellu_seq = drs_recipe.DrsRunSequence('tellu_seq', __INSTRUMENT__)
 # define schematic file and description file
 tellu_seq.schematic = 'tellu_seq.jpg'
-tellu_seq.description_file = 'tellu_seq_{0}.rst'.format(__INSTRUMENT__)
+tellu_seq.description_file = 'tellu_seq_{0}.rst'.format(__INSTRUMENT__.lower())
 # extract science
 tellu_seq.add(apero_extract, name='EXTTELL', recipe_kind='extract-hotstar',
               files=files.science_pp,
@@ -2008,7 +2008,7 @@ tellu_seq.add(apero_mk_template, name='MKTEMP2', recipe_kind='tellu-hotstar',
 science_seq = drs_recipe.DrsRunSequence('science_seq', __INSTRUMENT__)
 # define schematic file and description file
 science_seq.schematic = 'science_seq.jpg'
-science_seq.description_file = 'science_seq_{0}.rst'.format(__INSTRUMENT__)
+science_seq.description_file = 'science_seq_{0}.rst'.format(__INSTRUMENT__.lower())
 # extract science
 science_seq.add(apero_extract, name='EXTOBJ', recipe_kind='extract-science',
                 files=files.science_pp,
@@ -2060,7 +2060,7 @@ science_seq.add(apero_postprocess, files=[files.pp_file], name='SCIPOST',
 quick_seq = drs_recipe.DrsRunSequence('quick_seq', __INSTRUMENT__)
 # define schematic file and description file
 quick_seq.schematic = None
-quick_seq.description_file = 'quick_seq_{0}.rst'.format(__INSTRUMENT__)
+quick_seq.description_file = 'quick_seq_{0}.rst'.format(__INSTRUMENT__.lower())
 # extract science
 quick_seq.add(apero_extract, name='EXTQUICK', recipe_kind='extract-quick',
               files=files.science_pp,
@@ -2079,7 +2079,7 @@ blank_seq = drs_recipe.DrsRunSequence('blank_seq', __INSTRUMENT__)
 eng_seq = drs_recipe.DrsRunSequence('eng_seq', __INSTRUMENT__)
 # define schematic file and description file
 eng_seq.schematic = None
-eng_seq.description_file = 'eng_seq_{0}.rst'.format(__INSTRUMENT__)
+eng_seq.description_file = 'eng_seq_{0}.rst'.format(__INSTRUMENT__.lower())
 # extract sequences
 eng_seq.add(apero_extract, name='EXT_HC1HC1', files=[files.pp_hc1_hc1],
             recipe_kind='extract-hchc')
@@ -2108,7 +2108,7 @@ eng_seq.add(apero_extract, name='EXT_EVERY', files=[files.pp_file],
 lbl_seq = drs_recipe.DrsRunSequence('lbl_seq', __INSTRUMENT__)
 # define schematic file and description file
 lbl_seq.schematic = None
-lbl_seq.description_file = 'lbl_seq_{0}.rst'.format(__INSTRUMENT__)
+lbl_seq.description_file = 'lbl_seq_{0}.rst'.format(__INSTRUMENT__.lower())
 # lbl ref
 lbl_seq.add(apero_lbl_ref, name='LBLREF', recipe_kind='lbl-ref')
 

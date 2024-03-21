@@ -7,8 +7,26 @@ apero_wave_ref_spirou
 ################################################################################
 
 
+
+Contents
+================================================================================
+
+* :ref:`1. Description <desc_spirou_WAVEREF>`
+* :ref:`2. Schematic <schematic_spirou_WAVEREF>`
+* :ref:`3. Usage <usage_spirou_WAVEREF>`
+* :ref:`4. Optional Arguments <optargs_spirou_WAVEREF>`
+* :ref:`5. Special Arguments <spargs_spirou_WAVEREF>`
+* :ref:`6. Output directory <outdir_spirou_WAVEREF>`
+* :ref:`7. Output files <outfiles_spirou_WAVEREF>`
+* :ref:`8. Debug plots <debugplots_spirou_WAVEREF>`
+* :ref:`9. Summary plots <summaryplots_spirou_WAVEREF>`
+
+
 1. Description
 ================================================================================
+
+
+.. _desc_spirou_WAVEREF:
 
 
 SHORTNAME: WAVEREF
@@ -19,6 +37,9 @@ SHORTNAME: WAVEREF
 
 2. Schematic
 ================================================================================
+
+
+.. _schematic_spirou_WAVEREF:
 
 
 .. only:: html
@@ -36,6 +57,9 @@ SHORTNAME: WAVEREF
 ================================================================================
 
 
+.. _usage_spirou_WAVEREF:
+
+
 .. code-block:: 
 
     apero_wave_ref_spirou.py {obs_dir}[STRING] --hcfiles[FILE:HCONE_HCONE] --fpfiles[FILE:FP_FP] {options}
@@ -50,6 +74,9 @@ SHORTNAME: WAVEREF
 
 4. Optional Arguments
 ================================================================================
+
+
+.. _optargs_spirou_WAVEREF:
 
 
 .. code-block:: 
@@ -81,6 +108,9 @@ SHORTNAME: WAVEREF
 ================================================================================
 
 
+.. _spargs_spirou_WAVEREF:
+
+
 .. code-block:: 
 
      --xhelp[STRING] // Extended help menu (with all advanced arguments)
@@ -106,6 +136,9 @@ SHORTNAME: WAVEREF
 ================================================================================
 
 
+.. _outdir_spirou_WAVEREF:
+
+
 .. code-block:: 
 
     DRS_DATA_REDUC // Default: "red" directory
@@ -113,6 +146,9 @@ SHORTNAME: WAVEREF
 
 7. Output files
 ================================================================================
+
+
+.. _outfiles_spirou_WAVEREF:
 
 
 .. csv-table:: Outputs
@@ -123,6 +159,9 @@ SHORTNAME: WAVEREF
 
 8. Debug plots
 ================================================================================
+
+
+.. _debugplots_spirou_WAVEREF:
 
 
 .. code-block:: 
@@ -141,6 +180,9 @@ SHORTNAME: WAVEREF
 
 9. Summary plots
 ================================================================================
+
+
+.. _summaryplots_spirou_WAVEREF:
 
 
 .. code-block:: 

@@ -7,8 +7,26 @@ apero_thermal_spirou
 ################################################################################
 
 
+
+Contents
+================================================================================
+
+* :ref:`1. Description <desc_spirou_THERM>`
+* :ref:`2. Schematic <schematic_spirou_THERM>`
+* :ref:`3. Usage <usage_spirou_THERM>`
+* :ref:`4. Optional Arguments <optargs_spirou_THERM>`
+* :ref:`5. Special Arguments <spargs_spirou_THERM>`
+* :ref:`6. Output directory <outdir_spirou_THERM>`
+* :ref:`7. Output files <outfiles_spirou_THERM>`
+* :ref:`8. Debug plots <debugplots_spirou_THERM>`
+* :ref:`9. Summary plots <summaryplots_spirou_THERM>`
+
+
 1. Description
 ================================================================================
+
+
+.. _desc_spirou_THERM:
 
 
 SHORTNAME: THERM
@@ -19,6 +37,9 @@ SHORTNAME: THERM
 
 2. Schematic
 ================================================================================
+
+
+.. _schematic_spirou_THERM:
 
 
 .. only:: html
@@ -36,6 +57,9 @@ SHORTNAME: THERM
 ================================================================================
 
 
+.. _usage_spirou_THERM:
+
+
 .. code-block:: 
 
     apero_thermal_spirou.py {obs_dir}[STRING] [FILE:DARK_DARK_INT,DARK_DARK_TEL] {options}
@@ -49,6 +73,9 @@ SHORTNAME: THERM
 
 4. Optional Arguments
 ================================================================================
+
+
+.. _optargs_spirou_THERM:
 
 
 .. code-block:: 
@@ -79,6 +106,9 @@ SHORTNAME: THERM
 ================================================================================
 
 
+.. _spargs_spirou_THERM:
+
+
 .. code-block:: 
 
      --xhelp[STRING] // Extended help menu (with all advanced arguments)
@@ -104,6 +134,9 @@ SHORTNAME: THERM
 ================================================================================
 
 
+.. _outdir_spirou_THERM:
+
+
 .. code-block:: 
 
     DRS_DATA_REDUC // Default: "red" directory
@@ -111,6 +144,9 @@ SHORTNAME: THERM
 
 7. Output files
 ================================================================================
+
+
+.. _outfiles_spirou_THERM:
 
 
 .. csv-table:: Outputs
@@ -123,11 +159,17 @@ SHORTNAME: THERM
 ================================================================================
 
 
+.. _debugplots_spirou_THERM:
+
+
 No debug plots.
 
 
 9. Summary plots
 ================================================================================
+
+
+.. _summaryplots_spirou_THERM:
 
 
 No summary plots.

@@ -7,8 +7,26 @@ apero_preprocess_nirps_he
 ################################################################################
 
 
+
+Contents
+================================================================================
+
+* :ref:`1. Description <desc_nirps_he_PP>`
+* :ref:`2. Schematic <schematic_nirps_he_PP>`
+* :ref:`3. Usage <usage_nirps_he_PP>`
+* :ref:`4. Optional Arguments <optargs_nirps_he_PP>`
+* :ref:`5. Special Arguments <spargs_nirps_he_PP>`
+* :ref:`6. Output directory <outdir_nirps_he_PP>`
+* :ref:`7. Output files <outfiles_nirps_he_PP>`
+* :ref:`8. Debug plots <debugplots_nirps_he_PP>`
+* :ref:`9. Summary plots <summaryplots_nirps_he_PP>`
+
+
 1. Description
 ================================================================================
+
+
+.. _desc_nirps_he_PP:
 
 
 SHORTNAME: PP
@@ -21,11 +39,17 @@ No description set
 ================================================================================
 
 
+.. _schematic_nirps_he_PP:
+
+
 No schematic set
 
 
 3. Usage
 ================================================================================
+
+
+.. _usage_nirps_he_PP:
 
 
 .. code-block:: 
@@ -43,6 +67,9 @@ No schematic set
 ================================================================================
 
 
+.. _optargs_nirps_he_PP:
+
+
 .. code-block:: 
 
      --skip[True/False] // [BOOLEAN] If True skips preprocessed files that are already found
@@ -50,6 +77,9 @@ No schematic set
 
 5. Special Arguments
 ================================================================================
+
+
+.. _spargs_nirps_he_PP:
 
 
 .. code-block:: 
@@ -77,6 +107,9 @@ No schematic set
 ================================================================================
 
 
+.. _outdir_nirps_he_PP:
+
+
 .. code-block:: 
 
     DRS_DATA_WORKING // Default: "tmp" directory
@@ -84,6 +117,9 @@ No schematic set
 
 7. Output files
 ================================================================================
+
+
+.. _outfiles_nirps_he_PP:
 
 
 .. csv-table:: Outputs
@@ -96,11 +132,17 @@ No schematic set
 ================================================================================
 
 
+.. _debugplots_nirps_he_PP:
+
+
 No debug plots.
 
 
 9. Summary plots
 ================================================================================
+
+
+.. _summaryplots_nirps_he_PP:
 
 
 No summary plots.
