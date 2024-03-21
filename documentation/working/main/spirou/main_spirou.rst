@@ -2,7 +2,7 @@
 .. _spirou_main:
 
 ===========================================
-Contents
+SPIRou
 ===========================================
 
 * :ref:`SPIRou documentation <spirou_doc>`
@@ -12,7 +12,7 @@ Contents
 .. _spirou_doc:
 
 ************************************************************************************
-SPIRou documentation
+General documentation
 ************************************************************************************
 
 SPIRou is a near-infrared (0.98-2.5um) spectro-polarimeter that saw first light at the Canada France Hawaii telescope
@@ -60,8 +60,9 @@ for input into APERO.
 
 .. _spirou_ddoc:
 
+************************************************************************************
 Detailed documentation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+************************************************************************************
 
 .. toctree::
    :maxdepth: 2

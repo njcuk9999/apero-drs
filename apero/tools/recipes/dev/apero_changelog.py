@@ -39,10 +39,8 @@ CLOGFILENAME = '../changelog.md'
 VERSIONFILE = '../version.txt'
 CONSTFILE = './base/base.py'
 # define documentation properties
-DOC_CONFPATH = '../documentation/working/conf.py'
-DOC_CONF_PREFIX = 'release = '
 DOC_INDEXPATH = '../documentation/working/index.rst'
-DOC_INDEX_PREFIX = 'Latest version: '
+DOC_INDEX_PREFIX = 'Documentation written with version: '
 DOC_CHANGELOGPATH = '../documentation/working/main/misc/changelog.rst'
 
 
@@ -154,12 +152,8 @@ def __main__(recipe, params):
             os.remove('tmp.txt')
     # ----------------------------------------------------------------------
     # get doc paths
-    doc_confpath = drs_misc.get_relative_folder(package, DOC_CONFPATH)
     doc_clogpath = drs_misc.get_relative_folder(package, DOC_CHANGELOGPATH)
     doc_indxpath = drs_misc.get_relative_folder(package, DOC_INDEXPATH)
-    # update documentation (conf.py)
-    strversion = '\'{0}\'\n'.format(version)
-    drs_changelog.update_file(doc_confpath, DOC_CONF_PREFIX, strversion)
     # update documentation (index.py)
     drs_changelog.update_file(doc_indxpath, DOC_INDEX_PREFIX, version)
 

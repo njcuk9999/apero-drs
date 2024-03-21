@@ -73,7 +73,7 @@
   <ul>
     <li><a title="Home" href="http://apero.exoplanets.ca/">
         <i class="fa fa-home fa-3x" aria-hidden="true"></i></a></li>
-    <li><a title="install" href="http://apero.exoplanets.ca/user/general/installation.html">
+    <li><a title="install" href="http://apero.exoplanets.ca/main/general/installation.html">
         <i class="fa fa-cog fa-3x" aria-hidden="true"></i></a></li>
     <li><a title="github" href="https://github.com/njcuk9999/apero-drs">
         <i class="fa fa-git-square fa-3x" aria-hidden="true"></i></a></li>
@@ -116,9 +116,7 @@
             
   <section id="apero-documentation">
 <span id="apero-doc-main"></span><h1>APERO Documentation<a class="headerlink" href="#apero-documentation" title="Permalink to this heading">¶</a></h1>
-<section id="latest-version-0-8-001">
-<span id="apero-doc-main-latest"></span><h2>Latest version: 0.8.001<a class="headerlink" href="#latest-version-0-8-001" title="Permalink to this heading">¶</a></h2>
-<blockquote>
+<blockquote id="apero-doc-main-latest">
 <div><p>Last Updated on 2024-03-21</p>
 <p>APERO is a pipeline designed to reduce astrophysical observations (specifically from echelle spectrographs).
 It is the official pipeline for:</p>
@@ -134,8 +132,54 @@ It is the official pipeline for:</p>
 <li><p><a class="reference external" href="https://www.astro.umontreal.ca/nirps">NIRPS HE</a></p></li>
 <li><p><a class="reference external" href="https://www.astro.umontreal.ca/nirps">NIRPS HA</a></p></li>
 </ul>
-<p>The Line-by-line code for precision radial velocity (<a class="reference external" href="https://iopscience.iop.org/article/10.3847/1538-3881/ac7ce6">Artigau et al. 2022</a>) is also integrated into APERO.</p>
+<p>The <a class="reference external" href="https://lbl.exoplanets.ca/">Line-by-line code</a> for precision radial velocity (<a class="reference external" href="https://iopscience.iop.org/article/10.3847/1538-3881/ac7ce6">Artigau et al. 2022</a>) is also integrated into APERO.</p>
 </div></blockquote>
+<section id="versions">
+<h2>Versions:<a class="headerlink" href="#versions" title="Permalink to this heading">¶</a></h2>
+<p>There are multiple branches and versions of APERO with different levels of stability and features.</p>
+<p>The current versions are:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>main (long term stable) V0.7.288 (2024-01-30)</p></li>
+</ul>
+<blockquote>
+<div><div class="highlight-text notranslate"><div class="highlight"><pre><span></span>This is the version currently recommended for all general use. It may not
+contain the most up-to-date features until long term support and stability can
+be verified.
+</pre></div>
+</div>
+</div></blockquote>
+<ul class="simple">
+<li><p>developer (tested) V0.7.288 (2024-01-30)</p></li>
+</ul>
+<blockquote>
+<div><div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Note the developer version should have been tested and semi-stable but not
+ready for full sets of processing and defintely not for release for
+non-developers or for data put on archives. Some changes may not be
+in this version that are in the working version.
+</pre></div>
+</div>
+</div></blockquote>
+<ul class="simple">
+<li><p>stable-test (tested) V0.7.289 (2024-03-21)</p></li>
+</ul>
+<blockquote>
+<div><div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Notrmally up-to-date with the live version has been or is currently
+being tested for stability
+</pre></div>
+</div>
+</div></blockquote>
+<ul class="simple">
+<li><p>live (untested) V0.8.001 (2024-03-21)</p></li>
+</ul>
+<blockquote>
+<div><div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Note the live version will be the most up-to-date version but has not been
+tested for stability - use at own risk.
+</pre></div>
+</div>
+</div></blockquote>
+</div></blockquote>
+<p>Documentation written with version: 0.8.001</p>
 </section>
 <section id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Permalink to this heading">¶</a></h2>
@@ -159,23 +203,35 @@ It is the official pipeline for:</p>
 <h2>Instrument documentation<a class="headerlink" href="#instrument-documentation" title="Permalink to this heading">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="main/spirou/main_spirou.html">Contents</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="main/spirou/main_spirou.html#spirou-documentation">SPIRou documentation</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="main/spirou/main_spirou.html#detailed-documentation">Detailed documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="main/spirou/main_spirou.html">SPIRou</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="main/spirou/main_spirou.html#general-documentation">General documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="main/spirou/main_spirou.html#detailed-documentation">Detailed documentation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="auto/recipe_sequences/spirou/sequences.html">Sequences (SPIROU)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="auto/recipe_definitions/spirou/recipes.html">Recipes (SPIROU)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="auto/tool_definitions/spirou/tools.html">User tools (spirou)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="auto/file_definitions/spirou/files.html">File definitions (SPIROU)</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="main/nirps_he/main_nirps_he.html">Contents</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="main/nirps_he/main_nirps_he.html#nirps-he-documentation">NIRPS HE documentation</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="main/nirps_he/main_nirps_he.html#detailed-documentation">Detailed documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="main/nirps_he/main_nirps_he.html">NIRPS HE</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="main/nirps_he/main_nirps_he.html#general-documentation">General documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="main/nirps_he/main_nirps_he.html#detailed-documentation">Detailed documentation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="auto/recipe_sequences/nirps_he/sequences.html">Sequences (NIRPS_HE)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="auto/recipe_definitions/nirps_he/recipes.html">Recipes (NIRPS_HE)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="auto/tool_definitions/nirps_he/tools.html">User tools (nirps_he)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="auto/file_definitions/nirps_he/files.html">File definitions (NIRPS_HE)</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="main/nirps_ha/main_nirps_ha.html">Contents</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="main/nirps_ha/main_nirps_ha.html#nirps-ha-documentation">NIRPS HA documentation</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="main/nirps_ha/main_nirps_ha.html#detailed-documentation">Detailed documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="main/nirps_ha/main_nirps_ha.html">NIRPS HA</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="main/nirps_ha/main_nirps_ha.html#general-documentation">General documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="main/nirps_ha/main_nirps_ha.html#detailed-documentation">Detailed documentation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="auto/recipe_sequences/nirps_ha/sequences.html">Sequences (NIRPS_HA)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="auto/recipe_definitions/nirps_ha/recipes.html">Recipes (NIRPS_HA)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="auto/tool_definitions/nirps_ha/tools.html">User tools (nirps_ha)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="auto/file_definitions/nirps_ha/files.html">File definitions (NIRPS_HA)</a></li>
 </ul>
 </li>
 </ul>
@@ -245,7 +301,7 @@ It is the official pipeline for:</p>
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2019, Neil Cook.
+        &#169; Copyright 2024, Neil Cook.
       Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.0.1.
     </div>
   </body>

@@ -13,16 +13,17 @@
 # import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
-
+from astropy.time import Time
+from apero.base import base
 
 # -- Project information -----------------------------------------------------
 
 project = 'APERO'
-copyright = '2019, Neil Cook'
+copyright = '{0}, Neil Cook'.format(Time.now().datetime.year)
 author = 'Neil Cook'
 
 # The full version, including alpha/beta/rc tags
-release = '0.8.001'
+release = base.__version__
 
 # -- General configuration ---------------------------------------------------
 

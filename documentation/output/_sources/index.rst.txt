@@ -13,13 +13,7 @@
 APERO Documentation
 ******************************************
 
-
-
 .. _apero_doc_main_latest:
-
-===========================================
-Latest version: 0.8.001
-===========================================
 
   .. |date| date::
 
@@ -40,7 +34,51 @@ Latest version: 0.8.001
   * `NIRPS HA <https://www.astro.umontreal.ca/nirps>`_
 
 
-  The Line-by-line code for precision radial velocity (`Artigau et al. 2022 <https://iopscience.iop.org/article/10.3847/1538-3881/ac7ce6>`_) is also integrated into APERO.
+  The `Line-by-line code <https://lbl.exoplanets.ca/>`_ for precision radial velocity (`Artigau et al. 2022 <https://iopscience.iop.org/article/10.3847/1538-3881/ac7ce6>`_) is also integrated into APERO.
+
+
+===========================================
+Versions:
+===========================================
+
+There are multiple branches and versions of APERO with different levels of stability and features.
+
+The current versions are:
+
+   * main (long term stable) V0.7.288 (2024-01-30)
+
+    .. code-block:: text
+
+       This is the version currently recommended for all general use. It may not
+       contain the most up-to-date features until long term support and stability can
+       be verified.
+
+
+   * developer (tested) V0.7.288 (2024-01-30)
+
+    .. code-block:: text
+
+       Note the developer version should have been tested and semi-stable but not
+       ready for full sets of processing and defintely not for release for
+       non-developers or for data put on archives. Some changes may not be
+       in this version that are in the working version.
+
+   * stable-test (tested) V0.7.289 (2024-03-21)
+
+    .. code-block:: text
+
+       Notrmally up-to-date with the live version has been or is currently
+       being tested for stability
+
+   * live (untested) V0.8.001 (2024-03-21)
+
+    .. code-block:: text
+
+       Note the live version will be the most up-to-date version but has not been
+       tested for stability - use at own risk.
+
+
+Documentation written with version: 0.8.001
 
 ===========================================
 Overview
