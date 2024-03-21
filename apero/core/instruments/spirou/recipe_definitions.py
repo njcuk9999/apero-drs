@@ -1566,7 +1566,7 @@ recipes.append(apero_postprocess)
 full_seq = drs_recipe.DrsRunSequence('full_seq', __INSTRUMENT__)
 # define schematic file and description file
 full_seq.schematic = 'full_seq.jpg'
-full_seq.description_file = None
+full_seq.description_file = 'full_seq_{0}.rst'.format(__INSTRUMENT__)
 # reference run
 # full_seq.add(apero_pp_ref, recipe_kind='pre-reference',
 #              arguments=dict(obs_dir='RUN_OBS_DIR'))
@@ -1689,7 +1689,7 @@ full_seq.add(apero_postprocess, name='POSTALL', files=[files.pp_file],
 limited_seq = drs_recipe.DrsRunSequence('limited_seq', __INSTRUMENT__)
 # define schematic file and description file
 limited_seq.schematic = 'limited_seq.jpg'
-limited_seq.description_file = None
+limited_seq.description_file = 'limited_seq_{0}.rst'.format(__INSTRUMENT__)
 # reference run
 # limited_seq.add(apero_pp_ref, recipe_kind='pre-reference',
 #                 arguments=dict(obs_dir='RUN_OBS_DIR'))
@@ -1897,7 +1897,7 @@ pp_seq_opt.add(apero_preprocess, name='PP_EVERY',
 ref_seq = drs_recipe.DrsRunSequence('ref_seq', __INSTRUMENT__)
 # define schematic file and description file
 ref_seq.schematic = 'ref_seq.jpg'
-ref_seq.description_file = 'ref_seq_spirou.rst'
+ref_seq.description_file = 'ref_seq_{0}.rst'.format(__INSTRUMENT__)
 # add recipes
 ref_seq.add(apero_dark_ref, ref=True)
 ref_seq.add(apero_badpix, name='BADREF', ref=True,
@@ -1929,7 +1929,7 @@ ref_seq.add(apero_thermal, name='THERM_REFT', ref=True,
 calib_seq = drs_recipe.DrsRunSequence('calib_seq', __INSTRUMENT__)
 # define schematic file and description file
 calib_seq.schematic = 'calib_seq.jpg'
-calib_seq.description_file = None
+calib_seq.description_file = 'calib_seq_{0}.rst'.format(__INSTRUMENT__)
 # night runs
 calib_seq.add(apero_badpix)
 calib_seq.add(apero_loc, files=[files.pp_dark_flat], name='LOCCAL',
@@ -1955,7 +1955,7 @@ calib_seq.add(apero_thermal, name='THERM_T',
 tellu_seq = drs_recipe.DrsRunSequence('tellu_seq', __INSTRUMENT__)
 # define schematic file and description file
 tellu_seq.schematic = 'tellu_seq.jpg'
-tellu_seq.description_file = None
+tellu_seq.description_file = 'tellu_seq_{0}.rst'.format(__INSTRUMENT__)
 # extract science
 tellu_seq.add(apero_extract, name='EXTTELL', recipe_kind='extract-hotstar',
               files=files.science_pp,
@@ -2008,7 +2008,7 @@ tellu_seq.add(apero_mk_template, name='MKTEMP2', recipe_kind='tellu-hotstar',
 science_seq = drs_recipe.DrsRunSequence('science_seq', __INSTRUMENT__)
 # define schematic file and description file
 science_seq.schematic = 'science_seq.jpg'
-science_seq.description_file = None
+science_seq.description_file = 'science_seq_{0}.rst'.format(__INSTRUMENT__)
 # extract science
 science_seq.add(apero_extract, name='EXTOBJ', recipe_kind='extract-science',
                 files=files.science_pp,
@@ -2058,6 +2058,9 @@ science_seq.add(apero_postprocess, files=[files.pp_file], name='SCIPOST',
 # science sequence (for trigger)
 # -----------------------------------------------------------------------------
 quick_seq = drs_recipe.DrsRunSequence('quick_seq', __INSTRUMENT__)
+# define schematic file and description file
+quick_seq.schematic = None
+quick_seq.description_file = 'quick_seq_{0}.rst'.format(__INSTRUMENT__)
 # extract science
 quick_seq.add(apero_extract, name='EXTQUICK', recipe_kind='extract-quick',
               files=files.science_pp,
@@ -2074,7 +2077,9 @@ blank_seq = drs_recipe.DrsRunSequence('blank_seq', __INSTRUMENT__)
 # engineering sequences
 # -----------------------------------------------------------------------------
 eng_seq = drs_recipe.DrsRunSequence('eng_seq', __INSTRUMENT__)
-
+# define schematic file and description file
+eng_seq.schematic = None
+eng_seq.description_file = 'eng_seq_{0}.rst'.format(__INSTRUMENT__)
 # extract sequences
 eng_seq.add(apero_extract, name='EXT_HC1HC1', files=[files.pp_hc1_hc1],
             recipe_kind='extract-hchc')
@@ -2084,12 +2089,12 @@ eng_seq.add(apero_extract, name='EXT_FF', files=[files.pp_flat_flat],
             recipe_kind='extract-ff')
 eng_seq.add(apero_extract, name='EXT_DFP', files=[files.pp_dark_fp],
             recipe_kind='extract-dfp')
+eng_seq.add(apero_extract, name='EXT_FPD', files=[files.pp_fp_dark],
+            recipe_kind='extract-fpd')
 eng_seq.add(apero_extract, name='EXT_SKY', files=[files.pp_dark_dark_sky],
             recipe_kind='extract-sky')
 eng_seq.add(apero_extract, name='EXT_LFC', files=[files.pp_lfc_lfc],
             recipe_kind='extract-lfc')
-eng_seq.add(apero_extract, name='EXT_FPD', files=[files.pp_fp_dark],
-            recipe_kind='extract-fpd')
 eng_seq.add(apero_extract, name='EXT_LFCFP', files=[files.pp_lfc_fp],
             recipe_kind='extract-lfcfp')
 eng_seq.add(apero_extract, name='EXT_FPLFC', files=[files.pp_fp_lfc],
@@ -2101,7 +2106,9 @@ eng_seq.add(apero_extract, name='EXT_EVERY', files=[files.pp_file],
 # lbl sequences
 # -----------------------------------------------------------------------------
 lbl_seq = drs_recipe.DrsRunSequence('lbl_seq', __INSTRUMENT__)
-
+# define schematic file and description file
+lbl_seq.schematic = None
+lbl_seq.description_file = 'lbl_seq_{0}.rst'.format(__INSTRUMENT__)
 # lbl ref
 lbl_seq.add(apero_lbl_ref, name='LBLREF', recipe_kind='lbl-ref')
 
