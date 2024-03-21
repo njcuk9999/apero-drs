@@ -7,7 +7,7 @@ pp_seq_opt
 ################################################################################
 
 
-No description set
+.. include:: ../../../resources/spirou/descriptions/pp_seq_opt_SPIROU.rst
 
 
 2. Schematic

@@ -1897,7 +1897,7 @@ pp_seq_opt.add(apero_preprocess, name='PP_EVERY',
 ref_seq = drs_recipe.DrsRunSequence('ref_seq', __INSTRUMENT__)
 # define schematic file and description file
 ref_seq.schematic = 'ref_seq.jpg'
-ref_seq.description_file = None
+ref_seq.description_file = 'ref_seq_spirou.rst'
 # add recipes
 ref_seq.add(apero_dark_ref, ref=True)
 ref_seq.add(apero_badpix, name='BADREF', ref=True,

@@ -7,7 +7,7 @@ pp_seq
 ################################################################################
 
 
-.. include:: ../../../resources/spirou/descriptions/pp_seq.rst
+.. include:: ../../../resources/spirou/descriptions/pp_seq_SPIROU.rst
 
 
 2. Schematic
