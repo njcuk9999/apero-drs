@@ -197,6 +197,17 @@ def load_previous_objects(params: ParamDict) -> Dict[str, AriObject]:
     filetypes = ari_core.ari_filetypes(params)
     # get has_polar criteria
     has_polar = ari_core.get_has_polar(params)
+    # get list of objects to redo from inputs
+    redo_objs = []
+    if 'REDO_OBJS' in params['INPUTS']:
+        # get parameter from inputs
+        raw_redo = params['INPUTS']['REDO_OBJS']
+        # if the value is not none (default) we populate the list
+        if raw_redo not in ['None', None, 'Null', '']:
+            # the list should be comma separated
+            redo_objs = raw_redo.split(',')
+            # we then need to remove any leading/trailing white space
+            redo_objs = [redo_obj.strip() for redo_obj in redo_objs]
     # -------------------------------------------------------------------------
     # create objects
     obj_classes = dict()
@@ -221,6 +232,9 @@ def load_previous_objects(params: ParamDict) -> Dict[str, AriObject]:
     # -------------------------------------------------------------------------
     # for each object we load from disk
     for objname in list(obj_classes.keys()):
+        # we don't want to load objects that we've set to redo
+        if objname in redo_objs:
+            continue
         # get object class
         obj_class = obj_classes[objname]
         # add files stats
@@ -257,7 +271,7 @@ def find_new_objects(params: ParamDict, object_classes: Dict[str, AriObject]
     for objname in tqdm(list(object_classes.keys())):
         # if we are filtering skip other objects
         if params['ARI_FILTER_OBJECTS']:
-            if objname not in  params['ARI_FILTER_OBJECTS_LIST']:
+            if objname not in params['ARI_FILTER_OBJECTS_LIST']:
                 continue
         # get object class
         obj_class = object_classes[objname]
