@@ -121,6 +121,10 @@ ari.set_kwarg(name='--obsdir', dtype=str, default='None',
               helpstr=textentry('OBS_DIR_HELP'))
 ari.set_kwarg(name='--reset', dtype='switch', default=False,
               helpstr='Reset ARI')
+ari.set_kwarg(name='--redo_objs', dtype=str, default='None',
+              helpstr='List of comma separated objects (named as in '
+                      'astrometric database) to redo. All others will be '
+                      'taken from storage unless not currently processed.')
 ari.description_file = 'apero_ri.rst'
 
 # -----------------------------------------------------------------------------
