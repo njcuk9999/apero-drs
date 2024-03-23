@@ -241,120 +241,132 @@ def make_obj_table(params: ParamDict, object_classes: Dict
 # =============================================================================
 # Individual Object functions
 # =============================================================================
-def _add_obj_page(it: int, key: str, params: ParamDict,
-                  object_classes: Dict[str, AriObject]):
+def _add_obj_page(it: int, key: str, rdict: dict, params: ParamDict,
+                  object_classes: Dict[str, AriObject]
+                  ) -> Dict[str, Tuple[bool, str]]:
     # get object
     object_class = object_classes[key]
-    # do not recalculate object page if we are not updating
-    if not object_class.update:
-        return
     # get the object name for this row
     objname = object_class.objname
-    # get the ari user
-    ari_user = params['ARI_USER']
-    # get the page reference
-    page_ref = f'{ari_user}_object_page_{objname}'
-    # get the table reference
-    table_ref = f'{ari_user}_object_table'
-    # get the sections references
-    object_section_ref = f'object_{ari_user}_objpage_{objname}'
-    spectrum_section_ref = f'spectrum_{ari_user}_objpage_{objname}'
-    lbl_section_ref = f'lbl_{ari_user}_objpage_{objname}'
-    ccf_section_ref = f'ccf_{ari_user}_objpage_{objname}'
-    timeseries_section_ref = f'timeseries_{ari_user}_objpage_{objname}'
-    # ------------------------------------------------------------------
-    # print progress
-    msg = '\tCreating page for {0} [{1} of {2}]'
-    margs = [objname, it + 1, len(object_classes)]
-    WLOG(params, '', msg.format(*margs))
-    # ---------------------------------------------------------------------
-    # construct path for object
-    obj_save_path = os.path.join(params['ARI_OBJ_PAGES'], objname)
-    # Make sure directory exists
-    if not os.path.exists(obj_save_path):
-        os.makedirs(obj_save_path)
-    # ---------------------------------------------------------------------
-    # populate the header dictionary for this object instance
-    # wlog(params, '', f'\t\tPopulating header dictionary')
-    object_class.populate_header_dict(params)
-    # ---------------------------------------------------------------------
-    # create ARI object page
-    object_page = drs_markdown.MarkDownPage(page_ref)
-    # state that this page does not have a paranet (as it is accessed via table)
-    object_page.add_text(':orphan:')
-    object_page.add_newline()
-    # add title
-    object_page.add_title(f'{objname} ({ari_user})')
-    # add page access
-    object_page.add_html(add_page_access(params['ARI_GROUP']))
-    # ---------------------------------------------------------------------
-    # Add basic text
-    # construct text to add
-    object_page.add_text(f'This page was last modified: {Time.now()} (UTC)')
-    object_page.add_newline()
-    # link back to the table
-    # create a table page for this table
-    table_ref_url = drs_markdown.make_url('object table', table_ref)
-    object_page.add_text(f'Back to the {table_ref_url}')
-    object_page.add_newline()
-    # ---------------------------------------------------------------------
-    # table of contents
-    # ---------------------------------------------------------------------
-    # Add the names of the sections
-    names = ['Target info', 'Spectrum', 'LBL', 'CCF', 'Time series']
-    # add the links to the pages
-    items = [object_section_ref, spectrum_section_ref, lbl_section_ref,
-             ccf_section_ref, timeseries_section_ref]
-    # add table of contents
-    object_page.add_table_of_contents(items=items, names=names)
-    object_page.add_newline(nlines=3)
-    # ---------------------------------------------------------------------
-    # Target information section
-    # ---------------------------------------------------------------------
-    objpage_targetinfo(params, object_page, names[0], items[0], object_class)
-    # ---------------------------------------------------------------------
-    # Spectrum section
-    # ---------------------------------------------------------------------
-    # print progress
-    # wlog(params, '', f'\t\tCreating spectrum section')
-    # add spectrum section
-    objpage_spectrum(params, object_page, names[1], items[1], object_class)
-    # ---------------------------------------------------------------------
-    # LBL section
-    # ---------------------------------------------------------------------
-    # print progress
-    # wlog(params, '', f'\t\tCreating LBL section')
-    # add LBL section
-    objpage_lbl(params, object_page, names[2], items[2], object_class)
-    # ---------------------------------------------------------------------
-    # CCF section
-    # ---------------------------------------------------------------------
-    # print progress
-    # wlog(params, '', f'\t\tCreating CCF section')
-    # add CCF section
-    objpage_ccf(params, object_page, names[3], items[3], object_class)
-    # ---------------------------------------------------------------------
-    # Time series section
-    # ---------------------------------------------------------------------
-    # print progress
-    # wlog(params, '', f'\t\tCreating time series section')
-    # add time series section
-    objpage_timeseries(params, object_page, names[4], items[4], object_class)
-    # ---------------------------------------------------------------------
-    # write object page
-    # ---------------------------------------------------------------------
-    # construct the rst path
-    object_page_path = os.path.join(params['ARI_OBJ_PAGES'], objname)
-    # construct the rst filename
-    rst_filename = f'{objname}.rst'
-    # save object page
-    object_page.write_page(os.path.join(object_page_path, rst_filename))
-    # ------------------------------------------------------------------
-    # print progress
-    msg = '\tFinished creating page for {0} [{1} of {2}]'
-    margs = [objname, it + 1, len(object_classes)]
-    WLOG(params, '', msg.format(*margs), colour='magenta')
-
+    # the rest could go wrong so we try it
+    try:
+        # do not recalculate object page if we are not updating
+        if not object_class.update:
+            # update rdict
+            rdict[objname] = (True, 'No object update')
+        # get the ari user
+        ari_user = params['ARI_USER']
+        # get the page reference
+        page_ref = f'{ari_user}_object_page_{objname}'
+        # get the table reference
+        table_ref = f'{ari_user}_object_table'
+        # get the sections references
+        object_section_ref = f'object_{ari_user}_objpage_{objname}'
+        spectrum_section_ref = f'spectrum_{ari_user}_objpage_{objname}'
+        lbl_section_ref = f'lbl_{ari_user}_objpage_{objname}'
+        ccf_section_ref = f'ccf_{ari_user}_objpage_{objname}'
+        timeseries_section_ref = f'timeseries_{ari_user}_objpage_{objname}'
+        # ------------------------------------------------------------------
+        # print progress
+        msg = '\tCreating page for {0} [{1} of {2}]'
+        margs = [objname, it + 1, len(object_classes)]
+        WLOG(params, '', msg.format(*margs))
+        # ---------------------------------------------------------------------
+        # construct path for object
+        obj_save_path = os.path.join(params['ARI_OBJ_PAGES'], objname)
+        # Make sure directory exists
+        if not os.path.exists(obj_save_path):
+            os.makedirs(obj_save_path)
+        # ---------------------------------------------------------------------
+        # populate the header dictionary for this object instance
+        # wlog(params, '', f'\t\tPopulating header dictionary')
+        object_class.populate_header_dict(params)
+        # ---------------------------------------------------------------------
+        # create ARI object page
+        object_page = drs_markdown.MarkDownPage(page_ref)
+        # state that this page does not have a paranet (as it is accessed via table)
+        object_page.add_text(':orphan:')
+        object_page.add_newline()
+        # add title
+        object_page.add_title(f'{objname} ({ari_user})')
+        # add page access
+        object_page.add_html(add_page_access(params['ARI_GROUP']))
+        # ---------------------------------------------------------------------
+        # Add basic text
+        # construct text to add
+        object_page.add_text(f'This page was last modified: {Time.now()} (UTC)')
+        object_page.add_newline()
+        # link back to the table
+        # create a table page for this table
+        table_ref_url = drs_markdown.make_url('object table', table_ref)
+        object_page.add_text(f'Back to the {table_ref_url}')
+        object_page.add_newline()
+        # ---------------------------------------------------------------------
+        # table of contents
+        # ---------------------------------------------------------------------
+        # Add the names of the sections
+        names = ['Target info', 'Spectrum', 'LBL', 'CCF', 'Time series']
+        # add the links to the pages
+        items = [object_section_ref, spectrum_section_ref, lbl_section_ref,
+                 ccf_section_ref, timeseries_section_ref]
+        # add table of contents
+        object_page.add_table_of_contents(items=items, names=names)
+        object_page.add_newline(nlines=3)
+        # ---------------------------------------------------------------------
+        # Target information section
+        # ---------------------------------------------------------------------
+        objpage_targetinfo(params, object_page, names[0], items[0], object_class)
+        # ---------------------------------------------------------------------
+        # Spectrum section
+        # ---------------------------------------------------------------------
+        # print progress
+        # wlog(params, '', f'\t\tCreating spectrum section')
+        # add spectrum section
+        objpage_spectrum(params, object_page, names[1], items[1], object_class)
+        # ---------------------------------------------------------------------
+        # LBL section
+        # ---------------------------------------------------------------------
+        # print progress
+        # wlog(params, '', f'\t\tCreating LBL section')
+        # add LBL section
+        objpage_lbl(params, object_page, names[2], items[2], object_class)
+        # ---------------------------------------------------------------------
+        # CCF section
+        # ---------------------------------------------------------------------
+        # print progress
+        # wlog(params, '', f'\t\tCreating CCF section')
+        # add CCF section
+        objpage_ccf(params, object_page, names[3], items[3], object_class)
+        # ---------------------------------------------------------------------
+        # Time series section
+        # ---------------------------------------------------------------------
+        # print progress
+        # wlog(params, '', f'\t\tCreating time series section')
+        # add time series section
+        objpage_timeseries(params, object_page, names[4], items[4], object_class)
+        # ---------------------------------------------------------------------
+        # write object page
+        # ---------------------------------------------------------------------
+        # construct the rst path
+        object_page_path = os.path.join(params['ARI_OBJ_PAGES'], objname)
+        # construct the rst filename
+        rst_filename = f'{objname}.rst'
+        # save object page
+        object_page.write_page(os.path.join(object_page_path, rst_filename))
+        # ------------------------------------------------------------------
+        # print progress
+        msg = '\tFinished creating page for {0} [{1} of {2}]'
+        margs = [objname, it + 1, len(object_classes)]
+        WLOG(params, '', msg.format(*margs), colour='magenta')
+        # update rdict
+        rdict[objname] = (True, 'Finished')
+        # return rdict
+        return rdict
+    except Exception as e:
+        # update rdict
+        rdict[objname] = (False, str(e))
+        # return rdict
+        return rdict
 
 def add_obj_pages(params: ParamDict, object_classes: Dict[str, AriObject]):
     # -------------------------------------------------------------------------
@@ -374,42 +386,60 @@ def add_obj_pages(params: ParamDict, object_classes: Dict[str, AriObject]):
     if n_cores is None:
         raise ValueError('Must define N_CORES in settings or profile')
     # -------------------------------------------------------------------------
-    # deal with running on a single core
-    if n_cores == 1:
-        # change the object column to a url
-        for it, key in enumerate(object_classes):
-            # combine arguments
-            itargs = [it, key] + args[2:]
-            # run the pool
-            _add_obj_page(*itargs)
+    # only create pages for those that require an update or those that are
+    #   missing a object page
+    process_classes = []
+    # loop around object classes
+    for objname in object_classes:
+        # get object page path
+        obj_save_path = os.path.join(params['ARI_OBJ_PAGES'], objname)
+        # construct the rst filename
+        rst_filename = f'{objname}.rst'
+        # process if we are updating
+        if object_classes[objname].update:
+            process_classes.append(objname)
+        # process if we do not have the object page
+        elif not os.path.exists(os.path.join(obj_save_path, rst_filename)):
+            process_classes.append(objname)
     # -------------------------------------------------------------------------
+    # define return dict to get results from
+    return_dict = dict()
     # deal with running on a single core
     if n_cores == 1:
         # change the object column to a url
-        for it, key in enumerate(object_classes):
+        for it, key in enumerate(process_classes):
             # combine arguments
-            itargs = [it, key] + args[2:]
+            itargs = [it, key, dict()] + args[2:]
             # run the pool
-            _add_obj_page(*itargs)
+            results = _add_obj_page(*itargs)
+            # fudge back into return dictionary
+            for key in results:
+                return_dict[key] = results[key]
     # -------------------------------------------------------------------------
     elif n_cores > 1:
         if ari_core.MULTI == 'POOL':
+            # import multiprocessing
             from multiprocessing import get_context
             # list of params for each entry
             params_per_process = []
-            for it, key in enumerate(object_classes):
-                itargs = [it, key] + args[2:]
+            for it, key in enumerate(process_classes):
+                itargs = [it, key, dict()] + args[2:]
                 params_per_process.append(itargs)
             # start parellel jobs
             with get_context('spawn').Pool(n_cores, maxtasksperchild=1) as pool:
-                pool.starmap(_add_obj_page, params_per_process)
+                results = pool.starmap(_add_obj_page, params_per_process)
+            # fudge back into return dictionary
+            for row in range(len(results)):
+                for key in results[row]:
+                    return_dict[key] = results[row][key]
         else:
-            from multiprocessing import Process
+            # import multiprocessing
+            from multiprocessing import Process, Manager
             # split up groups
             group_iterations, group_keys = [], []
-            all_iterations = list(range(len(object_classes)))
-            all_keys = list(object_classes.keys())
-            ngroups = int(np.ceil(len(object_classes) / n_cores))
+            all_iterations = list(range(len(process_classes)))
+            all_keys = list(process_classes)
+            ngroups = int(np.ceil(len(process_classes) / n_cores))
             for group_it in range(ngroups):
                 start = group_it * n_cores
                 end = (group_it * n_cores) + n_cores
@@ -420,11 +450,16 @@ def add_obj_pages(params: ParamDict, object_classes: Dict[str, AriObject]):
                 group_keys.append(keys)
             # do the multiprocessing
             for group_it in range(ngroups):
+                # start process manager
+                manager = Manager()
+                rdict = manager.dict()
+                # process storage
                 jobs = []
                 # loop around jobs in group
                 for group_jt in range(len(group_iterations[group_it])):
                     group_args = [group_iterations[group_it][group_jt],
-                                  group_keys[group_it][group_jt]] + args[2:]
+                                  group_keys[group_it][group_jt],
+                                  rdict] + args[2:]
                     # get parallel process
                     process = Process(target=_add_obj_page, args=group_args)
                     process.start()
@@ -432,6 +467,22 @@ def add_obj_pages(params: ParamDict, object_classes: Dict[str, AriObject]):
                 # do not continue until finished
                 for pit, proc in enumerate(jobs):
                     proc.join()
+                # sort run objects and push into rdict (true dictionary)
+                for key in rdict.keys():
+                    return_dict[key] = rdict[key]
+    # -------------------------------------------------------------------------
+    # store global passed
+    all_passed = True
+    # deal with errors in processing
+    for key in return_dict:
+        passed, reason = return_dict[key]
+        # print all warnings
+        if not passed:
+            all_passed = False
+            WLOG(params, 'warning', reason)
+        # stop the code here
+        if not all_passed:
+            WLOG(params, 'error', 'ARI crashed (see warnings above)')
     # -------------------------------------------------------------------------
     # return the object table
     return object_classes
