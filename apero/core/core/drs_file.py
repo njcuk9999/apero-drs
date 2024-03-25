@@ -103,9 +103,9 @@ List[Union[List[str], List[int], List[Any]]]]
 BlockPath = pathdef.BlockPath
 # get out file class
 OutFileTypes = Union[out.OutFile, out.GeneralOutFile, out.NpyOutFile,
-out.DebugOutFile, out.BlankOutFile, out.CalibOutFile,
-out.RefCalibOutFile, out.SetOutFile, out.LBLOutFile, out.PostOutFile,
-None]
+                     out.DebugOutFile, out.BlankOutFile, out.CalibOutFile,
+                     out.RefCalibOutFile, out.SetOutFile, out.LBLOutFile,
+                     out.PostOutFile, None]
 
 
 # =============================================================================
