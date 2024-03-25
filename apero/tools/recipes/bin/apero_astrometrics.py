@@ -95,9 +95,13 @@ def __main__(recipe, params):
     # step 1: Is object in database?
     # ----------------------------------------------------------------------
     # query local object database
-    unfound_objs = drs_astrometrics.query_database(params, rawobjs, overwrite)
+    unfound_objs, found_objs = drs_astrometrics.query_database(params, rawobjs,
+                                                               overwrite)
     # stop here if all objects found
-    if len(unfound_objs) == 0:
+    if len(found_objs) > 0:
+        # check that object doesn't currently have problems
+        drs_astrometrics.check_object(params, found_objs)
+
         msg = 'All objects found in database'
         WLOG(params, 'info', msg)
         return locals()
