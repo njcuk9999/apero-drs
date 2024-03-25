@@ -1184,7 +1184,7 @@ def check_object(params: ParamDict, found_objs: Dict[str, Tuple[str, str]]):
             WLOG(params, '', imsg.format(*iargs))
             # warn user about future objects having different DRSOBJN
             if drsobjns[0] != correct_name:
-                wmsg = '\tFuture objects will be have {1}={0} not {2}'
+                wmsg = '\tFuture observations will be have {1}={0} not {2}'
                 wmsg += ('\n\tTo avoid this please re-reduce '
                          'SCIENCE_TARGETS={0}.'
                          '\n\t\ti.e. pp_seq_opt + science_seq '
