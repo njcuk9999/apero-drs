@@ -1179,8 +1179,8 @@ def check_object(params: ParamDict, found_objs: Dict[str, Tuple[str, str]]):
             # return all is good
             continue
         elif len(drsobjns) == 1:
-            imsg = '\tAll files found on disk are correct {0}={1}'
-            iargs = [objkey, correct_name]
+            imsg = '\tAll files found on disk have same {0}={1}'
+            iargs = [objkey, drsobjns[0]]
             WLOG(params, '', imsg.format(*iargs))
         # ---------------------------------------------------------------------
         # get a list of files that are wrong
