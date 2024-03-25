@@ -1186,7 +1186,8 @@ def check_object(params: ParamDict, found_objs: Dict[str, Tuple[str, str]]):
             if drsobjns[0] != correct_name:
                 wmsg = '\tFuture objects will be have {1}={0} not {2}'
                 wmsg += ('\n\tTo avoid this please re-reduce '
-                         'SCIENCE_TARGETS={0}. (i.e. pp_seq_opt + science_seq) '
+                         'SCIENCE_TARGETS={0}.'
+                         '\n\t\ti.e. pp_seq_opt + science_seq '
                          'with SKIP_XXXX = False')
                 wargs = [correct_name, objkey, drsobjns[0]]
                 WLOG(params, 'warning', wmsg.format(*wargs))
@@ -1207,7 +1208,8 @@ def check_object(params: ParamDict, found_objs: Dict[str, Tuple[str, str]]):
                 wmsg = '\t\tFile: {0}'
                 WLOG(params, 'warning', wmsg.format(filename), sublevel=5)
             imsg = ('\n\tPlease re-reduce SCIENCE_TARGETS={0}. '
-                    '(i.e. pp_seq_opt + science_seq) with SKIP_XXXX = False\n')
+                    '\n\t\ti.e. pp_seq_opt + science_seq '
+                    'with SKIP_XXXX = False')
             iargs = [correct_name]
             WLOG(params, 'info', imsg.format(*iargs))
 
