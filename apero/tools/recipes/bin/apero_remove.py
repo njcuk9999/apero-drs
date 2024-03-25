@@ -11,6 +11,7 @@ Created on 2019-07-26 at 09:39
 """
 from apero import lang
 from apero.base import base
+from apero.core.constants import path_definitions
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
 from apero.tools.module.setup import drs_reset
@@ -81,8 +82,10 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # get log and warn from inputs
     obsdir = params['INPUTS']['obsdir']
+    blockstr = params['INPUTS']['blocks']
     fileprefix = params['INPUTS']['file_prefix']
     filesuffix = params['INPUTS']['file_suffix']
+    objnamestr = params['INPUTS']['objnames']
     warn = not params['INPUTS']['nowarn']
 
     # if any are set to 'None' then set to None
@@ -102,16 +105,49 @@ def __main__(recipe, params):
             params['INPUTS'].set('test', value=True)
         else:
             params['INPUTS'].set('test', value=False)
-
+    # ---------------------------------------------------------------------
+    # deal with blocks
+    blocks = []
+    if blockstr not in [None, 'None', 'Null', '']:
+        # loop around blocks
+        for raw_block in blockstr.split(','):
+            # get block name
+            block_name = raw_block.strip()
+            # append to blocks
+            blocks.append(block_name)
+        # get valid blocks from instance
+        valid_blocks = list(map(lambda block: block.name,
+                                path_definitions.BLOCKS))
+        # check if all blocks are valid
+        for block in blocks:
+            # generate an error for invalid block
+            if block not in valid_blocks:
+                emsg = ('Block "{0}" is not a valid block name.'
+                        ' Please check --blocks argument.')
+                WLOG(params, 'error', emsg.format(block))
+            # do not allow block to be raw
+            if block == 'raw':
+                emsg = ('block contains "raw". We cannot remove raw files. '
+                        'Please check --blocks argument.')
+                WLOG(params, 'error', emsg)
+    # ----------------------------------------------------------------------
+    # object names
+    objnames = []
+    if objnamestr not in [None, 'None', 'Null', '']:
+        # loop around object names
+        for objname in objnamestr.split(','):
+            # get object name
+            obj_name = objname.strip()
+            # append to objnames
+            objnames.append(obj_name)
     # ----------------------------------------------------------------------
     # Must check that we are not inside an apero directory (for safety)
     drs_reset.check_cwd(params)
-
     # ----------------------------------------------------------------------
     # get a list of files to remove (using the file index database)
-    filetable, condition = drs_reset.get_filelist(params, obsdir, fileprefix,
-                                                  filesuffix)
-
+    filetable, condition = drs_reset.get_filelist(params, obsdir, blocks,
+                                                  fileprefix, filesuffix,
+                                                  objnames)
     # ----------------------------------------------------------------------
     # remove the files from disk
     disk_entries = drs_reset.remove_files_from_disk(params, filetable)

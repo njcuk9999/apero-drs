@@ -936,8 +936,10 @@ def remove_files(params, path, log=True, skipfiles=None):
 # Define remove functions
 # =============================================================================
 def get_filelist(params: ParamDict, obsdir: Optional[str] = None,
+                 blocks: Optional[List[str]] = None,
                  fileprefix: Optional[str] = None,
-                 filesuffix: Optional[str] = None) -> Tuple[Table, str]:
+                 filesuffix: Optional[str] = None,
+                 objnames: Optional[str] = None) -> Tuple[Table, str]:
     """
     Get a list of files from the index database that match either the obsdir
     and/or the file prefix/file suffix
@@ -952,25 +954,51 @@ def get_filelist(params: ParamDict, obsdir: Optional[str] = None,
     indexdbm = drs_database.FileIndexDatabase(params)
     # load if required
     indexdbm.load_db()
+    # -------------------------------------------------------------------------
     # set up condition (do not remove raw files)
     condition = 'BLOCK_KIND!="raw" AND '
+    # -------------------------------------------------------------------------
     # construct condition
     subconditions = []
+    # -------------------------------------------------------------------------
     # construct condition
     if obsdir is not None:
         subconditions.append('OBS_DIR="{0}"'.format(obsdir))
+    # -------------------------------------------------------------------------
+    # add the blocks
+    if blocks is not None and len(blocks) > 0:
+        bsubconditions = []
+        for block in blocks:
+            bsubconditions.append('BLOCK_KIND="{0}"'.format(block))
+        bsubcond = (' OR '.join(bsubconditions))
+        subconditions.append('({0})'.format(bsubcond))
+    # -------------------------------------------------------------------------
+    # add the file prefix condition
     if fileprefix is not None:
         subconditions.append('FILENAME LIKE "{0}%"'.format(fileprefix))
+    # -------------------------------------------------------------------------
+    # add the file suffix condition
     if filesuffix is not None:
         subconditions.append('FILENAME LIKE "%{0}"'.format(filesuffix))
+    # -------------------------------------------------------------------------
+    # add the objects conditions
+    if objnames is not None and len(objnames) > 0:
+        osubconditions = []
+        for objname in objnames:
+            osubconditions.append('KW_OBJNAME="{0}"'.format(objname))
+        osubcond = (' OR '.join(osubconditions))
+        subconditions.append('({0})'.format(osubcond))
+    # -------------------------------------------------------------------------
     # if we have no subconditions return empty list
     if len(subconditions) == 0:
-        wmsg = ('obsdir, fileprefix or filesuffix must be defined. '
-                'No files added')
+        wmsg = ('obsdir, blocks, fileprefix, filesuffix or objnames must '
+                'be defined. No files added')
         WLOG(params, 'warning', wmsg)
         return Table(), condition
+    # -------------------------------------------------------------------------
     # join subconditions
     condition += ' AND '.join(subconditions)
+    # -------------------------------------------------------------------------
     # print progress
     msg = 'Querying index database for files with condition: \n\t{0}'
     WLOG(params, '', msg.format(condition))
@@ -1000,7 +1028,7 @@ def remove_files_from_disk(params: ParamDict, filetable: Table) -> int:
     for absfile in tqdm(absfilelist):
         # if in debug mode just log
         if test:
-            WLOG(params, '', '\t\tRemoved {0}'.format(absfile))
+            WLOG(params, '', '\t\tWould have removed {0}'.format(absfile))
             # count as file removed
             filecount += 1
         # else remove file
@@ -1045,7 +1073,10 @@ def remove_files_from_databases(params: ParamDict, filetable: Table,
     # load if required
     calibdbm.load_db()
     # log removal
-    WLOG(params, '', 'Removing entries from calibration database')
+    if test:
+        WLOG(params, '', 'Would have removed entries from calibration database')
+    else:
+        WLOG(params, '', 'Removing entries from calibration database')
     # start counter
     db_counts['calibdb'] = 0
     # we need to loop over all files and remove them one by one from the
@@ -1060,7 +1091,7 @@ def remove_files_from_databases(params: ParamDict, filetable: Table,
             calibdbm.remove_entries(condition=cal_cond)
         else:
             # log removal
-            WLOG(params, '', '\tRemoving file: {0}'.format(ufilename))
+            WLOG(params, '', '\tWould have removed file: {0}'.format(ufilename))
 
     # -------------------------------------------------------------------------
     # then deal with the telluric database --> remove entries with the
@@ -1069,7 +1100,10 @@ def remove_files_from_databases(params: ParamDict, filetable: Table,
     # load if required
     telludbm.load_db()
     # log removal
-    WLOG(params, '', 'Removing entries from telluric database')
+    if test:
+        WLOG(params, '', 'Would have removed entries from telluric database')
+    else:
+        WLOG(params, '', 'Removing entries from telluric database')
     # start counter
     db_counts['telludb'] = 0
     # we need to loop over all files and remove them one by one from the
@@ -1084,7 +1118,7 @@ def remove_files_from_databases(params: ParamDict, filetable: Table,
             telludbm.remove_entries(condition=tel_cond)
         else:
             # log removal
-            WLOG(params, '', '\tRemoving file: {0}'.format(ufilename))
+            WLOG(params, '', '\tWould have removed file: {0}'.format(ufilename))
 
     # -------------------------------------------------------------------------
     # for the log database we remove entries with the same PIDs
@@ -1092,7 +1126,10 @@ def remove_files_from_databases(params: ParamDict, filetable: Table,
     # load if required
     logdbm.load_db()
     # log removal
-    WLOG(params, '', 'Removing entries from log database')
+    if test:
+        WLOG(params, '', 'Would have removed entries from log database')
+    else:
+        WLOG(params, '', 'Removing entries from log database')
     # start counter
     db_counts['logdb'] = 0
     # we need to loop over all pids and remove them one by one from the
@@ -1107,7 +1144,7 @@ def remove_files_from_databases(params: ParamDict, filetable: Table,
             logdbm.remove_entries(condition=log_cond)
         else:
             # log removal
-            WLOG(params, '', '\tRemoving PID: {0}'.format(upid))
+            WLOG(params, '', '\tWould have removed PID: {0}'.format(upid))
 
     # -------------------------------------------------------------------------
     # last deal with index database (easy --> remove entries with the same
@@ -1116,8 +1153,12 @@ def remove_files_from_databases(params: ParamDict, filetable: Table,
     # load index database
     findexdb.load_db()
     # log removal
-    WLOG(params, '', 'Removing entries from index database with condition: '
-                     '\n\t{0}'.format(file_cond))
+    if test:
+        WLOG(params, '', 'Would have removed entries from index database '
+                         'with condition: \n\t{0}'.format(file_cond))
+    else:
+        WLOG(params, '', 'Removing entries from index database with condition: '
+                          '\n\t{0}'.format(file_cond))
     # add to db counts
     db_counts['findexdb'] = findexdb.database.count(condition=file_cond)
     # remove entries

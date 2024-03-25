@@ -545,12 +545,19 @@ remove.recipe_kind = 'user'
 remove.set_kwarg(name='--obsdir', dtype=str, default='None',
                  helpstr='Delete all instances of a certain observation '
                          'directory from disk and databases')
+remove.set_kwarg(name='--blocks', dtype=str, default='None',
+                 helpstr='Delete all instances of tmp/red/out/calib/tellu '
+                         'from disk and database '
+                         '(multiple blocks should be separated by a comma)')
 remove.set_kwarg(name='--file_prefix', dtype=str, default='None',
                  helpstr='Delete all instances of a certain file prefix '
                          'from disk and databases')
 remove.set_kwarg(name='--file_suffix', dtype=str, default='None',
                  helpstr='Delete all instances of a certain file suffix '
                          'from disk and databases')
+remove.set_kwarg(name='--objnames', dtype=str, default='None',
+                 helpstr='Delete all instances of a certain object name '
+                         '(DRSOBJN) from disk and databases')
 remove.set_kwarg(name='--test', dtype='switch', 
                  helpstr='Whether to run in test mode (recommended first time)')
 remove.set_kwarg(name='--nowarn', dtype='switch', 
