@@ -1121,11 +1121,15 @@ def check_object(params: ParamDict, found_objs: Dict[str, Tuple[str, str]]):
     # ---------------------------------------------------------------------
     # loop around each object
     for objname in found_objs:
+        # log progress
+        imsg = 'Checking object {0} for errors.'
+        iargs = [objname]
+        WLOG(params, 'info', imsg.format(*iargs))
         # get the place and correct name
         place, correct_name = found_objs[objname]
         # find object in astrometric table
         if place == 'database-objname':
-            mask = atable['OBJNAME'] == objname
+            mask = atable['OBJNAME'] == correct_name
         elif place == 'database-alias':
             mask = atable['OBJNAME'] == correct_name
         else:
@@ -1133,10 +1137,15 @@ def check_object(params: ParamDict, found_objs: Dict[str, Tuple[str, str]]):
         # ---------------------------------------------------------------------
         # deal with multiple matches (shouldn't happen)
         if np.sum(mask) > 1:
-            wmsg = ('Multiple matches found for {0} in object database. '
+            wmsg = ('\tMultiple matches found for {0} in object database. '
                     'Please fix the database. ')
             WLOG(params, 'warning', wmsg.format(objname))
             continue
+        elif np.sum(mask) == 0:
+            emsg = ('\tNo matches found for {0} in object database. '
+                    'This should not happen.')
+            WLOG(params, 'error', emsg.format(objname))
+
         # ---------------------------------------------------------------------
         # get this rows information
         rowinfo = atable[mask].iloc[0]
@@ -1164,13 +1173,13 @@ def check_object(params: ParamDict, found_objs: Dict[str, Tuple[str, str]]):
         # ---------------------------------------------------------------------
         # if we only have one entry
         if len(drsobjns) == 0:
-            imsg = 'No files found on disk for {0}={1}'
+            imsg = '\tNo files found on disk for {0}={1}'
             iargs = [objkey, correct_name]
             WLOG(params, '', imsg.format(*iargs))
             # return all is good
-            return
+            continue
         elif len(drsobjns) == 1:
-            imsg = 'All files found on disk are correct {0}={1}'
+            imsg = '\tAll files found on disk are correct {0}={1}'
             iargs = [objkey, correct_name]
             WLOG(params, '', imsg.format(*iargs))
         # ---------------------------------------------------------------------
@@ -1182,14 +1191,14 @@ def check_object(params: ParamDict, found_objs: Dict[str, Tuple[str, str]]):
         # only continue if we have files (this should always be the case)
         if len(filenames) == 0:
             # deal with multiple drsobjns
-            wmsg = 'Multiple {0} found for {1} (should all be {0}={2})'
+            wmsg = '\tMultiple {0} found for {1} (should all be {0}={2})'
             wargs = [objkey, objname, correct_name]
             WLOG(params, 'warning', wmsg.format(*wargs), sublevel=5)
             # loop around filenames and print them
             for filename in filenames:
-                wmsg = '\tFile: {0}'
+                wmsg = '\t\tFile: {0}'
                 WLOG(params, 'warning', wmsg.format(filename), sublevel=5)
-            imsg = ('\nPlease re-reduce SCIENCE_TARGETS={0}. '
+            imsg = ('\n\tPlease re-reduce SCIENCE_TARGETS={0}. '
                     '(i.e. pp_seq_opt + science_seq)\n')
             iargs = [correct_name]
             WLOG(params, 'info', imsg.format(*iargs))
