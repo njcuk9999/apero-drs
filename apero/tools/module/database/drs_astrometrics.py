@@ -1182,6 +1182,14 @@ def check_object(params: ParamDict, found_objs: Dict[str, Tuple[str, str]]):
             imsg = '\tAll files found on disk have same {0}={1}'
             iargs = [objkey, drsobjns[0]]
             WLOG(params, '', imsg.format(*iargs))
+            # warn user about future objects having different DRSOBJN
+            if drsobjns[0] != correct_name:
+                wmsg = '\tFuture objects will be have {1}={0} not {2}'
+                wmsg += ('\n\tTo avoid this please re-reduce '
+                         'SCIENCE_TARGETS={0}. (i.e. pp_seq_opt + science_seq) '
+                         'with SKIP_XXXX = False')
+                wargs = [correct_name, objkey, drsobjns[0]]
+                WLOG(params, 'warning', wmsg.format(*wargs))
         # ---------------------------------------------------------------------
         # get a list of files that are wrong
         new_condition = condition + ' AND KW_OBJNAME!="{0}"'.format(correct_name)
@@ -1199,7 +1207,7 @@ def check_object(params: ParamDict, found_objs: Dict[str, Tuple[str, str]]):
                 wmsg = '\t\tFile: {0}'
                 WLOG(params, 'warning', wmsg.format(filename), sublevel=5)
             imsg = ('\n\tPlease re-reduce SCIENCE_TARGETS={0}. '
-                    '(i.e. pp_seq_opt + science_seq)\n')
+                    '(i.e. pp_seq_opt + science_seq) with SKIP_XXXX = False\n')
             iargs = [correct_name]
             WLOG(params, 'info', imsg.format(*iargs))
 
