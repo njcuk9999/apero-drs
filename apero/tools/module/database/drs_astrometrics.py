@@ -1107,6 +1107,94 @@ def check_database(params: ParamDict):
     base.write_yaml(bad_objects, bad_object_file)
 
 
+def check_object(params: ParamDict, found_objs: Dict[str, Tuple[str, str]]):
+    # ---------------------------------------------------------------------
+    # load the object database after updating
+    objdbm = ObjectDatabase(params)
+    objdbm.load_db()
+    # print that we are getting the full table
+    WLOG(params, 'info', 'Accessing full local object database...')
+    # get the full table
+    atable = objdbm.get_entries()
+    # get header key for KW_OBJNAME
+    objkey = params['KW_OBJNAME'][0]
+    # ---------------------------------------------------------------------
+    # loop around each object
+    for objname in found_objs:
+        # get the place and correct name
+        place, correct_name = found_objs[objname]
+        # find object in astrometric table
+        if place == 'database-objname':
+            mask = atable['OBJNAME'] == objname
+        elif place == 'database-alias':
+            mask = atable['OBJNAME'] == correct_name
+        else:
+            continue
+        # ---------------------------------------------------------------------
+        # deal with multiple matches (shouldn't happen)
+        if np.sum(mask) > 1:
+            wmsg = ('Multiple matches found for {0} in object database. '
+                    'Please fix the database. ')
+            WLOG(params, 'warning', wmsg.format(objname))
+            continue
+        # ---------------------------------------------------------------------
+        # get this rows information
+        rowinfo = atable[mask].iloc[0]
+        # get all aliases for this object
+        aliaes = rowinfo['ALIASES'].split('|')
+        # add the objname and original name
+        names = [rowinfo['OBJNAME'], rowinfo['ORIGINAL_NAME']] + aliaes
+
+        # ---------------------------------------------------------------------
+        # based on these names find all files in the file index database
+        #   that match these names
+        # ---------------------------------------------------------------------
+        indexdbm = drs_database.FileIndexDatabase(params)
+        # load the database
+        indexdbm.load_db()
+        # get all possible object names
+        subconditions = []
+        for name in names:
+            subconditions.append('KW_OBJNAME="{0}"'.format(name))
+        # join subconditions with an OR
+        condition = ' OR '.join(subconditions)
+        # get all unique entries of DRSOBJN in the file index database
+        #   matching this condition
+        drsobjns = indexdbm.get_unique('KW_OBJNAME', condition=condition)
+        # ---------------------------------------------------------------------
+        # if we only have one entry
+        if len(drsobjns) == 0:
+            imsg = 'No files found on disk for {0}={1}'
+            iargs = [objkey, correct_name]
+            WLOG(params, '', imsg.format(*iargs))
+            # return all is good
+            return
+        elif len(drsobjns) == 1:
+            imsg = 'All files found on disk are correct {0}={1}'
+            iargs = [objkey, correct_name]
+            WLOG(params, '', imsg.format(*iargs))
+        # ---------------------------------------------------------------------
+        # get a list of files that are wrong
+        new_condition = condition + ' AND KW_OBJNAME!="{0}"'.format(correct_name)
+        # get the list of filenames from index database
+        filenames = indexdbm.get_entries('FILENAME', condition=new_condition)
+        # ---------------------------------------------------------------------
+        # only continue if we have files (this should always be the case)
+        if len(filenames) == 0:
+            # deal with multiple drsobjns
+            wmsg = 'Multiple {0} found for {1} (should all be {0}={2})'
+            wargs = [objkey, objname, correct_name]
+            WLOG(params, 'warning', wmsg.format(*wargs), sublevel=5)
+            # loop around filenames and print them
+            for filename in filenames:
+                wmsg = '\tFile: {0}'
+                WLOG(params, 'warning', wmsg.format(filename), sublevel=5)
+            imsg = ('\nPlease re-reduce SCIENCE_TARGETS={0}. '
+                    '(i.e. pp_seq_opt + science_seq)\n')
+            iargs = [correct_name]
+            WLOG(params, 'info', imsg.format(*iargs))
+
+
 def _check_objname(params: ParamDict, bad_objs: Dict[str, List[str]],
                    objname: str, row: int,
                    atable: pd.DataFrame, kind: str = 'OBJNAME',
@@ -1191,7 +1279,8 @@ def _check_crossmatch(params: ParamDict, bad_objs: Dict[str, List[str]],
 
 
 def query_database(params, rawobjnames: List[str],
-                   overwrite: bool = False) -> List[str]:
+                   overwrite: bool = False
+                   ) -> Tuple[List[str], Dict[str, Tuple[str, str]]]:
     """
     Find all objects in the object database and return list of unfound
     objects
@@ -1202,13 +1291,13 @@ def query_database(params, rawobjnames: List[str],
     :param overwrite: bool, if True does not check whether object already
                       exists in database
 
-    :return: list of strings, the raw (uncleaned) objects names we want to
-             process
+    :return: tuple, 1. list of strings, the raw (uncleaned) objects names we
+             want to process 2. dictionary, the found objects and where they
+             were found (and their correct name)
     """
-
     # deal with overwrite
     if overwrite:
-        return rawobjnames
+        return rawobjnames, dict()
     # ---------------------------------------------------------------------
     # get psuedo constants
     pconst = constants.pload()
@@ -1228,23 +1317,41 @@ def query_database(params, rawobjnames: List[str],
     objdbm.load_db()
     # storage for output - assume none are found
     unfound = []
+    found = dict()
     # get the object rejection list
     reject_list = prep.get_obj_reject_list(params)
     # loop around objects and find them in database
     for rawobjname in rawobjnames:
         # find correct name in the database (via objname or aliases)
-        correct_objname, found = objdbm.find_objname(pconst, rawobjname)
+        correct_objname, flag_found = objdbm.find_objname(pconst, rawobjname,
+                                                          return_flag=True)
         # deal with found / not found
-        if found:
-            msg = '\t - Object: "{0}" found in database as "{1}"'
-            margs = [rawobjname, correct_objname]
-            WLOG(params, '', msg.format(*margs))
+        if flag_found > 0:
+            # append where found: in the database, and correct name
+            if flag_found == 1:
+                msg = '\t - Object: "{0}" found in database as "{1}"'
+                margs = [rawobjname, correct_objname]
+                WLOG(params, '', msg.format(*margs))
+                found[rawobjname] = ('database-objname', correct_objname)
+            elif flag_found == 2:
+                msg = ('\t - Object: "{0}" found in database under an alias '
+                       'as "{1}"')
+                margs = [rawobjname, correct_objname]
+                WLOG(params, '', msg.format(*margs))
+                found[rawobjname] = ('database-alias', correct_objname)
+            else:
+                msg = ('\t - Object: "{0}" found by unknown means as "{1}"')
+                margs = [rawobjname, correct_objname]
+                WLOG(params, 'error', msg.format(*margs))
+                found[rawobjname] = ('database-unknown', correct_objname)
         elif correct_objname in reject_list:
             msg = '\t - Object: "{0}" in reject list database as "{1}"'
             msg += ('\n\t\t - remove manually from reject list if '
                     'required for PRV')
             margs = [rawobjname, correct_objname]
             WLOG(params, '', msg.format(*margs), colour='magenta')
+            # append where found: in the reject list, and correct name
+            found[rawobjname] = ('reject', correct_objname)
         else:
             msg = '\t - Object: "{0}" not found in database'
             margs = [rawobjname]
@@ -1252,7 +1359,7 @@ def query_database(params, rawobjnames: List[str],
             # add to unfound list
             unfound.append(rawobjname)
     # return the entry names and the found dictionary
-    return unfound
+    return unfound, found
 
 
 def ask_user(params: ParamDict, astro_obj: AstroObj) -> Tuple[AstroObj, bool]:

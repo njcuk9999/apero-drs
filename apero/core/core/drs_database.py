@@ -542,7 +542,8 @@ class AstrometricDatabase(DatabaseManager):
         return out_objnames
 
     def find_objname(self, pconst: constants.PseudoConstants,
-                     objname: str) -> Tuple[str, bool]:
+                     objname: str, return_flag: bool = False
+                     ) -> Tuple[str, Union[bool, int]]:
         """
         Find and clean the correct object name (as used by apero) this is
         either:
@@ -551,10 +552,14 @@ class AstrometricDatabase(DatabaseManager):
         3. the cleaned input name (not found in the database)
 
         :param pconst: psuedo constants - used to clean the object name
-        :param objname: str, the object name to clean and fimd
+        :param objname: str, the object name to clean and find
+        :param return_flag: bool, if True returns a flag (0, 1 or 2) showing
+                             where the object was found
+                             else returns a True/False )found or not found)
 
         :return: Tuple, 1. str, the "correct" object name to use for the DRS,
-                 2. whether the object was found in the database
+                 2. a flag on where object was found 0=not found, 1=found in
+                    OBJNAME, 2=found in ALIASES
         """
         # global to be updated so we don't do this more than once for the
         #   same objname
@@ -569,12 +574,15 @@ class AstrometricDatabase(DatabaseManager):
             return objname, True
         # ---------------------------------------------------------------------
         # assume we have not found our object name
-        found = False
+        found = 0
         # clean the input objname
         cobjname = pconst.DRS_OBJ_NAME(objname)
         # deal with a null object (should not continue)
         if cobjname == 'Null':
-            return '', False
+            if return_flag:
+                return '', 0
+            else:
+                return '', False
         # sql obj condition
         sql_obj_cond = 'OBJNAME="{0}" AND USED=1'.format(cobjname)
         # look for object name in database
@@ -594,21 +602,24 @@ class AstrometricDatabase(DatabaseManager):
                 # loop around aliases until we find the alias
                 for alias in aliases[row].split('|'):
                     if pconst.DRS_OBJ_NAME(alias) == cobjname:
-                        found = True
+                        found = 2
                         break
                 # stop looping if we have found our object
-                if found:
+                if found > 0:
                     break
             # get the cobjname for this target if found
-            if found:
+            if found > 0:
                 cobjname = full_table['OBJNAME'][row]
         # if there is an entry we found the object
         else:
-            found = True
+            found = 1
         # store in global so we don't have to do this again
         OBS_NAMES[objname] = [cobjname, found]
         # return the correct object name
-        return cobjname, found
+        if return_flag:
+            return cobjname, found
+        else:
+            return cobjname, found > 0
 
 
 # =============================================================================
