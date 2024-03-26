@@ -101,10 +101,15 @@ def create_background_map(params: ParamDict, image: np.ndarray,
     # can simply take a median along the "fast" dispersion to find the
     # order profile. We pick width to be small enough for the orders not
     # to show a significant curvature within w pixels
-    for x_it in range(0, image0.shape[1], width):
-        # ribbon to find the order profile
-        ribbon = mp.nanmedian(image0[:, x_it:x_it + width], axis=1)
 
+    # width in fast dispersion axis - smaller so there is no blur due to the
+    # curvature of orders
+    width2 = width // 4
+    # loop around this regions (per region)
+    for x_it in range(0, image0.shape[1], width2):
+        # ribbon to find the order profile
+        ribbon = mp.nanmedian(image0[:, x_it:x_it + width2], axis=1)
+        # loop around the columns (per pixel)
         for y_it in range(image0.shape[0]):
             # we perform a running Nth percentile filter along the
             # order profile. The box of the filter is w. Note that it could
@@ -118,7 +123,7 @@ def create_background_map(params: ParamDict, image: np.ndarray,
                 yend = image0.shape[0] - 1
             # background estimate
             backest_pix = mp.nanpercentile(ribbon[ystart:yend], percent)
-            backest[y_it, x_it: x_it + width] = backest_pix
+            backest[y_it, x_it: x_it + width2] = backest_pix
     # the mask is the area that is below then Nth percentile threshold
     with warnings.catch_warnings(record=True) as _:
         backmask = np.array(image0 < backest, dtype=float)
@@ -302,65 +307,112 @@ def correction(recipe: DrsRecipe, params: ParamDict, infile: DrsFitsFile,
         #     estimate of the background for each x+y "center". This image
         #     will be up-scaled to the size of the full science image and
         #     subtracted
-        # x and y centers for each background calculation
-        xc = np.arange(width, image2.shape[0], width)
-        yc = np.arange(width, image2.shape[1], width)
-        # full background map
-        background_image_full = np.zeros_like(image2)
-        # background map (binned-down for now)
-        background_image = np.zeros((len(xc), len(yc)))
-        # iterate round the background image
-        for biteration in range(5):
-            image3 = np.array(image2) - background_image_full
-            # loop around all boxes with centers xc and yc
-            # and find pixels within a given widths
-            # around these centers in the full image
-            for i_it in range(len(xc)):
-                for j_it in range(len(yc)):
-                    xci, yci = xc[i_it], yc[j_it]
-                    # get the pixels for this box
-                    subframe = image3[xci - width:xci + width,
-                                      yci - width:yci + width]
-                    subframe = subframe.ravel()
-                    # get the (2*size)th minimum pixel
-                    with warnings.catch_warnings(record=True) as _:
-                        # do not use the nanpercentile, just a median
-                        # as we masked non-background pixels with NaNs
-                        value = mp.nanmedian(subframe)
-                    # if we have value use it in the background map
-                    if np.isfinite(value):
-                        background_image[i_it, j_it] = value
-                    # otherwise background is zero
-                    else:
-                        background_image[i_it, j_it] = 0.0
-            # ------------------------------------------------------------------
-            # define a mapping grid from size of background_image
-            #     (image1[0]/width) by (image1[1]/width)
-            # get shapes
-            gridshape = background_image.shape
-            imageshape = image3.shape
-            # get fractional positions of the full image
-            indices = np.indices(imageshape)
-            fypix = indices[0] / imageshape[0]
-            fxpix = indices[1] / imageshape[1]
-            # scalge fraction positions to size of background image
-            sypix = (gridshape[0] - 1) * fypix
-            sxpix = (gridshape[1] - 1) * fxpix
-            # coords for mapping
-            coords = np.array([sypix, sxpix])
+        xc = np.arange(0, image2.shape[0])
+        yc = np.arange(width//4, image2.shape[1], width//4)
 
-            delta_background_full = mapc(background_image, coords,
+        imageshape = image2.shape
+
+
+        background_image = np.zeros((len(xc), len(yc)))
+        background_image_offset = np.zeros((len(xc), len(yc)))
+        background_image_full = np.zeros_like(image2)
+        gridshape = background_image.shape
+
+        # get fractional positions of the full image
+        indices = np.indices(imageshape)
+        fypix = indices[0] / imageshape[0]
+        fxpix = indices[1] / imageshape[1]
+        # scalge fraction positions to size of background image
+        sypix = (gridshape[0] - 1) * fypix
+        sxpix = (gridshape[1] - 1) * fxpix
+        # coords for mapping
+        coords = np.array([sypix, sxpix])
+
+
+        for ite in range(3):
+            image2b = np.array(image2-background_image_full)
+            #     # loop around all boxes with centers xc and yc
+            #     # and find pixels within a given widths
+            #     # around these centers in the full image
+            for ii, icol in enumerate(yc):
+                i0 = np.max([icol-width//2,0])
+                i1 = np.min([icol+width//2,image2.shape[1]])
+                with warnings.catch_warnings(record=True) as _:
+                    medcol = np.nanmedian(image2b[:,i0:i1],axis=1)
+                background_image_offset[:,ii] = mp.lowpassfilter(medcol,width)
+
+
+            background_image_full += mapc(background_image_offset, coords,
                                          order=2, cval=np.nan, output=float,
                                          mode='constant')
+            background_image += background_image_offset
+            print(np.nanstd(background_image_offset),np.nanstd(background_image))
 
-            brms = np.nanstd(delta_background_full)
-            msg = 'Background Iteration {0}: delta background rms={1:.3f}'
-            WLOG(params, '', msg.format(biteration, brms))
-            # expand image onto the grid that matches the size of the input
-            # image
-            background_image_full += mapc(background_image, coords,
-                                          order=2, cval=np.nan, output=float,
-                                          mode='constant')
+        # ------------------------------------------------------------------
+        # create the box centers
+        #     we construct a binned-down version of the full image with the
+        #     estimate of the background for each x+y "center". This image
+        #     will be up-scaled to the size of the full science image and
+        #     subtracted
+        # # x and y centers for each background calculation
+        # xc = np.arange(width, image2.shape[0], width)
+        # yc = np.arange(width, image2.shape[1], width)
+        # # full background map
+        # background_image_full = np.zeros_like(image2)
+        # # background map (binned-down for now)
+        # background_image = np.zeros((len(xc), len(yc)))
+        # # iterate round the background image
+        # for biteration in range(5):
+        #     image3 = np.array(image2) - background_image_full
+        #     # loop around all boxes with centers xc and yc
+        #     # and find pixels within a given widths
+        #     # around these centers in the full image
+        #     for i_it in range(len(xc)):
+        #         for j_it in range(len(yc)):
+        #             xci, yci = xc[i_it], yc[j_it]
+        #             # get the pixels for this box
+        #             subframe = image3[xci - width:xci + width,
+        #                               yci - width:yci + width]
+        #             subframe = subframe.ravel()
+        #             # get the (2*size)th minimum pixel
+        #             with warnings.catch_warnings(record=True) as _:
+        #                 # do not use the nanpercentile, just a median
+        #                 # as we masked non-background pixels with NaNs
+        #                 value = mp.nanmedian(subframe)
+        #             # if we have value use it in the background map
+        #             if np.isfinite(value):
+        #                 background_image[i_it, j_it] = value
+        #             # otherwise background is zero
+        #             else:
+        #                 background_image[i_it, j_it] = 0.0
+        #     # ------------------------------------------------------------------
+        #     # define a mapping grid from size of background_image
+        #     #     (image1[0]/width) by (image1[1]/width)
+        #     # get shapes
+        #     gridshape = background_image.shape
+        #     imageshape = image3.shape
+        #     # get fractional positions of the full image
+        #     indices = np.indices(imageshape)
+        #     fypix = indices[0] / imageshape[0]
+        #     fxpix = indices[1] / imageshape[1]
+        #     # scalge fraction positions to size of background image
+        #     sypix = (gridshape[0] - 1) * fypix
+        #     sxpix = (gridshape[1] - 1) * fxpix
+        #     # coords for mapping
+        #     coords = np.array([sypix, sxpix])
+        #
+        #     delta_background_full = mapc(background_image, coords,
+        #                                  order=2, cval=np.nan, output=float,
+        #                                  mode='constant')
+        #
+        #     brms = np.nanstd(delta_background_full)
+        #     msg = 'Background Iteration {0}: delta background rms={1:.3f}'
+        #     WLOG(params, '', msg.format(biteration, brms))
+        #     # expand image onto the grid that matches the size of the input
+        #    # image
+        #    background_image_full += mapc(background_image, coords,
+        #                                  order=2, cval=np.nan, output=float,
+        #                                  mode='constant')
         # ------------------------------------------------------------------
         # correct image
         corrected_image = image - background_image_full
