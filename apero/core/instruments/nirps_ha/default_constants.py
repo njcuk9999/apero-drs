@@ -624,7 +624,7 @@ BADPIX_DILATE_SIZE.value = 9
 # =============================================================================
 #    Width of the box to produce the background mask
 BKGR_BOXSIZE = BKGR_BOXSIZE.copy(__NAME__)
-BKGR_BOXSIZE.value = 256
+BKGR_BOXSIZE.value = 128
 
 #    Do background percentile to compute minimum value (%)
 BKGR_PERCENTAGE = BKGR_PERCENTAGE.copy(__NAME__)
