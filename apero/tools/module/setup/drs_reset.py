@@ -956,11 +956,12 @@ def remove_files(params, path, log=True, skipfiles=None):
 # =============================================================================
 # Define remove functions
 # =============================================================================
-def get_filelist(params: ParamDict, obsdir: Optional[str] = None,
+def get_filelist(params: ParamDict,
+                 obsdir: Optional[Union[str, List[str]]] = None,
                  blocks: Optional[List[str]] = None,
                  fileprefix: Optional[str] = None,
                  filesuffix: Optional[str] = None,
-                 objnames: Optional[str] = None) -> Tuple[Table, str]:
+                 objnames: Optional[List[str]] = None) -> Tuple[Table, str]:
     """
     Get a list of files from the index database that match either the obsdir
     and/or the file prefix/file suffix
@@ -984,7 +985,14 @@ def get_filelist(params: ParamDict, obsdir: Optional[str] = None,
     # -------------------------------------------------------------------------
     # construct condition
     if obsdir is not None:
-        subconditions.append('OBS_DIR="{0}"'.format(obsdir))
+        if isinstance(obsdir, str):
+            subconditions.append('OBS_DIR="{0}"'.format(obsdir))
+        elif isinstance(obsdir, list):
+            dsubconditions = []
+            for objname in objnames:
+                dsubconditions.append('OBS_DIR="{0}"'.format(objname))
+            dsubcond = (' OR '.join(dsubconditions))
+            subconditions.append('({0})'.format(dsubcond))
     # -------------------------------------------------------------------------
     # add the blocks
     if blocks is not None and len(blocks) > 0:
