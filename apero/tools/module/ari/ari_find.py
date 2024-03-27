@@ -63,7 +63,7 @@ GAIA_URL = 'https://gea.esac.esa.int/tap-server/tap'
 # noinspection SqlNoDataSourceInspection,SqlDialectInspection
 GAIA_QUERY = """
 SELECT
-    source_id,ra,dec,parallax,pmra,pmdec,phot_g_mean_mag,phot_rp_mean_mag,
+    source_id as source_id,ra,dec,parallax,pmra,pmdec,phot_g_mean_mag,phot_rp_mean_mag,
     phot_bp_mean_mag, phot_g_mean_flux, phot_rp_mean_flux, phot_bp_mean_flux
 FROM gaiadr3.gaia_source
 WHERE 
@@ -535,6 +535,11 @@ def get_gaia_sources(params: ParamDict, coords: SkyCoord, obstime: Time,
     sources['separation'] = []
     # get parallax mask
     parallax_mask = table['parallax'].mask
+    # -------------------------------------------------------------------------
+    # make sure source id is lowercase (this seems to have changed)
+    # TODO: check whats going on here
+    if 'SOURCE_ID' in table.colnames:
+        table['source_id'] = table['SOURCE_ID']
     # -------------------------------------------------------------------------
     # get all stars in the region where they would be now
     for row in range(len(table)):
