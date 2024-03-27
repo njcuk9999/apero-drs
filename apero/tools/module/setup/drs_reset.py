@@ -989,8 +989,8 @@ def get_filelist(params: ParamDict,
             subconditions.append('OBS_DIR="{0}"'.format(obsdir))
         elif isinstance(obsdir, list):
             dsubconditions = []
-            for objname in objnames:
-                dsubconditions.append('OBS_DIR="{0}"'.format(objname))
+            for obsdir_it in obsdir:
+                dsubconditions.append('OBS_DIR="{0}"'.format(obsdir_it))
             dsubcond = (' OR '.join(dsubconditions))
             subconditions.append('({0})'.format(dsubcond))
     # -------------------------------------------------------------------------
