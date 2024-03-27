@@ -81,20 +81,19 @@ def __main__(recipe, params):
     # Main Code
     # ----------------------------------------------------------------------
     # get log and warn from inputs
-    obsdir = params['INPUTS']['obsdir']
+    rawobsdir = params['INPUTS']['obsdir']
     blockstr = params['INPUTS']['blocks']
     fileprefix = params['INPUTS']['file_prefix']
     filesuffix = params['INPUTS']['file_suffix']
     objnamestr = params['INPUTS']['objnames']
     warn = not params['INPUTS']['nowarn']
-
+    # ---------------------------------------------------------------------
     # if any are set to 'None' then set to None
-    if obsdir == 'None':
-        obsdir = None
     if fileprefix == 'None':
         fileprefix = None
     if filesuffix == 'None':
         filesuffix = None
+    # ---------------------------------------------------------------------
     # deal with non test mode - ask the user
     if not params['INPUTS']['test'] and warn:
         msg = ('Warning this will remove files from disk and the database '
@@ -105,6 +104,22 @@ def __main__(recipe, params):
             params['INPUTS'].set('test', value=True)
         else:
             params['INPUTS'].set('test', value=False)
+    # ---------------------------------------------------------------------
+    # make sure we don't have a list of observation directories
+    if rawobsdir == 'None':
+        obsdir = None
+    elif ',' in rawobsdir:
+        obsdir = []
+        # loop around object names
+        for rawobsdir_it in rawobsdir.split(','):
+            # get object name
+            obsdir_it = rawobsdir_it.strip()
+            # append to objnames
+            obsdir.append(obsdir_it)
+    elif isinstance(rawobsdir, str):
+        obsdir = str(rawobsdir)
+    else:
+        obsdir = None
     # ---------------------------------------------------------------------
     # deal with blocks
     blocks = []
