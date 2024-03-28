@@ -186,6 +186,12 @@ def load_ari_params(params: ParamDict) -> ParamDict:
     if params['INPUTS']['reset']:
         params.set('ARI_RESET', value=True, source=func_name)
     # ----------------------------------------------------------------------
+    # deal with finder argument
+    if params['INPUTS']['finder_create']:
+        params['ARI_FINDING_CHARTS']['create'] = True
+    if params['INPUTS']['finder_reset']:
+        params['ARI_FINDING_CHARTS']['reset'] = True
+    # ----------------------------------------------------------------------
     # return the ari parameters
     return params
 
