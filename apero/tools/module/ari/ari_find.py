@@ -11,6 +11,7 @@ Created on 2024-01-30 at 14:01
 """
 import os
 import warnings
+import time
 from typing import Any, Dict, List, Tuple
 
 import matplotlib.pyplot as plt
@@ -50,8 +51,6 @@ ParamDict = constants.ParamDict
 WLOG = drs_log.wlog
 # set the date for finder charts
 DATE = Time.now()
-# Skip done
-SKIP_DONE = True
 # columns in the apero astrometric database
 ASTROM_COLS = ['OBJNAME', 'RA_DEG', 'DEC_DEG', 'PMRA', 'PMDE', 'PLX', 'RV',
                'EPOCH']
@@ -227,7 +226,8 @@ def copy_finder_charts(params: ParamDict):
 
 
 def create_finder_chart(params: ParamDict, objname: str,
-                        it: int, object_table: pd.DataFrame):
+                        it: int, object_table: pd.DataFrame,
+                        skip_done: bool = False):
     """
     Get all objects and push into finder chart one by one
     :return:
@@ -240,10 +240,12 @@ def create_finder_chart(params: ParamDict, objname: str,
     args = [objname, it + 1, len(object_table)]
     # check whether file already exists
     abspath = os.path.join(directory, f'{objname}.pdf')
-    if SKIP_DONE and os.path.exists(abspath):
+    if skip_done and os.path.exists(abspath):
         msg = 'Skipping finder for object: {0} [{1}/{2}]'
         WLOG(params, '', msg.format(*args))
         return
+    else:
+        os.remove(abspath)
     # get the objdict
     objdict = from_apero_objtable(it, object_table)
     # print progress
@@ -501,12 +503,32 @@ def get_gaia_sources(params: ParamDict, coords: SkyCoord, obstime: Time,
 
     gaia_query = GAIA_QUERY.format(ra=coords.ra.deg, dec=coords.dec.deg,
                                    radius=radius.to(uu.deg).value)
-    # launch the query
-    job = gaia.launch_job(gaia_query)
-    # get the query results
-    table = job.get_results()
-    # delete job
-    del job
+    # set a counter
+    ncount = 0
+    emsg = ''
+    table = None
+    # get the mean jdate for the field
+    while ncount < 10:
+        try:
+            # launch the query
+            job = gaia.launch_job(gaia_query)
+            # get the query results
+            table = job.get_results()
+            # delete job
+            del job
+            break
+        except Exception as e:
+            wmsg = 'Attempt {0} Error occured {1}: {2}'
+            wargs = [ncount + 1, type(e), str(e)]
+            WLOG(params, 'warning', wmsg.format(*wargs))
+            time.sleep(5)
+            # try again add to counter
+            ncount += 1
+            # store message for eventual error message
+            emsg = str(wmsg.format(*wargs))
+    # break if we tried 10 times and it still fails
+    if ncount >= 10:
+        WLOG(params, 'error', emsg)
     # deal with query being exactly 2000 (the max size)
     if len(table) == 2000:
         print('Too many sources. Launching job asyncronously. Please wait...')
@@ -691,9 +713,28 @@ def get_2mass_sources(params: ParamDict, gaia_sources: Dict[str, List[float]],
     # get parameters from params
     sigma_limit = params['ARI_FINDER']['SIGMA_LIMIT']
     mag_limit = params['ARI_FINDER']['MAG_LIMIT']
+    # set a counter
+    ncount = 0
+    emsg = ''
+    jdate_time, tmass_table = None, None
     # get the mean jdate for the field
-    jdate_time, tmass_table = get_2mass_field(params, obs_coords, obs_time,
-                                              radius)
+    while ncount < 10:
+        try:
+            jdate_time, tmass_table = get_2mass_field(params, obs_coords,
+                                                      obs_time, radius)
+            break
+        except Exception as e:
+            wmsg = 'Attempt {0} Error occured {1}: {2}'
+            wargs = [ncount + 1, type(e), str(e)]
+            WLOG(params, 'warning', wmsg.format(*wargs))
+            time.sleep(5)
+            # try again add to counter
+            ncount += 1
+            # store message for eventual error message
+            emsg = str(wmsg.format(*wargs))
+    # break if we tried 10 times and it still fails
+    if ncount >= 10:
+        WLOG(params, 'error', emsg)
     # get all 2MASS coords
     tmass_coords = SkyCoord(ra=tmass_table['ra'], dec=tmass_table['dec'],
                             distance=None, pm_ra_cosdec=None, pm_dec=None,
