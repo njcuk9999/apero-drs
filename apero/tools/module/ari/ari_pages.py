@@ -1067,10 +1067,10 @@ def make_finder_page(params: ParamDict):
     objdbm.load_db()
     # get all objects
     object_table = objdbm.get_entries()
+    # sort object alphabetically
+    object_table = object_table.sort_values('OBJNAME')
     # get list of object names
     objnames = list(object_table['OBJNAME'])
-    # sort object names in alphabetical order
-    objnames = np.sort(objnames)
     # load finder chart parameters
     params = ari_find.load_params(params)
     # get the finder directory
@@ -1094,7 +1094,8 @@ def make_finder_page(params: ParamDict):
         # if we are being asked to reset create a new finder chart
         if params['ARI_FINDER']['reset']:
             # create a new finder chart
-            ari_find.create_finder_chart(params, objname, it, object_table)
+            ari_find.create_finder_chart(params, objname, it, object_table,
+                                         skip_done=False)
             # add to finder_dict
             finder_dict['PDF'].append(pdf_name)
             finder_dict['Found'].append('True')
@@ -1116,7 +1117,8 @@ def make_finder_page(params: ParamDict):
         # otherwise we do not have a finder chart, so create one
         else:
             # create a new finder chart
-            ari_find.create_finder_chart(params, objname, it, object_table)
+            ari_find.create_finder_chart(params, objname, it, object_table,
+                                         skip_done=True)
             # add to finder_dict
             finder_dict['PDF'].append(pdf_name)
             finder_dict['Found'].append('True')
