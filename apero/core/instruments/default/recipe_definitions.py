@@ -125,9 +125,9 @@ ari.set_kwarg(name='--redo_objs', dtype=str, default='None',
               helpstr='List of comma separated objects (named as in '
                       'astrometric database) to redo. All others will be '
                       'taken from storage unless not currently processed.')
-ari.set_kwarg(name='--finder_create', dtype='switch', default=False,
+ari.set_kwarg(name='--finder_create', dtype='switch',
               helpstr='Overwrites the profile setting to create finder charts')
-ari.set_kwarg(name='--finder_reset', dtype='switch', default=False,
+ari.set_kwarg(name='--finder_reset', dtype='switch',
               helpstr='Overwrites the profile setting to reset finder charts')
 ari.description_file = 'apero_ri.rst'
 
