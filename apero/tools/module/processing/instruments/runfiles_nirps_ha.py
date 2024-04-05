@@ -55,7 +55,9 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     run_files.append(blank_run_nirps_ha)
     # mini run
     mini_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'mini_run')
+    mini_run_nirps_ha.modify('USE_ENGINEERING', True)
     mini_run_nirps_ha.append_sequence('limited_seq')
+    # do not skip any steps of the lbl
     mini_run_nirps_ha.modify('SKIP_LBLREF', False)
     mini_run_nirps_ha.modify('SKIP_LBLMASK_SCI', False)
     mini_run_nirps_ha.modify('SKIP_LBLCOMPUTE_SCI', False)

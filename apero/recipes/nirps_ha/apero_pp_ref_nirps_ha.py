@@ -225,17 +225,23 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # ----------------------------------------------------------------------
     # Create LED flat
     # ----------------------------------------------------------------------
+    # add level to recipe log
+    log2 = recipe.log.add_level(params, 'led', 0)
     # get raw file definitions
     raw_led_file = file_definitions.raw_led_led
     raw_dark_file = file_definitions.raw_dark_dark
     # create the led flat
     led_outfile = preprocessing.create_led_flat(params, recipe, raw_led_file,
                                                 raw_dark_file)
+
     # ------------------------------------------------------------------
     # add LED flat to calibration database
     # ------------------------------------------------------------------
     # copy the mask to the calibDB
     calibdbm.add_calib_file(led_outfile)
+
+    # end log2
+    log2.end()
 
     # ----------------------------------------------------------------------
     # End of main code
