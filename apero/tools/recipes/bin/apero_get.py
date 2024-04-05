@@ -120,7 +120,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     get_assets = drs_text.true_text(inputs['ASSETS'])
     # get assets
     if get_assets:
-        drs_assets.check_assets(params)
+        update_assets = drs_assets.check_local_assets(params)
+        if update_assets:
+            drs_assets.update_local_assets(params)
         return locals()
     # -------------------------------------------------------------------------
     # get filters from user inputs

@@ -47,17 +47,19 @@ apero_dcheck.instrument = __INSTRUMENT__
 apero_dcheck.in_block_str = 'red'
 apero_dcheck.out_block_str = 'red'
 apero_dcheck.extension = 'fits'
-apero_dcheck.description = ('Developer functionality dealing with creating'
-                            ' checksums for data files. If run with no '
-                            'arguments this just checks whether the current '
-                            'assets directory is up to date. If run with '
-                            '--indir it will update the checksums and tar. '
-                            'If run with --tarfile it will use that tar file '
-                            ' to update the assets directory')
+apero_dcheck.description = ('Developer functionality dealing with local/remote asset data files.      '
+                            'mode=update-remote - creates a new tar on the server from local assets'
+                            'mode=check-local - checks whether the local assets need updating from server'
+                            'mode=update-local - update local assets from server')
 apero_dcheck.kind = 'misc'
 apero_dcheck.set_debug_plots()
 apero_dcheck.set_summary_plots()
 
+apero_dcheck.set_arg(pos=0, name='mode', dtype=str,
+                     helpstr='Mode of operation (update-remote, check-local, update-local)        '
+                            'mode=update-remote - creates a new tar on the server from local assets'
+                            'mode=check-local - checks whether the local assets need updating from server'
+                            'mode=update-local - update local assets from server')
 apero_dcheck.set_kwarg(name='--indir', dtype=str, default='None',
                        helpstr='Input data directory. If set recreates '
                                'checksums and tar file from --indir')
@@ -119,10 +121,23 @@ def __main__(recipe, params):
     # -------------------------------------------------------------------------
     mainname = __NAME__ + '._main()'
     # -------------------------------------------------------------------------
-    # get input directory
-    indir = params['INPUTS']['INDIR']
-    # deal with uploading assets
-    if not drs_text.null_text(indir, ['None', 'Null', '']):
+    # get mode from arguments
+    mode = params['INPUTS']['mode']
+    if mode not in ['update-remote', 'check-local', 'update-local']:
+        msg = ('Mode must be either: "update-remote", "check-local" or '
+               '"update-local"')
+        WLOG(params, 'error', msg)
+        return locals()
+    # -------------------------------------------------------------------------
+    if mode == 'update-remote':
+        # get input directory
+        indir = params['INPUTS']['INDIR']
+        # deal with no input directory
+        if drs_text.null_text(indir, ['None', 'Null', '']):
+            emsg = ('Must provide an input directory with --indir '
+                    'for mode=update-remote')
+            WLOG(params, 'error', emsg)
+            return locals()
         # deal with input directory not existing
         if not os.path.exists(indir):
             msg = 'Input directory {0} does not exist'
@@ -130,13 +145,20 @@ def __main__(recipe, params):
             WLOG(params, 'error', msg.format(*margs))
             return locals()
         # upload assets
-        drs_assets.upload_assets(params)
-    # deal with downloading assets
-    else:
-        # get the tar file from inputs ('None' by default)
-        tarfile = params['INPUTS']['TARFILE']
+        drs_assets.update_remote_assets(params)
+    # deal with checking local assets
+    elif mode == 'check-local':
         # check the assets and download / update if necessary
-        drs_assets.check_assets(params, tarfile=tarfile)
+        drs_assets.check_local_assets(params)
+    # deal with update local assets
+    elif mode == 'update-local':
+        # update the local assets
+        drs_assets.update_local_assets(params)
+    else:
+        msg = ('Mode must be either: "update-remote", "check-local" or '
+               '"update-local"')
+        WLOG(params, 'error', msg)
+        return locals()
 
     # -------------------------------------------------------------------------
     # End of main code

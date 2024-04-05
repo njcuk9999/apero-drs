@@ -67,10 +67,10 @@ data:
   spirou/reset/runs/trigger_night_scirun.ini: e7458eafb9cbcc068aabbd4f5d078665
   spirou/telluric/tapas_all_sp.fits.gz: 128ecb9b9cb2180c5d452d1370269e3d
 setup:
-  humantime: '2024-03-28 21:05:07.927'
+  humantime: '2024-04-05 21:46:04.690'
   servers:
   - http://apero.exoplanets.ca/assets/
-  tarfile: 1711659907_927197_assets.tar.gz
-  unixtime: 1711659907.927197
+  tarfile: 1712353564_689861_assets.tar.gz
+  unixtime: 1712353564.689861
   vdate: '2024-03-12'
   version: 0.8.001

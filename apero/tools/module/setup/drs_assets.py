@@ -39,7 +39,7 @@ WLOG = drs_log.wlog
 # =============================================================================
 # functions
 # =============================================================================
-def upload_assets(params: ParamDict):
+def update_remote_assets(params: ParamDict):
     """
     Create a yaml file containing all checksums and create a tar file of the
     assets directory and upload to the server
@@ -142,7 +142,7 @@ def upload_assets(params: ParamDict):
     os.system(RSYNC_CMD.format(**rdict))
 
 
-def check_assets(params: ParamDict, tarfile: str = None):
+def check_local_assets(params: ParamDict):
     """
     Check if we need to update assets based on the check sums in the yaml file
 
@@ -199,10 +199,22 @@ def check_assets(params: ParamDict, tarfile: str = None):
     if not update:
         # print that everything is up-to-date
         WLOG(params, '', 'Assets are up-to-date')
-        return
+        return False
     else:
         # print that we need to update
-        WLOG(params, '', 'Assets need updating')
+        WLOG(params, '', 'Assets need updating.')
+        return True
+
+
+def update_local_assets(params: ParamDict, tarfile: str = None):
+    # get path to yaml file
+    _asset_path = params['DRS_RESET_ASSETS_PATH']
+    # get the absolute path to the assets dir
+    abs_asset_path = drs_data.construct_path(params, '', _asset_path)
+    # add the checksum filename
+    checksum_path = os.path.join(abs_asset_path, base.CHECKSUM_FILE)
+    # read the yaml file
+    yaml_dict = base.load_yaml(checksum_path)
     # -------------------------------------------------------------------------
     # deal with a local tar file
     local = False
@@ -220,7 +232,6 @@ def check_assets(params: ParamDict, tarfile: str = None):
     # -------------------------------------------------------------------------
     # deal with non-local tar file
     if not local:
-
         # get the tar file name
         server_tarfile = yaml_dict['setup']['tarfile']
         # check that tar file now exists locally
@@ -258,15 +269,16 @@ def check_assets(params: ParamDict, tarfile: str = None):
             msg = 'Reading from local tar file: {0}'
             margs = [tarfile]
             WLOG(params, '', msg.format(*margs))
-
     # -------------------------------------------------------------------------
     # Extract the tar file
     # -------------------------------------------------------------------------
+    # get the assets path
+    extract_path = os.path.dirname(abs_asset_path.rstrip(os.sep))
     # print progress
-    WLOG(params, '', f'Extracting tar file: {tarfile}')
+    WLOG(params, '', f'Extracting tar file: {tarfile} to {extract_path}')
     # extract tar file
     try:
-        drs_path.extract_tarfile(tarfile, os.path.dirname(abs_asset_path))
+        drs_path.extract_tarfile(tarfile, extract_path)
     except Exception as e:
         emsg = 'Cannot extract tar file: {0} \n\t Error {1}: {2}'
         eargs = [tarfile, type(e), str(e)]
