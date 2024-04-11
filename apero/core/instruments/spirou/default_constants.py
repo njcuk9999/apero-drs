@@ -2151,6 +2151,10 @@ TELLU_BLACKLIST_NAME.value = 'tellu_blacklist.txt'
 TELLU_ONLY_PRECLEAN = TELLU_ONLY_PRECLEAN.copy(__NAME__)
 TELLU_ONLY_PRECLEAN.value = False
 
+# Whether to fit line of sight velocity in telluric pre-cleaning
+TELLU_ABSO_FIT_LOS_VELO = TELLU_ABSO_FIT_LOS_VELO.copy(__NAME__)
+TELLU_ABSO_FIT_LOS_VELO.value = False
+
 # =============================================================================
 # OBJECT: TELLURIC PRE-CLEANING SETTINGS
 # =============================================================================
