@@ -249,7 +249,7 @@ __all__ = [
     'TAPAS_FILE', 'TAPAS_FILE_FMT', 'TELLU_CUT_BLAZE_NORM',
     'TELLU_ALLOWED_DPRTYPES', 'TELLURIC_FILETYPE', 'TELLURIC_FIBER_TYPE',
     'TELLU_LIST_DIRECTORY', 'TELLU_WHITELIST_NAME', 'TELLU_BLACKLIST_NAME',
-    'TELLU_ONLY_PRECLEAN',
+    'TELLU_ONLY_PRECLEAN', 'TELLU_ABSO_FIT_LOS_VELO',
     # telluric pre-cleaning constants
     'TELLUP_DO_PRECLEANING', 'TELLUP_DO_FINITE_RES_CORR',
     'TELLUP_CCF_SCAN_RANGE', 'TELLUP_CLEAN_OH_LINES',
@@ -3857,6 +3857,13 @@ TELLU_ONLY_PRECLEAN = Const('TELLU_ONLY_PRECLEAN', value=None, dtype=bool,
                             source=__NAME__, group=cgroup,
                             description='Force only pre-cleaning (not '
                                         'recommended - only for debugging)')
+
+# Whether to fit line of sight velocity in telluric pre-cleaning
+TELLU_ABSO_FIT_LOS_VELO = Const('TELLU_ABSO_FIT_LOS_VELO', value=False,
+                                dtype=bool, source=__NAME__, group=cgroup,
+                                description='whether to fit line of sight '
+                                            'velocity in telluric '
+                                            'pre-cleaning')
 
 # =============================================================================
 # OBJECT: TELLURIC PRE-CLEANING SETTINGS

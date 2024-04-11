@@ -10,6 +10,75 @@ Changelog
 - [APERO] update date / version / documentation. [Neil Cook]
 
 
+0.7.290 (2024-04-05)
+--------------------
+- Update run.ini files. [Neil Cook]
+- [NIRPS] update `pp_ref` to give error when there are no LED files +
+  `mini_data` to use engineering. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.290-live' into
+  v0.7.290-live. [Neil Cook]
+- [APERO] `apero_ri` - finder - allow connection problems (try again 10
+  times) [Neil Cook]
+- [APERO] fix problem with finder charts (sorted alphabetically for name
+  not for table) - leads to wrong finder charts. [Neil Cook]
+- [APERO] `apero_remove.py` - allow multiple obsdir to be defined. [Neil
+  Cook]
+- [APERO] `apero_remove.py` - allow multiple obsdir to be defined. [Neil
+  Cook]
+- [APERO] `apero_ri.py` - fix problems with finding charts. [Neil Cook]
+- [APERO] `tapas_all_sp.fits.gz` - fix column name (duplicate `ch_4` -->
+  `o_3)` [Neil Cook]
+- [APERO] background fixes (both at the badpix calibration level and in
+  the extraction code [from EA] [Neil Cook]
+- [APERO] `apero_astrometrics.py` - add a check for objects in database
+  that all files match DRSOBJN to that expected by database. (Issue
+  #756) [Neil Cook]
+- [APERO] `apero_astrometrics.py` - add a check for objects in database
+  that all files match DRSOBJN to that expected by database. (Issue
+  #756) [Neil Cook]
+- [APERO] `apero_astrometrics.py` - add a check for objects in database
+  that all files match DRSOBJN to that expected by database. (Issue
+  #756) [Neil Cook]
+- [APERO] `apero_astrometrics.py` - add a check for objects in database
+  that all files match DRSOBJN to that expected by database. [Neil Cook]
+- [APERO] `apero_remove` add a --block and --objnames argument. [Neil
+  Cook]
+- [APERO] Try to catch ARI errors in object page creation. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.289-live' into
+  v0.7.289-live. [Neil Cook]
+- [ARI] update forgot.html and index.html. [Neil Cook]
+- [NIRPS] Correct that preprocessing missing `KW_PPVERSION` key. [Neil
+  Cook]
+- [ARI] add ari-home to resources/ari. [Neil Cook]
+- [ARI] add ari-home to resources/ari. [Neil Cook]
+- [ARI] add ari-home to resources/ari. [Neil Cook]
+- [ARI] must update the ari home page. [Neil Cook]
+- [ARI] fix page header. [Neil Cook]
+- [ARI] fix page header. [Neil Cook]
+- [ARI] fix page header. [Neil Cook]
+- [APERO] Fix `apero_remove` (boolean args should use switch) [Neil Cook]
+- [APERO] Fix `apero_remove` (boolean args should use switch) [Neil Cook]
+- [APERO] Fix the column names in `tapas_all_sp.fits.gz` (Issue #742)
+  [Neil Cook]
+- [APERO] Make runstring work better implicit arguments like --nosave
+  only present if used (previous had --nosave=False or --nosave=True)
+  which makes runstring unusable without removing them manually. [Neil
+  Cook]
+- [APERO] Add a header key CRUNFILE that gives the config run file used
+  (if given) [Neil Cook]
+- [ARI] Edit html of recipe and finder pages. [Neil Cook]
+- [ARI] Edit html of recipe and finder pages. [Neil Cook]
+- [ARI] Edit html of recipe and finder pages. [Neil Cook]
+- [ARI] Edit html of recipe and finder pages. [Neil Cook]
+- [ARI] Add css to recipe and finder pages. [Neil Cook]
+- [APERO CHECKS] `PREV_REDUC` -  need to not flag rejected files. [Neil
+  Cook]
+- [ARI] Fix font css in ARI. [Neil Cook]
+- [ARI] Remove ARI sidebar. [Neil Cook]
+- [ARI] Add BERV to extracted 2D header file. [Neil Cook]
+- [APERO] update date/changelog. [Neil Cook]
+
+
 0.7.289 (2024-03-12)
 --------------------
 - [APERO] correct typo. [Neil Cook]
