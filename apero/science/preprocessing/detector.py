@@ -705,6 +705,15 @@ def create_led_flat(params: ParamDict, recipe: DrsRecipe, led_file: DrsFitsFile,
                                          filters=led_hkeys)
     raw_dark_files = drs_utils.find_files(params, block_kind='raw',
                                           filters=dark_hkeys)
+    # check that we have files
+    if len(raw_led_files) == 0:
+        emsg = 'No LED files found for {0}'
+        eargs = [led_file.name]
+        WLOG(params, 'error', emsg.format(*eargs))
+    if len(raw_dark_files) == 0:
+        emsg = 'No DARK files found for {0}'
+        eargs = [dark_file.name]
+        WLOG(params, 'error', emsg.format(*eargs))
     # check whether filetype is allowed for instrument
     rawfiletype = led_file.name
     # get definition

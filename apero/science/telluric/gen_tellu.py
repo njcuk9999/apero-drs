@@ -963,35 +963,41 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         #     next steps.
         # if this is the first iteration then fit the  absorption velocity
         if iteration == 0:
-            # make a guess for the water fit parameters (for curve fit)
-            water_guess = [mp.nanmin(ccf_water), 0, 4]
-            # fit the ccf_water with a guassian
-            try:
-                # noinspection PyTupleAssignmentBalance
-                popt, pcov = curve_fit(mp.gauss_function_nodc, drange,
-                                       ccf_water, p0=water_guess)
-            except RuntimeError:
-                eargs = ['water', water_guess]
-                WLOG(params, 'error', textentry('09-019-00006', args=eargs))
-                popt = [0, 0, 0]
-            # store the velocity of the water
-            dv_water = popt[1]
-            # make a guess of the others fit parameters (for curve fit)
-            others_guess = [mp.nanmin(ccf_water), 0, 4]
-            # fit the ccf_others with a gaussian
-            try:
-                # noinspection PyTupleAssignmentBalance
-                popt, pconv = curve_fit(mp.gauss_function_nodc, drange,
-                                        ccf_others, p0=others_guess)
-            except RuntimeError:
-                eargs = ['others', water_guess]
-                WLOG(params, 'error', textentry('09-019-00006', args=eargs))
-                popt = [0, 0, 0]
-            # store the velocity of the other species
-            dv_others = popt[1]
-            # store the mean velocity of water and others
-            if not force_dv_abso:
-                dv_abso = np.mean([dv_water, dv_others])
+            # whether we are fitting the line of sight velocity
+            if params['TELLU_ABSO_FIT_LOS_VELO']:
+                # make a guess for the water fit parameters (for curve fit)
+                water_guess = [mp.nanmin(ccf_water), 0, 4]
+                # fit the ccf_water with a guassian
+                try:
+                    # noinspection PyTupleAssignmentBalance
+                    popt, pcov = curve_fit(mp.gauss_function_nodc, drange,
+                                           ccf_water, p0=water_guess)
+                except RuntimeError:
+                    eargs = ['water', water_guess]
+                    WLOG(params, 'error', textentry('09-019-00006', args=eargs))
+                    popt = [0, 0, 0]
+                # store the velocity of the water
+                dv_water = popt[1]
+                # make a guess of the others fit parameters (for curve fit)
+                others_guess = [mp.nanmin(ccf_water), 0, 4]
+                # fit the ccf_others with a gaussian
+                try:
+                    # noinspection PyTupleAssignmentBalance
+                    popt, pconv = curve_fit(mp.gauss_function_nodc, drange,
+                                            ccf_others, p0=others_guess)
+                except RuntimeError:
+                    eargs = ['others', water_guess]
+                    WLOG(params, 'error', textentry('09-019-00006', args=eargs))
+                    popt = [0, 0, 0]
+                # store the velocity of the other species
+                dv_others = popt[1]
+                # store the mean velocity of water and others
+                if not force_dv_abso:
+                    dv_abso = np.mean([dv_water, dv_others])
+            else:
+                dv_water = 0.0
+                dv_others = 0.0
+                dv_abso = 0.0
         # ------------------------------------------------------------------
         # store the amplitudes of current exponent values
         # for other species
