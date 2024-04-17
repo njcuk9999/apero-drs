@@ -15,6 +15,7 @@ import shutil
 import sys
 from typing import Dict, List, Optional, Tuple, Union
 
+import numpy as np
 from astropy.table import Table
 
 from apero import lang
@@ -1086,16 +1087,20 @@ def remove_files_from_databases(params: ParamDict, filetable: Table,
     tqdm = base.tqdm_module(use=not test)
     # -------------------------------------------------------------------------
     # get unique filenames
-    ufilenames = set(filetable['FILENAME'])
+    ufilenames = set(np.array(filetable['FILENAME']).astype(str))
     # remove None (this should not happen)
     if None in ufilenames:
         ufilenames.remove(None)
+    if 'None' in ufilenames:
+        ufilenames.remove('None')
     # -------------------------------------------------------------------------
     # get unique pids
-    upids = set(filetable['KW_PID'])
+    upids = set(np.array(filetable['KW_PID']).astype(str))
     # remove "None" from upids
     if None in upids:
         upids.remove(None)
+    if 'None' in upids:
+        upids.remove('None')
     # -------------------------------------------------------------------------
     # then deal with the calibration database --> remove entries with the
     # same filename)
