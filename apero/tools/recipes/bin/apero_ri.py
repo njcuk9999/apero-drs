@@ -17,6 +17,7 @@ from apero.core import constants
 from apero.core.core import drs_log
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
+from apero.tools.module.processing import drs_processing
 from apero.tools.module.ari import ari_general as ari
 from apero.tools.module.ari import ari_pages as arip
 
@@ -96,6 +97,24 @@ def __main__(recipe: DrsRecipe, params: ParamDict):
     # ----------------------------------------------------------------------
     # read parameters from yaml file and push into parameter dictionary
     params = ari.load_ari_params(params)
+
+    # ----------------------------------------------------------------------
+    # update the database if we are not in parellel mode
+    if not params['INPUTS']['PARALLEL']:
+        # set parameters that are normally set from the run.ini file
+        if params['INPUTS']['OBSDIR'] not in ['None', 'Null', '', None]:
+            params.set('INCLUDE_OBS_DIRS', value=params['INPUTS']['OBSDIR'])
+        else:
+            params.set('INCLUDE_OBS_DIRS', value='')
+        params.set('EXCLUDE_OBS_DIRS', value='')
+        params.set('UPDATE_IDATABASE_NAMES', value='All')
+
+        # update the index database (taking into account include/exclude
+        #    lists) we have to loop around block kinds to prevent recipe
+        #    from updating the index database every time a new recipe
+        #    starts this is really important as we have disabled updating
+        #    for parallel runs to make it more efficient
+        drs_processing.update_index_db(params)
 
     # ----------------------------------------------------------------------
     # step 2: previous data
