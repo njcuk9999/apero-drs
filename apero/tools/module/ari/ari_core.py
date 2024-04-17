@@ -2816,9 +2816,10 @@ def _filter_pids(findex_table: pd.DataFrame, logdbm: Any) -> np.ndarray:
         pid = findex_table['KW_PID'].iloc[row]
         # find all rows that have this pid
         mask = all_pids == pid
-        # deal with no entries
-        # noinspection PyTypeChecker
-        if len(mask) == 0:
+        # Deal with no pid match between file index and log database
+        #  These get set to True (as we don't know otherwise)
+        if np.sum(mask) == 0:
+            passed[row] = True
             continue
         # if all rows pass qc passed = 1
         if np.sum(all_pass[mask]):

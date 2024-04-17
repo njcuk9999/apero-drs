@@ -479,10 +479,12 @@ def add_obj_pages(params: ParamDict, object_classes: Dict[str, AriObject]):
         # print all warnings
         if not passed:
             all_passed = False
-            WLOG(params, 'warning', reason)
-        # stop the code here
-        if not all_passed:
-            WLOG(params, 'error', 'ARI crashed (see warnings above)')
+            emsg = 'Error for {0}: {1}'
+            eargs = [key, reason]
+            WLOG(params, 'warning', emsg.format(*eargs))
+    # stop the code here
+    if not all_passed:
+        WLOG(params, 'error', 'ARI crashed (see warnings above)')
     # -------------------------------------------------------------------------
     # return the object table
     return object_classes
