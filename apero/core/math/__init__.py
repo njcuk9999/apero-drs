@@ -50,6 +50,8 @@ gauss_beta_function = gauss.gauss_beta_function
 
 gauss_fit_s = gauss.gauss_fit_s
 
+gaussian_slope = gauss.gaussian_slope
+
 get_magic_grid = gen_math.get_magic_grid
 
 get_circular_mask = gen_math.get_circular_mask
