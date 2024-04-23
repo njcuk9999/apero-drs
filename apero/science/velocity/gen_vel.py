@@ -805,7 +805,7 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     # Estimate the noise
     # ------------------------------------------------------------------
     # norm the ccf
-    ccf_norm = ccf_stack / mp.nanmedian(ccf_stack)
+    ccf_stack_norm = ccf_stack / mp.nanmedian(ccf_stack)
     # sigma from the data
     ccf_sig = np.sqrt(ccf_stack)
     # some gradients
@@ -819,27 +819,33 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     # bouchy 2001 formula
     sum_ratio2 = np.sqrt(np.sum((ccf_grad / ccf_sig) ** 2))
     ccf_stack_noise = (1 / sum_ratio2) * np.sqrt(oversampling_ratio_ord)
+
+    # ------------------------------------------------------------------
+    # Fit the CCF
+    # ------------------------------------------------------------------
     # get the fit for the normalized average ccf
-    mean_ccf_coeffs, mean_ccf_fit = fit_ccf_ea(params, 'mean', props['RV_CCF'],
-                                               ccf_norm, ccf_stack_noise,
-                                               fit_type=fit_type)
+    ccf_coeffs_stack, ccf_fit_stack = fit_ccf_ea(params, 'stack',
+                                                 props['RV_CCF'],
+                                                 ccf_stack_norm,
+                                                 ccf_stack_noise,
+                                                 fit_type=fit_type)
     # get the max cpp
     # TODO: How do we calculate max_cpp and what is it? Do we need it?
     # max_cpp = mp.nansum(props['CCF_MAX']) / mp.nansum(props['PIX_PASSED_ALL'])
     # get the RV value from the normalised average ccf fit center location
-    ccf_rv = float(mean_ccf_coeffs[0])
+    ccf_rv = float(ccf_coeffs_stack[0])
     # get the FWHM value
-    ccf_fwhm = mean_ccf_coeffs[1] * mp.fwhm()
+    ccf_fwhm = ccf_coeffs_stack[1] * mp.fwhm()
     # get the contrast (ccf fit amplitude)
-    ccf_contrast = float(mean_ccf_coeffs[2])
+    ccf_contrast = float(ccf_coeffs_stack[2])
 
     # ----------------------------------------------------------------------
     # Work out the bisector span
-    bisspan = bisector(params, props)
+    bisspan = bisector(params, props['RV_CCF'], ccf_stack, ccf_coeffs_stack)
 
     # ----------------------------------------------------------------------
     # log the stats
-    wargs = [ccf_contrast, float(mean_ccf_coeffs[1]), ccf_stack_noise, ccf_fwhm]
+    wargs = [ccf_contrast, float(ccf_coeffs_stack[1]), ccf_stack_noise, ccf_fwhm]
     WLOG(params, 'info', textentry('40-020-00004', args=wargs))
     # ----------------------------------------------------------------------
     # add to output array
@@ -850,13 +856,13 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     props['CONTRAST_STACK'] = ccf_contrast
     props['FWHM_STACK'] = ccf_fwhm
     props['BISSPAN_STACK'] = bisspan
-    props['MEAN_CCF_RES'] = mean_ccf_coeffs
-    props['MEAN_CCF_FIT'] = mean_ccf_fit
-    props['MEAN_RV_NOISE'] = ccf_stack_noise
+    props['CCF_COEFFS_STACK'] = ccf_coeffs_stack
+    props['CCF_FIT_STACK'] = ccf_fit_stack
+    props['CCF_NOISE_STACK'] = ccf_stack_noise
     # set the source
-    keys = ['TOT_SPEC_RMS', 'ORD_SPEC_RMS', 'MEAN_CCF', 'MEAN_RV',
-            'MEAN_CONTRAST', 'MEAN_FWHM', 'MEAN_CCF_RES', 'MEAN_CCF_FIT',
-            'MEAN_RV_NOISE']
+    keys = ['TOT_SPEC_RMS', 'ORD_SPEC_RMS', 'CCF_STACK', 'RV_STACK',
+            'CONTRAST_STACK', 'FWHM_STACK', 'CCF_COEFFS_STACK', 'CCF_FIT_STACK',
+            'CCF_NOISE_STACK']
     props.set_sources(keys, func_name)
     # add constants to props
     props['CCF_MASK'] = ccfmask
@@ -885,12 +891,12 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
                 orders=np.arange(len(props['CCF'])), order=None)
     # the mean ccf
     recipe.plot('CCF_RV_FIT', params=params, x=props['RV_CCF'],
-                y=mean_ccf, yfit=mean_ccf_fit, kind='MEAN SCIENCE',
+                y=ccf_stack, yfit=ccf_fit_stack, kind='SCIENCE STACK',
                 rv=ccf_rv, ccfmask=ccfmask,
                 orders=None, order=None)
     # the mean ccf for summary
     recipe.plot('SUM_CCF_RV_FIT', params=params, x=props['RV_CCF'],
-                y=mean_ccf, yfit=mean_ccf_fit, kind='MEAN SCIENCE',
+                y=ccf_stack, yfit=ccf_fit_stack, kind='SCIENCE STACK',
                 rv=ccf_rv, ccfmask=ccfmask,
                 orders=None, order=None)
 
@@ -953,40 +959,70 @@ def compute_ccf_fp(params, recipe, infile, image, blaze, wavemap, fiber,
     # ----------------------------------------------------------------------
     # Calculate the mean CCF
     # ----------------------------------------------------------------------
-    # get the average ccf
-    mean_ccf = mp.nanmean(props['CCF'][: ccfnmax], axis=0)
+    # get the average ccf (after fwhm sigma clip)
+    ccf_stack = mp.nansum(props['CCF'][: ccfnmax], axis=0)
 
+    # ------------------------------------------------------------------
+    # Estimate the noise
+    # ------------------------------------------------------------------
+    # sigma from the data
+    ccf_sig = np.sqrt(ccf_stack)
+    # some gradients
+    gradwave = np.nanmedian(wavemap / np.gradient(wavemap))
+    grad_dv = np.gradient(props['RV_CCF'])
+    med_grad_dv = mp.nanmedian(grad_dv)
+    # estimate oversampling factor
+    oversampling_ratio_ord = (speed_of_light_ms / gradwave) / med_grad_dv
+    # error on the RV from the photon noise
+    ccf_grad = np.gradient(ccf_stack) / grad_dv
+    # bouchy 2001 formula
+    sum_ratio2 = np.sqrt(np.sum((ccf_grad / ccf_sig) ** 2))
+    ccf_stack_noise = (1 / sum_ratio2) * np.sqrt(oversampling_ratio_ord)
+
+    # ------------------------------------------------------------------
+    # Fit the CCF
+    # ------------------------------------------------------------------
     # get the fit for the normalized average ccf
-    mean_ccf_coeffs, mean_ccf_fit = fit_ccf(params, 'mean', props['RV_CCF'],
-                                            mean_ccf, fit_type=fit_type)
+    ccf_coeffs_stack, ccf_fit_stack = fit_ccf_ea(params, 'stack',
+                                                 props['RV_CCF'],
+                                                 ccf_stack, ccf_stack_noise,
+                                                 fit_type=fit_type)
+    # get the max cpp
+    # TODO: How do we calculate max_cpp and what is it? Do we need it?
+    # max_cpp = mp.nansum(props['CCF_MAX']) / mp.nansum(props['PIX_PASSED_ALL'])
     # get the RV value from the normalised average ccf fit center location
-    ccf_rv = float(mean_ccf_coeffs[1])
-    # get the contrast (ccf fit amplitude)
-    ccf_contrast = np.abs(100 * mean_ccf_coeffs[0])
+    ccf_rv = float(ccf_coeffs_stack[0])
     # get the FWHM value
-    ccf_fwhm = mean_ccf_coeffs[2] * mp.fwhm()
+    ccf_fwhm = ccf_coeffs_stack[1] * mp.fwhm()
+    # get the contrast (ccf fit amplitude)
+    ccf_contrast = float(ccf_coeffs_stack[2])
+
     # ----------------------------------------------------------------------
-    #  combined CCF_NOISE uncertainty
-    rv_noise = 1.0 / np.sqrt(mp.nansum(1.0 / props['CCF_NOISE'] ** 2))
+    # Work out the bisector span
+    # Question: Can we do the bisector span for FP?
+    bisspan = bisector(params, props['RV_CCF'], ccf_stack, ccf_coeffs_stack)
+
     # ----------------------------------------------------------------------
     # log the stats
-    wargs = [ccf_contrast, float(mean_ccf_coeffs[1]), rv_noise, ccf_fwhm]
+    wargs = [ccf_contrast, float(ccf_coeffs_stack[1]), ccf_stack_noise, ccf_fwhm]
     WLOG(params, 'info', textentry('40-020-00004', args=wargs))
+
     # ----------------------------------------------------------------------
     # add to output array
     props['TOT_SPEC_RMS'] = wmeanref
     props['ORD_SPEC_RMS'] = wmeanrefo
-    props['MEAN_CCF'] = mean_ccf
-    props['MEAN_RV'] = ccf_rv
-    props['MEAN_CONTRAST'] = ccf_contrast
-    props['MEAN_FWHM'] = ccf_fwhm
-    props['MEAN_CCF_COEFFS'] = mean_ccf_coeffs
-    props['MEAN_CCF_FIT'] = mean_ccf_fit
-    props['MEAN_RV_NOISE'] = rv_noise
+    props['CCF_STACK'] = ccf_stack
+    props['RV_STACK'] = ccf_rv
+    props['CONTRAST_STACK'] = ccf_contrast
+    props['FWHM_STACK'] = ccf_fwhm
+    props['BISSPAN_STACK'] = bisspan
+    props['CCF_COEFFS_STACK'] = ccf_coeffs_stack
+    props['CCF_FIT_STACK'] = ccf_fit_stack
+    props['CCF_NOISE_STACK'] = ccf_stack_noise
     # set the source
-    keys = ['TOT_SPEC_RMS', 'ORD_SPEC_RMS', 'MEAN_CCF', 'MEAN_RV',
-            'MEAN_CONTRAST', 'MEAN_FWHM', 'MEAN_CCF_COEFFS', 'MEAN_CCF_FIT',
-            'MEAN_RV_NOISE']
+    keys = ['TOT_SPEC_RMS', 'ORD_SPEC_RMS', 'CCF_STACK', 'RV_STACK',
+            'CONTRAST_STACK', 'FWHM_STACK', 'CCF_COEFFS_STACK',
+            'CCF_FIT_STACK', 'CCF_NOISE_STACK']
     props.set_sources(keys, func_name)
     # add constants to props
     props['CCF_MASK'] = ccfmask
@@ -1016,15 +1052,15 @@ def compute_ccf_fp(params, recipe, infile, image, blaze, wavemap, fiber,
                 orders=np.arange(len(props['CCF'])), order=None)
     # the mean ccf
     recipe.plot('CCF_RV_FIT', params=params, x=props['RV_CCF'],
-                y=mean_ccf, yfit=mean_ccf_fit,
-                kind='MEAN FP fiber={0}'.format(fiber),
-                rv=props['MEAN_CCF_COEFFS'][1], ccfmask=ccfmask,
+                y=ccf_stack, yfit=ccf_fit_stack,
+                kind='FP Stack fiber={0}'.format(fiber),
+                rv=ccf_rv, ccfmask=ccfmask,
                 orders=None, order=None)
     # the mean ccf for summary
     if sum_plot:
         recipe.plot('SUM_CCF_RV_FIT', params=params, x=props['RV_CCF'],
-                    y=mean_ccf, yfit=mean_ccf_fit,
-                    kind='MEAN FP fiber={0}'.format(fiber),
+                    y=ccf_stack, yfit=ccf_fit_stack,
+                    kind='FP Stack fiber={0}'.format(fiber),
                     rv=ccf_rv, ccfmask=ccfmask,
                     orders=None, order=None)
 
@@ -1654,16 +1690,58 @@ def fit_ccf_ea(params, order_num, rv, ccf, sig, fit_type):
     return result, ccf_fit
 
 
-def bisector(params, props):
+def bisector(params: ParamDict, rv: np.ndarray, ccf: np.ndarray,
+             ccf_coeffs: np.ndarray) -> float:
+    """
+    Calculate the bisector span of the CCF
 
-
+    :param params: ParamDict, parameter dictionary of constants
+    :param rv: np.ndarray, the radial velocities for the ccf
+    :param ccf: np.ndarray, the CCF values
+    :param ccf_coeffs: np.ndarray, the gaussian fit coefficients for the CCF
+    :return: float, the bisector span
+    """
     # get min and max depth for the bisector
-    bs_cut1 = params['CCF_BIS_CUT1']
-    bs_cut2 = params['CCF_BIS_CUT2']
+    bs_cut_top = params['CCF_BIS_CUT_TOP']
+    bs_cut_bottom = params['CCF_BIS_CUT_BOTTOM']
+    # take the gaussian fit without a depth
+    ccf_coeffs2 = np.array(ccf_coeffs)
+    # set the depth to 0 (i.e. no depth)
+    ccf_coeffs2[2] = 0
+    # normalize CCF without the gaussian. Sets the continuum flat to 1
+    ccf2 = (1 - ccf / mp.gaussian_slope(rv, *ccf_coeffs2)) / ccf_coeffs[2]
+    # ----------------------------------------------------------------------
+    # Bisector at cut1
+    span_top = bisector_cut(rv, ccf2, bs_cut_top)
+    # Bisector at cut2
+    span_bottom = bisector_cut(rv, ccf2, bs_cut_bottom)
+    # difference between the two bisector cuts
+    return span_top - span_bottom
 
 
-    # normalize
+def bisector_cut(xx: np.ndarray, yy: np.ndarray, cut: float) -> float:
+    """
+    Calculate the bisector span of the CCF at a given cut
 
+    :param xx: np.ndarray, the x values (radial velocities)
+    :param yy: np.ndarray, the y values (CCF values)
+    :param cut: float, the cut value to calculate the bisector span at
+
+    :return: float, the bisector span at this cut value
+    """
+    # find the two points where the CCF is above cut and interpolate with a
+    #    linear fit
+    lims1 = np.where(yy > cut)[0][[0, -1]]
+    # find the value at the left side
+    x1_start, x1_end = lims1[0] - 1, lims1[0] + 1
+    v1_fit = np.polyfit(yy[x1_start:x1_end], xx[x1_start:x1_end], 1)
+    v1_val = np.polyval(v1_fit, cut)
+    # find the value at the right side
+    x2_start, x2_end = lims1[1] , lims1[1] + 2
+    v2_fit = np.polyfit(yy[x2_start:x2_end], xx[x2_start:x2_end], 1)
+    v2_val = np.polyval(v2_fit, cut)
+    # return the bisector span for this cut
+    return (v1_val + v2_val) / 2
 
 
 def fit_ccf(params, order_num, rv, ccf, fit_type):
@@ -1751,7 +1829,7 @@ def write_ccf(params, recipe, infile, props, rawfiles, combine, qc_params,
     table1['RV'] = props['RV_CCF']
     for order_num in range(len(props['CCF'])):
         table1['ORDER{0:02d}'.format(order_num)] = props['CCF'][order_num]
-    table1['Combined'] = props['MEAN_CCF']
+    table1['Combined'] = props['CCF_STACK']
     # ----------------------------------------------------------------------
     # produce stats table
     table2 = Table()
@@ -1798,14 +1876,14 @@ def write_ccf(params, recipe, infile, props, rawfiles, combine, qc_params,
     ccf_file.add_hkey('KW_FIBER', value=fiber)
     # ----------------------------------------------------------------------
     # add results from the CCF
-    ccf_file.add_hkey('KW_CCF_MEAN_RV', value=props['MEAN_RV'])
-    ccf_file.add_hkey('KW_CCF_MEAN_CONSTRAST', value=props['MEAN_CONTRAST'])
-    ccf_file.add_hkey('KW_CCF_MEAN_FWHM', value=props['MEAN_FWHM'])
+    ccf_file.add_hkey('KW_CCF_MEAN_RV', value=props['RV_STACK'])
+    ccf_file.add_hkey('KW_CCF_MEAN_CONSTRAST', value=props['CONTRAST_STACK'])
+    ccf_file.add_hkey('KW_CCF_MEAN_FWHM', value=props['FWHM_STACK'])
     ccf_file.add_hkey('KW_CCF_TOT_LINES', value=props['TOT_LINE'])
     ccf_file.add_hkey('KW_CCF_DVRMS_SP',
                       value=np.round(props['TOT_SPEC_RMS'], 4))
     ccf_file.add_hkey('KW_CCF_DVRMS_CC',
-                      value=np.round(props['MEAN_RV_NOISE'], 4))
+                      value=np.round(props['CCF_NOISE_STACK'], 4))
     # ----------------------------------------------------------------------
     # add constants used to process
     ccf_file.add_hkey('KW_CCF_MASK', value=props['CCF_MASK'])
