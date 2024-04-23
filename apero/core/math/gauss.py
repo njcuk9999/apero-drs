@@ -288,6 +288,24 @@ def gauss_fit_s(x: Union[float, np.ndarray], a: float, x0: float, sigma: float,
     return gauss + correction
 
 
+def gaussian_slope(x: np.ndarray, cen: float, ew: float, depth: float,
+                   slope: float, amp: float) -> np.ndarray:
+    """
+    :param x: numpy array (1D), the x values for the gauss fit
+    :param cen: float, the center of the gaussian
+    :param ew: float, the e-width of the gaussian
+    :param depth: float, the normalized depth to continuum
+    :param slope: float, the slope of the continuum
+    :param amp: float, amplitde of the continuum, normally very close to 1
+
+    :return: numpy array, a gaussian with the properties listed on the x grid
+    """
+    xpix = (x - cen)
+    gauss = (1 - depth * np.exp(-2 * xpix ** 2 / ew ** 2))
+    # return gaussian
+    return gauss * (1 - slope * xpix) * amp
+
+
 def centered_super_gauss(x: np.ndarray, fwhm: float, amp: float,
                          expo: float) -> np.ndarray:
     """
