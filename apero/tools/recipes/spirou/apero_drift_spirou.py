@@ -270,8 +270,7 @@ def __main__(recipe, params):
             # compute the ccf
             ccfargs = [infile, infile.get_data(), blaze,
                        wprops['WAVEMAP'], fiber]
-            rvprops = velocity.compute_ccf_fp(params, recipe, *ccfargs,
-                                              sum_plot=False)
+            rvprops = velocity.compute_ccf_fp(params, recipe, *ccfargs)
             # -----------------------------------------------------------------
             # push rvprops to storage
             basenames.append(infile.basename)

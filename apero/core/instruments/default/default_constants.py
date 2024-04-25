@@ -286,6 +286,7 @@ __all__ = [
     'CCF_NOISE_SIGDET', 'CCF_NOISE_BOXSIZE', 'CCF_NOISE_THRES',
     'CCF_MAX_CCF_WID_STEP_RATIO', 'CCF_BLAZE_NORM_PERCENTILE',
     'CCF_NSIG_THRESHOLD', 'CCF_FWHM_SIGCUT',
+    'CCF_BIS_CUT_TOP', 'CCF_BIS_CUT_BOTTOM',
     'OBJRV_NULL_VAL', 'CCF_MASK_NORMALIZATION', 'CCF_TEFF_MASK_TABLE',
     # general polar constants
     'POLAR_FIBERS', 'POLAR_STOKES_PARAMS', 'POLAR_BERV_CORRECT',
@@ -4552,6 +4553,18 @@ CCF_FWHM_SIGCUT = Const('CCF_FWHM_SIGCUT', value=None, dtype=float,
                         source=__NAME__, minimum=0, group=cgroup,
                         description='Define the minimum number of sigma the '
                                     'FWHM of CCF must have to be acceptable')
+
+# Define the top cut of the bisector cut (percent)
+CCF_BIS_CUT_TOP = Const('CCF_BIS_CUT_TOP', value=None, dtype=float,
+                        source=__NAME__, minimum=0, group=cgroup,
+                        description='Define the top cut of the bisector cut '
+                                    '(percent)')
+
+# Define the bottom cut of the bisector cut (percent)
+CCF_BIS_CUT_BOTTOM = Const('CCF_BIS_CUT_BOTTOM', value=None, dtype=float,
+                           source=__NAME__, minimum=0, group=cgroup,
+                           description='Define the bottom cut of the bisector'
+                                       ' cut (percent)')
 
 # =============================================================================
 # GENERAL POLARISATION SETTINGS
