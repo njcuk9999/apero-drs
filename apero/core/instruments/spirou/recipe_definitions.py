@@ -1820,6 +1820,10 @@ pp_seq_opt.add(apero_preprocess, name='PP_LFCFP', files=[files.raw_lfc_fp],
                recipe_kind='pre-lfcfp')
 pp_seq_opt.add(apero_preprocess, name='PP_FPLFC', files=[files.raw_fp_lfc],
                recipe_kind='pre-fplfc')
+pp_seq_opt.add(apero_preprocess, name='PP_FPHC1', files=[files.raw_fp_hc1],
+            recipe_kind='pre-fphc1')
+pp_seq_opt.add(apero_preprocess, name='PP_HC1FP', files=[files.raw_hc1_fp],
+            recipe_kind='pre-hc1fp')
 pp_seq_opt.add(apero_preprocess, name='PP_EVERY',
                files=[files.raw_file])
 
@@ -2026,6 +2030,10 @@ eng_seq.add(apero_extract, name='EXT_LFCFP', files=[files.pp_lfc_fp],
             recipe_kind='extract-lfcfp')
 eng_seq.add(apero_extract, name='EXT_FPLFC', files=[files.pp_fp_lfc],
             recipe_kind='extract-fplfc')
+eng_seq.add(apero_extract, name='EXT_FPHC1', files=[files.pp_fp_hc1],
+            recipe_kind='extract-fphc1')
+eng_seq.add(apero_extract, name='EXT_HC1FP', files=[files.pp_hc1_fp],
+            recipe_kind='extract-hc1fp')
 eng_seq.add(apero_extract, name='EXT_EVERY', files=[files.pp_file],
             recipe_kind='extract-everything')
 
