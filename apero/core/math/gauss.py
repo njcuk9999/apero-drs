@@ -283,7 +283,8 @@ def gauss_fit_s(x: Union[float, np.ndarray], a: float, x0: float, sigma: float,
     # set function name
     # _ = display_func('gauss_fit_s', __NAME__)
     # calculate gaussian
-    gauss = a * np.exp(-0.5 * (x - x0) ** 2 / (sigma ** 2)) + zp
+    with warnings.catch_warnings(record=True) as _:
+        gauss = a * np.exp(-0.5 * (x - x0) ** 2 / (sigma ** 2)) + zp
     correction = (x - x0) * slope
     return gauss + correction
 

@@ -348,14 +348,14 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # archive ccf from science fiber
         # ------------------------------------------------------------------
         velocity.write_ccf(params, recipe, infile, rv_props1, rawfiles,
-                           combine, qc_params, fiber)
+                           combine, qc_params, fiber, fit_type=0)
 
         # ------------------------------------------------------------------
         # archive ccf from reference fiber
         # ------------------------------------------------------------------
         if has_fp:
             velocity.write_ccf(params, recipe, infile_r, rv_props2, rawfiles,
-                               combine, qc_params, rfiber)
+                               combine, qc_params, rfiber, fit_type=1)
         # ------------------------------------------------------------------
         # update recipe log file
         # ------------------------------------------------------------------
