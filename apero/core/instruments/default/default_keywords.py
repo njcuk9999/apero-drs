@@ -166,8 +166,10 @@ __all__ = [  # input keys
     'KW_MKTEMP_HASH', 'KW_MKTEMP_TIME',
     'KW_MKTEMP_SNR_ORDER', 'KW_MKTEMP_SNR_THRES',
     # ccf values
-    'KW_CCF_MEAN_RV', 'KW_CCF_MEAN_CONSTRAST', 'KW_CCF_MEAN_FWHM',
-    'KW_CCF_TOT_LINES', 'KW_CCF_MASK',
+    'KW_CCF_STACK_RV', 'KW_CCF_STACK_CONTRAST', 'KW_CCF_STACK_FWHM',
+    'KW_CCF_BISECTOR', 'KW_CCF_BIS_SPAN',
+    'KW_CCF_TOT_LINES', 'KW_CCF_SNR_STACK', 'KW_CCF_NORM_STACK',
+    'KW_CCF_MASK',
     'KW_CCF_STEP', 'KW_CCF_WIDTH', 'KW_CCF_TARGET_RV', 'KW_CCF_SIGDET',
     'KW_CCF_BOXSIZE', 'KW_CCF_MAXFLUX', 'KW_CCF_NMAX', 'KW_CCF_MASK_MIN',
     'KW_CCF_MASK_WID', 'KW_CCF_MASK_UNITS', 'KW_CCF_RV_WAVE_FP',
@@ -2277,26 +2279,49 @@ KW_MKTEMP_BERV_COV_RES = Keyword('KW_MKTEMP_BERV_COV_RES', key='NULL', dtype=flo
 # -----------------------------------------------------------------------------
 # Define ccf variables
 # -----------------------------------------------------------------------------
-# The mean rv calculated from the mean ccf
-KW_CCF_MEAN_RV = Keyword('KW_CCF_MEAN_RV', key='NULL', dtype=float, source=__NAME__,
-                         description='The mean rv calculated from the mean ccf')
+# The rv calculated from the ccf stack
+KW_CCF_STACK_RV = Keyword('KW_CCF_STACK_RV', key='NULL', dtype=float, source=__NAME__,
+                         description='The rv calculated from the ccf '
+                                     'stack')
 
-# the mean constrast (depth of fit ccf) from the mean ccf
-KW_CCF_MEAN_CONSTRAST = Keyword('KW_CCF_MEAN_CONSTRAST', key='NULL', dtype=float,
+# the constrast (depth of fit ccf) from the ccf stack
+KW_CCF_STACK_CONTRAST = Keyword('KW_CCF_STACK_CONTRAST', key='NULL', dtype=float,
                                 source=__NAME__,
-                                description=('the mean constrast (depth of '
-                                             'fit ccf) from the mean ccf'))
+                                description=('the constrast (depth of '
+                                             'fit ccf) from the ccf stack'))
 
-# the mean fwhm from the mean ccf
-KW_CCF_MEAN_FWHM = Keyword('KW_CCF_MEAN_FWHM', key='NULL', dtype=float,
+# the fwhm from the ccf stack
+KW_CCF_STACK_FWHM = Keyword('KW_CCF_STACK_FWHM', key='NULL', dtype=float,
                            source=__NAME__,
-                           description='the mean fwhm from the mean ccf')
+                           description='the fwhm from the ccf stack')
+
+# the bisector span from the ccf stack
+KW_CCF_BISECTOR = Keyword('KW_CCF_BISECTOR', key='NULL', dtype=float,
+                          source=__NAME__,
+                          description='the bisector span from the ccf stack')
+
+# the bisector span values (Top to bottom)
+KW_CCF_BIS_SPAN = Keyword('KW_CCF_BIS_SPAN', key='NULL', dtype=str,
+                          source=__NAME__,
+                          description='the bisector span values (Top to '
+                                      'bottom)')
 
 # the total number of mask lines used in all ccfs
 KW_CCF_TOT_LINES = Keyword('KW_CCF_TOT_LINES', key='NULL', dtype=int,
                            source=__NAME__,
                            description=('the total number of mask lines '
                                         'used in all ccfs'))
+
+# The SNR of the CCF stack
+KW_CCF_SNR_STACK = Keyword('KW_CCF_SNR_STACK', key='NULL', dtype=float,
+                           source=__NAME__,
+                            description='The SNR of the CCF stack')
+
+# The normalization coefficient of the CCF stack
+KW_CCF_NORM_STACK = Keyword('KW_CCF_NORM_STACK', key='NULL', dtype=float,
+                            source=__NAME__,
+                            description='The normalization coeffcient of the '
+                                        'CCF stack')
 
 # the ccf mask file used
 KW_CCF_MASK = Keyword('KW_CCF_MASK', key='NULL', dtype=str, source=__NAME__,
