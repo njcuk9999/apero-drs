@@ -2007,6 +2007,10 @@ KW_MKTEMP_BERV_COV_RES.set('MTPBCRES',
 # -----------------------------------------------------------------------------
 # Define ccf variables
 # -----------------------------------------------------------------------------
+# type of ccf fit (aborption or emission)
+KW_CCF_FIT_TYPE = KW_CCF_FIT_TYPE.copy(__NAME__)
+KW_CCF_FIT_TYPE.set(key='CCFFTYPE', comment='CCF fit type (abs or em)')
+
 # The rv calculated from the ccf stack
 KW_CCF_STACK_RV = KW_CCF_STACK_RV.copy(__NAME__)
 KW_CCF_STACK_RV.set(key='CCFMNRV',

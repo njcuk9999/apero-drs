@@ -2273,9 +2273,9 @@ def update_w_rv_props(wprops: ParamDict, rvprops: ParamDict,
     if source is None:
         source = str(func_name)
     # set wave properties from ccf (rv) properties for wave outputs
-    wprops['WFP_DRIFT'] = rvprops['MEAN_RV']
-    wprops['WFP_FWHM'] = rvprops['MEAN_FWHM']
-    wprops['WFP_CONTRAST'] = rvprops['MEAN_CONTRAST']
+    wprops['WFP_DRIFT'] = rvprops['RV_STACK']
+    wprops['WFP_FWHM'] = rvprops['FWHM_STACK']
+    wprops['WFP_CONTRAST'] = rvprops['CONTRAST_STACK']
     wprops['WFP_MASK'] = rvprops['CCF_MASK']
     wprops['WFP_LINES'] = rvprops['TOT_LINE']
     wprops['WFP_TARG_RV'] = rvprops['TARGET_RV']
@@ -2287,7 +2287,7 @@ def update_w_rv_props(wprops: ParamDict, rvprops: ParamDict,
     rvprops['RV_WAVETIME'] = wprops['WAVETIME']
     rvprops['RV_WAVESRCE'] = wprops['WAVESOURCE']
     rvprops['RV_TIMEDIFF'] = 'None'
-    rvprops['RV_WAVE_FP'] = rvprops['MEAN_RV']
+    rvprops['RV_WAVE_FP'] = rvprops['RV_STACK']
     rvprops['RV_SIMU_FP'] = 'None'
     rvprops['RV_DRIFT'] = 'None'
     rvprops['RV_OBJ'] = 'None'

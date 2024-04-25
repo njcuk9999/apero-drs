@@ -838,7 +838,7 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     recipe.plot('CCF_RV_FIT_LOOP', params=params, x=props['RV_CCF'],
                 y=props['CCF_NORM'],
                 yfit=props['CCF_FIT'], kind='SCIENCE',
-                rv=props['CCF_FIT_COEFFS'][:, 1], ccfmask=ccfmask,
+                rv=props['CCF_FIT_COEFFS'][:, 0], ccfmask=ccfmask,
                 orders=np.arange(len(props['CCF'])), order=None)
     # the ccf stack
     recipe.plot('CCF_RV_FIT', params=params, x=props['RV_CCF'],
@@ -886,7 +886,10 @@ def compute_ccf_fp(params, recipe, infile, image, blaze, wavemap, fiber,
     # the fit type must be set to 1 (for emission lines)
     fit_type = 1
     # set the number of fit parameters
-    fit_params = 6
+    if fit_type == 0:
+        fit_params = 6
+    else:
+        fit_params = 5
     # ------------------------------------------------------------------
     # Compute photon noise uncertainty for FP
     # ------------------------------------------------------------------
@@ -993,7 +996,6 @@ def ccf_calculation_per_order(params, image, blaze, wavemap, berv, targetrv,
                                    'blaze_norm_percentile', kwargs, func_name)
     blaze_threshold = pcheck(params, 'WAVE_FP_BLAZE_THRES', 'blaze_threshold',
                              kwargs, func_name)
-    ccf_nsig_threshold = pcheck(params, 'CCF_NSIG_THRESHOLD', func=func_name)
     # get rvmin and rvmax in km/s
     rvmin = targetrv - ccfwidth
     rvmin = pcheck(params, 'RVMIN', 'rvmin', kwargs, func_name, default=rvmin)
@@ -1004,7 +1006,10 @@ def ccf_calculation_per_order(params, image, blaze, wavemap, berv, targetrv,
     # create a rv ccf range in km/s
     rv_ccf = np.arange(rvmin, rvmax, ccfstep)
     # set the number of fit parameters
-    fit_params = 6
+    if fit_type == 0:
+        fit_params = 6
+    else:
+        fit_params = 5
     # store outputs in param dict
     props = ParamDict()
     props['RV_CCF'] = rv_ccf
@@ -1161,7 +1166,8 @@ def ccf_calculation_per_order(params, image, blaze, wavemap, berv, targetrv,
         # ------------------------------------------------------------------
         # Estimate the noise
         # ------------------------------------------------------------------
-        pn_args = [wa_ord, rv_ccf, ccf_fit_ord, ccf_coeffs_ord, sig_ord]
+        pn_args = [wa_ord, rv_ccf, ccf_fit_ord, ccf_coeffs_ord, sig_ord,
+                   fit_type]
         ccf_phot_noise, ccf_snr = estimate_photon_noise(*pn_args)
         # ------------------------------------------------------------------
         # append ccf to storage
@@ -1170,7 +1176,7 @@ def ccf_calculation_per_order(params, image, blaze, wavemap, berv, targetrv,
         props['CCF_LINES'][order_num] = numlines
         props['TOT_LINE'][order_num] += numlines
         props['CCF_PHOT_NOISE'][order_num] = ccf_phot_noise
-        props['CCF_PIX_NOISE'] [order_num] = sig_ord
+        props['CCF_PIX_NOISE'][order_num] = sig_ord
         props['CCF_SNR'][order_num] = ccf_snr
         props['CCF_FIT'][order_num] = ccf_fit_ord
         props['CCF_FIT_COEFFS'][order_num] = ccf_coeffs_ord
@@ -1210,19 +1216,27 @@ def ccf_calculation_stack(params: ParamDict, props: ParamDict, fit_type: int,
     # Estimate the noise
     # ------------------------------------------------------------------
     pn_args = [wavemap, props['RV_CCF'], ccf_fit_stack,
-               ccf_coeffs_stack, ccf_stack_pix_noise_norm]
+               ccf_coeffs_stack, ccf_stack_pix_noise_norm, fit_type]
     ccf_stack_phot_noise, ccf_stack_snr = estimate_photon_noise(*pn_args)
     # ------------------------------------------------------------------
-    # get the RV value from the normalised average ccf fit center location
-    ccf_rv = float(ccf_coeffs_stack[0])
-    # get the FWHM value
-    ccf_fwhm = ccf_coeffs_stack[1] * mp.fwhm()
-    # get the contrast (ccf fit amplitude)
-    ccf_contrast = float(ccf_coeffs_stack[2])
+    if fit_type == 0:
+        # get the RV value from the normalised average ccf fit center location
+        ccf_rv = float(ccf_coeffs_stack[0])
+        # get the FWHM value
+        ccf_fwhm = ccf_coeffs_stack[1] * mp.fwhm()
+        # get the contrast (ccf fit amplitude)
+        ccf_contrast = float(ccf_coeffs_stack[2])
+    else:
+        # get the RV value from the normalised average ccf fit center location
+        ccf_rv = float(ccf_coeffs_stack[1])
+        # get the FWHM value
+        ccf_fwhm = ccf_coeffs_stack[2] * mp.fwhm()
+        # get the contrast (ccf fit amplitude)
+        ccf_contrast = np.nan
     # ----------------------------------------------------------------------
     # Work out the bisector span
     bisspan = bisector(params, props['RV_CCF'], ccf_stack_norm,
-                       ccf_coeffs_stack)
+                       ccf_coeffs_stack, fit_type)
     # add to output array
     props['CCF_STACK'] = ccf_stack_norm
     props['RV_STACK'] = ccf_rv
@@ -1286,7 +1300,7 @@ def update_per_order_ccfs(params: ParamDict, props: ParamDict, nbo: int,
         # Estimate the noise
         # ------------------------------------------------------------------
         pn_args = [wa_ord, rv_ccf, ccf_fit_ord, ccf_coeffs_ord, sig_ord,
-                   norm]
+                   fit_type, norm]
         ccf_phot_noise, ccf_snr = estimate_photon_noise(*pn_args)
         # append to storage
         ccf_all_fit.append(ccf_fit_ord)
@@ -1367,48 +1381,59 @@ def fit_ccf_ea(params, order_num, rv, ccf, sig, fit_type, fit_params,
         guess_amp = 1
         # set bounds for the curve fit
         bounds_lower = [min_rv, 0, 0, -np.inf, -np.inf, 0]
-        bounds_upper = [max_rv, (max_rv - min_rv)/2, 1, np.inf, np.inf, 2]
+        bounds_upper = [max_rv, (max_rv - min_rv) / 2, 1, np.inf, np.inf, 2]
+
+        # push guess values into list
+        guess = [guess_cent, guess_w, guess_depth, guess_slope, guess_curv,
+                 guess_amp]
+        # get gaussian fit
+        nanmask = np.isfinite(ccf)
+        ccf[~nanmask] = 0.0
+        # fit the gaussian
+        try:
+            with warnings.catch_warnings(record=True) as _:
+                # noinspection PyTupleAssignmentBalance
+                result, _ = curve_fit(mp.gaussian_slope, rv, ccf,
+                                      bounds=[bounds_lower, bounds_upper],
+                                      p0=guess, sigma=sig)
+                fit = mp.gaussian_slope(rv, *result)
+        except RuntimeError:
+            result = np.repeat(np.nan, fit_params)
+            fit = np.repeat(np.nan, len(rv))
 
     # else (fit_type == 1) then we have emission lines
     else:
-        # set up guess for gaussian fit
-        guess_cent = guess_dict.get('guess_cent', rv[argmax])
-        # twice the image pixel size in km/s
-        guess_w = guess_dict.get('guess_ew', 2 * image_pixel_size)
-        # for an emission feature this should be the max_ccf
-        guess_depth = -guess_dict.get('guess_depth', max_ccf)
-        # guess slope
-        guess_slope = 0
-        # guess curvature
-        guess_curv = 0
-        # guess amp
+        # set the amplitude
         guess_amp = 1
+        # set up guess for gaussian fit
+        guess_cent = rv[argmax]
+        # set up sigma
+        guess_sigma = image_pixel_size
+        # set up zp
+        guess_zp = min_ccf
+        # set up slope
+        guess_slope = 0
         # set bounds for the curve fit
-        bounds_lower = [min_rv, 0, -np.inf, -np.inf, -1e-9, 0]
-        bounds_upper = [max_rv, (max_rv - min_rv)/2, 0, np.inf, 1e-9, np.inf]
+        bounds_lower = [0, min_rv, 0, 0, -np.inf]
+        bounds_upper = [2 * max_ccf, max_rv, (max_rv - min_rv) / 2, max_ccf, np.inf]
+        # push guess values into list
+        #      a, x0, sigma, zp, slope
+        guess = [guess_amp, guess_cent, guess_sigma, guess_zp, guess_slope]
+        # get gaussian fit
+        nanmask = np.isfinite(ccf)
+        ccf[~nanmask] = 0.0
+        # fit the gaussian
+        try:
+            with warnings.catch_warnings(record=True) as _:
+                # noinspection PyTupleAssignmentBalance
+                result, _ = curve_fit(mp.gauss_fit_s, rv, ccf,
+                                      bounds=[bounds_lower, bounds_upper],
+                                      p0=guess, sigma=sig)
+                fit = mp.gauss_fit_s(rv, *result)
+        except RuntimeError:
+            result = np.repeat(np.nan, fit_params)
+            fit = np.repeat(np.nan, len(rv))
 
-    # push guess values into list
-    guess = [guess_cent, guess_w, guess_depth, guess_slope, guess_curv,
-             guess_amp]
-    # normalise y
-    # y = ccf / max_ccf - 1 + fit_type
-    y = ccf
-    # x is just the RVs
-    x = rv
-    # get gaussian fit
-    nanmask = np.isfinite(y)
-    y[~nanmask] = 0.0
-    # fit the gaussian
-    try:
-        with warnings.catch_warnings(record=True) as _:
-            # noinspection PyTupleAssignmentBalance
-            result, _ = curve_fit(mp.gaussian_slope, x, y,
-                                  bounds=[bounds_lower, bounds_upper],
-                                  p0=guess, sigma=sig)
-            fit = mp.gaussian_slope(x, *result)
-    except RuntimeError:
-        result = np.repeat(np.nan, fit_params)
-        fit = np.repeat(np.nan, len(x))
     # scale the ccf
     # ccf_fit = (fit + 1 - fit_type) * max_ccf
     # return the best guess and the gaussian fit
@@ -1417,7 +1442,8 @@ def fit_ccf_ea(params, order_num, rv, ccf, sig, fit_type, fit_params,
 
 def estimate_photon_noise(wavemap: np.ndarray, rv_ccf: np.ndarray,
                           ccf_fit_ord: np.ndarray, ccf_coeffs_ord: np.ndarray,
-                          sig_ord: np.ndarray, norm=1) -> Tuple[float, float]:
+                          sig_ord: np.ndarray, fit_type: int,
+                          norm=1) -> Tuple[float, float]:
     """
     Estimate the photon noise using the gradients of wave, dv and ccf
 
@@ -1426,6 +1452,7 @@ def estimate_photon_noise(wavemap: np.ndarray, rv_ccf: np.ndarray,
     :param ccf_fit_ord: np.ndarray, the fitted gaussian slope vector
     :param ccf_coeffs_ord: np.ndarray, the gaussian slope coefficients
     :param sig_ord: np.ndarray, the ccf pixel noise vector
+    :param fit_type: int, the type of fit (0=absorption, 1=emission)
     :param norm: scale factor for the fit compared to the ccf
 
     :return: tuple, 1. the CCF photon noise, 2. The CCF SNR
@@ -1442,13 +1469,16 @@ def estimate_photon_noise(wavemap: np.ndarray, rv_ccf: np.ndarray,
     sum_ratio2 = np.sqrt(np.sum((ccf_grad / sig_ord) ** 2))
     ccf_phot_noise = (1 / sum_ratio2) * np.sqrt(oversampling_ratio_ord)
     # get the ccf snr (1/mean snr)*depth
-    ccf_snr = ccf_coeffs_ord[1] * mp.fwhm() / ccf_phot_noise
+    if fit_type == 0:
+        ccf_snr = ccf_coeffs_ord[1] * mp.fwhm() / ccf_phot_noise
+    else:
+        ccf_snr = ccf_coeffs_ord[2] * mp.fwhm() / ccf_phot_noise
     # return the photon noise and SNR
     return ccf_phot_noise, ccf_snr
 
 
 def bisector(params: ParamDict, rv: np.ndarray, ccf: np.ndarray,
-             ccf_coeffs: np.ndarray) -> float:
+             ccf_coeffs: np.ndarray, fit_type: int) -> float:
     """
     Calculate the bisector span of the CCF
 
@@ -1456,6 +1486,8 @@ def bisector(params: ParamDict, rv: np.ndarray, ccf: np.ndarray,
     :param rv: np.ndarray, the radial velocities for the ccf
     :param ccf: np.ndarray, the CCF values
     :param ccf_coeffs: np.ndarray, the gaussian fit coefficients for the CCF
+    :param fit_type: int, the type of fit (0=absorption, 1=emission)
+
     :return: float, the bisector span
     """
     # get min and max depth for the bisector
@@ -1466,7 +1498,10 @@ def bisector(params: ParamDict, rv: np.ndarray, ccf: np.ndarray,
     # set the depth to 0 (i.e. no depth)
     ccf_coeffs2[2] = 0
     # normalize CCF without the gaussian. Sets the continuum flat to 1
-    ccf2 = (1 - ccf / mp.gaussian_slope(rv, *ccf_coeffs2)) / ccf_coeffs[2]
+    if fit_type == 0:
+        ccf2 = (1 - ccf / mp.gaussian_slope(rv, *ccf_coeffs2)) / ccf_coeffs[2]
+    else:
+        ccf2 = (ccf - mp.gauss_fit_s(rv, *ccf_coeffs2)) / ccf_coeffs[0]
     # ----------------------------------------------------------------------
     # Bisector at cut1
     span_top = bisector_cut(rv, ccf2, bs_cut_top)
@@ -1505,7 +1540,7 @@ def bisector_cut(xx: np.ndarray, yy: np.ndarray, cut: float) -> float:
 # Define writing functions
 # =============================================================================
 def write_ccf(params, recipe, infile, props, rawfiles, combine, qc_params,
-              fiber):
+              fiber, fit_type: int):
     # ----------------------------------------------------------------------
     # produce CCF table
     table1 = Table()
@@ -1533,14 +1568,24 @@ def write_ccf(params, recipe, infile, props, rawfiles, combine, qc_params,
     table2['NLines'] = props['CCF_LINES']
     # get the coefficients
     coeffs = props['CCF_FIT_COEFFS']
-    table2['RV'] = coeffs[:, 0]
-    table2['EW'] = coeffs[:, 1]
-    table2['DEPTH'] = coeffs[:, 2]
-    table2['SLOPE'] = coeffs[:, 3]
-    table2['CURV'] = coeffs[:, 4]
-    table2['AMP'] = coeffs[:, 5]
-    table2['FWHM'] = coeffs[:, 1] * mp.fwhm()
-    table2['Contrast'] = np.abs(100 * coeffs[:, 2])
+    if fit_type == 0:
+        table2['RV'] = coeffs[:, 0]
+        table2['EW'] = coeffs[:, 1]
+        table2['DEPTH'] = coeffs[:, 2]
+        table2['SLOPE'] = coeffs[:, 3]
+        table2['CURV'] = coeffs[:, 4]
+        table2['AMP'] = coeffs[:, 5]
+        table2['FWHM'] = coeffs[:, 1] * mp.fwhm()
+        table2['Contrast'] = np.abs(100 * coeffs[:, 2])
+    else:
+        table2['RV'] = coeffs[:, 1]
+        table2['SIG'] = coeffs[:, 2]
+        table2['ZP'] = coeffs[:, 3]
+        table2['SLOPE'] = coeffs[:, 4]
+        table2['AMP'] = coeffs[:, 0]
+        table2['FWHM'] = coeffs[:, 2] * mp.fwhm()
+        table2['Contrast'] = np.repeat(np.nan, len(coeffs))
+
     table2['SNR'] = props['CCF_SNR']
     table2['Norm'] = props['CCF_NORM_FACTOR']
     table2['DVRMS_SP'] = props['ORD_SPEC_RMS']
@@ -1548,14 +1593,25 @@ def write_ccf(params, recipe, infile, props, rawfiles, combine, qc_params,
     # add table descriptions
     table2['Orders'].description = 'Order number'
     table2['NLines'].description = 'Number of lines used in CCF'
-    table2['RV'].description = 'Radial velocity (km/s) from fit'
-    table2['EW'].description = 'Equivalent width (km/s) from fit'
-    table2['DEPTH'].description = 'Depth of the CCF from fit'
-    table2['SLOPE'].description = 'Slope of the CCF from fit'
-    table2['CURV'].description = 'Curvature of the CCF from fit'
-    table2['AMP'].description = 'Amplitude of the CCF from fit'
-    table2['FWHM'].description = 'Full width half maximum of the CCF from fit'
-    table2['Contrast'].description = 'Contrast of the CCF from fit'
+
+    if fit_type == 0:
+        table2['RV'].description = 'Radial velocity (km/s) from fit'
+        table2['EW'].description = 'Equivalent width (km/s) from fit'
+        table2['DEPTH'].description = 'Depth of the CCF from fit'
+        table2['SLOPE'].description = 'Slope of the CCF from fit'
+        table2['CURV'].description = 'Curvature of the CCF from fit'
+        table2['AMP'].description = 'Amplitude of the CCF from fit'
+        table2['FWHM'].description = 'Full width half maximum of the CCF from fit'
+        table2['Contrast'].description = 'Contrast of the CCF from fit'
+    else:
+        table2['RV'].description = 'Radial velocity (km/s) from fit'
+        table2['SIG'].description = 'Sigma of the CCF from fit'
+        table2['ZP'].description = 'Zero point of the CCF from fit'
+        table2['SLOPE'].description = 'Slope of the CCF from fit'
+        table2['AMP'].description = 'Amplitude of the CCF from fit'
+        table2['FWHM'].description = 'Full width half maximum of the CCF from fit'
+        table2['Contrast'].description = 'Contrast of the CCF from fit'
+
     table2['SNR'].description = 'Signal to noise ratio of the CCF'
     table2['Norm'].description = ('Normalization factor of the CCF '
                                   '(median of CCF)')
@@ -1593,6 +1649,10 @@ def write_ccf(params, recipe, infile, props, rawfiles, combine, qc_params,
     # add fiber to file
     ccf_file.add_hkey('KW_FIBER', value=fiber)
     # ----------------------------------------------------------------------
+    if fit_type == 0:
+        ccf_file.add_hkey('KW_CCF_FIT_TYPE', value='aborption')
+    else:
+        ccf_file.add_hkey('KW_CCF_FIT_TYPE', value='emission')
     # add results from the CCF
     ccf_file.add_hkey('KW_CCF_STACK_RV', value=props['RV_STACK'])
     ccf_file.add_hkey('KW_CCF_STACK_CONTRAST', value=props['CONTRAST_STACK'])
