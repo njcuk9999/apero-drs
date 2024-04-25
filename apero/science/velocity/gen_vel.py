@@ -1248,7 +1248,7 @@ def ccf_calculation_stack(params: ParamDict, props: ParamDict, fit_type: int,
 def update_per_order_ccfs(params: ParamDict, props: ParamDict, nbo: int,
                           fit_type: int, fit_params: int, wavemap: np.ndarray):
     # set function name
-    func_name = display_func('ccf_calculation_stack', __NAME__)
+    func_name = display_func('update_per_order_ccfs', __NAME__)
     # storage for outputs
     ccf_all_fit = []
     ccf_all_results = []
@@ -1345,6 +1345,7 @@ def fit_ccf_ea(params, order_num, rv, ccf, sig, fit_type, fit_params,
 
     # get constants
     max_ccf, min_ccf = mp.nanmax(ccf), mp.nanmin(ccf)
+    min_rv, max_rv = mp.nanmin(rv), mp.nanmax(rv)
     argmin, argmax = mp.nanargmin(ccf), mp.nanargmax(ccf)
 
     # set up guess for gaussian fit
@@ -1356,26 +1357,35 @@ def fit_ccf_ea(params, order_num, rv, ccf, sig, fit_type, fit_params,
         guess_w = guess_dict.get('guess_ew', 2 * image_pixel_size)
         # for absorption this should be 1 - the min ccf
         guess_depth = guess_dict.get('guess_depth', 1 - min_ccf)
+        # fit the continnum to guess the slope and curvature
+        continuum_fit, _ = mp.robust_polyfit(rv, ccf, 2, nsigcut=3)
+        # guess slope
+        guess_slope = continuum_fit[0]
+        # guess curvature
+        guess_curv = continuum_fit[1]
+        # guess amp
+        guess_amp = 1
+        # set bounds for the curve fit
+        bounds_lower = [min_rv, 0, 0, -np.inf, -np.inf, 0]
+        bounds_upper = [max_rv, (max_rv - min_rv)/2, 1, np.inf, np.inf, 2]
+
+    # else (fit_type == 1) then we have emission lines
+    else:
+        # set up guess for gaussian fit
+        guess_cent = guess_dict.get('guess_cent', rv[argmax])
+        # twice the image pixel size in km/s
+        guess_w = guess_dict.get('guess_ew', 2 * image_pixel_size)
+        # for an emission feature this should be the max_ccf
+        guess_depth = -guess_dict.get('guess_depth', max_ccf)
         # guess slope
         guess_slope = 0
         # guess curvature
         guess_curv = 0
         # guess amp
         guess_amp = 1
-    # else (fit_type == 1) then we have emission lines
-    else:
-        # set up guess for gaussian fit
-        guess_cent = guess_dict.get('guess_cent', rv[argmin])
-        # twice the image pixel size in km/s
-        guess_w = guess_dict.get('guess_ew', 2 * image_pixel_size)
-        # for an emission feature this should be the max_ccf
-        guess_depth = guess_dict.get('guess_depth', max_ccf)
-        # guess slope
-        guess_slope = 0
-        # guess curvature
-        guess_curv = 0
-        # guess amp
-        guess_amp = 0
+        # set bounds for the curve fit
+        bounds_lower = [min_rv, 0, -np.inf, -np.inf, -1e-9, 0]
+        bounds_upper = [max_rv, (max_rv - min_rv)/2, 0, np.inf, 1e-9, np.inf]
 
     # push guess values into list
     guess = [guess_cent, guess_w, guess_depth, guess_slope, guess_curv,
@@ -1392,7 +1402,9 @@ def fit_ccf_ea(params, order_num, rv, ccf, sig, fit_type, fit_params,
     try:
         with warnings.catch_warnings(record=True) as _:
             # noinspection PyTupleAssignmentBalance
-            result, _ = curve_fit(mp.gaussian_slope, x, y, p0=guess, sigma=sig)
+            result, _ = curve_fit(mp.gaussian_slope, x, y,
+                                  bounds=[bounds_lower, bounds_upper],
+                                  p0=guess, sigma=sig)
             fit = mp.gaussian_slope(x, *result)
     except RuntimeError:
         result = np.repeat(np.nan, fit_params)
