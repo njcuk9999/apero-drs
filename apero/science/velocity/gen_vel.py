@@ -1539,8 +1539,9 @@ def bisector_cut(xx: np.ndarray, yy: np.ndarray, cut: float) -> float:
 # =============================================================================
 # Define writing functions
 # =============================================================================
-def write_ccf(params, recipe, infile, props, rawfiles, combine, qc_params,
-              fiber, fit_type: int):
+def write_ccf(params: ParamDict, recipe, infile: DrsFitsFile,
+              props: ParamDict, rawfiles, combine: bool, qc_params,
+              fiber: str, fit_type: int):
     # ----------------------------------------------------------------------
     # produce CCF table
     table1 = Table()
