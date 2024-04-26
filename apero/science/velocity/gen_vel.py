@@ -1525,11 +1525,13 @@ def bisector_cut(xx: np.ndarray, yy: np.ndarray, cut: float) -> float:
     #    linear fit
     lims1 = np.where(yy > cut)[0][[0, -1]]
     # find the value at the left side
-    x1_start, x1_end = lims1[0] - 1, lims1[0] + 1
+    x1_start = max([lims1[0] - 2, 0])
+    x1_end = min([lims1[0] + 1, len(yy)])
     v1_fit = np.polyfit(yy[x1_start:x1_end], xx[x1_start:x1_end], 1)
     v1_val = np.polyval(v1_fit, cut)
     # find the value at the right side
-    x2_start, x2_end = lims1[1], lims1[1] + 2
+    x2_start = lims1[1]
+    x2_end = min([lims1[1] + 2, len(yy)])
     v2_fit = np.polyfit(yy[x2_start:x2_end], xx[x2_start:x2_end], 1)
     v2_val = np.polyval(v2_fit, cut)
     # return the bisector span for this cut
