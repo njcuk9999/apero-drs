@@ -3608,6 +3608,9 @@ class DrsFitsFile(DrsInputFile):
             if isinstance(self.hdict[key], HCC):
                 for value in str(self.hdict[key]).split('\n'):
                     self.header[key] = value
+            # deal with NaNS
+            if self.hdict[key] in [np.nan, 'nan', 'NAN']:
+                self.header[key] = ('NAN', self.hdict.comments[key])
             # just set them to  header[key] = (VALUE, COMMENT)
             else:
                 self.header[key] = (self.hdict[key], self.hdict.comments[key])
