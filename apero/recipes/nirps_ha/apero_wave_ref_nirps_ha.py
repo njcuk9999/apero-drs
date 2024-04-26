@@ -434,7 +434,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             # ------------------------------------------------------------------
             # need to use the updated header in newfpe2ds
             velocity.write_ccf(params, recipe, newfpe2ds, rvs_all[fiber],
-                               rawfpfiles, combine, qc_params, fiber)
+                               rawfpfiles, combine, qc_params, fiber,
+                               fit_type=1)
 
             # ----------------------------------------------------------
             # Update calibDB with FP solution and line references
