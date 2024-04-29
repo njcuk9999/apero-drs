@@ -1,5 +1,0 @@
-mask, kind, datatype, teff_min, teff_max
-"GL514_neg.fits","default","fits","",""
-"HD85512_neg.fits","range","fits",4100,10000
-"GL514_neg.fits","range","fits",3400,4100
-"PROXIMA_neg.fits","range","fits",0,3400
