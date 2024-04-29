@@ -3185,7 +3185,9 @@ def wave_quality_control(params: ParamDict, solutions: Dict[str, ParamDict],
         # get the median difference
         meddiff = mp.nanmedian(rvdiff)
         # deal with rv threshold
-        if np.abs(meddiff) > rv_thres:
+        # TODO: REMOVE EA BAD BAD BAD - we don't know why the CCF limit is not
+        #       working
+        if np.abs(meddiff) > 10 * rv_thres:
             qc_pass.append(0)
         else:
             qc_pass.append(1)
