@@ -18,7 +18,7 @@ psutil==5.9.4
 PyYAML==6.0
 scikit-image==0.19.3
 scipy==1.10.0
-tqdm==4.65.0
+tqdm==4.66.3
 yagmail==0.15.293
 lbl @ git+https://github.com/njcuk9999/lbl.git@developer
 
