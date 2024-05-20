@@ -197,19 +197,41 @@ def load_ari_params(params: ParamDict) -> ParamDict:
 
 
 def list_profiles(params: ParamDict):
-    # print path to profiles
+    # get the profiles argument
+    view_profiles = params['INPUTS']['PROFILES']
+    # get the requested profile name
+    profile_name = params['INPUTS']['profile']
+    # get the path to the profiles
     profile_path = os.path.join(params['DRS_DATA_OTHER'], 'ari-config')
+    # get available profiles (yaml files)
+    files = os.listdir(profile_path)
+    # test if profile exists
+    cond1 = (os.path.exists(profile_name)) and profile_name.endswith('.yaml')
+    cond2 = (profile_name in files) and profile_name.endswith('.yaml')
+    # we do not display all available profiles if we have the profile name
+    #   and user does not want to view profiles
+    if (cond1 or cond2) and not view_profiles:
+        return True
+    # print path to profiles
     msg1='Path to profiles: {0}'
     WLOG(params, 'info', msg1.format(profile_path))
     # print available profiles message
     msg2 = '\n\nAvailable profiles:'
     WLOG(params, 'info', msg2)
-    # get available profiles (yaml files)
-    files = os.listdir(profile_path)
     # loop around files and print any yaml files
     for filename in files:
         if filename.endswith('.yaml'):
             WLOG(params, 'info', '\t - {0}'.format(filename))
+    # now we return whether current profile is valid
+    if cond1 or cond2:
+        return True
+    elif view_profiles:
+        return False
+    else:
+        emsg = 'Cannot find profile file: {0}'
+        eargs = [profile_name]
+        WLOG(params, 'error', emsg.format(*eargs))
+        return False
 
 
 def load_previous_objects(params: ParamDict) -> Dict[str, AriObject]:
