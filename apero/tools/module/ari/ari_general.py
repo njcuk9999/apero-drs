@@ -196,6 +196,22 @@ def load_ari_params(params: ParamDict) -> ParamDict:
     return params
 
 
+def list_profiles(params: ParamDict):
+    # print path to profiles
+    profile_path = os.path.join(params['DRS_DATA_OTHER'], 'ari-config')
+    msg1='Path to profiles: {0}'
+    WLOG(params, 'info', msg1.format(profile_path))
+    # print available profiles message
+    msg2 = '\n\nAvailable profiles:'
+    WLOG(params, 'info', msg2)
+    # get available profiles (yaml files)
+    files = os.listdir(profile_path)
+    # loop around files and print any yaml files
+    for filename in files:
+        if filename.endswith('.yaml'):
+            WLOG(params, 'info', '\t - {0}'.format(filename))
+
+
 def load_previous_objects(params: ParamDict) -> Dict[str, AriObject]:
     # get a list of objects from astrometric database
     astrometric_obj_list = _get_object_table(params)
