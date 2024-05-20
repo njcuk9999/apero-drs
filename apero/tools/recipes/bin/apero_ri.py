@@ -92,9 +92,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict):
     # ----------------------------------------------------------------------
     mainname = __NAME__ + '._main()'
     # ----------------------------------------------------------------------
-    # deal with --profiles arguments
-    if params['INPUTS']['PROFILES']:
-        ari.list_profiles(params)
+    # deal with --profiles arguments and non valid profiles
+    valid = ari.list_profiles(params)
+    if not valid:
         # end here
         return locals()
 

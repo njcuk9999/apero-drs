@@ -130,7 +130,9 @@ ari.set_kwarg(name='--finder_create', dtype='switch', default=False,
 ari.set_kwarg(name='--finder_reset', dtype='switch', default=False,
               helpstr='Overwrites the profile setting to reset finder charts')
 ari.set_kwarg(name='--profiles', dtype='switch', default=False,
-              helpstr='List allowed profiles (and path to profiles)')
+              helpstr='List allowed profiles (and path to profiles), as profile '
+                      'is usually required any invalid profile yaml also '
+                      'displays this and exits.')
 ari.description_file = 'apero_ri.rst'
 
 # -----------------------------------------------------------------------------
