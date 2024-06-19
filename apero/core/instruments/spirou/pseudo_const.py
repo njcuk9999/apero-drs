@@ -7,6 +7,7 @@ Created on 2019-01-18 at 14:44
 
 @author: cook
 """
+import string
 from pathlib import Path
 from typing import Any, List, Optional, Tuple, Union
 
@@ -1015,6 +1016,36 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         epoch = Time(value, format=time_fmt)
         # return epoch in JD
         return epoch.jd
+
+    def COMBINE_FILE_SUFFIX(self, basenames: List[str], suffix: str):
+        """
+        Get a possible suffix from the basename
+
+        :param basenames: list of strings, the base filenames
+        :param suffix: str, the original suffix to add to the base filename
+
+        :return: str, the new filename
+        """
+        prefixes = []
+        # loop around all files and get the prefixes
+        for basename in basenames:
+            # lets get the prefix
+            prefix = basename.split(suffix)[0]
+            # for spirou we have a an odocode followed by a letter as the prefix
+            # lets get this letter (we assume all filenames have a letter as the
+            # last digit - but we will test this anyway
+            if prefix[-1] in string.ascii_letters:
+                prefixes.append(prefix[-1])
+            # return the combined filename
+            else:
+                prefixes.append(suffix)
+
+        # check if all prefixes are the same
+        if len(set(prefixes)) == 1:
+            return prefixes[0] + suffix
+        # return the combined filename
+        else:
+            return suffix
 
 
 # =============================================================================
