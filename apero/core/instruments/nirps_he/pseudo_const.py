@@ -852,6 +852,20 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         # return epoch in JD
         return epoch.jd
 
+    def COMBINE_FILE_SUFFIX(self, basenames: List[str], suffix: str):
+        """
+        Get a possible suffix from the basename
+
+        :param basenames: list of strings, the base filenames
+        :param suffix: str, the original suffix to add to the base filename
+
+        :return: str, the new filename
+        """
+        # we don't use the basename for this instrument
+        _ = basename
+        # return the combined filename
+        return suffix
+
 
 # =============================================================================
 # Functions used by pseudo const (instrument specific)
