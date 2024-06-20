@@ -146,7 +146,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                                    data_type=data_type, **kwargs)
         # log messages from lbl
         WLOG(params, 'info', 'Adding LBL log to apero log')
-        for msg in lblself.get('logmsg', []):
+        for msg in TQDM(lblself.get('logmsg', [])):
             WLOG(params, '', msg, logonly=True)
         # ---------------------------------------------------------------------
         # get lbl compile input files
@@ -197,9 +197,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                                      object_template=object_template,
                                      data_type=data_type, **kwargs)
         # log messages from lbl
-        WLOG(params, 'info', 'Adding LBL log to apero log')
-        for msg in lblfriend.get('logmsg', []):
-            WLOG(params, '', msg, logonly=True)
+        gen_lbl.add_log(params, lblfriend)
         # ---------------------------------------------------------------------
         # get lbl compile input files
         lblrv_files = np.sort(lblfriend['lblrv_files'])

@@ -2703,6 +2703,16 @@ CCF_FWHM_SIGCUT = CCF_FWHM_SIGCUT.copy(__NAME__)
 CCF_FWHM_SIGCUT.value = 8
 CCF_FWHM_SIGCUT.author = base.AUTHORS['EA']
 
+# Define the top cut of the bisector cut (percent)
+CCF_BIS_CUT_TOP = CCF_BIS_CUT_TOP.copy(__NAME__)
+CCF_BIS_CUT_TOP.value = 80
+CCF_BIS_CUT_TOP.author = base.AUTHORS['EA']
+
+# Define the bottom cut of the bisector cut (percent)
+CCF_BIS_CUT_BOTTOM = CCF_BIS_CUT_BOTTOM.copy(__NAME__)
+CCF_BIS_CUT_BOTTOM.value = 30
+CCF_BIS_CUT_BOTTOM.author = base.AUTHORS['EA']
+
 # =============================================================================
 # GENERAL POLARISATION SETTINGS
 # =============================================================================

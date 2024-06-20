@@ -253,16 +253,16 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             # need to deal with no drift from wave solution
             if wprops_r['WFP_DRIFT'] is None:
                 rv_wave_fp = np.nan
-                rv_simu_fp = rv_props2['MEAN_RV']
+                rv_simu_fp = rv_props2['RV_STACK']
                 rv_drift = rv_simu_fp
-                rv_obj = rv_props1['MEAN_RV']
+                rv_obj = rv_props1['RV_STACK']
                 rv_corrected = rv_obj - rv_drift
             # else we have drift from wave solution
             else:
                 rv_wave_fp = wprops_r['WFP_DRIFT']
-                rv_simu_fp = rv_props2['MEAN_RV']
+                rv_simu_fp = rv_props2['RV_STACK']
                 rv_drift = rv_wave_fp - rv_simu_fp
-                rv_obj = rv_props1['MEAN_RV']
+                rv_obj = rv_props1['RV_STACK']
                 rv_corrected = rv_obj - rv_drift
         # need to deal with no drift from wave solution and no simultaneous FP
         elif wprops['WFP_DRIFT'] is None:
@@ -272,7 +272,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             rv_wave_fp = np.nan
             rv_simu_fp = np.nan
             rv_drift = 0.0
-            rv_obj = rv_props1['MEAN_RV']
+            rv_obj = rv_props1['RV_STACK']
             rv_corrected = rv_obj - rv_drift
             infile_r = None
             wprops_r = None
@@ -285,7 +285,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             rv_wave_fp = 0.0
             rv_simu_fp = 0.0
             rv_drift = 0.0
-            rv_obj = rv_props1['MEAN_RV']
+            rv_obj = rv_props1['RV_STACK']
             rv_corrected = rv_obj - rv_drift
             infile_r = None
             wprops_r = None
@@ -348,14 +348,14 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # archive ccf from science fiber
         # ------------------------------------------------------------------
         velocity.write_ccf(params, recipe, infile, rv_props1, rawfiles,
-                           combine, qc_params, fiber)
+                           combine, qc_params, fiber, fit_type=0)
 
         # ------------------------------------------------------------------
         # archive ccf from reference fiber
         # ------------------------------------------------------------------
         if has_fp:
             velocity.write_ccf(params, recipe, infile_r, rv_props2, rawfiles,
-                               combine, qc_params, rfiber)
+                               combine, qc_params, rfiber, fit_type=1)
         # ------------------------------------------------------------------
         # update recipe log file
         # ------------------------------------------------------------------

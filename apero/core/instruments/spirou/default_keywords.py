@@ -2059,24 +2059,46 @@ KW_MKTEMP_BERV_COV_RES.set('MTPBCRES',
 # -----------------------------------------------------------------------------
 # Define ccf variables
 # -----------------------------------------------------------------------------
-# The mean rv calculated from the mean ccf
-KW_CCF_MEAN_RV = KW_CCF_MEAN_RV.copy(__NAME__)
-KW_CCF_MEAN_RV.set(key='CCFMNRV',
-                   comment='Mean RV calc. from the mean CCF [km/s]')
+# type of ccf fit (aborption or emission)
+KW_CCF_FIT_TYPE = KW_CCF_FIT_TYPE.copy(__NAME__)
+KW_CCF_FIT_TYPE.set(key='CCFFTYPE', comment='CCF fit type (abs or em)')
 
-# the mean constrast (depth of fit ccf) from the mean ccf
-KW_CCF_MEAN_CONSTRAST = KW_CCF_MEAN_CONSTRAST.copy(__NAME__)
-KW_CCF_MEAN_CONSTRAST.set(key='CCFMCONT',
-                          comment='Mean contrast (depth of fit) from mean CCF')
+# The rv calculated from the ccf stack
+KW_CCF_STACK_RV = KW_CCF_STACK_RV.copy(__NAME__)
+KW_CCF_STACK_RV.set(key='CCFMNRV',
+                   comment='RV calc. from the CCF stack [km/s]')
 
-# the mean fwhm from the mean ccf
-KW_CCF_MEAN_FWHM = KW_CCF_MEAN_FWHM.copy(__NAME__)
-KW_CCF_MEAN_FWHM.set(key='CCFMFWHM', comment='Mean FWHM from mean CCF')
+# the constrast (depth of fit ccf) from the ccf stack
+KW_CCF_STACK_CONTRAST = KW_CCF_STACK_CONTRAST.copy(__NAME__)
+KW_CCF_STACK_CONTRAST.set(key='CCFMCONT',
+                          comment='Contrast (depth of fit) from CCF stack')
+
+# the fwhm from the ccf stack
+KW_CCF_STACK_FWHM = KW_CCF_STACK_FWHM.copy(__NAME__)
+KW_CCF_STACK_FWHM.set(key='CCFMFWHM', comment='FWHM from CCF stack')
+
+# the bisector span from the ccf stack
+KW_CCF_BISECTOR = KW_CCF_BISECTOR.copy(__NAME__)
+KW_CCF_BISECTOR.set(key='CCFMBISV', comment='Bisector span from CCF stack')
+
+# the bisector span values (Top to bottom)
+KW_CCF_BIS_SPAN = KW_CCF_BIS_SPAN.copy(__NAME__)
+KW_CCF_BIS_SPAN.set(key='CCFMBISL', comment='Bisector top and bottom values')
 
 # the total number of mask lines used in all ccfs
 KW_CCF_TOT_LINES = KW_CCF_TOT_LINES.copy(__NAME__)
 KW_CCF_TOT_LINES.set(key='CCFTLINE',
                      comment='Total no. of mask lines used in CCF')
+
+# The SNR of the CCF stack
+KW_CCF_SNR_STACK = KW_CCF_SNR_STACK.copy(__NAME__)
+KW_CCF_SNR_STACK.set(key='CCFSNRST',
+                     comment='SNR of the CCF stack')
+
+# The normalization coefficient of the CCF stack
+KW_CCF_NORM_STACK = KW_CCF_NORM_STACK.copy(__NAME__)
+KW_CCF_NORM_STACK.set(key='CCFNORMS',
+                      comment='Normalization coefficient of the CCF stack')
 
 # the ccf mask file used
 KW_CCF_MASK = KW_CCF_MASK.copy(__NAME__)

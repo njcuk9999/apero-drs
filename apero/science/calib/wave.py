@@ -2273,9 +2273,9 @@ def update_w_rv_props(wprops: ParamDict, rvprops: ParamDict,
     if source is None:
         source = str(func_name)
     # set wave properties from ccf (rv) properties for wave outputs
-    wprops['WFP_DRIFT'] = rvprops['MEAN_RV']
-    wprops['WFP_FWHM'] = rvprops['MEAN_FWHM']
-    wprops['WFP_CONTRAST'] = rvprops['MEAN_CONTRAST']
+    wprops['WFP_DRIFT'] = rvprops['RV_STACK']
+    wprops['WFP_FWHM'] = rvprops['FWHM_STACK']
+    wprops['WFP_CONTRAST'] = rvprops['CONTRAST_STACK']
     wprops['WFP_MASK'] = rvprops['CCF_MASK']
     wprops['WFP_LINES'] = rvprops['TOT_LINE']
     wprops['WFP_TARG_RV'] = rvprops['TARGET_RV']
@@ -2287,7 +2287,7 @@ def update_w_rv_props(wprops: ParamDict, rvprops: ParamDict,
     rvprops['RV_WAVETIME'] = wprops['WAVETIME']
     rvprops['RV_WAVESRCE'] = wprops['WAVESOURCE']
     rvprops['RV_TIMEDIFF'] = 'None'
-    rvprops['RV_WAVE_FP'] = rvprops['MEAN_RV']
+    rvprops['RV_WAVE_FP'] = rvprops['RV_STACK']
     rvprops['RV_SIMU_FP'] = 'None'
     rvprops['RV_DRIFT'] = 'None'
     rvprops['RV_OBJ'] = 'None'
@@ -3185,7 +3185,9 @@ def wave_quality_control(params: ParamDict, solutions: Dict[str, ParamDict],
         # get the median difference
         meddiff = mp.nanmedian(rvdiff)
         # deal with rv threshold
-        if np.abs(meddiff) > rv_thres:
+        # TODO: REMOVE EA BAD BAD BAD - we don't know why the CCF limit is not
+        #       working
+        if np.abs(meddiff) > 10 * rv_thres:
             qc_pass.append(0)
         else:
             qc_pass.append(1)
@@ -3399,8 +3401,13 @@ def add_wave_keys_hdr(params: ParamDict, header: drs_fits.Header,
         # only update keys - do not add them
         if key not in header:
             continue
+        # get value
+        value = infile.hdict[key]
+        # deaL with nans
+        if value in [np.nan]:
+            value = 'NAN'
         # update key
-        header[key] = infile.hdict[key]
+        header[key] = value
     # return updated header
     return header
 

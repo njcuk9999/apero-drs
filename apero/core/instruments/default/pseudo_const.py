@@ -1480,6 +1480,21 @@ class DefaultPseudoConstants:
         # raise implementation error
         self._not_implemented('GET_EPOCH')
 
+
+    def COMBINE_FILE_SUFFIX(self, basenames: List[str], suffix: str):
+
+        """
+        Get a possible suffix from the basename
+
+        :param basenames: list of strings, the base filenames
+        :param suffix: str, the original suffix to add to the base filename
+
+        :return: str, the new filename
+        """
+        _ = basename, suffix
+        # raise implementation error
+        self._not_implemented('COMBINE_FILE_SUFFIX')
+
     # =========================================================================
     # CROSSMATCHING
     # =========================================================================

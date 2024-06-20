@@ -244,7 +244,7 @@ def create_finder_chart(params: ParamDict, objname: str,
         msg = 'Skipping finder for object: {0} [{1}/{2}]'
         WLOG(params, '', msg.format(*args))
         return
-    else:
+    elif os.path.exists(abspath):
         os.remove(abspath)
     # get the objdict
     objdict = from_apero_objtable(it, object_table)
