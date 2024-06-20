@@ -48,6 +48,9 @@ textentry = lang.textentry
 # LBL directories
 LBL_DIRS = ['calib', 'lblrdb', 'lblreftable', 'log', 'masks', 'models',
             'plots', 'science', 'templates']
+# Get tqdm from base
+TQDM = base.tqdm_module()
+
 
 # =============================================================================
 # Define functions
@@ -476,6 +479,21 @@ def dtemp(params: ParamDict) -> Union[Dict[str, str], None]:
         WLOG(params, 'info', msg.format(*margs))
         return valid_dtemp_files
 
+
+def add_log(params: ParamDict, lblinstance: Any):
+    """
+    Add the LBL log (from the lbl instance) to the apero logs
+    this is a fudge as all time stamps will be "now" not when they were run
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param lblinstance: return on lbl_xxx.main() call
+
+    :return: None, just logs to parent log file
+    """
+    # TODO: This may be too slow if LBL log is large
+    WLOG(params, 'info', 'Adding LBL log to apero log')
+    for msg in TQDM(lblinstance.get('logmsg', [])):
+        WLOG(params, '', msg, logonly=True)
 
 # =============================================================================
 # Start of code
