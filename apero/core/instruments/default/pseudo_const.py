@@ -328,7 +328,7 @@ class DefaultPseudoConstants:
         self._not_implemented('DRS_DPRTYPE')
 
     def DRS_DPRTYPE(self, params: Any, recipe: Any, header: Any,
-                    filename: str, skip_validation: bool = False):
+                    filename: str):
         """
         Get the dprtype for a specific header
 

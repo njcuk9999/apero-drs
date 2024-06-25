@@ -96,7 +96,7 @@ def add_file_reject(params: ParamDict, recipe: DrsRecipe, raw_identifier: str):
     # storage of all raw files
     all_files = dict()
     # walk around all raw files
-    for root, dirs, files in os.walk(rawdir):
+    for root, dirs, files in os.walk(rawdir, followlinks=True):
         # loop around files in this directories
         for filename in files:
             # append to raw_files
@@ -126,7 +126,7 @@ def add_file_reject(params: ParamDict, recipe: DrsRecipe, raw_identifier: str):
     # counter for row
     row = 0
     # loop around identifiers and get file info (or skip)
-    for identifier in TQDM(identifiers):
+    for identifier in identifiers:
         # print progresss
         msg = '\tAnalysing files for identifier: {0}'
         margs = [identifier]
@@ -154,12 +154,13 @@ def add_file_reject(params: ParamDict, recipe: DrsRecipe, raw_identifier: str):
                 obsdir = obsdir.strip(os.sep)
                 # get header
                 header = drs_fits.read_header(params, filename)
+                # fix the header (as we do in apero)
+                header, _ = pconst.HEADER_FIXES(params, recipe, header, dict(),
+                                                filename, True, objdbm)
                 # get dprtype
-                dprtype = pconst.DRS_DPRTYPE(params, recipe, header, filename,
-                                             skip_validation=True)
+                dprtype = header[params['KW_DPRTYPE'][0]]
                 # get apero objname
-                objname = pconst.GET_OBJNAME(params, header, filename,
-                                             True, objdbm)
+                objname = header[params['KW_OBJNAME'][0]]
             # otherwise say we do not have this file
             else:
                 dprtype = '--'
@@ -334,6 +335,10 @@ def update_from_obsdir(params: ParamDict, recipe: DrsRecipe, obsdir: str) -> str
         return 'None'
     # construct path to obsdir
     rawpath = os.path.join(rawdir, obsdir)
+    # get the object database
+    objdbm = drs_database.AstrometricDatabase(params)
+    # load object database
+    objdbm.load_db()
     # ----------------------------------------------------------------------
     # get the pseudo constants
     pconst = constants.pload()
@@ -358,9 +363,11 @@ def update_from_obsdir(params: ParamDict, recipe: DrsRecipe, obsdir: str) -> str
     for filename in TQDM(files):
         # get header
         header = drs_fits.read_header(params, filename)
+        # fix the header (as we do in apero)
+        header, _ = pconst.HEADER_FIXES(params, recipe, header, dict(),
+                                        filename, True, objdbm)
         # get dprtype
-        dprtype = pconst.DRS_DPRTYPE(params, recipe, header, filename,
-                                     skip_validation=True)
+        dprtype = header[params['KW_DPRTYPE'][0]]
         # only add filename
         if dprtype not in sci_dprtype:
             valid_files.append(filename)

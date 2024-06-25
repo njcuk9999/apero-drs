@@ -342,8 +342,7 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
                                 objdbm)
 
     def DRS_DPRTYPE(self, params: ParamDict, recipe: Any, header: Any,
-                    filename: Union[Path, str],
-                    skip_validation: bool = False) -> str:
+                    filename: Union[Path, str]) -> str:
         """
         Get the dprtype for a specific header
 
@@ -358,8 +357,7 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
                  or DARK_DARK)
         """
         # get correct header
-        dprtype, _, _ = construct_dprtype(recipe, params, filename, header,
-                                          skip_validation=skip_validation)
+        dprtype, _, _ = construct_dprtype(recipe, params, filename, header)
         # return dprtype
         return dprtype
 
@@ -1421,8 +1419,7 @@ def get_drs_mode(params: ParamDict, header: Any, hdict: Any) -> Tuple[Any, Any]:
 
 
 def construct_dprtype(recipe: Any, params: ParamDict, filename: str,
-                      header: Any,
-                      skip_validation: bool = False) -> Tuple[str, str, Any]:
+                      header: Any) -> Tuple[str, str, Any]:
     """
     Construct the DPRTYPE from the header
 
@@ -1444,11 +1441,8 @@ def construct_dprtype(recipe: Any, params: ParamDict, filename: str,
         # set recipe
         drsfile.set_params(params)
         # find out whether file is valid
-        if not skip_validation:
-            valid, _ = drsfile.has_correct_hkeys(header, log=False,
-                                                 filename=filename)
-        else:
-            valid = True
+        valid, _ = drsfile.has_correct_hkeys(header, log=False,
+                                             filename=filename)
         # if valid the assign dprtype
         if valid:
             # remove prefix if not None
@@ -1465,8 +1459,7 @@ def construct_dprtype(recipe: Any, params: ParamDict, filename: str,
 
 
 def get_dprtype(params: ParamDict, recipe: Any, header: Any, hdict: Any,
-                filename: Union[None, str, Path] = None,
-                skip_vdation: bool = False) -> Tuple[Any, Any]:
+                filename: Union[None, str, Path] = None) -> Tuple[Any, Any]:
     """
     Get the DPRTYPE from the header
 
@@ -1497,8 +1490,7 @@ def get_dprtype(params: ParamDict, recipe: Any, header: Any, hdict: Any,
         hdict = dict()
     # construct the dprtype and outtype from the header
     dprtype, outtype, drsfile = construct_dprtype(recipe, params, filename,
-                                                  header,
-                                                  skip_validation=skip_vdation)
+                                                  header)
     # update header with DPRTYPE
     header[kwdprtype] = (dprtype, kwdprcomment)
     hdict[kwdprtype] = (dprtype, kwdprcomment)
