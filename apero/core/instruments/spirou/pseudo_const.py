@@ -327,6 +327,20 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         # clean object name
         return pseudo_const.clean_object(objname)
 
+    def GET_OBJNAME(self, params: ParamDict, header: Any, filename: str,
+                    check_aliases, objdbm: Any = None) -> str:
+        """
+        Get a cleaned version of the object name from the header
+
+        :param params: ParamDict, the parameter dictionary of constants
+        :param header: fits header, the header to get the object name from
+        :param filename: str, the filename the header belongs to
+
+        :return: str, the cleaned object name
+        """
+        return constuct_objname(params, header, filename, check_aliases,
+                                objdbm)
+
     def DRS_DPRTYPE(self, params: ParamDict, recipe: Any, header: Any,
                     filename: Union[Path, str]) -> str:
         """
@@ -343,9 +357,9 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
                  or DARK_DARK)
         """
         # get correct header
-        header, _ = get_dprtype(params, recipe, header, None, filename)
+        dprtype, _, _ = construct_dprtype(recipe, params, filename, header)
         # return dprtype
-        return str(header[params['KW_DPRTYPE'][0]])
+        return dprtype
 
     def DRS_MIDMJD(self, params: ParamDict, header: Any,
                    filename: Union[Path, str]) -> float:
@@ -1051,42 +1065,34 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
 # =============================================================================
 # Functions used by pseudo const (instrument specific)
 # =============================================================================
-def clean_obj_name(params: Union[ParamDict, None], header,
-                   hdict: Any = None, objname: Union[str, None] = None,
-                   filename: Union[None, str, Path] = None,
-                   check_aliases: bool = False,
-                   objdbm: Any = None) -> Union[Tuple[Any, Any], str]:
+def constuct_objname(params: Union[ParamDict, None], header,
+                     objname: Union[str, None] = None,
+                     filename: Union[None, str, Path] = None,
+                     check_aliases: bool = False,
+                     objdbm: Any = None) -> str:
     """
-    Clean an object name (remove spaces and make upper case strip white space)
+    Construct the object name from the header (if objname is None)
 
     :param params: ParamDict, parameter dictionary of constants
-    :param header: drs_fits.Header or astropy.io.fits.Header, the header to
-                   check for objname (if "objname" not set)
-    :param hdict: drs_fits.Header the output header dictionary to update with
-                  objname (as well as "header" if "objname" not set)
+    :param header: fits.Header, the header to get keys from
     :param objname: str, the uncleaned object name to clean
     :param filename: str, the filename header came from (for exception)
     :param check_aliases: bool, if True check aliases (using database)
-    :param objdbm: drs_database.ObjectDatabase - the database to check aliases
-                   in
+    :param objdbm: ObjectDatabase, the database to check aliases in
 
-    :return: if objname set return str, else return the updated header and hdict
+    :return: str, the object name
     """
     # set function name
-    func_name = display_func('clean_obj_name', __NAME__)
-    # ---------------------------------------------------------------------
-    # check KW_OBJNAME and then KW_OBJECTNAME
-    # ---------------------------------------------------------------------
+    func_name = display_func('constuct_objname', __NAME__)
     # get keys from params
     kwrawobjname = params['KW_OBJECTNAME'][0]
     kwobjname = params['KW_OBJNAME'][0]
-    kwobjcomment = params['KW_OBJNAME'][2]
     # if objname is None we need to get it from the header
     if drs_text.null_text(objname, NULL_TEXT):
         # deal with output key already in header
         if kwobjname in header:
             if not drs_text.null_text(header[kwobjname], NULL_TEXT):
-                return header, hdict
+                return header[kwobjname]
         # get raw object name
         if kwrawobjname not in header:
             eargs = [kwrawobjname, filename]
@@ -1118,6 +1124,39 @@ def clean_obj_name(params: Union[ParamDict, None], header,
         objectname, _ = objdbm.find_objname(pconst, rawobjname)
     else:
         objectname = pseudo_const.clean_object(rawobjname)
+    # -------------------------------------------------------------------------
+    return objectname
+
+
+def clean_obj_name(params: Union[ParamDict, None], header,
+                   hdict: Any = None, objname: Union[str, None] = None,
+                   filename: Union[None, str, Path] = None,
+                   check_aliases: bool = False,
+                   objdbm: Any = None) -> Union[Tuple[Any, Any], str]:
+    """
+    Clean an object name (remove spaces and make upper case strip white space)
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param header: drs_fits.Header or astropy.io.fits.Header, the header to
+                   check for objname (if "objname" not set)
+    :param hdict: drs_fits.Header the output header dictionary to update with
+                  objname (as well as "header" if "objname" not set)
+    :param objname: str, the uncleaned object name to clean
+    :param filename: str, the filename header came from (for exception)
+    :param check_aliases: bool, if True check aliases (using database)
+    :param objdbm: drs_database.ObjectDatabase - the database to check aliases
+                   in
+
+    :return: if objname set return str, else return the updated header and hdict
+    """
+    # get keys from params
+    kwobjname = params['KW_OBJNAME'][0]
+    kwobjcomment = params['KW_OBJNAME'][2]
+    # ---------------------------------------------------------------------
+    # check KW_OBJNAME and then KW_OBJECTNAME
+    # ---------------------------------------------------------------------
+    objectname = constuct_objname(params, header, objname, filename,
+                                  check_aliases, objdbm)
     # -------------------------------------------------------------------------
     # add it to the header with new keyword
     header[kwobjname] = (objectname, kwobjcomment)
@@ -1379,6 +1418,46 @@ def get_drs_mode(params: ParamDict, header: Any, hdict: Any) -> Tuple[Any, Any]:
     return header, hdict
 
 
+def construct_dprtype(recipe: Any, params: ParamDict, filename: str,
+                      header: Any) -> Tuple[str, str, Any]:
+    """
+    Construct the DPRTYPE from the header
+
+    :param recipe: DrsRecipe, the recipe instance
+    :param params: ParamDict, the parameter dictionary of constants
+    :param filename: str, the filename header came from (for exception)
+    :param header: fits.Header, the header to get the DPRTYPE from
+
+    :return: type, 1. the dprtype, 2. the outtype, 3. the drsfile instance
+    """
+    # get the drs files and raw_prefix
+    drsfiles = recipe.filemod.get().raw_file.fileset
+    raw_prefix = recipe.filemod.get().raw_prefix
+    # set up inname
+    dprtype, outtype = 'Unknown', 'Unknown'
+    drsfile = None
+    # loop around drs files
+    for drsfile in drsfiles:
+        # set recipe
+        drsfile.set_params(params)
+        # find out whether file is valid
+        valid, _ = drsfile.has_correct_hkeys(header, log=False,
+                                             filename=filename)
+        # if valid the assign dprtype
+        if valid:
+            # remove prefix if not None
+            if raw_prefix is not None:
+                dprtype = drsfile.name.split(raw_prefix)[-1]
+                outtype = drsfile.name
+            else:
+                dprtype = drsfile.name
+                outtype = drsfile.name
+            # we have found file so break
+            break
+
+    return dprtype, outtype, drsfile
+
+
 def get_dprtype(params: ParamDict, recipe: Any, header: Any, hdict: Any,
                 filename: Union[None, str, Path] = None) -> Tuple[Any, Any]:
     """
@@ -1409,30 +1488,9 @@ def get_dprtype(params: ParamDict, recipe: Any, header: Any, hdict: Any,
     # deal with no hdict
     if hdict is None:
         hdict = dict()
-    # get the drs files and raw_prefix
-    drsfiles = recipe.filemod.get().raw_file.fileset
-    raw_prefix = recipe.filemod.get().raw_prefix
-    # set up inname
-    dprtype, outtype = 'Unknown', 'Unknown'
-    drsfile = None
-    # loop around drs files
-    for drsfile in drsfiles:
-        # set recipe
-        drsfile.set_params(params)
-        # find out whether file is valid
-        valid, _ = drsfile.has_correct_hkeys(header, log=False,
-                                             filename=filename)
-        # if valid the assign dprtype
-        if valid:
-            # remove prefix if not None
-            if raw_prefix is not None:
-                dprtype = drsfile.name.split(raw_prefix)[-1]
-                outtype = drsfile.name
-            else:
-                dprtype = drsfile.name
-                outtype = drsfile.name
-            # we have found file so break
-            break
+    # construct the dprtype and outtype from the header
+    dprtype, outtype, drsfile = construct_dprtype(recipe, params, filename,
+                                                  header)
     # update header with DPRTYPE
     header[kwdprtype] = (dprtype, kwdprcomment)
     hdict[kwdprtype] = (dprtype, kwdprcomment)

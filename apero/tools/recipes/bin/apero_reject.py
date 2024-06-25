@@ -85,7 +85,12 @@ def __main__(recipe, params):
     # get log and warn from inputs
     objname = params['INPUTS']['objname']
     identifier = params['INPUTS']['identifier']
-
+    obsdir = params['INPUTS']['obsdir']
+    # ----------------------------------------------------------------------
+    # deal with obsdir set (update identifier)
+    if obsdir not in ['None', None]:
+        # update identifier to include all non-science from this night
+        identifier = drs_reject.update_from_obsdir(params, recipe, obsdir)
     # ----------------------------------------------------------------------
     # must set either objname or filename
     if objname in ['None', None] and identifier in ['None', None]:
@@ -95,7 +100,6 @@ def __main__(recipe, params):
     if objname not in ['None', None] and identifier not in ['None', None]:
         WLOG(params, 'error', 'Must set either objname or identifier')
         raise SystemExit()
-
     # ----------------------------------------------------------------------
     # deal with objname set
     if objname not in ['None', None]:
@@ -103,7 +107,6 @@ def __main__(recipe, params):
         drs_astrometrics.add_object_reject(params, objname)
         # return locals
         return locals()
-
     # ----------------------------------------------------------------------
     # deal with filename set
     if identifier not in ['None', None]:
