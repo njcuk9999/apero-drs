@@ -111,7 +111,7 @@ def __main__(recipe, params):
     # deal with filename set
     if identifier not in ['None', None]:
         # add to file reject list
-        drs_reject.add_file_reject(params, identifier)
+        drs_reject.add_file_reject(params, recipe, identifier)
         # return locals
         return locals()
 

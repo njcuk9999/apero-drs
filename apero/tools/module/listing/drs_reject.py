@@ -155,7 +155,8 @@ def add_file_reject(params: ParamDict, recipe: DrsRecipe, raw_identifier: str):
                 # get header
                 header = drs_fits.read_header(params, filename)
                 # get dprtype
-                dprtype = pconst.DRS_DPRTYPE(params, recipe, header, filename)
+                dprtype = pconst.DRS_DPRTYPE(params, recipe, header, filename,
+                                             skip_validation=True)
                 # get apero objname
                 objname = pconst.GET_OBJNAME(params, header, filename,
                                              True, objdbm)
@@ -358,7 +359,8 @@ def update_from_obsdir(params: ParamDict, recipe: DrsRecipe, obsdir: str) -> str
         # get header
         header = drs_fits.read_header(params, filename)
         # get dprtype
-        dprtype = pconst.DRS_DPRTYPE(params, recipe, header, filename)
+        dprtype = pconst.DRS_DPRTYPE(params, recipe, header, filename,
+                                     skip_validation=True)
         # only add filename
         if dprtype not in sci_dprtype:
             valid_files.append(filename)
