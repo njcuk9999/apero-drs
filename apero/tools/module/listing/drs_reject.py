@@ -102,7 +102,7 @@ def add_file_reject(params: ParamDict, recipe: DrsRecipe, raw_identifier: str):
             # append to raw_files
             filename_it = os.path.join(root, filename)
             # get the identifier
-            identifier_it = filename.split('.fits')[0]
+            identifier_it = os.path.basename(filename).split('.fits')[0]
             # push into dictionary
             all_files[identifier_it] = filename_it
     # ----------------------------------------------------------------------
@@ -164,7 +164,7 @@ def add_file_reject(params: ParamDict, recipe: DrsRecipe, raw_identifier: str):
             else:
                 dprtype = '--'
                 objname = '--'
-                obsdir = 'NOT ON DISK'
+                obsdir = 'NOT-ON-DISK'
             # push into storage
             file_info['ROW'].append(row)
             file_info['IDENTIFIER'].append(identifier)
