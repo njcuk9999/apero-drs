@@ -266,9 +266,12 @@ def add_file_reject(params: ParamDict, recipe: DrsRecipe, raw_identifier: str):
     # ----------------------------------------------------------------------
     # loop around identifiers and add to reject list
     for identifier in file_table['IDENTIFIER']:
+        # get the time now in iso format
+        time_now = base.Time.now().iso
         # ----------------------------------------------------------------------
         # now we can add to dataframe
-        new_row = dict(IDENTIFIER=[identifier], PP=[pp], TEL=[tel], RV=[rv],
+        new_row = dict(IDENTIFIER=[identifier], DATE_ADDED=[time_now],
+                       PP=[pp], TEL=[tel], RV=[rv],
                        COMMENT=[comment])
         # add to dataframe
         dataframe = pd.concat([dataframe, pd.DataFrame(new_row)],
