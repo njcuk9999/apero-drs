@@ -1184,9 +1184,10 @@ def check_object(params: ParamDict, found_objs: Dict[str, Tuple[str, str]]):
             WLOG(params, '', imsg.format(*iargs))
             # warn user about future objects having different DRSOBJN
             if drsobjns[0] != correct_name:
-                wmsg = '\tFuture objects will be have {1}={0} not {2}'
+                wmsg = '\tFuture observations will be have {1}={0} not {2}'
                 wmsg += ('\n\tTo avoid this please re-reduce '
-                         'SCIENCE_TARGETS={0}. (i.e. pp_seq_opt + science_seq) '
+                         'SCIENCE_TARGETS={0}.'
+                         '\n\t\ti.e. pp_seq_opt + science_seq '
                          'with SKIP_XXXX = False')
                 wargs = [correct_name, objkey, drsobjns[0]]
                 WLOG(params, 'warning', wmsg.format(*wargs))
@@ -1207,7 +1208,8 @@ def check_object(params: ParamDict, found_objs: Dict[str, Tuple[str, str]]):
                 wmsg = '\t\tFile: {0}'
                 WLOG(params, 'warning', wmsg.format(filename), sublevel=5)
             imsg = ('\n\tPlease re-reduce SCIENCE_TARGETS={0}. '
-                    '(i.e. pp_seq_opt + science_seq) with SKIP_XXXX = False\n')
+                    '\n\t\ti.e. pp_seq_opt + science_seq '
+                    'with SKIP_XXXX = False')
             iargs = [correct_name]
             WLOG(params, 'info', imsg.format(*iargs))
 
@@ -1827,7 +1829,7 @@ def get_bibcode_list(params: ParamDict) -> List[str]:
     return ubibcodes
 
 
-def add_object_reject(params: ParamDict, objname: str):
+def add_object_reject(params: ParamDict, raw_objname: str):
     """
     Add an object to the astrometric reject list
 
@@ -1836,6 +1838,13 @@ def add_object_reject(params: ParamDict, objname: str):
 
     :return: None, adds object to the astrometric reject list
     """
+
+    # deal with multiple object names
+    if ',' in raw_objname:
+        objnames = raw_objname.split(',')
+    else:
+        objnames = [raw_objname]
+    # ----------------------------------------------------------------------
     # add gspread directory and afiles
     drs_misc.gsp_setup()
     # get whether we are in a test
@@ -1855,81 +1864,91 @@ def add_object_reject(params: ParamDict, objname: str):
     # get the alias column
     alias_column = np.array(dataframe['ALIASES']).astype(str)
     # ----------------------------------------------------------------------
-    # clean input object name
-    apero_objname = pseudo_const.clean_object(objname)
+    # loop around object names
     # ----------------------------------------------------------------------
-    # object in object column
-    cond1 = (objname in object_column) or (apero_objname in object_column)
-    # if we an object in the reject list report
-    if cond1:
-        # make a mask for the identifier
-        mask = (object_column == objname) | (object_column == apero_objname)
-        # get the comment for the identifier
-        comment = np.array(dataframe['NOTES'])[mask][0]
+    for objname in objnames:
+        # clean input object name
+        apero_objname = pseudo_const.clean_object(objname)
+        # ----------------------------------------------------------------------
+        # object in object column
+        cond1 = (objname in object_column) or (apero_objname in object_column)
+        # if we an object in the reject list report
+        if cond1:
+            # make a mask for the identifier
+            mask = (object_column == objname) | (object_column == apero_objname)
+            # get the comment for the identifier
+            comment = np.array(dataframe['NOTES'])[mask][0]
 
-        msg = 'Object {0} (APERO={1}) already in reject list with comment: {2}'
-        margs = [objname, apero_objname, comment]
-        WLOG(params, '', msg.format(*margs), colour='magenta')
-        return
-    # ----------------------------------------------------------------------
-    # object in alias column
-    cond2, row = False, -1
-    for r_it, alias in enumerate(alias_column):
-        alias_list = alias.split('|')
-        if objname in alias_list or apero_objname in alias_list:
-            cond2 = True
-            row = r_it
-            break
-    # ----------------------------------------------------------------------
-    # if in the aliases
-    if cond2:
-        # get the object name
-        objname = object_column[row]
-        # get the comment for the identifier
-        comment = np.array(dataframe['NOTES'])[row]
-
-        msg = 'Object {0} (APERO={1}) already in reject list with comment: {2}'
-        margs = [objname, apero_objname, comment]
-        WLOG(params, '', msg.format(*margs), colour='magenta')
-        return
-    # ----------------------------------------------------------------------
-    # if we have autofill use it
-    if autofill not in [None, 'None']:
-        # split the auto fill into ALIASES,NOTES
-        autofill_list = autofill.split(',')
-        # check we have 2 values
-        if len(autofill_list) != 2:
-            emsg = 'Auto fill must be in the form ALIASES,NOTES'
-            WLOG(params, 'error', emsg)
+            msg = ('Object {0} (APERO={1}) already in reject list with '
+                   'comment: {2}')
+            margs = [objname, apero_objname, comment]
+            WLOG(params, '', msg.format(*margs), colour='magenta')
             return
-        # get the values
-        aliases, notes = autofill_list
-    else:
-        # get the aliases
-        question = ('Enter aliases for object={0} (APERO={1}) separate '
-                    'aliases by a "|"  e.g. GL699 | Barnard Star | GL 699')
-        qargs = [objname, apero_objname]
-        aliases = drs_installation.ask(question.format(*qargs), dtype=str)
-        # get the comment
-        question = 'Enter a comment to reject object={0} (APERO={1})'
-        qargs = [objname, apero_objname]
-        notes = drs_installation.ask(question.format(*qargs), dtype=str)
-    # ----------------------------------------------------------------------
-    # now we can add to the dataframe
-    new_row = dict(OBJNAME=[apero_objname], ORIGINAL_NAME=[objname],
-                   ALIASES=[aliases], NOTES=[notes], USED=[1])
-    # add to dataframe
-    dataframe = pd.concat([dataframe, pd.DataFrame(new_row)], ignore_index=True)
-    # print progress
-    msg = 'Pushing object={0} (APERO={1}) to reject list google-sheet'
-    WLOG(params, '', msg.format(objname, apero_objname))
+        # ----------------------------------------------------------------------
+        # object in alias column
+        cond2, row = False, -1
+        for r_it, alias in enumerate(alias_column):
+            alias_list = alias.split('|')
+            if objname in alias_list or apero_objname in alias_list:
+                cond2 = True
+                row = r_it
+                break
+        # ----------------------------------------------------------------------
+        # if in the aliases
+        if cond2:
+            # get the object name
+            objname = object_column[row]
+            # get the comment for the identifier
+            comment = np.array(dataframe['NOTES'])[row]
+
+            msg = 'Object {0} (APERO={1}) already in reject list with comment: {2}'
+            margs = [objname, apero_objname, comment]
+            WLOG(params, '', msg.format(*margs), colour='magenta')
+            return
+        # ----------------------------------------------------------------------
+        # if we have autofill use it
+        if autofill not in [None, 'None']:
+            # split the auto fill into ALIASES,NOTES
+            autofill_list = autofill.split(',')
+            # check we have 2 values
+            if len(autofill_list) != 2:
+                emsg = 'Auto fill must be in the form ALIASES,NOTES'
+                WLOG(params, 'error', emsg)
+                return
+            # get the values
+            aliases, notes = autofill_list
+        else:
+            # get the aliases
+            question = ('Enter aliases for object={0} (APERO={1}) separate '
+                        'aliases by a "|"  e.g. GL699 | Barnard Star | GL 699')
+            qargs = [objname, apero_objname]
+            aliases = drs_installation.ask(question.format(*qargs), dtype=str)
+            # get the comment
+            question = 'Enter a comment to reject object={0} (APERO={1})'
+            qargs = [objname, apero_objname]
+            notes = drs_installation.ask(question.format(*qargs), dtype=str)
+        # ----------------------------------------------------------------------
+        # now we can add to the dataframe
+        new_row = dict(OBJNAME=[apero_objname], ORIGINAL_NAME=[objname],
+                       ALIASES=[aliases], NOTES=[notes], USED=[1])
+        # print progress
+        msg = 'Pushing object={0} (APERO={1}) to reject list google-sheet'
+        WLOG(params, '', msg.format(objname, apero_objname))
+        # add to dataframe
+        dataframe = pd.concat([dataframe, pd.DataFrame(new_row)],
+                              ignore_index=True)
+
     # push dataframe back to server
     if not test:
         google_sheet.df_to_sheet(dataframe, index=False, replace=True,
                                  sheet=sheet_name)
     # print progress
-    msg = 'object={0} (APERO={1}) added to reject list google-sheet'
-    WLOG(params, '', msg.format(objname, apero_objname))
+    for objname in objnames:
+        # clean input object name
+        apero_objname = pseudo_const.clean_object(objname)
+        # print progress
+        msg = 'object={0} (APERO={1}) added to reject list google-sheet'
+        WLOG(params, '', msg.format(objname, apero_objname))
 
 
 # =============================================================================

@@ -288,7 +288,7 @@ def get_current_versions(importslist):
                 versionslist.append(mod.__version__)
             else:
                 versionslist.append('No version info')
-        except ImportError:
+        except Exception:
             versionslist.append('NOT INSTALLED')
     return versionslist
 

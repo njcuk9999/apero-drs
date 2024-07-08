@@ -1378,7 +1378,7 @@ class AriObject:
             table_row = drs_table.read_table(params, select_file,
                                              fmt='fits', hdu=1)
             # get the combined CCF for this file
-            ccf_row = table_row['Combined']
+            ccf_row = table_row['CCF_STACK']
             # normalize ccf
             ccf_row = ccf_row / np.nanmedian(ccf_row)
             # push into vector

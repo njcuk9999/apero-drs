@@ -3401,8 +3401,13 @@ def add_wave_keys_hdr(params: ParamDict, header: drs_fits.Header,
         # only update keys - do not add them
         if key not in header:
             continue
+        # get value
+        value = infile.hdict[key]
+        # deaL with nans
+        if value in [np.nan]:
+            value = 'NAN'
         # update key
-        header[key] = infile.hdict[key]
+        header[key] = value
     # return updated header
     return header
 
