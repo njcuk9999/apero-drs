@@ -23,6 +23,7 @@ Import rules:
     do not import from core.core.drs_argument
 """
 import os
+import string
 import textwrap
 import time
 import warnings
@@ -106,6 +107,8 @@ OutFileTypes = Union[out.OutFile, out.GeneralOutFile, out.NpyOutFile,
                      out.DebugOutFile, out.BlankOutFile, out.CalibOutFile,
                      out.RefCalibOutFile, out.SetOutFile, out.LBLOutFile,
                      out.PostOutFile, None]
+# get printable characters
+printable = set(string.printable)
 
 
 # =============================================================================
@@ -3608,12 +3611,33 @@ class DrsFitsFile(DrsInputFile):
             if isinstance(self.hdict[key], HCC):
                 for value in str(self.hdict[key]).split('\n'):
                     self.header[key] = value
-            # deal with NaNS
-            if self.hdict[key] in [np.nan, 'nan', 'NAN']:
-                self.header[key] = ('NAN', self.hdict.comments[key])
-            # just set them to  header[key] = (VALUE, COMMENT)
-            else:
-                self.header[key] = (self.hdict[key], self.hdict.comments[key])
+                continue
+            # get value that is printable
+            comment = self._only_printable(str(self.hdict.comments[key]))
+            # try to set header
+            try:
+                # deal with NaNS
+                if self.hdict[key] in [np.nan, 'nan', 'NAN']:
+                    self.header[key] = ('NAN', comment)
+                # just set them to  header[key] = (VALUE, COMMENT)
+                else:
+                    self.header[key] = (self.hdict[key], comment)
+            # try to deal with FITS header values must contain standard
+            # printable ASCII characters
+            except ValueError as _:
+                value = self._only_printable(self.hdict[key])
+                self.header[key] = (value, comment)
+
+    def _only_printable(self, value: str):
+        """
+        Fix for FITS header values must contain standard printable
+        ASCII characters
+
+        :param value: str, the string to enter
+
+        :return: A string without non-ascii characters
+        """
+        return ''.join(filter(lambda x: x in printable, str(value)))
 
     def write_file(self, block_kind: str,
                    runstring: Union[str, None] = None):
@@ -4079,8 +4103,11 @@ class DrsFitsFile(DrsInputFile):
         checksum = generate_arg_checksum(basenames, 5)
         # make sure checksum is capitalized
         checksum = checksum.upper()
+        # add a possible suffix from the filename
+        pconst = constants.pload()
+        suffix = pconst.COMBINE_FILE_SUFFIX(basenames, self.suffix)
         # add the checksum + the suffix + the file extension
-        basename = checksum + self.suffix + self.inext
+        basename = checksum + suffix + self.inext
         # update path and filename
         if path is None:
             path = self.path

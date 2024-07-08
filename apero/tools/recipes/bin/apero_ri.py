@@ -91,13 +91,18 @@ def __main__(recipe: DrsRecipe, params: ParamDict):
     # Main Code
     # ----------------------------------------------------------------------
     mainname = __NAME__ + '._main()'
+    # ----------------------------------------------------------------------
+    # deal with --profiles arguments and non valid profiles
+    valid = ari.list_profiles(params)
+    if not valid:
+        # end here
+        return locals()
 
     # ----------------------------------------------------------------------
     # step 1: setup
     # ----------------------------------------------------------------------
     # read parameters from yaml file and push into parameter dictionary
     params = ari.load_ari_params(params)
-
     # ----------------------------------------------------------------------
     # update the database if we are not in parellel mode
     if not params['INPUTS']['PARALLEL']:

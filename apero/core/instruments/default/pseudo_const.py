@@ -311,6 +311,22 @@ class DefaultPseudoConstants:
         # return object name
         return clean_object(objname)
 
+    def GET_OBJNAME(self, params: Any, header: Any, filename: str,
+                    check_aliases, objdbm: Any = None):
+        """
+        Get a cleaned version of the object name from the header
+
+        :param params: ParamDict, the parameter dictionary of constants
+        :param header: fits header, the header to get the object name from
+        :param filename: str, the filename the header belongs to
+
+        :return: str, the cleaned object name
+        """
+        # cannot get dprtye without instrument
+        _ = params,  header, filename, check_aliases, objdbm
+        # raise implementation error
+        self._not_implemented('DRS_DPRTYPE')
+
     def DRS_DPRTYPE(self, params: Any, recipe: Any, header: Any,
                     filename: str):
         """
@@ -1424,6 +1440,21 @@ class DefaultPseudoConstants:
         _ = params, header
         # raise implementation error
         self._not_implemented('GET_EPOCH')
+
+
+    def COMBINE_FILE_SUFFIX(self, basenames: List[str], suffix: str):
+
+        """
+        Get a possible suffix from the basename
+
+        :param basenames: list of strings, the base filenames
+        :param suffix: str, the original suffix to add to the base filename
+
+        :return: str, the new filename
+        """
+        _ = basename, suffix
+        # raise implementation error
+        self._not_implemented('COMBINE_FILE_SUFFIX')
 
     # =========================================================================
     # CROSSMATCHING
