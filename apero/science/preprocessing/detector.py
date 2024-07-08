@@ -1464,10 +1464,13 @@ def postermeter_stats(params: ParamDict, filename: str, ext: int) -> ParamDict:
     # get the flux diff and mjd
     try:
         table = drs_table.read_table(params, filename, fmt='fits', hdu=ext)
+        # # first point is meaningless in CDS
+        # table = table[1:]
         # work out the flux difference between fibers
         flux_diff = table['FIBRE1'] - table['FIBRE2']
         # get the time in mjd
-        mjd = Time(table['TIME'], format='jd').mjd
+        time_jd = np.array(table['TIME']).astype(float)
+        mjd = Time(time_jd, format='jd').mjd
         # work out the sum of this (as weights)
         flux_diff_sum = mp.nansum(flux_diff)
         # work out the weighted mean
@@ -1475,7 +1478,10 @@ def postermeter_stats(params: ParamDict, filename: str, ext: int) -> ParamDict:
         # work out the rms and meidan flux diff
         med_flux_diff = mp.nanmedian(flux_diff)
         rms_flux_diff = mp.nanstd(flux_diff)
-    except Exception as _:
+    except Exception as e:
+        emsg = 'Cannot measure postmeter stats\n{0}: {1}'
+        eargs = [type(e), str(e)]
+        WLOG(params, 'warning', emsg.format(*eargs), sublevel=2)
         mjd_flux = np.nan
         med_flux_diff = np.nan
         rms_flux_diff = np.nan
