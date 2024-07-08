@@ -1827,8 +1827,7 @@ def target_stats_table(target_props: Dict[str, Any], stat_path: str,
     plx = target_props['Parallax']
     rv = target_props['RV']
     aliases = target_props['Aliases']
-    objnames_header  = target_props['OBJNAMES_HEADER']
-    
+    objnames_header = target_props['OBJNAMES_HEADER']
 
     # --------------------------------------------------------------------------
     # construct the stats table
