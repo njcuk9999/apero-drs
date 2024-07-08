@@ -530,6 +530,8 @@ class AriObject:
         self.pmde_source: Optional[str] = None
         self.plx_source: Optional[str] = None
         self.rv_source: Optional[str] = None
+        # name of the files in the raw headers
+        self.objnames_header: Optional[str] = None
 
         # ----------------------------s-----------------------------------------
         # Add files as copy of filetype class
@@ -654,6 +656,9 @@ class AriObject:
             udprtypes = get_unique(dprtypes, str, exclude=[None, 'Unknown'])
             # push into self
             self.dprtypes = ','.join(udprtypes)
+        # ------------------------------------------------------------------
+        # lets get all unique object names for raw files
+        self.objnames_header = get_objnames_headers(self.objname, indexdbm)
         # ------------------------------------------------------------------
         # get all filetype last processing times
         all_last_processed = []
@@ -813,7 +818,8 @@ class AriObject:
         target_props['Parallax'] = f'{self.plx} [mas/yr] ({self.plx_source})'
         target_props['RV'] = f'{self.rv} [mas/yr] ({self.rv_source})'
         target_props['Aliases'] = self.aliases
-
+        target_props['OBJNAMES_HEADER'] = f'{self.objnames_header}'
+        
         # -----------------------------------------------------------------
         # construct the stats
         # -----------------------------------------------------------------
@@ -1821,6 +1827,8 @@ def target_stats_table(target_props: Dict[str, Any], stat_path: str,
     plx = target_props['Parallax']
     rv = target_props['RV']
     aliases = target_props['Aliases']
+    objnames_header  = target_props['OBJNAMES_HEADER']
+    
 
     # --------------------------------------------------------------------------
     # construct the stats table
@@ -1857,7 +1865,9 @@ def target_stats_table(target_props: Dict[str, Any], stat_path: str,
     # Add aliases
     target_dict['Description'].append('Aliases')
     target_dict['Value'].append(aliases)
-
+    # Add objnames header
+    target_dict['Description'].append('OBJECT name(s) in headers')
+    target_dict['Value'].append(objnames_header)
     # --------------------------------------------------------------------------
     # change the columns names
     target_dict2 = dict()
@@ -3216,6 +3226,18 @@ def get_unique(values, dtype, exclude: Optional[List[Any]] = None) -> List[Any]:
     forced_uniques = [dtype(_unique) for _unique in uniques]
     # return uniques of single data type
     return forced_uniques
+
+
+def get_objnames_headers(objname: str, indexdbm: Any) -> str:
+    # set up the condition
+    condition = f'BLOCK_KIND="raw" AND KW_OBJNAME="{objname}"'
+    # get the possible original object names for this condition
+    objtable = indexdbm.get_entries('KW_OBJECTNAME,KW_OBJECTNAME2',
+                                    condition=condition)
+    # get only unique object names
+    all_names = set(objtable['KW_OBJECTNAME']) | set(objtable['KW_OBJECTNAME2'])
+    # return all the object names
+    return ', '.join(all_names)
 
 
 # =============================================================================
