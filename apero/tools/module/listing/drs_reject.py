@@ -271,7 +271,7 @@ def add_file_reject(params: ParamDict, recipe: DrsRecipe, raw_identifier: str):
         # ----------------------------------------------------------------------
         # now we can add to dataframe
         new_row = dict(IDENTIFIER=[identifier], DATE_ADDED=[time_now],
-                       PP=[pp], TEL=[tel], RV=[rv],
+                       PP=[pp], TEL=[tel], RV=[rv], USED=[1],
                        COMMENT=[comment])
         # add to dataframe
         dataframe = pd.concat([dataframe, pd.DataFrame(new_row)],
