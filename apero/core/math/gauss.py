@@ -283,9 +283,29 @@ def gauss_fit_s(x: Union[float, np.ndarray], a: float, x0: float, sigma: float,
     # set function name
     # _ = display_func('gauss_fit_s', __NAME__)
     # calculate gaussian
-    gauss = a * np.exp(-0.5 * (x - x0) ** 2 / (sigma ** 2)) + zp
+    with warnings.catch_warnings(record=True) as _:
+        gauss = a * np.exp(-0.5 * (x - x0) ** 2 / (sigma ** 2)) + zp
     correction = (x - x0) * slope
     return gauss + correction
+
+
+def gaussian_slope(x: np.ndarray, cen: float, ew: float, depth: float,
+                   slope: float, curv: float, amp: float) -> np.ndarray:
+    """
+    :param x: numpy array (1D), the x values for the gauss fit
+    :param cen: float, the center of the gaussian
+    :param ew: float, the e-width of the gaussian
+    :param depth: float, the normalized depth to continuum
+    :param slope: float, the slope of the continuum
+    :param curv: float, the curvature of the continuum
+    :param amp: float, amplitde of the continuum, normally very close to 1
+
+    :return: numpy array, a gaussian with the properties listed on the x grid
+    """
+    xpix = (x - cen)
+    gauss = (1 - depth * np.exp(-0.5 * xpix ** 2 / ew ** 2))
+    # return gaussian
+    return gauss * (1 - slope * xpix - curv * xpix ** 2) * amp
 
 
 def centered_super_gauss(x: np.ndarray, fwhm: float, amp: float,

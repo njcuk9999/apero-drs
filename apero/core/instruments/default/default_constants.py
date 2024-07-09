@@ -249,7 +249,7 @@ __all__ = [
     'TAPAS_FILE', 'TAPAS_FILE_FMT', 'TELLU_CUT_BLAZE_NORM',
     'TELLU_ALLOWED_DPRTYPES', 'TELLURIC_FILETYPE', 'TELLURIC_FIBER_TYPE',
     'TELLU_LIST_DIRECTORY', 'TELLU_WHITELIST_NAME', 'TELLU_BLACKLIST_NAME',
-    'TELLU_ONLY_PRECLEAN',
+    'TELLU_ONLY_PRECLEAN', 'TELLU_ABSO_FIT_LOS_VELO',
     # telluric pre-cleaning constants
     'TELLUP_DO_PRECLEANING', 'TELLUP_DO_FINITE_RES_CORR',
     'TELLUP_CCF_SCAN_RANGE', 'TELLUP_CLEAN_OH_LINES',
@@ -292,6 +292,7 @@ __all__ = [
     'CCF_NOISE_SIGDET', 'CCF_NOISE_BOXSIZE', 'CCF_NOISE_THRES',
     'CCF_MAX_CCF_WID_STEP_RATIO', 'CCF_BLAZE_NORM_PERCENTILE',
     'CCF_NSIG_THRESHOLD', 'CCF_FWHM_SIGCUT',
+    'CCF_BIS_CUT_TOP', 'CCF_BIS_CUT_BOTTOM',
     'OBJRV_NULL_VAL', 'CCF_MASK_NORMALIZATION', 'CCF_TEFF_MASK_TABLE',
     # general polar constants
     'POLAR_FIBERS', 'POLAR_STOKES_PARAMS', 'POLAR_BERV_CORRECT',
@@ -3858,6 +3859,13 @@ TELLU_ONLY_PRECLEAN = Const('TELLU_ONLY_PRECLEAN', value=None, dtype=bool,
                             description='Force only pre-cleaning (not '
                                         'recommended - only for debugging)')
 
+# Whether to fit line of sight velocity in telluric pre-cleaning
+TELLU_ABSO_FIT_LOS_VELO = Const('TELLU_ABSO_FIT_LOS_VELO', value=False,
+                                dtype=bool, source=__NAME__, group=cgroup,
+                                description='whether to fit line of sight '
+                                            'velocity in telluric '
+                                            'pre-cleaning')
+
 # =============================================================================
 # OBJECT: TELLURIC PRE-CLEANING SETTINGS
 # =============================================================================
@@ -4639,6 +4647,18 @@ CCF_FWHM_SIGCUT = Const('CCF_FWHM_SIGCUT', value=None, dtype=float,
                         source=__NAME__, minimum=0, group=cgroup,
                         description='Define the minimum number of sigma the '
                                     'FWHM of CCF must have to be acceptable')
+
+# Define the top cut of the bisector cut (percent)
+CCF_BIS_CUT_TOP = Const('CCF_BIS_CUT_TOP', value=None, dtype=float,
+                        source=__NAME__, minimum=0, group=cgroup,
+                        description='Define the top cut of the bisector cut '
+                                    '(percent)')
+
+# Define the bottom cut of the bisector cut (percent)
+CCF_BIS_CUT_BOTTOM = Const('CCF_BIS_CUT_BOTTOM', value=None, dtype=float,
+                           source=__NAME__, minimum=0, group=cgroup,
+                           description='Define the bottom cut of the bisector'
+                                       ' cut (percent)')
 
 # =============================================================================
 # GENERAL POLARISATION SETTINGS

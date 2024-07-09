@@ -8,6 +8,7 @@ Created on 2020-08-2020-08-14 12:48
 @author: cook
 """
 import os
+from typing import List
 
 import numpy as np
 
@@ -140,13 +141,13 @@ def __main__(recipe, params):
     # get the fibers
     sfibers, rfiber = pconst.FIBER_KINDS()
     dfibers = sfibers + [rfiber]
-    fibers = list(dfibers)
+    fibers: List[str] = list(dfibers)
     # if we have fibers from user use them
     if 'fibers' in params['INPUTS']:
         if not drs_text.null_text(params['INPUTS']['fibers'], ['None', '']):
             fibers = params['INPUTS']['fibers'].split(',')
             # strip fibers of whitespace
-            fibers = np.char.array(fibers).strip()
+            fibers = list(np.char.array(fibers).strip())
             # check fibers are correct
             for fiber in fibers:
                 if fiber not in dfibers:
@@ -235,8 +236,8 @@ def __main__(recipe, params):
                                                block_kind='red')
         # ---------------------------------------------------------------------
         # storage for table
-        basenames, mjdmids, mean_rvs, mean_contrasts = [], [], [], []
-        mean_fwhms, mean_tot_lines, dvrms_sps, dv_rms_ccs = [], [], [], []
+        basenames, mjdmids, rv_stack, contrasts_stack = [], [], [], []
+        fwhms_stack, mean_tot_lines, dvrms_sps, dv_rms_ccs = [], [], [], []
         wavetimes, wavefiles, wavesrces, paths = [], [], [], []
         # ---------------------------------------------------------------------
         # loop around files
@@ -270,18 +271,17 @@ def __main__(recipe, params):
             # compute the ccf
             ccfargs = [infile, infile.get_data(), blaze,
                        wprops['WAVEMAP'], fiber]
-            rvprops = velocity.compute_ccf_fp(params, recipe, *ccfargs,
-                                              sum_plot=False)
+            rvprops = velocity.compute_ccf_fp(params, recipe, *ccfargs)
             # -----------------------------------------------------------------
             # push rvprops to storage
             basenames.append(infile.basename)
             mjdmids.append(infile.get_hkey('KW_MID_OBS_TIME'))
-            mean_rvs.append(rvprops['MEAN_RV'])
-            mean_contrasts.append(rvprops['MEAN_CONTRAST'])
-            mean_fwhms.append(rvprops['MEAN_FWHM'])
+            rv_stack.append(rvprops['RV_STACK'])
+            contrasts_stack.append(rvprops['CONTRAST_STACK'])
+            fwhms_stack.append(rvprops['FWHM_STACK'])
             mean_tot_lines.append(rvprops['TOT_LINE'])
             dvrms_sps.append(rvprops['TOT_SPEC_RMS'])
-            dv_rms_ccs.append(rvprops['MEAN_RV_NOISE'])
+            dv_rms_ccs.append(rvprops['CCF_PHOT_NOISE'])
             wavetimes.append(wprops['WAVETIME'])
             wavefiles.append(wprops['WAVEFILE'])
             wavesrces.append(wprops['WAVESOURCE'])
@@ -291,8 +291,8 @@ def __main__(recipe, params):
         columnnames = ['FILENAME', 'MJDMID', 'RV', 'CONTRAST', 'FWHM',
                        'TOTLINES', 'DVRMS_SP', 'DVRMS_CC', 'WAVETIME',
                        'WAVEFILE', 'WAVESOURCE', 'PATH']
-        columnvalues = [basenames, mjdmids, mean_rvs, mean_contrasts,
-                        mean_fwhms, mean_tot_lines, dvrms_sps, dv_rms_ccs,
+        columnvalues = [basenames, mjdmids, rv_stack, contrasts_stack,
+                        fwhms_stack, mean_tot_lines, dvrms_sps, dv_rms_ccs,
                         wavetimes, wavefiles, wavesrces, paths]
         # make table
         table = drs_table.make_table(params, columnnames, columnvalues)
@@ -300,7 +300,7 @@ def __main__(recipe, params):
         # construct filename
         cargs = [params['DRS_DATA_REDUC'], params['OBS_DIR'],
                  OUTPUT_FILENAME.format(dprtype, fiber)]
-        out_filename = os.path.join(*cargs)
+        out_filename = str(os.path.join(*cargs))
         # log that we are saving file
         WLOG(params, '', textentry('40-018-00008', args=[out_filename]))
         # save the table to file

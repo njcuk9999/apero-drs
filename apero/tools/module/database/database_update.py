@@ -61,7 +61,7 @@ GAIA_COL = 'GAIADR2ID'
 # =============================================================================
 # Define functions
 # =============================================================================
-def update_database(params: ParamDict, dbkind: str):
+def update_database(params: ParamDict, recipe: DrsRecipe, dbkind: str):
     """
     Update the calib/tellu/log and index databases from files on disk
 
@@ -113,7 +113,7 @@ def update_database(params: ParamDict, dbkind: str):
         WLOG(params, 'info', textentry('40-006-00007', args=['index']),
              colour='magenta')
         WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
-        index_update(params)
+        index_update(params, recipe)
 
     if dbkind in ['astrom', 'all']:
         WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
@@ -262,13 +262,16 @@ def calib_tellu_update(params: ParamDict, pconst: PseudoConstants,
         del kind, db_out_file
 
 
-def index_update(params: ParamDict):
+def index_update(params: ParamDict, recipe: DrsRecipe):
     # get all block kinds
     block_kinds = drs_file.DrsPath.get_block_names(params=params,
                                                    block_filter='indexing')
     # get index database
     findexdbm = drs_database.FileIndexDatabase(params)
     findexdbm.load_db()
+    # get astrometric database
+    astromdb = drs_database.AstrometricDatabase(params)
+    astromdb.load_db()
     # loop around block kinds (with the indexing filter)
     for block_kind in block_kinds:
         # log block update
@@ -276,6 +279,10 @@ def index_update(params: ParamDict):
         # update index database for block kind
         findexdbm = drs_utils.update_index_db(params, block_kind=block_kind,
                                               findexdbm=findexdbm)
+        # update headers of raw files
+        if block_kind == 'raw':
+            # fix the headers
+            findexdbm.update_header_fix(recipe=recipe, objdbm=astromdb)
 
 
 def log_update(params: ParamDict, pconst: PseudoConstants):

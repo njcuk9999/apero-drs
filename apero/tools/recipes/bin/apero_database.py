@@ -116,7 +116,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # ----------------------------------------------------------------------
     # deal with full update
     if update:
-        database_update.update_database(params, dbkind=dbkind)
+        database_update.update_database(params, recipe, dbkind=dbkind)
         # ------------------------------------------------------------------
         # End of main code
         # ------------------------------------------------------------------

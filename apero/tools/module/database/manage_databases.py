@@ -798,8 +798,6 @@ def update_reject_database(params: ParamDict, log: bool = True):
     # -------------------------------------------------------------------------
     # convert main table to a pandas dataframe
     df = maintable.to_pandas()
-    # add a date added column
-    df['DATE_ADDED'] = np.full(len(df), base.__now__.iso)
     # -------------------------------------------------------------------------
     # get columns and ctypes from pconst
     rejectdb_cols = pconst.REJECT_DB_COLUMNS()

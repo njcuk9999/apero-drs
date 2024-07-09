@@ -129,6 +129,10 @@ ari.set_kwarg(name='--finder_create', dtype='switch',
               helpstr='Overwrites the profile setting to create finder charts')
 ari.set_kwarg(name='--finder_reset', dtype='switch',
               helpstr='Overwrites the profile setting to reset finder charts')
+ari.set_kwarg(name='--profiles', dtype='switch', default=False,
+              helpstr='List allowed profiles (and path to profiles), as profile '
+                      'is usually required any invalid profile yaml also '
+                      'displays this and exits.')
 ari.description_file = 'apero_ri.rst'
 
 # -----------------------------------------------------------------------------
@@ -525,9 +529,16 @@ reject.recipe_kind = 'user'
 reject.set_kwarg(name='--identifier', dtype=str, default='None',
                  helpstr='Add a specific file identifier to the file reject '
                          'list. E.g. for spirou this is the odocode, for '
-                         'nirps this is raw the filename')
+                         'nirps this is raw the filename '
+                         '(Can add multiple as comma separated list)')
 reject.set_kwarg(name='--objname', dtype=str, default='None',
-                 helpstr='Add a specific object name to the object reject list')
+                 helpstr='Add a specific object name to the object reject list '
+                         '(Can add multiple as comma separated list)')
+reject.set_kwarg(name='--obsdir', dtype=str, default='None',
+                 helpstr='Add all files from a certain observation directory '
+                         'to the file reject list (excludes science '
+                         'observations). You may only select one obsdir at '
+                         'once. Note this overrides --identifier')
 reject.set_kwarg(name='--autofill', dtype=str, default='None',
                  helpstr='Autofill the questions asked. '
                          'For identifier this is PP,TEL,RV,COMMENT '

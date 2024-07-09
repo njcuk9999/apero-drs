@@ -1,0 +1,6 @@
+mask, kind, datatype, teff_min, teff_max
+"PROXIMA_neg.fits","default","fits","",""
+"GJ9425_neg.fits","range","fits",4000,10000
+"GJ1_neg.fits","range","fits",3500,4000
+"GL699_neg.fits","range","fits",3100,3500
+"PROXIMA_neg.fits","range","fits",0,3100

@@ -346,7 +346,7 @@ def correction(recipe: DrsRecipe, params: ParamDict, infile: DrsFitsFile,
                                          order=2, cval=np.nan, output=float,
                                          mode='constant')
             background_image += background_image_offset
-            print(np.nanstd(background_image_offset),np.nanstd(background_image))
+            # print(np.nanstd(background_image_offset),np.nanstd(background_image))
 
         # ------------------------------------------------------------------
         # create the box centers

@@ -2180,6 +2180,10 @@ TELLU_BLACKLIST_NAME.value = 'tellu_blacklist.txt'
 TELLU_ONLY_PRECLEAN = TELLU_ONLY_PRECLEAN.copy(__NAME__)
 TELLU_ONLY_PRECLEAN.value = False
 
+# Whether to fit line of sight velocity in telluric pre-cleaning
+TELLU_ABSO_FIT_LOS_VELO = TELLU_ABSO_FIT_LOS_VELO.copy(__NAME__)
+TELLU_ABSO_FIT_LOS_VELO.value = False
+
 # =============================================================================
 # OBJECT: TELLURIC PRE-CLEANING SETTINGS
 # =============================================================================
@@ -2637,6 +2641,16 @@ CCF_NSIG_THRESHOLD.author = base.AUTHORS['EA']
 CCF_FWHM_SIGCUT = CCF_FWHM_SIGCUT.copy(__NAME__)
 CCF_FWHM_SIGCUT.value = 8
 CCF_FWHM_SIGCUT.author = base.AUTHORS['EA']
+
+# Define the top cut of the bisector cut (percent)
+CCF_BIS_CUT_TOP = CCF_BIS_CUT_TOP.copy(__NAME__)
+CCF_BIS_CUT_TOP.value = 80
+CCF_BIS_CUT_TOP.author = base.AUTHORS['EA']
+
+# Define the bottom cut of the bisector cut (percent)
+CCF_BIS_CUT_BOTTOM = CCF_BIS_CUT_BOTTOM.copy(__NAME__)
+CCF_BIS_CUT_BOTTOM.value = 30
+CCF_BIS_CUT_BOTTOM.author = base.AUTHORS['EA']
 
 # =============================================================================
 # DEBUG PLOT SETTINGS

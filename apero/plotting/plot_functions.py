@@ -4976,14 +4976,6 @@ def plot_ccf_photon_uncert(plotter: Plotter, graph: Graph,
     x = kwargs.get('x')
     y_sp = kwargs.get('y_sp')
     y_ccf = kwargs.get('y_cc')
-    # get max/min points
-    with warnings.catch_warnings(record=True) as _:
-        ymin = mp.nanmin(y_ccf)
-        ymax = mp.nanmax(y_ccf)
-        if not np.isfinite(ymin):
-            ymin = mp.nanmin(y_sp)
-        if not np.isfinite(ymax):
-            ymax = mp.nanmax(y_sp)
     # ------------------------------------------------------------------
     # set up plot
     fig, frame = graph.set_figure(plotter)
@@ -4997,14 +4989,9 @@ def plot_ccf_photon_uncert(plotter: Plotter, graph: Graph,
     title = 'Photon noise uncertainty versus spectral order'
     frame.set(xlabel='Order number', ylabel='Photon noise uncertainty [m/s]',
               title=title)
-    # deal with limits (may be NaN)
-    if np.isfinite(ymin) and np.isfinite(ymax):
-        frame.set_ylim(bottom=ymin, top=ymax)
-    elif np.isfinite(ymin):
-        frame.set_ylim(bottom=ymin)
-    else:
-        frame.set_ylim(top=ymax)
-
+    # log the y axis
+    frame.set_yscale('log')
+    # plot a legend
     frame.legend(loc=0)
     # ------------------------------------------------------------------
     # wrap up using plotter
