@@ -71,7 +71,7 @@ Changelog
 - [APERO] update date/changelog. [Neil Cook]
 
 
-0.7.289 (2024-03-12)
+0.7.289 (2024-03-12
 --------------------
 - [APERO] correct typo. [Neil Cook]
 - [APERO] Add --objname to reject code (Issue https://github.com/users/n
