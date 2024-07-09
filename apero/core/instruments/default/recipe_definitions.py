@@ -542,9 +542,11 @@ reject.set_kwarg(name='--obsdir', dtype=str, default='None',
 reject.set_kwarg(name='--autofill', dtype=str, default='None',
                  helpstr='Autofill the questions asked. '
                          'For identifier this is PP,TEL,RV,COMMENT '
-                         'e.g. 1,1,1,bad target '
-                         'For objname this is ALIASES,NOTES '
-                         'e.g. alias1|alias2|alias3,Not a real target')
+                         'e.g. "1,1,1,bad target" '
+                         'For objname this is ALIASES,BAD_ASTRO,NOTES '
+                         'e.g. "alias1|alias2|alias3,0,Not a real target"'
+                         '      or      '
+                         'e.g. "alias1|alias2|alias3,1,No proper motion"')
 reject.set_kwarg(name='--test', dtype='switch',
                  helpstr='Whether to run in test mode (recommended first time)')
 
@@ -573,9 +575,9 @@ remove.set_kwarg(name='--file_suffix', dtype=str, default='None',
 remove.set_kwarg(name='--objnames', dtype=str, default='None',
                  helpstr='Delete all instances of a certain object name '
                          '(DRSOBJN) from disk and databases')
-remove.set_kwarg(name='--test', dtype='switch', 
+remove.set_kwarg(name='--test', dtype='switch',
                  helpstr='Whether to run in test mode (recommended first time)')
-remove.set_kwarg(name='--nowarn', dtype='switch', 
+remove.set_kwarg(name='--nowarn', dtype='switch',
                  helpstr='Whether to warn the user we are not in test mode.')
 
 # -----------------------------------------------------------------------------
