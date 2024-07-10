@@ -193,11 +193,7 @@ fabric.properties
 /documentation/working/_build/*
 
 # Ignore instrument data files
-apero/data/core/*
-apero/data/nirps_ha/*
-apero/data/nirps_he/*
-apero/data/spirou/*
-apero/data/*tar.gz
+apero-assets/*
 
 # Ignore lock file
 lock.lock

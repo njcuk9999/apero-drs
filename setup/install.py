@@ -659,7 +659,7 @@ def main():
             # raise error
             raise ImportError(lang.error('00-000-00013').format(assets_mod))
     # now check whether we need to download the assets
-    update_assets = drs_assets.check_assets(params)
+    update_assets = drs_assets.check_local_assets(params)
     if update_assets:
         drs_assets.update_local_assets(params, tarfile=allparams['TARFILE'])
     # ----------------------------------------------------------------------

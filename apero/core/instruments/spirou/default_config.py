@@ -164,7 +164,11 @@ DRS_WAVE_DATA.value = 'calib/'
 # where the assets directory is (relative to apero module)
 # TODO: remove and replace with online link / user link
 DRS_RESET_ASSETS_PATH = DRS_RESET_ASSETS_PATH.copy(__NAME__)
-DRS_RESET_ASSETS_PATH.value = './data/'
+DRS_RESET_ASSETS_PATH.value = './apero-assets/'
+
+# where the checksum and critica data (git managed) are stored
+DRS_CRITICAL_DATA_PATH = DRS_CRITICAL_DATA_PATH.copy(__NAME__)
+DRS_CRITICAL_DATA_PATH.value = './data/'
 
 # where the reset data are stored (within assets directory)
 # for calibDB (within assets directory)

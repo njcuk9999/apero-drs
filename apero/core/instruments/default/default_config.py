@@ -33,7 +33,7 @@ __all__ = [  # global settings
     'DRS_MOD_CORE_CONFIG', 'DRS_WAVE_DATA',
     'DRS_INSTRUMENT_RECIPE_PATH', 'DRS_DEFAULT_RECIPE_PATH',
     'DRS_BADPIX_DATA', 'DRS_CALIB_DATA',
-    'DRS_RESET_ASSETS_PATH', 'DRS_RESET_CALIBDB_PATH',
+    'DRS_RESET_ASSETS_PATH', 'DRS_CRITICAL_DATA_PATH', 'DRS_RESET_CALIBDB_PATH',
     'DRS_RESET_TELLUDB_PATH', 'DRS_USER_PROGRAM',
     'DRS_PDB_RC_FILE', 'IPYTHON_RETURN', 'ALLOW_BREAKPOINTS',
     'DRS_RESET_RUN_PATH', 'DRS_INSTRUMENTS', 'DRS_PDB_RC_FILENAME',
@@ -326,9 +326,9 @@ DRS_USER_DEFAULT = Const('DRS_USER_DEFAULT', value='../config/', dtype=str,
                          output=False)
 
 #   where to store internal data
-DRS_MOD_DATA_PATH = Const('DRS_MOD_DATA_PATH', value='./data/', dtype=str,
-                          source=__NAME__, group=cgroup,
-                          description='where to store internal data',
+DRS_MOD_DATA_PATH = Const('DRS_MOD_DATA_PATH', value='./apero-assets/',
+                          dtype=str, source=__NAME__, group=cgroup,
+                          description='where to store asset data',
                           output=False)
 
 #   where instrument configuration files are stored (do not change here)
@@ -390,6 +390,13 @@ DRS_RESET_ASSETS_PATH = Const('DRS_RESET_ASSETS_PATH', dtype=str,
                               description=('where the assets directory is '
                                            '(relative to apero module)'),
                               output=False)
+
+# where the checksum and critica data (git managed) are stored
+DRS_CRITICAL_DATA_PATH = Const('DRS_CRITICAL_DATA_PATH', dtype=str,
+                               source=__NAME__, group=cgroup,
+                               description=('where the checksum and critica '
+                                            'data (git managed) are stored'),
+                               output=False)
 
 # where the reset data are stored (within assets directory)
 # for calibDB (within assets directory)

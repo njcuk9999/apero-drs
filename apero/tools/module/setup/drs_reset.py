@@ -28,6 +28,7 @@ from apero.core.utils import drs_data
 from apero.io import drs_lock
 from apero.io import drs_path
 from apero.tools.module.database import manage_databases
+from apero.tools.module.setup import drs_assets
 
 # =============================================================================
 # Define variables
@@ -659,6 +660,12 @@ def reset_assets(params: ParamDict, log: bool = True, reset_dbs: bool = True):
     name = 'assets'
     # get database paths
     databases = manage_databases.list_databases(params)
+
+    # now check whether we need to download the assets
+    update_assets = drs_assets.check_local_assets(params)
+    if update_assets:
+        drs_assets.update_local_assets(params)
+
     # load pseudo constants
     pconst = constants.pload()
     # TODO: deal with getting online
@@ -668,7 +675,6 @@ def reset_assets(params: ParamDict, log: bool = True, reset_dbs: bool = True):
 
     # get reset_path from apero module dir
     abs_reset_path = drs_data.construct_path(params, '', str(reset_path))
-
     # loop around files and folders in assets dir
     #   we want to backup any new files the user as copied
     #   i.e. new masks etc

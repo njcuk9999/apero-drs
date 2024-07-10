@@ -70,7 +70,7 @@ def update_remote_assets(params: ParamDict):
                     os.remove(os.path.join(root, filename))
                 continue
             # get full path to file
-            abs_path = os.path.join(root, filename)
+            abs_path = str(os.path.join(root, filename))
             # append to full paths
             abs_paths.append(abs_path)
             # get the relative path to file
@@ -109,12 +109,12 @@ def update_remote_assets(params: ParamDict):
     # -------------------------------------------------------------------------
     # Step 4: Save the yaml file
     # -------------------------------------------------------------------------
-    # create path to yaml file
-    asset_path = params['DRS_RESET_ASSETS_PATH']
-    # get the absolute path to the assets dir
-    abs_asset_path = drs_data.construct_path(params, '', asset_path)
+    # get path to yaml file
+    _data_path = params['DRS_CRITICAL_DATA_PATH']
+    # get the data path
+    abs_data_path = drs_data.construct_path(params, '', _data_path)
     # add the checksum filename
-    checksum_path = os.path.join(abs_asset_path, base.CHECKSUM_FILE)
+    checksum_path = os.path.join(abs_data_path, base.CHECKSUM_FILE)
     # print progress
     WLOG(params, '', f'Saving yaml file to: {checksum_path}')
     # create yaml file
@@ -157,10 +157,13 @@ def check_local_assets(params: ParamDict):
     """
     # get path to yaml file
     _asset_path = params['DRS_RESET_ASSETS_PATH']
+    _data_path = params['DRS_CRITICAL_DATA_PATH']
     # get the absolute path to the assets dir
     abs_asset_path = drs_data.construct_path(params, '', _asset_path)
+    # get the data path
+    abs_data_path = drs_data.construct_path(params, '', _data_path)
     # add the checksum filename
-    checksum_path = os.path.join(abs_asset_path, base.CHECKSUM_FILE)
+    checksum_path = os.path.join(abs_data_path, base.CHECKSUM_FILE)
     # read the yaml file
     yaml_dict = base.load_yaml(checksum_path)
     # -------------------------------------------------------------------------
@@ -209,10 +212,13 @@ def check_local_assets(params: ParamDict):
 def update_local_assets(params: ParamDict, tarfile: str = None):
     # get path to yaml file
     _asset_path = params['DRS_RESET_ASSETS_PATH']
+    _data_path = params['DRS_CRITICAL_DATA_PATH']
     # get the absolute path to the assets dir
     abs_asset_path = drs_data.construct_path(params, '', _asset_path)
+    # get the data path
+    abs_data_path = drs_data.construct_path(params, '', _data_path)
     # add the checksum filename
-    checksum_path = os.path.join(abs_asset_path, base.CHECKSUM_FILE)
+    checksum_path = os.path.join(abs_data_path, base.CHECKSUM_FILE)
     # read the yaml file
     yaml_dict = base.load_yaml(checksum_path)
     # -------------------------------------------------------------------------
@@ -283,8 +289,7 @@ def update_local_assets(params: ParamDict, tarfile: str = None):
         emsg = 'Cannot extract tar file: {0} \n\t Error {1}: {2}'
         eargs = [tarfile, type(e), str(e)]
         WLOG(params, 'error', emsg.format(*eargs))
-    # -------------------------------------------------------------------------
-    return locals()
+
 
 
 # =============================================================================
