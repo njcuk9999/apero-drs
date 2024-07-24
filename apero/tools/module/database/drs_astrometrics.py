@@ -153,6 +153,8 @@ class AstroObj:
     vsini_err: Optional[float] = None
     vsini_source: str = ''
     mags: Dict[str, float] = dict()
+    mags_source: Dict[str, str] = dict()
+    keywords: List[str] = []
     notes: str = ''
 
     def __init__(self, name: str):
@@ -220,6 +222,10 @@ class AstroObj:
         self.mags['J'] = table_row['FLUX_J']
         self.mags['H'] = table_row['FLUX_H']
         self.mags['K'] = table_row['FLUX_K']
+
+        self.mags_source['J_SOURCE'] = 'SIMBAD'
+        self.mags_source['H_SOURCE'] = 'SIMBAD'
+        self.mags_source['K_SOURCE'] = 'SIMBAD'
         # deal with notes
         if not update:
             nargs = [Time.now().iso, getpass.getuser(), socket.gethostname(),
@@ -313,6 +319,7 @@ class AstroObj:
         else:
             dataframe['RV'] = [self.rv]
             dataframe['RV_SOURCE'] = [self.rv_source]
+        # ---------------------------------------------------------------------
         # deal with no teff
         if drs_text.null_text(self.teff, ['None', 'Null', '']):
             dataframe['TEFF'] = ['']
@@ -320,6 +327,7 @@ class AstroObj:
         else:
             dataframe['TEFF'] = [self.teff]
             dataframe['TEFF_SOURCE'] = [self.teff_source]
+        # ---------------------------------------------------------------------
         # deal with no spt
         if drs_text.null_text(self.sp_type, ['None', 'Null', '']):
             dataframe['SP_TYPE'] = ['']
@@ -327,9 +335,33 @@ class AstroObj:
         else:
             dataframe['SP_TYPE'] = [self.sp_type]
             dataframe['SP_SOURCE'] = [self.sp_source]
+        # ---------------------------------------------------------------------
+        # deal with vsin i
+        if drs_text.null_text(self.vsini, ['None', 'Null', '']):
+            dataframe['VSINI'] = ['']
+            dataframe['VSINI_ERR'] = ['']
+            dataframe['VSINI_SOURCE'] = ['']
+        else:
+            dataframe['VSINI'] = [self.vsini]
+            dataframe['VSINI_ERR'] = [self.vsini_err]
+            dataframe['VSINI_SOURCE'] = [self.vsini_source]
+        # ---------------------------------------------------------------------
+        # get magnitudes keys
+        mag_keys = ['UMAG', 'BMAG', 'VMAG', 'GMAG', 'RMAG', 'IMAG', 'JMAG',
+                    'HMAG', 'KMAG']
+        # loop around all magnitudes
+        for mag in mag_keys:
+            if mag in self.mags:
+                dataframe[mag] = [self.mags[mag]]
+                dataframe[mag+'_SOURCE'] = [self.mags_source[mag]]
+            else:
+                dataframe[mag] = ['']
+                dataframe[mag+'_SOURCE'] = ['']
+        # ---------------------------------------------------------------------
         # add to the notes and used column
         dataframe['NOTES'] = self.notes
         dataframe['USED'] = 1
+        dataframe['KEYWORDS'] = '|'.join(self.keywords)
         # return the populated dataframe
         return dataframe
 
@@ -726,6 +758,33 @@ class AstroObj:
             refs.append(qtable['bibcode'][row])
         # return the values and the options
         return values, options, refs
+
+    def check_keywords(self):
+        # ---------------------------------------------------------------------
+        # ask user whether they want to add keywords
+        # ---------------------------------------------------------------------
+        question = ('Do you want to add keywords? (e.g. TELLURIC, STANDARD)')
+        give_keywords = drs_installation.ask(question, dtype='YN')
+        # if yes allow them to enter keywords
+        if give_keywords:
+            # ask user for keywords
+            uinput = drs_installation.ask('Enter keywords separated by commas',
+                                          dtype=str)
+            # split keywords
+            keywords = uinput.split(',')
+            # if there are no keywords return
+            if len(keywords) == 0:
+                return
+            # clean keywords
+            clean_keywords = []
+            for keyword in keywords:
+                clean_keyword = keyword.strip().upper()
+                # if keyword is valid (anything that isn't blank) add it
+                if len(clean_keyword) > 0:
+                    clean_keywords.append(clean_keyword)
+            # add to object
+            self.keywords = clean_keywords
+
 
     def check_property(self, params: ParamDict, propname: str,
                        findexdbm: drs_database.FileIndexDatabase):
@@ -1430,6 +1489,11 @@ def ask_user(params: ParamDict, astro_obj: AstroObj) -> Tuple[AstroObj, bool]:
         findexdbm = drs_database.FileIndexDatabase(params)
         # check for vsini (from files on disk with this objname/aliases)
         astro_obj.check_property(params, propname='VSINI', findexdbm=findexdbm)
+    # ----------------------------------------------------------------
+    # deal with adding keywords to database
+    if add_to_list:
+        # check for keywords (from files on disk with this objname/aliases)
+        astro_obj.check_keywords()
     # -----------------------------------------------------------------
     return astro_obj, add_to_list
 
