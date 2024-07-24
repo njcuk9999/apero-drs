@@ -44,30 +44,6 @@ PseudoConst = constants.PseudoConstants
 WLOG = drs_log.wlog
 # get textentry
 textentry = lang.textentry
-# define object column datatypes (force consistency)
-OBJ_DATA_TYPES = dict()
-OBJ_DATA_TYPES['OBJNAME'] = str
-OBJ_DATA_TYPES['ORIGINAL_NAME'] = str
-OBJ_DATA_TYPES['ALIASES'] = str
-OBJ_DATA_TYPES['RA_DEG'] = float
-OBJ_DATA_TYPES['RA_SOURCE'] = str
-OBJ_DATA_TYPES['DEC_DEG'] = float
-OBJ_DATA_TYPES['DEC_SOURCE'] = str
-OBJ_DATA_TYPES['EPOCH'] = float
-OBJ_DATA_TYPES['PMRA'] = float
-OBJ_DATA_TYPES['PMRA_SOURCE'] = str
-OBJ_DATA_TYPES['PMDE'] = float
-OBJ_DATA_TYPES['PMDE_SOURCE'] = str
-OBJ_DATA_TYPES['PLX'] = float
-OBJ_DATA_TYPES['PLX_SOURCE'] = str
-OBJ_DATA_TYPES['RV'] = float
-OBJ_DATA_TYPES['RV_SOURCE'] = str
-OBJ_DATA_TYPES['SP_TYPE'] = str
-OBJ_DATA_TYPES['SP_SOURCE'] = str
-OBJ_DATA_TYPES['TEFF'] = float
-OBJ_DATA_TYPES['TEFF_SOURCE'] = str
-OBJ_DATA_TYPES['NOTES'] = str
-OBJ_DATA_TYPES['USED'] = int
 # define reject column datatypes (force consistency)
 REJECT_DATA_TYPES = dict()
 REJECT_DATA_TYPES['IDENTIFIER'] = str
@@ -116,7 +92,7 @@ def kill(params: ParamDict, timeout: int = 60):
         # get all processes that were started by user
         table = database.get('*', condition=condition, return_pandas=True)
         # get ids from table
-        ids = list(table['ID'].values)
+        ids = table['ID'].to_list()
         # log how many ids found
         WLOG(params, '', 'Found {0} processes'.format(len(ids)))
         # try to kill processes
@@ -599,6 +575,16 @@ def get_object_database(params: ParamDict, log: bool = True) -> Table:
     user_id = params['OBJ_LIST_GSHEET_USER_ID']
     # object col name in google sheet
     gl_objcol = params['GL_OBJ_COL_NAME']
+    # -------------------------------------------------------------------------
+    # load pseudo constants
+    pconst = constants.pload()
+    # get object database column data types
+    obj_data_types = dict()
+    astrom_cols = pconst.ASTROMETRIC_DB_COLUMNS()
+    # loop around columns and get data type
+    for col in astrom_cols.columns:
+        obj_data_types[col.name] = astrom_cols.get_datatype(col.name)
+    # -------------------------------------------------------------------------
     # print that we are updating object database
     if log:
         WLOG(params, 'info', textentry('40-503-00039'))
@@ -626,8 +612,8 @@ def get_object_database(params: ParamDict, log: bool = True) -> Table:
         pendtable = drs_database.get_google_sheet(params, gsheet_url,
                                                   pending_id)
     # force types in main table and pend table (so we can join them)
-    maintable = _force_column_dtypes(maintable, OBJ_DATA_TYPES)
-    pendtable = _force_column_dtypes(pendtable, OBJ_DATA_TYPES)
+    maintable = _force_column_dtypes(maintable, obj_data_types)
+    pendtable = _force_column_dtypes(pendtable, obj_data_types)
     # -------------------------------------------------------------------------
     # get the user table if defined
     if not drs_text.null_text(user_url, ['None', 'Null', '']):
@@ -644,7 +630,7 @@ def get_object_database(params: ParamDict, log: bool = True) -> Table:
         usertable = Table()
     # force types in user table
     if len(usertable) > 0:
-        usertable = _force_column_dtypes(usertable, OBJ_DATA_TYPES)
+        usertable = _force_column_dtypes(usertable, obj_data_types)
     # -------------------------------------------------------------------------
     # update main table with other tables (if we have entries in the pending
     #   table) and if those object name column not already in main table
@@ -841,6 +827,15 @@ def get_reject_database(params: ParamDict, log: bool = True) -> Table:
     if log:
         WLOG(params, 'info', textentry('40-503-00046'))
     # -------------------------------------------------------------------------
+    # load pseudo constants
+    pconst = constants.pload()
+    # get reject database column data types
+    reject_data_types = dict()
+    reject_cols = pconst.REJECT_DB_COLUMNS()
+    # loop around columns and get data type
+    for col in reject_cols.columns:
+        reject_data_types[col.name] = reject_cols.get_datatype(col.name)
+    # -------------------------------------------------------------------------
     # deal with gsheet_url being local csv file
     if os.path.exists(gsheet_url):
         mainpath = os.path.join(gsheet_url, main_id)
@@ -856,7 +851,7 @@ def get_reject_database(params: ParamDict, log: bool = True) -> Table:
         # get google sheets
         maintable = drs_database.get_google_sheet(params, gsheet_url, main_id)
     # force types in main table and pend table (so we can join them)
-    maintable = _force_column_dtypes(maintable, REJECT_DATA_TYPES)
+    maintable = _force_column_dtypes(maintable, reject_data_types)
     # -------------------------------------------------------------------------
     # return the main table
     return maintable
