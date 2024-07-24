@@ -669,17 +669,22 @@ def reset_assets(params: ParamDict, log: bool = True, reset_dbs: bool = True):
     # load pseudo constants
     pconst = constants.pload()
     # TODO: deal with getting online
-    asset_path = params['DRS_DATA_ASSETS']
-    reset_path = os.path.join(params['DRS_RESET_ASSETS_PATH'],
+    asset_path1 = params['DRS_DATA_ASSETS']
+    reset_path1 = os.path.join(params['DRS_RESET_ASSETS_PATH'],
                               params['INSTRUMENT'].lower())
-
+    asset_path2 = os.path.join(params['DRS_DATA_ASSETS'], 'core')
+    reset_path2 = os.path.join(params['DRS_RESET_ASSETS_PATH'], 'core')
     # get reset_path from apero module dir
-    abs_reset_path = drs_data.construct_path(params, '', str(reset_path))
+    abs_reset_path1 = drs_data.construct_path(params, '', str(reset_path1))
+    abs_reset_path2 = drs_data.construct_path(params, '', str(reset_path2))
     # loop around files and folders in assets dir
     #   we want to backup any new files the user as copied
     #   i.e. new masks etc
-    reset_dbdir(params, name, asset_path, abs_reset_path, log=log,
+    reset_dbdir(params, name, asset_path1, abs_reset_path1, log=log,
                 relative_path='MODULE', backup=True)
+    # also copy the core files into the same path
+    reset_dbdir(params, name, asset_path2, abs_reset_path2, log=log,
+                relative_path='CORE')
     # if user wants to reset all databases we do this here
     if reset_dbs:
         # create index databases

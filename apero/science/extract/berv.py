@@ -439,13 +439,10 @@ def use_barycorrpy(params: ParamDict, times: np.ndarray, props: ParamDict,
     estimate = pcheck(params, 'EXT_BERV_EST_ACC', func=func_name,
                       override=berv_est)
     # get barycorrpy directory
-    bc_dir = pcheck(params, 'EXT_BERV_BARYCORRPY_DIR', func=func_name,
-                    override=bc_dir)
     iersfile = pcheck(params, 'EXT_BERV_IERSFILE', func=func_name,
                       override=iersfile)
-    package = pcheck(params, 'DRS_PACKAGE', func=func_name, override=package)
     # make barycorrpy directory an absolute path
-    bc_dir = drs_path.get_relative_folder(params, package, bc_dir)
+    bc_dir = os.path.join(params['DRS_DATA_ASSETS'], 'core', 'barycorrpy')
     # get args
     # TODO: Add back in leap seconds (when barycorrpy works)
     bkwargs = dict(ra=props['RA'], dec=props['DEC'],

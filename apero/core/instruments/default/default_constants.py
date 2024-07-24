@@ -155,7 +155,7 @@ __all__ = [
     'EXT_S1D_INFILE', 'EXT_S1D_WAVESTART', 'EXT_S1D_WAVEEND',
     'EXT_S1D_BIN_UWAVE', 'EXT_S1D_BIN_UVELO', 'EXT_S1D_EDGE_SMOOTH_SIZE',
     'EXT_ALLOWED_BERV_DPRTYPES', 'EXT_BERV_EST_ACC', 'EXT_BERV_KIND',
-    'EXT_BERV_BARYCORRPY_DIR', 'EXT_BERV_IERSFILE', 'EXT_BERV_IERS_A_URL',
+    'EXT_BERV_IERSFILE', 'EXT_BERV_IERS_A_URL',
     'EXT_BERV_LEAPDIR', 'EXT_BERV_LEAPUPDATE', 'EXTRACT_PLOT_ORDER',
     'EXTRACT_S1D_PLOT_ZOOM1', 'EXTRACT_S1D_PLOT_ZOOM2', 'EXT_QUICK_LOOK',
     # thermal constants
@@ -2422,12 +2422,6 @@ EXT_BERV_KIND = Const('EXT_BERV_KIND', value=None, dtype=str, source=__NAME__,
                       options=['barycorrpy', 'estimate', 'None'], group=cgroup,
                       description=('Define which BERV calculation to use '
                                    '(barycorrpy or estimate or None)'))
-
-#   Define the barycorrpy data directory
-EXT_BERV_BARYCORRPY_DIR = Const('EXT_BERV_BARYCORRPY_DIR', value=None,
-                                dtype=str, source=__NAME__, group=cgroup,
-                                description=('Define the barycorrpy data '
-                                             'directory'))
 
 #   Define the barycorrpy iers file
 EXT_BERV_IERSFILE = Const('EXT_BERV_IERSFILE', value=None, dtype=str,

@@ -1290,10 +1290,6 @@ EXT_ALLOWED_BERV_DPRTYPES.value = 'OBJ_FP, OBJ_DARK, POLAR_FP, POLAR_DARK'
 EXT_BERV_KIND = EXT_BERV_KIND.copy(__NAME__)
 EXT_BERV_KIND.value = 'barycorrpy'
 
-#   Define the barycorrpy data directory
-EXT_BERV_BARYCORRPY_DIR = EXT_BERV_BARYCORRPY_DIR.copy(__NAME__)
-EXT_BERV_BARYCORRPY_DIR.value = './data/core/barycorrpy/'
-
 #   Define the barycorrpy iers file
 EXT_BERV_IERSFILE = EXT_BERV_IERSFILE.copy(__NAME__)
 EXT_BERV_IERSFILE.value = 'finals2000A.all'
