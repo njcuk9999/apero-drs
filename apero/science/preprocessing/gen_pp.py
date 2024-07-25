@@ -109,6 +109,8 @@ def resolve_target(params: ParamDict, pconst: PseudoConst,
     # -------------------------------------------------------------------------
     # update the sql object condition
     sql_obj_cond = 'OBJNAME="{0}"'.format(correct_objname)
+    # add condition that "NO_PM" not in keywords
+    sql_obj_cond += ' AND NOT (KEYWORDS LIKE "%NO_PM%")'
     # get the full entry for this cobjname
     table = database.get_entries('*', condition=sql_obj_cond)
     # -------------------------------------------------------------------------
