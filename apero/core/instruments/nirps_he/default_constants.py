@@ -2987,6 +2987,11 @@ LBL_SPECIFIC_DATATYPES.value = 'FP, LFC'
 LBL_RECAL_TEMPLATE = LBL_RECAL_TEMPLATE.copy(__NAME__)
 LBL_RECAL_TEMPLATE.value = 'FP, LFC'
 
+# Define which recipes should skip done files comma separates list e.g.
+#   e.g. LBL_COMPUTE,LBL_COMPILE,LBL_MASK
+LBL_SKIP_DONE = LBL_SKIP_DONE.copy(__NAME__)
+LBL_SKIP_DONE.value = 'LBL_COMPUTE, LBL_MASK'
+
 # Define which object names should be run through LBL compute in parellel
 #   i.e. break in to Ncore chunks (comma separated list)
 LBL_MULTI_OBJLIST = LBL_MULTI_OBJLIST.copy(__NAME__)

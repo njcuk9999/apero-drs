@@ -109,7 +109,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     kwargs['instrument'] = params['INSTRUMENT']
     kwargs['data_dir'] = params['LBL_PATH']
     kwargs['data_source'] = 'APERO'
-    kwargs['skip_done'] = params['INPUTS'].get('SKIP_DONE', True)
+    kwargs['skip_done'] = gen_lbl.do_skip(params, 'LBL_COMPUTE')
     kwargs['program'] = program
     kwargs['RESPROJ_TABLES'] = gen_lbl.dtemp(params)
     # deal with data type

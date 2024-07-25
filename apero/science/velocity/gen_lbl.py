@@ -55,6 +55,27 @@ TQDM = base.tqdm_module()
 # =============================================================================
 # Define functions
 # =============================================================================
+def do_skip(params: ParamDict, recipe_test: str) -> bool:
+    """
+    Determine whether to skip this recipe
+
+    :param params: ParamDict, the parameter dictionary containing constants
+    :param recipe_test: str, the recipe name to test for skipping
+
+    :return: bool, whether to skip this recipe
+    """
+    # get skip done from parameters
+    if recipe_test in params.listp('LBL_SKIP_DONE', dtype=str):
+        skip_done = True
+    else:
+        skip_done = False
+    # overwrite skip done if given in inputs
+    if 'INPUTS' in params:
+        return params['INPUTS'].get('SKIP_DONE', skip_done)
+    else:
+        return skip_done
+
+
 def run_mkdirs(params: ParamDict):
     # get the lbl path
     lbl_in_path = params['LBL_PATH']

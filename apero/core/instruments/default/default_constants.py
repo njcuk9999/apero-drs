@@ -373,8 +373,8 @@ __all__ = [
     # LBL settings
     'LBL_FILE_DEFS', 'LBL_DPRTYPES', 'LBL_TEMPLATE_FILE_DEFS',
     'LBL_SIM_FP_DPRTYPES', 'LBL_SYMLINKS', 'LBL_FRIENDS',
-    'LBL_SPECIFIC_DATATYPES', 'LBL_RECAL_TEMPLATE', 'LBL_MULTI_OBJLIST',
-    'LBL_DTEMP',
+    'LBL_SPECIFIC_DATATYPES', 'LBL_RECAL_TEMPLATE', 'LBL_SKIP_DONE',
+    'LBL_MULTI_OBJLIST', 'LBL_DTEMP',
     # post-processing settings
     'POST_CLEAR_REDUCED', 'POST_OVERWRITE', 'POST_HDREXT_COMMENT_KEY',
     # tool constants
@@ -5586,6 +5586,14 @@ LBL_RECAL_TEMPLATE = Const('LBL_RECAL_TEMPLATE', value=None, dtype=str,
                            description='Define objnames for which we should '
                                        'recalculate template if it doesn\'t '
                                        'exist (must include FP)')
+
+# Define which recipes should skip done files comma separates list e.g.
+#   e.g. LBL_COMPUTE,LBL_COMPILE,LBL_MASK
+LBL_SKIP_DONE = Const('LBL_SKIP_DONE', value=None, dtype=str, source=__NAME__,
+                      user=False, active=True, group=cgroup,
+                      description='Define which recipes should skip done files'
+                                  ' comma separates list '
+                                  'e.g.  LBL_COMPUTE,LBL_COMPILE,LBL_MASK')
 
 # Define which object names should be run through LBL compute in parellel
 #   i.e. break in to Ncore chunks (comma separated list)

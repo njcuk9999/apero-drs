@@ -2989,6 +2989,11 @@ LBL_SPECIFIC_DATATYPES.value = 'FP, LFC'
 LBL_RECAL_TEMPLATE = LBL_RECAL_TEMPLATE.copy(__NAME__)
 LBL_RECAL_TEMPLATE.value = 'FP, LFC'
 
+# Define which recipes should skip done files comma separates list e.g.
+#   e.g. LBL_COMPUTE,LBL_COMPILE,LBL_MASK
+LBL_SKIP_DONE = LBL_SKIP_DONE.copy(__NAME__)
+LBL_SKIP_DONE.value = 'LBL_COMPUTE, LBL_MASK'
+
 # Define which object names should be run through LBL compute in parellel
 #   i.e. break in to Ncore chunks (comma separated list)
 LBL_MULTI_OBJLIST = LBL_MULTI_OBJLIST.copy(__NAME__)
@@ -2997,6 +3002,7 @@ LBL_MULTI_OBJLIST.value = 'FP'
 # Define the DTEMP gradient files
 LBL_DTEMP = LBL_DTEMP.copy(__NAME__)
 LBL_DTEMP.value = '{"DTEMP3000": "temperature_gradient_3000.fits", "DTEMP3500": "temperature_gradient_3500.fits", "DTEMP4000": "temperature_gradient_4000.fits", "DTEMP4500": "temperature_gradient_4500.fits", "DTEMP5000": "temperature_gradient_5000.fits", "DTEMP5500": "temperature_gradient_5500.fits", "DTEMP6000": "temperature_gradient_6000.fits"}'
+
 
 # =============================================================================
 # POST PROCESS SETTINGS

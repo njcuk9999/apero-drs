@@ -109,7 +109,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     kwargs['instrument'] = params['INSTRUMENT']
     kwargs['data_dir'] = params['LBL_PATH']
     kwargs['data_source'] = 'APERO'
-    kwargs['skip_done'] = params['INPUTS'].get('SKIP_DONE', True)
+    kwargs['skip_done'] = gen_lbl.do_skip(params, 'LBL_COMPUTE')
     # deal with data type
     if objname in params.listp('LBL_SPECIFIC_DATATYPES', dtype=str):
         data_type = objname
@@ -154,7 +154,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # add output file(s) to database
         for science_file in science_files:
             # get science file base name
-            basename = os.path.basename(science_file)
+            basename = str(os.path.basename(science_file))
             # remove .fits from basename
             basename = basename.replace('.fits', '')
             # add to database
