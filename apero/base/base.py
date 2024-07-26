@@ -74,7 +74,9 @@ RECOMM_USER = __PATH__.parent.joinpath('requirements_current.txt')
 RECOMM_DEV = __PATH__.parent.joinpath('requirements_developer.txt')
 # data checksum filename
 CHECKSUM_FILE = 'checksums.yaml'
-
+# yaml groups
+YAML_GROUPS = ['DRS', 'PREPROCESSING', 'CALIBRATION', 'OBJECT', 'DEBUG',
+               'TOOLS']
 # -----------------------------------------------------------------------------
 # warnings
 # -----------------------------------------------------------------------------
@@ -115,8 +117,8 @@ GSPARAM = ('OE4_WF0Btk29', 'Gmb8SrbTJ3UF')
 # types definitions
 # -----------------------------------------------------------------------------
 # Define simple types allowed for constants
-SIMPLE_TYPES = [int, float, str, bool, list]
-SIMPLE_STYPES = ['int', 'float', 'str', 'bool', 'list']
+SIMPLE_TYPES = [int, float, str, bool, list, dict]
+SIMPLE_STYPES = ['int', 'float', 'str', 'bool', 'list', 'dict']
 # define valid characters
 VALID_CHARS = list(string.ascii_letters) + list(string.digits)
 VALID_CHARS += list(string.punctuation) + list(string.whitespace)

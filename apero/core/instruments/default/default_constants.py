@@ -406,7 +406,7 @@ Const = constant_functions.Const
 # =============================================================================
 # DRS DATA SETTINGS
 # =============================================================================
-cgroup = 'DRS DATA SETTINGS'
+cgroup = 'DRS.DATA'
 # Define the data engineering path
 DATA_ENGINEERING = Const('DATA_ENGINEERING', value=None, dtype=str,
                          source=__NAME__, group=cgroup,
@@ -429,7 +429,7 @@ CALIB_DB_FORCE_WAVESOL = Const('CALIB_DB_FORCE_WAVESOL', value=None,
 # =============================================================================
 # COMMON IMAGE SETTINGS
 # =============================================================================
-cgroup = 'COMMON IMAGE SETTINGS'
+cgroup = 'DRS.COMMON_IMAGE'
 
 # Define the rotation of the pp files in relation to the raw files
 #     nrot = 0 -> same as input
@@ -484,7 +484,8 @@ IMAGE_Y_FULL = Const('IMAGE_Y_FULL', dtype=int, value=None, source=__NAME__,
                                   'access to this information) in y dim'))
 
 # Define the fibers
-FIBER_TYPES = Const('FIBER_TYPES', dtype=str, value=None, source=__NAME__,
+FIBER_TYPES = Const('FIBER_TYPES', dtype=list, dtypei=str,
+                    value=None, source=__NAME__,
                     group=cgroup, description='Define the fibers')
 
 # Defines whether to by default combine images that are inputted at the same
@@ -551,7 +552,7 @@ ALL_POLAR_RHOMB_POS = Const('ALL_POLAR_RHOMB_POS', value=None, dtype=str,
 # =============================================================================
 # CALIBRATION: GENERAL SETTINGS
 # =============================================================================
-cgroup = 'CALIBRATION: GENERAL SETTINGS'
+cgroup = 'CALIBRATION.GENERAL'
 
 # Define the maximum number of files that can be used in a group
 GROUP_FILE_LIMIT = Const('GROUP_FILE_LIMIT', value=None, dtype=int,
@@ -831,7 +832,7 @@ NIGHT_DEFINITION = Const('NIGHT_DEFINITION', value=None, dtype=str,
 # =============================================================================
 # CALIBRATION: FIBER SETTINGS
 # =============================================================================
-cgroup = 'CALIBRATION: FIBER SETTINGS'
+cgroup = 'CALIBRATION.FIBER'
 # Number of orders to skip at start of image
 FIBER_FIRST_ORDER_JUMP_AB = Const('FIBER_FIRST_ORDER_JUMP_AB', value=None,
                                   dtype=int, minimum=0, source=__NAME__,
@@ -881,7 +882,7 @@ FIBER_SET_NUM_FIBERS_C = Const('FIBER_SET_NUM_FIBERS_C', value=None,
 # =============================================================================
 # PRE-PROCESSSING SETTINGS
 # =============================================================================
-cgroup = 'PRE-PROCESSING SETTINGS'
+cgroup = 'PREPROCESSING.GENERAL'
 # Define object (science or telluric)
 PP_OBJ_DPRTYPES = Const('PP_OBJ_DPRTYPES', value=None, dtype=str,
                         source=__NAME__, group=cgroup,
@@ -1188,7 +1189,7 @@ GL_R_RV_COL = Const('GL_R_RV_COL', value=None, dtype=str,
 # =============================================================================
 # CALIBRATION: DARK SETTINGS
 # =============================================================================
-cgroup = 'CALIBRATION: DARK SETTINGS'
+cgroup = 'CALIBRATION.DARK'
 # Min dark exposure time
 QC_DARK_TIME = Const('QC_DARK_TIME', value=None, dtype=float, minimum=0.0,
                      source=__NAME__, group=cgroup,
@@ -1309,7 +1310,7 @@ DARK_REF_MIN_EXPTIME = Const('DARK_REF_MIN_EXPTIME', value=None, dtype=int,
 # =============================================================================
 # CALIBRATION: BAD PIXEL MAP SETTINGS
 # =============================================================================
-cgroup = 'CALIBRATION: BAD PIXEL MAP SETTINGS'
+cgroup = 'CALIBRATION.BAD_PIXEL_MAP'
 # Defines the full detector flat file (located in the data folder)
 BADPIX_FULL_FLAT = Const('BADPIX_FULL_FLAT', value=None, dtype=str,
                          source=__NAME__, group=cgroup,
@@ -1371,7 +1372,7 @@ BADPIX_DILATE_SIZE = Const('BADPIX_DILATE_SIZE', value=None, dtype=int,
 # =============================================================================
 # CALIBRATION: BACKGROUND CORRECTION SETTINGS
 # =============================================================================
-cgroup = 'CALIBRATION: BACKGROUND CORRECTION SETTINGS'
+cgroup = 'CALIBRATION.BACKGROUND_CORRECTION'
 #  Width of the box to produce the background mask
 BKGR_BOXSIZE = Const('BKGR_BOXSIZE', value=None, dtype=int,
                      source=__NAME__, minimum=0, group=cgroup,
@@ -1438,7 +1439,7 @@ BKGR_KER_SIG = Const('BKGR_KER_SIG', value=None, dtype=float, source=__NAME__,
 # =============================================================================
 # CALIBRATION: LOCALISATION SETTINGS
 # =============================================================================
-cgroup = 'CALIBRATION: LOCALISATION SETTINGS'
+cgroup = 'CALIBRATION.LOCALISATION'
 # median-binning size in the dispersion direction. This is just used to
 #     get an order-of-magnitude of the order profile along a given column
 LOC_BINSIZE = Const('LOC_BINSIZE', value=None, dtype=int, source=__NAME__,
@@ -1528,10 +1529,6 @@ LOC_NUM_WID_SAMPLES = Const('LOC_NUM_WID_SAMPLES', value=None, dtype=int,
                             description='define the number of width samples to '
                                         'use in localisation')
 
-# =============================================================================
-# CALIBRATION: LOCALISATION SETTINGS
-# =============================================================================
-cgroup = 'CALIBRATION: LOCALISATION SETTINGS'
 # Size of the order_profile smoothed box
 #   (from pixel - size to pixel + size)
 LOC_ORDERP_BOX_SIZE = Const('LOC_ORDERP_BOX_SIZE', value=None, dtype=int,
@@ -1732,7 +1729,7 @@ LOC_PLOT_CORNER_YZOOM2 = Const('LOC_PLOT_CORNER_YZOOM2', value=None,
 # =============================================================================
 # CALIBRATION: SHAPE SETTINGS
 # =============================================================================
-cgroup = 'CALIBRATION: SHAPE SETTINGS'
+cgroup = 'CALIBRATION.SHAPE'
 #  Define the allowed DPRTYPES for finding files for SHAPE_REF will
 #      only find those types define by 'filetype' but 'filetype' must
 #      be one of theses (strings separated by commas)
@@ -2109,7 +2106,7 @@ SHAPEL_PLOT_ZOOM2 = Const('SHAPEL_PLOT_ZOOM2', value=None, dtype=str,
 # =============================================================================
 # CALIBRATION: FLAT SETTINGS
 # =============================================================================
-cgroup = 'CALIBRATION: FLAT SETTINGS'
+cgroup = 'CALIBRATION.FLAT'
 # TODO: is blaze_size needed with sinc function?
 # Half size blaze smoothing window
 FF_BLAZE_HALF_WINDOW = Const('FF_BLAZE_HALF_WINDOW', value=None, dtype=int,
@@ -2186,7 +2183,7 @@ FF_HIGH_PASS_SIZE = Const('FF_HIGH_PASS_SIZE', value=None, dtype=int,
 # =============================================================================
 # CALIBRATION: LEAKAGE SETTINGS
 # =============================================================================
-cgroup = 'CALIBRATION: LEAKAGE SETTINGS'
+cgroup = 'CALIBRATION.LEAKAGE'
 # Define the types of input file allowed by the leakage reference recipe
 ALLOWED_LEAKREF_TYPES = Const('ALLOWED_LEAKREF_TYPES', value=None, dtype=str,
                               source=__NAME__, group=cgroup,
@@ -2298,7 +2295,7 @@ LEAK_BAD_RATIO_OFFSET = Const('LEAK_BAD_RATIO_OFFSET', value=None, dtype=float,
 # =============================================================================
 # CALIBRATION: EXTRACTION SETTINGS
 # =============================================================================
-cgroup = 'CALIBRATION: EXTRACTION SETTINGS'
+cgroup = 'CALIBRATION.EXTRACTION'
 #    Whether extraction code is done in quick look mode (do not use for
 #       final products)
 EXT_QUICK_LOOK = Const('EXT_QUICK_LOOK', value=None, dtype=bool,
@@ -2477,7 +2474,7 @@ EXTRACT_S1D_PLOT_ZOOM2 = Const('EXTRACT_S1D_PLOT_ZOOM2', value=None,
 # =============================================================================
 # CALIBRATION: THERMAL SETTINGS
 # =============================================================================
-cgroup = 'CALIBRATION: THERMAL SETTINGS'
+cgroup = 'CALIBRATION.THERMAL'
 # whether to apply the thermal correction to extractions
 THERMAL_CORRECT = Const('THERMAL_CORRECT', value=None, dtype=bool,
                         source=__NAME__, user=True, active=False, group=cgroup,
@@ -2579,7 +2576,7 @@ THERMAL_EXCESS_EMISSIVITY_FILE = Const('THERMAL_EXCESS_EMISSIVITY_FILE',
 # =============================================================================
 # CALIBRATION: WAVE EA GENERAL SETTINGS
 # =============================================================================
-cgroup = 'CALIBRATION: WAVE GENERAL SETTING'
+cgroup = 'CALIBRATION.WAVE_GENERAL'
 
 # Define wave reference fiber (controller fiber)
 WAVE_REF_FIBER = Const('WAVE_REF_FIBER', value=None, dtype=str,
@@ -2723,7 +2720,7 @@ WAVE_FIBER_COMP_PLOT_ORD = Const('WAVE_FIBER_COMP_PLOT_ORD', value=None,
 # =============================================================================
 # CALIBRATION: WAVE LINES REFERENCE SETTINGS
 # =============================================================================
-cgroup = 'CALIBRATION: WAVE LINES REFERENCE SETTINGS'
+cgroup = 'CALIBRATION.WAVE_LINES_REFERENCE'
 # min SNR to consider the line (for HC)
 WAVEREF_NSIG_MIN_HC = Const('WAVEREF_NSIG_MIN_HC', value=None, dtype=int,
                             source=__NAME__, minimum=0, group=cgroup,
@@ -2841,7 +2838,7 @@ WAVE_RES_VELO_CUTOFF2 = Const('WAVE_RES_VELO_CUTOFF2', value=None,
 # =============================================================================
 # CALIBRATION: WAVE CCF SETTINGS
 # =============================================================================
-cgroup = 'CALIBRATION: WAVE CCF SETTINGS'
+cgroup = 'CALIBRATION.WAVE_CCF'
 #   The value of the noise for wave dv rms calculation
 #       snr = flux/sqrt(flux + noise^2)
 WAVE_CCF_NOISE_SIGDET = Const('WAVE_CCF_NOISE_SIGDET', value=None, dtype=float,
@@ -3024,7 +3021,7 @@ WAVE_CCF_RV_THRES_QC = Const('WAVE_CCF_RV_THRES_QC', value=None, dtype=float,
 # =============================================================================
 # CALIBRATION: WAVE GENERAL SETTINGS
 # =============================================================================
-cgroup = 'CALIBRATION: WAVE GENERAL SETTING'
+cgroup = 'CALIBRATION.WAVE_GENERAL'
 
 # Define the line list file (located in the DRS_WAVE_DATA directory)
 WAVE_LINELIST_FILE = Const('WAVE_LINELIST_FILE', value=None, dtype=str,
@@ -3118,7 +3115,7 @@ WAVE_N_ORD_FINAL = Const('WAVE_N_ORD_FINAL', value=None, dtype=int,
 # =============================================================================
 # CALIBRATION: WAVE HC SETTINGS
 # =============================================================================
-cgroup = 'CALIBRATION: WAVE HC SETTING'
+cgroup = 'CALIBRATION.WAVE_HC'
 # Define the mode to calculate the hc wave solution
 WAVE_MODE_HC = Const('WAVE_MODE_HC', value=None, dtype=int, source=__NAME__,
                      options=[0], user=True, active=False, group=cgroup,
@@ -3338,7 +3335,7 @@ WAVE_HC_RESMAP_SIGCLIP = Const('WAVE_HC_RESMAP_SIGCLIP', value=None,
 # =============================================================================
 # CALIBRATION: WAVE LITTROW SETTINGS
 # =============================================================================
-cgroup = 'CALIBRATION: WAVE LITTROW SETTINGS'
+cgroup = 'CALIBRATION.WAVE_LITTROW'
 #  Define the order to start the Littrow fit from for the HC wave solution
 WAVE_LITTROW_ORDER_INIT_1 = Const('WAVE_LITTROW_ORDER_INIT_1', value=None,
                                   dtype=int, source=__NAME__, group=cgroup,
@@ -3433,7 +3430,7 @@ WAVE_LITTROW_QC_DEV_MAX = Const('WAVE_LITTROW_QC_DEV_MAX', value=None,
 # =============================================================================
 # CALIBRATION: WAVE FP SETTINGS
 # =============================================================================
-cgroup = 'CALIBRATION: WAVE FP SETTING'
+cgroup = 'CALIBRATION.WAVE_FP'
 # Define the mode to calculate the fp wave solution
 WAVE_MODE_FP = Const('WAVE_MODE_FP', value=None, dtype=int, source=__NAME__,
                      options=[0, 1], user=True, active=False, group=cgroup,
@@ -3627,7 +3624,7 @@ WAVE_FP_FIBERTYPES = Const('WAVE_FP_FIBERTYPES', value='None', dtype=str,
 # =============================================================================
 # CALIBRATION: WAVE NIGHT SETTINGS
 # =============================================================================
-cgroup = 'CALIBRATION: WAVE NIGHT SETTINGS'
+cgroup = 'CALIBRATION.WAVE_NIGHT'
 
 # number of iterations for hc convergence
 WAVE_NIGHT_NITERATIONS1 = Const('WAVE_NIGHT_NITERATIONS1', value=None,
@@ -3689,7 +3686,7 @@ WAVENIGHT_PLT_BINU = Const('WAVENIGHT_PLT_BINU', value=None, dtype=float,
 # =============================================================================
 # OBJECT: SKY CORR SETTINGS
 # =============================================================================
-cgroup = 'OBJECT: SKY CORR SETTINGS'
+cgroup = 'OBJECT.SKY_CORR'
 
 
 # the OUTPUT type (KW_OUTPUT header key) and DrsFitsFile name required for
@@ -3805,7 +3802,7 @@ SKYCORR_NSIG_THRES = Const('SKYCORR_NSIG_THRES', value=None, dtype=int,
 # =============================================================================
 # OBJECT: TELLURIC SETTINGS
 # =============================================================================
-cgroup = 'OBJECT: TELLURIC SETTINGS'
+cgroup = 'OBJECT.TELLURIC'
 # Define the name of the tapas file to use
 TAPAS_FILE = Const('TAPAS_FILE', value=None, dtype=str, source=__NAME__,
                    group=cgroup,
@@ -3863,7 +3860,7 @@ TELLU_ABSO_FIT_LOS_VELO = Const('TELLU_ABSO_FIT_LOS_VELO', value=False,
 # =============================================================================
 # OBJECT: TELLURIC PRE-CLEANING SETTINGS
 # =============================================================================
-cgroup = 'OBJECT: TELLURIC PRE-CLEANING SETTINGS'
+cgroup = 'OBJECT.TELLURIC_PRECLEANING'
 
 # define whether we do pre-cleaning
 TELLUP_DO_PRECLEANING = Const('TELLUP_DO_PRECLEANING', value=None, dtype=bool,
@@ -4028,7 +4025,7 @@ TELLU_FINITE_RES_ORDER = Const('TELLUP_WATER_BOUNDS', value=None, dtype=int,
 # =============================================================================
 # OBJECT: MAKE TELLURIC SETTINGS
 # =============================================================================
-cgroup = 'OBJECT: MAKE TELLURIC SETTINGS'
+cgroup = 'OBJECT.MAKE_TELLURIC'
 # value below which the blaze in considered too low to be useful
 #     for all blaze profiles, we normalize to the 95th percentile.
 #     That's pretty much the peak value, but it is resistent to
@@ -4152,7 +4149,7 @@ TELLU_TRANS_MODEL_SIG = Const('TELLU_TRANS_MODEL_SIG', value=None,
 # =============================================================================
 # OBJECT: FIT TELLURIC SETTINGS
 # =============================================================================
-cgroup = 'OBJECT: FIT TELLURIC SETTINGS'
+cgroup = 'OBJECT.FIT_TELLURIC'
 
 #   Define the order to use for SNR check when accepting tellu files
 #      to the telluDB
@@ -4284,7 +4281,7 @@ FTELLU_SPLOT_ORDER = Const('FTELLU_SPLOT_ORDER', value=None,
 # =============================================================================
 # OBJECT: MAKE TEMPLATE SETTINGS
 # =============================================================================
-cgroup = 'OBJECT: MAKE TEMPLATE SETTINGS'
+cgroup = 'OBJECT.MAKE_TEMPLATE'
 # the OUTPUT type (KW_OUTPUT header key) and DrsFitsFile name required for
 #   input template files
 TELLURIC_FILETYPE = Const('TELLURIC_FILETYPE', value=None, dtype=str,
@@ -4449,7 +4446,7 @@ MKTEMPLATE_DECONV_ITR_MAX = Const('MKTEMPLATE_DECONV_ITR_MAX', value=None,
 # =============================================================================
 # CALIBRATION: CCF SETTINGS
 # =============================================================================
-cgroup = 'CALIBRATION: CCF SETTINGS'
+cgroup = 'OBJECT.CCF'
 # Define the ccf mask path
 CCF_MASK_PATH = Const('CCF_MASK_PATH', value=None, dtype=str, source=__NAME__,
                       group=cgroup, description='Define the ccf mask path')
@@ -4657,7 +4654,7 @@ CCF_BIS_CUT_BOTTOM = Const('CCF_BIS_CUT_BOTTOM', value=None, dtype=float,
 # =============================================================================
 # GENERAL POLARISATION SETTINGS
 # =============================================================================
-cgroup = 'GENERAL POLARISATION SETTINGS'
+cgroup = 'OBJECT.POLARISATION'
 
 # Define all possible fibers used for polarimetry
 POLAR_FIBERS = Const('POLAR_FIBERS', value=None, dtype=str, source=__NAME__,
@@ -4754,7 +4751,7 @@ POLAR_REDDEST_THRESHOLD = Const('POLAR_REDDEST_THRESHOLD', value=None,
 # =============================================================================
 # POLAR POLY MOVING MEDIAN SETTINGS
 # =============================================================================
-cgroup = 'POLAR POLY MOVING MEDIAN SETTINGS'
+cgroup = 'OBJECT.POLAR_POLY_MOVING_MEDIAN'
 
 # Define the polarimetry continuum bin size
 POLAR_CONT_BINSIZE = Const('POLAR_CONT_BINSIZE', value=None, dtype=int,
@@ -4785,7 +4782,7 @@ POLAR_CONT_DEG_POLYNOMIAL = Const('POLAR_CONT_DEG_POLYNOMIAL', value=None,
 # =============================================================================
 # POLAR IRAF SETTINGS
 # =============================================================================
-cgroup = 'POLAR IRAF SETTINGS'
+cgroup = 'OBJECT.POLAR_IRAF'
 
 # function to fit to the stokes I continuum: must be 'polynomial' or
 #    'spline3'
@@ -4825,7 +4822,7 @@ POLAR_IRAF_CONT_FUNC_ORDER = Const('POLAR_IRAF_CONT_FUNC_ORDER',
 # =============================================================================
 # POLAR LSD SETTINGS
 # =============================================================================
-cgroup = 'POLAR LSD SETTINGS'
+cgroup = 'OBJECT.POLAR_LSD'
 
 #  Define the spectral lsd mask directory for lsd polar calculations
 POLAR_LSD_DIR = Const('POLAR_LSD_DIR', value=None, dtype=str, source=__NAME__,
@@ -4919,7 +4916,7 @@ POLAR_LSD_RES_POWER_GUESS = Const('POLAR_LSD_RES_POWER_GUESS', value=None,
 # =============================================================================
 # DEBUG OUTPUT FILE SETTINGS
 # =============================================================================
-cgroup = 'DEBUG OUTPUT FILE SETTINGS'
+cgroup = 'DEBUG.OUTPUT_FILE'
 # Whether to save background debug file (large 0.5 GB per file)
 #   one of these per extraction (lots)
 DEBUG_BACKGROUND_FILE = Const('DEBUG_BACKGROUND_FILE', value=True,
@@ -4961,7 +4958,7 @@ DEBUG_UNCORR_EXT_FILES = Const('DEBUG_UNCORR_EXT_FILES', value=True,
 # =============================================================================
 # DEBUG PLOT SETTINGS
 # =============================================================================
-cgroup = 'DEBUG PLOT SETTINGS'
+cgroup = 'DEBUG.PLOT'
 # turn on dark image region debug plot
 PLOT_DARK_IMAGE_REGIONS = Const('PLOT_DARK_IMAGE_REGIONS', value=False,
                                 dtype=bool, source=__NAME__,
@@ -5532,7 +5529,7 @@ PLOT_POLAR_LSD = Const('PLOT_POLAR_LSD', value=False,
 # =============================================================================
 # LBL SETTINGS
 # =============================================================================
-cgroup = 'LBL SETTINGS'
+cgroup = 'OBJECT.LBL'
 # Define the file definition type (DRSOUTID) for LBL input files
 LBL_FILE_DEFS = Const('LBL_FILE_DEFS', value=None, dtype=str, source=__NAME__,
                       user=False, active=True, group=cgroup,
@@ -5613,7 +5610,7 @@ LBL_DTEMP = Const('LBL_DTEMP', value=None, dtype=str,
 # =============================================================================
 # POST PROCESS SETTINGS
 # =============================================================================
-cgroup = 'POST PROCESS SETTINGS'
+cgroup = 'OBJECT.POST_PROCESS'
 # Define whether (by deafult) to clear reduced directory
 POST_CLEAR_REDUCED = Const('POST_CLEAR_REDUCED', value=False,
                            dtype=bool, source=__NAME__, user=True, active=True,
@@ -5636,14 +5633,15 @@ POST_HDREXT_COMMENT_KEY = Const('POST_HDREXT_COMMENT_KEY', value=None,
                                             'to insert extension comment after')
 
 # =============================================================================
-# TOOLS SETTINGS
+# TOOLS REPROCESS SETTINGS
 # =============================================================================
-cgroup = 'TOOLS SETTING'
+cgroup = 'TOOLS.REPROCESS'
 
 # Define which block kinds to reindex (warning can take a long time)
 #    only select block kinds that have (or could be) manually changed
 REPROCESS_REINDEX_BLOCKS = Const('REPROCESS_REINDEX_BLOCKS', value=None,
-                                 dtype=str, source=__NAME__, group=cgroup,
+                                 dtype=list, dtypei=str,
+                                 source=__NAME__, group=cgroup,
                                  user=True, active=True,
                                  description='Define which block kinds to '
                                              'reindex (warning can take a '
@@ -5746,6 +5744,11 @@ REPROCESS_OBJ_SCI_SQL = Const('REPROCESS_OBJ_SCI_SQL', value='', dtype=str,
                               description='Define the extra SQL science '
                                           'object select critera')
 
+# =============================================================================
+# TOOLS: GENERAL SETTINGS
+# =============================================================================
+cgroup = 'TOOLS.GENERAL'
+
 # define the default database to remake
 REMAKE_DATABASE_DEFAULT = Const('REMAKE_DATABASE_DEFAULT', value='calibration',
                                 dtype=str, source=__NAME__, group=cgroup,
@@ -5795,6 +5798,8 @@ DRIFT_DPR_FIBER_TYPE = Const('DRIFT_DPR_FIBER_TYPE', value=None, dtype=str,
 # =============================================================================
 # ARI SETTINGS
 # =============================================================================
+cgroup = 'TOOLS.ARI'
+
 # Define the ari instrument (may be different from the apero instrument)
 ARI_INSTRUMENT = Const('ARI_INSTRUMENT', value=None, dtype=str,
                        source=__NAME__, group=cgroup,

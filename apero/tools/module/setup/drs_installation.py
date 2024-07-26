@@ -18,12 +18,16 @@ from pathlib import Path
 from typing import Any, List, Dict, Optional, Tuple, Union
 
 import numpy as np
+from ruamel.yaml import YAML
+from ruamel.yaml.comments import CommentedMap
 
 from apero import lang
 from apero.base import base
+from apero.core.core import drs_exceptions
 from apero.core import constants
 from apero.core.constants import path_definitions as pathdef
 from apero.core.core import drs_misc
+from apero.core.core import drs_base_classes
 
 # =============================================================================
 # Define variables
@@ -51,6 +55,9 @@ DEFAULT_DATA_PATH = HOME.joinpath('apero', 'data', 'default')
 
 UCONFIG = 'user_config.ini'
 UCONST = 'user_constants.ini'
+
+YCONFIG = 'user_config.yaml'
+YCONST = 'user_constants.yaml'
 
 OUT_BINPATH = Path('..').joinpath('bin')
 OUT_TOOLPATH = Path('..').joinpath('tools')
@@ -863,14 +870,27 @@ def create_configs(params: ParamDict, all_params: ParamDict) -> ParamDict:
     # reload dictionaries connected to yaml files
     base.IPARAMS = base.load_install_yaml()
     base.DPARAMS = base.load_database_yaml()
+    # make a copy of parameters and update all_params values in them
+    uparams = params.copy()
+    # push the new keys into uparams
+    for key in uparams:
+        if key in all_params:
+            uparams.set(key, all_params[key], source=params.sources[key],
+                        instance=params.instances[key])
     # create user config
-    config_lines, const_lines = create_ufiles(params, devmode, askcreate)
+    ufiles = create_ufiles(uparams, devmode, askcreate)
+    config_lines, const_lines, config_data, const_data = ufiles
     # write / update config and const
-    uconfig = ufile_write(params, config_lines, userconfig, UCONFIG,
+    uconfig = ufile_write(uparams, config_lines, userconfig, UCONFIG,
                           'config')
-    uconst = ufile_write(params, const_lines, userconfig, UCONST,
+    uconst = ufile_write(uparams, const_lines, userconfig, UCONST,
                          'constant')
+    # write the yaml
+    yconfig = yfile_write(config_data, userconfig, YCONFIG, 'config')
+    yconst = yfile_write(const_data, userconfig, YCONST, 'constant')
+
     # store filenames in iparams
+    # TODO: REPLACE UCONFIG with YCONFIG and same for CONST
     all_params['CONFIGFILES'] = [uconfig, uconst]
     all_params.set_source('CONFIGFILES', func_name)
     # return all_params
@@ -1279,8 +1299,8 @@ def reset_paths_empty(all_params: ParamDict) -> bool:
 # =============================================================================
 # create user files functions
 # =============================================================================
-def create_ufiles(params: ParamDict, devmode: bool,
-                  ask_user: bool = True) -> Tuple[List[str], List[str]]:
+def create_ufiles(params: ParamDict, devmode: bool, ask_user: bool = True
+                  ) -> Tuple[List[str], List[str], CommentedMap, CommentedMap]:
     """
     Create the user config/constant ini files
 
@@ -1387,14 +1407,103 @@ def create_ufiles(params: ParamDict, devmode: bool,
             else:
                 const[group] = [[instance, params[param]]]
     # ------------------------------------------------------------------
-    # create config file
-    config_lines = create_ufile(params['INSTRUMENT'], 'config', config,
-                                config_groups)
-    # create const file
-    const_lines = create_ufile(params['INSTRUMENT'], 'constant', const,
-                               const_groups)
+    # TODO: Remove these in favour of the yaml files
+    # # create config file
+    # config_lines = create_ufile(params['INSTRUMENT'], 'config', config,
+    #                             config_groups)
+    # # create const file
+    # const_lines = create_ufile(params['INSTRUMENT'], 'constant', const,
+    #                            const_groups)
+    config_lines, const_lines = [], []
     # ------------------------------------------------------------------
-    return config_lines, const_lines
+    # create config yaml file
+    config_data = create_uyaml(params['INSTRUMENT'], 'config', config,
+                               config_groups)
+    # create const yaml file
+    const_data = create_uyaml(params['INSTRUMENT'], 'constant', const,
+                              const_groups)
+    # ------------------------------------------------------------------
+    return config_lines, const_lines, config_data, const_data
+
+
+def create_uyaml(instrument: str, ckind: str, group_dict: Dict[str, list],
+                 grouplist: List[str]) -> CommentedMap:
+
+    # Create a commented map
+    data = CommentedMap()
+    # Add start comments
+    ltitle = '{0} {1} file'.format(instrument, ckind)
+    lines = user_header(ltitle, comment='')
+    data.yaml_set_start_comment('\n'.join(lines))
+    # -------------------------------------------------------------------------
+    # define yaml groups from this ckind
+    yaml_groups = []
+    # loop around groups and get valid groups for this ckind
+    for groupstr in grouplist:
+        # ---------------------------------------------------------------------
+        # get yaml group and group
+        yaml_group, group = groupstr.split('.')
+        # skip if we've already added this group
+        if yaml_group in yaml_groups:
+            continue
+        # deal with bad group
+        if yaml_group not in base.YAML_GROUPS:
+            emsg = 'YAML group "{0}" not in base.YAML_GROUPS'
+            eargs = [yaml_group]
+            raise drs_exceptions.DrsCodedException('', level='error',
+                                                   message=emsg.format(*eargs))
+        # add to yaml groups
+        yaml_groups.append(yaml_group)
+        # add a section for this group
+        data[yaml_group] = CommentedMap()
+        section_lines = ['']
+        section_lines += user_header(yaml_group, comment='')
+        section_str = '\n'.join(section_lines)
+        # push comment for section
+        data.yaml_set_comment_before_after_key(yaml_group, before=section_str,
+                                               indent=0)
+    # loop around groups
+    for groupstr in grouplist:
+        # ---------------------------------------------------------------------
+        # get yaml group and group
+        yaml_group, group = groupstr.split('.')
+        # ---------------------------------------------------------------------
+        # only add if we have parameters that are needed in that group
+        if groupstr in group_dict:
+            # add a header if this is a new group
+            group_lines = ['']
+            group_lines += user_header(group, comment='')
+            group_str = '\n'.join(group_lines)
+            # define section for each group
+            data[yaml_group][group] = CommentedMap()
+            data[yaml_group].yaml_set_comment_before_after_key(group,
+                                                               before=group_str,
+                                                               indent=2)
+            # loop around group parameters
+            for it, item in enumerate(range(len(group_dict[groupstr]))):
+                # set lines to add for variable
+                var_lines = []
+                # get instance of this parameter
+                instance = group_dict[groupstr][item][0]
+                # get value of this parameter
+                value = group_dict[groupstr][item][1]
+                name = instance.name
+                # create line
+                var_lines += instance.write_line(value=value, format='yaml')
+                # deal with inactive lines
+                if not instance.active:
+                    name = '+++{0}'.format(name)
+                    value = str(value)
+                # only keep basic types (everything else to string)
+                if not isinstance(value, (int, float, bool, str, list, dict)):
+                    value = str(value)
+                # push into the commented dictionary
+                data[yaml_group][group][name] = value
+                var_str = '\n'.join(var_lines)
+                ckw = dict(key=name, before=var_str, indent=4)
+                data[yaml_group][group].yaml_set_comment_before_after_key(**ckw)
+    # return commented map
+    return data
 
 
 def create_ufile(instrument: str, ckind: str, group_dict: Dict[str, list],
@@ -1421,14 +1530,15 @@ def create_ufile(instrument: str, ckind: str, group_dict: Dict[str, list],
     :return: List of strings, the lines to add to the "ckind" ini file
     """
     lines = []
-    lines += user_header('{0} {1} file'.format(instrument, ckind))
+    ltitle = '{0} {1} file'.format(instrument, ckind)
+    lines += user_header(ltitle, comment='# ')
     # loop around groups
     for group in grouplist:
         # only add if we have parameters that are needed in that group
         if group in group_dict:
             # add a header if this is a new group
             lines += ['']
-            lines += user_header(group)
+            lines += user_header(group, comment='# ')
             # loop around group parameters
             for item in range(len(group_dict[group])):
                 # get instance of this parameter
@@ -1441,7 +1551,7 @@ def create_ufile(instrument: str, ckind: str, group_dict: Dict[str, list],
     return lines
 
 
-def user_header(title: str) -> List[str]:
+def user_header(title: str, comment: str = '# ') -> List[str]:
     """
     Returns a group title for constants / config ini file
 
@@ -1449,11 +1559,9 @@ def user_header(title: str) -> List[str]:
 
     :return: List of strings - the title lines to add
     """
-    lines = ['# {0}'.format('-' * 77),
-             '# ',
-             '#  {0}'.format(title),
-             '# ',
-             '# {0}'.format('-' * 77)]
+    lines = ['{0}{1}'.format(comment, '-' * 77),
+             '{0} {1}'.format(comment, title),
+             '{0}{1}'.format(comment, '-' * 77)]
     return lines
 
 
@@ -1536,6 +1644,62 @@ def ufile_write(aparams: ParamDict, lines: List[str], upath: Path,
                 u_file.write(line + '\n')
             else:
                 u_file.write(line)
+    # return user file path
+    return ufilepath
+
+
+def yfile_write(data: CommentedMap, upath: Path, ufile: Union[Path, str],
+                ckind: str) -> Path:
+    # initialize YAML object
+    yaml = YAML()
+    # make directory if it doesn't exist
+    if not upath.exists():
+        os.makedirs(upath)
+    # ----------------------------------------------------------------------
+    # define config file path
+    ufilepath = upath.joinpath(ufile)
+    # ----------------------------------------------------------------------
+    # deal with yaml file existing
+    if ufilepath.exists():
+        # read the lines
+        current_data = base.load_yaml(str(ufilepath))
+        # flatten current data
+        current_dict = drs_base_classes.FlatYamlDict(current_data)
+        # flatten data
+        data_dict = drs_base_classes.FlatYamlDict(data)
+        # now need to check these lines against lines
+        for key in current_dict:
+            # deal with old keys not existing in new data
+            if key not in data_dict:
+                continue
+            # deal with matching keys (skip)
+            if data_dict[key] == current_dict[key]:
+                continue
+            # get the path in non-flat dictionary
+            path = current_dict.key_dict[key]
+            # assume we have a section a group and name for the key
+            section, group, name = path
+            # display a warning
+            cargs = [ckind, '.'.join(path)]
+            cprint(textentry('40-001-00064', args=cargs), 'y')
+            cargs = [data_dict[key], current_data[key]]
+            output = ask(textentry('40-001-00065', args=cargs), dtype='YN')
+            # update the key if required
+            if output:
+                data[section][group][name] = current_dict[key]
+    # ----------------------------------------------------------------------
+    # write files
+    with ufilepath.open('w') as y_file:
+        yaml.dump(data, y_file)
+    # ----------------------------------------------------------------------
+    # hack replace +++ with #
+    with open(ufilepath, 'r') as ofile:
+        lines = ofile.readlines()
+        for it, line in enumerate(lines):
+            lines[it] = line.replace('+++', '# ')
+    with open(ufilepath, 'w') as ofile:
+        ofile.writelines(lines)
+    # ----------------------------------------------------------------------
     # return user file path
     return ufilepath
 

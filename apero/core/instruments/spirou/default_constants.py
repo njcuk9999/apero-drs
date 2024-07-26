@@ -66,7 +66,7 @@ IMAGE_Y_FULL.value = 4096
 
 # Define the fibers
 FIBER_TYPES = FIBER_TYPES.copy(__NAME__)
-FIBER_TYPES.value = 'AB, A, B, C'
+FIBER_TYPES.value = ['AB', 'A', 'B', 'C']
 
 # Defines whether to by default combine images that are inputted at the same
 #   time
@@ -3322,7 +3322,7 @@ POST_HDREXT_COMMENT_KEY.value = 'KW_IDENTIFIER'
 # Define which block kinds to reindex (warning can take a long time)
 #    only select block kinds that have (or could be) manually changed
 REPROCESS_REINDEX_BLOCKS = REPROCESS_REINDEX_BLOCKS.copy(__NAME__)
-REPROCESS_REINDEX_BLOCKS.value = 'raw,tmp,red,out'
+REPROCESS_REINDEX_BLOCKS.value = ['raw', 'tmp', 'red', 'out']
 
 # Define whether to use multiprocess "pool" or "process" or use "linear"
 #     mode when parallelising recipes

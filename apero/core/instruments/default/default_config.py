@@ -69,7 +69,7 @@ Const = constant_functions.Const
 # =============================================================================
 # global settings
 # =============================================================================
-cgroup = 'GLOBAL SETTINGS'
+cgroup = 'DRS.GLOBAL'
 # PLotting mode (0-3)
 DRS_PLOT = Const('DRS_PLOT', value=0, dtype=int, source=__NAME__, user=True,
                  active=True, group=cgroup, options=[0, 1, 2, 3, 4],
@@ -109,7 +109,7 @@ PARAMETER_SNAPSHOT = Const('PARAMETER_SNAPSHOT', value=True, dtype=bool,
 # =============================================================================
 # path settings
 # =============================================================================
-cgroup = 'PATH SETTINGS'
+cgroup = 'DRS.PATH'
 #   Define the root installation directory
 DRS_ROOT = Const('DRS_ROOT', dtype='path', source=__NAME__, user=True,
                  active=True, group=cgroup, value='./',
@@ -201,7 +201,7 @@ LBL_PATH = Const('LBL_PATH', dtype='path', source=__NAME__, user=True,
 # =============================================================================
 # INTERNAL: General properites
 # =============================================================================
-cgroup = 'INTERNAL: General properites'
+cgroup = 'DRS.INTERNAL'
 # Version
 DRS_VERSION = Const('DRS_VERSION', value=__version__, dtype=str,
                     source=__NAME__, group=cgroup, description='Version')
@@ -223,7 +223,7 @@ DRS_DATE = Const('DRS_DATE', value=__date__, dtype=str, source=__NAME__,
 # =============================================================================
 # DRS SETTINGS
 # =============================================================================
-cgroup = 'INTERNAL: DRS SETTINGS'
+cgroup = 'DRS.DRS'
 #   The top-level package name (i.e. import PACKAGE)
 DRS_PACKAGE = Const('DRS_PACKAGE', value=__PACKAGE__, dtype=str,
                     source=__NAME__, group=cgroup,
@@ -295,7 +295,7 @@ IS_REF = Const('IS_REFERENCE', value=False, dtype=bool, source=__NAME__,
 # =============================================================================
 # Instrument/Observatory Constants
 # =============================================================================
-cgroup = 'Instrument/Observatory Constants'
+cgroup = 'DRS.INSTRUMENT_OBSERVATORY'
 # Instrument Name
 INSTRUMENT = Const('INSTRUMENT', value='None', dtype=str,
                    options=DRS_INSTRUMENTS.value, source=__NAME__, group=cgroup,
@@ -315,7 +315,7 @@ OBS_ALT = Const('OBS_LAT', value=None, dtype=float, source=__NAME__,
 # =============================================================================
 # DRS INTERNAL PATHS
 # =============================================================================
-cgroup = 'DRS INTERNAL PATHS'
+cgroup = 'DRS.INTERNAL_PATHS'
 #   User-config default location (if environmental variable not set)
 #   this is relative to the package level
 DRS_USER_DEFAULT = Const('DRS_USER_DEFAULT', value='../config/', dtype=str,
@@ -437,7 +437,7 @@ DRS_PDB_RC_FILENAME = Const('DRS_PDB_RC_FILENAME', value=base.PDB_RC_FILENAME,
 # =============================================================================
 # DRS ASSETS URLS
 # =============================================================================
-cgroup = 'DRS ASSETS URLS'
+cgroup = 'DRS.ASSETS_URLS'
 # where the assets tar file can be downloaded from (will be stored in the
 #   yaml file as well - this just controls where the developers upload it to)
 #   links must be publically accessible, separate links with a comma
@@ -489,7 +489,7 @@ DRS_SSH_ASSETSPATH = Const('DRS_SSH_ASSETSPATH',
 # =============================================================================
 # DATABASE SETTINGS
 # =============================================================================
-cgroup = 'DATABASE SETTINGS'
+cgroup = 'DRS.DATABASE'
 
 # Define database directory (relative to assets directory)
 DATABASE_DIR = Const('DATABASE_DIR', dtype=str, value='databases/',
@@ -547,7 +547,7 @@ TELLU_DB_MATCH = Const('TELLU_DB_MATCH', dtype=str, source=__NAME__,
 # =============================================================================
 # DISPLAY/LOGGING SETTINGS
 # =============================================================================
-cgroup = 'DISPLAY/LOGGING SETTINGS'
+cgroup = 'DRS.DISPLAY_LOGGING'
 #   Level at which to print, values can be:
 #       'all' - to print all events
 #       'info' - to print info/warning/error events
@@ -670,7 +670,7 @@ DRS_LOG_EMAIL_AUTH = Const('DRS_LOG_EMAIL_AUTH', value='apero.drs.oauth2.json',
 # =============================================================================
 # PLOT SETTINGS
 # =============================================================================
-cgroup = 'PLOT SETTINGS'
+cgroup = 'DRS.PLOT_CORE'
 # Set the default font family for all graphs
 #     (i.e. monospace) "None" for not set
 DRS_PLOT_FONT_FAMILY = Const('DRS_PLOT_FONT_FAMILY', value='None', dtype=str,
@@ -726,7 +726,7 @@ DRS_SUMMARY_STYLE = Const('DRS_SUMMARY_STYLE', value='latex', dtype=str,
 # =============================================================================
 # DEBUG MODES
 # =============================================================================
-cgroup = 'DEBUG MODES'
+cgroup = 'DEBUG.MODES'
 # The debug number to print debug log messages
 DEBUG_MODE_LOG_PRINT = Const('DEBUG_MODE_LOG_PRINT', value=10, dtype=int,
                              source=__NAME__, group=cgroup,

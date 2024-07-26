@@ -262,7 +262,7 @@ class Const:
                      description=self.description, author=self.author,
                      parent=self.parent, output=self.output)
 
-    def write_line(self, value: Any = None) -> List[str]:
+    def write_line(self, value: Any = None, format: str = 'ini') -> List[str]:
         """
         Creates the lines required for a config/constant file for this constant
 
@@ -275,12 +275,19 @@ class Const:
 
         :param value: object, the value to add as the `value` in a
                       config/constant file.
+        :param format: str, the format of the output (default='ini')
+                       if set to yaml {NAME} = {VALUE} is not added
 
         :return: A list of strings (lines) to add to config/constant file for
                  this constant
 
         :rtype: list[str]
         """
+        # deal with formatting
+        if format == 'ini':
+            comment = '# '
+        else:
+            comment = ''
         # set up line list
         lines = ['']
         # deal with value
@@ -297,14 +304,15 @@ class Const:
             # loop around wrapped lines and add as comments
             for wline in wrapdesc:
                 # add wrapped line to
-                lines.append('# {0}'.format(wline))
+                lines.append('{0}{1}'.format(comment, wline))
         # if we don't have descriptions add a default one
         else:
-            lines.append('# {0} [DESCRIPTION NEEDED]'.format(self.name))
+            largs = [comment, self.name]
+            lines.append('{0}{1} [DESCRIPTION NEEDED]'.format(*largs))
         # -------------------------------------------------------------------
         # add default set up values
         # -------------------------------------------------------------------
-        dline = '#\t'
+        dline = '{0}\t'.format(comment.strip())
         # add data type
         if self.dtype is not None:
             if self.dtype in [str, 'str']:
@@ -334,20 +342,22 @@ class Const:
             # make sure options are strings
             stroptions = list(map(lambda x: '{0}'.format(x), self.options))
             # add options string
-            oline = '#\toptions = {0}'.format(', '.join(stroptions))
+            oargs = [comment.strip(), ', '.join(stroptions)]
+            oline = '{0}\toptions = {1}'.format(*oargs)
             # append line to lines
             lines.append(oline.strip())
 
         # ------------------------------------------------------------------
         # construct line to add (for user changing)
         # -------------------------------------------------------------------
-        # construct line
-        aline = '{0} = {1}'.format(self.name, value)
-        # if not active add as comment
-        if not self.active:
-            aline = '# ' + aline
-        # add to lines
-        lines.append(aline)
+        if format == 'ini':
+            # construct line
+            aline = '{0} = {1}'.format(self.name, value)
+            # if not active add as comment
+            if not self.active:
+                aline = '{0}{1}'.format(comment, aline)
+            # add to lines
+            lines.append(aline)
         # return lines
         return lines
 
@@ -1091,6 +1101,19 @@ def _validate_value(name: str, dtype: Union[str, type, None],
             for value in true_value:
                 newvalues.append(_test_dtype(name, value, dtypei, source))
             true_value = newvalues
+        # return true value
+        return true_value, source
+    # ---------------------------------------------------------------------
+    # check dtypei if dict
+    if dtype == dict:
+        if dtypei is not None:
+            newvalues = dict()
+            for key in true_value:
+                newvalues[key] = _test_dtype(name, true_value[key], dtypei,
+                                             source)
+            true_value = newvalues
+        # return true value
+        return true_value, source
     # ---------------------------------------------------------------------
     # check options if not a list
     if dtype in [str, int, float] and options is not None:
@@ -1101,6 +1124,9 @@ def _validate_value(name: str, dtype: Union[str, type, None],
                          func_name]
                 raise DrsCodedException('00-003-00017', 'error', targs=eargs,
                                         func_name=func_name)
+    # if we have a str we are done
+    if dtype == str:
+        return true_value, source
     # ---------------------------------------------------------------------
     # check limits if not a list or str or bool
     if dtype in [int, float]:

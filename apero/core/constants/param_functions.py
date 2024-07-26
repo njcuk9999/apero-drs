@@ -1473,6 +1473,9 @@ def load_config(instrument: Union[str, None] = None,
 
         keys, values, sources, instances = _load_from_file(files, modules)
 
+        files = [filename.replace('.ini', '.yaml') for filename in files]
+        keys, values, sources, instances = _load_from_yaml(files, modules)
+
         # add to params
         for it in range(len(keys)):
             # set value
@@ -1840,6 +1843,76 @@ def _load_from_module(modules: List[str], quiet: bool = False) -> ModLoads:
                 sources.append(mvalue.source)
                 instances.append(mvalue)
     # return keys
+    return keys, values, sources, instances
+
+
+def _load_from_yaml(files: List[str], modules: List[str]) -> ModLoads:
+    """
+    Load constants/keywords from a yaml file
+
+    :param files: list of strings, the file paths to the config/const files
+    :param modules: list of strings, the module paths
+
+    :return: list of keys (str), list of values (Any), list of sources (str),
+             list of instances (either Const or Keyword instances)
+    """
+    # set function name (cannot break here --> no access to inputs)
+    func_name = display_func('_load_from_file', __NAME__)
+    # -------------------------------------------------------------------------
+    # load constants from yaml file
+    # -------------------------------------------------------------------------
+    fkeys, fvalues, fsources = [], [], []
+    for filename in files:
+        # load the yaml in the standard way
+        yaml_dict = base.load_yaml(filename)
+        # flatten this dictionary
+        flat_dict = base_class.FlatYamlDict(yaml_dict, max_level=3)
+        # get key and value pairs
+        fkey, fvalue = flat_dict.items()
+        # add to fkeys and fvalues (loop around fkeys)
+        for it in range(len(fkey)):
+            # get this iterations values
+            fkeyi, fvaluei = fkey[it], fvalue[it]
+            # if this is not a new constant print warning
+            if fkeyi in fkeys:
+                # log warning message
+                wargs = [fkeyi, filename, ','.join(set(fsources)), filename]
+                DrsCodedWarning('10-002-00002', 'warning', targs=wargs,
+                                func_name=func_name)
+
+            # do not add keys if value is None
+            if fvaluei is None:
+                continue
+            # append to list
+            fkeys.append(fkeyi)
+            fvalues.append(fvaluei)
+            fsources.append(filename)
+    # -------------------------------------------------------------------------
+    # Now need to test the values are correct
+    # -------------------------------------------------------------------------
+    # storage for returned values
+    keys, values, sources, instances = [], [], [], []
+    # loop around modules
+    for module in modules:
+        # get a list of keys values
+        mkeys, mvalues = constant_functions.generate_consts(module)
+        # loop around each value and test type
+        for it in range(len(mkeys)):
+            # get iteration values
+            mvalue = mvalues[it]
+            # loop around the file values
+            for jt in range(len(fkeys)):
+                # if we are not dealing with the same key skip
+                if fkeys[jt] != mkeys[it]:
+                    continue
+                # if we are then we need to validate
+                value = mvalue.validate(fvalues[jt], source=fsources[jt])
+                # now append to output lists
+                keys.append(fkeys[jt])
+                values.append(value)
+                sources.append(fsources[jt])
+                instances.append(mvalue)
+    # return keys values and sources
     return keys, values, sources, instances
 
 

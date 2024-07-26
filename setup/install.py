@@ -47,6 +47,9 @@ REQ_DEV = 'requirements_developer.txt'
 VERSION_FILE = 'version.txt'
 # explicit args
 explicit_args = ['update', 'skip', 'dev', 'gui']
+# Support database types
+# TODO: Get from base
+SUPPORTED_DATABASES = ['mysql+pymysql']
 # modules that don't install like their name
 module_translation = dict()
 module_translation['Pillow'] = 'PIL'
@@ -386,9 +389,10 @@ def get_args() -> argparse.Namespace:
                         dest='clean_no_warning',
                         help=lang['INSTALL_CLEAN_NO_WARNING_HELP'])
     # add database mode argument
-    parser.add_argument('--database_mode', action='store', dest='database_mode',
-                        help=lang['INSTALL_DBMODE_HELP'], choices=[1, 2],
-                        type=int)
+    parser.add_argument('--database_type', action='store', dest='database_type',
+                        help=lang['INSTALL_DBMODE_HELP'],
+                        choices=SUPPORTED_DATABASES,
+                        type=str)
     # add MySQL database arguements (database_mode = 2)
     parser.add_argument('--database_host', action='store', dest='database_host',
                         help=lang['INSTALL_DB_HOST_HELP'])
@@ -640,9 +644,9 @@ def main():
     install.cprint(textentry('40-001-00069'), 'm')
     allparams = install.create_configs(params, allparams)
     # ----------------------------------------------------------------------
-    # update config values from iparams
-    install.cprint(textentry('40-001-00070'), 'm')
-    allparams = install.update_configs(allparams)
+    # # update config values from iparams
+    # install.cprint(textentry('40-001-00070'), 'm')
+    # allparams = install.update_configs(allparams)
     # ----------------------------------------------------------------------
     # create source files to add environmental variables
     install.cprint(textentry('40-001-00071'), 'm')

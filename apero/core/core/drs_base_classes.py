@@ -20,7 +20,7 @@ import importlib
 import os
 import sys
 from collections import UserDict
-from typing import Any, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import duckdb
 import numpy as np
@@ -49,7 +49,7 @@ DrsCodedException = drs_exceptions.DrsCodedException
 
 
 # =============================================================================
-# Define Custom classes
+# Define dictionary Custom classes
 # =============================================================================
 # case insensitive dictionary
 class CaseInsensitiveDict(UserDict):
@@ -414,7 +414,135 @@ class ListDict(UserDict):
         return self.__str__()
 
 
+class FlatYamlDict:
+    def __init__(self, yaml_dict: Dict[str, Any], max_level=3):
+        """
+        Initialize the FlatYamlDict object
 
+        :param yaml_dict: Dict[str, Any], the dictionary to flatten
+        :param max_level: int, the maximum level to flatten the dictionary to
+                          (dictionaries below this level will still be
+                          dictionaries)
+        """
+        self.yaml_dict = yaml_dict
+        self.flatten_dict = dict()
+        self.key_dict = dict()
+        self.flatten(max_level=max_level)
+
+    def __contains__(self, key: str) -> bool:
+        """
+        Check if the key is in the flattened dictionary
+
+        :param key: str, the key to check
+
+        :return: bool, True if the key is in the flattened dictionary
+        """
+        return key in self.flatten_dict
+
+    def __iter__(self):
+        """
+        Return the iterator of the flattened dictionary
+
+        :return: iter, the iterator of the flattened dictionary
+        """
+        return iter(self.flatten_dict)
+
+    def __getitem__(self, key: str) -> Any:
+        """
+        Get the value of the key
+
+        :param key: str, the key to get the value of
+
+        :return: Any, the value of the key
+        """
+        path = self.key_dict.get(key)
+        if not path:
+            return None
+
+        _dict_value = self.yaml_dict
+        # loop around path until we get the key
+        for pkey in path:
+            if pkey not in _dict_value:
+                return None
+            # go down to the next level
+            _dict_value = _dict_value[pkey]
+        # return the value
+        return _dict_value
+
+    def __setitem__(self, key: str, value: Any) -> None:
+        """
+        Set the value of the key
+
+        :param key: str, the key to set the value of
+        :param value: Any, the value to set
+
+        :return: None, updates self.yaml_dict and self.flatten_dict
+        """
+        path = self.key_dict.get(key)
+        if not path:
+            return
+        _dict_value = self.yaml_dict
+        # loop around path until we get the key
+        for pkey in path[:-1]:
+            if pkey not in _dict_value:
+                return
+            # go down to the next level
+            _dict_value = _dict_value[pkey]
+        # set the value
+        _dict_value[path[-1]] = value
+        # also update the flattened version
+        self.flatten_dict[key] = value
+
+    def flatten(self, max_level=3):
+        """
+        Flatten the dictionary
+
+        :param max_level: int, the maximum level to flatten the dictionary to
+                          (dictionaries below this level will still be
+                           dictionaries)
+        """
+        # empty flattened dictionary
+        self.flatten_dict = dict()
+        self.key_dict = dict()
+        # run the flattening
+        self._flatten_dict(self.yaml_dict, 0, max_level)
+
+    def _flatten_dict(self, my_dict, level, max_level, path=None):
+        """
+        Recursively flatten the dictionary to a max level
+
+        :param my_dict: Dict[str, Any], the dictionary to flatten
+        :param level: int, the current level of the dictionary
+        :param max_level: int, the maximum level to flatten the dictionary to
+                            (dictionaries below this level will still be
+                                dictionaries)
+        :param path: List[str], the current path in the dictionary
+
+        :return: None, updates self.flatten_dict and self.key_dict
+        """
+        if path is None:
+            path = []
+        for key, value in my_dict.items():
+            current_path = path + [key]
+            if isinstance(value, dict) and level < max_level - 1:
+                self._flatten_dict(value, level + 1, max_level, current_path)
+            else:
+                # flatten the dictionary and map the values to the key path
+                self.flatten_dict[key] = value
+                self.key_dict[key] = current_path
+
+    def items(self) -> Tuple[List[str], List[Any]]:
+        """
+        Key the list of keys and values
+
+        :return: Tuple[List[str], List[Any]], the list of keys and values
+        """
+        return list(self.flatten_dict.keys()), list(self.flatten_dict.values())
+
+
+# =============================================================================
+# Define Custom classes
+# =============================================================================
 class BinaryMatrix():
     def __init__(self, shape):
         # store the matrix
@@ -443,9 +571,6 @@ class BinaryMatrix():
         pos = self.keys.index(key)
         # add to the data (shift bits and combine with a bit-wise or
         self.data |= bits << pos
-
-
-
 
 
 class BinaryDict(UserDict):
