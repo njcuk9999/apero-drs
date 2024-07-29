@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Any, List, Dict, Optional, Tuple, Union
 
 import numpy as np
+import yaml
 from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap
 
@@ -503,16 +504,22 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
     # ------------------------------------------------------------------
     elif data_promptuser:
         create = False
-        directory = Path(default_dpath)
+        directory = Path(datadir)
         # loop until we have an answer
         while not create:
-            directory = ask(textentry('40-001-00047'), 'path',
-                            default=default_dpath)
+            if askcreate:
+                directory = ask(textentry('40-001-00047'), 'path',
+                                default=datadir)
+            else:
+                directory = datadir
             # ask to create directory
             pathquestion = textentry('40-001-00038', args=[directory])
 
             if not directory.exists():
-                create = ask(pathquestion, dtype='YN')
+                if askcreate:
+                    create = ask(pathquestion, dtype='YN')
+                else:
+                    create = True
                 if create:
                     cprint(textentry('40-001-00048', args=directory), 'g')
                     os.makedirs(directory)
@@ -881,17 +888,17 @@ def create_configs(params: ParamDict, all_params: ParamDict) -> ParamDict:
     ufiles = create_ufiles(uparams, devmode, askcreate)
     config_lines, const_lines, config_data, const_data = ufiles
     # write / update config and const
-    uconfig = ufile_write(uparams, config_lines, userconfig, UCONFIG,
-                          'config')
-    uconst = ufile_write(uparams, const_lines, userconfig, UCONST,
-                         'constant')
+    # uconfig = ufile_write(uparams, config_lines, userconfig, UCONFIG,
+    #                       'config')
+    # uconst = ufile_write(uparams, const_lines, userconfig, UCONST,
+    #                      'constant')
     # write the yaml
     yconfig = yfile_write(config_data, userconfig, YCONFIG, 'config')
     yconst = yfile_write(const_data, userconfig, YCONST, 'constant')
 
     # store filenames in iparams
     # TODO: REPLACE UCONFIG with YCONFIG and same for CONST
-    all_params['CONFIGFILES'] = [uconfig, uconst]
+    all_params['CONFIGFILES'] = [yconfig, yconst]
     all_params.set_source('CONFIGFILES', func_name)
     # return all_params
     return all_params
@@ -1052,11 +1059,11 @@ def clean_install(params: ParamDict, all_params: ParamDict
     package = params['DRS_PACKAGE']
     # get clean warning
     if all_params['CLEANWARN'] is None:
-        cleanwarn = True
-    elif all_params['CLEANWARN'] in [True, 'True', '1', 1]:
         cleanwarn = False
-    else:
+    elif all_params['CLEANWARN'] in [True, 'True', '1', 1]:
         cleanwarn = True
+    else:
+        cleanwarn = False
     # get tools save location
     in_tool_path = Path(drs_misc.get_relative_folder(package, IN_TOOLPATH))
     # append tool path
@@ -1076,7 +1083,7 @@ def clean_install(params: ParamDict, all_params: ParamDict
     # add to environment
     add_paths(all_params)
     # construct reset command
-    reset_args = toolmod.main(quiet=True, warn=cleanwarn, database_timeout=0)
+    reset_args = toolmod.main(quiet=True, nowarn=cleanwarn, database_timeout=0)
     # deal with a bad reset
     if not reset_args['success']:
         # error message: Error resetting database (see above) cannot install
@@ -1198,11 +1205,13 @@ def add_paths(all_params: ParamDict):
     :return: None, just updates PATH and PYTHONPATH environmental variables
     """
     # get paths and add in correct order
-    paths = [str(all_params['DRS_ROOT'].parent),
+    all_paths = [str(all_params['DRS_ROOT'].parent),
              str(all_params['DRS_OUT_BIN_PATH'])]
     # add all the tool directories
     for directory in all_params['DRS_OUT_TOOLS']:
-        paths.append(str(directory))
+        all_paths.append(str(directory))
+    # make sure we only have unique paths
+    all_paths = list(set(all_paths))
     # ----------------------------------------------------------------------
     # set USERCONFIG
     os.environ[ENV_CONFIG] = str(all_params['USERCONFIG'])
@@ -1215,24 +1224,26 @@ def add_paths(all_params: ParamDict):
     # add to PATH
     if 'PATH' in os.environ:
         # get old path
-        oldpath = os.environ['PATH']
+        oldpaths = os.environ['PATH'].split(sep)
+        oldpaths = list(set(oldpaths))
         # add to paths
-        paths += oldpath
+        paths = all_paths + oldpaths
         # add to environment
         os.environ['PATH'] = sep.join(paths)
     else:
         # add to environment
-        os.environ['PATH'] = sep.join(paths)
+        os.environ['PATH'] = sep.join(all_paths)
     # add to PYTHON PATH
     if 'PYTHONPATH' in os.environ:
-        oldpath = os.environ['PYTHONPATH']
+        oldpaths = os.environ['PYTHONPATH'].split(sep)
+        oldpaths = list(set(oldpaths))
         # add to paths
-        paths += oldpath
+        paths = all_paths + oldpaths
         # add to environment
         os.environ['PYTHONPATH'] = sep.join(paths)
     else:
         # add to environment
-        os.environ['PYTHONPATH'] = sep.join(paths)
+        os.environ['PYTHONPATH'] = sep.join(all_paths)
 
 
 def printheader() -> str:
@@ -1490,20 +1501,58 @@ def create_uyaml(instrument: str, ckind: str, group_dict: Dict[str, list],
                 name = instance.name
                 # create line
                 var_lines += instance.write_line(value=value, format='yaml')
-                # deal with inactive lines
+                # deal with inactive lines - comment them out (with hack)
                 if not instance.active:
-                    name = '+++{0}'.format(name)
-                    value = str(value)
+                    name, value_str = _yaml_inactive_str(name, value)
                 # only keep basic types (everything else to string)
-                if not isinstance(value, (int, float, bool, str, list, dict)):
-                    value = str(value)
+                elif not isinstance(value, (int, float, bool, str, list, dict)):
+                    value_str = str(value)
+                else:
+                    value_str = value
                 # push into the commented dictionary
-                data[yaml_group][group][name] = value
+                data[yaml_group][group][name] = value_str
                 var_str = '\n'.join(var_lines)
                 ckw = dict(key=name, before=var_str, indent=4)
                 data[yaml_group][group].yaml_set_comment_before_after_key(**ckw)
     # return commented map
     return data
+
+
+def _yaml_inactive_str(name: str, value: Any) -> Tuple[str, str]:
+    """
+    Hack for commenting out inactive variables in yaml files
+    Also requires a hack before saving the yaml file that replaces
+    "^^^" with "\n{indent}" and "+++" with "# "
+
+    :param name: str, the name of the variable
+    :param value: any, the value of the variable
+
+    :return: tuple, 1. str, the updated name and 2. the value string
+    """
+    # our name is going to be commented out: add the +++ in front
+    #    this needs replacing before using the yaml file
+    name = '+++{0}'.format(name)
+    # we don't need to do anything else for simple variables
+    if isinstance(value, (int, float, bool, str)):
+        return name, value
+    # we need a yaml representation of the value (use a dict)
+    value_dict = dict()
+    # set the key value pair in our temporary dict
+    value_dict[name] = value
+    # use yaml to dump this variable into a string
+    value_str = yaml.dump(value_dict)
+    # our yaml string probably ends with a new line remove this (as the
+    #   real yaml dump will add this newline in afterwards)
+    value_str = value_str.strip('\n')
+    # the yaml dump has the variable name followed by ":" remove this as it is
+    #    added in the real yaml dump
+    value_str = value_str.replace(name + ':', '')
+    # value that are list and dictionaries start on new lines which the
+    #    yaml will remove so we replace these with a special character
+    #    that needs to be replaced back before using
+    value_str = value_str.replace('\n', '^^^+++')
+    # return the updated name and value string
+    return name, value_str
 
 
 def create_ufile(instrument: str, ckind: str, group_dict: Dict[str, list],
@@ -1672,8 +1721,9 @@ def yfile_write(data: CommentedMap, upath: Path, ufile: Union[Path, str],
             # deal with old keys not existing in new data
             if key not in data_dict:
                 continue
-            # deal with matching keys (skip)
-            if data_dict[key] == current_dict[key]:
+            # deal with matching keys (skip) - deal with string representations
+            #    as these should match
+            if str(data_dict[key]) == str(current_dict[key]):
                 continue
             # get the path in non-flat dictionary
             path = current_dict.key_dict[key]
@@ -1682,7 +1732,7 @@ def yfile_write(data: CommentedMap, upath: Path, ufile: Union[Path, str],
             # display a warning
             cargs = [ckind, '.'.join(path)]
             cprint(textentry('40-001-00064', args=cargs), 'y')
-            cargs = [data_dict[key], current_data[key]]
+            cargs = [data_dict[key], current_dict[key]]
             output = ask(textentry('40-001-00065', args=cargs), dtype='YN')
             # update the key if required
             if output:
@@ -1696,7 +1746,14 @@ def yfile_write(data: CommentedMap, upath: Path, ufile: Union[Path, str],
     with open(ufilepath, 'r') as ofile:
         lines = ofile.readlines()
         for it, line in enumerate(lines):
-            lines[it] = line.replace('+++', '# ')
+            # +++ is a special character that needs to be replaced back
+            #   it represents a commented line
+            line = line.replace('+++', '# ')
+            # ^^^ is a special character that needs to be replaced back
+            #   it represents a newline indent=4
+            line = line.replace('^^^', '\n    ')
+            # update line in list
+            lines[it] = line
     with open(ufilepath, 'w') as ofile:
         ofile.writelines(lines)
     # ----------------------------------------------------------------------

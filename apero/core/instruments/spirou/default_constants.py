@@ -2654,7 +2654,7 @@ CCF_ALLOWED_DPRTYPES.value = 'OBJ_DARK, OBJ_FP, POLAR_DARK, POLAR_FP'
 
 # Valid DPRTYPES for FP in calibration fiber
 CCF_VALID_FP_DPRTYPES = CCF_VALID_FP_DPRTYPES.copy(__NAME__)
-CCF_VALID_FP_DPRTYPES.value = 'OBJ_FP, POLAR_FP'
+CCF_VALID_FP_DPRTYPES.value = ['OBJ_FP', 'POLAR_FP']
 
 # Define the KW_OUTPUT types that are valid telluric corrected spectra
 CCF_CORRECT_TELLU_TYPES = CCF_CORRECT_TELLU_TYPES.copy(__NAME__)

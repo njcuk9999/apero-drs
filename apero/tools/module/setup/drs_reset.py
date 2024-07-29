@@ -885,7 +885,7 @@ def fast_rm_remove(path: str) -> bool:
     if len(os.listdir(path)) == 0:
         return True
     # -------------------------------------------------------------------------
-    # try doing an rm
+    # try doing an rm (quicker than rmtree)
     try:
         os.system('rm -rfv {0}/*'.format(path))
     except Exception as _:

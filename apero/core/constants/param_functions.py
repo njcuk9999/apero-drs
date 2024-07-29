@@ -58,7 +58,7 @@ CONST_PATH = base.CONST_PATH
 CORE_PATH = base.CORE_PATH
 # Define config/constant/keyword scripts to open
 SCRIPTS = base.SCRIPTS
-USCRIPTS = base.USCRIPTS
+YSCRIPTS = base.YSCRIPTS
 PSEUDO_CONST_FILE = base.PSEUDO_CONST_FILE
 PSEUDO_CONST_CLASS = base.PSEUDO_CONST_CLASS
 DEFAULT_PSEUDO_CONST_CLASS = base.DEFAULT_PSEUDO_CONST_CLASS
@@ -1470,12 +1470,8 @@ def load_config(instrument: Union[str, None] = None,
     if from_file:
         # get instrument user config files
         files = _get_file_names(params, instrument)
-
-        keys, values, sources, instances = _load_from_file(files, modules)
-
-        files = [filename.replace('.ini', '.yaml') for filename in files]
+        # load keys, values, sources and instances from yaml files
         keys, values, sources, instances = _load_from_yaml(files, modules)
-
         # add to params
         for it in range(len(keys)):
             # set value
@@ -1790,7 +1786,7 @@ def _get_file_names(params: ParamDict,
     # look for user configurations within instrument sub-folder
     # -------------------------------------------------------------------------
     config_files = []
-    for script in USCRIPTS:
+    for script in YSCRIPTS:
         # construct path
         config_path = os.path.join(config_dir, script)
         # check that it exists
@@ -1798,7 +1794,7 @@ def _get_file_names(params: ParamDict,
             config_files.append(config_path)
     # deal with no files found
     if len(config_files) == 0:
-        wargs = [config_dir, ','.join(USCRIPTS)]
+        wargs = [config_dir, ','.join(YSCRIPTS)]
         DrsCodedWarning('00-003-00036', 'warning', targs=wargs,
                         func_name=func_name)
     # return files
@@ -1857,7 +1853,7 @@ def _load_from_yaml(files: List[str], modules: List[str]) -> ModLoads:
              list of instances (either Const or Keyword instances)
     """
     # set function name (cannot break here --> no access to inputs)
-    func_name = display_func('_load_from_file', __NAME__)
+    func_name = display_func('_load_from_yaml', __NAME__)
     # -------------------------------------------------------------------------
     # load constants from yaml file
     # -------------------------------------------------------------------------
@@ -1873,16 +1869,15 @@ def _load_from_yaml(files: List[str], modules: List[str]) -> ModLoads:
         for it in range(len(fkey)):
             # get this iterations values
             fkeyi, fvaluei = fkey[it], fvalue[it]
+            # do not add keys if value is None
+            if fvaluei is None:
+                continue
             # if this is not a new constant print warning
             if fkeyi in fkeys:
                 # log warning message
                 wargs = [fkeyi, filename, ','.join(set(fsources)), filename]
                 DrsCodedWarning('10-002-00002', 'warning', targs=wargs,
                                 func_name=func_name)
-
-            # do not add keys if value is None
-            if fvaluei is None:
-                continue
             # append to list
             fkeys.append(fkeyi)
             fvalues.append(fvaluei)

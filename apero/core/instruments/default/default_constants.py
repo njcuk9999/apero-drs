@@ -4563,7 +4563,8 @@ CCF_ALLOWED_DPRTYPES = Const('CCF_ALLOWED_DPRTYPES', value=None, dtype=str,
                                          'for CCF recipe')
 
 # Valid DPRTYPES for FP in calibration fiber
-CCF_VALID_FP_DPRTYPES = Const('CCF_VALID_FP_DPRTYPES', value=None, dtype=str,
+CCF_VALID_FP_DPRTYPES = Const('CCF_VALID_FP_DPRTYPES', value=None,
+                              dtype=list, dtypei=str,
                               source=__NAME__, user=True, active=False,
                               group=cgroup,
                               description='Valid DPRTYPES for FP in calibration '
