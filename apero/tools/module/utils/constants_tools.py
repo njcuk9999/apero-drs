@@ -14,9 +14,9 @@ from typing import Tuple, Union
 
 import numpy as np
 
-from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core import lang
 from apero.core.constants import constant_functions as cf
 from apero.core.core import drs_log
 from apero.core.core import drs_misc
@@ -86,6 +86,7 @@ def deal_with_generate(params: ParamDict):
     else:
         kwargs = dict(devmode=False, ask_user=False)
     # create files
+    # noinspection PyTupleAssignmentBalance
     config_lines, const_lines = install.create_ufiles(params, **kwargs)
     # write / update config and const
     uconfig = install.ufile_write(params, config_lines, userconfig,

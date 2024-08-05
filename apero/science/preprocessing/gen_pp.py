@@ -15,9 +15,9 @@ import numpy as np
 import pandas as pd
 from astropy import units as uu
 
-from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core import lang
 from apero.core import math as mp
 from apero.core.core import drs_database
 from apero.core.core import drs_log

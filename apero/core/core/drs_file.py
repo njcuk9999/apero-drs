@@ -38,9 +38,9 @@ import pandas as pd
 from astropy.table import Table, vstack
 from scipy.stats import pearsonr
 
-from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core import lang
 from apero.core import math as mp
 from apero.core.constants import path_definitions as pathdef
 from apero.core.core import drs_base_classes
@@ -3336,6 +3336,7 @@ class DrsFitsFile(DrsInputFile):
                      safer)
         :param return_data: bool, if True returns data, if False updates
                             self.data
+        :param extname: str, the extension name to read
 
         :return: None or [np.ndarray/Table] if return_data = True
         """
@@ -3470,6 +3471,9 @@ class DrsFitsFile(DrsInputFile):
         :param copy: bool, if True deep copies the data
         :param extensions: None or list of ints - if set load multiple
                            extensions - in the order given
+        :param extnames: None or list of strings - if set load multiple
+                            extensions - in the order given
+
         :return: the data (numpy array or Table) or list of data from each
                  extension
         """
@@ -3941,6 +3945,8 @@ class DrsFitsFile(DrsInputFile):
                           exception is raised
         :param path: None or str, update the path for the output combined
                      DrsFitsFile (added to new filename)
+        :param test_similarity: bool, if True tests similarity of files before
+                                 combining (if False does not test)
 
         :return: a tuple, 1. new DrsFitsFile instance of the combined file,
                  2. the combined table
@@ -4621,7 +4627,6 @@ class DrsFitsFile(DrsInputFile):
                 header[key] = np.nan
         # return updated header
         return header
-
 
     def add_hkey(self, key: Union[str, None] = None,
                  keyword: Union[list, None] = None, value: Any = None,
@@ -7602,8 +7607,7 @@ def check_input_qc(params: ParamDict, drsfiles: List[DrsFitsFile],
 
 
 def check_input_dprtypes(params: ParamDict, recipe: Any,
-                         infiles: List[DrsFitsFile],
-                         required_ref: bool = True) -> List[DrsFitsFile]:
+                         infiles: List[DrsFitsFile]) -> List[DrsFitsFile]:
     """
     Check that the input dprtypes conform to one of the models within the
     recipe
@@ -7897,6 +7901,8 @@ def combine(params: ParamDict, recipe: Any,
     :param same_type: bool, if True all infiles must have the same DrsFitFile
                       dtype
     :param save: bool, if True saves to disk otherwise returns DrsFitsFile
+    :param test_similarity: bool, if True tests the similarity of the files
+                            before combining
 
     :type params: ParamDict
     :type infiles: list[DrsFitsFile]

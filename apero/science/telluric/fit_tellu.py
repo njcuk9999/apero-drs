@@ -14,9 +14,9 @@ from typing import Optional
 
 import numpy as np
 
-from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core import lang
 from apero.core import math as mp
 from apero.core.core import drs_log, drs_file
 from apero.core.utils import drs_recipe
@@ -301,8 +301,6 @@ def shift_template(params: ParamDict, recipe: DrsRecipe,
                    template_props: ParamDict,
                    refprops: ParamDict, wprops: ParamDict,
                    bprops: ParamDict) -> ParamDict:
-
-
     # set function name
     func_name = display_func('shift_template', __NAME__)
     # ------------------------------------------------------------------
@@ -820,13 +818,15 @@ def calc_res_model(params, recipe, image, image1, trans_props, tpreprops,
     Calculate the residual model and apply it to the image
 
     :param params: ParamDict, parameter dictionary of constants
-    :param recipe:
-    :param image:
-    :param image1:
-    :param trans_props:
-    :param tpreprops:
-    :param refprops:
-    :param wprops:
+    :param recipe: DrsRecipe, recipe instance
+    :param image: np.ndarray, the image data
+    :param image1: np.ndarray, the image data after sky correction
+    :param trans_props: ParamDict, transmission properties
+    :param tpreprops: ParamDict, pre-cleaning properties
+    :param refprops: ParamDict, reference properties
+    :param wprops: ParamDict, wave properties
+    :param infile: DrsFitsFile, the input file instance
+    :param min_trans: float, the minimum transmission value
 
     :return:
     """
@@ -870,8 +870,8 @@ def calc_res_model(params, recipe, image, image1, trans_props, tpreprops,
     pkwargs = dict(wprops=wprops, image=image,
                    image1=image1, sp_out=sp_out, res_model2=res_model2,
                    tpreprops=tpreprops, recon_abso=recon_abso,
-                   objname = infile.get_hkey('KW_OBJNAME', dtype=str),
-                   dprtype = infile.get_hkey('KW_DPRTYPE', dtype=str))
+                   objname=infile.get_hkey('KW_OBJNAME', dtype=str),
+                   dprtype=infile.get_hkey('KW_DPRTYPE', dtype=str))
     # debug plot
     recipe.plot('FTELLU_RES_MODEL', **pkwargs)
     # summary plot

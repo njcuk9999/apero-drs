@@ -15,9 +15,9 @@ from scipy.ndimage import percentile_filter, binary_dilation
 from scipy.ndimage.filters import median_filter
 from skimage import measure
 
-from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core import lang
 from apero.core import math as mp
 from apero.core.core import drs_database
 from apero.core.core import drs_log, drs_file
@@ -257,7 +257,7 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
         threshold[:, bin_it:bin_it + binsize] = maptmp
     # -------------------------------------------------------------------------
     # create a binary mask that will indicate if a pixel is in or out of orders
-    mask_orders = image > threshold
+    mask_orders = np.array(image > threshold)
     # mask the edges to avoid problems
     mask_orders[:, 0:binsize] = 0
     mask_orders[:, -binsize:] = 0

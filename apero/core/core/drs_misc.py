@@ -18,8 +18,8 @@ only from
 import os
 import random
 import string
-import time
 import sys
+import time
 import warnings
 from pathlib import Path
 from typing import Any, Dict, List, Union, Tuple
@@ -27,9 +27,9 @@ from typing import Any, Dict, List, Union, Tuple
 import numpy as np
 import psutil
 
-from apero import lang
 from apero.base import base
 from apero.base import drs_base
+from apero.core import lang
 
 # =============================================================================
 # Define variables
@@ -383,9 +383,11 @@ def python_git_stats(params: Any) -> Any:
     #   available)
     with warnings.catch_warnings(record=True) as _:
         try:
+            # noinspection PyProtectedMember
             from pip._internal.operations import freeze
         except ImportError:
             # pip < 10.0
+            # noinspection PyBroadException
             try:
                 # noinspection PyUnresolvedReferences
                 from pip.operations import freeze
@@ -421,6 +423,7 @@ def python_git_stats(params: Any) -> Any:
     # -------------------------------------------------------------------------
     # try to get git version
     # -------------------------------------------------------------------------
+    # noinspection PyBroadException
     try:
         # noinspection PyUnresolvedReferences
         from git import Repo

@@ -22,11 +22,11 @@ from typing import Any, Dict, List, Optional, Union, Tuple
 import numpy as np
 from scipy.ndimage.morphology import binary_erosion, binary_dilation
 
-from apero import lang
 from apero.base import base
 from apero.core import constants
-from apero.core.constants import path_definitions
+from apero.core import lang
 from apero.core import math as mp
+from apero.core.constants import path_definitions
 from apero.core.core import drs_log
 from apero.core.core import drs_misc
 from apero.io import drs_fits
@@ -53,8 +53,8 @@ pcheck = constants.PCheck(wlog=WLOG)
 # Get function string
 display_func = drs_log.display_func
 # get block paths
-params = constants.load()
-block_func = lambda block: block(params).path
+_params = constants.load()
+block_func = lambda block: block(_params).path
 block_paths = list(map(block_func, path_definitions.BLOCKS))
 
 

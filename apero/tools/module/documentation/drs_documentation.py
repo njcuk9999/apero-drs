@@ -16,9 +16,9 @@ from typing import Any, Dict, List, Tuple, Union
 import numpy as np
 from astropy.table import Table
 
-from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core import lang
 from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.core.core import drs_misc
@@ -128,8 +128,8 @@ def rel_path_from_current(current: str, required: str) -> str:
     :return: str, the required path relative to the current path
     """
     # make sure both paths are real
-    current = os.path.realpath(current)
-    required = os.path.realpath(required)
+    current = str(os.path.realpath(current))
+    required = str(os.path.realpath(required))
     # find common most path
     root = os.path.commonpath([current, required])
     # remove root from paths
@@ -138,8 +138,9 @@ def rel_path_from_current(current: str, required: str) -> str:
     # get the number of levels up to go
     levels = len(os.path.split(current)) + 1
     # construct new relative path
-    outargs = ['..'] * levels + list(os.path.split(required))
+    outargs = ['..'] * levels + list(str(os.path.split(required)))
     # return the new relative path
+    # noinspection PyTypeChecker
     return os.path.join(*outargs)
 
 

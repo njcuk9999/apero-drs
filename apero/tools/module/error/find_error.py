@@ -20,6 +20,7 @@ import numpy as np
 from apero.base import base
 from apero.base import drs_db
 from apero.core import constants
+from apero.core.lang import drs_lang
 from apero.core.core import drs_log
 from apero.core.core import drs_misc
 from apero.core.utils import drs_recipe
@@ -844,14 +845,11 @@ class LoadData:
         :return: a tuple of dictionaries
         :rtype: tuple[dict, dict, dict, dict, dict]
         """
-        # get langudate database
-        langdbm = drs_db.LanguageDatabase()
-        # load database
-        langdbm.load_db()
-        # get language table name
-        tablename = langdbm.database.tname
-        # get pandas table
-        df = langdbm.database.get('*', return_pandas=True)
+        # do a full import of the language database
+        lang_table = drs_lang.LanguageLookup(mode='full')
+        # get keys from values
+        keys = list(lang_table.lang_values.keys())
+
         # storage
         values = dict()
         source = dict()
@@ -859,12 +857,12 @@ class LoadData:
         kinds = dict()
         comments = dict()
         # need to convert all to dictionary
-        for row, key in enumerate(df['KEYNAME']):
-            values[key] = df[self.language].iloc[row]
-            source[key] = '{0}+{1}'.format(str(langdbm), tablename)
-            args[key] = df['ARGUMENTS'].iloc[row]
-            kinds[key] = df['KIND'].iloc[row]
-            comments[key] = df['KEYDESC'].iloc[row]
+        for key in keys:
+            values[key] = lang_table.lang_values[key]
+            source[key] = lang_table.lang_sources[key]
+            args[key] = lang_table.lang_args[key]
+            kinds[key] = lang_table.lang_kinds[key]
+            comments[key] = lang_table.lang_comments[key]
         # return databases
         return values, source, args, kinds, comments
 

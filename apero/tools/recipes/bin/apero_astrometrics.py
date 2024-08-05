@@ -9,9 +9,9 @@ Created on 2021-12-09
 
 @author: cook
 """
-from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core import lang
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
 from apero.tools.module.database import drs_astrometrics

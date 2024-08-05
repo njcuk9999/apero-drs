@@ -19,9 +19,9 @@ from astropy import units as uu
 from astropy.table import Table
 from scipy.optimize import curve_fit
 
-from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core import lang
 from apero.core import math as mp
 from apero.core.core import drs_file
 from apero.core.core import drs_log
@@ -1272,6 +1272,7 @@ def update_per_order_ccfs(params: ParamDict, props: ParamDict, nbo: int,
     ccf_all_results = []
     ccf_all_snr = []
     ccf_phot_noise_all = []
+    ccf_fit_names = []
     # get parameters from props
     rv_ccf = props['RV_CCF']
     ccf_coeffs_stack = props['CCF_COEFFS_STACK']
@@ -1549,7 +1550,7 @@ def bisector_cut(xx: np.ndarray, yy: np.ndarray, cut: float) -> float:
 
 
 def get_coeff_dict(coeffs: np.ndarray, names: List[str]
-               ) -> Dict[str, Union[np.ndarray, float]]:
+                   ) -> Dict[str, Union[np.ndarray, float]]:
     """
     Turn a coefficients vector (2D - per order or 1D) into a dictionary
     of terms which can be called with fit names
@@ -1738,4 +1739,3 @@ if __name__ == "__main__":
 # =============================================================================
 # End of code
 # =============================================================================
-

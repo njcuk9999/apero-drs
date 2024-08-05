@@ -15,16 +15,15 @@ import numpy as np
 from astropy import units as uu
 from astropy.coordinates import SkyCoord, Distance
 
-from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core import lang
 from apero.core import math as mp
 from apero.core.core import drs_exceptions
 from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.io import drs_fits
 from apero.io import drs_lock
-from apero.io import drs_path
 from apero.science.extract import bervest
 
 # =============================================================================
@@ -412,9 +411,7 @@ def assign_use_berv(berv_props: ParamDict, use=True) -> ParamDict:
 def use_barycorrpy(params: ParamDict, times: np.ndarray, props: ParamDict,
                    iteration: int = 0,
                    berv_est: Union[float, None] = None,
-                   bc_dir: Union[str, None] = None,
                    iersfile: Union[str, None] = None,
-                   package: Union[str, None] = None
                    ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Use the barycorrpy module to calculate BERV/BJD
@@ -426,9 +423,7 @@ def use_barycorrpy(params: ParamDict, times: np.ndarray, props: ParamDict,
                       (for logging)
     :param berv_est: float, an estimate of the pyasl BERV uncertainties
                      (for logging)
-    :param bc_dir: str, the berv directory where the IERSFILE should be located
     :param iersfile: str, the IERSFILE - if using a custom file
-    :param package: str, the package name (APERO)
 
     :return: two numpy arrays, the array of bervs for the times [km/s], and
              array of bjds [julien date]

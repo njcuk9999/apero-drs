@@ -25,16 +25,16 @@ from astropy.coordinates import SkyCoord
 from astropy.table import Row
 from astroquery.simbad import Simbad
 
-from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core import lang
 from apero.core.core import drs_base_classes
 from apero.core.core import drs_database
 from apero.core.core import drs_log
 from apero.core.core import drs_misc
 from apero.core.core import drs_text
-from apero.core.utils import drs_startup
 from apero.core.instruments.default import pseudo_const
+from apero.core.utils import drs_startup
 from apero.io import drs_fits
 from apero.science import preprocessing as prep
 from apero.tools.module.database import manage_databases
@@ -353,10 +353,10 @@ class AstroObj:
         for mag in mag_keys:
             if mag in self.mags:
                 dataframe[mag] = [self.mags[mag]]
-                dataframe[mag+'_SOURCE'] = [self.mags_source[mag]]
+                dataframe[mag + '_SOURCE'] = [self.mags_source[mag]]
             else:
                 dataframe[mag] = ['']
-                dataframe[mag+'_SOURCE'] = ['']
+                dataframe[mag + '_SOURCE'] = ['']
         # ---------------------------------------------------------------------
         # add to the notes and used column
         dataframe['NOTES'] = self.notes
@@ -763,7 +763,7 @@ class AstroObj:
         # ---------------------------------------------------------------------
         # ask user whether they want to add keywords
         # ---------------------------------------------------------------------
-        question = ('Do you want to add keywords? (e.g. TELLURIC, STANDARD)')
+        question = 'Do you want to add keywords? (e.g. TELLURIC, STANDARD)'
         give_keywords = drs_installation.ask(question, dtype='YN')
         # if yes allow them to enter keywords
         if give_keywords:
@@ -784,7 +784,6 @@ class AstroObj:
                     clean_keywords.append(clean_keyword)
             # add to object
             self.keywords = clean_keywords
-
 
     def check_property(self, params: ParamDict, propname: str,
                        findexdbm: drs_database.FileIndexDatabase):
@@ -1418,7 +1417,7 @@ def query_database(params, rawobjnames: List[str],
                 WLOG(params, '', msg.format(*margs))
                 found[rawobjname] = ('database-alias', correct_objname)
             else:
-                msg = ('\t - Object: "{0}" found by unknown means as "{1}"')
+                msg = '\t - Object: "{0}" found by unknown means as "{1}"'
                 margs = [rawobjname, correct_objname]
                 WLOG(params, 'error', msg.format(*margs))
                 found[rawobjname] = ('database-unknown', correct_objname)
@@ -1898,7 +1897,7 @@ def add_object_reject(params: ParamDict, raw_objname: str):
     Add an object to the astrometric reject list
 
     :param params: ParamDict, parameter dictionary of constants
-    :param objname: str, the object name to add to the reject list
+    :param raw_objname: str, the object name to add to the reject list
 
     :return: None, adds object to the astrometric reject list
     """

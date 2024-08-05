@@ -13,7 +13,6 @@ Created on 2024-07-29 at 09:10
 from apero.base import base
 from apero.core.lang import drs_lang_list
 
-
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -29,7 +28,7 @@ __release__ = base.__release__
 # Define functions
 # =============================================================================
 # Get the language list
-langlist = drs_lang_list.LanguageList()
+langlist = drs_lang_list.LanguageList(__NAME__)
 
 
 

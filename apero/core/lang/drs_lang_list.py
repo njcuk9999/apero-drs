@@ -24,8 +24,6 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # -----------------------------------------------------------------------------
-# Language error code
-LANG_ERROR_CODE = '00-000-00014'
 # Supported languages
 SUPPORTED_LANGUAGES = base.LANGUAGES
 # default language
@@ -91,6 +89,7 @@ class LanguageItem:
     key: str
     kind: str
     value: Dict[str, str]
+    arguments: str
     comment: str
 
     def __init__(self, key: str, kind: str,
@@ -170,7 +169,8 @@ class LanguageList:
     Can have multiple of these that compile in Language class to overwrite
     each other
     """
-    def __init__(self):
+    def __init__(self, name: str):
+        self.name = name
         self.language_dict: Dict[str, LanguageItem] = dict()
 
     def get(self, language: str, key: str):

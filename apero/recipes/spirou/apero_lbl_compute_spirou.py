@@ -16,9 +16,9 @@ import os
 import sys
 from typing import Any, Dict, Optional, Tuple, Union
 
-from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core import lang
 from apero.core.core import drs_log
 from apero.core.instruments.spirou import file_definitions as files
 from apero.core.utils import drs_recipe

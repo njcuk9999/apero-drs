@@ -17,9 +17,9 @@ from typing import List, Tuple, Type, Union
 import numpy as np
 from astropy.table import Table
 
-from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core import lang
 from apero.core.core import drs_exceptions
 from apero.core.core import drs_log
 from apero.core.core import drs_misc
@@ -117,7 +117,7 @@ def load_linelist(params: ParamDict,
     ampcol = pcheck(params, 'WAVE_LINELIST_AMPCOL', func=func_name,
                     override=ampcol)
     # deal with return_filename
-    absfilename = os.path.join(assetdir, relfolder, filename)
+    absfilename = str(os.path.join(assetdir, relfolder, filename))
     if return_filename:
         return absfilename
     # split table columns
@@ -173,8 +173,8 @@ def load_cavity_files(params: ParamDict,
     filename_ll = pcheck(params, 'CAVITY_LL_FILE', func=func_name,
                          override=filell)
     # construct absolute filenames
-    absfilename_1m = os.path.join(assetdir, relfolder, filename_1m)
-    absfilename_ll = os.path.join(assetdir, relfolder, filename_ll)
+    absfilename_1m = str(os.path.join(assetdir, relfolder, filename_1m))
+    absfilename_ll = str(os.path.join(assetdir, relfolder, filename_ll))
     # check for absolute path existence
     exists1 = os.path.exists(absfilename_1m)
     exists2 = os.path.exists(absfilename_ll)
@@ -222,8 +222,8 @@ def save_cavity_files(params: ParamDict, fit_1m_d: np.ndarray,
                          override=file1m)
     filename_ll = pcheck(params, 'CAVITY_LL_FILE', func=func_name,
                          override=filell)
-    absfilename_1m = os.path.join(assetdir, relfolder, filename_1m)
-    absfilename_ll = os.path.join(assetdir, relfolder, filename_ll)
+    absfilename_1m = str(os.path.join(assetdir, relfolder, filename_1m))
+    absfilename_ll = str(os.path.join(assetdir, relfolder, filename_ll))
     # save the 1m file
     save_text_file(params, absfilename_1m, fit_1m_d, func_name)
     # save the ll file
@@ -308,7 +308,7 @@ def load_excess_emissivity(params: ParamDict,
     filename = pcheck(params, 'THERMAL_EXCESS_EMISSIVITY_FILE', func=func_name,
                       override=filename)
     # deal with return_filename
-    absfilename = os.path.join(assetdir, relfolder, filename)
+    absfilename = str(os.path.join(assetdir, relfolder, filename))
     # return table
     table = load_table_file(params, absfilename, fmt=fmt,
                             datastart=datastart, func_name=func_name)
@@ -356,7 +356,7 @@ def load_hotpix(params: ParamDict,
     filename = pcheck(params, 'PP_HOTPIX_FILE', func=func_name,
                       override=filename)
     # deal with return_filename
-    absfilename = os.path.join(assetdir, relfolder, filename)
+    absfilename = str(os.path.join(assetdir, relfolder, filename))
     if return_filename:
         return absfilename
     # return table
@@ -368,12 +368,12 @@ def load_hotpix(params: ParamDict,
 
 
 def load_amp_bias_model(params: ParamDict,
-                         assetsdir: Union[str, None] = None,
-                         eng_dir: Union[str, None] = None,
-                         filename: Union[str, None] = None,
-                         func: Union[str, None] = None,
-                         return_filename: bool = False
-                         ) -> Union[str, Tuple[np.ndarray, np.ndarray]]:
+                        assetsdir: Union[str, None] = None,
+                        eng_dir: Union[str, None] = None,
+                        filename: Union[str, None] = None,
+                        func: Union[str, None] = None,
+                        return_filename: bool = False
+                        ) -> Union[str, Tuple[np.ndarray, np.ndarray]]:
     """
     Load the preprocessing amplifier bias model
 
@@ -385,7 +385,7 @@ def load_amp_bias_model(params: ParamDict,
     :param filename: str, the amp bias model file name
                      -- overrides params['PP_AMP_ERROR_MODEL']
     :param func: str, the function name calling this function
-    :param fmt: str, the data format (astropy.table format)
+
     :param return_filename: bool, if True returns filename else returns image
 
     :return: either the filename (return_filename=True) or tuple 1. np.ndarray
@@ -405,7 +405,7 @@ def load_amp_bias_model(params: ParamDict,
     filename = pcheck(params, 'PP_AMP_ERROR_MODEL', func=func_name,
                       override=filename)
     # deal with return_filename
-    absfilename = os.path.join(assetdir, relfolder, filename)
+    absfilename = str(os.path.join(assetdir, relfolder, filename))
     if return_filename:
         return absfilename
     # return table
@@ -456,7 +456,7 @@ def load_tapas(params: ParamDict,
                       override=filename)
     fmt = pcheck(params, 'TAPAS_FILE_FMT', func=func_name, override=fmt)
     # deal with return_filename
-    absfilename = os.path.join(assetdir, relfolder, filename)
+    absfilename = str(os.path.join(assetdir, relfolder, filename))
     if return_filename:
         return absfilename
     # return image
@@ -504,7 +504,7 @@ def load_object_list(params: ParamDict,
                       override=filename)
     fmt = pcheck(params, 'OBJ_LIST_FILE_FMT', func=func_name, override=fmt)
     # deal with return_filename
-    absfilename = os.path.join(assetdir, relfolder, filename)
+    absfilename = str(os.path.join(assetdir, relfolder, filename))
     if return_filename:
         return absfilename
     # return image
@@ -553,7 +553,7 @@ def load_ccf_mask(params: ParamDict,
                       override=filename)
     fmt = pcheck(params, 'CCF_MASK_FMT', func=func_name, override=fmt)
     # deal with return_filename
-    absfilename = os.path.join(assetdir, relfolder, filename)
+    absfilename = str(os.path.join(assetdir, relfolder, filename))
     if return_filename:
         return absfilename
     # return image
@@ -656,7 +656,7 @@ def load_sp_mask_lsd(params: ParamDict, temperature: float,
     if os.path.exists(filename):
         absfilename = str(filename)
     else:
-        absfilename = os.path.join(assetdir, relfolder, filename)
+        absfilename = str(os.path.join(assetdir, relfolder, filename))
     # deal with return_filename
     if return_filename:
         return absfilename
@@ -712,7 +712,7 @@ def load_order_mask(params: ParamDict,
                       override=filename)
     # ----------------------------------------------------------------------
     # deal with return_filename
-    absfilename = os.path.join(assetdir, relfolder, filename)
+    absfilename = str(os.path.join(assetdir, relfolder, filename))
     if return_filename:
         return absfilename
     # ----------------------------------------------------------------------

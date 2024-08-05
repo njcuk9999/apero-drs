@@ -87,30 +87,6 @@ def main():
         # return results of find_error.main()
         return find_error.main()
 
-    # if we are updating database then run
-    if params['INPUTS']['update']:
-        # make the reset files
-        drs_lang.make_reset_csvs()
-        # make the databases list (but only language database)
-        print('Updating Language Database')
-        databases = dict()
-        landdbm = drs_db.LanguageDatabase(check=False)
-        databases['lang'] = landdbm
-        # create the database
-        manage_databases.create_lang_database(None, databases)
-        # return None
-        return
-
-    # if we are just reloading just reload the language database
-    if params['INPUTS']['reload']:
-        # make the databases list (but only language database)
-        print('Reloading Language Database')
-        databases = dict()
-        landdbm = drs_db.LanguageDatabase(check=False)
-        databases['lang'] = landdbm
-        # create the database
-        manage_databases.create_lang_database(None, databases)
-
     else:
         print('No option selected. See --help for options')
 

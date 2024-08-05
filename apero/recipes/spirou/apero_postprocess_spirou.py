@@ -12,9 +12,9 @@ Created on 2019-05-13 at 11:04
 import os
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core import lang
 from apero.core.core import drs_database
 from apero.core.core import drs_log
 from apero.core.instruments.spirou import file_definitions as fd

@@ -17,9 +17,9 @@ import matplotlib
 import numpy as np
 from astropy.table import Table
 
-from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core import lang
 from apero.core import math as mp
 from apero.core.core import drs_log
 from apero.core.utils import drs_recipe
@@ -163,7 +163,7 @@ class Plotter:
         if obs_dir is None or obs_dir == '':
             obs_dir = 'other'
         # construct summary pdf
-        path = os.path.join(plot_path, obs_dir, self.pid_dir)
+        path = str(os.path.join(plot_path, obs_dir, self.pid_dir))
         # create folder it if doesn't exist
         drs_path.makedirs(self.params, path)
         # create the summary plot name
@@ -1391,6 +1391,7 @@ def plot_selection(params: ParamDict,
     plot_names = []
     # loop around plot numbers and get plot names
     for plot_num in plot_nums:
+        # noinspection PyBroadException
         try:
             plot_names.append(plots[int(plot_num) - 1])
         except Exception as _:

@@ -105,7 +105,12 @@ SUPPORTED_DATABASES = ['mysql+pymysql']
 # language settings
 # -----------------------------------------------------------------------------
 DEFAULT_LANG = 'ENG'
+# supported languages
 LANGUAGES = ['ENG', 'FR']
+# define default language files
+DEF_LANG_FILES = ['default_text.py', 'default_help.py']
+
+# TODO: Is the rest of this being used?
 LANG_DEFAULT_PATH = './lang/databases/'
 LANG_INSTRUMNET_PATH = './lang/databases/'
 LANG_BACKUP_PATH = './lang/backup/'
@@ -253,6 +258,20 @@ def load_install_yaml() -> dict:
             # raise an error
             emsg = '{0}={1} does not exist'
             raise BaseAperoError(emsg.format(USER_ENV, path))
+    # try fall back option
+    else:
+        try:
+            path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            path = os.path.join(path, 'data', 'default_install.yaml')
+            if os.path.exists(path):
+                return load_yaml(path)
+            else:
+                # raise an error
+                emsg = 'Default install.py={0} does not exist'
+                raise BaseAperoError(emsg.format(path))
+        except Exception as _:
+            pass
+
     # else raise except (cannot come from database)
     emsg = '{0} must be set (please run setup script or add {0} to your PATH)'
     raise BaseAperoError(emsg.format(USER_ENV))
@@ -306,6 +325,7 @@ def create_yamls(allparams: Any):
     install_dict['INSTRUMENT'] = allparams['INSTRUMENT']
     install_dict['LANGUAGE'] = allparams['LANGUAGE']
     install_dict['USE_TQDM'] = True
+    install_dict['DRS_LANG_MODULES'] = allparams['LANG_MODULES']
     # write database
     write_yaml(install_dict, str(install_path))
     # -------------------------------------------------------------------------

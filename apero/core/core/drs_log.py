@@ -28,9 +28,9 @@ from typing import Any, List, Optional, Tuple, Union
 
 import numpy as np
 
-from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core import lang
 from apero.core.core import drs_exceptions
 from apero.core.core import drs_misc
 from apero.core.core import drs_text
@@ -714,9 +714,9 @@ def printlogandcmd(logobj: Logger, params: ParamDict,
     # get character log length
     char_len = logobj.pconstant.CHARACTER_LOG_LENGTH()
     # deal with string message (force to list)
-    if type(message) == str:
+    if isinstance(message, str):
         message = [message]
-    elif type(list):
+    elif isinstance(message, list):
         message = list(message)
     else:
         message = [textentry('00-005-00005', args=message)]
@@ -1252,7 +1252,7 @@ def get_drs_data_msg(params: ParamDict, group: Union[str, None] = None,
     # deal with a group directory (groups must be in sub-directory)
     if (group is not None) and (dir_data_msg is not None):
         # join to group name
-        dir_data_msg = os.path.join(dir_data_msg, group)
+        dir_data_msg = os.path.join(str(dir_data_msg), group)
     # ----------------------------------------------------------------------
     # add night name dir (if available) - put into sub-directory
     if ('OBS_SUBDIR' in params) and (dir_data_msg is not None):

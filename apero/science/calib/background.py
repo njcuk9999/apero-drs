@@ -15,9 +15,9 @@ from scipy.ndimage import map_coordinates as mapc
 from scipy.ndimage import zoom
 from scipy.signal import convolve2d
 
-from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core import lang
 from apero.core import math as mp
 from apero.core.core import drs_file
 from apero.core.core import drs_log
@@ -308,10 +308,9 @@ def correction(recipe: DrsRecipe, params: ParamDict, infile: DrsFitsFile,
         #     will be up-scaled to the size of the full science image and
         #     subtracted
         xc = np.arange(0, image2.shape[0])
-        yc = np.arange(width//4, image2.shape[1], width//4)
+        yc = np.arange(width // 4, image2.shape[1], width // 4)
 
         imageshape = image2.shape
-
 
         background_image = np.zeros((len(xc), len(yc)))
         background_image_offset = np.zeros((len(xc), len(yc)))
@@ -328,23 +327,21 @@ def correction(recipe: DrsRecipe, params: ParamDict, infile: DrsFitsFile,
         # coords for mapping
         coords = np.array([sypix, sxpix])
 
-
         for ite in range(3):
-            image2b = np.array(image2-background_image_full)
+            image2b = np.array(image2 - background_image_full)
             #     # loop around all boxes with centers xc and yc
             #     # and find pixels within a given widths
             #     # around these centers in the full image
             for ii, icol in enumerate(yc):
-                i0 = np.max([icol-width//2,0])
-                i1 = np.min([icol+width//2,image2.shape[1]])
+                i0 = np.max([icol - width // 2, 0])
+                i1 = np.min([icol + width // 2, image2.shape[1]])
                 with warnings.catch_warnings(record=True) as _:
-                    medcol = np.nanmedian(image2b[:,i0:i1],axis=1)
-                background_image_offset[:,ii] = mp.lowpassfilter(medcol,width)
-
+                    medcol = np.nanmedian(image2b[:, i0:i1], axis=1)
+                background_image_offset[:, ii] = mp.lowpassfilter(medcol, width)
 
             background_image_full += mapc(background_image_offset, coords,
-                                         order=2, cval=np.nan, output=float,
-                                         mode='constant')
+                                          order=2, cval=np.nan, output=float,
+                                          mode='constant')
             background_image += background_image_offset
             # print(np.nanstd(background_image_offset),np.nanstd(background_image))
 

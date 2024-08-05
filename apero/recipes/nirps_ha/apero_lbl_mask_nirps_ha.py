@@ -12,16 +12,16 @@ Created on 2023-08-09 at 11:14
 @author: cook
 """
 import sys
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, Optional, Tuple, Union
 
-from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core import lang
 from apero.core.core import drs_log
+from apero.core.instruments.spirou import file_definitions as files
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
 from apero.science.velocity import gen_lbl
-from apero.core.instruments.spirou import file_definitions as files
 
 # =============================================================================
 # Define variables

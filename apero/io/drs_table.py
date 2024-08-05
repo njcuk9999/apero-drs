@@ -29,9 +29,9 @@ from astropy.io.registry import get_formats
 from astropy.table import Column, Table, vstack
 from astropy.table import TableMergeError
 
-from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core import lang
 from apero.core.core import drs_log
 from apero.core.core import drs_text
 from apero.io import drs_lock

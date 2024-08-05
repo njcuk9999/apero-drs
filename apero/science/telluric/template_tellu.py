@@ -13,16 +13,16 @@ from collections import OrderedDict
 from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
-from astropy.io import fits
 from astropy import constants as cc
 from astropy import units as uu
+from astropy.io import fits
 from astropy.table import Table
 from scipy.signal import savgol_filter
 
-from apero import lang
 from apero.base import base
 from apero.base import drs_base
 from apero.core import constants
+from apero.core import lang
 from apero.core import math as mp
 from apero.core.core import drs_database
 from apero.core.core import drs_file
@@ -209,7 +209,7 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
     # ----------------------------------------------------------------------
     for p_it in upbins:
         # get a mask of files in this bin
-        pmask = p_it == pbins
+        pmask = np.array(p_it == pbins)
         # ----------------------------------------------------------------------
         # Set up storage for cubes (NaN arrays) for binned median
         # ----------------------------------------------------------------------
@@ -702,7 +702,7 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
     # ----------------------------------------------------------------------
     for p_it in upbins:
         # get a mask of files in this bin
-        pmask = p_it == pbins
+        pmask = np.array(p_it == pbins)
         # ----------------------------------------------------------------------
         # Set up storage for cubes (NaN arrays) for binned median
         # ----------------------------------------------------------------------
@@ -875,9 +875,9 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
     # for case when bin
     if flag_bin:
         with warnings.catch_warnings(record=True) as _:
-            eflux = (1/np.sqrt(np.nansum(1/big_errors**2,axis=1)))
+            eflux = (1 / np.sqrt(np.nansum(1 / big_errors ** 2, axis=1)))
             eflux[~np.isfinite(eflux)] = np.nan
-            final_n = np.sum(big_n,axis=1)
+            final_n = np.sum(big_n, axis=1)
     else:
         # print progress
         WLOG(params, '', params['DRS_HEADER'])
@@ -957,6 +957,8 @@ def list_current_templates(params: ParamDict,
     :param params: ParamDict, the parameter dictionary of constants
     :param telludb: None or telluric database (to save opening it more times
                     than needed)
+    :param all_objects: list of strings, the list of all objects to filter
+                        the list of templates by
 
     :return: list of current templates
     """

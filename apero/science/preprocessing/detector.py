@@ -17,9 +17,9 @@ import numpy as np
 from astropy.table import Table
 from scipy import ndimage
 
-from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core import lang
 from apero.core import math as mp
 from apero.core.core import drs_database
 from apero.core.core import drs_file
@@ -606,7 +606,7 @@ def construct_led_cube(params: ParamDict, led_files: np.ndarray,
     # number of iterations
     n_iterations = 5
     # load first image
-    led_data_0 = drs_fits.readfits(params, led_files[0])
+    led_data_0 = drs_fits.readfits(params, str(led_files[0]))
     # ----------------------------------------------------------------------
     # storage
     cube = np.zeros([len(led_files), led_data_0.shape[0], led_data_0.shape[1]])
@@ -615,6 +615,8 @@ def construct_led_cube(params: ParamDict, led_files: np.ndarray,
     # ----------------------------------------------------------------------
     # loop around LED files
     for it, led_file in enumerate(led_files):
+        # make sure led_file is a string
+        led_file = str(led_file)
         # print progres
         # TODO: Add to language database
         pargs = [it + 1, len(led_files)]
@@ -1085,6 +1087,7 @@ def nirps_correction(params: ParamDict, image: np.ndarray,
 
     :param params: ParamDict, the parameter dictionary of constants
     :param image: np.ndarray, the image to correct
+    :param header: drs_fits.Header, the header of the image
     :param create_mask: bool, if True create a mask, otherwise try to read
                         it from calibration database (and raise error if not
                         found)
@@ -1092,7 +1095,7 @@ def nirps_correction(params: ParamDict, image: np.ndarray,
     :return: numpy 2D array, the corrected image
     """
     # define the bin size for low level frequencies
-    binsize = params['PP_MEDAMP_BINSIZE']
+    # binsize = params['PP_MEDAMP_BINSIZE']
     # number of amplifiers in total
     namps = params['PP_TOTAL_AMP_NUM']
     # shape of the image
@@ -1440,7 +1443,7 @@ def nirps_order_mask(params: ParamDict, mask_image: np.ndarray,
     image2 = nirps_correction(params, image, mask_header)
     # generate a better estimate of the mask (after correction)
     with warnings.catch_warnings(record=True):
-        mask = image2 < 0
+        mask = np.array(image2 < 0)
     # set properties
     props = ParamDict()
     props['PPM_MASK_NSIG'] = 0

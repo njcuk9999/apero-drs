@@ -12,9 +12,9 @@ from typing import List, Tuple
 
 import numpy as np
 
-from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core import lang
 from apero.core import math as mp
 from apero.core.core import drs_file
 from apero.core.core import drs_log
@@ -334,12 +334,12 @@ def calculate_tellu_res_absorption(params, recipe, image, template_props,
                 bad_order = True
                 continue
             # on the first iteration
-            if ite ==0:
+            if ite == 0:
                 # on the first iteration just fit a slope
-                fit,_ = mp.robust_polyfit(mwavemap[order_num][valid],
-                                          image2[order_num][valid], 1, 5)
+                fit, _ = mp.robust_polyfit(mwavemap[order_num][valid],
+                                           image2[order_num][valid], 1, 5)
                 # SED is the slope of the hot star spectrum
-                sed_tmp = np.polyval(fit,mwavemap[order_num])
+                sed_tmp = np.polyval(fit, mwavemap[order_num])
             # otherwise low pass the spectrum
             else:
                 # calculate the SED model using this the masked image (low pass)
@@ -374,8 +374,8 @@ def calculate_tellu_res_absorption(params, recipe, image, template_props,
             # must have some valid points
             if np.sum(good) > 0:
                 # Fit the residuals to the absorption
-                fit,_ = mp.robust_polyfit(tapas_trans_ord[good], diff[good],
-                                          degree=1, nsigcut=5)
+                fit, _ = mp.robust_polyfit(tapas_trans_ord[good], diff[good],
+                                           degree=1, nsigcut=5)
                 correction = np.polyval(fit, tapas_trans_ord)
                 # applying a correction to the image2
                 image2[order_num] = image2[order_num] - correction

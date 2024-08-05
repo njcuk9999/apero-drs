@@ -20,9 +20,9 @@ from scipy import signal
 from scipy import stats
 from scipy.interpolate import UnivariateSpline
 
-from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core import lang
 from apero.core import math as mp
 from apero.core.core import drs_database
 from apero.core.core import drs_file

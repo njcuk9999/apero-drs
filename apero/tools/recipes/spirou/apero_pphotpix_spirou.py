@@ -16,9 +16,9 @@ from astropy.io import fits
 from astropy.table import Table
 from scipy.signal import medfilt, convolve2d
 
-from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core import lang
 from apero.core import math as mp
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup

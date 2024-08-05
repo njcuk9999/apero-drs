@@ -14,8 +14,8 @@ import os
 import shutil
 from datetime import datetime
 
-from apero import lang
 from apero.base import base
+from apero.core import lang
 from apero.core.core import drs_log
 
 # =============================================================================

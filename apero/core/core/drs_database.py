@@ -32,16 +32,16 @@ from astropy.io.ascii.core import InconsistentTableError
 from astropy.table import Table
 from pandasql import sqldf
 
-from apero import lang
 from apero.base import base
 from apero.base import drs_db
 from apero.base.drs_db import DatabaseManager
 from apero.core import constants
+from apero.core import lang
 from apero.core.core import drs_exceptions
 from apero.core.core import drs_file
 from apero.core.core import drs_log
-from apero.core.core import drs_text
 from apero.core.core import drs_misc
+from apero.core.core import drs_text
 from apero.io import drs_fits
 from apero.io import drs_path
 

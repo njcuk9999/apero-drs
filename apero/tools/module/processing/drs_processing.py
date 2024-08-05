@@ -23,9 +23,9 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import numpy as np
 from astropy.table import Table
 
-from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core import lang
 from apero.core.core import drs_argument
 from apero.core.core import drs_base_classes as base_class
 from apero.core.core import drs_database
@@ -920,11 +920,11 @@ def generate_run_list(params: ParamDict, findexdbm: FileIndexDatabase,
                      sublevel=2)
     # -------------------------------------------------------------------------
     # get recipe definitions module (for this instrument)
-    recipemod = _get_recipe_module(params)
+    recipemod = get_recipe_module(params)
     # get all values (upper case) using map function
-    rvalues = _get_rvalues(runtable)
+    rvalues = get_rvalues(runtable)
     # check if rvalues has a run sequence
-    sequencelist = _check_for_sequences(rvalues, recipemod)
+    sequencelist = check_for_sequences(rvalues, recipemod)
     # set rlist to None (for no sequences)
     rlist = None
     # if we have found sequences need to deal with them
@@ -935,11 +935,11 @@ def generate_run_list(params: ParamDict, findexdbm: FileIndexDatabase,
             # log progress
             WLOG(params, 'info', textentry('40-503-00009', args=[sequence[0]]))
             # generate new runs for sequence
-            newruns = _generate_run_from_sequence(params, sequence,
-                                                  findexdbm, tstars=tstars,
-                                                  ostars=ostars,
-                                                  template_stars=template_stars,
-                                                  ref_condition=ref_condition)
+            newruns = generate_run_from_sequence(params, sequence,
+                                                 findexdbm, tstars=tstars,
+                                                 ostars=ostars,
+                                                 template_stars=template_stars,
+                                                 ref_condition=ref_condition)
             # update runtable with sequence generation
             runtable, rlist = update_run_table(sequence, runtable, newruns,
                                                rlist)
@@ -1360,7 +1360,7 @@ def generate_ids(params: ParamDict, indexdb: FileIndexDatabase,
     keylist = list(numbers[sortmask])
     inrecipelist = list(inrecipes[sortmask])
     # get recipe definitions module (for this instrument)
-    recipemod = _get_recipe_module(params, logmsg=False)
+    recipemod = get_recipe_module(params, logmsg=False)
     # store skip previous runstrings (so it is not recalculated every time)
     skip_storage = dict()
     # -------------------------------------------------------------------------
@@ -1508,7 +1508,7 @@ def _multi_generate_id(params: ParamDict, subgroup: np.ndarray,
              id and the value is the DrsRecipe
     """
     # get recipe definitions module (for this instrument)
-    recipemod = _get_recipe_module(params, logmsg=False)
+    recipemod = get_recipe_module(params, logmsg=False)
     # get the file index database
     indexdb = FileIndexDatabase(params)
     # set up a skip storage (so we don't redo things we don't have to many
@@ -1787,7 +1787,7 @@ def _remove_py(innames):
 # =============================================================================
 # Define "from sequence" functions
 # =============================================================================
-def _check_for_sequences(rvalues, mod):
+def check_for_sequences(rvalues, mod):
     # find sequences
     all_sequences = mod.get().sequences
     # get sequences names
@@ -1810,14 +1810,14 @@ def _check_for_sequences(rvalues, mod):
         return sequencelist
 
 
-def _generate_run_from_sequence(params: ParamDict, sequence,
-                                indexdb: FileIndexDatabase,
-                                return_recipes: bool = False,
-                                logmsg: bool = True,
-                                tstars: Union[List[str], None] = None,
-                                ostars: Union[List[str], None] = None,
-                                template_stars: Union[List[str], None] = None,
-                                ref_condition: str = ''):
+def generate_run_from_sequence(params: ParamDict, sequence,
+                               indexdb: FileIndexDatabase,
+                               return_recipes: bool = False,
+                               logmsg: bool = True,
+                               tstars: Union[List[str], None] = None,
+                               ostars: Union[List[str], None] = None,
+                               template_stars: Union[List[str], None] = None,
+                               ref_condition: str = ''):
     func_name = __NAME__ + '.generate_run_from_sequence()'
     # -------------------------------------------------------------------------
     # get filemod and recipe mod
@@ -3570,7 +3570,7 @@ def get_non_telluric_stars(params: ParamDict, all_objects: List[str],
     return list(np.sort(other_objects))
 
 
-def _get_recipe_module(params: ParamDict, logmsg: bool = True, **kwargs):
+def get_recipe_module(params: ParamDict, logmsg: bool = True, **kwargs):
     func_name = __NAME__ + '.get_recipe_module()'
     # log progress: loading recipe module files
     if logmsg:
@@ -3596,7 +3596,7 @@ def _get_recipe_module(params: ParamDict, logmsg: bool = True, **kwargs):
     return mod
 
 
-def _get_rvalues(runtable):
+def get_rvalues(runtable):
     return list(map(lambda x: x.upper(), runtable.values()))
 
 

@@ -15,9 +15,9 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
-from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core import lang
 from apero.core.core import drs_database
 from apero.core.core import drs_file
 from apero.core.core import drs_log
@@ -206,6 +206,7 @@ def find_teff(params: ParamDict, objname: str) -> float:
                                  condition='OBJNAME="{0}"'.format(objname),
                                  nentries=1)
     # try to convert to a float (may be a null)
+    # noinspection PyBroadException
     try:
         teff = float(teff)
     except Exception as _:
@@ -228,6 +229,7 @@ def add_output(params: ParamDict, recipe: DrsRecipe,
 
     :param params: ParamDict, paremeter dictionary of constants
     :param recipe: DrsRecipe, the recipe instance that called this function
+    :param header_fits_file: str or None, the header fits file to use
     :param drsfile: DrsInputFile, the input file definition
     :param inprefix: str or None, the file prefix identifier
                      i.e. {identifier}_pp_e2dsff_tcorr_AB_
@@ -452,7 +454,6 @@ def fake_hkeys(params: ParamDict, filename: str,
 
     # need to add KW_DPRTYPE, KW_PI_NAME, KW_RUN_ID, KW_FIBER
 
-
     # overwrite keys
     pkeys['KW_OBJNAME'] = objname
     pkeys['KW_INSTRUMENT'] = params['INSTRUMENT']
@@ -515,6 +516,7 @@ def add_log(params: ParamDict, lblinstance: Any):
     WLOG(params, 'info', 'Adding LBL log to apero log')
     for msg in TQDM(lblinstance.get('logmsg', [])):
         WLOG(params, '', msg, logonly=True)
+
 
 # =============================================================================
 # Start of code

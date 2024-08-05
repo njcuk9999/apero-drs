@@ -26,9 +26,9 @@ from typing import Any, List, Optional, Union
 import numpy as np
 from astropy import units as uu
 
-from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core import lang
 from apero.core import math as mp
 from apero.core.core import drs_exceptions
 from apero.core.core import drs_log
@@ -406,14 +406,14 @@ def listdirs(rootdir: str) -> List[str]:
     # store directories
     directories = []
     # loop around items in rootdir
-    for it in os.scandir(rootdir):
+    for item in os.scandir(rootdir):
         # check if it 1. is a directory 2. is not empty
-        if it.is_dir():
+        if item.is_dir():
             # add to paths
-            if not nofiles(it):
-                directories.append(it.path)
+            if not nofiles(str(item)):
+                directories.append(item.path)
             # add sub directories
-            directories += listdirs(it)
+            directories += listdirs(str(item))
     # sort directories
     directories = sorted(directories)
     # return sort directories
@@ -551,6 +551,9 @@ def make_tarfile(output_filename: str, source_dir: str,
 
     :param output_filename: the output tar filename
     :param source_dir: str, the source directory to add to the tar file
+    :param exclude_prefixes: list of str, prefixes to exclude from the tar file
+    :param exclude_suffixes: list of str, suffixes to exclude from the tar file
+
     :return:
     """
     # deal with default values
@@ -558,6 +561,7 @@ def make_tarfile(output_filename: str, source_dir: str,
         exclude_prefixes = []
     if exclude_suffixes is None:
         exclude_suffixes = []
+
     # define function to use in tar.add
     def should_be_excluded(tarinfo: Any) -> Any:
         """
@@ -595,6 +599,7 @@ def extract_tarfile(tar_filename: str, extract_dir: str):
     """
     with tarfile.open(tar_filename, "r:gz") as tar:
         tar.extractall(path=extract_dir)
+
 
 # =============================================================================
 # Start of code

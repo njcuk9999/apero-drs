@@ -7,22 +7,22 @@ Created on 2024-03-11 at 11:15
 
 @author: cook
 """
-import os
 import glob
+import os
 from typing import Tuple
 
+import gspread_pandas as gspd
 import numpy as np
 import pandas as pd
-import gspread_pandas as gspd
 from astropy.table import Table
 
-from apero import lang
 from apero.base import base
 from apero.core import constants
-from apero.core.utils import drs_recipe
+from apero.core import lang
+from apero.core.core import drs_database
 from apero.core.core import drs_log
 from apero.core.core import drs_misc
-from apero.core.core import drs_database
+from apero.core.utils import drs_recipe
 from apero.io import drs_fits
 from apero.tools.module.setup import drs_installation
 
@@ -50,6 +50,8 @@ WLOG = drs_log.wlog
 display_func = drs_log.display_func
 # get tqdm instance
 TQDM = base.tqdm_module()
+
+
 # -----------------------------------------------------------------------------
 
 
@@ -61,7 +63,8 @@ def add_file_reject(params: ParamDict, recipe: DrsRecipe, raw_identifier: str):
     Add an identifier to the file reject list
 
     :param params: ParamDict, the parameter dictionary of constants
-    :param identifier: str, the identifier to reject
+    :param recipe: DrsRecipe, the recipe instance
+    :param raw_identifier: str, the identifier to reject
 
     :return: None, updates the file reject list
     """
@@ -222,7 +225,7 @@ def add_file_reject(params: ParamDict, recipe: DrsRecipe, raw_identifier: str):
                 wmsg = 'Row number={0} must be an integer'
                 wargs = [_row]
                 WLOG(params, 'warning', wmsg.format(*wargs))
-                has_warnings= True
+                has_warnings = True
         # deal with having warnings --> restart while loop
         if has_warnings:
             continue
@@ -323,6 +326,7 @@ def update_from_obsdir(params: ParamDict, recipe: DrsRecipe, obsdir: str) -> str
     science observations to the reject list
 
     :param params: ParamDict, the parameter dictionary of constants
+    :param recipe: DrsRecipe, the recipe instance
     :param obsdir: str, the obsdir to update from
 
     :return: str, comma separated list of identifiers from the obsdir

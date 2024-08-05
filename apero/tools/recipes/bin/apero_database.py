@@ -12,11 +12,9 @@ Created on 2019-07-26 at 09:39
 from pathlib import Path
 from typing import Any, Dict
 
-import numpy as np
-
-from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core import lang
 from apero.core.core import drs_log
 from apero.core.core import drs_text
 from apero.core.utils import drs_recipe

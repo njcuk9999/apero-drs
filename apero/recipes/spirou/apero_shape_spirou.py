@@ -11,9 +11,9 @@ Created on 2019-03-23 at 13:01
 """
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core import lang
 from apero.core.core import drs_database
 from apero.core.core import drs_file
 from apero.core.core import drs_log

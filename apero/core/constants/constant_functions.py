@@ -18,8 +18,8 @@ from typing import Any, List, Tuple, Union
 import numpy as np
 from astropy import units as uu
 
-from apero import lang
 from apero.base import base
+from apero.core import lang
 from apero.core.core import drs_base_classes as base_class
 from apero.core.core import drs_exceptions
 from apero.core.core import drs_misc
@@ -262,7 +262,7 @@ class Const:
                      description=self.description, author=self.author,
                      parent=self.parent, output=self.output)
 
-    def write_line(self, value: Any = None, format: str = 'ini') -> List[str]:
+    def write_line(self, value: Any = None, fmt: str = 'ini') -> List[str]:
         """
         Creates the lines required for a config/constant file for this constant
 
@@ -275,7 +275,7 @@ class Const:
 
         :param value: object, the value to add as the `value` in a
                       config/constant file.
-        :param format: str, the format of the output (default='ini')
+        :param fmt: str, the format of the output (default='ini')
                        if set to yaml {NAME} = {VALUE} is not added
 
         :return: A list of strings (lines) to add to config/constant file for
@@ -284,7 +284,7 @@ class Const:
         :rtype: list[str]
         """
         # deal with formatting
-        if format == 'ini':
+        if fmt == 'ini':
             comment = '# '
         else:
             comment = ''
@@ -888,16 +888,16 @@ def get_constants_from_file(filename: str) -> Tuple[List[str], List[str]]:
         return [], []
     # loop around each variable (key and value pairs)
     if single:
-        key = raw[0].strip().strip("'").strip('"')
-        value = raw[1].strip().strip("'").strip('"')
+        key = str(raw[0]).strip().strip("'").strip('"')
+        value = str(raw[1]).strip().strip("'").strip('"')
         keys = [key]
         values = [value]
     else:
         keys, values = [], []
         for row in range(lraw):
             # remove whitespaces and quotation marks from start/end
-            key = raw[row, 0].strip().strip("'").strip('"')
-            value = raw[row, 1].strip().strip("'").strip('"')
+            key = str(raw[row, 0]).strip().strip("'").strip('"')
+            value = str(raw[row, 1]).strip().strip("'").strip('"')
             # add key.upper() to keys
             keys.append(key.upper())
             # add value to values

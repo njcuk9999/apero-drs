@@ -20,8 +20,7 @@ import signal
 import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
-
-import setup_lang
+import runpy
 
 # =============================================================================
 # Define variables
@@ -63,13 +62,76 @@ module_translation['SQLAlchemy'] = 'sqlalchemy'
 module_translation['Sphinx'] = 'sphinx'
 module_translation['ipython'] = 'IPython'
 module_translation['gspread-pandas'] = 'gspread_pandas'
-# start the language dictionary
-lang = setup_lang.LangDict()
+# define default language files
+DEF_LANG_FILES = ['default_text.py', 'default_help.py']
+# define allowed languages
+SUPPORTED_LANGUAGES = ['ENG', 'FR']
+
 
 
 # =============================================================================
 # Define functions
 # =============================================================================
+# TODO: Replace with drs_base.BETEXT  (and base error)
+class InstallLang:
+    def __init__(self, language: str):
+        self.language = language
+        self.langlist = dict()
+        self._get_lang()
+
+    def __getitem__(self, key):
+        return self.langlist[key]
+
+    def error(self, key):
+        msg = self.langlist[key]
+        return '\033[91m' + msg + '\033[0m'
+
+    def _get_lang(self):
+        """
+        Get the language database (sounds like a given but need to check)
+        :return:
+        """
+        # get the apero path
+        drs_root_guess = os.path.dirname(os.path.dirname(__file__))
+        lang_path = os.path.join(drs_root_guess, 'apero', 'core', 'lang',
+                                 'tables')
+        # loop around lanuage table files
+        for lang_basename in DEF_LANG_FILES:
+            # construct language file
+            lang_file = os.path.join(lang_path, lang_basename)
+            # read file
+            with open(lang_file, 'r') as lfile:
+                lines = lfile.readlines()
+            # make text pairs
+            in_file = True
+            while in_file:
+                # if no lines left break
+                if len(lines) == 0:
+                    break
+                # get the first line
+                line = lines.pop(0)
+                # if we have a start of a text block
+                if 'langlist.create' in line:
+                    # get the text key
+                    key = line.split('langlist.create(\'')[-1].split('\'')[0]
+                    # get the language values
+                    next_lines = lines[:len(SUPPORTED_LANGUAGES)]
+                    for nline in next_lines:
+                        if f'item.value[\'{self.language}\']' in nline:
+                            value = nline.split('] = ')[-1]
+                            value = value.strip('\n')
+                            value = value.strip('\'').strip('"')
+                            value = value.replace('\\n', '\n')
+                            value = value.replace('\\t', '\t')
+                            self.langlist[key] = value
+                            break
+        return self.langlist
+
+
+# default language
+lang = InstallLang('ENG')
+
+
 def get_version() -> str:
     filepath = os.path.abspath(__file__)
     # get files
@@ -560,17 +622,8 @@ def main():
 
     :return:
     """
-    global lang
     # set function name
     func_name = __NAME__ + '.main()'
-    # -------------------------------------------------------------------------
-    # get language argument
-    langarg = get_sys_arg('lang')
-    if langarg in setup_lang.LANGUAGES:
-        lang = setup_lang.LangDict(langarg)
-    else:
-        lang = setup_lang.LangDict()
-    language = lang.language
     # ----------------------------------------------------------------------
     # deal with validation
     if not get_sys_arg('--skip') and not get_sys_arg('--help', 'switch'):
@@ -590,8 +643,6 @@ def main():
         from apero.base import drs_base
     except Exception as _:
         pass
-    # update the language dict to use the full proxy database
-    lang = drs_base.lang_db_proxy()
     # get text entry for remaining text
     textentry = install.textentry
     # ----------------------------------------------------------------------
@@ -611,7 +662,7 @@ def main():
         sys.exit()
     # get parameters from user input
     elif not args.update:
-        allparams, args = install.user_interface(params, args, language)
+        allparams, args = install.user_interface(params, args)
         # save current arguments to disk
         afile = save_args(args)
         install.cprint(f'Saved installation parameters to: {afile}')

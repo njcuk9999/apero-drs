@@ -16,9 +16,9 @@ from typing import Dict, List, Optional
 import numpy as np
 from astropy.table import Table
 
-from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core import lang
 from apero.core.core import drs_database
 from apero.core.core import drs_log
 from apero.core.core import drs_misc
@@ -145,8 +145,8 @@ class Trigger:
         # define the time to wait to check again
         self.sleep_time = 60
         # define the path to the trigger table
-        trigger_dir = os.path.join(params['DRS_DATA_ASSETS'],
-                                   params['DATABASE_DIR'])
+        trigger_dir = str(os.path.join(params['DRS_DATA_ASSETS'],
+                                       params['DATABASE_DIR']))
         self.triggr_table = os.path.join(trigger_dir, TRIGGER_TABLE)
         # set the input directory (to scan)
         self.indir = params['INPUTS']['INDIR']
@@ -441,11 +441,11 @@ def get_recipes(params: ParamDict, runfile: str,
                                                  rkind='run',
                                                  log_overwrite=True)
     # get recipe definitions module (for this instrument)
-    recipemod = drs_processing._get_recipe_module(iparams, logmsg=False)
+    recipemod = drs_processing.get_recipe_module(iparams, logmsg=False)
     # get all values (upper case) using map function
-    rvalues = drs_processing._get_rvalues(runtable)
+    rvalues = drs_processing.get_rvalues(runtable)
     # check if rvalues has a run sequence
-    sequencelist = drs_processing._check_for_sequences(rvalues, recipemod)
+    sequencelist = drs_processing.check_for_sequences(rvalues, recipemod)
     # --------------------------------------------------------------------------
     # store recipes in the run file
     recipe_names = dict()
@@ -456,7 +456,7 @@ def get_recipes(params: ParamDict, runfile: str,
         for sequence in sequencelist:
             # generate new runs for sequence
             gargs = [iparams, sequence, findexdbm, True, False]
-            srecipes = drs_processing._generate_run_from_sequence(*gargs)
+            srecipes = drs_processing.generate_run_from_sequence(*gargs)
             # loop around recipes in sequence
             for srecipe in srecipes:
                 # get the run name (that should be in params from runfile)

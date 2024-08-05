@@ -17,9 +17,9 @@ from typing import Dict, List, Optional, Tuple, Union
 import numpy as np
 from astropy.time import Time
 
-from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core import lang
 from apero.core.core import drs_database
 from apero.core.core import drs_log
 from apero.core.core import drs_text
@@ -363,8 +363,8 @@ def all_objects(params):
     findexdb = drs_database.FileIndexDatabase(params)
     findexdb.load_db()
     # return all object names
-    objs =  findexdb.get_unique(column='KW_OBJNAME',
-                                condition='BLOCK_KIND="raw"')
+    objs = findexdb.get_unique(column='KW_OBJNAME',
+                               condition='BLOCK_KIND="raw"')
     # print number of objects found
     msg = 'Found {0} raw objects in file index database'
     margs = [len(objs)]
@@ -434,7 +434,7 @@ def check_size_limit(params: ParamDict, inpaths: Dict[str, List[str]],
     if total_size > sizelimit:
         # print warning
         eargs = [total_size, sizelimit]
-        emsg = ('Total size of files ({0:.3f} GB) exceeds limit ({1:.3f} GB)')
+        emsg = 'Total size of files ({0:.3f} GB) exceeds limit ({1:.3f} GB)'
         WLOG(params, 'error', emsg.format(*eargs))
 
 

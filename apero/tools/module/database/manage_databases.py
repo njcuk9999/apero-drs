@@ -14,10 +14,10 @@ import numpy as np
 import pandas as pd
 from astropy.table import Table, vstack, MaskedColumn
 
-from apero import lang
 from apero.base import base
 from apero.base import drs_db
 from apero.core import constants
+from apero.core import lang
 from apero.core.core import drs_database
 from apero.core.core import drs_log
 from apero.core.core import drs_text
@@ -243,7 +243,6 @@ def list_databases(params: ParamDict) -> Dict[str, DatabaseM]:
     logdbm = drs_database.LogDatabase(params, pconst)
     objectdbm = drs_database.AstrometricDatabase(params, pconst)
     rejectdbm = drs_database.RejectDatabase(params, pconst)
-    landdbm = drs_db.LanguageDatabase()
     # add to storage
     databases['calib'] = calibdbm
     databases['tellu'] = telludbm
@@ -251,7 +250,6 @@ def list_databases(params: ParamDict) -> Dict[str, DatabaseM]:
     databases['log'] = logdbm
     databases['astrom'] = objectdbm
     databases['reject'] = rejectdbm
-    databases['lang'] = landdbm
     # return the databases
     return databases
 
@@ -300,10 +298,6 @@ def install_databases(params: ParamDict, skip: Union[List[str], None] = None,
     # create reject database
     if 'reject' not in skip and 'reject' in runs:
         _ = create_reject_database(params, pconst, databases, verbose=verbose)
-    # -------------------------------------------------------------------------
-    # create language database
-    if 'lang' not in skip and 'lang' in runs:
-        _ = create_lang_database(params, databases, verbose=verbose)
 
 
 # =============================================================================
@@ -349,7 +343,7 @@ def create_calibration_database(params: ParamDict, pconst: PseudoConst,
         WLOG(params, '', 'Created calibration database')
     # ---------------------------------------------------------------------
     # construct reset file
-    reset_abspath = os.path.join(asset_dir, reset_path, calibdbm.dbreset)
+    reset_abspath = str(os.path.join(asset_dir, reset_path, calibdbm.dbreset))
     # get rows from reset file
     reset_entries = pd.read_csv(reset_abspath, skipinitialspace=True)
     # add rows from reset text file
@@ -401,7 +395,7 @@ def create_telluric_database(params: ParamDict, pconst: PseudoConst,
         WLOG(params, '', 'Created telluric database')
     # ---------------------------------------------------------------------
     # construct reset file
-    reset_abspath = os.path.join(asset_dir, reset_path, telludbm.dbreset)
+    reset_abspath = str(os.path.join(asset_dir, reset_path, telludbm.dbreset))
     # the rest file may not exist - this is okay for the telluric database
     if os.path.exists(reset_abspath):
         # get rows from reset file
@@ -855,82 +849,6 @@ def get_reject_database(params: ParamDict, log: bool = True) -> Table:
     # -------------------------------------------------------------------------
     # return the main table
     return maintable
-
-
-# =============================================================================
-# Define language database functions
-# =============================================================================
-def create_lang_database(params: Union[None, ParamDict],
-                         databases: Dict[str, DatabaseM],
-                         verbose: bool = False) -> Database:
-    """
-    Setup for the index database
-
-    :param params: ParamDict, the parameter dictionary of constants
-    :param databases: dictionary of database managers
-    :param verbose: bool, if True print messages
-
-    :returns: database - the telluric database
-    """
-    # -------------------------------------------------------------------------
-    # construct directory
-    langdbm = databases['lang']
-    assert isinstance(langdbm, drs_db.LanguageDatabase)
-    # -------------------------------------------------------------------------
-    # make database
-    langdb = Database(langdbm.dburl, tablename=langdbm.dbtable)
-    # get columns
-    lang_cols = langdbm.columns
-    # -------------------------------------------------------------------------
-    if langdb.tablename in langdb.get_tables():
-        langdb.backup()
-        langdb.delete_table(langdb.tablename)
-        if verbose and params is not None:
-            WLOG(params, '', 'Deleted language database')
-    # add main table
-    langdb.add_table(langdb.tablename,
-                     columns=lang_cols.columns,
-                     indexes=lang_cols.indexes,
-                     uniques=lang_cols.uniques)
-    if verbose and params is not None:
-        WLOG(params, '', 'Created language database')
-    # ---------------------------------------------------------------------
-    # add rows from reset text file for default file
-    # ---------------------------------------------------------------------
-    # get rows from reset file
-    reset_entries0 = pd.read_csv(langdbm.resetfile, skipinitialspace=True)
-    # remove entries with KEYNAME == nan
-    mask0 = np.array(reset_entries0['KEYNAME']).astype(str) == 'nan'
-    # add rows from reset text file
-    langdb.add_from_pandas(reset_entries0[~mask0])
-    # ---------------------------------------------------------------------
-    # add rows from reset text file for instrument file
-    # ---------------------------------------------------------------------
-    # get rows from instrument file
-    reset_entries1 = pd.read_csv(langdbm.instruement_resetfile,
-                                 skipinitialspace=True)
-    # remove entries with KEYNAME == nan
-    mask1 = np.array(reset_entries1['KEYNAME']).astype(str) == 'nan'
-    reset_entries1 = reset_entries1[~mask1]
-    # reload database into landgm
-    langdbm.load_db(check=False)
-    # need to loop around rows and add them one by one for instrument
-    for row in range(len(reset_entries1)):
-        # get row data
-        rowdata = reset_entries1.iloc[row]
-        # fill values
-        entry = dict()
-        entry['key'] = rowdata['KEYNAME']
-        entry['kind'] = rowdata['KIND']
-        entry['comment'] = rowdata['KEYDESC']
-        entry['arguments'] = rowdata['ARGUMENTS']
-        entry['textdict'] = dict()
-        for language in base.LANGUAGES:
-            entry['textdict'][language] = rowdata[language]
-        # add entry
-        langdbm.add_entry(**entry)
-    # -------------------------------------------------------------------------
-    return langdb
 
 
 # =============================================================================

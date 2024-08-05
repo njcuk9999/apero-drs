@@ -10,8 +10,8 @@ Created on 2024-03-11
 """
 from typing import Optional
 
-from apero import lang
 from apero.base import base
+from apero.core import lang
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
 from apero.tools.module.database import drs_astrometrics

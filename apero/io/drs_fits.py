@@ -31,12 +31,11 @@ from astropy.io import fits
 from astropy.io.fits.verify import VerifyWarning
 from astropy.table import Table
 
-from apero import lang
 from apero.base import base
 from apero.core import constants
-from apero.core.core import drs_log
+from apero.core import lang
 from apero.core.core import drs_base_classes
-
+from apero.core.core import drs_log
 
 # =============================================================================
 # Define variables
@@ -355,7 +354,7 @@ class Header(fits.Header):
         elif isinstance(value, float) and np.isneginf(value):
             return '-INF'
         # check and deal with tuple
-        elif type(value) == tuple:
+        elif isinstance(value, tuple):
             return (Header.__nan_check(value[0]),) + value[1:]
         # else return original value
         else:
@@ -1309,7 +1308,7 @@ def deal_with_bad_file_single(filename: str, ext: Optional[int] = None,
     # deal with having a extension name
     if extname is not None:
         if flavour == 'data':
-            return np.arary(hdulist[extname].data)
+            return np.array(hdulist[extname].data)
         else:
             return fits.Header(hdulist[extname].header)
     # else loop around until we find the data we are after

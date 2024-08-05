@@ -1,0 +1,7 @@
+DRS_LANG_MODULES:
+- apero.core.lang.tables.default_help
+- apero.core.lang.tables.default_text
+DRS_UCONFIG: None
+INSTRUMENT: None
+LANGUAGE: ENG
+USE_TQDM: true

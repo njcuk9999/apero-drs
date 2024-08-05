@@ -18,9 +18,9 @@ import numpy as np
 from astropy.io import fits
 from astropy.table import Table
 
-from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core import lang
 from apero.core.core import drs_database
 from apero.core.core import drs_file
 from apero.core.core import drs_log
@@ -66,6 +66,7 @@ def update_database(params: ParamDict, recipe: DrsRecipe, dbkind: str):
     Update the calib/tellu/log and index databases from files on disk
 
     :param params: Paramdict, the parameter dictionary of constants
+    :param recipe: DrsRecipe, the recipe instance
     :param dbkind: str, the type of database (i.e. all, calib, tellu, log etc)
     :return:
     """
@@ -77,7 +78,7 @@ def update_database(params: ParamDict, recipe: DrsRecipe, dbkind: str):
 
         # deal with removal of entries
         if dbkind == 'calib':
-            remove = remove_db_entries(params, pconst, 'calibration')
+            remove = remove_db_entries(params, 'calibration')
             # we do not continue if we are removing entries
             if remove:
                 return
@@ -91,7 +92,7 @@ def update_database(params: ParamDict, recipe: DrsRecipe, dbkind: str):
     if dbkind in ['tellu', 'all']:
         # deal with removal of entries
         if dbkind == 'tellu':
-            remove = remove_db_entries(params, pconst, 'telluric')
+            remove = remove_db_entries(params, 'telluric')
             # we do not continue if we are removing entries
             if remove:
                 return
@@ -348,8 +349,7 @@ def log_update(params: ParamDict, pconst: PseudoConstants):
             logdbm.add_entries(*logentries[lcode])
 
 
-def remove_db_entries(params: ParamDict, pconst: PseudoConstants,
-                      db_type: str) -> bool:
+def remove_db_entries(params: ParamDict, db_type: str) -> bool:
 
     # first check if we have the --since and --keys arguments in INPUTS
     # if we do then we need to remove entries from the database
@@ -486,7 +486,7 @@ def remove_db_entries(params: ParamDict, pconst: PseudoConstants,
                 # loop around files in table and remove them
                 for row in range(len(table)):
                     # get filename
-                    filename = table['FILENAME'][row]
+                    filename = str(table['FILENAME'][row])
                     # get full path
                     fullpath = os.path.join(path, filename)
                     # check if file exists

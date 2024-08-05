@@ -15,9 +15,9 @@ only from
 """
 from typing import Any, Union
 
-from apero import lang
 from apero.base import base
 from apero.base import drs_base
+from apero.core import lang
 
 # =============================================================================
 # Define variables

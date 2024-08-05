@@ -19,9 +19,9 @@ from astropy import units as uu
 from astropy.table import Table
 from scipy.optimize import curve_fit
 
-from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core import lang
 from apero.core import math as mp
 from apero.core.core import drs_database
 from apero.core.core import drs_file
@@ -98,7 +98,7 @@ def get_tellu_include_list(params: ParamDict,
     tfilename = pcheck(params, 'TELLU_WHITELIST_NAME', func=func_name,
                        override=tellu_include_file)
     # get absolulte filename
-    whitelistfile = os.path.join(assetdir, relfolder, tfilename)
+    whitelistfile = str(os.path.join(assetdir, relfolder, tfilename))
     # load the white list
     whitelist = drs_data.load_text_file(params, whitelistfile, func_name,
                                         dtype=str)
@@ -132,7 +132,7 @@ def get_tellu_exclude_list(params: ParamDict,
     tfilename = pcheck(params, 'TELLU_BLACKLIST_NAME', func=func_name,
                        override=tellu_exclude_file)
     # get absolulte filename
-    blacklistfile = os.path.join(assetdir, relfolder, tfilename)
+    blacklistfile = str(os.path.join(assetdir, relfolder, tfilename))
     # load the white list
     blacklist = drs_data.load_text_file(params, blacklistfile, func_name,
                                         dtype=str)
@@ -473,6 +473,8 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     :param fiber:
     :param rawfiles:
     :param combine:
+    :param template_props:
+    :param sky_props:
     :param calibdbm:
     :param telludbm:
 
@@ -863,7 +865,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         # ------------------------------------------------------------------
         # apply some cuts to very discrepant points. These will be set to zero
         #   not to bias the CCF too much
-        cutmask = np.abs(spectrum_tmp[spectrum_tmp!=0])
+        cutmask = np.abs(spectrum_tmp[spectrum_tmp != 0])
         cut = mp.nanmedian(cutmask) * trans_siglim
         # set NaN and infinite values to zero
         # spectrum_tmp[~np.isfinite(spectrum_tmp)] = 0.0
@@ -1125,45 +1127,45 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     margs = [snr_others, snr_water]
     WLOG(params, '', msg.format(*margs))
     # deal with lower bounds for other species
-    if expo_others/hdr_airmass < others_bounds[0]:
+    if expo_others / hdr_airmass < others_bounds[0]:
         # update qc params
-        qc_values[2] = float(expo_others)/hdr_airmass
+        qc_values[2] = float(expo_others) / hdr_airmass
         qc_pass[2] = 0
         # flag qc as failed and break
         flag_qc = True
     else:
-        qc_values[2] = float(expo_others)/hdr_airmass
+        qc_values[2] = float(expo_others) / hdr_airmass
         qc_pass[2] = 1
     # deal with upper bounds for other species
-    if expo_others/hdr_airmass > others_bounds[1]:
+    if expo_others / hdr_airmass > others_bounds[1]:
         # update qc params
-        qc_values[3] = float(expo_others)/hdr_airmass
+        qc_values[3] = float(expo_others) / hdr_airmass
         qc_pass[3] = 0
         # flag qc as failed and break
         flag_qc = True
     else:
-        qc_values[3] = float(expo_others)/hdr_airmass
+        qc_values[3] = float(expo_others) / hdr_airmass
         qc_pass[3] = 1
     # --------------------------------------------------------------
     # deal with lower bounds for water
-    if expo_water/hdr_airmass < water_bounds[0]:
+    if expo_water / hdr_airmass < water_bounds[0]:
         # update qc params
-        qc_values[4] = float(expo_water)/hdr_airmass
+        qc_values[4] = float(expo_water) / hdr_airmass
         qc_pass[4] = 0
         # flag qc as failed and break
         flag_qc = True
     else:
-        qc_values[4] = float(expo_water)/hdr_airmass
+        qc_values[4] = float(expo_water) / hdr_airmass
         qc_pass[4] = 1
     # deal with upper bounds for water
-    if expo_water/hdr_airmass > water_bounds[1]:
+    if expo_water / hdr_airmass > water_bounds[1]:
         # update qc params
-        qc_values[5] = float(expo_water)/hdr_airmass
+        qc_values[5] = float(expo_water) / hdr_airmass
         qc_pass[5] = 0
         # flag qc as failed and break
         flag_qc = True
     else:
-        qc_values[5] = float(expo_water)/hdr_airmass
+        qc_values[5] = float(expo_water) / hdr_airmass
         qc_pass[5] = 1
     # ----------------------------------------------------------------------
     # deal with iterations hitting the max (no convergence)
@@ -1370,7 +1372,7 @@ def clean_ohline_pca(params, recipe, image, wavemap, **kwargs):
     nbo, nbpix = image.shape
     # -------------------------------------------------------------------------
     # load principle components data file
-    ohfile = os.path.join(assetdir, relfolder, filename)
+    ohfile = str(os.path.join(assetdir, relfolder, filename))
     ohpcdata = drs_data.load_fits_file(params, ohfile, func_name)
     # -------------------------------------------------------------------------
     # get the number of components
@@ -1776,10 +1778,17 @@ def qc_exit_tellu_preclean(params, recipe, image, image_e2ds_ini, infile,
     :param params:
     :param recipe:
     :param image:
+    :param image_e2ds_ini:
     :param infile:
     :param wavemap:
     :param qc_params:
     :param sky_model:
+    ;param res_e2ds_fwhm:
+    :param res_e2ds_expo:
+    :param template_props:
+    :param wave_e2ds:
+    :param res_s1d_fwhm:
+    :param res_s1d_expo:
     :param database:
 
     :return:
@@ -2286,17 +2295,17 @@ def read_tellu_preclean(params, recipe, infile, fiber, database=None):
 LoadTelluFileReturn = Union[str,
                             Tuple[str, str],
                             Tuple[Union[np.ndarray, Table, None],
-                                  Union[drs_fits.Header, None],str],
+                                  Union[drs_fits.Header, None], str],
                             Tuple[Union[np.ndarray, Table, None],
                                   Union[drs_fits.Header, None], str, str],
                             List[str],
                             Tuple[List[str], str],
                             Tuple[List[Union[np.ndarray, Table, None]],
-                            List[Union[drs_fits.Header, None]],
-                            List[str]],
+                                  List[Union[drs_fits.Header, None]],
+                                  List[str]],
                             Tuple[List[Union[np.ndarray, None]],
-                            List[Union[drs_fits.Header, None]],
-                            List[str], str],
+                                  List[Union[drs_fits.Header, None]],
+                                  List[str], str],
                             Tuple[None, None, None, str],
                             Tuple[None, None, None]]
 

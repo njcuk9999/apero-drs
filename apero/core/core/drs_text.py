@@ -20,9 +20,9 @@ from typing import Any, Union, List
 
 import numpy as np
 
-from apero import lang
 from apero.base import base
 from apero.base import drs_base
+from apero.core import lang
 from apero.core.core import drs_exceptions
 
 # =============================================================================

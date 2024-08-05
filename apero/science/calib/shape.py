@@ -11,16 +11,16 @@ import os
 import warnings
 from typing import List, Optional, Tuple, Union
 
-from astropy.table import Table
 import numpy as np
+from astropy.table import Table
 from scipy.ndimage import filters
 from scipy.ndimage import map_coordinates as mapc
 from scipy.signal import convolve2d
 from scipy.stats import stats
 
-from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core import lang
 from apero.core import math as mp
 from apero.core.core import drs_database
 from apero.core.core import drs_file
@@ -162,7 +162,8 @@ def construct_ref_fp(params: ParamDict, recipe: DrsRecipe, dprtype: str,
                      fp_table: Table, image_ref: np.ndarray,
                      time_thres: Optional[float] = None,
                      percent_thres: Optional[float] = None,
-                     qc_res: Optional[float]=None) -> Tuple[np.ndarray, Table]:
+                     qc_res: Optional[float] = None
+                     ) -> Tuple[np.ndarray, Table]:
     """
     Construct the reference FP
 
@@ -327,6 +328,10 @@ def construct_ref_fp(params: ParamDict, recipe: DrsRecipe, dprtype: str,
     return fp_ref, valid_fp_table
 
 
+LinTransRetrun = Union[Tuple[np.ndarray, float, float],
+                       Tuple[None, None, None]]
+
+
 def get_linear_transform_params(params: ParamDict, recipe: DrsRecipe,
                                 image1: np.ndarray, image2: np.ndarray,
                                 maxn_percent: Optional[float] = None,
@@ -334,7 +339,7 @@ def get_linear_transform_params(params: ParamDict, recipe: DrsRecipe,
                                 niterations: Optional[int] = None,
                                 ini_boxsize: Optional[int] = None,
                                 small_boxsize: Optional[int] = None
-                                ) -> Tuple[np.ndarray, float, float]:
+                                ) -> LinTransRetrun:
     # set function name
     func_name = display_func('get_linear_transform_params', __NAME__)
     # get parameters from params/kwargs

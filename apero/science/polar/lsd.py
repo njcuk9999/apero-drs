@@ -18,9 +18,9 @@ from astropy import units as uu
 from astropy.table import Table
 from scipy.optimize import curve_fit
 
-from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core import lang
 from apero.core import math as mp
 from apero.core.core import drs_log, drs_file
 from apero.core.utils import drs_data
@@ -964,6 +964,7 @@ def fit_gaussian_to_lsd_profile(params: ParamDict, velocities: np.ndarray,
     # -------------------------------------------------------------------------
     # noinspection PyTypeChecker
     try:
+        # noinspection PyTupleAssignmentBalance
         popt, pcov = curve_fit(mp.gauss_function, velocities, profile_inv,
                                p0=guess)
     except Exception as e:

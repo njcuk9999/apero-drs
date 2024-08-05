@@ -32,10 +32,10 @@ from typing import Any, IO, Dict, List, Tuple, Type, Union
 
 import numpy as np
 
-from apero import lang
 from apero.base import base
 from apero.base import drs_db
 from apero.core import constants
+from apero.core import lang
 from apero.core.core import drs_base_classes
 from apero.core.core import drs_database
 from apero.core.core import drs_exceptions
@@ -449,7 +449,7 @@ class _CheckObsDir(DrsAction):
         # check for help
         # noinspection PyProtectedMember
         parser._has_special()
-        if type(values) == list:
+        if isinstance(values, list):
             value = list(map(self._check_obs_dir, values))[0]
         else:
             value = self._check_obs_dir(values)
@@ -753,7 +753,7 @@ class _CheckBool(DrsAction):
         skip = parser._has_special()
         if skip:
             return 0
-        if type(values) == list:
+        if isinstance(values, list):
             value = list(map(self._check_bool, values))
         else:
             value = self._check_bool(values)
@@ -980,7 +980,7 @@ class _CheckType(DrsAction):
             return 0
         if self.nargs == 1:
             value = self._check_type(values)
-        elif type(values) == list:
+        elif isinstance(values, list):
             value = list(map(self._check_type, values))
         else:
             value = self._check_type(values)
@@ -1077,7 +1077,7 @@ class _CheckOptions(DrsAction):
         skip = parser._has_special()
         if skip:
             return 0
-        if type(values) == list:
+        if isinstance(values, list):
             value = list(map(self._check_options, values))
         else:
             value = self._check_options(values)
@@ -1370,7 +1370,7 @@ class _ActivateDebug(DrsAction):
         # noinspection PyPep8,PyBroadException
         try:
             # only take first value (if a list)
-            if type(values) != str and hasattr(values, '__len__'):
+            if not isinstance(values, str) and hasattr(values, '__len__'):
                 values = values[0]
             # try to make an integer
             value = int(values)
@@ -1403,7 +1403,7 @@ class _ActivateDebug(DrsAction):
         self.recipe = parser.recipe
 
         # display listing
-        if type(values) == list:
+        if isinstance(values, list):
             value = list(map(self._set_debug, values))
         else:
             value = self._set_debug(values)
@@ -1561,7 +1561,7 @@ class _ForceInputDir(DrsAction):
         # noinspection PyPep8,PyBroadException
         try:
             # only take first value (if a list)
-            if type(values) != str and hasattr(values, '__len__'):
+            if not isinstance(values, str) and hasattr(values, '__len__'):
                 values = values[0]
             # try to make an string
             value = str(values)
@@ -1589,7 +1589,7 @@ class _ForceInputDir(DrsAction):
         # get drs parameters
         self.recipe = parser.recipe
         # display listing
-        if type(values) == list:
+        if isinstance(values, list):
             value = list(map(self._force_input_dir, values))[0]
         else:
             value = self._force_input_dir(values)
@@ -1659,7 +1659,7 @@ class _ForceOutputDir(DrsAction):
         # noinspection PyPep8,PyBroadException
         try:
             # only take first value (if a list)
-            if type(values) != str and hasattr(values, '__len__'):
+            if not isinstance(values, str) and hasattr(values, '__len__'):
                 values = values[0]
             # try to make an string
             value = str(values)
@@ -1687,7 +1687,7 @@ class _ForceOutputDir(DrsAction):
         # get drs parameters
         self.recipe = parser.recipe
         # display listing
-        if type(values) == list:
+        if isinstance(values, list):
             value = list(map(self._force_output_dir, values))[0]
         else:
             value = self._force_output_dir(values)
@@ -2433,7 +2433,7 @@ class _IsReference(DrsAction):
         # get drs parameters
         self.recipe = parser.recipe
         # display listing
-        if type(values) == list:
+        if isinstance(values, list):
             value = list(map(_set_reference, values))
         else:
             value = _set_reference(values)
@@ -2504,7 +2504,7 @@ class _SetCrunFile(DrsAction):
         # get drs parameters
         self.recipe = parser.recipe
         # display listing
-        if type(values) == list:
+        if isinstance(values, list):
             value = list(map(_set_crun_file, values))
         else:
             value = _set_crun_file(values)
@@ -3419,7 +3419,7 @@ def valid_file(params: ParamDict, filedb: PandasLikeDatabase,
     Test for whether a file is valid
 
     :param params: ParamDict - parameter dictionary of constants
-    :param indexdb: IndexDatabase instance, the index database
+    :param filedb: IndexDatabase instance, the index database
     :param argname: str, the name of the argument we are testing
     :param filename: string, the filename to test
     :param rargs: dictionary of DrsArguments - the positional arguments
@@ -4065,8 +4065,6 @@ def _check_arg_path(params: ParamDict, arg: DrsArgument,
     """
     # set function name
     # _ = display_func('_check_arg_path', __NAME__)
-
-
     # get block names
     blocks = drs_file.DrsPath.get_blocks(params)
     block_names = drs_file.DrsPath.get_block_names(blocks)

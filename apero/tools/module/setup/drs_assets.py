@@ -9,6 +9,7 @@ Created on 2019-11-09 10:44
 Version 0.0.1
 """
 import os
+
 import wget
 
 from apero.base import base
@@ -151,7 +152,6 @@ def check_local_assets(params: ParamDict):
     all data changes)
 
     :param params: ParamDict, parameter dictionary of constants
-    :param tarfile: str, optional, name of tar file to download
 
     :return:
     """
@@ -250,6 +250,7 @@ def update_local_assets(params: ParamDict, tarfile: str = None):
             servers = yaml_dict['setup']['servers']
             # loop around servers and find one that can download our tar file
             for server in servers:
+                # noinspection PyBroadException
                 try:
                     # print progress
                     msg = 'Attempting downloading tar file from: {0}'
@@ -289,7 +290,6 @@ def update_local_assets(params: ParamDict, tarfile: str = None):
         emsg = 'Cannot extract tar file: {0} \n\t Error {1}: {2}'
         eargs = [tarfile, type(e), str(e)]
         WLOG(params, 'error', emsg.format(*eargs))
-
 
 
 # =============================================================================

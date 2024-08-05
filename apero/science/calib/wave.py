@@ -21,8 +21,8 @@ from astropy.table import Table
 from scipy.ndimage import zoom
 from scipy.optimize import curve_fit
 
-from apero import lang
 from apero.core import constants
+from apero.core import lang
 from apero.core import math as mp
 from apero.core.core import drs_database
 from apero.core.core import drs_file
@@ -538,7 +538,7 @@ def get_waveheader(params: ParamDict, wprops: ParamDict
     :return:
     """
     # construct the absolute path (assuming file is in calibration database)
-    wavefile = os.path.join(params['DRS_CALIB_DB'], wprops['WAVEFILE'])
+    wavefile = str(os.path.join(params['DRS_CALIB_DB'], wprops['WAVEFILE']))
     # if we have this file in the calibration database get the header
     if os.path.exists(wavefile):
         # get the wave header
@@ -657,7 +657,7 @@ def get_cavity_file(params: ParamDict, header: HeaderType = None,
     # load filename from inputs/calibDB
     # ---------------------------------------------------------------------
     lkwargs = dict(userinputkey='CAVITYFILE', database=calibdbm, key=cavity_key,
-                   get_header=True,  inheader=header, required=True)
+                   get_header=True, inheader=header, required=True)
     # load wave fp file
     cfile = gen_calib.CalibFile()
     cfile.load_calib_file(params, **lkwargs)
@@ -1592,7 +1592,7 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
             # work out the residuals
             residual = 1 - ordhc_wave_ref / ohcwave_fit
             sigma_hc_res = mp.robust_nanstd(residual)
-            err = np.ones_like(residual)*sigma_hc_res
+            err = np.ones_like(residual) * sigma_hc_res
             med_hc_res, err_med_hc_res = mp.odd_ratio_mean(residual, err)
             # -----------------------------------------------------------------
             # work out a robust sigma of the residuals
@@ -1610,7 +1610,7 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
             msg = (f'\tCavity fit {jt + 1}: med hc res = '
                    f'{med_hc_res * speed_of_light_ms:.3e} m/s '
                    f'{sigma_hc_res * speed_of_light_ms:.3e} m/s '
-                   f'{ err_med_hc_res * speed_of_light_ms:.3e} m/s '
+                   f'{err_med_hc_res * speed_of_light_ms:.3e} m/s '
                    )
             WLOG(params, '', msg)
 
@@ -1769,7 +1769,7 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
             # fpl_wave_ref = np.polyval(cavity, fpl_wave_ref) / fpl_peak_num
 
             vtmp = mp.val_cheby(cavity, fpl_wave_ref,
-                                        domain=[inst_wavestart, inst_waveend])
+                                domain=[inst_wavestart, inst_waveend])
             fpl_wave_ref = (vtmp + cavity_pedestal) / fpl_peak_num
         # ---------------------------------------------------------------------
         # get the wavelength solution for the order and the HC line position
@@ -1863,7 +1863,7 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
                            domain=[inst_wavestart, inst_waveend])
     margs = [mp.nanmean(cavlen1) - mp.nanmean(cavlen0)]
     WLOG(params, '', textentry('40-017-00058', args=margs))
-    
+
     # TODO: fp_peak_num_3, fp_wave_meas_3, fp_wave_ref3
     # -------------------------------------------------------------------------
     # get the proper cavity length from the cavity polynomial
@@ -2185,7 +2185,7 @@ def update_smart_fp_mask(params: ParamDict, cavity: np.ndarray, **kwargs):
     # ----------------------------------------------------------------------
     # construct output filename
     # TODO: this is bad idea, if assets dir is reset this file is deleted
-    outfile = os.path.join(assetdir, ccfpath, ccfmask)
+    outfile = str(os.path.join(assetdir, ccfpath, ccfmask))
     # ----------------------------------------------------------------------
     # start with a broader range of FP N values and clip later on
     n_fp_fpeak = np.arange(nmin, nmax)
@@ -2686,7 +2686,7 @@ def generate_resolution_map(params: ParamDict, recipe: DrsRecipe,
                              wavemap.shape)
     # -------------------------------------------------------------------------
     # create 1d spectra (s1d) of the res_e2ds file
-    skwargs = dict(params=params, recipe=recipe, wavemap=wprops['WAVEMAP'], 
+    skwargs = dict(params=params, recipe=recipe, wavemap=wprops['WAVEMAP'],
                    blaze=blaze, fiber=fiber)
     # define vectors and names
     e2ds_vectors = [e2ds_amp, e2ds_fwhm, e2ds_expo]
@@ -2761,11 +2761,10 @@ def map_res_e2ds(map_values: Dict[tuple, float], inshape: Tuple[int, int],
             inmap[it, jt] = map_values[(it, jt)]
     # -------------------------------------------------------------------------
     # use ndimage zoom
-    outmap = zoom(inmap, np.array(outshape)/np.array(inmap.shape))
+    outmap = zoom(inmap, np.array(outshape) / np.array(inmap.shape))
     # -------------------------------------------------------------------------
     # return the expanded map, shape = outshape
     return outmap
-
 
 
 def res_fit_super_gauss(params: ParamDict, mapkey: Tuple[int, int],
@@ -2775,11 +2774,6 @@ def res_fit_super_gauss(params: ParamDict, mapkey: Tuple[int, int],
                         all_order: List[float],
                         map_lower_ords: dict, map_high_ords: dict,
                         map_lower_pix: dict, map_high_pix: dict):
-    # set function name
-    func_name = display_func('res_fit_super_gauss', __NAME__)
-    # -----------------------------------------------------------------
-    # get sigma clip
-    sigclipthres = pcheck(params, 'WAVE_HC_RESMAP_SIGCLIP', func=func_name)
     # -----------------------------------------------------------------
     # prepare all dvs and flux for fitting
     # -----------------------------------------------------------------
@@ -2819,7 +2813,7 @@ def res_fit_super_gauss(params: ParamDict, mapkey: Tuple[int, int],
         # # calculate fit
         # fluxfit2 = mp.centered_super_gauss(all_dv, *pcoeffs2)
         # calculate resolution
-        #fwhm, amp, expo = pcoeffs2
+        # fwhm, amp, expo = pcoeffs2
         fwhm, amp, expo = pcoeffs1
         res_eff = speed_of_light / fwhm
     except ValueError as e:
@@ -2862,7 +2856,7 @@ def res_fit_gauss(params: ParamDict, mapkey: Tuple[int, int],
                   map_lower_ords: dict, map_high_ords: dict,
                   map_lower_pix: dict, map_high_pix: dict):
     # set function name
-    func_name = display_func('res_fit_gauss', __NAME__)
+    # func_name = display_func('res_fit_gauss', __NAME__)
     # -----------------------------------------------------------------
     # get sigma clip
     # sigclipthres = pcheck(params, 'WAVE_HC_RESMAP_SIGCLIP', func=func_name)
@@ -2889,6 +2883,7 @@ def res_fit_gauss(params: ParamDict, mapkey: Tuple[int, int],
         # attempt a first fit on the flux
         cargs = [mp.gauss_function, all_dv, all_flux]
         with warnings.catch_warnings(record=True) as _:
+            # noinspection PyTupleAssignmentBalance
             pcoeffs1, _ = curve_fit(*cargs, p0=guess)
         # calculate the residuals between flux and fit
         fluxfit1 = mp.gauss_function(all_dv, *pcoeffs1)
@@ -3051,6 +3046,7 @@ def match_fplines(params: ParamDict, orders1: np.ndarray, peakn1: np.ndarray,
     """
     Match two sets of peak numbers based on the peak numbers in two fibers
 
+    :param params: ParamDict, the parameter dictionary of constants
     :param orders1: np.ndarray - which order each fp line belongs to in fiber 1
     :param peakn1: np.ndarray - the peak number of each fp line in fiber 1
     :param orders2: np.ndarray - which order each fp line belongs to in fiber 2

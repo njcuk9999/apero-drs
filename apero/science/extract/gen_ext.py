@@ -18,9 +18,9 @@ from astropy import constants as cc
 from astropy import units as uu
 from astropy.table import Table
 
-from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core import lang
 from apero.core import math as mp
 from apero.core.core import drs_database
 from apero.core.core import drs_log, drs_file
@@ -132,6 +132,7 @@ def order_profiles(params, recipe, infile, fibertypes, sprops,
             pid = None
         else:
             pid = params['PID']
+
         # ------------------------------------------------------------------
         # need a lock here as orderps temporary file can be writing to disk
         #    and other cores then try to read the file while writing
@@ -586,7 +587,7 @@ def create_order_table(lprops: ParamDict, wprops: ParamDict,
     """
     # number of orders
     nbo = wprops['NBO']
-    nbxpix = wprops['NBPIX']
+    # nbxpix = wprops['NBPIX']
     # start the table
     order_table = Table()
     # order number

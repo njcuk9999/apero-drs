@@ -19,9 +19,9 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 import numpy as np
 from astropy.table import Table
 
-from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core import lang
 from apero.core.core import drs_argument
 from apero.core.core import drs_base_classes as base_class
 from apero.core.core import drs_database
@@ -2264,7 +2264,6 @@ def filter_values(values: List[str], filter_list: List[str],
     return valid_values
 
 
-
 # =============================================================================
 # Define other functions
 # =============================================================================
@@ -2322,9 +2321,6 @@ def lambda_plot(*args, **kwargs):
     """
     _ = args, kwargs
     pass
-
-
-
 
 # =============================================================================
 # End of code

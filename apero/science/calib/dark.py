@@ -14,9 +14,9 @@ from typing import List, Optional, Tuple, Union
 import numpy as np
 from astropy.table import Table
 
-from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core import lang
 from apero.core import math as mp
 from apero.core.core import drs_file
 from apero.core.core import drs_log
@@ -233,6 +233,8 @@ def construct_dark_table(params: ParamDict, filenames: List[str],
                        params['DARK_REF_MATCH_TIME']
     :param max_files: int or None, optional, the maximum number of files to use
                       in the dark reference calibration
+    :param min_exptime: float or None, optional, the minimum exposure time to
+                        consider for dark reference calibration
     :param mode: str, 'raw' or 'pp' - changes the keywords which are used
 
     :return: astropy table, the filled dark file table
@@ -374,7 +376,7 @@ def construct_ref_dark(params: ParamDict, dark_table: Table,
     # get the most recent position
     lastpos = np.argmax(dark_times)
     # get temporary output dir
-    outdir = os.path.dirname(filenames[lastpos])
+    outdir = str(os.path.dirname(filenames[lastpos]))
     # cannot and should not use the raw directory
     outdir = outdir.replace(params['DRS_DATA_RAW'], params['DRS_DATA_WORKING'])
     # -------------------------------------------------------------------------

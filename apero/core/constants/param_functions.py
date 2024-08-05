@@ -22,8 +22,8 @@ import numpy as np
 from astropy.io import fits
 from astropy.table import Table
 
-from apero import lang
 from apero.base import base
+from apero.core import lang
 from apero.core import math as mp
 from apero.core.constants import constant_functions
 from apero.core.core import drs_base_classes as base_class
@@ -453,9 +453,9 @@ class ParamDict(CaseInDict):
             # capitalise
             key = drs_text.capitalise_key(key)
             # Get source for this iteration
-            if type(sources) == list:
+            if isinstance(sources, list):
                 source = sources[k_it]
-            elif type(sources) == dict:
+            elif isinstance(sources, dict):
                 source = sources[key]
             else:
                 source = str(sources)
@@ -488,9 +488,9 @@ class ParamDict(CaseInDict):
             # capitalise
             key = drs_text.capitalise_key(key)
             # Get source for this iteration
-            if type(instances) == list:
+            if isinstance(instances, list):
                 instance = instances[k_it]
-            elif type(instances) == dict:
+            elif isinstance(instances, dict):
                 instance = instances[key]
             else:
                 instance = instances
@@ -523,9 +523,9 @@ class ParamDict(CaseInDict):
             # capitalise
             key = drs_text.capitalise_key(key)
             # Get source for this iteration
-            if type(sources) == list:
+            if isinstance(sources, list):
                 source = sources[k_it]
-            elif type(sources) == dict:
+            elif isinstance(sources, dict):
                 source = sources[key]
             else:
                 source = str(sources)
@@ -647,7 +647,7 @@ class ParamDict(CaseInDict):
         # loop around keys
         for key in self.data.keys():
             # make sure key is string
-            if type(key) != str:
+            if not isinstance(key, str):
                 continue
             # if first
             if str(key).startswith(substring.upper()):
@@ -670,7 +670,7 @@ class ParamDict(CaseInDict):
         # loop around keys
         for key in self.data.keys():
             # make sure key is string
-            if type(key) != str:
+            if not isinstance(key, str):
                 continue
             # if first
             if substring.upper() in key:
@@ -702,8 +702,6 @@ class ParamDict(CaseInDict):
         # return sub params
         return sub_params
 
-
-
     def endswith(self, substring: str) -> List[str]:
         """
         Return all keys that end with this substring
@@ -719,7 +717,7 @@ class ParamDict(CaseInDict):
         # loop around keys
         for key in self.data.keys():
             # make sure key is string
-            if type(key) != str:
+            if not isinstance(key, str):
                 continue
             # if first
             if str(key).endswith(substring.upper()):

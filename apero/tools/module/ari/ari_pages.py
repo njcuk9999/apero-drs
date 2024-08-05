@@ -18,9 +18,9 @@ from astropy.table import Table
 from astropy.time import Time
 from bs4 import BeautifulSoup
 
-from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core import lang
 from apero.core.core import drs_database
 from apero.core.core import drs_log
 from apero.core.core import drs_misc
@@ -368,6 +368,7 @@ def _add_obj_page(it: int, key: str, rdict: dict, params: ParamDict,
         # return rdict
         return rdict
 
+
 def add_obj_pages(params: ParamDict, object_classes: Dict[str, AriObject]):
     # -------------------------------------------------------------------------
     # deal with no entries in object table
@@ -407,14 +408,14 @@ def add_obj_pages(params: ParamDict, object_classes: Dict[str, AriObject]):
     # deal with running on a single core
     if n_cores == 1:
         # change the object column to a url
-        for it, key in enumerate(process_classes):
+        for it, key1 in enumerate(process_classes):
             # combine arguments
-            itargs = [it, key, dict()] + args[2:]
+            itargs = [it, key1, dict()] + args[2:]
             # run the pool
             results = _add_obj_page(*itargs)
             # fudge back into return dictionary
-            for key in results:
-                return_dict[key] = results[key]
+            for key2 in results:
+                return_dict[key2] = results[key2]
     # -------------------------------------------------------------------------
     elif n_cores > 1:
         if ari_core.MULTI == 'POOL':
@@ -491,7 +492,7 @@ def add_obj_pages(params: ParamDict, object_classes: Dict[str, AriObject]):
 
 
 def objpage_targetinfo(params: ParamDict, page: Any, name: str, ref: str,
-                     object_instance: AriObject):
+                       object_instance: AriObject):
     # add divider
     # page.add_divider(color=DIVIDER_COLOR, height=DIVIDER_HEIGHT)
     # add a reference to this section
@@ -741,7 +742,6 @@ def recipe_date_table(table: Table, machine_name: str
 # Finder functions
 # =============================================================================
 def html_page_nav():
-
     layout_path = drs_misc.get_relative_folder(__PACKAGE__, PAGE_NAV_HTML)
     # read the file
     with open(layout_path, 'r') as lpage:

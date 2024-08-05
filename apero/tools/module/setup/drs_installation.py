@@ -22,13 +22,13 @@ import yaml
 from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap
 
-from apero import lang
 from apero.base import base
-from apero.core.core import drs_exceptions
 from apero.core import constants
+from apero.core import lang
 from apero.core.constants import path_definitions as pathdef
-from apero.core.core import drs_misc
 from apero.core.core import drs_base_classes
+from apero.core.core import drs_exceptions
+from apero.core.core import drs_misc
 
 # =============================================================================
 # Define variables
@@ -99,6 +99,9 @@ export PS1=" ${YELLOW}{NAME} ${WHITE}\d \t ${BLUE}\u@\h: ${RED}\w${END}\n>>   "
 unset RED BLUE YELLOW WHITE END
 """
 
+# define path to language tables
+LANG_PATH = 'apero.core.lang.tables'
+
 
 # =============================================================================
 # Define setup/general functions
@@ -131,6 +134,7 @@ def ask(question: str, dtype: Union[str, type, None] = None,
     :param required: bool, if False and dtype=path does not create a path
                      else does not change anything
     :param color: str, the color of the text printed out
+    :param stringlimit: int, the maximum length of a string
 
     :return: the response from the user or the default
     """
@@ -303,6 +307,7 @@ def check_path_arg(name: str, value: Union[str, Path],
     :param name: str, the path name (description of the path)
     :param value: str or Path, the path to create
     :param ask_to_create: bool, if True asks user before creation
+    :param from_cmd: bool, if True the value is from the command line
 
     :return: tuple, 1. whether to prompt the user for another path (i.e. they
              didn't want to create the path, 2. the value of the path
@@ -335,14 +340,13 @@ def check_path_arg(name: str, value: Union[str, Path],
     return promptuser, value
 
 
-def user_interface(params: ParamDict, args: argparse.Namespace,
-                   user_lang: str) -> Tuple[ParamDict, argparse.Namespace]:
+def user_interface(params: ParamDict, args: argparse.Namespace
+                   ) -> Tuple[ParamDict, argparse.Namespace]:
     """
     Ask the user the questions required to install apero
 
     :param params: ParamDict, the parameter dictionary of constants
     :param args: passed from argparse
-    :param user_lang: str, the language the user requires
 
     :return: tuple, 1. all parameters dict, 2. the argparse namespace
     """
@@ -350,6 +354,9 @@ def user_interface(params: ParamDict, args: argparse.Namespace,
     func_name = __NAME__ + '.user_interface()'
     # get default from params
     package = params['DRS_PACKAGE']
+    # get install yaml
+    iparams = base.load_install_yaml()
+    user_lang = iparams['LANGUAGE']
     # get available instruments
     drs_instruments = list(np.char.array(params['DRS_INSTRUMENTS']).upper())
     # storage of answers
@@ -872,6 +879,8 @@ def create_configs(params: ParamDict, all_params: ParamDict) -> ParamDict:
     # get dev mode
     devmode = all_params['DEVMODE']
     askcreate = all_params['ASK_CREATE']
+    # deal with language modules
+    all_params['LANG_MODULES'] = assign_language_modules(all_params)
     # create install config
     base.create_yamls(all_params)
     # reload dictionaries connected to yaml files
@@ -902,6 +911,28 @@ def create_configs(params: ParamDict, all_params: ParamDict) -> ParamDict:
     all_params.set_source('CONFIGFILES', func_name)
     # return all_params
     return all_params
+
+
+def assign_language_modules(all_params: ParamDict) -> List[str]:
+    """
+    Assign the language modules to use (base on table type and instrument)
+
+    :param all_params: ParamDict, the installation parameter dictionary
+
+    :return: list[str], the list of language modules to use
+    """
+    # storage of the lang tables to return
+    lang_tables = []
+    # loop around types of table
+    for key1 in ['help', 'text']:
+        # loop around the default + instrument
+        for key2 in ['default', all_params['INSTRUMENT']]:
+            # construct module path
+            table = f'{LANG_PATH}.{key2.lower()}_{key1}'
+            # add to list of tables
+            lang_tables.append(table)
+    # return the lang tables
+    return lang_tables
 
 
 def update_configs(all_params: ParamDict) -> ParamDict:
@@ -1206,7 +1237,7 @@ def add_paths(all_params: ParamDict):
     """
     # get paths and add in correct order
     all_paths = [str(all_params['DRS_ROOT'].parent),
-             str(all_params['DRS_OUT_BIN_PATH'])]
+                 str(all_params['DRS_OUT_BIN_PATH'])]
     # add all the tool directories
     for directory in all_params['DRS_OUT_TOOLS']:
         all_paths.append(str(directory))
@@ -1500,7 +1531,7 @@ def create_uyaml(instrument: str, ckind: str, group_dict: Dict[str, list],
                 value = group_dict[groupstr][item][1]
                 name = instance.name
                 # create line
-                var_lines += instance.write_line(value=value, format='yaml')
+                var_lines += instance.write_line(value=value, fmt='yaml')
                 # deal with inactive lines - comment them out (with hack)
                 if not instance.active:
                     name, value_str = _yaml_inactive_str(name, value)
@@ -1605,6 +1636,7 @@ def user_header(title: str, comment: str = '# ') -> List[str]:
     Returns a group title for constants / config ini file
 
     :param title: str, the group title
+    :param comment: str, the comment character to use
 
     :return: List of strings - the title lines to add
     """
@@ -1700,7 +1732,7 @@ def ufile_write(aparams: ParamDict, lines: List[str], upath: Path,
 def yfile_write(data: CommentedMap, upath: Path, ufile: Union[Path, str],
                 ckind: str) -> Path:
     # initialize YAML object
-    yaml = YAML()
+    yaml_inst = YAML()
     # make directory if it doesn't exist
     if not upath.exists():
         os.makedirs(upath)
@@ -1740,7 +1772,7 @@ def yfile_write(data: CommentedMap, upath: Path, ufile: Union[Path, str],
     # ----------------------------------------------------------------------
     # write files
     with ufilepath.open('w') as y_file:
-        yaml.dump(data, y_file)
+        yaml_inst.dump(data, y_file)
     # ----------------------------------------------------------------------
     # hack replace +++ with #
     with open(ufilepath, 'r') as ofile:

@@ -12,8 +12,8 @@ Created on 2021-07-15
 import os
 from typing import Any, List, Tuple, Union
 
-from apero import lang
 from apero.base import base
+from apero.core import lang
 from apero.core.constants import param_functions
 from apero.core.core import drs_exceptions
 

@@ -14,9 +14,9 @@ from typing import List, Optional, Tuple, Union
 import numpy as np
 from astropy.io import fits
 
-from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core import lang
 from apero.core import math as mp
 from apero.core.core import drs_database
 from apero.core.core import drs_file
@@ -696,10 +696,10 @@ def measure_effective_readout_noise(params: ParamDict, image: np.ndarray,
     bkgrdimage = drs_fits.readfits(params, bkgrdfile)
     # create mask from badpixmask
     bmap = np.array(bkgrdimage, dtype=bool)
-    tmp = image[bmap] # keep only background pixels
+    tmp = image[bmap]  # keep only background pixels
     # effective point-to-point RMS. Sqrt 2 comes from the differences
     # only preserves pix-to-pix RMS and removes low frequencies
-    sig = mp.robust_nanstd(np.diff(tmp))/np.sqrt(2)
+    sig = mp.robust_nanstd(np.diff(tmp)) / np.sqrt(2)
     # return effective readout noise
     return sig
 
@@ -847,6 +847,8 @@ def check_fp(params: ParamDict, image: np.ndarray, filename: str,
                        is the FP center size in pixels
     :param num_ref: None or int, overrides 'PP_NUM_REF_TOP', this is the number
                     of reference pixels at the top
+    :param iterator: int or None, the iterator number (for logging)
+    :param total_num: int or None, the total number of FP files (for logging)
 
     :return: bool, whether the FP file passes quality control
     """

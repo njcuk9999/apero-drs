@@ -10,9 +10,9 @@ Created on 2019-09-16 at 14:07
 @author: cook
 """
 
-from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core import lang
 from apero.core.core import drs_log
 
 # =============================================================================

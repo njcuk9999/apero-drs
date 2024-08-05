@@ -17,9 +17,9 @@ from astropy.table import Table
 from scipy.ndimage import binary_erosion, binary_dilation
 from scipy.optimize import curve_fit
 
-from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core import lang
 from apero.core import math as mp
 from apero.core.core import drs_database
 from apero.core.core import drs_file
@@ -62,7 +62,6 @@ pcheck = constants.PCheck(wlog=WLOG)
 speed_of_light_ms = cc.c.to(uu.m / uu.s).value
 # noinspection PyUnresolvedReferences
 speed_of_light = cc.c.to(uu.km / uu.s).value
-
 
 # =============================================================================
 # Reference sky-corr functions
@@ -129,6 +128,9 @@ def skymodel_matchfiles(sky_files_sci: List[str], sky_files_cal: List[str],
 
     :param sky_files_sci:
     :param sky_files_cal:
+    :param sci_fiber:
+    :param cal_fiber:
+
     :return:
     """
     # lists for keeping
@@ -269,10 +271,6 @@ def skymodel_combine_func(image: np.ndarray, hdr: drs_fits.Header,
     :param recipe: DrsRecipe, recipe calling this function
     :param refwavemap: np.ndarray, reference night wavelength solution
     :param fiber: str, the fiber this image is associated with
-    :param wavemod: apero wave python sub-module (cannot assume we have
-                    non-standard modules so passed via arguments)
-    :param mathmod: apero math python sub-module (cannot assume we have
-                    non-standard modules so passed via arguments)
 
     :return: np.ndarray, the updated image
     """
@@ -375,7 +373,6 @@ def identify_sky_line_regions(params: ParamDict, sky_props: ParamDict,
                               waveend: Optional[float] = None,
                               binvelo: Optional[float] = None,
                               ) -> np.ndarray:
-
     # set function name
     func_name = display_func('identify_sky_line_regions', __NAME__)
     # get parameters from parameter dictionary
@@ -487,7 +484,7 @@ def calc_skymodel(params: ParamDict, sky_props_sci: ParamDict,
     order_pix, x_pix = np.indices(waveref.shape)
     # ravel 2D arrays
     regions_rav = regions.ravel()
-    order_pix_rav = order_pix.ravel()
+    # order_pix_rav = order_pix.ravel()
     x_pix_rav = x_pix.ravel()
     waveref_rav = waveref.ravel()
     # get unique regions
@@ -511,10 +508,10 @@ def calc_skymodel(params: ParamDict, sky_props_sci: ParamDict,
         # make lists for this region
         all_sci, all_cal = [], []
         # construct new cubes by loop around all binned files
-        for bin in range(nbins):
+        for bin_it in range(nbins):
             # get this bins data (for this region)
-            tmp_sci = sci_cube[bin][region_mask]
-            tmp_cal = cal_cube[bin][region_mask]
+            tmp_sci = sci_cube[bin_it][region_mask]
+            tmp_cal = cal_cube[bin_it][region_mask]
             # work out the amplitude of the science fiber
             amp = np.nansum(tmp_sci)
             # add to list for this region
@@ -533,6 +530,7 @@ def calc_skymodel(params: ParamDict, sky_props_sci: ParamDict,
         all_sci_dict[region] = all_sci
         all_cal_dict[region] = all_cal
         # calculate the line fit (if possible)
+        # noinspection PyBroadException
         try:
             # calculate the dv step in km/s
             wavestep = (region_wave / np.mean(region_wave)) - 1
@@ -540,13 +538,14 @@ def calc_skymodel(params: ParamDict, sky_props_sci: ParamDict,
             # get the fwhm of the line
             guess = [0, np.max(med_sci), 4.0, 2.0, 0.0]
             # fit using curve fit
+            # noinspection PyTupleAssignmentBalance
             fitcoeffs, _ = curve_fit(mp.super_gauss, dvstep, med_sci, p0=guess)
             # get the fwhm
             fwhm_all.append(fitcoeffs[2])
             # get the mean pixel position for this region
             xpix_all.append(np.mean(x_pix_rav[region_mask]))
             # work out fit using fit coefficients
-            model =  mp.super_gauss(dvstep, *fitcoeffs)
+            model = mp.super_gauss(dvstep, *fitcoeffs)
             # get the number of sigma this fit has away from the data
             nsig = fitcoeffs[1] / mp.nanstd(med_sci - model)
             nsig_all.append(nsig)
@@ -613,6 +612,7 @@ def calc_skymodel(params: ParamDict, sky_props_sci: ParamDict,
 def mk_skymodel_qc(params: ParamDict, sky_props: ParamDict
                    ) -> Tuple[List[list], int]:
     # TODO: Fill out QC
+    _ = sky_props
     # set passed variable and fail message list
     fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
     # no quality control currently
@@ -672,8 +672,8 @@ def write_skymodel(recipe: DrsRecipe, params: ParamDict,
     margs = [skymodel_file.filename]
     WLOG(params, '', msg.format(*margs))
     # define multi lists
-    data_list = [sky_props['SKYMODEL_CAL'],  sky_props['WAVEMAP'],
-                 sky_props['REGION_ID'],  sky_props['WEIGHTS'],
+    data_list = [sky_props['SKYMODEL_CAL'], sky_props['WAVEMAP'],
+                 sky_props['REGION_ID'], sky_props['WEIGHTS'],
                  sky_props['GRADIENT'], sky_props['SKYTABLE_SCI'],
                  sky_props['SKYTABLE_CAL']]
     datatype_list = ['image', 'image', 'image', 'image', 'image',
@@ -698,9 +698,8 @@ def write_skymodel(recipe: DrsRecipe, params: ParamDict,
 
 
 def mk_skymodel_summary(recipe, params, sky_props: ParamDict, qc_params):
-
     # TODO: Write skymodel summary
-
+    _ = sky_props
     # add stats
     recipe.plot.add_stat('KW_VERSION', value=params['DRS_VERSION'])
     recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS_DATE'])
@@ -735,7 +734,7 @@ def correct_sky_with_ref(params: ParamDict, recipe: DrsRecipe,
     # set function name
     func_name = display_func('correct_sky', __NAME__)
     # get parameters from Params
-    weight_iters = pcheck(params, 'SKYCORR_WEIGHT_ITERATIONS')  # = 5
+    # weight_iters = pcheck(params, 'SKYCORR_WEIGHT_ITERATIONS')  # = 5
     lowpass_size1 = pcheck(params, 'SKYCORR_LOWPASS_SIZE1')  # = 51
     lowpass_size2 = pcheck(params, 'SKYCORR_LOWPASS_SIZE2')  # = 101
     lowpass_itrs = pcheck(params, 'SKYCORR_LOWPASS_ITERATIONS')  # = 2

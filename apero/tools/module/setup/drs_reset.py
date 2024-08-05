@@ -18,9 +18,9 @@ from typing import Dict, List, Optional, Tuple, Union
 import numpy as np
 from astropy.table import Table
 
-from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core import lang
 from apero.core.constants import path_definitions
 from apero.core.core import drs_database
 from apero.core.core import drs_log
@@ -671,7 +671,7 @@ def reset_assets(params: ParamDict, log: bool = True, reset_dbs: bool = True):
     # TODO: deal with getting online
     asset_path1 = params['DRS_DATA_ASSETS']
     reset_path1 = os.path.join(params['DRS_RESET_ASSETS_PATH'],
-                              params['INSTRUMENT'].lower())
+                               params['INSTRUMENT'].lower())
     asset_path2 = os.path.join(params['DRS_DATA_ASSETS'], 'core')
     reset_path2 = os.path.join(params['DRS_RESET_ASSETS_PATH'], 'core')
     # get reset_path from apero module dir
@@ -695,8 +695,6 @@ def reset_assets(params: ParamDict, log: bool = True, reset_dbs: bool = True):
         manage_databases.create_object_database(params, pconst, databases)
         # create reject database
         manage_databases.create_reject_database(params, pconst, databases)
-        # create language database
-        manage_databases.create_lang_database(params, databases)
 
 
 def reset_other_folder(params: ParamDict, log: bool = True):
@@ -957,10 +955,12 @@ def get_filelist(params: ParamDict,
     Get a list of files from the index database that match either the obsdir
     and/or the file prefix/file suffix
 
-    :param params:
-    :param obsdir:
-    :param fileprefix:
-    :param filesuffix:
+    :param params: ParamDict, the parameter dictionary of constants
+    :param obsdir: string or list of strings, the obs directory to search for
+    :param blocks: list of strings, the blocks to search for
+    :param fileprefix: string, the file prefix to search for
+    :param filesuffix: string, the file suffix to search for
+    :param objnames: list of strings, the object names to search for
     :return:
     """
     # get index database
@@ -1182,7 +1182,7 @@ def remove_files_from_databases(params: ParamDict, filetable: Table,
                          'with condition: \n\t{0}'.format(file_cond))
     else:
         WLOG(params, '', 'Removing entries from index database with condition: '
-                          '\n\t{0}'.format(file_cond))
+                         '\n\t{0}'.format(file_cond))
     # add to db counts
     db_counts['findexdb'] = findexdb.database.count(condition=file_cond)
     # remove entries

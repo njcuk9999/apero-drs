@@ -15,9 +15,9 @@ import numpy as np
 from astropy.table import Table
 from tqdm import tqdm
 
-from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core import lang
 from apero.core import math as mp
 from apero.core.core import drs_argument
 from apero.core.core import drs_database
@@ -199,6 +199,7 @@ def calib_check(params: ParamDict, recipe: DrsRecipe, tstars: List[str],
 SciTelluCheckReturn = Tuple[Dict[str, dict], Dict[str, dict],
                             Dict[str, np.ndarray], List[str]]
 
+
 def sci_tellu_check(params: ParamDict, recipe: DrsRecipe, tstars: List[str],
                     ostars: List[str], uobsdirs: np.ndarray,
                     findexdbm: FileIndexDatabase, log: bool = True
@@ -211,7 +212,6 @@ def sci_tellu_check(params: ParamDict, recipe: DrsRecipe, tstars: List[str],
     :param tstars: list of hot (telluric) stars
     :param ostars: list of science targets
     :param uobsdirs: numpy array of strings, the unique observation directories
-    :param condition: str, the SQL condition to use
     :param findexdbm: FileIndexDatabase, the file index database
     :param log: bool, if True prints messages to screen (default True)
 
@@ -368,6 +368,7 @@ def sci_tellu_check(params: ParamDict, recipe: DrsRecipe, tstars: List[str],
 
     return science_count, tellu_count, sci_times, engineering_nights
 
+
 def file_check(params: ParamDict, recipe: DrsRecipe,
                findexdbm: Optional[FileIndexDatabase] = None):
     """
@@ -398,7 +399,7 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
     # get the conditions based on params
     # -------------------------------------------------------------------------
     condition, _ = drs_processing.gen_global_condition(params, findexdbm,
-                                                    odo_reject_list)
+                                                       odo_reject_list)
     # get unique observations directories
     uobsdirs = findexdbm.get_unique('OBS_DIR', condition=condition)
     # sort uobsdirs alphabetically
@@ -420,7 +421,7 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
     # -------------------------------------------------------------------------
     # get a list of calibration files
     # -------------------------------------------------------------------------
-    cout = calib_check(params, recipe, tstars,  ostars, uobsdirs,
+    cout = calib_check(params, recipe, tstars, ostars, uobsdirs,
                        condition, findexdbm)
     calib_count, calib_times, bad_calib_nights = cout
     # -------------------------------------------------------------------------
@@ -507,6 +508,7 @@ def get_raw_seq_files(params: ParamDict, recipemod,
     :param tstars: list of strings, the telluric stars object names
     :param ostars: list of strings, the non-telluric star object names
     :param sequence: str, the sequence name
+    :param log: bool, if True prints messages to screen (default True)
 
     :return: dictionary
     """
@@ -663,6 +665,7 @@ def obj_check(params: ParamDict, findexdbm: Optional[FileIndexDatabase] = None,
 
     :param params: ParamDict, the parameter dictionary of constants
     :param findexdbm: IndexDatabase instance or None (will load index database)
+    :param log: bool, if True prints messages to screen (default True)
 
     :return: None, prints to screen
     """

@@ -13,9 +13,9 @@ from typing import List, Optional, Tuple, Union
 import numpy as np
 from scipy.optimize import curve_fit
 
-from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core import lang
 from apero.core import math as mp
 from apero.core.core import drs_database
 from apero.core.core import drs_file
@@ -140,10 +140,12 @@ def calculate_blaze_flat_sinc(params: ParamDict, e2ds_ini: np.ndarray,
         # try to fit and if there is a failure catch it
         try:
             # we optimize over pixels that are not NaN
+            # noinspection PyTupleAssignmentBalance
             popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep],
                                    p0=fit_guess, bounds=bounds)
             # we then re-fit to avoid local minima (this has happened - fitting
             #   a second time seemed to fix this - when the guess is off)
+            # noinspection PyTupleAssignmentBalance
             popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep], p0=popt,
                                    bounds=bounds)
             # worked --> break while loop
@@ -153,11 +155,13 @@ def calculate_blaze_flat_sinc(params: ParamDict, e2ds_ini: np.ndarray,
             try:
                 # we optimize over pixels that are not NaN (this time with
                 # no bounds)
+                # noinspection PyTupleAssignmentBalance
                 popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep],
                                        p0=fit_guess)
                 # we then re-fit to avoid local minima (this has happened
                 #    - fitting a second time seemed to fix this
                 #    - when the guess is off)
+                # noinspection PyTupleAssignmentBalance
                 popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep], p0=popt)
                 # worked --> break while loop
                 break
@@ -167,6 +171,7 @@ def calculate_blaze_flat_sinc(params: ParamDict, e2ds_ini: np.ndarray,
                     fit_guess1 = fit_guess[:5]
                     # we optimize over pixels that are not NaN (this time with
                     #    no bounds)
+                    # noinspection PyTupleAssignmentBalance
                     popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep],
                                            p0=fit_guess1)
                     # worked --> break while loop

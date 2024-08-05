@@ -24,7 +24,6 @@ from hashlib import blake2b
 from pathlib import Path
 from typing import Any, List, Union
 
-import pandas as pd
 import pkg_resources
 
 from apero.base import base
@@ -41,7 +40,8 @@ __date__ = base.__date__
 __release__ = base.__release__
 # relative folder cache
 REL_CACHE = dict()
-
+# cache for language proxy dict
+BETEXT = dict()
 
 # =============================================================================
 # Define other functions - do not any apero functions in these
@@ -64,41 +64,51 @@ def _escape_map(value: Any) -> Any:
             return value
 
 
-def lang_db_proxy(language=None) -> dict:
+def lang_db_proxy(language=None):
     """
     If all else fails (i.e. if the language database has yet to be
     installed - load the default reset file from reset csv files)
 
     :return: dictionary of key, value language pairs (default language)
     """
-    # try to load the reset file manually
-    # noinspection PyBroadException
-    try:
-        # get language path
-        rellangpath = base.LANG_DEFAULT_PATH
-        # get lang file
-        rellangfile = base.LANG_DB_RESET
-        # get default language
-        if language is not None:
-            language = str(language)
-        elif 'LANGUAGE' in base.IPARAMS:
-            language = base.IPARAMS['LANGUAGE']
-        else:
-            language = base.DEFAULT_LANG
-        # get relative path
-        relpath = os.path.join(rellangpath, rellangfile)
-        # get aboslute path
-        langfile = _rel_folder(__PACKAGE__, relpath)
-        # load language database
-        df = pd.read_csv(langfile)
-        # convert \\n and \\t to \n and \t
-        values = list(map(_escape_map, list(df[language])))
-        # return dictionary
-        return dict(zip(df['KEYNAME'], values))
-    # if we can't even do this then return an empty dictionary -
-    #  all outputs will be the keyname
-    except Exception as _:
-        return dict()
+    global BETEXT
+
+    # get the apero path
+    drs_root_guess = os.path.dirname(os.path.dirname(__file__))
+    lang_path = os.path.join(drs_root_guess, 'core', 'lang', 'tables')
+    # deal with no language
+    if language is None:
+        language = base.DEFAULT_LANG
+    # loop around lanuage table files
+    for lang_basename in base.DEF_LANG_FILES:
+        # construct language file
+        lang_file = os.path.join(lang_path, lang_basename)
+        # read file
+        with open(lang_file, 'r') as lfile:
+            lines = lfile.readlines()
+        # make text pairs
+        in_file = True
+        while in_file:
+            # if no lines left break
+            if len(lines) == 0:
+                break
+            # get the first line
+            line = lines.pop(0)
+            # if we have a start of a text block
+            if 'langlist.create' in line:
+                # get the text key
+                key = line.split('langlist.create(\'')[-1].split('\'')[0]
+                # get the language values
+                next_lines = lines[:len(base.LANGUAGES)]
+                for nline in next_lines:
+                    if f'item.value[\'{language}\']' in nline:
+                        value = nline.split('] = ')[-1]
+                        value = value.strip('\n')
+                        value = value.strip('\'').strip('"')
+                        value = value.replace('\\n', '\n')
+                        value = value.replace('\\t', '\t')
+                        BETEXT[key] = value
+                        break
 
 
 def _rel_folder(package: str, folder: str) -> str:
@@ -153,7 +163,7 @@ def generate_hash(string_text: str, size: int = 10) -> str:
 #           - apero.lang.core.drs_lang
 # =============================================================================
 # Get the language database from the csv file in the default language
-BETEXT = lang_db_proxy()
+lang_db_proxy()
 
 
 # =============================================================================
@@ -456,6 +466,7 @@ def base_null_text(variable: Any, nulls: Union[None, List[str]] = None) -> bool:
                     return True
     # else in all other cases return False
     return False
+
 
 
 # =============================================================================

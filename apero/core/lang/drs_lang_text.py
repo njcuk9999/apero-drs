@@ -18,7 +18,7 @@ from typing import Any, Dict, List, Union
 
 from apero.base import base
 from apero.core.lang import drs_lang
-from apero.core import constants
+
 
 # =============================================================================
 # Define variables
@@ -260,7 +260,10 @@ def textentry(key: str, args: Union[List[Any], str, None] = None,
     # set function name
     _ = __NAME__ + '.textentry()'
     # deal with no entries
-    value = LanguageLookup[key]
+    try:
+        value = LanguageLookup[key]
+    except drs_lang.DrsLanguageError as _:
+        value = None
     # deal with no value (use key)
     if value is None:
         message = key

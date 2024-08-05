@@ -29,7 +29,7 @@ __release__ = base.__release__
 # Define functions
 # =============================================================================
 # Get the language list
-langlist = drs_lang_list.LanguageList()
+langlist = drs_lang_list.LanguageList(__NAME__)
 
 
 

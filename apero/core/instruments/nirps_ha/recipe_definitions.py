@@ -7,8 +7,8 @@ Created on 2020-10-31 at 18:06
 
 @author: cook
 """
-from apero import lang
 from apero.base import base
+from apero.core import lang
 from apero.core.core import drs_base_classes as base_class
 from apero.core.instruments.default import grouping
 from apero.core.instruments.default import recipe_definitions as rd
@@ -942,7 +942,6 @@ apero_ccf.group_column = 'REPROCESS_OBSDIR_COL'
 # add to recipe
 recipes.append(apero_ccf)
 
-
 # -----------------------------------------------------------------------------
 # apero_mk_skymodel
 # -----------------------------------------------------------------------------
@@ -1202,7 +1201,7 @@ apero_mk_template.set_kwarg(name='--filetype', dtype='options',
 apero_mk_template.set_kwarg(name='--fiber', dtype='options',
                             default_ref='MKTEMPLATE_FIBER_TYPE',
                             helpstr=textentry('MKTEMP_FIBER'),
-                            options=sci_fibers+cal_fibers)
+                            options=sci_fibers + cal_fibers)
 apero_mk_template.set_kwarg(**add_db)
 apero_mk_template.set_kwarg(**blazefile)
 apero_mk_template.set_kwarg(**plot)
@@ -1606,20 +1605,20 @@ limited_seq.add(apero_lbl_ref, name='LBLREF', recipe_kind='lbl-ref')
 
 # lbl mask (SCIENCE)
 limited_seq.add(apero_lbl_mask, name='LBLMASK_SCI', recipe_kind='lbl-mask-sci',
-            arguments=dict(objname='SCIENCE_TARGETS'),
-            filters=dict(KW_OBJNAME='SCIENCE_TARGETS'))
+                arguments=dict(objname='SCIENCE_TARGETS'),
+                filters=dict(KW_OBJNAME='SCIENCE_TARGETS'))
 
 # lbl compute (SCIENCE)
 limited_seq.add(apero_lbl_compute, name='LBLCOMPUTE_SCI',
-            recipe_kind='lbl-compute-sci',
-            arguments=dict(objname='SCIENCE_TARGETS'),
-            filters=dict(KW_OBJNAME='SCIENCE_TARGETS'))
+                recipe_kind='lbl-compute-sci',
+                arguments=dict(objname='SCIENCE_TARGETS'),
+                filters=dict(KW_OBJNAME='SCIENCE_TARGETS'))
 
 # lbl compile (SCIENCE)
 limited_seq.add(apero_lbl_compile, name='LBLCOMPILE_SCI',
-            recipe_kind='lbl-compile-sci',
-            arguments=dict(objname='SCIENCE_TARGETS'),
-            filters=dict(KW_OBJNAME='SCIENCE_TARGETS'))
+                recipe_kind='lbl-compile-sci',
+                arguments=dict(objname='SCIENCE_TARGETS'),
+                filters=dict(KW_OBJNAME='SCIENCE_TARGETS'))
 
 # # post processing
 limited_seq.add(apero_postprocess, name='SCIPOST', files=[files.pp_file],
@@ -1662,9 +1661,9 @@ pp_seq_opt.add(apero_preprocess, name='PP_LFCFP', files=[files.raw_lfc_fp],
 pp_seq_opt.add(apero_preprocess, name='PP_FPLFC', files=[files.raw_fp_lfc],
                recipe_kind='pre-fplfc')
 pp_seq_opt.add(apero_preprocess, name='PP_FPHC1', files=[files.raw_fp_hc1],
-            recipe_kind='pre-fphc1')
+               recipe_kind='pre-fphc1')
 pp_seq_opt.add(apero_preprocess, name='PP_HC1FP', files=[files.raw_hc1_fp],
-            recipe_kind='pre-hc1fp')
+               recipe_kind='pre-hc1fp')
 pp_seq_opt.add(apero_preprocess, name='PP_EVERY',
                files=[files.raw_file])
 
