@@ -10,6 +10,7 @@ Created on 2019-01-17 at 14:31
 @author: cook
 """
 from apero.core.lang import drs_lang_text
+from apero.core.lang import drs_lang_list
 
 __all__ = ['textentry', 'Text']
 
@@ -18,6 +19,9 @@ textentry = drs_lang_text.textentry
 
 # the text class
 Text = drs_lang_text.Text
+
+# Language Error
+DrsLanguageError = drs_lang_list.DrsLanguageError
 
 # Common text
 try:

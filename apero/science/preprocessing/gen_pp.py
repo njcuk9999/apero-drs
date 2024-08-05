@@ -109,10 +109,12 @@ def resolve_target(params: ParamDict, pconst: PseudoConst,
     # -------------------------------------------------------------------------
     # update the sql object condition
     sql_obj_cond = 'OBJNAME="{0}"'.format(correct_objname)
-    # add condition that "NO_PM" not in keywords
-    sql_obj_cond += ' AND NOT (KEYWORDS LIKE "%NO_PM%")'
     # get the full entry for this cobjname
     table = database.get_entries('*', condition=sql_obj_cond)
+    # -------------------------------------------------------------------------
+    # remove entries that have NO_PM in the keywords
+    no_pm_mask = table['KEYWORDS'].str.contains('NO_PM', na=False)
+    table = table[~no_pm_mask]
     # -------------------------------------------------------------------------
     # check if key columns have null values - if they do remove these rows
     #   from the table

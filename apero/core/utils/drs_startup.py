@@ -479,7 +479,7 @@ def run(func: Any, recipe: DrsRecipe,
                 recipe.log.add_error('DatabaseError Exit', '')
             # reset the lock directory
             drs_lock.reset_lock_dir(params)
-        except lang.drs_lang.LanguageError as e:
+        except lang.DrsLanguageError as e:
             WLOG(params, 'error', e.message, raise_exception=False)
             # on debug exit was not a success
             success = False

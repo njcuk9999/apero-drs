@@ -410,10 +410,10 @@ def listdirs(rootdir: str) -> List[str]:
         # check if it 1. is a directory 2. is not empty
         if item.is_dir():
             # add to paths
-            if not nofiles(str(item)):
+            if not nofiles(str(item.path)):
                 directories.append(item.path)
             # add sub directories
-            directories += listdirs(str(item))
+            directories += listdirs(str(item.path))
     # sort directories
     directories = sorted(directories)
     # return sort directories
