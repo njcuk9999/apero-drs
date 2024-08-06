@@ -93,7 +93,7 @@ def get_berv(params: ParamDict, infile: Union[DrsFitsFile, None] = None,
         WLOG(params, 'info', textentry('40-016-00017'))
     # get parameters from params and kwargs
     dprtypes = pcheck(params, 'EXT_ALLOWED_BERV_DPRTYPES', func=func_name,
-                      mapf='list', dtype=str, override=dprtypes)
+                      override=dprtypes)
     kind = pcheck(params, 'EXT_BERV_KIND', func=func_name, override=kind)
     # -------------------------------------------------------------------------
     # get header

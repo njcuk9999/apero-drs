@@ -351,7 +351,7 @@ def flat_blaze_qc(params: ParamDict, eprops: ParamDict, fiber: str
     # check that rms values in required orders are below threshold
 
     # get mask for removing certain values
-    remove_orders = params.listp('FF_RMS_SKIP_ORDERS', dtype=int)
+    remove_orders = params['FF_RMS_SKIP_ORDERS']
     remove_orders = np.array(remove_orders)
     remove_mask = np.in1d(np.arange(len(eprops['RMS'])), remove_orders)
     # apply max and calculate the maximum of the rms values

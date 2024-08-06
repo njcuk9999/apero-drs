@@ -153,7 +153,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         # For OBJECT files we need to resolve object and update header
         # ------------------------------------------------------------------
-        obj_dprtypes = params.listp('PP_OBJ_DPRTYPES', dtype=str)
+        obj_dprtypes = params['PP_OBJ_DPRTYPES']
         # only resolve targets that are objects
         if infile.get_hkey('KW_DPRTYPE') in obj_dprtypes:
             # get object based on object name and gaia id
@@ -331,7 +331,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         image, cprops = prep.correct_cosmics(params, image, intercept,
                                              errslope1, inttime)
         # get dprtypes we don't do sci capacitive coupling for
-        nosci_capc = params.listp('PP_NOSCI_CAPC_DPRTYPES', dtype=str)
+        nosci_capc = params['PP_NOSCI_CAPC_DPRTYPES']
         sci_capc_corr = True
         for _string in nosci_capc:
             if _string in infile.header['DPRTYPE']:

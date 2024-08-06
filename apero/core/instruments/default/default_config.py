@@ -442,8 +442,9 @@ cgroup = 'DRS.ASSETS_URLS'
 #   yaml file as well - this just controls where the developers upload it to)
 #   links must be publically accessible, separate links with a comma
 DRS_ASSETS_URLS = Const('DRS_ASSETS_URLS',
-                        value='http://apero.exoplanets.ca/assets/',
-                        dtype=str, source=__NAME__, group=cgroup,
+                        value=['http://apero.exoplanets.ca/assets/'],
+                        dtype=list, dtypei=str,
+                        source=__NAME__, group=cgroup,
                         description=(' where the assets tar file can be '
                                      'downloaded from (will be stored in the '
                                      'yaml file as well - this just controls '

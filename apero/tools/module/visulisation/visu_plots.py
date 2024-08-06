@@ -69,7 +69,7 @@ class SpectrumPlot:
         self.obs_dir = ''
         self.identifier = ''
         self.order_num = 0
-        self.fibers = PARAMS.listp('TELLURIC_FIBER_TYPE', dtype=str)
+        self.fibers = PARAMS['TELLURIC_FIBER_TYPE']
         self.order_max = PARAMS['FIBER_MAX_NUM_ORDERS_A'] - 1
         self.fiber = str(self.fibers[0])
         self.obs_dirs = visu_core.get_obs_dirs()

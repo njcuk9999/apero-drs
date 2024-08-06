@@ -65,7 +65,7 @@ def do_skip(params: ParamDict, recipe_test: str) -> bool:
     :return: bool, whether to skip this recipe
     """
     # get skip done from parameters
-    if recipe_test in params.listp('LBL_SKIP_DONE', dtype=str):
+    if recipe_test in params['LBL_SKIP_DONE']:
         skip_done = True
     else:
         skip_done = False
@@ -179,7 +179,7 @@ def find_friend(params: ParamDict, objname: str) -> str:
     # TODO: v0.8 change this to use the astrometric database
     #       with a FRIEND column
     # get dictionary of friends (key = objname, value = friend teff)
-    friends = params.dictp('LBL_FRIENDS', dtype=float)
+    friends = params['LBL_FRIENDS']
     friend_names = np.array(list(friends.keys()))
     friend_teffs = np.array(list(friends.values()))
     # get the teff of this object
@@ -475,7 +475,7 @@ def dtemp(params: ParamDict) -> Union[Dict[str, str], None]:
     :return:
     """
     # get the dictionary of dtemp files
-    dtemp_keys = params.dictp('LBL_DTEMP')
+    dtemp_keys = params['LBL_DTEMP']
     # get the model directory
     models_dir = os.path.join(params['LBL_PATH'], 'models')
 

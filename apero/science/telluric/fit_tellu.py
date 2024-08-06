@@ -532,7 +532,7 @@ def calc_recon_and_correct(params, recipe, image, wprops, pca_props, sprops,
     recon_limit = pcheck(params, 'FTELLU_FIT_RECON_LIMIT', 'recon_limit',
                          kwargs, func_name)
     tellu_absorbers = pcheck(params, 'TELLU_ABSORBERS', 'absorbers', kwargs,
-                             func_name, mapf='list', dtype=str)
+                             func_name)
     thres_transfit_low = pcheck(params, 'MKTELLU_THRES_TRANSFIT',
                                 'thres_transfit_low', kwargs, func_name)
     thres_transfit_upper = pcheck(params, 'MKTELLU_TRANS_FIT_UPPER_BAD',
@@ -708,7 +708,7 @@ def calc_recon_and_correct(params, recipe, image, wprops, pca_props, sprops,
     # plot recon abso (summary plot)
     recipe.plot('SUM_FTELLU_RECON_ABSO', params=params, image=image,
                 wavemap=wavemap, sp2=sp2, template=template2, recon=recon_abso,
-                orders=params.listp('FTELLU_PLOT_ORDER_NUMS', dtype=int))
+                orders=params['FTELLU_PLOT_ORDER_NUMS'])
 
     # ------------------------------------------------------------------
     # copy the residual recon for use below
@@ -1120,7 +1120,7 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
     corrfile.add_hkey('KW_TELLUP_CLEAN_OHLINES',
                       value=tpreprops['TELLUP_CLEAN_OH_LINES'])
     corrfile.add_hkey('KW_TELLUP_REMOVE_ORDS',
-                      value=tpreprops['TELLUP_REMOVE_ORDS'], mapf='list')
+                      value=tpreprops['TELLUP_REMOVE_ORDS'])
     corrfile.add_hkey('KW_TELLUP_SNR_MIN_THRES',
                       value=tpreprops['TELLUP_SNR_MIN_THRES'])
     corrfile.add_hkey('KW_TELLUP_DEXPO_CONV_THRES',
@@ -1146,9 +1146,9 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
     corrfile.add_hkey('KW_TELLUP_FORCE_AIRMASS',
                       value=tpreprops['TELLUP_FORCE_AIRMASS'])
     corrfile.add_hkey('KW_TELLUP_OTHER_BOUNDS',
-                      value=tpreprops['TELLUP_OTHER_BOUNDS'], mapf='list')
+                      value=tpreprops['TELLUP_OTHER_BOUNDS'])
     corrfile.add_hkey('KW_TELLUP_WATER_BOUNDS',
-                      value=tpreprops['TELLUP_WATER_BOUNDS'], mapf='list')
+                      value=tpreprops['TELLUP_WATER_BOUNDS'])
     # ----------------------------------------------------------------------
     # add template key (if we have template)
     if template_props['TEMP_FILE'] is None:

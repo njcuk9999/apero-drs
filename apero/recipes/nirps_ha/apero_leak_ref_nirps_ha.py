@@ -98,7 +98,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # extract file type from inputs
     filetypes = params['INPUTS'].listp('FILETYPE', dtype=str)
     # get allowed dark types
-    allowedtypes = params.listp('ALLOWED_LEAKREF_TYPES', dtype=str)
+    allowedtypes = params['ALLOWED_LEAKREF_TYPES']
     # set up plotting (no plotting before this)
     recipe.plot.set_location()
     # load the calibration database

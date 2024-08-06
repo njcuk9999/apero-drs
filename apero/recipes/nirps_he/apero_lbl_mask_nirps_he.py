@@ -103,7 +103,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # get object name
     objname = params['INPUTS']['OBJNAME']
     # get the objects for which to calculate a template
-    recal_template = params.listp('LBL_RECAL_TEMPLATE', dtype=str)
+    recal_template = params['LBL_RECAL_TEMPLATE']
     # set up arguments for lbl
     kwargs = dict()
     kwargs['instrument'] = params['INSTRUMENT']
@@ -112,7 +112,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     skip_done = gen_lbl.do_skip(params, 'LBL_MASK')
     kwargs['program'] = program
     # deal with data type
-    if objname in params.listp('LBL_SPECIFIC_DATATYPES', dtype=str):
+    if objname in params['LBL_SPECIFIC_DATATYPES']:
         data_type = objname
         # Just set Teff to room temperature for non-science data
         teff = 300

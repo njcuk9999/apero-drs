@@ -292,11 +292,9 @@ def ref_fplines(params, recipe, e2dsfile, wavemap, fiber, database=None,
     # set up function name
     func_name = display_func('ref_fplines', __NAME__)
     # get constant from params
-    allowtypes = pcheck(params, 'WAVE_FP_DPRLIST', 'fptypes', kwargs, func_name,
-                        mapf='list')
+    allowtypes = pcheck(params, 'WAVE_FP_DPRLIST', 'fptypes', kwargs, func_name)
 
-    allowfibers = pcheck(params, 'WAVE_FP_FIBERTYPES', 'fpfibers', kwargs,
-                         func_name, mapf='list')
+    allowfibers = pcheck(params, 'WAVE_FP_FIBERTYPES', 'fpfibers', kwargs)
     # get dprtype
     dprtype = e2dsfile.get_hkey('KW_DPRTYPE', dtype=str)
     # get psuedo constants

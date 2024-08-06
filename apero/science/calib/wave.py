@@ -872,10 +872,10 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
     hcboxsize = pcheck(params, 'WAVEREF_HC_BOXSIZE', func=func_name)
     # get valid hc dprtypes (string list separated by commas)
     hcfibtypes = pcheck(params, 'WAVEREF_HC_FIBTYPES', 'hcfibtypes',
-                        func=func_name, mapf='list', dtype=str)
+                        func=func_name,)
     # get valid fp dprtypes (string list separated by commas)
     fpfibtypes = pcheck(params, 'WAVEREF_FP_FIBTYPES', 'fpfibtypes',
-                        func=func_name, mapf='list', dtype=str)
+                        func=func_name)
     # get the degree to fix reference wavelength to in hc mode
     fitdeg = pcheck(params, 'WAVEREF_FITDEG', 'fitdeg', func=func_name)
     # cavity fit degree
@@ -890,8 +890,7 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
     # define the guess HC exponetial width [pixels]
     guess_hc_ewid = pcheck(params, 'WAVEREF_HC_GUESS_EWID', func=func_name)
     # define orders not to fit
-    remove_orders = pcheck(params, 'WAVE_REMOVE_ORDERS', func=func_name,
-                           mapf='list', dtype=int)
+    remove_orders = pcheck(params, 'WAVE_REMOVE_ORDERS', func=func_name)
     # define the bulk offset to be added to the cavity length
     cavity_pedestal = pcheck(params, 'WAVE_FP_DOPD0', func=func_name)
     # define the wavelength bounds of the instrument
@@ -1390,8 +1389,7 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     # Define the odd ratio that is used in generating the weighted mean
     odd_ratio = pcheck(params, 'WAVE_HC_VEL_ODD_RATIO', func=func_name)
     # define orders not to fit
-    remove_orders = pcheck(params, 'WAVE_REMOVE_ORDERS', func=func_name,
-                           mapf='list', dtype=int)
+    remove_orders = pcheck(params, 'WAVE_REMOVE_ORDERS', func=func_name)
     # define the bulk offset to be added to the cavity length
     cavity_pedestal = pcheck(params, 'WAVE_FP_DOPD0', func=func_name)
     # define the wavelength bounds of the instrument
@@ -2065,8 +2063,8 @@ def process_fibers(params: ParamDict, recipe: DrsRecipe,
     ref_fiber = pcheck(params, 'WAVE_REF_FIBER', func=func_name)
     plot_order = pcheck(params, 'WAVE_FIBER_COMP_PLOT_ORD', func=func_name)
     # get the scale and offset modifiers
-    fiber_offset = params.dictp('WAVE_FIBER_OFFSET_MOD', dtype=float)
-    fiber_scale = params.dictp('WAVE_FIBER_SCALE_MOD', dtype=float)
+    fiber_offset = params['WAVE_FIBER_OFFSET_MOD']
+    fiber_scale = params['WAVE_FIBER_SCALE_MOD']
     # get the cavity file
     cavity = refprops['CAVITY']
     # get the reference fiber lines
@@ -2523,8 +2521,7 @@ def generate_resolution_map(params: ParamDict, recipe: DrsRecipe,
     velocity_cutoff2 = pcheck(params, 'WAVE_RES_VELO_CUTOFF2', func=func_name,
                               override=velo_cutoff2)
     # get the y limit for the res plot
-    res_ylim = pcheck(params, 'WAVE_HC_RESMAP_YLIM', func=func_name,
-                      mapf='list', dtype=float)
+    res_ylim = pcheck(params, 'WAVE_HC_RESMAP_YLIM', func=func_name)
     # define the way we fit line profiles
     fitmode = pcheck(params, 'WAVE_HC_RESMAP_FITTYPE', func=func_name)
 

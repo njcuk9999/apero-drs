@@ -71,7 +71,7 @@ def apply_excess_emissivity(params: ParamDict, recipe: DrsRecipe,
     func_name = display_func('apply_excess_emissivity', __NAME__)
     # -------------------------------------------------------------------------
     # get allowed dprtypes parameter
-    dprtypes = params.listp('THERMAL_EXCESS_DPRTYPES', dtype=str)
+    dprtypes = params['THERMAL_EXCESS_DPRTYPES']
     # get the filter width for the low pass filter
     filter_wid = params['THERMAL_FILTER_WID']
     # loop around all fibers
@@ -148,9 +148,9 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
     flat = pcheck(params, 'FLAT', paramdict=eprops)
 
     corrtype1 = pcheck(params, 'THERMAL_CORRETION_TYPE1', 'corrtype1', kwargs,
-                       func_name, mapf='list', dtype=str)
+                       func_name, dtype=str)
     corrtype2 = pcheck(params, 'THERMAL_CORRETION_TYPE2', 'corrtype2', kwargs,
-                       func_name, mapf='list', dtype=str)
+                       func_name, dtype=str)
 
     thermal_file = kwargs.get('thermal_file', None)
     thermal_correct = pcheck(params, 'THERMAL_CORRECT', 'thermal_correct',

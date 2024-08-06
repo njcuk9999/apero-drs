@@ -93,7 +93,7 @@ def __main__(recipe, params):
     # extract file type from inputs
     filetypes = params['INPUTS'].listp('FILETYPE', dtype=str)
     # get allowed dark types
-    allowedtypes = params.listp('ALLOWED_PPM_TYPES', dtype=str)
+    allowedtypes = params['ALLOWED_PPM_TYPES']
     # set up plotting (no plotting before this)
     recipe.plot.set_location()
 

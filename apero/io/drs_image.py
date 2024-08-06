@@ -417,7 +417,7 @@ def get_fiber_types(params: ParamDict,
     # set function name
     func_name = display_func('get_fiber_types', __NAME__)
     # get parameter list from params/kwargs
-    validfibertypes = params.listp('FIBER_TYPES', dtype=str)
+    validfibertypes = params['FIBER_TYPES']
     # if fiber types is defined then return it (assuming user knows best)
     if fibertypes is not None:
         return fibertypes

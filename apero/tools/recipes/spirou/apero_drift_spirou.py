@@ -176,9 +176,9 @@ def __main__(recipe, params):
     if 'dprtype' in params['INPUTS']:
         if not drs_text.null_text(params['INPUTS']['dprtype'], ['None', '']):
             dprtype = params['INPUTS']['dprtype']
-    if dprtype not in params.listp('DRIFT_DPRTYPES', dtype=str):
+    if dprtype not in params['DRIFT_DPRTYPES']:
         emsg = textentry('01-001-00020', args=[dprtype, mainname])
-        for allowedtype in params.listp('DRIFT_DPRTYPES', dtype=str):
+        for allowedtype in params['DRIFT_DPRTYPES']:
             emsg += '\n\t - "{0}"'.format(allowedtype)
         WLOG(params, 'error', emsg)
     # ------------------------------------------------------------------------

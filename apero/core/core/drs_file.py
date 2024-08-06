@@ -3965,8 +3965,7 @@ class DrsFitsFile(DrsInputFile):
         # check that data is read
         self.check_read()
         # get combine metric types
-        comb_metric_1_types = params.listp('COMBINE_METRIC1_TYPES',
-                                           dtype=str)
+        comb_metric_1_types = params['COMBINE_METRIC1_TYPES']
         # set new data to this files data
         data = np.array(self.data)
         # --------------------------------------------------------------------
@@ -4631,7 +4630,7 @@ class DrsFitsFile(DrsInputFile):
     def add_hkey(self, key: Union[str, None] = None,
                  keyword: Union[list, None] = None, value: Any = None,
                  comment: Union[str, None] = None,
-                 fullpath: bool = False, mapf: Union[str, None] = None):
+                 fullpath: bool = False):
         """
         Add a new key to DrsFile.hdict from kwstore. If kwstore is None
         and key and comment are defined these are used instead.
@@ -4652,22 +4651,12 @@ class DrsFitsFile(DrsInputFile):
         :param fullpath: bool, if true header keys retain the full path
                          if False filenames are cut down to just the filename
                          (os.path.basename)
-        :param mapf: string, sets how we interpret "value" - mapf can either be
-                     "list" or "dict", if list then value should be a list of
-                     values, if dict then value should be a dict
 
         :return: None (but updates DrsFitsFile.hdict)
         """
         # set function name
         func_name = display_func('add_hkey', __NAME__,
                                  self.class_name)
-        # deal with mapf
-        if mapf is not None:
-            if mapf == 'list':
-                value = ', '.join(np.array(value).astype(str))
-            elif mapf == 'dict':
-                value = value.__str__()
-
         # check for kwstore in params
         self.check_params(func_name)
         params = self.params

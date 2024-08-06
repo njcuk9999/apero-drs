@@ -1278,7 +1278,6 @@ class PCheck:
                  name: Union[str, None] = None,
                  kwargs: Union[dict, None] = None,
                  func: Union[str, None] = None,
-                 mapf: Union[str, None] = None,
                  dtype: Union[Type, None] = None,
                  paramdict: Union[ParamDict, None] = None,
                  required: bool = True,
@@ -1298,11 +1297,7 @@ class PCheck:
                         containing "key"
          :param func: string, the function name "find_param" was used
                       in (for logging)
-         :param mapf: string, 'list' or 'dict' - the way to map a string parameter
-                      i.e. 'a,b,c' mapf='list' -->  ['a', 'b', 'c']
-                      i.e. '{a:1, b:2}  mapf='dict' --> dict(a=1, b=2)
-         :param dtype: type, the data type for output of mapf (list or dict) for
-                       key
+
          :param paramdict: ParamDict, if defined overrides the use of params for
                            searching for "key"
          :param required: bool, if True and "key" not found
@@ -1320,13 +1315,12 @@ class PCheck:
          :type name: str
          :type kwargs: dict
          :type func: str
-         :type mapf: str
          :type dtype: type
          :type paramdict: ParamDict
          :type required: bool
          :type default: object
 
-         :return: returns the object or list/dict (if mapf='list'/'dict')
+         :return: returns the object or list/dict
          """
         # set function name
         func_name = display_func('find_param', __NAME__,
@@ -1395,10 +1389,6 @@ class PCheck:
             return copy.deepcopy(default)
         elif name in rkwargs:
             return copy.deepcopy(rkwargs[name])
-        elif mapf == 'list':
-            return copy.deepcopy(paramdict.listp(key, dtype=dtype))
-        elif mapf == 'dict':
-            return copy.deepcopy(paramdict.dictp(key, dtype=dtype))
         else:
             return copy.deepcopy(paramdict[key])
 

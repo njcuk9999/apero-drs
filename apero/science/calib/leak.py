@@ -84,7 +84,7 @@ def get_dark_fps(params: ParamDict, recipe: DrsRecipe,
     # extract file type from inputs
     filetypes = params['INPUTS'].listp('FILETYPE', dtype=str)
     # get allowed dark types
-    allowedtypes = params.listp('ALLOWED_LEAKREF_TYPES', dtype=str)
+    allowedtypes = params['ALLOWED_LEAKREF_TYPES']
     # get max number of files
     max_num_files = pcheck(params, 'LEAK_REF_MAX_FILES', func=func_name,
                            override=max_files)
@@ -338,7 +338,7 @@ def manage_leak_correction(params: ParamDict, recipe: DrsRecipe,
     if cond2:
         reason += 'FIBER={0} '.format(fiber)
     # make sure reference fiber is an FP
-    cond3 = ref_type not in params.listp('LEAKAGE_REF_TYPES', dtype=str)
+    cond3 = ref_type not in params['LEAKAGE_REF_TYPES']
     # add to reason
     if cond3:
         reason += 'REFTYPE={0} '.format(ref_type)
@@ -450,7 +450,7 @@ def correct_ext_dark_fp(params: ParamDict, sciimage: np.ndarray,
     func_name = __NAME__ + '.correct_ext_dark_fp()'
     # get properties from parameters
     leak2dext = pcheck(params, 'LEAK_2D_EXTRACT_FILES', func=func_name,
-                       override=leak2dext, mapf='list')
+                       override=leak2dext)
     extfiletype = pcheck(params, 'LEAK_EXTRACT_FILE', func=func_name,
                          override=extfiletype)
     bckgrd_percentile = pcheck(params, 'LEAK_BCKGRD_PERCENTILE', func=func_name,
@@ -775,7 +775,7 @@ def ref_fplines(params: ParamDict, recipe: DrsRecipe, e2dsfile: DrsFitsFile,
     func_name = display_func('ref_fplines', __NAME__)
     # get constant from params
     allowtypes = pcheck(params, 'WAVE_FP_DPRLIST', func=func_name,
-                        override=fptypes, mapf='list')
+                        override=fptypes)
     # get dprtype
     dprtype = e2dsfile.get_hkey('KW_DPRTYPE', dtype=str)
     # get psuedo constants

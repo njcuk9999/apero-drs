@@ -106,7 +106,7 @@ def update_remote_assets(params: ParamDict):
     yaml_dict['setup']['vdate'] = base.__date__
     yaml_dict['setup']['unixtime'] = float(time_now.unix)
     yaml_dict['setup']['humantime'] = time_now.iso
-    yaml_dict['setup']['servers'] = params.listp('DRS_ASSETS_URLS', dtype=str)
+    yaml_dict['setup']['servers'] = params['DRS_ASSETS_URLS']
     # -------------------------------------------------------------------------
     # Step 4: Save the yaml file
     # -------------------------------------------------------------------------

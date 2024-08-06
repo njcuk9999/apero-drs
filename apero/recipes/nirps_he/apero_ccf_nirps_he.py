@@ -147,9 +147,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         dprtype = infile.get_hkey('KW_DPRTYPE', dtype=str)
         # if dprtype is incorrect skip
-        if dprtype not in params.listp('CCF_ALLOWED_DPRTYPES'):
+        if dprtype not in params['CCF_ALLOWED_DPRTYPES']:
             # join allowed dprtypes
-            allowed_dprtypes = ', '.join(params.listp('CCF_ALLOWED_DPRTYPES'))
+            allowed_dprtypes = ', '.join(params['CCF_ALLOWED_DPRTYPES'])
             # log that we are skipping
             wargs = [dprtype, recipe.name, allowed_dprtypes, infile.basename]
             WLOG(params, 'warning', textentry('10-019-00001', args=wargs),
@@ -157,7 +157,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             # continue
             continue
         # flag whether calibration fiber is FP
-        if dprtype in params.listp('CCF_VALID_FP_DPRTYPES'):
+        if dprtype in params['CCF_VALID_FP_DPRTYPES']:
             has_fp = True
         else:
             has_fp = False

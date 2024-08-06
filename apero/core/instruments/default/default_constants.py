@@ -545,7 +545,8 @@ IMAGE_FRAME_TIME = Const('IMAGE_FRAME_TIME', value=None, dtype=float,
                          description='Define the frame time for an image')
 
 # Define all polar rhomb positions
-ALL_POLAR_RHOMB_POS = Const('ALL_POLAR_RHOMB_POS', value=None, dtype=str,
+ALL_POLAR_RHOMB_POS = Const('ALL_POLAR_RHOMB_POS', value=None,
+                            dtype=list, dtypei=str,
                             source=__NAME__, group=cgroup,
                             description='Define all polar rhomb positions')
 
@@ -605,7 +606,8 @@ COMBINE_METRIC_THRESHOLD1 = Const('COMBINE_METRIC_THRESHOLD1', value=None,
                                                '= perfect, 0 = noise)'))
 
 # Define the DPRTYPES allowed for the combine metric 1 comparison
-COMBINE_METRIC1_TYPES = Const('COMBINE_METRIC1_TYPES', value=None, dtype=str,
+COMBINE_METRIC1_TYPES = Const('COMBINE_METRIC1_TYPES', value=None,
+                              dtype=list, dtypei=str,
                               source=__NAME__, group=cgroup,
                               description=('Define the DPRTYPES allowed for '
                                            'the combine metric 1 comparison'))
@@ -884,7 +886,8 @@ FIBER_SET_NUM_FIBERS_C = Const('FIBER_SET_NUM_FIBERS_C', value=None,
 # =============================================================================
 cgroup = 'PREPROCESSING.GENERAL'
 # Define object (science or telluric)
-PP_OBJ_DPRTYPES = Const('PP_OBJ_DPRTYPES', value=None, dtype=str,
+PP_OBJ_DPRTYPES = Const('PP_OBJ_DPRTYPES', value=None,
+                        dtype=list, dtypei=str,
                         source=__NAME__, group=cgroup,
                         description='Define object (science or telluric)')
 
@@ -1079,7 +1082,8 @@ SKIP_DONE_PP = Const('SKIP_DONE_PP', value=None, dtype=bool,
                                  'that have already be processed')
 
 # Define dark dprtypes for threshold quality control check (PP_DARK_THRES)
-PP_DARK_DPRTYPES = Const('PP_DARK_DPRTYPES', value=None, dtype=str,
+PP_DARK_DPRTYPES = Const('PP_DARK_DPRTYPES', value=None,
+                         dtype=list, dtypei=str,
                          source=__NAME__, active=False, group=cgroup,
                          description='Define dark dprtypes for threshold '
                                      'quality control check (PP_DARK_THRES)')
@@ -1092,7 +1096,8 @@ PP_DARK_THRES = Const('PP_DARK_THRES', value=None, dtype=float,
                                   'dprtypes (above this will not be processed)')
 
 # Define allowed preprocess reference file types (PP DPRTYPE)
-ALLOWED_PPM_TYPES = Const('ALLOWED_PPM_TYPES', value=None, dtype=str,
+ALLOWED_PPM_TYPES = Const('ALLOWED_PPM_TYPES', value=None,
+                          dtype=list, dtypei=str,
                           source=__NAME__, group=cgroup,
                           description='Define allowed preprocess reference '
                                       'filetypes (PP DPRTYPE)')
@@ -1272,15 +1277,15 @@ USE_SKYDARK_ONLY = Const('USE_SKYDARK_ONLY', value=None, dtype=bool,
 
 #  Define the allowed DPRTYPES for finding files for DARK_REF will
 #      only find those types define by 'filetype' but 'filetype' must
-#      be one of theses (strings separated by commas)
-ALLOWED_DARK_TYPES = Const('ALLOWED_DARK_TYPES', value=None, dtype=str,
+#      be one of theses
+ALLOWED_DARK_TYPES = Const('ALLOWED_DARK_TYPES', value=None,
+                           dtype=list, dtypei=str,
                            source=__NAME__, group=cgroup,
                            description=('Define the allowed DPRTYPES for '
                                         'finding files for DARK_REF will '
                                         'only find those types define by '
                                         'filetype but filetype must be one '
-                                        'of theses (strings separated by '
-                                        'commas)'))
+                                        'of theses'))
 
 # Define the maximum time span to combine dark files over (in hours)
 DARK_REF_MATCH_TIME = Const('DARK_REF_MATCH_TIME', value=None,
@@ -1704,25 +1709,29 @@ LOC_SAVE_SUPERIMP_FILE = Const('LOC_SAVE_SUPERIMP_FILE', value=None,
 
 # set the zoom in levels for the plots (xmin values)
 LOC_PLOT_CORNER_XZOOM1 = Const('LOC_PLOT_CORNER_XZOOM1', value=None,
-                               dtype=str, source=__NAME__, group=cgroup,
+                               dtype=list, dtypei=int,
+                               source=__NAME__, group=cgroup,
                                description=('set the zoom in levels for '
                                             'the plots (xmin values)'))
 
 # set the zoom in levels for the plots (xmax values)
 LOC_PLOT_CORNER_XZOOM2 = Const('LOC_PLOT_CORNER_XZOOM2', value=None,
-                               dtype=str, source=__NAME__, group=cgroup,
+                               dtype=list, dtypei=int,
+                               source=__NAME__, group=cgroup,
                                description=('set the zoom in levels for the '
                                             'plots (xmax values)'))
 
 # set the zoom in levels for the plots (ymin values)
 LOC_PLOT_CORNER_YZOOM1 = Const('LOC_PLOT_CORNER_YZOOM1', value=None,
-                               dtype=str, source=__NAME__, group=cgroup,
+                               dtype=list, dtypei=int,
+                               source=__NAME__, group=cgroup,
                                description=('set the zoom in levels for the '
                                             'plots (ymin values)'))
 
 # set the zoom in levels for the plots (ymax values)
 LOC_PLOT_CORNER_YZOOM2 = Const('LOC_PLOT_CORNER_YZOOM2', value=None,
-                               dtype=str, source=__NAME__, group=cgroup,
+                               dtype=list, dtypei=int,
+                               source=__NAME__, group=cgroup,
                                description=('set the zoom in levels for the '
                                             'plots (ymax values)'))
 
@@ -1732,14 +1741,14 @@ LOC_PLOT_CORNER_YZOOM2 = Const('LOC_PLOT_CORNER_YZOOM2', value=None,
 cgroup = 'CALIBRATION.SHAPE'
 #  Define the allowed DPRTYPES for finding files for SHAPE_REF will
 #      only find those types define by 'filetype' but 'filetype' must
-#      be one of theses (strings separated by commas)
-ALLOWED_FP_TYPES = Const('ALLOWED_FP_TYPES', value=None, dtype=str,
+#      be one of theses
+ALLOWED_FP_TYPES = Const('ALLOWED_FP_TYPES', value=None,
+                         dtype=list, dtypei=str,
                          source=__NAME__, group=cgroup,
                          description=('Define the allowed DPRTYPES for finding '
                                       'files for SHAPE_REF will only find '
                                       'those types define by filetype but '
-                                      'filetype must be one of theses '
-                                      '(strings separated by commas)'))
+                                      'filetype must be one of theses '))
 
 # Define the maximum time span to combine fp files over (in hours)
 FP_REF_MATCH_TIME = Const('FP_REF_MATCH_TIME', value=None,
@@ -1852,7 +1861,8 @@ SHAPE_PLOT_SELECTED_ORDER = Const('SHAPE_PLOT_SELECTED_ORDER', value=None,
                                                'shape plot'))
 
 # width of the ABC fibers (in pixels)
-SHAPE_ORDER_WIDTH = Const('SHAPE_ORDER_WIDTH', value=None, dtype=str,
+SHAPE_ORDER_WIDTH = Const('SHAPE_ORDER_WIDTH', value=None,
+                          dtype=dict, dtypei=int,
                           source=__NAME__, group=cgroup,
                           description='width of the ABC fibers (in pixels)')
 
@@ -2089,7 +2099,8 @@ SHAPE_UNIQUE_FIBERS = Const('SHAPE_UNIQUE_FIBERS', value=None, dtype=str,
 
 #  Define first zoom plot for shape local zoom debug plot
 #     should be a string list (xmin, xmax, ymin, ymax)
-SHAPEL_PLOT_ZOOM1 = Const('SHAPEL_PLOT_ZOOM1', value=None, dtype=str,
+SHAPEL_PLOT_ZOOM1 = Const('SHAPEL_PLOT_ZOOM1', value=None,
+                          dtype=list, dtypei=int,
                           source=__NAME__, group=cgroup,
                           description=('Define first zoom plot for shape local '
                                        'zoom debug plot should be a string '
@@ -2097,7 +2108,8 @@ SHAPEL_PLOT_ZOOM1 = Const('SHAPEL_PLOT_ZOOM1', value=None, dtype=str,
 
 #  Define second zoom plot for shape local zoom debug plot
 #     should be a string list (xmin, xmax, ymin, ymax)
-SHAPEL_PLOT_ZOOM2 = Const('SHAPEL_PLOT_ZOOM2', value=None, dtype=str,
+SHAPEL_PLOT_ZOOM2 = Const('SHAPEL_PLOT_ZOOM2', value=None,
+                          dtype=list, dtypei=int,
                           source=__NAME__, group=cgroup,
                           description=('Define second zoom plot for shape '
                                        'local zoom debug plot should be a '
@@ -2158,7 +2170,8 @@ FF_BLAZE_SINC_MED_SIZE = Const('FF_BLAZE_SINC_MED_SIZE', value=None, dtype=int,
 
 # Define the orders not to plot on the RMS plot should be a string
 #     containing a list of integers
-FF_RMS_SKIP_ORDERS = Const('FF_RMS_SKIP_ORDERS', value=None, dtype=str,
+FF_RMS_SKIP_ORDERS = Const('FF_RMS_SKIP_ORDERS', value=None,
+                           dtype=list, dtypei=int,
                            source=__NAME__, group=cgroup,
                            description=('Define the orders not to plot on the '
                                         'RMS plot should be a string '
@@ -2185,7 +2198,8 @@ FF_HIGH_PASS_SIZE = Const('FF_HIGH_PASS_SIZE', value=None, dtype=int,
 # =============================================================================
 cgroup = 'CALIBRATION.LEAKAGE'
 # Define the types of input file allowed by the leakage reference recipe
-ALLOWED_LEAKREF_TYPES = Const('ALLOWED_LEAKREF_TYPES', value=None, dtype=str,
+ALLOWED_LEAKREF_TYPES = Const('ALLOWED_LEAKREF_TYPES', value=None,
+                              dtype=list, dtypei=str,
                               source=__NAME__, group=cgroup,
                               description=('Define the types of input file '
                                            'allowed by the leakage reference '
@@ -2215,7 +2229,8 @@ CORRECT_LEAKAGE = Const('CORRECT_LEAKAGE', value=None, dtype=str,
                                     'leakage by default')
 
 # Define DPRTYPE in reference fiber to do correction
-LEAKAGE_REF_TYPES = Const('LEAKAGE_REF_TYPES', value=None, dtype=str,
+LEAKAGE_REF_TYPES = Const('LEAKAGE_REF_TYPES', value=None,
+                          dtype=list, dtypei=str,
                           source=__NAME__, group=cgroup,
                           description='Define DPRTYPE in reference fiber to do '
                                       'correction')
@@ -2238,14 +2253,16 @@ LEAK_EXTRACT_FILE = Const('LEAK_EXTRACT_FILE', value=None, dtype=str,
                                        'with LEAKREF_EXTRACT_TYPE'))
 
 # define the extraction files which are 2D images (i.e. order num x nbpix)
-LEAK_2D_EXTRACT_FILES = Const('LEAK_2D_EXTRACT_FILES', value=None, dtype=str,
+LEAK_2D_EXTRACT_FILES = Const('LEAK_2D_EXTRACT_FILES', value=None,
+                              dtype=list, dtypei=str,
                               source=__NAME__, group=cgroup,
                               description=('define the extraction files which '
                                            'are 2D images (i.e. order num x '
                                            'nbpix)'))
 
 # define the extraction files which are 1D spectra
-LEAK_1D_EXTRACT_FILES = Const('LEAK_1D_EXTRACT_FILES', value=None, dtype=str,
+LEAK_1D_EXTRACT_FILES = Const('LEAK_1D_EXTRACT_FILES', value=None,
+                              dtype=list, dtypei=str,
                               source=__NAME__, group=cgroup,
                               description=('define the extraction files which '
                                            'are 1D spectra'))
@@ -2317,21 +2334,24 @@ EXT_END_ORDER = Const('EXT_END_ORDER', value=None, dtype=int,
                                    'None ends at last order'))
 
 # Half-zone extraction width left side (formally plage1)
-EXT_RANGE1 = Const('EXT_RANGE1', value=None, dtype=str, source=__NAME__,
-                   group=cgroup,
+EXT_RANGE1 = Const('EXT_RANGE1', value=None,
+                   dtype=dict, dtypei=int,
+                   source=__NAME__, group=cgroup,
                    description=('Half-zone extraction width left side '
                                 '(formally plage1)'))
 
 # Half-zone extraction width right side (formally plage2)
-EXT_RANGE2 = Const('EXT_RANGE2', value=None, dtype=str, source=__NAME__,
-                   group=cgroup,
+EXT_RANGE2 = Const('EXT_RANGE2', value=None,
+                   dtype=dict, dtypei=int,
+                   source=__NAME__, group=cgroup,
                    description=('Half-zone extraction width right side '
                                 '(formally plage2)'))
 
 # Define the orders to skip extraction on (will set all order values
 #    to NaN. If None no orders are skipped. If Not None should be a
 #    string (valid python list)
-EXT_SKIP_ORDERS = Const('EXT_SKIP_ORDERS', value=None, dtype=str,
+EXT_SKIP_ORDERS = Const('EXT_SKIP_ORDERS', value=None,
+                        dtype=list, dtypei=int,
                         source=__NAME__, group=cgroup,
                         description=('Define the orders to skip extraction on '
                                      '(will set all order values to NaN. If '
@@ -2456,7 +2476,8 @@ EXTRACT_PLOT_ORDER = Const('EXTRACT_PLOT_ORDER', value=None, dtype=int,
 # Define the wavelength lower bounds for s1d plots
 #     (must be a string list of floats) defines the lower wavelength in nm
 EXTRACT_S1D_PLOT_ZOOM1 = Const('EXTRACT_S1D_PLOT_ZOOM1', value=None,
-                               dtype=str, source=__NAME__, group=cgroup,
+                               dtype=list, dtypei=float,
+                               source=__NAME__, group=cgroup,
                                description=('Define the wavelength lower '
                                             'bounds for s1d plots (must be a '
                                             'string list of floats) defines '
@@ -2465,7 +2486,8 @@ EXTRACT_S1D_PLOT_ZOOM1 = Const('EXTRACT_S1D_PLOT_ZOOM1', value=None,
 # Define the wavelength upper bounds for s1d plots
 #     (must be a string list of floats) defines the upper wavelength in nm
 EXTRACT_S1D_PLOT_ZOOM2 = Const('EXTRACT_S1D_PLOT_ZOOM2', value=None,
-                               dtype=str, source=__NAME__, group=cgroup,
+                               dtype=list, dtypei=float,
+                               source=__NAME__, group=cgroup,
                                description=('Define the wavelength upper '
                                             'bounds for s1d plots (must be a '
                                             'string list of floats) defines '
@@ -2501,7 +2523,8 @@ THERMAL_EXTRACT_TYPE = Const('THERMAL_EXTRACT_TYPE', value=None, dtype=str,
 # define DPRTYPEs we need to correct thermal background using
 #  telluric absorption (TAPAS)
 THERMAL_CORRETION_TYPE1 = Const('THERMAL_CORRETION_TYPE1', value=None,
-                                dtype=str, source=__NAME__, group=cgroup,
+                                dtype=list, dtypei=str,
+                                source=__NAME__, group=cgroup,
                                 description=('define DPRTYPEs we need to '
                                              'correct thermal background using '
                                              'telluric absorption (TAPAS)'))
@@ -2509,7 +2532,8 @@ THERMAL_CORRETION_TYPE1 = Const('THERMAL_CORRETION_TYPE1', value=None,
 # define DPRTYPEs we need to correct thermal background using
 #   method 2
 THERMAL_CORRETION_TYPE2 = Const('THERMAL_CORRETION_TYPE2', value=None,
-                                dtype=str, source=__NAME__, group=cgroup,
+                                dtype=list, dtypei=str,
+                                source=__NAME__, group=cgroup,
                                 description=('define DPRTYPEs we need to '
                                              'correct thermal background '
                                              'using method 2'))
@@ -2561,7 +2585,8 @@ THERMAL_PLOT_START_ORDER = Const('THERMAL_PLOT_START_ORDER', value=None,
 
 # define the dprtypes for which to apply the excess emissivity file
 THERMAL_EXCESS_DPRTYPES = Const('THERMAL_EXCESS_DPRTYPES', value=None,
-                                dtype=str, source=__NAME__, group=cgroup,
+                                dtype=list, dtypei=str,
+                                source=__NAME__, group=cgroup,
                                 description=('define the dprtypes for which '
                                              'to apply the excess emissivity '
                                              'file'))
@@ -2697,7 +2722,8 @@ WAVE_HC_VEL_ODD_RATIO = Const('WAVE_HC_VEL_ODD_RATIO', value=None,
 
 # Define orders that we cannot fit HC or FP lines to (list of strings)
 WAVE_REMOVE_ORDERS = Const('WAVE_REMOVE_ORDERS', value=None,
-                           dtype=str, source=__NAME__, group=cgroup,
+                           dtype=list, dtypei=int,
+                           source=__NAME__, group=cgroup,
                            description='Define orders that we cannot fit HC '
                                        'or FP lines to (list of strings)')
 
@@ -2743,14 +2769,15 @@ WAVEREF_HC_BOXSIZE = Const('WAVEREF_HC_BOXSIZE', value=None, dtype=int,
                            description=('value in pixel (+/-) for the box size '
                                         'around each HC line to perform fit'))
 
-# get valid hc dprtypes (string list separated by commas)
-WAVEREF_HC_FIBTYPES = Const('WAVEREF_HC_FIBTYPES', value=None, dtype=str,
+# get valid hc dprtypes
+WAVEREF_HC_FIBTYPES = Const('WAVEREF_HC_FIBTYPES', value=None,
+                            dtype=list, dtypei=str,
                             source=__NAME__, group=cgroup,
-                            description=('get valid hc dprtypes (string list '
-                                         'separated by commas)'))
+                            description=('get valid hc dprtypes'))
 
-# get valid fp dprtypes (string list separated by commas)
-WAVEREF_FP_FIBTYPES = Const('WAVEREF_HC_FIBTYPES', value=None, dtype=str,
+# get valid fp dprtypes
+WAVEREF_FP_FIBTYPES = Const('WAVEREF_FP_FIBTYPES', value=None,
+                            dtype=list, dtypei=str,
                             source=__NAME__, group=cgroup)
 
 # get the degree to fix reference wavelength to in hc mode
@@ -2783,13 +2810,15 @@ WAVEREF_HC_GUESS_EWID = Const('WAVEREF_HC_GUESS_EWID', value=None, dtype=float,
                                            'width [pixels]'))
 
 # Define the fiber offset (in pixels) away from reference fiber
-WAVE_FIBER_OFFSET_MOD = Const('WAVE_FIBER_OFFSET_MOD', value=None, dtype=str,
+WAVE_FIBER_OFFSET_MOD = Const('WAVE_FIBER_OFFSET_MOD', value=None,
+                              dtype=dict, dtypei=float,
                               source=__NAME__, group=cgroup,
                               description='Define the fiber offset (in pixels) '
                                           'away from reference fiber')
 
 # Define the fiber scale factor from reference fiber
-WAVE_FIBER_SCALE_MOD = Const('WAVE_FIBER_SCALE_MOD', value=None, dtype=str,
+WAVE_FIBER_SCALE_MOD = Const('WAVE_FIBER_SCALE_MOD', value=None,
+                              dtype=dict, dtypei=float,
                              source=__NAME__, group=cgroup,
                              description='Define the fiber scale factor '
                                          'from reference fiber')
@@ -3035,14 +3064,13 @@ WAVE_LINELIST_FMT = Const('WAVE_LINELIST_FMT', value=None, dtype=str,
                           description=('Define the line list file format (must '
                                        'be astropy.table format)'))
 
-# Define the line list file column names (must be separated by commas
+# Define the line list file column names
 # and must be equal to the number of columns in file)
 WAVE_LINELIST_COLS = Const('WAVE_LINELIST_COLS', value=None, dtype=str,
                            source=__NAME__, group=cgroup,
                            description=('Define the line list file column '
-                                        'names (must be separated by commas '
-                                        'and must be equal to the number of '
-                                        'columns in file)'))
+                                        'names and must be equal to the number '
+                                        'of columns in file)'))
 
 # Define the line list file row the data starts
 WAVE_LINELIST_START = Const('WAVE_LINELIST_START', value=None, dtype=int,
@@ -3229,9 +3257,10 @@ WAVE_HC_TFIT_MINTOT_LINES = Const('WAVE_HC_TFIT_MINTOT_LINES', value=None,
 #     in the  xpix vs wave solutions by setting the first term = 12,
 #     we force that the zeroth element of the xpix of the wavelegnth
 #     grid is fitted with a 12th order polynomial as a function of
-#     order number (format = string list separated by commas
+#     order number
 WAVE_HC_TFIT_ORDER_FIT_CONT = Const('WAVE_HC_TFIT_ORDER_FIT_CONT', value=None,
-                                    dtype=str, source=__NAME__, group=cgroup,
+                                    dtype=list, dtypei=int,
+                                    source=__NAME__, group=cgroup,
                                     description=('this sets the order of the '
                                                  'polynomial used to ensure '
                                                  'continuity in the xpix vs '
@@ -3242,8 +3271,7 @@ WAVE_HC_TFIT_ORDER_FIT_CONT = Const('WAVE_HC_TFIT_ORDER_FIT_CONT', value=None,
                                                  'wavelegnth grid is fitted '
                                                  'with a 12th order polynomial '
                                                  'as a function of order '
-                                                 'number (format = string list '
-                                                 'separated by commas'))
+                                                 'number'))
 
 # Number of times to loop through the sigma clip for triplet fit
 WAVE_HC_TFIT_SIGCLIP_NUM = Const('WAVE_HC_TFIT_SIGCLIP_NUM', value=None,
@@ -3293,7 +3321,8 @@ WAVE_HC_QC_SIGMA_MAX = Const('WAVE_HC_QC_SIGMA_MAX', value=None, dtype=float,
 
 # Defines the dv span for PLOT_WAVE_HC_RESMAP debug plot, should be a
 #    string list containing a min and max dv value
-WAVE_HC_RESMAP_DV_SPAN = Const('WAVE_HC_RESMAP_DV_SPAN', value=None, dtype=str,
+WAVE_HC_RESMAP_DV_SPAN = Const('WAVE_HC_RESMAP_DV_SPAN', value=None,
+                               dtype=list, dtypei=float,
                                source=__NAME__, group=cgroup,
                                description=('Defines the dv span for '
                                             'PLOT_WAVE_HC_RESMAP debug plot, '
@@ -3303,7 +3332,8 @@ WAVE_HC_RESMAP_DV_SPAN = Const('WAVE_HC_RESMAP_DV_SPAN', value=None, dtype=str,
 
 # Defines the x limits for PLOT_WAVE_HC_RESMAP debug plot, should be a
 #   string list containing a min and max x value
-WAVE_HC_RESMAP_XLIM = Const('WAVE_HC_RESMAP_XLIM', value=None, dtype=str,
+WAVE_HC_RESMAP_XLIM = Const('WAVE_HC_RESMAP_XLIM', value=None,
+                            dtype=list, dtypei=float,
                             source=__NAME__, group=cgroup,
                             description=('Defines the x limits for '
                                          'PLOT_WAVE_HC_RESMAP debug plot, '
@@ -3312,7 +3342,8 @@ WAVE_HC_RESMAP_XLIM = Const('WAVE_HC_RESMAP_XLIM', value=None, dtype=str,
 
 # Defines the y limits for PLOT_WAVE_HC_RESMAP debug plot, should be a
 #   string list containing a min and max y value
-WAVE_HC_RESMAP_YLIM = Const('WAVE_HC_RESMAP_YLIM', value=None, dtype=str,
+WAVE_HC_RESMAP_YLIM = Const('WAVE_HC_RESMAP_YLIM', value=None,
+                            dtype=list, dtypei=float,
                             source=__NAME__, group=cgroup,
                             description=('Defines the y limits for '
                                          'PLOT_WAVE_HC_RESMAP debug plot, '
@@ -3366,14 +3397,11 @@ WAVE_LITTROW_ORDER_FINAL_2 = Const('WAVE_LITTROW_ORDER_FINAL_2', value=None,
                                                 'Littrow fit at for the FP '
                                                 'wave solution'))
 
-#  Define orders to ignore in Littrow fit (should be a string list separated
-#      by commas
+#  Define orders to ignore in Littrow fit
 WAVE_LITTROW_REMOVE_ORDERS = Const('WAVE_LITTROW_REMOVE_ORDERS', value=None,
                                    dtype=str, source=__NAME__, group=cgroup,
                                    description=('Define orders to ignore in '
-                                                'Littrow fit (should be a '
-                                                'string list separated by '
-                                                'commas'))
+                                                'Littrow fit'))
 
 #  Define the littrow cut steps for the HC wave solution
 WAVE_LITTROW_CUT_STEP_1 = Const('WAVE_LITTROW_CUT_STEP_1', value=None,
@@ -3608,14 +3636,16 @@ WAVE_FP_PLOT_MULTI_NBO = Const('WAVE_FP_PLOT_MULTI_NBO', value=None, dtype=int,
                                             'wave fp plot'))
 
 # define the dprtype for generating FPLINES (string list)
-WAVE_FP_DPRLIST = Const('WAVE_FP_DPRLIST', value=None, dtype=str,
+WAVE_FP_DPRLIST = Const('WAVE_FP_DPRLIST', value=None,
+                        dtype=list, dtypei=str,
                         source=__NAME__, group=cgroup,
                         description=('define the dprtype for generating '
                                      'FPLINES (string list)'))
 
 # define the override for reference fiber for generating FPLINES
 #    None for no override
-WAVE_FP_FIBERTYPES = Const('WAVE_FP_FIBERTYPES', value='None', dtype=str,
+WAVE_FP_FIBERTYPES = Const('WAVE_FP_FIBERTYPES', value=None,
+                           dtype=list, dtypei=str,
                            source=__NAME__, group=cgroup,
                            description='define the override for reference '
                                        'fiber for generating FPLINES (None for '
@@ -3761,7 +3791,8 @@ SKYMODEL_WEIGHT_ERODE_SIZE = Const('SKYMODEL_WEIGHT_ERODE_SIZE', value=None,
 
 # Define the allowed DPRTYPEs for sky correction
 ALLOWED_SKYCORR_DPRTYPES = Const('ALLOWED_SKYCORR_DPRTYPES', value=None,
-                                 dtype=str, source=__NAME__, group=cgroup,
+                                 dtype=list, dtypei=str,
+                                 source=__NAME__, group=cgroup,
                                  description='Define the allowed DPRTYPEs for'
                                              ' sky correction')
 
@@ -3815,7 +3846,8 @@ TAPAS_FILE_FMT = Const('TAPAS_FILE_FMT', value=None, dtype=str, source=__NAME__,
                                     'tapas file "TAPAS_FILE"'))
 
 # The allowed input DPRTYPES for input telluric files
-TELLU_ALLOWED_DPRTYPES = Const('TELLU_ALLOWED_DPRTYPES', value=None, dtype=str,
+TELLU_ALLOWED_DPRTYPES = Const('TELLU_ALLOWED_DPRTYPES', value=None,
+                               dtype=list, dtypei=str,
                                source=__NAME__, group=cgroup,
                                description=('The allowed input DPRTYPES for '
                                             'input telluric files'))
@@ -3902,7 +3934,8 @@ TELLUP_OHLINE_PCA_FILE = Const('TELLUP_OHLINE_PCA_FILE', value=None, dtype=str,
 
 # define the orders not to use in pre-cleaning fit (due to thermal
 # background)
-TELLUP_REMOVE_ORDS = Const('TELLUP_REMOVE_ORDS', value=None, dtype=str,
+TELLUP_REMOVE_ORDS = Const('TELLUP_REMOVE_ORDS', value=None,
+                           dtype=list, dtypei=int,
                            source=__NAME__, group=cgroup,
                            description=('define the orders not to use in '
                                         'pre-cleaning fit (due to thermal '
@@ -3998,7 +4031,8 @@ TELLUP_D_WATER_ABSO = Const('TELLUP_D_WATER_ABSO', value=None,
 # set the lower and upper bounds (String list) for the exponent of
 #  the other species of absorbers as a ratio to the airmass
 #  i.e. value/airmass compared to bound
-TELLUP_OTHER_BOUNDS = Const('TELLUP_OTHER_BOUNDS', value=None, dtype=str,
+TELLUP_OTHER_BOUNDS = Const('TELLUP_OTHER_BOUNDS', value=None,
+                            dtype=list, dtypei=float,
                             source=__NAME__, group=cgroup,
                             description='set the lower and upper bounds '
                                         '(String list) for the exponent of '
@@ -4008,7 +4042,8 @@ TELLUP_OTHER_BOUNDS = Const('TELLUP_OTHER_BOUNDS', value=None, dtype=str,
 
 # set the lower and upper bounds (string list) for the exponent of
 #  water absorber as a ratio to the airmass i.e. value/airmass compared to bound
-TELLUP_WATER_BOUNDS = Const('TELLUP_WATER_BOUNDS', value=None, dtype=str,
+TELLUP_WATER_BOUNDS = Const('TELLUP_WATER_BOUNDS', value=None,
+                            dtype=list, dtypei=float,
                             source=__NAME__, group=cgroup,
                             description='set the lower and upper bounds '
                                         '(string list) for the exponent of '
@@ -4017,7 +4052,7 @@ TELLUP_WATER_BOUNDS = Const('TELLUP_WATER_BOUNDS', value=None, dtype=str,
                                         'to bound')
 
 # set the plot order for the finite resolution plot
-TELLU_FINITE_RES_ORDER = Const('TELLUP_WATER_BOUNDS', value=None, dtype=int,
+TELLU_FINITE_RES_ORDER = Const('TELLU_FINITE_RES_ORDER', value=None, dtype=int,
                                minimum=0, source=__NAME__, group=cgroup,
                                description='set the plot order for the finite '
                                            'resolution plot')
@@ -4044,7 +4079,8 @@ MKTELLU_CUT_BLAZE_NORM = Const('MKTELLU_CUT_BLAZE_NORM', value=None,
                                description='')
 
 # Define list of absorbers in the tapas fits table
-TELLU_ABSORBERS = Const('TELLU_ABSORBERS', value=None, dtype=str,
+TELLU_ABSORBERS = Const('TELLU_ABSORBERS', value=None,
+                        dtype=list, dtypei=str,
                         source=__NAME__, group=cgroup,
                         description=('Define list of absorbers in the tapas '
                                      'fits table'))
@@ -4067,13 +4103,11 @@ MKTELLU_TEMP_MED_FILT = Const('MKTELLU_TEMP_MED_FILT', value=None, dtype=int,
                                            '[pixel]'))
 
 # Define the orders to plot (not too many)
-#    values should be a string list separated by commas
 MKTELLU_PLOT_ORDER_NUMS = Const('MKTELLU_PLOT_ORDER_NUMS', value=None,
-                                dtype=str, source=__NAME__, group=cgroup,
+                                dtype=list, dtypei=int,
+                                source=__NAME__, group=cgroup,
                                 description=('Define the orders to plot '
-                                             '(not too many) values should '
-                                             'be a string list separated by '
-                                             'commas'))
+                                             '(not too many)'))
 
 # Set an upper limit for the allowed line-of-sight optical depth of water
 MKTELLU_TAU_WATER_ULIMIT = Const('MKTELLU_TAU_WATER_ULIMIT', value=None,
@@ -4263,13 +4297,11 @@ FTELLU_FIT_RECON_LIMIT = Const('FTELLU_FIT_RECON_LIMIT', value=None,
                                             'absorption calculation'))
 
 # Define the orders to plot (not too many) for recon abso plot
-#    values should be a string list separated by commas
 FTELLU_PLOT_ORDER_NUMS = Const('FTELLU_PLOT_ORDER_NUMS', value=None,
-                               dtype=str, source=__NAME__, group=cgroup,
+                               dtype=list, dtypei=int,
+                               source=__NAME__, group=cgroup,
                                description=('Define the orders to plot (not '
-                                            'too many) for recon abso plot '
-                                            'values should be a string list '
-                                            'separated by commas'))
+                                            'too many) for recon abso plot '))
 
 # Define the selected fit telluric order for debug plots (when not in loop)
 FTELLU_SPLOT_ORDER = Const('FTELLU_SPLOT_ORDER', value=None,
@@ -4292,7 +4324,8 @@ TELLURIC_FILETYPE = Const('TELLURIC_FILETYPE', value=None, dtype=str,
                                       'template files')
 
 # the fiber required for input template files
-TELLURIC_FIBER_TYPE = Const('TELLURIC_FIBER_TYPE', value=None, dtype=str,
+TELLURIC_FIBER_TYPE = Const('TELLURIC_FIBER_TYPE', value=None,
+                            dtype=list, dtypei=str,
                             source=__NAME__, user=True, active=False,
                             group=cgroup,
                             description='the fiber required for input '
@@ -4556,7 +4589,8 @@ CCF_N_ORD_MAX = Const('CCF_N_ORD_MAX', value=None, dtype=int, source=__NAME__,
                       minimum=1, group=cgroup)
 
 # Allowed input DPRTYPES for input for CCF recipe
-CCF_ALLOWED_DPRTYPES = Const('CCF_ALLOWED_DPRTYPES', value=None, dtype=str,
+CCF_ALLOWED_DPRTYPES = Const('CCF_ALLOWED_DPRTYPES', value=None,
+                             dtype=list, dtypei=str,
                              source=__NAME__, user=True, active=False,
                              group=cgroup,
                              description='Allowed input DPRTYPES for input '
@@ -4658,13 +4692,15 @@ CCF_BIS_CUT_BOTTOM = Const('CCF_BIS_CUT_BOTTOM', value=None, dtype=float,
 cgroup = 'OBJECT.POLARISATION'
 
 # Define all possible fibers used for polarimetry
-POLAR_FIBERS = Const('POLAR_FIBERS', value=None, dtype=str, source=__NAME__,
-                     group=cgroup,
+POLAR_FIBERS = Const('POLAR_FIBERS', value=None,
+                     dtype=list, dtypei=str,
+                     source=__NAME__, group=cgroup,
                      description='Define all possible fibers used for '
                                  'polarimetry')
 
 # Define all possible stokes parameters
-POLAR_STOKES_PARAMS = Const('POLAR_STOKES_PARAMS', value=None, dtype=str,
+POLAR_STOKES_PARAMS = Const('POLAR_STOKES_PARAMS', value=None,
+                            dtype=list, dtypei=str,
                             source=__NAME__, group=cgroup,
                             description='Define all possible stokes parameters')
 
@@ -5563,14 +5599,17 @@ LBL_SYMLINKS = Const('LBL_SYMLINKS', value=False, dtype=bool, source=__NAME__,
                                  'symlinks')
 
 # Define the dictionary of friend and friend teffs for LBL
-LBL_FRIENDS = Const('LBL_FRIENDS', value=None, dtype=str, source=__NAME__,
+LBL_FRIENDS = Const('LBL_FRIENDS', value=None,
+                    dtype=dict, dtypei=int,
+                    source=__NAME__,
                     user=False, active=True, group=cgroup,
                     description='Define the dictionary of friend and friend '
                                 'teffs for LBL')
 
 # Define the specific data types (where objname is the data type) for LBL
 LBL_SPECIFIC_DATATYPES = Const('LBL_SPECIFIC_DATATYPES', value=None,
-                               dtype=str, source=__NAME__, user=False,
+                               dtype=list, dtypei=str,
+                               source=__NAME__, user=False,
                                active=True, group=cgroup,
                                description='Define the specific data types '
                                            '(where objname is the data type) '
@@ -5578,33 +5617,36 @@ LBL_SPECIFIC_DATATYPES = Const('LBL_SPECIFIC_DATATYPES', value=None,
 
 # Define objnames for which we should recalculate template if it doesn't
 #   exist (must include FP)
-LBL_RECAL_TEMPLATE = Const('LBL_RECAL_TEMPLATE', value=None, dtype=str,
+LBL_RECAL_TEMPLATE = Const('LBL_RECAL_TEMPLATE', value=None,
+                           dtype=list, dtypei=str,
                            source=__NAME__, user=False, active=True,
                            group=cgroup,
                            description='Define objnames for which we should '
                                        'recalculate template if it doesn\'t '
                                        'exist (must include FP)')
 
-# Define which recipes should skip done files comma separates list e.g.
+# Define which recipes should skip done files
 #   e.g. LBL_COMPUTE,LBL_COMPILE,LBL_MASK
-LBL_SKIP_DONE = Const('LBL_SKIP_DONE', value=None, dtype=str, source=__NAME__,
+LBL_SKIP_DONE = Const('LBL_SKIP_DONE', value=None,
+                      dtype=list, dtypei=str,
+                      source=__NAME__,
                       user=False, active=True, group=cgroup,
                       description='Define which recipes should skip done files'
-                                  ' comma separates list '
                                   'e.g.  LBL_COMPUTE,LBL_COMPILE,LBL_MASK')
 
 # Define which object names should be run through LBL compute in parellel
-#   i.e. break in to Ncore chunks (comma separated list)
-LBL_MULTI_OBJLIST = Const('LBL_MULTI_OBJLIST', value=None, dtype=str,
+#   i.e. break in to Ncore chunks
+LBL_MULTI_OBJLIST = Const('LBL_MULTI_OBJLIST', value=None,
+                          dtype=list, dtypei=str,
                           source=__NAME__, user=False, active=True,
                           group=cgroup,
                           description='Define which object names should be '
                                       ' run through LBL compute in parellel '
-                                      ' i.e. break in to Ncore chunks '
-                                      '(comma separated list)')
+                                      ' i.e. break in to Ncore chunks ')
 
 # Define the DTEMP gradient files
-LBL_DTEMP = Const('LBL_DTEMP', value=None, dtype=str,
+LBL_DTEMP = Const('LBL_DTEMP', value=None,
+                  dtype=dict, dtypei=str,
                   source=__NAME__, user=False, active=True, group=cgroup,
                   description='Define the DTEMP gradient files')
 
@@ -5785,7 +5827,8 @@ EXPMETER_TELLU_THRES = Const('EXPMETER_TELLU_THRES', value=None, dtype=float,
                                           'transmission)'))
 
 # Define the types of file allowed for drift measurement
-DRIFT_DPRTYPES = Const('DRIFT_DPRTYPES', value=None, dtype=str,
+DRIFT_DPRTYPES = Const('DRIFT_DPRTYPES', value=None,
+                       dtype=list, dtypei=str,
                        source=__NAME__, group=cgroup,
                        description=('Define the types of file allowed for '
                                     'drift measurement'))

@@ -1401,7 +1401,7 @@ def get_drs_mode(params: ParamDict, header: Any, hdict: Any) -> Tuple[Any, Any]:
     kw_polar_key_1 = params['KW_POLAR_KEY_1'][0]
     kw_polar_key_2 = params['KW_POLAR_KEY_2'][0]
     kw_obstype = params['KW_OBSTYPE'][0]
-    all_polar_rhomb_pos = params.listp('ALL_POLAR_RHOMB_POS', dtype=str)
+    all_polar_rhomb_pos = params['ALL_POLAR_RHOMB_POS']
     # -------------------------------------------------------------------------
     # deal with no hdict
     if hdict is None:
@@ -1546,7 +1546,7 @@ def get_special_objname(params: ParamDict, header: Any,
     kwobjname = params['KW_OBJNAME'][0]
     kwtrgtype = params['KW_TARGET_TYPE'][0]
     kwobjcomment = params['KW_OBJNAME'][2]
-    obj_dprtypes = params.listp('PP_OBJ_DPRTYPES', dtype=str)
+    obj_dprtypes = params['PP_OBJ_DPRTYPES']
     # conditions
     cond1 = header[kwdprtype] in obj_dprtypes
     cond2 = header[kwtrgtype] == 'SKY'

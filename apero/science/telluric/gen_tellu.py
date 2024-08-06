@@ -493,7 +493,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     clean_ohlines = pcheck(params, 'TELLUP_CLEAN_OH_LINES', 'clean_ohlines',
                            kwargs, func_name)
     remove_orders = pcheck(params, 'TELLUP_REMOVE_ORDS', 'remove_orders',
-                           kwargs, func_name, mapf='list', dtype=int)
+                           kwargs, func_name)
     snr_min_thres = pcheck(params, 'TELLUP_SNR_MIN_THRES', 'snr_min_thres',
                            kwargs, func_name)
     dexpo_thres = pcheck(params, 'TELLUP_DEXPO_CONV_THRES', 'dexpo_thres',
@@ -511,9 +511,9 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     force_airmass = pcheck(params, 'TELLUP_FORCE_AIRMASS', 'force_airmass',
                            kwargs, func_name)
     others_bounds = pcheck(params, 'TELLUP_OTHER_BOUNDS', 'others_bounds',
-                           kwargs, func_name, mapf='list', dtype=float)
+                           kwargs, func_name)
     water_bounds = pcheck(params, 'TELLUP_WATER_BOUNDS', 'water_bounds', kwargs,
-                          func_name, mapf='list', dtype=float)
+                          func_name)
     ker_thres = pcheck(params, 'TELLUP_ABSO_EXPO_KTHRES', 'ker_thres', kwargs,
                        func_name)
     wavestart = pcheck(params, 'EXT_S1D_WAVESTART', 'wavestart', kwargs,
@@ -1807,7 +1807,7 @@ def qc_exit_tellu_preclean(params, recipe, image, image_e2ds_ini, infile,
                            kwargs, func_name)
 
     remove_orders = pcheck(params, 'TELLUP_REMOVE_ORDS', 'remove_orders',
-                           kwargs, func_name, mapf='list', dtype=int)
+                           kwargs, func_name)
     snr_min_thres = pcheck(params, 'TELLUP_SNR_MIN_THRES', 'snr_min_thres',
                            kwargs, func_name)
     dexpo_thres = pcheck(params, 'TELLUP_DEXPO_CONV_THRES', 'dexpo_thres',
@@ -1825,9 +1825,9 @@ def qc_exit_tellu_preclean(params, recipe, image, image_e2ds_ini, infile,
     force_airmass = pcheck(params, 'TELLUP_FORCE_AIRMASS', 'force_airmass',
                            kwargs, func_name)
     others_bounds = pcheck(params, 'TELLUP_OTHER_BOUNDS', 'others_bounds',
-                           kwargs, func_name, mapf='list', dtype=float)
+                           kwargs, func_name)
     water_bounds = pcheck(params, 'TELLUP_WATER_BOUNDS', 'water_bounds', kwargs,
-                          func_name, mapf='list', dtype=float)
+                          func_name)
     ker_thres = pcheck(params, 'TELLUP_ABSO_EXPO_KTHRES', 'ker_thres', kwargs,
                        func_name)
     wavestart = pcheck(params, 'EXT_S1D_WAVESTART', 'wavestart', kwargs,
@@ -2070,7 +2070,7 @@ def tellu_preclean_write(params, recipe, infile, rawfiles, fiber, combine,
     tpclfile.add_hkey('KW_TELLUP_CLEAN_OHLINES',
                       value=props['TELLUP_CLEAN_OH_LINES'])
     tpclfile.add_hkey('KW_TELLUP_REMOVE_ORDS',
-                      value=props['TELLUP_REMOVE_ORDS'], mapf='list')
+                      value=props['TELLUP_REMOVE_ORDS'])
     tpclfile.add_hkey('KW_TELLUP_SNR_MIN_THRES',
                       value=props['TELLUP_SNR_MIN_THRES'])
     tpclfile.add_hkey('KW_TELLUP_DEXPO_CONV_THRES',
@@ -2093,9 +2093,9 @@ def tellu_preclean_write(params, recipe, infile, rawfiles, fiber, combine,
     tpclfile.add_hkey('KW_TELLUP_FORCE_AIRMASS',
                       value=props['TELLUP_FORCE_AIRMASS'])
     tpclfile.add_hkey('KW_TELLUP_OTHER_BOUNDS',
-                      value=props['TELLUP_OTHER_BOUNDS'], mapf='list')
+                      value=props['TELLUP_OTHER_BOUNDS'])
     tpclfile.add_hkey('KW_TELLUP_WATER_BOUNDS',
-                      value=props['TELLUP_WATER_BOUNDS'], mapf='list')
+                      value=props['TELLUP_WATER_BOUNDS'])
     # ----------------------------------------------------------------------
     # print progress
     WLOG(params, '', textentry('40-019-00044', args=[tpclfile.filename]))
@@ -2741,7 +2741,7 @@ def load_conv_tapas(params, recipe, header, refprops, fiber, database=None,
     func_name = __NAME__ + '.load_conv_tapas()'
     # get parameters from params/kwargs
     tellu_absorbers = pcheck(params, 'TELLU_ABSORBERS', func=func_name,
-                             mapf='list', dtype=str, override=absorbers)
+                             override=absorbers)
     fwhm_pixel_lsf = pcheck(params, 'FWHM_PIXEL_LSF', func=func_name,
                             override=fwhm_lsf)
     # ----------------------------------------------------------------------

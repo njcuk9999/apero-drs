@@ -102,7 +102,7 @@ FWHM_PIXEL_LSF.value = 2.1
 
 # Define all polar rhomb positions
 ALL_POLAR_RHOMB_POS = ALL_POLAR_RHOMB_POS.copy(__NAME__)
-ALL_POLAR_RHOMB_POS.value = 'P2, P4, P14, P16'
+ALL_POLAR_RHOMB_POS.value = ['P2', 'P4', 'P14', 'P16']
 
 # =============================================================================
 # CALIBRATION: GENERAL SETTINGS
@@ -137,7 +137,8 @@ COMBINE_METRIC_THRESHOLD1.value = 0.99
 
 # Define the DPRTYPES allowed for the combine metric 1 comparison
 COMBINE_METRIC1_TYPES = COMBINE_METRIC1_TYPES.copy(__NAME__)
-COMBINE_METRIC1_TYPES.value = 'DARK_FLAT, FLAT_FLAT, FLAT_DARK, FP_FP, DARK_FP'
+COMBINE_METRIC1_TYPES.value = ['DARK_FLAT', 'FLAT_FLAT', 'FLAT_DARK',
+                               'FP_FP', 'DARK_FP']
 
 # Define the coefficients of the fit of 1/m vs d
 CAVITY_1M_FILE = CAVITY_1M_FILE.copy(__NAME__)
@@ -312,7 +313,7 @@ FIBER_SET_NUM_FIBERS_C.value = 1
 # =============================================================================
 # Define object (science or telluric)
 PP_OBJ_DPRTYPES = PP_OBJ_DPRTYPES.copy(__NAME__)
-PP_OBJ_DPRTYPES.value = 'OBJ_DARK, OBJ_FP, POLAR_DARK, POLAR_FP'
+PP_OBJ_DPRTYPES.value = ['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK', 'POLAR_FP']
 PP_OBJ_DPRTYPES.author = base.AUTHORS['NJC']
 
 # Define the bad list google spreadsheet id
@@ -440,7 +441,7 @@ SKIP_DONE_PP.value = False
 
 # Define dark dprtypes for threshold quality control check (PP_DARK_THRES)
 PP_DARK_DPRTYPES = PP_DARK_DPRTYPES.copy(__NAME__)
-PP_DARK_DPRTYPES.value = 'DARK_DARK_INT,DARK_DARK_TEL'
+PP_DARK_DPRTYPES.value = ['DARK_DARK_INT', 'DARK_DARK_TEL']
 
 # Define the threshold for a suitable DARK_DARK (above this will not be
 #    processed)
@@ -471,7 +472,7 @@ PP_COR_XTALK_AMP_D2FLUX.author = base.AUTHORS['EA']
 # Define the partial APERO DPRTYPES which we should not do the science
 #    capacitive coupling
 PP_NOSCI_CAPC_DPRTYPES = PP_NOSCI_CAPC_DPRTYPES.copy(__NAME__)
-PP_NOSCI_CAPC_DPRTYPES.value = 'HCONE,HCTWO'
+PP_NOSCI_CAPC_DPRTYPES.value = ['HCONE', 'HCTWO']
 
 # =============================================================================
 # CALIBRATION: ASTROMETRIC DATABASE SETTINGS
@@ -564,9 +565,9 @@ HISTO_RANGE_HIGH.value = 0.8
 
 #    Define the allowed DPRTYPES for finding files for DARK_REF will
 #        only find those types define by 'filetype' but 'filetype' must
-#        be one of theses (strings separated by commas)
+#        be one of theses
 ALLOWED_DARK_TYPES = ALLOWED_DARK_TYPES.copy(__NAME__)
-ALLOWED_DARK_TYPES.value = 'DARK_DARK_TEL, DARK_DARK_INT'
+ALLOWED_DARK_TYPES.value = ['DARK_DARK_TEL', 'DARK_DARK_INT']
 
 #   Define the maximum time span to combine dark files over (in hours)
 DARK_REF_MATCH_TIME = DARK_REF_MATCH_TIME.copy(__NAME__)
@@ -850,19 +851,19 @@ LOC_SAVE_SUPERIMP_FILE.value = True
 
 # set the zoom in levels for the plots (x min value)
 LOC_PLOT_CORNER_XZOOM1 = LOC_PLOT_CORNER_XZOOM1.copy(__NAME__)
-LOC_PLOT_CORNER_XZOOM1.value = '0, 2044, 0, 2044'
+LOC_PLOT_CORNER_XZOOM1.value = [0, 2044, 0, 2044]
 
 # set the zoom in levels for the plots (x max value)
 LOC_PLOT_CORNER_XZOOM2 = LOC_PLOT_CORNER_XZOOM2.copy(__NAME__)
-LOC_PLOT_CORNER_XZOOM2.value = '2044, 4088, 2044, 4088'
+LOC_PLOT_CORNER_XZOOM2.value = [2044, 4088, 2044, 4088]
 
 # set the zoom in levels for the plots (top left corners)
 LOC_PLOT_CORNER_YZOOM1 = LOC_PLOT_CORNER_YZOOM1.copy(__NAME__)
-LOC_PLOT_CORNER_YZOOM1.value = '0, 0, 2500, 2500'
+LOC_PLOT_CORNER_YZOOM1.value = [0, 0, 2500, 2500]
 
 # set the zoom in levels for the plots (top right corners)
 LOC_PLOT_CORNER_YZOOM2 = LOC_PLOT_CORNER_YZOOM2.copy(__NAME__)
-LOC_PLOT_CORNER_YZOOM2.value = '600, 600, 3100, 3100'
+LOC_PLOT_CORNER_YZOOM2.value = [600, 600, 3100, 3100]
 
 
 # =============================================================================
@@ -870,9 +871,9 @@ LOC_PLOT_CORNER_YZOOM2.value = '600, 600, 3100, 3100'
 # =============================================================================
 #    Define the allowed DPRTYPES for finding files for DARK_REF will
 #        only find those types define by 'filetype' but 'filetype' must
-#        be one of theses (strings separated by commas)
+#        be one of theses
 ALLOWED_FP_TYPES = ALLOWED_FP_TYPES.copy(__NAME__)
-ALLOWED_FP_TYPES.value = 'FP_FP'
+ALLOWED_FP_TYPES.value = ['FP_FP']
 
 #   Define the maximum time span to combine fp files over (in hours)
 FP_REF_MATCH_TIME = FP_REF_MATCH_TIME.copy(__NAME__)
@@ -935,7 +936,7 @@ SHAPE_PLOT_SELECTED_ORDER.value = 33
 
 # total width of the order (combined fibers) in pixels
 SHAPE_ORDER_WIDTH = SHAPE_ORDER_WIDTH.copy(__NAME__)
-SHAPE_ORDER_WIDTH.value = '{"AB": 60, "A": 60, "B": 60, "C": 60}'
+SHAPE_ORDER_WIDTH.value = {"AB": 60, "A": 60, "B": 60, "C": 60}
 
 # number of sections per order to split the order into
 SHAPE_NSECTIONS = SHAPE_NSECTIONS.copy(__NAME__)
@@ -1074,12 +1075,12 @@ SHAPE_UNIQUE_FIBERS.value = 'A, B, C'
 #  Define first zoom plot for shape local zoom debug plot
 #     should be a string list (xmin, xmax, ymin, ymax)
 SHAPEL_PLOT_ZOOM1 = SHAPEL_PLOT_ZOOM1.copy(__NAME__)
-SHAPEL_PLOT_ZOOM1.value = '1844, 2244, 0, 400'
+SHAPEL_PLOT_ZOOM1.value = [1844, 2244, 0, 400]
 
 #  Define second zoom plot for shape local zoom debug plot
 #     should be a string list (xmin, xmax, ymin, ymax)
 SHAPEL_PLOT_ZOOM2 = SHAPEL_PLOT_ZOOM2.copy(__NAME__)
-SHAPEL_PLOT_ZOOM2.value = '1844, 2244, 2700, 3100'
+SHAPEL_PLOT_ZOOM2.value = [1844, 2244, 2700, 3100]
 
 # =============================================================================
 # CALIBRATION: FLAT SETTINGS
@@ -1121,7 +1122,7 @@ FF_BLAZE_SINC_MED_SIZE.value = 25
 #   Define the orders not to plot on the RMS plot should be a string
 #       containing a list of integers
 FF_RMS_SKIP_ORDERS = FF_RMS_SKIP_ORDERS.copy(__NAME__)
-FF_RMS_SKIP_ORDERS.value = '[0, 22, 23, 24, 25, 48]'
+FF_RMS_SKIP_ORDERS.value = [0, 22, 23, 24, 25, 48]
 
 #   Maximum allowed RMS of flat field
 QC_FF_MAX_RMS = QC_FF_MAX_RMS.copy(__NAME__)
@@ -1141,7 +1142,7 @@ FF_HIGH_PASS_SIZE.author = base.AUTHORS['EA']
 # =============================================================================
 # Define the types of input file allowed by the leakage reference recipe
 ALLOWED_LEAKREF_TYPES = ALLOWED_LEAKREF_TYPES.copy(__NAME__)
-ALLOWED_LEAKREF_TYPES.value = 'DARK_FP'
+ALLOWED_LEAKREF_TYPES.value = ['DARK_FP']
 
 # define whether to always extract leak reference files
 #      (i.e. overwrite existing files)
@@ -1159,7 +1160,7 @@ CORRECT_LEAKAGE.value = True
 
 # Define DPRTYPE in reference fiber to do correction
 LEAKAGE_REF_TYPES = LEAKAGE_REF_TYPES.copy(__NAME__)
-LEAKAGE_REF_TYPES.value = 'FP'
+LEAKAGE_REF_TYPES.value = ['FP']
 
 # define the maximum number of files to use in the leak reference
 LEAK_REF_MAX_FILES = LEAK_REF_MAX_FILES.copy(__NAME__)
@@ -1173,11 +1174,11 @@ LEAK_EXTRACT_FILE.value = 'E2DSFF_FILE'
 
 # define the extraction files which are 2D images (i.e. order num x nbpix)
 LEAK_2D_EXTRACT_FILES = LEAK_2D_EXTRACT_FILES.copy(__NAME__)
-LEAK_2D_EXTRACT_FILES.value = 'E2DS_FILE, E2DSFF_FILE'
+LEAK_2D_EXTRACT_FILES.value = ['E2DS_FILE', 'E2DSFF_FILE']
 
 # define the extraction files which are 1D spectra
 LEAK_1D_EXTRACT_FILES = LEAK_1D_EXTRACT_FILES.copy(__NAME__)
-LEAK_1D_EXTRACT_FILES.value = 'S1D_W_FILE, S1D_V_FILE'
+LEAK_1D_EXTRACT_FILES.value = ['S1D_W_FILE', 'S1D_V_FILE']
 
 # define the thermal background percentile for the leak and leak reference
 LEAK_BCKGRD_PERCENTILE = LEAK_BCKGRD_PERCENTILE.copy(__NAME__)
@@ -1225,17 +1226,17 @@ EXT_END_ORDER.value = None
 
 #   Half-zone extraction width left side (formally plage1)
 EXT_RANGE1 = EXT_RANGE1.copy(__NAME__)
-EXT_RANGE1.value = '{"AB":16, "A":8, "B":8, "C": 7}'
+EXT_RANGE1.value = {"AB":16, "A":8, "B":8, "C": 7}
 
 #   Half-zone extraction width right side (formally plage2)
 EXT_RANGE2 = EXT_RANGE2.copy(__NAME__)
-EXT_RANGE2.value = '{"AB":16, "A":8, "B":8, "C": 7}'
+EXT_RANGE2.value = {"AB":16, "A":8, "B":8, "C": 7}
 
 #   Define the orders to skip extraction on (will set all order values
 #      to NaN. If empty list no orders are skipped. Should be a string
 #      containing a valid python list
 EXT_SKIP_ORDERS = EXT_SKIP_ORDERS.copy(__NAME__)
-EXT_SKIP_ORDERS.value = '[]'
+EXT_SKIP_ORDERS.value = []
 
 #    Defines whether to run extraction with cosmic correction
 EXT_COSMIC_CORRETION = EXT_COSMIC_CORRETION.copy(__NAME__)
@@ -1284,7 +1285,8 @@ EXT_S1D_EDGE_SMOOTH_SIZE.value = 20
 
 #    Define dprtypes to calculate berv for (should be a string list)
 EXT_ALLOWED_BERV_DPRTYPES = EXT_ALLOWED_BERV_DPRTYPES.copy(__NAME__)
-EXT_ALLOWED_BERV_DPRTYPES.value = 'OBJ_FP, OBJ_DARK, POLAR_FP, POLAR_DARK'
+EXT_ALLOWED_BERV_DPRTYPES.value = ['OBJ_FP', 'OBJ_DARK', 'POLAR_FP',
+                                   'POLAR_DARK']
 
 #    Define which BERV calculation to use ('barycorrpy' or 'estimate' or 'None')
 EXT_BERV_KIND = EXT_BERV_KIND.copy(__NAME__)
@@ -1317,12 +1319,12 @@ EXTRACT_PLOT_ORDER.value = 4
 # Define the wavelength lower bounds for s1d plots
 #     (must be a string list of floats) defines the lower wavelength in nm
 EXTRACT_S1D_PLOT_ZOOM1 = EXTRACT_S1D_PLOT_ZOOM1.copy(__NAME__)
-EXTRACT_S1D_PLOT_ZOOM1.value = '990, 1245, 1570, 2000, 2400'
+EXTRACT_S1D_PLOT_ZOOM1.value = [990, 1245, 1570, 2000, 2400]
 
 # Define the wavelength upper bounds for s1d plots
 #     (must be a string list of floats) defines the upper wavelength in nm
 EXTRACT_S1D_PLOT_ZOOM2 = EXTRACT_S1D_PLOT_ZOOM2.copy(__NAME__)
-EXTRACT_S1D_PLOT_ZOOM2.value = '1050, 1285, 1670, 2100, 2500'
+EXTRACT_S1D_PLOT_ZOOM2.value = [1050, 1285, 1670, 2100, 2500]
 
 
 # =============================================================================
@@ -1342,14 +1344,14 @@ THERMAL_EXTRACT_TYPE = THERMAL_EXTRACT_TYPE.copy(__NAME__)
 THERMAL_EXTRACT_TYPE.value = 'E2DS'
 
 # define DPRTYPEs we need to correct thermal background using
-#    telluric absorption (TAPAS)  (must be a string list separated by a comma)
+#    telluric absorption (TAPAS)
 THERMAL_CORRETION_TYPE1 = THERMAL_CORRETION_TYPE1.copy(__NAME__)
-THERMAL_CORRETION_TYPE1.value = 'OBJ, POLAR'
+THERMAL_CORRETION_TYPE1.value = ['OBJ', 'POLAR']
 
 # define DPRTYPEs we need to correct thermal background using
-#     method 2 (must be a string list separated by a comma)
+#     method 2
 THERMAL_CORRETION_TYPE2 = THERMAL_CORRETION_TYPE2.copy(__NAME__)
-THERMAL_CORRETION_TYPE2.value = 'FP, HC, HCONE, HCTWO, FLAT'
+THERMAL_CORRETION_TYPE2.value = ['FP', 'HC', 'HCONE', 'HCTWO', 'FLAT']
 
 # define the order to perform the thermal background scaling on
 THERMAL_ORDER = THERMAL_ORDER.copy(__NAME__)
@@ -1382,7 +1384,7 @@ THERMAL_PLOT_START_ORDER.value = 35
 
 # define the dprtypes for which to apply the excess emissivity file
 THERMAL_EXCESS_DPRTYPES = THERMAL_EXCESS_DPRTYPES.copy(__NAME__)
-THERMAL_EXCESS_DPRTYPES.value = 'DARK_DARK_TEL'
+THERMAL_EXCESS_DPRTYPES.value = ['DARK_DARK_TEL']
 
 # define the thermal emissivity file
 THERMAL_EXCESS_EMISSIVITY_FILE = THERMAL_EXCESS_EMISSIVITY_FILE.copy(__NAME__)
@@ -1478,7 +1480,7 @@ WAVE_HC_VEL_ODD_RATIO.author = base.AUTHORS['EA']
 
 # Define orders that we cannot fit HC or FP lines to (list of strings)
 WAVE_REMOVE_ORDERS = WAVE_REMOVE_ORDERS.copy(__NAME__)
-WAVE_REMOVE_ORDERS.value = ''  # '48'
+WAVE_REMOVE_ORDERS.value = []  # [48]
 
 # Define the number of iterations required to do the final fplines
 #   wave solution
@@ -1514,14 +1516,14 @@ WAVEREF_HC_BOXSIZE = WAVEREF_HC_BOXSIZE.copy(__NAME__)
 WAVEREF_HC_BOXSIZE.value = 5
 WAVEREF_HC_BOXSIZE.author = base.AUTHORS['EA']
 
-# get valid hc dprtypes (string list separated by commas)
+# get valid hc dprtypes
 WAVEREF_HC_FIBTYPES = WAVEREF_HC_FIBTYPES.copy(__NAME__)
-WAVEREF_HC_FIBTYPES.value = 'HCONE, HCTWO'
+WAVEREF_HC_FIBTYPES.value = ['HCONE', 'HCTWO']
 WAVEREF_HC_FIBTYPES.author = base.AUTHORS['NJC']
 
-# get valid fp dprtypes (string list separated by commas)
+# get valid fp dprtypes
 WAVEREF_FP_FIBTYPES = WAVEREF_FP_FIBTYPES.copy(__NAME__)
-WAVEREF_FP_FIBTYPES.value = 'FP'
+WAVEREF_FP_FIBTYPES.value = ['FP']
 WAVEREF_FP_FIBTYPES.author = base.AUTHORS['NJC']
 
 # get the degree to fix reference wavelength to in hc mode
@@ -1551,11 +1553,11 @@ WAVEREF_HC_GUESS_EWID.author = base.AUTHORS['EA']
 
 # Define the fiber offset (in pixels) away from reference fiber
 WAVE_FIBER_OFFSET_MOD = WAVE_FIBER_OFFSET_MOD.copy(__NAME__)
-WAVE_FIBER_OFFSET_MOD.value = '{"A":0.0, "B":0.0, "C":0.0}'
+WAVE_FIBER_OFFSET_MOD.value = {"A":0.0, "B":0.0, "C":0.0}
 
 # Define the fiber scale factor from reference fiber
 WAVE_FIBER_SCALE_MOD = WAVE_FIBER_SCALE_MOD.copy(__NAME__)
-WAVE_FIBER_SCALE_MOD.value = '{"A":1.0, "B":1.0, "C":1.0}'
+WAVE_FIBER_SCALE_MOD.value = {"A":1.0, "B":1.0, "C":1.0}
 
 # =============================================================================
 # CALIBRATION: WAVE RESOLUTION MAP SETTINGS
@@ -1704,10 +1706,10 @@ WAVE_LINELIST_FILE.value = 'catalogue_UNe.csv'  # 'catalogue_UNe.dat'
 WAVE_LINELIST_FMT = WAVE_LINELIST_FMT.copy(__NAME__)
 WAVE_LINELIST_FMT.value = 'ascii.csv'   # 'ascii.tab'
 
-# Define the line list file column names (must be separated by commas
+# Define the line list file column names
 #   and must be equal to the number of columns in file)
 WAVE_LINELIST_COLS = WAVE_LINELIST_COLS.copy(__NAME__)
-WAVE_LINELIST_COLS.value = 'll, amp, kind'
+WAVE_LINELIST_COLS.value = ['ll', 'amp', 'kind']
 
 # Define the line list file row the data starts
 WAVE_LINELIST_START = WAVE_LINELIST_START.copy(__NAME__)
@@ -1829,12 +1831,12 @@ WAVE_HC_TFIT_MINTOT_LINES.value = 200
 #     in the  xpix vs wave solutions by setting the first term = 12,
 #     we force that the zeroth element of the xpix of the wavelegnth
 #     grid is fitted with a 12th order polynomial as a function of
-#     order number (format = string list separated by commas)
+#     order number
 # these values are too high and lead to stability problems in the fit
 # WAVE_HC_TFIT_ORDER_FIT_CONT.value = '12, 9, 6, 2, 2'
 
 WAVE_HC_TFIT_ORDER_FIT_CONT = WAVE_HC_TFIT_ORDER_FIT_CONT.copy(__NAME__)
-WAVE_HC_TFIT_ORDER_FIT_CONT.value = '12, 8, 4, 1, 1, 1'
+WAVE_HC_TFIT_ORDER_FIT_CONT.value = [12, 8, 4, 1, 1, 1]
 
 
 # Number of times to loop through the sigma clip for triplet fit
@@ -1867,17 +1869,17 @@ WAVE_HC_QC_SIGMA_MAX.value = 8
 # Defines the dv span for PLOT_WAVE_HC_RESMAP debug plot, should be a
 #    string list containing a min and max dv value
 WAVE_HC_RESMAP_DV_SPAN = WAVE_HC_RESMAP_DV_SPAN.copy(__NAME__)
-WAVE_HC_RESMAP_DV_SPAN.value = '-15, 15'
+WAVE_HC_RESMAP_DV_SPAN.value = [-15, 15]
 
 # Defines the x limits for PLOT_WAVE_HC_RESMAP debug plot, should be a
 #   string list containing a min and max x value
 WAVE_HC_RESMAP_XLIM = WAVE_HC_RESMAP_XLIM.copy(__NAME__)
-WAVE_HC_RESMAP_XLIM.value = '-8.0, 8.0'
+WAVE_HC_RESMAP_XLIM.value = [-8.0, 8.0]
 
 # Defines the y limits for PLOT_WAVE_HC_RESMAP debug plot, should be a
 #   string list containing a min and max y value
 WAVE_HC_RESMAP_YLIM = WAVE_HC_RESMAP_YLIM.copy(__NAME__)
-WAVE_HC_RESMAP_YLIM.value = '-0.05, 0.7'
+WAVE_HC_RESMAP_YLIM.value = [-0.05, 0.7]
 
 # Define whether to fit line profiles with "gaussian" or "super-gaussian"
 WAVE_HC_RESMAP_FITTYPE = WAVE_HC_RESMAP_FITTYPE.copy(__NAME__)
@@ -1965,12 +1967,12 @@ WAVE_FP_PLOT_MULTI_NBO.value = 5
 
 # define the dprtype for generating FPLINES (string list)
 WAVE_FP_DPRLIST = WAVE_FP_DPRLIST.copy(__NAME__)
-WAVE_FP_DPRLIST.value = 'OBJ_FP, POLAR_FP'
+WAVE_FP_DPRLIST.value = ['OBJ_FP', 'POLAR_FP']
 
 # define the override for reference fiber for generating FPLINES
 #    None for no override
 WAVE_FP_FIBERTYPES = WAVE_FP_FIBERTYPES.copy(__NAME__)
-WAVE_FP_FIBERTYPES.value = 'None'
+WAVE_FP_FIBERTYPES.value = []
 
 # =============================================================================
 # CALIBRATION: WAVE LITTROW SETTINGS
@@ -1993,10 +1995,9 @@ WAVE_LITTROW_ORDER_FINAL_1.value = 47
 WAVE_LITTROW_ORDER_FINAL_2 = WAVE_LITTROW_ORDER_FINAL_2.copy(__NAME__)
 WAVE_LITTROW_ORDER_FINAL_2.value = 47
 
-#  Define orders to ignore in Littrow fit (should be a string list separated
-#      by commas
+#  Define orders to ignore in Littrow fit
 WAVE_LITTROW_REMOVE_ORDERS = WAVE_LITTROW_REMOVE_ORDERS.copy(__NAME__)
-WAVE_LITTROW_REMOVE_ORDERS.value = ''
+WAVE_LITTROW_REMOVE_ORDERS.value = []
 
 #  Define the littrow cut steps for the HC wave solution
 WAVE_LITTROW_CUT_STEP_1 = WAVE_LITTROW_CUT_STEP_1.copy(__NAME__)
@@ -2164,7 +2165,7 @@ SKYMODEL_WEIGHT_ERODE_SIZE.author = base.AUTHORS['EA']
 
 # Define the allowed DPRTYPEs for sky correction
 ALLOWED_SKYCORR_DPRTYPES = ALLOWED_SKYCORR_DPRTYPES.copy(__NAME__)
-ALLOWED_SKYCORR_DPRTYPES.value = 'OBJ_SKY, TELLU_SKY, FLUXSTD_SKY'
+ALLOWED_SKYCORR_DPRTYPES.value = ['OBJ_SKY', 'TELLU_SKY', 'FLUXSTD_SKY']
 ALLOWED_SKYCORR_DPRTYPES.author = base.AUTHORS['NJC']
 
 # Define the number of iterations used to create sky correction weights
@@ -2205,7 +2206,7 @@ TAPAS_FILE_FMT.value = 'fits'
 
 # The allowed input DPRTYPES for input telluric files
 TELLU_ALLOWED_DPRTYPES = TELLU_ALLOWED_DPRTYPES.copy(__NAME__)
-TELLU_ALLOWED_DPRTYPES.value = 'OBJ_DARK, OBJ_FP, POLAR_FP, POLAR_DARK'
+TELLU_ALLOWED_DPRTYPES.value = ['OBJ_DARK', 'OBJ_FP', 'POLAR_FP', 'POLAR_DARK']
 
 # the INPUT type (KW_OUTPUT header key) and DrsFitsFile name required for
 #   input telluric files
@@ -2214,7 +2215,7 @@ TELLURIC_FILETYPE.value = 'EXT_E2DS_FF'
 
 # the fiber required for input template files
 TELLURIC_FIBER_TYPE = TELLURIC_FIBER_TYPE.copy(__NAME__)
-TELLURIC_FIBER_TYPE.value = 'AB'
+TELLURIC_FIBER_TYPE.value = ['AB']
 
 # Define level above which the blaze is high enough to accurately
 #    measure telluric
@@ -2272,7 +2273,7 @@ TELLUP_OHLINE_PCA_FILE.value = 'sky_PCs.fits'
 # define the orders not to use in pre-cleaning fit (due to thermal
 # background)
 TELLUP_REMOVE_ORDS = TELLUP_REMOVE_ORDS.copy(__NAME__)
-TELLUP_REMOVE_ORDS.value = '45, 46, 47, 48'
+TELLUP_REMOVE_ORDS.value = [45, 46, 47, 48]
 
 # define the minimum snr to accept orders for pre-cleaning fit
 TELLUP_SNR_MIN_THRES = TELLUP_SNR_MIN_THRES.copy(__NAME__)
@@ -2330,12 +2331,12 @@ TELLUP_D_WATER_ABSO.value = 4.0
 #  the other species of absorbers as a ratio to the airmass
 #  i.e. value/airmass compared to bound
 TELLUP_OTHER_BOUNDS = TELLUP_OTHER_BOUNDS.copy(__NAME__)
-TELLUP_OTHER_BOUNDS.value = '0.8, 1.5'
+TELLUP_OTHER_BOUNDS.value = [0.8, 1.5]
 
 # set the lower and upper bounds (string list) for the exponent of
 #  water absorber as a ratio to the airmass i.e. value/airmass compared to bound
 TELLUP_WATER_BOUNDS = TELLUP_WATER_BOUNDS.copy(__NAME__)
-TELLUP_WATER_BOUNDS.value = '0.1, 10'
+TELLUP_WATER_BOUNDS.value = [0.1, 10]
 
 # set the plot order for the finite resolution plot (somewhere aroun 1.45 um)
 TELLU_FINITE_RES_ORDER = TELLU_FINITE_RES_ORDER.copy(__NAME__)
@@ -2356,7 +2357,7 @@ MKTELLU_CUT_BLAZE_NORM.value = 0.1
 
 # Define list of absorbers in the tapas fits table
 TELLU_ABSORBERS = TELLU_ABSORBERS.copy(__NAME__)
-TELLU_ABSORBERS.value = 'combined, h2o, o3, n2o, o2, co2, ch4'
+TELLU_ABSORBERS.value = ['combined', 'h2o', 'o3', 'n2o', 'o2', 'co2', 'ch4']
 
 # define the default convolution width [in pixels]
 MKTELLU_DEFAULT_CONV_WIDTH = MKTELLU_DEFAULT_CONV_WIDTH.copy(__NAME__)
@@ -2369,9 +2370,8 @@ MKTELLU_TEMP_MED_FILT = MKTELLU_TEMP_MED_FILT.copy(__NAME__)
 MKTELLU_TEMP_MED_FILT.value = 15
 
 # Define the orders to plot (not too many)
-#    values should be a string list separated by commas
 MKTELLU_PLOT_ORDER_NUMS = MKTELLU_PLOT_ORDER_NUMS.copy(__NAME__)
-MKTELLU_PLOT_ORDER_NUMS.value = '19, 26, 35'
+MKTELLU_PLOT_ORDER_NUMS.value = [19, 26, 35]
 
 #   Define the order to use for SNR check when accepting tellu files
 #      to the telluDB
@@ -2479,9 +2479,8 @@ FTELLU_FIT_RECON_LIMIT = FTELLU_FIT_RECON_LIMIT.copy(__NAME__)
 FTELLU_FIT_RECON_LIMIT.value = -0.5
 
 # Define the orders to plot (not too many) for recon abso plot
-#    values should be a string list separated by commas
 FTELLU_PLOT_ORDER_NUMS = FTELLU_PLOT_ORDER_NUMS.copy(__NAME__)
-FTELLU_PLOT_ORDER_NUMS.value = '19, 26, 35'
+FTELLU_PLOT_ORDER_NUMS.value = [19, 26, 35]
 
 # Define the selected fit telluric order for debug plots (when not in loop)
 FTELLU_SPLOT_ORDER = FTELLU_SPLOT_ORDER.copy(__NAME__)
@@ -2650,7 +2649,7 @@ CCF_N_ORD_MAX.value = 48
 
 # Allowed input DPRTYPES for input  for CCF recipe
 CCF_ALLOWED_DPRTYPES = CCF_ALLOWED_DPRTYPES.copy(__NAME__)
-CCF_ALLOWED_DPRTYPES.value = 'OBJ_DARK, OBJ_FP, POLAR_DARK, POLAR_FP'
+CCF_ALLOWED_DPRTYPES.value = ['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK', 'POLAR_FP']
 
 # Valid DPRTYPES for FP in calibration fiber
 CCF_VALID_FP_DPRTYPES = CCF_VALID_FP_DPRTYPES.copy(__NAME__)
@@ -2714,12 +2713,12 @@ CCF_BIS_CUT_BOTTOM.author = base.AUTHORS['EA']
 # =============================================================================
 # Define all possible fibers used for polarimetry
 POLAR_FIBERS = POLAR_FIBERS.copy(__NAME__)
-POLAR_FIBERS.value = 'A,B'
+POLAR_FIBERS.value = ['A', 'B']
 POLAR_FIBERS.author = base.AUTHORS['EM']
 
 # Define all possible stokes parameters
 POLAR_STOKES_PARAMS = POLAR_STOKES_PARAMS.copy(__NAME__)
-POLAR_STOKES_PARAMS.value = 'V,Q,U'
+POLAR_STOKES_PARAMS.value = ['V', 'Q', 'U']
 POLAR_STOKES_PARAMS.author = base.AUTHORS['EM']
 
 # Whether or not to correct for BERV shift before calculate polarimetry
@@ -3276,30 +3275,38 @@ LBL_SYMLINKS.value = True
 
 # Define the dictionary of friend and friend teffs for LBL
 LBL_FRIENDS = LBL_FRIENDS.copy(__NAME__)
-LBL_FRIENDS.value = '{"GL846": 3900, "GL699": 3200, "GL905": 2900}'
+LBL_FRIENDS.value = {"GL846": 3900,
+                     "GL699": 3200,
+                     "GL905": 2900}
 
 # Define the specific data types (where objname is the data type) for LBL
 LBL_SPECIFIC_DATATYPES = LBL_SPECIFIC_DATATYPES.copy(__NAME__)
-LBL_SPECIFIC_DATATYPES.value = 'FP, LFC'
+LBL_SPECIFIC_DATATYPES.value = ['FP', 'LFC']
 
 # Define objnames for which we should recalculate template if it doesn't
 #   exist (must include FP)
 LBL_RECAL_TEMPLATE = LBL_RECAL_TEMPLATE.copy(__NAME__)
-LBL_RECAL_TEMPLATE.value = 'FP, LFC'
+LBL_RECAL_TEMPLATE.value = ['FP', 'LFC']
 
-# Define which recipes should skip done files comma separates list e.g.
+# Define which recipes should skip done files
 #   e.g. LBL_COMPUTE,LBL_COMPILE,LBL_MASK
 LBL_SKIP_DONE = LBL_SKIP_DONE.copy(__NAME__)
-LBL_SKIP_DONE.value = 'LBL_COMPUTE, LBL_MASK'
+LBL_SKIP_DONE.value = ['LBL_COMPUTE', 'LBL_MASK']
 
 # Define which object names should be run through LBL compute in parellel
-#   i.e. break in to Ncore chunks (comma separated list)
+#   i.e. break in to Ncore chunks
 LBL_MULTI_OBJLIST = LBL_MULTI_OBJLIST.copy(__NAME__)
-LBL_MULTI_OBJLIST.value = 'FP'
+LBL_MULTI_OBJLIST.value = ['FP']
 
 # Define the DTEMP gradient files
 LBL_DTEMP = LBL_DTEMP.copy(__NAME__)
-LBL_DTEMP.value = '{"DTEMP3000": "temperature_gradient_3000.fits", "DTEMP3500": "temperature_gradient_3500.fits", "DTEMP4000": "temperature_gradient_4000.fits", "DTEMP4500": "temperature_gradient_4500.fits", "DTEMP5000": "temperature_gradient_5000.fits", "DTEMP5500": "temperature_gradient_5500.fits", "DTEMP6000": "temperature_gradient_6000.fits"}'
+LBL_DTEMP.value = {"DTEMP3000": "temperature_gradient_3000.fits",
+                   "DTEMP3500": "temperature_gradient_3500.fits",
+                   "DTEMP4000": "temperature_gradient_4000.fits",
+                   "DTEMP4500": "temperature_gradient_4500.fits",
+                   "DTEMP5000": "temperature_gradient_5000.fits",
+                   "DTEMP5500": "temperature_gradient_5500.fits",
+                   "DTEMP6000": "temperature_gradient_6000.fits"}
 
 # =============================================================================
 # POST PROCESS SETTINGS
@@ -3402,7 +3409,7 @@ EXPMETER_TELLU_THRES.value = 0.95
 
 # Define the types of file allowed for drift measurement
 DRIFT_DPRTYPES = DRIFT_DPRTYPES.copy(__NAME__)
-DRIFT_DPRTYPES.value = 'FP_FP, OBJ_FP, DARK_FP, POLAR_FP, FP_DARK'
+DRIFT_DPRTYPES.value = ['FP_FP', 'OBJ_FP', 'DARK_FP', 'POLAR_FP', 'FP_DARK']
 
 # Define the fiber dprtype allowed for drift measurement (only FP)
 DRIFT_DPR_FIBER_TYPE = DRIFT_DPR_FIBER_TYPE.copy(__NAME__)

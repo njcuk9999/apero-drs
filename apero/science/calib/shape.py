@@ -664,7 +664,7 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, lprops, fiber, **kwargs):
                               'long_medfilt_width', kwargs, func_name)
     std_qc = pcheck(params, 'SHAPE_QC_DXMAP_STD', 'std_qc', kwargs, func_name)
     # get width for fiber
-    width = params.dictp('SHAPE_ORDER_WIDTH', dtype=int)[fiber]
+    width = params['SHAPE_ORDER_WIDTH'][fiber]
     # get properties from property dictionaries
     nbo = lprops['NBO']
     acc = lprops['CENT_COEFFS']
@@ -1195,7 +1195,7 @@ def calculate_dxmap_nirps(params, recipe, fpdata, lprops, fiber, **kwargs):
                               'long_medfilt_width', kwargs, func_name)
     std_qc = pcheck(params, 'SHAPE_QC_DXMAP_STD', 'std_qc', kwargs, func_name)
     # get width for fiber
-    width = params.dictp('SHAPE_ORDER_WIDTH', dtype=int)[fiber]
+    width = params['SHAPE_ORDER_WIDTH'][fiber]
     # get properties from property dictionaries
     nbo = lprops['NBO']
     acc = lprops['CENT_COEFFS']

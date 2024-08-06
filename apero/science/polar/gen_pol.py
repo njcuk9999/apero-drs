@@ -234,8 +234,8 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
     pconst = constants.pload()
     # -------------------------------------------------------------------------
     # get from parameters
-    polar_fibers = params.listp('POLAR_FIBERS', dtype=str)
-    stokesparams = params.listp('POLAR_STOKES_PARAMS', dtype=str)
+    polar_fibers = params['POLAR_FIBERS']
+    stokesparams = params['POLAR_STOKES_PARAMS']
     berv_correct = params['POLAR_BERV_CORRECT']
     source_rv_correct = params['POLAR_SOURCE_RV_CORRECT']
     # whether we need to check qc

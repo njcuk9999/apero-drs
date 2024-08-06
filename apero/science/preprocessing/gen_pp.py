@@ -559,7 +559,7 @@ def quality_control2(params: ParamDict, qc_params: list, image: np.ndarray,
     fail_msg = []
     qc_names, qc_values, qc_logic, qc_pass = qc_params
     # get paramters from params
-    dark_types = params.listp('PP_DARK_DPRTYPES', dtype=str)
+    dark_types = params['PP_DARK_DPRTYPES']
     dark_thres = params['PP_DARK_THRES']
     # ----------------------------------------------------------------------
     # check if dark dark it is not science

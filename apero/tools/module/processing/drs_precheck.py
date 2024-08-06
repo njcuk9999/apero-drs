@@ -706,7 +706,7 @@ def obj_check(params: ParamDict, findexdbm: Optional[FileIndexDatabase] = None,
         manage_databases.update_reject_database(params, log=log)
     # ---------------------------------------------------------------------
     # only find science / hot star objects
-    sci_dprtypes = params.listp('PP_OBJ_DPRTYPES', dtype=str)
+    sci_dprtypes = params['PP_OBJ_DPRTYPES']
     subconditions = []
     for sci_dprtype in sci_dprtypes:
         subconditions.append(f'KW_DPRTYPE="{sci_dprtype}"')

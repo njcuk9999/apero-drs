@@ -1071,10 +1071,10 @@ def plot_loc_im_corner(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     # get xpix
     xpix = np.arange(image.shape[1])
     # get zoom values
-    xzoom1 = params.listp('LOC_PLOT_CORNER_XZOOM1', dtype=int)
-    xzoom2 = params.listp('LOC_PLOT_CORNER_XZOOM2', dtype=int)
-    yzoom1 = params.listp('LOC_PLOT_CORNER_YZOOM1', dtype=int)
-    yzoom2 = params.listp('LOC_PLOT_CORNER_YZOOM2', dtype=int)
+    xzoom1 = params['LOC_PLOT_CORNER_XZOOM1']
+    xzoom2 = params['LOC_PLOT_CORNER_XZOOM2']
+    yzoom1 = params['LOC_PLOT_CORNER_YZOOM1']
+    yzoom2 = params['LOC_PLOT_CORNER_YZOOM2']
     # get number of zooms required
     length = len(xzoom1)
     # get the number of columns
@@ -1420,7 +1420,7 @@ def plot_shape_angle_offset(plotter: Plotter, graph: Graph,
     sorder = params['SHAPE_PLOT_SELECTED_ORDER']
     nbanana = params['SHAPE_NUM_ITERATIONS']
     # get width for fiber
-    width = params.dictp('SHAPE_ORDER_WIDTH', dtype=int)[fiber]
+    width = params['SHAPE_ORDER_WIDTH'][fiber]
     # ------------------------------------------------------------------
     # if we have a bnum set get the plot loop generator (around orders)
     if bnum is not None:
@@ -1508,8 +1508,8 @@ def plot_shape_local_zoom_shift(plotter: Plotter, graph: Graph,
     image = kwargs['image']
     simage = kwargs['simage']
     # get zoom values
-    zoom1 = params.listp('SHAPEL_PLOT_ZOOM1', dtype=int)
-    zoom2 = params.listp('SHAPEL_PLOT_ZOOM2', dtype=int)
+    zoom1 = params['SHAPEL_PLOT_ZOOM1']
+    zoom2 = params['SHAPEL_PLOT_ZOOM2']
     # ------------------------------------------------------------------
     # get limits for zooms
     xmin1, xmax1, ymin1, ymax1 = zoom1
@@ -1616,8 +1616,8 @@ def plot_flat_order_fit_edges(plotter: Plotter, graph: Graph,
     # get dimensions from coeffs
     nbo = coeffs1.shape[0]
     # get parameters from params
-    range1_dict = params.dictp('EXT_RANGE1', dtype=str)
-    range2_dict = params.dictp('EXT_RANGE2', dtype=str)
+    range1_dict = params['EXT_RANGE1']
+    range2_dict = params['EXT_RANGE2']
     range1 = float(range1_dict[fiber])
     range2 = float(range2_dict[fiber])
     # ------------------------------------------------------------------
@@ -1982,8 +1982,8 @@ def plot_extract_s1d(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     fiber = kwargs['fiber']
     kind = kwargs.get('kind', None)
     # get zoom in parameters from params
-    zoom1 = params.listp('EXTRACT_S1D_PLOT_ZOOM1', dtype=float)
-    zoom2 = params.listp('EXTRACT_S1D_PLOT_ZOOM2', dtype=float)
+    zoom1 = params['EXTRACT_S1D_PLOT_ZOOM1']
+    zoom2 = params['EXTRACT_S1D_PLOT_ZOOM2']
     # get data from s1d table
     wavemap = stable['wavelength']
     flux = stable['flux']
@@ -2061,8 +2061,8 @@ def plot_extract_s1d_weights(plotter: Plotter, graph: Graph,
     fiber = kwargs.get('fiber', None)
     stype = kwargs['stype']
     # get zoom in parameters from params
-    zoom1 = params.listp('EXTRACT_S1D_PLOT_ZOOM1', dtype=float)
-    zoom2 = params.listp('EXTRACT_S1D_PLOT_ZOOM2', dtype=float)
+    zoom1 = params['EXTRACT_S1D_PLOT_ZOOM1']
+    zoom2 = params['EXTRACT_S1D_PLOT_ZOOM2']
     # ------------------------------------------------------------------
     # correct data for plotting
     with warnings.catch_warnings(record=True) as _:
@@ -2704,9 +2704,9 @@ def plot_wave_hc_resmap_old(plotter: Plotter, graph: Graph,
     nbo = kwargs['nbo']
     nbpix = kwargs['nbpix']
     # get parameters from params
-    fit_span = params.listp('WAVE_HC_RESMAP_DV_SPAN', dtype=float)
-    xlim = params.listp('WAVE_HC_RESMAP_XLIM', dtype=float)
-    ylim = params.listp('WAVE_HC_RESMAP_YLIM', dtype=float)
+    fit_span = params['WAVE_HC_RESMAP_DV_SPAN']
+    xlim = params['WAVE_HC_RESMAP_XLIM']
+    ylim = params['WAVE_HC_RESMAP_YLIM']
     # ------------------------------------------------------------------
     # bin size in order direction
     bin_order = int(np.ceil(nbo / resmap_size[0]))

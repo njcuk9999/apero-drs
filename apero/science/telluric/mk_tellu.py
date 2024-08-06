@@ -217,8 +217,7 @@ def calculate_tellu_res_absorption(params, recipe, image, template_props,
     med_filt1 = pcheck(params, 'MKTELLU_TEMP_MED_FILT', 'med_filt', kwargs,
                        func_name)
     plot_order_nums = pcheck(params, 'MKTELLU_PLOT_ORDER_NUMS',
-                             'plot_order_nums', kwargs, func_name,
-                             mapf='list', dtype=int)
+                             'plot_order_nums', kwargs, func_name)
     # ------------------------------------------------------------------
     # copy image
     image1 = np.array(image)
@@ -691,7 +690,7 @@ def mk_tellu_write_trans_file(params, recipe, infile, rawfiles, fiber, combine,
     transfile.add_hkey('KW_TELLUP_CLEAN_OHLINES',
                        value=tpreprops['TELLUP_CLEAN_OH_LINES'])
     transfile.add_hkey('KW_TELLUP_REMOVE_ORDS',
-                       value=tpreprops['TELLUP_REMOVE_ORDS'], mapf='list')
+                       value=tpreprops['TELLUP_REMOVE_ORDS'])
     transfile.add_hkey('KW_TELLUP_SNR_MIN_THRES',
                        value=tpreprops['TELLUP_SNR_MIN_THRES'])
     transfile.add_hkey('KW_TELLUP_DEXPO_CONV_THRES',
@@ -717,9 +716,9 @@ def mk_tellu_write_trans_file(params, recipe, infile, rawfiles, fiber, combine,
     transfile.add_hkey('KW_TELLUP_FORCE_AIRMASS',
                        value=tpreprops['TELLUP_FORCE_AIRMASS'])
     transfile.add_hkey('KW_TELLUP_OTHER_BOUNDS',
-                       value=tpreprops['TELLUP_OTHER_BOUNDS'], mapf='list')
+                       value=tpreprops['TELLUP_OTHER_BOUNDS'])
     transfile.add_hkey('KW_TELLUP_WATER_BOUNDS',
-                       value=tpreprops['TELLUP_WATER_BOUNDS'], mapf='list')
+                       value=tpreprops['TELLUP_WATER_BOUNDS'])
     # ----------------------------------------------------------------------
     # save recovered airmass and water vapor
     transfile.add_hkey('KW_MKTELL_AIRMASS', value=tprops['RECOV_AIRMASS'])

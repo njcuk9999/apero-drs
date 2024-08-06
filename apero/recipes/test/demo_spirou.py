@@ -250,13 +250,6 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # which is very useful for params
         print('params DRS_DATA keys = ', params.contains('DRS_DATA'))
 
-        # the string list method - get a list from a string
-        WLOG(params, '', 'ParamDict: listp method')
-        print('list1 = ', newparams.listp('LIST1', dtype=int))
-
-        # the string dict method - get a dictionary from a string
-        WLOG(params, '', 'ParamDict: dictp method')
-        print('dict1 = ', newparams.dictp('DICT1', dtype=float))
 
     # ----------------------------------------------------------------------
     # Demo 5: Calibrations
