@@ -26,6 +26,7 @@ from apero.base import base
 from apero.base import drs_base
 from apero.base import drs_db
 from apero.core import constants
+from apero.core.constants import run_params
 from apero.core import lang
 from apero.core.core import drs_argument
 from apero.core.core import drs_base_classes as base_class
@@ -73,30 +74,8 @@ INSTRUMENT_PATH = base.CONST_PATH
 CORE_PATH = base.CORE_PATH
 PDB_RC_FILE = base.PDB_RC_FILE
 CURRENT_PATH = ''
-# Run keys
-RUN_KEYS = dict()
-RUN_KEYS['RUN_NAME'] = 'Run Unknown'
-RUN_KEYS['SEND_EMAIL'] = False
-RUN_KEYS['EMAIL_ADDRESS'] = None
-RUN_KEYS['RUN_OBS_DIR'] = 'All'
-RUN_KEYS['EXCLUDE_OBS_DIRS'] = 'All'
-RUN_KEYS['INCLUDE_OBS_DIRS'] = 'All'
-RUN_KEYS['PI_NAMES'] = 'All'
-RUN_KEYS['REF_OBS_DIR'] = None
-RUN_KEYS['CORES'] = 1
-RUN_KEYS['STOP_AT_EXCEPTION'] = False
-RUN_KEYS['TEST_RUN'] = False
-RUN_KEYS['USE_ENGINEERING'] = False
-RUN_KEYS['TRIGGER_RUN'] = False
-RUN_KEYS['USE_REJECTLIST'] = True
-RUN_KEYS['RECAL_TEMPLATES'] = True
-RUN_KEYS['UPDATE_OBJ_DATABASE'] = False
-RUN_KEYS['UPDATE_REJECT_DATABASE'] = True
-RUN_KEYS['UPDATE_FILEINDEX_DATABASE'] = True
-RUN_KEYS['UPDATE_IDATABASE_NAMES'] = 'All'
-RUN_KEYS['TELLURIC_TARGETS'] = 'All'
-RUN_KEYS['SCIENCE_TARGETS'] = 'All'
 
+RUN_KEYS = dict()
 
 # =============================================================================
 # Define functions
@@ -1056,14 +1035,19 @@ def read_runfile(params: ParamDict, recipe: Union[DrsRecipe, None],
                 params.set_source(key, func_name)
     # ----------------------------------------------------------------------
     if rkind == 'run':
+
+        run_keys = run_functions.RUN_KEYS
         # push default values (in case we don't have values in run file)
-        for key in RUN_KEYS:
+        for key in run_functions.run_keys:
             if key not in params:
+                # skip if value if None
+                if run_keys[key].value is None:
+                    continue
                 # print that we are using default settings (not a warning)
-                wargs = [key, RUN_KEYS[key]]
+                wargs = [key, run_keys[key].value]
                 WLOG(params, '', textentry('10-503-00005', args=wargs))
                 # push keys to params
-                params[key] = RUN_KEYS[key]
+                params[key] = run_keys[key].value
                 params.set_source(key, __NAME__ + '.RUN_KEYS')
 
         # ---------------------------------------------------------------------

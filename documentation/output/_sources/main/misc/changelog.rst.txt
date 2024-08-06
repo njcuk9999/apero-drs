@@ -11831,6 +11831,7 @@ Changelog
 0.5.023 (2019-06-23)
 --------------------
 - `SpirouRgen.py` - fix problem when two independent file types defined
+
   (i.e. `DARK_FLAT` and `FLAT_DARK)` [Neil Cook]
 - `SpirouRgen.py` - check that master night name exists (raise error if it
   doesn't) [Neil Cook]

@@ -102,14 +102,16 @@ def __main__(recipe, params):
         msg = 'Processing file {0} of {1}: {2} [{3}]'
         margs = [it + 1, len(run_files), run_file.name, run_file.instrument]
         WLOG(params, 'info', msg.format(*margs))
-        # populate the text file
-        run_file.populate_text_file(params)
-        # print message
-        msg = '\tWriting file: {0}'
-        margs = [run_file.outpath]
-        WLOG(params, '', msg.format(*margs))
-        # write to file
-        run_file.write_text_file()
+        # # populate the text file
+        # run_file.populate_text_file(params)
+        # # print message
+        # msg = '\tWriting file: {0}'
+        # margs = [run_file.outpath]
+        # WLOG(params, '', msg.format(*margs))
+        # # write to file
+        # run_file.write_text_file()
+        # write to yaml file
+        run_file.write_yaml_file(params)
 
     # ----------------------------------------------------------------------
     # End of main code
