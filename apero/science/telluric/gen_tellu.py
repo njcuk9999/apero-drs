@@ -2069,8 +2069,9 @@ def tellu_preclean_write(params, recipe, infile, rawfiles, fiber, combine,
                       value=props['TELLUP_CCF_SCAN_RANGE'])
     tpclfile.add_hkey('KW_TELLUP_CLEAN_OHLINES',
                       value=props['TELLUP_CLEAN_OH_LINES'])
-    tpclfile.add_hkey('KW_TELLUP_REMOVE_ORDS',
-                      value=props['TELLUP_REMOVE_ORDS'])
+    # push to strings
+    tellu_rords = [str(x) for x in props['TELLUP_REMOVE_ORDS']]
+    tpclfile.add_hkey('KW_TELLUP_REMOVE_ORDS', value=','.join(tellu_rords))
     tpclfile.add_hkey('KW_TELLUP_SNR_MIN_THRES',
                       value=props['TELLUP_SNR_MIN_THRES'])
     tpclfile.add_hkey('KW_TELLUP_DEXPO_CONV_THRES',
