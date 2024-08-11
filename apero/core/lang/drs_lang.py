@@ -148,14 +148,16 @@ class LanguageLookup:
                 source = name
                 LANG_SOURCES[key] = source
 
-    def __getitem__(self, key: str) -> Any:
+    def __getitem__(self, key: str, required: bool = True) -> Any:
         """
         Get a value (after compiling)
         """
         # get key from language values
         value = LANG_VALUES.get(key, None)
         # deal with no value
-        if value is None:
+        if value is None and not required:
+            return None
+        elif value is None:
             emsg = 'Key "{0}" not found in language lists.'
             eargs = [key]
             raise DrsLanguageError(emsg.format(*eargs))
@@ -163,12 +165,12 @@ class LanguageLookup:
         else:
             return value
 
-    def get(self, key: str, kind: str = 'value') -> Any:
+    def get(self, key: str, kind: str = 'value', required: bool = True) -> Any:
         """
         Get a value or comment (after compiling)
         """
         if kind == 'value':
-            return self.__getitem__(key)
+            return self.__getitem__(key, required=required)
         elif kind == 'comment':
             return LANG_COMMENTS.get(key, None)
         else:

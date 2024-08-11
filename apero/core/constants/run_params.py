@@ -9,6 +9,7 @@ Created on 2024-08-06 at 10:42
 
 @author: cook
 """
+import copy
 import textwrap
 from typing import Dict, Union
 
@@ -80,6 +81,19 @@ class RunParam:
             return None
         else:
             return comment_text
+
+    def copy(self) -> 'RunParam':
+        # deep copy all parameters
+        name = copy.deepcopy(self.name)
+        value = copy.deepcopy(self.value)
+        dtype = copy.deepcopy(self.dtype)
+        comment = copy.deepcopy(self.comment)
+        dtypei = copy.deepcopy(self.dtypei)
+        section = copy.deepcopy(self.section)
+        after = copy.deepcopy(self.after)
+        # create new run parameter
+        return RunParam(name, value, dtype, comment,
+                        dtypei, section, after)
 
 
 # -----------------------------------------------------------------------------

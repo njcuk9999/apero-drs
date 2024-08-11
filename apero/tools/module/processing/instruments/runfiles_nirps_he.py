@@ -134,6 +134,7 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     science_run_nirps_he.modify('RUN_PP_LFCFP', False)
     science_run_nirps_he.modify('RUN_PP_FPLFC', False)
     science_run_nirps_he.modify('RECAL_TEMPLATES', False)
+    run_files.append(science_run_nirps_he)
     # tellu run
     tellu_run_nirps_he = RunIniFile(params, 'NIRPS_HE', 'tellu_run')
     tellu_run_nirps_he.append_sequence('pp_seq_opt')

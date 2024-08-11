@@ -120,9 +120,6 @@ def load_linelist(params: ParamDict,
     absfilename = str(os.path.join(assetdir, relfolder, filename))
     if return_filename:
         return absfilename
-    # split table columns
-    tablecols = list(map(lambda x: x.strip(), tablecols.split(',')))
-
     # return image
     try:
         table = load_table_file(params, absfilename, fmt=tablefmt,

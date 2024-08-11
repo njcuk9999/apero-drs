@@ -91,7 +91,10 @@ class RunIniFile:
         # import the recipe module
         self.recipemod = self.pconst.RECIPEMOD().get()
         # get run keys (from startup)
-        self.run_keys = dict(run_params.RUN_KEYS)
+        self.run_keys = dict()
+        # deep copy all parameters (so we can use them multiple times)
+        for key in run_params.RUN_KEYS:
+            self.run_keys[key] = run_params.RUN_KEYS[key].copy()
         # modify/add some values
         self.rkey('VERSION', __version__)
         self.rkey('DATE', __date__)

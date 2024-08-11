@@ -1336,7 +1336,7 @@ def _sigfig(value: Union[float, str], digits: int = 5) -> Union[float, Any]:
     """
     # deal with float values
     try:
-        if '.' in str(value):
+        if '.' in str(value) and len(str(value).split('.')) == 1:
             value = np.round(float(value), digits)
             return mp.sigfig(value, digits)
     except ValueError:

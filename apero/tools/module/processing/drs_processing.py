@@ -101,9 +101,7 @@ class Run:
         self.priority = priority
         self.args = []
         self.recipename = ''
-        self.runname = None
         self.shortname = None
-        self.skipname = None
         self.recipe = inrecipe
         if mod is not None:
             self.module = mod.copy()
@@ -294,8 +292,6 @@ class Run:
         # ---------------------------------------------------------------------
         # sort out names
         self.shortname = self.recipe.shortname
-        self.runname = 'RUN_{0}'.format(self.shortname)
-        self.skipname = 'SKIP_{0}'.format(self.shortname)
         # get properties
         self.get_recipe_kind()
         self.get_obs_dir()
@@ -1703,9 +1699,9 @@ def skip_run_object(params, runobj, skiptable, skip_storage, input_recipe):
     recipe = runobj.recipe
     # ----------------------------------------------------------------------
     # check if the user wants to run this runobj (in run list)
-    if runobj.runname in params:
+    if runobj.shortname in params['RUN_RECIPES']:
         # if user has set the runname to False then we want to skip
-        if not params[runobj.runname]:
+        if not params['RUN_RECIPES'][runobj.shortname]:
             return True, textentry('40-503-00007')
     # ----------------------------------------------------------------------
     # deal with skip table being empty
@@ -1713,9 +1709,9 @@ def skip_run_object(params, runobj, skiptable, skip_storage, input_recipe):
         return False, None
     # ----------------------------------------------------------------------
     # check if the user wants to skip
-    if runobj.skipname in params:
+    if runobj.shortname in params['SKIP_RECIPES']:
         # if user wants to skip
-        if params[runobj.skipname]:
+        if params['SKIP_RECIPES'][runobj.shortname]:
             # clean run string
             clean_runstring = skip_clean_arguments(runobj.runstring)
             # check for recipe in skip storage
@@ -1755,17 +1751,18 @@ def skip_run_object(params, runobj, skiptable, skip_storage, input_recipe):
                 return False, None
         else:
             # debug log
-            dargs = [runobj.skipname]
+            dargs = [f'SKIP_RECIPES[{runobj.shortname}]']
             WLOG(params, 'debug', textentry('90-503-00004', args=dargs))
             # return False and no reason
             return False, None
     # ----------------------------------------------------------------------
     else:
+        skip_name = f'SKIP_RECIPES[{runobj.shortname}]'
         # debug log
-        dargs = [runobj.skipname]
+        dargs = [skip_name]
         WLOG(params, '', textentry('90-503-00005', args=dargs))
         # return False and no reason
-        return False, '{0} not present'.format(runobj.skipname)
+        return False, '{0} not present'.format(skip_name)
 
 
 def _remove_py(innames):
@@ -1855,17 +1852,15 @@ def generate_run_from_sequence(params: ParamDict, sequence,
     # ------------------------------------------------------------------
     # loop around recipes in new list
     for srecipe in srecipelist:
-        # deal with skip
-        runname = 'RUN_{0}'.format(srecipe.shortname)
         # skip if run name is not True
-        if runname in params:
-            if not params[runname]:
+        if srecipe.shortname in params['RUN_RECIPES']:
+            if not params['RUN_RECIPES'][srecipe.shortname]:
                 wargs = [srecipe.name, srecipe.shortname]
                 WLOG(params, '', textentry('40-503-00021', args=wargs),
                      colour='yellow')
                 continue
         # deal with run name not in params (means not selected)
-        if runname not in params:
+        if srecipe.shortname not in params['RUN_RECIPES']:
             wargs = [srecipe.name, srecipe.shortname]
             WLOG(params, '', textentry('40-503-00045', args=wargs),
                  colour='yellow')

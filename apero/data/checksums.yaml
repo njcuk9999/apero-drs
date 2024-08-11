@@ -32,20 +32,20 @@ data:
   nirps_ha/reset/calibdb/REF_WAVE_NIRPS_HA_CUT_75.fits: c282f4238d7b7117d3111bc6785c2d3b
   nirps_ha/reset/calibdb/tapas_all_sp.fits.gz: 06f8b2cc920f9c954dba574071891500
   nirps_ha/reset/runs/README.md: d67e72e286f03b8460c7d6deb4b50c9d
-  nirps_ha/reset/runs/blank_run.ini: 7f046ca9f357c857386864a846c1a28a
-  nirps_ha/reset/runs/calib_run.ini: b12f44ca40fe0b278d67970be5a30cfe
-  nirps_ha/reset/runs/complete_run.ini: ad026d3f76e53fdd52b43ee5ddd0f832
-  nirps_ha/reset/runs/helios_run.ini: b4613b9940e5b94363195dc2bdfcd95e
-  nirps_ha/reset/runs/lbl_run.ini: 29cdbfbf490f3318e0c61485b9892bfc
-  nirps_ha/reset/runs/mini_run.ini: f9af637cc8f0c27d2dc77e05119bebef
-  nirps_ha/reset/runs/other_run.ini: 47e891cdbf2ce2aac857c89fba653648
-  nirps_ha/reset/runs/quick_run.ini: f62597cee7e671b2fe76aae45f0785b3
-  nirps_ha/reset/runs/ref_calib_run.ini: e5076dfbe54a987d5ae1ad777c80211f
-  nirps_ha/reset/runs/science_run.ini: 7651456e9e43ed6bbbc19b50e8f20267
-  nirps_ha/reset/runs/tellu_run.ini: fcfa1749b4b8d6bfac80da4ad3fad170
-  nirps_ha/reset/runs/test_run.ini: e709dc2635aee44f9a35752d69021ed7
-  nirps_ha/reset/runs/trigger_night_calibrun.ini: df7fdfc17eecb21156b5bacdc20cab6f
-  nirps_ha/reset/runs/trigger_night_scirun.ini: 0473e26686e6f8671e7ab299121e5d63
+  nirps_ha/reset/runs/blank_run.yaml: eaecf4d70ef68b368c986a6624e1b481
+  nirps_ha/reset/runs/calib_run.yaml: 088be272b449cc885f69052e4348149d
+  nirps_ha/reset/runs/complete_run.yaml: f3c9d2abb7911f57a02294aff6af4487
+  nirps_ha/reset/runs/helios_run.yaml: 16f38229cd994d23305797f8c19fc960
+  nirps_ha/reset/runs/lbl_run.yaml: 5496eb8d118ad937cf6ffdbe92793ced
+  nirps_ha/reset/runs/mini_run.yaml: 19345798004e5d2bc5a8b325cffd5e6c
+  nirps_ha/reset/runs/other_run.yaml: b8355bcbd4fa6739f22b0c335bc1e871
+  nirps_ha/reset/runs/quick_run.yaml: 54eae98a4031f45bcaee2a61bd3b0432
+  nirps_ha/reset/runs/ref_calib_run.yaml: d43629e1554d09d68ae59465ab639b28
+  nirps_ha/reset/runs/science_run.yaml: 02a10811b63f2e1755e2ca3934f126ec
+  nirps_ha/reset/runs/tellu_run.yaml: 7122409a25d484d8449608af390d885c
+  nirps_ha/reset/runs/test_run.yaml: bda4c8c05a55aab5150a0c734812e00e
+  nirps_ha/reset/runs/trigger_night_calibrun.yaml: d796307ab316aecaa3064db7c92cddfa
+  nirps_ha/reset/runs/trigger_night_scirun.yaml: 637b3d72bd337556b6088c2ff739f3ac
   nirps_ha/reset/telludb/sky_model_ha.fits: 3ced68262a7f5c21817f8c8db2780e80
   nirps_ha/reset/telludb/tapas_all_sp.fits.gz: 06f8b2cc920f9c954dba574071891500
   nirps_ha/telluric/tapas_all_sp.fits.gz: 128ecb9b9cb2180c5d452d1370269e3d
@@ -83,20 +83,20 @@ data:
   nirps_he/reset/calibdb/REF_WAVE_NIRPS_HE_CUT_75.fits: fce13f9fbd3af343372a4f2e75dc0faa
   nirps_he/reset/calibdb/tapas_all_sp.fits.gz: 06f8b2cc920f9c954dba574071891500
   nirps_he/reset/runs/README.md: d67e72e286f03b8460c7d6deb4b50c9d
-  nirps_he/reset/runs/blank_run.ini: 7f046ca9f357c857386864a846c1a28a
-  nirps_he/reset/runs/calib_run.ini: b12f44ca40fe0b278d67970be5a30cfe
-  nirps_he/reset/runs/complete_run.ini: ad026d3f76e53fdd52b43ee5ddd0f832
-  nirps_he/reset/runs/helios_run.ini: b4613b9940e5b94363195dc2bdfcd95e
-  nirps_he/reset/runs/lbl_run.ini: 29cdbfbf490f3318e0c61485b9892bfc
-  nirps_he/reset/runs/mini_run.ini: f9af637cc8f0c27d2dc77e05119bebef
-  nirps_he/reset/runs/other_run.ini: 47e891cdbf2ce2aac857c89fba653648
-  nirps_he/reset/runs/quick_run.ini: f62597cee7e671b2fe76aae45f0785b3
-  nirps_he/reset/runs/ref_calib_run.ini: e5076dfbe54a987d5ae1ad777c80211f
-  nirps_he/reset/runs/science_run.ini: e0cfbd9a51d798944ab8942db7765c4c
-  nirps_he/reset/runs/tellu_run.ini: fcfa1749b4b8d6bfac80da4ad3fad170
-  nirps_he/reset/runs/test_run.ini: e709dc2635aee44f9a35752d69021ed7
-  nirps_he/reset/runs/trigger_night_calibrun.ini: df7fdfc17eecb21156b5bacdc20cab6f
-  nirps_he/reset/runs/trigger_night_scirun.ini: 0473e26686e6f8671e7ab299121e5d63
+  nirps_he/reset/runs/blank_run.yaml: eaecf4d70ef68b368c986a6624e1b481
+  nirps_he/reset/runs/calib_run.yaml: b187dc9c2251bd5c7fbce233720bc76b
+  nirps_he/reset/runs/complete_run.yaml: 7499ca32a9aaa70f1f3226b7c478528b
+  nirps_he/reset/runs/helios_run.yaml: bf9120e080da20452544954e36074585
+  nirps_he/reset/runs/lbl_run.yaml: 89d979cf1a9d396be63a622b80d74514
+  nirps_he/reset/runs/mini_run.yaml: 5291938b28ed0e14647c6082fdedc605
+  nirps_he/reset/runs/other_run.yaml: b3304d3b5574d1b6d0f1934bdee60225
+  nirps_he/reset/runs/quick_run.yaml: ad52feb44b9134a0077bbe7446139ed0
+  nirps_he/reset/runs/ref_calib_run.yaml: 640ee3a4ddf4d2de1f4d699bdbe1ba35
+  nirps_he/reset/runs/science_run.yaml: a09c47b9d0e074f3502a5d967f3abeea
+  nirps_he/reset/runs/tellu_run.yaml: a05ee6d3cb48341825f36ebc33a240f7
+  nirps_he/reset/runs/test_run.yaml: 8bdfba6b0e7803addc8421b9d6d63ca1
+  nirps_he/reset/runs/trigger_night_calibrun.yaml: c439c838530e6a0bab743af78ab6988f
+  nirps_he/reset/runs/trigger_night_scirun.yaml: 41eb84466022705e640ff9b07cf9d5a1
   nirps_he/reset/telludb/sky_model_he.fits: ab11112b08f9d0ea5f1eb2736f09296d
   nirps_he/reset/telludb/tapas_all_sp.fits.gz: 06f8b2cc920f9c954dba574071891500
   nirps_he/telluric/tapas_all_sp.fits.gz: 128ecb9b9cb2180c5d452d1370269e3d
@@ -166,20 +166,19 @@ data:
   spirou/reset/calibdb/REF_WAVE_2400416c_C.fits: 8e28afbfd3078a653910394ee4201d85
   spirou/reset/calibdb/tapas_all_sp.fits.gz: 06f8b2cc920f9c954dba574071891500
   spirou/reset/runs/README.md: d67e72e286f03b8460c7d6deb4b50c9d
-  spirou/reset/runs/blank_run.ini: de7509717f4da5bf305d90323b93bcee
-  spirou/reset/runs/calib_run.ini: 2912a3ffd426162e3914dc266a55b4a8
-  spirou/reset/runs/complete_run.ini: 6e5215434399a4b03e91ec1eb02fde56
-  spirou/reset/runs/lbl_run.ini: 9caa6c176061299bb0dc967eb3113e2b
-  spirou/reset/runs/master_calib_run.ini: b671eb82e83cb390df0b2ed1948501f5
-  spirou/reset/runs/mini_run1.ini: bd206769ba396923930fb20096648c4a
-  spirou/reset/runs/mini_run2.ini: ac13dbda4da1fa70029e7250c6cb7b17
-  spirou/reset/runs/other_run.ini: 229787495318911a0fcc0ddc8b282777
-  spirou/reset/runs/quick_run.ini: 1777d21d0a2e159c037eeccd46c2a278
-  spirou/reset/runs/ref_calib_run.ini: 88d7a35df6f385300d6859f603b91d4f
-  spirou/reset/runs/science_run.ini: 85dcc4163923cc181be8bdd1a3dae18d
-  spirou/reset/runs/test_run.ini: cffba664b61743f18cefa73c7cc16534
-  spirou/reset/runs/trigger_night_calibrun.ini: 87b826e2e730aec7a4144e478c631e32
-  spirou/reset/runs/trigger_night_scirun.ini: e7458eafb9cbcc068aabbd4f5d078665
+  spirou/reset/runs/blank_run.yaml: 0bb7e13a7507aaf411bbe4143e96c0ea
+  spirou/reset/runs/calib_run.yaml: 485dbc8b1ae76d80ffded14c9ec0e9bd
+  spirou/reset/runs/complete_run.yaml: 9b4b1161e9662eb40e7e658daa0b5c87
+  spirou/reset/runs/lbl_run.yaml: acfa286ee540d35722cc8f1593892956
+  spirou/reset/runs/mini_run1.yaml: b524586eb2883162e67b224ddcdfbdfa
+  spirou/reset/runs/mini_run2.yaml: e3c2d36b106b4c046f7f063241885cea
+  spirou/reset/runs/other_run.yaml: 6ea43c9c701e01def2c9f61d91650fcb
+  spirou/reset/runs/quick_run.yaml: dfd19f5e6e10a70862a43d135d709f0f
+  spirou/reset/runs/ref_calib_run.yaml: 997df5ef91cca0716accbef13737b6c8
+  spirou/reset/runs/science_run.yaml: 6d12898c5872253a73f2c0e5e4280250
+  spirou/reset/runs/test_run.yaml: e88150d6d6cca76752b9187ea48ade6d
+  spirou/reset/runs/trigger_night_calibrun.yaml: c78842dd1d9508d1f3a53e96eb913f11
+  spirou/reset/runs/trigger_night_scirun.yaml: 79f50da0987ff088fe37d2c7cf98be0b
   spirou/reset/telludb/tapas_all_sp.fits.gz: 06f8b2cc920f9c954dba574071891500
   spirou/telluric/sky_PCs.fits: 81d030ca5e31b26c0dec86a89d2f096f
   spirou/telluric/tapas_all_sp.fits.gz: 128ecb9b9cb2180c5d452d1370269e3d
@@ -188,10 +187,10 @@ data:
   spirou/telluric/trans_h2o_abso_ccf.mas: 3467d02a8ea1ea056980bcbd1e86d30b
   spirou/telluric/trans_others_abso_ccf.mas: ed6f602b746534c5018bde1b952631ff
 setup:
-  humantime: '2024-07-10 08:55:55.013'
+  humantime: '2024-08-09 22:44:52.085'
   servers:
   - http://apero.exoplanets.ca/assets/
-  tarfile: 1720601755_013494_assets.tar.gz
-  unixtime: 1720601755.013494
+  tarfile: 1723243492_084861_assets.tar.gz
+  unixtime: 1723243492.084861
   vdate: '2024-07-09'
   version: 0.8.001

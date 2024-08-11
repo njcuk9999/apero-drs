@@ -3066,7 +3066,8 @@ WAVE_LINELIST_FMT = Const('WAVE_LINELIST_FMT', value=None, dtype=str,
 
 # Define the line list file column names
 # and must be equal to the number of columns in file)
-WAVE_LINELIST_COLS = Const('WAVE_LINELIST_COLS', value=None, dtype=str,
+WAVE_LINELIST_COLS = Const('WAVE_LINELIST_COLS', value=None,
+                           dtype=list, dtypei=str,
                            source=__NAME__, group=cgroup,
                            description=('Define the line list file column '
                                         'names and must be equal to the number '

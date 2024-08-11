@@ -42,6 +42,17 @@ item.comment = ''
 langlist.add(item)
 
 # =============================================================================
+# OBS_DIR_HELP
+# =============================================================================
+item = langlist.create('OBS_DIR_HELP', kind='HELP')
+item.value['ENG'] = ('[STRING] The directory to find the data files in. '
+                     'Most of the time this is organised by nightly '
+                     'observation directory')
+item.arguments = 'None'
+item.comment = ''
+langlist.add(item)
+
+# =============================================================================
 # BACKSUB_HELP 
 # =============================================================================
 item = langlist.create('BACKSUB_HELP', kind='HELP')

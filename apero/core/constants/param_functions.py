@@ -2284,9 +2284,11 @@ def _add_param_dict_to_tabledict(tabledict: dict,
     # deal with data being list
     if isinstance(data, list):
         value = data[it]
-    else:
+    elif isinstance(data, (dict, ParamDict)):
         # add value (if list)
         value = data[pkey]
+    else:
+        value = data
     # -------------------------------------------------------------------------
     # deal with value being a parameter dictionary itself
     if isinstance(value, ParamDict):
@@ -2306,11 +2308,22 @@ def _add_param_dict_to_tabledict(tabledict: dict,
     elif isinstance(value, dict):
         # loop around keys in dictionary
         for jt, skey in enumerate(value.keys()):
+            # dict could be in instances/sources (if parameter)
+            #   but could also be a nested dictionary and therefore not in
+            #   instances/sources
+            if skey in instances:
+                _instances = instances[skey]
+            else:
+                _instances = None
+            if skey in sources:
+                _sources = sources[skey]
+            else:
+                _sources = None
             # key to go into function
             rkey = '{0}[{1}]'.format(key, skey)
             # try to add sub-level to table dict
             tabledict = _add_param_dict_to_tabledict(tabledict, value,
-                                                     rkey, instances, sources,
+                                                     rkey, _instances, _sources,
                                                      used, None, pkey=skey)
         # stop here
         return tabledict
@@ -2333,11 +2346,13 @@ def _add_param_dict_to_tabledict(tabledict: dict,
     # -------------------------------------------------------------------------
     # deal with other simple types
     elif isinstance(value, (str, int, float, bool)):
+        # used key does not have the [it] or [key] part
+        used_key = pkey.split('[')[0]
         # add skip if not used
-        if pkey not in used:
+        if used_key not in used:
             return tabledict
         # add to count
-        tabledict['COUNT'].append(used[pkey])
+        tabledict['COUNT'].append(used[used_key])
         # fill in value
         tabledict['VALUE'].append(str(value))
         # fill in row

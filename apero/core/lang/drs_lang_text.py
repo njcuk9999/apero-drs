@@ -260,10 +260,7 @@ def textentry(key: str, args: Union[List[Any], str, None] = None,
     # set function name
     _ = __NAME__ + '.textentry()'
     # deal with no entries
-    try:
-        value = LanguageLookup[key]
-    except drs_lang.DrsLanguageError as _:
-        value = None
+    value = LanguageLookup.get(key, required=False)
     # deal with no value (use key)
     if value is None:
         message = key
