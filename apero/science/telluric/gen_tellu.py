@@ -2093,10 +2093,12 @@ def tellu_preclean_write(params, recipe, infile, rawfiles, fiber, combine,
                       value=props['TELLUP_TRANS_SIGLIM'])
     tpclfile.add_hkey('KW_TELLUP_FORCE_AIRMASS',
                       value=props['TELLUP_FORCE_AIRMASS'])
-    tpclfile.add_hkey('KW_TELLUP_OTHER_BOUNDS',
-                      value=props['TELLUP_OTHER_BOUNDS'])
-    tpclfile.add_hkey('KW_TELLUP_WATER_BOUNDS',
-                      value=props['TELLUP_WATER_BOUNDS'])
+    # get the other and water bounds
+    obounds = [str(x) for x in props['TELLUP_OTHER_BOUNDS']]
+    wbounds = [str(x) for x in props['TELLUP_WATER_BOUNDS']]
+    # push into the header
+    tpclfile.add_hkey('KW_TELLUP_OTHER_BOUNDS', value=','.join(obounds))
+    tpclfile.add_hkey('KW_TELLUP_WATER_BOUNDS', value=','.join(wbounds))
     # ----------------------------------------------------------------------
     # print progress
     WLOG(params, '', textentry('40-019-00044', args=[tpclfile.filename]))

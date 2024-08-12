@@ -1119,8 +1119,9 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
                       value=tpreprops['TELLUP_CCF_SCAN_RANGE'])
     corrfile.add_hkey('KW_TELLUP_CLEAN_OHLINES',
                       value=tpreprops['TELLUP_CLEAN_OH_LINES'])
-    corrfile.add_hkey('KW_TELLUP_REMOVE_ORDS',
-                      value=tpreprops['TELLUP_REMOVE_ORDS'])
+    # push to strings
+    tellu_rords = [str(x) for x in tpreprops['TELLUP_REMOVE_ORDS']]
+    corrfile.add_hkey('KW_TELLUP_REMOVE_ORDS', value=','.join(tellu_rords))
     corrfile.add_hkey('KW_TELLUP_SNR_MIN_THRES',
                       value=tpreprops['TELLUP_SNR_MIN_THRES'])
     corrfile.add_hkey('KW_TELLUP_DEXPO_CONV_THRES',
@@ -1145,10 +1146,12 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
                       value=tpreprops['TELLUP_TRANS_SIGLIM'])
     corrfile.add_hkey('KW_TELLUP_FORCE_AIRMASS',
                       value=tpreprops['TELLUP_FORCE_AIRMASS'])
-    corrfile.add_hkey('KW_TELLUP_OTHER_BOUNDS',
-                      value=tpreprops['TELLUP_OTHER_BOUNDS'])
-    corrfile.add_hkey('KW_TELLUP_WATER_BOUNDS',
-                      value=tpreprops['TELLUP_WATER_BOUNDS'])
+    # get the other and water bounds
+    obounds = [str(x) for x in tpreprops['TELLUP_OTHER_BOUNDS']]
+    wbounds = [str(x) for x in tpreprops['TELLUP_WATER_BOUNDS']]
+    # push into the header
+    corrfile.add_hkey('KW_TELLUP_OTHER_BOUNDS', value=','.join(obounds))
+    corrfile.add_hkey('KW_TELLUP_WATER_BOUNDS', value=','.join(wbounds))
     # ----------------------------------------------------------------------
     # add template key (if we have template)
     if template_props['TEMP_FILE'] is None:
