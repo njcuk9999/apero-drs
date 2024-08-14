@@ -1912,17 +1912,23 @@ def add_object_reject(params: ParamDict, raw_objname: str):
             autofill_list = autofill.split(',')
             # check we have 2 values
             if len(autofill_list) != 2:
-                emsg = 'Auto fill must be in the form ALIASES,NOTES'
+                emsg = 'Auto fill must be in the form ALIASES,BAD_ASTRO,NOTES'
                 WLOG(params, 'error', emsg)
                 return
             # get the values
-            aliases, notes = autofill_list
+            aliases, bad_astro, notes = autofill_list
         else:
             # get the aliases
             question = ('Enter aliases for object={0} (APERO={1}) separate '
                         'aliases by a "|"  e.g. GL699 | Barnard Star | GL 699')
             qargs = [objname, apero_objname]
             aliases = drs_installation.ask(question.format(*qargs), dtype=str)
+            # Ask about bad astrometry
+            question = ('IAre you rejectiong object={0} (APERO={1}) '
+                        'due to bad/no proper motion?')
+            qargs = [objname, apero_objname]
+            bad_astro = drs_installation.ask(question.format(*qargs),
+                                             dtype='YN')
             # get the comment
             question = 'Enter a comment to reject object={0} (APERO={1})'
             qargs = [objname, apero_objname]
@@ -1930,7 +1936,8 @@ def add_object_reject(params: ParamDict, raw_objname: str):
         # ----------------------------------------------------------------------
         # now we can add to the dataframe
         new_row = dict(OBJNAME=[apero_objname], ORIGINAL_NAME=[objname],
-                       ALIASES=[aliases], NOTES=[notes], USED=[1])
+                       ALIASES=[aliases], NOTES=[notes],
+                       BAD_ASTROMETRICS=[bad_astro], USED=[1])
         # print progress
         msg = 'Pushing object={0} (APERO={1}) to reject list google-sheet'
         WLOG(params, '', msg.format(objname, apero_objname))

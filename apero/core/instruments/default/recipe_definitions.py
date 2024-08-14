@@ -523,9 +523,11 @@ reject.set_kwarg(name='--obsdir', dtype=str, default='None',
 reject.set_kwarg(name='--autofill', dtype=str, default='None',
                  helpstr='Autofill the questions asked. '
                          'For identifier this is PP,TEL,RV,COMMENT '
-                         'e.g. 1,1,1,bad target '
-                         'For objname this is ALIASES,NOTES '
-                         'e.g. alias1|alias2|alias3,Not a real target')
+                         'e.g. "1,1,1,bad target" '
+                         'For objname this is ALIASES,BAD_ASTRO,NOTES '
+                         'e.g. "alias1|alias2|alias3,0,Not a real target"'
+                         '      or      '
+                         'e.g. "alias1|alias2|alias3,1,No proper motion"')
 reject.set_kwarg(name='--test', dtype='bool', default=False,
                  helpstr='Whether to run in test mode (recommended first time)')
 

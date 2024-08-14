@@ -2158,7 +2158,7 @@ TELLUP_OHLINE_PCA_FILE.value = 'sky_PCs.fits'
 # define the orders not to use in pre-cleaning fit (due to thermal
 # background)
 TELLUP_REMOVE_ORDS = TELLUP_REMOVE_ORDS.copy(__NAME__)
-TELLUP_REMOVE_ORDS.value = '47, 48'
+TELLUP_REMOVE_ORDS.value = '43, 44, 45'
 
 # define the minimum snr to accept orders for pre-cleaning fit
 TELLUP_SNR_MIN_THRES = TELLUP_SNR_MIN_THRES.copy(__NAME__)
