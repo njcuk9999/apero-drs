@@ -1197,7 +1197,7 @@ apero_mk_template.set_arg(name='objname', pos=0, dtype=str,
 apero_mk_template.set_kwarg(name='--filetype', dtype='options',
                             default_ref='MKTEMPLATE_FILETYPE',
                             helpstr=textentry('MKTEMP_FILETYPE'),
-                            options=['EXT_E2DS', 'EXT_E2DS_FF'])
+                            options=['EXT_E2DS', 'EXT_E2DS_FF', 'TELLU_OBJ'])
 apero_mk_template.set_kwarg(name='--fiber', dtype='options',
                             default_ref='MKTEMPLATE_FIBER_TYPE',
                             helpstr=textentry('MKTEMP_FIBER'),
