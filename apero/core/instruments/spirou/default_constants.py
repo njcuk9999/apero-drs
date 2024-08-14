@@ -2215,7 +2215,7 @@ TELLURIC_FILETYPE.value = 'EXT_E2DS_FF'
 
 # the fiber required for input template files
 TELLURIC_FIBER_TYPE = TELLURIC_FIBER_TYPE.copy(__NAME__)
-TELLURIC_FIBER_TYPE.value = ['AB']
+TELLURIC_FIBER_TYPE.value = 'AB'
 
 # Define level above which the blaze is high enough to accurately
 #    measure telluric

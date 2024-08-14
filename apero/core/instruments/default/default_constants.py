@@ -4325,8 +4325,7 @@ TELLURIC_FILETYPE = Const('TELLURIC_FILETYPE', value=None, dtype=str,
                                       'template files')
 
 # the fiber required for input template files
-TELLURIC_FIBER_TYPE = Const('TELLURIC_FIBER_TYPE', value=None,
-                            dtype=list, dtypei=str,
+TELLURIC_FIBER_TYPE = Const('TELLURIC_FIBER_TYPE', value=None, dtype=str,
                             source=__NAME__, user=True, active=False,
                             group=cgroup,
                             description='the fiber required for input '
