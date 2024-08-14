@@ -1614,12 +1614,38 @@ def ask_for_aliases(params: ParamDict, astro_obj: AstroObj) -> AstroObj:
     question1 = f'\nAdd to aliases?\n\tCurrent aliases:{aliaslist}'
     cond = drs_installation.ask(question1, dtype='YN', color='m')
     # if user want to modify name let them
-    if cond:
+    while cond:
         # ask for new name
         question2 = f'Enter new aliases (separated by a comma):'
         raw_aliases = drs_installation.ask(question2, dtype=str)
         # get raw aliases
         raw_aliases = raw_aliases.split(',')
+        # ---------------------------------------------------------------------
+        # Need to check for blank aliases - we cannot allow these
+        # ---------------------------------------------------------------------
+        # condition to continue
+        continue_aliases = 'pass'
+        # loop around raw aliases submitted
+        for raw_alias in raw_aliases:
+            if len(raw_alias.strip()) == 0:
+                wmsg = ('Blank alias found. Re-enter aliases? [Y]es or [N]o. '
+                        '\n\tNo skips adding aliases.')
+                question2a = drs_installation.ask(wmsg, dtype='YN', color='y')
+                # if yes we ask the question2 again - no need to continue this
+                #   for loop
+                if question2a:
+                    continue_aliases = 'reset'
+                    break
+                # skip adding aliases - no need to continue this for loop
+                else:
+                    continue_aliases = 'skip'
+                    break
+        # if we want to continue aliases we go back to question2
+        if continue_aliases == 'reset':
+            continue
+        # otherwise we break out of this loop
+        elif continue_aliases == 'skip':
+            break
         # ---------------------------------------------------------------------
         # clean raw aliases
         aliases = []
@@ -1635,6 +1661,7 @@ def ask_for_aliases(params: ParamDict, astro_obj: AstroObj) -> AstroObj:
             aliaslist += f'\n\t - {alias}'
         # ---------------------------------------------------------------------
         # log change of name
+        cond = False
         WLOG(params, '', f'\n\tUpdated aliases:{aliaslist}')
     # return the original or update astro_obj
     return astro_obj
