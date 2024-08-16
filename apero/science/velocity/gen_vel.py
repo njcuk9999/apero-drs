@@ -1379,15 +1379,15 @@ def fit_ccf_ea(params, order_num, rv, ccf, sig, fit_type, fit_params,
         # for absorption this should be 1 - the min ccf
         guess_depth = guess_dict.get('guess_depth', 1 - min_ccf)
         # fit the continnum to guess the slope and curvature
-        continuum_fit, _ = mp.robust_polyfit(rv, ccf, 2, nsigcut=3)
+        continuum_fit, _ = mp.robust_polyfit(rv - guess_cent, ccf, 2, nsigcut=3)
         # guess slope
-        guess_slope = continuum_fit[0]
+        guess_slope = -continuum_fit[0] / continuum_fit[2]
         # guess curvature
-        guess_curv = continuum_fit[1]
+        guess_curv = -continuum_fit[1] / continuum_fit[2]
         # guess amp
-        guess_amp = 1
+        guess_amp = continuum_fit[2]
         # set bounds for the curve fit
-        bounds_lower = [min_rv, 0, 0, -np.inf, -np.inf, 0]
+        bounds_lower = [min_rv, 1e-10, 1e-10, -np.inf, -np.inf, 1e-10]
         bounds_upper = [max_rv, (max_rv - min_rv) / 2, 1, np.inf, np.inf, 2]
 
         # push guess values into list
@@ -1395,16 +1395,39 @@ def fit_ccf_ea(params, order_num, rv, ccf, sig, fit_type, fit_params,
                  guess_amp]
         # get names for the fit
         fitnames = ['RV', 'EW', 'DEPTH', 'SLOPE', 'CURV', 'AMP']
+        # check that guess isn't outside bounds
+        for v_it, variable in enumerate(guess):
+            # check bounds
+            cond1 = variable < bounds_lower[v_it]
+            cond2 = variable > bounds_upper[v_it]
+            # if out of bounds do not fit this order
+            if cond1 or cond2:
+                result = np.repeat(np.nan, fit_params)
+                fit = np.repeat(np.nan, len(rv))
+                # print warning
+                wmsg = ('CCF initial guess out of bounds. Skipping order {0}.'
+                        '\n\t{1} = {2}  bounds=[{3}, {4}]')
+                wargs = [order_num, fitnames[v_it], variable,
+                         bounds_lower[v_it], bounds_upper[v_it]]
+                WLOG(params, 'warning', wmsg.format(*wargs), sublevel=5)
+                # return the best guess and the gaussian fit
+                return result, fit, fitnames
         # get gaussian fit
         nanmask = np.isfinite(ccf)
         ccf[~nanmask] = 0.0
         # fit the gaussian
         try:
             with warnings.catch_warnings(record=True) as _:
+                # cannot have nans in the ccf or ccf error
+                finitemask = np.isfinite(ccf) & np.isfinite(sig)
+                # deal with not enough points to fit
+                if np.sum(finitemask) < 5:
+                    raise RuntimeError('Not enough finite points to fit')
                 # noinspection PyTupleAssignmentBalance
-                result, _ = curve_fit(mp.gaussian_slope, rv, ccf,
+                result, _ = curve_fit(mp.gaussian_slope, rv[finitemask],
+                                      ccf[finitemask],
                                       bounds=[bounds_lower, bounds_upper],
-                                      p0=guess, sigma=sig)
+                                      p0=guess, sigma=sig[finitemask])
                 fit = mp.gaussian_slope(rv, *result)
         except RuntimeError:
             result = np.repeat(np.nan, fit_params)
@@ -1424,12 +1447,30 @@ def fit_ccf_ea(params, order_num, rv, ccf, sig, fit_type, fit_params,
         guess_slope = 0
         # set bounds for the curve fit
         bounds_lower = [0, min_rv, 0, 0, -np.inf]
-        bounds_upper = [2 * max_ccf, max_rv, (max_rv - min_rv) / 2, max_ccf, np.inf]
+        bounds_upper = [2 * max_ccf, max_rv, (max_rv - min_rv) / 2,
+                        max_ccf, np.inf]
         # push guess values into list
         #      a, x0, sigma, zp, slope
         guess = [guess_amp, guess_cent, guess_sigma, guess_zp, guess_slope]
         # get names for the fit
         fitnames = ['AMP', 'RV', 'SIG', 'ZP', 'SLOPE']
+        # check that guess isn't outside bounds
+        for v_it, variable in enumerate(guess):
+            # check bounds
+            cond1 = variable < bounds_lower[v_it]
+            cond2 = variable > bounds_upper[v_it]
+            # if out of bounds do not fit this order
+            if cond1 or cond2:
+                result = np.repeat(np.nan, fit_params)
+                fit = np.repeat(np.nan, len(rv))
+                # print warning
+                wmsg = ('CCF initial guess out of bounds. Skipping order {0}.'
+                        '\n\t{1} = {2}  bounds=[{3}, {4}]')
+                wargs = [order_num, fitnames[v_it], variable,
+                         bounds_lower[v_it], bounds_upper[v_it]]
+                WLOG(params, 'warning', wmsg.format(*wargs), sublevel=5)
+                # return the best guess and the gaussian fit
+                return result, fit, fitnames
         # get gaussian fit
         nanmask = np.isfinite(ccf)
         ccf[~nanmask] = 0.0
