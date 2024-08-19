@@ -1866,7 +1866,8 @@ pp_seq_opt.description_file = 'pp_seq_opt_{0}.rst'.format(__INSTRUMENT__.lower()
 pp_seq_opt.add(apero_preprocess, name='PP_CAL', recipe_kind='pre-cal',
                filters=dict(KW_OBJNAME='CALIB'))
 pp_seq_opt.add(apero_preprocess, name='PP_SCI', recipe_kind='pre-sci',
-               filters=dict(KW_OBJNAME='SCIENCE_TARGETS'))
+               filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
+                            KW_DPRTYPE=files.science_dprtypes))
 pp_seq_opt.add(apero_preprocess, name='PP_TEL', recipe_kind='pre-tel',
                filters=dict(KW_OBJNAME='TELLURIC_TARGETS'))
 pp_seq_opt.add(apero_preprocess, name='PP_HC1HC1', files=[files.raw_hc1_hc1],
