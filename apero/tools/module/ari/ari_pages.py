@@ -363,8 +363,10 @@ def _add_obj_page(it: int, key: str, rdict: dict, params: ParamDict,
         # return rdict
         return rdict
     except Exception as e:
+        # generate reason for exception
+        reason = f'{type(e)}: {str(e)}'
         # update rdict
-        rdict[objname] = (False, str(e))
+        rdict[objname] = (False, reason)
         # return rdict
         return rdict
 
