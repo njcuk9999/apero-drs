@@ -114,12 +114,12 @@ def setup(name: str = 'None', instrument: str = 'None',
     """
     # set function name
     func_name = display_func('setup', __NAME__)
-    # catch sigint (if not threaded) -- if threaded can only be in main thread
-    if not threaded:
-        signal(SIGINT, constants.catch_sigint)
     # deal with no keywords
     if fkwargs is None:
         fkwargs = dict()
+    # catch sigint (if not threaded) -- if threaded can only be in main thread
+    if not fkwargs.get('threaded', threaded):
+        signal(SIGINT, constants.catch_sigint)
     # deal with quiet in fkwargs
     if 'quiet' in fkwargs:
         if fkwargs['quiet'] in [True, 'True', 1]:
