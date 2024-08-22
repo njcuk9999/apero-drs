@@ -1840,6 +1840,16 @@ def _generate_run_from_sequence(params: ParamDict, sequence,
     # ------------------------------------------------------------------
     # get length of database at this point
     idb_len = indexdb.database.count(condition=ref_condition)
+    # need to deal with being a trigger run
+    if 'TRIGGER_RUN' in params:
+        trigger_cond = drs_text.true_text(params['TRIGGER_RUN'])
+        # test whether we need to stop here
+        if trigger_cond and idb_len == 0:
+            # display message that we stopped here as no files were found
+            wmsg = 'No files found for trigger run'
+            WLOG(params, 'info', wmsg)
+            # stop processing recipes
+            return []
     # deal with empty database (after conditions)
     if idb_len == 0:
         eargs = [ref_condition, func_name]
