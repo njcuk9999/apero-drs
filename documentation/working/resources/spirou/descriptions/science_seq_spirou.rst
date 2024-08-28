@@ -4,7 +4,7 @@ This should be run after preprocessing of (at least) all science stars hot star 
 
 Include the following recipes:
 
-    - EXTTELL: Extracts all science target files
+    - EXTOBJ: Extracts all science target files
     - FTFIT1: Correct for telluric absorption in all science target files (without template)
     - FTTEMP1: Make a template for all science targets (using science files from FTFIT1)
     - FTFIT2: Correct for telluric absorption in all science target files (with template)
