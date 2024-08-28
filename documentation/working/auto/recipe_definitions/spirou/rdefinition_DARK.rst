@@ -59,8 +59,8 @@ No schematic set
 
 .. code-block:: 
 
-     {obs_dir}[STRING] // OBS_DIR_HELP
-     [FILE:DARK_DARK_INT,DARK_DARK_TEL,DARK_DARK_SKY] // [STRING/STRINGS] A list of fits files to use separated by spaces. DARK_FILES_HELP
+     {obs_dir}[STRING] // [STRING] The directory to find the data files in. Most of the time this is organised by nightly observation directory
+     [FILE:DARK_DARK_INT,DARK_DARK_TEL,DARK_DARK_SKY] // [STRING/STRINGS] A list of fits files to use separated by spaces. Current allowed types: DARK_DARK_INT, DARK_DARK_TEL, DARK_DARK_SKY
 
 
 4. Optional Arguments
@@ -73,7 +73,7 @@ No schematic set
 .. code-block:: 
 
      --database[True/False] // [BOOLEAN] Whether to add outputs to calibration database
-     --combine[True/False] // COMBINE_HELP
+     --combine[True/False] // [BOOLEAN] Whether to combine fits files in file list or to process them separately
      --plot[0>INT>4] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
      --no_in_qc // Disable checking the quality control of input files
 

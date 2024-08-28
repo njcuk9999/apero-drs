@@ -59,7 +59,7 @@ No schematic set
 
 .. code-block:: 
 
-     {obs_dir}[STRING] // OBS_DIR_HELP
+     {obs_dir}[STRING] // [STRING] The directory to find the data files in. Most of the time this is organised by nightly observation directory
      [FILE:DRS_PP] // [STRING/STRINGS] A list of fits files to use separated by spaces. 
 
 
@@ -72,8 +72,8 @@ No schematic set
 
 .. code-block:: 
 
-     --skip[True/False] // OUT_OVERWRITE_HELP
-     --clear[True/False] // OUT_CLEAR_HELP
+     --skip[True/False] // Overwrites post processed files if they exist (default is False)
+     --clear[True/False] // Clear the reduced folder after post-processing. WARNING removes all files from the reduced directory.
      --no_in_qc // Disable checking the quality control of input files
 
 

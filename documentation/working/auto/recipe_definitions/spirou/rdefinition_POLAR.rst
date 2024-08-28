@@ -59,7 +59,7 @@ No schematic set
 
 .. code-block:: 
 
-     {obs_dir}[STRING] // OBS_DIR_HELP
+     {obs_dir}[STRING] // [STRING] The directory to find the data files in. Most of the time this is organised by nightly observation directory
 
 
 4. Optional Arguments
@@ -82,9 +82,9 @@ No schematic set
      --output_lsd[STRING] // Output LSD file
      --lsd // Run LSD analysis
      --noqccheck // Do not check quality control of inputs
-     --blazefile[FILE:FF_BLAZE] // BLAZEFILE_HELP
+     --blazefile[FILE:FF_BLAZE] // [STRING] Define a custom file to use for blaze correction. If unset uses closest file from calibDB. Checks for an absolute path and then checks 'directory' (CALIBDB=BADPIX)
      --plot[0>INT>4] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
-     --wavefile[FILE:WAVESOL_REF,WAVE_NIGHT,WAVESOL_DEFAULT] // WAVEFILE_HELP
+     --wavefile[FILE:WAVESOL_REF,WAVE_NIGHT,WAVESOL_DEFAULT] // [STRING] Define a custom file to use for the wave solution. If unset uses closest file from header or calibDB (depending on setup). Checks for an absolute path and then checks 'directory'
      --no_in_qc // Disable checking the quality control of input files
 
 

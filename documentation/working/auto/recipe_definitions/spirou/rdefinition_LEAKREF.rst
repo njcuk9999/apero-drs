@@ -59,7 +59,7 @@ No schematic set
 
 .. code-block:: 
 
-     {obs_dir}[STRING] // OBS_DIR_HELP
+     {obs_dir}[STRING] // [STRING] The directory to find the data files in. Most of the time this is organised by nightly observation directory
 
 
 4. Optional Arguments
@@ -71,7 +71,7 @@ No schematic set
 
 .. code-block:: 
 
-     --filetype[STRING] // LEAKREF_HELP_FILETYPE
+     --filetype[STRING] // [STRING] Specify the DPRTYPE for DARK_FP files
      --database[True/False] // [BOOLEAN] Whether to add outputs to calibration database
      --plot[0>INT>4] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
      --no_in_qc // Disable checking the quality control of input files

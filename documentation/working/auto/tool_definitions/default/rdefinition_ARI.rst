@@ -71,8 +71,12 @@ No schematic set
 
 .. code-block:: 
 
-     --obsdir[STRING] // OBS_DIR_HELP
+     --obsdir[STRING] // [STRING] The directory to find the data files in. Most of the time this is organised by nightly observation directory
      --reset // Reset ARI
+     --redo_objs[STRING] // List of comma separated objects (named as in astrometric database) to redo. All others will be taken from storage unless not currently processed.
+     --finder_create // Overwrites the profile setting to create finder charts
+     --finder_reset // Overwrites the profile setting to reset finder charts
+     --profiles // List allowed profiles (and path to profiles), as profile is usually required any invalid profile yaml also displays this and exits.
 
 
 5. Special Arguments

@@ -59,7 +59,7 @@ No schematic set
 
 .. code-block:: 
 
-     {objname}[STRING] // MKTEMP_OBJNAME_HELP
+     {objname}[STRING] // [STRING] The object name to process
 
 
 4. Optional Arguments

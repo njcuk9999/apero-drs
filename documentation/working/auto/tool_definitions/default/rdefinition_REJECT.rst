@@ -69,9 +69,10 @@ No optional arguments
 
 .. code-block:: 
 
-     --identifier[STRING] // Add a specific file identifier to the file reject list. E.g. for spirou this is the odocode, for nirps this is raw the filename
-     --objname[STRING] // Add a specific object name to the object reject list
-     --autofill[STRING] // Autofill the questions asked. For identifier this is PP,TEL,RV,COMMENT e.g. 1,1,1,bad target For objname this is ALIASES,NOTES e.g. alias1|alias2|alias3,Not a real target
+     --identifier[STRING] // Add a specific file identifier to the file reject list. E.g. for spirou this is the odocode, for nirps this is raw the filename (Can add multiple as comma separated list)
+     --objname[STRING] // Add a specific object name to the object reject list (Can add multiple as comma separated list)
+     --obsdir[STRING] // Add all files from a certain observation directory to the file reject list (excludes science observations). You may only select one obsdir at once. Note this overrides --identifier
+     --autofill[STRING] // Autofill the questions asked. For identifier this is PP,TEL,RV,COMMENT e.g. "1,1,1,bad target" For objname this is ALIASES,BAD_ASTRO,NOTES e.g. "alias1|alias2|alias3,0,Not a real target"      or      e.g. "alias1|alias2|alias3,1,No proper motion"
      --test // Whether to run in test mode (recommended first time)
 
 

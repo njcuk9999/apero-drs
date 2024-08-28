@@ -59,7 +59,7 @@ No schematic set
 
 .. code-block:: 
 
-     {obs_dir}[STRING] // OBS_DIR_HELP
+     {obs_dir}[STRING] // [STRING] The directory to find the data files in. Most of the time this is organised by nightly observation directory
 
 
 4. Optional Arguments

@@ -1,7 +1,7 @@
 ORDER,RECIPE,SHORTNAME,RECIPE KIND,REF RECIPE,FILTERS,ARGS
 1,apero_pp_ref_nirps_he.py,PPREF,pre-reference,Yes,--,
 2,apero_preprocess_nirps_he.py,PP_CAL,pre-cal,No,KW_RAW_DPRCATG: CALIB,
-3,apero_preprocess_nirps_he.py,PP_SCI,pre-sci,No,KW_OBJNAME: SCIENCE_TARGETS,
+3,apero_preprocess_nirps_he.py,PP_SCI,pre-sci,No,"KW_OBJNAME: SCIENCE_TARGETS |br| KW_DPRTYPE: OBJ_DARK, OBJ_FP, OBJ_SKY, OBJ_TUN, FLUXSTD_SKY, TELLU_SKY",
 4,apero_preprocess_nirps_he.py,PP_TEL,pre-tel,No,KW_OBJNAME: TELLURIC_TARGETS,
 5,apero_preprocess_nirps_he.py,PP_HC1HC1,pre-hchc,No,--,{files}=[RAW_HCONE_HCONE]
 6,apero_preprocess_nirps_he.py,PP_FPFP,pre-fpfp,No,--,{files}=[RAW_FP_FP]
@@ -12,4 +12,6 @@ ORDER,RECIPE,SHORTNAME,RECIPE KIND,REF RECIPE,FILTERS,ARGS
 11,apero_preprocess_nirps_he.py,PP_LFC,pre-lfc,No,--,{files}=[RAW_LFC_LFC]
 12,apero_preprocess_nirps_he.py,PP_LFCFP,pre-lfcfp,No,--,{files}=[RAW_LFC_FP]
 13,apero_preprocess_nirps_he.py,PP_FPLFC,pre-fplfc,No,--,{files}=[RAW_FP_LFC]
-14,apero_preprocess_nirps_he.py,PP_EVERY,pre,No,--,{files}=[DRS_RAW]
+14,apero_preprocess_nirps_he.py,PP_FPHC1,pre-fphc1,No,--,{files}=[RAW_FP_HCONE]
+15,apero_preprocess_nirps_he.py,PP_HC1FP,pre-hc1fp,No,--,{files}=[RAW_HCONE_FP]
+16,apero_preprocess_nirps_he.py,PP_EVERY,pre,No,--,{files}=[DRS_RAW]

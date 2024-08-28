@@ -69,7 +69,7 @@ No optional arguments
 
 .. code-block:: 
 
-     --filetype[EXT_E2DS,EXT_E2DS_FF] // MKTEMP_FILETYPE
+     --filetype[EXT_E2DS,EXT_E2DS_FF] // [STRING] optional, the filetype (KW_OUTPUT) to use when processing files
      --database[True/False] // [BOOLEAN] Whether to add outputs to calibration database
      --plot[0>INT>4] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
 

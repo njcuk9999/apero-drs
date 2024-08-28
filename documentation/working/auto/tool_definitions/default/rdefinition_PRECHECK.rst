@@ -74,8 +74,8 @@ No schematic set
      --obs_dir[STRING] // PROCESS_OBS_DIR_HELP
      --exclude_obs_dirs[STRING] // PROCESS_EXCLUDE_OBS_DIRS_HELP
      --include_obs_dirs[STRING] // PROCESS_INCLUDE_OBS_DIRS_HELP
-     --no_file_check // Dont check the number of files on disk and dont flag these errors
-     --no_obj_check // Dont check object database with current set of raw files and dont flag these errors
+     --no_file_check // Don’t check the number of files on disk and don’t flag these errors
+     --no_obj_check // Don’t check object database with current set of raw files and don’t flag these errors
 
 
 5. Special Arguments

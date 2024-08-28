@@ -70,8 +70,10 @@ No optional arguments
 .. code-block:: 
 
      --obsdir[STRING] // Delete all instances of a certain observation directory from disk and databases
+     --blocks[STRING] // Delete all instances of tmp/red/out/calib/tellu from disk and database (multiple blocks should be separated by a comma)
      --file_prefix[STRING] // Delete all instances of a certain file prefix from disk and databases
      --file_suffix[STRING] // Delete all instances of a certain file suffix from disk and databases
+     --objnames[STRING] // Delete all instances of a certain object name (DRSOBJN) from disk and databases
      --test // Whether to run in test mode (recommended first time)
      --nowarn // Whether to warn the user we are not in test mode.
 

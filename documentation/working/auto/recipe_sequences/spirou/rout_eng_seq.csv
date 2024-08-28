@@ -8,4 +8,6 @@ ORDER,RECIPE,SHORTNAME,RECIPE KIND,REF RECIPE,ARGS
 7,apero_extract_spirou.py,EXT_LFC,extract-lfc,No,{files}=[LFC_LFC]
 8,apero_extract_spirou.py,EXT_LFCFP,extract-lfcfp,No,{files}=[LFC_FP]
 9,apero_extract_spirou.py,EXT_FPLFC,extract-fplfc,No,{files}=[FP_LFC]
-10,apero_extract_spirou.py,EXT_EVERY,extract-everything,No,{files}=[DRS_PP]
+10,apero_extract_spirou.py,EXT_FPHC1,extract-fphc1,No,{files}=[FP_HCONE]
+11,apero_extract_spirou.py,EXT_HC1FP,extract-hc1fp,No,{files}=[HCONE_FP]
+12,apero_extract_spirou.py,EXT_EVERY,extract-everything,No,{files}=[DRS_PP]

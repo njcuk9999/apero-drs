@@ -1,6 +1,6 @@
 ORDER,RECIPE,SHORTNAME,RECIPE KIND,REF RECIPE,FILTERS,ARGS
 1,apero_preprocess_spirou.py,PP_CAL,pre-cal,No,KW_OBJNAME: CALIB,
-2,apero_preprocess_spirou.py,PP_SCI,pre-sci,No,KW_OBJNAME: SCIENCE_TARGETS,
+2,apero_preprocess_spirou.py,PP_SCI,pre-sci,No,"KW_OBJNAME: SCIENCE_TARGETS |br| KW_DPRTYPE: OBJ_DARK, OBJ_FP, POLAR_DARK, POLAR_FP",
 3,apero_preprocess_spirou.py,PP_TEL,pre-tel,No,KW_OBJNAME: TELLURIC_TARGETS,
 4,apero_preprocess_spirou.py,PP_HC1HC1,pre-hchc,No,--,{files}=[RAW_HCONE_HCONE]
 5,apero_preprocess_spirou.py,PP_FPFP,pre-fpfp,No,--,{files}=[RAW_FP_FP]
@@ -11,4 +11,6 @@ ORDER,RECIPE,SHORTNAME,RECIPE KIND,REF RECIPE,FILTERS,ARGS
 10,apero_preprocess_spirou.py,PP_LFC,pre-lfc,No,--,{files}=[RAW_LFC_LFC]
 11,apero_preprocess_spirou.py,PP_LFCFP,pre-lfcfp,No,--,{files}=[RAW_LFC_FP]
 12,apero_preprocess_spirou.py,PP_FPLFC,pre-fplfc,No,--,{files}=[RAW_FP_LFC]
-13,apero_preprocess_spirou.py,PP_EVERY,pre,No,--,{files}=[DRS_RAW]
+13,apero_preprocess_spirou.py,PP_FPHC1,pre-fphc1,No,--,{files}=[RAW_FP_HCONE]
+14,apero_preprocess_spirou.py,PP_HC1FP,pre-hc1fp,No,--,{files}=[RAW_HCONE_FP]
+15,apero_preprocess_spirou.py,PP_EVERY,pre,No,--,{files}=[DRS_RAW]

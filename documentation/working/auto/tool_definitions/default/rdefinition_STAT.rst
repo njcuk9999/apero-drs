@@ -69,7 +69,7 @@ No optional arguments
 
 .. code-block:: 
 
-     --mode[STRING] // [STRING] Stats mode. Any combination of the following (separated by a comma, no white spaces). For all use all. For timing statistics use "timing". For quality control statistics use "qc". For error statistics use "error". For memory statistics use "memory". For file index use findex.  I.e. --mode=qc,memory  runs the qc and memory stats.
+     --mode[STRING] // [STRING] Stats mode. Any combination of the following (separated by a comma, no white spaces). For all use “all”. For timing statistics use "timing". For quality control statistics use "qc". For error statistics use "error". For memory statistics use "memory". For file index use “findex”.  I.e. --mode=qc,memory  runs the qc and memory stats.
      --plog[STRING] // [STRING] Specify a certain log file (full path)
      --plot[0>INT>4] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
      --sql[STRING] // [STRING] Specify a SQL WHERE clause to narrow the stats

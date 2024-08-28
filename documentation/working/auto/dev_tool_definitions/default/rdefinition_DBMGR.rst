@@ -76,7 +76,7 @@ No optional arguments
      --csv[STRING] // Path to csv file. For --importdb this is the csv file you wish to add. For --exportdb this is the csv file that will be saved.
      --exportdb[calib,tellu,findex,log,astrom,lang,reject] // Export a database to a csv file
      --importdb[calib,tellu,findex,log,astrom,lang,reject] // Import a csv file into a database
-     --join[replace,append] // How to add the csv file to database: append adds all lines to the end of current database, replace removes all previous lines from database. Default is replace.
+     --join[replace,append] // How to add the csv file to database: append adds all lines to the end of current database, replace removes all previous lines from database. Default is ‘replace’.
      --delete // Load up the delete table GUI (MySQL only)
      --keys[STRING] // Keyname of entries to remove (used in combination with --telludb or --calibdb)
      --since[STRING] // Date to remove entries since (used in combination with --telludb or --calibdb) format is YYYY-MM-DD or YYYY-MM-DD hh:mm:ss

@@ -137,8 +137,10 @@ def rel_path_from_current(current: str, required: str) -> str:
     required = required[len(root) + 1:]
     # get the number of levels up to go
     levels = len(os.path.split(current)) + 1
+
+    req_paths = [str(_p) for _p in os.path.split(required)]
     # construct new relative path
-    outargs = ['..'] * levels + list(str(os.path.split(required)))
+    outargs = ['..'] * levels + req_paths
     # return the new relative path
     # noinspection PyTypeChecker
     return os.path.join(*outargs)

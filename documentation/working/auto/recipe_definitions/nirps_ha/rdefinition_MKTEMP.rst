@@ -59,7 +59,7 @@ No schematic set
 
 .. code-block:: 
 
-     {objname}[STRING] // MKTEMP_OBJNAME_HELP
+     {objname}[STRING] // [STRING] The object name to process
 
 
 4. Optional Arguments
@@ -71,12 +71,12 @@ No schematic set
 
 .. code-block:: 
 
-     --filetype[EXT_E2DS,EXT_E2DS_FF] // MKTEMP_FILETYPE
-     --fiber[A,B] // MKTEMP_FIBER
+     --filetype[EXT_E2DS,EXT_E2DS_FF,TELLU_OBJ] // [STRING] optional, the filetype (KW_OUTPUT) to use when processing files
+     --fiber[A,B] // [STRING] optional, the fiber type to use when processing files
      --database[True/False] // [BOOLEAN] Whether to add outputs to calibration database
-     --blazefile[FILE:FF_BLAZE] // BLAZEFILE_HELP
+     --blazefile[FILE:FF_BLAZE] // [STRING] Define a custom file to use for blaze correction. If unset uses closest file from calibDB. Checks for an absolute path and then checks 'directory' (CALIBDB=BADPIX)
      --plot[0>INT>4] // [INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file
-     --wavefile[FILE:WAVESOL_REF,WAVE_NIGHT,WAVESOL_DEFAULT] // WAVEFILE_HELP
+     --wavefile[FILE:WAVESOL_REF,WAVE_NIGHT,WAVESOL_DEFAULT] // [STRING] Define a custom file to use for the wave solution. If unset uses closest file from header or calibDB (depending on setup). Checks for an absolute path and then checks 'directory'
      --no_in_qc // Disable checking the quality control of input files
 
 
