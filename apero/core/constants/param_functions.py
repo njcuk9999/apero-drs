@@ -16,7 +16,7 @@ import os
 import shutil
 from collections import OrderedDict
 from pathlib import Path
-from typing import Any, List, Tuple, Type, Union
+from typing import Any, Dict, List, Tuple, Type, Union
 
 import numpy as np
 from astropy.io import fits
@@ -26,11 +26,11 @@ from apero.base import base
 from apero.core import lang
 from apero.core import math as mp
 from apero.core.constants import constant_functions
-from apero.core.core import drs_base_classes as base_class
-from apero.core.core import drs_exceptions
-from apero.core.core import drs_misc
-from apero.core.core import drs_text
-from apero.core.instruments.default import pseudo_const
+from apero.core.base import drs_exceptions
+from apero.core.base import drs_base_classes as base_class
+from apero.core.base import drs_text
+from apero.core.base import drs_misc
+
 
 # =============================================================================
 # Define variables
@@ -48,8 +48,6 @@ DrsCodedException = drs_exceptions.DrsCodedException
 DrsCodedWarning = drs_exceptions.DrsCodedWarning
 # relative folder cache
 REL_CACHE = dict()
-CONFIG_CACHE = dict()
-PCONFIG_CACHE = dict()
 # cache some settings
 SETTINGS_CACHE_KEYS = ['DRS_DEBUG', 'ALLOW_BREAKPOINTS']
 SETTINGS_CACHE = dict()
@@ -742,6 +740,8 @@ class ParamDict(CaseInDict):
             # try to deep copy parameter
             if isinstance(value, ParamDict):
                 pp[key] = value.copy()
+            elif isinstance(value, select.Instrument):
+                pp[key] = value.copy()
             else:
                 # noinspection PyBroadException
                 try:
@@ -1417,111 +1417,6 @@ def update_paramdicts(*args, key: str, value: Any = None, source: str = None,
             arg.set(key, value=value, source=source, instance=instance)
 
 
-def load_config(instrument: Union[str, None] = None,
-                from_file: bool = True,
-                cache: bool = True) -> ParamDict:
-    """
-    Load an instruments configuration into a Parameter Dictionary (ParamDict)
-
-    :param instrument: str, the instrumnet config to load (can be None)
-    :param from_file: bool, if True loads from user files (else loads from
-                      module only
-    :param cache: bool, use the cached parameters - no need to reload from
-                  module - if True and cache present supersedes from_file
-    :return: ParamDict containing the constants
-    """
-    global CONFIG_CACHE
-    # deal with no instrument
-    if instrument is None:
-        if 'INSTRUMENT' in base.IPARAMS:
-            instrument = base.IPARAMS['INSTRUMENT']
-        else:
-            instrument = 'None'
-    elif instrument == 'default':
-        instrument = 'None'
-    # check config cache
-    if instrument in CONFIG_CACHE and cache:
-        return CONFIG_CACHE[instrument].copy()
-    # get instrument sub-package constants files
-    modules = get_module_names(instrument)
-    # get constants from modules
-    keys, values, sources, instances = _load_from_module(modules, True)
-
-    params = ParamDict(zip(keys, values))
-    # Set the source
-    params.set_sources(keys=keys, sources=sources)
-    # add to params
-    for it in range(len(keys)):
-        # set instance (Const/Keyword instance)
-        params.set_instance(keys[it], instances[it])
-    # get constants from user config files
-    if from_file:
-        # get instrument user config files
-        files = _get_file_names(params, instrument)
-        # load keys, values, sources and instances from yaml files
-        keys, values, sources, instances = _load_from_yaml(files, modules)
-        # add to params
-        for it in range(len(keys)):
-            # set value
-            params[keys[it]] = values[it]
-            # set instance (Const/Keyword instance)
-            params.set_instance(keys[it], instances[it])
-        params.set_sources(keys=keys, sources=sources)
-    # save sources to params
-    params = _save_config_params(params)
-    # cache these params
-    if cache and from_file:
-        CONFIG_CACHE[instrument] = params.copy()
-    # return the parameter dictionary
-    return params
-
-
-def load_pconfig(instrument: Union[str, None] = None
-                 ) -> pseudo_const.DefaultPseudoConstants:
-    """
-    Load an instrument pseudo constants
-
-    :param instrument: str, the instrument to load pseudo constants for
-
-    :return: the PesudoConstant class
-    """
-    global PCONFIG_CACHE
-    # set function name (cannot break here --> no access to inputs)
-    func_name = display_func('load_pconfig', __NAME__)
-    # deal with no instrument
-    if instrument is None:
-        instrument = base.IPARAMS['INSTRUMENT']
-    elif instrument == 'default':
-        instrument = 'None'
-    # check cache
-    if instrument in PCONFIG_CACHE:
-        return PCONFIG_CACHE[instrument]
-    # get instrument sub-package constants files
-    modules = get_module_names(instrument, mod_list=[PSEUDO_CONST_FILE])
-    # import module
-    module = constant_functions.import_module(func_name, modules[0])
-    # get the correct module for this class
-    mod = module.get()
-    # check that we have class and import it
-    if hasattr(mod, PSEUDO_CONST_CLASS):
-        psconst = getattr(mod, PSEUDO_CONST_CLASS)
-    # deal with case where we want to use the default pseudo class
-    #     (non-instrument dependent)
-    elif hasattr(mod, DEFAULT_PSEUDO_CONST_CLASS):
-        psconst = getattr(mod, DEFAULT_PSEUDO_CONST_CLASS)
-    # else raise error
-    else:
-        eargs = [modules[0], PSEUDO_CONST_CLASS, func_name]
-        raise DrsCodedException('00-001-00046', targs=eargs, level='error',
-                                func_name=func_name)
-
-    # get instance of PseudoClass
-    pconfig = psconst(instrument=instrument)
-    # update cache
-    PCONFIG_CACHE[instrument] = pconfig
-    return pconfig
-
-
 def get_config_all():
     """
     List all attributes in modules (from get_module_names)
@@ -1728,292 +1623,6 @@ def window_size(drows: int = 80, dcols: int = 80) -> Tuple[int, int]:
     # if we have reached this point return the default number of rows
     #   and columns
     return drows, dcols
-
-
-# =============================================================================
-# Config loading private functions
-# =============================================================================
-def _get_file_names(params: ParamDict,
-                    instrument: Union[str, None] = None) -> List[str]:
-    """
-    Lists the users config / constants files for the specific instrument
-    if None are found returns the default files
-
-    :param params: Paramdict - parameter dictionary
-    :param instrument: str, the instrument to list files for
-    :return: list of strings - the config /constant files found
-    """
-    # set function name (cannot break here --> no access to inputs)
-    func_name = display_func('_get_file_names', __NAME__)
-    # deal with no instrument
-    if drs_text.null_text(instrument, ['None', '']):
-        return []
-    # get user environmental path
-    user_env = params['DRS_USERENV']
-    # deal with no user environment and no default path
-    if user_env is None:
-        return []
-    # set empty directory
-    config_dir = None
-    # -------------------------------------------------------------------------
-    # User environmental path
-    # -------------------------------------------------------------------------
-    # check environmental path exists
-    if user_env in os.environ:
-        # get value
-        path = os.environ[user_env]
-        # check that directory linked exists
-        if os.path.exists(path):
-            # set directory
-            config_dir = path
-    # -------------------------------------------------------------------------
-    # if directory is still empty return empty list
-    if config_dir is None:
-        return []
-    # -------------------------------------------------------------------------
-    # look for user configurations within instrument sub-folder
-    # -------------------------------------------------------------------------
-    config_files = []
-    for script in YSCRIPTS:
-        # construct path
-        config_path = os.path.join(config_dir, script)
-        # check that it exists
-        if os.path.exists(config_path):
-            config_files.append(config_path)
-    # deal with no files found
-    if len(config_files) == 0:
-        wargs = [config_dir, ','.join(YSCRIPTS)]
-        DrsCodedWarning('00-003-00036', 'warning', targs=wargs,
-                        func_name=func_name)
-    # return files
-    return config_files
-
-
-def _load_from_module(modules: List[str], quiet: bool = False) -> ModLoads:
-    """
-    Load constants/keywords from modules and validates them
-
-    :param modules: list of strings, the module paths
-    :param quiet: bool, if True prints when validating
-    :return: list of keys (str), list of values (Any), list of sources (str),
-             list of instances (either Const or Keyword instances)
-    """
-    # set function name (cannot break here --> no access to inputs)
-    func_name = display_func('_load_from_module', __NAME__)
-    # storage for returned values
-    keys, values, sources, instances = [], [], [], []
-    # loop around modules
-    for module in modules:
-        # get a list of keys values
-        mkeys, mvalues = constant_functions.generate_consts(module)
-        # loop around each value and test type
-        for it in range(len(mkeys)):
-            # get iteration values
-            mvalue = mvalues[it]
-            # get the parameter name
-            key = mkeys[it]
-            # deal with duplicate keys
-            if key in keys:
-                # raise exception
-                eargs = [key, module, ','.join(modules), func_name]
-                raise DrsCodedException('00-003-00006', targs=eargs,
-                                        level='error', func_name=func_name)
-            # valid parameter
-            cond = mvalue.validate(quiet=quiet)
-            # if validated append to keys/values/sources
-            if cond:
-                keys.append(key)
-                values.append(mvalue.true_value)
-                sources.append(mvalue.source)
-                instances.append(mvalue)
-    # return keys
-    return keys, values, sources, instances
-
-
-def _load_from_yaml(files: List[str], modules: List[str]) -> ModLoads:
-    """
-    Load constants/keywords from a yaml file
-
-    :param files: list of strings, the file paths to the config/const files
-    :param modules: list of strings, the module paths
-
-    :return: list of keys (str), list of values (Any), list of sources (str),
-             list of instances (either Const or Keyword instances)
-    """
-    # set function name (cannot break here --> no access to inputs)
-    func_name = display_func('_load_from_yaml', __NAME__)
-    # -------------------------------------------------------------------------
-    # load constants from yaml file
-    # -------------------------------------------------------------------------
-    fkeys, fvalues, fsources = [], [], []
-    for filename in files:
-        # load the yaml in the standard way
-        yaml_dict = base.load_yaml(filename)
-        # flatten this dictionary
-        flat_dict = base_class.FlatYamlDict(yaml_dict, max_level=3)
-        # get key and value pairs
-        fkey, fvalue = flat_dict.items()
-        # add to fkeys and fvalues (loop around fkeys)
-        for it in range(len(fkey)):
-            # get this iterations values
-            fkeyi, fvaluei = fkey[it], fvalue[it]
-            # do not add keys if value is None
-            if fvaluei is None:
-                continue
-            # if this is not a new constant print warning
-            if fkeyi in fkeys:
-                # log warning message
-                wargs = [fkeyi, filename, ','.join(set(fsources)), filename]
-                DrsCodedWarning('10-002-00002', 'warning', targs=wargs,
-                                func_name=func_name)
-            # append to list
-            fkeys.append(fkeyi)
-            fvalues.append(fvaluei)
-            fsources.append(filename)
-    # -------------------------------------------------------------------------
-    # Now need to test the values are correct
-    # -------------------------------------------------------------------------
-    # storage for returned values
-    keys, values, sources, instances = [], [], [], []
-    # loop around modules
-    for module in modules:
-        # get a list of keys values
-        mkeys, mvalues = constant_functions.generate_consts(module)
-        # loop around each value and test type
-        for it in range(len(mkeys)):
-            # get iteration values
-            mvalue = mvalues[it]
-            # loop around the file values
-            for jt in range(len(fkeys)):
-                # if we are not dealing with the same key skip
-                if fkeys[jt] != mkeys[it]:
-                    continue
-                # if we are then we need to validate
-                value = mvalue.validate(fvalues[jt], source=fsources[jt])
-                # now append to output lists
-                keys.append(fkeys[jt])
-                values.append(value)
-                sources.append(fsources[jt])
-                instances.append(mvalue)
-    # return keys values and sources
-    return keys, values, sources, instances
-
-
-def _load_from_file(files: List[str], modules: List[str]) -> ModLoads:
-    """
-    Load constants/keywords from a list of config/const files and validates them
-
-    :param files: list of strings, the file paths to the config/const files
-    :param modules: list of strings, the module paths
-
-    :return: list of keys (str), list of values (Any), list of sources (str),
-             list of instances (either Const or Keyword instances)
-    """
-    # set function name (cannot break here --> no access to inputs)
-    func_name = display_func('_load_from_file', __NAME__)
-    # -------------------------------------------------------------------------
-    # load constants from file
-    # -------------------------------------------------------------------------
-    fkeys, fvalues, fsources = [], [], []
-    for filename in files:
-        # get keys/values from script
-        fkey, fvalue = constant_functions.get_constants_from_file(filename)
-        # add to fkeys and fvalues (loop around fkeys)
-        for it in range(len(fkey)):
-            # get this iterations values
-            fkeyi, fvaluei = fkey[it], fvalue[it]
-            # if this is not a new constant print warning
-            if fkeyi in fkeys:
-                # log warning message
-                wargs = [fkeyi, filename, ','.join(set(fsources)), filename]
-                DrsCodedWarning('10-002-00002', 'warning', targs=wargs,
-                                func_name=func_name)
-            # append to list
-            fkeys.append(fkeyi)
-            fvalues.append(fvaluei)
-            fsources.append(filename)
-    # -------------------------------------------------------------------------
-    # Now need to test the values are correct
-    # -------------------------------------------------------------------------
-    # storage for returned values
-    keys, values, sources, instances = [], [], [], []
-    # loop around modules
-    for module in modules:
-        # get a list of keys values
-        mkeys, mvalues = constant_functions.generate_consts(module)
-        # loop around each value and test type
-        for it in range(len(mkeys)):
-            # get iteration values
-            mvalue = mvalues[it]
-            # loop around the file values
-            for jt in range(len(fkeys)):
-                # if we are not dealing with the same key skip
-                if fkeys[jt] != mkeys[it]:
-                    continue
-                # if we are then we need to validate
-                value = mvalue.validate(fvalues[jt], source=fsources[jt])
-                # now append to output lists
-                keys.append(fkeys[jt])
-                values.append(value)
-                sources.append(fsources[jt])
-                instances.append(mvalue)
-    # return keys values and sources
-    return keys, values, sources, instances
-
-
-def _save_config_params(params: ParamDict) -> ParamDict:
-    """
-    Adds 'DRS_CONFIG' list of config files to parameter dictionary
-
-    :param params: ParamDict - the parameter dictionary of constants
-
-    :return:
-    """
-    # set function name (cannot break here --> no access to inputs)
-    func_name = display_func('_save_config_params', __NAME__)
-    # get sources from paramater dictionary
-    sources = params.sources.values()
-    # get unique sources
-    usources = set(sources)
-    # set up storage
-    params['DRS_CONFIG'] = []
-    params.set_source('DRS_CONFIG', func_name)
-    # loop around and add to param
-    for source in usources:
-        params['DRS_CONFIG'].append(source)
-    # return the parameters
-    return params
-
-
-def _check_mod_source(source: str) -> Union[None, str]:
-    """
-    Check that the source (a module file) is a python mod path
-    i.e. path1.path2.filename  and not a file path
-    i.e. path1/path2/filename.py
-
-    :param source: str, the moudle source to check
-    :return: str, the cleaned source i.e. path1.path2.filename
-    """
-    # deal with source is None
-    if source is None:
-        return source
-    # if source doesn't exist also skip
-    if not os.path.exists(source):
-        return source
-    # get package path
-    package_path = drs_misc.get_relative_folder(__PACKAGE__, '')
-    # if package path not in source then skip
-    if package_path not in source:
-        return source
-    # remove package path and replace with PACKAGE
-    source = source.replace(package_path, __PACKAGE__.lower())
-    # replace separators with .
-    source = source.replace(os.sep, '.')
-    # remove double dots
-    while '..' in source:
-        source = source.replace('..', '.')
-    # return edited source
-    return source
 
 
 # =============================================================================

@@ -33,7 +33,7 @@ from apero.base import base
 from apero.core import constants
 from apero.core import lang
 from apero.core.core import drs_log
-from apero.core.core import drs_text
+from apero.core.base import drs_text
 from apero.io import drs_lock
 
 # =============================================================================

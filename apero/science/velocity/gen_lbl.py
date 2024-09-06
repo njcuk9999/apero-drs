@@ -114,7 +114,7 @@ def run_apero_get(params: ParamDict):
     # do not use since
     since = None
     # get the fiber types
-    lbl_scifibers, lbl_calfibers = pconst.FIBER_CCF()
+    lbl_scifibers, lbl_calfibers = params['FIBER_CCF']
     # get the output path
     outpath_objects = os.path.join(lbl_in_path, 'science')
     outpath_templates = os.path.join(lbl_in_path, 'templates')

@@ -1,32 +1,35 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Pseudo constants (function) definitions for NIRPS HA
+Pseudo constants (function) definitions for NIRPS HE
 
 Created on 2019-01-18 at 14:44
 
 @author: cook
 """
 from pathlib import Path
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import sqlalchemy
 
 from apero.base import base
 from apero.base import drs_db
-from apero.core import constants
-from apero.core.core import drs_base_classes as base_class
-from apero.core.core import drs_exceptions
-from apero.core.core import drs_misc
-from apero.core.core import drs_text
-from apero.core.instruments.default import pseudo_const
+from apero.core.constants.param_functions import ParamDict
+from apero.core.base import drs_exceptions
+from apero.core.base import drs_base_classes as base_class
+from apero.core.base import drs_misc
+from apero.core.base import drs_text
+from apero.core.instruments.default import instrument
+from apero.core.instruments.nirps_he import config
+from apero.core.instruments.nirps_he import constants
+from apero.core.instruments.nirps_he import keywords
 
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'config.instruments.nirps_ha.pseudo_const'
-__INSTRUMENT__ = 'NIRPS_HA'
+__NAME__ = 'config.instruments.nirps_he.pseudo_const'
+__INSTRUMENT__ = 'NIRPS_HE'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
 __author__ = base.__author__
@@ -34,8 +37,6 @@ __date__ = base.__date__
 __release__ = base.__release__
 # get Time / TimeDelta
 Time, TimeDelta = base.AstropyTime, base.AstropyTimeDelta
-# Get Parmeter Dictionary class
-ParamDict = constants.ParamDict
 # Get the Database Columns class
 DatabaseColumns = drs_db.AperoDatabaseColumns
 # get error
@@ -45,13 +46,13 @@ display_func = drs_misc.display_func
 # null text
 NULL_TEXT = ['', 'None', 'Null']
 # get astropy table (don't reload)
-Table = pseudo_const.Table
+Table = instrument.Table
 
 
 # =============================================================================
 # Define Constants class (pseudo constants)
 # =============================================================================
-class PseudoConstants(pseudo_const.DefaultPseudoConstants):
+class NirpsHe(instrument.Instrument):
     # set class name
     class_name = 'PsuedoConstants'
 
@@ -129,9 +130,32 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         # return string representation
         return '{0}[{1}]'.format(self.class_name, self.instrument)
 
-    # -------------------------------------------------------------------------
-    # OVERWRITE PSEUDO-CONSTANTS from constants.default.pseudo_const.py here
-    # -------------------------------------------------------------------------
+    def copy(self):
+        return NirpsHe(instrument=self.instrument)
+
+    def get_constants(self
+                      ) -> Tuple[Dict[str, Any], Dict[str, str], Dict[str, Any]]:
+        # get constants dicts
+        config_dict = config.CDict()
+        constants_dict = constants.CDict()
+        keywords_dict = keywords.CDict()
+        # ---------------------------------------------------------------------
+        # store keys, values, sources, instances
+        values, sources, instances = dict(), dict(), dict()
+        # loop around config/constants/keyword dictionaries and merge
+        for clist in [config_dict, constants_dict, keywords_dict]:
+            # loop around all keys stored in dictionary
+            for key in clist.storage.keys():
+                # do not add keys that are already in values
+                if key in values:
+                    continue
+                # update value, source, instance based on
+                values[key] = clist.storage[key].true_value
+                sources[key] = clist.storage[key].source
+                instances[key] = clist.storage[key]
+        # ---------------------------------------------------------------------
+        # return these
+        return values, sources, instances
 
     # =========================================================================
     # File and Recipe definitions
@@ -147,10 +171,10 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         if self.filemod is not None:
             return self.filemod
         # set module name
-        module_name = 'apero.core.instruments.nirps_ha.file_definitions'
+        module_name = 'apero.core.instruments.nirps_he.file_definitions'
         # try to import module
         try:
-            self.filemod = base_class.ImportModule('nirps_ha.file_definitions',
+            self.filemod = base_class.ImportModule('nirps_he.file_definitions',
                                                    module_name)
             return self.filemod
         except Exception as e:
@@ -172,10 +196,10 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         if self.recipemod is not None:
             return self.recipemod
         # set module name
-        module_name = 'apero.core.instruments.nirps_ha.recipe_definitions'
+        module_name = 'apero.core.instruments.nirps_he.recipe_definitions'
         # try to import module
         try:
-            strmod = 'nirps_ha.recipe_definitions'
+            strmod = 'nirps_he.recipe_definitions'
             self.recipemod = base_class.ImportModule(strmod, module_name)
             return self.recipemod
         except Exception as e:
@@ -188,61 +212,6 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
     # =========================================================================
     # HEADER SETTINGS
     # =========================================================================
-    def VALID_RAW_FILES(self) -> List[str]:
-        """
-        Return the extensions that are valid for raw files
-
-        :return: a list of strings of valid extensions
-        """
-        # set function name
-        # _ = display_func('VALID_RAW_FILES', __NAME__, self.class_name)
-        # set valid extentions
-        valid = ['.fits']
-        return valid
-
-    def NON_CHECK_DUPLICATE_KEYS(self) -> List[str]:
-        """
-        Post process do not check these duplicate keys
-        """
-        # set function name
-        # _ = display_func('NON_CHECK_DUPLICATE_KEYS', __NAME__,
-        #                  self.class_name)
-        # set forbidden keys
-        keys = ['SIMPLE', 'EXTEND', 'NEXTEND']
-        # return forbiiden keys
-        return keys
-
-    def FORBIDDEN_OUT_KEYS(self) -> List[str]:
-        """
-        Post process primary extension should not have these keys
-        """
-        # set function name
-        # _ = display_func('FORBIDDEN_OUT_KEYS', __NAME__, self.class_name)
-        # set forbidden keys
-        forbidden_keys = ['BITPIX', 'NAXIS', 'NAXIS1', 'NAXIS2', 'XTENSION']
-        # return forbiiden keys
-        return forbidden_keys
-
-    # noinspection PyPep8Naming
-    def FORBIDDEN_COPY_KEYS(self) -> List[str]:
-        """
-        Defines the keys in a HEADER file not to copy when copying over all
-        HEADER keys to a new fits file
-
-        :return forbidden_keys: list of strings, the keys in a HEADER file not
-                                to copy from and old fits file
-        """
-        # set function name
-        # _ = display_func('FORBIDDEN_COPY_KEYS', __NAME__, self.class_name)
-        # set forbidden keys
-        forbidden_keys = ['SIMPLE', 'BITPIX', 'NAXIS', 'NAXIS1', 'NAXIS2',
-                          'EXTEND', 'COMMENT', 'CRVAL1', 'CRPIX1', 'CDELT1',
-                          'CRVAL2', 'CRPIX2', 'CDELT2', 'BSCALE', 'BZERO',
-                          'PHOT_IM', 'FRAC_OBJ', 'FRAC_SKY', 'FRAC_BB',
-                          'NEXTEND', '', 'HISTORY', 'XTENSION']
-        # return keys
-        return forbidden_keys
-
     def HEADER_FIXES(self, params: ParamDict, recipe: Any, header: Any,
                      hdict: Any, filename: str, check_aliases: bool = False,
                      objdbm: Any = None) -> Any:
@@ -308,7 +277,6 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         # Deal with calibrations and sky KW_OBJNAME
         # ------------------------------------------------------------------
         header, hdict = get_special_objname(params, header, hdict)
-
         # ------------------------------------------------------------------
         # Return header
         # ------------------------------------------------------------------
@@ -364,9 +332,9 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
                  or DARK_DARK)
         """
         # get correct header
-        header, _ = get_dprtype(params, recipe, header, None, filename)
+        dprtype, _, _ = construct_dprtype(recipe, params, filename, header)
         # return dprtype
-        return str(header[params['KW_DPRTYPE'][0]])
+        return dprtype
 
     def DRS_MIDMJD(self, params: ParamDict, header: Any,
                    filename: Union[Path, str]) -> float:
@@ -714,19 +682,6 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         else:
             return dprtype.split('_')[1]
 
-    def FIBER_CCF(self) -> Tuple[str, str]:
-        """
-        Get the science and reference fiber to use in the CCF process
-
-        :return: the science and reference fiber
-        """
-        # set function name
-        # _ = display_func('FIBER_CCF', __NAME__, self.class_name)
-        # set the fibers and return
-        science = 'A'
-        reference = 'B'
-        return science, reference
-
     def FIBER_KINDS(self) -> Tuple[List[str], str]:
         """
         Set the fiber kinds (those to be though as as "science" and those to be
@@ -768,15 +723,6 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         # list the individual fiber names
         return ['A', 'B']
 
-    def SKYFIBERS(self) -> Tuple[Union[str, None], Union[str, None]]:
-        """
-        List the sky fibers to use for the science channel and the calib
-        channel
-
-        :return:
-        """
-        return 'A', 'B'
-
     # tellu fudge
     def TAPAS_INST_CORR(self, mask_water: Table,
                         mask_others: Table) -> Tuple[Table, Table]:
@@ -801,21 +747,6 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         mask_others = mask_others[nirps_mask_others]
 
         return mask_water, mask_others
-
-    def TELLU_BAD_WAVEREGIONS(self) -> List[Tuple[float, float]]:
-        """
-        Define bad wavelength regions to mask before correcting tellurics
-
-        :return:  list of tuples (float, float), each tuple is a region from
-                  min wavelength to max wavelength
-        """
-        bad_regions = []
-        # mask the absorption region
-        bad_regions.append((1370, 1410))
-        # mask the reddest wavelength
-        bad_regions.append((1850, 2000))
-        # by default we mask no regions
-        return bad_regions
 
     # =========================================================================
     # DATABASE SETTINGS
@@ -959,6 +890,7 @@ def constuct_objname(params: Union[ParamDict, None], header,
         objectname = pseudo_const.clean_object(rawobjname)
     # -------------------------------------------------------------------------
     return objectname
+
 
 
 def clean_obj_name(params: ParamDict = None, header: Any = None,
@@ -1187,7 +1119,7 @@ def get_drs_mode(params: ParamDict, header: Any, hdict: Any) -> Tuple[Any, Any]:
     # get drs mode header keyword store
     kw_drs_mode, _, kw_drs_mode_comment = params['KW_DRS_MODE']
     # get drs mode header keyword store
-    drs_mode = 'HA'
+    drs_mode = 'HE'
     # -------------------------------------------------------------------------
     # add header key
     header[kw_drs_mode] = (drs_mode, kw_drs_mode_comment)

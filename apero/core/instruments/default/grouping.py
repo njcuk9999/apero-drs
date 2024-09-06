@@ -30,7 +30,7 @@ from astropy.table import Table
 
 from apero.base import base
 from apero.core.core import drs_argument
-from apero.core.core import drs_exceptions
+from apero.core.base import drs_exceptions
 from apero.core.core import drs_log
 from apero.tools.module.processing import drs_grouping_functions as drsgf
 

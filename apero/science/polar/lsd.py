@@ -249,10 +249,8 @@ def load_lsd_mask(params: ParamDict, props: ParamDict) -> ParamDict:
     min_linedepth = params['POLAR_LSD_MIN_LINEDEPTH']
     max_linedepth = params['POLAR_LSD_MAX_LINEDEPTH']
     # -------------------------------------------------------------------------
-    # get pconst
-    pconst = constants.pload()
     # get lsd regions
-    wl_regions = pconst.GET_LSD_LINE_REGIONS()
+    wl_regions = params['GET_LSD_LINE_REGIONS']
     # -------------------------------------------------------------------------
     # get temperature
     temperature = props['OBJECT_TEMPERATURE']
@@ -468,14 +466,11 @@ def prepare_polarimetry_data(params: ParamDict, props: ParamDict) -> ParamDict:
     pol, polerr = props['POL'], props['POLERR']
     null1, null2 = props['NULL1'], props['NULL2']
     # -------------------------------------------------------------------------
-    # get pconst
-    pconst = constants.pload()
-    # -------------------------------------------------------------------------
     # get the shape of pol
     ydim, xdim = pol.shape
     # -------------------------------------------------------------------------
     # get wavelength ranges to be considered in each spectral order
-    ordermask = pconst.GET_LSD_ORDER_RANGES()
+    ordermask = params['GET_LSD_ORDER_RANGES']
     # -------------------------------------------------------------------------
     # initialize output data vectors
     lsd_wave, lsd_flux, lsd_fluxerr = [], [], []

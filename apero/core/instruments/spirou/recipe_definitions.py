@@ -9,7 +9,7 @@ Created on 2018-10-31 at 18:06
 """
 from apero.base import base
 from apero.core import lang
-from apero.core.core import drs_base_classes as base_class
+from apero.core.base import drs_base_classes as base_class
 from apero.core.instruments.default import grouping
 from apero.core.instruments.default import recipe_definitions as rd
 from apero.core.instruments.spirou import file_definitions as files

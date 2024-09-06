@@ -11,6 +11,7 @@ Created on 2019-01-17 at 14:31
 """
 from apero.core.constants import constant_functions
 from apero.core.constants import param_functions
+from apero.core.constants import load_functions
 
 # =============================================================================
 # Define variables
@@ -26,13 +27,13 @@ __all__ = ['load', 'pload', 'ParamDict', 'gen_all', 'getmodnames',
 # =============================================================================
 # load a config file (based on instrument)
 #    Errors returned via ConfigError (must be handled
-load = param_functions.load_config
+load = load_functions.load_config
 
 # load the pseudo constants (based on instrument)
-pload = param_functions.load_pconfig
+pload = load_functions.load_pconfig
 
 # load the psuedo constants typing
-PseudoConstants = param_functions.pseudo_const.DefaultPseudoConstants
+PseudoConstants = load_functions.select.Instrument
 
 # pchcek
 PCheck = param_functions.PCheck

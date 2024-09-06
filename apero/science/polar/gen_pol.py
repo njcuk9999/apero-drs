@@ -27,7 +27,7 @@ from apero.core import math as mp
 from apero.core.core import drs_database
 from apero.core.core import drs_file
 from apero.core.core import drs_log
-from apero.core.core import drs_text
+from apero.core.base import drs_text
 from apero.core.utils import drs_recipe
 from apero.io import drs_fits
 from apero.science import extract
@@ -1353,8 +1353,7 @@ def calculate_continuum(params: ParamDict, recipe: DrsRecipe, props: ParamDict
     remove_continuum = params['POLAR_REMOVE_CONTINUUM']
     # -------------------------------------------------------------------------
     # get pconst
-    pconst = constants.pload()
-    telluric_bands = pconst.GET_POLAR_TELLURIC_BANDS()
+    telluric_bands = params['GET_POLAR_TELLURIC_BANDS']
     # -------------------------------------------------------------------------
     # get wavelength data if require
     wldata = props['GLOBAL_WAVEMAP'].ravel()
@@ -2185,10 +2184,8 @@ def add_polar_keywords(params: ParamDict, props: ParamDict,
     :return: outfile: DrsFitsFile, the updated DrsFitsFile (hdict updated)
     """
     # -------------------------------------------------------------------------
-    # get pconst
-    pconst = constants.pload()
     # get the telluric bands
-    telluric_bands = pconst.GET_POLAR_TELLURIC_BANDS()
+    telluric_bands = params['GET_POLAR_TELLURIC_BANDS']
     # load the telluric bands into a 1D list of strings '{LOW},{HIGH}
     str_telluric_bands = []
     for band in telluric_bands:

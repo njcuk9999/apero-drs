@@ -26,7 +26,7 @@ from apero.core import math as mp
 from apero.core.core import drs_database
 from apero.core.core import drs_file
 from apero.core.core import drs_log
-from apero.core.core import drs_text
+from apero.core.base import drs_text
 from apero.core.instruments.default import pseudo_const
 from apero.core.utils import drs_data
 from apero.core.utils import drs_utils
@@ -52,7 +52,7 @@ DrsFitsFile = drs_file.DrsFitsFile
 CalibDatabase = drs_database.CalibrationDatabase
 TelluDatabase = drs_database.TelluricDatabase
 FileIndexDatabase = drs_database.FileIndexDatabase
-DPseudoConsts = pseudo_const.DefaultPseudoConstants
+DPseudoConsts = pseudo_const.Instrument
 # Get function string
 display_func = drs_log.display_func
 # Get Logging function

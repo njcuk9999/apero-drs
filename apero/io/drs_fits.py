@@ -34,7 +34,7 @@ from astropy.table import Table
 from apero.base import base
 from apero.core import constants
 from apero.core import lang
-from apero.core.core import drs_base_classes
+from apero.core.base import drs_base_classes
 from apero.core.core import drs_log
 
 # =============================================================================

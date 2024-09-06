@@ -140,14 +140,12 @@ def __main__(recipe, params):
     mainname = __NAME__ + '._main()'
     # define file type
     filetype = 'WAVE_NIGHT'
-    # get pseudo constants
-    pconst = constants.pload()
     # load the calibration database
     calibdbm = drs_database.CalibrationDatabase(params)
     calibdbm.load_db()
     # ----------------------------------------------------------------------
     # get all allowed fibers
-    allowed_fibers = pconst.INDIVIDUAL_FIBERS()
+    allowed_fibers = params['INDIVIDUAL_FIBERS']
     # get fibers
     if params['INPUTS']['FIBERS'] not in ['None', '']:
         fibers = params['INPUTS'].listp('FIBERS', dtype=str)

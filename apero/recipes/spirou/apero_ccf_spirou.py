@@ -195,7 +195,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         outtype = infile.get_hkey('KW_OUTPUT', dtype=str)
         # get ccf fibers
-        recon_sfiber, recon_rfiber = pconst.FIBER_CCF()
+        recon_sfiber, recon_rfiber = params['FIBER_CCF']
         # correct tellurics
         if outtype in params['CCF_CORRECT_TELLU_TYPES']:
             # remove telluric domain below a defined threshold

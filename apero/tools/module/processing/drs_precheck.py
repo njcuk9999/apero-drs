@@ -23,7 +23,7 @@ from apero.core.core import drs_argument
 from apero.core.core import drs_database
 from apero.core.core import drs_file
 from apero.core.core import drs_log
-from apero.core.core import drs_text
+from apero.core.base import drs_text
 from apero.core.utils import drs_recipe
 from apero.science import preprocessing as prep
 from apero.science import telluric

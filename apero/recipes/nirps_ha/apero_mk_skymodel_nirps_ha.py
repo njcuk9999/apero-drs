@@ -106,7 +106,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # find all sky files
     # ----------------------------------------------------------------------
     # get the science and calib fibers to use
-    sci_fiber, cal_fiber = pconst.SKYFIBERS()
+    sci_fiber, cal_fiber = params['SKYFIBERS']
     # find science files
     sky_files_sci, infile_sci = telluric.find_night_skyfiles(params, sci_fiber,
                                                              filetype)

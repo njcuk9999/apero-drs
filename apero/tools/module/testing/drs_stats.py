@@ -24,11 +24,9 @@ from pandasql import sqldf
 from apero.base import base
 from apero.core import constants
 from apero.core import math as mp
-from apero.core.core import drs_base_classes as base_class
+from apero.core.base import drs_base_classes as base_class, drs_text, drs_misc
 from apero.core.core import drs_database
 from apero.core.core import drs_log
-from apero.core.core import drs_misc
-from apero.core.core import drs_text
 from apero.core.utils import drs_recipe
 from apero.io import drs_fits
 

@@ -24,7 +24,7 @@ from apero.core import lang
 from apero.core.core import drs_database
 from apero.core.core import drs_file
 from apero.core.core import drs_log
-from apero.core.core import drs_text
+from apero.core.base import drs_text
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_utils
 from apero.io import drs_table

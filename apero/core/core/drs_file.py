@@ -43,12 +43,12 @@ from apero.core import constants
 from apero.core import lang
 from apero.core import math as mp
 from apero.core.constants import path_definitions as pathdef
-from apero.core.core import drs_base_classes
-from apero.core.core import drs_exceptions
+from apero.core.base import drs_exceptions
+from apero.core.base import drs_base_classes as base_class
+from apero.core.base import drs_text
+from apero.core.base import drs_misc
 from apero.core.core import drs_log
-from apero.core.core import drs_misc
 from apero.core.core import drs_out_file as out
-from apero.core.core import drs_text
 from apero.io import drs_fits
 from apero.io import drs_path
 from apero.io import drs_table
@@ -4533,8 +4533,6 @@ class DrsFitsFile(DrsInputFile):
         # generate instances from params
         keyword_inst = constants.constant_functions.Keyword
         keyworddict = params.get_instanceof(keyword_inst, nameattr='key')
-        # get pconstant
-        pconstant = constants.pload()
 
         # filter function
         def __keep_card(card: drs_fits.fits.header.Card) -> bool:
@@ -4587,16 +4585,16 @@ class DrsFitsFile(DrsInputFile):
                 else:
                     return False
             # skip if key is forbidden key
-            if forbid_keys and (key in pconstant.FORBIDDEN_COPY_KEYS()):
+            if forbid_keys and (key in params['FORBIDDEN_COPY_KEYS']):
                 return False
             # skip if key is drs forbidden key (unless allkeys)
-            elif (key in pconstant.FORBIDDEN_DRS_KEY()) and (not allkeys):
+            elif (key in params['FORBIDDEN_DRS_KEY']) and (not allkeys):
                 return False
             # skip if key added temporarily in code (denoted by @@@)
             elif '@@@' in key:
                 return False
             # skip QC keys (unless allkeys)
-            elif is_forbidden_prefix(pconstant, key) and (not allkeys):
+            elif is_forbidden_prefix(params, key) and (not allkeys):
                 return False
             else:
                 return True
@@ -7000,17 +6998,15 @@ class DrsOutFile(DrsInputFile):
         
         :return: None, updates keys/values in self
         """
-        # get pconst
-        pconst = constants.pload()
         # deal with removing drs keys
         self._remove_drs_keys(params)
         # deal with removing standard keys from primary header
-        self._remove_standard_keys(pconst)
+        self._remove_standard_keys(params)
         # deal with adding keys from one header to another
         self._add_header_keys(params)
         # remove keys that are in primary and in extensions
         # TODO: Add back in with a skip for certain files?
-        # self._remove_duplicate_keys(params, pconst)
+        # self._remove_duplicate_keys(params)
         # add extension names as comments
         self._add_extensions_names_to_primary(params)
 
@@ -7230,7 +7226,7 @@ class DrsOutFile(DrsInputFile):
                 # push header back to extension
                 self.extensions[pos].header = header
 
-    def _remove_standard_keys(self, pconst: PseudoConstants):
+    def _remove_standard_keys(self, params: ParamDict):
         """
         Remove standard keys from a header if extension was flagged as having
         remove_std_hkeys
@@ -7240,7 +7236,7 @@ class DrsOutFile(DrsInputFile):
         :return:
         """
         # get standard keys from pconst
-        remove_keys = pconst.FORBIDDEN_OUT_KEYS()
+        remove_keys = params['FORBIDDEN_OUT_KEYS']
         # loop around each extension
         for pos in self.extensions:
             # make sure extension has header
@@ -7259,8 +7255,7 @@ class DrsOutFile(DrsInputFile):
                 # push header back to extension
                 self.extensions[pos].header = header
 
-    def _remove_duplicate_keys(self, params: ParamDict,
-                               pconst: PseudoConstants):
+    def _remove_duplicate_keys(self, params: ParamDict):
         """
         Remove keys that are both in primary and extension
 
@@ -7270,7 +7265,7 @@ class DrsOutFile(DrsInputFile):
         :return:
         """
         # get keys not to check
-        skip_keys = pconst.NON_CHECK_DUPLICATE_KEYS()
+        skip_keys = params['NON_CHECK_DUPLICATE_KEYS']
         # get primary extension
         header0 = self.extensions[0].header
         # loop around extensions
@@ -8077,7 +8072,7 @@ def combine_headers(params: ParamDict, headers: List[Header],
     # loop around unique header keys
     for k_it, key in enumerate(all_header_keys):
         # skip forbidden keys
-        if key in pconst.FORBIDDEN_OUT_KEYS():
+        if key in params['FORBIDDEN_OUT_KEYS']:
             continue
         # storage of values
         values = []
@@ -8684,13 +8679,13 @@ def test_for_formatting(key: str, number: Union[int, float]) -> str:
         return test_str
 
 
-def is_forbidden_prefix(pconstant: PseudoConstants, key: str) -> bool:
+def is_forbidden_prefix(params: ParamDict, key: str) -> bool:
     """
     Boolean check of the Pseudo Constants class for FORBIDDEN_HEADER_PREFIXES
     if key starts with forbidden header prefixes False is returned, otherwise
     True is return
 
-    :param pconstant: PseudoConstants class instance
+    :param params: ParamDict, parameter dictionary of constants
     :param key: str, the key to check
 
     :return: bool, True if key does not start with any forbidden header prefix,
@@ -8702,7 +8697,7 @@ def is_forbidden_prefix(pconstant: PseudoConstants, key: str) -> bool:
     cond = False
     # if prefix is forbidden and key starts with this prefix -->
     #   set cond to true (key is not forbidden)
-    for prefix in pconstant.FORBIDDEN_HEADER_PREFIXES():
+    for prefix in params['FORBIDDEN_HEADER_PREFIXES']:
         if key.startswith(prefix):
             cond = True
     # return condition on whether key is forbidden

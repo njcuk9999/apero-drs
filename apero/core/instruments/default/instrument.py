@@ -20,10 +20,13 @@ from astropy.table import Table
 
 from apero.base import base
 from apero.base import drs_db
-from apero.core.core import drs_base_classes as base_class
-from apero.core.core import drs_exceptions
-from apero.core.core import drs_misc
-from apero.core.core import drs_text
+from apero.core.base import drs_exceptions
+from apero.core.base import drs_base_classes as base_class
+from apero.core.base import drs_misc
+from apero.core.base import drs_text
+from apero.core.instruments.default import config
+from apero.core.instruments.default import constants
+from apero.core.instruments.default import keywords
 
 # =============================================================================
 # Define variables
@@ -59,7 +62,7 @@ LONG_FLOAT = drs_db.AperoFloat(precision=53, asdecimal=False)
 # Define Constants class (pseudo constants)
 # =============================================================================
 # noinspection PyMethodMayBeStatic,PyPep8Naming
-class DefaultPseudoConstants:
+class Instrument:
     # set class name
     class_name = 'DefaultPseudoConstants'
 
@@ -126,6 +129,9 @@ class DefaultPseudoConstants:
         # return string representation
         return '{0}[{1}]'.format(self.class_name, self.instrument)
 
+    def copy(self):
+        return Instrument(instrument=self.instrument)
+
     def _not_implemented(self, method_name: str):
         """
         Raise a Not Implemented Error (for methods that are required to be
@@ -139,6 +145,30 @@ class DefaultPseudoConstants:
         """
         emsg = '{0} must be defined at instrument level'
         raise NotImplementedError(emsg.format(method_name))
+
+    def get_constants(self
+                      ) -> Tuple[Dict[str, Any], Dict[str, str], Dict[str, Any]]:
+        # get constants dicts
+        config_dict = config.CDict()
+        constants_dict = constants.CDict()
+        keywords_dict = keywords.CDict()
+        # ---------------------------------------------------------------------
+        # store keys, values, sources, instances
+        values, sources, instances = dict(), dict(), dict()
+        # loop around config/constants/keyword dictionaries and merge
+        for clist in [config_dict, constants_dict, keywords_dict]:
+            # loop around all keys stored in dictionary
+            for key in clist.storage.keys():
+                # do not add keys that are already in values
+                if key in values:
+                    continue
+                # update value, source, instance based on
+                values[key] = clist.storage[key].true_value
+                sources[key] = clist.storage[key].source
+                instances[key] = clist.storage[key]
+        # ---------------------------------------------------------------------
+        # return these
+        return values, sources, instances
 
     # =========================================================================
     # File and Recipe definitions
@@ -187,92 +217,6 @@ class DefaultPseudoConstants:
     # =========================================================================
     # HEADER SETTINGS
     # =========================================================================
-    def VALID_RAW_FILES(self) -> List[str]:
-        """
-        Return the extensions that are valid for raw files
-
-        :return: a list of strings of valid extensions
-        """
-        # set function name
-        # _ = display_func('VALID_RAW_FILES', __NAME__, self.class_name)
-        # set valid extentions
-        valid = ['.fits']
-        return valid
-
-    def NON_CHECK_DUPLICATE_KEYS(self) -> List[str]:
-        """
-        Post process do not check these duplicate keys
-        """
-        # set function name
-        # _ = display_func('NON_CHECK_DUPLICATE_KEYS', __NAME__,
-        #                  self.class_name)
-        # set forbidden keys
-        keys = ['SIMPLE', 'EXTEND', 'NEXTEND']
-        # return forbiiden keys
-        return keys
-
-    def FORBIDDEN_OUT_KEYS(self) -> List[str]:
-        """
-        Defines the keys in a HEADER file not to copy when copying over all
-        HEADER keys to a new fits file
-
-        :return forbidden_keys: list of strings, the keys in a HEADER file not
-                                to copy from and old fits file
-        """
-        # set function name
-        # _ = display_func('FORBIDDEN_COPY_KEYS', __NAME__, self.class_name)
-        # set forbidden keys
-        forbidden_keys = ['SIMPLE', 'BITPIX', 'NAXIS', 'NAXIS1', 'NAXIS2',
-                          'EXTEND', 'COMMENT', 'CRVAL1', 'CRPIX1', 'CDELT1',
-                          'CRVAL2', 'CRPIX2', 'CDELT2', 'BSCALE', 'BZERO',
-                          'PHOT_IM', 'FRAC_OBJ', 'FRAC_SKY', 'FRAC_BB',
-                          'NEXTEND']
-        # return keys
-        return forbidden_keys
-
-    def FORBIDDEN_COPY_KEYS(self):
-        """
-        Defines the keys in a HEADER file not to copy when copying over all
-        HEADER keys to a new fits file
-
-        :return forbidden_keys: list of strings, the keys in a HEADER file not
-                                to copy from and old fits file
-        """
-        # set function name
-        # _ = display_func('FORBIDDEN_COPY_KEYS', __NAME__, self.class_name)
-        # raise implementation error
-        self._not_implemented('FORBIDDEN_COPY_KEYS')
-
-    def FORBIDDEN_HEADER_PREFIXES(self) -> List[str]:
-        """
-        Define the QC keys prefixes that should not be copied (i.e. they are
-        just for the input file not the output file)
-
-        :return keys:
-        """
-        # set function name
-        # _ = display_func('FORBIDDEN_HEADER_PREFIXES', __NAME__,
-        #                  self.class_name)
-        # set qc prefixes
-        prefixes = ['QCC', 'INF1', 'INF2', 'INF3', 'INP1']
-        # return keys
-        return prefixes
-
-    def FORBIDDEN_DRS_KEY(self) -> List[str]:
-        """
-        Define a list of keys that should not be copied from headers to new
-        headers
-
-        :return: list of strings, the header keys to not be copied
-        """
-        # set function name
-        # _ = display_func('FORBIDDEN_DRS_KEY', __NAME__, self.class_name)
-        # DRS OUTPUT KEYS
-        forbidden_keys = ['WAVELOC', 'REFRFILE', 'DRSPID', 'VERSION',
-                          'DRSOUTID']
-        # return keys
-        return forbidden_keys
-
     def HEADER_FIXES(self, params: Any, recipe: Any, header: Any,
                      hdict: Any, filename: str, check_aliases: bool = False,
                      objdbm: Any = None):
@@ -415,35 +359,6 @@ class DefaultPseudoConstants:
         _ = params, header, wlog
         # raise implementation error
         self._not_implemented('DRS_MIDMJD')
-
-    def GET_POLAR_TELLURIC_BANDS(self):
-        """
-        Define regions where telluric absorption is high
-
-        :return: list of bands each element is a list of a minimum wavelength
-                 and a maximum wavelength of that band
-        """
-        # raise implementation error
-        self._not_implemented('GET_POLAR_TELLURIC_BANDS')
-
-    def GET_LSD_LINE_REGIONS(self):
-        """
-        Define regions to select lines in the LSD analysis
-
-        :return: list of regions each element is a list of a minimum wavelength
-                 and a maximum wavelength of that band
-        """
-        # raise implementation error
-        self._not_implemented('GET_LSD_LINE_REGIONS')
-
-    def GET_LSD_ORDER_RANGES(self):
-        """
-        Define the valid wavelength ranges for each order in SPIrou.
-
-        :return orders: array of float pairs for wavelength ranges
-        """
-        # raise implementation error
-        self._not_implemented('GET_LSD_ORDER_RANGES')
 
     # =========================================================================
     # INDEXING SETTINGS
@@ -1017,16 +932,6 @@ class DefaultPseudoConstants:
         _ = fiber
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
-    def FIBER_CCF(self):
-        """
-        Get the science and reference fiber to use in the CCF process
-
-        :return: the science and reference fiber
-        """
-        # set function name
-        func_name = display_func('FIBER_CCF', __NAME__, self.class_name)
-        raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
-
     def FIBER_KINDS(self):
         """
         Set the fiber kinds (those to be though as as "science" and those to be
@@ -1050,17 +955,6 @@ class DefaultPseudoConstants:
         _ = fiber
         # set function name
         func_name = display_func('FIBER_KINDS', __NAME__, self.class_name)
-        raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
-
-    def INDIVIDUAL_FIBERS(self):
-        """
-        List the individual fiber names
-
-        :return: list of strings, the individual fiber names
-        """
-        # set function name
-        func_name = display_func('INDIVIDUAL_FIBERS', __NAME__,
-                                 self.class_name)
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
     # tellu fudge
@@ -1087,19 +981,6 @@ class DefaultPseudoConstants:
         """
         # by default we mask no regions
         return []
-
-
-    def SKYFIBERS(self):
-        """
-        List the sky fibers to use for the science channel and the calib
-        channel
-
-        :return:
-        """
-        # set function name
-        func_name = display_func('SKYFIBERS', __NAME__,
-                                 self.class_name)
-        raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
     # =========================================================================
     # PLOT SETTINGS
@@ -1515,7 +1396,6 @@ class DefaultPseudoConstants:
         _ = params, header
         # raise implementation error
         self._not_implemented('GET_EPOCH')
-
 
     def COMBINE_FILE_SUFFIX(self, basenames: List[str], suffix: str):
 

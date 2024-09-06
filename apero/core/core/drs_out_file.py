@@ -12,8 +12,8 @@ from typing import Any, Optional, Tuple, Union
 
 from apero.base import base
 from apero.core.constants import param_functions
-from apero.core.core import drs_exceptions
-from apero.core.core import drs_misc
+from apero.core.base import drs_exceptions
+from apero.core.base import drs_misc
 
 # =============================================================================
 # Define variables

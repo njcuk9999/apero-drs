@@ -17,7 +17,7 @@ from PIL import Image, ImageTk
 
 from apero.base import base
 from apero.core.core import drs_log
-from apero.core.core import drs_misc
+from apero.core.base import drs_misc
 
 # =============================================================================
 # Define variables

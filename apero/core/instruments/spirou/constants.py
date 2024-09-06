@@ -6,12 +6,12 @@ Created on 2019-01-17
 @author: cook
 """
 from apero.base import base
-from apero.core.instruments.default.default_constants import *
+from apero.core.instruments.default.constants import *
 
 # Note: If variables are not showing up MUST CHECK __all__ definition
 #       in import * module
 
-__NAME__ = 'core.instruments.spirou.default_constants.py'
+__NAME__ = 'core.instruments.spirou.constants.py'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
 __author__ = base.__author__
@@ -103,6 +103,15 @@ FWHM_PIXEL_LSF.value = 2.1
 # Define all polar rhomb positions
 ALL_POLAR_RHOMB_POS = ALL_POLAR_RHOMB_POS.copy(__NAME__)
 ALL_POLAR_RHOMB_POS.value = ['P2', 'P4', 'P14', 'P16']
+
+# =========================================================================
+# HEADER SETTINGS
+# =========================================================================
+cgroup = 'DRS.HEADER'
+
+# Define the extensions that are valid for raw files
+VALID_RAW_FILES = VALID_RAW_FILES.copy(__NAME__)
+VALID_RAW_FILES.value = ['a.fits', 'c.fits', 'd.fits', 'f.fits', 'o.fits']
 
 # =============================================================================
 # CALIBRATION: GENERAL SETTINGS
@@ -307,6 +316,18 @@ FIBER_SET_NUM_FIBERS_AB.value = 2
 FIBER_SET_NUM_FIBERS_A.value = 1
 FIBER_SET_NUM_FIBERS_B.value = 1
 FIBER_SET_NUM_FIBERS_C.value = 1
+
+# Get the science and reference fiber to use in the CCF process
+FIBER_CCF = FIBER_CCF.copy(__NAME__)
+FIBER_CCF.value = ['AB', 'C']
+
+# List the individual fiber names
+INDIVIDUAL_FIBERS = INDIVIDUAL_FIBERS.copy(__NAME__)
+INDIVIDUAL_FIBERS.value = ['A', 'B', 'C']
+
+# List the sky fibers to use for the science channel and the calib channel
+SKYFIBERS = SKYFIBERS.copy(__NAME__)
+SKYFIBERS.value = ['AB', None]
 
 # =============================================================================
 # PRE-PROCESSSING SETTINGS
@@ -2242,6 +2263,10 @@ TELLU_ONLY_PRECLEAN.value = False
 TELLU_ABSO_FIT_LOS_VELO = TELLU_ABSO_FIT_LOS_VELO.copy(__NAME__)
 TELLU_ABSO_FIT_LOS_VELO.value = False
 
+# Define bad wavelength regions to mask before correcting tellurics
+TELLU_BAD_WAVEREGIONS = TELLU_BAD_WAVEREGIONS.copy(__NAME__)
+TELLU_BAD_WAVEREGIONS.values = []
+
 # =============================================================================
 # OBJECT: TELLURIC PRE-CLEANING SETTINGS
 # =============================================================================
@@ -2784,6 +2809,104 @@ POLAR_NSIGMA_CLIPPING.author = base.AUTHORS['EM']
 POLAR_REDDEST_THRESHOLD = POLAR_REDDEST_THRESHOLD.copy(__NAME__)
 POLAR_REDDEST_THRESHOLD.value = 2450
 POLAR_REDDEST_THRESHOLD.author = base.AUTHORS['EM']
+
+# -----------------------------------------------------------------------------
+# Define regions where telluric absorption is high
+# -----------------------------------------------------------------------------
+GET_POLAR_TELLURIC_BANDS = GET_POLAR_TELLURIC_BANDS.copy(__NAME__)
+# storage for bands
+# noinspection PyListCreation
+bands = []
+# add bands (as tuples for low wave to high wave
+# bands.append([930, 967])
+# bands.append([1109, 1167])
+# bands.append([1326, 1491])
+# bands.append([1782, 1979])
+# bands.append([1997, 2027])
+# bands.append([2047, 2076])
+# set value
+GET_POLAR_TELLURIC_BANDS.value = bands
+GET_POLAR_TELLURIC_BANDS.author = base.AUTHORS['EM']
+
+# -----------------------------------------------------------------------------
+# Define regions to select lines in the LSD analysis
+# -----------------------------------------------------------------------------
+GET_LSD_LINE_REGIONS = GET_LSD_LINE_REGIONS.copy(__NAME__)
+# storage for bands
+# noinspection PyListCreation
+bands = []
+# add bands (as tuples for low wave to high wave
+# bands.append([983.0, 1116.0])
+# bands.append([1163.0, 1260.0])
+# bands.append([1280.0, 1331.0])
+# bands.append([1490.0, 1790.0])
+# bands.append([1975.0, 1995.0])
+# bands.append([2030.0, 2047.5])
+bands.append([960.0, 2430.0])
+# set value
+GET_LSD_LINE_REGIONS.value = bands
+GET_LSD_LINE_REGIONS.author = base.AUTHORS['EM']
+
+# -----------------------------------------------------------------------------
+# Define the valid wavelength ranges for each order in SPIrou.
+# -----------------------------------------------------------------------------
+GET_LSD_ORDER_RANGES = GET_LSD_ORDER_RANGES.copy(__NAME__)
+# storage for order ranges
+# noinspection PyListCreation
+orders = []
+# add ranges as pairs of wavelengths (low wave to high wave)
+orders.append([963.6, 986.0])
+orders.append([972.0, 998.4])
+orders.append([986.3, 1011])
+orders.append([1000.1, 1020])
+orders.append([1015, 1035])
+orders.append([1027.2, 1050])
+orders.append([1042, 1065])
+orders.append([1055, 1078])
+orders.append([1070, 1096])
+orders.append([1084, 1112.8])
+orders.append([1098, 1128])
+orders.append([1113, 1146])
+orders.append([1131, 1162])
+orders.append([1148, 1180])
+orders.append([1166, 1198])
+orders.append([1184, 1216])
+orders.append([1202, 1235])
+orders.append([1222, 1255])
+orders.append([1243, 1275])
+orders.append([1263, 1297])
+orders.append([1284, 1320])
+orders.append([1306, 1342])
+orders.append([1328, 1365])
+orders.append([1352, 1390])
+orders.append([1377, 1415])
+orders.append([1405, 1440])
+orders.append([1429, 1470])
+orders.append([1456, 1497])
+orders.append([1485, 1526])
+orders.append([1515, 1557])
+orders.append([1545, 1590])
+orders.append([1578, 1623])
+orders.append([1609, 1657])
+orders.append([1645, 1692])
+orders.append([1681, 1731])
+orders.append([1722, 1770])
+orders.append([1760, 1810])
+orders.append([1800, 1855])
+orders.append([1848, 1900])
+orders.append([1890, 1949])
+orders.append([1939, 1999])
+orders.append([1991, 2050])
+orders.append([2044.5, 2105])
+orders.append([2104, 2162])
+orders.append([2161, 2226])
+orders.append([2225, 2293])
+orders.append([2291, 2362])
+orders.append([2362, 2430])
+orders.append([2440, 2510])
+# set value
+GET_LSD_ORDER_RANGES.value = orders
+GET_LSD_ORDER_RANGES.author = base.AUTHORS['EM']
 
 # =============================================================================
 # POLAR POLY MOVING MEDIAN SETTINGS

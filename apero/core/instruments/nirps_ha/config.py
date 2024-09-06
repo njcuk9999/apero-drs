@@ -1,16 +1,16 @@
 """
-Default parameters for SPIROU
+Default parameters for NIRPS HA
 
 Created on 2019-01-17
 
 @author: cook
 """
 from apero.base import base
-from apero.core.instruments.default.default_config import *
+from apero.core.instruments.default.config import *
 
 # Note: If variables are not showing up MUST CHECK __all__ definition
 #       in import * module
-__NAME__ = 'config.instruments.spirou.default_config.py'
+__NAME__ = 'config.instruments.nirps_ha.config.py'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
 __author__ = base.__author__
@@ -22,19 +22,19 @@ __release__ = base.__release__
 # -----------------------------------------------------------------------------
 # Instrument Name
 INSTRUMENT = INSTRUMENT.copy(__NAME__)
-INSTRUMENT.value = 'SPIROU'
+INSTRUMENT.value = 'NIRPS_HA'
 
 # Defines the longitude West is negative
 OBS_LONG = OBS_LONG.copy(__NAME__)
-OBS_LONG.value = -155.468876
+OBS_LONG.value = -70.731330408
 
 #  Defines the latitude North (deg)
 OBS_LAT = OBS_LAT.copy(__NAME__)
-OBS_LAT.value = 19.825252
+OBS_LAT.value = -29.261165622
 
 #  Defines the CFHT altitude (m)
 OBS_ALT = OBS_ALT.copy(__NAME__)
-OBS_ALT.value = 4204
+OBS_ALT.value = 2400
 
 # -----------------------------------------------------------------------------
 # global settings
@@ -59,55 +59,55 @@ PARAMETER_SNAPSHOT.value = True
 # -----------------------------------------------------------------------------
 #   Define the root installation directory
 DRS_ROOT = DRS_ROOT.copy(__NAME__)
-DRS_ROOT.value = '/drs/spirou/drs/'
+DRS_ROOT.value = '/drs/nirps_ha/drs/'
 
 #   Define the folder with the raw data files in
 DRS_DATA_RAW = DRS_DATA_RAW.copy(__NAME__)
-DRS_DATA_RAW.value = '/drs/spirou/data/raw/'
+DRS_DATA_RAW.value = '/drs/nirps_ha/data/raw/'
 
 #   Define the directory that the reduced data should be saved to/read from
 DRS_DATA_REDUC = DRS_DATA_REDUC.copy(__NAME__)
-DRS_DATA_REDUC.value = '/drs/spirou/data/reduced'
+DRS_DATA_REDUC.value = '/drs/nirps_ha/data/reduced'
 
 #   Define the directory that the post processed data should be saved to
 DRS_DATA_OUT = DRS_DATA_OUT.copy(__NAME__)
-DRS_DATA_OUT.value = '/drs/spirou/data/out'
+DRS_DATA_OUT.value = '/drs/nirps_ha/data/out'
 
 #   Define the directory that the calibration files should be saved to/read from
 DRS_CALIB_DB = DRS_CALIB_DB.copy(__NAME__)
-DRS_CALIB_DB.value = '/drs/spirou/data/calibDB'
+DRS_CALIB_DB.value = '/drs/nirps_ha/data/calibDB'
 
 #   Define the directory that the calibration files should be saved to/read from
 DRS_TELLU_DB = DRS_TELLU_DB.copy(__NAME__)
-DRS_TELLU_DB.value = '/drs/spirou/data/telluDB'
+DRS_TELLU_DB.value = '/drs/nirps_ha/data/telluDB'
 
 #   Define the directory that the log messages are stored in
 DRS_DATA_MSG = DRS_DATA_MSG.copy(__NAME__)
-DRS_DATA_MSG.value = '/drs/spirou/data/msg'
+DRS_DATA_MSG.value = '/drs/nirps_ha/data/msg'
 
 #   Define the working directory
 DRS_DATA_WORKING = DRS_DATA_WORKING.copy(__NAME__)
-DRS_DATA_WORKING.value = '/drs/spirou/data/tmp'
+DRS_DATA_WORKING.value = '/drs/nirps_ha/data/tmp'
 
 #   Define the plotting directory
 DRS_DATA_PLOT = DRS_DATA_PLOT.copy(__NAME__)
-DRS_DATA_PLOT.value = '/drs/spirou/data/plot'
+DRS_DATA_PLOT.value = '/drs/nirps_ha/data/plot'
 
 #   Define the run directory
 DRS_DATA_RUN = DRS_DATA_RUN.copy(__NAME__)
-DRS_DATA_RUN.value = '/drs/spirou/data/run'
+DRS_DATA_RUN.value = '/drs/nirps_ha/data/run'
 
 #   Define the assets directory
 DRS_DATA_ASSETS = DRS_DATA_ASSETS.copy(__NAME__)
-DRS_DATA_ASSETS.value = '/drs/spirou/data/assets'
+DRS_DATA_ASSETS.value = '/drs/nirps_ha/data/assets'
 
 #   Define the other directory
 DRS_DATA_OTHER = DRS_DATA_OTHER.copy(__NAME__)
-DRS_DATA_OTHER.value = '/drs/spirou/data/other'
+DRS_DATA_OTHER.value = '/drs/nirps_ha/data/other'
 
 # Define the lbl directory
 LBL_PATH = LBL_PATH.copy(__NAME__)
-LBL_PATH.value = '/drs/spirou/data/lbl'
+LBL_PATH.value = '/drs/nirps_ha/data/lbl'
 
 # =============================================================================
 # DATABASE SETTINGS

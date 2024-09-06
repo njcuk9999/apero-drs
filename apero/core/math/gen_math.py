@@ -21,7 +21,7 @@ from scipy.optimize import curve_fit
 from scipy.special import erf, erfinv
 
 from apero.base import base
-from apero.core.core.drs_exceptions import DrsCodedException
+from apero.core.base.drs_exceptions import DrsCodedException
 from apero.core.math import fast
 
 # =============================================================================

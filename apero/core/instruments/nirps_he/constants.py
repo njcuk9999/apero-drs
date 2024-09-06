@@ -1,18 +1,17 @@
 """
-Default constants for NIRPS HA
-
+Default constants for NIRPS HE
 
 Created on 2019-01-17
 
 @author: cook
 """
 from apero.base import base
-from apero.core.instruments.default.default_constants import *
+from apero.core.instruments.default.constants import *
 
 # Note: If variables are not showing up MUST CHECK __all__ definition
 #       in import * module
 
-__NAME__ = 'core.instruments.nirps_ha.default_constants.py'
+__NAME__ = 'core.instruments.nirps_he.default_constants.py'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
 __author__ = base.__author__
@@ -110,6 +109,15 @@ IMAGE_SATURATION.value = 60000
 # Define the frame time for an image
 IMAGE_FRAME_TIME = IMAGE_FRAME_TIME.copy(__NAME__)
 IMAGE_FRAME_TIME.value = 5.57192
+
+# =========================================================================
+# HEADER SETTINGS
+# =========================================================================
+cgroup = 'DRS.HEADER'
+
+# Define the extensions that are valid for raw files
+VALID_RAW_FILES = VALID_RAW_FILES.copy(__NAME__)
+VALID_RAW_FILES.value = ['.fits']
 
 # =============================================================================
 # CALIBRATION: GENERAL SETTINGS
@@ -254,11 +262,11 @@ REJECT_LIST_GOOGLE_SHEET_URL.value = '1gvMp1nHmEcKCUpxsTxkx-5m115mLuQIGHhxJCyVoZ
 
 # Define the google sheet id to use for update the reject list
 REJECT_LIST_GSHEET_MAIN_LIST_ID = REJECT_LIST_GSHEET_MAIN_LIST_ID.copy(__NAME__)
-REJECT_LIST_GSHEET_MAIN_LIST_ID.value = '768446388'
+REJECT_LIST_GSHEET_MAIN_LIST_ID.value = '1847598400'
 
 # Define the google sheet name to use for the reject list
 REJECT_LIST_GSHEET_SHEET_NAME = REJECT_LIST_GSHEET_SHEET_NAME.copy(__NAME__)
-REJECT_LIST_GSHEET_SHEET_NAME.value = 'NIRPS_HA'
+REJECT_LIST_GSHEET_SHEET_NAME.value = 'NIRPS_HE'
 
 # Define which twilight to use as the definition of a night observation
 #    ("CIVIL", "NAUTICAL", "ASTRONOMICAL")
@@ -294,6 +302,18 @@ FIBER_SET_NUM_FIBERS_B = FIBER_SET_NUM_FIBERS_B.copy(__NAME__)
 # set values
 FIBER_SET_NUM_FIBERS_A.value = 1
 FIBER_SET_NUM_FIBERS_B.value = 1
+
+# Get the science and reference fiber to use in the CCF process
+FIBER_CCF = FIBER_CCF.copy(__NAME__)
+FIBER_CCF.value = ['A', 'B']
+
+# List the individual fiber names
+INDIVIDUAL_FIBERS = INDIVIDUAL_FIBERS.copy(__NAME__)
+INDIVIDUAL_FIBERS.value = ['A', 'B']
+
+# List the sky fibers to use for the science channel and the calib channel
+SKYFIBERS = SKYFIBERS.copy(__NAME__)
+SKYFIBERS.value = ['A', 'B']
 
 # =============================================================================
 # PRE-PROCESSSING SETTINGS
@@ -368,7 +388,7 @@ PP_AMP_ERROR_MODEL.value = 'amplifier_bias_model_nirps.fits'
 
 # Defines the pp led flat file (located in the data folder)
 PP_LED_FLAT_FILE = PP_LED_FLAT_FILE.copy(__NAME__)
-PP_LED_FLAT_FILE.value = 'led_flat_ha.fits'
+PP_LED_FLAT_FILE.value = 'led_flat_he.fits'
 
 #   Define the number of un-illuminated reference pixels at top of image
 PP_NUM_REF_TOP = PP_NUM_REF_TOP.copy(__NAME__)
@@ -933,29 +953,29 @@ SHAPE_NUM_ITERATIONS.value = 4
 
 # The order to use on the shape plot
 SHAPE_PLOT_SELECTED_ORDER = SHAPE_PLOT_SELECTED_ORDER.copy(__NAME__)
-SHAPE_PLOT_SELECTED_ORDER.value = 64
+SHAPE_PLOT_SELECTED_ORDER.value = 33
 
 # total width of the order (combined fibers) in pixels
 SHAPE_ORDER_WIDTH = SHAPE_ORDER_WIDTH.copy(__NAME__)
-SHAPE_ORDER_WIDTH.value = {"A": 60, "B": 60, "C": 60}
+SHAPE_ORDER_WIDTH.value = {"A": 24, "B": 8}
 
 # number of sections per order to split the order into
 SHAPE_NSECTIONS = SHAPE_NSECTIONS.copy(__NAME__)
-SHAPE_NSECTIONS.value = 32
+SHAPE_NSECTIONS.value = 16
 
 # the range of angles (in degrees) for the first iteration (large)
 # and subsequent iterations (small)
 SHAPE_LARGE_ANGLE_MIN = SHAPE_LARGE_ANGLE_MIN.copy(__NAME__)
-SHAPE_LARGE_ANGLE_MIN.value = -12.0
+SHAPE_LARGE_ANGLE_MIN.value = -20.0
 
 SHAPE_LARGE_ANGLE_MAX = SHAPE_LARGE_ANGLE_MAX.copy(__NAME__)
-SHAPE_LARGE_ANGLE_MAX.value = 0.0
+SHAPE_LARGE_ANGLE_MAX.value = 20.0
 
 SHAPE_SMALL_ANGLE_MIN = SHAPE_SMALL_ANGLE_MIN.copy(__NAME__)
-SHAPE_SMALL_ANGLE_MIN.value = -1.0
+SHAPE_SMALL_ANGLE_MIN.value = -5.0
 
 SHAPE_SMALL_ANGLE_MAX = SHAPE_SMALL_ANGLE_MAX.copy(__NAME__)
-SHAPE_SMALL_ANGLE_MAX.value = 1.0
+SHAPE_SMALL_ANGLE_MAX.value = 5.0
 
 # max sigma clip (in sigma) on points within a section
 SHAPE_SIGMACLIP_MAX = SHAPE_SIGMACLIP_MAX.copy(__NAME__)
@@ -967,7 +987,7 @@ SHAPE_MEDIAN_FILTER_SIZE.value = 51
 
 # The minimum value for the cross-correlation to be deemed good
 SHAPE_MIN_GOOD_CORRELATION = SHAPE_MIN_GOOD_CORRELATION.copy(__NAME__)
-SHAPE_MIN_GOOD_CORRELATION.value = 0.3
+SHAPE_MIN_GOOD_CORRELATION.value = 0.5
 
 # Define the first pass (short) median filter width for dx
 SHAPE_SHORT_DX_MEDFILT_WID = SHAPE_SHORT_DX_MEDFILT_WID.copy(__NAME__)
@@ -1228,11 +1248,11 @@ EXT_END_ORDER.value = None
 
 #   Half-zone extraction width left side (formally plage1)
 EXT_RANGE1 = EXT_RANGE1.copy(__NAME__)
-EXT_RANGE1.value = {"A":2, "B":2}
+EXT_RANGE1.value = {"A":9, "B":2}
 
 #   Half-zone extraction width right side (formally plage2)
 EXT_RANGE2 = EXT_RANGE2.copy(__NAME__)
-EXT_RANGE2.value = {"A":2, "B":2}
+EXT_RANGE2.value = {"A":9, "B":2}
 
 #   Define the orders to skip extraction on (will set all order values
 #      to NaN. If empty list no orders are skipped. Should be a string
@@ -1489,12 +1509,12 @@ WAVEREF_HC_GUESS_EWID.author = base.AUTHORS['EA']
 
 # Define the fiber offset (in pixels) away from reference fiber
 WAVE_FIBER_OFFSET_MOD = WAVE_FIBER_OFFSET_MOD.copy(__NAME__)
-WAVE_FIBER_OFFSET_MOD.value = {"A":0.0, "B":0.0}
+WAVE_FIBER_OFFSET_MOD.value = {"A":0.0, "B":-20.0}
 WAVE_FIBER_OFFSET_MOD.author = base.AUTHORS['EA']
 
 # Define the fiber scale factor from reference fiber
 WAVE_FIBER_SCALE_MOD = WAVE_FIBER_SCALE_MOD.copy(__NAME__)
-WAVE_FIBER_SCALE_MOD.value = {"A":1.0, "B":1.0}
+WAVE_FIBER_SCALE_MOD.value = {"A":1.0, "B":0.99766}
 WAVE_FIBER_SCALE_MOD.author = base.AUTHORS['EA']
 
 # =============================================================================
@@ -1629,10 +1649,12 @@ WAVE_CCF_SMART_MASK_DWAVE_THRES.value = 1.0e-9
 
 # define the quality control threshold from RV of CCF FP between reference
 #    fiber and other fibers, above this limit fails QC [m/s]
+#  For HE there is an offset between A and B - this will be a high value
 # TODO: We should really think about this a bit more
 WAVE_CCF_RV_THRES_QC = WAVE_CCF_RV_THRES_QC.copy(__NAME__)
 # TODO: address this later - should be much lower
-WAVE_CCF_RV_THRES_QC.value = 20.0    # 0.5 (spirou value)
+WAVE_CCF_RV_THRES_QC.value = 50000.0    # 0.5 (spirou value)
+WAVE_CCF_RV_THRES_QC.author = base.AUTHORS['EA']
 
 # TODO: Sort out wave constants below here
 # =============================================================================
@@ -2183,6 +2205,17 @@ TELLU_ONLY_PRECLEAN.value = False
 TELLU_ABSO_FIT_LOS_VELO = TELLU_ABSO_FIT_LOS_VELO.copy(__NAME__)
 TELLU_ABSO_FIT_LOS_VELO.value = False
 
+# Define bad wavelength regions to mask before correcting tellurics
+TELLU_BAD_WAVEREGIONS = TELLU_BAD_WAVEREGIONS.copy(__NAME__)
+# set bad regions
+bad_regions = []
+# mask the absorption region
+bad_regions.append((1370, 1410))
+# mask the reddest wavelength
+bad_regions.append((1850, 2000))
+# set value
+TELLU_BAD_WAVEREGIONS.values = bad_regions
+
 # =============================================================================
 # OBJECT: TELLURIC PRE-CLEANING SETTINGS
 # =============================================================================
@@ -2198,7 +2231,6 @@ TELLUP_DO_FINITE_RES_CORR.value = True
 TELLUP_CCF_SCAN_RANGE = TELLUP_CCF_SCAN_RANGE.copy(__NAME__)
 TELLUP_CCF_SCAN_RANGE.value = 25
 
-# define whether to clean OH lines
 # TODO: Turn on OH line cleaning
 TELLUP_CLEAN_OH_LINES = TELLUP_CLEAN_OH_LINES.copy(__NAME__)
 TELLUP_CLEAN_OH_LINES.value = False
@@ -2244,7 +2276,7 @@ TELLUP_ABSO_EXPO_KTHRES.value = 1.0e-6
 
 # define the gaussian width of the kernel used in abso_expo
 TELLUP_ABSO_EXPO_KWID = TELLUP_ABSO_EXPO_KWID.copy(__NAME__)
-TELLUP_ABSO_EXPO_KWID.value = 4.0
+TELLUP_ABSO_EXPO_KWID.value = 4.5
 
 # define the gaussian exponent of the kernel used in abso_expo
 #   a value of 2 is gaussian, a value >2 is boxy
@@ -2318,7 +2350,7 @@ MKTELLU_PLOT_ORDER_NUMS.value = [19, 26, 35]
 #   Define the order to use for SNR check when accepting tellu files
 #      to the telluDB
 MKTELLU_QC_SNR_ORDER = MKTELLU_QC_SNR_ORDER.copy(__NAME__)
-MKTELLU_QC_SNR_ORDER.value = 64
+MKTELLU_QC_SNR_ORDER.value = 33
 
 # Defines the minimum allowed value for the recovered water vapor optical
 #    depth (should not be able 1)
@@ -2595,8 +2627,7 @@ CCF_ALLOWED_DPRTYPES = CCF_ALLOWED_DPRTYPES.copy(__NAME__)
 CCF_ALLOWED_DPRTYPES.value = ['OBJ_DARK', 'OBJ_FP', 'OBJ_SKY', 'TELLU_SKY',
                               'FLUXSTD_SKY']
 
-# Valid DPRTYPES for FP in calibration fiber
-CCF_VALID_FP_DPRTYPES = CCF_VALID_FP_DPRTYPES.copy(__NAME__)
+# Valid DPRTYPES for FP in calibration fiber = CCF_VALID_FP_DPRTYPES.copy(__NAME__)
 CCF_VALID_FP_DPRTYPES.value = 'OBJ_FP'
 
 # Define the KW_OUTPUT types that are valid telluric corrected spectra
@@ -2954,7 +2985,6 @@ PLOT_CCF_SWAVE_REF.value = False
 PLOT_CCF_PHOTON_UNCERT = PLOT_CCF_PHOTON_UNCERT.copy(__NAME__)
 PLOT_CCF_PHOTON_UNCERT.value = True
 
-
 # =============================================================================
 # LBL SETTINGS
 # =============================================================================
@@ -2982,9 +3012,13 @@ LBL_SYMLINKS.value = True
 # Define the dictionary of friend and friend teffs for LBL
 LBL_FRIENDS = LBL_FRIENDS.copy(__NAME__)
 LBL_FRIENDS.value = {"HD85512": 4411,
+                     "GJ9425": 4060,
                      "GL514": 3750,
                      "GJ2066": 3557,
-                     "GL699": 3257,
+                     "GJ581": 3413,
+                     "GJ643": 3306,
+                     "GJ3737": 3257,
+                     "GL699": 3224,
                      "PROXIMA": 2900}
 
 # Define the specific data types (where objname is the data type) for LBL
@@ -3015,7 +3049,6 @@ LBL_DTEMP.value = {"DTEMP3000": "temperature_gradient_3000.fits",
                    "DTEMP5000": "temperature_gradient_5000.fits",
                    "DTEMP5500": "temperature_gradient_5500.fits",
                    "DTEMP6000": "temperature_gradient_6000.fits"}
-
 
 # =============================================================================
 # POST PROCESS SETTINGS

@@ -21,8 +21,8 @@ from pandastable import dialogs
 from apero.base import base
 from apero.base import drs_db
 from apero.core import constants
-from apero.core.core import drs_misc
-from apero.core.core import drs_text
+from apero.core.base import drs_text
+from apero.core.base import drs_misc
 from apero.tools.module.database import manage_databases
 
 # =============================================================================

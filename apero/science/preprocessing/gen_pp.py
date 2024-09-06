@@ -21,7 +21,7 @@ from apero.core import lang
 from apero.core import math as mp
 from apero.core.core import drs_database
 from apero.core.core import drs_log
-from apero.core.core import drs_text
+from apero.core.base import drs_text
 from apero.io import drs_fits
 
 # =============================================================================

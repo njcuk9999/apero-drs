@@ -13,17 +13,17 @@ import os
 import sys
 import traceback
 from pathlib import Path
-from typing import Any, List, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union
 
 import numpy as np
 from astropy import units as uu
 
 from apero.base import base
 from apero.core import lang
-from apero.core.core import drs_base_classes as base_class
-from apero.core.core import drs_exceptions
-from apero.core.core import drs_misc
-from apero.core.core import drs_text
+from apero.core.base import drs_exceptions
+from apero.core.base import drs_base_classes as base_class
+from apero.core.base import drs_text
+from apero.core.base import drs_misc
 
 # =============================================================================
 # Define variables
@@ -360,6 +360,101 @@ class Const:
             lines.append(aline)
         # return lines
         return lines
+
+
+class ConstantsDict:
+    """
+    Basic container for constants
+    """
+    def __init__(self):
+        self.storage: Dict[str, Const] = dict()
+
+    def add(self, name: str, value: Any = None,
+                 dtype: Union[None, str, type] = None,
+                 dtypei: Union[None, str, type] = None,
+                 options: List = None,
+                 maximum: Union[int, float, None] = None,
+                 minimum: Union[int, float, None] = None,
+                 source: Union[str, None] = None,
+                 unit: Union[uu.Unit] = None, default: Any = None,
+                 datatype: Union[type, None] = None,
+                 dataformat: Union[str, None] = None,
+                 group: Union[str, None] = None, user: bool = False,
+                 active: bool = False, description: Union[str, None] = None,
+                 author: Union[str, List[str], None] = None,
+                 parent: Union[str, None] = None,
+                 output: bool = True):
+        """
+        Add a constant instance to the dict
+
+        :param name: str, name of the constant
+        :param value: object, value of the constant
+        :param dtype: type, data type of the constant
+        :param dtypei: type, data type of list/dictionary elements
+        :param options: list of objects, the allowed values for the constant
+        :param maximum: the maximum value allowed for the constant
+        :param minimum: the minimum value allowed for the constant
+        :param source: str, the source file of the constant
+        :param unit: astropy unit, the units of the constant
+        :param default: default value of the constant
+        :param datatype: str, an additional datatype i.e. used to pass to
+                         another function e.g. a time having data type "MJD"
+        :param dataformat: str, an additional data format i.e. used to pass to
+                           another function e.g. a time having data format float
+        :param group: str, the group this constant belongs to
+        :param user: bool, whether the constant is a user constant
+        :param active: bool, whether the constant is active in constant files
+                       (for user config file generation)
+        :param description: str, the description for this constant
+        :param author: str, the author of this constant (i.e. who to contact)
+        :param parent: str, the parent of this constant (if a constant is
+                       related to or comes from another constant)
+        :param output: bool if False does not put in parameter output table
+
+        :returns: None (constructor)
+        """
+        # create constant
+        constants = Const(name, value, dtype, dtypei, options, maximum, minimum,
+                          source, unit, default, datatype, dataformat, group,
+                          user, active, description, author, parent, output)
+        # add to storage
+        self.storage[name] = constants
+
+    def get(self, key: str) -> Const:
+        # just return the Const
+        return self.storage[key]
+
+    def set(self, key: str, value: Any,
+            source: Union[str, None] = None,
+            author: Union[str, None] = None):
+
+        # update value
+        self.storage[key].value = value
+        # update source (if given)
+        if source is not None:
+            self.storage[key].source = source
+        # update author (if given)
+        if author is not None:
+            # if author is in base.AUTHORS use this instead
+            if author in base.AUTHORS:
+                self.storage[key].author = base.AUTHORS[author]
+            # otherwise set the author
+            else:
+                self.storage[key].author = author
+
+    def copy(self) -> 'ConstantsDict':
+        # create new storage
+        new_storage = dict()
+        # loop around storage
+        for name in self.storage:
+            # copy constant
+            new_storage[name] = self.storage[name].copy()
+        # create new ConstantsList
+        new_constants = ConstantsDict()
+        # add storage to new storage
+        new_constants.storage = new_storage
+        # return new constants
+        return new_constants
 
 
 class Keyword(Const):

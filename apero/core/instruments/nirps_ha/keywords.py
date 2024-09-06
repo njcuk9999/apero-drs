@@ -1,5 +1,5 @@
 """
-Default keywords for NIRPS HE
+Default keywords for NIRPS HA
 
 Created on 2019-01-17
 
@@ -8,11 +8,11 @@ Created on 2019-01-17
 from astropy import units as uu
 
 from apero.base import base
-from apero.core.instruments.default.default_keywords import *
+from apero.core.instruments.default.keywords import *
 
 # Note: If variables are not showing up MUST CHECK __all__ definition
 #       in import * module
-__NAME__ = 'config.instruments.nirps_he.default_keywords.py'
+__NAME__ = 'config.instruments.nirps_ha.keywords.py'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
 __author__ = base.__author__
@@ -49,7 +49,7 @@ KW_RDNOISE.set(key='HIERARCH ESO DET OUT1 RON',
 
 # define the gain HEADER key (used to get value only)
 KW_GAIN = KW_GAIN.copy(__NAME__)
-# TODO: was HIERARCH ESO DET CHIP1 GAIN
+# TODO: Change to HIERARCH ESO DET CHIP1 GAIN
 KW_GAIN.set(key='HIERARCH ESO DET OUT1 CONAD',
             comment='[adu/e-] Conversion electrons to ADU',
             combine_method='mean', group='raw')
@@ -542,6 +542,7 @@ KW_CDBLEAKR.set(key='CDBLEAKR', comment='The cal ref LEAKM file used')
 # time of the ref leak reference calibration file used
 KW_CDTLEAKR = KW_CDTLEAKR.copy(__NAME__)
 KW_CDTLEAKR.set(key='CDTLEAKR', comment='MJDMID of cal ref LEAK file used')
+
 # additional properties of calibration
 KW_C_FLIP = KW_C_FLIP.copy(__NAME__)
 KW_C_FLIP.set(key='CAL_FLIP', comment='Whether the image was flipped from pp')
@@ -1723,11 +1724,10 @@ KW_TELLUP_DO_PRECLEAN = KW_TELLUP_DO_PRECLEAN.copy(__NAME__)
 KW_TELLUP_DO_PRECLEAN.set(key='TLPDOCLN', comment='tellu preclean done',
                           parent='TELLUP_DO_PRECLEANING')
 
-# Define default water absorption used (tellu pre-cleaning)
-KW_TELLUP_DFLT_WATER = KW_TELLUP_DFLT_WATER.copy(__NAME__)
-KW_TELLUP_DFLT_WATER.set(key='TLPDFH2O',
-                         comment='tellu preclean default H2O abso used',
-                         parent='TELLUP_D_WATER_ABSO')
+# Define whether precleaning was done (tellu pre-cleaning)
+KW_TELLUP_DO_PRECLEAN = KW_TELLUP_DO_PRECLEAN.copy(__NAME__)
+KW_TELLUP_DO_PRECLEAN.set(key='TLPDOFRC', comment='tellu finite res corr done',
+                          parent='TELLUP_DO_FINITE_RES_CORR')
 
 # Define default water absorption used (tellu pre-cleaning)
 KW_TELLUP_DFLT_WATER = KW_TELLUP_DFLT_WATER.copy(__NAME__)
@@ -2172,7 +2172,7 @@ KW_CCF_DVRMS_SP.set(key='DVRMS_SP',
 # the dev rms calculated during the CCF [m/s]
 KW_CCF_DVRMS_CC = KW_CCF_DVRMS_CC.copy(__NAME__)
 KW_CCF_DVRMS_CC.set(key='DVRMS_CC',
-                    comment='final photon-noise RV uncertainty calc on mean '
+                    comment='final photon-noise RV uncertainty calc on stacked '
                             'CCF [m/s]')
 
 # The radial velocity measured from the wave solution FP CCF

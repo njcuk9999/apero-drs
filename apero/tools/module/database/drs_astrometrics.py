@@ -28,11 +28,9 @@ from astroquery.simbad import Simbad
 from apero.base import base
 from apero.core import constants
 from apero.core import lang
-from apero.core.core import drs_base_classes
+from apero.core.base import drs_base_classes, drs_text, drs_misc
 from apero.core.core import drs_database
 from apero.core.core import drs_log
-from apero.core.core import drs_misc
-from apero.core.core import drs_text
 from apero.core.instruments.default import pseudo_const
 from apero.core.utils import drs_startup
 from apero.io import drs_fits

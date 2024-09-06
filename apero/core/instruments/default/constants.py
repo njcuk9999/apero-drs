@@ -49,6 +49,9 @@ __all__ = [
     'IMAGE_Y_LOW', 'IMAGE_Y_HIGH', 'IMAGE_X_BLUE_LOW',
     'IMAGE_PIXEL_SIZE', 'FWHM_PIXEL_LSF', 'IMAGE_SATURATION',
     'IMAGE_FRAME_TIME', 'ALL_POLAR_RHOMB_POS',
+    # header constants
+    'VALID_RAW_FILES', 'NON_CHECK_DUPLICATE_KEYS', 'FORBIDDEN_OUT_KEYS',
+    'FORBIDDEN_COPY_KEYS', 'FORBIDDEN_HEADER_PREFIXES', 'FORBIDDEN_DRS_KEY',
     # general calib constants
     'COMBINE_METRIC_THRESHOLD1', 'CAVITY_1M_FILE', 'CAVITY_LL_FILE',
     'SIMBAD_TAP_URL',
@@ -78,6 +81,7 @@ __all__ = [
     'FIBER_MAX_NUM_ORDERS_B', 'FIBER_MAX_NUM_ORDERS_C',
     'FIBER_SET_NUM_FIBERS_AB', 'FIBER_SET_NUM_FIBERS_A',
     'FIBER_SET_NUM_FIBERS_B', 'FIBER_SET_NUM_FIBERS_C',
+    'FIBER_CCF', 'INDIVIDUAL_FIBERS', 'SKYFIBERS',
     # dark constants
     'IMAGE_X_BLUE_HIGH', 'IMAGE_Y_BLUE_LOW', 'IMAGE_Y_BLUE_HIGH',
     'IMAGE_X_RED_LOW', 'IMAGE_X_RED_HIGH', 'IMAGE_Y_RED_LOW',
@@ -238,7 +242,7 @@ __all__ = [
     'WAVE_NIGHT_NSIG_FIT_CUT', 'WAVENIGHT_PLT_BINL', 'WAVENIGHT_PLT_BINU',
     'WAVENIGHT_PLT_NBINS',
     # sky correction constants
-    'SKYMODEL_FILETYPE',  'SKYMODEL_EXT_SNR_ORDERNUM', 'SKYMODEL_MIN_EXPTIME',
+    'SKYMODEL_FILETYPE', 'SKYMODEL_EXT_SNR_ORDERNUM', 'SKYMODEL_MIN_EXPTIME',
     'SKYMODEL_MAX_OPEN_FILES', 'SKYMODEL_LINE_SIGMA',
     'SKYMODEL_LINE_ERODE_SIZE', 'SKYMODEL_LINE_DILATE_SIZE',
     'SKYMODEL_WEIGHT_ITERS', 'SKYMODEL_WEIGHT_ERODE_SIZE',
@@ -250,6 +254,7 @@ __all__ = [
     'TELLU_ALLOWED_DPRTYPES', 'TELLURIC_FILETYPE', 'TELLURIC_FIBER_TYPE',
     'TELLU_LIST_DIRECTORY', 'TELLU_WHITELIST_NAME', 'TELLU_BLACKLIST_NAME',
     'TELLU_ONLY_PRECLEAN', 'TELLU_ABSO_FIT_LOS_VELO',
+    'TELLU_BAD_WAVEREGIONS',
     # telluric pre-cleaning constants
     'TELLUP_DO_PRECLEANING', 'TELLUP_DO_FINITE_RES_CORR',
     'TELLUP_CCF_SCAN_RANGE', 'TELLUP_CLEAN_OH_LINES',
@@ -300,7 +305,8 @@ __all__ = [
     'STOKESI_CONTINUUM_DET_ALG', 'POLAR_CONTINUUM_DET_ALG',
     'POLAR_NORMALIZE_STOKES_I', 'POLAR_REMOVE_CONTINUUM',
     'POLAR_CLEAN_BY_SIGMA_CLIPPING', 'POLAR_NSIGMA_CLIPPING',
-    'POLAR_REDDEST_THRESHOLD',
+    'POLAR_REDDEST_THRESHOLD', 'GET_POLAR_TELLURIC_BANDS',
+    'GET_LSD_LINE_REGIONS', 'GET_LSD_ORDER_RANGES',
     # polar poly moving median settings
     'POLAR_CONT_BINSIZE', 'POLAR_CONT_OVERLAP', 'POLAR_CONT_POLYNOMIAL_FIT',
     'POLAR_CONT_DEG_POLYNOMIAL',
@@ -394,7 +400,7 @@ __all__ = [
 ]
 
 # set name
-__NAME__ = 'core.instruments.default.default_constants.py'
+__NAME__ = 'core.instruments.default.constants.py'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
 __author__ = base.__author__
@@ -549,6 +555,70 @@ ALL_POLAR_RHOMB_POS = Const('ALL_POLAR_RHOMB_POS', value=None,
                             dtype=list, dtypei=str,
                             source=__NAME__, group=cgroup,
                             description='Define all polar rhomb positions')
+
+# =========================================================================
+# HEADER SETTINGS
+# =========================================================================
+cgroup = 'DRS.HEADER'
+
+# Define the extensions that are valid for raw files
+VALID_RAW_FILES = Const('VALID_RAW_FILES', value=['.fits'],
+                        dtype=list, dtypei=str,
+                        source=__NAME__, group=cgroup,
+                        description='Define the extrensions that are valid for '
+                                    'raw files')
+
+# post process do not check these duplicate keys
+NON_CHECK_DUPLICATE_KEYS = Const('NON_CHECK_DUPLICATE_KEYS',
+                                 value=['SIMPLE', 'EXTEND', 'NEXTEND'],
+                                 dtype=list, dtypei=str,
+                                 source=__NAME__, group=cgroup,
+                                 description='post process do not check these '
+                                             'duplicate keys')
+
+# Post process primary extension should not have these keys
+FORBIDDEN_OUT_KEYS = Const('FORBIDDEN_OUT_KEYS',
+                           value=['BITPIX', 'NAXIS', 'NAXIS1', 'NAXIS2',
+                                  'XTENSION'],
+                           dtype=list, dtypei=str,
+                           source=__NAME__, group=cgroup,
+                           description='Post process primary extension should '
+                                       'not have these keys')
+
+# Defines the keys in a HEADER file not to copy when copying over all
+# HEADER keys to a new fits file
+FORBIDDEN_COPY_KEYS = Const('FORBIDDEN_COPY_KEYS',
+                            value=['SIMPLE', 'BITPIX', 'NAXIS', 'NAXIS1',
+                                   'NAXIS2', 'EXTEND', 'COMMENT', 'CRVAL1',
+                                   'CRPIX1', 'CDELT1', 'CRVAL2', 'CRPIX2',
+                                   'CDELT2', 'BSCALE', 'BZERO', 'PHOT_IM',
+                                   'FRAC_OBJ', 'FRAC_SKY', 'FRAC_BB',
+                                   'NEXTEND'],
+                            dtype=list, dtypei=str,
+                            source=__NAME__, group=cgroup,
+                            description='Defines the keys in a HEADER file not '
+                                        'to copy when copying over all HEADER '
+                                        'keys to a new fits file')
+
+# Define the QC keys prefixes that should not be copied (i.e. they are
+# just for the input file not the output file)
+FORBIDDEN_HEADER_PREFIXES = Const('FORBIDDEN_HEADER_PREFIXES',
+                                  value=['QCC', 'INF1', 'INF2', 'INF3', 'INP1'],
+                                  dtype=list, dtypei=str,
+                                  source=__NAME__, group=cgroup,
+                                  description='Define the QC keys prefixes '
+                                              'that should not be copied '
+                                              '(i.e. they are just for the '
+                                              'input file not the output file)')
+
+# Define a list of keys that should not be copied from headers to new headers
+FORBIDDEN_DRS_KEY = Const('FORBIDDEN_DRS_KEY',
+                          value=['WAVELOC', 'REFRFILE', 'DRSPID', 'VERSION',
+                                 'DRSOUTID'],
+                          dtype=list, dtypei=str,
+                          source=__NAME__, group=cgroup,
+                          description='Define a list of keys that should not '
+                                      'be copied from headers to new headers')
 
 # =============================================================================
 # CALIBRATION: GENERAL SETTINGS
@@ -880,6 +950,23 @@ FIBER_SET_NUM_FIBERS_B = Const('FIBER_SET_NUM_FIBERS_B', value=None,
 FIBER_SET_NUM_FIBERS_C = Const('FIBER_SET_NUM_FIBERS_C', value=None,
                                dtype=int, minimum=1, source=__NAME__,
                                group=cgroup, description='')
+
+# Get the science and reference fiber to use in the CCF process
+FIBER_CCF = Const('FIBER_CCF', value=None, dtype=list, dtypei=str,
+                  source=__NAME__, group=cgroup,
+                  description='Get the science and reference fiber to use in '
+                              'the CCF process')
+
+# List the individual fiber names
+INDIVIDUAL_FIBERS = Const('INDIVIDUAL_FIBERS', value=None, dtype=list,
+                          dtypei=str, source=__NAME__, group=cgroup,
+                          description='List the individual fiber names')
+
+# List the sky fibers to use for the science channel and the calib channel
+SKYFIBERS = Const('SKYFIBERS', value=None, dtype=list,
+                  source=__NAME__, group=cgroup,
+                  description='List the sky fibers to use for the science '
+                              'channel and the calib channel')
 
 # =============================================================================
 # PRE-PROCESSSING SETTINGS
@@ -2237,9 +2324,9 @@ LEAKAGE_REF_TYPES = Const('LEAKAGE_REF_TYPES', value=None,
 
 # define the maximum number of files to use in the leak reference
 LEAK_REF_MAX_FILES = Const('LEAK_REF_MAX_FILES', value=None, dtype=int,
-                          source=__NAME__, group=cgroup, minimum=0,
-                          description='define the maximum number of files to '
-                                      'use in the leak reference')
+                           source=__NAME__, group=cgroup, minimum=0,
+                           description='define the maximum number of files to '
+                                       'use in the leak reference')
 
 # define the type of file to use for the leak correction (currently allowed are
 #     'E2DS_FILE' or 'E2DSFF_FILE' (linked to recipe definition outputs)
@@ -2773,7 +2860,7 @@ WAVEREF_HC_BOXSIZE = Const('WAVEREF_HC_BOXSIZE', value=None, dtype=int,
 WAVEREF_HC_FIBTYPES = Const('WAVEREF_HC_FIBTYPES', value=None,
                             dtype=list, dtypei=str,
                             source=__NAME__, group=cgroup,
-                            description=('get valid hc dprtypes'))
+                            description='get valid hc dprtypes')
 
 # get valid fp dprtypes
 WAVEREF_FP_FIBTYPES = Const('WAVEREF_FP_FIBTYPES', value=None,
@@ -2818,7 +2905,7 @@ WAVE_FIBER_OFFSET_MOD = Const('WAVE_FIBER_OFFSET_MOD', value=None,
 
 # Define the fiber scale factor from reference fiber
 WAVE_FIBER_SCALE_MOD = Const('WAVE_FIBER_SCALE_MOD', value=None,
-                              dtype=dict, dtypei=float,
+                             dtype=dict, dtypei=float,
                              source=__NAME__, group=cgroup,
                              description='Define the fiber scale factor '
                                          'from reference fiber')
@@ -3584,6 +3671,7 @@ WAVE_FP_UPDATE_CAVITY = Const('WAVE_FP_UPDATE_CAVITY', value=None, dtype=bool,
 #   Should be one of the following:
 #       0 - derive using the 1/m vs d fit from HC lines
 #       1 - derive using the ll vs d fit from HC lines
+# noinspection SqlDialectInspection
 WAVE_FP_CAVFIT_MODE = Const('WAVE_FP_CAVFIT_MODE', value=None, dtype=int,
                             source=__NAME__, options=[0, 1], group=cgroup,
                             description=('Select the FP cavity fitting '
@@ -3718,7 +3806,6 @@ WAVENIGHT_PLT_BINU = Const('WAVENIGHT_PLT_BINU', value=None, dtype=float,
 # OBJECT: SKY CORR SETTINGS
 # =============================================================================
 cgroup = 'OBJECT.SKY_CORR'
-
 
 # the OUTPUT type (KW_OUTPUT header key) and DrsFitsFile name required for
 #   input sky files
@@ -3889,6 +3976,13 @@ TELLU_ABSO_FIT_LOS_VELO = Const('TELLU_ABSO_FIT_LOS_VELO', value=False,
                                 description='whether to fit line of sight '
                                             'velocity in telluric '
                                             'pre-cleaning')
+
+# Define bad wavelength regions to mask before correcting tellurics
+TELLU_BAD_WAVEREGIONS = Const('TELLU_BAD_WAVEREGIONS', value=[],
+                              dtype=list, dtypei=list,
+                              source=__NAME__, group=cgroup,
+                              description='Define bad wavelength regions to '
+                                          'mask before correcting tellurics')
 
 # =============================================================================
 # OBJECT: TELLURIC PRE-CLEANING SETTINGS
@@ -4785,6 +4879,27 @@ POLAR_REDDEST_THRESHOLD = Const('POLAR_REDDEST_THRESHOLD', value=None,
                                 description='Define the reddest wavelength to '
                                             'use throughout polar code')
 
+# Define regions where telluric absorption is high
+GET_POLAR_TELLURIC_BANDS = Const('GET_POLAR_TELLURIC_BANDS', value=None,
+                                 dtype=list, dtypei=float,
+                                 source=__NAME__, group=cgroup,
+                                 description='Define regions where telluric '
+                                             'absorption is high')
+
+# Define regions to select lines in the LSD analysis
+GET_LSD_LINE_REGIONS = Const('GET_LSD_LINE_REGIONS', value=None,
+                             dtype=list, dtypei=float,
+                             source=__NAME__, group=cgroup,
+                             description='Define regions to select lines in '
+                                         'the LSD analysis')
+
+# Define the valid wavelength ranges for each order in SPIrou.
+GET_LSD_ORDER_RANGES = Const('GET_LSD_ORDER_RANGES', value=None,
+                             dtype=list, dtypei=list,
+                             source=__NAME__, group=cgroup,
+                             description='Define the valid wavelength ranges '
+                                         'for each order in SPIrou.')
+
 # =============================================================================
 # POLAR POLY MOVING MEDIAN SETTINGS
 # =============================================================================
@@ -5359,14 +5474,6 @@ PLOT_TELLU_SKYMODEL_LINEFIT = Const('PLOT_TELLU_SKYMODEL_LINEFIT',
                                     description='turn on the sky model '
                                                 'median plot')
 
-# turn on the sky model median plot
-PLOT_TELLU_SKYMODEL_LINEFIT = Const('PLOT_TELLU_SKYMODEL_LINEFIT',
-                                    value=False, dtype=bool,
-                                    source=__NAME__, user=True,
-                                    active=False, group=cgroup,
-                                    description='turn on the sky model '
-                                                'median plot')
-
 # turn on the sky correction debug plot
 PLOT_TELLU_SKY_CORR_PLOT = Const('PLOT_TELLU_SKY_CORR_PLOT', value=False,
                                  dtype=bool, source=__NAME__, user=True,
@@ -5873,9 +5980,9 @@ ARI_SSH_COPY = Const('ARI_SSH_COPY', value=None, dtype=dict, source=__NAME__,
 
 # Define the ari group (For login access to pages)
 ARI_GROUP = Const('ARI_GROUP', value=None, dtype=str, source=__NAME__,
-                     group=cgroup,
-                     description='Define the ari group (For login access to '
-                                 'pages)')
+                  group=cgroup,
+                  description='Define the ari group (For login access to '
+                              'pages)')
 
 # Define whether to reset the ari working directory
 ARI_RESET = Const('ARI_RESET', value=False, dtype=bool, source=__NAME__,

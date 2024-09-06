@@ -26,9 +26,7 @@ from apero.base import base
 from apero.core import constants
 from apero.core import lang
 from apero.core.constants import path_definitions as pathdef
-from apero.core.core import drs_base_classes
-from apero.core.core import drs_exceptions
-from apero.core.core import drs_misc
+from apero.core.base import drs_exceptions, drs_base_classes, drs_misc
 
 # =============================================================================
 # Define variables

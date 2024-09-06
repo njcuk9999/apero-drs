@@ -19,7 +19,7 @@ from apero.base import base
 from apero.core import constants
 from apero.core import lang
 from apero.core import math as mp
-from apero.core.core import drs_exceptions
+from apero.core.base import drs_exceptions
 from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.io import drs_fits

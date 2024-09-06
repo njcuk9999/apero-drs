@@ -37,11 +37,11 @@ from apero.base import drs_db
 from apero.base.drs_db import DatabaseManager
 from apero.core import constants
 from apero.core import lang
-from apero.core.core import drs_exceptions
+from apero.core.base import drs_exceptions
+from apero.core.base import drs_text
+from apero.core.base import drs_misc
 from apero.core.core import drs_file
 from apero.core.core import drs_log
-from apero.core.core import drs_misc
-from apero.core.core import drs_text
 from apero.io import drs_fits
 from apero.io import drs_path
 
@@ -1449,7 +1449,7 @@ def _get_hdict(params: ParamDict, dbname: str, drsfile: DrsFileTypes = None,
         # add keys from hdict to header
         for key in hdict:
             # do not look at forbidden keys
-            if key in pconst.FORBIDDEN_OUT_KEYS():
+            if key in params['FORBIDDEN_OUT_KEYS']:
                 continue
             # else set key from hdict with the comment
             header[key] = (hdict[key], hdict.comments[key])

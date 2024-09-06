@@ -17,12 +17,12 @@ import pandas as pd
 
 from apero.base import base
 from apero.core import constants
-from apero.core.core import drs_base_classes as base_class
 from apero.core.core import drs_database
-from apero.core.core import drs_exceptions
+from apero.core.base import drs_exceptions
+from apero.core.base import drs_base_classes as base_class
+from apero.core.base import drs_misc
+from apero.core.base import drs_text
 from apero.core.core import drs_log
-from apero.core.core import drs_misc
-from apero.core.core import drs_text
 from apero.io import drs_fits
 
 # =============================================================================

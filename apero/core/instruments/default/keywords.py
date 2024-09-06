@@ -204,7 +204,7 @@ __all__ = [  # input keys
 ]
 
 # set name
-__NAME__ = 'apero.constants.default.default_keywords'
+__NAME__ = 'apero.constants.default.keywords'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
 __author__ = base.__author__
