@@ -29,7 +29,7 @@ from apero.core.instruments.spirou import keywords
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'config.instruments.spirou.pseudo_const'
+__NAME__ = 'config.instruments.spirou.instrument'
 __INSTRUMENT__ = 'SPIROU'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
@@ -53,7 +53,7 @@ NULL_TEXT = ['', 'None', 'Null', 'nan', 'inf']
 # =============================================================================
 class Spirou(instrument.Instrument):
     # set class name
-    class_name = 'PsuedoConstants'
+    class_name = 'Spirou'
 
     def __init__(self, instrument: Union[str, None] = None):
         """
@@ -137,7 +137,7 @@ class Spirou(instrument.Instrument):
         # get constants dicts
         config_dict = config.CDict()
         constants_dict = constants.CDict()
-        keywords_dict = keywords.CDict()
+        keywords_dict = keywords.KDict()
         # ---------------------------------------------------------------------
         # store keys, values, sources, instances
         values, sources, instances = dict(), dict(), dict()

@@ -4105,8 +4105,7 @@ def _remove_engineering(params, indexdb, condition):
     u_obs_dirs = np.unique(obs_dirs)
     # get the object mask (i.e. we want to know that we have objects for this
     #   night
-    allowed_objtypes = params.listp('REPROCESS_OBJECT_TYPES', separator=' ',
-                                    dtype=str)
+    allowed_objtypes = params['REPROCESS_OBJECT_TYPES']
     objmask = np.in1d(obstypes, np.array(allowed_objtypes))
     # define empty keep mask
     reject_obs_dirs = ''

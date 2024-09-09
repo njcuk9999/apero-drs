@@ -32,7 +32,7 @@ from apero.core.instruments.default import keywords
 # Define variables
 # =============================================================================
 # Name of program
-__NAME__ = 'instruments.default.pseudo_const'
+__NAME__ = 'instruments.default.instrument'
 __PATH__ = 'instruments.default'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
@@ -64,7 +64,7 @@ LONG_FLOAT = drs_db.AperoFloat(precision=53, asdecimal=False)
 # noinspection PyMethodMayBeStatic,PyPep8Naming
 class Instrument:
     # set class name
-    class_name = 'DefaultPseudoConstants'
+    class_name = 'Instrument'
 
     def __init__(self, instrument: Union[str, None] = None):
         """
@@ -151,7 +151,7 @@ class Instrument:
         # get constants dicts
         config_dict = config.CDict()
         constants_dict = constants.CDict()
-        keywords_dict = keywords.CDict()
+        keywords_dict = keywords.KDict()
         # ---------------------------------------------------------------------
         # store keys, values, sources, instances
         values, sources, instances = dict(), dict(), dict()

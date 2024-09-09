@@ -28,7 +28,7 @@ from apero.core.instruments.nirps_ha import keywords
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'config.instruments.nirps_ha.pseudo_const'
+__NAME__ = 'config.instruments.nirps_ha.instrument'
 __INSTRUMENT__ = 'NIRPS_HA'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
@@ -54,7 +54,7 @@ Table = instrument.Table
 # =============================================================================
 class NirpsHa(instrument.Instrument):
     # set class name
-    class_name = 'PsuedoConstants'
+    class_name = 'NirpsHa'
 
     def __init__(self, instrument: Union[str, None] = None):
         """
@@ -138,7 +138,7 @@ class NirpsHa(instrument.Instrument):
         # get constants dicts
         config_dict = config.CDict()
         constants_dict = constants.CDict()
-        keywords_dict = keywords.CDict()
+        keywords_dict = keywords.KDict()
         # ---------------------------------------------------------------------
         # store keys, values, sources, instances
         values, sources, instances = dict(), dict(), dict()

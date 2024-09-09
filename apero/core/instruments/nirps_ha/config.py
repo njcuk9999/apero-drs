@@ -6,115 +6,106 @@ Created on 2019-01-17
 @author: cook
 """
 from apero.base import base
-from apero.core.instruments.default.config import *
+from apero.core.instruments.default import config
 
-# Note: If variables are not showing up MUST CHECK __all__ definition
-#       in import * module
 __NAME__ = 'config.instruments.nirps_ha.config.py'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
 __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
+# copy the storage
+CDict = config.CDict.copy()
 
 # -----------------------------------------------------------------------------
 # global settings
 # -----------------------------------------------------------------------------
 # Instrument Name
-INSTRUMENT = INSTRUMENT.copy(__NAME__)
-INSTRUMENT.value = 'NIRPS_HA'
+CDict.set('INSTRUMENT', value='NIRPS_HA', source=__NAME__, author='NJC')
 
 # Defines the longitude West is negative
-OBS_LONG = OBS_LONG.copy(__NAME__)
-OBS_LONG.value = -70.731330408
+CDict.set('OBS_LONG', value=-70.731330408, source=__NAME__, author='NJC')
 
 #  Defines the latitude North (deg)
-OBS_LAT = OBS_LAT.copy(__NAME__)
-OBS_LAT.value = -29.261165622
+CDict.set('OBS_LAT', value=-29.261165622, source=__NAME__, author='NJC')
 
 #  Defines the CFHT altitude (m)
-OBS_ALT = OBS_ALT.copy(__NAME__)
-OBS_ALT.value = 2400
+CDict.set('OBS_ALT', value=2400, source=__NAME__, author='NJC')
 
 # -----------------------------------------------------------------------------
 # global settings
 # -----------------------------------------------------------------------------
 # PLotting mode (0-3)
-DRS_PLOT = DRS_PLOT.copy(__NAME__)
-DRS_PLOT.value = 0
+CDict.set('DRS_PLOT', value=0, source=__NAME__, author='NJC')
 
 # Whether to run in debug mode
 #      0: no debug
 #      1: basic debugging on errors
 #      2: recipes specific (plots and some code runs)
-DRS_DEBUG = DRS_DEBUG.copy(__NAME__)
-DRS_DEBUG.value = 0
+CDict.set('DRS_DEBUG', value=0, source=__NAME__, author='NJC')
 
 # Add snapshot parameter table to reduced outputs
-PARAMETER_SNAPSHOT = PARAMETER_SNAPSHOT.copy(__NAME__)
-PARAMETER_SNAPSHOT.value = True
+CDict.set('PARAMETER_SNAPSHOT', value=True, source=__NAME__, author='NJC')
 
 # -----------------------------------------------------------------------------
 # path settings
 # -----------------------------------------------------------------------------
 #   Define the root installation directory
-DRS_ROOT = DRS_ROOT.copy(__NAME__)
-DRS_ROOT.value = '/drs/nirps_ha/drs/'
+CDict.set('DRS_ROOT', value='/drs/nirps_ha/drs/', source=__NAME__, author='NJC')
 
 #   Define the folder with the raw data files in
-DRS_DATA_RAW = DRS_DATA_RAW.copy(__NAME__)
-DRS_DATA_RAW.value = '/drs/nirps_ha/data/raw/'
+CDict.set('DRS_DATA_RAW', value='/drs/nirps_ha/data/raw/', source=__NAME__,
+          author='NJC')
 
 #   Define the directory that the reduced data should be saved to/read from
-DRS_DATA_REDUC = DRS_DATA_REDUC.copy(__NAME__)
-DRS_DATA_REDUC.value = '/drs/nirps_ha/data/reduced'
+CDict.set('DRS_DATA_REDUC', value='/drs/nirps_ha/data/reduced', source=__NAME__,
+          author='NJC')
 
 #   Define the directory that the post processed data should be saved to
-DRS_DATA_OUT = DRS_DATA_OUT.copy(__NAME__)
-DRS_DATA_OUT.value = '/drs/nirps_ha/data/out'
+CDict.set('DRS_DATA_OUT', value='/drs/nirps_ha/data/out', source=__NAME__,
+          author='NJC')
 
 #   Define the directory that the calibration files should be saved to/read from
-DRS_CALIB_DB = DRS_CALIB_DB.copy(__NAME__)
-DRS_CALIB_DB.value = '/drs/nirps_ha/data/calibDB'
+CDict.set('DRS_CALIB_DB', value='/drs/nirps_ha/data/calibDB', source=__NAME__,
+          author='NJC')
 
 #   Define the directory that the calibration files should be saved to/read from
-DRS_TELLU_DB = DRS_TELLU_DB.copy(__NAME__)
-DRS_TELLU_DB.value = '/drs/nirps_ha/data/telluDB'
+CDict.set('DRS_TELLU_DB', value='/drs/nirps_ha/data/telluDB', source=__NAME__,
+          author='NJC')
 
 #   Define the directory that the log messages are stored in
-DRS_DATA_MSG = DRS_DATA_MSG.copy(__NAME__)
-DRS_DATA_MSG.value = '/drs/nirps_ha/data/msg'
+CDict.set('DRS_DATA_MSG', value='/drs/nirps_ha/data/msg', source=__NAME__,
+          author='NJC')
 
 #   Define the working directory
-DRS_DATA_WORKING = DRS_DATA_WORKING.copy(__NAME__)
-DRS_DATA_WORKING.value = '/drs/nirps_ha/data/tmp'
+CDict.set('DRS_DATA_WORKING', value='/drs/nirps_ha/data/tmp', source=__NAME__,
+          author='NJC')
 
 #   Define the plotting directory
-DRS_DATA_PLOT = DRS_DATA_PLOT.copy(__NAME__)
-DRS_DATA_PLOT.value = '/drs/nirps_ha/data/plot'
+CDict.set('DRS_DATA_PLOT', value='/drs/nirps_ha/data/plot', source=__NAME__,
+          author='NJC')
 
 #   Define the run directory
-DRS_DATA_RUN = DRS_DATA_RUN.copy(__NAME__)
-DRS_DATA_RUN.value = '/drs/nirps_ha/data/run'
+CDict.set('DRS_DATA_RUN', value='/drs/nirps_ha/data/run', source=__NAME__,
+          author='NJC')
 
 #   Define the assets directory
-DRS_DATA_ASSETS = DRS_DATA_ASSETS.copy(__NAME__)
-DRS_DATA_ASSETS.value = '/drs/nirps_ha/data/assets'
+CDict.set('DRS_DATA_ASSETS', value='/drs/nirps_ha/data/assets', source=__NAME__,
+          author='NJC')
 
 #   Define the other directory
-DRS_DATA_OTHER = DRS_DATA_OTHER.copy(__NAME__)
-DRS_DATA_OTHER.value = '/drs/nirps_ha/data/other'
+CDict.set('DRS_DATA_OTHER', value='/drs/nirps_ha/data/other', source=__NAME__,
+          author='NJC')
 
 # Define the lbl directory
-LBL_PATH = LBL_PATH.copy(__NAME__)
-LBL_PATH.value = '/drs/nirps_ha/data/lbl'
+CDict.set('LBL_PATH', value='/drs/nirps_ha/data/lbl', source=__NAME__,
+          author='NJC')
 
 # =============================================================================
 # DATABASE SETTINGS
 # =============================================================================
 # Define database directory (relative to assets directory)
-DATABASE_DIR = DATABASE_DIR.copy(__NAME__)
-DATABASE_DIR.value = 'databases/'
+CDict.set('DATABASE_DIR', value='databases/', source=__NAME__, author='NJC')
 
 #   Define the match type for calibDB files
 #         match = 'older'  only select calibration files that are older in
@@ -127,8 +118,7 @@ DATABASE_DIR.value = 'databases/'
 #                            closest in time to the input file
 #    if two files match with keys and time the key lower in the
 #         calibDB file will be used
-CALIB_DB_MATCH = CALIB_DB_MATCH.copy(__NAME__)
-CALIB_DB_MATCH.value = 'closest'
+CDict.set('CALIB_DB_MATCH', value='closest', source=__NAME__, author='NJC')
 
 #   Define the match type for calibDB files
 #         match = 'older'  when more than one file for each key will
@@ -139,48 +129,44 @@ CALIB_DB_MATCH.value = 'closest'
 #                            fitsfilename
 #    if two files match with keys and time the key lower in the
 #         calibDB file will be used
-TELLU_DB_MATCH = TELLU_DB_MATCH.copy(__NAME__)
-TELLU_DB_MATCH.value = 'closest'
+CDict.set('TELLU_DB_MATCH', value='closest', source=__NAME__, author='NJC')
 
 # =============================================================================
 # DRS INTERNAL PATHS
 # =============================================================================
 # where the instrument recipes are stored
-DRS_INSTRUMENT_RECIPE_PATH = DRS_INSTRUMENT_RECIPE_PATH.copy(__NAME__)
-DRS_INSTRUMENT_RECIPE_PATH.value = './recipes/'
+CDict.set('DRS_INSTRUMENT_RECIPE_PATH', value='./recipes/', source=__NAME__,
+          author='NJC')
 
 #  where the bad pixel data are stored (within assets directory)
-DRS_BADPIX_DATA = DRS_BADPIX_DATA.copy(__NAME__)
-DRS_BADPIX_DATA.value = 'engineering/'
+CDict.set('DRS_BADPIX_DATA', value='engineering/', source=__NAME__,
+          author='NJC')
 
 # where the calibration data are stored (within assets directory)
-DRS_CALIB_DATA = DRS_CALIB_DATA.copy(__NAME__)
-DRS_CALIB_DATA.value = 'calib/'
+CDict.set('DRS_CALIB_DATA', value='calib/', source=__NAME__, author='NJC')
 
 # where the wave data are stored (within assets directory)
-DRS_WAVE_DATA = DRS_WAVE_DATA.copy(__NAME__)
-DRS_WAVE_DATA.value = 'calib/'
+CDict.set('DRS_WAVE_DATA', value='calib/', source=__NAME__, author='NJC')
 
 # where the assets directory is (relative to apero module)
 # TODO: remove and replace with online link / user link
-DRS_RESET_ASSETS_PATH = DRS_RESET_ASSETS_PATH.copy(__NAME__)
-DRS_RESET_ASSETS_PATH.value = './apero-assets/'
+CDict.set('DRS_RESET_ASSETS_PATH', value='./apero-assets/', source=__NAME__,
+          author='NJC')
 
 # where the checksum and critica data (git managed) are stored
-DRS_CRITICAL_DATA_PATH = DRS_CRITICAL_DATA_PATH.copy(__NAME__)
-DRS_CRITICAL_DATA_PATH.value = './data/'
+CDict.set('DRS_CRITICAL_DATA_PATH', value='./data/', source=__NAME__,
+          author='NJC')
 
 # where the reset data are stored (within assets directory)
 # for calibDB (within assets directory)
-DRS_RESET_CALIBDB_PATH = DRS_RESET_CALIBDB_PATH.copy(__NAME__)
-DRS_RESET_CALIBDB_PATH.value = 'reset/calibdb/'
+CDict.set('DRS_RESET_CALIBDB_PATH', value='reset/calibdb/', source=__NAME__,
+          author='NJC')
 # for telluDB (within assets directory)
-DRS_RESET_TELLUDB_PATH = DRS_RESET_TELLUDB_PATH.copy(__NAME__)
-DRS_RESET_TELLUDB_PATH.value = 'reset/telludb/'
+CDict.set('DRS_RESET_TELLUDB_PATH', value='reset/telludb/', source=__NAME__,
+          author='NJC')
 # for run files (within assets directory)
-DRS_RESET_RUN_PATH = DRS_RESET_RUN_PATH.copy(__NAME__)
-DRS_RESET_RUN_PATH.value = 'reset/runs/'
-
+CDict.set('DRS_RESET_RUN_PATH', value='reset/runs/', source=__NAME__,
+          author='NJC')
 
 # =============================================================================
 #  End of configuration file

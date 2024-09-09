@@ -424,23 +424,112 @@ class ConstantsDict:
         # just return the Const
         return self.storage[key]
 
-    def set(self, key: str, value: Any,
+    def set(self, name: str, key: str, value: Any = None,
+            dtype: Union[None, str, type] = None,
+            dtypei: Union[None, str, type] = None,
+            options: List = None,
+            maximum: Union[int, float, None] = None,
+            minimum: Union[int, float, None] = None,
             source: Union[str, None] = None,
-            author: Union[str, None] = None):
+            unit: Union[uu.Unit] = None, default: Any = None,
+            datatype: Union[type, None] = None,
+            dataformat: Union[str, None] = None,
+            group: Union[str, None] = None, user: bool = False,
+            active: bool = False, description: Union[str, None] = None,
+            author: Union[str, List[str], None] = None,
+            parent: Union[str, None] = None,
+            output: bool = True):
+        """
+        Add a constant instance to the dict
 
+        :param name: str, name of the constant
+        :param value: object, value of the constant
+        :param dtype: type, data type of the constant
+        :param dtypei: type, data type of list/dictionary elements
+        :param options: list of objects, the allowed values for the constant
+        :param maximum: the maximum value allowed for the constant
+        :param minimum: the minimum value allowed for the constant
+        :param source: str, the source file of the constant
+        :param unit: astropy unit, the units of the constant
+        :param default: default value of the constant
+        :param datatype: str, an additional datatype i.e. used to pass to
+                         another function e.g. a time having data type "MJD"
+        :param dataformat: str, an additional data format i.e. used to pass to
+                           another function e.g. a time having data format float
+        :param group: str, the group this constant belongs to
+        :param user: bool, whether the constant is a user constant
+        :param active: bool, whether the constant is active in constant files
+                       (for user config file generation)
+        :param description: str, the description for this constant
+        :param author: str, the author of this constant (i.e. who to contact)
+        :param parent: str, the parent of this constant (if a constant is
+                       related to or comes from another constant)
+        :param output: bool if False does not put in parameter output table
+        """
+        # update the hdrkey
+        if key is not None:
+            self.storage[name].name = key
         # update value
-        self.storage[key].value = value
+        if value is not None:
+            self.storage[name].value = value
+        # update dtype
+        if dtype is not None:
+            self.storage[name].dtype = dtype
+        # update dtypei
+        if dtypei is not None:
+            self.storage[name].dtypei = dtypei
+        # update options
+        if options is not None:
+            self.storage[name].options = options
+        # update maximum
+        if maximum is not None:
+            self.storage[name].maximum = maximum
+        # update minimum
+        if minimum is not None:
+            self.storage[name].minimum = minimum
         # update source (if given)
         if source is not None:
-            self.storage[key].source = source
+            self.storage[name].source = source
+        # update unit (if given)
+        if unit is not None:
+            self.storage[name].unit = unit
+        # update default (if given)
+        if default is not None:
+            self.storage[name].default = default
+        # update datatype (if given)
+        if datatype is not None:
+            self.storage[name].datatype = datatype
+        # update dataformat (if given)
+        if dataformat is not None:
+            self.storage[name].dataformat = dataformat
+        # update group (if given)
+        if group is not None:
+            self.storage[name].group = group
+        # update user (if given)
+        if user is not None:
+            self.storage[name].user = user
+        # update active (if given)
+        if active is not None:
+            self.storage[name].active = active
+        # update description (if given)
+        if description is not None:
+            self.storage[name].description = description
         # update author (if given)
         if author is not None:
             # if author is in base.AUTHORS use this instead
             if author in base.AUTHORS:
-                self.storage[key].author = base.AUTHORS[author]
+                self.storage[name].author = base.AUTHORS[author]
             # otherwise set the author
             else:
-                self.storage[key].author = author
+                self.storage[name].author = author
+        else:
+            self.storage[name].author = base.AUTHORS['NJC']
+        # update parent (if given)
+        if parent is not None:
+            self.storage[name].parent = parent
+        # update output (if given)
+        if output is not None:
+            self.storage[name].output = output
 
     def copy(self) -> 'ConstantsDict':
         # create new storage
@@ -776,6 +865,191 @@ class Keyword(Const):
                        combine_method=self.combine_method,
                        description=self.description,
                        post_exclude=self.post_exclude)
+
+
+class KeywordDict:
+    """
+    Basic container for constants
+    """
+    def __init__(self):
+        self.storage: Dict[str, Keyword] = dict()
+
+    def add(self, name: str, key: Union[str, None] = None,
+            value: Any = None, dtype: Union[None, str, type] = None,
+            comment: Union[str, None] = None,
+            options: List = None,
+            maximum: Union[int, float, None] = None,
+            minimum: Union[int, float, None] = None,
+            source: Union[str, None] = None,
+            unit: Union[uu.Unit] = None, default: Any = None,
+            datatype: Union[type, None] = None,
+            dataformat: Union[str, None] = None,
+            group: Union[str, None] = None,
+            author: Union[str, List[str], None] = None,
+            parent: Union[str, None] = None,
+            combine_method: Union[str, None] = None,
+            description: Union[str, None] = None,
+            post_exclude: bool = False):
+        """
+        Construct the keyword instance
+
+        :param name: str, name of the keyword
+        :param key: str, the FITS HEADER key for the keyword
+        :param value: str, the FITS HEADER value for the keyword
+        :param dtype: str, the data type for the keyword value
+        :param comment: str, the FITS HEADER comment for the keyword
+        :param options: list of objects, the allowed values for the keyword
+        :param maximum: the maximum value allowed for the keyword value
+        :param minimum: the minimum value allowed for the keyword value
+        :param source: str, the source file of the keyword
+        :param unit: astropy unit, the units of the keyword value
+        :param default: default value of the keyword value
+        :param datatype: str, an additional datatype i.e. used to pass to
+                         another function e.g. a time having data type "MJD"
+        :param dataformat: str, an additional data format i.e. used to pass to
+                           another function e.g. a time having data format float
+        :param group: str, the group this constant belongs to
+        :param author: str, the author of this constant (i.e. who to contact)
+        :param parent: Const, the parent of this constant (if a constant is
+                       related to or comes from another constant)
+        :param combine_method: str, the method to combine keyword (if we are
+                               combining images)
+        :param description: str or None, if set this is the description of the
+                            constants
+        :param post_exclude: bool, if True flags that keyword can be removed
+                             in post processing files
+
+        :returns: None (constructor)
+        """
+        # create constant
+        constants = Keyword(name, key, value, dtype, comment, options, maximum,
+                            minimum, source, unit, default, datatype,
+                            dataformat, group, author, parent, combine_method,
+                            description, post_exclude)
+        # add to storage
+        self.storage[name] = constants
+
+    def get(self, key: str) -> Const:
+        # just return the Const
+        return self.storage[key]
+
+    def set(self, name: str, key: str = None, value: Any = None,
+            dtype: Union[None, str, type] = None,
+            comment: Union[str, None] = None,
+            options: List = None,
+            maximum: Union[int, float, None] = None,
+            minimum: Union[int, float, None] = None,
+            source: Union[str, None] = None,
+            unit: Union[uu.Unit] = None, default: Any = None,
+            datatype: Union[type, None] = None,
+            dataformat: Union[str, None] = None,
+            group: Union[str, None] = None,
+            author: Union[str, List[str], None] = None,
+            parent: Union[str, None] = None,
+            combine_method: Union[str, None] = None,
+            description: Union[str, None] = None,
+            post_exclude: Union[bool, None] = None):
+        """
+        Set attributes of the Keyword instance
+
+        :param key: str, the FITS HEADER key for the keyword
+        :param value: str, the FITS HEADER value for the keyword
+        :param dtype: str, the data type for the keyword value
+        :param comment: str, the FITS HEADER comment for the keyword
+        :param options: list of objects, the allowed values for the keyword
+        :param maximum: the maximum value allowed for the keyword value
+        :param minimum: the minimum value allowed for the keyword value
+        :param source: str, the source file of the keyword
+        :param unit: astropy unit, the units of the keyword value
+        :param default: default value of the keyword value
+        :param datatype: str, an additional datatype i.e. used to pass to
+                         another function e.g. a time having data type "MJD"
+        :param dataformat: str, an additional data format i.e. used to pass to
+                           another function e.g. a time having data format float
+        :param group: str, the group this constant belongs to
+        :param author: str, the author of this constant (i.e. who to contact)
+        :param parent: Const, the parent of this constant (if a constant is
+                       related to or comes from another constant)
+        :param combine_method: str, the method used to combine this keyword
+                               when combining two or more files
+        :param description: str or None, if set this is the description of the
+                            constants
+        :param post_exclude: bool, whether to exclude from post processing
+
+        :returns: None
+        """
+        # update value
+        if value is not None:
+            self.storage[name].value = value
+        # update dtype
+        if dtype is not None:
+            self.storage[name].dtype = dtype
+        # update comment
+        if comment is not None:
+            self.storage[name].comment = comment
+        # update options
+        if options is not None:
+            self.storage[name].options = options
+        # update maximum
+        if maximum is not None:
+            self.storage[name].maximum = maximum
+        # update minimum
+        if minimum is not None:
+            self.storage[name].minimum = minimum
+        # update source
+        if source is not None:
+            self.storage[name].source = source
+        # update unit
+        if unit is not None:
+            self.storage[name].unit = unit
+        # update default
+        if default is not None:
+            self.storage[name].default = default
+        # update datatype
+        if datatype is not None:
+            self.storage[name].datatype = datatype
+        # update dataformat
+        if dataformat is not None:
+            self.storage[name].dataformat = dataformat
+        # update group
+        if group is not None:
+            self.storage[name].group = group
+        # update author (if given)
+        if author is not None:
+            # if author is in base.AUTHORS use this instead
+            if author in base.AUTHORS:
+                self.storage[name].author = base.AUTHORS[author]
+            # otherwise set the author
+            else:
+                self.storage[name].author = author
+        else:
+            self.storage[name].author = base.AUTHORS['NJC']
+        # update parent
+        if parent is not None:
+            self.storage[name].parent = parent
+        # update combine method
+        if combine_method is not None:
+            self.storage[name].combine_method = combine_method
+        # update description
+        if description is not None:
+            self.storage[name].description = description
+        # update post_exclude
+        if post_exclude is not None:
+            self.storage[name].post_exclude = post_exclude
+
+    def copy(self) -> 'KeywordDict':
+        # create new storage
+        new_storage = dict()
+        # loop around storage
+        for name in self.storage:
+            # copy constant
+            new_storage[name] = self.storage[name].copy()
+        # create new ConstantsList
+        new_keywords = KeywordDict()
+        # add storage to new storage
+        new_keywords.storage = new_storage
+        # return new constants
+        return new_keywords
 
 
 class CKCaseINSDict(base_class.CaseInsensitiveDict):

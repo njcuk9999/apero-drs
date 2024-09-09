@@ -13,50 +13,6 @@ from apero.core.constants import constant_functions
 # =============================================================================
 # Define variables
 # =============================================================================
-# all definition
-__all__ = [  # global settings
-    'DRS_PLOT', 'DRS_DEBUG', 'PARAMETER_SNAPSHOT',
-    # path settings
-    'DRS_ROOT', 'DRS_DATA_RAW', 'DRS_DATA_REDUC', 'DRS_DATA_OUT',
-    'DRS_CALIB_DB', 'DRS_TELLU_DB', 'DRS_DATA_MSG', 'DRS_DATA_WORKING',
-    'DRS_DATA_RUN', 'DRS_DATA_MSG_FULL', 'DRS_DATA_ASSETS', 'DRS_DATA_OTHER',
-    'LBL_PATH',
-    # General properites
-    'DRS_VERSION', 'AUTHORS', 'DRS_RELEASE', 'DRS_DATE', 'LANGUAGE',
-    # Instrument/Observatory Constants
-    'INSTRUMENT', 'OBS_LONG', 'OBS_LAT', 'OBS_ALT',
-    # DRS SETTINGS
-    'DRS_PACKAGE', 'DRS_USERENV', 'DRS_GROUP', 'DRS_RECIPE_KIND',
-    'DRS_USER_DEFAULT', 'IS_REF', 'DRS_RECIPE_TYPE', 'DRS_GROUP_PATH',
-    # DRS INTERNAL PATHS
-    'DRS_USER_DEFAULT', 'DRS_MOD_DATA_PATH', 'DRS_MOD_INSTRUMENT_CONFIG',
-    'DRS_MOD_CORE_CONFIG', 'DRS_WAVE_DATA',
-    'DRS_INSTRUMENT_RECIPE_PATH', 'DRS_DEFAULT_RECIPE_PATH',
-    'DRS_BADPIX_DATA', 'DRS_CALIB_DATA',
-    'DRS_RESET_ASSETS_PATH', 'DRS_CRITICAL_DATA_PATH', 'DRS_RESET_CALIBDB_PATH',
-    'DRS_RESET_TELLUDB_PATH', 'DRS_USER_PROGRAM',
-    'DRS_PDB_RC_FILE', 'IPYTHON_RETURN', 'ALLOW_BREAKPOINTS',
-    'DRS_RESET_RUN_PATH', 'DRS_INSTRUMENTS', 'DRS_PDB_RC_FILENAME',
-    # DRS ASSETS URLS
-    'DRS_ASSETS_URLS', 'DRS_SSH_OPTIONS', 'DRS_SSH_USER', 'DRS_SSH_HOST',
-    'DRS_SSH_WEBPATH', 'DRS_SSH_ASSETSPATH',
-    # DATABASE SETTINGS
-    'DATABASE_DIR', 'CALIB_DB_MATCH', 'TELLU_DB_MATCH',
-    # DISPLAY/LOGGING SETTINGS
-    'DRS_PRINT_LEVEL', 'DRS_LOG_LEVEL', 'DRS_COLOURED_LOG', 'DRS_THEME',
-    'DRS_MAX_IO_DISPLAY_LIMIT', 'DRS_HEADER', 'DRS_LOG_CAUGHT_WARNINGS',
-    'DRS_LOG_EXIT_TYPE', 'DRS_LOG_FORMAT', 'DRS_LOG_FITS_NAME', 'DRS_LOG_EMAIL',
-    'DRS_LOG_EMAIL_AUTH', 'DRS_LOG_EMAIL_AUTH_PATH',
-    # PLOT SETTINGS
-    'DRS_PLOT_FONT_FAMILY', 'DRS_PLOT_FONT_WEIGHT',
-    'DRS_PLOT_FONT_SIZE', 'DRS_PLOT_STYLE', 'DRS_DATA_PLOT',
-    'DRS_PLOT_EXT', 'DRS_SUMMARY_EXT', 'DRS_SUMMARY_STYLE',
-    # debug settings
-    'DEBUG_MODE_LOG_PRINT', 'DEBUG_MODE_TEXTNAME_PRINT',
-    'DEBUG_MODE_FUNC_PRINT',
-]
-
-# set name
 __NAME__ = 'apero.constants.default.config'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
