@@ -3618,6 +3618,53 @@ def _check_runtable(params, runtable, recipemod):
             WLOG(params, 'error', textentry('00-503-00011', args=eargs))
 
 
+def _find_special_targets(params: ParamDict, pconst,
+                          object_list: List[str], special_name: str,
+                          objdbm: drs_database.AstrometricDatabase,
+                          ) -> List[str]:
+    # note we need to update this list to match
+    # the cleaning that is done in preprocessing
+    found_list, missing_list = objdbm.find_objnames(pconst, object_list,
+                                                    allow_empty=False,
+                                                    listname=special_name)
+    # deal with different length than when we started
+    if len(found_list) != len(object_list):
+        # flag for stopping here
+        stop_here = False
+        # print warning
+        wmsg = 'Could not find all objects from {0} in astrometric database.'
+        wargs = [special_name]
+        WLOG(params, 'warning', wmsg.format(*wargs), sublevel=1)
+        # Ask the user for each missing target whether they wish to use it
+        for missing_obj in missing_list:
+            # ask user whether they wish to use this object
+            question = ('Do you wish to use object?')
+            question = question.format(special_name)
+            # get user input
+            answer = input(question.format(missing_obj))
+
+            if 'Y' in answer.upper():
+                found_list.append(missing_obj)
+            else:
+                stop_here = True
+        # if the user has decided to stop here generate a user error
+        if stop_here:
+            # generate a full error message
+            emsg = ('Could not find all objects from '
+                    '{0} in astrometric database. '
+                    'Please check {0}, add missing objects to '
+                    'astrometric database or remove objects from {0} '
+                    'and try again. \nMissing objects:\n\t')
+            # add missing objects
+            for missing_obj in missing_list:
+                emsg += '\n\t - {0}'.format(missing_obj)
+            # log error
+            eargs = [special_name]
+            WLOG(params, 'error', emsg.format(*eargs))
+
+    return found_list
+
+
 def _get_filters(params: ParamDict, srecipe: DrsRecipe,
                  filter_kind: str = 'raw') -> Dict[str, Any]:
     """
@@ -3658,21 +3705,10 @@ def _get_filters(params: ParamDict, srecipe: DrsRecipe,
             if (user_filter is None) or (user_filter.upper() in slvalues):
                 if value == 'TELLURIC_TARGETS':
                     tellu_include_list = telluric.get_tellu_include_list(params)
-                    # note we need to update this list to match
-                    # the cleaning that is done in preprocessing
-                    clist = objdbm.find_objnames(pconst, tellu_include_list,
-                                                 allow_empty=False,
-                                                 listname='TELLURIC_TARGETS')
-                    # deal with different length than when we started
-                    if len(clist) != len(tellu_include_list):
-                        emsg = ('Could not find all objects in '
-                                '{0} in astrometric database. '
-                                'Please check {0}, add missing objects to '
-                                'astrometric database or remove from {0} '
-                                'and try again. \n\t objnames={1}')
-                        eargs = ['TELLURIC_TARGETS',
-                                 ','.join(tellu_include_list)]
-                        WLOG(params, 'error', emsg.format(*eargs))
+                    # find special targets and deal with those missing
+                    clist = _find_special_targets(params, pconst,
+                                                  tellu_include_list,
+                                                  'TELLURIC_TARGETS', objdbm)
                     # add cleaned obj list to filters
                     filters[key] = list(np.unique(clist))
                 else:
@@ -3683,20 +3719,9 @@ def _get_filters(params: ParamDict, srecipe: DrsRecipe,
                 objlist = _split_string_list(user_filter, allow_whitespace=True)
 
                 if value == 'SCIENCE_TARGETS':
-                    # note we need to update this list to match
-                    # the cleaning that is done in preprocessing
-                    clist = objdbm.find_objnames(pconst, objlist,
-                                                 allow_empty=False,
-                                                 listname='SCIENCE_TARGETS')
-                    # deal with different length than when we started
-                    if len(clist) != len(objlist):
-                        emsg = ('Could not find all objects in '
-                                '{0} in astrometric database. '
-                                'Please check {0}, add missing objects to '
-                                'astrometric database or remove from {0} '
-                                'and try again. \n\t objnames={1}')
-                        eargs = ['SCIENCE_TARGETS', ', '.join(objlist)]
-                        WLOG(params, 'error', emsg.format(*eargs))
+                    # find special targets and deal with those missing
+                    clist = _find_special_targets(params, pconst, objlist,
+                                                  'SCIENCE_TARGETS', objdbm)
                     # add cleaned obj list to filters
                     filters[key] = list(np.unique(clist))
                     # update science targets
@@ -3704,8 +3729,8 @@ def _get_filters(params: ParamDict, srecipe: DrsRecipe,
                 else:
                     # note we need to update this list to match
                     # the cleaning that is done in preprocessing
-                    clist = objdbm.find_objnames(pconst, objlist,
-                                                 allow_empty=True)
+                    clist, _ = objdbm.find_objnames(pconst, objlist,
+                                                    allow_empty=True)
                     # add cleaned obj list to filters
                     filters[key] = list(np.unique(clist))
             else:

@@ -36,7 +36,7 @@ __INSTRUMENT__ = 'None'
 __version__ = '0.7.290'
 __author__ = ['N. Cook', 'E. Artigau', 'F. Bouchy', 'M. Hobson', 'C. Moutou',
               'I. Boisse', 'E. Martioli']
-__date__ = '2024-04-10'
+__date__ = '2024-09-11'
 __release__ = 'alpha pre-release'
 # do this once per drs import
 __now__ = Time.now()

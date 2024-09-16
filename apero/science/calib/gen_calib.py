@@ -352,8 +352,8 @@ def check_files(params: ParamDict,
     objname_inputs = params['INPUTS']['OBJNAME'].split(',')
     # clean (capitalize and remove white spaces)
     dprtype_inputs = drs_text.clean_strings(dprtype_inputs)
-    objname_inputs = objdbm.find_objnames(pconst, objname_inputs,
-                                          allow_empty=True)
+    objname_inputs, _ = objdbm.find_objnames(pconst, objname_inputs,
+                                             allow_empty=True)
     # ----------------------------------------------------------------------
     # log checking file info
     wargs = [dprtype, objname]
