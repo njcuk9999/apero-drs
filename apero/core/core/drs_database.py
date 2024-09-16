@@ -499,7 +499,7 @@ class AstrometricDatabase(DatabaseManager):
                       objnames: Union[List[str], np.ndarray],
                       allow_empty: bool,
                       listname: Optional[str] = None
-                      ) -> List[str]:
+                      ) -> Tuple[List[str], List[str]]:
         """
         Wrapper around find_objname
 
@@ -516,10 +516,13 @@ class AstrometricDatabase(DatabaseManager):
             objnames = [objnames]
         # loop around objects
         out_objnames = []
+        missing_objnames = []
         for objname in objnames:
             out_objname, found = self.find_objname(pconst, objname)
             if found:
                 out_objnames.append(out_objname)
+            else:
+                missing_objnames.append(objname)
         # ---------------------------------------------------------------------
         # deal with no entries and not expecting an empty list return
         if len(out_objnames) == 0 and not allow_empty:
@@ -536,10 +539,10 @@ class AstrometricDatabase(DatabaseManager):
             eargs = [listname, ', '.join(objnames)]
             # report the error
             WLOG(self.params, 'error', emsg.format(*eargs))
-            return []
+            return [], objnames
         # ---------------------------------------------------------------------
         # return the filled out list
-        return out_objnames
+        return out_objnames, missing_objnames
 
     def find_objname(self, pconst: constants.PseudoConstants,
                      objname: str, return_flag: bool = False

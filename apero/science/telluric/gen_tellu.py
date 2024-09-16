@@ -103,7 +103,7 @@ def get_tellu_include_list(params: ParamDict,
     whitelist = drs_data.load_text_file(params, whitelistfile, func_name,
                                         dtype=str)
     # must clean names
-    whitelist = objdbm.find_objnames(pconst, whitelist, allow_empty=True)
+    whitelist, _ = objdbm.find_objnames(pconst, whitelist, allow_empty=True)
 
     # deal with all objects filter
     if all_objects is not None:
@@ -137,7 +137,7 @@ def get_tellu_exclude_list(params: ParamDict,
     blacklist = drs_data.load_text_file(params, blacklistfile, func_name,
                                         dtype=str)
     # must clean names and deal with aliases
-    blacklist = objdbm.find_objnames(pconst, blacklist, allow_empty=True)
+    blacklist, _ = objdbm.find_objnames(pconst, blacklist, allow_empty=True)
     # return the whitelist
     return blacklist, blacklistfile
 
