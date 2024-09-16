@@ -3629,6 +3629,21 @@ def _find_special_targets(params: ParamDict, pconst,
                           object_list: List[str], special_name: str,
                           objdbm: drs_database.AstrometricDatabase,
                           ) -> List[str]:
+    """
+    Find special targets (i.e. telluric targets or science targets) in the
+    astrometric database and deal with those missing (ask user)
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param pconst: PseudoConst, the pseudo constants
+    :param object_list: list of strings, the list of objects
+    :param special_name: the name of the special list (telluric targets or
+                         science targets) or any other parameter name to
+                         guide the user as to what needs fixing
+    :param objdbm: AstrometricDatabase, the astrometric database manager
+
+    :return: List[str], the list of objects that should be used (found + user
+             added that were missing)
+    """
     # note we need to update this list to match
     # the cleaning that is done in preprocessing
     found_list, missing_list = objdbm.find_objnames(pconst, object_list,
