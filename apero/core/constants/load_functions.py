@@ -292,37 +292,6 @@ def _load_from_yaml(files: List[str], instances: Dict[str, Any]
     return out_values, out_sources, out_instances
 
 
-def _check_mod_source(source: str) -> Union[None, str]:
-    """
-    Check that the source (a module file) is a python mod path
-    i.e. path1.path2.filename  and not a file path
-    i.e. path1/path2/filename.py
-
-    :param source: str, the moudle source to check
-    :return: str, the cleaned source i.e. path1.path2.filename
-    """
-    # deal with source is None
-    if source is None:
-        return source
-    # if source doesn't exist also skip
-    if not os.path.exists(source):
-        return source
-    # get package path
-    package_path = drs_misc.get_relative_folder(__PACKAGE__, '')
-    # if package path not in source then skip
-    if package_path not in source:
-        return source
-    # remove package path and replace with PACKAGE
-    source = source.replace(package_path, __PACKAGE__.lower())
-    # replace separators with .
-    source = source.replace(os.sep, '.')
-    # remove double dots
-    while '..' in source:
-        source = source.replace('..', '.')
-    # return edited source
-    return source
-
-
 # =============================================================================
 # Start of code
 # =============================================================================

@@ -15,7 +15,7 @@ from apero.core.utils import drs_recipe
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'config.core.default.recipe_definitions.py'
+__NAME__ = 'apero.core.instruments.default.recipe_definitions.py'
 __INSTRUMENT__ = 'None'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__

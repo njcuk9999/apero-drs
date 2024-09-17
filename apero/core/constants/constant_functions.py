@@ -366,8 +366,9 @@ class ConstantsDict:
     """
     Basic container for constants
     """
-    def __init__(self):
+    def __init__(self, source: str):
         self.storage: Dict[str, Const] = dict()
+        self.source = source
 
     def add(self, name: str, value: Any = None,
                  dtype: Union[None, str, type] = None,
@@ -424,7 +425,7 @@ class ConstantsDict:
         # just return the Const
         return self.storage[key]
 
-    def set(self, name: str, key: str, value: Any = None,
+    def set(self, name: str, value: Any = None,
             dtype: Union[None, str, type] = None,
             dtypei: Union[None, str, type] = None,
             options: List = None,
@@ -467,8 +468,7 @@ class ConstantsDict:
         :param output: bool if False does not put in parameter output table
         """
         # update the hdrkey
-        if key is not None:
-            self.storage[name].name = key
+        self.storage[name] = Const(name, source=source)
         # update value
         if value is not None:
             self.storage[name].value = value
@@ -531,15 +531,15 @@ class ConstantsDict:
         if output is not None:
             self.storage[name].output = output
 
-    def copy(self) -> 'ConstantsDict':
+    def copy(self, source: str) -> 'ConstantsDict':
         # create new storage
         new_storage = dict()
         # loop around storage
         for name in self.storage:
             # copy constant
-            new_storage[name] = self.storage[name].copy()
+            new_storage[name] = self.storage[name].copy(source=self.source)
         # create new ConstantsList
-        new_constants = ConstantsDict()
+        new_constants = ConstantsDict(source)
         # add storage to new storage
         new_constants.storage = new_storage
         # return new constants
@@ -871,8 +871,9 @@ class KeywordDict:
     """
     Basic container for constants
     """
-    def __init__(self):
+    def __init__(self, source: str):
         self.storage: Dict[str, Keyword] = dict()
+        self.source = source
 
     def add(self, name: str, key: Union[str, None] = None,
             value: Any = None, dtype: Union[None, str, type] = None,
@@ -921,6 +922,9 @@ class KeywordDict:
 
         :returns: None (constructor)
         """
+        # get global source if not set
+        if source is None:
+            source = self.source
         # create constant
         constants = Keyword(name, key, value, dtype, comment, options, maximum,
                             minimum, source, unit, default, datatype,
@@ -978,6 +982,11 @@ class KeywordDict:
 
         :returns: None
         """
+        # get global source if not set
+        if source is None:
+            source = self.source
+        # set up a Keyword instance
+        self.storage[name] = Keyword(name, key, source=source)
         # update value
         if value is not None:
             self.storage[name].value = value
@@ -1037,15 +1046,15 @@ class KeywordDict:
         if post_exclude is not None:
             self.storage[name].post_exclude = post_exclude
 
-    def copy(self) -> 'KeywordDict':
+    def copy(self, source: str) -> 'KeywordDict':
         # create new storage
         new_storage = dict()
         # loop around storage
         for name in self.storage:
             # copy constant
-            new_storage[name] = self.storage[name].copy()
+            new_storage[name] = self.storage[name].copy(source=self.source)
         # create new ConstantsList
-        new_keywords = KeywordDict()
+        new_keywords = KeywordDict(source)
         # add storage to new storage
         new_keywords.storage = new_storage
         # return new constants

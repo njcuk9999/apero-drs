@@ -12,14 +12,17 @@ Created on 2018-10-31 at 18:06
 
 @author: cook
 """
+import os
+
 from apero.base import base
 from apero.core.core import drs_file
 from apero.core.core import drs_out_file as out
+from apero.core.instruments.nirps_ha.constants import CDict
 
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'config.instruments.nirps_he.file_defintions.py'
+__NAME__ = 'apero.core.instruments.nirps_he.file_defintions.py'
 __INSTRUMENT__ = 'NIRPS_HE'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
@@ -1992,8 +1995,12 @@ post_file.addset(post_v_file)
 # =============================================================================
 # Other Files
 # =============================================================================
+ccf_path = str(os.path.join(CDict['DRS_DATA_ASSETS'],
+                            CDict['WAVE_CCF_MASK_PATH']))
+# special case where input file may not be in default path directory
 other_ccf_mask_file = drs_input('CCF_MASK', filetype='.mas',
-                                description='CCF mask file')
+                                description='CCF mask file',
+                                inpath=ccf_path)
 
 # =============================================================================
 # End of code

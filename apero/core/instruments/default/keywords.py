@@ -13,7 +13,7 @@ from apero.core.constants import constant_functions
 # -----------------------------------------------------------------------------
 # Define variables
 # -----------------------------------------------------------------------------
-__NAME__ = 'apero.constants.default.keywords'
+__NAME__ = 'apero.core.instruments.default.keywords'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
 __author__ = base.__author__
@@ -23,7 +23,7 @@ __release__ = base.__release__
 Const = constant_functions.Const
 # Keyword defintion
 Keyword = constant_functions.Keyword
-KDict = constant_functions.KeywordDict()
+KDict = constant_functions.KeywordDict(__NAME__)
 
 # -----------------------------------------------------------------------------
 # Required header keys (general)
@@ -739,9 +739,6 @@ KDict.set('KW_BTOT', key='NULL', dtype=float, source=__NAME__,
 # -----------------------------------------------------------------------------
 # Define localisation variables
 # -----------------------------------------------------------------------------
-# root for localisation header keys
-ROOT_DRS_LOC = Const('ROOT_DRS_LOC', value=None, dtype=str, source=__NAME__,
-                     description='root for localisation header keys')
 # Mean background (as percentage)
 KDict.set('KW_LOC_BCKGRD', key='NULL', dtype=float, source=__NAME__,
           description='Mean background (as percentage)')

@@ -24,11 +24,13 @@ from apero.core.instruments.default import instrument
 from apero.core.instruments.nirps_he import config
 from apero.core.instruments.nirps_he import constants
 from apero.core.instruments.nirps_he import keywords
+from apero.core.instruments.nirps_he import file_definitions
+from apero.core.instruments.nirps_he import recipe_definitions
 
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'config.instruments.nirps_he.instrument'
+__NAME__ = 'apero.core.instruments.nirps_he.instrument'
 __INSTRUMENT__ = 'NIRPS_HE'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
@@ -56,16 +58,16 @@ class NirpsHe(instrument.Instrument):
     # set class name
     class_name = 'NirpsHe'
 
-    def __init__(self, instrument: Union[str, None] = None):
+    def __init__(self, instrument_name: Union[str, None] = None):
         """
         Pseudo Constants constructor
 
-        :param instrument: str, the drs instrument name
+        :param instrument_name: str, the drs instrument name
         """
         # set function name
         # _ = display_func('__init__', __NAME__, self.class_name)
         # set instrument name
-        super().__init__(instrument)
+        super().__init__(instrument_name)
         # storage of things we don't want to compute twice without need
         self.exclude = ['header_cols', 'index_cols', 'calibration_cols',
                         'telluric_cols', 'logdb_cols', 'objdb_cols',
@@ -131,14 +133,14 @@ class NirpsHe(instrument.Instrument):
         return '{0}[{1}]'.format(self.class_name, self.instrument)
 
     def copy(self):
-        return NirpsHe(instrument=self.instrument)
+        return NirpsHe(instrument_name=self.instrument)
 
     def get_constants(self
                       ) -> Tuple[Dict[str, Any], Dict[str, str], Dict[str, Any]]:
         # get constants dicts
-        config_dict = config.CDict()
-        constants_dict = constants.CDict()
-        keywords_dict = keywords.KDict()
+        config_dict = config.CDict
+        constants_dict = constants.CDict
+        keywords_dict = keywords.KDict
         # ---------------------------------------------------------------------
         # store keys, values, sources, instances
         values, sources, instances = dict(), dict(), dict()
@@ -160,54 +162,20 @@ class NirpsHe(instrument.Instrument):
     # =========================================================================
     # File and Recipe definitions
     # =========================================================================
-    def FILEMOD(self) -> base_class.ImportModule:
+    def FILEMOD(self) -> Any:
         """
         The import for the file definitions
         :return: file_definitions
         """
-        # set function name
-        func_name = display_func('FILEMOD', __NAME__, self.class_name)
-        # deal with already having this defined
-        if self.filemod is not None:
-            return self.filemod
-        # set module name
-        module_name = 'apero.core.instruments.nirps_he.file_definitions'
-        # try to import module
-        try:
-            self.filemod = base_class.ImportModule('nirps_he.file_definitions',
-                                                   module_name)
-            return self.filemod
-        except Exception as e:
-            # raise coded exception
-            eargs = [module_name, 'system', func_name, type(e), str(e), '']
-            ekwargs = dict(codeid='00-000-00003', level='error',
-                           targs=eargs, func_name=func_name)
-            raise drs_exceptions.DrsCodedException(**ekwargs)
+        return file_definitions
 
-    def RECIPEMOD(self) -> base_class.ImportModule:
+    def RECIPEMOD(self) -> Any:
         """
         The import for the recipe defintions
 
         :return: file_definitions
         """
-        # set function name
-        func_name = display_func('RECIPEMOD', __NAME__, self.class_name)
-        # deal with already having this defined
-        if self.recipemod is not None:
-            return self.recipemod
-        # set module name
-        module_name = 'apero.core.instruments.nirps_he.recipe_definitions'
-        # try to import module
-        try:
-            strmod = 'nirps_he.recipe_definitions'
-            self.recipemod = base_class.ImportModule(strmod, module_name)
-            return self.recipemod
-        except Exception as e:
-            # raise coded exception
-            eargs = [module_name, 'system', func_name, type(e), str(e), '']
-            ekwargs = dict(codeid='00-000-00003', level='error',
-                           targs=eargs, func_name=func_name)
-            raise drs_exceptions.DrsCodedException(**ekwargs)
+        return recipe_definitions
 
     # =========================================================================
     # HEADER SETTINGS
@@ -263,7 +231,7 @@ class NirpsHe(instrument.Instrument):
         # ------------------------------------------------------------------
         # Deal with sun altitude
         # ------------------------------------------------------------------
-        header, hdict = pseudo_const.get_sun_altitude(params, header, hdict)
+        header, hdict = instrument.get_sun_altitude(params, header, hdict)
         # ------------------------------------------------------------------
         # Deal with drs mode
         # ------------------------------------------------------------------
@@ -300,7 +268,7 @@ class NirpsHe(instrument.Instrument):
         # set function name
         # _ = display_func('DRS_OBJ_NAME', __NAME__, self.class_name)
         # clean object name
-        return pseudo_const.clean_object(objname)
+        return instrument.clean_object(objname)
 
     def GET_OBJNAME(self, params: ParamDict, header: Any, filename: str,
                     check_aliases, objdbm: Any = None) -> str:
@@ -402,7 +370,7 @@ class NirpsHe(instrument.Instrument):
         header_cols.add(name='KW_DATE_OBS', datatype=sqlalchemy.String(80))
         header_cols.add(name='KW_MJDATE', datatype=sqlalchemy.String(80))
         header_cols.add(name='KW_TARGET_TYPE', datatype=sqlalchemy.String(80))
-        header_cols.add(name='KW_MID_OBS_TIME', datatype=pseudo_const.LONG_FLOAT,
+        header_cols.add(name='KW_MID_OBS_TIME', datatype=instrument.LONG_FLOAT,
                         is_index=True)
         # cleaned object name
         header_cols.add(name='KW_OBJNAME', datatype=sqlalchemy.String(80),
@@ -412,7 +380,7 @@ class NirpsHe(instrument.Instrument):
         # other raw object name
         header_cols.add(name='KW_OBJECTNAME2', datatype=sqlalchemy.String(80))
         header_cols.add(name='KW_OBSTYPE', datatype=sqlalchemy.String(80))
-        header_cols.add(name='KW_EXPTIME', datatype=pseudo_const.LONG_FLOAT)
+        header_cols.add(name='KW_EXPTIME', datatype=instrument.LONG_FLOAT)
         header_cols.add(name='KW_INSTRUMENT', datatype=sqlalchemy.String(80))
         header_cols.add(name='KW_INST_MODE', datatype=sqlalchemy.String(80))
         header_cols.add(name='KW_RAW_DPRTYPE', datatype=sqlalchemy.String(80))
@@ -786,7 +754,7 @@ class NirpsHe(instrument.Instrument):
                        datatype=sqlalchemy.String(200))
         index_cols.add(name='BLOCK_KIND', is_index=True,
                        datatype=sqlalchemy.String(20))
-        index_cols.add(name='LAST_MODIFIED', datatype=pseudo_const.LONG_FLOAT)
+        index_cols.add(name='LAST_MODIFIED', datatype=instrument.LONG_FLOAT)
         index_cols.add(name='RECIPE', datatype=sqlalchemy.String(200))
         index_cols.add(name='RUNSTRING',
                        datatype=sqlalchemy.TEXT)
@@ -882,15 +850,12 @@ def constuct_objname(params: Union[ParamDict, None], header,
         rawobjname = header[kwrawobjname]
     # -------------------------------------------------------------------------
     if check_aliases and objdbm is not None:
-        # get local version of pconst
-        pconst = PseudoConstants()
         # get clean / alias-safe version of object name
-        objectname, _ = objdbm.find_objname(pconst, rawobjname)
+        objectname, _ = objdbm.find_objname(instrument, rawobjname)
     else:
-        objectname = pseudo_const.clean_object(rawobjname)
+        objectname = instrument.clean_object(rawobjname)
     # -------------------------------------------------------------------------
     return objectname
-
 
 
 def clean_obj_name(params: ParamDict = None, header: Any = None,

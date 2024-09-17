@@ -18,7 +18,7 @@ from apero.core.utils import drs_recipe
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'core.instruments.spirou.recipe_definitions.py'
+__NAME__ = 'apero.core.instruments.spirou.recipe_definitions.py'
 __INSTRUMENT__ = 'SPIROU'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__

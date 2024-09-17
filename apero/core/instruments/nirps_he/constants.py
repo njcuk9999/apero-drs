@@ -8,14 +8,14 @@ Created on 2019-01-17
 from apero.base import base
 from apero.core.instruments.default import constants
 
-__NAME__ = 'core.instruments.nirps_he.constants.py'
+__NAME__ = 'apero.core.instruments.nirps_he.constants.py'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
 __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # copy the storage
-CDict = constants.CDict.copy()
+CDict = constants.CDict.copy(source=__NAME__)
 
 # =============================================================================
 # NIRPS_HA Constant definitions

@@ -18,6 +18,7 @@ only from
 
     do not import from core.core.drs_argument
     do not import from core.core.drs_file
+    do not import from core.constants (except load_functions)
 
 Version 0.0.1
 """
@@ -29,12 +30,12 @@ from typing import Any, List, Optional, Tuple, Union
 import numpy as np
 
 from apero.base import base
-from apero.core import constants
 from apero.core import lang
 from apero.core.base import drs_exceptions
 from apero.core.base import drs_text
 from apero.core.base import drs_misc
 from apero.core.math import time
+from apero.core.constants import load_functions
 
 # =============================================================================
 # Define variables
@@ -49,7 +50,7 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # Get the parameter dictionary
-ParamDict = constants.ParamDict
+ParamDict = Any
 # Get the Config error
 DrsCodedException = drs_exceptions.DrsCodedException
 DrsCodedWarning = drs_exceptions.DrsCodedWarning
@@ -81,7 +82,7 @@ class Logger:
         if paramdict is not None:
             self.pin = paramdict
         else:
-            self.pin = constants.load()
+            self.pin = load_functions.load_config()
         # noinspection PyBroadException
         try:
             self.language = base.IPARAMS['LANGUAGE']
@@ -93,7 +94,7 @@ class Logger:
             self.language = base.IPARAMS['LANGUAGE']
             self.instrument = base.IPARAMS['INSTRUMENT']
         # load additional resources based on instrument/language
-        self.pconstant = constants.pload()
+        self.pconstant = load_functions.load_pconfig()
         # ---------------------------------------------------------------------
         # save output parameter dictionary for saving to file
         self.pout = ParamDict()
@@ -130,7 +131,7 @@ class Logger:
         # update dict with state
         self.__dict__.update(state)
         # read attributes not in state
-        self.pconstant = constants.pload()
+        self.pconstant = load_functions.load_pconfig()
 
     def __str__(self) -> str:
         """
@@ -243,7 +244,7 @@ class Logger:
             DrsCodedWarning('10-005-00005', 'warning', func_name=func_name)
         # if params is still None load it
         if params is None:
-            params = constants.load()
+            params = load_functions.load_config()
         # deal with no PID
         if 'PID' not in params:
             params['PID'] = None
@@ -456,7 +457,7 @@ class Logger:
             # update language
             self.language = paramdict['LANGUAGE']
             # update pconstant
-            self.pconstant = constants.pload()
+            self.pconstant = load_functions.load_pconfig()
 
     def output_param_dict(self, paramdict: ParamDict,
                           new: bool = False) -> ParamDict:
@@ -853,7 +854,7 @@ def warninglogger(params: ParamDict, warnlist: Any,
     :return:
     """
     # get pconstant
-    pconstant = constants.pload()
+    pconstant = load_functions.load_pconfig()
     log_warnings = pconstant.LOG_CAUGHT_WARNINGS()
     # deal with warnlist as string
     if isinstance(warnlist, str):

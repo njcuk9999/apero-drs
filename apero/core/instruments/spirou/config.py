@@ -8,14 +8,14 @@ Created on 2019-01-17
 from apero.base import base
 from apero.core.instruments.default import config
 
-__NAME__ = 'config.instruments.spirou.config.py'
+__NAME__ = 'apero.core.instruments.spirou.config.py'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
 __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # copy the storage
-CDict = config.CDict.copy()
+CDict = config.CDict.copy(source='config.instruments.default.config.py')
 
 # -----------------------------------------------------------------------------
 # global settings

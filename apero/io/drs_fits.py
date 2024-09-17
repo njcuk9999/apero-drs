@@ -32,9 +32,10 @@ from astropy.io.fits.verify import VerifyWarning
 from astropy.table import Table
 
 from apero.base import base
-from apero.core import constants
 from apero.core import lang
+from apero.core.base import drs_exceptions
 from apero.core.base import drs_base_classes
+from apero.core.base import drs_misc
 from apero.core.core import drs_log
 
 # =============================================================================
@@ -50,13 +51,11 @@ __release__ = base.__release__
 # Get Astropy Time and Time Delta
 Time, TimeDelta = base.AstropyTime, base.AstropyTimeDelta
 # get param dict
-ParamDict = constants.ParamDict
-# Get Logging function
-WLOG = drs_log.wlog
-# alias pcheck
-pcheck = constants.PCheck(wlog=WLOG)
+ParamDict = Any
+# exception
+DrsCodedException = drs_exceptions.DrsCodedException
 # Get function string
-display_func = drs_log.display_func
+display_func = drs_misc.display_func
 # Get the text types
 textentry = lang.textentry
 # set scale args for astropy >3.0
@@ -411,10 +410,17 @@ def readfits(params: ParamDict, filename: Union[str, Path],
         dirname = os.path.dirname(filename)
         if not os.path.exists(dirname):
             eargs = [dirname, os.path.basename(filename), func_name]
-            WLOG(params, 'error', textentry('01-001-00013', args=eargs))
+
+            raise DrsCodedException('01-001-00013',
+                                                   level='error',
+                                                   targs=eargs,
+                                                   func_name=func_name)
         else:
             eargs = [os.path.basename(filename), dirname, func_name]
-            WLOG(params, 'error', textentry('01-001-00012', args=eargs))
+            raise DrsCodedException('01-001-00012',
+                                                   level='error',
+                                                   targs=eargs,
+                                                   func_name=func_name)
     # -------------------------------------------------------------------------
     # deal with obtaining data
     if fmt == 'fits-image':
@@ -439,8 +445,10 @@ def readfits(params: ParamDict, filename: Union[str, Path],
     else:
         cfmts = ', '.join(allowed_formats)
         eargs = [filename, fmt, cfmts, func_name]
-        WLOG(params, 'error', textentry('00-008-00019', args=eargs))
-        return None
+        raise DrsCodedException('00-008-00019',
+                                               level='error',
+                                               targs=eargs,
+                                               func_name=func_name)
     # -------------------------------------------------------------------------
     # deal with return
     if return_names:
@@ -485,12 +493,11 @@ def read_header(params: ParamDict, filename: str, ext: Union[int, None] = None,
     try:
         header = fits.getheader(filename, ext=ext)
     except Exception as e:
-        if log:
-            eargs = [os.path.basename(filename), ext, type(e), e, func_name]
-            WLOG(params, 'error', textentry('01-001-00010', args=eargs))
-            header = None
-        else:
-            raise e
+        eargs = [os.path.basename(filename), ext, type(e), e, func_name]
+        raise DrsCodedException('01-001-00010',
+                                               level='error',
+                                               targs=eargs,
+                                               func_name=func_name)
     # return header
     if copy:
         return fits.Header(header)
@@ -529,8 +536,10 @@ def _read_fitsmulti(params: ParamDict, filename: str, getdata: bool,
             try:
                 n_ext = len(hdulist)
             except Exception as e:
-                msg = textentry('10-001-00005', args=[type(e), e])
-                WLOG(params, 'warning', msg, sublevel=2)
+                wargs = [type(e), str(e)]
+                drs_exceptions.DrsCodedWarning('10-001-00005', level='warning',
+                                               targs=wargs,
+                                               func_name=func_name)
                 n_ext = None
             # deal with unknown number of extensions
             if n_ext is None:
@@ -547,13 +556,12 @@ def _read_fitsmulti(params: ParamDict, filename: str, getdata: bool,
                     try:
                         hdr_it = fits.Header(hdulist[it].header)
                     except Exception as e:
-                        if log:
-                            eargs = [os.path.basename(filename), it,
-                                     type(e), e, func_name]
-                            msg = textentry('01-001-00008', args=eargs)
-                            WLOG(params, 'error', msg)
-                        else:
-                            raise e
+                        eargs = [os.path.basename(filename), it,
+                                 type(e), e, func_name]
+                        raise DrsCodedException('01-001-00013',
+                                                               level='error',
+                                                               targs=eargs,
+                                                               func_name=func_name)
                     # ---------------------------------------------------------
                     # get this iterations data
                     data_it = hdulist[it].data
@@ -579,17 +587,18 @@ def _read_fitsmulti(params: ParamDict, filename: str, getdata: bool,
                         else:
                             dataarr.append(deepcopy(data_it))
                     except Exception as e:
-                        if log:
-                            eargs = [os.path.basename(filename), it,
-                                     type(e), e, func_name]
-                            emsg = textentry('01-001-00007', args=eargs)
-                            WLOG(params, 'error', emsg)
-                        else:
-                            raise e
+                        eargs = [os.path.basename(filename), it,
+                                 type(e), e, func_name]
+                        rkwargs = dict(codeid='01-001-00007',
+                                       level='error', targs=eargs,
+                                       func_name=func_name)
+                        raise drs_exceptions.DrsCodedException(**rkwargs)
     except Exception as e:
         eargs = [filename, type(e), e, func_name]
-        WLOG(params, 'error', textentry('01-001-00006', args=eargs))
-
+        rkwargs = dict(codeid='01-001-00006',
+                       level='error', targs=eargs,
+                       func_name=func_name)
+        raise drs_exceptions.DrsCodedException(**rkwargs)
     # -------------------------------------------------------------------------
     # return data and/or header
     if getdata and gethdr:
@@ -624,7 +633,7 @@ def _read_fitsimage(params: ParamDict, filename: str, getdata: bool,
     :return: data if getdata True and/or headers if gethdr True
     """
     # set function name
-    # _ = display_func('_read_fitsimage', __NAME__)
+    func_name = display_func('_read_fitsimage', __NAME__)
     # -------------------------------------------------------------------------
     # deal with getting data
     if getdata:
@@ -639,7 +648,10 @@ def _read_fitsimage(params: ParamDict, filename: str, getdata: bool,
                         #              File may be corrupted or wrong type
                         eargs = [filename, ext]
                         emsg = textentry('00-004-00015', args=eargs)
-                        WLOG(params, 'error', emsg)
+                        rkwargs = dict(codeid='00-004-00015',
+                                       level='error', targs=eargs,
+                                       func_name=func_name)
+                        raise drs_exceptions.DrsCodedException(**rkwargs)
                     data = np.array(hdulist[ext].data)
             # deal with extname being set
             elif extname is not None:
@@ -649,8 +661,10 @@ def _read_fitsimage(params: ParamDict, filename: str, getdata: bool,
                         # print error: File {0} does not have extension name {1}
                         #              File may be corrupted or wrong type
                         eargs = [filename, extname]
-                        emsg = textentry('00-004-00016', args=eargs)
-                        WLOG(params, 'error', emsg)
+                        rkwargs = dict(codeid='00-004-00016',
+                                       level='error', targs=eargs,
+                                       func_name=func_name)
+                        raise drs_exceptions.DrsCodedException(**rkwargs)
                     data = np.array(hdulist[extname].data)
             # just load first valid extension (and copy it)
             else:
@@ -662,23 +676,23 @@ def _read_fitsimage(params: ParamDict, filename: str, getdata: bool,
                                                  extname=extname,
                                                  flavour='data')
             except Exception as e:
-                if log:
-                    if ext is not None:
-                        extstr = 'ext = {0}'.format(ext)
-                    elif extname is not None:
-                        extstr = 'extname = {0}'.format(extname)
-                    else:
-                        extstr = ''
-                    # if we get to this point we cannot open the required
-                    #   extension
-                    string_trackback = traceback.format_exc()
-                    eargs = [filename, extstr, type(e)]
-                    emsg = textentry('01-001-00014', args=eargs)
-                    emsg += '\n\n' + textentry(string_trackback)
-                    WLOG(params, 'error', emsg)
-                    data = None
+                if ext is not None:
+                    extstr = 'ext = {0}'.format(ext)
+                elif extname is not None:
+                    extstr = 'extname = {0}'.format(extname)
                 else:
-                    raise e
+                    extstr = ''
+                # if we get to this point we cannot open the required
+                #   extension
+                string_trackback = traceback.format_exc()
+                eargs = [filename, extstr, type(e)]
+                emsg = textentry('01-001-00014', args=eargs)
+                emsg += '\n\n' + textentry(string_trackback)
+                rkwargs = dict(codeid='01-001-00014',
+                               message=emsg,
+                               level='error', targs=eargs,
+                               func_name=func_name)
+                raise drs_exceptions.DrsCodedException(**rkwargs)
     else:
         data = None
     # -------------------------------------------------------------------------
@@ -694,8 +708,10 @@ def _read_fitsimage(params: ParamDict, filename: str, getdata: bool,
                         # print error: File {0} does not have extension {1}
                         #              File may be corrupted or wrong type
                         eargs = [filename, ext]
-                        emsg = textentry('00-004-00015', args=eargs)
-                        WLOG(params, 'error', emsg)
+                        rkwargs = dict(codeid='00-004-00015',
+                                       level='error', targs=eargs,
+                                       func_name=func_name)
+                        raise drs_exceptions.DrsCodedException(**rkwargs)
                     header = Header(hdulist[ext].header)
             # deal with extname being set
             elif extname is not None:
@@ -705,8 +721,10 @@ def _read_fitsimage(params: ParamDict, filename: str, getdata: bool,
                         # print error: File {0} does not have extension name {1}
                         #              File may be corrupted or wrong type
                         eargs = [filename, extname]
-                        emsg = textentry('00-004-00016', args=eargs)
-                        WLOG(params, 'error', emsg)
+                        rkwargs = dict(codeid='00-004-00016',
+                                       level='error', targs=eargs,
+                                       func_name=func_name)
+                        raise drs_exceptions.DrsCodedException(**rkwargs)
                     header = Header(hdulist[extname].header)
             # just load first valid extension (and copy it)
             else:
@@ -718,21 +736,20 @@ def _read_fitsimage(params: ParamDict, filename: str, getdata: bool,
                                                    extname=extname,
                                                    flavour='header')
             except Exception as e:
-                if log:
-                    if ext is not None:
-                        extstr = 'ext = {0}'.format(ext)
-                    elif extname is not None:
-                        extstr = 'extname = {0}'.format(extname)
-                    else:
-                        extstr = ''
-                    string_trackback = traceback.format_exc()
-                    eargs = [filename, extstr, type(e)]
-                    emsg = textentry('01-001-00015', args=eargs)
-                    emsg += '\n\n' + textentry(string_trackback)
-                    WLOG(params, 'error', emsg)
-                    header = None
+                if ext is not None:
+                    extstr = 'ext = {0}'.format(ext)
+                elif extname is not None:
+                    extstr = 'extname = {0}'.format(extname)
                 else:
-                    raise e
+                    extstr = ''
+                string_trackback = traceback.format_exc()
+                eargs = [filename, extstr, type(e)]
+                emsg = textentry('01-001-00015', args=eargs)
+                emsg += '\n\n' + textentry(string_trackback)
+                rkwargs = dict(codeid='01-001-00015',
+                               level='error', targs=eargs,
+                               func_name=func_name)
+                raise drs_exceptions.DrsCodedException(**rkwargs)
     else:
         header = None
     # -------------------------------------------------------------------------
@@ -764,7 +781,7 @@ def _read_fitstable(params: ParamDict, filename: str, getdata: bool,
     :return: table if getdata True and/or headers if gethdr True
     """
     # set function name
-    # _ = display_func('_read_fitstable', __NAME__)
+    func_name = display_func('_read_fitstable', __NAME__)
     # -------------------------------------------------------------------------
     # deal with getting data
     if getdata:
@@ -780,14 +797,15 @@ def _read_fitstable(params: ParamDict, filename: str, getdata: bool,
                 else:
                     data = Table(Table.read(filename, format='fits'))
         except Exception as e:
-            if log:
-                string_trackback = traceback.format_exc()
-                emsg = textentry('01-001-00016', args=[filename, ext, type(e)])
-                emsg += '\n\n' + textentry(string_trackback)
-                WLOG(params, 'error', emsg)
-                data = None
-            else:
-                raise e
+            string_trackback = traceback.format_exc()
+            eargs = [filename, ext, type(e)]
+            emsg = textentry('01-001-00016', args=eargs)
+            emsg += '\n\n' + textentry(string_trackback)
+            rkwargs = dict(codeid='01-001-00016',
+                           message=emsg,
+                           level='error', targs=eargs,
+                           func_name=func_name)
+            raise drs_exceptions.DrsCodedException(**rkwargs)
     else:
         data = None
     # -------------------------------------------------------------------------
@@ -796,14 +814,14 @@ def _read_fitstable(params: ParamDict, filename: str, getdata: bool,
         try:
             header = fits.Header(fits.getheader(filename, ext=ext))
         except Exception as e:
-            if log:
-                string_trackback = traceback.format_exc()
-                emsg = textentry('01-001-00017', args=[filename, ext, type(e)])
-                emsg += '\n\n' + textentry(string_trackback)
-                WLOG(params, 'error', emsg)
-                header = None
-            else:
-                raise e
+            string_trackback = traceback.format_exc()
+            eargs = [filename, ext, type(e)]
+            emsg = textentry('01-001-00017', args=eargs)
+            emsg += '\n\n' + textentry(string_trackback)
+            rkwargs = dict(codeid='01-001-00017',
+                           level='error', targs=eargs,
+                           func_name=func_name)
+            raise drs_exceptions.DrsCodedException(**rkwargs)
     else:
         header = None
     # -------------------------------------------------------------------------
@@ -961,25 +979,40 @@ def _write_fits(params: ParamDict, filename: str, data: ListImageTable,
     if not success:
         eargs = [os.path.basename(filename), store_error[0], store_error[1],
                  func_name]
-        WLOG(params, 'error', textentry('01-001-00003', args=eargs))
+        rkwargs = dict(codeid='01-001-00003',
+                       level='error', targs=eargs,
+                       func_name=func_name)
+        raise drs_exceptions.DrsCodedException(**rkwargs)
     # ----------------------------------------------------------------------
     # header must be same length as data
     if len(data) != len(header):
         eargs = [filename, len(data), len(header), func_name]
-        WLOG(params, 'error', textentry('00-013-00004', args=eargs))
+        rkwargs = dict(codeid='00-013-00004',
+                       level='error', targs=eargs,
+                       func_name=func_name)
+        raise drs_exceptions.DrsCodedException(**rkwargs)
     # datatype must be same length as data
     if len(data) != len(datatype):
         eargs = [filename, len(data), len(datatype), func_name]
-        WLOG(params, 'error', textentry('00-013-00005', args=eargs))
+        rkwargs = dict(codeid='00-013-00005',
+                       level='error', targs=eargs,
+                       func_name=func_name)
+        raise drs_exceptions.DrsCodedException(**rkwargs)
     # names must be same length as data
     if len(names) != len(data):
         eargs = [filename, len(data), len(names), func_name]
-        WLOG(params, 'error', textentry('00-013-00009', args=eargs))
+        rkwargs = dict(codeid='00-013-00009',
+                       level='error', targs=eargs,
+                       func_name=func_name)
+        raise drs_exceptions.DrsCodedException(**rkwargs)
     # if dtype is not None must be same length as data
     if dtype is not None:
         if len(data) != len(dtype):
             eargs = [filename, len(data), len(dtype), func_name]
-            WLOG(params, 'error', textentry('00-013-00006', args=eargs))
+            rkwargs = dict(codeid='00-013-00006',
+                           level='error', targs=eargs,
+                           func_name=func_name)
+            raise drs_exceptions.DrsCodedException(**rkwargs)
     # ----------------------------------------------------------------------
     # create the multi HDU list
     # try to create primary HDU first
@@ -1025,8 +1058,9 @@ def _write_fits(params: ParamDict, filename: str, data: ListImageTable,
         else:
             # warn user that extension is being skipped
             wargs = [it + 1, names[it], datatype[it]]
-            WLOG(params, 'warning', textentry('10-001-00010', args=wargs),
-                 sublevel=4)
+            drs_exceptions.DrsCodedWarning('10-001-00010', level='warning',
+                                           targs=wargs,
+                                           func_name=func_name)
             continue
         # ---------------------------------------------------------------------
         # only add if header is a fits header
@@ -1051,10 +1085,6 @@ def _write_fits(params: ParamDict, filename: str, data: ListImageTable,
         hdus.append(hdu_i)
     # convert to  HDU list
     hdulist = fits.HDUList(hdus)
-    # except Exception as e:
-    #     eargs = [type(e), e, func_name]
-    #     WLOG(params, 'error', textentry('01-001-00004', args=eargs))
-    #     hdulist = None
     # ---------------------------------------------------------------------
     # write to file
     with warnings.catch_warnings(record=True) as w:
@@ -1063,7 +1093,10 @@ def _write_fits(params: ParamDict, filename: str, data: ListImageTable,
             hdulist.close()
         except Exception as e:
             eargs = [os.path.basename(filename), type(e), e, func_name]
-            WLOG(params, 'error', textentry('01-001-00005', args=eargs))
+            raise drs_exceptions.DrsCodedException('01-001-00005',
+                                                   level='error',
+                                                   targs=eargs, 
+                                                   func_name=func_name)
     # ---------------------------------------------------------------------
     # ignore truncated comment warning since spirou images have some poorly
     #   formatted header cards
@@ -1102,8 +1135,11 @@ def update_extension(params: ParamDict, filename: str, extension: int,
         fitstype = fits.BinTableHDU
     else:
         # log error fmt must be image or table
-        WLOG(params, 'error', textentry('00-004-00013', args=[fmt]))
-        return
+        eargs = [fmt]
+        raise drs_exceptions.DrsCodedException('00-004-00013',
+                                               level='error',
+                                               targs=eargs,
+                                               func_name=func_name)
     # open hdulist
     with fits.open(filename) as hdulist:
         # only update if we have enough extensions
@@ -1138,8 +1174,10 @@ def update_extension(params: ParamDict, filename: str, extension: int,
             # log error: Extension {0} not in {1}
             eargs = [extension, filename, func_name]
             # log error
-            WLOG(params, 'error', textentry('00-004-00014', args=eargs))
-            return
+            raise drs_exceptions.DrsCodedException('00-004-00014',
+                                                   level='error',
+                                                   targs=eargs,
+                                                   func_name=func_name)
         # write to file
         with warnings.catch_warnings(record=True) as _:
             try:
@@ -1148,7 +1186,10 @@ def update_extension(params: ParamDict, filename: str, extension: int,
                 nhdulist.close()
             except Exception as e:
                 eargs = [os.path.basename(filename), type(e), e, func_name]
-                WLOG(params, 'error', textentry('01-001-00005', args=eargs))
+                raise drs_exceptions.DrsCodedException('01-001-00005',
+                                                       level='error',
+                                                       targs=eargs,
+                                                       func_name=func_name)
 
 
 # =============================================================================
@@ -1172,7 +1213,7 @@ def deal_with_bad_header(params: ParamDict, hdu: fits.HDUList,
               up to the point where it cannot get them
     """
     # set function name
-    # _ = display_func('deal_with_bad_header', __NAME__)
+    func_name = display_func('deal_with_bad_header', __NAME__)
     # define condition to pass
     cond = True
     # define iterator
@@ -1195,8 +1236,9 @@ def deal_with_bad_header(params: ParamDict, hdu: fits.HDUList,
     # print message
     if len(datastore) > 0:
         dargs = [it - 1, filename]
-        WLOG(params, 'warning', textentry('10-001-00001', args=dargs),
-             sublevel=4)
+        drs_exceptions.DrsCodedWarning('10-001-00001', level='warning',
+                                       targs=dargs,
+                                       func_name=func_name)
     # find the first one that contains equal shaped array
     valid = []
     for d_it in range(len(datastore)):
@@ -1204,7 +1246,10 @@ def deal_with_bad_header(params: ParamDict, hdu: fits.HDUList,
             valid.append(d_it)
     # if valid is empty we have a problem
     if len(valid) == 0:
-        WLOG(params, 'error', textentry('01-001-00001', args=[filename]))
+        raise DrsCodedException('01-001-00001',
+                                               level='error',
+                                               targs=[filename],
+                                               func_name=func_name)
     # return valid data
     return datastore, headerstore, names
 

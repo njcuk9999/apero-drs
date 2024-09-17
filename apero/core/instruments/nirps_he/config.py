@@ -10,14 +10,14 @@ from apero.core.instruments.default import config
 
 # Note: If variables are not showing up MUST CHECK __all__ definition
 #       in import * module
-__NAME__ = 'config.instruments.nirps_he.config.py'
+__NAME__ = 'apero.core.instruments.nirps_he.config.py'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
 __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # copy the storage
-CDict = config.CDict.copy()
+CDict = config.CDict.copy(source=__NAME__)
 
 # -----------------------------------------------------------------------------
 # global settings

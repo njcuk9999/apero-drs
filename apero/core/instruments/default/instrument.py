@@ -27,12 +27,14 @@ from apero.core.base import drs_text
 from apero.core.instruments.default import config
 from apero.core.instruments.default import constants
 from apero.core.instruments.default import keywords
+from apero.core.instruments.default import file_definitions
+from apero.core.instruments.default import recipe_definitions
 
 # =============================================================================
 # Define variables
 # =============================================================================
 # Name of program
-__NAME__ = 'instruments.default.instrument'
+__NAME__ = 'apero.core.instruments.default.instrument'
 __PATH__ = 'instruments.default'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
@@ -66,16 +68,16 @@ class Instrument:
     # set class name
     class_name = 'Instrument'
 
-    def __init__(self, instrument: Union[str, None] = None):
+    def __init__(self, instrument_name: Union[str, None] = None):
         """
         Pseudo Constants constructor
 
-        :param instrument: str, the drs instrument name
+        :param instrument_name: str, the drs instrument name
         """
         # set function name
         # _ = display_func('__init__', __NAME__, self.class_name)
         # set instrument name
-        self.instrument = instrument
+        self.instrument = instrument_name
         # storage of things we don't want to compute twice without need
         self.header_cols: Optional[DatabaseColumns] = None
         self.index_cols: Optional[DatabaseColumns] = None
@@ -130,7 +132,7 @@ class Instrument:
         return '{0}[{1}]'.format(self.class_name, self.instrument)
 
     def copy(self):
-        return Instrument(instrument=self.instrument)
+        return Instrument(instrument_name=self.instrument)
 
     def _not_implemented(self, method_name: str):
         """
@@ -173,46 +175,20 @@ class Instrument:
     # =========================================================================
     # File and Recipe definitions
     # =========================================================================
-    def FILEMOD(self) -> base_class.ImportModule:
+    def FILEMOD(self) -> Any:
         """
         The import for the file definitions
         :return: file_definitions
         """
-        # set function name
-        func_name = display_func('FILEMOD', __NAME__, self.class_name)
-        # set module name
-        module_name = 'apero.core.instruments.default.file_definitions'
-        # try to import module
-        try:
-            return base_class.ImportModule('default.file_definitions',
-                                           module_name)
-        except Exception as e:
-            # raise coded exception
-            eargs = [module_name, 'system', func_name, type(e), str(e), '']
-            ekwargs = dict(codeid='00-000-00003', level='error',
-                           targs=eargs, func_name=func_name)
-            raise drs_exceptions.DrsCodedException(**ekwargs)
+        return file_definitions
 
-    def RECIPEMOD(self) -> base_class.ImportModule:
+    def RECIPEMOD(self) -> Any:
         """
         The import for the recipe defintions
 
         :return: file_definitions
         """
-        # set function name
-        func_name = display_func('RECIPEMOD', __NAME__, self.class_name)
-        # set module name
-        module_name = 'apero.core.instruments.default.recipe_definitions'
-        # try to import module
-        try:
-            return base_class.ImportModule('default.recipe_definitions',
-                                           module_name)
-        except Exception as e:
-            # raise coded exception
-            eargs = [module_name, 'system', func_name, type(e), str(e), '']
-            ekwargs = dict(codeid='00-000-00003', level='error',
-                           targs=eargs, func_name=func_name)
-            raise drs_exceptions.DrsCodedException(**ekwargs)
+        return recipe_definitions
 
     # =========================================================================
     # HEADER SETTINGS
@@ -1407,7 +1383,7 @@ class Instrument:
 
         :return: str, the new filename
         """
-        _ = basename, suffix
+        _ = basenames, suffix
         # raise implementation error
         self._not_implemented('COMBINE_FILE_SUFFIX')
 

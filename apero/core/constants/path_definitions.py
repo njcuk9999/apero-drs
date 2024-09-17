@@ -14,7 +14,6 @@ from typing import Any, List, Tuple, Union
 
 from apero.base import base
 from apero.core import lang
-from apero.core.constants import param_functions
 from apero.core.base import drs_exceptions
 
 # =============================================================================
@@ -32,7 +31,7 @@ Time = base.Time
 # Get the text types
 textentry = lang.textentry
 # get parameter dictionary
-ParamDict = param_functions.ParamDict
+ParamDict = Any
 # get the Drs Exceptions
 DrsCodedException = drs_exceptions.DrsCodedException
 DrsCodedWarning = drs_exceptions.DrsCodedWarning

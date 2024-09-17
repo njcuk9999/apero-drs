@@ -94,7 +94,7 @@ PseudoConstants = constants.PseudoConstants
 # get numpy masked constant
 MaskedConstant = np.ma.core.MaskedConstant
 # Get pandas like database class
-PandasLikeDatabase = drs_base_classes.PandasLikeDatabaseDuckDB
+PandasLikeDatabase = base_class.PandasLikeDatabaseDuckDB
 # -----------------------------------------------------------------------------
 # define complex typing
 QCParamList = Union[Tuple[List[str], List[Any], List[str], List[int]],
