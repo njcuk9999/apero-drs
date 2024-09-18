@@ -111,6 +111,17 @@ def add_file_reject(params: ParamDict, recipe: DrsRecipe, raw_identifier: str):
         identifiers = raw_identifier.split(',')
     else:
         identifiers = [raw_identifier]
+    # ----------------------------------------------------------------------
+    # simple cleaning to avoid some user errors
+    for it, identifier in enumerate(identifiers):
+        # remove any path given
+        clean_identifier = os.path.basename(identifier)
+        # remove .fits from the identifiers (user may have given the filename)
+        if clean_identifier.endswith('.fits'):
+            clean_identifier = clean_identifier[:-len('.fits')]
+        # update identifiers
+        identifiers[it] = clean_identifier
+    # ----------------------------------------------------------------------
     # get pconst
     pconst = constants.pload()
     # ----------------------------------------------------------------------
