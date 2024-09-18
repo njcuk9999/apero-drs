@@ -34,8 +34,12 @@ from pandasql import sqldf
 
 from apero.base import base
 from apero.base import drs_db
+from apero.base import drs_base
 from apero.base.drs_db import DatabaseManager
-from apero.core import constants
+from apero.core.base.drs_base_classes import Printer
+from apero.core.constants import param_functions
+from apero.core.constants import load_functions
+
 from apero.core import lang
 from apero.core.base import drs_exceptions
 from apero.core.base import drs_text
@@ -60,14 +64,14 @@ Time = base.Time
 # get tqdm from base
 tqdm = base.TQDM
 # get ParamDict
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 # get execption
 DrsCodedException = drs_exceptions.DrsCodedException
+DrsCodedWarning = drs_exceptions.DrsCodedWarning
 # get display func
-display_func = drs_log.display_func
+display_func = drs_misc.display_func
 # get WLOG
-WLOG = drs_log.wlog
-TLOG = drs_log.Printer
+TLOG = Printer
 # get drs header
 DrsHeader = drs_file.Header
 FitsHeader = drs_file.FitsHeader
@@ -80,7 +84,7 @@ textentry = lang.textentry
 DrsFileTypes = Union[drs_file.DrsInputFile, drs_file.DrsFitsFile,
                      drs_file.DrsNpyFile]
 # alias pcheck
-pcheck = constants.PCheck(wlog=WLOG)
+pcheck = param_functions.PCheck()
 # get list of obj name cols
 OBJNAMECOLS = ['KW_OBJNAME']
 # complex return
@@ -122,7 +126,7 @@ class AstrometricDatabase(DatabaseManager):
         self.classname = 'AstrometricDatabase'
         # deal with no pconst
         if pconst is None:
-            pconst = constants.pload()
+            pconst = load_functions.load_pconfig()
         # construct super class
         DatabaseManager.__init__(self, params, pconst)
         # set name
@@ -293,7 +297,7 @@ class AstrometricDatabase(DatabaseManager):
         """
         return self.database.count(condition=condition)
 
-    def find_objnames(self, pconst: constants.PseudoConstants,
+    def find_objnames(self, pconst: Any,
                       objnames: Union[List[str], np.ndarray],
                       allow_empty: bool,
                       listname: Optional[str] = None,
@@ -336,13 +340,14 @@ class AstrometricDatabase(DatabaseManager):
             emsg += '\n\tObjnames: "{1}"'
             eargs = [listname, ', '.join(objnames)]
             # report the error
-            WLOG(self.params, 'error', emsg.format(*eargs))
-            return [], objnames
+            emsg = emsg.format(*eargs)
+            raise DrsCodedException('None', level='error', targs=eargs,
+                                    message=emsg, func_name=func_name)
         # ---------------------------------------------------------------------
         # return the filled out list
         return out_objnames, missing_objnames
 
-    def find_objname(self, pconst: constants.PseudoConstants,
+    def find_objname(self, pconst: Any,
                      objname: str, return_flag: bool = False
                      ) -> Tuple[str, Union[bool, int]]:
         """
@@ -439,7 +444,7 @@ class CalibrationDatabase(DatabaseManager):
         self.classname = 'CalibrationDatabaseManager'
         # deal with no pconst
         if pconst is None:
-            pconst = constants.pload()
+            pconst = load_functions.load_pconfig()
         # construct super class
         DatabaseManager.__init__(self, params, pconst)
         # set name
@@ -495,7 +500,9 @@ class CalibrationDatabase(DatabaseManager):
             if not self.params['INPUTS']['DATABASE']:
                 # Log that we are not adding file due to user input
                 wargs = [dbkey, drsfile.filename]
-                WLOG(self.params, 'info', textentry('40-001-00024', args=wargs))
+                wmsg = textentry('40-001-00024', args=wargs)
+                DrsCodedWarning('40-001-00024', level='info', targs=wargs,
+                                message=wmsg)
                 # return here
                 return
         # ------------------------------------------------------------------
@@ -718,7 +725,9 @@ class CalibrationDatabase(DatabaseManager):
                 # log error: Time mode invalid for Calibration database.
                 eargs = [timemode, ' or '.join(['closest', 'older', 'newer'])]
                 emsg = textentry('00-002-00021', args=eargs)
-                WLOG(self.params, 'error', emsg)
+                raise DrsCodedException('00-002-00021', level='error',
+                                        targs=eargs, message=emsg,
+                                        func_name=func_name)
         # ---------------------------------------------------------------------
         # do sql query
         # ---------------------------------------------------------------------
@@ -774,7 +783,9 @@ class CalibrationDatabase(DatabaseManager):
                     infile = 'File[Time={0}]'.format(filetime.iso)
             # log error: No entries found in {0} database for key='{1}
             eargs = [self.name, key, ', '.join(keys), infile, func_name]
-            WLOG(self.params, 'error', textentry('00-002-00015', args=eargs))
+            emsg = textentry('00-002-00015', args=eargs)
+            raise DrsCodedException('00-002-00015', level='error', targs=eargs,
+                                    message=emsg)
         # make all files absolute paths
         if isinstance(filenames, str):
             # set output
@@ -828,7 +839,7 @@ class TelluricDatabase(DatabaseManager):
         self.classname = 'TelluricDatabaseManager'
         # deal with no pconst
         if pconst is None:
-            pconst = constants.pload()
+            pconst = load_functions.load_pconfig()
         # construct super class
         DatabaseManager.__init__(self, params, pconst)
         # set name
@@ -913,7 +924,9 @@ class TelluricDatabase(DatabaseManager):
             if not self.params['INPUTS']['DATABASE']:
                 # Log that we are not adding file due to user input
                 wargs = [dbkey, drsfile.filename]
-                WLOG(self.params, 'info', textentry('40-001-00024', args=wargs))
+                wmsg = textentry('40-001-00024', args=wargs)
+                drs_base.base_printer('40-001-00024', level='info', args=wargs,
+                                      message=wmsg)
                 # return here
                 return
         # ------------------------------------------------------------------
@@ -1164,7 +1177,9 @@ class TelluricDatabase(DatabaseManager):
                 # log error: Time mode invalid for Calibration database.
                 eargs = [timemode, ' or '.join(['closest', 'older', 'newer'])]
                 emsg = textentry('00-002-00021', args=eargs)
-                WLOG(self.params, 'error', emsg)
+                raise DrsCodedException('00-002-00021', level='error',
+                                        targs=eargs, message=emsg,
+                                        func_name=func_name)
         # ---------------------------------------------------------------------
         # do sql query
         # ---------------------------------------------------------------------
@@ -1204,7 +1219,9 @@ class TelluricDatabase(DatabaseManager):
                     infile = 'None'
             # log error: No entries found in {0} database for key='{1}
             eargs = [self.name, key, ', '.join(keys), infile, func_name]
-            WLOG(self.params, 'error', textentry('00-002-00015', args=eargs))
+            emsg = textentry('00-002-00015', args=eargs)
+            raise DrsCodedException('00-002-00015', level='error', targs=eargs,
+                                    message=emsg, func_name=func_name)
         # make all files absolute paths
         if isinstance(filenames, str):
             return Path(self.filedir).joinpath(filenames).absolute()
@@ -1262,8 +1279,9 @@ def _get_dbkey(params: ParamDict, drsfile: DrsFileTypes, dbmname: str) -> str:
         return drsfile.get_dbkey()
     else:
         eargs = [drsfile.name, dbmname, func_name]
-        WLOG(params, 'error', textentry('00-008-00012', args=eargs))
-        return 'None'
+        emsg = textentry('00-008-00012', args=eargs)
+        raise DrsCodedException('00-008-00012', level='error', targs=eargs,
+                                message=emsg, func_name=func_name)
 
 
 def _get_dbtable(params: ParamDict, drsfile: DrsFileTypes, dbmname: str) -> bool:
@@ -1285,14 +1303,15 @@ def _get_dbtable(params: ParamDict, drsfile: DrsFileTypes, dbmname: str) -> bool
         if dbname != dbmname.upper():
             eargs = [drsfile.name, dbname, dbmname.upper(), drsfile.filename,
                      func_name]
-            WLOG(params, 'error', textentry('00-002-00019', args=eargs))
-            return False
+            emsg = textentry('00-002-00019', args=eargs)
+            raise DrsCodedException('00-002-00019', level='error', targs=eargs,
+                                    message=emsg, func_name=func_name)
     else:
         eargs = [drsfile.name, dbmname, func_name]
         emsg = ('Drsfile {0} cannot use database "{1}". Check file_definitions'
                 '\n\tFunction = {2}')
-        WLOG(params, 'error', emsg.format(*eargs))
-        return False
+        raise DrsCodedException('None', level='error', targs=eargs,
+                                message=emsg, func_name=func_name)
     # if we are here return True --> success
     return True
 
@@ -1333,7 +1352,9 @@ def _get_hkey(params: ParamDict, pkey: str,
             value = dtype(value)
         except Exception as e:
             eargs = [type(e), str(e), func_name]
-            WLOG(params, 'error', textentry('00-000-00002', args=eargs))
+            emsg = textentry('00-000-00002', args=eargs)
+            raise DrsCodedException('00-000-00002', level='error', targs=eargs,
+                                    message=emsg, func_name=func_name)
     # return fiber
     return value
 
@@ -1389,13 +1410,17 @@ def _copy_db_file(params: ParamDict, drsfile: DrsFileTypes,
         # log if verbose
         if verbose:
             margs = [dbmname, outpath]
-            WLOG(params, '', textentry('40-006-00004', args=margs))
+            msg = textentry('40-006-00004', args=margs)
+            drs_base.base_printer('40-006-00004', level='info', args=margs,
+                                  message=msg)
         # copy file using shutil (should be thread safe)
         shutil.copyfile(inpath, outpath)
     except Exception as e:
         # log exception:
         eargs = [dbmname, inpath, outpath, type(e), e, func_name]
-        WLOG(params, 'error', textentry('00-002-00014', args=eargs))
+        emsg = textentry('00-002-00014', args=eargs)
+        raise DrsCodedException('00-002-00014', level='error', targs=eargs,
+                                message=emsg, func_name=func_name)
 
 
 HeaderType = Union[DrsHeader, FitsHeader, None]
@@ -1419,8 +1444,6 @@ def _get_hdict(params: ParamDict, dbname: str, drsfile: DrsFileTypes = None,
     """
     # set function name
     func_name = display_func('_get_hdict', __NAME__)
-    # get pseudo constants
-    pconst = constants.pload()
     # deal with having hdict input
     if hdict is not None:
         return hdict, None
@@ -1468,8 +1491,10 @@ def _get_hdict(params: ParamDict, dbname: str, drsfile: DrsFileTypes = None,
         header = _force_apero_header(drsfile.get_header())
     else:
         eargs = [dbname, drsfile.name, func_name]
-        WLOG(params, 'error', textentry('00-001-00027', args=eargs))
-        hdict, header = None, None
+        emsg = textentry('00-001-00027', args=eargs)
+        raise DrsCodedException('00-001-00027', level='error', targs=eargs,
+                                message=emsg, func_name=func_name)
+
     return hdict, header
 
 
@@ -1514,7 +1539,9 @@ def _get_time(params: ParamDict, dbname: str,
         return t
     else:
         eargs = [dbname, func_name]
-        WLOG(params, 'error', textentry('00-001-00039', args=eargs))
+        emsg = textentry('00-001-00039', args=eargs)
+        raise DrsCodedException('00-001-00039', level='error', targs=eargs,
+                                message=emsg, func_name=func_name)
 
 
 # =============================================================================
@@ -1534,7 +1561,7 @@ class FileIndexDatabase(DatabaseManager):
         self.classname = 'FileIndexDatabaseManager'
         # deal with no pconst
         if pconst is None:
-            pconst = constants.pload()
+            pconst = load_functions.load_pconfig()
         # construct super class
         DatabaseManager.__init__(self, params, pconst)
         # set name
@@ -1644,7 +1671,8 @@ class FileIndexDatabase(DatabaseManager):
                     wargs = [self.name, hkey, hkeys[hkey],
                              dtype, func_name]
                     wmsg = textentry('10-002-00003', args=wargs)
-                    WLOG(self.params, 'warning', wmsg, sublevel=2)
+                    DrsCodedWarning('10-002-00003', level='warning',
+                                    targs=wargs, message=wmsg)
                     hvalues[hkey] = 'NULL'
             else:
                 hvalues[hkey] = 'NULL'
@@ -1793,7 +1821,8 @@ class FileIndexDatabase(DatabaseManager):
                         wargs = [self.name, hkey, hkeys[hkey],
                                  dtype, func_name]
                         wmsg = textentry('10-002-00003', args=wargs)
-                        WLOG(self.params, 'warning', wmsg)
+                        DrsCodedWarning('10-002-00003', level='warning',
+                                        targs=wargs, message=wmsg)
         # ------------------------------------------------------------------
         # add the number of entries to get
         if isinstance(nentries, int):
@@ -1884,7 +1913,7 @@ class FileIndexDatabase(DatabaseManager):
             # if we are not updating return here
             if not cond:
                 # print skipping: Skipping search (already run)
-                WLOG(self.params, 'debug', textentry('40-001-00031'))
+                # WLOG(self.params, 'debug', textentry('40-001-00031'))
                 return None
         # ---------------------------------------------------------------------
         # deal with no database loaded
@@ -1948,8 +1977,10 @@ class FileIndexDatabase(DatabaseManager):
                 rm_conditions.append(rm_cond.format(*rm_args))
                 # print removing file: File no longer on disk - removing from
                 #                file index database: {0}
-                wmsg = textentry('10-002-00008', args=[remove_file])
-                WLOG(self.params, 'warning', wmsg)
+                wargs = [remove_file]
+                wmsg = textentry('10-002-00008', args=wargs)
+                DrsCodedWarning('10-002-00008', level='warning',
+                                targs=wargs, message=wmsg)
 
             # remove entries which no longer exist on disk
             if len(rm_conditions) > 0:
@@ -1987,7 +2018,9 @@ class FileIndexDatabase(DatabaseManager):
             # prompt user and warn
             wargs = [len(columns), len(ikeys)]
             # log warning: Index database has wrong number of columns
-            WLOG(self.params, 'warning', textentry('10-002-00005', args=wargs))
+            wmsg = textentry('10-002-00005', args=wargs)
+            DrsCodedWarning('10-002-00005', level='warning',
+                            targs=wargs, message=wmsg)
             # reset database
             userinput = input(str(textentry('10-002-00006')))
             # if yes delete table and recreate
@@ -2003,15 +2036,21 @@ class FileIndexDatabase(DatabaseManager):
                 self.load_db()
                 # update all entries for raw index entries
                 iargs = ['raw']
-                WLOG(self.params, 'info', textentry('40-006-00006', args=iargs))
+                msg = textentry('40-006-00006', args=iargs)
+                drs_base.base_printer('40-006-00006', level='info', args=iargs,
+                                      message=msg)
                 self.update_entries('raw', force_update=True)
                 # update all entries for tmp index entries
                 iargs = ['tmp']
-                WLOG(self.params, 'info', textentry('40-006-00006', args=iargs))
+                msg = textentry('40-006-00006', args=iargs)
+                drs_base.base_printer('40-006-00006', level='info', args=iargs,
+                                      message=msg)
                 self.update_entries('tmp', force_update=True)
                 # update all entries for reduced index entries
                 iargs = ['red']
-                WLOG(self.params, 'info', textentry('40-006-00006', args=iargs))
+                msg = textentry('40-006-00006', args=iargs)
+                drs_base.base_printer('40-006-00006', level='info', args=iargs,
+                                      message=msg)
                 self.update_entries('red', force_update=True)
                 return
         # ---------------------------------------------------------------------
@@ -2022,7 +2061,9 @@ class FileIndexDatabase(DatabaseManager):
         # ---------------------------------------------------------------------
         # log: Reading headers of {0} files (to be updated)
         margs = [len(reqfiles)]
-        WLOG(self.params, '', textentry('40-001-00032', args=margs))
+        msg = textentry('40-001-00032', args=margs)
+        drs_base.base_printer('40-001-00032', level='info', args=margs,
+                              message=msg)
         # add required files to the database
         for reqfile in tqdm(reqfiles):
             # get a drs path for required file
@@ -2040,7 +2081,8 @@ class FileIndexDatabase(DatabaseManager):
                     #       Skipping file {0}\n\tError {1}: {2}'
                     wargs = [str(reqfile), type(e), str(e)]
                     wmsg = textentry('10-002-00009', args=wargs)
-                    WLOG(self.params, 'warning', wmsg, sublevel=6)
+                    DrsCodedWarning('10-002-00009', level='warning',
+                                    targs=wargs, message=wmsg)
                     continue
                 # loop around required keys
                 for rkey in rkeys:
@@ -2220,7 +2262,8 @@ def _get_files(params: ParamDict, path: Union[Path, str], block_kind: str,
     block_names = path_inst.blocks_with_obs_dirs()
     # -------------------------------------------------------------------------
     # print progress: Searching all directories'
-    WLOG(params, '', textentry('40-001-00033'))
+    msg = textentry('40-001-00033')
+    drs_base.base_printer('40-001-00033', message=msg, level='')
     # get conditions (so we don't repeat them)
     incdircond = incdirs is not None
     excdircond = excdirs is not None
@@ -2359,7 +2402,7 @@ class LogDatabase(DatabaseManager):
         self.classname = 'LogDatabaseManager'
         # deal with no pconst
         if pconst is None:
-            pconst = constants.pload()
+            pconst = load_functions.load_pconfig()
         # construct super class
         DatabaseManager.__init__(self, params, pconst)
         # set name
@@ -2724,7 +2767,7 @@ class RejectDatabase(DatabaseManager):
         self.classname = 'RejectDatabaseManager'
         # deal with no pconst
         if pconst is None:
-            pconst = constants.pload()
+            pconst = load_functions.load_pconfig()
         # construct super class
         DatabaseManager.__init__(self, params, pconst)
         # set name
@@ -3086,8 +3129,9 @@ def get_google_sheet(params: ParamDict, sheet_id: str, worksheet: int = 0,
     except Exception as e:
         # log error: Could not load table from url
         eargs = [url, type(e), str(e), func_name]
-        WLOG(params, 'error', textentry('00-010-00009', args=eargs))
-        return Table()
+        emsg = textentry('00-010-00009', args=eargs)
+        raise DrsCodedException('00-010-00009', level='error', targs=eargs,
+                                message=emsg, func_name=func_name)
     # deal with no rows in table
     if '\n' not in rawdata.text:
         return Table()
@@ -3113,7 +3157,9 @@ def get_google_sheet(params: ParamDict, sheet_id: str, worksheet: int = 0,
     if tries >= 10:
         # log error: Could not load table from url: (Tried 10 times)
         eargs = [url, func_name]
-        WLOG(params, 'error', textentry('00-010-00010', args=eargs))
+        emsg = textentry('00-010-00010', args=eargs)
+        raise DrsCodedException('00-010-00010', level='error', targs=eargs,
+                                message=emsg, func_name=func_name)
     # add to cached storage
     GOOGLE_TABLES[url] = table
     # return table

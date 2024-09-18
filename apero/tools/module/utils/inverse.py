@@ -12,7 +12,8 @@ Created on 2020-03-30 at 14:47
 import numpy as np
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
+from apero.core.constants import load_functions
 from apero.core import math as mp
 from apero.core.core import drs_log
 from apero.science.calib import localisation
@@ -29,7 +30,7 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # get param dict
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
 
@@ -141,7 +142,7 @@ def main():
     nbypix = 3100
     nbo = 49
     fibers = ['A', 'B', 'C']
-    params = constants.load()
+    params = load_functions.load_config()
     # recipe = drs_recipe.make_default_recipe(params, name='test')
     ishape = (nbypix, nbxpix)
     eshape = (nbo, nbxpix)

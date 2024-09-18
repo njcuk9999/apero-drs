@@ -284,7 +284,7 @@ const Search = {
     for (const [title, foundTitles] of Object.entries(allTitles)) {
       if (title.toLowerCase().includes(queryLower) && (queryLower.length >= title.length/2)) {
         for (const [file, id] of foundTitles) {
-          let score = Math.round(100 * queryLower.length / title.length)
+          let score = Math.round(100 * queryLower.length / title.length);
           results.push([
             docNames[file],
             titles[file] !== title ? `${titles[file]} > ${title}` : title,
@@ -301,7 +301,7 @@ const Search = {
     for (const [entry, foundEntries] of Object.entries(indexEntries)) {
       if (entry.includes(queryLower) && (queryLower.length >= entry.length/2)) {
         for (const [file, id] of foundEntries) {
-          let score = Math.round(100 * queryLower.length / entry.length)
+          let score = Math.round(100 * queryLower.length / entry.length);
           results.push([
             docNames[file],
             titles[file],
@@ -376,7 +376,7 @@ const Search = {
     const results = [];
 
     const objectSearchCallback = (prefix, match) => {
-      const name = match[4]
+      const name = match[4];
       const fullname = (prefix ? prefix + "." : "") + name;
       const fullnameLower = fullname.toLowerCase();
       if (fullnameLower.indexOf(object) < 0) return;

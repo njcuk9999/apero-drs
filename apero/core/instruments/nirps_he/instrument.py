@@ -20,12 +20,7 @@ from apero.core.base import drs_exceptions
 from apero.core.base import drs_base_classes as base_class
 from apero.core.base import drs_misc
 from apero.core.base import drs_text
-from apero.core.instruments.default import instrument
-from apero.core.instruments.nirps_he import config
-from apero.core.instruments.nirps_he import constants
-from apero.core.instruments.nirps_he import keywords
-from apero.core.instruments.nirps_he import file_definitions
-from apero.core.instruments.nirps_he import recipe_definitions
+from apero.core.instruments.default import instrument as instrument_mod
 
 # =============================================================================
 # Define variables
@@ -48,13 +43,13 @@ display_func = drs_misc.display_func
 # null text
 NULL_TEXT = ['', 'None', 'Null']
 # get astropy table (don't reload)
-Table = instrument.Table
+Table = instrument_mod.Table
 
 
 # =============================================================================
 # Define Constants class (pseudo constants)
 # =============================================================================
-class NirpsHe(instrument.Instrument):
+class NirpsHe(instrument_mod.Instrument):
     # set class name
     class_name = 'NirpsHe'
 
@@ -137,6 +132,10 @@ class NirpsHe(instrument.Instrument):
 
     def get_constants(self
                       ) -> Tuple[Dict[str, Any], Dict[str, str], Dict[str, Any]]:
+        # this has to be local
+        from apero.core.instruments.nirps_he import config
+        from apero.core.instruments.nirps_he import constants
+        from apero.core.instruments.nirps_he import keywords
         # get constants dicts
         config_dict = config.CDict
         constants_dict = constants.CDict
@@ -167,6 +166,9 @@ class NirpsHe(instrument.Instrument):
         The import for the file definitions
         :return: file_definitions
         """
+        # this has to be local
+        from apero.core.instruments.nirps_he import file_definitions
+        # return import
         return file_definitions
 
     def RECIPEMOD(self) -> Any:
@@ -175,6 +177,9 @@ class NirpsHe(instrument.Instrument):
 
         :return: file_definitions
         """
+        # this has to be local
+        from apero.core.instruments.nirps_he import recipe_definitions
+        # return import
         return recipe_definitions
 
     # =========================================================================

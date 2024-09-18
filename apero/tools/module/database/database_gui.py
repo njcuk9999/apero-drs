@@ -20,7 +20,7 @@ from pandastable import dialogs
 
 from apero.base import base
 from apero.base import drs_db
-from apero.core import constants
+from apero.core.constants import load_functions
 from apero.core.base import drs_text
 from apero.core.base import drs_misc
 from apero.tools.module.database import manage_databases
@@ -62,7 +62,7 @@ class DatabaseHolder:
         self.kind = kind
         self.path = path
         self.params = params
-        self.pconst = constants.pload()
+        self.pconst = load_functions.load_pconfig()
         self.df = df
         self.empty = False
         self.changed = False
@@ -598,7 +598,7 @@ def open_ds9(path):
 # =============================================================================
 if __name__ == "__main__":
     # get parameters
-    _params = constants.load()
+    _params = load_functions.load_config()
     # get databases
     _dbs = manage_databases.list_databases(_params)
     # push into database holder

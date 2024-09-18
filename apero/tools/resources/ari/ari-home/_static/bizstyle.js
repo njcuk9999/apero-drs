@@ -14,17 +14,17 @@ const initialiseBizStyle = () => {
         document.querySelector("li.nav-item-0 a").innerText = "Top"
     }
     const truncator = item => {if (item.textContent.length > 20) {
-        item.title = item.innerText
+        item.title = item.innerText;
         item.innerText = item.innerText.substr(0, 17) + "..."
       }
-    }
+    };
     document.querySelectorAll("div.related:first ul li:not(.right) a").slice(1).forEach(truncator);
     document.querySelectorAll("div.related:last ul li:not(.right) a").slice(1).forEach(truncator);
-}
+};
 
 window.addEventListener("resize",
   () => (document.querySelector("li.nav-item-0 a").innerText = (window.innerWidth <= 776) ? "Top" : "APERO Reduction Interface 0.7.289 documentation")
-)
+);
 
-if (document.readyState !== "loading") initialiseBizStyle()
-else document.addEventListener("DOMContentLoaded", initialiseBizStyle)
+if (document.readyState !== "loading") initialiseBizStyle();
+else document.addEventListener("DOMContentLoaded", initialiseBizStyle);

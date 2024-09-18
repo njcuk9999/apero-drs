@@ -23,11 +23,13 @@ import numpy as np
 from scipy.ndimage.morphology import binary_erosion, binary_dilation
 
 from apero.base import base
-from apero.core import constants
+from apero.base import drs_base
+from apero.core.constants import param_functions
+from apero.core.constants import load_functions
 from apero.core import lang
 from apero.core import math as mp
+from apero.core.base import drs_exceptions
 from apero.core.constants import path_definitions
-from apero.core.core import drs_log
 from apero.core.base import drs_misc
 from apero.io import drs_fits
 from apero.io import drs_path
@@ -43,17 +45,17 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # get param dict
-ParamDict = constants.ParamDict
-# Get Logging function
-WLOG = drs_log.wlog
+ParamDict = param_functions.ParamDict
 # Get the text types
 textentry = lang.textentry
 # alias pcheck
-pcheck = constants.PCheck(wlog=WLOG)
+pcheck = param_functions.PCheck()
 # Get function string
-display_func = drs_log.display_func
+display_func = drs_misc.display_func
+# Get the exceptions
+DrsCodedException = drs_exceptions.DrsCodedException
 # get block paths
-_params = constants.load()
+_params = load_functions.load_config()
 block_func = lambda block: block(_params).path
 block_paths = list(map(block_func, path_definitions.BLOCKS))
 
@@ -89,14 +91,13 @@ def rotate_image(image: np.ndarray, rotnum: int) -> np.ndarray:
     return mp.rot8(image, rotnum)
 
 
-def resize(params: ParamDict, image: np.ndarray,
+def resize(image: np.ndarray,
            x: Union[np.ndarray, None] = None, y: Union[np.ndarray, None] = None,
            xlow: int = 0, xhigh: Union[int, None] = None, ylow: int = 0,
            yhigh: Union[int, None] = None) -> Union[np.ndarray, None]:
     """
     Resize an image based on a pixel values
 
-    :param params: ParamDict, parameter dictionary of constants
     :param image: numpy array (2D), the image
     :param x: None or numpy array (1D), the list of x pixels
     :param y: None or numpy array (1D), the list of y pixels
@@ -135,7 +136,7 @@ def resize(params: ParamDict, image: np.ndarray,
             x = np.arange(xhigh + 1, xlow + 1)[::-1]
         elif xlow == xhigh:
             eargs = ['xlow', 'xhigh', xlow, func_name]
-            WLOG(params, 'error', textentry('00-001-00023', args=eargs))
+            raise DrsCodedException('00-001-00023', level='error', targs=eargs)
         else:
             x = np.arange(xlow, xhigh)
         # deal with ylow > yhigh
@@ -143,7 +144,7 @@ def resize(params: ParamDict, image: np.ndarray,
             y = np.arange(yhigh + 1, ylow + 1)[::-1]
         elif ylow == yhigh:
             eargs = ['ylow', 'yhigh', xlow, func_name]
-            WLOG(params, 'error', textentry('00-001-00023', args=eargs))
+            raise DrsCodedException('00-001-00023', level='error', targs=eargs)
         else:
             y = np.arange(ylow, yhigh)
     # construct the new image (if one can't raise error)
@@ -151,24 +152,21 @@ def resize(params: ParamDict, image: np.ndarray,
         newimage = np.take(np.take(image, x, axis=1), y, axis=0)
     except Exception as e:
         eargs = [xlow, xhigh, ylow, yhigh, type(e), e, func_name]
-        WLOG(params, 'error', textentry('00-001-00024', args=eargs))
-        newimage = None
+        raise DrsCodedException('00-001-00024', level='error', targs=eargs)
     # return error if we removed all pixels
     if newimage.shape[0] == 0 or newimage.shape[1] == 0:
         eargs = [xlow, xhigh, ylow, yhigh, func_name]
-        WLOG(params, 'error', textentry('00-001-00025', args=eargs))
-        newimage = None
+        raise DrsCodedException('00-001-00025', level='error', targs=eargs)
 
     # return new image
     return newimage
 
 
-def flip_image(params: ParamDict, image: np.ndarray, fliprows: bool = True,
+def flip_image(image: np.ndarray, fliprows: bool = True,
                flipcols: bool = True) -> np.ndarray:
     """
     Flips the image in the x and/or the y direction
 
-    :param params: ParamDict, the constants parameter dictionary
     :param image: numpy array (2D), the image
     :param fliprows: bool, if True reverses row order (axis = 0)
     :param flipcols: bool, if True reverses column order (axis = 1)
@@ -180,7 +178,7 @@ def flip_image(params: ParamDict, image: np.ndarray, fliprows: bool = True,
     # raise error if image is not 2D
     if len(image.shape) < 2:
         eargs = [image.shape, func_name]
-        WLOG(params, 'error', textentry('09-002-00001', args=eargs))
+        raise DrsCodedException('09-002-00001', level='error', targs=eargs)
     # flip both dimensions
     if fliprows and flipcols:
         return image[::-1, ::-1]
@@ -438,11 +436,11 @@ def get_fiber_types(params: ParamDict,
         return [fiber]
     else:
         eargs = [fiber, ', '.join(validfibertypes), func_name]
-        WLOG(params, 'error', textentry('09-001-00030', args=eargs))
+        raise DrsCodedException('09-001-00030', level='error', targs=eargs)
 
 
-def npy_filelist(params: ParamDict, name: str, index: int,
-                 array: np.ndarray, filenames: Union[List[str], None],
+def npy_filelist(name: str, index: int, array: np.ndarray,
+                 filenames: Union[List[str], None],
                  subdir: Union[str, None] = None,
                  outdir: Union[str, None] = None) -> Tuple[List[str], str]:
     """
@@ -452,7 +450,6 @@ def npy_filelist(params: ParamDict, name: str, index: int,
     file is named as follows:
         /LIM-{unixtime}-{random value}/{name}_{index}.npy
 
-    :param params: ParamDict, parameter dictionary of constants
     :param name: str, the name to add to the npy filename (as a prefix)
     :param index: int, the iteration of this file
     :param array: np.array - the numay array to save in the npy file
@@ -485,7 +482,9 @@ def npy_filelist(params: ParamDict, name: str, index: int,
     filepath = os.path.join(outdir, subdir)
     # create subdir
     if not os.path.exists(filepath):
-        WLOG(params, '', 'Creating directory: {0}'.format(filepath))
+        msg = 'Creating directory: {0}'.format(filepath)
+        drs_base.base_printer('None', message=msg, level='')
+
         os.makedirs(filepath)
     # construct absolute path to file
     abspath = os.path.join(filepath, filename)
@@ -497,14 +496,13 @@ def npy_filelist(params: ParamDict, name: str, index: int,
     return filenames, subdir
 
 
-def npy_fileclean(params: ParamDict, filenames: Union[List[str], None],
+def npy_fileclean(filenames: Union[List[str], None],
                   subdir: Union[str, None] = None,
                   outdir: Union[str, None] = None):
     """
     Remove all numpy files (after no longer needed) and the sub-directory they
     were saved to (a clean up)
 
-    :param params: ParamDict, the parameter dictionary of constants
     :param filenames: None or list of npy files
     :param subdir: str or None, if set replaces this default sub-directory
                    with user defined sub-directory (default is
@@ -521,14 +519,16 @@ def npy_fileclean(params: ParamDict, filenames: Union[List[str], None],
         outdir = ''
     # remove files
     for filename in filenames:
-        WLOG(params, '', 'Removing file: {0}'.format(filename))
+        msg = 'Removing file: {0}'.format(filename)
+        drs_base.base_printer('None', message=msg, level='')
         os.remove(filename)
     # construct file dir
     filepath = os.path.join(outdir, subdir)
     # ----------------------------------------------------------------------
     # delete the sub directory
     while os.path.exists(filepath):
-        WLOG(params, '', 'Removing directory: {0}'.format(filepath))
+        msg = 'Removing directory: {0}'.format(filepath)
+        drs_base.base_printer('None', message=msg, level='')
         if filepath not in block_paths:
             os.rmdir(filepath)
 
@@ -596,8 +596,8 @@ def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
     else:
         emsg = 'Math error: {0} is invalid must be: {1}'
         eargs = [math, '"median" or "mean" or "sum"']
-        WLOG(params, 'error', emsg.format(*eargs))
-        cfunc = None
+        raise DrsCodedException('None', level='error', targs=eargs,
+                                message=emsg.format(*eargs))
     # deal with not outdir
     if outdir is None:
         outdir = ''
@@ -624,8 +624,7 @@ def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
     else:
         # fmt="{0}" is incorrect
         eargs = [fmt, 'fits, npy', func_name]
-        WLOG(params, 'error', textentry('00-001-00044', args=eargs))
-        image0, hdr0 = None, None
+        raise DrsCodedException('00-001-00044', level='error', targs=eargs)
     # ----------------------------------------------------------------------
     # deal with only having 1 file
     if numfiles == 1:
@@ -658,7 +657,9 @@ def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
         # log message so we know how far through we are
         # Processing file {0} / {1}
         wargs = [f_it + 1, numfiles]
-        WLOG(params, '', textentry('40-000-00012', args=wargs))
+        wmsg = textentry('40-000-00011', args=wargs)
+        drs_base.base_printer('40-000-00012', level='', args=wargs,
+                              message=wmsg)
         # ------------------------------------------------------------------
         # load file
         if fmt == 'fits':
@@ -669,8 +670,7 @@ def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
         else:
             # fmt="{0}" is incorrect
             eargs = [fmt, 'fits, npy', func_name]
-            WLOG(params, 'error', textentry('00-001-00044', args=eargs))
-            image, hdr = None, None
+            raise DrsCodedException('00-001-00044', level='error', targs=eargs)
         # get the shape of the image
         dim1, dim2 = np.array(image.shape).astype(int)
         # clean the filename
@@ -682,7 +682,7 @@ def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
             # Files are not the same shape
             eargs = [mdim1, mdim2, f_it, dim1, dim2, files[0], files[1],
                      func_name]
-            WLOG(params, 'error', textentry('00-001-00045', args=eargs))
+            raise DrsCodedException('00-001-00045', level='error', targs=eargs)
         # ------------------------------------------------------------------
         # deal with no fkwargs
         if fkwargs is None:
@@ -703,7 +703,10 @@ def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
             ribbon_path = os.path.join(subfilepath, base_ribbon_name)
             # save ribbon to file
             # log: Saving file: {0}
-            WLOG(params, '', textentry('40-000-00013', args=[ribbon_path]))
+            msg = textentry('40-000-00013', args=[ribbon_path])
+            drs_base.base_printer('40-000-00013', msg, level='',
+                                  args=[ribbon_path])
+            # save the ribbon
             np.save(ribbon_path, ribbon)
             # delete ribbon
             del ribbon
@@ -717,7 +720,8 @@ def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
         # log message so we know how far through we are
         # Combining ribbon {0} / {1}
         wargs = [b_it + 1, len(bins)]
-        WLOG(params, '', textentry('40-000-00014', args=wargs))
+        msg = textentry('40-000-00014', args=wargs)
+        drs_base.base_printer('40-000-00014', msg, level='', args=wargs)
         # store box
         box = []
         # ------------------------------------------------------------------
@@ -730,11 +734,16 @@ def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
             ribbon_path = os.path.join(subfilepath, base_ribbon_name)
             # load ribbon
             # log: Loading file: {0}
-            WLOG(params, '', textentry('40-000-00015', args=[ribbon_path]))
+            msg = textentry('40-000-00015', args=[ribbon_path])
+            drs_base.base_printer('40-000-00015', msg, level='',
+                                  args=[ribbon_path])
+
             ribbon = np.load(ribbon_path)
             # delete this ribbon from disk
             # log: Removing file: {0}
-            WLOG(params, '', textentry('40-000-00016', args=[ribbon_path]))
+            msg = textentry('40-000-00016', args=[ribbon_path])
+            drs_base.base_printer('40-000-00016', msg, level='',
+                                  args=[ribbon_path])
             os.remove(ribbon_path)
             # append to box
             box.append(np.array(ribbon))

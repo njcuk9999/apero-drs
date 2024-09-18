@@ -14,7 +14,7 @@ from typing import Any, Dict, Tuple, Union
 import numpy as np
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
 from apero.core import lang
 from apero.core.core import drs_database
 from apero.core.core import drs_log
@@ -38,7 +38,7 @@ WLOG = drs_log.wlog
 # Get Recipe class
 DrsRecipe = drs_recipe.DrsRecipe
 # Get parameter class
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 # Get the text types
 textentry = lang.textentry
 
@@ -141,8 +141,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # Have to update obs_dir while locked for all param dicts (do not copy)
     #     Note: do not use 'uparamdicts' unless you know what you are doing.
     ukwargs = dict(key='OBS_DIR', value='other', source=mainname)
-    constants.uparamdicts(params, recipe.params, WLOG.pin, **ukwargs)
-
+    param_functions.update_paramdicts(params, recipe.params, WLOG.pin,
+                                      **ukwargs)
     # ------------------------------------------------------------------
     # Quality control
     # ------------------------------------------------------------------

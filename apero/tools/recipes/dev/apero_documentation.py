@@ -11,9 +11,9 @@ Created on 2020-01-07 at 14:59
 """
 
 from apero.base import base
-from apero.core import constants
-from apero.core.core import drs_log
 from apero.core.base import drs_text
+from apero.core.constants import load_functions
+from apero.core.core import drs_log
 from apero.core.utils import drs_startup
 from apero.tools.module.documentation import drs_documentation
 
@@ -101,7 +101,7 @@ def __main__(recipe, params):
                  colour='magenta')
             WLOG(params, '', params['DRS_HEADER'], colour='magenta')
         # re-load params for this instrument
-        iparams = constants.load(instrument=instrument)
+        iparams = load_functions.load_config(instrument=instrument)
         # constants.load sets default to None we want this back to default
         if instrument == 'default':
             iparams.set('INSTRUMENT', instrument)

@@ -15,7 +15,7 @@ import numpy as np
 from astropy.table import Table
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
 from apero.core import lang
 from apero.core import math as mp
 from apero.core.core import drs_file
@@ -42,13 +42,13 @@ WLOG = drs_log.wlog
 # Get Recipe class
 DrsRecipe = drs_recipe.DrsRecipe
 # Get parameter class
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 # Get fits file class
 DrsFitsFile = drs_file.DrsFitsFile
 # Get the text types
 textentry = lang.textentry
 # alias pcheck
-pcheck = constants.PCheck(wlog=WLOG)
+pcheck = param_functions.PCheck(wlog=WLOG)
 
 
 # =============================================================================
@@ -332,7 +332,7 @@ def construct_dark_table(params: ParamDict, filenames: List[str],
     # log progress
     WLOG(params, '', textentry('40-011-10002', args=[time_thres]))
     # match files by time
-    matched_id = drs_path.group_files_by_time(params, np.array(dark_time),
+    matched_id = drs_path.group_files_by_time(np.array(dark_time),
                                               time_thres)
 
     # ----------------------------------------------------------------------
@@ -346,7 +346,7 @@ def construct_dark_table(params: ParamDict, filenames: List[str],
               dark_pp_version, dark_wt_temp, dark_cass_temp, dark_humidity,
               dprtypes, matched_id]
     # make table using columns and values
-    dark_table = drs_table.make_table(params, columns, values)
+    dark_table = drs_table.make_table(columns, values)
     # return table
     return dark_table
 
@@ -416,7 +416,7 @@ def construct_ref_dark(params: ParamDict, dark_table: Table,
         # save files for medianing later
         nargs = ['group_darkm_cube', g_it, groupdark, group_dark_files,
                  darkm_subdir, outdir]
-        group_dark_files, darkm_subdir = drs_image.npy_filelist(params, *nargs)
+        group_dark_files, darkm_subdir = drs_image.npy_filelist(*nargs)
     # ----------------------------------------------------------------------
     # produce the large median (write ribbons to disk to save space)
     with warnings.catch_warnings(record=True) as _:
@@ -424,7 +424,7 @@ def construct_ref_dark(params: ParamDict, dark_table: Table,
                                                  math='median',
                                                  outdir=outdir, fmt='npy')
     # clean up npy dir
-    drs_image.npy_fileclean(params, group_dark_files, darkm_subdir, outdir)
+    drs_image.npy_fileclean(group_dark_files, darkm_subdir, outdir)
     # -------------------------------------------------------------------------
     # get file type of last file
     filetype = filetypes[lastpos]

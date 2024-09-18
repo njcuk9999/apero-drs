@@ -21,7 +21,7 @@ from bokeh.models.widgets import DataTable, TableColumn
 from bokeh.models.widgets import Div
 from bokeh.plotting import figure
 
-from apero.core import constants
+from apero.core.constants import load_functions
 from apero.core import math as mp
 from apero.tools.module.visulisation import visu_core
 
@@ -30,7 +30,7 @@ from apero.tools.module.visulisation import visu_core
 # =============================================================================
 DEBUG = True
 # get params
-PARAMS = constants.load()
+PARAMS = load_functions.load_config()
 # define log text
 LOG_HTML = '<strong>Log:</strong><br><br>'
 # tool tip

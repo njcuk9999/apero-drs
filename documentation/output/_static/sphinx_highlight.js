@@ -1,7 +1,7 @@
 /* Highlighting utilities for Sphinx HTML documentation. */
 "use strict";
 
-const SPHINX_HIGHLIGHT_ENABLED = true
+const SPHINX_HIGHLIGHT_ENABLED = true;
 
 /**
  * highlight a given string on a node by wrapping it in
@@ -81,7 +81,7 @@ const SphinxHighlight = {
         localStorage.getItem("sphinx_highlight_terms")
         || url.searchParams.get("highlight")
         || "";
-    localStorage.removeItem("sphinx_highlight_terms")
+    localStorage.removeItem("sphinx_highlight_terms");
     url.searchParams.delete("highlight");
     window.history.replaceState({}, "", url);
 

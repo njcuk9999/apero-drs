@@ -149,6 +149,55 @@ def load_pconfig(instrument: Union[str, None] = None
                             message=emsg.format(*eargs))
 
 
+def warninglogger(params: Any, warnlist: Any,
+                  funcname: Union[str, None] = None):
+    """
+    Warning logger - takes "w" - a list of caught warnings and pipes them on
+    to the log functions. If "funcname" is not None then t "funcname" is
+    printed with the line reference (intended to be used to identify the code/
+    function/module warning was generated in)
+
+    to catch warnings use the following:
+
+    >> import warnings
+    >> with warnings.catch_warnings(record=True) as warnlist:
+    >>     code_to_generate_warnings()
+    >> warninglogger(parmas, warnlist, 'some function name for logging')
+
+    :param params: ParamDict, the constants dictionary passed in call
+    :param warnlist: list of warnings, the list of warnings from
+                     warnings.catch_warnings
+    :param funcname: string or None, if string then also pipes "funcname" to the
+                     warning message (intended to be used to identify the code/
+                     function/module warning was generated in)
+    :return:
+    """
+    # get pconstant
+    pconstant = load_pconfig()
+    log_warnings = pconstant.LOG_CAUGHT_WARNINGS()
+    # deal with warnlist as string
+    if isinstance(warnlist, str):
+        warnlist = [warnlist]
+    # deal with warnings
+    displayed_warnings = []
+    if log_warnings and (len(warnlist) > 0):
+        for warnitem in warnlist:
+            # if we have a function name then use it else just report the
+            #    line number (not recommended)
+            if funcname is None:
+                wargs = [warnitem.lineno, '', warnitem.message]
+            else:
+                wargs = [warnitem.lineno, '({0})'.format(funcname),
+                         warnitem.message]
+            # log message
+            key = '10-005-00001'
+            wmsg = textentry(key, args=wargs)
+            # if we have already display this warning don't again
+            if wmsg in displayed_warnings:
+                continue
+            else:
+                drs_exceptions.DrsCodedWarning(key, 'warnning', message=wmsg)
+                displayed_warnings.append(wmsg)
 
 
 def _save_config_params(params: ParamDict) -> ParamDict:
@@ -290,6 +339,10 @@ def _load_from_yaml(files: List[str], instances: Dict[str, Any]
             out_instances[key] = instances[key]
     # return keys values and sources
     return out_values, out_sources, out_instances
+
+
+
+
 
 
 # =============================================================================

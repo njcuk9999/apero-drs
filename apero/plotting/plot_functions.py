@@ -20,7 +20,7 @@ from astropy import constants as cc
 from astropy import units as uu
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
 from apero.core import math as mp
 from apero.core.utils import drs_recipe
 
@@ -35,7 +35,7 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # Get parameter dictionary class
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 DrsRecipe = drs_recipe.DrsRecipe
 # get astropy time module
 Time = base.Time

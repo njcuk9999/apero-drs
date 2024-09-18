@@ -16,11 +16,13 @@ from astropy.table import Table, vstack, MaskedColumn
 
 from apero.base import base
 from apero.base import drs_db
-from apero.core import constants
 from apero.core import lang
+from apero.core.base import drs_text
+from apero.core.constants import param_functions
+from apero.core.constants import load_functions
 from apero.core.core import drs_database
 from apero.core.core import drs_log
-from apero.core.base import drs_text
+from apero.core.instruments.default import instrument as instrument_mod
 
 # =============================================================================
 # Define variables
@@ -38,8 +40,8 @@ tqdm = base.TQDM
 Database = drs_db.AperoDatabase
 DatabaseM = drs_database.DatabaseManager
 # Get ParamDict
-ParamDict = constants.ParamDict
-PseudoConst = constants.PseudoConstants
+ParamDict = param_functions.ParamDict
+Instrument = instrument_mod.Instrument
 # Get Logging function
 WLOG = drs_log.wlog
 # get textentry
@@ -235,7 +237,7 @@ def import_database(params: ParamDict, database_name: str,
 def list_databases(params: ParamDict) -> Dict[str, DatabaseM]:
     # set up storage
     databases = dict()
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     # get databases from managers (later databases)
     calibdbm = drs_database.CalibrationDatabase(params, pconst)
     telludbm = drs_database.TelluricDatabase(params, pconst)
@@ -270,7 +272,7 @@ def install_databases(params: ParamDict, skip: Union[List[str], None] = None,
     # get database paths
     databases = list_databases(params)
     # load pseudo constants
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     # -------------------------------------------------------------------------
     # create calibration database
     if 'calib' not in skip and 'calib' in runs:
@@ -303,7 +305,7 @@ def install_databases(params: ParamDict, skip: Union[List[str], None] = None,
 # =============================================================================
 # Define calibration database functions
 # =============================================================================
-def create_calibration_database(params: ParamDict, pconst: PseudoConst,
+def create_calibration_database(params: ParamDict, pconst: Instrument,
                                 databases: Dict[str, DatabaseM],
                                 verbose: bool = False) -> Database:
     """
@@ -355,7 +357,7 @@ def create_calibration_database(params: ParamDict, pconst: PseudoConst,
 # =============================================================================
 # Define telluric database functions
 # =============================================================================
-def create_telluric_database(params: ParamDict, pconst: PseudoConst,
+def create_telluric_database(params: ParamDict, pconst: Instrument,
                              databases: Dict[str, DatabaseM],
                              verbose: bool = False) -> Database:
     """
@@ -409,7 +411,7 @@ def create_telluric_database(params: ParamDict, pconst: PseudoConst,
 # =============================================================================
 # Define index database functions
 # =============================================================================
-def create_fileindex_database(params: ParamDict, pconst: PseudoConst,
+def create_fileindex_database(params: ParamDict, pconst: Instrument,
                               databases: Dict[str, DatabaseM],
                               verbose: bool = False) -> Database:
     """
@@ -451,7 +453,7 @@ def create_fileindex_database(params: ParamDict, pconst: PseudoConst,
 # =============================================================================
 # Define log database functions
 # =============================================================================
-def create_log_database(params: ParamDict, pconst: PseudoConst,
+def create_log_database(params: ParamDict, pconst: Instrument,
                         databases: Dict[str, DatabaseM],
                         verbose: bool = False) -> Database:
     """
@@ -493,7 +495,7 @@ def create_log_database(params: ParamDict, pconst: PseudoConst,
 # =============================================================================
 # Define object database functions
 # =============================================================================
-def create_object_database(params: ParamDict, pconst: PseudoConst,
+def create_object_database(params: ParamDict, pconst: Instrument,
                            databases: Dict[str, DatabaseM],
                            verbose: bool = False) -> Database:
     """
@@ -571,7 +573,7 @@ def get_object_database(params: ParamDict, log: bool = True) -> Table:
     gl_objcol = params['GL_OBJ_COL_NAME']
     # -------------------------------------------------------------------------
     # load pseudo constants
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     # get object database column data types
     obj_data_types = dict()
     astrom_cols = pconst.ASTROMETRIC_DB_COLUMNS()
@@ -663,7 +665,7 @@ def update_object_database(params: ParamDict, log: bool = True):
     :return: None, updates local object database
     """
     # get pconst
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     # get list of databases
     databases = list_databases(params)
     # get the object database (combined with pending + user table)
@@ -701,7 +703,7 @@ def update_object_database(params: ParamDict, log: bool = True):
 # =============================================================================
 # Define reject database functions
 # =============================================================================
-def create_reject_database(params: ParamDict, pconst: PseudoConst,
+def create_reject_database(params: ParamDict, pconst: Instrument,
                            databases: Dict[str, DatabaseM],
                            verbose: bool = False) -> Database:
     """
@@ -774,7 +776,7 @@ def update_reject_database(params: ParamDict, log: bool = True):
     :return: None, updates local object database
     """
     # get pconst
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     # get list of databases
     databases = list_databases(params)
     # get the object database (combined with pending + user table)
@@ -826,7 +828,7 @@ def get_reject_database(params: ParamDict, log: bool = True) -> Table:
         WLOG(params, 'info', textentry('40-503-00046'))
     # -------------------------------------------------------------------------
     # load pseudo constants
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     # get reject database column data types
     reject_data_types = dict()
     reject_cols = pconst.REJECT_DB_COLUMNS()
@@ -906,7 +908,7 @@ def _drop_duplicates(table: Table, column: str, keep: str = 'last'):
 # =============================================================================
 if __name__ == "__main__":
     # test with spirou
-    _params = constants.load()
+    _params = load_functions.load_config()
     # install database
     install_databases(_params)
 

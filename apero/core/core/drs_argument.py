@@ -16,7 +16,6 @@ only from
 - apero.core.core.drs_execptions
 - apero.core.core.drs_misc
 - apero.core.core.drs_text
-- apero.core.core.constants.*
 - apero.core.core.drs_log
 - apero.core.core.drs_file
 - apero.core.core.drs_database
@@ -34,8 +33,10 @@ import numpy as np
 
 from apero.base import base
 from apero.base import drs_db
-from apero.core import constants
 from apero.core import lang
+
+from apero.core.constants import param_functions
+from apero.core.constants import load_functions
 from apero.core.core import drs_database
 from apero.core.base import drs_exceptions
 from apero.core.base import drs_base_classes as base_class
@@ -58,11 +59,11 @@ __date__ = base.__date__
 __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
-display_func = drs_log.display_func
+display_func = drs_misc.display_func
 # get print colours
 COLOR = drs_misc.Colors()
 # get param dict
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 # get DrsInputFile (for typing)
 DrsInputFile = drs_file.DrsInputFile
 # get index database
@@ -80,7 +81,7 @@ NUMBER_TYPES = base.NUMBER_TYPES
 # switch for arg no db
 NO_DB = base.NO_DB
 # load pseudo constants
-pconst = constants.pload()
+pconst = load_functions.load_pconfig()
 # define complex typing for file return
 ValidFileType = Tuple[List[Union[Any, str]],
                       List[Union[DrsInputFile, None]]]

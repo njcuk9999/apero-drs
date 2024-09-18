@@ -2652,7 +2652,6 @@ CDict.set('WAVE_CCF_MASK_UNITS', value=None, dtype=str,
 # Define the ccf mask path the FP CCF
 CDict.set('WAVE_CCF_MASK_PATH', value=None, dtype=str,
           source=__NAME__, group=cgroup,
-
           description='Define the ccf mask path the FP CCF')
 
 # Define the CCF mask format (must be an astropy.table format)

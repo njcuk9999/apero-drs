@@ -19,7 +19,7 @@ from astropy.time import Time
 from bs4 import BeautifulSoup
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
 from apero.core import lang
 from apero.core.core import drs_database
 from apero.core.core import drs_log
@@ -42,7 +42,7 @@ __date__ = base.__date__
 __release__ = base.__release__
 # -----------------------------------------------------------------------------
 # Get ParamDict
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types

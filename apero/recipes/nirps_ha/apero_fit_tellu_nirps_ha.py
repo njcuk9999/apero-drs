@@ -15,7 +15,8 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import numpy as np
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
+from apero.core.constants import load_functions
 from apero.core import lang
 from apero.core.core import drs_database
 from apero.core.core import drs_file
@@ -41,7 +42,7 @@ WLOG = drs_log.wlog
 # Get Recipe class
 DrsRecipe = drs_recipe.DrsRecipe
 # Get parameter class
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 # Get the text types
 textentry = lang.textentry
 
@@ -196,7 +197,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         # load reference wavelength solution for this fiber
         # get pseudo constants
-        pconst = constants.pload()
+        pconst = load_functions.load_pconfig()
         # deal with fibers that we don't have
         usefiber = pconst.FIBER_WAVE_TYPES(fiber)
         # ------------------------------------------------------------------
@@ -358,7 +359,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # Correct other science fibers (using recon)
         # ------------------------------------------------------------------
         # get fibers
-        pconst = constants.pload()
+        pconst = load_functions.load_pconfig()
         sfibers, rfiber = pconst.FIBER_KINDS()
         # loop around fibers and correct/create s1d/save
         for sfiber in sfibers:

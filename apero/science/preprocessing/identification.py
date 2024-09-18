@@ -9,7 +9,7 @@ Created on 2019-03-05 16:37
 Version 0.0.1
 """
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
 from apero.core import lang
 from apero.core.core import drs_log, drs_file
 from apero.core.utils import drs_recipe
@@ -27,7 +27,7 @@ __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 # get param dict
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 DrsFitsFile = drs_file.DrsFitsFile
 DrsRecipe = drs_recipe.DrsRecipe
 # Get the text types

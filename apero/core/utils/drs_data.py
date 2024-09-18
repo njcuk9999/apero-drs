@@ -18,7 +18,7 @@ import numpy as np
 from astropy.table import Table
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
 from apero.core import lang
 from apero.core.base import drs_exceptions
 from apero.core.base import drs_text
@@ -41,13 +41,13 @@ __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 # Get ParamDict
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 # Get the text types
 textentry = lang.textentry
 # get exceptions
 DrsCodedException = drs_exceptions.DrsCodedException
 # alias pcheck
-pcheck = constants.PCheck(wlog=WLOG)
+pcheck = param_functions.PCheck(wlog=WLOG)
 # get display func
 display_func = drs_misc.display_func
 
@@ -1000,7 +1000,7 @@ def construct_path(params: ParamDict, filename: Union[str, None] = None,
     # get properties from params/jwargs
     package = pcheck(params, 'DRS_PACKAGE', func=func_name, override=package)
     # construct filepath
-    datadir = drs_path.get_relative_folder(params, package, asset_dir)
+    datadir = drs_path.get_relative_folder(package, asset_dir)
     absfilename = os.path.join(datadir, filename)
     # return absolute path
     return absfilename

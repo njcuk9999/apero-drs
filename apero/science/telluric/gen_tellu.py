@@ -20,14 +20,16 @@ from astropy.table import Table
 from scipy.optimize import curve_fit
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
+from apero.core.constants import load_functions
 from apero.core import lang
 from apero.core import math as mp
+from apero.core.base import drs_misc
 from apero.core.core import drs_database
 from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.core.base import drs_text
-from apero.core.instruments.default import pseudo_const
+from apero.core.instruments.default import instrument
 from apero.core.utils import drs_data
 from apero.core.utils import drs_utils
 from apero.io import drs_fits
@@ -46,21 +48,21 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # get param dict
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 DrsFitsFile = drs_file.DrsFitsFile
 # get calibration database
 CalibDatabase = drs_database.CalibrationDatabase
 TelluDatabase = drs_database.TelluricDatabase
 FileIndexDatabase = drs_database.FileIndexDatabase
-DPseudoConsts = pseudo_const.Instrument
+DPseudoConsts = instrument.Instrument
 # Get function string
-display_func = drs_log.display_func
+display_func = drs_misc.display_func
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
 textentry = lang.textentry
 # alias pcheck
-pcheck = constants.PCheck(wlog=WLOG)
+pcheck = param_functions.PCheck(wlog=WLOG)
 # Speed of light
 # noinspection PyUnresolvedReferences
 speed_of_light_ms = cc.c.to(uu.m / uu.s).value
@@ -86,7 +88,7 @@ def get_tellu_include_list(params: ParamDict,
                            ) -> List[str]:
     func_name = __NAME__ + '.get_whitelist()'
     # get pseudo constants
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     # get object database
     objdbm = drs_database.AstrometricDatabase(params)
     objdbm.load_db()
@@ -120,7 +122,7 @@ def get_tellu_exclude_list(params: ParamDict,
                            ) -> Tuple[List[str], str]:
     func_name = __NAME__ + '.get_blacklist()'
     # get pseudo constants
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     # get object database
     objdbm = drs_database.AstrometricDatabase(params)
     objdbm.load_db()
@@ -351,7 +353,7 @@ def get_sp_linelists(params, **kwargs):
     mask_water, _ = drs_data.load_ccf_mask(params, mask_dir=relfolder,
                                            filename=waterfile)
     # load pseudo constants
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     # mask out some regions based on instrument
     # TODO: remove once tapas always comes from specific instrument
     mask_water, mask_others = pconst.TAPAS_INST_CORR(mask_water, mask_others)
@@ -374,7 +376,7 @@ def mask_bad_regions(params: ParamDict,
                     wavemap to mask by
     :param pconst: Optional Pconst, the pseudo constants instance for this
                    instrument, if not given and bad_regions is None, loaded
-                   from constants.pload()
+                   from load_functions.load_pconfig()
     :param bad_regions: Optional tuple of (float, float), the bad regions
                         each tuple entry is a wave start and wave end (in units
                         of the wavemap) if set to None this is loaded from
@@ -390,7 +392,7 @@ def mask_bad_regions(params: ParamDict,
     if bad_regions is None:
         # if pconst is not loaded load it
         if pconst is None:
-            pconst = constants.pload()
+            pconst = load_functions.load_pconfig()
         # get the bad regions from TELLU_BAD_WAVEREGIONS()
         bad_regions = pconst.TELLU_BAD_WAVEREGIONS()
     # deal with no bad regions

@@ -19,9 +19,10 @@ from scipy.signal import convolve2d
 from scipy.stats import stats
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
 from apero.core import lang
 from apero.core import math as mp
+from apero.core.base import drs_misc
 from apero.core.core import drs_database
 from apero.core.core import drs_file
 from apero.core.core import drs_log
@@ -50,13 +51,13 @@ WLOG = drs_log.wlog
 # Get Recipe class
 DrsRecipe = drs_recipe.DrsRecipe
 # Get parameter class
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 # Get the text types
 textentry = lang.textentry
 # Get function string
-display_func = drs_log.display_func
+display_func = drs_misc.display_func
 # alias pcheck
-pcheck = constants.PCheck(wlog=WLOG)
+pcheck = param_functions.PCheck(wlog=WLOG)
 
 
 # =============================================================================
@@ -153,7 +154,7 @@ def construct_fp_table(params: ParamDict,
     values = [obs_dirs, basenames, valid_files, fp_time, fp_exp,
               fp_pp_version]
     # make table using columns and values
-    fp_table = drs_table.make_table(params, columns, values)
+    fp_table = drs_table.make_table(columns, values)
     # return table
     return fp_table
 
@@ -207,7 +208,7 @@ def construct_ref_fp(params: ParamDict, recipe: DrsRecipe, dprtype: str,
     # log progress
     WLOG(params, '', textentry('40-014-00004', args=[time_thres]))
     # match files by time
-    matched_id = drs_path.group_files_by_time(params, fp_times, time_thres)
+    matched_id = drs_path.group_files_by_time(fp_times, time_thres)
     # ----------------------------------------------------------------------
     # Read individual files and sum groups
     # ----------------------------------------------------------------------
@@ -286,7 +287,7 @@ def construct_ref_fp(params: ParamDict, recipe: DrsRecipe, dprtype: str,
         # save files for medianing later
         nargs = ['fp_ref_cube', row, groupfp, fp_cube_files, fpsubdir,
                  out_obs_dir]
-        fp_cube_files, fpsubdir = drs_image.npy_filelist(params, *nargs)
+        fp_cube_files, fpsubdir = drs_image.npy_filelist(*nargs)
         # delete groupfp
         del groupfp
         # add to row
@@ -308,7 +309,7 @@ def construct_ref_fp(params: ParamDict, recipe: DrsRecipe, dprtype: str,
                                                math='mean',
                                                outdir=out_obs_dir, fmt='npy')
     # clean up npy dir
-    drs_image.npy_fileclean(params, fp_cube_files, fpsubdir, out_obs_dir)
+    drs_image.npy_fileclean(fp_cube_files, fpsubdir, out_obs_dir)
     # ----------------------------------------------------------------------
     # convert transform_list to array
     tarrary = np.array(transforms_list)

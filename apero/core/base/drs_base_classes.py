@@ -17,6 +17,7 @@ only from
 import importlib
 import os
 import sys
+import time
 from collections import UserDict
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -978,6 +979,61 @@ class HiddenPrints:
     def __exit__(self, exc_type, exc_val, exc_tb):
         sys.stdout.close()
         sys.stdout = self._original_stdout
+
+
+class Printer:
+    """Print things to stdout on one line dynamically"""
+
+    def __init__(self, params: Any, level: Union[str, None],
+                 message: Union[list, np.ndarray, str]):
+        """
+        Dynamically print text to stdout, flushing the line so it appears
+        to come from only one line (does not have new lines)
+
+        :param params: ParamDict, the constants parameter dictionary
+                       (Not used but here to emulate Logger.__call__())
+        :param level: str,
+        :param message:
+        """
+        # set class name
+        self.class_name = 'Printer'
+        # set function name
+        _ = drs_misc.display_func('__init__', __NAME__, self.class_name)
+        # set params and level
+        self.params = params
+        self.level = level
+
+        if type(message) not in [list, np.ndarray]:
+            message = [message]
+            sleeptimer = 0
+        else:
+            sleeptimer = 1
+
+        for mess in message:
+            sys.stdout.write("\r\x1b[K" + mess.__str__())
+            sys.stdout.flush()
+            time.sleep(sleeptimer)
+
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state
+        return state
+
+    def __setstate__(self, state: dict):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+
 
 
 # =============================================================================

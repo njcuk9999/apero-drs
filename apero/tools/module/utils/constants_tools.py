@@ -15,7 +15,7 @@ from typing import Tuple, Union
 import numpy as np
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
 from apero.core import lang
 from apero.core.constants import constant_functions as cf
 from apero.core.core import drs_log
@@ -34,13 +34,13 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # get param dict
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
 textentry = lang.textentry
 # get display func
-display_func = drs_log.display_func
+display_func = drs_misc.display_func
 
 
 # =============================================================================

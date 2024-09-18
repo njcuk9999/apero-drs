@@ -78,7 +78,7 @@
 	    var Encryptor = CTRGladman.Encryptor = CTRGladman.extend({
 	        processBlock: function (words, offset) {
 	            // Shortcuts
-	            var cipher = this._cipher
+	            var cipher = this._cipher;
 	            var blockSize = cipher.blockSize;
 	            var iv = this._iv;
 	            var counter = this._counter;

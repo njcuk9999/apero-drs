@@ -17,14 +17,15 @@ from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
+from apero.core.constants import load_functions
 from apero.core import lang
 from apero.core.core import drs_database
 from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.core.constants import run_params
 from apero.core.utils import drs_recipe
-from apero.core.utils import drs_startup
+
 from apero.io import drs_path
 from apero.science import telluric
 from apero.tools.module.processing import drs_processing
@@ -41,7 +42,7 @@ __date__ = base.__date__
 __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 DrsRecipe = drs_recipe.DrsRecipe
 DrsFitsFile = drs_file.DrsFitsFile
 DrsInputFile = drs_file.DrsInputFile
@@ -87,7 +88,7 @@ class RunIniFile:
         self.instrument = instrument
         # load params and pconst for use throughout
         self.params = params
-        self.pconst = constants.pload(instrument)
+        self.pconst = load_functions.load_pconfig(instrument)
         # import the recipe module
         self.recipemod = self.pconst.RECIPEMOD().get()
         # get run keys (from startup)
@@ -230,7 +231,7 @@ class RunIniFile:
         # push in instrument name
         outpath = OUTPATH.format(instrument=self.instrument.lower())
         # get absolute outpath path
-        outpath = drs_path.get_relative_folder(params, __PACKAGE__, outpath)
+        outpath = drs_path.get_relative_folder(__PACKAGE__, outpath)
         # store in class
         self.outpath = os.path.join(outpath, self.name + '.yaml')
         # ---------------------------------------------------------------------
@@ -376,7 +377,7 @@ class RunIniFile:
         # push in instrument name
         outpath = OUTPATH.format(instrument=self.instrument.lower())
         # get absolute outpath path
-        outpath = drs_path.get_relative_folder(params, __PACKAGE__, outpath)
+        outpath = drs_path.get_relative_folder(__PACKAGE__, outpath)
         # store in class
         self.outpath = os.path.join(outpath, self.name + '.ini')
         # ---------------------------------------------------------------------
@@ -385,7 +386,7 @@ class RunIniFile:
         # push in instrument name
         template = TEMPLATE.format(instrument=self.instrument.lower())
         # get absolute template path
-        template = drs_path.get_relative_folder(params, __PACKAGE__, template)
+        template = drs_path.get_relative_folder(__PACKAGE__, template)
         # load template
         if os.path.exists(template):
             with open(template, 'r') as tfile:

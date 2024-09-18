@@ -425,6 +425,9 @@ class ConstantsDict:
         # just return the Const
         return self.storage[key]
 
+    def __getitem__(self, item):
+        return self.storage[item].value
+
     def set(self, name: str, value: Any = None,
             dtype: Union[None, str, type] = None,
             dtypei: Union[None, str, type] = None,
@@ -874,6 +877,9 @@ class KeywordDict:
     def __init__(self, source: str):
         self.storage: Dict[str, Keyword] = dict()
         self.source = source
+
+    def __getitem__(self, item):
+        return self.storage[item].value
 
     def add(self, name: str, key: Union[str, None] = None,
             value: Any = None, dtype: Union[None, str, type] = None,

@@ -10,7 +10,7 @@ Created on 2021-12-09
 @author: cook
 """
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
 from apero.core import lang
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
@@ -32,7 +32,7 @@ __release__ = base.__release__
 textentry = lang.textentry
 # Get Logging function
 WLOG = drs_log.wlog
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 
 
 # =============================================================================

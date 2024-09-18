@@ -20,7 +20,7 @@ from astropy.table import Table
 from tqdm import tqdm
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
 from apero.core.core import drs_database
 from apero.core.core import drs_log
 from apero.core.base import drs_misc
@@ -39,7 +39,7 @@ __date__ = base.__date__
 __release__ = base.__release__
 # -----------------------------------------------------------------------------
 # Get ParamDict
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
 # Get ARI core classes

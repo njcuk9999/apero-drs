@@ -17,7 +17,7 @@ import numpy as np
 from astropy.table import Table
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
 from apero.core import lang
 from apero.core.core import drs_database
 from apero.core.core import drs_log
@@ -41,7 +41,7 @@ __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 # get the parameter dictionary
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 # get the recipe class
 DrsRecipe = drs_recipe.DrsRecipe
 # Get the text types

@@ -15,12 +15,14 @@ import numpy as np
 from astropy.io import fits
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
+from apero.core.constants import load_functions
 from apero.core import lang
 from apero.core import math as mp
 from apero.core.core import drs_database
 from apero.core.core import drs_file
 from apero.core.core import drs_log
+from apero.core.base import drs_misc
 from apero.core.base import drs_text
 from apero.core.utils import drs_data
 from apero.core.utils import drs_recipe
@@ -41,7 +43,7 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # get param dict
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 DrsRecipe = drs_recipe.DrsRecipe
 DrsFitsFile = drs_file.DrsFitsFile
 DrsHeader = drs_fits.Header
@@ -54,9 +56,9 @@ Time = base.Time
 # Get the text types
 textentry = lang.textentry
 # alias pcheck
-pcheck = constants.PCheck(wlog=WLOG)
+pcheck = param_functions.PCheck(wlog=WLOG)
 # get display func
-display_func = drs_log.display_func
+display_func = drs_misc.display_func
 
 
 # =============================================================================
@@ -330,7 +332,7 @@ def check_files(params: ParamDict,
                        elemtn the OBJNAME skip conditions
     """
     # get pseudo constants
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     # get infile DPRTYPE and OBJNAME
     dprtype = infile.get_hkey('KW_DPRTYPE', dtype=str, required=False)
     objname = infile.get_hkey('KW_OBJNAME', dtype=str, required=False)
@@ -490,7 +492,7 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
         calibdbm = database
     # -------------------------------------------------------------------------
     # load pconst
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     # -------------------------------------------------------------------------
     # Get basic image properties
     sigdet = infile.get_hkey('KW_RDNOISE')
@@ -538,7 +540,7 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
     # flip image
     # ----------------------------------------------------------------------
     if flip:
-        image2 = drs_image.flip_image(params, image1)
+        image2 = drs_image.flip_image(image1)
     else:
         image2 = np.array(image1)
     # ----------------------------------------------------------------------
@@ -559,7 +561,7 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
         sargs = dict(xlow=params['IMAGE_X_LOW'], xhigh=params['IMAGE_X_HIGH'],
                      ylow=params['IMAGE_Y_LOW'], yhigh=params['IMAGE_Y_HIGH'])
         # resize flat
-        image2 = drs_image.resize(params, image2, **sargs)
+        image2 = drs_image.resize(image2, **sargs)
         # print that image has been resize
         wargs = [dprtype, image1.shape, image2.shape]
         WLOG(params, '', textentry('40-014-00013', args=wargs))

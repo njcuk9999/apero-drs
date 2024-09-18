@@ -16,7 +16,8 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import numpy as np
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
+from apero.core.constants import load_functions
 from apero.core import lang
 from apero.core.core import drs_database
 from apero.core.core import drs_file
@@ -40,7 +41,7 @@ WLOG = drs_log.wlog
 # Get Recipe class
 DrsRecipe = drs_recipe.DrsRecipe
 # Get parameter class
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 # Get Input File class
 DrsInputFile = drs_file.DrsInputFile
 # Get the text types
@@ -96,7 +97,7 @@ def run_apero_get(params: ParamDict):
 
     :returns: None, copies or symlinks files to params['LBL_PATH']
     """
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     # get the lbl path
     lbl_in_path = params['LBL_PATH']
     # APERO file definition out types
@@ -417,7 +418,7 @@ def fake_hkeys(params: ParamDict, filename: str,
     # set function name
     func_name = __NAME__ + '.fake_hkeys()'
     # get rkeys from pseudo constants
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     iheader_cols = pconst.FILEINDEX_HEADER_COLS()
     rkeys = list(iheader_cols.names)
     # key to add to hkeys (if required by instrument)

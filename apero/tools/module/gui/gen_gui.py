@@ -15,7 +15,7 @@ from tkinter import ttk
 from ttkthemes import ThemedTk
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
 from apero.tools.module.gui import widgets
@@ -31,7 +31,7 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # get param dict
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
 # get instrument names

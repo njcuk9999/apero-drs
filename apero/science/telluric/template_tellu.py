@@ -21,9 +21,10 @@ from scipy.signal import savgol_filter
 
 from apero.base import base
 from apero.base import drs_base
-from apero.core import constants
+from apero.core.constants import param_functions
 from apero.core import lang
 from apero.core import math as mp
+from apero.core.base import drs_misc
 from apero.core.core import drs_database
 from apero.core.core import drs_file
 from apero.core.core import drs_log
@@ -48,20 +49,20 @@ __release__ = base.__release__
 # Get Astropy Time and Time Delta
 Time, TimeDelta = base.AstropyTime, base.AstropyTimeDelta
 # get param dict
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 DrsFitsFile = drs_file.DrsFitsFile
 DrsRecipe = drs_recipe.DrsRecipe
 # get databases
 CalibrationDatabase = drs_database.CalibrationDatabase
 TelluricDatabase = drs_database.TelluricDatabase
 # Get function string
-display_func = drs_log.display_func
+display_func = drs_misc.display_func
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
 textentry = lang.textentry
 # alias pcheck
-pcheck = constants.PCheck(wlog=WLOG)
+pcheck = param_functions.PCheck(wlog=WLOG)
 # Speed of light
 # noinspection PyUnresolvedReferences
 speed_of_light_ms = cc.c.to(uu.m / uu.s).value
@@ -1038,7 +1039,7 @@ def calculate_berv_coverage(params: ParamDict, recipe: DrsRecipe,
     # construct table
     columns = ['BERV', 'ANTICOVERAGE', 'COVERAGE']
     values = [velo_range, anticoverage, coverage]
-    table = drs_table.make_table(params, columns, values,
+    table = drs_table.make_table(columns, values,
                                  units=['km/s', None, None])
     # return table
     return table, berv_cov
@@ -1265,7 +1266,7 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     columns = list(cprops['BIG_COLS'].keys())
     values = list(cprops['BIG_COLS'].values())
     # construct table
-    bigtable = drs_table.make_table(params, columns=columns, values=values)
+    bigtable = drs_table.make_table(columns=columns, values=values)
     # make a hash so this template is unique
     template_hash = gen_template_hash(','.join(bigtable['Filename'][nused]))
     # get berv coverage table
@@ -1409,7 +1410,7 @@ def mk_1d_template_write(params, recipe, infile, props, filetype, fiber,
     columns = list(props['S1D_BIG_COLS'].keys())
     values = list(props['S1D_BIG_COLS'].values())
     # construct table
-    bigtable = drs_table.make_table(params, columns=columns, values=values)
+    bigtable = drs_table.make_table(columns=columns, values=values)
 
     # ------------------------------------------------------------------
     # Set up template big table

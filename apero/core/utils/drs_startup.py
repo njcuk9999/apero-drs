@@ -25,7 +25,10 @@ from apero import plotting
 from apero.base import base
 from apero.base import drs_base
 from apero.base import drs_db
-from apero.core import constants
+from apero.core.base.drs_base_classes import Printer
+from apero.core.constants import param_functions
+from apero.core.constants import load_functions
+from apero.core.constants import constant_functions
 from apero.core.constants import run_params
 from apero.core import lang
 from apero.core.core import drs_argument
@@ -55,16 +58,16 @@ __release__ = base.__release__
 Time, TimeDelta = base.AstropyTime, base.AstropyTimeDelta
 # Get Logging function
 WLOG = drs_log.wlog
-TLOG = drs_log.Printer
+TLOG = Printer
 # get print colours
 COLOR = drs_misc.Colors()
 # get param dict
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 DrsRecipe = drs_recipe.DrsRecipe
 DrsFitsFile = drs_file.DrsFitsFile
 DrsInputFile = drs_file.DrsInputFile
 # Get function string
-display_func = drs_log.display_func
+display_func = drs_misc.display_func
 # get the Drs Exceptions
 DrsCodedException = drs_exceptions.DrsCodedException
 # Get the text types
@@ -119,7 +122,7 @@ def setup(name: str = 'None', instrument: str = 'None',
         fkwargs = dict()
     # catch sigint (if not threaded) -- if threaded can only be in main thread
     if not fkwargs.get('threaded', threaded):
-        signal(SIGINT, constants.catch_sigint)
+        signal(SIGINT, param_functions.catch_sigint)
     # deal with quiet in fkwargs
     if 'quiet' in fkwargs:
         if fkwargs['quiet'] in [True, 'True', 1]:
@@ -132,7 +135,7 @@ def setup(name: str = 'None', instrument: str = 'None',
     # get filemod and recipe mod
     #  must set instrument here as we could need 'None' (for some tools that
     #  are above the instrument level)
-    pconst = constants.pload(instrument=instrument)
+    pconst = load_functions.load_pconfig(instrument=instrument)
     filemod = pconst.FILEMOD()
     # deal with rmod coming from call
     if rmod is None:
@@ -156,7 +159,7 @@ def setup(name: str = 'None', instrument: str = 'None',
             # update recipe instrument
             recipe.instrument = str(instrument)
             # need to update filemod and recipe mod
-            pconst = constants.pload()
+            pconst = load_functions.load_pconfig()
             # update filemod
             filemod = pconst.FILEMOD()
             # deal with rmod coming from call
@@ -693,7 +696,7 @@ def index_files(params: ParamDict, recipe: DrsRecipe):
     findexdb = drs_database.FileIndexDatabase(params)
     findexdb.load_db()
     # get pconstants
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     # load index header keys
     iheader_cols = pconst.FILEINDEX_HEADER_COLS()
     rkeys = list(iheader_cols.names)
@@ -1531,7 +1534,7 @@ def _display_logo(params: ParamDict):
     # get colours
     colors = COLOR
     # get pconstant
-    pconstant = constants.pload()
+    pconstant = load_functions.load_pconfig()
     # noinspection PyPep8
     logo = pconstant.LOGO()
     for line in logo:
@@ -1559,7 +1562,7 @@ def _display_ee(params: ParamDict):
     # get colours
     colors = COLOR
     # get pconstant
-    pconstant = constants.pload()
+    pconstant = load_functions.load_pconfig()
     # noinspection PyPep8
     logo = pconstant.SPLASH()
     for line in logo:
@@ -2018,9 +2021,9 @@ def find_recipe(name: str = 'None', instrument: str = 'None',
     # else we have a name and an instrument
     if mod is None:
         margs = [instrument, ['recipe_definitions.py'], ipath, CORE_PATH]
-        modules = constants.getmodnames(*margs, return_paths=False)
+        modules = param_functions.get_module_names(*margs, return_paths=False)
         # load module
-        mod = constants.import_module(func_name, modules[0], full=True)
+        mod = constant_functions.import_module(func_name, modules[0], full=True)
     # get a list of all recipes from modules
     all_recipes = mod.recipes
     # try to locate this recipe

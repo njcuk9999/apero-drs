@@ -11,7 +11,7 @@ Created on 2019-07-26 at 09:40
 """
 from apero.core import lang
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import constant_functions
 from apero.core.core import drs_log
 from apero.core.base import drs_text
 from apero.core.utils import drs_startup
@@ -83,7 +83,8 @@ def __main__(recipe, params):
         # try to load run def
         # noinspection PyBroadException
         try:
-            rundef = constants.import_module(modname, modpath, quiet=True)
+            rundef = constant_functions.import_module(modname, modpath,
+                                                      quiet=True)
         except Exception as _:
             wmsg = 'Cannot load: {0} skipping'
             wargs = [modname]

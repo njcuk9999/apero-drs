@@ -13,7 +13,8 @@ from typing import List
 import numpy as np
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
+from apero.core.constants import load_functions
 from apero.core import lang
 from apero.core.core import drs_database
 from apero.core.core import drs_file
@@ -39,7 +40,7 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # get param dict
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
@@ -134,7 +135,7 @@ def __main__(recipe, params):
     # set up plotting (no plotting before this)
     recipe.plot.set_location()
     # get pseudo constants
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     # load the calibration database
     calibdbm = drs_database.CalibrationDatabase(params)
     calibdbm.load_db()
@@ -295,7 +296,7 @@ def __main__(recipe, params):
                         fwhms_stack, mean_tot_lines, dvrms_sps, dv_rms_ccs,
                         wavetimes, wavefiles, wavesrces, paths]
         # make table
-        table = drs_table.make_table(params, columnnames, columnvalues)
+        table = drs_table.make_table(columnnames, columnvalues)
         # ---------------------------------------------------------------------
         # construct filename
         cargs = [params['DRS_DATA_REDUC'], params['OBS_DIR'],

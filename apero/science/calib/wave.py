@@ -21,9 +21,11 @@ from astropy.table import Table
 from scipy.ndimage import zoom
 from scipy.optimize import curve_fit
 
-from apero.core import constants
+from apero.core.constants import param_functions
+from apero.core.constants import load_functions
 from apero.core import lang
 from apero.core import math as mp
+from apero.core.base import drs_misc
 from apero.core.core import drs_database
 from apero.core.core import drs_file
 from apero.core.core import drs_log
@@ -46,14 +48,14 @@ from apero.science.calib import gen_calib
 __NAME__ = 'science.calib.wave.py'
 __INSTRUMENT__ = 'None'
 # Get constants
-Constants = constants.load(__INSTRUMENT__)
+Constants = load_functions.load_config(__INSTRUMENT__)
 # Get version and author
 __version__ = Constants['DRS_VERSION']
 __author__ = Constants['AUTHORS']
 __date__ = Constants['DRS_DATE']
 __release__ = Constants['DRS_RELEASE']
 # get param dict
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 DrsFitsFile = drs_file.DrsFitsFile
 DrsRecipe = drs_recipe.DrsRecipe
 RecipeLog = drs_utils.RecipeLog
@@ -62,7 +64,7 @@ CalibDB = drs_database.CalibrationDatabase
 # Get Logging function
 WLOG = drs_log.wlog
 # alias pcheck
-pcheck = constants.PCheck(wlog=WLOG)
+pcheck = param_functions.PCheck(wlog=WLOG)
 # Get the text types
 textentry = lang.textentry
 # Speed of light
@@ -71,7 +73,7 @@ speed_of_light_ms = cc.c.to(uu.m / uu.s).value
 # noinspection PyUnresolvedReferences
 speed_of_light = cc.c.to(uu.km / uu.s).value
 # Get function string
-display_func = drs_log.display_func
+display_func = drs_misc.display_func
 # define the header types
 HeaderType = Union[drs_fits.Header, drs_fits.fits.Header, None]
 
@@ -95,7 +97,7 @@ def get_waveref_filename(params: ParamDict, fiber: str,
     # set function name
     func_name = display_func('get_waveref_filename', __NAME__)
     # get pseudo constants
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     # deal with fibers that we don't have
     usefiber = pconst.FIBER_WAVE_TYPES(fiber)
     # get whether the user wants to bin the calibration times to a specific
@@ -362,7 +364,7 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
                        func_name)
     # ------------------------------------------------------------------------
     # get pseudo constants
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     # deal with which fiber to use
     if kwargs.get('forcefiber', False):
         usefiber = str(fiber)
@@ -708,7 +710,7 @@ def get_wavelines(params: ParamDict, fiber: str,
     # set up function name
     func_name = display_func('get_wavelines', __NAME__)
     # get psuedo constants
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     # deal with fibers that we don't have
     usefiber = pconst.FIBER_WAVE_TYPES(fiber)
     # ------------------------------------------------------------------------
@@ -898,7 +900,7 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
     inst_waveend = pcheck(params, 'EXT_S1D_WAVEEND', func=func_name)
     # ------------------------------------------------------------------
     # get psuedo constants
-    pconst = constants.pload(params['INSTRUMENT'])
+    pconst = load_functions.load_pconfig(params['INSTRUMENT'])
     # get the shape from the wavemap
     nbo, nbpix = wavemap.shape
     # get dprtype
@@ -1251,7 +1253,7 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
     columnvalues = [list_waves, wave_m, list_pixels, pixel_m, list_orders,
                     list_wfit, ewidth, amp, nsig, diffpix, peak_number]
     # make table
-    table = drs_table.make_table(params, columnnames, columnvalues)
+    table = drs_table.make_table(columnnames, columnvalues)
     # return table
     return table
 
@@ -2242,7 +2244,7 @@ def update_smart_fp_mask(params: ParamDict, cavity: np.ndarray, **kwargs):
     columnnames = ['WLOW', 'WHIGH', 'WEIGHT']
     columnvalues = [wavelower, waveupper, weights]
     # make table
-    table = drs_table.make_table(params, columnnames, columnvalues)
+    table = drs_table.make_table(columnnames, columnvalues)
     # print that we are saving smart fp header
     WLOG(params, '', textentry('40-017-00053', args=outfile))
     # write smart mask table to file
@@ -3263,7 +3265,7 @@ def write_wavesol(params: ParamDict, recipe: DrsRecipe, fiber: str,
     for w_it in range(wprops['COEFFS'].shape[1]):
         wave_cols.append('COEFFS_{0}'.format(w_it))
         wave_vals.append(wprops['COEFFS'][:, w_it])
-    wave_table = drs_table.make_table(params, columns=wave_cols,
+    wave_table = drs_table.make_table(columns=wave_cols,
                                       values=wave_vals)
     # ----------------------------------------------------------------------
     # copy original keys from fp file
@@ -3678,7 +3680,7 @@ def write_resolution_map(params: ParamDict, recipe: DrsRecipe,
               list(map_amp.values()),
               list(map_expo.values()),
               list(map_res_eff.values())]
-    stat_table = drs_table.make_table(params, columns, values)
+    stat_table = drs_table.make_table(columns, values)
     # ------------------------------------------------------------------
     # Make sector tables (DV, FLUX, FIT FLUX)
     # ------------------------------------------------------------------
@@ -3692,7 +3694,7 @@ def write_resolution_map(params: ParamDict, recipe: DrsRecipe,
                   np.array(map_fits[key]), np.array(map_waves[key]),
                   np.array(map_orders[key])]
         # make the tables
-        tables.append(drs_table.make_table(params, columns, values))
+        tables.append(drs_table.make_table(columns, values))
         # get properties for this sector
         ordlow, ordhigh = map_lower_ords[key], map_high_ords[key]
         pixlow, pixhigh = map_lower_pix[key], map_high_pix[key]

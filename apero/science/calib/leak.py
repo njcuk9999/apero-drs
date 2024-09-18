@@ -17,9 +17,11 @@ from astropy import units as uu
 from astropy.table import Table
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
+from apero.core.constants import load_functions
 from apero.core import lang
 from apero.core import math as mp
+from apero.core.base import drs_misc
 from apero.core.core import drs_database
 from apero.core.core import drs_log, drs_file
 from apero.core.utils import drs_recipe
@@ -40,7 +42,7 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # get param dict
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 DrsFitsFile = drs_file.DrsFitsFile
 DrsNpyFile = drs_file.DrsNpyFile
 DrsRecipe = drs_recipe.DrsRecipe
@@ -49,7 +51,7 @@ WLOG = drs_log.wlog
 # Get the text types
 textentry = lang.textentry
 # alias pcheck
-pcheck = constants.PCheck(wlog=WLOG)
+pcheck = param_functions.PCheck(wlog=WLOG)
 # define the calibration database class
 CalibrationDatabase = drs_database.CalibrationDatabase
 # -----------------------------------------------------------------------------
@@ -59,7 +61,7 @@ speed_of_light_ms = cc.c.to(uu.m / uu.s).value
 # noinspection PyUnresolvedReferences
 speed_of_light_kms = cc.c.to(uu.km / uu.s).value
 # Get function string
-display_func = drs_log.display_func
+display_func = drs_misc.display_func
 
 
 # =============================================================================
@@ -181,7 +183,7 @@ def correct_ref_dark_fp(params: ParamDict, extractdict: ParamDict,
     ykernel = np.exp(-0.5 * (xkernel / w_smooth) ** 2)
 
     # get this instruments science fibers and reference fiber
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     # science fibers should be list of strings, reference fiber should be string
     sci_fibers, ref_fiber = pconst.FIBER_KINDS()
     # output storage (dictionary of corrected extracted files)
@@ -308,7 +310,7 @@ def manage_leak_correction(params: ParamDict, recipe: DrsRecipe,
     # get the ut file header
     inheader = infile.header
     # get this instruments science fibers and reference fiber
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     # science fibers should be list of strings, reference fiber should be string
     sci_fibers, ref_fiber = pconst.FIBER_KINDS()
     # get the type of data for each fiber
@@ -472,7 +474,7 @@ def correct_ext_dark_fp(params: ParamDict, sciimage: np.ndarray,
     sciimage = np.array(sciimage)
     # ----------------------------------------------------------------------
     # get this instruments science fibers and reference fiber
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     # science fibers should be list of strings, reference fiber should be string
     sci_fibers, ref_fiber = pconst.FIBER_KINDS()
     # ----------------------------------------------------------------------
@@ -779,7 +781,7 @@ def ref_fplines(params: ParamDict, recipe: DrsRecipe, e2dsfile: DrsFitsFile,
     # get dprtype
     dprtype = e2dsfile.get_hkey('KW_DPRTYPE', dtype=str)
     # get psuedo constants
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     sfibers, rfiber = pconst.FIBER_KINDS()
     # ----------------------------------------------------------------------
     # deal with fiber being the reference fiber

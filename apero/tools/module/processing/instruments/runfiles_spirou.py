@@ -12,7 +12,7 @@ Created on 2022-06-06
 from typing import List
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
 from apero.tools.module.processing import drs_run_ini
 
 # =============================================================================
@@ -28,7 +28,7 @@ __release__ = base.__release__
 # get the run file class
 RunIniFile = drs_run_ini.RunIniFile
 # get parameter dictionary class
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 # Define the default reference observation directory
 DEFAULT_REF_OBSDIR = drs_run_ini.DEFAULT_REF_OBSDIR[__INSTRUMENT__]
 

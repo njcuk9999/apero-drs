@@ -26,12 +26,13 @@ from astropy.table import Row
 from astroquery.simbad import Simbad
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
+from apero.core.constants import load_functions
 from apero.core import lang
 from apero.core.base import drs_base_classes, drs_text, drs_misc
 from apero.core.core import drs_database
 from apero.core.core import drs_log
-from apero.core.instruments.default import pseudo_const
+from apero.core.instruments.default import instrument as instrument_mod
 from apero.core.utils import drs_startup
 from apero.io import drs_fits
 from apero.science import preprocessing as prep
@@ -53,11 +54,11 @@ Time = base.Time
 # get text entry instance
 textentry = lang.textentry
 # get the parmeter dictionary instance
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
 # Get function string
-display_func = drs_log.display_func
+display_func = drs_misc.display_func
 # get the databases
 FileIndexDatabase = drs_database.FileIndexDatabase
 ObjectDatabase = drs_database.AstrometricDatabase
@@ -178,7 +179,7 @@ class AstroObj:
 
         :return: None populates attributes
         """
-        pconst = constants.pload()
+        pconst = load_functions.load_pconfig()
         # set objname as cleaned version of name
         self.objname = pconst.DRS_OBJ_NAME(self.name)
         # store the original name
@@ -418,7 +419,7 @@ class AstroObj:
         func_name = display_func('consistent_astrometrics', __NAME__,
                                  'AstroObj')
         # get pconst (we need it for tap urls
-        pconst = constants.pload()
+        pconst = load_functions.load_pconfig()
         # get the tap dictionaries
         pm_tap_dict = pconst.PM_TAP_DICT(params)
         # update progress if report is True
@@ -576,7 +577,7 @@ class AstroObj:
         objnames = [self.objname, self.original_name] + self.aliases.split('|')
         # clean all names
         cobjnames = []
-        pconst = constants.pload()
+        pconst = load_functions.load_pconfig()
         for objname in objnames:
             cobjnames.append(pconst.DRS_OBJ_NAME(objname))
         # check for objname in raw files only
@@ -897,7 +898,7 @@ class AstroObj:
     #     objnames = [self.objname, self.original_name] + self.aliases.split('|')
     #     # clean all names
     #     cobjnames = []
-    #     pconst = constants.pload()
+    #     pconst = load_functions.load_pconfig()
     #     for objname in objnames:
     #         cobjnames.append(pconst.DRS_OBJ_NAME(objname))
     #     # check for objname in raw files only
@@ -1375,7 +1376,7 @@ def query_database(params, rawobjnames: List[str],
         return rawobjnames, dict()
     # ---------------------------------------------------------------------
     # get psuedo constants
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     # ---------------------------------------------------------------------
     # Update the object database (recommended only for full reprocessing)
     # check that we have entries in the object database
@@ -1505,7 +1506,7 @@ def lookup(params: ParamDict, rawobjname: str
     :return: 
     """
     # get pconst 
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     # get cleaned object name
     objname = pconst.DRS_OBJ_NAME(rawobjname)
     # construct new astrometric object instance
@@ -1551,7 +1552,7 @@ def ask_for_name(params: ParamDict, astro_obj: AstroObj) -> AstroObj:
     :return: update AstroObj
     """
     # clean object name
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     # get the obj name
     name = pconst.DRS_OBJ_NAME(astro_obj.name)
     # but first check whether main name
@@ -1718,7 +1719,7 @@ def add_obj_to_sheet(params: ParamDict, astro_objs: List[AstroObj]):
 
 def update_astrometrics(params):
     # get pconst
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     # load table
     table = manage_databases.get_object_database(params)
     # store astrometric objects that we need to add to database
@@ -1956,7 +1957,7 @@ def add_object_reject(params: ParamDict, raw_objname: str):
     # ----------------------------------------------------------------------
     for objname in objnames:
         # clean input object name
-        apero_objname = pseudo_const.clean_object(objname)
+        apero_objname = instrument_mod.clean_object(objname)
         # ----------------------------------------------------------------------
         # object in object column
         cond1 = (objname in object_column) or (apero_objname in object_column)
@@ -2040,7 +2041,7 @@ def add_object_reject(params: ParamDict, raw_objname: str):
     # print progress
     for objname in objnames:
         # clean input object name
-        apero_objname = pseudo_const.clean_object(objname)
+        apero_objname = instrument_mod.clean_object(objname)
         # print progress
         msg = 'object={0} (APERO={1}) added to reject list google-sheet'
         WLOG(params, '', msg.format(objname, apero_objname))
@@ -2053,7 +2054,7 @@ if __name__ == "__main__":
     # TODO: should this be a dev recipe?
     args = sys.argv
     # get params
-    _params = constants.load()
+    _params = load_functions.load_config()
     # assign a PID
     _params['PID'], _ = drs_startup.assign_pid()
     # set shortname

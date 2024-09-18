@@ -20,15 +20,9 @@ from astropy.table import Table
 
 from apero.base import base
 from apero.base import drs_db
-from apero.core.base import drs_exceptions
-from apero.core.base import drs_base_classes as base_class
 from apero.core.base import drs_misc
 from apero.core.base import drs_text
-from apero.core.instruments.default import config
-from apero.core.instruments.default import constants
-from apero.core.instruments.default import keywords
-from apero.core.instruments.default import file_definitions
-from apero.core.instruments.default import recipe_definitions
+
 
 # =============================================================================
 # Define variables
@@ -150,6 +144,10 @@ class Instrument:
 
     def get_constants(self
                       ) -> Tuple[Dict[str, Any], Dict[str, str], Dict[str, Any]]:
+        # these have to be local
+        from apero.core.instruments.default import config
+        from apero.core.instruments.default import constants
+        from apero.core.instruments.default import keywords
         # get constants dicts
         config_dict = config.CDict()
         constants_dict = constants.CDict()
@@ -180,6 +178,9 @@ class Instrument:
         The import for the file definitions
         :return: file_definitions
         """
+        # this has to be local
+        from apero.core.instruments.default import file_definitions
+        # return import
         return file_definitions
 
     def RECIPEMOD(self) -> Any:
@@ -188,6 +189,9 @@ class Instrument:
 
         :return: file_definitions
         """
+        # this has to be local
+        from apero.core.instruments.default import recipe_definitions
+        # return import
         return recipe_definitions
 
     # =========================================================================

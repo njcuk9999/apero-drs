@@ -293,7 +293,7 @@
 	    var BLOWFISH_CTX = {
 	        pbox: [],
 	        sbox: []
-	    }
+	    };
 
 	    function F(ctx, x){
 	        let a = (x >> 24) & 0xFF;

@@ -18,10 +18,11 @@ import numpy as np
 from astropy.table import Table
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
 from apero.core import lang
 from apero.core import math as mp
 from apero.core.core import drs_log
+from apero.core.base import drs_misc
 from apero.core.utils import drs_recipe
 from apero.io import drs_path
 from apero.plotting import html
@@ -39,16 +40,16 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # Get function string
-display_func = drs_log.display_func
+display_func = drs_misc.display_func
 # Get Logging function
 WLOG = drs_log.wlog
 # get ParamDict
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 DrsRecipe = drs_recipe.DrsRecipe
 # Get the text types
 textentry = lang.textentry
 # alias pcheck
-pcheck = constants.PCheck(wlog=WLOG)
+pcheck = param_functions.PCheck(wlog=WLOG)
 # get plotting definitions
 definitions = plot_functions.definitions
 # get Graph function
@@ -165,7 +166,7 @@ class Plotter:
         # construct summary pdf
         path = str(os.path.join(plot_path, obs_dir, self.pid_dir))
         # create folder it if doesn't exist
-        drs_path.makedirs(self.params, path)
+        drs_path.makedirs(path)
         # create the summary plot name
         filename = 'summary_{0}_{1}'.format(pid, rname)
         # make filename all lower case

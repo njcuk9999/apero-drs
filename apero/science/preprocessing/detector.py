@@ -18,7 +18,7 @@ from astropy.table import Table
 from scipy import ndimage
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
 from apero.core import lang
 from apero.core import math as mp
 from apero.core.core import drs_database
@@ -47,7 +47,7 @@ WLOG = drs_log.wlog
 # Get time from base
 Time = base.Time
 # get param dict
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 # get the recipe class
 DrsRecipe = drs_recipe.DrsRecipe
 # get fits file class
@@ -59,7 +59,7 @@ CalibrationDatabase = drs_database.CalibrationDatabase
 # Get the text types
 textentry = lang.textentry
 # alias pcheck
-pcheck = constants.PCheck(wlog=WLOG)
+pcheck = param_functions.PCheck(wlog=WLOG)
 
 
 # =============================================================================
@@ -678,7 +678,7 @@ def construct_led_cube(params: ParamDict, led_files: np.ndarray,
     columns = ['OBS_DIR', 'BASENAME', 'FILENAME', 'MJDATE', 'EXPTIME']
     values = [obs_dirs, basenames, led_files, led_time, led_exp]
     # make table using columns and values
-    led_table = drs_table.make_table(params, columns, values)
+    led_table = drs_table.make_table(columns, values)
     # ----------------------------------------------------------------------
     # return cube and table
     return cube, led_table

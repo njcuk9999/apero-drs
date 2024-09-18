@@ -20,7 +20,9 @@ import numpy as np
 from astropy.table import Table
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
+from apero.core.constants import load_functions
+from apero.core.constants import constant_functions
 from apero.core import lang
 from apero.core.core import drs_argument
 from apero.core.core import drs_database
@@ -41,13 +43,13 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # Get function string
-display_func = drs_log.display_func
+display_func = drs_misc.display_func
 # Get Logging function
 WLOG = drs_log.wlog
 # get print colours
 COLOR = drs_misc.Colors()
 # get param dict
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 # get the binary dictionary
 BinaryDict = base_class.BinaryDict
 # get the input file
@@ -63,7 +65,7 @@ FileIndexDatabase = drs_database.FileIndexDatabase
 DrsArgumentParser = drs_argument.DrsArgumentParser
 DrsArgument = drs_argument.DrsArgument
 # alias pcheck
-pcheck = constants.PCheck(wlog=WLOG)
+pcheck = param_functions.PCheck(wlog=WLOG)
 # define special keys
 SPECIAL_LIST_KEYS = ['SCIENCE_TARGETS', 'TELLURIC_TARGETS']
 
@@ -114,7 +116,7 @@ class DrsRecipe(object):
         # set drs file module related to this recipe
         if filemod is None:
             # get pconst
-            self.filemod = constants.pload().FILEMOD()
+            self.filemod = load_functions.load_pconfig().FILEMOD()
         else:
             self.filemod = filemod.copy()
         # get drs parameters (will be loaded later)
@@ -241,7 +243,7 @@ class DrsRecipe(object):
         # update dict with state
         self.__dict__.update(state)
         # get pconst
-        pconst = constants.pload(self.params['INSTRUMENT'])
+        pconst = load_functions.load_pconfig(self.params['INSTRUMENT'])
         # set drs pconstant
         self.drs_pconstant = pconst
         # set drs file module related to this recipe
@@ -355,8 +357,8 @@ class DrsRecipe(object):
         func_name = display_func('get_drs_params', __NAME__,
                                  self.class_name)
         # Get config parameters from primary file
-        self.params = constants.load()
-        self.drs_pconstant = constants.pload()
+        self.params = load_functions.load_config()
+        self.drs_pconstant = load_functions.load_pconfig()
         # ---------------------------------------------------------------------
         # assign parameters from kwargs
         for kwarg in kwargs:
@@ -988,7 +990,8 @@ class DrsRecipe(object):
                 rpath = params['DRS_INSTRUMENT_RECIPE_PATH']
                 dpath = params['DRS_DEFAULT_RECIPE_PATH']
                 margs = [instrument, [self.name], rpath, dpath]
-                modules = constants.getmodnames(*margs, return_paths=False)
+                modules = param_functions.get_module_names(*margs,
+                                                           return_paths=False)
                 # return module
                 self.module = self._import_module(modules[0], full=True,
                                                   quiet=True)
@@ -1251,7 +1254,7 @@ class DrsRecipe(object):
         objdbm = drs_database.AstrometricDatabase(params)
         objdbm.load_db()
         # load pseudo constants
-        pconst = constants.pload()
+        pconst = load_functions.load_pconfig()
         # loop around arguments
         for argname in arguments:
             # get value
@@ -1339,8 +1342,8 @@ class DrsRecipe(object):
         # get local copy of module
         # noinspection PyBroadException
         try:
-            return constants.import_module(func_name, name, full=full,
-                                           quiet=quiet)
+            return constant_functions.import_module(func_name, name, full=full,
+                                                    quiet=quiet)
         except Exception:
             return None
 
@@ -1930,7 +1933,7 @@ class DrsRunSequence:
         # set other stars
         self.ostars = ostars
         # get filemod and recipe mod
-        pconst = constants.pload()
+        pconst = load_functions.load_pconfig()
         filemod = pconst.FILEMOD()
         recipemod = pconst.RECIPEMOD()
         # storage of sequences

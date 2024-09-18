@@ -19,9 +19,11 @@ from astropy import units as uu
 from astropy.table import Table
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
+from apero.core.constants import load_functions
 from apero.core import lang
 from apero.core import math as mp
+from apero.core.base import drs_misc
 from apero.core.core import drs_database
 from apero.core.core import drs_log, drs_file
 from apero.core.base import drs_text
@@ -44,7 +46,7 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # get param dict
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 DrsFitsFile = drs_file.DrsFitsFile
 DrsNpyFile = drs_file.DrsNpyFile
 DrsRecipe = drs_recipe.DrsRecipe
@@ -53,7 +55,7 @@ WLOG = drs_log.wlog
 # Get the text types
 textentry = lang.textentry
 # alias pcheck
-pcheck = constants.PCheck(wlog=WLOG)
+pcheck = param_functions.PCheck(wlog=WLOG)
 # -----------------------------------------------------------------------------
 # Speed of light
 # noinspection PyUnresolvedReferences
@@ -61,7 +63,7 @@ speed_of_light_ms = cc.c.to(uu.m / uu.s).value
 # noinspection PyUnresolvedReferences
 speed_of_light_kms = cc.c.to(uu.km / uu.s).value
 # Get function string
-display_func = drs_log.display_func
+display_func = drs_misc.display_func
 
 
 # =============================================================================
@@ -233,7 +235,7 @@ def save_tmp_orderps_file(params: ParamDict, recipe: DrsRecipe,
         # get key
         key = opfile.get_dbkey()
         # get pseudo constants
-        pconst = constants.pload()
+        pconst = load_functions.load_pconfig()
         # get fiber to use for ORDERPFILE (i.e. AB,A,B --> AB  and C-->C)
         usefiber = pconst.FIBER_LOC_TYPES(fiber)
         # get the order profile filename
@@ -298,7 +300,7 @@ def ref_fplines(params, recipe, e2dsfile, wavemap, fiber, database=None,
     # get dprtype
     dprtype = e2dsfile.get_hkey('KW_DPRTYPE', dtype=str)
     # get psuedo constants
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     if fiber in allowfibers:
         rfiber = str(fiber)
     else:

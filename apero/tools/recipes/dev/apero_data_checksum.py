@@ -10,7 +10,7 @@ Created on 2021-01-2021-01-13 14:42
 import os
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
 from apero.core import lang
 from apero.core.core import drs_log
 from apero.core.base import drs_text
@@ -29,7 +29,7 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # get param dict
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
@@ -57,9 +57,9 @@ apero_dcheck.set_summary_plots()
 
 apero_dcheck.set_arg(pos=0, name='mode', dtype=str,
                      helpstr='Mode of operation (update-remote, check-local, update-local)        '
-                            'mode=update-remote - creates a new tar on the server from local assets'
-                            'mode=check-local - checks whether the local assets need updating from server'
-                            'mode=update-local - update local assets from server')
+                             'mode=update-remote - creates a new tar on the server from local assets'
+                             'mode=check-local - checks whether the local assets need updating from server'
+                             'mode=update-local - update local assets from server')
 apero_dcheck.set_kwarg(name='--indir', dtype=str, default='None',
                        helpstr='Input data directory. If set recreates '
                                'checksums and tar file from --indir')

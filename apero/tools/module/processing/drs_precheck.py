@@ -16,7 +16,8 @@ from astropy.table import Table
 from tqdm import tqdm
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
+from apero.core.constants import load_functions
 from apero.core import lang
 from apero.core import math as mp
 from apero.core.core import drs_argument
@@ -42,7 +43,7 @@ __date__ = base.__date__
 __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 DrsRecipe = drs_recipe.DrsRecipe
 DrsArgument = drs_argument.DrsArgument
 DrsFitsFile = drs_file.DrsFitsFile
@@ -676,7 +677,7 @@ def obj_check(params: ParamDict, findexdbm: Optional[FileIndexDatabase] = None,
         WLOG(params, 'info', params['DRS_HEADER'])
     # ---------------------------------------------------------------------
     # get psuedo constants
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     # deal with not having index database
     if findexdbm is None:
         # construct the index database instance

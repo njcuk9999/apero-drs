@@ -12,7 +12,9 @@ Created on 2020-02-04 at 13:37
 import sys
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
+from apero.core.constants import constant_functions
+from apero.core.constants import load_functions
 from apero.core.core import drs_log, drs_file
 from apero.core.base import drs_misc
 from apero.core.utils import drs_recipe
@@ -29,7 +31,7 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # get param dict
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
 # get DrsRecipe
@@ -73,9 +75,9 @@ class RecipeDefinition:
             ipath = INSTRUMENT_PATH
         # get recipe definitions module
         margs = [self.instrument, ['recipe_definitions.py'], ipath, CORE_PATH]
-        modules = constants.getmodnames(*margs, return_paths=False)
+        modules = param_functions.get_module_names(*margs, return_paths=False)
         # load module
-        mod = constants.import_module(func_name, modules[0], full=True)
+        mod = constant_functions.import_module(func_name, modules[0], full=True)
         # add to recipes
         self.recipes = mod.get().recipes
         self.recipemod = mod.get()
@@ -128,9 +130,9 @@ class FileDefinition:
             ipath = INSTRUMENT_PATH
         # get recipe definitions module
         margs = [self.instrument, ['file_definitions.py'], ipath, CORE_PATH]
-        modules = constants.getmodnames(*margs, return_paths=False)
+        modules = param_functions.get_module_names(*margs, return_paths=False)
         # load module
-        mod = constants.import_module(func_name, modules[0], full=True)
+        mod = constant_functions.import_module(func_name, modules[0], full=True)
         # add to recipes
         self.files = mod.get()
         self.out = mod.get().out
@@ -144,7 +146,7 @@ class Demo:
     def __init__(self, params=None):
         # get parameters
         if params is None:
-            self.params = constants.load()
+            self.params = load_functions.load_config()
         else:
             self.params = params
         # get package

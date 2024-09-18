@@ -25,7 +25,8 @@ from astropy import units as uu
 from scipy.optimize import curve_fit
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
+from apero.core.constants import load_functions
 from apero.core.core import drs_log
 from apero.io import drs_table
 from apero.core.math import normal_fraction
@@ -46,7 +47,7 @@ __date__ = base.__date__
 __release__ = base.__release__
 # -----------------------------------------------------------------------------
 # Get ParamDict
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
 # -----------------------------------------------------------------------------
@@ -1764,7 +1765,7 @@ class AriRecipe:
 # =============================================================================
 def ari_filetypes(params: ParamDict) -> Dict[str, FileType]:
     # load pseudo-constants from apero
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     # get the science fiber from pconst
     science_fibers, ref_fiber = pconst.FIBER_KINDS()
     # we assume the first science fiber is the primary science fiber

@@ -14,9 +14,6 @@ import sys
 from typing import Any, Dict
 
 from apero.base import base
-from apero.base import drs_db
-from apero.lang.core import drs_lang
-from apero.tools.module.database import manage_databases
 from apero.tools.module.error import find_error
 
 # =============================================================================

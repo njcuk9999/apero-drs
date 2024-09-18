@@ -12,7 +12,7 @@ Created on 2022-02-08
 from typing import Any, Dict
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
 from apero.core.core import drs_log
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
@@ -33,7 +33,7 @@ WLOG = drs_log.wlog
 # Get Recipe class
 DrsRecipe = drs_recipe.DrsRecipe
 # Get parameter class
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 
 
 # =============================================================================

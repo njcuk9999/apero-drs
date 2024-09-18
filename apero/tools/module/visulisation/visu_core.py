@@ -16,9 +16,12 @@ import numpy as np
 
 from apero.core import lang
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
+from apero.core.constants import load_functions
+from apero.core.base import drs_misc
 from apero.core.core import drs_database
 from apero.core.core import drs_log
+from apero.core.instruments.default import instrument as instrument_mod
 from apero.core.utils import drs_recipe
 from apero.io import drs_fits
 
@@ -33,15 +36,15 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # get params
-PARAMS = constants.load()
+PARAMS = load_functions.load_config()
 # Get Logging function
 WLOG = drs_log.wlog
 # get parameter dictionary
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 DrsRecipe = drs_recipe.DrsRecipe
-PseudoConstants = constants.PseudoConstants
+Instrument = instrument_mod.Instrument
 # get display func
-display_func = drs_log.display_func
+display_func = drs_misc.display_func
 # Get the text types
 textentry = lang.textentry
 # get tqdm (if required)

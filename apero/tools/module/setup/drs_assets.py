@@ -13,7 +13,7 @@ import os
 import wget
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
 from apero.core.core import drs_log
 from apero.core.base import drs_text
 from apero.core.utils import drs_data
@@ -30,7 +30,7 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # get param dict
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 # RSYNC command
 RSYNC_CMD = 'rsync -avuz -e "{SSH}" {INPATH} {USER}@{HOST}:{OUTPATH}'
 # Get Logging function

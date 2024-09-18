@@ -16,9 +16,11 @@ from scipy.ndimage.filters import median_filter
 from skimage import measure
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
+from apero.core.constants import load_functions
 from apero.core import lang
 from apero.core import math as mp
+from apero.core.base import drs_misc
 from apero.core.core import drs_database
 from apero.core.core import drs_log, drs_file
 from apero.core.utils import drs_recipe
@@ -36,7 +38,7 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # get param dict
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 DrsRecipe = drs_recipe.DrsRecipe
 DrsFitsFile = drs_file.DrsFitsFile
 # get the calibration database
@@ -44,11 +46,11 @@ CalibrationDatabase = drs_database.CalibrationDatabase
 # Get Logging function
 WLOG = drs_log.wlog
 # Get function string
-display_func = drs_log.display_func
+display_func = drs_misc.display_func
 # Get the text types
 textentry = lang.textentry
 # alias pcheck
-pcheck = constants.PCheck(wlog=WLOG)
+pcheck = param_functions.PCheck(wlog=WLOG)
 
 
 # =============================================================================
@@ -213,7 +215,7 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
     # Fiber properties
     # -------------------------------------------------------------------------
     # get pseudo constants
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     # whether we are dilate the imagine due to fiber configuration this should
     #     only be used when we want a combined localisation solution
     #     i.e. AB from A and B
@@ -716,7 +718,7 @@ def get_coefficients(params: ParamDict, header: drs_file.Header,
     # set function name
     func_name = __NAME__ + '.get_coefficients()'
     # get pseudo constants
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     # deal with fibers that we don't have
     usefiber = pconst.FIBER_LOC_TYPES(fiber)
     # -------------------------------------------------------------------------
@@ -955,7 +957,7 @@ def loc_quality_control(params: ParamDict, lprops: ParamDict
     rorder_num = lprops['NORDERS']
     cent_diff = lprops['CENTER_DIFF']
     # this one comes from pseudo constants
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     fiberparams = pconst.FIBER_SETTINGS(params, fiber)
 
     required_norders = pcheck(params, 'FIBER_MAX_NUM_ORDERS', func=func_name,
@@ -1090,7 +1092,7 @@ def write_localisation_files(params: ParamDict, recipe: DrsRecipe,
              drs file instance
     """
     # this one comes from pseudo constants
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     # get properties from lprops
     cent_coeffs = lprops['CENT_COEFFS']
     wid_coeffs = lprops['WID_COEFFS']
@@ -1115,7 +1117,7 @@ def write_localisation_files(params: ParamDict, recipe: DrsRecipe,
     for c_it in range(cent_coeffs.shape[1]):
         cent_cols.append('COEFFS_{0}'.format(c_it))
         cent_vals.append(cent_coeffs[:, c_it])
-    cent_table = drs_table.make_table(params, columns=cent_cols,
+    cent_table = drs_table.make_table(columns=cent_cols,
                                       values=cent_vals)
     # ------------------------------------------------------------------
     # Make width coefficient table
@@ -1130,7 +1132,7 @@ def write_localisation_files(params: ParamDict, recipe: DrsRecipe,
     for c_it in range(wid_coeffs.shape[1]):
         wid_cols.append('COEFFS_{0}'.format(c_it))
         wid_vals.append(wid_coeffs[:, c_it])
-    wid_table = drs_table.make_table(params, columns=wid_cols,
+    wid_table = drs_table.make_table(columns=wid_cols,
                                      values=wid_vals)
     # ------------------------------------------------------------------
     # Write image order_profile to file

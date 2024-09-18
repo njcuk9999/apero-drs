@@ -17,12 +17,14 @@ import numpy as np
 from astropy.table import Table
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
+from apero.core.constants import load_functions
 from apero.core import lang
 from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.core.base import drs_text
 from apero.core.base import drs_misc
+from apero.core.instruments.default import instrument as instrument_mod
 from apero.core.utils import drs_recipe
 from apero.io import drs_path
 from apero.tools.module.documentation import drs_markdown
@@ -40,8 +42,8 @@ __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 # get drs classes
-ParamDict = constants.ParamDict
-PseudoConst = constants.PseudoConstants
+ParamDict = param_functions.ParamDict
+Instrument = instrument_mod.Instrument
 DrsRecipe = drs_recipe.DrsRecipe
 DrsRunSequence = drs_recipe.DrsRunSequence
 DrsInputFile = drs_file.DrsInputFile
@@ -187,7 +189,7 @@ def compile_file_definitions(params: ParamDict, recipe: DrsRecipe):
     # get instrument name
     instrument = params['INSTRUMENT']
     # load pseudo constants
-    pconst = constants.pload(instrument=instrument)
+    pconst = load_functions.load_pconfig(instrument=instrument)
     # define file types to add
     sectionnames = ['1. Raw Files', '2. Preprocesed files', '3. Reduced Files',
                     '4. Calibration files', '5. Telluric files',
@@ -486,7 +488,7 @@ def make_definitions(params: ParamDict, srecipes: List[DrsRecipe],
     # store list of recipe definitions
     recipe_definitions = []
     # load pseudo constants
-    pconst = constants.pload(instrument=instrument)
+    pconst = load_functions.load_pconfig(instrument=instrument)
     # -------------------------------------------------------------------------
     # get the absolute path of the schematics
     schematic_path = SCHEMATIC_PATH.format(instrument=instrument.lower())
@@ -983,7 +985,7 @@ def upload(params: ParamDict):
 # =============================================================================
 # Define worker functions
 # =============================================================================
-def _compile_files(params: ParamDict, pconst: PseudoConst,
+def _compile_files(params: ParamDict, pconst: Instrument,
                    fileset: List[DrsInputFile]) -> Table:
     """
     Compile a table of parameters based on an input fileset (list of Drs
@@ -1122,7 +1124,7 @@ def _modify_cols(table: Table, cols: List[str],
     return table, modified
 
 
-def _compile_recipe(params: ParamDict, pconst: PseudoConst,
+def _compile_recipe(params: ParamDict, pconst: Instrument,
                     recipe: DrsRecipe, outpath: str) -> Dict[str, Any]:
     """
     Compile recipe

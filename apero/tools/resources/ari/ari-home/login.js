@@ -4,7 +4,7 @@ function openModal(username) {
 
 	if (!(username === 'none')) {
 		var inputElement = document.getElementById("uname");
-		inputElement.placeholder = username
+		inputElement.placeholder = username;
 		inputElement.value = username;
 	}
 }
@@ -134,7 +134,7 @@ function ListPages() {
         // Loop through each list item
 	menuItems.forEach(function(item) {
 		// Check if the item should be visible based on the id
-        	var itemId = item.getAttribute('id')
+        	var itemId = item.getAttribute('id');
 		// deal with no loggedInGroup
         	if (!loggedInGroup) {
 			item.style.display = 'none';
@@ -142,7 +142,7 @@ function ListPages() {
 			item.style.display = 'block';
 		} else {
 			item.style.display = 'none';
-		};
+		}
 
 	});
 
@@ -151,7 +151,7 @@ function ListPages() {
 		notLoggedIn.innerText = 'No pages to view. Please log in.';
 	} else {
 		notLoggedIn.innerText = '';
-	};
+	}
 	
 
 

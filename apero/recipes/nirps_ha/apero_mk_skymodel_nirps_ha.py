@@ -12,7 +12,8 @@ Created on 2019-09-05 at 14:58
 from typing import Any, Dict, Tuple, Union
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
+from apero.core.constants import load_functions
 from apero.core import lang
 from apero.core.core import drs_database
 from apero.core.core import drs_log
@@ -36,7 +37,7 @@ WLOG = drs_log.wlog
 # Get Recipe class
 DrsRecipe = drs_recipe.DrsRecipe
 # Get parameter class
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 # Get the text types
 textentry = lang.textentry
 
@@ -92,7 +93,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # ----------------------------------------------------------------------
     mainname = __NAME__ + '._main()'
     # need to convert object to drs object name
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     # get the filetype (this is overwritten from user inputs if defined)
     filetype = params['INPUTS']['FILETYPE']
     # load the calibration and telluric databases

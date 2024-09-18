@@ -225,6 +225,7 @@ class DrsCodedWarning:
 
     def __init__(self, codeid: str, level: Union[str, None] = None,
                  targs: Union[None, list, str] = None,
+                 message: Union[str, None] = None,
                  func_name: Union[str, None] = None):
         """
         A Drs Coded Exception (normally to be caught and piped into a
@@ -239,9 +240,11 @@ class DrsCodedWarning:
         self.codeid = codeid
         self.level = level
         self.targs = targs
+        self.message = message
         self.func_name = func_name
         # get message from string representation
-        message = self.__str__()
+        if message is None:
+            message = self.__str__()
         # only print if not in used warnings (avoids repetition)
         if message in USED_DRS_WARNINGS:
             return
@@ -273,7 +276,10 @@ class DrsCodedWarning:
         The string representation of the error: used as message when raised
         :return:
         """
-        message = lang.textentry(self.codeid, self.targs)
+        if self.message is None:
+            message = lang.textentry(self.codeid, self.targs)
+        else:
+            message = self.message
         # return the base printer version string represntation
         return drs_base.base_printer(self.codeid, message, self.level,
                                      self.targs, self.func_name,

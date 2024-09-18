@@ -10,7 +10,7 @@ Created on 2019-03-21 at 11:36
 @author: cook
 
 Import rules:
-    only from core.core.drs_log, core.io, core.math, core.constants,
+    only from core.base, core.math, core.constants,
     apero.lang, apero.base
 
     do not import from core.core.drs_file
@@ -36,7 +36,7 @@ from apero.core import lang
 from apero.core.base import drs_exceptions
 from apero.core.base import drs_base_classes
 from apero.core.base import drs_misc
-from apero.core.core import drs_log
+from apero.core.constants import load_functions
 
 # =============================================================================
 # Define variables
@@ -1108,7 +1108,7 @@ def _write_fits(params: ParamDict, filename: str, data: ListImageTable,
         if wmsg != str(warning.message):
             w1.append(warning)
     # add warnings to the warning logger and log if we have them
-    drs_log.warninglogger(params, w1)
+    load_functions.warninglogger(params, w1)
 
 
 def update_extension(params: ParamDict, filename: str, extension: int,

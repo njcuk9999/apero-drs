@@ -23,7 +23,9 @@ from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
+from apero.core.constants import load_functions
+from apero.core.constants import constant_functions
 from apero.core import lang
 from apero.core.constants import path_definitions as pathdef
 from apero.core.base import drs_exceptions, drs_base_classes, drs_misc
@@ -42,7 +44,7 @@ __release__ = base.__release__
 # get colors
 Colors = drs_misc.Colors()
 # get param dict
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 # define bad characters for profile name (alpha numeric + "_")
 BAD_CHARS = [' '] + list(string.punctuation.replace('_', ''))
 # Get the text types
@@ -945,7 +947,7 @@ def update_configs(all_params: ParamDict) -> ParamDict:
     # loop around config files
     for filename in all_params['CONFIGFILES']:
         # get the current config values
-        fkeys, fvalues = constants.get_constants_from_file(filename)
+        fkeys, fvalues = constant_functions.get_constants_from_file(filename)
         fdict = dict(zip(fkeys, fvalues))
         # loop around keys
         for key in fkeys:
@@ -954,7 +956,7 @@ def update_configs(all_params: ParamDict) -> ParamDict:
                 # update value
                 fdict[key] = all_params[key]
         # now update config file
-        constants.update_file(filename, fdict)
+        constant_functions.update_file(filename, fdict)
     # return all parameters
     return all_params
 
@@ -1281,7 +1283,7 @@ def printheader() -> str:
 
     :return: str, the header string to be printed
     """
-    rows, columns = constants.param_functions.window_size()
+    rows, columns = param_functions.window_size()
     return '=' * (columns - 1)
 
 
@@ -1860,7 +1862,7 @@ def update(params: ParamDict, args: argparse.Namespace) -> ParamDict:
     all_params['LANGUAGE'] = language
     all_params.set_source('LANGUAGE', language)
     # load params for instrument
-    iparams = constants.load(cache=False)
+    iparams = load_functions.load_config(cache=False)
     # ------------------------------------------------------------------
     # loop around data paths
     for datapath in DATA_PATHS.keys():

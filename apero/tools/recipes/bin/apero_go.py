@@ -14,7 +14,8 @@ import os
 from typing import Any, Dict
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
+from apero.core.constants import load_functions
 from apero.core.constants import path_definitions
 from apero.core.instruments.default import recipe_definitions as rd
 
@@ -29,7 +30,7 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # Get parameter class
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 
 
 # =============================================================================
@@ -74,7 +75,7 @@ def main():
 
     """
     # get parameters for this instrument
-    params = constants.load()
+    params = load_functions.load_config()
     # add arguments as inputs (via argparse)
     params['INPUTS'] = get_args()
     # run the __main__ function
@@ -189,4 +190,3 @@ if __name__ == "__main__":
 # =============================================================================
 # End of code
 # =============================================================================
-

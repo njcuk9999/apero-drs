@@ -11,7 +11,7 @@ import os
 from typing import Any, Dict
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
 from apero.core.core import drs_log
 from apero.core.base import drs_text
 from apero.core.utils import drs_recipe
@@ -35,7 +35,7 @@ WLOG = drs_log.wlog
 # Get Recipe class
 DrsRecipe = drs_recipe.DrsRecipe
 # Get parameter class
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 # get time from base
 Time = base.Time
 

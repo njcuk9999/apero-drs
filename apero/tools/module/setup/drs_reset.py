@@ -19,11 +19,14 @@ import numpy as np
 from astropy.table import Table
 
 from apero.base import base
-from apero.core import constants
+from apero.core.base.drs_base_classes import Printer
+from apero.core.constants import param_functions
+from apero.core.constants import load_functions
 from apero.core import lang
 from apero.core.constants import path_definitions
 from apero.core.core import drs_database
 from apero.core.core import drs_log
+from apero.core.instruments.default import instrument as instrument_mod
 from apero.core.utils import drs_data
 from apero.io import drs_lock
 from apero.io import drs_path
@@ -41,12 +44,12 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # get param dict
-ParamDict = constants.ParamDict
-PseudoConst = constants.PseudoConstants
+ParamDict = param_functions.ParamDict
+Instrument = instrument_mod.Instrument
 DatabaseM = drs_database.DatabaseManager
 # Get Logging function
 WLOG = drs_log.wlog
-TLOG = drs_log.Printer
+TLOG = Printer
 # Get the text types
 textentry = lang.textentry
 # debug mode (test)
@@ -216,7 +219,7 @@ def reset_tmp_folders(params: ParamDict, log: bool = True):
         # get database paths
         databases = manage_databases.list_databases(params)
         # load pseudo constants
-        pconst = constants.pload()
+        pconst = load_functions.load_pconfig()
         # create index database
         manage_databases.create_fileindex_database(params, pconst, databases)
         # get index database
@@ -239,7 +242,7 @@ def reset_tmp_folders(params: ParamDict, log: bool = True):
         # get database paths
         databases = manage_databases.list_databases(params)
         # load pseudo constants
-        pconst = constants.pload()
+        pconst = load_functions.load_pconfig()
         # create index database
         manage_databases.create_log_database(params, pconst, databases)
         # get log database
@@ -282,7 +285,7 @@ def reset_reduced_folders(params: ParamDict, log: bool = True):
         # get database paths
         databases = manage_databases.list_databases(params)
         # load pseudo constants
-        pconst = constants.pload()
+        pconst = load_functions.load_pconfig()
         # create index database
         manage_databases.create_fileindex_database(params, pconst, databases)
         # get index database
@@ -305,7 +308,7 @@ def reset_reduced_folders(params: ParamDict, log: bool = True):
         # get database paths
         databases = manage_databases.list_databases(params)
         # load pseudo constants
-        pconst = constants.pload()
+        pconst = load_functions.load_pconfig()
         # create index database
         manage_databases.create_log_database(params, pconst, databases)
         # get log database
@@ -330,7 +333,7 @@ def reset_calibdb(params: ParamDict, log: bool = True):
     # get database paths
     databases = manage_databases.list_databases(params)
     # load pseudo constants
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     # name the database
     name = 'calibration database'
     # get the calibration database file directory
@@ -365,7 +368,7 @@ def reset_telludb(params: ParamDict, log: bool = True):
     # get database paths
     databases = manage_databases.list_databases(params)
     # load pseudo constants
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     # name the database
     name = 'tellruic database'
     # get the telluric database file directory
@@ -545,7 +548,7 @@ def reset_lbl_folders(params: ParamDict, log: bool = True):
         # get database paths
         databases = manage_databases.list_databases(params)
         # load pseudo constants
-        pconst = constants.pload()
+        pconst = load_functions.load_pconfig()
         # create index database
         manage_databases.create_fileindex_database(params, pconst, databases)
         # get index database
@@ -568,7 +571,7 @@ def reset_lbl_folders(params: ParamDict, log: bool = True):
         # get database paths
         databases = manage_databases.list_databases(params)
         # load pseudo constants
-        pconst = constants.pload()
+        pconst = load_functions.load_pconfig()
         # create index database
         manage_databases.create_log_database(params, pconst, databases)
         # get log database
@@ -611,7 +614,7 @@ def reset_out_folders(params: ParamDict, log: bool = True):
         # get database paths
         databases = manage_databases.list_databases(params)
         # load pseudo constants
-        pconst = constants.pload()
+        pconst = load_functions.load_pconfig()
         # create index database
         manage_databases.create_fileindex_database(params, pconst, databases)
         # get index database
@@ -634,7 +637,7 @@ def reset_out_folders(params: ParamDict, log: bool = True):
         # get database paths
         databases = manage_databases.list_databases(params)
         # load pseudo constants
-        pconst = constants.pload()
+        pconst = load_functions.load_pconfig()
         # create index database
         manage_databases.create_log_database(params, pconst, databases)
         # get log database
@@ -667,7 +670,7 @@ def reset_assets(params: ParamDict, log: bool = True, reset_dbs: bool = True):
         drs_assets.update_local_assets(params)
 
     # load pseudo constants
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     # TODO: deal with getting online
     asset_path1 = params['DRS_DATA_ASSETS']
     reset_path1 = os.path.join(params['DRS_RESET_ASSETS_PATH'],
@@ -719,8 +722,7 @@ def reset_other_folder(params: ParamDict, log: bool = True):
         # get original path
         rel_old_path = reset_dict[path_name][0]
         # construct path (assuming it is relative
-        old_path = drs_path.get_relative_folder(params, base.__PACKAGE__,
-                                                rel_old_path)
+        old_path = drs_path.get_relative_folder(base.__PACKAGE__, rel_old_path)
         # construct new path
         new_path = str(os.path.join(other_path, reset_dict[path_name][1]))
         # try to copy the file

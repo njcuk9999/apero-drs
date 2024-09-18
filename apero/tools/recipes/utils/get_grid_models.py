@@ -18,7 +18,7 @@ from astropy.io import fits
 from astropy.table import Table
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
 from apero.core.core import drs_log
 
 # =============================================================================
@@ -34,7 +34,7 @@ __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 # alias to parameter check class
-pcheck = constants.PCheck(wlog=WLOG)
+pcheck = param_functions.PCheck(wlog=WLOG)
 
 # MIN WAVELENGTH (slightly before detector)   [um]
 WAVE_MIN = 950

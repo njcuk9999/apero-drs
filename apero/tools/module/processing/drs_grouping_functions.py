@@ -16,7 +16,7 @@ from astropy.table import Table
 
 from apero.base import base
 from apero.core.core import drs_argument
-from apero.core.core import drs_log
+from apero.core.base.drs_base_classes import Printer
 
 # =============================================================================
 # Define variables
@@ -271,7 +271,7 @@ def get_non_file_args(non_file_args: List[str],
                 run_inst2.dictionary[argname] = value
             # print statement
             pmsg = '\t\tProcessing II run {0}'.format(run_count)
-            drs_log.Printer(None, None, pmsg)
+            Printer(None, None, pmsg)
             # add to run count
             run_count += 1
             # add new instance to runs

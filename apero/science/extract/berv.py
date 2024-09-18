@@ -16,7 +16,7 @@ from astropy import units as uu
 from astropy.coordinates import SkyCoord, Distance
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
 from apero.core import lang
 from apero.core import math as mp
 from apero.core.base import drs_exceptions
@@ -39,7 +39,7 @@ __release__ = base.__release__
 # Get Astropy Time and Time Delta
 Time, TimeDelta = base.AstropyTime, base.AstropyTimeDelta
 # get param dict
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 # get drs file
 DrsFitsFile = drs_file.DrsFitsFile
 # Get exceptions
@@ -49,7 +49,7 @@ WLOG = drs_log.wlog
 # Get the text types
 textentry = lang.textentry
 # alias pcheck
-pcheck = constants.PCheck(wlog=WLOG)
+pcheck = param_functions.PCheck(wlog=WLOG)
 
 
 # =============================================================================

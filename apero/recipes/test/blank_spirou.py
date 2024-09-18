@@ -12,7 +12,7 @@ Created on 2019-07-05 at 16:46
 from typing import Any, Dict, Tuple, Union
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
 from apero.core.core import drs_log
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
@@ -29,7 +29,7 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # get param dict
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
 # Get Recipe class

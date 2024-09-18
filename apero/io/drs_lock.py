@@ -12,7 +12,7 @@ Created on 2019-01-21 at 09:37
 
 
 Import rules:
-    only from core.core.drs_log, core.io, core.math, core.constants,
+    only from core.io, core.math, core.constants,
     apero.lang, apero.base
 
     do not import from core.io.drs_table
@@ -29,9 +29,11 @@ from typing import Any, Tuple, Union
 import numpy as np
 
 from apero.base import base
-from apero.core import constants
+from apero.core.base import drs_exceptions
+from apero.core.constants import param_functions
+from apero.core.constants import load_functions
 from apero.core import lang
-from apero.core.core import drs_log
+from apero.core.base import drs_misc
 
 # =============================================================================
 # Define variables
@@ -45,11 +47,12 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # get the parameter dictionary
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
+# DRS exceptions
+DrsCodedException = drs_exceptions.DrsCodedException
+DrsCodedWarning = drs_exceptions.DrsCodedWarning
 # Get function string
-display_func = drs_log.display_func
-# Get Logging function
-WLOG = drs_log.wlog
+display_func = drs_misc.display_func
 # Get the text types
 textentry = lang.textentry
 # define max wait
@@ -101,7 +104,8 @@ class Lock:
         # if we had an error and got to 10 tries then cause an error
         if error is not None and it == 10:
             eargs = [type(error), error, self.lockpath, func_name]
-            WLOG(params, 'error', textentry('00-503-00016', args=eargs))
+            raise DrsCodedException('00-503-00016', level='error',
+                                    targs=eargs)
         # ------------------------------------------------------------------
         self.maxwait = MAX_WAIT
         self.path = os.path.join(self.lockpath, self.lockname)
@@ -146,10 +150,7 @@ class Lock:
                 # noinspection PyBroadException
                 try:
                     os.mkdir(self.path)
-                    # log that lock has been activated
-                    wargs = [self.path]
-                    WLOG(self.params, 'debug',
-                         textentry('40-101-00001', args=wargs))
+
                     break
                 except Exception as _:
                     # whatever the problem sleep for a second
@@ -160,7 +161,8 @@ class Lock:
                     if (timer % 100 == 0) and (timer != 0):
                         # Warn that lock is waiting due to making the lock dir
                         wmsg = textentry('10-101-00001', args=[self.lockname])
-                        WLOG(self.params, 'warning', wmsg)
+                        DrsCodedWarning('10-101-00001', message=wmsg,
+                                        level='warning')
             # if path does exist just skip
             else:
                 break
@@ -208,7 +210,8 @@ class Lock:
                         wargs = [self.lockname, abspath]
                         # warn that lock is waiting due to making the lock file
                         wmsg = textentry('10-101-00002', args=wargs)
-                        WLOG(self.params, 'warning', wmsg)
+                        DrsCodedWarning('10-101-00002', message=wmsg,
+                                        level='warning')
             # if path does exist just skip
             else:
                 break
@@ -291,7 +294,9 @@ class Lock:
                             # log warning for error
                             eargs = [abspath, type(e), str(e)]
                             emsg = textentry('10-101-00007', args=eargs)
-                            WLOG(self.params, 'warning', emsg)
+                            DrsCodedWarning('10-101-00007', message=emsg,
+                                            level='warning')
+
                             break
                         else:
                             continue
@@ -328,10 +333,6 @@ class Lock:
         # _ = display_func('__clean_name', __NAME__, self.classname)
         # clean name
         name = self.__clean_name(name)
-        # log progress: lock file added to queue
-        filename = name + '.lock'
-        abspath = os.path.join(self.path, filename)
-        WLOG(self.params, 'debug', textentry('40-101-00002', args=[abspath]))
         # add unique name to queue
         self.__makelockfile(name)
         # put in just to see if we are appending too quickly
@@ -361,9 +362,6 @@ class Lock:
         # if the unique name is first in the list then we can unlock this file
         if filename == first:
             # log that lock file is unlocked
-            abspath = os.path.join(self.path, filename)
-            WLOG(self.params, 'debug',
-                 textentry('40-101-00003', args=[abspath]))
             return True, None
         # else we return False (and ask whether it is my turn later)
         else:
@@ -378,12 +376,6 @@ class Lock:
         :return: None - removes lock file for 'name' to 'name' item can be
                  unlocked
         """
-        # set function
-        # _ = display_func('dequeue', __NAME__, self.classname)
-        # log that lock file has been removed from the queue
-        filename = name + '.lock'
-        abspath = os.path.join(self.path, filename)
-        WLOG(self.params, 'debug', textentry('40-101-00004', args=[abspath]))
         # once we are finished with a lock we remove it from the queue
         self.__remove_file(name)
 
@@ -396,7 +388,6 @@ class Lock:
         # set function
         # _ = display_func('reset', __NAME__, self.classname)
         # log that lock is deactivated
-        WLOG(self.params, 'debug', textentry('40-101-00005', args=[self.path]))
         # get the raw list
         if os.path.exists(self.path):
             rawlist = np.sort(os.listdir(self.path))
@@ -417,7 +408,8 @@ class Lock:
                     # log warning for error
                     eargs = [abspath, type(e), str(e)]
                     emsg = textentry('10-101-00006', args=eargs)
-                    WLOG(self.params, 'warning', emsg)
+                    DrsCodedWarning('10-101-00006', message=emsg,
+                                    level='warning')
         # now remove directory (if possible)
         if os.path.exists(self.path):
             # do not remove lock path (used by other processes)
@@ -429,7 +421,8 @@ class Lock:
                     # log warning for error
                     eargs = [self.path, type(e), str(e)]
                     emsg = textentry('10-101-00005', args=eargs)
-                    WLOG(self.params, 'warning', emsg)
+                    DrsCodedWarning('10-101-00005', message=emsg,
+                                    level='warning')
 
 
 def synchronized(lock: Lock, name: str):
@@ -507,14 +500,16 @@ def synchronized(lock: Lock, name: str):
                     # log that we are waiting in a queue
                     wargs = [lock.path, name, timer]
                     wmsg = textentry('10-101-00003', args=wargs)
-                    WLOG(lock.params, 'warning', wmsg)
+                    DrsCodedWarning('10-101-00003', message=wmsg,
+                                    level='warning')
                 # find whether it is this name's turn
                 cond, error = lock.myturn(name)
                 if error is not None:
                     # log that we are waiting in a queue and error generated
                     wargs = [lock.path, name, error, timer]
                     wmsg = textentry('10-101-00004', args=wargs)
-                    WLOG(lock.params, 'warning', wmsg)
+                    DrsCodedWarning('10-101-00004', message=wmsg,
+                                    level='warning')
                 # increase timer
                 timer += 1
             # now try to run the function
@@ -625,17 +620,14 @@ def __remove_empty__(params: ParamDict, path: str, remove_head: bool = True,
     # if folder empty, delete it
     files = np.sort(os.listdir(path))
     if len(files) == 0 and remove_head:
-        if log:
-            # print msg: Lock is removing empty folder: {0}
-            WLOG(params, 'debug', textentry('90-008-00015', args=[path]))
         # try to remove or report warning
         try:
             os.rmdir(path)
         except Exception as e:
             eargs = [path, type(e), e, func_name]
             # print msg: Cannot remove dir {0}. Error {1}: {2}
-            WLOG(params, 'warning', textentry('10-001-00014', args=eargs),
-                 sublevel=2)
+            wmsg = textentry('10-001-00014', args=eargs)
+            DrsCodedWarning('10-001-00014', message=wmsg, level='warning')
 
 
 # =============================================================================
@@ -649,7 +641,7 @@ if __name__ == "__main__":
     from multiprocessing import Process
     import string
     # load parameters
-    _params = constants.load()
+    _params = load_functions.load_config()
 
     # define a function to print (this is the function to be called in a
     #    parallelised way)

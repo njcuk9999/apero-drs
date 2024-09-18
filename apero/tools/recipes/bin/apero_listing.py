@@ -10,7 +10,7 @@ Created on 2019-09-16 at 13:48
 @author: cook
 """
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
 from apero.core import lang
 from apero.core.core import drs_log
 from apero.core.base import drs_text
@@ -28,7 +28,7 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # get param dict
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 # get text entry instance
 textentry = lang.textentry
 # Get Logging function

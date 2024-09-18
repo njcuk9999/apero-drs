@@ -16,12 +16,15 @@ import pandas as pd
 from astropy import units as uu
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
+from apero.core.constants import load_functions
 from apero.core import lang
 from apero.core import math as mp
+from apero.core.base import drs_misc
 from apero.core.core import drs_database
 from apero.core.core import drs_log
 from apero.core.base import drs_text
+from apero.core.instruments.default import instrument as instrument_mod
 from apero.io import drs_fits
 
 # =============================================================================
@@ -39,14 +42,14 @@ Time = base.Time
 # Get Logging function
 WLOG = drs_log.wlog
 # Get function string
-display_func = drs_log.display_func
+display_func = drs_misc.display_func
 # Get the text types
 textentry = lang.textentry
 # Get database
 ObjectDatabase = drs_database.AstrometricDatabase
 # get param dict
-ParamDict = constants.ParamDict
-PseudoConst = constants.PseudoConstants
+ParamDict = param_functions.ParamDict
+Instrument = instrument_mod.Instrument
 
 # cache for google sheet
 GOOGLE_TABLES = dict()
@@ -62,7 +65,7 @@ NON_NULL_OBJ_COLS = ['OBJNAME', 'RA_DEG', 'DEC_DEG', 'PMRA', 'PMDE', 'EPOCH']
 # =============================================================================
 # Define object resolution functions
 # =============================================================================
-def resolve_target(params: ParamDict, pconst: PseudoConst,
+def resolve_target(params: ParamDict, pconst: Instrument,
                    objname: Union[str, None] = None,
                    database: Union[ObjectDatabase, None] = None,
                    header: Union[drs_fits.Header, None] = None
@@ -316,7 +319,7 @@ def get_obj_reject_list(params: ParamDict) -> np.ndarray:
     :return: np.array 1D, the list of reject object names
     """
     # get psuedo constants
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     # get parameters from params
     gsheet_url = params['OBJ_LIST_GOOGLE_SHEET_URL']
     reject_id = params['OBJ_LIST_GSHEET_REJECT_LIST_ID']

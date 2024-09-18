@@ -16,7 +16,8 @@ import numpy as np
 import pandas as pd
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
+from apero.core.constants import load_functions
 from apero.core.core import drs_database
 from apero.core.base import drs_exceptions
 from apero.core.base import drs_base_classes as base_class
@@ -36,15 +37,15 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # get display func
-display_func = drs_log.display_func
+display_func = drs_misc.display_func
 # get time object
 Time = base.Time
 # Get Logging function
 WLOG = drs_log.wlog
 # alias pcheck
-pcheck = constants.PCheck(wlog=WLOG)
+pcheck = param_functions.PCheck(wlog=WLOG)
 # get parameter dictionary
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 # get the binary dictionary
 BinaryDict = base_class.BinaryDict
 # get exceptions
@@ -702,7 +703,7 @@ class RecipeLog:
         description = []
         count = []
         # get log keys
-        ldb_cols = constants.pload().LOG_DB_COLUMNS()
+        ldb_cols = load_functions.load_pconfig().LOG_DB_COLUMNS()
         log_keys = list(ldb_cols.altnames)
         log_comments = list(ldb_cols.comments)
         # convert the flags
@@ -951,7 +952,7 @@ def display_flag(params: ParamDict):
     # print progress
     WLOG(params, '', 'Flag mode: {0}[{1}]'.format(recipe, flagnum))
     # load pseudo constants
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     # get the recipe module
     rmod = pconst.RECIPEMOD().get()
     # get binary flags for recipe

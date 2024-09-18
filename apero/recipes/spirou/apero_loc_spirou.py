@@ -10,7 +10,8 @@ Created on 2019-05-14 at 09:40
 @author: cook
 """
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
+from apero.core.constants import load_functions
 from apero.core import lang
 from apero.core.core import drs_database
 from apero.core.core import drs_file
@@ -34,7 +35,7 @@ WLOG = drs_log.wlog
 # Get the text types
 textentry = lang.textentry
 # alias pcheck
-pcheck = constants.PCheck(wlog=WLOG)
+pcheck = param_functions.PCheck(wlog=WLOG)
 
 
 # =============================================================================
@@ -149,7 +150,7 @@ def __main__(recipe, params):
         # Identify fiber type
         # ------------------------------------------------------------------
         # get pconst
-        pconst = constants.pload()
+        pconst = load_functions.load_pconfig()
         # identify fiber type based on data type
         fiber = pconst.FIBER_DPRTYPE(dprtype=props['DPRTYPE'])
         if fiber is None:

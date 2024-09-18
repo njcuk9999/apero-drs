@@ -19,12 +19,15 @@ from astropy.io import fits
 from astropy.table import Table
 
 from apero.base import base
-from apero.core import constants
 from apero.core import lang
+from apero.core.base import drs_misc
+from apero.core.base import drs_text
+from apero.core.constants import load_functions
+from apero.core.constants import param_functions
 from apero.core.core import drs_database
 from apero.core.core import drs_file
 from apero.core.core import drs_log
-from apero.core.base import drs_text
+from apero.core.instruments.default import instrument as instrument_mod
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_utils
 from apero.io import drs_table
@@ -43,11 +46,11 @@ __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 # get parameter dictionary
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 DrsRecipe = drs_recipe.DrsRecipe
-PseudoConstants = constants.PseudoConstants
+Instrument = instrument_mod.Instrument
 # get display func
-display_func = drs_log.display_func
+display_func = drs_misc.display_func
 # Get the text types
 textentry = lang.textentry
 # get tqdm (if required)
@@ -71,7 +74,7 @@ def update_database(params: ParamDict, recipe: DrsRecipe, dbkind: str):
     :return:
     """
     # load pconst
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
 
     # update calibration database
     if dbkind in ['calib', 'all']:
@@ -142,7 +145,7 @@ def reset_databases(params: ParamDict, dbkind):
     manage_databases.install_databases(params, dbkind=dbkind, verbose=True)
 
 
-def calib_tellu_update(params: ParamDict, pconst: PseudoConstants,
+def calib_tellu_update(params: ParamDict, pconst: Instrument,
                        db_type: str):
     """
     Update either the calibration or telluric database with files on disk
@@ -286,7 +289,7 @@ def index_update(params: ParamDict, recipe: DrsRecipe):
             findexdbm.update_header_fix(recipe=recipe, objdbm=astromdb)
 
 
-def log_update(params: ParamDict, pconst: PseudoConstants):
+def log_update(params: ParamDict, pconst: Instrument):
     """
     Update log database using files on disk in block directories flagged as
     "logging" block kinds
@@ -512,7 +515,7 @@ def remove_db_entries(params: ParamDict, db_type: str) -> bool:
 # =============================================================================
 # Define worker functions
 # =============================================================================
-def _log_update(pconst: PseudoConstants,
+def _log_update(pconst: Instrument,
                 ptable: Table) -> Tuple[List[Any], str, str]:
     """
     Get a log entry for individual file - may not be unique so must be filtered

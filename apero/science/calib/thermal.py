@@ -15,9 +15,11 @@ from typing import Dict, List, Optional, Tuple, Union
 import numpy as np
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
+from apero.core.constants import load_functions
 from apero.core import lang
 from apero.core import math as mp
+from apero.core.base import drs_misc
 from apero.core.core import drs_database
 from apero.core.core import drs_log, drs_file
 from apero.core.utils import drs_data
@@ -36,7 +38,7 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # get param dict
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 DrsRecipe = drs_recipe.DrsRecipe
 DrsFitsFile = drs_file.DrsFitsFile
 CalibrationDatabase = drs_database.CalibrationDatabase
@@ -45,9 +47,9 @@ WLOG = drs_log.wlog
 # Get the text types
 textentry = lang.textentry
 # alias pcheck
-pcheck = constants.PCheck(wlog=WLOG)
+pcheck = param_functions.PCheck(wlog=WLOG)
 # Get function string
-display_func = drs_log.display_func
+display_func = drs_misc.display_func
 
 
 # =============================================================================
@@ -157,7 +159,7 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
                              kwargs, func_name)
     # ----------------------------------------------------------------------
     # get pconstant from p
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     # ----------------------------------------------------------------------
     # get fiber dprtype
     fibertype = pconst.FIBER_DATA_TYPE(dprtype, fiber)

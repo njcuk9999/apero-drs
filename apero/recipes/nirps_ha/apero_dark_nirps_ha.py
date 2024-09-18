@@ -14,7 +14,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import numpy as np
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
 from apero.core import lang
 from apero.core.core import drs_database
 from apero.core.core import drs_file
@@ -39,7 +39,7 @@ WLOG = drs_log.wlog
 # Get Recipe class
 DrsRecipe = drs_recipe.DrsRecipe
 # Get parameter class
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 # Get the text types
 textentry = lang.textentry
 
@@ -171,13 +171,13 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                        xhigh=params['IMAGE_X_BLUE_HIGH'],
                        ylow=params['IMAGE_Y_BLUE_LOW'],
                        yhigh=params['IMAGE_Y_BLUE_HIGH'])
-        imageblue = drs_image.resize(params, image0, **bkwargs)
+        imageblue = drs_image.resize(image0, **bkwargs)
         # resize red image
         rkwargs = dict(xlow=params['IMAGE_X_RED_LOW'],
                        xhigh=params['IMAGE_X_RED_HIGH'],
                        ylow=params['IMAGE_Y_RED_LOW'],
                        yhigh=params['IMAGE_Y_RED_HIGH'])
-        imagered = drs_image.resize(params, image0, **rkwargs)
+        imagered = drs_image.resize(image0, **rkwargs)
         # ------------------------------------------------------------------
         # Dark Measurement
         # ------------------------------------------------------------------

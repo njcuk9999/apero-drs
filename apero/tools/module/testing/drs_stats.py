@@ -22,7 +22,7 @@ from astropy.table import Table
 from pandasql import sqldf
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
 from apero.core import math as mp
 from apero.core.base import drs_base_classes as base_class, drs_text, drs_misc
 from apero.core.core import drs_database
@@ -46,7 +46,7 @@ Time = base.Time
 tqdm = base.tqdm_module()
 # Get Logging function
 WLOG = drs_log.wlog
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 DrsRecipe = drs_recipe.DrsRecipe
 # define index columns to get
 FINDEX_COLS = ['FILENAME', 'OBS_DIR', 'BLOCK_KIND', 'KW_MID_OBS_TIME',

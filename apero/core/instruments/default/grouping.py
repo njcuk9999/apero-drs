@@ -29,9 +29,10 @@ import numpy as np
 from astropy.table import Table
 
 from apero.base import base
+from apero.core.base.drs_base_classes import Printer
 from apero.core.core import drs_argument
 from apero.core.base import drs_exceptions
-from apero.core.core import drs_log
+from apero.core.base import drs_misc
 from apero.tools.module.processing import drs_grouping_functions as drsgf
 
 # =============================================================================
@@ -45,7 +46,7 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # get display func
-display_func = drs_log.display_func
+display_func = drs_misc.display_func
 # get argument class
 DrsArgument = drs_argument.DrsArgument
 # define complex type argdict
@@ -106,7 +107,7 @@ def no_group(rargs: Dict[str, DrsArgument],
     run_instances.append(run_inst)
     # print statement
     pmsg = '\t\tProcessing I run {0}'.format(0)
-    drs_log.Printer(None, None, pmsg)
+    Printer(None, None, pmsg)
     # ----------------------------------------------------------------------
     # deal with non-file arguments
     # ----------------------------------------------------------------------
@@ -199,7 +200,7 @@ def group_individually(rargs: Dict[str, DrsArgument],
             run_inst.dictionary[first_arg] = [table0['OUT'][row]]
             # print statement
             pmsg = '\t\tProcessing I run {0}'.format(run_count)
-            drs_log.Printer(None, None, pmsg)
+            Printer(None, None, pmsg)
             # add to run count
             run_count += 1
             # add run_instance to list
@@ -408,7 +409,7 @@ def group_by_dirname(rargs: Dict[str, DrsArgument],
                 if valid:
                     # print statement
                     pmsg = '\t\tProcessing I run {0}'.format(run_count)
-                    drs_log.Printer(None, None, pmsg)
+                    Printer(None, None, pmsg)
                     # add to run count
                     run_count += 1
                     # add to run_instances

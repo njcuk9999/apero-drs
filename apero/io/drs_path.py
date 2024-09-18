@@ -27,12 +27,13 @@ import numpy as np
 from astropy import units as uu
 
 from apero.base import base
-from apero.core import constants
+from apero.base import drs_base
+from apero.core.base.drs_base_classes import Printer
+from apero.core.constants import param_functions
 from apero.core import lang
 from apero.core import math as mp
 from apero.core.base import drs_exceptions
 from apero.core.base import drs_misc
-from apero.core.core import drs_log
 
 # =============================================================================
 # Define variables
@@ -47,14 +48,13 @@ __release__ = base.__release__
 # get tqdm
 tqdm = base.tqdm_module()
 # get the parameter dictionary
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 # Get function string
-display_func = drs_log.display_func
+display_func = drs_misc.display_func
 # Get exceptions
 DrsCodedException = drs_exceptions.DrsCodedException
 # Get Logging function
-WLOG = drs_log.wlog
-TLOG = drs_log.Printer
+TLOG = Printer
 # Get the text types
 textentry = lang.textentry
 
@@ -65,13 +65,12 @@ textentry = lang.textentry
 # =============================================================================
 # Define functions
 # =============================================================================
-def get_relative_folder(params: ParamDict, package: str, folder: str) -> str:
+def get_relative_folder(package: str, folder: str) -> str:
     """
     Get the absolute path of folder defined at relative path
     folder from package (wrapper around drs_break.get_relative_folder to catch
     DrsCodedException)
 
-    :param params: ParamDict, the parameter dictionary of constants
     :param package: string, the python package name
     :param folder: string, the relative path of the config folder
 
@@ -84,8 +83,8 @@ def get_relative_folder(params: ParamDict, package: str, folder: str) -> str:
     try:
         data_folder = drs_misc.get_relative_folder(package, folder)
     except DrsCodedException as e:
-        WLOG(params, e.level, textentry(e.codeid, args=e.targs))
-        data_folder = None
+        raise DrsCodedException(e.codeid, level=e.level,
+                                message=textentry(e.codeid, args=e.targs))
     # return the absolute data_folder path
     return data_folder
 
@@ -111,14 +110,13 @@ def get_uncommon_path(path1: str, path2: str) -> str:
     return drs_misc.get_uncommon_path(path1, path2)
 
 
-def group_files_by_time(params: ParamDict, times: np.ndarray,
+def group_files_by_time(times: np.ndarray,
                         time_thres: Union[uu.Quantity, float],
                         time_unit: Union[uu.Unit, str] = 'hours') -> np.ndarray:
     """
     Take a np.array of times ('times') and sort them into groups based on
     being closer to each other than "time_thres'
 
-    :param params: ParamDict, parameter dictionary of constants
     :param times: np.array of Time objects (if time_thres is a astropy.Quantity)
                   else a list of floats (either in 'hours' or 'days' - changable
                   using 'time_unit'
@@ -143,17 +141,25 @@ def group_files_by_time(params: ParamDict, times: np.ndarray,
                 time_thres = (time_thres * time_unit).to(uu.day)
         except uu.UnitConversionError as e:
             eargs = [str(e), func_name]
-            WLOG(params, 'error', textentry('00-008-00008', args=eargs))
+            emsg = textentry('00-008-00008', args=eargs)
+            raise DrsCodedException('00-008-00008', level='error',
+                                    message=emsg, targs=eargs)
+
         except Exception as e:
             eargs = [type(e), str(e), func_name]
-            WLOG(params, 'error', textentry('00-008-00009', args=eargs))
+            emsg = textentry('00-008-00009', args=eargs)
+            raise DrsCodedException('00-008-00009', level='error',
+                                    message=emsg, targs=eargs)
+
     elif time_unit == 'hours':
         time_thres = time_thres / 24
     elif time_unit == 'days':
         pass
     else:
         eargs = [time_unit, func_name]
-        WLOG(params, 'error', textentry('00-008-00010', args=eargs))
+        emsg = textentry('00-008-00010', args=eargs)
+        raise DrsCodedException('00-008-00010', level='error',
+                                message=emsg, targs=eargs)
     # ID of matched multiplets of files
     matched_id = np.zeros_like(times, dtype=int)
     # loop until all files are matched with all other files taken within
@@ -201,11 +207,10 @@ def get_most_recent(filelist: List[str]) -> Union[float, None]:
     return most_recent
 
 
-def makedirs(params: ParamDict, path: str):
+def makedirs(path: str):
     """
     Make directory 'path' and all sub-directories
 
-    :param params: ParamDict, parameter dictionary of constants
     :param path: str, the directory + sub-directories to make (as one path)
 
     :return: None - just makes the 'path'
@@ -220,7 +225,9 @@ def makedirs(params: ParamDict, path: str):
         # catch all exceptions and pipe to drs error
         except Exception as e:
             eargs = [path, type(e), e, func_name]
-            WLOG(params, 'error', textentry('01-010-00002', args=eargs))
+            emsg = textentry('01-010-00002', args=eargs)
+            raise DrsCodedException('01-010-00002', level='error',
+                                    message=emsg, targs=eargs)
 
 
 def copytree(src: Union[str, Path], dst: Union[str, Path]):
@@ -256,11 +263,10 @@ def copytree(src: Union[str, Path], dst: Union[str, Path]):
             shutil.copy(str(infile), str(outfile))
 
 
-def copyfile(params: ParamDict, src: str, dst: str, log: bool = True):
+def copyfile(src: str, dst: str, log: bool = True):
     """
     Copy a single file (catching exceptions where possible)
 
-    :param params: ParamDict, parameter dictionary of constants
     :param src: str, the source file path
     :param dst: str, the output file path
     :param log: bool, if True logs that this file has been copied
@@ -274,17 +280,23 @@ def copyfile(params: ParamDict, src: str, dst: str, log: bool = True):
         # if logging then log
         if log:
             wargs = [src, dst]
-            WLOG(params, '', textentry('40-000-00011', args=wargs))
+            wmsg = textentry('40-000-00011', args=wargs)
+            drs_base.base_printer('40-000-00011', wmsg, level='',
+                                  args=wargs)
         # copy using shutil
         try:
             shutil.copy(src, dst)
         except Exception as e:
             eargs = [src, dst, type(e), e, func_name]
-            WLOG(params, '', textentry('00-004-00006', args=eargs))
+            wmsg = textentry('00-004-00006', args=eargs)
+            drs_base.base_printer('00-004-00006', wmsg, level='',
+                                  args=eargs)
     # else raise exception
     else:
         eargs = [src, dst, func_name]
-        WLOG(params, 'error', textentry('00-004-00005', args=eargs))
+        emsg = textentry('00-004-00005', args=eargs)
+        raise DrsCodedException('00-004-00005', level='error',
+                                message=emsg, targs=eargs)
 
 
 def copy_element(old_element: str, new_element: str):

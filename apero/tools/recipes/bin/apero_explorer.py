@@ -12,7 +12,7 @@ Created on 2019-07-26 at 09:39
 from typing import Any, Dict
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
 from apero.core.core import drs_log
 from apero.core.base import drs_text
 from apero.core.utils import drs_recipe
@@ -36,7 +36,7 @@ WLOG = drs_log.wlog
 # Get Recipe class
 DrsRecipe = drs_recipe.DrsRecipe
 # Get parameter class
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 # -----------------------------------------------------------------------------
 # define the program name
 PROGRAM_NAME = 'APERO File Explorer'

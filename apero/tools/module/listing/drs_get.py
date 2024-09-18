@@ -18,7 +18,8 @@ import numpy as np
 from astropy.time import Time
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
+from apero.core.constants import load_functions
 from apero.core import lang
 from apero.core.core import drs_database
 from apero.core.core import drs_log
@@ -37,7 +38,8 @@ __date__ = base.__date__
 __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
+
 DrsRecipe = drs_recipe.DrsRecipe
 # Get the text types
 textentry = lang.textentry
@@ -85,7 +87,7 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
     """
     # -------------------------------------------------------------------------
     # get pconst
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     # get whether to filter by passing qc
     filter_qc = not params['INPUTS']['failedqc']
     # -------------------------------------------------------------------------
@@ -383,7 +385,7 @@ def fiber_by_output(kw_fibers: Union[List[str], None],
     if kw_fibers is None:
         return None
     # load psuedo constants
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     filemod = pconst.FILEMOD().get()
     # get filesets
     filedefs = [filemod.raw_file, filemod.pp_file, filemod.red_file,

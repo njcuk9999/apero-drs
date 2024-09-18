@@ -24,10 +24,7 @@ Version 0.0.1
 """
 import os
 import sys
-from time import sleep
 from typing import Any, List, Optional, Tuple, Union
-
-import numpy as np
 
 from apero.base import base
 from apero.core import lang
@@ -36,6 +33,7 @@ from apero.core.base import drs_text
 from apero.core.base import drs_misc
 from apero.core.math import time
 from apero.core.constants import load_functions
+from apero.core.constants import param_functions
 
 # =============================================================================
 # Define variables
@@ -50,7 +48,7 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # Get the parameter dictionary
-ParamDict = Any
+ParamDict = param_functions.ParamDict
 # Get the Config error
 DrsCodedException = drs_exceptions.DrsCodedException
 DrsCodedWarning = drs_exceptions.DrsCodedWarning
@@ -619,60 +617,6 @@ class Logger:
                      sublevel=sublevel)
 
 
-class Printer:
-    """Print things to stdout on one line dynamically"""
-
-    def __init__(self, params: Union[ParamDict, None], level: Union[str, None],
-                 message: Union[list, np.ndarray, str]):
-        """
-        Dynamically print text to stdout, flushing the line so it appears
-        to come from only one line (does not have new lines)
-
-        :param params: ParamDict, the constants parameter dictionary
-                       (Not used but here to emulate Logger.__call__())
-        :param level: str,
-        :param message:
-        """
-        # set class name
-        self.class_name = 'Printer'
-        # set function name
-        _ = drs_misc.display_func('__init__', __NAME__, self.class_name)
-        # set params and level
-        self.params = params
-        self.level = level
-
-        if type(message) not in [list, np.ndarray]:
-            message = [message]
-            sleeptimer = 0
-        else:
-            sleeptimer = 1
-
-        for mess in message:
-            sys.stdout.write("\r\x1b[K" + mess.__str__())
-            sys.stdout.flush()
-            sleep(sleeptimer)
-
-    def __getstate__(self) -> dict:
-        """
-        For when we have to pickle the class
-        :return:
-        """
-        # set state to __dict__
-        state = dict(self.__dict__)
-        # return dictionary state
-        return state
-
-    def __setstate__(self, state: dict):
-        """
-        For when we have to unpickle the class
-
-        :param state: dictionary from pickle
-        :return:
-        """
-        # update dict with state
-        self.__dict__.update(state)
-
-
 # =============================================================================
 # Define our instance of wlog
 # =============================================================================
@@ -805,81 +749,6 @@ def debug_start(logobj: Logger, params: ParamDict,
     except Exception as _:
         if raise_exception:
             logobj.pconstant.EXIT(params)()
-
-
-def display_func(name: Union[str, None] = None,
-                 program: Union[str, None] = None,
-                 class_name: Union[str, None] = None) -> str:
-    """
-    Alias to display function (but always with wlog set from Logger()
-
-    :param name: str or None - if set is the name of the function
-                 (i.e. def myfunction   name = "myfunction")
-                 if unset, set to "Unknown"
-    :param program: str or None, the program or recipe the function is defined
-                    in, if unset not added to the output string
-    :param class_name: str or None, the class name, if unset not added
-                       (i.e. class myclass   class_name = "myclass"
-
-    :return: a properly constructed string representation of where the
-              function is.
-    """
-    # set function name (obviously can't use display func here)
-    _ = __NAME__ + 'display_func()'
-    # run the display function
-    return drs_misc.display_func(name, program, class_name)
-
-
-def warninglogger(params: ParamDict, warnlist: Any,
-                  funcname: Union[str, None] = None):
-    """
-    Warning logger - takes "w" - a list of caught warnings and pipes them on
-    to the log functions. If "funcname" is not None then t "funcname" is
-    printed with the line reference (intended to be used to identify the code/
-    function/module warning was generated in)
-
-    to catch warnings use the following:
-
-    >> import warnings
-    >> with warnings.catch_warnings(record=True) as warnlist:
-    >>     code_to_generate_warnings()
-    >> warninglogger(parmas, warnlist, 'some function name for logging')
-
-    :param params: ParamDict, the constants dictionary passed in call
-    :param warnlist: list of warnings, the list of warnings from
-                     warnings.catch_warnings
-    :param funcname: string or None, if string then also pipes "funcname" to the
-                     warning message (intended to be used to identify the code/
-                     function/module warning was generated in)
-    :return:
-    """
-    # get pconstant
-    pconstant = load_functions.load_pconfig()
-    log_warnings = pconstant.LOG_CAUGHT_WARNINGS()
-    # deal with warnlist as string
-    if isinstance(warnlist, str):
-        warnlist = [warnlist]
-    # deal with warnings
-    displayed_warnings = []
-    if log_warnings and (len(warnlist) > 0):
-        for warnitem in warnlist:
-
-            # if we have a function name then use it else just report the
-            #    line number (not recommended)
-            if funcname is None:
-                wargs = [warnitem.lineno, '', warnitem.message]
-            else:
-                wargs = [warnitem.lineno, '({0})'.format(funcname),
-                         warnitem.message]
-            # log message
-            key = '10-005-00001'
-            wmsg = textentry(key, args=wargs)
-            # if we have already display this warning don't again
-            if wmsg in displayed_warnings:
-                continue
-            else:
-                wlog(params, 'warning', wmsg, sublevel=1)
-                displayed_warnings.append(wmsg)
 
 
 def get_logfilepath(logobj: Logger, params: ParamDict,

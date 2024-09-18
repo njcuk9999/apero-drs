@@ -24,8 +24,11 @@ import numpy as np
 from astropy.table import Table
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
+from apero.core.constants import load_functions
+from apero.core.constants import constant_functions
 from apero.core import lang
+from apero.core.base.drs_base_classes import Printer
 from apero.core.core import drs_argument
 from apero.core.core import drs_database
 from apero.core.base import drs_exceptions
@@ -56,9 +59,9 @@ __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 # Get function string
-display_func = drs_log.display_func
+display_func = drs_misc.display_func
 # get the parameter dictionary
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 # get drs recipe
 DrsRecipe = drs_recipe.DrsRecipe
 DrsRecipeException = drs_exceptions.DrsRecipeException
@@ -68,7 +71,7 @@ DrsInputFile = drs_file.DrsInputFile
 # Get the text types
 textentry = lang.textentry
 # alias pcheck
-pcheck = constants.PCheck(wlog=WLOG)
+pcheck = param_functions.PCheck(wlog=WLOG)
 # get tqdm
 tqdm = base.tqdm_module()
 # get database
@@ -233,7 +236,7 @@ class Run:
         # get args
         self.args = self.runstring.split(' ')
         # get pconst
-        pconst = constants.pload(self.params['INSTRUMENT'])
+        pconst = load_functions.load_pconfig(self.params['INSTRUMENT'])
         # the first argument must be the recipe name
         self.recipename = self.args[0]
         # find the recipe
@@ -432,7 +435,7 @@ class Run:
         if self.pickle_recipe_name is None:
             return
         # get pconst
-        pconst = constants.pload(self.params['INSTRUMENT'])
+        pconst = load_functions.load_pconfig(self.params['INSTRUMENT'])
         # load the recipe mod
         rmod = pconst.RECIPEMOD()
         # set up the arguments to find the recipe
@@ -450,7 +453,7 @@ class Run:
 # =============================================================================
 def reload_recipe(params, recipename):
     # reload excluded attributes
-    pconst = constants.pload(params['INSTRUMENT'])
+    pconst = load_functions.load_pconfig(params['INSTRUMENT'])
     # load the recipe mod
     rmod = pconst.RECIPEMOD()
     # set up the arguments to find the recipe
@@ -1150,7 +1153,7 @@ def save_stats(params, outlist):
     columns = ['ID', 'RECIPE', 'OBS_DIR', 'CORE_NUM', 'CORE_TOT', 'RUNSTRING']
     values = [priorities, recipenames, obs_dirs, coresused, corestot,
               runlists]
-    out_fits_table = drs_table.make_table(params, columns, values)
+    out_fits_table = drs_table.make_table(columns, values)
     # write table
     try:
         drs_table.write_table(params, out_fits_table, out_fits_path)
@@ -1818,7 +1821,7 @@ def generate_run_from_sequence(params: ParamDict, sequence,
     func_name = __NAME__ + '.generate_run_from_sequence()'
     # -------------------------------------------------------------------------
     # get filemod and recipe mod
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     filemod = pconst.FILEMOD()
     recipemod = pconst.RECIPEMOD()
     # generate sequence
@@ -2057,7 +2060,7 @@ def generate_runs(params: ParamDict, recipe: DrsRecipe,
     # now we have the runargs we can convert to a runlist
     runlist = convert_to_command(recipe, runargs)
     # clear printer
-    drs_log.Printer(None, None, '')
+    Printer(None, None, '')
     # return the runlist
     return runlist
 
@@ -2876,7 +2879,7 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
         dataframe = indexdb.get_entries('*', condition=argcondition)
         absfilenames = np.array(dataframe['ABSPATH']).astype(str)
         # load pconst
-        pconst = constants.pload()
+        pconst = load_functions.load_pconfig()
         icols = pconst.FILEINDEX_DB_COLUMNS()
 
         # get index column data types
@@ -2914,7 +2917,7 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
                 # print statement
                 pargs = [drsfile.name, f_it + 1, len(absfilenames)]
                 pmsg = '\t\tProcessing {0} file {1}/{2}'.format(*pargs)
-                drs_log.Printer(None, None, pmsg)
+                Printer(None, None, pmsg)
                 # get infile instance (i.e. raw or pp file) and assign the
                 #   correct outfile (from filename)
                 out = drsfile.get_infile_outfilename(recipe.name,
@@ -3243,7 +3246,7 @@ def group_run_files(params: ParamDict, recipe: DrsRecipe,
             while cond:
                 # print statement
                 pmsg = '\t\tProcessing run {0}'.format(len(runs))
-                drs_log.Printer(None, None, pmsg)
+                Printer(None, None, pmsg)
                 # check for None
                 if rundict[arg0][drsfilekey] is None:
                     break
@@ -3388,7 +3391,7 @@ def check_minimum_number(params: ParamDict, recipe: DrsRecipe,
     # tell the user some files were skipped due to minimum requirements
     if len(new_runargs) != len(runargs):
         # clear printer
-        drs_log.Printer(None, None, '')
+        Printer(None, None, '')
         # print warning message
         # TODO: Add to language db
         wmsg = ('\t\tSkipped {0} runs due to minimum file requirements '
@@ -3401,7 +3404,7 @@ def check_minimum_number(params: ParamDict, recipe: DrsRecipe,
             WLOG(params, 'warning', '\t\t\t{0} = {1}'.format(*wargs))
     else:
         # clear printer
-        drs_log.Printer(None, None, '')
+        Printer(None, None, '')
         # print none skipped
         # TODO: Add to language db
         msg = '\t\tTRIGGER_RUN=True all files meet minimum file requirements'
@@ -3595,9 +3598,9 @@ def get_recipe_module(params: ParamDict, logmsg: bool = True, **kwargs):
         ipath = instrument_path
     # else we have a name and an instrument
     margs = [instrument, ['recipe_definitions.py'], ipath, core_path]
-    modules = constants.getmodnames(*margs, return_paths=False)
+    modules = param_functions.get_module_names(*margs, return_paths=False)
     # load module
-    mod = constants.import_module(func_name, modules[0], full=True)
+    mod = constant_functions.import_module(func_name, modules[0], full=True)
     # return module
     return mod
 
@@ -3660,7 +3663,7 @@ def _find_special_targets(params: ParamDict, pconst,
         # Ask the user for each missing target whether they wish to use it
         for missing_obj in missing_list:
             # ask user whether they wish to use this object
-            question = ('Do you wish to use object?')
+            question = 'Do you wish to use object?'
             question = question.format(special_name)
             # get user input
             answer = input(question.format(missing_obj))
@@ -3703,7 +3706,7 @@ def _get_filters(params: ParamDict, srecipe: DrsRecipe,
     # set up function name
     func_name = __NAME__ + '._get_filters()'
     # get pseudo constatns
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     # need to load object database
     objdbm = drs_database.AstrometricDatabase(params)
     objdbm.load_db()

@@ -19,9 +19,10 @@ from astropy.table import Table
 from scipy.optimize import curve_fit
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
 from apero.core import lang
 from apero.core import math as mp
+from apero.core.base import drs_misc
 from apero.core.core import drs_log, drs_file
 from apero.core.utils import drs_data
 from apero.core.utils import drs_recipe
@@ -39,17 +40,17 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # get param dict
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 DrsFitsFile = drs_file.DrsFitsFile
 DrsRecipe = drs_recipe.DrsRecipe
 # Get Logging function
 WLOG = drs_log.wlog
 # Get function string
-display_func = drs_log.display_func
+display_func = drs_misc.display_func
 # Get the text types
 textentry = lang.textentry
 # alias pcheck
-pcheck = constants.PCheck(wlog=WLOG)
+pcheck = param_functions.PCheck(wlog=WLOG)
 # Speed of light
 # noinspection PyUnresolvedReferences
 speed_of_light_ms = cc.c.to(uu.m / uu.s).value
@@ -135,7 +136,7 @@ def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
     values = [lsd_velocities, lsd_stokesvqu, lsd_stokesvqu_err, lsd_stokesi,
               lsd_stokesi_err, lsd_stokesi_model, lsd_null, lsd_null_err]
     # construct table
-    lsd_table = drs_table.make_table(params, columns=columns, values=values)
+    lsd_table = drs_table.make_table(columns=columns, values=values)
     # -------------------------------------------------------------------------
     # Write LSD file to disk
     # -------------------------------------------------------------------------

@@ -18,7 +18,8 @@ import numpy as np
 from astropy.table import Table
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
+from apero.core.constants import load_functions
 
 # =============================================================================
 # Define variables
@@ -31,7 +32,7 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # Get parameter dictionary class
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 # define known extensions
 KNOWN_EXTENSIONS = ['.pdf', '.tex', '.html']
 # define colours
@@ -505,7 +506,7 @@ def apply_colormask(lines: List[str], colormask: Union[list, np.ndarray],
 # Main code here
 if __name__ == "__main__":
     # get params
-    _params = constants.load()
+    _params = load_functions.load_config()
     # -------------------------------------------------------------------------
     # Create a test html file
     # -------------------------------------------------------------------------

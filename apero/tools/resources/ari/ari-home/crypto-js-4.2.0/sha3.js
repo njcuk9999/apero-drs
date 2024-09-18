@@ -102,7 +102,7 @@
 	        }),
 
 	        _doReset: function () {
-	            var state = this._state = []
+	            var state = this._state = [];
 	            for (var i = 0; i < 25; i++) {
 	                state[i] = new X64Word.init();
 	            }

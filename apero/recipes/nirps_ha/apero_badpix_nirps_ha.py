@@ -14,7 +14,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import numpy as np
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
 from apero.core import lang
 from apero.core import math as mp
 from apero.core.core import drs_database
@@ -41,7 +41,7 @@ WLOG = drs_log.wlog
 # Get Recipe class
 DrsRecipe = drs_recipe.DrsRecipe
 # Get parameter class
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 # Get the text types
 textentry = lang.textentry
 
@@ -194,9 +194,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         if params['INPUT_FLIP_IMAGE']:
             # flip flat
-            flat_image1 = drs_image.flip_image(params, flat_image)
+            flat_image1 = drs_image.flip_image(flat_image)
             # flip bad pixel map
-            bad_pixel_map1 = drs_image.flip_image(params, bad_pixel_map)
+            bad_pixel_map1 = drs_image.flip_image(bad_pixel_map)
         else:
             flat_image1, bad_pixel_map1 = flat_image, bad_pixel_map
 
@@ -210,9 +210,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                          ylow=params['IMAGE_Y_LOW'],
                          yhigh=params['IMAGE_Y_HIGH'])
             # resize flat
-            flat_image1 = drs_image.resize(params, flat_image1, **sargs)
+            flat_image1 = drs_image.resize(flat_image1, **sargs)
             # resize bad pixel map
-            bad_pixel_map1 = drs_image.resize(params, bad_pixel_map1, **sargs)
+            bad_pixel_map1 = drs_image.resize(bad_pixel_map1, **sargs)
         else:
             flat_image1 = np.array(flat_image)
             bad_pixel_map1 = np.array(bad_pixel_map)

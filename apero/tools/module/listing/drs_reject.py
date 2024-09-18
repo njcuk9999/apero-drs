@@ -17,7 +17,8 @@ import pandas as pd
 from astropy.table import Table
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
+from apero.core.constants import load_functions
 from apero.core import lang
 from apero.core.core import drs_database
 from apero.core.core import drs_log
@@ -41,13 +42,13 @@ Time = base.Time
 # get text entry instance
 textentry = lang.textentry
 # get the parmeter dictionary instance
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 # get the DrsRecipe instance
 DrsRecipe = drs_recipe.DrsRecipe
 # Get Logging function
 WLOG = drs_log.wlog
 # Get function string
-display_func = drs_log.display_func
+display_func = drs_misc.display_func
 # get tqdm instance
 TQDM = base.tqdm_module()
 
@@ -115,7 +116,7 @@ def add_file_reject(params: ParamDict, recipe: DrsRecipe, raw_identifier: str):
     else:
         identifiers = [raw_identifier]
     # get pconst
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     # ----------------------------------------------------------------------
     # loop around identifiers
     # ----------------------------------------------------------------------
@@ -348,7 +349,7 @@ def update_from_obsdir(params: ParamDict, recipe: DrsRecipe, obsdir: str) -> str
     objdbm.load_db()
     # ----------------------------------------------------------------------
     # get the pseudo constants
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     # ----------------------------------------------------------------------
     # get the files in the raw obs dir
     files = glob.glob(os.path.join(rawpath, '*.fits'))

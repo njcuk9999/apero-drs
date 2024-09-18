@@ -39,7 +39,11 @@ from astropy.table import Table, vstack
 from scipy.stats import pearsonr
 
 from apero.base import base
-from apero.core import constants
+from apero.base import drs_base
+from apero.core.constants import param_functions
+from apero.core.constants import constant_functions
+from apero.core.constants import load_functions
+from apero.core.instruments.default import instrument as instrument_mod
 from apero.core import lang
 from apero.core import math as mp
 from apero.core.constants import path_definitions as pathdef
@@ -47,7 +51,6 @@ from apero.core.base import drs_exceptions
 from apero.core.base import drs_base_classes as base_class
 from apero.core.base import drs_text
 from apero.core.base import drs_misc
-from apero.core.core import drs_log
 from apero.core.core import drs_out_file as out
 from apero.io import drs_fits
 from apero.io import drs_path
@@ -64,15 +67,13 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # get display func
-display_func = drs_log.display_func
+display_func = drs_misc.display_func
 # get time object
 Time = base.Time
-# Get Logging function
-WLOG = drs_log.wlog
 # alias pcheck
-pcheck = constants.PCheck(wlog=WLOG)
+pcheck = param_functions.PCheck()
 # get parameter dictionary
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 # get header classes from io.drs_fits
 Header = drs_fits.Header
 FitsHeader = drs_fits.fits.Header
@@ -84,13 +85,13 @@ INSTRUMENT_PATH = base.CONST_PATH
 CORE_PATH = base.CORE_PATH
 PDB_RC_FILE = base.PDB_RC_FILE
 # get Keyword instance
-Keyword = constants.constant_functions.Keyword
+Keyword = constant_functions.Keyword
 # get exceptions
 DrsCodedException = drs_exceptions.DrsCodedException
 # get header comment card from drs_fits
 HCC = drs_fits.HeaderCommentCards
 # get default psuedo constants class
-PseudoConstants = constants.PseudoConstants
+Instrument = instrument_mod.Instrument
 # get numpy masked constant
 MaskedConstant = np.ma.core.MaskedConstant
 # Get pandas like database class
@@ -116,6 +117,7 @@ printable = set(string.printable)
 # =============================================================================
 class DrsPath:
     blocks: List[BlockPath] = None
+    classname: str = 'DrsPath'
 
     def __init__(self, params: ParamDict,
                  abspath: Union[Path, str, None] = None,
@@ -301,6 +303,8 @@ class DrsPath:
         Update values (if one changes others may change)
         :return:
         """
+        # set function name
+        func_name = drs_misc.display_func('update', __NAME__, self.classname)
         # deal with updating parameters
         if obs_dir is not None:
             self.obs_dir = obs_dir
@@ -323,8 +327,9 @@ class DrsPath:
         # else we have a problem
         else:
             # log error: DrsPath requires at least abspath/block_kind/block_name
-            WLOG(self.params, 'error', textentry('00-004-00007'))
-            return
+            emsg = textentry('00-004-00007')
+            raise DrsCodedException('00-004-00007', message=emsg, level='error',
+                                    func_name=func_name)
         # now we have block kind we can set other properties
         for block in self.blocks:
             if self.block_kind.lower() == block.name.lower():
@@ -356,12 +361,16 @@ class DrsPath:
         Get the path instance for the absolute path
         :return:
         """
+        # set function name
+        func_name = drs_misc.display_func('to_path', __NAME__, self.classname)
+        # deal with abspath not set
         if self.abspath is not None:
             return Path(self.abspath)
         else:
             # Log error: DrsPath does not have absolute path set
-            WLOG(self.params, 'error', textentry('00-004-00008'))
-            return Path('')
+            emsg = textentry('00-004-00008')
+            raise DrsCodedException('00-004-00008', message=emsg, level='error',
+                                    func_name=func_name)
 
     def _clean_obs_dir(self):
         """
@@ -416,6 +425,9 @@ class DrsPath:
 
         :return:
         """
+        # set function name
+        func_name = drs_misc.display_func('_from_abspath', __NAME__,
+                                            self.classname)
         # deal with abspath not set
         if self.abspath is None:
             return
@@ -465,7 +477,9 @@ class DrsPath:
             # add block error
             eargs += [self._blocks_error()]
             # log error
-            WLOG(self.params, 'error', textentry('00-004-00009', args=eargs))
+            emsg = textentry('00-004-00009', args=eargs)
+            raise DrsCodedException('00-004-00009', message=emsg, level='error',
+                                    func_name=func_name)
 
     def _blocks_error(self) -> str:
         """
@@ -484,6 +498,9 @@ class DrsPath:
         Set abspath and block_kind from block_path
         :return:
         """
+        # set function name
+        func_name = drs_misc.display_func('_from_block_path', __NAME__,
+                                            self.classname)
         # deal with abspath not set
         if self.block_path is None:
             return
@@ -523,7 +540,9 @@ class DrsPath:
             # add block error
             eargs += [self._blocks_error()]
             # log error
-            WLOG(self.params, 'error', textentry('00-004-00010', args=eargs))
+            emsg = textentry('00-004-00010', args=eargs)
+            raise DrsCodedException('00-004-00010', message=emsg, level='error',
+                                    func_name=func_name)
 
     def _set_block_path_from_block_kind(self) -> bool:
         """
@@ -556,6 +575,9 @@ class DrsPath:
         Set abspath and block_path from block_kind
         :return:
         """
+        # set function name
+        func_name = drs_misc.display_func('_from_block_kind', __NAME__,
+                                            self.classname)
         # set block path from block kind
         found = self._set_block_path_from_block_kind()
         # now we want to set absolute path
@@ -583,7 +605,9 @@ class DrsPath:
             # add block error
             eargs += [self._blocks_error()]
             # log error
-            WLOG(self.params, 'error', textentry('00-004-00011', args=eargs))
+            emsg = textentry('00-004-00011', args=eargs)
+            raise DrsCodedException('00-004-00011', message=emsg, level='error',
+                                    func_name=func_name)
 
     def get_block(self):
         """
@@ -841,7 +865,7 @@ class DrsInputFile:
         return 'DrsInputFile[{0}]'.format(self.name)
 
     def summary(self, params: ParamDict,
-                pconst: Optional[PseudoConstants]) -> Dict[str, str]:
+                pconst: Optional[Instrument]) -> Dict[str, str]:
         """
         Create a dictionary sumamry representation of the file definition
 
@@ -852,7 +876,7 @@ class DrsInputFile:
         """
         # deal with no pconst given
         if pconst is None:
-            pconst = constants.pload()
+            pconst = load_functions.load_pconfig()
         # ---------------------------------------------------------------------
         # get header columns
         header_columns = list(pconst.FILEDEF_HEADER_KEYS())
@@ -1196,7 +1220,7 @@ class DrsInputFile:
         # set function name
         # _ = display_func('__message__', __NAME__, self.class_name)
         # print and log via wlogger
-        WLOG(self.params, '', messages)
+        drs_base.base_printer('None', message=messages, level='')
 
     def __log__(self, messages: Union[Text, str], kind: str):
         """
@@ -1213,7 +1237,7 @@ class DrsInputFile:
         # append initial error message to messages
         messages = message0 + messages
         # print and log via wlogger
-        WLOG(self.params, kind, messages)
+        drs_base.base_printer('None', message=messages, level=kind)
 
     def addset(self, drsfile: Any):
         """
@@ -1712,15 +1736,17 @@ class DrsInputFile:
             except DrsCodedException as e:
                 level = e.get('level', 'error')
                 eargs = e.get('targs', None)
-                WLOG(params, level, textentry(e.codeid, args=eargs))
-                abspath = None
-
+                emsg = textentry(e.codeid, args=eargs)
+                raise DrsCodedException(e.codeid, level=level, targs=eargs,
+                                        message=emsg, func_name=func_name)
             self.filename = abspath
             self.basename = os.path.basename(abspath)
         # else raise an error
         else:
             eargs = [self.__repr__(), func_name]
-            WLOG(params, 'error', textentry('00-008-00004', args=eargs))
+            emsg = textentry('00-008-00004', args=eargs)
+            raise DrsCodedException('00-008-00004', level='error', targs=eargs,
+                                    message=emsg, func_name=func_name)
         # check that we are allowed to use infile (if set)
         if infile is not None and check:
             if self.intype is not None:
@@ -1730,7 +1756,10 @@ class DrsInputFile:
                 # see if infile is in reqfiles
                 if infile.name not in reqfiles:
                     eargs = [infile.name, reqstr, self.filename, func_name]
-                    WLOG(params, 'error', textentry('00-008-00017', args=eargs))
+                    emsg = textentry('00-008-00017', args=eargs)
+                    raise DrsCodedException('00-008-00017', level='error',
+                                            targs=eargs, message=emsg,
+                                            func_name=func_name)
 
     def generate_reqfiles(self) -> List[str]:
         """
@@ -1865,7 +1894,7 @@ class DrsInputFile:
                                  self.class_name)
         # check that params is set
         self.check_params(func_name)
-        pconst = constants.pload()
+        pconst = load_functions.load_pconfig()
         # get required keys for index database
         iheader_cols = pconst.FILEINDEX_HEADER_COLS()
         hkeys = list(iheader_cols.names)
@@ -2698,8 +2727,6 @@ class DrsFitsFile(DrsInputFile):
         # if valid return True and no error
         if cond:
             dargs = [argname, os.path.basename(filename)]
-            WLOG(params, 'debug', textentry('90-001-00009', args=dargs),
-                 wrap=False)
             return True, msg
         # if False generate error and return it
         else:
@@ -2741,7 +2768,7 @@ class DrsFitsFile(DrsInputFile):
         self.check_params(func_name)
         # get parameters
         params = self.params
-        pconst = constants.pload()
+        pconst = load_functions.load_pconfig()
         # get the list of allowed required header keys
         allowed_keys = pconst.FILEDEF_HEADER_KEYS()
         # get the required header keys
@@ -2757,7 +2784,10 @@ class DrsFitsFile(DrsInputFile):
             if drskey not in allowed_keys:
                 eargs = [self.name, drskey, 'FILEDEF_HEADER_KEYS()',
                          ','.join(allowed_keys), func_name]
-                WLOG(params, 'error', textentry('00-006-00022', args=eargs))
+                emsg = textentry('00-006-00022', args=eargs)
+                raise DrsCodedException('00-006-00022', level='error',
+                                        message=emsg, targs=eargs)
+
             # check whether header key is in param dict (i.e. from a
             #    keywordstore) or whether we have to use the key as is
             if drskey in params:
@@ -2769,17 +2799,16 @@ class DrsFitsFile(DrsInputFile):
             # deal with empty key
             if (key is None) or key == '':
                 eargs = [key, drskey, source]
-                WLOG(params, 'error', textentry('00-006-00011', args=eargs))
+                emsg = textentry('00-006-00011', args=eargs)
+                raise DrsCodedException('00-006-00011', level='error',
+                                        message=emsg, targs=eargs)
             # check if key is in header
             if key not in header:
                 eargs = [argname, key]
                 emsg = textentry('09-001-00007', args=eargs)
-                WLOG(params, 'debug', emsg)
                 return False, emsg
             else:
                 dargs = [argname, key, basename]
-                WLOG(params, 'debug', textentry('90-001-00010', args=dargs),
-                     wrap=False)
         # if we have got to this point return True (success) and no error
         #   messages
         return True, None
@@ -2849,22 +2878,18 @@ class DrsFitsFile(DrsInputFile):
                 # get error arguments
                 eargs = [key, filename, func_name]
                 # log error: Required header key "{0}" not found'
-                WLOG(params, 'error', textentry('00-001-00058', args=eargs))
+                emsg = textentry('00-001-00058', args=eargs)
+                raise DrsCodedException('00-001-00058', level='error',
+                                        message=emsg, targs=eargs)
             # get value and required value
             value = str(header[key]).strip()
             rvalue = str(rkeys[drskey]).strip()
             # check if key is valid
             if rvalue != value:
                 dargs = [argname, key, rvalue]
-                if log:
-                    WLOG(params, 'debug', textentry('90-001-00011', args=dargs),
-                         wrap=False)
                 found = False
             else:
                 dargs = [argname, key, rvalue]
-                if log:
-                    WLOG(params, 'debug', textentry('90-001-00012', args=dargs),
-                         wrap=False)
             # store info
             errors[key] = (found, argname, rvalue, value)
         # return found (bool) and errors
@@ -3855,7 +3880,7 @@ class DrsFitsFile(DrsInputFile):
         # check that params is set
         self.check_params(func_name)
         params = self.params
-        pconst = constants.pload()
+        pconst = load_functions.load_pconfig()
         # get required keys for index database
         iheader_cols = pconst.FILEINDEX_HEADER_COLS()
         hkeys = list(iheader_cols.names)
@@ -4117,7 +4142,7 @@ class DrsFitsFile(DrsInputFile):
         # make sure checksum is capitalized
         checksum = checksum.upper()
         # add a possible suffix from the filename
-        pconst = constants.pload()
+        pconst = load_functions.load_pconfig()
         suffix = pconst.COMBINE_FILE_SUFFIX(basenames, self.suffix)
         # add the checksum + the suffix + the file extension
         basename = checksum + suffix + self.inext
@@ -4531,7 +4556,7 @@ class DrsFitsFile(DrsInputFile):
         self.check_params(func_name)
         params = self.params
         # generate instances from params
-        keyword_inst = constants.constant_functions.Keyword
+        keyword_inst = constant_functions.Keyword
         keyworddict = params.get_instanceof(keyword_inst, nameattr='key')
 
         # filter function
@@ -6152,7 +6177,7 @@ class DrsOutFileExtension:
         # set function name
         func_name = display_func('make_table', __NAME__, self.class_name)
         # get allowed header keys
-        pconst = constants.pload()
+        pconst = load_functions.load_pconfig()
         iheader_cols = pconst.FILEINDEX_HEADER_COLS()
         rkeys = list(iheader_cols.names)
         # define table column parameters
@@ -6298,7 +6323,7 @@ class DrsOutFileExtension:
                 self.table_clear_files.append(filename)
         # ---------------------------------------------------------------------
         # make out table
-        outtable = drs_table.make_table(params, use_cols, values,
+        outtable = drs_table.make_table(use_cols, values,
                                         units=use_units)
         # ---------------------------------------------------------------------
         # load into data
@@ -6367,7 +6392,7 @@ class DrsOutFile(DrsInputFile):
         self.clear_files = []
 
     def summary(self, params: ParamDict,
-                pconst: Optional[PseudoConstants]) -> Dict[str, str]:
+                pconst: Optional[Instrument]) -> Dict[str, str]:
         """
         Custom summary for out files
 
@@ -6704,7 +6729,7 @@ class DrsOutFile(DrsInputFile):
         # set function name
         func_name = display_func('process_links', __NAME__, self.class_name)
         # get allowed header keys
-        pconst = constants.pload()
+        pconst = load_functions.load_pconfig()
         iheader_cols = pconst.FILEINDEX_HEADER_COLS()
         rkeys = list(iheader_cols.names)
         # must have primary filename set
@@ -7425,7 +7450,7 @@ class DrsOutFile(DrsInputFile):
         # check that params is set
         self.check_params(func_name)
         params = self.params
-        pconst = constants.pload()
+        pconst = load_functions.load_pconfig()
         # get required keys for index database
         iheader_cols = pconst.FILEINDEX_HEADER_COLS()
         hkeys = list(iheader_cols.names)
@@ -7762,9 +7787,9 @@ def get_file_definition(params: ParamDict, name: str,
             name = name[:-(len(suffix))]
     # else we have a name and an instrument
     margs = [instrument, ['file_definitions.py'], ipath, CORE_PATH]
-    modules = constants.getmodnames(*margs, return_paths=False)
+    modules = param_functions.get_module_names(*margs, return_paths=False)
     # load module
-    mod = constants.import_module(func_name, modules[0], full=True)
+    mod = constant_functions.import_module(func_name, modules[0], full=True)
     # get a list of all recipes from modules
     block = DrsPath(params, block_kind=block_kind)
     # get the file set for this block kind
@@ -8027,8 +8052,6 @@ def combine_headers(params: ParamDict, headers: List[Header],
                  combine_methods)
     :return:
     """
-    # get psuedo constants
-    pconst = constants.pload()
     # -------------------------------------------------------------------------
     # step 1. find header keys that need combining
     # -------------------------------------------------------------------------
@@ -8279,7 +8302,7 @@ def fix_header(params: ParamDict, recipe: Any,
         hdict = Header()
         filename = None
     # load pseudo constants
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     # use pseudo constant to apply any header fixes required (specific to
     #   a specific instrument) and update the header
     header, hdict = pconst.HEADER_FIXES(params=params, recipe=recipe,
@@ -8336,7 +8359,7 @@ def id_drs_file(params: ParamDict,
     # set function
     func_name = display_func('id_drs_file', __NAME__)
     # get pconst
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     # ----------------------------------------------------------------------
     # deal with list vs no list for drs_file_sets
     if isinstance(drs_file_sets, list):
@@ -8547,7 +8570,7 @@ def locate_calibfiber_file(params: ParamDict, infile: DrsFitsFile):
     else:
         instance = infile
 
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
 
     sci_fibers, ref_fiber = pconst.FIBER_KINDS()
 

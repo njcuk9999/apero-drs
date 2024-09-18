@@ -15,7 +15,8 @@ from typing import Any, Dict, Tuple, Union
 import numpy as np
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
+from apero.core.constants import load_functions
 from apero.core import lang
 from apero.core.core import drs_log
 from apero.core.utils import drs_recipe
@@ -37,7 +38,7 @@ WLOG = drs_log.wlog
 # Get Recipe class
 DrsRecipe = drs_recipe.DrsRecipe
 # Get parameter class
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 # Get the text types
 textentry = lang.textentry
 # -----------------------------------------------------------------------------
@@ -62,7 +63,7 @@ demo_recipe.set_kwarg(name='--text', dtype=str, default='None',
 # add recipe to recipe definition
 RMOD.add(demo_recipe)
 # demo functions (Note: remove anywhere that is not a demo)
-demo = drs_dev.Demo(constants.load())
+demo = drs_dev.Demo(load_functions.load_config())
 
 
 # =============================================================================

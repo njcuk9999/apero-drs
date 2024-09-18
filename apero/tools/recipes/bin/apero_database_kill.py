@@ -10,7 +10,7 @@ Created on 2021-05-18
 @author: cook
 """
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import load_functions
 from apero.tools.module.database import manage_databases
 
 
@@ -31,7 +31,7 @@ __release__ = base.__release__
 # =============================================================================
 if __name__ == "__main__":
     # load params
-    params = constants.load()
+    params = load_functions.load_config()
     # kill all user processes in the database that have been running for
     manage_databases.kill(params, timeout=60)
 

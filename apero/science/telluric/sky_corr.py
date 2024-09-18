@@ -18,9 +18,11 @@ from scipy.ndimage import binary_erosion, binary_dilation
 from scipy.optimize import curve_fit
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
+from apero.core.constants import load_functions
 from apero.core import lang
 from apero.core import math as mp
+from apero.core.base import drs_misc
 from apero.core.core import drs_database
 from apero.core.core import drs_file
 from apero.core.core import drs_log
@@ -43,20 +45,20 @@ __release__ = base.__release__
 # Get Astropy Time and Time Delta
 Time, TimeDelta = base.AstropyTime, base.AstropyTimeDelta
 # get param dict
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 DrsFitsFile = drs_file.DrsFitsFile
 DrsRecipe = drs_recipe.DrsRecipe
 # get databases
 CalibrationDatabase = drs_database.CalibrationDatabase
 TelluricDatabase = drs_database.TelluricDatabase
 # Get function string
-display_func = drs_log.display_func
+display_func = drs_misc.display_func
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
 textentry = lang.textentry
 # alias pcheck
-pcheck = constants.PCheck(wlog=WLOG)
+pcheck = param_functions.PCheck(wlog=WLOG)
 # Speed of light
 # noinspection PyUnresolvedReferences
 speed_of_light_ms = cc.c.to(uu.m / uu.s).value
@@ -750,7 +752,7 @@ def correct_sky_with_ref(params: ParamDict, recipe: DrsRecipe,
         telludbm.load_db()
     # -------------------------------------------------------------------------
     # load psuedo constants
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     # get the science and calib fiber names
     sci_fibers, calib_fiber = pconst.FIBER_KINDS()
     # find the reference (calibration) fiber file
@@ -913,7 +915,7 @@ def correct_sky_no_ref(params: ParamDict, recipe: DrsRecipe,
         telludbm.load_db()
     # -------------------------------------------------------------------------
     # load psuedo constants
-    pconst = constants.pload()
+    pconst = load_functions.load_pconfig()
     # get the science and calib fiber names
     sci_fibers, calib_fiber = pconst.FIBER_KINDS()
     # -------------------------------------------------------------------------

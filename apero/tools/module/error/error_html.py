@@ -19,7 +19,7 @@ from astropy.table import Table
 from tqdm import tqdm
 
 from apero.base import base
-from apero.core import constants
+from apero.core.constants import param_functions
 
 # =============================================================================
 # Define variables
@@ -32,7 +32,7 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # get the parameter dictionary
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 
 
 # =============================================================================
@@ -514,7 +514,6 @@ def table_to_outlist(table: Table,
                 outtypes.append(out_types[c_it])
 
     return outlist, outcols, outtypes
-
 
 
 # =============================================================================
