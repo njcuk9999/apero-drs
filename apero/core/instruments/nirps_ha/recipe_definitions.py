@@ -1170,7 +1170,7 @@ apero_mk_template.set_arg(name='objname', pos=0, dtype=str,
 apero_mk_template.set_kwarg(name='--filetype', dtype='options',
                             default_ref='MKTEMPLATE_FILETYPE',
                             helpstr=textentry('MKTEMP_FILETYPE'),
-                            options=['EXT_E2DS', 'EXT_E2DS_FF'])
+                            options=['EXT_E2DS', 'EXT_E2DS_FF', 'TELLU_OBJ'])
 apero_mk_template.set_kwarg(name='--fiber', dtype='options',
                             default_ref='MKTEMPLATE_FIBER_TYPE',
                             helpstr=textentry('MKTEMP_FIBER'),
@@ -1611,7 +1611,8 @@ pp_seq_opt.add(apero_pp_ref, recipe_kind='pre-reference')
 pp_seq_opt.add(apero_preprocess, name='PP_CAL', recipe_kind='pre-cal',
                filters=dict(KW_RAW_DPRCATG='CALIB'))
 pp_seq_opt.add(apero_preprocess, name='PP_SCI', recipe_kind='pre-sci',
-               filters=dict(KW_OBJNAME='SCIENCE_TARGETS'))
+               filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
+                            KW_DPRTYPE=files.science_dprtypes))
 pp_seq_opt.add(apero_preprocess, name='PP_TEL', recipe_kind='pre-tel',
                filters=dict(KW_OBJNAME='TELLURIC_TARGETS'))
 pp_seq_opt.add(apero_preprocess, name='PP_HC1HC1', files=[files.raw_hc1_hc1],

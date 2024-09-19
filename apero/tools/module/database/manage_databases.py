@@ -686,6 +686,10 @@ def get_object_database(params: ParamDict, log: bool = True) -> Table:
         if len(_table) != 0:
             # make sure we have the object name column
             if gl_objcol in _table.colnames:
+                # we can't keep duplicates in the _table drop them and keep most
+                # recent (lowest in list)
+                _table = _drop_duplicates(_table, gl_objcol)
+                # create a mask of valies not in the main table
                 pmask = ~np.in1d(_table[gl_objcol], maintable[gl_objcol])
                 # add new columns to main table
                 maintable = vstack([maintable, _table[pmask]])
@@ -1003,6 +1007,23 @@ def _force_column_dtypes(table: Table, coltype: Dict[str, type]) -> Table:
             table[col] = np.array(table[col]).astype(coltype[col])
     # return the new table
     return table
+
+
+def _drop_duplicates(table: Table, column: str, keep: str = 'last'):
+    """
+    Drop duplicates in an astropy table
+
+    :param table: astropy table
+    :param column: column that is unique
+    :param keep: str, value to keep ('last', 'first')
+    :return:
+    """
+    # convert table to dataframe
+    df = table.to_pandas()
+    # remove duplicates
+    df = df.drop_duplicates(subset=column, keep=keep)
+    # convert back to astropy table
+    return Table.from_pandas(df)
 
 
 # =============================================================================
