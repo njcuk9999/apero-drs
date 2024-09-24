@@ -1025,7 +1025,7 @@ class DrsRecipe(object):
         if recipe.filemod is None:
             self.filemod = None
         else:
-            self.filemod = recipe.filemod.copy()
+            self.filemod = recipe.filemod
         # set filters
         self.filters = dict(recipe.filters)
         self.reference = bool(recipe.reference)

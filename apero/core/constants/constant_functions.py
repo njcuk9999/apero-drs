@@ -414,6 +414,13 @@ class ConstantsDict:
 
         :returns: None (constructor)
         """
+        # we should not override these
+        if name in self.storage:
+            emsg = ('Constant "{0}" already exists in storage. '
+                    'Please fix in defaults.').format(name)
+            eargs = [name]
+            raise DrsCodedException('None', level='error', targs=eargs,
+                                    message=emsg.format(*eargs))
         # create constant
         constants = Const(name, value, dtype, dtypei, options, maximum, minimum,
                           source, unit, default, datatype, dataformat, group,
@@ -470,8 +477,12 @@ class ConstantsDict:
                        related to or comes from another constant)
         :param output: bool if False does not put in parameter output table
         """
-        # update the hdrkey
-        self.storage[name] = Const(name, source=source)
+        if name not in self.storage:
+            emsg = ('Constant "{0}" not found in storage. '
+                    'Please add Cdict.add("{0}") to defaults.').format(name)
+            eargs = [name]
+            raise DrsCodedException('None', level='error', targs=eargs,
+                                    message=emsg.format(*eargs))
         # update value
         if value is not None:
             self.storage[name].value = value
@@ -928,12 +939,21 @@ class KeywordDict:
 
         :returns: None (constructor)
         """
+        # we should not override these
+        if name in self.storage:
+            emsg = ('Constant "{0}" already exists in storage. '
+                    'Please fix in defaults.').format(name)
+            eargs = [name]
+            raise DrsCodedException('None', level='error', targs=eargs,
+                                    message=emsg.format(*eargs))
+        # set the value to a tuple (done in validation for user defined)
+        true_value = [key, value, comment]
         # get global source if not set
         if source is None:
             source = self.source
         # create constant
-        constants = Keyword(name, key, value, dtype, comment, options, maximum,
-                            minimum, source, unit, default, datatype,
+        constants = Keyword(name, key, true_value, dtype, comment, options,
+                            maximum, minimum, source, unit, default, datatype,
                             dataformat, group, author, parent, combine_method,
                             description, post_exclude)
         # add to storage
@@ -988,14 +1008,25 @@ class KeywordDict:
 
         :returns: None
         """
+        if name not in self.storage:
+            emsg = ('Keyword "{0}" not found in storage. '
+                    'Please add KDict.add("{0}") to defaults.').format(name)
+            eargs = [name]
+            raise DrsCodedException('None', level='error', targs=eargs,
+                                    message=emsg.format(*eargs))
         # get global source if not set
         if source is None:
             source = self.source
-        # set up a Keyword instance
-        self.storage[name] = Keyword(name, key, source=source)
+        # update key
+        if key is not None:
+            self.storage[name].key = key
         # update value
-        if value is not None:
-            self.storage[name].value = value
+        if key is not None or comment is not None:
+            if comment is None:
+                comment = ''
+            # set the value to a tuple (done in validation for user defined)
+            true_value = [key, value, comment]
+            self.storage[name].value = true_value
         # update dtype
         if dtype is not None:
             self.storage[name].dtype = dtype

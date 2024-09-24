@@ -151,7 +151,7 @@ class Spirou(instrument_mod.Instrument):
                 if key in values:
                     continue
                 # update value, source, instance based on
-                values[key] = clist.storage[key].true_value
+                values[key] = clist.storage[key].value
                 sources[key] = clist.storage[key].source
                 instances[key] = clist.storage[key]
         # ---------------------------------------------------------------------
@@ -236,7 +236,7 @@ class Spirou(instrument_mod.Instrument):
         # ------------------------------------------------------------------
         # Deal with sun altitude
         # ------------------------------------------------------------------
-        header, hdict = instrument.get_sun_altitude(params, header, hdict)
+        header, hdict = instrument_mod.get_sun_altitude(params, header, hdict)
         # ------------------------------------------------------------------
         # Deal with drs mode
         # ------------------------------------------------------------------
@@ -273,7 +273,7 @@ class Spirou(instrument_mod.Instrument):
         # set function name
         # _ = display_func('DRS_OBJ_NAME', __NAME__, self.class_name)
         # clean object name
-        return instrument.clean_object(objname)
+        return instrument_mod.clean_object(objname)
 
     def GET_OBJNAME(self, params: ParamDict, header: Any, filename: str,
                     check_aliases, objdbm: Any = None) -> str:
@@ -442,9 +442,9 @@ class Spirou(instrument_mod.Instrument):
         header_cols = DatabaseColumns()
         header_cols.add(name='KW_DATE_OBS', datatype=sqlalchemy.String(80))
         header_cols.add(name='KW_UTC_OBS', datatype=sqlalchemy.String(80))
-        header_cols.add(name='KW_ACQTIME', datatype=instrument.LONG_FLOAT)
+        header_cols.add(name='KW_ACQTIME', datatype=instrument_mod.LONG_FLOAT)
         header_cols.add(name='KW_TARGET_TYPE', datatype=sqlalchemy.String(80))
-        header_cols.add(name='KW_MID_OBS_TIME', datatype=instrument.LONG_FLOAT,
+        header_cols.add(name='KW_MID_OBS_TIME', datatype=instrument_mod.LONG_FLOAT,
                         is_index=True)
         # cleaned object name
         header_cols.add(name='KW_OBJNAME', datatype=sqlalchemy.String(80),
@@ -454,7 +454,7 @@ class Spirou(instrument_mod.Instrument):
         # other raw object name
         header_cols.add(name='KW_OBJECTNAME2', datatype=sqlalchemy.String(80))
         header_cols.add(name='KW_OBSTYPE', datatype=sqlalchemy.String(80))
-        header_cols.add(name='KW_EXPTIME', datatype=instrument.LONG_FLOAT)
+        header_cols.add(name='KW_EXPTIME', datatype=instrument_mod.LONG_FLOAT)
         header_cols.add(name='KW_INSTRUMENT', datatype=sqlalchemy.String(80))
         header_cols.add(name='KW_CCAS', datatype=sqlalchemy.String(80))
         header_cols.add(name='KW_CREF', datatype=sqlalchemy.String(80))
@@ -824,7 +824,7 @@ class Spirou(instrument_mod.Instrument):
                        datatype=sqlalchemy.String(200))
         index_cols.add(name='BLOCK_KIND', is_index=True,
                        datatype=sqlalchemy.String(20))
-        index_cols.add(name='LAST_MODIFIED', datatype=instrument.LONG_FLOAT)
+        index_cols.add(name='LAST_MODIFIED', datatype=instrument_mod.LONG_FLOAT)
         index_cols.add(name='RECIPE', datatype=sqlalchemy.String(200))
         index_cols.add(name='RUNSTRING',
                        datatype=sqlalchemy.TEXT)
@@ -953,7 +953,7 @@ def constuct_objname(params: Union[ParamDict, None], header,
         # get clean / alias-safe version of object name
         objectname, _ = objdbm.find_objname(instrument, rawobjname)
     else:
-        objectname = instrument.clean_object(rawobjname)
+        objectname = instrument_mod.clean_object(rawobjname)
     # -------------------------------------------------------------------------
     return objectname
 

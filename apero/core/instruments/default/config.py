@@ -267,8 +267,8 @@ CDict.add('OBS_LONG', value=None, dtype=float, source=__NAME__,
 CDict.add('OBS_LAT', value=None, dtype=float, source=__NAME__,
           group=cgroup, description='Defines the latitude North (deg)')
 #  Defines the CFHT altitude (m)
-CDict.add('OBS_LAT', value=None, dtype=float, source=__NAME__,
-          group=cgroup)
+CDict.add('OBS_ALT', value=None, dtype=float, source=__NAME__,
+          group=cgroup, description='Defines the CFHT altitude (m)')
 
 # =============================================================================
 # DRS INTERNAL PATHS

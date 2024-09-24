@@ -169,7 +169,7 @@ def setup(name: str = 'None', instrument: str = 'None',
                 recipemod = rmod
     # -------------------------------------------------------------------------
     # set file module and recipe module
-    recipe.filemod = filemod.copy()
+    recipe.filemod = filemod
     recipe.recipemod = recipemod
     # clean params
     recipe.params = ParamDict()

@@ -219,7 +219,8 @@ def _save_config_params(params: ParamDict) -> ParamDict:
     params.set_source('DRS_CONFIG', func_name)
     # loop around and add to param
     for source in usources:
-        params['DRS_CONFIG'].append(source)
+        if source is not None:
+            params['DRS_CONFIG'].append(source)
     # return the parameters
     return params
 
@@ -315,7 +316,7 @@ def _load_from_yaml(files: List[str], instances: Dict[str, Any]
             if fvaluei is None:
                 continue
             # if this is not a new constant print warning
-            if fkeyi in instances:
+            if fkeyi in fvalues:
                 # log warning message
                 wargs = [fkeyi, filename, ','.join(set(fsources)), filename]
                 DrsCodedWarning('10-002-00002', 'warning', targs=wargs,
