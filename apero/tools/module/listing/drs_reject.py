@@ -80,7 +80,9 @@ def add_file_reject(params: ParamDict, recipe: DrsRecipe, raw_identifier: str):
     # load google sheet instance
     google_sheet = gspd.spread.Spread(sheet_id)
     # convert google sheet to pandas dataframe
-    dataframe = google_sheet.sheet_to_df(index=0, sheet=sheet_name)
+    dataframe = drs_misc.pull_from_googlesheet(params, google_sheet,
+                                               index=0, sheet=sheet_name,
+                                               logger=WLOG)
     # get the identifer column
     identifier_column = np.array(dataframe['IDENTIFIER']).astype(str)
     # get the raw directory
@@ -294,8 +296,15 @@ def add_file_reject(params: ParamDict, recipe: DrsRecipe, raw_identifier: str):
         WLOG(params, '', msg.format(identifier))
     # push dataframe back to server
     if not test:
-        google_sheet.df_to_sheet(dataframe, index=False, replace=True,
-                                 sheet=sheet_name)
+        # check local backup
+        drs_misc.check_local_googlesheet(params, dataframe,
+                                         sheet_name=sheet_name,
+                                         sheet_id=sheet_id, logger=WLOG,
+                                         check_len=False)
+        # push to google sheet
+        drs_misc.push_to_googlesheet(params, google_sheet, dataframe,
+                                     index=False, replace=True,
+                                     sheet=sheet_name, logger=WLOG)
     # print progress
     for identifier in file_table['IDENTIFIER']:
         msg = 'identifier={0} added to reject list google-sheet'
