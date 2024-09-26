@@ -1619,7 +1619,8 @@ def add_obj_to_sheet(params: ParamDict, astro_objs: List[AstroObj]):
     # load google sheet instance
     google_sheet = gspd.spread.Spread(sheet_id)
     # convert google sheet to pandas dataframe
-    dataframe = google_sheet.sheet_to_df(index=0, sheet=GSHEET_NAME)
+    dataframe = drs_misc.pull_from_googlesheet(params, google_sheet, index=0,
+                                               sheet=GSHEET_NAME, logger=WLOG)
     # add the astro_obj
     for astro_obj in astro_objs:
         # print progress
@@ -1648,8 +1649,13 @@ def add_obj_to_sheet(params: ParamDict, astro_objs: List[AstroObj]):
     # print progress
     msg = 'Pushing all objects to google-sheet'
     WLOG(params, '', msg)
+    # check local backup
+    drs_misc.check_local_googlesheet(params, dataframe, sheet_name=GSHEET_NAME,
+                                     sheet_id=sheet_id, logger=WLOG,
+                                     check_len=False)
     # push dataframe back to server
-    google_sheet.df_to_sheet(dataframe, index=False, replace=True)
+    drs_misc.push_to_googlesheet(params, google_sheet, dataframe, index=False,
+                                 replace=True, logger=WLOG)
     # print progress
     msg = 'All objects added to google-sheet'
     WLOG(params, '', msg)
@@ -1885,7 +1891,8 @@ def add_object_reject(params: ParamDict, raw_objname: str):
     # load google sheet instance
     google_sheet = gspd.spread.Spread(sheet_id)
     # convert google sheet to pandas dataframe
-    dataframe = google_sheet.sheet_to_df(index=0, sheet=sheet_name)
+    dataframe = drs_misc.pull_from_googlesheet(params, google_sheet, index=0,
+                                               sheet=sheet_name, logger=WLOG)
     # get the object column
     object_column = np.array(dataframe['OBJNAME']).astype(str)
     # get the alias column
@@ -1974,8 +1981,15 @@ def add_object_reject(params: ParamDict, raw_objname: str):
 
     # push dataframe back to server
     if not test:
-        google_sheet.df_to_sheet(dataframe, index=False, replace=True,
-                                 sheet=sheet_name)
+        # check local backup
+        drs_misc.check_local_googlesheet(params, dataframe,
+                                         sheet_name=sheet_name,
+                                         sheet_id=sheet_id, logger=WLOG,
+                                         check_len=False)
+        # push to google sheet
+        drs_misc.push_to_googlesheet(params, google_sheet, dataframe,
+                                     index=False, replace=True,
+                                     sheet=sheet_name, logger=WLOG)
     # print progress
     for objname in objnames:
         # clean input object name
