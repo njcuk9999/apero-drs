@@ -228,12 +228,12 @@ def calib_tellu_update(params: ParamDict, pconst: Instrument,
         wargs = [it + 1, len(db_files), os.path.basename(db_file)]
         WLOG(params, 'debug', textentry('40-505-00001', args=wargs))
         # ------------------------------------------------------------------
-        if not hasattr(filemod.get(), file_set_name):
-            eargs = [name, file_set_name, filemod.get(), func_name]
+        if not hasattr(filemod, file_set_name):
+            eargs = [name, file_set_name, filemod, func_name]
             WLOG(params, 'error', textentry('00-505-00001', args=eargs))
             file_set = None
         else:
-            file_set = getattr(filemod.get(), file_set_name)
+            file_set = getattr(filemod, file_set_name)
         # ------------------------------------------------------------------
         # skip default reference files
         if os.path.basename(db_file).startswith(REF_PREFIX):

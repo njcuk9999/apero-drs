@@ -88,6 +88,7 @@ PDB_RC_FILE = base.PDB_RC_FILE
 Keyword = constant_functions.Keyword
 # get exceptions
 DrsCodedException = drs_exceptions.DrsCodedException
+DrsCodedWarning = drs_exceptions.DrsCodedWarning
 # get header comment card from drs_fits
 HCC = drs_fits.HeaderCommentCards
 # get default psuedo constants class
@@ -99,15 +100,15 @@ PandasLikeDatabase = base_class.PandasLikeDatabaseDuckDB
 # -----------------------------------------------------------------------------
 # define complex typing
 QCParamList = Union[Tuple[List[str], List[Any], List[str], List[int]],
-                    List[Union[List[str], List[int], List[Any]]]]
+List[Union[List[str], List[int], List[Any]]]]
 # -----------------------------------------------------------------------------
 # path definitions
 BlockPath = pathdef.BlockPath
 # get out file class
 OutFileTypes = Union[out.OutFile, out.GeneralOutFile, out.NpyOutFile,
-                     out.DebugOutFile, out.BlankOutFile, out.CalibOutFile,
-                     out.RefCalibOutFile, out.SetOutFile, out.LBLOutFile,
-                     out.PostOutFile, None]
+out.DebugOutFile, out.BlankOutFile, out.CalibOutFile,
+out.RefCalibOutFile, out.SetOutFile, out.LBLOutFile,
+out.PostOutFile, None]
 # get printable characters
 printable = set(string.printable)
 
@@ -427,7 +428,7 @@ class DrsPath:
         """
         # set function name
         func_name = drs_misc.display_func('_from_abspath', __NAME__,
-                                            self.classname)
+                                          self.classname)
         # deal with abspath not set
         if self.abspath is None:
             return
@@ -500,7 +501,7 @@ class DrsPath:
         """
         # set function name
         func_name = drs_misc.display_func('_from_block_path', __NAME__,
-                                            self.classname)
+                                          self.classname)
         # deal with abspath not set
         if self.block_path is None:
             return
@@ -577,7 +578,7 @@ class DrsPath:
         """
         # set function name
         func_name = drs_misc.display_func('_from_block_kind', __NAME__,
-                                            self.classname)
+                                          self.classname)
         # set block path from block kind
         found = self._set_block_path_from_block_kind()
         # now we want to set absolute path
@@ -3052,8 +3053,9 @@ class DrsFitsFile(DrsInputFile):
             else:
                 # log error: Filename must be set or given
                 eargs = [func_name]
-                WLOG(self.params, 'error', textentry('00-004-00012', eargs))
-
+                emsg = textentry('00-004-00011', args=eargs)
+                raise DrsCodedException('00-004-00012', level='error',
+                                        message=emsg, targs=eargs)
         # deal with fiber being set
         if fiber is not None:
             fiberstr = '_{0}'.format(fiber)
@@ -3129,12 +3131,14 @@ class DrsFitsFile(DrsInputFile):
                 except DrsCodedException as e:
                     level = e.get('level', 'error')
                     eargs = e.get('targs', None)
-                    WLOG(params, level, textentry(e.codeid, args=eargs))
-                    outfilename = None
+                    emsg = textentry(e.codeid, args=eargs)
+                    raise DrsCodedException(e.codeid, level=level, message=emsg,
+                                            targs=eargs)
             else:
                 eargs = [self.name, recipename, func_name]
-                WLOG(params, 'error', textentry('09-503-00009', args=eargs))
-                outfilename = None
+                emsg = textentry('09-503-00009', args=eargs)
+                raise DrsCodedException('09-503-00009', level='error',
+                                        message=emsg, targs=eargs)
         # ------------------------------------------------------------------
         # assume file is valid
         valid = True
@@ -3149,6 +3153,7 @@ class DrsFitsFile(DrsInputFile):
             # debug log that extension was incorrect
             dargs = [self.filetype, filename]
             WLOG(params, 'debug', textentry('90-008-00004', args=dargs))
+
         # ------------------------------------------------------------------
         # check suffix (after extension removed)
         if (self.suffix is not None) and valid:
@@ -5414,12 +5419,14 @@ class DrsNpyFile(DrsInputFile):
                     if attempts == 9:
                         eargs = [type(e), e, self.filename, func_name]
                         emsg = textentry('00-008-00018', args=eargs)
-                        WLOG(params, 'error', emsg)
+                        raise DrsCodedException('00-008-00018', level='error',
+                                                targs=eargs, message=emsg)
                     # some time file is locked by other process
                     else:
                         # file locking trying again in 5s
                         wmsg = textentry('10-001-00011', args=[self.filename])
-                        WLOG(params, 'warning', wmsg, sublevel=1)
+                        DrsCodedWarning('10-001-00011', level='warning',
+                                        targs=[self.filename], message=wmsg)
                         # sleep 5 seconds and then try again
                         time.sleep(5)
                         # add to the attempts and loop again

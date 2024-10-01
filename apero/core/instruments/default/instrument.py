@@ -149,9 +149,9 @@ class Instrument:
         from apero.core.instruments.default import constants
         from apero.core.instruments.default import keywords
         # get constants dicts
-        config_dict = config.CDict()
-        constants_dict = constants.CDict()
-        keywords_dict = keywords.KDict()
+        config_dict = config.CDict
+        constants_dict = constants.CDict
+        keywords_dict = keywords.KDict
         # ---------------------------------------------------------------------
         # store keys, values, sources, instances
         values, sources, instances = dict(), dict(), dict()

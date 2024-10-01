@@ -1075,8 +1075,7 @@ def display_errors(params, outlist):
                     strerror = '{1}'.format(*error)
                 else:
                     strerror = str(error)
-                WLOG.printmessage(params, strerror, colour='red')
-                WLOG.logmessage(params, strerror)
+                WLOG(params, '', strerror, colour='red')
             WLOG(params, '', '', colour='red')
             # --------------------------------------------------------------
             # deal with list from out traceback
@@ -1090,8 +1089,7 @@ def display_errors(params, outlist):
                     strtback = '{1}'.format(*tback)
                 else:
                     strtback = str(tback)
-                WLOG.printmessage(params, strtback, colour='red')
-                WLOG.logmessage(params, strtback)
+                WLOG(params, '', strtback, colour='red')
             WLOG(params, '', '', colour='red')
             # --------------------------------------------------------------
             WLOG(params, '', params['DRS_HEADER'], colour='red')

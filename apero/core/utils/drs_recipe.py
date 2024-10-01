@@ -78,13 +78,13 @@ class DrsRecipe(object):
     Recipe class - giving properties to each recipe
     """
     # define typing for attributes
-    filemod: Union[base_class.ImportModule, None]
+    filemod: Any
     # set class name
     class_name = 'DrsRecipe'
 
     def __init__(self, instrument: str = 'None',
                  name: Union[str, None] = None,
-                 filemod: Union[base_class.ImportModule, None] = None,
+                 filemod: Union[Any] = None,
                  params: Union[ParamDict, None] = None):
         """
         Create a DRS Recipe object (one of these for each top 'user' level
@@ -118,7 +118,7 @@ class DrsRecipe(object):
             # get pconst
             self.filemod = load_functions.load_pconfig().FILEMOD()
         else:
-            self.filemod = filemod.copy()
+            self.filemod = filemod
         # get drs parameters (will be loaded later)
         if params is None:
             self.params = ParamDict()

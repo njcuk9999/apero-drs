@@ -13,6 +13,7 @@ import importlib
 import os
 import re
 import sys
+import time
 import traceback
 import warnings
 from collections import OrderedDict
@@ -117,6 +118,8 @@ def setup(name: str = 'None', instrument: str = 'None',
     """
     # set function name
     func_name = display_func('setup', __NAME__)
+    # start time
+    prog_start = time.time()
     # deal with no keywords
     if fkwargs is None:
         fkwargs = dict()
@@ -327,6 +330,9 @@ def setup(name: str = 'None', instrument: str = 'None',
         params['DATA_DICT'] = fkwargs['DATA_DICT']
     else:
         params['DATA_DICT'] = ParamDict()
+    # -------------------------------------------------------------------------
+    # add prog_start to params
+    params['PROG_START'] = prog_start
     # -------------------------------------------------------------------------
     # lock parameter dictionary (cannot add items after this point)
     params.lock()
@@ -588,6 +594,8 @@ def end_main(params: ParamDict, llmain: Union[Dict[str, Any], None],
     :return: the updated parameter dictionary
     :rtype: ParamDict
     """
+    # set function name
+    func_name = display_func('end_main', __NAME__)
     # -------------------------------------------------------------------------
     # get params/plotter from llmain if present
     #     (from __main__ function not main)
@@ -609,17 +617,28 @@ def end_main(params: ParamDict, llmain: Union[Dict[str, Any], None],
     # -------------------------------------------------------------------------
     # log end message
     if end:
+        # get the time now
+        end = time.time()
+        if 'PROG_START' in params:
+            duration = end - params['PROG_START']
+        else:
+            duration = None
         # log the success (or failure)
         if success and (not quiet):
             iargs = [str(params['RECIPE'])]
             WLOG(params, 'info', params['DRS_HEADER'])
-            WLOG(params, 'info', textentry('40-003-00001', args=iargs))
+            msg = textentry('40-003-00001', args=iargs)
+            if duration is not None:
+                msg += f'\t({duration:.3f} seconds)'
+            WLOG(params, 'info', msg)
             WLOG(params, 'info', params['DRS_HEADER'])
         elif not quiet:
             wargs = [str(params['RECIPE'])]
             WLOG(params, 'info', params['DRS_HEADER'], colour='red')
-            WLOG(params, 'warning', textentry('40-003-00005', args=wargs),
-                 colour='red', sublevel=8)
+            msg = textentry('40-003-00005', args=wargs)
+            if duration is not None:
+                msg += f'\t({duration:.3f} seconds)'
+            WLOG(params, 'warning', msg, colour='red', sublevel=8)
             WLOG(params, 'info', params['DRS_HEADER'], colour='red')
         # ---------------------------------------------------------------------
         # deal with logging (if log exists in recipe)
@@ -631,7 +650,9 @@ def end_main(params: ParamDict, llmain: Union[Dict[str, Any], None],
         # unlock parameter dictionary
         params.unlock()
         # add the logger messages to params
-        params = WLOG.output_param_dict(params)
+        log_messages = WLOG.output_param_dict(params)
+        for key in log_messages:
+            params.set(key, log_messages[key], func_name)
         # update params in log / and recipes after locking
         recipe.params = params.copy()
         WLOG.pin = params.copy()
@@ -1472,12 +1493,12 @@ def _display_drs_title(params: ParamDict, group: Union[str, None] = None,
     # get colours
     colors = COLOR
     # create title
-    title = ' * '
+    title = '* '
     title += colors.RED1 + ' {0} ' + colors.okgreen + '@{1}'
     title += ' (' + colors.BLUE1 + 'V{2}' + colors.okgreen + ')'
     title = title.format(params['INSTRUMENT'], params['PID'],
                          params['DRS_VERSION'])
-    title += '\n' + ' * '
+    title += '\n' + '* '
     title += colors.BLUE1 + ' '*len(params['INSTRUMENT'])
     title += '  py' + params['PYVERSION']
     if params['GIT_BRANCH'] != 'Unknown':
@@ -1510,11 +1531,11 @@ def _display_title(params: ParamDict, title: str,
     WLOG(params, '', params['DRS_HEADER'], wrap=False, printonly=printonly,
          logonly=logonly)
     # add title
-    WLOG(params, '', ' *\n{0}\n *'.format(title), wrap=False,
+    WLOG(params, '', '*\n{0}\n*'.format(title), wrap=False,
          printonly=printonly, logonly=logonly)
     # add group if defined
     if group is not None:
-        WLOG(params, '', ' * \tGroup: {0}'.format(group), wrap=False,
+        WLOG(params, '', '* \tGroup: {0}'.format(group), wrap=False,
              printonly=printonly, logonly=logonly)
     # end header
     WLOG(params, '', params['DRS_HEADER'], wrap=False,

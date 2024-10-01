@@ -16,6 +16,8 @@ import sqlalchemy
 
 from apero.base import base
 from apero.base import drs_db
+from apero.core.constants.param_functions import ParamDict
+from apero.core.constants import load_functions
 from apero.core.base import drs_exceptions
 from apero.core.base import drs_base_classes as base_class
 from apero.core.base import drs_misc
@@ -32,8 +34,6 @@ __version__ = base.__version__
 __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
-# Proxy ParamDict
-ParamDict = Any
 # get Time / TimeDelta
 Time, TimeDelta = base.AstropyTime, base.AstropyTimeDelta
 # Get the Database Columns class
@@ -950,8 +950,10 @@ def constuct_objname(params: Union[ParamDict, None], header,
         rawobjname = header[kwrawobjname]
     # -------------------------------------------------------------------------
     if check_aliases and objdbm is not None:
+        # load pseudo constants
+        pconst = load_functions.load_pconfig()
         # get clean / alias-safe version of object name
-        objectname, _ = objdbm.find_objname(instrument, rawobjname)
+        objectname, _ = objdbm.find_objname(pconst, rawobjname)
     else:
         objectname = instrument_mod.clean_object(rawobjname)
     # -------------------------------------------------------------------------
@@ -1261,8 +1263,8 @@ def construct_dprtype(recipe: Any, params: ParamDict, filename: str,
     :return: type, 1. the dprtype, 2. the outtype, 3. the drsfile instance
     """
     # get the drs files and raw_prefix
-    drsfiles = recipe.filemod.get().raw_file.fileset
-    raw_prefix = recipe.filemod.get().raw_prefix
+    drsfiles = recipe.filemod.raw_file.fileset
+    raw_prefix = recipe.filemod.raw_prefix
     # set up inname
     dprtype, outtype = 'Unknown', 'Unknown'
     drsfile = None

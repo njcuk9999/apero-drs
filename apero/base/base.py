@@ -79,8 +79,10 @@ CHECKSUM_FILE = 'checksums.yaml'
 YAML_GROUPS = ['DRS', 'PREPROCESSING', 'CALIBRATION', 'OBJECT', 'DEBUG',
                'TOOLS']
 # -----------------------------------------------------------------------------
-# warnings
+# logging and warnings
 # -----------------------------------------------------------------------------
+# Make sure default directory exists
+DEFAULT_LOG_PATH = str(os.path.expanduser('~/.apero/dlog/'))
 # only use this to turn warnings to errors (we need to use this flag to stop
 #   some exceptions creating long loops and freezing when all warnings go to
 #   errors)
@@ -408,6 +410,20 @@ def tqdm_module(use: bool = True):
             from tqdm import tqdm as _tqdm
 
     return _tqdm
+
+
+def get_default_log_dir() -> str:
+    """
+    Get the log directory when no parameters are given
+    """
+    default_path = DEFAULT_LOG_PATH
+    # make sure the default log path exists
+    if not os.path.exists(default_path):
+        os.makedirs(default_path)
+    # get date now
+    datestr = Time.now().fits.split('T')[0]
+    # return the log file
+    return str(os.path.join(default_path, datestr))
 
 
 # =============================================================================

@@ -195,6 +195,18 @@ class Logger:
         # set function name
         func_name = drs_misc.display_func('__call__', __NAME__,
                                           self.class_name)
+
+        from apero.core.base import drs_log as new_logger
+        WLOG = new_logger.Wlog()
+        WLOG(params, key, message, printonly, logonly, wrap, option, colour,
+             raise_exception, sublevel)
+
+        new_logger.AperoCodedWarning(code='00-000-00000')
+
+        raise new_logger.AperoCodedException(code='00-000-00000')
+
+
+        return
         # ---------------------------------------------------------------------
         # deal with debug mode. If DRS_DEBUG is zero do not print these
         #     messages

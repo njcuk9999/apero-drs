@@ -1084,11 +1084,12 @@ class Plotter:
         """
         # deal with unset params
         if params is None:
-            params = self.params
-        # add the logger messages to params
-        odict = WLOG.output_param_dict(params, new=True)
-        # set warnings
-        self.warnings = odict['LOGGER_WARNING']
+            self.warnings = []
+        else:
+            # add the logger messages to params
+            storage = WLOG.output_param_dict(params)
+            # set warnings
+            self.warnings = storage['LOGGER_WARNING']
 
     def set_interactive(self):
         """

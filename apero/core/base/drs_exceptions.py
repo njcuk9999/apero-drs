@@ -16,7 +16,6 @@ only from
 from typing import Any, Union
 
 from apero.base import base
-from apero.base import drs_base
 from apero.core import lang
 
 # =============================================================================
@@ -122,6 +121,10 @@ class DebugExit(Exit):
         self.__dict__.update(state)
 
 
+class DrsLogException(Exception):
+    pass
+
+
 class DrsCodedException(DrsException):
     """
     Exception to be passed to drs logger (up the chain)
@@ -174,9 +177,7 @@ class DrsCodedException(DrsException):
         """
         message = self.get_text()
         # return the base printer version string represntation
-        return drs_base.base_printer(self.codeid, message, self.level,
-                                     self.targs, self.func_name,
-                                     printstatement=False)
+        return message
 
     def __repr__(self):
         """
@@ -280,10 +281,11 @@ class DrsCodedWarning:
             message = lang.textentry(self.codeid, self.targs)
         else:
             message = self.message
-        # return the base printer version string represntation
-        return drs_base.base_printer(self.codeid, message, self.level,
-                                     self.targs, self.func_name,
-                                     printstatement=False)
+
+        if self.codeid is not None:
+            print(f'[{self.codeid}]: {message}')
+        else:
+            print(message)
 
     def __repr__(self):
         """
@@ -369,12 +371,14 @@ def wlogbasic(_: Any, level: Union[str, None] = None,
             codeid = ''
         # print message (and deal with errors)
         if level == 'error' and len(codeid) == 0:
-            raise drs_base.base_error(codeid, message, level, **kwargs)
+
+            raise DrsCodedException(codeid, level, message)
         elif level == 'error':
             raise DrsCodedException(codeid, 'error', message=message)
+        elif codeid is not None:
+            print(f'[{codeid}]: {message}')
         else:
-            drs_base.base_printer(codeid, message=message, level=level,
-                                  **kwargs)
+            print(message)
 
 
 # =============================================================================

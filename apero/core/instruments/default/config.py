@@ -507,6 +507,73 @@ CDict.add('TELLU_DB_MATCH', dtype=str, source=__NAME__,
 # DISPLAY/LOGGING SETTINGS
 # =============================================================================
 cgroup = 'DRS.DISPLAY_LOGGING'
+
+
+# dictionary of all the levels of logging available (values are the key)
+CDict.add('LOG_STORAGE_KEYS',
+          value=dict(all='LOGGER_ALL', error='LOGGER_ERROR',
+                        warning='LOGGER_WARNING',
+                        info='LOGGER_INFO', graph='LOGGER_ALL',
+                        debug='LOGGER_DEBUG'),
+          dtype=dict, source=__NAME__, group=cgroup,
+          description=('dictionary of all the levels of logging '
+                       'available (values are the key)'))
+
+# Defines a reference switch, whether to report warnings that are caught in
+CDict.add('LOG_CAUGHT_WARNINGS', value=True, dtype=bool,
+          source=__NAME__, group=cgroup,
+          description=('Defines a reference switch, whether to '
+                         'report warnings that are caught in'))
+
+# The log trigger key characters to use in log. Keys must be the same as
+#  WRITE_LEVELS()
+CDict.add('LOG_TRIG_KEYS',
+          value=dict(all='  ', error='!!', warning='@@',
+                     info='**', graph='~~', debug='++'),
+          dtype=dict, source=__NAME__, group=cgroup,
+          description=('The log trigger key characters to use in log. '
+                         'Keys must be the same as WRITE_LEVELS()'))
+
+#         The write levels. Keys must be the same as LOG_TRIG_KEYS()
+#         The write levels define which levels are logged and printed (based on
+#         constants "PRINT_LEVEL" and "LOG_LEVEL" in the primary config file
+CDict.add('WRITE_LEVELS',
+          value=dict(error=3, warning=2, info=1,
+                     graph=0, all=0, debug=0),
+          dtype=dict, source=__NAME__, group=cgroup,
+          description=('The write levels. Keys must be the same as '
+                       'LOG_TRIG_KEYS() '
+                       'The write levels define which levels are logged '
+                       'and printed (based on constants "PRINT_LEVEL" '
+                       'and "LOG_LEVEL" in the primary config file'))
+
+# The report levels. Keys must be the same as spirouConst.LOG_TRIG_KEYS()
+# If True then the input code is printed (used for errors /warning/debug)
+# if False just the message is printed
+CDict.add('REPORT_KEYS',
+          value=dict(error=True, warning=True, info=False, graph=False,
+                     all=False, debug=False),
+          dtype=dict, source=__NAME__, group=cgroup,
+          description=('The report levels. Keys must be the same as '
+                       'spirouConst.LOG_TRIG_KEYS() '
+                       'If True then the input code is printed '
+                       '(used for errors /warning/debug) '
+                       'if False just the message is printed'))
+
+# Define the sublevel divider point (number below this will be set to
+#     SUBLEVEL_DIV_CHAR[LOW] and above to SUBLEVEL_DIV_CHAR[HIGH])
+CDict.add('DRS_LOG_SUBLEVEL_DIV', value=5, dtype=int,
+          source=__NAME__, group=cgroup,
+          description='Define the sublevel divider point (number below this '
+                      'will be set to SUBLEVEL_DIV_CHAR[LOW] and above to '
+                      'SUBLEVEL_DIV_CHAR[HIGH])')
+
+# Define the sublevel divider characters for DRS_LOG_SUBLEVEL_DIV
+CDict.add('DRS_LOG_SUBLEVEL_DIV_CHAR', value=dict(LOW='$', HIGH='!'),
+          dtype=dict, dtypei=str, source=__NAME__, group=cgroup,
+          description='Define the sublevel divider characters for '
+                      'DRS_LOG_SUBLEVEL_DIV')
+
 #   Level at which to print, values can be:
 #       'all' - to print all events
 #       'info' - to print info/warning/error events
@@ -539,6 +606,12 @@ CDict.add('DRS_LOG_LEVEL', value='all', dtype=str,
                        'events '
                        '\n\twarning - to print warning/error events'
                        '\n\terror - to print only error events'),
+          output=False)
+
+
+#  Get character length for log
+CDict.add('DRS_LOG_CHAR_LEN', value=80, dtype=int, source=__NAME__,
+          group=cgroup, description='Get character length for log',
           output=False)
 
 #   Coloured logging to standard output (console)

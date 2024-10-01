@@ -185,7 +185,7 @@ def compile_file_definitions(params: ParamDict, recipe: DrsRecipe):
     :return: None writes to file definition rst files
     """
     # load file mod
-    filemod = recipe.filemod.get(force=True)
+    filemod = recipe.filemod
     # get instrument name
     instrument = params['INSTRUMENT']
     # load pseudo constants

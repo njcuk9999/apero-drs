@@ -203,7 +203,9 @@ class Text(str):
         # ---------------------------------------------------------------------
         vargs = [reportlevel, self.tkey, self.tvalue]
         # deal with report
-        if report and (self.tkey != self.tvalue):
+        if self.tkey in [None, 'None', '']:
+            valuestr = '{2}'.format(*vargs)
+        elif report and (self.tkey != self.tvalue):
             valuestr = '{0}[{1}]: {2}'.format(*vargs)
         else:
             valuestr = '{2}'.format(*vargs)
@@ -263,7 +265,8 @@ def textentry(key: str, args: Union[List[Any], str, None] = None,
     value = LanguageLookup.get(key, required=False)
     # deal with no value (use key)
     if value is None:
-        message = key
+        message = str(key)
+        key = None
     else:
         message = value
     # deal with args

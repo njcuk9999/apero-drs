@@ -229,8 +229,8 @@ def sci_tellu_check(params: ParamDict, recipe: DrsRecipe, tstars: List[str],
     engineering_nights = []
     sci_times = dict()
     # get the recipe module for this instrument
-    recipemodule = recipe.recipemod.get()
-    filemodule = recipe.filemod.get()
+    recipemodule = recipe.recipemod
+    filemodule = recipe.filemod
     # get the generic raw file type
     generic_raw_file = filemodule.raw_file
     # -------------------------------------------------------------------------
