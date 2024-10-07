@@ -14,7 +14,7 @@ import os
 from typing import Dict, List
 
 from apero.base import base
-from apero.core.core import drs_log
+from apero.core.base import drs_log
 from apero.core.utils import drs_startup
 
 # =============================================================================

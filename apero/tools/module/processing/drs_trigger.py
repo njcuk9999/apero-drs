@@ -18,9 +18,9 @@ from astropy.table import Table
 
 from apero.base import base
 from apero.core.constants import param_functions
-from apero.core import lang
+from apero.base import drs_lang
 from apero.core.core import drs_database
-from apero.core.core import drs_log
+from apero.core.base import drs_log
 from apero.core.base import drs_text
 from apero.core.base import drs_misc
 from apero.core.utils import drs_recipe
@@ -45,7 +45,7 @@ ParamDict = param_functions.ParamDict
 # get the recipe class
 DrsRecipe = drs_recipe.DrsRecipe
 # Get the text types
-textentry = lang.textentry
+textentry = drs_lang.textentry
 # -----------------------------------------------------------------------------
 # trigger table
 TRIGGER_TABLE = 'trigger_table.fits'

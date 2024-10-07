@@ -15,8 +15,8 @@ import shutil
 from datetime import datetime
 
 from apero.base import base
-from apero.core import lang
-from apero.core.core import drs_log
+from apero.base import drs_lang
+from apero.core.base import drs_log
 
 # =============================================================================
 # Define variables
@@ -31,7 +31,7 @@ __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 # get text entry
-textentry = lang.textentry
+textentry = drs_lang.textentry
 # -----------------------------------------------------------------------------
 # define line parameters
 VERSIONSTR_PREFIX = '__version__ = '

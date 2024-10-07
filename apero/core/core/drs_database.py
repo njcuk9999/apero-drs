@@ -40,12 +40,12 @@ from apero.core.base.drs_base_classes import Printer
 from apero.core.constants import param_functions
 from apero.core.constants import load_functions
 
-from apero.core import lang
+from apero.base import drs_lang
 from apero.core.base import drs_exceptions
 from apero.core.base import drs_text
 from apero.core.base import drs_misc
 from apero.core.core import drs_file
-from apero.core.core import drs_log
+from apero.core.base import drs_log
 from apero.io import drs_fits
 from apero.io import drs_path
 
@@ -79,7 +79,7 @@ FitsHeader = drs_file.FitsHeader
 DrsInputFile = drs_file.DrsInputFile
 DrsFitsFile = drs_file.DrsFitsFile
 # Get the text types
-textentry = lang.textentry
+textentry = drs_lang.textentry
 # define drs files
 DrsFileTypes = Union[drs_file.DrsInputFile, drs_file.DrsFitsFile,
                      drs_file.DrsNpyFile]

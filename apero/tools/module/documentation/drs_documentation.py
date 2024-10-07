@@ -19,9 +19,9 @@ from astropy.table import Table
 from apero.base import base
 from apero.core.constants import param_functions
 from apero.core.constants import load_functions
-from apero.core import lang
+from apero.base import drs_lang
 from apero.core.core import drs_file
-from apero.core.core import drs_log
+from apero.core.base import drs_log
 from apero.core.base import drs_text
 from apero.core.base import drs_misc
 from apero.core.instruments.default import instrument as instrument_mod
@@ -48,7 +48,7 @@ DrsRecipe = drs_recipe.DrsRecipe
 DrsRunSequence = drs_recipe.DrsRunSequence
 DrsInputFile = drs_file.DrsInputFile
 # Get the text types
-textentry = lang.textentry
+textentry = drs_lang.textentry
 # --------------------------------------------------------------------------
 DOC_DIR = '../documentation/working'
 OUT_DIR = '../documentation/output'

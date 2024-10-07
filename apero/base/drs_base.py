@@ -75,7 +75,7 @@ def lang_db_proxy(language=None):
 
     # get the apero path
     drs_root_guess = os.path.dirname(os.path.dirname(__file__))
-    lang_path = os.path.join(drs_root_guess, 'core', 'lang', 'tables')
+    lang_path = os.path.join(drs_root_guess, 'base', 'drs_lang', 'tables')
     # deal with no language
     if language is None:
         language = base.DEFAULT_LANG

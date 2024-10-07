@@ -23,7 +23,7 @@ from apero.core.base import drs_exceptions
 from apero.core.base import drs_base_classes as base_class
 from apero.core.base import drs_misc
 from apero.core.base import drs_text
-from apero.core.core import drs_log
+from apero.core.base import drs_log
 from apero.io import drs_fits
 
 # =============================================================================
@@ -67,7 +67,6 @@ class RecipeLog:
     """
 
     def __init__(self, name: str, sname: str, params: ParamDict, level: int = 0,
-                 logger: Union[None, drs_log.Logger] = None,
                  database: Union[LogDatabase, None] = None,
                  flags: Optional[BinaryDict] = None):
         """
@@ -112,8 +111,6 @@ class RecipeLog:
                 if params['INPUTS']['NOSAVE']:
                     self.no_log = True
         # ---------------------------------------------------------------------
-        # the Logger instances (or None)
-        self.wlog = logger
         # set the pid
         self.pid = str(params['PID'])
         # set the human time
@@ -338,8 +335,7 @@ class RecipeLog:
         level = self.level + 1
         # create new log
         newlog = RecipeLog(self.name, self.sname, params, level=level,
-                           logger=self.wlog, database=self.logdbm,
-                           flags=self.flags)
+                           database=self.logdbm, flags=self.flags)
         # copy from parent
         newlog.copy(self)
         # set log start time

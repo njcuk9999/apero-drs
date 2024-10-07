@@ -15,9 +15,9 @@ from scipy.ndimage import filters
 
 from apero.base import base
 from apero.core.constants import param_functions
-from apero.core import lang
+from apero.base import drs_lang
 from apero.core import math as mp
-from apero.core.core import drs_log, drs_file
+from apero.core.base import drs_log, drs_file
 from apero.core.utils import drs_data
 from apero.core.utils import drs_recipe
 from apero.io import drs_fits
@@ -41,7 +41,7 @@ ParamDict = param_functions.ParamDict
 # Get the input fits file class
 DrsFitsFile = drs_file.DrsFitsFile
 # Get the text types
-textentry = lang.textentry
+textentry = drs_lang.textentry
 # alias pcheck
 pcheck = param_functions.PCheck(wlog=WLOG)
 

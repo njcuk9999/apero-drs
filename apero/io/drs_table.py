@@ -33,7 +33,7 @@ from apero.base import base
 from apero.base import drs_base
 from apero.core.base import drs_exceptions
 from apero.core.constants import param_functions
-from apero.core import lang
+from apero.base import drs_lang
 from apero.core.base import drs_misc
 from apero.core.base import drs_text
 from apero.io import drs_lock
@@ -54,7 +54,7 @@ ParamDict = param_functions.ParamDict
 # Get function string
 display_func = drs_misc.display_func
 # Get the text types
-textentry = lang.textentry
+textentry = drs_lang.textentry
 # get DRS exceptions
 DrsCodedException = drs_exceptions.DrsCodedException
 DrsCodedWarning = drs_exceptions.DrsCodedWarning

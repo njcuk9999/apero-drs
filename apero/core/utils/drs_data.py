@@ -19,11 +19,11 @@ from astropy.table import Table
 
 from apero.base import base
 from apero.core.constants import param_functions
-from apero.core import lang
+from apero.base import drs_lang
 from apero.core.base import drs_exceptions
 from apero.core.base import drs_text
 from apero.core.base import drs_misc
-from apero.core.core import drs_log
+from apero.core.base import drs_log
 from apero.io import drs_fits
 from apero.io import drs_path
 from apero.io import drs_table
@@ -43,7 +43,7 @@ WLOG = drs_log.wlog
 # Get ParamDict
 ParamDict = param_functions.ParamDict
 # Get the text types
-textentry = lang.textentry
+textentry = drs_lang.textentry
 # get exceptions
 DrsCodedException = drs_exceptions.DrsCodedException
 # alias pcheck

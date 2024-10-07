@@ -11,9 +11,9 @@ Created on 2020-05-05
 """
 from apero.base import base
 from apero.core.constants import param_functions
-from apero.core import lang
+from apero.base import drs_lang
 from apero.core.core import drs_database
-from apero.core.core import drs_log
+from apero.core.base import drs_log
 from apero.core.utils import drs_startup
 from apero.science import extract
 from apero.science.calib import wave
@@ -34,7 +34,7 @@ ParamDict = param_functions.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
 # get text entry
-textentry = lang.textentry
+textentry = drs_lang.textentry
 # -----------------------------------------------------------------------------
 # set up recipe definitions (overwrites default one)
 RMOD = drs_dev.RecipeDefinition(instrument=__INSTRUMENT__)

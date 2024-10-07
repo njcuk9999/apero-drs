@@ -23,12 +23,12 @@ from scipy.optimize import curve_fit
 
 from apero.core.constants import param_functions
 from apero.core.constants import load_functions
-from apero.core import lang
+from apero.base import drs_lang
 from apero.core import math as mp
 from apero.core.base import drs_misc
 from apero.core.core import drs_database
 from apero.core.core import drs_file
-from apero.core.core import drs_log
+from apero.core.base import drs_log
 from apero.core.base import drs_text
 from apero.core.utils import drs_data
 from apero.core.utils import drs_recipe
@@ -66,7 +66,7 @@ WLOG = drs_log.wlog
 # alias pcheck
 pcheck = param_functions.PCheck(wlog=WLOG)
 # Get the text types
-textentry = lang.textentry
+textentry = drs_lang.textentry
 # Speed of light
 # noinspection PyUnresolvedReferences
 speed_of_light_ms = cc.c.to(uu.m / uu.s).value

@@ -32,7 +32,7 @@ from astropy.io.fits.verify import VerifyWarning
 from astropy.table import Table
 
 from apero.base import base
-from apero.core import lang
+from apero.base import drs_lang
 from apero.core.base import drs_exceptions
 from apero.core.base import drs_base_classes
 from apero.core.base import drs_misc
@@ -57,7 +57,7 @@ DrsCodedException = drs_exceptions.DrsCodedException
 # Get function string
 display_func = drs_misc.display_func
 # Get the text types
-textentry = lang.textentry
+textentry = drs_lang.textentry
 # set scale args for astropy >3.0
 SCALEARGS = dict(bscale=1, bzero=0)
 # Define any simple type for typing

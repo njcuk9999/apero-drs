@@ -19,10 +19,10 @@ from ruamel.yaml.comments import CommentedMap
 from apero.base import base
 from apero.core.constants import param_functions
 from apero.core.constants import load_functions
-from apero.core import lang
+from apero.base import drs_lang
 from apero.core.core import drs_database
 from apero.core.core import drs_file
-from apero.core.core import drs_log
+from apero.core.base import drs_log
 from apero.core.constants import run_params
 from apero.core.utils import drs_recipe
 
@@ -51,7 +51,7 @@ DrsSequence = drs_recipe.DrsRunSequence
 FileIndexDatabase = drs_database.FileIndexDatabase
 ObjectDatabase = drs_database.AstrometricDatabase
 # get text entry instance
-textentry = lang.textentry
+textentry = drs_lang.textentry
 # define default reference dir
 DEFAULT_REF_OBSDIR = dict()
 DEFAULT_REF_OBSDIR['SPIROU'] = '2020-08-31'

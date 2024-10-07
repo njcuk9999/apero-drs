@@ -20,7 +20,7 @@ import re
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from apero.base import base
-from apero.core import lang
+from apero.base import drs_lang
 from apero.core.base import drs_exceptions
 
 # =============================================================================
@@ -39,7 +39,7 @@ CACHE = dict()
 # Get astropy time from base module
 Time = base.Time
 # Get text entry
-textentry = lang.textentry
+textentry = drs_lang.textentry
 # Get exceptions
 DrsLogException = drs_exceptions.DrsLogException
 DrsCodedException = drs_exceptions.DrsCodedException
@@ -749,7 +749,7 @@ class Wlog:
     log_classes = dict()
 
     def __call__(self, params: Any = None, key: str = '',
-                 message: Union[lang.Text, str, None] = None,
+                 message: Union[drs_lang.Text, str, None] = None,
                  printonly: bool = False, logonly: bool = False,
                  wrap: bool = True, option: str = None, colour: str = None,
                  raise_exception: bool = True, sublevel: Optional[int] = None):
@@ -846,7 +846,10 @@ class Wlog:
             # get the storage value
             storekey = params['LOG_STORAGE_KEYS'][key]
             # get entries
-            entries = CACHE[log.filepath][key]
+            if key not in CACHE[log.filepath]:
+                entries = []
+            else:
+                entries = CACHE[log.filepath][key]
             # push into params
             storage[storekey] = list(entries)
         # return all these log files
@@ -860,7 +863,7 @@ class Wlog:
         cache_logger(log.filepath, message, code=key, timestr=ttime,
                      key=key, program=program)
 
-    def clean_log(self, params: Any):
+    def clean_log(self, params: Any = None):
         # get the log
         log = self.get_log(params)
         # clear this cache
@@ -898,7 +901,7 @@ class AperoCodedException(DrsCodedException):
             # set code
             self.code = code
             # set the message from the code
-            self.message = lang.textentry(self.code, targs)
+            self.message = drs_lang.textentry(self.code, targs)
         else:
             # otherwise use the message
             self.message = message
@@ -918,7 +921,7 @@ class AperoCodedException(DrsCodedException):
                   raise_exception=False)
         # return the message as the string (for the raise)
         if self.message is None:
-            message = lang.textentry(self.code, self.targs)
+            message = drs_lang.textentry(self.code, self.targs)
         else:
             message = self.message
         # return the base printer version string represntation
@@ -958,7 +961,7 @@ class AperoCodedWarning():
             # set code
             self.code = code
             # set the message from the code
-            self.message = lang.textentry(self.code, targs)
+            self.message = drs_lang.textentry(self.code, targs)
         else:
             # otherwise use the message
             self.message = message
@@ -1168,7 +1171,7 @@ def get_drs_data_msg(params: Any, group: Union[str, None] = None,
 
 
 def format_message(params: Any, key: str,
-                   message: Union[lang.Text, str, None],
+                   message: Union[drs_lang.Text, str, None],
                    option: Union[str, None],
                    sublevel: Union[int, None],
                    wrap: bool = True
@@ -1178,8 +1181,8 @@ def format_message(params: Any, key: str,
 
     :param params: ParamDict, the parameter dictionary of constants
     :param key: str, the key (level) for the message
-    :param message: Union[lang.Text, str, None], the message to log (can be
-                    a string or a lang.Text object)
+    :param message: Union[drs_lang.Text, str, None], the message to log (can be
+                    a string or a drs_lang.Text object)
     :param option: Union[str, None], the option for the message
     :param sublevel: Union[str, None], the sublevel of the message
     :param wrap: bool, if True wrap the message to the log width
@@ -1190,10 +1193,10 @@ def format_message(params: Any, key: str,
                     4. the list of str messages with text code
     """
     # -------------------------------------------------------------------------
-    # deal with message format (convert to lang.Text)
+    # deal with message format (convert to drs_lang.Text)
     if message is None:
         msg_obj = textentry('Unknown')
-    elif isinstance(message, lang.Text):
+    elif isinstance(message, drs_lang.Text):
         msg_obj = message
     elif isinstance(message, str):
         msg_obj = textentry(message)
@@ -1254,7 +1257,7 @@ def format_message(params: Any, key: str,
         code = code + params['DRS_LOG_SUBLEVEL_DIV_CHAR']['HIGH']
     # -------------------------------------------------------------------------
     # get messages
-    if isinstance(msg_obj, lang.Text):
+    if isinstance(msg_obj, drs_lang.Text):
         raw_messages1 = msg_obj.get_text(report=report, reportlevel=key)
         raw_messages2 = msg_obj.get_text(report=True, reportlevel=key)
         # raw messages 2 are just for the log - no colour
@@ -1282,6 +1285,12 @@ def _clean_message(message: str) -> str:
     message = ANSI_ESCAPE.sub('', message)
     # return message
     return message
+
+
+# =============================================================================
+# Activate Wlog (only need one)
+# =============================================================================
+wlog = Wlog()
 
 
 # =============================================================================

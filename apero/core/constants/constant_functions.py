@@ -19,7 +19,7 @@ import numpy as np
 from astropy import units as uu
 
 from apero.base import base
-from apero.core import lang
+from apero.base import drs_lang
 from apero.core.base import drs_exceptions
 from apero.core.base import drs_base_classes as base_class
 from apero.core.base import drs_text
@@ -40,7 +40,7 @@ __release__ = base.__release__
 # get the Drs Exceptions
 DrsCodedException = drs_exceptions.DrsCodedException
 # get the text entry
-textentry = lang.textentry
+textentry = drs_lang.textentry
 # get simple types
 SIMPLE_TYPES = base.SIMPLE_TYPES
 SIMPLE_STYPES = base.SIMPLE_STYPES

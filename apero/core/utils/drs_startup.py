@@ -31,7 +31,7 @@ from apero.core.constants import param_functions
 from apero.core.constants import load_functions
 from apero.core.constants import constant_functions
 from apero.core.constants import run_params
-from apero.core import lang
+from apero.base import drs_lang
 from apero.core.core import drs_argument
 from apero.core.core import drs_database
 from apero.core.base import drs_exceptions
@@ -39,7 +39,7 @@ from apero.core.base import drs_base_classes as base_class
 from apero.core.base import drs_misc
 from apero.core.base import drs_text
 from apero.core.core import drs_file
-from apero.core.core import drs_log
+from apero.core.base import drs_log
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_utils
 from apero.io import drs_lock
@@ -72,7 +72,7 @@ display_func = drs_misc.display_func
 # get the Drs Exceptions
 DrsCodedException = drs_exceptions.DrsCodedException
 # Get the text types
-textentry = lang.textentry
+textentry = drs_lang.textentry
 # recipe control path
 INSTRUMENT_PATH = base.CONST_PATH
 CORE_PATH = base.CORE_PATH
@@ -134,7 +134,7 @@ def setup(name: str = 'None', instrument: str = 'None',
     # set up process id
     pid, htime = assign_pid()
     # Clean WLOG
-    WLOG.clean_log(pid)
+    WLOG.clean_log()
     # get filemod and recipe mod
     #  must set instrument here as we could need 'None' (for some tools that
     #  are above the instrument level)
@@ -368,10 +368,9 @@ def setup(name: str = 'None', instrument: str = 'None',
     cond2 = params['DRS_RECIPE_TYPE'] != 'nolog-tool'
     if cond1 and cond2:
         recipe.log = drs_utils.RecipeLog(recipe.name, recipe.shortname,
-                                         params, logger=WLOG,
-                                         flags=recipe.flags)
+                                         params, flags=recipe.flags)
         # add log file to log (only used to save where the log is)
-        logfile = drs_log.get_logfilepath(WLOG, params)
+        logfile = drs_log.get_logfilepath(params)
         recipe.log.set_log_file(logfile)
         recipe.log.block_kind = str(recipe.out_block_str)
         recipe.log.recipe_kind = str(recipe.recipe_kind)
@@ -467,7 +466,7 @@ def run(func: Any, recipe: DrsRecipe,
                 recipe.log.add_error('DatabaseError Exit', '')
             # reset the lock directory
             drs_lock.reset_lock_dir(params)
-        except lang.DrsLanguageError as e:
+        except drs_lang.DrsLanguageError as e:
             WLOG(params, 'error', e.message, raise_exception=False)
             # on debug exit was not a success
             success = False
@@ -660,7 +659,7 @@ def end_main(params: ParamDict, llmain: Union[Dict[str, Any], None],
         params.lock()
         # ---------------------------------------------------------------------
         # finally clear out the log in WLOG
-        WLOG.clean_log(params['PID'])
+        WLOG.clean_log()
         # ---------------------------------------------------------------------
         # deal with clearing warnings
         drs_exceptions.clear_warnings()
@@ -1688,13 +1687,13 @@ def _display_initial_parameterisation(params: ParamDict,
          logonly=logonly)
 
 
-def _display_database_settings(wmsgs: lang.Text) -> lang.Text:
+def _display_database_settings(wmsgs: drs_lang.Text) -> drs_lang.Text:
     """
     Display database settings
 
-    :param wmsgs: the current lang.Text instance
+    :param wmsgs: the current drs_lang.Text instance
 
-    :return: lang.Text, the updated lang.Text instance
+    :return: drs_lang.Text, the updated drs_lang.Text instance
     """
     dparams = base.DPARAMS
     # -------------------------------------------------------------------------

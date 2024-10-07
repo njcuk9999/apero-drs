@@ -15,10 +15,10 @@ import numpy as np
 
 from apero.base import base
 from apero.core.constants import param_functions
-from apero.core import lang
+from apero.base import drs_lang
 from apero.core.core import drs_database
 from apero.core.core import drs_file
-from apero.core.core import drs_log
+from apero.core.base import drs_log
 from apero.core.instruments.nirps_ha import file_definitions
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
@@ -42,7 +42,7 @@ DrsRecipe = drs_recipe.DrsRecipe
 # Get parameter class
 ParamDict = param_functions.ParamDict
 # Get the text types
-textentry = lang.textentry
+textentry = drs_lang.textentry
 # Raw prefix
 RAW_PREFIX = file_definitions.raw_prefix
 

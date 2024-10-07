@@ -19,9 +19,9 @@ from astropy.table import Table
 from apero.base import base
 from apero.core.constants import param_functions
 from apero.core.constants import load_functions
-from apero.core import lang
+from apero.base import drs_lang
 from apero.core.core import drs_database
-from apero.core.core import drs_log
+from apero.core.base import drs_log
 from apero.core.base import drs_misc
 from apero.core.utils import drs_recipe
 from apero.io import drs_fits
@@ -40,7 +40,7 @@ __release__ = base.__release__
 # get time instance
 Time = base.Time
 # get text entry instance
-textentry = lang.textentry
+textentry = drs_lang.textentry
 # get the parmeter dictionary instance
 ParamDict = param_functions.ParamDict
 # get the DrsRecipe instance

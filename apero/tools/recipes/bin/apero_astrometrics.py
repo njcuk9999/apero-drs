@@ -11,8 +11,8 @@ Created on 2021-12-09
 """
 from apero.base import base
 from apero.core.constants import param_functions
-from apero.core import lang
-from apero.core.core import drs_log
+from apero.base import drs_lang
+from apero.core.base import drs_log
 from apero.core.utils import drs_startup
 from apero.tools.module.database import drs_astrometrics
 from apero.tools.module.database import manage_databases
@@ -29,7 +29,7 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # get text entry instance
-textentry = lang.textentry
+textentry = drs_lang.textentry
 # Get Logging function
 WLOG = drs_log.wlog
 ParamDict = param_functions.ParamDict

@@ -11,13 +11,13 @@ Created on 2024-07-29 at 09:10
 @author: cook
 """
 from apero.base import base
-from apero.core.lang import drs_lang_list
+from apero.base.drs_lang import drs_lang_list
 
 
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero.lang.tables.spirou_help.py'
+__NAME__ = 'apero.lang.tables.nirps_he_help.py'
 __PACKAGE__ = base.__PACKAGE__
 __INSTRUMENT__ = 'None'
 __version__ = base.__version__
@@ -401,6 +401,33 @@ item.comment = ''
 langlist.add(item)
 
 # =============================================================================
+# PPREF_DESC 
+# =============================================================================
+item = langlist.create('PPREF_DESC', kind='HELP')
+item.value['ENG'] = 'Master sequence pre-processing script (for use before pre-processing script in reference sequence). Takes a set of files to build a detector mask.'
+item.arguments = 'None'
+item.comment = ''
+langlist.add(item)
+
+# =============================================================================
+# PPREF_EXAMPLE 
+# =============================================================================
+item = langlist.create('PPREF_EXAMPLE', kind='HELP')
+item.value['ENG'] = 'cal_pp_reference_nirps_ha.py 2018-08-05'
+item.arguments = 'None'
+item.comment = ''
+langlist.add(item)
+
+# =============================================================================
+# PPREF_FILETYPE_HELP 
+# =============================================================================
+item = langlist.create('PPREF_FILETYPE_HELP', kind='HELP')
+item.value['ENG'] = '[STRING] The raw file to use for the preprocessing reference mask'
+item.arguments = 'None'
+item.comment = ''
+langlist.add(item)
+
+# =============================================================================
 # RESIZE_HELP 
 # =============================================================================
 item = langlist.create('RESIZE_HELP', kind='HELP')
@@ -425,7 +452,6 @@ langlist.add(item)
 # =============================================================================
 item = langlist.create('SHAPE_EXAMPLE', kind='HELP')
 item.value['ENG'] = 'cal_SHAPE_spirou.py [NIGHT_NAME] [HCONE_HCONE] [FP_FP] \n cal_SHAPE_spirou.py 2018-08-05 2295680c_pp.fits 2295525a_pp.fits \n cal_SHAPE_spirou.py 2018-08-05 2295680c_pp 2295525a_pp \n cal_SHAPE_spirou.py 2018-08-05 2295680c_pp *a_pp.fits'
-item.value['FR'] = 'cal_SHAPE_spirou.py [NIGHT_NAME] [HCONE_HCONE] [FP_FP] \n cal_SHAPE_spirou.py 2018-08-05 2295680c_pp.fits 2295525a_pp.fits \n cal_SHAPE_spirou.py 2018-08-05 2295680c_pp 2295525a_pp \n cal_SHAPE_spirou.py 2018-08-05 2295680c_pp *a_pp.fits'
 item.arguments = 'None'
 item.comment = ''
 langlist.add(item)
@@ -760,24 +786,6 @@ item.comment = ''
 langlist.add(item)
 
 # =============================================================================
-# USE_TEMP_HELP 
-# =============================================================================
-item = langlist.create('USE_TEMP_HELP', kind='HELP')
-item.value['ENG'] = 'Whether to use the template provided from the telluric database'
-item.arguments = 'None'
-item.comment = ''
-langlist.add(item)
-
-# =============================================================================
-# TEMPLATE_FILE_HELP 
-# =============================================================================
-item = langlist.create('TEMPLATE_FILE_HELP', kind='HELP')
-item.value['ENG'] = 'Filename of the custom template to use (instead of from telluric database)'
-item.arguments = 'None'
-item.comment = ''
-langlist.add(item)
-
-# =============================================================================
 # MKTEMP_DESC 
 # =============================================================================
 item = langlist.create('MKTEMP_DESC', kind='HELP')
@@ -1061,6 +1069,24 @@ langlist.add(item)
 # =============================================================================
 item = langlist.create('LEAK_LEAKFILE_HELP', kind='HELP')
 item.value['ENG'] = '[STRING] optional, the leak reference file to use'
+item.arguments = 'None'
+item.comment = ''
+langlist.add(item)
+
+# =============================================================================
+# USE_TEMP_HELP 
+# =============================================================================
+item = langlist.create('USE_TEMP_HELP', kind='HELP')
+item.value['ENG'] = 'Whether to use the template provided from the telluric database'
+item.arguments = 'None'
+item.comment = ''
+langlist.add(item)
+
+# =============================================================================
+# TEMPLATE_FILE_HELP 
+# =============================================================================
+item = langlist.create('TEMPLATE_FILE_HELP', kind='HELP')
+item.value['ENG'] = 'Filename of the custom template to use (instead of from telluric database)'
 item.arguments = 'None'
 item.comment = ''
 langlist.add(item)

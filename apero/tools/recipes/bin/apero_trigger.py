@@ -10,8 +10,8 @@ Created on 2022-06-03
 @author: cook
 """
 from apero.base import base
-from apero.core import lang
-from apero.core.core import drs_log
+from apero.base import drs_lang
+from apero.core.base import drs_log
 from apero.core.base import drs_text
 from apero.core.utils import drs_startup
 from apero.tools.module.processing import drs_trigger
@@ -29,7 +29,7 @@ __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-textentry = lang.textentry
+textentry = drs_lang.textentry
 
 
 # =============================================================================

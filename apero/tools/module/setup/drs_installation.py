@@ -26,7 +26,7 @@ from apero.base import base
 from apero.core.constants import param_functions
 from apero.core.constants import load_functions
 from apero.core.constants import constant_functions
-from apero.core import lang
+from apero.base import drs_lang
 from apero.core.constants import path_definitions as pathdef
 from apero.core.base import drs_exceptions, drs_base_classes, drs_misc
 
@@ -48,7 +48,7 @@ ParamDict = param_functions.ParamDict
 # define bad characters for profile name (alpha numeric + "_")
 BAD_CHARS = [' '] + list(string.punctuation.replace('_', ''))
 # Get the text types
-textentry = lang.textentry
+textentry = drs_lang.textentry
 # -----------------------------------------------------------------------------
 HOME = Path('~').expanduser()
 DEFAULT_USER_PATH = HOME.joinpath('apero', 'default')
@@ -106,7 +106,7 @@ LANG_PATH = 'apero.core.lang.tables'
 # =============================================================================
 # Define setup/general functions
 # =============================================================================
-def cprint(message: Union[lang.Text, str], colour: str = 'g'):
+def cprint(message: Union[drs_lang.Text, str], colour: str = 'g'):
     """
     print coloured message
 
@@ -153,8 +153,8 @@ def ask(question: str, dtype: Union[str, type, None] = None,
     # -------------------------------------------------------------------------
     # deal with yes/no dtype
     if isinstance(dtype, str) and dtype.upper() == 'YN':
-        options = [lang.YES, lang.NO]
-        optiondesc = [lang.YES_OR_NO]
+        options = [drs_lang.YES, drs_lang.NO]
+        optiondesc = [drs_lang.YES_OR_NO]
     # deal with paths (expand)
     dcond = isinstance(dtype, str) or isinstance(dtype, Path)
     if dcond and dtype.upper() == 'PATH':
@@ -259,12 +259,12 @@ def ask(question: str, dtype: Union[str, type, None] = None,
                     continue
         # deal with Yes/No questions
         elif dtype == 'YN':
-            if lang.YES in uinput.upper():
+            if drs_lang.YES in uinput.upper():
                 return True
-            elif lang.NO in uinput.upper():
+            elif drs_lang.NO in uinput.upper():
                 return False
             else:
-                cprint(textentry('40-001-00039', args=[lang.YES_OR_NO]), 'y')
+                cprint(textentry('40-001-00039', args=[drs_lang.YES_OR_NO]), 'y')
                 check = True
                 continue
         # deal with options

@@ -16,7 +16,6 @@ only from
 from typing import Any, Union
 
 from apero.base import base
-from apero.core import lang
 
 # =============================================================================
 # Define variables
@@ -190,7 +189,7 @@ class DrsCodedException(DrsException):
         if self.message is not None:
             message = str(self.message)
         else:
-            message = str(lang.textentry(self.codeid, self.targs))
+            message = f'E[{self.codeid}]'
         return message
 
     def get(self, key: str, default: Any):
@@ -278,7 +277,7 @@ class DrsCodedWarning:
         :return:
         """
         if self.message is None:
-            message = lang.textentry(self.codeid, self.targs)
+            message = f'W[{self.codeid}]'
         else:
             message = self.message
 
@@ -365,7 +364,7 @@ def wlogbasic(_: Any, level: Union[str, None] = None,
     if level == 'debug':
         return None
     else:
-        if isinstance(message, lang.Text):
+        if hasattr(message, 'tkey'):
             codeid = message.tkey
         else:
             codeid = ''

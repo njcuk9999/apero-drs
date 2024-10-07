@@ -27,7 +27,7 @@ import sys
 from typing import Any, List, Optional, Tuple, Union
 
 from apero.base import base
-from apero.core import lang
+from apero.base import drs_lang
 from apero.core.base import drs_exceptions
 from apero.core.base import drs_text
 from apero.core.base import drs_misc
@@ -53,7 +53,7 @@ ParamDict = param_functions.ParamDict
 DrsCodedException = drs_exceptions.DrsCodedException
 DrsCodedWarning = drs_exceptions.DrsCodedWarning
 # Get the text types
-textentry = lang.textentry
+textentry = drs_lang.textentry
 # get the default language
 DEFAULT_LANGUAGE = base.DEFAULT_LANG
 # Get the Color dict
@@ -195,18 +195,6 @@ class Logger:
         # set function name
         func_name = drs_misc.display_func('__call__', __NAME__,
                                           self.class_name)
-
-        from apero.core.base import drs_log as new_logger
-        WLOG = new_logger.Wlog()
-        WLOG(params, key, message, printonly, logonly, wrap, option, colour,
-             raise_exception, sublevel)
-
-        new_logger.AperoCodedWarning(code='00-000-00000')
-
-        raise new_logger.AperoCodedException(code='00-000-00000')
-
-
-        return
         # ---------------------------------------------------------------------
         # deal with debug mode. If DRS_DEBUG is zero do not print these
         #     messages
@@ -230,10 +218,10 @@ class Logger:
         # get character length
         char_len = self.pconstant.CHARACTER_LOG_LENGTH()
         # ---------------------------------------------------------------------
-        # deal with message format (convert to lang.Text)
+        # deal with message format (convert to drs_lang.Text)
         if message is None:
             msg_obj = textentry('Unknown')
-        elif isinstance(message, lang.Text):
+        elif isinstance(message, drs_lang.Text):
             msg_obj = message
         elif isinstance(message, str):
             msg_obj = textentry(message)
@@ -320,7 +308,7 @@ class Logger:
         if debug >= params['DEBUG_MODE_TEXTNAME_PRINT']:
             report = True
         # get messages
-        if isinstance(msg_obj, lang.Text):
+        if isinstance(msg_obj, drs_lang.Text):
             raw_messages1 = msg_obj.get_text(report=report, reportlevel=key)
         else:
             raw_messages1 = str(msg_obj)
@@ -377,7 +365,7 @@ class Logger:
         code = self.pconstant.ADJUST_SUBLEVEL(code, sublevel)
         # report = self.pconstant.REPORT_KEYS().get(key, False)
         # get messages
-        if isinstance(msg_obj, lang.Text):
+        if isinstance(msg_obj, drs_lang.Text):
             raw_messages2 = msg_obj.get_text(report=True, reportlevel=key)
         else:
             raw_messages2 = str(msg_obj)

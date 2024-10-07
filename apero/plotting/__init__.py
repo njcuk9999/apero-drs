@@ -10,18 +10,18 @@ Created on 2019-01-19 at 13:44
 @author: cook
 """
 
-from apero.plotting import core
+from apero.plotting import plotter
 
 # =============================================================================
 # Core functionality
 # =============================================================================
 # Plotter class
-Plotter = core.Plotter
+Plotter = plotter.Plotter
 
-plot_selection = core.plot_selection
+plot_selection = plotter.plot_selection
 
 # Individual plotter
-main = core.main
+main = plotter.main
 
 # =============================================================================
 # End of code

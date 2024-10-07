@@ -40,7 +40,7 @@ DrsRecipe = drs_recipe.DrsRecipe
 # get astropy time module
 Time = base.Time
 # set up definition storage
-definitions = []
+definitions = dict()
 # Speed of light
 # noinspection PyUnresolvedReferences
 speed_of_light_ms = cc.c.to(uu.m / uu.s).value
@@ -617,8 +617,10 @@ test_plot2 = Graph('TEST2', kind='debug', func=graph_test_plot_1)
 test_plot3 = Graph('TEST3', kind='debug', func=graph_test_plot_2)
 test_plot4 = Graph('TEST4', kind='summary', func=graph_test_plot_2)
 # add to definitions
-definitions += [test_plot1, test_plot2, test_plot3, test_plot4]
-
+definitions['TEST1'] = test_plot1
+definitions['TEST2'] = test_plot2
+definitions['TEST3'] = test_plot3
+definitions['TEST4'] = test_plot4
 
 # =============================================================================
 # Define dark plotting functions
@@ -749,8 +751,10 @@ summary_dark_histogram = Graph('SUM_DARK_HISTOGRAM', kind='summary',
                                func=plot_dark_histogram, dpi=150,
                                description=sum_desc, figsize=(10, 10))
 # add to definitions
-definitions += [dark_image_regions, dark_histogram,
-                summary_dark_image_regions, summary_dark_histogram]
+definitions['DARK_IMAGE_REGIONS'] = dark_image_regions
+definitions['DARK_HISTOGRAM'] = dark_histogram
+definitions['SUM_DARK_IMAGE_REGIONS'] = summary_dark_image_regions
+definitions['SUM_DARK_HISTOGRAM'] = summary_dark_histogram
 
 
 # =============================================================================
@@ -798,7 +802,8 @@ summary_badpix_map = Graph('SUM_BADPIX_MAP', kind='summary',
                            func=plot_badpix_map, description=sum_desc,
                            figsize=(10, 10), dpi=150)
 # add to definitions
-definitions += [badpix_map, summary_badpix_map]
+definitions['BADPIX_MAP'] = badpix_map
+definitions['SUM_BADPIX_MAP'] = summary_badpix_map
 
 
 # =============================================================================
@@ -1187,9 +1192,14 @@ sum_plot_loc_im_corner = Graph('SUM_LOC_IM_CORNER', kind='summary',
                                dpi=150, description=sum_desc)
 
 # add to definitions
-definitions += [loc_width_regions, loc_fiber_doublet_parity, loc_gap_orders,
-                loc_image_fit, loc_im_corner, loc_im_regions,
-                sum_plot_loc_im_fit, sum_plot_loc_im_corner]
+definitions['LOC_WIDTH_REGIONS'] = loc_width_regions
+definitions['LOC_FIBER_DOUBLET_PARITY'] = loc_fiber_doublet_parity
+definitions['LOC_GAP_ORDERS'] = loc_gap_orders
+definitions['LOC_IMAGE_FIT'] = loc_image_fit
+definitions['LOC_IM_CORNER'] = loc_im_corner
+definitions['LOC_IM_REGIONS'] = loc_im_regions
+definitions['SUM_LOC_IM_FIT'] = sum_plot_loc_im_fit
+definitions['SUM_LOC_IM_CORNER'] = sum_plot_loc_im_corner
 
 
 # =============================================================================
@@ -1578,9 +1588,13 @@ sum_shape_local_zoom_shift = Graph('SUM_SHAPEL_ZOOM_SHIFT', kind='summary',
                                    figsize=(16, 10), dpi=150,
                                    description=sum_desc)
 # add to definitions
-definitions += [shape_dx, shape_linear_tparams, shape_angle_offset_all,
-                shape_angle_offset, sum_shape_angle_offset,
-                shape_local_zoom_shift, sum_shape_local_zoom_shift]
+definitions['SHAPE_DX'] = shape_dx
+definitions['SHAPE_LINEAR_TPARAMS'] = shape_linear_tparams
+definitions['SHAPE_ANGLE_OFFSET_ALL'] = shape_angle_offset_all
+definitions['SHAPE_ANGLE_OFFSET'] = shape_angle_offset
+definitions['SHAPEL_ZOOM_SHIFT'] = shape_local_zoom_shift
+definitions['SUM_SHAPE_ANGLE_OFFSET'] = sum_shape_angle_offset
+definitions['SUM_SHAPEL_ZOOM_SHIFT'] = sum_shape_local_zoom_shift
 
 
 # =============================================================================
@@ -1813,9 +1827,12 @@ sum_flat_blaze_order = Graph('SUM_FLAT_BLAZE_ORDER', kind='summary',
                              func=plot_flat_blaze_order,
                              figsize=(16, 10), dpi=150, description=sum_desc)
 # add to definitions
-definitions += [flat_order_fit_edges1, flat_order_fit_edges2,
-                flat_blaze_order1, flat_blaze_order2,
-                sum_flat_order_fit_edges, sum_flat_blaze_order]
+definitions['FLAT_ORDER_FIT_EDGES1'] = flat_order_fit_edges1
+definitions['FLAT_BLAZE_ORDER1'] = flat_blaze_order1
+definitions['FLAT_ORDER_FIT_EDGES2'] = flat_order_fit_edges2
+definitions['FLAT_BLAZE_ORDER2'] = flat_blaze_order2
+definitions['SUM_FLAT_ORDER_FIT_EDGES'] = sum_flat_order_fit_edges
+definitions['SUM_FLAT_BLAZE_ORDER'] = sum_flat_blaze_order
 
 
 # =============================================================================
@@ -1878,7 +1895,7 @@ def plot_thermal_background(plotter: Plotter, graph: Graph,
 thermal_background = Graph('THERMAL_BACKGROUND', kind='debug',
                            func=plot_thermal_background)
 # add to definitions
-definitions += [thermal_background]
+definitions['THERMAL_BACKGROUND'] = thermal_background
 
 
 # =============================================================================
@@ -2137,9 +2154,12 @@ sum_extract_s1d = Graph('SUM_EXTRACT_S1D', kind='summary',
                         func=plot_extract_s1d,
                         figsize=(16, 10), dpi=150, description=sum_desc)
 # add to definitions
-definitions += [extract_spectral_order1, extract_spectral_order2,
-                extract_s1d, extract_s1d_weights, sum_extract_sp_order,
-                sum_extract_s1d]
+definitions['EXTRACT_SPECTRAL_ORDER1'] = extract_spectral_order1
+definitions['EXTRACT_SPECTRAL_ORDER2'] = extract_spectral_order2
+definitions['EXTRACT_S1D'] = extract_s1d
+definitions['EXTRACT_S1D_WEIGHT'] = extract_s1d_weights
+definitions['SUM_EXTRACT_SP_ORDER'] = sum_extract_sp_order
+definitions['SUM_EXTRACT_S1D'] = sum_extract_s1d
 
 
 # =============================================================================
@@ -2365,8 +2385,11 @@ sum_wave_fiber_comp = Graph('SUM_WAVE_FIBER_COMP', kind='summary',
                             description=sum_desc)
 
 # add to definitions
-definitions += [wave_wl_vs_cavity, wave_fiber_comparison,
-                wave_fiber_comp, sum_wave_fiber_comp, wave_hc_diff_hist]
+definitions['WAVE_WL_CAV'] = wave_wl_vs_cavity
+definitions['WAVE_HC_DIFF_HIST'] = wave_hc_diff_hist
+definitions['WAVE_FIBER_COMPARISON'] = wave_fiber_comparison
+definitions['WAVE_FIBER_COMP'] = wave_fiber_comp
+definitions['SUM_WAVE_FIBER_COMP'] = sum_wave_fiber_comp
 
 
 # =============================================================================
@@ -3629,16 +3652,32 @@ sum_wavenight_histplot = Graph('SUM_WAVENIGHT_HISTPLOT', kind='summary',
                                figsize=(16, 10), dpi=150,
                                description=sum_desc)
 # add to definitions
-definitions += [wave_hc_guess, wave_hc_brightest_lines, wave_hc_tfit_grid,
-                wave_hc_resmap, wave_littrow_check1, wave_littrow_extrap1,
-                wave_littrow_check2, wave_littrow_extrap2, wave_fp_final_order,
-                wave_fp_lwid_offset, wave_fp_wave_res, wave_fp_m_x_res,
-                wave_fp_ipt_cwid_1mhc, wave_fp_ipt_cwid_llhc, wave_fp_ll_diff,
-                wave_fp_multi_order, wave_fp_single_order, wave_resmap,
-                sum_wave_littrow_check, sum_wave_littrow_extrap,
-                sum_wave_fp_ipt_cwid_1mhc, waveref_expected, wavenight_iterplot,
-                sum_wavenight_iterplot, wavenight_histplot,
-                sum_wavenight_histplot]
+definitions['WAVE_HC_GUESS'] = wave_hc_guess
+definitions['WAVE_HC_BRIGHTEST_LINES'] = wave_hc_brightest_lines
+definitions['WAVE_HC_TFIT_GRID'] = wave_hc_tfit_grid
+definitions['WAVE_HC_RESMAP'] = wave_hc_resmap
+definitions['WAVE_RESMAP'] = wave_resmap
+definitions['WAVE_LITTROW_CHECK1'] = wave_littrow_check1
+definitions['WAVE_LITTROW_EXTRAP1'] = wave_littrow_extrap1
+definitions['WAVE_LITTROW_CHECK2'] = wave_littrow_check2
+definitions['WAVE_LITTROW_EXTRAP2'] = wave_littrow_extrap2
+definitions['WAVE_FP_FINAL_ORDER'] = wave_fp_final_order
+definitions['WAVE_FP_LWID_OFFSET'] = wave_fp_lwid_offset
+definitions['WAVE_FP_WAVE_RES'] = wave_fp_wave_res
+definitions['WAVE_FP_M_X_RES'] = wave_fp_m_x_res
+definitions['WAVE_FP_IPT_CWID_1MHC'] = wave_fp_ipt_cwid_1mhc
+definitions['WAVE_FP_IPT_CWID_LLHC'] = wave_fp_ipt_cwid_llhc
+definitions['SUM_WAVE_FP_IPT_CWID_LLHC'] = sum_wave_fp_ipt_cwid_1mhc
+definitions['WAVE_FP_LL_DIFF'] = wave_fp_ll_diff
+definitions['WAVE_FP_MULTI_ORDER'] = wave_fp_multi_order
+definitions['WAVE_FP_SINGLE_ORDER'] = wave_fp_single_order
+definitions['WAVEREF_EXPECTED'] = waveref_expected
+definitions['WAVENIGHT_ITERPLOT'] = wavenight_iterplot
+definitions['SUM_WAVENIGHT_ITERPLOT'] = sum_wavenight_iterplot
+definitions['WAVENIGHT_HISTPLOT'] = wavenight_histplot
+definitions['SUM_WAVENIGHT_HISTPLOT'] = sum_wavenight_histplot
+definitions['SUM_WAVE_LITTROW_CHECK'] = sum_wave_littrow_check
+definitions['SUM_WAVE_LITTROW_EXTRAP'] = sum_wave_littrow_extrap
 
 
 # =============================================================================
@@ -4792,17 +4831,35 @@ tellu_finite_res_cor = Graph('TELLU_FINITE_RES_CORR', kind='debug',
                              func=plot_tellu_finite_res_corr)
 
 # add to definitions
-definitions += [tellu_skymodel_region, tellu_skymodel_med,
-                tellu_skymodel_linefit,  tellu_sky_corr,
-                mktellu_wave_flux1, mktellu_wave_flux2,
-                sum_mktellu_wave_flux,  mktellu_model, sum_mktellu_model,
-                ftellu_pca_comp1, ftellu_pca_comp2, ftellu_recon_spline1,
-                ftellu_recon_spline2, ftellu_wave_shift1, ftellu_wave_shift2,
-                ftellu_recon_abso1, ftellu_recon_abso2, sum_ftellu_recon_abso,
-                tellup_wave_trans, sum_tellup_wave_trans, tellup_abso_spec,
-                tellup_clean_oh, sum_tellup_abso_spec, mktemp_berv_cov,
-                mktemp_deconv, tellu_finite_res_cor, sum_mktemp_berv_cov,
-                ftellu_res_model, sum_ftellu_res_model]
+definitions['TELLU_SKYMODEL_REGION_PLOT'] = tellu_skymodel_region
+definitions['TELLU_SKYMODEL_MED'] = tellu_skymodel_med
+definitions['TELLU_SKYMODEL_LINEFIT'] = tellu_skymodel_linefit
+definitions['TELLU_SKY_CORR_PLOT'] = tellu_sky_corr
+definitions['TELLUP_WAVE_TRANS'] = mktellu_wave_flux1
+definitions['MKTELLU_WAVE_FLUX2'] = mktellu_wave_flux2
+definitions['SUM_MKTELLU_WAVE_FLUX'] = sum_mktellu_wave_flux
+definitions['MKTELLU_MODEL'] = mktellu_model
+definitions['SUM_MKTELLU_MODEL'] = sum_mktellu_model
+definitions['FTELLU_PCA_COMP1'] = ftellu_pca_comp1
+definitions['FTELLU_PCA_COMP2'] = ftellu_pca_comp2
+definitions['FTELLU_RECON_SPLINE1'] = ftellu_recon_spline1
+definitions['FTELLU_RECON_SPLINE2'] = ftellu_recon_spline2
+definitions['FTELLU_WAVE_SHIFT1'] = ftellu_wave_shift1
+definitions['FTELLU_WAVE_SHIFT2'] = ftellu_wave_shift2
+definitions['FTELLU_RECON_ABSO1'] = ftellu_recon_abso1
+definitions['FTELLU_RECON_ABSO2'] = ftellu_recon_abso2
+definitions['SUM_FTELLU_RECON_ABSO'] = sum_ftellu_recon_abso
+definitions['TELLUP_WAVE_TRANS'] = tellup_wave_trans
+definitions['SUM_TELLUP_WAVE_TRANS'] = sum_tellup_wave_trans
+definitions['TELLUP_ABSO_SPEC'] = tellup_abso_spec
+definitions['SUM_TELLUP_ABSO_SPEC'] = sum_tellup_abso_spec
+definitions['TELLUP_CLEAN_OH'] = tellup_clean_oh
+definitions['MKTEMP_BERV_COV'] = mktemp_berv_cov
+definitions['SUM_MKTEMP_BERV_COV'] = sum_mktemp_berv_cov
+definitions['MKTEMP_S1D_DECONV'] = mktemp_deconv
+definitions['TELLU_FINITE_RES_CORR'] = tellu_finite_res_cor
+definitions['FTELLU_RES_MODEL'] = ftellu_res_model
+definitions['SUM_FTELLU_RES_MODEL'] = sum_ftellu_res_model
 
 
 # =============================================================================
@@ -5008,8 +5065,12 @@ sum_ccf_photon_uncert = Graph('SUM_CCF_PHOTON_UNCERT', kind='summary',
                               func=plot_ccf_photon_uncert)
 
 # add to definitions
-definitions += [ccf_rv_fit, ccf_rv_fit_loop, ccf_swave_ref,
-                ccf_photon_uncert, sum_ccf_rv_fit, sum_ccf_photon_uncert]
+definitions['CCF_RV_FIT_LOOP'] = ccf_rv_fit_loop
+definitions['CCF_RV_FIT'] = ccf_rv_fit
+definitions['CCF_SWAVE_REF'] = ccf_swave_ref
+definitions['CCF_PHOTON_UNCERT'] = ccf_photon_uncert
+definitions['SUM_CCF_RV_FIT'] = sum_ccf_rv_fit
+definitions['SUM_CCF_PHOTON_UNCERT'] = sum_ccf_photon_uncert
 
 
 # =============================================================================
@@ -5353,8 +5414,11 @@ polar_stokes_i = Graph('POLAR_STOKES_I', kind='debug', func=plot_polar_stoke_i)
 polar_lsd = Graph('POLAR_LSD', kind='debug', func=plot_polar_lsd)
 
 # add to definitions
-definitions += [polar_fit_cont, polar_continuum, polar_results,
-                polar_stokes_i, polar_lsd]
+definitions['POLAR_FIT_CONT'] = polar_fit_cont
+definitions['POLAR_CONTINUUM'] = polar_continuum
+definitions['POLAR_RESULTS'] = polar_results
+definitions['POLAR_STOKES_I'] = polar_stokes_i
+definitions['POLAR_LSD'] = polar_lsd
 
 
 # =============================================================================
@@ -5748,7 +5812,10 @@ stats_ram_plot = Graph('STAT_RAM_PLOT', kind='show',
                        func=plot_stats_ram_plot)
 
 # add to definitions
-definitions += [logstats_bar, stats_timing, stats_qc_recipe, stats_ram_plot]
+definitions['LOGSTATS_BAR'] = logstats_bar
+definitions['STATS_TIMING_PLOT'] = stats_timing
+definitions['STAT_QC_RECIPE_PLOT'] = stats_qc_recipe
+definitions['STAT_RAM_PLOT'] = stats_ram_plot
 
 
 # =============================================================================
@@ -5868,7 +5935,8 @@ general_image = Graph('IMAGE', kind='show', func=plot_image)
 general_plot = Graph('PLOT', kind='show', func=plot_plot)
 
 # add to definitions
-definitions += [general_image, general_plot]
+definitions['IMAGE'] = general_image
+definitions['PLOT'] = general_plot
 
 # =============================================================================
 # Start of code

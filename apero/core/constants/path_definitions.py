@@ -13,7 +13,7 @@ import os
 from typing import Any, List, Tuple, Union
 
 from apero.base import base
-from apero.core import lang
+from apero.base import drs_lang
 from apero.core.base import drs_exceptions
 
 # =============================================================================
@@ -29,7 +29,7 @@ __release__ = base.__release__
 # get time object
 Time = base.Time
 # Get the text types
-textentry = lang.textentry
+textentry = drs_lang.textentry
 # get parameter dictionary
 ParamDict = Any
 # get the Drs Exceptions
@@ -45,7 +45,7 @@ QCParamList = Union[Tuple[List[str], List[Any], List[str], List[int]],
 # Define Path classes
 # =============================================================================
 class BlockPath:
-    description: lang.Text = None
+    description: drs_lang.Text = None
     name: str = None
     key: str = None
     argname: str = None
@@ -127,7 +127,7 @@ class BlockPath:
 
 
 class RawPath(BlockPath):
-    description: lang.Text = textentry('DATA_RAW_DESC')
+    description: drs_lang.Text = textentry('DATA_RAW_DESC')
     name: str = 'raw'
     key: str = 'DRS_DATA_RAW'
     argname: str = 'rawdir'
@@ -146,7 +146,7 @@ class RawPath(BlockPath):
 
 
 class TmpPath(BlockPath):
-    description: lang.Text = textentry('DATA_TMP_DESC')
+    description: drs_lang.Text = textentry('DATA_TMP_DESC')
     name: str = 'tmp'
     key: str = 'DRS_DATA_WORKING'
     argname: str = 'tmpdir'
@@ -165,7 +165,7 @@ class TmpPath(BlockPath):
 
 
 class ReducedPath(BlockPath):
-    description: lang.Text = textentry('DATA_REDUC_DESC')
+    description: drs_lang.Text = textentry('DATA_REDUC_DESC')
     name: str = 'red'
     key: str = 'DRS_DATA_REDUC'
     argname: str = 'reddir'
@@ -184,7 +184,7 @@ class ReducedPath(BlockPath):
 
 
 class CalibPath(BlockPath):
-    description: lang.Text = textentry('DATA_CALIB_DESC')
+    description: drs_lang.Text = textentry('DATA_CALIB_DESC')
     name: str = 'calib'
     key: str = 'DRS_CALIB_DB'
     argname: str = 'calibdir'
@@ -203,7 +203,7 @@ class CalibPath(BlockPath):
 
 
 class TelluPath(BlockPath):
-    description: lang.Text = textentry('DATA_TELLU_DESC')
+    description: drs_lang.Text = textentry('DATA_TELLU_DESC')
     name: str = 'tellu'
     key: str = 'DRS_TELLU_DB'
     argname: str = 'telludir'
@@ -222,7 +222,7 @@ class TelluPath(BlockPath):
 
 
 class OutPath(BlockPath):
-    description: lang.Text = textentry('DATA_OUT_DESC')
+    description: drs_lang.Text = textentry('DATA_OUT_DESC')
     name: str = 'out'
     key: str = 'DRS_DATA_OUT'
     argname: str = 'outdir'
@@ -241,7 +241,7 @@ class OutPath(BlockPath):
 
 
 class OtherPath(BlockPath):
-    description: lang.Text = 'Other files reduction path'
+    description: drs_lang.Text = 'Other files reduction path'
     name: str = 'other'
     key: str = 'DRS_DATA_OTHER'
     argname: str = 'otherdir'
@@ -259,7 +259,7 @@ class OtherPath(BlockPath):
 
 
 class LBLPath(BlockPath):
-    description: lang.Text = 'LBL reduction path'
+    description: drs_lang.Text = 'LBL reduction path'
     name: str = 'lbl'
     key: str = 'LBL_PATH'
     argname: str = 'lbldir'
@@ -278,7 +278,7 @@ class LBLPath(BlockPath):
 
 
 class AssetPath(BlockPath):
-    description: lang.Text = textentry('DATA_ASSETS_DESC')
+    description: drs_lang.Text = textentry('DATA_ASSETS_DESC')
     name: str = 'asset'
     key: str = 'DRS_DATA_ASSETS'
     argname: str = 'assetsdir'
@@ -296,7 +296,7 @@ class AssetPath(BlockPath):
 
 
 class PlotPath(BlockPath):
-    description: lang.Text = textentry('DATA_PLOT_DESC')
+    description: drs_lang.Text = textentry('DATA_PLOT_DESC')
     name: str = 'plot'
     key: str = 'DRS_DATA_PLOT'
     argname: str = 'plotdir'
@@ -314,7 +314,7 @@ class PlotPath(BlockPath):
 
 
 class RunPath(BlockPath):
-    description: lang.Text = textentry('DATA_RUN_DESC')
+    description: drs_lang.Text = textentry('DATA_RUN_DESC')
     name: str = 'run'
     key: str = 'DRS_DATA_RUN'
     argname: str = 'rundir'
@@ -332,7 +332,7 @@ class RunPath(BlockPath):
 
 
 class LogPath(BlockPath):
-    description: lang.Text = textentry('DATA_LOG_DESC')
+    description: drs_lang.Text = textentry('DATA_LOG_DESC')
     name: str = 'msg'
     key: str = 'DRS_DATA_MSG'
     argname: str = 'logdir'

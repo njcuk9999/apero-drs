@@ -15,7 +15,7 @@ from typing import Any, Dict, List, Tuple, Union
 from apero.base import base
 from apero.core.base import drs_base_classes as base_class
 from apero.core.constants.param_functions import ParamDict
-from apero.core import lang
+from apero.base import drs_lang
 from apero.core.base import drs_exceptions
 from apero.core.base import drs_misc
 from apero.core.base import drs_text
@@ -35,7 +35,7 @@ __release__ = base.__release__
 DrsCodedException = drs_exceptions.DrsCodedException
 DrsCodedWarning = drs_exceptions.DrsCodedWarning
 # Get the text types
-textentry = lang.textentry
+textentry = drs_lang.textentry
 # get display func
 display_func = drs_misc.display_func
 # Define config/constant/keyword scripts to open
@@ -66,10 +66,7 @@ def load_config(instrument: Union[str, None] = None,
     global CONFIG_CACHE
     # deal with no instrument
     if instrument is None:
-        if 'INSTRUMENT' in base.IPARAMS:
-            instrument = base.IPARAMS['INSTRUMENT']
-        else:
-            instrument = 'None'
+        instrument = base.IPARAMS['INSTRUMENT']
     elif instrument == 'default':
         instrument = 'None'
     # force instrument to upper case
@@ -126,7 +123,10 @@ def load_pconfig(instrument: Union[str, None] = None
     """
     # deal with no instrument
     if instrument is None:
-        instrument = base.IPARAMS['INSTRUMENT']
+        if len(base.IPARAMS) == 0:
+            instrument = 'None'
+        else:
+            instrument = base.IPARAMS['INSTRUMENT']
     elif instrument == 'default':
         instrument = 'None'
     # force instrument to upper case

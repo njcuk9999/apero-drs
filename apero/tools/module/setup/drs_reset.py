@@ -22,10 +22,10 @@ from apero.base import base
 from apero.core.base.drs_base_classes import Printer
 from apero.core.constants import param_functions
 from apero.core.constants import load_functions
-from apero.core import lang
+from apero.base import drs_lang
 from apero.core.constants import path_definitions
 from apero.core.core import drs_database
-from apero.core.core import drs_log
+from apero.core.base import drs_log
 from apero.core.instruments.default import instrument as instrument_mod
 from apero.core.utils import drs_data
 from apero.io import drs_lock
@@ -51,7 +51,7 @@ DatabaseM = drs_database.DatabaseManager
 WLOG = drs_log.wlog
 TLOG = Printer
 # Get the text types
-textentry = lang.textentry
+textentry = drs_lang.textentry
 # debug mode (test)
 DEBUG = False
 

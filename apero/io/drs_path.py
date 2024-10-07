@@ -30,7 +30,7 @@ from apero.base import base
 from apero.base import drs_base
 from apero.core.base.drs_base_classes import Printer
 from apero.core.constants import param_functions
-from apero.core import lang
+from apero.base import drs_lang
 from apero.core import math as mp
 from apero.core.base import drs_exceptions
 from apero.core.base import drs_misc
@@ -56,7 +56,7 @@ DrsCodedException = drs_exceptions.DrsCodedException
 # Get Logging function
 TLOG = Printer
 # Get the text types
-textentry = lang.textentry
+textentry = drs_lang.textentry
 
 
 # -----------------------------------------------------------------------------

@@ -16,9 +16,9 @@ import numpy as np
 
 from apero.base import base
 from apero.core.constants import param_functions
-from apero.core import lang
+from apero.base import drs_lang
 from apero.core.constants import constant_functions as cf
-from apero.core.core import drs_log
+from apero.core.base import drs_log
 from apero.core.base import drs_text
 from apero.core.base import drs_misc
 from apero.tools.module.setup import drs_installation as install
@@ -38,7 +38,7 @@ ParamDict = param_functions.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-textentry = lang.textentry
+textentry = drs_lang.textentry
 # get display func
 display_func = drs_misc.display_func
 

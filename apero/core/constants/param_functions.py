@@ -23,7 +23,7 @@ from astropy.io import fits
 from astropy.table import Table
 
 from apero.base import base
-from apero.core import lang
+from apero.base import drs_lang
 from apero.core import math as mp
 from apero.core.base import drs_base_classes as base_class
 from apero.core.base import drs_exceptions
@@ -62,7 +62,7 @@ DEFAULT_PSEUDO_CONST_CLASS = base.DEFAULT_PSEUDO_CONST_CLASS
 # Get base classes
 CaseInDict = base_class.CaseInsensitiveDict
 # Get the text types
-textentry = lang.textentry
+textentry = drs_lang.textentry
 # get display func
 display_func = drs_misc.display_func
 

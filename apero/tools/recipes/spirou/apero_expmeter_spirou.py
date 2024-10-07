@@ -15,11 +15,11 @@ import numpy as np
 
 from apero.base import base
 from apero.core.constants import param_functions
-from apero.core import lang
+from apero.base import drs_lang
 from apero.core import math as mp
 from apero.core.core import drs_database
 from apero.core.core import drs_file
-from apero.core.core import drs_log
+from apero.core.base import drs_log
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_utils
 from apero.science import telluric
@@ -43,7 +43,7 @@ ParamDict = param_functions.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-textentry = lang.textentry
+textentry = drs_lang.textentry
 # -----------------------------------------------------------------------------
 # set up recipe definitions (overwrites default one)
 RMOD = drs_dev.RecipeDefinition(instrument=__INSTRUMENT__)

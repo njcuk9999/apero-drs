@@ -32,7 +32,7 @@ from apero.base import base
 from apero.core.base import drs_exceptions
 from apero.core.constants import param_functions
 from apero.core.constants import load_functions
-from apero.core import lang
+from apero.base import drs_lang
 from apero.core.base import drs_misc
 
 # =============================================================================
@@ -54,7 +54,7 @@ DrsCodedWarning = drs_exceptions.DrsCodedWarning
 # Get function string
 display_func = drs_misc.display_func
 # Get the text types
-textentry = lang.textentry
+textentry = drs_lang.textentry
 # define max wait
 MAX_WAIT = 100
 

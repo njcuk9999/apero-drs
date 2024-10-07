@@ -12,13 +12,12 @@ Created on 2019-10-08 at 10:04
 import glob
 import os
 import shutil
-from typing import Dict, List, Union
+from typing import Any, Dict, List, Union
 
 import numpy as np
 from astropy.table import Table
 
 from apero.base import base
-from apero.core.constants import param_functions
 from apero.core.constants import load_functions
 
 # =============================================================================
@@ -31,8 +30,6 @@ __version__ = base.__version__
 __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
-# Get parameter dictionary class
-ParamDict = param_functions.ParamDict
 # define known extensions
 KNOWN_EXTENSIONS = ['.pdf', '.tex', '.html']
 # define colours
@@ -65,7 +62,7 @@ table, td, th {
 # Define class
 # =============================================================================
 class HtmlDocument:
-    def __init__(self, params: ParamDict, filename: str,
+    def __init__(self, params: Any, filename: str,
                  extension: str = '.html'):
         """
         Construct HTML instance

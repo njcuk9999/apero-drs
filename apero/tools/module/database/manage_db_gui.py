@@ -18,7 +18,7 @@ from ttkthemes import ThemedTk
 from apero.base import base
 from apero.base import drs_db
 from apero.core.constants import param_functions
-from apero.core.core import drs_log
+from apero.core.base import drs_log
 from apero.tools.module.gui import gen_gui
 from apero.tools.module.gui import widgets
 

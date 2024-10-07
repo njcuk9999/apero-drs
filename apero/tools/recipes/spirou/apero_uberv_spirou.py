@@ -15,7 +15,7 @@ import os
 from apero.base import base
 from apero.core.constants import param_functions
 from apero.core.core import drs_file
-from apero.core.core import drs_log
+from apero.core.base import drs_log
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_utils
 from apero.science import extract

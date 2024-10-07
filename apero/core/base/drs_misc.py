@@ -30,7 +30,7 @@ import psutil
 
 from apero.base import base
 from apero.base import drs_base
-from apero.core import lang
+from apero.base import drs_lang
 from apero.core.base import drs_exceptions
 
 # =============================================================================
@@ -48,7 +48,7 @@ Time = base.Time
 # get all chars
 CHARS = string.ascii_uppercase + string.digits
 # get textentry
-textentry = lang.textentry
+textentry = drs_lang.textentry
 # define relative path to google token files
 PARAM1 = ('241559402076-vbo2eu8sl64ehur7'
           'n1qhqb0q9pfb5hei.apps.googleusercontent.com')

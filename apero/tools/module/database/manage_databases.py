@@ -16,12 +16,12 @@ from astropy.table import Table, vstack, MaskedColumn
 
 from apero.base import base
 from apero.base import drs_db
-from apero.core import lang
+from apero.base import drs_lang
 from apero.core.base import drs_text
 from apero.core.constants import param_functions
 from apero.core.constants import load_functions
 from apero.core.core import drs_database
-from apero.core.core import drs_log
+from apero.core.base import drs_log
 from apero.core.instruments.default import instrument as instrument_mod
 
 # =============================================================================
@@ -45,7 +45,7 @@ Instrument = instrument_mod.Instrument
 # Get Logging function
 WLOG = drs_log.wlog
 # get textentry
-textentry = lang.textentry
+textentry = drs_lang.textentry
 # define reject column datatypes (force consistency)
 REJECT_DATA_TYPES = dict()
 REJECT_DATA_TYPES['IDENTIFIER'] = str

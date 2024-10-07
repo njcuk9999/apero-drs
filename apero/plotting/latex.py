@@ -553,6 +553,8 @@ def clean(text: Union[List[str], str]) -> Union[List[str], str]:
     """
     # if we have a list go to clean list function
     if isinstance(text, list):
+        if len(text) == 0:
+            return text
         return cleanlist(text)
     # else copy new text
     else:

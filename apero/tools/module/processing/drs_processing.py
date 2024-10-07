@@ -27,7 +27,7 @@ from apero.base import base
 from apero.core.constants import param_functions
 from apero.core.constants import load_functions
 from apero.core.constants import constant_functions
-from apero.core import lang
+from apero.base import drs_lang
 from apero.core.base.drs_base_classes import Printer
 from apero.core.core import drs_argument
 from apero.core.core import drs_database
@@ -36,7 +36,7 @@ from apero.core.base import drs_base_classes as base_class
 from apero.core.base import drs_misc
 from apero.core.base import drs_text
 from apero.core.core import drs_file
-from apero.core.core import drs_log
+from apero.core.base import drs_log
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_utils
@@ -69,7 +69,7 @@ DrsRecipeException = drs_exceptions.DrsRecipeException
 DrsArgument = drs_argument.DrsArgument
 DrsInputFile = drs_file.DrsInputFile
 # Get the text types
-textentry = lang.textentry
+textentry = drs_lang.textentry
 # alias pcheck
 pcheck = param_functions.PCheck(wlog=WLOG)
 # get tqdm

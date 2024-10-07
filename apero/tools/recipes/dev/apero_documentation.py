@@ -13,7 +13,7 @@ Created on 2020-01-07 at 14:59
 from apero.base import base
 from apero.core.base import drs_text
 from apero.core.constants import load_functions
-from apero.core.core import drs_log
+from apero.core.base import drs_log
 from apero.core.utils import drs_startup
 from apero.tools.module.documentation import drs_documentation
 

@@ -9,8 +9,8 @@ Created on 2019-01-17 at 14:31
 
 @author: cook
 """
-from apero.core.lang import drs_lang_text
-from apero.core.lang import drs_lang_list
+from apero.base.drs_lang import drs_lang_text
+from apero.base.drs_lang import drs_lang_list
 
 __all__ = ['textentry', 'Text']
 

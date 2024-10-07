@@ -19,14 +19,14 @@ from astropy.io import fits
 from astropy.table import Table
 
 from apero.base import base
-from apero.core import lang
+from apero.base import drs_lang
 from apero.core.base import drs_misc
 from apero.core.base import drs_text
 from apero.core.constants import load_functions
 from apero.core.constants import param_functions
 from apero.core.core import drs_database
 from apero.core.core import drs_file
-from apero.core.core import drs_log
+from apero.core.base import drs_log
 from apero.core.instruments.default import instrument as instrument_mod
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_utils
@@ -52,7 +52,7 @@ Instrument = instrument_mod.Instrument
 # get display func
 display_func = drs_misc.display_func
 # Get the text types
-textentry = lang.textentry
+textentry = drs_lang.textentry
 # get tqdm (if required)
 tqdm = base.tqdm_module()
 # Define reference prefix

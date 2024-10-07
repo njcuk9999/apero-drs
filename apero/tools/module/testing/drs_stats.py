@@ -26,7 +26,7 @@ from apero.core.constants import param_functions
 from apero.core import math as mp
 from apero.core.base import drs_base_classes as base_class, drs_text, drs_misc
 from apero.core.core import drs_database
-from apero.core.core import drs_log
+from apero.core.base import drs_log
 from apero.core.utils import drs_recipe
 from apero.io import drs_fits
 

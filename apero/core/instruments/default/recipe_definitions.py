@@ -7,7 +7,7 @@ Created on 2018-10-31 at 18:06
 
 @author: cook
 """
-from apero.core import lang
+from apero.base import drs_lang
 from apero.base import base
 from apero.core.constants import path_definitions
 from apero.core.utils import drs_recipe
@@ -23,7 +23,7 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # Get Help
-textentry = lang.textentry
+textentry = drs_lang.textentry
 
 # =============================================================================
 # Commonly used arguments

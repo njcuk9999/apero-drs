@@ -33,7 +33,7 @@ import numpy as np
 
 from apero.base import base
 from apero.base import drs_db
-from apero.core import lang
+from apero.base import drs_lang
 
 from apero.core.constants import param_functions
 from apero.core.constants import load_functions
@@ -43,7 +43,7 @@ from apero.core.base import drs_base_classes as base_class
 from apero.core.base import drs_text
 from apero.core.base import drs_misc
 from apero.core.core import drs_file
-from apero.core.core import drs_log
+from apero.core.base import drs_log
 from apero.io import drs_fits
 
 # =============================================================================
@@ -74,7 +74,7 @@ DrsCodedException = drs_exceptions.DrsCodedException
 PandasLikeDatabase = base_class.PandasLikeDatabase
 # PandasLikeDatabase = drs_base_classes.PandasLikeDatabaseDuckDB
 # Get the text types
-textentry = lang.textentry
+textentry = drs_lang.textentry
 # define display strings for types
 STRTYPE = base.STRTYPE
 NUMBER_TYPES = base.NUMBER_TYPES
@@ -3058,9 +3058,9 @@ class DrsArgument(object):
         self.props = copy.deepcopy(argument.props)
         self.value = copy.deepcopy(argument.value)
 
-    ErrorStrType = Union[List[Union[lang.Text, str]], lang.Text, str, None]
+    ErrorStrType = Union[List[Union[drs_lang.Text, str]], drs_lang.Text, str, None]
 
-    def exception(self, message: Union[lang.Text, List[str], str, None] = None,
+    def exception(self, message: Union[drs_lang.Text, List[str], str, None] = None,
                   errorstr: ErrorStrType = None):
         """
         Internal exception generator --> raises an Argument Error with
@@ -3088,13 +3088,13 @@ class DrsArgument(object):
         # if we have an error object then raise an argument error with
         #   the error object
         if errorstr is not None:
-            if isinstance(errorstr, (lang.Text, str)):
+            if isinstance(errorstr, (drs_lang.Text, str)):
                 errorstr = [errorstr]
             # add the log option to error output
             errorout = log_opt
             # add the error strings
             for estr in errorstr:
-                if isinstance(estr, lang.Text):
+                if isinstance(estr, drs_lang.Text):
                     estr = estr.get_text(report=True)
                 errorout += estr
 

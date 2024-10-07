@@ -18,12 +18,12 @@ from tqdm import tqdm
 from apero.base import base
 from apero.core.constants import param_functions
 from apero.core.constants import load_functions
-from apero.core import lang
+from apero.base import drs_lang
 from apero.core import math as mp
 from apero.core.core import drs_argument
 from apero.core.core import drs_database
 from apero.core.core import drs_file
-from apero.core.core import drs_log
+from apero.core.base import drs_log
 from apero.core.base import drs_text
 from apero.core.utils import drs_recipe
 from apero.science import preprocessing as prep
@@ -52,7 +52,7 @@ DrsInputFile = drs_file.DrsInputFile
 FileIndexDatabase = drs_database.FileIndexDatabase
 ObjectDatabase = drs_database.AstrometricDatabase
 # get text entry instance
-textentry = lang.textentry
+textentry = drs_lang.textentry
 
 
 # =============================================================================

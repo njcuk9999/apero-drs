@@ -14,9 +14,9 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 from apero.base import base
 from apero.core.constants import param_functions
-from apero.core import lang
+from apero.base import drs_lang
 from apero.core.core import drs_database
-from apero.core.core import drs_log
+from apero.core.base import drs_log
 from apero.core.instruments.spirou import file_definitions as fd
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
@@ -38,7 +38,7 @@ DrsRecipe = drs_recipe.DrsRecipe
 # Get parameter class
 ParamDict = param_functions.ParamDict
 # Get the text types
-textentry = lang.textentry
+textentry = drs_lang.textentry
 
 
 # =============================================================================

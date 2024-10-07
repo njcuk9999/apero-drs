@@ -18,7 +18,7 @@ import importlib
 from typing import Any, Dict, List
 
 from apero.base import base
-from apero.core.lang import drs_lang_list
+from apero.base.drs_lang import drs_lang_list
 
 # =============================================================================
 # Define variables

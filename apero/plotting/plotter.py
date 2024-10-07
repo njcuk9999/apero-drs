@@ -8,7 +8,7 @@ Created on 2019-01-19 at 13:45
 @author: cook
 """
 import os
-import sys
+import platform
 from collections import OrderedDict
 from collections.abc import Iterable
 from typing import Any, Generator, List, Tuple, Union
@@ -18,14 +18,15 @@ import numpy as np
 from astropy.table import Table
 
 from apero.base import base
-from apero.core.constants import param_functions
-from apero.core import lang
+from apero.base import drs_lang
 from apero.core import math as mp
-from apero.core.core import drs_log
+from apero.core.base import drs_log
 from apero.core.base import drs_misc
+from apero.core.constants import load_functions
+from apero.core.constants import param_functions
 from apero.core.utils import drs_recipe
 from apero.io import drs_path
-from apero.plotting import html
+from apero.plotting import drs_html
 from apero.plotting import latex
 from apero.plotting import plot_functions
 
@@ -47,7 +48,7 @@ WLOG = drs_log.wlog
 ParamDict = param_functions.ParamDict
 DrsRecipe = drs_recipe.DrsRecipe
 # Get the text types
-textentry = lang.textentry
+textentry = drs_lang.textentry
 # alias pcheck
 pcheck = param_functions.PCheck(wlog=WLOG)
 # get plotting definitions
@@ -94,7 +95,7 @@ class Plotter:
         else:
             self.plotoption = mode
         # set up names of the plots that have been used
-        self.names = OrderedDict()
+        self.names = definitions
         # set up the plot switches
         self.plot_switches = OrderedDict()
         # flag whether we have debug plots
@@ -129,8 +130,6 @@ class Plotter:
         self.matplotlib = None
         self.axes_grid1 = None
         # ------------------------------------------------------------------
-        # set self.names via _get_plot_names()
-        self._get_plot_names()
         # set self.plot_switches via _get_plot_switches()
         self._get_plot_switches()
         # set matplotlib via _get_matplotlib()
@@ -160,7 +159,7 @@ class Plotter:
         # get root plot path
         plot_path = self.params['DRS_DATA_PLOT']
         # get night name (and deal with unset/other)
-        obs_dir = self.params['OBS_DIR']
+        obs_dir = self.params.get('OBS_DIR', None)
         if obs_dir is None or obs_dir == '':
             obs_dir = 'other'
         # construct summary pdf
@@ -814,7 +813,7 @@ class Plotter:
         """
         summary_filename = self.summary_filename
         # set up the latex document
-        doc = html.HtmlDocument(self.params, summary_filename)
+        doc = drs_html.HtmlDocument(self.params, summary_filename)
         # get recipe short name
         shortname = self.recipename
         pid = self.params['PID'].lower()
@@ -864,7 +863,7 @@ class Plotter:
         # return doc
         return doc
 
-    def summary_html_qc_params(self, doc: html.HtmlDocument,
+    def summary_html_qc_params(self, doc: drs_html.HtmlDocument,
                                qc_params: Union[List[Any], None] = None):
         """
         Compile the qc params  table for the html document
@@ -908,7 +907,7 @@ class Plotter:
             # insert table
             doc.insert_table(qc_table, caption=qc_caption, colormask=qc_mask)
 
-    def summary_html_stats(self, doc: html.HtmlDocument,
+    def summary_html_stats(self, doc: drs_html.HtmlDocument,
                            stats: Union[Table, None] = None):
         """
         Add the stats table to the html document
@@ -945,8 +944,8 @@ class Plotter:
             # insert table
             doc.insert_table(stats_html, caption=caption)
 
-    def summary_html_warnings(self,
-                              doc: html.HtmlDocument) -> html.HtmlDocument:
+    def summary_html_warnings(self, doc: drs_html.HtmlDocument
+                              ) -> drs_html.HtmlDocument:
         """
         Add the warnings table to the html document
 
@@ -1129,21 +1128,6 @@ class Plotter:
             eargs = [name, func_name]
             WLOG(self.params, 'error', textentry('00-100-00001', args=eargs))
 
-    def _get_plot_names(self):
-        """
-        Get the plot names (stored in self.names) from plot_obj.name for
-        all plot definitions (plot_functions.definitions)
-
-        :return: None, updates self.names
-        """
-        self.names = OrderedDict()
-        # loop around plot objects
-        for plot_obj in definitions:
-            # get the plot object name
-            name = plot_obj.name.upper()
-            # store in names dictionary
-            self.names[name] = plot_obj
-
     def _get_plot_switches(self):
         """
         Find all currently defined plot switches in params and checks
@@ -1201,8 +1185,9 @@ class Plotter:
             PLT_MOD = None
             MPL_MOD = None
             return
+        # ------------------------------------------------------------------
         # both conditions are met set to Agg (no plotting)
-        elif cond1 and cond2:
+        if cond1 and cond2:
             matplotlib.use('Agg')
             import matplotlib.pyplot as plt
             from mpl_toolkits import axes_grid1
@@ -1224,7 +1209,8 @@ class Plotter:
         # ------------------------------------------------------------------
         # deal with still having MacOSX backend
         if self.backend == 'MacOSX':
-            WLOG(self.params, 'error', textentry('90-100-00001'))
+            WLOG(self.params, 'error', textentry('90-100-00001',
+                                                 args=[self.backend]))
 
 
 # =============================================================================
@@ -1242,7 +1228,14 @@ def import_matplotlib() -> Union[Tuple[Any, Any, Any], None]:
     global PLT_MOD
     global MPL_MOD
     # fix for MacOSX plots freezing
-    gui_env = ['MacOSX', 'Qt5Agg', 'GTKAgg', 'TKAgg', 'WXAgg', 'Agg']
+
+    if platform.system().lower() == 'darwin':
+        gui_env = [matplotlib.get_backend(), 'MacOSX', 'Qt5Agg', 'GTKAgg',
+                   'TKAgg', 'WXAgg', 'Agg']
+    else:
+        gui_env = [matplotlib.get_backend(), 'Qt5Agg', 'GTKAgg', 'TKAgg',
+                   'WXAgg', 'Agg']
+
     for gui in gui_env:
         # noinspection PyBroadException
         try:
@@ -1426,16 +1419,15 @@ def plot_selection(params: ParamDict,
 # Main code here
 if __name__ == "__main__":
     # ----------------------------------------------------------------------
-    __NAME__ = 'apero_dark_spirou.py'
-    sys.argv = 'apero_dark_spirou.py 2018-09-24 2305769d_pp.fits'.split()
-    from apero.recipes.spirou import apero_dark_spirou
-
-    _recipe, _params = apero_dark_spirou.main(DEBUG0000=True)
+    _params = load_functions.load_config()
+    _recipe = DrsRecipe(instrument=_params['INSTRUMENT'],
+                        params=_params, name='test')
 
     _recipe.debug_plots.append('TEST1')
     _recipe.debug_plots.append('TEST2')
     _recipe.summary_plots.append('TEST3')
 
+    _params.set('PID', 'Unknown')
     _params.set('DRS_DEBUG', value=1)
     _params.set('DRS_PLOT', value=2)
     _params.set('DRS_PLOT_EXT', 'pdf')
@@ -1444,6 +1436,8 @@ if __name__ == "__main__":
     _params.set('PLOT_TEST2', value=True)
     _params.set('PLOT_TEST3', value=True)
     _plotter = Plotter(_params, _recipe)
+    _plotter.set_location()
+
     x = np.arange(-10, 10)
     y = x ** 2
     _plotter('TEST1', x=x, y=y, colour='red')

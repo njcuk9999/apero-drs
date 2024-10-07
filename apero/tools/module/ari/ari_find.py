@@ -30,7 +30,7 @@ from tqdm import tqdm
 
 from apero.base import base
 from apero.core.constants import param_functions
-from apero.core.core import drs_log
+from apero.core.base import drs_log
 from apero.tools.module.ari import ari_core
 
 

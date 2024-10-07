@@ -44,7 +44,7 @@ from apero.core.constants import param_functions
 from apero.core.constants import constant_functions
 from apero.core.constants import load_functions
 from apero.core.instruments.default import instrument as instrument_mod
-from apero.core import lang
+from apero.base import drs_lang
 from apero.core import math as mp
 from apero.core.constants import path_definitions as pathdef
 from apero.core.base import drs_exceptions
@@ -78,8 +78,8 @@ ParamDict = param_functions.ParamDict
 Header = drs_fits.Header
 FitsHeader = drs_fits.fits.Header
 # Get the text types
-textentry = lang.textentry
-Text = lang.Text
+textentry = drs_lang.textentry
+Text = drs_lang.Text
 # recipe control path
 INSTRUMENT_PATH = base.CONST_PATH
 CORE_PATH = base.CORE_PATH

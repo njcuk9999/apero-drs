@@ -15,7 +15,7 @@ from apero.base import base
 from apero.core.constants import param_functions
 from apero.core.constants import load_functions
 from apero.core import math as mp
-from apero.core.core import drs_log
+from apero.core.base import drs_log
 from apero.science.calib import localisation
 from apero.science.calib import shape
 

@@ -20,9 +20,9 @@ from bs4 import BeautifulSoup
 
 from apero.base import base
 from apero.core.constants import param_functions
-from apero.core import lang
+from apero.base import drs_lang
 from apero.core.core import drs_database
-from apero.core.core import drs_log
+from apero.core.base import drs_log
 from apero.core.base import drs_misc
 from apero.io import drs_path
 from apero.tools.module.ari import ari_core
@@ -46,7 +46,7 @@ ParamDict = param_functions.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-textentry = lang.textentry
+textentry = drs_lang.textentry
 # Get ARI core classes
 AriObject = ari_core.AriObject
 AriRecipe = ari_core.AriRecipe

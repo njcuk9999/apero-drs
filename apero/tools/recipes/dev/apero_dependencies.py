@@ -15,7 +15,7 @@ from collections import OrderedDict
 import numpy as np
 
 from apero.base import base
-from apero.core.core import drs_log
+from apero.core.base import drs_log
 from apero.core.base import drs_misc
 from apero.core.utils import drs_startup
 

@@ -23,14 +23,15 @@ from apero.base import base
 from apero.core.constants import param_functions
 from apero.core.constants import load_functions
 from apero.core.constants import constant_functions
-from apero.core import lang
+from apero.base import drs_lang
 from apero.core.core import drs_argument
 from apero.core.core import drs_database
 from apero.core.base import drs_exceptions
 from apero.core.base import drs_base_classes as base_class
 from apero.core.base import drs_misc
 from apero.core.base import drs_text
-from apero.core.core import drs_log, drs_file
+from apero.core.base import drs_log
+from apero.core.core import drs_file
 
 # =============================================================================
 # Define variables
@@ -55,7 +56,7 @@ BinaryDict = base_class.BinaryDict
 # get the input file
 DrsInputFile = drs_file.DrsInputFile
 # Get the text types
-textentry = lang.textentry
+textentry = drs_lang.textentry
 # Get exceptions
 DrsCodedException = drs_exceptions.DrsCodedException
 # get index database

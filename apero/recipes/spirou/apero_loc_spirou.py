@@ -12,10 +12,10 @@ Created on 2019-05-14 at 09:40
 from apero.base import base
 from apero.core.constants import param_functions
 from apero.core.constants import load_functions
-from apero.core import lang
+from apero.base import drs_lang
 from apero.core.core import drs_database
 from apero.core.core import drs_file
-from apero.core.core import drs_log
+from apero.core.base import drs_log
 from apero.core.utils import drs_startup
 from apero.science.calib import gen_calib
 from apero.science.calib import localisation
@@ -33,7 +33,7 @@ __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-textentry = lang.textentry
+textentry = drs_lang.textentry
 # alias pcheck
 pcheck = param_functions.PCheck(wlog=WLOG)
 

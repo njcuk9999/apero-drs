@@ -17,11 +17,11 @@ import numpy as np
 from apero.base import base
 from apero.core.constants import param_functions
 from apero.core.constants import load_functions
-from apero.core import lang
+from apero.base import drs_lang
 from apero.core import math as mp
 from apero.core.base import drs_misc
 from apero.core.core import drs_database
-from apero.core.core import drs_log, drs_file
+from apero.core.base import drs_log, drs_file
 from apero.core.utils import drs_data
 from apero.core.utils import drs_recipe
 from apero.science.calib import gen_calib
@@ -45,7 +45,7 @@ CalibrationDatabase = drs_database.CalibrationDatabase
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-textentry = lang.textentry
+textentry = drs_lang.textentry
 # alias pcheck
 pcheck = param_functions.PCheck(wlog=WLOG)
 # Get function string

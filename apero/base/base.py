@@ -261,18 +261,17 @@ def load_install_yaml() -> dict:
             emsg = '{0}={1} does not exist'
             raise BaseAperoError(emsg.format(USER_ENV, path))
     # try fall back option
-    else:
-        try:
-            path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            path = os.path.join(path, 'data', 'default_install.yaml')
-            if os.path.exists(path):
-                return load_yaml(path)
-            else:
-                # raise an error
-                emsg = 'Default install.py={0} does not exist'
-                raise BaseAperoError(emsg.format(path))
-        except Exception as _:
-            pass
+    try:
+        path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        path = os.path.join(path, 'data', 'default_install.yaml')
+        if os.path.exists(path):
+            return load_yaml(path)
+        else:
+            # raise an error
+            emsg = 'Default install.py={0} does not exist'
+            raise BaseAperoError(emsg.format(path))
+    except Exception as _:
+        pass
 
     # else raise except (cannot come from database)
     emsg = '{0} must be set (please run setup script or add {0} to your PATH)'
@@ -431,12 +430,8 @@ def get_default_log_dir() -> str:
 # =============================================================================
 # populate DPARAMS or IPARAMS
 # noinspection PyBroadException
-try:
-    DPARAMS = load_database_yaml()
-    IPARAMS = load_install_yaml()
-except Exception as _:
-    DPARAMS = dict()
-    IPARAMS = dict()
+DPARAMS = load_database_yaml()
+IPARAMS = load_install_yaml()
 # need tqdm
 TQDM = tqdm_module()
 

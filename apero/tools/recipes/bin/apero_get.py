@@ -12,7 +12,7 @@ from typing import Any, Dict
 
 from apero.base import base
 from apero.core.constants import param_functions
-from apero.core.core import drs_log
+from apero.core.base import drs_log
 from apero.core.base import drs_text
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup

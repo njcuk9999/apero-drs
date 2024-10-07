@@ -11,7 +11,7 @@ Created on 2019-07-26 at 09:39
 """
 from apero.base import base
 from apero.core.constants import param_functions
-from apero.core.core import drs_log
+from apero.core.base import drs_log
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
 from apero.tools.module.testing import drs_stats

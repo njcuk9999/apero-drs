@@ -8,7 +8,7 @@ Created on 2018-10-31 at 18:06
 @author: cook
 """
 from apero.base import base
-from apero.core import lang
+from apero.base import drs_lang
 from apero.core.base import drs_base_classes as base_class
 from apero.core.instruments.default import grouping
 from apero.core.instruments.default import recipe_definitions as rd
@@ -28,7 +28,7 @@ __release__ = base.__release__
 # Define instrument alias
 INSTRUMENT_ALIAS = 'spirou'
 # Get Help
-textentry = lang.textentry
+textentry = drs_lang.textentry
 # import file definitions in import module class
 sf = base_class.ImportModule('spirou.file_definitions',
                              'apero.core.instruments.spirou.file_definitions',

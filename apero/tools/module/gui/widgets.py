@@ -16,7 +16,7 @@ from tkinter import ttk
 from PIL import Image, ImageTk
 
 from apero.base import base
-from apero.core.core import drs_log
+from apero.core.base import drs_log
 from apero.core.base import drs_misc
 
 # =============================================================================

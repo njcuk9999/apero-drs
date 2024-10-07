@@ -11,8 +11,8 @@ import os
 
 from apero.base import base
 from apero.core.constants import param_functions
-from apero.core import lang
-from apero.core.core import drs_log
+from apero.base import drs_lang
+from apero.core.base import drs_log
 from apero.core.base import drs_text
 from apero.core.utils import drs_startup
 from apero.tools.module.setup import drs_assets
@@ -33,7 +33,7 @@ ParamDict = param_functions.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-textentry = lang.textentry
+textentry = drs_lang.textentry
 # -----------------------------------------------------------------------------
 # set up recipe definitions (overwrites default one)
 RMOD = drs_dev.RecipeDefinition(instrument=__INSTRUMENT__)

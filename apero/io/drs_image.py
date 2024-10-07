@@ -26,7 +26,7 @@ from apero.base import base
 from apero.base import drs_base
 from apero.core.constants import param_functions
 from apero.core.constants import load_functions
-from apero.core import lang
+from apero.base import drs_lang
 from apero.core import math as mp
 from apero.core.base import drs_exceptions
 from apero.core.constants import path_definitions
@@ -47,7 +47,7 @@ __release__ = base.__release__
 # get param dict
 ParamDict = param_functions.ParamDict
 # Get the text types
-textentry = lang.textentry
+textentry = drs_lang.textentry
 # alias pcheck
 pcheck = param_functions.PCheck()
 # Get function string

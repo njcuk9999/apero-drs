@@ -11,8 +11,8 @@ Created on 2019-09-16 at 13:48
 """
 from apero.base import base
 from apero.core.constants import param_functions
-from apero.core import lang
-from apero.core.core import drs_log
+from apero.base import drs_lang
+from apero.core.base import drs_log
 from apero.core.base import drs_text
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_utils
@@ -30,7 +30,7 @@ __release__ = base.__release__
 # get param dict
 ParamDict = param_functions.ParamDict
 # get text entry instance
-textentry = lang.textentry
+textentry = drs_lang.textentry
 # Get Logging function
 WLOG = drs_log.wlog
 

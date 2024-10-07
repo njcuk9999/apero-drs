@@ -27,7 +27,7 @@ from scipy.optimize import curve_fit
 from apero.base import base
 from apero.core.constants import param_functions
 from apero.core.constants import load_functions
-from apero.core.core import drs_log
+from apero.core.base import drs_log
 from apero.io import drs_table
 from apero.core.math import normal_fraction
 from apero.tools.module.documentation import drs_markdown

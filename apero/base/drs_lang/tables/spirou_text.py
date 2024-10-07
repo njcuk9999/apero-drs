@@ -11,12 +11,12 @@ Created on 2024-07-29 at 09:10
 @author: cook
 """
 from apero.base import base
-from apero.core.lang import drs_lang_list
+from apero.base.drs_lang import drs_lang_list
 
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero.lang.tables.nirps_ha_text.py'
+__NAME__ = 'apero.lang.tables.spirou_text.py'
 __PACKAGE__ = base.__PACKAGE__
 __INSTRUMENT__ = 'None'
 __version__ = base.__version__

@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
@@ -6,31 +5,21 @@
 
 # CODE DESCRIPTION HERE
 
-Created on 2024-07-29 at 09:10
+Created on 2024-07-29 at 09:09
 
 @author: cook
 """
-from apero.base import base
-from apero.core.lang import drs_lang_list
-
-
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero.lang.tables.nirps_he_text.py'
-__PACKAGE__ = base.__PACKAGE__
-__INSTRUMENT__ = 'None'
-__version__ = base.__version__
-__author__ = base.__author__
-__date__ = base.__date__
-__release__ = base.__release__
+
+# -----------------------------------------------------------------------------
 
 # =============================================================================
 # Define functions
 # =============================================================================
-# Get the language list
-langlist = drs_lang_list.LanguageList(__NAME__)
-
+def function1():
+    return 0
 
 
 # =============================================================================

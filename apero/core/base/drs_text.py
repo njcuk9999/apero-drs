@@ -22,7 +22,7 @@ import numpy as np
 
 from apero.base import base
 from apero.base import drs_base
-from apero.core import lang
+from apero.base import drs_lang
 from apero.core.base import drs_exceptions
 
 # =============================================================================
@@ -38,7 +38,7 @@ __release__ = base.__release__
 # get exceptions
 DrsCodedException = drs_exceptions.DrsCodedException
 # get text entry
-textentry = lang.textentry
+textentry = drs_lang.textentry
 
 
 # =============================================================================

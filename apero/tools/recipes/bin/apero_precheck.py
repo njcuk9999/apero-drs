@@ -10,9 +10,9 @@ Created on 2019-07-26 at 09:47
 @author: cook
 """
 from apero.base import base
-from apero.core import lang
+from apero.base import drs_lang
 from apero.core.core import drs_database
-from apero.core.core import drs_log
+from apero.core.base import drs_log
 from apero.core.utils import drs_startup
 from apero.tools.module.processing import drs_precheck
 from apero.tools.module.processing import drs_processing
@@ -33,7 +33,7 @@ WLOG = drs_log.wlog
 IndexDatabase = drs_database.FileIndexDatabase
 ObjectDatabase = drs_database.AstrometricDatabase
 # get text entry instance
-textentry = lang.textentry
+textentry = drs_lang.textentry
 
 
 # =============================================================================
