@@ -682,7 +682,7 @@ def processing_email(params: ParamDict, position: str, name: str,
         instrument = base.IPARAMS['INSTRUMENT']
     # ----------------------------------------------------------------------
     # deal with log file
-    logfile = drs_log.get_logfilepath(WLOG, params)
+    logfile = drs_log.get_logfilepath(params)
     # read log file
     with open(logfile, 'r') as lfile:
         lines = lfile.readlines()
@@ -783,7 +783,7 @@ def reset_files(params):
     # check if we need to reset directory
     if params['RESET_LOG']:
         # deal with files to skip
-        exclude_files = [drs_log.get_logfilepath(WLOG, params)]
+        exclude_files = [drs_log.get_logfilepath(params)]
         reset = drs_reset.reset_confirmation(params, 'Log',
                                              params['DRS_DATA_MSG'])
         # reset directory using reset module
@@ -1111,7 +1111,7 @@ def save_stats(params, outlist):
                  sublevel=4)
             return
     # get log file name
-    log_abs_file = drs_log.get_logfilepath(WLOG, params)
+    log_abs_file = drs_log.get_logfilepath(params)
     log_file = os.path.basename(log_abs_file)
     # get fits file out path
     out_fitsfile = log_file.replace('.log', '_stats.fits')
@@ -2754,7 +2754,7 @@ def close_all_plots():
         PLT_MOD.close('all')
         return
     else:
-        from apero.plotting.core import import_matplotlib
+        from apero.plotting.plotter import import_matplotlib
         out = import_matplotlib()
         if out is not None:
             plt = out[0]

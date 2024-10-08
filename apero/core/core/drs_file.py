@@ -52,6 +52,7 @@ from apero.core.base import drs_base_classes as base_class
 from apero.core.base import drs_text
 from apero.core.base import drs_misc
 from apero.core.core import drs_out_file as out
+from apero.core.base import drs_log
 from apero.io import drs_fits
 from apero.io import drs_path
 from apero.io import drs_table
@@ -74,6 +75,8 @@ Time = base.Time
 pcheck = param_functions.PCheck()
 # get parameter dictionary
 ParamDict = param_functions.ParamDict
+# Get the logger
+WLOG = drs_log.wlog
 # get header classes from io.drs_fits
 Header = drs_fits.Header
 FitsHeader = drs_fits.fits.Header

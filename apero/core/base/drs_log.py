@@ -778,10 +778,6 @@ class Wlog:
         else:
             to_console, to_file = True, True
         # ---------------------------------------------------------------------
-        # for errors we don't need to print twice
-        if key == 'error':
-            to_console = False
-        # ---------------------------------------------------------------------
         # loop around message and log them
         for message1, message2 in zip(messages1, messages2):
             log_kwargs = dict(message=message1, code=code, program=option,
@@ -1265,7 +1261,12 @@ def format_message(params: Any, key: str,
     else:
         raw_messages1 = str(msg_obj)
         raw_messages2 = str(msg_obj)
-    # split by '\n'
+    # -------------------------------------------------------------------------
+    # logger can't have % - replace with unicode
+    raw_messages1 = raw_messages1.replace('%', '\u066A')
+    raw_messages2 = raw_messages2.replace('%', '\u066A')
+    # -------------------------------------------------------------------------
+    # split by '\n' to create list of messages
     raw_messages1 = raw_messages1.split('\n')
     raw_messages2 = raw_messages2.split('\n')
     # -------------------------------------------------------------------------

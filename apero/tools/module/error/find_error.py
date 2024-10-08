@@ -19,7 +19,7 @@ import numpy as np
 
 from apero.base import base
 from apero.core.constants import param_functions
-from apero.core.lang import drs_lang
+from apero.base.drs_lang import drs_lang
 from apero.core.base import drs_log
 from apero.core.base import drs_misc
 from apero.core.utils import drs_recipe

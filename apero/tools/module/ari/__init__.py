@@ -9,16 +9,6 @@ Created on 2024-01-22 at 10:14
 
 @author: cook
 """
-
-import numpy as np
-import matplotlib.pyplot as plt
-from astropy.io import fits
-from astropy.table import Table
-from astropy import units as u
-from tqdm import tqdm
-import warnings
-
-
 # =============================================================================
 # Define variables
 # =============================================================================

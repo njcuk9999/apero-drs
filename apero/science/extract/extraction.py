@@ -18,7 +18,8 @@ from apero.base import base
 from apero.core.constants import param_functions
 from apero.base import drs_lang
 from apero.core import math as mp
-from apero.core.base import drs_log, drs_file
+from apero.core.base import drs_log
+from apero.core.core import drs_file
 from apero.science.calib import flat_blaze
 
 # =============================================================================

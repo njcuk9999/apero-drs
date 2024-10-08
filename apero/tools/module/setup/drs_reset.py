@@ -476,7 +476,7 @@ def reset_log(params: ParamDict, exclude_files: Union[List[str], None] = None,
     # remove files from reduced folder
     log_dir = params['DRS_DATA_MSG']
     # get current log file (must be skipped)
-    current_logfile = drs_log.get_logfilepath(WLOG, params)
+    current_logfile = drs_log.get_logfilepath(params)
     # deal with no exclude files
     if exclude_files is None:
         exclude_files = []

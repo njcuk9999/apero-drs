@@ -179,7 +179,7 @@ def __main__(recipe, params):
     drs_reset.reset_title(params, 'Log')
     reset = True
     # deal with files to skip
-    exclude_files = [drs_log.get_logfilepath(WLOG, params)]
+    exclude_files = [drs_log.get_logfilepath(params)]
     # log folder
     if 'log' in warns:
         reset = drs_reset.reset_confirmation(params, 'Log',
