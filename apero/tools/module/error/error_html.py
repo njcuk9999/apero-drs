@@ -496,6 +496,32 @@ def table_to_outlist(table: Table,
     # deal with no out column types
     if out_types is None:
         out_types = ['str'] * len(out_col_names)
+    # add a CRUNFILE column if it isn't in there already
+    if 'RUNSTRING' in table.colnames and 'CRUNFILES' not in table.colnames:
+        # add a column
+        crunfiles = []
+        # loop around rows
+        for row in range(len(table)):
+            # get run string
+            runstring = table['RUNSTRING'][row]
+            # get the crunfile
+            if 'crunfile=' in runstring:
+                crunfile = runstring.split('crunfile=')[-1].split()[0]
+                crunfile = crunfile.split('.')[0]
+                crunfiles.append(crunfile)
+            elif 'crunfile ' in runstring:
+                crunfile = runstring.split('crunfile ')[-1].split()[0]
+                crunfile = crunfile.split('.')[0]
+                crunfiles.append(crunfile)
+            else:
+                crunfiles.append('None')
+        # push into table
+        table['CRUNFILES'] = crunfiles
+        # update col_names
+        pos = out_col_names.index('RUNSTRING')
+        in_col_names.insert(pos, 'CRUNFILES')
+        out_col_names.insert(pos, 'CRUNFILES')
+        out_types.insert(pos, 'str')
     # storage for return dictionary
     outlist = dict()
     outcols, outtypes = [], []
@@ -512,7 +538,7 @@ def table_to_outlist(table: Table,
             if out_col not in outcols:
                 outcols.append(out_col)
                 outtypes.append(out_types[c_it])
-
+    # return
     return outlist, outcols, outtypes
 
 
