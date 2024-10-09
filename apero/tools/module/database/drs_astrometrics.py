@@ -184,7 +184,7 @@ class AstroObj:
         # store the original name
         self.original_name = self.name
         # get the aliases from table row
-        self.aliases = table_row['IDS']
+        self.aliases = clean_aliases(table_row['IDS'])
         # get the ra and source from table row
         self.ra = table_row['RA_d']
         self.ra_source = table_row['COO_BIBCODE']
@@ -241,7 +241,7 @@ class AstroObj:
         # store the original name
         self.original_name = table_row['ORIGINAL_NAME']
         # get the aliases from table row
-        self.aliases = table_row['ALIASES']
+        self.aliases = clean_aliases(table_row['ALIASES'])
         # get the ra and source from table row
         self.ra = table_row['RA_DEG']
         self.ra_source = table_row['RA_SOURCE']
@@ -1587,7 +1587,10 @@ def ask_for_aliases(params: ParamDict, astro_obj: AstroObj) -> AstroObj:
         # clean raw aliases
         aliases = []
         for raw_alias in raw_aliases:
-            aliases.append(raw_alias.strip())
+            # clean alias
+            clean_alias = clean_aliases(raw_alias)
+            # add to aliases
+            aliases.append(clean_alias)
         # add to aliases
         astro_obj.aliases = '|'.join(aliases0 + aliases)
         # ---------------------------------------------------------------------
@@ -1602,6 +1605,23 @@ def ask_for_aliases(params: ParamDict, astro_obj: AstroObj) -> AstroObj:
         WLOG(params, '', f'\n\tUpdated aliases:{aliaslist}')
     # return the original or update astro_obj
     return astro_obj
+
+
+def clean_aliases(raw_alias: str) -> str:
+    """
+    Clean the alias in a standardised way
+
+    :param raw_alias: str, the input "dirty" alias
+
+    :return: str, the cleaned alias
+    """
+    # remove punctuation that will break sql queries
+    raw_alias = raw_alias.replace('"', '')
+    raw_alias = raw_alias.replace("'", '')
+    # remove leading and trailing white space
+    raw_alias = raw_alias.strip()
+    # return this cleaned alias
+    return raw_alias
 
 
 def add_obj_to_sheet(params: ParamDict, astro_objs: List[AstroObj]):

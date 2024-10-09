@@ -15,6 +15,7 @@ import sys
 import traceback
 import warnings
 import re
+import time
 from collections import OrderedDict
 from signal import signal, SIGINT
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -135,6 +136,8 @@ def setup(name: str = 'None', instrument: str = 'None',
     """
     # set function name
     func_name = display_func('setup', __NAME__)
+    # start time
+    prog_start = time.time()
     # deal with no keywords
     if fkwargs is None:
         fkwargs = dict()
@@ -345,6 +348,9 @@ def setup(name: str = 'None', instrument: str = 'None',
         params['DATA_DICT'] = fkwargs['DATA_DICT']
     else:
         params['DATA_DICT'] = ParamDict()
+    # -------------------------------------------------------------------------
+    # add prog_start to params
+    params['PROG_START'] = prog_start
     # -------------------------------------------------------------------------
     # lock parameter dictionary (cannot add items after this point)
     params.lock()
@@ -627,17 +633,28 @@ def end_main(params: ParamDict, llmain: Union[Dict[str, Any], None],
     # -------------------------------------------------------------------------
     # log end message
     if end:
+        # get the time now
+        end = time.time()
+        if 'PROG_START' in params:
+            duration = end - params['PROG_START']
+        else:
+            duration = None
         # log the success (or failure)
         if success and (not quiet):
             iargs = [str(params['RECIPE'])]
             WLOG(params, 'info', params['DRS_HEADER'])
-            WLOG(params, 'info', textentry('40-003-00001', args=iargs))
+            msg = textentry('40-003-00001', args=iargs)
+            if duration is not None:
+                msg += f'\t({duration:.3f} seconds)'
+            WLOG(params, 'info', msg)
             WLOG(params, 'info', params['DRS_HEADER'])
         elif not quiet:
             wargs = [str(params['RECIPE'])]
             WLOG(params, 'info', params['DRS_HEADER'], colour='red')
-            WLOG(params, 'warning', textentry('40-003-00005', args=wargs),
-                 colour='red', sublevel=8)
+            msg = textentry('40-003-00005', args=wargs)
+            if duration is not None:
+                msg += f'\t({duration:.3f} seconds)'
+            WLOG(params, 'warning', msg, colour='red', sublevel=8)
             WLOG(params, 'info', params['DRS_HEADER'], colour='red')
         # ---------------------------------------------------------------------
         # deal with logging (if log exists in recipe)
