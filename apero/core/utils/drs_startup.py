@@ -21,6 +21,7 @@ from signal import signal, SIGINT
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
+from lbl.core.base_classes import LblException
 
 from apero import plotting
 from apero.base import base
@@ -238,20 +239,21 @@ def setup(name: str = 'None', instrument: str = 'None',
         _display_drs_title(recipe.params, drsgroupname, printonly=True)
     # -------------------------------------------------------------------------
     # display loading message
-    TLOG(recipe.params, '', 'Loading Arguments. Please wait...')
-    # -------------------------------------------------------------------------
-    # load index database manager
-    findexdb = drs_database.FileIndexDatabase(recipe.params)
-    # interface between "recipe", "fkwargs" and command line (via argparse)
-    recipe.recipe_setup(findexdb, fkwargs)
-    # -------------------------------------------------------------------------
-    # deal with options from input_parameters
-    recipe.option_manager()
-    # update default params
-    # WLOG.update_param_dict(recipe.drs_params)
-    # -------------------------------------------------------------------------
-    # clear loading message
-    TLOG(recipe.params, '', '')
+    try:
+        TLOG(recipe.params, '', 'Loading Arguments. Please wait...')
+        # -------------------------------------------------------------------------
+        # load index database manager
+        findexdb = drs_database.FileIndexDatabase(recipe.params)
+        # interface between "recipe", "fkwargs" and command line (via argparse)
+        recipe.recipe_setup(findexdb, fkwargs)
+        # -------------------------------------------------------------------------
+        # deal with options from input_parameters
+        recipe.option_manager()
+        # update default params
+        # WLOG.update_param_dict(recipe.drs_params)
+    finally:
+        # clear loading message
+        TLOG(recipe.params, '', '')
     # -------------------------------------------------------------------------
     # create runstring and log args/kwargs/skwargs (must be done after
     #    option_manager)
@@ -515,6 +517,17 @@ def run(func: Any, recipe: DrsRecipe,
                 recipe.log.add_error('DrsBaseError Exit', '')
             # reset the lock directory
             drs_lock.reset_lock_dir(params)
+
+        except LblException as e:
+            WLOG(params, 'error', e.message, raise_exception=False,
+                 wrap=False)
+            # on debug exit was not a success
+            success = False
+            # save params to llmain
+            llmain = dict(e=e, tb='', params=params, recipe=recipe)
+            # add error to log file
+            if params['DRS_RECIPE_TYPE'] != 'nolog-tool':
+                recipe.log.add_error('DrsBaseError Exit', '')
         except Exception as e:
             # get the trace back
             string_trackback = traceback.format_exc()
@@ -793,7 +806,8 @@ def copy_kwargs(params: ParamDict, recipe: Union[DrsRecipe, None] = None,
     func_name = display_func('copy_kwargs', __NAME__)
     # deal with no recipe
     if recipe is None and recipename is None:
-        WLOG(params, 'error', textentry('00-001-00040', args=func_name))
+        raise drs_log.AperoCodedException(params, '00-001-00040',
+                                          targs=[func_name])
     elif recipe is None:
         recipe, _ = find_recipe(recipename, params['INSTRUMENT'], recipemod)
     # get inputs for
@@ -981,7 +995,8 @@ def read_runfile_yaml(params: ParamDict, recipe: Union[DrsRecipe, None],
         runfile = os.path.join(run_dir, runfile)
         # check that it exists
         if not os.path.exists(runfile):
-            WLOG(params, 'error', textentry('09-503-00002', args=[runfile]))
+            raise drs_log.AperoCodedException(params, '09-503-00002',
+                                              targs=[runfile])
     # ----------------------------------------------------------------------
     # now try to load run file
     try:
@@ -989,8 +1004,7 @@ def read_runfile_yaml(params: ParamDict, recipe: Union[DrsRecipe, None],
     except Exception as e:
         # log error
         eargs = [runfile, type(e), e, func_name]
-        WLOG(params, 'error', textentry('09-503-00003', args=eargs))
-        return params, OrderedDict()
+        raise drs_log.AperoCodedException(params, '09-503-00003', targs=eargs)
     # ----------------------------------------------------------------------
     # table storage
     runtable = OrderedDict()
@@ -1035,7 +1049,9 @@ def read_runfile_yaml(params: ParamDict, recipe: Union[DrsRecipe, None],
                 emsg = ('Run File Error: keyword "{0}"={1} invalid '
                         '(required "{2}")')
                 eargs = [key, value, instance.dtype]
-                WLOG(params, 'error', emsg.format(*eargs))
+                raise drs_log.AperoCodedException(params, None,
+                                                  message=emsg,
+                                                  targs=eargs)
         else:
             params[key] = value
             params.set_source(key, func_name)
@@ -1101,7 +1117,8 @@ def read_runfile_ini(params: ParamDict, recipe: Union[DrsRecipe, None],
         runfile = os.path.join(run_dir, runfile)
         # check that it exists
         if not os.path.exists(runfile):
-            WLOG(params, 'error', textentry('09-503-00002', args=[runfile]))
+            raise drs_log.AperoCodedException(params, '09-503-00002',
+                                              targs=[runfile])
     # ----------------------------------------------------------------------
     # now try to load run file
     try:
@@ -1110,8 +1127,7 @@ def read_runfile_ini(params: ParamDict, recipe: Union[DrsRecipe, None],
     except Exception as e:
         # log error
         eargs = [runfile, type(e), e, func_name]
-        WLOG(params, 'error', textentry('09-503-00003', args=eargs))
-        keys, values = [], []
+        raise drs_log.AperoCodedException(params, '09-503-00003', targs=eargs)
     # ----------------------------------------------------------------------
     # table storage
     runtable = OrderedDict()
@@ -1140,8 +1156,8 @@ def read_runfile_ini(params: ParamDict, recipe: Union[DrsRecipe, None],
                 runid = int(key.replace(run_key, ''))
             except Exception as e:
                 eargs = [key, value, run_key, type(e), e, func_name]
-                WLOG(params, 'error', textentry('09-503-00004', args=eargs))
-                runid = None
+                raise drs_log.AperoCodedException(params, '09-503-00004',
+                                                  targs=eargs)
             # check if we already have this column
             if runid in runtable:
                 wargs = [runid, keytable[runid], runtable[runid],
@@ -1184,7 +1200,9 @@ def read_runfile_ini(params: ParamDict, recipe: Union[DrsRecipe, None],
                     emsg = ('Run File Error: keyword "{0}"={1} invalid '
                             '(required "{2}")')
                     eargs = [key, value, instance.dtype]
-                    WLOG(params, 'error', emsg.format(*eargs))
+                    raise drs_log.AperoCodedException(params, None,
+                                                      message=emsg,
+                                                      targs=eargs)
             else:
                 params[key] = value
                 params.set_source(key, func_name)
@@ -1307,7 +1325,7 @@ def _deal_with_run_file_cmd_args(params: ParamDict) -> ParamDict:
         # if trigger if defined night name must be as well
         if params['OBS_DIR'] is None and params['TRIGGER_RUN']:
             # cause an error if obs_dir not set
-            WLOG(params, 'error', textentry('09-503-00010'))
+            raise drs_log.AperoCodedException(params, '09-503-00010')
     # ---------------------------------------------------------------------
     # switch for setting science targets (from user inputs)
     if 'SCIENCE_TARGETS' in params['INPUTS']:
@@ -1679,10 +1697,8 @@ def _display_initial_parameterisation(params: ParamDict,
         wargs = ['DRS_DEBUG', params['DRS_DEBUG']]
         wmsgs += '\n' + textentry('40-001-00009', args=wargs)
     # log to screen and file
-    WLOG(params, 'info', textentry('40-001-00006'), printonly=printonly,
-         logonly=logonly)
-    WLOG(params, 'info', wmsgs, wrap=False, printonly=printonly,
-         logonly=logonly)
+    WLOG(params, 'info', textentry('40-001-00006') + wmsgs,
+         printonly=printonly, logonly=logonly, wrap=False)
     WLOG(params, '', params['DRS_HEADER'], printonly=printonly,
          logonly=logonly)
 
@@ -1821,9 +1837,8 @@ def _display_run_time_arguments(recipe, fkwargs=None, printonly=False,
     # -------------------------------------------------------------------------
     # log to screen and log file
     if len(log_strings) > 0:
-        WLOG(params, 'info', textentry('40-001-00017'), printonly=printonly,
-             logonly=logonly)
-        WLOG(params, 'info', textentry(log_strings), wrap=False,
+        # add a newline string to log_String
+        WLOG(params, 'info', textentry('40-001-00017') + log_strings,
              printonly=printonly, logonly=logonly)
         WLOG(params, '', textentry(params['DRS_HEADER']), printonly=printonly,
              logonly=logonly)
@@ -2592,8 +2607,7 @@ def _make_dirs(params: ParamDict, path: str):
     # -------------------------------------------------------------------------
     # must check that a pid is set
     if params['PID'] is None:
-        WLOG(params, 'error', textentry('10-005-00006'))
-        pid = None
+        raise drs_log.AperoCodedException(params, '10-005-00006')
     else:
         pid = params['PID']
 
@@ -2614,8 +2628,8 @@ def _make_dirs(params: ParamDict, path: str):
             string_trackback = traceback.format_exc()
             emsg = textentry('01-000-00001', args=[path, type(e_)])
             emsg += '\n\n' + textentry(string_trackback)
-            WLOG(params, 'error', emsg, raise_exception=True, wrap=False)
-
+            raise drs_log.AperoCodedException(params, '01-000-00001',
+                                              message=emsg)
     # -------------------------------------------------------------------------
     # try to run locked makedirs
     try:

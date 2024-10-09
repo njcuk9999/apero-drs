@@ -133,7 +133,7 @@ def load_linelist(params: ParamDict,
         return ll, amp
     except DrsCodedException:
         eargs = [filename, os.path.join(assetdir, relfolder)]
-        WLOG(params, 'error', textentry('00-017-00002', args=eargs))
+        raise drs_log.AperoCodedException(params, '00-017-00002', targs=eargs)
 
 
 def load_cavity_files(params: ParamDict,
@@ -637,7 +637,8 @@ def load_sp_mask_lsd(params: ParamDict, temperature: float,
             except Exception as e:
                 # log error
                 eargs = [filename, type(e), e]
-                WLOG(params, 'error', textentry('09-021-00009', args=eargs))
+                raise drs_log.AperoCodedException(params, '09-021-00009',
+                                                  targs=eargs)
         # ---------------------------------------------------------------------
         # now we have the temperatures find the closest to the input
         #     temperature
@@ -788,7 +789,7 @@ def get_file_from_inputs(params: ParamDict, dbmname: str,
         # log error: Database {0} - file was defined in {1} but path
         #            does not exist.
         eargs = [dbmname, strsource, func_name]
-        WLOG(params, 'error', textentry('00-002-00020', args=eargs))
+        raise drs_log.AperoCodedException(params, '00-002-00020', targs=eargs)
     else:
         if return_source:
             return value, source
@@ -840,8 +841,7 @@ def read_db_file(params: ParamDict, abspath: Union[str, Path],
     else:
         # raise error is kind is incorrect
         eargs = [' or '.join(['image', 'table']), func_name]
-        WLOG(params, 'error', textentry('00-001-00038', args=eargs))
-        image = None
+        raise drs_log.AperoCodedException(params, '00-001-00038', targs=eargs)
     # ------------------------------------------------------------------
     # get header if required (and a fits file)
     if get_header and abspath.endswith('.fits'):

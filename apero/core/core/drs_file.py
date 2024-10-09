@@ -4013,7 +4013,8 @@ class DrsFitsFile(DrsInputFile):
             # check that infile matches in name to self
             if (self.name != infile.name) and same_type:
                 eargs = [func_name]
-                WLOG(params, 'error', textentry('00-001-00021', args=eargs))
+                raise drs_log.AperoCodedException(params, '00-001-00021',
+                                                  targs=eargs)
             # add to cube
             datacube0.append(infile.data)
             basenames0.append(infile.basename)
@@ -4098,7 +4099,8 @@ class DrsFitsFile(DrsInputFile):
                 smsg = '\n\t{0} ({1}) METRIC={2}'
                 stat_str += smsg.format(*sargs)
             # log error
-            WLOG(params, 'error', textentry('00-001-00054', args=stat_str))
+            raise drs_log.AperoCodedException(params, '00-001-00054',
+                                              targs=[stat_str])
 
         # --------------------------------------------------------------------
         # make data cube
@@ -4139,7 +4141,8 @@ class DrsFitsFile(DrsInputFile):
         # else we have an error in math
         else:
             eargs = [math, ', '.join(available_math), func_name]
-            WLOG(params, 'error', textentry('00-001-00042', args=eargs))
+            raise drs_log.AperoCodedException(params, '00-001-00042',
+                                              targs=eargs)
 
         # --------------------------------------------------------------------
         # Need to setup a new filename - based on all input files
@@ -5034,7 +5037,8 @@ class DrsFitsFile(DrsInputFile):
         for length in lengths:
             if lengths[0] != length:
                 eargs = [', '.join(strlengths), func_name]
-                WLOG(params, 'error', textentry('00-001-00019', args=eargs))
+                raise drs_log.AperoCodedException(params, '00-001-00019',
+                                                  targs=eargs)
         # loop around values and add to hdict
         for it in range(lengths[0]):
             # loop around qc parameters
@@ -5436,7 +5440,8 @@ class DrsNpyFile(DrsInputFile):
                         attempts += 1
         # cause error if file name is not set
         else:
-            WLOG(params, 'error', textentry('00-008-00013', args=[func_name]))
+            raise drs_log.AperoCodedException(params, '00-008-00013',
+                                              targs=[func_name])
 
     def check_read(self, header_only: bool = False, data_only: bool = False,
                    load: bool = True):
@@ -5528,17 +5533,20 @@ class DrsNpyFile(DrsInputFile):
             return
         # if filename is not set raise error
         if self.filename is None:
-            WLOG(params, 'error', textentry('00-008-00013', args=[func_name]))
+            raise drs_log.AperoCodedException(params, '00-008-00013',
+                                              targs=[func_name])
         if self.data is not None:
             try:
                 # save to file
                 np.save(self.filename, self.data)
             except Exception as e:
                 eargs = [type(e), e, self.filename, func_name]
-                WLOG(params, 'error', textentry('00-008-00015', args=eargs))
+                raise drs_log.AperoCodedException(params, '00-008-00015',
+                                                  targs=eargs)
         else:
             eargs = [self.filename, func_name]
-            WLOG(params, 'error', textentry('00-008-00014', args=eargs))
+            raise drs_log.AperoCodedException(params, '00-008-00014',
+                                              targs=eargs)
 
     def string_output(self) -> str:
         """
@@ -7164,26 +7172,29 @@ class DrsOutFile(DrsInputFile):
             if inpos is None:
                 # Cannot add hkey {0} (in extension {1} does not exist)
                 eargs = [drs_key, inext, 'inpos']
-                WLOG(params, 'error', textentry('00-090-00011', args=eargs))
+                raise drs_log.AperoCodedException(params, '00-090-00011',
+                                                  targs=eargs)
             if outpos is None:
                 # Cannot add hkey {0} (out extension {1} does not exist)
                 eargs = [drs_key, inext, 'outpos']
-                WLOG(params, 'error', textentry('00-090-00011', args=eargs))
+                raise drs_log.AperoCodedException(params, '00-090-00011',
+                                                  targs=eargs)
+
             # -----------------------------------------------------------------
             # make sure we have the in header for this key
             if self.extensions[inpos].header is None:
                 # Cannot add hkey {0} (in header {1} does not exist)
                 eargs = [drs_key, inext, 'inheader=None']
-                WLOG(params, 'error', textentry('00-090-00011', args=eargs))
-                inheader = None
+                raise drs_log.AperoCodedException(params, '00-090-00011',
+                                                  targs=eargs)
             else:
                 inheader = self.extensions[inpos].header
             # make sure we have the out header for this key
             if self.extensions[outpos].header is None:
                 # Cannot add hkey {0} (out header {1} does not exist)
                 eargs = [drs_key, inext, 'outheader=None']
-                WLOG(params, 'error', textentry('00-090-00011', args=eargs))
-                outheader = None
+                raise drs_log.AperoCodedException(params, '00-090-00011',
+                                                  targs=eargs)
             else:
                 outheader = self.extensions[outpos].header
             # -----------------------------------------------------------------
@@ -7191,7 +7202,8 @@ class DrsOutFile(DrsInputFile):
             if drs_key not in inheader:
                 # Cannot add hkey {0} (in header {1} does not have header key
                 eargs = [drs_key, inext]
-                WLOG(params, 'error', textentry('00-090-00012', args=eargs))
+                raise drs_log.AperoCodedException(params, '00-090-00012',
+                                                  targs=eargs)
             # get value
             value = inheader[drs_key]
             comment = inheader.comments[drs_key]
@@ -7606,7 +7618,9 @@ def check_input_qc(params: ParamDict, drsfiles: List[DrsFitsFile],
             eargs1 = [bad_drsfile, bad_drsfiles[bad_drsfile]]
             emsg += '\n\t - {0}: {1}'.format(*eargs1)
         # report error: No valid files after QC
-        WLOG(params, 'error', emsg)
+        raise drs_log.AperoCodedException(params, '09-001-00033',
+                                          message=emsg)
+
     elif len(valid_drsfiles) != len(drsfiles):
         # print warning msg: Some input {0} failed QC test - Removing:
         wargs = [filekind]
@@ -7702,7 +7716,9 @@ def check_input_dprtypes(params: ParamDict, recipe: Any,
             emsg = ('Reference DPRTYPE {0} not in input files '
                     '\n\tCurrent DPRTYPES are: {1}')
             eargs = [ref_dprtype, ', '.join(dprtypes)]
-            WLOG(params, 'error', emsg.format(*eargs))
+            raise drs_log.AperoCodedException(params, None,
+                                              message=emsg.format(*eargs))
+
         elif valid:
             # storage of first (ref file type)
             file0 = None
@@ -7724,12 +7740,13 @@ def check_input_dprtypes(params: ParamDict, recipe: Any,
         for emsg in error_msgs:
             emsg += emsg
         # raise the error
-        WLOG(params, 'error', emsgs)
+        # TODO: Add to language database
+        raise drs_log.AperoCodedException(params, None, emsgs)
     # deal with multiple valid models
     elif np.sum(validity) > 1:
         # TODO: Add to language database
         emsg = 'Multiple valid file models. File DPRTYPEs need checking'
-        WLOG(params, 'error', emsg)
+        raise drs_log.AperoCodedException(params, None, emsg)
     # -------------------------------------------------------------------------
     # return the infiles
     return infiles
@@ -7788,7 +7805,8 @@ def get_file_definition(params: ParamDict, name: str,
     if name == 'None' or name is None:
         if required:
             eargs = [name, 'unknown', func_name]
-            WLOG(params, 'error', textentry('00-008-00011', args=eargs))
+            raise drs_log.AperoCodedException(params, '00-008-00011',
+                                              targs=eargs)
         return None
     # deal with fiber (needs removing)
     if fiber is not None:
@@ -7811,17 +7829,19 @@ def get_file_definition(params: ParamDict, name: str,
             found_files.append(filet)
         elif name == filet.name:
             found_files.append(filet)
-
+    # deal with no files found and no instrument
     if instrument is None and len(found_files) == 0:
         empty = DrsFitsFile('Empty')
         return empty
-
+    # deal with no files found and not required
     if (len(found_files) == 0) and (not required):
         return None
+    # deal with no files found and required - raise error
     elif len(found_files) == 0:
         eargs = [name, modules[0], func_name]
-        WLOG(None, 'error', textentry('00-008-00011', args=eargs))
-
+        raise drs_log.AperoCodedException(params, '00-008-00011',
+                                          targs=eargs)
+    # return the found files
     if return_all:
         return found_files
     else:
@@ -7939,8 +7959,8 @@ def combine(params: ParamDict, recipe: Any,
         return infiles, Table()
     # make sure infiles is a list
     if not isinstance(infiles, list):
-        WLOG(params, 'error', textentry('00-001-00020', args=[func_name]))
-        return None, None
+        raise drs_log.AperoCodedException(params, '00-001-00020',
+                                          targs=[func_name])
     # if we have only one file (or none) skip combine
     if len(infiles) == 1:
         return infiles[0], Table()
@@ -7951,14 +7971,14 @@ def combine(params: ParamDict, recipe: Any,
         for it, infile in enumerate(infiles):
             if infile.name != infiles[0].name:
                 eargs = [infiles[0].name, it, infile.name, func_name]
-                WLOG(params, 'error', textentry('00-001-00021', args=eargs))
-
+                raise drs_log.AperoCodedException(params, '00-001-00021',
+                                                  targs=eargs)
     # get output path from params
     outpath = str(params['OUTPATH'])
     # check if outpath is set
     if outpath is None:
-        WLOG(params, 'error', textentry('01-001-00023', args=[func_name]))
-        return None, None
+        raise drs_log.AperoCodedException(params, '01-001-00023',
+                                          targs=[func_name])
     # get the absolute path (for combined output)
     if params['OBS_DIR'] is None:
         obs_dir = ''
@@ -8398,8 +8418,8 @@ def id_drs_file(params: ParamDict,
         # check we ahve a file set
         if file_set.filename is None:
             if filename is None:
-                eargs = [func_name]
-                WLOG(params, 'error', textentry('00-001-00057', args=eargs))
+                raise drs_log.AperoCodedException(params, '00-001-00057',
+                                                  targs=[func_name])
             else:
                 file_set.set_filename(filename)
         # ------------------------------------------------------------------
@@ -8484,7 +8504,7 @@ def id_drs_file(params: ParamDict,
             argstr += '\t{0}: {1}\n'.format(key, value)
 
         eargs = [' '.join(names), file_set.filename, argstr, func_name]
-        WLOG(params, 'error', textentry('00-010-00001', args=eargs))
+        raise drs_log.AperoCodedException(params, '00-010-00001', targs=eargs)
     # ----------------------------------------------------------------------
     # return found and the drsfile instance
     if len(kinds) == 0:
@@ -8531,7 +8551,7 @@ def get_mid_obs_time(params: ParamDict,
     # deal with header still being None
     if header is None:
         eargs = [func_name]
-        WLOG(params, 'error', textentry('00-001-00051', args=eargs))
+        raise drs_log.AperoCodedException(params, '00-001-00051', targs=eargs)
     # get raw value from header
     rawtime = header[outkey]
     # get time object
@@ -8555,7 +8575,7 @@ def get_mid_obs_time(params: ParamDict,
     else:
         kinds = ['None', 'human', 'iso', 'unix', 'mjd', 'jd', 'decimalyear']
         eargs = [dbname, ' or '.join(kinds), out_fmt, func_name]
-        WLOG(params, 'error', textentry('00-001-00030', args=eargs))
+        raise drs_log.AperoCodedException(params, '00-001-00030', targs=eargs)
 
 
 def locate_calibfiber_file(params: ParamDict, infile: DrsFitsFile):

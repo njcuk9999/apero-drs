@@ -163,7 +163,9 @@ class DrsArgumentParser(argparse.ArgumentParser):
         # log message
         emsg_args = [message, program]
         emsg_obj = textentry('09-001-00001', args=emsg_args)
-        WLOG(params, 'error', emsg_obj)
+
+        raise drs_log.AperoCodedException(params, '09-001-00001',
+                                          targs=emsg_args)
 
     def _print_message(self, message: str, file: Union[None, IO] = None):
         """
@@ -572,7 +574,8 @@ class _CheckFiles(DrsAction):
         # deal with instrument == 'None'
         if self.indexdb.instrument == 'None':
             eargs = [argname, self.indexdb.name, func_name]
-            WLOG(params, 'error', textentry('09-001-00032', args=eargs))
+            raise drs_log.AperoCodedException(params, '09-001-00032',
+                                              targs=eargs)
         elif self.indexdb.database is None:
             # try to load database
             self.indexdb.load_db()
@@ -729,8 +732,8 @@ class _CheckBool(DrsAction):
             WLOG(params, 'debug', dmsg, wrap=False)
             return False
         else:
-            eargs = [self.dest, value]
-            WLOG(params, 'error', textentry('09-001-00013', args=eargs))
+            raise drs_log.AperoCodedException(params, '09-001-00013',
+                                              targs=[self.dest, value])
 
     def __call__(self, parser: DrsArgumentParser,
                  namespace: argparse.Namespace, values: Any,
@@ -830,10 +833,8 @@ class _CheckType(DrsAction):
         # check if passed as a list
         if (self.nargs == 1) and (type(value) is list):
             if len(value) == 0:
-                emsg = textentry('09-001-00016', args=[self.dest])
-                WLOG(params, 'error', emsg)
-            else:
-                return self._eval_type(value[0])
+                raise drs_log.AperoCodedException(params, '09-001-00016',
+                                                  targs=[self.dest])
         # else if we have a list we should iterate
         elif type(value) is list:
             values = []
@@ -841,12 +842,15 @@ class _CheckType(DrsAction):
                 values.append(self._eval_type(values[it]))
             if len(values) < len(value):
                 eargs = [self.dest, self.nargs, len(value)]
-                WLOG(params, 'error', textentry('09-001-00017', args=eargs))
+                raise drs_log.AperoCodedException(params, '09-001-00017',
+                                                  targs=eargs)
+
             return values
         # else
         else:
             eargs = [self.dest, self.nargs, type(value), value]
-            WLOG(params, 'error', textentry('09-001-00018', args=eargs))
+            raise drs_log.AperoCodedException(params, '09-001-00018',
+                                                targs=eargs)
 
     def _eval_type(self, value: Any) -> Any:
         """
@@ -863,9 +867,11 @@ class _CheckType(DrsAction):
         try:
             return self.type(value)
         except ValueError as _:
-            WLOG(params, 'error', textentry('09-001-00014', args=eargs))
+            raise drs_log.AperoCodedException(params, '09-001-00014',
+                                              targs=eargs)
         except TypeError as _:
-            WLOG(params, 'error', textentry('09-001-00015', args=eargs))
+            raise drs_log.AperoCodedException(params, '09-001-00015',
+                                              targs=eargs)
 
     def _check_limits(self, values: Any) -> Union[List[Any], Any]:
         """
@@ -898,8 +904,8 @@ class _CheckType(DrsAction):
             arg = self.recipe.special_args[argname]
         else:
             eargs = [argname, func_name]
-            WLOG(params, 'error', textentry('00-006-00011', args=eargs))
-            arg = None
+            raise drs_log.AperoCodedException(params, '00-006-00010',
+                                              targs=eargs)
         # ---------------------------------------------------------------------
         # skip this step if minimum/maximum are both None
         if arg.minimum is None and arg.maximum is None:
@@ -922,13 +928,16 @@ class _CheckType(DrsAction):
                 minimum = arg.dtype(minimum)
             except ValueError as e:
                 eargs = [argname, 'minimum', minimum, type(e), e]
-                WLOG(params, 'error', textentry('00-006-00012', args=eargs))
+                raise drs_log.AperoCodedException(params, '00-006-00012',
+                                                    targs=eargs)
+
         if maximum is not None:
             try:
                 maximum = arg.dtype(maximum)
             except ValueError as e:
                 eargs = [argname, 'maximum', maximum, type(e), e]
-                WLOG(params, 'error', textentry('00-006-00012', args=eargs))
+                raise drs_log.AperoCodedException(params, '00-006-00012',
+                                                    targs=eargs)
         # ---------------------------------------------------------------------
         # loop round files and check values
         for value in values:
@@ -936,20 +945,20 @@ class _CheckType(DrsAction):
             if minimum is not None and maximum is not None:
                 if (value < minimum) or (value > maximum):
                     eargs = [argname, value, minimum, maximum]
-                    emsg = textentry('09-001-00029', args=eargs)
-                    WLOG(params, 'error', emsg)
+                    raise drs_log.AperoCodedException(params, '09-001-00029',
+                                                      targs=eargs)
             # deal with case where just minimum is checked
             elif minimum is not None:
                 if value < minimum:
                     eargs = [argname, value, minimum]
-                    emsg = textentry('09-001-00027', args=eargs)
-                    WLOG(params, 'error', emsg)
+                    raise drs_log.AperoCodedException(params, '09-001-00027',
+                                                      targs=eargs)
             # deal with case where just maximum is checked
             elif maximum is not None:
                 if value > maximum:
                     eargs = [argname, value, maximum]
-                    emsg = textentry('09-001-00028', args=eargs)
-                    WLOG(params, 'error', emsg)
+                    raise drs_log.AperoCodedException(params, '09-001-00028',
+                                                        targs=eargs)
         # ---------------------------------------------------------------------
         # return (based on whether it is a list or not)
         if is_list:
@@ -1054,7 +1063,8 @@ class _CheckOptions(DrsAction):
             return value
         else:
             eargs = [self.dest, ' or '.join(self.choices), value]
-            WLOG(params, 'error', textentry('09-001-00019', args=eargs))
+            raise drs_log.AperoCodedException(params, '09-001-00019',
+                                              targs=eargs)
 
     def __call__(self, parser: DrsArgumentParser,
                  namespace: argparse.Namespace, values: Any,
@@ -1380,10 +1390,11 @@ class _ActivateDebug(DrsAction):
             # return value
             return value
         except drs_exceptions.DrsCodedException as e:
-            WLOG(params, 'error', textentry(e.codeid, args=e.targs))
+            raise drs_log.AperoCodedException(None, e.codeid, targs=e.targs)
         except Exception as _:
             eargs = [self.dest, values]
-            WLOG(params, 'error', textentry('09-001-00020', args=eargs))
+            raise drs_log.AperoCodedException(None, '09-001-00020', targs=eargs)
+
 
     def __call__(self, parser: DrsArgumentParser,
                  namespace: argparse.Namespace, values: Any,
@@ -1570,7 +1581,8 @@ class _ForceInputDir(DrsAction):
             return value
         except Exception as _:
             eargs = [self.dest, values]
-            WLOG(params, 'error', textentry('09-001-00020', args=eargs))
+            raise drs_log.AperoCodedException(params, '09-001-00020',
+                                              targs=eargs)
 
     def __call__(self, parser: DrsArgumentParser,
                  namespace: argparse.Namespace, values: Any,
@@ -1668,7 +1680,8 @@ class _ForceOutputDir(DrsAction):
             return value
         except Exception as _:
             eargs = [self.dest, values]
-            WLOG(params, 'error', textentry('09-001-00020', args=eargs))
+            raise drs_log.AperoCodedException(params, '09-001-00020',
+                                              targs=eargs)
 
     def __call__(self, parser: DrsArgumentParser,
                  namespace: argparse.Namespace, values: Any,
@@ -2068,8 +2081,8 @@ class _SetParallel(DrsAction):
             return False
         else:
             eargs = [self.dest, strvalue]
-            WLOG(params, 'error', textentry('09-001-00013', args=eargs))
-            return False
+            raise drs_log.AperoCodedException(params, '09-001-00013',
+                                              targs=eargs)
 
     def __call__(self, parser: DrsArgumentParser,
                  namespace: argparse.Namespace, values: Any,
@@ -3207,7 +3220,7 @@ def valid_obs_dir_no_db(params: ParamDict, indexdb: FileIndexDatabase,
         input_value = str(input_value)
     except Exception as _:
         eargs = [argname, input_value, type(input_value)]
-        WLOG(params, 'error', textentry('09-001-00003', args=eargs))
+        raise drs_log.AperoCodedException(params, '09-001-00003', targs=eargs)
     # clean up
     input_value = input_value.strip()
 
@@ -3241,7 +3254,7 @@ def valid_obs_dir_no_db(params: ParamDict, indexdb: FileIndexDatabase,
     # -------------------------------------------------------------------------
     abspath = os.path.join(block_inst.block_path, input_value)
     eargs = [argname, input_value, input_value, str(abspath)]
-    WLOG(params, 'error', textentry('09-001-00004', args=eargs))
+    raise drs_log.AperoCodedException(params, '09-001-00004', targs=eargs)
 
 
 # noinspection PyBroadException
@@ -3282,7 +3295,7 @@ def valid_obs_dir(params: ParamDict, indexdb: FileIndexDatabase,
         input_value = str(input_value)
     except Exception as _:
         eargs = [argname, input_value, type(input_value)]
-        WLOG(params, 'error', textentry('09-001-00003', args=eargs))
+        raise drs_log.AperoCodedException(params, '09-001-00003', targs=eargs)
     # clean up
     input_value = input_value.strip()
     # -------------------------------------------------------------------------
@@ -3291,7 +3304,7 @@ def valid_obs_dir(params: ParamDict, indexdb: FileIndexDatabase,
     # deal with instrument == 'None'
     if indexdb.instrument == 'None':
         eargs = [argname, indexdb.name, func_name]
-        WLOG(params, 'error', textentry('09-001-00032', args=eargs))
+        raise drs_log.AperoCodedException(params, '09-001-00032', targs=eargs)
     elif indexdb.database is None:
         # try to load database
         indexdb.load_db()
@@ -3330,7 +3343,7 @@ def valid_obs_dir(params: ParamDict, indexdb: FileIndexDatabase,
     # -------------------------------------------------------------------------
     abspath = os.path.join(block_inst.block_path, input_value)
     eargs = [argname, input_value, input_value, str(abspath)]
-    WLOG(params, 'error', textentry('09-001-00004', args=eargs))
+    raise drs_log.AperoCodedException(params, '09-001-00004', targs=eargs)
 
 
 # noinspection PyBroadException
@@ -3367,7 +3380,7 @@ def valid_file_no_db(params: ParamDict, recipe: Any,
         filename = str(filename)
     except Exception as _:
         eargs = [argname, filename, type(filename)]
-        WLOG(params, 'error', textentry('09-001-00005', args=eargs))
+        raise drs_log.AperoCodedException(params, '09-001-00005', targs=eargs)
     # clean up
     filename = filename.strip()
     # ---------------------------------------------------------------------
@@ -3408,7 +3421,7 @@ def valid_file_no_db(params: ParamDict, recipe: Any,
     # ---------------------------------------------------------------------
     # if we have reached this point we cannot file filename
     eargs = [argname, filename, abspath]
-    WLOG(params, 'error', textentry('09-001-00005', args=eargs))
+    raise drs_log.AperoCodedException(params, '09-001-00005', targs=eargs)
 
 
 # noinspection PyBroadException
@@ -3448,7 +3461,7 @@ def valid_file(params: ParamDict, filedb: PandasLikeDatabase,
         filename = str(filename)
     except Exception as _:
         eargs = [argname, filename, type(filename)]
-        WLOG(params, 'error', textentry('09-001-00005', args=eargs))
+        raise drs_log.AperoCodedException(params, '09-001-00005', targs=eargs)
     # clean up
     filename = filename.strip()
 
@@ -3505,7 +3518,7 @@ def valid_file(params: ParamDict, filedb: PandasLikeDatabase,
     # ---------------------------------------------------------------------
     # if we have reached this point we cannot file filename
     eargs = [argname, filename, abspath]
-    WLOG(params, 'error', textentry('09-001-00005', args=eargs))
+    raise drs_log.AperoCodedException(params, '09-001-00005', targs=eargs)
 
 
 def _fits_database_query(params: ParamDict, drsfiles: List[DrsInputFile],
@@ -3603,7 +3616,7 @@ def _fits_database_query(params: ParamDict, drsfiles: List[DrsInputFile],
                 break
         # if at the end of all drsfiles this row is not valid print the error
         if not row_valid and error is not None:
-            WLOG(params, 'error', error)
+            raise drs_log.AperoCodedException(params, None, message=error)
     # finally return the list of files
     return files, types
 
@@ -3694,7 +3707,7 @@ def _fits_query(params: ParamDict, recipe: Any,
                 break
         # if at the end of all drsfiles this row is not valid print the error
         if not row_valid and error is not None:
-            WLOG(params, 'error', error)
+            raise drs_log.AperoCodedException(params, None, message=error)
     # finally return the list of files
     return files, types
 
@@ -3724,7 +3737,8 @@ def _check_file_logic(params: ParamDict, argname: str, logic: str,
             if filetype.name != types[-1].name:
                 # raise error if not
                 eargs = [argname, filetype.name, types[-1].name]
-                WLOG(params, 'error', textentry('09-001-00008', args=eargs))
+                raise drs_log.AperoCodedException(params, '09-001-00008',
+                                                  targs=eargs)
 
 
 def _inpath_file(params: ParamDict, argname: str, filename: str,
@@ -3753,9 +3767,7 @@ def _inpath_file(params: ParamDict, argname: str, filename: str,
         return [abspath], [file_in]
     # if we have reached this point we cannot file filename
     eargs = [argname, filename, abspath]
-    WLOG(params, 'error', textentry('09-001-00005', args=eargs))
-    # return placeholders (should not get to here)
-    return [abspath], [drsfile]
+    raise drs_log.AperoCodedException(params, '09-001-00005', targs=eargs)
 
 
 # =============================================================================

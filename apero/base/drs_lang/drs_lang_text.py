@@ -245,7 +245,8 @@ class Text(str):
 
 
 def textentry(key: str, args: Union[List[Any], str, None] = None,
-              kwargs: Union[Dict[str, Any], None] = None) -> Text:
+              kwargs: Union[Dict[str, Any], None] = None,
+              message: Union[str, None] = None) -> Text:
     """
     Get text from a database
 
@@ -263,6 +264,14 @@ def textentry(key: str, args: Union[List[Any], str, None] = None,
     _ = __NAME__ + '.textentry()'
     # deal with no entries
     value = LanguageLookup.get(key, required=False)
+    # deal with no value (use key)
+    if message is not None:
+        if args is not None:
+            value = message.format(*args)
+        elif kwargs is not None:
+            value = message.format(**kwargs)
+        else:
+            value = message
     # deal with no value (use key)
     if value is None:
         message = str(key)

@@ -2660,7 +2660,7 @@ CDict.set('LBL_FILE_DEFS', value='TELLU_OBJ', source=__NAME__)
 
 # Define the dprtype for science files for LBL
 CDict.set('LBL_DPRTYPES',
-          value=['OBJ_FP', 'BJ_DARK', 'POLAR_FP', 'POLAR_DARK'],
+          value=['OBJ_FP', 'OBJ_DARK', 'POLAR_FP', 'POLAR_DARK'],
           source=__NAME__, group=cgroup)
 
 # Define the file definition type (DRSOUTID) for lbl input template

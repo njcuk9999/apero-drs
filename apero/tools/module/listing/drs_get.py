@@ -386,7 +386,7 @@ def fiber_by_output(kw_fibers: Union[List[str], None],
         return None
     # load psuedo constants
     pconst = load_functions.load_pconfig()
-    filemod = pconst.FILEMOD().get()
+    filemod = pconst.FILEMOD()
     # get filesets
     filedefs = [filemod.raw_file, filemod.pp_file, filemod.red_file,
                 filemod.post_file]

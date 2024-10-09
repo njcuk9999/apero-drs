@@ -1314,7 +1314,8 @@ class DrsRecipe(object):
             # else raise an error
             else:
                 eargs = [argname, value, func_name]
-                WLOG(params, 'error', textentry('00-503-00012', args=eargs))
+                raise drs_log.AperoCodedException(params, '00-503-00012',
+                                                  targs=eargs)
 
     # =========================================================================
     # Private Methods (Not to be used externally to drs_recipe.py)
@@ -1442,10 +1443,15 @@ class DrsRecipe(object):
             # add the first argument
             if '--' in arg.argname:
                 self.str_arg_list.append(arg.argname)
-            # add the rest as separate arguments
-            for value in values:
-                # finally append the string to str_arg_list
-                self.str_arg_list.append(str(value))
+                # option values --> comma separated list
+                str_options = ','.join([str(value) for value in values])
+                # push into string list
+                self.str_arg_list.append(str_options)
+            else:
+                # add the rest as separate arguments
+                for value in values:
+                    # finally append the string to str_arg_list
+                    self.str_arg_list.append(str(value))
         else:
             strarg = [arg.argname, values]
             self.str_arg_list.append(strfmt.format(*strarg))

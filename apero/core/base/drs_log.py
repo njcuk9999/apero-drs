@@ -119,6 +119,7 @@ class Log:
                         program: Union[str, None] = None,
                         rmessage: Union[str, None] = None,
                         colour: Union[str, None] = None,
+                        counter: int = 0,
                         to_console: bool = True,
                         to_file: bool = True):
         """
@@ -135,7 +136,8 @@ class Log:
         self.code = code
         # update console fmt
         self.confmt = ConsoleFormat(theme=self.theme, code=code,
-                                    program=program, colour=colour)
+                                    program=program, colour=colour,
+                                    counter=counter)
         self.filefmt = FileFormat(theme='OFF', code=code, program=program,
                                   rmessage=rmessage)
         # clean any handlers in logging currently
@@ -216,7 +218,7 @@ class Log:
                 colour: Union[str, None] = None,
                 key: Union[str, None] = None,
                 to_console: bool = True, to_file: bool = True,
-                **kwargs):
+                counter: int = 0, **kwargs):
         """
         Log a message at the GENERAL level
 
@@ -237,7 +239,8 @@ class Log:
         """
         # update the handles with the properties from this call
         self.update_handles(self.console_verbosity, code, program,
-                            rmessage, colour, to_console, to_file)
+                            rmessage, colour, to_console, to_file,
+                            counter)
         # update cached log
         cache_logger(self.filepath, rmessage, code=self.code,
                      program=self.program, key=key)
@@ -251,7 +254,7 @@ class Log:
               colour: Union[str, None] = None,
               key: Union[str, None] = None,
               to_console: bool = True, to_file: bool = True,
-              **kwargs):
+              counter: int = 0, **kwargs):
         """
         Log a message at the GENERAL level
 
@@ -272,7 +275,8 @@ class Log:
         """
         # update the handles with the properties from this call
         self.update_handles(self.console_verbosity, code, program,
-                            rmessage, colour, to_console, to_file)
+                            rmessage, colour, to_console, to_file,
+                            counter)
         # update cached log
         cache_logger(self.filepath, rmessage, code=self.code,
                      program=self.program, key=key)
@@ -286,7 +290,7 @@ class Log:
              colour: Union[str, None] = None,
              key: Union[str, None] = None,
              to_console: bool = True, to_file: bool = True,
-             **kwargs):
+             counter: int = 0, **kwargs):
         """
         Log a message at the GENERAL level
 
@@ -307,7 +311,8 @@ class Log:
         """
         # update the handles with the properties from this call
         self.update_handles(self.console_verbosity, code, program,
-                            rmessage, colour, to_console, to_file)
+                            rmessage, colour, to_console, to_file,
+                            counter)
         # update cached log
         cache_logger(self.filepath, rmessage, code=self.code,
                      program=self.program, key=key)
@@ -321,7 +326,7 @@ class Log:
                 colour: Union[str, None] = None,
                 key: Union[str, None] = None,
                 to_console: bool = True, to_file: bool = True,
-                **kwargs):
+                counter: int = 0, **kwargs):
         """
         Log a message at the GENERAL level
 
@@ -342,7 +347,8 @@ class Log:
         """
         # update the handles with the properties from this call
         self.update_handles(self.console_verbosity, code, program,
-                            rmessage, colour, to_console, to_file)
+                            rmessage, colour, to_console, to_file,
+                            counter)
         # update cached log
         cache_logger(self.filepath, rmessage, code=self.code,
                      program=self.program, key=key)
@@ -356,7 +362,7 @@ class Log:
               colour: Union[str, None] = None,
               key: Union[str, None] = None,
               to_console: bool = True, to_file: bool = True,
-              **kwargs):
+              counter: int = 0, **kwargs):
         """
         Log a message at the GENERAL level
 
@@ -377,7 +383,8 @@ class Log:
         """
         # update the handles with the properties from this call
         self.update_handles(self.console_verbosity, code, program,
-                            rmessage, colour, to_console, to_file)
+                            rmessage, colour, to_console, to_file,
+                            counter)
         # update cached log
         cache_logger(self.filepath, rmessage, code=self.code,
                      program=self.program, key=key)
@@ -390,7 +397,7 @@ class Log:
                        rmessage: Union[str, None] = None,
                        colour: Union[str, None] = None,
                        to_console: bool = True,
-                       to_file: bool = True):
+                       to_file: bool = True, counter: int = 0):
         """
         Update the text printed to console
             0=only warnings/errors
@@ -411,22 +418,22 @@ class Log:
         if verbose == 2:
             # set the default console level to GENERAL
             self._update_handles(verbose, self.GENERAL, code, program,
-                                 rmessage, colour,
+                                 rmessage, colour, counter,
                                  to_console=to_console, to_file=to_file)
         elif verbose == 1:
             # set the default console level to INFO
             self._update_handles(verbose, self.INFO, code, program,
-                                 rmessage, colour,
+                                 rmessage, colour, counter,
                                  to_console=to_console, to_file=to_file)
         elif verbose == 0:
             # set the default console level to WARNING
             self._update_handles(verbose, self.WARNING, code, program,
-                                 rmessage, colour,
+                                 rmessage, colour, counter,
                                  to_console=to_console, to_file=to_file)
         else:
             # set the default console level to GENERAL
             self._update_handles(verbose, self.GENERAL, code, program,
-                                 rmessage, colour,
+                                 rmessage, colour, counter,
                                  to_console=to_console, to_file=to_file)
 
     @staticmethod
@@ -452,7 +459,8 @@ class ConsoleFormat(logging.Formatter):
     def __init__(self, fmt: str = "%(levelno)s: %(msg)s", theme=None,
                  code: Union[str, None] = None,
                  program: Union[str, None] = None,
-                 colour: Union[str, None] = None):
+                 colour: Union[str, None] = None,
+                 counter: int = 0):
         """
         Initialize the formatter
 
@@ -469,8 +477,12 @@ class ConsoleFormat(logging.Formatter):
             program = ''
         if code is None:
             code = ' '
-        self.fmt = '%(asctime)s.%(msecs)03d|'
-        self.fmt += f'{code}|{program}| %(message)s'
+        # coounter changes how we display to the console
+        if counter == 0:
+            self.fmt = '%(asctime)s.%(msecs)03d|'
+            self.fmt += f'{code}|{program}| %(message)s'
+        else:
+            self.fmt = '  L %(message)s'
         # set this as the default logging format
         self.default = logging.Formatter(self.fmt, datefmt='%Y-%m-%d %H:%M:%S')
         # define empty format
@@ -778,11 +790,14 @@ class Wlog:
         else:
             to_console, to_file = True, True
         # ---------------------------------------------------------------------
+        # keep counter on messages
+        counter = 0
         # loop around message and log them
         for message1, message2 in zip(messages1, messages2):
             log_kwargs = dict(message=message1, code=code, program=option,
                               to_console=to_console, to_file=to_file,
-                              rmessage=message2, colour=colour, key=key)
+                              rmessage=message2, colour=colour, key=key,
+                              counter=counter)
             # log at the correct level
             if key == 'info':
                 log.info(**log_kwargs)
@@ -799,6 +814,8 @@ class Wlog:
                 log.debug(**log_kwargs)
             else:
                 log.general(**log_kwargs)
+            # increment counter
+            counter += 1
 
     def get_log(self, params: Any) -> Log:
         """
@@ -893,11 +910,16 @@ class AperoCodedException(DrsCodedException):
         # set targs
         self.targs = targs
         # if we have a code
-        if self.code is not None:
+        if self.code is not None and self.message is None:
             # set code
             self.code = code
             # set the message from the code
             self.message = drs_lang.textentry(self.code, targs)
+        elif self.code is not None:
+            # set code
+            self.code = code
+            # otherwise use the message
+            self.message = drs_lang.textentry(self.message, targs)
         else:
             # otherwise use the message
             self.message = message
@@ -1205,8 +1227,14 @@ def format_message(params: Any, key: str,
     # -------------------------------------------------------------------------
     # deal with text wrapping
     if wrap:
-        msg_obj.tvalue = textwrap.fill(msg_obj.tvalue,
-                                       params['DRS_LOG_CHAR_LEN'])
+        msg_string = msg_obj.tvalue.split('\n')
+        # loop around these lines
+        for it, msg in enumerate(msg_string):
+            msg_string[it] = textwrap.fill(msg,
+                                           width=params['DRS_LOG_CHAR_LEN'],
+                                           break_long_words=False,
+                                           break_on_hyphens=False)
+        msg_obj.tvalue = '\n'.join(msg_string)
     # -------------------------------------------------------------------------
     # strip white spaces
     msg_obj.tvalue = msg_obj.tvalue.strip()
@@ -1269,6 +1297,11 @@ def format_message(params: Any, key: str,
     # split by '\n' to create list of messages
     raw_messages1 = raw_messages1.split('\n')
     raw_messages2 = raw_messages2.split('\n')
+    # -------------------------------------------------------------------------
+    # if we have mutiple messages add a blank one first
+    if len(raw_messages1) > 1:
+        raw_messages1.insert(0, '')
+        raw_messages2.insert(0, '')
     # -------------------------------------------------------------------------
     # return the raw messages and the code
     return raw_messages1, code, option, raw_messages2
