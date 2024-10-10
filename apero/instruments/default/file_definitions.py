@@ -19,7 +19,7 @@ from apero.core.core import drs_out_file as out
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero.core.instruments.default.file_definitions.py'
+__NAME__ = 'apero.instruments.default.file_definitions.py'
 __INSTRUMENT__ = 'None'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__

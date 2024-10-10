@@ -38,7 +38,7 @@ from apero.tools.module.processing import drs_grouping_functions as drsgf
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero.core.instruments.default.grouping.py'
+__NAME__ = 'apero.instruments.default.grouping.py'
 __INSTRUMENT__ = 'None'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__

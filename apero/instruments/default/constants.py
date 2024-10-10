@@ -17,7 +17,7 @@ from apero.core.constants import constant_functions
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero.core.instruments.default.constants.py'
+__NAME__ = 'apero.instruments.default.constants.py'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
 __author__ = base.__author__

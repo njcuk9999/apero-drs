@@ -1,5 +1,5 @@
 """
-Default keywords for NIRPS HA
+Default keywords for SPIROU
 
 Created on 2019-01-17
 
@@ -8,12 +8,12 @@ Created on 2019-01-17
 from astropy import units as uu
 
 from apero.base import base
-from apero.core.instruments.default import keywords
+from apero.instruments.default import keywords
 
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero.core.instruments.nirps_ha.keywords.py'
+__NAME__ = 'apero.instruments.spirou.keywords.py'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
 __author__ = base.__author__
@@ -27,135 +27,132 @@ KDict = keywords.KDict.copy(source=__NAME__)
 # -----------------------------------------------------------------------------
 # Define the header key that uniquely identifies the file
 #     (i.e. an odometer code)
-KDict.set('KW_IDENTIFIER', key='ARCFILE',
-          comment='filename anticipated by fitspipe server',
-          group='raw')
+KDict.set('KW_IDENTIFIER', key='FILENAME',
+          comment='filename anticipated by fitspipe server', group='raw')
+
+# define the HEADER key for acquisition time
+#     Note datatype must be a astropy.Time.format
+#     'jd', 'mjd', 'decimalyear', 'unix', 'cxcsec', 'gps', 'plot_date',
+#     'datetime', 'iso', 'isot', 'yday', 'datetime64', 'fits', 'byear',
+#     'jyear', 'byear_str', 'jyear_str'
+KDict.set('KW_ACQTIME', key='MJDEND', datatype='mjd', dataformat=float,
+          comment='Modified Julian Date at start of observation',
+          combine_method='maximum', group='raw')
+
+# define the MJ end date HEADER key
+KDict.set('KW_MJDEND', key='MJDEND', datatype='mjd', dataformat=float,
+          comment='Modified Julian Date at end of observation',
+          combine_method='maximum', group='raw')
 
 # define the MJ date HEADER key (only used for logging)
-KDict.set('KW_MJDATE', key='MJD-OBS', datatype='mjd', dataformat=float,
-          comment='Observation Start (Modified Julian Date)',
-          combine_method='minimum', group='raw')
+KDict.set('KW_MJDATE', key='MJDATE', datatype='mjd', dataformat=float,
+          comment='', combine_method='minimum', group='raw')
 
 # define the observation date HEADER key
-KDict.set('KW_DATE_OBS', key='DATE-OBS', datatype='fits', dataformat=str,
-          comment='Observation Start (YYYY-MM-DDThh:mm:ss UTC)',
+KDict.set('KW_DATE_OBS', key='DATE-OBS', comment='Date at start of observation (UTC)',
+          group='raw')
+
+# define the observation time HEADER key
+KDict.set('KW_UTC_OBS', key='UTC-OBS', comment='Time at start of observation (UTC)',
           group='raw')
 
 # define the read noise HEADER key a.k.a sigdet (used to get value only)
-KDict.set('KW_RDNOISE', key='HIERARCH ESO DET OUT1 RON',
-          comment='Read noise (electrons)', combine_method='flux',
-          group='raw')
+KDict.set('KW_RDNOISE', key='RDNOISE', comment='Read noise (electrons)',
+          combine_method='noise', group='raw')
 
 # define the gain HEADER key (used to get value only)
-# TODO: Change to HIERARCH ESO DET CHIP1 GAIN
-KDict.set('KW_GAIN', key='HIERARCH ESO DET OUT1 CONAD',
-          comment='[adu/e-] Conversion electrons to ADU',
+KDict.set('KW_GAIN', key='GAIN', comment='Amplifier gain (electrons/ADU)',
           combine_method='mean', group='raw')
 
+# define the saturation limit HEADER key
+KDict.set('KW_SATURATE', key='SATURATE', comment='Saturation value (ADU) ',
+          combine_method='mean', group='raw')
+
+# define the frame time HEADER key
+KDict.set('KW_FRMTIME', key='FRMTIME', comment='[sec] Frame time, cadence of IR reads',
+          group='raw')
+
 # define the exposure time HEADER key (used to get value only)
-KDict.set('KW_EXPTIME', key='EXPTIME', unit=uu.s,
-          comment='[sec] Integration time',
+KDict.set('KW_EXPTIME', key='EXPTIME', unit=uu.s, comment='[sec] Integration time',
           combine_method='math', group='raw')
 
 # define the required exposure time HEADER key (used to get value only)
-# NIRPS-CHANGE: Do we have this for NIRPS?
-# TODO: For now set this to the actual exposure time
-KDict.set('KW_EXPREQ', key='EXPTIME', unit=uu.s,
+KDict.set('KW_EXPREQ', key='EXPREQ', unit=uu.s,
           comment='[sec] Requested integration time',
           combine_method='math', group='raw')
 
 # define the observation type HEADER key
-KDict.set('KW_OBSTYPE', key='HIERARCH ESO DPR TYPE',
-          comment='Observation / Exposure type', group='raw')
+KDict.set('KW_OBSTYPE', key='OBSTYPE', comment='Observation / Exposure type',
+          group='raw')
 
 # define the science fiber type HEADER key
-# KW_CCAS = KW_CCAS.copy(__NAME__)
-# KW_CCAS.set(key='SBCCAS_P',
-#             comment='SPIRou Cassegrain Fiber Position (predefined)',
-#             group='raw')
+KDict.set('KW_CCAS', key='SBCCAS_P',
+          comment='SPIRou Cassegrain Fiber Position (predefined)')
 
 # define the reference fiber type HEADER key
-# KW_CREF = KW_CREF.copy(__NAME__)
-# KW_CREF.set(key='SBCREF_P',
-#             comment='SPIRou Reference Fiber Position (predefined)',
-#             group='raw')
+KDict.set('KW_CREF', key='SBCREF_P',
+          comment='SPIRou Reference Fiber Position (predefined)',
+          group='raw')
 
 # define the calibration wheel position
-# KW_CALIBWH = KW_CALIBWH.copy(__NAME__)
-# KW_CALIBWH.set(key='SBCALI_P',
-#                comment='SPIRou calibwh predefined position or angle',
-#                group='raw')
+KDict.set('KW_CALIBWH', key='SBCALI_P',
+          comment='SPIRou calibwh predefined position or angle',
+          group='raw')
 
 # define the target type (object/sky)
-KDict.set('KW_TARGET_TYPE', key='TRG_TYPE', comment='target or sky object', group='raw')
+KDict.set('KW_TARGET_TYPE', key='TRG_TYPE', comment='target or sky object',
+          group='ppraw')
 
 # define the density HEADER key
-# KW_CDEN = KW_CDEN.copy(__NAME__)
-# KW_CDEN.set(key='SBCDEN_P',
-#             comment='SPIRou Calib-Reference density (0 to 3.3)', group='raw')
+KDict.set('KW_CDEN', key='SBCDEN_P',
+          comment='SPIRou Calib-Reference density (0 to 3.3)', group='raw')
 
 # define polarisation HEADER key
-# KW_CMMTSEQ = KW_CMMTSEQ.copy(__NAME__)
-# KW_CMMTSEQ.set(key='CMMTSEQ', group='raw')
+KDict.set('KW_CMMTSEQ', key='CMMTSEQ', group='raw')
 
 # define the exposure number within sequence HEADER key
-KDict.set('KW_CMPLTEXP', key='HIERARCH ESO TPL EXPNO',
+KDict.set('KW_CMPLTEXP', key='CMPLTEXP',
           comment='Exposure number within the exposure sequence ',
           combine_method='1', group='raw')
 
 # define the total number of exposures HEADER key
-KDict.set('KW_NEXP', key='HIERARCH ESO TPL NEXP',
-          comment='Total number of exposures within the sequence',
+KDict.set('KW_NEXP', key='NEXP', comment='Total number of exposures within the sequence',
           combine_method='1', group='raw')
 
 # define the pi name HEADER key
-KDict.set('KW_PI_NAME', key='HIERARCH ESO OBS PI-COI NAME',
-          comment='The PI of the program', group='raw')
+KDict.set('KW_PI_NAME', key='PI_NAME', comment='The PI of the program', group='raw')
 
 # define the run id HEADER key
-KDict.set('KW_RUN_ID', key='HIERARCH ESO OBS PROG ID',
-          comment='ESO program identification', group='raw')
+KDict.set('KW_RUN_ID', key='RUNID', comment='queue run id', group='raw')
 
 # define the instrument HEADER key
 KDict.set('KW_INSTRUMENT', key='INSTRUME', comment='Instrument Name', group='raw')
-
-# define the instrument mode header key
-KDict.set('KW_INST_MODE', key='HIERARCH ESO INS MODE', comment='Instrument mode used',
-          group='raw')
-
-# define the raw dprtype from the telescope
-KDict.set('KW_RAW_DPRTYPE', key='HIERARCH ESO DPR TYPE', comment='Observation type',
-          group='raw')
-
-# define the raw dpr category
-KDict.set('KW_RAW_DPRCATG', key='HIERARCH ESO DPR CATG', comment='Observation category',
-          group='raw')
 
 # -----------------------------------------------------------------------------
 # Required header keys (related to science object)
 # -----------------------------------------------------------------------------
 # define the observation ra HEADER key
-KDict.set('KW_OBJRA', key='RA', unit=uu.deg, comment='Target right ascension',
+KDict.set('KW_OBJRA', key='RA_DEG', unit=uu.deg, comment='Target right ascension',
           group='raw')
 
 # define the observation dec HEADER key
-KDict.set('KW_OBJDEC', key='DEC', unit=uu.deg, comment='Target declination ',
+KDict.set('KW_OBJDEC', key='DEC_DEG', unit=uu.deg, comment='Target declination',
           group='raw')
 
 # define the observation name
 KDict.set('KW_OBJECTNAME', key='OBJECT', comment='Target name', group='raw')
 
 # define the observation name
-KDict.set('KW_OBJECTNAME2', key='HIERARCH ESO OBS TARG NAME', comment='OB target name',
+KDict.set('KW_OBJECTNAME2', key='OBJNAME', comment='Target name (alternate)',
           group='raw')
 
 # define the observation equinox HEADER key
-KDict.set('KW_OBJEQUIN', key='EQUINOX', datatype='decimalyear',
+KDict.set('KW_OBJEQUIN', key='OBJEQUIN', datatype='decimalyear',
           comment='Target equinox ', group='raw')
 
 # define the observation proper motion in ra HEADER key
 KDict.set('KW_OBJRAPM', key='OBJRAPM', unit=uu.arcsec / uu.yr,
-          comment='Target right ascension proper motion in as/yr ',
+          comment='Target right ascension proper motion in as/yr',
           group='raw')
 
 # define the observation proper motion in dec HEADER key
@@ -164,26 +161,29 @@ KDict.set('KW_OBJDECPM', key='OBJDECPM', unit=uu.arcsec / uu.yr,
           group='raw')
 
 # define the airmass HEADER key
-KDict.set('KW_AIRMASS', key='HIERARCH ESO TEL AIRM START',
-          comment='Airmass at start of observation',
+KDict.set('KW_AIRMASS', key='AIRMASS', comment='Airmass at start of observation',
           group='raw')
 
 # define the weather tower temperature HEADER key
-# KW_WEATHER_TOWER_TEMP = KW_WEATHER_TOWER_TEMP.copy(__NAME__)
-# KW_WEATHER_TOWER_TEMP.set(key='TEMPERAT',
-#                           comment='86 temp, air, weather tower deg C  ',
-#                           group='raw')
+KDict.set('KW_WEATHER_TOWER_TEMP', key='TEMPERAT',
+          comment='86 temp, air, weather tower deg C  ',
+          group='raw')
 
 # define the cassegrain temperature HEADER key
-# KW_CASS_TEMP = KW_CASS_TEMP.copy(__NAME__)
-# KW_CASS_TEMP.set(key='SB_POL_T',
-#                  comment='SPIRou tpolar temp at start of exp (deg C)  ',
-#                  group='raw')
+KDict.set('KW_CASS_TEMP', key='SB_POL_T',
+          comment='SPIRou tpolar temp at start of exp (deg C)  ',
+          group='raw')
 
 # define the humidity HEADER key
-# KW_HUMIDITY = KW_HUMIDITY.copy(__NAME__)
-# KW_HUMIDITY.set(key='RELHUMID',
-#                 comment='87 relative humidity, weather tower % ', group='raw')
+KDict.set('KW_HUMIDITY', key='RELHUMID',
+          comment='87 relative humidity, weather tower % ',
+          group='raw')
+
+# define the first polar sequence key
+KDict.set('KW_POLAR_KEY_1', key='SBRHB1_P', group='raw')
+
+# define the second polar sequence key
+KDict.set('KW_POLAR_KEY_2', key='SBRHB2_P', group='raw')
 
 # -----------------------------------------------------------------------------
 # Wanted header keys (related to science object)
@@ -286,7 +286,7 @@ KDict.set('KW_DRS_PLX_S', key='PP_PLXS',
 
 # the radial velocity to be used by the drs (after preprocessing)
 KDict.set('KW_DRS_RV', key='PP_RV', unit=uu.km / uu.s,
-          comment='The RV [km/s] used by the DRS',
+          comment='The RV [m/s] used by the DRS',
           group='resolve', post_exclude=True)
 
 # the source of the radial velocity used by the drs (after preprocessing)
@@ -364,7 +364,7 @@ KDict.set('KW_DPRTYPE', key='DPRTYPE', comment='APERO-type of file (from pre-pro
           group='ppraw')
 
 # Define the key to get the drs mode
-KDict.set('KW_DRS_MODE', key='DRSMODE', comment='APERO-mode (HA or HE)',
+KDict.set('KW_DRS_MODE', key='DRSMODE', comment='APERO-mode (Spectroscopy or Polar)',
           group='ppraw')
 
 # Define the mid exposure time
@@ -452,14 +452,28 @@ KDict.set('KW_CDBLEAKR', key='CDBLEAKR', comment='The cal ref LEAKM file used')
 KDict.set('KW_CDTLEAKR', key='CDTLEAKR', comment='MJDMID of cal ref LEAK file used')
 
 # additional properties of calibration
+
+# whether the calibrations have been flipped
 KDict.set('KW_C_FLIP', key='CAL_FLIP', comment='Whether the image was flipped from pp')
+
+# whether the calibratoins have been converted to electrons
 KDict.set('KW_C_CVRTE', key='CAL_TOE', comment='Whether the flux was converted to e-')
+
+# whether the calibrations have been resized
 KDict.set('KW_C_RESIZE', key='CAL_SIZE', comment='Whether the image was resized from pp')
+
+# whether the calibrations have an ftype
 KDict.set('KW_C_FTYPE', key='CAL_FTYP', comment='What this fiber was identified as')
+
+# the fiber name
 KDict.set('KW_FIBER', key='FIBER', comment='The fiber name')
 
-# define the sky model used for sky correction
-KDict.set('KW_TDBSKY', key='TDTSKYCO', comment='Sky model used for sky correction')
+# the ratio used for thermal correction (method=tapas or envelope)
+KDict.set('KW_THERM_RATIO', key='THRM_RAT', comment='Ratio 1 used for thermal correction')
+
+# the ratio method used for thermal correction
+KDict.set('KW_THERM_RATIO_U', key='THRM_RU',
+          comment='Ratio method used for thermal correction')
 
 # define the measured effective readout noise
 KDict.set('KW_EFF_RON', key='EFFRON', comment='Measured eff readout noise before ext')
@@ -511,36 +525,6 @@ KDict.set('KW_PPC_NBAD_SLOPE', key='NBADSLOP',
 KDict.set('KW_PPC_NBAD_BOTH', key='NBADBOTH',
           comment='No. bad px both cosmic reject',
           post_exclude=True)
-
-# The number of sigma used to construct pp reference mask
-KDict.set('KW_PP_REF_NSIG', key='PPMNSIG', comment='PP reference mask nsig used')
-
-# Define the key to store the name of the pp reference file used in pp (if used)
-KDict.set('KW_PP_REF_FILE', key='PPMFILE', comment='PP reference mask file used')
-
-# Define the percentile stats for LED flat in pp (50th percentile)
-KDict.set('KW_PP_LED_FLAT_P50', key='PPLEDP50', comment='LED RMS 50th percentile')
-
-# Define the percentile stats for LED flat in pp (16th percentile)
-KDict.set('KW_PP_LED_FLAT_P16', key='PPLEDP16', comment='LED RMS 16th percentile')
-
-# Define the percentile stats for LED flat in pp (84th percentile)
-KDict.set('KW_PP_LED_FLAT_P84', key='PPLEDP84', comment='LED RMS 84th percentile')
-
-# Define the LED flat file used
-KDict.set('KW_PP_LED_FLAT_FILE', key='PPLEDFIL', comment='LED flat file used')
-
-# Define the flux-weighted mid-exposure [Expert use only]
-KDict.set('KW_PP_MJD_FLUX', key='MJD_FLUX',
-          comment='weighted flux in posemeter [Expert use only]')
-
-# Define fractional RMS of posemteter [Expert use only]
-KDict.set('KW_PP_RMS_POSE', key='RMS_POSE ',
-          comment='RMS of flux in posemeter [Expert use only]')
-
-# Define median flux in posemeter [Expert use only]
-KDict.set('KW_PP_MED_POSE', key='MED_POSE',
-          comment='Median flux in posemeter [Expert use only]')
 
 # -----------------------------------------------------------------------------
 # Define apero_dark variables
@@ -1268,9 +1252,9 @@ KDict.set('KW_WNT_NITER1', key='WNTNITER', comment='wave night hc n iterations u
           parent='WAVE_NIGHT_NITERATIONS1', group='wave')
 
 # number of iterations for convergence used in wave night (fp)
-KDict.set('KW_WNT_NITER21', key='WNTNITER',
-                  comment='wave night fp n iterations used',
-                  parent='WAVE_NIGHT_NITERATIONS2', group='wave')
+KDict.set('KW_WNT_NITER2', key='WNTNITER',
+          comment='wave night fp n iterations used',
+          parent='WAVE_NIGHT_NITERATIONS2', group='wave')
 
 # starting point for the cavity corrections used in wave night
 KDict.set('KW_WNT_DCAVITY', key='WNTDCVTY',
@@ -1402,9 +1386,10 @@ KDict.set('KW_TELLUP_CCFP_OTHERS', key='TLPCPOTR', comment='CCF power of other s
 KDict.set('KW_TELLUP_DO_PRECLEAN', key='TLPDOCLN', comment='tellu preclean done',
           parent='TELLUP_DO_PRECLEANING')
 
-# Define whether precleaning was done (tellu pre-cleaning)
-KDict.set('KW_TELLUP_DO_PRECLEAN', key='TLPDOFRC', comment='tellu finite res corr done',
-          parent='TELLUP_DO_FINITE_RES_CORR')
+# Define default water absorption used (tellu pre-cleaning)
+KDict.set('KW_TELLUP_DFLT_WATER', key='TLPDFH2O',
+          comment='tellu preclean default H2O abso used',
+          parent='TELLUP_D_WATER_ABSO')
 
 # Define default water absorption used (tellu pre-cleaning)
 KDict.set('KW_TELLUP_DFLT_WATER', key='TLPDFH2O',
@@ -1665,18 +1650,19 @@ KDict.set('KW_MKTEMP_SNR_THRES', key='MTPSNRTH', comment='mktemplate snr thresho
 
 # the berv coverage calculated for this template calculation
 KDict.set('KW_MKTEMP_BERV_COV', key='MTPBCOV',
-                       comment='mktemplate berv coverage km/s')
+          comment='mktemplate berv coverage km/s')
 
 # the minimum berv coverage allowed for this template calculation
 KDict.set('KW_MKTEMP_BERV_COV_MIN', key='MTPBCMIN',
-                           comment='mktemplate min berv coverage used km/s')
+          comment='mktemplate min berv coverage used km/s')
 
 # the core snr used for this template calculation
-KDict.set('KW_MKTEMP_BERV_COV_SNR', key='MTPBCSNR', comment='mktemplate berv cov snr used')
+KDict.set('KW_MKTEMP_BERV_COV_SNR', key='MTPBCSNR',
+          comment='mktemplate berv cov snr used')
 
 # the resolution used for this template calculation
 KDict.set('KW_MKTEMP_BERV_COV_RES', key='MTPBCRES',
-                           comment='mktemplate berv cov resolution used')
+          comment='mktemplate berv cov resolution used')
 
 # -----------------------------------------------------------------------------
 # Define ccf variables
@@ -1762,7 +1748,7 @@ KDict.set('KW_CCF_DVRMS_SP', key='DVRMS_SP',
 
 # the dev rms calculated during the CCF [m/s]
 KDict.set('KW_CCF_DVRMS_CC', key='DVRMS_CC',
-          comment='final photon-noise RV uncertainty calc on stacked '
+          comment='final photon-noise RV uncertainty calc on mean '
                   'CCF [m/s]')
 
 # The radial velocity measured from the wave solution FP CCF
@@ -1802,6 +1788,188 @@ KDict.set('KW_CCF_RV_TIMEDIFF', key='RV_WAVTD',
 # the wave file source used for the rv reference fiber
 KDict.set('KW_CCF_RV_WAVESRCE', key='RV_WAVSR',
           comment='RV wave file source used')
+
+# -----------------------------------------------------------------------------
+# Define polar variables
+# -----------------------------------------------------------------------------
+# define the Elapsed time of observation (sec)
+KDict.set('KW_POL_ELAPTIME', key='ELAPTIME',
+          comment='POLAR Elapsed time of observation (sec)')
+
+# define the MJD at center of observation
+KDict.set('KW_POL_MJDCEN', key='MJDCEN', comment='POLAR MJD at center of observation')
+
+# define the BJD at center of observation
+KDict.set('KW_POL_BJDCEN', key='BJDCEN', comment='POLAR BJD at center of observation')
+
+# define the BERV at center of observation
+KDict.set('KW_POL_BERVCEN', key='BERVCEN',
+          comment='POLAR BERV at center of observation')
+
+# define the Mean BJD for polar sequence
+KDict.set('KW_POL_MEAN_MJD', key='MEANMJD', comment='POLAR Mean MJD for polar sequence')
+
+# define the Mean BJD for polar sequence
+KDict.set('KW_POL_MEAN_BJD', key='MEANBJD', comment='POLAR Mean BJD for polar sequence')
+
+# define the mean BERV of the exposures
+KDict.set('KW_POL_MEAN_BERV', key='MEANBERV', comment='POLAR Mean BERV of the exposures')
+
+# define the Stokes paremeter: Q, U, V, or I
+KDict.set('KW_POL_STOKES', key='STOKES', comment='POLAR Stokes paremeter: Q, U, V, or I')
+
+# define Number of exposures for polarimetry
+KDict.set('KW_POL_NEXP', key='POLNEXP',
+          comment='POLAR Number of exposures for polarimetry')
+
+# define the Total exposure time (sec)
+KDict.set('KW_POL_EXPTIME', key='TOTETIME', comment='POLAR Total exposure time (sec)')
+
+# defines the Polarimetry method
+KDict.set('KW_POL_METHOD', key='POLMETHO', comment='POLAR Polarimetry method')
+
+# define the MJD at flux-weighted center of 4 exposures
+KDict.set('KW_POL_MJD_FW_CEN', key='MJDFWCEN',
+          comment='MJD at flux-weighted center of the exposures')
+
+# define the BJD at flux-weighted center of 4 exposures
+KDict.set('KW_POL_BJD_FW_CEN', key='BJDFWCEN',
+          comment='BJD at flux-weighted center of the exposures')
+
+# define whether we corrected for BERV
+KDict.set('KW_POL_CORR_BERV', key='CORRBERV',
+          comment='BERV corrected before polarimetry')
+
+# define whether we corrected for source RV
+KDict.set('KW_POL_CORR_SRV', key='CORRSRV',
+          comment='Source RV corrected before polarimetry')
+
+# define whether we normalized stokes I by continuum
+KDict.set('KW_POL_NORM_STOKESI', key='NSTOKESI',
+          comment='Normalize Stokes I by continuum')
+
+# define whether we normalized stokes I by continuum
+KDict.set('KW_POL_INTERP_FLUX', key='PINTERPF',
+          comment='Interp flux to correct for shifts between exps')
+
+# define whether we apply polarimetric sigma-clip cleaning
+KDict.set('KW_POL_SIGCLIP', key='PSIGCLIP',
+          comment='Apply polarimetric sigma-clip cleaning')
+
+# define the number of sigma swithin which to apply sigma clipping
+KDict.set('KW_POL_NSIGMA', key='PNSIGMA',
+          comment='Number of sigmas of sigma-clip cleaning')
+
+# define whether we removed continuum polarization
+KDict.set('KW_POL_REMOVE_CONT', key='PREMCONT', comment='Remove continuum polarization')
+
+# define the stokes I continuum detection algorithm
+KDict.set('KW_POL_SCONT_DET_ALG', key='SICONTAL',
+          comment='Stokes I continuum detection algorithm')
+
+# define the polar continuum detection algorithm
+KDict.set('KW_POL_PCONT_DET_ALG', key='PCONTAL',
+          comment='Polarization continuum detection algorithm')
+
+# define whether we used polynomial fit for continuum polarization
+KDict.set('KW_POL_CONT_POLYFIT', key='PCPOLFIT',
+          comment='Use polynomial fit for continuum polarization')
+
+# define polynomial degree of fit continuum polarization
+KDict.set('KW_POL_CONT_DEG_POLY', key='PCPOLDEG',
+          comment='Polynomial degree to fit continuum polariz.')
+
+# define the iraf function that was used to fit stokes I continuum
+KDict.set('KW_POL_S_IRAF_FUNC', key='SICFUNC',
+          comment='Function to fit Stokes I continuum')
+
+# define the iraf function that was used to fit polar continuum
+KDict.set('KW_POL_P_IRAF_FUNC', key='PICFUNC',
+          comment='Function to fit polar continuum')
+
+# define the degree of the polynomial used to fit stokes I continuum
+KDict.set('KW_POL_S_IRAF_DEGREE', key='SIPOLDEG',
+          comment='POlynomial degree fit Stokes I continuum')
+
+# define the degree of the polynomial used to fit polar continuum
+KDict.set('KW_POL_P_IRAF_DEGREE', key='PIPOLDEG',
+          comment='POlynomial degree fit polar continuum')
+
+# define the polar continuum bin size used
+KDict.set('KW_POL_CONT_BINSIZE', key='PCBINSIZ',
+          comment='Polarimetry continuum bin size')
+
+# define the polar continuum overlap size used
+KDict.set('KW_POL_CONT_OVERLAP', key='PCOVERLA',
+          comment='Polarimetry continuum overlap size')
+
+# define the telluric mask parameters (1D list)
+KDict.set('KW_POL_CONT_TELLMASK', key='PCEWL{0:03d}',
+          comment='Excluded wave range (nm) for cont detection')
+
+# define the lsd origin
+KDict.set('KW_LSD_ORIGIN', key='LSDORIG', comment='Origin of this LSD file')
+
+# define the rv from lsd gaussian fit
+KDict.set('KW_LSD_FIT_RV', key='LSDFITRV', comment='RV from LSD gaussian fit (km/s)')
+
+# define the mean degree of polarization
+KDict.set('KW_LSD_POL_MEAN', key='POLAVG', comment='Mean degree of polarization')
+
+# define the std deviation of degree of polarization
+KDict.set('KW_LSD_POL_STDDEV', key='POLSTD',
+          comment='Std deviation of degree of polarization')
+
+# define the median degree of polarization
+KDict.set('KW_LSD_POL_MEDIAN', key='POLMED', comment='Median degree of polarization')
+
+# define the median deviations of degree of polarization
+KDict.set('KW_LSD_POL_MEDABSDEV', key='POLMEDEV',
+          comment='Median deviations of degree of polarization')
+
+# define the mean of stokes VQU lsd profile
+KDict.set('KW_LSD_STOKESVQU_MEAN', key='LSDPAVG',
+          comment='Mean of Stokes VQU LSD profile')
+
+# define the std deviation of stokes VQU LSD profile
+KDict.set('KW_LSD_STOKESVQU_STDDEV', key='LSDPSTD',
+          comment='Std deviation of Stokes VQU LSD profile')
+
+# define the mean of stokes VQU LSD null profile
+KDict.set('KW_LSD_NULL_MEAN', key='LSDNAVG',
+          comment='Mean of Stokes VQU LSD null profile')
+
+# define the std deviation of stokes vqu lsd null profile
+KDict.set('KW_LSD_NULL_STDDEV', key='LSDNSTD',
+          comment='Std deviation of Stokes VQU LSD null profile')
+
+# define the mask file used in the lsd analysis
+KDict.set('KW_LSD_MASK_FILE', key='LSDMASK', comment='Mask file used in LSD analysis')
+
+# define the number of lines in the original mask
+KDict.set('KW_LSD_MASK_NUMLINES', key='NLINMASK',
+          comment='Number of lines in the original mask')
+
+# define the number of lines used in the LSD analysis
+KDict.set('KW_LSD_MASKLINES_USED', key='NLINUSED',
+          comment='Number of lines used in LSD analysis')
+
+# define the mean wavelength of lines use din lsd analysis
+KDict.set('KW_LSD_NORM_WLC', key='WAVEAVG',
+          comment='Mean wavelength (wl) of lines used in LSD '
+                  'analysis')
+
+# define the mean lande of lines used in lsd analysis
+KDict.set('KW_LSD_NORM_LANDE', key='LANDEAVG',
+          comment='Mean lande (g) of lines used in LSD analysis')
+
+# define the depth used in lsd analysis
+KDict.set('KW_LSD_NORM_DEPTH', key='DEPTNORM',
+          comment='Normalization line depth (d) used in LSD')
+
+# define the calculate normalisation of the weights used in the lsd analysis
+KDict.set('KW_LSD_NORM_WEIGHT', key='WEIGNORM',
+          comment='Normalization weight = wl * d * g used in LSD')
 
 # =============================================================================
 #  End of configuration file

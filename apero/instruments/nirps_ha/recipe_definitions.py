@@ -10,15 +10,15 @@ Created on 2020-10-31 at 18:06
 from apero.base import base
 from apero.base import drs_lang
 from apero.core.base import drs_base_classes as base_class
-from apero.core.instruments.default import grouping
-from apero.core.instruments.default import recipe_definitions as rd
-from apero.core.instruments.nirps_ha import file_definitions as files
+from apero.instruments.default import grouping
+from apero.instruments.default import recipe_definitions as rd
+from apero.instruments.nirps_ha import file_definitions as files
 from apero.core.utils import drs_recipe
 
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero.core.instruments.nirps_ha.recipe_definitions.py'
+__NAME__ = 'apero.instruments.nirps_ha.recipe_definitions.py'
 __INSTRUMENT__ = 'NIRPS_HA'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
@@ -31,7 +31,7 @@ INSTRUMENT_ALIAS = 'nirps_ha'
 textentry = drs_lang.textentry
 # import file definitions in import module class
 sf = base_class.ImportModule('nirps_ha.file_definitions',
-                             'apero.core.instruments.nirps_ha.file_definitions',
+                             'apero.instruments.nirps_ha.file_definitions',
                              mod=files)
 
 # =============================================================================

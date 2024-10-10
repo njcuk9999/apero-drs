@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Pseudo constants (function) definitions for NIRPS HA
+Pseudo constants (function) definitions for SPIROU
 
 Created on 2019-01-18 at 14:44
 
 @author: cook
 """
+import string
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -21,14 +22,13 @@ from apero.core.base import drs_exceptions
 from apero.core.base import drs_base_classes as base_class
 from apero.core.base import drs_misc
 from apero.core.base import drs_text
-from apero.core.instruments.default import instrument as instrument_mod
-
+from apero.instruments.default import instrument as instrument_mod
 
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero.core.instruments.nirps_ha.instrument'
-__INSTRUMENT__ = 'NIRPS_HA'
+__NAME__ = 'apero.instruments.spirou.instrument.py'
+__INSTRUMENT__ = 'SPIROU'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
 __author__ = base.__author__
@@ -43,17 +43,15 @@ DrsCodedException = drs_exceptions.DrsCodedException
 # get display func
 display_func = drs_misc.display_func
 # null text
-NULL_TEXT = ['', 'None', 'Null']
-# get astropy table (don't reload)
-Table = instrument_mod.Table
+NULL_TEXT = ['', 'None', 'Null', 'nan', 'inf']
 
 
 # =============================================================================
 # Define Constants class (pseudo constants)
 # =============================================================================
-class NirpsHa(instrument_mod.Instrument):
+class Spirou(instrument_mod.Instrument):
     # set class name
-    class_name = 'NirpsHa'
+    class_name = 'Spirou'
 
     def __init__(self, instrument_name: Union[str, None] = None):
         """
@@ -130,14 +128,14 @@ class NirpsHa(instrument_mod.Instrument):
         return '{0}[{1}]'.format(self.class_name, self.instrument)
 
     def copy(self):
-        return NirpsHa(instrument_name=self.instrument)
+        return Spirou(instrument_name=self.instrument)
 
     def get_constants(self
                       ) -> Tuple[Dict[str, Any], Dict[str, str], Dict[str, Any]]:
         # this has to be local
-        from apero.core.instruments.nirps_ha import config
-        from apero.core.instruments.nirps_ha import constants
-        from apero.core.instruments.nirps_ha import keywords
+        from apero.instruments.spirou import config
+        from apero.instruments.spirou import constants
+        from apero.instruments.spirou import keywords
         # get constants dicts
         config_dict = config.CDict
         constants_dict = constants.CDict
@@ -153,7 +151,7 @@ class NirpsHa(instrument_mod.Instrument):
                 if key in values:
                     continue
                 # update value, source, instance based on
-                values[key] = clist.storage[key].true_value
+                values[key] = clist.storage[key].value
                 sources[key] = clist.storage[key].source
                 instances[key] = clist.storage[key]
         # ---------------------------------------------------------------------
@@ -169,7 +167,7 @@ class NirpsHa(instrument_mod.Instrument):
         :return: file_definitions
         """
         # this has to be local
-        from apero.core.instruments.nirps_ha import file_definitions
+        from apero.instruments.spirou import file_definitions
         # return import
         return file_definitions
 
@@ -180,10 +178,9 @@ class NirpsHa(instrument_mod.Instrument):
         :return: file_definitions
         """
         # this has to be local
-        from apero.core.instruments.nirps_ha import recipe_definitions
+        from apero.instruments.spirou import recipe_definitions
         # return import
         return recipe_definitions
-
 
     # =========================================================================
     # HEADER SETTINGS
@@ -192,7 +189,7 @@ class NirpsHa(instrument_mod.Instrument):
                      hdict: Any, filename: str, check_aliases: bool = False,
                      objdbm: Any = None) -> Any:
         """
-        For NIRPS_HA the following keys may or may not be present (older data
+        For SPIRou the following keys may or may not be present (older data
         may need these adding):
 
         KW_TARGET_TYPE:   if KW_OBSTYPE=="OBJECT"
@@ -253,7 +250,6 @@ class NirpsHa(instrument_mod.Instrument):
         # Deal with calibrations and sky KW_OBJNAME
         # ------------------------------------------------------------------
         header, hdict = get_special_objname(params, header, hdict)
-
         # ------------------------------------------------------------------
         # Return header
         # ------------------------------------------------------------------
@@ -309,9 +305,9 @@ class NirpsHa(instrument_mod.Instrument):
                  or DARK_DARK)
         """
         # get correct header
-        header, _ = get_dprtype(params, recipe, header, None, filename)
+        dprtype, _, _ = construct_dprtype(recipe, params, filename, header)
         # return dprtype
-        return str(header[params['KW_DPRTYPE'][0]])
+        return dprtype
 
     def DRS_MIDMJD(self, params: ParamDict, header: Any,
                    filename: Union[Path, str]) -> float:
@@ -340,7 +336,10 @@ class NirpsHa(instrument_mod.Instrument):
                        header keys to id file
         :return: float the frame time in seconds
         """
-        return float(params['IMAGE_FRAME_TIME'])
+        # get header key
+        kw_frmtime = params['KW_FRMTIME'][0]
+        # return frame time
+        return float(header[kw_frmtime])
 
     def SATURATION(self, params: ParamDict, header: Any):
         """
@@ -352,7 +351,72 @@ class NirpsHa(instrument_mod.Instrument):
                        header keys to id file
         :return: float the frame time in seconds
         """
-        return float(params['IMAGE_SATURATION'])
+        # get header key
+        kw_sat = params['KW_SATURATE'][0]
+        # return frame time
+        return float(header[kw_sat])
+
+    def GET_STOKES_FROM_HEADER(self, params: ParamDict, header: Any,
+                               wlog: Any = None) -> Tuple[Union[str, None], int]:
+        """
+        Get the stokes parameter and exposure number from the header
+
+        :param params: ParamDict, the parameter dictionary of constants
+        :param header: fits.Header, the fits header to get keys from
+        :param wlog: logger for error reporting
+
+        :raises ValueError: if header key incorrect and wlog is None
+        :raises DrsLogError: if header key incorrect and wlog is logger
+        :return: tuple, 1. The stokes parameter, 2. the exposure number
+        """
+        # get cmmtseq from key from params
+        kw_cmmtseq = params['KW_CMMTSEQ'][0]
+        # ---------------------------------------------------------------------
+        # deal with no key in header
+        if kw_cmmtseq not in header:
+            return None, -1
+        # ---------------------------------------------------------------------
+        # get cmmtseq key
+        cmmtseq = header[kw_cmmtseq]
+        # key should read as follows:
+        #    {STOKE} exposure {exp_num}, sequence N of M
+        seqlist = cmmtseq.split()
+        # ---------------------------------------------------------------------
+        # check length is correct - raise error if incorrect
+        if len(seqlist) != 7:
+            # generate error message
+            emsg = 'CMMTSEQ key incorrect'
+            emsg += '\n\tExpected {STOKE} exposure {exp_num}, sequence N of M'
+            emsg += '\n\tGot: "{0}"'.format(cmmtseq)
+            # log or raise error
+            if wlog is not None:
+                # wlog error
+                wlog(params, 'error', emsg)
+                return None, -1
+            else:
+                raise ValueError(emsg)
+        # ---------------------------------------------------------------------
+        # get stokes and exposure number
+        stokes = seqlist[0]
+        # try to get exposure number
+        # noinspection PyBroadException
+        try:
+            exp_num = int(seqlist[2].replace(',', ''))
+        except Exception as _:
+            # generate error message
+            emsg = 'CMMTSEQ exp_num incorrect'
+            emsg += '\n\tExpected {STOKE} exposure {exp_num}, sequence N of M'
+            emsg += '\n\tGot: "{0}"'.format(cmmtseq)
+            # log or raise error
+            if wlog is not None:
+                # wlog error
+                wlog(params, 'error', emsg)
+                return None, -1
+            else:
+                raise ValueError(emsg)
+        # ---------------------------------------------------------------------
+        # return stokes and exposure number
+        return stokes, exp_num
 
     # =========================================================================
     # INDEXING SETTINGS
@@ -377,10 +441,10 @@ class NirpsHa(instrument_mod.Instrument):
         # set keyts
         header_cols = DatabaseColumns()
         header_cols.add(name='KW_DATE_OBS', datatype=sqlalchemy.String(80))
-        header_cols.add(name='KW_MJDATE', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_UTC_OBS', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_ACQTIME', datatype=instrument_mod.LONG_FLOAT)
         header_cols.add(name='KW_TARGET_TYPE', datatype=sqlalchemy.String(80))
-        header_cols.add(name='KW_MID_OBS_TIME',
-                        datatype=instrument_mod.LONG_FLOAT,
+        header_cols.add(name='KW_MID_OBS_TIME', datatype=instrument_mod.LONG_FLOAT,
                         is_index=True)
         # cleaned object name
         header_cols.add(name='KW_OBJNAME', datatype=sqlalchemy.String(80),
@@ -392,9 +456,12 @@ class NirpsHa(instrument_mod.Instrument):
         header_cols.add(name='KW_OBSTYPE', datatype=sqlalchemy.String(80))
         header_cols.add(name='KW_EXPTIME', datatype=instrument_mod.LONG_FLOAT)
         header_cols.add(name='KW_INSTRUMENT', datatype=sqlalchemy.String(80))
-        header_cols.add(name='KW_INST_MODE', datatype=sqlalchemy.String(80))
-        header_cols.add(name='KW_RAW_DPRTYPE', datatype=sqlalchemy.String(80))
-        header_cols.add(name='KW_RAW_DPRCATG', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_CCAS', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_CREF', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_CDEN', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_CALIBWH', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_POLAR_KEY_1', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_POLAR_KEY_2', datatype=sqlalchemy.String(80))
         header_cols.add(name='KW_DPRTYPE', datatype=sqlalchemy.String(80),
                         is_index=True)
         header_cols.add(name='KW_DRS_MODE', datatype=sqlalchemy.String(80))
@@ -429,9 +496,9 @@ class NirpsHa(instrument_mod.Instrument):
         :return: list of keys
         """
         keys = ['KW_TARGET_TYPE', 'KW_OBJECTNAME', 'KW_OBSTYPE',
-                'KW_RAW_DPRTYPE', 'KW_RAW_DPRCATG', 'KW_INSTRUMENT',
-                'KW_INST_MODE', 'KW_DPRTYPE', 'KW_OUTPUT', 'KW_NIGHT_OBS',
-                'KW_INST_MODE', 'KW_DPRTYPE', 'KW_OUTPUT', 'KW_OBJECTNAME2']
+                'KW_CCAS', 'KW_CREF', 'KW_CALIBWH', 'KW_INSTRUMENT',
+                'KW_DPRTYPE', 'KW_OUTPUT', 'KW_DRS_MODE', 'KW_POLAR_KEY_1',
+                'KW_POLAR_KEY_2', 'KW_NIGHT_OBS']
         return keys
 
     # =========================================================================
@@ -445,22 +512,20 @@ class NirpsHa(instrument_mod.Instrument):
         # set function name
         # _ = display_func('SPLASH', __NAME__, self.class_name)
         # set the logo
-        logo = ["                                                                                                    ",
-                "    %%,                *##*      *##(      *#####(/*,           (######(/,            *#&&&&,  ,    ",
-                "    **#%               /**/      /**/      /********/(&%        /********/(       /#/*******(&%     ",
-                "    ***/##             /***      /**/      /***,    ****&/      /***,    ****&*   ,(****     ,***,  ",
-                "    **,,,*##           /,,*      /,,*      /*,*       *,*(      /,,*,      *,*/   */,,/,            ",
-                "    *,,,*,,/&,         /,,*      /,,*      /*,*,      *,,*      /***,     ,****    ***#(            ",
-                "    ***/  ***/&,       /***      /***      /***,     /***(      /***,     /***(     ****#&(,        ",
-                "    /**/    ***(&      /**/      /***,     (/**#(#%%**///,      (///%##%#*////        */////(%(,    ",
-                "    (///      ///(%    (///      (///,     (//////////,         ((/((((((((,              */(((((   ",
-                "    ((((       ,(((((, ((((      ((((,     ((((,*(((*           ((((,                        ,###*  ",
-                "    ####         ,(##(((###     ,(###,     (###*  (##/          (###/                         (%%#/ ",
-                "    ####,          ,#%%%%%#     ,(%%%,     (%%%*   ,%%#*        #%%%/            ,#%%#        #%%#, ",
-                "    #%%%,             %%%%%     ,(%%%*     (%%%*     #%%/,      #%%%/             ,%%%/,    (%%%%*  ",
-                "    %%%%,               %%%,    ,(%%%*     (%%%*      (%%%*     #%%%/               (%%%%%%%%%%/*   ",
-                "                          (,       ,         ,           ,,,      ,,                   *(((/,       ",
-                "                                                                                                    "]
+        logo = ['',
+                '      `-+syyyso:.   -/+oossssso+:-`   `.-:-`  `...------.``                                 ',
+                '    `ohmmmmmmmmmdy: +mmmmmmmmmmmmmy- `ydmmmh: sdddmmmmmmddho-                               ',
+                '   `ymmmmmdmmmmmmmd./mmmmmmhhhmmmmmm-/mmmmmmo ymmmmmmmmmmmmmmo                              ',
+                '   /mmmmm:.-:+ydmm/ :mmmmmy``.smmmmmo.ydmdho` ommmmmhsshmmmmmm.      ```                    ',
+                '   ommmmmhs+/-..::  .mmmmmmoshmmmmmd- `.-::-  +mmmmm:  `hmmmmm`  `-/+ooo+:.   .:::.   .:/// ',
+                '   .dmmmmmmmmmdyo.   mmmmmmmmmmmddo. oyyyhm/  :mmmmmy+osmmmmms  `osssssssss+` /sss-   :ssss ',
+                '    .ohdmmmmmmmmmmo  dmmmmmdo+/:.`   ymmmmm/  .mmmmmmmmmmmmms`  +sss+..-ossso`+sss-   :ssss ',
+                '   --.`.:/+sdmmmmmm: ymmmmmh         ymmmmm/   mmmmmmmmmddy-    ssss`   :ssss.osss.   :ssss ',
+                '  +mmmhs/-.-smmmmmm- ommmmmm`        hmmmmm/   dmmmmm/sysss+.  `ssss-  `+ssss`osss`   :ssss ',
+                ' -mmmmmmmmmmmmmmmms  /mmmmmm.        hmmmmm/   ymmmmm``+sssss/` /sssso+sssss- +sss:` .ossso ',
+                ' -sdmmmmmmmmmmmmdo`  -mmmmmm/        hmmmmm:   smmmmm-  -osssss/`-osssssso/.  -sssssosssss+ ',
+                '    ./osyhhhyo+-`    .mmmddh/        sddhhy-   /mdddh-    -//::-`  `----.      `.---.``.--. ',
+                '']
         return logo
 
     # =========================================================================
@@ -508,43 +573,55 @@ class NirpsHa(instrument_mod.Instrument):
 
         :return: list of strings, the fibers to find localisation for
         """
-        return fiber
+        if fiber in ['AB', 'A', 'B']:
+            return ['A', 'B']
+        else:
+            return ['C']
 
     def FIBER_DILATE(self, fiber: str) -> bool:
         """
         whether we are dilate the imagine due to fiber configuration this should
         only be used when we want a combined localisation solution
-        i.e. AB from A and B
-        for NIRPS this is False
+        i.e. find fiber AB (instead of A and B)
 
         :param fiber: str, the fiber name
         :return: bool, True if we should dilate, False otherwise
         """
-        _ = fiber
-        return False
+        if fiber in ['AB']:
+            return True
+        else:
+            return False
 
     def FIBER_DOUBLETS(self, fiber: str) -> bool:
         """
         whether we have orders coming in doublets (i.e. SPIROUs AB --> A + B)
 
-        Not used for NIRPS
-
         :param fiber: str, the fiber name
         :return: bool, True if we have fiber 'doublets', False otherwise
         """
-        _ = fiber
-        return False
+        if fiber in ['AB', 'A', 'B']:
+            return True
+        else:
+            return False
 
     def FIBER_DOUBLET_PARITY(self, fiber: str) -> Union[int, None]:
         """
-        Give the doublet fibers parity - all other fibers should not use this
-        function - not used for NIRPS
+        Give the doublt fibers parity - all other fibers should not use this
+        function
 
         :param fiber: str, the fiber name
         :return: int or None, either +/-1 (for fiber A/B) or None)
         """
-        _ = fiber
-        return None
+        # if fiber A we return -1
+        if fiber == 'A':
+            return -1
+        # for fiber B we return +1
+        elif fiber == 'B':
+            return 1
+        # all other fibers should return None - this should not ever be the
+        #   case and should break
+        else:
+            return None
 
     def FIBER_LOC_TYPES(self, fiber: str) -> str:
         """
@@ -558,10 +635,10 @@ class NirpsHa(instrument_mod.Instrument):
         # set function name
         # _ = display_func('FIBER_LOC_TYPES', __NAME__, self.class_name)
         # check fiber against list
-        if fiber in ['A']:
-            return 'A'
+        if fiber in ['AB', 'A', 'B']:
+            return 'AB'
         else:
-            return 'B'
+            return 'C'
 
     def FIBER_WAVE_TYPES(self, fiber: str) -> str:
         """
@@ -575,10 +652,10 @@ class NirpsHa(instrument_mod.Instrument):
         # set function name
         # _ = display_func('FIBER_WAVE_TYPES', __NAME__, self.class_name)
         # check fiber against list
-        if fiber in ['A']:
-            return 'A'
+        if fiber in ['AB', 'A', 'B']:
+            return 'AB'
         else:
-            return 'B'
+            return 'C'
 
     def FIBER_DPR_POS(self, dprtype: str, fiber: str) -> str:
         """
@@ -595,7 +672,7 @@ class NirpsHa(instrument_mod.Instrument):
         # split DPRTYPE
         dprtypes = dprtype.split('_')
         # check fiber type
-        if fiber in ['A']:
+        if fiber in ['AB', 'A', 'B']:
             return dprtypes[0]
         else:
             return dprtypes[1]
@@ -609,9 +686,9 @@ class NirpsHa(instrument_mod.Instrument):
         """
         # identify fiber type based on data type
         if dprtype == 'FLAT_DARK':
-            return 'A'
+            return 'AB'
         elif dprtype == 'DARK_FLAT':
-            return 'B'
+            return 'C'
         else:
             return None
 
@@ -619,8 +696,10 @@ class NirpsHa(instrument_mod.Instrument):
                             fiber: str) -> Tuple[np.ndarray, int]:
         """
         Extract the localisation coefficients based on how they are stored
-        for nirps we have either A or B of size 49
-        orders.
+        for spirou we have either AB,A,B of size 98 orders or C of size 49
+        orders. For AB we merge the A and B, for A and B we take alternating
+        orders, for C we take all. Note only have AB and C files also affects
+        FIBER_LOC_TYPES
 
         :param coeffs: the input localisation coefficients
         :param fiber: str, the fiber
@@ -629,11 +708,28 @@ class NirpsHa(instrument_mod.Instrument):
         """
         # set function name
         # _ = display_func('FIBER_LOC_COEFF_EXT', __NAME__, self.class_name)
-        # for A we take all of them (as there are only the A components)
-        if fiber == 'A':
-            acc = coeffs
-            nbo = coeffs.shape[0]
-        # for B we take all of them (as there are only the B components)
+        # for AB we need to merge the A and B components
+        if fiber == 'AB':
+            # get shape
+            nbo, ncoeff = coeffs.shape
+            # set up acc
+            acc = np.zeros([int(nbo // 2), ncoeff])
+            # get sum of 0 to step pixels
+            cosum = np.array(coeffs[0:nbo:2, :])
+            # add the sum of 1 to step
+            cosum = cosum + coeffs[1:nbo:2, :]
+            # overwrite values into coeffs array
+            acc[0:int(nbo // 2), :] = (1 / 2) * cosum
+            nbo = nbo // 2
+        # for A we only need the A components
+        elif fiber == 'A':
+            acc = coeffs[1::2]
+            nbo = coeffs.shape[0] // 2
+        # for B we only need the B components
+        elif fiber == 'B':
+            acc = coeffs[:-1:2]
+            nbo = coeffs.shape[0] // 2
+        # for C we take all of them (as there are only the C components)
         else:
             acc = coeffs
             nbo = coeffs.shape[0]
@@ -655,7 +751,7 @@ class NirpsHa(instrument_mod.Instrument):
         # set function name
         # _ = display_func('FIBER_DATA_TYPE', __NAME__, self.class_name)
         # check fiber type
-        if fiber in ['A']:
+        if fiber in ['AB', 'A', 'B']:
             return dprtype.split('_')[0]
         else:
             return dprtype.split('_')[1]
@@ -670,9 +766,9 @@ class NirpsHa(instrument_mod.Instrument):
         # set function name
         # _ = display_func('FIBER_KINDS', __NAME__, self.class_name)
         # can be multiple science channels
-        science = ['A']
+        science = ['AB', 'A', 'B']
         # can only be one reference
-        reference = 'B'
+        reference = 'C'
         # return science and reference fiber(s)
         return science, reference
 
@@ -685,35 +781,10 @@ class NirpsHa(instrument_mod.Instrument):
         :param fiber:
         :return:
         """
-        if fiber == 'A':
-            return ['A']
+        if fiber == 'AB':
+            return ['A', 'B']
         else:
-            return ['B']
-
-    # tellu fudge
-    def TAPAS_INST_CORR(self, mask_water: Table,
-                        mask_others: Table) -> Tuple[Table, Table]:
-        """
-        TAPAS comes from spirou we need to modify it here
-
-        :param mask_water: astropy table the water TAPAS mask table
-        :param mask_others: astropy table the others TAPAS mask table
-
-        :return: tuple, 1. the updated mask_water table, 2. the update
-                 mask_others table
-        """
-        # TODO: NIRPS ONLY remake files remove these lines
-        nirps_mask_water = (mask_water['ll_mask_s'] < 1350)
-        nirps_mask_water |= (mask_water['ll_mask_s'] > 1450)
-        nirps_mask_water &= mask_water['ll_mask_s'] < 1820
-        mask_water = mask_water[nirps_mask_water]
-
-        nirps_mask_others = (mask_others['ll_mask_s'] < 1350)
-        nirps_mask_others |= (mask_others['ll_mask_s'] > 1450)
-        nirps_mask_others &= mask_others['ll_mask_s'] < 1820
-        mask_others = mask_others[nirps_mask_others]
-
-        return mask_water, mask_others
+            return ['C']
 
     # =========================================================================
     # DATABASE SETTINGS
@@ -801,16 +872,33 @@ class NirpsHa(instrument_mod.Instrument):
 
         :return: str, the new filename
         """
-        # we don't use the basename for this instrument
-        _ = basenames
+        prefixes = []
+        # loop around all files and get the prefixes
+        for basename in basenames:
+            # lets get the prefix
+            prefix = basename.split(suffix)[0]
+            # for spirou we have a an odocode followed by a letter as the prefix
+            # lets get this letter (we assume all filenames have a letter as the
+            # last digit - but we will test this anyway
+            if prefix[-1] in string.ascii_letters:
+                prefixes.append(prefix[-1])
+            # return the combined filename
+            else:
+                prefixes.append(suffix)
+
+        # check if all prefixes are the same
+        if len(set(prefixes)) == 1:
+            return prefixes[0] + suffix
         # return the combined filename
-        return suffix
+        else:
+            return suffix
 
 
 # =============================================================================
 # Functions used by pseudo const (instrument specific)
 # =============================================================================
 def constuct_objname(params: Union[ParamDict, None], header,
+                     objname: Union[str, None] = None,
                      filename: Union[None, str, Path] = None,
                      check_aliases: bool = False,
                      objdbm: Any = None) -> str:
@@ -819,6 +907,7 @@ def constuct_objname(params: Union[ParamDict, None], header,
 
     :param params: ParamDict, parameter dictionary of constants
     :param header: fits.Header, the header to get keys from
+    :param objname: str, the uncleaned object name to clean
     :param filename: str, the filename header came from (for exception)
     :param check_aliases: bool, if True check aliases (using database)
     :param objdbm: ObjectDatabase, the database to check aliases in
@@ -828,24 +917,36 @@ def constuct_objname(params: Union[ParamDict, None], header,
     # set function name
     func_name = display_func('constuct_objname', __NAME__)
     # get keys from params
-    kwrawobjname1 = params['KW_OBJECTNAME2'][0]
     kwrawobjname = params['KW_OBJECTNAME'][0]
     kwobjname = params['KW_OBJNAME'][0]
-    # deal with output key already in header
-    if kwobjname in header:
-        if not drs_text.null_text(header[kwobjname], NULL_TEXT):
-            return header[kwobjname]
-    # start raw object name as None
-    rawobjname = None
-    # check target name
-    if kwrawobjname1 in header:
-        rawobjname = header[kwrawobjname1]
-    # get raw object name
-    if rawobjname is None and kwrawobjname not in header:
-        eargs = [kwrawobjname, filename]
-        raise DrsCodedException('01-001-00027', 'error', targs=eargs,
-                                func_name=func_name)
-    elif rawobjname is None:
+    # if objname is None we need to get it from the header
+    if drs_text.null_text(objname, NULL_TEXT):
+        # deal with output key already in header
+        if kwobjname in header:
+            if not drs_text.null_text(header[kwobjname], NULL_TEXT):
+                return header[kwobjname]
+        # get raw object name
+        if kwrawobjname not in header:
+            eargs = [kwrawobjname, filename]
+            raise DrsCodedException('01-001-00027', 'error', targs=eargs,
+                                    func_name=func_name)
+        else:
+            rawobjname = header[kwrawobjname]
+    # else just set up blank parameters
+    else:
+        rawobjname = str(objname)
+    # ---------------------------------------------------------------------
+    # if object name is still None - check KW_OBJECTNAME2
+    # ---------------------------------------------------------------------
+    # object name maybe come from OBJNAME instead of OBJECT
+    if drs_text.null_text(rawobjname, NULL_TEXT):
+        # get keys from params
+        kwrawobjname = params['KW_OBJECTNAME2'][0]
+        # get raw object name
+        if kwrawobjname not in header:
+            eargs = [kwrawobjname, filename]
+            raise DrsCodedException('01-001-00027', 'error', targs=eargs,
+                                    func_name=func_name)
         rawobjname = header[kwrawobjname]
     # -------------------------------------------------------------------------
     if check_aliases and objdbm is not None:
@@ -859,8 +960,9 @@ def constuct_objname(params: Union[ParamDict, None], header,
     return objectname
 
 
-def clean_obj_name(params: ParamDict = None, header: Any = None,
-                   hdict: Any = None, filename: Union[None, str, Path] = None,
+def clean_obj_name(params: Union[ParamDict, None], header,
+                   hdict: Any = None, objname: Union[str, None] = None,
+                   filename: Union[None, str, Path] = None,
                    check_aliases: bool = False,
                    objdbm: Any = None) -> Union[Tuple[Any, Any], str]:
     """
@@ -871,6 +973,7 @@ def clean_obj_name(params: ParamDict = None, header: Any = None,
                    check for objname (if "objname" not set)
     :param hdict: drs_fits.Header the output header dictionary to update with
                   objname (as well as "header" if "objname" not set)
+    :param objname: str, the uncleaned object name to clean
     :param filename: str, the filename header came from (for exception)
     :param check_aliases: bool, if True check aliases (using database)
     :param objdbm: drs_database.ObjectDatabase - the database to check aliases
@@ -882,12 +985,11 @@ def clean_obj_name(params: ParamDict = None, header: Any = None,
     kwobjname = params['KW_OBJNAME'][0]
     kwobjcomment = params['KW_OBJNAME'][2]
     # ---------------------------------------------------------------------
-    # check KW_OBJNAME and then KW_OBJECTNAME2 and finally KW_OBJECTNAME
+    # check KW_OBJNAME and then KW_OBJECTNAME
     # ---------------------------------------------------------------------
-    objectname = constuct_objname(params, header, filename,
+    objectname = constuct_objname(params, header, objname, filename,
                                   check_aliases, objdbm)
     # -------------------------------------------------------------------------
-    # deal with returning header
     # add it to the header with new keyword
     header[kwobjname] = (objectname, kwobjcomment)
     hdict[kwobjname] = (objectname, kwobjcomment)
@@ -911,38 +1013,56 @@ def get_trg_type(params: ParamDict, header: Any, hdict: Any,
     :return: the updated header and hdict
     """
     # set function name
-    # _ = display_func('get_trg_type', __NAME__)
+    func_name = display_func('get_trg_type', __NAME__)
     # get keys from params
-    kwobstype = params['KW_OBSTYPE'][0]
     kwobjname = params['KW_OBJNAME'][0]
+    kwobjname1 = params['KW_OBJECTNAME'][0]
+    kwobjname2 = params['KW_OBJECTNAME2'][0]
+    kwobstype = params['KW_OBSTYPE'][0]
     kwtrgtype = params['KW_TARGET_TYPE'][0]
     kwtrgcomment = params['KW_TARGET_TYPE'][2]
+
+    # get objname
+    if kwobjname not in header:
+        eargs = [kwobjname, filename]
+        raise DrsCodedException('01-001-00027', 'error', targs=eargs,
+                                func_name=func_name)
+
+    objname = header[kwobjname]
     # get obstype
     if kwobstype not in header:
         eargs = [kwobstype, filename]
-        raise drs_exceptions.DrsCodedException('01-001-00027', 'error',
-                                               targs=eargs)
+        raise DrsCodedException('01-001-00027', 'error', targs=eargs,
+                                func_name=func_name)
+
     obstype = header[kwobstype]
-    # -------------------------------------------------------------------------
-    # deal with setting value
-    # -------------------------------------------------------------------------
-    # "SKY" in dpr.type
-    cond1 = 'SKY' in obstype
-    # "SKY" in object name
-    cond2 = 'SKY' in header[kwobjname]
-    # "telluric" not in dpr.type
-    cond3 = 'TELLURIC' not in obstype
-    # "flux" not in dpr.type
-    cond4 = 'FLUX' not in obstype
-    # -------------------------------------------------------------------------
-    if cond1 and cond2 and cond3 and cond4:
-        trg_type = 'SKY'
-    elif not cond1 or not cond2 or not cond3:
-        trg_type = 'TARGET'
-    elif 'STAR' in obstype:
-        trg_type = 'TARGET'
-    else:
+    # get list of object names
+    object_names = [objname]
+    # deal with raw object name(s)
+    if kwobjname1 in header:
+        object_names.append(header[kwobjname1])
+    if kwobjname2 in header:
+        object_names.append(header[kwobjname2])
+
+    # deal with setting value (must test all object names
+    if obstype != 'OBJECT':
         trg_type = ''
+    else:
+        trg_type = 'TARGET'
+        for object_name in object_names:
+            # skip None (can happen when header come from database table)
+            if object_name is None:
+                continue
+            # if sky is in one of these object names then we assume we have a
+            #   sky frame
+            if 'SKY' in object_name.upper():
+                trg_type = 'SKY'
+                break
+    # deal with output key already in header
+    if header is not None and trg_type != 'SKY':
+        if kwtrgtype in header:
+            if not drs_text.null_text(header[kwtrgtype], NULL_TEXT):
+                return header, hdict
     # update header
     header[kwtrgtype] = (trg_type, kwtrgcomment)
     hdict[kwtrgtype] = (trg_type, kwtrgcomment)
@@ -999,13 +1119,13 @@ def get_mid_obs_time(params: ParamDict, header: Any, hdict: Any,
     exptime = timetype(header[exp_timekey])
     # -------------------------------------------------------------------
     # get header time
-    starttime = get_header_time(params, header, filename)
+    endtime = get_header_time(params, header, filename)
     # get the time after start of the observation
     timedelta = TimeDelta(exptime * exp_timeunit) / 2.0
     # calculate observation time
-    obstime = starttime + timedelta
+    obstime = endtime - timedelta
     # set the method for getting mid obs time
-    method = 'mjdobs+exp/2'
+    method = 'mjdend-exp/2'
     # -------------------------------------------------------------------
     # return time in requested format
     if timefmt is None:
@@ -1049,9 +1169,9 @@ def get_header_time(params: ParamDict, header: Any,
     # set function name
     func_name = display_func('get_header_time', __NAME__)
     # get acqtime
-    time_key = params['KW_MJDATE'][0]
-    timefmt = params.instances['KW_MJDATE'].datatype
-    timetype = params.instances['KW_MJDATE'].dataformat
+    time_key = params['KW_ACQTIME'][0]
+    timefmt = params.instances['KW_ACQTIME'].datatype
+    timetype = params.instances['KW_ACQTIME'].dataformat
 
     # get time key from header
     if time_key not in header:
@@ -1067,7 +1187,7 @@ def get_header_time(params: ParamDict, header: Any,
 
 def get_drs_mode(params: ParamDict, header: Any, hdict: Any) -> Tuple[Any, Any]:
     """
-    Assign the drs mode to the drs (for nirps_ha this is HA)
+    Assign the drs mode to the drs (for spirou based on the polar mode)
 
     :param params: ParamDict, parameter dictionary of constants
     :param header: drs_fits.Header or astropy.io.fits.Header, the header to
@@ -1084,8 +1204,44 @@ def get_drs_mode(params: ParamDict, header: Any, hdict: Any) -> Tuple[Any, Any]:
     """
     # get drs mode header keyword store
     kw_drs_mode, _, kw_drs_mode_comment = params['KW_DRS_MODE']
-    # get drs mode header keyword store
-    drs_mode = 'HA'
+    kw_polar_key_1 = params['KW_POLAR_KEY_1'][0]
+    kw_polar_key_2 = params['KW_POLAR_KEY_2'][0]
+    kw_obstype = params['KW_OBSTYPE'][0]
+    all_polar_rhomb_pos = params['ALL_POLAR_RHOMB_POS']
+    # -------------------------------------------------------------------------
+    # deal with no hdict
+    if hdict is None:
+        hdict = dict()
+    # get polar key 1 from the header
+    if kw_polar_key_1 not in header:
+        polar_key1 = None
+    else:
+        polar_key1 = header[kw_polar_key_1]
+    # get polar key 2 from the header
+    if kw_polar_key_2 not in header:
+        polar_key2 = None
+    else:
+        polar_key2 = header[kw_polar_key_2]
+    # -------------------------------------------------------------------------
+    # get obstype from the header
+    if kw_obstype not in header:
+        obstype = None
+    else:
+        obstype = header[kw_obstype]
+    # -------------------------------------------------------------------------
+    # default set drs mode to Unknown
+    drs_mode = 'Unknown'
+    # get drs mode
+    if drs_mode == 'Unknown' and obstype == 'OBJECT':
+        # check polar keys are valid (if so and not polar we assume
+        #   the are spectroscopy)
+        valid_key1 = polar_key1 in all_polar_rhomb_pos
+        valid_key2 = polar_key2 in all_polar_rhomb_pos
+        # define the drs mode
+        if polar_key1 == 'P16' and polar_key2 == 'P16':
+            drs_mode = 'SPECTROSCOPY'
+        elif valid_key1 and valid_key2:
+            drs_mode = 'POLAR'
     # -------------------------------------------------------------------------
     # add header key
     header[kw_drs_mode] = (drs_mode, kw_drs_mode_comment)
@@ -1095,8 +1251,7 @@ def get_drs_mode(params: ParamDict, header: Any, hdict: Any) -> Tuple[Any, Any]:
 
 
 def construct_dprtype(recipe: Any, params: ParamDict, filename: str,
-                      header: Any,
-                      skip_validation: bool = False) -> Tuple[str, str, Any]:
+                      header: Any) -> Tuple[str, str, Any]:
     """
     Construct the DPRTYPE from the header
 
@@ -1118,11 +1273,8 @@ def construct_dprtype(recipe: Any, params: ParamDict, filename: str,
         # set recipe
         drsfile.set_params(params)
         # find out whether file is valid
-        if not skip_validation:
-            valid, _ = drsfile.has_correct_hkeys(header, log=False,
-                                                 filename=filename)
-        else:
-            valid = True
+        valid, _ = drsfile.has_correct_hkeys(header, log=False,
+                                             filename=filename)
         # if valid the assign dprtype
         if valid:
             # remove prefix if not None
@@ -1134,6 +1286,7 @@ def construct_dprtype(recipe: Any, params: ParamDict, filename: str,
                 outtype = drsfile.name
             # we have found file so break
             break
+
     return dprtype, outtype, drsfile
 
 
@@ -1197,15 +1350,12 @@ def get_special_objname(params: ParamDict, header: Any,
     # get parameters from params
     kwdprtype = params['KW_DPRTYPE'][0]
     kwobjname = params['KW_OBJNAME'][0]
-    kwcatg = params['KW_RAW_DPRCATG'][0]
     kwtrgtype = params['KW_TARGET_TYPE'][0]
     kwobjcomment = params['KW_OBJNAME'][2]
     obj_dprtypes = params['PP_OBJ_DPRTYPES']
     # conditions
     cond1 = header[kwdprtype] in obj_dprtypes
     cond2 = header[kwtrgtype] == 'SKY'
-    cond3 = header[kwcatg] == 'CALIB'
-    cond4 = header[kwcatg] == 'TEST'
     # if nether conditions are met we have a science/telluric observation
     #  don't update the date
     if cond1 and not cond2:
@@ -1214,12 +1364,8 @@ def get_special_objname(params: ParamDict, header: Any,
     elif cond2:
         objname = 'SKY'
     # otherwise we assume we have a calibration
-    elif cond3:
-        objname = 'CALIB'
-    elif cond4:
-        objname = 'TEST'
     else:
-        objname = 'UNKNOWN'
+        objname = 'CALIB'
     #  update header / hdict
     header[kwobjname] = (objname, kwobjcomment)
     hdict[kwobjname] = (objname, kwobjcomment)

@@ -21,7 +21,7 @@ from apero.core.core import drs_out_file as out
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero.core.instruments.nirps_ha.file_defintions.py'
+__NAME__ = 'apero.instruments.nirps_ha.file_defintions.py'
 __INSTRUMENT__ = 'NIRPS_HA'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__

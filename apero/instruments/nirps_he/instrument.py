@@ -21,12 +21,12 @@ from apero.core.base import drs_exceptions
 from apero.core.base import drs_base_classes as base_class
 from apero.core.base import drs_misc
 from apero.core.base import drs_text
-from apero.core.instruments.default import instrument as instrument_mod
+from apero.instruments.default import instrument as instrument_mod
 
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero.core.instruments.nirps_he.instrument'
+__NAME__ = 'apero.instruments.nirps_he.instrument.py'
 __INSTRUMENT__ = 'NIRPS_HE'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
@@ -134,9 +134,9 @@ class NirpsHe(instrument_mod.Instrument):
     def get_constants(self
                       ) -> Tuple[Dict[str, Any], Dict[str, str], Dict[str, Any]]:
         # this has to be local
-        from apero.core.instruments.nirps_he import config
-        from apero.core.instruments.nirps_he import constants
-        from apero.core.instruments.nirps_he import keywords
+        from apero.instruments.nirps_he import config
+        from apero.instruments.nirps_he import constants
+        from apero.instruments.nirps_he import keywords
         # get constants dicts
         config_dict = config.CDict
         constants_dict = constants.CDict
@@ -168,7 +168,7 @@ class NirpsHe(instrument_mod.Instrument):
         :return: file_definitions
         """
         # this has to be local
-        from apero.core.instruments.nirps_he import file_definitions
+        from apero.instruments.nirps_he import file_definitions
         # return import
         return file_definitions
 
@@ -179,7 +179,7 @@ class NirpsHe(instrument_mod.Instrument):
         :return: file_definitions
         """
         # this has to be local
-        from apero.core.instruments.nirps_he import recipe_definitions
+        from apero.instruments.nirps_he import recipe_definitions
         # return import
         return recipe_definitions
 

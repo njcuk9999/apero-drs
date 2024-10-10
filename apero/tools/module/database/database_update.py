@@ -27,7 +27,7 @@ from apero.core.constants import param_functions
 from apero.core.core import drs_database
 from apero.core.core import drs_file
 from apero.core.base import drs_log
-from apero.core.instruments.default import instrument as instrument_mod
+from apero.instruments.default import instrument as instrument_mod
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_utils
 from apero.io import drs_table

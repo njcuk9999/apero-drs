@@ -24,7 +24,7 @@ from apero.core.base import drs_misc
 from apero.core.core import drs_database
 from apero.core.base import drs_log
 from apero.core.base import drs_text
-from apero.core.instruments.default import instrument as instrument_mod
+from apero.instruments.default import instrument as instrument_mod
 from apero.io import drs_fits
 
 # =============================================================================

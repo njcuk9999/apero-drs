@@ -22,7 +22,7 @@ from apero.base import drs_lang
 from apero.core.core import drs_database
 from apero.core.core import drs_file
 from apero.core.base import drs_log
-from apero.core.instruments.spirou import file_definitions
+from apero.instruments.spirou import file_definitions
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
 from apero.io import drs_image

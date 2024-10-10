@@ -8,12 +8,12 @@ Created on 2019-01-17
 from astropy import units as uu
 
 from apero.base import base
-from apero.core.instruments.default import keywords
+from apero.instruments.default import keywords
 
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero.core.instruments.nirps_ha.keywords.py'
+__NAME__ = 'apero.instruments.nirps_ha.keywords.py'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
 __author__ = base.__author__

@@ -19,7 +19,7 @@ from apero.base import drs_lang
 from apero.core.base import drs_exceptions
 from apero.core.base import drs_misc
 from apero.core.base import drs_text
-from apero.core.instruments import select
+from apero.instruments import select
 
 # =============================================================================
 # Define variables

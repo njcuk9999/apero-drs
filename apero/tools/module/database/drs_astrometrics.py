@@ -32,7 +32,7 @@ from apero.base import drs_lang
 from apero.core.base import drs_base_classes, drs_text, drs_misc
 from apero.core.core import drs_database
 from apero.core.base import drs_log
-from apero.core.instruments.default import instrument as instrument_mod
+from apero.instruments.default import instrument as instrument_mod
 from apero.core.utils import drs_startup
 from apero.io import drs_fits
 from apero.science import preprocessing as prep

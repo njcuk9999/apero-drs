@@ -24,7 +24,7 @@ from apero.core.core import drs_file
 from apero.core.base import drs_log
 from apero.core.base import drs_text
 from apero.core.base import drs_misc
-from apero.core.instruments.default import instrument as instrument_mod
+from apero.instruments.default import instrument as instrument_mod
 from apero.core.utils import drs_recipe
 from apero.io import drs_path
 from apero.tools.module.documentation import drs_markdown

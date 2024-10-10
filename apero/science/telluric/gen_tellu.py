@@ -29,7 +29,7 @@ from apero.core.core import drs_database
 from apero.core.core import drs_file
 from apero.core.base import drs_log
 from apero.core.base import drs_text
-from apero.core.instruments.default import instrument
+from apero.instruments.default import instrument
 from apero.core.utils import drs_data
 from apero.core.utils import drs_utils
 from apero.io import drs_fits

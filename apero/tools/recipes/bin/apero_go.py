@@ -17,7 +17,7 @@ from apero.base import base
 from apero.core.constants import param_functions
 from apero.core.constants import load_functions
 from apero.core.constants import path_definitions
-from apero.core.instruments.default import recipe_definitions as rd
+from apero.instruments.default import recipe_definitions as rd
 
 # =============================================================================
 # Define variables

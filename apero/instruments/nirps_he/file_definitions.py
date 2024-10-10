@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-APERO DrsFile definitions for SPIROU
+APERO DrsFile definitions for NIRPS HE
 
 # For fits files
 
 file_name = drs_finput(name, filetype, suffix=, outclass, instrument,
                        description)
-
 
 Created on 2018-10-31 at 18:06
 
@@ -22,15 +21,16 @@ from apero.core.core import drs_out_file as out
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero.core.instruments.spirou.file_defintions.py'
-__INSTRUMENT__ = 'SPIROU'
+__NAME__ = 'apero.instruments.nirps_he.file_defintions.py'
+__INSTRUMENT__ = 'NIRPS_HE'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
 __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # Instrument name in header
-INSTRUMENT_NAME = 'SPIRou'
+INSTRUMENT_NAME = 'NIRPS'
+INSTRUMENT_MODE = 'HE'
 
 # =============================================================================
 # Define Files
@@ -73,304 +73,413 @@ raw_file = drs_finput('DRS_RAW', filetype='.fits', suffix='',
 #                            outclass=blank_ofile)
 # raw_file.addset(raw_dark_dark)
 
-# raw dark in P4 (internal dark)
-raw_dark_dark_int = drs_finput('RAW_DARK_DARK_INT', filetype='.fits',
-                               suffix='', inext='.fits', outclass=blank_ofile,
-                               hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_pk',
-                                          KW_OBSTYPE='DARK', KW_CALIBWH='P4',
-                                          KW_INSTRUMENT=INSTRUMENT_NAME),
-                               description='Raw sci=DARK calib=DARK file, '
-                                           'where dark is an internal dark')
-raw_file.addset(raw_dark_dark_int)
+# raw dark
+raw_dark_dark = drs_finput('RAW_DARK_DARK', filetype='.fits',
+                           suffix='', inext='.fits', outclass=blank_ofile,
+                           hkeys=dict(KW_RAW_DPRTYPE='DARK',
+                                      KW_RAW_DPRCATG='CALIB',
+                                      KW_INST_MODE=INSTRUMENT_MODE,
+                                      KW_INSTRUMENT=INSTRUMENT_NAME),
+                           description='Raw sci=DARK calib=DARK file')
+raw_file.addset(raw_dark_dark)
 
-# raw dark in P5 (telescope dark)
-raw_dark_dark_tel = drs_finput('RAW_DARK_DARK_TEL', filetype='.fits',
-                               suffix='', inext='.fits', outclass=blank_ofile,
-                               hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_pk',
-                                          KW_OBSTYPE='DARK', KW_CALIBWH='P5',
-                                          KW_INSTRUMENT=INSTRUMENT_NAME),
-                               description='Raw sci=DARK calib=DARK file, '
-                                           'where dark is a telescope dark')
-raw_file.addset(raw_dark_dark_tel)
+# flux calib sky observation
+raw_flux_sky_sky = drs_finput('RAW_FLUX_SKY_SKY', filetype='.fits',
+                              suffix='', inext='.fits', outclass=blank_ofile,
+                              hkeys=dict(KW_RAW_DPRTYPE='EFF,SKY,SKY',
+                                         KW_RAW_DPRCATG='CALIB',
+                                         KW_INST_MODE=INSTRUMENT_MODE,
+                                         KW_INSTRUMENT=INSTRUMENT_NAME),
+                              description='Raw sci=DARK calib=DARK file')
+raw_file.addset(raw_flux_sky_sky)
 
-# sky observation (sky dark)
-raw_dark_dark_sky = drs_finput('RAW_DARK_DARK_SKY', filetype='.fits',
+# night sky sky observation
+raw_night_sky_sky = drs_finput('RAW_NIGHT_SKY_SKY', filetype='.fits',
                                suffix='', inext='.fits', outclass=blank_ofile,
-                               hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_pk',
-                                          KW_OBSTYPE='OBJECT',
-                                          KW_TARGET_TYPE='SKY',
+                               hkeys=dict(KW_RAW_DPRTYPE='OBJECT,SKY',
+                                          KW_RAW_DPRCATG='SCIENCE',
+                                          KW_NIGHT_OBS='1',
+                                          KW_INST_MODE=INSTRUMENT_MODE,
                                           KW_INSTRUMENT=INSTRUMENT_NAME),
-                               description='Raw sci=DARK calib=DARK file, '
-                                           'where dark is a sky dark')
-raw_file.addset(raw_dark_dark_sky)
-
-# sky observations (with fp)
-raw_dark_fp_sky = drs_finput('RAW_DARK_FP_SKY', filetype='.fits', suffix='',
-                             inext='.fits', outclass=blank_ofile,
-                             hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_fp',
-                                        KW_OBSTYPE='OBJECT',
-                                        KW_TARGET_TYPE='SKY',
-                                        KW_INSTRUMENT=INSTRUMENT_NAME),
-                             description='Raw sci=DARK calib=FP file, '
-                                         'where dark is an internal dark')
-raw_file.addset(raw_dark_fp_sky)
+                               description='Raw night sci=SKY calib=SKY file')
+raw_file.addset(raw_night_sky_sky)
 
 # -----------------------------------------------------------------------------
 # raw flat files
-raw_dark_flat = drs_finput('RAW_DARK_FLAT', outclass=blank_ofile,
-                           filetype='.fits', suffix='',
-                           hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_wl',
-                                      KW_OBSTYPE='FLAT',
+raw_dark_flat = drs_finput('RAW_DARK_FLAT', outclass=blank_ofile, filetype='.fits',
+                           suffix='',
+                           hkeys=dict(KW_RAW_DPRTYPE='ORDERDEF,DARK,LAMP',
+                                      KW_RAW_DPRCATG='CALIB',
+                                      KW_INST_MODE=INSTRUMENT_MODE,
                                       KW_INSTRUMENT=INSTRUMENT_NAME),
-                           description='Raw sci=DARK calib=FLAT file,'
-                                       ' where dark is an internal dark')
+                           description='Raw sci=DARK calib=FP file')
 raw_file.addset(raw_dark_flat)
 
 raw_flat_dark = drs_finput('RAW_FLAT_DARK', outclass=blank_ofile,
                            filetype='.fits', suffix='',
-                           hkeys=dict(KW_CCAS='pos_wl', KW_CREF='pos_pk',
-                                      KW_OBSTYPE='FLAT',
+                           hkeys=dict(KW_RAW_DPRTYPE='ORDERDEF,LAMP,DARK',
+                                      KW_RAW_DPRCATG='CALIB',
+                                      KW_INST_MODE=INSTRUMENT_MODE,
                                       KW_INSTRUMENT=INSTRUMENT_NAME),
-                           description='Raw sci=FLAT calib=DARK file,'
-                                       ' where dark is an internal dark')
+                           description='Raw sci=FLAT calib=DARK file')
 raw_file.addset(raw_flat_dark)
 
 raw_flat_flat = drs_finput('RAW_FLAT_FLAT', outclass=blank_ofile,
                            filetype='.fits', suffix='',
-                           hkeys=dict(KW_CCAS='pos_wl', KW_CREF='pos_wl',
-                                      KW_OBSTYPE='FLAT',
+                           hkeys=dict(KW_RAW_DPRTYPE='FLAT,LAMP,LAMP',
+                                      KW_RAW_DPRCATG='CALIB',
+                                      KW_INST_MODE=INSTRUMENT_MODE,
                                       KW_INSTRUMENT=INSTRUMENT_NAME),
                            description='Raw sci=FLAT calib=FLAT file')
 raw_file.addset(raw_flat_flat)
-
-raw_flat_fp = drs_finput('RAW_FLAT_FP', outclass=blank_ofile,
-                         filetype='.fits', suffix='',
-                         hkeys=dict(KW_CCAS='pos_wl', KW_CREF='pos_fp',
-                                    KW_OBSTYPE='FLAT',
-                                    KW_INSTRUMENT=INSTRUMENT_NAME),
-                         description='Raw sci=FLAT calib=FP file')
-raw_file.addset(raw_flat_fp)
 
 # -----------------------------------------------------------------------------
 # raw align files
 raw_dark_fp = drs_finput('RAW_DARK_FP', outclass=blank_ofile,
                          filetype='.fits', suffix='',
-                         hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_fp',
-                                    KW_OBSTYPE='ALIGN',
+                         hkeys=dict(KW_RAW_DPRTYPE='CONTAM,DARK,FP',
+                                    KW_RAW_DPRCATG='CALIB',
+                                    KW_INST_MODE=INSTRUMENT_MODE,
                                     KW_INSTRUMENT=INSTRUMENT_NAME),
-                         description='Raw sci=DARK calib=FP file,'
-                                     ' where dark is an internal dark')
+                         description='Raw sci=DARK calib=FP file')
 raw_file.addset(raw_dark_fp)
 
 raw_fp_dark = drs_finput('RAW_FP_DARK', outclass=blank_ofile,
                          filetype='.fits', suffix='',
-                         hkeys=dict(KW_CCAS='pos_fp', KW_CREF='pos_pk',
-                                    KW_OBSTYPE='ALIGN',
+                         hkeys=dict(KW_RAW_DPRTYPE='CONTAM,FP,DARK',
+                                    KW_RAW_DPRCATG='CALIB',
+                                    KW_INST_MODE=INSTRUMENT_MODE,
                                     KW_INSTRUMENT=INSTRUMENT_NAME),
-                         description='Raw sci=FP calib=DARK file, '
-                                     ' where dark is an internal dark')
+                         description='Raw sci=FP calib=DARK file')
 raw_file.addset(raw_fp_dark)
-
-raw_fp_flat = drs_finput('RAW_FP_FLAT', outclass=blank_ofile,
-                         filetype='.fits', suffix='',
-                         hkeys=dict(KW_CCAS='pos_fp', KW_CREF='pos_wl',
-                                    KW_OBSTYPE='ALIGN',
-                                    KW_INSTRUMENT=INSTRUMENT_NAME),
-                         description='Raw sci=FP calib=FLAT file')
-raw_file.addset(raw_fp_flat)
 
 raw_fp_fp = drs_finput('RAW_FP_FP', outclass=blank_ofile,
                        filetype='.fits', suffix='',
-                       hkeys=dict(KW_CCAS='pos_fp', KW_CREF='pos_fp',
-                                  KW_OBSTYPE='ALIGN',
+                       hkeys=dict(KW_RAW_DPRTYPE='WAVE,FP,FP',
+                                  KW_RAW_DPRCATG='CALIB',
+                                  KW_INST_MODE=INSTRUMENT_MODE,
                                   KW_INSTRUMENT=INSTRUMENT_NAME),
                        description='Raw sci=FP calib=FP file')
 raw_file.addset(raw_fp_fp)
 
 # -----------------------------------------------------------------------------
 # raw LFC files
+# NIRPS-CHANGE: Not defined - this is a guess
 raw_lfc_lfc = drs_finput('RAW_LFC_LFC', filetype='.fits', suffix='',
                          outclass=blank_ofile,
-                         hkeys=dict(KW_CCAS='pos_rs', KW_CREF='pos_rs',
-                                    KW_OBSTYPE='ALIGN',
+                         hkeys=dict(KW_RAW_DPRTYPE='WAVE,LFC,LFC',
+                                    KW_RAW_DPRCATG='CALIB',
+                                    KW_INST_MODE=INSTRUMENT_MODE,
                                     KW_INSTRUMENT=INSTRUMENT_NAME),
                          description='Raw sci=LFC calib=LFC file')
 raw_file.addset(raw_lfc_lfc)
 
-raw_lfc_fp = drs_finput('RAW_LFC_FP', outclass=blank_ofile,
-                        filetype='.fits', suffix='',
-                        hkeys=dict(KW_CCAS='pos_rs', KW_CREF='pos_fp',
-                                   KW_OBSTYPE='ALIGN',
+# NIRPS-CHANGE: Not defined - this is a guess
+raw_lfc_fp = drs_finput('RAW_LFC_FP', filetype='.fits', suffix='',
+                        outclass=blank_ofile,
+                        hkeys=dict(KW_RAW_DPRTYPE='WAVE,LFC,FP',
+                                   KW_RAW_DPRCATG='CALIB',
+                                   KW_INST_MODE=INSTRUMENT_MODE,
                                    KW_INSTRUMENT=INSTRUMENT_NAME),
                         description='Raw sci=LFC calib=FP file')
 raw_file.addset(raw_lfc_fp)
 
-raw_fp_lfc = drs_finput('RAW_FP_LFC', outclass=blank_ofile,
+# NIRPS-CHANGE: Not defined - this is a guess
+raw_fp_lfc = drs_finput('RAW_FP_LFC',
                         filetype='.fits', suffix='',
-                        hkeys=dict(KW_CCAS='pos_fp', KW_CREF='pos_rs',
-                                   KW_OBSTYPE='ALIGN',
+                        outclass=blank_ofile,
+                        hkeys=dict(KW_RAW_DPRTYPE='WAVE,FP,LFC',
+                                   KW_RAW_DPRCATG='CALIB',
+                                   KW_INST_MODE=INSTRUMENT_MODE,
                                    KW_INSTRUMENT=INSTRUMENT_NAME),
                         description='Raw sci=FP calib=LFC file')
 raw_file.addset(raw_fp_lfc)
 
 # -----------------------------------------------------------------------------
+# raw LED LED file
+raw_led_led = drs_finput('RAW_LED_LED', filetype='.fits', suffix='',
+                         outclass=blank_ofile,
+                         hkeys=dict(KW_RAW_DPRTYPE='LED,LAMP',
+                                    KW_RAW_DPRCATG='CALIB',
+                                    KW_INST_MODE=INSTRUMENT_MODE,
+                                    KW_INSTRUMENT=INSTRUMENT_NAME))
+raw_file.addset(raw_led_led)
+
+# raw FLAT LED file
+raw_flat_led = drs_finput('RAW_FLAT_LED', filetype='.fits', suffix='',
+                          outclass=blank_ofile,
+                          hkeys=dict(KW_RAW_DPRTYPE='FLAT,LED',
+                                     KW_RAW_DPRCATG='CALIB',
+                                     KW_INST_MODE=INSTRUMENT_MODE,
+                                     KW_INSTRUMENT=INSTRUMENT_NAME))
+raw_file.addset(raw_flat_led)
+
+# -----------------------------------------------------------------------------
 # raw object files
 raw_obj_dark = drs_finput('RAW_OBJ_DARK', outclass=blank_ofile,
-                          hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_pk',
-                                     KW_OBSTYPE='OBJECT',
-                                     KW_DRS_MODE='SPECTROSCOPY',
+                          hkeys=dict(KW_RAW_DPRTYPE='OBJECT,DARK',
                                      KW_TARGET_TYPE='TARGET',
+                                     KW_INST_MODE=INSTRUMENT_MODE,
                                      KW_INSTRUMENT=INSTRUMENT_NAME),
-                          description='Raw sci=OBJ calib=DARK file,'
-                                      ' where dark is an internal dark')
+                          description='Raw sci=OBJ calib=DARK file')
 raw_file.addset(raw_obj_dark)
 
 raw_obj_fp = drs_finput('RAW_OBJ_FP', outclass=blank_ofile, filetype='.fits',
                         suffix='', inext='.fits',
-                        hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_fp',
-                                   KW_OBSTYPE='OBJECT',
-                                   KW_DRS_MODE='SPECTROSCOPY',
+                        hkeys=dict(KW_RAW_DPRTYPE='OBJECT,FP',
                                    KW_TARGET_TYPE='TARGET',
+                                   KW_INST_MODE=INSTRUMENT_MODE,
                                    KW_INSTRUMENT=INSTRUMENT_NAME),
                         description='Raw sci=OBJ calib=FP file')
 raw_file.addset(raw_obj_fp)
 
 raw_obj_hc1 = drs_finput('RAW_OBJ_HCONE', outclass=blank_ofile,
                          filetype='.fits', suffix='', inext='.fits',
-                         hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_hc1',
-                                    KW_OBSTYPE='OBJECT',
+                         hkeys=dict(KW_RAW_DPRTYPE='OBJECT,UN1',
                                     KW_TARGET_TYPE='TARGET',
+                                    KW_INST_MODE=INSTRUMENT_MODE,
                                     KW_INSTRUMENT=INSTRUMENT_NAME),
                          description='Raw sci=OBJ calib=Hollow Cathode file,'
                                      ' Uranium Neon lamp')
 raw_file.addset(raw_obj_hc1)
 
-raw_obj_hc2 = drs_finput('RAW_OBJ_HCTWO', outclass=blank_ofile,
+raw_obj_sky = drs_finput('RAW_OBJ_SKY', outclass=blank_ofile,
                          filetype='.fits', suffix='', inext='.fits',
-                         hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_hc2',
-                                    KW_OBSTYPE='OBJECT',
+                         hkeys=dict(KW_RAW_DPRTYPE='OBJECT,SKY',
                                     KW_TARGET_TYPE='TARGET',
+                                    KW_INST_MODE=INSTRUMENT_MODE,
                                     KW_INSTRUMENT=INSTRUMENT_NAME),
-                         description='Raw sci=OBJ calib=Hollow Cathode file,'
-                                     ' Thorium Argon lamp')
-raw_file.addset(raw_obj_hc2)
+                         description='Raw sci=OBJ calib=Sky file')
+raw_file.addset(raw_obj_sky)
 
-# raw object files
-raw_polar_dark = drs_finput('RAW_POLAR_DARK', outclass=blank_ofile,
-                            hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_pk',
-                                       KW_OBSTYPE='OBJECT',
-                                       KW_DRS_MODE='POLAR',
-                                       KW_TARGET_TYPE='TARGET',
-                                       KW_INSTRUMENT=INSTRUMENT_NAME),
-                            description='Raw sci=POLAR calib=DARK,'
-                                        ' where dark is an internal dark')
-raw_file.addset(raw_polar_dark)
+raw_obj_tun = drs_finput('RAW_OBJ_TUN', outclass=blank_ofile,
+                         filetype='.fits', suffix='', inext='.fits',
+                         hkeys=dict(KW_RAW_DPRTYPE='OBJECT,TUN',
+                                    KW_TARGET_TYPE='TARGET',
+                                    KW_INST_MODE=INSTRUMENT_MODE,
+                                    KW_INSTRUMENT=INSTRUMENT_NAME))
+raw_file.addset(raw_obj_tun)
 
-raw_polar_fp = drs_finput('RAW_POLAR_FP', outclass=blank_ofile, filetype='.fits',
-                          suffix='', inext='.fits',
-                          hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_fp',
-                                     KW_OBSTYPE='OBJECT',
-                                     KW_DRS_MODE='POLAR',
-                                     KW_TARGET_TYPE='TARGET',
+raw_sun_fp = drs_finput('RAW_SUN_FP', outclass=blank_ofile,
+                        filetype='.fits', suffix='', inext='.fits',
+                        hkeys=dict(KW_RAW_DPRTYPE='SUN,FP,G2V',
+                                   KW_INST_MODE=INSTRUMENT_MODE,
+                                   KW_INSTRUMENT=INSTRUMENT_NAME),
+                        description='Raw sci=SUN calib=FP file')
+raw_file.addset(raw_sun_fp)
+
+raw_sun_dark = drs_finput('RAW_SUN_DARK', outclass=blank_ofile,
+                          filetype='.fits', suffix='', inext='.fits',
+                          hkeys=dict(KW_RAW_DPRTYPE='SUN,DARK,G2V',
+                                     KW_INST_MODE=INSTRUMENT_MODE,
                                      KW_INSTRUMENT=INSTRUMENT_NAME),
-                          description='Raw sci=POLAR calib=FP')
-raw_file.addset(raw_polar_fp)
+                          description='Raw sci=SUN calib=DARK file')
+raw_file.addset(raw_sun_dark)
+
+raw_fluxstd_sky = drs_finput('RAW_FLUXSTD_SKY', outclass=blank_ofile,
+                             filetype='.fits', suffix='', inext='.fits',
+                             hkeys=dict(KW_RAW_DPRTYPE='FLUX,STD,SKY',
+                                        KW_INST_MODE=INSTRUMENT_MODE,
+                                        KW_INSTRUMENT=INSTRUMENT_NAME),
+                             description='Raw sci=flux standard star '
+                                         'calib=DARK file')
+raw_file.addset(raw_fluxstd_sky)
+
+raw_tellu_sky = drs_finput('RAW_TELLU_SKY', outclass=blank_ofile,
+                           filetype='.fits', suffix='', inext='.fits',
+                           hkeys=dict(KW_RAW_DPRTYPE='TELLURIC,SKY',
+                                      KW_INST_MODE=INSTRUMENT_MODE,
+                                      KW_INSTRUMENT=INSTRUMENT_NAME),
+                           description='Raw sci=hot star calib=DARK file')
+raw_file.addset(raw_tellu_sky)
 
 # -----------------------------------------------------------------------------
 # raw comparison files
 raw_dark_hc1 = drs_finput('RAW_DARK_HCONE', outclass=blank_ofile,
                           filetype='.fits', suffix='',
-                          hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_hc1',
-                                     KW_OBSTYPE='COMPARISON',
+                          hkeys=dict(KW_RAW_DPRTYPE='WAVE,DARK,UN1',
+                                     KW_RAW_DPRCATG='CALIB',
+                                     KW_INST_MODE=INSTRUMENT_MODE,
                                      KW_INSTRUMENT=INSTRUMENT_NAME),
                           description='Raw sci=DARK calib=Hollow Cathode file,'
                                       ' where dark is an internal dark,'
                                       ' Uranium Neon lamp')
 raw_file.addset(raw_dark_hc1)
 
-raw_dark_hc2 = drs_finput('RAW_DARK_HCTWO', outclass=blank_ofile,
-                          filetype='.fits', suffix='',
-                          hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_hc2',
-                                     KW_OBSTYPE='COMPARISON',
-                                     KW_INSTRUMENT=INSTRUMENT_NAME),
-                          description='Raw sci=DARK calib=Hollow Cathode file,'
-                                      ' where dark is an internal dark,'
-                                      ' Thorium Argon lamp')
-raw_file.addset(raw_dark_hc2)
-
 raw_fp_hc1 = drs_finput('RAW_FP_HCONE', outclass=blank_ofile,
                         filetype='.fits', suffix='',
-                        hkeys=dict(KW_CCAS='pos_fp', KW_CREF='pos_hc1',
-                                   KW_OBSTYPE='COMPARISON',
+                        hkeys=dict(KW_RAW_DPRTYPE='WAVE,FP,UN1',
+                                   KW_RAW_DPRCATG='CALIB',
+                                   KW_INST_MODE=INSTRUMENT_MODE,
                                    KW_INSTRUMENT=INSTRUMENT_NAME),
                         description='Raw sci=FP calib=Hollow Cathode file,'
                                     ' Uranium Neon lamp')
 raw_file.addset(raw_fp_hc1)
 
-raw_fp_hc2 = drs_finput('RAW_FP_HCTWO', outclass=blank_ofile,
-                        filetype='.fits', suffix='',
-                        hkeys=dict(KW_CCAS='pos_fp', KW_CREF='pos_hc2',
-                                   KW_OBSTYPE='COMPARISON',
-                                   KW_INSTRUMENT=INSTRUMENT_NAME),
-                        description='Raw sci=FP calib=Hollow Cathode file,'
-                                    ' Thorium Argon lamp')
-raw_file.addset(raw_fp_hc2)
-
 raw_hc1_fp = drs_finput('RAW_HCONE_FP', outclass=blank_ofile,
                         filetype='.fits', suffix='',
-                        hkeys=dict(KW_CCAS='pos_hc1', KW_CREF='pos_fp',
-                                   KW_OBSTYPE='COMPARISON',
+                        hkeys=dict(KW_RAW_DPRTYPE='WAVE,UN1,FP',
+                                   KW_RAW_DPRCATG='CALIB',
+                                   KW_INST_MODE=INSTRUMENT_MODE,
                                    KW_INSTRUMENT=INSTRUMENT_NAME),
                         description='Raw sci=Hollow Cathode calib=FP file,'
                                     ' Uranium Neion lamp')
 raw_file.addset(raw_hc1_fp)
 
-raw_hc2_fp = drs_finput('RAW_HCTWO_FP', outclass=blank_ofile,
-                        filetype='.fits', suffix='',
-                        hkeys=dict(KW_CCAS='pos_hc2', KW_CREF='pos_fp',
-                                   KW_OBSTYPE='COMPARISON',
-                                   KW_INSTRUMENT=INSTRUMENT_NAME),
-                        description='Raw sci=Hollow Cathode calib=FP file,'
-                                    ' Thorium Argon lamp')
-raw_file.addset(raw_hc2_fp)
-
 raw_hc1_hc1 = drs_finput('RAW_HCONE_HCONE', filetype='.fits', suffix='',
                          outclass=blank_ofile,
-                         hkeys=dict(KW_CCAS='pos_hc1', KW_CREF='pos_hc1',
-                                    KW_OBSTYPE='COMPARISON',
+                         hkeys=dict(KW_RAW_DPRTYPE='WAVE,UN1,UN1',
+                                    KW_RAW_DPRCATG='CALIB',
+                                    KW_INST_MODE=INSTRUMENT_MODE,
                                     KW_INSTRUMENT=INSTRUMENT_NAME),
                          description='Raw sci=Hollow Cathode calib=Hollow '
                                      'Cathode file, Uranium Neon lamp')
 raw_file.addset(raw_hc1_hc1)
 
-raw_hc2_hc2 = drs_finput('RAW_HCTWO_HCTWO', filetype='.fits', suffix='',
-                         outclass=blank_ofile,
-                         hkeys=dict(KW_CCAS='pos_hc2', KW_CREF='pos_hc2',
-                                    KW_OBSTYPE='COMPARISON',
-                                    KW_INSTRUMENT=INSTRUMENT_NAME),
-                         description='Raw sci=Hollow Cathode calib=Hollow '
-                                     'Cathode file, Thorium Argon lamp')
-raw_file.addset(raw_hc2_hc2)
-
 raw_hc1_dark = drs_finput('RAW_HCONE_DARK', filetype='.fits', suffix='',
                           outclass=blank_ofile,
-                          hkeys=dict(KW_CCAS='pos_hc1', KW_CREF='pos_pk',
-                                     KW_OBSTYPE='COMPARISON',
+                          hkeys=dict(KW_RAW_DPRTYPE='WAVE,UN1,DARK',
+                                     KW_RAW_DPRCATG='CALIB',
+                                     KW_INST_MODE=INSTRUMENT_MODE,
                                      KW_INSTRUMENT=INSTRUMENT_NAME),
                           description='Raw sci=Hollow Cathode calib=DARK file,'
                                       ' where dark is an internal dark,'
                                       ' Uranium Neon lamp')
 raw_file.addset(raw_hc1_dark)
 
-raw_hc2_dark = drs_finput('RAW_HCTWO_DARK', filetype='.fits', suffix='',
-                          outclass=blank_ofile,
-                          hkeys=dict(KW_CCAS='pos_hc2', KW_CREF='pos_pk',
-                                     KW_OBSTYPE='COMPARISON',
-                                     KW_INSTRUMENT=INSTRUMENT_NAME),
-                          description='Raw sci=Hollow Cathode calib=DARK file,'
-                                      ' where dark is an internal dark,'
-                                      ' Thorium Argon lamp')
-raw_file.addset(raw_hc2_dark)
+# -----------------------------------------------------------------------------
+# test raw files
+# -----------------------------------------------------------------------------
+# raw test dark flat file
+# TODO: Should this exist?
+raw_calib_dark_flat = drs_finput('RAW_CALIB_DARK_FLAT', outclass=blank_ofile,
+                                 filetype='.fits', suffix='',
+                                 hkeys=dict(KW_RAW_DPRTYPE='FLAT,DARK,LAMP',
+                                            KW_RAW_DPRCATG='CALIB',
+                                            KW_INST_MODE=INSTRUMENT_MODE,
+                                            KW_INSTRUMENT=INSTRUMENT_NAME),
+                                 description='Raw sci=DARK calib=FLAT test file')
+raw_file.addset(raw_calib_dark_flat)
+
+# raw test flat dark file
+# TODO: Should this exist?
+raw_calib_flat_dark = drs_finput('RAW_CALIB_FLAT_DARK', outclass=blank_ofile,
+                                 filetype='.fits', suffix='',
+                                 hkeys=dict(KW_RAW_DPRTYPE='FLAT,LAMP,DARK',
+                                            KW_RAW_DPRCATG='CALIB',
+                                            KW_INST_MODE=INSTRUMENT_MODE,
+                                            KW_INSTRUMENT=INSTRUMENT_NAME),
+                                 description='Raw sci=FLAT calib=DARK '
+                                             'test file')
+raw_file.addset(raw_calib_flat_dark)
+
+# raw test dark fp
+raw_test_dark_fp = drs_finput('RAW_TEST_DARK_FP', outclass=blank_ofile,
+                              filetype='.fits', suffix='',
+                              hkeys=dict(KW_RAW_DPRTYPE='CONTAM,DARK,FP',
+                                         KW_RAW_DPRCATG='TEST',
+                                         KW_INST_MODE=INSTRUMENT_MODE,
+                                         KW_INSTRUMENT=INSTRUMENT_NAME),
+                              description='Raw sci=DARK calib=FP test file')
+raw_file.addset(raw_test_dark_fp)
+
+# raw test dark flat file
+raw_test_dark_flat = drs_finput('RAW_TEST_DARK_FLAT', outclass=blank_ofile,
+                                filetype='.fits', suffix='',
+                                hkeys=dict(KW_RAW_DPRTYPE='FLAT,DARK,LAMP',
+                                           KW_RAW_DPRCATG='TEST',
+                                           KW_INST_MODE=INSTRUMENT_MODE,
+                                           KW_INSTRUMENT=INSTRUMENT_NAME),
+                                description='Raw sci=DARK calib=FLAT test file')
+raw_file.addset(raw_test_dark_flat)
+
+# raw test flat dark file
+raw_test_flat_dark = drs_finput('RAW_TEST_FLAT_DARK', outclass=blank_ofile,
+                                filetype='.fits', suffix='',
+                                hkeys=dict(KW_RAW_DPRTYPE='FLAT,LAMP,DARK',
+                                           KW_RAW_DPRCATG='TEST',
+                                           KW_INST_MODE=INSTRUMENT_MODE,
+                                           KW_INSTRUMENT=INSTRUMENT_NAME),
+                                description='Raw sci=FLAT calib=DARK test file')
+raw_file.addset(raw_test_flat_dark)
+
+# raw test wave fp fp file
+raw_test_fp_fp = drs_finput('RAW_TEST_FP_FP', outclass=blank_ofile,
+                            filetype='.fits', suffix='',
+                            hkeys=dict(KW_RAW_DPRTYPE='WAVE,FP,FP',
+                                       KW_RAW_DPRCATG='TEST',
+                                       KW_INST_MODE=INSTRUMENT_MODE,
+                                       KW_INSTRUMENT=INSTRUMENT_NAME),
+                            description='Raw sci=FP calib=FP test file')
+raw_file.addset(raw_test_fp_fp)
+
+# raw test led
+raw_test_led_led = drs_finput('RAW_TEST_LED_LED', filetype='.fits', suffix='',
+                              hkeys=dict(KW_RAW_DPRTYPE='LED,LAMP',
+                                         KW_RAW_DPRCATG='TEST',
+                                         KW_INST_MODE=INSTRUMENT_MODE,
+                                         KW_INSTRUMENT=INSTRUMENT_NAME),
+                              description='Raw sci=LED calib=LED test file')
+raw_file.addset(raw_test_led_led)
+
+raw_test_hc1_hc1 = drs_finput('RAW_TEST_HCONE_HCONE', filetype='.fits',
+                              suffix='', outclass=blank_ofile,
+                              hkeys=dict(KW_RAW_DPRTYPE='WAVE,UN1,UN1',
+                                         KW_RAW_DPRCATG='TEST',
+                                         KW_INST_MODE=INSTRUMENT_MODE,
+                                         KW_INSTRUMENT=INSTRUMENT_NAME),
+                              description='Raw sci=Hollow Cathode calib='
+                                          'Hollow Cathode test file')
+raw_file.addset(raw_test_hc1_hc1)
+
+raw_test_fp_hc1 = drs_finput('RAW_TEST_FP_HCONE', outclass=blank_ofile,
+                             filetype='.fits', suffix='',
+                             hkeys=dict(KW_RAW_DPRTYPE='WAVE,FP,UN1',
+                                        KW_RAW_DPRCATG='TEST',
+                                        KW_INST_MODE=INSTRUMENT_MODE,
+                                        KW_INSTRUMENT=INSTRUMENT_NAME),
+                             description='Raw sci=FP calib=Hollow Cathode test'
+                                         ' file')
+raw_file.addset(raw_test_fp_hc1)
+
+raw_test_hc1_fp = drs_finput('RAW_TEST_HCONE_FP', outclass=blank_ofile,
+                             filetype='.fits', suffix='',
+                             hkeys=dict(KW_RAW_DPRTYPE='WAVE,UN1,FP',
+                                        KW_RAW_DPRCATG='TEST',
+                                        KW_INST_MODE=INSTRUMENT_MODE,
+                                        KW_INSTRUMENT=INSTRUMENT_NAME),
+                             description='Raw sci=Hollow Cathode calib=FP test'
+                                         ' file')
+raw_file.addset(raw_test_hc1_fp)
+
+raw_test_dark_dark_sky = drs_finput('RAW_DARK_DARK_SKY', outclass=blank_ofile,
+                                    filetype='.fits', suffix='',
+                                    hkeys=dict(KW_RAW_DPRTYPE='EFF,SKY,SKY',
+                                               KW_RAW_DPRCATG='TEST',
+                                               KW_INST_MODE=INSTRUMENT_MODE,
+                                               KW_INSTRUMENT=INSTRUMENT_NAME),
+                                    description='Raw sci=SKY calib=SKY test file')
+raw_file.addset(raw_test_dark_dark_sky)
+
+# test dark
+raw_test_dark = drs_finput('RAW_TEST_DARK', outclass=blank_ofile,
+                           filetype='.fits', suffix='',
+                           hkeys=dict(KW_RAW_DPRTYPE='DARK',
+                                      KW_RAW_DPRCATG='TEST',
+                                      KW_INST_MODE=INSTRUMENT_MODE,
+                                      KW_INSTRUMENT=INSTRUMENT_NAME),
+                           description='Raw sci=DARK calib=DARK test file')
+raw_file.addset(raw_test_dark)
+
+# test dark fp
+raw_test_fp_dark = drs_finput('RAW_TEST_FP_DARK', outclass=blank_ofile,
+                              filetype='.fits', suffix='',
+                              hkeys=dict(KW_RAW_DPRTYPE='CONTAM,FP,DARK',
+                                         KW_RAW_DPRCATG='TEST',
+                                         KW_INST_MODE=INSTRUMENT_MODE,
+                                         KW_INSTRUMENT=INSTRUMENT_NAME),
+                              description='Raw sci=FP calib=DARK test file')
+raw_file.addset(raw_test_fp_dark)
 
 # =============================================================================
 # Preprocessed Files
@@ -389,39 +498,28 @@ pp_file = drs_finput('DRS_PP', filetype='.fits', suffix='_pp',
 #                           inext='.fits', outclass=general_ofile)
 # pp_file.addset(pp_dark_dark)
 
-pp_dark_dark_int = drs_finput('DARK_DARK_INT', filetype='.fits',
-                              suffix='_pp', intype=raw_dark_dark_int,
-                              inext='.fits', outclass=general_ofile,
-                              hkeys=dict(KW_DPRTYPE='DARK_DARK_INT'),
-                              description='Preprocessed sci=DARK calib=DARK'
-                                          ' file, where dark is an internal'
-                                          ' dark')
-pp_file.addset(pp_dark_dark_int)
+pp_dark_dark = drs_finput('DARK_DARK', filetype='.fits',
+                          suffix='_pp', intype=raw_dark_dark,
+                          inext='.fits', outclass=general_ofile,
+                          hkeys=dict(KW_DPRTYPE='DARK_DARK'),
+                          description='Preprocessed sci=DARK calib=DARK file')
+pp_file.addset(pp_dark_dark)
 
-pp_dark_dark_tel = drs_finput('DARK_DARK_TEL', filetype='.fits',
-                              suffix='_pp', intype=raw_dark_dark_tel,
+pp_flux_sky_sky = drs_finput('FLUX_SKY_SKY', filetype='.fits',
+                              suffix='_pp', intype=raw_flux_sky_sky,
                               inext='.fits', outclass=general_ofile,
-                              hkeys=dict(KW_DPRTYPE='DARK_DARK_TEL'),
-                              description='Preprocessed sci=DARK calib=DARK'
-                                          ' file, where dark is a telescope'
-                                          ' dark')
-pp_file.addset(pp_dark_dark_tel)
+                              hkeys=dict(KW_DPRTYPE='FLUX_SKY_SKY'),
+                              description='Preprocessed flux sci=SKY calib=SKY '
+                                          'file')
+pp_file.addset(pp_flux_sky_sky)
 
-pp_dark_dark_sky = drs_finput('DARK_DARK_SKY', filetype='.fits',
-                              suffix='_pp', intype=raw_dark_dark_sky,
+pp_night_sky_sky = drs_finput('NIGHT_SKY_SKY', filetype='.fits',
+                              suffix='_pp', intype=raw_night_sky_sky,
                               inext='.fits', outclass=general_ofile,
-                              hkeys=dict(KW_DPRTYPE='DARK_DARK_SKY'),
-                              description='Preprocessed sci=DARK calib=DARK '
-                                          'file, where dark is a sky dark')
-pp_file.addset(pp_dark_dark_sky)
-
-pp_dark_fp_sky = drs_finput('DARK_FP_SKY', filetype='.fits',
-                            suffix='_pp', intype=raw_dark_fp_sky,
-                            inext='.fits', outclass=general_ofile,
-                            hkeys=dict(KW_DPRTYPE='DARK_FP_SKY'),
-                            description='Preprocessed sci=DARK calib=FP file, '
-                                        'where dark is an internal dark')
-pp_file.addset(pp_dark_fp_sky)
+                              hkeys=dict(KW_DPRTYPE='NIGHT_SKY_SKY'),
+                              description='Preprocessed night sci=SKY '
+                                          'calib=SKY file')
+pp_file.addset(pp_night_sky_sky)
 
 # -----------------------------------------------------------------------------
 # flat
@@ -429,16 +527,14 @@ pp_flat_dark = drs_finput('FLAT_DARK', filetype='.fits',
                           suffix='_pp', intype=raw_flat_dark,
                           inext='.fits', outclass=general_ofile,
                           hkeys=dict(KW_DPRTYPE='FLAT_DARK'),
-                          description='Preprocessed sci=FLAT calib=DARK file,'
-                                      ' where dark is an internal dark')
+                          description='Preprocessed sci=FLAT calib=DARK file')
 pp_file.addset(pp_flat_dark)
 
 pp_dark_flat = drs_finput('DARK_FLAT', filetype='.fits',
                           suffix='_pp', intype=raw_dark_flat,
                           inext='.fits', outclass=general_ofile,
                           hkeys=dict(KW_DPRTYPE='DARK_FLAT'),
-                          description='Preprocessed sci=DARK calib=FLAT file,'
-                                      ' where dark is an internal dark')
+                          description='Preprocessed sci=DARK calib=FLAT file')
 pp_file.addset(pp_dark_flat)
 
 pp_flat_flat = drs_finput('FLAT_FLAT', filetype='.fits',
@@ -448,36 +544,21 @@ pp_flat_flat = drs_finput('FLAT_FLAT', filetype='.fits',
                           description='Preprocessed sci=FLAT calib=FLAT file')
 pp_file.addset(pp_flat_flat)
 
-pp_flat_fp = drs_finput('FLAT_FP', filetype='.fits',
-                        suffix='_pp', intype=raw_flat_fp,
-                        inext='.fits', outclass=general_ofile,
-                        hkeys=dict(KW_DPRTYPE='FLAT_FP'),
-                        description='Preprocessed sci=FLAT calib=FP file')
-pp_file.addset(pp_flat_fp)
 # -----------------------------------------------------------------------------
 # align
 pp_dark_fp = drs_finput('DARK_FP', filetype='.fits',
                         suffix='_pp', intype=raw_dark_fp,
                         inext='.fits', outclass=general_ofile,
                         hkeys=dict(KW_DPRTYPE='DARK_FP'),
-                        description='Preprocessed sci=DARK calib=FP file,'
-                                    ' where dark is an internal dark')
+                        description='Preprocessed sci=DARK calib=FP file')
 pp_file.addset(pp_dark_fp)
 
 pp_fp_dark = drs_finput('FP_DARK', filetype='.fits',
                         suffix='_pp', intype=raw_fp_dark,
                         inext='.fits', outclass=general_ofile,
                         hkeys=dict(KW_DPRTYPE='FP_DARK'),
-                        description='Preprocessed sci=FP calib=DARK file, '
-                                    ' where dark is an internal dark')
+                        description='Preprocessed sci=FP calib=DARK file')
 pp_file.addset(pp_fp_dark)
-
-pp_fp_flat = drs_finput('FP_FLAT', filetype='.fits',
-                        suffix='_pp', intype=raw_fp_flat,
-                        inext='.fits', outclass=general_ofile,
-                        hkeys=dict(KW_DPRTYPE='FP_FLAT'),
-                        description='Preprocessed sci=FP calib=FLAT file')
-pp_file.addset(pp_fp_flat)
 
 pp_fp_fp = drs_finput('FP_FP', filetype='.fits',
                       suffix='_pp', intype=raw_fp_fp,
@@ -508,13 +589,27 @@ pp_fp_lfc = drs_finput('FP_LFC', hkeys=dict(KW_DPRTYPE='FP_LFC'),
 pp_file.addset(pp_fp_lfc)
 
 # -----------------------------------------------------------------------------
+# LED LED file
+pp_led_led = drs_finput('LED_LED', hkeys=dict(KW_DPRTYPE='LED_LED'),
+                        filetype='.fits', suffix='_pp', intype=raw_led_led,
+                        inext='.fits', outclass=general_ofile,
+                        description='Preprocessed sci=LED calib=LED file')
+pp_file.addset(pp_led_led)
+
+# FLAT LED
+pp_flat_led = drs_finput('FLAT_LED', hkeys=dict(KW_DPRTYPE='FLAT_LED'),
+                         filetype='.fits', suffix='_pp', intype=raw_flat_led,
+                         inext='.fits', outclass=general_ofile,
+                         description='Preprocessed sci=FLAT calib=LED file')
+pp_file.addset(pp_flat_led)
+
+# -----------------------------------------------------------------------------
 #  object
 pp_obj_dark = drs_finput('OBJ_DARK', hkeys=dict(KW_DPRTYPE='OBJ_DARK'),
                          filetype='.fits',
                          suffix='_pp', intype=raw_obj_dark,
                          inext='.fits', outclass=general_ofile,
-                         description='Preprocessed sci=OBJ calib=DARK file,'
-                                     ' where dark is an internal dark')
+                         description='Preprocessed sci=OBJ calib=DARK file')
 pp_file.addset(pp_obj_dark)
 pp_obj_fp = drs_finput('OBJ_FP', hkeys=dict(KW_DPRTYPE='OBJ_FP'),
                        filetype='.fits',
@@ -522,42 +617,62 @@ pp_obj_fp = drs_finput('OBJ_FP', hkeys=dict(KW_DPRTYPE='OBJ_FP'),
                        inext='.fits', outclass=general_ofile,
                        description='Preprocessed sci=OBJ calib=FP file')
 pp_file.addset(pp_obj_fp)
-
 pp_obj_hc1 = drs_finput('OBJ_HCONE', hkeys=dict(KW_DPRTYPE='OBJ_HCONE'),
                         filetype='.fits',
                         suffix='_pp', intype=raw_obj_hc1,
                         inext='.fits', outclass=general_ofile,
-                        description='Preprocessed sci=OBJ calib=Hollow Cathode '
-                                    'file, Uranium Neon lamp')
+                        description='Preprocessed sci=OBJ calib=Hollow Cathode')
 pp_file.addset(pp_obj_hc1)
 
-pp_obj_hc2 = drs_finput('OBJ_HCTWO', hkeys=dict(KW_DPRTYPE='OBJ_HCTWO'),
+pp_obj_sky = drs_finput('OBJ_SKY', hkeys=dict(KW_DPRTYPE='OBJ_SKY'),
                         filetype='.fits',
-                        suffix='_pp', intype=raw_obj_hc2,
+                        suffix='_pp', intype=raw_obj_sky,
                         inext='.fits', outclass=general_ofile,
-                        description='Preprocessed sci=OBJ calib=Hollow Cathode '
-                                    'file, Thorium Argon lamp')
-pp_file.addset(pp_obj_hc2)
+                        description='Preprocessed sci=OBJ calib=SKY')
+pp_file.addset(pp_obj_sky)
 
-pp_polar_dark = drs_finput('POLAR_DARK', hkeys=dict(KW_DPRTYPE='POLAR_DARK'),
-                           filetype='.fits',
-                           suffix='_pp', intype=raw_polar_dark,
-                           inext='.fits', outclass=general_ofile,
-                           description='Preprocessed sci=POLAR calib=DARK,'
-                                       ' where dark is an internal dark')
-pp_file.addset(pp_polar_dark)
+pp_obj_tun = drs_finput('OBJ_TUN', hkeys=dict(KW_DPRTYPE='OBJ_TUN'),
+                        filetype='.fits',
+                        suffix='_pp', intype=raw_obj_tun,
+                        inext='.fits', outclass=general_ofile,
+                        description='Preprocessed sci=OBJ calib=Tungston lamp')
+pp_file.addset(pp_obj_tun)
 
-pp_polar_fp = drs_finput('POLAR_FP', hkeys=dict(KW_DPRTYPE='POLAR_FP'),
+pp_sun_fp = drs_finput('SUN_FP', hkeys=dict(KW_DPRTYPE='SUN_FP'),
+                       filetype='.fits',
+                       suffix='_pp', intype=raw_sun_fp,
+                       inext='.fits', outclass=general_ofile,
+                       description='Preprocessed sci=SUN calib=FP')
+pp_file.addset(pp_sun_fp)
+
+pp_sun_dark = drs_finput('SUN_DARK', hkeys=dict(KW_DPRTYPE='SUN_DARK'),
                          filetype='.fits',
-                         suffix='_pp', intype=raw_polar_fp,
+                         suffix='_pp', intype=raw_sun_dark,
                          inext='.fits', outclass=general_ofile,
-                         description='Preprocessed sci=POLAR calib=FP')
-pp_file.addset(pp_polar_fp)
+                         description='Preprocessed sci=SUN calib=DARK')
+pp_file.addset(pp_sun_dark)
 
+pp_fluxstd_sky = drs_finput('FLUXSTD_SKY', hkeys=dict(KW_DPRTYPE='FLUXSTD_SKY'),
+                            filetype='.fits',
+                            suffix='_pp', intype=raw_fluxstd_sky,
+                            inext='.fits', outclass=general_ofile,
+                            description='Preprocessed sci=Flux standard star '
+                                        'calib=SKY')
+pp_file.addset(pp_fluxstd_sky)
+
+pp_tellu_sky = drs_finput('TELLU_SKY', hkeys=dict(KW_DPRTYPE='TELLU_SKY'),
+                          filetype='.fits',
+                          suffix='_pp', intype=raw_tellu_sky,
+                          inext='.fits', outclass=general_ofile,
+                          description='Preprocessed sci=Telluric hot star '
+                                      'calib=SKY')
+pp_file.addset(pp_tellu_sky)
 
 # define all science observations
-science_pp = [pp_obj_dark, pp_obj_fp, pp_polar_dark, pp_polar_fp]
-science_dprtypes = ['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK', 'POLAR_FP']
+science_pp = [pp_obj_dark, pp_obj_fp, pp_obj_sky, pp_obj_tun, pp_fluxstd_sky,
+              pp_tellu_sky]
+science_dprtypes = ['OBJ_DARK', 'OBJ_FP', 'OBJ_SKY', 'OBJ_TUN', 'FLUXSTD_SKY',
+                    'TELLU_SKY']
 
 # -----------------------------------------------------------------------------
 #  comparison
@@ -566,18 +681,8 @@ pp_dark_hc1 = drs_finput('DARK_HCONE', hkeys=dict(KW_DPRTYPE='DARK_HCONE'),
                          suffix='_pp', intype=raw_dark_hc1,
                          inext='.fits', outclass=general_ofile,
                          description='Preprocessed sci=DARK calib=Hollow '
-                                     'Cathode file, where dark is an internal '
-                                     'dark, Uranium Neon lamp')
+                                     'Cathode file, Uranium Neon lamp')
 pp_file.addset(pp_dark_hc1)
-
-pp_dark_hc2 = drs_finput('DARK_HCTWO', hkeys=dict(KW_DPRTYPE='DARK_HCTWO'),
-                         filetype='.fits',
-                         suffix='_pp', intype=raw_dark_hc2,
-                         inext='.fits', outclass=general_ofile,
-                         description='Preprocessed sci=DARK calib=Hollow '
-                                     ' Cathode file, where dark is an internal '
-                                     'dark, Thorium Argon lamp')
-pp_file.addset(pp_dark_hc2)
 
 pp_fp_hc1 = drs_finput('FP_HCONE', hkeys=dict(KW_DPRTYPE='FP_HCONE'),
                        filetype='.fits',
@@ -587,14 +692,6 @@ pp_fp_hc1 = drs_finput('FP_HCONE', hkeys=dict(KW_DPRTYPE='FP_HCONE'),
                                    'file, Uranium Neon lamp')
 pp_file.addset(pp_fp_hc1)
 
-pp_fp_hc2 = drs_finput('FP_HCTWO', hkeys=dict(KW_DPRTYPE='FP_HCTWO'),
-                       filetype='.fits',
-                       suffix='_pp', intype=raw_fp_hc2,
-                       inext='.fits', outclass=general_ofile,
-                       description='Preprocessed sci=FP calib=Hollow Cathode '
-                                   'file, Thorium Argon lamp')
-pp_file.addset(pp_fp_hc2)
-
 pp_hc1_fp = drs_finput('HCONE_FP', hkeys=dict(KW_DPRTYPE='HCONE_FP'),
                        filetype='.fits',
                        suffix='_pp', intype=raw_hc1_fp,
@@ -602,14 +699,6 @@ pp_hc1_fp = drs_finput('HCONE_FP', hkeys=dict(KW_DPRTYPE='HCONE_FP'),
                        description='Preprocessed sci=Hollow Cathode calib=FP '
                                    'file, Uranium Neion lamp')
 pp_file.addset(pp_hc1_fp)
-
-pp_hc2_fp = drs_finput('HCTWO_FP', hkeys=dict(KW_DPRTYPE='HCTWO_FP'),
-                       filetype='.fits',
-                       suffix='_pp', intype=raw_hc2_fp,
-                       inext='.fits', outclass=general_ofile,
-                       description='Preprocessed sci=Hollow Cathode calib=FP '
-                                   'file, Thorium Argon lamp')
-pp_file.addset(pp_hc2_fp)
 
 pp_hc1_hc1 = drs_finput('HCONE_HCONE', hkeys=dict(KW_DPRTYPE='HCONE_HCONE'),
                         filetype='.fits',
@@ -620,32 +709,139 @@ pp_hc1_hc1 = drs_finput('HCONE_HCONE', hkeys=dict(KW_DPRTYPE='HCONE_HCONE'),
                                     'lamp')
 pp_file.addset(pp_hc1_hc1)
 
-pp_hc2_hc2 = drs_finput('HCTWO_HCTWO', hkeys=dict(KW_DPRTYPE='HCTWO_HCTWO'),
-                        filetype='.fits',
-                        suffix='_pp', intype=raw_hc2_hc2,
-                        inext='.fits', outclass=general_ofile,
-                        description='Preprocessed sci=Hollow Cathode '
-                                    'calib=Hollow  Cathode file, Thorium '
-                                    'Argon lamp')
-pp_file.addset(pp_hc2_hc2)
-
 pp_hc1_dark = drs_finput('HCONE_DARK', hkeys=dict(KW_DPRTYPE='HCONE_DARK'),
                          filetype='.fits',
                          suffix='_pp', intype=raw_hc1_dark,
-                         inext='.fits', outclass=general_ofile,
-                         description='Preprocessed sci=Hollow Cathode '
-                                     'calib=DARK file, where dark is an '
-                                     'internal dark, Uranium Neon lamp')
+                         inext='.fits', outclass=general_ofile)
 pp_file.addset(pp_hc1_dark)
 
-pp_hc2_dark = drs_finput('HCTWO_DARK', hkeys=dict(KW_DPRTYPE='HCTWO_DARK'),
-                         filetype='.fits',
-                         suffix='_pp', intype=raw_hc2_dark,
-                         inext='.fits', outclass=general_ofile,
-                         description='Preprocessed sci=Hollow Cathode '
-                                     'calib=DARK file, where dark is an '
-                                     'internal dark, Thorium Argon lamp')
-pp_file.addset(pp_hc2_dark)
+# -----------------------------------------------------------------------------
+# test pp files
+# -----------------------------------------------------------------------------
+# raw test dark flat file
+# TODO: Should this exist?
+calib_dark_flat = drs_finput('CALIB_DARK_FLAT', filetype='.fits',
+                             hkeys=dict(KW_DPRTYPE='CALIB_DARK_FLAT'),
+                             suffix='_pp', intype=raw_calib_dark_flat,
+                             inext='.fits', outclass=general_ofile,
+                             description='Preprocessed sci=DARK calib=FLAT '
+                                         'test file')
+pp_file.addset(calib_dark_flat)
+
+# raw test flat dark file
+# TODO: Should this exist?
+calib_flat_dark = drs_finput('CALIB_FLAT_DARK', filetype='.fits',
+                             hkeys=dict(KW_DPRTYPE='CALIB_FLAT_DARK'),
+                             suffix='_pp', intype=raw_calib_flat_dark,
+                             inext='.fits', outclass=general_ofile,
+                             description='Preprocessed sci=FLAT calib=DARK '
+                                         'test file')
+pp_file.addset(calib_flat_dark)
+
+# raw test dark flat file
+pp_test_dark_flat = drs_finput('TEST_DARK_FLAT', filetype='.fits',
+                               hkeys=dict(KW_DPRTYPE='TEST_DARK_FLAT'),
+                               suffix='_pp', intype=raw_test_dark_flat,
+                               inext='.fits', outclass=general_ofile,
+                               description='Preprocessed sci=DARK calib=FLAT '
+                                           'test file')
+
+pp_file.addset(pp_test_dark_flat)
+
+# raw test flat dark file
+pp_test_flat_dark = drs_finput('TEST_FLAT_DARK', filetype='.fits',
+                               hkeys=dict(KW_DPRTYPE='TEST_FLAT_DARK'),
+                               suffix='_pp', intype=raw_test_flat_dark,
+                               inext='.fits', outclass=general_ofile,
+                               description='Preprocessed sci=FLAT calib=DARK '
+                                           'test file')
+pp_file.addset(pp_test_flat_dark)
+
+# raw test dark fp
+pp_test_dark_fp = drs_finput('TEST_DARK_FP', filetype='.fits',
+                             suffix='_pp', intype=raw_test_dark_fp,
+                             inext='.fits', outclass=general_ofile,
+                             hkeys=dict(KW_DPRTYPE='TEST_DARK_FP'),
+                             description='Preprocessed sci=DARK calib=FP '
+                                         'test file')
+pp_file.addset(pp_test_dark_fp)
+
+# raw test wave fp fp file
+pp_test_fp_fp = drs_finput('TEST_FP_FP', filetype='.fits',
+                           hkeys=dict(KW_DPRTYPE='TEST_FP_FP'),
+                           suffix='_pp', intype=raw_test_fp_fp,
+                           inext='.fits', outclass=general_ofile,
+                           description='Preprocessed sci=FP calib=FP '
+                                       'test file')
+pp_file.addset(pp_test_fp_fp)
+
+# raw test led
+pp_test_led_led = drs_finput('TEST_LED_LED', filetype='.fits',
+                             hkeys=dict(KW_DPRTYPE='TEST_LED_LED'),
+                             suffix='_pp', intype=raw_test_led_led,
+                             inext='.fits', outclass=general_ofile,
+                             description='Preprocessed sci=LED calib=LED '
+                                         'test file')
+pp_file.addset(pp_test_led_led)
+
+# raw test hc1 hc1
+pp_test_hc1_hc1 = drs_finput('TEST_HCONE_HCONE', filetype='.fits',
+                             hkeys=dict(KW_DPRTYPE='TEST_HCONE_HCONE'),
+                             suffix='_pp', intype=raw_test_hc1_hc1,
+                             inext='.fits', outclass=general_ofile,
+                             description='Preprocessed sci=Hollow Cathode '
+                                         'calib=Hollow Cathode test file')
+pp_file.addset(pp_test_hc1_hc1)
+
+# test fp hc
+pp_test_fp_hc1 = drs_finput('TEST_FP_HCONE',
+                            hkeys=dict(KW_DPRTYPE='TEST_FP_HCONE'),
+                            filetype='.fits',
+                            suffix='_pp', intype=raw_test_fp_hc1,
+                            inext='.fits', outclass=general_ofile,
+                            description='Preprocessed sci=FP calib=Hollow '
+                                        'Cathode test file')
+pp_file.addset(pp_test_fp_hc1)
+
+# test hc fp
+pp_test_hc1_fp = drs_finput('TEST_HCONE_FP',
+                            hkeys=dict(KW_DPRTYPE='TEST_HCONE_FP'),
+                            filetype='.fits',
+                            suffix='_pp', intype=raw_test_hc1_fp,
+                            inext='.fits', outclass=general_ofile,
+                            description='Preprocessed sci=Hollow Cathode '
+                                        'calib=FP test file')
+pp_file.addset(pp_test_hc1_fp)
+
+# test eff sky
+pp_test_dark_dark_sky = drs_finput('TEST_DARK_DARK_SKY',
+                                   hkeys=dict(KW_DPRTYPE='TEST_DARK_DARK_SKY'),
+                                   filetype='.fits',
+                                   suffix='_pp', intype=raw_test_dark_dark_sky,
+                                   inext='.fits', outclass=general_ofile,
+                                   description='Preprocessed sci=SKY calib=SKY '
+                                               'test file')
+pp_file.addset(pp_test_dark_dark_sky)
+
+# test dark
+pp_test_dark = drs_finput('TEST_DARK',
+                          hkeys=dict(KW_DPRTYPE='TEST_DARK'),
+                          filetype='.fits',
+                          suffix='_pp', intype=raw_test_dark,
+                          inext='.fits', outclass=general_ofile,
+                          description='Preprocessed sci=DARK calib=DARK '
+                                      'test file')
+pp_file.addset(pp_test_dark)
+
+# test fp dark
+pp_test_fp_dark = drs_finput('TEST_FP_DARK',
+                             hkeys=dict(KW_DPRTYPE='TEST_FP_DARK'),
+                             filetype='.fits',
+                             suffix='_pp', intype=raw_test_fp_dark,
+                             inext='.fits', outclass=general_ofile,
+                             description='Preprocessed sci=FP calib=DARK '
+                                         'test file')
+pp_file.addset(pp_test_fp_dark)
 
 # =============================================================================
 # Reduced Files
@@ -664,6 +860,29 @@ tellu_file = drs_finput('DRS_OUTPUT', filetype='.fits', suffix='',
                         description='Generic telluric file')
 
 # -----------------------------------------------------------------------------
+# pp reference files
+# -----------------------------------------------------------------------------
+out_pp_ref = drs_finput('PP_REF', hkeys=dict(KW_OUTPUT='PP_REF'),
+                        filetype='.fits',
+                        intype=[raw_flat_flat],
+                        suffix='_ppref',
+                        outclass=refcalib_ofile,
+                        dbname='calibration', dbkey='PP_REF',
+                        description='PP Reference flat calibration file')
+
+out_pp_led_flat = drs_finput('PP_LED_FLAT', hkeys=dict(KW_OUTPUT='PP_LED_FLAT'),
+                             filetype='.fits', intype=[raw_led_led],
+                             suffix='_led_flat', outclass=refcalib_ofile,
+                             dbname='calibration', dbkey='PP_LED',
+                             description='Reference LED flat calibration file')
+
+# add dark outputs to output fileset
+red_file.addset(out_pp_ref)
+red_file.addset(out_pp_led_flat)
+calib_file.addset(out_pp_ref)
+calib_file.addset(out_pp_led_flat)
+
+# -----------------------------------------------------------------------------
 # dark files
 # -----------------------------------------------------------------------------
 # dark out file
@@ -673,42 +892,24 @@ tellu_file = drs_finput('DRS_OUTPUT', filetype='.fits', suffix='',
 #                       outclass=calib_ofile,
 #                       dbname='calibration', dbkey='DARK')
 
-out_dark_int = drs_finput('DARKI', hkeys=dict(KW_OUTPUT='DARKI'),
-                          filetype='.fits', intype=pp_dark_dark_int,
-                          suffix='_darki',
-                          outclass=calib_ofile,
-                          dbname='calibration', dbkey='DARKI',
-                          description='Internal dark calibration file')
-
-out_dark_tel = drs_finput('DARKT', hkeys=dict(KW_OUTPUT='DARKT'),
-                          filetype='.fits', intype=pp_dark_dark_tel,
-                          suffix='_darkt',
-                          outclass=calib_ofile,
-                          dbname='calibration', dbkey='DARKT',
-                          description='Telescope dark calibration file')
-
-out_dark_sky = drs_finput('DARKS', hkeys=dict(KW_OUTPUT='DARKS'),
-                          filetype='.fits', intype=pp_dark_dark_sky,
-                          suffix='_darks',
-                          outclass=calib_ofile,
-                          dbname='calibration', dbkey='DARKS',
-                          description='Sky dark calibration file')
+out_dark = drs_finput('DARKI', hkeys=dict(KW_OUTPUT='DARKI'),
+                      filetype='.fits', intype=pp_dark_dark,
+                      suffix='_darki',
+                      outclass=calib_ofile,
+                      dbname='calibration', dbkey='DARKI',
+                      description='Internal dark calibration file')
 
 out_dark_ref = drs_finput('DARKREF', hkeys=dict(KW_OUTPUT='DARKREF'),
                           filetype='.fits',
-                          intype=[pp_dark_dark_tel, pp_dark_dark_int],
+                          intype=[pp_dark_dark],
                           suffix='_dark_ref',
                           outclass=refcalib_ofile,
                           dbname='calibration', dbkey='DARKREF',
                           description='Reference dark calibration file')
 # add dark outputs to output fileset
-red_file.addset(out_dark_int)
-red_file.addset(out_dark_tel)
-red_file.addset(out_dark_sky)
+red_file.addset(out_dark)
 red_file.addset(out_dark_ref)
-calib_file.addset(out_dark_int)
-calib_file.addset(out_dark_tel)
-calib_file.addset(out_dark_sky)
+calib_file.addset(out_dark)
 calib_file.addset(out_dark_ref)
 
 # -----------------------------------------------------------------------------
@@ -745,7 +946,7 @@ calib_file.addset(out_backmap)
 # localisation files
 # -----------------------------------------------------------------------------
 # define fiber valid for localisation
-valid_lfibers = ['AB', 'C']
+valid_lfibers = ['A', 'B']
 # localisation
 out_loc_orderp = drs_finput('LOC_ORDERP', hkeys=dict(KW_OUTPUT='LOC_ORDERP'),
                             fibers=valid_lfibers,
@@ -818,18 +1019,6 @@ out_shape_debug_ofp = drs_finput('SHAPE_OUT_FP',
                                  suffix='_shape_out_fp', outclass=debug_ofile,
                                  description='Output FP file for shape '
                                              'comparison')
-out_shape_debug_ihc = drs_finput('SHAPE_IN_HC',
-                                 hkeys=dict(KW_OUTPUT='SHAPE_IN_HC'),
-                                 filetype='.fits', intype=pp_hc1_hc1,
-                                 suffix='_shape_in_hc', outclass=debug_ofile,
-                                 description='Input Hollow Cathode file for'
-                                             'shape comparison')
-out_shape_debug_ohc = drs_finput('SHAPE_OUT_HC',
-                                 hkeys=dict(KW_OUTPUT='SHAPE_OUT_HC'),
-                                 filetype='.fits', intype=pp_hc1_hc1,
-                                 suffix='_shape_out_hc', outclass=debug_ofile,
-                                 description='Output Hollow Cathode file for'
-                                             'shape comparison')
 out_shape_debug_bdx = drs_finput('SHAPE_BDX', hkeys=dict(KW_OUTPUT='SHAPE_BDX'),
                                  filetype='.fits', intype=pp_fp_fp,
                                  suffix='_shape_out_bdx', outclass=debug_ofile,
@@ -841,8 +1030,6 @@ red_file.addset(out_shape_dymap)
 red_file.addset(out_shape_fpref)
 red_file.addset(out_shape_debug_ifp)
 red_file.addset(out_shape_debug_ofp)
-red_file.addset(out_shape_debug_ihc)
-red_file.addset(out_shape_debug_ohc)
 red_file.addset(out_shape_debug_bdx)
 
 calib_file.addset(out_shape_dxmap)
@@ -850,7 +1037,7 @@ calib_file.addset(out_shape_dymap)
 calib_file.addset(out_shape_fpref)
 
 # valid ext fibers
-valid_efibers = ['AB', 'A', 'B', 'C']
+valid_efibers = ['A', 'B']
 # -----------------------------------------------------------------------------
 # shape files (per night)
 # -----------------------------------------------------------------------------
@@ -997,39 +1184,6 @@ red_file.addset(out_ext_s1d_v)
 red_file.addset(out_ext_fplines)
 
 # -----------------------------------------------------------------------------
-# thermal files
-# -----------------------------------------------------------------------------
-# thermal from internal dark
-out_thermal_e2ds_int = drs_finput('THERMALI_E2DS',
-                                  hkeys=dict(KW_OUTPUT='THERMALI_E2DS'),
-                                  fibers=valid_efibers,
-                                  filetype='.fits', intype=pp_dark_dark_int,
-                                  suffix='_thermal_e2ds_int',
-                                  dbname='calibration', dbkey='THERMALI',
-                                  outclass=general_ofile,
-                                  description='Extracted sci=DARK calib=DARK '
-                                              'thermal calibration file, '
-                                              'where dark is an internal dark')
-
-# thermal from telescope dark
-out_thermal_e2ds_tel = drs_finput('THERMALT_E2DS',
-                                  hkeys=dict(KW_OUTPUT='THERMALT_E2DS'),
-                                  fibers=valid_efibers,
-                                  filetype='.fits', intype=pp_dark_dark_tel,
-                                  suffix='_thermal_e2ds_tel',
-                                  dbname='calibration', dbkey='THERMALT',
-                                  outclass=general_ofile,
-                                  description='Extracted sci=DARK calib=DARK '
-                                              'thermal calibration file, '
-                                              'where dark is a telescope dark')
-
-# add thermal outputs to output fileset
-red_file.addset(out_thermal_e2ds_int)
-red_file.addset(out_thermal_e2ds_tel)
-calib_file.addset(out_thermal_e2ds_int)
-calib_file.addset(out_thermal_e2ds_tel)
-
-# -----------------------------------------------------------------------------
 # leakage files
 # -----------------------------------------------------------------------------
 # thermal from internal dark
@@ -1082,15 +1236,13 @@ out_wave_fplist_ref = drs_finput('WAVE_FPLIST_REF',
                                  suffix='_waveref_fplines',
                                  dbname='calibration', dbkey='WAVEFPL',
                                  datatype='table',
-                                 outclass=refcalib_ofile,
-                                 description='Reference list of FP liens '
-                                             'calibration file')
+                                 outclass=refcalib_ofile)
 
 # teh cavity file polynomial file
 out_waveref_cavity = drs_finput('WAVEREF_CAV',
                                 hkeys=dict(KW_OUTPUT='WAVEREF_CAV'),
                                 filetype='.fits',
-                                fibers=['AB'],
+                                fibers=['A'],
                                 intype=[out_ext_e2ds, out_ext_e2dsff],
                                 suffix='_waveref_cav_',
                                 dbname='calibration', dbkey='WAVECAV',
@@ -1145,7 +1297,6 @@ out_wavem_res_e2ds = drs_finput('WAVEM_RES_E2DS',
                                 dbkey='WAVR_E2DS', outclass=refcalib_ofile,
                                 description='Reference wavelength resolution '
                                             'e2ds file')
-
 # fp global results table
 out_wavem_res_table = drs_input('WAVE_FPRESTAB',
                                 hkeys=dict(KW_OUTPUT='WAVE_FPRESTAB'),
@@ -1252,7 +1403,7 @@ calib_file.addset(out_wave_night)
 # make telluric
 # -----------------------------------------------------------------------------
 # define valid fibers for telluric process
-valid_tfibers = ['AB', 'A', 'B']
+valid_tfibers = ['A']
 
 # cleaned spectrum
 out_sky_model = drs_finput('SKY_MODEL',
@@ -1317,14 +1468,12 @@ out_tellu_model = drs_finput('TRANS_MODEL', hkeys=dict(KW_OUTPUT='TRANS_MODEL'),
 
 # add make_telluric outputs to output fileset
 red_file.addset(out_sky_model)
-red_file.addset(out_tellu_sclean)
 red_file.addset(out_tellu_pclean)
 red_file.addset(out_tellu_conv)
 red_file.addset(out_tellu_trans)
 red_file.addset(out_tellu_spl_npy)
 red_file.addset(out_tellu_model)
 tellu_file.addset(out_sky_model)
-tellu_file.addset(out_tellu_sclean)
 tellu_file.addset(out_tellu_pclean)
 tellu_file.addset(out_tellu_conv)
 tellu_file.addset(out_tellu_trans)
@@ -1500,7 +1649,7 @@ tellu_file.addset(out_tellu_s1dv_template)
 # ccf
 # -----------------------------------------------------------------------------
 # valid ccf_fibers
-valid_ccf_fibers = ['AB', 'A', 'B', 'C']
+valid_ccf_fibers = ['A', 'B']
 # ccf out file
 out_ccf_fits = drs_finput('CCF_RV', hkeys=dict(KW_OUTPUT='CCF_RV'),
                           fibers=valid_ccf_fibers,
@@ -1511,148 +1660,15 @@ out_ccf_fits = drs_finput('CCF_RV', hkeys=dict(KW_OUTPUT='CCF_RV'),
 
 red_file.addset(out_ccf_fits)
 
-# -----------------------------------------------------------------------------
-# polarisation
-# -----------------------------------------------------------------------------
-# pol deg file
-out_pol_deg = drs_finput('POL_DEG', hkeys=dict(KW_OUTPUT='POL_DEG'),
-                         filetype='.fits', suffix='_pol',
-                         intype=[out_ext_e2dsff, out_tellu_obj],
-                         outclass=general_ofile,
-                         description='Polarimetry 2D degree of polarisation '
-                                     'file')
-
-# pol calib file
-out_pol_calib = drs_finput('POL_CALIB', hkeys=dict(KW_OUTPUT='POL_CALIB'),
-                           filetype='.fits', datatype='table',
-                           suffix='_pol_calib',
-                           intype=[out_ext_e2dsff, out_tellu_obj],
-                           outclass=general_ofile,
-                           description='Polarimetry 2D shifted wavelength '
-                                       'solution and blaze calibration file')
-
-# stokes i file
-out_pol_stokesi = drs_finput('STOKESI_POL',
-                             hkeys=dict(KW_OUTPUT='STOKESI_POL'),
-                             filetype='.fits',
-                             suffix='_StokesI',
-                             intype=[out_ext_e2dsff, out_tellu_obj],
-                             outclass=general_ofile,
-                             description='Polarimetry 2D stokes I '
-                                         'polarisation file')
-
-# null 1 file
-out_pol_null1 = drs_finput('NULL_POL1', hkeys=dict(KW_OUTPUT='NULL_POL1'),
-                           filetype='.fits', suffix='_null1_pol',
-                           intype=[out_ext_e2dsff, out_tellu_obj],
-                           outclass=general_ofile,
-                           description='2D Null polarisation 1 file')
-
-# null 2 file
-out_pol_null2 = drs_finput('NULL_POL2', hkeys=dict(KW_OUTPUT='NULL_POL2'),
-                           filetype='.fits', suffix='_null2_pol',
-                           intype=[out_ext_e2dsff, out_tellu_obj],
-                           outclass=general_ofile,
-                           description='2D Null polarisation 2 file')
-
-# lsd file
-out_pol_lsd = drs_finput('LSD_POL', hkeys=dict(KW_OUTPUT='LSD_POL'),
-                         filetype='.fits', suffix='_lsd_pol',
-                         intype=[out_ext_e2dsff, out_tellu_obj],
-                         outclass=general_ofile,
-                         description='Least squares deconvolution file')
-
-# pol s1d files
-out_pol_s1dw = drs_finput('S1DW_POL', hkeys=dict(KW_OUTPUT='S1DW_POL'),
-                          filetype='.fits',
-                          suffix='_s1d_w_pol', remove_insuffix=True,
-                          intype=[out_ext_e2dsff, out_tellu_obj],
-                          outclass=general_ofile,
-                          description='Polarimetry 2D degree of polarisation '
-                                      'file (constant wavelength binning)')
-out_pol_s1dv = drs_finput('S1DV_POL', hkeys=dict(KW_OUTPUT='S1DV_POL'),
-                          filetype='.fits',
-                          suffix='_s1d_v_pol', remove_insuffix=True,
-                          intype=[out_ext_e2dsff, out_tellu_obj],
-                          outclass=general_ofile,
-                          description='Polarimetry 2D degree of polarisation '
-                                      'file (constant velocity binning)')
-
-# null1 s1d files
-out_null1_s1dw = drs_finput('S1DW_NULL1', hkeys=dict(KW_OUTPUT='S1DW_NULL1'),
-                            filetype='.fits',
-                            suffix='_s1d_w_null1', remove_insuffix=True,
-                            intype=[out_ext_e2dsff, out_tellu_obj],
-                            outclass=general_ofile,
-                            description='1D Null polarisation 1 file '
-                                        '(constant wavelength binning)')
-out_null1_s1dv = drs_finput('S1DV_NULL1', hkeys=dict(KW_OUTPUT='S1DV_NULL1'),
-                            filetype='.fits',
-                            suffix='_s1d_v_null1', remove_insuffix=True,
-                            intype=[out_ext_e2dsff, out_tellu_obj],
-                            outclass=general_ofile,
-                            description='1D Null polarisation 1 file '
-                                        '(constant velocity binning)')
-
-# null2 s1d files
-out_null2_s1dw = drs_finput('S1DW_NULL2', hkeys=dict(KW_OUTPUT='S1DW_NULL1'),
-                            filetype='.fits',
-                            suffix='_s1d_w_null2', remove_insuffix=True,
-                            intype=[out_ext_e2dsff, out_tellu_obj],
-                            outclass=general_ofile,
-                            description='1D Null polarisation 2 file '
-                                        '(constant wavelength binning)')
-out_null2_s1dv = drs_finput('S1DV_NULL2', hkeys=dict(KW_OUTPUT='S1DV_NULL2'),
-                            filetype='.fits',
-                            suffix='_s1d_v_null2', remove_insuffix=True,
-                            intype=[out_ext_e2dsff, out_tellu_obj],
-                            outclass=general_ofile,
-                            description='1D Null polarisation 2 file '
-                                        '(constant velocity binning)')
-
-# stokes I s1d files
-out_stokesi_s1dw = drs_finput('S1DW_STOKESI',
-                              hkeys=dict(KW_OUTPUT='S1DW_STOKESI'),
-                              filetype='.fits',
-                              suffix='_s1d_w_stokesi', remove_insuffix=True,
-                              intype=[out_ext_e2dsff, out_tellu_obj],
-                              outclass=general_ofile,
-                              description='Polarimetry 1D stokes I '
-                                          'polarisation file '
-                                          '(constant wavelength binning)')
-out_stokesi_s1dv = drs_finput('S1DV_STOKESI',
-                              hkeys=dict(KW_OUTPUT='S1DV_STOKESI'),
-                              filetype='.fits',
-                              suffix='_s1d_v_stokesi', remove_insuffix=True,
-                              intype=[out_ext_e2dsff, out_tellu_obj],
-                              outclass=general_ofile,
-                              description='Polarimetry 1D stokes I '
-                                          'polarisation file '
-                                          '(constant velocity binning)')
-
-red_file.addset(out_pol_deg)
-red_file.addset(out_pol_stokesi)
-red_file.addset(out_pol_null1)
-red_file.addset(out_pol_null2)
-red_file.addset(out_pol_lsd)
-red_file.addset(out_pol_s1dw)
-red_file.addset(out_pol_s1dv)
-red_file.addset(out_null1_s1dw)
-red_file.addset(out_null1_s1dv)
-red_file.addset(out_null2_s1dw)
-red_file.addset(out_null2_s1dv)
-red_file.addset(out_stokesi_s1dw)
-red_file.addset(out_stokesi_s1dv)
-
 # =============================================================================
 # LBL processed Files
 # =============================================================================
-lbl_fibers = ['AB']
+lbl_fibers = ['A']
 
 # lbl template file
 lbl_template_file = drs_input('LBL_TEMPLATE', path='templates',
                               filetype='.fits',
-                              basename='Template_s1dv_{obj}_sc1d_v_file_AB',
+                              basename='Template_s1dv_{obj}_sc1d_v_file_A',
                               datatype='table',
                               outclass=lbl_ofile,
                               description='Telluric 1D template file',
@@ -1724,7 +1740,6 @@ lbl_rdb2_drift_file = drs_input('LBL_RDB2_DRIFT',
                                            'rdb file',
                                required=False)
 
-
 # =============================================================================
 # Post processed Files
 # =============================================================================
@@ -1752,53 +1767,30 @@ post_e_file.add_ext('PP', pp_file, pos=0, header_only=True, block_kind='tmp',
                                            'POLAR_DARK']),
                     remove_drs_hkeys=True)
 
-post_e_file.add_ext('EXT_AB', out_ext_e2dsff, pos=1, fiber='AB', block_kind='red',
+post_e_file.add_ext('EXT_A', out_ext_e2dsff, pos=1, fiber='A', block_kind='red',
                     link='PP', hlink='KW_IDENTIFIER', clear_file=True,
-                    tag='FluxAB')
-
-post_e_file.add_ext('EXT_A', out_ext_e2dsff, pos=2, fiber='A', block_kind='red',
-                    link='EXT_AB', hlink='KW_IDENTIFIER', clear_file=True,
                     tag='FluxA')
 
-post_e_file.add_ext('EXT_B', out_ext_e2dsff, pos=3, fiber='B', block_kind='red',
-                    link='EXT_AB', hlink='KW_IDENTIFIER', clear_file=True,
+post_e_file.add_ext('EXT_B', out_ext_e2dsff, pos=2, fiber='B', block_kind='red',
+                    link='EXT_A', hlink='KW_IDENTIFIER', clear_file=True,
                     tag='FluxB')
 
-post_e_file.add_ext('EXT_C', out_ext_e2dsff, pos=4, fiber='C', block_kind='red',
-                    link='EXT_AB', hlink='KW_IDENTIFIER', clear_file=True,
-                    tag='FluxC')
-
-post_e_file.add_ext('WAVE_AB', wave_files, pos=5, fiber='AB', block_kind='red',
-                    link='EXT_AB', hlink='CALIB::WAVE', tag='WaveAB')
-
-post_e_file.add_ext('WAVE_A', wave_files, pos=6, fiber='A', block_kind='red',
+post_e_file.add_ext('WAVE_A', wave_files, pos=3, fiber='A', block_kind='red',
                     link='EXT_A', hlink='CALIB::WAVE', tag='WaveA')
 
-post_e_file.add_ext('WAVE_B', wave_files, pos=7, fiber='B', block_kind='red',
+post_e_file.add_ext('WAVE_B', wave_files, pos=4, fiber='B', block_kind='red',
                     link='EXT_B', hlink='CALIB::WAVE', tag='WaveB')
 
-post_e_file.add_ext('WAVE_C', wave_files, pos=8, fiber='C', block_kind='red',
-                    link='EXT_C', hlink='CALIB::WAVE', tag='WaveC')
-
-post_e_file.add_ext('BLAZE_AB', out_ff_blaze, pos=9, fiber='AB',
-                    block_kind='red', link='EXT_AB', hlink='CALIB::BLAZE',
-                    tag='BlazeAB')
-
-post_e_file.add_ext('BLAZE_A', out_ff_blaze, pos=10, fiber='A',
+post_e_file.add_ext('BLAZE_A', out_ff_blaze, pos=5, fiber='A',
                     block_kind='red', link='EXT_A', hlink='CALIB::BLAZE',
                     tag='BlazeA')
 
-post_e_file.add_ext('BLAZE_B', out_ff_blaze, pos=11, fiber='B',
+post_e_file.add_ext('BLAZE_B', out_ff_blaze, pos=6, fiber='B',
                     block_kind='red', link='EXT_B', hlink='CALIB::BLAZE',
                     tag='BlazeB')
-
-post_e_file.add_ext('BLAZE_C', out_ff_blaze, pos=12, fiber='C',
-                    block_kind='red', link='EXT_C', hlink='CALIB::BLAZE',
-                    tag='BlazeC')
-
 # move header keys
-post_e_file.add_hkey('KW_VERSION', inheader='EXT_AB', outheader='PP')
-post_e_file.add_hkey('KW_DRS_DATE_NOW', inheader='EXT_AB', outheader='PP')
+post_e_file.add_hkey('KW_VERSION', inheader='EXT_A', outheader='PP')
+post_e_file.add_hkey('KW_DRS_DATE_NOW', inheader='EXT_A', outheader='PP')
 # add to post processed file set
 post_file.addset(post_e_file)
 
@@ -1818,16 +1810,8 @@ post_s_file.add_ext('S1D_W', 'table', pos=1, block_kind='red',
                     extname='UniformWavelength', tag='UniformWavelength')
 # add s1d w columns (all linked via PP file)
 post_s_file.add_column('S1D_W', out_ext_s1d_w,
-                       incol='wavelength', outcol='Wave', fiber='AB',
+                       incol='wavelength', outcol='Wave', fiber='A',
                        units='nm', block_kind='red', clear_file=True)
-
-post_s_file.add_column('S1D_W', out_ext_s1d_w,
-                       incol='flux', outcol='FluxAB', fiber='AB',
-                       block_kind='red', clear_file=True)
-
-post_s_file.add_column('S1D_W', out_ext_s1d_w,
-                       incol='eflux', outcol='FluxErrAB', fiber='AB',
-                       block_kind='red', clear_file=True)
 
 post_s_file.add_column('S1D_W', out_ext_s1d_w,
                        incol='flux', outcol='FluxA', fiber='A',
@@ -1845,23 +1829,6 @@ post_s_file.add_column('S1D_W', out_ext_s1d_w,
                        incol='eflux', outcol='FluxErrB', fiber='B',
                        block_kind='red', clear_file=True)
 
-post_s_file.add_column('S1D_W', out_ext_s1d_w,
-                       incol='flux', outcol='FluxC', fiber='C',
-                       block_kind='red', clear_file=True)
-
-post_s_file.add_column('S1D_W', out_ext_s1d_w,
-                       incol='eflux', outcol='FluxErrC', fiber='C',
-                       block_kind='red', clear_file=True)
-
-post_s_file.add_column('S1D_W', out_tellu_sc1d_w,
-                       incol='flux', outcol='FluxABTelluCorrected', fiber='AB',
-                       required=False, block_kind='red', clear_file=True)
-
-post_s_file.add_column('S1D_W', out_tellu_sc1d_w,
-                       incol='eflux', outcol='FluxErrABTelluCorrected',
-                       fiber='AB', required=False,
-                       block_kind='red', clear_file=True)
-
 post_s_file.add_column('S1D_W', out_tellu_sc1d_w,
                        incol='flux', outcol='FluxATelluCorrected', fiber='A',
                        required=False, block_kind='red', clear_file=True)
@@ -1870,37 +1837,28 @@ post_s_file.add_column('S1D_W', out_tellu_sc1d_w,
                        incol='eflux', outcol='FluxErrATelluCorrected',
                        fiber='A', required=False,
                        block_kind='red', clear_file=True)
-
-post_s_file.add_column('S1D_W', out_tellu_sc1d_w,
-                       incol='flux', outcol='FluxBTelluCorrected', fiber='B',
-                       required=False, block_kind='red', clear_file=True)
-
-post_s_file.add_column('S1D_W', out_tellu_sc1d_w,
-                       incol='eflux', outcol='FluxErrBTelluCorrected',
-                       fiber='B', required=False,
-                       block_kind='red', clear_file=True)
-
-post_s_file.add_column('S1D_W', out_tellu_rc1d_w, fiber='AB',
+# TODO: from telluric database?
+post_s_file.add_column('S1D_W', out_tellu_rc1d_w, fiber='A',
                        incol='RECON_flux', outcol='Recon',
                        required=False, block_kind='red', clear_file=True)
-
-post_s_file.add_column('S1D_W', out_tellu_rc1d_w, fiber='AB',
+# TODO: from telluric database?
+post_s_file.add_column('S1D_W', out_tellu_rc1d_w, fiber='A',
                        incol='RECON_eflux', outcol='ReconErr',
                        required=False, block_kind='red', clear_file=True)
 # TODO: from telluric database?
-post_s_file.add_column('S1D_W', out_tellu_rc1d_w, fiber='AB',
+post_s_file.add_column('S1D_W', out_tellu_rc1d_w, fiber='A',
                        incol='SKYC_flux', outcol='SkyCorr',
                        required=False, block_kind='red', clear_file=True)
 # TODO: from telluric database?
-post_s_file.add_column('S1D_W', out_tellu_rc1d_w, fiber='AB',
+post_s_file.add_column('S1D_W', out_tellu_rc1d_w, fiber='A',
                        incol='SKYC_eflux', outcol='SkyCorrErr',
                        required=False, block_kind='red', clear_file=True)
 # TODO: from telluric database?
-post_s_file.add_column('S1D_W', out_tellu_rc1d_w, fiber='AB',
+post_s_file.add_column('S1D_W', out_tellu_rc1d_w, fiber='A',
                        incol='FRES_flux', outcol='FiniteRes',
                        required=False, block_kind='red', clear_file=True)
 # TODO: from telluric database?
-post_s_file.add_column('S1D_W', out_tellu_rc1d_w, fiber='AB',
+post_s_file.add_column('S1D_W', out_tellu_rc1d_w, fiber='A',
                        incol='FRES_eflux', outcol='FiniteResErr',
                        required=False, block_kind='red', clear_file=True)
 # s1d w is a composite table
@@ -1910,16 +1868,8 @@ post_s_file.add_ext('S1D_V', 'table', pos=2, block_kind='red',
 
 # add s1d w columns (all linked via PP file)
 post_s_file.add_column('S1D_V', out_ext_s1d_v,
-                       incol='wavelength', outcol='Wave', fiber='AB',
+                       incol='wavelength', outcol='Wave', fiber='A',
                        units='nm', block_kind='red', clear_file=True)
-
-post_s_file.add_column('S1D_V', out_ext_s1d_v,
-                       incol='flux', outcol='FluxAB', fiber='AB',
-                       block_kind='red', clear_file=True)
-
-post_s_file.add_column('S1D_V', out_ext_s1d_v,
-                       incol='eflux', outcol='FluxErrAB', fiber='AB',
-                       block_kind='red', clear_file=True)
 
 post_s_file.add_column('S1D_V', out_ext_s1d_v,
                        incol='flux', outcol='FluxA', fiber='A',
@@ -1937,69 +1887,38 @@ post_s_file.add_column('S1D_V', out_ext_s1d_v,
                        incol='eflux', outcol='FluxErrB', fiber='B',
                        block_kind='red', clear_file=True)
 
-post_s_file.add_column('S1D_V', out_ext_s1d_v,
-                       incol='flux', outcol='FluxC', fiber='C',
-                       block_kind='red', clear_file=True)
-
-post_s_file.add_column('S1D_V', out_ext_s1d_v,
-                       incol='eflux', outcol='FluxErrC', fiber='C',
-                       block_kind='red', clear_file=True)
-
-# TODO: from telluric database?
-post_s_file.add_column('S1D_V', out_tellu_sc1d_v,
-                       incol='flux', outcol='FluxABTelluCorrected', fiber='AB',
-                       required=False, block_kind='red', clear_file=True)
-
-# TODO: from telluric database?
-post_s_file.add_column('S1D_V', out_tellu_sc1d_v,
-                       incol='eflux', outcol='FluxErrABTelluCorrected',
-                       fiber='AB', required=False,
-                       block_kind='red', clear_file=True)
-
-# TODO: from telluric database?
 post_s_file.add_column('S1D_V', out_tellu_sc1d_v,
                        incol='flux', outcol='FluxATelluCorrected', fiber='A',
                        required=False, block_kind='red', clear_file=True)
-# TODO: from telluric database?
+
 post_s_file.add_column('S1D_V', out_tellu_sc1d_v,
                        incol='eflux', outcol='FluxErrATelluCorrected',
                        fiber='A', required=False,
                        block_kind='red', clear_file=True)
 # TODO: from telluric database?
-post_s_file.add_column('S1D_V', out_tellu_sc1d_v,
-                       incol='flux', outcol='FluxBTelluCorrected', fiber='B',
-                       required=False, block_kind='red', clear_file=True)
-# TODO: from telluric database?
-post_s_file.add_column('S1D_V', out_tellu_sc1d_v,
-                       incol='eflux', outcol='FluxErrBTelluCorrected',
-                       fiber='B', required=False,
-                       block_kind='red', clear_file=True)
-# TODO: from telluric database?
-post_s_file.add_column('S1D_V', out_tellu_rc1d_v, fiber='AB',
+post_s_file.add_column('S1D_W', out_tellu_rc1d_v, fiber='A',
                        incol='RECON_flux', outcol='Recon',
                        required=False, block_kind='red', clear_file=True)
 # TODO: from telluric database?
-post_s_file.add_column('S1D_V', out_tellu_rc1d_v, fiber='AB',
+post_s_file.add_column('S1D_W', out_tellu_rc1d_v, fiber='A',
                        incol='RECON_eflux', outcol='ReconErr',
                        required=False, block_kind='red', clear_file=True)
 # TODO: from telluric database?
-post_s_file.add_column('S1D_V', out_tellu_rc1d_v, fiber='AB',
+post_s_file.add_column('S1D_V', out_tellu_rc1d_v, fiber='A',
                        incol='SKYC_flux', outcol='SkyCorr',
                        required=False, block_kind='red', clear_file=True)
 # TODO: from telluric database?
-post_s_file.add_column('S1D_V', out_tellu_rc1d_v, fiber='AB',
+post_s_file.add_column('S1D_V', out_tellu_rc1d_v, fiber='A',
                        incol='SKYC_eflux', outcol='SkyCorrErr',
                        required=False, block_kind='red', clear_file=True)
 # TODO: from telluric database?
-post_s_file.add_column('S1D_V', out_tellu_rc1d_v, fiber='AB',
+post_s_file.add_column('S1D_V', out_tellu_rc1d_v, fiber='A',
                        incol='FRES_flux', outcol='FiniteRes',
                        required=False, block_kind='red', clear_file=True)
 # TODO: from telluric database?
-post_s_file.add_column('S1D_V', out_tellu_rc1d_v, fiber='AB',
+post_s_file.add_column('S1D_V', out_tellu_rc1d_v, fiber='A',
                        incol='FRES_eflux', outcol='FiniteResErr',
                        required=False, block_kind='red', clear_file=True)
-
-
 # move header keys
 post_s_file.add_hkey('KW_VERSION', inheader='S1D_W', outheader='PP')
 post_s_file.add_hkey('KW_DRS_DATE_NOW', inheader='S1D_W', outheader='PP')
@@ -2018,54 +1937,35 @@ post_t_file.add_ext('PP', pp_file, pos=0, header_only=True, block_kind='tmp',
                     hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_FP',
                                            'POLAR_DARK']),
                     remove_drs_hkeys=True)
-post_t_file.add_ext('TELLU_AB', out_tellu_obj, pos=1, fiber='AB',
-                    link='PP', hlink='KW_IDENTIFIER', block_kind='red',
-                    clear_file=True, tag='FluxAB')
-
-post_t_file.add_ext('WAVE_AB', wave_files, pos=2, fiber='AB',
-                    link='TELLU_AB', hlink='CALIB::WAVE', block_kind='red',
-                    clear_file=True, tag='WaveAB')
-
-post_t_file.add_ext('BLAZE_AB', out_ff_blaze, pos=3, fiber='AB',
-                    link='TELLU_AB', hlink='CALIB::BLAZE', block_kind='red',
-                    clear_file=True, tag='BlazeAB')
-
-post_t_file.add_ext('RECON_AB', out_tellu_recon, pos=4, fiber='AB',
-                    link='TELLU_AB', hlink='KW_IDENTIFIER',
-                    block_kind='red', clear_file=True, tag='Recon')
-
-post_t_file.add_ext('OHLINE', out_tellu_pclean, pos=5, fiber='AB',
-                    link='TELLU_AB', hlink='KW_IDENTIFIER',
-                    block_kind='red', clear_file=True, tag='OHLine',
-                    extname='PCA_SKY')
-
-post_t_file.add_ext('TELLU_A', out_tellu_obj, pos=6, fiber='A',
+post_t_file.add_ext('TELLU_A', out_tellu_obj, pos=1, fiber='A',
                     link='PP', hlink='KW_IDENTIFIER', block_kind='red',
                     clear_file=True, tag='FluxA')
 
-post_t_file.add_ext('WAVE_A', wave_files, pos=7, fiber='A',
+post_t_file.add_ext('WAVE_A', wave_files, pos=2, fiber='A',
                     link='TELLU_A', hlink='CALIB::WAVE', block_kind='red',
                     clear_file=True, tag='WaveA')
 
-post_t_file.add_ext('BLAZE_A', out_ff_blaze, pos=8, fiber='A',
+post_t_file.add_ext('BLAZE_A', out_ff_blaze, pos=3, fiber='A',
                     link='TELLU_A', hlink='CALIB::BLAZE', block_kind='red',
                     clear_file=True, tag='BlazeA')
 
-post_t_file.add_ext('TELLU_B', out_tellu_obj, pos=9, fiber='B',
-                    link='PP', hlink='KW_IDENTIFIER', block_kind='red',
-                    clear_file=True, tag='FluxB')
+post_t_file.add_ext('RECON_A', out_tellu_recon, pos=4, fiber='A',
+                    link='TELLU_A', hlink='KW_IDENTIFIER', block_kind='red',
+                    clear_file=True, tag='Recon')
 
-post_t_file.add_ext('WAVE_B', wave_files, pos=10, fiber='B',
-                    link='TELLU_B', hlink='CALIB::WAVE', block_kind='red',
-                    clear_file=True, tag='WaveB')
+post_t_file.add_ext('SKYCORR_SCI', out_tellu_pclean, pos=5, fiber='A',
+                    link='TELLU_A', hlink='KW_IDENTIFIER',
+                    block_kind='red', clear_file=True, tag='SKYCORR_SCI',
+                    extname='SKYCORR_SCI')
 
-post_t_file.add_ext('BLAZE_B', out_ff_blaze, pos=11, fiber='B',
-                    link='TELLU_B', hlink='CALIB::BLAZE', block_kind='red',
-                    clear_file=True, tag='BlazeB')
+post_t_file.add_ext('SKYCORR_CAL', out_tellu_pclean, pos=6, fiber='A',
+                    link='TELLU_A', hlink='KW_IDENTIFIER',
+                    block_kind='red', clear_file=True, tag='SKYCORR_CAL',
+                    extname='SKYCORR_CAL')
 
 # move header keys
-post_t_file.add_hkey('KW_VERSION', inheader='TELLU_AB', outheader='PP')
-post_t_file.add_hkey('KW_DRS_DATE_NOW', inheader='TELLU_AB', outheader='PP')
+post_t_file.add_hkey('KW_VERSION', inheader='TELLU_A', outheader='PP')
+post_t_file.add_hkey('KW_DRS_DATE_NOW', inheader='TELLU_A', outheader='PP')
 # add to post processed file set
 post_file.addset(post_t_file)
 
@@ -2081,7 +1981,7 @@ post_v_file.add_ext('PP', pp_file, pos=0, header_only=True, block_kind='tmp',
                                            'POLAR_DARK']),
                     clear_file=True, remove_drs_hkeys=True)
 
-post_v_file.add_ext('VEL', out_ccf_fits, pos=1, fiber='AB',
+post_v_file.add_ext('VEL', out_ccf_fits, pos=1, fiber='A',
                     link='PP', hlink='KW_IDENTIFIER', block_kind='red',
                     clear_file=True, tag='CCF')
 # move header keys
@@ -2090,121 +1990,6 @@ post_v_file.add_hkey('KW_DRS_DATE_NOW', inheader='VEL', outheader='PP')
 
 # add to post processed file set
 post_file.addset(post_v_file)
-
-# -----------------------------------------------------------------------------
-# post processed polar file
-# -----------------------------------------------------------------------------
-# Not always required (i.e. for hot stars)
-post_p_file = drs_oinput('DRS_POST_P', filetype='.fits', suffix='p.fits',
-                         outclass=post_ofile, inext='o', required=False,
-                         exclude_keys=dict(KW_DRS_MODE=['SPECTROSCOPY',
-                                                        'Unknown']),
-                         description='Post process polarimetry collection')
-
-# add extensions
-post_p_file.add_ext('PP', pp_file, pos=0, header_only=True, block_kind='tmp',
-                    hkeys=dict(KW_DPRTYPE=['POLAR_FP', 'POLAR_DARK']),
-                    clear_file=True, remove_drs_hkeys=True)
-post_p_file.add_ext('POL', out_pol_deg, pos=1, block_kind='red',
-                    link='PP', hlink='KW_IDENTIFIER', clear_file=True,
-                    tag='Pol', extname='POL_DEG')
-post_p_file.add_ext('POLERR', out_pol_deg, pos=2, block_kind='red',
-                    link='PP', hlink='KW_IDENTIFIER', clear_file=True,
-                    tag='PolErr', extname='POL_ERR')
-post_p_file.add_ext('STOKESI', out_pol_stokesi, pos=3, block_kind='red',
-                    link='PP', hlink='KW_IDENTIFIER', clear_file=True,
-                    tag='StokesI', extname='STOKESI_POL')
-post_p_file.add_ext('STOKESIERR', out_pol_stokesi, pos=4, block_kind='red',
-                    link='PP', hlink='KW_IDENTIFIER', clear_file=True,
-                    tag='StokesIErr', extname='STOKESI_ERR')
-post_p_file.add_ext('NULL1', out_pol_null1, pos=5, block_kind='red',
-                    link='PP', hlink='KW_IDENTIFIER', clear_file=True,
-                    tag='Null1', extname='NULL_POL1')
-post_p_file.add_ext('NULL2', out_pol_null2, pos=6, block_kind='red',
-                    link='PP', hlink='KW_IDENTIFIER', clear_file=True,
-                    tag='Null2', extname='NULL_POL2')
-post_p_file.add_ext('WAVE_AB', out_pol_calib, pos=7,
-                    block_kind='red', link='PP', hlink='KW_IDENTIFIER',
-                    tag='WaveAB', extname='POL_WAVE', datatype='image',
-                    hdr_extname='POL_WAVE')
-post_p_file.add_ext('BLAZE_AB', out_pol_calib, pos=8,
-                    block_kind='red', link='PP', hlink='KW_IDENTIFIER',
-                    tag='BlazeAB', extname='POL_BLAZE', datatype='image',
-                    hdr_extname='POL_BLAZE')
-# s1d w table
-post_p_file.add_ext('S1D_W', 'table', pos=9, block_kind='red',
-                    link='PP', hlink='KW_IDENTIFIER',
-                    extname='UniformWavelength', tag='UniformWavelength')
-# add s1d w columns (all linked via PP file)
-post_p_file.add_column('S1D_W', out_pol_s1dw,
-                       incol='wavelength', outcol='Wave', fiber='None',
-                       units='nm', block_kind='red', clear_file=True)
-post_p_file.add_column('S1D_W', out_pol_s1dw,
-                       incol='flux', outcol='FluxPol', fiber='None',
-                       block_kind='red', clear_file=True)
-post_p_file.add_column('S1D_W', out_pol_s1dw,
-                       incol='eflux', outcol='FluxErrPol', fiber='None',
-                       block_kind='red', clear_file=True)
-post_p_file.add_column('S1D_W', out_stokesi_s1dw,
-                       incol='flux', outcol='FluxStokesI', fiber='None',
-                       block_kind='red', clear_file=True)
-post_p_file.add_column('S1D_W', out_stokesi_s1dw,
-                       incol='eflux', outcol='FluxErrStokesI', fiber='None',
-                       block_kind='red', clear_file=True)
-post_p_file.add_column('S1D_W', out_null1_s1dw,
-                       incol='flux', outcol='FluxNull1', fiber='None',
-                       block_kind='red', clear_file=True)
-post_p_file.add_column('S1D_W', out_null1_s1dw,
-                       incol='eflux', outcol='FluxErrNull1', fiber='None',
-                       block_kind='red', clear_file=True)
-post_p_file.add_column('S1D_W', out_null2_s1dw,
-                       incol='flux', outcol='FluxNull2', fiber='None',
-                       block_kind='red', clear_file=True)
-post_p_file.add_column('S1D_W', out_null2_s1dw,
-                       incol='eflux', outcol='FluxErrNull2', fiber='None',
-                       block_kind='red', clear_file=True)
-# s1d v table
-post_p_file.add_ext('S1D_V', 'table', pos=10, block_kind='red',
-                    link='PP', hlink='KW_IDENTIFIER',
-                    extname='UniformVelocity', tag='UniformVelocity')
-# add s1d w columns (all linked via PP file)
-post_p_file.add_column('S1D_V', out_pol_s1dv,
-                       incol='wavelength', outcol='Wave', fiber='None',
-                       units='nm', block_kind='red', clear_file=True)
-post_p_file.add_column('S1D_V', out_pol_s1dv,
-                       incol='flux', outcol='FluxPol', fiber='None',
-                       block_kind='red', clear_file=True)
-post_p_file.add_column('S1D_V', out_pol_s1dv,
-                       incol='eflux', outcol='FluxErrPol', fiber='None',
-                       block_kind='red', clear_file=True)
-post_p_file.add_column('S1D_V', out_stokesi_s1dv,
-                       incol='flux', outcol='FluxStokesI', fiber='None',
-                       block_kind='red', clear_file=True)
-post_p_file.add_column('S1D_V', out_stokesi_s1dv,
-                       incol='eflux', outcol='FluxErrStokesI', fiber='None',
-                       block_kind='red', clear_file=True)
-post_p_file.add_column('S1D_V', out_null1_s1dv,
-                       incol='flux', outcol='FluxNull1', fiber='None',
-                       block_kind='red', clear_file=True)
-post_p_file.add_column('S1D_V', out_null1_s1dv,
-                       incol='eflux', outcol='FluxErrNull1', fiber='None',
-                       block_kind='red', clear_file=True)
-post_p_file.add_column('S1D_V', out_null2_s1dv,
-                       incol='flux', outcol='FluxNull2', fiber='None',
-                       block_kind='red', clear_file=True)
-post_p_file.add_column('S1D_V', out_null2_s1dv,
-                       incol='eflux', outcol='FluxErrNull2', fiber='None',
-                       block_kind='red', clear_file=True)
-# add the polar input combine table
-post_p_file.add_ext('POLTABLE', out_pol_deg, pos=11, block_kind='red',
-                    link='PP', hlink='KW_IDENTIFIER', clear_file=True,
-                    tag='PolTable', extname='POL_TABLE', datatype='table')
-# move header keys
-post_p_file.add_hkey('KW_VERSION', inheader='POL', outheader='PP')
-post_p_file.add_hkey('KW_DRS_DATE_NOW', inheader='POL', outheader='PP')
-
-# add to post processed file set
-post_file.addset(post_p_file)
 
 # =============================================================================
 # Other Files

@@ -28,7 +28,7 @@ from apero.core.base import drs_text
 # Define variables
 # =============================================================================
 # Name of program
-__NAME__ = 'apero.core.instruments.default.instrument'
+__NAME__ = 'apero.instruments.default.instrument'
 __PATH__ = 'instruments.default'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
@@ -145,9 +145,9 @@ class Instrument:
     def get_constants(self
                       ) -> Tuple[Dict[str, Any], Dict[str, str], Dict[str, Any]]:
         # these have to be local
-        from apero.core.instruments.default import config
-        from apero.core.instruments.default import constants
-        from apero.core.instruments.default import keywords
+        from apero.instruments.default import config
+        from apero.instruments.default import constants
+        from apero.instruments.default import keywords
         # get constants dicts
         config_dict = config.CDict
         constants_dict = constants.CDict
@@ -179,7 +179,7 @@ class Instrument:
         :return: file_definitions
         """
         # this has to be local
-        from apero.core.instruments.default import file_definitions
+        from apero.instruments.default import file_definitions
         # return import
         return file_definitions
 
@@ -190,7 +190,7 @@ class Instrument:
         :return: file_definitions
         """
         # this has to be local
-        from apero.core.instruments.default import recipe_definitions
+        from apero.instruments.default import recipe_definitions
         # return import
         return recipe_definitions
 

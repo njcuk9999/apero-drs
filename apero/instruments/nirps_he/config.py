@@ -6,11 +6,11 @@ Created on 2019-01-17
 @author: cook
 """
 from apero.base import base
-from apero.core.instruments.default import config
+from apero.instruments.default import config
 
 # Note: If variables are not showing up MUST CHECK __all__ definition
 #       in import * module
-__NAME__ = 'apero.core.instruments.nirps_he.config.py'
+__NAME__ = 'apero.instruments.nirps_he.config.py'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
 __author__ = base.__author__

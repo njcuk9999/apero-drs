@@ -22,7 +22,7 @@ from apero.core.constants import param_functions
 from apero.core.constants import load_functions
 from apero.core.core import drs_database
 from apero.core.base import drs_log
-from apero.core.instruments.default import instrument as instrument_mod
+from apero.instruments.default import instrument as instrument_mod
 
 # =============================================================================
 # Define variables

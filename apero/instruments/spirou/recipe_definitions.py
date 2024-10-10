@@ -10,15 +10,15 @@ Created on 2018-10-31 at 18:06
 from apero.base import base
 from apero.base import drs_lang
 from apero.core.base import drs_base_classes as base_class
-from apero.core.instruments.default import grouping
-from apero.core.instruments.default import recipe_definitions as rd
-from apero.core.instruments.spirou import file_definitions as files
+from apero.instruments.default import grouping
+from apero.instruments.default import recipe_definitions as rd
+from apero.instruments.spirou import file_definitions as files
 from apero.core.utils import drs_recipe
 
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero.core.instruments.spirou.recipe_definitions.py'
+__NAME__ = 'apero.instruments.spirou.recipe_definitions.py'
 __INSTRUMENT__ = 'SPIROU'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
@@ -31,7 +31,7 @@ INSTRUMENT_ALIAS = 'spirou'
 textentry = drs_lang.textentry
 # import file definitions in import module class
 sf = base_class.ImportModule('spirou.file_definitions',
-                             'apero.core.instruments.spirou.file_definitions',
+                             'apero.instruments.spirou.file_definitions',
                              mod=files)
 
 # =============================================================================

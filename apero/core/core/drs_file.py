@@ -43,7 +43,7 @@ from apero.base import drs_base
 from apero.core.constants import param_functions
 from apero.core.constants import constant_functions
 from apero.core.constants import load_functions
-from apero.core.instruments.default import instrument as instrument_mod
+from apero.instruments.default import instrument as instrument_mod
 from apero.base import drs_lang
 from apero.core import math as mp
 from apero.core.constants import path_definitions as pathdef

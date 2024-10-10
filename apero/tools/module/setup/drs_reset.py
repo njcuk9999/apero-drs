@@ -26,7 +26,7 @@ from apero.base import drs_lang
 from apero.core.constants import path_definitions
 from apero.core.core import drs_database
 from apero.core.base import drs_log
-from apero.core.instruments.default import instrument as instrument_mod
+from apero.instruments.default import instrument as instrument_mod
 from apero.core.utils import drs_data
 from apero.io import drs_lock
 from apero.io import drs_path
