@@ -11,6 +11,7 @@ from apero.instruments.default.instrument import Instrument
 from apero.instruments.spirou.instrument import Spirou
 from apero.instruments.nirps_he.instrument import NirpsHe
 from apero.instruments.nirps_ha.instrument import NirpsHa
+
 # New imports here
 
 # =============================================================================
@@ -25,6 +26,7 @@ INSTRUMENTS['SPIROU'] = Spirou
 INSTRUMENTS['NIRPS_HE'] = NirpsHe
 # Add the NIRPS HA instrument
 INSTRUMENTS['NIRPS_HA'] = NirpsHa
+
 # New instruments here
 
 # =============================================================================
