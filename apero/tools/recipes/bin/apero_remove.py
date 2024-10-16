@@ -160,17 +160,28 @@ def __main__(recipe, params):
     drs_reset.check_cwd(params)
     # ----------------------------------------------------------------------
     # get a list of files to remove (using the file index database)
-    filetable, condition = drs_reset.get_filelist(params, obsdir, blocks,
-                                                  fileprefix, filesuffix,
-                                                  objnames)
+    filetable1, condition1 = drs_reset.get_filelist(params, obsdir, blocks,
+                                                    fileprefix, filesuffix,
+                                                    objnames)
+    # if we are remove raw file entries from database we have to run this
+    #  query again
+    if params['INPUTS']['RAWDB']:
+        filetable2, condition2 = drs_reset.get_filelist(params, obsdir, blocks,
+                                                        fileprefix, filesuffix,
+                                                        objnames,
+                                                        include_raw=True)
+    # if we are not removing raw files from the database then use the same
+    # as before
+    else:
+        filetable2, condition2 = filetable1, condition1
     # ----------------------------------------------------------------------
     # remove the files from disk
-    disk_entries = drs_reset.remove_files_from_disk(params, filetable)
+    disk_entries = drs_reset.remove_files_from_disk(params, filetable1)
 
     # ----------------------------------------------------------------------
     # remove files from database
-    db_entries = drs_reset.remove_files_from_databases(params, filetable,
-                                                       condition)
+    db_entries = drs_reset.remove_files_from_databases(params, filetable2,
+                                                       condition2)
 
     # ----------------------------------------------------------------------
     if params['INPUTS']['test']:
