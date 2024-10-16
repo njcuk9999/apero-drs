@@ -1,0 +1,4 @@
+include tools/images/*.png
+include tools/setup/apero.*
+include */README.md
+include */*/README.md
