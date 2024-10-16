@@ -962,7 +962,8 @@ def get_filelist(params: ParamDict,
                  blocks: Optional[List[str]] = None,
                  fileprefix: Optional[str] = None,
                  filesuffix: Optional[str] = None,
-                 objnames: Optional[List[str]] = None) -> Tuple[Table, str]:
+                 objnames: Optional[List[str]] = None,
+                 include_raw: bool = False) -> Tuple[Table, str]:
     """
     Get a list of files from the index database that match either the obsdir
     and/or the file prefix/file suffix
@@ -979,7 +980,10 @@ def get_filelist(params: ParamDict,
     indexdbm.load_db()
     # -------------------------------------------------------------------------
     # set up condition (do not remove raw files)
-    condition = 'BLOCK_KIND!="raw" AND '
+    if include_raw:
+        condition = ''
+    else:
+        condition = 'BLOCK_KIND!="raw" AND '
     # -------------------------------------------------------------------------
     # construct condition
     subconditions = []
@@ -1119,15 +1123,22 @@ def remove_files_from_databases(params: ParamDict, filetable: Table,
     for ufilename in tqdm(ufilenames):
         # construct condition
         cal_cond = 'FILENAME="{0}"'.format(ufilename)
+        # get the count
+        count = calibdbm.database.count(condition=cal_cond)
         # add to db counts
-        db_counts['calibdb'] += calibdbm.database.count(condition=cal_cond)
+        db_counts['calibdb'] += count
+        # don't continue if there are no files
+        if count == 0:
+            continue
         # remove entry
         if not test:
             calibdbm.remove_entries(condition=cal_cond)
         else:
             # log removal
             WLOG(params, '', '\tWould have removed file: {0}'.format(ufilename))
-
+    # if there are no files print this info
+    if db_counts['calibdb'] == 0:
+        WLOG(params, '', '\tNo files removed.')
     # -------------------------------------------------------------------------
     # then deal with the telluric database --> remove entries with the
     # same filename)
@@ -1146,15 +1157,22 @@ def remove_files_from_databases(params: ParamDict, filetable: Table,
     for ufilename in tqdm(ufilenames):
         # construct condition
         tel_cond = 'FILENAME="{0}"'.format(ufilename)
+        # get the count
+        count = telludbm.database.count(condition=tel_cond)
         # add to db counts
-        db_counts['telludb'] += telludbm.database.count(condition=tel_cond)
+        db_counts['telludb'] += count
+        # don't continue if there are no files
+        if count == 0:
+            continue
         # remove entry
         if not test:
             telludbm.remove_entries(condition=tel_cond)
         else:
             # log removal
             WLOG(params, '', '\tWould have removed file: {0}'.format(ufilename))
-
+    # if there are no files print this info
+    if db_counts['telludb'] == 0:
+        WLOG(params, '', '\tNo files removed.')
     # -------------------------------------------------------------------------
     # for the log database we remove entries with the same PIDs
     logdbm = drs_database.LogDatabase(params)
@@ -1172,15 +1190,22 @@ def remove_files_from_databases(params: ParamDict, filetable: Table,
     for upid in tqdm(upids):
         # construct condition
         log_cond = 'PID="{0}"'.format(upid)
+        # get the count
+        count = logdbm.database.count(condition=log_cond)
         # add to db counts
-        db_counts['logdb'] += logdbm.database.count(condition=log_cond)
+        db_counts['logdb'] += count
+        # don't continue if there are no files
+        if count == 0:
+            continue
         # remove entry
         if not test:
             logdbm.remove_entries(condition=log_cond)
         else:
             # log removal
             WLOG(params, '', '\tWould have removed PID: {0}'.format(upid))
-
+    # if there are no files print this info
+    if db_counts['logdb'] == 0:
+        WLOG(params, '', '\tNo files removed.')
     # -------------------------------------------------------------------------
     # last deal with index database (easy --> remove entries with the same
     # condition we used to find files)
