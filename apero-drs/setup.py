@@ -11,7 +11,7 @@ import sys
 import os
 from pathlib import Path
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 # =============================================================================
 # Define variables
@@ -95,7 +95,7 @@ def load_scripts() -> list:
 if __name__ == "__main__":
     # ----------------------------------------------------------------------
     setup(name='apero',
-          package_dir={'': 'apero'},
+          packages=find_packages(),
           version=get_version(),
           scripts=load_scripts(),
           url='http://apero.exoplanets.ca',

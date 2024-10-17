@@ -9,7 +9,7 @@ Created on 2019-01-17 at 15:24
 """
 import sys
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 # =============================================================================
 # Define variables
@@ -70,7 +70,7 @@ def load_requirements() -> list:
 if __name__ == "__main__":
     # ----------------------------------------------------------------------
     setup(name='aperocore',
-          package_dir= {'' : 'aperocore'},
+          packages=find_packages(),
           version=get_version(),
           url='http://apero.exoplanets.ca',
           license='MIT',
