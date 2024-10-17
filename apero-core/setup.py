@@ -70,6 +70,7 @@ def load_requirements() -> list:
 if __name__ == "__main__":
     # ----------------------------------------------------------------------
     setup(name='aperocore',
+          package_dir= {'' : 'aperocore'},
           version=get_version(),
           url='http://apero.exoplanets.ca',
           license='MIT',

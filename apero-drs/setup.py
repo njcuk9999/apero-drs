@@ -95,6 +95,7 @@ def load_scripts() -> list:
 if __name__ == "__main__":
     # ----------------------------------------------------------------------
     setup(name='apero',
+          package_dir={'': 'apero'},
           version=get_version(),
           scripts=load_scripts(),
           url='http://apero.exoplanets.ca',
