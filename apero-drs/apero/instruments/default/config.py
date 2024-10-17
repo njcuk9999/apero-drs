@@ -17,7 +17,7 @@ from aperocore.constants import constant_functions
 __NAME__ = 'apero.instruments.default.config'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
-__author__ = base.__author__
+__authors__ = base.__authors__
 __date__ = base.__date__
 __release__ = base.__release__
 # Constants definition
@@ -165,7 +165,7 @@ CDict.add('DRS_VERSION', value=__version__, dtype=str,
           source=__NAME__, group=cgroup, description='Version')
 
 # Authors
-CDict.add('AUTHORS', value=__author__,
+CDict.add('AUTHORS', value=__authors__,
           dtype=list, dtypei=str, source=__NAME__, group=cgroup,
           description='Authors', output=False)
 

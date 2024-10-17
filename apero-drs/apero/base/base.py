@@ -32,8 +32,8 @@ with open(__PATH__.parent.parent.joinpath('version.txt'), 'r') as vfile:
     vtext = vfile.readlines()
 __INSTRUMENT__ = 'None'
 __version__ = vtext[0].strip()
-__author__ = ['N. Cook', 'E. Artigau', 'F. Bouchy', 'M. Hobson', 'C. Moutou',
-              'I. Boisse', 'E. Martioli']
+__authors__ = ['N. Cook', 'E. Artigau', 'F. Bouchy', 'M. Hobson', 'C. Moutou',
+               'I. Boisse', 'E. Martioli']
 __date__ = vtext[1].strip()
 __release__ = 'beta'
 # do this once per drs import

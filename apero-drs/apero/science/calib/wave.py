@@ -53,7 +53,7 @@ __INSTRUMENT__ = 'None'
 Constants = load_functions.load_config(select.INSTRUMENTS, __INSTRUMENT__)
 # Get version and author
 __version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
+__authors__ = Constants['AUTHORS']
 __date__ = Constants['DRS_DATE']
 __release__ = Constants['DRS_RELEASE']
 # get param dict

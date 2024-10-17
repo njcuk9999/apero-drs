@@ -38,7 +38,7 @@ __NAME__ = 'plotting.core.py'
 __INSTRUMENT__ = 'None'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
-__author__ = base.__author__
+__authors__ = base.__authors__
 __date__ = base.__date__
 __release__ = base.__release__
 # Get function string
@@ -628,7 +628,7 @@ class Plotter:
         # summary info
         sargs = [shortname, pid]
         summary_title = textentry('40-100-01006', args=sargs)
-        summary_authors = ' '.join(__author__)
+        summary_authors = ' '.join(__authors__)
         # add start
         doc.preamble()
         doc.begin()
@@ -821,7 +821,7 @@ class Plotter:
         # summary info
         sargs = [shortname, pid]
         summary_title = textentry('40-100-01006', args=sargs)
-        summary_authors = ' '.join(__author__)
+        summary_authors = ' '.join(__authors__)
         # add start
         doc.preamble()
         # add title

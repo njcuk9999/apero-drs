@@ -25,7 +25,7 @@ __NAME__ = 'blank.py'
 __INSTRUMENT__ = 'SPIROU'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
-__author__ = base.__author__
+__authors__ = base.__authors__
 __date__ = base.__date__
 __release__ = base.__release__
 # get param dict

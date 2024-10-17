@@ -28,7 +28,7 @@ __NAME__ = 'apero_postprocess_nirps_ha.py'
 __INSTRUMENT__ = 'NIRPS_HA'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
-__author__ = base.__author__
+__authors__ = base.__authors__
 __date__ = base.__date__
 __release__ = base.__release__
 # Get Logging function

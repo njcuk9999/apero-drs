@@ -29,7 +29,7 @@ from aperocore.core import drs_exceptions
 __NAME__ = 'aperocore.core.drs_log.py'
 __version__ = base.__version__
 __date__ = base.__date__
-__authors__ = base.__author__
+__authors__ = base.__authors__
 # no theme values
 NO_THEME = [False, 'False', 'OFF', 'off', 'Off', 'None']
 # General level

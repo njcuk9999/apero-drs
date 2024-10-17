@@ -28,7 +28,7 @@ __NAME__ = 'apero_explorer.py'
 __INSTRUMENT__ = 'None'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
-__author__ = base.__author__
+__authors__ = base.__authors__
 __date__ = base.__date__
 __release__ = base.__release__
 # Get Logging function

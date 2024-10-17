@@ -24,28 +24,27 @@ import numpy as np
 from lbl.core.base_classes import LblException
 
 from apero import plotting
-from aperocore.base import base
 from apero.base import base as apero_base
-from aperocore.base import drs_base
 from apero.base import drs_db
-from aperocore.core.drs_base_classes import Printer
-from aperocore.constants import param_functions
-from aperocore.constants import load_functions
-from aperocore.constants import constant_functions
 from apero.constants import run_params
-from aperocore import drs_lang
 from apero.core import drs_argument
 from apero.core import drs_database
-from aperocore.core import drs_exceptions
-from aperocore.core import drs_base_classes as base_class
-from aperocore.core import drs_misc
-from aperocore.core import drs_text
 from apero.core import drs_file
-from aperocore.core import drs_log
+from apero.instruments import select
+from apero.io import drs_lock
 from apero.utils import drs_recipe
 from apero.utils import drs_utils
-from apero.io import drs_lock
-from apero.instruments import select
+from aperocore import drs_lang
+from aperocore.base import base
+from aperocore.base import drs_base
+from aperocore.constants import load_functions
+from aperocore.constants import param_functions
+from aperocore.core import drs_base_classes as base_class
+from aperocore.core import drs_exceptions
+from aperocore.core import drs_log
+from aperocore.core import drs_misc
+from aperocore.core import drs_text
+from aperocore.core.drs_base_classes import Printer
 
 # =============================================================================
 # Define variables
@@ -55,7 +54,7 @@ __NAME__ = 'drs_startup.py'
 __INSTRUMENT__ = 'None'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
-__author__ = base.__author__
+__authors__ = base.__authors__
 __date__ = base.__date__
 __release__ = base.__release__
 # Get Astropy Time and Time Delta
