@@ -96,7 +96,6 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------
     setup(name='apero',
           version=get_version(),
-          packages=['apero'],
           scripts=load_scripts(),
           url='http://apero.exoplanets.ca',
           license='MIT',

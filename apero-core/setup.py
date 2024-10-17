@@ -71,7 +71,6 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------
     setup(name='aperocore',
           version=get_version(),
-          packages=['aperocore'],
           url='http://apero.exoplanets.ca',
           license='MIT',
           author='Neil Cook',
