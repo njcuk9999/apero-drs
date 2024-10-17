@@ -193,7 +193,7 @@ fabric.properties
 /documentation/working/_build/*
 
 # Ignore instrument data files
-apero_drs/apero/apero-assets/*
+apero-drs/apero/apero-assets/*
 
 # Ignore lock file
 lock.lock
