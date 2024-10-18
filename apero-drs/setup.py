@@ -99,7 +99,7 @@ def load_scripts() -> list:
 # Main code here
 if __name__ == "__main__":
     # ----------------------------------------------------------------------
-    setup(name='apero',
+    setup(name='apero-drs',
           packages=find_packages(),
           version=get_version(),
           scripts=load_scripts(),
