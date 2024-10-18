@@ -33,10 +33,7 @@ def get_version() -> str:
     Get the version from the version file
     :return:
     """
-    # copy version.txt file to apero-core
-    if os.path.exists('version.txt'):
-        os.remove('version.txt')
-    shutil.copy('../version.txt', 'version.txt')
+
     # try to open version file
     try:
         with open('version.txt', 'r') as vfile:
@@ -97,6 +94,10 @@ def load_scripts() -> list:
 # =============================================================================
 # Main code here
 if __name__ == "__main__":
+    # copy version.txt file to apero-core
+    if os.path.exists('version.txt'):
+        os.remove('version.txt')
+    shutil.copy('../version.txt', 'version.txt')
     # ----------------------------------------------------------------------
     setup(name='apero',
           packages=find_packages(),
