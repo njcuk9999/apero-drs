@@ -33,9 +33,13 @@ def get_version() -> str:
     Get the version from the version file
     :return:
     """
+    # copy version.txt file to apero-core
+    if os.path.exists('version.txt'):
+        os.remove('version.txt')
+    shutil.copy('../version.txt', 'version.txt')
     # try to open version file
     try:
-        with open('../version.txt', 'r') as vfile:
+        with open('version.txt', 'r') as vfile:
             vtext = vfile.readlines()
     except Exception as e:
         print('Error: Could not read version file')
