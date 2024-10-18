@@ -36,7 +36,7 @@ def get_version() -> str:
     shutil.copy('../version.txt', 'aperocore/version.txt')
     # try to open version file
     try:
-        with open('version.txt', 'r') as vfile:
+        with open('aperocore/version.txt', 'r') as vfile:
             vtext = vfile.readlines()
     except Exception as e:
         print('Error: Could not read version file')
