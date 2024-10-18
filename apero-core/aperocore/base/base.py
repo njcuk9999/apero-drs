@@ -32,13 +32,18 @@ from astropy.time import Time, TimeDelta
 # =============================================================================
 __PACKAGE__ = 'aperocore'
 __PATH__ = Path(__file__).parent.parent
-with open(__PATH__.joinpath('version.txt'), 'r') as vfile:
-    vtext = vfile.readlines()
 __INSTRUMENT__ = 'None'
-__version__ = vtext[0].strip()
-__authors__ = ['N. Cook']
-__date__ = vtext[1].strip()
-__release__ = 'beta'
+# load the yaml file
+__YAML__ = yaml.load(open(__PATH__.joinpath('info.yaml')),
+                     Loader=yaml.FullLoader)
+
+# =============================================================================
+# Get variables from info.yaml
+# =============================================================================
+__version__ = __YAML__['VERSION']
+__authors__ = __YAML__['AUTHORS']
+__date__ = __YAML__['DATE']
+__release__ = __YAML__['RELEASE']
 # do this once per drs import
 __now__ = Time.now()
 AstropyTime = Time
@@ -72,9 +77,9 @@ if WARN_TO_ERROR:
 # -----------------------------------------------------------------------------
 # language settings
 # -----------------------------------------------------------------------------
-DEFAULT_LANG = 'ENG'
+DEFAULT_LANG = __YAML__['DEFAULT_LANG']
 # supported languages
-LANGUAGES = ['ENG', 'FR']
+LANGUAGES = __YAML__['LANGUAGES']
 # define default language files
 DEF_LANG_FILES = ['default_text.py', 'default_help.py']
 

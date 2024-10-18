@@ -1,0 +1,19 @@
+# Define versionV
+VERSION: 0.8.003
+# Define date of release
+DATE: 2024-10-16
+# Define release type
+RELEASE: beta
+# Define authors
+AUTHORS:
+    - N. Cook
+    - E. Artigau
+# -----------------------------------------------------------------------------
+# Language settings
+# -----------------------------------------------------------------------------
+# Default language
+DEFAULT_LANG: ENG
+# Supported languages
+LANGUAGES:
+    - ENG
+    - FR

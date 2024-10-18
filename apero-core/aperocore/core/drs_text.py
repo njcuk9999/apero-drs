@@ -14,16 +14,18 @@ only from:
 - apero.lang.*
 - apero.core.core.drs_exceptions
 """
+import os
 import warnings
 from pathlib import Path
-from typing import Any, Union, List
+from typing import Any, Union, List, Optional
 
 import numpy as np
 
+from aperocore import drs_lang
 from aperocore.base import base
 from aperocore.base import drs_base
-from aperocore import drs_lang
 from aperocore.core import drs_exceptions
+from aperocore.core import drs_misc
 
 # =============================================================================
 # Define variables
@@ -39,6 +41,8 @@ __release__ = base.__release__
 DrsCodedException = drs_exceptions.DrsCodedException
 # get text entry
 textentry = drs_lang.textentry
+# Get colours
+COLOURS = drs_misc.Colors()
 
 
 # =============================================================================
@@ -536,6 +540,218 @@ def clean_strings(strings: Union[List[str], str]) -> Union[List[str], str]:
         for string in strings:
             outstrings.append(string.strip().upper())
         return outstrings
+
+
+def cprint(message: Union[drs_lang.Text, str], colour: str = 'g'):
+    """
+    print coloured message
+
+    :param message: str, message to print
+    :param colour: str, colour to print
+    :return:
+    """
+    print(COLOURS.print(str(message), colour))
+
+
+def user_input(question: str, dtype: Union[str, type, None] = None,
+               options: Union[List[Any], None] = None,
+               default: Any = None,
+               required: bool = True, color='g',
+               stringlimit: Optional[int] = None) -> Any:
+    """
+    Ask user for an input
+
+    :param question: str, the question to ask
+    :param dtype: str, the data type (int/float/bool/str/path/YN)
+    :param options: list, list of valid options
+    :param optiondesc: list, list of option descriptions
+    :param default: object, if set the default value, if unset a value
+                    if required
+    :param required: bool, if False and dtype=path does not create a path
+                     else does not change anything
+    :param color: str, the color of the text printed out
+    :param stringlimit: int, the maximum length of a string
+
+    :return: the response from the user or the default
+    """
+    # set up check criteria as True at first
+    check = True
+    # set up user input as unset
+    uinput = None
+    # -------------------------------------------------------------------------
+    # deal with dtype
+    if isinstance(dtype, str):
+        dtype = dtype.upper()
+    elif isinstance(dtype, Path):
+        dtype = 'PATH'
+    # deal with paths (expand)
+    if dtype == 'PATH':
+        if default not in [None, 'None', '']:
+            default = Path(default)
+            default.expanduser()
+        else:
+            default = None
+    # -------------------------------------------------------------------------
+    # deal options
+    if options is not None:
+        if dtype in [int, float, 'INT', 'FLOAT']:
+            optiondesc = [str(i) for i in options]
+            option_dict = None
+        else:
+            optiondesc = []
+            option_dict = dict()
+            for it, option in enumerate(options):
+                optiondesc.append(f'{it+1}: {option}')
+                option_dict[str(it+1)] = option
+            dtype = 'OPTION'
+    else:
+        optiondesc = None
+        option_dict = None
+    # -------------------------------------------------------------------------
+    # deal with yes/no dtype
+    if dtype == 'YN':
+        options = [drs_lang.YES, drs_lang.NO]
+        optiondesc = [drs_lang.YES_OR_NO]
+        option_dict = None
+    # -------------------------------------------------------------------------
+    # loop around until check is passed
+    while check:
+        # ask question
+        cprint(question, color)
+        # print options
+        if options is not None:
+            cprint(drs_lang.OPTIONS_ARE + ':', 'b')
+            print('   ' + '\n   '.join(list(np.array(optiondesc, dtype=str))))
+        if default is not None:
+            cprint('   {0}: {1}'.format(drs_lang.DEFAULT_IS, default), 'b')
+        # record response
+        uinput = input(' >>   ')
+        # deal with string ints, floats, logic
+        if dtype in ['INT', 'FLOAT', 'BOOL', 'STR']:
+            # noinspection PyBroadException
+            try:
+                basetype = eval(dtype.lower())
+                uinput = basetype(uinput)
+                check = False
+            except Exception as _:
+                if uinput == '' and default is not None:
+                    check = False
+                else:
+                    cargs = [dtype.lower()]
+                    cprint(textentry('40-001-00034', args=cargs), 'y')
+                    check = True
+                    continue
+        # deal with int/float/logic
+        if dtype in [int, float, bool, str]:
+            # noinspection PyBroadException
+            try:
+                uinput = dtype(uinput)
+                check = False
+            except Exception as _:
+                cargs = [dtype.__name__]
+                cprint(textentry('40-001-00034', args=cargs), 'y')
+                check = True
+                continue
+        # deal with paths
+        elif dtype == 'PATH':
+            # --------------------------------------------------------------
+            # check whether default wanted and user types 'None' or blank ('')
+            if uinput in ['None', ''] and default is not None:
+                uinput = default
+                # deal with a null default
+                if default in ['None', '']:
+                    return default
+            # deal with case where path is 'None' or blank and path is not
+            # required (even if not required must be set to None or blank)
+            elif not required and uinput in ['None', '']:
+                return None
+            # otherwise 'None and '' are not valid
+            elif uinput in ['None', '']:
+                cprint(textentry('40-001-00035'), 'y')
+                check = True
+                continue
+            # --------------------------------------------------------------
+            # try to create path
+            # noinspection PyBroadException
+            try:
+                upath = Path(uinput)
+            except Exception as _:
+                if not required:
+                    cprint(textentry('40-001-00036'), 'y')
+                    check = True
+                    continue
+                else:
+                    cprint(textentry('40-001-00037'), 'y')
+                    check = True
+                    continue
+            # get rid of expansions
+            upath.expanduser()
+            # --------------------------------------------------------------
+            # check whether path exists
+            if upath.exists():
+                return upath
+            # if path does not exist ask to make it (if create)
+            else:
+                # check whether to create path
+                pathquestion = textentry('40-001-00038', args=[uinput])
+                create = user_input(pathquestion, dtype='YN')
+                if create:
+                    if not upath.exists():
+                        # noinspection PyBroadException
+                        try:
+                            os.makedirs(upath)
+                        except Exception as _:
+                            cprint(textentry('40-001-00037'), 'y')
+                            check = True
+                            continue
+                    return upath
+                else:
+                    cprint(textentry('40-001-00037'), 'y')
+                    check = True
+                    continue
+        # deal with Yes/No questions
+        elif dtype == 'YN':
+            if drs_lang.YES in uinput.upper():
+                return True
+            elif drs_lang.NO in uinput.upper():
+                return False
+            else:
+                cprint(textentry('40-001-00039', args=[drs_lang.YES_OR_NO]), 'y')
+                check = True
+                continue
+        # deal with options
+        if options is not None:
+            if option_dict is not None:
+                if uinput in option_dict:
+                    return option_dict[uinput]
+            # convert options to string
+            options = np.char.array(np.array(options, dtype=str))
+            if str(uinput).upper() in options.upper():
+                check = False
+                continue
+            elif uinput == '' and default is not None:
+                check = False
+                continue
+            else:
+                ortxt = ' {0} '.format(drs_lang.OR)
+                optionstr = ortxt.join(np.array(options, dtype=str))
+                cprint(textentry('40-001-00039', args=[optionstr]), 'y')
+                check = True
+        # deal with string and string limit
+        if dtype == str and stringlimit is not None:
+            if len(uinput) > stringlimit:
+                msg = 'String length must be less than {0} characters'
+                margs = [stringlimit]
+                cprint(msg.format(*margs), 'y')
+                check = True
+                continue
+    # deal with returning default
+    if uinput == '' and default is not None:
+        return default
+    else:
+        # return uinput
+        return uinput
+
 
 
 # =============================================================================

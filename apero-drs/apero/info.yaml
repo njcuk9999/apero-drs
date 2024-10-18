@@ -1,0 +1,43 @@
+# Define version
+VERSION: 0.8.003
+# Define date of release
+DATE: 2024-10-16
+# Define release type
+RELEASE: beta
+# Define authors
+AUTHORS:
+    - N. Cook
+    - E. Artigau
+    - F. Bouchy
+    - M. Hobson
+    - C. Moutou
+    - I. Boisse
+    - E. Martioli
+# Define instruments
+INSTRUMENTS:
+    - SPIROU
+    - NIRPS_HA
+    - NIRPS_HE
+    - None
+# -----------------------------------------------------------------------------
+# Basic choices on options
+# -----------------------------------------------------------------------------
+# databases backends
+DB_MODES:
+    - 'mysql+pymysql'
+
+# plotting modes available
+PLOT_MODES:
+    - 0
+    - 1
+    - 2
+    - 3
+# -----------------------------------------------------------------------------
+# Hard coded constants that should not be changed ever
+# -----------------------------------------------------------------------------
+# Sun's elevation at civil twilight (degrees)
+CIVIL_TWILIGHT: -6
+# Sun's elevation at nautical twilight (degrees)
+NAUTICAL_TWILIGHT: -12
+# Sun's elevation at astronomical twilight (degrees)
+ASTRONOMIAL_TWILIGHT: -18

@@ -35,14 +35,14 @@ def get_version() -> str:
     """
     # try to open version file
     try:
-        with open('apero/version.txt', 'r') as vfile:
+        with open('apero/info.yaml', 'r') as vfile:
             vtext = vfile.readlines()
     except Exception as e:
         print('Error: Could not read version file')
         print('Error: {0}'.format(e))
         sys.exit(1)
     # return version
-    return vtext[0]
+    return vtext[1].split(':')[-1].strip()
 
 
 def load_requirements() -> list:

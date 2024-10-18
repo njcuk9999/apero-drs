@@ -2,4 +2,4 @@ include tools/images/*.png
 include tools/setup/apero.*
 include */README.md
 include */*/README.md
-include version.txt
+include apero/info.yaml

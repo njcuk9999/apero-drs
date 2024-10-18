@@ -18,8 +18,7 @@ import rules:
 import os
 import warnings
 from pathlib import Path
-
-from astropy.time import Time, TimeDelta
+import yaml
 
 from aperocore.base import base
 
@@ -28,18 +27,22 @@ from aperocore.base import base
 # =============================================================================
 __PACKAGE__ = 'apero'
 __PATH__ = Path(__file__).parent.parent
-with open(__PATH__.joinpath('version.txt'), 'r') as vfile:
-    vtext = vfile.readlines()
 __INSTRUMENT__ = 'None'
-__version__ = vtext[0].strip()
-__authors__ = ['N. Cook', 'E. Artigau', 'F. Bouchy', 'M. Hobson', 'C. Moutou',
-               'I. Boisse', 'E. Martioli']
-__date__ = vtext[1].strip()
-__release__ = 'beta'
+# load the yaml file
+__YAML__ = yaml.load(open(__PATH__.joinpath('info.yaml')),
+                     Loader=yaml.FullLoader)
+
+# =============================================================================
+# Get variables from info.yaml
+# =============================================================================
+__version__ = __YAML__['VERSION']
+__authors__ = __YAML__['AUTHORS']
+__date__ = __YAML__['DATE']
+__release__ = __YAML__['RELEASE']
 # do this once per drs import
-__now__ = Time.now()
-AstropyTime = Time
-AstropyTimeDelta = TimeDelta
+__now__ = base.Time.now()
+AstropyTime = base.Time
+AstropyTimeDelta = base.TimeDelta
 # List of author names
 AUTHORS = base.AUTHORS
 
@@ -50,7 +53,7 @@ USER_ENV = 'DRS_UCONFIG'
 # switch for no db in args
 NO_DB = False
 # Define instruments (last one should be 'None')
-INSTRUMENTS = ['SPIROU', 'NIRPS_HA', 'NIRPS_HE', 'None']
+INSTRUMENTS = __YAML__['INSTRUMENTS']
 # -----------------------------------------------------------------------------
 # constants/parameter settings
 # -----------------------------------------------------------------------------
@@ -94,13 +97,13 @@ DATABASE_COL_CLASS = ['CALIBRATION_DB_COLUMNS', 'TELLURIC_DB_COLUMNS',
 DEFAULT_DATABASE_PORT = 3306
 DEFAULT_PATH_MAXC = 1024
 # Support database types
-SUPPORTED_DATABASES = ['mysql+pymysql']
+SUPPORTED_DATABASES = __YAML__['DB_MODES']
 # -----------------------------------------------------------------------------
 # language settings
 # -----------------------------------------------------------------------------
-DEFAULT_LANG = 'ENG'
+DEFAULT_LANG = base.DEFAULT_LANG
 # supported languages
-LANGUAGES = ['ENG', 'FR']
+LANGUAGES = base.LANGUAGES
 # define default language files
 DEF_LANG_FILES = ['default_text.py', 'default_help.py']
 
@@ -142,11 +145,11 @@ LOG_FLAGS['ONLYPRECLEAN'] = 'Only do preclean part of telluric correction'
 # Hard coded constants that should not be changed ever
 # -----------------------------------------------------------------------------
 # Sun's elevation at civil twilight (degrees)
-CIVIL_TWILIGHT = -6
+CIVIL_TWILIGHT = __YAML__['CIVIL_TWILIGHT']
 # Sun's elevation at nautical twilight (degrees)
-NAUTICAL_TWILIGHT = -12
+NAUTICAL_TWILIGHT = __YAML__['NAUTICAL_TWILIGHT']
 # Sun's elevation at astronomical twilight (degrees)
-ASTRONOMIAL_TWILIGHT = -18
+ASTRONOMIAL_TWILIGHT = __YAML__['ASTRONOMIAL_TWILIGHT']
 
 
 # =============================================================================
