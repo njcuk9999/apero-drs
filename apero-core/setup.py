@@ -75,8 +75,10 @@ def load_requirements() -> list:
 # Main code here
 if __name__ == "__main__":
     # ----------------------------------------------------------------------
-    setup(name='apero-core',
-          packages=find_packages(),
+    setup(name='aperocore',
+          packages=['aperocore', 'aperocore.base', 'aperocore.core',
+                    'aperocore.constants', 'aperocore.drs_lang',
+                    'aperocore.math'],
           version=get_version(),
           url='http://apero.exoplanets.ca',
           license='MIT',
