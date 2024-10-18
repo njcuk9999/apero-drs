@@ -7,11 +7,8 @@ Created on 2019-01-17 at 15:24
 
 @author: cook
 """
-import os
 import sys
-import shutil
-
-from setuptools import setup, find_packages
+from setuptools import setup
 
 # =============================================================================
 # Define variables
@@ -30,10 +27,6 @@ def get_version() -> str:
     Get the version from the version file
     :return:
     """
-    # copy version.txt file to apero-core
-    if os.path.exists('version.txt'):
-        os.remove('version.txt')
-    shutil.copy('../version.txt', 'aperocore/version.txt')
     # try to open version file
     try:
         with open('aperocore/version.txt', 'r') as vfile:

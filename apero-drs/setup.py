@@ -9,7 +9,6 @@ Created on 2019-01-17 at 15:24
 """
 import sys
 import os
-import shutil
 from pathlib import Path
 
 from setuptools import setup, find_packages
@@ -34,10 +33,6 @@ def get_version() -> str:
     Get the version from the version file
     :return:
     """
-    # copy version.txt file to apero-core
-    if os.path.exists('version.txt'):
-        os.remove('version.txt')
-    shutil.copy('../version.txt', 'apero/version.txt')
     # try to open version file
     try:
         with open('apero/version.txt', 'r') as vfile:
