@@ -33,7 +33,7 @@ def get_version() -> str:
     # copy version.txt file to apero-core
     if os.path.exists('version.txt'):
         os.remove('version.txt')
-    shutil.copy('../version.txt', 'version.txt')
+    shutil.copy('../version.txt', 'aperocore/version.txt')
     # try to open version file
     try:
         with open('version.txt', 'r') as vfile:

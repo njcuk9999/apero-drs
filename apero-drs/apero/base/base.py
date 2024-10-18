@@ -28,7 +28,7 @@ from aperocore.base import base
 # =============================================================================
 __PACKAGE__ = 'apero'
 __PATH__ = Path(__file__).parent.parent
-with open(__PATH__.parent.parent.joinpath('version.txt'), 'r') as vfile:
+with open(__PATH__.joinpath('version.txt'), 'r') as vfile:
     vtext = vfile.readlines()
 __INSTRUMENT__ = 'None'
 __version__ = vtext[0].strip()
