@@ -211,8 +211,13 @@ def command_line_args(sargs: Dict[str, SetupArgument]) -> ParamDict:
     raw_params = vars(parser.parse_args())
     # storage for params
     params = ParamDict()
+
+    used = []
     # loop around arguments
     for argname in sargs:
+        # if we have used argument (due to a set) skip this argument
+        if argname in used:
+            continue
         # get arg instance
         arg = sargs[argname]
         # get value
@@ -235,6 +240,8 @@ def command_line_args(sargs: Dict[str, SetupArgument]) -> ParamDict:
                 params.set(argname, value, source='default')
             else:
                 params.set(argname, value, source='command_line')
+        # keep track of processed argnames
+        used.append(argname)
         # deal with set
         if params.sources[argname] == 'command_line' and arg.sets is not None:
             # loop around sets
@@ -242,7 +249,9 @@ def command_line_args(sargs: Dict[str, SetupArgument]) -> ParamDict:
                 # get the value
                 value = arg.sets[key].format(**params)
                 # update value in params
-                params.set(key, value, source=f'set[{arg.name}')
+                params.set(key, value, source=f'set[{arg.name}]')
+                # keep track of processed argnames
+                used.append(key)
     # return params
     return params
 
