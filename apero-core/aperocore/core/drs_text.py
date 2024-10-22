@@ -557,7 +557,9 @@ def user_input(question: str, dtype: Union[str, type, None] = None,
                options: Union[List[Any], None] = None,
                default: Any = None,
                required: bool = True, color='g',
-               stringlimit: Optional[int] = None) -> Any:
+               stringlimit: Optional[int] = None,
+               restricted_chars: List[str] = None,
+               optiondescs: List[str] = None) -> Any:
     """
     Ask user for an input
 
@@ -571,6 +573,9 @@ def user_input(question: str, dtype: Union[str, type, None] = None,
                      else does not change anything
     :param color: str, the color of the text printed out
     :param stringlimit: int, the maximum length of a string
+    :param restricted_chars: list of str, the restricted characters
+    :param optiondescs: list of str, the descriptions of the options
+                        (if None uses options itself)
 
     :return: the response from the user or the default
     """
@@ -592,8 +597,15 @@ def user_input(question: str, dtype: Union[str, type, None] = None,
         else:
             default = None
     # -------------------------------------------------------------------------
-    # deal options
-    if options is not None:
+    # deal options + option descriptions
+    if optiondescs is not None and options is not None:
+        optiondesc = []
+        option_dict = dict()
+        for option, desc in zip(options, optiondescs):
+            optiondesc.append(f'{option}: {desc}')
+            option_dict[option] = option
+    # deal with options + no option descriptions
+    elif options is not None:
         if dtype in [int, float, 'INT', 'FLOAT']:
             optiondesc = [str(i) for i in options]
             option_dict = None
@@ -604,6 +616,7 @@ def user_input(question: str, dtype: Union[str, type, None] = None,
                 optiondesc.append(f'{it+1}: {option}')
                 option_dict[str(it+1)] = option
             dtype = 'OPTION'
+    # deal with no options
     else:
         optiondesc = None
         option_dict = None
@@ -626,6 +639,24 @@ def user_input(question: str, dtype: Union[str, type, None] = None,
             cprint('   {0}: {1}'.format(drs_lang.DEFAULT_IS, default), 'b')
         # record response
         uinput = input(' >>   ')
+        # ---------------------------------------------------------------------
+        # deal with restricted characters
+        if restricted_chars is not None:
+            bad_char = False
+            for char in restricted_chars:
+                if char in uinput:
+                    wmsg = ('Restricted character "{0}" found in input. '
+                            'Please correct.')
+                    cprint(wmsg.format(char), 'y')
+                    # check again flag
+                    check = True
+                    # bad character flag
+                    bad_char = True
+                    continue
+            # ask the question again
+            if bad_char:
+                continue
+        # ---------------------------------------------------------------------
         # deal with string ints, floats, logic
         if dtype in ['INT', 'FLOAT', 'BOOL', 'STR']:
             # noinspection PyBroadException
@@ -641,6 +672,7 @@ def user_input(question: str, dtype: Union[str, type, None] = None,
                     cprint(textentry('40-001-00034', args=cargs), 'y')
                     check = True
                     continue
+        # ---------------------------------------------------------------------
         # deal with int/float/logic
         if dtype in [int, float, bool, str]:
             # noinspection PyBroadException

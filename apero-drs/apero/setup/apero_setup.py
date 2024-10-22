@@ -14,7 +14,7 @@ import signal
 from aperocore.constants import param_functions
 
 from apero.setup import drs_setup
-
+from apero.setup import setup_constants
 
 # =============================================================================
 # Define variables
@@ -31,12 +31,14 @@ def main() -> ParamDict:
     """
     # catch Ctrl+C
     signal.signal(signal.SIGINT, drs_setup.catch_sigint)
+    # get setup constants
+    sargs = setup_constants.SARGS
     # -------------------------------------------------------------------------
     # get command line args
-    params = drs_setup.command_line_args()
+    params = drs_setup.command_line_args(sargs)
     # -------------------------------------------------------------------------
     # ask the users for any missing arguments
-    params = drs_setup.ask_user(params)
+    params = drs_setup.ask_user(params, sargs)
     # -------------------------------------------------------------------------
     # run the setup
     if params['UPDATE']:

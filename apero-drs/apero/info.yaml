@@ -32,6 +32,11 @@ PLOT_MODES:
     - 1
     - 2
     - 3
+PLOT_DESCS:
+    - 'No plots'
+    - 'Show plots'
+    - 'Save plots'
+    - 'Show and save plots'
 # -----------------------------------------------------------------------------
 # Hard coded constants that should not be changed ever
 # -----------------------------------------------------------------------------
