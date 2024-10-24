@@ -16,7 +16,7 @@ import sqlalchemy
 
 from aperocore.base import base
 from apero.base import base as apero_base
-from apero.base import drs_db
+from aperocore.core import drs_db
 from aperocore.constants.param_functions import ParamDict
 from aperocore.constants import load_functions
 from aperocore.core import drs_exceptions

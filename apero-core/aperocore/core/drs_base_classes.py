@@ -539,6 +539,68 @@ class FlatYamlDict:
         return list(self.flatten_dict.keys()), list(self.flatten_dict.values())
 
 
+class Path2Dict:
+    """
+    A class to allow dictionary access using a path
+
+    i.e. if we have a dictionary like: {'a': {'b': {'c': 1}}} we can access
+    the value of 'c' using 'a.b.c'
+    """
+    def __init__(self, data: dict):
+        """
+        Construct the Path2Dict class
+
+        :param data: dict, the dictionary to access
+        """
+        self.data = data
+
+    def __getitem__(self, path: str) -> Any:
+        """
+        Get the value of the path
+        """
+        mydict = self.data
+        # if we don't have a path just return the value
+        if '.' not in path:
+            return mydict[path]
+        # get the path
+        path_list = path.split('.')
+        # loop around path
+        for path_it in path_list:
+            if path_it not in mydict:
+                # log error if we cannot determine path
+                emsg = 'Path: {0} not available in dictionary [{1} not found]'
+                eargs = [path, path_it]
+                raise DrsCodedException('', message=emsg.format(*eargs))
+            # get the next dictionary level
+            mydict = mydict[path_it]
+        # return the value
+        return mydict
+
+    def __setitem__(self, key: str, value: Any):
+        """
+        Cannot set a value using Path2Dict - this is a read only class
+        """
+        raise NotImplementedError('Path2Dict does not support item assignment')
+
+    def __contains__(self, path: str):
+        """
+        Check if the path is in the dictionary
+        """
+        mydict = self.data
+        # if we don't have a path just return the value
+        if '.' not in path:
+            return path in mydict
+        # get the path
+        path_list = path.split('.')
+        # loop around path
+        for path_it in path_list:
+            if path_it not in mydict:
+                return False
+            # get the next dictionary level
+            mydict = mydict[path_it]
+        # return the value
+        return True
+
 # =============================================================================
 # Define Custom classes
 # =============================================================================

@@ -53,7 +53,8 @@ SARGS['INSTRUMENT'] = SetupArgument(name='INSTRUMENT', argname='--instrument',
                                     default_value=None,
                                     dtype='str', options=INSTRUMENTS,
                                     required=True,
-                                    helpstr='The instrument to use')
+                                    helpstr='The instrument to use',
+                                    installname='INSTRUMENT')
 # -----------------------------------------------------------------------------
 # Directory settings
 # -----------------------------------------------------------------------------
@@ -82,53 +83,65 @@ SARGS['DATADIR'] = SetupArgument(name='DATADIR', argname='--datadir',
 # The raw data directory to use (if not using DATADIR)
 SARGS['RAWDIR'] = SetupArgument(name='RAWDIR', default_value=None,
                                 dtype='path', required=True, depends='DATADIR',
-                                helpstr='The raw data directory to use')
+                                helpstr='The raw data directory to use',
+                                aperoname='DRS_DATA_RAW')
 # The tmp data directory to use (if not using DATADIR)
 SARGS['TMPDIR'] = SetupArgument(name='TMPDIR', default_value=None,
                                 dtype='path', required=True, depends='DATADIR',
-                                helpstr='The tmp data directory to use')
+                                helpstr='The tmp data directory to use',
+                                aperoname='DRS_DATA_WORKING')
 # The reduced data directory to use (if not using DATADIR)
 SARGS['REDDIR'] = SetupArgument(name='REDDIR', default_value=None,
                                 dtype='path', required=True, depends='DATADIR',
-                                helpstr='The reduced data directory to use')
+                                helpstr='The reduced data directory to use',
+                                aperoname='DRS_DATA_REDUC')
 # the calibration directory to use (if not using DATADIR)
 SARGS['CALDIR'] = SetupArgument(name='CALDIR', default_value=None,
                                 dtype='path', required=True, depends='DATADIR',
-                                helpstr='The calibration data directory to use')
+                                helpstr='The calibration data directory to use',
+                                aperoname='DRS_CALIB_DB')
 # the telluric directory to use (if not using DATADIR)
 SARGS['TELDIR'] = SetupArgument(name='TELDIR', default_value=None,
                                 dtype='path', required=True, depends='DATADIR',
-                                helpstr='The telluric data directory to use')
+                                helpstr='The telluric data directory to use',
+                                aperoname='DRS_TELLU_DB')
 # the out directory to use (if not using DATADIR)
 SARGS['OUTDIR'] = SetupArgument(name='OUTDIR', default_value=None,
                                 dtype='path', required=True, depends='DATADIR',
-                                helpstr='The out directory to use')
+                                helpstr='The out directory to use',
+                                aperoname='DRS_DATA_OUT')
 # the lbl directory to use (if not using DATADIR)
 SARGS['LBLDIR'] = SetupArgument(name='LBLDIR', default_value=None,
                                 dtype='path', required=True, depends='DATADIR',
-                                helpstr='The lbl directory to use')
+                                helpstr='The lbl directory to use',
+                                aperoname='LBL_PATH')
 # the log directory to use (if not using DATADIR)
 SARGS['LOGDIR'] = SetupArgument(name='LOGDIR', default_value=None,
                                 dtype='path', required=True, depends='DATADIR',
-                                helpstr='The log directory to use')
+                                helpstr='The log directory to use',
+                                aperoname='DRS_DATA_MSG')
 # the plot directory to use (if not using DATADIR)
 SARGS['PLOTDIR'] = SetupArgument(name='PLOTDIR', default_value=None,
                                  dtype='path', required=True, depends='DATADIR',
-                                 helpstr='The plot directory to use')
+                                 helpstr='The plot directory to use',
+                                 aperoname='DRS_DATA_PLOT')
 # the run directory to use (if not using DATADIR)
 SARGS['RUNDIR'] = SetupArgument(name='RUNDIR', default_value=None,
                                 dtype='path', required=True, depends='DATADIR',
-                                helpstr='The run directory to use')
+                                helpstr='The run directory to use',
+                                aperoname='DRS_DATA_RUN')
 # the assets directory to use (if not using DATADIR)
 SARGS['ASSETSDIR'] = SetupArgument(name='ASSETSDIR', default_value=None,
                                    dtype='path', required=True,
                                    depends='DATADIR',
-                                   helpstr='The assets directory to use')
+                                   helpstr='The assets directory to use',
+                                   aperoname='DRS_DATA_ASSETS')
 # the other directory to use (if not using DATADIR)
 SARGS['OTHERDIR'] = SetupArgument(name='OTHERDIR', default_value=None,
                                   dtype='path', required=True,
                                   depends='DATADIR',
-                                  helpstr='The other directory to use')
+                                  helpstr='The other directory to use',
+                                  aperoname='DRS_DATA_OTHER')
 # whether to always create nre directories without asking user
 SARGS['FORCE_DIR_CREATE'] = SetupArgument(name='FORCE_DIR_CREATE',
                                           argname='--always-create',
@@ -144,31 +157,36 @@ SARGS['DATABASE_MODE'] = SetupArgument(name='DATABASE_MODE',
                                        default_value=DB_MODES[0],
                                        dtype='str',
                                        options=DB_MODES,
-                                       helpstr='The database mode to use')
+                                       helpstr='The database mode to use',
+                                       databasename='TYPE')
 # the database host name
 SARGS['DATABASE_HOST'] = SetupArgument(name='DATABASE_HOST',
                                        argname='--database-host',
                                        default_value='localhost',
                                        dtype='str',
-                                       helpstr='The database host')
+                                       helpstr='The database host',
+                                       databasename='HOST')
 # the database user name
 SARGS['DATABASE_USER'] = SetupArgument(name='DATABASE_USER',
                                        argname='--database-user',
                                        default_value='root',
                                        dtype='str',
-                                       helpstr='The database user')
+                                       helpstr='The database user',
+                                       databasename='USER')
 # the database password
 SARGS['DATABASE_PASS'] = SetupArgument(name='DATABASE_PASS',
                                        argname='--database-pass',
                                        default_value='None',
                                        dtype='str',
-                                       helpstr='The database password')
+                                       helpstr='The database password',
+                                       databasename='PASSWD')
 # the database name
 SARGS['DATABASE_NAME'] = SetupArgument(name='DATABASE_NAME',
                                        argname='--database-name',
                                        default_value='None',
                                        dtype='str',
-                                       helpstr='The database name')
+                                       helpstr='The database name',
+                                       databasename='DATABASE')
 # the sets dictionary for edit_dbtables
 edt_sets = dict()
 edt_sets['CALIB_DBTABLE'] = 'calib_{NAME}_db'
@@ -189,37 +207,43 @@ SARGS['CALIB_DBTABLE'] = SetupArgument(name='CALIB_DBTABLE',
                                        argname='--calibtable',
                                        default_value='calib',
                                        dtype='str', depends='EDIT_DBTABLES',
-                                       helpstr='The calibration table name')
+                                       helpstr='The calibration table name',
+                                       databasename='CALIB.PROFILE')
 # telluric table name
 SARGS['TELLU_DBTABLE'] = SetupArgument(name='TELLU_DBTABLE',
                                        argname='--tellutable',
                                        default_value='tellu',
                                        dtype='str', depends='EDIT_DBTABLES',
-                                       helpstr='The telluric table name')
+                                       helpstr='The telluric table name',
+                                       databasename='TELLU.PROFILE')
 # file index table name
 SARGS['FINDEX_DBTABLE'] = SetupArgument(name='FINDEX_DBTABLE',
                                         argname='--findextable',
                                         default_value='findex',
                                         dtype='str', depends='EDIT_DBTABLES',
-                                        helpstr='The file index table name')
+                                        helpstr='The file index table name',
+                                        databasename='FINDEX.PROFILE')
 # astrometric table name
 SARGS['ASTROM_DBTABLE'] = SetupArgument(name='ASTROM_DBTABLE',
                                         argname='--astromtable',
                                         default_value='astrom',
                                         dtype='str', depends='EDIT_DBTABLES',
-                                        helpstr='The astrometric table name')
+                                        helpstr='The astrometric table name',
+                                        databasename='ASTROM.PROFILE')
 # the reject table name
 SARGS['REJECT_DBTABLE'] = SetupArgument(name='REJECT_DBTABLE',
                                         argname='--rejecttable',
                                         default_value='reject',
                                         dtype='str', depends='EDIT_DBTABLES',
-                                        helpstr='The reject table name')
+                                        helpstr='The reject table name',
+                                        databasename='REJECT.PROFILE')
 # the log table name
 SARGS['LOG_DBTABLE'] = SetupArgument(name='LOG_DBTABLE',
                                      argname='--logtable',
                                      default_value='log',
                                      dtype='str', depends='EDIT_DBTABLES',
-                                     helpstr='The log table name')
+                                     helpstr='The log table name',
+                                     databasename='LOG.PROFILE')
 # -----------------------------------------------------------------------------
 # Other settings
 # -----------------------------------------------------------------------------
@@ -228,7 +252,8 @@ SARGS['PLOT_MODE'] = SetupArgument(name='PLOT_MODE', argname='--plotmode',
                                    default_value=0, dtype='int',
                                    options=PLOT_MODES,
                                    optiondescs=PLOT_DESCS,
-                                   helpstr='The plot mode to use')
+                                   helpstr='The plot mode to use',
+                                   aperoname='DRS_PLOT')
 # whether to start from a clean state
 SARGS['CLEAN_START'] = SetupArgument(name='CLEAN_START', argname='--clean',
                                      default_value=True, dtype='bool',

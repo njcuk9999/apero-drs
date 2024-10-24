@@ -29,7 +29,6 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy_utils import database_exists, create_database
 
 from aperocore.base import base
-from apero.base import base as apero_base
 from aperocore.base import drs_base
 
 # =============================================================================
@@ -1283,7 +1282,7 @@ class DatabaseManager:
         if 'PORT' in ddict:
             self.dbport = ddict['PORT']
         else:
-            self.dbport = apero_base.DEFAULT_DATABASE_PORT
+            self.dbport = base.DEFAULT_DATABASE_PORT
         # kind must be one of the following
         if kind is not None:
             if kind.lower() not in DATABASE_NAMES:

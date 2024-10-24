@@ -31,7 +31,7 @@ from typing import Any, IO, Dict, List, Tuple, Type, Union
 
 import numpy as np
 
-from apero.base import drs_db
+from aperocore.core import drs_db
 from apero.core import drs_database
 from apero.core import drs_file
 from apero.io import drs_fits

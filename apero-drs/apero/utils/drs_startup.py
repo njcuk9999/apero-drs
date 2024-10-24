@@ -25,7 +25,7 @@ from lbl.core.base_classes import LblException
 
 from apero import plotting
 from apero.base import base as apero_base
-from apero.base import drs_db
+from aperocore.core import drs_db
 from apero.constants import run_params
 from apero.core import drs_argument
 from apero.core import drs_database

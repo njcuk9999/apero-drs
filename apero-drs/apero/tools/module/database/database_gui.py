@@ -19,7 +19,7 @@ from pandastable import Table, TableModel, applyStyle
 from pandastable import dialogs
 
 from aperocore.base import base
-from apero.base import drs_db
+from aperocore.core import drs_db
 from aperocore.constants import load_functions
 from aperocore.core import drs_text
 from aperocore.core import drs_misc

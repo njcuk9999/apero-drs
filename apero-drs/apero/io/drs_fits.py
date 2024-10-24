@@ -38,6 +38,8 @@ from aperocore.core import drs_base_classes
 from aperocore.core import drs_misc
 from aperocore.constants import load_functions
 
+from apero.instruments import select
+
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -1108,7 +1110,7 @@ def _write_fits(params: ParamDict, filename: str, data: ListImageTable,
         if wmsg != str(warning.message):
             w1.append(warning)
     # add warnings to the warning logger and log if we have them
-    load_functions.warninglogger(params, w1)
+    load_functions.warninglogger(select.instruments, w1)
 
 
 def update_extension(params: ParamDict, filename: str, extension: int,

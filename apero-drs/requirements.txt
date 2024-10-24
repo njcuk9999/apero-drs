@@ -17,6 +17,8 @@ pandasql==0.7.3
 psutil==5.9.4
 PyYAML==6.0
 scipy==1.10.0
+SQLAlchemy==2.0.15
+sqlalchemy_utils==0.41.1
 tqdm==4.65.0
 wget==3.2
 yagmail==0.15.293
@@ -35,7 +37,5 @@ Pillow==10.2.0
 scikit-image==0.19.3
 Sphinx==7.0.1
 sphinx-toolbox==3.4.0
-SQLAlchemy==2.0.15
-sqlalchemy_utils==0.41.1
 ttkthemes==3.2.2
 xlrd==2.0.1

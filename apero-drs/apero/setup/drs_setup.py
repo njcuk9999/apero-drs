@@ -10,18 +10,20 @@ Created on 2024-10-18 at 12:05
 @author: cook
 """
 import argparse
-import string
+import os
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 
 import yaml
 
 from aperocore.base import base
 from aperocore import drs_lang
 from aperocore.constants import param_functions
+from aperocore.constants import load_functions
 from aperocore.core import drs_log
 from aperocore.core import drs_text
+
 
 # =============================================================================
 # Define variables
@@ -64,7 +66,10 @@ class SetupArgument:
                  ask: bool = True, restricted_chars: List[str] = None,
                  alt_argnames: List[str] = None,
                  stringlimit: int = None, qstr: str = None,
-                 optiondescs: List[str] = None):
+                 optiondescs: List[str] = None,
+                 aperoname: str = None,
+                 installname: str = None,
+                 databasename: str = None):
         """
         Setup argument class
 
@@ -140,7 +145,12 @@ class SetupArgument:
         self.stringlimit = stringlimit
         # set the question string
         self.question_string = qstr
-
+        # store the apero name
+        self.apero_name = aperoname
+        # store the install name
+        self.install_name = installname
+        # store the database name
+        self.database_name = databasename
 
     def parser_args(self) -> List[Any]:
         # storage for arguments
@@ -156,17 +166,18 @@ class SetupArgument:
     def parser_kwargs(self) -> Dict[str, Any]:
         # storage for kwargs
         kwargs = dict()
-        # set the parser action
-        if self.dtype == bool:
-            kwargs['action'] = 'store_true'
-        else:
-            kwargs['action'] = 'store'
         # set the default value to None - we never set this from command line
         kwargs['default'] = None
         # set the destination
         kwargs['dest'] = self.name
         # set the help string
         kwargs['help'] = self.helpstr
+        # set the parser action
+        if self.dtype in [bool, 'bool']:
+            kwargs['action'] = 'store_true'
+            return kwargs
+        else:
+            kwargs['action'] = 'store'
         # deal with type
         typetrans = dict(zip(base.SIMPLE_STYPES, base.SIMPLE_TYPES))
         if self.dtype is not None:
@@ -252,6 +263,12 @@ def command_line_args(sargs: Dict[str, SetupArgument]) -> ParamDict:
                 params.set(key, value, source=f'set[{arg.name}]')
                 # keep track of processed argnames
                 used.append(key)
+
+    # -------------------------------------------------------------------------
+    # specific arguments
+    params = fix_config_path(params)
+
+
     # return params
     return params
 
@@ -336,16 +353,113 @@ def ask_user(params: ParamDict, sargs: Dict[str, SetupArgument]) -> ParamDict:
                 value = arg.sets[key].format(**params)
                 # update value in params
                 params.set(key, value, source=f'set[{arg.name}')
-
+    # -------------------------------------------------------------------------
+    # specific arguments
+    params = fix_config_path(params)
+    # -------------------------------------------------------------------------
     return params
 
 
-def update_setup(params: ParamDict):
-    pass
+def update_setup(setup_params: ParamDict,
+                 sargs: Dict[str, SetupArgument]) -> ParamDict:
+
+    # if we have a environment variable we can get current parameters from
+    # the setup directory
+    cond1 = 'DRS_UCONFIG' in os.environ
+    cond2 = setup_params['NAME'] is not None
+    cond3 = setup_params['CONFIG_PATH'] is not None
+    # ----------------------------------------------------------------------
+    # Get the config path
+    # ----------------------------------------------------------------------
+    if (not cond1) and not (cond2 and cond3):
+        emsg = ('Cannot update setup without DRS_UCONFIG environment variable '
+                'set or --name and --config arguments set')
+        raise drs_log.AperoCodedException(None, message=emsg)
+    elif cond1:
+        # get the config path
+        config_path = os.environ['DRS_UCONFIG']
+    else:
+        # get the config path
+        config_path = setup_params['CONFIG_PATH']
+        # lets set this in os.envinron
+        os.environ['DRS_UCONFIG'] = config_path
+    # ----------------------------------------------------------------------
+    # Once DRS_UCONFIG is set we can load the parameters
+    # ----------------------------------------------------------------------
+    from apero.instruments import select
+    # get the current apero parameters
+    aparams = load_functions.load_config(select.INSTRUMENTS)
+    # get the current install parameters
+    iparams = base.load_yaml(os.path.join(config_path, 'install.yaml'))
+    # get the current database parameters
+    dparams = base.load_yaml(os.path.join(config_path, 'database.yaml'))
+    # access dparams using paths
+    dparam2path = param_functions.base_class.Path2Dict(dparams)
+    # ----------------------------------------------------------------------
+    # Update the setup parameters
+    for argname in sargs:
+        # if the argument is not in the setup parameters we skip
+        if argname not in setup_params:
+            continue
+        # get the apero name, install name and database name
+        apero_name = sargs[argname].apero_name
+        install_name = sargs[argname].install_name
+        database_name = sargs[argname].database_name
+        # if the key is in the apero parameters we update the setup parameters
+        if apero_name is not None and apero_name in aparams:
+            value = aparams[apero_name]
+            setup_params.set(argname, value, source='apero.params')
+            msg = '{0}="{1}" from apero params [{2}]'
+            margs = [apero_name, value, argname.upper()]
+            drs_text.cprint(msg.format(*margs), 'magenta')
+        # if the key is in the install parameters we update the setup parameters
+        if install_name is not None and install_name in iparams:
+            value = iparams[install_name]
+            setup_params.set(argname, value, source='apero.iparams')
+            msg = '{0}="{1}" from install params [{2}]'
+            margs = [install_name, value, argname.upper()]
+            drs_text.cprint(msg.format(*margs), 'magenta')
+        # if the key is in the database parameters we update the setup parameters
+        if database_name is not None and database_name in dparam2path:
+            # get value from a path
+            value = dparam2path[database_name]
+            setup_params.set(argname, value, source='apero.dparams')
+            msg = '{0}="{1}" from database params [{2}]'
+            margs = [database_name, value, argname.upper()]
+            drs_text.cprint(msg.format(*margs), 'magenta')
+    # -------------------------------------------------------------------------
+    # return the updated setup parameters
+    return setup_params
 
 
 def run_setup(params: ParamDict):
     pass
+
+
+# =============================================================================
+# Define other functions
+# =============================================================================
+def fix_config_path(params: ParamDict) -> ParamDict:
+    """
+    Fix the config path (make sure it ends with the name)
+
+    :param params: ParamDict, the parameters to fix
+
+    :return params: ParamDict, the fixed parameters
+    """
+    # only do this if we have both the name and config_path
+    if params['NAME'] is not None and params['CONFIG_PATH'] is not None:
+        # make sure config_path ends with the name
+        if not params['CONFIG_PATH'].endswith(params['NAME']):
+            # add the name to the end of the config_path
+            config_path = os.path.join(params['CONFIG_PATH'], params['NAME'])
+            # update parmaeters
+            params.set('CONFIG_PATH', config_path, source='command_line')
+            # need to make sure this exists
+            if not os.path.exists(config_path):
+                os.makedirs(config_path)
+    # return parameters (updated or not)
+    return params
 
 
 # =============================================================================

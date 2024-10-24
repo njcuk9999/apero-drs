@@ -16,7 +16,7 @@ from tkinter import ttk, messagebox
 from ttkthemes import ThemedTk
 
 from aperocore.base import base
-from apero.base import drs_db
+from aperocore.core import drs_db
 from aperocore.constants import param_functions
 from aperocore.core import drs_log
 from apero.tools.module.gui import gen_gui

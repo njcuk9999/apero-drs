@@ -113,6 +113,11 @@ STRTYPE[np.ndarray] = 'np.ndarray'
 # define types that we can do min and max on
 NUMBER_TYPES = [int, float]
 # -----------------------------------------------------------------------------
+# drs db settings
+# -----------------------------------------------------------------------------
+DEFAULT_DATABASE_PORT = 3306
+DEFAULT_PATH_MAXC = 1024
+# -----------------------------------------------------------------------------
 # display settings
 # -----------------------------------------------------------------------------
 # define colours (should not be used if we have access to drs_misc)

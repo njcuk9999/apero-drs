@@ -33,7 +33,7 @@ from astropy.table import Table
 from pandasql import sqldf
 
 from aperocore.base import base
-from apero.base import drs_db
+from aperocore.core import drs_db
 from aperocore.base import drs_base
 from apero.base.drs_db import DatabaseManager
 from aperocore.core.drs_base_classes import Printer

@@ -19,7 +19,7 @@ from aperocore import drs_lang
 from aperocore.core import drs_exceptions
 from aperocore.core import drs_misc
 from aperocore.core import drs_text
-from apero.instruments import select
+
 
 # =============================================================================
 # Define variables
@@ -147,7 +147,7 @@ def load_pconfig(instruments: Dict[str, Any],
                             message=emsg.format(*eargs))
 
 
-def warninglogger(params: Any, warnlist: Any,
+def warninglogger(instruments: Dict[str, Any], warnlist: Any,
                   funcname: Union[str, None] = None):
     """
     Warning logger - takes "w" - a list of caught warnings and pipes them on
@@ -162,7 +162,7 @@ def warninglogger(params: Any, warnlist: Any,
     >>     code_to_generate_warnings()
     >> warninglogger(parmas, warnlist, 'some function name for logging')
 
-    :param params: ParamDict, the constants dictionary passed in call
+    :param instruments: dictionary of instruments
     :param warnlist: list of warnings, the list of warnings from
                      warnings.catch_warnings
     :param funcname: string or None, if string then also pipes "funcname" to the
@@ -171,7 +171,7 @@ def warninglogger(params: Any, warnlist: Any,
     :return:
     """
     # get pconstant
-    pconstant = load_pconfig(select.INSTRUMENTS)
+    pconstant = load_pconfig(instruments)
     log_warnings = pconstant.LOG_CAUGHT_WARNINGS()
     # deal with warnlist as string
     if isinstance(warnlist, str):

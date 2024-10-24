@@ -15,7 +15,7 @@ import pandas as pd
 from astropy.table import Table, vstack, MaskedColumn
 
 from aperocore.base import base
-from apero.base import drs_db
+from aperocore.core import drs_db
 from aperocore import drs_lang
 from aperocore.core import drs_text
 from aperocore.constants import param_functions

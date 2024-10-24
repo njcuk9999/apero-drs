@@ -37,14 +37,17 @@ def main() -> ParamDict:
     # get command line args
     params = drs_setup.command_line_args(sargs)
     # -------------------------------------------------------------------------
-    # ask the users for any missing arguments
-    params = drs_setup.ask_user(params, sargs)
-    # -------------------------------------------------------------------------
-    # run the setup
+    # update setup
     if params['UPDATE']:
-        drs_setup.update_setup(params)
+        params = drs_setup.update_setup(params, sargs)
+    # -------------------------------------------------------------------------
+    # run setup
     else:
-        drs_setup.run_setup(params)
+        # ask the users for any missing arguments
+        params = drs_setup.ask_user(params, sargs)
+    # -------------------------------------------------------------------------
+    # run setup
+    drs_setup.run_setup(params)
     # -------------------------------------------------------------------------
     # return params
     return params

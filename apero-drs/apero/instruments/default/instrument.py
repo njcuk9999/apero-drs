@@ -19,7 +19,7 @@ from astropy import units as uu
 from astropy.table import Table
 
 from aperocore.base import base
-from apero.base import drs_db
+from aperocore.core import drs_db
 from aperocore.core import drs_misc
 from aperocore.core import drs_text
 
