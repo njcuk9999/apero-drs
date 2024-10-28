@@ -377,8 +377,11 @@ def compile_recipe_data(params: ParamDict) -> TableFile:
     for c_it, col in enumerate(ari_core.LOG_COLUMNS):
         # deal with bools
         if ari_core.LOG_TYPES[c_it] == 'bool':
-            # find null values
-            mask = (log_table[col] == 1) | (log_table[col] == 0)
+            # convert log table to string (may be mixed null + floats)
+            str_log_table = log_table[col].astype(str)
+            # find real integers (nulls should now be False - everything else
+            #   should be True)
+            mask = np.in1d(str_log_table, ['0.0', '1.0', '0', '1'])
             # convert log_table column to bools replacing
             #   null values with 0 and then convert to string and fill
             #   null values with blanks
