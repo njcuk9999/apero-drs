@@ -749,6 +749,7 @@ class Wlog:
     Wlog class to handle logging messages from the code - and storing the
     log classes so we don't create them multiple times
     """
+    class_name = 'Wlog'
     # log class storage
     log_classes = dict()
     # minimal parameter definitions
@@ -839,6 +840,8 @@ class Wlog:
 
         :return: dict, the minimal parameters for the log class
         """
+        # define function name
+        func_name = f'{__NAME__}.{self.class_name}.minimal_params()'
         # if we have done this before don't check again
         if self.dparams is not None:
             return self.dparams
@@ -851,16 +854,17 @@ class Wlog:
         if params is None:
             for key in self.mparams:
                 dparams[key] = self.mparams[key]
+            # set dparams
+            self.dparams = dparams
         # else we try to set them from params first
         else:
             # loop around minimal params
             for key in self.mparams:
                 if key not in params:
-                    dparams[key] = self.mparams[key]
-                else:
-                    dparams[key] = params[key]
-        # set dparams
-        self.dparams = dparams
+                    params[key] = self.mparams[key]
+                    params.set(key, self.mparams[key], source=func_name)
+            # set dparams
+            self.dparams = params
         # return dparams
         return dparams
 
