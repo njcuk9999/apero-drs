@@ -861,7 +861,6 @@ class Wlog:
             # loop around minimal params
             for key in self.mparams:
                 if key not in params:
-                    params[key] = self.mparams[key]
                     params.set(key, self.mparams[key], source=func_name)
             # set dparams
             self.dparams = params
