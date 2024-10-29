@@ -845,17 +845,19 @@ class Wlog:
         # if we have done this before don't check again
         if self.dparams is not None:
             return self.dparams
-        # storage for dparams (set at end to avoid errors)
-        if dict_class is not None:
-            dparams = dict_class()
-        else:
-            dparams = dict()
         # if we don't have any parameters at all set them all from yaml file
         if params is None:
+            # storage for dparams (set at end to avoid errors)
+            if dict_class is not None:
+                dparams = dict_class()
+            else:
+                dparams = dict()
             for key in self.mparams:
                 dparams[key] = self.mparams[key]
             # set dparams
             self.dparams = dparams
+            # return dparams
+            return dparams
         # else we try to set them from params first
         else:
             # loop around minimal params
@@ -864,8 +866,8 @@ class Wlog:
                     params.set(key, self.mparams[key], source=func_name)
             # set dparams
             self.dparams = params
-        # return dparams
-        return dparams
+            # return dparams
+            return params
 
     def get_log(self, params: Any) -> Log:
         """
