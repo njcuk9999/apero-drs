@@ -763,8 +763,6 @@ class Wlog:
     mparams['DRS_LOG_SUBLEVEL_DIV_CHAR'] = LOGYAML['DRS_LOG_SUBLEVEL_DIV_CHAR']
     mparams['DRS_DATA_MSG'] = base.get_default_log_dir()
     mparams['DRS_HEADER'] = '*' * 50
-    # default parameters (either from params or mparams)
-    dparams = None
 
     def __call__(self, params: Any = None, key: str = '',
                  message: Union[drs_lang.Text, str, None] = None,
@@ -842,9 +840,6 @@ class Wlog:
         """
         # define function name
         func_name = f'{__NAME__}.{self.class_name}.minimal_params()'
-        # if we have done this before don't check again
-        if self.dparams is not None:
-            return self.dparams
         # if we don't have any parameters at all set them all from yaml file
         if params is None:
             # storage for dparams (set at end to avoid errors)
@@ -854,8 +849,6 @@ class Wlog:
                 dparams = dict()
             for key in self.mparams:
                 dparams[key] = self.mparams[key]
-            # set dparams
-            self.dparams = dparams
             # return dparams
             return dparams
         # else we try to set them from params first
@@ -864,8 +857,6 @@ class Wlog:
             for key in self.mparams:
                 if key not in params:
                     params.set(key, self.mparams[key], source=func_name)
-            # set dparams
-            self.dparams = params
             # return dparams
             return params
 
