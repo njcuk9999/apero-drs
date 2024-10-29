@@ -566,7 +566,6 @@ def user_input(question: str, dtype: Union[str, type, None] = None,
     :param question: str, the question to ask
     :param dtype: str, the data type (int/float/bool/str/path/YN)
     :param options: list, list of valid options
-    :param optiondesc: list, list of option descriptions
     :param default: object, if set the default value, if unset a value
                     if required
     :param required: bool, if False and dtype=path does not create a path

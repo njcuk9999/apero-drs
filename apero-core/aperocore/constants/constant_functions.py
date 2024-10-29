@@ -80,7 +80,7 @@ class Const:
                  active: bool = False, description: Union[str, None] = None,
                  author: Union[str, List[str], None] = None,
                  parent: Union[str, None] = None,
-                 output: bool = True):
+                 output: bool = True, not_none: bool = False):
         """
         Construct the constant instance
 
@@ -107,6 +107,8 @@ class Const:
         :param parent: str, the parent of this constant (if a constant is
                        related to or comes from another constant)
         :param output: bool if False does not put in parameter output table
+        :param not_none: bool, if True the constant is required and prompts
+                         may ask for this value if set to None
 
         :returns: None (constructor)
         """
@@ -160,6 +162,8 @@ class Const:
         self.parent = parent
         # set true value
         self.true_value = None
+        # set not none
+        self.not_none = not_none
 
     def __getstate__(self) -> dict:
         """
@@ -393,7 +397,8 @@ class ConstantsDict:
                  active: bool = False, description: Union[str, None] = None,
                  author: Union[str, List[str], None] = None,
                  parent: Union[str, None] = None,
-                 output: bool = True):
+                 output: bool = True,
+                 not_none: bool = False):
         """
         Add a constant instance to the dict
 
@@ -420,6 +425,8 @@ class ConstantsDict:
         :param parent: str, the parent of this constant (if a constant is
                        related to or comes from another constant)
         :param output: bool if False does not put in parameter output table
+        :param not_none: bool, if True the constant is required and prompts
+                         may ask for this value if set to None
 
         :returns: None (constructor)
         """
@@ -433,7 +440,8 @@ class ConstantsDict:
         # create constant
         constants = Const(name, value, dtype, dtypei, options, maximum, minimum,
                           source, unit, default, datatype, dataformat, group,
-                          user, active, description, author, parent, output)
+                          user, active, description, author, parent, output,
+                          not_none)
         # add to storage
         self.storage[name] = constants
 
@@ -697,7 +705,7 @@ class ConstantsDict:
 
         :return: str, the section comment
         """
-        comment = '\n' + '=' * 77 + '\n' + section_title
+        comment = '\n\n' + '=' * 77 + '\n' + section_title
         comment += '\n' + '=' * 77 + '\n'
         return comment
 
