@@ -372,6 +372,8 @@ class ConstantsDict:
     """
     # title for output yaml
     title: str = ''
+    # groups for output yaml
+    groups: Dict[str, str] = dict()
     
     def __init__(self, source: str):
         self.storage: Dict[str, Const] = dict()
@@ -566,7 +568,10 @@ class ConstantsDict:
         # return new constants
         return new_constants
 
-    def save(self, params: Any = None, log: bool = True, outpath: str = None,
+    # -------------------------------------------------------------------------
+    # yaml functionality
+    # -------------------------------------------------------------------------
+    def save_yaml(self, params: Any = None, log: bool = True, outpath: str = None,
              mode: str = None) -> str:
         """
         Create a yaml file from input parameters
@@ -581,6 +586,8 @@ class ConstantsDict:
         if params is None:
             params = dict()
         # ---------------------------------------------------------------------
+        # storage of used groups
+        used_groups = []
         # create a commented map instance
         data = CommentedMap()
         # add the start comment
@@ -592,11 +599,21 @@ class ConstantsDict:
             # if there is no comment don't add
             if comment is None:
                 continue
-
             # if this is not a user constant skip
             if not self.storage[key].user:
                 continue
-
+            # -----------------------------------------------------------------
+            # deal with new group
+            group = self.storage[key].group
+            # we only both if variable has a group and group is set
+            if group is not None and group in self.groups:
+                # if group has heading then we don't add it again
+                if group not in used_groups:
+                    # get group description
+                    group_desc = self.groups[group]
+                    # modify the comment
+                    comment = self.add_yaml_section(group_desc) + comment
+            # -----------------------------------------------------------------
             # remove new lines at start/end of comment
             if not comment.startswith('\n\n'):
                 comment = comment.strip('\n')
@@ -648,6 +665,26 @@ class ConstantsDict:
         # -------------------------------------------------------------------------
         # return the yaml file path
         return outpath
+
+    @staticmethod
+    def yaml_title(name, setup_program):
+        comment = '\n\n\n' + '#' * 77 + name + '\n' + '=' * 77 + '\n'
+        comment += f'    Version = {__version__}\n'
+        comment += f'    Date    = {__date__}\n'
+        comment += (f'If using a different version it is recommended to '
+                    f'run {setup_program} to generate a new yaml file.\n\n')
+        return comment
+
+    @staticmethod
+    def add_yaml_section(section_title):
+        comment = '\n\n\n' + '=' * 77 + section_title + '\n' + '=' * 77 + '\n'
+        return comment
+
+    def add_group(self, groupname, groupdesc):
+        """
+        Add a group for the yaml file
+        """
+        self.groups[groupname] = groupdesc
 
 
 class Keyword(Const):
