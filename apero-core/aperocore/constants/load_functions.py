@@ -340,10 +340,6 @@ def _load_from_yaml(files: List[str], instances: Dict[str, Any]
     return out_values, out_sources, out_instances
 
 
-
-
-
-
 # =============================================================================
 # Start of code
 # =============================================================================

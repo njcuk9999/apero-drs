@@ -16,6 +16,7 @@ only from
 from typing import Any, Union
 
 from aperocore.base import base
+from aperocore.drs_lang import textentry
 
 # =============================================================================
 # Define variables
@@ -189,7 +190,7 @@ class DrsCodedException(DrsException):
         if self.message is not None:
             message = str(self.message)
         else:
-            message = f'E[{self.codeid}]'
+            message = f'E[{self.codeid}]' + textentry(self.codeid, self.targs)
         return message
 
     def get(self, key: str, default: Any):
@@ -276,15 +277,7 @@ class DrsCodedWarning:
         The string representation of the error: used as message when raised
         :return:
         """
-        if self.message is None:
-            message = f'W[{self.codeid}]'
-        else:
-            message = self.message
-
-        if self.codeid is not None:
-            print(f'[{self.codeid}]: {message}')
-        else:
-            print(message)
+        return self.get_text()
 
     def __repr__(self):
         """
@@ -292,6 +285,13 @@ class DrsCodedWarning:
         :return:
         """
         return self.__str__()
+
+    def get_text(self):
+        if self.message is not None:
+            message = str(self.message)
+        else:
+            message = f'E[{self.codeid}]' + textentry(self.codeid, self.targs)
+        return message
 
     def get(self, key: str, default: Any):
         """
