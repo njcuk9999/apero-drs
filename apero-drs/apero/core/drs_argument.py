@@ -2961,6 +2961,9 @@ class DrsArgument(object):
         # deal with required (for optional arguments)
         if self.kind != 'arg':
             self.props['required'] = self.required
+        # if positional argumnet is not required we set nargs to '?'
+        elif self.kind == 'arg' and not self.required:
+            self.props['nargs'] = '?'
         # add help string
         self.props['help'] = self.helpstr
 

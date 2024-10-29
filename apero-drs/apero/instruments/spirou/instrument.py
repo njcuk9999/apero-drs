@@ -818,7 +818,7 @@ class Spirou(instrument_mod.Instrument):
         # column definitions
         index_cols = DatabaseColumns()
         index_cols.add(name='ABSPATH', is_unique=True,
-                       datatype=sqlalchemy.String(apero_base.DEFAULT_PATH_MAXC))
+                       datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC))
         index_cols.add(name='OBS_DIR', datatype=sqlalchemy.String(200),
                        is_index=True)
         index_cols.add(name='FILENAME', is_index=True,

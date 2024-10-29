@@ -119,6 +119,46 @@ def setup(name: str = 'None', instrument: str = 'None',
               dictionary for constants (ParamDict)
     :rtype: Tuple[DrsRecipe, ParamDict]
     """
+    try:
+        return __setup__(name, instrument, fkwargs, quiet, threaded,
+                         enable_plotter, rmod)
+    except (DrsCodedException, drs_log.DrsLogException):
+        end_all(None, False, recipename=name)
+        sys.exit()
+
+
+def __setup__(name: str = 'None', instrument: str = 'None',
+          fkwargs: Union[Dict[str, Any], None] = None, quiet: bool = False,
+          threaded: bool = False, enable_plotter: bool = True,
+          rmod: Any = None) -> Tuple[DrsRecipe, ParamDict]:
+    """
+    Recipe setup script for recipe "name" and "instrument"
+
+    :param name: string, the name of the recipe, if 'None', assumes there is no
+                   recipe set
+    :param instrument: string, the instrument name, if 'None' assumes there is
+                       no instrument set
+    :param fkwargs: dictionary or None, argument keywords
+    :param quiet: bool, if True does not print out setup text
+    :param threaded: bool, if True we have a parallel process so do not
+                     catch SIGINT as normal
+    :param enable_plotter: bool, if True do not enable plotter
+    :param rmod: object, a custom recipe defintion to use (for testing
+                 purposes only)
+
+    :type name: str
+    :type instrument: str
+    :type fkwargs: dict
+    :type quiet: bool
+    :type threaded: bool
+    :type enable_plotter: bool
+
+    :exception SystemExit: on caught errors
+
+    :returns: returns the recipe instance (DrsRecipe) and parameter
+              dictionary for constants (ParamDict)
+    :rtype: Tuple[DrsRecipe, ParamDict]
+    """
     # set function name
     func_name = display_func('setup', __NAME__)
     # start time
@@ -569,6 +609,38 @@ def run(func: Any, recipe: DrsRecipe,
     return llmain, success
 
 
+def end_all(params: ParamDict = None, success: bool = True,
+            quiet: bool = False, recipename: str = '') -> None:
+    """
+    Quick end script
+    """
+    if params is None:
+        params = drs_log.DPARAMS
+    # get the time now
+    end = time.time()
+    if 'PROG_START' in params:
+        duration = end - params['PROG_START']
+    else:
+        duration = None
+    # log the success (or failure)
+    if success and (not quiet):
+        iargs = [str(params['RECIPE'])]
+        WLOG(params, 'info', params['DRS_HEADER'])
+        msg = textentry('40-003-00001', args=iargs)
+        if duration is not None:
+            msg += f'\t({duration:.3f} seconds)'
+        WLOG(params, 'info', msg)
+        WLOG(params, 'info', params['DRS_HEADER'])
+    elif not quiet:
+        wargs = [str(params.get('RECIPE', recipename))]
+        WLOG(params, 'info', params['DRS_HEADER'], colour='red')
+        msg = textentry('40-003-00005', args=wargs)
+        if duration is not None:
+            msg += f'\t({duration:.3f} seconds)'
+        WLOG(params, 'warning', msg, colour='red', sublevel=8)
+        WLOG(params, 'info', params['DRS_HEADER'], colour='red')
+
+
 def end_main(params: ParamDict, llmain: Union[Dict[str, Any], None],
              recipe: DrsRecipe, success: bool, outputs: str = 'red',
              end: bool = True, quiet: bool = False,
@@ -632,29 +704,7 @@ def end_main(params: ParamDict, llmain: Union[Dict[str, Any], None],
     # -------------------------------------------------------------------------
     # log end message
     if end:
-        # get the time now
-        end = time.time()
-        if 'PROG_START' in params:
-            duration = end - params['PROG_START']
-        else:
-            duration = None
-        # log the success (or failure)
-        if success and (not quiet):
-            iargs = [str(params['RECIPE'])]
-            WLOG(params, 'info', params['DRS_HEADER'])
-            msg = textentry('40-003-00001', args=iargs)
-            if duration is not None:
-                msg += f'\t({duration:.3f} seconds)'
-            WLOG(params, 'info', msg)
-            WLOG(params, 'info', params['DRS_HEADER'])
-        elif not quiet:
-            wargs = [str(params['RECIPE'])]
-            WLOG(params, 'info', params['DRS_HEADER'], colour='red')
-            msg = textentry('40-003-00005', args=wargs)
-            if duration is not None:
-                msg += f'\t({duration:.3f} seconds)'
-            WLOG(params, 'warning', msg, colour='red', sublevel=8)
-            WLOG(params, 'info', params['DRS_HEADER'], colour='red')
+        end_all(params, success, quiet=quiet)
         # ---------------------------------------------------------------------
         # deal with logging (if log exists in recipe)
         if success and recipe.log is not None:

@@ -646,23 +646,28 @@ class DrsRecipe(object):
         if name is None:
             name = 'Arg{0}'.format(len(self.args) + 1)
         # create argument
-        try:
-            argument = DrsArgument(name, kind='arg', pos=pos, altnames=altnames,
-                                   dtype=dtype, options=options,
-                                   helpstr=helpstr, files=files, path=path,
-                                   limit=limit, minimum=minimum,
-                                   maximum=maximum, filelogic=filelogic,
-                                   default=default, default_ref=default_ref,
-                                   required=required, reprocess=reprocess)
-        except DrsCodedException as e:
-            WLOG(None, 'error', e.get_text())
-            raise SystemExit()
+        argument = DrsArgument(name, kind='arg', pos=pos, altnames=altnames,
+                               dtype=dtype, options=options,
+                               helpstr=helpstr, files=files, path=path,
+                               limit=limit, minimum=minimum,
+                               maximum=maximum, filelogic=filelogic,
+                               default=default, default_ref=default_ref,
+                               required=required, reprocess=reprocess)
         # make arg parser properties
         argument.make_properties()
         # recast name
         name = argument.name
         # add to arg list
         self.args[name] = argument
+        # need to check that if required is set to False we don't have two
+        # arguments
+        if required is not None:
+            if not required and len(self.args) > 1:
+                # TODO: Add to language class
+                emsg = ('Cannot have more than one optional positional '
+                        'argument in recipe {0} (argument {1})')
+                eargs = [self.name, name]
+                raise DrsCodedException('', message=emsg.format(*eargs))
 
     def set_kwarg(self, name: Union[str, None] = None,
                   altnames: Union[List[str], None] = None,

@@ -35,7 +35,7 @@ from pandasql import sqldf
 from aperocore.base import base
 from aperocore.core import drs_db
 from aperocore.base import drs_base
-from apero.base.drs_db import DatabaseManager
+from aperocore.core.drs_db import DatabaseManager
 from aperocore.core.drs_base_classes import Printer
 from aperocore.constants import param_functions
 from aperocore.constants import load_functions

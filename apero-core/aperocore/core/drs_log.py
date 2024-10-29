@@ -56,6 +56,9 @@ DPARAMS['WRITE_LEVELS'] = dict(error=3, warning=2, info=1,
                                graph=0, all=0, debug=0)
 DPARAMS['REPORT_KEYS'] = dict(error=True, warning=True, info=False,
                               graph=False, all=False, debug=False)
+DPARAMS['DRS_HEADER'] = '*' * 50
+DPARAMS['DRS_LOG_SUBLEVEL_DIV'] = 5
+DPARAMS['DRS_LOG_SUBLEVEL_DIV_CHAR'] = dict(LOW='$', HIGH='!')
 
 
 # =============================================================================
@@ -810,9 +813,6 @@ class Wlog:
                 log.warning(**log_kwargs)
             elif key == 'error':
                 log.error(**log_kwargs)
-                # only raise exception if raise_exception is True
-                if raise_exception:
-                    raise DrsCodedException(message2)
             elif key == 'general':
                 log.general(**log_kwargs)
             elif key == 'debug':
@@ -821,6 +821,10 @@ class Wlog:
                 log.general(**log_kwargs)
             # increment counter
             counter += 1
+        # deal with old way of exiting with an error
+        if key == 'error' and raise_exception:
+            raise DrsLogException('\n'.join(messages2))
+
 
     def get_log(self, params: Any) -> Log:
         """
@@ -911,7 +915,7 @@ class AperoCodedException(DrsCodedException):
         # set targs
         self.targs = targs
         # if we have a code
-        if self.code is not None and self.message is None:
+        if self.code is not None and message is None:
             # set code
             self.code = code
             # set the message from the code

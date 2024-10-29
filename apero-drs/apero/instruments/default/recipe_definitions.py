@@ -44,6 +44,7 @@ drs_recipe = drs_recipe.DrsRecipe
 ari = drs_recipe(__INSTRUMENT__)
 astrometric = drs_recipe(__INSTRUMENT__)
 changelog = drs_recipe(__INSTRUMENT__)
+execute = drs_recipe(__INSTRUMENT__)
 explorer = drs_recipe(__INSTRUMENT__)
 get_files = drs_recipe(__INSTRUMENT__)
 go_recipe = drs_recipe(__INSTRUMENT__)
@@ -66,7 +67,7 @@ validate = drs_recipe(__INSTRUMENT__)
 visulise = drs_recipe(__INSTRUMENT__)
 
 # push into a list
-recipes = [ari, astrometric, changelog, database_mgr, explorer,
+recipes = [ari, astrometric, changelog, database_mgr, explorer, execute,
            get_files, go_recipe, langdb, listing,
            precheck, processing, remake_db, remake_doc, req_check,
            reject, remove, reset, run_ini,
@@ -106,6 +107,22 @@ recipes = [ari, astrometric, changelog, database_mgr, explorer,
 raw_recipe = drs_recipe(__INSTRUMENT__)
 pp_recipe = drs_recipe(__INSTRUMENT__)
 out_recipe = drs_recipe(__INSTRUMENT__)
+
+
+# -----------------------------------------------------------------------------
+# apero_execute.py
+# -----------------------------------------------------------------------------
+execute.name = 'apero_execute.py'
+execute.shortname = 'EXEC'
+execute.instrument = __INSTRUMENT__
+execute.description = 'Run an apero recipe'
+execute.recipe_type = 'nolog-tool'
+execute.recipe_kind = 'user'
+execute.set_arg(pos=0, name='recipe', default='None', dtype=str,
+                required=False)
+execute.set_kwarg(name='--recipes', dtype=str, default='None',
+                  helpstr='Display a list of available recipes')
+
 
 # -----------------------------------------------------------------------------
 # apero_ri.py
