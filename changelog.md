@@ -2,6 +2,72 @@ Changelog
 =========
 
 
+0.7.291 (2024-10-28)
+--------------------
+- [ARI] Quick fix for future warning in ARI with log_cols mixed between
+  Null, 1, 0. [Neil Cook]
+- [APERO] apero_remove.py can now remove raw entries from database with
+  --rawdb argument. [Neil Cook]
+- [APERO] drs_astrometrics.py - clean up aliases. [Neil Cook]
+- Merge branch 'v0.7.290-stable-test' into v0.7.291-live. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.290-stable-test' into
+  v0.7.290-stable-test. [Neil Cook]
+- [ARI] Add CRUNFILE column to recipe table. [Neil Cook]
+- Merge branch 'refs/heads/v0.7.290-stable-test' into v0.7.291-live.
+  [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.290-stable-test' into
+  v0.7.290-stable-test. [Neil Cook]
+- Update requirements_current.txt. [larnoldgithub]
+
+  Ok could finf how to edit.   I did correct the typo 'gspraed'
+- Merge remote-tracking branch 'origin/v0.7.290-stable-test' into
+  v0.7.290-stable-test. [Neil Cook]
+- Update requirements_developer.txt. [larnoldgithub]
+
+  corrected a typo   gspraed instead of gspread
+- [APERO] update requirements (force gspread version) [Neil Cook]
+- [APERO] update requirements (force gspread version) [Neil Cook]
+- [APERO] update requirements (force gspread version) [Neil Cook]
+- [APERO] update requirements (force gspread version) [Neil Cook]
+- [APERO] update requirements (force gspread version) [Neil Cook]
+- [APERO] try to prevent problems with google sheets (astrometrics +
+  reject) [Neil Cook]
+- Merge branch 'refs/heads/v0.7.290-stable-test' into v0.7.290-live.
+  [Neil Cook]
+- [APERO REJECT] Clean identifiers of some basic errors (should not be a
+  path or a filename) [Neil Cook]
+- [APERO] Deal with trigger run and idb_len=0 v0.7.290 [Issue #776]
+  [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.290-stable-test' into
+  v0.7.290-stable-test. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.290-stable-test' into
+  v0.7.290-stable-test. [Neil Cook]
+- [APERO ARI] better error for Exception (reason for obj failing) [Neil
+  Cook]
+- [APERO] Allow fkwargs to have a 'threaded' argument before using
+  threaded variable v0.7.290 [Issue #777] [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.290-stable-test' into
+  v0.7.290-stable-test. [Neil Cook]
+- [APERO] Fixes for CCF errors [Issues
+  https://github.com/njcuk9999/apero-drs/issues/768,
+  https://github.com/njcuk9999/apero-drs/issues/769,
+  https://github.com/njcuk9999/apero-drs/issues/770] [Neil Cook]
+- [APERO] Fix for not being allowed duplicated in pending table [Issue
+  https://github.com/njcuk9999/apero-utils/issues/261 and Issue
+  https://github.com/njcuk9999/apero-drs/issues/772] [Neil Cook]
+- [APERO] Fix for astrometrics being allowed blank aliases [Issue
+  https://github.com/njcuk9999/apero-utils/issues/261 and Issue
+  https://github.com/njcuk9999/apero-drs/issues/772] [Neil Cook]
+- [APERO] PP_SCI sequence filter by DPRTYPE [Issue #775] [Neil Cook]
+- Merge branch 'refs/heads/v0.7.290-live' into v0.7.290-stable-test.
+  [Neil Cook]
+- [APERO] Fix problem with --filetype in apero_mk_template [Issue
+  https://github.com/njcuk9999/apero-utils/issues/264] [Neil Cook]
+- [APERO] Add doc string for _find_special_targets. [Neil Cook]
+- [APERO] Deal with SCIENCE_TARGETS not being in astrometric database
+  [Issue #780] [Neil Cook]
+
+
 0.7.290 (2024-08-06)
 --------------------
 - [NIRPS] Fix the orders remove in telluric pre-cleaning (was 47-48 now
