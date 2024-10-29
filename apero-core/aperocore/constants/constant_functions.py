@@ -613,6 +613,8 @@ class ConstantsDict:
                     group_desc = self.groups[group]
                     # modify the comment
                     comment = self.add_yaml_section(group_desc) + comment
+                    # add group to used groups
+                    used_groups.append(group)
             # -----------------------------------------------------------------
             # remove new lines at start/end of comment
             if not comment.startswith('\n\n'):
@@ -667,17 +669,18 @@ class ConstantsDict:
         return outpath
 
     @staticmethod
-    def yaml_title(name, setup_program):
-        comment = '\n\n\n' + '#' * 77 + name + '\n' + '=' * 77 + '\n'
-        comment += f'    Version = {__version__}\n'
-        comment += f'    Date    = {__date__}\n'
+    def yaml_title(name, setup_program, version, date):
+        comment = '#' * 77 + '\n' + name + '\n' + '=' * 77 + '\n'
+        comment += f'    Version = {version}\n'
+        comment += f'    Date    = {date}\n'
         comment += (f'If using a different version it is recommended to '
                     f'run {setup_program} to generate a new yaml file.\n\n')
         return comment
 
     @staticmethod
     def add_yaml_section(section_title):
-        comment = '\n\n\n' + '=' * 77 + section_title + '\n' + '=' * 77 + '\n'
+        comment = '\n\n\n' + '=' * 77 + '\n' + section_title
+        comment += '\n' + '=' * 77 + '\n'
         return comment
 
     def add_group(self, groupname, description):
