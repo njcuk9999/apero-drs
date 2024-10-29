@@ -45,20 +45,8 @@ DrsLogException = drs_exceptions.DrsLogException
 DrsCodedException = drs_exceptions.DrsCodedException
 # Regular expression to match ANSI escape sequences
 ANSI_ESCAPE = re.compile(r'\x1B[@-_][0-?]*[ -/]*[@-~]')
-# Define a default set of minimum params that are required for logging
-DPARAMS = dict()
-DPARAMS['DRS_DATA_MSG'] = base.get_default_log_dir()
-DPARAMS['DRS_RECIPE_TYPE'] = 'default'
-DPARAMS['DRS_LOG_CHAR_LEN'] = 80
-DPARAMS['LOG_TRIG_KEYS'] = dict(all='  ', error='!!', warning='@@',
-                               info='**', graph='~~', debug='++')
-DPARAMS['WRITE_LEVELS'] = dict(error=3, warning=2, info=1,
-                               graph=0, all=0, debug=0)
-DPARAMS['REPORT_KEYS'] = dict(error=True, warning=True, info=False,
-                              graph=False, all=False, debug=False)
-DPARAMS['DRS_HEADER'] = '*' * 50
-DPARAMS['DRS_LOG_SUBLEVEL_DIV'] = 5
-DPARAMS['DRS_LOG_SUBLEVEL_DIV_CHAR'] = dict(LOW='$', HIGH='!')
+# log yaml
+LOGYAML = base.__YAML__['LOG']
 
 
 # =============================================================================
@@ -761,7 +749,21 @@ class Wlog:
     Wlog class to handle logging messages from the code - and storing the
     log classes so we don't create them multiple times
     """
+    # log class storage
     log_classes = dict()
+    # minimal parameter definitions
+    mparams = dict()
+    mparams['DRS_RECIPE_TYPE'] = LOGYAML['DRS_RECIPE_TYPE']
+    mparams['DRS_LOG_CHAR_LEN'] = LOGYAML['DRS_LOG_CHAR_LEN']
+    mparams['LOG_TRIG_KEYS'] = LOGYAML['LOG_TRIG_KEYS']
+    mparams['WRITE_LEVELS'] = LOGYAML['WRITE_LEVELS']
+    mparams['REPORT_KEYS'] = LOGYAML['REPORT_KEYS']
+    mparams['DRS_LOG_SUBLEVEL_DIV'] = LOGYAML['DRS_LOG_SUBLEVEL_DIV']
+    mparams['DRS_LOG_SUBLEVEL_DIV_CHAR'] = LOGYAML['DRS_LOG_SUBLEVEL_DIV_CHAR']
+    mparams['DRS_DATA_MSG'] = base.get_default_log_dir()
+    mparams['DRS_HEADER'] = '*' * 50
+    # default parameters (either from params or mparams)
+    dparams = None
 
     def __call__(self, params: Any = None, key: str = '',
                  message: Union[drs_lang.Text, str, None] = None,
@@ -772,9 +774,8 @@ class Wlog:
         Main function to log messages from the code
         """
         # ---------------------------------------------------------------------
-        # deal with params not being set
-        if params is None:
-            params = DPARAMS
+        # deal with default params not being set
+        params = self.minimal_params(params)
         # ---------------------------------------------------------------------
         # get the logger instance
         log = self.get_log(params)
@@ -825,6 +826,33 @@ class Wlog:
         if key == 'error' and raise_exception:
             raise DrsLogException('\n'.join(messages2))
 
+    def minimal_params(self, params: Any) -> Dict[str, Any]:
+        """
+        We set the minimal parameters for the log class
+
+        These are either taken from user input or from default values
+        """
+        # if we have done this before don't check again
+        if self.dparams is not None:
+            return self.dparams
+        # storage for dparams (set at end to avoid errors)
+        dparams = dict()
+        # if we don't have any parameters at all set them all from yaml file
+        if params is None:
+            for key in self.mparams:
+                dparams[key] = base.__YAML__['LOG'][key]
+        # else we try to set them from params first
+        else:
+            # loop around minimal params
+            for key in self.mparams:
+                if key not in params:
+                    dparams[key] = base.__YAML__['LOG'][key]
+                else:
+                    dparams[key] = params[key]
+        # set dparams
+        self.dparams = dparams
+        # return dparams
+        return dparams
 
     def get_log(self, params: Any) -> Log:
         """

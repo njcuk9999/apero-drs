@@ -17,3 +17,34 @@ DEFAULT_LANG: ENG
 LANGUAGES:
     - ENG
     - FR
+# -----------------------------------------------------------------------------
+# Minimal log settings
+# -----------------------------------------------------------------------------
+LOG:
+    DRS_RECIPE_TYPE: 'default'
+    DRS_LOG_CHAR_LEN: 80
+    LOG_TRIG_KEYS:
+        all: '  '
+        error: '!!'
+        warning: '@@'
+        info: '**'
+        graph: '~~'
+        debug: '++'
+    WRITE_LEVELS:
+        error: 3
+        warning: 2
+        info: 1
+        graph: 0
+        all: 0
+        debug: 0
+    REPORT_KEYS:
+        error: True
+        warning: True
+        info: False
+        graph: False
+        all: False
+        debug: False
+    DRS_LOG_SUBLEVEL_DIV: 5
+    DRS_LOG_SUBLEVEL_DIV_CHAR:
+        LOW: '$'
+        HIGH: '!'

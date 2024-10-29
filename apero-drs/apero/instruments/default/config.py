@@ -543,9 +543,9 @@ CDict.add('LOG_TRIG_KEYS',
           description=('The log trigger key characters to use in log. '
                          'Keys must be the same as WRITE_LEVELS()'))
 
-#         The write levels. Keys must be the same as LOG_TRIG_KEYS()
-#         The write levels define which levels are logged and printed (based on
-#         constants "PRINT_LEVEL" and "LOG_LEVEL" in the primary config file
+# The write levels. Keys must be the same as LOG_TRIG_KEYS()
+# The write levels define which levels are logged and printed (based on
+# constants "PRINT_LEVEL" and "LOG_LEVEL" in the primary config file
 CDict.add('WRITE_LEVELS',
           value=dict(error=3, warning=2, info=1,
                      graph=0, all=0, debug=0),

@@ -74,8 +74,6 @@ def load_config(instruments: Dict[str, Any],
         return CONFIG_CACHE[instrument].copy()
     # otherwise get instrument class
     instrument_instance = load_pconfig(instruments, instrument)
-    # get constants from instrument
-    instrument_instance.get_constants()
     # get constants from modules
     values, sources, instances = instrument_instance.get_constants()
     # push into a parameter dictionary
