@@ -630,7 +630,7 @@ class ConstantsDict:
             # get modes
             modes = self.storage[key].modes
             # deal with no mode
-            if modes is None:
+            if modes is None or mode is None:
                 in_mode = True
             else:
                 in_mode = mode in modes
