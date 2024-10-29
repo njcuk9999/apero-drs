@@ -826,27 +826,37 @@ class Wlog:
         if key == 'error' and raise_exception:
             raise DrsLogException('\n'.join(messages2))
 
-    def minimal_params(self, params: Any) -> Dict[str, Any]:
+    def minimal_params(self, params: Any,
+                       dict_class: Optional[Any] = None) -> Any:
         """
         We set the minimal parameters for the log class
 
         These are either taken from user input or from default values
+
+        :param params: Any, the parameters to get the log class for
+        :param dict_class: Any, the dictionary class to use (default None uses
+                           dict(), but ParamDict can be used and returned)
+
+        :return: dict, the minimal parameters for the log class
         """
         # if we have done this before don't check again
         if self.dparams is not None:
             return self.dparams
         # storage for dparams (set at end to avoid errors)
-        dparams = dict()
+        if dict_class is not None:
+            dparams = dict_class()
+        else:
+            dparams = dict()
         # if we don't have any parameters at all set them all from yaml file
         if params is None:
             for key in self.mparams:
-                dparams[key] = base.__YAML__['LOG'][key]
+                dparams[key] = self.mparams[key]
         # else we try to set them from params first
         else:
             # loop around minimal params
             for key in self.mparams:
                 if key not in params:
-                    dparams[key] = base.__YAML__['LOG'][key]
+                    dparams[key] = self.mparams[key]
                 else:
                     dparams[key] = params[key]
         # set dparams
