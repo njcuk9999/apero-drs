@@ -33,11 +33,11 @@ from astropy.time import Time, TimeDelta
 __PACKAGE__ = 'apero'
 __PATH__ = Path(__file__).parent.parent
 __INSTRUMENT__ = 'None'
-__version__ = '0.7.290'
+__version__ = '0.7.291'
 __author__ = ['N. Cook', 'E. Artigau', 'F. Bouchy', 'M. Hobson', 'C. Moutou',
               'I. Boisse', 'E. Martioli']
-__date__ = '2024-09-11'
-__release__ = 'alpha pre-release'
+__date__ = '2024-10-29'
+__release__ = 'beta release'
 # do this once per drs import
 __now__ = Time.now()
 AstropyTime = Time
