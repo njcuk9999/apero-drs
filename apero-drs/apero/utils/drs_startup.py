@@ -615,7 +615,7 @@ def end_all(params: ParamDict = None, success: bool = True,
     Quick end script
     """
     if params is None:
-        params = drs_log.DPARAMS
+        params = drs_log.MPARAMS
     # get the time now
     end = time.time()
     if 'PROG_START' in params:

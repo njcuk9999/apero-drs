@@ -48,6 +48,18 @@ ANSI_ESCAPE = re.compile(r'\x1B[@-_][0-?]*[ -/]*[@-~]')
 # log yaml
 LOGYAML = base.__YAML__['LOG']
 
+# minimal parameter definitions
+MPARAMS = dict()
+MPARAMS['DRS_RECIPE_TYPE'] = LOGYAML['DRS_RECIPE_TYPE']
+MPARAMS['DRS_LOG_CHAR_LEN'] = LOGYAML['DRS_LOG_CHAR_LEN']
+MPARAMS['LOG_TRIG_KEYS'] = LOGYAML['LOG_TRIG_KEYS']
+MPARAMS['WRITE_LEVELS'] = LOGYAML['WRITE_LEVELS']
+MPARAMS['REPORT_KEYS'] = LOGYAML['REPORT_KEYS']
+MPARAMS['DRS_LOG_SUBLEVEL_DIV'] = LOGYAML['DRS_LOG_SUBLEVEL_DIV']
+MPARAMS['DRS_LOG_SUBLEVEL_DIV_CHAR'] = LOGYAML['DRS_LOG_SUBLEVEL_DIV_CHAR']
+MPARAMS['DRS_DATA_MSG'] = base.get_default_log_dir()
+MPARAMS['DRS_HEADER'] = '*' * 50
+
 
 # =============================================================================
 # Define classes
@@ -752,17 +764,6 @@ class Wlog:
     class_name = 'Wlog'
     # log class storage
     log_classes = dict()
-    # minimal parameter definitions
-    mparams = dict()
-    mparams['DRS_RECIPE_TYPE'] = LOGYAML['DRS_RECIPE_TYPE']
-    mparams['DRS_LOG_CHAR_LEN'] = LOGYAML['DRS_LOG_CHAR_LEN']
-    mparams['LOG_TRIG_KEYS'] = LOGYAML['LOG_TRIG_KEYS']
-    mparams['WRITE_LEVELS'] = LOGYAML['WRITE_LEVELS']
-    mparams['REPORT_KEYS'] = LOGYAML['REPORT_KEYS']
-    mparams['DRS_LOG_SUBLEVEL_DIV'] = LOGYAML['DRS_LOG_SUBLEVEL_DIV']
-    mparams['DRS_LOG_SUBLEVEL_DIV_CHAR'] = LOGYAML['DRS_LOG_SUBLEVEL_DIV_CHAR']
-    mparams['DRS_DATA_MSG'] = base.get_default_log_dir()
-    mparams['DRS_HEADER'] = '*' * 50
 
     def __call__(self, params: Any = None, key: str = '',
                  message: Union[drs_lang.Text, str, None] = None,
@@ -847,16 +848,16 @@ class Wlog:
                 dparams = dict_class()
             else:
                 dparams = dict()
-            for key in self.mparams:
-                dparams[key] = self.mparams[key]
+            for key in MPARAMS:
+                dparams[key] = MPARAMS[key]
             # return dparams
             return dparams
         # else we try to set them from params first
         else:
             # loop around minimal params
-            for key in self.mparams:
+            for key in MPARAMS:
                 if key not in params:
-                    params.set(key, self.mparams[key], source=func_name)
+                    params.set(key, MPARAMS[key], source=func_name)
             # return dparams
             return params
 
@@ -958,13 +959,13 @@ class AperoCodedException(DrsCodedException):
             # set code
             self.code = code
             # otherwise use the message
-            self.message = drs_lang.textentry(self.message, targs)
+            self.message = drs_lang.textentry(message, targs)
         else:
             # otherwise use the message
             self.message = message
         # deal with no params
         if params is None:
-            self.params = DPARAMS
+            self.params = MPARAMS
         else:
             self.params = params
 
@@ -1024,7 +1025,7 @@ class AperoCodedWarning():
             self.message = message
         # deal with no params
         if params is None:
-            self.params = DPARAMS
+            self.params = MPARAMS
         else:
             self.params = params
         # log the error to the log file
@@ -1087,7 +1088,7 @@ def get_logfilepath(params: Any, use_group: bool = True) -> str:
     :return warning: bool, if True print warnings about log file path
     """
     if params is None:
-        params = DPARAMS
+        params = MPARAMS
     # -------------------------------------------------------------------------
     # deal with group
     if not use_group:
