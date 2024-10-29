@@ -17,6 +17,8 @@ from typing import Any, Dict, List, Tuple, Union
 
 import numpy as np
 from astropy import units as uu
+from ruamel.yaml import YAML
+from ruamel.yaml.comments import CommentedMap
 
 from aperocore.base import base
 from aperocore import drs_lang
@@ -61,6 +63,8 @@ class Const:
     """
     # set class name
     class_name = 'Const'
+    # modes (add to "add") [currently used for soss but could be used for others]
+    modes: str = ''
 
     def __init__(self, name: str, value: Any = None,
                  dtype: Union[None, str, type] = None,
@@ -366,6 +370,9 @@ class ConstantsDict:
     """
     Basic container for constants
     """
+    # title for output yaml
+    title: str = ''
+    
     def __init__(self, source: str):
         self.storage: Dict[str, Const] = dict()
         self.source = source
@@ -558,6 +565,89 @@ class ConstantsDict:
         new_constants.storage = new_storage
         # return new constants
         return new_constants
+
+    def save(self, params: Any = None, log: bool = True, outpath: str = None,
+             mode: str = None) -> str:
+        """
+        Create a yaml file from input parameters
+    
+        :param params: Dict[str, Any], the input parameters
+        :param log: bool, if True print log messages
+    
+        :return: None writes yaml file
+        """
+        # ---------------------------------------------------------------------
+        # deal with no parameters
+        if params is None:
+            params = dict()
+        # ---------------------------------------------------------------------
+        # create a commented map instance
+        data = CommentedMap()
+        # add the start comment
+        data.yaml_set_start_comment(self.title)
+        # loop around constants and add to the data
+        for key in self.storage:
+            # get comment
+            comment = self.storage[key].description
+            # if there is no comment don't add
+            if comment is None:
+                continue
+
+            # if this is not a user constant skip
+            if not self.storage[key].user:
+                continue
+
+            # remove new lines at start/end of comment
+            if not comment.startswith('\n\n'):
+                comment = comment.strip('\n')
+            # add the default value to the comment (if given)
+            if self.storage[key].value is not None:
+                comment += '\n\tDefault value: {0}'.format(str(self.storage[key].value))
+            # ---------------------------------------------------------------------
+            # get active
+            active = self.storage[key].active
+            # if the constant is not active skip
+            if not active:
+                continue
+            # ---------------------------------------------------------------------
+            # get modes
+            modes = self.storage[key].modes
+            # deal with no mode
+            if modes is None:
+                in_mode = True
+            else:
+                in_mode = mode in modes
+            # if we are not in the correct mode skip
+            if not in_mode:
+                continue
+            # ---------------------------------------------------------------------
+            # get the constant
+            const = self.storage[key]
+            # push into params
+            if key in params:
+                data[key] = params[key]
+            else:
+                data[key] = const.value
+            # add the comment
+            ckwargs = dict(key=key, before=comment, indent=0)
+            data.yaml_set_comment_before_after_key(**ckwargs)
+        # ---------------------------------------------------------------------
+        # print message
+        if log:
+            msg = '\tWriting yaml file: {0}'
+            margs = [outpath]
+            drs_text.cprint(msg.format(*margs), colour='g')
+        # initialize YAML object
+        yaml_inst = YAML()
+        # remove the yaml if it already exists
+        if os.path.exists(outpath):
+            os.remove(outpath)
+        # write files
+        with open(outpath, 'w') as y_file:
+            yaml_inst.dump(data, y_file)
+        # -------------------------------------------------------------------------
+        # return the yaml file path
+        return outpath
 
 
 class Keyword(Const):
