@@ -669,17 +669,35 @@ class ConstantsDict:
         return outpath
 
     @staticmethod
-    def yaml_title(name, setup_program, version, date):
-        comment = '#' * 77 + '\n' + name + '\n' + '=' * 77 + '\n'
+    def yaml_title(name: str, setup_program: str, version: str,
+                   date: str) -> str:
+        """
+        Create the title for the yaml file
+
+        :param name: str, the name of the program
+        :param setup_program: str, the name of the setup program
+        :param version: str, the version of the program
+        :param date: str, the date of the program
+
+        :return: str, the title for the yaml file
+        """
+        comment = '#' * 77 + '\n' + name + '\n' + '#' * 77 + '\n'
         comment += f'    Version = {version}\n'
-        comment += f'    Date    = {date}\n'
-        comment += (f'If using a different version it is recommended to '
+        comment += f'    Date    = {date}\n\n'
+        comment += (f'If using a different version it is recommended to \n'
                     f'run {setup_program} to generate a new yaml file.\n\n')
         return comment
 
     @staticmethod
-    def add_yaml_section(section_title):
-        comment = '\n\n\n' + '=' * 77 + '\n' + section_title
+    def add_yaml_section(section_title: str) -> str:
+        """
+        Add a section to the yaml file
+
+        :param section_title: str, the title of the section
+
+        :return: str, the section comment
+        """
+        comment = '\n' + '=' * 77 + '\n' + section_title
         comment += '\n' + '=' * 77 + '\n'
         return comment
 
@@ -689,6 +707,8 @@ class ConstantsDict:
 
         :param groupname: str, the name of the group
         :param description: str, the description of the group
+
+        :return: None, updates self.groups
         """
         self.groups[groupname] = description
 
