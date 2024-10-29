@@ -680,11 +680,14 @@ class ConstantsDict:
         comment = '\n\n\n' + '=' * 77 + section_title + '\n' + '=' * 77 + '\n'
         return comment
 
-    def add_group(self, groupname, groupdesc):
+    def add_group(self, groupname, description):
         """
         Add a group for the yaml file
+
+        :param groupname: str, the name of the group
+        :param description: str, the description of the group
         """
-        self.groups[groupname] = groupdesc
+        self.groups[groupname] = description
 
 
 class Keyword(Const):
