@@ -1458,6 +1458,40 @@ full_seq.add(apero_ccf, files=[files.out_tellu_obj], fiber=ref_fiber,
              filters=dict(KW_DPRTYPE=files.science_dprtypes),
              recipe_kind='rv-tcorr')
 
+# lbl ref
+full_seq.add(apero_lbl_ref, name='LBLREF', recipe_kind='lbl-ref')
+
+# lbl mask (FP)
+full_seq.add(apero_lbl_mask, name='LBLMASK_FP', recipe_kind='lbl-mask-fp',
+            arguments=dict(objname='FP'))
+
+# lbl compute (FP)
+full_seq.add(apero_lbl_compute, name='LBLCOMPUTE_FP',
+            recipe_kind='lbl-compute-fp',
+            arguments=dict(objname='FP'))
+
+# lbl compile (FP)
+full_seq.add(apero_lbl_compile, name='LBLCOMPILE_FP',
+            recipe_kind='lbl-compile-fp',
+            arguments=dict(objname='FP'))
+
+# lbl mask (SCIENCE)
+full_seq.add(apero_lbl_mask, name='LBLMASK_SCI', recipe_kind='lbl-mask-sci',
+            arguments=dict(objname='SCIENCE_TARGETS'),
+            filters=dict(KW_OBJNAME='SCIENCE_TARGETS'))
+
+# lbl compute (SCIENCE)
+full_seq.add(apero_lbl_compute, name='LBLCOMPUTE_SCI',
+            recipe_kind='lbl-compute-sci',
+            arguments=dict(objname='SCIENCE_TARGETS'),
+            filters=dict(KW_OBJNAME='SCIENCE_TARGETS'))
+
+# lbl compile (SCIENCE)
+full_seq.add(apero_lbl_compile, name='LBLCOMPILE_SCI',
+            recipe_kind='lbl-compile-sci',
+            arguments=dict(objname='SCIENCE_TARGETS'),
+            filters=dict(KW_OBJNAME='SCIENCE_TARGETS'))
+
 # post processing
 full_seq.add(apero_postprocess, name='POSTALL', files=[files.pp_file],
              recipe_kind='post-all',
