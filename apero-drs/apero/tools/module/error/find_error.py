@@ -19,23 +19,24 @@ import numpy as np
 
 from aperocore.base import base
 from aperocore.constants import param_functions
-from apero.base.drs_lang import drs_lang
+from aperocore.drs_lang import drs_lang
 from aperocore.core import drs_log
 from aperocore.core import drs_misc
 from apero.utils import drs_recipe
 from apero.utils import drs_startup
 from apero.tools.module.testing import drs_dev
+from apero.base import base as apero_base
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'find_error.py'
 __INSTRUMENT__ = base.IPARAMS['INSTRUMENT']
-__PACKAGE__ = base.__PACKAGE__
-__version__ = base.__version__
-__authors__ = base.__authors__
-__date__ = base.__date__
-__release__ = base.__release__
+__PACKAGE__ = apero_base.__PACKAGE__
+__version__ = apero_base.__version__
+__authors__ = apero_base.__authors__
+__date__ = apero_base.__date__
+__release__ = apero_base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 # Get Recipe class

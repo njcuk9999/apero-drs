@@ -33,17 +33,18 @@ from apero.io import drs_path
 from apero.tools.module.database import manage_databases
 from apero.tools.module.setup import drs_assets
 from apero.instruments import select
+from apero.base import base as apero_base
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'tools.module.setup.drs_reset.py'
 __INSTRUMENT__ = 'None'
-__PACKAGE__ = base.__PACKAGE__
-__version__ = base.__version__
-__authors__ = base.__authors__
-__date__ = base.__date__
-__release__ = base.__release__
+__PACKAGE__ = apero_base.__PACKAGE__
+__version__ = apero_base.__version__
+__authors__ = apero_base.__authors__
+__date__ = apero_base.__date__
+__release__ = apero_base.__release__
 # get param dict
 ParamDict = param_functions.ParamDict
 Instrument = instrument_mod.Instrument
@@ -723,7 +724,7 @@ def reset_other_folder(params: ParamDict, log: bool = True):
         # get original path
         rel_old_path = reset_dict[path_name][0]
         # construct path (assuming it is relative
-        old_path = drs_path.get_relative_folder(base.__PACKAGE__, rel_old_path)
+        old_path = drs_path.get_relative_folder(apero_base.__PACKAGE__, rel_old_path)
         # construct new path
         new_path = str(os.path.join(other_path, reset_dict[path_name][1]))
         # try to copy the file

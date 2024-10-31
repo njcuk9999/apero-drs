@@ -15,17 +15,18 @@ from typing import Any, Dict
 
 from aperocore.base import base
 from apero.tools.module.error import find_error
+from apero.base import base as apero_base
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'apero_langdb.py'
 __INSTRUMENT__ = 'None'
-__PACKAGE__ = base.__PACKAGE__
-__version__ = base.__version__
-__authors__ = base.__authors__
-__date__ = base.__date__
-__release__ = base.__release__
+__PACKAGE__ = apero_base.__PACKAGE__
+__version__ = apero_base.__version__
+__authors__ = apero_base.__authors__
+__date__ = apero_base.__date__
+__release__ = apero_base.__release__
 # define the drs name (and module name)
 DRS_PATH = __PACKAGE__
 # Define text (cannot use lanugage database to make language database)

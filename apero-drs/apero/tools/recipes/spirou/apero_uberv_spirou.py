@@ -20,17 +20,18 @@ from apero.utils import drs_startup
 from apero.utils import drs_utils
 from apero.science import extract
 from apero.tools.module.testing import drs_dev
+from apero.base import base as apero_base
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'apero_uberv_spirou.py'
 __INSTRUMENT__ = 'SPIROU'
-__PACKAGE__ = base.__PACKAGE__
-__version__ = base.__version__
-__authors__ = base.__authors__
-__date__ = base.__date__
-__release__ = base.__release__
+__PACKAGE__ = apero_base.__PACKAGE__
+__version__ = apero_base.__version__
+__authors__ = apero_base.__authors__
+__date__ = apero_base.__date__
+__release__ = apero_base.__release__
 # get param dict
 ParamDict = param_functions.ParamDict
 # Get Logging function
@@ -121,7 +122,7 @@ def __main__(recipe, params):
     if params['INPUTS']['OBJECTS'] in [None, 'None', 'None', '']:
         skip_objects = None
     else:
-        skip_objects = params['INPUTS'].listp('OBJECTS', dtype=str)
+        skip_objects = params['INPUTS']['OBJECTS']
     # ----------------------------------------------------------------------
     # get all combinations
     combinations = list(itertools.product(filetypes, intypes, fibers))

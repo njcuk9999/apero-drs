@@ -29,17 +29,18 @@ from aperocore.constants import constant_functions
 from aperocore import drs_lang
 from apero.constants import path_definitions as pathdef
 from aperocore.core import drs_exceptions, drs_base_classes, drs_misc
+from apero.base import base as apero_base
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'tools.module.setup.drs_installation.py'
 __INSTRUMENT__ = 'None'
-__PACKAGE__ = base.__PACKAGE__
-__version__ = base.__version__
-__authors__ = base.__authors__
-__date__ = base.__date__
-__release__ = base.__release__
+__PACKAGE__ = apero_base.__PACKAGE__
+__version__ = apero_base.__version__
+__authors__ = apero_base.__authors__
+__date__ = apero_base.__date__
+__release__ = apero_base.__release__
 
 # get colors
 Colors = drs_misc.Colors()

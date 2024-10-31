@@ -29,17 +29,18 @@ from apero.core import drs_database
 from aperocore.core import drs_log
 from apero.utils import drs_recipe
 from apero.io import drs_fits
+from apero.base import base as apero_base
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'apero_log_stats.py'
 __INSTRUMENT__ = 'None'
-__PACKAGE__ = base.__PACKAGE__
-__version__ = base.__version__
-__authors__ = base.__authors__
-__date__ = base.__date__
-__release__ = base.__release__
+__PACKAGE__ = apero_base.__PACKAGE__
+__version__ = apero_base.__version__
+__authors__ = apero_base.__authors__
+__date__ = apero_base.__date__
+__release__ = apero_base.__release__
 # get astropy time
 Time = base.Time
 # get tqdm
@@ -1121,7 +1122,7 @@ def error_stats(params: ParamDict):
             if drs_text.null_text(params['INPUTS']['PLOG'], null_text):
                 plog_files = []
             else:
-                plog_files = params['INPUTS'].listp('PLOG', dtype=str)
+                plog_files = params['INPUTS']['PLOG']
     # -------------------------------------------------------------------------
     if len(plog_files) == 0:
         # get log directory

@@ -30,17 +30,18 @@ from aperocore.core import drs_log
 from apero.utils import drs_data
 from apero.io import drs_fits
 from apero.instruments import select
+from apero.base import base as apero_base
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'science.rv.gen_vel.py'
 __INSTRUMENT__ = 'None'
-__PACKAGE__ = base.__PACKAGE__
-__version__ = base.__version__
-__authors__ = base.__authors__
-__date__ = base.__date__
-__release__ = base.__release__
+__PACKAGE__ = apero_base.__PACKAGE__
+__version__ = apero_base.__version__
+__authors__ = apero_base.__authors__
+__date__ = apero_base.__date__
+__release__ = apero_base.__release__
 # get param dict
 ParamDict = param_functions.ParamDict
 DrsFitsFile = drs_file.DrsFitsFile
@@ -258,6 +259,31 @@ def measure_fp_peaks(params: ParamDict, props: ParamDict, limit: float,
 
     # return the property parameter dictionary
     return props
+
+
+def fwhm_fp_airy(popt: np.ndarray) -> float:
+    """
+    Calculate the FWHM of the FP peaks from the fit parameters
+
+    :param popt: numpy array (1D), the best fit parameters from the FP peak
+                 fitting
+    :param pcov: numpy array (2D), the covariance matrix from the FP peak
+                 fitting
+
+    :return: numpy array (1D), the FWHM of the FP peaks
+    """
+    # we find the fwhm of this function:
+    #     # calculate ea_airy_function
+    #     y = zp + amp * ((1 + np.cos(2 * np.pi * (x - x0) / w)) / 2.0) ** beta
+    #   done in mp.ea_airy_function
+    # get the parameters
+    amp, x0, w, beta, zp = popt
+    # calculate the half width (inverse of beta)
+    half_width = w * np.arccos(2 * ((0.5 ** (1 / beta)) - 1)) / (2 * np.pi)
+    # calculate the full width
+    full_width = 2 * half_width
+    # return the FWHM and error on the FWHM
+    return full_width
 
 
 def fit_fp_peaks(x, y, size, return_model=False):

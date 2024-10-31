@@ -8,21 +8,20 @@ Created on 2018-10-31 at 18:06
 @author: cook
 """
 from aperocore import drs_lang
-from aperocore.base import base
-from apero.base import base as apero_base
 from apero.constants import path_definitions
 from apero.utils import drs_recipe
+from apero.base import base as apero_base
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'apero.instruments.default.recipe_definitions.py'
 __INSTRUMENT__ = 'None'
-__PACKAGE__ = base.__PACKAGE__
-__version__ = base.__version__
-__authors__ = base.__authors__
-__date__ = base.__date__
-__release__ = base.__release__
+__PACKAGE__ = apero_base.__PACKAGE__
+__version__ = apero_base.__version__
+__authors__ = apero_base.__authors__
+__date__ = apero_base.__date__
+__release__ = apero_base.__release__
 # Get Help
 textentry = drs_lang.textentry
 
@@ -38,33 +37,33 @@ plot = dict(name='--plot', dtype=int, helpstr=textentry('PLOT_HELP'),
 # =============================================================================
 # List of usable recipes
 # =============================================================================
-drs_recipe = drs_recipe.DrsRecipe
+DrsRecipe = drs_recipe.DrsRecipe
 
 # Below one must define all recipes and put into the "recipes" list
-ari = drs_recipe(__INSTRUMENT__)
-astrometric = drs_recipe(__INSTRUMENT__)
-changelog = drs_recipe(__INSTRUMENT__)
-execute = drs_recipe(__INSTRUMENT__)
-explorer = drs_recipe(__INSTRUMENT__)
-get_files = drs_recipe(__INSTRUMENT__)
-go_recipe = drs_recipe(__INSTRUMENT__)
-database_mgr = drs_recipe(__INSTRUMENT__)
-langdb = drs_recipe(__INSTRUMENT__)
-listing = drs_recipe(__INSTRUMENT__)
-stats = drs_recipe(__INSTRUMENT__)
-precheck = drs_recipe(__INSTRUMENT__)
-processing = drs_recipe(__INSTRUMENT__)
-remake_db = drs_recipe(__INSTRUMENT__)
-remake_doc = drs_recipe(__INSTRUMENT__)
-req_check = drs_recipe(__INSTRUMENT__)
-reject = drs_recipe(__INSTRUMENT__)
-remove = drs_recipe(__INSTRUMENT__)
-reset = drs_recipe(__INSTRUMENT__)
-run_ini = drs_recipe(__INSTRUMENT__)
-static = drs_recipe(__INSTRUMENT__)
-trigger = drs_recipe(__INSTRUMENT__)
-validate = drs_recipe(__INSTRUMENT__)
-visulise = drs_recipe(__INSTRUMENT__)
+ari = DrsRecipe(__INSTRUMENT__)
+astrometric = DrsRecipe(__INSTRUMENT__)
+changelog = DrsRecipe(__INSTRUMENT__)
+execute = DrsRecipe(__INSTRUMENT__)
+explorer = DrsRecipe(__INSTRUMENT__)
+get_files = DrsRecipe(__INSTRUMENT__)
+go_recipe = DrsRecipe(__INSTRUMENT__)
+database_mgr = DrsRecipe(__INSTRUMENT__)
+langdb = DrsRecipe(__INSTRUMENT__)
+listing = DrsRecipe(__INSTRUMENT__)
+stats = DrsRecipe(__INSTRUMENT__)
+precheck = DrsRecipe(__INSTRUMENT__)
+processing = DrsRecipe(__INSTRUMENT__)
+remake_db = DrsRecipe(__INSTRUMENT__)
+remake_doc = DrsRecipe(__INSTRUMENT__)
+req_check = DrsRecipe(__INSTRUMENT__)
+reject = DrsRecipe(__INSTRUMENT__)
+remove = DrsRecipe(__INSTRUMENT__)
+reset = DrsRecipe(__INSTRUMENT__)
+run_ini = DrsRecipe(__INSTRUMENT__)
+static = DrsRecipe(__INSTRUMENT__)
+trigger = DrsRecipe(__INSTRUMENT__)
+validate = DrsRecipe(__INSTRUMENT__)
+visulise = DrsRecipe(__INSTRUMENT__)
 
 # push into a list
 recipes = [ari, astrometric, changelog, database_mgr, explorer, execute,
@@ -104,9 +103,9 @@ recipes = [ari, astrometric, changelog, database_mgr, explorer, execute,
 # -----------------------------------------------------------------------------
 # generic recipe
 # -----------------------------------------------------------------------------
-raw_recipe = drs_recipe(__INSTRUMENT__)
-pp_recipe = drs_recipe(__INSTRUMENT__)
-out_recipe = drs_recipe(__INSTRUMENT__)
+raw_recipe = DrsRecipe(__INSTRUMENT__)
+pp_recipe = DrsRecipe(__INSTRUMENT__)
+out_recipe = DrsRecipe(__INSTRUMENT__)
 
 
 # -----------------------------------------------------------------------------
@@ -119,7 +118,7 @@ execute.description = 'Run an apero recipe'
 execute.recipe_type = 'nolog-tool'
 execute.recipe_kind = 'user'
 execute.set_arg(pos=0, name='recipe', default='None', dtype=str,
-                required=False)
+                optional=True)
 execute.set_kwarg(name='--recipes', dtype=str, default='None',
                   helpstr='Display a list of available recipes')
 
@@ -691,3 +690,8 @@ visulise.recipe_kind = 'user'
 visulise.set_kwarg(name='--mode', dtype='options', default='None',
                    options=['e2ds'], helpstr=textentry('VISU_MODE_HELP'))
 visulise.description_file = None
+
+# -----------------------------------------------------------------------------
+# compile recipe list
+# -----------------------------------------------------------------------------
+RECIPE_DICT = drs_recipe.compile_recipe_dict(recipes)

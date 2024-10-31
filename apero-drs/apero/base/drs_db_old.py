@@ -32,6 +32,8 @@ from astropy.table import Table
 from aperocore.base import base
 from aperocore.base import drs_base
 
+from apero.base import base as apero_base
+
 # try to import mysql
 # noinspection PyBroadException
 try:
@@ -43,12 +45,12 @@ except Exception as _:
 # Define variables
 # =============================================================================
 __NAME__ = 'apero.base.drs_db.py'
-__PACKAGE__ = base.__PACKAGE__
+__PACKAGE__ = apero_base.__PACKAGE__
 __INSTRUMENT__ = 'None'
-__version__ = base.__version__
-__authors__ = base.__authors__
-__date__ = base.__date__
-__release__ = base.__release__
+__version__ = apero_base.__version__
+__authors__ = apero_base.__authors__
+__date__ = apero_base.__date__
+__release__ = apero_base.__release__
 # get astropy time
 Time = base.AstropyTime
 # timeout parameter in seconds
@@ -2830,7 +2832,7 @@ class LanguageDatabase(BaseDatabaseManager):
         func_name = '{0}.{1}.{2}()'.format(__NAME__, self.classname,
                                            'path_definitions')
         # get the package name
-        package = base.__PACKAGE__
+        package = __PACKAGE__
         # get the relative path for the database
         lang_path = base.LANG_DEFAULT_PATH
         # get the absolute path for the language database

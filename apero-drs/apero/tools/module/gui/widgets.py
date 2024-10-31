@@ -18,17 +18,18 @@ from PIL import Image, ImageTk
 from aperocore.base import base
 from aperocore.core import drs_log
 from aperocore.core import drs_misc
+from apero.base import base as apero_base
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'file_explorer.py'
 __INSTRUMENT__ = 'None'
-__PACKAGE__ = base.__PACKAGE__
-__version__ = base.__version__
-__authors__ = base.__authors__
-__date__ = base.__date__
-__release__ = base.__release__
+__PACKAGE__ = apero_base.__PACKAGE__
+__version__ = apero_base.__version__
+__authors__ = apero_base.__authors__
+__date__ = apero_base.__date__
+__release__ = apero_base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 # Get resource path

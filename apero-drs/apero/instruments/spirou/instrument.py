@@ -18,7 +18,6 @@ from aperocore.base import base
 from apero.base import base as apero_base
 from aperocore.core import drs_db
 from aperocore.constants.param_functions import ParamDict
-from aperocore.constants import load_functions
 from aperocore.core import drs_exceptions
 from aperocore.core import drs_base_classes as base_class
 from aperocore.core import drs_misc
@@ -30,11 +29,11 @@ from apero.instruments.default import instrument as instrument_mod
 # =============================================================================
 __NAME__ = 'apero.instruments.spirou.instrument.py'
 __INSTRUMENT__ = 'SPIROU'
-__PACKAGE__ = base.__PACKAGE__
-__version__ = base.__version__
-__authors__ = base.__authors__
-__date__ = base.__date__
-__release__ = base.__release__
+__PACKAGE__ = apero_base.__PACKAGE__
+__version__ = apero_base.__version__
+__authors__ = apero_base.__authors__
+__date__ = apero_base.__date__
+__release__ = apero_base.__release__
 # get Time / TimeDelta
 Time, TimeDelta = base.AstropyTime, base.AstropyTimeDelta
 # Get the Database Columns class
@@ -222,7 +221,7 @@ class Spirou(instrument_mod.Instrument):
         # ------------------------------------------------------------------
         # Deal with cleaning object name
         # ------------------------------------------------------------------
-        header, hdict = clean_obj_name(params, header, hdict, filename=filename,
+        header, hdict = clean_obj_name(params, self, header, hdict, filename=filename,
                                        check_aliases=check_aliases,
                                        objdbm=objdbm)
         # ------------------------------------------------------------------
@@ -959,7 +958,7 @@ def constuct_objname(params: Union[ParamDict, None], pconst, header,
     return objectname
 
 
-def clean_obj_name(params: Union[ParamDict, None], header,
+def clean_obj_name(params: Union[ParamDict, None], pconst: Any, header,
                    hdict: Any = None, objname: Union[str, None] = None,
                    filename: Union[None, str, Path] = None,
                    check_aliases: bool = False,
@@ -986,7 +985,7 @@ def clean_obj_name(params: Union[ParamDict, None], header,
     # ---------------------------------------------------------------------
     # check KW_OBJNAME and then KW_OBJECTNAME
     # ---------------------------------------------------------------------
-    objectname = constuct_objname(params, header, objname, filename,
+    objectname = constuct_objname(params, pconst, header, objname, filename,
                                   check_aliases, objdbm)
     # -------------------------------------------------------------------------
     # add it to the header with new keyword

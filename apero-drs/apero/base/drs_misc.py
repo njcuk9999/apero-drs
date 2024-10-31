@@ -24,17 +24,18 @@ import pandas as pd
 from aperocore.base import base
 from aperocore import drs_lang
 from aperocore.core import drs_exceptions
+from apero.base import base as apero_base
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'apero.base.drs_misc.py'
-__PACKAGE__ = base.__PACKAGE__
+__PACKAGE__ = apero_base.__PACKAGE__
 __INSTRUMENT__ = 'None'
-__version__ = base.__version__
-__authors__ = base.__authors__
-__date__ = base.__date__
-__release__ = base.__release__
+__version__ = apero_base.__version__
+__authors__ = apero_base.__authors__
+__date__ = apero_base.__date__
+__release__ = apero_base.__release__
 # Get time
 Time = base.Time
 # get all chars

@@ -17,17 +17,18 @@ from apero.utils import drs_startup
 from apero.tools.module.database import drs_astrometrics
 from apero.tools.module.database import manage_databases
 from apero.tools.module.setup import drs_installation
+from apero.base import base as apero_base
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'apero_astrometrics.py'
 __INSTRUMENT__ = 'None'
-__PACKAGE__ = base.__PACKAGE__
-__version__ = base.__version__
-__authors__ = base.__authors__
-__date__ = base.__date__
-__release__ = base.__release__
+__PACKAGE__ = apero_base.__PACKAGE__
+__version__ = apero_base.__version__
+__authors__ = apero_base.__authors__
+__date__ = apero_base.__date__
+__release__ = apero_base.__release__
 # get text entry instance
 textentry = drs_lang.textentry
 # Get Logging function
@@ -83,7 +84,7 @@ def __main__(recipe, params):
     # Main Code
     # ----------------------------------------------------------------------
     # get the raw objects
-    rawobjs = params['INPUTS'].listp('OBJECTS', dtype=str)
+    rawobjs = params['INPUTS']['OBJECTS']
     # get the overwrite parameter
     overwrite = params['INPUTS']['OVERWRITE']
     # get the check parameter

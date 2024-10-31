@@ -18,17 +18,18 @@ from aperocore.core import drs_log
 from aperocore.core import drs_text
 from apero.utils import drs_data
 from apero.io import drs_path
+from apero.base import base as apero_base
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'tools.module.setup.drs_assets.py'
 __INSTRUMENT__ = 'None'
-__PACKAGE__ = base.__PACKAGE__
-__version__ = base.__version__
-__authors__ = base.__authors__
-__date__ = base.__date__
-__release__ = base.__release__
+__PACKAGE__ = apero_base.__PACKAGE__
+__version__ = apero_base.__version__
+__authors__ = apero_base.__authors__
+__date__ = apero_base.__date__
+__release__ = apero_base.__release__
 # get param dict
 ParamDict = param_functions.ParamDict
 # RSYNC command
@@ -163,7 +164,7 @@ def check_local_assets(params: ParamDict):
     # get the data path
     abs_data_path = drs_data.construct_path(params, '', _data_path)
     # add the checksum filename
-    checksum_path = os.path.join(abs_data_path, base.CHECKSUM_FILE)
+    checksum_path = os.path.join(abs_data_path, apero_base.CHECKSUM_FILE)
     # read the yaml file
     yaml_dict = base.load_yaml(checksum_path)
     # -------------------------------------------------------------------------

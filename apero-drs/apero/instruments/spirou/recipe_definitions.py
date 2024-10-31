@@ -14,17 +14,18 @@ from apero.instruments.default import grouping
 from apero.instruments.default import recipe_definitions as rd
 from apero.instruments.spirou import file_definitions as files
 from apero.utils import drs_recipe
+from apero.base import base as apero_base
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'apero.instruments.spirou.recipe_definitions.py'
 __INSTRUMENT__ = 'SPIROU'
-__PACKAGE__ = base.__PACKAGE__
-__version__ = base.__version__
-__authors__ = base.__authors__
-__date__ = base.__date__
-__release__ = base.__release__
+__PACKAGE__ = apero_base.__PACKAGE__
+__version__ = apero_base.__version__
+__authors__ = apero_base.__authors__
+__date__ = apero_base.__date__
+__release__ = apero_base.__release__
 # Define instrument alias
 INSTRUMENT_ALIAS = 'spirou'
 # Get Help
@@ -2188,3 +2189,8 @@ lbl_seq.add(apero_lbl_compile, name='LBLCOMPILE_SCI',
 # -----------------------------------------------------------------------------
 sequences = [pp_seq, pp_seq_opt, full_seq, limited_seq, ref_seq, calib_seq,
              tellu_seq, science_seq, quick_seq, blank_seq, eng_seq, lbl_seq]
+
+# -----------------------------------------------------------------------------
+# compile recipe list
+# -----------------------------------------------------------------------------
+RECIPE_DICT = drs_recipe.compile_recipe_dict(recipes)

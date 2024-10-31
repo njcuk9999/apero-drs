@@ -1204,7 +1204,7 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
                         wcoeffs = np.polyfit([midpoint, midpoint + 1],
                                              owave[[midpoint, midpoint + 1]], 1)
                         wave_m[good[it]] = np.polyval(wcoeffs, popt[1])
-                        ewidth[good[it]] = popt[2]
+                        ewidth[good[it]] = velocity.fwhm_fp_airy(popt[2])
                         nsig[good[it]] = np.abs(popt[0]) / rms
                         # line is valid
                         valid_lines += 1
@@ -1251,7 +1251,7 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
     # Create table to store them in
     # ----------------------------------------------------------------------
     columnnames = ['WAVE_REF', 'WAVE_MEAS', 'PIXEL_REF', 'PIXEL_MEAS',
-                   'ORDER', 'WFIT', 'EWIDTH_MEAS', 'AMP_MEAS', 'NSIG',
+                   'ORDER', 'WFIT', 'FWHM_MEAS', 'AMP_MEAS', 'NSIG',
                    'DIFF', 'PEAK_NUMBER']
     columnvalues = [list_waves, wave_m, list_pixels, pixel_m, list_orders,
                     list_wfit, ewidth, amp, nsig, diffpix, peak_number]

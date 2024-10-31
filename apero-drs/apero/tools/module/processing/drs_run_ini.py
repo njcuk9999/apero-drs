@@ -26,6 +26,7 @@ from aperocore.core import drs_log
 from apero.constants import run_params
 from apero.utils import drs_recipe
 
+from apero.base import base as apero_base
 from apero.io import drs_path
 from apero.science import telluric
 from apero.tools.module.processing import drs_processing
@@ -36,11 +37,11 @@ from apero.instruments import select
 # =============================================================================
 __NAME__ = 'drs_run.ini.py'
 __INSTRUMENT__ = 'None'
-__PACKAGE__ = base.__PACKAGE__
-__version__ = base.__version__
-__authors__ = base.__authors__
-__date__ = base.__date__
-__release__ = base.__release__
+__PACKAGE__ = apero_base.__PACKAGE__
+__version__ = apero_base.__version__
+__authors__ = apero_base.__authors__
+__date__ = apero_base.__date__
+__release__ = apero_base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 ParamDict = param_functions.ParamDict

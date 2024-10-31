@@ -31,20 +31,21 @@ from typing import Any, IO, Dict, List, Tuple, Type, Union
 
 import numpy as np
 
-from aperocore.core import drs_db
+from apero.base import base as apero_base
 from apero.core import drs_database
 from apero.core import drs_file
+from apero.instruments import select
 from apero.io import drs_fits
 from aperocore import drs_lang
 from aperocore.base import base
 from aperocore.constants import load_functions
 from aperocore.constants import param_functions
 from aperocore.core import drs_base_classes as base_class
+from aperocore.core import drs_db
 from aperocore.core import drs_exceptions
 from aperocore.core import drs_log
 from aperocore.core import drs_misc
 from aperocore.core import drs_text
-from apero.instruments import select
 
 # =============================================================================
 # Define variables
@@ -52,11 +53,11 @@ from apero.instruments import select
 __NAME__ = 'drs_argument.py'
 __INSTRUMENT__ = 'None'
 # Get version and author
-__PACKAGE__ = base.__PACKAGE__
-__version__ = base.__version__
-__authors__ = base.__authors__
-__date__ = base.__date__
-__release__ = base.__release__
+__PACKAGE__ = apero_base.__PACKAGE__
+__version__ = apero_base.__version__
+__authors__ = apero_base.__authors__
+__date__ = apero_base.__date__
+__release__ = apero_base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 display_func = drs_misc.display_func
@@ -835,6 +836,8 @@ class _CheckType(DrsAction):
             if len(value) == 0:
                 raise drs_log.AperoCodedException(params, '09-001-00016',
                                                   targs=[self.dest])
+            else:
+                return self._eval_type(value[0])
         # else if we have a list we should iterate
         elif type(value) is list:
             values = []
@@ -2635,7 +2638,8 @@ class DrsArgument(object):
                  maximum: Union[int, float, None] = None,
                  filelogic: str = 'inclusive', default: Union[Any, None] = None,
                  default_ref: Union[str, None] = None,
-                 required: bool = None, reprocess: bool = False):
+                 required: bool = None, reprocess: bool = False,
+                 optional: bool = False):
         """
         Create a DRS Argument object
 
@@ -2848,6 +2852,8 @@ class DrsArgument(object):
             self.reprocess = False
         else:
             self.reprocess = reprocess
+        # whether positional argument is optional
+        self.optional = optional
         # set empty
         self.props = OrderedDict()
         self.value = None
@@ -2961,9 +2967,9 @@ class DrsArgument(object):
         # deal with required (for optional arguments)
         if self.kind != 'arg':
             self.props['required'] = self.required
-        # if positional argumnet is not required we set nargs to '?'
-        elif self.kind == 'arg' and not self.required:
-            self.props['nargs'] = '?'
+        # # if positional argument is not required we set nargs to '?'
+        # if self.kind == 'arg' and self.optional:
+        #     self.props['nargs'] = '?'
         # add help string
         self.props['help'] = self.helpstr
 

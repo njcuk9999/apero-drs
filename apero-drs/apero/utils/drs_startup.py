@@ -45,6 +45,7 @@ from aperocore.core import drs_log
 from aperocore.core import drs_misc
 from aperocore.core import drs_text
 from aperocore.core.drs_base_classes import Printer
+from apero.base import base as apero_base
 
 # =============================================================================
 # Define variables
@@ -52,11 +53,11 @@ from aperocore.core.drs_base_classes import Printer
 # Name of program
 __NAME__ = 'drs_startup.py'
 __INSTRUMENT__ = 'None'
-__PACKAGE__ = base.__PACKAGE__
-__version__ = base.__version__
-__authors__ = base.__authors__
-__date__ = base.__date__
-__release__ = base.__release__
+__PACKAGE__ = apero_base.__PACKAGE__
+__version__ = apero_base.__version__
+__authors__ = apero_base.__authors__
+__date__ = apero_base.__date__
+__release__ = apero_base.__release__
 # Get Astropy Time and Time Delta
 Time, TimeDelta = base.AstropyTime, base.AstropyTimeDelta
 # Get Logging function

@@ -361,6 +361,9 @@ def tqdm_module(use: bool = True):
     if 'USE_TQDM' in IPARAMS and use:
         if IPARAMS['USE_TQDM']:
             from tqdm import tqdm as _tqdm
+    elif 'USE_TQDM' in __YAML__:
+        if __YAML__['USE_TQDM']:
+            from tqdm import tqdm as _tqdm
 
     return _tqdm
 

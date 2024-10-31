@@ -14,17 +14,18 @@ from aperocore import drs_lang
 from aperocore.core import drs_log
 from apero.core import drs_file
 from apero.utils import drs_recipe
+from apero.base import base as apero_base
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'preprocessing.identification.py'
 __INSTRUMENT__ = 'None'
-__PACKAGE__ = base.__PACKAGE__
-__version__ = base.__version__
-__authors__ = base.__authors__
-__date__ = base.__date__
-__release__ = base.__release__
+__PACKAGE__ = apero_base.__PACKAGE__
+__version__ = apero_base.__version__
+__authors__ = apero_base.__authors__
+__date__ = apero_base.__date__
+__release__ = apero_base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 # get param dict

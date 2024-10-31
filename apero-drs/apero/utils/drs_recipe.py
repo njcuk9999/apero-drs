@@ -34,17 +34,18 @@ from aperocore.core import drs_text
 from aperocore.core import drs_log
 from apero.core import drs_file
 from apero.instruments import select
+from apero.base import base as apero_base
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'drs_recipe.py'
 __INSTRUMENT__ = 'None'
-__PACKAGE__ = base.__PACKAGE__
-__version__ = base.__version__
-__authors__ = base.__authors__
-__date__ = base.__date__
-__release__ = base.__release__
+__PACKAGE__ = apero_base.__PACKAGE__
+__version__ = apero_base.__version__
+__authors__ = apero_base.__authors__
+__date__ = apero_base.__date__
+__release__ = apero_base.__release__
 # Get function string
 display_func = drs_misc.display_func
 # Get Logging function
@@ -571,7 +572,8 @@ class DrsRecipe(object):
                 maximum: Union[int, float, None] = None,
                 filelogic: str = 'inclusive', default: Union[Any, None] = None,
                 default_ref: Union[Any, None] = None,
-                required: bool = None, reprocess: bool = False):
+                required: bool = None, reprocess: bool = False,
+                optional: bool = False):
         """
         Add an argument to the recipe
 
@@ -637,6 +639,10 @@ class DrsRecipe(object):
         :param reprocess: bool, if True this argument will be used in processing
                           script as a required argument (but does not raise an
                           exception when recipe used individually)
+        :param optional: bool, if True this is an optional argument - note
+                         you can only have one positional argument if any
+                         positional arguments are optional more than one will
+                         raise an error
 
         :returns: None, updates DrsRecipe.args
         """
@@ -652,7 +658,8 @@ class DrsRecipe(object):
                                limit=limit, minimum=minimum,
                                maximum=maximum, filelogic=filelogic,
                                default=default, default_ref=default_ref,
-                               required=required, reprocess=reprocess)
+                               required=required, reprocess=reprocess,
+                               optional=optional)
         # make arg parser properties
         argument.make_properties()
         # recast name
@@ -661,13 +668,12 @@ class DrsRecipe(object):
         self.args[name] = argument
         # need to check that if required is set to False we don't have two
         # arguments
-        if required is not None:
-            if not required and len(self.args) > 1:
-                # TODO: Add to language class
-                emsg = ('Cannot have more than one optional positional '
-                        'argument in recipe {0} (argument {1})')
-                eargs = [self.name, name]
-                raise DrsCodedException('', message=emsg.format(*eargs))
+        if optional and len(self.args) > 1:
+            # TODO: Add to language class
+            emsg = ('Cannot have more than one optional positional '
+                    'argument in recipe {0} (argument {1})')
+            eargs = [self.name, name]
+            raise DrsCodedException('', message=emsg.format(*eargs))
 
     def set_kwarg(self, name: Union[str, None] = None,
                   altnames: Union[List[str], None] = None,
@@ -2286,6 +2292,20 @@ def filter_values(values: List[str], filter_list: List[str],
 # =============================================================================
 # Define other functions
 # =============================================================================
+def compile_recipe_dict(recipes: List[DrsRecipe]) -> Dict[str, DrsRecipe]:
+    # storage for recipe list
+    recipe_list = dict()
+    # loop around recipes
+    for recipe in recipes:
+        if recipe.name in recipe_list:
+            emsg = 'Recipe name "{0}" duplicated in recipe list'
+            raise DrsCodedException('', message=emsg)
+        else:
+            recipe_list[recipe.shortname] = recipe
+    # return recipe list
+    return recipe_list
+
+
 def _summary_args(args: Dict[str, Any], argkind: str = 'pos') -> str:
     """
     A string representation for args or kwargs for DrsRunSequence.summary

@@ -1,7 +1,7 @@
 # Define version
-VERSION: 0.8.003
+VERSION: 0.8.085
 # Define date of release
-DATE: 2024-10-16
+DATE: 2024-10-30
 # Define release type
 RELEASE: beta
 # Define authors

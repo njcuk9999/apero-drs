@@ -9,16 +9,17 @@ Created on 2019-01-17
 """
 from aperocore.base import base
 from aperocore.constants import constant_functions
+from apero.base import base as apero_base
 
 # -----------------------------------------------------------------------------
 # Define variables
 # -----------------------------------------------------------------------------
 __NAME__ = 'apero.instruments.default.keywords'
-__PACKAGE__ = base.__PACKAGE__
-__version__ = base.__version__
-__authors__ = base.__authors__
-__date__ = base.__date__
-__release__ = base.__release__
+__PACKAGE__ = apero_base.__PACKAGE__
+__version__ = apero_base.__version__
+__authors__ = apero_base.__authors__
+__date__ = apero_base.__date__
+__release__ = apero_base.__release__
 # Constants definition
 Const = constant_functions.Const
 # Keyword defintion

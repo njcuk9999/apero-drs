@@ -11,7 +11,6 @@ Created on 2019-07-26 at 09:39
 """
 from typing import Any, Dict
 
-from aperocore.base import base
 from aperocore.constants import param_functions
 from aperocore.core import drs_log
 from aperocore.core import drs_text
@@ -20,17 +19,18 @@ from apero.utils import drs_startup
 from apero.utils import drs_utils
 from apero.tools.module.database import database_gui
 from apero.tools.module.database import manage_databases
+from apero.base import base as apero_base
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'apero_explorer.py'
 __INSTRUMENT__ = 'None'
-__PACKAGE__ = base.__PACKAGE__
-__version__ = base.__version__
-__authors__ = base.__authors__
-__date__ = base.__date__
-__release__ = base.__release__
+__PACKAGE__ = apero_base.__PACKAGE__
+__version__ = apero_base.__version__
+__authors__ = apero_base.__authors__
+__date__ = apero_base.__date__
+__release__ = apero_base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 # Get Recipe class
@@ -43,7 +43,7 @@ PROGRAM_NAME = 'APERO File Explorer'
 # define the default path
 ALLOWED_PATHS = ['DRS_DATA_WORKING', 'DRS_DATA_REDUC']
 # define database names
-NAMES = dict(zip(base.DATABASE_NAMES, base.DATABASE_FULLNAMES))
+NAMES = dict(zip(apero_base.DATABASE_NAMES, apero_base.DATABASE_FULLNAMES))
 
 
 # -----------------------------------------------------------------------------

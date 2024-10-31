@@ -32,17 +32,18 @@ from apero.science.calib import gen_calib
 from apero.science.calib import wave
 from apero.science.extract import gen_ext
 from apero.instruments import select
+from apero.base import base as apero_base
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'science.calib.leak.py'
 __INSTRUMENT__ = 'None'
-__PACKAGE__ = base.__PACKAGE__
-__version__ = base.__version__
-__authors__ = base.__authors__
-__date__ = base.__date__
-__release__ = base.__release__
+__PACKAGE__ = apero_base.__PACKAGE__
+__version__ = apero_base.__version__
+__authors__ = apero_base.__authors__
+__date__ = apero_base.__date__
+__release__ = apero_base.__release__
 # get param dict
 ParamDict = param_functions.ParamDict
 DrsFitsFile = drs_file.DrsFitsFile
@@ -86,7 +87,7 @@ def get_dark_fps(params: ParamDict, recipe: DrsRecipe,
     # set function name
     func_name = display_func('get_dark_fps', __NAME__)
     # extract file type from inputs
-    filetypes = params['INPUTS'].listp('FILETYPE', dtype=str)
+    filetypes = params['INPUTS']['FILETYPE']
     # get allowed dark types
     allowedtypes = params['ALLOWED_LEAKREF_TYPES']
     # get max number of files

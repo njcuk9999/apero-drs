@@ -34,17 +34,18 @@ from apero.core import drs_argument
 from aperocore.core import drs_exceptions
 from aperocore.core import drs_misc
 from apero.tools.module.processing import drs_grouping_functions as drsgf
+from apero.base import base as apero_base
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'apero.instruments.default.grouping.py'
 __INSTRUMENT__ = 'None'
-__PACKAGE__ = base.__PACKAGE__
-__version__ = base.__version__
-__authors__ = base.__authors__
-__date__ = base.__date__
-__release__ = base.__release__
+__PACKAGE__ = apero_base.__PACKAGE__
+__version__ = apero_base.__version__
+__authors__ = apero_base.__authors__
+__date__ = apero_base.__date__
+__release__ = apero_base.__release__
 # get display func
 display_func = drs_misc.display_func
 # get argument class

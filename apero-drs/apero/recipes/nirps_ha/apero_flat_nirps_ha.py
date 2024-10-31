@@ -25,17 +25,18 @@ from apero.science.calib import flat_blaze
 from apero.science.calib import gen_calib
 from apero.science.calib import localisation
 from apero.science.calib import shape
+from apero.base import base as apero_base
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'apero_flat_nirps_ha.py'
 __INSTRUMENT__ = 'NIRPS_HA'
-__PACKAGE__ = base.__PACKAGE__
-__version__ = base.__version__
-__authors__ = base.__authors__
-__date__ = base.__date__
-__release__ = base.__release__
+__PACKAGE__ = apero_base.__PACKAGE__
+__version__ = apero_base.__version__
+__authors__ = apero_base.__authors__
+__date__ = apero_base.__date__
+__release__ = apero_base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 # Get Recipe class

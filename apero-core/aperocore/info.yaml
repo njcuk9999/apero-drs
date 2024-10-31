@@ -1,7 +1,7 @@
 # Define versionV
-VERSION: 0.8.003
+VERSION: 0.8.085
 # Define date of release
-DATE: 2024-10-16
+DATE: 2024-10-30
 # Define release type
 RELEASE: beta
 # Define authors
@@ -21,8 +21,13 @@ LANGUAGES:
 # Minimal log settings
 # -----------------------------------------------------------------------------
 LOG:
+    # The recipe type that this parameter dictionary is associated with
+    #   (i.e. recipe, tool, processing)
     DRS_RECIPE_TYPE: 'default'
+    # The default length of the log messages displayed on the screen
     DRS_LOG_CHAR_LEN: 80
+    # The log trigger key characters to use in log. Keys must be the same as
+    # WRITE_LEVELS
     LOG_TRIG_KEYS:
         all: '  '
         error: '!!'
@@ -30,6 +35,9 @@ LOG:
         info: '**'
         graph: '~~'
         debug: '++'
+    # The write levels. Keys must be the same as LOG_TRIG_KEYS
+    # The write levels define which levels are logged and printed (based on
+    # constants "PRINT_LEVEL" and "LOG_LEVEL" in the primary config file
     WRITE_LEVELS:
         error: 3
         warning: 2
@@ -37,6 +45,9 @@ LOG:
         graph: 0
         all: 0
         debug: 0
+    # The report levels. Keys must be the same as LOG_TRIG_KEYS()
+    # If True then the input code is printed (used for errors /warning/debug)
+    # if False just the message is printed
     REPORT_KEYS:
         error: True
         warning: True
@@ -44,7 +55,15 @@ LOG:
         graph: False
         all: False
         debug: False
+    # the divider for low and high levels of sublevel
     DRS_LOG_SUBLEVEL_DIV: 5
+    # the character to user for the divider (replaces second char in
+    # LOG_TRIG_KEYS)
     DRS_LOG_SUBLEVEL_DIV_CHAR:
         LOW: '$'
         HIGH: '!'
+# -----------------------------------------------------------------------------
+# Other settings
+# -----------------------------------------------------------------------------
+# Use tqdm
+USE_TQDM: true

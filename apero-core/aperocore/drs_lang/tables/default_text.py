@@ -1253,7 +1253,7 @@ langlist.add(item)
 # 00-003-00005 
 # =============================================================================
 item = langlist.create('00-003-00005', kind='error-code')
-item.value['ENG'] = 'Folder \'{0}\' does not exist in {1}'
+item.value['ENG'] = 'Folder "{0}" does not exist in {1}'
 item.arguments = 'None'
 item.comment = 'Means that config folder does not exist on disk'
 langlist.add(item)

@@ -16,17 +16,18 @@ from aperocore.core import drs_log
 from aperocore.core import drs_text
 from apero.utils import drs_startup
 from apero.utils import drs_utils
+from apero.base import base as apero_base
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'apero_listing.py'
 __INSTRUMENT__ = 'None'
-__PACKAGE__ = base.__PACKAGE__
-__version__ = base.__version__
-__authors__ = base.__authors__
-__date__ = base.__date__
-__release__ = base.__release__
+__PACKAGE__ = apero_base.__PACKAGE__
+__version__ = apero_base.__version__
+__authors__ = apero_base.__authors__
+__date__ = apero_base.__date__
+__release__ = apero_base.__release__
 # get param dict
 ParamDict = param_functions.ParamDict
 # get text entry instance
@@ -93,13 +94,13 @@ def __main__(recipe, params):
     if drs_text.null_text(include_list, ['None', '', 'All']):
         include_list = None
     else:
-        include_list = params['INPUTS'].listp('INCLUDE_OBS_DIRS')
+        include_list = params['INPUTS']['INCLUDE_OBS_DIRS']
     # get the black list of nights from inputs
     exclude_list = params['INPUTS']['EXCLUDE_OBS_DIRS']
     if drs_text.null_text(exclude_list, ['None', '', 'All']):
         exclude_list = None
     else:
-        exclude_list = params['INPUTS'].listp('EXCLUDE_OBS_DIRS')
+        exclude_list = params['INPUTS']['EXCLUDE_OBS_DIRS']
 
     # ----------------------------------------------------------------------
     # Deal with kind

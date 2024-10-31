@@ -37,6 +37,7 @@ from aperocore import drs_lang
 from aperocore.core import drs_misc
 from aperocore.core import drs_text
 from apero.io import drs_lock
+from apero.base import base as apero_base
 
 # =============================================================================
 # Define variables
@@ -44,11 +45,11 @@ from apero.io import drs_lock
 # Name of program
 __NAME__ = 'drs_table.py'
 __INSTRUMENT__ = 'None'
-__PACKAGE__ = base.__PACKAGE__
-__version__ = base.__version__
-__authors__ = base.__authors__
-__date__ = base.__date__
-__release__ = base.__release__
+__PACKAGE__ = apero_base.__PACKAGE__
+__version__ = apero_base.__version__
+__authors__ = apero_base.__authors__
+__date__ = apero_base.__date__
+__release__ = apero_base.__release__
 # get the parameter dictionary
 ParamDict = param_functions.ParamDict
 # Get function string

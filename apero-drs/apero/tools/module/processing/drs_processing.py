@@ -46,17 +46,18 @@ from apero.science import preprocessing as prep
 from apero.science import telluric
 from apero.tools.module.setup import drs_reset
 from apero.instruments import select
+from apero.base import base as apero_base
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'tools.module.processing.drs_processing.py'
 __INSTRUMENT__ = 'None'
-__PACKAGE__ = base.__PACKAGE__
-__version__ = base.__version__
-__authors__ = base.__authors__
-__date__ = base.__date__
-__release__ = base.__release__
+__PACKAGE__ = apero_base.__PACKAGE__
+__version__ = apero_base.__version__
+__authors__ = apero_base.__authors__
+__date__ = apero_base.__date__
+__release__ = apero_base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 # Get function string
@@ -108,7 +109,7 @@ class Run:
         self.shortname = None
         self.recipe = inrecipe
         if mod is not None:
-            self.module = mod.copy()
+            self.module = mod
         else:
             self.module = None
         self.reference = False
@@ -247,7 +248,7 @@ class Run:
             # get filemod and recipe mod
             self.recipe.filemod = pconst.FILEMOD()
         # import the recipe module
-        self.recipemod = self.recipe.main
+        self.recipe_main = self.recipe.main
         # turn off the input validation
         self.recipe.input_validation = False
         # get the reference setting
@@ -436,19 +437,13 @@ class Run:
         # deal with no pickable recipe name
         if self.pickle_recipe_name is None:
             return
-        # get pconst
-        pconst = load_functions.load_pconfig(select.INSTRUMENTS,
-                                             self.params['INSTRUMENT'])
-        # load the recipe mod
-        rmod = pconst.RECIPEMOD()
-        # set up the arguments to find the recipe
-        fkwargs = dict(name=self.pickle_recipe_name,
-                       instrument=self.params['INSTRUMENT'],
-                       mod=rmod)
-        # set recipe
-        self.recipe, _ = drs_startup.find_recipe(**fkwargs)
+        # get instrument class
+        pconst = load_functions.load_pconfig(select.INSTRUMENTS)
+        # get recipe
+        recipemod = pconst.RECIPEMOD()
+        self.recipe = recipemod.RECIPE_DICT[self.pickle_recipe_name]
         # recipe mod in this sense is the recipe.main
-        self.recipemod = self.recipe.main
+        self.recipe_main = self.recipe.main
 
 
 # =============================================================================
@@ -524,12 +519,12 @@ def generate_skip_table(params):
     if drs_text.null_text(params['INCLUDE_OBS_DIRS'], ['', 'All', 'None']):
         include_list = None
     else:
-        include_list = params.listp('INCLUDE_OBS_DIRS')
+        include_list = params['INCLUDE_OBS_DIRS']
     # deal with black list for directories
     if drs_text.null_text(params['EXCLUDE_OBS_DIRS'], ['', 'All', 'None']):
         exclude_list = None
     else:
-        exclude_list = params.listp('EXCLUDE_OBS_DIRS')
+        exclude_list = params['EXCLUDE_OBS_DIRS']
     # deal with obs_dir set (take precedences over white list)
     if not drs_text.null_text(params['RUN_OBS_DIR'], ['', 'None', 'All']):
         include_list = [params['RUN_OBS_DIR']]
@@ -823,11 +818,11 @@ def update_index_db(params: ParamDict,
     :return: None, updates index database
     """
     # get include list
-    includelist = params.listp('INCLUDE_OBS_DIRS', dtype=str)
+    includelist = params['INCLUDE_OBS_DIRS']
     # get exclude list
-    excludelist = params.listp('EXCLUDE_OBS_DIRS', dtype=str)
+    excludelist = params['EXCLUDE_OBS_DIRS']
     # get re-index list
-    reindexlist = params.listp('REPROCESS_REINDEX_BLOCKS', dtype=str)
+    reindexlist = params['REPROCESS_REINDEX_BLOCKS']
     # -------------------------------------------------------------------------
     # get the user defined databases to update
     if 'UPDATE_IDATABASE_NAMES' in params:
@@ -835,7 +830,7 @@ def update_index_db(params: ParamDict,
         if drs_text.null_text(ureindexlist, ['All', 'None', 'Null', 'None']):
             ureindexlist = list(reindexlist)
         else:
-            ureindexlist = params.listp('UPDATE_IDATABASE_NAMES', dtype=str)
+            ureindexlist = params['UPDATE_IDATABASE_NAMES']
     else:
         ureindexlist = list(reindexlist)
     # -------------------------------------------------------------------------
@@ -958,13 +953,18 @@ def process_run_list(params: ParamDict, runlist, group=None,
     process_start = time.time()
     # get number of cores
     cores = _get_cores(params)
+    # get parameters required for linear process
+    stop_at_exception = params['STOP_AT_EXCEPTION']
+    test_run = params['TEST_RUN']
     # pipe to correct module
     # do not use parallelization
     if cores == 1 or params['REPROCESS_MP_TYPE'].lower() == 'linear':
         # log process: Running with 1 core
         WLOG(params, 'info', textentry('40-503-00016'))
         # run as linear process
-        rdict = _linear_process(params, runlist, group=group)
+        rdict = _linear_process(params, runlist, group=group,
+                                stop_at_exception=stop_at_exception,
+                                test_run=test_run)
     # use pathos to multiprocess
     elif params['REPROCESS_MP_TYPE'].lower() == 'pathos':
         # log process: Running with N cores
@@ -990,7 +990,9 @@ def process_run_list(params: ParamDict, runlist, group=None,
         # log process: Running with 1 core
         WLOG(params, 'info', textentry('40-503-00016'))
         # run as linear process
-        rdict = _linear_process(params, runlist, group=group)
+        rdict = _linear_process(params, runlist, group=group,
+                                stop_at_exception=stop_at_exception,
+                                test_run=test_run)
     # end a timer
     process_end = time.time()
     # remove lock files
@@ -1233,9 +1235,9 @@ def generate_run_table(params, recipe, *args, **kwargs):
 # =============================================================================
 def _linear_generate_id(params: ParamDict, it: int, run_key: str,
                         run_item: str, runlist: List[str], keylist: List[int],
-                        input_recipe, indexdb: FileIndexDatabase,
-                        recipemod: Any, skiptable: Table,
-                        skip_storage: dict, cores: int = 1
+                        input_recipe_shortname: str, skiptable: Table,
+                        skip_storage: dict, cores: int = 1,
+                        runfile: str = None, debug: bool = False
                         ) -> Dict[int, Run]:
     """
     Linear run of a single validation step
@@ -1254,6 +1256,15 @@ def _linear_generate_id(params: ParamDict, it: int, run_key: str,
     :param cores:
     :return:
     """
+    # get params
+    pconst = load_functions.load_pconfig(select.INSTRUMENTS)
+    # get recipe mod
+    recipemod = pconst.RECIPEMOD()
+    # get file index database
+    indexdb = drs_database.FileIndexDatabase(params)
+    indexdb.load_db()
+    # get the input recipe
+    input_recipe = recipemod.RECIPE_DICT[input_recipe_shortname]
     # get runid
     runid = '{0}{1:05d}'.format(run_key, keylist[it])
     # deal with no return dict
@@ -1278,7 +1289,7 @@ def _linear_generate_id(params: ParamDict, it: int, run_key: str,
     # ---------------------------------------------------------------------
     # deal with passing debug
     if params['DRS_DEBUG'] > 0:
-        dargs = [run_object.runstring, params['DRS_DEBUG']]
+        dargs = [run_object.runstring, debug]
         run_object.runstring = '{0} --debug={1}'.format(*dargs)
     # ---------------------------------------------------------------------
     # deal with passing reference argument
@@ -1287,8 +1298,8 @@ def _linear_generate_id(params: ParamDict, it: int, run_key: str,
         run_object.runstring = '{0} --ref={1}'.format(*dargs)
     # ---------------------------------------------------------------------
     # add run file to argument
-    if not drs_text.null_text(params['INPUTS']['RUNFILE']):
-        dargs = [run_object.runstring, params['INPUTS']['RUNFILE']]
+    if not drs_text.null_text(runfile):
+        dargs = [run_object.runstring, runfile]
         run_object.runstring = '{0} --crunfile={1}'.format(*dargs)
     # ---------------------------------------------------------------------
     # update run object (runstring should only be updated once here
@@ -1360,8 +1371,6 @@ def generate_ids(params: ParamDict, indexdb: FileIndexDatabase,
     runlist = list(commands[sortmask])
     keylist = list(numbers[sortmask])
     inrecipelist = list(inrecipes[sortmask])
-    # get recipe definitions module (for this instrument)
-    recipemod = get_recipe_module(params, logmsg=False)
     # store skip previous runstrings (so it is not recalculated every time)
     skip_storage = dict()
     # -------------------------------------------------------------------------
@@ -1370,13 +1379,20 @@ def generate_ids(params: ParamDict, indexdb: FileIndexDatabase,
     # -------------------------------------------------------------------------
     # deal with a single core (no multiprocessing)
     if cores == 1 or params['REPROCESS_MP_TYPE_VAL'].lower() == 'linear':
+        # get debug mode
+        debug = params['DRS_DEBUG']
+        # get run file (if its given)
+        if 'RUNFILE' in params['INPUTS']:
+            runfile = params['INPUTS']['RUNFILE']
+        else:
+            runfile = None
         # iterate through and make run objects
         rdict = dict()
         for it, run_item in enumerate(runlist):
             # set up the arguments
             args = [params, it, run_key, run_item, runlist, keylist,
-                    inrecipelist[it], indexdb, recipemod, skiptable,
-                    skip_storage]
+                    inrecipelist[it].name, skiptable,
+                    skip_storage, runfile, debug]
             # run as a single process
             results = _linear_generate_id(*args)
             # append to run_objects
@@ -1508,10 +1524,13 @@ def _multi_generate_id(params: ParamDict, subgroup: np.ndarray,
     :return: dictionary, the return dict or a dictionary where each key is an
              id and the value is the DrsRecipe
     """
-    # get recipe definitions module (for this instrument)
-    recipemod = get_recipe_module(params, logmsg=False)
-    # get the file index database
-    indexdb = FileIndexDatabase(params)
+    # get debug mode
+    debug = params['DRS_DEBUG']
+    # get run file (if its given)
+    if 'RUNFILE' in params['INPUTS']:
+        runfile = params['INPUTS']['RUNFILE']
+    else:
+        runfile = None
     # set up a skip storage (so we don't redo things we don't have to many
     #  times)
     skip_storage = dict()
@@ -1522,8 +1541,9 @@ def _multi_generate_id(params: ParamDict, subgroup: np.ndarray,
     for it in subgroup:
         # generate results for this iteration
         results = _linear_generate_id(params, it, run_key, runlist[it], runlist,
-                                      keylist, inrecipelist[it], indexdb,
-                                      recipemod, skiptable, skip_storage, cores)
+                                      keylist, inrecipelist[it].name,
+                                      skiptable,
+                                      skip_storage, cores, runfile, debug)
         # push back into results
         for key in results:
             return_dict[key] = results[key]
@@ -1791,7 +1811,7 @@ def _remove_py(innames):
 # =============================================================================
 def check_for_sequences(rvalues, mod):
     # find sequences
-    all_sequences = mod.get().sequences
+    all_sequences = mod.sequences
     # get sequences names
     all_seqnames = list(map(lambda x: x.name, all_sequences))
     # convert to uppercase
@@ -1884,11 +1904,6 @@ def generate_run_from_sequence(params: ParamDict, sequence,
         # print progress
         wargs = [srecipe.name, srecipe.shortname]
         WLOG(params, '', textentry('40-503-00012', args=wargs))
-        # add file and recipe mod if not set
-        if srecipe.recipemod is None:
-            srecipe.recipemod = recipemod.copy()
-        if srecipe.filemod is None:
-            srecipe.filemod = filemod.copy()
         # add params to srecipe
         srecipe.params = params
         # copy reference condition
@@ -2215,7 +2230,7 @@ def gen_global_condition(params: ParamDict, findexdbm: FileIndexDatabase,
     # black list
     if not drs_text.null_text(params['EXCLUDE_OBS_DIRS'], ['', 'All', 'None']):
         # get black list from params
-        exclude_obs_dirs = params.listp('EXCLUDE_OBS_DIRS', dtype=str)
+        exclude_obs_dirs = params['EXCLUDE_OBS_DIRS']
         # add excluded obs dirs to condition
         condition = conditional_list(exclude_obs_dirs, 'OBS_DIR', 'exclude',
                                      condition)
@@ -2240,7 +2255,7 @@ def gen_global_condition(params: ParamDict, findexdbm: FileIndexDatabase,
     # ------------------------------------------------------------------
     if not drs_text.null_text(params['INCLUDE_OBS_DIRS'], ['', 'All', 'None']):
         # get white list from params
-        include_obs_dirs = params.listp('INCLUDE_OBS_DIRS', dtype=str)
+        include_obs_dirs = params['INCLUDE_OBS_DIRS']
         # add to the list of observation directories to keep
         list_of_obsdirs += include_obs_dirs
         # add included obs dirs to condition
@@ -2267,7 +2282,7 @@ def gen_global_condition(params: ParamDict, findexdbm: FileIndexDatabase,
     # ------------------------------------------------------------------
     if not drs_text.null_text(params['PI_NAMES'], ['', 'All', 'None']):
         # get pi name list from params
-        pi_names = params.listp('PI_NAMES', dtype=str)
+        pi_names = params['PI_NAMES']
         # add included pi_names to condition
         condition = conditional_list(pi_names, 'KW_PI_NAME', 'include',
                                      condition)
@@ -2330,21 +2345,22 @@ def gen_global_condition(params: ParamDict, findexdbm: FileIndexDatabase,
 # =============================================================================
 # Define processing functions
 # =============================================================================
-def _linear_process(params, runlist, number=0, cores=1, event=None,
-                    group=None, return_dict=None):
+def _linear_process(params: ParamDict, runlist: List[Run],
+                    number=0, cores=1, event=None,
+                    group=None, return_dict=None,
+                    stop_at_exception: bool = False,
+                    test_run: bool = False):
     # deal with empty return_dict
     if return_dict is None:
         return_dict = dict()
     # loop around runlist
     for run_item in runlist:
-        # get parameters from params
-        stop_at_exception = bool(params['STOP_AT_EXCEPTION'])
         # if reference we should always stop at exception
         if run_item.reference:
             stop_at_exception = True
         # ------------------------------------------------------------------
         # get the module
-        modulemain = run_item.recipemod
+        modulemain = run_item.recipe_main
         # get the kwargs
         kwargs = run_item.kwargs
         # get the priority
@@ -2370,7 +2386,7 @@ def _linear_process(params, runlist, number=0, cores=1, event=None,
         else:
             wmsg = 'ID{0:05d}| {1}'.format(priority, run_item.runstring)
         # deal with a test run
-        if params['TEST_RUN']:
+        if test_run:
             # log which core is being used
             WLOG(params, 'info', 'T' + wmsg, colour='magenta', wrap=False)
             # add default outputs
@@ -2594,6 +2610,9 @@ def _multi_process_process(params, runlist, cores, groupname=None,
     manager = Manager()
     event = Event()
     return_dict = manager.dict()
+        # get parameters required for linear process
+    stop_at_exception = params['STOP_AT_EXCEPTION']
+    test_run = params['TEST_RUN']
     # loop around groups
     #   - each group is a unique recipe
     for g_it, group in enumerate(grouplist):
@@ -2612,7 +2631,8 @@ def _multi_process_process(params, runlist, cores, groupname=None,
         for r_it, runlist_group in enumerate(group):
             # get args
             args = (params, runlist_group, r_it + 1,
-                    cores, event, groupname, return_dict)
+                    cores, event, groupname, return_dict,
+                    stop_at_exception, test_run)
             # get parallel process
             process = Process(target=_linear_process, args=args)
             process.start()
@@ -2652,7 +2672,9 @@ def _multi_process_pool(params, runlist, cores, groupname=None,
     manager = Manager()
     event = manager.Event()
     return_dict = dict()
-
+    # get parameters required for linear process
+    stop_at_exception = params['STOP_AT_EXCEPTION']
+    test_run = params['TEST_RUN']
     # loop around groups
     #   - each group is a unique recipe
     for g_it, groupnum in enumerate(grouplist):
@@ -2670,7 +2692,8 @@ def _multi_process_pool(params, runlist, cores, groupname=None,
         # populate params for each sub group
         for r_it, runlist_group in enumerate(group):
             args = [params, [runlist_group], r_it + 1,
-                    cores, event, groupname]
+                    cores, event, groupname, None,
+                    stop_at_exception, test_run]
             params_per_process.append(args)
         # start parellel jobs
         with get_context('spawn').Pool(cores, maxtasksperchild=1) as pool:
@@ -2699,6 +2722,9 @@ def _multi_process_pathos(params, runlist, cores, groupname=None,
     grouplist, groupnames = _group_tasks2(runlist)
     # set up the dictionary
     return_dict = dict()
+    # get parameters required for linear process
+    stop_at_exception = params['STOP_AT_EXCEPTION']
+    test_run = params['TEST_RUN']
     # deal with Pool specific imports
     from pathos.pools import ParallelPool as Pool
     # loop around groups
@@ -2719,8 +2745,8 @@ def _multi_process_pathos(params, runlist, cores, groupname=None,
         params_per_process = []
         # populate params for each sub group
         for r_it, runlist_group in enumerate(group):
-            args = [params, [runlist_group], r_it + 1,
-                    cores, None, groupname]
+            args = [params, [runlist_group], r_it + 1, cores, None, groupname,
+                    None, stop_at_exception, test_run]
             params_per_process.append(args)
         # transpose the params axis
         params_per_process2 = list(zip(*params_per_process))
@@ -3058,7 +3084,7 @@ def add_non_file_args(params: ParamDict, recipe: DrsRecipe,
             # test for null values
             if not drs_text.null_text(include_obs_dirs, ['None', 'All', '']):
                 # get white night list as a list
-                include_obs_dirs = params['INPUTS'].listp('INCLUDE_OBS_DIRS')
+                include_obs_dirs = params['INPUTS']['INCLUDE_OBS_DIRS']
                 # add to file dict
                 filedict[argname] = include_obs_dirs
     # -------------------------------------------------------------------------
@@ -3070,7 +3096,7 @@ def add_non_file_args(params: ParamDict, recipe: DrsRecipe,
             # test for null values
             if not drs_text.null_text(exclude_obs_dirs, ['None', 'All', '']):
                 # get white night list as a list
-                exclude_obs_dirs = params['INPUTS'].listp('EXCLUDE_OBS_DIRS')
+                exclude_obs_dirs = params['INPUTS']['EXCLUDE_OBS_DIRS']
                 # add to file dict
                 filedict[argname] = exclude_obs_dirs
     # -------------------------------------------------------------------------
@@ -3082,7 +3108,7 @@ def add_non_file_args(params: ParamDict, recipe: DrsRecipe,
             # test for null values
             if not drs_text.null_text(obs_dir, ['None', 'All', '']):
                 # get white night list as a list
-                obs_dir = params['INPUTS'].listp('OBS_DIR')
+                obs_dir = params['INPUTS']['OBS_DIR']
                 # add to file dict
                 filedict[argname] = obs_dir
     # -------------------------------------------------------------------------
@@ -3519,7 +3545,7 @@ def get_uobjs_from_findex(params: ParamDict, indexdb: FileIndexDatabase,
                           ) -> List[str]:
     # ----------------------------------------------------------------------
     # define the conditions for objects
-    dprtypes = params.listp('PP_OBJ_DPRTYPES', dtype=str)
+    dprtypes = params['PP_OBJ_DPRTYPES']
     # get the dprtype condition
     subcond = []
     for dprtype in dprtypes:
@@ -3598,7 +3624,7 @@ def get_rvalues(runtable):
 def _check_runtable(params, runtable, recipemod):
     func_name = __NAME__ + '._check_runtable()'
     # get recipe list
-    recipelist = list(map(lambda x: x.name, recipemod.get().recipes))
+    recipelist = list(map(lambda x: x.name, recipemod.recipes))
     # remove .py
     recipelist = np.char.replace(recipelist, '.py', '')
     # check that all run items start with a recipe

@@ -15,11 +15,11 @@ from aperocore.constants import constant_functions
 # Define variables
 # =============================================================================
 __NAME__ = 'apero.instruments.default.config'
-__PACKAGE__ = base.__PACKAGE__
-__version__ = base.__version__
-__authors__ = base.__authors__
-__date__ = base.__date__
-__release__ = base.__release__
+__PACKAGE__ = apero_base.__PACKAGE__
+__version__ = apero_base.__version__
+__authors__ = apero_base.__authors__
+__date__ = apero_base.__date__
+__release__ = apero_base.__release__
 # Constants definition
 Const = constant_functions.Const
 CDict = constant_functions.ConstantsDict(__NAME__)

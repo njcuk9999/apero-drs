@@ -22,7 +22,7 @@ from aperocore.base import base
 from aperocore.core import drs_db
 from aperocore.core import drs_misc
 from aperocore.core import drs_text
-
+from apero.base import base as apero_base
 
 # =============================================================================
 # Define variables
@@ -30,11 +30,11 @@ from aperocore.core import drs_text
 # Name of program
 __NAME__ = 'apero.instruments.default.instrument'
 __PATH__ = 'instruments.default'
-__PACKAGE__ = base.__PACKAGE__
-__version__ = base.__version__
-__authors__ = base.__authors__
-__date__ = base.__date__
-__release__ = base.__release__
+__PACKAGE__ = apero_base.__PACKAGE__
+__version__ = apero_base.__version__
+__authors__ = apero_base.__authors__
+__date__ = apero_base.__date__
+__release__ = apero_base.__release__
 # get Time / TimeDelta
 Time = base.AstropyTime
 # get not implemented error
@@ -1533,9 +1533,9 @@ def get_sun_altitude(params: Any, header: Any, hdict: Any) -> Tuple[Any, Any]:
     obs_long = params['OBS_LONG'] * uu.deg
     # get the definitions of civil, nautical and astronomical twilight
     night_def = params['NIGHT_DEFINITION']
-    civ_twil_angle = base.CIVIL_TWILIGHT
-    nau_twil_angle = base.NAUTICAL_TWILIGHT
-    ast_twil_angle = base.ASTRONOMIAL_TWILIGHT
+    civ_twil_angle = apero_base.CIVIL_TWILIGHT
+    nau_twil_angle = apero_base.NAUTICAL_TWILIGHT
+    ast_twil_angle = apero_base.ASTRONOMIAL_TWILIGHT
     # get header keys
     kwmidobstime = params['KW_MID_OBS_TIME'][0]
     kw_night_obs, _, kw_night_obs_comment = params['KW_NIGHT_OBS']

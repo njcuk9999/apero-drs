@@ -22,18 +22,18 @@ from aperocore.core import drs_base_classes as base_class
 from aperocore.core import drs_misc
 from aperocore.core import drs_text
 from apero.instruments.default import instrument as instrument_mod
-
+from apero.base import base as apero_base
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'apero.instruments.nirps_ha.instrument.py'
 __INSTRUMENT__ = 'NIRPS_HA'
-__PACKAGE__ = base.__PACKAGE__
-__version__ = base.__version__
-__authors__ = base.__authors__
-__date__ = base.__date__
-__release__ = base.__release__
+__PACKAGE__ = apero_base.__PACKAGE__
+__version__ = apero_base.__version__
+__authors__ = apero_base.__authors__
+__date__ = apero_base.__date__
+__release__ = apero_base.__release__
 # get Time / TimeDelta
 Time, TimeDelta = base.AstropyTime, base.AstropyTimeDelta
 # Get the Database Columns class
