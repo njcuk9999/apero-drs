@@ -62,6 +62,8 @@ def load_config(instruments: Dict[str, Any],
     :return: ParamDict containing the constants
     """
     global CONFIG_CACHE
+    # set function name
+    func_name = display_func('load_config', __NAME__)
     # deal with no instrument
     if instrument is None:
         instrument = base.IPARAMS['INSTRUMENT']
@@ -98,7 +100,7 @@ def load_config(instruments: Dict[str, Any],
             params.set_instance(key, oinstances[key])
             params.set_source(key, osources[key])
     # finally push instrument into params
-    params['INST'] = instrument_instance
+    params.set('INST', instrument_instance, source=func_name)
     # save sources to params
     params = _save_config_params(params)
     # cache these params

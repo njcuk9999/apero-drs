@@ -73,8 +73,6 @@ class Spirou(instrument_mod.Instrument):
         self.telluric_cols: Optional[DatabaseColumns] = None
         self.logdb_cols: Optional[DatabaseColumns] = None
         self.objdb_cols: Optional[DatabaseColumns] = None
-        self.filemod: Optional[base_class.ImportModule] = None
-        self.recipemod: Optional[base_class.ImportModule] = None
         self.rejectdb_cols: Optional[DatabaseColumns] = None
 
     def __getstate__(self) -> dict:

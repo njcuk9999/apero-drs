@@ -2301,7 +2301,7 @@ def compile_recipe_dict(recipes: List[DrsRecipe]) -> Dict[str, DrsRecipe]:
             emsg = 'Recipe name "{0}" duplicated in recipe list'
             raise DrsCodedException('', message=emsg)
         else:
-            recipe_list[recipe.shortname] = recipe
+            recipe_list[recipe.name] = recipe
     # return recipe list
     return recipe_list
 

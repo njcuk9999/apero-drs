@@ -207,7 +207,7 @@ def __setup__(name: str = 'None', instrument: str = 'None',
             # update recipe instrument
             recipe.instrument = str(instrument)
             # need to update filemod and recipe mod
-            pconst = load_functions.load_pconfig(select.INSTRUMENTS)
+            pconst = load_functions.load_pconfig(select.INSTRUMENTS, instrument)
             # update filemod
             filemod = pconst.FILEMOD()
             # deal with rmod coming from call

@@ -108,12 +108,9 @@ class Run:
         self.recipename = ''
         self.shortname = None
         self.recipe = inrecipe
-        if mod is not None:
-            self.module = mod
-        else:
-            self.module = None
         self.reference = False
-        self.recipemod = None
+        self.recipemod = mod
+        self.recipe_main = None
         self.kwargs = dict()
         self.fileargs = dict()
         self.required_args = []
@@ -237,16 +234,11 @@ class Run:
         """
         # get args
         self.args = self.runstring.split(' ')
-        # get pconst
-        pconst = load_functions.load_pconfig(select.INSTRUMENTS,
-                                             self.params['INSTRUMENT'])
         # the first argument must be the recipe name
         self.recipename = self.args[0]
         # find the recipe
         if self.recipe is None:
-            self.recipe, self.module = self.find_recipe(self.module)
-            # get filemod and recipe mod
-            self.recipe.filemod = pconst.FILEMOD()
+            self.recipe, self.recipemod = self.find_recipe(self.recipemod)
         # import the recipe module
         self.recipe_main = self.recipe.main
         # turn off the input validation
@@ -1235,7 +1227,7 @@ def generate_run_table(params, recipe, *args, **kwargs):
 # =============================================================================
 def _linear_generate_id(params: ParamDict, it: int, run_key: str,
                         run_item: str, runlist: List[str], keylist: List[int],
-                        input_recipe_shortname: str, skiptable: Table,
+                        input_recipe: DrsRecipe, skiptable: Table,
                         skip_storage: dict, cores: int = 1,
                         runfile: str = None, debug: bool = False
                         ) -> Dict[int, Run]:
@@ -1263,8 +1255,6 @@ def _linear_generate_id(params: ParamDict, it: int, run_key: str,
     # get file index database
     indexdb = drs_database.FileIndexDatabase(params)
     indexdb.load_db()
-    # get the input recipe
-    input_recipe = recipemod.RECIPE_DICT[input_recipe_shortname]
     # get runid
     runid = '{0}{1:05d}'.format(run_key, keylist[it])
     # deal with no return dict
@@ -1391,7 +1381,7 @@ def generate_ids(params: ParamDict, indexdb: FileIndexDatabase,
         for it, run_item in enumerate(runlist):
             # set up the arguments
             args = [params, it, run_key, run_item, runlist, keylist,
-                    inrecipelist[it].name, skiptable,
+                    inrecipelist[it], skiptable,
                     skip_storage, runfile, debug]
             # run as a single process
             results = _linear_generate_id(*args)
@@ -1541,7 +1531,7 @@ def _multi_generate_id(params: ParamDict, subgroup: np.ndarray,
     for it in subgroup:
         # generate results for this iteration
         results = _linear_generate_id(params, it, run_key, runlist[it], runlist,
-                                      keylist, inrecipelist[it].name,
+                                      keylist, inrecipelist[it],
                                       skiptable,
                                       skip_storage, cores, runfile, debug)
         # push back into results
@@ -1844,8 +1834,6 @@ def generate_run_from_sequence(params: ParamDict, sequence,
     # -------------------------------------------------------------------------
     # get filemod and recipe mod
     pconst = load_functions.load_pconfig(select.INSTRUMENTS)
-    filemod = pconst.FILEMOD()
-    recipemod = pconst.RECIPEMOD()
     # generate sequence
     sequence[1].process_adds(params, tstars=list(tstars), ostars=list(ostars),
                              template_stars=template_stars,
