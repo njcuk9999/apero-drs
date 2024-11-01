@@ -1306,7 +1306,7 @@ def update_paramdicts(*args, key: str, value: Any = None, source: str = None,
             arg.set(key, value=value, source=source, instance=instance)
 
 
-def get_module_names(instrument: str,
+def get_module_names(instrument: str, package: str,
                      mod_list: List[str],
                      instrument_path: Union[str, Path],
                      default_path: Union[str, Path],
@@ -1333,8 +1333,8 @@ def get_module_names(instrument: str,
     # set function name
     func_name = display_func('_get_module_names', __NAME__)
     # get constants package path
-    const_path = drs_misc.get_relative_folder(__PACKAGE__, instrument_path)
-    core_path = drs_misc.get_relative_folder(__PACKAGE__, default_path)
+    const_path = drs_misc.get_relative_folder(package, instrument_path)
+    core_path = drs_misc.get_relative_folder(package, default_path)
     # get the directories within const_path
     filelist = np.sort(os.listdir(const_path))
     directories = []
@@ -1349,10 +1349,10 @@ def get_module_names(instrument: str,
 
     # construct module import name
     if instrument == 'None':
-        modpath = '{0}.{1}'.format(__PACKAGE__, corepath)
+        modpath = '{0}.{1}'.format(package, corepath)
         filepath = os.path.join(core_path, '')
     else:
-        modpath = '{0}.{1}.{2}'.format(__PACKAGE__, relpath, instrument.lower())
+        modpath = '{0}.{1}.{2}'.format(package, relpath, instrument.lower())
         filepath = os.path.join(const_path, instrument.lower())
     # get module names
     mods, paths = [], []

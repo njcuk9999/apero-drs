@@ -1005,7 +1005,7 @@ class DrsRecipe(object):
                 instrument = params['INSTRUMENT']
                 rpath = params['DRS_INSTRUMENT_RECIPE_PATH']
                 dpath = params['DRS_DEFAULT_RECIPE_PATH']
-                margs = [instrument, [self.name], rpath, dpath]
+                margs = [instrument, __PACKAGE__, [self.name], rpath, dpath]
                 modules = param_functions.get_module_names(*margs,
                                                            return_paths=False)
                 # return module
