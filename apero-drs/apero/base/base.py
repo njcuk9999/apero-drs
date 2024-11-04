@@ -37,7 +37,7 @@ __YAML__ = yaml.load(open(__PATH__.joinpath('info.yaml')),
 # =============================================================================
 __version__ = __YAML__['VERSION']
 __authors__ = __YAML__['AUTHORS']
-__date__ = __YAML__['DATE']
+__date__ = str(__YAML__['DATE'])
 __release__ = __YAML__['RELEASE']
 # do this once per drs import
 __now__ = base.Time.now()

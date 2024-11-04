@@ -1111,7 +1111,7 @@ def _write_fits(params: ParamDict, filename: str, data: ListImageTable,
         if wmsg != str(warning.message):
             w1.append(warning)
     # add warnings to the warning logger and log if we have them
-    load_functions.warninglogger(select.instruments, w1)
+    load_functions.warninglogger(select.INSTRUMENTS, w1)
 
 
 def update_extension(params: ParamDict, filename: str, extension: int,

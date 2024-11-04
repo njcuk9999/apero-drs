@@ -110,6 +110,8 @@ STRTYPE[complex] = 'complex'
 STRTYPE[list] = 'list'
 STRTYPE[bool] = 'bool'
 STRTYPE[np.ndarray] = 'np.ndarray'
+# Invert STRTYPE
+TYPESTR = {v: k for k, v in STRTYPE.items()}
 # define types that we can do min and max on
 NUMBER_TYPES = [int, float]
 # -----------------------------------------------------------------------------

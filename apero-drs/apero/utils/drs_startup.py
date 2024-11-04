@@ -123,9 +123,10 @@ def setup(name: str = 'None', instrument: str = 'None',
     try:
         return __setup__(name, instrument, fkwargs, quiet, threaded,
                          enable_plotter, rmod)
-    except (DrsCodedException, drs_log.DrsLogException):
+    except (DrsCodedException, drs_log.DrsLogException) as e:
+        WLOG(None, 'error', e.message, raise_exception=False)
         end_all(None, False, recipename=name)
-        sys.exit()
+        sys.exit(1)
 
 
 def __setup__(name: str = 'None', instrument: str = 'None',

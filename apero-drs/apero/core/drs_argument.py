@@ -1099,6 +1099,463 @@ class _CheckOptions(DrsAction):
         setattr(namespace, self.dest, value)
 
 
+class _CheckList(DrsAction):
+    def __init__(self, *args, **kwargs):
+        """
+        Construct the Check Type action (for checking a type argument)
+
+        :param args: arguments passed to argparse.Action.__init__
+        :param kwargs: keyword arguments passed to argparse.Action.__init__
+        """
+        # set class name
+        self.class_name = '_CheckType'
+        # define recipe as None
+        self.recipe = None
+        # force super initialisation
+        DrsAction.__init__(self, *args, **kwargs)
+
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state
+        return state
+
+    def __setstate__(self, state: dict):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+        # set parser to None (Is this a problem?)
+        self.parser = None
+
+    def __str__(self) -> str:
+        """
+        String representation of this class
+        :return:
+        """
+        return '_CheckType[DrsAction]'
+
+    def _check_type(self, value: Any) -> Any:
+        """
+        Check the value of the type is valid - raise exception if not
+        valid, else return the value
+
+        :param value: Any, the value to test whether valid for directory
+        argument
+
+        :return: Any, based on the type required (raises exception if invalid)
+        :raises: drs_exceptions.LogExit
+        """
+        # should be string anyway but force into string and split into list
+        value = str(value).split(',')
+        # ---------------------------------------------------------------------
+        # deal with no check
+        if not self.recipe.input_validation:
+            return value
+        # ---------------------------------------------------------------------
+        # get parameters
+        params = self.recipe.params
+        # else if we have a list we should iterate
+        if type(value) is list:
+            values = []
+            for it in range(len(value)):
+                values.append(self._eval_type(values[it]))
+            return values
+        # else
+        else:
+            eargs = [self.dest, self.nargs, type(value), value]
+            raise drs_log.AperoCodedException(params, '09-001-00018',
+                                                targs=eargs)
+
+    def _eval_type(self, value: Any) -> Any:
+        """
+        Try to cast the value into self.type
+
+        :param value: Any, value to try to change to self.type
+        :return: Any, the value type-casted into self.type type
+        :raises: drs_exceptions.LogExit
+        """
+        # get parameters
+        params = self.recipe.params
+        # get type error
+        eargs = [self.dest, value, self.type]
+        try:
+            return self.type(value)
+        except ValueError as _:
+            raise drs_log.AperoCodedException(params, '09-001-00014',
+                                              targs=eargs)
+        except TypeError as _:
+            raise drs_log.AperoCodedException(params, '09-001-00015',
+                                              targs=eargs)
+
+    def _check_limits(self, values: Any) -> Union[List[Any], Any]:
+        """
+        Checks the limits (maximum and minimum) of a value or set of values
+        (maximum and minimum obtained from Argument definition)
+
+        :param values: Any, the input values to test
+        :return: Any, the same values as input (unless outside max and/or min)
+        :raises: drs_exceptions.LogExit
+        """
+        # set function name (cannot break here --> no access to inputs)
+        func_name = display_func('_check_type',
+                                 __NAME__, self.class_name)
+        # ---------------------------------------------------------------------
+        # deal with no check
+        if not self.recipe.input_validation:
+            return values
+        # ---------------------------------------------------------------------
+        # get parameters
+        params = self.recipe.params
+        # get the argument name
+        argname = self.dest
+        # ---------------------------------------------------------------------
+        # find argument
+        if argname in self.recipe.args:
+            arg = self.recipe.args[argname]
+        elif argname in self.recipe.kwargs:
+            arg = self.recipe.kwargs[argname]
+        elif argname in self.recipe.special_args:
+            arg = self.recipe.special_args[argname]
+        else:
+            eargs = [argname, func_name]
+            raise drs_log.AperoCodedException(params, '00-006-00010',
+                                              targs=eargs)
+        # ---------------------------------------------------------------------
+        # skip this step if minimum/maximum are both None
+        if arg.minimum is None and arg.maximum is None:
+            return values
+        if arg.dtype not in NUMBER_TYPES:
+            return values
+        # ---------------------------------------------------------------------
+        # make sure we have a list
+        if type(values) not in [list, np.ndarray]:
+            is_list = False
+            values = [values]
+        else:
+            is_list = True
+        # ---------------------------------------------------------------------
+        # get the minimum and maximum values
+        minimum, maximum = arg.minimum, arg.maximum
+        # make sure we can push values to required dtype (unless None)
+        if minimum is not None:
+            try:
+                minimum = arg.dtype(minimum)
+            except ValueError as e:
+                eargs = [argname, 'minimum', minimum, type(e), e]
+                raise drs_log.AperoCodedException(params, '00-006-00012',
+                                                    targs=eargs)
+
+        if maximum is not None:
+            try:
+                maximum = arg.dtype(maximum)
+            except ValueError as e:
+                eargs = [argname, 'maximum', maximum, type(e), e]
+                raise drs_log.AperoCodedException(params, '00-006-00012',
+                                                    targs=eargs)
+        # ---------------------------------------------------------------------
+        # loop round files and check values
+        for value in values:
+            # deal with case where minimum and maximum should be checked
+            if minimum is not None and maximum is not None:
+                if (value < minimum) or (value > maximum):
+                    eargs = [argname, value, minimum, maximum]
+                    raise drs_log.AperoCodedException(params, '09-001-00029',
+                                                      targs=eargs)
+            # deal with case where just minimum is checked
+            elif minimum is not None:
+                if value < minimum:
+                    eargs = [argname, value, minimum]
+                    raise drs_log.AperoCodedException(params, '09-001-00027',
+                                                      targs=eargs)
+            # deal with case where just maximum is checked
+            elif maximum is not None:
+                if value > maximum:
+                    eargs = [argname, value, maximum]
+                    raise drs_log.AperoCodedException(params, '09-001-00028',
+                                                        targs=eargs)
+        # ---------------------------------------------------------------------
+        # return (based on whether it is a list or not)
+        if is_list:
+            return values
+        else:
+            return values[0]
+
+    def __call__(self, parser: DrsArgumentParser,
+                 namespace: argparse.Namespace, values: Any,
+                 option_string: Any = None):
+        """
+        Call the action _CheckType() - sets the _CheckType.dest
+        to value if valid else raises exception
+
+        :param parser: DrsArgumentParser instance
+        :param namespace: argparse.Namespace instance
+        :param values: Any, the values to check directory argument
+        :param option_string: None in most cases but used to get options
+                              for testing the value if required
+        :return: None
+        :raises: drs_exceptions.LogExit
+        """
+        # get drs parameters
+        self.recipe = parser.recipe
+        # check for help
+        # noinspection PyProtectedMember
+        skip = parser._has_special()
+        if skip:
+            return 0
+        if self.nargs == 1:
+            value = self._check_type(values)
+        elif isinstance(values, list):
+            value = list(map(self._check_type, values))
+        else:
+            value = self._check_type(values)
+        # check the limits are correct
+        value = self._check_limits(value)
+        # Add the attribute
+        setattr(namespace, self.dest, value)
+
+
+class _CheckDict(DrsAction):
+    def __init__(self, *args, **kwargs):
+        """
+        Construct the Check Type action (for checking a type argument)
+
+        :param args: arguments passed to argparse.Action.__init__
+        :param kwargs: keyword arguments passed to argparse.Action.__init__
+        """
+        # set class name
+        self.class_name = '_CheckType'
+        # define recipe as None
+        self.recipe = None
+        # force super initialisation
+        DrsAction.__init__(self, *args, **kwargs)
+
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state
+        return state
+
+    def __setstate__(self, state: dict):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+        # set parser to None (Is this a problem?)
+        self.parser = None
+
+    def __str__(self) -> str:
+        """
+        String representation of this class
+        :return:
+        """
+        return '_CheckType[DrsAction]'
+
+    def _check_type(self, value: Any) -> Any:
+        """
+        Check the value of the type is valid - raise exception if not
+        valid, else return the value
+
+        :param value: Any, the value to test whether valid for directory
+        argument
+
+        :return: Any, based on the type required (raises exception if invalid)
+        :raises: drs_exceptions.LogExit
+        """
+        # should be string anyway but force into string and split into list
+        rawvalue = str(value).split(',')
+        # each entry should be key: value
+        keyi, valuei = [], []
+        for rv in rawvalue:
+            # split into key and value
+            kv = rv.split(':')
+            # append to key and value
+            keyi.append(kv[0])
+            valuei.append(kv[1])
+        # value is the dictionary form of this
+        value = dict(zip(keyi, valuei))
+        # ---------------------------------------------------------------------
+        # deal with no check
+        if not self.recipe.input_validation:
+            return value
+        # ---------------------------------------------------------------------
+        # get parameters
+        params = self.recipe.params
+        # if we have a dict we should iterate
+        if type(value) is dict:
+            values = dict()
+            for key in value:
+                values[key] = self._eval_type(value[key])
+            return values
+        # else
+        else:
+            eargs = [self.dest, self.nargs, type(value), value]
+            raise drs_log.AperoCodedException(params, '09-001-00018',
+                                                targs=eargs)
+
+    def _eval_type(self, value: Any) -> Any:
+        """
+        Try to cast the value into self.type
+
+        :param value: Any, value to try to change to self.type
+        :return: Any, the value type-casted into self.type type
+        :raises: drs_exceptions.LogExit
+        """
+        # get parameters
+        params = self.recipe.params
+        # get type error
+        eargs = [self.dest, value, self.type]
+        try:
+            return self.type(value)
+        except ValueError as _:
+            raise drs_log.AperoCodedException(params, '09-001-00014',
+                                              targs=eargs)
+        except TypeError as _:
+            raise drs_log.AperoCodedException(params, '09-001-00015',
+                                              targs=eargs)
+
+    def _check_limits(self, values: Any) -> Union[List[Any], Any]:
+        """
+        Checks the limits (maximum and minimum) of a value or set of values
+        (maximum and minimum obtained from Argument definition)
+
+        :param values: Any, the input values to test
+        :return: Any, the same values as input (unless outside max and/or min)
+        :raises: drs_exceptions.LogExit
+        """
+        # set function name (cannot break here --> no access to inputs)
+        func_name = display_func('_check_type',
+                                 __NAME__, self.class_name)
+        # ---------------------------------------------------------------------
+        # deal with no check
+        if not self.recipe.input_validation:
+            return values
+        # ---------------------------------------------------------------------
+        # get parameters
+        params = self.recipe.params
+        # get the argument name
+        argname = self.dest
+        # ---------------------------------------------------------------------
+        # find argument
+        if argname in self.recipe.args:
+            arg = self.recipe.args[argname]
+        elif argname in self.recipe.kwargs:
+            arg = self.recipe.kwargs[argname]
+        elif argname in self.recipe.special_args:
+            arg = self.recipe.special_args[argname]
+        else:
+            eargs = [argname, func_name]
+            raise drs_log.AperoCodedException(params, '00-006-00010',
+                                              targs=eargs)
+        # ---------------------------------------------------------------------
+        # skip this step if minimum/maximum are both None
+        if arg.minimum is None and arg.maximum is None:
+            return values
+        if arg.dtype not in NUMBER_TYPES:
+            return values
+        # ---------------------------------------------------------------------
+        # make sure we have a list
+        if type(values) not in [list, np.ndarray]:
+            is_list = False
+            values = [values]
+        else:
+            is_list = True
+        # ---------------------------------------------------------------------
+        # get the minimum and maximum values
+        minimum, maximum = arg.minimum, arg.maximum
+        # make sure we can push values to required dtype (unless None)
+        if minimum is not None:
+            try:
+                minimum = arg.dtype(minimum)
+            except ValueError as e:
+                eargs = [argname, 'minimum', minimum, type(e), e]
+                raise drs_log.AperoCodedException(params, '00-006-00012',
+                                                    targs=eargs)
+
+        if maximum is not None:
+            try:
+                maximum = arg.dtype(maximum)
+            except ValueError as e:
+                eargs = [argname, 'maximum', maximum, type(e), e]
+                raise drs_log.AperoCodedException(params, '00-006-00012',
+                                                    targs=eargs)
+        # ---------------------------------------------------------------------
+        # loop round files and check values
+        for value in values:
+            # deal with case where minimum and maximum should be checked
+            if minimum is not None and maximum is not None:
+                if (value < minimum) or (value > maximum):
+                    eargs = [argname, value, minimum, maximum]
+                    raise drs_log.AperoCodedException(params, '09-001-00029',
+                                                      targs=eargs)
+            # deal with case where just minimum is checked
+            elif minimum is not None:
+                if value < minimum:
+                    eargs = [argname, value, minimum]
+                    raise drs_log.AperoCodedException(params, '09-001-00027',
+                                                      targs=eargs)
+            # deal with case where just maximum is checked
+            elif maximum is not None:
+                if value > maximum:
+                    eargs = [argname, value, maximum]
+                    raise drs_log.AperoCodedException(params, '09-001-00028',
+                                                        targs=eargs)
+        # ---------------------------------------------------------------------
+        # return (based on whether it is a list or not)
+        if is_list:
+            return values
+        else:
+            return values[0]
+
+    def __call__(self, parser: DrsArgumentParser,
+                 namespace: argparse.Namespace, values: Any,
+                 option_string: Any = None):
+        """
+        Call the action _CheckType() - sets the _CheckType.dest
+        to value if valid else raises exception
+
+        :param parser: DrsArgumentParser instance
+        :param namespace: argparse.Namespace instance
+        :param values: Any, the values to check directory argument
+        :param option_string: None in most cases but used to get options
+                              for testing the value if required
+        :return: None
+        :raises: drs_exceptions.LogExit
+        """
+        # get drs parameters
+        self.recipe = parser.recipe
+        # check for help
+        # noinspection PyProtectedMember
+        skip = parser._has_special()
+        if skip:
+            return 0
+        if self.nargs == 1:
+            value = self._check_type(values)
+        elif isinstance(values, list):
+            value = list(map(self._check_type, values))
+        else:
+            value = self._check_type(values)
+        # check the limits are correct
+        value = self._check_limits(value)
+        # Add the attribute
+        setattr(namespace, self.dest, value)
+
 # =============================================================================
 # Define Special Actions
 # =============================================================================
@@ -2721,7 +3178,10 @@ class DrsArgument(object):
                          'help']
         # define allowed dtypes
         self.allowed_dtypes = ['files', 'file', 'obs_dir', 'bool',
-                               'options', 'switch', int, float, str, list]
+                               'options', 'switch', int, float, str, list,
+                               'List[str]', 'List[int]', 'List[float]',
+                               'Dict[str, str]', 'Dict[str, int]',
+                               'Dict[str, float]']
         # ------------------------------------------------------------------
         # deal with no name or kind (placeholder for copy)
         if name is None:
@@ -2952,7 +3412,15 @@ class DrsArgument(object):
             self.props['choices'] = self.options
         elif self.dtype == 'switch':
             self.props['action'] = 'store_true'
-        elif type(self.dtype) is type:
+        elif str(self.dtype).startswith('List'):
+            self.props['action'] = _CheckList
+            self.props['type'] = self.get_special_type(self.dtype)
+            self.options = [self.name.upper()]
+        elif str(self.dtype).startswith('Dict'):
+            self.props['action'] = _CheckDict
+            self.props['type'] = self.get_special_type(self.dtype)
+            self.options = [self.name.upper()]
+        elif isinstance(self.dtype, (int, float, bool, str)):
             self.props['action'] = _CheckType
             self.props['type'] = self.dtype
             self.props['nargs'] = 1
@@ -3119,9 +3587,8 @@ class DrsArgument(object):
                 if isinstance(estr, drs_lang.Text):
                     estr = estr.get_text(report=True)
                 errorout += estr
-
             raise DrsCodedException('00-006-00023', 'error', targs=[errorout],
-                                    func_name=func_name)
+                                    func_name=func_name, message=errorout)
         # else raise the argument error with just the message
         else:
             raise DrsCodedException('00-006-00023', 'error', targs=[message],
@@ -3194,6 +3661,46 @@ class DrsArgument(object):
             return fmt.format(*fargs), str(self.helpstr)
         else:
             return fmt.format(*fargs)
+
+
+    def get_special_type(self, dtype: str) -> Type:
+        """
+        Get the special type for a given dtype
+
+        i.e. List[str], List[int], Dict[str, str], Dict[str, int]
+        """
+        try:
+            # deal with List[X]
+            if dtype.startswith('List'):
+                # Get inner type
+                type = dtype.split('List[')[-1].split(']')[0]
+                # make sure inner type (as a string) is in base.TYPESTR
+                if type not in base.TYPESTR:
+                    # TODO: Add to language database
+                    ee = 'Arg {0}: List type "{1}" not recognized'
+                    eargs = [self.name, dtype]
+                    self.exception(None, errorstr=[ee.format(*eargs)])
+                # return the type class
+                return base.TYPESTR[type]
+            # deal with Dict[X]
+            elif dtype.startswith('Dict'):
+                # Get inner type
+                type = dtype.split('Dict[')[-1].split(',')[-1].split(']')[0]
+                # make sure inner type (as a string) is in base.TYPESTR
+                if type not in base.TYPESTR:
+                    # TODO: Add to language database
+                    ee = 'Arg {0}: Dict type "{1}" not recognized'
+                    eargs = [self.name, dtype]
+                    self.exception(None, errorstr=[ee.format(*eargs)])
+                # return the type class
+                return base.TYPESTR[type]
+        # deal with anything else
+        except Exception as _:
+            pass
+        # TODO: Add to language database
+        ee = 'Arg {0}: Type "{1}" not recognized'
+        eargs = [self.name, dtype]
+        self.exception(None, errorstr=[ee.format(*eargs)])
 
 
 # =============================================================================

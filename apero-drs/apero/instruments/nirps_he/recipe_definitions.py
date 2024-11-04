@@ -201,7 +201,8 @@ apero_pp_ref.recipe_kind = 'pre-reference'
 apero_pp_ref.set_outputs(PP_REF=files.out_pp_ref,
                          PP_LED_FLAT=files.out_pp_led_flat)
 apero_pp_ref.set_arg(pos=0, **obs_dir)
-apero_pp_ref.set_kwarg(name='--filetype', dtype=str, default='FLAT_FLAT',
+apero_pp_ref.set_kwarg(name='--filetype', dtype='List[str]',
+                       default='FLAT_FLAT',
                        helpstr=textentry('PP_REF_FILETYPE_HELP'))
 apero_pp_ref.group_func = grouping.no_group
 apero_pp_ref.group_column = None
@@ -333,7 +334,7 @@ apero_dark_ref.recipe_type = 'recipe'
 apero_dark_ref.recipe_kind = 'calib-reference'
 apero_dark_ref.calib_required = True
 apero_dark_ref.set_outputs(DARK_REF_FILE=files.out_dark_ref)
-apero_dark_ref.set_kwarg(name='--filetype', dtype=str,
+apero_dark_ref.set_kwarg(name='--filetype', dtype='List[str]',
                          default='DARK_DARK',
                          helpstr=textentry('DARK_REF_FILETYPE'))
 apero_dark_ref.set_kwarg(**add_db)
@@ -612,7 +613,8 @@ apero_leak_ref.set_output_data(LEAK_E2DS_FILE=leakref_dict,
                                LEAK_REF=leakref_dict)
 apero_leak_ref.set_flags(INT_EXT=True, EXT_FOUND=False)
 apero_leak_ref.set_arg(pos=0, **obs_dir)
-apero_leak_ref.set_kwarg(name='--filetype', dtype=str, default='DARK_FP',
+apero_leak_ref.set_kwarg(name='--filetype', dtype='List[str]',
+                         default='DARK_FP',
                          helpstr=textentry('LEAKREF_HELP_FILETYPE'))
 apero_leak_ref.set_kwarg(**add_db)
 apero_leak_ref.set_kwarg(**plot)
