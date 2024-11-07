@@ -184,6 +184,9 @@ LBL_STAT_FILES['LBL BERV zp RDB2 file'] = 'lbl2_{0}_bervzp.rdb'
 LBL_STAT_FILES['LBL BERV Zp Diaganostic Plots'] = 'lbl_{0}_bervzp_plots.pdf'
 LBL_STAT_FILES['LBL-PCA RDB file'] = 'lbl_{0}_PCAx.rdb'
 LBL_STAT_FILES['LBL-PCA RDB2 file'] = 'lbl2_{0}_PCAx.rdb'
+# TODO: remove once in APERO
+LBL_STAT_FILES['LBL telluric-PCA cleaned'] = 'lbl_{0}_TELLU05.rdb'
+LBL_STAT_FILES['LBL slinky + telluric-PCA cleaned'] = 'lbl_{0}_SLINKY05.rdb'
 # time series column names
 TIME_SERIES_COLS = ['Obs Dir', 'First obs mid',
                     'Last obs mid', 'Number of ext', 'Number of tcorr',

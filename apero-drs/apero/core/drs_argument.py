@@ -530,6 +530,10 @@ class _CheckFiles(DrsAction):
         # set the function name
         func_name = display_func('_check_files', __NAME__, self.class_name)
         # ---------------------------------------------------------------------
+        # deal with comma
+        if ',' in value:
+            value = value.split(',')
+        # ---------------------------------------------------------------------
         # deal with single string -> list of strings
         if isinstance(value, str):
             values = [value]
@@ -642,7 +646,14 @@ class _CheckFiles(DrsAction):
         if skip:
             return 0
         # check values and return a list of files and file types
-        files, types = self._check_files(values)
+        if isinstance(values, list):
+            files, types = [], []
+            for value in values:
+                files_it, types_it = self._check_files(value)
+                files += files_it
+                types += types_it
+        else:
+            files, types = self._check_files(values)
         # Add the attribute
         setattr(namespace, self.dest, [files, types])
 
@@ -1555,6 +1566,7 @@ class _CheckDict(DrsAction):
         value = self._check_limits(value)
         # Add the attribute
         setattr(namespace, self.dest, value)
+
 
 # =============================================================================
 # Define Special Actions
@@ -3420,14 +3432,14 @@ class DrsArgument(object):
             self.props['action'] = _CheckDict
             self.props['type'] = self.get_special_type(self.dtype)
             self.options = [self.name.upper()]
-        elif isinstance(self.dtype, (int, float, bool, str)):
+        elif self.dtype in [int, float, bool, str]:
             self.props['action'] = _CheckType
             self.props['type'] = self.dtype
             self.props['nargs'] = 1
             self.options = [self.name.upper()]
         else:
+            self.props['action'] = 'store'
             self.props['type'] = str
-            self.props['nargs'] = 1
             self.options = [self.name.upper()]
         # deal with default argument
         if self.default is not None:
