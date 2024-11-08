@@ -1178,7 +1178,7 @@ class _CheckList(DrsAction):
         if type(value) is list:
             values = []
             for it in range(len(value)):
-                values.append(self._eval_type(values[it]))
+                values.append(self._eval_type(value[it]))
             return values
         # else
         else:

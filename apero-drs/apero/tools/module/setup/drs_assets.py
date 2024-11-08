@@ -67,7 +67,7 @@ def update_remote_assets(params: ParamDict):
                     os.remove(os.path.join(root, filename))
                 continue
             # remove the checksum yaml files from the directory
-            if filename == base.CHECKSUM_FILE:
+            if filename == apero_base.CHECKSUM_FILE:
                 if os.path.exists(filename):
                     os.remove(os.path.join(root, filename))
                 continue
@@ -116,7 +116,7 @@ def update_remote_assets(params: ParamDict):
     # get the data path
     abs_data_path = drs_data.construct_path(params, '', _data_path)
     # add the checksum filename
-    checksum_path = os.path.join(abs_data_path, base.CHECKSUM_FILE)
+    checksum_path = os.path.join(abs_data_path, apero_base.CHECKSUM_FILE)
     # print progress
     WLOG(params, '', f'Saving yaml file to: {checksum_path}')
     # create yaml file
@@ -219,7 +219,7 @@ def update_local_assets(params: ParamDict, tarfile: str = None):
     # get the data path
     abs_data_path = drs_data.construct_path(params, '', _data_path)
     # add the checksum filename
-    checksum_path = os.path.join(abs_data_path, base.CHECKSUM_FILE)
+    checksum_path = os.path.join(abs_data_path, apero_base.CHECKSUM_FILE)
     # read the yaml file
     yaml_dict = base.load_yaml(checksum_path)
     # -------------------------------------------------------------------------

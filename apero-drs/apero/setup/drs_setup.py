@@ -433,7 +433,37 @@ def update_setup(setup_params: ParamDict,
 
 
 def run_setup(params: ParamDict):
-    pass
+
+
+    # create the database.yaml and install.yaml
+    base.create_yamls(params)
+
+    # create the user_config.yaml and user_constants.yaml
+
+
+    # create the setup file (sh, bash, etc)
+
+    # ----------------------------------------------------------------------
+    # Now we can use apero
+    # ----------------------------------------------------------------------
+    from apero.tools.module.setup import drs_assets
+    from apero.instruments import select
+    # reload base dparams and iparams
+    base.DPARAMS = base.load_database_yaml()
+    base.IPARAMS = base.load_install_yaml()
+    # get apero parameters
+    aparams = load_functions.load_config(select.INSTRUMENTS)
+
+    # ----------------------------------------------------------------------
+    # download the assets (into github directory)
+    # ----------------------------------------------------------------------
+    # now check whether we need to download the assets
+    update_assets = drs_assets.check_local_assets(aparams)
+    if update_assets:
+        drs_assets.update_local_assets(aparams, tarfile=params['TARFILE'])
+    # ----------------------------------------------------------------------
+    # clean install
+
 
 
 # =============================================================================
