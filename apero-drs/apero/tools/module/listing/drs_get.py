@@ -170,6 +170,10 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
         else:
             master_condition += f' AND {subcondition}'
     # -------------------------------------------------------------------------
+    # deal with no objnames
+    if kw_objnames is None:
+        kw_objnames = ['None']
+    # -------------------------------------------------------------------------
     # separate list for each object name
     # -------------------------------------------------------------------------
     # storage of inpaths

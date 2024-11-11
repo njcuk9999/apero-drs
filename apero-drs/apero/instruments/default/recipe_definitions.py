@@ -138,7 +138,7 @@ ari.set_kwarg(name='--obsdir', dtype=str, default='None',
               helpstr=textentry('OBS_DIR_HELP'))
 ari.set_kwarg(name='--reset', dtype='switch',
               helpstr='Reset ARI')
-ari.set_kwarg(name='--redo_objs', dtype=str, default='None',
+ari.set_kwarg(name='--redo_objs', dtype='List[str]', default='None',
               helpstr='List of comma separated objects (named as in '
                       'astrometric database) to redo. All others will be '
                       'taken from storage unless not currently processed.')
@@ -161,7 +161,7 @@ astrometric.instrument = __INSTRUMENT__
 astrometric.description = textentry('ASTROMETRIC_DESCRIPTION')
 astrometric.recipe_type = 'tool'
 astrometric.recipe_kind = 'user'
-astrometric.set_arg(pos=0, name='objects', dtype=str,
+astrometric.set_arg(pos=0, name='objects', dtype='List[str]',
                     helpstr=textentry('ASTROMETRIC_OBJ_HELP'))
 astrometric.set_kwarg(name='--overwrite', dtype='switch',
                       helpstr=textentry('ASTROMETRIC_OVERWRITE_HELP'))
@@ -222,7 +222,7 @@ database_mgr.set_kwarg(name='--join', dtype='options', default='replace',
 database_mgr.set_kwarg(name='--delete', dtype='switch',
                        helpstr=textentry('DBMGR_DELETE_HELP'))
 # TODO: Add to language database
-database_mgr.set_kwarg(name='--keys', dtype=str, default='None',
+database_mgr.set_kwarg(name='--keys', dtype='List[str]', default='None',
                        helpstr='Keyname of entries to remove (used in '
                                'combination with --telludb or --calibdb)')
 database_mgr.set_kwarg(name='--since', dtype=str, default='None',
@@ -251,7 +251,7 @@ remake_doc.shortname = 'DOC'
 remake_doc.description = textentry('REMAKE_DOC_DESCRIPTION')
 remake_doc.recipe_type = 'nolog-tool'
 remake_doc.recipe_kind = 'admin'
-remake_doc.set_kwarg(name='--instruments', dtype=str, default='ALL',
+remake_doc.set_kwarg(name='--instruments', dtype='List[str]', default='ALL',
                      helpstr=textentry('REMAKE_INSTRUMENT_HELP'))
 remake_doc.set_kwarg(name='--compile', dtype='switch',
                      helpstr=textentry('REMAKE_DOC_COMPILE_HELP'))
@@ -312,13 +312,13 @@ get_files.set_kwarg(name='--tarfile', default='None', dtype=str,
                     helpstr='The name of the tar file to create. Must also '
                             'provide the --tar argument')
 # file filters
-get_files.set_kwarg(name='--objnames', dtype=str, default='None',
+get_files.set_kwarg(name='--objnames', dtype='List[str]', default='None',
                     helpstr=textentry('GET_OBJNAME_HELP'))
-get_files.set_kwarg(name='--dprtypes', dtype=str, default='None',
+get_files.set_kwarg(name='--dprtypes', dtype='List[str]', default='None',
                     helpstr=textentry('GET_DPRTYPES_HELP'))
-get_files.set_kwarg(name='--outtypes', dtype=str, default='None',
+get_files.set_kwarg(name='--outtypes', dtype='List[str]', default='None',
                     helpstr=textentry('GET_OUTTYPES_HELP'))
-get_files.set_kwarg(name='--fibers', dtype=str, default='None',
+get_files.set_kwarg(name='--fibers', dtype='List[str]', default='None',
                     helpstr=textentry('GET_FIBERS_HELP'))
 
 get_files.set_kwarg(name='--since', default='None', dtype=str,
@@ -335,9 +335,9 @@ get_files.set_kwarg(name='--timekey', default='observed', dtype='options',
 get_files.set_kwarg(name='--obsdir', default='None', dtype=str,
                     helpstr='Only get files from a certain observation '
                             'directory')
-get_files.set_kwarg(name='--pi_name', default='None', dtype=str,
+get_files.set_kwarg(name='--pi_name', default='None', dtype='List[str]',
                     helpstr='Only get files from a certain PI')
-get_files.set_kwarg(name='--runid', default='None', dtype=str,
+get_files.set_kwarg(name='--runid', default='None', dtype='List[str]',
                     helpstr='Only get files from certain run ids')
 # advanced options
 get_files.set_kwarg(name='--failedqc', dtype='switch',
@@ -406,9 +406,9 @@ listing.set_kwarg(name='--obs_dir', dtype=str, default='',
 listing.set_kwarg(name='--block_kind', dtype='options', default='raw',
                   options=['raw', 'tmp', 'red', 'out'],
                   helpstr=textentry('LISTING_HELP_KIND'))
-listing.set_kwarg(name='--exclude_obs_dirs', dtype=str, default='None',
+listing.set_kwarg(name='--exclude_obs_dirs', dtype='List[str]', default='None',
                   helpstr=textentry('PROCESS_EXCLUDE_OBS_DIRS_HELP'))
-listing.set_kwarg(name='--include_obs_dirs', dtype=str, default='None',
+listing.set_kwarg(name='--include_obs_dirs', dtype='List[str]', default='None',
                   helpstr=textentry('PROCESS_INCLUDE_OBS_DIRS_HELP'))
 listing.description_file = 'apero_listing.rst'
 
@@ -478,9 +478,9 @@ precheck.set_arg(pos=0, name='runfile', dtype=str,
                  helpstr=textentry('PROCESS_RUNFILE_HELP'))
 precheck.set_kwarg(name='--obs_dir', dtype=str, default='None',
                    helpstr=textentry('PROCESS_OBS_DIR_HELP'))
-precheck.set_kwarg(name='--exclude_obs_dirs', dtype=str, default='None',
+precheck.set_kwarg(name='--exclude_obs_dirs', dtype='List[str]', default='None',
                    helpstr=textentry('PROCESS_EXCLUDE_OBS_DIRS_HELP'))
-precheck.set_kwarg(name='--include_obs_dirs', dtype=str, default='None',
+precheck.set_kwarg(name='--include_obs_dirs', dtype='List[str]', default='None',
                    helpstr=textentry('PROCESS_INCLUDE_OBS_DIRS_HELP'))
 precheck.set_kwarg(name='--no_file_check', dtype='switch',
                    helpstr=textentry('PRECHECK_NOFILECHECK_HELP'))
@@ -503,22 +503,22 @@ processing.set_kwarg(name='--obs_dir', dtype=str, default='None',
                      helpstr=textentry('PROCESS_OBS_DIR_HELP'))
 processing.set_kwarg(name='--filename', dtype=str, default='None',
                      helpstr=textentry('PROCESS_FILENAME_HELP'))
-processing.set_kwarg(name='--exclude_obs_dirs', dtype=str, default='None',
+processing.set_kwarg(name='--exclude_obs_dirs', dtype='List[str]', default='None',
                      helpstr=textentry('PROCESS_EXCLUDE_OBS_DIRS_HELP'))
-processing.set_kwarg(name='--include_obs_dirs', dtype=str, default='None',
+processing.set_kwarg(name='--include_obs_dirs', dtype='List[str]', default='None',
                      helpstr=textentry('PROCESS_INCLUDE_OBS_DIRS_HELP'))
-processing.set_kwarg(name='--cores', dtype=str, default='None',
+processing.set_kwarg(name='--cores', dtype=int, default='None',
                      helpstr=textentry('PROCESS_CORES_HELP'))
 processing.set_kwarg(name='--test', dtype='options', default='None',
                      options=['True', 'False', '1', '0', 'None'],
                      helpstr=textentry('PROCESS_TEST_HELP'))
 processing.set_kwarg(name='--trigger', dtype='switch',
                      helpstr=textentry('PROCESS_TRIGGER_HELP'))
-processing.set_kwarg(name='--science_targets', dtype=str, default='None',
+processing.set_kwarg(name='--science_targets', dtype='List[str]', default='None',
                      helpstr=textentry('PROCESS_SCI_TARGETS'))
-processing.set_kwarg(name='--telluric_targets', dtype=str, default='None',
+processing.set_kwarg(name='--telluric_targets', dtype='List[str]', default='None',
                      helpstr=textentry('PROCESS_TELLU_TARGETS'))
-processing.set_kwarg(name='--update_objdb', dtype=str, default='None',
+processing.set_kwarg(name='--update_objdb', dtype='switch',
                      helpstr=textentry('PROCESS_UPDATE_OBJDB'))
 processing.description_file = 'apero_processing.rst'
 
@@ -543,12 +543,12 @@ reject.description = ('Add a object or file to the object or file reject list '
                       'online.')
 reject.recipe_type = 'nolog-tool'
 reject.recipe_kind = 'user'
-reject.set_kwarg(name='--identifier', dtype=str, default='None',
+reject.set_kwarg(name='--identifier', dtype='List[str]', default='None',
                  helpstr='Add a specific file identifier to the file reject '
                          'list. E.g. for spirou this is the odocode, for '
                          'nirps this is raw the filename '
                          '(Can add multiple as comma separated list)')
-reject.set_kwarg(name='--objname', dtype=str, default='None',
+reject.set_kwarg(name='--objname', dtype='List[str]', default='None',
                  helpstr='Add a specific object name to the object reject list '
                          '(Can add multiple as comma separated list)')
 reject.set_kwarg(name='--obsdir', dtype=str, default='None',
@@ -579,7 +579,7 @@ remove.recipe_kind = 'user'
 remove.set_kwarg(name='--obsdir', dtype=str, default='None',
                  helpstr='Delete all instances of a certain observation '
                          'directory from disk and databases')
-remove.set_kwarg(name='--blocks', dtype=str, default='None',
+remove.set_kwarg(name='--blocks', dtype='List[str]', default='None',
                  helpstr='Delete all instances of tmp/red/out/calib/tellu '
                          'from disk and database '
                          '(multiple blocks should be separated by a comma)')
@@ -589,7 +589,7 @@ remove.set_kwarg(name='--file_prefix', dtype=str, default='None',
 remove.set_kwarg(name='--file_suffix', dtype=str, default='None',
                  helpstr='Delete all instances of a certain file suffix '
                          'from disk and databases')
-remove.set_kwarg(name='--objnames', dtype=str, default='None',
+remove.set_kwarg(name='--objnames', dtype='List[str]', default='None',
                  helpstr='Delete all instances of a certain object name '
                          '(DRSOBJN) from disk and databases')
 remove.set_kwarg(name='--test', dtype='switch',
