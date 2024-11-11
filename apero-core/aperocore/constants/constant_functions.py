@@ -580,12 +580,17 @@ class ConstantsDict:
     # yaml functionality
     # -------------------------------------------------------------------------
     def save_yaml(self, params: Any = None, log: bool = True,
-                  outpath: str = None, mode: str = None) -> str:
+                  outpath: str = None, mode: str = None,
+                  title_args: Dict[str, Any] = None) -> str:
         """
         Create a yaml file from input parameters
     
         :param params: Dict[str, Any], the input parameters
         :param log: bool, if True print log messages
+        :param outpath: str, the output path for the yaml file
+        :param mode: str, the mode to use (if None uses all)
+        :param title_args: Dict[str, Any], the arguments to pass to the title
+                           set to None if none passed
     
         :return: None writes yaml file
         """
@@ -598,8 +603,15 @@ class ConstantsDict:
         used_groups = []
         # create a commented map instance
         data = CommentedMap()
+        # deal with title
+        if self.title is None:
+            title = 'YAML file'
+        elif title_args is None:
+            title = self.title
+        else:
+            title = self.title.format(**title_args)
         # add the start comment
-        data.yaml_set_start_comment(self.title)
+        data.yaml_set_start_comment(title)
         # loop around constants and add to the data
         for key in self.storage:
             # get comment

@@ -11,6 +11,7 @@ Created on 2024-10-22 at 10:10
 """
 import string
 
+from aperocore.base import base
 from apero.setup import drs_setup
 
 # =============================================================================
@@ -42,6 +43,14 @@ SARGS['name'] = SetupArgument(name='name', argname='--name',
 SARGS['update'] = SetupArgument(name='update', argname='--update',
                                 default_value=False, dtype='bool', ask=False,
                                 helpstr='whether to update current profile')
+
+# which language to install apero in
+SARGS['language'] = SetupArgument(name='language', argname='--language',
+                                  options=base.LANGUAGES,
+                                  default_value=base.DEFAULT_LANG,
+                                  dtype='str', ask=False,
+                                  helpstr='which lanugage to install apero in')
+
 # the path where the user config files for this apero profile will be stored
 SARGS['config_path'] = SetupArgument(name='config_path', argname='--config',
                                      default_value=None, dtype='path',

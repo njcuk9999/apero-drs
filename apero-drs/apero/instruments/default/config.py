@@ -24,10 +24,17 @@ __release__ = apero_base.__release__
 Const = constant_functions.Const
 CDict = constant_functions.ConstantsDict(__NAME__)
 
+# set the title for output yaml files
+CDict.title = CDict.yaml_title('APERO[{INSTRUMENT}] config file',
+                               setup_program='apero_setup.py',
+                               version=__version__, date=__date__)
+
 # =============================================================================
 # global settings
 # =============================================================================
 cgroup = 'DRS.GLOBAL'
+CDict.add_group(cgroup, description='DRS.GLOBAL: global settings')
+
 # PLotting mode (0-3)
 CDict.add('DRS_PLOT', value=0, dtype=int,
           source=__NAME__, user=True,
@@ -68,6 +75,8 @@ CDict.add('PARAMETER_SNAPSHOT', value=True, dtype=bool,
 # path settings
 # =============================================================================
 cgroup = 'DRS.PATH'
+CDict.add_group(cgroup, description='DRS.PATH: path settings')
+
 #   Define the root installation directory
 CDict.add('DRS_ROOT', dtype='path', source=__NAME__, user=True,
           active=True, group=cgroup, value='./',
@@ -160,6 +169,8 @@ CDict.add('LBL_PATH', dtype='path', source=__NAME__, user=True,
 # INTERNAL: General properites
 # =============================================================================
 cgroup = 'DRS.INTERNAL'
+CDict.add_group(cgroup, description='DRS.INTERNAL: General properites')
+
 # Version
 CDict.add('DRS_VERSION', value=__version__, dtype=str,
           source=__NAME__, group=cgroup, description='Version')
@@ -182,6 +193,8 @@ CDict.add('DRS_DATE', value=__date__, dtype=str, source=__NAME__,
 # DRS SETTINGS
 # =============================================================================
 cgroup = 'DRS.DRS'
+CDict.add_group(cgroup, description='DRS.DRS: DRS SETTINGS')
+
 #   The top-level package name (i.e. import PACKAGE)
 CDict.add('DRS_PACKAGE', value=__PACKAGE__, dtype=str,
           source=__NAME__, group=cgroup,
@@ -262,6 +275,10 @@ CDict.add('USER_SCRIPTS',
 # Instrument/Observatory Constants
 # =============================================================================
 cgroup = 'DRS.INSTRUMENT_OBSERVATORY'
+CDict.add_group(cgroup,
+                description='DRS.INSTRUMENT_OBSERVATORY: '
+                            'Instrument/Observatory Constants')
+
 # Instrument Name
 CDict.add('INSTRUMENT', value='None', dtype=str,
           options=CDict.get('DRS_INSTRUMENTS').value,
@@ -283,6 +300,8 @@ CDict.add('OBS_ALT', value=None, dtype=float, source=__NAME__,
 # DRS INTERNAL PATHS
 # =============================================================================
 cgroup = 'DRS.INTERNAL_PATHS'
+CDict.add_group(cgroup, description='DRS.INTERNAL_PATHS: DRS INTERNAL PATHS')
+
 #   User-config default location (if environmental variable not set)
 #   this is relative to the package level
 CDict.add('DRS_USER_DEFAULT', value='../config/', dtype=str,
@@ -405,6 +424,8 @@ CDict.add('DRS_PDB_RC_FILENAME', value=apero_base.PDB_RC_FILENAME,
 # DRS ASSETS URLS
 # =============================================================================
 cgroup = 'DRS.ASSETS_URLS'
+CDict.add_group(cgroup, description='DRS.ASSETS_URLS: DRS ASSETS URLS')
+
 # where the assets tar file can be downloaded from (will be stored in the
 #   yaml file as well - this just controls where the developers upload it to)
 #   links must be publically accessible, separate links with a comma
@@ -458,6 +479,7 @@ CDict.add('DRS_SSH_ASSETSPATH',
 # DATABASE SETTINGS
 # =============================================================================
 cgroup = 'DRS.DATABASE'
+CDict.add_group(cgroup, description='DRS.DATABASE: DATABASE SETTINGS')
 
 # Define database directory (relative to assets directory)
 CDict.add('DATABASE_DIR', dtype=str, value='databases/',
@@ -516,7 +538,8 @@ CDict.add('TELLU_DB_MATCH', dtype=str, source=__NAME__,
 # DISPLAY/LOGGING SETTINGS
 # =============================================================================
 cgroup = 'DRS.DISPLAY_LOGGING'
-
+CDict.add_group(cgroup, description='DRS.DISPLAY_LOGGING: '
+                                    'DISPLAY/LOGGING SETTINGS')
 
 # dictionary of all the levels of logging available (values are the key)
 CDict.add('LOG_STORAGE_KEYS',
@@ -712,6 +735,8 @@ CDict.add('DRS_LOG_EMAIL_AUTH', value='apero.drs.oauth2.json',
 # PLOT SETTINGS
 # =============================================================================
 cgroup = 'DRS.PLOT_CORE'
+CDict.add_group(cgroup, description='DRS.PLOT_CORE: CORE PLOT SETTINGS')
+
 # Set the default font family for all graphs
 #     (i.e. monospace) "None" for not set
 CDict.add('DRS_PLOT_FONT_FAMILY', value='None', dtype=str,
@@ -768,6 +793,8 @@ CDict.add('DRS_SUMMARY_STYLE', value='latex', dtype=str,
 # DEBUG MODES
 # =============================================================================
 cgroup = 'DEBUG.MODES'
+CDict.add_group(cgroup, description='DEBUG.MODES: DEBUG.MODES')
+
 # The debug number to print debug log messages
 CDict.add('DEBUG_MODE_LOG_PRINT', value=10, dtype=int,
           source=__NAME__, group=cgroup,

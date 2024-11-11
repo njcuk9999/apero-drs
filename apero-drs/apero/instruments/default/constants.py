@@ -28,10 +28,19 @@ __release__ = apero_base.__release__
 Const = constant_functions.Const
 CDict = constant_functions.ConstantsDict(__NAME__)
 
+
+# set the title for output yaml files
+CDict.title = CDict.yaml_title('APERO[{INSTRUMENT}] constants file',
+                               setup_program='apero_setup.py',
+                               version=__version__, date=__date__)
+
+
 # =============================================================================
 # DRS DATA SETTINGS
 # =============================================================================
 cgroup = 'DRS.DATA'
+CDict.add_group(cgroup, description='DRS.DATA: DRS DATA SETTINGS')
+
 # Define the data engineering path
 CDict.add('DATA_ENGINEERING', value=None, dtype=str,
           source=__NAME__, group=cgroup,
@@ -55,6 +64,7 @@ CDict.add('CALIB_DB_FORCE_WAVESOL', value=None,
 # COMMON IMAGE SETTINGS
 # =============================================================================
 cgroup = 'DRS.COMMON_IMAGE'
+CDict.add_group(cgroup, description='DRS.COMMON_IMAGE: COMMON IMAGE SETTINGS')
 
 # Define the rotation of the pp files in relation to the raw files
 #     nrot = 0 -> same as input
@@ -179,6 +189,7 @@ CDict.add('ALL_POLAR_RHOMB_POS', value=None,
 # HEADER SETTINGS
 # =========================================================================
 cgroup = 'DRS.HEADER'
+CDict.add_group(cgroup, description='DRS.HEADER: HEADER SETTINGS')
 
 # Define the extensions that are valid for raw files
 CDict.add('VALID_RAW_FILES', value=['.fits'],
@@ -243,6 +254,8 @@ CDict.add('FORBIDDEN_DRS_KEY',
 # CALIBRATION: GENERAL SETTINGS
 # =============================================================================
 cgroup = 'CALIBRATION.GENERAL'
+CDict.add_group(cgroup, description='CALIBRATION.GENERAL: '
+                                    'CALIBRATION: GENERAL SETTINGS')
 
 # Define the maximum number of files that can be used in a group
 CDict.add('GROUP_FILE_LIMIT', value=None, dtype=int,
@@ -524,6 +537,9 @@ CDict.add('NIGHT_DEFINITION', value=None, dtype=str,
 # CALIBRATION: FIBER SETTINGS
 # =============================================================================
 cgroup = 'CALIBRATION.FIBER'
+CDict.add_group(cgroup, description='CALIBRATION.FIBER: '
+                                    'CALIBRATION: FIBER SETTINGS')
+
 # Number of orders to skip at start of image
 CDict.add('FIBER_FIRST_ORDER_JUMP_AB', value=None,
           dtype=int, minimum=0, source=__NAME__,
@@ -591,6 +607,9 @@ CDict.add('SKYFIBERS', value=None, dtype=list,
 # PRE-PROCESSSING SETTINGS
 # =============================================================================
 cgroup = 'PREPROCESSING.GENERAL'
+CDict.add_group(cgroup, description='PREPROCESSING.GENERAL: '
+                                    'PRE-PROCESSSING SETTINGS')
+
 # Define object (science or telluric)
 CDict.add('PP_OBJ_DPRTYPES', value=None,
           dtype=list, dtypei=str,
@@ -864,6 +883,10 @@ CDict.add('PP_NOSCI_CAPC_DPRTYPES', value=None,
 # =============================================================================
 # CALIBRATION: ASTROMETRIC DATABASE SETTINGS
 # =============================================================================
+cgroup = 'PREPROCESSING.ASTROM'
+CDict.add_group(cgroup, description='PREPROCESSING.ASTROM: '
+                                    'CALIBRATION: ASTROMETRIC DATABASE '
+                                    'SETTINGS')
 # gaia col name in google sheet
 CDict.add('GL_GAIA_COL_NAME', value=None, dtype=str,
           source=__NAME__, group=cgroup,
@@ -901,6 +924,9 @@ CDict.add('GL_R_RV_COL', value=None, dtype=str,
 # CALIBRATION: DARK SETTINGS
 # =============================================================================
 cgroup = 'CALIBRATION.DARK'
+CDict.add_group(cgroup, description='CALIBRATION.DARK: '
+                                    'CALIBRATION: DARK SETTINGS')
+
 # Min dark exposure time
 CDict.add('QC_DARK_TIME', value=None, dtype=float, minimum=0.0,
           source=__NAME__, group=cgroup,
@@ -1023,6 +1049,9 @@ CDict.add('DARK_REF_MIN_EXPTIME', value=None, dtype=int,
 # CALIBRATION: BAD PIXEL MAP SETTINGS
 # =============================================================================
 cgroup = 'CALIBRATION.BAD_PIXEL_MAP'
+CDict.add_group(cgroup, description='CALIBRATION.BAD_PIXEL_MAP: '
+                                    'CALIBRATION: BAD PIXEL MAP SETTINGS')
+
 # Defines the full detector flat file (located in the data folder)
 CDict.add('BADPIX_FULL_FLAT', value=None, dtype=str,
           source=__NAME__, group=cgroup,
@@ -1085,6 +1114,10 @@ CDict.add('BADPIX_DILATE_SIZE', value=None, dtype=int,
 # CALIBRATION: BACKGROUND CORRECTION SETTINGS
 # =============================================================================
 cgroup = 'CALIBRATION.BACKGROUND_CORRECTION'
+CDict.add_group(cgroup, description='CALIBRATION.BACKGROUND_CORRECTION: '
+                                    'CALIBRATION: BACKGROUND CORRECTION '
+                                    'SETTINGS')
+
 #  Width of the box to produce the background mask
 CDict.add('BKGR_BOXSIZE', value=None, dtype=int,
           source=__NAME__, minimum=0, group=cgroup,
@@ -1152,6 +1185,9 @@ CDict.add('BKGR_KER_SIG', value=None, dtype=float, source=__NAME__,
 # CALIBRATION: LOCALISATION SETTINGS
 # =============================================================================
 cgroup = 'CALIBRATION.LOCALISATION'
+CDict.add_group(cgroup, description='CALIBRATION.LOCALISATION: '
+                                    'CALIBRATION: LOCALISATION SETTINGS')
+
 # median-binning size in the dispersion direction. This is just used to
 #     get an order-of-magnitude of the order profile along a given column
 CDict.add('LOC_BINSIZE', value=None, dtype=int, source=__NAME__,
@@ -1446,6 +1482,9 @@ CDict.add('LOC_PLOT_CORNER_YZOOM2', value=None,
 # CALIBRATION: SHAPE SETTINGS
 # =============================================================================
 cgroup = 'CALIBRATION.SHAPE'
+CDict.add_group(cgroup, description='CALIBRATION.SHAPE: '
+                                    'CALIBRATION: SHAPE SETTINGS')
+
 #  Define the allowed DPRTYPES for finding files for SHAPE_REF will
 #      only find those types define by 'filetype' but 'filetype' must
 #      be one of theses
@@ -1826,6 +1865,9 @@ CDict.add('SHAPEL_PLOT_ZOOM2', value=None,
 # CALIBRATION: FLAT SETTINGS
 # =============================================================================
 cgroup = 'CALIBRATION.FLAT'
+CDict.add_group(cgroup, description='CALIBRATION.FLAT: '
+                                    'CALIBRATION: FLAT SETTINGS')
+
 # TODO: is blaze_size needed with sinc function?
 # Half size blaze smoothing window
 CDict.add('FF_BLAZE_HALF_WINDOW', value=None, dtype=int,
@@ -2020,6 +2062,9 @@ CDict.add('LEAK_BAD_RATIO_OFFSET', value=None, dtype=float,
 # CALIBRATION: EXTRACTION SETTINGS
 # =============================================================================
 cgroup = 'CALIBRATION.EXTRACTION'
+CDict.add_group(cgroup, description='CALIBRATION.EXTRACTION: '
+                                    'CALIBRATION: EXTRACTION SETTINGS')
+
 #    Whether extraction code is done in quick look mode (do not use for
 #       final products)
 CDict.add('EXT_QUICK_LOOK', value=None, dtype=bool,
@@ -2204,6 +2249,9 @@ CDict.add('EXTRACT_S1D_PLOT_ZOOM2', value=None,
 # CALIBRATION: THERMAL SETTINGS
 # =============================================================================
 cgroup = 'CALIBRATION.THERMAL'
+CDict.add_group(cgroup, description='CALIBRATION.THERMAL: '
+                                    'CALIBRATION: THERMAL SETTINGS')
+
 # whether to apply the thermal correction to extractions
 CDict.add('THERMAL_CORRECT', value=None, dtype=bool,
           source=__NAME__, user=True, active=False, group=cgroup,
@@ -2309,6 +2357,8 @@ CDict.add('THERMAL_EXCESS_EMISSIVITY_FILE',
 # CALIBRATION: WAVE EA GENERAL SETTINGS
 # =============================================================================
 cgroup = 'CALIBRATION.WAVE_GENERAL'
+CDict.add_group(cgroup, description='CALIBRATION.WAVE_GENERAL: '
+                                    'CALIBRATION: WAVE EA GENERAL SETTINGS')
 
 # Define wave reference fiber (controller fiber)
 CDict.add('WAVE_REF_FIBER', value=None, dtype=str,
@@ -2454,6 +2504,10 @@ CDict.add('WAVE_FIBER_COMP_PLOT_ORD', value=None,
 # CALIBRATION: WAVE LINES REFERENCE SETTINGS
 # =============================================================================
 cgroup = 'CALIBRATION.WAVE_LINES_REFERENCE'
+CDict.add_group(cgroup, description='CALIBRATION.WAVE_LINES_REFERENCE: '
+                                    'CALIBRATION: WAVE LINES REFERENCE '
+                                    'SETTINGS')
+
 # min SNR to consider the line (for HC)
 CDict.add('WAVEREF_NSIG_MIN_HC', value=None, dtype=int,
           source=__NAME__, minimum=0, group=cgroup,
@@ -2533,6 +2587,10 @@ CDict.add('WAVE_FIBER_SCALE_MOD', value=None,
 # =============================================================================
 # CALIBRATION: WAVE RESOLUTION MAP SETTINGS
 # =============================================================================
+cgroup = 'CALIBRATION.WAVE_RES_MAP'
+CDict.add_group(cgroup, description='CALIBRATION.WAVE_RES_MAP: '
+                                    'CALIBRATION: WAVE RESOLUTION MAP SETTINGS')
+
 # define the number of bins in order direction to use in the resolution map
 CDict.add('WAVE_RES_MAP_ORDER_BINS', value=None,
           dtype=int, source=__NAME__, minimum=1,
@@ -2575,6 +2633,9 @@ CDict.add('WAVE_RES_VELO_CUTOFF2', value=None,
 # CALIBRATION: WAVE CCF SETTINGS
 # =============================================================================
 cgroup = 'CALIBRATION.WAVE_CCF'
+CDict.add_group(cgroup, description='CALIBRATION.WAVE_CCF: '
+                                    'CALIBRATION: WAVE CCF SETTINGS')
+
 #   The value of the noise for wave dv rms calculation
 #       snr = flux/sqrt(flux + noise^2)
 CDict.add('WAVE_CCF_NOISE_SIGDET', value=None, dtype=float,
@@ -2757,6 +2818,8 @@ CDict.add('WAVE_CCF_RV_THRES_QC', value=None, dtype=float,
 # CALIBRATION: WAVE GENERAL SETTINGS
 # =============================================================================
 cgroup = 'CALIBRATION.WAVE_GENERAL'
+CDict.add_group(cgroup, description='CALIBRATION.WAVE_GENERAL: '
+                                    'CALIBRATION: WAVE GENERAL SETTINGS')
 
 # Define the line list file (located in the DRS_WAVE_DATA directory)
 CDict.add('WAVE_LINELIST_FILE', value=None, dtype=str,
@@ -2851,6 +2914,9 @@ CDict.add('WAVE_N_ORD_FINAL', value=None, dtype=int,
 # CALIBRATION: WAVE HC SETTINGS
 # =============================================================================
 cgroup = 'CALIBRATION.WAVE_HC'
+CDict.add_group(cgroup, description='CALIBRATION.WAVE_HC: '
+                                    'CALIBRATION: WAVE HC SETTINGS')
+
 # Define the mode to calculate the hc wave solution
 CDict.add('WAVE_MODE_HC', value=None, dtype=int, source=__NAME__,
           options=[0], user=True, active=False, group=cgroup,
@@ -3077,6 +3143,9 @@ CDict.add('WAVE_HC_RESMAP_SIGCLIP', value=None,
 # CALIBRATION: WAVE LITTROW SETTINGS
 # =============================================================================
 cgroup = 'CALIBRATION.WAVE_LITTROW'
+CDict.add_group(cgroup, description='CALIBRATION.WAVE_LITTROW: '
+                                    'CALIBRATION: WAVE LITTROW SETTINGS')
+
 #  Define the order to start the Littrow fit from for the HC wave solution
 CDict.add('WAVE_LITTROW_ORDER_INIT_1', value=None,
           dtype=int, source=__NAME__, group=cgroup,
@@ -3169,6 +3238,9 @@ CDict.add('WAVE_LITTROW_QC_DEV_MAX', value=None,
 # CALIBRATION: WAVE FP SETTINGS
 # =============================================================================
 cgroup = 'CALIBRATION.WAVE_FP'
+CDict.add_group(cgroup, description='CALIBRATION.WAVE_FP: '
+                                    'CALIBRATION: WAVE FP SETTINGS')
+
 # Define the mode to calculate the fp wave solution
 CDict.add('WAVE_MODE_FP', value=None, dtype=int, source=__NAME__,
           options=[0, 1], user=True, active=False, group=cgroup,
@@ -3367,6 +3439,8 @@ CDict.add('WAVE_FP_FIBERTYPES', value=None,
 # CALIBRATION: WAVE NIGHT SETTINGS
 # =============================================================================
 cgroup = 'CALIBRATION.WAVE_NIGHT'
+CDict.add_group(cgroup, description='CALIBRATION.WAVE_NIGHT: '
+                                    'CALIBRATION: WAVE NIGHT SETTINGS')
 
 # number of iterations for hc convergence
 CDict.add('WAVE_NIGHT_NITERATIONS1', value=None,
@@ -3429,6 +3503,8 @@ CDict.add('WAVENIGHT_PLT_BINU', value=None, dtype=float,
 # OBJECT: SKY CORR SETTINGS
 # =============================================================================
 cgroup = 'OBJECT.SKY_CORR'
+CDict.add_group(cgroup, description='OBJECT.SKY_CORR: '
+                                    'OBJECT: SKY CORR SETTINGS')
 
 # the OUTPUT type (KW_OUTPUT header key) and DrsFitsFile name required for
 #   input sky files
@@ -3545,6 +3621,9 @@ CDict.add('SKYCORR_NSIG_THRES', value=None, dtype=int,
 # OBJECT: TELLURIC SETTINGS
 # =============================================================================
 cgroup = 'OBJECT.TELLURIC'
+CDict.add_group(cgroup, description='OBJECT.TELLURIC: '
+                                    'OBJECT: TELLURIC SETTINGS')
+
 # Define the name of the tapas file to use
 CDict.add('TAPAS_FILE', value=None, dtype=str, source=__NAME__,
           group=cgroup,
@@ -3611,6 +3690,8 @@ CDict.add('TELLU_BAD_WAVEREGIONS', value=[],
 # OBJECT: TELLURIC PRE-CLEANING SETTINGS
 # =============================================================================
 cgroup = 'OBJECT.TELLURIC_PRECLEANING'
+CDict.add_group(cgroup, description='OBJECT.TELLURIC_PRECLEANING: '
+                                    'OBJECT: TELLURIC PRE-CLEANING SETTINGS')
 
 # define whether we do pre-cleaning
 CDict.add('TELLUP_DO_PRECLEANING', value=None, dtype=bool,
@@ -3779,6 +3860,9 @@ CDict.add('TELLU_FINITE_RES_ORDER', value=None, dtype=int,
 # OBJECT: MAKE TELLURIC SETTINGS
 # =============================================================================
 cgroup = 'OBJECT.MAKE_TELLURIC'
+CDict.add_group(cgroup, description='OBJECT.MAKE_TELLURIC: '
+                                    'OBJECT: MAKE TELLURIC SETTINGS')
+
 # value below which the blaze in considered too low to be useful
 #     for all blaze profiles, we normalize to the 95th percentile.
 #     That's pretty much the peak value, but it is resistent to
@@ -3902,6 +3986,8 @@ CDict.add('TELLU_TRANS_MODEL_SIG', value=None,
 # OBJECT: FIT TELLURIC SETTINGS
 # =============================================================================
 cgroup = 'OBJECT.FIT_TELLURIC'
+CDict.add_group(cgroup, description='OBJECT.FIT_TELLURIC: '
+                                    'OBJECT: FIT TELLURIC SETTINGS')
 
 #   Define the order to use for SNR check when accepting tellu files
 #      to the telluDB
@@ -4032,6 +4118,9 @@ CDict.add('FTELLU_SPLOT_ORDER', value=None,
 # OBJECT: MAKE TEMPLATE SETTINGS
 # =============================================================================
 cgroup = 'OBJECT.MAKE_TEMPLATE'
+CDict.add_group(cgroup, description='OBJECT.MAKE_TEMPLATE: '
+                                    'OBJECT: MAKE TEMPLATE SETTINGS')
+
 # the OUTPUT type (KW_OUTPUT header key) and DrsFitsFile name required for
 #   input template files
 CDict.add('TELLURIC_FILETYPE', value=None, dtype=str,
@@ -4197,6 +4286,9 @@ CDict.add('MKTEMPLATE_DECONV_ITR_MAX', value=None,
 # CALIBRATION: CCF SETTINGS
 # =============================================================================
 cgroup = 'OBJECT.CCF'
+CDict.add_group(cgroup, description='OBJECT.CCF: '
+                                    'OBJECT: CCF SETTINGS')
+
 # Define the ccf mask path
 CDict.add('CCF_MASK_PATH', value=None, dtype=str, source=__NAME__,
           group=cgroup, description='Define the ccf mask path')
@@ -4407,6 +4499,8 @@ CDict.add('CCF_BIS_CUT_BOTTOM', value=None, dtype=float,
 # GENERAL POLARISATION SETTINGS
 # =============================================================================
 cgroup = 'OBJECT.POLARISATION'
+CDict.add_group(cgroup, description='OBJECT.POLARISATION: '
+                                    'OBJECT: POLARISATION SETTINGS')
 
 # Define all possible fibers used for polarimetry
 CDict.add('POLAR_FIBERS', value=None,
@@ -4527,6 +4621,8 @@ CDict.add('GET_LSD_ORDER_RANGES', value=None,
 # POLAR POLY MOVING MEDIAN SETTINGS
 # =============================================================================
 cgroup = 'OBJECT.POLAR_POLY_MOVING_MEDIAN'
+CDict.add_group(cgroup, description='OBJECT.POLAR_POLY_MOVING_MEDIAN: '
+                                    'OBJECT: POLAR POLY MOVING MEDIAN SETTINGS')
 
 # Define the polarimetry continuum bin size
 CDict.add('POLAR_CONT_BINSIZE', value=None, dtype=int,
@@ -4558,6 +4654,8 @@ CDict.add('POLAR_CONT_DEG_POLYNOMIAL', value=None,
 # POLAR IRAF SETTINGS
 # =============================================================================
 cgroup = 'OBJECT.POLAR_IRAF'
+CDict.add_group(cgroup, description='OBJECT.POLAR_IRAF: '
+                                    'OBJECT: POLAR IRAF SETTINGS')
 
 # function to fit to the stokes I continuum: must be 'polynomial' or
 #    'spline3'
@@ -4598,6 +4696,8 @@ CDict.add('POLAR_IRAF_CONT_FUNC_ORDER',
 # POLAR LSD SETTINGS
 # =============================================================================
 cgroup = 'OBJECT.POLAR_LSD'
+CDict.add_group(cgroup, description='OBJECT.POLAR_LSD: '
+                                    'OBJECT: POLAR LSD SETTINGS')
 
 #  Define the spectral lsd mask directory for lsd polar calculations
 CDict.add('POLAR_LSD_DIR', value=None, dtype=str, source=__NAME__,
@@ -4692,6 +4792,9 @@ CDict.add('POLAR_LSD_RES_POWER_GUESS', value=None,
 # DEBUG OUTPUT FILE SETTINGS
 # =============================================================================
 cgroup = 'DEBUG.OUTPUT_FILE'
+CDict.add_group(cgroup, description='DEBUG.OUTPUT_FILE: '
+                                    'DEBUG OUTPUT FILE SETTINGS')
+
 # Whether to save background debug file (large 0.5 GB per file)
 #   one of these per extraction (lots)
 CDict.add('DEBUG_BACKGROUND_FILE', value=True,
@@ -4734,6 +4837,8 @@ CDict.add('DEBUG_UNCORR_EXT_FILES', value=True,
 # DEBUG PLOT SETTINGS
 # =============================================================================
 cgroup = 'DEBUG.PLOT'
+CDict.add_group(cgroup, description='DEBUG.PLOT: DEBUG PLOT SETTINGS')
+
 # turn on dark image region debug plot
 CDict.add('PLOT_DARK_IMAGE_REGIONS', value=False,
           dtype=bool, source=__NAME__,
@@ -5302,6 +5407,8 @@ CDict.add('PLOT_POLAR_LSD', value=False,
 # LBL SETTINGS
 # =============================================================================
 cgroup = 'OBJECT.LBL'
+CDict.add_group(cgroup, description='OBJECT.LBL: LBL SETTINGS')
+
 # Define the file definition type (DRSOUTID) for LBL input files
 CDict.add('LBL_FILE_DEFS', value=None, dtype=str, source=__NAME__,
           user=False, active=True, group=cgroup,
@@ -5392,6 +5499,8 @@ CDict.add('LBL_DTEMP', value=None,
 # POST PROCESS SETTINGS
 # =============================================================================
 cgroup = 'OBJECT.POST_PROCESS'
+CDict.add_group(cgroup, description='OBJECT.POST_PROCESS: POST PROCESS SETTINGS')
+
 # Define whether (by deafult) to clear reduced directory
 CDict.add('POST_CLEAR_REDUCED', value=False,
           dtype=bool, source=__NAME__, user=True, active=True,
@@ -5417,6 +5526,7 @@ CDict.add('POST_HDREXT_COMMENT_KEY', value=None,
 # TOOLS REPROCESS SETTINGS
 # =============================================================================
 cgroup = 'TOOLS.REPROCESS'
+CDict.add_group(cgroup, description='TOOLS.REPROCESS: REPROCESS SETTINGS')
 
 # Define which block kinds to reindex (warning can take a long time)
 #    only select block kinds that have (or could be) manually changed
@@ -5530,6 +5640,7 @@ CDict.add('REPROCESS_OBJ_SCI_SQL', value='', dtype=str,
 # TOOLS: GENERAL SETTINGS
 # =============================================================================
 cgroup = 'TOOLS.GENERAL'
+CDict.add_group(cgroup, description='TOOLS.GENERAL: GENERAL TOOL SETTINGS')
 
 # define the default database to remake
 CDict.add('REMAKE_DATABASE_DEFAULT', value='calibration',
@@ -5582,6 +5693,7 @@ CDict.add('DRIFT_DPR_FIBER_TYPE', value=None, dtype=str,
 # ARI SETTINGS
 # =============================================================================
 cgroup = 'TOOLS.ARI'
+CDict.add_group(cgroup, description='TOOLS.ARI: ARI SETTINGS')
 
 # Define the ari instrument (may be different from the apero instrument)
 CDict.add('ARI_INSTRUMENT', value=None, dtype=str,

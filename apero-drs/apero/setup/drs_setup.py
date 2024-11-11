@@ -181,7 +181,7 @@ class SetupArgument:
         # set the help string
         kwargs['help'] = self.helpstr
         # set the parser action
-        if self.dtype in [bool, 'bool']:
+        if self.dtype in [bool, 'bool'] and self.default_value is None:
             kwargs['action'] = 'store_true'
             return kwargs
         else:
@@ -476,15 +476,29 @@ def run_setup(params: ParamDict, sargs: Dict[str, SetupArgument]):
     - setup.bat
     - install.sh
     """
+    # check that config path exists - we need this to continue
+    if not os.path.exists(params['CONFIG_PATH']):
+        emsg = 'Config path does not exist: {0}'
+        eargs = [params['CONFIG_PATH']]
+        raise drs_log.AperoCodedException(None, message=emsg.format(*eargs))
+    else:
+        os.environ['DRS_UCONFIG'] = str(params['CONFIG_PATH'])
+    # -------------------------------------------------------------------------
     # create the database.yaml and install.yaml
-    base.create_yamls(params)
+    drs_text.cprint('Creating database.yaml and install.yaml', 'blue')
+    create_yamls(params)
+    # -------------------------------------------------------------------------
     # create the user_config.yaml and user_constants.yaml
+    drs_text.cprint('Creating user_config.yaml and user_constants.yaml', 'blue')
     create_user_configs(params)
+    # -------------------------------------------------------------------------
     # create the setup file (setup.sh, setup.bat)
+    drs_text.cprint('Creating setup.sh and setup.bat', 'blue')
     create_setup_files(params)
+    # -------------------------------------------------------------------------
     # create an install.sh to reproduce the installation
+    drs_text.cprint('Creating install.sh', 'blue')
     create_install_script(params, sargs)
-
     # ----------------------------------------------------------------------
     # Now we can use apero
     # ----------------------------------------------------------------------
@@ -522,10 +536,13 @@ def fix_config_path(params: ParamDict) -> ParamDict:
     """
     # only do this if we have both the name and config_path
     if params['NAME'] is not None and params['CONFIG_PATH'] is not None:
+        # force config path to a Path object
+        if isinstance(params['CONFIG_PATH'], str):
+            params['CONFIG_PATH'] = Path(params['CONFIG_PATH'])
         # make sure config_path ends with the name
-        if not params['CONFIG_PATH'].endswith(params['NAME']):
+        if not str(params['CONFIG_PATH']).endswith(params['NAME']):
             # add the name to the end of the config_path
-            config_path = os.path.join(params['CONFIG_PATH'], params['NAME'])
+            config_path = params['CONFIG_PATH'].joinpath(params['NAME'])
             # update parmaeters
             params.set('CONFIG_PATH', config_path, source='command_line')
             # need to make sure this exists
@@ -533,6 +550,85 @@ def fix_config_path(params: ParamDict) -> ParamDict:
                 os.makedirs(config_path)
     # return parameters (updated or not)
     return params
+
+
+def create_yamls(params: Any):
+    """
+    Create the yaml files from allparams
+
+    :param allparams: ParamDict, the parameter dictionary of installation
+
+    :return: None - writes install.yaml and database.yaml
+    """
+    # get config directory
+    userconfig = Path(params['CONFIG_PATH'])
+    # -------------------------------------------------------------------------
+    # create install yaml
+    # -------------------------------------------------------------------------
+    # get save path
+    install_path = userconfig.joinpath(base.INSTALL_YAML)
+    # populate dictionary
+    install_dict = dict()
+    install_dict['DRS_UCONFIG'] = str(userconfig)
+    install_dict['INSTRUMENT'] = params['INSTRUMENT']
+    install_dict['LANGUAGE'] = params['LANGUAGE']
+    install_dict['USE_TQDM'] = True
+    # write database
+    base.write_yaml(install_dict, str(install_path))
+    # -------------------------------------------------------------------------
+    # create database yaml
+    # -------------------------------------------------------------------------
+    # get save path
+    database_path = userconfig.joinpath(base.DATABASE_YAML)
+    # populate dictionary
+    database_dict = dict()
+    # -------------------------------------------------------------------------
+    #  DATABASE SETTINGS
+    # -------------------------------------------------------------------------
+    # add database settings
+    database_dict['TYPE'] = params.get('DATABASE_MODE', 'NULL')
+    database_dict['HOST'] = params.get('DATABASE_HOST', 'NULL')
+    database_dict['USER'] = params.get('DATABASE_USER', 'NULL')
+    database_dict['PASSWD'] = params.get('DATABASE_PASS', 'NULL')
+    database_dict['DATABASE'] = params.get('DATABASE_NAME', 'NULL')
+    # add calib database
+    calibdb = dict()
+    calibdb['NAME'] = params.get('CALIB_NAME', 'calib')
+    calibdb['RESET'] = params.get('CALIB_RESET', 'reset.calib.csv')
+    calibdb['TABLE'] = params.get('CALIB_DBTABLE', 'NULL')
+    database_dict['CALIB'] = calibdb
+    # add tellu database
+    telludb = dict()
+    telludb['NAME'] = params.get('TELLU_NAME', 'tellu')
+    telludb['RESET'] = params.get('TELLU_RESET', 'reset.tellu.csv')
+    telludb['TABLE'] = params.get('TELLU_DBTABLE', 'NULL')
+    database_dict['TELLU'] = telludb
+    # add index database
+    findexdb = dict()
+    findexdb['NAME'] = params.get('FINDEX_NAME', 'findex')
+    findexdb['RESET'] = params.get('FINDEX_RESET', 'NULL')
+    findexdb['TABLE'] = params.get('FINDEX_DBTABLE', 'NULL')
+    database_dict['FINDEX'] = findexdb
+    # add log database
+    logdb = dict()
+    logdb['NAME'] = params.get('LOG_NAME', 'log')
+    logdb['RESET'] = params.get('LOG_RESET', 'NULL')
+    logdb['TABLE'] = params.get('LOG_DBTABLE', 'NULL')
+    database_dict['LOG'] = logdb
+    # add object database
+    astromdb = dict()
+    astromdb['NAME'] = params.get('ASTROM_NAME', 'astrom')
+    astromdb['RESET'] = params.get('ASTROM_RESET', 'reset.astrom.csv')
+    astromdb['TABLE'] = params.get('ASTROM_DBTABLE', 'NULL')
+    database_dict['ASTROM'] = astromdb
+    # add reject database
+    rejectdb = dict()
+    rejectdb['NAME'] = params.get('REJECT_NAME', 'reject')
+    rejectdb['RESET'] = params.get('REJECT_RESET', 'NULL')
+    rejectdb['TABLE'] = params.get('REJECT_PROFILE', 'NULL')
+    database_dict['REJECT'] = rejectdb
+    # write database
+    base.write_yaml(database_dict, str(database_path))
 
 
 def create_user_configs(params: ParamDict):
@@ -545,19 +641,24 @@ def create_user_configs(params: ParamDict):
     :return: None, writes user_config.yaml and user_constants.yaml to file
     """
     # get config directory
-    userconfig = Path(params['USERCONFIG'])
+    userconfig = Path(params['CONFIG_PATH'])
     # import modules here
     from apero.instruments.default import config, constants
     from apero.instruments import select
+    # -------------------------------------------------------------------------
     # get the user scripts
-    user_scripts = config.CDict['USER_SCRIPTS'].value
+    user_scripts = config.CDict['USER_SCRIPTS']
     # get the modules for CDicts (config, constants)
     mod_scripts = [config, constants, None]
+    # -------------------------------------------------------------------------
     # temporary load constants for this instrument
     apero_params = load_functions.load_config(select.INSTRUMENTS,
                                               params['INSTRUMENT'],
                                               from_file=False,
                                               cache=False)
+    # -------------------------------------------------------------------------
+    # get the title arguments
+    tkwargs = dict(INSTRUMENT=params['INSTRUMENT'])
     # loop around user scripts and create the yamls
     for it in range(len(user_scripts)):
         # don't continue if we don't have a Cdict module defined
@@ -566,12 +667,13 @@ def create_user_configs(params: ParamDict):
         # construct the path
         outpath = userconfig.joinpath(user_scripts[it])
         # save the yaml file
-        mod_scripts[it].CDict.save_yaml(apero_params, outpath=outpath)
+        mod_scripts[it].CDict.save_yaml(apero_params, outpath=outpath,
+                                        title_args=tkwargs)
 
 
 def create_setup_files(params: ParamDict):
     # get config directory
-    userconfig = Path(params['USERCONFIG'])
+    userconfig = Path(params['CONFIG_PATH'])
     # setup the user config directory
     kwargs = dict()
     kwargs['ROOT_PATH'] = str(__PATH__)
@@ -653,6 +755,7 @@ def create_install_script(params: ParamDict, sargs: Dict[str, SetupArgument]):
     # ---------------------------------------------------------------------
     # make the file executable
     os.chmod(destination, 0o755)
+
 
 # =============================================================================
 # Start of code
