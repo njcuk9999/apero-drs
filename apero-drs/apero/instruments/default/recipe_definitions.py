@@ -507,7 +507,7 @@ processing.set_kwarg(name='--exclude_obs_dirs', dtype='List[str]', default='None
                      helpstr=textentry('PROCESS_EXCLUDE_OBS_DIRS_HELP'))
 processing.set_kwarg(name='--include_obs_dirs', dtype='List[str]', default='None',
                      helpstr=textentry('PROCESS_INCLUDE_OBS_DIRS_HELP'))
-processing.set_kwarg(name='--cores', dtype=int, default='None',
+processing.set_kwarg(name='--cores', dtype=int, default=5,
                      helpstr=textentry('PROCESS_CORES_HELP'))
 processing.set_kwarg(name='--test', dtype='options', default='None',
                      options=['True', 'False', '1', '0', 'None'],

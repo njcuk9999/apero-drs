@@ -13,7 +13,7 @@ import argparse
 import os
 import sys
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import yaml
 
@@ -52,6 +52,14 @@ WLOG = drs_log.wlog
 textentry = drs_lang.textentry
 # get the user input function
 user_input = drs_text.user_input
+
+# -----------------------------------------------------------------------------
+# setup files
+SETUP_PATH = __PATH__.joinpath('tools', 'resources', 'setup')
+# define setup files
+SETUP_FILES = dict()
+SETUP_FILES['setup.sh'] = 'apero_bash.sh'
+SETUP_FILES['setup.bat'] = 'apero_bat.bat'
 
 
 # =============================================================================
@@ -191,6 +199,29 @@ class SetupArgument:
             kwargs['choices'] = self.options
         # return the kwargs
         return kwargs
+
+    def print_arg(self, value: Any = None) -> Optional[str]:
+
+        # if we don't have a value set then don't add this argument
+        if value is None:
+            return None
+        # ---------------------------------------------------------------------
+        # deal with argname
+        if self.argname is not None:
+            argname = self.argname
+        else:
+            argname = self.name
+        # ---------------------------------------------------------------------
+        # deal with value
+        value = str(value)
+        # deal with white spaces
+        if ' ' in value:
+            value = f'"{value}"'
+        # ---------------------------------------------------------------------
+        # deal with command
+        command = f'--{argname}={value}'
+        # return command
+        return command
 
 
 def catch_sigint(signal_received: Any, frame: Any):
@@ -432,16 +463,27 @@ def update_setup(setup_params: ParamDict,
     return setup_params
 
 
-def run_setup(params: ParamDict):
+def run_setup(params: ParamDict, sargs: Dict[str, SetupArgument]):
+    """
+    Run the setup (create files in DRS_UCONFIG)
 
-
+    Files created:
+    - install.yaml
+    - database.yaml
+    - user_config.yaml
+    - user_constants.yaml
+    - setup.sh
+    - setup.bat
+    - install.sh
+    """
     # create the database.yaml and install.yaml
     base.create_yamls(params)
-
     # create the user_config.yaml and user_constants.yaml
-
-
-    # create the setup file (sh, bash, etc)
+    create_user_configs(params)
+    # create the setup file (setup.sh, setup.bat)
+    create_setup_files(params)
+    # create an install.sh to reproduce the installation
+    create_install_script(params, sargs)
 
     # ----------------------------------------------------------------------
     # Now we can use apero
@@ -463,6 +505,7 @@ def run_setup(params: ParamDict):
         drs_assets.update_local_assets(aparams, tarfile=params['TARFILE'])
     # ----------------------------------------------------------------------
     # clean install
+    # TODO
 
 
 
@@ -491,6 +534,125 @@ def fix_config_path(params: ParamDict) -> ParamDict:
     # return parameters (updated or not)
     return params
 
+
+def create_user_configs(params: ParamDict):
+    """
+    Create the user_config.yaml and user_constants.yaml files
+    for the user specified instrument
+
+    :param params: ParamDict, the parameters to use
+
+    :return: None, writes user_config.yaml and user_constants.yaml to file
+    """
+    # get config directory
+    userconfig = Path(params['USERCONFIG'])
+    # import modules here
+    from apero.instruments.default import config, constants
+    from apero.instruments import select
+    # get the user scripts
+    user_scripts = config.CDict['USER_SCRIPTS'].value
+    # get the modules for CDicts (config, constants)
+    mod_scripts = [config, constants, None]
+    # temporary load constants for this instrument
+    apero_params = load_functions.load_config(select.INSTRUMENTS,
+                                              params['INSTRUMENT'],
+                                              from_file=False,
+                                              cache=False)
+    # loop around user scripts and create the yamls
+    for it in range(len(user_scripts)):
+        # don't continue if we don't have a Cdict module defined
+        if mod_scripts[it] is None:
+            continue
+        # construct the path
+        outpath = userconfig.joinpath(user_scripts[it])
+        # save the yaml file
+        mod_scripts[it].CDict.save_yaml(apero_params, outpath=outpath)
+
+
+def create_setup_files(params: ParamDict):
+    # get config directory
+    userconfig = Path(params['USERCONFIG'])
+    # setup the user config directory
+    kwargs = dict()
+    kwargs['ROOT_PATH'] = str(__PATH__)
+    kwargs['USER_CONFIG'] = str(userconfig)
+    kwargs['USER_NAME'] = params['NAME']
+    kwargs['NAME'] = str(params['NAME'])
+    # -------------------------------------------------------------------------
+    # loop around setup files
+    for setup_file in SETUP_FILES:
+        # get the source and destination
+        source = SETUP_PATH.joinpath(SETUP_FILES[setup_file])
+        destination = userconfig.joinpath(setup_file)
+        # ----------------------------------------------------------------
+        # open the source file
+        with open(source, 'r') as sf:
+            # read the source file as a single string
+            sfile = sf.read()
+        # need to push kwargs into sfile
+        sfile = sfile.format(**kwargs)
+        # ---------------------------------------------------------------------
+        # print progress
+        msg = 'Writing setup file: {0}'
+        margs = [destination]
+        drs_text.cprint(msg.format(*margs), 'green')
+        # ---------------------------------------------------------------------
+        # write the destination file
+        with open(destination, 'w') as df:
+            # write the source file to the destination file
+            df.write(sfile)
+        # ---------------------------------------------------------------------
+        # make the file executable
+        os.chmod(destination, 0o755)
+
+
+def create_install_script(params: ParamDict, sargs: Dict[str, SetupArgument]):
+    """
+    Create the install.sh script to reproduce the installation
+
+    :param params: ParamDict, the parameters to use
+    :param sargs: dict, the setup arguments to use
+
+    :return: None, writes install.sh to file
+    """
+    # write command
+    command = f'python apero_setup.py          \\'
+    # -------------------------------------------------------------------------
+    # set always create to true (even if False)
+    params['FORCE_DIR_CREATE'] = True
+    # -------------------------------------------------------------------------
+    # remove profile name from config path (for arguments)
+    #   but keep config_path for saving file to
+    config_path = str(params['CONFIG_PATH'])
+    if str(config_path).endswith(params['NAME']):
+        config_path = str(config_path)[:-len(params['NAME'])]
+    params['CONFIG_PATH'] = config_path
+    # -------------------------------------------------------------------------
+    # add non null arguments
+    for it, sname in enumerate(sargs):
+        # get the argument
+        sarg = sargs[sname]
+        # only add arguments which are not still None
+        if params[sname] is not None:
+            # set up command prefix
+            prefix = '\n' + 10 * ' '
+            # -----------------------------------------------------------------
+            # set up command suffix (different for last argument)
+            if it != len(sargs) - 1:
+                suffix = ' ' * 4 + '\\'
+            else:
+                suffix = ''
+            # -----------------------------------------------------------------
+            # add command
+            command += prefix + sarg.print_arg(params[sname]) + suffix
+    # construct path
+    destination = os.path.join(config_path, 'install.sh')
+    # write to file
+    with open(destination, 'w') as afile:
+        afile.write(command)
+    # ---------------------------------------------------------------------
+    # make the file executable
+    os.chmod(destination, 0o755)
 
 # =============================================================================
 # Start of code

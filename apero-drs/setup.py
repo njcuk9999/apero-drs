@@ -25,6 +25,10 @@ SCRIPT_PATHS = [os.path.join('apero', 'tools', 'recipes', 'bin'),
                 os.path.join('apero', 'tools', 'recipes', 'dev'),
                 os.path.join('apero', 'tools', 'recipes', 'utils')]
 
+SETUP_PATHS = [os.path.join('apero', 'setup', 'apero_setup.py'),
+               os.path.join('apero', 'setup', 'apero_profile.bat'),
+               os.path.join('apero', 'setup', 'apero_profile.sh')]
+
 # =============================================================================
 # Define functions
 # =============================================================================
@@ -84,6 +88,12 @@ def load_scripts() -> list:
                 continue
             if filepath.is_file() and os.access(filepath, os.X_OK):
                 scripts.append(os.path.relpath(str(filepath)))
+
+    # add the setup scripts
+    for strpath in SETUP_PATHS:
+        filepath = PACKAGE_DIR.joinpath(strpath)
+        if filepath.is_file() and os.access(filepath, os.X_OK):
+            scripts.append(os.path.relpath(filepath))
     # return modules
     return scripts
 

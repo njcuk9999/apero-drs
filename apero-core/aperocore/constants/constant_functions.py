@@ -579,8 +579,8 @@ class ConstantsDict:
     # -------------------------------------------------------------------------
     # yaml functionality
     # -------------------------------------------------------------------------
-    def save_yaml(self, params: Any = None, log: bool = True, outpath: str = None,
-             mode: str = None) -> str:
+    def save_yaml(self, params: Any = None, log: bool = True,
+                  outpath: str = None, mode: str = None) -> str:
         """
         Create a yaml file from input parameters
     

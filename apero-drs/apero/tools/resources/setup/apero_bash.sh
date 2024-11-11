@@ -1,11 +1,5 @@
-#!/bin/zsh
-# zsh setup file
-
-# setup paths
-export PATH={PATH}:$PATH
-
-# setup up python path
-export PYTHONPATH={PYTHONPATH}:$PYTHONPATH
+#!/bin/bash
+# bash setup file
 
 # setup aliases
 alias gointroot="cd {ROOT_PATH}"
@@ -14,7 +8,7 @@ alias gosetup="cd {USER_CONFIG}"
 # setup drs config path
 export DRS_UCONFIG="{USER_CONFIG}"
 
-# force numpy to only use 1 core max
+# force numpy  to only use 1 core max
 export MKL_DYNAMIC=FALSE
 export MKL_CBWR=COMPATIBLE
 export OMP_NUM_THREADS=1
@@ -22,3 +16,6 @@ export OPENBLAS_NUM_THREADS=1
 export MKL_NUM_THREADS=1
 export VECLIB_MAXIMUM_THREADS=1
 export NUMEXPR_NUM_THREADS=1
+
+# Set the command prompt
+export PS1="[{NAME}] $PS1"

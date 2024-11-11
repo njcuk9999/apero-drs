@@ -47,7 +47,7 @@ def main() -> ParamDict:
         params = drs_setup.ask_user(params, sargs)
     # -------------------------------------------------------------------------
     # run setup
-    drs_setup.run_setup(params)
+    drs_setup.run_setup(params, sargs)
     # -------------------------------------------------------------------------
     # return params
     return params

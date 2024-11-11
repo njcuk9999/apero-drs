@@ -124,7 +124,7 @@ def setup(name: str = 'None', instrument: str = 'None',
         return __setup__(name, instrument, fkwargs, quiet, threaded,
                          enable_plotter, rmod)
     except (DrsCodedException, drs_log.DrsLogException) as e:
-        WLOG(None, 'error', e.message, raise_exception=False)
+        WLOG(None, 'error', str(e), raise_exception=False)
         end_all(None, False, recipename=name)
         sys.exit(1)
 

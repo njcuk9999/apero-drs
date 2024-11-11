@@ -12,7 +12,6 @@ Created on 2019-07-26 at 09:47
 import sys
 import traceback
 
-from aperocore.base import base
 from aperocore import drs_lang
 from apero.core import drs_database
 from aperocore.core import drs_log
