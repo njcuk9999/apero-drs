@@ -59,7 +59,7 @@ SETUP_PATH = __PATH__.joinpath('tools', 'resources', 'setup')
 # define setup files
 SETUP_FILES = dict()
 SETUP_FILES['setup.sh'] = 'apero_bash.sh'
-SETUP_FILES['setup.bat'] = 'apero_bat.bat'
+SETUP_FILES['setup.bat'] = 'apero_win.bat'
 
 
 # =============================================================================
