@@ -9,6 +9,7 @@ Created on 2024-10-22 at 10:10
 
 @author: cook
 """
+from pathlib import Path
 import string
 
 from aperocore.base import base
@@ -17,6 +18,7 @@ from apero.setup import drs_setup
 # =============================================================================
 # Define variables
 # =============================================================================
+__PATH__ = Path(__file__).parent.parent
 # set the setup argument class
 SetupArgument = drs_setup.SetupArgument
 # get the instrument list
@@ -64,6 +66,15 @@ SARGS['INSTRUMENT'] = SetupArgument(name='INSTRUMENT', argname='--instrument',
                                     required=True,
                                     helpstr='The instrument to use',
                                     installname='INSTRUMENT')
+
+# The path to the apero module (set automatically in the code but can be
+#   set if required)
+SARGS['APERO_PATH'] = SetupArgument(name='APERO_PATH',
+                                    default_value=str(__PATH__),
+                                    dtype='path', required=False, ask=False,
+                                    helpstr='The path to the apero module',
+                                    aperoname='DRS_ROOT')
+
 # -----------------------------------------------------------------------------
 # Directory settings
 # -----------------------------------------------------------------------------

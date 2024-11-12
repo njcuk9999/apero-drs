@@ -1778,9 +1778,7 @@ def _display_database_settings(wmsgs: drs_lang.Text) -> drs_lang.Text:
         ydbname = dbname.upper()
         # get database name and profile
         dbname = dparams[ydbname]['NAME']
-        profile = dparams[ydbname]['PROFILE']
-        # construct table name
-        tablename = '{0}_{1}_db'.format(dbname, profile)
+        tablename = dparams[ydbname]['TABLE']
         # add to wmsgs
         dargs = [dbname, dparams['DATABASE'], dparams['HOST'],
                  tablename]

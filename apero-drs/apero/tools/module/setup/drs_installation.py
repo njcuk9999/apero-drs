@@ -1910,10 +1910,10 @@ def update_dparams(aparams: ParamDict,
     """
     # loop around databases
     for dbname in base.DATABASE_NAMES:
-        dbkey = f'{dbname}_profile'.upper()
+        dbkey = f'{dbname}_table'.upper()
         value = aparams['DATABASE'].get(dbkey, None)
         if value is not None:
-            dparams[dbname.upper()]['PROFILE'] = value
+            dparams[dbname.upper()]['TABLE'] = value
     # return dparams
     return dparams
 
@@ -1950,7 +1950,7 @@ def update_db_settings(aparams: ParamDict) -> ParamDict:
         aparams['DATABASE'][f'{ydbname}_NAME'] = sdict['NAME']
         if 'RESET' in sdict:
             aparams['DATABASE'][f'{ydbname}_RESET'] = sdict['RESET']
-        aparams['DATABASE'][f'{ydbname}_PROFILE'] = sdict['PROFILE']
+        aparams['DATABASE'][f'{ydbname}_TABLE'] = sdict['TABLE']
     # ------------------------------------------------------------------
     # return the update all_params
     return aparams

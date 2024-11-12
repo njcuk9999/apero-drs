@@ -2465,7 +2465,7 @@ def database_wrapper(kind: str, path: Union[Path, str, None],
             tablename = None
             abs_tname = True
         else:
-            tablename = '{0}_{1}'.format(kind, sparams[kind]['PROFILE'])
+            tablename = sparams[kind]['PROFILE']
             abs_tname = False
         # return the MySQLDatabase instance
         return MySQLDatabase(path=path,

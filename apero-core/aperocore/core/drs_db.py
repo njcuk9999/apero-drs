@@ -1291,11 +1291,11 @@ class DatabaseManager:
             ykind = kind.upper()
             # set table name
             dbname = ddict[ykind]['NAME']
-            profile = ddict[ykind]['PROFILE']
+            tablename = ddict[ykind]['TABLE']
             if dbname.endswith('_db'):
                 self.dbtable = dbname
             else:
-                self.dbtable = '{0}_{1}_db'.format(dbname, profile)
+                self.dbtable = tablename
             # set reset path
             if ddict[ykind]['RESET'] in [None, 'None', 'Null', '']:
                 self.dbreset = None

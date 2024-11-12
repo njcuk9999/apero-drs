@@ -25,7 +25,7 @@ LOG:
     #   (i.e. recipe, tool, processing)
     DRS_RECIPE_TYPE: 'default'
     # The default length of the log messages displayed on the screen
-    DRS_LOG_CHAR_LEN: 80
+    DRS_LOG_CHAR_LEN: 120
     # The log trigger key characters to use in log. Keys must be the same as
     # WRITE_LEVELS
     LOG_TRIG_KEYS:

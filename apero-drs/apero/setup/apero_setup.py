@@ -31,6 +31,10 @@ def main() -> ParamDict:
     """
     # catch Ctrl+C
     signal.signal(signal.SIGINT, drs_setup.catch_sigint)
+    # -------------------------------------------------------------------------
+    # display title
+    drs_setup.display_title()
+    # -------------------------------------------------------------------------
     # get setup constants
     sargs = setup_constants.SARGS
     # -------------------------------------------------------------------------

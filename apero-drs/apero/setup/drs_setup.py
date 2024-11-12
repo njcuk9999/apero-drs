@@ -18,7 +18,9 @@ from typing import Any, Dict, List, Optional
 import yaml
 
 from aperocore.base import base
+from aperocore.base import resources
 from aperocore import drs_lang
+from aperocore.core import drs_misc
 from aperocore.constants import param_functions
 from aperocore.constants import load_functions
 from aperocore.core import drs_log
@@ -29,6 +31,7 @@ from aperocore.core import drs_text
 # Define variables
 # =============================================================================
 __PATH__ = Path(__file__).parent.parent
+__NAME__ = 'apero.setup.drs_setup.py'
 __INSTRUMENT__ = 'None'
 # load the yaml file
 __YAML__ = yaml.load(open(__PATH__.joinpath('info.yaml')),
@@ -43,7 +46,8 @@ __release__ = __YAML__['RELEASE']
 
 INSTRUMENTS = __YAML__['INSTRUMENTS']
 # -----------------------------------------------------------------------------
-
+# get print colours
+COLOR = drs_misc.Colors()
 # get ParamDict
 ParamDict = param_functions.ParamDict
 # get WLOG
@@ -52,8 +56,9 @@ WLOG = drs_log.wlog
 textentry = drs_lang.textentry
 # get the user input function
 user_input = drs_text.user_input
-
 # -----------------------------------------------------------------------------
+# profiles file
+PROFILE_FILE = os.path.expanduser('~/.apero/profiles.ini')
 # setup files
 SETUP_PATH = __PATH__.joinpath('tools', 'resources', 'setup')
 # define setup files
@@ -305,7 +310,10 @@ def command_line_args(sargs: Dict[str, SetupArgument]) -> ParamDict:
 
 
 def ask_user(params: ParamDict, sargs: Dict[str, SetupArgument]) -> ParamDict:
-    
+    # -------------------------------------------------------------------------
+    # print progress
+    msg = 'Setup parameters'
+    WLOG(None, 'info', msg)
     # loop around all arguments
     for argname in sargs:
         # get this argument
@@ -327,9 +335,9 @@ def ask_user(params: ParamDict, sargs: Dict[str, SetupArgument]) -> ParamDict:
         # ---------------------------------------------------------------------
         # if source is command line we skip this argument - we don't need to ask
         if source == 'command_line':
-            msg = '{0}="{1}" from command line [{2}]'
+            msg = '\t{0}="{1}" from command line [{2}]'
             margs = [arg.argname, value, argname.upper()]
-            drs_text.cprint(msg.format(*margs), 'magenta')
+            WLOG(None, '', msg.format(*margs), colour='magenta', wrap=False)
             continue
         # ---------------------------------------------------------------------
         # Deal with boolean dtype
@@ -368,7 +376,7 @@ def ask_user(params: ParamDict, sargs: Dict[str, SetupArgument]) -> ParamDict:
         # ---------------------------------------------------------------------
         # get the user input
         uinput = user_input(question, dtype=dtype.lower(),
-                            default=value,
+                            default=value, color='magenta',
                             required=arg.required,
                             options=arg.options,
                             optiondescs=arg.optiondescs,
@@ -442,14 +450,14 @@ def update_setup(setup_params: ParamDict,
             setup_params.set(argname, value, source='apero.params')
             msg = '{0}="{1}" from apero params [{2}]'
             margs = [apero_name, value, argname.upper()]
-            drs_text.cprint(msg.format(*margs), 'magenta')
+            WLOG(None, '', msg.format(*margs), colour='magenta')
         # if the key is in the install parameters we update the setup parameters
         if install_name is not None and install_name in iparams:
             value = iparams[install_name]
             setup_params.set(argname, value, source='apero.iparams')
             msg = '{0}="{1}" from install params [{2}]'
             margs = [install_name, value, argname.upper()]
-            drs_text.cprint(msg.format(*margs), 'magenta')
+            WLOG(None, '', msg.format(*margs), colour='magenta')
         # if the key is in the database parameters we update the setup parameters
         if database_name is not None and database_name in dparam2path:
             # get value from a path
@@ -457,7 +465,7 @@ def update_setup(setup_params: ParamDict,
             setup_params.set(argname, value, source='apero.dparams')
             msg = '{0}="{1}" from database params [{2}]'
             margs = [database_name, value, argname.upper()]
-            drs_text.cprint(msg.format(*margs), 'magenta')
+            WLOG(None, '', msg.format(*margs), colour='magenta')
     # -------------------------------------------------------------------------
     # return the updated setup parameters
     return setup_params
@@ -484,20 +492,29 @@ def run_setup(params: ParamDict, sargs: Dict[str, SetupArgument]):
     else:
         os.environ['DRS_UCONFIG'] = str(params['CONFIG_PATH'])
     # -------------------------------------------------------------------------
+    # check profile name in .apero
+    # -------------------------------------------------------------------------
+    # create paths
+    create_paths(params, sargs)
+    # -------------------------------------------------------------------------
     # create the database.yaml and install.yaml
-    drs_text.cprint('Creating database.yaml and install.yaml', 'blue')
+    msg = 'Creating database.yaml and install.yaml'
+    WLOG(None, 'info', msg)
     create_yamls(params)
     # -------------------------------------------------------------------------
     # create the user_config.yaml and user_constants.yaml
-    drs_text.cprint('Creating user_config.yaml and user_constants.yaml', 'blue')
-    create_user_configs(params)
+    msg = 'Creating user_config.yaml and user_constants.yaml'
+    WLOG(None, 'info', msg)
+    create_user_configs(params, sargs)
     # -------------------------------------------------------------------------
     # create the setup file (setup.sh, setup.bat)
-    drs_text.cprint('Creating setup.sh and setup.bat', 'blue')
+    msg = 'Creating setup.sh and setup.bat'
+    WLOG(None, 'info', msg)
     create_setup_files(params)
     # -------------------------------------------------------------------------
     # create an install.sh to reproduce the installation
-    drs_text.cprint('Creating install.sh', 'blue')
+    msg = 'Creating install.sh'
+    WLOG(None, 'info', msg)
     create_install_script(params, sargs)
     # ----------------------------------------------------------------------
     # Now we can use apero
@@ -508,24 +525,58 @@ def run_setup(params: ParamDict, sargs: Dict[str, SetupArgument]):
     base.DPARAMS = base.load_database_yaml()
     base.IPARAMS = base.load_install_yaml()
     # get apero parameters
-    aparams = load_functions.load_config(select.INSTRUMENTS)
+    aparams = load_functions.load_config(select.INSTRUMENTS, cache=False)
 
     # ----------------------------------------------------------------------
     # download the assets (into github directory)
     # ----------------------------------------------------------------------
+    msg = 'Updating APERO assets'
+    WLOG(None, 'info', msg)
     # now check whether we need to download the assets
     update_assets = drs_assets.check_local_assets(aparams)
     if update_assets:
         drs_assets.update_local_assets(aparams, tarfile=params['TARFILE'])
     # ----------------------------------------------------------------------
     # clean install
-    # TODO
-
+    # ----------------------------------------------------------------------
+    clean_install(params)
 
 
 # =============================================================================
 # Define other functions
 # =============================================================================
+def display_title():
+    """
+    Print the title of the script
+    """
+    # set function name
+    # _ = display_func('_display_drs_title', __NAME__)
+    # get colours
+    colors = COLOR
+    # create title
+    title = colors.okgreen + '* '
+    title += colors.RED1 + ' {0} ' + colors.okgreen + '@{1}'
+    title += ' (' + colors.BLUE1 + 'V{2}' + colors.okgreen + ')'
+    title = title.format('APERO', 'Setup', __version__)
+    title += colors.ENDC
+    # header
+    drs_header = '*' * 80
+    # set function name
+    # _ = display_func('_display_title', __NAME__)
+    # print and log
+    WLOG(None, '', drs_header, wrap=False)
+    # add title
+    WLOG(None, '', '*\n{0}\n*'.format(title), wrap=False)
+    # end header
+    WLOG(None, '', drs_header, wrap=False)
+    # print logo
+    for line in resources.apero_logo():
+        WLOG(None, '', colors.RED1 + line + colors.ENDC, wrap=False,
+             printonly=True)
+    # print and log
+    WLOG(None, '', drs_header)
+
+
 def fix_config_path(params: ParamDict) -> ParamDict:
     """
     Fix the config path (make sure it ends with the name)
@@ -552,6 +603,43 @@ def fix_config_path(params: ParamDict) -> ParamDict:
     return params
 
 
+def create_paths(params: ParamDict, sargs: Dict[str, SetupArgument]):
+    # -------------------------------------------------------------------------
+    # print progress
+    WLOG(None, 'info', 'Validating paths')
+    # -------------------------------------------------------------------------
+    created = False
+    # loop around all variables and look for paths
+    for sname in sargs:
+        # get the setup argument
+        sarg = sargs[sname]
+        # if we have a path try to create it if it doesn't exist
+        if sarg.dtype == 'path':
+            try:
+                # get the path
+                path = Path(params[sname])
+                # check if path exists
+                if not path.exists():
+                    # print progress
+                    msg = '\tCreating path {0}: {1}'
+                    margs = [sname, path]
+                    WLOG(None, '', msg.format(*margs))
+                    # create path
+                    path.mkdir(parents=True)
+                    # set created to True
+                    created = True
+            except Exception as e:
+                # print error message
+                emsg = 'Error creating path: {0}\n\t{1}: {2}'
+                eargs = [params[sname], type(e), str(e)]
+                raise drs_log.AperoCodedException(None,
+                                                  message=emsg.format(*eargs))
+    # -------------------------------------------------------------------------
+    # deal with no paths created
+    if not created:
+        WLOG(None, '', '\tNo paths created')
+
+
 def create_yamls(params: Any):
     """
     Create the yaml files from allparams
@@ -573,6 +661,9 @@ def create_yamls(params: Any):
     install_dict['INSTRUMENT'] = params['INSTRUMENT']
     install_dict['LANGUAGE'] = params['LANGUAGE']
     install_dict['USE_TQDM'] = True
+    # print writing
+    msg = '\tWriting install.yaml: {0}'.format(install_path)
+    WLOG(None, '', msg, wrap=False)
     # write database
     base.write_yaml(install_dict, str(install_path))
     # -------------------------------------------------------------------------
@@ -627,11 +718,14 @@ def create_yamls(params: Any):
     rejectdb['RESET'] = params.get('REJECT_RESET', 'NULL')
     rejectdb['TABLE'] = params.get('REJECT_PROFILE', 'NULL')
     database_dict['REJECT'] = rejectdb
+    # print writing
+    msg = '\tWriting database.yaml: {0}'.format(database_path)
+    WLOG(None, '', msg, wrap=False)
     # write database
     base.write_yaml(database_dict, str(database_path))
 
 
-def create_user_configs(params: ParamDict):
+def create_user_configs(params: ParamDict, sargs: Dict[str, SetupArgument]):
     """
     Create the user_config.yaml and user_constants.yaml files
     for the user specified instrument
@@ -657,6 +751,17 @@ def create_user_configs(params: ParamDict):
                                               from_file=False,
                                               cache=False)
     # -------------------------------------------------------------------------
+    # push the required parameters into apero_params
+    for sname in sargs:
+        # get the setup argument
+        sarg = sargs[sname]
+        # if not defined in parameters we skip
+        if sname not in params:
+            continue
+        # otherwise add argument to apero_params is we have an apero name
+        if sarg.apero_name is not None:
+            apero_params[sarg.apero_name] = params[sname]
+    # -------------------------------------------------------------------------
     # get the title arguments
     tkwargs = dict(INSTRUMENT=params['INSTRUMENT'])
     # loop around user scripts and create the yamls
@@ -666,9 +771,12 @@ def create_user_configs(params: ParamDict):
             continue
         # construct the path
         outpath = userconfig.joinpath(user_scripts[it])
+        # print writing
+        WLOG(None, '', '\tWriting {0}: {1}'.format(user_scripts[it], outpath),
+             wrap=False)
         # save the yaml file
         mod_scripts[it].CDict.save_yaml(apero_params, outpath=outpath,
-                                        title_args=tkwargs)
+                                        title_args=tkwargs, log=False)
 
 
 def create_setup_files(params: ParamDict):
@@ -695,9 +803,9 @@ def create_setup_files(params: ParamDict):
         sfile = sfile.format(**kwargs)
         # ---------------------------------------------------------------------
         # print progress
-        msg = 'Writing setup file: {0}'
+        msg = '\tWriting setup file: {0}'
         margs = [destination]
-        drs_text.cprint(msg.format(*margs), 'green')
+        WLOG(None, '', msg.format(*margs), wrap=False)
         # ---------------------------------------------------------------------
         # write the destination file
         with open(destination, 'w') as df:
@@ -706,6 +814,37 @@ def create_setup_files(params: ParamDict):
         # ---------------------------------------------------------------------
         # make the file executable
         os.chmod(destination, 0o755)
+    # -------------------------------------------------------------------------
+    # Deal with profile.ini
+    # -------------------------------------------------------------------------
+    # Add a profile.ini file if it doesn't exist
+    if not os.path.exists(PROFILE_FILE):
+        # print progress
+        WLOG(None, '', '\tCreating profile.ini: {0}'.format(PROFILE_FILE))
+        # convert to dictionary
+        profiles = dict()
+    else:
+        # print progress
+        WLOG(None, '', '\tAdding to profile.ini: {0}'.format(PROFILE_FILE))
+        # load the profile file
+        with open(PROFILE_FILE, 'r') as afile:
+            lines = afile.readlines()
+        # convert to dictionary
+        profiles = dict()
+        for line in lines:
+            if len(line.split('=')) != 2:
+                continue
+            key, value = line.split('=')
+            profiles[key.strip()] = value.strip()
+    # add or replace  the new profile
+    if params['NAME'] in profiles:
+        WLOG(None, '', '\tReplacing profile: {0}'.format(params['NAME']))
+    # push name into profiles
+    profiles[params['NAME']] = str(userconfig)
+    # write to file
+    with open(PROFILE_FILE, 'w') as afile:
+        for key, value in profiles.items():
+            afile.write('{0}={1}\n'.format(key, value))
 
 
 def create_install_script(params: ParamDict, sargs: Dict[str, SetupArgument]):
@@ -749,12 +888,36 @@ def create_install_script(params: ParamDict, sargs: Dict[str, SetupArgument]):
             command += prefix + sarg.print_arg(params[sname]) + suffix
     # construct path
     destination = os.path.join(config_path, 'install.sh')
+    # print writing
+    WLOG(None, '', '\tWriting install.sh: {0}'.format(destination), wrap=False)
     # write to file
     with open(destination, 'w') as afile:
         afile.write(command)
     # ---------------------------------------------------------------------
     # make the file executable
     os.chmod(destination, 0o755)
+
+
+def clean_install(params: ParamDict):
+    # clean install
+    if not params['CLEAN_START']:
+        return
+    # -------------------------------------------------------------------------
+    # print progress
+    WLOG(None, 'info', 'Cleaning installation using apero_reset.py')
+    # import apero_reset here
+    from apero.tools.recipes.bin import apero_reset
+    # define clean warn
+    cleanwarn = params['CLEAN_PROMPT']
+    # construct reset command
+    reset_args = apero_reset.main(quiet=True, nowarn=cleanwarn,
+                                  database_timeout=0)
+    # deal with a bad reset
+    if not reset_args['success']:
+        # error message: Error resetting database (see above) cannot install
+        #                apero
+        WLOG(None, 'error', textentry('40-001-00083'))
+        return None
 
 
 # =============================================================================
