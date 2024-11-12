@@ -560,7 +560,7 @@ def display_title():
     title = title.format('APERO', 'Setup', __version__)
     title += colors.ENDC
     # header
-    drs_header = '*' * 80
+    drs_header = '*' * base.__YAML__['LOG']['DRS_LOG_CHAR_LEN']
     # set function name
     # _ = display_func('_display_title', __NAME__)
     # print and log
