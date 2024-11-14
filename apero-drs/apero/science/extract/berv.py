@@ -45,6 +45,8 @@ ParamDict = param_functions.ParamDict
 DrsFitsFile = drs_file.DrsFitsFile
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # Get the text types
 textentry = drs_lang.textentry
 # alias pcheck
@@ -100,7 +102,9 @@ def get_berv(params: ParamDict, infile: Union[DrsFitsFile, None] = None,
     if infile is not None:
         header = infile.header
     if header is None:
-        WLOG(params, 'error', 'Either header or infile must be defined')
+        # TODO: Add to language database
+        emsg = 'Either header or infile must be defined'
+        raise AperoCodedException(params, message=emsg)
     # convert header to drs_fits header
     header = drs_fits.Header(header)
     # -------------------------------------------------------------------------
@@ -474,8 +478,7 @@ def use_barycorrpy(params: ParamDict, times: np.ndarray, props: ParamDict,
     # -------------------------------------------------------------------------
     # must check that a pid is set
     if params['PID'] is None:
-        WLOG(params, 'error', textentry('10-005-00006'))
-        pid = None
+        raise AperoCodedException(params, '10-005-00006')
     else:
         pid = params['PID']
 
@@ -564,7 +567,7 @@ def use_pyasl(params: ParamDict, times: Union[np.ndarray, list],
     if np.isnan(ra2000) or np.isnan(dec2000):
         eargs = [props['OBJNAME'], props['RA'], props['DEC'], props['PMRA'],
                  props['PMDE'], props['PLX'], props['EPOCH']]
-        WLOG(params, 'error', textentry('00-016-00028', args=eargs))
+        raise AperoCodedException(params, '00-016-00028', targs=eargs)
     # get args
     bkwargs = dict(ra2000=ra2000, dec2000=dec2000,
                    obs_long=props['DRS_LONG'], obs_lat=props['DRS_LAT'],
@@ -582,7 +585,7 @@ def use_pyasl(params: ParamDict, times: Union[np.ndarray, list],
             bjds.append(bjd)
         except Exception as e:
             wargs = [jdtime, type(e), e, func_name]
-            WLOG(params, 'error', textentry('00-016-00017', args=wargs))
+            raise AperoCodedException(params, '00-016-00017', targs=wargs)
     # convert lists to numpy arrays and return
     return np.array(bervs), np.array(bjds)
 

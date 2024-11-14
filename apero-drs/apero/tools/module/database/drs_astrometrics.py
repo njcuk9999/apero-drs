@@ -59,6 +59,8 @@ textentry = drs_lang.textentry
 ParamDict = param_functions.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # Get function string
 display_func = drs_misc.display_func
 # get the databases
@@ -1038,8 +1040,9 @@ def query_simbad(params: ParamDict, rawobjname: str,
                 attempts += 1
     # deal with max attempts
     if attempts == 10:
+        # TODO: Add to language database
         emsg = 'Cannot run simbad query objects. \n\t Error {0}'
-        WLOG(params, 'error', emsg.format(error))
+        raise AperoCodedException(params, message=emsg)
     # storage for astrometric objects
     astroobjs = []
     # deal with not having object
@@ -1201,9 +1204,10 @@ def check_object(params: ParamDict, found_objs: Dict[str, Tuple[str, str]]):
             WLOG(params, 'warning', wmsg.format(objname))
             continue
         elif np.sum(mask) == 0:
+            # TODO: Add to language database
             emsg = ('\tNo matches found for {0} in object database. '
                     'This should not happen.')
-            WLOG(params, 'error', emsg.format(objname))
+            raise AperoCodedException(params, message=emsg)
 
         # ---------------------------------------------------------------------
         # get this rows information
@@ -1420,8 +1424,8 @@ def query_database(params, rawobjnames: List[str],
             else:
                 msg = '\t - Object: "{0}" found by unknown means as "{1}"'
                 margs = [rawobjname, correct_objname]
-                WLOG(params, 'error', msg.format(*margs))
-                found[rawobjname] = ('database-unknown', correct_objname)
+                raise AperoCodedException(params, message=msg.format(*margs),
+                                          targs=margs)
         elif correct_objname in reject_list:
             msg = '\t - Object: "{0}" in reject list database as "{1}"'
             msg += ('\n\t\t - remove manually from reject list if '
@@ -2031,9 +2035,9 @@ def add_object_reject(params: ParamDict, raw_objname: str):
             autofill_list = autofill.split(',')
             # check we have 2 values
             if len(autofill_list) != 2:
+                # TODO: Add to lanugage database
                 emsg = 'Auto fill must be in the form ALIASES,BAD_ASTRO,NOTES'
-                WLOG(params, 'error', emsg)
-                return
+                raise AperoCodedException(params, message=emsg)
             # get the values
             aliases, bad_astro, notes = autofill_list
         else:

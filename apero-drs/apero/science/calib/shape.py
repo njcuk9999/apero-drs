@@ -49,6 +49,8 @@ __date__ = apero_base.__date__
 __release__ = apero_base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # Get Recipe class
 DrsRecipe = drs_recipe.DrsRecipe
 # Get parameter class
@@ -361,7 +363,7 @@ def get_linear_transform_params(params: ParamDict, recipe: DrsRecipe,
     if image2.shape != image1.shape:
         # log that the shapes are inconsistent
         eargs = [image1.shape, image2.shape, func_name]
-        WLOG(params, 'error', textentry('00-014-00001', args=eargs))
+        raise AperoCodedException(params, '00-014-00001', targs=eargs)
     # linear transform vector
     # with dx0,dy0,A,B,C,D
     # we start assuming that there is no shift in x or y
@@ -564,11 +566,11 @@ def ea_transform(params, image, lin_transform_vect=None,
     if dxmap is not None:
         if dxmap.shape != image.shape:
             eargs = [dxmap.shape, image.shape, func_name]
-            WLOG(params, 'error', textentry('00-014-00002', args=eargs))
+            raise AperoCodedException(params, '00-014-00002', targs=eargs)
     if dymap is not None:
         if dymap.shape != image.shape:
             eargs = [dymap.shape, image.shape, func_name]
-            WLOG(params, 'error', textentry('00-014-00003', args=eargs))
+            raise AperoCodedException(params, '00-014-00003', targs=eargs)
     # deal with no linear transform required (just a dxmap or dymap shift)
     if lin_transform_vect is None:
         lin_transform_vect = np.array([0.0, 0.0, 1.0, 0.0, 0.0, 1.0])

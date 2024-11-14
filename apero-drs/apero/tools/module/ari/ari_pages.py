@@ -46,6 +46,8 @@ __release__ = apero_base.__release__
 ParamDict = param_functions.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # Get the text types
 textentry = drs_lang.textentry
 # Get ARI core classes
@@ -488,7 +490,9 @@ def add_obj_pages(params: ParamDict, object_classes: Dict[str, AriObject]):
             WLOG(params, 'warning', emsg.format(*eargs))
     # stop the code here
     if not all_passed:
-        WLOG(params, 'error', 'ARI crashed (see warnings above)')
+        # TODO: Add to language database
+        emsg = 'ARI crashed (see warnings above)'
+        raise AperoCodedException(params, message=emsg)
     # -------------------------------------------------------------------------
     # return the object table
     return object_classes

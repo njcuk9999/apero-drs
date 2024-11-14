@@ -15,7 +15,6 @@ import numpy as np
 from astropy import constants as cc
 from astropy import units as uu
 
-from aperocore.base import base
 from aperocore.constants import param_functions
 from aperocore import drs_lang
 from apero.core import drs_database
@@ -43,6 +42,8 @@ __date__ = apero_base.__date__
 __release__ = apero_base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # Get Recipe class
 DrsRecipe = drs_recipe.DrsRecipe
 # Get parameter class
@@ -160,7 +161,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     if fpfiles is not None:
         if len(hcfiles) != len(fpfiles):
             wargs = [len(hcfiles), len(fpfiles)]
-            WLOG(params, 'error', textentry('10-017-00002', args=wargs))
+            raise AperoCodedException(params, '10-017-00002', targs=wargs)
     # get the number of files
     num_files = len(hcfiles)
     # get the fiber types from a list parameter (or from inputs)
@@ -413,7 +414,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ---------------------------------------------------------------------
         if not global_passed and params['INPUTS']['REF']:
             eargs = [recipe.name]
-            WLOG(params, 'error', textentry('09-000-00011', args=eargs))
+            raise AperoCodedException(params, '09-000-00011', targs=eargs)
 
         # -----------------------------------------------------------------
         # Construct summary document

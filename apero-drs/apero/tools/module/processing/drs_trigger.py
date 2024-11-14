@@ -41,6 +41,8 @@ __date__ = apero_base.__date__
 __release__ = apero_base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # get the parameter dictionary
 ParamDict = param_functions.ParamDict
 # get the recipe class
@@ -155,8 +157,9 @@ class Trigger:
         self.outdir = params['DRS_DATA_RAW']
         # deal with no input directory to scan
         if drs_text.null_text(self.indir, ['None', '', 'Null']):
+            # TODO: Add to language database
             emsg = '--indir must be defined'
-            WLOG(params, 'error', emsg)
+            raise AperoCodedException(params, message=emsg)
         # define the calib and science trigger scripts
         self.calib_script = 'None'
         self.science_script = 'None'

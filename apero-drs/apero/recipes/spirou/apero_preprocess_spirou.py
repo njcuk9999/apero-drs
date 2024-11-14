@@ -41,6 +41,8 @@ __date__ = apero_base.__date__
 __release__ = apero_base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # Get Recipe class
 DrsRecipe = drs_recipe.DrsRecipe
 # Get parameter class
@@ -172,8 +174,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             WLOG(params, 'info', textentry('40-010-00001', args=eargs))
         else:
             eargs = [infile.filename]
-            WLOG(params, 'error', textentry('40-010-00002', args=eargs))
-            continue
+            raise AperoCodedException(params, '40-010-00002', targs=eargs)
         # ------------------------------------------------------------------
         # print progress
         WLOG(params, '', 'Loading RAMP [intercept,intercept,errslope,inttime]')
@@ -205,7 +206,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # if we didn't find the output file we should log this error
         if not found:
             eargs = [outfile.name]
-            WLOG(params, 'error', textentry('00-010-00003', args=eargs))
+            raise AperoCodedException(params, '00-010-00003', targs=eargs)
         if skip:
             if os.path.exists(outfile.filename):
                 wargs = [infile.filename]

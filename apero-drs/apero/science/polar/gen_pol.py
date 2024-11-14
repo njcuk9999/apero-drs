@@ -54,6 +54,8 @@ DrsRecipe = drs_recipe.DrsRecipe
 DrsFitsFile = drs_file.DrsFitsFile
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # Get function string
 display_func = drs_misc.display_func
 # Get the text types
@@ -171,7 +173,7 @@ def set_polar_exposures(params: ParamDict) -> List[DrsFitsFile]:
             # log error: Exposure {0} must have keys {1} and {2}
             eargs = [exp_pos, params['KW_POLAR_KEY_1'][0],
                      params['KW_POLAR_KEY_2'][1], func_name]
-            WLOG(params, 'error', textentry('09-021-00010', args=eargs))
+            raise AperoCodedException(params, '09-021-00010', targs=eargs)
         # stop if we already have 4 exposures
         if exp_pos > 3:
             break
@@ -193,7 +195,7 @@ def set_polar_exposures(params: ParamDict) -> List[DrsFitsFile]:
     for it, exp in enumerate(exposures):
         if not isinstance(exp, DrsFitsFile):
             # Log Error: Exposure {0} has not been set correctly
-            WLOG(params, 'error', textentry('09-021-00011', args=[it + 1]))
+            raise AperoCodedException(params, '09-021-00011', targs=[it + 1])
     # -------------------------------------------------------------------------
     # return the list of exposures
     return exposures
@@ -358,7 +360,7 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
             eargs = [basenames[it], exp_nums[it], stokes[it]]
             emsg += '\n' + textentry('09-021-00013', args=eargs)
         # pass error to logger
-        WLOG(params, 'error', emsg)
+        raise AperoCodedException(params, '09-021-00012', message=emsg)
     else:
         polar_dict['GLOBAL_STOKES'] = stokes[0]
     # -------------------------------------------------------------------------
@@ -372,7 +374,7 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
             eargs = [basenames[it], params['KW_OBJNAME'][0], objnames[it]]
             emsg += '\n' + textentry('09-021-00015', args=eargs)
         # pass error to logger
-        WLOG(params, 'error', emsg)
+        raise AperoCodedException(params, '09-021-00014', message=emsg)
     # set object name
     object_name = objnames[0]
     # -------------------------------------------------------------------------
@@ -573,9 +575,10 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
     if len(polar_dict['EXPOSURES']) == 8:
         polar_dict['N_EXPOSURES'] = 4
     else:
+        # TODO: Add to language database
         emsg = ('Number of exposures in input data is not sufficient for'
                 ' polarimetry calculations')
-        WLOG(params, 'error', emsg)
+        raise AperoCodedException(params, message=emsg)
     # -------------------------------------------------------------------------
     # add object name and temperature to polar dictionary
     polar_dict['OBJECT_NAME'] = object_name
@@ -728,7 +731,7 @@ def calculate_polarimetry(params: ParamDict, pprops: ParamDict,
         return polarimetry_ratio_method(params, pprops)
     else:
         # Log Error: Method="{0}" not valid for polarimetry calculation
-        WLOG(params, 'error', textentry('09-021-00016', args=[method]))
+        raise AperoCodedException(params, '09-021-00016', targs=[method])
 
 
 def polarimetry_diff_method(params: ParamDict, props: ParamDict,
@@ -882,7 +885,7 @@ def polarimetry_diff_method(params: ParamDict, props: ParamDict,
         # Log error: Number of exposures in input data is not sufficient
         # for polarimetry calculations
         eargs = [nexp, func_name]
-        WLOG(params, 'error', textentry('09-021-00008', args=eargs))
+        raise AperoCodedException(params, '09-021-00008', targs=eargs)
     # -------------------------------------------------------------------------
     # add to props (for output)
     # -------------------------------------------------------------------------
@@ -1080,7 +1083,7 @@ def polarimetry_ratio_method(params: ParamDict, props: ParamDict,
         # Log error: Number of exposures in input data is not sufficient
         # for polarimetry calculations
         eargs = [nexp, func_name]
-        WLOG(params, 'error', textentry('09-021-00008', args=eargs))
+        raise AperoCodedException(params, '09-021-00008', targs=eargs)
     # set the method
     props['METHOD'] = 'Ratio'
     props['POL'] = pol_arr
@@ -1423,8 +1426,7 @@ def calculate_continuum(params: ParamDict, recipe: DrsRecipe, props: ParamDict
     else:
         # log error: Stokes I continuum detection algorithm invalid
         eargs = [stokesi_detection_alg, func_name]
-        WLOG(params, 'error', textentry('09-021-00017', args=eargs))
-        contflux = None
+        raise AperoCodedException(params, '09-021-00017', targs=eargs)
     # -------------------------------------------------------------------------
     # normalize flux by continuum
     if norm_stokes_i:
@@ -1458,8 +1460,7 @@ def calculate_continuum(params: ParamDict, recipe: DrsRecipe, props: ParamDict
     else:
         # Log error: Stokes I continuum detection algorithm invalid
         eargs = [polar_detection_alg, func_name]
-        WLOG(params, 'error', textentry('09-021-00017', args=eargs))
-        contpol = None
+        raise AperoCodedException(params, '09-021-00017', targs=eargs)
     # -------------------------------------------------------------------------
     # remove continuum polarization
     if remove_continuum:
@@ -2394,7 +2395,7 @@ def continuum(params: ParamDict, xarr: np.ndarray, yarr: np.ndarray,
                 else:
                     # Log Error: Can not recognize selected mode="{0}"
                     eargs = [mode, func_name]
-                    WLOG(params, 'error', textentry('09-021-00018', args=eargs))
+                    raise AperoCodedException(params, '09-021-00018', targs=eargs)
         # ---------------------------------------------------------------------
         # if we are dealing with last bin
         if ibin == nbins - 1 and not use_linear_fit:
@@ -2538,8 +2539,7 @@ def _fit_continuum(params: ParamDict, recipe: DrsRecipe, wavemap: np.ndarray,
     else:
         # Log Error: Continuum function "{0}" not valid for {1}'
         eargs = [function, func_name]
-        WLOG(params, 'error', textentry('09-021-00019', args=eargs))
-        cont = None
+        raise AperoCodedException(params, '09-021-00019', targs=eargs)
     # -------------------------------------------------------------------------
     # iteration loop: reject outliers and fit again
     if niter > 0:
@@ -2598,8 +2598,7 @@ def _fit_continuum(params: ParamDict, recipe: DrsRecipe, wavemap: np.ndarray,
             else:
                 # Log Error: Continuum function = "{0}" not valid for {1}'
                 eargs = [function, func_name]
-                WLOG(params, 'error', textentry('09-021-00019', args=eargs))
-                cont = None
+                raise AperoCodedException(params, '09-021-00019', targs=eargs)
     # compute residual and rms
     res = fspec - cont
     # compute the standard deviation of valid points
@@ -2723,7 +2722,7 @@ def _continuum_polarization(params: ParamDict, xarr: np.ndarray,
             else:
                 # Log error: Can not recognize selected mode="{0}"
                 eargs = [mode, func_name]
-                WLOG(params, 'error', textentry('09-021-00020', args=eargs))
+                raise AperoCodedException(params, '09-021-00020', targs=eargs)
         # ---------------------------------------------------------------------
         if ibin == nbins - 1:
             xbin.append(xarr[-1] + np.abs(xarr[-1] - xarr[-2]))

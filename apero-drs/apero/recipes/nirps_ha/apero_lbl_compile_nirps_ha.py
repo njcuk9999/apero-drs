@@ -38,6 +38,8 @@ __date__ = apero_base.__date__
 __release__ = apero_base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # Get Recipe class
 DrsRecipe = drs_recipe.DrsRecipe
 # Get parameter class
@@ -125,9 +127,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # remove any current arguments from sys.argv
         sys.argv = [__NAME__]
     except ImportError:
+        # TODO: Add to language database
         emsg = 'Cannot run LBL (not installed) please install LBL'
-        WLOG(params, 'error', emsg)
-        return locals()
+        raise AperoCodedException(params, message=emsg)
     # -------------------------------------------------------------------------
     # store errors for reporting later
     errors = []
@@ -229,7 +231,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # ----------------------------------------------------------------------
     # report errors
     if len(errors) == 2:
-        WLOG(params, 'error', '\n\n'.join(errors))
+        raise AperoCodedException(params, message='\n\n'.join(errors))
     elif len(errors) == 1:
         WLOG(params, 'warning', errors[0])
     # ----------------------------------------------------------------------

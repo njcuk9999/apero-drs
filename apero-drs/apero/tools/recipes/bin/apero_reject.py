@@ -30,6 +30,8 @@ __date__ = apero_base.__date__
 __release__ = apero_base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # Get the text types
 textentry = drs_lang.textentry
 
@@ -95,12 +97,12 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # must set either objname or filename
     if objname in ['None', None] and identifier in ['None', None]:
-        WLOG(params, 'error', 'Must set either objname or identifier')
-        raise SystemExit()
+        emsg = 'Must set either objname or identifier'
+        raise AperoCodedException(params, message=emsg)
     # must not set both - this is confusing
     if objname not in ['None', None] and identifier not in ['None', None]:
-        WLOG(params, 'error', 'Must set either objname or identifier')
-        raise SystemExit()
+        emsg = 'Must set either objname or identifier'
+        raise AperoCodedException(params, message=emsg)
     # ----------------------------------------------------------------------
     # deal with objname set
     if objname not in ['None', None]:

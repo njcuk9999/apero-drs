@@ -61,6 +61,8 @@ DPseudoConsts = instrument.Instrument
 display_func = drs_misc.display_func
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # Get the text types
 textentry = drs_lang.textentry
 # alias pcheck
@@ -408,14 +410,16 @@ def mask_bad_regions(params: ParamDict,
                 '\n\tImage shape: {0}'
                 '\n\tFunction: {1}')
         eargs = [image.shape, func_name]
-        WLOG(params, 'error', emsg.format(*eargs))
+        raise AperoCodedException(params, message=emsg.format(*eargs),
+                                  targs=eargs)
     if image.shape != wavemap.shape:
         # TODO: Add to language database
         emsg = ('Image and wavelength grid must have same dimensions'
                 '\n\tImage shape: {0} \n\tWavemap shape: {1}'
                 '\n\tFunction: {2}')
         eargs = [image.shape, wavemap.shape, func_name]
-        WLOG(params, 'error', emsg.format(*eargs))
+        raise AperoCodedException(params, message=emsg.format(*eargs),
+                                  targs=eargs)
     # -------------------------------------------------------------------------
     # loop around bad regions and mask them
     for bad_region in bad_regions:
@@ -980,7 +984,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
                                            ccf_water, p0=water_guess)
                 except RuntimeError:
                     eargs = ['water', water_guess]
-                    WLOG(params, 'error', textentry('09-019-00006', args=eargs))
+                    raise AperoCodedException(params, '09-019-00006', targs=eargs)
                     popt = [0, 0, 0]
                 # store the velocity of the water
                 dv_water = popt[1]
@@ -993,8 +997,8 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
                                             ccf_others, p0=others_guess)
                 except RuntimeError:
                     eargs = ['others', water_guess]
-                    WLOG(params, 'error', textentry('09-019-00006', args=eargs))
-                    popt = [0, 0, 0]
+                    raise AperoCodedException(params, '09-019-00006', 
+                                              targs=eargs)
                 # store the velocity of the other species
                 dv_others = popt[1]
                 # store the mean velocity of water and others
@@ -2620,7 +2624,8 @@ def load_templates(params: ParamDict,
                     # log error
                     eargs = [os.path.basename(template_filename),
                              template_filename]
-                    WLOG(params, 'error', textentry('09-019-00005', args=eargs))
+                    raise AperoCodedException(params, '09-019-00005', 
+                                              targs=eargs)
 
     # -------------------------------------------------------------------------
     # get key
@@ -3011,7 +3016,7 @@ def wave_to_wave(params, spectrum, wave1, wave2, reshape=False, splinek=5):
         except ValueError:
             # log that we cannot reshape spectrum
             eargs = [spectrum.shape, wave2.shape, func_name]
-            WLOG(params, 'error', textentry('09-019-00004', args=eargs))
+            raise AperoCodedException(params, '09-019-00004', targs=eargs)
     # if they are the same
     # noinspection PyTypeChecker
     if mp.nansum(wave1 != wave2) == 0:

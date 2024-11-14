@@ -48,6 +48,8 @@ DrsFitsFile = drs_file.DrsFitsFile
 CalibrationDatabase = drs_database.CalibrationDatabase
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # Get function string
 display_func = drs_misc.display_func
 # Get the text types
@@ -645,7 +647,7 @@ def merge_coeffs(params: ParamDict,
                 if fiber_nbo != nbo:
                     # log error: Inconsistent number of orders between fibers
                     eargs = [fiber0, nbo, _fiber, fiber_nbo, func_name]
-                    WLOG(params, 'error', textentry('00-013-00008', args=eargs))
+                    raise AperoCodedException(params, '00-013-00008', targs=eargs)
                 # add to merged coeffs - need to be flipped
                 cent_coeffs.append(ldict[_fiber][0][order_num])
                 wid_coeffs.append(ldict[_fiber][1][order_num])

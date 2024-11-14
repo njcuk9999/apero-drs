@@ -49,6 +49,8 @@ __release__ = apero_base.__release__
 ParamDict = param_functions.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # set the date for finder charts
 DATE = Time.now()
 # columns in the apero astrometric database
@@ -528,7 +530,7 @@ def get_gaia_sources(params: ParamDict, coords: SkyCoord, obstime: Time,
             emsg = str(wmsg.format(*wargs))
     # break if we tried 10 times and it still fails
     if ncount >= 10:
-        WLOG(params, 'error', emsg)
+        raise AperoCodedException(params, message=emsg)
     # deal with query being exactly 2000 (the max size)
     if len(table) == 2000:
         print('Too many sources. Launching job asyncronously. Please wait...')
@@ -734,7 +736,7 @@ def get_2mass_sources(params: ParamDict, gaia_sources: Dict[str, List[float]],
             emsg = str(wmsg.format(*wargs))
     # break if we tried 10 times and it still fails
     if ncount >= 10:
-        WLOG(params, 'error', emsg)
+        raise AperoCodedException(params, message=emsg)
     # get all 2MASS coords
     tmass_coords = SkyCoord(ra=tmass_table['ra'], dec=tmass_table['dec'],
                             distance=None, pm_ra_cosdec=None, pm_dec=None,

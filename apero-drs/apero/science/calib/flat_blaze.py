@@ -36,6 +36,8 @@ __date__ = apero_base.__date__
 __release__ = apero_base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # Get Recipe class
 DrsRecipe = drs_recipe.DrsRecipe
 # Get parameter class
@@ -192,8 +194,8 @@ def calculate_blaze_flat_sinc(params: ParamDict, e2ds_ini: np.ndarray,
                         strupper = strlist.format(*bounds[1])
                         eargs = [order_num, fiber, n_it, strguess, strlower,
                                  strupper, type(e), str(e), func_name]
-                        emsg = textentry('40-015-00009', args=eargs)
-                        WLOG(params, 'error', emsg)
+                        raise AperoCodedException(params, '40-015-00009',
+                                                  targs=eargs)
     # ------------------------------------------------------------------
     # calculate the blaze from the curve_fit coefficients
     blaze = mp.sinc(xpix, *popt, peak_cut=peak_cut)

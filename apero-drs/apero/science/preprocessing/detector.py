@@ -45,6 +45,8 @@ __date__ = apero_base.__date__
 __release__ = apero_base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # Get time from base
 Time = base.Time
 # get param dict
@@ -710,13 +712,17 @@ def create_led_flat(params: ParamDict, recipe: DrsRecipe, led_file: DrsFitsFile,
                                           filters=dark_hkeys)
     # check that we have files
     if len(raw_led_files) == 0:
+        # TODO: Add to language database
         emsg = 'No LED files found for {0}'
         eargs = [led_file.name]
-        WLOG(params, 'error', emsg.format(*eargs))
+        raise AperoCodedException(params, message=emsg.format(*eargs), 
+                                  targs=eargs)
     if len(raw_dark_files) == 0:
+        # TODO: Add to language database
         emsg = 'No DARK files found for {0}'
         eargs = [dark_file.name]
-        WLOG(params, 'error', emsg.format(*eargs))
+        raise AperoCodedException(params, message=emsg.format(*eargs),
+                                  targs=eargs)
     # check whether filetype is allowed for instrument
     rawfiletype = led_file.name
     # get definition

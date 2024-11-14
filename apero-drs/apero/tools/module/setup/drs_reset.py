@@ -51,6 +51,9 @@ Instrument = instrument_mod.Instrument
 DatabaseM = drs_database.DatabaseManager
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
+# Get temporary printer
 TLOG = Printer
 # Get the text types
 textentry = drs_lang.textentry
@@ -80,10 +83,12 @@ def check_cwd(params: ParamDict):
         # if it is in current working path we have a problem
         if str(os.path.realpath(block_path)) in str(os.path.realpath(cwd)):
             # raise error
+            # TODO: Add to language database
             emsg = ('Current working directory within paths to be reset. '
                     'Please change directory\n\tCurrent dir: {0}\n\tBlock: {1}')
             eargs = [cwd, block_path]
-            WLOG(params, 'error', emsg.format(*eargs))
+            raise AperoCodedException(params, message=emsg.format(*eargs),
+                                      targs=eargs)
 
 
 def is_empty(params: ParamDict, directory: str,
@@ -455,7 +460,7 @@ def copy_default_db(params: ParamDict, name: str, db_dir: str,
     # check that absfolder exists
     if not os.path.exists(reset_path):
         eargs = [name, reset_path]
-        WLOG(params, 'error', textentry('00-502-00001', args=eargs))
+        raise AperoCodedException(params, '00-502-00001', targs=eargs)
     # -------------------------------------------------------------------------
     # copy required calibDB files to DRS_CALIB_DB path
     drs_path.copytree(reset_path, db_dir)
@@ -756,7 +761,7 @@ def remove_all(params, path, log=True, skipfiles=None):
             # make directories
             os.makedirs(path)
         else:
-            WLOG(params, 'error', textentry('00-502-00002', args=[path]))
+            raise AperoCodedException(params, '00-502-00002', targs=[path])
     # if we have access to rm and skip files is empty we can do this quickly
     if len(skipfiles) > 0:
         success = fast_remove_skip_files(path, skipfiles)

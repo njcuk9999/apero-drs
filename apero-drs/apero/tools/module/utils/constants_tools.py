@@ -38,6 +38,8 @@ __release__ = apero_base.__release__
 ParamDict = param_functions.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # Get the text types
 textentry = drs_lang.textentry
 # get display func
@@ -129,10 +131,10 @@ def deal_with_clean(params) -> bool:
     # Adding descriptions from comments
     # -------------------------------------------------------------------------
     # get a list of base config / constants scripts
-    const_dir = drs_misc.get_relative_folder(__PACKAGE__, base.CORE_PATH)
+    const_dir = drs_misc.get_relative_folder(__PACKAGE__, apero_base.CORE_PATH)
 
     # loop around all types
-    for filename in base.SCRIPTS:
+    for filename in apero_base.SCRIPTS:
         # log progress
         WLOG(params, 'info', 'Processing file: {0}'.format(filename))
         # get full path to script
@@ -177,7 +179,11 @@ def deal_with_clean(params) -> bool:
             const_entry, start, end = get_const(key, const_string, kinds[row])
             # deal with key not found
             if start == -1:
-                WLOG(params, 'error', 'Key: "{0}" not found'.format(key))
+                # TODO: Add to language database
+                emsg = 'Key: "{0}" not found in file: {1}'
+                eargs = [key, const_path]
+                raise AperoCodedException(params, message=emsg.format(*eargs),
+                                          targs=eargs)
             # get description
             description = get_comment(start, const_string)
             # add the description to the end of the const_etnry
@@ -331,13 +337,13 @@ def create_glossary(params):
     # Adding descriptions from comments
     # -------------------------------------------------------------------------
     # get a list of base config / constants scripts
-    const_dir = drs_misc.get_relative_folder(__PACKAGE__, base.CORE_PATH)
+    const_dir = drs_misc.get_relative_folder(__PACKAGE__, apero_base.CORE_PATH)
     # ---------------------------------------------------------------------
     # store instances without descriptions
     constants_dict, keywords_dict = dict(), dict()
     # ---------------------------------------------------------------------
     # loop around all types
-    for filename in base.SCRIPTS:
+    for filename in apero_base.SCRIPTS:
         # log progress
         WLOG(params, 'info', 'Processing file: {0}'.format(filename))
         # get full path to script

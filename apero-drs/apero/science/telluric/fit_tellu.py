@@ -48,6 +48,8 @@ DrsRecipe = drs_recipe.DrsRecipe
 display_func = drs_misc.display_func
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # Get the text types
 textentry = drs_lang.textentry
 # alias pcheck
@@ -88,7 +90,7 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, refprops,
         # log and raise error: not enough tranmission maps to run pca analysis
         wargs = [trans_key, len(transfiles), npc, 'FTELLU_NUM_PRINCIPLE_COMP',
                  func_name]
-        WLOG(params, 'error', textentry('09-019-00003', args=wargs))
+        raise AperoCodedException(params, '09-019-00003', targs=wargs)
     # ----------------------------------------------------------------------
     # check whether we can use pre-saved absorption map and create it by
     #     loading trans files if pre-saved abso map does not exist
@@ -318,7 +320,7 @@ def shift_template(params: ParamDict, recipe: DrsRecipe,
     # deal with bad berv (nan or None)
     if dv in [np.nan, None] or not isinstance(dv, (int, float)):
         eargs = [dv, func_name]
-        WLOG(params, 'error', textentry('09-016-00004', args=eargs))
+        raise AperoCodedException(params, '09-016-00004', targs=eargs)
     # Get the reference wavemap from reference wave props
     wavemap_ref = refprops['WAVEMAP']
     wavefile_ref = os.path.basename(refprops['WAVEFILE'])
@@ -386,7 +388,7 @@ def shift_all_to_frame(params, recipe, image, template, bprops, refprops, wprops
     # deal with bad berv (nan or None)
     if dv in [np.nan, None] or not isinstance(dv, (int, float)):
         eargs = [dv, func_name]
-        WLOG(params, 'error', textentry('09-016-00004', args=eargs))
+        raise AperoCodedException(params, '09-016-00004', targs=eargs)
     # Get the reference wavemap from reference wave props
     wavemap_ref = refprops['WAVEMAP']
     wavefile_ref = os.path.basename(refprops['WAVEFILE'])

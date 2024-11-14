@@ -38,6 +38,8 @@ __date__ = apero_base.__date__
 __release__ = apero_base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # Get Recipe class
 DrsRecipe = drs_recipe.DrsRecipe
 # Get parameter class
@@ -128,9 +130,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # remove any current arguments from sys.argv
         sys.argv = [__NAME__]
     except ImportError:
+        # TODO: Add to language database
         emsg = 'Cannot run LBL (not installed) please install LBL'
-        WLOG(params, 'error', emsg)
-        return locals()
+        raise AperoCodedException(params, message=emsg)
     # -------------------------------------------------------------------------
     # store errors for reporting later
     errors = []
@@ -165,6 +167,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                                objname=object_science,
                                tempname=object_template)
     except Exception as e:
+        # TODO: Move to language database
         emsg = 'LBL Compute Exception [{0}_{1}] {2}: {3}'
         eargs = [object_science, object_template, type(e), str(e)]
         errors.append(emsg.format(*eargs))
@@ -177,7 +180,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         recipe.log.add_qc(qc_params, passed)
         # report errors
         if len(errors) > 0:
-            WLOG(params, 'error', '\n\n'.join(errors))
+            raise AperoCodedException(params, message='\n\n'.join(errors))
         # End of main code
         return locals()
     # -------------------------------------------------------------------------
@@ -225,7 +228,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # ----------------------------------------------------------------------
     # report errors
     if len(errors) == 2:
-        WLOG(params, 'error', '\n\n'.join(errors))
+        raise AperoCodedException(params, message='\n\n'.join(errors))
     elif len(errors) == 1:
         WLOG(params, 'warning', errors[0])
     # ----------------------------------------------------------------------

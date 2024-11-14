@@ -51,6 +51,8 @@ DrsNpyFile = drs_file.DrsNpyFile
 DrsRecipe = drs_recipe.DrsRecipe
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # Get the text types
 textentry = drs_lang.textentry
 # alias pcheck
@@ -103,7 +105,9 @@ def get_dark_fps(params: ParamDict, recipe: DrsRecipe,
             emsg = textentry('01-001-00020', args=[filetype, func_name])
             for allowedtype in allowedtypes:
                 emsg += '\n\t - "{0}"'.format(allowedtype)
-            WLOG(params, 'error', emsg)
+            raise AperoCodedException(params, '01-001-00020',
+                                      targs=[filetype, func_name],
+                                      message=emsg)
         # ------------------------------------------------------------------
         # check whether filetype is allowed for instrument
         # get definition
@@ -112,7 +116,7 @@ def get_dark_fps(params: ParamDict, recipe: DrsRecipe,
         # deal with defintion not found
         if darkfpfile is None:
             eargs = [filetype, recipe.name, func_name]
-            WLOG(params, 'error', textentry('09-010-00001', args=eargs))
+            raise AperoCodedException(params, '09-010-00001', targs=eargs)
         # ------------------------------------------------------------------
         # get all "filetype" filenames
         files = drs_utils.find_files(params, block_kind='tmp',
@@ -197,7 +201,7 @@ def correct_ref_dark_fp(params: ParamDict, extractdict: ParamDict,
     # check for reference fiber in extract dict
     if ref_fiber not in extractdict:
         eargs = [ref_fiber, ', '.join(extractdict.keys()), func_name]
-        WLOG(params, 'error', textentry('00-016-00024', args=eargs))
+        raise AperoCodedException(params, '00-016-00024', targs=eargs)
     # get the reference file
     reffile = extractdict[ref_fiber]
     # get dprtype
@@ -208,7 +212,7 @@ def correct_ref_dark_fp(params: ParamDict, extractdict: ParamDict,
     if refdpr != 'FP':
         # log and raise error
         eargs = [ref_fiber, dprtype, func_name]
-        WLOG(params, 'error', textentry('00-016-00025', args=eargs))
+        raise AperoCodedException(params, '00-016-00025', targs=eargs)
 
     # get the data for the reference image
     refimage = reffile.get_data(copy=True)
@@ -243,7 +247,7 @@ def correct_ref_dark_fp(params: ParamDict, extractdict: ParamDict,
         # check that science fiber is in extraction dictionary
         if sci_fiber not in extractdict:
             eargs = [sci_fiber, ', '.join(extractdict.keys()), func_name]
-            WLOG(params, 'error', textentry('00-016-00026', args=eargs))
+            raise AperoCodedException(params, '00-016-00026', targs=eargs)
         # get the science image
         scifile = extractdict[sci_fiber]
         # get the data for the reference image

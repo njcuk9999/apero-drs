@@ -65,6 +65,8 @@ RecipeLog = drs_utils.RecipeLog
 CalibDB = drs_database.CalibrationDatabase
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # alias pcheck
 pcheck = param_functions.PCheck(wlog=WLOG)
 # Get the text types
@@ -138,7 +140,7 @@ def get_waveref_filename(params: ParamDict, fiber: str,
     # if we still have None we have a problem
     if filename is None:
         eargs = [', '.join(keys), func_name]
-        WLOG(params, 'error', textentry('09-017-00007', args=eargs))
+        raise AperoCodedException(params, '09-017-00007', targs=eargs)
         return '', None
     else:
         # return the last valid wave entry
@@ -222,7 +224,7 @@ def get_wave_solution_from_wavefile(params: ParamDict, usefiber: str,
             # get error arguments
             eargs = cfile.dtime_eargs
             # log error
-            WLOG(params, 'error', textentry('09-002-00004', args=eargs))
+            raise AperoCodedException(params, '09-002-00004', targs=eargs)
     # -------------------------------------------------------------------------
     # construct new infile instance (first fp solution then hc solutions)
     wavefile = out_wave.newcopy(filename=inwavefile, params=params,
@@ -264,7 +266,7 @@ def get_wave_solution_from_inheader(params: ParamDict, recipe: DrsRecipe,
             filetype = header[dprtypekey]
             # log error
             eargs = [outputkey, dprtypekey, filetype, func_name]
-            WLOG(params, 'error', textentry('00-017-00008', args=eargs))
+            raise AperoCodedException(params, '00-017-00008', targs=eargs)
             kind = None
         # get wave file instance
         wavefile = drs_file.get_file_definition(params, filetype,
@@ -382,14 +384,14 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
     if infile is not None:
         if not isinstance(infile, drs_file.DrsFitsFile):
             eargs = [type(infile), func_name]
-            WLOG(params, 'error', textentry('00-017-00001', args=eargs))
+            raise AperoCodedException(params, '00-017-00001', targs=eargs)
     # ------------------------------------------------------------------------
     # deal with no header but an infile
     if header is None and infile is not None:
         header = infile.get_header()
     # we need a header unless reference is True
     if not ref and header is None:
-        WLOG(params, 'error', textentry('00-017-00009', args=[func_name]))
+        raise AperoCodedException(params, '00-017-00009', targs=[func_name])
     # ------------------------------------------------------------------------
     # Get in wave file
     # ------------------------------------------------------------------------
@@ -463,7 +465,7 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
             nbx = int(nbpix)
         # otherwise we cannot make wavemap so log error
         else:
-            WLOG(params, 'error', textentry('09-017-00008', args=[func_name]))
+            raise AperoCodedException(params, '09-017-00008', targs=[func_name])
             nbx = 0
         # get the wave map
         wavemap = get_wavemap_from_coeffs(wave_coeffs, nbo, nbx)
@@ -730,7 +732,7 @@ def get_wavelines(params: ParamDict, fiber: str,
     if infile is not None:
         if not isinstance(infile, drs_file.DrsFitsFile):
             eargs = [type(infile), func_name]
-            WLOG(params, 'error', textentry('00-017-00001', args=eargs))
+            raise AperoCodedException(params, '00-017-00001', targs=eargs)
     # ------------------------------------------------------------------------
     # deal with no header but an infile
     if header is None and infile is not None:
@@ -739,7 +741,7 @@ def get_wavelines(params: ParamDict, fiber: str,
     if header is None:
         # log error: header not defined.
         eargs = [func_name]
-        WLOG(params, 'error', textentry('00-017-00009', args=eargs))
+        raise AperoCodedException(params, '00-017-00009', targs=eargs)
     # ------------------------------------------------------------------------
     # get file definitions (wave solution FP and wave solution HC)
     out_wave_fp = drs_file.get_file_definition(params, 'WAVE_FPLIST_REF',
@@ -1103,12 +1105,7 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
         # log error and break
         eargs = [e2dsfile.name, dprtype, fiber, func_name, hcfibtypes,
                  fpfibtypes]
-        WLOG(params, 'error', textentry('00-017-00012', args=eargs))
-        list_waves = []
-        list_orders = []
-        list_pixels = []
-        list_wfit = []
-        peak_number = []
+        raise AperoCodedException(params, '00-017-00012', targs=eargs)
     # ----------------------------------------------------------------------
     # Fit the peaks
     # ----------------------------------------------------------------------
@@ -1700,7 +1697,7 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
         # deal with too many iterations
         if count > mp.nanmin(fpl_peak_num):
             # log error: Too many iterations for bulk offset N={0}
-            WLOG(params, 'error', textentry('09-017-00009', args=[count]))
+            raise AperoCodedException(params, '09-017-00009', targs=[count])
         # add to count
         count += 1
     # update all peaks with current best offset
@@ -1747,8 +1744,7 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
             #              chromatic terms. This produces and error
             # log error: Cannot have fit_achromatic=True without
             #            cavity_update input'
-            WLOG(params, 'error', textentry('00-017-00014'))
-            cavity = None
+            raise AperoCodedException(params, '00-017-00014')
     # -------------------------------------------------------------------------
     # copy the cavity fit
     cavity0 = np.array(cavity)
@@ -2230,8 +2226,7 @@ def update_smart_fp_mask(params: ParamDict, cavity: np.ndarray, **kwargs):
     except Exception as e:
         # log error
         eargs = [mask_units, type(e), e, func_name]
-        WLOG(params, 'error', textentry('09-020-00002', args=eargs))
-        return
+        raise AperoCodedException(params, '09-020-00002', targs=eargs)
     # add units
     wave_fp_peak = wave_fp_peak * unit
     # convert to nanometers
@@ -2980,7 +2975,7 @@ def get_echelle_orders(params: ParamDict, wprops: ParamDict) -> ParamDict:
         # log error:  Number of Echelle orders (={0}) must be the same as
         #             number of orders (={1}) \n\t Function = {2}
         eargs = [len(echelle_orders), wavemap.shape[0], func_name]
-        WLOG(params, 'error', textentry('00-017-00013', args=eargs))
+        raise AperoCodedException(params, '00-017-00013', targs=eargs)
     # -------------------------------------------------------------------------
     # add back to wprops
     wprops['EORDERS'] = echelle_orders.astype(int)
@@ -3070,9 +3065,12 @@ def match_fplines(params: ParamDict, orders1: np.ndarray, peakn1: np.ndarray,
             continue
         # if we have multiple matches, raise an error
         if len(good) > 1:
+            # TODO: Add to language database
             emsg = 'Multiple matches found for peak {0} in '
             emsg += 'order {1} in fiber 2'
-            WLOG(params, 'error', emsg.format(i_peak, i_order))
+            eargs = [i_peak, i_order]
+            raise AperoCodedException(params, message=emsg.format(*eargs),
+                                      targs=eargs)
         # append to masks
         mask1.append(it)
         mask2.append(good[0])

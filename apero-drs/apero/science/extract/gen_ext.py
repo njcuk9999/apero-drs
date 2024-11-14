@@ -55,6 +55,8 @@ DrsNpyFile = drs_file.DrsNpyFile
 DrsRecipe = drs_recipe.DrsRecipe
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # Get the text types
 textentry = drs_lang.textentry
 # alias pcheck
@@ -133,8 +135,7 @@ def order_profiles(params, recipe, infile, fibertypes, sprops,
         # -------------------------------------------------------------------------
         # must check that a pid is set
         if params['PID'] is None:
-            WLOG(params, 'error', textentry('10-005-00006'))
-            pid = None
+            raise AperoCodedException(params, '10-005-00006')
         else:
             pid = params['PID']
 
@@ -215,7 +216,7 @@ def save_tmp_orderps_file(params: ParamDict, recipe: DrsRecipe,
                 orderpsfile.read_file()
             else:
                 eargs = [orderpsfile.__str__(), func_name]
-                WLOG(params, 'error', textentry('00-016-00023', args=eargs))
+                raise AperoCodedException(params, '00-016-00023', targs=eargs)
             # push data into orderp
             orderp = orderpsfile.get_data()
             orderpfilename = orderpsfile.filename

@@ -60,6 +60,8 @@ __date__ = apero_base.__date__
 __release__ = apero_base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # Get function string
 display_func = drs_misc.display_func
 # get the parameter dictionary
@@ -195,7 +197,7 @@ class Run:
         # deal with an empty recipe return
         if recipe.name == 'Empty':
             eargs = [self.recipename]
-            WLOG(None, 'error', textentry('00-007-00001', args=eargs))
+            raise AperoCodedException(None, '00-007-00001', targs=eargs)
         # else return
         return recipe, mod
 
@@ -474,7 +476,7 @@ def run_process(params: ParamDict, recipe: DrsRecipe,
         if terminate:
             display_errors(params, outlist)
             eargs = [module.name, recipe.name]
-            WLOG(params, 'error', textentry('00-001-00043', args=eargs))
+            raise AperoCodedException(params, '00-001-00043', targs=eargs)
         else:
             eargs = [module.name, recipe.name]
             WLOG(params, 'warning', textentry('00-001-00043', args=eargs),
@@ -1182,7 +1184,7 @@ def generate_run_table(params, recipe, *args, **kwargs):
                 length = len(arg)
             elif len(arg) != length:
                 eargs = ['Arg {0}'.format(it), length, func_name]
-                WLOG(params, 'error', textentry('00-503-00010', args=eargs))
+                raise AperoCodedException(params, '00-503-00010', targs=eargs)
     # loop around keyword arguments and identify list of arguments
     for kwarg in kwargs:
         # if we have a list it needs to be the same length as all other list
@@ -1194,7 +1196,7 @@ def generate_run_table(params, recipe, *args, **kwargs):
                 # log error we need all lists to have the same number of
                 #    elements
                 eargs = [kwarg, length, func_name]
-                WLOG(params, 'error', textentry('00-503-00010', args=eargs))
+                raise AperoCodedException(params, '00-503-00010', targs=eargs)
     # length could still be None should be 1
     if length is None:
         length = 1
@@ -1421,8 +1423,8 @@ def generate_ids(params: ParamDict, indexdb: FileIndexDatabase,
                 # TODO: Move to language database
                 emsg = 'Unknown multiprocessing type: {0}'
                 eargs = [params['REPROCESS_MP_TYPE_VAL']]
-                WLOG(params, 'error', emsg.format(*eargs))
-                continue
+                raise AperoCodedException(params, message=emsg.format(*eargs),
+                                          targs=eargs)
             # push into rdict
             for key in results:
                 rdict[key] = results[key]
@@ -1863,11 +1865,12 @@ def generate_run_from_sequence(params: ParamDict, sequence,
     # deal with empty database (after conditions)
     if idb_len == 0:
         eargs = [ref_condition, func_name]
-        WLOG(params, 'error', textentry('00-503-00018', args=eargs))
+        WLOG(params, 'error', '00-503-00018', targs=eargs, raise_exception=False)
         # get response for how to continue (skip or exit)
         response = prompt()
         if not response:
-            WLOG(params, 'error', 'User chose to exit')
+            # TODO: Add to language database
+            WLOG(params, 'error', 'User chose to exit', raise_exception=False)
             raise SystemExit()
 
     # log that we are processing recipes
@@ -1945,7 +1948,9 @@ def generate_run_from_sequence(params: ParamDict, sequence,
                 if response:
                     continue
                 else:
-                    WLOG(params, 'error', 'User chose to exit')
+                    # TODO: Add to language database
+                    WLOG(params, 'error', 'User chose to exit',
+                         raise_exception=False)
                     raise SystemExit()
             # mask table by observation directory
             condition += ' AND OBS_DIR="{0}"'.format(obs_dir)
@@ -1972,7 +1977,9 @@ def generate_run_from_sequence(params: ParamDict, sequence,
             if response:
                 continue
             else:
-                WLOG(params, 'error', 'User chose to exit')
+                # TODO: Add to language database
+                WLOG(params, 'error', 'User chose to exit',
+                     raise_exception=False)
                 raise SystemExit()
         # ------------------------------------------------------------------
         # deal with filters defined in recipe
@@ -2210,7 +2217,9 @@ def gen_global_condition(params: ParamDict, findexdbm: FileIndexDatabase,
             if response:
                 pass
             else:
-                WLOG(params, 'error', 'User chose to exit')
+                # TODO: Add to language database
+                WLOG(params, 'error', 'User chose to exit',
+                     raise_exception=False)
                 raise SystemExit()
     # ------------------------------------------------------------------
     # deal with black lists
@@ -2236,7 +2245,9 @@ def gen_global_condition(params: ParamDict, findexdbm: FileIndexDatabase,
             if response:
                 pass
             else:
-                WLOG(params, 'error', 'User chose to exit')
+                # TODO: Add to language database
+                WLOG(params, 'error', 'User chose to exit',
+                     raise_exception=False)
                 raise SystemExit()
     # ------------------------------------------------------------------
     # deal with white list
@@ -2263,7 +2274,9 @@ def gen_global_condition(params: ParamDict, findexdbm: FileIndexDatabase,
             if response:
                 pass
             else:
-                WLOG(params, 'error', 'User chose to exit')
+                # TODO: Add to language database
+                WLOG(params, 'error', 'User chose to exit',
+                     raise_exception=False)
                 raise SystemExit()
     # ------------------------------------------------------------------
     # deal with pi name filter
@@ -2288,7 +2301,9 @@ def gen_global_condition(params: ParamDict, findexdbm: FileIndexDatabase,
             if response:
                 pass
             else:
-                WLOG(params, 'error', 'User chose to exit')
+                # TODO: Add to language database
+                WLOG(params, 'error', 'User chose to exit',
+                     raise_exception=False)
                 raise SystemExit()
     # ------------------------------------------------------------------
     # Deal with reject list
@@ -3625,7 +3640,7 @@ def _check_runtable(params, runtable, recipemod):
         if program not in recipelist:
             # log error
             eargs = [program, params['INSTRUMENT'], func_name]
-            WLOG(params, 'error', textentry('00-503-00011', args=eargs))
+            raise AperoCodedException(params, '00-503-00011', targs=eargs)
 
 
 def _find_special_targets(params: ParamDict, pconst,
@@ -3674,6 +3689,7 @@ def _find_special_targets(params: ParamDict, pconst,
                 stop_here = True
         # if the user has decided to stop here generate a user error
         if stop_here:
+            # TODO: Add to language db
             # generate a full error message
             emsg = ('Could not find all objects from '
                     '{0} in astrometric database. '
@@ -3685,7 +3701,8 @@ def _find_special_targets(params: ParamDict, pconst,
                 emsg += '\n\t - {0}'.format(missing_obj)
             # log error
             eargs = [special_name]
-            WLOG(params, 'error', emsg.format(*eargs))
+            raise AperoCodedException(params, message=emsg.format(*eargs),
+                                      targs=eargs)
 
     return found_list
 
@@ -3775,7 +3792,7 @@ def _get_filters(params: ParamDict, srecipe: DrsRecipe,
         else:
             # log error
             eargs = [key, value, srecipe.name, func_name]
-            WLOG(params, 'error', textentry('00-503-00017', args=eargs))
+            raise AperoCodedException(params, '00-503-00017', targs=eargs)
     # -------------------------------------------------------------------------
     # add basic drprtpye filters (from args/kwargs with file arguments)
     # add these as "OR" statements - as we have multiple arguments that may
@@ -3949,12 +3966,10 @@ def _get_cores(params):
                 cores = int(cores)
             except ValueError as e:
                 eargs = [params['CORES'], type(e), e]
-                WLOG(params, 'error', textentry('00-503-00013', args=eargs))
-                cores = 1
+                raise AperoCodedException(params, '00-503-00013', targs=eargs)
             except Exception as e:
                 eargs = [type(e), e]
-                WLOG(params, 'error', textentry('00-503-00014', args=eargs))
-                cores = 1
+                raise AperoCodedException(params, '00-503-00014', targs=eargs)
             # update the value in params
             params.set('CORES', value=cores, source='USER INPUT')
 
@@ -3964,12 +3979,10 @@ def _get_cores(params):
             cores = int(params['CORES'])
         except ValueError as e:
             eargs = [params['CORES'], type(e), e]
-            WLOG(params, 'error', textentry('00-503-00006', args=eargs))
-            cores = 1
+            raise AperoCodedException(params, '00-503-00006', targs=eargs)
         except Exception as e:
             eargs = [type(e), e]
-            WLOG(params, 'error', textentry('00-503-00007', args=eargs))
-            cores = 1
+            raise AperoCodedException(params, '00-503-00007', targs=eargs)
     else:
         cores = 1
     # -------------------------------------------------------------------------
@@ -3985,7 +3998,7 @@ def _get_cores(params):
     # -------------------------------------------------------------------------
     # check that cores is valid
     if cores < 1:
-        WLOG(params, 'error', textentry('00-503-00008', args=[cores]))
+        raise AperoCodedException(params, '00-503-00008', targs=[cores])
     if cores >= cpus:
         eargs = [cpus, cores]
         WLOG(params, 'warning', textentry('00-503-00009', args=eargs),

@@ -44,6 +44,9 @@ __date__ = apero_base.__date__
 __release__ = apero_base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
+# Get other instances
 ParamDict = param_functions.ParamDict
 DrsRecipe = drs_recipe.DrsRecipe
 DrsFitsFile = drs_file.DrsFitsFile
@@ -397,7 +400,8 @@ class RunIniFile:
         else:
             emsg = 'Template file does not exist: {0}'
             eargs = [template]
-            WLOG(params, 'error', emsg.format(*eargs))
+            raise AperoCodedException(params, message=emsg.format(*eargs),
+                                      targs=eargs)
         # ---------------------------------------------------------------------
         # step 3: generate run text and skip text
         # ---------------------------------------------------------------------

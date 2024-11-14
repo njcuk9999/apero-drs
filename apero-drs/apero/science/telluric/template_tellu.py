@@ -60,6 +60,8 @@ TelluricDatabase = drs_database.TelluricDatabase
 display_func = drs_misc.display_func
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # Get the text types
 textentry = drs_lang.textentry
 # alias pcheck
@@ -254,7 +256,7 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
             # deal with bad berv (nan or None)
             if berv in [np.nan, None] or not isinstance(berv, (int, float)):
                 eargs = [berv, func_name]
-                WLOG(params, 'error', textentry('09-016-00004', args=eargs))
+                raise AperoCodedException(params, '09-016-00004', targs=eargs)
             # ------------------------------------------------------------------
             # load wavelength solution for this fiber
             # ------------------------------------------------------------------
@@ -756,7 +758,7 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
             # deal with bad berv (nan or None)
             if berv in [np.nan, None] or not isinstance(berv, (int, float)):
                 eargs = [berv, func_name]
-                WLOG(params, 'error', textentry('09-016-00004', args=eargs))
+                raise AperoCodedException(params, '09-016-00004', targs=eargs)
 
             # ------------------------------------------------------------------
             # populate the template file table

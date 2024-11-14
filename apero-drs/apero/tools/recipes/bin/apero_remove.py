@@ -29,6 +29,8 @@ __date__ = apero_base.__date__
 __release__ = apero_base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # Get the text types
 textentry = drs_lang.textentry
 
@@ -140,12 +142,14 @@ def __main__(recipe, params):
             if block not in valid_blocks:
                 emsg = ('Block "{0}" is not a valid block name.'
                         ' Please check --blocks argument.')
-                WLOG(params, 'error', emsg.format(block))
+                eargs = [block]
+                raise AperoCodedException(params, message=emsg.format(*eargs),
+                                          targs=eargs)
             # do not allow block to be raw
             if block == 'raw':
                 emsg = ('block contains "raw". We cannot remove raw files. '
                         'Please check --blocks argument.')
-                WLOG(params, 'error', emsg)
+                raise AperoCodedException(params, message=emsg)
     # ----------------------------------------------------------------------
     # object names
     objnames = []

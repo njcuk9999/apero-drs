@@ -49,6 +49,8 @@ ParamDict = param_functions.ParamDict
 DrsRecipe = drs_recipe.DrsRecipe
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # Get function string
 display_func = drs_misc.display_func
 # get tqdm instance
@@ -257,8 +259,9 @@ def add_file_reject(params: ParamDict, recipe: DrsRecipe, raw_identifier: str):
         autofill_list = autofill.split(',')
         # check we have 4 values
         if len(autofill_list) != 4:
-            WLOG(params, 'error', 'Autofill must be in form PP,TEL,RV,COMMENT')
-            return
+            # TODO: Add to language database
+            emsg = 'Autofill must be in form PP,TEL,RV,COMMENT'
+            raise AperoCodedException(params, message=emsg)
         # get the values
         pp_str, tel_str, rv_str, comment = autofill_list
 
@@ -273,8 +276,8 @@ def add_file_reject(params: ParamDict, recipe: DrsRecipe, raw_identifier: str):
             else:
                 emsg = '{0} must be True/T/1 or False/F/0'
                 eargs = [value]
-                WLOG(params, 'error', emsg.format(*eargs))
-                return
+                raise AperoCodedException(params, message=emsg.format(*eargs),
+                                          targs=eargs)
         # get the values
         pp, tel, rv = logic_values
     # otherwise we ask the user for some information
@@ -359,8 +362,11 @@ def update_from_obsdir(params: ParamDict, recipe: DrsRecipe, obsdir: str) -> str
     rawdir = params['DRS_DATA_RAW']
     # deal with bad obsdir
     if obsdir not in os.listdir(rawdir):
-        WLOG(params, 'error', '--obsdir={0} not found in raw directory')
-        return 'None'
+        # TODO: Add to language database
+        emsg = 'Obsdir={0} not found in raw directory'
+        eargs = [obsdir]
+        raise AperoCodedException(params, message=emsg.format(*eargs),
+                                  targs=eargs)
     # construct path to obsdir
     rawpath = os.path.join(rawdir, obsdir)
     # get the object database
@@ -375,9 +381,11 @@ def update_from_obsdir(params: ParamDict, recipe: DrsRecipe, obsdir: str) -> str
     files = glob.glob(os.path.join(rawpath, '*.fits'))
     # deal with no files found
     if len(files) == 0:
+        # TODO: Add to language database
         emsg = 'No files found in raw directory: {0}'
         eargs = [rawpath]
-        WLOG(params, 'error', emsg.format(*eargs))
+        raise AperoCodedException(params, message=emsg.format(*eargs),
+                                  targs=eargs)
     # ----------------------------------------------------------------------
     # non-valid dptypes
     sci_dprtype = params['PP_OBJ_DPRTYPES']

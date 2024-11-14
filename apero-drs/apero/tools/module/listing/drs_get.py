@@ -40,6 +40,8 @@ __date__ = apero_base.__date__
 __release__ = apero_base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 ParamDict = param_functions.ParamDict
 
 DrsRecipe = drs_recipe.DrsRecipe
@@ -443,7 +445,8 @@ def check_size_limit(params: ParamDict, inpaths: Dict[str, List[str]],
         # print warning
         eargs = [total_size, sizelimit]
         emsg = 'Total size of files ({0:.3f} GB) exceeds limit ({1:.3f} GB)'
-        WLOG(params, 'error', emsg.format(*eargs))
+        raise AperoCodedException(params, message=emsg.format(*eargs),
+                                  targs=eargs)
 
 
 # =============================================================================

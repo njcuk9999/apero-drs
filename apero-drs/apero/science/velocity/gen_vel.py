@@ -49,6 +49,8 @@ DrsFitsFile = drs_file.DrsFitsFile
 display_func = drs_misc.display_func
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # Get the text types
 textentry = drs_lang.textentry
 # alias pcheck
@@ -484,7 +486,7 @@ def get_ccf_teff_mask(params: ParamDict,
     else:
         # error msg: Object temperature key "{0}" not in header'
         eargs = [teff_key]
-        WLOG(params, 'error', textentry('09-020-00008', args=eargs))
+        raise AperoCodedException(params, '09-020-00008', targs=eargs)
         # should never get here
         return '', ''
     # ---------------------------------------------------------------------
@@ -496,8 +498,7 @@ def get_ccf_teff_mask(params: ParamDict,
     if 'default' not in teff_masks['kind']:
         # error msg: Cannot use {0} - must have default value in kind column
         eargs = [teff_masks_file]
-        WLOG(params, 'error', textentry('09-020-00009', args=eargs))
-        return '', ''
+        raise AperoCodedException(params, '09-020-00009', targs=eargs)
     # get position of defaults
     default_mask = teff_masks['kind'] == 'default'
     pos = np.where(default_mask)[0][0]
@@ -557,8 +558,7 @@ def get_ccf_mask(params, filename, mask_width, mask_units='nm',
     except Exception as e:
         # log error
         eargs = [mask_units, type(e), e, func_name]
-        WLOG(params, 'error', textentry('09-020-00002', args=eargs))
-        return None, None, None
+        raise AperoCodedException(params, '09-020-00002', targs=eargs)
     # add units
     ll_mask_d = ll_mask_d * unit
     ll_mask_ctr = ll_mask_ctr * unit
@@ -633,7 +633,7 @@ def remove_telluric_domain(params, infile, fiber, **kwargs):
     # check that e2ds file exists
     if not os.path.exists(e2dsabsfilename):
         eargs = [infile.filename, ext_type, e2dsabsfilename]
-        WLOG(params, 'error', textentry('09-020-00003', args=eargs))
+        raise AperoCodedException(params, '09-020-00003', targs=eargs)
     # get infile
     e2dsinst = drs_file.get_file_definition(params, ext_type, block_kind='red')
     # construct e2ds file
@@ -648,7 +648,7 @@ def remove_telluric_domain(params, infile, fiber, **kwargs):
     # check recon file exists
     if not os.path.exists(reconfile.filename):
         eargs = [infile.filename, reconfile.name, e2dsfile.filename]
-        WLOG(params, 'error', textentry('09-020-00003', args=eargs))
+        raise AperoCodedException(params, '09-020-00003', targs=eargs)
     # read recon file
     reconfile.read_file()
     # find all places below threshold
@@ -774,7 +774,7 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     # ----------------------------------------------------------------------
     if ccfstep > (ccfwidth / maxwsr):
         eargs = [ccfwidth, ccfstep, maxwsr, func_name]
-        WLOG(params, 'error', textentry('09-020-00005', args=eargs))
+        raise AperoCodedException(params, '09-020-00005', targs=eargs)
 
     # ----------------------------------------------------------------------
     # Check we are using correct fiber
@@ -785,7 +785,7 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
         # log that the science fiber was not correct
         eargs = [fiber, ' or '.join(sfiber), infile.name, infile.filename,
                  func_name]
-        WLOG(params, 'error', textentry('09-020-00001', args=eargs))
+        raise AperoCodedException(params, '09-020-00001', targs=eargs)
 
     # ----------------------------------------------------------------------
     # Compute photon noise uncertainty for reference file
@@ -1382,7 +1382,7 @@ def fit_ccf_ea(params, order_num, rv, ccf, sig, fit_type, fit_params,
     # deal with inconsistent lengths
     if len(rv) != len(ccf):
         eargs = [len(rv), len(ccf), func_name]
-        WLOG(params, 'error', textentry('00-020-00001', args=eargs))
+        raise AperoCodedException(params, '00-020-00001', targs=eargs)
     # deal with all nans
     if np.sum(np.isnan(ccf)) == len(ccf):
         # log warning about all NaN ccf

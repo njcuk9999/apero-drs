@@ -39,6 +39,8 @@ __date__ = apero_base.__date__
 __release__ = apero_base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # Get Recipe class
 DrsRecipe = drs_recipe.DrsRecipe
 # Get parameter class
@@ -176,7 +178,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             # log that the science fiber was not correct
             eargs = [fiber, ' or '.join(sfiber), infile.name,
                      infile.filename, mainname]
-            WLOG(params, 'error', textentry('09-020-00001', args=eargs))
+            raise AperoCodedException(params, '09-020-00001', targs=eargs)
 
         # ------------------------------------------------------------------
         # Get barycentric corrections (BERV)

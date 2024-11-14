@@ -34,6 +34,8 @@ __date__ = apero_base.__date__
 __release__ = apero_base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # Get Recipe class
 DrsRecipe = drs_recipe.DrsRecipe
 # Get parameter class
@@ -226,7 +228,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                 WLOG(params, '', params['DRS_HEADER'], colour='red')
             # report on combined number of errors (and crash)
             eargs = [len(error_storage), recipe.name]
-            WLOG(params, 'error', textentry('00-090-00010', args=eargs))
+            raise AperoCodedException(params, '00-090-00010', targs=eargs)
     # else report that no errors were found
     else:
         WLOG(params, '', params['DRS_HEADER'])

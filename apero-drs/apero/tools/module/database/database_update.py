@@ -47,6 +47,8 @@ __date__ = apero_base.__date__
 __release__ = apero_base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # get parameter dictionary
 ParamDict = param_functions.ParamDict
 DrsRecipe = drs_recipe.DrsRecipe
@@ -177,7 +179,7 @@ def calib_tellu_update(params: ParamDict, pconst: Instrument,
         dbmanager = drs_database.TelluricDatabase(params)
         dbmanager.load_db()
     else:
-        WLOG(params, 'error', textentry('09-505-00001', args=[db_type]))
+        raise AperoCodedException(params, '09-505-00001', targs=[db_type])
         dbmanager = None
         db_path = None
         name = None
@@ -232,8 +234,7 @@ def calib_tellu_update(params: ParamDict, pconst: Instrument,
         # ------------------------------------------------------------------
         if not hasattr(filemod, file_set_name):
             eargs = [name, file_set_name, filemod, func_name]
-            WLOG(params, 'error', textentry('00-505-00001', args=eargs))
-            file_set = None
+            raise AperoCodedException(params, '00-505-00001', targs=eargs)
         else:
             file_set = getattr(filemod, file_set_name)
         # ------------------------------------------------------------------
@@ -387,8 +388,8 @@ def remove_db_entries(params: ParamDict, db_type: str) -> bool:
         # TODO: Add to language database
         emsg = 'Unknown database type: {0}'
         eargs = [db_type]
-        WLOG(params, 'error', emsg.format(*eargs))
-        return False
+        raise AperoCodedException(params, message=emsg.format(*eargs),
+                                  targs=eargs)
     # load database
     dbmanager.load_db()
     # -------------------------------------------------------------------------

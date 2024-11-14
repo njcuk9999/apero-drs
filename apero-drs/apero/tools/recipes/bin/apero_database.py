@@ -36,6 +36,8 @@ __date__ = apero_base.__date__
 __release__ = apero_base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # Get Recipe class
 DrsRecipe = drs_recipe.DrsRecipe
 # Get parameter class
@@ -140,8 +142,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # deal with no csv file
     if drs_text.null_text(csvpath, null_text):
         # log error: Argument Error: --csv file is required'
-        WLOG(params, 'error', textentry('09-507-00001'))
-        csvpath = None
+        raise AperoCodedException(params, '09-507-00001')
     else:
         csvpath = Path(csvpath)
     # ----------------------------------------------------------------------
@@ -179,12 +180,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # If we got here user did not define export or import
     # ----------------------------------------------------------------------
     # log error
+    # TODO: Add to language database
     emsg = 'Argument Error: Must define either --exportdb or --importdb'
-    WLOG(params, 'error', emsg)
-    # ----------------------------------------------------------------------
-    # End of main code
-    # ----------------------------------------------------------------------
-    return locals()
+    raise AperoCodedException(params, message=emsg)
 
 
 # =============================================================================

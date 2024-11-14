@@ -23,6 +23,7 @@ from apero.utils import drs_startup
 from apero.science.calib import gen_calib
 from apero.science.calib import localisation
 from apero.base import base as apero_base
+from apero.instruments import select
 
 # =============================================================================
 # Define variables
@@ -36,6 +37,8 @@ __date__ = apero_base.__date__
 __release__ = apero_base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # Get Recipe class
 DrsRecipe = drs_recipe.DrsRecipe
 # Get parameter class
@@ -168,9 +171,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         if fiber is None:
             eargs = [props['DPRTYPE'], recipe.name, 'FLAT_DARK or DARK_FLAT',
                      infile.basename]
-            WLOG(params, 'error', textentry('00-013-00001', args=eargs))
-            fiber = None
-
+            raise AperoCodedException(params, '00-013-00001', targs=eargs)
         # set a flag for fiber type in logging
         science_fiber, _ = pconst.FIBER_KINDS()
         if fiber in science_fiber:
@@ -242,7 +243,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ---------------------------------------------------------------------
         if not passed and params['INPUTS']['REF']:
             eargs = [recipe.name]
-            WLOG(params, 'error', textentry('09-000-00011', args=eargs))
+            raise AperoCodedException(params, '09-000-00011', targs=eargs)
         # ------------------------------------------------------------------
         # Summary plots
         # ------------------------------------------------------------------

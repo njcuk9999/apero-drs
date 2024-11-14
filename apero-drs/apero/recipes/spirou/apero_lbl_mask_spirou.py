@@ -36,6 +36,8 @@ __date__ = apero_base.__date__
 __release__ = apero_base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # Get Recipe class
 DrsRecipe = drs_recipe.DrsRecipe
 # Get parameter class
@@ -131,8 +133,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     except ImportError:
         # TODO: Add to language database
         emsg = 'Cannot run LBL (not installed) please install LBL'
-        WLOG(params, 'error', emsg)
-        return locals()
+        raise AperoCodedException(params, message=emsg)
     # -------------------------------------------------------------------------
     if objname in recal_template:
         # setup object and template names
@@ -162,7 +163,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             # TODO: Add to language database
             emsg = 'LBL Template Exception [{0}_{1}] {2}: {3}'
             eargs = [object_science, object_template, type(e), str(e)]
-            WLOG(params, 'error', emsg.format(*eargs))
+            raise AperoCodedException(params, message=emsg.format(*eargs),
+                                      targs=eargs)
     else:
         lbltemp = None
     # -------------------------------------------------------------------------
@@ -198,7 +200,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # TODO: Add to language database
         emsg = 'LBL Mask Exception [{0}_{1}] {2}: {3}'
         eargs = [object_science, object_template, type(e), str(e)]
-        WLOG(params, 'error', emsg.format(*eargs))
+        raise AperoCodedException(params, message=emsg.format(*eargs),
+                                  targs=eargs)
     # --------------------------------------------------------------
     # Quality control
     # --------------------------------------------------------------

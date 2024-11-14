@@ -43,6 +43,8 @@ __release__ = apero_base.__release__
 ParamDict = param_functions.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # Get the text types
 textentry = drs_lang.textentry
 # -----------------------------------------------------------------------------
@@ -154,10 +156,12 @@ def __main__(recipe, params):
         for fiber in fibers:
             if fiber not in allowed_fibers:
                 # log error message
+                # TODO: Add to language database
                 emsg = ('--fibers FIBER="{0}" is not a valid fiber'
                         '\n\t Valid fibers are {1}')
                 eargs = [fiber, ' or '.join(allowed_fibers)]
-                WLOG(params, 'error', emsg.format(*eargs))
+                raise AperoCodedException(params, message=emsg.format(*eargs),
+                                          targs=eargs)
     # else set fibers to all allowed fibers
     else:
         fibers = allowed_fibers
@@ -184,9 +188,11 @@ def __main__(recipe, params):
         files = drs_utils.find_files(params, block_kind='red', filters=filters)
         # deal with no files found
         if len(files) == 0:
+            # TODO: Add to language database
             eargs = [filetype, fiber, mainname]
             emsg = 'No files found for {0} (fiber = {1}) \n\t Function = {2}'
-            WLOG(params, 'error', emsg.format(*eargs))
+            raise AperoCodedException(params, message=emsg.format(*eargs),
+                                      targs=eargs)
         # make a new copy of infile
         infile = drsfile.newcopy(filename=files[-1], params=params)
         # read file

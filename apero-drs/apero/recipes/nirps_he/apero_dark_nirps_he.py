@@ -13,7 +13,6 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
-from aperocore.base import base
 from aperocore.constants import param_functions
 from aperocore import drs_lang
 from apero.core import drs_database
@@ -37,6 +36,8 @@ __date__ = apero_base.__date__
 __release__ = apero_base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # Get Recipe class
 DrsRecipe = drs_recipe.DrsRecipe
 # Get parameter class
@@ -159,8 +160,11 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # Quality control: make sure the exposure time is longer than
         #                  qc_dark_time
         if exptime < params['QC_DARK_TIME']:
+            # TODO: Add to language database
             emsg = 'Dark exposure time too short (< {0:.1f} s)'
-            WLOG(params, 'error', emsg.format(params['QC_DARK_TIME']))
+            eargs = [params['QC_DARK_TIME']]
+            raise AperoCodedException(params, message=emsg.format(*eargs),
+                                      targs=eargs)
         # ------------------------------------------------------------------
         # Resize and rotate image
         # ------------------------------------------------------------------
@@ -229,7 +233,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ---------------------------------------------------------------------
         if not passed and params['INPUTS']['REF']:
             eargs = [recipe.name]
-            WLOG(params, 'error', textentry('09-000-00011', args=eargs))
+            raise AperoCodedException(params, '09-000-00011', targs=eargs)
         # ------------------------------------------------------------------
         # Summary plots
         # ------------------------------------------------------------------

@@ -46,6 +46,8 @@ __release__ = apero_base.__release__
 display_func = drs_misc.display_func
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # get ParamDict
 ParamDict = param_functions.ParamDict
 DrsRecipe = drs_recipe.DrsRecipe
@@ -257,7 +259,7 @@ class Plotter:
         else:
             # else log an error
             eargs = [name, self.recipe.name]
-            WLOG(self.params, 'error', textentry('00-100-00002', args=eargs))
+            raise AperoCodedException(self.params, '00-100-00002', targs=eargs)
         # ------------------------------------------------------------------
         # new instance of the plot object
         plot_inst = plot_obj.copy()
@@ -1128,7 +1130,7 @@ class Plotter:
             # log error: Plotter error: graph name was not found in plotting
             #            definitions
             eargs = [name, func_name]
-            WLOG(self.params, 'error', textentry('00-100-00001', args=eargs))
+            raise AperoCodedException(self.params, '00-100-00001', targs=eargs)
 
     def _get_plot_switches(self):
         """
@@ -1211,8 +1213,8 @@ class Plotter:
         # ------------------------------------------------------------------
         # deal with still having MacOSX backend
         if self.backend == 'MacOSX':
-            WLOG(self.params, 'error', textentry('90-100-00001',
-                                                 args=[self.backend]))
+            raise AperoCodedException(self.params, '90-100-00001',
+                                      targs=[self.backend])
 
 
 # =============================================================================

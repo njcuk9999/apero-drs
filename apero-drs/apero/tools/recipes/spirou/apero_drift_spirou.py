@@ -45,6 +45,8 @@ __release__ = apero_base.__release__
 ParamDict = param_functions.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # Get the text types
 textentry = drs_lang.textentry
 # -----------------------------------------------------------------------------
@@ -156,7 +158,7 @@ def __main__(recipe, params):
                 if fiber not in dfibers:
                     # log error User input error: fiber={0} is invalid.
                     eargs = [fiber, ' or '.join(dfibers)]
-                    WLOG(params, 'error', textentry('09-018-00002', args=eargs))
+                    raise AperoCodedException(params, '09-018-00002', targs=eargs)
     # -------------------------------------------------------------------------
     # deal with other user inputs
     # -------------------------------------------------------------------------
@@ -183,7 +185,8 @@ def __main__(recipe, params):
         emsg = textentry('01-001-00020', args=[dprtype, mainname])
         for allowedtype in params['DRIFT_DPRTYPES']:
             emsg += '\n\t - "{0}"'.format(allowedtype)
-        WLOG(params, 'error', emsg)
+        raise AperoCodedException(params, '01-001-00020',
+                                  targs=[dprtype, mainname], message=emsg)
     # ------------------------------------------------------------------------
     # get the file type (e.g. EXT_E2DS_FF
     filetype = str(DEFAULT_FILETYPE)
@@ -223,7 +226,7 @@ def __main__(recipe, params):
                     # Log error: Observation directory = "{0}" is not a valid
                     #     reduced sub-directory
                     eargs = [obs_dir]
-                    WLOG(params, 'error', textentry('09-018-00001', args=eargs))
+                    raise AperoCodedException(params, '09-018-00001', targs=eargs)
             # find files for this night (or None)
             filters = dict(KW_DPRTYPE=dprtype, KW_OUTPUT=filetype,
                            KW_FIBER=fiber, OBS_DIR=obs_dir)

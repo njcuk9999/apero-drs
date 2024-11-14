@@ -152,7 +152,6 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         WLOG(params, 'warning', '\'warning\':\tWarning message', sublevel=1)
         # Note that error messages will end the code
         #    (uncomment below to use)
-        # WLOG(params, 'error', '\'error\':\tError message')
         # Here we have used raise_exception=False not to end code
         WLOG(params, 'error', '\'error\':\tError message',
              raise_exception=False)

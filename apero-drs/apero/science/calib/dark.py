@@ -40,6 +40,8 @@ __date__ = apero_base.__date__
 __release__ = apero_base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # Get Recipe class
 DrsRecipe = drs_recipe.DrsRecipe
 # Get parameter class
@@ -115,7 +117,7 @@ def measure_dark(params: ParamDict, image: np.ndarray, entry_key: str,
         image = np.array(image)
     except Exception as e:
         eargs = [type(e), e, func_name]
-        WLOG(params, 'error', textentry('00-001-00026', args=eargs))
+        raise AperoCodedException(params, '00-001-00026', targs=eargs)
     # flatten the image
     fimage = image.flat
     # get the finite (non-NaN) mask
@@ -309,7 +311,7 @@ def construct_dark_table(params: ParamDict, filenames: List[str],
     if len(dark_files) == 0:
         # TODO: add this to language database
         emsg = 'No valid dark files found'
-        WLOG(params, 'error', emsg)
+        raise AperoCodedException(params, message=emsg)
     # ----------------------------------------------------------------------
     # Only use a certain number of files to limit time taken
     # ----------------------------------------------------------------------

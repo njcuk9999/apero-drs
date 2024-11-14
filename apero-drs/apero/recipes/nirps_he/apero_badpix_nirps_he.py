@@ -13,7 +13,6 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
-from aperocore.base import base
 from aperocore.constants import param_functions
 from aperocore import drs_lang
 from aperocore import math as mp
@@ -39,6 +38,8 @@ __date__ = apero_base.__date__
 __release__ = apero_base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # Get Recipe class
 DrsRecipe = drs_recipe.DrsRecipe
 # Get parameter class
@@ -137,9 +138,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # warn user if lengths differ
     if len(flatfiles) != len(darkfiles):
         wargs = [len(flatfiles), len(darkfiles)]
-        WLOG(params, 'error', textentry('10-012-00001', args=wargs))
-        # get the number of files
-        num_files = mp.nanmin([len(flatfiles), len(darkfiles)])
+        raise AperoCodedException(params, '10-012-00001', targs=wargs)
     else:
         # get the number of files
         num_files = len(flatfiles)
@@ -260,7 +259,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ---------------------------------------------------------------------
         if not passed and params['INPUTS']['REF']:
             eargs = [recipe.name]
-            WLOG(params, 'error', textentry('09-000-00011', args=eargs))
+            raise AperoCodedException(params, '09-000-00011', targs=eargs)
         # ------------------------------------------------------------------
         # Summary plots
         # ------------------------------------------------------------------

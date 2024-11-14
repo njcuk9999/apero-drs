@@ -40,6 +40,8 @@ __date__ = apero_base.__date__
 __release__ = apero_base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # Get Recipe class
 DrsRecipe = drs_recipe.DrsRecipe
 # Get parameter class
@@ -215,7 +217,7 @@ def find_teff(params: ParamDict, objname: str) -> float:
     except Exception as _:
         # TODO: Add to language database
         emsg = 'No Teff found for {0}'.format(objname)
-        WLOG(params, 'error', emsg)
+        raise AperoCodedException(params, message=emsg)
     # return the teff
     return teff
 
@@ -248,7 +250,8 @@ def add_output(params: ParamDict, recipe: DrsRecipe,
         # TODO: Add to language database
         emsg = 'File definition {0} must have an lbl outclass (lbl_ofile)'
         eargs = [drsfile.name]
-        WLOG(params, 'error', emsg.format(*eargs))
+        raise AperoCodedException(params, message=emsg.format(*eargs),
+                                  targs=eargs)
     # get kwargs for lbl_file
     kwargs = dict()
     kwargs['objname'] = objname
@@ -262,7 +265,8 @@ def add_output(params: ParamDict, recipe: DrsRecipe,
         # TODO: Add to language database
         emsg = 'Expected {0} does not exist: {1}'
         eargs = [drsfile.name, filename]
-        WLOG(params, 'error', emsg.format(*eargs))
+        raise AperoCodedException(params, message=emsg.format(*eargs),
+                                  targs=eargs)
     elif not os.path.exists(filename):
         # TODO: Add to language database
         wmsg = 'Skipping {0}, does not exist and not required: {1}'
@@ -430,10 +434,12 @@ def fake_hkeys(params: ParamDict, filename: str,
         header_fits_file = filename
     # deal with header_fits_file being None
     if header_fits_file is None:
+        # TODO: Add to language database
         emsg = ('Must provide a header_fits_file argument for non-fits file.'
                 '\n\tfilename = {0}\n\tfunction = {1}')
         eargs = [filename, func_name]
-        WLOG(params, 'error', emsg.format(*eargs))
+        raise AperoCodedException(params, message=emsg.format(*eargs),
+                                  targs=eargs)
     # get header from selected
     hdr = drs_fits.read_header(params, header_fits_file)
     for key in rkeys:

@@ -36,6 +36,8 @@ __date__ = apero_base.__date__
 __release__ = apero_base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # Get Recipe class
 DrsRecipe = drs_recipe.DrsRecipe
 # Get parameter class
@@ -205,7 +207,7 @@ def locate_bad_pixels(params: ParamDict, fimage: np.ndarray,
     # complain if the flat image and dark image do not have the same dimensions
     if dimage.shape != fimage.shape:
         eargs = [fimage.shape, dimage.shape, func_name]
-        WLOG(params, 'error', textentry('09-012-00002', args=eargs))
+        raise AperoCodedException(params, '09-012-00002', targs=eargs)
     # -------------------------------------------------------------------------
     # as there may be a small level of scattered light and thermal
     # background in the dark  we subtract the running median to look
@@ -302,7 +304,7 @@ def locate_bad_pixels_full(params: ParamDict, image: np.ndarray,
     # check if the shape of the image and the full flat match
     if image.shape != mdata.shape:
         eargs = [mdata.shape, image.shape, func_name]
-        WLOG(params, 'error', textentry('09-012-00001', args=eargs))
+        raise AperoCodedException(params, '09-012-00001', targs=eargs)
     # apply threshold
     mask = np.abs(mp.rot8(mdata, rotnum) - 1) > threshold
     # -------------------------------------------------------------------------
@@ -339,7 +341,7 @@ def correction(params: ParamDict, image: Union[np.ndarray, None],
         # TODO: Add to language database
         emsg = ('Image cannot be None if we are not just returning the map'
                 ' please set "image" or set "return_map=True"')
-        WLOG(params, 'error', emsg)
+        raise AperoCodedException(params, message=emsg)
     # if return map just return the bad pixel map
     if return_map:
         return mask

@@ -46,6 +46,8 @@ ParamDict = param_functions.ParamDict
 Instrument = instrument_mod.Instrument
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # get textentry
 textentry = drs_lang.textentry
 # define reject column datatypes (force consistency)
@@ -138,14 +140,13 @@ def export_database(params: ParamDict, database_name: str,
     database_name = database_name.lower()
     # -------------------------------------------------------------------
     # deal with calibration database
-    if database_name in base.DATABASE_NAMES:
+    if database_name in apero_base.DATABASE_NAMES:
         db = databases[database_name]
     # else log error
     else:
         # log error: Argument Error: EXPORTDB must be
-        eargs = [' or '.join(base.DATABASE_NAMES)]
-        WLOG(params, 'error', textentry('09-506-00001', args=eargs))
-        db = None
+        eargs = [' or '.join(apero_base.DATABASE_NAMES)]
+        raise AperoCodedException(params, '09-506-00001', targs=eargs)
     # -------------------------------------------------------------------
     # load database
     db.load_db()
@@ -154,7 +155,7 @@ def export_database(params: ParamDict, database_name: str,
     if db.database is None:
         # log error: Database Error: Cannot load "{0}" database
         eargs = [database_name]
-        WLOG(params, 'error', textentry('09-506-00002', args=eargs))
+        raise AperoCodedException(params, '09-506-00002', targs=eargs)
     # -------------------------------------------------------------------
     # get all rows as a pandas data frame
     df = db.database.get('*', return_pandas=True)
@@ -192,17 +193,16 @@ def import_database(params: ParamDict, database_name: str,
     if joinmode not in ['append', 'replace']:
         # log error: Join mode = "{0}" is invalid. Must be either "append"
         #            or "replace"
-        WLOG(params, 'error', textentry('09-506-00004', args=[joinmode]))
+        raise AperoCodedException(params, '09-506-00004', targs=[joinmode])
     # -------------------------------------------------------------------
     # deal with calibration database
-    if database_name in base.DATABASE_NAMES:
+    if database_name in apero_base.DATABASE_NAMES:
         db = databases[database_name]
     # else log error
     else:
         # log error Argument Error: EXPORTDB must be {0}
-        eargs = [' or '.join(base.DATABASE_NAMES)]
-        WLOG(params, 'error', textentry('09-506-00003', args=eargs))
-        db = None
+        eargs = [' or '.join(apero_base.DATABASE_NAMES)]
+        raise AperoCodedException(params, '09-506-00003', targs=eargs)
     # -------------------------------------------------------------------
     # load database
     # -------------------------------------------------------------------
@@ -210,7 +210,7 @@ def import_database(params: ParamDict, database_name: str,
     # deal with no database
     if db.database is None:
         # get a list of all other database
-        other_databases = list(base.DATABASE_NAMES).remove(database_name)
+        other_databases = list(apero_base.DATABASE_NAMES).remove(database_name)
         # install database
         install_databases(params, skip=other_databases)
         # load database
@@ -597,8 +597,7 @@ def get_object_database(params: ParamDict, log: bool = True) -> Table:
             # error msg: if OBJ_LIST_GOOGLE_SHEET_URL is local directory
             #            main_id must be a valid csv file.
             eargs = [mainpath, type(e), str(e), func_name]
-            WLOG(params, 'error', textentry('09-002-00005', args=eargs))
-            maintable = Table()
+            raise AperoCodedException(params, '09-002-00005', targs=eargs)
         # noinspection PyBroadException
         try:
             pendtable = Table.read(pendpath, format='csv')
@@ -847,8 +846,7 @@ def get_reject_database(params: ParamDict, log: bool = True) -> Table:
             # error msg: if REJECT_LIST_GOOGLE_SHEET_URL is local directory
             #            main_id must be a valid csv file
             eargs = [mainpath, type(e), str(e), func_name]
-            WLOG(params, 'error', textentry('09-002-00006', args=eargs))
-            maintable = Table()
+            raise AperoCodedException(params, '09-002-00006', targs=eargs)
     else:
         # get google sheets
         maintable = drs_database.get_google_sheet(params, gsheet_url, main_id)

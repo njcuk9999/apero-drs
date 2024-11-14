@@ -19,8 +19,6 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 import numpy as np
 from astropy.table import Table
 
-from aperocore.base import base
-from apero.base import base as apero_base
 from aperocore.constants import param_functions
 from aperocore.constants import load_functions
 from aperocore.constants import constant_functions
@@ -50,6 +48,8 @@ __release__ = apero_base.__release__
 display_func = drs_misc.display_func
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # get print colours
 COLOR = drs_misc.Colors()
 # get param dict
@@ -451,15 +451,14 @@ class DrsRecipe(object):
         # test that sys.argv is a list
         if not isinstance(sys.argv, list):
             eargs = [sys.argv, type(sys.argv), func_name]
-            WLOG(drs_params, 'error', textentry('00-006-00013', args=eargs))
+            raise AperoCodedException(drs_params, '00-006-00013', targs=eargs)
         # ---------------------------------------------------------------------
         # get params
         try:
             params = vars(parser.parse_args(args=self.str_arg_list))
         except Exception as e:
             eargs = [sys.argv, self.str_arg_list, type(e), e, func_name]
-            WLOG(drs_params, 'error', textentry('00-006-00014', args=eargs))
-            params = None
+            raise AperoCodedException(drs_params, '00-006-00014', targs=eargs)
         # ---------------------------------------------------------------------
         # record the inputs (either via self.str_arg_list or sys.argv)
         if self.str_arg_list is None:

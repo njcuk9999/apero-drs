@@ -51,6 +51,8 @@ __release__ = apero_base.__release__
 ParamDict = param_functions.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # -----------------------------------------------------------------------------
 # Parameter variables
 # -----------------------------------------------------------------------------
@@ -3145,8 +3147,9 @@ def do_rsync(params: ParamDict, mode: str, path_in: str, path_out: str,
     elif mode == 'send':
         rsync_cmd = RSYNC_CMD_OUT
     else:
-        WLOG(params, 'error', 'Mode not recognized (must be "get" or "send")')
-        return
+        # TODO: Add to language database
+        emsg = 'Mode not recognized (must be "get" or "send")'
+        raise AperoCodedException(params, message=emsg)
     # --------------------------------------------------------------------------
     # get the ssh command
     ssh_dict = dict()
@@ -3158,15 +3161,18 @@ def do_rsync(params: ParamDict, mode: str, path_in: str, path_out: str,
     # --------------------------------------------------------------------------
     # try to do the rsync
     try:
+        # TODO: Add to language database
         msg = 'Running rsync command: {0}'
         margs = [rsync_cmd.format(**ssh_dict)]
         WLOG(params, '', msg.format(*margs))
         os.system(rsync_cmd.format(**ssh_dict))
     except Exception as e:
+        # TODO: Add to language database
         msg = 'Failed to rsync file from/to ari\n\t{0}:{1}'
         margs = [type(e), str(e)]
         if required:
-            WLOG(params, 'error', msg.format(margs))
+            raise AperoCodedException(params, message=msg.format(*margs),
+                                      targs=margs)
 
 
 def find_finder_charts(path: str, objname: str) -> Tuple[List[str], List[str]]:

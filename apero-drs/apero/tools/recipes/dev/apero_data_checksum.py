@@ -33,6 +33,8 @@ __release__ = apero_base.__release__
 ParamDict = param_functions.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # Get the text types
 textentry = drs_lang.textentry
 # -----------------------------------------------------------------------------
@@ -125,26 +127,26 @@ def __main__(recipe, params):
     # get mode from arguments
     mode = params['INPUTS']['mode']
     if mode not in ['update-remote', 'check-local', 'update-local']:
+        # TODO: Add to language database
         msg = ('Mode must be either: "update-remote", "check-local" or '
                '"update-local"')
-        WLOG(params, 'error', msg)
-        return locals()
+        raise AperoCodedException(params, message=msg)
     # -------------------------------------------------------------------------
     if mode == 'update-remote':
         # get input directory
         indir = params['INPUTS']['INDIR']
         # deal with no input directory
         if drs_text.null_text(indir, ['None', 'Null', '']):
+            # TODO: Add to language database
             emsg = ('Must provide an input directory with --indir '
                     'for mode=update-remote')
-            WLOG(params, 'error', emsg)
-            return locals()
+            raise AperoCodedException(params, message=emsg)
         # deal with input directory not existing
         if not os.path.exists(indir):
-            msg = 'Input directory {0} does not exist'
+            # TODO: Add to language database
+            emsg = 'Input directory {0} does not exist'
             margs = [indir]
-            WLOG(params, 'error', msg.format(*margs))
-            return locals()
+            raise AperoCodedException(params, message=emsg)
         # upload assets
         drs_assets.update_remote_assets(params)
     # deal with checking local assets
@@ -156,10 +158,10 @@ def __main__(recipe, params):
         # update the local assets
         drs_assets.update_local_assets(params)
     else:
-        msg = ('Mode must be either: "update-remote", "check-local" or '
+        # TODO: Add to language database
+        emsg = ('Mode must be either: "update-remote", "check-local" or '
                '"update-local"')
-        WLOG(params, 'error', msg)
-        return locals()
+        raise AperoCodedException(params, message=emsg)
 
     # -------------------------------------------------------------------------
     # End of main code

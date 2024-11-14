@@ -36,6 +36,8 @@ __date__ = apero_base.__date__
 __release__ = apero_base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # Get Recipe class
 DrsRecipe = drs_recipe.DrsRecipe
 # Get parameter class
@@ -115,7 +117,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             emsg = textentry('01-001-00020', args=[filetype, mainname])
             for allowedtype in allowedtypes:
                 emsg += '\n\t - "{0}"'.format(allowedtype)
-            WLOG(params, 'error', emsg)
+            raise AperoCodedException(params, '01-001-00020',
+                                      targs=[filetype, mainname], message=emsg)
         # get all "filetype" filenames
         files = drs_utils.find_files(params, block_kind='tmp',
                                      filters=dict(KW_DPRTYPE=filetype))
@@ -127,7 +130,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # deal with no files found
     if len(filenames) == 0:
         eargs = [params['INPATH']]
-        WLOG(params, 'error', textentry('09-011-00005', args=eargs))
+        raise AperoCodedException(params, '09-011-00005', targs=eargs)
 
     # ----------------------------------------------------------------------
     # Get all dark file properties
@@ -167,7 +170,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # ---------------------------------------------------------------------
     if not passed:
         eargs = [recipe.name]
-        WLOG(params, 'error', textentry('09-000-00011', args=eargs))
+        raise AperoCodedException(params, '09-000-00011', targs=eargs)
     # ------------------------------------------------------------------
     # Construct summary document
     # ------------------------------------------------------------------

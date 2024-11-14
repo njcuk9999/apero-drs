@@ -57,6 +57,8 @@ TelluricDatabase = drs_database.TelluricDatabase
 display_func = drs_misc.display_func
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # Get the text types
 textentry = drs_lang.textentry
 # alias pcheck
@@ -104,12 +106,13 @@ def find_night_skyfiles(params: ParamDict, fiber: Union[str, None],
                                                   KW_FIBER=fiber))
     # deal with no science files
     if len(sky_files) == 0:
+        # TODO: Add to language database
         emsg = ('No night SKY files found (KW_OUTPUT={0} KW_FIBER={1})'
                 '\n\tFunction = {2}')
         eargs = [filetype, fiber, func_name]
         # log error
-        WLOG(params, 'error', emsg.format(*eargs))
-        return None, None
+        raise AperoCodedException(params, message=emsg.format(*eargs), 
+                                  targs=eargs)
     else:
         sky_files = list(np.sort(sky_files))
     # Get filetype definition

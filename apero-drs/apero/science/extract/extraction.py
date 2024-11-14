@@ -38,6 +38,8 @@ ParamDict = param_functions.ParamDict
 DrsFitsFile = drs_file.DrsFitsFile
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # Get the text types
 textentry = drs_lang.textentry
 # alias pcheck
@@ -89,7 +91,7 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
     # check that orderp is same dimensions as image
     if simage.shape != orderp.shape:
         eargs = [simage.shape, orderp.shape]
-        WLOG(params, 'error', textentry('00-016-00006', args=eargs))
+        raise AperoCodedException(params, '00-016-00006', targs=eargs)
     # ----------------------------------------------------------------------
     # deal with start order being None
     if start_order is None:
@@ -466,20 +468,20 @@ def _valid_orders(params, start_order, end_order, skip_orders=None):
         start_order = int(start_order)
     except Exception as e:
         eargs = [start_order, type(e), e, func_name]
-        WLOG(params, 'error', textentry('00-016-00001', args=eargs))
+        raise AperoCodedException(params, '00-016-00001', targs=eargs)
     try:
         end_order = int(end_order)
     except Exception as e:
         eargs = [end_order, type(e), e, func_name]
-        WLOG(params, 'error', textentry('00-016-00002', args=eargs))
+        raise AperoCodedException(params, '00-016-00002', targs=eargs)
     # start order must be zero or greater
     if start_order < 0:
         eargs = [start_order, func_name]
-        WLOG(params, 'error', textentry('00-016-00003', args=eargs))
+        raise AperoCodedException(params, '00-016-00003', targs=eargs)
     # check that start order is less than end order
     if start_order > end_order:
         eargs = [start_order, end_order, func_name]
-        WLOG(params, 'error', textentry('00-016-00004', args=eargs))
+        raise AperoCodedException(params, '00-016-00004', targs=eargs)
     # deal with skip orders
     if not isinstance(skip_orders, list):
         skip_orders = []
@@ -488,7 +490,7 @@ def _valid_orders(params, start_order, end_order, skip_orders=None):
             skip_orders = np.array(skip_orders).astype(float).astype(int)
         except Exception as e:
             eargs = [skip_orders, type(e), e, func_name]
-            WLOG(params, 'error', textentry('00-016-00005', args=eargs))
+            raise AperoCodedException(params, '00-016-00005', targs=eargs)
     # define storage
     valid_orders = []
     # loop around orders
@@ -506,22 +508,22 @@ def _get_range(params, rangedict, fiber, keys):
 
     if not isinstance(rangedict, dict):
         eargs = [keys[0], keys[1], func_name]
-        WLOG(params, 'error', textentry('00-016-00007', args=eargs))
+        raise AperoCodedException(params, '00-016-00007', targs=eargs)
     # deal with fiber not being in range dictionary
     if fiber not in rangedict:
         # log that range1 had invalid fiber type
         eargs = [fiber, rangedict, keys[0], keys[1], func_name]
-        WLOG(params, 'error', textentry('00-016-00008', args=eargs))
+        raise AperoCodedException(params, '00-016-00008', targs=eargs)
     else:
         try:
             # return range value
             return float(rangedict[fiber])
         except ValueError as _:
             eargs = [fiber, rangedict, keys[0], keys[1], func_name]
-            WLOG(params, 'error', textentry('00-016-00009', args=eargs))
+            raise AperoCodedException(params, '00-016-00009', targs=eargs)
         except Exception as e:
             eargs = [fiber, rangedict, type(e), e, keys[0], keys[1], func_name]
-            WLOG(params, 'error', textentry('00-016-00010', args=eargs))
+            raise AperoCodedException(params, '00-016-00010', targs=eargs)
 
 
 # =============================================================================

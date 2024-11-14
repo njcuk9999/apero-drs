@@ -36,6 +36,8 @@ ParamDict = param_functions.ParamDict
 RSYNC_CMD = 'rsync -avuz -e "{SSH}" {INPATH} {USER}@{HOST}:{OUTPATH}'
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 
 
 # =============================================================================
@@ -233,9 +235,11 @@ def update_local_assets(params: ParamDict, tarfile: str = None):
             # set local flag
             local = True
         else:
+            # TODO: Add to language database
             emsg = 'Cannot find local assets tar file: {}'
             eargs = [tarfile]
-            WLOG(params, 'error', emsg.format(*eargs))
+            raise AperoCodedException(params, message=emsg.format(*eargs),
+                                      targs=eargs)
     # -------------------------------------------------------------------------
     # deal with non-local tar file
     if not local:
@@ -269,9 +273,11 @@ def update_local_assets(params: ParamDict, tarfile: str = None):
                     pass
             # check if tar file exists
             if not os.path.exists(tarfile):
+                # TODO: Add to language database
                 emsg = 'Cannot download assets tar file: {}'
                 eargs = [tarfile]
-                WLOG(params, 'error', emsg.format(*eargs))
+                raise AperoCodedException(params, message=emsg.format(*eargs),
+                                          targs=eargs)
         else:
             # print that we are reading from local file
             msg = 'Reading from local tar file: {0}'
@@ -288,9 +294,11 @@ def update_local_assets(params: ParamDict, tarfile: str = None):
     try:
         drs_path.extract_tarfile(tarfile, extract_path)
     except Exception as e:
+        # TODO: Add to language database
         emsg = 'Cannot extract tar file: {0} \n\t Error {1}: {2}'
         eargs = [tarfile, type(e), str(e)]
-        WLOG(params, 'error', emsg.format(*eargs))
+        raise AperoCodedException(params, message=emsg.format(*eargs),
+                                  targs=eargs)
 
 
 # =============================================================================

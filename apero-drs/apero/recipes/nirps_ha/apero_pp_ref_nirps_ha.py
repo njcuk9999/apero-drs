@@ -38,6 +38,8 @@ __date__ = apero_base.__date__
 __release__ = apero_base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # Get Recipe class
 DrsRecipe = drs_recipe.DrsRecipe
 # Get parameter class
@@ -118,7 +120,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             emsg = textentry('01-001-00020', args=[filetype, mainname])
             for allowedtype in allowedtypes:
                 emsg += '\n\t - "{0}"'.format(allowedtype)
-            WLOG(params, 'error', emsg)
+            raise AperoCodedException(params, '01-001-00020',
+                                      targs=[filetype, mainname],
+                                      message=emsg)
         # ------------------------------------------------------------------
         # check whether filetype is allowed for instrument
         rawfiletype = 'RAW_{0}'.format(filetype)
@@ -128,7 +132,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # deal with defintion not found
         if rawfile is None:
             eargs = [filetype, recipe.name, mainname]
-            WLOG(params, 'error', textentry('09-010-00001', args=eargs))
+            raise AperoCodedException(params, '09-010-00001', targs=eargs)
         # ------------------------------------------------------------------
         # get all "filetype" filenames
         files = drs_utils.find_files(params, block_kind='raw',

@@ -32,6 +32,8 @@ __date__ = apero_base.__date__
 __release__ = apero_base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # Get Recipe class
 DrsRecipe = drs_recipe.DrsRecipe
 # Get parameter class
@@ -149,7 +151,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             # TODO: move to language database
             emsg = '--since={0} is not a valid time YYYY-MM-DD hh:mm:ss'
             eargs = [since]
-            WLOG(params, 'error', emsg.format(*eargs))
+            raise AperoCodedException(params, 'error', emsg.format(*eargs),
+                                      targs=eargs)
     else:
         since = None
     # -------------------------------------------------------------------------
@@ -164,7 +167,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             # TODO: move to language database
             emsg = '--latest={0} is not a valid time YYYY-MM-DD hh:mm:ss'
             eargs = [latest]
-            WLOG(params, 'error', emsg.format(*eargs))
+            raise AperoCodedException(params, 'error', emsg.format(*eargs),
+                                      targs=eargs)
     else:
         latest = None
     # -------------------------------------------------------------------------

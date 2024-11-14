@@ -40,6 +40,8 @@ DrsFitsFile = drs_file.DrsFitsFile
 DrsRecipe = drs_recipe.DrsRecipe
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # Get the DrsLog Class
 RecipeLog = drs_utils.RecipeLog
 # Get the text types
@@ -91,7 +93,7 @@ def extract_thermal_files(params, recipe, extname, thermalfile,
         thoutinst = recipe.outputs['THERMALT_FILE']
     else:
         eargs = [dprtype, func_name]
-        WLOG(params, 'error', textentry('40-016-00022', args=eargs))
+        raise AperoCodedException(params, '40-016-00022', targs=eargs)
         thoutinst = None
 
     # ----------------------------------------------------------------------
@@ -242,10 +244,11 @@ def extract_files(params: ParamDict, recipe: DrsRecipe,
         obs_dir = os.path.dirname(infile.filename).split(inpath)[1]
     # otherwise deal with error
     else:
+        # TODO: Add to language database
         emsg = 'Input file {0} not in input or output path'
         eargs = [infile.filename, inpath, outpath, func_name]
-        WLOG(params, 'error', emsg.format(*eargs))
-        obs_dir = ''
+        raise AperoCodedException(params, message=emsg.format(*eargs),
+                                  targs=eargs)
     # remove leading/trailing slashes
     obs_dir = obs_dir.strip(os.sep)
     # ------------------------------------------------------------------
@@ -369,7 +372,7 @@ def extract_files(params: ParamDict, recipe: DrsRecipe,
         # check success
         if not llout['success']:
             eargs = [recipe.name, func_name]
-            WLOG(params, 'error', textentry('09-016-00002', args=eargs))
+            raise AperoCodedException(params, '09-016-00002', targs=eargs)
         # # get qc
         # passed = bool(llout['passed'])
 
@@ -382,7 +385,7 @@ def extract_files(params: ParamDict, recipe: DrsRecipe,
         # if not passed:
         #     # log error: extraction of file failed
         #     eargs = [kind, infile.basename, func_name]
-        #     WLOG(params, 'error', textentry('09-016-00003', args=eargs))
+        #     raise AperoCodedException(params, '09-016-00003', targs=eargs)
 
         # # loop around fibers
         # for fiber in fiber_types:
@@ -417,7 +420,7 @@ def extract_files(params: ParamDict, recipe: DrsRecipe,
         if not passed:
             # log error: extraction of file failed
             eargs = [kind, infile.basename, func_name]
-            WLOG(params, 'error', textentry('09-016-00003', args=eargs))
+            raise AperoCodedException(params, '09-016-00003', targs=eargs)
         # copy file to dictionary
         outputs[fiber] = outfile.completecopy(outfile)
     # return dictionary of outputs (one key for each fiber)

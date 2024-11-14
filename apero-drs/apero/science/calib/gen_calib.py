@@ -53,6 +53,8 @@ DrsHeader = drs_fits.Header
 CalibDatabase = drs_database.CalibrationDatabase
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # get time
 Time = base.Time
 # Get the text types
@@ -818,8 +820,7 @@ def calib_delta_time_check(params: ParamDict, inheader: DrsHeader,
         eargs = [key, calib_filename, delta_time, max_dtime, hobstime,
                  hcalibtime, func_name]
         if required:
-            WLOG(params, 'error', textentry('09-002-00004', args=eargs))
-            return False, eargs
+            raise AperoCodedException(params, '09-002-00004', targs=eargs)
         else:
             WLOG(params, 'warning', textentry('09-002-00004', args=eargs))
             return False, eargs
@@ -920,7 +921,7 @@ def check_fp_files(params: ParamDict,
     # deal with having no files left
     if len(newfpfiles) == 0:
         # log: No FP files passed 2D quality control. \n\t Function = {0}
-        WLOG(params, 'error', textentry('09-000-00010', args=[func_name]))
+        raise AperoCodedException(params, '09-000-00010', targs=[func_name])
     # return new fp files
     return newfpfiles
 

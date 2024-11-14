@@ -28,6 +28,8 @@ __date__ = apero_base.__date__
 __release__ = apero_base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # get param dict
 ParamDict = param_functions.ParamDict
 DrsFitsFile = drs_file.DrsFitsFile
@@ -90,7 +92,7 @@ def drs_outfile_id(params, recipe, infile, drsfileset, prefix=None):
     # check we have entries
     if len(drsfileset.fileset) == 0:
         eargs = [drsfileset.name, func_name]
-        WLOG(params, 'error', textentry('00-010-00001', args=eargs))
+        raise AperoCodedException(params, '00-010-00001', targs=eargs)
     # get the associated files with this generic drs file
     fileset = list(drsfileset.fileset)
     strfileset = list(map(lambda x: str(x.name), fileset))
@@ -116,7 +118,7 @@ def drs_outfile_id(params, recipe, infile, drsfileset, prefix=None):
     # deal with not being found
     if kind is None:
         eargs = [inname, '\n\t'.join(strfileset), func_name]
-        WLOG(params, 'error', textentry('00-010-00006', args=eargs))
+        raise AperoCodedException(params, '00-010-00006', targs=eargs)
 
     # set the recipe if found
     if found:

@@ -43,6 +43,8 @@ __release__ = apero_base.__release__
 ParamDict = param_functions.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # Get ARI core classes
 AriObject = ari_core.AriObject
 AriRecipe = ari_core.AriRecipe
@@ -77,10 +79,11 @@ def load_ari_params(params: ParamDict) -> ParamDict:
                                   profile_basename)
         # deal with the trial path not existing
         if not os.path.exists(trial_path):
+            # TODO: Add to language database
             emsg = 'Cannot find profile file. Tried: {0} and {1}'
             eargs = [profile_yaml, trial_path]
-            WLOG(params, 'error', emsg.format(*eargs))
-            return params
+            raise AperoCodedException(params, message=emsg.format(*eargs), 
+                                      targs=eargs)
         # otherwise set profile yaml to trial path
         else:
             profile_yaml = str(trial_path)
@@ -90,10 +93,11 @@ def load_ari_params(params: ParamDict) -> ParamDict:
         try:
             ari_params = base.load_yaml(profile_yaml)
         except Exception as e:
+            # TODO: Add to language database
             emsg = 'Error loading profile file: {0}\n\t{1}'
             eargs = [profile_yaml, e]
-            WLOG(params, 'error', emsg.format(*eargs))
-            return params
+            raise AperoCodedException(params, message=emsg.format(*eargs),
+                                      targs=eargs)
     # otherwise log an error message
     else:
         emsg = 'Cannot find profile file: {0}'
@@ -120,26 +124,29 @@ def load_ari_params(params: ParamDict) -> ParamDict:
             try:
                 value = ari_params[key1][key2]
             except Exception as _:
+                # TODO: Add to language database
                 emsg = 'Yaml file {0} does not contain key'
                 eargs = [profile_yaml]
-                WLOG(params, 'error', emsg.format(*eargs))
-                return params
+                raise AperoCodedException(params, message=emsg.format(*eargs),
+                                          targs=eargs)
         else:
             # noinspection PyBroadException
             try:
                 value = ari_params[key]
             except Exception as _:
+                # TODO: Add to language database
                 emsg = 'Yaml file {0} does not contain key'
                 eargs = [profile_yaml]
-                WLOG(params, 'error', emsg.format(*eargs))
-                return params
+                raise AperoCodedException(params, message=emsg.format(*eargs),
+                                          targs=eargs)
         # deal with param key not existing in params
         param_key = ari_core.YAML_TO_PARAM[key]
         if param_key not in params:
+            # TODO: Add to language database
             emsg = 'Param key {0} does not exist'
             eargs = [param_key]
-            WLOG(params, 'error', emsg.format(*eargs))
-            return params
+            raise AperoCodedException(params, message=emsg.format(*eargs),
+                                      targs=eargs)
         # push value into params
         params.set(key=param_key, value=value, source=profile_yaml)
 
@@ -230,10 +237,11 @@ def list_profiles(params: ParamDict):
     elif view_profiles:
         return False
     else:
+        # TODO: Add to language database
         emsg = 'Cannot find profile file: {0}'
         eargs = [profile_name]
-        WLOG(params, 'error', emsg.format(*eargs))
-        return False
+        raise AperoCodedException(params, message=emsg.format(*eargs),
+                                  targs=eargs)
 
 
 def load_previous_objects(params: ParamDict) -> Dict[str, AriObject]:

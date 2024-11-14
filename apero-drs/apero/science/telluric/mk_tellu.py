@@ -44,6 +44,8 @@ DrsRecipe = drs_recipe.DrsRecipe
 display_func = drs_misc.display_func
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # Get the text types
 textentry = drs_lang.textentry
 # alias pcheck
@@ -228,7 +230,7 @@ def calculate_tellu_res_absorption(params, recipe, image, template_props,
     # deal with bad berv (nan or None)
     if berv in [np.nan, None] or not isinstance(berv, (int, float)):
         eargs = [berv, func_name]
-        WLOG(params, 'error', textentry('09-016-00004', args=eargs))
+        raise AperoCodedException(params, '09-016-00004', targs=eargs)
     # get airmass from header
     airmass = header[params['KW_AIRMASS'][0]]
     # get reference wave map

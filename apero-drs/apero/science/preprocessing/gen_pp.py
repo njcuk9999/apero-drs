@@ -43,6 +43,8 @@ __release__ = apero_base.__release__
 Time = base.Time
 # Get Logging function
 WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # Get function string
 display_func = drs_misc.display_func
 # Get the text types
@@ -99,15 +101,14 @@ def resolve_target(params: ParamDict, pconst: Instrument,
     # deal with no objname and no header
     if objname is None and header is None:
         # print error: Must define ‘objname’ or ‘header’
-        WLOG(params, 'error', textentry('00-010-00011'))
+        raise AperoCodedException(params, '00-010-00011')
     elif objname is None:
         if hdr_objname in header:
             objname = header[hdr_objname]
         else:
             # print error: Header must be fixed (header must contain {0})
             eargs = [hdr_objname]
-            WLOG(params, 'error', textentry('00-010-00012', args=eargs))
-            return
+            raise AperoCodedException(params, '00-010-00012', targs=eargs)
     # -------------------------------------------------------------------------
     # find correct name in the database (via objname or aliases)
     correct_objname, found = database.find_objname(pconst, objname)
@@ -458,9 +459,7 @@ def get_file_reject_list(params: ParamDict, column: str = 'PP') -> np.ndarray:
     if column not in list(rtable.columns):
         # log error
         eargs = [column, func_name]
-        WLOG(params, 'error', textentry('00-010-00008', args=eargs))
-        # return empty array if error does not exit
-        return np.array([])
+        raise AperoCodedException(params, '00-010-00008', targs=eargs)
     else:
         # get the reject mask for the column
         idmask = np.array(rtable[column], dtype=bool)
@@ -642,7 +641,7 @@ def _convert_units(params: ParamDict, key: str, value: float,
     except Exception as _:
         # log error: Units for {0} do not match Current: {1} Desired: {2}
         eargs = [key, current_unit, desired_unit]
-        WLOG(params, 'error', textentry('00-001-00059', args=eargs))
+        raise AperoCodedException(params, '00-001-00059', targs=eargs)
     # return the updated value
     return float(value.value)
 
