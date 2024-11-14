@@ -21,8 +21,8 @@ from scipy.optimize import curve_fit
 from scipy.special import erf, erfinv
 
 from aperocore.base import base
-from aperocore.core.drs_exceptions import DrsCodedException
 from aperocore.math import fast
+from aperocore.core import drs_log
 
 # =============================================================================
 # Define variables
@@ -34,6 +34,8 @@ __version__ = base.__version__
 __authors__ = base.__authors__
 __date__ = base.__date__
 __release__ = base.__release__
+# get apero exception
+AperoCodedException = drs_log.AperoCodedException
 # Speed of light
 # noinspection PyUnresolvedReferences
 speed_of_light_ms = cc.c.to(uu.m / uu.s).value
@@ -766,8 +768,7 @@ def sigfig(x: Union[list, np.ndarray, float, int], n: int
         xin = np.array([x])
         dtype = type(x)
     else:
-        raise DrsCodedException('00-009-10002', 'error',
-                                targs=[type(x)], func_name=func_name)
+        raise AperoCodedException(None, '00-009-10002', targs=[type(x)])
     # filter out zeros
     mask = (xin != 0) & (np.isfinite(xin))
     # get the power and factor
@@ -855,12 +856,10 @@ def medbin(image: np.ndarray, by: int, bx: int) -> np.ndarray:
     # must have valid bx and by
     if dim1 % by != 0:
         eargs = ['by', dim1, func_name]
-        raise DrsCodedException('00-009-10003', 'error', targs=eargs,
-                                func_name=func_name)
+        raise AperoCodedException(None, '00-009-10003', targs=eargs)
     if dim2 % bx != 0:
         eargs = ['bx', dim2, func_name]
-        raise DrsCodedException('00-009-10003', 'error', targs=eargs,
-                                func_name=func_name)
+        raise AperoCodedException(None, '00-009-10003', targs=eargs)
     # reshape the image
     array = image.reshape([by, dim1 // by, bx, dim2 // bx])
     # median in axis 1
@@ -898,11 +897,11 @@ def square_medbin(image: np.ndarray, binexpo: int = 8) -> np.ndarray:
     if squ_shape[0] % 1 != 0 or squ_shape[1] % 1 != 0:
         # TODO: move to language database
         emsg = 'Image is not 2**N. Shape={0}'.format(image.shape)
-        raise DrsCodedException('0', 'error', message=emsg, func_name=func_name)
+        raise AperoCodedException(None, message=emsg, targs=[image.shape])
     if squ_shape[0] != squ_shape[1]:
         # TODO: move to language database
         emsg = 'Image is not square. Shape={0}'.format(image.shape)
-        raise DrsCodedException('0', 'error', message=emsg, func_name=func_name)
+        raise AperoCodedException(None, message=emsg, targs=[image.shape])
 
     # nsize (N)
     nsize = squ_shape[0]

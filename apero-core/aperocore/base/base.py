@@ -191,7 +191,8 @@ def load_database_yaml() -> dict:
             emsg = '{0}={1} does not exist'
             raise BaseAperoError(emsg.format(USER_ENV, path))
     # else raise except (cannot come from database)
-    emsg = '{0} must be set (please run setup script or add {0} to your PATH)'
+    emsg = ('{0} must be set (please run apero_profile.sh or '
+            'apero_profile.bat or add {0} to your PATH)')
     raise BaseAperoError(emsg.format(USER_ENV))
 
 

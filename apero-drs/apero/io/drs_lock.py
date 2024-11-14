@@ -28,8 +28,7 @@ from typing import Any, Tuple, Union
 
 import numpy as np
 
-from aperocore.base import base
-from aperocore.core import drs_exceptions
+from aperocore.core import drs_log
 from aperocore.constants import param_functions
 from aperocore.constants import load_functions
 from aperocore import drs_lang
@@ -51,8 +50,8 @@ __release__ = apero_base.__release__
 # get the parameter dictionary
 ParamDict = param_functions.ParamDict
 # DRS exceptions
-DrsCodedException = drs_exceptions.DrsCodedException
-DrsCodedWarning = drs_exceptions.DrsCodedWarning
+AperoCodedException = drs_log.AperoCodedException
+AperoCodedWarning = drs_log.AperoCodedWarning
 # Get function string
 display_func = drs_misc.display_func
 # Get the text types
@@ -106,8 +105,7 @@ class Lock:
         # if we had an error and got to 10 tries then cause an error
         if error is not None and it == 10:
             eargs = [type(error), error, self.lockpath, func_name]
-            raise DrsCodedException('00-503-00016', level='error',
-                                    targs=eargs)
+            raise AperoCodedException(params, '00-503-00016', targs=eargs)
         # ------------------------------------------------------------------
         self.maxwait = MAX_WAIT
         self.path = os.path.join(self.lockpath, self.lockname)
@@ -162,9 +160,8 @@ class Lock:
                     # update user every 10 seconds file is locked
                     if (timer % 100 == 0) and (timer != 0):
                         # Warn that lock is waiting due to making the lock dir
-                        wmsg = textentry('10-101-00001', args=[self.lockname])
-                        DrsCodedWarning('10-101-00001', message=wmsg,
-                                        level='warning')
+                        AperoCodedWarning(None, '10-101-00001',
+                                          targs=[self.lockname])
             # if path does exist just skip
             else:
                 break
@@ -211,9 +208,7 @@ class Lock:
                         abspath = os.path.join(self.path, filename)
                         wargs = [self.lockname, abspath]
                         # warn that lock is waiting due to making the lock file
-                        wmsg = textentry('10-101-00002', args=wargs)
-                        DrsCodedWarning('10-101-00002', message=wmsg,
-                                        level='warning')
+                        AperoCodedWarning(None, '10-101-00002', targs=wargs)
             # if path does exist just skip
             else:
                 break
@@ -294,11 +289,8 @@ class Lock:
                     except Exception as e:
                         if attempt >= 10:
                             # log warning for error
-                            eargs = [abspath, type(e), str(e)]
-                            emsg = textentry('10-101-00007', args=eargs)
-                            DrsCodedWarning('10-101-00007', message=emsg,
-                                            level='warning')
-
+                            wargs = [abspath, type(e), str(e)]
+                            AperoCodedWarning(None, '10-101-00007', targs=wargs)
                             break
                         else:
                             continue
@@ -408,10 +400,8 @@ class Lock:
                     os.remove(abspath)
                 except Exception as e:
                     # log warning for error
-                    eargs = [abspath, type(e), str(e)]
-                    emsg = textentry('10-101-00006', args=eargs)
-                    DrsCodedWarning('10-101-00006', message=emsg,
-                                    level='warning')
+                    wargs = [abspath, type(e), str(e)]
+                    AperoCodedWarning(None, '10-101-00006', targs=wargs)
         # now remove directory (if possible)
         if os.path.exists(self.path):
             # do not remove lock path (used by other processes)
@@ -421,10 +411,8 @@ class Lock:
                     os.removedirs(self.path)
                 except Exception as e:
                     # log warning for error
-                    eargs = [self.path, type(e), str(e)]
-                    emsg = textentry('10-101-00005', args=eargs)
-                    DrsCodedWarning('10-101-00005', message=emsg,
-                                    level='warning')
+                    wargs = [self.path, type(e), str(e)]
+                    AperoCodedWarning(None, '10-101-00005', targs=wargs)
 
 
 def synchronized(lock: Lock, name: str):
@@ -501,17 +489,13 @@ def synchronized(lock: Lock, name: str):
                 if (timer % 60 == 0) and (timer != 0):
                     # log that we are waiting in a queue
                     wargs = [lock.path, name, timer]
-                    wmsg = textentry('10-101-00003', args=wargs)
-                    DrsCodedWarning('10-101-00003', message=wmsg,
-                                    level='warning')
+                    AperoCodedWarning(None, '10-101-00003', targs=wargs)
                 # find whether it is this name's turn
                 cond, error = lock.myturn(name)
                 if error is not None:
                     # log that we are waiting in a queue and error generated
                     wargs = [lock.path, name, error, timer]
-                    wmsg = textentry('10-101-00004', args=wargs)
-                    DrsCodedWarning('10-101-00004', message=wmsg,
-                                    level='warning')
+                    AperoCodedWarning(None, '10-101-00004', targs=wargs)
                 # increase timer
                 timer += 1
             # now try to run the function
@@ -626,10 +610,9 @@ def __remove_empty__(params: ParamDict, path: str, remove_head: bool = True,
         try:
             os.rmdir(path)
         except Exception as e:
-            eargs = [path, type(e), e, func_name]
+            wargs = [path, type(e), e, func_name]
             # print msg: Cannot remove dir {0}. Error {1}: {2}
-            wmsg = textentry('10-001-00014', args=eargs)
-            DrsCodedWarning('10-001-00014', message=wmsg, level='warning')
+            AperoCodedWarning(params, '10-001-00014', targs=wargs)
 
 
 # =============================================================================

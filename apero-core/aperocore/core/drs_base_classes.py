@@ -30,6 +30,7 @@ from aperocore.base import base
 from aperocore.core import drs_exceptions
 from aperocore.core import drs_text
 from aperocore.core import drs_misc
+from aperocore.core import drs_log
 
 # =============================================================================
 # Define variables
@@ -44,7 +45,7 @@ __release__ = base.__release__
 # get display function
 display_func = drs_misc.display_func
 # get exceptions
-DrsCodedException = drs_exceptions.DrsCodedException
+AperoCodedException = drs_log.AperoCodedException
 
 
 # =============================================================================
@@ -568,9 +569,11 @@ class Path2Dict:
         for path_it in path_list:
             if path_it not in mydict:
                 # log error if we cannot determine path
+                # TODO: Add to language database
                 emsg = 'Path: {0} not available in dictionary [{1} not found]'
                 eargs = [path, path_it]
-                raise DrsCodedException('', message=emsg.format(*eargs))
+                raise AperoCodedException(None, message=emsg.format(*eargs),
+                                          targs=eargs)
             # get the next dictionary level
             mydict = mydict[path_it]
         # return the value
@@ -879,8 +882,7 @@ class ImportModule:
                 eargs = [self.name, self.path, func_name, type(e), str(e),
                          string_traceback]
                 # raise an exception
-                raise DrsCodedException('00-000-00003', level='error',
-                                        targs=eargs, func_name=func_name)
+                raise AperoCodedException(None, '00-000-00003', targs=eargs)
 
     def copy(self) -> 'ImportModule':
         """

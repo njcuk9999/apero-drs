@@ -22,19 +22,18 @@ from typing import Any, Dict, List, Optional, Union, Tuple
 import numpy as np
 from scipy.ndimage.morphology import binary_erosion, binary_dilation
 
-from aperocore.base import base
 from aperocore.base import drs_base
 from aperocore.constants import param_functions
 from aperocore.constants import load_functions
 from aperocore import drs_lang
 from aperocore import math as mp
-from aperocore.core import drs_exceptions
 from apero.constants import path_definitions
 from aperocore.core import drs_misc
 from apero.io import drs_fits
 from apero.io import drs_path
 from apero.instruments import select
 from apero.base import base as apero_base
+from aperocore.core import drs_log
 
 # =============================================================================
 # Define variables
@@ -55,7 +54,7 @@ pcheck = param_functions.PCheck()
 # Get function string
 display_func = drs_misc.display_func
 # Get the exceptions
-DrsCodedException = drs_exceptions.DrsCodedException
+AperoCodedException = drs_log.AperoCodedException
 # get block paths
 _params = load_functions.load_config(select.INSTRUMENTS)
 block_func = lambda block: block(_params).path
@@ -138,7 +137,7 @@ def resize(image: np.ndarray,
             x = np.arange(xhigh + 1, xlow + 1)[::-1]
         elif xlow == xhigh:
             eargs = ['xlow', 'xhigh', xlow, func_name]
-            raise DrsCodedException('00-001-00023', level='error', targs=eargs)
+            raise AperoCodedException(None, '00-001-00023', targs=eargs)
         else:
             x = np.arange(xlow, xhigh)
         # deal with ylow > yhigh
@@ -146,7 +145,7 @@ def resize(image: np.ndarray,
             y = np.arange(yhigh + 1, ylow + 1)[::-1]
         elif ylow == yhigh:
             eargs = ['ylow', 'yhigh', xlow, func_name]
-            raise DrsCodedException('00-001-00023', level='error', targs=eargs)
+            raise AperoCodedException(None, '00-001-00023', targs=eargs)
         else:
             y = np.arange(ylow, yhigh)
     # construct the new image (if one can't raise error)
@@ -154,11 +153,11 @@ def resize(image: np.ndarray,
         newimage = np.take(np.take(image, x, axis=1), y, axis=0)
     except Exception as e:
         eargs = [xlow, xhigh, ylow, yhigh, type(e), e, func_name]
-        raise DrsCodedException('00-001-00024', level='error', targs=eargs)
+        raise AperoCodedException(None, '00-001-00024', targs=eargs)
     # return error if we removed all pixels
     if newimage.shape[0] == 0 or newimage.shape[1] == 0:
         eargs = [xlow, xhigh, ylow, yhigh, func_name]
-        raise DrsCodedException('00-001-00025', level='error', targs=eargs)
+        raise AperoCodedException(None, '00-001-00025', targs=eargs)
 
     # return new image
     return newimage
@@ -180,7 +179,7 @@ def flip_image(image: np.ndarray, fliprows: bool = True,
     # raise error if image is not 2D
     if len(image.shape) < 2:
         eargs = [image.shape, func_name]
-        raise DrsCodedException('09-002-00001', level='error', targs=eargs)
+        raise AperoCodedException(None, '09-002-00001', targs=eargs)
     # flip both dimensions
     if fliprows and flipcols:
         return image[::-1, ::-1]
@@ -438,7 +437,7 @@ def get_fiber_types(params: ParamDict,
         return [fiber]
     else:
         eargs = [fiber, ', '.join(validfibertypes), func_name]
-        raise DrsCodedException('09-001-00030', level='error', targs=eargs)
+        raise AperoCodedException(params, '09-001-00030', targs=eargs)
 
 
 def npy_filelist(name: str, index: int, array: np.ndarray,
@@ -596,10 +595,11 @@ def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
     elif math == 'sum':
         cfunc = mp.nansum
     else:
+        # TODO: Add to language database
         emsg = 'Math error: {0} is invalid must be: {1}'
         eargs = [math, '"median" or "mean" or "sum"']
-        raise DrsCodedException('None', level='error', targs=eargs,
-                                message=emsg.format(*eargs))
+        raise AperoCodedException(params, message=emsg.format(*eargs),
+                                  targs=eargs)
     # deal with not outdir
     if outdir is None:
         outdir = ''
@@ -626,7 +626,7 @@ def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
     else:
         # fmt="{0}" is incorrect
         eargs = [fmt, 'fits, npy', func_name]
-        raise DrsCodedException('00-001-00044', level='error', targs=eargs)
+        raise AperoCodedException(params, '00-001-00044', targs=eargs)
     # ----------------------------------------------------------------------
     # deal with only having 1 file
     if numfiles == 1:
@@ -672,7 +672,7 @@ def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
         else:
             # fmt="{0}" is incorrect
             eargs = [fmt, 'fits, npy', func_name]
-            raise DrsCodedException('00-001-00044', level='error', targs=eargs)
+            raise AperoCodedException(params, '00-001-00044', targs=eargs)
         # get the shape of the image
         dim1, dim2 = np.array(image.shape).astype(int)
         # clean the filename
@@ -684,7 +684,7 @@ def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
             # Files are not the same shape
             eargs = [mdim1, mdim2, f_it, dim1, dim2, files[0], files[1],
                      func_name]
-            raise DrsCodedException('00-001-00045', level='error', targs=eargs)
+            raise AperoCodedException(params, '00-001-00045', targs=eargs)
         # ------------------------------------------------------------------
         # deal with no fkwargs
         if fkwargs is None:

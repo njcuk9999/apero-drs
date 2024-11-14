@@ -48,8 +48,6 @@ Time = base.Time
 CHARS = string.ascii_uppercase + string.digits
 # get textentry
 textentry = drs_lang.textentry
-# get coded error
-DrsCodedException= drs_exceptions.DrsCodedException
 
 
 # =============================================================================

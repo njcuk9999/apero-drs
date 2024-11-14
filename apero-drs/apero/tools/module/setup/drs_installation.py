@@ -27,6 +27,7 @@ from aperocore.constants import param_functions
 from aperocore.constants import load_functions
 from aperocore.constants import constant_functions
 from aperocore import drs_lang
+from aperocore.core import drs_log
 from apero.constants import path_definitions as pathdef
 from aperocore.core import drs_exceptions, drs_base_classes, drs_misc
 from apero.base import base as apero_base
@@ -41,7 +42,8 @@ __version__ = apero_base.__version__
 __authors__ = apero_base.__authors__
 __date__ = apero_base.__date__
 __release__ = apero_base.__release__
-
+# Get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # get colors
 Colors = drs_misc.Colors()
 # get param dict
@@ -1491,10 +1493,11 @@ def create_uyaml(instrument: str, ckind: str, group_dict: Dict[str, list],
             continue
         # deal with bad group
         if yaml_group not in base.YAML_GROUPS:
+            # TODO: Add to language database
             emsg = 'YAML group "{0}" not in base.YAML_GROUPS'
             eargs = [yaml_group]
-            raise drs_exceptions.DrsCodedException('', level='error',
-                                                   message=emsg.format(*eargs))
+            raise AperoCodedException(None, message=emsg.format(*eargs),
+                                      targs=eargs)
         # add to yaml groups
         yaml_groups.append(yaml_group)
         # add a section for this group

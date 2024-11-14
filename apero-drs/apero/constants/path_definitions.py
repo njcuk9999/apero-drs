@@ -16,6 +16,7 @@ from aperocore.base import base
 from aperocore import drs_lang
 from aperocore.core import drs_exceptions
 from apero.base import base as apero_base
+from aperocore.core import drs_log
 
 # =============================================================================
 # Define variables
@@ -34,8 +35,7 @@ textentry = drs_lang.textentry
 # get parameter dictionary
 ParamDict = Any
 # get the Drs Exceptions
-DrsCodedException = drs_exceptions.DrsCodedException
-DrsCodedWarning = drs_exceptions.DrsCodedWarning
+AperoCodedException = drs_log.AperoCodedException
 # -----------------------------------------------------------------------------
 # define complex typing
 QCParamList = Union[Tuple[List[str], List[Any], List[str], List[int]],
@@ -69,18 +69,17 @@ class BlockPath:
             block_path = params[key]
             # check that block path exists
             if not os.path.exists(block_path) and check:
+
+                # TODO: Add to language database
                 emsg = 'BlockPathError: Key {0} does not exist\n\tPath={1}'
                 eargs = [key, params[key]]
-
-                raise drs_exceptions.DrsCodedException('', 'error',
-                                                       targs=eargs,
-                                                       message=emsg)
+                raise AperoCodedException(params, message=emsg.format(*eargs),
+                                          targs=eargs)
         except Exception as e:
             emsg = 'BlockPathError: Key {0}\n\tPath={1}\n\t{2}: {3}'
             eargs = [key, params[key], type(e), str(e)]
-            raise drs_exceptions.DrsCodedException('', 'error',
-                                                   targs=eargs,
-                                                   message=emsg)
+            raise AperoCodedException(params, message=emsg.format(*eargs),
+                                      targs=eargs)
         # now set path
         self.key = key
         self.path = block_path

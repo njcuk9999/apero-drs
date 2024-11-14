@@ -88,12 +88,12 @@ if WARN_TO_ERROR:
 
 # -----------------------------------------------------------------------------
 # databases
-DATABASE_NAMES = ['calib', 'tellu', 'findex', 'log', 'astrom', 'lang', 'reject']
+DATABASE_NAMES = ['calib', 'tellu', 'findex', 'log', 'astrom', 'reject']
 DATABASE_FULLNAMES = ['calibration', 'telluric', 'file index', 'recipe log',
-                      'astrometric', 'language', 'rejection']
+                      'astrometric', 'rejection']
 DATABASE_COL_CLASS = ['CALIBRATION_DB_COLUMNS', 'TELLURIC_DB_COLUMNS',
                       'FILEINDEX_DB_COLUMNS', 'LOG_DB_COLUMNS',
-                      'ASTROMETRIC_DB_COLUMNS', None, 'REJECT_DB_COLUMNS']
+                      'ASTROMETRIC_DB_COLUMNS', 'REJECT_DB_COLUMNS']
 # Support database types
 SUPPORTED_DATABASES = __YAML__['DB_MODES']
 # -----------------------------------------------------------------------------

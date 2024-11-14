@@ -68,8 +68,8 @@ tqdm = base.TQDM
 # get ParamDict
 ParamDict = param_functions.ParamDict
 # get execption
-DrsCodedException = drs_exceptions.DrsCodedException
-DrsCodedWarning = drs_exceptions.DrsCodedWarning
+AperoCodedException = drs_log.AperoCodedException
+AperoCodedWarning = drs_log.AperoCodedWarning
 # get display func
 display_func = drs_misc.display_func
 # get WLOG
@@ -336,15 +336,15 @@ class AstrometricDatabase(DatabaseManager):
             else:
                 listname = f'"{listname}" ({func_name})'
             # log error: No objects found in astrometric database.
+            # TODO: Add to the language database
             emsg = 'No objects found in astrometric database.'
             emsg += '\n\tPlease add objects to the astrometric database.'
             emsg += '\n\tListname={0}'
             emsg += '\n\tObjnames: "{1}"'
             eargs = [listname, ', '.join(objnames)]
             # report the error
-            emsg = emsg.format(*eargs)
-            raise DrsCodedException('None', level='error', targs=eargs,
-                                    message=emsg, func_name=func_name)
+            raise AperoCodedException(None, message=emsg.format(*eargs),
+                                      targs=eargs)
         # ---------------------------------------------------------------------
         # return the filled out list
         return out_objnames, missing_objnames
@@ -502,9 +502,7 @@ class CalibrationDatabase(DatabaseManager):
             if not self.params['INPUTS']['DATABASE']:
                 # Log that we are not adding file due to user input
                 wargs = [dbkey, drsfile.filename]
-                wmsg = textentry('40-001-00024', args=wargs)
-                DrsCodedWarning('40-001-00024', level='info', targs=wargs,
-                                message=wmsg)
+                AperoCodedWarning(self.params, '40-001-00024', targs=wargs)
                 # return here
                 return
         # ------------------------------------------------------------------
@@ -726,10 +724,8 @@ class CalibrationDatabase(DatabaseManager):
             if timemode not in ['closest', 'older', 'newer']:
                 # log error: Time mode invalid for Calibration database.
                 eargs = [timemode, ' or '.join(['closest', 'older', 'newer'])]
-                emsg = textentry('00-002-00021', args=eargs)
-                raise DrsCodedException('00-002-00021', level='error',
-                                        targs=eargs, message=emsg,
-                                        func_name=func_name)
+                raise AperoCodedException(self.params, '00-002-00021',
+                                          targs=eargs)
         # ---------------------------------------------------------------------
         # do sql query
         # ---------------------------------------------------------------------
@@ -785,9 +781,7 @@ class CalibrationDatabase(DatabaseManager):
                     infile = 'File[Time={0}]'.format(filetime.iso)
             # log error: No entries found in {0} database for key='{1}
             eargs = [self.name, key, ', '.join(keys), infile, func_name]
-            emsg = textentry('00-002-00015', args=eargs)
-            raise DrsCodedException('00-002-00015', level='error', targs=eargs,
-                                    message=emsg)
+            raise AperoCodedException(self.params, '00-002-00015', targs=eargs)
         # make all files absolute paths
         if isinstance(filenames, str):
             # set output
@@ -1178,10 +1172,8 @@ class TelluricDatabase(DatabaseManager):
             if timemode not in ['closest', 'older', 'newer']:
                 # log error: Time mode invalid for Calibration database.
                 eargs = [timemode, ' or '.join(['closest', 'older', 'newer'])]
-                emsg = textentry('00-002-00021', args=eargs)
-                raise DrsCodedException('00-002-00021', level='error',
-                                        targs=eargs, message=emsg,
-                                        func_name=func_name)
+                raise AperoCodedException(self.params, '00-002-00021',
+                                          targs=eargs)
         # ---------------------------------------------------------------------
         # do sql query
         # ---------------------------------------------------------------------
@@ -1221,9 +1213,7 @@ class TelluricDatabase(DatabaseManager):
                     infile = 'None'
             # log error: No entries found in {0} database for key='{1}
             eargs = [self.name, key, ', '.join(keys), infile, func_name]
-            emsg = textentry('00-002-00015', args=eargs)
-            raise DrsCodedException('00-002-00015', level='error', targs=eargs,
-                                    message=emsg, func_name=func_name)
+            raise AperoCodedException(self.params, '00-002-00015', targs=eargs)
         # make all files absolute paths
         if isinstance(filenames, str):
             return Path(self.filedir).joinpath(filenames).absolute()
@@ -1281,9 +1271,7 @@ def _get_dbkey(params: ParamDict, drsfile: DrsFileTypes, dbmname: str) -> str:
         return drsfile.get_dbkey()
     else:
         eargs = [drsfile.name, dbmname, func_name]
-        emsg = textentry('00-008-00012', args=eargs)
-        raise DrsCodedException('00-008-00012', level='error', targs=eargs,
-                                message=emsg, func_name=func_name)
+        raise AperoCodedException(params, '00-008-00012', targs=eargs)
 
 
 def _get_dbtable(params: ParamDict, drsfile: DrsFileTypes, dbmname: str) -> bool:
@@ -1305,15 +1293,14 @@ def _get_dbtable(params: ParamDict, drsfile: DrsFileTypes, dbmname: str) -> bool
         if dbname != dbmname.upper():
             eargs = [drsfile.name, dbname, dbmname.upper(), drsfile.filename,
                      func_name]
-            emsg = textentry('00-002-00019', args=eargs)
-            raise DrsCodedException('00-002-00019', level='error', targs=eargs,
-                                    message=emsg, func_name=func_name)
+            raise AperoCodedException(params, '00-002-00019', targs=eargs)
     else:
+        # TODO: Add to language database
         eargs = [drsfile.name, dbmname, func_name]
         emsg = ('Drsfile {0} cannot use database "{1}". Check file_definitions'
                 '\n\tFunction = {2}')
-        raise DrsCodedException('None', level='error', targs=eargs,
-                                message=emsg, func_name=func_name)
+        raise AperoCodedException(params, message=emsg.format(*eargs),
+                                  targs=eargs)
     # if we are here return True --> success
     return True
 
@@ -1354,9 +1341,7 @@ def _get_hkey(params: ParamDict, pkey: str,
             value = dtype(value)
         except Exception as e:
             eargs = [type(e), str(e), func_name]
-            emsg = textentry('00-000-00002', args=eargs)
-            raise DrsCodedException('00-000-00002', level='error', targs=eargs,
-                                    message=emsg, func_name=func_name)
+            raise AperoCodedException(params, '00-000-00002', targs=eargs)
     # return fiber
     return value
 
@@ -1420,9 +1405,7 @@ def _copy_db_file(params: ParamDict, drsfile: DrsFileTypes,
     except Exception as e:
         # log exception:
         eargs = [dbmname, inpath, outpath, type(e), e, func_name]
-        emsg = textentry('00-002-00014', args=eargs)
-        raise DrsCodedException('00-002-00014', level='error', targs=eargs,
-                                message=emsg, func_name=func_name)
+        raise AperoCodedException(params, '00-002-00014', targs=eargs)
 
 
 HeaderType = Union[DrsHeader, FitsHeader, None]
@@ -1493,9 +1476,7 @@ def _get_hdict(params: ParamDict, dbname: str, drsfile: DrsFileTypes = None,
         header = _force_apero_header(drsfile.get_header())
     else:
         eargs = [dbname, drsfile.name, func_name]
-        emsg = textentry('00-001-00027', args=eargs)
-        raise DrsCodedException('00-001-00027', level='error', targs=eargs,
-                                message=emsg, func_name=func_name)
+        raise AperoCodedException(params, '00-001-00027', targs=eargs)
 
     return hdict, header
 
@@ -1541,9 +1522,7 @@ def _get_time(params: ParamDict, dbname: str,
         return t
     else:
         eargs = [dbname, func_name]
-        emsg = textentry('00-001-00039', args=eargs)
-        raise DrsCodedException('00-001-00039', level='error', targs=eargs,
-                                message=emsg, func_name=func_name)
+        raise AperoCodedException(params, '00-001-00039', targs=eargs)
 
 
 # =============================================================================
@@ -1672,9 +1651,7 @@ class FileIndexDatabase(DatabaseManager):
                 except Exception as _:
                     wargs = [self.name, hkey, hkeys[hkey],
                              dtype, func_name]
-                    wmsg = textentry('10-002-00003', args=wargs)
-                    DrsCodedWarning('10-002-00003', level='warning',
-                                    targs=wargs, message=wmsg)
+                    AperoCodedWarning(self.params, '10-002-00003', targs=wargs)
                     hvalues[hkey] = 'NULL'
             else:
                 hvalues[hkey] = 'NULL'
@@ -1822,9 +1799,8 @@ class FileIndexDatabase(DatabaseManager):
                     except Exception as _:
                         wargs = [self.name, hkey, hkeys[hkey],
                                  dtype, func_name]
-                        wmsg = textentry('10-002-00003', args=wargs)
-                        DrsCodedWarning('10-002-00003', level='warning',
-                                        targs=wargs, message=wmsg)
+                        AperoCodedWarning(self.params, '10-002-00003',
+                                          targs=wargs)
         # ------------------------------------------------------------------
         # add the number of entries to get
         if isinstance(nentries, int):
@@ -1980,10 +1956,7 @@ class FileIndexDatabase(DatabaseManager):
                 # print removing file: File no longer on disk - removing from
                 #                file index database: {0}
                 wargs = [remove_file]
-                wmsg = textentry('10-002-00008', args=wargs)
-                DrsCodedWarning('10-002-00008', level='warning',
-                                targs=wargs, message=wmsg)
-
+                AperoCodedWarning(self.params, '10-002-00008', targs=wargs)
             # remove entries which no longer exist on disk
             if len(rm_conditions) > 0:
                 # add all remove conditions with the OR criteria
@@ -2020,9 +1993,7 @@ class FileIndexDatabase(DatabaseManager):
             # prompt user and warn
             wargs = [len(columns), len(ikeys)]
             # log warning: Index database has wrong number of columns
-            wmsg = textentry('10-002-00005', args=wargs)
-            DrsCodedWarning('10-002-00005', level='warning',
-                            targs=wargs, message=wmsg)
+            AperoCodedWarning(self.params, '10-002-00005', targs=wargs)
             # reset database
             userinput = input(str(textentry('10-002-00006')))
             # if yes delete table and recreate
@@ -2082,9 +2053,7 @@ class FileIndexDatabase(DatabaseManager):
                     # print error message as warning:
                     #       Skipping file {0}\n\tError {1}: {2}'
                     wargs = [str(reqfile), type(e), str(e)]
-                    wmsg = textentry('10-002-00009', args=wargs)
-                    DrsCodedWarning('10-002-00009', level='warning',
-                                    targs=wargs, message=wmsg)
+                    AperoCodedWarning(self.params, '10-002-00009', targs=wargs)
                     continue
                 # loop around required keys
                 for rkey in rkeys:
@@ -3131,9 +3100,7 @@ def get_google_sheet(params: ParamDict, sheet_id: str, worksheet: int = 0,
     except Exception as e:
         # log error: Could not load table from url
         eargs = [url, type(e), str(e), func_name]
-        emsg = textentry('00-010-00009', args=eargs)
-        raise DrsCodedException('00-010-00009', level='error', targs=eargs,
-                                message=emsg, func_name=func_name)
+        raise AperoCodedException(params, '00-010-00009', targs=eargs)
     # deal with no rows in table
     if '\n' not in rawdata.text:
         return Table()
@@ -3159,9 +3126,7 @@ def get_google_sheet(params: ParamDict, sheet_id: str, worksheet: int = 0,
     if tries >= 10:
         # log error: Could not load table from url: (Tried 10 times)
         eargs = [url, func_name]
-        emsg = textentry('00-010-00010', args=eargs)
-        raise DrsCodedException('00-010-00010', level='error', targs=eargs,
-                                message=emsg, func_name=func_name)
+        raise AperoCodedException(params, '00-010-00010', targs=eargs)
     # add to cached storage
     GOOGLE_TABLES[url] = table
     # return table

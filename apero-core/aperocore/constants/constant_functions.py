@@ -26,6 +26,7 @@ from aperocore.core import drs_exceptions
 from aperocore.core import drs_base_classes as base_class
 from aperocore.core import drs_text
 from aperocore.core import drs_misc
+from aperocore.core import drs_log
 
 # =============================================================================
 # Define variables
@@ -38,9 +39,8 @@ __version__ = base.__version__
 __authors__ = base.__authors__
 __date__ = base.__date__
 __release__ = base.__release__
-
 # get the Drs Exceptions
-DrsCodedException = drs_exceptions.DrsCodedException
+AperoCodedException = drs_log.AperoCodedException
 # get the text entry
 textentry = drs_lang.textentry
 # get simple types
@@ -133,8 +133,7 @@ class Const:
         # set the source file of the constant
         if source is None:
             eargs = [self.class_name, self.name]
-            raise DrsCodedException('00-003-00034', level='error',
-                                    targs=eargs, func_name=func_name)
+            raise AperoCodedException(None, '00-003-00034', targs=eargs)
         else:
             self.source = source
         # set the units of the constant (astropy units)
@@ -215,7 +214,7 @@ class Const:
                  else if unset returns True if value is valid. If not valid
                  exception is raised.
         :rtype: Union[bool, object]
-        :raises DrsCodedError: if value is not valid
+        :raises AperoCodedException: if value is not valid
         """
         # deal with no test value (use value set at module level)
         if test_value is None:
@@ -252,15 +251,13 @@ class Const:
         :type source: str
         :return: Const, a shallow copy of the constant
         :rtype: Const
-        :raises DrsCodedException: if source is None
+        :raises AperoCodedException: if source is None
         """
         # set function name
         func_name = display_func('copy', __NAME__, self.class_name)
         # check that source is valid
         if source is None:
-            raise DrsCodedException('00-003-00007', 'error', targs=[func_name],
-                                    func_name=func_name)
-
+            raise AperoCodedException(None, '00-003-00007', targs=[func_name])
         # return new copy of Const
         return Const(self.name, self.value, self.dtype, self.dtypei,
                      self.options, self.maximum, self.minimum, source=source,
@@ -432,11 +429,12 @@ class ConstantsDict:
         """
         # we should not override these
         if name in self.storage:
+            # TODO: Add to language database
             emsg = ('Constant "{0}" already exists in storage. '
                     'Please fix in defaults.').format(name)
             eargs = [name]
-            raise DrsCodedException('None', level='error', targs=eargs,
-                                    message=emsg.format(*eargs))
+            raise AperoCodedException(None, message=emsg.format(*eargs),
+                                      targs=eargs)
         # create constant
         constants = Const(name, value, dtype, dtypei, options, maximum, minimum,
                           source, unit, default, datatype, dataformat, group,
@@ -498,8 +496,8 @@ class ConstantsDict:
             emsg = ('Constant "{0}" not found in storage. '
                     'Please add Cdict.add("{0}") to defaults.').format(name)
             eargs = [name]
-            raise DrsCodedException('None', level='error', targs=eargs,
-                                    message=emsg.format(*eargs))
+            raise AperoCodedException(None, targs=eargs,
+                                      message=emsg.format(*eargs))
         # update value
         if value is not None:
             self.storage[name].value = value
@@ -799,8 +797,7 @@ class Keyword(Const):
         # set the source file of the Keyword
         if source is None:
             eargs = [self.class_name, self.name]
-            raise DrsCodedException('00-003-00034', level='error',
-                                    targs=eargs, func_name=func_name)
+            raise AperoCodedException(None, '00-003-00034', targs=eargs)
         else:
             self.source = source
         # Initialize the constant parameters (super)
@@ -990,7 +987,7 @@ class Keyword(Const):
                  else if unset returns True if value is valid. If not valid
                  exception is raised.
         :rtype: Union[bool, object]
-        :raises DrsCodedException: if value is not valid
+        :raises AperoCodedException: if value is not valid
         """
         # set function name
         func_name = display_func('validate', __NAME__, self.class_name)
@@ -1012,9 +1009,7 @@ class Keyword(Const):
             self.comment = ''
         # need a key
         if self.key is None:
-            raise DrsCodedException('00-003-00035', 'error', targs=[self.name],
-                                    func_name=func_name)
-
+            raise AperoCodedException(None, '00-003-00035', targs=[self.name])
         # construct true value as keyword store
         true_value = [self.key, true_value, self.comment]
         # deal with storing
@@ -1034,14 +1029,13 @@ class Keyword(Const):
         :type source: str
         :return: Keyword, a shallow copy of the keyword
         :rtype: Keyword
-        :raises DrsCodedException: if source is None
+        :raises AperoCodedException: if source is None
         """
         # set function name
         func_name = display_func('copy', __NAME__, self.class_name)
         # check that source is valid
         if source is None:
-            raise DrsCodedException('00-003-00008', 'error', targs=[func_name],
-                                    func_name=func_name)
+            raise AperoCodedException(None, '00-003-00036', targs=[func_name])
         # return new copy of Const
         return Keyword(self.name, self.key, self.value, self.dtype,
                        self.comment, self.options, self.maximum,
@@ -1117,8 +1111,8 @@ class KeywordDict:
             emsg = ('Constant "{0}" already exists in storage. '
                     'Please fix in defaults.').format(name)
             eargs = [name]
-            raise DrsCodedException('None', level='error', targs=eargs,
-                                    message=emsg.format(*eargs))
+            raise AperoCodedException(None, message=emsg.format(*eargs),
+                                      targs=eargs)
         # set the value to a tuple (done in validation for user defined)
         true_value = [key, value, comment]
         # get global source if not set
@@ -1185,8 +1179,8 @@ class KeywordDict:
             emsg = ('Keyword "{0}" not found in storage. '
                     'Please add KDict.add("{0}") to defaults.').format(name)
             eargs = [name]
-            raise DrsCodedException('None', level='error', targs=eargs,
-                                    message=emsg.format(*eargs))
+            raise AperoCodedException(None, message=emsg.format(*eargs),
+                                      targs=eargs)
         # get global source if not set
         if source is None:
             source = self.source
@@ -1349,7 +1343,7 @@ def generate_consts(modulepath: str) -> GenConsts:
 
     :return: the keys (Const/Keyword names) and their respective instances
     :rtype: tuple[list[str], list[Const, Keyword]]
-    :raises DrsCodedException: if module name is not valid
+    :raises AperoCodedException: if module name is not valid
     """
     # set function name
     func_name = display_func('generate_consts', __NAME__)
@@ -1387,14 +1381,14 @@ def import_module(func: str, modulepath: str, full: bool = False,
     :param modulepath: str, the
     :param full: bool, if True, assumes modulepath is the full path
     :param quiet: bool, if True raises a ValueError instead of a
-                  DrsCodedException
+                  AperoCodedException
 
     :type func: str
     :type modulepath: str
     :type full: bool
     :type quiet: bool
 
-    :raises: DrsCodedException - if module path is not valid (and quiet=False)
+    :raises: AperoCodedException - if module path is not valid (and quiet=False)
     :raises: ValueError - if module path is not valid (and quiet=True)
 
     :return: the imported module instance
@@ -1437,8 +1431,7 @@ def import_module(func: str, modulepath: str, full: bool = False,
         if quiet:
             raise ValueError(textentry('00-000-00003', args=eargs))
         else:
-            raise DrsCodedException('00-000-00003', 'error', targs=eargs,
-                                    func_name=func_name)
+            raise AperoCodedException(None, '00-000-00003', targs=eargs)
 
 
 def get_constants_from_file(filename: str) -> Tuple[List[str], List[str]]:
@@ -1454,7 +1447,7 @@ def get_constants_from_file(filename: str) -> Tuple[List[str], List[str]]:
     :return keys: list of strings, upper case strings for each variable
     :return values: list of strings, value of each key
 
-    :raises DrsCodedException: if there is a profile read constants from file
+    :raises AperoCodedException: if there is a profile read constants from file
     """
     # first try to reformat text file to avoid weird characters
     #   (like mac smart quotes)
@@ -1506,7 +1499,7 @@ def update_file(filename: str, dictionary: dict):
     :type filename: str
     :type dictionary: dict
     :return: None
-    :raises DrsCodedException: if we cannot read filename
+    :raises AperoCodedException: if we cannot read filename
     """
     # set function name (cannot break here --> no access to inputs)
     func_name = str(__NAME__) + '.update_file()'
@@ -1517,8 +1510,7 @@ def update_file(filename: str, dictionary: dict):
             lines = f.readlines()
     except Exception as e:
         eargs = [filename, func_name, type(e), e]
-        raise DrsCodedException('00-004-00003', 'error', targs=eargs,
-                                func_name=func_name)
+        raise AperoCodedException(None, '00-004-00003', targs=eargs)
     # convert lines to char array
     clines = np.char.array(lines).strip()
     # loop through keys in dictionary
@@ -1543,8 +1535,7 @@ def update_file(filename: str, dictionary: dict):
             f.writelines(lines)
     except Exception as e:
         eargs = [filename, func_name, type(e), e]
-        raise DrsCodedException('00-004-00004', 'error', targs=eargs,
-                                func_name=func_name)
+        raise AperoCodedException(None, '00-004-00004', targs=eargs)
 
 
 # =============================================================================
@@ -1570,7 +1561,7 @@ def _test_dtype(name: str, invalue: Any, dtype: Union[str, type],
     :return: returns the value in the input dtype (if valid) if invalid
              returns input value (unless quiet=True then exception raised)
     :rtype: Any
-    :raises DrsCodedException: if quiet=True and type invalid
+    :raises AperoCodedException: if quiet=True and type invalid
     """
     # set function name (cannot break here --> no access to inputs)
     func_name = str(__NAME__) + '._test_dtype()'
@@ -1582,20 +1573,17 @@ def _test_dtype(name: str, invalue: Any, dtype: Union[str, type],
         if not isinstance(invalue, str):
             if not quiet:
                 eargs = [name, type(invalue), invalue, source, func_name]
-                raise DrsCodedException('00-003-00009', 'error', targs=eargs,
-                                        func_name=func_name)
+                raise AperoCodedException(None, '00-003-00009', targs=eargs)
         if not os.path.exists(invalue):
             if not quiet:
                 eargs = [name, invalue, func_name]
-                raise DrsCodedException('00-003-00010', 'error', targs=eargs,
-                                        func_name=func_name)
+                raise AperoCodedException(None, '00-003-00010', targs=eargs)
         return str(invalue)
     # deal with casting a string into a list
     if (dtype is list) and isinstance(invalue, str):
         if not quiet:
             eargs = [name, invalue, source, func_name]
-            raise DrsCodedException('00-003-00011', 'error', targs=eargs,
-                                    func_name=func_name)
+            raise AperoCodedException(None, '00-003-00011', targs=eargs)
     # now try to cast value
     try:
         outvalue = dtype(invalue)
@@ -1603,8 +1591,7 @@ def _test_dtype(name: str, invalue: Any, dtype: Union[str, type],
         if not quiet:
             eargs = [name, dtype, invalue, type(invalue), type(e), e,
                      source, func_name]
-            raise DrsCodedException('00-003-00012', 'error', targs=eargs,
-                                    func_name='error')
+            raise AperoCodedException(None, '00-003-00012', targs=eargs)
         outvalue = invalue
     # return out value
     return outvalue
@@ -1639,7 +1626,7 @@ def _validate_value(name: str, dtype: Union[str, type, None],
     :return: returns the value in the input dtype and the source of that
              value
     :rtype: tuple[object, str]
-    :raises DrsCodedException: if quiet=True and type invalid
+    :raises AperoCodedException: if quiet=True and type invalid
     """
     # set function name (cannot break here --> no access to inputs)
     func_name = str(__NAME__) + '._validate_value()'
@@ -1651,20 +1638,17 @@ def _validate_value(name: str, dtype: Union[str, type, None],
     if dtype is None:
         if not quiet:
             eargs = [name, source, func_name]
-            raise DrsCodedException('00-003-00013', 'error', targs=eargs,
-                                    func_name=func_name)
+            raise AperoCodedException(None, '00-003-00013', targs=eargs)
     if (dtype not in SIMPLE_TYPES) and (dtype != 'path'):
         if not quiet:
             eargs = [name, ', '.join(SIMPLE_STYPES), source, func_name]
-            raise DrsCodedException('00-003-00014', 'error', targs=eargs,
-                                    func_name=func_name)
+            raise AperoCodedException(None, '00-003-00014', targs=eargs)
     # ---------------------------------------------------------------------
     # Check value is not None
     if value is None:
         if not quiet:
             eargs = [name, source, func_name]
-            raise DrsCodedException('00-003-00015', 'error', targs=eargs,
-                                    func_name=func_name)
+            raise AperoCodedException(None, '00-003-00015', targs=eargs)
     # ---------------------------------------------------------------------
     # check bools
     if dtype is bool:
@@ -1676,8 +1660,7 @@ def _validate_value(name: str, dtype: Union[str, type, None],
         if value not in [True, 1, False, 0]:
             if not quiet:
                 eargs = [name, value, source, func_name]
-                raise DrsCodedException('00-003-00016', 'error', targs=eargs,
-                                        func_name=func_name)
+                raise AperoCodedException(None, '00-003-00016', targs=eargs)
     # ---------------------------------------------------------------------
     # Check if dtype is correct
     true_value = _test_dtype(name, value, dtype, source, quiet=quiet)
@@ -1710,8 +1693,7 @@ def _validate_value(name: str, dtype: Union[str, type, None],
                 stroptions = ['"{0}"'.format(opt) for opt in options]
                 eargs = [name, ', '.join(stroptions), true_value, source,
                          func_name]
-                raise DrsCodedException('00-003-00017', 'error', targs=eargs,
-                                        func_name=func_name)
+                raise AperoCodedException(None, '00-003-00017', targs=eargs)
     # if we have a str we are done
     if dtype == str:
         return true_value, source
@@ -1722,14 +1704,12 @@ def _validate_value(name: str, dtype: Union[str, type, None],
             if true_value > maximum:
                 if not quiet:
                     eargs = [name, maximum, true_value, source, func_name]
-                    raise DrsCodedException('00-003-00018', 'error',
-                                            targs=eargs, func_name=func_name)
+                    raise AperoCodedException(None, '00-003-00018', targs=eargs)
         if minimum is not None:
             if true_value < minimum:
                 if not quiet:
                     eargs = [name, minimum, true_value, source, func_name]
-                    raise DrsCodedException('00-003-00019', 'error',
-                                            targs=eargs, func_name=func_name)
+                    raise AperoCodedException(None, '00-003-00019', targs=eargs)
     # return true value
     return true_value, source
 
@@ -1751,7 +1731,7 @@ def _validate_text_file(filename: Union[str, Path],
     :type comments: str
 
     :return None:
-    :raises DrsCodedException: If text file is invalid
+    :raises AperoCodedException: If text file is invalid
     """
     # set function name (cannot break here --> no access to inputs)
     func_name = str(__NAME__) + '._validate_text_file()'
@@ -1777,8 +1757,7 @@ def _validate_text_file(filename: Union[str, Path],
                 emsg += textentry('00-003-00021', args=[char, l_it + 1])
         # only raise an error if invalid is True (if we found bad characters)
         if invalid:
-            raise DrsCodedException('00-003-00020', 'error', message=emsg,
-                                    func_name=func_name)
+            raise AperoCodedException(None, '00-003-00020', message=emsg)
 
 
 # =============================================================================

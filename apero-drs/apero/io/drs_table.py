@@ -29,9 +29,8 @@ from astropy.io.registry import get_formats
 from astropy.table import Column, Table, vstack
 from astropy.table import TableMergeError
 
-from aperocore.base import base
 from aperocore.base import drs_base
-from aperocore.core import drs_exceptions
+from aperocore.core import drs_log
 from aperocore.constants import param_functions
 from aperocore import drs_lang
 from aperocore.core import drs_misc
@@ -57,8 +56,8 @@ display_func = drs_misc.display_func
 # Get the text types
 textentry = drs_lang.textentry
 # get DRS exceptions
-DrsCodedException = drs_exceptions.DrsCodedException
-DrsCodedWarning = drs_exceptions.DrsCodedWarning
+AperoCodedException = drs_log.AperoCodedException
+AperoCodedWarning = drs_log.AperoCodedWarning
 # -----------------------------------------------------------------------------
 # define list of integers
 INTEGERS = (np.int32, np.int64, int)
@@ -108,37 +107,25 @@ def make_table(columns: List[str],
     # make sure we have as many columns as we do values
     if lcol != len(values):
         eargs = [lcol, len(values), func_name]
-        emsg = textentry('01-002-00001', args=eargs)
-        raise DrsCodedException('01-002-00001', level='error',
-                                targs=eargs, func_name=func_name,
-                                message=emsg)
+        raise AperoCodedException(None, '01-002-00001', targs=eargs)
 
     # make sure if we have formats we have as many as columns
     if formats is not None:
         if lcol != len(formats):
             eargs = [lcol, len(formats), func_name]
-            emsg = textentry('01-002-00002', args=eargs)
-            raise DrsCodedException('01-002-00002', level='error',
-                                    targs=eargs, func_name=func_name,
-                                    message=emsg)
+            raise AperoCodedException(None, '01-002-00002', targs=eargs)
     else:
         formats = [None] * len(columns)
     # make sure if we have units we have as many as columns
     if units is not None:
         if lcol != len(units):
             eargs = [lcol, len(units), func_name]
-            emsg = textentry('01-002-00003', args=eargs)
-            raise DrsCodedException('01-002-00003', level='error',
-                                    targs=eargs, func_name=func_name,
-                                    message=emsg)
+            raise AperoCodedException(None, '01-002-00003', targs=eargs)
     # make sure that the values in values are the same length
     lval1 = len(values[0])
     for value in values:
         if len(value) != lval1:
-            emsg = textentry('01-002-00004', args=[func_name])
-            raise DrsCodedException('01-002-00004', level='error',
-                                    targs=[func_name], func_name=func_name,
-                                    message=emsg)
+            raise AperoCodedException(None, '01-002-00004', targs=[func_name])
     # now construct the table
     for c_it, col in enumerate(columns):
         # get value for this iteration
@@ -151,10 +138,7 @@ def make_table(columns: List[str],
                 table[col].format = formats[c_it]
             else:
                 eargs = [formats[c_it], col, func_name]
-                emsg = textentry('01-002-00005', args=eargs)
-                raise DrsCodedException('01-002-00005', level='error',
-                                        targs=eargs, func_name=func_name,
-                                        message=emsg)
+                raise AperoCodedException(None, '01-002-00005', targs=eargs)
         # if we have units set the unit
         if units is not None:
             table[col].unit = units[c_it]
@@ -207,20 +191,13 @@ def write_table(params: ParamDict, table: Table, filename: str,
     # check that format in format_table
     if fmt not in ftable['Format']:
         eargs = [fmt, func_name]
-        emsg = textentry('01-002-00006', args=eargs)
-        raise DrsCodedException('01-002-00006', level='error',
-                                targs=eargs, func_name=func_name,
-                                message=emsg)
-
+        raise AperoCodedException(params, '01-002-00006', targs=eargs)
     # else check that we can read file
     else:
         pos = np.where(ftable['Format'] == fmt)[0][0]
         if not ftable['write?'][pos]:
             eargs = [fmt, func_name]
-            emsg = textentry('01-002-00007', args=eargs)
-            raise DrsCodedException('01-002-00007', level='error',
-                                    targs=eargs, func_name=func_name,
-                                    message=emsg)
+            raise AperoCodedException(params, '01-002-00007', targs=eargs)
     # ----------------------------------------------------------------------
     # define a synchoronized lock for indexing (so multiple instances do not
     #  run at the same time)
@@ -230,8 +207,7 @@ def write_table(params: ParamDict, table: Table, filename: str,
     # -------------------------------------------------------------------------
     # must check that a pid is set
     if params['PID'] is None:
-        raise DrsCodedException('10-005-00006', level='error',
-                                func_name=func_name)
+        raise AperoCodedException(params, '10-005-00006')
     else:
         pid = params['PID']
 
@@ -246,10 +222,7 @@ def write_table(params: ParamDict, table: Table, filename: str,
         except Exception as exception:
             # log error
             _eargs = [type(exception), exception, func_name]
-            _emsg = textentry('01-002-00008', args=_eargs)
-            raise DrsCodedException('01-002-00008', level='error',
-                                    targs=_eargs, func_name=func_name,
-                                    message=_emsg)
+            raise AperoCodedException(params, '01-002-00008', targs=_eargs)
         if (fmt == 'fits') and (header is not None):
             # reload fits data
             data, filehdr = fits.getdata(filename, header=True)
@@ -263,10 +236,7 @@ def write_table(params: ParamDict, table: Table, filename: str,
             except Exception as exception:
                 # log error
                 _eargs = [type(exception), exception, func_name]
-                _emsg = textentry('01-002-00009', args=_eargs)
-                raise DrsCodedException('01-002-00009', level='error',
-                                        targs=_eargs, func_name=func_name,
-                                        message=_emsg)
+                raise AperoCodedException(params, '01-002-00009', targs=_eargs)
 
     # -------------------------------------------------------------------------
     # try to run locked makedirs
@@ -319,10 +289,7 @@ def merge_table(params: ParamDict, table: Table, filename: str,
             new_table = vstack([old_table, table])
         except TableMergeError as e:
             eargs = [filename, type(e), e, func_name]
-            emsg = textentry('01-002-00010', args=eargs)
-            raise DrsCodedException('01-002-00010', level='error',
-                                    targs=eargs, func_name=func_name,
-                                    message=emsg)
+            raise AperoCodedException(params, '01-002-00010', targs=eargs)
         # write new table
         write_table(params, new_table, filename, fmt)
     # else just write the table
@@ -369,28 +336,18 @@ def read_table(params: ParamDict, filename: str, fmt: str,
     # check that format in format_table
     if fmt not in ftable['Format']:
         eargs = [fmt, func_name]
-        emsg = textentry('01-002-00006', args=eargs)
-        raise DrsCodedException('01-002-00006', level='error',
-                                targs=eargs, func_name=func_name,
-                                message=emsg)
-
+        raise AperoCodedException(params, '01-002-00006', targs=eargs)
     # else check that we can read file
     else:
         pos = np.where(ftable['Format'] == fmt)[0][0]
         if not ftable['read?'][pos]:
             eargs = [fmt, func_name]
-            emsg = textentry('01-002-00008', args=eargs)
-            raise DrsCodedException('01-002-00008', level='error',
-                                    targs=eargs, func_name=func_name,
-                                    message=emsg)
+            raise AperoCodedException(params, '01-002-00008', targs=eargs)
 
     # check that filename exists
     if not os.path.exists(filename):
         eargs = [filename, func_name]
-        emsg = textentry('01-002-00011', args=eargs)
-        raise DrsCodedException('01-002-00011', level='error',
-                                targs=eargs, func_name=func_name,
-                                message=emsg)
+        raise AperoCodedException(params, '01-002-00011', targs=eargs)
 
     # remove data_start for fits files
     if (fmt in ['fits']) and ('data_start' in kwargs):
@@ -402,18 +359,12 @@ def read_table(params: ParamDict, filename: str, fmt: str,
             table = Table.read(filename, format=fmt, **kwargs)
     except Exception as e:
         eargs = [type(e), e, filename, func_name]
-        emsg = textentry('01-002-00012', args=eargs)
-        raise DrsCodedException('01-002-00012', level='error',
-                                targs=eargs, func_name=func_name,
-                                message=emsg)
+        raise AperoCodedException(params, '01-002-00012', targs=eargs)
     # if we have colnames rename the columns
     if colnames is not None:
         if len(colnames) > len(table.colnames):
             eargs = [len(colnames), len(table.colnames), filename, func_name]
-            emsg = textentry('01-002-00013', args=eargs)
-            raise DrsCodedException('01-002-00013', level='error',
-                                    targs=eargs, func_name=func_name,
-                                    message=emsg)
+            raise AperoCodedException(params, '01-002-00013', targs=eargs)
         # rename old names to new names
         oldcols = table.colnames
         for c_it, col in enumerate(colnames):
@@ -509,10 +460,7 @@ def read_fits_table(params: ParamDict, filename: str,
     # check that filename exists
     if not os.path.exists(filename):
         eargs = [filename, func_name]
-        emsg = textentry('01-002-00014', args=eargs)
-        raise DrsCodedException('01-002-00014', level='error',
-                                targs=eargs, func_name=func_name,
-                                message=emsg)
+        raise AperoCodedException(params, '01-002-00014', targs=eargs)
     # read data
     try:
         with warnings.catch_warnings(record=True) as _:
@@ -524,10 +472,7 @@ def read_fits_table(params: ParamDict, filename: str,
     except Exception as e:
         # display error
         eargs = [filename, type(e), e, func_name]
-        emsg = textentry('01-002-00015', args=eargs)
-        raise DrsCodedException('01-002-00015', level='error',
-                                targs=eargs, func_name=func_name,
-                                message=emsg)
+        raise AperoCodedException(params, '01-002-00015', targs=eargs)
     # return dict if return_dict is True
     if return_dict:
         # set up dictionary for storage
@@ -565,10 +510,7 @@ def write_fits_table(params: ParamDict, astropy_table: Table,
     # check directory exists
     if not os.path.exists(dir_name):
         eargs = [dir_name, func_name]
-        emsg = textentry('01-002-00016', args=eargs)
-        raise DrsCodedException('01-002-00016', level='error',
-                                targs=eargs, func_name=func_name,
-                                message=emsg)
+        raise AperoCodedException(params, '01-002-00016', targs=eargs)
     # get backup file name
     backup_file = output_filename.replace('.fits', '.fits.back')
     # deal with file already existing
@@ -581,10 +523,7 @@ def write_fits_table(params: ParamDict, astropy_table: Table,
         except Exception as e:
             # log error
             eargs = [output_filename, type(e), e, func_name]
-            emsg = textentry('01-002-00023', args=eargs)
-            raise DrsCodedException('01-002-00023', level='error',
-                                    targs=eargs, func_name=func_name,
-                                    message=emsg)
+            raise AperoCodedException(params, '01-002-00023', targs=eargs)
     # write data
     try:
         # write file
@@ -603,10 +542,7 @@ def write_fits_table(params: ParamDict, astropy_table: Table,
             shutil.copy(backup_file, output_filename)
         # log error
         eargs = [output_filename, type(e), e, func_name]
-        emsg = textentry('01-002-00017', args=eargs)
-        raise DrsCodedException('01-002-00017', level='error',
-                                targs=eargs, func_name=func_name,
-                                message=emsg)
+        raise AperoCodedException(params, '01-002-00017', targs=eargs)
 
 
 def deal_with_missing_end_card(params: ParamDict, filename: str,
@@ -654,29 +590,17 @@ def deal_with_missing_end_card(params: ParamDict, filename: str,
         ext = 1
     else:
         eargs = [filename, type(exception), exception, func_name]
-        emsg = textentry('01-002-00018', args=eargs)
-        raise DrsCodedException('01-002-00018', level='error',
-                                targs=eargs, func_name=func_name,
-                                message=emsg)
+        raise AperoCodedException(params, '01-002-00018', targs=eargs)
     # test that we have columns and names
     if not hasattr(data, 'columns'):
         eargs = [filename, type(exception), exception, func_name]
-        emsg = textentry('01-002-00019', args=eargs)
-        raise DrsCodedException('01-002-00019', level='error',
-                                targs=eargs, func_name=func_name,
-                                message=emsg)
+        raise AperoCodedException(params, '01-002-00019', targs=eargs)
     if not hasattr(data.columns, 'names'):
         eargs = [filename, type(exception), exception, func_name]
-        emsg = textentry('01-002-00020', args=eargs)
-        raise DrsCodedException('01-002-00020', level='error',
-                                targs=eargs, func_name=func_name,
-                                message=emsg)
+        raise AperoCodedException(params, '01-002-00020', targs=eargs)
     # print warning
     wargs = [type(exception), exception, ext, filename, func_name]
-    wmsg = textentry('10-001-00006', args=wargs)
-    # log warning
-    DrsCodedWarning('10-001-00006', level='warning', targs=wargs,
-                    message=wmsg)
+    AperoCodedWarning(params, '10-001-00006', targs=wargs)
     # convert data to astropy table
     astropy_table = Table()
     for col in data.columns.names:
@@ -839,20 +763,14 @@ def prep_merge(params: ParamDict, filename: str, table: Table,
         # check for column name
         if col not in table.colnames:
             eargs = [col, filename, func_name]
-            emsg = textentry('01-002-00021', args=eargs)
-            raise DrsCodedException('01-002-00021', level='error',
-                                    targs=eargs, func_name=func_name,
-                                    message=emsg)
+            raise AperoCodedException(params, '01-002-00021', targs=eargs)
         # check format
         if table[col].dtype != pformat:
             try:
                 newtable[col] = np.array(table[col]).astype(pformat)
             except Exception as e:
                 eargs = [col, filename, type(e), e, func_name]
-                emsg = textentry('01-002-00022', args=eargs)
-                raise DrsCodedException('01-002-00022', level='error',
-                                        targs=eargs, func_name=func_name,
-                                        message=emsg)
+                raise AperoCodedException(params, '01-002-00022', targs=eargs)
         else:
             newtable[col] = table[col]
     # return prepped table

@@ -35,6 +35,7 @@ from aperocore.core import drs_exceptions
 from aperocore.core import drs_misc
 from apero.tools.module.processing import drs_grouping_functions as drsgf
 from apero.base import base as apero_base
+from aperocore.core import drs_log
 
 # =============================================================================
 # Define variables
@@ -50,6 +51,8 @@ __release__ = apero_base.__release__
 display_func = drs_misc.display_func
 # get argument class
 DrsArgument = drs_argument.DrsArgument
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # define complex type argdict
 ArgDictType = Union[Dict[str, Table], OrderedDict, None]
 RunType = List[Dict[str, Any]]
@@ -321,9 +324,7 @@ def group_by_dirname(rargs: Dict[str, DrsArgument],
         elif group_filter is not None:
             # raise exception: Cannot use group filter with more than
             #                  1 file argument
-            raise drs_exceptions.DrsCodedException('00-006-00025', 'error',
-                                                   targs=[func_name],
-                                                   func_name=func_name)
+            raise AperoCodedException(None, '00-006-00025', targs=[func_name])
         else:
             # else we just have one mask and it is all Trues --> i.e. no
             #   filter mask
@@ -369,9 +370,8 @@ def group_by_dirname(rargs: Dict[str, DrsArgument],
                         #     astropy table
                         eargs = [argname, drsfiletype, func_name]
                         ekwargs = dict(targs=eargs, func_name=func_name)
-                        raise drs_exceptions.DrsCodedException('00-006-00024',
-                                                               'error',
-                                                               **ekwargs)
+                        raise AperoCodedException(None, '00-006-00024',
+                                                  targs=eargs)
                     # deal with no table --> no files for this argument
                     if table1 is None:
                         valid = False
@@ -846,9 +846,7 @@ def _get_raw_table(alldict: dict, first_arg: str,
         func_name = display_func('_get_raw_table', __NAME__)
         # raise error: alldict[{0}][{1}] is not a valid astropy table
         eargs = [first_arg, drsfiletype, func_name]
-        raise drs_exceptions.DrsCodedException('00-006-00024', 'error',
-                                               targs=eargs,
-                                               func_name=func_name)
+        raise AperoCodedException(None, '00-006-00024', targs=eargs)
 
 
 # =============================================================================

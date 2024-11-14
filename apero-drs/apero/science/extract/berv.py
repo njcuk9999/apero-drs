@@ -43,8 +43,6 @@ Time, TimeDelta = base.AstropyTime, base.AstropyTimeDelta
 ParamDict = param_functions.ParamDict
 # get drs file
 DrsFitsFile = drs_file.DrsFitsFile
-# Get exceptions
-DrsCodedException = drs_exceptions.DrsCodedException
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types

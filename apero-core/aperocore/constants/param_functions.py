@@ -30,6 +30,7 @@ from aperocore.core import drs_exceptions
 from aperocore.core import drs_misc
 from aperocore.core import drs_text
 from aperocore.constants import constant_functions
+from aperocore.core import drs_log
 
 # =============================================================================
 # Define variables
@@ -43,8 +44,8 @@ __authors__ = base.__authors__
 __date__ = base.__date__
 __release__ = base.__release__
 # get the Drs Exceptions
-DrsCodedException = drs_exceptions.DrsCodedException
-DrsCodedWarning = drs_exceptions.DrsCodedWarning
+AperoCodedException = drs_log.AperoCodedException
+AperoCodedWarning = drs_log.AperoCodedWarning
 # relative folder cache
 REL_CACHE = dict()
 # cache some settings
@@ -62,7 +63,7 @@ display_func = drs_misc.display_func
 # =============================================================================
 Const, Keyword = constant_functions.Const, constant_functions.Keyword
 
-Exceptions = Union[DrsCodedException]
+Exceptions = Union[AperoCodedException]
 
 ModLoads = Tuple[List[str], List[Any], List[str], List[Union[Const, Keyword]]]
 
@@ -135,7 +136,7 @@ class ParamDict(CaseInDict):
 
         :type key: str
         :return value: object, the value stored at position "key"
-        :raises DrsCodedException: if key not found
+        :raises AperoCodedException: if key not found
         """
         # set function name
         func_name = display_func('__getitem__', __NAME__, self.class_name)
@@ -147,8 +148,7 @@ class ParamDict(CaseInDict):
             return super(ParamDict, self).__getitem__(key)
         except KeyError:
             # log that parameter was not found in parameter dictionary
-            raise DrsCodedException('00-003-00024', targs=[key], level='error',
-                                    func_name=func_name)
+            raise AperoCodedException(None, '00-003-00023', targs=[key])
 
     def __setitem__(self, key: str, value: object,
                     source: Union[None, str] = None,
@@ -165,7 +165,7 @@ class ParamDict(CaseInDict):
         :type instance: Union[None, object]
 
         :return: None
-        :raises DrsCodedException: if parameter dictionary is locked
+        :raises AperoCodedException: if parameter dictionary is locked
         """
         global SETTINGS_CACHE
         # set function name
@@ -173,8 +173,7 @@ class ParamDict(CaseInDict):
         # deal with parameter dictionary being locked
         if self.locked:
             # log that parameter dictionary is locked so we cannot set key
-            raise DrsCodedException('00-003-00025', targs=[key, value],
-                                    level='error', func_name=func_name)
+            raise AperoCodedException(None, '00-003-00025', targs=[key, value])
         # if we dont have the key in sources set it regardless
         if key not in self.sources:
             self.sources[key] = source
@@ -329,7 +328,7 @@ class ParamDict(CaseInDict):
         """
         Set a key to have sources[key] = source
 
-        raises a DrsCodedException if key not found
+        raises a AperoCodedException if key not found
 
         :param key: string, the main dictionary string
         :param source: string, the source to set
@@ -338,7 +337,7 @@ class ParamDict(CaseInDict):
         :type source: str
 
         :return None:
-        :raises DrsCodedException: if key not found
+        :raises AperoCodedException: if key not found
         """
         global CHECKED_SOURCES
         # set function name
@@ -363,8 +362,7 @@ class ParamDict(CaseInDict):
                 self.source_history[key] = [_source]
         else:
             # log error: source cannot be added for key
-            raise DrsCodedException('00-003-00026', targs=[key], level='error',
-                                    func_name=func_name)
+            raise AperoCodedException(None, '00-003-00026', targs=[key])
 
     def set_instance(self, key: str, instance: Union[None, Const, Keyword]):
         """
@@ -379,7 +377,7 @@ class ParamDict(CaseInDict):
         :type key: str
 
         :return None:
-        :raises DrsCodedException: if key not found
+        :raises AperoCodedException: if key not found
         """
         # set function name
         func_name = display_func('set_instance', __NAME__,
@@ -391,8 +389,7 @@ class ParamDict(CaseInDict):
             self.instances[key] = instance
         else:
             # log error: instance cannot be added for key
-            raise DrsCodedException('00-003-00027', targs=[key], level='error',
-                                    func_name=func_name)
+            raise AperoCodedException(None, '00-003-00027', targs=[key])
 
     def append_source(self, key: str, source: str):
         """
@@ -420,7 +417,7 @@ class ParamDict(CaseInDict):
         """
         Set a list of keys sources
 
-        raises a DrsCodedException if key not found
+        raises a AperoCodedException if key not found
 
         :param keys: list of strings, the list of keys to add sources for
         :param sources: string or list of strings or dictionary of strings,
@@ -455,7 +452,7 @@ class ParamDict(CaseInDict):
         """
         Set a list of keys sources
 
-        raises a DrsCodedException if key not found
+        raises a AperoCodedException if key not found
 
         :param keys: list of strings, the list of keys to add sources for
         :param instances: object or list of objects or dictionary of objects,
@@ -490,7 +487,7 @@ class ParamDict(CaseInDict):
         """
         Adds list of keys sources (appends if exists)
 
-        raises a DrsCodedException if key not found
+        raises a AperoCodedException if key not found
 
         :param keys: list of strings, the list of keys to add sources for
         :param sources: string or list of strings or dictionary of strings,
@@ -558,7 +555,7 @@ class ParamDict(CaseInDict):
         """
         Get a source from the parameter dictionary (must be set)
 
-        raises a DrsCodedException if key not found
+        raises a AperoCodedException if key not found
 
         :param key: string, the key to find (must be set)
 
@@ -574,14 +571,13 @@ class ParamDict(CaseInDict):
         # else raise a Config Error
         else:
             # log error: no source set for key
-            raise DrsCodedException('00-003-00028', targs=[key], level='error',
-                                    func_name=func_name)
+            raise AperoCodedException(None, '00-003-00028', targs=[key])
 
     def get_instance(self, key: str) -> Union[None, Const, Keyword]:
         """
         Get a source from the parameter dictionary (must be set)
 
-        raises a DrsCodedException if key not found
+        raises a AperoCodedException if key not found
 
         :param key: string, the key to find (must be set)
 
@@ -597,8 +593,7 @@ class ParamDict(CaseInDict):
             return self.instances[key]
         # else raise a Config Error
         else:
-            raise DrsCodedException('00-003-00029', targs=[key], level='error',
-                                    func_name=func_name)
+            raise AperoCodedException(None, '00-003-00029', targs=[key])
 
     def source_keys(self) -> List[str]:
         """
@@ -982,13 +977,11 @@ class ParamDict(CaseInDict):
                 # deal with input not being a list
                 if not isinstance(kinds, list):
                     eargs = [inames[it], func_name]
-                    DrsCodedException('00-001-00056', 'error', targs=eargs,
-                                      func_name=func_name)
+                    raise AperoCodedException(None, '00-001-00056', targs=eargs)
                 # deal with length of input
                 if len(inputs[it]) != length:
                     eargs = [inames[it], len(inputs[it]), length, func_name]
-                    DrsCodedException('00-001-00055', 'error', targs=eargs,
-                                      func_name=func_name)
+                    raise AperoCodedException(None, '00-001-00055', targs=eargs)
         # ---------------------------------------------------------------------
         # extract out hdict values
         names, kinds, values, sources, descs = _add_hdict(drsfitsfile, names,
@@ -1118,7 +1111,7 @@ class PCheck:
         Constructor for checking a parameter dictionary
 
         :param wlog: Either None or the wlog (for printing) if wlog is not
-                     defined may have to catch a DrsCodedException
+                     defined may have to catch a AperoCodedException
                      (can put in here or in the call)
         """
         # set class name
@@ -1194,7 +1187,7 @@ class PCheck:
          :param default: object, the default value of key if not found (if None
                          does not set and raises error if required=True)
          :param wlog: Either None or the wlog (for printing) if wlog is not defined
-                      may have to catch a DrsCodedException
+                      may have to catch a AperoCodedException
                       (can put in here or before in the __init__)
         :param override: Any, an override value if set takes precendence over
                          other values
@@ -1230,11 +1223,7 @@ class PCheck:
             paramdict = ParamDict(paramdict)
         # deal with key being None
         if key is None and name is None:
-            if wlog is not None:
-                wlog(params, 'error', textentry('00-003-00004'))
-            else:
-                raise DrsCodedException('00-003-00004', level='error',
-                                        func_name=func_name)
+            raise AperoCodedException(None, '00-003-00004')
         elif key is None:
             key = 'Not set'
         # deal with no kwargs
@@ -1270,12 +1259,7 @@ class PCheck:
             return copy.deepcopy(default)
         elif not_in_paramdict and not_in_rkwargs:
             eargs = [key, func]
-            if wlog is not None:
-                wlog(params, 'error', textentry('00-003-00001', args=eargs))
-            else:
-                raise DrsCodedException('00-003-00001', level='error',
-                                        targs=eargs, func_name=func_name)
-            return copy.deepcopy(default)
+            raise AperoCodedException(None, '00-003-00001', targs=eargs)
         elif name in rkwargs:
             return copy.deepcopy(rkwargs[name])
         else:
@@ -1328,7 +1312,7 @@ def get_module_names(instrument: str, package: str,
                  return_paths = True -> path1/path2/filename.py
                  return_paths = False -> path1.path2.filename
 
-    :raises DrsCodedException: on exceptions
+    :raises AperoCodedException: on exceptions
     """
     # set function name
     func_name = display_func('_get_module_names', __NAME__)
@@ -1376,21 +1360,19 @@ def get_module_names(instrument: str, package: str,
         if not found:
             # log error: dev error module {0} is required to have class {1}
             eargs = [mod, fpath, func_name]
-            raise DrsCodedException('00-001-00047', targs=eargs, level='error',
-                                    func_name=func_name)
+            raise AperoCodedException(None, '00-001-00047', targs=eargs)
         # append mods
         mods.append(mod)
         paths.append(fpath)
     # make sure we found something
     if len(mods) == 0:
         # log error: DevError: no config directories found
-        raise DrsCodedException('00-001-00048', targs=[func_name], level='error',
-                                func_name=func_name)
+        raise AperoCodedException(None, '00-001-00048', targs=[func_name])
+    
     if len(mods) != len(mod_list):
         # log error: DevError: Const mod scripts missing
         eargs = [','.join(mods), ','.join(mod_list), func_name]
-        raise DrsCodedException('00-001-000479', targs=eargs, level='error',
-                                func_name=func_name)
+        raise AperoCodedException(None, '00-001-000479', targs=eargs)
     # return modules
     if return_paths:
         return paths
@@ -1398,7 +1380,7 @@ def get_module_names(instrument: str, package: str,
         return mods
 
 
-def print_error(error: DrsCodedException):
+def print_error(error: AperoCodedException):
     """
     Print an exceptions message/level etc
 
@@ -1550,8 +1532,7 @@ def _map_listparameter(value: Union[str, list], separator: str = ',',
             return list(map(lambda x: x.strip(), listparameter))
     except Exception as e:
         eargs = [value, type(e), e, func_name]
-        raise DrsCodedException('00-003-00002', targs=eargs, level='error',
-                                func_name=func_name)
+        raise AperoCodedException(None, '00-003-00002', targs=eargs)
 
 
 def _map_dictparameter(value: str, dtype: Union[None, Type] = None) -> dict:
@@ -1582,8 +1563,7 @@ def _map_dictparameter(value: str, dtype: Union[None, Type] = None) -> dict:
             return returndict
     except Exception as e:
         eargs = [value, type(e), e, func_name]
-        raise DrsCodedException('00-003-00003', targs=eargs, level='error',
-                                func_name=func_name)
+        raise AperoCodedException(None, '00-003-00003', targs=eargs)
 
 
 def _yaml_walk(yaml_dict) -> Tuple[list, list]:

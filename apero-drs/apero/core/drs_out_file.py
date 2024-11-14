@@ -15,6 +15,7 @@ from aperocore.constants import param_functions
 from aperocore.core import drs_exceptions
 from aperocore.core import drs_misc
 from apero.base import base as apero_base
+from aperocore.core import drs_log
 
 # =============================================================================
 # Define variables
@@ -27,7 +28,7 @@ __authors__ = apero_base.__authors__
 __date__ = apero_base.__date__
 __release__ = apero_base.__release__
 # get exceptions
-DrsCodedException = drs_exceptions.DrsCodedException
+AperoCodedException = drs_log.AperoCodedException
 # get parameter dictionary
 ParamDict = param_functions.ParamDict
 # get display func
@@ -114,26 +115,23 @@ class OutFile:
             func_name = '{0} [{1}]'.format(func, func_name)
         # deal with kwargs that are required
         if infile is None:
-            raise DrsCodedException('00-001-00017', level='error',
-                                    targs=[func_name], func_name=func_name)
+            raise AperoCodedException(params, '00-001-00017', targs=[func_name])
         if outfile is None:
-            raise DrsCodedException('00-001-00018', level='error',
-                                    targs=[func_name], func_name=func_name)
+            raise AperoCodedException(params, '00-001-00018', targs=[func_name])
         # try to get fiber from outfile
         if fiber is None:
             fiber = outfile.fiber
         # deal with fiber being required but still unset
         if outfile.fibers is not None and fiber is None:
             eargs = [outfile, func_name]
-            raise DrsCodedException('00-001-00032', level='error',
-                                    targs=eargs, func_name=func_name)
+            raise AperoCodedException(params, '00-001-00032', targs=eargs)
         # set infile basename
         inbasename = infile.basename
         # infile basename should not be None
         if inbasename is None:
             # raise error: infile.basename must be set when defining infile
             eargs = [infile.name, func_name]
-            raise DrsCodedException('00-004-00017', level='error', targs=eargs)
+            raise AperoCodedException(params, '00-001-00017', targs=eargs)
         # get condition to remove input file prefix
         if remove_insuffix is None:
             remove_insuffix = outfile.remove_insuffix
@@ -172,8 +170,8 @@ class OutFile:
                 outpath = None
             # check if outpath is set
             if outpath is None:
-                raise DrsCodedException('01-001-00023', level='error',
-                                        targs=[func_name], func_name=func_name)
+                raise AperoCodedException(params, '01-001-00023', 
+                                          targs=[func_name])
             # get output night name from params
             if params['OBS_DIR'] is None:
                 obs_dir = ''
@@ -241,19 +239,16 @@ class GeneralOutFile(OutFile):
             func_name = '{0} [{1}]'.format(func, func_name)
         # deal with kwargs that are required
         if infile is None:
-            raise DrsCodedException('00-001-00017', level='error',
-                                    targs=[func_name], func_name=func_name)
+            raise AperoCodedException(params, '00-001-00017', targs=[func_name])
         if outfile is None:
-            raise DrsCodedException('00-001-00018', level='error',
-                                    targs=[func_name], func_name=func_name)
+            raise AperoCodedException(params, '00-001-00018', targs=[func_name])
         # try to get fiber from outfile
         if fiber is None:
             fiber = outfile.fiber
         # deal with fiber being required but still unset
         if outfile.fibers is not None and fiber is None:
             eargs = [outfile, func_name]
-            raise DrsCodedException('00-001-00032', level='error',
-                                    targs=eargs, func_name=func_name)
+            raise AperoCodedException(params, '00-001-00032', targs=eargs)
         # set infile basename
         inbasename = infile.basename
         # get condition to remove input file prefix
@@ -294,8 +289,8 @@ class GeneralOutFile(OutFile):
                 outpath = None
             # check if outpath is set
             if outpath is None:
-                raise DrsCodedException('01-001-00023', level='error',
-                                        targs=[func_name], func_name=func_name)
+                raise AperoCodedException(params, '01-001-00023',
+                                          targs=[func_name])
             # get output night name from params
             if params['OBS_DIR'] is None:
                 obs_dir = ''
@@ -363,13 +358,11 @@ class NpyOutFile(GeneralOutFile):
 
         # get out file and report error if not set
         if outfile is None:
-            raise DrsCodedException('00-001-00018', level='error',
-                                    targs=[func_name], func_name=func_name)
+            raise AperoCodedException(params, '00-001-00018', targs=[func_name])
         # make sure filetype is .npy
         filetype = outfile.filetype
         if '.npy' not in filetype:
-            raise DrsCodedException('00-001-00033', level='error',
-                                    targs=[filetype], func_name=func_name)
+            raise AperoCodedException(params, '00-001-00033', targs=[filetype])
         # update keywords func name
         return super().construct(params, infile, outfile, func=func_name)
 
@@ -491,8 +484,7 @@ class BlankOutFile(OutFile):
         # deal with kwargs that are required
         if infile is None:
             _ = outfile
-            raise DrsCodedException('00-001-00017', level='error',
-                                    targs=[func_name], func_name=func_name)
+            raise AperoCodedException(params, '00-001-00017', targs=[func_name])
         # return absolute path
         return infile.filename
 
@@ -551,15 +543,13 @@ class SetOutFile(OutFile):
         # deal with no outfile set
         if outfile is None:
             _ = infile
-            raise DrsCodedException('00-001-00018', level='error',
-                                    targs=[func_name], func_name=func_name)
+            raise AperoCodedException(params, '00-001-00018', targs=[func_name])
         # get filename from outfile if None
         if filename is None:
             filename = outfile.basename
         # deal with no file name set and filename must be a basename (no path)
         if filename is None:
-            raise DrsCodedException('00-001-00041', level='error',
-                                    targs=[func_name], func_name=func_name)
+            raise AperoCodedException(params, '00-001-00041', targs=[func_name])
         else:
             filename = os.path.basename(filename)
         # get extension
@@ -578,16 +568,16 @@ class SetOutFile(OutFile):
             outpath = params['OUTPATH']
             # check if outpath is set
             if outpath is None:
-                raise DrsCodedException('01-001-00023', level='error',
-                                        targs=[func_name], func_name=func_name)
+                raise AperoCodedException(params, '01-001-00023',
+                                          targs=[func_name])
             # get output night name from params
             obs_dir = params['OBS_DIR']
             # make sure night name folder exists (create it if not)
             make_obs_dir(obs_dir, outpath)
             # construct absolute path
-            abspath = os.path.join(outpath, obs_dir, outfilename)
+            abspath = str(os.path.join(outpath, obs_dir, outfilename))
         else:
-            abspath = os.path.join(path, outfilename)
+            abspath = str(os.path.join(path, outfilename))
         # return absolute path
         return abspath
 
@@ -636,15 +626,16 @@ class LBLOutFile(OutFile):
         path = path.format(obj=objname, temp=tempname)
         # give error if filetype is not defined
         if drsfile.filetype is None:
+            # TODO: Add to language database
             emsg = 'LBL file definition must have a filetype'
-            # TODO: Change to DrsCodedException
-            raise ValueError(emsg)
+            raise AperoCodedException(params, message=emsg)
 
         if drsfile.basename is not None:
             if objname is None or tempname is None:
-                # TODO: Change to DrsCodedException
+                # TODO: Add to language database
                 emsg = 'LBL file definition must have objname and tempname'
-                raise ValueError(emsg)
+                raise AperoCodedException(params, message=emsg)
+            
             basename = drsfile.basename.format(obj=objname, temp=tempname)
 
         elif drsfile.suffix is not None:
@@ -652,9 +643,9 @@ class LBLOutFile(OutFile):
             basename = '{0}{1}'.format(inprefix, suffix)
 
         else:
+            # TODO: Add to language database
             emsg = 'LBL file definition must have a basename or suffix'
-            # TODO: Change to DrsCodedException
-            raise ValueError(emsg)
+            raise AperoCodedException(params, message=emsg)
         # ---------------------------------------------------------------------
         # add the in suffix if given
         if insuffix is not None:
@@ -958,8 +949,7 @@ def get_outfilename(infilename: str, prefix: Union[str, None] = None,
         outfilename = str(infilename[:-len(inext)])
     else:
         eargs = [infilename, inext, func_name]
-        raise DrsCodedException('00-001-00031', level='error',
-                                targs=eargs, func_name=func_name)
+        raise AperoCodedException(None, '00-001-00031', targs=eargs)
     # add prefix and suffix
     if prefix is not None:
         outfilename = '{0}{1}'.format(prefix, outfilename)
@@ -1011,15 +1001,13 @@ def make_obs_dir(obs_dir: Union[str, None], path: str) -> str:
             os.chdir(cwd)
         except Exception as e:
             eargs = [rel_path, path, type(e), e, func_name]
-            raise DrsCodedException('09-003-00002', level='error',
-                                    targs=eargs, func_name=func_name)
+            raise AperoCodedException(None, '09-003-00002', targs=eargs)
     # try to see if path exists one last time
     if os.path.exists(full_path):
         return full_path
     else:
         eargs = [rel_path, path, func_name]
-        raise DrsCodedException('09-003-00003', level='error',
-                                targs=eargs, func_name=func_name)
+        raise AperoCodedException(None, '09-003-00003', targs=eargs)
 
 
 # =============================================================================

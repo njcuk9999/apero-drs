@@ -19,7 +19,7 @@ from apero.base import base as apero_base
 from aperocore.core import drs_db
 from aperocore.constants.param_functions import ParamDict
 from aperocore.core import drs_exceptions
-from aperocore.core import drs_base_classes as base_class
+from aperocore.core import drs_log
 from aperocore.core import drs_misc
 from aperocore.core import drs_text
 from apero.instruments.default import instrument as instrument_mod
@@ -39,7 +39,7 @@ Time, TimeDelta = base.AstropyTime, base.AstropyTimeDelta
 # Get the Database Columns class
 DatabaseColumns = drs_db.AperoDatabaseColumns
 # get error
-DrsCodedException = drs_exceptions.DrsCodedException
+AperoCodedException = drs_log.AperoCodedException
 # get display func
 display_func = drs_misc.display_func
 # null text
@@ -554,8 +554,7 @@ class Spirou(instrument_mod.Instrument):
             # deal with key not existing
             if key1 not in params:
                 eargs = [key1]
-                raise DrsCodedException('00-001-00052', 'error', targs=eargs,
-                                        func_name=func_name)
+                raise AperoCodedException(params, '00-001-00052', targs=eargs)
             # if key exists add it for this fiber
             else:
                 fiberparams[key] = params[key1]
@@ -926,8 +925,7 @@ def constuct_objname(params: Union[ParamDict, None], pconst, header,
         # get raw object name
         if kwrawobjname not in header:
             eargs = [kwrawobjname, filename]
-            raise DrsCodedException('01-001-00027', 'error', targs=eargs,
-                                    func_name=func_name)
+            raise AperoCodedException(params, '00-001-00052', targs=eargs)
         else:
             rawobjname = header[kwrawobjname]
     # else just set up blank parameters
@@ -943,8 +941,7 @@ def constuct_objname(params: Union[ParamDict, None], pconst, header,
         # get raw object name
         if kwrawobjname not in header:
             eargs = [kwrawobjname, filename]
-            raise DrsCodedException('01-001-00027', 'error', targs=eargs,
-                                    func_name=func_name)
+            raise AperoCodedException(params, '00-001-00052', targs=eargs)
         rawobjname = header[kwrawobjname]
     # -------------------------------------------------------------------------
     if check_aliases and objdbm is not None:
@@ -1021,15 +1018,13 @@ def get_trg_type(params: ParamDict, header: Any, hdict: Any,
     # get objname
     if kwobjname not in header:
         eargs = [kwobjname, filename]
-        raise DrsCodedException('01-001-00027', 'error', targs=eargs,
-                                func_name=func_name)
+        raise AperoCodedException(params, '00-001-00027', targs=eargs)
 
     objname = header[kwobjname]
     # get obstype
     if kwobstype not in header:
         eargs = [kwobstype, filename]
-        raise DrsCodedException('01-001-00027', 'error', targs=eargs,
-                                func_name=func_name)
+        raise AperoCodedException(params, '00-001-00027', targs=eargs)
 
     obstype = header[kwobstype]
     # get list of object names
@@ -1110,8 +1105,7 @@ def get_mid_obs_time(params: ParamDict, header: Any, hdict: Any,
     # get exptime
     if exp_timekey not in header:
         eargs = [exp_timekey, filename]
-        raise DrsCodedException('01-001-00027', 'error', targs=eargs,
-                                func_name=func_name)
+        raise AperoCodedException(params, '00-001-00027', targs=eargs)
     exptime = timetype(header[exp_timekey])
     # -------------------------------------------------------------------
     # get header time
@@ -1162,8 +1156,6 @@ def get_header_time(params: ParamDict, header: Any,
 
     :return: astropy.Time instance for the header time
     """
-    # set function name
-    func_name = display_func('get_header_time', __NAME__)
     # get acqtime
     time_key = params['KW_ACQTIME'][0]
     timefmt = params.instances['KW_ACQTIME'].datatype
@@ -1172,8 +1164,7 @@ def get_header_time(params: ParamDict, header: Any,
     # get time key from header
     if time_key not in header:
         eargs = [time_key, filename]
-        raise DrsCodedException('01-001-00027', 'error', targs=eargs,
-                                func_name=func_name)
+        raise AperoCodedException(params, '00-001-00027', targs=eargs)
 
     rawtime = header[time_key]
     # ----------------------------------------------------------------------

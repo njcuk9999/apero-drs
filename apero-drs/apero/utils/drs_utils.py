@@ -50,8 +50,6 @@ pcheck = param_functions.PCheck(wlog=WLOG)
 ParamDict = param_functions.ParamDict
 # get the binary dictionary
 BinaryDict = base_class.BinaryDict
-# get exceptions
-DrsCodedException = drs_exceptions.DrsCodedException
 # get databases
 FileIndexDatabase = drs_database.FileIndexDatabase
 LogDatabase = drs_database.LogDatabase

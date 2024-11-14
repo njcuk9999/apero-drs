@@ -73,7 +73,7 @@ DrsInputFile = drs_file.DrsInputFile
 # Get function string
 display_func = drs_misc.display_func
 # get the Drs Exceptions
-DrsCodedException = drs_exceptions.DrsCodedException
+AperoCodedException = drs_log.AperoCodedException
 # Get the text types
 textentry = drs_lang.textentry
 # recipe control path
@@ -123,7 +123,7 @@ def setup(name: str = 'None', instrument: str = 'None',
     try:
         return __setup__(name, instrument, fkwargs, quiet, threaded,
                          enable_plotter, rmod)
-    except (DrsCodedException, drs_log.DrsLogException) as e:
+    except (AperoCodedException, drs_log.DrsLogException) as e:
         WLOG(None, 'error', str(e), raise_exception=False)
         end_all(None, False, recipename=name)
         sys.exit(1)
@@ -524,7 +524,7 @@ def run(func: Any, recipe: DrsRecipe,
                 recipe.log.add_error('LanguageError Exit', '')
             # reset the lock directory
             drs_lock.reset_lock_dir(params)
-        except drs_exceptions.DrsCodedException as e:
+        except AperoCodedException as e:
             # get trace back
             string_trackback = traceback.format_exc()
             # on LogExit was not a success
@@ -2129,12 +2129,7 @@ def find_recipe(name: str = 'None', instrument: str = 'None',
         return empty, None
     if found_recipe is None:
         # may not have access to this
-        # TODO: is this needed?
-        try:
-            WLOG(None, 'error', textentry('00-007-00001', args=[name]))
-        except Exception as _:
-            raise DrsCodedException('00-007-00001', 'error', targs=[name],
-                                    func_name=func_name)
+        raise AperoCodedException(None, '00-007-00001', targs=[name])
     # make a copy of found recipe to return
     copy_recipe = DrsRecipe()
     copy_recipe.copy(found_recipe)

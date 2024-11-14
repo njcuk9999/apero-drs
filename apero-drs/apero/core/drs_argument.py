@@ -70,7 +70,7 @@ DrsInputFile = drs_file.DrsInputFile
 # get index database
 FileIndexDatabase = drs_database.FileIndexDatabase
 # get the config error
-DrsCodedException = drs_exceptions.DrsCodedException
+AperoCodedException = drs_log.AperoCodedException
 # Get pandas like database class
 PandasLikeDatabase = base_class.PandasLikeDatabase
 # PandasLikeDatabase = drs_base_classes.PandasLikeDatabaseDuckDB
@@ -1861,11 +1861,11 @@ class _ActivateDebug(DrsAction):
             self.recipe.params.set('DRS_DEBUG', value)
             # return value
             return value
-        except drs_exceptions.DrsCodedException as e:
-            raise drs_log.AperoCodedException(None, e.codeid, targs=e.targs)
+        except AperoCodedException as e:
+            raise AperoCodedException(None, e.codeid, targs=e.targs)
         except Exception as _:
             eargs = [self.dest, values]
-            raise drs_log.AperoCodedException(None, '09-001-00020', targs=eargs)
+            raise AperoCodedException(None, '09-001-00020', targs=eargs)
 
 
     def __call__(self, parser: DrsArgumentParser,
@@ -3269,8 +3269,7 @@ class DrsArgument(object):
                     # get exception argumnets
                     eargs = [self.name, 'DrsInputFile', func_name]
                     # raise exception
-                    raise DrsCodedException('00-006-00021', level='error',
-                                            targs=eargs, func_name=func_name)
+                    raise AperoCodedException(None, '00-006-00021', targs=eargs)
         # else assume file is a single file (but put it into a list any way)
         else:
             drsfile = files
@@ -3280,8 +3279,7 @@ class DrsArgument(object):
                 # get exception arguments
                 eargs = [self.name, 'DrsInputFile', func_name]
                 # raise exception
-                raise DrsCodedException('00-006-00021', level='error',
-                                        targs=eargs, func_name=func_name)
+                raise AperoCodedException(None, '00-006-00021', targs=eargs)
         # ---------------------------------------------------------------------
         # define the override input path for files (defaults to directory)
         #    Note path can be a parameter in param dict
@@ -3523,8 +3521,7 @@ class DrsArgument(object):
                     # get exception argumnets
                     eargs = [self.name, 'DrsInputFile', func_name]
                     # raise exception
-                    raise DrsCodedException('00-006-00021', level='error',
-                                            targs=eargs, func_name=func_name)
+                    raise AperoCodedException(None, '00-006-00021', targs=eargs)
         # else assume file is a single file (but put it into a list any way)
         else:
             drsfile = argument.files
@@ -3534,8 +3531,7 @@ class DrsArgument(object):
                 # get exception argumnets
                 eargs = [self.name, 'DrsInputFile', func_name]
                 # raise exception
-                raise DrsCodedException('00-006-00021', level='error',
-                                        targs=eargs, func_name=func_name)
+                raise AperoCodedException(None, '00-006-00021', targs=eargs)
         # copy the override input path
         #    Note path can be a parameter in param dict
         self.path = copy.deepcopy(argument.path)
@@ -3599,12 +3595,12 @@ class DrsArgument(object):
                 if isinstance(estr, drs_lang.Text):
                     estr = estr.get_text(report=True)
                 errorout += estr
-            raise DrsCodedException('00-006-00023', 'error', targs=[errorout],
-                                    func_name=func_name, message=errorout)
+            raise AperoCodedException(None, '00-006-00023', targs=[errorout])
+
         # else raise the argument error with just the message
         else:
-            raise DrsCodedException('00-006-00023', 'error', targs=[message],
-                                    func_name=func_name)
+            raise AperoCodedException(None, '00-006-00023', targs=[message])
+
 
     def summary(self, full: bool = False) -> Union[str, Tuple[str, str]]:
         """

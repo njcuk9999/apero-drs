@@ -1077,7 +1077,7 @@ def cache_logger(filepath: str, message: str, code: Union[str, None] = None,
 def get_logfilepath(params: Any, use_group: bool = True) -> str:
     """
     Construct the log file path and filename (normally from "DRS_DATA_MSG"
-    generates an DrsCodedException exception.
+    generates an AperoCodedException exception.
 
     "DRS_DATA_MSG" is defined in "config.py"
 

@@ -93,8 +93,8 @@ PDB_RC_FILE = apero_base.PDB_RC_FILE
 # get Keyword instance
 Keyword = constant_functions.Keyword
 # get exceptions
-DrsCodedException = drs_exceptions.DrsCodedException
-DrsCodedWarning = drs_exceptions.DrsCodedWarning
+AperoCodedException = drs_log.AperoCodedException
+AperoCodedWarning = drs_log.AperoCodedWarning
 # get header comment card from drs_fits
 HCC = drs_fits.HeaderCommentCards
 # get default psuedo constants class
@@ -334,9 +334,7 @@ class DrsPath:
         # else we have a problem
         else:
             # log error: DrsPath requires at least abspath/block_kind/block_name
-            emsg = textentry('00-004-00007')
-            raise DrsCodedException('00-004-00007', message=emsg, level='error',
-                                    func_name=func_name)
+            raise AperoCodedException(None, '00-004-00007')
         # now we have block kind we can set other properties
         for block in self.blocks:
             if self.block_kind.lower() == block.name.lower():
@@ -375,9 +373,7 @@ class DrsPath:
             return Path(self.abspath)
         else:
             # Log error: DrsPath does not have absolute path set
-            emsg = textentry('00-004-00008')
-            raise DrsCodedException('00-004-00008', message=emsg, level='error',
-                                    func_name=func_name)
+            raise AperoCodedException(None, '00-004-00008')
 
     def _clean_obs_dir(self):
         """
@@ -484,9 +480,7 @@ class DrsPath:
             # add block error
             eargs += [self._blocks_error()]
             # log error
-            emsg = textentry('00-004-00009', args=eargs)
-            raise DrsCodedException('00-004-00009', message=emsg, level='error',
-                                    func_name=func_name)
+            raise AperoCodedException(None, '00-004-00009', targs=eargs)
 
     def _blocks_error(self) -> str:
         """
@@ -547,9 +541,7 @@ class DrsPath:
             # add block error
             eargs += [self._blocks_error()]
             # log error
-            emsg = textentry('00-004-00010', args=eargs)
-            raise DrsCodedException('00-004-00010', message=emsg, level='error',
-                                    func_name=func_name)
+            raise AperoCodedException(None, '00-004-00010', targs=eargs)
 
     def _set_block_path_from_block_kind(self) -> bool:
         """
@@ -612,9 +604,7 @@ class DrsPath:
             # add block error
             eargs += [self._blocks_error()]
             # log error
-            emsg = textentry('00-004-00011', args=eargs)
-            raise DrsCodedException('00-004-00011', message=emsg, level='error',
-                                    func_name=func_name)
+            raise AperoCodedException(None, '00-004-00011', targs=eargs)
 
     def get_block(self):
         """
@@ -1740,20 +1730,18 @@ class DrsInputFile:
                                                   fiber, path, func,
                                                   remove_insuffix, prefix,
                                                   suffix, filename)
-            except DrsCodedException as e:
-                level = e.get('level', 'error')
+            except AperoCodedException as e:
                 eargs = e.get('targs', None)
                 emsg = textentry(e.codeid, args=eargs)
-                raise DrsCodedException(e.codeid, level=level, targs=eargs,
-                                        message=emsg, func_name=func_name)
+                raise AperoCodedException(None, e.codeit, targs=eargs,
+                                          message=emsg.format(*eargs))
+                                        
             self.filename = abspath
             self.basename = os.path.basename(abspath)
         # else raise an error
         else:
             eargs = [self.__repr__(), func_name]
-            emsg = textentry('00-008-00004', args=eargs)
-            raise DrsCodedException('00-008-00004', level='error', targs=eargs,
-                                    message=emsg, func_name=func_name)
+            raise AperoCodedException(None, '00-008-00004', targs=eargs)
         # check that we are allowed to use infile (if set)
         if infile is not None and check:
             if self.intype is not None:
@@ -1763,10 +1751,7 @@ class DrsInputFile:
                 # see if infile is in reqfiles
                 if infile.name not in reqfiles:
                     eargs = [infile.name, reqstr, self.filename, func_name]
-                    emsg = textentry('00-008-00017', args=eargs)
-                    raise DrsCodedException('00-008-00017', level='error',
-                                            targs=eargs, message=emsg,
-                                            func_name=func_name)
+                    raise AperoCodedException(None, '00-008-00017', targs=eargs)
 
     def generate_reqfiles(self) -> List[str]:
         """
@@ -2792,8 +2777,7 @@ class DrsFitsFile(DrsInputFile):
                 eargs = [self.name, drskey, 'FILEDEF_HEADER_KEYS()',
                          ','.join(allowed_keys), func_name]
                 emsg = textentry('00-006-00022', args=eargs)
-                raise DrsCodedException('00-006-00022', level='error',
-                                        message=emsg, targs=eargs)
+                raise AperoCodedException(None, '00-006-00022', targs=eargs)
 
             # check whether header key is in param dict (i.e. from a
             #    keywordstore) or whether we have to use the key as is
@@ -2806,9 +2790,7 @@ class DrsFitsFile(DrsInputFile):
             # deal with empty key
             if (key is None) or key == '':
                 eargs = [key, drskey, source]
-                emsg = textentry('00-006-00011', args=eargs)
-                raise DrsCodedException('00-006-00011', level='error',
-                                        message=emsg, targs=eargs)
+                raise AperoCodedException(None, '00-006-00011', targs=eargs)
             # check if key is in header
             if key not in header:
                 eargs = [argname, key]
@@ -2885,9 +2867,7 @@ class DrsFitsFile(DrsInputFile):
                 # get error arguments
                 eargs = [key, filename, func_name]
                 # log error: Required header key "{0}" not found'
-                emsg = textentry('00-001-00058', args=eargs)
-                raise DrsCodedException('00-001-00058', level='error',
-                                        message=emsg, targs=eargs)
+                raise AperoCodedException(None, '00-001-0058', targs=eargs)
             # get value and required value
             value = str(header[key]).strip()
             rvalue = str(rkeys[drskey]).strip()
@@ -3059,9 +3039,7 @@ class DrsFitsFile(DrsInputFile):
             else:
                 # log error: Filename must be set or given
                 eargs = [func_name]
-                emsg = textentry('00-004-00011', args=eargs)
-                raise DrsCodedException('00-004-00012', level='error',
-                                        message=emsg, targs=eargs)
+                raise AperoCodedException(None, '00-004-00012', targs=eargs)
         # deal with fiber being set
         if fiber is not None:
             fiberstr = '_{0}'.format(fiber)
@@ -3134,17 +3112,18 @@ class DrsFitsFile(DrsInputFile):
                                                           infile=infile,
                                                           outfile=self,
                                                           fiber=fiber)
-                except DrsCodedException as e:
+                except AperoCodedException as e:
                     level = e.get('level', 'error')
                     eargs = e.get('targs', None)
                     emsg = textentry(e.codeid, args=eargs)
-                    raise DrsCodedException(e.codeid, level=level, message=emsg,
-                                            targs=eargs)
+                    raise AperoCodedException(None, e.codeid,
+                                              message=emsg.format(*eargs),
+                                              targs=eargs)
+                
+                                            
             else:
                 eargs = [self.name, recipename, func_name]
-                emsg = textentry('09-503-00009', args=eargs)
-                raise DrsCodedException('09-503-00009', level='error',
-                                        message=emsg, targs=eargs)
+                raise AperoCodedException(None, '09-503-00009', targs=eargs)
         # ------------------------------------------------------------------
         # assume file is valid
         valid = True
@@ -5428,15 +5407,13 @@ class DrsNpyFile(DrsInputFile):
                     #   raise error
                     if attempts == 9:
                         eargs = [type(e), e, self.filename, func_name]
-                        emsg = textentry('00-008-00018', args=eargs)
-                        raise DrsCodedException('00-008-00018', level='error',
-                                                targs=eargs, message=emsg)
+                        raise AperoCodedException(None, '00-008-00018',
+                                                  targs=eargs)
                     # some time file is locked by other process
                     else:
                         # file locking trying again in 5s
-                        wmsg = textentry('10-001-00011', args=[self.filename])
-                        DrsCodedWarning('10-001-00011', level='warning',
-                                        targs=[self.filename], message=wmsg)
+                        AperoCodedWarning(None, '10-001-00011',
+                                          targs=[self.filename])
                         # sleep 5 seconds and then try again
                         time.sleep(5)
                         # add to the attempts and loop again
@@ -6582,8 +6559,8 @@ class DrsOutFile(DrsInputFile):
                                  self.class_name)
         # position must be an integer
         if not isinstance(pos, int):
-            raise DrsCodedException('00-001-00053', level='error',
-                                    targs=[pos, func_name])
+            raise AperoCodedException(None, '00-001-00053',
+                                      targs=[pos, func_name])
         # add new extension instance
         self.extensions[pos] = DrsOutFileExtension(name, drsfile, pos, fiber,
                                                    block_kind, hkeys, link,

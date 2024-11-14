@@ -19,7 +19,7 @@ from aperocore import drs_lang
 from aperocore.core import drs_exceptions
 from aperocore.core import drs_misc
 from aperocore.core import drs_text
-
+from aperocore.core import drs_log
 
 # =============================================================================
 # Define variables
@@ -32,8 +32,8 @@ __authors__ = base.__authors__
 __date__ = base.__date__
 __release__ = base.__release__
 # get the Drs Exceptions
-DrsCodedException = drs_exceptions.DrsCodedException
-DrsCodedWarning = drs_exceptions.DrsCodedWarning
+AperoCodedException = drs_log.AperoCodedException
+AperoCodedWarning = drs_log.AperoCodedWarning
 # Get the text types
 textentry = drs_lang.textentry
 # get display func
@@ -143,8 +143,8 @@ def load_pconfig(instruments: Dict[str, Any],
     # otherwise raise an exception
     emsg = 'Instrument "{0}" not found.'
     eargs = [instrument]
-    raise DrsCodedException('00-000-00000', targs=eargs, level='error',
-                            message=emsg.format(*eargs))
+    raise AperoCodedException(None, '00-000-00000', targs=eargs,
+                              message=emsg.format(*eargs))
 
 
 def warninglogger(instruments: Dict[str, Any], warnlist: Any,
@@ -194,7 +194,8 @@ def warninglogger(instruments: Dict[str, Any], warnlist: Any,
             if wmsg in displayed_warnings:
                 continue
             else:
-                drs_exceptions.DrsCodedWarning(key, 'warnning', message=wmsg)
+                AperoCodedWarning(None, '10-005-00001', targs=wargs,
+                                  sublevel=5)
                 displayed_warnings.append(wmsg)
 
 
@@ -278,8 +279,7 @@ def _get_file_names(params: ParamDict,
     # deal with no files found
     if len(config_files) == 0:
         wargs = [config_dir, ','.join(yscripts)]
-        DrsCodedWarning('00-003-00036', 'warning', targs=wargs,
-                        func_name=func_name)
+        AperoCodedWarning(None,'00-003-00036', targs=wargs)
     # return files
     return config_files
 
@@ -319,8 +319,7 @@ def _load_from_yaml(files: List[str], instances: Dict[str, Any]
             if fkeyi in fvalues:
                 # log warning message
                 wargs = [fkeyi, filename, ','.join(set(fsources)), filename]
-                DrsCodedWarning('10-002-00002', 'warning', targs=wargs,
-                                func_name=func_name)
+                AperoCodedWarning(None, '10-002-00002', targs=wargs)
             # append to list
             fvalues[fkeyi] = fvaluei
             fsources[fkeyi] = filename

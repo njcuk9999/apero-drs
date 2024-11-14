@@ -26,6 +26,7 @@ from aperocore.base import base
 from aperocore.base import drs_base
 from aperocore.core import drs_exceptions
 from aperocore.core import drs_misc
+from aperocore.core import drs_log
 
 # =============================================================================
 # Define variables
@@ -38,7 +39,7 @@ __authors__ = base.__authors__
 __date__ = base.__date__
 __release__ = base.__release__
 # get exceptions
-DrsCodedException = drs_exceptions.DrsCodedException
+AperoCodedException = drs_log.AperoCodedException
 # get text entry
 textentry = drs_lang.textentry
 # Get colours
@@ -155,8 +156,7 @@ def save_text_file(filename: Union[str, None], array: np.ndarray,
             np.savetxt(filename, array)
         except Exception as e:
             eargs = [filename, type(e), e, func_name]
-            raise DrsCodedException(codeid='00-008-00020', targs=eargs,
-                                    level='error', func_name=func_name)
+            raise AperoCodedException(None, '00-008-00020', targs=eargs)
 
 
 def common_text(stringlist: List[str],

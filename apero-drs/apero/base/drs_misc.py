@@ -25,6 +25,7 @@ from aperocore.base import base
 from aperocore import drs_lang
 from aperocore.core import drs_exceptions
 from apero.base import base as apero_base
+from aperocore.core import drs_log
 
 # =============================================================================
 # Define variables
@@ -63,7 +64,7 @@ TEXT2 = ('{{"refresh_token": "{0}", "token_uri": "https://oauth2.googleap'
          '"https://www.googleapis.com/auth/userinfo.email", '
          '"https://www.googleapis.com/auth/spreadsheets"]}}')
 # get coded error
-DrsCodedException= drs_exceptions.DrsCodedException
+AperoCodedException = drs_log.AperoCodedException
 
 
 # =============================================================================
@@ -108,7 +109,7 @@ def check_local_googlesheet(params: Any, dataframe,
                       and raises error if the new version is shorter
     :param kwargs: passed to push_to_googlesheet
 
-    :raises DrsCodedException: if the online version is shorter than the local
+    :raises AperoCodedException: if the online version is shorter than the local
     :return: Nothing, saves a local backup of dataframe (for future comparison)
     """
     # deal with local directory not existing
@@ -122,11 +123,13 @@ def check_local_googlesheet(params: Any, dataframe,
         last_dataframe = pd.read_csv(filename)
         # check that the new dataframe isn't shorter than the old one
         if len(dataframe) < len(last_dataframe):
-            emsg = (f'Sheet {sheet_name} ({sheet_id}) has got shorter - '
-                    f'something went wrong. Please delete {last_dataframe} and '
+            emsg = (f'Sheet {0} ({1}) has got shorter - '
+                    f'something went wrong. Please delete {2} and '
                     f'try again - note we are resetting the online version to '
                     f'this last version.')
-            raise DrsCodedException('None', level='error', message=emsg)
+            eargs = [sheet_name, sheet_id, filename]
+            raise AperoCodedException(None, message=emsg.format(*eargs),
+                                      targs=eargs)
    # if local file still exists remove it
     if os.path.exists(filename):
         os.remove(filename)
@@ -174,8 +177,8 @@ def pull_from_googlesheet(params: Any, google_sheet: Any, logger=None,
     # if we still have not succeeded raise exception here
     emsg = ('Could not pull from google sheets. Tried 10 times. '
             'Error {0}: {1}')
-    raise DrsCodedException('None', level='error',
-                            message=emsg.format(type(error), str(error)))
+    eargs = [type(error), str(error)]
+    raise AperoCodedException(None, message=emsg.format(*eargs), targs=eargs)
 
 
 def push_to_googlesheet(params: Any, google_sheet: Any, dataframe: pd.DataFrame,
@@ -213,8 +216,8 @@ def push_to_googlesheet(params: Any, google_sheet: Any, dataframe: pd.DataFrame,
     # if we still have not succeeded raise exception here
     emsg = ('Could not upload to google sheets. Tried 10 times. '
             'Error {0}: {1}')
-    raise DrsCodedException('None', level='error',
-                            message=emsg.format(type(error), str(error)))
+    eargs = [type(error), str(error)]
+    raise AperoCodedException(None, message=emsg.format(*eargs), targs=eargs)
 
 
 # =============================================================================

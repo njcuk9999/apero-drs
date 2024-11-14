@@ -32,7 +32,7 @@ from aperocore.core.drs_base_classes import Printer
 from aperocore.constants import param_functions
 from aperocore import drs_lang
 from aperocore import math as mp
-from aperocore.core import drs_exceptions
+from aperocore.core import drs_log
 from aperocore.core import drs_misc
 from apero.base import base as apero_base
 
@@ -53,7 +53,7 @@ ParamDict = param_functions.ParamDict
 # Get function string
 display_func = drs_misc.display_func
 # Get exceptions
-DrsCodedException = drs_exceptions.DrsCodedException
+AperoCodedException = drs_log.AperoCodedException
 # Get Logging function
 TLOG = Printer
 # Get the text types
@@ -70,7 +70,7 @@ def get_relative_folder(package: str, folder: str) -> str:
     """
     Get the absolute path of folder defined at relative path
     folder from package (wrapper around drs_break.get_relative_folder to catch
-    DrsCodedException)
+    AperoCodedException)
 
     :param package: string, the python package name
     :param folder: string, the relative path of the config folder
@@ -83,9 +83,8 @@ def get_relative_folder(package: str, folder: str) -> str:
     # try to get relative directory
     try:
         data_folder = drs_misc.get_relative_folder(package, folder)
-    except DrsCodedException as e:
-        raise DrsCodedException(e.codeid, level=e.level,
-                                message=textentry(e.codeid, args=e.targs))
+    except AperoCodedException as e:
+        raise AperoCodedException(None, e.codeid, targs=e.targs)
     # return the absolute data_folder path
     return data_folder
 
@@ -142,15 +141,11 @@ def group_files_by_time(times: np.ndarray,
                 time_thres = (time_thres * time_unit).to(uu.day)
         except uu.UnitConversionError as e:
             eargs = [str(e), func_name]
-            emsg = textentry('00-008-00008', args=eargs)
-            raise DrsCodedException('00-008-00008', level='error',
-                                    message=emsg, targs=eargs)
+            raise AperoCodedException(None, '00-008-00008', targs=eargs)
 
         except Exception as e:
             eargs = [type(e), str(e), func_name]
-            emsg = textentry('00-008-00009', args=eargs)
-            raise DrsCodedException('00-008-00009', level='error',
-                                    message=emsg, targs=eargs)
+            raise AperoCodedException(None, '00-008-00009', targs=eargs)
 
     elif time_unit == 'hours':
         time_thres = time_thres / 24
@@ -158,9 +153,7 @@ def group_files_by_time(times: np.ndarray,
         pass
     else:
         eargs = [time_unit, func_name]
-        emsg = textentry('00-008-00010', args=eargs)
-        raise DrsCodedException('00-008-00010', level='error',
-                                message=emsg, targs=eargs)
+        raise AperoCodedException(None, '00-008-00010', targs=eargs)
     # ID of matched multiplets of files
     matched_id = np.zeros_like(times, dtype=int)
     # loop until all files are matched with all other files taken within
@@ -226,10 +219,7 @@ def makedirs(path: str):
         # catch all exceptions and pipe to drs error
         except Exception as e:
             eargs = [path, type(e), e, func_name]
-            emsg = textentry('01-010-00002', args=eargs)
-            raise DrsCodedException('01-010-00002', level='error',
-                                    message=emsg, targs=eargs)
-
+            raise AperoCodedException(None, '01-010-00002', targs=eargs)
 
 def copytree(src: Union[str, Path], dst: Union[str, Path]):
     """
@@ -295,9 +285,7 @@ def copyfile(src: str, dst: str, log: bool = True):
     # else raise exception
     else:
         eargs = [src, dst, func_name]
-        emsg = textentry('00-004-00005', args=eargs)
-        raise DrsCodedException('00-004-00005', level='error',
-                                message=emsg, targs=eargs)
+        raise AperoCodedException(None, '00-004-00005', targs=eargs)
 
 
 def copy_element(old_element: str, new_element: str):

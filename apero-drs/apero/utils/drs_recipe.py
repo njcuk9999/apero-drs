@@ -61,7 +61,7 @@ DrsInputFile = drs_file.DrsInputFile
 # Get the text types
 textentry = drs_lang.textentry
 # Get exceptions
-DrsCodedException = drs_exceptions.DrsCodedException
+AperoCodedException = drs_log.AperoCodedException
 # get index database
 FileIndexDatabase = drs_database.FileIndexDatabase
 # -----------------------------------------------------------------------------
@@ -673,7 +673,8 @@ class DrsRecipe(object):
             emsg = ('Cannot have more than one optional positional '
                     'argument in recipe {0} (argument {1})')
             eargs = [self.name, name]
-            raise DrsCodedException('', message=emsg.format(*eargs))
+            raise AperoCodedException(None, message=emsg.format(*eargs),
+                                      targs=eargs)
 
     def set_kwarg(self, name: Union[str, None] = None,
                   altnames: Union[List[str], None] = None,
@@ -793,7 +794,7 @@ class DrsRecipe(object):
                                           default_ref=default_ref,
                                           required=required,
                                           reprocess=reprocess)
-        except DrsCodedException as e:
+        except AperoCodedException as e:
             WLOG(None, 'error', e.get_text())
             raise SystemExit()
         # make arg parser properties
@@ -1163,9 +1164,8 @@ class DrsRecipe(object):
         func_name = display_func('proxy_arg', __NAME__, self.class_name)
         # check for arg
         if kwargname not in self.kwargs:
-            raise DrsCodedException('00-006-00001', 'error',
-                                    targs=[kwargname, self.name],
-                                    func_name=func_name)
+            eargs = [kwargname, self.name]
+            raise AperoCodedException(None, '00-006-00001', targs=eargs)
         else:
             arg = self.kwargs[kwargname]
         # setup position args
@@ -1568,7 +1568,7 @@ class DrsRecipe(object):
         name = props['name']
         try:
             spec = DrsArgument(name, kind='special', altnames=props['altnames'])
-        except DrsCodedException as e:
+        except AperoCodedException as e:
             WLOG(None, 'error', e.get_text())
             raise SystemExit()
         spec.assign_properties(props)
@@ -2298,8 +2298,11 @@ def compile_recipe_dict(recipes: List[DrsRecipe]) -> Dict[str, DrsRecipe]:
     # loop around recipes
     for recipe in recipes:
         if recipe.name in recipe_list:
+            # TODO: Add to language database
             emsg = 'Recipe name "{0}" duplicated in recipe list'
-            raise DrsCodedException('', message=emsg)
+            eargs = [recipe.name]
+            raise AperoCodedException(None, message=emsg.format(*eargs),
+                                      targs=eargs)
         else:
             recipe_list[recipe.name] = recipe
     # return recipe list

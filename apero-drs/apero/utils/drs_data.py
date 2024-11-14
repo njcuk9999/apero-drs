@@ -46,7 +46,7 @@ ParamDict = param_functions.ParamDict
 # Get the text types
 textentry = drs_lang.textentry
 # get exceptions
-DrsCodedException = drs_exceptions.DrsCodedException
+AperoCodedException = drs_log.AperoCodedException
 # alias pcheck
 pcheck = param_functions.PCheck(wlog=WLOG)
 # get display func
@@ -132,7 +132,7 @@ def load_linelist(params: ParamDict,
         amp = np.array(table[ampcol], dtype=float)
         # return wavelength and amplitude columns
         return ll, amp
-    except DrsCodedException:
+    except AperoCodedException:
         eargs = [filename, os.path.join(assetdir, relfolder)]
         raise drs_log.AperoCodedException(params, '00-017-00002', targs=eargs)
 
@@ -875,7 +875,7 @@ def load_fits_file(params: ParamDict, filename: str,
     if not os.path.exists(filename):
         # generate error
         eargs = [filename, func_name]
-        raise DrsCodedException('01-001-00022', 'error', targs=eargs)
+        raise AperoCodedException(params, '01-001-00022', targs=eargs)
     # read image
     image = drs_fits.readfits(params, filename)
     # return image
@@ -907,7 +907,7 @@ def load_table_file(params: ParamDict, filename: str,
     if not os.path.exists(filename):
         # raise exception
         eargs = [filename, func_name]
-        raise DrsCodedException('01-001-00022', 'error', targs=eargs)
+        raise AperoCodedException(params, '01-001-00022', targs=eargs)
     # read table
     table = drs_table.read_table(params, filename, fmt=fmt,
                                  colnames=colnames, data_start=datastart)
@@ -936,15 +936,13 @@ def load_text_file(params: ParamDict, filename: str,
     # check that filepath exists and log an error if it was not found
     if not os.path.exists(filename):
         eargs = [filename, func_name]
-        raise DrsCodedException('01-001-00022', 'error', targs=eargs)
+        raise AperoCodedException(params, '01-001-00022', targs=eargs)
     # load text as list
     try:
         textlist = drs_text.load_text_file(filename, '#', ' ')
-    except DrsCodedException as e:
-        elevel = e.get('level', 'error')
+    except AperoCodedException as e:
         eargs = e.get('targs', None)
-        WLOG(params, elevel, textentry(e.codeid, args=eargs))
-        textlist = None
+        raise AperoCodedException(params, e.codeid, targs=eargs)
     # deal with change list to numpy array
     textlist = np.array(textlist).astype(dtype)
     # return image
@@ -968,10 +966,9 @@ def save_text_file(params: ParamDict, filename: str, array: np.ndarray,
     # save text file
     try:
         drs_text.save_text_file(filename, array, func_name)
-    except DrsCodedException as e:
-        elevel = e.get('level', 'error')
+    except AperoCodedException as e:
         eargs = e.get('targs', None)
-        WLOG(params, elevel, textentry(e.codeid, args=eargs))
+        raise AperoCodedException(params, e.codeid, targs=eargs)
 
 
 def construct_path(params: ParamDict, filename: Union[str, None] = None,
