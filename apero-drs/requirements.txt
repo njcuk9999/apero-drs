@@ -17,7 +17,7 @@ pandasql==0.7.3
 psutil==5.9.4
 PyYAML==6.0
 ruamel.yaml==0.17.31
-scipy==1.10.0
+scipy==1.10.1
 SQLAlchemy==2.0.15
 sqlalchemy_utils==0.41.1
 tqdm==4.65.0
