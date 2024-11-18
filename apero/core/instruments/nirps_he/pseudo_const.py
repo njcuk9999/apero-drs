@@ -800,6 +800,17 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         # by default we mask no regions
         return bad_regions
 
+    def TELLU_FLUORESCENCE(self):
+        """
+        Define regions where fluorescence of oxygen lines that biases the
+        telluric absorption calculation (when observation are taken early in the
+        night)
+
+        :return:
+        """
+        # TODO: Move to params for 0.8
+        return [[1240, 1290]]
+
     # =========================================================================
     # DATABASE SETTINGS
     # =========================================================================
