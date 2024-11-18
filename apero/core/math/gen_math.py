@@ -997,6 +997,8 @@ def lowpassfilter(input_vect: np.ndarray, width: int = 101,
         # if no finite value, skip
         if np.mean(np.isfinite(input_vect[pixval])) <= frac_valid_min:
             continue
+        # we don't want any infs or nans in our xmed or ymed
+        pixval = pixval[np.isfinite(input_vect[pixval])]
         # mean position along vector and NaN median value of
         # points at those positions
         xmed.append(fast.nanmean(pixval))

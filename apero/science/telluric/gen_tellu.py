@@ -538,6 +538,9 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     # get wave map for the input e2ds
     wave_e2ds = wprops['WAVEMAP']
     # ----------------------------------------------------------------------
+    # get pconst
+    pconst = constants.pload()
+    # ------------------------------------------------------------------------
     # get res_e2ds file instance
     res_e2ds = drs_file.get_file_definition(params, 'WAVEM_RES_E2DS',
                                             block_kind='red')
@@ -636,14 +639,11 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         props['EXPO_OTHERS'] = np.nan
         props['DV_WATER'] = np.nan
         props['DV_OTHERS'] = np.nan
-        props['CCFPOWER_WATER'] = np.nan
-        props['CCFPOWER_OTHERS'] = np.nan
         props['QC_PARAMS'] = qc_params
         # set sources
         keys = ['CORRECTED_E2DS', 'TRANS_MASK', 'ABSO_E2DS', 'EXPO_WATER',
-                'EXPO_OTHERS', 'DV_WATER', 'DV_OTHERS', 'CCFPOWER_WATER',
-                'CCFPOWER_OTHERS', 'QC_PARAMS', 'SKY_MODEL',
-                'PRE_SKYCORR_IMAGE']
+                'EXPO_OTHERS', 'DV_WATER', 'DV_OTHERS', 'QC_PARAMS',
+                'SKY_MODEL', 'PRE_SKYCORR_IMAGE']
         props.set_sources(keys, func_name)
         # ------------------------------------------------------------------
         # add constants used (can come from kwargs)
@@ -716,8 +716,6 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     else:
         # no template? force expo_others to airmass
         force_airmass = False
-        # no template? force dv_abso to zero
-        force_dv_abso = True
         # template1 = np.ones_like(wave_e2ds)
         template2 = np.ones_like(wavemap)
     # ----------------------------------------------------------------------
@@ -763,26 +761,15 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     spectrum[~np.isfinite(spectrum)] = 0.0
     spectrum[spectrum < 0.0] = 0.0
     # ----------------------------------------------------------------------
-    # scanning range for the ccf computations
-    dint = params['IMAGE_PIXEL_SIZE'] / 4
-    drange = np.arange(-ccf_scan_range, ccf_scan_range + 1.0, dint)
-    # get species line lists from file
-    mask_others, mask_water = get_sp_linelists(params)
-    # storage for the ccfs
-    ccf_others = np.zeros_like(drange, dtype=float)
-    ccf_water = np.zeros_like(drange, dtype=float)
-    # start with no correction of abso to get the CCF
-    expo_water = 0.0
-    # we start at zero to get a velocity mesaurement even if we may force
-    #   to the airmass
-    expo_others = 0.0
+    # we start the water at 4
+    expo_water = 4.0
+    # we start the dry component at the airmass
+    expo_others = hdr_airmass
     # keep track of consecutive exponents and test convergence
-    expo_water_prev = np.inf
-    expo_others_prev = np.inf
     dexpo = np.inf
-    # storage for the amplitude from fit
-    amp_water_list = []
-    amp_others_list = []
+    # storage for the slopes from fit
+    slope_water_list = []
+    slope_others_list = []
     # storage for the exponential from fit
     expo_water_list = []
     expo_others_list = []
@@ -791,7 +778,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     ccf_water_iterations = []
     ccf_others_iterations = []
     # ----------------------------------------------------------------------
-    # first guess at the velocity of absoprtion is 0 km/s
+    # first guess at the velocity of absorption is 0 km/s
     dv_abso = 0.0
     # set the iteration number
     iteration = 0
@@ -800,9 +787,6 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     trans = np.ones_like(wavemap)
     # set up a qc flag
     flag_qc = False
-    # proxy values
-    slope_water, slope_others = 0, 0
-    valid0 = np.ones_like(spectrum, dtype=bool)
     # log progress
     WLOG(params, '', textentry('40-019-00040'))
     # ----------------------------------------------------------------------
@@ -816,25 +800,41 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
                                 res_fwhm=res_fwhm, res_expo=res_expo,
                                 dv_abso=dv_abso, wavestart=wavestart,
                                 waveend=waveend, dvgrid=dvgrid)
-    # spline the reference other and water transmission
-    spline_ref_others = mp.iuv_spline(wavemap, trans_others, k=1, ext=1)
-    spline_ref_water = mp.iuv_spline(wavemap, trans_water, k=1, ext=1)
-    # get the mask wavelength
-    ll_mask_s_others = mask_others['ll_mask_s']
-    ll_mask_s_water = mask_water['ll_mask_s']
-    # set the depths to the transmission (using the reference splines)
-    wmask_others = 1 - spline_ref_others(mask_others['ll_mask_s'])
-    wmask_water = 1 - spline_ref_water(mask_water['ll_mask_s'])
-    # mask lines that are deep but not too deep
-    mmask_others = (wmask_others > 0.05) & (wmask_others < 0.5)
-    mmask_water = (wmask_water > 0.05) & (wmask_water < 0.5)
-    # mask the mask for others / water
-    ll_mask_s_others = ll_mask_s_others[mmask_others]
-    wmask_others = wmask_others[mmask_others]
-    ll_mask_s_water = ll_mask_s_water[mmask_water]
-    wmask_water = wmask_water[mmask_water]
-    # storage for amplitudes
-    amp_water_arr, amp_others_arr = np.array([]), np.array([])
+
+    # remove low transmissions - not useful here
+    trans_others[trans_others < 0.1] = np.nan
+    trans_water[trans_water < 0.1] = np.nan
+    # take the log of other and water
+    with warnings.catch_warnings(record=True) as _:
+        log_others = np.log(trans_others)
+        log_water = np.log(trans_water)
+
+    # TODO: Add to params
+    abs_bin_size = 0.05
+    abs_bin_range = [-0.4, 0]
+
+    # mask the fluorescent bands
+    fluorescent_mask = np.zeros_like(wavemap, dtype=bool)
+    for fband in pconst.TELLU_FLUORESCENCE():
+        reject = (wavemap > fband[0]) & (wavemap < fband[1])
+        fluorescent_mask[reject] = True
+
+    # get the bins for absorption
+    abs_bins = np.arange(abs_bin_range[0], abs_bin_range[1], abs_bin_size)
+    water_bins, other_bins = [], []
+    for ibin in range(len(abs_bins)):
+
+        # get the water bins
+        water_mask = abs(log_water - abs_bins[ibin]) < abs_bin_size/2
+        water_pos = np.where(water_mask)[0]
+        water_bins.append(water_pos)
+        # get the other bins
+        other_mask = abs(log_others - abs_bins[ibin]) < abs_bin_size/2
+        # add the fluorescent mask
+        other_mask &= ~fluorescent_mask
+        other_pos = np.where(other_mask)[0]
+        other_bins.append(other_pos)
+
     # loop around until convergence or 20th iteration
     while (dexpo > dexpo_thres) and (iteration < max_iterations):
         # set up a qc flag
@@ -852,278 +852,91 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         trans[trans < 0.01] = 0.01
         # divide spectrum by transmission
         spectrum_tmp = spectrum / (trans * template2)
-        # only keep valid pixels (non NaNs)
-        valid = np.isfinite(spectrum_tmp)
-        # ------------------------------------------------------------------
-        if iteration < 2:
-            # transmission with the exponent value
-            valid0 = (trans > np.exp(trans_thres))
-        # apply valid0 from loop iteration < 2
-        valid &= valid0
-        # ------------------------------------------------------------------
-        # apply some cuts to very discrepant points. These will be set to zero
-        #   not to bias the CCF too much
-        cutmask = np.abs(spectrum_tmp[spectrum_tmp!=0])
-        cut = mp.nanmedian(cutmask) * trans_siglim
-        # set NaN and infinite values to zero
-        # spectrum_tmp[~np.isfinite(spectrum_tmp)] = 0.0
-        valid &= np.isfinite(spectrum_tmp)
-        # apply cut and set values to zero
-        # spectrum_tmp[spectrum_tmp > cut] = 0.0
-        valid &= (spectrum_tmp <= cut)
-        # set negative values to zero
-        # spectrum_tmp[spectrum_tmp < 0.0] = 0.0
-        valid &= spectrum_tmp >= 0.0
-        # ------------------------------------------------------------------
-        # get the CCF of the test spectrum
-        # first spline onto the wave grid
-        spline = mp.iuv_spline(wavemap[valid], spectrum_tmp[valid], k=1, ext=1)
-        # loop around all scanning points in d
-        for d_it in range(len(drange)):
-            # computer rv scaling factor
-            scaling = (1 + drange[d_it] / speed_of_light)
-            # we compute the ccf_others all the time, even when forcing the
-            # airmass, just to look at its structure and potential residuals
-            # compute for others
-            lothers = np.array(ll_mask_s_others) * scaling
-            tmp_others = spline(lothers) * np.array(wmask_others)
-            ccf_others[d_it] = mp.nansum(tmp_others[tmp_others != 0.0])
-            # computer for water
-            lwater = np.array(ll_mask_s_water) * scaling
-            tmp_water = spline(lwater) * wmask_water
-            ccf_water[d_it] = mp.nansum(tmp_water[tmp_water != 0.0])
+        # low pass the spectrum
+        with warnings.catch_warnings(record=True) as _:
+            lowpass = mp.lowpassfilter(spectrum_tmp)
+            spectrum_tmp_lowpass = spectrum_tmp / lowpass
+        # log this low passed spectrum
+        with warnings.catch_warnings(record=True) as _:
+            log_spec_tmp_lowpass = np.log(spectrum_tmp_lowpass)
 
-        # ------------------------------------------------------------------
-        # subtract the median of the ccf outside the core of the gaussian.
-        #     We take this to be the 'external' part of of the scan range
-        # work out the external part mask
-        # with warnings.catch_warnings(record=True) as _:
-        #     external_mask = np.abs(drange) > ccf_scan_range / 2
-        # calculate and subtract external part
-        # external_water = np.nanmedian(ccf_water[external_mask])
-        # ccf_water = ccf_water - external_water
-        # external_others = np.nanmedian(ccf_others[external_mask])
-        # ccf_others = ccf_others - external_others
+        mad = mp.lowpassfilter(abs(log_spec_tmp_lowpass))
+        running_sigma = mad / mp.normal_fraction()
 
-        # set ccf scan size
-        # ccf_scan_size = int(10 * params['IMAGE_PIXEL_SIZE'])
-        # # calculate and subtract external part
-        # ccf_water_res = mp.lowpassfilter(ccf_water, ccf_scan_size)
-        # ccf_water = ccf_water - ccf_water_res
-        # # calculate and subtract external part
-        # ccf_others_res = mp.lowpassfilter(ccf_others, ccf_scan_size)
-        # ccf_others = ccf_others - ccf_others_res
+        # storage
+        mean_res_depth_water = np.zeros(len(abs_bins))
+        mean_res_depth_others = np.zeros(len(abs_bins))
+        err_res_depth_water = np.zeros(len(abs_bins))
+        err_res_depth_others = np.zeros(len(abs_bins))
 
-        # ---------------------------------------------------------------------
-        # remove a polynomial fit (remove continuum of the CCF) for water
-        # this is now a normalized CCF we subtract a 1 so it becomes centered
-        # on zeri
-        cont = np.abs(drange) > np.max(np.abs(drange)) / 4
-        # ccf_water /= np.nanmedian(ccf_water[cont])
-        # ccf_others /= np.nanmedian(ccf_others[cont])
+        for ibin in range(len(abs_bins)):
 
-        water_coeffs, _ = mp.robust_polyfit(drange[cont], ccf_water[cont],
-                                            2, 3)
-        ccf_water = (ccf_water / np.polyval(water_coeffs, drange)) - 1
-        # remove a polynomial fit (remove continuum of the CCF) for water
-        others_coeffs, _ = mp.robust_polyfit(drange[cont], ccf_others[cont],
-                                             2, 3)
-        ccf_others = (ccf_others / np.polyval(others_coeffs, drange)) - 1
+            # measure the mean residual depth in water
+            water_flux_in_bin = log_spec_tmp_lowpass[water_bins[ibin]]
+            water_err_in_bin = running_sigma[water_bins[ibin]]
+            odd_out = mp.odd_ratio_mean(water_flux_in_bin, water_err_in_bin)
+            mean_res_depth_water[ibin] = odd_out[0]
+            err_res_depth_water[ibin] = odd_out[1]
+            # measure the mean residual depth in others
+            others_flux_in_bin = log_spec_tmp_lowpass[other_bins[ibin]]
+            others_err_in_bin = log_spec_tmp_lowpass[other_bins[ibin]]
+            odd_out = mp.odd_ratio_mean(others_flux_in_bin, others_err_in_bin)
+            mean_res_depth_others[ibin] = odd_out[0]
+            err_res_depth_others[ibin] = odd_out[1]
 
-        # ------------------------------------------------------------------
-        # get the amplitude of the middle of the CCF
-        # work out the internal part mask
-        internal_mask = np.abs(drange) < ccf_control_radius
-        amp_water = mp.nanmean(ccf_water[internal_mask])
-        if not force_airmass:
-            amp_others = mp.nanmean(ccf_others[internal_mask])
-        else:
-            amp_others = 0.0
-        # TODO: Add to language database
-        msg = '\t\tamp_water={0:.3f} amp_others={0:3f}'
-        margs = [amp_water, amp_others]
-        WLOG(params, '', msg.format(*margs))
-        # ------------------------------------------------------------------
-        # count the number of NaNs in the CCF
-        num_nan_ccf = np.sum(~np.isfinite(ccf_water))
-        # if CCF is NaN do not continue
-        if num_nan_ccf > 0:
-            # update qc params
-            qc_values[1] = num_nan_ccf
-            qc_pass[1] = 0
-            # flag qc as failed and break
-            flag_qc = True
-            break
-        else:
-            qc_values[1] = num_nan_ccf
-            qc_pass[1] = 1
-        # ------------------------------------------------------------------
-        # we measure absorption velocity by fitting a gaussian to the
-        #     absorption profile. This updates the dv_abso value for the
-        #     next steps.
-        # if this is the first iteration then fit the  absorption velocity
-        if iteration == 0:
-            # whether we are fitting the line of sight velocity
-            if params['TELLU_ABSO_FIT_LOS_VELO']:
-                # make a guess for the water fit parameters (for curve fit)
-                water_guess = [mp.nanmin(ccf_water), 0, 4]
-                # fit the ccf_water with a guassian
-                try:
-                    # noinspection PyTupleAssignmentBalance
-                    popt, pcov = curve_fit(mp.gauss_function_nodc, drange,
-                                           ccf_water, p0=water_guess)
-                except RuntimeError:
-                    eargs = ['water', water_guess]
-                    WLOG(params, 'error', textentry('09-019-00006', args=eargs))
-                    popt = [0, 0, 0]
-                # store the velocity of the water
-                dv_water = popt[1]
-                # make a guess of the others fit parameters (for curve fit)
-                others_guess = [mp.nanmin(ccf_water), 0, 4]
-                # fit the ccf_others with a gaussian
-                try:
-                    # noinspection PyTupleAssignmentBalance
-                    popt, pconv = curve_fit(mp.gauss_function_nodc, drange,
-                                            ccf_others, p0=others_guess)
-                except RuntimeError:
-                    eargs = ['others', water_guess]
-                    WLOG(params, 'error', textentry('09-019-00006', args=eargs))
-                    popt = [0, 0, 0]
-                # store the velocity of the other species
-                dv_others = popt[1]
-                # store the mean velocity of water and others
-                if not force_dv_abso:
-                    dv_abso = np.mean([dv_water, dv_others])
-            else:
-                dv_water = 0.0
-                dv_others = 0.0
-                dv_abso = 0.0
-        # ------------------------------------------------------------------
-        # store the amplitudes of current exponent values
-        # for other species
-        if not force_airmass:
-            amp_others_list.append(amp_others)
-            expo_others_list.append(expo_others)
-        # for water
-        amp_water_list.append(amp_water)
+        # re-normalize to the mean
+        mean_res_depth_water -= np.nanmean(mean_res_depth_water)
+        mean_res_depth_others -= np.nanmean(mean_res_depth_others)
+
+        # TODO: Add to plotting functions
+        import matplotlib.pyplot as plt
+        alpha = 1 if dexpo < 0.01 else 0.1
+        plt.errorbar(abs_bins, mean_res_depth_water, yerr=err_res_depth_water,
+                     ls='None', marker='o', color='b', alpha=alpha)
+        plt.errorbar(abs_bins, mean_res_depth_others, yerr=err_res_depth_others,
+                     ls='None', marker='o', color='orange', alpha=alpha)
+
+        # fitting the slope of residual amplitude of water
+        fit_water = np.polyfit(abs_bins, mean_res_depth_water, deg=1,
+                               w=1/err_res_depth_water)
+        slope_water = fit_water[0]
+        # append to storage
+        slope_water_list.append(slope_water)
         expo_water_list.append(expo_water)
+        # fitting the slope of the residual amplitude of others
+        fit_others = np.polyfit(abs_bins, mean_res_depth_others, deg=1,
+                                w=1/err_res_depth_others)
+        slope_others = fit_others[0]
+        # append to storage
+        slope_others_list.append(slope_others)
+        expo_others_list.append(expo_others)
 
-        # ------------------------------------------------------------------
-        # if this is the first iteration force the values of
-        # expo_others and expo water
         if iteration == 0:
-            # header value to be used
-            expo_others = float(hdr_airmass)
-            # default value for water
-            expo_water = float(default_water_abso)
-        # ------------------------------------------------------------------
-        # else we fit the amplitudes with polynomial fits
+            expo_water += slope_water
+            expo_others += slope_others
         else:
-            # --------------------------------------------------------------
-            # set value for fit_others
-            # fit_others = [np.nan, hdr_airmass, np.nan]
-            # convert lists to arrays
-            amp_others_arr = np.array(amp_others_list)
-            expo_others_arr = np.array(expo_others_list)
-            amp_water_arr = np.array(amp_water_list)
-            expo_water_arr = np.array(expo_water_list)
-            # first iteration we work out the slope
-            if iteration == 1:
-                # slope of the water
-                diff_expo_water = expo_water_arr[1] - expo_water_arr[0]
-                diff_amp_water = amp_water_arr[1] - amp_water_arr[0]
-                slope_water = diff_expo_water / diff_amp_water
-                # slope of the others
-                if not force_airmass:
-                    diff_expo_others = expo_others_arr[1] - expo_others_arr[0]
-                    diff_amp_others = amp_others_arr[1] - amp_others_arr[0]
-                    slope_others = diff_expo_others / diff_amp_others
-            # move exponent by an increment to get the right exponent
-            next_expo_water = expo_water - amp_water_arr[-1] * slope_water
+            # find the place where the water residuals null to zero (intercept)
+            expo_water_fit = np.polyfit(slope_water_list[-2:],
+                                        expo_water_list[-2:], deg=1)
+            expo_water = expo_water_fit[1]
+            # find the place where the others residuals null to zero (intercept)
+            expo_others_fit = np.polyfit(slope_others_list[-2:],
+                                         expo_others_list[-2:], deg=1)
+            expo_others = expo_others_fit[1]
+            # convergence check
+            water_part = (expo_water_list[-1] - expo_water_list[-2])
+            others_part = (expo_others_list[-1] - expo_others_list[-2])
+            dexpo = np.sqrt(water_part**2 + others_part**2)
 
-            if not force_airmass:
-                next_expo_others = expo_others - amp_others_arr[-1] * slope_others
-            else:
-                next_expo_others = hdr_airmass
-
-            # feedback loop is excessive we cannot have expo_water negative
-            if next_expo_water < 0:
-                expo_water = expo_water / 2
-                slope_water = slope_water / 2
-            else:
-                expo_water = next_expo_water
-
-            if next_expo_others < 0:
-                expo_others = expo_others / 2
-                slope_others = slope_others / 2
-            else:
-                expo_others = next_expo_others
-
-            # # if we have over 5 iterations we fit a 2nd order polynomial
-            # # to the lowest 5 amplitudes
-            if iteration > 5:
-                # fit the last 4 amplitudes for others
-                fit_others = np.polyfit(amp_others_arr[-4:], expo_others_arr[-4:], 2)
-                # fit the last 4 ampliters for water
-                fit_water = np.polyfit(amp_water_arr[-4:], expo_water_arr[-4:], 2)
-                # take the slope of the derivative as the slope (others)
-                slope_others = np.polyval(np.polyder(fit_others), 0)
-                # take the slope of the derivative as the slope (water)
-                slope_water = np.polyval(np.polyder(fit_water), 0)
-
-            #     if not force_airmass:
-            #         # get others lists as array and sort them
-            #         # sortmask = np.argsort(np.abs(amp_others_arr))
-            #         # amp_others_arr = amp_others_arr[sortmask]
-            #         # expo_others_arr = expo_others_arr[sortmask]
-            #         # polyfit lowest 5 others terms
-            #         fit_others = np.polyfit(amp_others_arr[-4:],
-            #                                 expo_others_arr[-4:], 1)
-            #     # get water lists as arrays and sort them
-            #     # sortmask = np.argsort(np.abs(amp_water_arr))
-            #     # amp_water_arr = amp_water_arr[sortmask]
-            #     # expo_water_arr = expo_water_arr[sortmask]
-            #     # polyfit lowest 5 water terms
-            #     fit_water = np.polyfit(amp_water_arr[-4:],
-            #                            expo_water_arr[-4:], 1)
-            # # else just fit a line
-            # else:
-            #     if not force_airmass:
-            #         fit_others = np.polyfit(amp_others_arr, expo_others_arr, 1)
-            #     fit_water = np.polyfit(amp_water_arr, expo_water_arr, 1)
-            # # --------------------------------------------------------------
-            # # find best guess for other species exponent
-            # expo_others = float(fit_others[1])
-            # # find best guess for water exponent
-            # expo_water = float(fit_water[1])
-            # --------------------------------------------------------------
-            # check whether we have converged yet (by updating dexpo)
-            if force_airmass:
-                dexpo = np.abs(expo_water_prev - expo_water)
-            else:
-                part1 = expo_water_prev - expo_water
-                part2 = expo_others_prev - expo_others
-                dexpo = np.sqrt(part1 ** 2 + part2 ** 2)
-        # --------------------------------------------------------------
-        # keep track of the convergence params
-        expo_water_prev = float(expo_water)
-        expo_others_prev = float(expo_others)
         # ------------------------------------------------------------------
-        # storage for plotting
-        dd_iterations.append(drange)
-        ccf_water_iterations.append(np.array(ccf_water))
-        ccf_others_iterations.append(np.array(ccf_others))
+        # TODO: Need a QC on the fit quality
+        qc_values[1] = 0
+        qc_pass[1] = 1
         # ------------------------------------------------------------------
         # finally add one to the iterator
         iteration += 1
+
     # ----------------------------------------------------------------------
-    # work out the SNR for the CCF
-    snr_others = -amp_others_arr[0] / mp.estimate_sigma(ccf_others)
-    snr_water = -amp_water_arr[0] / mp.estimate_sigma(ccf_water)
-    # TODO: Add to language database
-    msg = 'SNR_others={:.2f} SNR_water={:.2f}'
-    margs = [snr_others, snr_water]
-    WLOG(params, '', msg.format(*margs))
     # deal with lower bounds for other species
     if expo_others/hdr_airmass < others_bounds[0]:
         # update qc params
@@ -1279,11 +1092,6 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         # add a flag that finite resolution correction was not performed
         finite_res_corr = False
     # ----------------------------------------------------------------------
-    # calculate CCF power
-    keep = np.abs(drange) < (ccf_scan_range / 4)
-    water_ccfpower = mp.nansum(np.gradient(ccf_water[keep] ** 2))
-    others_ccfpower = mp.nansum(np.gradient(ccf_others)[keep] ** 2)
-    # ----------------------------------------------------------------------
     # populate parameter dictionary
     props = ParamDict()
     props['CORRECTED_E2DS'] = corrected_e2ds
@@ -1296,16 +1104,14 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     props['EXPO_OTHERS'] = expo_others
     props['DV_WATER'] = dv_water
     props['DV_OTHERS'] = dv_others
-    props['CCFPOWER_WATER'] = water_ccfpower
-    props['CCFPOWER_OTHERS'] = others_ccfpower
     props['QC_PARAMS'] = qc_params
     props['SPL_TAPAS_WATER'] = spl_water
     props['SPL_TAPAS_OTHERS'] = spl_others
     # set sources
     keys = ['CORRECTED_E2DS', 'TRANS_MASK', 'ABSO_E2DS', 'EXPO_WATER',
-            'EXPO_OTHERS', 'DV_WATER', 'DV_OTHERS', 'CCFPOWER_WATER',
-            'CCFPOWER_OTHERS', 'QC_PARAMS', 'SKY_MODEL', 'PRE_SKYCORR_IMAGE',
-            'FINITE_RES_CORRECTED', 'SPL_TAPAS_WATER', 'SPL_TAPAS_OTHERS']
+            'EXPO_OTHERS', 'DV_WATER', 'DV_OTHERS', 'QC_PARAMS', 'SKY_MODEL',
+            'PRE_SKYCORR_IMAGE',  'FINITE_RES_CORRECTED', 'SPL_TAPAS_WATER',
+            'SPL_TAPAS_OTHERS']
     props.set_sources(keys, func_name)
     # ----------------------------------------------------------------------
     # add constants used (can come from kwargs)
@@ -1909,15 +1715,13 @@ def qc_exit_tellu_preclean(params, recipe, image, image_e2ds_ini, infile,
     props['EXPO_OTHERS'] = expo_others
     props['DV_WATER'] = np.nan
     props['DV_OTHERS'] = np.nan
-    props['CCFPOWER_WATER'] = np.nan
-    props['CCFPOWER_OTHERS'] = np.nan
     props['QC_PARAMS'] = qc_params
     props['SPL_TAPAS_WATER'] = spl_water
     props['SPL_TAPAS_OTHERS'] = spl_others
     # set sources
     keys = ['CORRECTED_E2DS', 'TRANS_MASK', 'ABSO_E2DS', 'EXPO_WATER',
-            'EXPO_OTHERS', 'DV_WATER', 'DV_OTHERS', 'CCFPOWER_WATER',
-            'CCFPOWER_OTHERS', 'QC_PARAMS', 'SKY_MODEL', 'PRE_SKYCORR_IMAGE',
+            'EXPO_OTHERS', 'DV_WATER', 'DV_OTHERS', 'QC_PARAMS',
+            'SKY_MODEL', 'PRE_SKYCORR_IMAGE',
             'FINITE_RES_CORRECTED', 'SPL_TAPAS_WATER', 'SPL_TAPAS_OTHERS']
     props.set_sources(keys, func_name)
     # ----------------------------------------------------------------------
@@ -2024,8 +1828,6 @@ def tellu_preclean_write(params, recipe, infile, rawfiles, fiber, combine,
     tpclfile.add_hkey('KW_TELLUP_EXPO_OTHERS', value=props['EXPO_OTHERS'])
     tpclfile.add_hkey('KW_TELLUP_DV_WATER', value=props['DV_WATER'])
     tpclfile.add_hkey('KW_TELLUP_DV_OTHERS', value=props['DV_OTHERS'])
-    tpclfile.add_hkey('KW_TELLUP_CCFP_WATER', value=props['CCFPOWER_WATER'])
-    tpclfile.add_hkey('KW_TELLUP_CCFP_OTHERS', value=props['CCFPOWER_OTHERS'])
     # ----------------------------------------------------------------------
     # get qc names/values/logic/pass from qc params
     qc_names, qc_values, qc_logic, qc_pass = props['QC_PARAMS']
@@ -2215,14 +2017,9 @@ def read_tellu_preclean(params, recipe, infile, fiber, database=None):
                                              dtype=float)
     props['DV_WATER'] = tpclfile.get_hkey('KW_TELLUP_DV_WATER', dtype=float)
     props['DV_OTHERS'] = tpclfile.get_hkey('KW_TELLUP_DV_OTHERS', dtype=float)
-    props['CCFPOWER_WATER'] = tpclfile.get_hkey('KW_TELLUP_CCFP_WATER',
-                                                dtype=float)
-    props['CCFPOWER_OTHERS'] = tpclfile.get_hkey('KW_TELLUP_CCFP_OTHERS',
-                                                 dtype=float)
     # set sources
     keys = ['CORRECTED_E2DS', 'TRANS_MASK', 'ABSO_E2DS', 'EXPO_WATER',
-            'EXPO_OTHERS', 'DV_WATER', 'DV_OTHERS', 'CCFPOWER_WATER',
-            'CCFPOWER_OTHERS', 'QC_PARAMS', 'SKY_MODEL']
+            'EXPO_OTHERS', 'DV_WATER', 'DV_OTHERS', 'QC_PARAMS', 'SKY_MODEL']
     props.set_sources(keys, 'header')
     # ----------------------------------------------------------------------
     # add constants used (can come from kwargs)
