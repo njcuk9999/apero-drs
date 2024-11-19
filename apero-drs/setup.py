@@ -27,7 +27,8 @@ SCRIPT_PATHS = [os.path.join('apero', 'tools', 'recipes', 'bin'),
 
 SETUP_PATHS = [os.path.join('apero', 'setup', 'apero_setup.py'),
                os.path.join('apero', 'setup', 'apero_profile.bat'),
-               os.path.join('apero', 'setup', 'apero_profile.sh')]
+               os.path.join('apero', 'setup', 'apero_profile.sh'),
+               os.path.join('apero', 'setup', 'apero_execute.py')]
 
 # =============================================================================
 # Define functions

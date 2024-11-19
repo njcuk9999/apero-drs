@@ -30,7 +30,7 @@ from aperocore.core import drs_text
 # =============================================================================
 # Define variables
 # =============================================================================
-__PATH__ = Path(__file__).parent.parent
+__PATH__ = Path(__file__).parent.parent.parent
 __NAME__ = 'apero.setup.drs_setup.py'
 __INSTRUMENT__ = 'None'
 # load the yaml file

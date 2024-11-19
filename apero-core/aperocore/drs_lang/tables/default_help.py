@@ -1467,6 +1467,16 @@ item.comment = ''
 langlist.add(item)
 
 # =============================================================================
+# EXECUTE_DESCRIPTION
+# =============================================================================
+item = langlist.create('EXECUTE_DESCRIPTION', kind='HELP')
+item.value['ENG'] = 'Run APERO recipe for this apero profile.'
+item.arguments = 'None'
+item.comment = ''
+langlist.add(item)
+
+
+# =============================================================================
 # ALL_TEXT 
 # =============================================================================
 item = langlist.create('ALL_TEXT', kind='TEXT')

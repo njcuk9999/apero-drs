@@ -9,10 +9,12 @@ Created on 2024-10-28 11:32
 
 @author: cook
 """
-from aperocore.base import base
+
 from aperocore.core import drs_log
-from apero.utils import drs_startup
+from aperocore.constants import load_functions
 from apero.base import base as apero_base
+from apero.instruments.select import INSTRUMENTS
+from apero.setup.core import drs_execute
 
 # =============================================================================
 # Define variables
@@ -48,51 +50,28 @@ def main(**kwargs):
     :returns: dictionary of the local space
     :rtype: dict
     """
-    # assign function calls (must add positional)
-    fkwargs = dict(**kwargs)
-    # ----------------------------------------------------------------------
-    # deal with command line inputs / function call inputs
-    recipe, params = drs_startup.setup(__NAME__, __INSTRUMENT__, fkwargs)
-    # solid debug mode option
-    if kwargs.get('DEBUG0000', False):
-        return recipe, params
-    # ----------------------------------------------------------------------
-    # run main bulk of code (catching all errors)
-    llmain, success = drs_startup.run(__main__, recipe, params)
-    # ----------------------------------------------------------------------
-    # End Message
-    # ----------------------------------------------------------------------
-    return drs_startup.end_main(params, llmain, recipe, success, outputs='None')
-
-
-def __main__(recipe, params):
-    """
-    Main code: should only call recipe and params (defined from main)
-
-    :param recipe:
-    :param params:
-    :return:
-    """
+    # get parameters from function
+    rparams = drs_execute.command_line_args()
+    # get recipe mod
+    aparams = load_functions.load_config(INSTRUMENTS)
+    instrument = load_functions.load_pconfig(INSTRUMENTS)
     # ----------------------------------------------------------------------
     # Main Code
     # ----------------------------------------------------------------------
     # Get a list of recipes (for instrument + tools)
-    recipe_list = recipe.recipemod.recipes
+    recipe_list = instrument.RECIPEMOD().recipes
 
-    if params['INPUTS']['RECIPES']:
-
-        WLOG(params, 'info', 'List of recipes:' )
+    if rparams['LIST']:
+        WLOG(aparams, 'info', 'List of recipes:' )
 
         for recipe_it in recipe_list:
             msg = '\t{0} [{1}]'
             margs = [recipe_it.name, recipe_it.shortname]
-            WLOG(params, 'info', msg.format(*margs))
+            WLOG(aparams, 'info', msg.format(*margs))
 
     # if params['INPUTS']['HELP']:
     #     WLOG(params, 'info', 'Help for recipe: {0}'.format(params['INPUTS']['HELP']))
-
-
-    WLOG(params, 'info', 'Running apero_execute.py')
+    WLOG(aparams, 'info', 'Running apero_execute.py')
 
     # ----------------------------------------------------------------------
     # End of main code

@@ -4667,9 +4667,9 @@ def make_listing(params: ParamDict) -> OrderedDict:
     # set up an output storage dictionary
     props = OrderedDict()
     # set the argument name
-    props['name'] = '--listing'
+    props['name'] = '--list_night'
     # set any argument alternative names
-    props['altnames'] = ['--list']
+    props['altnames'] = ['--listn']
     # set the argument action function
     props['action'] = _MakeListing
     # set the number of argument to expect
@@ -4695,9 +4695,9 @@ def make_alllisting(params: ParamDict) -> OrderedDict:
     # set up an output storage dictionary
     props = OrderedDict()
     # set the argument name
-    props['name'] = '--listingall'
+    props['name'] = '--list_all'
     # set any argument alternative names
-    props['altnames'] = ['--listall']
+    props['altnames'] = ['--lista']
     # set the argument action function
     props['action'] = _MakeAllListing
     # set the number of argument to expect

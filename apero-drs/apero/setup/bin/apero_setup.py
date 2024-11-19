@@ -13,8 +13,8 @@ import signal
 
 from aperocore.constants import param_functions
 
-from apero.setup import drs_setup
-from apero.setup import setup_constants
+from apero.setup.core import drs_setup
+from apero.setup.core import setup_constants
 
 # =============================================================================
 # Define variables
