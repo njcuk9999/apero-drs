@@ -1041,11 +1041,11 @@ apero_mk_tellu.set_output_data(TELLU_CONV=mktellu_dict,
                                TELLU_PCLEAN=mktellu_dict)
 apero_mk_tellu.set_debug_plots('TELLU_SKY_CORR_PLOT',
                                'MKTELLU_WAVE_FLUX1', 'MKTELLU_WAVE_FLUX2',
-                               'TELLUP_WAVE_TRANS', 'TELLUP_ABSO_SPEC',
+                               'TELLUP_MEAN_RES', 'TELLUP_ABSO_SPEC',
                                'TELLUP_CLEAN_OH', 'FTELLU_RECON_SPLINE2',
                                'TELLU_FINITE_RES_CORR')
 apero_mk_tellu.set_summary_plots('SUM_MKTELLU_WAVE_FLUX',
-                                 'SUM_TELLUP_WAVE_TRANS', 'SUM_TELLUP_ABSO_SPEC')
+                                 'SUM_TELLUP_MEAN_RES', 'SUM_TELLUP_ABSO_SPEC')
 apero_mk_tellu.set_arg(pos=0, **obs_dir)
 apero_mk_tellu.set_arg(name='files', dtype='files', pos='1+',
                        files=[files.out_ext_e2ds, files.out_ext_e2dsff],
@@ -1166,11 +1166,11 @@ apero_fit_tellu.set_debug_plots('TELLU_SKY_CORR_PLOT',
                                 'FTELLU_RECON_SPLINE1', 'FTELLU_RECON_SPLINE2',
                                 'FTELLU_WAVE_SHIFT1', 'FTELLU_WAVE_SHIFT2',
                                 'FTELLU_RECON_ABSO1', 'FTELLU_RECON_ABSO2',
-                                'TELLUP_WAVE_TRANS', 'TELLUP_ABSO_SPEC',
+                                'TELLUP_MEAN_RES', 'TELLUP_ABSO_SPEC',
                                 'TELLUP_CLEAN_OH', 'FTELLU_RES_MODEL',
                                 'TELLU_FINITE_RES_CORR')
 apero_fit_tellu.set_summary_plots('SUM_EXTRACT_S1D', 'SUM_FTELLU_RECON_ABSO',
-                                  'SUM_TELLUP_WAVE_TRANS',
+                                  'SUM_TELLUP_MEAN_RES',
                                   'SUM_TELLUP_ABSO_SPEC',
                                   'SUM_FTELLU_RES_MODEL')
 apero_fit_tellu.set_arg(pos=0, **obs_dir)
