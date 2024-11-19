@@ -88,6 +88,8 @@ def __main__(recipe, params):
             margs = [recipe_it.name, recipe_it.shortname]
             WLOG(params, 'info', msg.format(*margs))
 
+    # if params['INPUTS']['HELP']:
+    #     WLOG(params, 'info', 'Help for recipe: {0}'.format(params['INPUTS']['HELP']))
 
 
     WLOG(params, 'info', 'Running apero_execute.py')
