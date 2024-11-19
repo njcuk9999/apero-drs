@@ -2174,7 +2174,7 @@ TELLUP_H2O_CCF_FILE.value = 'trans_h2o_abso_ccf.mas'
 
 # define dexpo convergence threshold
 TELLUP_DEXPO_CONV_THRES = TELLUP_DEXPO_CONV_THRES.copy(__NAME__)
-TELLUP_DEXPO_CONV_THRES.value = 1.0e-4
+TELLUP_DEXPO_CONV_THRES.value = 1.0e-3
 
 # define the maximum number of iterations to try to get dexpo
 # convergence
@@ -2798,8 +2798,8 @@ PLOT_TELLU_SKY_CORR_PLOT = PLOT_TELLU_SKY_CORR_PLOT.copy(__NAME__)
 PLOT_TELLU_SKY_CORR_PLOT.value = True
 
 # turn on the telluric pre-cleaning ccf debug plot
-PLOT_TELLUP_WAVE_TRANS = PLOT_TELLUP_WAVE_TRANS.copy(__NAME__)
-PLOT_TELLUP_WAVE_TRANS.value = True
+PLOT_TELLUP_MEAN_RES = PLOT_TELLUP_MEAN_RES.copy(__NAME__)
+PLOT_TELLUP_MEAN_RES.value = True
 
 # turn on the telluric pre-cleaning result debug plot
 PLOT_TELLUP_ABSO_SPEC = PLOT_TELLUP_ABSO_SPEC.copy(__NAME__)

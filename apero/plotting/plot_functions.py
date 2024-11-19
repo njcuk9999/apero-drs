@@ -3705,8 +3705,8 @@ def plot_tellu_sky_corr(plotter: Plotter, graph: Graph,
     plotter.plotend(graph)
 
 
-def plot_tellup_wave_trans(plotter: Plotter, graph: Graph,
-                           kwargs: Dict[str, Any]):
+def plot_tellup_mean_res(plotter: Plotter, graph: Graph,
+                         kwargs: Dict[str, Any]):
     """
     Graph: Telluric wave transmission plot
 
@@ -3722,59 +3722,49 @@ def plot_tellup_wave_trans(plotter: Plotter, graph: Graph,
         return
     # ------------------------------------------------------------------
     # get the arguments from kwargs
-    dd_arr = kwargs['dd_arr']
-    ccf_water_arr = kwargs['ccf_water_arr']
-    ccf_others_arr = kwargs['ccf_others_arr']
-    size = kwargs['size']
-    n_iterations = len(dd_arr)
+    dexpos = kwargs['dexpos']
+    mean_rd_water= kwargs['mean_rd_water']
+    emean_rd_water = kwargs['emean_rd_water']
+    mean_rd_others = kwargs['mean_rd_others']
+    emean_rd_others = kwargs['emean_rd_others']
+    abs_bins = kwargs['abs_bins']
+    objname = kwargs['objname']
+    dprtype = kwargs['dprtype']
+    n_iterations = kwargs['n_iterations']
     # ------------------------------------------------------------------
     # set up plot
-    fig, frames = graph.set_figure(plotter, nrows=1, ncols=2, sharex='all')
+    fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
     # construct the title
-    titlesup = '[Total iterations={0}]'.format(n_iterations)
-    # ------------------------------------------------------------------
-    # plot ccfs (for each iteration)
-    for n_it in range(n_iterations):
-        # ---------------------------------------------------------------------
-        # set up different plot parameters based on iteration number
-        if n_it == 0:
-            color = 'red'
-            alpha = 1
-            label = 'First iteration'
-        elif n_it == n_iterations - 1:
-            color = 'green'
-            alpha = 1
-            label = 'Last iteration'
+    targs = [objname, dprtype, n_iterations]
+    titlesup = '{0} [{1}], Total iterations={2}'.format(*targs)
+
+    for it in range(len(dexpos)):
+        dexpo = dexpos[it]
+        mean_res_depth_water = mean_rd_water[it]
+        err_res_depth_water = emean_rd_water[it]
+        mean_res_depth_others = mean_rd_others[it]
+        err_res_depth_others = emean_rd_others[it]
+
+        alpha = 1 if dexpo < 0.01 else 0.1
+
+        # label for last iteration
+        if it == len(dexpos) - 1:
+            water_label = 'Water'
+            other_label = 'Others'
         else:
-            color = 'black'
-            alpha = (n_it + 1) / n_iterations
-            label = None
-        # ---------------------------------------------------------------------
-        # plot water ccf
-        frames[0].plot(dd_arr[n_it], ccf_water_arr[n_it], color=color,
-                       alpha=alpha, label=label)
-        frames[0].set(xlabel='dv [km/s]', ylabel='CCF power',
-                      title='Water CCF')
-        # plot other species ccf
-        frames[1].plot(dd_arr[n_it], ccf_others_arr[n_it], color=color,
-                       alpha=alpha, label=label)
-        frames[1].set(xlabel='dv [km/s]', ylabel='CCF power',
-                      title='Dry CCF')
-    # ------------------------------------------------------------------
-    # plot the control region
-    frames[0].axvline(x=size, color='k', linestyle='--')
-    frames[0].axvline(x=-size, color='k', linestyle='--')
-    # plot the horizontal zero line
-    frames[0].axhline(y=0, color='k', linestyle='--', label='control region')
-    # plot the control region
-    frames[1].axvline(x=size, color='k', linestyle='--')
-    frames[1].axvline(x=-size, color='k', linestyle='--')
-    # plot the horizontal zero line
-    frames[1].axhline(y=0, color='k', linestyle='--', label='control region')
-    # ------------------------------------------------------------------
-    # plot legends
-    frames[0].legend(loc=0)
-    frames[1].legend(loc=1)
+            water_label, other_label = None, None
+
+        frame.errorbar(abs_bins, mean_res_depth_water,
+                       yerr=err_res_depth_water,
+                       ls='None', marker='o', color='b', alpha=alpha,
+                       label=water_label)
+        frame.errorbar(abs_bins, mean_res_depth_others,
+                       yerr=err_res_depth_others,
+                       ls='None', marker='o', color='orange', alpha=alpha,
+                       label=other_label)
+    # add legend
+    frame.legend(loc=0)
+    frame.set(xlabel='log(absorption)', ylabel='Average residual depth')
     # plot super title
     plotter.plt.suptitle(titlesup)
     # ------------------------------------------------------------------
@@ -4560,14 +4550,13 @@ def plot_tellu_finite_res_corr(plotter: Plotter, graph: Graph,
 # sky correction graph instance
 tellu_sky_corr = Graph('TELLU_SKY_CORR_PLOT', kind='debug',
                        func=plot_tellu_sky_corr)
-
 # telluric pre clean graph instances
-tellup_wave_trans = Graph('TELLUP_WAVE_TRANS', kind='debug',
-                          func=plot_tellup_wave_trans)
-sum_desc = ('Plot to show the measured CCF of water and other species '
+tellup_mean_res = Graph('TELLUP_MEAN_RES', kind='debug',
+                          func=plot_tellup_mean_res)
+sum_desc = ('Plot to show the measured exponents of water and other species '
             'calculated during the telluric pre-cleaning')
-sum_tellup_wave_trans = Graph('SUM_TELLUP_WAVE_TRANS', kind='summary',
-                              func=plot_tellup_wave_trans,
+sum_tellup_mean_res = Graph('SUM_TELLUP_MEAN_RES', kind='summary',
+                              func=plot_tellup_mean_res,
                               figsize=(16, 10), dpi=150, description=sum_desc)
 tellup_abso_spec = Graph('TELLUP_ABSO_SPEC', kind='debug',
                          func=plot_tellup_abso_spec)
@@ -4644,7 +4633,7 @@ definitions += [tellu_sky_corr, mktellu_wave_flux1, mktellu_wave_flux2,
                 ftellu_pca_comp1, ftellu_pca_comp2, ftellu_recon_spline1,
                 ftellu_recon_spline2, ftellu_wave_shift1, ftellu_wave_shift2,
                 ftellu_recon_abso1, ftellu_recon_abso2, sum_ftellu_recon_abso,
-                tellup_wave_trans, sum_tellup_wave_trans, tellup_abso_spec,
+                tellup_mean_res, sum_tellup_mean_res, tellup_abso_spec,
                 tellup_clean_oh, sum_tellup_abso_spec, mktemp_berv_cov,
                 mktemp_deconv, tellu_finite_res_cor, sum_mktemp_berv_cov,
                 ftellu_res_model, sum_ftellu_res_model]
