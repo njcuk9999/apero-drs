@@ -275,6 +275,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                                             fiber, rawfiles, combine,
                                             database=telludbm,
                                             template_props=template_props,
+                                            ref_props=refprops,
+                                            bprops=bprops,
                                             clean_ohlines=clean_ohlines,
                                             sky_props=scprops)
         # get corrected image out of pre-cleaning parameter dictionary

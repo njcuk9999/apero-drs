@@ -17,7 +17,6 @@ import numpy as np
 from astropy import constants as cc
 from astropy import units as uu
 from astropy.table import Table
-from scipy.optimize import curve_fit
 
 from apero import lang
 from apero.base import base
@@ -29,6 +28,7 @@ from apero.core.core import drs_log
 from apero.core.core import drs_text
 from apero.core.instruments.default import pseudo_const
 from apero.core.utils import drs_data
+from apero.core.utils import drs_recipe
 from apero.core.utils import drs_utils
 from apero.io import drs_fits
 from apero.io import drs_table
@@ -48,6 +48,7 @@ __release__ = base.__release__
 # get param dict
 ParamDict = constants.ParamDict
 DrsFitsFile = drs_file.DrsFitsFile
+DrsRecipe = drs_recipe.DrsRecipe
 # get calibration database
 CalibDatabase = drs_database.CalibrationDatabase
 TelluDatabase = drs_database.TelluricDatabase
@@ -441,7 +442,8 @@ def mask_bad_regions(params: ParamDict,
 # pre-cleaning functions
 # =============================================================================
 def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
-                   template_props: ParamDict,
+                   template_props: ParamDict, refprops: ParamDict,
+                   bprops: ParamDict,
                    sky_props: Optional[ParamDict] = None,
                    calibdbm: Union[CalibDatabase, None] = None,
                    telludbm: Union[TelluDatabase, None] = None, **kwargs):
@@ -579,9 +581,9 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     qc_logic.append('MED[EXTSNR] < {0}'.format(snr_min_thres))
     qc_pass.append(np.nan)
     # 2. ccf is NaN (pos = 1)
-    qc_values.append(np.nan)
-    qc_names.append('NUM_NAN_CCF')
-    qc_logic.append('NUM_NAN_CCF > 0')
+    qc_values.append('N.A')
+    qc_names.append('APPROX_RV [PREV, NOW]')
+    qc_logic.append('APP_RV[NOW] > APP_RV[PREV]')
     qc_pass.append(np.nan)
     # 3. exponent for others out of bounds (pos = 2 and 3)
     qc_values += [np.nan, np.nan]
@@ -774,9 +776,9 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     expo_water_list = []
     expo_others_list = []
     # storage for plotting
-    dd_iterations = []
-    ccf_water_iterations = []
-    ccf_others_iterations = []
+    dexpos = []
+    mean_rd_water, emean_rd_water = [], []
+    mean_rd_others, emean_rd_others = [], []
     # ----------------------------------------------------------------------
     # first guess at the velocity of absorption is 0 km/s
     dv_abso = 0.0
@@ -835,6 +837,8 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         other_pos = np.where(other_mask)[0]
         other_bins.append(other_pos)
 
+    # store approx rv and approx rv err
+    approx_rvs = []
     # loop around until convergence or 20th iteration
     while (dexpo > dexpo_thres) and (iteration < max_iterations):
         # set up a qc flag
@@ -888,14 +892,6 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         mean_res_depth_water -= np.nanmean(mean_res_depth_water)
         mean_res_depth_others -= np.nanmean(mean_res_depth_others)
 
-        # TODO: Add to plotting functions
-        import matplotlib.pyplot as plt
-        alpha = 1 if dexpo < 0.01 else 0.1
-        plt.errorbar(abs_bins, mean_res_depth_water, yerr=err_res_depth_water,
-                     ls='None', marker='o', color='b', alpha=alpha)
-        plt.errorbar(abs_bins, mean_res_depth_others, yerr=err_res_depth_others,
-                     ls='None', marker='o', color='orange', alpha=alpha)
-
         # fitting the slope of residual amplitude of water
         fit_water = np.polyfit(abs_bins, mean_res_depth_water, deg=1,
                                w=1/err_res_depth_water)
@@ -910,32 +906,87 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         # append to storage
         slope_others_list.append(slope_others)
         expo_others_list.append(expo_others)
-
+        # storage for plotting
+        dexpos.append(np.array(dexpo))
+        mean_rd_water.append(np.array(mean_res_depth_water))
+        emean_rd_water.append(np.array(err_res_depth_water))
+        mean_rd_others.append(np.array(mean_res_depth_others))
+        emean_rd_others.append(np.array(err_res_depth_others))
+        # if iteration zero we just add the slopes to the expo
         if iteration == 0:
             expo_water += slope_water
             expo_others += slope_others
-        else:
-            # find the place where the water residuals null to zero (intercept)
-            expo_water_fit = np.polyfit(slope_water_list[-2:],
-                                        expo_water_list[-2:], deg=1)
-            expo_water = expo_water_fit[1]
-            # find the place where the others residuals null to zero (intercept)
-            expo_others_fit = np.polyfit(slope_others_list[-2:],
-                                         expo_others_list[-2:], deg=1)
-            expo_others = expo_others_fit[1]
-            # convergence check
-            water_part = (expo_water_list[-1] - expo_water_list[-2])
-            others_part = (expo_others_list[-1] - expo_others_list[-2])
-            dexpo = np.sqrt(water_part**2 + others_part**2)
-
-        # ------------------------------------------------------------------
-        # TODO: Need a QC on the fit quality
-        qc_values[1] = 0
-        qc_pass[1] = 1
+            # finally add one to the iterator
+            iteration += 1
+            continue
+        # ---------------------------------------------------------------------
+        # only if we have more than one iteration
+        # ---------------------------------------------------------------------
+        # find the place where the water residuals null to zero (intercept)
+        expo_water_fit = np.polyfit(slope_water_list[-2:],
+                                    expo_water_list[-2:], deg=1)
+        expo_water = expo_water_fit[1]
+        # find the place where the others residuals null to zero (intercept)
+        expo_others_fit = np.polyfit(slope_others_list[-2:],
+                                     expo_others_list[-2:], deg=1)
+        expo_others = expo_others_fit[1]
+        # convergence check
+        water_part = (expo_water_list[-1] - expo_water_list[-2])
+        others_part = (expo_others_list[-1] - expo_others_list[-2])
+        dexpo = np.sqrt(water_part**2 + others_part**2)
+        # -----------------------------------------------------------------
+        # if we have a template we can measure an approximate RV
+        #  we can then use this to better shift the template to the data
+        if template_props['HAS_TEMPLATE']:
+            # get the gradient to the wave (and turn it in to a velocity)
+            grad_wave = speed_of_light_ms * np.gradient(np.log(wavemap))
+            # get the velocity derivative per pixel
+            with warnings.catch_warnings(record=True) as _:
+                velo_deriv = np.gradient(np.log(template2))/grad_wave
+            # project this onto the spectrum
+            velo_proj = log_spec_tmp_lowpass/velo_deriv
+            err_proj = running_sigma/velo_deriv
+            # find the approx velocity and its error
+            app_vel, app_vel_err = mp.odd_ratio_mean(velo_proj, err_proj)
+            # we add this to the approximate rv shift
+            approx_rvs.append(app_vel)
+            approx_rv = float(np.sum(approx_rvs))
+            approx_rv_err = float(app_vel_err)
+            # TODO: Add to language database
+            msg = ('\t\tApprox Rv shift: {0:.2f}+/-{1:.2f} '
+                   'increment: {2:.4f} [m/s]')
+            margs = [approx_rv, approx_rv_err, app_vel]
+            WLOG(params, '', msg.format(*margs))
+            # shift the template
+            template_props = shift_template(params, recipe, None,
+                                            template_props, refprops,
+                                            wprops, bprops,
+                                            rvoffset=approx_rv,
+                                            rvoffseterr=approx_rv_err,
+                                            log=False)
+            # update template 1 and 2 to use in next loop
+            template1 = np.array(template_props['TEMP_S2D'])
+            template2 = template1.ravel()[flatkeep]
         # ------------------------------------------------------------------
         # finally add one to the iterator
         iteration += 1
-
+    # ----------------------------------------------------------------------
+    # update qc[1] qc as this is not the first iteration
+    #    we have a template
+    if template_props['HAS_TEMPLATE']:
+        # get the prev, now approx rv values
+        qc_v = f'{approx_rvs[-2]:.4f}, {approx_rvs[-1]:.4f}'
+        # if approx rvs have diverged then we fail QC
+        if abs(approx_rvs[-1]) > abs(approx_rvs[-2]):
+            qc_values[1] = qc_v
+            qc_pass[1] = 0
+        else:
+            qc_values[1] = qc_v
+            qc_pass[1] = 1
+    else:
+        # qc values only if not the first iteration and with a template
+        qc_values[1] = 'N.A.'
+        qc_pass[1] = 1
     # ----------------------------------------------------------------------
     # deal with lower bounds for other species
     if expo_others/hdr_airmass < others_bounds[0]:
@@ -1007,15 +1058,19 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
                                       template_props, wave_e2ds, res_s1d_fwhm,
                                       res_s1d_expo, database=telludbm)
     # ----------------------------------------------------------------------
-    # show CCF plot to see if correlation peaks have been killed
-    recipe.plot('TELLUP_WAVE_TRANS', dd_arr=dd_iterations,
-                ccf_water_arr=ccf_water_iterations,
-                ccf_others_arr=ccf_others_iterations,
-                size=ccf_control_radius)
-    recipe.plot('SUM_TELLUP_WAVE_TRANS', dd_arr=dd_iterations,
-                ccf_water_arr=ccf_water_iterations,
-                ccf_others_arr=ccf_others_iterations,
-                size=ccf_control_radius)
+    # plot the slope fit mean res plot
+    recipe.plot('TELLUP_MEAN_RES', dexpos=dexpos,
+                mean_rd_water=mean_rd_water, emean_rd_water=emean_rd_water,
+                mean_rd_others=mean_rd_others, emean_rd_others=emean_rd_others,
+                abs_bins=abs_bins, n_iterations=iteration,
+                objname=infile.get_hkey('KW_OBJNAME', dtype=str),
+                dprtype=infile.get_hkey('KW_DPRTYPE', dtype=str))
+    recipe.plot('SUM_TELLUP_MEAN_RES', dexpos=dexpos,
+                mean_rd_water=mean_rd_water, emean_rd_water=emean_rd_water,
+                mean_rd_others=mean_rd_others, emean_rd_others=emean_rd_others,
+                abs_bins=abs_bins, n_iterations=iteration,
+                objname=infile.get_hkey('KW_OBJNAME', dtype=str),
+                dprtype=infile.get_hkey('KW_DPRTYPE', dtype=str))
     # plot to show absorption spectrum
     # TODO: add switch to change labels based on template = None
     recipe.plot('TELLUP_ABSO_SPEC', trans=trans, wave=wavemap,
@@ -1153,7 +1208,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
                          props, wprops, sky_props, database=telludbm)
     # ----------------------------------------------------------------------
     # return props
-    return props
+    return props, template_props
 
 
 def clean_ohline_pca(params, recipe, image, wavemap, **kwargs):
@@ -1458,7 +1513,8 @@ def variable_res_conv(wavemap: np.ndarray, spectrum: np.ndarray,
         sumker = sumker + ker
     # -------------------------------------------------------------------------
     # normalize convovled spectrum to kernel sum
-    spectrum2 = spectrum2 / sumker
+    with warnings.catch_warnings(record=True) as _:
+        spectrum2 = spectrum2 / sumker
     # reshape if necessary
     if len(shape0) == 2:
         spectrum2 = spectrum2.reshape(shape0)
@@ -1697,7 +1753,7 @@ def qc_exit_tellu_preclean(params, recipe, image, image_e2ds_ini, infile,
         # plot the finite resolution correction plot
         recipe.plot('TELLU_FINITE_RES_CORR', params=params, wavemap=wave_e2ds,
                     e2ds0=corrected_e2ds0, e2ds1=corrected_e2ds,
-                    corr=finite_res_e2ds)
+                    corr=finite_res_e2ds, abso_e2ds=abso_e2ds)
     else:
         finite_res_e2ds = np.ones_like(corrected_e2ds)
         # add a flag that finite resolution correction was not performed
@@ -1760,7 +1816,7 @@ def qc_exit_tellu_preclean(params, recipe, image, image_e2ds_ini, infile,
     props.set_sources(keys, func_name)
     # ----------------------------------------------------------------------
     # return props
-    return props
+    return props, template_props
 
 
 def tellu_preclean_write(params, recipe, infile, rawfiles, fiber, combine,
@@ -2376,8 +2432,11 @@ def load_templates(params: ParamDict,
             temp_props['TEMP_TIME'] = 'None'
             temp_props['TEMP_S1D_TABLE'] = None
             temp_props['TEMP_S1D_FILE'] = 'None'
+            temp_props['APPROX_RV'] = np.nan
+            temp_props['APPROX_RV_ERR'] = np.nan
             # set source
-            tkeys = ['TEMP_FILE', 'TEMP_NUM', 'TEMP_HASH', 'TEMP_TIME']
+            tkeys = ['TEMP_FILE', 'TEMP_NUM', 'TEMP_HASH', 'TEMP_TIME',
+                     'APPROX_RV', 'APPROX_RV_ERR']
             temp_props.set_sources(tkeys, func_name)
             # return null entries
             return temp_props
@@ -2430,8 +2489,11 @@ def load_templates(params: ParamDict,
         temp_props['TEMP_TIME'] = 'None'
         temp_props['TEMP_S1D_TABLE'] = None
         temp_props['TEMP_S1D_FILE'] = 'None'
+        temp_props['APPROX_RV'] = np.nan
+        temp_props['APPROX_RV_ERR'] = np.nan
         # set source
-        tkeys = ['TEMP_FILE', 'TEMP_NUM', 'TEMP_HASH', 'TEMP_TIME']
+        tkeys = ['TEMP_FILE', 'TEMP_NUM', 'TEMP_HASH', 'TEMP_TIME',
+                 'APPROX_RV', 'APPROX_RV_ERR']
         temp_props.set_sources(tkeys, func_name)
         # return null entries
         return temp_props
@@ -2462,12 +2524,105 @@ def load_templates(params: ParamDict,
     temp_props['TEMP_TIME'] = temp_header[params['KW_MKTEMP_TIME'][0]]
     temp_props['TEMP_S1D_TABLE'] = s1d_table
     temp_props['TEMP_S1D_FILE'] = temp_filename
+    temp_props['APPROX_RV'] = np.nan
+    temp_props['APPROX_RV_ERR'] = np.nan
+    # we need a copy of the s2d, s1d (so if we modify we can reset)
+    temp_props['ORIG_TEMP_S2D'] = np.array(temp_props['TEMP_S2D'])
+    temp_props['ORIG_TEMP_S1D_TABLE'] = np.array(temp_props['TEMP_S1D_TABLE'])
     # set source
     tkeys = ['TEMP_S2D', 'TEMP_FILE', 'TEMP_NUM', 'TEMP_HASH', 'TEMP_TIME',
-             'TEMP_S1D_TABLE', 'TEMP_S1D_FILE']
+             'TEMP_S1D_TABLE', 'TEMP_S1D_FILE', 'APPROX_RV', 'APPROX_RV_ERR',
+             'ORIG_TEMP_S2D', 'ORIG_TEMP_S1D_TABLE']
     temp_props.set_sources(tkeys, func_name)
     # only return most recent template
     return temp_props
+
+
+def shift_template(params: ParamDict, recipe: DrsRecipe,
+                   image: Optional[np.ndarray],
+                   tprops: ParamDict,
+                   refprops: ParamDict, wprops: ParamDict,
+                   bprops: ParamDict, rvoffset: float = 0.0,
+                   rvoffseterr: float = 0.0, log: bool = True) -> ParamDict:
+    # set function name
+    func_name = display_func('shift_template', __NAME__)
+    # ------------------------------------------------------------------
+    # no template - do nothing
+    if not tprops['HAS_TEMPLATE']:
+        return tprops
+    # ------------------------------------------------------------------
+    # reset the 2d and 1d templates (to their pre-shifted values)
+    tprops['TEMP_S2D'] = np.array(tprops['ORIG_TEMP_S2D'])
+    tprops['TEMP_S1D_TABLE'] = np.array(tprops['ORIG_TEMP_S1D_TABLE'])
+    # ------------------------------------------------------------------
+    # get data from property dictionaries
+    # ------------------------------------------------------------------
+    # Get the Barycentric correction from berv props
+    dv = bprops['USE_BERV'] - rvoffset / 1000.0
+    # deal with bad berv (nan or None)
+    if dv in [np.nan, None] or not isinstance(dv, (int, float)):
+        eargs = [dv, func_name]
+        if log:
+            WLOG(params, 'error', textentry('09-016-00004', args=eargs))
+    # Get the reference wavemap from reference wave props
+    wavemap_ref = refprops['WAVEMAP']
+    wavefile_ref = os.path.basename(refprops['WAVEFILE'])
+    # Get the current wavemap from wave props
+    wavemap = wprops['WAVEMAP']
+    wavefile = os.path.basename(wprops['WAVEFILE'])
+    # ------------------------------------------------------------------
+    # Interpolate at shifted wavelengths (if we have a e2dsimage)
+    # ------------------------------------------------------------------
+    # Log that we are shifting the template
+    if log:
+        WLOG(params, '', textentry('40-019-00017'))
+    # interpolate at shifted values
+    dvshift = mp.relativistic_waveshift(dv, units='km/s')
+    # ------------------------------------------------------------------
+    # Shift the e2ds to correct wave frame
+    # ------------------------------------------------------------------
+    # log the shifting of PCA components
+    if log:
+        wargs = [wavefile_ref, wavefile]
+        WLOG(params, '', textentry('40-019-00021', args=wargs))
+    # shift template e2ds
+    template_e2ds = wave_to_wave(params, tprops['TEMP_S2D'],
+                                 wavemap_ref / dvshift,
+                                 wavemap, reshape=True)
+    # push into 2D vector shape = 1 by len(s1d_table)
+    tmp_wave = np.array([tprops['TEMP_S1D_TABLE']['wavelength']])
+    tmp_s1d = np.array([tprops['TEMP_S1D_TABLE']['flux']])
+    tmp_s1d_deconv = np.array([tprops['TEMP_S1D_TABLE']['deconv']])
+    # shift template s1d
+    template_s1d = wave_to_wave(params, tmp_s1d,
+                                          tmp_wave / dvshift,
+                                          tmp_wave, reshape=False)
+    template_s1d_deconv = wave_to_wave(params, tmp_s1d_deconv,
+                                                 tmp_wave / dvshift,
+                                                 tmp_wave, reshape=False)
+    # debug plot - reconstructed spline (in loop)
+    if image is not None:
+        recipe.plot('FTELLU_RECON_SPLINE1', image=image, wavemap=wavemap,
+                    template=template_e2ds.ravel(), order=None)
+        # debug plot - reconstructed spline (selected order)
+        recipe.plot('FTELLU_RECON_SPLINE2', image=image, wavemap=wavemap,
+                    template=template_e2ds.ravel(),
+                    order=params['FTELLU_SPLOT_ORDER'])
+    # -------------------------------------------------------------------------
+    # push back into template props
+    tprops['TEMP_S2D'] = template_e2ds
+    tprops['TEMP_S1D_TABLE']['flux'] = template_s1d
+    tprops['TEMP_S1D_TABLE']['deconv'] = template_s1d_deconv
+    # deal with rv offset
+    if rvoffset == 0.0:
+        tprops['APPROX_RV'] = np.nan
+        tprops['APPROX_RV_ERR'] = np.nan
+    else:
+        tprops['APPROX_RV'] = rvoffset
+        tprops['APPROX_RV_ERR'] = rvoffseterr
+    # -------------------------------------------------------------------------
+    # return the updated e2ds (if present)
+    return tprops
 
 
 def get_transmission_files(params, header, fiber, database=None):
