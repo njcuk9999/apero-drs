@@ -2558,7 +2558,7 @@ def shift_template(params: ParamDict, recipe: DrsRecipe,
     # get data from property dictionaries
     # ------------------------------------------------------------------
     # Get the Barycentric correction from berv props
-    dv = bprops['USE_BERV'] - rvoffset / 1000.0
+    dv = bprops['USE_BERV'] - (rvoffset / 1000.0)
     # deal with bad berv (nan or None)
     if dv in [np.nan, None] or not isinstance(dv, (int, float)):
         eargs = [dv, func_name]
