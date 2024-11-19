@@ -107,7 +107,7 @@ normalise_by_pblaze = gen_tellu.normalise_by_pblaze
 
 pclean_only = fit_tellu.pclean_only
 
-shift_template = fit_tellu.shift_template
+shift_template = gen_tellu.shift_template
 
 # =============================================================================
 # End of code

@@ -1805,6 +1805,16 @@ KW_MKTELL_TEMPHASH.set(key='MKTTEMPH', comment='mktellu template unique hash')
 KW_MKTELL_TEMPTIME = KW_MKTELL_TEMPTIME.copy(__NAME__)
 KW_MKTELL_TEMPTIME.set(key='MKTTEMPT', comment='mktellu template create time')
 
+# The approximate RV calculated with the telluric correction
+KW_FTELLU_APPROX_RV = KW_FTELLU_APPROX_RV.copy(__NAME__)
+KW_FTELLU_APPROX_RV.set(key='MKT_ARV',
+                        comment='Approx relative RV from tellu [m/s]')
+
+# The approximate RV calculated with the telluric correction
+KW_FTELLU_APPROX_RV_ERR = KW_FTELLU_APPROX_RV_ERR.copy(__NAME__)
+KW_FTELLU_APPROX_RV_ERR.set(key='MKT_AERV',
+                        comment='Approx relative RV err from tellu [m/s]')
+
 # The blaze percentile used for mktellu calculation
 KW_MKTELL_BLAZE_PRCT = KW_MKTELL_BLAZE_PRCT.copy(__NAME__)
 KW_MKTELL_BLAZE_PRCT.set(key='MKTBPRCT', comment='mktellu blaze percentile')

@@ -161,6 +161,7 @@ __all__ = [  # input keys
     'KW_FTELLU_TAU_H2O', 'KW_FTELLU_TAU_REST', 'KW_FTELLU_ABSO_PREFIX',
     'KW_FTELLU_TEMPLATE', 'KW_FTELLU_TEMPNUM', 'KW_FTELLU_TEMPHASH',
     'KW_FTELLU_TEMPTIME', 'KW_FTELLU_NTRANS',
+    'KW_FTELLU_APPROX_RV', 'KW_FTELLU_APPROX_RV_ERR',
     # make template values
     'KW_MKTEMP_NFILES', 'KW_MKTEMP_NFILES_USED',
     'KW_MKTEMP_HASH', 'KW_MKTEMP_TIME',
@@ -2181,6 +2182,18 @@ KW_FTELLU_TEMPTIME = Keyword('KW_FTELLU_TEMPTIME', key='NULL', dtype=str,
                              source=__NAME__,
                              description=('the hash for the template '
                                           'generation (unique)'))
+
+# The approximate RV calculated with the telluric correction
+KW_FTELLU_APPROX_RV = Keyword('KW_FTELLU_APPROX_RV', key='NULL', dtype=str,
+                              source=__NAME__,
+                              description='Approx relative RV done with tellu '
+                                          'correction [m/s]')
+
+# The approximate RV calculated with the telluric correction
+KW_FTELLU_APPROX_RV_ERR = Keyword('KW_FTELLU_APPROX_RV_ERR', key='NULL',
+                                  dtype=str, source=__NAME__,
+                                  description='Approx relative RV err done '
+                                              'with tellu correction [m/s]')
 
 # Telluric principle component amplitudes (for use with 1D list)
 KW_FTELLU_AMP_PC = Keyword('KW_FTELLU_AMP_PC', key='NULL', dtype=float,

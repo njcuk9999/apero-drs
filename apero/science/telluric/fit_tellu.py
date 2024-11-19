@@ -19,7 +19,6 @@ from apero.base import base
 from apero.core import constants
 from apero.core import math as mp
 from apero.core.core import drs_log, drs_file
-from apero.core.utils import drs_recipe
 from apero.io import drs_fits
 from apero.io import drs_path
 from apero.science import extract
@@ -40,7 +39,6 @@ __release__ = base.__release__
 # get param dict
 ParamDict = constants.ParamDict
 DrsFitsFile = drs_file.DrsFitsFile
-DrsRecipe = drs_recipe.DrsRecipe
 # Get function string
 display_func = drs_log.display_func
 # Get Logging function
@@ -294,79 +292,6 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, refprops,
     # ----------------------------------------------------------------------
     # return props
     return props
-
-
-def shift_template(params: ParamDict, recipe: DrsRecipe,
-                   image: Optional[np.ndarray],
-                   template_props: ParamDict,
-                   refprops: ParamDict, wprops: ParamDict,
-                   bprops: ParamDict) -> ParamDict:
-
-
-    # set function name
-    func_name = display_func('shift_template', __NAME__)
-    # ------------------------------------------------------------------
-    # no template - do nothing
-    if not template_props['HAS_TEMPLATE']:
-        return template_props
-    # ------------------------------------------------------------------
-    # get data from property dictionaries
-    # ------------------------------------------------------------------
-    # Get the Barycentric correction from berv props
-    dv = bprops['USE_BERV']
-    # deal with bad berv (nan or None)
-    if dv in [np.nan, None] or not isinstance(dv, (int, float)):
-        eargs = [dv, func_name]
-        WLOG(params, 'error', textentry('09-016-00004', args=eargs))
-    # Get the reference wavemap from reference wave props
-    wavemap_ref = refprops['WAVEMAP']
-    wavefile_ref = os.path.basename(refprops['WAVEFILE'])
-    # Get the current wavemap from wave props
-    wavemap = wprops['WAVEMAP']
-    wavefile = os.path.basename(wprops['WAVEFILE'])
-    # ------------------------------------------------------------------
-    # Interpolate at shifted wavelengths (if we have a e2dsimage)
-    # ------------------------------------------------------------------
-    # Log that we are shifting the template
-    WLOG(params, '', textentry('40-019-00017'))
-    # interpolate at shifted values
-    dvshift = mp.relativistic_waveshift(dv, units='km/s')
-    # ------------------------------------------------------------------
-    # Shift the e2ds to correct wave frame
-    # ------------------------------------------------------------------
-    # log the shifting of PCA components
-    wargs = [wavefile_ref, wavefile]
-    WLOG(params, '', textentry('40-019-00021', args=wargs))
-    # shift template e2ds
-    template_e2ds = gen_tellu.wave_to_wave(params, template_props['TEMP_S2D'],
-                                           wavemap_ref / dvshift,
-                                           wavemap, reshape=True)
-    # push into 2D vector shape = 1 by len(s1d_table)
-    tmp_wave = np.array([template_props['TEMP_S1D_TABLE']['wavelength']])
-    tmp_s1d = np.array([template_props['TEMP_S1D_TABLE']['flux']])
-    tmp_s1d_deconv = np.array([template_props['TEMP_S1D_TABLE']['deconv']])
-    # shift template s1d
-    template_s1d = gen_tellu.wave_to_wave(params, tmp_s1d,
-                                          tmp_wave / dvshift,
-                                          tmp_wave, reshape=False)
-    template_s1d_deconv = gen_tellu.wave_to_wave(params, tmp_s1d_deconv,
-                                                 tmp_wave / dvshift,
-                                                 tmp_wave, reshape=False)
-    # debug plot - reconstructed spline (in loop)
-    recipe.plot('FTELLU_RECON_SPLINE1', image=image, wavemap=wavemap,
-                template=template_e2ds.ravel(), order=None)
-    # debug plot - reconstructed spline (selected order)
-    recipe.plot('FTELLU_RECON_SPLINE2', image=image, wavemap=wavemap,
-                template=template_e2ds.ravel(),
-                order=params['FTELLU_SPLOT_ORDER'])
-    # -------------------------------------------------------------------------
-    # push back into template props
-    template_props['TEMP_S2D'] = template_e2ds
-    template_props['TEMP_S1D_TABLE']['flux'] = template_s1d
-    template_props['TEMP_S1D_TABLE']['deconv'] = template_s1d_deconv
-    # -------------------------------------------------------------------------
-    # return the updated e2ds (if present)
-    return template_props
 
 
 def shift_all_to_frame(params, recipe, image, template, bprops, refprops, wprops,
@@ -1151,11 +1076,14 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
                       value=tpreprops['TELLUP_WATER_BOUNDS'], mapf='list')
     # ----------------------------------------------------------------------
     # add template key (if we have template)
-    if template_props['TEMP_FILE'] is None:
+    if template_props['TEMP_FILE'] in [None, 'None', 'Null', '']:
         corrfile.add_hkey('KW_FTELLU_TEMPLATE', value='None')
         corrfile.add_hkey('KW_FTELLU_TEMPNUM', value=0)
         corrfile.add_hkey('KW_FTELLU_TEMPHASH', value='None')
         corrfile.add_hkey('KW_FTELLU_TEMPTIME', value='None')
+
+        corrfile.add_hkey('KW_FTELLU_APPROX_RV', value='NaN')
+        corrfile.add_hkey('KW_FTELLU_APPROX_RV_ERR', value='NaN')
     else:
         corrfile.add_hkey('KW_FTELLU_TEMPLATE',
                           value=os.path.basename(template_props['TEMP_FILE']))
@@ -1165,6 +1093,10 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
                           value=template_props['TEMP_HASH'])
         corrfile.add_hkey('KW_FTELLU_TEMPTIME',
                           value=template_props['TEMP_TIME'])
+        corrfile.add_hkey('KW_FTELLU_APPROX_RV',
+                          value=template_props['APPROX_RV'])
+        corrfile.add_hkey('KW_FTELLU_APPROX_RV_ERR',
+                          value=template_props['APPROX_RV_ERR'])
     # ----------------------------------------------------------------------
     # copy data
     corrfile.data = sp_out

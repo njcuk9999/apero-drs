@@ -347,7 +347,7 @@ __all__ = [
     # sky corr plot settings
     'PLOT_TELLU_SKY_CORR_PLOT',
     # debug telluric plot settings
-    'PLOT_TELLUP_WAVE_TRANS', 'PLOT_TELLUP_ABSO_SPEC',
+    'PLOT_TELLUP_MEAN_RES', 'PLOT_TELLUP_ABSO_SPEC',
     'PLOT_MKTELLU_WAVE_FLUX1', 'PLOT_MKTELLU_WAVE_FLUX2',
     'PLOT_MKTELLU_MODEL',
     'PLOT_FTELLU_PCA_COMP1', 'PLOT_FTELLU_PCA_COMP2',
@@ -5222,11 +5222,11 @@ PLOT_TELLU_SKY_CORR_PLOT = Const('PLOT_TELLU_SKY_CORR_PLOT', value=False,
                                              'plot')
 
 # turn on the telluric pre-cleaning ccf debug plot
-PLOT_TELLUP_WAVE_TRANS = Const('PLOT_TELLUP_WAVE_TRANS', value=False,
+PLOT_TELLUP_MEAN_RES = Const('PLOT_TELLUP_MEAN_RES', value=False,
                                dtype=bool, source=__NAME__, user=True,
                                active=False, group=cgroup,
                                description='turn on the telluric pre-cleaning '
-                                           'ccf debug plot')
+                                           'slope mean res debug plot')
 
 # turn on the telluric pre-cleaning result debug plot
 PLOT_TELLUP_ABSO_SPEC = Const('PLOT_TELLUP_ABSO_SPEC', value=False,
