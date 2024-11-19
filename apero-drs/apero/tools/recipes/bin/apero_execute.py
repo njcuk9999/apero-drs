@@ -76,8 +76,19 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Main Code
     # ----------------------------------------------------------------------
-
     # Get a list of recipes (for instrument + tools)
+    recipe_list = recipe.recipemod.recipes
+
+    if params['INPUTS']['RECIPES']:
+
+        WLOG(params, 'info', 'List of recipes:' )
+
+        for recipe_it in recipe_list:
+            msg = '\t{0} [{1}]'
+            margs = [recipe_it.name, recipe_it.shortname]
+            WLOG(params, 'info', msg.format(*margs))
+
+
 
     WLOG(params, 'info', 'Running apero_execute.py')
 

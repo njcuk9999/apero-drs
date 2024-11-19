@@ -89,7 +89,8 @@ class DrsRecipe(object):
     def __init__(self, instrument: str = 'None',
                  name: Union[str, None] = None,
                  filemod: Union[Any] = None,
-                 params: Union[ParamDict, None] = None):
+                 params: Union[ParamDict, None] = None,
+                 specials: bool = True):
         """
         Create a DRS Recipe object (one of these for each top 'user' level
         script (or recipe)
@@ -206,7 +207,8 @@ class DrsRecipe(object):
         # get drs params
         self.get_drs_params()
         # make special arguments
-        self._make_specials()
+        if specials:
+            self._make_specials()
         # whether calibration is required (used in precheck)
         self.calib_required = False
         # parameters for summary documentation

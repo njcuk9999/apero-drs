@@ -43,7 +43,7 @@ DrsRecipe = drs_recipe.DrsRecipe
 ari = DrsRecipe(__INSTRUMENT__)
 astrometric = DrsRecipe(__INSTRUMENT__)
 changelog = DrsRecipe(__INSTRUMENT__)
-execute = DrsRecipe(__INSTRUMENT__)
+execute = DrsRecipe(__INSTRUMENT__, specials=False)
 explorer = DrsRecipe(__INSTRUMENT__)
 get_files = DrsRecipe(__INSTRUMENT__)
 go_recipe = DrsRecipe(__INSTRUMENT__)
@@ -119,7 +119,7 @@ execute.recipe_type = 'nolog-tool'
 execute.recipe_kind = 'user'
 execute.set_arg(pos=0, name='recipe', default='None', dtype=str,
                 optional=True)
-execute.set_kwarg(name='--recipes', dtype=str, default='None',
+execute.set_kwarg(name='--recipes', dtype='switch',
                   helpstr='Display a list of available recipes')
 
 
