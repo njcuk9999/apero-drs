@@ -159,7 +159,8 @@ __all__ = [
     # thermal constants
     'THERMAL_CORRECT', 'THERMAL_ALWAYS_EXTRACT', 'THERMAL_EXTRACT_TYPE',
     'THERMAL_CORRETION_TYPE1', 'THERMAL_CORRETION_TYPE2', 'THERMAL_ORDER',
-    'THERMAL_FILTER_WID', 'THERMAL_RED_LIMIT', 'THERMAL_BLUE_LIMIT',
+    'THERMAL_FILTER_WID', 'THERMAL_LIMIT',
+    'THERMAL_RED_LIMIT', 'THERMAL_BLUE_LIMIT',
     'THERMAL_THRES_TAPAS', 'THERMAL_ENVELOPE_PERCENTILE',
     'THERMAL_PLOT_START_ORDER', 'THERMAL_EXCESS_EMISSIVITY_FILE',
     'THERMAL_EXCESS_DPRTYPES',
@@ -2512,6 +2513,15 @@ THERMAL_FILTER_WID = Const('THERMAL_FILTER_WID', value=None, dtype=int,
                            source=__NAME__, group=cgroup,
                            description=('width of the median filter used for '
                                         'the background'))
+
+# define thermal limit - below this we do not correct thermal emission
+#   because we know from first principles that it should be too small
+THERMAL_LIMIT = Const('THERMAL_LIMIT', value=None, dtype=float,
+                      source=__NAME__, group=cgroup,
+                      description='define thermal limit - below this '
+                                  'we do not correct thermal emission '
+                                  'because we know from first principles '
+                                  'that it should be too small')
 
 # define thermal red limit (in nm)
 THERMAL_RED_LIMIT = Const('THERMAL_RED_LIMIT', value=None, dtype=float,
