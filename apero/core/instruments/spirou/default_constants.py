@@ -1349,6 +1349,11 @@ THERMAL_CORRETION_TYPE2.value = 'FP, HC, HCONE, HCTWO, FLAT'
 THERMAL_ORDER = THERMAL_ORDER.copy(__NAME__)
 THERMAL_ORDER.value = 48
 
+# define thermal limit - below this we do not correct thermal emission
+#   because we know from first principles that it should be too small
+THERMAL_LIMIT = THERMAL_LIMIT.copy(__NAME__)
+THERMAL_LIMIT.value = 1900
+
 # width of the median filter used for the background
 THERMAL_FILTER_WID = THERMAL_FILTER_WID.copy(__NAME__)
 THERMAL_FILTER_WID.value = 101
