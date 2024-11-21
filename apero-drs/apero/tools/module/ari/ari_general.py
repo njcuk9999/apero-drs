@@ -100,10 +100,11 @@ def load_ari_params(params: ParamDict) -> ParamDict:
                                       targs=eargs)
     # otherwise log an error message
     else:
+        # TODO: Add to language database
         emsg = 'Cannot find profile file: {0}'
         eargs = [profile_yaml]
-        WLOG(params, 'error', emsg.format(*eargs))
-        return params
+        raise AperoCodedException(params, None, message=emsg.format(*eargs),
+                                  targs=eargs)
     # ----------------------------------------------------------------------
     # deal with individual settings
     # ----------------------------------------------------------------------

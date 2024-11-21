@@ -26,7 +26,6 @@ from aperocore.constants import param_functions
 from aperocore.core import drs_log
 from aperocore.core import drs_text
 
-
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -50,6 +49,8 @@ INSTRUMENTS = __YAML__['INSTRUMENTS']
 COLOR = drs_misc.Colors()
 # get ParamDict
 ParamDict = param_functions.ParamDict
+# get execptions
+AperoCodedException = drs_log.AperoCodedException
 # get WLOG
 WLOG = drs_log.wlog
 # get textwrap
@@ -137,7 +138,10 @@ def get_recipe_list(aparams: ParamDict, attribute: str) -> List[Any]:
     recipe_list += list(instrument.RECIPEMOD().rd.recipes)
     # deal with bad attribute
     if not hasattr(recipe_list[0], attribute):
-        WLOG(aparams, 'error', 'Attribute "{0}" not found in DrsRecipe')
+        emsg = 'Attribute "{0}" not found in DrsRecipe'
+        eargs = [attribute]
+        raise AperoCodedException(aparams, None, message=emsg.format(*eargs),
+                                  targs=eargs)
     # storage for output
     attribute_list = list(map(lambda x: getattr(x, attribute), recipe_list))
     # return recipes

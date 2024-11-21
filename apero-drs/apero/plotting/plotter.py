@@ -202,8 +202,8 @@ class Plotter:
         if self.recipe is None:
             self.location = './'
         elif self.location is None:
-            WLOG(self.params, 'error', textentry('00-100-00003',
-                                                 args=[str(func)]))
+            raise AperoCodedException(self.params, '00-100-00003',
+                                      targs=[str(func)])
         # ------------------------------------------------------------------
         # deal with no plot needed
         if self.plotoption == 0:
@@ -378,7 +378,9 @@ class Plotter:
             try:
                 looplist = list(looplist)
             except Exception as _:
-                WLOG(self.params, 'error', 'Must be a list')
+                # TODO: Add to language database
+                emsg = 'Must be a list'
+                raise AperoCodedException(self.params, None, message=emsg)
 
         # test for string list
         if len(looplist) > 0:

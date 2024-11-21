@@ -50,6 +50,8 @@ INSTRUMENTS = __YAML__['INSTRUMENTS']
 COLOR = drs_misc.Colors()
 # get ParamDict
 ParamDict = param_functions.ParamDict
+# Get exceptions
+AperoCodedException = drs_log.AperoCodedException
 # get WLOG
 WLOG = drs_log.wlog
 # get textwrap
@@ -916,8 +918,7 @@ def clean_install(params: ParamDict):
     if not reset_args['success']:
         # error message: Error resetting database (see above) cannot install
         #                apero
-        WLOG(None, 'error', textentry('40-001-00083'))
-        return None
+        raise AperoCodedException(None, '40-001-00083')
 
 
 # =============================================================================

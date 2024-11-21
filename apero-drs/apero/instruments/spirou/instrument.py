@@ -383,14 +383,14 @@ class Spirou(instrument_mod.Instrument):
         # check length is correct - raise error if incorrect
         if len(seqlist) != 7:
             # generate error message
+            # TODO: Add to language database
             emsg = 'CMMTSEQ key incorrect'
             emsg += '\n\tExpected {STOKE} exposure {exp_num}, sequence N of M'
             emsg += '\n\tGot: "{0}"'.format(cmmtseq)
             # log or raise error
             if wlog is not None:
                 # wlog error
-                wlog(params, 'error', emsg)
-                return None, -1
+                raise AperoCodedException(params, None, message=emsg)
             else:
                 raise ValueError(emsg)
         # ---------------------------------------------------------------------
@@ -402,14 +402,14 @@ class Spirou(instrument_mod.Instrument):
             exp_num = int(seqlist[2].replace(',', ''))
         except Exception as _:
             # generate error message
+            # TODO: Add to language database
             emsg = 'CMMTSEQ exp_num incorrect'
             emsg += '\n\tExpected {STOKE} exposure {exp_num}, sequence N of M'
             emsg += '\n\tGot: "{0}"'.format(cmmtseq)
             # log or raise error
             if wlog is not None:
                 # wlog error
-                wlog(params, 'error', emsg)
-                return None, -1
+                raise AperoCodedException(params, None, message=emsg)
             else:
                 raise ValueError(emsg)
         # ---------------------------------------------------------------------
