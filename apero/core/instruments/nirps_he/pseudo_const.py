@@ -1000,6 +1000,7 @@ def get_trg_type(params: ParamDict, header: Any, hdict: Any,
     # _ = display_func('get_trg_type', __NAME__)
     # get keys from params
     kwobstype = params['KW_OBSTYPE'][0]
+    kwobjname = params['KW_OBJECTNAME'][0]
     kwtrgtype = params['KW_TARGET_TYPE'][0]
     kwtrgcomment = params['KW_TARGET_TYPE'][2]
     # get obstype
@@ -1008,13 +1009,17 @@ def get_trg_type(params: ParamDict, header: Any, hdict: Any,
         raise drs_exceptions.DrsCodedException('01-001-00027', 'error',
                                                targs=eargs)
     obstype = header[kwobstype]
+    obsname = header[kwobjname]
     # deal with setting value
     cond1 = 'SKY' in obstype
-    cond2 = 'OBJECT' not in obstype
+    cond2 = 'SKY' in obsname.upper()
     cond3 = 'TELLURIC' not in obstype
     cond4 = 'FLUX' not in obstype
+    cond5 = 'NIGHT' in obsname.upper()
 
-    if cond1 and cond2 and cond3 and cond4:
+    if cond1 and cond2 and cond3 and cond4 and cond5:
+        trg_type = 'NIGHT-SKY'
+    elif cond1 and cond2 and cond3 and cond4:
         trg_type = 'SKY'
     elif not cond1 or not cond2 or not cond3:
         trg_type = 'TARGET'
