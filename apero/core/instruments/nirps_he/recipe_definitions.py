@@ -10,8 +10,8 @@ Created on 2020-10-31 at 18:06
 from apero import lang
 from apero.base import base
 from apero.core.core import drs_base_classes as base_class
-from apero.core.instruments.default import recipe_definitions as rd
 from apero.core.instruments.default import grouping
+from apero.core.instruments.default import recipe_definitions as rd
 from apero.core.instruments.nirps_he import file_definitions as files
 from apero.core.utils import drs_recipe
 
@@ -303,7 +303,8 @@ apero_dark.set_debug_plots('DARK_IMAGE_REGIONS', 'DARK_HISTOGRAM')
 apero_dark.set_summary_plots('SUM_DARK_IMAGE_REGIONS', 'SUM_DARK_HISTOGRAM')
 apero_dark.set_arg(pos=0, **obs_dir)
 apero_dark.set_arg(name='files', dtype='files',
-                   files=[files.pp_dark_dark, files.pp_dark_dark_sky],
+                   files=[files.pp_dark_dark, files.pp_eff_sky_sky,
+                          files.pp_night_sky_sky],
                    pos='1+', filelogic='exclusive',
                    helpstr=textentry('FILES_HELP') + textentry('DARK_FILES_HELP'))
 apero_dark.set_kwarg(**add_db)
@@ -1287,7 +1288,6 @@ apero_lbl_compile.group_column = None
 # add to recipe
 recipes.append(apero_lbl_compile)
 
-
 # -----------------------------------------------------------------------------
 # apero_postprocess
 # -----------------------------------------------------------------------------
@@ -1457,7 +1457,6 @@ full_seq.add(apero_mk_template, name='FTTEMP2', fiber=ref_fiber,
 full_seq.add(apero_ccf, files=[files.out_tellu_obj], fiber=ref_fiber,
              filters=dict(KW_DPRTYPE=files.science_dprtypes),
              recipe_kind='rv-tcorr')
-
 # lbl ref
 full_seq.add(apero_lbl_ref, name='LBLREF', recipe_kind='lbl-ref')
 
@@ -1491,7 +1490,6 @@ full_seq.add(apero_lbl_compile, name='LBLCOMPILE_SCI',
             recipe_kind='lbl-compile-sci',
             arguments=dict(objname='SCIENCE_TARGETS'),
             filters=dict(KW_OBJNAME='SCIENCE_TARGETS'))
-
 # post processing
 full_seq.add(apero_postprocess, name='POSTALL', files=[files.pp_file],
              recipe_kind='post-all',
@@ -1659,7 +1657,8 @@ pp_seq_opt.add(apero_preprocess, name='PP_FF', files=[files.raw_flat_flat],
 pp_seq_opt.add(apero_preprocess, name='PP_DFP', files=[files.raw_dark_fp],
                recipe_kind='pre-dfp')
 pp_seq_opt.add(apero_preprocess, name='PP_SKY',
-               files=[files.raw_dark_dark_sky, files.raw_test_dark_dark_sky],
+               files=[files.raw_eff_sky_sky, files.raw_test_eff_sky_sky,
+                      files.raw_night_sky_sky, files.raw_test_night_sky_sky],
                recipe_kind='pre-sky')
 pp_seq_opt.add(apero_preprocess, name='PP_LFC', files=[files.raw_lfc_lfc],
                recipe_kind='pre-lfc')
@@ -1851,7 +1850,8 @@ eng_seq.add(apero_extract, name='EXT_FF', files=[files.pp_flat_flat],
 eng_seq.add(apero_extract, name='EXT_DFP', files=[files.pp_dark_fp],
             recipe_kind='extract-dfp')
 eng_seq.add(apero_extract, name='EXT_SKY',
-            files=[files.pp_dark_dark_sky, files.pp_test_dark_dark_sky],
+            files=[files.pp_eff_sky_sky, files.pp_test_dark_dark_sky,
+                   files.pp_night_sky_sky],
             recipe_kind='extract-sky')
 eng_seq.add(apero_extract, name='EXT_LFC', files=[files.pp_lfc_lfc],
             recipe_kind='extract-lfc')
