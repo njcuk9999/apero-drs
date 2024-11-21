@@ -2049,7 +2049,7 @@ WAVENIGHT_PLT_BINU.value = 20
 # =============================================================================
 # Define the allowed DPRTYPEs for sky correction
 ALLOWED_SKYCORR_DPRTYPES = ALLOWED_SKYCORR_DPRTYPES.copy(__NAME__)
-ALLOWED_SKYCORR_DPRTYPES.value = 'OBJ_SKY, TELLU_SKY, FLUXSTD_SKY'
+ALLOWED_SKYCORR_DPRTYPES.value = ''
 ALLOWED_SKYCORR_DPRTYPES.author = base.AUTHORS['NJC']
 
 # Define the number of iterations used to create sky correction weights
