@@ -626,7 +626,7 @@ def end_all(params: ParamDict = None, success: bool = True,
         duration = None
     # log the success (or failure)
     if success and (not quiet):
-        iargs = [str(params['RECIPE'])]
+        iargs = [str(params.get('RECIPE', recipename))]
         WLOG(params, 'info', params['DRS_HEADER'])
         msg = textentry('40-003-00001', args=iargs)
         if duration is not None:

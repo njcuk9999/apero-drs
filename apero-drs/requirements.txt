@@ -15,6 +15,7 @@ pandas==2.2.3
 pandastable==0.13.1
 pandasql==0.7.3
 psutil==5.9.4
+PyMySQL==1.1.1
 PyYAML==6.0
 ruamel.yaml==0.17.31
 scipy==1.10.1

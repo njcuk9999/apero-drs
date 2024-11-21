@@ -10,11 +10,12 @@ Created on 2024-10-28 11:32
 @author: cook
 """
 
-from aperocore.core import drs_log
-from aperocore.constants import load_functions
 from apero.base import base as apero_base
 from apero.instruments.select import INSTRUMENTS
 from apero.setup.core import drs_execute
+from apero.utils import drs_startup
+from aperocore.constants import load_functions
+from aperocore.core import drs_log
 
 # =============================================================================
 # Define variables
@@ -50,39 +51,29 @@ def main(**kwargs):
     :returns: dictionary of the local space
     :rtype: dict
     """
+    # display the title
+    drs_execute.display_title()
     # get parameters from function
     rparams = drs_execute.command_line_args()
     # get recipe mod
     aparams = load_functions.load_config(INSTRUMENTS)
-    instrument = load_functions.load_pconfig(INSTRUMENTS)
-    # ----------------------------------------------------------------------
-    # Main Code
-    # ----------------------------------------------------------------------
-    # Get a list of recipes (for instrument + tools)
-    recipe_list = instrument.RECIPEMOD().recipes
-
+    # deal with just listing parameters
     if rparams['LIST']:
-        WLOG(aparams, 'info', 'List of recipes:' )
-
-        for recipe_it in recipe_list:
-            msg = '\t{0} [{1}]'
-            margs = [recipe_it.name, recipe_it.shortname]
-            WLOG(aparams, 'info', msg.format(*margs))
-
-    # if params['INPUTS']['HELP']:
-    #     WLOG(params, 'info', 'Help for recipe: {0}'.format(params['INPUTS']['HELP']))
-    WLOG(aparams, 'info', 'Running apero_execute.py')
-
+        drs_execute.list_recipes(aparams, rparams)
+    else:
+        # run the recipe
+        drs_execute.run_recipe(aparams, rparams)
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
+    # end splash
+    drs_startup.end_all(aparams, success=True, recipename=__NAME__)
+    # end here
     return locals()
-
 
 
 def run():
     _ = main()
-
 
 
 # =============================================================================

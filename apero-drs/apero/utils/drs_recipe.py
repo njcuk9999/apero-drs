@@ -117,6 +117,8 @@ class DrsRecipe(object):
         # else name is correct
         else:
             self.name = str(name)
+        # set the recipe path
+        self.path = None
         # set drs file module related to this recipe
         if filemod is None:
             pconst = load_functions.load_pconfig(select.INSTRUMENTS)
@@ -996,20 +998,17 @@ class DrsRecipe(object):
         # ------------------------------------------------------------------
         # next check in parameters for path to module
         if (self.module is None) and (self.params is not None):
-            params = self.params
-            # check for parameters
-            cond1 = 'INSTRUMENT' in params
-            cond2 = 'DRS_INSTRUMENT_RECIPE_PATH' in params
-            cond3 = 'DRS_DEFAULT_RECIPE_PATH' in params
-            if cond1 and cond2 and cond3:
-                instrument = params['INSTRUMENT']
-                rpath = params['DRS_INSTRUMENT_RECIPE_PATH']
-                dpath = params['DRS_DEFAULT_RECIPE_PATH']
-                margs = [instrument, __PACKAGE__, [self.name], rpath, dpath]
-                modules = param_functions.get_module_names(*margs,
-                                                           return_paths=False)
+            if self.path is None:
+                emsg = 'No path to module set for recipe {0}. Please set.'
+                WLOG(self.params, 'error', emsg.format(self.name))
+            else:
+                name = self.name
+                if name.endswith('.py'):
+                    name = name[:-3]
+                # get the full path
+                full_path = f'{self.path}.{name}'
                 # return module
-                self.module = self._import_module(modules[0], full=True,
+                self.module = self._import_module(full_path, full=True,
                                                   quiet=True)
         # ------------------------------------------------------------------
         # else make an error
@@ -1037,6 +1036,9 @@ class DrsRecipe(object):
         self.instrument = str(recipe.instrument)
         # name
         self.name = str(recipe.name)
+        # path
+        # set the recipe path
+        self.path = copy.deepcopy(recipe.path)
         # set drs file module related to this recipe
         if recipe.filemod is None:
             self.filemod = None

@@ -52,7 +52,6 @@ listing = DrsRecipe(__INSTRUMENT__)
 stats = DrsRecipe(__INSTRUMENT__)
 precheck = DrsRecipe(__INSTRUMENT__)
 processing = DrsRecipe(__INSTRUMENT__)
-remake_db = DrsRecipe(__INSTRUMENT__)
 remake_doc = DrsRecipe(__INSTRUMENT__)
 req_check = DrsRecipe(__INSTRUMENT__)
 reject = DrsRecipe(__INSTRUMENT__)
@@ -67,7 +66,7 @@ visulise = DrsRecipe(__INSTRUMENT__)
 # push into a list
 recipes = [ari, astrometric, changelog, database_mgr, explorer,
            get_files, go_recipe, langdb, listing,
-           precheck, processing, remake_db, remake_doc, req_check,
+           precheck, processing, remake_doc, req_check,
            reject, remove, reset, run_ini,
            static, stats, trigger, validate, visulise]
 
@@ -111,6 +110,7 @@ out_recipe = DrsRecipe(__INSTRUMENT__)
 # apero_ri.py
 # -----------------------------------------------------------------------------
 ari.name = 'apero_ri.py'
+ari.path = 'apero.tools.recipes.bin'
 ari.shortname = 'ARI'
 ari.instrument = __INSTRUMENT__
 ari.description = 'Run the ARI (APERO reduction interface)'
@@ -140,6 +140,7 @@ ari.description_file = 'apero_ri.rst'
 # apero_astrometrics.py
 # -----------------------------------------------------------------------------
 astrometric.name = 'apero_astrometrics.py'
+astrometric.path = 'apero.tools.recipes.bin'
 astrometric.shortname = 'ASTROM'
 astrometric.instrument = __INSTRUMENT__
 astrometric.description = textentry('ASTROMETRIC_DESCRIPTION')
@@ -163,6 +164,7 @@ astrometric.description_file = 'apero_astrometrics.rst'
 # apero_changelog.py
 # -----------------------------------------------------------------------------
 changelog.name = 'apero_changelog.py'
+changelog.path = 'apero.tools.recipes.dev'
 changelog.shortname = 'CLOG'
 changelog.instrument = __INSTRUMENT__
 changelog.description = textentry('CHANGELOG_DESCRIPTION')
@@ -176,6 +178,7 @@ changelog.description_file = 'apero_changelog.rst'
 # apero_database.py
 # -----------------------------------------------------------------------------
 database_mgr.name = 'apero_database.py'
+database_mgr.path = 'apero.tools.recipes.bin'
 database_mgr.shortname = 'DBMGR'
 database_mgr.instrument = __INSTRUMENT__
 database_mgr.description = textentry('DBMGR_DESCRIPTION')
@@ -230,6 +233,7 @@ database_mgr.description_file = 'apero_database.rst'
 # apero_documentation.py
 # -----------------------------------------------------------------------------
 remake_doc.name = 'apero_documentation.py'
+remake_doc.path = 'apero.tools.recipes.dev'
 remake_doc.instrument = __INSTRUMENT__
 remake_doc.shortname = 'DOC'
 remake_doc.description = textentry('REMAKE_DOC_DESCRIPTION')
@@ -258,6 +262,7 @@ remake_doc.description_file = 'apero_documentation.rst'
 # apero_explorer.py
 # -----------------------------------------------------------------------------
 explorer.name = 'apero_explorer.py'
+explorer.path = 'apero.tools.recipes.bin'
 explorer.shortname = 'EXPLO'
 explorer.instrument = __INSTRUMENT__
 explorer.description = textentry('EXPLORER_DESCRIPTION')
@@ -276,6 +281,7 @@ explorer.description_file = 'apero_explorer.rst'
 # apero_get.py
 # -----------------------------------------------------------------------------
 get_files.name = 'apero_get.py'
+get_files.path = 'apero.tools.recipes.bin'
 get_files.shortname = 'GET'
 get_files.instrument = __INSTRUMENT__
 get_files.description = textentry('GET_DESCRIPTION')
@@ -340,6 +346,7 @@ get_files.description_file = 'apero_get.rst'
 # apero_go.py
 # -----------------------------------------------------------------------------
 go_recipe.name = 'apero_go.py'
+go_recipe.path = 'apero.tools.recipes.bin'
 go_recipe.shortname = 'GO'
 go_recipe.instrument = __INSTRUMENT__
 go_recipe.description = textentry('GO_DESCRIPTION')
@@ -362,6 +369,7 @@ go_recipe.description_file = 'apero_go.rst'
 #      (proxy - also need to change apero_langdb.py)
 # -----------------------------------------------------------------------------
 langdb.name = 'apero_langdb.py'
+langdb.path = 'apero.tools.recipes.bin'
 langdb.shortname = 'LANG'
 langdb.instrument = __INSTRUMENT__
 langdb.description = textentry('LANGDB_DESC')
@@ -380,6 +388,7 @@ langdb.description_file = 'apero_langdb.rst'
 # apero_listing.py
 # -----------------------------------------------------------------------------
 listing.name = 'apero_listing.py'
+listing.path = 'apero.tools.recipes.bin'
 listing.shortname = 'LIST'
 listing.instrument = __INSTRUMENT__
 listing.description = textentry('LISTING_DESC')
@@ -400,6 +409,7 @@ listing.description_file = 'apero_listing.rst'
 # apero_log_stats.py
 # -----------------------------------------------------------------------------
 stats.name = 'apero_stats.py'
+stats.path = 'apero.tools.recipes.bin'
 stats.shortname = 'STAT'
 stats.instrument = __INSTRUMENT__
 stats.description = textentry('LOGSTAT_DESC')
@@ -425,6 +435,7 @@ stats.description_file = 'apero_stats.rst'
 # apero_trigger.py
 # -----------------------------------------------------------------------------
 trigger.name = 'apero_trigger.py'
+trigger.path = 'apero.tools.recipes.bin'
 trigger.shortname = 'TRIGGER'
 trigger.instrument = __INSTRUMENT__
 trigger.description = textentry('TRIGGER_DESCRIPTION')
@@ -453,6 +464,7 @@ trigger.description_file = 'apero_trigger.rst'
 # apero_precheck.py
 # -----------------------------------------------------------------------------
 precheck.name = 'apero_precheck.py'
+precheck.path = 'apero.tools.recipes.bin'
 precheck.shortname = 'PRECHECK'
 precheck.instrument = __INSTRUMENT__
 precheck.description = textentry('PRECHECK_DESCRIPTION')
@@ -476,6 +488,7 @@ precheck.description_file = 'apero_precheck.rst'
 # apero_processing.py
 # -----------------------------------------------------------------------------
 processing.name = 'apero_processing.py'
+processing.path = 'apero.tools.recipes.bin'
 processing.shortname = 'PROC'
 processing.instrument = __INSTRUMENT__
 processing.description = textentry('PROCESS_DESCRIPTION')
@@ -510,6 +523,7 @@ processing.description_file = 'apero_processing.rst'
 # apero_requirements-check.py
 # -----------------------------------------------------------------------------
 req_check.name = 'apero_dependencies.py'
+req_check.path = 'apero.tools.recipes.dev'
 req_check.shortname = 'DEPEND'
 req_check.instrument = __INSTRUMENT__
 req_check.description = textentry('DEPENDENCIES_DESCRIPTION')
@@ -521,6 +535,7 @@ req_check.description_file = 'apero_dependencies.rst'
 # apero_reject.py
 # -----------------------------------------------------------------------------
 reject.name = 'apero_reject.py'
+reject.path = 'apero.tools.recipes.bin'
 reject.shortname = 'REJECT'
 reject.instrument = __INSTRUMENT__
 reject.description = ('Add a object or file to the object or file reject list '
@@ -555,6 +570,7 @@ reject.set_kwarg(name='--test', dtype='switch',
 # apero_reset.py
 # -----------------------------------------------------------------------------
 remove.name = 'apero_remove.py'
+remove.path = 'apero.tools.recipes.bin'
 remove.shortname = 'REMOVE'
 remove.instrument = __INSTRUMENT__
 remove.description = 'The APERO file/directory remove tool'
@@ -587,6 +603,7 @@ remove.set_kwarg(name='--rawdb', dtype='switch',
 # apero_reset.py
 # -----------------------------------------------------------------------------
 reset.name = 'apero_reset.py'
+reset.path = 'apero.tools.recipes.bin'
 reset.shortname = 'RESET'
 reset.instrument = __INSTRUMENT__
 reset.description = textentry('RESET_DESCRIPTION')
@@ -627,6 +644,7 @@ reset.description_file = 'apero_reset.rst'
 # apero_run_ini.py
 # -----------------------------------------------------------------------------
 run_ini.name = 'apero_run_ini.py'
+run_ini.path = 'apero.tools.recipes.dev'
 run_ini.shortname = 'RUN_INI'
 run_ini.instrument = __INSTRUMENT__
 run_ini.description = textentry('RUN_INI_DESCRIPTION')
@@ -641,6 +659,7 @@ run_ini.description_file = 'apero_run_ini.rst'
 # apero_static.py
 # -----------------------------------------------------------------------------
 static.name = 'apero_static.py'
+static.path = 'apero.tools.recipes.dev'
 static.shortname = 'STATIC'
 static.instrument = __INSTRUMENT__
 static.description = textentry('STATIC_DESCRIPTION')
@@ -655,6 +674,7 @@ static.description_file = 'apero_static.rst'
 # apero_validate.py
 # -----------------------------------------------------------------------------
 validate.name = 'apero_validate.py'
+validate.path = 'apero.tools.recipes.bin'
 validate.shortname = 'VALID'
 validate.instrument = __INSTRUMENT__
 validate.description = textentry('VALIDATE_DESCRIPTION')
@@ -666,6 +686,7 @@ validate.description_file = 'apero_validate.rst'
 # apero_visu.py
 # -----------------------------------------------------------------------------
 visulise.name = 'apero_visu.py'
+visulise.path = 'apero.tools.recipes.bin'
 visulise.shortname = 'VISU'
 visulise.instrument = __INSTRUMENT__
 visulise.description = textentry('VISU_DESCRIPTION')

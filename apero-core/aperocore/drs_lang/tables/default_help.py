@@ -1475,6 +1475,42 @@ item.arguments = 'None'
 item.comment = ''
 langlist.add(item)
 
+# =============================================================================
+# EXECUTE_LIST_HELP
+# =============================================================================
+item = langlist.create('EXECUTE_XHELP_HELP', kind='HELP')
+item.value['ENG'] = 'Display all usable recipes for this apero profile.'
+item.arguments = 'None'
+item.comment = ''
+langlist.add(item)
+
+# =============================================================================
+# EXECUTE_RECIPE_HELP
+# =============================================================================
+item = langlist.create('EXECUTE_RECIPE_HELP', kind='HELP')
+item.value['ENG'] = 'The recipe to run'
+item.arguments = 'None'
+item.comment = ''
+langlist.add(item)
+
+# =============================================================================
+# EXECUTE_ARGS_HELP
+# =============================================================================
+item = langlist.create('EXECUTE_ARGS_HELP', kind='HELP')
+item.value['ENG'] = 'The args to pass to the recipe'
+item.arguments = 'None'
+item.comment = ''
+langlist.add(item)
+
+# =============================================================================
+# EXECUTE_XHELP_HELP
+# =============================================================================
+item = langlist.create('EXECUTE_XHELP_HELP', kind='HELP')
+item.value['ENG'] = 'Display help for the given recipe'
+item.arguments = 'None'
+item.comment = ''
+langlist.add(item)
+
 
 # =============================================================================
 # ALL_TEXT 
