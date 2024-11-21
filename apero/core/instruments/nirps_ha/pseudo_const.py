@@ -358,9 +358,9 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
                  or DARK_DARK)
         """
         # get correct header
-        header, _ = get_dprtype(params, recipe, header, None, filename)
+        dprtype, _, _ = construct_dprtype(recipe, params, filename, header)
         # return dprtype
-        return str(header[params['KW_DPRTYPE'][0]])
+        return dprtype
 
     def DRS_MIDMJD(self, params: ParamDict, header: Any,
                    filename: Union[Path, str]) -> float:
