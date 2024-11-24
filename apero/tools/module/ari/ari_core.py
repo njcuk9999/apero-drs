@@ -1212,6 +1212,29 @@ class AriObject:
             lbl_props['SNR_H_LABEL'] = self.headers['LBL']['EXT_H']['label']
             lbl_props['RESET_RV'] = np.array(rdb_table['RESET_RV']).astype(bool)
             lbl_props['NUM_RESET_RV'] = np.sum(rdb_table['RESET_RV'])
+            # -----------------------------------------------------------------
+            # deal with wavelength rv plot parameters
+            # -----------------------------------------------------------------
+            # Get all the keys (column names) from the table
+            keys = np.array(rdb_table.keys())
+            # Filter keys to keep only those that start with 'vrad'
+            vrad_keys = keys[np.char.startswith(keys, 'vrad')]
+            # Further filter keys to keep only those that contain 'nm' in their name
+            vrad_keys = vrad_keys[np.char.find(vrad_keys, 'nm') > 0]
+            # push into lbl props
+            lbl_props['VRAD_DICT'] = dict()
+            lbl_props['SVRAD_DICT'] = dict()
+            # add keys from vrad dict
+            for key in vrad_keys:
+                lbl_props['VRAD_DICT'][key] = np.array(rdb_table[key])
+                lbl_props['SVRAD_DICT'][key] = np.array(rdb_table['s' + key])
+            # Extract the wavelength from the 'vrad' keys by splitting
+            # the string
+            wavemap = []
+            for vrad_key in vrad_keys:
+                wavemap.append(float(vrad_key.split('_')[1].split('nm')[0]))
+            lbl_props['wavemap'] = np.array(wavemap)
+            # -----------------------------------------------------------------
             # get the lbl header key
             lbl_version_hdrkey = self.headers['LBL']['LBL_VERSION']['key']
             # find the lbl fits file
@@ -2232,7 +2255,7 @@ def add_lbl_count(params: ParamDict, object_classes: Dict[str, AriObject]
 def lbl_plot(lbl_props: Dict[str, Any], plot_path: str,
              plot_title: str) -> Dict[str, Any]:
     # setup the figure
-    fig, frame = plt.subplots(2, 1, figsize=(12, 6), sharex='all')
+    fig, frame = plt.subplots(3, 1, figsize=(12, 9), sharex='all')
     # get parameters from props
     plot_date = lbl_props['plot_date']
     vrad = lbl_props['vrad']
@@ -2240,6 +2263,9 @@ def lbl_plot(lbl_props: Dict[str, Any], plot_path: str,
     snr_h = lbl_props['snr_h']
     snr_h_label = lbl_props['SNR_H_LABEL']
     reset_mask = lbl_props['RESET_RV']
+    vrad_dict = lbl_props['VRAD_DICT']
+    svrad_dict = lbl_props['SVRAD_DICT']
+    wavemap = lbl_props['wavemap']
     # sort data by date
     sort = np.argsort(plot_date)
     plot_date = plot_date[sort]
@@ -2247,9 +2273,13 @@ def lbl_plot(lbl_props: Dict[str, Any], plot_path: str,
     svrad = svrad[sort]
     snr_h = snr_h[sort]
     reset_mask = reset_mask[sort]
+    for key in vrad_dict:
+        vrad_dict[key] = vrad_dict[key][sort]
+        svrad_dict[key] = svrad_dict[key][sort]
     # set background color
     frame[0].set_facecolor(PLOT_BACKGROUND_COLOR)
     frame[1].set_facecolor(PLOT_BACKGROUND_COLOR)
+    frame[2].set_facecolor(PLOT_BACKGROUND_COLOR)
     # --------------------------------------------------------------------------
     # Top plot LBL RV
     # --------------------------------------------------------------------------
@@ -2347,19 +2377,54 @@ def lbl_plot(lbl_props: Dict[str, Any], plot_path: str,
                        alpha=0.5, color='green', ls='None', label='Good')
     frame[1].plot_date(plot_date[reset_mask], snr_h[reset_mask], fmt='.',
                        alpha=0.5, color='purple', ls='None',
-                       label='Possibily bad (reset rv)')
+                       label='Possibly bad (reset rv)')
     # over plot the bad points from above
     if len(bad_points) > 0:
         bad_points = np.array(bad_points)
         frame[1].plot_date(plot_date[bad_points], snr_h[bad_points], fmt='.',
                            alpha=0.5, color='red', ls='None', label='Outliers')
-
     # add properties
     frame[1].grid(which='both', color='lightgray', linestyle='--')
-    frame[1].set(xlabel='Date')
     frame[1].set(ylabel=snr_h_label)
     # add legend
     frame[1].legend(loc=0)
+    # --------------------------------------------------------------------------
+    # frame 3: wavelength bin lbl rvs
+    # --------------------------------------------------------------------------
+    # Normalize the wavelength values for color mapping
+    norm = plt.Normalize(vmin=min(wavemap), vmax=max(wavemap))
+    # Get the 'coolwarm' colormap for plotting
+    cmap = plt.get_cmap('coolwarm')
+    # Calculate the median of the 'svrad' column, which represents the RV errors
+    med_vrad_err = np.nanmedian(svrad)
+    # frame 3: wave bin rv
+    for ikey, key in enumerate(vrad_dict):
+        # get the median error
+        med_svrad = np.nanmedian(svrad_dict[key])
+        # Skip the key if the median RV error is too high
+        if med_svrad > (10 * med_vrad_err):
+            continue
+        # Skip the key if the median RV error is too low
+        if med_svrad < med_vrad_err:
+            continue
+        # Get the color for the current wavelength
+        color = cmap(norm(wavemap[ikey]))
+        # Plot the RVs with error bars, using the calculated color
+        frame[2].errorbar(plot_date, vrad_dict[key], yerr=svrad_dict[key],
+                          label=key.replace('vrad_', ''),
+                          alpha=0.5, fmt='.', color=color)
+    # Plot the overall 'vrad' with error bars as black dots
+    frame[2].errorbar(plot_date, vrad, yerr=svrad, fmt='k.', label='vrad')
+    # set the Date for all axis
+    frame[2].set(xlabel='Date')
+    frame[2].set(ylabel='RV [m/s]')
+    frame[2].grid(which='both', color='lightgray', linestyle='--')
+    frame[2].legend(ncol=5, fontsize='xx-small')
+    # zoom in on the median
+    med = np.nanmedian(vrad)
+    rms = np.nanstd(vrad)
+    frame[2].set(ylim=[med - 15*rms, med + 15*rms])
+    # --------------------------------------------------------------------------
     plt.tight_layout()
     # --------------------------------------------------------------------------
     # save figure and close the plot

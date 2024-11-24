@@ -298,13 +298,12 @@ apero_dark.recipe_kind = 'calib-night'
 apero_dark.calib_required = False
 apero_dark.set_outputs(DARK_INT_FILE=files.out_dark,
                        DARK_TEL_FIEL=files.out_dark,
-                       DARK_SKY_FILE=files.out_dark_sky)
+                       DARK_SKY_FILE=files.out_dark_nsky)
 apero_dark.set_debug_plots('DARK_IMAGE_REGIONS', 'DARK_HISTOGRAM')
 apero_dark.set_summary_plots('SUM_DARK_IMAGE_REGIONS', 'SUM_DARK_HISTOGRAM')
 apero_dark.set_arg(pos=0, **obs_dir)
 apero_dark.set_arg(name='files', dtype='files',
-                   files=[files.pp_dark_dark, files.pp_eff_sky_sky,
-                          files.pp_night_sky_sky],
+                   files=[files.pp_dark_dark, files.pp_night_sky_sky],
                    pos='1+', filelogic='exclusive',
                    helpstr=textentry('FILES_HELP') + textentry('DARK_FILES_HELP'))
 apero_dark.set_kwarg(**add_db)

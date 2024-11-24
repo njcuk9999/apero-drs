@@ -454,8 +454,21 @@ raw_test_eff_sky_sky = drs_finput('RAW_TEST_EFF_SKY_SKY', outclass=blank_ofile,
                                                KW_RAW_DPRCATG='TEST',
                                                KW_INST_MODE=INSTRUMENT_MODE,
                                                KW_INSTRUMENT=INSTRUMENT_NAME),
-                                  description='Raw sci=SKY calib=SKY test file')
+                                  description='Raw sci=SKY calib=SKY test file '
+                                              '(eff)')
 raw_file.addset(raw_test_eff_sky_sky)
+
+
+raw_test_night_sky_sky = drs_finput('RAW_TEST_NIGHT_SKY_SKY',
+                                    outclass=blank_ofile,
+                                    filetype='.fits', suffix='',
+                                    hkeys=dict(KW_RAW_DPRTYPE='OBJECT,SKY',
+                                               KW_TARGET_TYPE='NIGHT-SKY',
+                                               KW_INST_MODE=INSTRUMENT_MODE,
+                                               KW_INSTRUMENT=INSTRUMENT_NAME),
+                                    description='Raw sci=SKY calib=SKY test file '
+                                                '(night)')
+raw_file.addset(raw_test_night_sky_sky)
 
 # test dark
 raw_test_dark = drs_finput('RAW_TEST_DARK', outclass=blank_ofile,
