@@ -973,20 +973,20 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     # ----------------------------------------------------------------------
     # update qc[1] qc as this is not the first iteration
     #    we have a template
-    if template_props['HAS_TEMPLATE']:
-        # get the prev, now approx rv values
-        qc_v = f'{approx_rvs[-2]:.4f}, {approx_rvs[-1]:.4f}'
-        # if approx rvs have diverged then we fail QC
-        if abs(approx_rvs[-1]) > abs(approx_rvs[-2]):
-            qc_values[1] = qc_v
-            qc_pass[1] = 0
-        else:
-            qc_values[1] = qc_v
-            qc_pass[1] = 1
-    else:
-        # qc values only if not the first iteration and with a template
-        qc_values[1] = 'N.A.'
-        qc_pass[1] = 1
+    # if template_props['HAS_TEMPLATE']:
+    #     # get the prev, now approx rv values
+    #     qc_v = f'{approx_rvs[-2]:.4f}, {approx_rvs[-1]:.4f}'
+    #     # if approx rvs have diverged then we fail QC
+    #     if abs(approx_rvs[-1]) > abs(approx_rvs[-2]):
+    #         qc_values[1] = qc_v
+    #         qc_pass[1] = 0
+    #     else:
+    #         qc_values[1] = qc_v
+    #         qc_pass[1] = 1
+    # else:
+    # qc values only if not the first iteration and with a template
+    qc_values[1] = 'N.A.'
+    qc_pass[1] = 1
     # ----------------------------------------------------------------------
     # deal with lower bounds for other species
     if expo_others/hdr_airmass < others_bounds[0]:
