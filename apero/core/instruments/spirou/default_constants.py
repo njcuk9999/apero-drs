@@ -2112,6 +2112,44 @@ WAVENIGHT_PLT_BINU = WAVENIGHT_PLT_BINU.copy(__NAME__)
 WAVENIGHT_PLT_BINU.value = 20
 
 # =============================================================================
+# OBJECT: SKY CORR SETTINGS
+# =============================================================================
+# Define the allowed DPRTYPEs for sky correction
+ALLOWED_SKYCORR_DPRTYPES = ALLOWED_SKYCORR_DPRTYPES.copy(__NAME__)
+ALLOWED_SKYCORR_DPRTYPES.value = ''
+ALLOWED_SKYCORR_DPRTYPES.author = base.AUTHORS['NJC']
+
+# Define the number of iterations used to create sky correction weights
+SKYCORR_WEIGHT_ITERATIONS = SKYCORR_WEIGHT_ITERATIONS.copy(__NAME__)
+SKYCORR_WEIGHT_ITERATIONS.value = 5
+SKYCORR_WEIGHT_ITERATIONS.author = base.AUTHORS['EA']
+
+# Define the size of the fine low pass filter (must be an odd integer)
+SKYCORR_LOWPASS_SIZE1 = SKYCORR_LOWPASS_SIZE1.copy(__NAME__)
+SKYCORR_LOWPASS_SIZE1.value = 51
+SKYCORR_LOWPASS_SIZE1.author = base.AUTHORS['EA']
+
+# Define the size of the coarse low pass filter (msut be an odd integer)
+SKYCORR_LOWPASS_SIZE2 = SKYCORR_LOWPASS_SIZE2.copy(__NAME__)
+SKYCORR_LOWPASS_SIZE2.value = 101
+SKYCORR_LOWPASS_SIZE2.author = base.AUTHORS['EA']
+
+# Define the number of iterations to use for the coarse low pass filter
+SKYCORR_LOWPASS_ITERATIONS = SKYCORR_LOWPASS_ITERATIONS.copy(__NAME__)
+SKYCORR_LOWPASS_ITERATIONS.value = 2
+SKYCORR_LOWPASS_ITERATIONS.author = base.AUTHORS['EA']
+
+# Define the number of sigma threshold for sky corr sigma clipping
+SKYCORR_NSIG_THRES = SKYCORR_NSIG_THRES.copy(__NAME__)
+SKYCORR_NSIG_THRES.value = 5
+SKYCORR_NSIG_THRES.author = base.AUTHORS['EA']
+
+# Define the flux ratio of sky lines that can not be corrected for
+SKYCORR_RATIO_THRES = SKYCORR_RATIO_THRES.copy(__NAME__)
+SKYCORR_RATIO_THRES.value = 4
+SKYCORR_RATIO_THRES = base.AUTHORS['EA']
+
+# =============================================================================
 # OBJECT: TELLURIC SETTINGS
 # =============================================================================
 # Define the name of the tapas file used
