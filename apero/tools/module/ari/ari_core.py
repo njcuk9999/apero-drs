@@ -2416,7 +2416,7 @@ def lbl_plot(lbl_props: Dict[str, Any], plot_path: str,
                           label=key.replace('vrad_', ''),
                           alpha=0.5, fmt='.', color=color)
         # deal with rms for zoom (update if larger)
-        rms_key = np.nanstd(vrad)
+        rms_key = np.nanstd(vrad_dict[key])
         if rms_key > rms:
             rms = rms_key
     # Plot the overall 'vrad' with error bars as black dots
@@ -2427,7 +2427,7 @@ def lbl_plot(lbl_props: Dict[str, Any], plot_path: str,
     frame[2].grid(which='both', color='lightgray', linestyle='--')
     frame[2].legend(ncol=5, fontsize='xx-small')
     # zoom in on the median - 5 sigma away from worse
-    frame[2].set(ylim=[med - 5*rms, med + 5*rms])
+    frame[2].set(ylim=[med - 3 * rms, med + 3 *rms])
     # --------------------------------------------------------------------------
     plt.tight_layout()
     # --------------------------------------------------------------------------
