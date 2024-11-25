@@ -231,7 +231,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
 
         # ------------------------------------------------------------------
         # Shift the template from reference wave solution --> night
-        #     wave solution
+        #    wave solution
         template_props = telluric.shift_template(params, recipe, image,
                                                  template_props, refprops,
                                                  wprops, bprops)
@@ -274,9 +274,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                                        database=telludbm,
                                        template_props=template_props,
                                        refprops=refprops,
-                                       bprops=bprops,
-                                       clean_ohlines=clean_ohlines,
-                                       sky_props=scprops)
+                                       bprops=bprops)
         tpreprops, template_props = tout
         # get corrected image out of pre-cleaning parameter dictionary
         image1 = tpreprops['CORRECTED_E2DS']
