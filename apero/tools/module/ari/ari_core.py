@@ -2397,6 +2397,8 @@ def lbl_plot(lbl_props: Dict[str, Any], plot_path: str,
     cmap = plt.get_cmap('coolwarm')
     # Calculate the median of the 'svrad' column, which represents the RV errors
     med_vrad_err = np.nanmedian(svrad)
+    med = np.nanmedian(vrad)
+    rms = np.nanstd(vrad)
     # frame 3: wave bin rv
     for ikey, key in enumerate(vrad_dict):
         # get the median error
@@ -2413,6 +2415,10 @@ def lbl_plot(lbl_props: Dict[str, Any], plot_path: str,
         frame[2].errorbar(plot_date, vrad_dict[key], yerr=svrad_dict[key],
                           label=key.replace('vrad_', ''),
                           alpha=0.5, fmt='.', color=color)
+        # deal with rms for zoom (update if larger)
+        rms_key = np.nanstd(vrad)
+        if rms_key > rms:
+            rms = rms_key
     # Plot the overall 'vrad' with error bars as black dots
     frame[2].errorbar(plot_date, vrad, yerr=svrad, fmt='k.', label='vrad')
     # set the Date for all axis
@@ -2420,10 +2426,8 @@ def lbl_plot(lbl_props: Dict[str, Any], plot_path: str,
     frame[2].set(ylabel='RV [m/s]')
     frame[2].grid(which='both', color='lightgray', linestyle='--')
     frame[2].legend(ncol=5, fontsize='xx-small')
-    # zoom in on the median
-    med = np.nanmedian(vrad)
-    rms = np.nanstd(vrad)
-    frame[2].set(ylim=[med - 15*rms, med + 15*rms])
+    # zoom in on the median - 5 sigma away from worse
+    frame[2].set(ylim=[med - 5*rms, med + 5*rms])
     # --------------------------------------------------------------------------
     plt.tight_layout()
     # --------------------------------------------------------------------------
