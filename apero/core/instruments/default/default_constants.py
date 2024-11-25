@@ -240,6 +240,7 @@ __all__ = [
     'ALLOWED_SKYCORR_DPRTYPES', 'SKYCORR_WEIGHT_ITERATIONS',
     'SKYCORR_LOWPASS_SIZE1', 'SKYCORR_LOWPASS_SIZE2',
     'SKYCORR_LOWPASS_ITERATIONS', 'SKYCORR_NSIG_THRES',
+    'SKYCORR_RATIO_THRES',
     # telluric constants
     'TAPAS_FILE', 'TAPAS_FILE_FMT', 'TELLU_CUT_BLAZE_NORM',
     'TELLU_ALLOWED_DPRTYPES', 'TELLURIC_FILETYPE', 'TELLURIC_FIBER_TYPE',
@@ -3723,6 +3724,12 @@ SKYCORR_NSIG_THRES = Const('SKYCORR_NSIG_THRES', value=None, dtype=int,
                            source=__NAME__, group=cgroup,
                            description='Define the number of sigma threshold '
                                        'for sky corr sigma clipping')
+
+# Define the flux ratio of sky lines that can not be corrected for
+SKYCORR_RATIO_THRES = Const('SKYCORR_RATIO_THRES', value=None, dtype=float,
+                            source=__NAME__, group=cgroup,
+                            description='Define the flux ratio of sky lines '
+                                        'that can not be corrected for')
 
 # =============================================================================
 # OBJECT: TELLURIC SETTINGS

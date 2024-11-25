@@ -9,6 +9,7 @@ Created on 2019-01-17 at 14:31
 
 @author: cook
 """
+from apero.science.telluric import core_tellu
 from apero.science.telluric import fit_tellu
 from apero.science.telluric import gen_tellu
 from apero.science.telluric import mk_tellu
@@ -69,7 +70,7 @@ load_conv_tapas = gen_tellu.load_conv_tapas
 
 load_templates = gen_tellu.load_templates
 
-load_tellu_file = gen_tellu.load_tellu_file
+load_tellu_file = core_tellu.load_tellu_file
 
 make_1d_template_cube = template_tellu.make_1d_template_cube
 
