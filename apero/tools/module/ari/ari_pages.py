@@ -266,6 +266,7 @@ def _add_obj_page(it: int, key: str, rdict: dict, params: ParamDict,
         lbl_section_ref = f'lbl_{ari_user}_objpage_{objname}'
         ccf_section_ref = f'ccf_{ari_user}_objpage_{objname}'
         timeseries_section_ref = f'timeseries_{ari_user}_objpage_{objname}'
+        debug_section_ref = f'debug_{ari_user}_objpage_{objname}'
         # ------------------------------------------------------------------
         # print progress
         msg = '\tCreating page for {0} [{1} of {2}]'
@@ -305,10 +306,11 @@ def _add_obj_page(it: int, key: str, rdict: dict, params: ParamDict,
         # table of contents
         # ---------------------------------------------------------------------
         # Add the names of the sections
-        names = ['Target info', 'Spectrum', 'LBL', 'CCF', 'Time series']
+        names = ['Target info', 'Spectrum', 'LBL', 'CCF', 'Time series',
+                 'Debug']
         # add the links to the pages
         items = [object_section_ref, spectrum_section_ref, lbl_section_ref,
-                 ccf_section_ref, timeseries_section_ref]
+                 ccf_section_ref, timeseries_section_ref, debug_section_ref]
         # add table of contents
         object_page.add_table_of_contents(items=items, names=names)
         object_page.add_newline(nlines=3)
@@ -344,6 +346,10 @@ def _add_obj_page(it: int, key: str, rdict: dict, params: ParamDict,
         # wlog(params, '', f'\t\tCreating time series section')
         # add time series section
         objpage_timeseries(params, object_page, names[4], items[4], object_class)
+        # ---------------------------------------------------------------------
+        # Debug section
+        # ---------------------------------------------------------------------
+        objpage_debug(params, object_page, names[5], items[5], object_class)
         # ---------------------------------------------------------------------
         # write object page
         # ---------------------------------------------------------------------
@@ -679,6 +685,35 @@ def objpage_timeseries(params: ParamDict, page: Any, name: str, ref: str,
         # add the stats table
         page.add_csv_table('', object_instance.time_series_dwn_table,
                            cssclass='csvtable2')
+
+
+def objpage_debug(params: ParamDict, page: Any, name: str, ref: str,
+                  object_instance: AriObject):
+    # add divider
+    # page.add_divider(color=DIVIDER_COLOR, height=DIVIDER_HEIGHT)
+    # add a reference to this section
+    page.add_reference(ref)
+    # add the section heading
+    page.add_section(name)
+    # ------------------------------------------------------------------
+    # get the spectrum parameters
+    object_instance.get_debug_parameters(params)
+    # ------------------------------------------------------------------
+    # add the debug plots
+    for debug_plot in object_instance.debug_plots:
+        # skip plots that are not active (i.e. plotting disabled them)
+        if not debug_plot.active:
+            continue
+        # make a sub section for this debug plot
+        page.add_sub_section(debug_plot.name)
+        # add the snr plot to the page
+        page.add_image(debug_plot.basename, align='left')
+        # add a new line
+        page.add_newline()
+        # add debug plot description
+        page.add_text(debug_plot.description)
+        # add a new line
+        page.add_newline()
 
 
 # =============================================================================
