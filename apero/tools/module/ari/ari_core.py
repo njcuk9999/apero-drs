@@ -28,7 +28,7 @@ from apero.base import base
 from apero.core import constants
 from apero.core.core import drs_log
 from apero.io import drs_table
-from apero.core.math import normal_fraction
+import apero.core.math as mp
 from apero.tools.module.documentation import drs_markdown
 from apero.plotting import gen_plot
 from apero.base.base import TQDM as tqdm
@@ -58,6 +58,7 @@ YAML_TO_PARAM['settings.instrument'] = 'ARI_INSTRUMENT'
 YAML_TO_PARAM['settings.username'] = 'ARI_USER'
 YAML_TO_PARAM['settings.N_CORES'] = 'ARI_NCORES'
 YAML_TO_PARAM['settings.SpecWave'] = 'ARI_WAVE_RANGES'
+YAML_TO_PARAM['settings.TcorrMapWave'] = 'ARI_TCORR_MAP_WAVE_RANGE'
 YAML_TO_PARAM['settings.ssh'] = 'ARI_SSH_COPY'
 YAML_TO_PARAM['settings.group'] = 'ARI_GROUP'
 YAML_TO_PARAM['settings.reset'] = 'ARI_RESET'
@@ -512,6 +513,16 @@ class RecipeEntry:
     pass
 
 
+class DebugPlot:
+    def __init__(self):
+        self.name = None
+        self.basename = None
+        self.path = None
+        self.plot = None
+        self.description = None
+        self.active = False
+
+
 class AriObject:
     def __init__(self, objname: str, filetypes: Dict[str, FileType]):
         # get the object name
@@ -592,6 +603,8 @@ class AriObject:
         self.time_series_stats_table: Optional[str] = None
         self.time_series_rlink_table: Optional[str] = None
         self.time_series_dwn_table: Optional[str] = None
+        # ---------------------------------------------------------------------
+        self.debug_plots: List[DebugPlot] = []
         # ---------------------------------------------------------------------
         # other parameters
         # ---------------------------------------------------------------------
@@ -1412,10 +1425,10 @@ class AriObject:
             all_ccf[row] = ccf_row
         # -----------------------------------------------------------------
         # get the 1 and 2 sigma limits
-        lower_sig1 = 100 * (0.5 - normal_fraction(1) / 2)
-        upper_sig1 = 100 * (0.5 + normal_fraction(1) / 2)
-        lower_sig2 = 100 * (0.5 - normal_fraction(2) / 2)
-        upper_sig2 = 100 * (0.5 + normal_fraction(2) / 2)
+        lower_sig1 = 100 * (0.5 - mp.normal_fraction(1) / 2)
+        upper_sig1 = 100 * (0.5 + mp.normal_fraction(1) / 2)
+        lower_sig2 = 100 * (0.5 - mp.normal_fraction(2) / 2)
+        upper_sig2 = 100 * (0.5 + mp.normal_fraction(2) / 2)
         # -----------------------------------------------------------------
         # y1 1sig is the 15th percentile of all ccfs
         ccf_props['y1_1sig'] = np.nanpercentile(all_ccf, lower_sig1, axis=0)
@@ -1673,6 +1686,119 @@ class AriObject:
         self.time_series_plot_path = None
         self.time_series_stats_table = time_series_base_name
         self.time_series_dwn_table = None
+
+    # -------------------------------------------------------------------------
+    # Debug functions
+    # -------------------------------------------------------------------------
+    def get_debug_parameters(self, params: ParamDict):
+        # set up the object page
+        obj_save_path = os.path.join(params['ARI_OBJ_PAGES'], self.objname)
+        ari_user = params['ARI_USER']
+        # alias to header dict
+        hdict = self.header_dict
+        # ---------------------------------------------------------------------
+        # parameters used for plotting
+        debug_props = dict()
+        debug_props['HDICT'] = self.header_dict
+        debug_props['HYAML'] = self.headers
+        debug_props['EXT_MJD'] = Time(np.array(hdict['EXT_MJDMID']))
+        debug_props['TCORR_WAVE_RANGE'] = params['ARI_TCORR_MAP_WAVE_RANGE']
+        # get the telluric corrected s1d files
+        sc1d_files = self.filetypes['sc1d'].get_files()
+        debug_props['SC1D_FILES'] = sc1d_files
+        # reset debug plots
+        self.debug_plots = []
+        # ---------------------------------------------------------------------
+        # define the debug plots
+        # ---------------------------------------------------------------------
+        # add shape plot
+        debug_shape = DebugPlot()
+        debug_shape.name = 'Shape QC plot'
+        debug_shape.basename = f'debug_shape_plot_{self.objname}_{ari_user}.png'
+        debug_shape.plot = shape_qc_plot_plot
+        debug_shape.description = ('Shape parameters varying in time.'
+                                   'dx is a shift along the order, dy is a '
+                                   'shift across orders, [[A,B],[C,D]] is an '
+                                   'affine transformation matrix.')
+        debug_shape.active = True
+        self.debug_plots.append(debug_shape)
+        # ---------------------------------------------------------------------
+        # add wfpdrift plot
+        debug_wfpdrift = DebugPlot()
+        debug_wfpdrift.name = 'wfpdrift plot'
+        debug_wfpdrift.basename = (f'debug_wfpdrift_plot_{self.objname}_'
+                                   f'{ari_user}.png')
+        debug_wfpdrift.plot = debug_mjd_wfpdrift_plot
+        debug_wfpdrift.description = ('Wavelength solution absolute CCF FP '
+                                      'Drift [km/s]')
+        debug_wfpdrift.active = True
+        self.debug_plots.append(debug_wfpdrift)
+        # ---------------------------------------------------------------------
+        # add wcav000 plot
+        debug_wcav000 = DebugPlot()
+        debug_wcav000.name = 'Wave cavity (c0) plot'
+        debug_wcav000.basename = (f'debug_wcav000_plot_{self.objname}_'
+                                  f'{ari_user}.png')
+        debug_wcav000.plot = debug_mjd_wcav000_plot
+        debug_wcav000.description = ('Wave cavity polynomial coeffs=0')
+        debug_wcav000.active = True
+        self.debug_plots.append(debug_wcav000)
+        # ---------------------------------------------------------------------
+        # add extsmax plot
+        debug_extsmax = DebugPlot()
+        debug_extsmax.name = 'Maximum Saturation level plot'
+        debug_extsmax.basename = (f'debug_extsmax_plot_{self.objname}_'
+                                  f'{ari_user}.png')
+        debug_extsmax.plot = debug_mjd_extsmax_plot
+        debug_extsmax.description = ('Maximum saturation level measured at time '
+                                     'of extraction')
+        debug_extsmax.active = True
+        self.debug_plots.append(debug_extsmax)
+        # ---------------------------------------------------------------------
+        # add effron plot
+        debug_effron = DebugPlot()
+        debug_effron.name = 'Measured effective readout noise before extraction'
+        debug_effron.basename = (f'debug_effron_plot_{self.objname}_'
+                                 f'{ari_user}.png')
+        debug_effron.plot = debug_mjd_effron_plot
+        debug_effron.description = ('Measured effective readout noise before '
+                                    'extraction')
+        debug_effron.active = True
+        self.debug_plots.append(debug_effron)
+        # ---------------------------------------------------------------------
+        # TODO
+        # add version plot
+
+        # ---------------------------------------------------------------------
+        # TODO
+        # add CDT comparison to MJD plot
+
+
+        # ---------------------------------------------------------------------
+        # TODO
+        # add tcorr map plot
+        debug_tcorr_map = DebugPlot()
+        debug_tcorr_map.name = 'Telluric map'
+        debug_tcorr_map.basename = (f'debug_tcorr_map_plot_{self.objname}_'
+                                    f'{ari_user}.png')
+        debug_tcorr_map.plot = debug_tcorr_map_plot
+        debug_tcorr_map.description = ('Telluric map of e2dsff_tcorr_A files.'
+                                       'Files are low-passed and corrected for '
+                                       'the stars motion.')
+        debug_tcorr_map.active = True
+        self.debug_plots.append(debug_tcorr_map)
+
+        # ---------------------------------------------------------------------
+        # plot the debug plots
+        # ---------------------------------------------------------------------
+        # loop around plots and plot
+        for debug_plot in self.debug_plots:
+            # set the plot title
+            plot_title = f'{debug_plot.name} [{self.objname}]'
+            # get the plot path
+            debug_plot.path = os.path.join(obj_save_path, debug_plot.basename)
+            # plot the debug plot
+            debug_plot.plot(debug_props, debug_plot.path, plot_title)
 
     # -------------------------------------------------------------------------
     # General page functions
@@ -2855,6 +2981,262 @@ def time_series_stats_table(time_series_props: Dict[str, Any], stat_path: str):
         stat_table[column] = time_series_props[column]
     # write to file as csv file
     stat_table.write(stat_path, format='ascii.csv', overwrite=True)
+
+
+# =============================================================================
+# Debug page functions
+# =============================================================================
+def shape_qc_plot_plot(debug_props: Dict[str, Any], plot_path: str,
+                  plot_title: str):
+    # get hdict and header yaml descriptions
+    hdict = debug_props['HDICT']
+    ext_headers = debug_props['HYAML']['ext']
+    # get mjd date
+    mjd = debug_props['EXT_MJD']
+    # get dx, dy, A, B, C, d
+    shape_dx = np.array(hdict['EXT_SHAPE_DX'])
+    shape_dy = np.array(hdict['EXT_SHAPE_DY'])
+    shape_a = 1 - np.array(hdict['EXT_SHAPE_A'])
+    shape_b = np.array(hdict['EXT_SHAPE_B'])
+    shape_c = np.array(hdict['EXT_SHAPE_C'])
+    shape_d = 1 - np.array(hdict['EXT_SHAPE_D'])
+    # --------------------------------------------------------------------------
+    # setup the figure
+    fig, frames = plt.subplots(nrows=6, ncols=1, figsize=(12, 12),
+                               sharex='all')
+    # set background color
+    for frame in frames:
+        frame.set_facecolor(PLOT_BACKGROUND_COLOR)
+        frame.grid(which='both', color='lightgray', ls='--')
+    # plot shape dx
+    frames[0].plot_date(mjd.plot_date, shape_dx, fmt='.', alpha=0.5)
+    frames[0].set(xlabel='Date', ylabel=ext_headers['EXT_SHAPE_DX']['label'])
+    frames[0].xaxis.set_ticks_position('top')
+    frames[0].xaxis.set_label_position('top')
+    # plot shape dy
+    frames[1].plot_date(mjd.plot_date, shape_dy, fmt='.', alpha=0.5)
+    frames[1].set(ylabel=ext_headers['EXT_SHAPE_DY']['label'])
+    # plot shape a
+    frames[2].plot_date(mjd.plot_date, shape_a, fmt='.', alpha=0.5)
+    frames[2].set(ylabel=ext_headers['EXT_SHAPE_A']['label'])
+    # plot shape b
+    frames[3].plot_date(mjd.plot_date, shape_b, fmt='.', alpha=0.5)
+    frames[3].set(ylabel=ext_headers['EXT_SHAPE_B']['label'])
+    # plot shape c
+    frames[4].plot_date(mjd.plot_date, shape_c, fmt='.', alpha=0.5)
+    frames[4].set(ylabel=ext_headers['EXT_SHAPE_C']['label'])
+    # plot shape d
+    frames[5].plot_date(mjd.plot_date, shape_d, fmt='.', alpha=0.5)
+    frames[5].set(xlabel='Date', ylabel=ext_headers['EXT_SHAPE_D']['label'])
+    # --------------------------------------------------------------------------
+    # add title
+    plt.suptitle(plot_title)
+    # save figure and close the plot
+    plt.savefig(plot_path)
+    plt.close()
+
+
+def debug_mjd_wfpdrift_plot(debug_props: Dict[str, Any], plot_path: str,
+                       plot_title: str):
+    debug_mjd_plot('EXT_WFPDRIFT', debug_props, plot_title, plot_path)
+
+
+def debug_mjd_wcav000_plot(debug_props: Dict[str, Any], plot_path: str,
+                       plot_title: str):
+    debug_mjd_plot('EXT_WCAV000', debug_props, plot_title, plot_path)
+
+
+def debug_mjd_extsmax_plot(debug_props: Dict[str, Any], plot_path: str,
+                       plot_title: str):
+    debug_mjd_plot('EXT_EXTSMAX', debug_props, plot_title, plot_path)
+
+
+def debug_mjd_effron_plot(debug_props: Dict[str, Any], plot_path: str,
+                       plot_title: str):
+    debug_mjd_plot('EXT_EFFRON', debug_props, plot_title, plot_path)
+
+
+def debug_mjd_plot(prop_name: str, debug_props: Dict[str, Any],
+                   plot_title: str, plot_path: str, ykind: str = 'ext',
+                   mjd_key: str = 'EXT_MJD'):
+    # get hdict and header yaml descriptions
+    hdict = debug_props['HDICT']
+    ext_headers = debug_props['HYAML'][ykind]
+    # get mjd date
+    mjd = debug_props[mjd_key]
+    # get variable
+    variable = hdict[prop_name]
+    variable_name = ext_headers[prop_name]['label']
+    # --------------------------------------------------------------------------
+    # setup the figure
+    fig, frame = plt.subplots(nrows=1, ncols=1, figsize=(12, 4))
+    # set background color
+    frame.set_facecolor(PLOT_BACKGROUND_COLOR)
+    frame.grid(which='both', color='lightgray', ls='--')
+    # plot shape dx
+    frame.plot_date(mjd.plot_date, variable, fmt='.', alpha=0.5)
+    frame.set(xlabel='Date', ylabel=variable_name)
+    # --------------------------------------------------------------------------
+    plt.subplots_adjust(hspace=0, left=0.1, right=0.99, bottom=0.15, top=0.9)
+    # add title
+    plt.suptitle(plot_title)
+    # save figure and close the plot
+    plt.savefig(plot_path)
+    plt.close()
+
+
+def debug_tcorr_map_plot(debug_props: Dict[str, Any], plot_path: str,
+                         plot_title: str):
+    # get pconstants
+    sc1d_files = debug_props['SC1D_FILES']
+    wave_min, wave_max = debug_props['TCORR_WAVE_RANGE']
+    wave_diff = wave_max - wave_min
+    # -------------------------------------------------------------------------
+    # load the first file as reference
+    ref_table = Table.read(sc1d_files[0], 'SC1D_V_FILE')
+    ref_wave = np.array(ref_table['wavelength'])
+    # Find the order with the most data points within the wavelength range
+    # of interest
+    wave_mask = (ref_wave > wave_min - 0.5 * wave_diff)
+    wave_mask &= (ref_wave < wave_max + 0.5 * wave_diff)
+    # cut down the wavelength vector
+    ref_wave = ref_wave[wave_mask]
+    # -------------------------------------------------------------------------
+    # create a map for plot
+    map2d = np.zeros((len(sc1d_files), np.sum(wave_mask)))
+    map2d_star = np.zeros((len(sc1d_files), np.sum(wave_mask)))
+    bervs = np.zeros(len(sc1d_files))
+    qcc_pass = np.zeros((len(sc1d_files), 1))
+    # -------------------------------------------------------------------------
+    # loop through each file and process each spectra (and add to maps)
+    for it, sc1d_file in enumerate(sc1d_files):
+        # open the sc1d file
+        it_table = Table.read(sc1d_file, 'SC1D_V_FILE')
+        # get the header
+        it_hdr = fits.getheader(sc1d_file)
+        # get the berv
+        bervs[it] = float(it_hdr['BERV'])
+        qcc_pass[it] = int(it_hdr['QCC_ALL'])
+        # get spectrum for preferred order
+        spec_ord = np.array(it_table['flux'][wave_mask]).astype(float)
+        # remove the table
+        del it_table
+        del it_hdr
+        # apply low pass filter to the spectrum and normalize
+        map2d[it] = spec_ord / mp.lowpassfilter(spec_ord, 101)
+        # interpolate the valid data points
+        valid = np.isfinite(map2d[it])
+        spec_spline = mp.iuv_spline(ref_wave[valid], map2d[it][valid])
+        # correct for the stars motions using doppler shift
+        dvshift = mp.relativistic_waveshift(bervs[it], units='km/s')
+        map2d_star[it] = spec_spline(ref_wave / dvshift)
+    # -------------------------------------------------------------------------
+    # Compute the median spectrum across all observations
+    med = np.median(map2d_star, axis=0)
+    # Copy the original map2d to map2d_star
+    map2d_star = np.array(map2d)
+    # Interpolate the median spectrum
+    valid = np.isfinite(med)
+    med_spl = mp.iuv_spline(ref_wave[valid], med[valid])
+    # Subtract the median spectrum from each observation
+    for it in range(len(sc1d_files)):
+        # calculate shift for this file
+        dvshift = mp.relativistic_waveshift(-bervs[it], units='km/s')
+        # correct the spectrum by the median of all observations
+        map2d_star[it] -= med_spl(ref_wave / dvshift)
+    # -------------------------------------------------------------------------
+    import matplotlib.gridspec as gridspec
+    from matplotlib.colors import ListedColormap
+    # Custom colormap for binary data: green for 1, red for 0
+    binary_cmap = ListedColormap(['orange', 'purple'])
+    # set up grid size
+    gridspec_kw = {'width_ratios': [40, 1, 1, 1],
+                   'height_ratios': [1, 1]}
+    # Create subplots for the original and corrected data
+    fig = plt.figure(figsize=(12, 12))
+    gs = gridspec.GridSpec(2, 4, **gridspec_kw)
+    # main plot frames
+    main_1 = fig.add_subplot(gs[0, 0])
+    main_2 = fig.add_subplot(gs[1, 0])
+    # qcc axis
+    qcc_1 = fig.add_subplot(gs[0, 1])
+    qcc_2 = fig.add_subplot(gs[1, 1])
+    # colorbars
+    cb_1 = fig.add_subplot(gs[0, 3])
+    cb_2 = fig.add_subplot(gs[1, 3])
+    # Define the extent of the plot in terms of wavelength and
+    # observation number
+    extent = [ref_wave.min(), ref_wave.max(), 0, len(sc1d_files)]
+    # -------------------------------------------------------------------------
+    # Calculate the plotting range for the original data
+    p10, p90 = np.nanpercentile(map2d, [10, 90])
+    mid = 0.5 * (p10 + p90)
+    width = 3 * (p90 - p10)
+    range_plot = [mid - 0.5 * width, mid + 0.5 * width]
+    # -------------------------------------------------------------------------
+    # Plot the original data
+    im0 = main_1.imshow(map2d, aspect='auto',
+                              vmin=range_plot[0], vmax=range_plot[1],
+                              interpolation='nearest', extent=extent,
+                              origin='lower')
+    # Set labels and titles for the plots
+    main_1.set_ylabel('Observation number')
+    main_1.set_title('TCORR corrected e2dsff')
+    main_1.set(xlim=[wave_min, wave_max])
+    # -------------------------------------------------------------------------
+    # add color bar 1
+    fig.colorbar(im0, cax=cb_1, orientation='vertical',
+                 label='Normalized\nIntensity')
+    cb_1.set_aspect('auto')
+    # -------------------------------------------------------------------------
+    # Plot qcc
+    qcc_1.imshow(qcc_pass, aspect='auto', cmap=binary_cmap,
+                 interpolation='nearest', origin='lower')
+    # adjust the binary mask axis
+    for pos in ['top', 'right', 'left', 'bottom']:
+        qcc_1.spines[pos].set_visible(False)
+    qcc_1.tick_params(left=False, bottom=False, labelleft=False,
+                      labelbottom=False)
+    qcc_1.set_xticks([])
+    qcc_1.set_xlabel('QC', labelpad=10, loc='center')
+    qcc_1.xaxis.set_label_position('top')
+    # -------------------------------------------------------------------------
+    # Calculate the plotting range for the corrected data
+    p10, p90 = np.nanpercentile(map2d_star, [10, 90])
+    mid = 0.5 * (p10 + p90)
+    width = 3 * (p90 - p10)
+    range_plot = [mid - 0.5 * width, mid + 0.5 * width]
+    # -------------------------------------------------------------------------
+    # Plot the corrected data
+    im1 = main_2.imshow(map2d_star, aspect='auto',
+                           vmin=range_plot[0], vmax=range_plot[1],
+                           interpolation='nearest', extent=extent,
+                           origin='lower')
+    # Set labels and titles for the plots
+    main_2.set_xlabel('Wavelength')
+    main_2.set_ylabel('Observation number')
+    main_2.set_title('Residuals to star median')
+    main_2.set(xlim=[wave_min, wave_max])
+    # -------------------------------------------------------------------------
+    # add color bar
+    fig.colorbar(im1, cax=cb_2, orientation='vertical',
+                 label='Normalized\nResidual')
+    # Ensure the colorbar axes are properly adjusted
+    cb_2.set_aspect('auto')
+    # -------------------------------------------------------------------------
+    # Plot qcc
+    qcc_2.imshow(qcc_pass, aspect='auto', cmap=binary_cmap,
+                 interpolation='nearest', origin='lower')
+    # adjust the binary mask axis
+    qcc_2.axis('off')
+    # --------------------------------------------------------------------------
+    plt.subplots_adjust(hspace=0.15, wspace=0.01,
+                        left=0.1, right=0.9, bottom=0.05, top=0.95)
+    # add title
+    plt.suptitle(plot_title)
+    # save figure and close the plot
+    plt.savefig(plot_path)
+    plt.close()
 
 
 # =============================================================================
