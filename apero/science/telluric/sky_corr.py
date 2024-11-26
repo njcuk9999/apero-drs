@@ -8,6 +8,7 @@ Created on 2020-07-2020-07-15 17:58
 @author: cook
 """
 import os
+import warnings
 from typing import Optional, List
 
 import numpy as np
@@ -329,7 +330,8 @@ def correct_sky_no_ref(params: ParamDict, recipe: DrsRecipe,
         grad1 = grad[reg_maskf]
         grad1_ref = gradient[reg_maskf]
         # dot product of the gradients
-        amp = np.nansum(grad1 * grad1_ref) / np.nansum(grad1_ref ** 2)
+        with warnings.catch_warnings(record=True) as _:
+            amp = np.nansum(grad1 * grad1_ref) / np.nansum(grad1_ref ** 2)
         # negative amps should be set to zero
         if amp < 0 and fmodel is None:
             amp = 0
