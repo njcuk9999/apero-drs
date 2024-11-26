@@ -119,8 +119,8 @@ def load_ari_params(params: ParamDict) -> ParamDict:
             try:
                 value = ari_params[key1][key2]
             except Exception as _:
-                emsg = 'Yaml file {0} does not contain key'
-                eargs = [profile_yaml]
+                emsg = 'Yaml file {0} does not contain key: {1}'
+                eargs = [profile_yaml, key]
                 WLOG(params, 'error', emsg.format(*eargs))
                 return params
         else:
@@ -338,8 +338,8 @@ def find_new_objects(params: ParamDict, object_classes: Dict[str, AriObject]
     return new_object_classes
 
 
-def compile_object_data(params: ParamDict, object_classes: Dict[str, AriObject]
-                        ) -> Tuple[Dict[str, AriObject], TableFile]:
+def make_object_pages(params: ParamDict, object_classes: Dict[str, AriObject]
+                      ) -> Tuple[Dict[str, AriObject], TableFile]:
     # log progress
     WLOG(params, '', 'Counting LBL files')
     # add the lbl count
@@ -358,7 +358,7 @@ def compile_object_data(params: ParamDict, object_classes: Dict[str, AriObject]
     return object_classes, object_table
 
 
-def compile_recipe_data(params: ParamDict) -> TableFile:
+def make_recipe_pages(params: ParamDict) -> TableFile:
     # ------------------------------------------------------------------
     # log progress
     WLOG(params, '', 'Compiling apero log table (this may take a while)')
