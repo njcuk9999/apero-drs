@@ -842,6 +842,8 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
 
     # store approx rv and approx rv err
     approx_rvs = []
+    approx_rv = 0
+    rv_converged = False
     # loop around until convergence or 20th iteration
     while (dexpo > dexpo_thres) and (iteration < max_iterations):
         # set up a qc flag
@@ -940,21 +942,40 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         # -----------------------------------------------------------------
         # if we have a template we can measure an approximate RV
         #  we can then use this to better shift the template to the data
-        if template_props['HAS_TEMPLATE']:
+        if template_props['HAS_TEMPLATE'] and not rv_converged:
             # get the gradient to the wave (and turn it in to a velocity)
             grad_wave = speed_of_light_ms * np.gradient(np.log(wavemap))
             # get the velocity derivative per pixel
             with warnings.catch_warnings(record=True) as _:
                 velo_deriv = np.gradient(np.log(template2))/grad_wave
             # project this onto the spectrum
-            velo_proj = log_spec_tmp_lowpass/velo_deriv
-            err_proj = running_sigma/velo_deriv
+            with warnings.catch_warnings(record=True) as _:
+                velo_proj = log_spec_tmp_lowpass/velo_deriv
+                err_proj = running_sigma/velo_deriv
+            # only do odd ratio mean on really clean bits of the telluric
+            # spectrum
+            btellu = trans > 0.9
             # find the approx velocity and its error
-            app_vel, app_vel_err = mp.odd_ratio_mean(velo_proj, err_proj)
+            app_vel, app_vel_err = mp.odd_ratio_mean(velo_proj[btellu],
+                                                     err_proj[btellu])
             # we add this to the approximate rv shift
             approx_rvs.append(app_vel)
-            approx_rv = float(np.sum(approx_rvs))
+            approx_rv = approx_rv - app_vel
             approx_rv_err = float(app_vel_err)
+
+            # If we have multiple rv measurements we neede to check whether it
+            # is converging
+            if len(approx_rvs) > 2:
+                if abs(approx_rvs[-1]) > (0.5 * abs(approx_rvs[-2])):
+                    # TODO: Add to language database
+                    wmsg = 'RV shift not converging. Stopping RV shift.'
+                    WLOG(params, 'warning', wmsg)
+                    # set these values to values that will work
+                    approx_rv, approx_rv_err, app_vel = 0, np.nan, 0
+                    # we say its converged but it hasn't we just can't fit RV on
+                    # this observation
+                    rv_converged = True
+
             # TODO: Add to language database
             msg = ('\t\tApprox Rv shift: {0:.2f}+/-{1:.2f} '
                    'increment: {2:.4f} [m/s]')
@@ -970,6 +991,10 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
             # update template 1 and 2 to use in next loop
             template1 = np.array(template_props['TEMP_S2D'])
             template2 = template1.ravel()[flatkeep]
+
+            # test whether the rv has converged
+            if abs(app_vel / app_vel_err) < 0.1:
+                rv_converged = True
         # ------------------------------------------------------------------
         # finally add one to the iterator
         iteration += 1
@@ -2297,7 +2322,7 @@ def load_templates(params: ParamDict,
     temp_props['APPROX_RV_ERR'] = np.nan
     # we need a copy of the s2d, s1d (so if we modify we can reset)
     temp_props['ORIG_TEMP_S2D'] = np.array(temp_props['TEMP_S2D'])
-    temp_props['ORIG_TEMP_S1D_TABLE'] = np.array(temp_props['TEMP_S1D_TABLE'])
+    temp_props['ORIG_TEMP_S1D_TABLE'] = Table(s1d_table)
     # set source
     tkeys = ['TEMP_S2D', 'TEMP_FILE', 'TEMP_NUM', 'TEMP_HASH', 'TEMP_TIME',
              'TEMP_S1D_TABLE', 'TEMP_S1D_FILE', 'APPROX_RV', 'APPROX_RV_ERR',
