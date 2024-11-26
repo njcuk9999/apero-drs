@@ -383,9 +383,9 @@ __all__ = [
     'REPROCESS_REINDEX_BLOCKS', 'REPROCESS_OBJECT_TYPES',
     # ari constants
     'ARI_INSTRUMENT', 'ARI_USER', 'ARI_NCORES', 'ARI_WAVE_RANGES',
-    'ARI_SSH_COPY', 'ARI_GROUP', 'ARI_RESET', 'ARI_FILTER_OBJECTS',
-    'ARI_FILTER_OBJECTS_LIST', 'ARI_HEADER_PROPS', 'ARI_FINDING_CHARTS',
-    'ARI_RESET_DICT',
+    'ARI_TCORR_MAP_WAVE_RANGE', 'ARI_SSH_COPY', 'ARI_GROUP', 'ARI_RESET',
+    'ARI_FILTER_OBJECTS', 'ARI_FILTER_OBJECTS_LIST', 'ARI_HEADER_PROPS',
+    'ARI_FINDING_CHARTS', 'ARI_RESET_DICT',
 ]
 
 # set name
@@ -5705,6 +5705,11 @@ ARI_WAVE_RANGES = Const('ARI_WAVE_RANGES', value=None, dtype=dict,
                         source=__NAME__, group=cgroup,
                         description='Define the ari spectrum wavelength '
                                     'ranges in nm')
+# Wavelength range of interest for debug telluric correction map
+ARI_TCORR_MAP_WAVE_RANGE = Const('ARI_TCORR_MAP_WAVE_RANGE', value=None,
+                                 dtype=list, source=__NAME__, group=cgroup,
+                                 description='Wavelength range of interest for '
+                                             'debug telluric correction map')
 
 # Define the ari ssh properties to copy the website to
 ARI_SSH_COPY = Const('ARI_SSH_COPY', value=None, dtype=dict, source=__NAME__,

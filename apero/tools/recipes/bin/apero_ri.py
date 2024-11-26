@@ -143,10 +143,10 @@ def __main__(recipe: DrsRecipe, params: ParamDict):
     # print progress
     WLOG(params, 'info', 'Compiling new data and writing pages')
     # compile object data
-    object_classes, object_table = ari.compile_object_data(params,
-                                                           object_classes)
+    object_classes, object_table = ari.make_object_pages(params,
+                                                         object_classes)
     # compile recipe data
-    recipe_table = ari.compile_recipe_data(params)
+    recipe_table = ari.make_recipe_pages(params)
 
     # ----------------------------------------------------------------------
     # step 5: make top level pages and compile
