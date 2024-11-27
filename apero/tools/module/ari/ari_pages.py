@@ -122,13 +122,13 @@ class TableFile:
         table_page.add_newline()
         # deal with column widths for this file type
         if table is not None and len(table) > 0:
-            if 'object' in self.name:
+            if 'recipe' in self.name:
+                # add the recipe tables
+                add_recipe_tables(self.params, table, self.machinename)
+            else:
                 # add the csv version of this table
                 table_page.add_csv_table('', self.csv_ref_path,
                                          cssclass='csvtable2')
-            elif 'recipe' in self.name:
-                # add the recipe tables
-                add_recipe_tables(self.params, table, self.machinename)
         else:
             # if we have no table then add a message
             table_page.add_text('No table created.')
@@ -235,6 +235,99 @@ def make_obj_table(params: ParamDict, object_classes: Dict
     # add the table to the table file
     table_file.make_table(out_table)
     # return this instance
+    return table_file
+
+
+# =============================================================================
+# Define Observation Table functions
+# =============================================================================
+def make_obs_table(params: ParamDict, object_classes: Dict) -> TableFile:
+    # get the ari user
+    ari_user = params['ARI_USER']
+    # -------------------------------------------------------------------------
+    # create a dictionary to store table data
+    table_dict = dict()
+    # list of nights i.e. YYYY-MM-DD
+    table_dict['Night'] = []
+    # list of object names with the link to the object pages
+    table_dict['Object name'] = []
+    # Number of raw observations for this night
+    table_dict['Number of ext'] = []
+    table_dict['Number of tcorr'] = []
+    # define quick links
+    link_keys = ['TARGET', 'SPECTRUM', 'LBL', 'CCF', 'TIMESERIES', 'DEBUG']
+    # create quick link columns
+    for link_key in link_keys:
+        table_dict[link_key] = []
+    # -------------------------------------------------------------------------
+    # loop around object classes and make
+    for objname in object_classes:
+        # get the object instance
+        object_instance = object_classes[objname]
+        # get the save path for this object name
+        obj_save_path = str(os.path.join(params['ARI_OBJ_PAGES'], objname))
+        # get the time
+        ts_tablename = object_instance.time_series_stats_table
+        # deal with this set to None
+        if ts_tablename is None:
+            continue
+        # get full table path
+        ts_tablepath = os.path.join(obj_save_path, ts_tablename)
+        # deal with table not existing (skip this target)
+        if not os.path.exists(ts_tablepath):
+            continue
+        # load the table
+        ts_table = Table.read(ts_tablepath, format='ascii')
+
+        # get the sections references
+        object_section_ref = f'object_{ari_user}_objpage_{objname}'
+        spectrum_section_ref = f'spectrum_{ari_user}_objpage_{objname}'
+        lbl_section_ref = f'lbl_{ari_user}_objpage_{objname}'
+        ccf_section_ref = f'ccf_{ari_user}_objpage_{objname}'
+        timeseries_section_ref = f'timeseries_{ari_user}_objpage_{objname}'
+        debug_section_ref = f'debug_{ari_user}_objpage_{objname}'
+
+        # ---------------------------------------------------------------------
+        # add the nights (straight from time series table)
+        # ---------------------------------------------------------------------
+        table_dict['Night'] += list(ts_table['Obs Dir'])
+        # ---------------------------------------------------------------------
+        # add the object name (with a link to obj page)
+        # ---------------------------------------------------------------------
+        # get the page reference
+        page_ref = f'{ari_user}_object_page_{objname}'
+        page_link = drs_markdown.make_url(objname, page_ref)
+        # push into object name
+        table_dict['Object name'] += [page_link] * len(ts_table)
+        # ---------------------------------------------------------------------
+        # add the number of files (straight from time series table)
+        # ---------------------------------------------------------------------
+        table_dict['Number of ext'] += list(ts_table['Number of ext'])
+        table_dict['Number of tcorr'] += list(ts_table['Number of tcorr'])
+        # ---------------------------------------------------------------------
+        # add the links to sections
+        # ---------------------------------------------------------------------
+        # define quick links
+        link_refs = [object_section_ref, spectrum_section_ref, lbl_section_ref,
+                     ccf_section_ref, timeseries_section_ref, debug_section_ref]
+        for l_it, link_key in enumerate(link_keys):
+            # set link text
+            link_text = f'[{link_key}]'
+            # make the link
+            quick_link = drs_markdown.make_url(link_text, link_refs[l_it])
+            # push into columns
+            table_dict[link_key] += [quick_link] * len(ts_table)
+    # -------------------------------------------------------------------------
+    # convert this to a table but use the output column names
+    out_table = Table(table_dict)
+    # sort by night (descending)
+    out_table.sort('Night', reverse=True)
+    # -------------------------------------------------------------------------
+    # make a table file instance
+    table_file = TableFile('Observation table', params)
+    # add the table to the table file
+    table_file.make_table(out_table)
+    # return the table file
     return table_file
 
 
@@ -376,6 +469,7 @@ def _add_obj_page(it: int, key: str, rdict: dict, params: ParamDict,
         # return rdict
         return rdict
 
+
 def add_obj_pages(params: ParamDict, object_classes: Dict[str, AriObject]):
     # -------------------------------------------------------------------------
     # deal with no entries in object table
@@ -506,6 +600,12 @@ def objpage_targetinfo(params: ParamDict, page: Any, name: str, ref: str,
     page.add_reference(ref)
     # add the section heading
     page.add_section(name)
+    # add explanation of section
+    page.add_text(f'This section gives some details of the APERO astrometric'
+                  f' database used when processing this target '
+                  f'(e.g. for BERV calculation). Any observation with a object '
+                  f'name in the alias list will be associated with this '
+                  f'"APERO target" i.e. DRSOBJN={object_instance.objname}')
     # ------------------------------------------------------------------
     # get the target parameters
     object_instance.get_target_parameters(params)
@@ -525,6 +625,9 @@ def objpage_spectrum(params: ParamDict, page: Any, name: str, ref: str,
     page.add_reference(ref)
     # add the section heading
     page.add_section(name)
+    # add explanation of section
+    page.add_text(f'This section presents the observation after extraction,'
+                  f'with and without telluric correction.')
     # ------------------------------------------------------------------
     # deal with no spectrum found
     if len(object_instance.filetypes['ext'].files) == 0:
@@ -587,6 +690,11 @@ def objpage_lbl(params: ParamDict, page: Any, name: str, ref: str,
     for objcomb in object_instance.lbl_combinations:
         # add subsection for the object+template combination
         page.add_section(f'LBL ({objcomb})')
+        # add explanation of section
+        page.add_text(f'This section presents the LBL results for '
+                      f'{objcomb}. The first object is the target we measure '
+                      f'RVs for the second is the "friend" or "template" '
+                      f'that was used to calculate those RVs.')
         # add the lbl plot
         if object_instance.lbl_plot_path[objcomb] is not None:
             # add the snr plot to the page
@@ -632,6 +740,9 @@ def objpage_ccf(params: ParamDict, page: Any, name: str, ref: str,
     # ------------------------------------------------------------------
     # add the section heading
     page.add_section(name)
+    # add explanation of section
+    page.add_text('This section presents the APERO CCF results for '
+                  'this object.')
     # ------------------------------------------------------------------
     # get the spectrum parameters
     object_instance.get_ccf_parameters(params)
@@ -670,6 +781,9 @@ def objpage_timeseries(params: ParamDict, page: Any, name: str, ref: str,
     page.add_reference(ref)
     # add the section heading
     page.add_section(name)
+    # add explanation of section
+    page.add_text('This section deals with providing the time series '
+                  'information for this object')
     # ------------------------------------------------------------------
     # get the spectrum parameters
     object_instance.get_time_series_parameters(params)
@@ -695,6 +809,8 @@ def objpage_debug(params: ParamDict, page: Any, name: str, ref: str,
     page.add_reference(ref)
     # add the section heading
     page.add_section(name)
+    # add explanation of section
+    page.add_text('This section has various debug plots from APERO products')
     # ------------------------------------------------------------------
     # get the spectrum parameters
     object_instance.get_debug_parameters(params)
@@ -708,12 +824,10 @@ def objpage_debug(params: ParamDict, page: Any, name: str, ref: str,
         page.add_sub_section(debug_plot.name)
         # add the snr plot to the page
         page.add_image(debug_plot.basename, align='left')
-        # add a new line
-        page.add_newline()
         # add debug plot description
         page.add_text(debug_plot.description)
         # add a new line
-        page.add_newline()
+        page.add_newline(2)
 
 
 # =============================================================================
