@@ -118,6 +118,10 @@ headers:
       key: VERSION
       label: APERO Version
       dtype: str
+    EXT_PDATE:
+      key: DRSPDATE
+      label: APERO Processed date
+      dtype: str
     EXT_SHAPE_DX:
       key: SHAPE_DX
       label: Shape DX
@@ -180,15 +184,15 @@ headers:
       dtype: float
     EXT_CDTSHAPL:
       key: CDTSHAPL
-      label: LOCO file
+      label: Local shape file
       dtype: float
     EXT_CDTSHAPX:
       key: CDTSHAPX
-      label: LOCO file
+      label: Shape X file
       dtype: float
     EXT_CDTSHAPY:
       key: CDTSHAPY
-      label: LOCO file
+      label: Shape Y file
       dtype: float
     EXT_CDTFLAT:
       key: CDTFLAT

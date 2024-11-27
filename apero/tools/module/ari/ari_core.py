@@ -1722,6 +1722,7 @@ class AriObject:
                                    'affine transformation matrix.')
         debug_shape.active = True
         self.debug_plots.append(debug_shape)
+
         # ---------------------------------------------------------------------
         # add wfpdrift plot
         debug_wfpdrift = DebugPlot()
@@ -1733,6 +1734,7 @@ class AriObject:
                                       'Drift [km/s]')
         debug_wfpdrift.active = True
         self.debug_plots.append(debug_wfpdrift)
+
         # ---------------------------------------------------------------------
         # add wcav000 plot
         debug_wcav000 = DebugPlot()
@@ -1743,6 +1745,7 @@ class AriObject:
         debug_wcav000.description = ('Wave cavity polynomial coeffs=0')
         debug_wcav000.active = True
         self.debug_plots.append(debug_wcav000)
+
         # ---------------------------------------------------------------------
         # add extsmax plot
         debug_extsmax = DebugPlot()
@@ -1754,6 +1757,7 @@ class AriObject:
                                      'of extraction')
         debug_extsmax.active = True
         self.debug_plots.append(debug_extsmax)
+
         # ---------------------------------------------------------------------
         # add effron plot
         debug_effron = DebugPlot()
@@ -1766,16 +1770,36 @@ class AriObject:
         debug_effron.active = True
         self.debug_plots.append(debug_effron)
         # ---------------------------------------------------------------------
-        # TODO
         # add version plot
-
+        debug_version = DebugPlot()
+        debug_version.name = 'APERO Processing Debug Plot'
+        debug_version.basename = (f'debug_version_plot_{self.objname}_'
+                                  f'{ari_user}.png')
+        debug_version.plot = debug_version_plot
+        debug_version.description = ('Plotting the version and processed date'
+                                     ' from the header from APERO. Note that'
+                                     ' offline reductions should lead to a '
+                                     'straight line, while online reductions '
+                                     'should be roughly a one-to-one with the'
+                                     ' Date axis.')
+        debug_version.active = True
+        self.debug_plots.append(debug_version)
         # ---------------------------------------------------------------------
-        # TODO
         # add CDT comparison to MJD plot
-
+        debug_mjd_cdt = DebugPlot()
+        debug_mjd_cdt.name = 'APERO Calibration times plot'
+        debug_mjd_cdt.basename = (f'debug_version_plot_{self.objname}_'
+                                  f'{ari_user}.png')
+        debug_mjd_cdt.plot = debug_mjd_cdt_plot
+        debug_mjd_cdt.description = ('Computed time between observation and '
+                                     'calibration used. Some calibrations are'
+                                     'reference calibrations and thus are '
+                                     'static, others should always be from the '
+                                     'same night.')
+        debug_mjd_cdt.active = True
+        self.debug_plots.append(debug_mjd_cdt)
 
         # ---------------------------------------------------------------------
-        # TODO
         # add tcorr map plot
         debug_tcorr_map = DebugPlot()
         debug_tcorr_map.name = 'Telluric map'
@@ -3232,6 +3256,100 @@ def debug_tcorr_map_plot(debug_props: Dict[str, Any], plot_path: str,
     # --------------------------------------------------------------------------
     plt.subplots_adjust(hspace=0.15, wspace=0.01,
                         left=0.1, right=0.9, bottom=0.05, top=0.9)
+    # add title
+    plt.suptitle(plot_title)
+    # save figure and close the plot
+    plt.savefig(plot_path)
+    plt.close()
+
+
+def debug_version_plot(debug_props: Dict[str, Any], plot_path: str,
+                         plot_title: str):
+    # get hdict and header yaml descriptions
+    hdict = debug_props['HDICT']
+    ext_headers = debug_props['HYAML']['ext']
+    # get mjd date
+    mjd = debug_props['EXT_MJD']
+    # get variable
+    version = hdict['EXT_VERSION']
+    version_name = ext_headers['EXT_VERSION']['label']
+    pdate = np.array(hdict['EXT_PDATE']).astype(str)
+    pdate = Time(pdate, format='iso').mjd
+    pdate_name = ext_headers['EXT_PDATE']['label']
+    # --------------------------------------------------------------------------
+    # setup the figure
+    fig, frames = plt.subplots(nrows=2, ncols=1, figsize=(12, 4), sharex='all')
+    # set background color
+    for frame in frames:
+        frame.set_facecolor(PLOT_BACKGROUND_COLOR)
+        frame.grid(which='both', color='lightgray', ls='--')
+    # plot version
+    frames[0].plot_date(mjd.plot_date, version, fmt='.', alpha=0.5,
+                        label=version_name)
+    frames[0].legend(loc=0)
+    # plot processed date
+    frames[1].plot_date(mjd.plot_date, pdate, fmt='.', alpha=0.5,
+                        label=pdate_name)
+    frames[1].set(xlabel='Date', ylabel='mjd')
+    frames[1].legend(loc=0)
+    # --------------------------------------------------------------------------
+    plt.subplots_adjust(hspace=0.05, left=0.1, right=0.99, bottom=0.15, top=0.9)
+    # add title
+    plt.suptitle(plot_title)
+    # save figure and close the plot
+    plt.savefig(plot_path)
+    plt.close()
+
+
+def debug_mjd_cdt_plot(debug_props: Dict[str, Any], plot_path: str,
+                       plot_title: str):
+    # get hdict and header yaml descriptions
+    hdict = debug_props['HDICT']
+    ext_headers = debug_props['HYAML']['ext']
+    # get mjd date
+    mjd = debug_props['EXT_MJD']
+    # define the keys to add
+    keys = dict()
+    keys['CDTDARK'] = 1
+    keys['CDTBAD'] = 0
+    keys['CDTBACK'] = 0
+    keys['CDTORDP'] = 0
+    keys['CDTLOCO'] = 0
+    keys['CDTSHAPL'] = 0
+    keys['CDTSHAPX'] = 1
+    keys['CDTSHAPY'] = 1
+    keys['CDTFLAT'] = 0
+    keys['CDTBLAZE'] = 0
+    keys['CDTWAVE'] = 0
+    keys['WAVETIME'] = 0
+    # --------------------------------------------------------------------------
+    # setup the figure
+    fig, frames = plt.subplots(nrows=12, ncols=1, figsize=(12, 24),
+                               sharex='all')
+    # loop through keys
+    for it, key in enumerate(keys):
+        # get the variable and variable name
+        variable = hdict[f'EXT_{key}']
+        variable_name = ext_headers[f'EXT_{key}']['label']
+        # get the color of the points
+        if keys[key] == 1:
+            color = 'purple'
+        else:
+            color = 'orange'
+        # get frame
+        frame = frames[it]
+        # set background color
+        frame.set_facecolor(PLOT_BACKGROUND_COLOR)
+        frame.grid(which='both', color='lightgray', ls='--')
+        # plot shape dx
+        frame.plot_date(mjd.plot_date, variable - mjd.value, color=color,
+                        fmt='.', alpha=0.5, label=variable_name)
+        frame.set(ylabel=r'$\Delta$t [d]')
+        frame.legend(loc=0)
+
+    frames[-1].set(xlabel='Date')
+    # --------------------------------------------------------------------------
+    plt.subplots_adjust(hspace=0, left=0.1, right=0.99, bottom=0.05, top=0.95)
     # add title
     plt.suptitle(plot_title)
     # save figure and close the plot
