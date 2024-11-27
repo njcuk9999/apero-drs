@@ -12,14 +12,14 @@ gspread==5.12.4
 numba==0.57.0
 numexpr==2.8.4
 numpy==1.24.3
-pandas==2.0.2
+pandas==2.2.3
 pandastable==0.13.1
 pandasql==0.7.3
 Pillow==10.2.0
 psutil==5.9.4
 PyYAML==6.0
 scikit-image==0.19.3
-scipy==1.10.0
+scipy==1.10.1
 tqdm==4.65.0
 yagmail==0.15.293
 lbl @ git+https://github.com/njcuk9999/lbl.git@developer
