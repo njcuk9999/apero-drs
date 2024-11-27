@@ -3123,7 +3123,7 @@ def debug_tcorr_map_plot(debug_props: Dict[str, Any], plot_path: str,
         del it_table
         del it_hdr
         # apply low pass filter to the spectrum and normalize
-        map2d[it] = spec_ord / mp.lowpassfilter(spec_ord, 101)
+        map2d[it] = spec_ord / mp.lowpassfilter(spec_ord, 501)
         # interpolate the valid data points
         valid = np.isfinite(map2d[it])
         spec_spline = mp.iuv_spline(ref_wave[valid], map2d[it][valid])
@@ -3181,7 +3181,7 @@ def debug_tcorr_map_plot(debug_props: Dict[str, Any], plot_path: str,
                               origin='lower')
     # Set labels and titles for the plots
     main_1.set_ylabel('Observation number')
-    main_1.set_title('TCORR corrected e2dsff')
+    main_1.set_title('Telluric corrected s1d')
     main_1.set(xlim=[wave_min, wave_max])
     # -------------------------------------------------------------------------
     # add color bar 1
@@ -3231,7 +3231,7 @@ def debug_tcorr_map_plot(debug_props: Dict[str, Any], plot_path: str,
     qcc_2.axis('off')
     # --------------------------------------------------------------------------
     plt.subplots_adjust(hspace=0.15, wspace=0.01,
-                        left=0.1, right=0.9, bottom=0.05, top=0.95)
+                        left=0.1, right=0.9, bottom=0.05, top=0.9)
     # add title
     plt.suptitle(plot_title)
     # save figure and close the plot
