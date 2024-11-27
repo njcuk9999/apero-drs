@@ -142,11 +142,13 @@ def __main__(recipe: DrsRecipe, params: ParamDict):
     # ----------------------------------------------------------------------
     # print progress
     WLOG(params, 'info', 'Compiling new data and writing pages')
-    # compile object data
+    # make object pages
     object_classes, object_table = ari.make_object_pages(params,
                                                          object_classes)
-    # compile recipe data
+    # make recipe pages
     recipe_table = ari.make_recipe_pages(params)
+    # make observation page
+    night_table = ari.make_observation_page(params, object_classes)
 
     # ----------------------------------------------------------------------
     # step 5: make top level pages and compile
@@ -156,7 +158,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict):
     # make index page
     arip.make_index_page(params)
     # make profile page
-    arip.make_profile_page(params, tables=[object_table, recipe_table])
+    arip.make_profile_page(params, tables=[object_table, recipe_table,
+                                           night_table])
     # make finder page
     arip.make_finder_page(params)
     # print progress

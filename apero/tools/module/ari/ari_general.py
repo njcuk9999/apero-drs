@@ -403,6 +403,15 @@ def make_recipe_pages(params: ParamDict) -> TableFile:
     return recipe_table
 
 
+def make_observation_page(params: ParamDict,
+                          object_classes: Dict[str, AriObject]) -> TableFile:
+    # log progress
+    WLOG(params, '', 'Making observation table')
+    obs_table = ari_pages.make_obs_table(params, object_classes)
+    # return this instance
+    return obs_table
+
+
 def save_yamls(params: ParamDict, object_classes: Dict[str, AriObject]):
     # -------------------------------------------------------------------------
     # Deal with objects
