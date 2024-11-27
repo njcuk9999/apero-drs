@@ -963,10 +963,20 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
             approx_rv = approx_rv - app_vel
             approx_rv_err = float(app_vel_err)
 
-            # If we have multiple rv measurements we neede to check whether it
+            # TODO: Add to language database
+            msg = ('\t\tApprox Rv shift: {0:.2f}+/-{1:.2f} '
+                   'increment: {2:.4f} [m/s]')
+            margs = [approx_rv, approx_rv_err, app_vel]
+            WLOG(params, '', msg.format(*margs))
+
+            # If we have multiple rv measurements we need to check whether it
             # is converging
             if len(approx_rvs) > 2:
-                if abs(approx_rvs[-1]) > (0.5 * abs(approx_rvs[-2])):
+                # we have two tests of convergence
+                converging1 = abs(approx_rvs[-1]) < abs(approx_rvs[-2])
+                converging2 = abs(approx_rvs[-1]) < app_vel_err
+                # if neither test is converging we are diverging
+                if not (converging1 or converging2):
                     # TODO: Add to language database
                     wmsg = 'RV shift not converging. Stopping RV shift.'
                     WLOG(params, 'warning', wmsg)
@@ -975,12 +985,11 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
                     # we say its converged but it hasn't we just can't fit RV on
                     # this observation
                     rv_converged = True
-
-            # TODO: Add to language database
-            msg = ('\t\tApprox Rv shift: {0:.2f}+/-{1:.2f} '
-                   'increment: {2:.4f} [m/s]')
-            margs = [approx_rv, approx_rv_err, app_vel]
-            WLOG(params, '', msg.format(*margs))
+                    # TODO: Add to language database
+                    msg = ('\t\tSetting Approx Rv shift: {0:.2f}+/-{1:.2f} '
+                           'increment: {2:.4f} [m/s]')
+                    margs = [approx_rv, approx_rv_err, app_vel]
+                    WLOG(params, '', msg.format(*margs))
             # shift the template
             template_props = shift_template(params, recipe, None,
                                             template_props, refprops,
@@ -2408,12 +2417,8 @@ def shift_template(params: ParamDict, recipe: DrsRecipe,
     tprops['TEMP_S1D_TABLE']['flux'] = template_s1d
     tprops['TEMP_S1D_TABLE']['deconv'] = template_s1d_deconv
     # deal with rv offset
-    if rvoffset == 0.0:
-        tprops['APPROX_RV'] = np.nan
-        tprops['APPROX_RV_ERR'] = np.nan
-    else:
-        tprops['APPROX_RV'] = rvoffset
-        tprops['APPROX_RV_ERR'] = rvoffseterr
+    tprops['APPROX_RV'] = rvoffset
+    tprops['APPROX_RV_ERR'] = rvoffseterr
     # -------------------------------------------------------------------------
     # return the updated e2ds (if present)
     return tprops
