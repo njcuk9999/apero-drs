@@ -29,6 +29,8 @@ from apero.tools.module.ari import ari_core
 from apero.tools.module.ari import ari_find
 from apero.tools.module.documentation import drs_markdown
 from apero.tools.module.error import error_html
+from apero.base.base import TQDM as tqdm
+
 
 # =============================================================================
 # Define variables
@@ -261,16 +263,11 @@ def make_obs_table(params: ParamDict, object_classes: Dict) -> TableFile:
         table_dict[link_key] = []
     # -------------------------------------------------------------------------
     # loop around object classes and make
-    for objname in object_classes:
-        # get the object instance
-        object_instance = object_classes[objname]
+    for objname in tqdm(object_classes):
         # get the save path for this object name
         obj_save_path = str(os.path.join(params['ARI_OBJ_PAGES'], objname))
         # get the time
-        ts_tablename = object_instance.time_series_stats_table
-        # deal with this set to None
-        if ts_tablename is None:
-            continue
+        ts_tablename = f'time_series_stat_{objname}_{ari_user}.txt'
         # get full table path
         ts_tablepath = os.path.join(obj_save_path, ts_tablename)
         # deal with table not existing (skip this target)
