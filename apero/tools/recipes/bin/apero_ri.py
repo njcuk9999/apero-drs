@@ -145,10 +145,10 @@ def __main__(recipe: DrsRecipe, params: ParamDict):
     # make object pages
     object_classes, object_table = ari.make_object_pages(params,
                                                          object_classes)
-    # make recipe pages
-    recipe_table = ari.make_recipe_pages(params)
     # make observation page
     night_table = ari.make_observation_page(params, object_classes)
+    # make recipe pages
+    recipe_table = ari.make_recipe_pages(params)
 
     # ----------------------------------------------------------------------
     # step 5: make top level pages and compile
