@@ -11,6 +11,7 @@ Created on 2024-01-23 at 15:52
 """
 import glob
 import os
+import traceback
 from typing import Any, Dict, List, Tuple, Union
 
 import numpy as np
@@ -461,6 +462,10 @@ def _add_obj_page(it: int, key: str, rdict: dict, params: ParamDict,
     except Exception as e:
         # generate reason for exception
         reason = f'{type(e)}: {str(e)}'
+        # get traceback
+        traceback_str = traceback.format_exc()
+        # add to the reason for failure
+        reason += '\n\n' + traceback_str
         # update rdict
         rdict[objname] = (False, reason)
         # return rdict

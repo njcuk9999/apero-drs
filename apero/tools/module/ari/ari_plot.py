@@ -661,17 +661,29 @@ def debug_tcorr_map_plot(debug_props: Dict[str, Any], plot_path: str,
         it_table = Table.read(sc1d_file, 'SC1D_V_FILE')
         # get the header
         it_hdr = fits.getheader(sc1d_file)
+        # ---------------------------------------------------------------------
         # get the berv
         bervs[it] = float(it_hdr['BERV'])
-        qcc_pass[it] = int(it_hdr['QCC_ALL'])
+        # ---------------------------------------------------------------------
+        # get the parameter that all quality control passed
+        qc_all = str(it_hdr['QCC_ALL'])
+        if qc_all.upper() in ['T', 'TRUE', '1']:
+            qcc_pass[it] = 1
+        else:
+            qcc_pass[it] = 0
+        # ---------------------------------------------------------------------
+        # get the rv offset (set to zero if not found)
         rvoffset[it] = float(it_hdr.get('MKT_ARV', 0.0))
+        # if set to NaN set to zero (for shift)
         if np.isnan(rvoffset[it]):
             rvoffset[it] = 0.0
+        # ---------------------------------------------------------------------
         # get spectrum for preferred order
         spec_ord = np.array(it_table['flux'][wave_mask]).astype(float)
         # remove the table
         del it_table
         del it_hdr
+        # ---------------------------------------------------------------------
         # apply low pass filter to the spectrum and normalize
         map2d[it] = spec_ord / mp.lowpassfilter(spec_ord, 501)
         # update the map2d_star (if we don't have a template)
