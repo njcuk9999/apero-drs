@@ -35,6 +35,9 @@ __version__ = base.__version__
 __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
+
+from apero.science.extract import berv
+
 # -----------------------------------------------------------------------------
 # Get ParamDict
 ParamDict = constants.ParamDict
@@ -80,21 +83,32 @@ def spec_plot(spec_props: Dict[str, Any], plot_path: str, plot_title: str):
     wavelim1 = spec_props['WAVELIM1']
     wavelim2 = spec_props['WAVELIM2']
     wavelim3 = spec_props['WAVELIM3']
+    bjd_tcorr = spec_props['BJD_TCORR']
+    berv_tcorr = spec_props['BERV_TCORR']
+    bjd_e2ds = spec_props['BJD_E2DS']
+    berv_e2ds = spec_props['BERV_E2DS']
+    tcorr_fail = spec_props['TCORR_FAIL_MASK']
+    e2ds_fail = spec_props['E2DS_FAIL_MASK']
+    bjd_curve = spec_props['BJD_CURVE']
+    berv_curve = spec_props['BERV_CURVE']
+    berv_cov = spec_props['BERV_COV']
     # --------------------------------------------------------------------------
     # setup the figure
-    plt.figure(figsize=(12, 12))
-    frame0 = plt.subplot2grid((3, 3), (0, 0), colspan=3, rowspan=1)
-    frame1 = plt.subplot2grid((3, 3), (1, 0), colspan=3, rowspan=1)
-    frame2a = plt.subplot2grid((3, 3), (2, 0), colspan=1, rowspan=1)
-    frame2b = plt.subplot2grid((3, 3), (2, 1), colspan=1, rowspan=1)
-    frame2c = plt.subplot2grid((3, 3), (2, 2), colspan=1, rowspan=1)
+    plt.figure(figsize=(12, 16))
+    frame0 = plt.subplot2grid((4, 3), (0, 0), colspan=3, rowspan=1)
+    frame1 = plt.subplot2grid((4, 3), (1, 0), colspan=3, rowspan=1)
+    frame2 = plt.subplot2grid((4, 3), (2, 0), colspan=3, rowspan=1)
+    frame3a = plt.subplot2grid((4, 3), (3, 0), colspan=1, rowspan=1)
+    frame3b = plt.subplot2grid((4, 3), (3, 1), colspan=1, rowspan=1)
+    frame3c = plt.subplot2grid((4, 3), (3, 2), colspan=1, rowspan=1)
 
     # set background color
     frame0.set_facecolor(PLOT_BACKGROUND_COLOR)
     frame1.set_facecolor(PLOT_BACKGROUND_COLOR)
-    frame2a.set_facecolor(PLOT_BACKGROUND_COLOR)
-    frame2b.set_facecolor(PLOT_BACKGROUND_COLOR)
-    frame2c.set_facecolor(PLOT_BACKGROUND_COLOR)
+    frame2.set_facecolor(PLOT_BACKGROUND_COLOR)
+    frame3a.set_facecolor(PLOT_BACKGROUND_COLOR)
+    frame3b.set_facecolor(PLOT_BACKGROUND_COLOR)
+    frame3c.set_facecolor(PLOT_BACKGROUND_COLOR)
     # --------------------------------------------------------------------------
     # Top plot SNR Y
     # --------------------------------------------------------------------------
@@ -106,28 +120,47 @@ def spec_plot(spec_props: Dict[str, Any], plot_path: str, plot_title: str):
     frame0.legend(loc=0, ncol=2)
     frame0.grid(which='both', color='lightgray', ls='--')
     frame0.set(xlabel='Date', ylabel='EXT SNR')
-
+    # --------------------------------------------------------------------------
+    # Middle plot - BERV coverage
+    # --------------------------------------------------------------------------
+    # Plot different categories of data points
+    frame1.scatter(bjd_tcorr[~tcorr_fail], berv_tcorr[~tcorr_fail],
+                   marker='o', s=40, color='green', zorder=1,
+                   label='Passed all QC (PP to TCORR)', alpha=0.5)
+    frame1.scatter(bjd_e2ds[e2ds_fail], berv_e2ds[e2ds_fail],
+                   marker='x', s=30, linewidth=2, color='blue',
+                   zorder=2, label='Failed QC (EXT)')
+    frame1.scatter(bjd_tcorr[tcorr_fail], berv_tcorr[tcorr_fail],
+                   marker='x', s=30, linewidth=2, color='red',
+                   zorder=3, label='Failed QC (TCORR)')
+    # Plot berv curve
+    frame1.plot(bjd_curve, berv_curve, ls=':', color='gray', linewidth=2)
+    # labels/axis/legend
+    frame1.legend(loc=0, ncols=1, fontsize=10).set_zorder(10)
+    frame1.set(xlabel='BJD [days]', ylabel='BERV [km/s]',
+               title=f'BERV coverage = {berv_cov:.3f} km/s')
+    frame1.grid(which='both', color='lightgray', ls='--')
     # --------------------------------------------------------------------------
     # Middle plot - full spectra + tcorr
     # --------------------------------------------------------------------------
     title = (f'Spectrum closest to Median {ext_h_label}'
              f'     SNR:{max_snr}     File: {max_file}')
 
-    frame1.plot(wavemap[wavemask0], ext_spec[wavemask0],
+    frame2.plot(wavemap[wavemask0], ext_spec[wavemask0],
                 color='k', label='Extracted Spectrum', lw=0.5)
     if tcorr_spec is not None:
-        frame1.plot(wavemap[wavemask0], tcorr_spec[wavemask0],
+        frame2.plot(wavemap[wavemask0], tcorr_spec[wavemask0],
                     color='r', label='Telluric Corrected', lw=0.5)
-        frame1.set_ylim((0, 1.5 * np.nanpercentile(tcorr_spec, 99)))
-    frame1.set(xlabel='Wavelength [nm]', ylabel='Flux', xlim=wavelim0)
-    frame1.set_title(title, fontsize=10)
-    frame1.legend(loc=0, ncol=2)
-    frame1.grid(which='both', color='lightgray', ls='--')
+        frame2.set_ylim((0, 1.5 * np.nanpercentile(tcorr_spec, 99)))
+    frame2.set(xlabel='Wavelength [nm]', ylabel='Flux', xlim=wavelim0)
+    frame2.set_title(title, fontsize=10)
+    frame2.legend(loc=0, ncol=2)
+    frame2.grid(which='both', color='lightgray', ls='--')
     # --------------------------------------------------------------------------
     # Bottom plots - Y, J, H spectra + tcorr
     # --------------------------------------------------------------------------
     masks = [wavemask1, wavemask2, wavemask3]
-    frames = [frame2a, frame2b, frame2c]
+    frames = [frame3a, frame3b, frame3c]
     limits = [wavelim1, wavelim2, wavelim3]
     # loop around masks and frames and plot the middle plots
     for it in range(len(masks)):
@@ -302,7 +335,8 @@ def lbl_plot(lbl_props: Dict[str, Any], plot_path: str,
     # Calculate the median of the 'svrad' column, which represents the RV errors
     med_vrad_err = np.nanmedian(svrad)
     med = np.nanmedian(vrad)
-    rms = np.nanstd(vrad)
+
+    p5, p95 = np.nanpercentile(vrad, [5, 95])
     # frame 3: wave bin rv
     for ikey, key in enumerate(vrad_dict):
         # get the median error
@@ -319,10 +353,13 @@ def lbl_plot(lbl_props: Dict[str, Any], plot_path: str,
         frame[2].errorbar(plot_date, vrad_dict[key], yerr=svrad_dict[key],
                           label=key.replace('vrad_', ''),
                           alpha=0.5, fmt='.', color=color)
-        # deal with rms for zoom (update if larger)
-        rms_key = np.nanstd(vrad_dict[key])
-        if rms_key > rms:
-            rms = rms_key
+        # deal with p5 and p95 for limits
+        p5_key, p95_key = np.nanpercentile(vrad_dict[key], [5, 95])
+        # update limits if they have widened
+        if p5_key < p5:
+            p5 = p5_key
+        if p95_key > p95:
+            p95 = p95_key
     # Plot the overall 'vrad' with error bars as black dots
     frame[2].errorbar(plot_date, vrad, yerr=svrad, fmt='k.', label='vrad')
     # set the Date for all axis
@@ -330,8 +367,8 @@ def lbl_plot(lbl_props: Dict[str, Any], plot_path: str,
     frame[2].set(ylabel='RV [m/s]')
     frame[2].grid(which='both', color='lightgray', linestyle='--')
     frame[2].legend(ncol=5, fontsize='xx-small')
-    # zoom in on the median - 5 sigma away from worse
-    frame[2].set(ylim=[med - 3 * rms, med + 3 * rms])
+    # zoom in on the median
+    frame[2].set(ylim=[p5 - (med-p5), p95 + (p95-med)])
     # --------------------------------------------------------------------------
     plt.tight_layout()
     # --------------------------------------------------------------------------
@@ -698,7 +735,7 @@ def debug_tcorr_map_plot(debug_props: Dict[str, Any], plot_path: str,
     # -------------------------------------------------------------------------
     # Compute the median spectrum across all observations
     if cal_med:
-        med = np.median(map2d_star, axis=0)
+        med = mp.nanmedian(map2d_star, axis=0)
     else:
         tmp_table = Table.read(tmp_s1d[-1], 'TELLU_TEMP_S1DV')
         med = np.array(tmp_table['flux'][wave_mask]).astype(float)
@@ -707,6 +744,7 @@ def debug_tcorr_map_plot(debug_props: Dict[str, Any], plot_path: str,
     map2d_star = np.array(map2d)
     # Interpolate the median spectrum
     valid = np.isfinite(med)
+    # get the spline of the median (or template)
     med_spl = mp.iuv_spline(ref_wave[valid], med[valid])
     # Subtract the median spectrum from each observation
     for it in range(len(sc1d_files)):
@@ -760,7 +798,7 @@ def debug_tcorr_map_plot(debug_props: Dict[str, Any], plot_path: str,
     # -------------------------------------------------------------------------
     # Plot qcc
     qcc_1.imshow(qcc_pass, aspect='auto', cmap=binary_cmap,
-                 interpolation='nearest', origin='lower')
+                 interpolation='nearest', origin='lower', vmin=0, vmax=1)
     # adjust the binary mask axis
     for pos in ['top', 'right', 'left', 'bottom']:
         qcc_1.spines[pos].set_visible(False)
@@ -795,7 +833,7 @@ def debug_tcorr_map_plot(debug_props: Dict[str, Any], plot_path: str,
     # -------------------------------------------------------------------------
     # Plot qcc
     qcc_2.imshow(qcc_pass, aspect='auto', cmap=binary_cmap,
-                 interpolation='nearest', origin='lower')
+                 interpolation='nearest', origin='lower', vmin=0, vmax=1)
     # adjust the binary mask axis
     qcc_2.axis('off')
     # --------------------------------------------------------------------------
