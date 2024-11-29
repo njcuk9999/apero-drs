@@ -31,7 +31,8 @@ import apero.core.math as mp
 from apero.tools.module.documentation import drs_markdown
 from apero.base.base import TQDM as tqdm
 from apero.tools.module.ari import ari_plot
-
+from apero.science.telluric import template_tellu
+from apero.science.extract import berv as berv_mod
 
 # =============================================================================
 # Define variables
@@ -846,6 +847,8 @@ class AriObject:
         # set up the object page
         obj_save_path = os.path.join(params['ARI_OBJ_PAGES'], self.objname)
         ari_user = params['ARI_USER']
+        core_snr = params['MKTEMPLATE_BERVCOV_CSNR']
+        resolution = params['MKTEMPLATE_BERVCOV_RES']
         # get the extracted files
         ext_files = self.filetypes['ext'].get_files()
         # don't go here if ext files are not present
@@ -1028,6 +1031,37 @@ class AriObject:
         spec_props['MAX_SNR'] = np.round(spec_props['EXT_H'][pos_ext], 2)
         raw_file = spec_props['RAW'].get_files(qc=True)[pos_raw]
         spec_props['MAX_FILE'] = os.path.basename(raw_file)
+        # ---------------------------------------------------------------------
+        # BERV coverage plot
+        # ---------------------------------------------------------------------
+        spec_props['BJD_TCORR'] = hdict['TCORR_BJD']
+        spec_props['BERV_TCORR'] = hdict['TCORR_BERV']
+        spec_props['TCORR_FAIL_MASK'] = ~np.array(hdict['TCORR_QCC_ALL'],
+                                                  dtype=bool)
+
+        spec_props['BJD_E2DS'] = hdict['EXT_BJD']
+        spec_props['BERV_E2DS'] = hdict['EXT_BERV']
+        spec_props['E2DS_FAIL_MASK'] = ~np.array(hdict['EXT_QCC_ALL'],
+                                                 dtype=bool)
+        # calculate berv coverage
+        bcovargs = [np.array(hdict['TCORR_BERV']),
+                    np.array(hdict['TCORR_H']),
+                    core_snr, resolution, self.objname]
+        bcout = template_tellu.calculate_berv_coverage(params, None, *bcovargs)
+        # set up the times in JD for the curve (here we use 14 days previous
+        #    to the first observation and 14 days after the last obs)
+        times = np.arange(Time(np.min(hdict['PP_MJDMID'])).jd - 14,
+                          Time(np.max(hdict['PP_MJDMID'])).jd + 14)
+        # use the first tcorr file to get the berv curve properties
+        ref_tcorr_hdr = fits.getheader(spec_props['TCORR'].get_files()[0])
+        # get the required properties from the header
+        hprops = berv_mod.get_keys_from_header(params, ref_tcorr_hdr)
+        # get the bervs and bjds
+        bervs_curve, bjd_curve = berv_mod.use_barycorrpy(params, times, hprops)
+        # push into spec props
+        spec_props['BJD_CURVE']= bjd_curve
+        spec_props['BERV_CURVE'] = bervs_curve
+        spec_props['BERV_COV'] = bcout[1]
         # ---------------------------------------------------------------------
         # deal with having telluric file
         if pos_sc1d is not None:
