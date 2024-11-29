@@ -94,11 +94,19 @@ headers:
       key: DPRTYPE
       label: 'DPR TYPE'
       dtype: str
-    BERV:
+    EXT_BERV:
       key: BERV
       label: BERV
       unit: km/s
       dtype: float
+    EXT_BJD:
+      key: BJD
+      label: BJD
+      dtype: float
+    EXT_QCC_ALL:
+      key: QCC_ALL
+      label: QCC ALL
+      dtype: int
     EXT_SEEING:
       key: HIERARCH ESO TEL AMBI FWHM START
       label: Seeing at start
@@ -215,6 +223,23 @@ headers:
       label: MJD
       dtype: float
       timefmt: mjd
+    TCORR_BERV:
+      key: BERV
+      label: BERV
+      unit: km/s
+      dtype: float
+    TCORR_BJD:
+      key: BJD
+      label: BJD
+      dtype: float
+    TCORR_QCC_ALL:
+      key: QCC_ALL
+      label: QCC ALL
+      dtype: int
+    TCORR_H:
+      key: EXTSN060
+      label: 'SNR[Order 60 (#89 1.63$\mu$m)]'
+      dtype: float
     TCORR_PROC:
       key: DRSPDATE
       label: Process Date
