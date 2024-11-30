@@ -180,7 +180,7 @@ headers:
       dtype: float
     EXT_CDTBACK:
       key: CDTBACK
-      label: BADPIX file
+      label: BACKGROUND file
       dtype: float
     EXT_CDTORDP:
       key: CDTORDP
