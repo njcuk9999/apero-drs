@@ -7,6 +7,8 @@ Created on 2019-01-17
 
 @author: cook
 """
+import pytz
+
 from apero.base import base
 from apero.core.constants import constant_functions
 
@@ -24,7 +26,7 @@ __all__ = [  # global settings
     # General properites
     'DRS_VERSION', 'AUTHORS', 'DRS_RELEASE', 'DRS_DATE', 'LANGUAGE',
     # Instrument/Observatory Constants
-    'INSTRUMENT', 'OBS_LONG', 'OBS_LAT', 'OBS_ALT',
+    'INSTRUMENT', 'OBS_LONG', 'OBS_LAT', 'OBS_ALT', 'OBS_TZ',
     # DRS SETTINGS
     'DRS_PACKAGE', 'DRS_USERENV', 'DRS_GROUP', 'DRS_RECIPE_KIND',
     'DRS_USER_DEFAULT', 'IS_REF', 'DRS_RECIPE_TYPE', 'DRS_GROUP_PATH',
@@ -310,6 +312,9 @@ OBS_LAT = Const('OBS_LAT', value=None, dtype=float, source=__NAME__,
 #  Defines the CFHT altitude (m)
 OBS_ALT = Const('OBS_LAT', value=None, dtype=float, source=__NAME__,
                 group=cgroup)
+#  Define the telescopes time zone (from pytz.all_timezones)
+OBS_TZ = Const('OBS_LAT', value=None, dtype=str, source=__NAME__,
+                group=cgroup, options=pytz.all_timezones)
 
 # =============================================================================
 # DRS INTERNAL PATHS
