@@ -32,9 +32,13 @@ OBS_LONG.value = -155.468876
 OBS_LAT = OBS_LAT.copy(__NAME__)
 OBS_LAT.value = 19.825252
 
-#  Defines the CFHT altitude (m)
+#  Defines the telescope altitude (m)
 OBS_ALT = OBS_ALT.copy(__NAME__)
 OBS_ALT.value = 4204
+
+#  Define the telescopes time zone (from pytz.all_timezones)
+OBS_TZ = OBS_TZ.copy(__NAME__)
+OBS_TZ.value = 'US/Hawaii'
 
 # -----------------------------------------------------------------------------
 # global settings

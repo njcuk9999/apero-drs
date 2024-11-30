@@ -83,15 +83,18 @@ def spec_plot(spec_props: Dict[str, Any], plot_path: str, plot_title: str):
     wavelim1 = spec_props['WAVELIM1']
     wavelim2 = spec_props['WAVELIM2']
     wavelim3 = spec_props['WAVELIM3']
-    bjd_tcorr = spec_props['BJD_TCORR']
+    bjd_tcorr = Time(spec_props['BJD_TCORR'], format='jd')
     berv_tcorr = spec_props['BERV_TCORR']
-    bjd_e2ds = spec_props['BJD_E2DS']
+    bjd_e2ds = Time(spec_props['BJD_E2DS'], format='jd')
     berv_e2ds = spec_props['BERV_E2DS']
     tcorr_fail = spec_props['TCORR_FAIL_MASK']
     e2ds_fail = spec_props['E2DS_FAIL_MASK']
-    bjd_curve = spec_props['BJD_CURVE']
+    bjd_curve = Time(spec_props['BJD_CURVE'], format='jd')
     berv_curve = spec_props['BERV_CURVE']
     berv_cov = spec_props['BERV_COV']
+    vsys = spec_props['VSYS']
+    obs_days = spec_props['OBS_DAYS']
+    obs_windows = spec_props['OBS_WINDOWS']
     # --------------------------------------------------------------------------
     # setup the figure
     plt.figure(figsize=(12, 16))
@@ -120,26 +123,55 @@ def spec_plot(spec_props: Dict[str, Any], plot_path: str, plot_title: str):
     frame0.legend(loc=0, ncol=2)
     frame0.grid(which='both', color='lightgray', ls='--')
     frame0.set(xlabel='Date', ylabel='EXT SNR')
+    # move the limits to match frame1 berv curve
+    xmin0, _, _, _ = frame0.axis()
+    xmax0 = np.max(Time(bjd_curve, format='mjd').plot_date)
+    frame0.set(xlim=[xmin0, xmax0])
     # --------------------------------------------------------------------------
     # Middle plot - BERV coverage
     # --------------------------------------------------------------------------
+    if vsys is None:
+        ylabel = 'BERV [km/s]  [No LBL]'
+        vsys_value = 0.0
+    else:
+        ylabel = r'$v_{tot}$ [km/s]'
+        vsys_value = float(vsys) / 1000
     # Plot different categories of data points
-    frame1.scatter(bjd_tcorr[~tcorr_fail], berv_tcorr[~tcorr_fail],
-                   marker='o', s=40, color='green', zorder=1,
-                   label='Passed all QC (PP to TCORR)', alpha=0.5)
-    frame1.scatter(bjd_e2ds[e2ds_fail], berv_e2ds[e2ds_fail],
-                   marker='x', s=30, linewidth=2, color='blue',
-                   zorder=2, label='Failed QC (EXT)')
-    frame1.scatter(bjd_tcorr[tcorr_fail], berv_tcorr[tcorr_fail],
-                   marker='x', s=30, linewidth=2, color='red',
-                   zorder=3, label='Failed QC (TCORR)')
+    frame1.plot_date(bjd_tcorr[~tcorr_fail].plot_date,
+                     berv_tcorr[~tcorr_fail].value + vsys_value, fmt='o',
+                     color='green', zorder=1, ls='None',
+                     label='Passed all QC (PP to TCORR)', alpha=0.5)
+    frame1.plot_date(bjd_e2ds[e2ds_fail].plot_date,
+                     berv_e2ds[e2ds_fail].value + vsys_value,
+                     fmt='x', color='blue', zorder=2, ms=10,
+                     label='Failed QC (EXT)', ls='None')
+    frame1.plot_date(bjd_tcorr[tcorr_fail].plot_date,
+                     berv_tcorr[tcorr_fail].value + vsys_value,
+                     fmt='x', color='red', ls='None', zorder=3, ms=10,
+                     label='Failed QC (TCORR)')
     # Plot berv curve
-    frame1.plot(bjd_curve, berv_curve, ls=':', color='gray', linewidth=2)
+    frame1.plot(Time(bjd_curve, format='mjd').plot_date,
+                berv_curve + vsys_value,
+                ls=':', color='gray', lw=2)
+    # plot
+    if vsys is not None:
+        frame1.axhline(y=vsys_value, label=r'$v_{sys}$')
+
+    frame1.set(xlim=[xmin0, xmax0])
+    # get limits
+    xmin, xmax, ymin, ymax = frame1.axis()
+    # set the last value to the same as the second from last (boundary effect)
+    obs_windows[-1] = bool(obs_windows[-1])
+    # fill between observation windows
+    frame1.fill_between(obs_days, y1=ymin, y2=ymax,
+                        where=np.invert(obs_windows), color='k', alpha=0.1,
+                        label='Unobservable')
     # labels/axis/legend
-    frame1.legend(loc=0, ncols=1, fontsize=10).set_zorder(10)
-    frame1.set(xlabel='BJD [days]', ylabel='BERV [km/s]',
-               title=f'BERV coverage = {berv_cov:.3f} km/s')
+    frame1.legend(loc=0, ncols=1, fontsize=8).set_zorder(10)
+    frame1.set(xlabel='Date', ylabel=ylabel)
+    frame1.set_title(f'BERV coverage = {berv_cov:.3f} km/s', fontsize=10)
     frame1.grid(which='both', color='lightgray', ls='--')
+    frame1.set(xlim=[xmin, xmax], ylim=[ymin, ymax])
     # --------------------------------------------------------------------------
     # Middle plot - full spectra + tcorr
     # --------------------------------------------------------------------------
@@ -182,7 +214,7 @@ def spec_plot(spec_props: Dict[str, Any], plot_path: str, plot_title: str):
     # --------------------------------------------------------------------------
     # add title
     plt.suptitle(plot_title)
-    plt.subplots_adjust(bottom=0.05, left=0.06, right=0.99, hspace=0.3,
+    plt.subplots_adjust(bottom=0.05, left=0.06, right=0.99, hspace=0.35,
                         top=0.95)
     # save figure and close the plot
     plt.savefig(plot_path)
