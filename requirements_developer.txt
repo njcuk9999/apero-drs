@@ -1,6 +1,7 @@
 # python 3.9
 # pip
 astropy==5.3
+astroplan==0.10.1
 astroquery==0.4.6
 barycorrpy==0.4.4
 Bottleneck==1.3.7
