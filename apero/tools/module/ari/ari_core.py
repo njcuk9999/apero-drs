@@ -17,22 +17,27 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from astropy.table import Table
-from astropy.time import Time, TimeDelta
-from astropy.io import fits
+from astroplan import Observer, FixedTarget
+from astroplan import AltitudeConstraint, AtNightConstraint
+from astroplan.constraints import time_grid_from_range
 from astropy import units as uu
+from astropy.coordinates import SkyCoord
+from astropy.io import fits
+from astropy.table import Table
+from astropy.time import Time
+from astropy.time import TimeDelta
 from scipy.optimize import curve_fit
 
+import apero.core.math as mp
 from apero.base import base
+from apero.base.base import TQDM as tqdm
 from apero.core import constants
 from apero.core.core import drs_log
 from apero.io import drs_table
-import apero.core.math as mp
-from apero.tools.module.documentation import drs_markdown
-from apero.base.base import TQDM as tqdm
-from apero.tools.module.ari import ari_plot
-from apero.science.telluric import template_tellu
 from apero.science.extract import berv as berv_mod
+from apero.science.telluric import template_tellu
+from apero.tools.module.ari import ari_plot
+from apero.tools.module.documentation import drs_markdown
 
 # =============================================================================
 # Define variables
@@ -151,6 +156,7 @@ LBL_FILETYPES = ['lbl_rdb', 'lbl2_rdb', 'lbl_drift', 'lbl2_drift', 'lbl_fits']
 LBL_FILENAMES = ['lbl_{0}_{1}.rdb', 'lbl2_{0}_{1}.rdb',
                  'lbl_{0}_{1}_drift.rdb', 'lbl2_{0}_{1}_drift.rdb',
                  'lbl_{0}_{1}.fits']
+LBL_DIRS = ['lblrdb', 'lblrdb', 'lblrdb', 'lblrdb', 'lblrdb', 'lblrv']
 LBL_FILE_DESC = ['RDB file', 'RDB2 file', 'Drift file', 'Drift2 file',
                  'LBL RDB fits file']
 LBL_DOWNLOAD = [True, True, True, True, False]
@@ -864,7 +870,6 @@ class AriObject:
         spec_props['S1D'] = self.filetypes['s1d']
         spec_props['SC1D'] = self.filetypes['sc1d']
         # ---------------------------------------------------------------------
-
         spec_props['DPRTYPES'] = self.dprtypes
         # ---------------------------------------------------------------------
         # header dict alias
@@ -1038,20 +1043,39 @@ class AriObject:
         spec_props['BERV_TCORR'] = hdict['TCORR_BERV']
         spec_props['TCORR_FAIL_MASK'] = ~np.array(hdict['TCORR_QCC_ALL'],
                                                   dtype=bool)
-
         spec_props['BJD_E2DS'] = hdict['EXT_BJD']
         spec_props['BERV_E2DS'] = hdict['EXT_BERV']
         spec_props['E2DS_FAIL_MASK'] = ~np.array(hdict['EXT_QCC_ALL'],
                                                  dtype=bool)
+
+        # tcorr vectors must all be finite
+        tkeys = ['BJD_TCORR', 'BERV_TCORR', 'TCORR_FAIL_MASK']
+        tmask = np.ones(len(spec_props[tkeys[0]])).astype(bool)
+        # find all finite values
+        for tkey in tkeys:
+            tmask &= np.isfinite(spec_props[tkey])
+        # apply tmask to vectors
+        for tkey in tkeys:
+            spec_props[tkey] = spec_props[tkey][tmask]
+        # ext vectors must all be finite
+        ekeys = ['BJD_E2DS', 'BERV_E2DS', 'E2DS_FAIL_MASK']
+        emask = np.ones(len(spec_props[ekeys[0]])).astype(bool)
+        # find all finite values
+        for ekey in ekeys:
+            emask &= np.isfinite(spec_props[ekey])
+        # apply emask to vectors
+        for ekey in ekeys:
+            spec_props[ekey] = spec_props[ekey][emask]
         # calculate berv coverage
-        bcovargs = [np.array(hdict['TCORR_BERV']),
-                    np.array(hdict['TCORR_H']),
+        bcovargs = [np.array(hdict['TCORR_BERV'][tmask]),
+                    np.array(hdict['TCORR_H'][tmask]),
                     core_snr, resolution, self.objname]
-        bcout = template_tellu.calculate_berv_coverage(params, None, *bcovargs)
+        bcout = template_tellu.calculate_berv_coverage(params, None, *bcovargs,
+                                                       log=False)
         # set up the times in JD for the curve (here we use 14 days previous
         #    to the first observation and 14 days after the last obs)
         times = np.arange(Time(np.min(hdict['PP_MJDMID'])).jd - 14,
-                          Time(np.max(hdict['PP_MJDMID'])).jd + 14)
+                          Time(np.max(hdict['PP_MJDMID'])).jd + 100)
         # use the first tcorr file to get the berv curve properties
         ref_tcorr_hdr = fits.getheader(spec_props['TCORR'].get_files()[0])
         # get the required properties from the header
@@ -1062,6 +1086,24 @@ class AriObject:
         spec_props['BJD_CURVE']= bjd_curve
         spec_props['BERV_CURVE'] = bervs_curve
         spec_props['BERV_COV'] = bcout[1]
+        # ---------------------------------------------------------------------
+        # if we have lbl files we should use them to get systemic velocity
+        if self.filetypes['lbl.fits'].num > 0:
+            # get all systemetic velocities and bervs
+            lbl_systvel, lbl_bervs = [], []
+            for lbl_rv_file in self.filetypes['lbl.fits'].files:
+                lbl_rv_hdr = fits.getheader(lbl_rv_file)
+                lbl_systvel.append(float(lbl_rv_hdr['SYSTVELO']))
+                lbl_bervs.append(float(lbl_rv_hdr['BERV']))
+            # calculate the vsys
+            dv = np.array(lbl_bervs) - np.array(lbl_systvel)
+            spec_props['VSYS'] = np.nanmedian(dv)
+        else:
+            spec_props['VSYS'] = None
+        # ----------------------------------------------------------------
+        obs_out = calc_obs_windows(params, hprops, times)
+        spec_props['OBS_DAYS'] = obs_out[0]
+        spec_props['OBS_WINDOWS'] = obs_out[1]
         # ---------------------------------------------------------------------
         # deal with having telluric file
         if pos_sc1d is not None:
@@ -2263,21 +2305,27 @@ def add_lbl_count(params: ParamDict, object_classes: Dict[str, AriObject]
         templates = []
         # store a list of counts
         counts = []
+        # files
+        lbl_rv_files = []
         # loop around each directory
         for directory in lblrv_dir:
             # get the template name for each directory
             basename = os.path.basename(directory)
             template = basename.split(f'{objname}_')[-1]
             # get the number of lbl files in each directory
-            count = len(glob.glob(os.path.join(directory, '*lbl.fits')))
+            dir_lblrv_files = glob.glob(os.path.join(directory, '*lbl.fits'))
+            count = len(dir_lblrv_files)
             # append storage
             templates.append(template)
             counts.append(count)
+            lbl_rv_files.append(dir_lblrv_files)
+
         # decide which template to use (using max of counts)
         select = np.argmax(counts)
         # get strings to add to storage
         _select = templates[select]
         _count = int(counts[select])
+        _lbl_rv_files = lbl_rv_files[select]
         # --------------------------------------------------------------------
         # deal with the update (do not update if there are no difference
         # in files)
@@ -2292,8 +2340,9 @@ def add_lbl_count(params: ParamDict, object_classes: Dict[str, AriObject]
         # --------------------------------------------------------------------
         # set the number of files
         object_class.filetypes['lbl.fits'].num = _count
+        object_class.filetypes['lbl.fits'].files = _lbl_rv_files
         # ---------------------------------------------------------------------
-        # LBL files
+        # LBL RDB files
         # ---------------------------------------------------------------------
         # loop around all lbl files
         for it, filetype in enumerate(LBL_FILETYPES):
@@ -3030,6 +3079,46 @@ def get_objnames_headers(objname: str, indexdbm: Any) -> str:
     all_names = set(objtable['KW_OBJECTNAME']) | set(objtable['KW_OBJECTNAME2'])
     # return all the object names
     return ', '.join(all_names)
+
+
+def calc_obs_windows(params, hprops, times: np.ndarray):
+
+    # Define observer's location
+    observer = Observer(latitude=params['OBS_LAT']*uu.deg,
+                        longitude=params['OBS_LONG']*uu.deg,
+                        elevation=params['OBS_ALT']*uu.m,
+                        timezone=params['OBS_TZ'])
+
+    # Define the object's coordinates (RA, Dec)
+    object_coords = SkyCoord(ra=hprops['RA']*uu.deg, dec=hprops['DEC']*uu.deg)
+    # turn the coordinates into a fixed object
+    target = FixedTarget(name=hprops['OBJNAME'], coord=object_coords)
+    # Define observing constraints
+    constraints = [AltitudeConstraint(min=30*uu.deg),  # Minimum altitude of 30 degrees
+                   AtNightConstraint.twilight_civil()  # Avoid twilight
+                   ]
+    # get start and end date from times array
+    start_date, end_date = [Time(times.min(), format='jd'),
+                            Time(times.max(), format='jd')]
+    # Generate a time grid for each day (every 30 minutes)
+    daily_time_grid = time_grid_from_range([start_date, end_date],
+                                            time_resolution=2*uu.hr)
+    # Compute observability for each time point in the daily grid
+    constraint_results = []
+    for constraint in constraints:
+        constraint_results.append(constraint(observer, [target],
+                                             times=daily_time_grid))
+    # Combine constraints using logical AND
+    observable_mask = np.logical_and.reduce(constraint_results)
+
+    # Group by day and check if observable at any time within each day
+    unique_days = np.array([t.datetime.date() for t in daily_time_grid])
+    days = np.unique(unique_days)
+
+    observable_per_day = [np.any(observable_mask[unique_days == day])
+                          for day in days]
+
+    return days, observable_per_day
 
 
 # =============================================================================
