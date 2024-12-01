@@ -2,6 +2,45 @@ Changelog
 =========
 
 
+0.7.292 (2024-12-01)
+--------------------
+- [APERO] Update run.ini files. [Neil Cook]
+- [ARI] correct yaml files CDTBACK BADPIX-->BACKGROUND. [Neil Cook]
+- [ARI] update ARI plots (LBL RV plot) + add ARI plot (BERV coverage) +
+  fix duckdb problem with pandas 2.2.3. [Neil Cook]
+- [ARI] update ARI plots (LBL RV plot) + add ARI plot (BERV coverage) +
+  fix duckdb problem with pandas 2.2.3. [Neil Cook]
+- [ARI] update ARI plots (LBL RV plot) + add ARI plot (BERV coverage) +
+  fix duckdb problem with pandas 2.2.3. [Neil Cook]
+- [ARI] add a traceback when ARI objects cause an error. [Neil Cook]
+- [ARI] ari obs page + ari plot adjustments. [Neil Cook]
+- [ARI] ari obs page + ari plot adjustments. [Neil Cook]
+- [ARI] ari obs page + ari plot adjustments. [Neil Cook]
+- [ARI] update debug plots. [Neil Cook]
+- [APERO] update requirements to match lbl. [Neil Cook]
+- [APERO] update sky_model_ha.fits. [Neil Cook]
+- [ARI] Continue add debug plots. [Neil Cook]
+- [APERO] telluric fixes with EA. [Neil Cook]
+- [APERO] telluric correction - sky corr. [Neil Cook]
+- [ARI] Add Etiennes lbl plot. [Neil Cook]
+- [ARI] Add Etiennes lbl plot. [Neil Cook]
+- [ARI] Add Etiennes lbl plot. [Neil Cook]
+- [NIRPS] change DARK_DARK_SKY to EFF_SKY_SKY and add NIGHT_SKY_SKY.
+  [Neil Cook]
+- [NIRPS] change DARK_DARK_SKY to EFF_SKY_SKY and add NIGHT_SKY_SKY.
+  [Neil Cook]
+- [APERO] change trans threshold to exp(-1) (was exp(-2)) [Neil Cook]
+- [NIRPS] do not correct sky with ref fiber. [Neil Cook]
+- [APERO] Fix bad thermal correction below 1900 nm [EA] [Neil Cook]
+- [APERO] Etienne telluric fixes. [Neil Cook]
+- [APERO] Etienne telluric fixes. [Neil Cook]
+- [APERO] Etienne telluric fixes. [Neil Cook]
+- [ARI] ari_core.py - add the slinky and tellu 05 files to ARI
+  (temporarily) [Neil Cook]
+- [APERO] Add lbl recipes to full_seq. [Neil Cook]
+- [APERO] update date/version/changelog. [Neil Cook]
+
+
 0.7.291 (2024-10-28)
 --------------------
 - [ARI] Quick fix for future warning in ARI with log_cols mixed between
@@ -66,10 +105,6 @@ Changelog
 - [APERO] Add doc string for _find_special_targets. [Neil Cook]
 - [APERO] Deal with SCIENCE_TARGETS not being in astrometric database
   [Issue #780] [Neil Cook]
-
-
-0.7.290 (2024-08-06)
---------------------
 - [NIRPS] Fix the orders remove in telluric pre-cleaning (was 47-48 now
   43-45) [Neil Cook]
 - [APERO] Add columns to reject (USED for file, and BAD_ASTROMETRICS for
@@ -99,14 +134,6 @@ Changelog
 - [APERO] fix for database updating raw files. [Neil Cook]
 - Merge branch 'v0.7.289-stable-test' into v0.7.290-stable-test. [Neil
   Cook]
-- [APERO] tapas_all_sp.fits.gz - fix column name (duplicate ch_4 -->
-  o_3) [Neil Cook]
-- [APERO] apero_astrometrics.py - add a check for objects in database
-  that all files match DRSOBJN to that expected by database. (Issue
-  #756) [Neil Cook]
-- [APERO] apero_astrometrics.py - add a check for objects in database
-  that all files match DRSOBJN to that expected by database. (Issue
-  #756) [Neil Cook]
 - [APERO] Correct problem with ARI finder chart (path not existing)
   [Neil Cook]
 - [APERO] Give ARI an argument that allows displaying available
@@ -176,6 +203,18 @@ Changelog
 - [APERO] apero_ri.py - fix problems with finding charts. [Neil Cook]
 - [APERO] background fixes (both at the badpix calibration level and in
   the extraction code [from EA] [Neil Cook]
+
+
+0.7.290 (2024-03-28)
+--------------------
+- [APERO] tapas_all_sp.fits.gz - fix column name (duplicate ch_4 -->
+  o_3) [Neil Cook]
+- [APERO] apero_astrometrics.py - add a check for objects in database
+  that all files match DRSOBJN to that expected by database. (Issue
+  #756) [Neil Cook]
+- [APERO] apero_astrometrics.py - add a check for objects in database
+  that all files match DRSOBJN to that expected by database. (Issue
+  #756) [Neil Cook]
 - [APERO] apero_astrometrics.py - add a check for objects in database
   that all files match DRSOBJN to that expected by database. (Issue
   #756) [Neil Cook]
@@ -223,10 +262,6 @@ Changelog
 - [ARI] Remove ARI sidebar. [Neil Cook]
 - [ARI] Add BERV to extracted 2D header file. [Neil Cook]
 - [APERO] update date/changelog. [Neil Cook]
-
-
-0.7.289 (2024-03-12)
---------------------
 - [APERO] correct typo. [Neil Cook]
 - [APERO] Add --objname to reject code (Issue https://github.com/users/n
   jcuk9999/projects/7/views/5?pane=issue&itemId=54972211) [Neil Cook]
@@ -287,6 +322,10 @@ Changelog
 - [APERO] update version/changelog/documentation. [Neil Cook]
 - [APERO-ARI] fix when we have no data adding dprtypes to object. [Neil
   Cook]
+
+
+0.7.289 (2024-02-13)
+--------------------
 - [APERO] apero_ri.py - Fix for unique values containing None. [Neil
   Cook]
 - [APERO] apero_ri.py - Fix for unique values containing None. [Neil
@@ -580,12 +619,12 @@ Changelog
 - Continue work on running lbl from APERO. [Neil Cook]
 - Allow LBL to be run from APERO [UNFINISHED & UNTESTED] [Neil Cook]
 - Update date/version/changelog/readme. [Neil Cook]
-
-
-0.7.287 (2023-08-08)
---------------------
 - [APERO] Correct that ribbon cannot load in raw file path. [Neil Cook]
 - [APERO] Correct that ribbon cannot save in raw file path. [Neil Cook]
+
+
+0.7.287 (2023-08-07)
+--------------------
 - [APERO] fix apero_get and null/nan passed_all_qc column. [Neil Cook]
 - [APERO] apero_get if PASSED_ALL_QC is Null we should accept it as
   passed QC (as we don't know otherwise) [Neil Cook]
@@ -628,10 +667,6 @@ Changelog
   Cook]
 - [APERO] drs_astrometrics.py - fix using dataframe.append (should be
   pd.concat) [Neil Cook]
-
-
-0.7.286 (2023-07-12)
---------------------
 - Merge remote-tracking branch 'origin/v0.7.286-live' into
   v0.7.286-live. [Neil Cook]
 - Merge branch 'v0.7.285-live' into v0.7.286-live. [Neil Cook]
@@ -639,6 +674,10 @@ Changelog
   replace the current name (and that name must be 3 characters long at
   least). [Neil Cook]
 - [APERO] update date/version/changelog/notes. [Neil Cook]
+
+
+0.7.286 (2023-07-12)
+--------------------
 - Merge branch 'v0.7.285-live' into v0.7.286-live. [Neil Cook]
 - Drs_processing.py - add change to return of _linear_generate_id. [Neil
   Cook]
