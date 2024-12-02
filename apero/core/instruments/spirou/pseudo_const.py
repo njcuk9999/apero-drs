@@ -21,6 +21,7 @@ from apero.core.core import drs_exceptions
 from apero.core.core import drs_misc
 from apero.core.core import drs_text
 from apero.core.instruments.default import pseudo_const
+from apero.core.instruments.default.pseudo_const import get_sun_altitude
 
 # =============================================================================
 # Define variables
@@ -289,6 +290,10 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         # ------------------------------------------------------------------
         header, hdict = get_mid_obs_time(params, header, hdict,
                                          filename=filename)
+        # ------------------------------------------------------------------
+        # Deal with sun altitude
+        # ------------------------------------------------------------------
+        header, hdict = get_sun_altitude(params, header, hdict)
         # ------------------------------------------------------------------
         # Deal with drs mode
         # ------------------------------------------------------------------
