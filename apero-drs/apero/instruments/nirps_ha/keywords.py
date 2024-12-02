@@ -202,7 +202,8 @@ KDict.set('KW_OBJ_TEMP', key='OBJTEMP', unit=uu.K, group='raw')
 # Keys added as early as possible
 # -----------------------------------------------------------------------------
 # define whether a target was observed at night
-KDict.set('KW_NIGHT_OBS', key='DRS_NOBS', comment='Whether target was observed at night',
+KDict.set('KW_NIGHT_OBS', key='DRS_NOBS',
+          comment='Whether target was observed at night',
           group='raw-add')
 
 # Define whether a target was observed during civil twilight
