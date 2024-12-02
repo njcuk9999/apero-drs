@@ -259,6 +259,12 @@ REJECT_LIST_GSHEET_MAIN_LIST_ID.value = '768446388'
 REJECT_LIST_GSHEET_SHEET_NAME = REJECT_LIST_GSHEET_SHEET_NAME.copy(__NAME__)
 REJECT_LIST_GSHEET_SHEET_NAME.value = 'NIRPS_HA'
 
+# Define which twilight to use as the definition of a night observation
+# ("CIVIL", "NAUTICAL", "ASTRONOMICAL")
+NIGHT_DEFINITION = NIGHT_DEFINITION.copy(__NAME__)
+NIGHT_DEFINITION.value = 'NAUTICAL'
+NIGHT_DEFINITION.author = base.AUTHORS['EA']
+
 # =============================================================================
 # CALIBRATION: FIBER SETTINGS
 # =============================================================================
