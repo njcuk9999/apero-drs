@@ -223,6 +223,36 @@ KW_OBJ_TEMP = KW_OBJ_TEMP.copy(__NAME__)
 KW_OBJ_TEMP.set(key='OBJTEMP', unit=uu.K, group='raw')
 
 # -----------------------------------------------------------------------------
+# Keys added as early as possible
+# -----------------------------------------------------------------------------
+# define whether a target was observed at night
+KW_NIGHT_OBS = KW_NIGHT_OBS.copy(__NAME__)
+KW_NIGHT_OBS.set(key='DRS_NOBS',
+                 comment='Whether target was observed at night',
+                 group='raw-add')
+
+# Define whether a target was observed during civil twilight
+KW_CIV_TWIL = KW_CIV_TWIL.copy(__NAME__)
+KW_CIV_TWIL.set(key='DRSCTWIL', group='raw-add',
+          comment='Whether target was observed during civil twilight')
+
+# Define whether a target was observed during nautical twilight
+KW_NAU_TWIL = KW_NAU_TWIL.copy(__NAME__)
+KW_NAU_TWIL.set(key='DRSNTWIL', group='raw-add',
+          comment='Whether target was observed during nautical twilight')
+
+# Define whether a target was observed during astronomical twilight
+KW_AST_TWIL = KW_AST_TWIL.copy(__NAME__)
+KW_AST_TWIL.set(key='DRSATWIL', group='raw-add',
+          comment='Whether target was observed during astronomical '
+                  'twilight')
+
+# Define the calculated sun elevation during observation
+KW_SUN_ELEV = KW_SUN_ELEV.copy(__NAME__)
+KW_SUN_ELEV.set(key='DRSSUNEL', group='raw-add',
+          comment='The calculated sun elevation during observation')
+
+# -----------------------------------------------------------------------------
 # Object resolution keys
 # -----------------------------------------------------------------------------
 # the object name to be used by the drs (after preprocessing)

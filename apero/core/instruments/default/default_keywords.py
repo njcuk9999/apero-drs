@@ -23,7 +23,9 @@ __all__ = [  # input keys
     'KW_PLX', 'KW_CALIBWH',
     'KW_TARGET_TYPE', 'KW_WEATHER_TOWER_TEMP', 'KW_CASS_TEMP',
     'KW_HUMIDITY', 'KW_INPUTRV', 'KW_OBJ_TEMP',
-    'KW_POLAR_KEY_1', 'KW_POLAR_KEY_2', 'KW_SATURATE', 'KW_FRMTIME',
+    'KW_POLAR_KEY_1', 'KW_POLAR_KEY_2',
+    'KW_NIGHT_OBS', 'KW_AST_TWIL', 'KW_CIV_TWIL', 'KW_NAU_TWIL', 'KW_SUN_ELEV',
+    'KW_SATURATE', 'KW_FRMTIME',
     'KW_OBJECTNAME', 'KW_OBJECTNAME2', 'KW_IDENTIFIER',
     'KW_INSTRUMENT', 'KW_INST_MODE', 'KW_RAW_DPRTYPE', 'KW_RAW_DPRCATG',
     # object resolution keys
@@ -416,6 +418,34 @@ KW_POLAR_KEY_1 = Keyword('KW_POLAR_KEY_1', key='NULL', dtype=str, source=__NAME_
 # define the second polar sequence key
 KW_POLAR_KEY_2 = Keyword('KW_POLAR_KEY_2', key='NULL', dtype=str, source=__NAME__,
                          description='define the first polar sequence key')
+
+# -----------------------------------------------------------------------------
+# Keys added as early as possible
+# -----------------------------------------------------------------------------
+# Define whether a target was observed at night
+KW_NIGHT_OBS = Keyword('KW_NIGHT_OBS', key='NULL', dtype=bool, source=__NAME__,
+          description='Define whether a target was observed '
+                      'at night')
+
+# Define whether a target was observed during civil twilight
+KW_CIV_TWIL = Keyword('KW_CIV_TWIL', key='NULL', dtype=bool, source=__NAME__,
+          description='Define whether a target was observed '
+                      'during civil twilight')
+
+# Define whether a target was observed during nautical twilight
+KW_NAU_TWIL = Keyword('KW_NAU_TWIL', key='NULL', dtype=bool, source=__NAME__,
+          description='Define whether a target was observed '
+                      'during nautical twilight')
+
+# Define whether a target was observed during astronomical twilight
+KW_AST_TWIL = Keyword('KW_AST_TWIL', key='NULL', dtype=bool, source=__NAME__,
+          description='Define whether a target was observed '
+                      'during astronomical twilight')
+
+# Define the calculated sun elevation during observation
+KW_SUN_ELEV = Keyword('KW_SUN_ELEV', key='NULL', dtype=float, source=__NAME__,
+          description='Define the calculated sun elevation during '
+                      'observation')
 
 # -----------------------------------------------------------------------------
 # Object resolution keys
