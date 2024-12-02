@@ -260,6 +260,12 @@ REJECT_LIST_GSHEET_SHEET_NAME.value = 'SPIROU'
 # ODOCODE_REJECT_GSHEET_NUM = ODOCODE_REJECT_GSHEET_NUM.copy(__NAME__)
 # ODOCODE_REJECT_GSHEET_NUM.value = 0
 
+# Define which twilight to use as the definition of a night observation
+# ("CIVIL", "NAUTICAL", "ASTRONOMICAL")
+NIGHT_DEFINITION = NIGHT_DEFINITION.copy(__NAME__)
+NIGHT_DEFINITION.value = 'NAUTICAL'
+NIGHT_DEFINITION.author = base.AUTHORS['EA']
+
 # =============================================================================
 # CALIBRATION: FIBER SETTINGS
 # =============================================================================
