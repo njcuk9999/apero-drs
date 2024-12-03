@@ -314,7 +314,7 @@ OBS_ALT = Const('OBS_LAT', value=None, dtype=float, source=__NAME__,
                 group=cgroup)
 #  Define the telescopes time zone (from pytz.all_timezones)
 OBS_TZ = Const('OBS_LAT', value=None, dtype=str, source=__NAME__,
-                group=cgroup, options=pytz.all_timezones)
+                group=cgroup, options=list(pytz.all_timezones))
 
 # =============================================================================
 # DRS INTERNAL PATHS
