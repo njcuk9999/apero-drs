@@ -63,6 +63,7 @@ __all__ = [
     'OBJ_LIST_GAIA_EPOCH', 'OBJ_LIST_GAIA_PLX_LIM', 'OBJ_LIST_GAIA_MAG_CUT',
     'OBJ_LIST_CROSS_MATCH_RADIUS', 'REJECT_LIST_GOOGLE_SHEET_URL',
     'REJECT_LIST_GSHEET_MAIN_LIST_ID', 'REJECT_LIST_GSHEET_SHEET_NAME',
+    'NIGHT_DEFINITION',
     'GROUP_FILE_LIMIT', 'MAX_CALIB_DTIME',
     'DO_CALIB_DTIME_CHECK', 'CALIB_BIN_IN_TIME', 'CALIB_DB_DAYFRAC',
     # qc constants
@@ -813,6 +814,15 @@ REJECT_LIST_GSHEET_SHEET_NAME = Const('REJECT_LIST_GSHEET_SHEET_NAME',
 #                                   description=('Define the odmeter code '
 #                                                'rejection google sheet '
 #                                                'workbook'))
+
+# Define which twilight to use as the definition of a night observation
+#    ("CIVIL", "NAUTICAL", "ASTRONOMICAL")
+NIGHT_DEFINITION = Const('NIGHT_DEFINITION', value=None, dtype=str,
+                          source=__NAME__, group=cgroup,
+                          options=['CIVIL', 'NAUTICAL', 'ASTRONOMICAL'],
+                          description='Define which twilight to use as the '
+                                      'definition of a night observation'
+                                      '("CIVIL", "NAUTICAL", "ASTRONOMICAL")')
 
 # =============================================================================
 # CALIBRATION: FIBER SETTINGS

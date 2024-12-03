@@ -20,6 +20,7 @@ from apero.core.core import drs_exceptions
 from apero.core.core import drs_misc
 from apero.core.core import drs_text
 from apero.core.instruments.default import pseudo_const
+from apero.core.instruments.default.pseudo_const import get_sun_altitude
 
 # =============================================================================
 # Define variables
@@ -290,6 +291,10 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         # ------------------------------------------------------------------
         header, hdict = get_mid_obs_time(params, header, hdict,
                                          filename=filename)
+        # ------------------------------------------------------------------
+        # Deal with sun altitude
+        # ------------------------------------------------------------------
+        header, hdict = get_sun_altitude(params, header, hdict)
         # ------------------------------------------------------------------
         # Deal with drs mode
         # ------------------------------------------------------------------
@@ -1002,6 +1007,7 @@ def get_trg_type(params: ParamDict, header: Any, hdict: Any,
     kwobjname = params['KW_OBJECTNAME'][0]
     kwtrgtype = params['KW_TARGET_TYPE'][0]
     kwtrgcomment = params['KW_TARGET_TYPE'][2]
+    kwnightobs = params['KW_NIGHT_OBS'][0]
     # get obstype
     if kwobstype not in header:
         eargs = [kwobstype, filename]
@@ -1009,12 +1015,13 @@ def get_trg_type(params: ParamDict, header: Any, hdict: Any,
                                                targs=eargs)
     obstype = header[kwobstype]
     obsname = header[kwobjname]
+    nightobs = header[kwnightobs]
     # deal with setting value
     cond1 = 'SKY' in obstype
     cond2 = 'SKY' in obsname.upper()
     cond3 = 'TELLURIC' not in obstype
     cond4 = 'FLUX' not in obstype
-    cond5 = 'NIGHT' in obsname.upper()
+    cond5 = str(nightobs).upper() in ['T', '1', 'TRUE']
 
     if cond1 and cond2 and cond3 and cond4 and cond5:
         trg_type = 'NIGHT-SKY'
@@ -1287,19 +1294,22 @@ def get_special_objname(params: ParamDict, header: Any,
     # conditions
     cond1 = header[kwdprtype] in obj_dprtypes
     cond2 = header[kwtrgtype] == 'SKY'
-    cond3 = header[kwcatg] == 'CALIB'
-    cond4 = header[kwcatg] == 'TEST'
+    cond3 = header[kwtrgtype] == 'NIGHT-SKY'
+    cond4 = header[kwcatg] == 'CALIB'
+    cond5 = header[kwcatg] == 'TEST'
     # if nether conditions are met we have a science/telluric observation
     #  don't update the date
     if cond1 and not cond2:
         return header, hdict
     # if target type is sky make the object name sky
-    elif cond2:
+    if cond2:
         objname = 'SKY'
+    if cond3:
+        objname = 'NIGHT-SKY'
     # otherwise we assume we have a calibration
-    elif cond3:
-        objname = 'CALIB'
     elif cond4:
+        objname = 'CALIB'
+    elif cond5:
         objname = 'TEST'
     else:
         objname = 'UNKNOWN'
