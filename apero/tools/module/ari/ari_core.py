@@ -1758,6 +1758,11 @@ class AriObject:
         # set up the object page
         obj_save_path = os.path.join(params['ARI_OBJ_PAGES'], self.objname)
         ari_user = params['ARI_USER']
+        # get the extracted files
+        ext_files = self.filetypes['ext'].get_files()
+        # don't go here if ext files are not present
+        if len(ext_files) == 0:
+            return
         # alias to header dict
         hdict = self.header_dict
         # ---------------------------------------------------------------------
