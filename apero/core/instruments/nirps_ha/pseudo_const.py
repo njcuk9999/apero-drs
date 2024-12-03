@@ -283,10 +283,6 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
                                        check_aliases=check_aliases,
                                        objdbm=objdbm)
         # ------------------------------------------------------------------
-        # Deal with TRG_TYPE
-        # ------------------------------------------------------------------
-        header, hdict = get_trg_type(params, header, hdict, filename=filename)
-        # ------------------------------------------------------------------
         # Deal with MIDMJD
         # ------------------------------------------------------------------
         header, hdict = get_mid_obs_time(params, header, hdict,
@@ -295,6 +291,10 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         # Deal with sun altitude
         # ------------------------------------------------------------------
         header, hdict = get_sun_altitude(params, header, hdict)
+        # ------------------------------------------------------------------
+        # Deal with TRG_TYPE
+        # ------------------------------------------------------------------
+        header, hdict = get_trg_type(params, header, hdict, filename=filename)
         # ------------------------------------------------------------------
         # Deal with drs mode
         # ------------------------------------------------------------------
