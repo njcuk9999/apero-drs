@@ -220,6 +220,14 @@ def calculate_blaze_flat_sinc(params: ParamDict, e2ds_ini: np.ndarray,
         blaze[bad_mask2] = np.nan
         e2ds_ini[bad_mask1] = np.nan
     # ----------------------------------------------------------------------
+    # If the blaze is below 0.25 we consider that the blaze and flat correction
+    # are not reliable
+    with warnings.catch_warnings(record=True) as _:
+        bad_mask3 = blaze < 0.25 * np.nanmax(blaze)
+        flat[bad_mask3] = np.nan
+        blaze[bad_mask3] = np.nan
+        e2ds_ini[bad_mask3] = np.nan
+    # ----------------------------------------------------------------------
     # recalculate calculate the rms
     # ----------------------------------------------------------------------
     rms = mp.robust_nanstd(flat[keep])
