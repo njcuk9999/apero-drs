@@ -2973,7 +2973,7 @@ REPROCESS_MP_TYPE.value = 'process'
 # Define whether to use multiprocess "pool" or "process" or use "linear"
 #     mode when validating recipes
 REPROCESS_MP_TYPE_VAL = REPROCESS_MP_TYPE_VAL.copy(__NAME__)
-REPROCESS_MP_TYPE_VAL.value = 'process'
+REPROCESS_MP_TYPE_VAL.value = 'linear'
 
 # Key for use in run files
 REPROCESS_RUN_KEY = REPROCESS_RUN_KEY.copy(__NAME__)
