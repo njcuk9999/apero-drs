@@ -3082,6 +3082,8 @@ def get_objnames_headers(objname: str, indexdbm: Any) -> str:
                                     condition=condition)
     # get only unique object names
     all_names = set(objtable['KW_OBJECTNAME']) | set(objtable['KW_OBJECTNAME2'])
+    # remove None from set
+    all_names = list(all_names.discard(None))
     # return all the object names
     return ', '.join(all_names)
 
