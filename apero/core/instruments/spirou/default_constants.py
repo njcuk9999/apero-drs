@@ -2153,7 +2153,7 @@ SKYCORR_NSIG_THRES.author = base.AUTHORS['EA']
 # Define the flux ratio of sky lines that can not be corrected for
 SKYCORR_RATIO_THRES = SKYCORR_RATIO_THRES.copy(__NAME__)
 SKYCORR_RATIO_THRES.value = 4
-SKYCORR_RATIO_THRES = base.AUTHORS['EA']
+SKYCORR_RATIO_THRES.author = base.AUTHORS['EA']
 
 # =============================================================================
 # OBJECT: TELLURIC SETTINGS
