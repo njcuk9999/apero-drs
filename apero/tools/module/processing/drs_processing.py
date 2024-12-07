@@ -1235,7 +1235,8 @@ def _linear_generate_id(params: ParamDict, it: int, run_key: str,
                         run_item: str, runlist: List[str], keylist: List[int],
                         input_recipe, indexdb: FileIndexDatabase,
                         recipemod: Any, skiptable: Table,
-                        skip_storage: dict, cores: int = 1):
+                        skip_storage: dict, cores: int = 1,
+                        return_run: bool = False):
     """
     Linear run of a single validation step
 
@@ -1305,9 +1306,12 @@ def _linear_generate_id(params: ParamDict, it: int, run_key: str,
             margs = [runid, run_object.runstring]
             WLOG(params, '', msg.format(*margs))
         # add to pickle files
-        prefix = 'RunObject_{0}'.format(params['PID'])
-        drs_pickle.make_pickle(params, run_object, prefix=prefix,
-                               suffix=it, log=True)
+        if not return_run:
+            prefix = 'RunObject_{0}'.format(params['PID'])
+            drs_pickle.make_pickle(params, run_object, prefix=prefix,
+                                   suffix=it, log=True)
+        else:
+            return run_object
     # else log that we are skipping
     else:
         # log that we have skipped run
@@ -1320,6 +1324,7 @@ def _linear_generate_id(params: ParamDict, it: int, run_key: str,
             msg = 'Run {0} skipped [{1}] {2}'
             margs = [runid, run_object.runstring, reason]
             WLOG(params, '', msg.format(*margs), colour='yellow')
+
 
 
 def generate_ids(params: ParamDict, indexdb: FileIndexDatabase,
@@ -1378,7 +1383,9 @@ def generate_ids(params: ParamDict, indexdb: FileIndexDatabase,
                     inrecipelist[it], indexdb, recipemod, skiptable,
                     skip_storage]
             # run as a single process
-            _linear_generate_id(*args)
+            run_it = _linear_generate_id(*args, return_run=True)
+            if run_it is not None:
+                rdict[it] = run_it
     # -------------------------------------------------------------------------
     # otherwise multiprocess
     # -------------------------------------------------------------------------
@@ -1412,14 +1419,14 @@ def generate_ids(params: ParamDict, indexdb: FileIndexDatabase,
                 eargs = [params['REPROCESS_MP_TYPE_VAL']]
                 WLOG(params, 'error', emsg.format(*eargs))
                 continue
-    # ---------------------------------------------------------------------
-    # load pickle files of runs
-    # TODO: Add to language database
-    msg = 'Loading run objects from pickles'
-    WLOG(params, 'info', msg)
-    # add to pickle files
-    prefix = 'RunObject_{0}'.format(params['PID'])
-    rdict = drs_pickle.get_pickle(params, prefix, remove=True)
+        # ---------------------------------------------------------------------
+        # load pickle files of runs
+        # TODO: Add to language database
+        msg = 'Loading run objects from pickles'
+        WLOG(params, 'info', msg)
+        # add to pickle files
+        prefix = 'RunObject_{0}'.format(params['PID'])
+        rdict = drs_pickle.get_pickle(params, prefix, remove=True)
     # -------------------------------------------------------------------------
     # recreate the run objects list from the return dict
     #    sorted by key
