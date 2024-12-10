@@ -164,9 +164,10 @@ def spec_plot(spec_props: Dict[str, Any], plot_path: str, plot_title: str):
     # set the last value to the same as the second from last (boundary effect)
     obs_windows[-1] = bool(obs_windows[-1])
     # fill between observation windows
-    frame1.fill_between(obs_days, y1=ymin, y2=ymax,
-                        where=np.invert(obs_windows), color='k', alpha=0.1,
-                        label='Unobservable')
+    # TODO: Fix the unobservable region
+    # frame1.fill_between(obs_days, y1=ymin, y2=ymax,
+    #                     where=np.invert(obs_windows), color='k', alpha=0.1,
+    #                     label='Unobservable')
     # labels/axis/legend
     frame1.legend(loc=0, ncols=1, fontsize=8).set_zorder(10)
     frame1.set(xlabel='Date', ylabel=ylabel)
