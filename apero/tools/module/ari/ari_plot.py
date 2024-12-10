@@ -134,7 +134,7 @@ def spec_plot(spec_props: Dict[str, Any], plot_path: str, plot_title: str):
         ylabel = 'BERV [km/s]  [No LBL]'
         vsys_value = 0.0
     else:
-        ylabel = r'$v_{tot}$ [km/s]'
+        ylabel = r'$v_{tot}$ [km/s] = $v_{sys} - BERV$'
         vsys_value = float(vsys) / 1000
     # Plot different categories of data points
     frame1.plot_date(bjd_tcorr[~tcorr_fail].plot_date,
@@ -155,7 +155,8 @@ def spec_plot(spec_props: Dict[str, Any], plot_path: str, plot_title: str):
                 ls=':', color='gray', lw=2)
     # plot
     if vsys is not None:
-        frame1.axhline(y=vsys_value, label=r'$v_{sys}$')
+        frame1.axhline(y=vsys_value,
+                       label=r'$v_{sys}$ = ' + f'{vsys_value:.3f} [km/s]')
 
     frame1.set(xlim=[xmin0, xmax0])
     # get limits
