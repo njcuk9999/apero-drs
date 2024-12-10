@@ -1096,7 +1096,7 @@ class AriObject:
                 lbl_systvel.append(float(lbl_rv_hdr['SYSTVELO']))
                 lbl_bervs.append(float(lbl_rv_hdr['BERV']))
             # calculate the vsys
-            dv = np.array(lbl_systvel) - np.array(lbl_bervs)
+            dv = np.array(lbl_systvel) - np.array(lbl_bervs) * 1000
             spec_props['VSYS'] = np.nanmedian(dv)
         else:
             spec_props['VSYS'] = None
