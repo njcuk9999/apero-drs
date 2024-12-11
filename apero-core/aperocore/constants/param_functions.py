@@ -341,17 +341,17 @@ class ParamDict(CaseInDict):
         """
         global CHECKED_SOURCES
         # set function name
-        func_name = display_func('set_source', __NAME__, self.class_name)
+        # func_name = display_func('set_source', __NAME__, self.class_name)
         # capitalise
         key = drs_text.capitalise_key(key)
         # check storage so we don't do this many times for no reason
-        if source in CHECKED_SOURCES:
-            _source = CHECKED_SOURCES[source]
+        if key in CHECKED_SOURCES:
+            _source = CHECKED_SOURCES[key]
         else:
             # don't put full path for sources in package
             _source = _check_mod_source(source)
             # add to storage so we don't do this many times for no reason
-            CHECKED_SOURCES[source] = _source
+            CHECKED_SOURCES[key] = _source
         # only add if key is in main dictionary
         if key in self.data.keys():
             self.sources[key] = _source
