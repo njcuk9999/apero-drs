@@ -738,7 +738,8 @@ class ConstantsDict:
                 # we update the data[key] CommentedMap
                 data[key] = const.value.add_to_yaml(data[key], sub_params,
                                                     sub_constants, sub_keys,
-                                                    used_groups=None, mode=mode,
+                                                    used_groups=used_groups,
+                                                    mode=mode,
                                                     indent=indent+2)
                 # then we update the data CommentedMap
                 ckwargs = dict(key=key, before=comment, indent=indent)
