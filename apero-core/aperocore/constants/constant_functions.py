@@ -13,7 +13,7 @@ import os
 import sys
 import traceback
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 from astropy import units as uu
@@ -612,6 +612,42 @@ class ConstantsDict:
         data.yaml_set_start_comment(title)
         # loop around constants and add to the data
         for key in self.storage:
+            # now we add the values / comments
+            #   This is in a sub-method as we may have to do this recursively
+            data = self.add_to_yaml(data, params,
+                                    constants=[self.storage[key]],
+                                    keys=[key], used_groups=used_groups,
+                                    mode=mode, indent=0)
+        # ---------------------------------------------------------------------
+        # print message
+        if log:
+            msg = '\tWriting yaml file: {0}'
+            margs = [outpath]
+            drs_text.cprint(msg.format(*margs), colour='g')
+        # initialize YAML object
+        yaml_inst = YAML()
+        # remove the yaml if it already exists
+        if os.path.exists(outpath):
+            os.remove(outpath)
+        # write files
+        with open(outpath, 'w') as y_file:
+            yaml_inst.dump(data, y_file)
+        # ---------------------------------------------------------------------
+        # return the yaml file path
+        return outpath
+
+    def add_to_yaml(self, data: CommentedMap, yparams: Any,
+                    constants: List[Const], keys: List[str],
+                    used_groups: Optional[List[str]] = None,
+                    mode: str = None, indent: int = 0) -> CommentedMap:
+        # deal with no used groups
+        if used_groups is None:
+            used_groups = []
+        # loop around keys
+        for it, key in enumerate(keys):
+            # get the constant
+            const = constants[it]
+            # -----------------------------------------------------------------
             # get comment
             comment = self.storage[key].description
             # if there is no comment don't add
@@ -646,7 +682,7 @@ class ConstantsDict:
             # if the constant is not active skip
             if not active:
                 continue
-            # ---------------------------------------------------------------------
+            # -----------------------------------------------------------------
             # get modes
             modes = self.storage[key].modes
             # deal with no mode
@@ -657,34 +693,43 @@ class ConstantsDict:
             # if we are not in the correct mode skip
             if not in_mode:
                 continue
-            # ---------------------------------------------------------------------
-            # get the constant
-            const = self.storage[key]
-            # push into params
-            if key in params:
-                data[key] = params[key]
+            # -----------------------------------------------------------------
+            # if we have a constant dictionary then we go down another level
+            if isinstance(const.value, ConstantsDict):
+                # if value is in params we use a subparams
+                if key in yparams:
+                    sub_params = yparams[key]
+                else:
+                    sub_params = None
+                # The sub-dictionary is a commented map
+                data[key] = CommentedMap()
+                # the Constant Dict is stored in the value of the current const
+                sub_constants  = list(const.value.storage.values())
+                sub_keys = list(const.value.storage.keys())
+                # we update the data[key] CommentedMap
+                data[key] = self.add_to_yaml(data[key], sub_params,
+                                             sub_constants, sub_keys,
+                                             used_groups=None, mode=mode,
+                                             indent=indent+2)
+                # then we update the data CommentedMap
+                ckwargs = dict(key=key, before=comment, indent=indent)
+                data.yaml_set_comment_before_after_key(**ckwargs)
+            # -----------------------------------------------------------------
+            # otherwise we are at the bottom of the tree
             else:
-                data[key] = const.value
+                # push into params
+                if key in yparams:
+                    value = yparams[key]
+                else:
+                    value = const.value
+                # set the value
+                data[key] = value
+            # -----------------------------------------------------------------
             # add the comment
-            ckwargs = dict(key=key, before=comment, indent=0)
+            ckwargs = dict(key=key, before=comment, indent=indent)
             data.yaml_set_comment_before_after_key(**ckwargs)
-        # ---------------------------------------------------------------------
-        # print message
-        if log:
-            msg = '\tWriting yaml file: {0}'
-            margs = [outpath]
-            drs_text.cprint(msg.format(*margs), colour='g')
-        # initialize YAML object
-        yaml_inst = YAML()
-        # remove the yaml if it already exists
-        if os.path.exists(outpath):
-            os.remove(outpath)
-        # write files
-        with open(outpath, 'w') as y_file:
-            yaml_inst.dump(data, y_file)
-        # -------------------------------------------------------------------------
-        # return the yaml file path
-        return outpath
+        # Return the commented map
+        return data
 
     @staticmethod
     def yaml_title(name: str, setup_program: str, version: str,
