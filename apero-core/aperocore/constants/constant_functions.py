@@ -702,9 +702,14 @@ class ConstantsDict:
             # remove new lines at start/end of comment
             if not comment.startswith('\n\n'):
                 comment = comment.strip('\n')
+            # -----------------------------------------------------------------
+            const_value = self.storage[key].value
             # add the default value to the comment (if given)
-            if self.storage[key].value is not None:
-                comment += '\n\tDefault value: {0}'.format(str(self.storage[key].value))
+            #  do not add Constants Dicts defualt value
+            if isinstance(const_value, ConstantsDict):
+                pass
+            elif self.storage[key].value is not None:
+                comment += '\n\tDefault value: {0}'.format(str(const_value))
             # ---------------------------------------------------------------------
             # get active
             active = self.storage[key].active
@@ -754,10 +759,10 @@ class ConstantsDict:
                     value = const.value
                 # set the value
                 data[key] = value
-            # -----------------------------------------------------------------
-            # add the comment
-            ckwargs = dict(key=key, before=comment, indent=indent)
-            data.yaml_set_comment_before_after_key(**ckwargs)
+                # -------------------------------------------------------------
+                # add the comment
+                ckwargs = dict(key=key, before=comment, indent=indent)
+                data.yaml_set_comment_before_after_key(**ckwargs)
         # Return the commented map
         return data
 
