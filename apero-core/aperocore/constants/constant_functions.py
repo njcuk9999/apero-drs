@@ -574,8 +574,16 @@ class ConstantsDict:
         # return new constants
         return new_constants
 
-    def unpack(self, values: Dict[str, Any], sources: Dict[str, str],
-               instances: Dict[str, Union[Const]]):
+    def unpack(self, values: Dict[str, Any] = None,
+               sources: Dict[str, str] = None,
+               instances: Dict[str, Union[Const]] = None):
+        # create dictionaries if they don't exist
+        if values is None:
+            values = dict()
+        if sources is None:
+            sources = dict()
+        if instances is None:
+            instances = dict()
         # loop around all keys stored in dictionary
         for key in self.storage.keys():
             # do not add keys that are already in values
@@ -583,7 +591,7 @@ class ConstantsDict:
                 continue
             # if the value itself is a ConstDict then we have to unpack that
             if isinstance(self.storage[key].value, ConstantsDict):
-                uout = self.unpack(values, sources, instances)
+                uout = self.unpack()
                 values[key], sources[key], instances[key] = uout
             # otherwise we set the value, source and instance
             else:
