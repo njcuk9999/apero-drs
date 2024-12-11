@@ -10,11 +10,12 @@ Created on 2024-09-06 at 16:30
 @author: cook
 """
 import os
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from aperocore.base import base
 from aperocore.core import drs_base_classes as base_class
 from aperocore.constants.param_functions import ParamDict
+from aperocore.constants import constant_functions
 from aperocore import drs_lang
 from aperocore.core import drs_exceptions
 from aperocore.core import drs_misc
@@ -43,10 +44,46 @@ display_func = drs_misc.display_func
 CONFIG_CACHE = dict()
 PCONFIG_CACHE = dict()
 
+ConstDict = constant_functions.ConstantsDict
+Const = constant_functions.Const
+Keyword = constant_functions.Keyword
+KeywordDict = constant_functions.KeywordDict
+
 
 # =============================================================================
 # Define functions
 # =============================================================================
+def load_parameters(config_list: List[ConstDict, KeywordDict] = None
+                    ) -> ParamDict:
+    """
+    Load a set of Constants Dictionaries into a single Parameter Dictionary
+
+    :param config_list: list of Constants Dictionaries
+
+    :return: tuple, 1. ParamDict containing the constants, 2. list of instances
+                    (Const/Keyword instances) for each key
+    """
+    # ---------------------------------------------------------------------
+    # store keys, values, sources, instances
+    values, sources, instances = dict(), dict(), dict()
+    # loop around config/constants/keyword dictionaries and merge
+    for clist in config_list:
+        # update value, source, instance based on
+        values, sources, instances = clist.unpack(values, sources, instances)
+    # ---------------------------------------------------------------------
+    # push into a parameter dictionary
+    params = ParamDict(values)
+    # add to params
+    for key in instances:
+        # set source
+        params.set_source(key, sources[key])
+        # set instance (Const/Keyword instance)
+        params.set_instance(key, instances[key])
+    # return these
+    return params
+
+
+
 def load_config(instruments: Dict[str, Any],
                 instrument: Union[str, None] = None,
                 from_file: bool = True,
@@ -77,21 +114,15 @@ def load_config(instruments: Dict[str, Any],
     # otherwise get instrument class
     instrument_instance = load_pconfig(instruments, instrument)
     # get constants from modules
-    values, sources, instances = instrument_instance.get_constants()
-    # push into a parameter dictionary
-    params = ParamDict(values)
-    # add to params
-    for key in instances:
-        # set source
-        params.set_source(key, sources[key])
-        # set instance (Const/Keyword instance)
-        params.set_instance(key, instances[key])
+    clist = instrument_instance.get_clists()
+    # push into params
+    params = load_parameters(clist)
     # get constants from user config files
     if from_file:
         # get instrument user config files
         files = _get_file_names(params, instrument)
         # load keys, values, sources and instances from yaml files
-        ovalues, osources, oinstances = _load_from_yaml(files, instances)
+        ovalues, osources, oinstances = _load_from_yaml(files, params.instances)
         # add to params
         for key in ovalues:
             # set value

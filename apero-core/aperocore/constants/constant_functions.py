@@ -574,6 +574,26 @@ class ConstantsDict:
         # return new constants
         return new_constants
 
+    def unpack(self, values: Dict[str, Any], sources: Dict[str, str],
+               instances: Dict[str, Union[Const]]):
+        # loop around all keys stored in dictionary
+        for key in self.storage.keys():
+            # do not add keys that are already in values
+            if key in values:
+                continue
+            # if the value itself is a ConstDict then we have to unpack that
+            if isinstance(self.storage[key], ConstantsDict):
+                uout = self.unpack(values, sources, instances)
+                values[key], sources[key], instances[key] = uout
+            # otherwise we set the value, source and instance
+            else:
+                # update value, source, instance based on
+                values[key] = self.storage[key].value
+                sources[key] = self.storage[key].source
+                instances[key] = self.storage[key]
+        # return all values
+        return values, sources, instances
+
     # -------------------------------------------------------------------------
     # yaml functionality
     # -------------------------------------------------------------------------
@@ -1308,6 +1328,26 @@ class KeywordDict:
         new_keywords.storage = new_storage
         # return new constants
         return new_keywords
+
+    def unpack(self, values: Dict[str, Any], sources: Dict[str, str],
+               instances: Dict[str, Union[Keyword]]):
+        # loop around all keys stored in dictionary
+        for key in self.storage.keys():
+            # do not add keys that are already in values
+            if key in values:
+                continue
+            # if the value itself is a ConstDict then we have to unpack that
+            if isinstance(self.storage[key], KeywordDict):
+                uout = self.unpack(values, sources, instances)
+                values[key], sources[key], instances[key] = uout
+            # otherwise we set the value, source and instance
+            else:
+                # update value, source, instance based on
+                values[key] = self.storage[key].value
+                sources[key] = self.storage[key].source
+                instances[key] = self.storage[key]
+        # return all values
+        return values, sources, instances
 
 
 class CKCaseINSDict(base_class.CaseInsensitiveDict):

@@ -133,8 +133,7 @@ class NirpsHa(instrument_mod.Instrument):
     def copy(self):
         return NirpsHa(instrument_name=self.instrument)
 
-    def get_constants(self
-                      ) -> Tuple[Dict[str, Any], Dict[str, str], Dict[str, Any]]:
+    def get_clists(self) -> List[Any]:
         # this has to be local
         from apero.instruments.nirps_ha import config
         from apero.instruments.nirps_ha import constants
@@ -144,22 +143,8 @@ class NirpsHa(instrument_mod.Instrument):
         constants_dict = constants.CDict
         keywords_dict = keywords.KDict
         # ---------------------------------------------------------------------
-        # store keys, values, sources, instances
-        values, sources, instances = dict(), dict(), dict()
-        # loop around config/constants/keyword dictionaries and merge
-        for clist in [config_dict, constants_dict, keywords_dict]:
-            # loop around all keys stored in dictionary
-            for key in clist.storage.keys():
-                # do not add keys that are already in values
-                if key in values:
-                    continue
-                # update value, source, instance based on
-                values[key] = clist.storage[key].true_value
-                sources[key] = clist.storage[key].source
-                instances[key] = clist.storage[key]
-        # ---------------------------------------------------------------------
         # return these
-        return values, sources, instances
+        return [config_dict, constants_dict, keywords_dict]
 
     # =========================================================================
     # File and Recipe definitions
