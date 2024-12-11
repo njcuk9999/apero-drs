@@ -736,10 +736,10 @@ class ConstantsDict:
                 sub_constants  = list(const.value.storage.values())
                 sub_keys = list(const.value.storage.keys())
                 # we update the data[key] CommentedMap
-                data[key] = self.add_to_yaml(data[key], sub_params,
-                                             sub_constants, sub_keys,
-                                             used_groups=None, mode=mode,
-                                             indent=indent+2)
+                data[key] = const.value.add_to_yaml(data[key], sub_params,
+                                                    sub_constants, sub_keys,
+                                                    used_groups=None, mode=mode,
+                                                    indent=indent+2)
                 # then we update the data CommentedMap
                 ckwargs = dict(key=key, before=comment, indent=indent)
                 data.yaml_set_comment_before_after_key(**ckwargs)
