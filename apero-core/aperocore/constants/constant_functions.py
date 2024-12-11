@@ -591,7 +591,7 @@ class ConstantsDict:
                 continue
             # if the value itself is a ConstDict then we have to unpack that
             if isinstance(self.storage[key].value, ConstantsDict):
-                uout = self.unpack()
+                uout = self.storage[key].value.unpack()
                 values[key], sources[key], instances[key] = uout
             # otherwise we set the value, source and instance
             else:
