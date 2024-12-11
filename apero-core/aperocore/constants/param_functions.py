@@ -347,16 +347,22 @@ class ParamDict(CaseInDict):
         # check storage so we don't do this many times for no reason
         if key in CHECKED_SOURCES:
             _source = CHECKED_SOURCES[key]
-        else:
+        elif isinstance(source, str):
             # don't put full path for sources in package
             _source = _check_mod_source(source)
             # add to storage so we don't do this many times for no reason
             CHECKED_SOURCES[key] = _source
+        else:
+            _source = source
+            CHECKED_SOURCES[key] = source
         # only add if key is in main dictionary
         if key in self.data.keys():
             self.sources[key] = _source
+            # don't add to history if source is None
+            if not isinstance(_source, str):
+                pass
             # add to history
-            if key in self.source_history:
+            elif key in self.source_history:
                 self.source_history[key].append(_source)
             else:
                 self.source_history[key] = [_source]
