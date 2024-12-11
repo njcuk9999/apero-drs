@@ -53,7 +53,7 @@ KeywordDict = constant_functions.KeywordDict
 # =============================================================================
 # Define functions
 # =============================================================================
-def load_parameters(config_list: List[ConstDict, KeywordDict] = None
+def load_parameters(config_list: List[Union[ConstDict, KeywordDict]] = None
                     ) -> ParamDict:
     """
     Load a set of Constants Dictionaries into a single Parameter Dictionary
