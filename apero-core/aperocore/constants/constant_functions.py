@@ -576,7 +576,9 @@ class ConstantsDict:
 
     def unpack(self, values: Dict[str, Any] = None,
                sources: Dict[str, str] = None,
-               instances: Dict[str, Union[Const]] = None):
+               instances: Dict[str, Union[Const]] = None,
+               path: str = None) -> Tuple[Dict[str, Any], Dict[str, str],
+                                          Dict[str, Union[Const]]]:
         # create dictionaries if they don't exist
         if values is None:
             values = dict()
@@ -586,19 +588,23 @@ class ConstantsDict:
             instances = dict()
         # loop around all keys stored in dictionary
         for key in self.storage.keys():
+            if path is not None:
+                key_path = '{0}.{1}'.format(path, key)
+            else:
+                key_path = key
             # do not add keys that are already in values
             if key in values:
                 continue
             # if the value itself is a ConstDict then we have to unpack that
             if isinstance(self.storage[key].value, ConstantsDict):
-                uout = self.storage[key].value.unpack()
-                values[key], sources[key], instances[key] = uout
+                uout = self.storage[key].value.unpack(path=key_path)
+                values[key_path], sources[key_path], instances[key_path] = uout
             # otherwise we set the value, source and instance
             else:
                 # update value, source, instance based on
-                values[key] = self.storage[key].value
-                sources[key] = self.storage[key].source
-                instances[key] = self.storage[key]
+                values[key_path] = self.storage[key].value
+                sources[key_path] = self.storage[key].source
+                instances[key_path] = self.storage[key]
         # return all values
         return values, sources, instances
 
