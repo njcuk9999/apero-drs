@@ -582,7 +582,7 @@ class ConstantsDict:
             if key in values:
                 continue
             # if the value itself is a ConstDict then we have to unpack that
-            if isinstance(self.storage[key], ConstantsDict):
+            if isinstance(self.storage[key].value, ConstantsDict):
                 uout = self.unpack(values, sources, instances)
                 values[key], sources[key], instances[key] = uout
             # otherwise we set the value, source and instance
