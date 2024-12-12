@@ -81,7 +81,7 @@ class Const:
                  author: Union[str, List[str], None] = None,
                  parent: Union[str, None] = None,
                  output: bool = True, not_none: bool = False,
-                 modes: str = ''):
+                 modes: str = '', length: int = None):
         """
         Construct the constant instance
 
@@ -113,11 +113,12 @@ class Const:
         :param modes: str, define which modes this constant can be used for
                      (used as a filter so not present in specific instrument
                       setups)
+        :param length: int, the length of the constant (if it is a list)
 
         :returns: None (constructor)
         """
         # set function name
-        func_name = display_func('__init__', __NAME__, self.class_name)
+        # func_name = display_func('__init__', __NAME__, self.class_name)
         # set the name of the constant
         self.name = name
         # set the value of the constant
@@ -169,6 +170,8 @@ class Const:
         self.not_none = not_none
         # set modes
         self.modes = modes
+        # set length
+        self.length = length
 
     def __getstate__(self) -> dict:
         """
@@ -272,7 +275,8 @@ class Const:
                      group=self.group, user=self.user, active=self.active,
                      description=self.description, author=self.author,
                      parent=self.parent, output=self.output,
-                     not_none=self.not_none, modes=self.modes)
+                     not_none=self.not_none, modes=self.modes,
+                     length=self.length)
 
     def write_line(self, value: Any = None, fmt: str = 'ini') -> List[str]:
         """
@@ -402,7 +406,8 @@ class ConstantsDict:
                  author: Union[str, List[str], None] = None,
                  parent: Union[str, None] = None,
                  output: bool = True,
-                 not_none: bool = False):
+                 not_none: bool = False,
+                 modes: str = '', length: int = None):
         """
         Add a constant instance to the dict
 
@@ -431,6 +436,10 @@ class ConstantsDict:
         :param output: bool if False does not put in parameter output table
         :param not_none: bool, if True the constant is required and prompts
                          may ask for this value if set to None
+        :param modes: str, define which modes this constant can be used for
+                      (used as a filter so not present in specific instrument
+                        setups)
+        :param length: int, the length of the constant (if it is a list)
 
         :returns: None (constructor)
         """
@@ -446,7 +455,7 @@ class ConstantsDict:
         constants = Const(name, value, dtype, dtypei, options, maximum, minimum,
                           source, unit, default, datatype, dataformat, group,
                           user, active, description, author, parent, output,
-                          not_none)
+                          not_none, modes, length)
         # add to storage
         self.storage[name] = constants
 
@@ -467,11 +476,12 @@ class ConstantsDict:
             unit: Union[uu.Unit] = None, default: Any = None,
             datatype: Union[type, None] = None,
             dataformat: Union[str, None] = None,
-            group: Union[str, None] = None, user: bool = False,
+            group: Union[str, None] = None, user: bool = None,
             active: bool = False, description: Union[str, None] = None,
             author: Union[str, List[str], None] = None,
             parent: Union[str, None] = None,
-            output: bool = True):
+            output: bool = True, not_none: bool = False,
+            modes: str = None, length: int = None):
         """
         Add a constant instance to the dict
 
@@ -566,6 +576,15 @@ class ConstantsDict:
         # update output (if given)
         if output is not None:
             self.storage[name].output = output
+        # update not none
+        if not_none is not None:
+            self.storage[name].not_none = not_none
+        # update modes
+        if modes is not None:
+            self.storage[name].modes = modes
+        # update length
+        if length is not None:
+            self.storage[name].length = length
 
     def copy(self, source: str) -> 'ConstantsDict':
         # create new storage
