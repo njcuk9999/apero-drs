@@ -247,24 +247,24 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         # apply sky correction
         # ------------------------------------------------------------------
-        if dprtype in params.listp('ALLOWED_SKYCORR_DPRTYPES', dtype=str):
-            # correct sky using model and B fiber
-            scprops = telluric.correct_sky_with_ref(params, recipe, infile,
-                                                    wprops, rawfiles, combine,
-                                                    calibdbm, telludbm)
-            # update infile
-            infile.data = scprops[f'CORR_EXT_{fiber}']
-            # turn off cleaning of OH lines in pre-cleaning
-            clean_ohlines = False
-        else:
-            # correct sky using model and B fiber
-            scprops = telluric.correct_sky_no_ref(params, recipe, infile,
-                                                  wprops, rawfiles, combine,
-                                                  calibdbm, telludbm)
-            # update infile
-            infile.data = scprops[f'CORR_EXT_{fiber}']
-            # turn off cleaning of OH lines in pre-cleaning
-            clean_ohlines = False
+        # if dprtype in params.listp('ALLOWED_SKYCORR_DPRTYPES', dtype=str):
+        #     # correct sky using model and B fiber
+        #     scprops = telluric.correct_sky_with_ref(params, recipe, infile,
+        #                                             wprops, rawfiles, combine,
+        #                                             calibdbm, telludbm)
+        #     # update infile
+        #     infile.data = scprops[f'CORR_EXT_{fiber}']
+        #     # turn off cleaning of OH lines in pre-cleaning
+        #     clean_ohlines = False
+        # else:
+        #     # correct sky using model and B fiber
+        #     scprops = telluric.correct_sky_no_ref(params, recipe, infile,
+        #                                           wprops, rawfiles, combine,
+        #                                           calibdbm, telludbm)
+        #     # update infile
+        #     infile.data = scprops[f'CORR_EXT_{fiber}']
+        #     # turn off cleaning of OH lines in pre-cleaning
+        #     clean_ohlines = False
 
         # ------------------------------------------------------------------
         # telluric pre-cleaning
