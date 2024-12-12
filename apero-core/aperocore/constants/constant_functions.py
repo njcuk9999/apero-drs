@@ -80,7 +80,8 @@ class Const:
                  active: bool = False, description: Union[str, None] = None,
                  author: Union[str, List[str], None] = None,
                  parent: Union[str, None] = None,
-                 output: bool = True, not_none: bool = False):
+                 output: bool = True, not_none: bool = False,
+                 modes: str = ''):
         """
         Construct the constant instance
 
@@ -109,6 +110,9 @@ class Const:
         :param output: bool if False does not put in parameter output table
         :param not_none: bool, if True the constant is required and prompts
                          may ask for this value if set to None
+        :param modes: str, define which modes this constant can be used for
+                     (used as a filter so not present in specific instrument
+                      setups)
 
         :returns: None (constructor)
         """
@@ -163,6 +167,8 @@ class Const:
         self.true_value = None
         # set not none
         self.not_none = not_none
+        # set modes
+        self.modes = modes
 
     def __getstate__(self) -> dict:
         """
@@ -265,7 +271,8 @@ class Const:
                      datatype=self.datatype, dataformat=self.dataformat,
                      group=self.group, user=self.user, active=self.active,
                      description=self.description, author=self.author,
-                     parent=self.parent, output=self.output)
+                     parent=self.parent, output=self.output,
+                     not_none=self.not_none, modes=self.modes)
 
     def write_line(self, value: Any = None, fmt: str = 'ini') -> List[str]:
         """
