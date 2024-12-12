@@ -122,7 +122,7 @@ def load_config(instruments: Dict[str, Any],
         # get instrument user config files
         files = _get_file_names(params, instrument)
         # load keys, values, sources and instances from yaml files
-        ovalues, osources, oinstances = _load_from_yaml(files, params.instances)
+        ovalues, osources, oinstances = load_from_yaml(files, params.instances)
         # add to params
         for key in ovalues:
             # set value
@@ -315,8 +315,8 @@ def _get_file_names(params: ParamDict,
     return config_files
 
 
-def _load_from_yaml(files: List[str], instances: Dict[str, Any]
-                    ) -> Tuple[Dict[str, Any], Dict[str, str], Dict[str, Any]]:
+def load_from_yaml(files: List[str], instances: Dict[str, Any]
+                   ) -> Tuple[Dict[str, Any], Dict[str, str], Dict[str, Any]]:
     """
     Load constants/keywords from a yaml file
 
@@ -327,7 +327,7 @@ def _load_from_yaml(files: List[str], instances: Dict[str, Any]
              list of instances (either Const or Keyword instances)
     """
     # set function name (cannot break here --> no access to inputs)
-    func_name = display_func('_load_from_yaml', __NAME__)
+    func_name = display_func('load_from_yaml', __NAME__)
     # -------------------------------------------------------------------------
     # load constants from yaml file
     # -------------------------------------------------------------------------
