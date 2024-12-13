@@ -53,6 +53,31 @@ KeywordDict = constant_functions.KeywordDict
 # =============================================================================
 # Define functions
 # =============================================================================
+def load_into_params(values: Dict[str, Any],
+                     sources: Dict[str, str],
+                     instances: Dict[str, Const]) -> ParamDict:
+    """
+    Load a set of values/sources/instances into a parameter dictionary
+    (recursively if there are dictionary/ParamDict instances)
+
+    :param values: dict, the values to load
+    """
+    # set up a new parameter dictionary
+    params = ParamDict()
+    # loop around keys
+    for key in instances:
+        # if we have a dictionary or a ParamDict instance recursively load
+        #  into a sub-PAramDict
+        if isinstance(values[key], (dict, ParamDict)):
+            params[key] = load_into_params(values[key], sources[key],
+                                           instances[key])
+        else:
+            params.set(key, values[key], source=sources[key],
+                       instance=instances[key])
+    # return the parameter dictionary
+    return params
+
+
 def load_parameters(config_list: List[Union[ConstDict, KeywordDict]] = None
                     ) -> ParamDict:
     """
@@ -72,13 +97,7 @@ def load_parameters(config_list: List[Union[ConstDict, KeywordDict]] = None
         values, sources, instances = clist.unpack(values, sources, instances)
     # ---------------------------------------------------------------------
     # push into a parameter dictionary
-    params = ParamDict(values)
-    # add to params
-    for key in instances:
-        # set source
-        params.set_source(key, sources[key])
-        # set instance (Const/Keyword instance)
-        params.set_instance(key, instances[key])
+    params = load_into_params(values, sources, instances)
     # return these
     return params
 

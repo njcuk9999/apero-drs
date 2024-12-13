@@ -333,6 +333,29 @@ def linear_minimization(vector: np.ndarray, sample: np.ndarray,
     return amp_out, recon_out
 
 
+def lin_mini_errors(y0, yerr0, sample):
+    y = y0.ravel()
+
+    if sample.shape[1] == y.shape[0]:
+        x = np.array(sample.T)
+    else:
+        x = np.array(sample)
+
+    errs = yerr0.ravel()  # np.array(err[i]).ravel()
+
+    # weights should be inverse of *square* error
+    res_wls = sm.WLS(y, x, weights=1.0 / errs ** 2, missing='drop').fit()
+
+    amps = res_wls.params
+    errs = res_wls.bse
+
+    recon = np.zeros_like(y0)
+    for i in range(x.shape[1]):
+        recon += amps[i] * x[:, i].reshape(y0.shape)
+
+    return amps, errs, recon
+
+
 def get_magic_grid(wave0: float, wave1: float, dv_grid: float = 500):
     """
     magic grid is a standard way of representing a wavelength vector it is set
