@@ -53,9 +53,9 @@ KeywordDict = constant_functions.KeywordDict
 # =============================================================================
 # Define functions
 # =============================================================================
-def load_into_params(values: Dict[str, Any],
-                     sources: Dict[str, str],
-                     instances: Dict[str, Const]) -> ParamDict:
+def load_into_params(values: Dict[str, Any], sources: Dict[str, str],
+                     instances: Dict[str, Const],
+                     params: ParamDict = None) -> ParamDict:
     """
     Load a set of values/sources/instances into a parameter dictionary
     (recursively if there are dictionary/ParamDict instances)
@@ -63,7 +63,8 @@ def load_into_params(values: Dict[str, Any],
     :param values: dict, the values to load
     """
     # set up a new parameter dictionary
-    params = ParamDict()
+    if params is None:
+        params = ParamDict()
     # loop around keys
     for key in instances:
         # if we have a dictionary or a ParamDict instance recursively load
@@ -355,6 +356,8 @@ def load_from_yaml(files: List[str], instances: Dict[str, Any]
         # load the yaml in the standard way
         yaml_dict = base.load_yaml(filename)
         # flatten this dictionary
+        # TODO: This is the problem
+        #       This does not allow nested dictionaries
         flat_dict = base_class.FlatYamlDict(yaml_dict, max_level=3)
         # get key and value pairs
         fkey, fvalue = flat_dict.items()

@@ -19,6 +19,7 @@ from scipy.ndimage import median_filter, zoom
 from scipy.ndimage.morphology import binary_dilation
 from scipy.optimize import curve_fit
 from scipy.special import erf, erfinv
+import statsmodels.api as statsmodels
 
 from aperocore.base import base
 from aperocore.math import fast
@@ -344,7 +345,8 @@ def lin_mini_errors(y0, yerr0, sample):
     errs = yerr0.ravel()  # np.array(err[i]).ravel()
 
     # weights should be inverse of *square* error
-    res_wls = sm.WLS(y, x, weights=1.0 / errs ** 2, missing='drop').fit()
+    res_wls = statsmodels.WLS(y, x, weights=1.0 / errs ** 2,
+                              missing='drop').fit()
 
     amps = res_wls.params
     errs = res_wls.bse

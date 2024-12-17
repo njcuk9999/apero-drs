@@ -21,6 +21,7 @@ ruamel.yaml==0.17.31
 scipy==1.10.1
 SQLAlchemy==2.0.15
 sqlalchemy_utils==0.41.1
+statsmodels==0.14.0
 tqdm==4.65.0
 wget==3.2
 yagmail==0.15.293
