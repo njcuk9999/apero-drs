@@ -1400,6 +1400,8 @@ class CKCaseINSDict(base_class.CaseInsensitiveDict):
         """
         # set class name
         self.class_name = 'CKCaseINSDict'
+        # the print format
+        self.pfmt = '\t{0:30s}{1:45s}'
         # super from dict
         super(CKCaseINSDict, self).__init__(*arg, **kw)
 
@@ -1433,13 +1435,6 @@ class CKCaseINSDict(base_class.CaseInsensitiveDict):
         """
         # then do the normal dictionary setting
         super(CKCaseINSDict, self).__setitem__(key, value)
-
-    def __str__(self):
-        """
-        Return the string representation of the class
-        :return: str, the string representation
-        """
-        return '{0}[CaseInsensitiveDict]'.format(self.class_name)
 
     def __repr__(self) -> str:
         """

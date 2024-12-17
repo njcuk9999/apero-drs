@@ -573,6 +573,34 @@ def bin_by_time(params: Any, time_value: Time, day_frac: float) -> Time:
     return Time(local_binned_time_value, format='mjd')
 
 
+def create_structure_like(d, value=''):
+    """Recursively create a dictionary structure with the same keys as `d`,
+    but with all values replaced by `value`.
+    """
+    # If the current element is a dictionary
+    if isinstance(d, dict):
+        return {k: create_structure_like(v, value) for k, v in d.items()}
+    # Replace non-dict values with 'value'
+    else:
+        return value
+
+
+def map_nested_attribute_dict(yaml_d, obj_d, attr_name, dict_types=(dict,)):
+    """
+    Recursively create a dictionary matching the structure of yaml_d,
+    but with values fetched from obj_d using the specified attribute.
+    """
+    result = {}
+    for key, yaml_value in yaml_d.items():
+        if isinstance(yaml_value, dict_types):
+            # Recursively process nested dictionaries
+            result[key] = map_nested_attribute_dict(yaml_value, obj_d.get(key, {}), attr_name)
+        else:
+            # Fetch the object dictionary at this level
+            result[key] = getattr(obj_d, attr_name).get(key, None)
+    return result
+
+
 # =============================================================================
 # Start of code
 # =============================================================================

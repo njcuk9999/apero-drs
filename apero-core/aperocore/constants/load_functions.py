@@ -72,8 +72,24 @@ def load_into_params(values: Dict[str, Any], sources: Dict[str, str],
         if isinstance(values[key], (dict, ParamDict)):
             params[key] = load_into_params(values[key], sources[key],
                                            instances[key])
+        # if we don't have an instance this is a new constants - which shouldn't
+        #   really be allowed - we'll display a warning and hope the
+        #   developer adds the constant to instances
+        elif key not in instances:
+
+            wmsg = ('Key "{0}" not found in instances. To remove this warning'
+                    ' make sure "{0}" is removes from input or added to the '
+                    ' constants definitions for this module.')
+            wargs = [key]
+            AperoCodedWarning(None, None, targs=wargs, message=wmsg)
+            # Push into params
+            params.set(key, values[key], instance=None,
+                       source=sources[key])
         else:
-            params.set(key, values[key], source=sources[key],
+            # verify the value
+            value = instances[key].validate(values[key], source=sources[key])
+            # set the value
+            params.set(key, value, source=sources[key],
                        instance=instances[key])
     # return the parameter dictionary
     return params
@@ -142,14 +158,7 @@ def load_config(instruments: Dict[str, Any],
         # get instrument user config files
         files = _get_file_names(params, instrument)
         # load keys, values, sources and instances from yaml files
-        ovalues, osources, oinstances = load_from_yaml(files, params.instances)
-        # add to params
-        for key in ovalues:
-            # set value
-            params[key] = ovalues[key]
-            # set instance (Const/Keyword instance)
-            params.set_instance(key, oinstances[key])
-            params.set_source(key, osources[key])
+        params = load_from_yaml(files, params)
     # finally push instrument into params
     params.set('INST', instrument_instance, source=func_name)
     # save sources to params
@@ -335,8 +344,7 @@ def _get_file_names(params: ParamDict,
     return config_files
 
 
-def load_from_yaml(files: List[str], instances: Dict[str, Any]
-                   ) -> Tuple[Dict[str, Any], Dict[str, str], Dict[str, Any]]:
+def load_from_yaml(files: List[str], params: ParamDict = None) -> ParamDict:
     """
     Load constants/keywords from a yaml file
 
@@ -348,50 +356,25 @@ def load_from_yaml(files: List[str], instances: Dict[str, Any]
     """
     # set function name (cannot break here --> no access to inputs)
     func_name = display_func('load_from_yaml', __NAME__)
+    # deal with no parameters
+    if params is None:
+        params = ParamDict()
     # -------------------------------------------------------------------------
     # load constants from yaml file
     # -------------------------------------------------------------------------
-    fvalues, fsources = dict(), dict()
+    # loop around files
     for filename in files:
         # load the yaml in the standard way
         yaml_dict = base.load_yaml(filename)
-        # flatten this dictionary
-        # TODO: This is the problem
-        #       This does not allow nested dictionaries
-        flat_dict = base_class.FlatYamlDict(yaml_dict, max_level=3)
-        # get key and value pairs
-        fkey, fvalue = flat_dict.items()
-        # add to fkeys and fvalues (loop around fkeys)
-        for it in range(len(fkey)):
-            # get this iterations values
-            fkeyi, fvaluei = fkey[it], fvalue[it]
-            # do not add keys if value is None
-            if fvaluei is None:
-                continue
-            # if this is not a new constant print warning
-            if fkeyi in fvalues:
-                # log warning message
-                wargs = [fkeyi, filename, ','.join(set(fsources)), filename]
-                AperoCodedWarning(None, '10-002-00002', targs=wargs)
-            # append to list
-            fvalues[fkeyi] = fvaluei
-            fsources[fkeyi] = filename
-    # -------------------------------------------------------------------------
-    # Now need to test the values are correct
-    # -------------------------------------------------------------------------
-    # storage for returned values
-    out_values, out_sources, out_instances = dict(), dict(), dict()
-    # loop around modules
-    for key in instances:
-        if key in fvalues:
-            # if we are then we need to validate
-            value = instances[key].validate(fvalues[key], source=fsources[key])
-            # now append to output lists
-            out_values[key] = value
-            out_sources[key] = str(fsources[key])
-            out_instances[key] = instances[key]
-    # return keys values and sources
-    return out_values, out_sources, out_instances
+        # load all parameter instances into params
+        instances = drs_misc.map_nested_attribute_dict(yaml_dict, params,
+                                                       'instances')
+        # for sources we copy the structure of yaml_dict
+        sources = drs_misc.create_structure_like(yaml_dict, func_name)
+        # load into params
+        params = load_into_params(yaml_dict, sources, instances, params)
+    # return updated parameters
+    return params
 
 
 # =============================================================================

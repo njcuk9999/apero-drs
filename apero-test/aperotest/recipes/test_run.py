@@ -37,7 +37,7 @@ WLOG = drs_log.wlog
 # =============================================================================
 def main(yaml_file: Optional[str] = None):
     # print splash
-    general.start_splash('SCARVS Run')
+    general.start_splash('APERO Test Run')
     # get parameters
     params = startup.get_params(yaml_file, description=__description__,
                                 name='RUN')
@@ -55,6 +55,8 @@ def main(yaml_file: Optional[str] = None):
             msg = 'Key = {0}, Value = {1}'
             margs = [key, params[key]]
             WLOG(params, '', msg.format(*margs), wrap=False)
+
+    print(params.sources)
     # -------------------------------------------------------------------------
     # print splash
     general.end_splash()

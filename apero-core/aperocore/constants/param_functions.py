@@ -221,7 +221,7 @@ class ParamDict(CaseInDict):
         :rtype: str
         """
         # get string from string print
-        return self._string_print()
+        return self.string_print()
 
     def __str__(self) -> str:
         """
@@ -231,7 +231,7 @@ class ParamDict(CaseInDict):
         :rtype: str
         """
         # get string from string print
-        return self._string_print()
+        return self.string_print()
 
     def count_used(self, key: str, start_value: int = 0):
         """
@@ -781,7 +781,8 @@ class ParamDict(CaseInDict):
             self.set(key, paramdict[key], ksource, kinst,
                      record_use=False)
 
-    def _string_print(self) -> str:
+    def string_print(self, full: bool = True, indent=0,
+                     name: str = None) -> str:
         """
         Constructs a string representation of the instance
 
@@ -791,8 +792,13 @@ class ParamDict(CaseInDict):
         # get keys and values
         keys = list(self.data.keys())
         values = list(self.data.values())
+
+        prefix = ' ' * indent
         # string storage
-        return_string = 'ParamDict:\n'
+        if name is not None:
+            return_string = f'{prefix}ParamDict[{name}]:\n'
+        else:
+            return_string = f'{prefix}ParamDict\n'
         strvalues = []
         # loop around each key in keys
         for k_it, key in enumerate(keys):
@@ -801,8 +807,12 @@ class ParamDict(CaseInDict):
             # deal with no source
             if key not in self.sources:
                 self.sources[key] = 'None'
+            # deal with a full printout
+            if full and isinstance(value, ParamDict):
+                strvalues += [value.string_print(full=True, indent=indent+4,
+                                                 name=key)]
             # print value
-            if type(value) in [list, np.ndarray]:
+            elif type(value) in [list, np.ndarray]:
                 sargs = [key, list(value), self.sources[key], self.pfmt]
                 strvalues += _string_repr_list(*sargs)
             elif type(value) in [dict, OrderedDict, ParamDict]:
@@ -815,7 +825,7 @@ class ParamDict(CaseInDict):
                 strvalues += [self.pfmt.format(*sargs)]
         # combine list into single string
         for string_value in strvalues:
-            return_string += '\n {0}'.format(string_value)
+            return_string += '\n{0} {1}'.format(prefix, string_value)
         # return string
         return return_string + '\n'
 

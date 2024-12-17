@@ -68,16 +68,9 @@ def get_params(yaml_file: Optional[str] = None,
     # get constants from user config files
     if from_file:
         # get instrument user config files
-        largs = [[os.path.realpath(yaml_file)], params.instances]
+        largs = [[os.path.realpath(yaml_file)], params]
         # load keys, values, sources and instances from yaml files
-        ovalues, osources, oinstances = load_functions.load_from_yaml(*largs)
-        # add to params
-        for key in ovalues:
-            # set value
-            params[key] = ovalues[key]
-            # set instance (Const/Keyword instance)
-            params.set_instance(key, oinstances[key])
-            params.set_source(key, osources[key])
+        params = load_functions.load_from_yaml(*largs)
 
     # set the yaml file
     params['GLOBAL']['YAML_FILE'] = yaml_file

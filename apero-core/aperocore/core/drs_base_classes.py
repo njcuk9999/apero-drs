@@ -59,6 +59,8 @@ class CaseInsensitiveDict(UserDict):
     #  not true for dict
     # set class name
     class_name = 'CaseInsensitiveDict'
+    # the print format
+    pfmt = '\t{0:30s}{1:45s}'
 
     def __init__(self, *arg, **kw):
         """
@@ -212,7 +214,16 @@ class CaseInsensitiveDict(UserDict):
         Return the string representation of the class
         :return: str, the string representation
         """
-        return '{0}[UserDict]'.format(self.class_name)
+        # Start the return string
+        return_string = f'{self.class_name}:\n'
+        # Print all keys and value pairs
+        for key, value in self.data.items():
+            # force string of value
+            value = str(value)
+            # add to return string
+            return_string += self.pfmt.format(key, value) + '\n'
+        # return return_string
+        return return_string
 
     def __repr__(self) -> str:
         """
@@ -603,6 +614,7 @@ class Path2Dict:
             mydict = mydict[path_it]
         # return the value
         return True
+
 
 # =============================================================================
 # Define Custom classes
