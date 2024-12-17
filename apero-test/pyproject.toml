@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools", "wheel", "numpy"]
+build-backend = "setuptools.build_meta"
+
+
+[project]
+dynamic = ["version", "dependencies"]
+name = 'aperotest'
+authors = [
+    {name = 'Neil Cook', email = 'neil.james.cook@gmail.com'},
+]
+description = 'APERO test module (using apero-core)'
+readme = {file = "README.md", content-type = "text/markdown"}
+license = {file = 'LICENSE'}
+requires-python = ">=3.9"
+
+[project.urls]
+Homepage = 'http://apero.exoplanets.ca'
+Repository = 'https://github.com/njcuk9999/{module}'
+
+[project.scripts]
+test_setup = "aperotest:recipes.test_setup.run"
+test_run = "aperotest:recipes.test_run.run"
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
