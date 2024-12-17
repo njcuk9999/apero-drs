@@ -85,12 +85,14 @@ def load_into_params(values: Dict[str, Any], sources: Dict[str, str],
             # Push into params
             params.set(key, values[key], instance=None,
                        source=sources[key])
+        elif values[key] is None:
+            # set the value
+            params.set(key, None, source=sources[key], instance=instances[key])
         else:
             # verify the value
             value = instances[key].validate(values[key], source=sources[key])
             # set the value
-            params.set(key, value, source=sources[key],
-                       instance=instances[key])
+            params.set(key, value, source=sources[key], instance=instances[key])
     # return the parameter dictionary
     return params
 
