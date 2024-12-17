@@ -928,12 +928,12 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         # only if we have more than one iteration
         # ---------------------------------------------------------------------
         # find the place where the water residuals null to zero (intercept)
-        expo_water_fit = np.polyfit(slope_water_list[-2:],
-                                    expo_water_list[-2:], deg=1)
+        expo_water_fit = np.polyfit(slope_water_list[-5:],
+                                    expo_water_list[-5:], deg=1)
         expo_water = expo_water_fit[1]
         # find the place where the others residuals null to zero (intercept)
-        expo_others_fit = np.polyfit(slope_others_list[-2:],
-                                     expo_others_list[-2:], deg=1)
+        expo_others_fit = np.polyfit(slope_others_list[-5:],
+                                     expo_others_list[-5:], deg=1)
         expo_others = expo_others_fit[1]
         # convergence check
         water_part = (expo_water_list[-1] - expo_water_list[-2])
