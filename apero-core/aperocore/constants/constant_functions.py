@@ -847,7 +847,7 @@ class ConstantsDict:
             if isinstance(const_value, ConstantsDict):
                 pass
             elif self.storage[key].value is not None:
-                comment += '\n\tDefault value: {0}'.format(str(const_value))
+                comment += '\n\tDefault value={0}'.format(str(const_value))
             # ---------------------------------------------------------------------
             # get active
             active = self.storage[key].active
