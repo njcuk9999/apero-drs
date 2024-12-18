@@ -65,13 +65,27 @@ def load_into_params(values: Dict[str, Any], sources: Dict[str, str],
     # set up a new parameter dictionary
     if params is None:
         params = ParamDict()
+    # deal with instances being None
+    if instances is None:
+        return params
     # loop around keys
     for key in instances:
+        # deal with no key in value
+        if key not in values:
+            values[key] = None
+        # deal with no key in sources
+        if key not in sources:
+            sources[key] = 'Unknown'
         # if we have a dictionary or a ParamDict instance recursively load
         #  into a sub-PAramDict
         if isinstance(values[key], (dict, ParamDict)):
             params[key] = load_into_params(values[key], sources[key],
                                            instances[key])
+            # make sure parent instances/sources has the dictionaries of
+            #   child instances/sources (otherwise we get in a mess)
+            if isinstance(params[key], ParamDict):
+                params.instances[key] = params[key].instances
+                params.sources[key] = params[key].sources
         # if we don't have an instance this is a new constants - which shouldn't
         #   really be allowed - we'll display a warning and hope the
         #   developer adds the constant to instances
@@ -119,7 +133,6 @@ def load_parameters(config_list: List[Union[ConstDict, KeywordDict]] = None
     params = load_into_params(values, sources, instances)
     # return these
     return params
-
 
 
 def load_config(instruments: Dict[str, Any],
@@ -209,6 +222,98 @@ def load_pconfig(instruments: Dict[str, Any],
                               message=emsg.format(*eargs))
 
 
+def load_from_yaml(files: List[str], params: ParamDict = None) -> ParamDict:
+    """
+    Load constants/keywords from a yaml file
+
+    :param files: list of strings, the file paths to the config/const files
+    :param instances: list of Consts, the module paths
+
+    :return: list of keys (str), list of values (Any), list of sources (str),
+             list of instances (either Const or Keyword instances)
+    """
+    # set function name (cannot break here --> no access to inputs)
+    func_name = display_func('load_from_yaml', __NAME__)
+    # deal with no parameters
+    if params is None:
+        params = ParamDict()
+    # define dict types
+    dict_types = (dict, ParamDict, ConstDict)
+    # -------------------------------------------------------------------------
+    # load constants from yaml file
+    # -------------------------------------------------------------------------
+    # loop around files
+    for filename in files:
+        # load the yaml in the standard way
+        yaml_dict = base.load_yaml(filename)
+        # load all parameter instances into params
+        margs = [params, params, 'instances', dict_types]
+        instances = drs_misc.map_nested_attribute_dict(*margs)
+        # for sources we copy the structure of yaml_dict
+        sources = drs_misc.create_structure_like(yaml_dict, func_name)
+        # load into params
+        params = load_into_params(yaml_dict, sources, instances, params)
+    # return updated parameters
+    return params
+
+
+def load_from_cmd_args(params: ParamDict, args: Dict[str, Any],
+                       source: str = None) -> ParamDict:
+    """
+    Push command line arguments into the parameter dictionary
+
+    :param params: ParamDict, the parameter dictionary to load into
+
+    :return: ParamDict containing the loaded constants
+    """
+    # set up a new parameter dictionary
+    if params is None:
+        params = ParamDict()
+    # deal with instances being None
+    if params.instances is None:
+        return params
+    # deal with source
+    if source is None:
+        source = 'command line arguments'
+    # loop around keys
+    for key in params.instances:
+        # set up source
+        # if we have a dictionary or a ParamDict instance recursively load
+        #  into a sub-PAramDict
+        if isinstance(params[key], ParamDict):
+            params[key] = load_from_cmd_args(params[key], args, source)
+            # make sure parent instances/sources has the dictionaries of
+            #   child instances/sources (otherwise we get in a mess)
+            if isinstance(params[key], ParamDict):
+                params.sources[key] = params[key].sources
+        # else we try to get key from args
+        else:
+            # get the instance from params
+            pinstance = params.instances[key]
+            # get key from instances
+            cmdkey = pinstance.cmd_arg
+            # deal with no key
+            if cmdkey is None:
+                continue
+            # deal with no key in args
+            if cmdkey not in args:
+                continue
+            # deal with None (to not update)
+            if args[cmdkey] is None:
+                continue
+            # verify the value
+            value = params.instances[key].validate(args[cmdkey],
+                                                   source=source)
+            # set the value
+            params.set(key, value, source=source, instance=pinstance)
+    # return the parameter dictionary
+    return params
+
+
+# =============================================================================
+# Config loading private functions
+# =============================================================================
+
 def warninglogger(instruments: Dict[str, Any], warnlist: Any,
                   funcname: Union[str, None] = None):
     """
@@ -286,9 +391,6 @@ def _save_config_params(params: ParamDict) -> ParamDict:
     return params
 
 
-# =============================================================================
-# Config loading private functions
-# =============================================================================
 def _get_file_names(params: ParamDict,
                     instrument: Union[str, None] = None) -> List[str]:
     """
@@ -344,41 +446,6 @@ def _get_file_names(params: ParamDict,
         AperoCodedWarning(None,'00-003-00036', targs=wargs)
     # return files
     return config_files
-
-
-def load_from_yaml(files: List[str], params: ParamDict = None) -> ParamDict:
-    """
-    Load constants/keywords from a yaml file
-
-    :param files: list of strings, the file paths to the config/const files
-    :param instances: list of Consts, the module paths
-
-    :return: list of keys (str), list of values (Any), list of sources (str),
-             list of instances (either Const or Keyword instances)
-    """
-    # set function name (cannot break here --> no access to inputs)
-    func_name = display_func('load_from_yaml', __NAME__)
-    # deal with no parameters
-    if params is None:
-        params = ParamDict()
-    # define dict types
-    dict_types = (dict, ParamDict, ConstDict)
-    # -------------------------------------------------------------------------
-    # load constants from yaml file
-    # -------------------------------------------------------------------------
-    # loop around files
-    for filename in files:
-        # load the yaml in the standard way
-        yaml_dict = base.load_yaml(filename)
-        # load all parameter instances into params
-        margs = [params, params, 'instances', dict_types]
-        instances = drs_misc.map_nested_attribute_dict(*margs)
-        # for sources we copy the structure of yaml_dict
-        sources = drs_misc.create_structure_like(yaml_dict, func_name)
-        # load into params
-        params = load_into_params(yaml_dict, sources, instances, params)
-    # return updated parameters
-    return params
 
 
 # =============================================================================

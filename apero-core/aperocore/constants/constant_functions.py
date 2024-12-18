@@ -81,7 +81,7 @@ class Const:
                  author: Union[str, List[str], None] = None,
                  parent: Union[str, None] = None,
                  output: bool = True, not_none: bool = False,
-                 modes: str = '', length: int = None):
+                 modes: str = '', length: int = None, cmd_arg: str = None):
         """
         Construct the constant instance
 
@@ -114,6 +114,9 @@ class Const:
                      (used as a filter so not present in specific instrument
                       setups)
         :param length: int, the length of the constant (if it is a list)
+        :param cmd_arg: str, the command line argument to use for this constant
+                        can be None if command line arguments are dealt with
+                        another way
 
         :returns: None (constructor)
         """
@@ -172,6 +175,8 @@ class Const:
         self.modes = modes
         # set length
         self.length = length
+        # set command line argument
+        self.cmd_arg = cmd_arg
 
     def __getstate__(self) -> dict:
         """
@@ -407,7 +412,8 @@ class ConstantsDict:
                  parent: Union[str, None] = None,
                  output: bool = True,
                  not_none: bool = False,
-                 modes: str = '', length: int = None):
+                 modes: str = '', length: int = None,
+                 cmd_arg: str = None):
         """
         Add a constant instance to the dict
 
@@ -440,6 +446,9 @@ class ConstantsDict:
                       (used as a filter so not present in specific instrument
                         setups)
         :param length: int, the length of the constant (if it is a list)
+        :param cmd_arg: str, the command line argument to use for this constant
+                        can be None if command line arguments are dealt with
+                        another way
 
         :returns: None (constructor)
         """
@@ -455,7 +464,7 @@ class ConstantsDict:
         constants = Const(name, value, dtype, dtypei, options, maximum, minimum,
                           source, unit, default, datatype, dataformat, group,
                           user, active, description, author, parent, output,
-                          not_none, modes, length)
+                          not_none, modes, length, cmd_arg)
         # add to storage
         self.storage[name] = constants
 
@@ -481,7 +490,8 @@ class ConstantsDict:
             author: Union[str, List[str], None] = None,
             parent: Union[str, None] = None,
             output: bool = True, not_none: bool = False,
-            modes: str = None, length: int = None):
+            modes: str = None, length: int = None,
+            cmd_arg: str = None):
         """
         Add a constant instance to the dict
 
@@ -508,6 +518,15 @@ class ConstantsDict:
         :param parent: str, the parent of this constant (if a constant is
                        related to or comes from another constant)
         :param output: bool if False does not put in parameter output table
+        :param not_none: bool, if True the constant is required and prompts
+                         may ask for this value if set to None
+        :param modes: str, define which modes this constant can be used for
+                      (used as a filter so not present in specific instrument
+                        setups)
+        :param length: int, the length of the constant (if it is a list)
+        :param cmd_arg: str, the command line argument to use for this constant
+                        can be None if command line arguments are dealt with
+                        another way
         """
         if name not in self.storage:
             emsg = ('Constant "{0}" not found in storage. '
@@ -585,6 +604,9 @@ class ConstantsDict:
         # update length
         if length is not None:
             self.storage[name].length = length
+        # update cmd_arg
+        if cmd_arg is not None:
+            self.storage[name].cmd_arg = cmd_arg
 
     def copy(self, source: str) -> 'ConstantsDict':
         # create new storage
