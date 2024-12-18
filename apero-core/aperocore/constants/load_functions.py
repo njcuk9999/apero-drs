@@ -357,8 +357,12 @@ def cmd_args_from_clist(description: str = None,
         if include_keys is not None:
             if argname not in include_keys:
                 continue
+        # get the name keyword
+        name = kwarg_list[argname]['name']
+        # remove from kwargs
+        kwarg_list[argname].pop('name')
         # add arguments
-        parser.add_argument(**kwarg_list[argname])
+        parser.add_argument(name ,**kwarg_list[argname])
     # parse arguments
     args = parser.parse_args()
     # return arguments
