@@ -90,7 +90,7 @@ def load_into_params(values: Dict[str, Any], sources: Dict[str, str],
         #   really be allowed - we'll display a warning and hope the
         #   developer adds the constant to instances
         elif key not in instances:
-
+            # otherwise warn we are adding a foreign key/value to params
             wmsg = ('Key "{0}" not found in instances. To remove this warning'
                     ' make sure "{0}" is removes from input or added to the '
                     ' constants definitions for this module.')
@@ -99,12 +99,21 @@ def load_into_params(values: Dict[str, Any], sources: Dict[str, str],
             # Push into params
             params.set(key, values[key], instance=None,
                        source=sources[key])
-        elif values[key] is None:
+        # if the value is None and not currently in params set the value
+        #   to None
+        elif values[key] is None and key not in params:
             # set the value
             params.set(key, None, source=sources[key], instance=instances[key])
+        # if the value is None and is already set do nothing
+        elif values[key] is None:
+            continue
+        # otherwise we verify the value before adding it
         else:
             # verify the value
             value = instances[key].validate(values[key], source=sources[key])
+            # do not update key if value if None and it is already set
+            if value is None and key in params:
+                continue
             # set the value
             params.set(key, value, source=sources[key], instance=instances[key])
     # return the parameter dictionary
@@ -280,12 +289,15 @@ def load_from_cmd_args(params: ParamDict, args: Dict[str, Any],
         # set up source
         # if we have a dictionary or a ParamDict instance recursively load
         #  into a sub-PAramDict
-        if isinstance(params[key], ParamDict):
+        if isinstance(params[key], (dict, ParamDict)):
             params[key] = load_from_cmd_args(params[key], args, source)
             # make sure parent instances/sources has the dictionaries of
             #   child instances/sources (otherwise we get in a mess)
             if isinstance(params[key], ParamDict):
                 params.sources[key] = params[key].sources
+        # skip if we don't have an instance
+        elif params.instances[key] is None:
+            continue
         # else we try to get key from args
         else:
             # get the instance from params
