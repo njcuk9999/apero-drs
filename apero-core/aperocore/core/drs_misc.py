@@ -595,9 +595,13 @@ def map_nested_attribute_dict(yaml_d, obj_d, attr_name, dict_types=(dict,)):
         if isinstance(yaml_value, dict_types):
             # Recursively process nested dictionaries
             result[key] = map_nested_attribute_dict(yaml_value, obj_d.get(key, {}), attr_name)
-        else:
+        elif hasattr(obj_d, attr_name):
             # Fetch the object dictionary at this level
             result[key] = getattr(obj_d, attr_name).get(key, None)
+        # if we don't have instances we don't have a object for this key
+        else:
+            result[key] = None
+    # return the results
     return result
 
 
