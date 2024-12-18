@@ -409,7 +409,6 @@ class Const:
 
         else:
             kwargs['action'] = 'store'
-            kwargs['nargs'] = 1
             kwargs['type'] = self.dtype
             kwargs['default'] = self.default
             if self.options is not None:
