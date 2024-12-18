@@ -37,16 +37,22 @@ ParamDict = param_functions.ParamDict
 WLOG = drs_log.wlog
 # Define paths to create
 PATHS = ['DATA_PATH', 'PLOT_PATH']
+# Set the description of APERO Core
+DESCRIPTIONS = dict()
+DESCRIPTIONS['aperotest.recipes.test_setup'] = 'SOSSISSE - SOSS Inspired SpectroScopic Extraction'
+DESCRIPTIONS['aperotest.recipes.test_run'] = 'Setup up SOSSISSE directories'
 
+INPUTARGS = dict()
+INPUTARGS['aperotest.recipes.test_run'] = ['GLOBAL.YAML_FILE']
+INPUTARGS['aperotest.recipes.test_setup'] = ['GLOBAL.YAML_FILE']
 
 # =============================================================================
 # Define functions
 # =============================================================================
 def get_params(yaml_file: Optional[str] = None,
-               description: str = None,
-               yaml_required: bool = True,
                from_file: bool = True,
-               name: Optional[str] = None) -> ParamDict:
+               name: Optional[str] = None,
+               **kwargs) -> ParamDict:
     """
     Get the parameters (default, command line and function call)
 
@@ -56,21 +62,24 @@ def get_params(yaml_file: Optional[str] = None,
     :param from_file:
     :return:
     """
+    description = DESCRIPTIONS.get(name, 'UNKNOWN')
+    inputs = INPUTARGS.get(name, None)
     # get the default arguments
     params = load_functions.load_parameters([constants.CDict])
     # set name
     if name is not None:
         params['RECIPE_SHORT'] = name
     # get the yaml file
-    yaml_file = command_line_args(description=description,
-                                  yaml_required=yaml_required,
-                                  yaml_file=yaml_file)
+    args = load_functions.cmd_args_from_clist(description, [constants.CDict],
+                                              inputs)
     # get constants from user config files
     if from_file:
         # get instrument user config files
         largs = [[os.path.realpath(yaml_file)], params]
         # load keys, values, sources and instances from yaml files
         params = load_functions.load_from_yaml(*largs)
+    # push in from command line arguments
+    params = load_functions.load_from_cmd_args(params, args, kwargs)
 
     # set the yaml file
     params['GLOBAL']['YAML_FILE'] = yaml_file

@@ -336,7 +336,7 @@ def load_from_cmd_args(params: ParamDict, cmd_kwargs: Dict[str, Any],
 
 def cmd_args_from_clist(description: str = None,
                         config_list: List[Union[ConstDict, KeywordDict]] = None,
-                        inlcude_keys: List[str] = None,
+                        include_keys: List[str] = None,
                         ) -> Dict[str, Any]:
     """
     Get command line arguments from the constants dictionary
@@ -354,8 +354,8 @@ def cmd_args_from_clist(description: str = None,
     # loop around all keys stored in dictionary
     for argname in kwarg_list:
         # deal with include list
-        if inlcude_keys is not None:
-            if argname not in inlcude_keys:
+        if include_keys is not None:
+            if argname not in include_keys:
                 continue
         # add arguments
         parser.add_argument(**kwarg_list[argname])

@@ -406,6 +406,15 @@ class Const:
         if self.cmd_kwargs is not None:
             kwargs.update(self.cmd_kwargs)
 
+        else:
+            kwargs['name'] = f'--{self.cmd_arg}'
+            kwargs['action'] = 'store'
+            kwargs['nargs'] = 1
+            kwargs['type'] = self.dtype
+            kwargs['default'] = self.default
+            if self.options is not None:
+                kwargs['choices'] = self.options
+
         # TODO: Add action here
         # ------------------------------------------------------------------
         # return the kwargs
@@ -724,7 +733,7 @@ class ConstantsDict:
                 kwarg_list = value.cmd_args_from_clist(kwarg_list,
                                                        parent=outkey)
             # otherwise if we have a Const we get the kwargs
-            elif isinstance(self.storage[key].value, Const):
+            elif isinstance(self.storage[key], Const):
                 # get the kwargs
                 kwargs = self.storage[key].argparse_kwargs()
                 # if we have kwargs add them to the list

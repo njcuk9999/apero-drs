@@ -19,8 +19,7 @@ from aperotest.core import general
 
 # =============================================================================
 # Define variables
-# =============================================================================
-__NAME__ = 'aperotest.constants.constants.py'
+__NAME__ = 'aperotest.recipes.test_run'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
 __authors__ = base.__authors__
@@ -40,7 +39,7 @@ def main(yaml_file: Optional[str] = None):
     general.start_splash('APERO Test Run')
     # get parameters
     params = startup.get_params(yaml_file, description=__description__,
-                                name='RUN')
+                                name=__NAME__)
     # -------------------------------------------------------------------------
     # do something here
     # print a message for this function

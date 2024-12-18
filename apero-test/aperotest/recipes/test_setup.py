@@ -16,7 +16,7 @@ from aperotest.core import general
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'aperotest.constants.constants.py'
+__NAME__ = 'aperotest.recipes.test_setup'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
 __authors__ = base.__authors__
@@ -33,7 +33,7 @@ def main():
     general.start_splash('APERO Test Setup')
     # get parameters
     params = startup.get_params(yaml_required=False, from_file=False,
-                                description=__description__, name='SETUP')
+                                name=__NAME__)
     # setup using parameters
     startup.setup(params)
     # print splash
