@@ -313,14 +313,16 @@ def load_from_cmd_args(params: ParamDict, cmd_kwargs: Dict[str, Any],
             # deal with getting the value (from function arguments or command)
             if (cmdkey not in func_kwargs) and (cmdkey not in cmd_kwargs):
                 continue
-            elif cmdkey in func_kwargs:
+            elif (cmdkey in func_kwargs) and (func_kwargs[cmdkey] is not None):
                 value = func_kwargs[cmdkey]
                 # deal with source
                 source = 'function arguments'
-            else:
+            elif (cmdkey in cmd_kwargs) and (cmd_kwargs[cmdkey] is not None):
                 value = cmd_kwargs[cmdkey]
                 # deal with source
                 source = 'command line arguments'
+            else:
+                continue
             # -----------------------------------------------------------------
             # deal with None (to not update)
             if value is None:
