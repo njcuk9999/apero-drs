@@ -402,12 +402,12 @@ class Const:
         # set the name
         kwargs['dest'] = self.cmd_arg
         kwargs['help'] = self.description
+        kwargs['name'] = f'--{self.cmd_arg}'
         # if we have kwargs for the cmd then add them all here
         if self.cmd_kwargs is not None:
             kwargs.update(self.cmd_kwargs)
 
         else:
-            kwargs['name'] = f'--{self.cmd_arg}'
             kwargs['action'] = 'store'
             kwargs['nargs'] = 1
             kwargs['type'] = self.dtype
