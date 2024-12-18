@@ -81,7 +81,8 @@ class Const:
                  author: Union[str, List[str], None] = None,
                  parent: Union[str, None] = None,
                  output: bool = True, not_none: bool = False,
-                 modes: str = '', length: int = None, cmd_arg: str = None):
+                 modes: str = '', length: int = None, cmd_arg: str = None,
+                 cmd_kwargs: Dict[str, Any] = None):
         """
         Construct the constant instance
 
@@ -117,6 +118,8 @@ class Const:
         :param cmd_arg: str, the command line argument to use for this constant
                         can be None if command line arguments are dealt with
                         another way
+        :param cmd_kwargs: dict, the command line argument kwargs passed to
+                           argparse
 
         :returns: None (constructor)
         """
@@ -177,6 +180,8 @@ class Const:
         self.length = length
         # set command line argument
         self.cmd_arg = cmd_arg
+        # set command line argparse kwargs
+        self.cmd_kwargs = cmd_kwargs
 
     def __getstate__(self) -> dict:
         """
@@ -281,7 +286,8 @@ class Const:
                      description=self.description, author=self.author,
                      parent=self.parent, output=self.output,
                      not_none=self.not_none, modes=self.modes,
-                     length=self.length)
+                     length=self.length, cmd_arg=self.cmd_arg,
+                     cmd_kwargs=self.cmd_kwargs)
 
     def write_line(self, value: Any = None, fmt: str = 'ini') -> List[str]:
         """
@@ -382,6 +388,29 @@ class Const:
         # return lines
         return lines
 
+    def argparse_kwargs(self) -> Union[None, Dict[str, Any]]:
+        """
+        Create the argparse kwargs for this constant
+        """
+        # storage to return
+        kwargs = dict()
+        # ------------------------------------------------------------------
+        # deal with no arguments needed
+        if self.cmd_arg is None:
+            return None
+        # ------------------------------------------------------------------
+        # set the name
+        kwargs['dest'] = self.cmd_arg
+        kwargs['help'] = self.description
+        # if we have kwargs for the cmd then add them all here
+        if self.cmd_kwargs is not None:
+            kwargs.update(self.cmd_kwargs)
+
+        # TODO: Add action here
+        # ------------------------------------------------------------------
+        # return the kwargs
+        return kwargs
+
 
 class ConstantsDict:
     """
@@ -413,7 +442,7 @@ class ConstantsDict:
                  output: bool = True,
                  not_none: bool = False,
                  modes: str = '', length: int = None,
-                 cmd_arg: str = None):
+                 cmd_arg: str = None, cmd_kwargs: Dict[str, Any] = None):
         """
         Add a constant instance to the dict
 
@@ -449,6 +478,8 @@ class ConstantsDict:
         :param cmd_arg: str, the command line argument to use for this constant
                         can be None if command line arguments are dealt with
                         another way
+        :param cmd_kwargs: dict, the command line argument kwargs passed to
+                            argparse
 
         :returns: None (constructor)
         """
@@ -464,7 +495,7 @@ class ConstantsDict:
         constants = Const(name, value, dtype, dtypei, options, maximum, minimum,
                           source, unit, default, datatype, dataformat, group,
                           user, active, description, author, parent, output,
-                          not_none, modes, length, cmd_arg)
+                          not_none, modes, length, cmd_arg, cmd_kwargs)
         # add to storage
         self.storage[name] = constants
 
@@ -491,7 +522,7 @@ class ConstantsDict:
             parent: Union[str, None] = None,
             output: bool = True, not_none: bool = False,
             modes: str = None, length: int = None,
-            cmd_arg: str = None):
+            cmd_arg: str = None, cmd_kwargs: Dict[str, Any] = None):
         """
         Add a constant instance to the dict
 
@@ -527,6 +558,8 @@ class ConstantsDict:
         :param cmd_arg: str, the command line argument to use for this constant
                         can be None if command line arguments are dealt with
                         another way
+        :param cmd_kwargs: dict, the command line argument kwargs passed to
+                            argparse
         """
         if name not in self.storage:
             emsg = ('Constant "{0}" not found in storage. '
@@ -607,6 +640,9 @@ class ConstantsDict:
         # update cmd_arg
         if cmd_arg is not None:
             self.storage[name].cmd_arg = cmd_arg
+        # update cmd_kwargs
+        if cmd_kwargs is not None:
+            self.storage[name].cmd_kwargs = cmd_kwargs
 
     def copy(self, source: str) -> 'ConstantsDict':
         # create new storage
@@ -626,6 +662,15 @@ class ConstantsDict:
                sources: Dict[str, str] = None,
                instances: Dict[str, Union[Const]] = None
                ) -> Tuple[Dict[str, Any], Dict[str, str], Dict[str, Union[Const]]]:
+        """
+        Unpack the values/sources/instances from storage into dictionaries
+
+        :param values: dict, the values dictionary to update
+        :param sources: dict, the sources dictionary to update
+        :param instances: dict, the instances dictionary to update
+
+        :return: values, sources, instances (updated and unpacked)
+        """
         # create dictionaries if they don't exist
         if values is None:
             values = dict()
@@ -650,6 +695,43 @@ class ConstantsDict:
                 instances[key] = self.storage[key]
         # return all values
         return values, sources, instances
+
+    def cmd_args_from_clist(self,
+                            kwarg_list: Dict[str, Dict[str, Any]] = None,
+                            parent: str = None) -> Dict[str, Dict[str, Any]]:
+        """
+        Get command line arguments from constants list (recursively)
+
+        :param kwarg_list: dict, the dictionary of command line arguments
+
+        :return: dict, the updated dictionary of command line arguments
+        """
+        # deal with no dictionary provided
+        if kwarg_list is None:
+            kwarg_list = dict()
+        # loop around all keys stored in dictionary
+        for key in self.storage:
+            # get outkey
+            if parent is not None:
+                outkey = '{0}.{1}'.format(parent, key)
+            else:
+                outkey = key
+            # if the value itself is a ConstDict then we have to unpack that
+            if isinstance(self.storage[key].value, ConstantsDict):
+                # get nested Constants dictionary
+                value = self.storage[key].value
+                # do the same process for the nested dictionary
+                kwarg_list = value.cmd_args_from_clist(kwarg_list,
+                                                       parent=outkey)
+            # otherwise if we have a Const we get the kwargs
+            elif isinstance(self.storage[key].value, Const):
+                # get the kwargs
+                kwargs = self.storage[key].argparse_kwargs()
+                # if we have kwargs add them to the list
+                if kwargs is not None:
+                    kwarg_list[outkey] = kwargs
+        # return the dictionary
+        return kwarg_list
 
     # -------------------------------------------------------------------------
     # yaml functionality

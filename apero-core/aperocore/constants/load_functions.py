@@ -9,6 +9,7 @@ Created on 2024-09-06 at 16:30
 
 @author: cook
 """
+import argparse
 import os
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -266,12 +267,15 @@ def load_from_yaml(files: List[str], params: ParamDict = None) -> ParamDict:
     return params
 
 
-def load_from_cmd_args(params: ParamDict, args: Dict[str, Any],
-                       source: str = None) -> ParamDict:
+def load_from_cmd_args(params: ParamDict, cmd_kwargs: Dict[str, Any],
+                       func_kwargs: Dict[str, Any]) -> ParamDict:
     """
     Push command line arguments into the parameter dictionary
 
     :param params: ParamDict, the parameter dictionary to load into
+    :param cmd_kwargs: dict, the command line arguments
+    :param func_kwargs: dict, the function keyword arguments
+    :param source: str, the source of the command line arguments
 
     :return: ParamDict containing the loaded constants
     """
@@ -281,16 +285,14 @@ def load_from_cmd_args(params: ParamDict, args: Dict[str, Any],
     # deal with instances being None
     if params.instances is None:
         return params
-    # deal with source
-    if source is None:
-        source = 'command line arguments'
     # loop around keys
     for key in params.instances:
         # set up source
         # if we have a dictionary or a ParamDict instance recursively load
         #  into a sub-PAramDict
-        if isinstance(params[key], (dict, ParamDict)):
-            params[key] = load_from_cmd_args(params[key], args, source)
+        if isinstance(params[key], ParamDict):
+            params[key] = load_from_cmd_args(params[key], cmd_kwargs,
+                                             func_kwargs)
             # make sure parent instances/sources has the dictionaries of
             #   child instances/sources (otherwise we get in a mess)
             if isinstance(params[key], ParamDict):
@@ -307,19 +309,60 @@ def load_from_cmd_args(params: ParamDict, args: Dict[str, Any],
             # deal with no key
             if cmdkey is None:
                 continue
-            # deal with no key in args
-            if cmdkey not in args:
+            # -----------------------------------------------------------------
+            # deal with getting the value (from function arguments or command)
+            if (cmdkey not in func_kwargs) and (cmdkey not in cmd_kwargs):
                 continue
+            elif cmdkey in func_kwargs:
+                value = func_kwargs[cmdkey]
+                # deal with source
+                source = 'function arguments'
+            else:
+                value = cmd_kwargs[cmdkey]
+                # deal with source
+                source = 'command line arguments'
+            # -----------------------------------------------------------------
             # deal with None (to not update)
-            if args[cmdkey] is None:
+            if value is None:
                 continue
+            # -----------------------------------------------------------------
             # verify the value
-            value = params.instances[key].validate(args[cmdkey],
-                                                   source=source)
+            value = params.instances[key].validate(value, source=source)
             # set the value
             params.set(key, value, source=source, instance=pinstance)
     # return the parameter dictionary
     return params
+
+
+def cmd_args_from_clist(description: str = None,
+                        config_list: List[Union[ConstDict, KeywordDict]] = None,
+                        inlcude_keys: List[str] = None,
+                        ) -> Dict[str, Any]:
+    """
+    Get command line arguments from the constants dictionary
+
+    :return:
+    """
+    # start parser
+    parser = argparse.ArgumentParser(description=description)
+    # storage of flattened list
+    kwarg_list = dict()
+    # loop around config/constants/keyword dictionaries and merge
+    for clist in config_list:
+        # get the flattened list of arguments
+        kwarg_list = clist.cmd_args_from_clist(kwarg_list)
+    # loop around all keys stored in dictionary
+    for argname in kwarg_list:
+        # deal with include list
+        if inlcude_keys is not None:
+            if argname not in inlcude_keys:
+                continue
+        # add arguments
+        parser.add_argument(**kwarg_list[argname])
+    # parse arguments
+    args = parser.parse_args()
+    # return arguments
+    return vars(args)
 
 
 # =============================================================================
