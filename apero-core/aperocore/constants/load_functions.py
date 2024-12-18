@@ -361,6 +361,8 @@ def load_from_yaml(files: List[str], params: ParamDict = None) -> ParamDict:
     # deal with no parameters
     if params is None:
         params = ParamDict()
+    # define dict types
+    dict_types = (dict, ParamDict, ConstDict)
     # -------------------------------------------------------------------------
     # load constants from yaml file
     # -------------------------------------------------------------------------
@@ -369,8 +371,8 @@ def load_from_yaml(files: List[str], params: ParamDict = None) -> ParamDict:
         # load the yaml in the standard way
         yaml_dict = base.load_yaml(filename)
         # load all parameter instances into params
-        instances = drs_misc.map_nested_attribute_dict(params, params,
-                                                       'instances')
+        margs = [params, params, 'instances', dict_types]
+        instances = drs_misc.map_nested_attribute_dict(*margs)
         # for sources we copy the structure of yaml_dict
         sources = drs_misc.create_structure_like(yaml_dict, func_name)
         # load into params
