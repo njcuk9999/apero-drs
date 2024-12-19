@@ -148,7 +148,7 @@ class ParamDict(CaseInDict):
             return super(ParamDict, self).__getitem__(key)
         except KeyError:
             # log that parameter was not found in parameter dictionary
-            raise AperoCodedException(None, '00-003-00023', targs=[key])
+            raise AperoCodedException(None, '00-003-00024', targs=[key])
 
     def __setitem__(self, key: str, value: object,
                     source: Union[None, str] = None,
@@ -1119,6 +1119,34 @@ class ParamDict(CaseInDict):
             table[col] = np.array(tabledict[col], dtype=str)
         # return table
         return table
+
+    def get_path(self, path: str) -> Any:
+        """
+        Get the value at a given path (recursively search through sub dicts)
+
+        :param path: str, the path to the value
+
+        :raise AperoCodedException: if the path does not exist
+        :return: Any, the value at the given path
+        """
+        # get the individual keys
+        keys = path.split('.')
+        # storeage for used keys
+        used_keys = []
+        # set the top level dictionary to self.data
+        tmp_dict = self.data
+        # loop around keys in path
+        for key in keys:
+            if isinstance(self, (dict, ParamDict)):
+                # get the next nested dictionary
+                tmp_dict = tmp_dict[key]
+                # append to used keys
+                used_keys.append(key)
+            else:
+                emsg = 'Key path {0} not found in ParamDict[{1}]'
+                eargs = [path, '.'.join(used_keys)
+                raise AperoCodedException(None, None, emsg.format(*eargs))
+        return tmp_dict
 
 
 class PCheck:

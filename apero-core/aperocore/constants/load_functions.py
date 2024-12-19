@@ -420,7 +420,9 @@ def cmd_args_from_clist(description: str = None,
     return vars(args)
 
 
-def ask_for_missing_args(params: ParamDict) -> ParamDict:
+def ask_for_missing_args(params: ParamDict,
+                         include_keys: List[str] = None,
+                         parent: str = None) -> ParamDict:
     """
     Ask the user for any missing arguments (recursively)
     based on a constant having the "not_none" flag set to True
@@ -433,9 +435,22 @@ def ask_for_missing_args(params: ParamDict) -> ParamDict:
     func_name = __NAME__ + '.ask_user_for_missing_arguments()'
     # set up parameters that are required and currently None in parameters
     for key in params:
+        # ---------------------------------------------------------------------
+        # deal with a parent
+        if parent is None:
+            outkey = key
+        else:
+            outkey = parent + '.' + key
+        # ---------------------------------------------------------------------
+        # deal with include list
+        if include_keys is not None:
+            if outkey not in include_keys:
+                continue
+        # ---------------------------------------------------------------------
         # deal with nested parameter dictionaries
         if isinstance(params[key], ParamDict):
-            params[key] = ask_for_missing_args(params[key])
+            params[key] = ask_for_missing_args(params[key], include_keys,
+                                               parent=outkey)
         # skip if value is not None
         if params[key] is not None:
             continue
@@ -451,8 +466,10 @@ def ask_for_missing_args(params: ParamDict) -> ParamDict:
                 # deal with dtype
                 if instance.dtype in ['bool', bool]:
                     udtype = 'YN'
-                else:
+                elif instance.dtype in ['int', int, 'float', float, str, 'str']:
                     udtype = instance.dtype
+                else:
+                    udtype = str
                 # -------------------------------------------------------------
                 # loop and ask
                 value = drs_text.user_input(question, dtype=udtype,
