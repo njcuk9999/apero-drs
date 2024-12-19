@@ -1144,7 +1144,7 @@ class ParamDict(CaseInDict):
                 used_keys.append(key)
             else:
                 emsg = 'Key path {0} not found in ParamDict[{1}]'
-                eargs = [path, '.'.join(used_keys)
+                eargs = [path, '.'.join(used_keys)]
                 raise AperoCodedException(None, None, emsg.format(*eargs))
         return tmp_dict
 
