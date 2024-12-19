@@ -40,6 +40,8 @@ AperoCodedWarning = drs_log.AperoCodedWarning
 textentry = drs_lang.textentry
 # get display func
 display_func = drs_misc.display_func
+# Get Logging function
+WLOG = drs_log.wlog
 # -----------------------------------------------------------------------------
 # loaded cached versions
 CONFIG_CACHE = dict()
@@ -80,8 +82,14 @@ def load_into_params(values: Dict[str, Any], sources: Dict[str, str],
         # if we have a dictionary or a ParamDict instance recursively load
         #  into a sub-PAramDict
         if isinstance(values[key], (dict, ParamDict)):
+            # deal with already having values set (i.e. not None)
+            if key in params:
+                _params = params[key]
+            else:
+                _params = None
+            # load nested dictionary
             params[key] = load_into_params(values[key], sources[key],
-                                           instances[key])
+                                           instances[key], params=_params)
             # make sure parent instances/sources has the dictionaries of
             #   child instances/sources (otherwise we get in a mess)
             if isinstance(params[key], ParamDict):
@@ -336,6 +344,47 @@ def load_from_cmd_args(params: ParamDict, cmd_kwargs: Dict[str, Any],
     return params
 
 
+def get_all_params(name: str, description: str, inputargs: List[str],
+                   config_list: List[Union[ConstDict, KeywordDict]] = None,
+                   from_file: bool = True,
+                   **kwargs) -> ParamDict:
+    """
+    Get the parameters (default, command line and function call)
+
+    :param name: str, the name of the recipe
+    :param descriptions: dict, the descriptions of the recipes
+    :param inputargs: dict, the allowed input arguments of the recipes
+    :param config_list: list of Constants Dictionaries
+    :param from_file: bool, if True loads from user files (else loads from
+                        module only
+    :param kwargs: any additional keywords to be passed to the recipe
+
+    :return: ParamDict containing the constants
+    """
+    # get function name
+    func_name = display_func('get_all_params', __NAME__)
+    # get the default arguments
+    params = load_parameters(config_list)
+    # set name
+    if name is not None:
+        params.set('RECIPE_SHORT', value=name.split('.')[-1],
+                   source=func_name)
+    # get the yaml file
+    args = cmd_args_from_clist(description, config_list, inputargs)
+    # push in from command line arguments
+    params = load_from_cmd_args(params, args, kwargs)
+    # get constants from user config files
+    if from_file:
+        # get instrument user config files
+        largs = [[os.path.realpath(params['GLOBAL']['YAML_FILE'])], params]
+        # load keys, values, sources and instances from yaml files
+        params = load_from_yaml(*largs)
+    # make sure we have the minimal log parameters from wlog
+    params = WLOG.minimal_params(params)
+    # return params
+    return params
+
+
 def cmd_args_from_clist(description: str = None,
                         config_list: List[Union[ConstDict, KeywordDict]] = None,
                         include_keys: List[str] = None,
@@ -369,6 +418,58 @@ def cmd_args_from_clist(description: str = None,
     args = parser.parse_args()
     # return arguments
     return vars(args)
+
+
+def ask_for_missing_args(params: ParamDict) -> ParamDict:
+    """
+    Ask the user for any missing arguments (recursively)
+    based on a constant having the "not_none" flag set to True
+
+    :param params: ParamDict, the parameter dictionary
+
+    :return: ParamDict, the updated parameter dictionary
+    """
+    # set function name
+    func_name = __NAME__ + '.ask_user_for_missing_arguments()'
+    # set up parameters that are required and currently None in parameters
+    for key in params:
+        # deal with nested parameter dictionaries
+        if isinstance(params[key], ParamDict):
+            params[key] = ask_for_missing_args(params[key])
+        # skip if value is not None
+        if params[key] is not None:
+            continue
+        # get the parameter constant instance
+        instance = params.instances[key]
+
+        # see if we have to ask the user for this value
+        if instance.not_none:
+            # loop until we get a valid response from the user
+            while True:
+                question = '\nPlease enter the value for {0}'.format(key)
+                # -------------------------------------------------------------
+                # deal with dtype
+                if instance.dtype in ['bool', bool]:
+                    udtype = 'YN'
+                else:
+                    udtype = instance.dtype
+                # -------------------------------------------------------------
+                # loop and ask
+                value = drs_text.user_input(question, dtype=udtype,
+                                            options=instance.options,
+                                            required=True)
+                # validate value
+                try:
+                    value = instance.validate(test_value=value)
+                except Exception as e:
+                    print('Error: {0}'.format(e))
+                    continue
+                # if we get here the value is good
+                break
+            # set the value and source
+            params.set(key, value, source=func_name)
+    # return parameters
+    return params
 
 
 # =============================================================================

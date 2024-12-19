@@ -41,6 +41,8 @@ __date__ = base.__date__
 __release__ = base.__release__
 # get the Drs Exceptions
 AperoCodedException = drs_log.AperoCodedException
+# Get Logging function
+WLOG = drs_log.wlog
 # get the text entry
 textentry = drs_lang.textentry
 # get simple types
@@ -1769,6 +1771,43 @@ def update_file(filename: str, dictionary: dict):
     except Exception as e:
         eargs = [filename, func_name, type(e), e]
         raise AperoCodedException(None, '00-004-00004', targs=eargs)
+
+
+def minimal_params(params: Any, dict_class: Optional[Any] = None,
+                   func_name: str = None) -> Any:
+    """
+    We set the minimal parameters for the log class
+
+    These are either taken from user input or from default values
+
+    :param params: Any, the parameters to get the log class for
+    :param dict_class: Any, the dictionary class to use (default None uses
+                       dict(), but ParamDict can be used and returned)
+
+    :return: dict, the minimal parameters for the log class
+    """
+    # define function name
+    if func_name is None:
+        func_name = display_func('minimal_params', __NAME__)
+    # if we don't have any parameters at all set them all from yaml file
+    if params is None:
+        # storage for dparams (set at end to avoid errors)
+        if dict_class is not None:
+            dparams = dict_class()
+        else:
+            dparams = dict()
+        for key in MPARAMS:
+            dparams[key] = MPARAMS[key]
+        # return dparams
+        return dparams
+    # else we try to set them from params first
+    else:
+        # loop around minimal params
+        for key in MPARAMS:
+            if key not in params:
+                params.set(key, MPARAMS[key], source=func_name)
+        # return dparams
+        return params
 
 
 # =============================================================================

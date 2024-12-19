@@ -12,9 +12,10 @@ Created on 2024-10-29 at 09:32
 from typing import Optional
 
 from aperocore.core import drs_log
+from aperocore.constants import load_functions
 
+from aperotest.constants.constants import CDict
 from aperotest.core import base
-from aperotest.core import startup
 from aperotest.core import general
 
 # =============================================================================
@@ -26,7 +27,8 @@ __authors__ = base.__authors__
 __date__ = base.__date__
 __release__ = base.__release__
 # set description
-__description__ = 'Setup the SCARVS recipes'
+__description__ = 'Run the APERO test recipe'
+__inputs__ = ['GLOBAL.YAML_FILE']
 # get the logger
 WLOG = drs_log.wlog
 
@@ -34,28 +36,22 @@ WLOG = drs_log.wlog
 # =============================================================================
 # Define functions
 # =============================================================================
-def main(yaml_file: Optional[str] = None):
+def main(**kwargs):
     # print splash
     general.start_splash('APERO Test Run')
     # get parameters
-    params = startup.get_params(yaml_file, description=__description__,
-                                name=__NAME__)
+    params = load_functions.get_all_params(name=__NAME__,
+                                           description=__description__,
+                                           inputargs=__inputs__,
+                                           config_list=[CDict],
+                                           kwargs=kwargs)
     # -------------------------------------------------------------------------
     # do something here
     # print a message for this function
     WLOG(params, 'info', 'This is a test function')
     # loop around keys in params and print them
-    for key in params:
-        # skip parameters without an instance
-        if params.instances[key] is None:
-            continue
-        # print parameters flagged as for the user
-        if params.instances[key].user:
-            msg = 'Key = {0}, Value = {1}'
-            margs = [key, params[key]]
-            WLOG(params, '', msg.format(*margs), wrap=False)
-
-    print(params.sources)
+    print(params, flush=True)
+    print(params.sources, flush=True)
     # -------------------------------------------------------------------------
     # print splash
     general.end_splash()

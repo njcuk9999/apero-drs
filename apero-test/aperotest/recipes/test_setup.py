@@ -9,6 +9,10 @@ Created on 2024-10-29 at 09:32
 
 @author: cook
 """
+
+from aperocore.constants import load_functions
+
+from aperotest.constants.constants import CDict
 from aperotest.core import base
 from aperotest.core import startup
 from aperotest.core import general
@@ -24,16 +28,21 @@ __date__ = base.__date__
 __release__ = base.__release__
 # set description
 __description__ = 'Setup the APERO test recipes'
+__inputs__ = ['GLOBAL.YAML_FILE', 'DATA_PATH', 'PLOT_PATH']
 
 # =============================================================================
 # Define functions
 # =============================================================================
-def main():
+def main(**kwargs):
     # print splash
     general.start_splash('APERO Test Setup')
     # get parameters
-    params = startup.get_params(yaml_required=False, from_file=False,
-                                name=__NAME__)
+    params = load_functions.get_all_params(name=__NAME__,
+                                           description=__description__,
+                                           inputargs=__inputs__,
+                                           config_list=[CDict],
+                                           from_file=False,
+                                           kwargs=kwargs)
     # setup using parameters
     startup.setup(params)
     # print splash

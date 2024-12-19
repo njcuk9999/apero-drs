@@ -46,9 +46,10 @@ CDict.add('GLOBAL', value=CDict_global, dtype=ConstDict,
           active=True, group=cgroup, description='')
 
 # Yaml file
-CDict_global.add('YAML_FILE', value=None, dtype=str, source=__NAME__, user=False,
-          active=False, group=cgroup,
-          description='Yaml file used')
+CDict_global.add('YAML_FILE', value=None, dtype=str, source=__NAME__,
+                 user=False, active=False, group=cgroup, not_none=True,
+                 cmd_arg='yaml_file',
+                 description='Yaml file used')
 
 # Plotting mode (0-3)
 CDict_global.add('PLOTTING', value=0, dtype=int,
@@ -82,13 +83,13 @@ CDict.add_group(cgroup, description='Definition of inputs related to the data')
 # Define data path
 CDict.add('DATA_PATH', value=None, dtype=str,
           source=__NAME__, user=True,
-          active=True, group=cgroup, not_none=True,
+          active=True, group=cgroup, not_none=True, cmd_arg='data_path',
           description='The data directory (required)')
 
 # Define plot path
 CDict.add('PLOT_PATH', value=None, dtype=str,
           source=__NAME__, user=True,
-          active=True, group=cgroup, not_none=True,
+          active=True, group=cgroup, not_none=True, cmd_arg='plot_path',
           description='Plot path (required)')
 
 
