@@ -347,6 +347,7 @@ def load_from_cmd_args(params: ParamDict, cmd_kwargs: Dict[str, Any],
 def get_all_params(name: str, description: str, inputargs: List[str],
                    config_list: List[Union[ConstDict, KeywordDict]] = None,
                    from_file: bool = True,
+                   param_file_path: str = None,
                    **kwargs) -> ParamDict:
     """
     Get the parameters (default, command line and function call)
@@ -375,8 +376,14 @@ def get_all_params(name: str, description: str, inputargs: List[str],
     params = load_from_cmd_args(params, args, kwargs)
     # get constants from user config files
     if from_file:
+        if param_file_path is None:
+            emsg = 'For {0} from_file is True must provide param_file_path'
+            eargs = [func_name]
+            WLOG(params, 'error', emsg.format(*eargs))
+        # get the parameter file
+        param_file = params.get_path(param_file_path)
         # get instrument user config files
-        largs = [[os.path.realpath(params['GLOBAL']['YAML_FILE'])], params]
+        largs = [[os.path.realpath(param_file)], params]
         # load keys, values, sources and instances from yaml files
         params = load_from_yaml(*largs)
     # make sure we have the minimal log parameters from wlog
