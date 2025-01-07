@@ -126,8 +126,8 @@ def load_ari_params(params: ParamDict) -> ParamDict:
                 value = ari_params[key1][key2]
             except Exception as _:
                 # TODO: Add to language database
-                emsg = 'Yaml file {0} does not contain key'
-                eargs = [profile_yaml]
+                emsg = 'Yaml file {0} does not contain key: {1}'
+                eargs = [profile_yaml, key]
                 raise AperoCodedException(params, message=emsg.format(*eargs),
                                           targs=eargs)
         else:
@@ -349,8 +349,8 @@ def find_new_objects(params: ParamDict, object_classes: Dict[str, AriObject]
     return new_object_classes
 
 
-def compile_object_data(params: ParamDict, object_classes: Dict[str, AriObject]
-                        ) -> Tuple[Dict[str, AriObject], TableFile]:
+def make_object_pages(params: ParamDict, object_classes: Dict[str, AriObject]
+                      ) -> Tuple[Dict[str, AriObject], TableFile]:
     # log progress
     WLOG(params, '', 'Counting LBL files')
     # add the lbl count
@@ -369,7 +369,7 @@ def compile_object_data(params: ParamDict, object_classes: Dict[str, AriObject]
     return object_classes, object_table
 
 
-def compile_recipe_data(params: ParamDict) -> TableFile:
+def make_recipe_pages(params: ParamDict) -> TableFile:
     # ------------------------------------------------------------------
     # log progress
     WLOG(params, '', 'Compiling apero log table (this may take a while)')
@@ -411,6 +411,15 @@ def compile_recipe_data(params: ParamDict) -> TableFile:
     recipe_table.make_table(out_log_table)
     # return the full recipe table
     return recipe_table
+
+
+def make_observation_page(params: ParamDict,
+                          object_classes: Dict[str, AriObject]) -> TableFile:
+    # log progress
+    WLOG(params, '', 'Making observation table')
+    obs_table = ari_pages.make_obs_table(params, object_classes)
+    # return this instance
+    return obs_table
 
 
 def save_yamls(params: ParamDict, object_classes: Dict[str, AriObject]):

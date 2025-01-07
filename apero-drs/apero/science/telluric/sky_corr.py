@@ -8,6 +8,7 @@ Created on 2020-07-2020-07-15 17:58
 @author: cook
 """
 import os
+import warnings
 from typing import List, Optional, Tuple, Union
 
 import numpy as np
@@ -33,6 +34,8 @@ from apero.science.calib import wave
 from apero.science.telluric import gen_tellu
 from apero.instruments import select
 from apero.base import base as apero_base
+from apero.science.telluric.core_tellu import load_tellu_file, wave_to_wave
+
 
 # =============================================================================
 # Define variables
@@ -746,6 +749,9 @@ def correct_sky_with_ref(params: ParamDict, recipe: DrsRecipe,
     lowpass_size2 = pcheck(params, 'SKYCORR_LOWPASS_SIZE2')  # = 101
     lowpass_itrs = pcheck(params, 'SKYCORR_LOWPASS_ITERATIONS')  # = 2
     nsig_thres = pcheck(params, 'SKYCORR_NSIG_THRES')  # = 3
+    # get the sky correction ratio for not correction a line
+    #  (too large to correct)
+    sky_corr_ratio_thres = params['SKYCORR_RATIO_THRES']
     # -------------------------------------------------------------------------
     # deal with no calibration database
     if calibdbm is None:
@@ -856,9 +862,18 @@ def correct_sky_with_ref(params: ParamDict, recipe: DrsRecipe,
     image_sci = np.array(infile.data)
     # copy the reference image
     image_calib = np.array(infile_calib.data)
+    # corrected image
+    image_corr_sci = image_sci - sky_corr_sci
+    image_corr_calib = image_calib - sky_corr_ref
+    # ratio of flux before and after sky correction
+    ratio_sci = image_sci / image_corr_sci
+    ratio_calib = image_calib / image_corr_calib
+    # remove correction for sky lines that are too large to correct well
+    image_corr_sci[ratio_sci > sky_corr_ratio_thres] = np.nan
+    image_corr_calib[ratio_calib > sky_corr_ratio_thres] = np.nan
     # save to dict
-    sc_props[f'CORR_EXT_{infile.fiber}'] = image_sci - sky_corr_sci
-    sc_props[f'CORR_EXT_{calib_fiber}'] = image_calib - sky_corr_ref
+    sc_props[f'CORR_EXT_{infile.fiber}'] = image_corr_sci
+    sc_props[f'CORR_EXT_{calib_fiber}'] = image_corr_calib
     sc_props[f'UNCORR_EXT_{infile.fiber}'] = image_sci
     sc_props[f'UNCORR_EXT_{calib_fiber}'] = image_calib
     sc_props['SKY_CORR_SCI'] = sky_corr_sci
@@ -891,7 +906,8 @@ def correct_sky_no_ref(params: ParamDict, recipe: DrsRecipe,
                        infile: DrsFitsFile, wprops: ParamDict,
                        rawfiles: List[str], combine: bool,
                        calibdbm: Optional[CalibrationDatabase] = None,
-                       telludbm: Optional[TelluricDatabase] = None
+                       telludbm: Optional[TelluricDatabase] = None,
+                       fmodel: Optional[np.ndarray] = None
                        ) -> ParamDict:
     """
     Correct a observation for sky-lines when observation has a sky in the
@@ -909,6 +925,10 @@ def correct_sky_no_ref(params: ParamDict, recipe: DrsRecipe,
     """
     # set function name
     func_name = display_func('correct_sky', __NAME__)
+    # -------------------------------------------------------------------------
+    # get the sky correction ratio for not correction a line
+    #  (too large to correct)
+    sky_corr_ratio_thres = params['SKYCORR_RATIO_THRES']
     # -------------------------------------------------------------------------
     # deal with no calibration database
     if calibdbm is None:
@@ -941,14 +961,12 @@ def correct_sky_no_ref(params: ParamDict, recipe: DrsRecipe,
     gradient = np.array(sc_props['SKY_GRADIENT'])
     # -------------------------------------------------------------------------
     # shift the image on to the sky wave grid
-    image1 = gen_tellu.wave_to_wave(params, image, wavemap, sky_wavemap,
-                                    reshape=True)
-
-    # TODO subtract template here. Each order is scaled to its median. OH lines
-    # TODO contribute very little to the median flux, so this is fine
-
+    image1 = wave_to_wave(params, image, wavemap, sky_wavemap, reshape=True)
     # find the gradients of this image
-    grad = np.gradient(image1, axis=1)
+    if fmodel is None:
+        grad = np.gradient(image1, axis=1)
+    else:
+        grad = np.gradient(image1 - fmodel, axis=1)
     # -------------------------------------------------------------------------
     # create a model scaled to the image calib fiber data
     # -------------------------------------------------------------------------
@@ -971,24 +989,32 @@ def correct_sky_no_ref(params: ParamDict, recipe: DrsRecipe,
         grad1 = grad[reg_maskf]
         grad1_ref = gradient[reg_maskf]
         # dot product of the gradients
-        amp = np.nansum(grad1 * grad1_ref) / np.nansum(grad1_ref ** 2)
+        with warnings.catch_warnings(record=True) as _:
+            amp = np.nansum(grad1 * grad1_ref) / np.nansum(grad1_ref ** 2)
         # negative amps should be set to zero
-        if amp < 0:
+        if amp < 0 and fmodel is None:
             amp = 0
         # apply to weights and scale (including areas with nans)
         sfactor = amp * weights[reg_mask]
         sky_corr_sci1[reg_mask] = sky_model_sci[reg_mask] * sfactor
     # -------------------------------------------------------------------------
     # shift the image back to the original wave grid
-    sky_corr_sci = gen_tellu.wave_to_wave(params, sky_corr_sci1, sky_wavemap,
-                                          wavemap, reshape=True)
+    sky_corr_sci = wave_to_wave(params, sky_corr_sci1, sky_wavemap, wavemap,
+                                reshape=True)
     # set nans to zeros
     sky_corr_sci[np.isnan(sky_corr_sci)] = 0.0
     # -------------------------------------------------------------------------
     # re-copy the science image
     image_sci = np.array(infile.data)
+    # corrected image
+    image_corr = image_sci - sky_corr_sci
+    # ratio of flux before and after sky correction
+    ratio = image_sci / image_corr
+    # remove correction for sky lines that are too large to correct well
+    image_corr[ratio > sky_corr_ratio_thres] = np.nan
+    # -------------------------------------------------------------------------
     # save to dict
-    sc_props[f'CORR_EXT_{infile.fiber}'] = image_sci - sky_corr_sci
+    sc_props[f'CORR_EXT_{infile.fiber}'] = image_corr
     sc_props[f'CORR_EXT_{calib_fiber}'] = None
     sc_props[f'UNCORR_EXT_{infile.fiber}'] = image_sci
     sc_props[f'UNCORR_EXT_{calib_fiber}'] = None
@@ -1041,10 +1067,10 @@ def get_sky_model(params: ParamDict, header: drs_fits.Header, fiber: str,
     # log status
     WLOG(params, '', textentry('40-019-00046', args=[sky_key]))
     # load tellu file, header and abspaths
-    sky_model = gen_tellu.load_tellu_file(params, sky_key, header,
-                                          fiber=fiber, n_entries=1,
-                                          get_image=False, database=database,
-                                          return_filename=True)
+    sky_model = load_tellu_file(params, sky_key, header,
+                                fiber=fiber, n_entries=1,
+                                get_image=False, database=database,
+                                return_filename=True)
     # load extensions
     exts, extnames = drs_fits.readfits(params, sky_model, getdata=True,
                                        fmt='fits-multi', return_names=True)

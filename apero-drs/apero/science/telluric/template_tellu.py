@@ -983,10 +983,11 @@ def list_current_templates(params: ParamDict,
     return uobjnames
 
 
-def calculate_berv_coverage(params: ParamDict, recipe: DrsRecipe,
+def calculate_berv_coverage(params: ParamDict, recipe: Union[DrsRecipe, None],
                             berv: np.ndarray, snr: np.ndarray,
                             core_snr: float, resolution: float,
-                            objname: str) -> Tuple[Table, float]:
+                            objname: str, log: bool = True
+                            ) -> Tuple[Table, float]:
     """
     Calculate the BERV coverage using the individual BERV measurements and
     the SNR
@@ -1033,12 +1034,14 @@ def calculate_berv_coverage(params: ParamDict, recipe: DrsRecipe,
     # calculate berv coverage (integral of coverage) in km/s
     berv_cov = float(np.trapz(coverage, velo_range))
     # log coverage
-    WLOG(params, 'info', textentry('40-019-00051', args=[berv_cov]))
+    if log:
+        WLOG(params, 'info', textentry('40-019-00051', args=[berv_cov]))
     # plot coverage for this object
-    recipe.plot('MKTEMP_BERV_COV', berv=velo_range, coverage=coverage,
-                objname=objname, total=berv_cov)
-    recipe.plot('SUM_MKTEMP_BERV_COV', berv=velo_range, coverage=coverage,
-                objname=objname, total=berv_cov)
+    if recipe is not None:
+        recipe.plot('MKTEMP_BERV_COV', berv=velo_range, coverage=coverage,
+                    objname=objname, total=berv_cov)
+        recipe.plot('SUM_MKTEMP_BERV_COV', berv=velo_range, coverage=coverage,
+                    objname=objname, total=berv_cov)
     # construct table
     columns = ['BERV', 'ANTICOVERAGE', 'COVERAGE']
     values = [velo_range, anticoverage, coverage]

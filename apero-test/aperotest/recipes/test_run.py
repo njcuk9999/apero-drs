@@ -9,8 +9,6 @@ Created on 2024-10-29 at 09:32
 
 @author: cook
 """
-from typing import Optional
-
 from aperocore.core import drs_log
 from aperocore.constants import load_functions
 

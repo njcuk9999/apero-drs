@@ -7,6 +7,8 @@ Created on 2019-01-17
 
 @author: cook
 """
+import pytz
+
 from aperocore.base import base
 from apero.base import base as apero_base
 from aperocore.constants import constant_functions
@@ -295,6 +297,11 @@ CDict.add('OBS_LAT', value=None, dtype=float, source=__NAME__,
 #  Defines the CFHT altitude (m)
 CDict.add('OBS_ALT', value=None, dtype=float, source=__NAME__,
           group=cgroup, description='Defines the CFHT altitude (m)')
+#  Define the telescopes time zone (from pytz.all_timezones)
+CDict.add('OBS_TZ', value='UTC', dtype=str, source=__NAME__,
+          group=cgroup, options=list(pytz.all_timezones),
+          description='Define the telescopes time zone '
+                      '(from pytz.all_timezones)')
 
 # =============================================================================
 # DRS INTERNAL PATHS

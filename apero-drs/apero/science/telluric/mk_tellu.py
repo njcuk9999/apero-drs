@@ -333,7 +333,7 @@ def calculate_tellu_res_absorption(params, recipe, image, template_props,
             # flag nan pixels
             valid = np.isfinite(image2[order_num])
             # flag that this is a bad order
-            if np.sum(valid) < 2:
+            if np.sum(valid) < 2 * smooth:
                 bad_order = True
                 continue
             # on the first iteration
@@ -375,7 +375,7 @@ def calculate_tellu_res_absorption(params, recipe, image, template_props,
             # Mask of finite values
             good = np.isfinite(diff)
             # must have some valid points
-            if np.sum(good) > 0:
+            if np.sum(good) > 2 * smooth:
                 # Fit the residuals to the absorption
                 fit, _ = mp.robust_polyfit(tapas_trans_ord[good], diff[good],
                                            degree=1, nsigcut=5)

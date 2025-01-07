@@ -2,44 +2,237 @@ Changelog
 =========
 
 
-0.7.290 (2024-04-05)
+0.7.292 (2024-12-01)
 --------------------
-- Update run.ini files. [Neil Cook]
-- [NIRPS] update pp_ref to give error when there are no LED files +
-  mini_data to use engineering. [Neil Cook]
+- [APERO] Update run.ini files. [Neil Cook]
+- [ARI] correct yaml files CDTBACK BADPIX-->BACKGROUND. [Neil Cook]
+- [ARI] update ARI plots (LBL RV plot) + add ARI plot (BERV coverage) +
+  fix duckdb problem with pandas 2.2.3. [Neil Cook]
+- [ARI] update ARI plots (LBL RV plot) + add ARI plot (BERV coverage) +
+  fix duckdb problem with pandas 2.2.3. [Neil Cook]
+- [ARI] update ARI plots (LBL RV plot) + add ARI plot (BERV coverage) +
+  fix duckdb problem with pandas 2.2.3. [Neil Cook]
+- [ARI] add a traceback when ARI objects cause an error. [Neil Cook]
+- [ARI] ari obs page + ari plot adjustments. [Neil Cook]
+- [ARI] ari obs page + ari plot adjustments. [Neil Cook]
+- [ARI] ari obs page + ari plot adjustments. [Neil Cook]
+- [ARI] update debug plots. [Neil Cook]
+- [APERO] update requirements to match lbl. [Neil Cook]
+- [APERO] update `sky_model_ha.fits`. [Neil Cook]
+- [ARI] Continue add debug plots. [Neil Cook]
+- [APERO] telluric fixes with EA. [Neil Cook]
+- [APERO] telluric correction - sky corr. [Neil Cook]
+- [ARI] Add Etiennes lbl plot. [Neil Cook]
+- [ARI] Add Etiennes lbl plot. [Neil Cook]
+- [ARI] Add Etiennes lbl plot. [Neil Cook]
+- [NIRPS] change `DARK_DARK_SKY` to `EFF_SKY_SKY` and add `NIGHT_SKY_SKY`.
+  [Neil Cook]
+- [NIRPS] change `DARK_DARK_SKY` to `EFF_SKY_SKY` and add `NIGHT_SKY_SKY`.
+  [Neil Cook]
+- [APERO] change trans threshold to exp(-1) (was exp(-2)) [Neil Cook]
+- [NIRPS] do not correct sky with ref fiber. [Neil Cook]
+- [APERO] Fix bad thermal correction below 1900 nm [EA] [Neil Cook]
+- [APERO] Etienne telluric fixes. [Neil Cook]
+- [APERO] Etienne telluric fixes. [Neil Cook]
+- [APERO] Etienne telluric fixes. [Neil Cook]
+- [ARI] `ari_core.py` - add the slinky and tellu 05 files to ARI
+  (temporarily) [Neil Cook]
+- [APERO] Add lbl recipes to `full_seq`. [Neil Cook]
+- [APERO] update date/version/changelog. [Neil Cook]
+
+
+0.7.291 (2024-10-28)
+--------------------
+- [ARI] Quick fix for future warning in ARI with `log_cols` mixed between
+  Null, 1, 0. [Neil Cook]
+- [APERO] `apero_remove.py` can now remove raw entries from database with
+  --rawdb argument. [Neil Cook]
+- [APERO] `drs_astrometrics.py` - clean up aliases. [Neil Cook]
+- Merge branch 'v0.7.290-stable-test' into v0.7.291-live. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.290-stable-test' into
+  v0.7.290-stable-test. [Neil Cook]
+- [ARI] Add CRUNFILE column to recipe table. [Neil Cook]
+- Merge branch 'refs/heads/v0.7.290-stable-test' into v0.7.291-live.
+  [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.290-stable-test' into
+  v0.7.290-stable-test. [Neil Cook]
+- Update `requirements_current.txt`. [larnoldgithub]
+
+  Ok could finf how to edit.   I did correct the typo 'gspraed'
+- Merge remote-tracking branch 'origin/v0.7.290-stable-test' into
+  v0.7.290-stable-test. [Neil Cook]
+- Update `requirements_developer.txt`. [larnoldgithub]
+
+  corrected a typo   gspraed instead of gspread
+- [APERO] update requirements (force gspread version) [Neil Cook]
+- [APERO] update requirements (force gspread version) [Neil Cook]
+- [APERO] update requirements (force gspread version) [Neil Cook]
+- [APERO] update requirements (force gspread version) [Neil Cook]
+- [APERO] update requirements (force gspread version) [Neil Cook]
+- [APERO] try to prevent problems with google sheets (astrometrics +
+  reject) [Neil Cook]
+- Merge branch 'refs/heads/v0.7.290-stable-test' into v0.7.290-live.
+  [Neil Cook]
+- [APERO REJECT] Clean identifiers of some basic errors (should not be a
+  path or a filename) [Neil Cook]
+- [APERO] Deal with trigger run and `idb_len=0` v0.7.290 [Issue #776]
+  [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.290-stable-test' into
+  v0.7.290-stable-test. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.290-stable-test' into
+  v0.7.290-stable-test. [Neil Cook]
+- [APERO ARI] better error for Exception (reason for obj failing) [Neil
+  Cook]
+- [APERO] Allow fkwargs to have a 'threaded' argument before using
+  threaded variable v0.7.290 [Issue #777] [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.290-stable-test' into
+  v0.7.290-stable-test. [Neil Cook]
+- [APERO] Fixes for CCF errors [Issues
+  https://github.com/njcuk9999/apero-drs/issues/768,
+  https://github.com/njcuk9999/apero-drs/issues/769,
+  https://github.com/njcuk9999/apero-drs/issues/770] [Neil Cook]
+- [APERO] Fix for not being allowed duplicated in pending table [Issue
+  https://github.com/njcuk9999/apero-utils/issues/261 and Issue
+  https://github.com/njcuk9999/apero-drs/issues/772] [Neil Cook]
+- [APERO] Fix for astrometrics being allowed blank aliases [Issue
+  https://github.com/njcuk9999/apero-utils/issues/261 and Issue
+  https://github.com/njcuk9999/apero-drs/issues/772] [Neil Cook]
+- [APERO] `PP_SCI` sequence filter by DPRTYPE [Issue #775] [Neil Cook]
+- Merge branch 'refs/heads/v0.7.290-live' into v0.7.290-stable-test.
+  [Neil Cook]
+- [APERO] Fix problem with --filetype in `apero_mk_template` [Issue
+  https://github.com/njcuk9999/apero-utils/issues/264] [Neil Cook]
+- [APERO] Add doc string for `_find_special_targets`. [Neil Cook]
+- [APERO] Deal with `SCIENCE_TARGETS` not being in astrometric database
+  [Issue #780] [Neil Cook]
+- [NIRPS] Fix the orders remove in telluric pre-cleaning (was 47-48 now
+  43-45) [Neil Cook]
+- [APERO] Add columns to reject (USED for file, and `BAD_ASTROMETRICS` for
+  object) [Neil Cook]
+- [APERO] fix the posemeter (problem with time in jd) [Neil Cook]
+- [ARI] Display the original header object names for this object (all
+  raw files) [Neil Cook]
 - Merge remote-tracking branch 'origin/v0.7.290-live' into
   v0.7.290-live. [Neil Cook]
-- [APERO] apero_ri - finder - allow connection problems (try again 10
+- [APERO] `apero_reject` add `DATE_ADDED` column from google sheet [Issue
+  #767] [Neil Cook]
+- [APERO] Fixes for upgrade to `apero_reject` [Issue #767] [Neil Cook]
+- [APERO] upgrade `apero_reject.py` (allow multiple identifiers, allow
+  objdir argument, allow multiple objnames) + print table for
+  identifiers and ask user if this is okay [Issue #767] [Neil Cook]
+- [APERO] upgrade `apero_reject.py` (allow multiple identifiers, allow
+  objdir argument, allow multiple objnames) + print table for
+  identifiers and ask user if this is okay [Issue #767] [Neil Cook]
+- [APERO] upgrade `apero_reject.py` (allow multiple identifiers, allow
+  objdir argument, allow multiple objnames) + print table for
+  identifiers and ask user if this is okay [Issue 767] [Neil Cook]
+- [APERO] Log with tqdm lbl log to apero log. [Neil Cook]
+- [SPIROU] Add odometer letter back into combined files (only if they
+  are all the same) [Issue github.com/njcuk9999/apero-utils/issues/248]
+  [Neil Cook]
+- Merge branch 'v0.7.289-live' into v0.7.290-stable-test. [Neil Cook]
+- [APERO] fix for database updating raw files. [Neil Cook]
+- Merge branch 'v0.7.289-stable-test' into v0.7.290-stable-test. [Neil
+  Cook]
+- [APERO] Correct problem with ARI finder chart (path not existing)
+  [Neil Cook]
+- [APERO] Give ARI an argument that allows displaying available
+  profiels. [Neil Cook]
+- [APERO] Give ARI an argument that allows displaying available
+  profiels. [Neil Cook]
+- [APERO] fix ARI trying to use `ccf_table['Combined']` (Now `CCF_STACK)`
+  [Neil Cook]
+- [APERO] Try to correct non-ascii characters in
+  `update_header_with_hdict`. [Neil Cook]
+- [ARI] Display the original header object names for this object (all
+  raw files) [Neil Cook]
+- [NIRPS] correct Teff mask name. [Neil Cook]
+- [APERO] finish testing ccf. [Neil Cook]
+- [APERO] Carry through CCF fit names. [Neil Cook]
+- [NIRPS] Add new RV masks from @CharlesCadieux for NIRPS-HE and NIRPS-
+  HA. [Neil Cook]
+- [APERO] `gen_vel.py` - try to make sure bisector doesn't go out of
+  bounds. [Neil Cook]
+- [APERO] wave solutions also have `write_ccf` --> need `fit_type=1`. [Neil
+  Cook]
+- [APERO] Need to deal with nans in `update_header_with_hdict`. [Neil
+  Cook]
+- [APERO] finish work on CCF [TESTED with science and FP] [Neil Cook]
+- [APERO] continue work on the CCF code upgrade [TESTED with science and
+  FP] [Neil Cook]
+- [APERO] continue work on the CCF code upgrade [TESTED with science,
+  not with FP] [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.290-live' into
+  v0.7.290-live. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.290-live' into
+  v0.7.290-live. [Neil Cook]
+- [APERO] add `FP_HCONE1` and `HCONE1_FP` to the `eng_seq`. [Neil Cook]
+- [APERO] continue work on the CCF code upgrade [TESTED with science,
+  not with FP] [Neil Cook]
+- [APERO] continue work on the CCF code upgrade [UNFINISHED] [Neil Cook]
+- [APERO] start work on the CCF code upgrade [UNFINISHED] [Neil Cook]
+- [APERO-ARI] update the file index database if not in parallel mode.
+  [Neil Cook]
+- [APERO-ARI] fix when we don't have PIDs in log database (from a
+  reset?) [Neil Cook]
+- [APERO] update index.html for ari. [Neil Cook]
+- [APERO] update index.html for ari. [Neil Cook]
+- [APERO] update index.html for ari. [Neil Cook]
+- [APERO] update index.html for ari. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.290-live' into
+  v0.7.290-live. [Neil Cook]
+- [APERO] Switch off line of sight velocity fit in precleaning (turn
+  back on with `TELLU_ABSO_FIT_LOS_VELO` = True) [Neil Cook]
+- [APERO] update date/version/notes. [Neil Cook]
+- Update run.ini files. [Neil Cook]
+- [NIRPS] update `pp_ref` to give error when there are no LED files +
+  `mini_data` to use engineering. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.290-live' into
+  v0.7.290-live. [Neil Cook]
+- [APERO] `tapas_all_sp.fits.gz` - fix column name (duplicate `ch_4` -->
+  `o_3)` [Neil Cook]
+- [APERO] `background.py` - remove print statement. [Neil Cook]
+- [APERO] `apero_ri` - finder - allow connection problems (try again 10
   times) [Neil Cook]
 - [APERO] fix problem with finder charts (sorted alphabetically for name
   not for table) - leads to wrong finder charts. [Neil Cook]
-- [APERO] apero_remove.py - allow multiple obsdir to be defined. [Neil
+- [APERO] `apero_remove.py` - allow multiple obsdir to be defined. [Neil
   Cook]
-- [APERO] apero_remove.py - allow multiple obsdir to be defined. [Neil
+- [APERO] `apero_remove.py` - allow multiple obsdir to be defined. [Neil
   Cook]
-- [APERO] apero_ri.py - fix problems with finding charts. [Neil Cook]
-- [APERO] tapas_all_sp.fits.gz - fix column name (duplicate ch_4 -->
-  o_3) [Neil Cook]
+- [APERO] `apero_ri.py` - fix problems with finding charts. [Neil Cook]
 - [APERO] background fixes (both at the badpix calibration level and in
   the extraction code [from EA] [Neil Cook]
-- [APERO] apero_astrometrics.py - add a check for objects in database
+
+
+0.7.290 (2024-03-28)
+--------------------
+- [APERO] `tapas_all_sp.fits.gz` - fix column name (duplicate `ch_4` -->
+  `o_3)` [Neil Cook]
+- [APERO] `apero_astrometrics.py` - add a check for objects in database
   that all files match DRSOBJN to that expected by database. (Issue
   #756) [Neil Cook]
-- [APERO] apero_astrometrics.py - add a check for objects in database
+- [APERO] `apero_astrometrics.py` - add a check for objects in database
   that all files match DRSOBJN to that expected by database. (Issue
   #756) [Neil Cook]
-- [APERO] apero_astrometrics.py - add a check for objects in database
+- [APERO] `apero_astrometrics.py` - add a check for objects in database
   that all files match DRSOBJN to that expected by database. (Issue
   #756) [Neil Cook]
-- [APERO] apero_astrometrics.py - add a check for objects in database
+- [APERO] `apero_astrometrics.py` - add a check for objects in database
+  that all files match DRSOBJN to that expected by database. (Issue
+  #756) [Neil Cook]
+- [APERO] `apero_astrometrics.py` - add a check for objects in database
+  that all files match DRSOBJN to that expected by database. (Issue
+  #756) [Neil Cook]
+- [APERO] `apero_astrometrics.py` - add a check for objects in database
   that all files match DRSOBJN to that expected by database. [Neil Cook]
-- [APERO] apero_remove add a --block and --objnames argument. [Neil
+- [APERO] `apero_remove` add a --block and --objnames argument. [Neil
   Cook]
 - [APERO] Try to catch ARI errors in object page creation. [Neil Cook]
 - Merge remote-tracking branch 'origin/v0.7.289-live' into
   v0.7.289-live. [Neil Cook]
 - [ARI] update forgot.html and index.html. [Neil Cook]
-- [NIRPS] Correct that preprocessing missing KW_PPVERSION key. [Neil
+- [NIRPS] Correct that preprocessing missing `KW_PPVERSION` key. [Neil
   Cook]
 - [ARI] add ari-home to resources/ari. [Neil Cook]
 - [ARI] add ari-home to resources/ari. [Neil Cook]
@@ -48,9 +241,9 @@ Changelog
 - [ARI] fix page header. [Neil Cook]
 - [ARI] fix page header. [Neil Cook]
 - [ARI] fix page header. [Neil Cook]
-- [APERO] Fix apero_remove (boolean args should use switch) [Neil Cook]
-- [APERO] Fix apero_remove (boolean args should use switch) [Neil Cook]
-- [APERO] Fix the column names in tapas_all_sp.fits.gz (Issue #742)
+- [APERO] Fix `apero_remove` (boolean args should use switch) [Neil Cook]
+- [APERO] Fix `apero_remove` (boolean args should use switch) [Neil Cook]
+- [APERO] Fix the column names in `tapas_all_sp.fits.gz` (Issue #742)
   [Neil Cook]
 - [APERO] Make runstring work better implicit arguments like --nosave
   only present if used (previous had --nosave=False or --nosave=True)
@@ -63,12 +256,72 @@ Changelog
 - [ARI] Edit html of recipe and finder pages. [Neil Cook]
 - [ARI] Edit html of recipe and finder pages. [Neil Cook]
 - [ARI] Add css to recipe and finder pages. [Neil Cook]
-- [APERO CHECKS] PREV_REDUC -  need to not flag rejected files. [Neil
+- [APERO CHECKS] `PREV_REDUC` -  need to not flag rejected files. [Neil
   Cook]
 - [ARI] Fix font css in ARI. [Neil Cook]
 - [ARI] Remove ARI sidebar. [Neil Cook]
 - [ARI] Add BERV to extracted 2D header file. [Neil Cook]
 - [APERO] update date/changelog. [Neil Cook]
+- [APERO] correct typo. [Neil Cook]
+- [APERO] Add --objname to reject code (Issue https://github.com/users/n
+  jcuk9999/projects/7/views/5?pane=issue&itemId=54972211) [Neil Cook]
+- [APERO] Add --identifier to reject code (Issue https://github.com/user
+  s/njcuk9999/projects/7/views/5?pane=issue&itemId=54972211) [TODO:
+  objname] [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.289-live' into
+  v0.7.289-live. [Neil Cook]
+- [APERO] update neesd `ASK_CREATE`. [Neil Cook]
+- [APERO] add ari-home content. [Neil Cook]
+- [APERO] add ari-home content. [Neil Cook]
+- [APERO] update ARI with new login procedure. [Neil Cook]
+- [APERO] update offline and minidata paths. [Neil Cook]
+- [APERO] Remove sys.exit and replace with WLOG(params, 'error', ...) +
+  raise SystemExit() [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.289-live' into
+  v0.7.289-live. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.289-live' into
+  v0.7.289-live. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.289-live' into
+  v0.7.289-live. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.289-live' into
+  v0.7.289-live. [Neil Cook]
+- [APERO] add extra object to tellu whitelist. [Neil Cook]
+- [APERO] bug fix - deal with recalculating templates when qc fails.
+  [Neil Cook]
+- [APERO] astrometric check - write bad objects to file. [Neil Cook]
+- [APERO] add extra object to tellu whitelist. [Neil Cook]
+- [APERO] astrometric check - write bad objects to file. [Neil Cook]
+- [APERO] bug fix - deal with recalculating templates when qc fails
+  (Issue https://github.com/njcuk9999/apero-utils/issues/218) [Neil
+  Cook]
+- [APERO] fix typo. [Neil Cook]
+- [APERO] astrometric check - write bad objects to file. [Neil Cook]
+- [APERO] astrometric check - write bad objects to file. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.289-live' into
+  v0.7.289-live. [Neil Cook]
+- [APERO] fix teff source limit (Issue
+  https://github.com/njcuk9999/apero-utils/issues/215) [Neil Cook]
+- [APERO] fix for having datadir defined and not `LBL_PATH` or
+  `DRS_DATA_OTHER` - we didn't create directories (Issue #748), also fixed
+  dev mode for installation not working. [Neil Cook]
+- [APERO] bug fix - deal with no rows in table for astrometric pending
+  table. [Neil Cook]
+- [APERO] upgrade requirements on mysql-connector-python to 8.3.0 (Issue
+  #707) [Neil Cook]
+- [APERO] `apero_remove.py` - add `apero_remove` code to remove `obs_dir`
+  and/or file prefix/suffix. [Neil Cook]
+- [APERO] `apero.base.drs_db.py` - corrections for duplicate and
+  `replace_paths` functionality. [Neil Cook]
+- [APERO] add a duplicate and `replace_paths` function to the database
+  classes (to support copying) [Neil Cook]
+- [APERO] `database_update.py` - remove some blank spaces. [Neil Cook]
+- `Apero.science.telluric.gen_tellu.py` - add wave mask to only reject snr
+  in orders smaller than 1800um for all instruments. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.289-live' into
+  v0.7.289-live. [Neil Cook]
+- [APERO] update version/changelog/documentation. [Neil Cook]
+- [APERO-ARI] fix when we have no data adding dprtypes to object. [Neil
+  Cook]
 
 
 0.7.289 (2024-03-12

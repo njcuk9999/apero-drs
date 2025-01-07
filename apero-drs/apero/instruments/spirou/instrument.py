@@ -208,10 +208,6 @@ class Spirou(instrument_mod.Instrument):
                                        check_aliases=check_aliases,
                                        objdbm=objdbm)
         # ------------------------------------------------------------------
-        # Deal with TRG_TYPE
-        # ------------------------------------------------------------------
-        header, hdict = get_trg_type(params, header, hdict, filename=filename)
-        # ------------------------------------------------------------------
         # Deal with MIDMJD
         # ------------------------------------------------------------------
         header, hdict = get_mid_obs_time(params, header, hdict,
@@ -220,6 +216,10 @@ class Spirou(instrument_mod.Instrument):
         # Deal with sun altitude
         # ------------------------------------------------------------------
         header, hdict = instrument_mod.get_sun_altitude(params, header, hdict)
+        # ------------------------------------------------------------------
+        # Deal with TRG_TYPE
+        # ------------------------------------------------------------------
+        header, hdict = get_trg_type(params, header, hdict, filename=filename)
         # ------------------------------------------------------------------
         # Deal with drs mode
         # ------------------------------------------------------------------

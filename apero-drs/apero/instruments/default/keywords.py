@@ -2049,6 +2049,16 @@ KDict.add('KW_FTELLU_TEMPTIME', key='NULL', dtype=str,
           description=('the hash for the template '
                        'generation (unique)'))
 
+# The approximate RV calculated with the telluric correction
+KDict.add('KW_FTELLU_APPROX_RV', key='NULL', dtype=str,
+          source=__NAME__,
+          description='Approx relative RV done with tellu correction [m/s]')
+
+# The approximate RV calculated with the telluric correction
+KDict.add('KW_FTELLU_APPROX_RV_FIT', key='NULL', dtype=str,
+          source=__NAME__,
+          description='Approx relative RV done with tellu correction [m/s]')
+
 # Telluric principle component amplitudes (for use with 1D list)
 KDict.add('KW_FTELLU_AMP_PC', key='NULL', dtype=float,
           source=__NAME__,

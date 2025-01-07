@@ -1052,6 +1052,11 @@ CDict.set('THERMAL_CORRETION_TYPE2',
 # Define the order to perform the thermal background scaling on
 CDict.set('THERMAL_ORDER', value=48, source=__NAME__)
 
+# define thermal limit - below this we do not correct thermal emission
+#   because we know from first principles that it should be too small
+CDict.set('THERMAL_LIMIT', value=1900, source=__NAME__,
+          author=base.AUTHORS['EA'])
+
 # width of the median filter used for the background
 CDict.set('THERMAL_FILTER_WID', value=101, source=__NAME__)
 
@@ -1711,9 +1716,7 @@ CDict.set('SKYMODEL_WEIGHT_ITERS', value=5, source=__NAME__, author='EA')
 CDict.set('SKYMODEL_WEIGHT_ERODE_SIZE', value=3, source=__NAME__, author='EA')
 
 # Define the allowed DPRTYPEs for sky correction
-CDict.set('ALLOWED_SKYCORR_DPRTYPES',
-          value=['OBJ_SKY', 'TELLU_SKY', 'FLUXSTD_SKY'],
-          source=__NAME__)
+CDict.set('ALLOWED_SKYCORR_DPRTYPES', value=[], source=__NAME__)
 
 # Define the number of iterations used to create sky correction weights
 CDict.set('SKYCORR_WEIGHT_ITERATIONS', value=5, source=__NAME__, author='EA')
@@ -1729,6 +1732,9 @@ CDict.set('SKYCORR_LOWPASS_ITERATIONS', value=2, source=__NAME__, author='EA')
 
 # Define the number of sigma threshold for sky corr sigma clipping
 CDict.set('SKYCORR_NSIG_THRES', value=5, source=__NAME__, author='EA')
+
+# Define the flux ratio of sky lines that can not be corrected for
+CDict.set('SKYCORR_RATIO_THRES', value=4, source=__NAME__, author='EA')
 
 # =============================================================================
 # OBJECT: TELLURIC SETTINGS
@@ -1811,7 +1817,7 @@ CDict.set('TELLUP_OTHERS_CCF_FILE', value='trans_others_abso_ccf.mas',
 CDict.set('TELLUP_H2O_CCF_FILE', value='trans_h2o_abso_ccf.mas', source=__NAME__)
 
 # Define dexpo convergence threshold
-CDict.set('TELLUP_DEXPO_CONV_THRES', value=1.0e-4, source=__NAME__)
+CDict.set('TELLUP_DEXPO_CONV_THRES', value=1.0e-3, source=__NAME__)
 
 # Define the maximum number of iterations to try to get dexpo
 # convergence
@@ -2573,7 +2579,7 @@ CDict.set('PLOT_TELLU_SKYMODEL_LINEFIT', value=True, source=__NAME__)
 CDict.set('PLOT_TELLU_SKY_CORR_PLOT', value=True, source=__NAME__)
 
 # turn on the telluric pre-cleaning ccf debug plot
-CDict.set('PLOT_TELLUP_WAVE_TRANS', value=True, source=__NAME__)
+CDict.set('PLOT_TELLUP_MEAN_RES', value=True, source=__NAME__)
 
 # turn on the telluric pre-cleaning result debug plot
 CDict.set('PLOT_TELLUP_ABSO_SPEC', value=True, source=__NAME__)
@@ -2734,7 +2740,7 @@ CDict.set('REPROCESS_MP_TYPE', value='process', source=__NAME__)
 
 # Define whether to use multiprocess "pool" or "process" or use
 # "linear" mode when validating recipes
-CDict.set('REPROCESS_MP_TYPE_VAL', value='process', source=__NAME__)
+CDict.set('REPROCESS_MP_TYPE_VAL', value='linear', source=__NAME__)
 
 # Key for use in run files
 CDict.set('REPROCESS_RUN_KEY', value='ID', source=__NAME__)

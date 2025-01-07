@@ -7,7 +7,6 @@ Created on 2020-10-31 at 18:06
 
 @author: cook
 """
-from aperocore.base import base
 from aperocore import drs_lang
 from aperocore.core import drs_base_classes as base_class
 from apero.instruments.default import grouping
@@ -299,12 +298,13 @@ apero_dark.recipe_type = 'recipe'
 apero_dark.recipe_kind = 'calib-night'
 apero_dark.calib_required = False
 apero_dark.set_outputs(DARK_INT_FILE=files.out_dark,
-                       DARK_TEL_FIEL=files.out_dark)
+                       DARK_TEL_FIEL=files.out_dark,
+                       DARK_SKY_FILE=files.out_dark_nsky)
 apero_dark.set_debug_plots('DARK_IMAGE_REGIONS', 'DARK_HISTOGRAM')
 apero_dark.set_summary_plots('SUM_DARK_IMAGE_REGIONS', 'SUM_DARK_HISTOGRAM')
 apero_dark.set_arg(pos=0, **obs_dir)
 apero_dark.set_arg(name='files', dtype='files',
-                   files=[files.pp_dark_dark],
+                   files=[files.pp_dark_dark, files.pp_night_sky_sky],
                    pos='1+', filelogic='exclusive',
                    helpstr=textentry('FILES_HELP') + textentry('DARK_FILES_HELP'))
 apero_dark.set_kwarg(**add_db)
@@ -997,11 +997,11 @@ apero_mk_tellu.set_output_data(TELLU_CONV=mktellu_dict,
                                TELLU_PCLEAN=mktellu_dict)
 apero_mk_tellu.set_debug_plots('TELLU_SKY_CORR_PLOT',
                                'MKTELLU_WAVE_FLUX1', 'MKTELLU_WAVE_FLUX2',
-                               'TELLUP_WAVE_TRANS', 'TELLUP_ABSO_SPEC',
+                               'TELLUP_MEAN_RES', 'TELLUP_ABSO_SPEC',
                                'TELLUP_CLEAN_OH', 'FTELLU_RECON_SPLINE2',
                                'TELLU_FINITE_RES_CORR')
 apero_mk_tellu.set_summary_plots('SUM_MKTELLU_WAVE_FLUX',
-                                 'SUM_TELLUP_WAVE_TRANS', 'SUM_TELLUP_ABSO_SPEC')
+                                 'SUM_TELLUP_MEAN_RES', 'SUM_TELLUP_ABSO_SPEC')
 apero_mk_tellu.set_arg(pos=0, **obs_dir)
 apero_mk_tellu.set_arg(name='files', dtype='files', pos='1+',
                        files=[files.out_ext_e2ds, files.out_ext_e2dsff],
@@ -1122,11 +1122,11 @@ apero_fit_tellu.set_debug_plots('TELLU_SKY_CORR_PLOT',
                                 'FTELLU_RECON_SPLINE1', 'FTELLU_RECON_SPLINE2',
                                 'FTELLU_WAVE_SHIFT1', 'FTELLU_WAVE_SHIFT2',
                                 'FTELLU_RECON_ABSO1', 'FTELLU_RECON_ABSO2',
-                                'TELLUP_WAVE_TRANS', 'TELLUP_ABSO_SPEC',
+                                'TELLUP_MEAN_RES', 'TELLUP_ABSO_SPEC',
                                 'TELLUP_CLEAN_OH', 'FTELLU_RES_MODEL',
                                 'TELLU_FINITE_RES_CORR')
 apero_fit_tellu.set_summary_plots('SUM_EXTRACT_S1D', 'SUM_FTELLU_RECON_ABSO',
-                                  'SUM_TELLUP_WAVE_TRANS',
+                                  'SUM_TELLUP_MEAN_RES',
                                   'SUM_TELLUP_ABSO_SPEC',
                                   'SUM_FTELLU_RES_MODEL')
 apero_fit_tellu.set_arg(pos=0, **obs_dir)
@@ -1682,7 +1682,8 @@ pp_seq_opt.add(apero_preprocess, name='PP_DFP', files=[files.raw_dark_fp],
 pp_seq_opt.add(apero_preprocess, name='PP_FPD', files=[files.raw_fp_dark],
                recipe_kind='pre-fpd')
 pp_seq_opt.add(apero_preprocess, name='PP_SKY',
-               files=[files.raw_night_sky_sky],
+               files=[files.raw_eff_sky_sky, files.raw_test_eff_sky_sky,
+                      files.raw_night_sky_sky, files.raw_test_night_sky_sky],
                recipe_kind='pre-sky')
 pp_seq_opt.add(apero_preprocess, name='PP_LFC', files=[files.raw_lfc_lfc],
                recipe_kind='pre-lfc')
@@ -1837,6 +1838,40 @@ science_seq.add(apero_ccf, files=[files.out_tellu_obj], fiber=ref_fiber,
                 filters=dict(KW_DPRTYPE=files.science_dprtypes,
                              KW_OBJNAME='SCIENCE_TARGETS'))
 
+# lbl ref
+science_seq.add(apero_lbl_ref, name='LBLREF', recipe_kind='lbl-ref')
+
+# lbl mask (FP)
+science_seq.add(apero_lbl_mask, name='LBLMASK_FP', recipe_kind='lbl-mask-fp',
+            arguments=dict(objname='FP'))
+
+# lbl compute (FP)
+science_seq.add(apero_lbl_compute, name='LBLCOMPUTE_FP',
+            recipe_kind='lbl-compute-fp',
+            arguments=dict(objname='FP'))
+
+# lbl compile (FP)
+science_seq.add(apero_lbl_compile, name='LBLCOMPILE_FP',
+            recipe_kind='lbl-compile-fp',
+            arguments=dict(objname='FP'))
+
+# lbl mask (SCIENCE)
+science_seq.add(apero_lbl_mask, name='LBLMASK_SCI', recipe_kind='lbl-mask-sci',
+            arguments=dict(objname='SCIENCE_TARGETS'),
+            filters=dict(KW_OBJNAME='SCIENCE_TARGETS'))
+
+# lbl compute (SCIENCE)
+science_seq.add(apero_lbl_compute, name='LBLCOMPUTE_SCI',
+            recipe_kind='lbl-compute-sci',
+            arguments=dict(objname='SCIENCE_TARGETS'),
+            filters=dict(KW_OBJNAME='SCIENCE_TARGETS'))
+
+# lbl compile (SCIENCE)
+science_seq.add(apero_lbl_compile, name='LBLCOMPILE_SCI',
+            recipe_kind='lbl-compile-sci',
+            arguments=dict(objname='SCIENCE_TARGETS'),
+            filters=dict(KW_OBJNAME='SCIENCE_TARGETS'))
+
 # post processing
 science_seq.add(apero_postprocess, files=[files.pp_file], name='SCIPOST',
                 recipe_kind='post-science',
@@ -1874,7 +1909,8 @@ eng_seq.add(apero_extract, name='EXT_FF', files=[files.pp_flat_flat],
 eng_seq.add(apero_extract, name='EXT_DFP', files=[files.pp_dark_fp],
             recipe_kind='extract-dfp')
 eng_seq.add(apero_extract, name='EXT_SKY',
-            files=[files.pp_night_sky_sky],
+            files=[files.pp_eff_sky_sky, files.pp_test_dark_dark_sky,
+                   files.pp_night_sky_sky],
             recipe_kind='extract-sky')
 eng_seq.add(apero_extract, name='EXT_LFC', files=[files.pp_lfc_lfc],
             recipe_kind='extract-lfc')

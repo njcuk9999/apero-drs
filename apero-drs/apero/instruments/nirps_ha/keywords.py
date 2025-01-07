@@ -1511,7 +1511,16 @@ KDict.set('KW_MKTELL_TEMPNUM', key='MKTTEMPN', comment='mktellu template used fo
 KDict.set('KW_MKTELL_TEMPHASH', key='MKTTEMPH', comment='mktellu template unique hash')
 
 # the time the template was generated
-KDict.set('KW_MKTELL_TEMPTIME', key='MKTTEMPT', comment='mktellu template create time')
+KDict.set('KW_MKTELL_TEMPTIME', key='MKTTEMPT',
+          comment='mktellu template create time')
+
+# The approximate RV calculated with the telluric correction
+KDict.set('KW_FTELLU_APPROX_RV_ERR', key='MKT_AERV',
+          comment='Approx relative RV err from tellu [m/s]')
+
+# The approximate RV calculated with the telluric correction
+KDict.set('KW_FTELLU_APPROX_RV', key='MKT_ARV',
+          comment='Approx relative RV from tellu [m/s]')
 
 # The blaze percentile used for mktellu calculation
 KDict.set('KW_MKTELL_BLAZE_PRCT', key='MKTBPRCT', comment='mktellu blaze percentile')

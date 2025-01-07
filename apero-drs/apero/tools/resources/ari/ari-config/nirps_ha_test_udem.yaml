@@ -1,29 +1,29 @@
 # General settings (do not remove)
 settings:
   # Instrument (either SPIROU or NIRPS)
-  instrument: SPIROU
+  instrument: NIRPS
   # username (for html) - should be unique
   #   if "None" will be set from platform.node()
   # This should be similar to the apero profile name and indicate
   #   where the data was reduced
   #   e.g. spirou_online_udem
-  username: spirou_test_07
+  username: nirps_ha_online_udem
   # number of cores to use in multiprocessing steps
   N_CORES: 1
   # Spectrum wavelength ranges in nm
   SpecWave:
     limit0:
-      - 965
-      - 2500
+      - 985
+      - 1810
     limit1:
       - 1082
       - 1085
     limit2:
-      - 1600
-      - 1604
+      - 1575
+      - 1580
     limit3:
-      - 2164
-      - 2169
+      - 1666
+      - 1668
   # Wavelength range of interest for debug telluric correction map
   TcorrMapWave:
     - 1716
@@ -31,28 +31,25 @@ settings:
   # SSH PATH to copy the website to
   #    Must have ssh keys set up (no prompt for password given)
   ssh:
-    directory: /export/www/home/cook/www/apero-drs/ari/internal/
+    directory: /export/www/home/cook/www/apero-drs/ari/
     user: cook
     host: venus.astro.umontreal.ca
     options: ssh -oport=5822
   # html group for login
-  group: spiroulocal
+  group: nirps
   # whether to reset the working directory
   reset: False
   # which observation directory to run on (None will use all or look for
   #   command set from command line)
   obsdir: None
   # whether to filter by objects
-  filter objects: False
+  filter objects: True
   # objects to filter by
   objects:
-    - GL699
-    - TRAPPIST1
-    - GL514
-    - HD189733
+    - PROXIMA
   # finding charts options
   finding charts:
-    create: True
+    create: False
     reset: False
     yaml: finder.yaml
 # -----------------------------------------------------------------------------
@@ -85,12 +82,12 @@ headers:
       dtype: str
       timefmt: iso
     EXT_Y:
-      key: EXTSN009
-      label: 'SNR[Order 8 (#71 1.08$\mu$m)]'
+      key: EXTSN015
+      label: 'SNR[Order 15 (#134 1.08$\mu$m)]'
       dtype: float
     EXT_H:
-      key: EXTSN035
-      label: 'SNR[Order 35 (#44 1.75$\mu$m)]'
+      key: EXTSN060
+      label: 'SNR[Order 60 (#89 1.63$\mu$m)]'
       dtype: float
     EXT_DPRTYPE:
       key: DPRTYPE
@@ -110,13 +107,15 @@ headers:
       label: QCC ALL
       dtype: int
     EXT_SEEING:
-      key: WDSEEMED
+      key: HIERARCH ESO TEL AMBI FWHM START
       label: Seeing at start
       dtype: float
+      fallback: Null
     EXT_AIRMASS:
-      key: AIRMASS
+      key: HIERARCH ESO TEL AIRM START
       label: Airmass at start
       dtype: float
+      fallback: Null
     EXT_EXPTIME:
         key: EXPTIME
         label: Exposure Time
@@ -237,8 +236,8 @@ headers:
       label: QCC ALL
       dtype: int
     TCORR_H:
-      key: EXTSN035
-      label: 'SNR[Order 35 (#44 1.75$\mu$m)]'
+      key: EXTSN060
+      label: 'SNR[Order 60 (#89 1.63$\mu$m)]'
       dtype: float
     TCORR_PROC:
       key: DRSPDATE
@@ -285,8 +284,8 @@ headers:
       dtype: str
   LBL:
     EXT_H:
-      key: EXTSN035
-      label: 'SNR[Order 35 (#44 1.75$\mu$m)]'
+      key: EXTSN060
+      label: 'SNR[Order 60 (#89 1.63$\mu$m)]'
       dtype: float
     LBL_VERSION:
       key: LBL_VERS

@@ -17,24 +17,32 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-from astropy.table import Table
-from astropy.time import Time, TimeDelta
-from astropy.io import fits
+from astroplan import Observer, FixedTarget
+from astroplan import AltitudeConstraint, AtNightConstraint
+from astroplan.constraints import time_grid_from_range
 from astropy import units as uu
+from astropy.coordinates import SkyCoord
+from astropy.io import fits
+from astropy.table import Table
+from astropy.time import Time
+from astropy.time import TimeDelta
 from scipy.optimize import curve_fit
 
 from aperocore.base import base
+from aperocore import math as mp
 from aperocore.constants import param_functions
 from aperocore.constants import load_functions
 from aperocore.core import drs_log
 from apero.io import drs_table
 from aperocore.math import normal_fraction
 from apero.tools.module.documentation import drs_markdown
-from apero.plotting import gen_plot
 from apero.base.base import TQDM as tqdm
 from apero.instruments import select
 from apero.base import base as apero_base
+from apero.science.extract import berv as berv_mod
+from apero.science.telluric import template_tellu
+from apero.tools.module.ari import ari_plot
+
 
 # =============================================================================
 # Define variables
@@ -62,6 +70,7 @@ YAML_TO_PARAM['settings.instrument'] = 'ARI_INSTRUMENT'
 YAML_TO_PARAM['settings.username'] = 'ARI_USER'
 YAML_TO_PARAM['settings.N_CORES'] = 'ARI_NCORES'
 YAML_TO_PARAM['settings.SpecWave'] = 'ARI_WAVE_RANGES'
+YAML_TO_PARAM['settings.TcorrMapWave'] = 'ARI_TCORR_MAP_WAVE_RANGE'
 YAML_TO_PARAM['settings.ssh'] = 'ARI_SSH_COPY'
 YAML_TO_PARAM['settings.group'] = 'ARI_GROUP'
 YAML_TO_PARAM['settings.reset'] = 'ARI_RESET'
@@ -156,6 +165,7 @@ LBL_FILENAMES = ['lbl_{0}_{1}.rdb', 'lbl2_{0}_{1}.rdb',
                  'lbl_{0}_{1}.fits']
 LBL_FILE_DESC = ['RDB file', 'RDB2 file', 'Drift file', 'Drift2 file',
                  'LBL RDB fits file']
+LBL_DIRS = ['lblrdb', 'lblrdb', 'lblrdb', 'lblrdb', 'lblrdb', 'lblrv']
 LBL_DOWNLOAD = [True, True, True, True, False]
 # define how many ccf files to use
 MAX_NUM_CCF = 100
@@ -195,7 +205,7 @@ TIME_SERIES_COLS = ['Obs Dir', 'First obs mid',
                     'Seeing', 'Airmass',
                     'Mean Exptime', 'Total Exptime', 'DPRTYPEs', None, None]
 # Which tables are Contents tables (linked to via .rst)
-CONTENTS_TABLES = ['OBJECT_TABLE']
+CONTENTS_TABLES = ['OBJECT_TABLE', 'OBSERVATION_TABLE']
 # Which tables are Other tables (linked to via .html)
 OTHER_TABLES = ['RECIPE_TABLE']
 
@@ -596,6 +606,8 @@ class AriObject:
         self.time_series_rlink_table: Optional[str] = None
         self.time_series_dwn_table: Optional[str] = None
         # ---------------------------------------------------------------------
+        self.debug_plots: List[ari_plot.DebugPlot] = []
+        # ---------------------------------------------------------------------
         # other parameters
         # ---------------------------------------------------------------------
         self.headers: Optional[Dict[str, Any]] = None
@@ -848,6 +860,8 @@ class AriObject:
         # set up the object page
         obj_save_path = os.path.join(params['ARI_OBJ_PAGES'], self.objname)
         ari_user = params['ARI_USER']
+        core_snr = params['MKTEMPLATE_BERVCOV_CSNR']
+        resolution = params['MKTEMPLATE_BERVCOV_RES']
         # get the extracted files
         ext_files = self.filetypes['ext'].get_files()
         # don't go here if ext files are not present
@@ -863,7 +877,6 @@ class AriObject:
         spec_props['S1D'] = self.filetypes['s1d']
         spec_props['SC1D'] = self.filetypes['sc1d']
         # ---------------------------------------------------------------------
-
         spec_props['DPRTYPES'] = self.dprtypes
         # ---------------------------------------------------------------------
         # header dict alias
@@ -1031,6 +1044,74 @@ class AriObject:
         raw_file = spec_props['RAW'].get_files(qc=True)[pos_raw]
         spec_props['MAX_FILE'] = os.path.basename(raw_file)
         # ---------------------------------------------------------------------
+        # BERV coverage plot
+        # ---------------------------------------------------------------------
+        spec_props['BJD_TCORR'] = hdict['TCORR_BJD']
+        spec_props['BERV_TCORR'] = hdict['TCORR_BERV']
+        spec_props['TCORR_FAIL_MASK'] = ~np.array(hdict['TCORR_QCC_ALL'],
+                                                  dtype=bool)
+        spec_props['BJD_E2DS'] = hdict['EXT_BJD']
+        spec_props['BERV_E2DS'] = hdict['EXT_BERV']
+        spec_props['E2DS_FAIL_MASK'] = ~np.array(hdict['EXT_QCC_ALL'],
+                                                 dtype=bool)
+
+        # tcorr vectors must all be finite
+        tkeys = ['BJD_TCORR', 'BERV_TCORR', 'TCORR_FAIL_MASK']
+        tmask = np.ones(len(spec_props[tkeys[0]])).astype(bool)
+        # find all finite values
+        for tkey in tkeys:
+            tmask &= np.isfinite(spec_props[tkey])
+        # apply tmask to vectors
+        for tkey in tkeys:
+            spec_props[tkey] = spec_props[tkey][tmask]
+        # ext vectors must all be finite
+        ekeys = ['BJD_E2DS', 'BERV_E2DS', 'E2DS_FAIL_MASK']
+        emask = np.ones(len(spec_props[ekeys[0]])).astype(bool)
+        # find all finite values
+        for ekey in ekeys:
+            emask &= np.isfinite(spec_props[ekey])
+        # apply emask to vectors
+        for ekey in ekeys:
+            spec_props[ekey] = spec_props[ekey][emask]
+        # calculate berv coverage
+        bcovargs = [np.array(hdict['TCORR_BERV'][tmask]),
+                    np.array(hdict['TCORR_H'][tmask]),
+                    core_snr, resolution, self.objname]
+        bcout = template_tellu.calculate_berv_coverage(params, None, *bcovargs,
+                                                       log=False)
+        # set up the times in JD for the curve (here we use 14 days previous
+        #    to the first observation and 14 days after the last obs)
+        times = np.arange(Time(np.min(hdict['PP_MJDMID'])).jd - 14,
+                          Time(np.max(hdict['PP_MJDMID'])).jd + 100)
+        # use the first tcorr file to get the berv curve properties
+        ref_tcorr_hdr = fits.getheader(spec_props['TCORR'].get_files()[0])
+        # get the required properties from the header
+        hprops = berv_mod.get_keys_from_header(params, ref_tcorr_hdr)
+        # get the bervs and bjds
+        bervs_curve, bjd_curve = berv_mod.use_barycorrpy(params, times, hprops)
+        # push into spec props
+        spec_props['BJD_CURVE']= bjd_curve
+        spec_props['BERV_CURVE'] = bervs_curve
+        spec_props['BERV_COV'] = bcout[1]
+        # ---------------------------------------------------------------------
+        # if we have lbl files we should use them to get systemic velocity
+        if self.filetypes['lbl.fits'].num > 0:
+            # get all systemetic velocities and bervs
+            lbl_systvel, lbl_bervs = [], []
+            for lbl_rv_file in self.filetypes['lbl.fits'].files:
+                lbl_rv_hdr = fits.getheader(lbl_rv_file)
+                lbl_systvel.append(float(lbl_rv_hdr['SYSTVELO']))
+                lbl_bervs.append(float(lbl_rv_hdr['BERV']))
+            # calculate the vsys
+            dv = np.array(lbl_systvel) - np.array(lbl_bervs) * 1000
+            spec_props['VSYS'] = np.nanmedian(dv)
+        else:
+            spec_props['VSYS'] = None
+        # ----------------------------------------------------------------
+        obs_out = calc_obs_windows(params, hprops, times)
+        spec_props['OBS_DAYS'] = obs_out[0]
+        spec_props['OBS_WINDOWS'] = obs_out[1]
+        # ---------------------------------------------------------------------
         # deal with having telluric file
         if pos_sc1d is not None:
             # get the telluric corrected spectrum for the spectrum with the
@@ -1053,7 +1134,7 @@ class AriObject:
         # get the plot path
         plot_path = os.path.join(obj_save_path, plot_base_name)
         # plot the lbl figure
-        spec_plot(spec_props, plot_path, plot_title=f'{self.objname}')
+        ari_plot.spec_plot(spec_props, plot_path, plot_title=f'{self.objname}')
         # -----------------------------------------------------------------
         # construct the stats
         # -----------------------------------------------------------------
@@ -1215,6 +1296,29 @@ class AriObject:
             lbl_props['SNR_H_LABEL'] = self.headers['LBL']['EXT_H']['label']
             lbl_props['RESET_RV'] = np.array(rdb_table['RESET_RV']).astype(bool)
             lbl_props['NUM_RESET_RV'] = np.sum(rdb_table['RESET_RV'])
+            # -----------------------------------------------------------------
+            # deal with wavelength rv plot parameters
+            # -----------------------------------------------------------------
+            # Get all the keys (column names) from the table
+            keys = np.array(rdb_table.keys())
+            # Filter keys to keep only those that start with 'vrad'
+            vrad_keys = keys[np.char.startswith(keys, 'vrad')]
+            # Further filter keys to keep only those that contain 'nm' in their name
+            vrad_keys = vrad_keys[np.char.find(vrad_keys, 'nm') > 0]
+            # push into lbl props
+            lbl_props['VRAD_DICT'] = dict()
+            lbl_props['SVRAD_DICT'] = dict()
+            # add keys from vrad dict
+            for key in vrad_keys:
+                lbl_props['VRAD_DICT'][key] = np.array(rdb_table[key])
+                lbl_props['SVRAD_DICT'][key] = np.array(rdb_table['s' + key])
+            # Extract the wavelength from the 'vrad' keys by splitting
+            # the string
+            wavemap = []
+            for vrad_key in vrad_keys:
+                wavemap.append(float(vrad_key.split('_')[1].split('nm')[0]))
+            lbl_props['wavemap'] = np.array(wavemap)
+            # -----------------------------------------------------------------
             # get the lbl header key
             lbl_version_hdrkey = self.headers['LBL']['LBL_VERSION']['key']
             # find the lbl fits file
@@ -1247,8 +1351,8 @@ class AriObject:
             # get the plot path
             plot_path = os.path.join(obj_save_path, plot_base_name)
             # plot the lbl figure
-            lbl_props = lbl_plot(lbl_props, plot_path,
-                                 plot_title=f'LBL {lbl_objtmp}')
+            lbl_props = ari_plot.lbl_plot(lbl_props, plot_path,
+                                          plot_title=f'LBL {lbl_objtmp}')
             # -----------------------------------------------------------------
             # construct the stats
             # -----------------------------------------------------------------
@@ -1392,10 +1496,10 @@ class AriObject:
             all_ccf[row] = ccf_row
         # -----------------------------------------------------------------
         # get the 1 and 2 sigma limits
-        lower_sig1 = 100 * (0.5 - normal_fraction(1) / 2)
-        upper_sig1 = 100 * (0.5 + normal_fraction(1) / 2)
-        lower_sig2 = 100 * (0.5 - normal_fraction(2) / 2)
-        upper_sig2 = 100 * (0.5 + normal_fraction(2) / 2)
+        lower_sig1 = 100 * (0.5 - mp.normal_fraction(1) / 2)
+        upper_sig1 = 100 * (0.5 + mp.normal_fraction(1) / 2)
+        lower_sig2 = 100 * (0.5 - mp.normal_fraction(2) / 2)
+        upper_sig2 = 100 * (0.5 + mp.normal_fraction(2) / 2)
         # -----------------------------------------------------------------
         # y1 1sig is the 15th percentile of all ccfs
         ccf_props['y1_1sig'] = np.nanpercentile(all_ccf, lower_sig1, axis=0)
@@ -1420,8 +1524,8 @@ class AriObject:
         plot_path = os.path.join(obj_save_path, plot_base_name)
         # set the plot title
         plot_title = f'CCF {self.objname} [mask={ccf_props["chosen_mask"]}]'
-        # plot the lbl figure
-        ccf_plot(ccf_props, plot_path, plot_title=plot_title)
+        # plot the ccf figure
+        ari_plot.ccf_plot(ccf_props, plot_path, plot_title=plot_title)
         # -----------------------------------------------------------------
         # construct the stats
         # -----------------------------------------------------------------
@@ -1655,6 +1759,158 @@ class AriObject:
         self.time_series_dwn_table = None
 
     # -------------------------------------------------------------------------
+    # Debug functions
+    # -------------------------------------------------------------------------
+    def get_debug_parameters(self, params: ParamDict):
+        # set up the object page
+        obj_save_path = os.path.join(params['ARI_OBJ_PAGES'], self.objname)
+        ari_user = params['ARI_USER']
+        # get the extracted files
+        ext_files = self.filetypes['ext'].get_files()
+        # don't go here if ext files are not present
+        if len(ext_files) == 0:
+            return
+        # alias to header dict
+        hdict = self.header_dict
+        # ---------------------------------------------------------------------
+        # parameters used for plotting
+        debug_props = dict()
+        debug_props['HDICT'] = self.header_dict
+        debug_props['HYAML'] = self.headers
+        debug_props['EXT_MJD'] = Time(np.array(hdict['EXT_MJDMID']))
+        debug_props['TCORR_WAVE_RANGE'] = params['ARI_TCORR_MAP_WAVE_RANGE']
+        # get the telluric corrected s1d files
+        sc1d_files = self.filetypes['sc1d'].get_files()
+        debug_props['SC1D_FILES'] = sc1d_files
+        # get the template s1d files
+        temp_s1d = self.filetypes['temp1d'].get_files()
+        debug_props['TEMP_S1D'] = temp_s1d
+        # reset debug plots
+        self.debug_plots = []
+        # ---------------------------------------------------------------------
+        # define the debug plots
+        # ---------------------------------------------------------------------
+        # add tcorr map plot
+        debug_tcorr_map = ari_plot.DebugPlot()
+        debug_tcorr_map.name = 'Telluric map'
+        debug_tcorr_map.basename = (f'debug_tcorr_map_plot_{self.objname}_'
+                                    f'{ari_user}.png')
+        debug_tcorr_map.plot = ari_plot.debug_tcorr_map_plot
+        debug_tcorr_map.description = ('Telluric map of e2dsff_tcorr_A files.'
+                                       'Files are low-passed and corrected for '
+                                       'the stars motion. '
+                                       'The QC is displayed to the right of '
+                                       'the image - in purple are the files '
+                                       'that passed, in orange the files that '
+                                       'failed.')
+        debug_tcorr_map.active = True
+        self.debug_plots.append(debug_tcorr_map)
+        # ---------------------------------------------------------------------
+        # add shape plot
+        debug_shape = ari_plot.DebugPlot()
+        debug_shape.name = 'Shape QC plot'
+        debug_shape.basename = f'debug_shape_plot_{self.objname}_{ari_user}.png'
+        debug_shape.plot = ari_plot.shape_qc_plot_plot
+        debug_shape.description = ('Shape parameters varying in time.'
+                                   'dx is a shift along the order, dy is a '
+                                   'shift across orders, [[A,B],[C,D]] is an '
+                                   'affine transformation matrix.')
+        debug_shape.active = True
+        self.debug_plots.append(debug_shape)
+
+        # ---------------------------------------------------------------------
+        # add wfpdrift plot
+        debug_wfpdrift = ari_plot.DebugPlot()
+        debug_wfpdrift.name = 'wfpdrift plot'
+        debug_wfpdrift.basename = (f'debug_wfpdrift_plot_{self.objname}_'
+                                   f'{ari_user}.png')
+        debug_wfpdrift.plot = ari_plot.debug_mjd_wfpdrift_plot
+        debug_wfpdrift.description = ('Wavelength solution absolute CCF FP '
+                                      'Drift [km/s]')
+        debug_wfpdrift.active = True
+        self.debug_plots.append(debug_wfpdrift)
+
+        # ---------------------------------------------------------------------
+        # add wcav000 plot
+        debug_wcav000 = ari_plot.DebugPlot()
+        debug_wcav000.name = 'Wave cavity (c0) plot'
+        debug_wcav000.basename = (f'debug_wcav000_plot_{self.objname}_'
+                                  f'{ari_user}.png')
+        debug_wcav000.plot = ari_plot.debug_mjd_wcav000_plot
+        debug_wcav000.description = 'Wave cavity polynomial coeffs=0'
+        debug_wcav000.active = True
+        self.debug_plots.append(debug_wcav000)
+
+        # ---------------------------------------------------------------------
+        # add extsmax plot
+        debug_extsmax = ari_plot.DebugPlot()
+        debug_extsmax.name = 'Maximum Saturation level plot'
+        debug_extsmax.basename = (f'debug_extsmax_plot_{self.objname}_'
+                                  f'{ari_user}.png')
+        debug_extsmax.plot = ari_plot.debug_mjd_extsmax_plot
+        debug_extsmax.description = ('Maximum saturation level measured at time '
+                                     'of extraction')
+        debug_extsmax.active = True
+        self.debug_plots.append(debug_extsmax)
+
+        # ---------------------------------------------------------------------
+        # add effron plot
+        debug_effron = ari_plot.DebugPlot()
+        debug_effron.name = 'Measured effective readout noise before extraction'
+        debug_effron.basename = (f'debug_effron_plot_{self.objname}_'
+                                 f'{ari_user}.png')
+        debug_effron.plot = ari_plot.debug_mjd_effron_plot
+        debug_effron.description = ('Measured effective readout noise before '
+                                    'extraction')
+        debug_effron.active = True
+        self.debug_plots.append(debug_effron)
+        # ---------------------------------------------------------------------
+        # add version plot
+        debug_version = ari_plot.DebugPlot()
+        debug_version.name = 'APERO Processing Debug Plot'
+        debug_version.basename = (f'debug_version_plot_{self.objname}_'
+                                  f'{ari_user}.png')
+        debug_version.plot = ari_plot.debug_version_plot
+        debug_version.description = ('Plotting the version and processed date'
+                                     ' from the header from APERO. Note that'
+                                     ' offline reductions should lead to a '
+                                     'straight line, while online reductions '
+                                     'should be roughly a one-to-one with the'
+                                     ' Date axis.')
+        debug_version.active = True
+        self.debug_plots.append(debug_version)
+        # ---------------------------------------------------------------------
+        # add CDT comparison to MJD plot
+        debug_mjd_cdt = ari_plot.DebugPlot()
+        debug_mjd_cdt.name = 'APERO Calibration times plot'
+        debug_mjd_cdt.basename = (f'debug_mjd_cdt_plot_{self.objname}_'
+                                  f'{ari_user}.png')
+        debug_mjd_cdt.plot = ari_plot.debug_mjd_cdt_plot
+        debug_mjd_cdt.description = ('Computed time between observation and '
+                                     'calibration used. Some calibrations are'
+                                     'reference calibrations (in purple) and '
+                                     'thus diverge from the reference night, '
+                                     'others should always be from the same '
+                                     'night (orange) unless no calibration was '
+                                     'taken that night in which case the '
+                                     'closest calirbation in time should '
+                                     'have been used.')
+        debug_mjd_cdt.active = True
+        self.debug_plots.append(debug_mjd_cdt)
+
+        # ---------------------------------------------------------------------
+        # plot the debug plots
+        # ---------------------------------------------------------------------
+        # loop around plots and plot
+        for debug_plot in self.debug_plots:
+            # set the plot title
+            plot_title = f'{debug_plot.name} [{self.objname}]'
+            # get the plot path
+            debug_plot.path = os.path.join(obj_save_path, debug_plot.basename)
+            # plot the debug plot
+            debug_plot.plot(debug_props, debug_plot.path, plot_title)
+
+    # -------------------------------------------------------------------------
     # General page functions
     # -------------------------------------------------------------------------
     def rlink(self, filetype: Optional[str] = None,
@@ -1804,6 +2060,9 @@ def ari_filetypes(params: ParamDict) -> Dict[str, FileType]:
                                 kw_output='EXT_S1D_V', fiber=science_fiber)
     filetypes['sc1d'] = FileType('sc1d', block_kind='red', chain='tcorr',
                                  kw_output='SC1D_V_FILE', fiber=science_fiber)
+    filetypes['temp1d'] = FileType('temp1d', block_kind='red', chain='tcorr',
+                                   kw_output='TELLU_TEMP_S1DV',
+                                   fiber=science_fiber)
     # lbl files added as filetype but don't count in same was as other files
     filetypes['lbl.fits'] = FileType('lbl.fits', count=False)
     for filetype in LBL_FILETYPES:
@@ -1889,104 +2148,8 @@ def target_stats_table(target_props: Dict[str, Any], stat_path: str,
 # =============================================================================
 # Spectrum page functions
 # =============================================================================
-def spec_plot(spec_props: Dict[str, Any], plot_path: str, plot_title: str):
-    # get parameters from props
-    mjd = spec_props['mjd']
-    ext_y = spec_props['EXT_Y']
-    ext_h = spec_props['EXT_H']
-    ext_y_label = spec_props['EXT_Y_LABEL']
-    ext_h_label = spec_props['EXT_H_LABEL']
-    wavemap = spec_props['WAVE']
-    ext_spec = spec_props['EXT_SPEC']
-    tcorr_spec = spec_props['TCORR_SPEC']
-    wavemask0 = spec_props['WAVEMASK0']
-    wavemask1 = spec_props['WAVEMASK1']
-    wavemask2 = spec_props['WAVEMASK2']
-    wavemask3 = spec_props['WAVEMASK3']
-    max_file = spec_props['MAX_FILE']
-    max_snr = spec_props['MAX_SNR']
-    wavelim0 = spec_props['WAVELIM0']
-    wavelim1 = spec_props['WAVELIM1']
-    wavelim2 = spec_props['WAVELIM2']
-    wavelim3 = spec_props['WAVELIM3']
-    # --------------------------------------------------------------------------
-    # setup the figure
-    plt.figure(figsize=(12, 12))
-    frame0 = plt.subplot2grid((3, 3), (0, 0), colspan=3, rowspan=1)
-    frame1 = plt.subplot2grid((3, 3), (1, 0), colspan=3, rowspan=1)
-    frame2a = plt.subplot2grid((3, 3), (2, 0), colspan=1, rowspan=1)
-    frame2b = plt.subplot2grid((3, 3), (2, 1), colspan=1, rowspan=1)
-    frame2c = plt.subplot2grid((3, 3), (2, 2), colspan=1, rowspan=1)
-
-    # set background color
-    frame0.set_facecolor(PLOT_BACKGROUND_COLOR)
-    frame1.set_facecolor(PLOT_BACKGROUND_COLOR)
-    frame2a.set_facecolor(PLOT_BACKGROUND_COLOR)
-    frame2b.set_facecolor(PLOT_BACKGROUND_COLOR)
-    frame2c.set_facecolor(PLOT_BACKGROUND_COLOR)
-    # --------------------------------------------------------------------------
-    # Top plot SNR Y
-    # --------------------------------------------------------------------------
-    # # plot the CCF RV points
-    frame0.plot_date(mjd.plot_date, ext_y, fmt='.', alpha=0.5,
-                     label=ext_y_label)
-    frame0.plot_date(mjd.plot_date, ext_h, fmt='.', alpha=0.5,
-                     label=ext_h_label)
-    frame0.legend(loc=0, ncol=2)
-    frame0.grid(which='both', color='lightgray', ls='--')
-    frame0.set(xlabel='Date', ylabel='EXT SNR')
-
-    # --------------------------------------------------------------------------
-    # Middle plot - full spectra + tcorr
-    # --------------------------------------------------------------------------
-    title = (f'Spectrum closest to Median {ext_h_label}'
-             f'     SNR:{max_snr}     File: {max_file}')
-
-    frame1.plot(wavemap[wavemask0], ext_spec[wavemask0],
-                color='k', label='Extracted Spectrum', lw=0.5)
-    if tcorr_spec is not None:
-        frame1.plot(wavemap[wavemask0], tcorr_spec[wavemask0],
-                    color='r', label='Telluric Corrected', lw=0.5)
-        frame1.set_ylim((0, 1.5 * np.nanpercentile(tcorr_spec, 99)))
-    frame1.set(xlabel='Wavelength [nm]', ylabel='Flux', xlim=wavelim0)
-    frame1.set_title(title, fontsize=10)
-    frame1.legend(loc=0, ncol=2)
-    frame1.grid(which='both', color='lightgray', ls='--')
-    # --------------------------------------------------------------------------
-    # Bottom plots - Y, J, H spectra + tcorr
-    # --------------------------------------------------------------------------
-    masks = [wavemask1, wavemask2, wavemask3]
-    frames = [frame2a, frame2b, frame2c]
-    limits = [wavelim1, wavelim2, wavelim3]
-    # loop around masks and frames and plot the middle plots
-    for it in range(len(masks)):
-        frame, mask, wavelim = frames[it], masks[it], limits[it]
-        frame.plot(wavemap[mask], ext_spec[mask],
-                   color='k', label='Extracted Spectrum', lw=0.5)
-        if tcorr_spec is not None:
-            frame.plot(wavemap[mask], tcorr_spec[mask],
-                       color='r', label='Telluric Corrected', lw=0.5)
-            ymin_mask = 0.5 * np.nanpercentile(tcorr_spec[mask], 1)
-            ymax_mask = 1.5 * np.nanpercentile(tcorr_spec[mask], 99)
-            frame.set_ylim((ymin_mask, ymax_mask))
-        if it == 0:
-            frame.set_ylabel('Flux')
-        frame.set(xlabel='Wavelength [nm]', xlim=wavelim)
-        frame.set_title(f'Zoom {it + 1}', fontsize=10)
-        frame.grid(which='both', color='lightgray', ls='--')
-
-    # --------------------------------------------------------------------------
-    # add title
-    plt.suptitle(plot_title)
-    plt.subplots_adjust(bottom=0.05, left=0.06, right=0.99, hspace=0.3,
-                        top=0.95)
-    # save figure and close the plot
-    plt.savefig(plot_path)
-    plt.close()
-
-
 def spec_stats_table(spec_props: Dict[str, Any], stat_path: str, title: str):
-    from apero.core.math import estimate_sigma
+
     # get parameters from props
     num_raw = spec_props['NUM_RAW_FILES']
     num_pp = spec_props['NUM_PP_FILES']
@@ -2021,8 +2184,8 @@ def spec_stats_table(spec_props: Dict[str, Any], stat_path: str, title: str):
     med_snr_y = np.nanmedian(ext_y)
     med_snr_h = np.nanmedian(ext_h)
     # RMS of SNR
-    rms_snr_y = estimate_sigma(ext_y)
-    rms_snr_h = estimate_sigma(ext_h)
+    rms_snr_y = mp.estimate_sigma(ext_y)
+    rms_snr_h = mp.estimate_sigma(ext_h)
     # --------------------------------------------------------------------------
     # construct the stats table
     # --------------------------------------------------------------------------
@@ -2154,21 +2317,26 @@ def add_lbl_count(params: ParamDict, object_classes: Dict[str, AriObject]
         templates = []
         # store a list of counts
         counts = []
+        # files
+        lbl_rv_files = []
         # loop around each directory
         for directory in lblrv_dir:
             # get the template name for each directory
             basename = os.path.basename(directory)
             template = basename.split(f'{objname}_')[-1]
             # get the number of lbl files in each directory
-            count = len(glob.glob(os.path.join(directory, '*lbl.fits')))
+            dir_lblrv_files = glob.glob(os.path.join(directory, '*lbl.fits'))
+            count = len(dir_lblrv_files)
             # append storage
             templates.append(template)
             counts.append(count)
+            lbl_rv_files.append(dir_lblrv_files)
         # decide which template to use (using max of counts)
         select = np.argmax(counts)
         # get strings to add to storage
         _select = templates[select]
         _count = int(counts[select])
+        _lbl_rv_files = lbl_rv_files[select]
         # --------------------------------------------------------------------
         # deal with the update (do not update if there are no difference
         # in files)
@@ -2183,8 +2351,9 @@ def add_lbl_count(params: ParamDict, object_classes: Dict[str, AriObject]
         # --------------------------------------------------------------------
         # set the number of files
         object_class.filetypes['lbl.fits'].num = _count
+        object_class.filetypes['lbl.fits'].files = _lbl_rv_files
         # ---------------------------------------------------------------------
-        # LBL files
+        # LBL RDB files
         # ---------------------------------------------------------------------
         # loop around all lbl files
         for it, filetype in enumerate(LBL_FILETYPES):
@@ -2230,150 +2399,6 @@ def add_lbl_count(params: ParamDict, object_classes: Dict[str, AriObject]
     # -------------------------------------------------------------------------
     # return the object table
     return object_classes
-
-
-def lbl_plot(lbl_props: Dict[str, Any], plot_path: str,
-             plot_title: str) -> Dict[str, Any]:
-    # setup the figure
-    fig, frame = plt.subplots(2, 1, figsize=(12, 6), sharex='all')
-    # get parameters from props
-    plot_date = lbl_props['plot_date']
-    vrad = lbl_props['vrad']
-    svrad = lbl_props['svrad']
-    snr_h = lbl_props['snr_h']
-    snr_h_label = lbl_props['SNR_H_LABEL']
-    reset_mask = lbl_props['RESET_RV']
-    # sort data by date
-    sort = np.argsort(plot_date)
-    plot_date = plot_date[sort]
-    vrad = vrad[sort]
-    svrad = svrad[sort]
-    snr_h = snr_h[sort]
-    reset_mask = reset_mask[sort]
-    # set background color
-    frame[0].set_facecolor(PLOT_BACKGROUND_COLOR)
-    frame[1].set_facecolor(PLOT_BACKGROUND_COLOR)
-    # --------------------------------------------------------------------------
-    # Top plot LBL RV
-    # --------------------------------------------------------------------------
-    # plot the points
-    frame[0].plot_date(plot_date[~reset_mask], vrad[~reset_mask], fmt='.',
-                       alpha=0.5, color='green', ls='None')
-    frame[0].plot_date(plot_date[reset_mask], vrad[reset_mask], fmt='.',
-                       alpha=0.5, color='purple', ls='None')
-    # plot the error bars
-    frame[0].errorbar(plot_date[~reset_mask], vrad[~reset_mask],
-                      yerr=svrad[~reset_mask],
-                      marker='o', alpha=0.5, color='green', ls='None',
-                      label='Good')
-    frame[0].errorbar(plot_date[reset_mask], vrad[reset_mask],
-                      yerr=svrad[reset_mask],
-                      marker='o', alpha=0.5, color='purple', ls='None',
-                      label='Possibly bad (reset rv)')
-    # find percentile cuts that will be expanded by 150% for the ylim
-    pp = np.nanpercentile(vrad, [10, 90])
-    diff = pp[1] - pp[0]
-    central_val = np.nanmean(pp)
-    # used for plotting but also for the flagging of outliers
-    ylim = [central_val - 1.5 * diff, central_val + 1.5 * diff]
-    # length of the arrow flagging outliers
-    l_arrow = 0.05 * (ylim[1] - ylim[0])
-    # store the bad points
-    bad_points = []
-    # set the arrow properties
-    arrowprops = dict(arrowstyle='<-', linewidth=2, color='red')
-    arrow = None
-    # --------------------------------------------------------------------------
-    # flag the low outliers
-    low = vrad < ylim[0]
-    # get the x and y values of the outliers to be looped over within
-    # the arrow plotting
-    xpoints = np.array(plot_date[low], dtype=float)
-    # x_range = np.nanmax(plot_date) - np.nanmin(plot_date)
-    for ix in range(len(xpoints)):
-        bad_points.append(ix)
-        arrow = frame[0].annotate('',
-                                  xy=(xpoints[ix], ylim[0] + l_arrow),
-                                  xytext=(xpoints[ix], ylim[0] - l_arrow * 2),
-                                  xycoords='data', textcoords='data',
-                                  arrowprops=arrowprops)
-
-        # frame[0].arrow(xpoints[ix], ylim[0] + l_arrow * 2, 0, -l_arrow,
-        #                color='red', head_width=0.01 * x_range,
-        #                head_length=0.25 * l_arrow, alpha=0.5, label='Outliers')
-    # same as above for the high outliers
-    high = vrad > ylim[1]
-    xpoints = np.array(plot_date[high], dtype=float)
-    for ix in range(len(xpoints)):
-        bad_points.append(ix)
-
-        arrow = frame[0].annotate('',
-                                  xy=(xpoints[ix], ylim[1] - l_arrow * 2),
-                                  xytext=(xpoints[ix], ylim[1] + l_arrow),
-                                  xycoords='data', textcoords='data',
-                                  arrowprops=arrowprops)
-
-        # frame[0].arrow(xpoints[ix], ylim[1] - l_arrow * 2, 0, l_arrow,
-        #                color='red', head_width=0.01 * x_range,
-        #                head_length=0.25 * l_arrow, alpha=0.5, label='Outliers')
-    # --------------------------------------------------------------------------
-    # setting the plot
-    frame[0].set(ylim=ylim)
-    frame[0].set(title=plot_title)
-    frame[0].grid(which='both', color='lightgray', linestyle='--')
-    frame[0].set(ylabel='Velocity [m/s]')
-    # only keep one unique labels for legend
-    handles, labels = [], []
-    raw_handles, raw_labels = frame[0].get_legend_handles_labels()
-    for it in range(len(raw_labels)):
-        if raw_labels[it] not in labels:
-            handles.append(raw_handles[it])
-            labels.append(raw_labels[it])
-    # --------------------------------------------------------------------------
-    # Create a custom legend handle for the arrows
-    if arrow is not None:
-        arrow_handle = gen_plot.ArrowHandler()
-        arrow_handle.arrowprops = arrowprops
-        handler_map = {tuple: arrow_handle}
-        handles.append((arrow,))
-        labels.append('Outliers')
-        # add legend
-        frame[0].legend(handles, labels, loc=0, handler_map=handler_map)
-    else:
-        frame[0].legend(handles, labels, loc=0)
-    # --------------------------------------------------------------------------
-    # Bottom plot SNR
-    # --------------------------------------------------------------------------
-    # simple plot of the SNR in a sample order. You need to
-    # update the relevant ketword for SPIRou
-    frame[1].plot_date(plot_date[~reset_mask], snr_h[~reset_mask], fmt='.',
-                       alpha=0.5, color='green', ls='None', label='Good')
-    frame[1].plot_date(plot_date[reset_mask], snr_h[reset_mask], fmt='.',
-                       alpha=0.5, color='purple', ls='None',
-                       label='Possibily bad (reset rv)')
-    # over plot the bad points from above
-    if len(bad_points) > 0:
-        bad_points = np.array(bad_points)
-        frame[1].plot_date(plot_date[bad_points], snr_h[bad_points], fmt='.',
-                           alpha=0.5, color='red', ls='None', label='Outliers')
-
-    # add properties
-    frame[1].grid(which='both', color='lightgray', linestyle='--')
-    frame[1].set(xlabel='Date')
-    frame[1].set(ylabel=snr_h_label)
-    # add legend
-    frame[1].legend(loc=0)
-    plt.tight_layout()
-    # --------------------------------------------------------------------------
-    # save figure and close the plot
-    plt.savefig(plot_path)
-    plt.close()
-    # some parameters are required later save them in a dictionary
-    lbl_props['low'] = low
-    lbl_props['high'] = high
-    lbl_props['ylim'] = ylim
-    # return the props
-    return lbl_props
 
 
 def lbl_stats_table(lbl_props: Dict[str, Any], stat_path: str, title: str):
@@ -2490,7 +2515,6 @@ def fit_ccf(ccf_props: Dict[str, Any]) -> Dict[str, Any]:
     :param ccf_props:
     :return:
     """
-    from apero.core.math.gauss import gauss_function
     # get parameters from props
     rv_vec = ccf_props['rv_vec']
     med_ccf = ccf_props['med_ccf']
@@ -2506,8 +2530,8 @@ def fit_ccf(ccf_props: Dict[str, Any]) -> Dict[str, Any]:
     # noinspection PyBroadException
     try:
         # noinspection PyTupleAssignmentBalance
-        coeffs, _ = curve_fit(gauss_function, rv_vec, med_ccf, p0=guess)
-        fit = gauss_function(rv_vec, *coeffs)
+        coeffs, _ = curve_fit(mp.gauss_function, rv_vec, med_ccf, p0=guess)
+        fit = mp.gauss_function(rv_vec, *coeffs)
         xlim = [coeffs[1] - coeffs[2] * 20, coeffs[1] + coeffs[2] * 20]
         ylim = [np.min(y1_1sig - fit), np.max(y2_1sig - fit)]
         has_fit = True
@@ -2528,187 +2552,7 @@ def fit_ccf(ccf_props: Dict[str, Any]) -> Dict[str, Any]:
     return ccf_props
 
 
-def ccf_plot(ccf_props: Dict[str, Any], plot_path: str, plot_title: str):
-    # get parameters from props
-    mjd = ccf_props['mjd']
-    vrad = ccf_props['dv']
-    svrad = ccf_props['sdv']
-    rv_vec = ccf_props['rv_vec']
-    y1_1sig = ccf_props['y1_1sig']
-    y2_1sig = ccf_props['y2_1sig']
-    y1_2sig = ccf_props['y1_2sig']
-    y2_2sig = ccf_props['y2_2sig']
-    med_ccf = ccf_props['med_ccf']
-    has_fit = ccf_props['has_fit']
-    fit = ccf_props['fit']
-    xlim = ccf_props['xlim']
-
-    # sort data by mjd.plot_date
-    sort = np.argsort(mjd.plot_date)
-    mjd = mjd[sort]
-    vrad = vrad[sort]
-    svrad = svrad[sort]
-    # ylim = ccf_props['ylim']
-    # --------------------------------------------------------------------------
-    # setup the figure
-    fig, frame = plt.subplots(4, 1, figsize=(12, 12))
-    # set background color
-    frame[0].set_facecolor(PLOT_BACKGROUND_COLOR)
-    frame[1].set_facecolor(PLOT_BACKGROUND_COLOR)
-    frame[2].set_facecolor(PLOT_BACKGROUND_COLOR)
-    frame[3].set_facecolor(PLOT_BACKGROUND_COLOR)
-    # --------------------------------------------------------------------------
-    # Top plot CCF RV
-    # --------------------------------------------------------------------------
-    # # plot the CCF RV points
-    frame[0].plot_date(mjd.plot_date, vrad, fmt='.', alpha=0.5,
-                       color='green', label='Good')
-    # plot the CCF RV errors
-    frame[0].errorbar(mjd.plot_date, vrad, yerr=svrad, fmt='o',
-                      alpha=0.5, color='green')
-    # find percentile cuts that will be expanded by 150% for the ylim
-    pp = np.nanpercentile(vrad, [10, 90])
-    diff = pp[1] - pp[0]
-    central_val = np.nanmean(pp)
-    # used for plotting but also for the flagging of outliers
-    if diff == 0:
-        ylim = [0, 1]
-    else:
-        ylim = [central_val - 1.5 * diff, central_val + 1.5 * diff]
-    # length of the arrow flagging outliers
-    l_arrow = 0.05 * (ylim[1] - ylim[0])
-    # set the arrow properties
-    arrowprops = dict(arrowstyle='<-', linewidth=2, color='red')
-    arrow = None
-    # --------------------------------------------------------------------------
-    # flag the low outliers
-    low = vrad < ylim[0]
-    # get the x and y values of the outliers to be looped over within
-    # the arrow plotting
-    xpoints = np.array(mjd.plot_date[low], dtype=float)
-    # x_range = np.nanmax(mjd.plot_date) - np.nanmin(mjd.plot_date)
-    for ix in range(len(xpoints)):
-        arrow = frame[0].annotate('',
-                                  xy=(xpoints[ix], ylim[0] - l_arrow),
-                                  xytext=(xpoints[ix], ylim[0] + l_arrow * 2),
-                                  xycoords='data', textcoords='data',
-                                  arrowprops=arrowprops)
-
-        # frame[0].arrow(xpoints[ix], ylim[0] + l_arrow * 2, 0, -l_arrow,
-        #                color='red', head_width=0.01 * x_range,
-        #                head_length=0.25 * l_arrow, alpha=0.5, label='Outliers')
-    # same as above for the high outliers
-    high = vrad > ylim[1]
-    xpoints = np.array(mjd.plot_date[high], dtype=float)
-    for ix in range(len(xpoints)):
-        arrow = frame[0].annotate('',
-                                  xy=(xpoints[ix], ylim[1] - l_arrow * 2),
-                                  xytext=(xpoints[ix], ylim[1] + l_arrow),
-                                  xycoords='data', textcoords='data',
-                                  arrowprops=arrowprops)
-
-        # frame[0].arrow(xpoints[ix], ylim[1] - l_arrow * 2, 0, l_arrow,
-        #                color='red', head_width=0.01 * x_range,
-        #                head_length=0.25 * l_arrow, alpha=0.5, label='Outliers')
-    # --------------------------------------------------------------------------
-    # setting the plot
-    frame[0].set(ylim=ylim)
-    frame[0].grid(which='both', color='lightgray', ls='--')
-    frame[0].set(xlabel='Date', ylabel='Velocity [m/s]')
-    # only keep one unique labels for legend
-    handles, labels = [], []
-    raw_handles, raw_labels = frame[0].get_legend_handles_labels()
-    for it in range(len(raw_labels)):
-        if raw_labels[it] not in labels:
-            handles.append(raw_handles[it])
-            labels.append(raw_labels[it])
-    # --------------------------------------------------------------------------
-    # Create a custom legend handle for the arrows
-    if arrow is not None:
-        arrow_handle = gen_plot.ArrowHandler()
-        arrow_handle.arrowprops = arrowprops
-        handler_map = {tuple: arrow_handle}
-        handles.append((arrow,))
-        labels.append('Outliers')
-        # add legend
-        frame[0].legend(handles, labels, loc=0, handler_map=handler_map)
-    else:
-        frame[0].legend(handles, labels, loc=0)
-    # --------------------------------------------------------------------------
-    # Middle plot median CCF
-    # --------------------------------------------------------------------------
-    # mask by xlim
-    limmask = (rv_vec > xlim[0]) & (rv_vec < xlim[1])
-
-    frame[1].fill_between(rv_vec[limmask], y1_2sig[limmask], y2_2sig[limmask],
-                          color='orange', alpha=0.4)
-    frame[1].fill_between(rv_vec[limmask], y1_1sig[limmask], y2_1sig[limmask],
-                          color='red', alpha=0.4)
-    frame[1].plot(rv_vec[limmask], med_ccf[limmask], alpha=1.0, color='black')
-    if has_fit:
-        frame[1].plot(rv_vec[limmask], fit[limmask], alpha=0.8,
-                      label='Gaussian fit', ls='--')
-    frame[1].legend(loc=0)
-    frame[1].set(xlabel='RV [km/s]',
-                 ylabel='Normalized CCF')
-    frame[1].grid(which='both', color='lightgray', ls='--')
-
-    # --------------------------------------------------------------------------
-    # Middle plot median CCF residuals
-    # --------------------------------------------------------------------------
-    if has_fit:
-        frame[2].fill_between(rv_vec[limmask], y1_2sig[limmask] - fit[limmask],
-                              y2_2sig[limmask] - fit[limmask], color='orange',
-                              alpha=0.4, label=r'2-$\sigma$')
-        frame[2].fill_between(rv_vec[limmask], y1_1sig[limmask] - fit[limmask],
-                              y2_1sig[limmask] - fit[limmask], color='red',
-                              alpha=0.4, label=r'1-$\sigma$')
-        frame[2].plot(rv_vec[limmask], med_ccf[limmask] - fit[limmask],
-                      alpha=0.8, label='Median residual')
-        frame[2].legend(loc=0, ncol=3)
-        frame[2].set(xlabel='RV [km/s]', ylabel='Residuals [to fit]')
-    else:
-        frame[2].text(0.5, 0.5, 'No fit to CCF possible',
-                      horizontalalignment='center')
-        frame[2].legend(loc=0, ncol=3)
-        frame[2].set(xlim=[0, 1], ylim=[0, 1], xlabel='RV [km/s]',
-                     ylabel='Residuals')
-    frame[2].grid(which='both', color='lightgray', ls='--')
-    # --------------------------------------------------------------------------
-    # Bottom plot median CCF residuals
-    # --------------------------------------------------------------------------
-    if has_fit:
-        frame[3].fill_between(rv_vec[limmask],
-                              y1_2sig[limmask] - med_ccf[limmask],
-                              y2_2sig[limmask] - med_ccf[limmask], color='orange',
-                              alpha=0.4, label=r'2-$\sigma$')
-        frame[3].fill_between(rv_vec[limmask],
-                              y1_1sig[limmask] - med_ccf[limmask],
-                              y2_1sig[limmask] - med_ccf[limmask], color='red',
-                              alpha=0.4, label=r'1-$\sigma$')
-        frame[3].plot(rv_vec[limmask], med_ccf[limmask] - med_ccf[limmask],
-                      alpha=0.8, label='Median residual')
-        frame[3].legend(loc=0, ncol=3)
-        frame[3].set(xlabel='RV [km/s]', ylabel='Residuals [To Median]')
-    else:
-        frame[3].text(0.5, 0.5, 'No fit to CCF possible',
-                      horizontalalignment='center')
-        frame[3].legend(loc=0, ncol=3)
-        frame[3].set(xlim=[0, 1], ylim=[0, 1], xlabel='RV [km/s]',
-                     ylabel='Residuals [To Median]')
-    frame[3].grid(which='both', color='lightgray', ls='--')
-    # --------------------------------------------------------------------------
-    # add title
-    plt.suptitle(plot_title)
-    plt.subplots_adjust(hspace=0.2, left=0.1, right=0.99, bottom=0.05,
-                        top=0.95)
-    # save figure and close the plot
-    plt.savefig(plot_path)
-    plt.close()
-
-
 def ccf_stats_table(ccf_props: Dict[str, Any], stat_path: str, title: str):
-    from apero.core.math import estimate_sigma
     # get parameters from props
     vrad = ccf_props['dv']
     fwhm = ccf_props['fwhm']
@@ -2725,11 +2569,11 @@ def ccf_stats_table(ccf_props: Dict[str, Any], stat_path: str, title: str):
     # get the systemic velocity
     sys_vel = np.nanmedian(vrad)
     # get the error in systemic velocity
-    err_sys_vel = estimate_sigma(vrad)
+    err_sys_vel = mp.estimate_sigma(vrad)
     # get the fwhm
     ccf_fwhm = np.nanmedian(fwhm)
     # get the error on fwhm
-    err_ccf_fwhm = estimate_sigma(fwhm)
+    err_ccf_fwhm = mp.estimate_sigma(fwhm)
     # --------------------------------------------------------------------------
     # construct the stats table
     # --------------------------------------------------------------------------
@@ -3246,8 +3090,52 @@ def get_objnames_headers(objname: str, indexdbm: Any) -> str:
                                     condition=condition)
     # get only unique object names
     all_names = set(objtable['KW_OBJECTNAME']) | set(objtable['KW_OBJECTNAME2'])
+    # remove None from set
+    all_names = list(all_names)
+    if None in all_names:
+        all_names.remove(None)
     # return all the object names
     return ', '.join(all_names)
+
+
+def calc_obs_windows(params: ParamDict, hprops, times: np.ndarray):
+
+    # Define observer's location
+    observer = Observer(latitude=params['OBS_LAT']*uu.deg,
+                        longitude=params['OBS_LONG']*uu.deg,
+                        elevation=params['OBS_ALT']*uu.m,
+                        timezone=params['OBS_TZ'])
+
+    # Define the object's coordinates (RA, Dec)
+    object_coords = SkyCoord(ra=hprops['RA']*uu.deg, dec=hprops['DEC']*uu.deg)
+    # turn the coordinates into a fixed object
+    target = FixedTarget(name=hprops['OBJNAME'], coord=object_coords)
+    # Define observing constraints
+    constraints = [AltitudeConstraint(min=30*uu.deg),  # Minimum altitude of 30 degrees
+                   AtNightConstraint.twilight_civil()  # Avoid twilight
+                   ]
+    # get start and end date from times array
+    start_date, end_date = [Time(times.min(), format='jd'),
+                            Time(times.max(), format='jd')]
+    # Generate a time grid for each day (every 30 minutes)
+    daily_time_grid = time_grid_from_range([start_date, end_date],
+                                            time_resolution=2*uu.hr)
+    # Compute observability for each time point in the daily grid
+    constraint_results = []
+    for constraint in constraints:
+        constraint_results.append(constraint(observer, [target],
+                                             times=daily_time_grid))
+    # Combine constraints using logical AND
+    observable_mask = np.logical_and.reduce(constraint_results)
+
+    # Group by day and check if observable at any time within each day
+    unique_days = np.array([t.datetime.date() for t in daily_time_grid])
+    days = np.unique(unique_days)
+
+    observable_per_day = [np.any(observable_mask[unique_days == day])
+                          for day in days]
+
+    return days, observable_per_day
 
 
 # =============================================================================

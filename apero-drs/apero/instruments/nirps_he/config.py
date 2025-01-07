@@ -32,8 +32,12 @@ CDict.set('OBS_LONG', value=-70.731330408, source=__NAME__, author='NJC')
 #  Defines the latitude North (deg)
 CDict.set('OBS_LAT', value=-29.261165622, source=__NAME__, author='NJC')
 
-#  Defines the CFHT altitude (m)
+#  Defines the telescope altitude (m)
 CDict.set('OBS_ALT', value=2400, source=__NAME__, author='NJC')
+
+#  Define the telescopes time zone (from pytz.all_timezones)
+CDict.set('OBS_TIMEZONE', value='Chile/Continental', source=__NAME__,
+          author='NJC')
 
 # -----------------------------------------------------------------------------
 # global settings

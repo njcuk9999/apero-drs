@@ -147,6 +147,8 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
                        func_name)
     blue_limit = pcheck(params, 'THERMAL_BLUE_LIMIT', 'blue_limit', kwargs,
                         func_name)
+    thermal_limit = pcheck(params, 'THERMAL_LIMIT', 'thermal_limit', kwargs,
+                           func_name)
     e2ds = pcheck(params, 'E2DS', 'e2ds', kwargs, func_name, paramdict=eprops)
     e2dsff = pcheck(params, 'E2DSFF', 'e2dsff', kwargs, func_name,
                     paramdict=eprops)
@@ -220,7 +222,8 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
                    tapas_thres=tapas_thres, envelope=envelope,
                    filter_wid=filter_wid, torder=torder,
                    red_limit=red_limit, blue_limit=blue_limit,
-                   thermal=thermal, database=database)
+                   thermal=thermal, database=database,
+                   thermal_limit=thermal_limit)
     # base thermal correction on fiber type
     if fibertype in corrtype1:
         # log progress: doing thermal correction
@@ -315,6 +318,7 @@ def tcorrect1(params: ParamDict, recipe: DrsRecipe,
     torder = kwargs.get('torder', None)
     red_limit = kwargs.get('red_limit', None)
     tapas_file = kwargs.get('tapas_file', None)
+    thermal_limit = kwargs.get('thermal_limit', None)
     # ----------------------------------------------------------------------
     # deal with no thermal
     if thermal is None:
@@ -386,7 +390,17 @@ def tcorrect1(params: ParamDict, recipe: DrsRecipe,
                 fiber=fiber, kind=kind)
     # ----------------------------------------------------------------------
     # correct image
-    corrected_image = image - thermal
+    corrected_image = np.array(image)
+    # loop around orders and correct thermal only in orders
+    # we know that even a fiber with an emissivity of one would have
+    #     basically no background below a certain thermal_limit
+    for order_num in range(image.shape[0]):
+        # mask anything below our thermal limit
+        thermal_mask = wavemap[order_num] > thermal_limit
+        # get the thermal order
+        thermal_ord = thermal[order_num][thermal_mask]
+        # only correct above our thermal mask limit
+        corrected_image[order_num][thermal_mask] -= thermal_ord
     # ----------------------------------------------------------------------
     # save parameters to param dict
     therm_props = ParamDict()
@@ -414,6 +428,7 @@ def tcorrect2(params: ParamDict, recipe: DrsRecipe,
     torder = kwargs.get('torder', None)
     red_limit = kwargs.get('red_limit', None)
     blue_limit = kwargs.get('blue_limit', None)
+    thermal_limit = kwargs.get('thermal_limit', None)
     # thermal_file = kwargs.get('thermal_file', None)
     # get the shape
     dim1, dim2 = image.shape
@@ -484,7 +499,17 @@ def tcorrect2(params: ParamDict, recipe: DrsRecipe,
                 fiber=fiber, kind=kind)
     # ----------------------------------------------------------------------
     # correct image
-    corrected_image = image - thermal
+    corrected_image = np.array(image)
+    # loop around orders and correct thermal only in orders
+    # we know that even a fiber with an emissivity of one would have
+    #     basically no background below a certain thermal_limit
+    for order_num in range(image.shape[0]):
+        # mask anything below our thermal limit
+        thermal_mask = wavemap[order_num] > thermal_limit
+        # get the thermal order
+        thermal_ord = thermal[order_num][thermal_mask]
+        # only correct above our thermal mask limit
+        corrected_image[order_num][thermal_mask] -= thermal_ord
     # ----------------------------------------------------------------------
     # save parameters to param dict
     therm_props = ParamDict()

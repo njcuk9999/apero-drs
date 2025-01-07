@@ -262,7 +262,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             # turn off cleaning of OH lines in pre-cleaning
             clean_ohlines = False
         else:
-            # correct sky using model and B fiber
+            # correct sky without the reference file
             scprops = telluric.correct_sky_no_ref(params, recipe, infile,
                                                   wprops, rawfiles, combine,
                                                   calibdbm, telludbm)
@@ -274,12 +274,15 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         # telluric pre-cleaning
         # ------------------------------------------------------------------
-        tpreprops = telluric.tellu_preclean(params, recipe, infile, wprops,
+        tout = telluric.tellu_preclean(params, recipe, infile, wprops,
                                             fiber, rawfiles, combine,
                                             database=telludbm,
                                             template_props=template_props,
+                                            refprops=refprops,
+                                            bprops=bprops,
                                             clean_ohlines=clean_ohlines,
                                             sky_props=scprops)
+        tpreprops, template_props = tout
         # get corrected image out of pre-cleaning parameter dictionary
         image1 = tpreprops['CORRECTED_E2DS']
 

@@ -51,44 +51,6 @@ INPUTARGS['aperotest.recipes.test_run'] = ['GLOBAL.YAML_FILE']
 # =============================================================================
 # Define functions
 # =============================================================================
-def get_params(from_file: bool = True,
-               name: Optional[str] = None,
-               **kwargs) -> ParamDict:
-    """
-    Get the parameters (default, command line and function call)
-
-    :param yaml_file:
-    :param description:
-    :param yaml_required:
-    :param from_file:
-    :return:
-    """
-    description = DESCRIPTIONS.get(name, 'UNKNOWN')
-    inputs = INPUTARGS.get(name, None)
-    # get the default arguments
-    params = load_functions.load_parameters([constants.CDict])
-    # set name
-    if name is not None:
-        params['RECIPE_SHORT'] = name.split('.')[-1]
-    # get the yaml file
-    args = load_functions.cmd_args_from_clist(description, [constants.CDict],
-                                              inputs)
-    # push in from command line arguments
-    params = load_functions.load_from_cmd_args(params, args, kwargs)
-    # get constants from user config files
-    if from_file:
-        # get instrument user config files
-        largs = [[os.path.realpath(params['GLOBAL']['YAML_FILE'])], params]
-        # load keys, values, sources and instances from yaml files
-        params = load_functions.load_from_yaml(*largs)
-    # make sure we have the minimal log parameters from wlog
-    params = WLOG.minimal_params(params)
-
-    # return params
-    return params
-
-
-
 def setup(params: ParamDict):
     """
     Setup the general module
@@ -138,9 +100,6 @@ def setup(params: ParamDict):
     WLOG(params, '', msg.format(os.path.realpath(yaml_file)))
     # save the constants dictionary to yaml file
     cdict.save_yaml(params, outpath=yaml_file, log=False)
-
-
-
 
 
 # =============================================================================

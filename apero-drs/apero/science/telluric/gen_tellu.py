@@ -19,7 +19,6 @@ from astropy import units as uu
 from astropy.table import Table
 from scipy.optimize import curve_fit
 
-from aperocore.base import base
 from aperocore.constants import param_functions
 from aperocore.constants import load_functions
 from aperocore import drs_lang
@@ -27,6 +26,7 @@ from aperocore import math as mp
 from aperocore.core import drs_misc
 from apero.core import drs_database
 from apero.core import drs_file
+from apero.utils import drs_recipe
 from aperocore.core import drs_log
 from aperocore.core import drs_text
 from apero.instruments.default import instrument
@@ -38,6 +38,8 @@ from apero.science.calib import flat_blaze
 from apero.science.calib import gen_calib
 from apero.instruments import select
 from apero.base import base as apero_base
+from apero.science.telluric.core_tellu import load_tellu_file, wave_to_wave
+from apero.science.telluric import sky_corr
 
 # =============================================================================
 # Define variables
@@ -52,6 +54,7 @@ __release__ = apero_base.__release__
 # get param dict
 ParamDict = param_functions.ParamDict
 DrsFitsFile = drs_file.DrsFitsFile
+DrsRecipe = drs_recipe.DrsRecipe
 # get calibration database
 CalibDatabase = drs_database.CalibrationDatabase
 TelluDatabase = drs_database.TelluricDatabase
@@ -449,7 +452,8 @@ def mask_bad_regions(params: ParamDict,
 # pre-cleaning functions
 # =============================================================================
 def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
-                   template_props: ParamDict,
+                   template_props: ParamDict, refprops: ParamDict,
+                   bprops: ParamDict,
                    sky_props: Optional[ParamDict] = None,
                    calibdbm: Union[CalibDatabase, None] = None,
                    telludbm: Union[TelluDatabase, None] = None, **kwargs):
@@ -548,6 +552,9 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     # get wave map for the input e2ds
     wave_e2ds = wprops['WAVEMAP']
     # ----------------------------------------------------------------------
+    # get pconst
+    pconst = load_functions.load_pconfig(instruments=select.INSTRUMENTS)
+    # ----------------------------------------------------------------------
     # get res_e2ds file instance
     res_e2ds = drs_file.get_file_definition(params, 'WAVEM_RES_E2DS',
                                             block_kind='red')
@@ -586,9 +593,9 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     qc_logic.append('MED[EXTSNR] < {0}'.format(snr_min_thres))
     qc_pass.append(np.nan)
     # 2. ccf is NaN (pos = 1)
-    qc_values.append(np.nan)
-    qc_names.append('NUM_NAN_CCF')
-    qc_logic.append('NUM_NAN_CCF > 0')
+    qc_values.append('N.A')
+    qc_names.append('APPROX_RV [PREV, NOW]')
+    qc_logic.append('APP_RV[NOW] > APP_RV[PREV]')
     qc_pass.append(np.nan)
     # 3. exponent for others out of bounds (pos = 2 and 3)
     qc_values += [np.nan, np.nan]
@@ -646,14 +653,11 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         props['EXPO_OTHERS'] = np.nan
         props['DV_WATER'] = np.nan
         props['DV_OTHERS'] = np.nan
-        props['CCFPOWER_WATER'] = np.nan
-        props['CCFPOWER_OTHERS'] = np.nan
         props['QC_PARAMS'] = qc_params
         # set sources
         keys = ['CORRECTED_E2DS', 'TRANS_MASK', 'ABSO_E2DS', 'EXPO_WATER',
-                'EXPO_OTHERS', 'DV_WATER', 'DV_OTHERS', 'CCFPOWER_WATER',
-                'CCFPOWER_OTHERS', 'QC_PARAMS', 'SKY_MODEL',
-                'PRE_SKYCORR_IMAGE']
+                'EXPO_OTHERS', 'DV_WATER', 'DV_OTHERS', 'QC_PARAMS',
+                'SKY_MODEL', 'PRE_SKYCORR_IMAGE']
         props.set_sources(keys, func_name)
         # ------------------------------------------------------------------
         # add constants used (can come from kwargs)
@@ -721,13 +725,9 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     if template_props['HAS_TEMPLATE']:
         template1 = np.array(template_props['TEMP_S2D'])
         template2 = template1.ravel()[flatkeep]
-        # template? measure dv_abso
-        force_dv_abso = False
     else:
         # no template? force expo_others to airmass
         force_airmass = False
-        # no template? force dv_abso to zero
-        force_dv_abso = True
         # template1 = np.ones_like(wave_e2ds)
         template2 = np.ones_like(wavemap)
     # ----------------------------------------------------------------------
@@ -773,33 +773,24 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     spectrum[~np.isfinite(spectrum)] = 0.0
     spectrum[spectrum < 0.0] = 0.0
     # ----------------------------------------------------------------------
-    # scanning range for the ccf computations
-    dint = params['IMAGE_PIXEL_SIZE'] / 4
-    drange = np.arange(-ccf_scan_range, ccf_scan_range + 1.0, dint)
-    # get species line lists from file
-    mask_others, mask_water = get_sp_linelists(params)
-    # storage for the ccfs
-    ccf_others = np.zeros_like(drange, dtype=float)
-    ccf_water = np.zeros_like(drange, dtype=float)
-    # start with no correction of abso to get the CCF
-    expo_water = 0.0
-    # we start at zero to get a velocity mesaurement even if we may force
-    #   to the airmass
-    expo_others = 0.0
+    # we start the water at 4
+    expo_water = 4.0
+    # we start the dry component at the airmass
+    expo_others = hdr_airmass
     # keep track of consecutive exponents and test convergence
-    expo_water_prev = np.inf
-    expo_others_prev = np.inf
     dexpo = np.inf
-    # storage for the amplitude from fit
-    amp_water_list = []
-    amp_others_list = []
+    # storage for the slopes from fit
+    slope_water_list = []
+    slope_others_list = []
     # storage for the exponential from fit
     expo_water_list = []
     expo_others_list = []
     # storage for plotting
-    dd_iterations = []
-    ccf_water_iterations = []
-    ccf_others_iterations = []
+    dexpos = []
+    mean_rd_water, emean_rd_water = [], []
+    mean_rd_others, emean_rd_others = [], []
+    # ----------------------------------------------------------------------
+    # first guess at the velocity of absorption is 0 km/s
     # ----------------------------------------------------------------------
     # first guess at the velocity of absoprtion is 0 km/s
     dv_abso = 0.0
@@ -826,25 +817,45 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
                                 res_fwhm=res_fwhm, res_expo=res_expo,
                                 dv_abso=dv_abso, wavestart=wavestart,
                                 waveend=waveend, dvgrid=dvgrid)
-    # spline the reference other and water transmission
-    spline_ref_others = mp.iuv_spline(wavemap, trans_others, k=1, ext=1)
-    spline_ref_water = mp.iuv_spline(wavemap, trans_water, k=1, ext=1)
-    # get the mask wavelength
-    ll_mask_s_others = mask_others['ll_mask_s']
-    ll_mask_s_water = mask_water['ll_mask_s']
-    # set the depths to the transmission (using the reference splines)
-    wmask_others = 1 - spline_ref_others(mask_others['ll_mask_s'])
-    wmask_water = 1 - spline_ref_water(mask_water['ll_mask_s'])
-    # mask lines that are deep but not too deep
-    mmask_others = (wmask_others > 0.05) & (wmask_others < 0.5)
-    mmask_water = (wmask_water > 0.05) & (wmask_water < 0.5)
-    # mask the mask for others / water
-    ll_mask_s_others = ll_mask_s_others[mmask_others]
-    wmask_others = wmask_others[mmask_others]
-    ll_mask_s_water = ll_mask_s_water[mmask_water]
-    wmask_water = wmask_water[mmask_water]
-    # storage for amplitudes
-    amp_water_arr, amp_others_arr = np.array([]), np.array([])
+    # -------------------------------------------------------------------------
+    # remove low transmissions - not useful here
+    trans_others[trans_others < 0.1] = np.nan
+    trans_water[trans_water < 0.1] = np.nan
+    # take the log of other and water
+    with warnings.catch_warnings(record=True) as _:
+        log_others = np.log(trans_others)
+        log_water = np.log(trans_water)
+
+    # TODO: Add to params
+    abs_bin_size = 0.05
+    abs_bin_range = [-0.4, 0]
+    # -------------------------------------------------------------------------
+    # mask the fluorescent bands
+    fluorescent_mask = np.zeros_like(wavemap, dtype=bool)
+    for fband in pconst.TELLU_FLUORESCENCE():
+        reject = (wavemap > fband[0]) & (wavemap < fband[1])
+        fluorescent_mask[reject] = True
+
+    # get the bins for absorption
+    abs_bins = np.arange(abs_bin_range[0], abs_bin_range[1], abs_bin_size)
+    water_bins, other_bins = [], []
+    for ibin in range(len(abs_bins)):
+
+        # get the water bins
+        water_mask = abs(log_water - abs_bins[ibin]) < abs_bin_size/2
+        water_pos = np.where(water_mask)[0]
+        water_bins.append(water_pos)
+        # get the other bins
+        other_mask = abs(log_others - abs_bins[ibin]) < abs_bin_size/2
+        # add the fluorescent mask
+        other_mask &= ~fluorescent_mask
+        other_pos = np.where(other_mask)[0]
+        other_bins.append(other_pos)
+    # -------------------------------------------------------------------------
+    # store approx rv and approx rv err
+    approx_rvs = []
+    approx_rv = 0
+    rv_converged = False
     # loop around until convergence or 20th iteration
     while (dexpo > dexpo_thres) and (iteration < max_iterations):
         # set up a qc flag
@@ -862,278 +873,170 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         trans[trans < 0.01] = 0.01
         # divide spectrum by transmission
         spectrum_tmp = spectrum / (trans * template2)
-        # only keep valid pixels (non NaNs)
-        valid = np.isfinite(spectrum_tmp)
-        # ------------------------------------------------------------------
-        if iteration < 2:
-            # transmission with the exponent value
-            valid0 = (trans > np.exp(trans_thres))
-        # apply valid0 from loop iteration < 2
-        valid &= valid0
-        # ------------------------------------------------------------------
-        # apply some cuts to very discrepant points. These will be set to zero
-        #   not to bias the CCF too much
-        cutmask = np.abs(spectrum_tmp[spectrum_tmp != 0])
-        cut = mp.nanmedian(cutmask) * trans_siglim
-        # set NaN and infinite values to zero
-        # spectrum_tmp[~np.isfinite(spectrum_tmp)] = 0.0
-        valid &= np.isfinite(spectrum_tmp)
-        # apply cut and set values to zero
-        # spectrum_tmp[spectrum_tmp > cut] = 0.0
-        valid &= (spectrum_tmp <= cut)
-        # set negative values to zero
-        # spectrum_tmp[spectrum_tmp < 0.0] = 0.0
-        valid &= spectrum_tmp >= 0.0
-        # ------------------------------------------------------------------
-        # get the CCF of the test spectrum
-        # first spline onto the wave grid
-        spline = mp.iuv_spline(wavemap[valid], spectrum_tmp[valid], k=1, ext=1)
-        # loop around all scanning points in d
-        for d_it in range(len(drange)):
-            # computer rv scaling factor
-            scaling = (1 + drange[d_it] / speed_of_light)
-            # we compute the ccf_others all the time, even when forcing the
-            # airmass, just to look at its structure and potential residuals
-            # compute for others
-            lothers = np.array(ll_mask_s_others) * scaling
-            tmp_others = spline(lothers) * np.array(wmask_others)
-            ccf_others[d_it] = mp.nansum(tmp_others[tmp_others != 0.0])
-            # computer for water
-            lwater = np.array(ll_mask_s_water) * scaling
-            tmp_water = spline(lwater) * wmask_water
-            ccf_water[d_it] = mp.nansum(tmp_water[tmp_water != 0.0])
+        # low pass the spectrum
+        with warnings.catch_warnings(record=True) as _:
+            lowpass = mp.lowpassfilter(spectrum_tmp)
+            spectrum_tmp_lowpass = spectrum_tmp / lowpass
+        # log this low passed spectrum
+        with warnings.catch_warnings(record=True) as _:
+            log_spec_tmp_lowpass = np.log(spectrum_tmp_lowpass)
 
-        # ------------------------------------------------------------------
-        # subtract the median of the ccf outside the core of the gaussian.
-        #     We take this to be the 'external' part of of the scan range
-        # work out the external part mask
-        # with warnings.catch_warnings(record=True) as _:
-        #     external_mask = np.abs(drange) > ccf_scan_range / 2
-        # calculate and subtract external part
-        # external_water = np.nanmedian(ccf_water[external_mask])
-        # ccf_water = ccf_water - external_water
-        # external_others = np.nanmedian(ccf_others[external_mask])
-        # ccf_others = ccf_others - external_others
+        mad = mp.lowpassfilter(abs(log_spec_tmp_lowpass))
+        running_sigma = mad / mp.normal_fraction()
 
-        # set ccf scan size
-        # ccf_scan_size = int(10 * params['IMAGE_PIXEL_SIZE'])
-        # # calculate and subtract external part
-        # ccf_water_res = mp.lowpassfilter(ccf_water, ccf_scan_size)
-        # ccf_water = ccf_water - ccf_water_res
-        # # calculate and subtract external part
-        # ccf_others_res = mp.lowpassfilter(ccf_others, ccf_scan_size)
-        # ccf_others = ccf_others - ccf_others_res
+        # storage
+        mean_res_depth_water = np.zeros(len(abs_bins))
+        mean_res_depth_others = np.zeros(len(abs_bins))
+        err_res_depth_water = np.zeros(len(abs_bins))
+        err_res_depth_others = np.zeros(len(abs_bins))
 
-        # ---------------------------------------------------------------------
-        # remove a polynomial fit (remove continuum of the CCF) for water
-        # this is now a normalized CCF we subtract a 1 so it becomes centered
-        # on zeri
-        cont = np.abs(drange) > np.max(np.abs(drange)) / 4
-        # ccf_water /= np.nanmedian(ccf_water[cont])
-        # ccf_others /= np.nanmedian(ccf_others[cont])
+        for ibin in range(len(abs_bins)):
 
-        water_coeffs, _ = mp.robust_polyfit(drange[cont], ccf_water[cont],
-                                            2, 3)
-        ccf_water = (ccf_water / np.polyval(water_coeffs, drange)) - 1
-        # remove a polynomial fit (remove continuum of the CCF) for water
-        others_coeffs, _ = mp.robust_polyfit(drange[cont], ccf_others[cont],
-                                             2, 3)
-        ccf_others = (ccf_others / np.polyval(others_coeffs, drange)) - 1
+            # measure the mean residual depth in water
+            water_flux_in_bin = log_spec_tmp_lowpass[water_bins[ibin]]
+            water_err_in_bin = running_sigma[water_bins[ibin]]
+            odd_out = mp.odd_ratio_mean(water_flux_in_bin, water_err_in_bin)
+            mean_res_depth_water[ibin] = odd_out[0]
+            err_res_depth_water[ibin] = odd_out[1]
+            # measure the mean residual depth in others
+            others_flux_in_bin = log_spec_tmp_lowpass[other_bins[ibin]]
+            others_err_in_bin = log_spec_tmp_lowpass[other_bins[ibin]]
+            odd_out = mp.odd_ratio_mean(others_flux_in_bin, others_err_in_bin)
+            mean_res_depth_others[ibin] = odd_out[0]
+            err_res_depth_others[ibin] = odd_out[1]
 
-        # ------------------------------------------------------------------
-        # get the amplitude of the middle of the CCF
-        # work out the internal part mask
-        internal_mask = np.abs(drange) < ccf_control_radius
-        amp_water = mp.nanmean(ccf_water[internal_mask])
-        if not force_airmass:
-            amp_others = mp.nanmean(ccf_others[internal_mask])
-        else:
-            amp_others = 0.0
-        # TODO: Add to language database
-        msg = '\t\tamp_water={0:.3f} amp_others={0:3f}'
-        margs = [amp_water, amp_others]
-        WLOG(params, '', msg.format(*margs))
-        # ------------------------------------------------------------------
-        # count the number of NaNs in the CCF
-        num_nan_ccf = np.sum(~np.isfinite(ccf_water))
-        # if CCF is NaN do not continue
-        if num_nan_ccf > 0:
-            # update qc params
-            qc_values[1] = num_nan_ccf
-            qc_pass[1] = 0
-            # flag qc as failed and break
-            flag_qc = True
-            break
-        else:
-            qc_values[1] = num_nan_ccf
-            qc_pass[1] = 1
-        # ------------------------------------------------------------------
-        # we measure absorption velocity by fitting a gaussian to the
-        #     absorption profile. This updates the dv_abso value for the
-        #     next steps.
-        # if this is the first iteration then fit the  absorption velocity
-        if iteration == 0:
-            # whether we are fitting the line of sight velocity
-            if params['TELLU_ABSO_FIT_LOS_VELO']:
-                # make a guess for the water fit parameters (for curve fit)
-                water_guess = [mp.nanmin(ccf_water), 0, 4]
-                # fit the ccf_water with a guassian
-                try:
-                    # noinspection PyTupleAssignmentBalance
-                    popt, pcov = curve_fit(mp.gauss_function_nodc, drange,
-                                           ccf_water, p0=water_guess)
-                except RuntimeError:
-                    eargs = ['water', water_guess]
-                    raise AperoCodedException(params, '09-019-00006', targs=eargs)
-                    popt = [0, 0, 0]
-                # store the velocity of the water
-                dv_water = popt[1]
-                # make a guess of the others fit parameters (for curve fit)
-                others_guess = [mp.nanmin(ccf_water), 0, 4]
-                # fit the ccf_others with a gaussian
-                try:
-                    # noinspection PyTupleAssignmentBalance
-                    popt, pconv = curve_fit(mp.gauss_function_nodc, drange,
-                                            ccf_others, p0=others_guess)
-                except RuntimeError:
-                    eargs = ['others', water_guess]
-                    raise AperoCodedException(params, '09-019-00006', 
-                                              targs=eargs)
-                # store the velocity of the other species
-                dv_others = popt[1]
-                # store the mean velocity of water and others
-                if not force_dv_abso:
-                    dv_abso = np.mean([dv_water, dv_others])
-            else:
-                dv_water = 0.0
-                dv_others = 0.0
-                dv_abso = 0.0
-        # ------------------------------------------------------------------
-        # store the amplitudes of current exponent values
-        # for other species
-        if not force_airmass:
-            amp_others_list.append(amp_others)
-            expo_others_list.append(expo_others)
-        # for water
-        amp_water_list.append(amp_water)
+        # re-normalize to the mean
+        mean_res_depth_water -= np.nanmean(mean_res_depth_water)
+        mean_res_depth_others -= np.nanmean(mean_res_depth_others)
+
+        # fitting the slope of residual amplitude of water
+        fit_water = np.polyfit(abs_bins, mean_res_depth_water, deg=1,
+                               w=1/err_res_depth_water)
+        slope_water = fit_water[0]
+        # append to storage
+        slope_water_list.append(slope_water)
         expo_water_list.append(expo_water)
-
-        # ------------------------------------------------------------------
-        # if this is the first iteration force the values of
-        # expo_others and expo water
-        if iteration == 0:
-            # header value to be used
-            expo_others = float(hdr_airmass)
-            # default value for water
-            expo_water = float(default_water_abso)
-        # ------------------------------------------------------------------
-        # else we fit the amplitudes with polynomial fits
-        else:
-            # --------------------------------------------------------------
-            # set value for fit_others
-            # fit_others = [np.nan, hdr_airmass, np.nan]
-            # convert lists to arrays
-            amp_others_arr = np.array(amp_others_list)
-            expo_others_arr = np.array(expo_others_list)
-            amp_water_arr = np.array(amp_water_list)
-            expo_water_arr = np.array(expo_water_list)
-            # first iteration we work out the slope
-            if iteration == 1:
-                # slope of the water
-                diff_expo_water = expo_water_arr[1] - expo_water_arr[0]
-                diff_amp_water = amp_water_arr[1] - amp_water_arr[0]
-                slope_water = diff_expo_water / diff_amp_water
-                # slope of the others
-                if not force_airmass:
-                    diff_expo_others = expo_others_arr[1] - expo_others_arr[0]
-                    diff_amp_others = amp_others_arr[1] - amp_others_arr[0]
-                    slope_others = diff_expo_others / diff_amp_others
-            # move exponent by an increment to get the right exponent
-            next_expo_water = expo_water - amp_water_arr[-1] * slope_water
-
-            if not force_airmass:
-                next_expo_others = expo_others - amp_others_arr[-1] * slope_others
-            else:
-                next_expo_others = hdr_airmass
-
-            # feedback loop is excessive we cannot have expo_water negative
-            if next_expo_water < 0:
-                expo_water = expo_water / 2
-                slope_water = slope_water / 2
-            else:
-                expo_water = next_expo_water
-
-            if next_expo_others < 0:
-                expo_others = expo_others / 2
-                slope_others = slope_others / 2
-            else:
-                expo_others = next_expo_others
-
-            # # if we have over 5 iterations we fit a 2nd order polynomial
-            # # to the lowest 5 amplitudes
-            if iteration > 5:
-                # fit the last 4 amplitudes for others
-                fit_others = np.polyfit(amp_others_arr[-4:], expo_others_arr[-4:], 2)
-                # fit the last 4 ampliters for water
-                fit_water = np.polyfit(amp_water_arr[-4:], expo_water_arr[-4:], 2)
-                # take the slope of the derivative as the slope (others)
-                slope_others = np.polyval(np.polyder(fit_others), 0)
-                # take the slope of the derivative as the slope (water)
-                slope_water = np.polyval(np.polyder(fit_water), 0)
-
-            #     if not force_airmass:
-            #         # get others lists as array and sort them
-            #         # sortmask = np.argsort(np.abs(amp_others_arr))
-            #         # amp_others_arr = amp_others_arr[sortmask]
-            #         # expo_others_arr = expo_others_arr[sortmask]
-            #         # polyfit lowest 5 others terms
-            #         fit_others = np.polyfit(amp_others_arr[-4:],
-            #                                 expo_others_arr[-4:], 1)
-            #     # get water lists as arrays and sort them
-            #     # sortmask = np.argsort(np.abs(amp_water_arr))
-            #     # amp_water_arr = amp_water_arr[sortmask]
-            #     # expo_water_arr = expo_water_arr[sortmask]
-            #     # polyfit lowest 5 water terms
-            #     fit_water = np.polyfit(amp_water_arr[-4:],
-            #                            expo_water_arr[-4:], 1)
-            # # else just fit a line
-            # else:
-            #     if not force_airmass:
-            #         fit_others = np.polyfit(amp_others_arr, expo_others_arr, 1)
-            #     fit_water = np.polyfit(amp_water_arr, expo_water_arr, 1)
-            # # --------------------------------------------------------------
-            # # find best guess for other species exponent
-            # expo_others = float(fit_others[1])
-            # # find best guess for water exponent
-            # expo_water = float(fit_water[1])
-            # --------------------------------------------------------------
-            # check whether we have converged yet (by updating dexpo)
-            if force_airmass:
-                dexpo = np.abs(expo_water_prev - expo_water)
-            else:
-                part1 = expo_water_prev - expo_water
-                part2 = expo_others_prev - expo_others
-                dexpo = np.sqrt(part1 ** 2 + part2 ** 2)
-        # --------------------------------------------------------------
-        # keep track of the convergence params
-        expo_water_prev = float(expo_water)
-        expo_others_prev = float(expo_others)
-        # ------------------------------------------------------------------
+        # fitting the slope of the residual amplitude of others
+        fit_others = np.polyfit(abs_bins, mean_res_depth_others, deg=1,
+                                w=1/err_res_depth_others)
+        slope_others = fit_others[0]
+        # append to storage
+        slope_others_list.append(slope_others)
+        expo_others_list.append(expo_others)
         # storage for plotting
-        dd_iterations.append(drange)
-        ccf_water_iterations.append(np.array(ccf_water))
-        ccf_others_iterations.append(np.array(ccf_others))
+        dexpos.append(np.array(dexpo))
+        mean_rd_water.append(np.array(mean_res_depth_water))
+        emean_rd_water.append(np.array(err_res_depth_water))
+        mean_rd_others.append(np.array(mean_res_depth_others))
+        emean_rd_others.append(np.array(err_res_depth_others))
+        # if iteration zero we just add the slopes to the expo
+        if iteration == 0:
+            expo_water += slope_water
+            expo_others += slope_others
+            # finally add one to the iterator
+            iteration += 1
+            continue
+        # ---------------------------------------------------------------------
+        # only if we have more than one iteration
+        # ---------------------------------------------------------------------
+        # find the place where the water residuals null to zero (intercept)
+        expo_water_fit = np.polyfit(slope_water_list[-5:],
+                                    expo_water_list[-5:], deg=1)
+        expo_water = expo_water_fit[1]
+        # find the place where the others residuals null to zero (intercept)
+        expo_others_fit = np.polyfit(slope_others_list[-5:],
+                                     expo_others_list[-5:], deg=1)
+        expo_others = expo_others_fit[1]
+        # convergence check
+        water_part = (expo_water_list[-1] - expo_water_list[-2])
+        others_part = (expo_others_list[-1] - expo_others_list[-2])
+        dexpo = np.sqrt(water_part**2 + others_part**2)
+        # -----------------------------------------------------------------
+        # if we have a template we can measure an approximate RV
+        #  we can then use this to better shift the template to the data
+        if template_props['HAS_TEMPLATE'] and not rv_converged:
+            # get the gradient to the wave (and turn it in to a velocity)
+            grad_wave = speed_of_light_ms * np.gradient(np.log(wavemap))
+            # get the velocity derivative per pixel
+            with warnings.catch_warnings(record=True) as _:
+                velo_deriv = np.gradient(np.log(template2))/grad_wave
+            # project this onto the spectrum
+            with warnings.catch_warnings(record=True) as _:
+                velo_proj = log_spec_tmp_lowpass/velo_deriv
+                err_proj = running_sigma/velo_deriv
+            # only do odd ratio mean on really clean bits of the telluric
+            # spectrum
+            btellu = trans > 0.9
+            # find the approx velocity and its error
+            app_vel, app_vel_err = mp.odd_ratio_mean(velo_proj[btellu],
+                                                     err_proj[btellu])
+            # we add this to the approximate rv shift
+            approx_rvs.append(app_vel)
+            approx_rv = approx_rv - app_vel
+            approx_rv_err = float(app_vel_err)
+
+            # TODO: Add to language database
+            msg = ('\t\tApprox Rv shift: {0:.2f}+/-{1:.2f} '
+                   'increment: {2:.4f} [m/s]')
+            margs = [approx_rv, approx_rv_err, app_vel]
+            WLOG(params, '', msg.format(*margs))
+
+            # If we have multiple rv measurements we need to check whether it
+            # is converging
+            if len(approx_rvs) > 2:
+                # we have two tests of convergence
+                converging1 = abs(approx_rvs[-1]) < abs(approx_rvs[-2])
+                converging2 = abs(approx_rvs[-1]) < app_vel_err
+                # if neither test is converging we are diverging
+                if not (converging1 or converging2):
+                    # TODO: Add to language database
+                    wmsg = 'RV shift not converging. Stopping RV shift.'
+                    WLOG(params, 'warning', wmsg)
+                    # set these values to values that will work
+                    approx_rv, approx_rv_err, app_vel = 0, np.nan, 0
+                    # we say its converged but it hasn't we just can't fit RV on
+                    # this observation
+                    rv_converged = True
+                    # TODO: Add to language database
+                    msg = ('\t\tSetting Approx Rv shift: {0:.2f}+/-{1:.2f} '
+                           'increment: {2:.4f} [m/s]')
+                    margs = [approx_rv, approx_rv_err, app_vel]
+                    WLOG(params, '', msg.format(*margs))
+            # shift the template
+            template_props = shift_template(params, recipe, None,
+                                            template_props, refprops,
+                                            wprops, bprops,
+                                            rvoffset=approx_rv,
+                                            rvoffseterr=approx_rv_err,
+                                            log=False)
+            # update template 1 and 2 to use in next loop
+            template1 = np.array(template_props['TEMP_S2D'])
+            template2 = template1.ravel()[flatkeep]
+
+            # test whether the rv has converged
+            if abs(app_vel / app_vel_err) < 0.1:
+                rv_converged = True
         # ------------------------------------------------------------------
         # finally add one to the iterator
         iteration += 1
     # ----------------------------------------------------------------------
-    # work out the SNR for the CCF
-    snr_others = -amp_others_arr[0] / mp.estimate_sigma(ccf_others)
-    snr_water = -amp_water_arr[0] / mp.estimate_sigma(ccf_water)
-    # TODO: Add to language database
-    msg = 'SNR_others={:.2f} SNR_water={:.2f}'
-    margs = [snr_others, snr_water]
-    WLOG(params, '', msg.format(*margs))
+    # update qc[1] qc as this is not the first iteration
+    #    we have a template
+    # if template_props['HAS_TEMPLATE']:
+    #     # get the prev, now approx rv values
+    #     qc_v = f'{approx_rvs[-2]:.4f}, {approx_rvs[-1]:.4f}'
+    #     # if approx rvs have diverged then we fail QC
+    #     if abs(approx_rvs[-1]) > abs(approx_rvs[-2]):
+    #         qc_values[1] = qc_v
+    #         qc_pass[1] = 0
+    #     else:
+    #         qc_values[1] = qc_v
+    #         qc_pass[1] = 1
+    # else:
+    # qc values only if not the first iteration and with a template
+    qc_values[1] = 'N.A.'
+    qc_pass[1] = 1
+    # ----------------------------------------------------------------------
     # deal with lower bounds for other species
     if expo_others / hdr_airmass < others_bounds[0]:
         # update qc params
@@ -1204,15 +1107,19 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
                                       template_props, wave_e2ds, res_s1d_fwhm,
                                       res_s1d_expo, database=telludbm)
     # ----------------------------------------------------------------------
-    # show CCF plot to see if correlation peaks have been killed
-    recipe.plot('TELLUP_WAVE_TRANS', dd_arr=dd_iterations,
-                ccf_water_arr=ccf_water_iterations,
-                ccf_others_arr=ccf_others_iterations,
-                size=ccf_control_radius)
-    recipe.plot('SUM_TELLUP_WAVE_TRANS', dd_arr=dd_iterations,
-                ccf_water_arr=ccf_water_iterations,
-                ccf_others_arr=ccf_others_iterations,
-                size=ccf_control_radius)
+    # plot the slope fit mean res plot
+    recipe.plot('TELLUP_MEAN_RES', dexpos=dexpos,
+                mean_rd_water=mean_rd_water, emean_rd_water=emean_rd_water,
+                mean_rd_others=mean_rd_others, emean_rd_others=emean_rd_others,
+                abs_bins=abs_bins, n_iterations=iteration,
+                objname=infile.get_hkey('KW_OBJNAME', dtype=str),
+                dprtype=infile.get_hkey('KW_DPRTYPE', dtype=str))
+    recipe.plot('SUM_TELLUP_MEAN_RES', dexpos=dexpos,
+                mean_rd_water=mean_rd_water, emean_rd_water=emean_rd_water,
+                mean_rd_others=mean_rd_others, emean_rd_others=emean_rd_others,
+                abs_bins=abs_bins, n_iterations=iteration,
+                objname=infile.get_hkey('KW_OBJNAME', dtype=str),
+                dprtype=infile.get_hkey('KW_DPRTYPE', dtype=str))
     # plot to show absorption spectrum
     # TODO: add switch to change labels based on template = None
     recipe.plot('TELLUP_ABSO_SPEC', trans=trans, wave=wavemap,
@@ -1251,12 +1158,41 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         abso_e2ds[order_num] = abso_tmp
     # all absorption deeper than exp(trans_thres) is considered too deep to
     #    be corrected. We set values there to NaN
-    mask = abso_e2ds < np.exp(2 * trans_thres)
+    mask = abso_e2ds < np.exp(trans_thres)
     # set deep lines to NaN
     abso_e2ds[mask] = np.nan
     # ----------------------------------------------------------------------
-    # now correct the original e2ds file
-    corrected_e2ds = (image_e2ds_ini - sky_model) / abso_e2ds
+    # if we have a template and used skyprops we recalculate the sky correction
+    # here
+    sky_cond1 = sky_props is not None and sky_props['SKY_CORR_REF'] is None
+    sky_cond2 = template_props['HAS_TEMPLATE']
+    if sky_cond1 and sky_cond2:
+        # load the blaze file for this fiber
+        _, _, blaze = flat_blaze.get_blaze(params, header, fiber)
+        # make the forward model
+        fmodel = template_props['TEMP_S2D'] * abso_e2ds * blaze
+        ratio_fmodel = image_e2ds_ini / fmodel
+        # loop around order
+        for order_num in range(fmodel.shape[0]):
+            blazepeak = blaze[order_num] > 0.5
+            # We construct a forward model of the spectrum combining the
+            # template (properly RV shifted above) with telluric abso
+            # (pre-clean) and the blaze. This model will be subtracted
+            # from the science frame to measure sky line residuals.
+            # The residuals may be under or over corrections. This is why
+            # we allow for positive or negative amplitudes of line subtraction
+            # within the correct_sky_no_ref function.
+            fmodel_fac = np.nanmedian(ratio_fmodel[order_num][blazepeak])
+            fmodel[order_num] = fmodel[order_num] *  fmodel_fac
+        # correct sky using model and B fiber
+        scprops = sky_corr.correct_sky_no_ref(params, recipe, infile,
+                                              wprops, rawfiles, combine,
+                                              calibdbm, telludbm, fmodel=fmodel)
+        # now correct the original e2ds file
+        corrected_e2ds = scprops[f'CORR_EXT_{infile.fiber}'] / abso_e2ds
+    else:
+        # now correct the original e2ds file
+        corrected_e2ds = (image_e2ds_ini - sky_model) / abso_e2ds
     # ----------------------------------------------------------------------
     # correct for finite resolution effects
     # ----------------------------------------------------------------------
@@ -1289,11 +1225,6 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         # add a flag that finite resolution correction was not performed
         finite_res_corr = False
     # ----------------------------------------------------------------------
-    # calculate CCF power
-    keep = np.abs(drange) < (ccf_scan_range / 4)
-    water_ccfpower = mp.nansum(np.gradient(ccf_water[keep] ** 2))
-    others_ccfpower = mp.nansum(np.gradient(ccf_others)[keep] ** 2)
-    # ----------------------------------------------------------------------
     # populate parameter dictionary
     props = ParamDict()
     props['CORRECTED_E2DS'] = corrected_e2ds
@@ -1306,16 +1237,14 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     props['EXPO_OTHERS'] = expo_others
     props['DV_WATER'] = dv_water
     props['DV_OTHERS'] = dv_others
-    props['CCFPOWER_WATER'] = water_ccfpower
-    props['CCFPOWER_OTHERS'] = others_ccfpower
     props['QC_PARAMS'] = qc_params
     props['SPL_TAPAS_WATER'] = spl_water
     props['SPL_TAPAS_OTHERS'] = spl_others
     # set sources
     keys = ['CORRECTED_E2DS', 'TRANS_MASK', 'ABSO_E2DS', 'EXPO_WATER',
-            'EXPO_OTHERS', 'DV_WATER', 'DV_OTHERS', 'CCFPOWER_WATER',
-            'CCFPOWER_OTHERS', 'QC_PARAMS', 'SKY_MODEL', 'PRE_SKYCORR_IMAGE',
-            'FINITE_RES_CORRECTED', 'SPL_TAPAS_WATER', 'SPL_TAPAS_OTHERS']
+            'EXPO_OTHERS', 'DV_WATER', 'DV_OTHERS', 'QC_PARAMS', 'SKY_MODEL',
+            'PRE_SKYCORR_IMAGE',  'FINITE_RES_CORRECTED', 'SPL_TAPAS_WATER',
+            'SPL_TAPAS_OTHERS']
     props.set_sources(keys, func_name)
     # ----------------------------------------------------------------------
     # add constants used (can come from kwargs)
@@ -1356,8 +1285,8 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     tellu_preclean_write(params, recipe, infile, rawfiles, fiber, combine,
                          props, wprops, sky_props, database=telludbm)
     # ----------------------------------------------------------------------
-    # return props
-    return props
+    # return props and the updated template
+    return props, template_props
 
 
 def clean_ohline_pca(params, recipe, image, wavemap, **kwargs):
@@ -1662,7 +1591,8 @@ def variable_res_conv(wavemap: np.ndarray, spectrum: np.ndarray,
         sumker = sumker + ker
     # -------------------------------------------------------------------------
     # normalize convovled spectrum to kernel sum
-    spectrum2 = spectrum2 / sumker
+    with warnings.catch_warnings(record=True) as _:
+        spectrum2 = spectrum2 / sumker
     # reshape if necessary
     if len(shape0) == 2:
         spectrum2 = spectrum2.reshape(shape0)
@@ -1908,7 +1838,7 @@ def qc_exit_tellu_preclean(params, recipe, image, image_e2ds_ini, infile,
         # plot the finite resolution correction plot
         recipe.plot('TELLU_FINITE_RES_CORR', params=params, wavemap=wave_e2ds,
                     e2ds0=corrected_e2ds0, e2ds1=corrected_e2ds,
-                    corr=finite_res_e2ds)
+                    corr=finite_res_e2ds, abso_e2ds=abso_e2ds)
     else:
         finite_res_e2ds = np.ones_like(corrected_e2ds)
         # add a flag that finite resolution correction was not performed
@@ -1926,15 +1856,13 @@ def qc_exit_tellu_preclean(params, recipe, image, image_e2ds_ini, infile,
     props['EXPO_OTHERS'] = expo_others
     props['DV_WATER'] = np.nan
     props['DV_OTHERS'] = np.nan
-    props['CCFPOWER_WATER'] = np.nan
-    props['CCFPOWER_OTHERS'] = np.nan
     props['QC_PARAMS'] = qc_params
     props['SPL_TAPAS_WATER'] = spl_water
     props['SPL_TAPAS_OTHERS'] = spl_others
     # set sources
     keys = ['CORRECTED_E2DS', 'TRANS_MASK', 'ABSO_E2DS', 'EXPO_WATER',
-            'EXPO_OTHERS', 'DV_WATER', 'DV_OTHERS', 'CCFPOWER_WATER',
-            'CCFPOWER_OTHERS', 'QC_PARAMS', 'SKY_MODEL', 'PRE_SKYCORR_IMAGE',
+            'EXPO_OTHERS', 'DV_WATER', 'DV_OTHERS', 'QC_PARAMS',
+            'SKY_MODEL', 'PRE_SKYCORR_IMAGE',
             'FINITE_RES_CORRECTED', 'SPL_TAPAS_WATER', 'SPL_TAPAS_OTHERS']
     props.set_sources(keys, func_name)
     # ----------------------------------------------------------------------
@@ -1972,8 +1900,8 @@ def qc_exit_tellu_preclean(params, recipe, image, image_e2ds_ini, infile,
             'TELLU_FINITE_RES']
     props.set_sources(keys, func_name)
     # ----------------------------------------------------------------------
-    # return props
-    return props
+    # return props and the updated template props
+    return props, template_props
 
 
 def tellu_preclean_write(params, recipe, infile, rawfiles, fiber, combine,
@@ -2041,8 +1969,6 @@ def tellu_preclean_write(params, recipe, infile, rawfiles, fiber, combine,
     tpclfile.add_hkey('KW_TELLUP_EXPO_OTHERS', value=props['EXPO_OTHERS'])
     tpclfile.add_hkey('KW_TELLUP_DV_WATER', value=props['DV_WATER'])
     tpclfile.add_hkey('KW_TELLUP_DV_OTHERS', value=props['DV_OTHERS'])
-    tpclfile.add_hkey('KW_TELLUP_CCFP_WATER', value=props['CCFPOWER_WATER'])
-    tpclfile.add_hkey('KW_TELLUP_CCFP_OTHERS', value=props['CCFPOWER_OTHERS'])
     # ----------------------------------------------------------------------
     # get qc names/values/logic/pass from qc params
     qc_names, qc_values, qc_logic, qc_pass = props['QC_PARAMS']
@@ -2235,14 +2161,9 @@ def read_tellu_preclean(params, recipe, infile, fiber, database=None):
                                              dtype=float)
     props['DV_WATER'] = tpclfile.get_hkey('KW_TELLUP_DV_WATER', dtype=float)
     props['DV_OTHERS'] = tpclfile.get_hkey('KW_TELLUP_DV_OTHERS', dtype=float)
-    props['CCFPOWER_WATER'] = tpclfile.get_hkey('KW_TELLUP_CCFP_WATER',
-                                                dtype=float)
-    props['CCFPOWER_OTHERS'] = tpclfile.get_hkey('KW_TELLUP_CCFP_OTHERS',
-                                                 dtype=float)
     # set sources
     keys = ['CORRECTED_E2DS', 'TRANS_MASK', 'ABSO_E2DS', 'EXPO_WATER',
-            'EXPO_OTHERS', 'DV_WATER', 'DV_OTHERS', 'CCFPOWER_WATER',
-            'CCFPOWER_OTHERS', 'QC_PARAMS', 'SKY_MODEL']
+            'EXPO_OTHERS', 'DV_WATER', 'DV_OTHERS', 'QC_PARAMS', 'SKY_MODEL']
     props.set_sources(keys, 'header')
     # ----------------------------------------------------------------------
     # add constants used (can come from kwargs)
@@ -2302,269 +2223,6 @@ def read_tellu_preclean(params, recipe, infile, fiber, database=None):
 # =============================================================================
 # Database functions
 # =============================================================================
-# for: load_tellu_file
-LoadTelluFileReturn = Union[str,
-                            Tuple[str, str],
-                            Tuple[Union[np.ndarray, Table, None],
-                                  Union[drs_fits.Header, None], str],
-                            Tuple[Union[np.ndarray, Table, None],
-                                  Union[drs_fits.Header, None], str, str],
-                            List[str],
-                            Tuple[List[str], str],
-                            Tuple[List[Union[np.ndarray, Table, None]],
-                                  List[Union[drs_fits.Header, None]],
-                                  List[str]],
-                            Tuple[List[Union[np.ndarray, None]],
-                                  List[Union[drs_fits.Header, None]],
-                                  List[str], str],
-                            Tuple[None, None, None, str],
-                            Tuple[None, None, None]]
-
-
-def load_tellu_file(params: ParamDict, key: str,
-                    inheader: Union[drs_fits.Header, None] = None,
-                    filename: Union[str, None] = None,
-                    get_image: bool = True, get_header: bool = False,
-                    fiber: Union[str, None] = None,
-                    userinputkey: Union[str, None] = None,
-                    database: Union[TelluDatabase, None] = None,
-                    return_filename: bool = False, return_source: bool = False,
-                    mode: Union[str, None] = None,
-                    n_entries: Union[int, str] = 1,
-                    objname: Union[str, None] = None,
-                    tau_water: Union[Tuple[float, float], None] = None,
-                    tau_others: Union[Tuple[float, float], None] = None,
-                    no_times: bool = False,
-                    required: bool = True, ext: Union[int, None] = None,
-                    fmt: str = 'fits',
-                    kind: str = 'image') -> LoadTelluFileReturn:
-    """
-    Load one or many telluric files
-
-    :param params: ParamDict, the parameter dictionary of constants
-    :param key: str, the key from the telluric database to select a
-                specific telluric with
-    :param inheader: fits.Header - the header file (required to match by time)
-                     if None does not match by a 'zero point' time)
-
-    :param filename: str or None, if set overrides filename from database
-    :param get_image: bool, if True loads image (or images if nentries > 1),
-                      if False image is None (or list of Nones if nentries > 1)
-    :param get_header: bool, if True loads header (or headers if nentries > 1)
-                       if False header is None (or list of Nones if
-                       nentries > 1)
-    :param fiber: str or None, if set must be the fiber type - all returned
-                  calibrations are filtered by this fiber type
-    :param userinputkey: str or None, if set checks params['INPUTS'] for this
-                         key and sets filename from here - note params['INPUTS']
-                         is where command line arguments are stored
-    :param database: drs telluric database instance - set this if calibration
-                     database already loaded (if unset will reload the database)
-    :param return_filename: bool, if True returns the filename only
-    :param return_source: bool, if True returns the source of the calib file(s)
-    :param mode: str or None, the time mode for getting from sql
-                 ('closest'/'newer'/'older')
-    :param n_entries: int or str, maximum number of calibration files to return
-                      for all entries use '*'
-    :param objname: str or None, if set OBJECT=="fiber"
-    :param tau_water: tuple or None, if set sets the lower and upper
-                      bounds for tau water i.e.
-                      TAU_WATER > tau_water[0]
-                      TAU_WATER < tau_water[1]
-    :param tau_others: tuple or None, if set sets the lower and upper bounds
-                       for tau others  i.e.
-                       TAU_OTHERS > tau_others[0]
-                       TAU_OTHERS < tau_others[1]
-    :param no_times: bool, if True does not use times to choose correct
-                 files
-    :param required: bool, whether we require an entry - will raise exception
-                     if required=True and no entries found
-    :param ext: int, valid extension (None by default) when kind='image'
-    :param fmt: str, astropy.table.Table valid format (when kind='table')
-    :param kind: str, either 'image' for fits image or 'table' for table
-
-    :return:
-             if get_image, also returns image/table or list of images/tables
-             if get_header, also returns header or list of headers
-             if return_filename, returns filename or list of filenames
-             if return_source, also returns source
-
-             i.e. possible returns are:
-                 filename
-                 filename, source
-                 image, header, filename
-                 image, header, filename, source
-                 List[filename]
-                 List[filename], source
-                 List[image], List[header], List[filename]
-                 List[image], List[header], List[filename], source
-
-    """
-    # set function
-    # _ = display_func('load_tellu_file', __NAME__)
-    # ------------------------------------------------------------------------
-    # first try to get file from inputs
-    fout = drs_data.get_file_from_inputs(params, 'telluric', userinputkey,
-                                         filename, return_source=return_source)
-    if return_source:
-        filename, source = fout
-    else:
-        filename, source = fout, 'None'
-    # ------------------------------------------------------------------------
-    # if filename is defined this is the filename we should return
-    if filename is not None and return_filename:
-        if return_source:
-            return str(filename), source
-        else:
-            return str(filename)
-    # -------------------------------------------------------------------------
-    # else we have to load from database
-    if filename is None:
-        # check if we have the database
-        if database is None:
-            # construct a new database instance
-            database = TelluDatabase(params)
-            # load the database
-            database.load_db()
-        # load filename from database
-        filename = database.get_tellu_file(key, header=inheader,
-                                           timemode=mode, nentries=n_entries,
-                                           required=required, fiber=fiber,
-                                           objname=objname, tau_water=tau_water,
-                                           tau_others=tau_others,
-                                           no_times=no_times)
-        source = 'telluDB'
-    # -------------------------------------------------------------------------
-    # deal with filename being a path --> string (unless None)
-    if filename is not None:
-        if isinstance(filename, list):
-            filename = list(map(lambda strfile: str(strfile), filename))
-        else:
-            filename = str(filename)
-    # -------------------------------------------------------------------------
-    # if we are just returning filename return here
-    if return_filename:
-        if return_source:
-            return filename, source
-        else:
-            return filename
-    # -------------------------------------------------------------------------
-    # deal with no file
-    if filename is None:
-        if return_source:
-            return None, None, None, 'None'
-        else:
-            return None, None, None
-    # -------------------------------------------------------------------------
-    # need to deal with a list of files
-    if isinstance(filename, list):
-        # storage for images and headres
-        images, headers = [], []
-        # loop around files
-        for file_it in filename:
-            # now read the calibration file
-            image, header = drs_data.read_db_file(params, file_it, get_image,
-                                                  get_header, kind, fmt, ext)
-            # append to storage
-            images.append(image)
-            headers.append(headers)
-        # return all
-        if return_source:
-            return images, headers, filename, source
-        else:
-            return images, headers, filename
-    # -------------------------------------------------------------------------
-    else:
-        # now read the calibration file
-        image, header = drs_data.read_db_file(params, filename, get_image,
-                                              get_header, kind, fmt, ext)
-        # return all
-        if return_source:
-            return image, header, filename, source
-        else:
-            return image, header, filename
-
-
-# def load_tellu_file(params, key=None, inheader=None, filename=None,
-#                     get_image=True, get_header=False, return_entries=False,
-#                     **kwargs):
-#     # get keys from params/kwargs
-#     n_entries = kwargs.get('n_entries', 1)
-#     required = kwargs.get('required', True)
-#     mode = kwargs.get('mode', None)
-#     # valid extension (zero by default)
-#     ext = kwargs.get('ext', 0)
-#     # fmt = valid astropy table format
-#     fmt = kwargs.get('fmt', 'fits')
-#     # kind = 'image' or 'table'
-#     kind = kwargs.get('kind', 'image')
-#     # ----------------------------------------------------------------------
-#     # deal with filename set
-#     if filename is not None:
-#         # get db fits file
-#         abspath = drs_database.get_db_abspath(params, filename, where='guess')
-#         image, header = drs_database.get_db_file(params, abspath, ext, fmt,
-#                                                  kind, get_image, get_header)
-#         # return here
-#         if get_header:
-#             return [image], [header], [abspath]
-#         else:
-#             return [image], [abspath]
-#     # ----------------------------------------------------------------------
-#     # get telluDB
-#     tdb = drs_database.get_full_database(params, 'telluric')
-#     # get calibration entries
-#     entries = drs_database.get_key_from_db(params, key, tdb, inheader,
-#                                            n_ent=n_entries, mode=mode,
-#                                            required=required)
-#     # ----------------------------------------------------------------------
-#     # deal with return entries
-#     if return_entries:
-#         return entries
-#     # ----------------------------------------------------------------------
-#     # get filename col
-#     filecol = tdb.file_col
-#     # ----------------------------------------------------------------------
-#     # storage
-#     images, headers, abspaths = [], [], []
-#     # ----------------------------------------------------------------------
-#     # loop around entries
-#     for it, entry in enumerate(entries):
-#         # get entry filename
-#         filename = entry[filecol]
-#         # ------------------------------------------------------------------
-#         # get absolute path
-#         abspath = drs_database.get_db_abspath(params, filename,
-#                                               where='telluric')
-#         # append to storage
-#         abspaths.append(abspath)
-#         # load image/header
-#         image, header = drs_database.get_db_file(params, abspath, ext, fmt,
-#                                                  kind, get_image, get_header)
-#         # append to storage
-#         images.append(image)
-#         # append to storage
-#         headers.append(header)
-#     # ----------------------------------------------------------------------
-#     # deal with returns with and without header
-#     if get_header:
-#         if not required and len(images) == 0:
-#             return None, None, None
-#         # deal with if n_entries is 1 (just return file not list)
-#         if n_entries == 1:
-#             return images[-1], headers[-1], abspaths[-1]
-#         else:
-#             return images, headers, abspaths
-#     else:
-#         if not required and len(images) == 0:
-#             return None, None
-#         # deal with if n_entries is 1 (just return file not list)
-#         if n_entries == 1:
-#             return images[-1], abspaths[-1]
-#         else:
-#             return images, abspaths
-
-
 def load_templates(params: ParamDict,
                    header: Union[drs_fits.Header, None] = None,
                    objname: Union[str, None] = None,
@@ -2599,8 +2257,11 @@ def load_templates(params: ParamDict,
             temp_props['TEMP_TIME'] = 'None'
             temp_props['TEMP_S1D_TABLE'] = None
             temp_props['TEMP_S1D_FILE'] = 'None'
+            temp_props['APPROX_RV'] = np.nan
+            temp_props['APPROX_RV_ERR'] = np.nan
             # set source
-            tkeys = ['TEMP_FILE', 'TEMP_NUM', 'TEMP_HASH', 'TEMP_TIME']
+            tkeys = ['TEMP_FILE', 'TEMP_NUM', 'TEMP_HASH', 'TEMP_TIME',
+                     'APPROX_RV', 'APPROX_RV_ERR']
             temp_props.set_sources(tkeys, func_name)
             # return null entries
             return temp_props
@@ -2654,8 +2315,11 @@ def load_templates(params: ParamDict,
         temp_props['TEMP_TIME'] = 'None'
         temp_props['TEMP_S1D_TABLE'] = None
         temp_props['TEMP_S1D_FILE'] = 'None'
+        temp_props['APPROX_RV'] = np.nan
+        temp_props['APPROX_RV_ERR'] = np.nan
         # set source
-        tkeys = ['TEMP_FILE', 'TEMP_NUM', 'TEMP_HASH', 'TEMP_TIME']
+        tkeys = ['TEMP_FILE', 'TEMP_NUM', 'TEMP_HASH', 'TEMP_TIME',
+                 'APPROX_RV', 'APPROX_RV_ERR']
         temp_props.set_sources(tkeys, func_name)
         # return null entries
         return temp_props
@@ -2686,12 +2350,89 @@ def load_templates(params: ParamDict,
     temp_props['TEMP_TIME'] = temp_header[params['KW_MKTEMP_TIME'][0]]
     temp_props['TEMP_S1D_TABLE'] = s1d_table
     temp_props['TEMP_S1D_FILE'] = temp_filename
+    temp_props['APPROX_RV'] = np.nan
+    temp_props['APPROX_RV_ERR'] = np.nan
+    # we need a copy of the s2d, s1d (so if we modify we can reset)
+    temp_props['ORIG_TEMP_S2D'] = np.array(temp_props['TEMP_S2D'])
+    temp_props['ORIG_TEMP_S1D_TABLE'] = Table(s1d_table)
     # set source
     tkeys = ['TEMP_S2D', 'TEMP_FILE', 'TEMP_NUM', 'TEMP_HASH', 'TEMP_TIME',
-             'TEMP_S1D_TABLE', 'TEMP_S1D_FILE']
+             'TEMP_S1D_TABLE', 'TEMP_S1D_FILE', 'APPROX_RV', 'APPROX_RV_ERR',
+             'ORIG_TEMP_S2D', 'ORIG_TEMP_S1D_TABLE']
     temp_props.set_sources(tkeys, func_name)
     # only return most recent template
     return temp_props
+
+
+def shift_template(params: ParamDict, recipe: DrsRecipe,
+                   image: Optional[np.ndarray],
+                   template_props: ParamDict,
+                   refprops: ParamDict, wprops: ParamDict,
+                   bprops: ParamDict) -> ParamDict:
+    # set function name
+    func_name = display_func('shift_template', __NAME__)
+    # ------------------------------------------------------------------
+    # no template - do nothing
+    if not template_props['HAS_TEMPLATE']:
+        return template_props
+    # ------------------------------------------------------------------
+    # get data from property dictionaries
+    # ------------------------------------------------------------------
+    # Get the Barycentric correction from berv props
+    dv = bprops['USE_BERV']
+    # deal with bad berv (nan or None)
+    if dv in [np.nan, None] or not isinstance(dv, (int, float)):
+        eargs = [dv, func_name]
+        raise AperoCodedException(params, '09-016-00004', targs=eargs)
+    # Get the reference wavemap from reference wave props
+    wavemap_ref = refprops['WAVEMAP']
+    wavefile_ref = os.path.basename(refprops['WAVEFILE'])
+    # Get the current wavemap from wave props
+    wavemap = wprops['WAVEMAP']
+    wavefile = os.path.basename(wprops['WAVEFILE'])
+    # ------------------------------------------------------------------
+    # Interpolate at shifted wavelengths (if we have a e2dsimage)
+    # ------------------------------------------------------------------
+    # Log that we are shifting the template
+    WLOG(params, '', textentry('40-019-00017'))
+    # interpolate at shifted values
+    dvshift = mp.relativistic_waveshift(dv, units='km/s')
+    # ------------------------------------------------------------------
+    # Shift the e2ds to correct wave frame
+    # ------------------------------------------------------------------
+    # log the shifting of PCA components
+    wargs = [wavefile_ref, wavefile]
+    WLOG(params, '', textentry('40-019-00021', args=wargs))
+    # shift template e2ds
+    template_e2ds = wave_to_wave(params, template_props['TEMP_S2D'],
+                                           wavemap_ref / dvshift,
+                                           wavemap, reshape=True)
+    # push into 2D vector shape = 1 by len(s1d_table)
+    tmp_wave = np.array([template_props['TEMP_S1D_TABLE']['wavelength']])
+    tmp_s1d = np.array([template_props['TEMP_S1D_TABLE']['flux']])
+    tmp_s1d_deconv = np.array([template_props['TEMP_S1D_TABLE']['deconv']])
+    # shift template s1d
+    template_s1d = wave_to_wave(params, tmp_s1d,
+                                          tmp_wave / dvshift,
+                                          tmp_wave, reshape=False)
+    template_s1d_deconv = wave_to_wave(params, tmp_s1d_deconv,
+                                                 tmp_wave / dvshift,
+                                                 tmp_wave, reshape=False)
+    # debug plot - reconstructed spline (in loop)
+    recipe.plot('FTELLU_RECON_SPLINE1', image=image, wavemap=wavemap,
+                template=template_e2ds.ravel(), order=None)
+    # debug plot - reconstructed spline (selected order)
+    recipe.plot('FTELLU_RECON_SPLINE2', image=image, wavemap=wavemap,
+                template=template_e2ds.ravel(),
+                order=params['FTELLU_SPLOT_ORDER'])
+    # -------------------------------------------------------------------------
+    # push back into template props
+    template_props['TEMP_S2D'] = template_e2ds
+    template_props['TEMP_S1D_TABLE']['flux'] = template_s1d
+    template_props['TEMP_S1D_TABLE']['deconv'] = template_s1d_deconv
+    # -------------------------------------------------------------------------
+    # return the updated e2ds (if present)
+    return template_props
 
 
 def get_transmission_files(params, header, fiber, database=None):
@@ -2989,70 +2730,6 @@ def _convolve_tapas(params, tapas_table, refprops, tellu_absorbers,
 
     # return tapas_all_species
     return tapas_all_species
-
-
-# TODO: should splinek=5 (default before 2023-01-18)
-def wave_to_wave(params, spectrum, wave1, wave2, reshape=False, splinek=5):
-    """
-    Shifts a "spectrum" at a given wavelength solution (map), "wave1", to
-    another wavelength solution (map) "wave2"
-
-    :param params: ParamDict, the parameter dictionary
-    :param spectrum: numpy array (2D),  flux in the reference frame of the
-                     file wave1
-    :param wave1: numpy array (2D), initial wavelength grid
-    :param wave2: numpy array (2D), destination wavelength grid
-    :param reshape: bool, if True try to reshape spectrum to the shape of
-                    the output wave solution
-    :param splinek: int, the splinke k value
-
-    :return output_spectrum: numpy array (2D), spectrum resampled to "wave2"
-    """
-    func_name = __NAME__ + '._wave_to_wave()'
-    # deal with reshape
-    if reshape or (spectrum.shape != wave2.shape):
-        try:
-            spectrum = spectrum.reshape(wave2.shape)
-        except ValueError:
-            # log that we cannot reshape spectrum
-            eargs = [spectrum.shape, wave2.shape, func_name]
-            raise AperoCodedException(params, '09-019-00004', targs=eargs)
-    # if they are the same
-    # noinspection PyTypeChecker
-    if mp.nansum(wave1 != wave2) == 0:
-        return spectrum
-    # size of array, assumes wave1, wave2 and spectrum have same shape
-    sz = np.shape(spectrum)
-    # create storage for the output spectrum
-    output_spectrum = np.zeros(sz) + np.nan
-    # looping through the orders to shift them from one grid to the other
-    for iord in range(sz[0]):
-        # only interpolate valid pixels
-        g = np.isfinite(spectrum[iord, :])
-        # if not enough valid pixel, then skip order (need k+1 points)
-        if mp.nansum(g) > 6:
-            # spline the spectrum
-            spline = mp.iuv_spline(wave1[iord, g], spectrum[iord, g],
-                                   k=splinek, ext=3)
-            # keep track of pixels affected by NaNs
-            splinemask = mp.iuv_spline(wave1[iord, :], g, k=1, ext=1)
-            # spline the input onto the output
-            output_spectrum[iord, :] = spline(wave2[iord, :])
-            # find which pixels are not NaNs
-            mask = splinemask(wave2[iord, :])
-            # set to NaN pixels outside of domain
-            bad = (output_spectrum[iord, :] == 0)
-            output_spectrum[iord, bad] = np.nan
-            # affected by a NaN value
-            # normally we would use only pixels ==1, but we get values
-            #    that are not exactly one due to the interpolation scheme.
-            #    We just set that >50% of the
-            # flux comes from valid pixels
-            bad = (mask <= 0.9)
-            # mask pixels affected by nan
-            output_spectrum[iord, bad] = np.nan
-    # return the filled output spectrum
-    return output_spectrum
 
 
 # =============================================================================

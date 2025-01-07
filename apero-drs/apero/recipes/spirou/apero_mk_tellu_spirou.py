@@ -223,23 +223,56 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         # Get template file (if available)
         # ------------------------------------------------------------------
-        template_props = telluric.load_templates(params, header, objname, fiber)
+        template_props = telluric.load_templates(params, header, objname,
+                                                 fiber)
         # ------------------------------------------------------------------
         # Get barycentric corrections (BERV)
         # ------------------------------------------------------------------
         bprops = extract.get_berv(params, infile)
         # ------------------------------------------------------------------
-        # Shift the template from reference wave solution --> night wave
-        #    solution
+        # Shift the template from reference wave solution --> night
+        #    wave solution
         template_props = telluric.shift_template(params, recipe, image,
                                                  template_props, refprops,
                                                  wprops, bprops)
         # ------------------------------------------------------------------
+        # mask bad regions
+        # ------------------------------------------------------------------
+        # Some regions cannot be telluric corrected and the data should be
+        #   just set to NaNs to avoid bad corrections
+        infile.data = telluric.mask_bad_regions(params, infile.data,
+                                                wprops['WAVEMAP'],
+                                                pconst=pconst)
+        # ------------------------------------------------------------------
+        # apply sky correction
+        # ------------------------------------------------------------------
+        # if dprtype in params.listp('ALLOWED_SKYCORR_DPRTYPES', dtype=str):
+        #     # correct sky using model and B fiber
+        #     scprops = telluric.correct_sky_with_ref(params, recipe, infile,
+        #                                             wprops, rawfiles, combine,
+        #                                             calibdbm, telludbm)
+        #     # update infile
+        #     infile.data = scprops[f'CORR_EXT_{fiber}']
+        #     # turn off cleaning of OH lines in pre-cleaning
+        #     clean_ohlines = False
+        # else:
+        #     # correct sky using model and B fiber
+        #     scprops = telluric.correct_sky_no_ref(params, recipe, infile,
+        #                                           wprops, rawfiles, combine,
+        #                                           calibdbm, telludbm)
+        #     # update infile
+        #     infile.data = scprops[f'CORR_EXT_{fiber}']
+        #     # turn off cleaning of OH lines in pre-cleaning
+        #     clean_ohlines = False
+        # ------------------------------------------------------------------
         # telluric pre-cleaning
         # ------------------------------------------------------------------
-        tpreprops = telluric.tellu_preclean(params, recipe, infile, wprops,
+        tout = telluric.tellu_preclean(params, recipe, infile, wprops,
                                             fiber, rawfiles, combine,
-                                            template_props=template_props)
+                                            template_props=template_props,
+                                            refprops=refprops,
+                                            bprops=bprops)
+        tpreprops, template_props = tout
         # get variables out of tpreprops
         image1 = tpreprops['CORRECTED_E2DS']
         # ------------------------------------------------------------------

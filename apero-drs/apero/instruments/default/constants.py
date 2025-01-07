@@ -2305,6 +2305,15 @@ CDict.add('THERMAL_FILTER_WID', value=None, dtype=int,
           description=('width of the median filter used for '
                        'the background'))
 
+# define thermal limit - below this we do not correct thermal emission
+#   because we know from first principles that it should be too small
+CDict.add('THERMAL_LIMIT', value=None, dtype=float, source=__NAME__,
+          group=cgroup,
+          description='define thermal limit - below this '
+                      'we do not correct thermal emission '
+                      'because we know from first principles '
+                      'that it should be too small')
+
 # define thermal red limit (in nm)
 CDict.add('THERMAL_RED_LIMIT', value=None, dtype=float,
           source=__NAME__, group=cgroup,
@@ -3617,6 +3626,12 @@ CDict.add('SKYCORR_NSIG_THRES', value=None, dtype=int,
           description='Define the number of sigma threshold '
                       'for sky corr sigma clipping')
 
+# Define the flux ratio of sky lines that can not be corrected for
+CDict.add('SKYCORR_RATIO_THRES', value=None, dtype=float,
+          source=__NAME__, group=cgroup,
+          description='Define the flux ratio of sky lines '
+                      'that can not be corrected for')
+
 # =============================================================================
 # OBJECT: TELLURIC SETTINGS
 # =============================================================================
@@ -3685,6 +3700,16 @@ CDict.add('TELLU_BAD_WAVEREGIONS', value=[],
           source=__NAME__, group=cgroup,
           description='Define bad wavelength regions to '
                       'mask before correcting tellurics')
+
+# Define regions where fluorescence of oxygen lines that biases the
+# telluric absorption calculation (when observation are taken early in the
+# night)
+CDict.add('TELLU_FLUORESCENCE', value=[[1240, 1290]],
+          dtype=list, dtypei=list, source=__NAME__, group=cgroup,
+          description='Define regions where fluorescence of oxygen '
+                      'lines that biases the telluric absorption '
+                      'calculation (when observation are taken early '
+                      'in the night)')
 
 # =============================================================================
 # OBJECT: TELLURIC PRE-CLEANING SETTINGS
@@ -5215,6 +5240,13 @@ CDict.add('PLOT_TELLU_SKY_CORR_PLOT', value=False,
                       'debug plot')
 
 # turn on the telluric pre-cleaning ccf debug plot
+PLOT_TELLUP_MEAN_RES = Const('PLOT_TELLUP_MEAN_RES', value=False,
+                               dtype=bool, source=__NAME__, user=True,
+                               active=False, group=cgroup,
+                               description='turn on the telluric pre-cleaning '
+                                           'slope mean res debug plot')
+
+# turn on the telluric pre-cleaning ccf debug plot
 CDict.add('PLOT_TELLUP_WAVE_TRANS', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
@@ -5715,6 +5747,12 @@ CDict.add('ARI_WAVE_RANGES', value=None, dtype=dict,
           source=__NAME__, group=cgroup,
           description='Define the ari spectrum wavelength '
                       'ranges in nm')
+
+# Wavelength range of interest for debug telluric correction map
+ARI_TCORR_MAP_WAVE_RANGE = Const('ARI_TCORR_MAP_WAVE_RANGE', value=None,
+                                 dtype=list, source=__NAME__, group=cgroup,
+                                 description='Wavelength range of interest for '
+                                             'debug telluric correction map')
 
 # Define the ari ssh properties to copy the website to
 CDict.add('ARI_SSH_COPY', value=None, dtype=dict, source=__NAME__,
