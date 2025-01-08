@@ -112,6 +112,8 @@ percentile_bin = gen_math.percentile_bin
 
 linear_minimization = gen_math.linear_minimization
 
+lin_mini_errors = gen_math.lin_mini_errors
+
 relativistic_waveshift = gen_math.relativistic_waveshift
 
 robust_nanstd = gen_math.robust_nanstd
