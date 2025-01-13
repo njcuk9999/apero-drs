@@ -146,7 +146,7 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
         if latest is not None:
             latest = f'\'{latest.iso}\''
     else:
-        time_col = 'KW_MJDATE'
+        time_col = 'KW_MID_OBS_TIME'
         if since is not None:
             since = since.mjd
         if latest is not None:
