@@ -217,7 +217,7 @@ def load_database_yaml() -> dict:
         else:
             # raise an error
             emsg = '{0}={1} does not exist'
-            raise BaseAperoError(emsg.format(USER_ENV, path))
+            raise BaseAperoError(emsg.format(USER_ENV, os.environ[USER_ENV]))
     # else raise except (cannot come from database)
     emsg = '{0} must be set (please run setup script or add {0} to your PATH)'
     raise BaseAperoError(emsg.format(USER_ENV))
