@@ -50,30 +50,6 @@ def get_version() -> str:
     return vtext[1].split(':')[-1].strip()
 
 
-def load_requirements() -> list:
-    """
-    Load requirements from file
-    :return:
-    """
-    requirements = 'requirements.txt'
-    # storage for list of modules
-    modules = []
-    # open requirements file
-    with open(requirements, 'r') as rfile:
-        lines = rfile.readlines()
-    # get modules from lines in requirements file
-    for line in lines:
-        if len(line) == '':
-            continue
-        if line.startswith('#'):
-            continue
-        else:
-            modules.append(line)
-    # return modules
-    return modules
-
-
-
 def load_scripts() -> list:
     """
     Load scripts from file
@@ -109,15 +85,6 @@ if __name__ == "__main__":
           packages=find_packages(),
           version=get_version(),
           scripts=load_scripts(),
-          url='http://apero.exoplanets.ca',
-          license='MIT',
-          author='Neil Cook',
-          author_email='neil.james.cook@gmail.com',
-          description=('APERO is a pipeline designed to reduce astrophysical '
-                       'observations (specifically from echelle spectrographs). '
-                       'It is the offical pipeline for SPIRou and is also '
-                       'used for NIRPS.'),
-          install_requires=load_requirements(),
           include_package_data=True)
 
 
