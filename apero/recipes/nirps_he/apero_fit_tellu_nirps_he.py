@@ -274,7 +274,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                                        database=telludbm,
                                        template_props=template_props,
                                        refprops=refprops,
-                                       bprops=bprops)
+                                       bprops=bprops, sky_props=scprops)
         tpreprops, template_props = tout
         # get corrected image out of pre-cleaning parameter dictionary
         image1 = tpreprops['CORRECTED_E2DS']
