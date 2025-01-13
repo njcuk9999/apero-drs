@@ -60,9 +60,5 @@ Homepage = 'http://apero.exoplanets.ca'
 Repository = 'https://github.com/njcuk9999/apero-drs'
 
 [project.optional-dependencies]
-full = [
-    "aperocore @ git+https://github.com/njcuk9999/apero-drs.git@v0.8.003#subdirectory=apero-core"
-]
-dev = [
-    "aperocore @ file:// ../apero-core"
-]
+full = ["aperocore @ git+https://github.com/njcuk9999/apero-drs.git@v0.8.003#subdirectory=apero-core"]
+dev = ["aperocore"]

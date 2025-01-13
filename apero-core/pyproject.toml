@@ -42,7 +42,3 @@ dependencies = [
 Homepage = 'http://apero.exoplanets.ca'
 Repository = 'https://github.com/njcuk9999/apero-drs'
 
-[project.optional-dependencies]
-full = []
-dev = []
-
