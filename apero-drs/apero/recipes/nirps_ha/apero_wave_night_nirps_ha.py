@@ -237,14 +237,19 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                                                         infile=fp_e2ds_file,
                                                         database=calibdbm)
         # -----------------------------------------------------------------
+        # get reference hc lines and fp lines from calibDB
+        wout = wave.get_wavelines(params, ref_fiber, infile=hc_e2ds_file)
+        mhclines, mhclsource, mfplines, mfplsource = wout
+        # -----------------------------------------------------------------
         # generate the hc reference lines
         hcargs = dict(e2dsfile=hc_e2ds_file, wavemap=wprops['WAVEMAP'],
-                      iteration=1)
+                      iteration=1, hclines=mhclines)
         hclines = wave.calc_wave_lines(params, recipe, **hcargs)
         # -----------------------------------------------------------------
         # generate the fp reference lines
         fpargs = dict(e2dsfile=fp_e2ds_file, wavemap=wprops['WAVEMAP'],
-                      cavity_poly=wprops['CAVITY'], iteration=1)
+                      cavity_poly=wprops['CAVITY'], iteration=1,
+                      fplines=mfplines)
         fplines = wave.calc_wave_lines(params, recipe, **fpargs)
 
         # -----------------------------------------------------------------
@@ -268,11 +273,12 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # =================================================================
         # generate the hc reference lines
         hcargs = dict(e2dsfile=hc_e2ds_file, wavemap=wprops['WAVEMAP'],
-                      iteration=2)
+                      iteration=2, hclines=mhclines)
         hclines = wave.calc_wave_lines(params, recipe, **hcargs)
         # generate the fp reference lines
         fpargs = dict(e2dsfile=fp_e2ds_file, wavemap=wprops['WAVEMAP'],
-                      cavity_poly=wprops['CAVITY'], iteration=2)
+                      cavity_poly=wprops['CAVITY'], iteration=2,
+                      fplines=mfplines)
         fplines = wave.calc_wave_lines(params, recipe, **fpargs)
         # add lines to wave properties
         wprops['HCLINES'] = hclines
