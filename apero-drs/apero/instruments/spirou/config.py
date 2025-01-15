@@ -34,7 +34,7 @@ CDict.set('OBS_LAT', value=19.825252, source=__NAME__, author='EA')
 CDict.set('OBS_ALT', value=4204, source=__NAME__, author='EA')
 
 #  Define the telescopes time zone (from pytz.all_timezones)
-CDict.set('OBS_TIMEZONE', value='US/Hawaii', source=__NAME__,
+CDict.set('OBS_TZ', value='US/Hawaii', source=__NAME__,
           author='NJC')
 
 # -----------------------------------------------------------------------------

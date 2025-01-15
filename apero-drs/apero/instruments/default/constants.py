@@ -5240,11 +5240,11 @@ CDict.add('PLOT_TELLU_SKY_CORR_PLOT', value=False,
                       'debug plot')
 
 # turn on the telluric pre-cleaning ccf debug plot
-PLOT_TELLUP_MEAN_RES = Const('PLOT_TELLUP_MEAN_RES', value=False,
-                               dtype=bool, source=__NAME__, user=True,
-                               active=False, group=cgroup,
-                               description='turn on the telluric pre-cleaning '
-                                           'slope mean res debug plot')
+CDict.add('PLOT_TELLUP_MEAN_RES', value=False,
+          dtype=bool, source=__NAME__, user=True,
+          active=False, group=cgroup,
+          description='turn on the telluric pre-cleaning '
+                      'slope mean res debug plot')
 
 # turn on the telluric pre-cleaning ccf debug plot
 CDict.add('PLOT_TELLUP_WAVE_TRANS', value=False,

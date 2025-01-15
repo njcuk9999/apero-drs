@@ -291,12 +291,15 @@ CDict.add('INSTRUMENT', value='None', dtype=str,
 CDict.add('OBS_LONG', value=None, dtype=float, source=__NAME__,
           group=cgroup,
           description='Defines the longitude West is negative')
+
 #  Defines the latitude North (deg)
 CDict.add('OBS_LAT', value=None, dtype=float, source=__NAME__,
           group=cgroup, description='Defines the latitude North (deg)')
+
 #  Defines the CFHT altitude (m)
 CDict.add('OBS_ALT', value=None, dtype=float, source=__NAME__,
           group=cgroup, description='Defines the CFHT altitude (m)')
+
 #  Define the telescopes time zone (from pytz.all_timezones)
 CDict.add('OBS_TZ', value='UTC', dtype=str, source=__NAME__,
           group=cgroup, options=list(pytz.all_timezones),
