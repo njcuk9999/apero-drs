@@ -232,6 +232,41 @@ KDict.add('KW_POLAR_KEY_2', key='NULL', dtype=str, source=__NAME__,
           description='define the first polar sequence key')
 
 # -----------------------------------------------------------------------------
+# Telescope status keywords
+# -----------------------------------------------------------------------------
+# FP vacuum gauge press
+KDict.set('KW_FP_VAC_PRESS', key='NULL', dtype=str, source=__NAME__,
+          description='Fabry Perot vacuum gauge pressure')
+
+# FP vacuum gauge press (mean of combined)
+KDict.set('KW_FP_VAC_PRESS_MEAN', key='NULL', dtype=str, source=__NAME__,
+          description='Fabry Perot vacuum gauge pressure (mean of combined)')
+
+# FP header power (percentage)
+KDict.set('KW_FP_HEATER_POWER', key='NULL', dtype=str, source=__NAME__,
+          description='Fabry Perot header power (percentage)')
+
+# FP header power (mean of combined)
+KDict.set('KW_FP_HEATER_POWER_MEAN', key='NULL', dtype=str, source=__NAME__,
+          description='Fabry Perot header power (mean of combined)')
+
+# FP internal temperature
+KDict.set('KW_FP_TEMP_INT', key='NULL', dtype=str, source=__NAME__,
+          description='Fabry Perot internal temperature')
+
+# FP internal temperature (mean of combined)
+KDict.set('KW_FP_TEMP_INT_MEAN', key='NULL', dtype=str, source=__NAME__,
+          description='Fabry Perot internal temperature (mean of combined)')
+
+# FP external temperature
+KDict.set('KW_FP_TEMP_EXT', key='NULL', dtype=str, source=__NAME__,
+          description='Fabry Perot lakeshore temp exterior')
+
+# FP external temperature (mean of combined)
+KDict.set('KW_FP_TEMP_EXT_MEAN', key='NULL', dtype=str, source=__NAME__,
+          description='Fabry Perot lakeshore temp exterior (mean of combined)')
+
+# -----------------------------------------------------------------------------
 # Keys added as early as possible
 # -----------------------------------------------------------------------------
 # Define whether a target was observed at night
@@ -2054,10 +2089,11 @@ KDict.add('KW_FTELLU_APPROX_RV', key='NULL', dtype=str,
           source=__NAME__,
           description='Approx relative RV done with tellu correction [m/s]')
 
-# The approximate RV calculated with the telluric correction
-KDict.add('KW_FTELLU_APPROX_RV_FIT', key='NULL', dtype=str,
+# The uncertainty for the approximate RV calculated with the telluric correction
+KDict.add('KW_FTELLU_APPROX_RV_ERR', key='NULL', dtype=str,
           source=__NAME__,
-          description='Approx relative RV done with tellu correction [m/s]')
+          description='The approximate RV calculated with the '
+                      'telluric correction')
 
 # Telluric principle component amplitudes (for use with 1D list)
 KDict.add('KW_FTELLU_AMP_PC', key='NULL', dtype=float,

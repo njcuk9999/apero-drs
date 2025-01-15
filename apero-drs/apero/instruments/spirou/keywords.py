@@ -199,6 +199,49 @@ KDict.set('KW_INPUTRV', key='OBJRV', unit=uu.km / uu.s, group='raw')
 KDict.set('KW_OBJ_TEMP', key='OBJTEMP', unit=uu.K, group='raw')
 
 # -----------------------------------------------------------------------------
+# Telescope status keywords
+# -----------------------------------------------------------------------------
+# FP vacuum gauge press
+KDict.set('KW_FP_VAC_PRESS', key='SECFPB_P',
+          comment='Fabry-perot vacuum gauge pressure', group='raw-status',
+          combine_method='mean')
+
+# FP vacuum gauge press (mean of combined)
+KDict.set('KW_FP_VAC_PRESS_MEAN', key='PFPRESS',
+          comment='Fabry Perot Heater Power (%) (mean of combined)',
+          group='raw-status')
+
+# FP header power (percentage)
+KDict.set('KW_FP_HEATER_POWER', key='SECFPP_V',
+          comment='Fabry-Perot header power (percentage)', group='raw-status',
+          combine_method='mean')
+
+# FP header power (mean of combined)
+KDict.set('KW_FP_HEATER_POWER_MEAN', key='FPPOWER',
+          comment='Fabry-Perot lakeshore interior (mean of combined)',
+          group='raw-status')
+
+# FP internal temperature
+KDict.set('KW_FP_TEMP_INT', key='SECFPI_T',
+          comment='Fabry-Perot internal temperature', group='raw-status',
+          combine_method='mean')
+
+# FP internal temperature (mean of combined)
+KDict.set('KW_FP_TEMP_INT_MEAN', key='FPINTAVG ',
+          comment='Fabry-Perot lakeshore temp exterior (mean of combined)',
+          group='raw-status')
+
+# FP external temperature
+KDict.set('KW_FP_TEMP_EXT', key='SECFPE_T',
+          comment='Fabry-Perot external temperature', group='raw-status',
+          combine_method='mean')
+
+# FP external temperature (mean of combined)
+KDict.set('KW_FP_TEMP_EXT_MEAN', key='FPEXTAVG',
+          comment='Fabry-Perot lakeshore temp exterior (mean of combined)',
+          group='raw-status')
+
+# -----------------------------------------------------------------------------
 # Keys added as early as possible
 # -----------------------------------------------------------------------------
 # define whether a target was observed at night
@@ -1498,12 +1541,12 @@ KDict.set('KW_MKTELL_TEMPHASH', key='MKTTEMPH', comment='mktellu template unique
 KDict.set('KW_MKTELL_TEMPTIME', key='MKTTEMPT', comment='mktellu template create time')
 
 # The approximate RV calculated with the telluric correction
-KDict.set('KW_FTELLU_APPROX_RV_ERR', key='MKT_AERV',
-          comment='Approx relative RV err from tellu [m/s]')
-
-# The approximate RV calculated with the telluric correction
 KDict.set('KW_FTELLU_APPROX_RV', key='MKT_ARV',
           comment='Approx relative RV from tellu [m/s]')
+
+# The uncertainty for the approximate RV calculated with the telluric correction
+KDict.set('KW_FTELLU_APPROX_RV_ERR', key='MKT_AERV',
+          comment='Approx relative RV err from tellu [m/s]')
 
 # The blaze percentile used for mktellu calculation
 KDict.set('KW_MKTELL_BLAZE_PRCT', key='MKTBPRCT', comment='mktellu blaze percentile')

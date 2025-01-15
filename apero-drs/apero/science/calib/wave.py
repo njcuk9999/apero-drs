@@ -3296,6 +3296,16 @@ def write_wavesol(params: ParamDict, recipe: DrsRecipe, fiber: str,
     # add the order num, fit degree and fit coefficients etc
     wavefile = add_wave_keys(wavefile, wprops)
     # ------------------------------------------------------------------
+    # add mean status keys
+    wavefile.add_hkey('KW_FP_VAC_PRESS_MEAN',
+                      value=fpfile.header[params['KW_FP_VAC_PRESS'][0]])
+    wavefile.add_hkey('KW_FP_HEATER_POWER_MEAN',
+                      value=fpfile.header[params['KW_FP_HEATER_POWER'][0]])
+    wavefile.add_hkey('KW_FP_TEMP_INT_MEAN',
+                      value=fpfile.header[params['KW_FP_TEMP_INT'][0]])
+    wavefile.add_hkey('KW_FP_TEMP_EXT_MEAN',
+                      value=fpfile.header[params['KW_FP_TEMP_EXT'][0]])
+    # ------------------------------------------------------------------
     # add qc parameters
     wavefile.add_qckeys(qc_params)
     # copy data
