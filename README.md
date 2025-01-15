@@ -95,3 +95,15 @@ Please see the documentation:
 - [LOCAL PDF] documentation/output/apero-docs.pdf 
 
 
+## 6 Dev mode
+[Back to top](#apero---a-pipeline-to-reduce-observations)
+
+For dev mode (editable install of both apero-core and sossisse please run the following:
+
+```bash
+
+git clone git@github.com:njcuk9999/apero-drs.git
+
+pip install -U -e ./apero-drs/apero-core
+pip install -U -e ./apero-drs/apero-drs[dev]
+```

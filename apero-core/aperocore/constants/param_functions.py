@@ -319,6 +319,14 @@ class ParamDict(CaseInDict):
         # if we have the key return the value
         if key in self.data.keys():
             return self.__getitem__(key)
+
+        # ---------------------------------------------------------------------
+        # check for path
+        path_dict = SubParamDict(self, key)
+        # if we have keys return this
+        if path_dict.exists:
+            return path_dict
+        # ---------------------------------------------------------------------
         # else return the default key (None if not defined)
         else:
             self.sources[key] = None
@@ -1147,6 +1155,79 @@ class ParamDict(CaseInDict):
                 eargs = [path, '.'.join(used_keys)]
                 raise AperoCodedException(None, None, emsg.format(*eargs))
         return tmp_dict
+
+
+class SubParamDict():
+    """
+    Acts like parameter dictionary for a "nested" :parameter
+    i.e. params['X.Y'] = 4
+
+    path_dict = SubParamDict(params, 'X')
+
+    path_dict['Y']  # returns 4
+
+    path_dict['Y'] = 5    # updates params as well as path_dict
+    """
+    def __init__(self, param_dict: ParamDict, key: str):
+        # shallow copy the parameter dictionary
+        self.param_dict = param_dict
+        self.path = key if key.endswith('.') else key + '.'
+        self.path_len = len(self.path)
+        self.exists = self._exists()
+
+    def __getitem__(self, item):
+        return self.param_dict.data[f'{self.path}{item}']
+
+    def __setitem__(self, key, value):
+        self.param_dict.data[f'{self.path}{key}'] = value
+
+    def set(self, key: str, value: Any, source: str, instance: Any):
+        self.param_dict.set(f'{self.path}{key}', value, source, instance)
+
+    def set_source(self, key: str, source: str):
+        self.param_dict.set_source(f'{self.path}{key}', source)
+
+    def set_instance(self, key: str, instance: Any):
+        self.param_dict.set_instance(f'{self.path}{key}', instance)
+
+    def set_sources(self, keys: List[str],
+                    sources: Union[str, List[str], dict]):
+        self.param_dict.set_sources([f'{self.path}{key}' for key in keys],
+                                    sources)
+
+    def set_instances(self, keys: List[str],
+                      instances: Union[object, list, dict]):
+        self.param_dict.set_instances([f'{self.path}{key}' for key in keys],
+                                      instances)
+
+    def _exists(self):
+        for key in self.param_dict.data.keys():
+            if key.startswith(self.path):
+                return True
+        return False
+
+    def __contains__(self, key):
+        if f'{self.path}.{key}' in self.param_dict.data:
+            return True
+        return False
+
+    def __str__(self) -> str:
+        # temporary create a new parameter dictionary
+        param_dict = ParamDict()
+
+        for key in self.param_dict.data.keys():
+            if key.startswith(self.path):
+                param_dict.set(key[self.path_len:], self.param_dict[key],
+                               source=self.param_dict.sources[key],
+                               instance=self.param_dict.instances[key])
+        return_string = param_dict.__str__()
+        # tidy up
+        del param_dict
+        # return return string
+        return return_string
+
+    def __repr__(self):
+        return self.__str__()
 
 
 class PCheck:

@@ -58,12 +58,21 @@ KeywordDict = constant_functions.KeywordDict
 # =============================================================================
 def load_into_params(values: Dict[str, Any], sources: Dict[str, str],
                      instances: Dict[str, Const],
-                     params: ParamDict = None) -> ParamDict:
+                     params: ParamDict = None,
+                     check: bool = True) -> ParamDict:
     """
     Load a set of values/sources/instances into a parameter dictionary
     (recursively if there are dictionary/ParamDict instances)
 
     :param values: dict, the values to load
+    :param sources: dict, the sources of the values
+    :param instances: dict, the instances of the values
+    :param params: ParamDict, the parameter dictionary to load into
+    :param check: bool, if True check the values before adding them,
+                  not this should only be set to False if checking elsewhere
+                  is guaranteed
+
+    :return: ParamDict containing the loaded constants
     """
     # set up a new parameter dictionary
     if params is None:
@@ -82,23 +91,31 @@ def load_into_params(values: Dict[str, Any], sources: Dict[str, str],
         # if we have a dictionary or a ParamDict instance recursively load
         #  into a sub-PAramDict
         if isinstance(values[key], (dict, ParamDict)):
-            # deal with already having values set (i.e. not None)
-            if key in params:
-                _params = params[key]
-            else:
-                _params = None
-            # load nested dictionary
-            params[key] = load_into_params(values[key], sources[key],
-                                           instances[key], params=_params)
-            # make sure parent instances/sources has the dictionaries of
-            #   child instances/sources (otherwise we get in a mess)
-            if isinstance(params[key], ParamDict):
-                params.instances[key] = params[key].instances
-                params.sources[key] = params[key].sources
+            # we only load a sub-dictionary if we don't have an associated
+            # Const as an instance (Const can be dictionaries of values but
+            # not dictionaries of Const)
+            if not isinstance(instances[key], Const):
+                # deal with already having values set (i.e. not None)
+                if key in params:
+                    _params = params[key]
+                else:
+                    _params = None
+                # load nested dictionary
+                params[key] = load_into_params(values[key], sources[key],
+                                               instances[key], params=_params,
+                                               check=check)
+                # make sure parent instances/sources has the dictionaries of
+                #   child instances/sources (otherwise we get in a mess)
+                if isinstance(params[key], ParamDict):
+                    params.instances[key] = params[key].instances
+                    params.sources[key] = params[key].sources
+
+
+                continue
         # if we don't have an instance this is a new constants - which shouldn't
         #   really be allowed - we'll display a warning and hope the
         #   developer adds the constant to instances
-        elif key not in instances:
+        if key not in instances:
             # otherwise warn we are adding a foreign key/value to params
             wmsg = ('Key "{0}" not found in instances. To remove this warning'
                     ' make sure "{0}" is removes from input or added to the '
@@ -116,6 +133,10 @@ def load_into_params(values: Dict[str, Any], sources: Dict[str, str],
         # if the value is None and is already set do nothing
         elif values[key] is None:
             continue
+        # if we are not checking just push value into parameters as is
+        elif not check:
+            params.set(key, values[key], source=sources[key],
+                       instance=instances[key])
         # otherwise we verify the value before adding it
         else:
             # verify the value
@@ -129,12 +150,15 @@ def load_into_params(values: Dict[str, Any], sources: Dict[str, str],
     return params
 
 
-def load_parameters(config_list: List[Union[ConstDict, KeywordDict]] = None
-                    ) -> ParamDict:
+def load_parameters(config_list: List[Union[ConstDict, KeywordDict]] = None,
+                    check: bool = True) -> ParamDict:
     """
     Load a set of Constants Dictionaries into a single Parameter Dictionary
 
     :param config_list: list of Constants Dictionaries
+    :param check: bool, if True check the values before adding them,
+                  not this should only be set to False if checking elsewhere
+                  is guaranteed
 
     :return: tuple, 1. ParamDict containing the constants, 2. list of instances
                     (Const/Keyword instances) for each key
@@ -148,7 +172,7 @@ def load_parameters(config_list: List[Union[ConstDict, KeywordDict]] = None
         values, sources, instances = clist.unpack(values, sources, instances)
     # ---------------------------------------------------------------------
     # push into a parameter dictionary
-    params = load_into_params(values, sources, instances)
+    params = load_into_params(values, sources, instances, check=check)
     # return these
     return params
 
@@ -185,7 +209,7 @@ def load_config(instruments: Dict[str, Any],
     # get constants from modules
     clist = instrument_instance.get_clists()
     # push into params
-    params = load_parameters(clist)
+    params = load_parameters(clist, check=not from_file)
     # get constants from user config files
     if from_file:
         # get instrument user config files
@@ -269,8 +293,9 @@ def load_from_yaml(files: List[str], params: ParamDict = None) -> ParamDict:
         instances = drs_misc.map_nested_attribute_dict(*margs)
         # for sources we copy the structure of yaml_dict
         sources = drs_misc.create_structure_like(yaml_dict, func_name)
-        # load into params
-        params = load_into_params(yaml_dict, sources, instances, params)
+        # load into params (make sure we definitely check the values)
+        params = load_into_params(yaml_dict, sources, instances, params,
+                                  check=True)
     # return updated parameters
     return params
 
@@ -381,7 +406,7 @@ def get_all_params(name: str, description: str, inputargs: List[str],
             eargs = [func_name]
             WLOG(params, 'error', emsg.format(*eargs))
         # get the parameter file
-        param_file = params.get_path(param_file_path)
+        param_file = params[param_file_path]
         # get instrument user config files
         largs = [[os.path.realpath(param_file)], params]
         # load keys, values, sources and instances from yaml files

@@ -11,6 +11,7 @@ Created on 2019-01-17 at 14:09
 """
 import os
 import sys
+import textwrap
 import traceback
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -493,28 +494,29 @@ class ConstantsDict:
 
         :returns: None (constructor)
         """
-        # we should not override these
-        if name in self.storage:
-            # TODO: Add to language database
-            emsg = ('Constant "{0}" already exists in storage. '
-                    'Please fix in defaults.').format(name)
-            eargs = [name]
-            raise AperoCodedException(None, message=emsg.format(*eargs),
-                                      targs=eargs)
         # create constant
         constants = Const(name, value, dtype, dtypei, options, maximum, minimum,
                           source, unit, default, datatype, dataformat, group,
                           user, active, description, author, parent, output,
                           not_none, modes, length, cmd_arg, cmd_kwargs)
-        # add to storage
-        self.storage[name] = constants
+        # deal with no group
+        if group is None:
+            self.storage[name] = constants
+        else:
+            self.storage[f'{group}.{name}'] = constants
 
     def get(self, key: str) -> Const:
         # just return the Const
         return self.storage[key]
 
     def __getitem__(self, item):
-        return self.storage[item].value
+        if isinstance(self.storage[item], ConstantsDict):
+            return self.storage[item].storage
+        else:
+            return self.storage[item].value
+
+    def __contains__(self, item):
+        return item in self.storage
 
     def set(self, name: str, value: Any = None,
             dtype: Union[None, str, type] = None,
@@ -694,8 +696,8 @@ class ConstantsDict:
             if key in values:
                 continue
             # if the value itself is a ConstDict then we have to unpack that
-            if isinstance(self.storage[key].value, ConstantsDict):
-                uout = self.storage[key].value.unpack()
+            if isinstance(self.storage[key], ConstantsDict):
+                uout = self.storage[key].unpack()
                 values[key], sources[key], instances[key] = uout
             # otherwise we set the value, source and instance
             else:
@@ -727,9 +729,9 @@ class ConstantsDict:
             else:
                 outkey = key
             # if the value itself is a ConstDict then we have to unpack that
-            if isinstance(self.storage[key].value, ConstantsDict):
+            if isinstance(self.storage[key], ConstantsDict):
                 # get nested Constants dictionary
-                value = self.storage[key].value
+                value = self.storage[key]
                 # do the same process for the nested dictionary
                 kwarg_list = value.cmd_args_from_clist(kwarg_list,
                                                        parent=outkey)
@@ -766,8 +768,6 @@ class ConstantsDict:
         if params is None:
             params = dict()
         # ---------------------------------------------------------------------
-        # storage of used groups
-        used_groups = []
         # create a commented map instance
         data = CommentedMap()
         # deal with title
@@ -778,15 +778,10 @@ class ConstantsDict:
         else:
             title = self.title.format(**title_args)
         # add the start comment
-        data.yaml_set_start_comment(title)
-        # loop around constants and add to the data
-        for key in self.storage:
-            # now we add the values / comments
-            #   This is in a sub-method as we may have to do this recursively
-            data = self.add_to_yaml(data, params,
-                                    constants=[self.storage[key]],
-                                    keys=[key], used_groups=used_groups,
-                                    mode=mode, indent=0)
+        data.yaml_set_start_comment(_comment_wrap(title))
+        # now we add the values / comments
+        #   This is in a sub-method as we may have to do this recursively
+        data = self.add_to_yaml(data, params, mode=mode)
         # ---------------------------------------------------------------------
         # print message
         if log:
@@ -805,18 +800,25 @@ class ConstantsDict:
         # return the yaml file path
         return outpath
 
-    def add_to_yaml(self, data: CommentedMap, yparams: Any,
-                    constants: List[Const], keys: List[str],
-                    used_groups: Optional[List[str]] = None,
-                    mode: str = None, indent: int = 0) -> CommentedMap:
-        # deal with no used groups
-        if used_groups is None:
-            used_groups = []
+    def add_to_yaml(self, data: CommentedMap, params: Any,
+                    mode: str = None) -> CommentedMap:
         # loop around keys
-        for it, key in enumerate(keys):
-            # get the constant
-            const = constants[it]
+        for it, key in enumerate(params.keys()):
             # -----------------------------------------------------------------
+            # if params have a key that is not in storage we skip
+            if key not in self.storage:
+                continue
+            # -----------------------------------------------------------------
+            # get the constant associated with this key
+            const = self.storage[key]
+            # -----------------------------------------------------------------
+            # if we don't have a constant we have a problem
+            if not isinstance(const, Const):
+                # TODO: Add to language database
+                emsg = 'Key "{0}" is not a constant instance'
+                eargs = [key]
+                raise AperoCodedException(None, None,
+                                          message=emsg.format((eargs)))
             # get comment
             comment = self.storage[key].description
             # if there is no comment don't add
@@ -826,30 +828,13 @@ class ConstantsDict:
             if not self.storage[key].user:
                 continue
             # -----------------------------------------------------------------
-            # deal with new group
-            group = self.storage[key].group
-            # we only both if variable has a group and group is set
-            if group is not None and group in self.groups:
-                # if group has heading then we don't add it again
-                if group not in used_groups:
-                    # get group description
-                    group_desc = self.groups[group]
-                    # modify the comment
-                    comment = self.add_yaml_section(group_desc) + comment
-                    # add group to used groups
-                    used_groups.append(group)
-            # -----------------------------------------------------------------
             # remove new lines at start/end of comment
             if not comment.startswith('\n\n'):
                 comment = comment.strip('\n')
             # -----------------------------------------------------------------
-            const_value = self.storage[key].value
             # add the default value to the comment (if given)
-            #  do not add Constants Dicts defualt value
-            if isinstance(const_value, ConstantsDict):
-                pass
-            elif self.storage[key].value is not None:
-                comment += '\n\tDefault value={0}'.format(str(const_value))
+            #  do not add Constants Dicts default value
+            comment += '\n\tDefault value={0}'.format(str(self.storage[key].value))
             # ---------------------------------------------------------------------
             # get active
             active = self.storage[key].active
@@ -868,41 +853,49 @@ class ConstantsDict:
             if not in_mode:
                 continue
             # -----------------------------------------------------------------
-            # if we have a constant dictionary then we go down another level
-            if isinstance(const.value, ConstantsDict):
-                # if value is in params we use a subparams
-                if key in yparams:
-                    sub_params = yparams[key]
-                else:
-                    sub_params = None
-                # The sub-dictionary is a commented map
-                data[key] = CommentedMap()
-                # the Constant Dict is stored in the value of the current const
-                sub_constants  = list(const.value.storage.values())
-                sub_keys = list(const.value.storage.keys())
-                # we update the data[key] CommentedMap
-                data[key] = const.value.add_to_yaml(data[key], sub_params,
-                                                    sub_constants, sub_keys,
-                                                    used_groups=used_groups,
-                                                    mode=mode,
-                                                    indent=indent+2)
-                # then we update the data CommentedMap
-                ckwargs = dict(key=key, before=comment, indent=indent)
-                data.yaml_set_comment_before_after_key(**ckwargs)
-            # -----------------------------------------------------------------
-            # otherwise we are at the bottom of the tree
+            # push into params
+            if key in params:
+                value = params[key]
             else:
-                # push into params
-                if key in yparams:
-                    value = yparams[key]
+                value = const.value
+
+            # -----------------------------------------------------------------
+            # get the nested levels
+            nested_levels = key.split('.')
+            # set the sub data to data to start with
+            sub_data = data
+
+            # loop around levels
+            for n_it, nested_key in enumerate(nested_levels):
+                # if we are at the last level then set the value
+                if nested_key == nested_levels[-1]:
+
+                    sub_data[nested_key] = value
+                    # ---------------------------------------------------------
+                    # add the comment
+                    ckwargs = dict(key=nested_key,
+                                   before=_comment_wrap(comment),
+                                   indent=2 * n_it)
+                    sub_data.yaml_set_comment_before_after_key(**ckwargs)
+
                 else:
-                    value = const.value
-                # set the value
-                data[key] = value
-                # -------------------------------------------------------------
-                # add the comment
-                ckwargs = dict(key=key, before=comment, indent=indent)
-                data.yaml_set_comment_before_after_key(**ckwargs)
+                    # if the nested key is not in the sub data add it
+                    if nested_key not in sub_data:
+                        sub_data[nested_key] = CommentedMap()
+                        # get group key
+                        group_key = '.'.join(nested_levels[:n_it + 1])
+                        # get group description
+                        group_desc = self.groups[group_key]
+                        # modify the comment
+                        gcomment = self.add_yaml_section(group_desc)
+
+                        gkwargs = dict(key=nested_key,
+                                       before=_comment_wrap(gcomment),
+                                       indent=2 * n_it)
+                        # add the comment
+                        sub_data.yaml_set_comment_before_after_key(**gkwargs)
+                    # switch to the sub data
+                    sub_data = sub_data[nested_key]
         # Return the commented map
         return data
 
@@ -939,7 +932,8 @@ class ConstantsDict:
         comment += '\n' + '=' * 77 + '\n'
         return comment
 
-    def add_group(self, groupname, description):
+    def add_group(self, groupname, description, source: str = None,
+                  user: bool = False, active: bool = False):
         """
         Add a group for the yaml file
 
@@ -948,6 +942,7 @@ class ConstantsDict:
 
         :return: None, updates self.groups
         """
+        # finally add the full group and description to groups
         self.groups[groupname] = description
 
 
@@ -1796,16 +1791,16 @@ def minimal_params(params: Any, dict_class: Optional[Any] = None,
             dparams = dict_class()
         else:
             dparams = dict()
-        for key in MPARAMS:
-            dparams[key] = MPARAMS[key]
+        for key in drs_log.MPARAMS:
+            dparams[key] = drs_log.MPARAMS[key]
         # return dparams
         return dparams
     # else we try to set them from params first
     else:
         # loop around minimal params
-        for key in MPARAMS:
+        for key in drs_log.MPARAMS:
             if key not in params:
-                params.set(key, MPARAMS[key], source=func_name)
+                params.set(key, drs_log.MPARAMS[key], source=func_name)
         # return dparams
         return params
 
@@ -2030,6 +2025,12 @@ def _validate_text_file(filename: Union[str, Path],
         # only raise an error if invalid is True (if we found bad characters)
         if invalid:
             raise AperoCodedException(None, '00-003-00020', message=emsg)
+
+
+def _comment_wrap(comment, width=80):
+    wrapped = textwrap.wrap(comment, width=width,
+                            replace_whitespace=False)
+    return '\n'.join(wrapped)
 
 
 # =============================================================================
