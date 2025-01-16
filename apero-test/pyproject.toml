@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 
 [project]
-dynamic = ["version", "dependencies"]
+dynamic = ["version"]
 name = 'aperotest'
 authors = [
     {name = 'Neil Cook', email = 'neil.james.cook@gmail.com'},
@@ -22,5 +22,6 @@ Repository = 'https://github.com/njcuk9999/{module}'
 test_setup = "aperotest:recipes.test_setup.run"
 test_run = "aperotest:recipes.test_run.run"
 
-[tool.setuptools.dynamic]
-dependencies = {file = ["requirements.txt"]}
+[project.optional-dependencies]
+full = ["aperocore @ git+https://github.com/njcuk9999/apero-drs.git@v0.8.003#subdirectory=apero-core"]
+dev = ["aperocore"]

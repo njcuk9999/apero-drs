@@ -51,7 +51,7 @@ dependencies = [
     "Sphinx==7.0.1",
     "sphinx-toolbox==3.4.0",
     "ttkthemes==3.2.2",
-    "xlrd==2.0.1",
+    "xlrd==2.0.1"
 ]
 
 

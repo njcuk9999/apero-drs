@@ -37,22 +37,21 @@ CDict.title = CDict.yaml_title('APERO TEST', setup_program='test_setup.py',
 # =============================================================================
 # global settings (generally don't touch these)
 # =============================================================================
-cgroup = 'APEROTEST.GLOBAL'
+cgroup = 'GLOBAL'
 CDict.add_group(cgroup, description='global settings (generally '
-                                    'don\'t touch these)')
-CDict_global = ConstDict(cgroup)
-CDict.add('GLOBAL', value=CDict_global, dtype=ConstDict,
-          source=__NAME__, user=True,
-          active=True, group=cgroup, description='')
+                                    'don\'t touch these)',
+                source=__NAME__, user=True, active=True)
 
 # Yaml file
-CDict_global.add('YAML_FILE', value=None, dtype=str, source=__NAME__,
+CDict.add('YAML_FILE', value=None, dtype=str, source=__NAME__,
                  user=False, active=False, group=cgroup, not_none=True,
-                 cmd_arg='yaml_file',
+                 cmd_arg='yamlfile',
+                 cmd_kwargs=dict(nargs='?', type=str, default=None,
+                                 action='store'),
                  description='Yaml file used')
 
 # Plotting mode (0-3)
-CDict_global.add('PLOTTING', value=0, dtype=int,
+CDict.add('PLOTTING', value=0, dtype=int,
           source=__NAME__, user=True,
           active=True, group=cgroup, options=[0, 1, 2, 3],
           description='Plotting mode: '
@@ -62,13 +61,13 @@ CDict_global.add('PLOTTING', value=0, dtype=int,
                       '\n\t3: Show and save plots to file')
 
 # Plotting types
-CDict_global.add('PLOT_TYPES', value=['png', 'pdf'], dtype=list,
+CDict.add('PLOT_TYPES', value=['png', 'pdf'], dtype=list,
           source=__NAME__, user=True,
           active=True, group=cgroup,
           description='List of plot types to save (e.g. [\'png\', \'pdf\'])')
 
 # Debug mode
-CDict_global.add('DEBUG', value=False, dtype=bool,
+CDict.add('DEBUG', value=False, dtype=bool,
           source=__NAME__, user=True,
           active=True, group=cgroup,
           description='Show debug messages')
@@ -77,8 +76,9 @@ CDict_global.add('DEBUG', value=False, dtype=bool,
 # =============================================================================
 # path settings (generally don't touch these)
 # =============================================================================
-cgroup = 'APEROTEST.PATHS'
-CDict.add_group(cgroup, description='Definition of inputs related to the data')
+cgroup = 'PATHS'
+CDict.add_group(cgroup, description='Definition of inputs related to the data',
+                source=__NAME__, user=True, active=True)
 
 # Define data path
 CDict.add('DATA_PATH', value=None, dtype=str,

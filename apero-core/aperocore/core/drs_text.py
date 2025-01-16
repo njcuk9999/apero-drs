@@ -776,6 +776,9 @@ def user_input(question: str, dtype: Union[str, type, None] = None,
                 cprint(msg.format(*margs), 'y')
                 check = True
                 continue
+    # deal with stripping strings
+    if dtype == str:
+        uinput = uinput.strip()
     # deal with returning default
     if uinput == '' and default is not None:
         return default

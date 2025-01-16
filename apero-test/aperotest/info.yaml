@@ -1,7 +1,7 @@
 # Define versionV
-VERSION: 0.1.001
+VERSION: 0.1.004
 # Define date of release
-DATE: 2024-12-17
+DATE: 2025-01-16
 # Define release type
 RELEASE: alpha
 # Define authors

@@ -94,7 +94,7 @@ def setup(params: ParamDict):
     # Get the constants dictionary
     cdict = constants.CDict
     # get the yaml file
-    yaml_file = params['GLOBAL']['YAML_FILE']
+    yaml_file = params['GLOBAL.YAML_FILE']
     # print progress
     msg = 'Saving constants to yaml file: {0}'
     WLOG(params, '', msg.format(os.path.realpath(yaml_file)))

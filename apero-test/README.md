@@ -7,6 +7,7 @@
 - [Installation](#installation)
 - [Setup](#setup)
 - [Usage](#usage)
+- [Dev mode](#dev-mode)
 
 [Back to top](#contents)
 
@@ -87,3 +88,16 @@ test_run {yaml_file}
 [Back to top](#contents)
 
 ---
+
+## Dev mode
+[Back to top](#contents)
+
+For dev mode (editable install of both apero-core and apero-test please run the following:
+
+```bash
+
+git clone git@github.com:njcuk9999/apero-drs.git
+
+pip install -U -e ./apero-drs/apero-core
+pip install -U -e ./apero-drs/apero-test[dev]
+```

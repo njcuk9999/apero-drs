@@ -28,7 +28,7 @@ __date__ = base.__date__
 __release__ = base.__release__
 # set description
 __description__ = 'Setup the APERO test recipes'
-__inputs__ = ['GLOBAL.YAML_FILE', 'DATA_PATH', 'PLOT_PATH']
+__inputs__ = ['GLOBAL.YAML_FILE', 'PATHS.DATA_PATH', 'PATHS.PLOT_PATH']
 
 # =============================================================================
 # Define functions

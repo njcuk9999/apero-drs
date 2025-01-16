@@ -406,6 +406,10 @@ def get_all_params(name: str, description: str, inputargs: List[str],
             WLOG(params, 'error', emsg.format(*eargs))
         # get the parameter file
         param_file = params[param_file_path]
+        if param_file is None:
+            emsg = '{0} cannot be None.'
+            eargs = [param_file_path]
+            WLOG(params, 'error', emsg.format(*eargs))
         # get instrument user config files
         largs = [[os.path.realpath(param_file)], params]
         # load keys, values, sources and instances from yaml files

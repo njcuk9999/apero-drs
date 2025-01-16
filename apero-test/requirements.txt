@@ -1,4 +1,0 @@
-# python 3.10
-# pip
-
-aperocore @ git+https://github.com/njcuk9999/apero-drs.git@v0.8.003#subdirectory=apero-core
