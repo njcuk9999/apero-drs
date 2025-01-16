@@ -279,8 +279,6 @@ def load_from_yaml(files: List[str], params: ParamDict = None) -> ParamDict:
     # deal with no parameters
     if params is None:
         params = ParamDict()
-    # define dict types
-    dict_types = (dict, ParamDict, ConstDict)
     # -------------------------------------------------------------------------
     # load constants from yaml file
     # -------------------------------------------------------------------------
@@ -288,13 +286,14 @@ def load_from_yaml(files: List[str], params: ParamDict = None) -> ParamDict:
     for filename in files:
         # load the yaml in the standard way
         yaml_dict = base.load_yaml(filename)
+        # flatten the dictionary
+        flat_dict = _to_flat_dict(yaml_dict)
         # load all parameter instances into params
-        margs = [params, params, 'instances', dict_types]
-        instances = drs_misc.map_nested_attribute_dict(*margs)
+        instances = params.instances
         # for sources we copy the structure of yaml_dict
-        sources = drs_misc.create_structure_like(yaml_dict, func_name)
+        sources = params.sources
         # load into params (make sure we definitely check the values)
-        params = load_into_params(yaml_dict, sources, instances, params,
+        params = load_into_params(flat_dict, sources, instances, params,
                                   check=True)
     # return updated parameters
     return params
@@ -657,6 +656,22 @@ def _get_file_names(params: ParamDict,
         AperoCodedWarning(None,'00-003-00036', targs=wargs)
     # return files
     return config_files
+
+
+def _to_flat_dict(nested_dict, parent_key=''):
+    flat_dict = {}
+    for key, value in nested_dict.items():
+        # get the full key
+        full_key = f"{parent_key}.{key}" if parent_key else key
+        # Check if the value is a dictionary
+        if isinstance(value, dict):
+            # Recurse into sub-dictionary
+            flat_dict.update(_to_flat_dict(value, full_key))
+        else:
+            # Add the key-value pair to the flat dictionary
+            flat_dict[full_key] = value
+    # return the flattened dictionary
+    return flat_dict
 
 
 # =============================================================================
