@@ -584,6 +584,20 @@ def robust_polyfit(xvector: np.ndarray, yvector: np.ndarray, degree: int,
     """
     # Initialize the fit to None
     fit = None
+    # -------------------------------------------------------------------------
+    # remove nans
+    finite_mask = np.isfinite(yvector) & np.isfinite(xvector)
+    xvector = xvector[finite_mask]
+    yvector = yvector[finite_mask]
+
+    # test length of vectors
+    if len(xvector) < degree + 1:
+        emsg = 'Not enough xvector points to fit polynomial in robust_polyfit'
+        raise AperoCodedException(None, None, message=emsg)
+    if len(yvector) < degree + 1:
+        emsg = 'Not enough yvector points to fit polynomial in robust_polyfit'
+        raise AperoCodedException(None, None, message=emsg)
+    # -------------------------------------------------------------------------
     # Create an array of weights, initialized to 1 for all values
     weight = np.ones_like(xvector)
     # Pre-compute the odd_cut value
