@@ -400,16 +400,8 @@ def get_all_params(name: str, description: str, inputargs: List[str],
     params = load_from_cmd_args(params, args, kwargs)
     # get constants from user config files
     if from_file:
-        if param_file_path is None:
-            emsg = 'For {0} from_file is True must provide param_file_path'
-            eargs = [func_name]
-            WLOG(params, 'error', emsg.format(*eargs))
-        # get the parameter file
-        param_file = params[param_file_path]
-        if param_file is None:
-            emsg = '{0} cannot be None.'
-            eargs = [param_file_path]
-            WLOG(params, 'error', emsg.format(*eargs))
+        # get param file path
+        param_file = get_param_file(params, param_file_path, func_name)
         # get instrument user config files
         largs = [[os.path.realpath(param_file)], params]
         # load keys, values, sources and instances from yaml files
@@ -418,6 +410,33 @@ def get_all_params(name: str, description: str, inputargs: List[str],
     params = WLOG.minimal_params(params)
     # return params
     return params
+
+
+def get_param_file(params: ParamDict, param_file_path: str,
+                   func_name: str) -> str:
+    # deal with no param file path
+    if param_file_path is None:
+        emsg = 'For {0} from_file is True must provide param_file_path'
+        eargs = [func_name]
+        WLOG(params, 'error', emsg.format(*eargs))
+    # get the parameter file
+    param_file = params[param_file_path]
+    # deal with no param file
+    if param_file is None:
+        # ask user for yaml file name
+        question = '\nPlease enter param file (.yaml) to load'
+        # loop and ask
+        param_file = drs_text.user_input(question, dtype='path',
+                                         required=True)
+    # check that param file exists
+    if not os.path.exists(param_file):
+        emsg = 'File "{0}" does not exist'
+        eargs = [param_file]
+        WLOG(params, 'error', emsg.format(*eargs))
+    # update params with this param file
+    params.set(param_file_path, os.path.realpath(param_file), source=func_name)
+    # return path to file
+    return params[param_file_path]
 
 
 def cmd_args_from_clist(description: str = None,

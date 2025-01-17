@@ -50,6 +50,13 @@ CDict.add('YAML_FILE', value=None, dtype=str, source=__NAME__,
                                  action='store'),
                  description='Yaml file used')
 
+# Define the yaml name (for creating new param files only)
+CDict.add('YAML_NAME', value=None, dtype=str,
+          source=__NAME__, user=False, active=False,
+          cmd_arg='yaml_name', group=cgroup,
+          description='The name of the yaml file to create '
+                      '(if not using a previous yaml file)')
+
 # Plotting mode (0-3)
 CDict.add('PLOTTING', value=0, dtype=int,
           source=__NAME__, user=True,
