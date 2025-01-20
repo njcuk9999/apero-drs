@@ -73,7 +73,7 @@ def load_linelist(params: ParamDict,
 
     :param params: ParamDict, parameter dictionary of constants
     :param assetsdir: str, Define the assets directory -- overrides
-                      params['DRS_DATA_ASSETS']
+                      params['PATH.ASSETS']
     :param wave_dir: str, where the wave data are stored (within assets
                       directory) -- overrides params['DRS_WAVE_DATA']
     :param filename: str, Define the line list file (located in the
@@ -101,7 +101,7 @@ def load_linelist(params: ParamDict,
     else:
         func_name = func
     # get parameters from params (or override)
-    assetdir = pcheck(params, 'DRS_DATA_ASSETS', func=func_name,
+    assetdir = pcheck(params, 'PATH.ASSETS', func=func_name,
                       override=assetsdir)
     relfolder = pcheck(params, 'DRS_WAVE_DATA', func=func_name,
                        override=wave_dir)
@@ -150,7 +150,7 @@ def load_cavity_files(params: ParamDict,
     :param params: ParamDict, parameter dictionary of constants
     :param required: bool, if True raises an exception when files don't exist
     :param assetsdir: str, Define the assets directory -- overrides
-                      params['DRS_DATA_ASSETS']
+                      params['PATH.ASSETS']
     :param cavity_dir: str, where the wave data are stored (within assets
                       directory) -- overrides params['DRS_WAVE_DATA']
     :param file1m: str, Define the coefficients of the fit of 1/m vs d
@@ -162,7 +162,7 @@ def load_cavity_files(params: ParamDict,
     # set function name
     func_name = display_func('load_cavity_files', __NAME__)
     # get parameters from params/kwargs
-    assetdir = pcheck(params, 'DRS_DATA_ASSETS', func=func_name,
+    assetdir = pcheck(params, 'PATH.ASSETS', func=func_name,
                       override=assetsdir)
     relfolder = pcheck(params, 'DRS_CALIB_DATA', func=func_name,
                        override=cavity_dir)
@@ -200,7 +200,7 @@ def save_cavity_files(params: ParamDict, fit_1m_d: np.ndarray,
     :param fit_1m_d: numpy array - the 1/m cavity array
     :param fit_ll_d: numpy array - the ll cavity array
     :param assetsdir: str, Define the assets directory -- overrides
-                      params['DRS_DATA_ASSETS']
+                      params['PATH.ASSETS']
     :param cavity_dir: str, where the wave data are stored (within assets
                        directory) -- overrides params['DRS_WAVE_DATA']
     :param file1m: str, Define the coefficients of the fit of 1/m vs d
@@ -212,7 +212,7 @@ def save_cavity_files(params: ParamDict, fit_1m_d: np.ndarray,
     # set function name
     func_name = display_func('save_cavity_files', __NAME__)
     # get parameters from params/kwargs
-    assetdir = pcheck(params, 'DRS_DATA_ASSETS', func=func_name,
+    assetdir = pcheck(params, 'PATH.ASSETS', func=func_name,
                       override=assetsdir)
     relfolder = pcheck(params, 'DRS_CALIB_DATA', func=func_name,
                        override=cavity_dir)
@@ -240,7 +240,7 @@ def load_full_flat_badpix(params: ParamDict,
 
     :param params: ParamDict, the parameter dictionary of constants
     :param assetsdir: str, Define the assets directory -- overrides
-                      params['DRS_DATA_ASSETS']
+                      params['PATH.ASSETS']
     :param badpix_dir: str, where the badpix file is stored (within assets
                       directory) -- overrides params['DRS_BADPIX_DATA']
     :param filename: str, the badpix file name
@@ -299,7 +299,7 @@ def load_excess_emissivity(params: ParamDict,
     else:
         func_name = func
     # set parameters from params (or override)
-    assetdir = pcheck(params, 'DRS_DATA_ASSETS', func=func_name,
+    assetdir = pcheck(params, 'PATH.ASSETS', func=func_name,
                       override=assetsdir)
     relfolder = pcheck(params, 'DRS_CALIB_DATA', func=func_name,
                        override=calib_dir)
@@ -328,9 +328,9 @@ def load_hotpix(params: ParamDict,
 
     :param params: ParamDict, the parameter dictionary of constants
     :param assetsdir: str, Define the assets directory -- overrides
-                      params['DRS_DATA_ASSETS']
+                      params['PATH.ASSETS']
     :param eng_dir: str, where the hotpix file is stored (within assets
-                      directory) -- overrides params['DATA_ENGINEERING']
+                      directory) -- overrides params['DATA.DATA_ENGINEERING']
     :param filename: str, the hotpix file name
                      -- overrides params['PP_HOTPIX_FILE']
     :param func: str, the function name calling this function
@@ -347,9 +347,9 @@ def load_hotpix(params: ParamDict,
     else:
         func_name = func
     # set parameters from params (or override)
-    assetdir = pcheck(params, 'DRS_DATA_ASSETS', func=func_name,
+    assetdir = pcheck(params, 'PATH.ASSETS', func=func_name,
                       override=assetsdir)
-    relfolder = pcheck(params, 'DATA_ENGINEERING', func=func_name,
+    relfolder = pcheck(params, 'DATA.DATA_ENGINEERING', func=func_name,
                        override=eng_dir)
     filename = pcheck(params, 'PP_HOTPIX_FILE', func=func_name,
                       override=filename)
@@ -377,9 +377,9 @@ def load_amp_bias_model(params: ParamDict,
 
     :param params: ParamDict, the parameter dictionary of constants
     :param assetsdir: str, Define the assets directory -- overrides
-                      params['DRS_DATA_ASSETS']
+                      params['PATH.ASSETS']
     :param eng_dir: str, where the hotpix file is stored (within assets
-                      directory) -- overrides params['DATA_ENGINEERING']
+                      directory) -- overrides params['DRS.DATA.DATA_ENGINEERING']
     :param filename: str, the amp bias model file name
                      -- overrides params['PP_AMP_ERROR_MODEL']
     :param func: str, the function name calling this function
@@ -396,9 +396,9 @@ def load_amp_bias_model(params: ParamDict,
     else:
         func_name = func
     # set parameters from params (or override)
-    assetdir = pcheck(params, 'DRS_DATA_ASSETS', func=func_name,
+    assetdir = pcheck(params, 'PATH.ASSETS', func=func_name,
                       override=assetsdir)
-    relfolder = pcheck(params, 'DATA_ENGINEERING', func=func_name,
+    relfolder = pcheck(params, 'DATA.DATA_ENGINEERING', func=func_name,
                        override=eng_dir)
     filename = pcheck(params, 'PP_AMP_ERROR_MODEL', func=func_name,
                       override=filename)
@@ -428,7 +428,7 @@ def load_tapas(params: ParamDict,
 
     :param params: ParamDict, the parameter dictionary of constants
     :param assetsdir: str, Define the assets directory -- overrides
-                      params['DRS_DATA_ASSETS']
+                      params['PATH.ASSETS']
     :param tellu_dir: str, where the tapas file is stored (within assets
                       directory) -- overrides params['TELLU_LIST_DIRECTORY']
     :param filename: str, the tapas file name
@@ -446,7 +446,7 @@ def load_tapas(params: ParamDict,
     else:
         func_name = func
     # get parameters from params/kwargs
-    assetdir = pcheck(params, 'DRS_DATA_ASSETS', func=func_name,
+    assetdir = pcheck(params, 'PATH.ASSETS', func=func_name,
                       override=assetsdir)
     relfolder = pcheck(params, 'TELLU_LIST_DIRECTORY', func=func_name,
                        override=tellu_dir)
@@ -476,7 +476,7 @@ def load_object_list(params: ParamDict,
 
     :param params: ParamDict, the parameter dictionary of constants
     :param assetsdir: str, Define the assets directory -- overrides
-                      params['DRS_DATA_ASSETS']
+                      params['PATH.ASSETS']
     :param db_dir: str, where the object list file is stored (within assets
                       directory) -- overrides params['DATABASE_DIR']
     :param filename: str, the object list file name
@@ -494,7 +494,7 @@ def load_object_list(params: ParamDict,
     else:
         func_name = func
     # get parameters from params/kwargs
-    assetdir = pcheck(params, 'DRS_DATA_ASSETS', func=func_name,
+    assetdir = pcheck(params, 'PATH.ASSETS', func=func_name,
                       override=assetsdir)
     relfolder = pcheck(params, 'DATABASE_DIR', func=func_name,
                        override=db_dir)
@@ -525,7 +525,7 @@ def load_ccf_mask(params: ParamDict,
 
     :param params: ParamDict, the parameter dictionary of constants
     :param assetsdir: str, Define the assets directory -- overrides
-                      params['DRS_DATA_ASSETS']
+                      params['PATH.ASSETS']
     :param mask_dir: str, where the ccf mask file is stored (within assets
                       directory) -- overrides params['CCF_MASK_PATH']
     :param filename: str, the ccf mask  file name
@@ -543,7 +543,7 @@ def load_ccf_mask(params: ParamDict,
     else:
         func_name = func
     # get parameters from params/kwargs
-    assetdir = pcheck(params, 'DRS_DATA_ASSETS', func=func_name,
+    assetdir = pcheck(params, 'PATH.ASSETS', func=func_name,
                       override=assetsdir)
     relfolder = pcheck(params, 'CCF_MASK_PATH', func=func_name,
                        override=mask_dir)
@@ -578,7 +578,7 @@ def load_sp_mask_lsd(params: ParamDict, temperature: float,
                         mask - the mask with the closest temperature to this
                         will be used
     :param assetsdir: str, Define the assets directory -- overrides
-                      params['DRS_DATA_ASSETS']
+                      params['PATH.ASSETS']
     :param lsd_dir: str, where the sp mask lsd file is stored (within assets
                       directory) -- overrides params['POLAR_LSD_PATH']
     :param filename: str, the sp mask lsd mask  file name
@@ -609,7 +609,7 @@ def load_sp_mask_lsd(params: ParamDict, temperature: float,
     else:
         func_name = func
     # get parameters from params/kwargs
-    assetdir = pcheck(params, 'DRS_DATA_ASSETS', func=func_name,
+    assetdir = pcheck(params, 'PATH.ASSETS', func=func_name,
                       override=assetsdir)
     relfolder = pcheck(params, 'POLAR_LSD_DIR', func=func_name,
                        override=lsd_dir)
@@ -686,7 +686,7 @@ def load_order_mask(params: ParamDict,
 
     :param params: ParamDict, the parameter dictionary of constants
     :param assetsdir: str, Define the assets directory -- overrides
-                      params['DRS_DATA_ASSETS']
+                      params['PATH.ASSETS']
     :param lsd_dir: str, where the ccf mask file is stored (within assets
                       directory) -- overrides params['POLAR_LSD_PATH']
     :param filename: str, the ccf mask  file name
@@ -703,7 +703,7 @@ def load_order_mask(params: ParamDict,
     else:
         func_name = func
     # get parameters from params/kwargs
-    assetdir = pcheck(params, 'DRS_DATA_ASSETS', func=func_name,
+    assetdir = pcheck(params, 'PATH.ASSETS', func=func_name,
                       override=assetsdir)
     relfolder = pcheck(params, 'POLAR_LSD_PATH', func=func_name,
                        override=lsd_dir)

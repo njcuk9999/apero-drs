@@ -243,8 +243,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         newparams.history('CONST1')
         # which is very useful in params where we read constants from multiple
         #   different places
-        WLOG(params, '', 'params DRS_DATA_RAW history:')
-        params.history('DRS_DATA_RAW')
+        WLOG(params, '', 'params PATH.RAW history:')
+        params.history('PATH.RAW')
 
         # the contains function
         WLOG(params, '', 'ParamDict: newparams contains "VAR"')

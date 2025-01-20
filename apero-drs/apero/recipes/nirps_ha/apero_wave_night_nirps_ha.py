@@ -143,7 +143,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         rawfpfiles = params['DATA_DICT']['rawfpfiles']
         combine = params['DATA_DICT']['combine']
     # combine input images if required
-    elif params['INPUT_COMBINE_IMAGES']:
+    elif params['IMAGE.COMBINE_INPUT']:
         # get combined file
         cond1 = drs_file.combine(params, recipe, hcfiles, math='mean')
         hcfiles = [cond1[0]]

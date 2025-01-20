@@ -419,7 +419,7 @@ class _CheckObsDir(DrsAction):
             return obs_dir
         # ---------------------------------------------------------------------
         # debug checking output (with new line)
-        if params['DRS_DEBUG'] > 0:
+        if params['GLOBAL.DEBUG'] > 0:
             print('')
         WLOG(params, 'debug', textentry('90-001-00018', args=[argname]))
         # check whether we have a valid directory
@@ -1858,7 +1858,7 @@ class _ActivateDebug(DrsAction):
             # try to make an integer
             value = int(values)
             # set DRS_DEBUG (must use the self version)
-            self.recipe.params.set('DRS_DEBUG', value)
+            self.recipe.params.set('GLOBAL.DEBUG', value)
             # return value
             return value
         except AperoCodedException as e:

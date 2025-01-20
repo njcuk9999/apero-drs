@@ -491,7 +491,7 @@ def flat_blaze_write(params: ParamDict, recipe: DrsRecipe, infile: DrsFitsFile,
     # define multi lists
     data_list, name_list = [], []
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=blazefile)]
         name_list += ['PARAM_TABLE']
     # write image to file
@@ -522,7 +522,7 @@ def flat_blaze_write(params: ParamDict, recipe: DrsRecipe, infile: DrsFitsFile,
     # define multi lists
     data_list, name_list = [], []
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=blazefile)]
         name_list += ['PARAM_TABLE']
     # write image to file
@@ -556,7 +556,7 @@ def flat_blaze_write(params: ParamDict, recipe: DrsRecipe, infile: DrsFitsFile,
         data_list, name_list = [eprops['E2DSCC']], ['E2DSLL', 'E2DSCC']
         datatype_list = ['image']
         # snapshot of parameters
-        if params['PARAMETER_SNAPSHOT']:
+        if params['GLOBAL.PSNAPSHOT']:
             data_list += [params.snapshot_table(recipe, drsfitsfile=e2dsllfile)]
             name_list += ['PARAM_TABLE']
             datatype_list += ['table']

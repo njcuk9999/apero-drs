@@ -661,7 +661,7 @@ def create_yamls(params: Any):
     install_dict = dict()
     install_dict['DRS_UCONFIG'] = str(userconfig)
     install_dict['INSTRUMENT'] = params['INSTRUMENT']
-    install_dict['LANGUAGE'] = params['LANGUAGE']
+    install_dict['GLOBAL.LANGUAGE'] = params['GLOBAL.LANGUAGE']
     install_dict['USE_TQDM'] = True
     # print writing
     msg = '\tWriting install.yaml: {0}'.format(install_path)

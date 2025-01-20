@@ -381,7 +381,7 @@ def construct_ref_dark(params: ParamDict, dark_table: Table,
     # get temporary output dir
     outdir = str(os.path.dirname(filenames[lastpos]))
     # cannot and should not use the raw directory
-    outdir = outdir.replace(params['DRS_DATA_RAW'], params['DRS_DATA_WORKING'])
+    outdir = outdir.replace(params['PATH.RAW'], params['PATH.PP'])
     # -------------------------------------------------------------------------
     # Read individual files and sum groups
     # -------------------------------------------------------------------------
@@ -512,7 +512,7 @@ def write_reference_files(params: ParamDict, recipe: DrsRecipe,
     # define multi lists
     data_list, name_list = [dark_table], ['DARK_TABLE']
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=outfile)]
         name_list += ['PARAM_TABLE']
     else:

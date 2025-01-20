@@ -316,7 +316,7 @@ def __setup__(name: str = 'None', instrument: str = 'None',
     # display
     if not quiet:
         # display initial parameterisation
-        if recipe.params['DRS_DEBUG'] == 42:
+        if recipe.params['GLOBAL.DEBUG'] == 42:
             _display_ee(recipe.params)
         # display initial parameterisation
         _display_initial_parameterisation(recipe.params, printonly=True)
@@ -326,8 +326,8 @@ def __setup__(name: str = 'None', instrument: str = 'None',
     # We must have DRS_DATA_MSG_FULL (the full path for this recipe)
     drs_data_msg_full = drs_log.get_drs_data_msg(recipe.params, reset=True,
                                                  group=drsgrouppath)
-    recipe.params['DRS_DATA_MSG_FULL'] = drs_data_msg_full
-    recipe.params.set_source('DRS_DATA_MSG_FULL', func_name)
+    recipe.params['PATH.LOG_FULL'] = drs_data_msg_full
+    recipe.params.set_source('PATH.LOG_FULL', func_name)
     # -------------------------------------------------------------------------
     # update params in log
     WLOG.pin = recipe.params.copy()
@@ -404,7 +404,7 @@ def __setup__(name: str = 'None', instrument: str = 'None',
     # -------------------------------------------------------------------------
     # deal with plot mode = 4 (special mode that prompts user to select
     #    which plots to plot)
-    if params['DRS_PLOT'] == 4:
+    if params['GLOBAL.PLOT_MODE'] == 4:
         params, recipe = plotting.plot_selection(params, recipe)
     # add in the plotter
     if enable_plotter:
@@ -458,7 +458,7 @@ def run(func: Any, recipe: DrsRecipe,
     # set function name
     # _ = display_func('run', __NAME__)
     # run main bulk of code (catching all errors)
-    if params['DRS_DEBUG'] > 0:
+    if params['GLOBAL.DEBUG'] > 0:
         llmain = func(recipe, params)
         llmain['e'], llmain['tb'] = None, None
         success = True
@@ -1042,7 +1042,7 @@ def read_runfile_yaml(params: ParamDict, recipe: Union[DrsRecipe, None],
     func_name = __NAME__ + '.read_runfile_yaml()'
     # ----------------------------------------------------------------------
     # get properties from params
-    run_dir = params['DRS_DATA_RUN']
+    run_dir = params['PATH.RUN']
     # ----------------------------------------------------------------------
     # check if run file exists
     if runfile is not None and not os.path.exists(runfile):
@@ -1164,7 +1164,7 @@ def read_runfile_ini(params: ParamDict, recipe: Union[DrsRecipe, None],
     # ----------------------------------------------------------------------
     # get properties from params
     run_key = params['REPROCESS_RUN_KEY']
-    run_dir = params['DRS_DATA_RUN']
+    run_dir = params['PATH.RUN']
     # ----------------------------------------------------------------------
     # check if run file exists
     if runfile is not None and not os.path.exists(runfile):
@@ -1723,20 +1723,17 @@ def _display_initial_parameterisation(params: ParamDict,
     # set function name
     # _ = display_func('_display_initial_parameterisation', __NAME__)
     # Add initial parameterisation
-    wmsgs = textentry('\n\tDRS_ROOT: {}'.format(params['DRS_ROOT']))
-    wmsgs += textentry('\n\tDRS_DATA_RAW: {}'.format(params['DRS_DATA_RAW']))
-    wmsgs += textentry('\n\tDRS_DATA_REDUC: {}'
-                       ''.format(params['DRS_DATA_REDUC']))
-    wmsgs += textentry('\n\tDRS_DATA_WORKING: {}'
-                       ''.format(params['DRS_DATA_WORKING']))
-    wmsgs += textentry('\n\tDRS_CALIB_DB: {}'.format(params['DRS_CALIB_DB']))
-    wmsgs += textentry('\n\tDRS_TELLU_DB: {}'.format(params['DRS_TELLU_DB']))
-    wmsgs += textentry('\n\tDRS_DATA_ASSETS: {}'
-                       ''.format(params['DRS_DATA_ASSETS']))
-    wmsgs += textentry('\n\tDRS_DATA_OUT: {}'.format(params['DRS_DATA_OUT']))
-    wmsgs += textentry('\n\tDRS_DATA_MSG: {}'.format(params['DRS_DATA_MSG']))
-    wmsgs += textentry('\n\tDRS_DATA_RUN: {}'.format(params['DRS_DATA_RUN']))
-    wmsgs += textentry('\n\tDRS_DATA_PLOT: {}'.format(params['DRS_DATA_PLOT']))
+    wmsgs = textentry('\n\tPATH.ROOT: {}'.format(params['PATH.ROOT']))
+    wmsgs += textentry('\n\tPATH.RAW: {}'.format(params['PATH.RAW']))
+    wmsgs += textentry('\n\tPATH.RED: {}'.format(params['PATH.RED']))
+    wmsgs += textentry('\n\tPATH.PP: {}'.format(params['PATH.PP']))
+    wmsgs += textentry('\n\tPATH.CALIB: {}'.format(params['PATH.CALIB']))
+    wmsgs += textentry('\n\tPATH.TELLU: {}'.format(params['PATH.TELLU']))
+    wmsgs += textentry('\n\tPATH.ASSETS: {}'.format(params['PATH.ASSETS']))
+    wmsgs += textentry('\n\tPATH.OUT: {}'.format(params['PATH.OUT']))
+    wmsgs += textentry('\n\tPATH.LOG: {}'.format(params['PATH.LOG']))
+    wmsgs += textentry('\n\tPATH.RUN: {}'.format(params['PATH.RUN']))
+    wmsgs += textentry('\n\tPATH.PLOT: {}'.format(params['PATH.PLOT']))
     wmsgs += textentry('\n\tDRS_DATA_OTHER: {}'.format(params['DRS_DATA_OTHER']))
     wmsgs += textentry('\n\tLBL_PATH: {}'.format(params['LBL_PATH']))
     # add config sources
@@ -1747,9 +1744,9 @@ def _display_initial_parameterisation(params: ParamDict,
     # add others
     wmsgs += textentry('\n\tPRINT_LEVEL: {}'.format(params['DRS_PRINT_LEVEL']))
     wmsgs += textentry('\n\tLOG_LEVEL: {}'.format(params['DRS_LOG_LEVEL']))
-    wmsgs += textentry('\n\tDRS_PLOT: {}'.format(params['DRS_PLOT']))
-    if params['DRS_DEBUG'] > 0:
-        wargs = ['DRS_DEBUG', params['DRS_DEBUG']]
+    wmsgs += textentry('\n\tPLOT_MODE: {}'.format(params['GLOBAL.PLOT_MODE']))
+    if params['GLOBAL.DEBUG'] > 0:
+        wargs = ['GLOBAL.DEBUG', params['GLOBAL.DEBUG']]
         wmsgs += '\n' + textentry('40-001-00009', args=wargs)
     # log to screen and file
     WLOG(params, 'info', textentry('40-001-00006') + wmsgs,
@@ -2318,7 +2315,7 @@ def _set_debug_from_input(recipe: DrsRecipe,
     """
     Set the debug parameter by searching fkwargs (from function call) and/or
     sys.argv (user input) looking for --debug.
-    Updates recipe.params['DRS_DEBUG']
+    Updates recipe.params['GLOBAL.DEBUG']
 
     :param recipe: DrsRecipe instance
     :param fkwargs: dictionary: keys to check from function call
@@ -2367,8 +2364,8 @@ def _set_debug_from_input(recipe: DrsRecipe,
     # set DRS_DEBUG
     if debug_mode is not None:
         # set the drs debug level to 1
-        recipe.params['DRS_DEBUG'] = debug_mode
-        recipe.params.set_source('DRS_DEBUG', func_name)
+        recipe.params['GLOBAL.DEBUG'] = debug_mode
+        recipe.params.set_source('GLOBAL.DEBUG', func_name)
     # return recipe
     return recipe
 

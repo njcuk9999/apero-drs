@@ -25,19 +25,15 @@ CDict = constants.CDict.copy(source=__NAME__)
 # =============================================================================
 # DRS DATA SETTINGS
 # =============================================================================
+cgroup = 'DATA'
 # Define the data engineering path
-CDict.set('DATA_ENGINEERING', value='engineering/', source=__NAME__)
-
-# Define core data path
-CDict.set('DATA_CORE', value='./data/core/', source=__NAME__)
-
-# Define whether to force wave solution from calibration database (instead of
-# using header wave solution if available)
-CDict.set('CALIB_DB_FORCE_WAVESOL', value=False, source=__NAME__)
+CDict.set('DATA_ENGINEERING', value='engineering/', source=__NAME__,
+          group=cgroup)
 
 # =============================================================================
 # COMMON IMAGE SETTINGS
 # =============================================================================
+cgroup = 'IMAGE'
 # Define the rotation of the pp files in relation to the raw files
 # nrot = 0 -> same as input
 # nrot = 1 -> 90deg counter-clock-wise
@@ -48,45 +44,46 @@ CDict.set('CALIB_DB_FORCE_WAVESOL', value=False, source=__NAME__)
 # nrot = 6 -> flip top-bottom and rotate 180 deg
 # nrot = 7 -> flip top-bottom and rotate 90 deg clock-wise
 # nrot >=8 -> performs a modulo 8 anyway
-CDict.set('RAW_TO_PP_ROTATION', value=3, source=__NAME__)
+CDict.set('RAW_PP_ROT', value=3, source=__NAME__, group=cgroup)
 
 # Measured detector gain in all places that use gain
-CDict.set('EFFGAIN', value=0.999, source=__NAME__)
+CDict.set('EFFGAIN', value=0.999, source=__NAME__, group=cgroup)
 
 # Define raw image size (mostly just used as a check and in places where we
 # don't have access to this information)
-CDict.set('IMAGE_X_FULL', value=4096, source=__NAME__)
-CDict.set('IMAGE_Y_FULL', value=4096, source=__NAME__)
+CDict.set('X_FULL', value=4096, source=__NAME__, group=cgroup)
+CDict.set('Y_FULL', value=4096, source=__NAME__, group=cgroup)
 
 # Define the fibers
-CDict.set('FIBER_TYPES', value=['AB', 'A', 'B', 'C'], source=__NAME__)
+CDict.set('FIBER_TYPES', value=['AB', 'A', 'B', 'C'], source=__NAME__,
+          group=cgroup)
 
 # Defines whether to by default combine images that are inputted at the same
 # time
-CDict.set('INPUT_COMBINE_IMAGES', value=True, source=__NAME__)
+CDict.set('COMBINE_INPUT', value=True, source=__NAME__, group=cgroup)
 
 # Defines whether to, by default, flip images that are inputted
-CDict.set('INPUT_FLIP_IMAGE', value=True, source=__NAME__)
+CDict.set('FLIP_INPUT', value=True, source=__NAME__, group=cgroup)
 
 # Defines whether to, by default, resize images that are inputted
-CDict.set('INPUT_RESIZE_IMAGE', value=True, source=__NAME__)
+CDict.set('RESIZE_IMAGE', value=True, source=__NAME__, group=cgroup)
 
 # Defines the resized image
-CDict.set('IMAGE_X_LOW', value=4, source=__NAME__)
-CDict.set('IMAGE_X_HIGH', value=4092, source=__NAME__)
-CDict.set('IMAGE_Y_LOW', value=250, source=__NAME__)
-CDict.set('IMAGE_Y_HIGH', value=3350, source=__NAME__)
+CDict.set('X_LOW', value=4, source=__NAME__, group=cgroup)
+CDict.set('X_HIGH', value=4092, source=__NAME__, group=cgroup)
+CDict.set('Y_LOW', value=250, source=__NAME__, group=cgroup)
+CDict.set('Y_HIGH', value=3350, source=__NAME__, group=cgroup)
 
 # Define the pixel size in km/s / pix
 # also used for the median sampling size in tellu correction
-CDict.set('IMAGE_PIXEL_SIZE', value=2.28, source=__NAME__)
+CDict.set('PIXEL_SIZE', value=2.28, source=__NAME__, group=cgroup)
 
 # Define mean line width expressed in pix
-CDict.set('FWHM_PIXEL_LSF', value=2.1, source=__NAME__)
+CDict.set('FWHM_PIXEL_LSF', value=2.1, source=__NAME__, group=cgroup)
 
 # Define all polar rhomb positions
-CDict.set('ALL_POLAR_RHOMB_POS', value=['P2', 'P4', 'P14', 'P16'],
-          source=__NAME__)
+CDict.set('POLAR_RHOMB_POS', value=['P2', 'P4', 'P14', 'P16'],
+          source=__NAME__, group=cgroup)
 
 # =========================================================================
 # HEADER SETTINGS
@@ -101,6 +98,10 @@ CDict.set('VALID_RAW_FILES',
 # =============================================================================
 # CALIBRATION: GENERAL SETTINGS
 # =============================================================================
+# Define whether to force wave solution from calibration database (instead of
+# using header wave solution if available)
+CDict.set('CALIB_DB_FORCE_WAVESOL', value=False, source=__NAME__)
+
 # Define the maximum number of files that can be used in a group
 CDict.set('GROUP_FILE_LIMIT', value=20, source=__NAME__)
 

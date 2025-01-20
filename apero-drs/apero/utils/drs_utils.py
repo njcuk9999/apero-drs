@@ -94,7 +94,7 @@ class RecipeLog:
         # the block kind (raw/tmp/red etc)
         self.block_kind = 'None'
         # the default logging absolute path
-        self.defaultpath = str(params['DRS_DATA_MSG_FULL'])
+        self.defaultpath = str(params['PATH.LOG_FULL'])
         # the log fits file name (log.fits)
         self.logfitsfile = str(params['DRS_LOG_FITS_NAME'])
         # the recipe input directory from recipe.inputdir

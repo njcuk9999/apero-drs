@@ -356,7 +356,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # rotate image
         # ------------------------------------------------------------------
         # rotation to match HARPS orientation (expected by DRS)
-        image = drs_image.rotate_image(image, params['RAW_TO_PP_ROTATION'])
+        image = drs_image.rotate_image(image, params['IMAGE.RAW_PP_ROT'])
 
         # ------------------------------------------------------------------
         # Quality control
@@ -409,7 +409,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # define multi lists
         data_list, name_list = [], []
         # snapshot of parameters
-        if params['PARAMETER_SNAPSHOT']:
+        if params['GLOBAL.PSNAPSHOT']:
             data_list += [params.snapshot_table(recipe, drsfitsfile=outfile)]
             name_list += ['PARAM_TABLE']
         # ------------------------------------------------------------------

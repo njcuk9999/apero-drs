@@ -34,11 +34,11 @@ CDict.title = CDict.yaml_title('APERO[{INSTRUMENT}] config file',
 # =============================================================================
 # global settings
 # =============================================================================
-cgroup = 'DRS.GLOBAL'
-CDict.add_group(cgroup, description='DRS.GLOBAL: global settings')
+cgroup = 'GLOBAL'
+CDict.add_group(cgroup, description='GLOBAL: global settings')
 
 # PLotting mode (0-3)
-CDict.add('DRS_PLOT', value=0, dtype=int,
+CDict.add('PLOT_MODE', value=0, dtype=int,
           source=__NAME__, user=True,
           active=True, group=cgroup, options=[0, 1, 2, 3, 4],
           description='Plotting mode: '
@@ -49,7 +49,7 @@ CDict.add('DRS_PLOT', value=0, dtype=int,
                       '\n\t4: prompts to select plots at start of code')
 
 # Whether to run in debug mode
-CDict.add('DRS_DEBUG', value=0, dtype=int, source=__NAME__, user=True,
+CDict.add('DEBUG', value=0, dtype=int, source=__NAME__, user=True,
           active=True, group=cgroup, options=[0, 1, 100, 200],
           description='Debug mode: '
                       '\n\t0: no debug '
@@ -66,7 +66,7 @@ CDict.add('LANGUAGE', value=base.DEFAULT_LANG, dtype=str,
           description='Language for DRS messages (if translated)')
 
 # Add snapshot parameter table to reduced outputs
-CDict.add('PARAMETER_SNAPSHOT', value=True, dtype=bool,
+CDict.add('PSNAPSHOT', value=True, dtype=bool,
           source=__NAME__, user=True, active=True,
           group=cgroup,
           description='Add snapshot parameter table to '
@@ -76,76 +76,76 @@ CDict.add('PARAMETER_SNAPSHOT', value=True, dtype=bool,
 # =============================================================================
 # path settings
 # =============================================================================
-cgroup = 'DRS.PATH'
-CDict.add_group(cgroup, description='DRS.PATH: path settings')
+cgroup = 'PATH'
+CDict.add_group(cgroup, description='PATH: path settings')
 
 #   Define the root installation directory
-CDict.add('DRS_ROOT', dtype='path', source=__NAME__, user=True,
+CDict.add('ROOT', dtype='path', source=__NAME__, user=True,
           active=True, group=cgroup, value='./',
           description='Define the root installation directory')
 
 #   Define the directory with the raw data files in  (block directory)
-CDict.add('DRS_DATA_RAW', dtype='path', source=__NAME__, user=True,
+CDict.add('RAW', dtype='path', source=__NAME__, user=True,
           active=True, group=cgroup, value='./apero-data/raw',
           description='Define the directory with the raw data '
                       'files in  (block directory)')
 
 #   Define the directory that the reduced data should be saved to/read from
-CDict.add('DRS_DATA_REDUC', dtype='path', source=__NAME__,
+CDict.add('RED', dtype='path', source=__NAME__,
           user=True,
           active=True, group=cgroup, value='./apero-data/reduced',
           description='Define the directory that the reduced data '
                       'should be saved to/read from')
 
 #   Define the directory that the post processed data should be saved to
-CDict.add('DRS_DATA_OUT', dtype='path', source=__NAME__,
+CDict.add('OUT', dtype='path', source=__NAME__,
           user=True, active=True, group=cgroup,
           value='./apero-data/out',
           description='Define the directory that the post processed'
                       ' data should be saved to')
 
 #   Define the directory that the calibration files should be saved to/read from
-CDict.add('DRS_CALIB_DB', dtype='path', source=__NAME__, user=True,
+CDict.add('CALIB', dtype='path', source=__NAME__, user=True,
           active=True, group=cgroup, value='./apero-data/calibDB',
           description='Define the directory that the calibration '
                       'files should be saved to/read from')
 
 #   Define the directory that the calibration files should be saved to/read from
-CDict.add('DRS_TELLU_DB', dtype='path', source=__NAME__, user=True,
+CDict.add('TELLU', dtype='path', source=__NAME__, user=True,
           active=True, group=cgroup, value='./apero-data/telluDB',
           description='Define the directory that the calibration '
                       'files should be saved to/read from')
 
 #   Define the directory that the log messages are stored in
-CDict.add('DRS_DATA_MSG', dtype='path', source=__NAME__, user=True,
+CDict.add('LOG', dtype='path', source=__NAME__, user=True,
           active=True, group=cgroup, value='./apero-data/msg',
           description='Define the directory that the log messages '
                       'are stored in')
 
 #   Define the full data message path (set after group name known)
-CDict.add('DRS_DATA_MSG_FULL', dtype='path', source=__NAME__,
+CDict.add('LOG_FULL', dtype='path', source=__NAME__,
           user=False, group=cgroup, value=None,
           description=('Define the full data message path '
                        '(set after group name known)'))
 
 #   Define the working directory
-CDict.add('DRS_DATA_WORKING', dtype='path', source=__NAME__,
+CDict.add('PP', dtype='path', source=__NAME__,
           user=True, active=True, group=cgroup,
           value='./apero-data/working',
           description='Define the working directory')
 
 #   Define the plotting directory
-CDict.add('DRS_DATA_PLOT', dtype='path', source=__NAME__, user=True,
+CDict.add('PLOT', dtype='path', source=__NAME__, user=True,
           active=True, group=cgroup, value='./apero-data/plot',
           description='Define the plotting directory')
 
 #   Define the run directory
-CDict.add('DRS_DATA_RUN', dtype='path', source=__NAME__, user=True,
+CDict.add('RUN', dtype='path', source=__NAME__, user=True,
           active=True, group=cgroup, value='./apero-data/runs',
           description='Define the run directory')
 
 #   Define the assets directory
-CDict.add('DRS_DATA_ASSETS', dtype='path', source=__NAME__,
+CDict.add('ASSETS', dtype='path', source=__NAME__,
           user=True, active=True, group=cgroup,
           value='./apero-data/assets',
           description='Define the assets directory')

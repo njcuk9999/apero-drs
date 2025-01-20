@@ -457,7 +457,7 @@ class Instrument:
 
         The filename is defined as:
             DRS-YYYY-MM-DD  (GMT date)
-        The directory is defined as dir_data_msg (or params['DRS_DATA_MSG']
+        The directory is defined as dir_data_msg (or params['PATH.LOG']
             if not defined)
 
         if params['DRS_USED_DATE'] is set this date is used instead
@@ -479,7 +479,7 @@ class Instrument:
         # _ = display_func('LOG_FILE_NAME', __NAME__, self.class_name)
         # deal with no dir_data_msg
         if dir_data_msg is None:
-            dir_data_msg = str(params['DRS_DATA_MSG'])
+            dir_data_msg = str(params['PATH.LOG'])
         # deal with no PID
         if 'PID' not in params:
             pid = 'UNKNOWN-PID'

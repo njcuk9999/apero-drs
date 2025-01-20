@@ -41,7 +41,7 @@ ParamDict = param_functions.ParamDict
 # define the program name
 PROGRAM_NAME = 'APERO File Explorer'
 # define the default path
-ALLOWED_PATHS = ['DRS_DATA_WORKING', 'DRS_DATA_REDUC']
+ALLOWED_PATHS = ['PATH.PP', 'PATH.RED']
 # define database names
 NAMES = dict(zip(apero_base.DATABASE_NAMES, apero_base.DATABASE_FULLNAMES))
 

@@ -468,7 +468,7 @@ def get_ccf_teff_mask(params: ParamDict,
     # set function name
     func_name = display_func('get_ccf_teff_mask', __NAME__)
     # get parameters from params/kwargs
-    assetdir = pcheck(params, 'DRS_DATA_ASSETS', func=func_name,
+    assetdir = pcheck(params, 'PATH.ASSETS', func=func_name,
                       override=assetsdir)
     relfolder = pcheck(params, 'CCF_MASK_PATH', func=func_name,
                        override=mask_dir)
@@ -1373,7 +1373,7 @@ def fit_ccf_ea(params, order_num, rv, ccf, sig, fit_type, fit_params,
     """
     func_name = __NAME__ + '.fit_ccf()'
     # resolution element in m/s
-    image_pixel_size = params['IMAGE_PIXEL_SIZE']
+    image_pixel_size = params['IMAGE.PIXEL_SIZE']
 
     # if there is no guess dictionary set it to an empty dictionary
     if guess_dict is None:
@@ -1784,7 +1784,7 @@ def write_ccf(params: ParamDict, recipe, infile: DrsFitsFile,
     datatype_list = ['table']
     name_list = ['RV_TABLE', 'ORDER_TABLE']
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=ccf_file)]
         name_list += ['PARAM_TABLE']
         datatype_list += ['table']

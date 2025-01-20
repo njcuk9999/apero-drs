@@ -282,7 +282,7 @@ def get_wave_solution_from_inheader(params: ParamDict, recipe: DrsRecipe,
             wavetime = header[params['KW_MID_OBS_TIME'][0]]
         # set the wave file data
         nbo = header[params['KW_WAVE_NBO'][0]]
-        nbpix = params['IMAGE_X_HIGH'] - params['IMAGE_X_LOW']
+        nbpix = params['IMAGE.X_HIGH'] - params['IMAGE.X_LOW']
         wavefile.data = np.zeros((nbo, nbpix))
         # set the source as header
         wavesource = 'header'
@@ -364,8 +364,8 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
     if not drs_text.null_text(inwavefile, ['Null', 'None', '']):
         force = True
     else:
-        force = pcheck(params, 'CALIB_DB_FORCE_WAVESOL', 'force', kwargs,
-                       func_name)
+        force = pcheck(params, 'CAL.GEN.FORCE_WAVESOL', 'force',
+                       kwargs, func_name)
     # ------------------------------------------------------------------------
     # get pseudo constants
     pconst = load_functions.load_pconfig(select.INSTRUMENTS)
@@ -544,7 +544,7 @@ def get_waveheader(params: ParamDict, wprops: ParamDict
     :return:
     """
     # construct the absolute path (assuming file is in calibration database)
-    wavefile = str(os.path.join(params['DRS_CALIB_DB'], wprops['WAVEFILE']))
+    wavefile = str(os.path.join(params['PATH.CALIB'], wprops['WAVEFILE']))
     # if we have this file in the calibration database get the header
     if os.path.exists(wavefile):
         # get the wave header
@@ -2156,7 +2156,7 @@ def update_smart_fp_mask(params: ParamDict, cavity: np.ndarray, **kwargs):
     # get constants from params
     update_mask = pcheck(params, 'WAVE_CCF_UPDATE_MASK', 'update_mask', kwargs,
                          func_name)
-    assetdir = pcheck(params, 'DRS_DATA_ASSETS', 'assetsdir', kwargs, func_name)
+    assetdir = pcheck(params, 'PATH.ASSETS', 'assetsdir', kwargs, func_name)
     ccfpath = pcheck(params, 'WAVE_CCF_MASK_PATH', 'ccfpath', kwargs, func_name)
     ccfmask = pcheck(params, 'WAVE_CCF_MASK', 'ccfmask', kwargs, func_name)
     dvwidth = pcheck(params, 'WAVE_CCF_SMART_MASK_WIDTH', 'dvwidth',
@@ -2349,7 +2349,7 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     # define multi lists
     data_list, name_list = [], []
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=e2ds_file)]
         name_list += ['PARAM_TABLE']
     # write file
@@ -2369,7 +2369,7 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     # define multi lists
     data_list, name_list = [], []
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=e2dsff_file)]
         name_list += ['PARAM_TABLE']
     # write file
@@ -2393,7 +2393,7 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
         if data_list is None:
             data_list, name_list = [], []
         # snapshot of parameters
-        if params['PARAMETER_SNAPSHOT']:
+        if params['GLOBAL.PSNAPSHOT']:
             data_list += [params.snapshot_table(recipe, drsfitsfile=e2dsll_file)]
             # there should be a param_table from extraction
             if 'PARAM_TABLE' in name_list:
@@ -2446,7 +2446,7 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     # define multi lists
     data_list, name_list = [], []
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=s1dw_file)]
         name_list += ['PARAM_TABLE']
     # write image to file
@@ -2477,7 +2477,7 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     # define multi lists
     data_list, name_list = [], []
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=s1dv_file)]
         name_list += ['PARAM_TABLE']
     # write image to file
@@ -3319,7 +3319,7 @@ def write_wavesol(params: ParamDict, recipe: DrsRecipe, fiber: str,
     datatype_list = ['table']
     name_list = ['COEFF_TABLE']
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=wavefile)]
         name_list += ['PARAM_TABLE']
         datatype_list += ['table']
@@ -3477,7 +3477,7 @@ def write_wave_lines(params: ParamDict, recipe: DrsRecipe,
     # define multi lists
     data_list, name_list = [], []
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=hcfile)]
         name_list += ['PARAM_TABLE']
     # write image to file
@@ -3521,7 +3521,7 @@ def write_wave_lines(params: ParamDict, recipe: DrsRecipe,
     # define multi lists
     data_list, name_list = [], []
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=fpfile)]
         name_list += ['PARAM_TABLE']
     # write image to file
@@ -3578,7 +3578,7 @@ def write_fplines(params: ParamDict, recipe: DrsRecipe, rfpl: Table,
     # define multi lists
     data_list, name_list = [], []
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=fplfile)]
         name_list += ['PARAM_TABLE']
     # write image to file
@@ -3636,7 +3636,7 @@ def write_cavity_file(params: ParamDict, recipe: DrsRecipe,
     # define multi lists
     data_list, name_list = [], []
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=cavfile)]
         name_list += ['PARAM_TABLE']
     # write image to file
@@ -3776,7 +3776,7 @@ def write_resolution_map(params: ParamDict, recipe: DrsRecipe,
     data_list, name_list = tables, table_names
     header_list = table_headers
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=resfile)]
         name_list += ['PARAM_TABLE']
         header_list += [None]
@@ -3812,7 +3812,7 @@ def write_resolution_map(params: ParamDict, recipe: DrsRecipe,
     datatype_list = ['image', 'image', 'table', 'table']
     # ------------------------------------------------------------------
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=resfile)]
         name_list += ['PARAM_TABLE']
         datatype_list += ['table']

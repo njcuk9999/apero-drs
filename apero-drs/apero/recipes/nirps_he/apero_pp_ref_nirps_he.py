@@ -206,7 +206,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # define multi lists
         data_list, name_list = [], []
         # snapshot of parameters
-        if params['PARAMETER_SNAPSHOT']:
+        if params['GLOBAL.PSNAPSHOT']:
             data_list += [params.snapshot_table(recipe, drsfitsfile=outfile)]
             name_list += ['PARAM_TABLE']
         # write image to file

@@ -692,7 +692,7 @@ def write_skymodel(recipe: DrsRecipe, params: ParamDict,
                  'GRADIENT', 'SKYTAB_SCI', 'SKYTAB_CAL']
     # ------------------------------------------------------------------
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=skymodel_file)]
         name_list += ['PARAM_TABLE']
         datatype_list += ['table']
@@ -1148,7 +1148,7 @@ def skyclean_write(params: ParamDict, recipe: DrsRecipe, infile: DrsFitsFile,
                  f'UNCORR_EXT_{sci_fiber}', f'UNCORR_EXT_{calib_fiber}',
                  f'SKY_{sci_fiber}', f'SKY_{calib_fiber}']
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=skyfile)]
         name_list += ['PARAM_TABLE']
     # write to file

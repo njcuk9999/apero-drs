@@ -113,7 +113,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         rawfiles = params['DATA_DICT']['rawfiles']
         combine = params['DATA_DICT']['combine']
     # combine input images if required
-    elif params['INPUT_COMBINE_IMAGES']:
+    elif params['IMAGE.COMBINE_INPUT']:
         # get combined file
         cond = drs_file.combine(params, recipe, infiles, math='median')
         infiles = [cond[0]]
@@ -149,7 +149,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # get expsoure time
         exptime = infile.get_hkey('KW_EXPTIME')
         # get gain
-        gain = params['EFFGAIN']
+        gain = params['IMAGE.EFFGAIN']
         # get data type
         dprtype = infile.get_hkey('KW_DPRTYPE', dtype=str)
         # ------------------------------------------------------------------

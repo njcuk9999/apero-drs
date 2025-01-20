@@ -260,7 +260,7 @@ def __main__(recipe, params):
             # define multi lists
             data_list, name_list = [], []
             # snapshot of parameters
-            if params['PARAMETER_SNAPSHOT']:
+            if params['GLOBAL.PSNAPSHOT']:
                 data_list += [params.snapshot_table(recipe,
                                                     drsfitsfile=infile1)]
                 name_list += ['PARAM_TABLE']

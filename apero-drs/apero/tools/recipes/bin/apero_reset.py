@@ -118,7 +118,7 @@ def __main__(recipe, params):
     # assets folder
     if 'assets' in warns:
         reset = drs_reset.reset_confirmation(params, 'Assets',
-                                             params['DRS_DATA_ASSETS'])
+                                             params['PATH.ASSETS'])
     # all databases (can be within assets dir this is why we ask here)
     if 'assets' in warns and 'assets' in resets and reset:
         reset_dbs = drs_reset.reset_confirmation(params, 'All databases')
@@ -134,7 +134,7 @@ def __main__(recipe, params):
     # tmp folder
     if 'tmp' in warns:
         reset = drs_reset.reset_confirmation(params, 'Working',
-                                             params['DRS_DATA_WORKING'])
+                                             params['PATH.PP'])
     if 'tmp' in resets and reset:
         drs_reset.reset_tmp_folders(params, log)
     else:
@@ -146,7 +146,7 @@ def __main__(recipe, params):
     # reduced folder
     if 'red' in warns:
         reset = drs_reset.reset_confirmation(params, 'Reduced',
-                                             params['DRS_DATA_REDUC'])
+                                             params['PATH.RED'])
     if 'red' in resets and reset:
         drs_reset.reset_reduced_folders(params, log)
     else:
@@ -158,7 +158,7 @@ def __main__(recipe, params):
     # calibration folder
     if 'calib' in warns:
         reset = drs_reset.reset_confirmation(params, 'Calibration',
-                                             params['DRS_CALIB_DB'])
+                                             params['PATH.CALIB'])
     if 'calib' in resets and reset:
         drs_reset.reset_calibdb(params, log)
     else:
@@ -170,7 +170,7 @@ def __main__(recipe, params):
     # telluric folder
     if 'tellu' in warns:
         reset = drs_reset.reset_confirmation(params, 'Telluric',
-                                             params['DRS_TELLU_DB'])
+                                             params['PATH.TELLU'])
     if 'tellu' in resets and reset:
         drs_reset.reset_telludb(params, log)
     else:
@@ -184,7 +184,7 @@ def __main__(recipe, params):
     # log folder
     if 'log' in warns:
         reset = drs_reset.reset_confirmation(params, 'Log',
-                                             params['DRS_DATA_MSG'],
+                                             params['PATH.LOG'],
                                              exclude_files=exclude_files)
     if 'log' in resets and reset:
         drs_reset.reset_log(params, exclude_files)
@@ -197,7 +197,7 @@ def __main__(recipe, params):
     # plot folder
     if 'plot' in warns:
         reset = drs_reset.reset_confirmation(params, 'Plotting',
-                                             params['DRS_DATA_PLOT'])
+                                             params['PATH.PLOT'])
     if 'plot' in resets and reset:
         drs_reset.reset_plot(params)
     else:
@@ -208,8 +208,7 @@ def __main__(recipe, params):
     reset = True
     # plot folder
     if 'run' in warns:
-        reset = drs_reset.reset_confirmation(params, 'Run',
-                                             params['DRS_DATA_RUN'])
+        reset = drs_reset.reset_confirmation(params, 'Run', params['PATH.RUN'])
     if 'run' in resets and reset:
         drs_reset.reset_run(params)
     else:
@@ -233,7 +232,7 @@ def __main__(recipe, params):
     # plot folder
     if 'out' in warns:
         reset = drs_reset.reset_confirmation(params, 'Out',
-                                             params['DRS_DATA_OUT'])
+                                             params['PATH.OUT'])
     if 'out' in resets and reset:
         drs_reset.reset_out_folders(params, log)
     else:

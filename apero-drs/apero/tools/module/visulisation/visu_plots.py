@@ -366,7 +366,7 @@ class SpectrumPlot:
                 new_values.append(value)
         # add filename
         new_keys += ['PATH', 'OBS_DIR', 'ID']
-        new_values += [PARAMS['DRS_DATA_REDUC'], self.obs_dir,
+        new_values += [PARAMS['PATH.RED'], self.obs_dir,
                        self.identifier]
         # update object source
         sdict = dict(keys=new_keys, values=new_values)

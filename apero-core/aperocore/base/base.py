@@ -151,7 +151,7 @@ D_IPARAMS['DRS_LANG_MODULES'] = ['aperocore.drs_lang.tables.default_help',
                                  'aperocore.drs_lang.tables.default_text']
 D_IPARAMS['DRS_UCONFIG'] = None
 D_IPARAMS['INSTRUMENT'] = 'None'
-D_IPARAMS['LANGUAGE'] = 'ENG'
+D_IPARAMS['GLOBAL.LANGUAGE'] = 'ENG'
 D_IPARAMS['USE_TQDM'] = True
 
 

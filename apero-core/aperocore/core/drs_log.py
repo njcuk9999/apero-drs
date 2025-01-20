@@ -57,7 +57,7 @@ MPARAMS['WRITE_LEVELS'] = LOGYAML['WRITE_LEVELS']
 MPARAMS['REPORT_KEYS'] = LOGYAML['REPORT_KEYS']
 MPARAMS['DRS_LOG_SUBLEVEL_DIV'] = LOGYAML['DRS_LOG_SUBLEVEL_DIV']
 MPARAMS['DRS_LOG_SUBLEVEL_DIV_CHAR'] = LOGYAML['DRS_LOG_SUBLEVEL_DIV_CHAR']
-MPARAMS['DRS_DATA_MSG'] = base.get_default_log_dir()
+MPARAMS['LOG.PATH'] = base.get_default_log_dir()
 MPARAMS['DRS_HEADER'] = '*' * 50
 
 
@@ -1121,7 +1121,7 @@ def get_drs_filename(params: Any, dir_data_msg: Union[str, None] = None
     :return: str, the log file path
     """
     if dir_data_msg is None:
-        dir_data_msg = str(params['DRS_DATA_MSG'])
+        dir_data_msg = str(params['PATH.LOG'])
     # deal with no PID
     if 'PID' not in params:
         pid = 'UNKNOWN-PID'
@@ -1152,15 +1152,15 @@ def get_drs_data_msg(params: Any, group: Union[str, None] = None,
     :return: str, the drs message full path
     """
     # if we have a full path in params we use this
-    if 'DRS_DATA_MSG_FULL' in params and not reset:
+    if 'PATH.LOG_FULL' in params and not reset:
         # check that path exists - if it does skip next steps
-        if params['DRS_DATA_MSG_FULL'] is None:
+        if params['PATH.LOG_FULL'] is None:
             pass
-        elif os.path.exists(params['DRS_DATA_MSG_FULL']):
-            return params['DRS_DATA_MSG_FULL']
+        elif os.path.exists(params['PATH.LOG_FULL']):
+            return params['PATH.LOG_FULL']
     # ----------------------------------------------------------------------
     # get from params
-    dir_data_msg = params.get('DRS_DATA_MSG', None)
+    dir_data_msg = params.get('PATH.LOG', None)
     # ----------------------------------------------------------------------
     # only sort by recipe kind if group is None
     if (params['DRS_RECIPE_TYPE'] is not None) and (group is None):

@@ -1990,7 +1990,7 @@ def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
     datatype_list = ['image', 'table']
     name_list = ['POL_ERR', 'POL_TABLE']
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=polfile)]
         name_list += ['PARAM_TABLE']
         datatype_list += ['table']
@@ -2023,7 +2023,7 @@ def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
     datatype_list = ['image', 'table']
     name_list = ['STOKESI_ERR', 'POL_TABLE']
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=stokesfile)]
         name_list += ['PARAM_TABLE']
         datatype_list += ['table']
@@ -2056,7 +2056,7 @@ def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
     datatype_list = ['table']
     name_list = ['POL_TABLE']
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=null1file)]
         name_list += ['PARAM_TABLE']
         datatype_list += ['table']
@@ -2089,7 +2089,7 @@ def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
     datatype_list = ['table']
     name_list = ['POL_TABLE']
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=null2file)]
         name_list += ['PARAM_TABLE']
         datatype_list += ['table']
@@ -2123,7 +2123,7 @@ def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
     name_list = ['POL_TABLE', 'POL_WAVE', 'POL_BLAZE']
     header_list = [wave_hdr, blaze_hdr]
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=calibfile)]
         name_list += ['PARAM_TABLE']
         datatype_list += ['table']
@@ -2162,7 +2162,7 @@ def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
         datatype_list = ['table']
         name_list = ['POL_TABLE']
         # snapshot of parameters
-        if params['PARAMETER_SNAPSHOT']:
+        if params['GLOBAL.PSNAPSHOT']:
             data_list += [params.snapshot_table(recipe, drsfitsfile=null2file)]
             name_list += ['PARAM_TABLE']
             datatype_list += ['table']

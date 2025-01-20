@@ -457,7 +457,7 @@ class CalibrationDatabase(DatabaseManager):
         # set path
         self.database_settings(kind=self.kind)
         # set database directory
-        self.filedir = Path(str(self.params['DRS_CALIB_DB']))
+        self.filedir = Path(str(self.params['PATH.CALIB']))
 
     def add_calib_file(self, drsfile: DrsInputFile, verbose: bool = True,
                        copy_files=True):
@@ -846,7 +846,7 @@ class TelluricDatabase(DatabaseManager):
         # set path
         self.database_settings(kind=self.kind)
         # set database directory
-        self.filedir = Path(str(self.params['DRS_TELLU_DB']))
+        self.filedir = Path(str(self.params['PATH.TELLU']))
 
     def add_tellu_file(self, drsfile: DrsInputFile, verbose: bool = True,
                        copy_files: bool = True,

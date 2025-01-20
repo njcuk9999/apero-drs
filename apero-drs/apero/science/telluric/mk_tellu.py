@@ -738,7 +738,7 @@ def mk_tellu_write_trans_file(params, recipe, infile, rawfiles, fiber, combine,
     # define multi lists
     data_list, name_list = [], []
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=transfile)]
         name_list += ['PARAM_TABLE']
     # write image to file
@@ -785,7 +785,7 @@ def mk_write_model(params: ParamDict, recipe: DrsRecipe, infile: DrsFitsFile,
     datatype_list = ['image', 'image', 'table']
     name_list = ['ZERO_RES', 'H2O_RES', 'DRY_RES', 'TRANS_TABLE']
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=model_file)]
         name_list += ['PARAM_TABLE']
         datatype_list += ['table']

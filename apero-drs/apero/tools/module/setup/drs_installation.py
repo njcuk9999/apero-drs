@@ -86,7 +86,7 @@ for data_class in DATA_CLASSES:
     DATA_ARGS[data_class.key] = data_class.argname
 
 # set the reset paths (must be checked for empty)
-RESET_PATHS = ['DRS_CALIB_DB', 'DRS_TELLU_DB', 'DRS_DATA_RUN']
+RESET_PATHS = ['PATH.CALIB', 'PATH.TELLU', 'PATH.RUN']
 
 prompt1 = r"""
 
@@ -359,7 +359,7 @@ def user_interface(params: ParamDict, args: argparse.Namespace
     package = params['DRS_PACKAGE']
     # get install yaml
     iparams = base.load_install_yaml()
-    user_lang = iparams['LANGUAGE']
+    user_lang = iparams['GLOBAL.LANGUAGE']
     # get available instruments
     drs_instruments = list(np.char.array(params['DRS_INSTRUMENTS']).upper())
     # storage of answers
@@ -448,8 +448,8 @@ def user_interface(params: ParamDict, args: argparse.Namespace
     all_params.set_source('INSTRUMENT', func_name)
     args.instrument = instrument
     # TODO: set language
-    all_params['LANGUAGE'] = user_lang
-    all_params.set_source('LANGUAGE', user_lang)
+    all_params['GLOBAL.LANGUAGE'] = user_lang
+    all_params.set_source('GLOBAL.LANGUAGE', user_lang)
     # ------------------------------------------------------------------
     # add the database settings (and ask user if required
     all_params, args = get_database_settings(all_params, args)
@@ -596,16 +596,16 @@ def user_interface(params: ParamDict, args: argparse.Namespace
                                textentry('40-001-00053'),
                                textentry('40-001-00082')],
                    default=0)
-        all_params['DRS_PLOT'] = plot
-        all_params.set_source('DRS_PLOT', __NAME__)
+        all_params['GLOBAL.PLOT_MODE'] = plot
+        all_params.set_source('GLOBAL.PLOT_MODE', __NAME__)
         # update args
         args.plotmode = plot
         # add header line
         cprint(printheader(), 'g')
     else:
         cprint(textentry('40-001-00054', args=[args.plotmode]))
-        all_params['DRS_PLOT'] = args.plotmode
-        all_params.set_source('DRS_PLOT', 'command line')
+        all_params['GLOBAL.PLOT_MODE'] = args.plotmode
+        all_params.set_source('GLOBAL.PLOT_MODE', 'command line')
 
     # ------------------------------------------------------------------
     # Step 5: Ask whether we want a clean install
@@ -853,7 +853,7 @@ def bin_paths(params: ParamDict, all_params: ParamDict) -> ParamDict:
     # add toool directory to all params
     all_params['DRS_OUT_TOOL_PATH'] = out_tool_path
     # add the drs root directory to all params
-    all_params['DRS_ROOT'] = root
+    all_params['PATH.ROOT'] = root
     # add the individual tool directories to all params
     all_params['DRS_OUT_TOOLS'] = []
     for directory in np.sort(list(in_tool_path.glob('*'))):
@@ -985,7 +985,7 @@ def create_shell_scripts(params: ParamDict, all_params: ParamDict) -> ParamDict:
     in_tool_path = Path(drs_misc.get_relative_folder(package, IN_TOOLPATH))
     # ----------------------------------------------------------------------
     # get paths and add in correct order and add bin directory
-    paths = [str(all_params['DRS_ROOT'].parent),
+    paths = [str(all_params['PATH.ROOT'].parent),
              str(all_params['DRS_OUT_BIN_PATH'])]
     # add all the tool directories
     for directory in all_params['DRS_OUT_TOOLS']:
@@ -1019,7 +1019,7 @@ def create_shell_scripts(params: ParamDict, all_params: ParamDict) -> ParamDict:
     # ----------------------------------------------------------------------
     # setup text dictionary
     text = dict()
-    text['ROOT_PATH'] = all_params['DRS_ROOT'].parent
+    text['ROOT_PATH'] = all_params['PATH.ROOT'].parent
     text['USER_CONFIG'] = all_params['USERCONFIG']
     text['NAME'] = all_params['PROFILENAME']
     text['PATH'] = '"' + sep.join(paths) + '"'
@@ -1239,7 +1239,7 @@ def add_paths(all_params: ParamDict):
     :return: None, just updates PATH and PYTHONPATH environmental variables
     """
     # get paths and add in correct order
-    all_paths = [str(all_params['DRS_ROOT'].parent),
+    all_paths = [str(all_params['PATH.ROOT'].parent),
                  str(all_params['DRS_OUT_BIN_PATH'])]
     # add all the tool directories
     for directory in all_params['DRS_OUT_TOOLS']:
@@ -1826,7 +1826,7 @@ def update(params: ParamDict, args: argparse.Namespace) -> ParamDict:
     # ----------------------------------------------------------------------
     # find all installed instruments
     instrument = base.IPARAMS['INSTRUMENT']
-    language = base.IPARAMS['LANGUAGE']
+    language = base.IPARAMS['GLOBAL.LANGUAGE']
     # ----------------------------------------------------------------------
     # set up dictionary
     all_params = ParamDict()
@@ -1863,8 +1863,8 @@ def update(params: ParamDict, args: argparse.Namespace) -> ParamDict:
     # set instrument in all params
     all_params['INSTRUMENT'] = instrument
     all_params.set_source('INSTRUMENT', func_name)
-    all_params['LANGUAGE'] = language
-    all_params.set_source('LANGUAGE', language)
+    all_params['GLOBAL.LANGUAGE'] = language
+    all_params.set_source('GLOBAL.LANGUAGE', language)
     # load params for instrument
     iparams = load_functions.load_config(select.INSTRUMENTS, cache=False)
     # ------------------------------------------------------------------

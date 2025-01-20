@@ -371,7 +371,7 @@ def timing_stats(params: ParamDict, recipe: DrsRecipe) -> ParamDict:
     # plot dt timing graph
     report_file = 'apero_stats_timing.fits'
     # construct report directory
-    report_dir = os.path.join(params['DRS_DATA_MSG'], 'report')
+    report_dir = os.path.join(params['PATH.LOG'], 'report')
     # deal with report directory not existing
     if not os.path.exists(report_dir):
         os.makedirs(report_dir)
@@ -1126,7 +1126,7 @@ def error_stats(params: ParamDict):
     # -------------------------------------------------------------------------
     if len(plog_files) == 0:
         # get log directory
-        plog_dir = os.path.join(params['DRS_DATA_MSG'], 'tool')
+        plog_dir = os.path.join(params['PATH.LOG'], 'tool')
         # -------------------------------------------------------------------------
         # locate all processing logs
         plog_files = []
@@ -1153,7 +1153,7 @@ def error_stats(params: ParamDict):
         # get the reports in a directory
         report_subdir = os.path.basename(plog_file).replace('.log', '')
         # construct report directory
-        report_dir = os.path.join(params['DRS_DATA_MSG'], 'report',
+        report_dir = os.path.join(params['PATH.LOG'], 'report',
                                   report_subdir)
         # deal with report directory not existing
         if not os.path.exists(report_dir):
@@ -1377,7 +1377,7 @@ def memory_stats(params: ParamDict, recipe: DrsRecipe):
     func_name = __NAME__ + '.memory_stats()'
     # ---------------------------------------------------------------------
     # construct report directory
-    report_dir = os.path.join(params['DRS_DATA_MSG'], 'report')
+    report_dir = os.path.join(params['PATH.LOG'], 'report')
     # deal with report directory not existing
     if not os.path.exists(report_dir):
         os.makedirs(report_dir)
@@ -1687,36 +1687,36 @@ def file_index_stats(params: ParamDict) -> ParamDict:
     # noinspection PyListCreation
     file_stats: list[FileStat] = []
     # raw / tmp / red
-    file_stats.append(FileStat('raw', path=params['DRS_DATA_RAW'],
+    file_stats.append(FileStat('raw', path=params['PATH.RAW'],
                                condition='BLOCK_KIND="raw"'))
-    file_stats.append(FileStat('raw[fits]', path=params['DRS_DATA_RAW'],
+    file_stats.append(FileStat('raw[fits]', path=params['PATH.RAW'],
                                condition='BLOCK_KIND="raw"',
                                suffix='.fits'))
-    file_stats.append(FileStat('tmp', path=params['DRS_DATA_WORKING'],
+    file_stats.append(FileStat('tmp', path=params['PATH.PP'],
                                condition='BLOCK_KIND="tmp"'))
-    file_stats.append(FileStat('tmp[fits]', path=params['DRS_DATA_WORKING'],
+    file_stats.append(FileStat('tmp[fits]', path=params['PATH.PP'],
                                condition='BLOCK_KIND="tmp"',
                                suffix='.fits'))
-    file_stats.append(FileStat('red', path=params['DRS_DATA_REDUC'],
+    file_stats.append(FileStat('red', path=params['PATH.RED'],
                                condition='BLOCK_KIND="red"'))
-    file_stats.append(FileStat('red[fits]', path=params['DRS_DATA_REDUC'],
+    file_stats.append(FileStat('red[fits]', path=params['PATH.RED'],
                                condition='BLOCK_KIND="red"',
                                suffix='.fits'))
     # calib + tellu
-    file_stats.append(FileStat('calib', path=params['DRS_CALIB_DB']))
-    file_stats.append(FileStat('calib[fits]', path=params['DRS_CALIB_DB'],
+    file_stats.append(FileStat('calib', path=params['PATH.CALIB']))
+    file_stats.append(FileStat('calib[fits]', path=params['PATH.CALIB'],
                                suffix='.fits'))
-    file_stats.append(FileStat('tellu', path=params['DRS_TELLU_DB']))
-    file_stats.append(FileStat('tellu[fits]', path=params['DRS_TELLU_DB'],
+    file_stats.append(FileStat('tellu', path=params['PATH.TELLU']))
+    file_stats.append(FileStat('tellu[fits]', path=params['PATH.TELLU'],
                                suffix='.fits'))
     # per night
-    file_stats.append(FileStat('raw[fits]', path=params['DRS_DATA_RAW'],
+    file_stats.append(FileStat('raw[fits]', path=params['PATH.RAW'],
                                condition='BLOCK_KIND="raw"', per_obs_dir=True,
                                suffix='.fits'))
-    file_stats.append(FileStat('tmp[fits]', path=params['DRS_DATA_WORKING'],
+    file_stats.append(FileStat('tmp[fits]', path=params['PATH.PP'],
                                condition='BLOCK_KIND="tmp"', per_obs_dir=True,
                                suffix='.fits'))
-    file_stats.append(FileStat('red[fits]', path=params['DRS_DATA_REDUC'],
+    file_stats.append(FileStat('red[fits]', path=params['PATH.RED'],
                                condition='BLOCK_KIND="red"', per_obs_dir=True,
                                suffix='.fits'))
     # -------------------------------------------------------------------------
@@ -1778,7 +1778,7 @@ def combine_stats(params: ParamDict, outputs: List[Union[ParamDict, None]]):
     """
     # -------------------------------------------------------------------------
     # construct report directory
-    report_dir = os.path.join(params['DRS_DATA_MSG'], 'report')
+    report_dir = os.path.join(params['PATH.LOG'], 'report')
     # deal with report directory not existing
     if not os.path.exists(report_dir):
         os.makedirs(report_dir)

@@ -273,7 +273,7 @@ def locate_bad_pixels_full(params: ParamDict, image: np.ndarray,
     :param threshold:
     :param rotnum:
     :param assetsdir: str, Define the assets directory -- overrides
-                      params['DRS_DATA_ASSETS']
+                      params['PATH.ASSETS']
     :param badpix_dir: str, where the badpix file is stored (within assets
                       directory) -- overrides params['DRS_BADPIX_DATA']
     :param filename: str, the badpix file name
@@ -289,9 +289,9 @@ def locate_bad_pixels_full(params: ParamDict, image: np.ndarray,
     # get parameters from params/kwargs
     threshold = pcheck(params, 'BADPIX_FULL_THRESHOLD', func=func_name,
                        override=threshold)
-    rotnum = pcheck(params, 'RAW_TO_PP_ROTATION', func=func_name,
+    rotnum = pcheck(params, 'IMAGE.RAW_PP_ROT', func=func_name,
                     override=rotnum)
-    assetsdir = pcheck(params, 'DRS_DATA_ASSETS', func=func_name,
+    assetsdir = pcheck(params, 'PATH.ASSETS', func=func_name,
                        override=assetsdir)
     badpix_dir = pcheck(params, 'DRS_BADPIX_DATA', func=func_name,
                         override=badpix_dir)
@@ -456,7 +456,7 @@ def write_files(params: ParamDict, recipe: DrsRecipe, flatfile: DrsFitsFile,
     # log that we are saving rotated image
     WLOG(params, '', textentry('40-012-00013', args=[badpixfile.filename]))
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list = [params.snapshot_table(recipe, drsfitsfile=badpixfile)]
         name_list = ['PARAM_TABLE']
     else:
@@ -489,7 +489,7 @@ def write_files(params: ParamDict, recipe: DrsRecipe, flatfile: DrsFitsFile,
     # log that we are saving rotated image
     WLOG(params, '', textentry('40-012-00014', args=[backmapfile.filename]))
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list = [params.snapshot_table(recipe, drsfitsfile=backmapfile)]
         name_list = ['PARAM_TABLE']
     else:

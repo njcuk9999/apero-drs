@@ -125,7 +125,7 @@ def __main__(recipe: None, params: ParamDict) -> Dict[str, Any]:
     # deal with --data keyword
     if 'data' in params['INPUTS']:
         if params['INPUTS']['data']:
-            value = os.path.dirname(params['DRS_DATA_RAW'])
+            value = os.path.dirname(params['PATH.RAW'])
             # set change dir to True
             if os.path.exists(value):
                 props['chdir'] = True

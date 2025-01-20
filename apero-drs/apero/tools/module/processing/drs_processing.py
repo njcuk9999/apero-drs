@@ -726,7 +726,7 @@ def reset_files(params):
     # check if we need to reset directory
     if params['RESET_TMP']:
         reset = drs_reset.reset_confirmation(params, 'Working',
-                                             params['DRS_DATA_WORKING'])
+                                             params['PATH.PP'])
         # reset directory using reset module
         if reset:
             drs_reset.reset_tmp_folders(params, log=True)
@@ -739,7 +739,7 @@ def reset_files(params):
     # check if we need to reset directory
     if params['RESET_REDUCED']:
         reset = drs_reset.reset_confirmation(params, 'Reduced',
-                                             params['DRS_DATA_REDUC'])
+                                             params['PATH.RED'])
         # reset directory using reset module
         if reset:
             drs_reset.reset_reduced_folders(params, log=True)
@@ -752,7 +752,7 @@ def reset_files(params):
     # check if we need to reset directory
     if params['RESET_CALIB']:
         reset = drs_reset.reset_confirmation(params, 'Calibration',
-                                             params['DRS_CALIB_DB'])
+                                             params['PATH.CALIB'])
         # reset directory using reset module
         if reset:
             drs_reset.reset_calibdb(params, log=True)
@@ -765,7 +765,7 @@ def reset_files(params):
     # check if we need to reset directory
     if params['RESET_TELLU']:
         reset = drs_reset.reset_confirmation(params, 'Telluric',
-                                             params['DRS_TELLU_DB'])
+                                             params['PATH.TELLU'])
         # reset directory using reset module
         if reset:
             drs_reset.reset_telludb(params, log=True)
@@ -780,7 +780,7 @@ def reset_files(params):
         # deal with files to skip
         exclude_files = [drs_log.get_logfilepath(params)]
         reset = drs_reset.reset_confirmation(params, 'Log',
-                                             params['DRS_DATA_MSG'])
+                                             params['PATH.LOG'])
         # reset directory using reset module
         if reset:
             drs_reset.reset_log(params, exclude_files)
@@ -793,7 +793,7 @@ def reset_files(params):
     # check if we need to reset directory
     if params['RESET_PLOT']:
         reset = drs_reset.reset_confirmation(params, 'Plotting',
-                                             params['DRS_DATA_PLOT'])
+                                             params['PATH.PLOT'])
         # reset directory using reset module
         if reset:
             drs_reset.reset_plot(params)
@@ -1102,7 +1102,7 @@ def save_stats(params, outlist):
     # set function name
     func_name = __NAME__ + '.save_stats()'
     # get save directory
-    save_dir = os.path.join(params['DRS_DATA_RUN'], 'stats')
+    save_dir = os.path.join(params['PATH.RUN'], 'stats')
     # deal with stats dir not existing
     if not os.path.exists(save_dir):
         try:
@@ -1282,7 +1282,7 @@ def _linear_generate_id(params: ParamDict, it: int, run_key: str,
                                    skip_storage, input_recipe)
     # ---------------------------------------------------------------------
     # deal with passing debug
-    if params['DRS_DEBUG'] > 0:
+    if params['GLOBAL.DEBUG'] > 0:
         dargs = [run_object.runstring, debug]
         run_object.runstring = '{0} --debug={1}'.format(*dargs)
     # ---------------------------------------------------------------------
@@ -1379,7 +1379,7 @@ def generate_ids(params: ParamDict, indexdb: FileIndexDatabase,
     # deal with a single core (no multiprocessing)
     if cores == 1 or params['REPROCESS_MP_TYPE_VAL'].lower() == 'linear':
         # get debug mode
-        debug = params['DRS_DEBUG']
+        debug = params['GLOBAL.DEBUG']
         # get run file (if its given)
         if 'RUNFILE' in params['INPUTS']:
             runfile = params['INPUTS']['RUNFILE']
@@ -1529,7 +1529,7 @@ def _multi_generate_id(params: ParamDict, subgroup: np.ndarray,
              id and the value is the DrsRecipe
     """
     # get debug mode
-    debug = params['DRS_DEBUG']
+    debug = params['GLOBAL.DEBUG']
     # get run file (if its given)
     if 'RUNFILE' in params['INPUTS']:
         runfile = params['INPUTS']['RUNFILE']

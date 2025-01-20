@@ -1173,7 +1173,7 @@ def write_localisation_files(params: ParamDict, recipe: DrsRecipe,
     # define multi lists
     data_list, name_list = [], []
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=orderpfile)]
         name_list += ['PARAM_TABLE']
     # write image to file
@@ -1234,7 +1234,7 @@ def write_localisation_files(params: ParamDict, recipe: DrsRecipe,
     name_list = ['CENT_TABLE', 'WIDTH_TABLE']
     datatype_list = ['table', 'table']
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=loco1file)]
         name_list += ['PARAM_TABLE']
         datatype_list += ['table']
@@ -1268,7 +1268,7 @@ def write_localisation_files(params: ParamDict, recipe: DrsRecipe,
     # define multi lists
     data_list, name_list = [], []
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=loco2file)]
         name_list += ['PARAM_TABLE']
     # write image to file
@@ -1306,7 +1306,7 @@ def write_localisation_files(params: ParamDict, recipe: DrsRecipe,
         # define multi lists
         data_list, name_list = [], []
         # snapshot of parameters
-        if params['PARAMETER_SNAPSHOT']:
+        if params['GLOBAL.PSNAPSHOT']:
             data_list += [params.snapshot_table(recipe, drsfitsfile=loco3file)]
             name_list += ['PARAM_TABLE']
         # write image to file

@@ -18,8 +18,25 @@ __release__ = apero_base.__release__
 # copy the storage
 CDict = config.CDict.copy(source='config.instruments.default.config.py')
 
+
 # -----------------------------------------------------------------------------
 # global settings
+# -----------------------------------------------------------------------------
+cgroup = 'GLOBAL'
+# PLotting mode (0-3)
+CDict.set('PLOT_MODE', value=0, source=__NAME__, author='NJC', group=cgroup)
+
+# Whether to run in debug mode
+#      0: no debug
+#      1: basic debugging on errors
+#      2: recipes specific (plots and some code runs)
+CDict.set('DEBUG', value=0, source=__NAME__, author='NJC', group=cgroup)
+
+# Add snapshot parameter table to reduced outputs
+CDict.set('PSNAPSHOT', value=True, source=__NAME__, author='NJC', group=cgroup)
+
+# -----------------------------------------------------------------------------
+# Instrument/Observatory Constants
 # -----------------------------------------------------------------------------
 # Instrument Name
 CDict.set('INSTRUMENT', value='SPIROU', source=__NAME__, author='NJC')
@@ -37,66 +54,54 @@ CDict.set('OBS_ALT', value=4204, source=__NAME__, author='EA')
 CDict.set('OBS_TZ', value='US/Hawaii', source=__NAME__,
           author='NJC')
 
-# -----------------------------------------------------------------------------
-# global settings
-# -----------------------------------------------------------------------------
-# PLotting mode (0-3)
-CDict.set('DRS_PLOT', value=0, source=__NAME__, author='NJC')
-
-# Whether to run in debug mode
-#      0: no debug
-#      1: basic debugging on errors
-#      2: recipes specific (plots and some code runs)
-CDict.set('DRS_DEBUG', value=0, source=__NAME__, author='NJC')
-
-# Add snapshot parameter table to reduced outputs
-CDict.set('PARAMETER_SNAPSHOT', value=True, source=__NAME__, author='NJC')
 
 # -----------------------------------------------------------------------------
 # path settings
 # -----------------------------------------------------------------------------
+cgroup = 'PATH'
 #   Define the root installation directory
-CDict.set('DRS_ROOT', value='/drs/spirou/drs/', source=__NAME__, author='NJC')
+CDict.set('ROOT', value='/drs/spirou/drs/', source=__NAME__, author='NJC',
+          group=cgroup)
 
 #   Define the folder with the raw data files in
-CDict.set('DRS_DATA_RAW', value='/drs/spirou/data/raw/', source=__NAME__,
-          author='NJC')
+CDict.set('RAW', value='/drs/spirou/data/raw/', source=__NAME__,
+          author='NJC', group=cgroup)
 
 #   Define the directory that the reduced data should be saved to/read from
-CDict.set('DRS_DATA_REDUC', value='/drs/spirou/data/reduced', source=__NAME__,
-          author='NJC')
+CDict.set('RED', value='/drs/spirou/data/reduced', source=__NAME__,
+          author='NJC', group=cgroup)
 
 #   Define the directory that the post processed data should be saved to
-CDict.set('DRS_DATA_OUT', value='/drs/spirou/data/out', source=__NAME__,
-          author='NJC')
+CDict.set('OUT', value='/drs/spirou/data/out', source=__NAME__,
+          author='NJC', group=cgroup)
 
 #   Define the directory that the calibration files should be saved to/read from
-CDict.set('DRS_CALIB_DB', value='/drs/spirou/data/calibDB', source=__NAME__,
-          author='NJC')
+CDict.set('CALIB', value='/drs/spirou/data/calibDB', source=__NAME__,
+          author='NJC', group=cgroup)
 
 #   Define the directory that the calibration files should be saved to/read from
-CDict.set('DRS_TELLU_DB', value='/drs/spirou/data/telluDB', source=__NAME__,
-          author='NJC')
+CDict.set('TELLU', value='/drs/spirou/data/telluDB', source=__NAME__,
+          author='NJC', group=cgroup)
 
 #   Define the directory that the log messages are stored in
-CDict.set('DRS_DATA_MSG', value='/drs/spirou/data/msg', source=__NAME__,
-          author='NJC')
+CDict.set('LOG', value='/drs/spirou/data/msg', source=__NAME__,
+          author='NJC', group=cgroup)
 
 #   Define the working directory
-CDict.set('DRS_DATA_WORKING', value='/drs/spirou/data/tmp', source=__NAME__,
-          author='NJC')
+CDict.set('PP', value='/drs/spirou/data/tmp', source=__NAME__,
+          author='NJC', group=cgroup)
 
 #   Define the plotting directory
-CDict.set('DRS_DATA_PLOT', value='/drs/spirou/data/plot', source=__NAME__,
-          author='NJC')
+CDict.set('PLOT', value='/drs/spirou/data/plot', source=__NAME__,
+          author='NJC', group=cgroup)
 
 #   Define the run directory
-CDict.set('DRS_DATA_RUN', value='/drs/spirou/data/run', source=__NAME__,
-          author='NJC')
+CDict.set('RUN', value='/drs/spirou/data/run', source=__NAME__,
+          author='NJC', group=cgroup)
 
 #   Define the assets directory
-CDict.set('DRS_DATA_ASSETS', value='/drs/spirou/data/assets', source=__NAME__,
-          author='NJC')
+CDict.set('ASSETS', value='/drs/spirou/data/assets', source=__NAME__,
+          author='NJC', group=cgroup)
 
 #   Define the other directory
 CDict.set('DRS_DATA_OTHER', value='/drs/spirou/data/other', source=__NAME__,

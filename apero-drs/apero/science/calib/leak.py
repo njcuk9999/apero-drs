@@ -750,7 +750,7 @@ def save_uncorrected_ext_fp(params: ParamDict, recipe: DrsRecipe,
     # define multi lists
     data_list, name_list = [], []
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=e2dsfile)]
         name_list += ['PARAM_TABLE']
     # write image to file
@@ -976,7 +976,7 @@ def write_leak_ref(params: ParamDict, recipe: DrsRecipe, rawfiles: List[str],
         datatype_list = ['table']
         name_list = ['COMBINE_TABLE']
         # snapshot of parameters
-        if params['PARAMETER_SNAPSHOT']:
+        if params['GLOBAL.PSNAPSHOT']:
             data_list += [params.snapshot_table(recipe, drsfitsfile=outfile)]
             datatype_list += ['table']
             name_list += ['PARAM_TABLE']
@@ -1049,7 +1049,7 @@ def write_leak(params: ParamDict, recipe: DrsRecipe,
             # define multi lists
             data_list, name_list = [], []
             # snapshot of parameters
-            if params['PARAMETER_SNAPSHOT']:
+            if params['GLOBAL.PSNAPSHOT']:
                 data_list += [params.snapshot_table(recipe,
                                                     drsfitsfile=extfile)]
                 name_list += ['PARAM_TABLE']
@@ -1100,7 +1100,7 @@ def write_leak(params: ParamDict, recipe: DrsRecipe,
         # define multi lists
         data_list, name_list = [], []
         # snapshot of parameters
-        if params['PARAMETER_SNAPSHOT']:
+        if params['GLOBAL.PSNAPSHOT']:
             data_list += [params.snapshot_table(recipe, drsfitsfile=s1dwfile)]
             name_list += ['PARAM_TABLE']
         # write image to file
@@ -1131,7 +1131,7 @@ def write_leak(params: ParamDict, recipe: DrsRecipe,
         # define multi lists
         data_list, name_list = [], []
         # snapshot of parameters
-        if params['PARAMETER_SNAPSHOT']:
+        if params['GLOBAL.PSNAPSHOT']:
             data_list += [params.snapshot_table(recipe, drsfitsfile=s1dvfile)]
             name_list += ['PARAM_TABLE']
         # write image to file

@@ -214,7 +214,7 @@ def get_calib(header: drs_fits.Header, key: str) -> Tuple[np.ndarray, str]:
     # get calib file
     cout = calibdbm.get_calib_file(key=key, header=header, nentries=1)
     # extract absolute filename from calibration database
-    cfilename = os.path.join(PARAMS['DRS_CALIB_DB'], cout[0])
+    cfilename = os.path.join(PARAMS['PATH.CALIB'], cout[0])
     # get data
     cdata = drs_fits.readfits(PARAMS, cfilename, ext=1)
     # return the data and the filename
@@ -257,7 +257,7 @@ def get_identifers(block_kind='red', obs_dir=None) -> List[str]:
 
 def get_bokeh_plot_dir(params, pyfile):
     # set path to bokeh subdir
-    path = os.path.join(params['DRS_DATA_PLOT'], 'bokeh')
+    path = os.path.join(params['PATH.PLOT'], 'bokeh')
     # create path if it doesn't exist
     if not os.path.exists(path):
         os.mkdir(path)
@@ -274,7 +274,7 @@ if __name__ == "__main__":
     # _bplt.create(kwargs=dict(power=3, xlabel='x', ylabel='x^3'))
     # _bplt.run()
 
-    _path = os.path.join(PARAMS['DRS_DATA_PLOT'], 'e2ds_plot.py')
+    _path = os.path.join(PARAMS['PATH.PLOT'], 'e2ds_plot.py')
     _bplt = BokehPlot(PARAMS, 'e2ds_plot', _path, 'E2DS plot')
     _bplt.create()
     _bplt.run()

@@ -208,7 +208,7 @@ def reset_tmp_folders(params: ParamDict, log: bool = True):
     # log progress
     WLOG(params, '', textentry('40-502-00003', args=['tmp']))
     # remove files from reduced folder
-    tmp_dir = params['DRS_DATA_WORKING']
+    tmp_dir = params['PATH.PP']
     # loop around files and folders in calib_dir
     remove_all(params, tmp_dir, log)
     # remake path
@@ -274,7 +274,7 @@ def reset_reduced_folders(params: ParamDict, log: bool = True):
     # log progress
     WLOG(params, '', textentry('40-502-00003', args=['reduced']))
     # remove files from reduced folder
-    red_dir = params['DRS_DATA_REDUC']
+    red_dir = params['PATH.RED']
     # loop around files and folders in calib_dir
     remove_all(params, red_dir, log)
     # remake path
@@ -344,7 +344,7 @@ def reset_calibdb(params: ParamDict, log: bool = True):
     # name the database
     name = 'calibration database'
     # get the calibration database file directory
-    calib_dir = params['DRS_CALIB_DB']
+    calib_dir = params['PATH.CALIB']
     # get the reset path
     reset_path = params['DRS_RESET_CALIBDB_PATH']
     # reset files
@@ -379,7 +379,7 @@ def reset_telludb(params: ParamDict, log: bool = True):
     # name the database
     name = 'tellruic database'
     # get the telluric database file directory
-    tellu_dir = params['DRS_TELLU_DB']
+    tellu_dir = params['PATH.TELLU']
     # get the reset path
     reset_path = params['DRS_RESET_TELLUDB_PATH']
     # reset files
@@ -424,7 +424,7 @@ def reset_dbdir(params: ParamDict, name: str, db_dir: str,
     WLOG(params, '', textentry('40-502-00003', args=[name]))
     # construct relative path if None given
     if relative_path is None:
-        reset_path = os.path.join(params['DRS_DATA_ASSETS'], reset_path)
+        reset_path = os.path.join(params['PATH.ASSETS'], reset_path)
     else:
         reset_path = os.path.abspath(reset_path)
     # loop around files and folders in calib_dir
@@ -481,7 +481,7 @@ def reset_log(params: ParamDict, exclude_files: Union[List[str], None] = None,
     # log progress
     WLOG(params, '', textentry('40-502-00003', args=['log']))
     # remove files from reduced folder
-    log_dir = params['DRS_DATA_MSG']
+    log_dir = params['PATH.LOG']
     # get current log file (must be skipped)
     current_logfile = drs_log.get_logfilepath(params)
     # deal with no exclude files
@@ -509,7 +509,7 @@ def reset_plot(params: ParamDict, log: bool = True):
     # log progress
     WLOG(params, '', textentry('40-502-00003', args=['plot']))
     # remove files from reduced folder
-    plot_dir = params['DRS_DATA_PLOT']
+    plot_dir = params['PATH.PLOT']
     # loop around files and folders in reduced dir
     remove_all(params, plot_dir, log=log)
     # remake path
@@ -527,7 +527,7 @@ def reset_run(params: ParamDict, log: bool = True):
     :return: None, resets run directory
     """
     name = 'run files'
-    run_dir = params['DRS_DATA_RUN']
+    run_dir = params['PATH.RUN']
     reset_path = params['DRS_RESET_RUN_PATH']
     # loop around files and folders in reduced dir
     reset_dbdir(params, name, run_dir, reset_path, log=log, empty_first=False)
@@ -603,7 +603,7 @@ def reset_out_folders(params: ParamDict, log: bool = True):
     # log progress
     WLOG(params, '', textentry('40-502-00003', args=['out']))
     # remove files from reduced folder
-    red_dir = params['DRS_DATA_OUT']
+    red_dir = params['PATH.OUT']
     # loop around files and folders in calib_dir
     remove_all(params, red_dir, log)
     # remake path
@@ -679,10 +679,10 @@ def reset_assets(params: ParamDict, log: bool = True, reset_dbs: bool = True):
     # load pseudo constants
     pconst = load_functions.load_pconfig(select.INSTRUMENTS)
     # TODO: deal with getting online
-    asset_path1 = params['DRS_DATA_ASSETS']
+    asset_path1 = params['PATH.ASSETS']
     reset_path1 = os.path.join(params['DRS_RESET_ASSETS_PATH'],
                                params['INSTRUMENT'].lower())
-    asset_path2 = os.path.join(params['DRS_DATA_ASSETS'], 'core')
+    asset_path2 = os.path.join(params['PATH.ASSETS'], 'core')
     reset_path2 = os.path.join(params['DRS_RESET_ASSETS_PATH'], 'core')
     # get reset_path from apero module dir
     abs_reset_path1 = drs_data.construct_path(params, '', str(reset_path1))

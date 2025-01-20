@@ -573,12 +573,18 @@ class ConstantsDict:
         :param cmd_kwargs: dict, the command line argument kwargs passed to
                             argparse
         """
+        # deal with not having group on name
+        if group is not None:
+            if not name.startswith(group + '.'):
+                name = f'{group}.{name}'
+        # ---------------------------------------------------------------------
         if name not in self.storage:
             emsg = ('Constant "{0}" not found in storage. '
                     'Please add Cdict.add("{0}") to defaults.').format(name)
             eargs = [name]
             raise AperoCodedException(None, targs=eargs,
                                       message=emsg.format(*eargs))
+        # ---------------------------------------------------------------------
         # update value
         if value is not None:
             self.storage[name].value = value

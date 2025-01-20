@@ -482,7 +482,7 @@ def debug_file(recipe: DrsRecipe, params: ParamDict, infile: DrsFitsFile,
                  'LC_NAN_FILLED', 'LC_BKGRD', 'GLOB_BKGRD',
                  'GLOB_BINNED']
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         dlist += [params.snapshot_table(recipe, drsfitsfile=debug_back)]
         name_list += ['PARAM_TABLE']
     # write multiple to file

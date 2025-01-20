@@ -124,7 +124,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         rawdarkfiles = params['DATA_DICT']['rawdarkfiles']
         combine = params['DATA_DICT']['combine']
     # combine input images if required
-    elif params['INPUT_COMBINE_IMAGES']:
+    elif params['IMAGE.COMBINE_INPUT']:
         # get combined FLAT_FLAT file
         cout1 = drs_file.combine(params, recipe, flatfiles, math='median')
         flatfiles = [cout1[0]]
@@ -192,7 +192,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         # Flip images
         # ------------------------------------------------------------------
-        if params['INPUT_FLIP_IMAGE']:
+        if params['IMAGE.FLIP_INPUT']:
             # flip flat
             flat_image1 = drs_image.flip_image(flat_image)
             # flip bad pixel map
@@ -203,12 +203,12 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         # Resize image
         # ------------------------------------------------------------------
-        if params['INPUT_RESIZE_IMAGE']:
+        if params['IMAGE.RESIZE_IMAGE']:
             # get resize size
-            sargs = dict(xlow=params['IMAGE_X_LOW'],
-                         xhigh=params['IMAGE_X_HIGH'],
-                         ylow=params['IMAGE_Y_LOW'],
-                         yhigh=params['IMAGE_Y_HIGH'])
+            sargs = dict(xlow=params['IMAGE.X_LOW'],
+                         xhigh=params['IMAGE.X_HIGH'],
+                         ylow=params['IMAGE.Y_LOW'],
+                         yhigh=params['IMAGE.Y_HIGH'])
             # resize flat
             flat_image1 = drs_image.resize(flat_image1, **sargs)
             # resize bad pixel map

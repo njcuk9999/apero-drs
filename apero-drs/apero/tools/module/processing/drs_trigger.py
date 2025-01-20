@@ -148,13 +148,13 @@ class Trigger:
         # define the time to wait to check again
         self.sleep_time = 60
         # define the path to the trigger table
-        trigger_dir = str(os.path.join(params['DRS_DATA_ASSETS'],
+        trigger_dir = str(os.path.join(params['PATH.ASSETS'],
                                        params['DATABASE_DIR']))
         self.triggr_table = os.path.join(trigger_dir, TRIGGER_TABLE)
         # set the input directory (to scan)
         self.indir = params['INPUTS']['INDIR']
         # set the output path
-        self.outdir = params['DRS_DATA_RAW']
+        self.outdir = params['PATH.RAW']
         # deal with no input directory to scan
         if drs_text.null_text(self.indir, ['None', '', 'Null']):
             # TODO: Add to language database

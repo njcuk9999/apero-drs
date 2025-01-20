@@ -42,8 +42,8 @@ WLOG = drs_log.wlog
 # =============================================================================
 def drs_image_shape(params):
     # get image shape from params
-    ylow, yhigh = params['IMAGE_Y_LOW'], params['IMAGE_Y_HIGH']
-    xlow, xhigh = params['IMAGE_X_LOW'], params['IMAGE_X_HIGH']
+    ylow, yhigh = params['IMAGE.Y_LOW'], params['IMAGE.Y_HIGH']
+    xlow, xhigh = params['IMAGE.X_LOW'], params['IMAGE.X_HIGH']
     # return the y and x size --> shape
     return yhigh - ylow, xhigh - xlow
 
@@ -53,7 +53,7 @@ def calc_central_localisation(params, fiber, header=None, filename=None):
     lprops = localisation.get_coefficients(params, header, filename=filename,
                                            fiber=fiber, merge=True)
     # get the cut down image size
-    xlow, xhigh = params['IMAGE_X_LOW'], params['IMAGE_X_HIGH']
+    xlow, xhigh = params['IMAGE.X_LOW'], params['IMAGE.X_HIGH']
     nbxpix = xhigh - xlow
     # store centers and widths
     centers, widths = [], []
@@ -103,10 +103,10 @@ def simage_to_drs(params, simage, shapex2, shapey):
 
 def drs_to_pp(params, image, fill=0.0):
     # get full image dimensions (from constants)
-    full_y, full_x = params['IMAGE_Y_FULL'], params['IMAGE_X_FULL']
+    full_y, full_x = params['IMAGE.Y_FULL'], params['IMAGE.X_FULL']
     # get the cut down image size
-    ylow, yhigh = params['IMAGE_Y_LOW'], params['IMAGE_Y_HIGH']
-    xlow, xhigh = params['IMAGE_X_LOW'], params['IMAGE_X_HIGH']
+    ylow, yhigh = params['IMAGE.Y_LOW'], params['IMAGE.Y_HIGH']
+    xlow, xhigh = params['IMAGE.X_LOW'], params['IMAGE.X_HIGH']
     # construct shape of output image
     oshape = (full_y, full_x)
     # make zero filled map

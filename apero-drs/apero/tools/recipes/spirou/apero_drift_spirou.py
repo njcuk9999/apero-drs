@@ -163,7 +163,7 @@ def __main__(recipe, params):
     # deal with other user inputs
     # -------------------------------------------------------------------------
     # get all nights
-    all_obs_dirs = drs_path.get_all_non_empty_subdirs(params['DRS_DATA_REDUC'])
+    all_obs_dirs = drs_path.get_all_non_empty_subdirs(params['PATH.RED'])
     # get nights from user (or set to None)
     obs_dirs = [None]
     if 'obs_dirs' in params['INPUTS']:
@@ -304,7 +304,7 @@ def __main__(recipe, params):
         table = drs_table.make_table(columnnames, columnvalues)
         # ---------------------------------------------------------------------
         # construct filename
-        cargs = [params['DRS_DATA_REDUC'], params['OBS_DIR'],
+        cargs = [params['PATH.RED'], params['OBS_DIR'],
                  OUTPUT_FILENAME.format(dprtype, fiber)]
         out_filename = str(os.path.join(*cargs))
         # log that we are saving file

@@ -1179,7 +1179,7 @@ def get_drs_mode(params: ParamDict, header: Any, hdict: Any) -> Tuple[Any, Any]:
     kw_polar_key_1 = params['KW_POLAR_KEY_1'][0]
     kw_polar_key_2 = params['KW_POLAR_KEY_2'][0]
     kw_obstype = params['KW_OBSTYPE'][0]
-    all_polar_rhomb_pos = params['ALL_POLAR_RHOMB_POS']
+    all_polar_rhomb_pos = params['IMAGE.POLAR_RHOMB_POS']
     # -------------------------------------------------------------------------
     # deal with no hdict
     if hdict is None:

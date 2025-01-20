@@ -80,7 +80,7 @@ class Plotter:
         :param params: ParamDict, parameter dictionary of constants
         :param recipe: DrsRecipe or None, the recipe that called this plotter
         :param mode: int or None, this is the plot mode, if None uses
-                     'DRS_PLOT' from params
+                     'GLOBAL.PLOT_MODE' from params
         """
         # set params and recipe
         self.params = params
@@ -95,7 +95,7 @@ class Plotter:
             self.used_command = self.recipe.used_command
         # deal with plot mode
         if mode is None:
-            self.plotoption = params['DRS_PLOT']
+            self.plotoption = params['GLOBAL.PLOT_MODE']
         else:
             self.plotoption = mode
         # set up names of the plots that have been used
@@ -161,7 +161,7 @@ class Plotter:
         pid = self.params['PID'].lower()
         self.pid_dir = '{0}_{1}_{2}'.format(pid, rname, iteration + 1)
         # get root plot path
-        plot_path = self.params['DRS_DATA_PLOT']
+        plot_path = self.params['PATH.PLOT']
         # get night name (and deal with unset/other)
         obs_dir = self.params.get('OBS_DIR', None)
         if obs_dir is None or obs_dir == '':
@@ -583,7 +583,7 @@ class Plotter:
                     latexdoc = self.summary_latex(qc_params, stats, warnings)
                 except Exception as e:
                     # do not skip if in debug mode
-                    if self.params['DRS_DEBUG']:
+                    if self.params['GLOBAL.DEBUG']:
                         raise e
                     # log error as warning
                     wargs = [type(e), e, func_name]
@@ -599,7 +599,7 @@ class Plotter:
             htmldoc = self.summary_html(qc_params, stats, warnings)
         except Exception as e:
             # do not skip if in debug mode
-            if self.params['DRS_DEBUG']:
+            if self.params['GLOBAL.DEBUG']:
                 raise e
             # log error as warning
             wargs = [type(e), e, func_name]
@@ -1353,7 +1353,7 @@ def main(params: ParamDict, graph_name: str,
     :param params: ParamDict, the parameter dictionary of constants
     :param graph_name: str, the name of the graph to plot
     :param mode: int or None, this is the plot mode, if None uses
-                 'DRS_PLOT' from params
+                 'GLOBAL.PLOT_MODE' from params
     :param kwargs: keywords passed to the plot function
 
     :return: None, plots using Plotter instance
@@ -1412,7 +1412,7 @@ def plot_selection(params: ParamDict,
         else:
             params.set(keyname, value=True, source=func_name)
     # finally set DRS_PLOT to mode = 3
-    params.set(key='DRS_PLOT', value=3, source=func_name)
+    params.set(key='GLOBAL.PLOT_MODE', value=3, source=func_name)
     # update recipe params
     recipe.params = params
     # return update params and recipe
@@ -1434,8 +1434,8 @@ if __name__ == "__main__":
     _recipe.summary_plots.append('TEST3')
 
     _params.set('PID', 'Unknown')
-    _params.set('DRS_DEBUG', value=1)
-    _params.set('DRS_PLOT', value=2)
+    _params.set('GLOBAL.DEBUG', value=1)
+    _params.set('GLOBAL.PLOT_MODE', value=2)
     _params.set('DRS_PLOT_EXT', 'pdf')
     _params.set('DRS_SUMMARY_EXT', 'pdf')
     _params.set('PLOT_TEST1', value=True)

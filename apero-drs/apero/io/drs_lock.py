@@ -88,7 +88,7 @@ class Lock:
         # replace all . and whitespace with _
         self.lockname = self.__clean_name(lockname)
         # get the lock path
-        self.lockpath = os.path.join(params['DRS_DATA_MSG'], 'lock')
+        self.lockpath = os.path.join(params['PATH.LOG'], 'lock')
         # ------------------------------------------------------------------
         # making the lock dir could be accessed in parallel several times
         #   at once so try 10 times with a wait in between
@@ -568,7 +568,7 @@ def reset_lock_dir(params: ParamDict, log: bool = False):
     # set function
     # _ = display_func('locker', __NAME__)
     # get the lock path
-    lockpath = os.path.join(params['DRS_DATA_MSG_FULL'], 'lock')
+    lockpath = os.path.join(params['PATH.LOG_FULL'], 'lock')
     if not os.path.exists(lockpath):
         return
     # remove empties

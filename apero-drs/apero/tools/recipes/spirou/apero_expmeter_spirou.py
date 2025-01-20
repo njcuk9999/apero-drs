@@ -336,7 +336,7 @@ def __main__(recipe, params):
     maskpp = inverse.drs_to_pp(params, mask, fill=0)
 
     # get raw image
-    maskraw = mp.rot8(maskpp, params['RAW_TO_PP_ROTATION'], invert=True)
+    maskraw = mp.rot8(maskpp, params['IMAGE.RAW_PP_ROT'], invert=True)
 
     # ----------------------------------------------------------------------
     # write pp out file
@@ -363,7 +363,7 @@ def __main__(recipe, params):
     # define multi lists
     data_list, name_list = [], []
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=out_pp_file)]
         name_list += ['PARAM_TABLE']
     # write file
@@ -395,7 +395,7 @@ def __main__(recipe, params):
     # define multi lists
     data_list, name_list = [], []
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=out_raw_file)]
         name_list += ['PARAM_TABLE']
     # write file

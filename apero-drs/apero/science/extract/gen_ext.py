@@ -278,7 +278,7 @@ def save_tmp_orderps_file(params: ParamDict, recipe: DrsRecipe,
         # define multi lists
         data_list, name_list = [], []
         # snapshot of parameters
-        if params['PARAMETER_SNAPSHOT']:
+        if params['GLOBAL.PSNAPSHOT']:
             data_list += [params.snapshot_table(recipe,
                                                 drsfitsfile=orderpsfile)]
             name_list += ['PARAM_TABLE']
@@ -772,7 +772,7 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     # define multi lists
     data_list, name_list = [order_table], ['ORDER_TABLE']
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=e2dsfile)]
         name_list += ['PARAM_TABLE']
     # write image to file
@@ -811,7 +811,7 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     # define multi lists
     data_list, name_list = [order_table], ['ORDER_TABLE']
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=e2dsfffile)]
         name_list += ['PARAM_TABLE']
     # write image to file
@@ -846,7 +846,7 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
         name_list = ['E2DSLL', 'E2DSCC']
         datatype_list = ['image']
         # snapshot of parameters
-        if params['PARAMETER_SNAPSHOT']:
+        if params['GLOBAL.PSNAPSHOT']:
             data_list += [params.snapshot_table(recipe, drsfitsfile=e2dsllfile)]
             name_list += ['PARAM_TABLE']
             datatype_list += ['table']
@@ -884,7 +884,7 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     # define multi lists
     data_list, name_list = [], []
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=e2dsfffile)]
         name_list += ['PARAM_TABLE']
     # write image to file
@@ -920,7 +920,7 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     # define multi lists
     data_list, name_list = [], []
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=s1dvfile)]
         name_list += ['PARAM_TABLE']
     # write image to file
@@ -1029,7 +1029,7 @@ def write_extraction_files_ql(params, recipe, infile, rawfiles, combine, fiber,
     # define multi lists
     data_list, name_list = [], []
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=e2dsfile)]
         name_list += ['PARAM_TABLE']
     # write image to file
@@ -1063,7 +1063,7 @@ def write_extraction_files_ql(params, recipe, infile, rawfiles, combine, fiber,
     # define multi lists
     data_list, name_list = [], []
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=e2dsfffile)]
         name_list += ['PARAM_TABLE']
     # write image to file

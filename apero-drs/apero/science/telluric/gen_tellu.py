@@ -100,7 +100,7 @@ def get_tellu_include_list(params: ParamDict,
     objdbm = drs_database.AstrometricDatabase(params)
     objdbm.load_db()
     # get parameters from params/kwargs
-    assetdir = pcheck(params, 'DRS_DATA_ASSETS', 'assetsdir', func=func_name,
+    assetdir = pcheck(params, 'PATH.ASSETS', 'assetsdir', func=func_name,
                       override=assets_dir)
     relfolder = pcheck(params, 'TELLU_LIST_DIRECTORY', func=func_name,
                        override=tellu_dir)
@@ -134,7 +134,7 @@ def get_tellu_exclude_list(params: ParamDict,
     objdbm = drs_database.AstrometricDatabase(params)
     objdbm.load_db()
     # get parameters from params/kwargs
-    assetdir = pcheck(params, 'DRS_DATA_ASSETS', 'assetsdir', func=func_name,
+    assetdir = pcheck(params, 'PATH.ASSETS', 'assetsdir', func=func_name,
                       override=assets_dir)
     relfolder = pcheck(params, 'TELLU_LIST_DIRECTORY', func=func_name,
                        override=tellu_dir)
@@ -532,7 +532,6 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
                        func_name)
     waveend = pcheck(params, 'EXT_S1D_WAVEEND', 'waveend', kwargs, func_name)
     dvgrid = pcheck(params, 'EXT_S1D_BIN_UVELO', 'dvgrid', kwargs, func_name)
-    ccf_control_radius = 2 * params['IMAGE_PIXEL_SIZE']
     # ----------------------------------------------------------------------
     # load database
     if calibdbm is None:
@@ -1294,7 +1293,7 @@ def clean_ohline_pca(params, recipe, image, wavemap, **kwargs):
     func_name = __NAME__ + '.clean_ohline_pca()'
     # -------------------------------------------------------------------------
     # get parameters from params/kwargs
-    assetdir = pcheck(params, 'DRS_DATA_ASSETS', 'assetsdir', kwargs, func_name)
+    assetdir = pcheck(params, 'PATH.ASSETS', 'assetsdir', kwargs, func_name)
     relfolder = pcheck(params, 'TELLU_LIST_DIRECTORY', 'directory', kwargs,
                        func_name)
     filename = pcheck(params, 'TELLUP_OHLINE_PCA_FILE', 'filename', kwargs,
@@ -1357,7 +1356,7 @@ def clean_ohline_pca(params, recipe, image, wavemap, **kwargs):
     # -------------------------------------------------------------------------
     # e-width of the region over which we measure the residuals of brighter lines
     # to adjust them
-    ew_weight = 2.5 * params['FWHM_PIXEL_LSF']
+    ew_weight = 2.5 * params['IMAGE.FWHM_PIXEL_LSF']
     # region of which we will compute the weight falloff of a bright sky line
     width = int(ew_weight * 4)
     # sky amplitude correction
@@ -2040,7 +2039,7 @@ def tellu_preclean_write(params, recipe, infile, rawfiles, fiber, combine,
     data_list = dimages[1:]
     name_list = names
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=tpclfile)]
         name_list += ['PARAM_TABLE']
     # write to file
@@ -2276,7 +2275,7 @@ def load_templates(params: ParamDict,
             # if template filename does not exist check in the telluric database
             if os.path.exists(template_filename):
                 # get template path
-                template_path = params['DRS_TELLU_DB']
+                template_path = params['PATH.TELLU']
                 # add to template filename
                 template_filename = os.path.join(template_path,
                                                  template_filename)
@@ -2495,7 +2494,7 @@ def load_conv_tapas(params, recipe, header, refprops, fiber, database=None,
     # get parameters from params/kwargs
     tellu_absorbers = pcheck(params, 'TELLU_ABSORBERS', func=func_name,
                              override=absorbers)
-    fwhm_pixel_lsf = pcheck(params, 'FWHM_PIXEL_LSF', func=func_name,
+    fwhm_pixel_lsf = pcheck(params, 'IMAGE.FWHM_PIXEL_LSF', func=func_name,
                             override=fwhm_lsf)
     # ----------------------------------------------------------------------
     # deal with database not being loaded
@@ -2530,7 +2529,7 @@ def load_conv_tapas(params, recipe, header, refprops, fiber, database=None,
         conv_paths = []
     # construct the filename from file instance
     out_tellu_conv.construct_filename(infile=refprops['WAVEINST'],
-                                      path=params['DRS_TELLU_DB'],
+                                      path=params['PATH.TELLU'],
                                       fiber=fiber)
     # if our npy file already exists then we just need to read it
     if out_tellu_conv.filename in conv_paths:
@@ -2611,7 +2610,7 @@ def load_tapas_spl(params, recipe, header, database=None):
                                  get_image=False, required=False,
                                  return_filename=True)
     # construct the filename from file instance
-    out_tellu_tapas.construct_filename(path=params['DRS_TELLU_DB'])
+    out_tellu_tapas.construct_filename(path=params['PATH.TELLU'])
     # ----------------------------------------------------------------------
     # if our npy file already exists then we just need to read it
     if (conv_paths is not None) and (out_tellu_tapas.filename in conv_paths):

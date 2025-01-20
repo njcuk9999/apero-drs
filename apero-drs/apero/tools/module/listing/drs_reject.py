@@ -90,7 +90,7 @@ def add_file_reject(params: ParamDict, recipe: DrsRecipe, raw_identifier: str):
     # get the identifer column
     identifier_column = np.array(dataframe['IDENTIFIER']).astype(str)
     # get the raw directory
-    rawdir = params['DRS_DATA_RAW']
+    rawdir = params['PATH.RAW']
     # get astrometric database
     objdbm = drs_database.AstrometricDatabase(params)
     # load astrometric database
@@ -359,7 +359,7 @@ def update_from_obsdir(params: ParamDict, recipe: DrsRecipe, obsdir: str) -> str
     if obsdir in [None, 'None', '', 'Null']:
         return 'None'
     # get the raw directory from params
-    rawdir = params['DRS_DATA_RAW']
+    rawdir = params['PATH.RAW']
     # deal with bad obsdir
     if obsdir not in os.listdir(rawdir):
         # TODO: Add to language database

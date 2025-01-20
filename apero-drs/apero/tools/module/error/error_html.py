@@ -264,9 +264,9 @@ def process_load_messages(params: ParamDict):
     :return: None, writes yaml file to {DRS_DATA_MSG}/yamls
     """
     # construct path to yaml dicts
-    yaml_path = os.path.join(params['DRS_DATA_MSG'], 'yamls')
+    yaml_path = os.path.join(params['PATH.LOG'], 'yamls')
     # get the log path
-    log_path = os.path.join(params['DRS_DATA_MSG'], 'tool', 'other')
+    log_path = os.path.join(params['PATH.LOG'], 'tool', 'other')
     # get a list of log files
     log_files = []
     for root, dirs, files in os.walk(log_path):

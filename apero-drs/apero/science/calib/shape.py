@@ -1938,7 +1938,7 @@ def write_shape_ref_files(params, recipe, fpfile, hcfile, rawfpfiles,
     data_list = [fp_table]
     name_list = ['FP_TABLE']
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         ptable = params.snapshot_table(recipe, drsfitsfile=outfile1)
         data_list += [ptable]
         name_list += ['PARAM_TABLE']
@@ -1969,7 +1969,7 @@ def write_shape_ref_files(params, recipe, fpfile, hcfile, rawfpfiles,
     data_list = [fp_table]
     name_list = ['FP_TABLE']
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=outfile2)]
         name_list += ['PARAM_TABLE']
     # write image to file
@@ -1999,7 +1999,7 @@ def write_shape_ref_files(params, recipe, fpfile, hcfile, rawfpfiles,
     data_list = [fp_table]
     name_list = ['FP_TABLE']
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=outfile3)]
         name_list += ['PARAM_TABLE']
     # write image to file
@@ -2030,7 +2030,7 @@ def write_shape_ref_files(params, recipe, fpfile, hcfile, rawfpfiles,
         data_list = [fp_table]
         name_list = ['FP_TABLE']
         # snapshot of parameters
-        if params['PARAMETER_SNAPSHOT']:
+        if params['GLOBAL.PSNAPSHOT']:
             data_list += [params.snapshot_table(recipe, drsfitsfile=debugfile0)]
             name_list += ['PARAM_TABLE']
         # write file
@@ -2056,7 +2056,7 @@ def write_shape_ref_files(params, recipe, fpfile, hcfile, rawfpfiles,
         data_list = [fp_table]
         name_list = ['FP_TABLE']
         # snapshot of parameters
-        if params['PARAMETER_SNAPSHOT']:
+        if params['GLOBAL.PSNAPSHOT']:
             data_list += [params.snapshot_table(recipe, drsfitsfile=debugfile1)]
             name_list += ['PARAM_TABLE']
         # write file
@@ -2079,7 +2079,7 @@ def write_shape_ref_files(params, recipe, fpfile, hcfile, rawfpfiles,
         data_list = [fp_table]
         name_list = ['FP_TABLE']
         # snapshot of parameters
-        if params['PARAMETER_SNAPSHOT']:
+        if params['GLOBAL.PSNAPSHOT']:
             data_list += [params.snapshot_table(recipe, drsfitsfile=debugfile2)]
             name_list += ['PARAM_TABLE']
         # write file
@@ -2116,7 +2116,7 @@ def write_shape_ref_files(params, recipe, fpfile, hcfile, rawfpfiles,
             data_list = [fp_table]
             name_list = ['FP_TABLE']
             # snapshot of parameters
-            if params['PARAMETER_SNAPSHOT']:
+            if params['GLOBAL.PSNAPSHOT']:
                 data_list += [params.snapshot_table(recipe, drsfitsfile=debugfile3)]
                 name_list += ['PARAM_TABLE']
             # write file
@@ -2141,7 +2141,7 @@ def write_shape_ref_files(params, recipe, fpfile, hcfile, rawfpfiles,
                 data_list = [fp_table]
                 name_list = ['FP_TABLE']
                 # snapshot of parameters
-                if params['PARAMETER_SNAPSHOT']:
+                if params['GLOBAL.PSNAPSHOT']:
                     data_list += [params.snapshot_table(recipe,
                                                         drsfitsfile=debugfile4)]
                     name_list += ['PARAM_TABLE']
@@ -2314,7 +2314,7 @@ def write_shape_local_files(params, recipe, infile, combine, rawfiles, props,
     # define multi lists
     data_list, name_list = [], []
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=outfile)]
         name_list += ['PARAM_TABLE']
     # write image to file
@@ -2342,7 +2342,7 @@ def write_shape_local_files(params, recipe, infile, combine, rawfiles, props,
         # define multi lists
         data_list, name_list = [], []
         # snapshot of parameters
-        if params['PARAMETER_SNAPSHOT']:
+        if params['GLOBAL.PSNAPSHOT']:
             data_list += [params.snapshot_table(recipe, drsfitsfile=debugfile1)]
             name_list += ['PARAM_TABLE']
         # write file
@@ -2364,7 +2364,7 @@ def write_shape_local_files(params, recipe, infile, combine, rawfiles, props,
         # define multi lists
         data_list, name_list = [], []
         # snapshot of parameters
-        if params['PARAMETER_SNAPSHOT']:
+        if params['GLOBAL.PSNAPSHOT']:
             data_list += [params.snapshot_table(recipe, drsfitsfile=debugfile2)]
             name_list += ['PARAM_TABLE']
         # write file

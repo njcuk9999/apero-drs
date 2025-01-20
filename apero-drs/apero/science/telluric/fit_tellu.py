@@ -103,10 +103,10 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, refprops,
     # construct the filename from file instance
     abso_npy_filename = 'tellu_save_{0}.npy'.format(recent_filetime)
     abso_npy.construct_filename(filename=abso_npy_filename,
-                                path=params['DRS_TELLU_DB'])
+                                path=params['PATH.TELLU'])
     abso1_npy_filename = 'tellu_save1_{0}.npy'.format(recent_filetime)
     abso1_npy.construct_filename(filename=abso1_npy_filename,
-                                 path=params['DRS_TELLU_DB'])
+                                 path=params['PATH.TELLU'])
     # noinspection PyBroadException
     try:
         # try loading from file
@@ -166,9 +166,9 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, refprops,
             #    We just try again as as long as one writes we are good
             try:
                 # remove all other abso npy files
-                _remove_absonpy_files(params, params['DRS_TELLU_DB'],
+                _remove_absonpy_files(params, params['PATH.TELLU'],
                                       'tellu_save_')
-                _remove_absonpy_files(params, params['DRS_TELLU_DB'],
+                _remove_absonpy_files(params, params['PATH.TELLU'],
                                       'tellu_save1_')
                 # write to npy file
                 abso_npy.data = abso
@@ -457,7 +457,7 @@ def calc_recon_and_correct(params, recipe, image, wprops, pca_props, sprops,
                         func_name)
     kernel_vsini = pcheck(params, 'FTELLU_KERNEL_VSINI', 'kernel_vsini',
                           kwargs, func_name)
-    image_pixel_size = pcheck(params, 'IMAGE_PIXEL_SIZE', 'image_pixel_size',
+    image_pixel_size = pcheck(params, 'IMAGE.PIXEL_SIZE', 'image_pixel_size',
                               kwargs, func_name)
     fit_iterations = pcheck(params, 'FTELLU_FIT_ITERS', 'fit_iterations',
                             kwargs, func_name)
@@ -729,7 +729,7 @@ def calc_recon_and_correct(params, recipe, image, wprops, pca_props, sprops,
     props['LAMBDA_MIN'] = lambda_min
     props['LAMBDA_MAX'] = lambda_max
     props['KERNEL_VSINI'] = kernel_vsini
-    props['IMAGE_PIXEL_SIZE'] = image_pixel_size
+    props['PIXEL_SIZE'] = image_pixel_size
     props['FIT_ITERATIONS'] = fit_iterations
     props['FIT_DERIV_PC'] = fit_deriv_pc
     props['RECON_LIMIT'] = recon_limit
@@ -738,8 +738,8 @@ def calc_recon_and_correct(params, recipe, image, wprops, pca_props, sprops,
     props['TRANS_FIT_UPPER_BAD'] = thres_transfit_upper
     # set sources
     keys = ['FIT_MIN_TRANS', 'LAMBDA_MIN', 'LAMBDA_MAX', 'KERNEL_VSINI',
-            'IMAGE_PIXEL_SIZE', 'FIT_ITERATIONS',
-            'FIT_DERIV_PC', 'RECON_LIMIT', 'TELLU_ABSORBERS']
+            'PIXEL_SIZE', 'FIT_ITERATIONS', 'FIT_DERIV_PC', 'RECON_LIMIT',
+            'TELLU_ABSORBERS']
     props.set_sources(keys, func_name)
     # return props
     return props
@@ -1119,7 +1119,7 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
     datatype_list = ['table']
     name_list = ['TRANS_TABLE']
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=corrfile)]
         name_list += ['PARAM_TABLE']
         datatype_list += ['table']
@@ -1161,7 +1161,7 @@ def fit_tellu_write_corrected_s1d(params, recipe, infile, corrfile, fiber,
     # define multi lists
     data_list, name_list = [], []
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=sc1dwfile)]
         name_list += ['PARAM_TABLE']
     # write image to file
@@ -1194,7 +1194,7 @@ def fit_tellu_write_corrected_s1d(params, recipe, infile, corrfile, fiber,
     # define multi lists
     data_list, name_list = [], []
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=sc1dvfile)]
         name_list += ['PARAM_TABLE']
     # write image to file
@@ -1227,7 +1227,7 @@ def fit_tellu_write_recon(params, recipe, infile, corrfile, fiber, cprops,
     # define multi lists
     data_list, name_list = [], []
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=reconfile)]
         name_list += ['PARAM_TABLE']
     # write image to file
@@ -1273,7 +1273,7 @@ def fit_tellu_write_recon(params, recipe, infile, corrfile, fiber, cprops,
     # define multi lists
     data_list, name_list = [], []
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=rc1dwfile)]
         name_list += ['PARAM_TABLE']
     # write image to file
@@ -1319,7 +1319,7 @@ def fit_tellu_write_recon(params, recipe, infile, corrfile, fiber, cprops,
     # define multi lists
     data_list, name_list = [], []
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=rc1dvfile)]
         name_list += ['PARAM_TABLE']
     # write image to file

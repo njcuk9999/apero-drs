@@ -440,7 +440,7 @@ def use_barycorrpy(params: ParamDict, times: np.ndarray, props: ParamDict,
     iersfile = pcheck(params, 'EXT_BERV_IERSFILE', func=func_name,
                       override=iersfile)
     # make barycorrpy directory an absolute path
-    bc_dir = os.path.join(params['DRS_DATA_ASSETS'], 'core', 'barycorrpy')
+    bc_dir = os.path.join(params['PATH.ASSETS'], 'core', 'barycorrpy')
     # get args
     # TODO: Add back in leap seconds (when barycorrpy works)
     bkwargs = dict(ra=props['RA'], dec=props['DEC'],
@@ -467,7 +467,7 @@ def use_barycorrpy(params: ParamDict, times: np.ndarray, props: ParamDict,
              sublevel=8)
         raise BaryCorrpyException(textentry('10-016-00003', args=wargs))
     # must lock here (barcorrpy is not parallisable yet)
-    lpath = params['DRS_DATA_REDUC']
+    lpath = params['PATH.RED']
     lfilename = os.path.join(lpath, 'barycorrpy')
     # ----------------------------------------------------------------------
     # define a synchronized lock for indexing (so multiple instances do not

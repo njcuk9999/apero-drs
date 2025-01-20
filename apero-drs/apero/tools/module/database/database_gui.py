@@ -147,9 +147,9 @@ class DatabaseHolder:
         if value.endswith('.fits'):
             # deal with different databases
             if self.name == 'calib':
-                path = Path(self.params['DRS_CALIB_DB']).joinpath(value)
+                path = Path(self.params['PATH.CALIB']).joinpath(value)
             elif self.name == 'tellu':
-                path = Path(self.params['DRS_TELLU_DB']).joinpath(value)
+                path = Path(self.params['PATH.TELLU']).joinpath(value)
             elif self.name == 'findex':
                 path = Path(value)
             else:

@@ -402,7 +402,7 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
         # deal with hot star (low pass filter)
         if flag_hotstar:
             # get the image pixel size
-            psize = params['IMAGE_PIXEL_SIZE']
+            psize = params['IMAGE.PIXEL_SIZE']
             # calculate hot star kernel size
             hotstar_kernel_size = hotstar_kernel_velocity / psize
             # must be an odd integer
@@ -1321,7 +1321,7 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     datatype_list = ['table', 'table', 'table']
     name_list = ['TEMPLATE_TABLE', 'BERV_TABLE', 'COMBINE_TABLE']
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=template_file)]
         name_list += ['PARAM_TABLE']
         datatype_list += ['table']
@@ -1354,7 +1354,7 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     datatype_list = ['table', 'table']
     name_list = ['TEMPLATE_TABLE', 'BERV_TABLE']
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=bigcubefile)]
         name_list += ['PARAM_TABLE']
         datatype_list += ['table']
@@ -1387,7 +1387,7 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     datatype_list = ['table', 'table']
     name_list = ['TEMPLATE_TABLE', 'BERV_TABLE']
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=bigcubefile0)]
         name_list += ['PARAM_TABLE']
         datatype_list += ['table']
@@ -1460,7 +1460,7 @@ def mk_1d_template_write(params, recipe, infile, props, filetype, fiber,
     datatype_list = ['table']
     name_list = ['TEMPLATE_TABLE']
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=template_file)]
         name_list += ['PARAM_TABLE']
         datatype_list += ['table']
@@ -1493,7 +1493,7 @@ def mk_1d_template_write(params, recipe, infile, props, filetype, fiber,
     datatype_list = ['table']
     name_list = ['TEMPLATE_TABLE']
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=bigcubefile)]
         name_list += ['PARAM_TABLE']
         datatype_list += ['table']

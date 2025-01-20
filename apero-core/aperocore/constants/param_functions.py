@@ -49,7 +49,7 @@ AperoCodedWarning = drs_log.AperoCodedWarning
 # relative folder cache
 REL_CACHE = dict()
 # cache some settings
-SETTINGS_CACHE_KEYS = ['DRS_DEBUG', 'ALLOW_BREAKPOINTS']
+SETTINGS_CACHE_KEYS = ['GLOBAL.DEBUG', 'ALLOW_BREAKPOINTS']
 SETTINGS_CACHE = dict()
 # Get base classes
 CaseInDict = base_class.CaseInsensitiveDict

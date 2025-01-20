@@ -176,9 +176,9 @@ def __main__(recipe, params):
     table['ypix'] = y
 
     # get outpath
-    assetdir = params['DRS_DATA_ASSETS']
+    assetdir = params['PATH.ASSETS']
     filename = params['PP_HOTPIX_FILE']
-    relpath = params['DATA_ENGINEERING']
+    relpath = params['DATA.DATA_ENGINEERING']
     absoutpath = os.path.join(assetdir, relpath, filename)
     # write output as a csv file
     WLOG(params, '', '\t Saved to: {0}'.format(absoutpath))

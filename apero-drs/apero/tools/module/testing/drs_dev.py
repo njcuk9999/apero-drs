@@ -159,8 +159,8 @@ class Demo:
 
     def change_lang(self, params, language):
         # update the language
-        self.params.set('LANGUAGE', language)
-        params.set('LANGUAGE', language)
+        self.params.set('GLOBAL.LANGUAGE', language)
+        params.set('GLOBAL.LANGUAGE', language)
 
     def test_data(self, params):
         # TODO: get test data from data/spirou/demo

@@ -325,7 +325,7 @@ class NirpsHe(instrument_mod.Instrument):
                        header keys to id file
         :return: float the frame time in seconds
         """
-        return float(params['IMAGE_FRAME_TIME'])
+        return float(params['IMAGE.FRAME_TIME'])
 
     def SATURATION(self, params: ParamDict, header: Any):
         """
@@ -337,7 +337,7 @@ class NirpsHe(instrument_mod.Instrument):
                        header keys to id file
         :return: float the frame time in seconds
         """
-        return float(params['IMAGE_SATURATION'])
+        return float(params['IMAGE.SATURATION'])
 
     # =========================================================================
     # INDEXING SETTINGS

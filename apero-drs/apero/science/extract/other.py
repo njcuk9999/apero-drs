@@ -306,7 +306,7 @@ def extract_files(params: ParamDict, recipe: DrsRecipe,
         # We need to load these again
         data_dict['files'] = None
         data_dict['rawfiles'] = [infile.basename]
-        data_dict['combine'] = params['INPUT_COMBINE_IMAGES']
+        data_dict['combine'] = params['IMAGE.COMBINE_INPUT']
         # add leak correction argument if set
         if leakcorr is not None and isinstance(leakcorr, bool):
             data_dict['LEAKCORR'] = leakcorr

@@ -185,7 +185,7 @@ class Page3(StartPage):
                                       initialdir='/')
         settings_dict['plot1'] = dict(name='plot1',
                                       kind='dropdown',
-                                      keyword='DRS_PLOT',
+                                      keyword='GLOBAL.PLOT_MODE',
                                       options=['a', 'b', 'c'],
                                       comment='Set the plotting option')
         self.settings = widgets.SettingsPage(self, settings_dict)

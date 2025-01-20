@@ -119,7 +119,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         rawfiles = params['DATA_DICT']['rawfiles']
         combine = params['DATA_DICT']['combine']
     # combine input images if required
-    elif params['INPUT_COMBINE_IMAGES']:
+    elif params['IMAGE.COMBINE_INPUT']:
         # get combined file
         cout = drs_file.combine(params, recipe, infiles, math='median')
         infiles = [cout[0]]

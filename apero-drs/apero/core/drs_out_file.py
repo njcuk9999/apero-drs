@@ -711,7 +711,7 @@ class PostOutFile(OutFile):
         if obs_dir is None:
             obs_dir = ''
         # construct path
-        path = os.path.join(params['DRS_DATA_OUT'], obs_dir)
+        path = os.path.join(params['PATH.OUT'], obs_dir)
         # add path to filename
         filename = os.path.join(path, filename)
         # ---------------------------------------------------------------------

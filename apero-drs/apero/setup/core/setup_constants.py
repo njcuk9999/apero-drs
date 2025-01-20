@@ -73,7 +73,7 @@ SARGS['APERO_PATH'] = SetupArgument(name='APERO_PATH',
                                     default_value=str(__PATH__),
                                     dtype='path', required=False, ask=False,
                                     helpstr='The path to the apero module',
-                                    aperoname='DRS_ROOT')
+                                    aperoname='PATH.ROOT')
 
 # -----------------------------------------------------------------------------
 # Directory settings
@@ -104,32 +104,32 @@ SARGS['DATADIR'] = SetupArgument(name='DATADIR', argname='--datadir',
 SARGS['RAWDIR'] = SetupArgument(name='RAWDIR', default_value=None,
                                 dtype='path', required=True, depends='DATADIR',
                                 helpstr='The raw data directory to use',
-                                aperoname='DRS_DATA_RAW')
+                                aperoname='PATH.RAW')
 # The tmp data directory to use (if not using DATADIR)
 SARGS['TMPDIR'] = SetupArgument(name='TMPDIR', default_value=None,
                                 dtype='path', required=True, depends='DATADIR',
                                 helpstr='The tmp data directory to use',
-                                aperoname='DRS_DATA_WORKING')
+                                aperoname='PATH.PP')
 # The reduced data directory to use (if not using DATADIR)
 SARGS['REDDIR'] = SetupArgument(name='REDDIR', default_value=None,
                                 dtype='path', required=True, depends='DATADIR',
                                 helpstr='The reduced data directory to use',
-                                aperoname='DRS_DATA_REDUC')
+                                aperoname='PATH.RED')
 # the calibration directory to use (if not using DATADIR)
 SARGS['CALDIR'] = SetupArgument(name='CALDIR', default_value=None,
                                 dtype='path', required=True, depends='DATADIR',
                                 helpstr='The calibration data directory to use',
-                                aperoname='DRS_CALIB_DB')
+                                aperoname='PATH.CALIB')
 # the telluric directory to use (if not using DATADIR)
 SARGS['TELDIR'] = SetupArgument(name='TELDIR', default_value=None,
                                 dtype='path', required=True, depends='DATADIR',
                                 helpstr='The telluric data directory to use',
-                                aperoname='DRS_TELLU_DB')
+                                aperoname='PATH.TELLU')
 # the out directory to use (if not using DATADIR)
 SARGS['OUTDIR'] = SetupArgument(name='OUTDIR', default_value=None,
                                 dtype='path', required=True, depends='DATADIR',
                                 helpstr='The out directory to use',
-                                aperoname='DRS_DATA_OUT')
+                                aperoname='PATH.OUT')
 # the lbl directory to use (if not using DATADIR)
 SARGS['LBLDIR'] = SetupArgument(name='LBLDIR', default_value=None,
                                 dtype='path', required=True, depends='DATADIR',
@@ -139,23 +139,23 @@ SARGS['LBLDIR'] = SetupArgument(name='LBLDIR', default_value=None,
 SARGS['LOGDIR'] = SetupArgument(name='LOGDIR', default_value=None,
                                 dtype='path', required=True, depends='DATADIR',
                                 helpstr='The log directory to use',
-                                aperoname='DRS_DATA_MSG')
+                                aperoname='PATH.LOG')
 # the plot directory to use (if not using DATADIR)
 SARGS['PLOTDIR'] = SetupArgument(name='PLOTDIR', default_value=None,
                                  dtype='path', required=True, depends='DATADIR',
                                  helpstr='The plot directory to use',
-                                 aperoname='DRS_DATA_PLOT')
+                                 aperoname='PATH.PLOT')
 # the run directory to use (if not using DATADIR)
 SARGS['RUNDIR'] = SetupArgument(name='RUNDIR', default_value=None,
                                 dtype='path', required=True, depends='DATADIR',
                                 helpstr='The run directory to use',
-                                aperoname='DRS_DATA_RUN')
+                                aperoname='PATH.RUN')
 # the assets directory to use (if not using DATADIR)
 SARGS['ASSETSDIR'] = SetupArgument(name='ASSETSDIR', default_value=None,
                                    dtype='path', required=True,
                                    depends='DATADIR',
                                    helpstr='The assets directory to use',
-                                   aperoname='DRS_DATA_ASSETS')
+                                   aperoname='PATH.ASSETS')
 # the other directory to use (if not using DATADIR)
 SARGS['OTHERDIR'] = SetupArgument(name='OTHERDIR', default_value=None,
                                   dtype='path', required=True,
@@ -273,7 +273,7 @@ SARGS['PLOT_MODE'] = SetupArgument(name='PLOT_MODE', argname='--plotmode',
                                    options=PLOT_MODES,
                                    optiondescs=PLOT_DESCS,
                                    helpstr='The plot mode to use',
-                                   aperoname='DRS_PLOT')
+                                   aperoname='GLOBAL.PLOT_MODE')
 # whether to start from a clean state
 SARGS['CLEAN_START'] = SetupArgument(name='CLEAN_START', argname='--clean',
                                      default_value=True, dtype='bool',

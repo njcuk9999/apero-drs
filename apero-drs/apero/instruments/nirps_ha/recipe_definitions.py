@@ -64,26 +64,26 @@ backsub = dict(name='--backsub', dtype='bool', default=True,
 # Must set default per recipe!!
 combine = dict(name='--combine', dtype='bool',
                helpstr=textentry('COMBINE_HELP'),
-               default_ref='INPUT_COMBINE_IMAGES')
+               default_ref='IMAGE.COMBINE_INPUT')
 # -----------------------------------------------------------------------------
 dodark = dict(name='--darkcorr', dtype='bool', default=True,
               helpstr=textentry('DODARK_HELP'))
 # -----------------------------------------------------------------------------
 fiber = dict(name='--fiber', dtype='options', default='ALL',
              helpstr=textentry('EXTFIBER_HELP'),
-             options=['ALL'] + sci_fibers + cal_fibers,
-             default_ref='INPUT_FLIP_IMAGE')
+             options=['ALL'] + sci_fibers + cal_fibers)
 # -----------------------------------------------------------------------------
-flipimage = dict(name='--flipimage', dtype='options', default='both',
+flipimage = dict(name='--flipimage', dtype='options',
                  helpstr=textentry('FLIPIMAGE_HELP'),
-                 options=['None', 'x', 'y', 'both'])
+                 options=['None', 'x', 'y', 'both'],
+                 default_ref='FLIP_INPUT')
 # -----------------------------------------------------------------------------
 fluxunits = dict(name='--fluxunits', dtype='options', default='e-',
                  helpstr=textentry('FLUXUNITS_HELP'), options=['ADU/s', 'e-'])
 # -----------------------------------------------------------------------------
 resize = dict(name='--resize', dtype='bool', default=True,
               helpstr=textentry('RESIZE_HELP'),
-              default_ref='INPUT_RESIZE_IMAGE')
+              default_ref='IMAGE.RESIZE_IMAGE')
 # -----------------------------------------------------------------------------
 objname = dict(name='--objname', dtype=str, default='None',
                helpstr=textentry('OBJNAME_HELP'))

@@ -7982,7 +7982,7 @@ def combine(params: ParamDict, recipe: Any,
     # deal with writing to disk (default)
     if save:
         # snapshot of parameters
-        if params['PARAMETER_SNAPSHOT']:
+        if params['GLOBAL.PSNAPSHOT']:
             data_list += [params.snapshot_table(recipe, drsfitsfile=outfile)]
             name_list += ['PARAM_TABLE']
             datatype_list += ['table']

@@ -246,7 +246,7 @@ class Navbar:
 
         :return:
         """
-        root = self.master.datastore.drs_params['DRS_ROOT']
+        root = self.master.datastore.drs_params['PATH.ROOT']
         explorer = os.path.join(root, EXPLORER_PATH)
         os.system('python {0}'.format(explorer))
 

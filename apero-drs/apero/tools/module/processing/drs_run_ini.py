@@ -566,7 +566,7 @@ class RunIniFile:
         # get run obs dir
         run_dir = self.run_keys['RUN_OBS_DIR']
         # get the raw dir
-        raw_dir = self.params['DRS_DATA_RAW']
+        raw_dir = self.params['PATH.RAW']
         # get raw run dir
         raw_run_dir = os.path.join(raw_dir, run_dir)
         # make sure raw run dir is present - if not we have to skip

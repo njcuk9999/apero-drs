@@ -232,7 +232,7 @@ def get_instrument_args() -> Dict[str, Any]:
 
     # store as dictionary
     lang_kwargs = dict(lang_insts=lang_lists,
-                       langauge=iparams['LANGUAGE'])
+                       langauge=iparams['GLOBAL.LANGUAGE'])
     # return the arguments for the Language class
     return lang_kwargs
 

@@ -469,9 +469,9 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
     """
     func_name = __NAME__ + '.calibrate_file()'
     # deal with inputs from params
-    flip = pcheck(params, 'INPUT_FLIP_IMAGE', func=func_name,
+    flip = pcheck(params, 'IMAGE.FLIP_INPUT', func=func_name,
                   override=flip_image)
-    resize = pcheck(params, 'INPUT_RESIZE_IMAGE', func=func_name,
+    resize = pcheck(params, 'IMAGE.RESIZE_IMAGE', func=func_name,
                     override=resize_image)
     # get image and header
     if image is None:
@@ -501,7 +501,7 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
     # Get basic image properties
     sigdet = infile.get_hkey('KW_RDNOISE')
     exptime = infile.get_hkey('KW_EXPTIME')
-    gain = params['EFFGAIN']
+    gain = params['IMAGE.EFFGAIN']
     dprtype = infile.get_hkey('KW_DPRTYPE', dtype=str)
     saturate = pconst.SATURATION(params, infile.get_header())
     frmtime = pconst.FRAME_TIME(params, infile.get_header())
@@ -562,8 +562,8 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
     # ----------------------------------------------------------------------
     if resize:
         # get resize size
-        sargs = dict(xlow=params['IMAGE_X_LOW'], xhigh=params['IMAGE_X_HIGH'],
-                     ylow=params['IMAGE_Y_LOW'], yhigh=params['IMAGE_Y_HIGH'])
+        sargs = dict(xlow=params['IMAGE.X_LOW'], xhigh=params['IMAGE.X_HIGH'],
+                     ylow=params['IMAGE.Y_LOW'], yhigh=params['IMAGE.Y_HIGH'])
         # resize flat
         image2 = drs_image.resize(image2, **sargs)
         # print that image has been resize

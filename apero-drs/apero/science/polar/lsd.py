@@ -196,7 +196,7 @@ def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
     # log that we are saving pol file
     WLOG(params, '', textentry('40-021-00009', args=[lsdfile.filename]))
     # snapshot of parameters
-    if params['PARAMETER_SNAPSHOT']:
+    if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=lsdfile)]
         name_list += ['PARAM_TABLE']
         datatype_list += ['table']

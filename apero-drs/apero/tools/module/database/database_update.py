@@ -165,14 +165,14 @@ def calib_tellu_update(params: ParamDict, pconst: Instrument,
     # ----------------------------------------------------------------------
     # get the settings for each type of database
     if db_type == 'calibration':
-        db_path = params['DRS_CALIB_DB']
+        db_path = params['PATH.CALIB']
         name = 'calibration database'
         file_set_name = 'calib_file'
         # load the calibration database
         dbmanager = drs_database.CalibrationDatabase(params)
         dbmanager.load_db()
     elif db_type == 'telluric':
-        db_path = params['DRS_TELLU_DB']
+        db_path = params['PATH.TELLU']
         name = 'telluric database'
         file_set_name = 'tellu_file'
         # load the telluric database
@@ -380,10 +380,10 @@ def remove_db_entries(params: ParamDict, db_type: str) -> bool:
     # get database
     if db_type == 'calibration':
         dbmanager = drs_database.CalibrationDatabase(params)
-        path = params['DRS_CALIB_DB']
+        path = params['PATH.CALIB']
     elif db_type == 'telluric':
         dbmanager = drs_database.TelluricDatabase(params)
-        path = params['DRS_TELLU_DB']
+        path = params['PATH.TELLU']
     else:
         # TODO: Add to language database
         emsg = 'Unknown database type: {0}'
