@@ -107,7 +107,7 @@ def __main__(recipe: None, params: ParamDict) -> Dict[str, Any]:
     # ----------------------------------------------------------------------
     if 'setup' in params['INPUTS']:
         if params['INPUTS']['setup']:
-            value = os.environ['DRS_UCONFIG']
+            value = os.environ[base.USER_ENV]
             print('SETUP: {0}'.format(value))
             return locals()
     # ----------------------------------------------------------------------

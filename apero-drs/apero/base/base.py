@@ -35,10 +35,10 @@ __YAML__ = yaml.load(open(__PATH__.joinpath('info.yaml')),
 # =============================================================================
 # Get variables from info.yaml
 # =============================================================================
-__version__ = __YAML__['VERSION']
-__authors__ = __YAML__['AUTHORS']
-__date__ = str(__YAML__['DATE'])
-__release__ = __YAML__['RELEASE']
+__version__ = __YAML__['DRS.VERSION']
+__authors__ = __YAML__['DRS.AUTHORS']
+__date__ = str(__YAML__['DRS.DATE'])
+__release__ = __YAML__['DRS.RELEASE']
 # do this once per drs import
 __now__ = base.Time.now()
 AstropyTime = base.Time
@@ -49,7 +49,7 @@ AUTHORS = base.AUTHORS
 # Define yaml files
 INSTALL_YAML = 'install.yaml'
 DATABASE_YAML = 'database.yaml'
-USER_ENV = 'DRS_UCONFIG'
+USER_ENV = base.USER_ENV
 # switch for no db in args
 NO_DB = False
 # Define instruments (last one should be 'None')

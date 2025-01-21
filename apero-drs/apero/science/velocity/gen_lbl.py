@@ -83,7 +83,7 @@ def do_skip(params: ParamDict, recipe_test: str) -> bool:
 
 def run_mkdirs(params: ParamDict):
     # get the lbl path
-    lbl_in_path = params['LBL_PATH']
+    lbl_in_path = params['PATH.LBL']
     # loop around directories
     for directory in LBL_DIRS:
         # construct path
@@ -99,11 +99,11 @@ def run_apero_get(params: ParamDict):
 
     :param params: ParamDict, the parameter dictionary containing constants
 
-    :returns: None, copies or symlinks files to params['LBL_PATH']
+    :returns: None, copies or symlinks files to params['PATH.LBL']
     """
-    pconst = load_functions.load_pconfig(select.INSTRUMENTS)
+    # pconst = load_functions.load_pconfig(select.INSTRUMENTS)
     # get the lbl path
-    lbl_in_path = params['LBL_PATH']
+    lbl_in_path = params['PATH.LBL']
     # APERO file definition out types
     lbl_outtypes = params['LBL_FILE_DEFS']
     # APERO DPRTYPE for lbl science files
@@ -465,7 +465,7 @@ def fake_hkeys(params: ParamDict, filename: str,
 
     # overwrite keys
     pkeys['KW_OBJNAME'] = objname
-    pkeys['KW_INSTRUMENT'] = params['INSTRUMENT']
+    pkeys['KW_INSTRUMENT'] = params['OBS.INSTRUMENT']
     pkeys['KW_OUTPUT'] = drsfile.name
     pkeys['KW_PID'] = params['PID']
     pkeys['KW_DRS_DATE_NOW'] = params['DATE_NOW']
@@ -486,7 +486,7 @@ def dtemp(params: ParamDict) -> Union[Dict[str, str], None]:
     # get the dictionary of dtemp files
     dtemp_keys = params['LBL_DTEMP']
     # get the model directory
-    models_dir = os.path.join(params['LBL_PATH'], 'models')
+    models_dir = os.path.join(params['PATH.LBL'], 'models')
 
     # deal with models directory not existing
     if not os.path.exists(models_dir):

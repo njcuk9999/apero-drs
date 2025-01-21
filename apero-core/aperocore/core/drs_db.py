@@ -1170,7 +1170,7 @@ class DatabaseManager:
         # save params for use throughout
         self.params = params
         self.pconst = pconst
-        self.instrument = base.IPARAMS['INSTRUMENT']
+        self.instrument = base.IPARAMS['OBS.INSTRUMENT']
         # set name
         self.name = 'DatabaseManager'
         self.kind = 'None'

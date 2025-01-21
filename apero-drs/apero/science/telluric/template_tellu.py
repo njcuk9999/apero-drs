@@ -232,9 +232,9 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
             # log progress
             wargs = [reffile.name, jt + 1, len(pmask), p_it + 1,
                      len(upbins)]
-            WLOG(params, '', params['DRS_HEADER'])
+            WLOG(params, '', params['LOG.HEADER'])
             WLOG(params, '', textentry('40-019-00028', args=wargs))
-            WLOG(params, '', params['DRS_HEADER'])
+            WLOG(params, '', params['LOG.HEADER'])
             # ------------------------------------------------------------------
             # load the data for this iteration
             # ------------------------------------------------------------------
@@ -724,9 +724,9 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
             # log progress
             wargs = [reffile.name, jt + 1, len(pmask), p_it + 1,
                      len(upbins)]
-            WLOG(params, '', params['DRS_HEADER'])
+            WLOG(params, '', params['LOG.HEADER'])
             WLOG(params, '', textentry('40-019-00028', args=wargs))
-            WLOG(params, '', params['DRS_HEADER'])
+            WLOG(params, '', params['LOG.HEADER'])
             # ------------------------------------------------------------------
             # load the data for this iteration
             # ------------------------------------------------------------------
@@ -822,12 +822,12 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
             big_cube[:, p_it] = big_cube_tmp[:, 0]
         else:
             # print progress
-            WLOG(params, 'info', params['DRS_HEADER'])
+            WLOG(params, 'info', params['LOG.HEADER'])
             # TODO: Add to language database
             msg = 'Combining bin {0} of {1}'
             margs = [p_it + 1, len(upbins)]
             WLOG(params, '', msg.format(*margs))
-            WLOG(params, '', params['DRS_HEADER'])
+            WLOG(params, '', params['LOG.HEADER'])
             # work out the median of this bin
             median = mp.nanmedian(big_cube_tmp, axis=1)
             # loop through files and normalise by cube median
@@ -884,11 +884,11 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
             final_n = np.sum(big_n, axis=1)
     else:
         # print progress
-        WLOG(params, '', params['DRS_HEADER'])
+        WLOG(params, '', params['LOG.HEADER'])
         # TODO: Add to language database
         msg = 'Combining big_cube error and number of valid pixels'
         WLOG(params, '', msg)
-        WLOG(params, '', params['DRS_HEADER'])
+        WLOG(params, '', params['LOG.HEADER'])
 
         with warnings.catch_warnings(record=True) as _:
             p16, p50, p84 = mp.nanpercentile(big_cube, percentiles, axis=1)
@@ -1234,8 +1234,8 @@ def mk_template_summary(recipe, params, cprops, template_file, qc_params):
     berv_cov = template_file.get_hkey('KW_MKTEMP_BERV_COV')
     min_berv_cov = template_file.get_hkey('KW_MKTEMP_BERV_COV_MIN')
     # add stats
-    recipe.plot.add_stat('KW_VERSION', value=params['DRS_VERSION'])
-    recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS_DATE'])
+    recipe.plot.add_stat('KW_VERSION', value=params['DRS.VERSION'])
+    recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS.DATE'])
     recipe.plot.add_stat('KW_MKTEMP_SNR_ORDER', value=cprops['QC_SNR_ORDER'])
     recipe.plot.add_stat('KW_MKTEMP_SNR_THRES', value=cprops['QC_SNR_THRES'])
     recipe.plot.add_stat('KW_MKTEMP_NFILES', value=nfiles,

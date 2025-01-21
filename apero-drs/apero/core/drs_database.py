@@ -720,7 +720,7 @@ class CalibrationDatabase(DatabaseManager):
         # deal with default time mode
         if timemode is None:
             # get default mode from params
-            timemode = self.params['CALIB_DB_MATCH']
+            timemode = self.params['DB.CALIB_MATCH']
             if timemode not in ['closest', 'older', 'newer']:
                 # log error: Time mode invalid for Calibration database.
                 eargs = [timemode, ' or '.join(['closest', 'older', 'newer'])]
@@ -1168,7 +1168,7 @@ class TelluricDatabase(DatabaseManager):
         # deal with default time mode
         if timemode is None:
             # get default mode from params
-            timemode = self.params['TELLU_DB_MATCH']
+            timemode = self.params['DB.TELLU_MATCH']
             if timemode not in ['closest', 'older', 'newer']:
                 # log error: Time mode invalid for Calibration database.
                 eargs = [timemode, ' or '.join(['closest', 'older', 'newer'])]

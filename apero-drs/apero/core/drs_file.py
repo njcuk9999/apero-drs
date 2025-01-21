@@ -4953,11 +4953,11 @@ class DrsFitsFile(DrsInputFile):
             params = dict()
         # ----------------------------------------------------------------------
         # add version
-        version = params.get('DRS_VERSION', __version__)
+        version = params.get('DRS.VERSION', __version__)
         self.add_hkey('KW_VERSION', value=version)
         # ----------------------------------------------------------------------
         # add drs date
-        drs_date = params.get('DRS_DATE', __date__)
+        drs_date = params.get('DRS.DATE', __date__)
         self.add_hkey('KW_DRS_DATE', value=drs_date)
         # ----------------------------------------------------------------------
         # add date now
@@ -7493,7 +7493,7 @@ class DrsOutFile(DrsInputFile):
         # some keys have to be set manually
         manual_keys = dict()
         manual_keys['KW_PID'] = params['PID']
-        manual_keys['KW_VERSION'] = params['DRS_VERSION']
+        manual_keys['KW_VERSION'] = params['DRS.VERSION']
         manual_keys['KW_FIBER'] = 'None'
         manual_keys['KW_OUTPUT'] = self.name
         # ---------------------------------------------------------------------

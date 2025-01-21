@@ -661,9 +661,9 @@ def write_skymodel(recipe: DrsRecipe, params: ParamDict,
     skymodel_file.copy_original_keys(infile, exclude_groups='wave')
     # ------------------------------------------------------------------
     # add version
-    skymodel_file.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
+    skymodel_file.add_hkey('KW_VERSION', value=params['DRS.VERSION'])
     # add dates
-    skymodel_file.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
+    skymodel_file.add_hkey('KW_DRS_DATE', value=params['DRS.DATE'])
     skymodel_file.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
     # add process id
     skymodel_file.add_hkey('KW_PID', value=params['PID'])
@@ -711,8 +711,8 @@ def mk_skymodel_summary(recipe, params, sky_props: ParamDict, qc_params):
     # TODO: Write skymodel summary
     _ = sky_props
     # add stats
-    recipe.plot.add_stat('KW_VERSION', value=params['DRS_VERSION'])
-    recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS_DATE'])
+    recipe.plot.add_stat('KW_VERSION', value=params['DRS.VERSION'])
+    recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS.DATE'])
     recipe.plot.add_stat('', value=None)
     # construct summary
     recipe.plot.summary_document(0, qc_params)

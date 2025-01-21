@@ -175,7 +175,7 @@ def __main__(recipe, params):
         # copy keys from input file
         outfile.copy_original_keys(infile)
         # add version
-        outfile.add_hkey('KW_PPVERSION', value=params['DRS_VERSION'])
+        outfile.add_hkey('KW_PPVERSION', value=params['DRS.VERSION'])
         # add core values (that should be in all headers)
         outfile.add_core_hkeys(params)
         # add input filename

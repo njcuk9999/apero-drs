@@ -196,15 +196,15 @@ def __setup__(name: str = 'None', instrument: str = 'None',
     # -------------------------------------------------------------------------
     # check that instrument is valid (i.e. input instrument is None or matches
     #    base.IPARAMS)
-    if 'INSTRUMENT' in base.IPARAMS:
+    if 'OBS.INSTRUMENT' in base.IPARAMS:
         if not drs_text.null_text(instrument, ['None']):
-            if instrument != base.IPARAMS['INSTRUMENT']:
+            if instrument != base.IPARAMS['OBS.INSTRUMENT']:
                 emsg = 'Cannot use {0} for instrument {1}'
-                eargs = [name, base.IPARAMS['INSTRUMENT']]
+                eargs = [name, base.IPARAMS['OBS.INSTRUMENT']]
                 WLOG(None, 'error', emsg.format(*eargs))
         else:
             # update instrument
-            instrument = str(base.IPARAMS['INSTRUMENT'])
+            instrument = str(base.IPARAMS['OBS.INSTRUMENT'])
             # update recipe instrument
             recipe.instrument = str(instrument)
             # need to update filemod and recipe mod
@@ -233,11 +233,11 @@ def __setup__(name: str = 'None', instrument: str = 'None',
                                            block_kind=recipe.out_block_str)
     # -------------------------------------------------------------------------
     # need to deal with drs group
-    if 'DRS_GROUP' in fkwargs:
-        drsgrouppath = fkwargs['DRS_GROUP']
+    if 'DRS.GROUP' in fkwargs:
+        drsgrouppath = fkwargs['DRS.GROUP']
         # only keep the basename for drs group name
         drsgroupname = os.path.basename(drsgrouppath)
-        del fkwargs['DRS_GROUP']
+        del fkwargs['DRS.GROUP']
     else:
         drsgrouppath, drsgroupname = None, None
     # need to deal with recipe_type and kind from fkwargs
@@ -250,10 +250,10 @@ def __setup__(name: str = 'None', instrument: str = 'None',
         if not drs_text.null_text(fkwargs['recipe_type'], ['None', '']):
             recipe_type = fkwargs['recipe_type']
     # set DRS_GROUP
-    recipe.params.set('DRS_GROUP', drsgroupname, source=func_name)
-    recipe.params.set('DRS_GROUP_PATH', drsgrouppath, source=func_name)
-    recipe.params.set('DRS_RECIPE_TYPE', recipe_type, source=func_name)
-    recipe.params.set('DRS_RECIPE_KIND', recipe_kind, source=func_name)
+    recipe.params.set('DRS.GROUP', drsgroupname, source=func_name)
+    recipe.params.set('DRS.GROUP_PATH', drsgrouppath, source=func_name)
+    recipe.params.set('DRS.RECIPE_TYPE', recipe_type, source=func_name)
+    recipe.params.set('DRS.RECIPE_KIND', recipe_kind, source=func_name)
     # set reference
     recipe.params.set('IS_REF', recipe.reference, source=func_name)
     # -------------------------------------------------------------------------
@@ -412,7 +412,7 @@ def __setup__(name: str = 'None', instrument: str = 'None',
     # -------------------------------------------------------------------------
     # add the recipe log
     cond1 = not drs_text.null_text(instrument, ['None', ''])
-    cond2 = params['DRS_RECIPE_TYPE'] != 'nolog-tool'
+    cond2 = params['DRS.RECIPE_TYPE'] != 'nolog-tool'
     if cond1 and cond2:
         recipe.log = drs_utils.RecipeLog(recipe.name, recipe.shortname,
                                          params, flags=recipe.flags)
@@ -482,7 +482,7 @@ def run(func: Any, recipe: DrsRecipe,
             llmain = dict(e=e, tb=string_trackback, params=params,
                           recipe=recipe)
             # add error to log file
-            if params['DRS_RECIPE_TYPE'] != 'nolog-tool':
+            if params['DRS.RECIPE_TYPE'] != 'nolog-tool':
                 recipe.log.add_error('KeyboardInterrupt', '')
             # reset the lock directory
             drs_lock.reset_lock_dir(params)
@@ -498,7 +498,7 @@ def run(func: Any, recipe: DrsRecipe,
             llmain = dict(e=e, tb=string_trackback, params=params,
                           recipe=recipe)
             # add error to log file
-            if params['DRS_RECIPE_TYPE'] != 'nolog-tool':
+            if params['DRS.RECIPE_TYPE'] != 'nolog-tool':
                 recipe.log.add_error(type(e), str(e))
             # reset the lock directory
             drs_lock.reset_lock_dir(params)
@@ -509,7 +509,7 @@ def run(func: Any, recipe: DrsRecipe,
             # save params to llmain
             llmain = dict(e=e, tb='', params=params, recipe=recipe)
             # add error to log file
-            if params['DRS_RECIPE_TYPE'] != 'nolog-tool':
+            if params['DRS.RECIPE_TYPE'] != 'nolog-tool':
                 recipe.log.add_error('DatabaseError Exit', '')
             # reset the lock directory
             drs_lock.reset_lock_dir(params)
@@ -520,7 +520,7 @@ def run(func: Any, recipe: DrsRecipe,
             # save params to llmain
             llmain = dict(e=e, tb='', params=params, recipe=recipe)
             # add error to log file
-            if params['DRS_RECIPE_TYPE'] != 'nolog-tool':
+            if params['DRS.RECIPE_TYPE'] != 'nolog-tool':
                 recipe.log.add_error('LanguageError Exit', '')
             # reset the lock directory
             drs_lock.reset_lock_dir(params)
@@ -536,7 +536,7 @@ def run(func: Any, recipe: DrsRecipe,
             llmain = dict(e=e, tb=string_trackback, params=params,
                           recipe=recipe)
             # add error to log file
-            if params['DRS_RECIPE_TYPE'] != 'nolog-tool':
+            if params['DRS.RECIPE_TYPE'] != 'nolog-tool':
                 recipe.log.add_error(type(e), str(e))
             # reset the lock directory
             drs_lock.reset_lock_dir(params)
@@ -547,7 +547,7 @@ def run(func: Any, recipe: DrsRecipe,
             # save params to llmain
             llmain = dict(e=e, tb='', params=params, recipe=recipe)
             # add error to log file
-            if params['DRS_RECIPE_TYPE'] != 'nolog-tool':
+            if params['DRS.RECIPE_TYPE'] != 'nolog-tool':
                 recipe.log.add_error('DebugExit', '')
             # reset the lock directory
             drs_lock.reset_lock_dir(params)
@@ -558,7 +558,7 @@ def run(func: Any, recipe: DrsRecipe,
             # save params to llmain
             llmain = dict(e=e, tb='', params=params, recipe=recipe)
             # add error to log file
-            if params['DRS_RECIPE_TYPE'] != 'nolog-tool':
+            if params['DRS.RECIPE_TYPE'] != 'nolog-tool':
                 recipe.log.add_error('DrsBaseError Exit', '')
             # reset the lock directory
             drs_lock.reset_lock_dir(params)
@@ -571,7 +571,7 @@ def run(func: Any, recipe: DrsRecipe,
             # save params to llmain
             llmain = dict(e=e, tb='', params=params, recipe=recipe)
             # add error to log file
-            if params['DRS_RECIPE_TYPE'] != 'nolog-tool':
+            if params['DRS.RECIPE_TYPE'] != 'nolog-tool':
                 recipe.log.add_error('DrsBaseError Exit', '')
         except Exception as e:
             # get the trace back
@@ -586,7 +586,7 @@ def run(func: Any, recipe: DrsRecipe,
             llmain = dict(e=e, tb=string_trackback, params=params,
                           recipe=recipe)
             # add error to log file
-            if params['DRS_RECIPE_TYPE'] != 'nolog-tool':
+            if params['DRS.RECIPE_TYPE'] != 'nolog-tool':
                 recipe.log.add_error(type(e), str(e))
             # reset the lock directory
             drs_lock.reset_lock_dir(params)
@@ -603,7 +603,7 @@ def run(func: Any, recipe: DrsRecipe,
             llmain = dict(e=e, tb=string_trackback, params=params,
                           recipe=recipe)
             # add error to log file
-            if params['DRS_RECIPE_TYPE'] != 'nolog-tool':
+            if params['DRS.RECIPE_TYPE'] != 'nolog-tool':
                 recipe.log.add_error(type(e), str(e))
             # reset the lock directory
             drs_lock.reset_lock_dir(params)
@@ -627,20 +627,20 @@ def end_all(params: ParamDict = None, success: bool = True,
     # log the success (or failure)
     if success and (not quiet):
         iargs = [str(params.get('RECIPE', recipename))]
-        WLOG(params, 'info', params['DRS_HEADER'])
+        WLOG(params, 'info', params['LOG.HEADER'])
         msg = textentry('40-003-00001', args=iargs)
         if duration is not None:
             msg += f'\t({duration:.3f} seconds)'
         WLOG(params, 'info', msg)
-        WLOG(params, 'info', params['DRS_HEADER'])
+        WLOG(params, 'info', params['LOG.HEADER'])
     elif not quiet:
         wargs = [str(params.get('RECIPE', recipename))]
-        WLOG(params, 'info', params['DRS_HEADER'], colour='red')
+        WLOG(params, 'info', params['LOG.HEADER'], colour='red')
         msg = textentry('40-003-00005', args=wargs)
         if duration is not None:
             msg += f'\t({duration:.3f} seconds)'
         WLOG(params, 'warning', msg, colour='red', sublevel=8)
-        WLOG(params, 'info', params['DRS_HEADER'], colour='red')
+        WLOG(params, 'info', params['LOG.HEADER'], colour='red')
 
 
 def end_main(params: ParamDict, llmain: Union[Dict[str, Any], None],
@@ -864,7 +864,7 @@ def copy_kwargs(params: ParamDict, recipe: Union[DrsRecipe, None] = None,
         raise drs_log.AperoCodedException(params, '00-001-00040',
                                           targs=[func_name])
     elif recipe is None:
-        recipe, _ = find_recipe(recipename, params['INSTRUMENT'], recipemod)
+        recipe, _ = find_recipe(recipename, params['OBS.INSTRUMENT'], recipemod)
     # get inputs for
     inputs = params['INPUTS']
     # get recipe arguments/kwarg arguments
@@ -927,10 +927,10 @@ def file_processing_update(params: ParamDict, it: int, num_files: int):
     # set function name
     # _ = display_func('file_processing_update', __NAME__)
     # log
-    WLOG(params, '', params['DRS_HEADER'])
+    WLOG(params, '', params['LOG.HEADER'])
     eargs = [it + 1, num_files]
     WLOG(params, '', textentry('40-001-00020', args=eargs))
-    WLOG(params, '', params['DRS_HEADER'])
+    WLOG(params, '', params['LOG.HEADER'])
 
 
 def fiber_processing_update(params: ParamDict, fiber: str):
@@ -946,9 +946,9 @@ def fiber_processing_update(params: ParamDict, fiber: str):
     # set function name
     # _ = display_func('fiber_processing_update', __NAME__)
     # log
-    WLOG(params, '', params['DRS_HEADER'])
+    WLOG(params, '', params['LOG.HEADER'])
     WLOG(params, '', textentry('40-001-00022', args=[fiber]))
-    WLOG(params, '', params['DRS_HEADER'])
+    WLOG(params, '', params['LOG.HEADER'])
 
 
 def end_plotting(params: ParamDict, recipe: Union[DrsRecipe, None]):
@@ -1568,10 +1568,10 @@ def _display_drs_title(params: ParamDict, group: Union[str, None] = None,
     title = '* '
     title += colors.RED1 + ' {0} ' + colors.okgreen + '@{1}'
     title += ' (' + colors.BLUE1 + 'V{2}' + colors.okgreen + ')'
-    title = title.format(params['INSTRUMENT'], params['PID'],
-                         params['DRS_VERSION'])
+    title = title.format(params['OBS.INSTRUMENT'], params['PID'],
+                         params['DRS.VERSION'])
     title += '\n' + '* '
-    title += colors.BLUE1 + ' '*len(params['INSTRUMENT'])
+    title += colors.BLUE1 + ' '*len(params['OBS.INSTRUMENT'])
     title += '  py' + params['PYVERSION']
     if params['GIT_BRANCH'] != 'Unknown':
         title += '  git:' + params['GIT_BRANCH']
@@ -1600,7 +1600,7 @@ def _display_title(params: ParamDict, title: str,
     # set function name
     # _ = display_func('_display_title', __NAME__)
     # print and log
-    WLOG(params, '', params['DRS_HEADER'], wrap=False, printonly=printonly,
+    WLOG(params, '', params['LOG.HEADER'], wrap=False, printonly=printonly,
          logonly=logonly)
     # add title
     WLOG(params, '', '*\n{0}\n*'.format(title), wrap=False,
@@ -1610,7 +1610,7 @@ def _display_title(params: ParamDict, title: str,
         WLOG(params, '', '* \tGroup: {0}'.format(group), wrap=False,
              printonly=printonly, logonly=logonly)
     # end header
-    WLOG(params, '', params['DRS_HEADER'], wrap=False,
+    WLOG(params, '', params['LOG.HEADER'], wrap=False,
          printonly=printonly, logonly=logonly)
 
 
@@ -1633,7 +1633,7 @@ def _display_logo(params: ParamDict):
     for line in logo:
         WLOG(params, '', colors.RED1 + line + colors.ENDC, wrap=False,
              printonly=True)
-    WLOG(params, '', params['DRS_HEADER'], wrap=False, printonly=True)
+    WLOG(params, '', params['LOG.HEADER'], wrap=False, printonly=True)
 
 
 def _display_ee(params: ParamDict):
@@ -1661,7 +1661,7 @@ def _display_ee(params: ParamDict):
     for line in logo:
         WLOG(params, '', colors.RED1 + line + colors.ENDC, wrap=False,
              printonly=True)
-    WLOG(params, '', params['DRS_HEADER'], printonly=True)
+    WLOG(params, '', params['LOG.HEADER'], printonly=True)
 
 
 def _display_initial_parameterisation(params: ParamDict,
@@ -1734,24 +1734,25 @@ def _display_initial_parameterisation(params: ParamDict,
     wmsgs += textentry('\n\tPATH.LOG: {}'.format(params['PATH.LOG']))
     wmsgs += textentry('\n\tPATH.RUN: {}'.format(params['PATH.RUN']))
     wmsgs += textentry('\n\tPATH.PLOT: {}'.format(params['PATH.PLOT']))
-    wmsgs += textentry('\n\tDRS_DATA_OTHER: {}'.format(params['DRS_DATA_OTHER']))
-    wmsgs += textentry('\n\tLBL_PATH: {}'.format(params['LBL_PATH']))
+    wmsgs += textentry('\n\tPATH.OTHER: {}'.format(params['PATH.OTHER']))
+    wmsgs += textentry('\n\tPATH.LBL: {}'.format(params['PATH.LBL']))
     # add config sources
     for source in np.sort(params['DRS_CONFIG']):
         wmsgs += textentry('\n\tDRS_CONFIG: {0}'.format(source))
     # add database settings
     wmsgs = _display_database_settings(wmsgs)
     # add others
-    wmsgs += textentry('\n\tPRINT_LEVEL: {}'.format(params['DRS_PRINT_LEVEL']))
-    wmsgs += textentry('\n\tLOG_LEVEL: {}'.format(params['DRS_LOG_LEVEL']))
-    wmsgs += textentry('\n\tPLOT_MODE: {}'.format(params['GLOBAL.PLOT_MODE']))
+    wmsgs += textentry('\n\tLOG.PLEVEL: {}'.format(params['LOG.PLEVEL']))
+    wmsgs += textentry('\n\tLOG.LLEVEL: {}'.format(params['LOG.LLEVEL']))
+    wmsgs += textentry('\n\tGLOBAL.PLOT_MODE: {}'
+                       ''.format(params['GLOBAL.PLOT_MODE']))
     if params['GLOBAL.DEBUG'] > 0:
         wargs = ['GLOBAL.DEBUG', params['GLOBAL.DEBUG']]
         wmsgs += '\n' + textentry('40-001-00009', args=wargs)
     # log to screen and file
     WLOG(params, 'info', textentry('40-001-00006') + wmsgs,
          printonly=printonly, logonly=logonly, wrap=False)
-    WLOG(params, '', params['DRS_HEADER'], printonly=printonly,
+    WLOG(params, '', params['LOG.HEADER'], printonly=printonly,
          logonly=logonly)
 
 
@@ -1808,7 +1809,7 @@ def _display_system_info(params: ParamDict, logonly: bool = True,
     # _ = display_func('_display_system_info', __NAME__)
     # noinspection PyListCreation
     messages = ' ' + textentry('40-001-00010')
-    messages += '\n' + textentry(params['DRS_HEADER'])
+    messages += '\n' + textentry(params['LOG.HEADER'])
     # add version /python dist keys
     messages = _sort_version(messages)
     # add os keys
@@ -1823,7 +1824,7 @@ def _display_system_info(params: ParamDict, logonly: bool = True,
         arg_msg = '\t Arg {0} = \'{1}\''.format(it + 1, arg)
         messages += '\n' + textentry(arg_msg)
     # add ending header
-    messages += '\n' + textentry(params['DRS_HEADER'])
+    messages += '\n' + textentry(params['LOG.HEADER'])
     if return_message:
         return messages
     else:
@@ -1890,7 +1891,7 @@ def _display_run_time_arguments(recipe, fkwargs=None, printonly=False,
         # add a newline string to log_String
         WLOG(params, 'info', textentry('40-001-00017') + log_strings,
              printonly=printonly, logonly=logonly)
-        WLOG(params, '', textentry(params['DRS_HEADER']), printonly=printonly,
+        WLOG(params, '', textentry(params['LOG.HEADER']), printonly=printonly,
              logonly=logonly)
 
 

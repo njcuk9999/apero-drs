@@ -21,6 +21,7 @@ from astropy.table import Table
 from scipy.ndimage import zoom
 from scipy.optimize import curve_fit
 
+from apero.base import base as apero_base
 from aperocore.constants import param_functions
 from aperocore.constants import load_functions
 from aperocore import drs_lang
@@ -49,13 +50,12 @@ from apero.instruments import select
 # =============================================================================
 __NAME__ = 'science.calib.wave.py'
 __INSTRUMENT__ = 'None'
-# Get constants
-Constants = load_functions.load_config(select.INSTRUMENTS, __INSTRUMENT__)
 # Get version and author
-__version__ = Constants['DRS_VERSION']
-__authors__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
+__PACKAGE__ = apero_base.__PACKAGE__
+__version__ = apero_base.__version__
+__authors__ = apero_base.__authors__
+__date__ = apero_base.__date__
+__release__ = apero_base.__release__
 # get param dict
 ParamDict = param_functions.ParamDict
 DrsFitsFile = drs_file.DrsFitsFile
@@ -905,7 +905,7 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
     # ------------------------------------------------------------------
     # get psuedo constants
     pconst = load_functions.load_pconfig(select.INSTRUMENTS, 
-                                         params['INSTRUMENT'])
+                                         params['OBS.INSTRUMENT'])
     # get the shape from the wavemap
     nbo, nbpix = wavemap.shape
     # get dprtype
@@ -2307,7 +2307,7 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
                          fiber, calibdbm):
     # ----------------------------------------------------------------------
     # find the extraction recipe
-    extrecipe, _ = drs_startup.find_recipe(extname, params['INSTRUMENT'],
+    extrecipe, _ = drs_startup.find_recipe(extname, params['OBS.INSTRUMENT'],
                                            mod=recipe.recipemod)
     extrecipe.params = params
     # ----------------------------------------------------------------------
@@ -3250,7 +3250,7 @@ def write_wavesol(params: ParamDict, recipe: DrsRecipe, fiber: str,
     wavefile.construct_filename(infile=fpfile)
     # set some wave keys as "SELF" (i.e. from this wave solution)
     wprops['WAVEFILE'] = wavefile.basename
-    sargs = [recipe.name, params['DRS_VERSION']]
+    sargs = [recipe.name, params['DRS.VERSION']]
     wprops['WAVESOURCE'] = '{0} [{1}]'.format(*sargs)
     wprops['WFP_FILE'] = wavefile.basename
 
@@ -3869,9 +3869,9 @@ def wave_summary(recipe, params, props, fiber, qc_params):
     # add qc params (fiber specific)
     recipe.plot.add_qc_params(qc_params, fiber=fiber)
     # add stats
-    recipe.plot.add_stat('KW_VERSION', value=params['DRS_VERSION'],
+    recipe.plot.add_stat('KW_VERSION', value=params['DRS.VERSION'],
                          fiber=fiber)
-    recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS_DATE'],
+    recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS.DATE'],
                          fiber=fiber)
     # add constants used (for reproduction)
     recipe.plot.add_stat('KW_WAVEFILE', value=props['WAVEFILE'])

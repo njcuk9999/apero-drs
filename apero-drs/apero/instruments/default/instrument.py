@@ -423,7 +423,7 @@ class Instrument:
         # set function name
         # _ = display_func('EXIT', __NAME__, self.class_name)
         # try to key exit type
-        my_exit = params.get('DRS_LOG_EXIT_TYPE', 'sys')
+        my_exit = params.get('LOG.EXIT_TYPE', 'sys')
         if my_exit == 'sys':
             return sys.exit
         if my_exit == 'os':
@@ -497,63 +497,6 @@ class Instrument:
         # return lpath
         return lpath
 
-    def LOG_STORAGE_KEYS(self) -> Dict[str, str]:
-        """
-        Create a dictionary of all the levels of logging available (values
-        are the params[KEY] to save them in
-
-        :return: dictionary of strings keys are logging levels, values are
-                 params[KEY] to save them to
-        """
-        # set function name
-        # _ = display_func('LOG_STORAGE_KEYS', __NAME__, self.class_name)
-        # The storage key to use for each key
-        storekey = dict(all='LOGGER_ALL', error='LOGGER_ERROR',
-                        warning='LOGGER_WARNING',
-                        info='LOGGER_INFO', graph='LOGGER_ALL',
-                        debug='LOGGER_DEBUG')
-        return storekey
-
-    def LOG_CAUGHT_WARNINGS(self) -> bool:
-        """
-        Defines a reference switch, whether to report warnings that are caught in
-
-        >> with warnings.catch_warnings(record=True) as w:
-        >>     code_that_may_gen_warnings
-
-        :return warn: bool, if True reports warnings, if False does not
-        """
-        # set function name
-        # _ = display_func('LOG_CAUGHT_WARNINGS', __NAME__, self.class_name)
-        # Define whether we warn
-        warn = True
-        return warn
-
-    def LOG_TRIG_KEYS(self) -> Dict[str, str]:
-        """
-        The log trigger key characters to use in log. Keys must be the same as
-        spirouConst.WRITE_LEVELS()
-
-        i.e.
-
-        if the following is defined:
-        >> trig_key[error] = '!'
-        and the following log is used:
-        >> WLOG(p, 'error', 'message')
-        the output is:
-        >> print("TIMESTAMP - ! |program|message")
-
-        :return trig_key: dictionary, contains all the trigger keys and the
-                          characters/strings to use in logging. Keys must be the
-                          same as spirouConst.WRITE_LEVELS()
-        """
-        # set function name
-        # _ = display_func('LOG_TRIG_KEYS', __NAME__, self.class_name)
-        # The trigger character to display for each
-        trig_key = dict(all='  ', error='!!', warning='@@',
-                        info='**', graph='~~', debug='++')
-        return trig_key
-
     def ADJUST_SUBLEVEL(self, code: str, sublevel: Optional[int] = None):
         """
         Adjust the log code based on sub level (minor and major)
@@ -572,53 +515,6 @@ class Instrument:
             return '{0}!'.format(code[0])
         else:
             return '{0}$'.format(code[0])
-
-    def WRITE_LEVEL(self) -> Dict[str, int]:
-        """
-        The write levels. Keys must be the same as spirouConst.LOG_TRIG_KEYS()
-
-        The write levels define which levels are logged and printed (based on
-        constants "PRINT_LEVEL" and "LOG_LEVEL" in the primary config file
-
-        i.e. if
-        >> PRINT_LEVEL = 'warning'
-        then no level with a numerical value less than
-        >> write_level['warning']
-        will be printed to the screen
-
-        similarly if
-        >> LOG_LEVEL = 'error'
-        then no level with a numerical value less than
-        >> write_level['error']
-        will be printed to the log file
-
-        :return write_level: dictionary, contains the keys and numerical levels
-                             of each trigger level. Keys must be the same as
-                             spirouConst.LOG_TRIG_KEYS()
-        """
-        # set function name
-        # _ = display_func('WRITE_LEVEL', __NAME__, self.class_name)
-        # set the write levels
-        write_level = dict(error=3, warning=2, info=1,
-                           graph=0, all=0, debug=0)
-        return write_level
-
-    def REPORT_KEYS(self) -> dict:
-        """
-        The report levels. Keys must be the same as spirouConst.LOG_TRIG_KEYS()
-
-        If True then the input code is printed (used for errors /warning/debug)
-
-        if False just the message is printed
-
-        :returns: dictionary of True and False for each level
-        """
-        # set function name
-        # _ = display_func('REPORT_KEYS', __NAME__, self.class_name)
-        # set the report level
-        report_level = dict(error=True, warning=True,
-                            info=False, graph=False, all=False, debug=False)
-        return report_level
 
     def SPLASH(self) -> List[str]:
         """
@@ -920,12 +816,12 @@ class Instrument:
         # _ = display_func('FONT_DICT', __NAME__, self.class_name)
         # set up font storage
         font = dict()
-        if params['DRS_PLOT_FONT_FAMILY'] != 'None':
-            font['family'] = params['DRS_PLOT_FONT_FAMILY']
-        if params['DRS_PLOT_FONT_WEIGHT'] != 'None':
-            font['weight'] = params['DRS_PLOT_FONT_WEIGHT']
-        if params['DRS_PLOT_FONT_SIZE'] > 0:
-            font['size'] = params['DRS_PLOT_FONT_SIZE']
+        if params['PLOT.CORE.FONT_FAMILY'] != 'None':
+            font['family'] = params['PLOT.CORE.FONT_FAMILY']
+        if params['PLOT.CORE.FONT_WEIGHT'] != 'None':
+            font['weight'] = params['PLOT.CORE.FONT_WEIGHT']
+        if params['PLOT.CORE.FONT_SIZE'] > 0:
+            font['size'] = params['PLOT.CORE.FONT_SIZE']
         return font
 
     # =========================================================================
@@ -1466,8 +1362,8 @@ def get_sun_altitude(params: Any, header: Any, hdict: Any) -> Tuple[Any, Any]:
     :return: the updated header/hdict
     """
     # get longitude and latitude from params
-    obs_lat = params['OBS_LAT'] * uu.deg
-    obs_long = params['OBS_LONG'] * uu.deg
+    obs_lat = params['OBS.LAT'] * uu.deg
+    obs_long = params['OBS.LONG'] * uu.deg
     # get the definitions of civil, nautical and astronomical twilight
     night_def = params['NIGHT_DEFINITION']
     civ_twil_angle = apero_base.CIVIL_TWILIGHT

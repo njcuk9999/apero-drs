@@ -2073,7 +2073,7 @@ def ari_filetypes(params: ParamDict) -> Dict[str, FileType]:
 
 def get_has_polar(params: ParamDict) -> bool:
     # get polar condition
-    has_polar = HAS_POLAR[params['INSTRUMENT']]
+    has_polar = HAS_POLAR[params['OBS.INSTRUMENT']]
     # return has polar
     return has_polar
 
@@ -2285,7 +2285,7 @@ def add_lbl_count(params: ParamDict, object_classes: Dict[str, AriObject]
     wlog = drs_log.wlog
     # -------------------------------------------------------------------------
     # get the lbl path
-    lbl_path = params['LBL_PATH']
+    lbl_path = params['PATH.LBL']
     if lbl_path in params:
         lbl_path = params[lbl_path]
     # -------------------------------------------------------------------------
@@ -3101,10 +3101,10 @@ def get_objnames_headers(objname: str, indexdbm: Any) -> str:
 def calc_obs_windows(params: ParamDict, hprops, times: np.ndarray):
 
     # Define observer's location
-    observer = Observer(latitude=params['OBS_LAT']*uu.deg,
-                        longitude=params['OBS_LONG']*uu.deg,
-                        elevation=params['OBS_ALT']*uu.m,
-                        timezone=params['OBS_TZ'])
+    observer = Observer(latitude=params['OBS.LAT']*uu.deg,
+                        longitude=params['OBS.LONG']*uu.deg,
+                        elevation=params['OBS.ALT']*uu.m,
+                        timezone=params['OBS.TIMEZONE'])
 
     # Define the object's coordinates (RA, Dec)
     object_coords = SkyCoord(ra=hprops['RA']*uu.deg, dec=hprops['DEC']*uu.deg)

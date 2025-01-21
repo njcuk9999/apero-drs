@@ -38,12 +38,12 @@ __YAML__ = yaml.load(open(__PATH__.joinpath('info.yaml')),
 # =============================================================================
 # Get variables from info.yaml
 # =============================================================================
-__version__ = __YAML__['VERSION']
-__authors__ = __YAML__['AUTHORS']
-__date__ = __YAML__['DATE']
-__release__ = __YAML__['RELEASE']
+__version__ = __YAML__['DRS.VERSION']
+__authors__ = __YAML__['DRS.AUTHORS']
+__date__ = __YAML__['DRS.DATE']
+__release__ = __YAML__['DRS.RELEASE']
 
-INSTRUMENTS = __YAML__['INSTRUMENTS']
+INSTRUMENTS = __YAML__['DRS.INSTRUMENTS']
 # -----------------------------------------------------------------------------
 # get print colours
 COLOR = drs_misc.Colors()
@@ -77,7 +77,7 @@ def display_title():
     title = title.format('APERO', 'Execute', __version__)
     title += colors.ENDC
     # header
-    drs_header = '*' * base.__YAML__['LOG']['DRS_LOG_CHAR_LEN']
+    drs_header = '*' * base.__YAML__['LOG']['CHAR_LEN']
     # set function name
     # _ = display_func('_display_title', __NAME__)
     # print and log
@@ -158,7 +158,7 @@ def list_recipes(aparams: ParamDict, rparams: ParamDict):
     dev = rparams['DEV']
     # -------------------------------------------------------------------------
     # message the list of recipes
-    msg = 'List of recipes for {0} instrument:'.format(aparams['INSTRUMENT'])
+    msg = 'List of recipes for {0} instrument:'.format(aparams['OBS.INSTRUMENT'])
     # loop around recipes
     for it, shortname in enumerate(shortname_list):
         # deal with not being dev mode and showing admin recipes
@@ -172,7 +172,7 @@ def list_recipes(aparams: ParamDict, rparams: ParamDict):
     WLOG(aparams, 'info', msg)
     # -------------------------------------------------------------------------
     # message the list of tools
-    msg = 'List of tools for {0} instrument:'.format(aparams['INSTRUMENT'])
+    msg = 'List of tools for {0} instrument:'.format(aparams['OBS.INSTRUMENT'])
     # loop around tools
     for it, shortname in enumerate(shortname_list):
         # deal with not being dev mode and showing admin recipes
@@ -187,7 +187,8 @@ def list_recipes(aparams: ParamDict, rparams: ParamDict):
     # -------------------------------------------------------------------------
     # message the list of tools
     if dev:
-        msg = 'List of dev-tools for {0} instrument:'.format(aparams['INSTRUMENT'])
+        msg = ('List of dev-tools for {0} instrument:'
+               '').format(aparams['OBS.INSTRUMENT'])
         # loop around tools
         for it, shortname in enumerate(shortname_list):
             # deal with not being dev mode and showing admin recipes

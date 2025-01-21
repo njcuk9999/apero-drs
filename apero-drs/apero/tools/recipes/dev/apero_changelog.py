@@ -89,7 +89,7 @@ def __main__(recipe, params):
     os.system('git fetch --tags')
 
     # get package
-    package = params['DRS_PACKAGE']
+    package = params['DRS.PACKAGE']
     # get filename
     filename = drs_misc.get_relative_folder(package, CLOGFILENAME)
     # get version file path

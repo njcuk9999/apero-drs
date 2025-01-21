@@ -152,7 +152,7 @@ def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
     # add output tag
     lsdfile.add_hkey('KW_OUTPUT', value=lsdfile.name)
     # add the lsd origin
-    instrument = params['INSTRUMENT']
+    instrument = params['OBS.INSTRUMENT']
     lsdfile.add_hkey('KW_LSD_ORIGIN', value='{0}_LSD'.format(instrument))
     # add the rv from lsd gaussian fit
     lsdfile.add_hkey('KW_LSD_FIT_RV', value=lsd_fit_rv)

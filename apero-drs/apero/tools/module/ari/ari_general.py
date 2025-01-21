@@ -75,7 +75,7 @@ def load_ari_params(params: ParamDict) -> ParamDict:
         # get yaml file basename
         profile_basename = os.path.basename(profile_yaml)
         # attempt to find the yaml profile file in the other/ari-config dir
-        trial_path = os.path.join(params['DRS_DATA_OTHER'], 'ari-config',
+        trial_path = os.path.join(params['PATH.OTHER'], 'ari-config',
                                   profile_basename)
         # deal with the trial path not existing
         if not os.path.exists(trial_path):
@@ -160,7 +160,7 @@ def load_ari_params(params: ParamDict) -> ParamDict:
     # build some ARI paths for use throughout
     # ----------------------------------------------------------------------
     # over all ari directory
-    ari_dir = os.path.join(params['DRS_DATA_OTHER'], 'ari',
+    ari_dir = os.path.join(params['PATH.OTHER'], 'ari',
                            str(params['ARI_USER']))
     # ARI object yaml directory
     ari_obj_yamls = os.path.join(ari_dir, 'object_yamls')
@@ -212,7 +212,7 @@ def list_profiles(params: ParamDict):
     # get the requested profile name
     profile_name = params['INPUTS']['profile']
     # get the path to the profiles
-    profile_path = os.path.join(params['DRS_DATA_OTHER'], 'ari-config')
+    profile_path = os.path.join(params['PATH.OTHER'], 'ari-config')
     # get available profiles (yaml files)
     files = os.listdir(profile_path)
     # test if profile exists
@@ -435,7 +435,7 @@ def save_yamls(params: ParamDict, object_classes: Dict[str, AriObject]):
 
 def upload(params: ParamDict) -> None:
     # get the base_path page (above ari_dir level)
-    base_path = str(os.path.join(params['DRS_DATA_OTHER'], 'ari',
+    base_path = str(os.path.join(params['PATH.OTHER'], 'ari',
                                  '_build', 'html'))
     # get the ssh directory
     ssh_directory = params['ARI_SSH_COPY']['directory']
@@ -454,7 +454,7 @@ def upload(params: ParamDict) -> None:
     ari_core.do_rsync(params, mode='send', path_in=base_path,
                       path_out=remote_path)
     # get home path
-    home_path = str(os.path.join(params['DRS_DATA_OTHER'], 'ari-home'))
+    home_path = str(os.path.join(params['PATH.OTHER'], 'ari-home'))
     # download the userlist.txt file and copy it over userlist_yaml
     remote_home_path = str(os.path.join(ssh_directory, 'home'))
     # make sure we copy contents not directory

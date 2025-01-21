@@ -48,7 +48,7 @@ def make_pickle(params: ParamDict, instance: Any, prefix: str, suffix: int,
     :return: None, writes file to DRS_DATA_OTHER/pickles/{prefix}/
     """
     # get the output directory
-    outdir = os.path.join(params['DRS_DATA_OTHER'], 'pickles', prefix)
+    outdir = os.path.join(params['PATH.OTHER'], 'pickles', prefix)
     # make directory if it doesn't exist - might happen at same time
     while not os.path.exists(outdir):
         try:
@@ -81,7 +81,7 @@ def get_pickle(params: ParamDict, prefix: str, suffix: Optional[int] = None,
     :return: The loaded pickle file (or list of loaded pickle files)
     """
     # get the output directory
-    outdir = os.path.join(params['DRS_DATA_OTHER'], 'pickles', prefix)
+    outdir = os.path.join(params['PATH.OTHER'], 'pickles', prefix)
     # no suffix - get all files
     if suffix is None:
         # construct the filename

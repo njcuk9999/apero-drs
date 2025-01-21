@@ -109,12 +109,12 @@ def update_remote_assets(params: ParamDict):
     yaml_dict['setup']['vdate'] = base.__date__
     yaml_dict['setup']['unixtime'] = float(time_now.unix)
     yaml_dict['setup']['humantime'] = time_now.iso
-    yaml_dict['setup']['servers'] = params['DRS_ASSETS_URLS']
+    yaml_dict['setup']['servers'] = params['AURLS.URLS']
     # -------------------------------------------------------------------------
     # Step 4: Save the yaml file
     # -------------------------------------------------------------------------
     # get path to yaml file
-    _data_path = params['DRS_CRITICAL_DATA_PATH']
+    _data_path = params['IPATH.CDATA']
     # get the data path
     abs_data_path = drs_data.construct_path(params, '', _data_path)
     # add the checksum filename
@@ -135,11 +135,11 @@ def update_remote_assets(params: ParamDict):
     # -------------------------------------------------------------------------
     # get rsync dict
     rdict = dict()
-    rdict['SSH'] = params['DRS_SSH_OPTIONS']
-    rdict['USER'] = params['DRS_SSH_USER']
-    rdict['HOST'] = params['DRS_SSH_HOST']
+    rdict['SSH'] = params['AURLS.SSH_OPTIONS']
+    rdict['USER'] = params['AURLS.SSH_USER']
+    rdict['HOST'] = params['AURLS.SSH_HOST']
     rdict['INPATH'] = tar_path
-    rdict['OUTPATH'] = params['DRS_SSH_ASSETSPATH']
+    rdict['OUTPATH'] = params['AURLS.SSH_ASSETSPATH']
     # print command to rsync
     WLOG(params, '', RSYNC_CMD.format(**rdict))
     # run rsync command
@@ -159,8 +159,8 @@ def check_local_assets(params: ParamDict):
     :return:
     """
     # get path to yaml file
-    _asset_path = params['DRS_RESET_ASSETS_PATH']
-    _data_path = params['DRS_CRITICAL_DATA_PATH']
+    _asset_path = params['IPATH.RESET_ASSETS']
+    _data_path = params['IPATH.CDATA']
     # get the absolute path to the assets dir
     abs_asset_path = drs_data.construct_path(params, '', _asset_path)
     # get the data path
@@ -214,8 +214,8 @@ def check_local_assets(params: ParamDict):
 
 def update_local_assets(params: ParamDict, tarfile: str = None):
     # get path to yaml file
-    _asset_path = params['DRS_RESET_ASSETS_PATH']
-    _data_path = params['DRS_CRITICAL_DATA_PATH']
+    _asset_path = params['IPATH.RESET_ASSETS']
+    _data_path = params['IPATH.CDATA']
     # get the absolute path to the assets dir
     abs_asset_path = drs_data.construct_path(params, '', _asset_path)
     # get the data path

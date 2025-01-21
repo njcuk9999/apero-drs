@@ -127,9 +127,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # Demo 1: Accessing inputs
     # ----------------------------------------------------------------------
     if mode == 1:
-        WLOG(params, '', params['DRS_HEADER'])
+        WLOG(params, '', params['LOG.HEADER'])
         WLOG(params, '', 'DEMO 1: ACCESSING INPUTS')
-        WLOG(params, '', params['DRS_HEADER'])
+        WLOG(params, '', params['LOG.HEADER'])
         # This is how we get parameters directly from user inputs
         # See blank.set_arg and blank.set_kwarg above for user input definitions
         print('Current inputs:')
@@ -142,9 +142,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # Demo 2: Writing to the logger (WLOG)
     # ----------------------------------------------------------------------
     if mode == 2:
-        WLOG(params, '', params['DRS_HEADER'])
+        WLOG(params, '', params['LOG.HEADER'])
         WLOG(params, '', 'DEMO 2: WLOG')
-        WLOG(params, '', params['DRS_HEADER'])
+        WLOG(params, '', params['LOG.HEADER'])
         # By default this writes to the screen and log files
         WLOG(params, '', 'Message types:')
         WLOG(params, '', '\'\':\tGeneral message')
@@ -162,9 +162,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # Demo 3: Writing Text Entries with the language database
     # ----------------------------------------------------------------------
     if mode == 3:
-        WLOG(params, '', params['DRS_HEADER'])
+        WLOG(params, '', params['LOG.HEADER'])
         WLOG(params, '', 'DEMO 3: Text Entry')
-        WLOG(params, '', params['DRS_HEADER'])
+        WLOG(params, '', params['LOG.HEADER'])
 
         # We also have an extensive language database - these messages
         #  use codes that will print in the language of the users choice
@@ -292,7 +292,7 @@ if __name__ == "__main__":
         # note to access recipe and params from __main__ do the following
         _recipe, _params = main(DEBUG0000=True)
         # simple print statement
-        WLOG(_params, '', 'Welcome to {0}'.format(_params['DRS_PACKAGE']))
+        WLOG(_params, '', 'Welcome to {0}'.format(_params['DRS.PACKAGE']))
 
 # =============================================================================
 # End of code

@@ -346,7 +346,7 @@ def reset_calibdb(params: ParamDict, log: bool = True):
     # get the calibration database file directory
     calib_dir = params['PATH.CALIB']
     # get the reset path
-    reset_path = params['DRS_RESET_CALIBDB_PATH']
+    reset_path = params['IPATH.RESET_CALIB']
     # reset files
     reset_dbdir(params, name, calib_dir, reset_path, log=log)
     # create calibration database
@@ -381,7 +381,7 @@ def reset_telludb(params: ParamDict, log: bool = True):
     # get the telluric database file directory
     tellu_dir = params['PATH.TELLU']
     # get the reset path
-    reset_path = params['DRS_RESET_TELLUDB_PATH']
+    reset_path = params['IPATH.RESET_TELLU']
     # reset files
     reset_dbdir(params, name, tellu_dir, reset_path, log=log)
     # create telluric database
@@ -528,7 +528,7 @@ def reset_run(params: ParamDict, log: bool = True):
     """
     name = 'run files'
     run_dir = params['PATH.RUN']
-    reset_path = params['DRS_RESET_RUN_PATH']
+    reset_path = params['IPATH.RESET_RUN']
     # loop around files and folders in reduced dir
     reset_dbdir(params, name, run_dir, reset_path, log=log, empty_first=False)
 
@@ -537,7 +537,7 @@ def reset_lbl_folders(params: ParamDict, log: bool = True):
     # log progress
     WLOG(params, '', textentry('40-502-00003', args=['lbl']))
     # remove files from reduced folder
-    lbl_dir = params['LBL_PATH']
+    lbl_dir = params['PATH.LBL']
     # loop around files and folders in reduced dir
     remove_all(params, lbl_dir, log=log)
     # remake path
@@ -680,10 +680,10 @@ def reset_assets(params: ParamDict, log: bool = True, reset_dbs: bool = True):
     pconst = load_functions.load_pconfig(select.INSTRUMENTS)
     # TODO: deal with getting online
     asset_path1 = params['PATH.ASSETS']
-    reset_path1 = os.path.join(params['DRS_RESET_ASSETS_PATH'],
-                               params['INSTRUMENT'].lower())
+    reset_path1 = os.path.join(params['IPATH.RESET_ASSETS'],
+                               params['OBS.INSTRUMENT'].lower())
     asset_path2 = os.path.join(params['PATH.ASSETS'], 'core')
-    reset_path2 = os.path.join(params['DRS_RESET_ASSETS_PATH'], 'core')
+    reset_path2 = os.path.join(params['IPATH.RESET_ASSETS'], 'core')
     # get reset_path from apero module dir
     abs_reset_path1 = drs_data.construct_path(params, '', str(reset_path1))
     abs_reset_path2 = drs_data.construct_path(params, '', str(reset_path2))
@@ -718,7 +718,7 @@ def reset_other_folder(params: ParamDict, log: bool = True):
     """
     _ = log
     # Get the other data directory (place to copy to)
-    other_path = params['DRS_DATA_OTHER']
+    other_path = params['PATH.OTHER']
     # get the reset dictionary
     #    key = tuple
     #    1: relative (to APERO) in directory

@@ -90,10 +90,10 @@ def update_database(params: ParamDict, recipe: DrsRecipe, dbkind: str):
             if remove:
                 return
         # otherwise we update full calibration database
-        WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
+        WLOG(params, 'info', params['LOG.HEADER'], colour='magenta')
         WLOG(params, 'info', textentry('40-006-00007', args=['calibration']),
              colour='magenta')
-        WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
+        WLOG(params, 'info', params['LOG.HEADER'], colour='magenta')
         calib_tellu_update(params, pconst, 'calibration')
     # update telluric database
     if dbkind in ['tellu', 'all']:
@@ -103,38 +103,38 @@ def update_database(params: ParamDict, recipe: DrsRecipe, dbkind: str):
             # we do not continue if we are removing entries
             if remove:
                 return
-        WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
+        WLOG(params, 'info', params['LOG.HEADER'], colour='magenta')
         WLOG(params, 'info', textentry('40-006-00007', args=['telluric']),
              colour='magenta')
-        WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
+        WLOG(params, 'info', params['LOG.HEADER'], colour='magenta')
         calib_tellu_update(params, pconst, 'telluric')
     # update log and index database
     if dbkind in ['log', 'all']:
-        WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
+        WLOG(params, 'info', params['LOG.HEADER'], colour='magenta')
         WLOG(params, 'info', textentry('40-006-00007', args=['log']),
              colour='magenta')
-        WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
+        WLOG(params, 'info', params['LOG.HEADER'], colour='magenta')
         log_update(params, pconst)
     # update index database
     if dbkind in ['findex', 'all']:
-        WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
+        WLOG(params, 'info', params['LOG.HEADER'], colour='magenta')
         WLOG(params, 'info', textentry('40-006-00007', args=['index']),
              colour='magenta')
-        WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
+        WLOG(params, 'info', params['LOG.HEADER'], colour='magenta')
         index_update(params, recipe)
 
     if dbkind in ['astrom', 'all']:
-        WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
+        WLOG(params, 'info', params['LOG.HEADER'], colour='magenta')
         WLOG(params, 'info', textentry('40-006-00007', args=['object']),
              colour='magenta')
-        WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
+        WLOG(params, 'info', params['LOG.HEADER'], colour='magenta')
         manage_databases.update_object_database(params)
 
     if dbkind in ['reject', 'all']:
-        WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
+        WLOG(params, 'info', params['LOG.HEADER'], colour='magenta')
         WLOG(params, 'info', textentry('40-006-00007', args=['reject']),
              colour='magenta')
-        WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
+        WLOG(params, 'info', params['LOG.HEADER'], colour='magenta')
         manage_databases.update_reject_database(params)
 
 

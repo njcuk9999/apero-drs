@@ -133,8 +133,8 @@ class DrsRecipe(object):
         else:
             self.params = params
             # even rarer that instrument is not set but params is
-            if self.instrument != params['INSTRUMENT']:
-                self.instrument = params['INSTRUMENT']
+            if self.instrument != params['OBS.INSTRUMENT']:
+                self.instrument = params['OBS.INSTRUMENT']
         # set filters
         self.filters = dict()
         self.reference = False
@@ -251,7 +251,7 @@ class DrsRecipe(object):
         self.__dict__.update(state)
         # get pconst
         pconst = load_functions.load_pconfig(select.INSTRUMENTS,
-                                             self.params['INSTRUMENT'])
+                                             self.params['OBS.INSTRUMENT'])
         # set drs pconstant
         self.drs_pconstant = pconst
         # set drs file module related to this recipe
@@ -893,7 +893,7 @@ class DrsRecipe(object):
                 # override recipe kind
                 self.recipe_kind = str(inputs['RECIPE_KIND'])
                 # must update in parameters as well
-                self.params.set('DRS_RECIPE_KIND', self.recipe_kind,
+                self.params.set('DRS.RECIPE_KIND', self.recipe_kind,
                                 source=func_name)
 
     def set_min_nfiles(self, filearg: str, limit: int):

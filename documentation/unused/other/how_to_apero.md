@@ -130,7 +130,7 @@ Add stats (if required) as follows:
 where key can be a string or a parameter in `params` (i.e. a keyword from `defaults_keywords.py`)
 i.e.:
 ```text
-        recipe.plotter.add_stat('KW_VERSION', value=params['DRS_VERSION'])
+        recipe.plotter.add_stat('KW_VERSION', value=params['DRS.VERSION'])
 ```
 
 The summary plot is then built as follows (usually at the end of a `__main__` code). It can take the `qc_params` (from quality control) as an argument or take no argument (for example if there are no quality control criteria). i.e.:

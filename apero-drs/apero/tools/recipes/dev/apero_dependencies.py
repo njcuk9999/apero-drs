@@ -83,7 +83,7 @@ def __main__(recipe, params):
 
     # ----------------------------------------------------------------------
     # define DRS path
-    drs_path = drs_misc.get_relative_folder(params['DRS_PACKAGE'], '')
+    drs_path = drs_misc.get_relative_folder(params['DRS.PACKAGE'], '')
     # ----------------------------------------------------------------------
     # get all python files
     WLOG(params, '', 'Getting python files')
@@ -138,7 +138,7 @@ def get_python_files(path):
 
 def get_import_statements(params, files):
     # get package list
-    package = params['DRS_PACKAGE']
+    package = params['DRS.PACKAGE']
     # get import list
     importslist = []
     # populate stats dictionary

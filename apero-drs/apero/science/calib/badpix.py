@@ -275,7 +275,7 @@ def locate_bad_pixels_full(params: ParamDict, image: np.ndarray,
     :param assetsdir: str, Define the assets directory -- overrides
                       params['PATH.ASSETS']
     :param badpix_dir: str, where the badpix file is stored (within assets
-                      directory) -- overrides params['DRS_BADPIX_DATA']
+                      directory) -- overrides params['IPATH.BADPIX']
     :param filename: str, the badpix file name
                      -- overrides params['BADPIX_FULL_FLAT']
 
@@ -293,7 +293,7 @@ def locate_bad_pixels_full(params: ParamDict, image: np.ndarray,
                     override=rotnum)
     assetsdir = pcheck(params, 'PATH.ASSETS', func=func_name,
                        override=assetsdir)
-    badpix_dir = pcheck(params, 'DRS_BADPIX_DATA', func=func_name,
+    badpix_dir = pcheck(params, 'IPATH.BADPIX', func=func_name,
                         override=badpix_dir)
     filename = pcheck(params, 'BADPIX_FULL_FLAT', func=func_name,
                       override=filename)
@@ -518,8 +518,8 @@ def summary(recipe: DrsRecipe, it: int, params: ParamDict,
     :return: None, produces summary document
     """
     # add stats
-    recipe.plot.add_stat('KW_VERSION', value=params['DRS_VERSION'])
-    recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS_DATE'])
+    recipe.plot.add_stat('KW_VERSION', value=params['DRS.VERSION'])
+    recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS.DATE'])
     recipe.plot.add_stat('KW_BHOT', value=bstats_a[0])
     recipe.plot.add_stat('KW_BBFLAT', value=bstats_a[1])
     recipe.plot.add_stat('KW_BNDARK', value=bstats_a[2])

@@ -39,12 +39,12 @@ __YAML__ = yaml.load(open(__PATH__.joinpath('info.yaml')),
 # =============================================================================
 # Get variables from info.yaml
 # =============================================================================
-__version__ = __YAML__['VERSION']
-__authors__ = __YAML__['AUTHORS']
-__date__ = __YAML__['DATE']
-__release__ = __YAML__['RELEASE']
+__version__ = __YAML__['DRS.VERSION']
+__authors__ = __YAML__['DRS.AUTHORS']
+__date__ = __YAML__['DRS.DATE']
+__release__ = __YAML__['DRS.RELEASE']
 
-INSTRUMENTS = __YAML__['INSTRUMENTS']
+INSTRUMENTS = __YAML__['DRS.INSTRUMENTS']
 # -----------------------------------------------------------------------------
 # get print colours
 COLOR = drs_misc.Colors()
@@ -406,7 +406,7 @@ def update_setup(setup_params: ParamDict,
 
     # if we have a environment variable we can get current parameters from
     # the setup directory
-    cond1 = 'DRS_UCONFIG' in os.environ
+    cond1 = base.USER_ENV in os.environ
     cond2 = setup_params['NAME'] is not None
     cond3 = setup_params['CONFIG_PATH'] is not None
     # ----------------------------------------------------------------------
@@ -418,12 +418,12 @@ def update_setup(setup_params: ParamDict,
         raise drs_log.AperoCodedException(None, message=emsg)
     elif cond1:
         # get the config path
-        config_path = os.environ['DRS_UCONFIG']
+        config_path = os.environ[base.USER_ENV]
     else:
         # get the config path
         config_path = setup_params['CONFIG_PATH']
         # lets set this in os.envinron
-        os.environ['DRS_UCONFIG'] = config_path
+        os.environ[base.USER_ENV] = config_path
     # ----------------------------------------------------------------------
     # Once DRS_UCONFIG is set we can load the parameters
     # ----------------------------------------------------------------------
@@ -492,7 +492,7 @@ def run_setup(params: ParamDict, sargs: Dict[str, SetupArgument]):
         eargs = [params['CONFIG_PATH']]
         raise drs_log.AperoCodedException(None, message=emsg.format(*eargs))
     else:
-        os.environ['DRS_UCONFIG'] = str(params['CONFIG_PATH'])
+        os.environ[base.USER_ENV] = str(params['CONFIG_PATH'])
     # -------------------------------------------------------------------------
     # check profile name in .apero
     # -------------------------------------------------------------------------
@@ -562,7 +562,7 @@ def display_title():
     title = title.format('APERO', 'Setup', __version__)
     title += colors.ENDC
     # header
-    drs_header = '*' * base.__YAML__['LOG']['DRS_LOG_CHAR_LEN']
+    drs_header = '*' * base.__YAML__['LOG']['CHAR_LEN']
     # set function name
     # _ = display_func('_display_title', __NAME__)
     # print and log
@@ -659,8 +659,8 @@ def create_yamls(params: Any):
     install_path = userconfig.joinpath(base.INSTALL_YAML)
     # populate dictionary
     install_dict = dict()
-    install_dict['DRS_UCONFIG'] = str(userconfig)
-    install_dict['INSTRUMENT'] = params['INSTRUMENT']
+    install_dict[base.USER_ENV] = str(userconfig)
+    install_dict['OBS.INSTRUMENT'] = params['OBS.INSTRUMENT']
     install_dict['GLOBAL.LANGUAGE'] = params['GLOBAL.LANGUAGE']
     install_dict['USE_TQDM'] = True
     # print writing
@@ -749,7 +749,7 @@ def create_user_configs(params: ParamDict, sargs: Dict[str, SetupArgument]):
     # -------------------------------------------------------------------------
     # temporary load constants for this instrument
     apero_params = load_functions.load_config(select.INSTRUMENTS,
-                                              params['INSTRUMENT'],
+                                              params['OBS.INSTRUMENT'],
                                               from_file=False,
                                               cache=False)
     # -------------------------------------------------------------------------
@@ -765,7 +765,7 @@ def create_user_configs(params: ParamDict, sargs: Dict[str, SetupArgument]):
             apero_params[sarg.apero_name] = params[sname]
     # -------------------------------------------------------------------------
     # get the title arguments
-    tkwargs = dict(INSTRUMENT=params['INSTRUMENT'])
+    tkwargs = dict(INSTRUMENT=params['OBS.INSTRUMENT'])
     # loop around user scripts and create the yamls
     for it in range(len(user_scripts)):
         # don't continue if we don't have a Cdict module defined

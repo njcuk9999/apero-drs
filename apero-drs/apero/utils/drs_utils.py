@@ -96,7 +96,7 @@ class RecipeLog:
         # the default logging absolute path
         self.defaultpath = str(params['PATH.LOG_FULL'])
         # the log fits file name (log.fits)
-        self.logfitsfile = str(params['DRS_LOG_FITS_NAME'])
+        self.logfitsfile = str(params['LOG.FITS_NAME'])
         # the recipe input directory from recipe.inputdir
         self.inputdir = str(params['INPATH'])
         # the recipe output directory from recipe.outputdir
@@ -121,7 +121,7 @@ class RecipeLog:
         self.log_start = 'None'
         self.log_end = 'None'
         # set the group name
-        self.group = str(params['DRS_GROUP'])
+        self.group = str(params['DRS.GROUP'])
         # set the night name directory (and deal with no value)
         if 'OBS_DIR' not in params:
             self.obs_dir = 'other'
@@ -140,9 +140,9 @@ class RecipeLog:
         self.kwargs = ''
         self.skwargs = ''
         self.runstring = ''
-        self.recipe_type = str(params['DRS_RECIPE_TYPE'])
-        self.recipe_kind = str(params['DRS_RECIPE_KIND'])
-        self.program_name = str(params['DRS_USER_PROGRAM'])
+        self.recipe_type = str(params['DRS.RECIPE_TYPE'])
+        self.recipe_kind = str(params['DRS.RECIPE_KIND'])
+        self.program_name = str(params['DRS.USERPROG'])
         # set that recipe started
         self.started = True
         # set the iteration

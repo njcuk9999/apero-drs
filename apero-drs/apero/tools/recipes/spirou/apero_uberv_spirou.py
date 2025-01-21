@@ -135,11 +135,11 @@ def __main__(recipe, params):
         filetype, intype, fiber = comb
         # ------------------------------------------------------------------
         # log progress
-        WLOG(params, 'info', params['DRS_HEADER'])
+        WLOG(params, 'info', params['LOG.HEADER'])
         wargs = [filetype, intype, fiber]
         msg = 'FILETYPE = {0}   INTYPE = {1}   FIBER = {2}'
         WLOG(params, 'info', msg.format(*wargs))
-        WLOG(params, 'info', params['DRS_HEADER'])
+        WLOG(params, 'info', params['LOG.HEADER'])
         # get the in file type
         infiletype = drs_file.get_file_definition(params, intype,
                                                   block_kind='red')

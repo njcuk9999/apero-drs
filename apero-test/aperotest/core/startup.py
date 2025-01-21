@@ -58,16 +58,16 @@ def setup(params: ParamDict):
     :return: None
     """
     # print progress
-    WLOG(params, 'info', params['DRS_HEADER'])
+    WLOG(params, 'info', params['LOG.HEADER'])
     WLOG(params, 'info', 'Checking arguments')
-    WLOG(params, 'info', params['DRS_HEADER'])
+    WLOG(params, 'info', params['LOG.HEADER'])
     # ask user for any missing arguments
     params = load_functions.ask_for_missing_args(params)
     # ----------------------------------------------------------------------
     # print progress
-    WLOG(params, 'info', params['DRS_HEADER'])
+    WLOG(params, 'info', params['LOG.HEADER'])
     WLOG(params, 'info', 'Checking paths')
-    WLOG(params, 'info', params['DRS_HEADER'])
+    WLOG(params, 'info', params['LOG.HEADER'])
     # Create some paths
     for path in PATHS:
         # deal with path not existing in params (skip) - these really should
@@ -88,9 +88,9 @@ def setup(params: ParamDict):
             os.makedirs(params[path])
     # ----------------------------------------------------------------------
     # print progress
-    WLOG(params, 'info', params['DRS_HEADER'])
+    WLOG(params, 'info', params['LOG.HEADER'])
     WLOG(params, 'info', 'Constructing yaml file')
-    WLOG(params, 'info', params['DRS_HEADER'])
+    WLOG(params, 'info', params['LOG.HEADER'])
     # Get the constants dictionary
     cdict = constants.CDict
     # get the yaml file

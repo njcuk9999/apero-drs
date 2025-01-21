@@ -243,7 +243,7 @@ class OutPath(BlockPath):
 class OtherPath(BlockPath):
     description: drs_lang.Text = 'Other files reduction path'
     name: str = 'other'
-    key: str = 'DRS_DATA_OTHER'
+    key: str = 'PATH.OTHER'
     argname: str = 'otherdir'
 
     def __init__(self, params, check: bool = True):
@@ -261,7 +261,7 @@ class OtherPath(BlockPath):
 class LBLPath(BlockPath):
     description: drs_lang.Text = 'LBL reduction path'
     name: str = 'lbl'
-    key: str = 'LBL_PATH'
+    key: str = 'PATH.LBL'
     argname: str = 'lbldir'
 
     def __init__(self, params, check: bool = True):

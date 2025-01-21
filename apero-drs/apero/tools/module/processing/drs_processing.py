@@ -194,7 +194,7 @@ class Run:
         """
         # find the recipe definition
         recipe, mod = drs_startup.find_recipe(self.recipename,
-                                              self.params['INSTRUMENT'],
+                                              self.params['OBS.INSTRUMENT'],
                                               mod=mod)
         # deal with an empty recipe return
         if recipe.name == 'Empty':
@@ -448,11 +448,11 @@ class Run:
 def reload_recipe(params, recipename):
     # reload excluded attributes
     pconst = load_functions.load_pconfig(select.INSTRUMENTS,
-                                         params['INSTRUMENT'])
+                                         params['OBS.INSTRUMENT'])
     # load the recipe mod
     rmod = pconst.RECIPEMOD()
     # set up the arguments to find the recipe
-    fkwargs = dict(name=recipename, instrument=params['INSTRUMENT'],
+    fkwargs = dict(name=recipename, instrument=params['OBS.INSTRUMENT'],
                    mod=rmod)
     # set recipe
     recipe, _ = drs_startup.find_recipe(**fkwargs)
@@ -671,10 +671,10 @@ def processing_email(params: ParamDict, position: str, name: str,
     else:
         pid = params['PID']
     # get instrument
-    if 'INSTRUMENT' in params:
-        instrument = params['INSTRUMENT']
+    if 'OBS.INSTRUMENT' in params:
+        instrument = params['OBS.INSTRUMENT']
     else:
-        instrument = base.IPARAMS['INSTRUMENT']
+        instrument = base.IPARAMS['OBS.INSTRUMENT']
     # ----------------------------------------------------------------------
     # deal with log file
     logfile = drs_log.get_logfilepath(params)
@@ -1018,9 +1018,9 @@ def display_timing(params, outlist, ptime):
     cores = _get_cores(params)
     # display the timings
     WLOG(params, '', '')
-    WLOG(params, '', params['DRS_HEADER'])
+    WLOG(params, '', params['LOG.HEADER'])
     WLOG(params, '', 'Timings:')
-    WLOG(params, '', params['DRS_HEADER'])
+    WLOG(params, '', params['LOG.HEADER'])
     WLOG(params, '', '')
     # sort outlist ids
     keys = np.sort(list(outlist.keys()))
@@ -1042,20 +1042,20 @@ def display_timing(params, outlist, ptime):
     # calculate the speed up factor
     speed_up = tot_time / ptime
     # add total time
-    WLOG(params, '', params['DRS_HEADER'])
+    WLOG(params, '', params['LOG.HEADER'])
     WLOG(params, 'info', textentry('40-503-00025', args=[tot_time]))
     WLOG(params, 'info', textentry('40-503-00033', args=[ptime]))
     WLOG(params, 'info', textentry('40-503-00034', args=[speed_up, cores]))
-    WLOG(params, '', params['DRS_HEADER'])
+    WLOG(params, '', params['LOG.HEADER'])
     WLOG(params, '', '')
 
 
 def display_errors(params, outlist):
     # log error title
     WLOG(params, '', '')
-    WLOG(params, '', params['DRS_HEADER'])
+    WLOG(params, '', params['LOG.HEADER'])
     WLOG(params, '', 'Errors:')
-    WLOG(params, '', params['DRS_HEADER'])
+    WLOG(params, '', params['LOG.HEADER'])
     WLOG(params, '', '')
     # sort outlist ids
     keys = np.sort(list(outlist.keys()))
@@ -1063,12 +1063,12 @@ def display_errors(params, outlist):
     for key in keys:
         if len(outlist[key]['ERROR']) > 0:
             WLOG(params, '', '', colour='red')
-            WLOG(params, '', params['DRS_HEADER'], colour='red')
+            WLOG(params, '', params['LOG.HEADER'], colour='red')
             WLOG(params, 'warning', textentry('40-503-00019', args=[key]),
                  colour='red', wrap=False, sublevel=8)
             WLOG(params, 'warning', '\t{0}'.format(outlist[key]['RUNSTRING']),
                  colour='red', wrap=False, sublevel=8)
-            WLOG(params, '', params['DRS_HEADER'], colour='red')
+            WLOG(params, '', params['LOG.HEADER'], colour='red')
             WLOG(params, '', '', colour='red')
             # --------------------------------------------------------------
             # deal with list from out error
@@ -1094,7 +1094,7 @@ def display_errors(params, outlist):
                 WLOG(params, '', strtback, colour='red')
             WLOG(params, '', '', colour='red')
             # --------------------------------------------------------------
-            WLOG(params, '', params['DRS_HEADER'], colour='red')
+            WLOG(params, '', params['LOG.HEADER'], colour='red')
     WLOG(params, '', '')
 
 
@@ -1267,9 +1267,9 @@ def _linear_generate_id(params: ParamDict, it: int, run_key: str,
     wargs = [runid, it + 1, len(runlist)]
     # print out is too heavy for multiprocessing
     if cores == 1:
-        WLOG(params, '', params['DRS_HEADER'])
+        WLOG(params, '', params['LOG.HEADER'])
         WLOG(params, '', textentry('40-503-00004', args=wargs))
-        WLOG(params, '', params['DRS_HEADER'])
+        WLOG(params, '', params['LOG.HEADER'])
         WLOG(params, '', textentry('40-503-00013', args=[run_item]))
     # create run object
     run_object = Run(params, indexdb, run_item, mod=recipemod,
@@ -2353,7 +2353,7 @@ def _linear_process(params: ParamDict, runlist: List[Run],
         pp['STATE'] = 'None'
         # ------------------------------------------------------------------
         # add drs group to keyword arguments
-        pp['ARGS']['DRS_GROUP'] = group
+        pp['ARGS']['DRS.GROUP'] = group
         # ------------------------------------------------------------------
         # log what we are running
         if cores > 1:
@@ -3612,7 +3612,7 @@ def _check_runtable(params, runtable, recipemod):
         # make sure it is in recipelist
         if program not in recipelist:
             # log error
-            eargs = [program, params['INSTRUMENT'], func_name]
+            eargs = [program, params['OBS.INSTRUMENT'], func_name]
             raise AperoCodedException(params, '00-503-00011', targs=eargs)
 
 
@@ -3985,10 +3985,10 @@ def _group_progress(params, g_it, grouplist, groupname):
     wargs = [' * ', g_it + 1, len(grouplist), groupname]
     # log
     WLOG(params, 'info', '', colour='magenta')
-    WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
+    WLOG(params, 'info', params['LOG.HEADER'], colour='magenta')
     WLOG(params, 'info', textentry('40-503-00018', args=wargs),
          colour='magenta')
-    WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
+    WLOG(params, 'info', params['LOG.HEADER'], colour='magenta')
     WLOG(params, 'info', '', colour='magenta')
 
 

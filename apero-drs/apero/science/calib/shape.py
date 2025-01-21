@@ -2210,8 +2210,8 @@ def shape_ref_qc(params, dxrms=None, qc_params=None, **kwargs):
 
 def write_shape_ref_summary(recipe, params, fp_table, qc_params):
     # add stats
-    recipe.plot.add_stat('KW_VERSION', value=params['DRS_VERSION'])
-    recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS_DATE'])
+    recipe.plot.add_stat('KW_VERSION', value=params['DRS.VERSION'])
+    recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS.DATE'])
     recipe.plot.add_stat('N_FPREF', value=len(fp_table),
                          comment='Number FP in reference')
     # construct summary
@@ -2379,8 +2379,8 @@ def write_shape_local_files(params, recipe, infile, combine, rawfiles, props,
 
 def write_shape_local_summary(recipe, params, qc_params, it, transform):
     # add stats
-    recipe.plot.add_stat('KW_VERSION', value=params['DRS_VERSION'])
-    recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS_DATE'])
+    recipe.plot.add_stat('KW_VERSION', value=params['DRS.VERSION'])
+    recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS.DATE'])
     recipe.plot.add_stat('KW_SHAPE_DX', value=transform[0])
     recipe.plot.add_stat('KW_SHAPE_DY', value=transform[1])
     recipe.plot.add_stat('KW_SHAPE_A', value=transform[2])

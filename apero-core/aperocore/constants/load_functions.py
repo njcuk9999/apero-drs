@@ -196,7 +196,7 @@ def load_config(instruments: Dict[str, Any],
     func_name = display_func('load_config', __NAME__)
     # deal with no instrument
     if instrument is None:
-        instrument = base.IPARAMS['INSTRUMENT']
+        instrument = base.IPARAMS['OBS.INSTRUMENT']
     elif instrument == 'default':
         instrument = 'None'
     # force instrument to upper case
@@ -241,7 +241,7 @@ def load_pconfig(instruments: Dict[str, Any],
         if len(base.IPARAMS) == 0:
             instrument = 'None'
         else:
-            instrument = base.IPARAMS['INSTRUMENT']
+            instrument = base.IPARAMS['OBS.INSTRUMENT']
     elif instrument == 'default':
         instrument = 'None'
     # force instrument to upper case
@@ -546,7 +546,6 @@ def ask_for_missing_args(params: ParamDict,
 # =============================================================================
 # Config loading private functions
 # =============================================================================
-
 def warninglogger(instruments: Dict[str, Any], warnlist: Any,
                   funcname: Union[str, None] = None):
     """
@@ -571,8 +570,8 @@ def warninglogger(instruments: Dict[str, Any], warnlist: Any,
     :return:
     """
     # get pconstant
-    pconstant = load_pconfig(instruments)
-    log_warnings = pconstant.LOG_CAUGHT_WARNINGS()
+    params = load_config(instruments)
+    log_warnings = params['LOG.CAUGHT_WARNINGS']
     # deal with warnlist as string
     if isinstance(warnlist, str):
         warnlist = [warnlist]
@@ -594,7 +593,7 @@ def warninglogger(instruments: Dict[str, Any], warnlist: Any,
             if wmsg in displayed_warnings:
                 continue
             else:
-                AperoCodedWarning(None, '10-005-00001', targs=wargs,
+                AperoCodedWarning(params, '10-005-00001', targs=wargs,
                                   sublevel=5)
                 displayed_warnings.append(wmsg)
 
@@ -635,14 +634,14 @@ def _get_file_names(params: ParamDict,
     :return: list of strings - the config /constant files found
     """
     # set function name (cannot break here --> no access to inputs)
-    func_name = display_func('_get_file_names', __NAME__)
+    # func_name = display_func('_get_file_names', __NAME__)
     # deal with no instrument
     if drs_text.null_text(instrument, ['None', '']):
         return []
     # get user environmental path
-    user_env = params['DRS_USERENV']
+    user_env = params['DRS.USERENV']
     # get the user scripts
-    yscripts = params['USER_SCRIPTS']
+    yscripts = params['DRS.USER_SCRIPTS']
     # deal with no user environment and no default path
     if user_env is None:
         return []

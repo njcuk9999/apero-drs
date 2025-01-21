@@ -40,10 +40,10 @@ __YAML__ = yaml.load(open(__PATH__.joinpath('info.yaml')),
 # =============================================================================
 # Get variables from info.yaml
 # =============================================================================
-__version__ = __YAML__['VERSION']
-__authors__ = __YAML__['AUTHORS']
-__date__ = __YAML__['DATE']
-__release__ = __YAML__['RELEASE']
+__version__ = __YAML__['DRS.VERSION']
+__authors__ = __YAML__['DRS.AUTHORS']
+__date__ = __YAML__['DRS.DATE']
+__release__ = __YAML__['RDRS.ELEASE']
 # do this once per drs import
 __now__ = Time.now()
 AstropyTime = Time
@@ -58,7 +58,7 @@ AUTHORS['MH'] = 'Melissa Hobson'
 # Define yaml files
 INSTALL_YAML = 'install.yaml'
 DATABASE_YAML = 'database.yaml'
-USER_ENV = 'DRS_UCONFIG'
+USER_ENV = 'DRS.UCONFIG'
 # switch for no db in args
 NO_DB = False
 
@@ -149,8 +149,8 @@ COLOURS['UNDERLINE'] = '\033[4m'
 D_IPARAMS = dict()
 D_IPARAMS['DRS_LANG_MODULES'] = ['aperocore.drs_lang.tables.default_help',
                                  'aperocore.drs_lang.tables.default_text']
-D_IPARAMS['DRS_UCONFIG'] = None
-D_IPARAMS['INSTRUMENT'] = 'None'
+D_IPARAMS[USER_ENV] = None
+D_IPARAMS['OBS.INSTRUMENT'] = 'None'
 D_IPARAMS['GLOBAL.LANGUAGE'] = 'ENG'
 D_IPARAMS['USE_TQDM'] = True
 

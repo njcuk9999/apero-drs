@@ -356,12 +356,12 @@ def user_interface(params: ParamDict, args: argparse.Namespace
     # set function name
     func_name = __NAME__ + '.user_interface()'
     # get default from params
-    package = params['DRS_PACKAGE']
+    package = params['DRS.PACKAGE']
     # get install yaml
     iparams = base.load_install_yaml()
     user_lang = iparams['GLOBAL.LANGUAGE']
     # get available instruments
-    drs_instruments = list(np.char.array(params['DRS_INSTRUMENTS']).upper())
+    drs_instruments = list(np.char.array(params['DRS.INSTRUMENTS']).upper())
     # storage of answers
     all_params = ParamDict()
     # title
@@ -420,7 +420,7 @@ def user_interface(params: ParamDict, args: argparse.Namespace
     # ------------------------------------------------------------------
     # Step 2: Ask for instrument (from valid instruments)
     # ------------------------------------------------------------------
-    user_instrument = getattr(args, 'instrument', 'Null')
+    user_instrument = getattr(args, 'OBS.INSTRUMENT', 'Null')
     # test if we need instrument
     if user_instrument not in drs_instruments:
 
@@ -444,8 +444,8 @@ def user_interface(params: ParamDict, args: argparse.Namespace
     else:
         instrument = str(user_instrument)
     # set instrument in all params
-    all_params['INSTRUMENT'] = instrument
-    all_params.set_source('INSTRUMENT', func_name)
+    all_params['OBS.INSTRUMENT'] = instrument
+    all_params.set_source('OBS.INSTRUMENT', func_name)
     args.instrument = instrument
     # TODO: set language
     all_params['GLOBAL.LANGUAGE'] = user_lang
@@ -839,7 +839,7 @@ def bin_paths(params: ParamDict, all_params: ParamDict) -> ParamDict:
     :return: ParamDict, the updated installation parameter dictionary
     """
     # get package
-    package = params['DRS_PACKAGE']
+    package = params['DRS.PACKAGE']
     # get root path
     root = Path(drs_misc.get_relative_folder(package, ''))
     # get out bin path
@@ -929,7 +929,7 @@ def assign_language_modules(all_params: ParamDict) -> List[str]:
     # loop around types of table
     for key1 in ['help', 'text']:
         # loop around the default + instrument
-        for key2 in ['default', all_params['INSTRUMENT']]:
+        for key2 in ['default', all_params['OBS.INSTRUMENT']]:
             # construct module path
             table = f'{LANG_PATH}.{key2.lower()}_{key1}'
             # add to list of tables
@@ -976,7 +976,7 @@ def create_shell_scripts(params: ParamDict, all_params: ParamDict) -> ParamDict:
     """
     # ----------------------------------------------------------------------
     # get package
-    package = params['DRS_PACKAGE']
+    package = params['DRS.PACKAGE']
     if all_params['PROFILENAME'] not in [None, 'None', '']:
         pname = all_params['PROFILENAME'].replace(' ', '_')
     else:
@@ -1060,7 +1060,7 @@ def create_shell_scripts(params: ParamDict, all_params: ParamDict) -> ParamDict:
             out_lines.append(out_line)
         # ------------------------------------------------------------------
         # get instrument
-        instrument = all_params['INSTRUMENT']
+        instrument = all_params['OBS.INSTRUMENT']
         # add instrument tests
         out_lines.append('\n')
         # run the validation script (just to print splash)
@@ -1090,7 +1090,7 @@ def clean_install(params: ParamDict, all_params: ParamDict
     :return: ParamDict, the updated installation parameter dictionary
     """
     # get package
-    package = params['DRS_PACKAGE']
+    package = params['DRS.PACKAGE']
     # get clean warning
     if all_params['CLEANWARN'] is None:
         cleanwarn = False
@@ -1139,9 +1139,9 @@ def create_symlinks(params: ParamDict, all_params: ParamDict) -> ParamDict:
     :return: ParamDict, the updated installation parameter dictionary
     """
     # get available instruments
-    drs_instruments = np.char.array(params['DRS_INSTRUMENTS']).upper()
+    drs_instruments = np.char.array(params['DRS.INSTRUMENTS']).upper()
     # get package
-    package = params['DRS_PACKAGE']
+    package = params['DRS.PACKAGE']
     # get out paths
     out_bin_path = all_params['DRS_OUT_BIN_PATH']
     out_tool_path = all_params['DRS_OUT_TOOL_PATH']
@@ -1153,7 +1153,7 @@ def create_symlinks(params: ParamDict, all_params: ParamDict) -> ParamDict:
     # log which directory we are populating
     cprint('\n\t Populating {0} directory\n'.format(out_bin_path), 'm')
     # get instrument name
-    instrument = all_params['INSTRUMENT']
+    instrument = all_params['OBS.INSTRUMENT']
     # find recipe folder for this instrument
     recipe_raw = Path(str(IN_BINPATH).format(instrument.lower()))
     recipe_dir = Path(drs_misc.get_relative_folder(package, recipe_raw))
@@ -1306,14 +1306,14 @@ def print_options(params: ParamDict, all_params: ParamDict):
     if not userconfig.endswith(os.sep):
         userconfig += os.sep
     # add to text dictionary
-    text['DRS_UCONFIG'] = userconfig
+    text[base.USER_ENV] = userconfig
     # add system to text dictionary
     text['SYSTEM'] = '{SYSTEM}'
     # add profile name (package name)
     if all_params['PROFILENAME'] not in ['None', None, '']:
         text['NAME'] = all_params['PROFILENAME']
     else:
-        text['NAME'] = params['DRS_PACKAGE']
+        text['NAME'] = params['DRS.PACKAGE']
     # print the messages
     print('\n\n')
     cprint(printheader(), 'm')
@@ -1454,18 +1454,18 @@ def create_ufiles(params: ParamDict, devmode: bool, ask_user: bool = True
     # ------------------------------------------------------------------
     # TODO: Remove these in favour of the yaml files
     # # create config file
-    # config_lines = create_ufile(params['INSTRUMENT'], 'config', config,
+    # config_lines = create_ufile(params['OBS.INSTRUMENT'], 'config', config,
     #                             config_groups)
     # # create const file
-    # const_lines = create_ufile(params['INSTRUMENT'], 'constant', const,
+    # const_lines = create_ufile(params['OBS.INSTRUMENT'], 'constant', const,
     #                            const_groups)
     config_lines, const_lines = [], []
     # ------------------------------------------------------------------
     # create config yaml file
-    config_data = create_uyaml(params['INSTRUMENT'], 'config', config,
+    config_data = create_uyaml(params['OBS.INSTRUMENT'], 'config', config,
                                config_groups)
     # create const yaml file
-    const_data = create_uyaml(params['INSTRUMENT'], 'constant', const,
+    const_data = create_uyaml(params['OBS.INSTRUMENT'], 'constant', const,
                               const_groups)
     # ------------------------------------------------------------------
     return config_lines, const_lines, config_data, const_data
@@ -1814,7 +1814,7 @@ def update(params: ParamDict, args: argparse.Namespace) -> ParamDict:
     # set function name
     func_name = __NAME__ + '.update()'
     # get config path
-    config_env = params['DRS_USERENV']
+    config_env = params['DRS.USERENV']
     # check for config environment set
     config_path = os.getenv(config_env)
     # deal with no config path set
@@ -1825,7 +1825,7 @@ def update(params: ParamDict, args: argparse.Namespace) -> ParamDict:
         config_path = Path(config_path)
     # ----------------------------------------------------------------------
     # find all installed instruments
-    instrument = base.IPARAMS['INSTRUMENT']
+    instrument = base.IPARAMS['OBS.INSTRUMENT']
     language = base.IPARAMS['GLOBAL.LANGUAGE']
     # ----------------------------------------------------------------------
     # set up dictionary
@@ -1861,8 +1861,8 @@ def update(params: ParamDict, args: argparse.Namespace) -> ParamDict:
     all_params['USERCONFIG'] = config_path
     all_params.set_source('USERCONFIG', func_name)
     # set instrument in all params
-    all_params['INSTRUMENT'] = instrument
-    all_params.set_source('INSTRUMENT', func_name)
+    all_params['OBS.INSTRUMENT'] = instrument
+    all_params.set_source('OBS.INSTRUMENT', func_name)
     all_params['GLOBAL.LANGUAGE'] = language
     all_params.set_source('GLOBAL.LANGUAGE', language)
     # load params for instrument

@@ -20,7 +20,7 @@ from apero.base import base as apero_base
 # Define variables
 # =============================================================================
 __NAME__ = 'apero_constants.py'
-__INSTRUMENT__ = base.IPARAMS['INSTRUMENT']
+__INSTRUMENT__ = base.IPARAMS['OBS.INSTRUMENT']
 __PACKAGE__ = apero_base.__PACKAGE__
 __version__ = apero_base.__version__
 __authors__ = apero_base.__authors__

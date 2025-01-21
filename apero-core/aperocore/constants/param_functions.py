@@ -49,7 +49,7 @@ AperoCodedWarning = drs_log.AperoCodedWarning
 # relative folder cache
 REL_CACHE = dict()
 # cache some settings
-SETTINGS_CACHE_KEYS = ['GLOBAL.DEBUG', 'ALLOW_BREAKPOINTS']
+SETTINGS_CACHE_KEYS = ['GLOBAL.DEBUG', 'DRS.ALLOW_BREAKPOINTS']
 SETTINGS_CACHE = dict()
 # Get base classes
 CaseInDict = base_class.CaseInsensitiveDict
@@ -1032,7 +1032,7 @@ class ParamDict(CaseInDict):
             # add install value
             tabledict['VALUE'].append(str(ivalues[it]))
             # add install source (the install yaml)
-            tabledict['SOURCE'].append(os.path.join(base.IPARAMS['DRS_UCONFIG'],
+            tabledict['SOURCE'].append(os.path.join(base.IPARAMS[base.USER_ENV],
                                                     base.INSTALL_YAML))
             # add install description (default)
             tabledict['DESCRIPTION'].append('Install parameter')
@@ -1055,7 +1055,7 @@ class ParamDict(CaseInDict):
             # add database key value
             tabledict['VALUE'].append(str(dvalues[it]))
             # add database key source (database yaml file)
-            tabledict['SOURCE'].append(os.path.join(base.IPARAMS['DRS_UCONFIG'],
+            tabledict['SOURCE'].append(os.path.join(base.IPARAMS[base.USER_ENV],
                                                     base.DATABASE_YAML))
             # add database description (default)
             tabledict['DESCRIPTION'].append('Database parameter')

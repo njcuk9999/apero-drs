@@ -339,8 +339,10 @@ class Plotter:
         elif graph.kind == 'summary':
             # 1. save to file
             self.interactive(False, show=False)
-            self.plt.savefig(graph.filename + '.png', dpi=graph.dpi)
-            self.plt.savefig(graph.filename + '.pdf', dpi=graph.dpi)
+            # loop around extensions
+            for ext in self.params['PLOT.CORE.PLOT_EXT']:
+                self.plt.savefig(graph.filename + ext, dpi=graph.dpi)
+            # close graph
             self.plt.close()
             # 2. add graph to summary plots
             self.summary_graphs[graph.filename] = graph.copy()
@@ -1426,7 +1428,7 @@ def plot_selection(params: ParamDict,
 if __name__ == "__main__":
     # ----------------------------------------------------------------------
     _params = load_functions.load_config(select.INSTRUMENTS)
-    _recipe = DrsRecipe(instrument=_params['INSTRUMENT'],
+    _recipe = DrsRecipe(instrument=_params['OBS.INSTRUMENT'],
                         params=_params, name='test')
 
     _recipe.debug_plots.append('TEST1')
@@ -1436,8 +1438,7 @@ if __name__ == "__main__":
     _params.set('PID', 'Unknown')
     _params.set('GLOBAL.DEBUG', value=1)
     _params.set('GLOBAL.PLOT_MODE', value=2)
-    _params.set('DRS_PLOT_EXT', 'pdf')
-    _params.set('DRS_SUMMARY_EXT', 'pdf')
+    _params.set('PLOT.CORE.PLOT_EXT', ['.png', '.pdf'])
     _params.set('PLOT_TEST1', value=True)
     _params.set('PLOT_TEST2', value=True)
     _params.set('PLOT_TEST3', value=True)

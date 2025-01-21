@@ -988,8 +988,8 @@ def fit_tellu_summary(recipe, it, params, qc_params, tpreprops, fiber):
     # add qc params (fiber specific)
     recipe.plot.add_qc_params(qc_params, fiber=fiber)
     # add stats
-    recipe.plot.add_stat('KW_VERSION', value=params['DRS_VERSION'])
-    recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS_DATE'])
+    recipe.plot.add_stat('KW_VERSION', value=params['DRS.VERSION'])
+    recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS.DATE'])
     recipe.plot.add_stat('KW_TELLUP_EXPO_WATER',
                          value=tpreprops['EXPO_WATER'])
     recipe.plot.add_stat('KW_TELLUP_EXPO_OTHERS',

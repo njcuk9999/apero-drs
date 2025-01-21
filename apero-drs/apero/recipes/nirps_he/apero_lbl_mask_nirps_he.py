@@ -109,8 +109,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     recal_template = params['LBL_RECAL_TEMPLATE']
     # set up arguments for lbl
     kwargs = dict()
-    kwargs['instrument'] = params['INSTRUMENT']
-    kwargs['data_dir'] = params['LBL_PATH']
+    kwargs['instrument'] = params['OBS.INSTRUMENT']
+    kwargs['data_dir'] = params['PATH.LBL']
     kwargs['data_source'] = 'APERO'
     skip_done = gen_lbl.do_skip(params, 'LBL_MASK')
     kwargs['program'] = program

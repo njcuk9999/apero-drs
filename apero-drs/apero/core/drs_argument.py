@@ -182,7 +182,7 @@ class DrsArgumentParser(argparse.ArgumentParser):
         params = self.recipe.params
         program = str(params['RECIPE'])
         # construct error message
-        if self.recipe.params['DRS_COLOURED_LOG']:
+        if self.recipe.params['LOG.COLOURED']:
             green, end = COLOR.GREEN1, COLOR.ENDC
             yellow, blue = COLOR.YELLOW1, COLOR.BLUE1
         else:
@@ -190,10 +190,10 @@ class DrsArgumentParser(argparse.ArgumentParser):
             yellow, blue = COLOR.ENDC, COLOR.ENDC
         # Manually print error message (with help text)
         print()
-        print(green + params['DRS_HEADER'] + end)
+        print(green + params['LOG.HEADER'] + end)
         helptitletext = textentry('40-002-00001', args=[program])
         print(green + ' ' + helptitletext + end)
-        print(green + params['DRS_HEADER'] + end)
+        print(green + params['LOG.HEADER'] + end)
         imsgs = _get_version_info(self.recipe.params, green, end)
         for imsg in imsgs:
             print(imsg)
@@ -228,15 +228,15 @@ class DrsArgumentParser(argparse.ArgumentParser):
         # add description
         if self.recipe.description is not None:
             # add header line
-            hmsgs += ['', self.recipe.params['DRS_HEADER']]
+            hmsgs += ['', self.recipe.params['LOG.HEADER']]
             # add description title
             hmsgs += [' ' + textentry('DESCRIPTION_TEXT')]
             # add header line
-            hmsgs += [self.recipe.params['DRS_HEADER'], '']
+            hmsgs += [self.recipe.params['LOG.HEADER'], '']
             # add description text
             hmsgs += [' ' + self.recipe.description]
             # add header line
-            hmsgs += [self.recipe.params['DRS_HEADER']]
+            hmsgs += [self.recipe.params['LOG.HEADER']]
         # deal with required (positional) arguments
         hmsgs += ['', textentry('40-002-00002'), '']
         # loop around each required (positional) arguments
@@ -264,11 +264,11 @@ class DrsArgumentParser(argparse.ArgumentParser):
         hmsgs.append(_help_format(['--xhelp'], helpstr2))
         # add epilog
         if self.recipe.epilog is not None:
-            hmsgs += ['', self.recipe.params['DRS_HEADER']]
+            hmsgs += ['', self.recipe.params['LOG.HEADER']]
             hmsgs += [' ' + textentry('EXAMPLES_TEXT')]
-            hmsgs += [self.recipe.params['DRS_HEADER'], '']
+            hmsgs += [self.recipe.params['LOG.HEADER'], '']
             hmsgs += [' ' + self.recipe.epilog]
-            hmsgs += [self.recipe.params['DRS_HEADER']]
+            hmsgs += [self.recipe.params['LOG.HEADER']]
         # return string
         return_string = ''
         for hmsg in hmsgs:
@@ -1948,7 +1948,7 @@ class _ExtendedHelp(DrsAction):
         :raises: drs_exceptions.LogExit
         """
         # construct error message
-        if self.recipe.params['DRS_COLOURED_LOG']:
+        if self.recipe.params['LOG.COLOURED']:
             green, end = COLOR.GREEN1, COLOR.ENDC
             yellow, blue = COLOR.YELLOW1, COLOR.BLUE1
         else:
@@ -2231,18 +2231,18 @@ class _DisplayVersion(DrsAction):
         # get params
         params = self.recipe.params
         # get colours
-        if params['DRS_COLOURED_LOG']:
+        if params['LOG.COLOURED']:
             green, end = COLOR.GREEN1, COLOR.ENDC
         else:
             green, end = COLOR.ENDC, COLOR.ENDC
         # print start header
-        print(green + params['DRS_HEADER'] + end)
+        print(green + params['LOG.HEADER'] + end)
         # print version info message
         imsgs = _get_version_info(params, green, end)
         for imsg in imsgs:
             print(imsg)
         # end header
-        print(green + params['DRS_HEADER'] + end)
+        print(green + params['LOG.HEADER'] + end)
 
     def __call__(self, parser: DrsArgumentParser,
                  namespace: argparse.Namespace, values: Any,
@@ -2323,16 +2323,16 @@ class _DisplayInfo(DrsAction):
         htext = recipe.helptext
         program = str(params['RECIPE'])
         # get colours
-        if params['DRS_COLOURED_LOG']:
+        if params['LOG.COLOURED']:
             green, end = COLOR.GREEN1, COLOR.ENDC
             yellow, blue = COLOR.YELLOW1, COLOR.BLUE1
         else:
             green, end = COLOR.ENDC, COLOR.ENDC
             yellow, blue = COLOR.ENDC, COLOR.ENDC
         # print usage
-        print(green + params['DRS_HEADER'] + end)
+        print(green + params['LOG.HEADER'] + end)
         print(green + etext['40-002-00006'].format(program + '.py') + end)
-        print(green + params['DRS_HEADER'] + end)
+        print(green + params['LOG.HEADER'] + end)
         # print version info message
         imsgs = _get_version_info(params, green, end)
         for imsg in imsgs:
@@ -2342,24 +2342,24 @@ class _DisplayInfo(DrsAction):
         print(blue + ' ' + etext['40-002-00007'] + recipe.drs_usage() + end)
         # print description
         print()
-        print(blue + params['DRS_HEADER'] + end)
+        print(blue + params['LOG.HEADER'] + end)
         print(blue + ' ' + htext['DESCRIPTION_TEXT'] + end)
-        print(blue + params['DRS_HEADER'] + end)
+        print(blue + params['LOG.HEADER'] + end)
         print()
         print(blue + ' ' + recipe.description + end)
         # print examples
         print()
-        print(blue + params['DRS_HEADER'] + end)
+        print(blue + params['LOG.HEADER'] + end)
         print(blue + ' ' + htext['EXAMPLES_TEXT'] + end)
-        print(blue + params['DRS_HEADER'] + end)
+        print(blue + params['LOG.HEADER'] + end)
         print()
         print(blue + ' ' + recipe.epilog + end)
-        print(blue + params['DRS_HEADER'] + end)
+        print(blue + params['LOG.HEADER'] + end)
         # print see help
         print(green + etext['40-002-00008'] + end)
         print()
         # end header
-        print(green + params['DRS_HEADER'] + end)
+        print(green + params['LOG.HEADER'] + end)
 
     def __call__(self, parser: DrsArgumentParser,
                  namespace: argparse.Namespace, values: Any,
@@ -2451,9 +2451,9 @@ class _SetProgram(DrsAction):
         dmsg = textentry('90-001-00031', args=[strvalue])
         WLOG(self.recipe.params, 'debug', dmsg)
         # set DRS_DEBUG (must use the self version)
-        self.recipe.params['DRS_USER_PROGRAM'] = strvalue
-        self.recipe.params.set_source('DRS_USER_PROGRAM', func_name)
-        self.recipe.params.set_instance('DRS_USER_PROGRAM', None)
+        self.recipe.params['DRS.USERPROG'] = strvalue
+        self.recipe.params.set_source('DRS.USERPROG', func_name)
+        self.recipe.params.set_instance('DRS.USERPROG', None)
         # return strvalue
         return strvalue
 
@@ -2646,9 +2646,9 @@ class _SetRecipeKind(DrsAction):
             strvalue = str(values)
         # set DRS_DEBUG (must use the self version)
         self.recipe.recipe_kind = strvalue
-        self.recipe.params['DRS_RECIPE_KIND'] = strvalue
-        self.recipe.params.set_source('DRS_RECIPE_KIND', func_name)
-        self.recipe.params.set_instance('DRS_RECIPE_KIND', None)
+        self.recipe.params['DRS.RECIPE_KIND'] = strvalue
+        self.recipe.params.set_source('DRS.RECIPE_KIND', func_name)
+        self.recipe.params.set_instance('DRS.RECIPE_KIND', None)
         # return strvalue
         return strvalue
 
@@ -2818,7 +2818,7 @@ class _SetIPythonReturn(DrsAction):
         """
         Set the IPYTHON_RETURN value to True if argument is present
 
-        :return: True and params['IPYTHON_RETURN'] = True
+        :return: True and params['DRS.IPYTHON_RETURN'] = True
         """
         # set function name (cannot break here --> no access to inputs)
         func_name = display_func('_set_return',
@@ -2827,9 +2827,9 @@ class _SetIPythonReturn(DrsAction):
         dmsg = textentry('90-001-00032')
         WLOG(self.recipe.params, 'debug', dmsg)
         # set DRS_DEBUG (must use the self version)
-        self.recipe.params['IPYTHON_RETURN'] = True
-        self.recipe.params.set_source('IPYTHON_RETURN', func_name)
-        self.recipe.params.set_instance('IPYTHON_RETURN', None)
+        self.recipe.params['DRS.IPYTHON_RETURN'] = True
+        self.recipe.params.set_source('DRS.IPYTHON_RETURN', func_name)
+        self.recipe.params.set_instance('DRS.IPYTHON_RETURN', None)
         # return strvalue
         return True
 
@@ -4315,8 +4315,8 @@ def _get_version_info(params: ParamDict, green: str = '',
     else:
         name = str(params['RECIPE'])
     # get version
-    if 'DRS_VERSION' in params:
-        version = str(params['DRS_VERSION'])
+    if 'DRS.VERSION' in params:
+        version = str(params['DRS.VERSION'])
     else:
         version = __version__
     # get text strings
@@ -4411,7 +4411,7 @@ def _print_list_msg(recipe: Any, fulldir: str, dircond: bool = False,
     # set function name
     # _ = display_func('_print_list_msg', __NAME__)
     # get limit
-    mlimit = params['DRS_MAX_IO_DISPLAY_LIMIT']
+    mlimit = params['LOG.MAX_IO_DISPLAY_LIMIT']
     # generate a file list
     filelist, limitreached = _get_file_list(mlimit, fulldir, recursive=True,
                                             dir_only=dircond, list_all=list_all)
@@ -4421,7 +4421,7 @@ def _print_list_msg(recipe: Any, fulldir: str, dircond: bool = False,
     if return_string:
         green, end = '', ''
         # yellow, blue = '', ''
-    elif params['DRS_COLOURED_LOG']:
+    elif params['LOG.COLOURED']:
         green, end = COLOR.GREEN1, COLOR.ENDC
         # yellow, blue = COLOR.YELLOW1, COLOR.BLUE1
     else:
@@ -4462,10 +4462,10 @@ def _print_list_msg(recipe: Any, fulldir: str, dircond: bool = False,
 
     # print info
     if not return_string:
-        pmsgs.append(green + params['DRS_HEADER'] + end)
+        pmsgs.append(green + params['LOG.HEADER'] + end)
         pmsgs.append(green + ' ' + textentry('40-005-00001', args=[program])
                      + end)
-        pmsgs.append(green + params['DRS_HEADER'] + end)
+        pmsgs.append(green + params['LOG.HEADER'] + end)
     #     imsgs = _get_version_info(params, green, end)
     #     pmsgs += imsgs
     #     pmsgs.append('')
@@ -4663,7 +4663,7 @@ def make_listing(params: ParamDict) -> OrderedDict:
     # set function name
     # _ = display_func('make_listing', __NAME__)
     # define the listing limit (used in listing help
-    limit = params['DRS_MAX_IO_DISPLAY_LIMIT']
+    limit = params['LOG.MAX_IO_DISPLAY_LIMIT']
     # set up an output storage dictionary
     props = OrderedDict()
     # set the argument name

@@ -71,7 +71,7 @@ def __main__(recipe, params):
     instruments = params['INPUTS']['INSTRUMENTS']
     # deal with instruments options
     if drs_text.null_text(instruments, ['None', 'Null', '']):
-        instruments = [params['INSTRUMENT']]
+        instruments = [params['OBS.INSTRUMENT']]
     elif instruments.upper() == 'ALL':
         instruments = apero_base.INSTRUMENTS[:-1]
     else:
@@ -100,18 +100,18 @@ def __main__(recipe, params):
     for instrument in instruments:
         # print progress if we are doing any of the three tasks
         if run_filedef or run_recipedef or run_recipeseq:
-            WLOG(params, '', params['DRS_HEADER'], colour='magenta')
+            WLOG(params, '', params['LOG.HEADER'], colour='magenta')
             WLOG(params, 'info', 'Processing {0}'.format(instrument),
                  colour='magenta')
-            WLOG(params, '', params['DRS_HEADER'], colour='magenta')
+            WLOG(params, '', params['LOG.HEADER'], colour='magenta')
         # re-load params for this instrument
         iparams = load_functions.load_config(select.INSTRUMENTS, 
                                              instrument=instrument)
         # constants.load sets default to None we want this back to default
         if instrument == 'default':
-            iparams.set('INSTRUMENT', instrument)
+            iparams.set('OBS.INSTRUMENT', instrument)
         # make sure the recipe is set to the correct instrument
-        recipe.params.set('INSTRUMENT', instrument)
+        recipe.params.set('OBS.INSTRUMENT', instrument)
         # re-get params and recipe
         recipe.reload(instrument)
         # ---------------------------------------------------------------------
@@ -135,19 +135,19 @@ def __main__(recipe, params):
     # compile documentation
     if params['INPUTS']['COMPILE']:
         # print progress
-        WLOG(params, '', params['DRS_HEADER'], colour='magenta')
+        WLOG(params, '', params['LOG.HEADER'], colour='magenta')
         WLOG(params, 'info', 'Compiling mode={0}'.format(mode),
              colour='magenta')
-        WLOG(params, '', params['DRS_HEADER'], colour='magenta')
+        WLOG(params, '', params['LOG.HEADER'], colour='magenta')
         # compile
         drs_documentation.compile_docs(params, mode=mode)
     # upload to server
     if params['INPUTS']['UPLOAD']:
         # print progress
-        WLOG(params, '', params['DRS_HEADER'], colour='magenta')
+        WLOG(params, '', params['LOG.HEADER'], colour='magenta')
         WLOG(params, 'info', 'Compiling mode={0}'.format(mode),
              colour='magenta')
-        WLOG(params, '', params['DRS_HEADER'], colour='magenta')
+        WLOG(params, '', params['LOG.HEADER'], colour='magenta')
         # upload
         drs_documentation.upload(params)
 

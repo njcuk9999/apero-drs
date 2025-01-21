@@ -24,9 +24,9 @@ __INSTRUMENT__ = 'None'
 # load the yaml file
 __YAML__ = yaml.load(open(__PATH__.joinpath('info.yaml')),
                      Loader=yaml.FullLoader)
-__version__ = __YAML__['VERSION']
-__date__ = __YAML__['DATE']
-__authors__ = __YAML__['AUTHORS']
+__version__ = __YAML__['DRS.VERSION']
+__date__ = __YAML__['DRS.DATE']
+__authors__ = __YAML__['DRS.AUTHORS']
 
 # =============================================================================
 # End of code

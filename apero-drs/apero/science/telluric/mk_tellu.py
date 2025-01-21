@@ -575,8 +575,8 @@ def mk_tellu_summary(recipe, it, params, qc_params, tellu_props, fiber):
     # add qc params (fiber specific)
     recipe.plot.add_qc_params(qc_params, fiber=fiber)
     # add stats
-    recipe.plot.add_stat('KW_VERSION', value=params['DRS_VERSION'])
-    recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS_DATE'])
+    recipe.plot.add_stat('KW_VERSION', value=params['DRS.VERSION'])
+    recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS.DATE'])
     recipe.plot.add_stat('KW_MKTELL_DEF_CONV_WID',
                          value=tellu_props['DEFAULT_CWIDTH'])
     recipe.plot.add_stat('KW_MKTELL_TEMP_MEDFILT',
@@ -616,8 +616,8 @@ def mk_model_qc(params: ParamDict) -> Tuple[list, int]:
 
 def mk_model_summary(recipe, params, qc_params, tprops):
     # add stats
-    recipe.plot.add_stat('KW_VERSION', value=params['DRS_VERSION'])
-    recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS_DATE'])
+    recipe.plot.add_stat('KW_VERSION', value=params['DRS.VERSION'])
+    recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS.DATE'])
 
     recipe.plot.add_stat('KW_MKMODEL_NFILES', value=tprops['N_TRANS_FILES'])
     recipe.plot.add_stat('KW_MKMODEL_MIN_FILES',

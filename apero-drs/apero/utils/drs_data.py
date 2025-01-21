@@ -75,7 +75,7 @@ def load_linelist(params: ParamDict,
     :param assetsdir: str, Define the assets directory -- overrides
                       params['PATH.ASSETS']
     :param wave_dir: str, where the wave data are stored (within assets
-                      directory) -- overrides params['DRS_WAVE_DATA']
+                      directory) -- overrides params['IPATH.WAVE']
     :param filename: str, Define the line list file (located in the
                        DRS_WAVE_DATA directory) -- overrides
                        params['WAVE_LINELIST_FILE']
@@ -103,7 +103,7 @@ def load_linelist(params: ParamDict,
     # get parameters from params (or override)
     assetdir = pcheck(params, 'PATH.ASSETS', func=func_name,
                       override=assetsdir)
-    relfolder = pcheck(params, 'DRS_WAVE_DATA', func=func_name,
+    relfolder = pcheck(params, 'IPATH.WAVE', func=func_name,
                        override=wave_dir)
     filename = pcheck(params, 'WAVE_LINELIST_FILE', func=func_name,
                       override=filename)
@@ -152,7 +152,7 @@ def load_cavity_files(params: ParamDict,
     :param assetsdir: str, Define the assets directory -- overrides
                       params['PATH.ASSETS']
     :param cavity_dir: str, where the wave data are stored (within assets
-                      directory) -- overrides params['DRS_WAVE_DATA']
+                      directory) -- overrides params['IPATH.WAVE']
     :param file1m: str, Define the coefficients of the fit of 1/m vs d
                    -- overrides params['CAVITY_1M_FILE']
     :param filell: str, Define the coefficients of the fit of wavelength vs d
@@ -164,7 +164,7 @@ def load_cavity_files(params: ParamDict,
     # get parameters from params/kwargs
     assetdir = pcheck(params, 'PATH.ASSETS', func=func_name,
                       override=assetsdir)
-    relfolder = pcheck(params, 'DRS_CALIB_DATA', func=func_name,
+    relfolder = pcheck(params, 'IPATH.CALIB', func=func_name,
                        override=cavity_dir)
     filename_1m = pcheck(params, 'CAVITY_1M_FILE', func=func_name,
                          override=file1m)
@@ -202,7 +202,7 @@ def save_cavity_files(params: ParamDict, fit_1m_d: np.ndarray,
     :param assetsdir: str, Define the assets directory -- overrides
                       params['PATH.ASSETS']
     :param cavity_dir: str, where the wave data are stored (within assets
-                       directory) -- overrides params['DRS_WAVE_DATA']
+                       directory) -- overrides params['IPATH.WAVE']
     :param file1m: str, Define the coefficients of the fit of 1/m vs d
                    -- overrides params['CAVITY_1M_FILE']
     :param filell: str, Define the coefficients of the fit of wavelength vs d
@@ -214,7 +214,7 @@ def save_cavity_files(params: ParamDict, fit_1m_d: np.ndarray,
     # get parameters from params/kwargs
     assetdir = pcheck(params, 'PATH.ASSETS', func=func_name,
                       override=assetsdir)
-    relfolder = pcheck(params, 'DRS_CALIB_DATA', func=func_name,
+    relfolder = pcheck(params, 'IPATH.CALIB', func=func_name,
                        override=cavity_dir)
     filename_1m = pcheck(params, 'CAVITY_1M_FILE', func=func_name,
                          override=file1m)
@@ -242,7 +242,7 @@ def load_full_flat_badpix(params: ParamDict,
     :param assetsdir: str, Define the assets directory -- overrides
                       params['PATH.ASSETS']
     :param badpix_dir: str, where the badpix file is stored (within assets
-                      directory) -- overrides params['DRS_BADPIX_DATA']
+                      directory) -- overrides params['IPATH.BADPIX']
     :param filename: str, the badpix file name
                      -- overrides params['BADPIX_FULL_FLAT']
     :param func: str, the function name calling this function
@@ -301,7 +301,7 @@ def load_excess_emissivity(params: ParamDict,
     # set parameters from params (or override)
     assetdir = pcheck(params, 'PATH.ASSETS', func=func_name,
                       override=assetsdir)
-    relfolder = pcheck(params, 'DRS_CALIB_DATA', func=func_name,
+    relfolder = pcheck(params, 'IPATH.CALIB', func=func_name,
                        override=calib_dir)
     filename = pcheck(params, 'THERMAL_EXCESS_EMISSIVITY_FILE', func=func_name,
                       override=filename)
@@ -478,7 +478,7 @@ def load_object_list(params: ParamDict,
     :param assetsdir: str, Define the assets directory -- overrides
                       params['PATH.ASSETS']
     :param db_dir: str, where the object list file is stored (within assets
-                      directory) -- overrides params['DATABASE_DIR']
+                      directory) -- overrides params['DB.DIR']
     :param filename: str, the object list file name
                      -- overrides params['OBJ_LIST_FILE']
     :param func: str, the function name calling this function
@@ -496,8 +496,7 @@ def load_object_list(params: ParamDict,
     # get parameters from params/kwargs
     assetdir = pcheck(params, 'PATH.ASSETS', func=func_name,
                       override=assetsdir)
-    relfolder = pcheck(params, 'DATABASE_DIR', func=func_name,
-                       override=db_dir)
+    relfolder = pcheck(params, 'DB.DIR', func=func_name, override=db_dir)
     filename = pcheck(params, 'OBJ_LIST_FILE', func=func_name,
                       override=filename)
     fmt = pcheck(params, 'OBJ_LIST_FILE_FMT', func=func_name, override=fmt)
@@ -996,7 +995,7 @@ def construct_path(params: ParamDict, filename: Union[str, None] = None,
     if asset_dir is None:
         asset_dir = ''
     # get properties from params/jwargs
-    package = pcheck(params, 'DRS_PACKAGE', func=func_name, override=package)
+    package = pcheck(params, 'DRS.PACKAGE', func=func_name, override=package)
     # construct filepath
     datadir = drs_path.get_relative_folder(package, asset_dir)
     absfilename = os.path.join(datadir, filename)

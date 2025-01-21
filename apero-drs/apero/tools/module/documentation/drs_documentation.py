@@ -189,7 +189,7 @@ def compile_file_definitions(params: ParamDict, recipe: DrsRecipe):
     # load file mod
     filemod = recipe.filemod
     # get instrument name
-    instrument = params['INSTRUMENT']
+    instrument = params['OBS.INSTRUMENT']
     # load pseudo constants
     pconst = load_functions.load_pconfig(select.INSTRUMENTS, 
                                          instrument=instrument)
@@ -363,7 +363,7 @@ def compile_recipe_definitions(params: ParamDict, recipe: DrsRecipe):
     # load file mod
     recipemod = recipe.recipemod
     # get instrument name
-    instrument = params['INSTRUMENT']
+    instrument = params['OBS.INSTRUMENT']
     # get a list of recipe instances
     srecipes = recipemod.recipes
     # three types of recipes
@@ -718,7 +718,7 @@ def compile_recipe_sequences(params: ParamDict, recipe: DrsRecipe):
     # load file mod
     recipemod = recipe.recipemod.get()
     # get instrument name
-    instrument = params['INSTRUMENT']
+    instrument = params['OBS.INSTRUMENT']
     # get a list of sequences
     if not hasattr(recipemod, 'sequences'):
         return
@@ -857,7 +857,7 @@ def compile_recipe_sequences(params: ParamDict, recipe: DrsRecipe):
 
 def compile_docs(params: ParamDict, mode: str = 'both'):
     # get package
-    package = params['DRS_PACKAGE']
+    package = params['DRS.PACKAGE']
     # get paths
     doc_dir = drs_misc.get_relative_folder(package, DOC_DIR)
     out_dir = drs_misc.get_relative_folder(package, OUT_DIR)
@@ -965,7 +965,7 @@ def compile_docs(params: ParamDict, mode: str = 'both'):
 
 def upload(params: ParamDict):
     # get package
-    package = params['DRS_PACKAGE']
+    package = params['DRS.PACKAGE']
     # get paths
     out_dir = drs_misc.get_relative_folder(package, OUT_DIR)
     # change permission of all files and directories
@@ -975,11 +975,11 @@ def upload(params: ParamDict):
         out_dir += os.sep
     # get rsync dict
     rdict = dict()
-    rdict['SSH'] = params['DRS_SSH_OPTIONS']
-    rdict['USER'] = params['DRS_SSH_USER']
-    rdict['HOST'] = params['DRS_SSH_HOST']
+    rdict['SSH'] = params['AURLS.SSH_OPTIONS']
+    rdict['USER'] = params['AURLS.SSH_USER']
+    rdict['HOST'] = params['AURLS.SSH_HOST']
     rdict['INPATH'] = out_dir
-    rdict['OUTPATH'] = params['DRS_SSH_WEBPATH']
+    rdict['OUTPATH'] = params['AURLS.SSH_WEBPATH']
     # print command to rsync
     WLOG(params, '', RSYNC_CMD.format(**rdict))
     # run command (will require password)

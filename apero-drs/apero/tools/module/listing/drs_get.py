@@ -289,9 +289,9 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
             # loop around objects
             for objname in all_inpaths:
                 WLOG(params, '', '')
-                WLOG(params, '', params['DRS_HEADER'])
+                WLOG(params, '', params['LOG.HEADER'])
                 WLOG(params, '', textentry('40-509-00008', args=[objname]))
-                WLOG(params, '', params['DRS_HEADER'])
+                WLOG(params, '', params['LOG.HEADER'])
                 WLOG(params, '', '')
                 # loop around files
                 for row in range(len(all_inpaths[objname])):
@@ -320,9 +320,9 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
     # -------------------------------------------------------------------------
     for objname in all_inpaths:
         WLOG(params, '', '')
-        WLOG(params, '', params['DRS_HEADER'])
+        WLOG(params, '', params['LOG.HEADER'])
         WLOG(params, '', textentry('40-509-00008', args=[objname]))
-        WLOG(params, '', params['DRS_HEADER'])
+        WLOG(params, '', params['LOG.HEADER'])
         WLOG(params, '', '')
         # loop around files
         for row in range(len(all_inpaths[objname])):

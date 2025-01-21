@@ -1082,9 +1082,9 @@ def extract_summary(recipe, params, qc_params, e2dsfile, sprops, eprops,
     # add qc params (fiber specific)
     recipe.plot.add_qc_params(qc_params, fiber=fiber)
     # add stats
-    recipe.plot.add_stat('KW_VERSION', value=params['DRS_VERSION'],
+    recipe.plot.add_stat('KW_VERSION', value=params['DRS.VERSION'],
                          fiber=fiber)
-    recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS_DATE'],
+    recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS.DATE'],
                          fiber=fiber)
     recipe.plot.add_stat('KW_EXT_TYPE', value=e2dsfile.name,
                          fiber=fiber)

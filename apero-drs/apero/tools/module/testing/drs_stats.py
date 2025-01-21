@@ -1074,7 +1074,7 @@ class ErrorReportEntry:
             # remove \n
             line = line.replace('\n', '')
             # remove header
-            line = line.replace(params['DRS_HEADER'], '')
+            line = line.replace(params['LOG.HEADER'], '')
             # remove timestamp
             line = line.split('-  |PROC|')[-1]
             # remove info lines

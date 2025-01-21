@@ -270,11 +270,11 @@ def send_email(params: Any, subject: str, message: Union[List[str], str],
         email_address = params['EMAIL_ADDRESS']
     # ----------------------------------------------------------------------
     # get auth file location
-    asset_relpath = params['DRS_LOG_EMAIL_AUTH_PATH']
-    authfile = params['DRS_LOG_EMAIL_AUTH']
+    asset_relpath = params['LOG.EMAIL_AUTH_PATH']
+    authfile = params['LOG.EMAIL_AUTH']
     assetdir = get_relative_folder(__PACKAGE__, asset_relpath)
     authpath = os.path.join(assetdir, authfile)
-    drs_email = params['DRS_LOG_EMAIL']
+    drs_email = params['LOG.EMAIL']
     # ----------------------------------------------------------------------
     # try to import yagmail
     try:
@@ -562,7 +562,7 @@ def bin_by_time(params: Any, time_value: Time, day_frac: float) -> Time:
     :return:
     """
     # get the longitude of the site
-    longitude = params['OBS_LONG']
+    longitude = params['OBS.LONG']
     # calculate the bin_time for this site (as a fraction of a day)
     local_bin_time = ((-longitude + 360) / 360 + day_frac) % 1
     # get the binned time for time_value

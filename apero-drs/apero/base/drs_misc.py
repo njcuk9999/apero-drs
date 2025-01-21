@@ -113,10 +113,10 @@ def check_local_googlesheet(params: Any, dataframe,
     :return: Nothing, saves a local backup of dataframe (for future comparison)
     """
     # deal with local directory not existing
-    if not os.path.exists(os.path.join(params['DRS_DATA_OTHER'], 'local')):
-        os.makedirs(os.path.join(params['DRS_DATA_OTHER'], 'local'))
+    if not os.path.exists(os.path.join(params['PATH.OTHER'], 'local')):
+        os.makedirs(os.path.join(params['PATH.OTHER'], 'local'))
     # construct local path
-    filename = os.path.join(params['DRS_DATA_OTHER'], 'local',
+    filename = os.path.join(params['PATH.OTHER'], 'local',
                             f'{sheet_id}_{sheet_name}.csv')
     # check if the local file exists
     if check_len and os.path.exists(filename):

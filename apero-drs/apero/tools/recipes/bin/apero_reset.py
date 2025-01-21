@@ -220,7 +220,7 @@ def __main__(recipe, params):
     # plot folder
     if 'lbl' in warns:
         reset = drs_reset.reset_confirmation(params, 'LBL',
-                                             params['LBL_PATH'])
+                                             params['PATH.LBL'])
     if 'lbl' in resets and reset:
         drs_reset.reset_lbl_folders(params, log)
     else:
@@ -243,7 +243,7 @@ def __main__(recipe, params):
     reset = True
     if 'other' in warns:
         reset = drs_reset.reset_confirmation(params, 'Other',
-                                             params['DRS_DATA_OTHER'])
+                                             params['PATH.OTHER'])
     if 'other' in resets and reset:
         drs_reset.reset_other_folder(params, log)
     else:

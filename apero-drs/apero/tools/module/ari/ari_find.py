@@ -115,11 +115,11 @@ def load_params(params: ParamDict) -> ParamDict:
     finder_dict = dict(loaded=True)
     # ----------------------------------------------------------------------
     # add path to the finder_yaml
-    finder_path = str(os.path.join(params['DRS_DATA_OTHER'], 'ari-config',
+    finder_path = str(os.path.join(params['PATH.OTHER'], 'ari-config',
                                    finder_yaml))
     # ----------------------------------------------------------------------
     # setup the directory
-    finder_dict['directory'] = str(os.path.join(params['DRS_DATA_OTHER'],
+    finder_dict['directory'] = str(os.path.join(params['PATH.OTHER'],
                                                 'ari', 'finder'))
     # add in the reset criteria
     finder_dict['reset'] = finder_reset

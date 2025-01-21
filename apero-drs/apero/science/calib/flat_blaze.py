@@ -589,8 +589,8 @@ def flat_blaze_summary(recipe: DrsRecipe, params: ParamDict,
     # add qc params (fiber specific)
     recipe.plot.add_qc_params(qc_params, fiber=fiber)
     # add stats
-    recipe.plot.add_stat('KW_VERSION', value=params['DRS_VERSION'], fiber=fiber)
-    recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS_DATE'], fiber=fiber)
+    recipe.plot.add_stat('KW_VERSION', value=params['DRS.VERSION'], fiber=fiber)
+    recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS.DATE'], fiber=fiber)
     recipe.plot.add_stat('KW_EXT_START', value=epp['START_ORDER'],
                          fiber=fiber)
     recipe.plot.add_stat('KW_EXT_END', value=epp['END_ORDER'], fiber=fiber)

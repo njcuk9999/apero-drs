@@ -2426,7 +2426,7 @@ def plot_wave_hc_guess(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     ofit = llprops['ORD_INI']
     # ------------------------------------------------------------------
     # deal with plot style
-    if 'dark' in params['DRS_PLOT_STYLE']:
+    if 'dark' in params['PLOT.CORE.PLOT_STYLE']:
         black = 'white'
     else:
         black = 'black'
@@ -2740,7 +2740,7 @@ def plot_wave_hc_resmap_old(plotter: Plotter, graph: Graph,
     x_range = np.arange(0, nbpix // bin_x)
     # ------------------------------------------------------------------
     # deal with plot style
-    if 'dark' in params['DRS_PLOT_STYLE']:
+    if 'dark' in params['PLOT.CORE.PLOT_STYLE']:
         black = 'white'
     else:
         black = 'black'
@@ -2901,7 +2901,7 @@ def plot_wave_littrow_extrap(plotter: Plotter, graph: Graph,
     yfit = llprops['LITTROW_EXTRAP_SOL_{0}'.format(iteration)]
     # ------------------------------------------------------------------
     # deal with plot style
-    if 'dark' in params['DRS_PLOT_STYLE']:
+    if 'dark' in params['PLOT.CORE.PLOT_STYLE']:
         black = 'white'
     else:
         black = 'black'
@@ -3313,7 +3313,7 @@ def plot_wave_fp_multi_order(plotter: Plotter, graph: Graph,
     n_plot_fin = np.min([n_plot_init + nbo, n_fin])
     # ------------------------------------------------------------------
     # deal with plot style
-    if 'dark' in params['DRS_PLOT_STYLE']:
+    if 'dark' in params['PLOT.CORE.PLOT_STYLE']:
         black = 'white'
     else:
         black = 'black'
@@ -4454,7 +4454,7 @@ def plot_ftellu_recon_abso(plotter: Plotter, graph: Graph,
         order_gen = [0]
     # ------------------------------------------------------------------
     # deal with plot style
-    if 'dark' in params['DRS_PLOT_STYLE']:
+    if 'dark' in params['PLOT.CORE.PLOT_STYLE']:
         black = 'white'
     else:
         black = 'black'
@@ -4899,7 +4899,7 @@ def plot_ccf_rv_fit(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
         order_gen = [order]
     # ------------------------------------------------------------------
     # deal with plot style
-    if 'dark' in params['DRS_PLOT_STYLE']:
+    if 'dark' in params['PLOT.CORE.PLOT_STYLE']:
         black = 'white'
     else:
         black = 'black'

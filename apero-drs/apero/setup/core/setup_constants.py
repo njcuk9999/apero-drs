@@ -65,6 +65,7 @@ SARGS['INSTRUMENT'] = SetupArgument(name='INSTRUMENT', argname='--instrument',
                                     dtype='str', options=INSTRUMENTS,
                                     required=True,
                                     helpstr='The instrument to use',
+                                    aperoname='OBS.INSTRUMENT',
                                     installname='INSTRUMENT')
 
 # The path to the apero module (set automatically in the code but can be
@@ -134,7 +135,7 @@ SARGS['OUTDIR'] = SetupArgument(name='OUTDIR', default_value=None,
 SARGS['LBLDIR'] = SetupArgument(name='LBLDIR', default_value=None,
                                 dtype='path', required=True, depends='DATADIR',
                                 helpstr='The lbl directory to use',
-                                aperoname='LBL_PATH')
+                                aperoname='PATH.LBL')
 # the log directory to use (if not using DATADIR)
 SARGS['LOGDIR'] = SetupArgument(name='LOGDIR', default_value=None,
                                 dtype='path', required=True, depends='DATADIR',
@@ -161,7 +162,7 @@ SARGS['OTHERDIR'] = SetupArgument(name='OTHERDIR', default_value=None,
                                   dtype='path', required=True,
                                   depends='DATADIR',
                                   helpstr='The other directory to use',
-                                  aperoname='DRS_DATA_OTHER')
+                                  aperoname='PATH.OTHER')
 # whether to always create nre directories without asking user
 SARGS['FORCE_DIR_CREATE'] = SetupArgument(name='FORCE_DIR_CREATE',
                                           argname='--always-create',

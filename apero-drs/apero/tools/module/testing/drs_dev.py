@@ -137,7 +137,7 @@ class Demo:
         else:
             self.params = params
         # get package
-        self.package = params['DRS_PACKAGE']
+        self.package = params['DRS.PACKAGE']
 
     @staticmethod
     def setup():

@@ -199,10 +199,10 @@ def __main__(recipe, params):
     # -------------------------------------------------------------------------
     for fb_it, fiber in enumerate(fibers):
         # ---------------------------------------------------------------------
-        WLOG(params, 'info', params['DRS_HEADER'])
+        WLOG(params, 'info', params['LOG.HEADER'])
         pargs = [fiber, fb_it + 1, len(fibers)]
         WLOG(params, 'info', textentry('40-018-00006', args=pargs))
-        WLOG(params, 'info', params['DRS_HEADER'])
+        WLOG(params, 'info', params['LOG.HEADER'])
         # get this fibers dprtype
         fiberdpr = pconst.FIBER_DPR_POS(dprtype, fiber)
         # skip if dprtype in this fiber does not match FP
@@ -249,10 +249,10 @@ def __main__(recipe, params):
         # loop around files
         for f_it, filename in enumerate(filenames):
             # -----------------------------------------------------------------
-            WLOG(params, 'info', params['DRS_HEADER'])
+            WLOG(params, 'info', params['LOG.HEADER'])
             pargs = [f_it + 1, len(filenames)]
             WLOG(params, 'info', textentry('40-018-00007', args=pargs))
-            WLOG(params, 'info', params['DRS_HEADER'])
+            WLOG(params, 'info', params['LOG.HEADER'])
             # -----------------------------------------------------------------
             # make a new copy of infile
             infile = drsfile.newcopy(filename=filename, params=params)

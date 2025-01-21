@@ -260,11 +260,11 @@ def get_keys_from_header(params: ParamDict,
     bprops['MJDMID_FMT'] = params.instances['KW_MID_OBS_TIME'].datatype
     bprops.set_source('MJDMID_FMT', 'KW_MID_OBS_TIME')
     # get longitude, latitude, altitude of the telescope
-    bprops['DRS_LONG'] = params['OBS_LONG']
-    bprops.set_source('DRS_LONG', 'params[OBS_LONG]')
-    bprops['DRS_LAT'] = params['OBS_LAT']
-    bprops.set_source('DRS_LAT', 'params[OBS_LAT]')
-    bprops['DRS_ALT'] = params['OBS_ALT']
+    bprops['DRS_LONG'] = params['OBS.LONG']
+    bprops.set_source('DRS_LONG', 'params[OBS.LONG]')
+    bprops['DRS_LAT'] = params['OBS.LAT']
+    bprops.set_source('DRS_LAT', 'params[OBS.LAT]')
+    bprops['DRS_ALT'] = params['OBS.ALT']
     bprops.set_source('DRS_ALT', 'params[OBS_ALT]')
     # -------------------------------------------------------------------------
     # get barycorrpy berv measurement (or set NaN)

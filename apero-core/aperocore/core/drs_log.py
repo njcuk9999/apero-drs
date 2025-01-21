@@ -50,15 +50,15 @@ LOGYAML = base.__YAML__['LOG']
 
 # minimal parameter definitions
 MPARAMS = dict()
-MPARAMS['DRS_RECIPE_TYPE'] = LOGYAML['DRS_RECIPE_TYPE']
-MPARAMS['DRS_LOG_CHAR_LEN'] = LOGYAML['DRS_LOG_CHAR_LEN']
-MPARAMS['LOG_TRIG_KEYS'] = LOGYAML['LOG_TRIG_KEYS']
-MPARAMS['WRITE_LEVELS'] = LOGYAML['WRITE_LEVELS']
-MPARAMS['REPORT_KEYS'] = LOGYAML['REPORT_KEYS']
-MPARAMS['DRS_LOG_SUBLEVEL_DIV'] = LOGYAML['DRS_LOG_SUBLEVEL_DIV']
-MPARAMS['DRS_LOG_SUBLEVEL_DIV_CHAR'] = LOGYAML['DRS_LOG_SUBLEVEL_DIV_CHAR']
+MPARAMS['DRS.RECIPE_TYPE'] = LOGYAML['RECIPE_TYPE']
+MPARAMS['LOG.CHAR_LEN'] = LOGYAML['CHAR_LEN']
+MPARAMS['LOG.TRIG_KEYS'] = LOGYAML['TRIG_KEYS']
+MPARAMS['LOG.WRITE_LEVELS'] = LOGYAML['WRITE_LEVELS']
+MPARAMS['LOG.REPORT_KEYS'] = LOGYAML['REPORT_KEYS']
+MPARAMS['LOG.SUBLEVEL_DIV'] = LOGYAML['SUBLEVEL_DIV']
+MPARAMS['LOG.SUBLEVEL_DIV_CHAR'] = LOGYAML['SUBLEVEL_DIV_CHAR']
 MPARAMS['LOG.PATH'] = base.get_default_log_dir()
-MPARAMS['DRS_HEADER'] = '*' * 50
+MPARAMS['LOG.HEADER'] = '*' * 50
 
 
 # =============================================================================
@@ -895,9 +895,9 @@ class Wlog:
         # storage
         storage = dict()
         # loop around all keys
-        for key in params['LOG_STORAGE_KEYS']:
+        for key in params['LOG.STORAGE_KEYS']:
             # get the storage value
-            storekey = params['LOG_STORAGE_KEYS'][key]
+            storekey = params['LOG.STORAGE_KEYS'][key]
             # get entries
             if key not in CACHE[log.filepath]:
                 entries = []
@@ -1094,8 +1094,8 @@ def get_logfilepath(params: Any, use_group: bool = True) -> str:
     if not use_group:
         group = None
         reset = True
-    elif 'DRS_GROUP_PATH' in params:
-        group = params['DRS_GROUP_PATH']
+    elif 'DRS.GROUP_PATH' in params:
+        group = params['DRS.GROUP_PATH']
         reset = False
     else:
         group = None
@@ -1163,12 +1163,12 @@ def get_drs_data_msg(params: Any, group: Union[str, None] = None,
     dir_data_msg = params.get('PATH.LOG', None)
     # ----------------------------------------------------------------------
     # only sort by recipe kind if group is None
-    if (params['DRS_RECIPE_TYPE'] is not None) and (group is None):
-        kind = params['DRS_RECIPE_TYPE'].lower()
+    if (params['DRS.RECIPE_TYPE'] is not None) and (group is None):
+        kind = params['DRS.RECIPE_TYPE'].lower()
         dir_data_msg = os.path.join(dir_data_msg, kind)
     # if we have a group (and we are dealing with a recipe called within
     #    another then put it in processing folder
-    elif group is not None and params['DRS_RECIPE_TYPE'] == 'sub-recipe':
+    elif group is not None and params['DRS.RECIPE_TYPE'] == 'sub-recipe':
         dir_data_msg = os.path.join(dir_data_msg, 'sub-recipe')
     # if we have a group (and we are not dealing with a recipe called within
     #    another then put it in processing folder
@@ -1273,7 +1273,7 @@ def format_message(params: Any, key: str,
         # loop around these lines
         for it, msg in enumerate(msg_string):
             msg_string[it] = textwrap.fill(msg,
-                                           width=params['DRS_LOG_CHAR_LEN'],
+                                           width=params['LOG.CHAR_LEN'],
                                            break_long_words=False,
                                            break_on_hyphens=False)
         msg_obj.tvalue = '\n'.join(msg_string)
@@ -1285,14 +1285,14 @@ def format_message(params: Any, key: str,
     if len(key) == 0:
         key = 'all'
     # check for key in various levels (give error if not)
-    if key not in params['LOG_TRIG_KEYS']:
-        eargs = [key, 'LOG_TRIG_KEYS']
+    if key not in params['LOG.TRIG_KEYS']:
+        eargs = [key, 'LOG.TRIG_KEYS']
         raise DrsLogException(textentry('00-005-00002', args=eargs))
-    if key not in params['WRITE_LEVELS']:
-        eargs = [key, 'WRITE_LEVELS']
+    if key not in params['LOG.WRITE_LEVELS']:
+        eargs = [key, 'LOG.WRITE_LEVELS']
         raise DrsLogException(textentry('00-005-00003', args=eargs))
-    if key not in params['REPORT_KEYS']:
-        eargs = [key, 'REPORT_KEYS']
+    if key not in params['LOG.REPORT_KEYS']:
+        eargs = [key, 'LOG.REPORT_KEYS']
         raise DrsLogException(textentry('00-005-00005', args=eargs))
     # ---------------------------------------------------------------------
     # deal with option
@@ -1305,22 +1305,22 @@ def format_message(params: Any, key: str,
     else:
         option = ''
     # overwrite these with DRS_USER_PROGRAM (if not None)
-    userprogram = str(params.get('DRS_USER_PROGRAM', None))
+    userprogram = str(params.get('DRS.USERPROG', None))
     if userprogram != 'None':
         option = userprogram
     # -------------------------------------------------------------------------
     # deal with report level
-    report = params['REPORT_KEYS'][key]
+    report = params['LOG.REPORT_KEYS'][key]
     # -------------------------------------------------------------------------
     # deal with code level
-    code = params['LOG_TRIG_KEYS'][key]
+    code = params['LOG.TRIG_KEYS'][key]
     # deal with code-sublevel
     if sublevel is None:
         pass
-    elif sublevel <= params['DRS_LOG_SUBLEVEL_DIV']:
-        code = code + params['DRS_LOG_SUBLEVEL_DIV_CHAR']['LOW']
+    elif sublevel <= params['LOG.SUBLEVEL_DIV']:
+        code = code + params['LOG.SUBLEVEL_DIV_CHAR']['LOW']
     else:
-        code = code + params['DRS_LOG_SUBLEVEL_DIV_CHAR']['HIGH']
+        code = code + params['LOG.SUBLEVEL_DIV_CHAR']['HIGH']
     # -------------------------------------------------------------------------
     # get messages
     if isinstance(msg_obj, drs_lang.Text):

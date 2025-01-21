@@ -104,7 +104,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     clean_by_sigmaclip = params['POLAR_CLEAN_BY_SIGMA_CLIPPING']
     clean_nsig = params['POLAR_NSIGMA_CLIPPING']
     do_lsd_analysis = params['INPUTS']['LSD']
-    drs_header = params['DRS_HEADER']
+    drs_header = params['LOG.HEADER']
     # -------------------------------------------------------------------------
     # part 1: deal with input files and load data
     # -------------------------------------------------------------------------

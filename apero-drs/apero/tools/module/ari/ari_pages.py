@@ -990,7 +990,7 @@ def add_finder_table(params: ParamDict, data_dict: Dict[str, Any]):
     # make path
     table_path = params['ARI_FINDER']['directory']
     # construct the html paths to copy to after compiling
-    html_table_path = str(os.path.join(params['DRS_DATA_OTHER'], 'ari',
+    html_table_path = str(os.path.join(params['PATH.OTHER'], 'ari',
                                        '_build', 'html', 'finder'))
     # storage of html files
     added_html_files = []
@@ -1125,7 +1125,7 @@ def add_recipe_tables(params: ParamDict, table: Table, machine_name: str):
     # get table name
     table_filename = machine_name.lower()
     # construct the html paths to copy to after compiling
-    html_table_path1 = str(os.path.join(params['DRS_DATA_OTHER'], 'ari',
+    html_table_path1 = str(os.path.join(params['PATH.OTHER'], 'ari',
                                         '_build', 'html', ari_user))
     html_table_path2 = str(os.path.join(html_table_path1, 'recipe_pages'))
     # storage of html files
@@ -1452,7 +1452,7 @@ def sphinx_compile(params: ParamDict):
 
 def add_other_reductions(params: ParamDict):
     # get the base_path page (above ari_dir level)
-    base_path = str(os.path.join(params['DRS_DATA_OTHER'], 'ari',
+    base_path = str(os.path.join(params['PATH.OTHER'], 'ari',
                                  '_build', 'html'))
     # index.html file
     index_html = os.path.join(base_path, 'index.html')

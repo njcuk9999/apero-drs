@@ -38,21 +38,26 @@ CDict.set('PSNAPSHOT', value=True, source=__NAME__, author='NJC',
 # -----------------------------------------------------------------------------
 # Instrument/Observatory Constants
 # -----------------------------------------------------------------------------
+cgroup = 'OBS'
 # Instrument Name
-CDict.set('INSTRUMENT', value='NIRPS_HA', source=__NAME__, author='NJC')
+CDict.set('INSTRUMENT', value='NIRPS_HA', source=__NAME__, author='NJC',
+          group=cgroup)
 
 # Defines the longitude West is negative
-CDict.set('OBS_LONG', value=-70.731330408, source=__NAME__, author='NJC')
+CDict.set('LONG', value=-70.731330408, source=__NAME__, author='NJC',
+          group=cgroup)
 
 #  Defines the latitude North (deg)
-CDict.set('OBS_LAT', value=-29.261165622, source=__NAME__, author='NJC')
+CDict.set('LAT', value=-29.261165622, source=__NAME__, author='NJC',
+          group=cgroup)
 
 #  Defines the telescope altitude (m)
-CDict.set('OBS_ALT', value=2400, source=__NAME__, author='NJC')
+CDict.set('ALT', value=2400, source=__NAME__, author='NJC',
+          group=cgroup)
 
 #  Define the telescopes time zone (from pytz.all_timezones)
-CDict.set('OBS_TZ', value='Chile/Continental', source=__NAME__,
-          author='NJC')
+CDict.set('TIMEZONE', value='Chile/Continental', source=__NAME__,
+          author='NJC', group=cgroup)
 
 # -----------------------------------------------------------------------------
 # path settings
@@ -103,18 +108,20 @@ CDict.set('ASSETS', value='/drs/nirps_ha/data/assets', source=__NAME__,
           author='NJC', group=cgroup)
 
 #   Define the other directory
-CDict.set('DRS_DATA_OTHER', value='/drs/nirps_ha/data/other', source=__NAME__,
-          author='NJC')
+CDict.set('OTHER', value='/drs/nirps_ha/data/other', source=__NAME__,
+          author='NJC', group=cgroup)
 
 # Define the lbl directory
-CDict.set('LBL_PATH', value='/drs/nirps_ha/data/lbl', source=__NAME__,
-          author='NJC')
+CDict.set('LBL', value='/drs/nirps_ha/data/lbl', source=__NAME__,
+          author='NJC', group=cgroup)
 
 # =============================================================================
 # DATABASE SETTINGS
 # =============================================================================
+group = 'DB'
 # Define database directory (relative to assets directory)
-CDict.set('DATABASE_DIR', value='databases/', source=__NAME__, author='NJC')
+CDict.set('DIR', value='databases/', source=__NAME__, author='NJC',
+          group=cgroup)
 
 #   Define the match type for calibDB files
 #         match = 'older'  only select calibration files that are older in
@@ -127,7 +134,8 @@ CDict.set('DATABASE_DIR', value='databases/', source=__NAME__, author='NJC')
 #                            closest in time to the input file
 #    if two files match with keys and time the key lower in the
 #         calibDB file will be used
-CDict.set('CALIB_DB_MATCH', value='closest', source=__NAME__, author='NJC')
+CDict.set('CALIB_MATCH', value='closest', source=__NAME__, author='NJC',
+          group=cgroup)
 
 #   Define the match type for calibDB files
 #         match = 'older'  when more than one file for each key will
@@ -138,44 +146,44 @@ CDict.set('CALIB_DB_MATCH', value='closest', source=__NAME__, author='NJC')
 #                            fitsfilename
 #    if two files match with keys and time the key lower in the
 #         calibDB file will be used
-CDict.set('TELLU_DB_MATCH', value='closest', source=__NAME__, author='NJC')
+CDict.set('TELLU_MATCH', value='closest', source=__NAME__, author='NJC',
+          group=cgroup)
 
 # =============================================================================
 # DRS INTERNAL PATHS
 # =============================================================================
-# where the instrument recipes are stored
-CDict.set('DRS_INSTRUMENT_RECIPE_PATH', value='./recipes/', source=__NAME__,
-          author='NJC')
-
+cgroup = 'IPATH'
 #  where the bad pixel data are stored (within assets directory)
-CDict.set('DRS_BADPIX_DATA', value='engineering/', source=__NAME__,
-          author='NJC')
+CDict.set('BADPIX', value='engineering/', source=__NAME__,
+          author='NJC', group=cgroup)
 
 # where the calibration data are stored (within assets directory)
-CDict.set('DRS_CALIB_DATA', value='calib/', source=__NAME__, author='NJC')
+CDict.set('CALIB', value='calib/', source=__NAME__, author='NJC',
+          group=cgroup)
 
 # where the wave data are stored (within assets directory)
-CDict.set('DRS_WAVE_DATA', value='calib/', source=__NAME__, author='NJC')
+CDict.set('WAVE', value='calib/', source=__NAME__, author='NJC',
+          group=cgroup)
 
 # where the assets directory is (relative to apero module)
 # TODO: remove and replace with online link / user link
-CDict.set('DRS_RESET_ASSETS_PATH', value='./apero-assets/', source=__NAME__,
-          author='NJC')
+CDict.set('RESET_ASSETS', value='./apero-assets/', source=__NAME__,
+          author='NJC', group=cgroup)
 
 # where the checksum and critica data (git managed) are stored
-CDict.set('DRS_CRITICAL_DATA_PATH', value='./data/', source=__NAME__,
-          author='NJC')
+CDict.set('CDATA', value='./data/', source=__NAME__,
+          author='NJC', group=cgroup)
 
 # where the reset data are stored (within assets directory)
 # for calibDB (within assets directory)
-CDict.set('DRS_RESET_CALIBDB_PATH', value='reset/calibdb/', source=__NAME__,
-          author='NJC')
+CDict.set('RESET_CALIB', value='reset/calibdb/', source=__NAME__,
+          author='NJC', group=cgroup)
 # for telluDB (within assets directory)
-CDict.set('DRS_RESET_TELLUDB_PATH', value='reset/telludb/', source=__NAME__,
-          author='NJC')
+CDict.set('RESET_TELLU', value='reset/telludb/', source=__NAME__,
+          author='NJC', group=cgroup)
 # for run files (within assets directory)
-CDict.set('DRS_RESET_RUN_PATH', value='reset/runs/', source=__NAME__,
-          author='NJC')
+CDict.set('RESET_RUN', value='reset/runs/', source=__NAME__,
+          author='NJC', group=cgroup)
 
 # =============================================================================
 #  End of configuration file

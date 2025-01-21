@@ -115,9 +115,9 @@ def __main__(recipe, params):
     # loop around unfound objects
     for objname in unfound_objs:
         # print header title
-        WLOG(params, 'info', params['DRS_HEADER'])
+        WLOG(params, 'info', params['LOG.HEADER'])
         WLOG(params, 'info', '\tProcessing: {0}'.format(objname))
-        WLOG(params, 'info', params['DRS_HEADER'])
+        WLOG(params, 'info', params['LOG.HEADER'])
         # construct add object question
         question1 = '\n\nAdd OBJECT="{0}" to astrometric database?'
         # ask if we want to find object
@@ -193,9 +193,9 @@ def __main__(recipe, params):
     # add to google sheet
     if len(add_objs) > 0:
         # print progress
-        WLOG(params, 'info', params['DRS_HEADER'])
+        WLOG(params, 'info', params['LOG.HEADER'])
         WLOG(params, 'info', 'Updating pending-list online database')
-        WLOG(params, 'info', params['DRS_HEADER'])
+        WLOG(params, 'info', params['LOG.HEADER'])
         # add all objects in add list to google-sheet
         drs_astrometrics.add_obj_to_sheet(params, add_objs)
         # log progress

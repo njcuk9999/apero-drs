@@ -60,7 +60,7 @@ def extract_thermal_files(params, recipe, extname, thermalfile,
     therm_always_extract = pcheck(params, 'THERMAL_ALWAYS_EXTRACT',
                                   'always_extract', kwargs, func_name)
     # find the extraction recipe
-    extrecipe, _ = drs_startup.find_recipe(extname, params['INSTRUMENT'],
+    extrecipe, _ = drs_startup.find_recipe(extname, params['OBS.INSTRUMENT'],
                                            mod=recipe.recipemod)
     # ----------------------------------------------------------------------
     # extract thermal files
@@ -136,7 +136,7 @@ def extract_leak_files(params, recipe, extname, darkfpfile, logger,
     leak_always_extract = pcheck(params, 'LEAKREF_ALWAYS_EXTRACT',
                                  'always_extract', kwargs, func_name)
     # find the extraction recipe
-    extrecipe, _ = drs_startup.find_recipe(extname, params['INSTRUMENT'],
+    extrecipe, _ = drs_startup.find_recipe(extname, params['OBS.INSTRUMENT'],
                                            mod=recipe.recipemod)
     # ----------------------------------------------------------------------
     # extract thermal files
@@ -163,7 +163,7 @@ def extract_wave_files(params, recipe, extname, hcfile,
     wave_always_extract = pcheck(params, 'WAVE_ALWAYS_EXTRACT',
                                  'always_extract', kwargs, func_name)
     # find the extraction recipe
-    extrecipe, _ = drs_startup.find_recipe(extname, params['INSTRUMENT'],
+    extrecipe, _ = drs_startup.find_recipe(extname, params['OBS.INSTRUMENT'],
                                            mod=recipe.recipemod)
     # get the fiber types from a list parameter
     fiber_types = drs_image.get_fiber_types(params)
@@ -319,12 +319,12 @@ def extract_files(params: ParamDict, recipe: DrsRecipe,
         # deal with adding group name
         if groupname is not None:
             # if we don't have a group already
-            if params['DRS_GROUP'] is None:
-                kwargs['DRS_GROUP'] = groupname
+            if params['DRS.GROUP'] is None:
+                kwargs['DRS.GROUP'] = groupname
             # if we do have a sub-folder
             else:
-                groupname = os.path.join(params['DRS_GROUP'], groupname)
-                kwargs['DRS_GROUP'] = groupname
+                groupname = os.path.join(params['DRS.GROUP'], groupname)
+                kwargs['DRS.GROUP'] = groupname
         # ------------------------------------------------------------------
         # pipe into apero_extract
         try:

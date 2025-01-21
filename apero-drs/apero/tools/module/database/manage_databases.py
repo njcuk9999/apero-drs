@@ -322,7 +322,7 @@ def create_calibration_database(params: ParamDict, pconst: Instrument,
     """
     # get parameters from params
     asset_dir = params['PATH.ASSETS']
-    reset_path = params['DATABASE_DIR']
+    reset_path = params['DB.DIR']
     # get columns and ctypes from pconst
     cdb_cols = pconst.CALIBRATION_DB_COLUMNS()
     # -------------------------------------------------------------------------
@@ -374,7 +374,7 @@ def create_telluric_database(params: ParamDict, pconst: Instrument,
     """
     # get parameters from params
     asset_dir = params['PATH.ASSETS']
-    reset_path = params['DATABASE_DIR']
+    reset_path = params['DB.DIR']
     # get columns and ctypes from pconst
     tdb_cols = pconst.TELLURIC_DB_COLUMNS()
     # -------------------------------------------------------------------------

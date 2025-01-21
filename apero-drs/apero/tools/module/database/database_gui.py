@@ -561,7 +561,7 @@ class DatabaseExplorer(tk.Frame):
         # first database
         databasehldr = self.databases[list(self.databases.keys())[0]]
         # get pacakge name
-        package = databasehldr.params['DRS_PACKAGE']
+        package = databasehldr.params['DRS.PACKAGE']
         # construct relative path
         relpath = 'tools/resources/images/spirou_logo.png'
         # get abspath

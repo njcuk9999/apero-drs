@@ -38,11 +38,11 @@ def start_splash(name: str):
 
     :return: None, prints to screen
     """
-    WLOG(None, 'info', drs_log.MPARAMS['DRS_HEADER'], colour='magenta')
+    WLOG(None, 'info', drs_log.MPARAMS['LOG.HEADER'], colour='magenta')
     WLOG(None, 'info', name, colour='magenta')
     vargs = [__version__, __date__]
     WLOG(None, 'info', 'v{0} [{1}]'.format(*vargs), colour='magenta')
-    WLOG(None, 'info', drs_log.MPARAMS['DRS_HEADER'], colour='magenta')
+    WLOG(None, 'info', drs_log.MPARAMS['LOG.HEADER'], colour='magenta')
 
 
 def end_splash():
@@ -51,9 +51,9 @@ def end_splash():
 
     :return: None, prints to screen
     """
-    WLOG(None, 'info', drs_log.MPARAMS['DRS_HEADER'], colour='magenta')
+    WLOG(None, 'info', drs_log.MPARAMS['LOG.HEADER'], colour='magenta')
     WLOG(None, 'info', 'End of code', colour='magenta')
-    WLOG(None, 'info', drs_log.MPARAMS['DRS_HEADER'], colour='magenta')
+    WLOG(None, 'info', drs_log.MPARAMS['LOG.HEADER'], colour='magenta')
 
 
 # =============================================================================

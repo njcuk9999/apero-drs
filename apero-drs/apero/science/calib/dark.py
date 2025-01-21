@@ -539,8 +539,8 @@ def reference_summary(recipe: DrsRecipe, params: ParamDict,
     :return: None, writes summary document
     """
     # add stats
-    recipe.plot.add_stat('KW_VERSION', value=params['DRS_VERSION'])
-    recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS_DATE'])
+    recipe.plot.add_stat('KW_VERSION', value=params['DRS.VERSION'])
+    recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS.DATE'])
     recipe.plot.add_stat('ND_REF', value=len(dark_table),
                          comment='Number DARK in reference')
     # construct summary (outside fiber loop)
@@ -725,8 +725,8 @@ def dark_summary(recipe: DrsRecipe, it: int, params: ParamDict,
     :return: None, writes summary document
     """
     # add stats
-    recipe.plot.add_stat('KW_VERSION', value=params['DRS_VERSION'])
-    recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS_DATE'])
+    recipe.plot.add_stat('KW_VERSION', value=params['DRS.VERSION'])
+    recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS.DATE'])
     recipe.plot.add_stat('KW_DARK_DEAD', value=dadead_full)
     recipe.plot.add_stat('KW_DARK_MED', value=med_full)
     recipe.plot.add_stat('KW_DARK_B_DEAD', value=dadead_blue)

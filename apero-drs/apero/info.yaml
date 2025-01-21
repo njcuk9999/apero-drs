@@ -1,11 +1,11 @@
 # Define version
-VERSION: 0.8.102
+DRS.VERSION: 0.8.102
 # Define date of release
-DATE: 2024-10-30
+DRS.DATE: 2024-10-30
 # Define release type
-RELEASE: beta
+DRS.RELEASE: beta
 # Define authors
-AUTHORS:
+DRS.AUTHORS:
     - N. Cook
     - E. Artigau
     - F. Bouchy
@@ -14,7 +14,7 @@ AUTHORS:
     - I. Boisse
     - E. Martioli
 # Define instruments
-INSTRUMENTS:
+DRS.INSTRUMENTS:
     - SPIROU
     - NIRPS_HA
     - NIRPS_HE

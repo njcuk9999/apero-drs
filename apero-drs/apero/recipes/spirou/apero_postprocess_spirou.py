@@ -146,9 +146,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # -----------------------------------------------------------------
         # log process: Processing {0}'
         iargs = [post_file.name]
-        WLOG(params, 'info', params['DRS_HEADER'])
+        WLOG(params, 'info', params['LOG.HEADER'])
         WLOG(params, 'info', textentry('40-090-00001', args=iargs))
-        WLOG(params, 'info', params['DRS_HEADER'])
+        WLOG(params, 'info', params['LOG.HEADER'])
         # -----------------------------------------------------------------
         # make a new copy of out file
         filepostfile = postfile.copy()
@@ -215,7 +215,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     if has_skipped:
         if len(error_storage) > 0:
             # header banner (in red)
-            WLOG(params, '', params['DRS_HEADER'], colour='red')
+            WLOG(params, '', params['LOG.HEADER'], colour='red')
             # combine error messages
             errormsg = ''
             # loop around error reports (from error_storage)
@@ -225,13 +225,13 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                 # print error
                 WLOG(params, 'error', error_entry, raise_exception=False)
                 # header banner (in red)
-                WLOG(params, '', params['DRS_HEADER'], colour='red')
+                WLOG(params, '', params['LOG.HEADER'], colour='red')
             # report on combined number of errors (and crash)
             eargs = [len(error_storage), recipe.name]
             raise AperoCodedException(params, '00-090-00010', targs=eargs)
     # else report that no errors were found
     else:
-        WLOG(params, '', params['DRS_HEADER'])
+        WLOG(params, '', params['LOG.HEADER'])
         WLOG(params, '', textentry('40-090-00009'))
     # -------------------------------------------------------------------------
     # end the log (only successful if no skips)

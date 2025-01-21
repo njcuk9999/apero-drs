@@ -88,9 +88,9 @@ def calib_check(params: ParamDict, recipe: DrsRecipe, tstars: List[str],
     recipemodule = recipe.recipemod
     # print progress
     if log:
-        WLOG(params, 'info', params['DRS_HEADER'])
+        WLOG(params, 'info', params['LOG.HEADER'])
         WLOG(params, 'info', textentry('40-503-00047'))
-        WLOG(params, 'info', params['DRS_HEADER'])
+        WLOG(params, 'info', params['LOG.HEADER'])
     # get calibration files grouped by recipe
     cout = get_raw_seq_files(params, recipemodule, tstars, ostars,
                              sequence='calib_seq', log=log)
@@ -240,9 +240,9 @@ def sci_tellu_check(params: ParamDict, recipe: DrsRecipe, tstars: List[str],
     # -------------------------------------------------------------------------
     # print msg: Analysing telluric and science raw files on disk
     if log:
-        WLOG(params, 'info', params['DRS_HEADER'])
+        WLOG(params, 'info', params['LOG.HEADER'])
         WLOG(params, 'info', textentry('40-503-00050'))
-        WLOG(params, 'info', params['DRS_HEADER'])
+        WLOG(params, 'info', params['LOG.HEADER'])
     # get telluric raw files
     tout = get_raw_seq_files(params, recipemodule, tstars, ostars,
                              sequence='tellu_seq')
@@ -465,9 +465,9 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
             bad_nights.append(obs_dir)
     # -------------------------------------------------------------------------
     # print msg: file check summary
-    WLOG(params, 'info', params['DRS_HEADER'])
+    WLOG(params, 'info', params['LOG.HEADER'])
     WLOG(params, 'info', textentry('40-503-00053'))
-    WLOG(params, 'info', params['DRS_HEADER'])
+    WLOG(params, 'info', params['LOG.HEADER'])
     # -------------------------------------------------------------------------
     # finally print a list of possible bad nights
     if len(bad_nights) > 0:
@@ -674,9 +674,9 @@ def obj_check(params: ParamDict, findexdbm: Optional[FileIndexDatabase] = None,
     """
     # print progress
     if log:
-        WLOG(params, 'info', params['DRS_HEADER'])
+        WLOG(params, 'info', params['LOG.HEADER'])
         WLOG(params, 'info', 'Checking current set of object names')
-        WLOG(params, 'info', params['DRS_HEADER'])
+        WLOG(params, 'info', params['LOG.HEADER'])
     # ---------------------------------------------------------------------
     # get psuedo constants
     pconst = load_functions.load_pconfig(select.INSTRUMENTS)

@@ -26,7 +26,7 @@ from apero.base import base as apero_base
 # Define variables
 # =============================================================================
 __NAME__ = 'error_html.py'
-__INSTRUMENT__ = base.IPARAMS['INSTRUMENT']
+__INSTRUMENT__ = base.IPARAMS['OBS.INSTRUMENT']
 __PACKAGE__ = apero_base.__PACKAGE__
 __version__ = apero_base.__version__
 __authors__ = apero_base.__authors__
@@ -142,8 +142,8 @@ def from_outlist(save_path: str, outlist: Dict[int, Dict[str, Any]]):
         # get group
         apero_group = ''
         if 'ARGS' in item:
-            if 'DRS_GROUP' in item['ARGS']:
-                apero_group = item['ARGS']['DRS_GROUP']
+            if 'DRS.GROUP' in item['ARGS']:
+                apero_group = item['ARGS']['DRS.GROUP']
         yaml_dict['GROUP'] = apero_group
         # ---------------------------------------------------------------------
         # get group date

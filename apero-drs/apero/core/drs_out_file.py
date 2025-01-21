@@ -620,7 +620,7 @@ class LBLOutFile(OutFile):
         :return: str, the absolute path to the file
         """
         # set up path
-        path = os.path.join(params['LBL_PATH'],
+        path = os.path.join(params['PATH.LBL'],
                             drsfile.path.replace('/', os.sep))
         # deal with path requiring the object or template name
         path = path.format(obj=objname, temp=tempname)

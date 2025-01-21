@@ -1156,7 +1156,7 @@ def check_database(params: ParamDict):
             bad_objects[objname] = all_objects[objname]
     # ---------------------------------------------------------------------
     # save bad object list to disk (via a yaml)
-    bad_object_path = os.path.join(params['DRS_DATA_OTHER'], 'astrometrics')
+    bad_object_path = os.path.join(params['PATH.OTHER'], 'astrometrics')
     # make sure the directory exists
     if not os.path.exists(bad_object_path):
         os.makedirs(bad_object_path)
@@ -1765,9 +1765,9 @@ def update_astrometrics(params):
         # update
         margs = [objname, row + 1, len(table)]
         msg = 'Processing original name = {0}  ({1}/{2})'.format(*margs)
-        WLOG(params, 'info', params['DRS_HEADER'])
+        WLOG(params, 'info', params['LOG.HEADER'])
         WLOG(params, 'info', msg)
-        WLOG(params, 'info', params['DRS_HEADER'])
+        WLOG(params, 'info', params['LOG.HEADER'])
         # ---------------------------------------------------------------------
         astro_objs, alias = [], str(objname)
         # search in simbad for objects (loop around aliases)
@@ -1840,10 +1840,10 @@ def update_astrometrics(params):
     # -------------------------------------------------------------------------
     # add to google sheet
     if len(add_objs) > 0:
-        WLOG(params, '', params['DRS_HEADER'], colour='magenta')
+        WLOG(params, '', params['LOG.HEADER'], colour='magenta')
         msg = 'Adding {0} objects to the object database'
         WLOG(params, '', msg.format(len(add_objs)), colour='magenta')
-        WLOG(params, '', params['DRS_HEADER'], colour='magenta')
+        WLOG(params, '', params['LOG.HEADER'], colour='magenta')
         # add all objects in add list to google-sheet
         add_obj_to_sheet(params, add_objs)
         # log progress
@@ -1851,19 +1851,19 @@ def update_astrometrics(params):
         # update database
         manage_databases.update_object_database(params, log=False)
     # -------------------------------------------------------------------------
-    WLOG(params, '', params['DRS_HEADER'], colour='yellow')
+    WLOG(params, '', params['LOG.HEADER'], colour='yellow')
     msg = 'There were {0} possible mismatched objects'
     margs = [len(possible_mismatched_objects)]
     WLOG(params, '', msg.format(*margs), colour='yellow')
-    WLOG(params, '', params['DRS_HEADER'], colour='yellow')
+    WLOG(params, '', params['LOG.HEADER'], colour='yellow')
     # print possible mismatched objects
     for mismatch in possible_mismatched_objects:
         WLOG(params, '', mismatch, colour='yellow')
     # -------------------------------------------------------------------------
-    WLOG(params, '', params['DRS_HEADER'], colour='red')
+    WLOG(params, '', params['LOG.HEADER'], colour='red')
     msg = 'There were {0} objects remove from the database'
     WLOG(params, '', msg.format(len(removed_objs)), colour='red')
-    WLOG(params, '', params['DRS_HEADER'], colour='red')
+    WLOG(params, '', params['LOG.HEADER'], colour='red')
     # print object removed (not found)
     for robjname in removed_objs:
         msg = 'Could not find "{0}". Removed from database'
@@ -1871,9 +1871,9 @@ def update_astrometrics(params):
     # -------------------------------------------------------------------------
     # log finishing of code
     iargs = ['update_astrometrics']
-    WLOG(params, 'info', params['DRS_HEADER'])
+    WLOG(params, 'info', params['LOG.HEADER'])
     WLOG(params, 'info', textentry('40-003-00001', args=iargs))
-    WLOG(params, 'info', params['DRS_HEADER'])
+    WLOG(params, 'info', params['LOG.HEADER'])
 
 
 def update_teffs(params):
@@ -1903,10 +1903,10 @@ def update_teffs(params):
     # -------------------------------------------------------------------------
     # add to google sheet
     if len(add_objs) > 0:
-        WLOG(params, '', params['DRS_HEADER'], colour='magenta')
+        WLOG(params, '', params['LOG.HEADER'], colour='magenta')
         msg = 'Adding {0} objects to the object database'
         WLOG(params, '', msg.format(len(add_objs)), colour='magenta')
-        WLOG(params, '', params['DRS_HEADER'], colour='magenta')
+        WLOG(params, '', params['LOG.HEADER'], colour='magenta')
         # add all objects in add list to google-sheet
         add_obj_to_sheet(params, add_objs)
         # log progress

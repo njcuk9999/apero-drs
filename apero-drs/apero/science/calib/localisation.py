@@ -1335,8 +1335,8 @@ def loc_summary(recipe: DrsRecipe, it: int, params: ParamDict,
     :return: None, saves summary document(s) to disk
     """
     # add stats
-    recipe.plot.add_stat('KW_VERSION', value=params['DRS_VERSION'])
-    recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS_DATE'])
+    recipe.plot.add_stat('KW_VERSION', value=params['DRS.VERSION'])
+    recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS.DATE'])
     recipe.plot.add_stat('KW_DPRTYPE', value=props['DPRTYPE'])
     recipe.plot.add_stat('KW_LOC_BCKGRD', value=lprops['MEAN_BACKGRD'])
     recipe.plot.add_stat('KW_LOC_NBO', value=lprops['NORDERS'])
