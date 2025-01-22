@@ -713,7 +713,7 @@ class CalibrationDatabase(DatabaseManager):
             if bintimes:
                 # get the the fraction of the day to bin to (0 = midnight
                 # before observation, 0.5 = noon, and 1.0 = midnight after
-                day_frac = self.params['CALIB_DB_DAYFRAC']
+                day_frac = self.params['CAL.GEN.DAYFRAC']
                 # modify the filetime to be the binned time
                 filetime = drs_misc.bin_by_time(self.params, filetime, day_frac)
         # ---------------------------------------------------------------------
@@ -1460,7 +1460,7 @@ def _get_hdict(params: ParamDict, dbname: str, drsfile: DrsFileTypes = None,
         # add keys from hdict to header
         for key in hdict:
             # do not look at forbidden keys
-            if key in params['FORBIDDEN_OUT_KEYS']:
+            if key in params['HEADER.FORBIDDEN_OUT_KEYS']:
                 continue
             # else set key from hdict with the comment
             header[key] = (hdict[key], hdict.comments[key])

@@ -1365,7 +1365,7 @@ def get_sun_altitude(params: Any, header: Any, hdict: Any) -> Tuple[Any, Any]:
     obs_lat = params['OBS.LAT'] * uu.deg
     obs_long = params['OBS.LONG'] * uu.deg
     # get the definitions of civil, nautical and astronomical twilight
-    night_def = params['NIGHT_DEFINITION']
+    night_def = params['OBS.NIGHT_DEFINITION']
     civ_twil_angle = apero_base.CIVIL_TWILIGHT
     nau_twil_angle = apero_base.NAUTICAL_TWILIGHT
     ast_twil_angle = apero_base.ASTRONOMIAL_TWILIGHT

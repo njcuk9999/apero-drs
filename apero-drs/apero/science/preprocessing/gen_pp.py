@@ -379,13 +379,13 @@ def reject_infile(params: ParamDict, header: drs_fits.Header,
     # -------------------------------------------------------------------------
     # get parameters from params
     if bad_kind == 'pp':
-        header_col = params['PP_BADLIST_DRS_HKEY']
-        value_col = params['PP_BADLIST_SS_VALCOL']
-        mask_col = params['PP_BADLIST_SS_MASKCOL']
+        header_col = params['REJECT_DRS_HKEY']
+        value_col = params['REJECT_VALCOL']
+        mask_col = params['REJECT_MASKCOL']
     else:
-        header_col = params['PP_BADLIST_DRS_HKEY']
-        value_col = params['PP_BADLIST_SS_VALCOL']
-        mask_col = params['PP_BADLIST_SS_MASKCOL']
+        header_col = params['REJECT_DRS_HKEY']
+        value_col = params['REJECT_VALCOL']
+        mask_col = params['REJECT_MASKCOL']
     # -------------------------------------------------------------------------
     # deal with no bad list
     cond1 = drs_text.null_text(header_col, ['None', ''])
@@ -509,7 +509,7 @@ def quality_control1(params, snr_hotpix, infile, rms_list, log=True):
     qc_logic.append('max(rms_list) > {0:.4e}'.format(rms_threshold))
     # ----------------------------------------------------------------------
     # check required exposure time
-    exptime_frac = params['PP_BAD_EXPTIME_FRACTION']
+    exptime_frac = params['PP.BAD_EXPTIME_FRACTION']
     # get required exposure time
     required_exptime = infile.get_hkey('KW_EXPREQ')
     # get exposure time

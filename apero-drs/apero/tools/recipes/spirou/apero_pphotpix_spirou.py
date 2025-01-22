@@ -138,8 +138,8 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     WLOG(params, '', 'Finding hot pixels')
     # get box size from parameters
-    boxsize = params['PP_HOTPIX_BOXSIZE']
-    threshold = params['PP_CORRUPT_HOT_THRES']
+    boxsize = params['PP.HOTPIX_BOXSIZE']
+    threshold = params['PP.CORRUPT_HOT_THRES']
     # a hot pixel is a point that is > 10 sigma (positive) and that has a
     # 5x5 median around it that is within +/- 1 sigma; it is well-behaved and
     #  not surrounded by bad pixels
@@ -179,7 +179,7 @@ def __main__(recipe, params):
 
     # get outpath
     assetdir = params['PATH.ASSETS']
-    filename = params['PP_HOTPIX_FILE']
+    filename = params['PP.HOTPIX_FILE']
     relpath = params['DATA.DATA_ENGINEERING']
     absoutpath = os.path.join(assetdir, relpath, filename)
     # write output as a csv file

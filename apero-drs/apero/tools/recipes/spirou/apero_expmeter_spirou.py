@@ -148,7 +148,7 @@ def __main__(recipe, params):
     calibdbm.load_db()
     # ----------------------------------------------------------------------
     # get all allowed fibers
-    allowed_fibers = params['INDIVIDUAL_FIBERS']
+    allowed_fibers = params['CAL.FIBER.INDIVIDUAL']
     # get fibers
     if params['INPUTS']['FIBERS'] not in ['None', '']:
         fibers = params['INPUTS']['FIBERS']

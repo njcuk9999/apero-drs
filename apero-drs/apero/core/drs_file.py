@@ -3980,7 +3980,7 @@ class DrsFitsFile(DrsInputFile):
         # check that data is read
         self.check_read()
         # get combine metric types
-        comb_metric_1_types = params['COMBINE_METRIC1_TYPES']
+        comb_metric_1_types = params['CAL.GEN.CMETRIC1_TYPES']
         # set new data to this files data
         data = np.array(self.data)
         # --------------------------------------------------------------------
@@ -4603,10 +4603,10 @@ class DrsFitsFile(DrsInputFile):
                 else:
                     return False
             # skip if key is forbidden key
-            if forbid_keys and (key in params['FORBIDDEN_COPY_KEYS']):
+            if forbid_keys and (key in params['HEADER.FORBIDDEN_COPY_KEYS']):
                 return False
             # skip if key is drs forbidden key (unless allkeys)
-            elif (key in params['FORBIDDEN_DRS_KEY']) and (not allkeys):
+            elif (key in params['HEADER.FORBIDDEN_DRS_KEY']) and (not allkeys):
                 return False
             # skip if key added temporarily in code (denoted by @@@)
             elif '@@@' in key:
@@ -7292,7 +7292,7 @@ class DrsOutFile(DrsInputFile):
         :return:
         """
         # get keys not to check
-        skip_keys = params['NON_CHECK_DUPLICATE_KEYS']
+        skip_keys = params['HEADER.NON_CHECK_DUPLICATE_KEYS']
         # get primary extension
         header0 = self.extensions[0].header
         # loop around extensions
@@ -8023,7 +8023,7 @@ def combine_metric_1(params: ParamDict, row: int, image1: np.ndarray,
     good = np.isfinite(image1) * np.isfinite(image2)
     metric, _ = pearsonr(image1[good], image2[good])
     # get metric threshold
-    metric_threshold = params['COMBINE_METRIC_THRESHOLD1']
+    metric_threshold = params['CAL.GEN.CMETRIC1_THRES']
     # define whether metric passed
     passed = metric > metric_threshold
     # return metric, threshold and passed criteria
@@ -8716,7 +8716,7 @@ def is_forbidden_prefix(params: ParamDict, key: str) -> bool:
     cond = False
     # if prefix is forbidden and key starts with this prefix -->
     #   set cond to true (key is not forbidden)
-    for prefix in params['FORBIDDEN_HEADER_PREFIXES']:
+    for prefix in params['HEADER.FORBIDDEN_HEADER_PREFIXES']:
         if key.startswith(prefix):
             cond = True
     # return condition on whether key is forbidden

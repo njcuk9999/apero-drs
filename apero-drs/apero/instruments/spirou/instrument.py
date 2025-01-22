@@ -1324,7 +1324,7 @@ def get_special_objname(params: ParamDict, header: Any,
     kwobjname = params['KW_OBJNAME'][0]
     kwtrgtype = params['KW_TARGET_TYPE'][0]
     kwobjcomment = params['KW_OBJNAME'][2]
-    obj_dprtypes = params['PP_OBJ_DPRTYPES']
+    obj_dprtypes = params['PP.OBJ_DPRTYPES']
     # conditions
     cond1 = header[kwdprtype] in obj_dprtypes
     cond2 = header[kwtrgtype] == 'SKY'

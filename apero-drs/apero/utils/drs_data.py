@@ -332,7 +332,7 @@ def load_hotpix(params: ParamDict,
     :param eng_dir: str, where the hotpix file is stored (within assets
                       directory) -- overrides params['DATA.DATA_ENGINEERING']
     :param filename: str, the hotpix file name
-                     -- overrides params['PP_HOTPIX_FILE']
+                     -- overrides params['PP.HOTPIX_FILE']
     :param func: str, the function name calling this function
     :param fmt: str, the data format (astropy.table format)
     :param datastart: int, the row at which to start reading the file
@@ -351,7 +351,7 @@ def load_hotpix(params: ParamDict,
                       override=assetsdir)
     relfolder = pcheck(params, 'DATA.DATA_ENGINEERING', func=func_name,
                        override=eng_dir)
-    filename = pcheck(params, 'PP_HOTPIX_FILE', func=func_name,
+    filename = pcheck(params, 'PP.HOTPIX_FILE', func=func_name,
                       override=filename)
     # deal with return_filename
     absfilename = str(os.path.join(assetdir, relfolder, filename))
@@ -381,7 +381,7 @@ def load_amp_bias_model(params: ParamDict,
     :param eng_dir: str, where the hotpix file is stored (within assets
                       directory) -- overrides params['DRS.DATA.DATA_ENGINEERING']
     :param filename: str, the amp bias model file name
-                     -- overrides params['PP_AMP_ERROR_MODEL']
+                     -- overrides params['PP.AMP_ERROR_MODEL']
     :param func: str, the function name calling this function
 
     :param return_filename: bool, if True returns filename else returns image
@@ -400,7 +400,7 @@ def load_amp_bias_model(params: ParamDict,
                       override=assetsdir)
     relfolder = pcheck(params, 'DATA.DATA_ENGINEERING', func=func_name,
                        override=eng_dir)
-    filename = pcheck(params, 'PP_AMP_ERROR_MODEL', func=func_name,
+    filename = pcheck(params, 'PP.AMP_ERROR_MODEL', func=func_name,
                       override=filename)
     # deal with return_filename
     absfilename = str(os.path.join(assetdir, relfolder, filename))

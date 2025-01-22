@@ -299,6 +299,15 @@ CDict.add('TIMEZONE', value='UTC', dtype=str, source=__NAME__,
           description='Define the telescopes time zone '
                       '(from pytz.all_timezones)')
 
+# Define which twilight to use as the definition of a night observation
+#    ("CIVIL", "NAUTICAL", "ASTRONOMICAL")
+CDict.add('NIGHT_DEFINITION', value=None, dtype=str,
+          source=__NAME__, group=cgroup,
+          options=['CIVIL', 'NAUTICAL', 'ASTRONOMICAL'],
+          description='Define which twilight to use as the '
+                      'definition of a night observation'
+                      '("CIVIL", "NAUTICAL", "ASTRONOMICAL")')
+
 # =============================================================================
 # DRS INTERNAL PATHS
 # =============================================================================

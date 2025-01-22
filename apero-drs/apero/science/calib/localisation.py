@@ -965,7 +965,7 @@ def loc_quality_control(params: ParamDict, lprops: ParamDict
     pconst = load_functions.load_pconfig(select.INSTRUMENTS)
     fiberparams = pconst.FIBER_SETTINGS(params, fiber)
 
-    required_norders = pcheck(params, 'FIBER_MAX_NUM_ORDERS', func=func_name,
+    required_norders = pcheck(params, 'FIBER.MAX_NUM_ORDERS', func=func_name,
                               paramdict=fiberparams)
     # ----------------------------------------------------------------------
     # # check that max number of points rejected in center fit is below

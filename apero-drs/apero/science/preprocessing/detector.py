@@ -105,9 +105,9 @@ def correct_cosmics(params: ParamDict, image: np.ndarray,
     # set function name
     func_name = display_func('correct_cosmics', __NAME__)
     # get parameters from params
-    tamp = params['PP_TOTAL_AMP_NUM']
-    ntop = params['PP_NUM_REF_TOP']
-    nbottom = params['PP_NUM_REF_BOTTOM']
+    tamp = params['PP.TOTAL_AMP_NUM']
+    ntop = params['PP.NUM_REF_TOP']
+    nbottom = params['PP.NUM_REF_BOTTOM']
     readout_noise = params['PP_COSMIC_NOISE_ESTIMATE']
     variance_cut1 = params['PP_COSMIC_VARCUT1']
     variance_cut2 = params['PP_COSMIC_VARCUT2']
@@ -231,9 +231,9 @@ def ref_top_bottom(params: ParamDict, image: np.ndarray) -> np.ndarray:
     # get the image size
     dim1, dim2 = image.shape
     # get constants from p
-    tamp = params['PP_TOTAL_AMP_NUM']
-    ntop = params['PP_NUM_REF_TOP']
-    nbottom = params['PP_NUM_REF_BOTTOM']
+    tamp = params['PP.TOTAL_AMP_NUM']
+    ntop = params['PP.NUM_REF_TOP']
+    nbottom = params['PP.NUM_REF_BOTTOM']
     # get number of pixels in amplifier
     pix_in_amp = dim2 // tamp
     pix_in_amp_2 = pix_in_amp // 2
@@ -273,8 +273,8 @@ def correct_left_right(params: ParamDict, image: np.ndarray) -> np.ndarray:
     :return image: numpy array (2D), the corrected image
     :rtype: np.ndarray
     """
-    nleft = params['PP_NUM_REF_LEFT']
-    nright = params['PP_NUM_REF_RIGHT']
+    nleft = params['PP.NUM_REF_LEFT']
+    nright = params['PP.NUM_REF_RIGHT']
     width = 5
     # get the shape
     ypix, xpix = image.shape
@@ -320,9 +320,9 @@ def median_filter_dark_amp(params: ParamDict, image: np.ndarray) -> np.ndarray:
     # get the image size
     dim1, dim2 = image.shape
     # get constants from p
-    namp = params['PP_NUM_DARK_AMP']
-    tamp = params['PP_TOTAL_AMP_NUM']
-    ybinnum = params['PP_DARK_MED_BINNUM']
+    namp = params['PP.NUM_DARK_AMP']
+    tamp = params['PP.TOTAL_AMP_NUM']
+    ybinnum = params['PP.DARK_MED_BINNUM']
     # get number of pixels in amplifier
     pix_in_amp = dim2 // tamp
     # ----------------------------------------------------------------------
@@ -416,8 +416,8 @@ def median_one_over_f_noise(params: ParamDict, image: np.ndarray) -> np.ndarray:
     # get the image size
     dim1, dim2 = image.shape
     # get constants from p
-    total_amps = params['PP_TOTAL_AMP_NUM']
-    n_dark_amp = params['PP_NUM_DARK_AMP']
+    total_amps = params['PP.TOTAL_AMP_NUM']
+    n_dark_amp = params['PP.NUM_DARK_AMP']
     # width of an amplifier
     amp_width = dim1 // total_amps
     # set up a residual low frequency array
@@ -517,15 +517,15 @@ def test_for_corrupt_files(params: ParamDict, image: np.ndarray,
         return np.nan, (np.nan, np.nan, np.nan, np.nan), np.nan, np.nan
     # -------------------------------------------------------------------------
     # get the med_size
-    med_size = params['PP_CORRUPT_MED_SIZE']
+    med_size = params['PP.CORRUPT_MED_SIZE']
     # get hte percentile values
-    rms_percentile = params['PP_RMS_PERCENTILE']
-    percent_thres = params['PP_LOWEST_RMS_PERCENTILE']
+    rms_percentile = params['PP.RMS_PERCENTILE']
+    percent_thres = params['PP.LOWEST_RMS_PERCENTILE']
     # get shape of full badpixel file
     dim1, dim2 = image.shape
     # get size of dark region
-    pixels_per_amp = dim2 // params['PP_TOTAL_AMP_NUM']
-    dark_size = params['PP_NUM_DARK_AMP'] * pixels_per_amp
+    pixels_per_amp = dim2 // params['PP.TOTAL_AMP_NUM']
+    dark_size = params['PP.NUM_DARK_AMP'] * pixels_per_amp
     # get the x and y hot pixel values
     yhot, xhot = hotpix
     # mask pixels around the edges
@@ -873,7 +873,7 @@ def correct_capacitive_coupling(params: ParamDict, image: np.ndarray,
     :return: np.ndarray, the corrected image
     """
     # get the total number of amplifiers (for this image)
-    total_amps = params['PP_TOTAL_AMP_NUM']
+    total_amps = params['PP.TOTAL_AMP_NUM']
     # get number of pixels in amplifier
     pix_in_amp = image.shape[1] // total_amps
     # get the amplifier error model file
@@ -979,7 +979,7 @@ def get_butterfly_maps(params: ParamDict, image0: np.ndarray,
              butteryfly pattern
     """
     # number of amplifier
-    total_amps = params['PP_TOTAL_AMP_NUM']
+    total_amps = params['PP.TOTAL_AMP_NUM']
     # remove nans
     image = np.array(image0)
     # pixel width of each amplifier
@@ -1104,7 +1104,7 @@ def nirps_correction(params: ParamDict, image: np.ndarray,
     # define the bin size for low level frequencies
     # binsize = params['PP_MEDAMP_BINSIZE']
     # number of amplifiers in total
-    namps = params['PP_TOTAL_AMP_NUM']
+    namps = params['PP.TOTAL_AMP_NUM']
     # shape of the image
     nbypix, nbxpix = image.shape
     # define the width of amplifiers

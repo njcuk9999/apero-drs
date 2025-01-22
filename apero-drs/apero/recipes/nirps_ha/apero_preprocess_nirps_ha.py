@@ -158,7 +158,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         # For OBJECT files we need to resolve object and update header
         # ------------------------------------------------------------------
-        obj_dprtypes = params['PP_OBJ_DPRTYPES']
+        obj_dprtypes = params['PP.OBJ_DPRTYPES']
         # only resolve targets that are objects
         if infile.get_hkey('KW_DPRTYPE') in obj_dprtypes:
             # get object based on object name and gaia id

@@ -106,7 +106,7 @@ def get_waveref_filename(params: ParamDict, fiber: str,
     usefiber = pconst.FIBER_WAVE_TYPES(fiber)
     # get whether the user wants to bin the calibration times to a specific
     #   day fraction (i.e. midnight, midday) using CALIB_DB_DAYFRAC
-    bintimes = params['CALIB_BIN_IN_TIME']
+    bintimes = params['CAL.GEN.BIN_IN_TIME']
     # ------------------------------------------------------------------------
     # load database
     if database is None:

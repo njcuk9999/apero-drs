@@ -337,7 +337,7 @@ class Trigger:
                 condition += f' AND OBS_DIR="{obs_dir}"'
                 # get science files condition (DPRTYPE)
                 subconds = []
-                for dprtype in self.params['PP_OBJ_DPRTYPES']:
+                for dprtype in self.params['PP.OBJ_DPRTYPES']:
                     subconds.append(f'KW_DPRTYPE="{dprtype}"')
                 condition += ' AND ({0})'.format(' OR '.join(subconds))
                 # get all science files

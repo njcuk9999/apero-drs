@@ -59,6 +59,10 @@ CDict.set('ALT', value=4204, source=__NAME__, author='EA',
 CDict.set('TIMEZONE', value='US/Hawaii', source=__NAME__,
           author='NJC', group=cgroup)
 
+# Define which twilight to use as the definition of a night observation
+# ("CIVIL", "NAUTICAL", "ASTRONOMICAL")
+CDict.set('NIGHT_DEFINITION', value='NAUTICAL', source=__NAME__, author='EA',
+          group=cgroup)
 
 # -----------------------------------------------------------------------------
 # path settings

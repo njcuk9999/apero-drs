@@ -174,16 +174,8 @@ CDict.add('POLAR_RHOMB_POS', value=None,
 # =========================================================================
 # HEADER SETTINGS
 # =========================================================================
-# TODO: Got to hear with X.Y.Z
 cgroup = 'HEADER'
 CDict.add_group(cgroup, description='DRS.HEADER: HEADER SETTINGS')
-
-# Define the extensions that are valid for raw files
-CDict.add('VALID_RAW_FILES', value=['.fits'],
-          dtype=list, dtypei=str,
-          source=__NAME__, group=cgroup,
-          description='Define the extrensions that are valid for '
-                      'raw files')
 
 # post process do not check these duplicate keys
 CDict.add('NON_CHECK_DUPLICATE_KEYS',
@@ -244,16 +236,6 @@ cgroup = 'CAL.GEN'
 CDict.add_group(cgroup, description='CALIBRATION.GENERAL: '
                                     'CALIBRATION: GENERAL SETTINGS')
 
-# Define whether to force wave solution from calibration database (instead of
-#  using header wave solution if available)
-CDict.add('FORCE_WAVESOL', value=None,
-          dtype=bool, source=__NAME__, user=True,
-          active=False, group=cgroup,
-          description='Define whether to force wave '
-                      'solution from calibration database '
-                      '(instead of using header wave '
-                      'solution if available)')
-
 # Define the maximum number of files that can be used in a group
 CDict.add('GROUP_FILE_LIMIT', value=None, dtype=int,
           source=__NAME__, group=cgroup, minimum=1,
@@ -262,14 +244,14 @@ CDict.add('GROUP_FILE_LIMIT', value=None, dtype=int,
 
 # Define the maximum time (in days) that a calibration can be separated from
 #   an observation in order to use it
-CDict.add('MAX_CALIB_DTIME', value=None, dtype=float,
+CDict.add('MAX_DTIME', value=None, dtype=float,
           source=__NAME__, group=cgroup, minimum=1.0,
           description='Define the maximum time (in days) that a '
                       'calibration can be separated from an '
                       'observation in order to use it')
 
 # Define whether we check the calibration and observation separation
-CDict.add('DO_CALIB_DTIME_CHECK', value=None, dtype=bool,
+CDict.add('DTIME_CHECK', value=None, dtype=bool,
           source=__NAME__, group=cgroup,
           description='Define whether we check the '
                       'calibration and observation '
@@ -277,16 +259,16 @@ CDict.add('DO_CALIB_DTIME_CHECK', value=None, dtype=bool,
 
 # define whether the user wants to bin the calibration times to a specific
 #   day fraction (i.e. midnight, midday) using CALIB_DB_DAYFRAC
-CDict.add('CALIB_BIN_IN_TIME', value=None, dtype=str,
+CDict.add('BIN_IN_TIME', value=None, dtype=str,
           source=__NAME__, group=cgroup,
-          description=('# define whether the user wants to '
+          description=('define whether the user wants to '
                        'bin the calibration times to a '
                        'specific day fraction (i.e. midnight,'
                        ' midday) using CALIB_DB_DAYFRAC'))
 
 # Define the the fraction of the day to bin to (0 = midnight  before
 #     observation, 0.5 = noon, and 1.0 = midnight after
-CDict.add('CALIB_DB_DAYFRAC', value=None, dtype=float,
+CDict.add('DAYFRAC', value=None, dtype=float,
           source=__NAME__, group=cgroup, minimum=0.0,
           maximum=1.0,
           description=('Define the the fraction of the day to '
@@ -295,7 +277,7 @@ CDict.add('CALIB_DB_DAYFRAC', value=None, dtype=float,
 
 # Define the threshold under which a file should not be combined
 #  (metric is compared to the median of all files 1 = perfect, 0 = noise)
-CDict.add('COMBINE_METRIC_THRESHOLD1', value=None,
+CDict.add('CMETRIC1_THRES', value=None,
           dtype=float, source=__NAME__, group=cgroup,
           minimum=0, maximum=1,
           description=('Define the threshold under '
@@ -305,26 +287,14 @@ CDict.add('COMBINE_METRIC_THRESHOLD1', value=None,
                        '= perfect, 0 = noise)'))
 
 # Define the DPRTYPES allowed for the combine metric 1 comparison
-CDict.add('COMBINE_METRIC1_TYPES', value=None,
+CDict.add('CMETRIC1_TYPES', value=None,
           dtype=list, dtypei=str,
           source=__NAME__, group=cgroup,
           description=('Define the DPRTYPES allowed for '
                        'the combine metric 1 comparison'))
 
-# Define the coefficients of the fit of 1/m vs d
-CDict.add('CAVITY_1M_FILE', value=None, dtype=str, source=__NAME__,
-          group=cgroup,
-          description=('Define the coefficients of the fit of '
-                       '1/m vs d'))
-
-# Define the coefficients of the fit of wavelength vs d
-CDict.add('CAVITY_LL_FILE', value=None, dtype=str, source=__NAME__,
-          group=cgroup,
-          description=('Define the coefficients of the fit of '
-                       'wavelength vs d'))
-
 # define the check FP percentile level
-CDict.add('CALIB_CHECK_FP_PERCENTILE', value=None,
+CDict.add('CHECKFP_PERCENTILE', value=None,
           dtype=int, minimum=0, source=__NAME__,
           group=cgroup,
           description=('define the check FP percentile '
@@ -334,263 +304,43 @@ CDict.add('CALIB_CHECK_FP_PERCENTILE', value=None,
 CDict.add('CALIB_CHECK_FP_THRES', value=None,
           dtype=float, minimum=0.0, source=__NAME__,
           group=cgroup,
-          description=('define the check FP threshold qc '
-                       'parameter'))
+          description='define the check FP threshold qc parameter')
 
 # define the check FP center image size [px]
-CDict.add('CALIB_CHECK_FP_CENT_SIZE', value=None,
+CDict.add('CHECK_FP_CENT_SIZE', value=None,
           dtype=int, minimum=0, source=__NAME__,
           group=cgroup,
-          description=('define the check FP center '
-                       'image size [px]'))
-
-# Define the SIMBAD TAP url
-CDict.add('SIMBAD_TAP_URL', value=None, dtype=str, source=__NAME__,
-          group=cgroup,
-          description='Define the SIMBAD TAP url')
-
-# Define the TAP Gaia URL (for use in crossmatching to Gaia via astroquery)
-CDict.add('OBJ_LIST_GAIA_URL', value=None, dtype=str,
-          source=__NAME__, group=cgroup,
-          description=('Define the TAP Gaia URL (for use in '
-                       'crossmatching to Gaia via astroquery)'))
-
-# Define the google sheet to use for crossmatch (may be set to a directory for
-#   completely offline reduction)
-CDict.add('OBJ_LIST_GOOGLE_SHEET_URL', value=None,
-          dtype=str, source=__NAME__, group=cgroup,
-          description=('Define the google sheet to use '
-                       'for crossmatch'))
-
-# Define the google sheet objname list main list id number (may be set to a
-#     csv file for completely offline reduction)
-CDict.add('OBJ_LIST_GSHEET_MAIN_LIST_ID', value=None,
-          dtype=str, source=__NAME__, group=cgroup,
-          description='Define the google sheet objname '
-                      'list main list id number')
-
-# Define the google sheet objname list pending list id number (may be set to a
-# #     csv file for completely offline reduction)
-CDict.add('OBJ_LIST_GSHEET_PEND_LIST_ID', value=None,
-          dtype=str, source=__NAME__, group=cgroup,
-          description='Define the google sheet '
-                      'objname list pending list '
-                      'id number')
-
-# Define the google sheet objname list reject list id number
-CDict.add('OBJ_LIST_GSHEET_REJECT_LIST_ID',
-          value=None, dtype=str, source=__NAME__,
-          group=cgroup,
-          description='Define the google sheet '
-                      'objname list reject list '
-                      'id number')
-
-# Define the google sheet bibcode id number
-CDict.add('OBJ_LIST_GSHEET_BIBCODE_ID',
-          value=None, dtype=str, source=__NAME__,
-          group=cgroup,
-          description='Define the google sheet '
-                      'bibcode id number')
-
-# Define the google sheet user url object list (None for no user list)
-#     (may be set to a directory for completely offline reduction)
-CDict.add('OBJ_LIST_GSHEET_USER_URL', value=None,
-          dtype=str, source=__NAME__, group=cgroup,
-          description='Define the google sheet user url '
-                      'object list (None for no user '
-                      'list)')
-
-# Define the google sheet user id object list id number (may be set to a
-#      csv file for completely offline reduction)
-CDict.add('OBJ_LIST_GSHEET_USER_ID', value=None,
-          dtype=str, source=__NAME__, group=cgroup,
-          description='Define the google sheet user id '
-                      'object list id number')
-
-# Define whether to resolve from local database (via drs_database / drs_db)
-CDict.add('OBJ_LIST_RESOLVE_FROM_DATABASE',
-          value=None, dtype=bool, source=__NAME__,
-          group=cgroup,
-          description=('Define whether to resolve '
-                       'from local database '
-                       '(via drs_database / '
-                       'drs_db)'))
-
-# Define whether to resolve from gaia id (via TapPlus to Gaia) if False
-#    ra/dec/pmra/pmde/plx will always come from header
-CDict.add('OBJ_LIST_RESOLVE_FROM_GAIAID',
-          value=None, dtype=bool, source=__NAME__,
-          group=cgroup,
-          description=('Define whether to resolve '
-                       'from gaia id (via TapPlus '
-                       'to Gaia) if False ra/dec/'
-                       'pmra/pmde/plx will always '
-                       'come from header'))
-
-# Define whether to get Gaia ID / Teff / RV from google sheets if False
-#    will try to resolve if gaia ID given otherwise will use ra/dec if
-#    OBJ_LIST_RESOLVE_FROM_COORDS = True else will default to header values
-CDict.add('OBJ_LIST_RESOLVE_FROM_GLIST',
-          value=None, dtype=bool, source=__NAME__,
-          group=cgroup,
-          description=('Define whether to get Gaia '
-                       'ID / Teff / RV from google '
-                       'sheets if False will try to '
-                       'resolve if gaia ID given '
-                       'otherwise will use ra/dec if '
-                       'OBJ_LIST_RESOLVE_FROM_COORDS '
-                       '= True else will default to '
-                       'header values'))
-
-# Define whether to get Gaia ID from header RA and Dec (basically if all other
-#    option fails) - WARNING - this is a crossmatch so may lead to a bad
-#    identification of the gaia id - not recommended
-CDict.add('OBJ_LIST_RESOLVE_FROM_COORDS',
-          value=None, dtype=bool, source=__NAME__,
-          group=cgroup,
-          description=('Define whether to get '
-                       'Gaia ID from header RA '
-                       'and Dec (basically if all '
-                       'other option fails) - '
-                       'WARNING - this is a '
-                       'crossmatch so may lead to a '
-                       'bad identification of the '
-                       'gaia id - not recommended'))
-
-# Define the gaia epoch to use in the gaia query
-CDict.add('OBJ_LIST_GAIA_EPOCH', value=None, dtype=float,
-          source=__NAME__, minimum=2000.0, maximum=2100.0,
-          group=cgroup,
-          description=('Define the gaia epoch to use in '
-                       'the gaia query'))
-
-# Define the radius for crossmatching objects (in both lookup table and query)
-#   in arcseconds
-CDict.add('OBJ_LIST_CROSS_MATCH_RADIUS', value=None,
-          dtype=float, source=__NAME__, minimum=0.0,
-          group=cgroup,
-          description=('Define the radius for '
-                       'crossmatching objects (in '
-                       'both lookup table and '
-                       'query) in arcseconds'))
-
-# Define the gaia parallax limit for using gaia point
-CDict.add('OBJ_LIST_GAIA_PLX_LIM', value=None, dtype=float,
-          source=__NAME__, minimum=0.0, group=cgroup,
-          description=('Define the gaia parallax limit '
-                       'for using gaia point'))
-
-# Define the gaia magnitude cut to use in the gaia query
-CDict.add('OBJ_LIST_GAIA_MAG_CUT', value=None, dtype=float,
-          source=__NAME__, minimum=10.0, maximum=25.0,
-          group=cgroup,
-          description=('Define the gaia magnitude cut to '
-                       'use in the gaia query'))
-
-# Define the google sheet to use for update the reject list
-CDict.add('REJECT_LIST_GOOGLE_SHEET_URL', value=None,
-          dtype=str, source=__NAME__, group=cgroup,
-          description=('Define the google sheet to use '
-                       'for crossmatch'))
-
-# Define the google sheet id to use for update the reject list
-CDict.add('REJECT_LIST_GSHEET_MAIN_LIST_ID', value=None,
-          dtype=str, source=__NAME__, group=cgroup,
-          description='Define the google sheet '
-                      'objname list main list id '
-                      'number')
-
-# Define the google sheet name to use for the reject list
-CDict.add('REJECT_LIST_GSHEET_SHEET_NAME',
-          value=None,
-          dtype=str, source=__NAME__, group=cgroup,
-          description='Define the google sheet name'
-                      ' to use for the reject list')
-
-# # Define the odometer code rejection google sheet id
-# CDict.add('ODOCODE_REJECT_GSHEET_ID', value=None,
-#                                  dtype=str, source=__NAME__, group=cgroup,
-#                                  description=('Define the odometer code '
-#                                               'rejection google sheet id'))
-#
-# # Define the odmeter code rejection google sheet workbook
-# CDict.add('ODOCODE_REJECT_GSHEET_NUM', value=int,
-#                                   dtype=str, source=__NAME__, minimum=0,
-#                                   group=cgroup,
-#                                   description=('Define the odmeter code '
-#                                                'rejection google sheet '
-#                                                'workbook'))
-
-# Define which twilight to use as the definition of a night observation
-#    ("CIVIL", "NAUTICAL", "ASTRONOMICAL")
-CDict.add('NIGHT_DEFINITION', value=None, dtype=str,
-          source=__NAME__, group=cgroup,
-          options=['CIVIL', 'NAUTICAL', 'ASTRONOMICAL'],
-          description='Define which twilight to use as the '
-                      'definition of a night observation'
-                      '("CIVIL", "NAUTICAL", "ASTRONOMICAL")')
+          description='define the check FP center image size [px]')
 
 # =============================================================================
 # CALIBRATION: FIBER SETTINGS
 # =============================================================================
 cgroup = 'CAL.FIBER'
-CDict.add_group(cgroup, description='CALIBRATION.FIBER: '
-                                    'CALIBRATION: FIBER SETTINGS')
+CDict.add_group(cgroup, description='CAL.FIBER: CALIBRATION FIBER SETTINGS')
 
 # Number of orders to skip at start of image
-CDict.add('FIBER_FIRST_ORDER_JUMP_AB', value=None,
-          dtype=int, minimum=0, source=__NAME__,
-          group=cgroup,
-          description=('Number of orders to skip '
-                       'at start of image'))
-CDict.add('FIBER_FIRST_ORDER_JUMP_A', value=None,
-          dtype=int, minimum=0, source=__NAME__,
-          group=cgroup, description='')
-CDict.add('FIBER_FIRST_ORDER_JUMP_B', value=None,
-          dtype=int, minimum=0, source=__NAME__,
-          group=cgroup, description='')
-CDict.add('FIBER_FIRST_ORDER_JUMP_C', value=None,
-          dtype=int, minimum=0, source=__NAME__,
-          group=cgroup, description='')
+CDict.add('FIRST_ORDER_JUMP', value=None, dtype=dict, dtypei=int,
+          source=__NAME__, group=cgroup,
+          description='Number of orders to skip at start of image')
 
 # Maximum number of order to use
-CDict.add('FIBER_MAX_NUM_ORDERS_AB', value=None,
-          dtype=int, minimum=1, source=__NAME__,
-          group=cgroup,
+CDict.add('MAX_NUM_ORDERS', value=None,
+          dtype=dict, dtypei=int, source=__NAME__, group=cgroup,
           description='Maximum number of order to use')
-CDict.add('FIBER_MAX_NUM_ORDERS_A', value=None,
-          dtype=int, minimum=1, source=__NAME__,
-          group=cgroup, description='')
-CDict.add('FIBER_MAX_NUM_ORDERS_B', value=None,
-          dtype=int, minimum=1, source=__NAME__,
-          group=cgroup, description='')
-CDict.add('FIBER_MAX_NUM_ORDERS_C', value=None,
-          dtype=int, minimum=1, source=__NAME__,
-          group=cgroup, description='')
 
 # Number of fibers
-CDict.add('FIBER_SET_NUM_FIBERS_AB', value=None,
-          dtype=int, minimum=1, source=__NAME__,
-          group=cgroup,
-          description='Number of fibers')
-CDict.add('FIBER_SET_NUM_FIBERS_A', value=None,
-          dtype=int, minimum=1, source=__NAME__,
-          group=cgroup, description='')
-CDict.add('FIBER_SET_NUM_FIBERS_B', value=None,
-          dtype=int, minimum=1, source=__NAME__,
-          group=cgroup, description='')
-CDict.add('FIBER_SET_NUM_FIBERS_C', value=None,
-          dtype=int, minimum=1, source=__NAME__,
-          group=cgroup, description='')
+CDict.add('SET_NUM_FIBERS', value=None,
+          dtype=dict, dtypei=int, source=__NAME__,
+          group=cgroup, description='Number of fibers')
 
 # Get the science and reference fiber to use in the CCF process
-CDict.add('FIBER_CCF', value=None, dtype=list, dtypei=str,
+CDict.add('CCF', value=None, dtype=list, dtypei=str,
           source=__NAME__, group=cgroup,
           description='Get the science and reference fiber to use in '
                       'the CCF process')
 
 # List the individual fiber names
-CDict.add('INDIVIDUAL_FIBERS', value=None, dtype=list,
+CDict.add('INDIVIDUAL', value=None, dtype=list,
           dtypei=str, source=__NAME__, group=cgroup,
           description='List the individual fiber names')
 
@@ -603,53 +353,23 @@ CDict.add('SKYFIBERS', value=None, dtype=list,
 # =============================================================================
 # PRE-PROCESSSING SETTINGS
 # =============================================================================
-cgroup = 'PP.GEN'
-CDict.add_group(cgroup, description='PREPROCESSING.GENERAL: '
-                                    'PRE-PROCESSSING SETTINGS')
+cgroup = 'PP'
+CDict.add_group(cgroup, description='PP: PRE-PROCESSSING SETTINGS')
 
 # Define object (science or telluric)
-CDict.add('PP_OBJ_DPRTYPES', value=None,
+CDict.add('OBJ_DPRTYPES', value=None,
           dtype=list, dtypei=str,
           source=__NAME__, group=cgroup,
           description='Define object (science or telluric)')
 
-# Define the bad list google spreadsheet id
-CDict.add('PP_BADLIST_SSID', value=None, dtype=str,
-          source=__NAME__, group=cgroup,
-          description='Define the bad list google spreadsheet id')
-
-# Define the bad list google workbook number
-CDict.add('PP_BADLIST_SSWB', value=None, dtype=int,
-          source=__NAME__, group=cgroup,
-          description='Define the bad list google workbook '
-                      'number')
-
-# Define the bad list header key
-CDict.add('PP_BADLIST_DRS_HKEY', value=None, dtype=str,
-          source=__NAME__, group=cgroup,
-          description='Define the bad list header key')
-
-# Define the bad list google spreadsheet value column
-CDict.add('PP_BADLIST_SS_VALCOL', value=None, dtype=str,
-          source=__NAME__, group=cgroup,
-          description='Define the bad list google '
-                      'spreadsheet value column')
-
-# Define the bad list google spreadsheet mask column for preprocessing
-CDict.add('PP_BADLIST_SS_MASKCOL', value=None, dtype=str,
-          source=__NAME__, group=cgroup,
-          description='Define the bad list google '
-                      'spreadsheet mask column for '
-                      'preprocessing')
-
 # Defines the box size surrounding hot pixels to use
-CDict.add('PP_HOTPIX_BOXSIZE', value=None, dtype=int,
+CDict.add('HOTPIX_BOXSIZE', value=None, dtype=int,
           minimum=1, source=__NAME__, group=cgroup,
           description=('Defines the box size surrounding '
                        'hot pixels to use'))
 
 # Defines the size around badpixels that is considered part of the bad pixel
-CDict.add('PP_CORRUPT_MED_SIZE', value=None, dtype=int,
+CDict.add('CORRUPT_MED_SIZE', value=None, dtype=int,
           minimum=1, source=__NAME__, group=cgroup,
           description=('Defines the size around badpixels '
                        'that is considered part of the '
@@ -657,7 +377,7 @@ CDict.add('PP_CORRUPT_MED_SIZE', value=None, dtype=int,
 
 # Define the fraction of the required exposure time that is required for a
 #   valid observation
-CDict.add('PP_BAD_EXPTIME_FRACTION', value=None,
+CDict.add('BAD_EXPTIME_FRACTION', value=None,
           dtype=float, minimum=0, source=__NAME__,
           group=cgroup,
           description=('Define the fraction of the '
@@ -666,78 +386,79 @@ CDict.add('PP_BAD_EXPTIME_FRACTION', value=None,
                        'observation'))
 
 # Defines the threshold in sigma that selects hot pixels
-CDict.add('PP_CORRUPT_HOT_THRES', value=None, dtype=int,
+CDict.add('CORRUPT_HOT_THRES', value=None, dtype=int,
           minimum=0, source=__NAME__, group=cgroup,
           description=('Defines the threshold in sigma that '
                        'selects hot pixels'))
 
 # Define the total number of amplifiers
-CDict.add('PP_TOTAL_AMP_NUM', value=None, dtype=int,
+CDict.add('TOTAL_AMP_NUM', value=None, dtype=int,
           minimum=0, source=__NAME__, group=cgroup,
           description='Define the total number of amplifiers')
 
 # Define the number of dark amplifiers
-CDict.add('PP_NUM_DARK_AMP', value=None, dtype=int,
+CDict.add('NUM_DARK_AMP', value=None, dtype=int,
           minimum=0, source=__NAME__, group=cgroup,
           description='Define the number of dark amplifiers')
 
-# Define the number of bins used in the dark median process         - [apero_preprocess]
-CDict.add('PP_DARK_MED_BINNUM', value=None, dtype=int,
+# Define the number of bins used in the dark median process
+CDict.add('DARK_MED_BINNUM', value=None, dtype=int,
           minimum=0, source=__NAME__, group=cgroup,
           description=('Define the number of bins used in the '
                        'dark median process - [apero_preprocess]'))
 
 #   Defines the pp hot pixel file (located in the data folder)
-CDict.add('PP_HOTPIX_FILE', value=None, dtype=str, source=__NAME__,
+CDict.add('HOTPIX_FILE', value=None, dtype=str, source=__NAME__,
           group=cgroup,
           description='Defines the pp hot pixel file (located in '
                       'the data folder)')
 
 #   Defines the pp amplifier bias model (located in the data folder)
-CDict.add('PP_AMP_ERROR_MODEL', value=None, dtype=str,
+CDict.add('AMP_ERROR_MODEL', value=None, dtype=str,
           source=__NAME__, group=cgroup,
           description='Defines the pp amplifier bias model '
                       '(located in the data folder)')
 
 # Defines the pp led flat file (located in the data folder)
-CDict.add('PP_LED_FLAT_FILE', value=None, dtype=str,
+# TODO: Note used??
+CDict.add('LED_FLAT_FILE', value=None, dtype=str,
           source=__NAME__, group=cgroup,
           description='Defines the pp led flat file '
                       '(located in the data folder)')
 
 # Define the number of un-illuminated reference pixels at top of image
-CDict.add('PP_NUM_REF_TOP', value=None, dtype=int,
+CDict.add('NUM_REF_TOP', value=None, dtype=int,
           source=__NAME__, group=cgroup,
           description=('Define the number of un-illuminated '
                        'reference pixels at top of image'))
 
 # Define the number of un-illuminated reference pixels at bottom of image
-CDict.add('PP_NUM_REF_BOTTOM', value=None, dtype=int,
+CDict.add('NUM_REF_BOTTOM', value=None, dtype=int,
           source=__NAME__, group=cgroup,
           description=('Define the number of un-illuminated '
                        'reference pixels at bottom of image'))
 
 # Define the number of un-illuminated reference pixels at left of image
-CDict.add('PP_NUM_REF_LEFT', value=None, dtype=int,
+CDict.add('NUM_REF_LEFT', value=None, dtype=int,
           source=__NAME__, group=cgroup,
           description=('Define the number of un-illuminated '
                        'reference pixels at left of image'))
 
 # Define the number of un-illuminated reference pixels at right of image
-CDict.add('PP_NUM_REF_RIGHT', value=None, dtype=int,
+CDict.add('NUM_REF_RIGHT', value=None, dtype=int,
           source=__NAME__, group=cgroup,
           description=('Define the number of un-illuminated '
                        'reference pixels at right of image'))
 
 # Define the percentile value for the rms normalisation (0-100)
-CDict.add('PP_RMS_PERCENTILE', value=None, dtype=int,
+CDict.add('RMS_PERCENTILE', value=None, dtype=int,
           minimum=0, maximum=100, source=__NAME__, group=cgroup,
           description=('Define the percentile value for the '
                        'rms normalisation (0-100)'))
 
 # Define the lowest rms value of the rms percentile allowed if the value of
 #   the pp_rms_percentile-th is lower than this this value is used
-CDict.add('PP_LOWEST_RMS_PERCENTILE', value=None,
+CDict.add('LOWEST_RMS_PERCENTILE', value=None,
           dtype=float, minimum=0.0, source=__NAME__,
           group=cgroup,
           description=('Define the lowest rms value of '
@@ -880,7 +601,7 @@ CDict.add('PP_NOSCI_CAPC_DPRTYPES', value=None,
 # =============================================================================
 # CALIBRATION: ASTROMETRIC DATABASE SETTINGS
 # =============================================================================
-cgroup = 'PP.ASTROM'
+cgroup = 'DB.ASTROM'
 CDict.add_group(cgroup, description='PREPROCESSING.ASTROM: '
                                     'CALIBRATION: ASTROMETRIC DATABASE '
                                     'SETTINGS')
@@ -2366,6 +2087,18 @@ cgroup = 'CAL.WAVE.GEN'
 CDict.add_group(cgroup, description='CALIBRATION.WAVE_GENERAL: '
                                     'CALIBRATION: WAVE EA GENERAL SETTINGS')
 
+# Define the coefficients of the fit of 1/m vs d
+CDict.add('CAVITY_1M_FILE', value=None, dtype=str, source=__NAME__,
+          group=cgroup,
+          description=('Define the coefficients of the fit of '
+                       '1/m vs d'))
+
+# Define the coefficients of the fit of wavelength vs d
+CDict.add('CAVITY_LL_FILE', value=None, dtype=str, source=__NAME__,
+          group=cgroup,
+          description=('Define the coefficients of the fit of '
+                       'wavelength vs d'))
+
 # Define wave reference fiber (controller fiber)
 CDict.add('WAVE_REF_FIBER', value=None, dtype=str,
           source=__NAME__, group=cgroup,
@@ -3504,6 +3237,196 @@ CDict.add('WAVENIGHT_PLT_BINU', value=None, dtype=float,
           source=__NAME__, minimum=0, group=cgroup,
           description=('wave night plot hc bin upper bound in '
                        'multiples of rms'))
+
+
+# =============================================================================
+# OBJ.LIST: OBJECT LIST SETTINGS
+# =============================================================================
+cgroup = 'OBJ.LIST'
+CDict.add_group(cgroup, description='CALIBRATION.WAVE_NIGHT: '
+                                    'CALIBRATION: WAVE NIGHT SETTINGS')
+
+# Define the SIMBAD TAP url
+CDict.add('SIMBAD_TAP_URL', value=None, dtype=str, source=__NAME__,
+          group=cgroup,
+          description='Define the SIMBAD TAP url')
+
+# Define the TAP Gaia URL (for use in crossmatching to Gaia via astroquery)
+CDict.add('OBJ_LIST_GAIA_URL', value=None, dtype=str,
+          source=__NAME__, group=cgroup,
+          description=('Define the TAP Gaia URL (for use in '
+                       'crossmatching to Gaia via astroquery)'))
+
+# Define the google sheet to use for crossmatch (may be set to a directory for
+#   completely offline reduction)
+CDict.add('OBJ_LIST_GOOGLE_SHEET_URL', value=None,
+          dtype=str, source=__NAME__, group=cgroup,
+          description=('Define the google sheet to use '
+                       'for crossmatch'))
+
+# Define the google sheet objname list main list id number (may be set to a
+#     csv file for completely offline reduction)
+CDict.add('OBJ_LIST_GSHEET_MAIN_LIST_ID', value=None,
+          dtype=str, source=__NAME__, group=cgroup,
+          description='Define the google sheet objname '
+                      'list main list id number')
+
+# Define the google sheet objname list pending list id number (may be set to a
+# #     csv file for completely offline reduction)
+CDict.add('OBJ_LIST_GSHEET_PEND_LIST_ID', value=None,
+          dtype=str, source=__NAME__, group=cgroup,
+          description='Define the google sheet '
+                      'objname list pending list '
+                      'id number')
+
+# Define the google sheet objname list reject list id number
+CDict.add('OBJ_LIST_GSHEET_REJECT_LIST_ID',
+          value=None, dtype=str, source=__NAME__,
+          group=cgroup,
+          description='Define the google sheet '
+                      'objname list reject list '
+                      'id number')
+
+# Define the bad list header key
+CDict.add('REJECT_DRS_HKEY', value=None, dtype=str,
+          source=__NAME__, group=cgroup,
+          description='Define the bad list header key')
+
+# Define the bad list google spreadsheet value column
+CDict.add('REJECT_VALCOL', value=None, dtype=str,
+          source=__NAME__, group=cgroup,
+          description='Define the bad list google '
+                      'spreadsheet value column')
+
+# Define the bad list google spreadsheet mask column for preprocessing
+CDict.add('REJECT_MASKCOL', value=None, dtype=str,
+          source=__NAME__, group=cgroup,
+          description='Define the bad list google '
+                      'spreadsheet mask column for '
+                      'preprocessing')
+
+
+# Define the google sheet bibcode id number
+CDict.add('OBJ_LIST_GSHEET_BIBCODE_ID',
+          value=None, dtype=str, source=__NAME__,
+          group=cgroup,
+          description='Define the google sheet '
+                      'bibcode id number')
+
+# Define the google sheet user url object list (None for no user list)
+#     (may be set to a directory for completely offline reduction)
+CDict.add('OBJ_LIST_GSHEET_USER_URL', value=None,
+          dtype=str, source=__NAME__, group=cgroup,
+          description='Define the google sheet user url '
+                      'object list (None for no user '
+                      'list)')
+
+# Define the google sheet user id object list id number (may be set to a
+#      csv file for completely offline reduction)
+CDict.add('OBJ_LIST_GSHEET_USER_ID', value=None,
+          dtype=str, source=__NAME__, group=cgroup,
+          description='Define the google sheet user id '
+                      'object list id number')
+
+# Define whether to resolve from local database (via drs_database / drs_db)
+CDict.add('OBJ_LIST_RESOLVE_FROM_DATABASE',
+          value=None, dtype=bool, source=__NAME__,
+          group=cgroup,
+          description=('Define whether to resolve '
+                       'from local database '
+                       '(via drs_database / '
+                       'drs_db)'))
+
+# Define whether to resolve from gaia id (via TapPlus to Gaia) if False
+#    ra/dec/pmra/pmde/plx will always come from header
+CDict.add('OBJ_LIST_RESOLVE_FROM_GAIAID',
+          value=None, dtype=bool, source=__NAME__,
+          group=cgroup,
+          description=('Define whether to resolve '
+                       'from gaia id (via TapPlus '
+                       'to Gaia) if False ra/dec/'
+                       'pmra/pmde/plx will always '
+                       'come from header'))
+
+# Define whether to get Gaia ID / Teff / RV from google sheets if False
+#    will try to resolve if gaia ID given otherwise will use ra/dec if
+#    OBJ_LIST_RESOLVE_FROM_COORDS = True else will default to header values
+CDict.add('OBJ_LIST_RESOLVE_FROM_GLIST',
+          value=None, dtype=bool, source=__NAME__,
+          group=cgroup,
+          description=('Define whether to get Gaia '
+                       'ID / Teff / RV from google '
+                       'sheets if False will try to '
+                       'resolve if gaia ID given '
+                       'otherwise will use ra/dec if '
+                       'OBJ_LIST_RESOLVE_FROM_COORDS '
+                       '= True else will default to '
+                       'header values'))
+
+# Define whether to get Gaia ID from header RA and Dec (basically if all other
+#    option fails) - WARNING - this is a crossmatch so may lead to a bad
+#    identification of the gaia id - not recommended
+CDict.add('OBJ_LIST_RESOLVE_FROM_COORDS',
+          value=None, dtype=bool, source=__NAME__,
+          group=cgroup,
+          description=('Define whether to get '
+                       'Gaia ID from header RA '
+                       'and Dec (basically if all '
+                       'other option fails) - '
+                       'WARNING - this is a '
+                       'crossmatch so may lead to a '
+                       'bad identification of the '
+                       'gaia id - not recommended'))
+
+# Define the gaia epoch to use in the gaia query
+CDict.add('OBJ_LIST_GAIA_EPOCH', value=None, dtype=float,
+          source=__NAME__, minimum=2000.0, maximum=2100.0,
+          group=cgroup,
+          description=('Define the gaia epoch to use in '
+                       'the gaia query'))
+
+# Define the radius for crossmatching objects (in both lookup table and query)
+#   in arcseconds
+CDict.add('OBJ_LIST_CROSS_MATCH_RADIUS', value=None,
+          dtype=float, source=__NAME__, minimum=0.0,
+          group=cgroup,
+          description=('Define the radius for '
+                       'crossmatching objects (in '
+                       'both lookup table and '
+                       'query) in arcseconds'))
+
+# Define the gaia parallax limit for using gaia point
+CDict.add('OBJ_LIST_GAIA_PLX_LIM', value=None, dtype=float,
+          source=__NAME__, minimum=0.0, group=cgroup,
+          description=('Define the gaia parallax limit '
+                       'for using gaia point'))
+
+# Define the gaia magnitude cut to use in the gaia query
+CDict.add('OBJ_LIST_GAIA_MAG_CUT', value=None, dtype=float,
+          source=__NAME__, minimum=10.0, maximum=25.0,
+          group=cgroup,
+          description=('Define the gaia magnitude cut to '
+                       'use in the gaia query'))
+
+# Define the google sheet to use for update the reject list
+CDict.add('REJECT_LIST_GOOGLE_SHEET_URL', value=None,
+          dtype=str, source=__NAME__, group=cgroup,
+          description=('Define the google sheet to use '
+                       'for crossmatch'))
+
+# Define the google sheet id to use for update the reject list
+CDict.add('REJECT_LIST_GSHEET_MAIN_LIST_ID', value=None,
+          dtype=str, source=__NAME__, group=cgroup,
+          description='Define the google sheet '
+                      'objname list main list id '
+                      'number')
+
+# Define the google sheet name to use for the reject list
+CDict.add('REJECT_LIST_GSHEET_SHEET_NAME',
+          value=None,
+          dtype=str, source=__NAME__, group=cgroup,
+          description='Define the google sheet name'
+                      ' to use for the reject list')
 
 # =============================================================================
 # OBJECT: SKY CORR SETTINGS

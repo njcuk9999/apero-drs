@@ -388,7 +388,7 @@ def update_from_obsdir(params: ParamDict, recipe: DrsRecipe, obsdir: str) -> str
                                   targs=eargs)
     # ----------------------------------------------------------------------
     # non-valid dptypes
-    sci_dprtype = params['PP_OBJ_DPRTYPES']
+    sci_dprtype = params['PP.OBJ_DPRTYPES']
     # state progress
     msg = 'Analysing files in raw directory: {0}'
     margs = [rawpath]

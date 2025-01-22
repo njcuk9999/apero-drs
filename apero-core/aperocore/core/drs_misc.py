@@ -187,7 +187,7 @@ class Colors:
             start = self.BLACK1
         else:
             start = self.endc
-        # return colour mesage
+        # return colour message
         return start + message + self.endc
 
 

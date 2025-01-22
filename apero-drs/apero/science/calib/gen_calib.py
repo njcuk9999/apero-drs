@@ -185,7 +185,7 @@ class CalibFile:
         mjdmid_key = params['KW_MID_OBS_TIME'][0]
         # get whether the user wants to bin the calibration times to a specific
         #   day fraction (i.e. midnight, midday) using CALIB_DB_DAYFRAC
-        bintimes = params['CALIB_BIN_IN_TIME']
+        bintimes = params['CAL.GEN.BIN_IN_TIME']
         # ---------------------------------------------------------------------
         # first try to get file from inputs
         fout = drs_data.get_file_from_inputs(params, 'calibration',
@@ -781,8 +781,8 @@ def calib_delta_time_check(params: ParamDict, inheader: DrsHeader,
     func_name = display_func('calib_delta_time_check', __NAME__)
     # ---------------------------------------------------------------------
     # get parameters from params
-    do_check = params['DO_CALIB_DTIME_CHECK']
-    max_dtime = params['MAX_CALIB_DTIME']
+    do_check = params['CAL.GEN.DTIME_CHECK']
+    max_dtime = params['CAL.GEN.MAX_CALIB_DTIME']
     timekey = params['KW_MID_OBS_TIME'][0]
     # extra skip if we are in quick look mode
     quicklook = params['EXT_QUICK_LOOK']
@@ -844,13 +844,13 @@ def check_fp(params: ParamDict, image: np.ndarray, filename: str,
     :param params: ParamDict, parameter dictionary of constants
     :param image: numpy array, the FP image
     :param filename: str, the filename of the FP we are checking (for logging)
-    :param percentile: None or float, overrides 'CALIB_CHECK_FP_PERCENTILE'
+    :param percentile: None or float, overrides 'CAL.GEN.CHECKFP_PERCENTILE'
                        should be between 0 and 100
     :param fp_qc_thres: None or float, overrides 'CALIB_CHECK_FP_THES', this is
                         the quality control threshold for the measured FP
-    :param centersize: None or int, overrides 'CALIB_CHECK_FP_CENT_SIZE', this
+    :param centersize: None or int, overrides 'CAl.GEN.CHECK_FP_CENT_SIZE', this
                        is the FP center size in pixels
-    :param num_ref: None or int, overrides 'PP_NUM_REF_TOP', this is the number
+    :param num_ref: None or int, overrides 'PP.NUM_REF_TOP', this is the number
                     of reference pixels at the top
     :param iterator: int or None, the iterator number (for logging)
     :param total_num: int or None, the total number of FP files (for logging)
@@ -868,13 +868,13 @@ def check_fp(params: ParamDict, image: np.ndarray, filename: str,
         args = [iterator + 1, total_num, filename]
         WLOG(params, '', pmsg.format(*args))
     # get properties from params
-    percentile = pcheck(params, 'CALIB_CHECK_FP_PERCENTILE', func=func_name,
+    percentile = pcheck(params, 'CAL.GEN.CHECKFP_PERCENTILE', func=func_name,
                         override=percentile)
     fp_qc = pcheck(params, 'CALIB_CHECK_FP_THRES', 'fp_qc', func=func_name,
                    override=fp_qc_thres)
-    centersize = pcheck(params, 'CALIB_CHECK_FP_CENT_SIZE', func=func_name,
+    centersize = pcheck(params, 'CAL.GEN.CHECK_FP_CENT_SIZE', func=func_name,
                         override=centersize)
-    num_ref = pcheck(params, 'PP_NUM_REF_TOP', func=func_name,
+    num_ref = pcheck(params, 'PP.NUM_REF_TOP', func=func_name,
                      override=num_ref)
     # get the image size
     nbypix, nbxpix = int(image.shape[0]), int(image.shape[1])

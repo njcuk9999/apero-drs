@@ -3316,7 +3316,7 @@ def group_run_files2(params: ParamDict, recipe: DrsRecipe,
     if recipe.limit is not None:
         limit = recipe.limit
     else:
-        limit = params['GROUP_FILE_LIMIT']
+        limit = params['CAL.GEN.GROUP_FILE_LIMIT']
     # get grouping function
     group_function = recipe.group_func
     # deal with reference
@@ -3521,7 +3521,7 @@ def get_uobjs_from_findex(params: ParamDict, indexdb: FileIndexDatabase,
                           ) -> List[str]:
     # ----------------------------------------------------------------------
     # define the conditions for objects
-    dprtypes = params['PP_OBJ_DPRTYPES']
+    dprtypes = params['PP.OBJ_DPRTYPES']
     # get the dprtype condition
     subcond = []
     for dprtype in dprtypes:

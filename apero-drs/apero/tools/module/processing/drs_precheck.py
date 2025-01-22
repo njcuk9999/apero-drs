@@ -461,7 +461,7 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
         diff = abs(mean_times[obs_mask] - mean_time_it)[1:]
         # check whether there is another night within given time frame
         #   give +/- 0.5 days due to start and end of calibrations
-        if np.sum(diff < params['MAX_CALIB_DTIME'] + 0.5) == 0:
+        if np.sum(diff < params['CAL.GEN.MAX_DTIME'] + 0.5) == 0:
             bad_nights.append(obs_dir)
     # -------------------------------------------------------------------------
     # print msg: file check summary
@@ -709,7 +709,7 @@ def obj_check(params: ParamDict, findexdbm: Optional[FileIndexDatabase] = None,
         manage_databases.update_reject_database(params, log=log)
     # ---------------------------------------------------------------------
     # only find science / hot star objects
-    sci_dprtypes = params['PP_OBJ_DPRTYPES']
+    sci_dprtypes = params['PP.OBJ_DPRTYPES']
     subconditions = []
     for sci_dprtype in sci_dprtypes:
         subconditions.append(f'KW_DPRTYPE="{sci_dprtype}"')

@@ -674,17 +674,6 @@ class NirpsHe(instrument_mod.Instrument):
         else:
             return ['B']
 
-    def INDIVIDUAL_FIBERS(self) -> List[str]:
-        """
-        List the individual fiber names
-
-        :return: list of strings, the individual fiber names
-        """
-        # set function name
-        # _ = display_func('INDIVIDUAL_FIBERS', __NAME__, self.class_name)
-        # list the individual fiber names
-        return ['A', 'B']
-
     # tellu fudge
     def TAPAS_INST_CORR(self, mask_water: Table,
                         mask_others: Table) -> Tuple[Table, Table]:
@@ -1192,7 +1181,7 @@ def get_special_objname(params: ParamDict, header: Any,
     kwcatg = params['KW_RAW_DPRCATG'][0]
     kwtrgtype = params['KW_TARGET_TYPE'][0]
     kwobjcomment = params['KW_OBJNAME'][2]
-    obj_dprtypes = params['PP_OBJ_DPRTYPES']
+    obj_dprtypes = params['PP.OBJ_DPRTYPES']
     # conditions
     cond1 = header[kwdprtype] in obj_dprtypes
     cond2 = header[kwtrgtype] == 'SKY'
