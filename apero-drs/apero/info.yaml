@@ -14,7 +14,7 @@ DRS.AUTHORS:
     - I. Boisse
     - E. Martioli
 # Define instruments
-DRS.INSTRUMENTS:
+INSTRUMENTS:
     - SPIROU
     - NIRPS_HA
     - NIRPS_HE
