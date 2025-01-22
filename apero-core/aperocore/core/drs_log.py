@@ -1160,7 +1160,7 @@ def get_drs_data_msg(params: Any, group: Union[str, None] = None,
             return params['PATH.LOG_FULL']
     # ----------------------------------------------------------------------
     # get from params
-    dir_data_msg = params.get('PATH.LOG', None)
+    dir_data_msg = params.get('PATH.LOG', params.get('LOG.PATH', None))
     # ----------------------------------------------------------------------
     # only sort by recipe kind if group is None
     if (params['DRS.RECIPE_TYPE'] is not None) and (group is None):
