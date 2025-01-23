@@ -211,27 +211,27 @@ CDict.set('RMS_PERCENTILE', value=95, source=__NAME__, group=cgroup)
 CDict.set('LOWEST_RMS_PERCENTILE', value=10, source=__NAME__, group=cgroup)
 
 # Defines the snr hotpix threshold to define a corrupt file
-CDict.set('PP_CORRUPT_SNR_HOTPIX', value=10, source=__NAME__)
+CDict.set('CORRUPT_SNR_HOTPIX', value=10, source=__NAME__, group=cgroup)
 
 # Defines the RMS threshold to also catch corrupt files
-CDict.set('PP_CORRUPT_RMS_THRES', value=0.15, source=__NAME__)
+CDict.set('CORRUPT_RMS_THRES', value=0.15, source=__NAME__, group=cgroup)
 
 # Super-pessimistic noise estimate. Includes uncorrected common noise
-CDict.set('PP_COSMIC_NOISE_ESTIMATE', value=30.0, source=__NAME__)
+CDict.set('COSMIC_NOISE_EST', value=30.0, source=__NAME__, group=cgroup)
 
 # Define the cuts in sigma where we should look for cosmics (variance)
-CDict.set('PP_COSMIC_VARCUT1', value=3000.0, source=__NAME__)
-CDict.set('PP_COSMIC_VARCUT2', value=1000.0, source=__NAME__)
+CDict.set('COSMIC_VARCUT1', value=3000.0, source=__NAME__, group=cgroup)
+CDict.set('COSMIC_VARCUT2', value=1000.0, source=__NAME__, group=cgroup)
 
 # Define the cuts in sigma where we should look for cosmics (intercept)
-CDict.set('PP_COSMIC_INTCUT1', value=100.0, source=__NAME__)
-CDict.set('PP_COSMIC_INTCUT2', value=50.0, source=__NAME__)
+CDict.set('COSMIC_INTCUT1', value=100.0, source=__NAME__, group=cgroup)
+CDict.set('COSMIC_INTCUT2', value=50.0, source=__NAME__, group=cgroup)
 
 # Random box size [in pixels] to speed-up low-frequency band computation
-CDict.set('PP_COSMIC_BOXSIZE', value=64, source=__NAME__)
+CDict.set('COSMIC_BOXSIZE', value=64, source=__NAME__, group=cgroup)
 
 # Define whether to skip preprocessed files that have already be processed
-CDict.set('SKIP_DONE_PP', value=False, source=__NAME__)
+CDict.set('SKIP_DONE', value=False, source=__NAME__, group=cgroup)
 
 # Define dark dprtypes for threshold quality control check (PP_DARK_THRES)
 CDict.set('PP_DARK_DPRTYPES', 
@@ -240,7 +240,7 @@ CDict.set('PP_DARK_DPRTYPES',
 
 # Define the threshold for a suitable DARK_DARK (above this will not
 # be processed)
-CDict.set('PP_DARK_THRES', value=0.5, source=__NAME__)
+CDict.set('DARK_THRES', value=0.5, source=__NAME__, group=cgroup)
 
 # Define the amplitude of the flux-dependent along-readout-axis
 # derivative component
@@ -262,7 +262,7 @@ CDict.set('PP_COR_XTALK_AMP_D2FLUX', value=-6.523985e-04, source=__NAME__,
 
 # Define the partial APERO DPRTYPES which we should not do the science
 # capacitive coupling
-CDict.set('PP_NOSCI_CAPC_DPRTYPES', value=['HCONE', 'HCTWO'], source=__NAME__)
+CDict.set('NOSCI_CAPC_DPRTYPES', value=['HCONE', 'HCTWO'], source=__NAME__, group=cgroup)
 
 # =============================================================================
 # CALIBRATION: ASTROMETRIC DATABASE SETTINGS

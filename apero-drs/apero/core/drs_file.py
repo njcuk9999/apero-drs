@@ -8091,7 +8091,7 @@ def combine_headers(params: ParamDict, headers: List[Header],
     # loop around unique header keys
     for k_it, key in enumerate(all_header_keys):
         # skip forbidden keys
-        if key in params['FORBIDDEN_OUT_KEYS']:
+        if key in params['HEADER.FORBIDDEN_OUT_KEYS']:
             continue
         # storage of values
         values = []

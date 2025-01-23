@@ -479,7 +479,7 @@ def quality_control1(params, snr_hotpix, infile, rms_list, log=True):
     # print out SNR hotpix value
     WLOG(params, '', textentry('40-010-00006', args=[snr_hotpix]))
     # get snr_threshold
-    snr_threshold = params['PP_CORRUPT_SNR_HOTPIX']
+    snr_threshold = params['PP.CORRUPT_SNR_HOTPIX']
     # deal with printing corruption message
     if snr_hotpix < snr_threshold:
         # add failed message to fail message list
@@ -494,7 +494,7 @@ def quality_control1(params, snr_hotpix, infile, rms_list, log=True):
     qc_logic.append('snr_hotpix < {0:.5e}'.format(snr_threshold))
     # ----------------------------------------------------------------------
     # get rms threshold
-    rms_threshold = params['PP_CORRUPT_RMS_THRES']
+    rms_threshold = params['PP.CORRUPT_RMS_THRES']
     # check
     if mp.nanmax(rms_list) > rms_threshold:
         # add failed message to fail message list
@@ -563,8 +563,8 @@ def quality_control2(params: ParamDict, qc_params: list, image: np.ndarray,
     fail_msg = []
     qc_names, qc_values, qc_logic, qc_pass = qc_params
     # get paramters from params
-    dark_types = params['PP_DARK_DPRTYPES']
-    dark_thres = params['PP_DARK_THRES']
+    dark_types = params['PP.DARK_DPRTYPES']
+    dark_thres = params['PP.DARK_THRES']
     # ----------------------------------------------------------------------
     # check if dark dark it is not science
     if dprtype in dark_types:

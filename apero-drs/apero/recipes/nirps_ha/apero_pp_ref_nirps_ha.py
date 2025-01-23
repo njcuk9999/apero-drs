@@ -104,7 +104,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # extract file type from inputs
     filetypes = params['INPUTS']['FILETYPE']
     # get allowed dark types
-    allowedtypes = params['ALLOWED_PPM_TYPES']
+    allowedtypes = params['PP.ALLOWED_PPM_TYPES']
     # set up plotting (no plotting before this)
     recipe.plot.set_location()
 
@@ -197,7 +197,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # add input filename
         outfile.add_hkey_1d('KW_INFILE1', values=rawfiles, dim1name='infile')
         # set used values from mask creation
-        outfile.add_hkey('KW_PP_REF_NSIG', value=props['PPM_MASK_NSIG'])
+        outfile.add_hkey('KW_PP_REF_NSIG', value=props['PP.PPM_MASK_NSIG'])
         # ------------------------------------------------------------------
         # copy data
         outfile.data = mask

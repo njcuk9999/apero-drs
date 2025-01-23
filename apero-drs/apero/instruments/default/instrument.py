@@ -295,7 +295,7 @@ class Instrument:
         # cannot get frame time without instrument
         _ = params, header
         # raise implementation error
-        self._not_implemented('FRAME_TIME')
+        self._not_implemented('IMAGE.FRAME_TIME')
 
     def SATURATION(self, params: Any, header: Any):
         """
@@ -310,7 +310,7 @@ class Instrument:
         # cannot get saturation without instrument
         _ = params, header
         # raise implementation error
-        self._not_implemented('SATURATION')
+        self._not_implemented('IMAGE.SATURATION')
 
     def GET_STOKES_FROM_HEADER(self, params: Any, header: Any, wlog: Any):
         """

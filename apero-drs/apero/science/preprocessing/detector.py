@@ -108,12 +108,12 @@ def correct_cosmics(params: ParamDict, image: np.ndarray,
     tamp = params['PP.TOTAL_AMP_NUM']
     ntop = params['PP.NUM_REF_TOP']
     nbottom = params['PP.NUM_REF_BOTTOM']
-    readout_noise = params['PP_COSMIC_NOISE_ESTIMATE']
-    variance_cut1 = params['PP_COSMIC_VARCUT1']
-    variance_cut2 = params['PP_COSMIC_VARCUT2']
-    intercept_cut1 = params['PP_COSMIC_INTCUT1']
-    intercept_cut2 = params['PP_COSMIC_INTCUT2']
-    intboxsize = params['PP_COSMIC_BOXSIZE']
+    readout_noise = params['PP.COSMIC_NOISE_EST']
+    variance_cut1 = params['PP.COSMIC_VARCUT1']
+    variance_cut2 = params['PP.COSMIC_VARCUT2']
+    intercept_cut1 = params['PP.COSMIC_INTCUT1']
+    intercept_cut2 = params['PP.COSMIC_INTCUT2']
+    intboxsize = params['PP.COSMIC_BOXSIZE']
     # get the 1 sigma fraction (~68)
     norm_frac = mp.normal_fraction(1) * 100
     # get shape of image
@@ -929,11 +929,11 @@ def correct_sci_capacitive_coupling(params: ParamDict, image: np.ndarray,
     WLOG(params, '', 'Correcting capacitive coupling due to sci/calib flux')
     # get the amplitudes from constants
     # TODO: Add values and add to constants
-    amp_flux = pcheck(params, 'PP_CORR_XTALK_AMP_FLUX', func=func_name,
+    amp_flux = pcheck(params, 'PP.CX_AMP_FLUX', func=func_name,
                       override=amp_flux)
-    amp_dflux = pcheck(params, 'PP_COR_XTALK_AMP_DFLUX', func=func_name,
+    amp_dflux = pcheck(params, 'PP.CX_AMP_DFLUX', func=func_name,
                        override=amp_dflux)
-    amp_d2flux = pcheck(params, 'PP_COR_XTALK_AMP_D2FLUX', func=func_name,
+    amp_d2flux = pcheck(params, 'PP.CX_AMP_D2FLUX', func=func_name,
                         override=amp_d2flux)
     # get the map
     full_butterfly, _, _, _ = get_butterfly_maps(params, image, amp_flux,
@@ -1102,7 +1102,7 @@ def nirps_correction(params: ParamDict, image: np.ndarray,
     :return: numpy 2D array, the corrected image
     """
     # define the bin size for low level frequencies
-    # binsize = params['PP_MEDAMP_BINSIZE']
+    # binsize = params['PP.MEDAMP_BINSIZE']
     # number of amplifiers in total
     namps = params['PP.TOTAL_AMP_NUM']
     # shape of the image
@@ -1454,7 +1454,7 @@ def nirps_order_mask(params: ParamDict, mask_image: np.ndarray,
     # set properties
     props = ParamDict()
     props['PPM_MASK_NSIG'] = 0
-    props.set_source('PPM_MASK_NSIG', func_name)
+    props.set_source('PP.PPM_MASK_NSIG', func_name)
     # return mask
     return mask, props
 

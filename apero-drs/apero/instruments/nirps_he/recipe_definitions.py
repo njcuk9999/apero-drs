@@ -230,7 +230,7 @@ apero_preprocess.set_arg(name='files', dtype='files', pos='1+',
                          helpstr=textentry('PREPROCESS_UFILES_HELP'), limit=1)
 apero_preprocess.set_kwarg(name='--skip', dtype='bool',
                            helpstr=textentry('PPSKIP_HELP'),
-                           default_ref='SKIP_DONE_PP')
+                           default_ref='PP.SKIP_DONE')
 apero_preprocess.group_func = grouping.group_individually
 apero_preprocess.group_column = 'REPROCESS_OBSDIR_COL'
 # documentation

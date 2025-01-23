@@ -110,7 +110,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # Get hot pixels for corruption check
     hotpixels = prep.get_hot_pixels(params)
     # get skip parmaeter
-    skip = params['SKIP_DONE_PP']
+    skip = params['PP.SKIP_DONE']
     # get pseudo constants
     pconst = load_functions.load_pconfig(select.INSTRUMENTS)
     # ----------------------------------------------------------------------
@@ -335,7 +335,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         image, cprops = prep.correct_cosmics(params, image, intercept,
                                              errslope1, inttime)
         # get dprtypes we don't do sci capacitive coupling for
-        nosci_capc = params['PP_NOSCI_CAPC_DPRTYPES']
+        nosci_capc = params['PP.NOSCI_CAPC_DPRTYPES']
         sci_capc_corr = True
         for _string in nosci_capc:
             if _string in infile.header['DPRTYPE']:

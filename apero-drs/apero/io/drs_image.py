@@ -402,7 +402,7 @@ def get_fiber_types(params: ParamDict,
                     fibertypes: Union[List[str], None] = None,
                     fiber: Union[str, None] = None) -> List[str]:
     """
-    Get the correct fiber types based on params['FIBER_TYPES'] - if fibertypes
+    Get the correct fiber types based on params['IMAGE.FIBER_TYPES'] - if fibertypes
     is set this is just returned, if fiber is 'ALL' return all fiber types,
     else if fiber is in fibers just return fiber in a list form.
 
