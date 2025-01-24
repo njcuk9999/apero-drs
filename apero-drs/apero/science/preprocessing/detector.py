@@ -1453,7 +1453,7 @@ def nirps_order_mask(params: ParamDict, mask_image: np.ndarray,
         mask = np.array(image2 < 0)
     # set properties
     props = ParamDict()
-    props['PPM_MASK_NSIG'] = 0
+    props['PP.PPM_MASK_NSIG'] = 0
     props.set_source('PP.PPM_MASK_NSIG', func_name)
     # return mask
     return mask, props

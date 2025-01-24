@@ -598,45 +598,6 @@ CDict.add('PP_NOSCI_CAPC_DPRTYPES', value=None,
                       'which we should not do the '
                       'science capacitive coupling')
 
-# =============================================================================
-# CALIBRATION: ASTROMETRIC DATABASE SETTINGS
-# =============================================================================
-cgroup = 'DB.ASTROM'
-CDict.add_group(cgroup, description='PREPROCESSING.ASTROM: '
-                                    'CALIBRATION: ASTROMETRIC DATABASE '
-                                    'SETTINGS')
-# gaia col name in google sheet
-CDict.add('GL_GAIA_COL_NAME', value=None, dtype=str,
-          source=__NAME__, group=cgroup,
-          description='gaia col name in google sheet')
-# object col name in google sheet
-CDict.add('GL_OBJ_COL_NAME', value=None, dtype=str,
-          source=__NAME__, group=cgroup,
-          description='object col name in google sheet')
-# alias col name in google sheet
-CDict.add('GL_ALIAS_COL_NAME', value=None, dtype=str,
-          source=__NAME__, group=cgroup,
-          description='alias col name in google sheet')
-# rv col name in google sheet
-CDict.add('GL_RV_COL_NAME', value=None, dtype=str,
-          source=__NAME__, group=cgroup,
-          description='rv col name in google sheet')
-CDict.add('GL_RVREF_COL_NAME', value=None, dtype=str,
-          source=__NAME__, group=cgroup, description='')
-# teff col name in google sheet
-CDict.add('GL_TEFF_COL_NAME', value=None, dtype=str,
-          source=__NAME__, group=cgroup,
-          description='teff col name in google sheet')
-CDict.add('GL_TEFFREF_COL_NAME', value=None, dtype=str,
-          source=__NAME__, group=cgroup, description='')
-# Reject like google columns
-CDict.add('GL_R_ODO_COL', value=None, dtype=str,
-          source=__NAME__, group=cgroup,
-          description='Reject like google columns')
-CDict.add('GL_R_PP_COL', value=None, dtype=str,
-          source=__NAME__, group=cgroup, description='')
-CDict.add('GL_R_RV_COL', value=None, dtype=str,
-          source=__NAME__, group=cgroup, description='')
 
 # =============================================================================
 # CALIBRATION: DARK SETTINGS
@@ -2081,7 +2042,7 @@ CDict.add('THERMAL_EXCESS_EMISSIVITY_FILE',
                       'emissivity file')
 
 # =============================================================================
-# CALIBRATION: WAVE EA GENERAL SETTINGS
+# CALIBRATION: WAVE GENERAL SETTINGS
 # =============================================================================
 cgroup = 'CAL.WAVE.GEN'
 CDict.add_group(cgroup, description='CALIBRATION.WAVE_GENERAL: '
@@ -2238,6 +2199,96 @@ CDict.add('WAVE_FIBER_COMP_PLOT_ORD', value=None,
           group=cgroup,
           description=('define the wave fiber '
                        'comparison plot order number'))
+
+# Define the line list file (located in the DRS_WAVE_DATA directory)
+CDict.add('WAVE_LINELIST_FILE', value=None, dtype=str,
+          source=__NAME__, group=cgroup,
+          description=('Define the line list file (located in '
+                       'the DRS_WAVE_DATA directory)'))
+
+# Define the line list file format (must be astropy.table format)
+CDict.add('WAVE_LINELIST_FMT', value=None, dtype=str,
+          source=__NAME__, group=cgroup,
+          description=('Define the line list file format (must '
+                       'be astropy.table format)'))
+
+# Define the line list file column names
+# and must be equal to the number of columns in file)
+CDict.add('WAVE_LINELIST_COLS', value=None,
+          dtype=list, dtypei=str,
+          source=__NAME__, group=cgroup,
+          description=('Define the line list file column '
+                       'names and must be equal to the number '
+                       'of columns in file)'))
+
+# Define the line list file row the data starts
+CDict.add('WAVE_LINELIST_START', value=None, dtype=int,
+          source=__NAME__, group=cgroup,
+          description=('Define the line list file row the '
+                       'data starts'))
+
+# Define the line list file wavelength column and amplitude column
+#  Must be in WAVE_LINELIST_COLS
+CDict.add('WAVE_LINELIST_WAVECOL', value=None, dtype=str,
+          source=__NAME__, group=cgroup,
+          description=('Define the line list file '
+                       'wavelength column and amplitude '
+                       'column Must be in '
+                       'WAVE_LINELIST_COLS'))
+CDict.add('WAVE_LINELIST_AMPCOL', value=None, dtype=str,
+          source=__NAME__, group=cgroup, description='')
+
+# define whether to always extract HC/FP files in the wave code (even if they
+#    have already been extracted
+CDict.add('WAVE_ALWAYS_EXTRACT', value=None, dtype=bool,
+          source=__NAME__, user=True, active=False,
+          group=cgroup,
+          description='define whether to always extract '
+                      'HC/FP files in the wave code '
+                      '(even if they')
+
+# define the type of file to use for wave solution (currently allowed are
+#    'E2DS' or 'E2DSFF'
+CDict.add('WAVE_EXTRACT_TYPE', value=None, dtype=str,
+          source=__NAME__, options=['E2DS', 'E2DSFF'],
+          user=True, active=False, group=cgroup,
+          description='define the type of file to use for '
+                      'wave solution (currently allowed '
+                      'are "E2DS" or "E2DSFF"')
+
+# define the fit degree for the wavelength solution
+CDict.add('WAVE_FIT_DEGREE', value=None, dtype=int,
+          source=__NAME__, user=True, active=False, group=cgroup,
+          description='define the fit degree for the '
+                      'wavelength solution')
+
+# Define intercept and slope for a pixel shift
+CDict.add('WAVE_PIXEL_SHIFT_INTER', value=None,
+          dtype=float, source=__NAME__, group=cgroup,
+          description=('Define intercept and slope for a '
+                       'pixel shift'))
+CDict.add('WAVE_PIXEL_SHIFT_SLOPE', value=None,
+          dtype=float, source=__NAME__, group=cgroup,
+          description='')
+
+#  Defines echelle of first extracted order
+CDict.add('WAVE_T_ORDER_START', value=None,
+          dtype=int, source=__NAME__, group=cgroup,
+          description=('Defines echelle of first extracted '
+                       'order'))
+
+#  Defines order from which the solution is calculated
+CDict.add('WAVE_N_ORD_START', value=None, dtype=int,
+          source=__NAME__, group=cgroup,
+          description=('Defines order from which the solution '
+                       'is calculated'))
+
+#  Defines order to which the solution is calculated
+CDict.add('WAVE_N_ORD_FINAL', value=None, dtype=int,
+          source=__NAME__, group=cgroup,
+          description=('Defines order to which the solution is '
+                       'calculated'))
+
 
 # =============================================================================
 # CALIBRATION: WAVE LINES REFERENCE SETTINGS
@@ -2551,103 +2602,6 @@ CDict.add('WAVE_CCF_RV_THRES_QC', value=None, dtype=float,
                        'threshold from RV of CCF FP between '
                        'reference fiber and other fibers, '
                        'above this limit fails QC [m/s]'))
-
-# TODO: Sort out wave constants below here
-# =============================================================================
-# CALIBRATION: WAVE GENERAL SETTINGS
-# =============================================================================
-cgroup = 'CAL.WAVE.GEN'
-CDict.add_group(cgroup, description='CALIBRATION.WAVE_GENERAL: '
-                                    'CALIBRATION: WAVE GENERAL SETTINGS')
-
-# Define the line list file (located in the DRS_WAVE_DATA directory)
-CDict.add('WAVE_LINELIST_FILE', value=None, dtype=str,
-          source=__NAME__, group=cgroup,
-          description=('Define the line list file (located in '
-                       'the DRS_WAVE_DATA directory)'))
-
-# Define the line list file format (must be astropy.table format)
-CDict.add('WAVE_LINELIST_FMT', value=None, dtype=str,
-          source=__NAME__, group=cgroup,
-          description=('Define the line list file format (must '
-                       'be astropy.table format)'))
-
-# Define the line list file column names
-# and must be equal to the number of columns in file)
-CDict.add('WAVE_LINELIST_COLS', value=None,
-          dtype=list, dtypei=str,
-          source=__NAME__, group=cgroup,
-          description=('Define the line list file column '
-                       'names and must be equal to the number '
-                       'of columns in file)'))
-
-# Define the line list file row the data starts
-CDict.add('WAVE_LINELIST_START', value=None, dtype=int,
-          source=__NAME__, group=cgroup,
-          description=('Define the line list file row the '
-                       'data starts'))
-
-# Define the line list file wavelength column and amplitude column
-#  Must be in WAVE_LINELIST_COLS
-CDict.add('WAVE_LINELIST_WAVECOL', value=None, dtype=str,
-          source=__NAME__, group=cgroup,
-          description=('Define the line list file '
-                       'wavelength column and amplitude '
-                       'column Must be in '
-                       'WAVE_LINELIST_COLS'))
-CDict.add('WAVE_LINELIST_AMPCOL', value=None, dtype=str,
-          source=__NAME__, group=cgroup, description='')
-
-# define whether to always extract HC/FP files in the wave code (even if they
-#    have already been extracted
-CDict.add('WAVE_ALWAYS_EXTRACT', value=None, dtype=bool,
-          source=__NAME__, user=True, active=False,
-          group=cgroup,
-          description='define whether to always extract '
-                      'HC/FP files in the wave code '
-                      '(even if they')
-
-# define the type of file to use for wave solution (currently allowed are
-#    'E2DS' or 'E2DSFF'
-CDict.add('WAVE_EXTRACT_TYPE', value=None, dtype=str,
-          source=__NAME__, options=['E2DS', 'E2DSFF'],
-          user=True, active=False, group=cgroup,
-          description='define the type of file to use for '
-                      'wave solution (currently allowed '
-                      'are "E2DS" or "E2DSFF"')
-
-# define the fit degree for the wavelength solution
-CDict.add('WAVE_FIT_DEGREE', value=None, dtype=int,
-          source=__NAME__, user=True, active=False, group=cgroup,
-          description='define the fit degree for the '
-                      'wavelength solution')
-
-# Define intercept and slope for a pixel shift
-CDict.add('WAVE_PIXEL_SHIFT_INTER', value=None,
-          dtype=float, source=__NAME__, group=cgroup,
-          description=('Define intercept and slope for a '
-                       'pixel shift'))
-CDict.add('WAVE_PIXEL_SHIFT_SLOPE', value=None,
-          dtype=float, source=__NAME__, group=cgroup,
-          description='')
-
-#  Defines echelle of first extracted order
-CDict.add('WAVE_T_ORDER_START', value=None,
-          dtype=int, source=__NAME__, group=cgroup,
-          description=('Defines echelle of first extracted '
-                       'order'))
-
-#  Defines order from which the solution is calculated
-CDict.add('WAVE_N_ORD_START', value=None, dtype=int,
-          source=__NAME__, group=cgroup,
-          description=('Defines order from which the solution '
-                       'is calculated'))
-
-#  Defines order to which the solution is calculated
-CDict.add('WAVE_N_ORD_FINAL', value=None, dtype=int,
-          source=__NAME__, group=cgroup,
-          description=('Defines order to which the solution is '
-                       'calculated'))
 
 # =============================================================================
 # CALIBRATION: WAVE HC SETTINGS
@@ -3427,6 +3381,42 @@ CDict.add('REJECT_LIST_GSHEET_SHEET_NAME',
           dtype=str, source=__NAME__, group=cgroup,
           description='Define the google sheet name'
                       ' to use for the reject list')
+
+# gaia col name in google sheet
+CDict.add('GL_GAIA_COL_NAME', value=None, dtype=str,
+          source=__NAME__, group=cgroup,
+          description='gaia col name in google sheet')
+# object col name in google sheet
+CDict.add('GL_OBJ_COL_NAME', value=None, dtype=str,
+          source=__NAME__, group=cgroup,
+          description='object col name in google sheet')
+# alias col name in google sheet
+CDict.add('GL_ALIAS_COL_NAME', value=None, dtype=str,
+          source=__NAME__, group=cgroup,
+          description='alias col name in google sheet')
+# rv col name in google sheet
+CDict.add('GL_RV_COL_NAME', value=None, dtype=str,
+          source=__NAME__, group=cgroup,
+          description='rv col name in google sheet')
+CDict.add('GL_RVREF_COL_NAME', value=None, dtype=str,
+          source=__NAME__, group=cgroup, description='')
+# teff col name in google sheet
+CDict.add('GL_TEFF_COL_NAME', value=None, dtype=str,
+          source=__NAME__, group=cgroup,
+          description='teff col name in google sheet')
+CDict.add('GL_TEFFREF_COL_NAME', value=None, dtype=str,
+          source=__NAME__, group=cgroup,
+          description='teff source reference col name in google sheet')
+# Reject like google columns
+CDict.add('GL_R_ODO_COL', value=None, dtype=str,
+          source=__NAME__, group=cgroup,
+          description='Reject "idenfier" col name in  google sheet')
+CDict.add('GL_R_PP_COL', value=None, dtype=str,
+          source=__NAME__, group=cgroup,
+          description='Reject "pp" col name in google sheet')
+CDict.add('GL_R_RV_COL', value=None, dtype=str,
+          source=__NAME__, group=cgroup,
+          description='Reject "rv" col name in google sheet')
 
 # =============================================================================
 # OBJECT: SKY CORR SETTINGS
@@ -4734,6 +4724,126 @@ CDict.add('POLAR_LSD_RES_POWER_GUESS', value=None,
                       'fit')
 
 # =============================================================================
+# LBL SETTINGS
+# =============================================================================
+cgroup = 'OBJ.LBL'
+CDict.add_group(cgroup, description='OBJECT.LBL: LBL SETTINGS')
+
+# Define the file definition type (DRSOUTID) for LBL input files
+CDict.add('LBL_FILE_DEFS', value=None, dtype=str, source=__NAME__,
+          user=False, active=True, group=cgroup,
+          description='Define the file definition type (DRSOUTID) '
+                      'for LBL input files')
+
+# Define the dprtype for science files for LBL
+CDict.add('LBL_DPRTYPES', value=None, dtype=list, dtypei=str,
+          source=__NAME__,
+          user=False, active=True, group=cgroup,
+          description='Define the dprtype for science files for LBL')
+
+# Define the file definition type (DRSOUTID) for lbl input template
+CDict.add('LBL_TEMPLATE_FILE_DEFS', value=None,
+          dtype=list, dtypei=str,
+          source=__NAME__, user=False,
+          active=True, group=cgroup,
+          description='Define the file definition type '
+                      '(DRSOUTID) for lbl input template')
+
+# Define the DPRTYPE for simultaneous FP files for lbl input
+CDict.add('LBL_SIM_FP_DPRTYPES', value=None,
+          dtype=list, dtypei=str,
+          source=__NAME__, user=False, active=True,
+          group=cgroup,
+          description='Define the DPRTYPE for simultaneous '
+                      'FP files for lbl input')
+
+# Define whether the LBL directory should use symlinks
+CDict.add('LBL_SYMLINKS', value=False, dtype=bool, source=__NAME__,
+          user=True, active=True, group=cgroup,
+          description='Define whether the LBL directory should use '
+                      'symlinks')
+
+# Define the dictionary of friend and friend teffs for LBL
+CDict.add('LBL_FRIENDS', value=None,
+          dtype=dict, dtypei=int,
+          source=__NAME__,
+          user=False, active=True, group=cgroup,
+          description='Define the dictionary of friend and friend '
+                      'teffs for LBL')
+
+# Define the specific data types (where objname is the data type) for LBL
+CDict.add('LBL_SPECIFIC_DATATYPES', value=None,
+          dtype=list, dtypei=str,
+          source=__NAME__, user=False,
+          active=True, group=cgroup,
+          description='Define the specific data types '
+                      '(where objname is the data type) '
+                      'for LBL')
+
+# Define objnames for which we should recalculate template if it doesn't
+#   exist (must include FP)
+CDict.add('LBL_RECAL_TEMPLATE', value=None,
+          dtype=list, dtypei=str,
+          source=__NAME__, user=False, active=True,
+          group=cgroup,
+          description='Define objnames for which we should '
+                      'recalculate template if it doesn\'t '
+                      'exist (must include FP)')
+
+# Define which recipes should skip done files
+#   e.g. LBL_COMPUTE,LBL_COMPILE,LBL_MASK
+CDict.add('LBL_SKIP_DONE', value=None,
+          dtype=list, dtypei=str,
+          source=__NAME__,
+          user=False, active=True, group=cgroup,
+          description='Define which recipes should skip done files'
+                      'e.g.  LBL_COMPUTE,LBL_COMPILE,LBL_MASK')
+
+# Define which object names should be run through LBL compute in parellel
+#   i.e. break in to Ncore chunks
+CDict.add('LBL_MULTI_OBJLIST', value=None,
+          dtype=list, dtypei=str,
+          source=__NAME__, user=False, active=True,
+          group=cgroup,
+          description='Define which object names should be '
+                      ' run through LBL compute in parellel '
+                      ' i.e. break in to Ncore chunks ')
+
+# Define the DTEMP gradient files
+CDict.add('LBL_DTEMP', value=None,
+          dtype=dict, dtypei=str,
+          source=__NAME__, user=False, active=True, group=cgroup,
+          description='Define the DTEMP gradient files')
+
+# =============================================================================
+# POST PROCESS SETTINGS
+# =============================================================================
+cgroup = 'OBJ.POST'
+CDict.add_group(cgroup, description='OBJECT.POST_PROCESS: POST PROCESS SETTINGS')
+
+# Define whether (by deafult) to clear reduced directory
+CDict.add('POST_CLEAR_REDUCED', value=False,
+          dtype=bool, source=__NAME__, user=True, active=True,
+          group=cgroup,
+          description='Define whether (by deafult) to '
+                      'clear reduced directory')
+
+# Define whether (by default) to overwrite post processed files
+CDict.add('POST_OVERWRITE', value=False,
+          dtype=bool, source=__NAME__, user=True, active=True,
+          group=cgroup,
+          description='Define whether (by default) to '
+                      'overwrite post processed files')
+
+# Define the header keyword store to insert extension comment after
+CDict.add('POST_HDREXT_COMMENT_KEY', value=None,
+          dtype=str, source=__NAME__, user=False,
+          active=False, group=cgroup,
+          description='Define the header keyword store '
+                      'to insert extension comment after')
+
+
+# =============================================================================
 # DEBUG OUTPUT FILE SETTINGS
 # =============================================================================
 cgroup = 'DEBUG.OUTFILE'
@@ -5355,124 +5465,6 @@ CDict.add('PLOT_POLAR_LSD', value=False,
           group=cgroup,
           description='turn on the polar lsd debug plot')
 
-# =============================================================================
-# LBL SETTINGS
-# =============================================================================
-cgroup = 'OBJ.LBL'
-CDict.add_group(cgroup, description='OBJECT.LBL: LBL SETTINGS')
-
-# Define the file definition type (DRSOUTID) for LBL input files
-CDict.add('LBL_FILE_DEFS', value=None, dtype=str, source=__NAME__,
-          user=False, active=True, group=cgroup,
-          description='Define the file definition type (DRSOUTID) '
-                      'for LBL input files')
-
-# Define the dprtype for science files for LBL
-CDict.add('LBL_DPRTYPES', value=None, dtype=list, dtypei=str,
-          source=__NAME__,
-          user=False, active=True, group=cgroup,
-          description='Define the dprtype for science files for LBL')
-
-# Define the file definition type (DRSOUTID) for lbl input template
-CDict.add('LBL_TEMPLATE_FILE_DEFS', value=None,
-          dtype=list, dtypei=str,
-          source=__NAME__, user=False,
-          active=True, group=cgroup,
-          description='Define the file definition type '
-                      '(DRSOUTID) for lbl input template')
-
-# Define the DPRTYPE for simultaneous FP files for lbl input
-CDict.add('LBL_SIM_FP_DPRTYPES', value=None,
-          dtype=list, dtypei=str,
-          source=__NAME__, user=False, active=True,
-          group=cgroup,
-          description='Define the DPRTYPE for simultaneous '
-                      'FP files for lbl input')
-
-# Define whether the LBL directory should use symlinks
-CDict.add('LBL_SYMLINKS', value=False, dtype=bool, source=__NAME__,
-          user=True, active=True, group=cgroup,
-          description='Define whether the LBL directory should use '
-                      'symlinks')
-
-# Define the dictionary of friend and friend teffs for LBL
-CDict.add('LBL_FRIENDS', value=None,
-          dtype=dict, dtypei=int,
-          source=__NAME__,
-          user=False, active=True, group=cgroup,
-          description='Define the dictionary of friend and friend '
-                      'teffs for LBL')
-
-# Define the specific data types (where objname is the data type) for LBL
-CDict.add('LBL_SPECIFIC_DATATYPES', value=None,
-          dtype=list, dtypei=str,
-          source=__NAME__, user=False,
-          active=True, group=cgroup,
-          description='Define the specific data types '
-                      '(where objname is the data type) '
-                      'for LBL')
-
-# Define objnames for which we should recalculate template if it doesn't
-#   exist (must include FP)
-CDict.add('LBL_RECAL_TEMPLATE', value=None,
-          dtype=list, dtypei=str,
-          source=__NAME__, user=False, active=True,
-          group=cgroup,
-          description='Define objnames for which we should '
-                      'recalculate template if it doesn\'t '
-                      'exist (must include FP)')
-
-# Define which recipes should skip done files
-#   e.g. LBL_COMPUTE,LBL_COMPILE,LBL_MASK
-CDict.add('LBL_SKIP_DONE', value=None,
-          dtype=list, dtypei=str,
-          source=__NAME__,
-          user=False, active=True, group=cgroup,
-          description='Define which recipes should skip done files'
-                      'e.g.  LBL_COMPUTE,LBL_COMPILE,LBL_MASK')
-
-# Define which object names should be run through LBL compute in parellel
-#   i.e. break in to Ncore chunks
-CDict.add('LBL_MULTI_OBJLIST', value=None,
-          dtype=list, dtypei=str,
-          source=__NAME__, user=False, active=True,
-          group=cgroup,
-          description='Define which object names should be '
-                      ' run through LBL compute in parellel '
-                      ' i.e. break in to Ncore chunks ')
-
-# Define the DTEMP gradient files
-CDict.add('LBL_DTEMP', value=None,
-          dtype=dict, dtypei=str,
-          source=__NAME__, user=False, active=True, group=cgroup,
-          description='Define the DTEMP gradient files')
-
-# =============================================================================
-# POST PROCESS SETTINGS
-# =============================================================================
-cgroup = 'OBJ.POST'
-CDict.add_group(cgroup, description='OBJECT.POST_PROCESS: POST PROCESS SETTINGS')
-
-# Define whether (by deafult) to clear reduced directory
-CDict.add('POST_CLEAR_REDUCED', value=False,
-          dtype=bool, source=__NAME__, user=True, active=True,
-          group=cgroup,
-          description='Define whether (by deafult) to '
-                      'clear reduced directory')
-
-# Define whether (by default) to overwrite post processed files
-CDict.add('POST_OVERWRITE', value=False,
-          dtype=bool, source=__NAME__, user=True, active=True,
-          group=cgroup,
-          description='Define whether (by default) to '
-                      'overwrite post processed files')
-
-# Define the header keyword store to insert extension comment after
-CDict.add('POST_HDREXT_COMMENT_KEY', value=None,
-          dtype=str, source=__NAME__, user=False,
-          active=False, group=cgroup,
-          description='Define the header keyword store '
-                      'to insert extension comment after')
 
 # =============================================================================
 # TOOLS REPROCESS SETTINGS

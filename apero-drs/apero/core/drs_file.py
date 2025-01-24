@@ -7263,7 +7263,7 @@ class DrsOutFile(DrsInputFile):
         :return:
         """
         # get standard keys from pconst
-        remove_keys = params['FORBIDDEN_OUT_KEYS']
+        remove_keys = params['HEADER.FORBIDDEN_OUT_KEYS']
         # loop around each extension
         for pos in self.extensions:
             # make sure extension has header
