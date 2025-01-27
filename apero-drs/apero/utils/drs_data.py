@@ -244,7 +244,7 @@ def load_full_flat_badpix(params: ParamDict,
     :param badpix_dir: str, where the badpix file is stored (within assets
                       directory) -- overrides params['IPATH.BADPIX']
     :param filename: str, the badpix file name
-                     -- overrides params['BADPIX_FULL_FLAT']
+                     -- overrides params['CAL.BPIX.FULL_FLAT']
     :param func: str, the function name calling this function
     :param return_filename: bool, if True returns filename else returns image
 

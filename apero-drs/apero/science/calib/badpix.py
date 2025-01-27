@@ -92,7 +92,7 @@ def normalise_median_flat(params: ParamDict, image: np.ndarray,
     WLOG(params, '', textentry('40-012-00001'))
 
     # get used percentile
-    percentile = pcheck(params, 'BADPIX_NORM_PERCENTILE', func=func_name,
+    percentile = pcheck(params, 'CAL.BPIX.NORM_PERCENTILE', func=func_name,
                         override=percentile)
 
     # wmed: We construct a "simili" flat by taking the running median of the
@@ -179,10 +179,10 @@ def locate_bad_pixels(params: ParamDict, fimage: np.ndarray,
     # a small amount over wmed pixels and that the badpixels are
     # isolated enough that the median along that box will be representative
     # of the flux they should have if they were not bad
-    wmed = pcheck(params, 'BADPIX_FLAT_MED_WID', func=func_name,
+    wmed = pcheck(params, 'CAL.BPIX.FLAT_MED_WID', func=func_name,
                   override=wmed)
     # maxi differential pixel response relative to the expected value
-    cut_ratio = pcheck(params, 'BADPIX_FLAT_CUT_RATIO', func=func_name,
+    cut_ratio = pcheck(params, 'CAL.BPIX.FLAT_CUT_RATIO', func=func_name,
                        override=cut_ratio)
     # illumination cut parameter. If we only cut the pixels that
     # fractionnally deviate by more than a certain amount, we are going
@@ -193,10 +193,10 @@ def locate_bad_pixels(params: ParamDict, fimage: np.ndarray,
     # to about 1. We then set an illumination threshold below which
     # only the dark current will be a relevant parameter to decide that
     #  a pixel is "bad"
-    illum_cut = pcheck(params, 'BADPIX_ILLUM_CUT', func=func_name,
+    illum_cut = pcheck(params, 'CAL.BPIX.ILLUM_CUT', func=func_name,
                        override=illum_cut)
     # hotpix. Max flux in ADU/s to be considered too hot to be used
-    max_hotpix = pcheck(params, 'BADPIX_MAX_HOTPIX', func=func_name,
+    max_hotpix = pcheck(params, 'CAL.BPIX.MAX_HOTPIX', func=func_name,
                         override=max_hotpix)
     # -------------------------------------------------------------------------
     # create storage for ratio of flat_ref to flat_med
@@ -287,7 +287,7 @@ def locate_bad_pixels_full(params: ParamDict, image: np.ndarray,
     # log that we are looking for bad pixels
     WLOG(params, '', textentry('40-012-00002'))
     # get parameters from params/kwargs
-    threshold = pcheck(params, 'BADPIX_FULL_THRESHOLD', func=func_name,
+    threshold = pcheck(params, 'CAL.BPIX.FULL_THRES', func=func_name,
                        override=threshold)
     rotnum = pcheck(params, 'IMAGE.RAW_PP_ROT', func=func_name,
                     override=rotnum)
@@ -295,7 +295,7 @@ def locate_bad_pixels_full(params: ParamDict, image: np.ndarray,
                        override=assetsdir)
     badpix_dir = pcheck(params, 'IPATH.BADPIX', func=func_name,
                         override=badpix_dir)
-    filename = pcheck(params, 'BADPIX_FULL_FLAT', func=func_name,
+    filename = pcheck(params, 'CAL.BPIX.FULL_FLAT', func=func_name,
                       override=filename)
     # get full flat
     mdata = drs_data.load_full_flat_badpix(params, assetsdir=assetsdir,

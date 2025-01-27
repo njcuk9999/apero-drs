@@ -650,14 +650,14 @@ def plot_dark_image_regions(plotter: Plotter, graph: Graph,
     params = kwargs['params']
     image = kwargs['image']
     # get parameters from params
-    bxlow = params['IMAGE_X_BLUE_LOW']
-    bxhigh = params['IMAGE_X_BLUE_HIGH']
-    bylow = params['IMAGE_Y_BLUE_LOW']
-    byhigh = params['IMAGE_Y_BLUE_HIGH']
-    rxlow = params['IMAGE_X_RED_LOW']
-    rxhigh = params['IMAGE_X_RED_HIGH']
-    rylow = params['IMAGE_Y_RED_LOW']
-    ryhigh = params['IMAGE_Y_RED_HIGH']
+    bxlow = params['CAL.DARK.X_BLUE_LOW']
+    bxhigh = params['CAL.DARK.X_BLUE_HIGH']
+    bylow = params['CAL.DARK.Y_BLUE_LOW']
+    byhigh = params['CAL.DARK.Y_BLUE_HIGH']
+    rxlow = params['CAL.DARK.X_RED_LOW']
+    rxhigh = params['CAL.DARK.X_RED_HIGH']
+    rylow = params['CAL.DARK.Y_RED_LOW']
+    ryhigh = params['CAL.DARK.Y_RED_HIGH']
     med = kwargs['med']
     # ------------------------------------------------------------------
     # adjust for backwards limits

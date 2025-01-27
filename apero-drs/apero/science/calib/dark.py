@@ -102,12 +102,12 @@ def measure_dark(params: ParamDict, image: np.ndarray, entry_key: str,
     # set the function name
     func_name = __NAME__ + '.measure_dark()'
     # check that params contains required parameters
-    dark_qmin = pcheck(params, 'DARK_QMIN', func=func_name, override=dark_qmin)
-    dark_qmax = pcheck(params, 'DARK_QMAX', func=func_name, override=dark_qmax)
-    hbins = pcheck(params, 'HISTO_BINS', func=func_name, override=histo_bins)
-    hrangelow = pcheck(params, 'HISTO_RANGE_LOW', func=func_name,
+    dark_qmin = pcheck(params, 'CAL.DARK.QMIN', func=func_name, override=dark_qmin)
+    dark_qmax = pcheck(params, 'CAL.DARK.QMAX', func=func_name, override=dark_qmax)
+    hbins = pcheck(params, 'CAL.DARK.HISTO_BINS', func=func_name, override=histo_bins)
+    hrangelow = pcheck(params, 'CAL.DARK.HISTO_RANGE_LOW', func=func_name,
                        override=histo_low)
-    hrangehigh = pcheck(params, 'HISTO_RANGE_HIGH', func=func_name,
+    hrangehigh = pcheck(params, 'CAL.DARK.HISTO_RANGE_HIGH', func=func_name,
                         override=histo_high)
     # get the textdict
     image_name = textentry(entry_key)
@@ -245,11 +245,11 @@ def construct_dark_table(params: ParamDict, filenames: List[str],
     # define function
     func_name = __NAME__ + '.construct_dark_table()'
     # get parameters from params
-    time_thres = pcheck(params, 'DARK_REF_MATCH_TIME', func=func_name,
+    time_thres = pcheck(params, 'CAL.DARK.REF_MTIME', func=func_name,
                         override=match_time)
-    max_num_files = pcheck(params, 'DARK_REF_MAX_FILES', func=func_name,
+    max_num_files = pcheck(params, 'CAL.DARK.REF_MAXFILES', func=func_name,
                            override=max_files)
-    dark_ref_min_exptime = pcheck(params, 'DARK_REF_MIN_EXPTIME',
+    dark_ref_min_exptime = pcheck(params, 'CAL.DARK.REF_MIN_EXPTIME',
                                   func=func_name, override=min_exptime)
     # define storage for table columns
     dark_files = []
@@ -369,7 +369,7 @@ def construct_ref_dark(params: ParamDict, dark_table: Table,
     """
     func_name = __NAME__ + '.construct_ref_dark'
     # get constants from p
-    med_size = pcheck(params, 'DARK_REF_MED_SIZE', func=func_name,
+    med_size = pcheck(params, 'CAL.DARK.REF_MEDSIZE', func=func_name,
                       override=ref_med_size)
     # get col data from dark_table
     filenames = dark_table['FILENAME']
@@ -573,7 +573,7 @@ def dark_qc(params: ParamDict, med_full: float, dadeadall: float,
     # add to qc header lists
     qc_values.append(med_full)
     qc_names.append('MED_FULL')
-    qc_logic.append('MED_FULL > {0:.2f}'.format(params['QC_MAX_DARKLEVEL']))
+    qc_logic.append('MED_FULL > {0:.2f}'.format(params['CAL.DARK.QC_MAX_DARKLEVEL']))
     # ------------------------------------------------------------------
     # check that fraction of dead pixels < qc_max_dead
     if dadeadall > params['QC_MAX_DEAD']:
@@ -586,7 +586,7 @@ def dark_qc(params: ParamDict, med_full: float, dadeadall: float,
     # add to qc header lists
     qc_values.append(dadeadall)
     qc_names.append('DADEADALL')
-    qc_logic.append('DADEADALL > {0:.2f}'.format(params['QC_MAX_DEAD']))
+    qc_logic.append('DADEADALL > {0:.2f}'.format(params['CAL.DARK.QC_MAX_DEAD']))
     # ----------------------------------------------------------------------
     # checl that the precentage of dark pixels < qc_max_dark
     if baddark > params['QC_MAX_DARK']:
@@ -598,7 +598,7 @@ def dark_qc(params: ParamDict, med_full: float, dadeadall: float,
     # add to qc header lists
     qc_values.append(baddark)
     qc_names.append('baddark')
-    qc_logic.append('baddark > {0:.2f}'.format(params['QC_MAX_DARK']))
+    qc_logic.append('baddark > {0:.2f}'.format(params['CAL.DARK.QC_MAX_DARK']))
     # ------------------------------------------------------------------
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
@@ -733,7 +733,7 @@ def dark_summary(recipe: DrsRecipe, it: int, params: ParamDict,
     recipe.plot.add_stat('KW_DARK_B_MED', value=med_blue)
     recipe.plot.add_stat('KW_DARK_R_DEAD', value=dadead_red)
     recipe.plot.add_stat('KW_DARK_R_MED', value=med_red)
-    recipe.plot.add_stat('KW_DARK_CUT', value=params['DARK_CUTLIMIT'])
+    recipe.plot.add_stat('KW_DARK_CUT', value=params['CAL.DARK.CUTLIMIT'])
     # construct summary
     recipe.plot.summary_document(it, qc_params)
 

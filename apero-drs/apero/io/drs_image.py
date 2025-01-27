@@ -799,8 +799,8 @@ def expand_badpixelmap(params: ParamDict, bad_pixel_map1: np.ndarray
     :return: np.ndarray, updated bad pixel map (1=bad, 0=good)
     """
     # get erode and dilate size
-    erode_size = pcheck(params, 'BADPIX_ERODE_SIZE', dtype=float)
-    dilate_size = pcheck(params, 'BADPIX_DILATE_SIZE', dtype=float)
+    erode_size = pcheck(params, 'CAL.BPIX.ERODE_SIZE', dtype=float)
+    dilate_size = pcheck(params, 'CAL.BPIX.DILATE_SIZE', dtype=float)
     # define circular masks for the erosion and dilation of the bad pixels
     erode_mask = mp.get_circular_mask(erode_size)
     dilate_mask = mp.get_circular_mask(dilate_size)

@@ -85,11 +85,11 @@ def create_background_map(params: ParamDict, image: np.ndarray,
     # get constants
     width = pcheck(params, 'BKGR_BOXSIZE', func=func_name,
                    override=bkgr_boxsize)
-    percent = pcheck(params, 'BKGR_PERCENTAGE', func=func_name,
+    percent = pcheck(params, 'CAL.BCORR.BKGR_PERCENTAGE', func=func_name,
                      override=bkgr_percentage)
-    csize = pcheck(params, 'BKGR_MASK_CONVOLVE_SIZE', func=func_name,
+    csize = pcheck(params, 'CAL.BCORR.BKGR_MASK_CSIZE', func=func_name,
                    override=bkgr_mask_conv_size)
-    nbad = pcheck(params, 'BKGR_N_BAD_NEIGHBOURS', func=func_name,
+    nbad = pcheck(params, 'CAL.BCORR.NBAD_NEIGHBOURS', func=func_name,
                   override=bkgr_n_bad)
     # set image bad pixels to NaN
     image0 = np.array(image)
@@ -186,9 +186,9 @@ def correct_local_background(params: ParamDict, image: np.ndarray,
     """
     func_name = __NAME__ + '.correct_local_background()'
     # get constants from parameter dictionary
-    wx_ker = pcheck(params, 'BKGR_KER_WX', func=func_name, override=bkgr_ker_wx)
-    wy_ker = pcheck(params, 'BKGR_KER_WY', func=func_name, override=bkgr_ker_wy)
-    sig_ker = pcheck(params, 'BKGR_KER_SIG', func=func_name,
+    wx_ker = pcheck(params, 'CAL.BCORR.KER_WX', func=func_name, override=bkgr_ker_wx)
+    wy_ker = pcheck(params, 'CAL.BCORR.KER_WY', func=func_name, override=bkgr_ker_wy)
+    sig_ker = pcheck(params, 'CAL.BCORR.KER_SIG', func=func_name,
                      override=bkgr_ker_sig)
     # log process
     WLOG(params, '', textentry('40-012-00010'))
@@ -264,11 +264,11 @@ def correction(recipe: DrsRecipe, params: ParamDict, infile: DrsFitsFile,
     """
     func_name = __NAME__ + '.correction()'
     # get constants from params/kwargs
-    no_sub = pcheck(params, 'BKGR_NO_SUBTRACTION', 'no_sub', func=func_name,
+    no_sub = pcheck(params, 'CAL.BCORR.NO_CORR', 'no_sub', func=func_name,
                     override=bkgr_no_sub)
-    width = pcheck(params, 'BKGR_BOXSIZE', 'width', func=func_name,
+    width = pcheck(params, 'CAL.BCORR.BKGR_BOXSIZE', 'width', func=func_name,
                    override=bkgr_boxsize)
-    amp_ker = pcheck(params, 'BKGR_KER_AMP', 'amp_ker', func=func_name,
+    amp_ker = pcheck(params, 'CAL.BCORR.KER_AMP', 'amp_ker', func=func_name,
                      override=bkgr_ker_amp)
     # deal with no correction needed
     if no_sub:

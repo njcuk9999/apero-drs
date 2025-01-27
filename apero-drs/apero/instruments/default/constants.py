@@ -468,19 +468,19 @@ CDict.add('LOWEST_RMS_PERCENTILE', value=None,
                        'than this this value is used'))
 
 # Defines the snr hotpix threshold to define a corrupt file
-CDict.add('PP_CORRUPT_SNR_HOTPIX', value=None, dtype=float,
+CDict.add('CORRUPT_SNR_HOTPIX', value=None, dtype=float,
           minimum=0.0, source=__NAME__, group=cgroup,
           description=('Defines the snr hotpix threshold '
                        'to define a corrupt file'))
 
 # Defines the RMS threshold to also catch corrupt files
-CDict.add('PP_CORRUPT_RMS_THRES', value=None, dtype=float,
+CDict.add('CORRUPT_RMS_THRES', value=None, dtype=float,
           minimum=0.0, source=__NAME__, group=cgroup,
           description=('Defines the RMS threshold to also '
                        'catch corrupt files'))
 
 # super-pessimistic noise estimate. Includes uncorrected common noise
-CDict.add('PP_COSMIC_NOISE_ESTIMATE', value=None,
+CDict.add('COSMIC_NOISE_EST', value=None,
           dtype=float, minimum=0.0, source=__NAME__,
           group=cgroup,
           description=('super-pessimistic noise '
@@ -488,44 +488,44 @@ CDict.add('PP_COSMIC_NOISE_ESTIMATE', value=None,
                        'common noise'))
 
 # define the cuts in sigma where we should look for cosmics (variance)
-CDict.add('PP_COSMIC_VARCUT1', value=None, dtype=float,
+CDict.add('COSMIC_VARCUT1', value=None, dtype=float,
           minimum=0.0, source=__NAME__, group=cgroup,
           description=('define the cuts in sigma where we '
                        'should look for cosmics (variance)'))
 
 # define the cuts in sigma where we should look for cosmics (variance)
-CDict.add('PP_COSMIC_VARCUT2', value=None, dtype=float,
+CDict.add('COSMIC_VARCUT2', value=None, dtype=float,
           minimum=0.0, source=__NAME__, group=cgroup,
           description=('define the cuts in sigma where we '
                        'should look for cosmics (variance)'))
 
 # define the cuts in sigma where we should look for cosmics (intercept)
-CDict.add('PP_COSMIC_INTCUT1', value=None, dtype=float,
+CDict.add('COSMIC_INTCUT1', value=None, dtype=float,
           minimum=0.0, source=__NAME__, group=cgroup,
           description=('define the cuts in sigma where we '
                        'should look for cosmics (intercept)'))
 
 # define the cuts in sigma where we should look for cosmics (intercept)
-CDict.add('PP_COSMIC_INTCUT2', value=None, dtype=float,
+CDict.add('COSMIC_INTCUT2', value=None, dtype=float,
           minimum=0.0, source=__NAME__, group=cgroup,
           description=('define the cuts in sigma where we '
                        'should look for cosmics (intercept)'))
 
 # random box size [in pixels] to speed-up low-frequency band computation
-CDict.add('PP_COSMIC_BOXSIZE', value=None, dtype=int,
+CDict.add('COSMIC_BOXSIZE', value=None, dtype=int,
           minimum=0.0, source=__NAME__, group=cgroup,
           description=('random box size [in pixels] to '
                        'speed-up low-frequency band '
                        'computation'))
 
 # Define whether to skip preprocessed files that have already be processed
-CDict.add('SKIP_DONE_PP', value=None, dtype=bool,
+CDict.add('SKIP_DONE', value=None, dtype=bool,
           source=__NAME__, user=True, active=False, group=cgroup,
           description='Define whether to skip preprocessed files '
                       'that have already be processed')
 
 # Define dark dprtypes for threshold quality control check (PP_DARK_THRES)
-CDict.add('PP_DARK_DPRTYPES', value=None,
+CDict.add('DARK_DPRTYPES', value=None,
           dtype=list, dtypei=str,
           source=__NAME__, active=False, group=cgroup,
           description='Define dark dprtypes for threshold '
@@ -533,7 +533,7 @@ CDict.add('PP_DARK_DPRTYPES', value=None,
 
 # Define the threshold for a suitable dark dprtypes (above this will not be
 #    processed)
-CDict.add('PP_DARK_THRES', value=None, dtype=float,
+CDict.add('DARK_THRES', value=None, dtype=float,
           source=__NAME__, active=False, group=cgroup,
           description='Define the threshold for a suitable dark '
                       'dprtypes (above this will not be processed)')
@@ -554,7 +554,7 @@ CDict.add('PPM_MASK_NSIG', value=None, dtype=float,
 # Define the bin to use to correct low level frequences. This value cannot
 #   be smaller than the order footprint on the array as it would lead to a set
 #   of NaNs in the downsized image
-CDict.add('PP_MEDAMP_BINSIZE', value=None, dtype=int,
+CDict.add('MEDAMP_BINSIZE', value=None, dtype=int,
           source=__NAME__, group=cgroup,
           description='Define the bin to use to correct low '
                       'level frequences. This value cannot be '
@@ -564,7 +564,7 @@ CDict.add('PP_MEDAMP_BINSIZE', value=None, dtype=int,
 
 # Define the amplitude of the flux-dependent along-readout-axis derivative
 #     component
-CDict.add('PP_CORR_XTALK_AMP_FLUX', value=None,
+CDict.add('CX_AMP_FLUX', value=None,
           dtype=float, minimum=0.0, source=__NAME__,
           group=cgroup,
           description='Define the amplitude of the '
@@ -573,7 +573,7 @@ CDict.add('PP_CORR_XTALK_AMP_FLUX', value=None,
 
 # Define amplitude of the flux-dependent along-readout-axis 1st derivative
 #     component
-CDict.add('PP_COR_XTALK_AMP_DFLUX', value=None,
+CDict.add('CX_AMP_DFLUX', value=None,
           dtype=float, minimum=0.0, source=__NAME__,
           group=cgroup,
           description='Define amplitude of the '
@@ -582,7 +582,7 @@ CDict.add('PP_COR_XTALK_AMP_DFLUX', value=None,
 
 # Define amplitude of the flux-dependent along-readout-axis 2nd derivative
 #     component
-CDict.add('PP_COR_XTALK_AMP_D2FLUX', value=None,
+CDict.add('CX_AMP_D2FLUX', value=None,
           dtype=float, minimum=0.0, source=__NAME__,
           group=cgroup,
           description='Define amplitude of the '
@@ -591,7 +591,7 @@ CDict.add('PP_COR_XTALK_AMP_D2FLUX', value=None,
 
 # Define the partial APERO DPRTYPES which we should not do the science
 #    capacitive coupling
-CDict.add('PP_NOSCI_CAPC_DPRTYPES', value=None,
+CDict.add('NOSCI_CAPC_DPRTYPES', value=None,
           dtype=str, source=__NAME__,
           group=cgroup,
           description='Define the partial APERO DPRTYPES '
@@ -626,38 +626,38 @@ CDict.add('QC_MAX_DEAD', value=None, dtype=float, source=__NAME__,
           group=cgroup, description='Max fraction of dead pixels')
 
 # Defines the resized blue image
-CDict.add('IMAGE_X_BLUE_LOW', value=None, dtype=int, minimum=0,
+CDict.add('X_BLUE_LOW', value=None, dtype=int, minimum=0,
           source=__NAME__, group=cgroup,
           description='Defines the resized blue image')
-CDict.add('IMAGE_X_BLUE_HIGH', value=None, dtype=int, minimum=0,
+CDict.add('X_BLUE_HIGH', value=None, dtype=int, minimum=0,
           source=__NAME__, group=cgroup, description='')
-CDict.add('IMAGE_Y_BLUE_LOW', value=None, dtype=int, minimum=0,
+CDict.add('Y_BLUE_LOW', value=None, dtype=int, minimum=0,
           source=__NAME__, group=cgroup, description='')
-CDict.add('IMAGE_Y_BLUE_HIGH', value=None, dtype=int, minimum=0,
+CDict.add('Y_BLUE_HIGH', value=None, dtype=int, minimum=0,
           source=__NAME__, group=cgroup, description='')
 
 # Defines the resized red image
-CDict.add('IMAGE_X_RED_LOW', value=None, dtype=int, minimum=0,
+CDict.add('X_RED_LOW', value=None, dtype=int, minimum=0,
           source=__NAME__, group=cgroup,
           description='Defines the resized red image')
-CDict.add('IMAGE_X_RED_HIGH', value=None, dtype=int, minimum=0,
+CDict.add('X_RED_HIGH', value=None, dtype=int, minimum=0,
           source=__NAME__, group=cgroup, description='')
-CDict.add('IMAGE_Y_RED_LOW', value=None, dtype=int, minimum=0,
+CDict.add('Y_RED_LOW', value=None, dtype=int, minimum=0,
           source=__NAME__, group=cgroup, description='')
-CDict.add('IMAGE_Y_RED_HIGH', value=None, dtype=int, minimum=0,
+CDict.add('Y_RED_HIGH', value=None, dtype=int, minimum=0,
           source=__NAME__, group=cgroup, description='')
 
 # Define a bad pixel cut limit (in ADU/s)
-CDict.add('DARK_CUTLIMIT', value=None, dtype=float, source=__NAME__,
+CDict.add('CUTLIMIT', value=None, dtype=float, source=__NAME__,
           group=cgroup,
           description='Define a bad pixel cut limit (in ADU/s)')
 
 # Defines the lower and upper percentiles when measuring the dark
-CDict.add('DARK_QMIN', value=None, dtype=int, source=__NAME__,
+CDict.add('QMIN', value=None, dtype=int, source=__NAME__,
           minimum=0, maximum=100, group=cgroup,
           description=('Defines the lower and upper percentiles when '
                        'measuring the dark'))
-CDict.add('DARK_QMAX', value=None, dtype=int, source=__NAME__,
+CDict.add('QMAX', value=None, dtype=int, source=__NAME__,
           minimum=0, maximum=100, group=cgroup, description='')
 
 # The number of bins in dark histogram
@@ -674,7 +674,7 @@ CDict.add('HISTO_RANGE_HIGH', value=None, dtype=int,
           description='The maximum of the histogram in ADU/s')
 
 #  Define whether to use SKYDARK for dark corrections
-CDict.add('USE_SKYDARK_CORRECTION', value=None,
+CDict.add('USE_SKYDARK_CORR', value=None,
           dtype=bool, source=__NAME__, group=cgroup,
           description=('Define whether to use SKYDARK for '
                        'dark corrections'))
@@ -690,7 +690,7 @@ CDict.add('USE_SKYDARK_ONLY', value=None, dtype=bool,
 #  Define the allowed DPRTYPES for finding files for DARK_REF will
 #      only find those types define by 'filetype' but 'filetype' must
 #      be one of theses
-CDict.add('ALLOWED_DARK_TYPES', value=None,
+CDict.add('ALLOWED_TYPES', value=None,
           dtype=list, dtypei=str,
           source=__NAME__, group=cgroup,
           description=('Define the allowed DPRTYPES for '
@@ -700,26 +700,26 @@ CDict.add('ALLOWED_DARK_TYPES', value=None,
                        'of theses'))
 
 # Define the maximum time span to combine dark files over (in hours)
-CDict.add('DARK_REF_MATCH_TIME', value=None,
+CDict.add('REF_MTIME', value=None,
           dtype=float, source=__NAME__, group=cgroup,
           description=('Define the maximum time span to '
                        'combine dark files over (in '
                        'hours)'))
 
 # median filter size for dark reference
-CDict.add('DARK_REF_MED_SIZE', value=None, dtype=int,
+CDict.add('REF_MEDSIZE', value=None, dtype=int,
           source=__NAME__, group=cgroup,
           description='median filter size for dark reference')
 
 # define the maximum number of files to use in the dark reference
-CDict.add('DARK_REF_MAX_FILES', value=None, dtype=int,
+CDict.add('REF_MAXFILES', value=None, dtype=int,
           source=__NAME__, group=cgroup,
           description='define the maximum number of files '
                       'to use in the dark reference')
 
 # define the minimimum allowed exptime for dark files to be used in
 #    dark ref
-CDict.add('DARK_REF_MIN_EXPTIME', value=None, dtype=int,
+CDict.add('REF_MIN_EXPTIME', value=None, dtype=int,
           source=__NAME__, group=cgroup,
           description='define the minimimum allowed exptime '
                       'for dark files to be used in')
@@ -732,14 +732,14 @@ CDict.add_group(cgroup, description='CALIBRATION.BAD_PIXEL_MAP: '
                                     'CALIBRATION: BAD PIXEL MAP SETTINGS')
 
 # Defines the full detector flat file (located in the data folder)
-CDict.add('BADPIX_FULL_FLAT', value=None, dtype=str,
+CDict.add('FULL_FLAT', value=None, dtype=str,
           source=__NAME__, group=cgroup,
           description=('Defines the full detector flat file '
                        '(located in the data folder)'))
 
 # Percentile to normalise to when normalising and median filtering
 #    image [percentage]
-CDict.add('BADPIX_NORM_PERCENTILE', value=None,
+CDict.add('NORM_PERCENTILE', value=None,
           dtype=float, source=__NAME__,
           minimum=0.0, maximum=100.0, group=cgroup,
           description=('Percentile to normalise to when '
@@ -747,44 +747,44 @@ CDict.add('BADPIX_NORM_PERCENTILE', value=None,
                        'image [percentage]'))
 
 # Define the median image in the x dimension over a boxcar of this width
-CDict.add('BADPIX_FLAT_MED_WID', value=None, dtype=int,
+CDict.add('FLAT_MED_WID', value=None, dtype=int,
           source=__NAME__, minimum=0, group=cgroup,
           description=('Define the median image in the x '
                        'dimension over a boxcar of this '
                        'width'))
 
 # Define the maximum differential pixel cut ratio
-CDict.add('BADPIX_FLAT_CUT_RATIO', value=None, dtype=float,
+CDict.add('FLAT_CUT_RATIO', value=None, dtype=float,
           source=__NAME__, minimum=0.0, group=cgroup,
           description=('Define the maximum differential '
                        'pixel cut ratio'))
 
 # Define the illumination cut parameter
-CDict.add('BADPIX_ILLUM_CUT', value=None, dtype=float,
+CDict.add('ILLUM_CUT', value=None, dtype=float,
           source=__NAME__, minimum=0.0, group=cgroup,
           description='Define the illumination cut parameter')
 
 # Define the maximum flux in ADU/s to be considered too hot to be used
-CDict.add('BADPIX_MAX_HOTPIX', value=None, dtype=float,
+CDict.add('MAX_HOTPIX', value=None, dtype=float,
           source=__NAME__, minimum=0.0, group=cgroup,
           description=('Define the maximum flux in ADU/s to '
                        'be considered too hot to be used'))
 
 # Defines the threshold on the full detector flat file to deem pixels as good
-CDict.add('BADPIX_FULL_THRESHOLD', value=None, dtype=float,
+CDict.add('FULL_THRES', value=None, dtype=float,
           source=__NAME__, minimum=0.0, group=cgroup,
           description=('Defines the threshold on the full '
                        'detector flat file to deem pixels '
                        'as good'))
 
 #   Defines areas that are large/small for bad pixel erosion
-CDict.add('BADPIX_ERODE_SIZE', value=None, dtype=int,
+CDict.add('ERODE_SIZE', value=None, dtype=int,
           source=__NAME__, minimum=1, group=cgroup,
           description=('Defines areas that are large/small '
                        'for bad pixel erosion'))
 
 #   Defines how much larger to make eroded bad pixel regions
-CDict.add('BADPIX_DILATE_SIZE', value=None, dtype=int,
+CDict.add('DILATE_SIZE', value=None, dtype=int,
           source=__NAME__, minimum=1, group=cgroup,
           description=('Defines how much larger to make '
                        'eroded bad pixel regions'))
@@ -811,7 +811,7 @@ CDict.add('BKGR_PERCENTAGE', value=None, dtype=float,
                        'minimum value (%)'))
 
 #  Size in pixels of the convolve tophat for the background mask
-CDict.add('BKGR_MASK_CONVOLVE_SIZE', value=None,
+CDict.add('BKGR_MASK_CSIZE', value=None,
           dtype=int, source=__NAME__, minimum=0,
           group=cgroup,
           description=('Size in pixels of the convolve '
@@ -819,31 +819,31 @@ CDict.add('BKGR_MASK_CONVOLVE_SIZE', value=None,
 
 #  If a pixel has this or more "dark" neighbours, we consider it dark
 #      regardless of its initial value
-CDict.add('BKGR_N_BAD_NEIGHBOURS', value=None, dtype=int,
+CDict.add('NBAD_NEIGHBOURS', value=None, dtype=int,
           source=__NAME__, minimum=0, group=cgroup,
           description=('If a pixel has this or more "dark" '
                        'neighbours, we consider it dark '
                        'regardless of its initial value'))
 
 #  Do not correct for background measurement (True or False)
-CDict.add('BKGR_NO_SUBTRACTION', value=None, dtype=bool,
+CDict.add('NO_CORR', value=None, dtype=bool,
           source=__NAME__, group=cgroup,
           description=('Do not correct for background '
                        'measurement (True or False)'))
 
 #  Kernel amplitude determined from drs_local_scatter.py
 #    If zero the scattering is skipped
-CDict.add('BKGR_KER_AMP', value=None, dtype=float, source=__NAME__,
+CDict.add('KER_AMP', value=None, dtype=float, source=__NAME__,
           group=cgroup,
           description=('Kernel amplitude determined from '
                        'drs_local_scatter.py, '
                        'If zero the scattering is skipped'))
 
 #  Background kernel width in x and y [pixels]
-CDict.add('BKGR_KER_WX', value=None, dtype=int, source=__NAME__,
+CDict.add('KER_WX', value=None, dtype=int, source=__NAME__,
           group=cgroup,
           description='Background kernel width in x [pixels]')
-CDict.add('BKGR_KER_WY', value=None, dtype=int, source=__NAME__,
+CDict.add('KER_WY', value=None, dtype=int, source=__NAME__,
           group=cgroup,
           description='Background kernel width in y [pixels]')
 
@@ -851,10 +851,10 @@ CDict.add('BKGR_KER_WY', value=None, dtype=int, source=__NAME__,
 #      +IC_BKGR_KER_SIG sigma in each direction. Its important no to
 #      make the kernel too big as this slows-down the 2D convolution.
 #      Do NOT make it a -10 to +10 sigma gaussian!
-CDict.add('BKGR_KER_SIG', value=None, dtype=float, source=__NAME__,
+CDict.add('KER_SIG', value=None, dtype=float, source=__NAME__,
           group=cgroup,
           description='construct a convolution kernel. We go from '
-                      '-IC_BKGR_KER_SIG to +IC_BKGR_KER_SIG sigma '
+                      '-IC_KER_SIG to +IC_KER_SIG sigma '
                       'in each direction. Its important no to make '
                       'the kernel too big as this slows-down the '
                       '2D convolution. Do NOT make it a -10 to +10 '
@@ -869,7 +869,7 @@ CDict.add_group(cgroup, description='CALIBRATION.LOCALISATION: '
 
 # median-binning size in the dispersion direction. This is just used to
 #     get an order-of-magnitude of the order profile along a given column
-CDict.add('LOC_BINSIZE', value=None, dtype=int, source=__NAME__,
+CDict.add('BINSIZE', value=None, dtype=int, source=__NAME__,
           group=cgroup, minimum=1,
           description='median-binning size in the dispersion '
                       'direction. This is just used to get an '
@@ -877,14 +877,14 @@ CDict.add('LOC_BINSIZE', value=None, dtype=int, source=__NAME__,
                       'along a given column')
 
 # the zero point percentile of a box
-CDict.add('LOC_BOX_PERCENTILE_LOW', value=None,
+CDict.add('BOX_PTILE_LOW', value=None,
           dtype=int, minimum=0, source=__NAME__,
           group=cgroup,
           description='the zero point percentile of a '
                       'box')
 
 # the percentile of a box that is always an illuminated pixel
-CDict.add('LOC_BOX_PERCENTILE_HIGH', value=None,
+CDict.add('BOX_PTILE_HIGH', value=None,
           dtype=int, minimum=0, source=__NAME__,
           group=cgroup,
           description='the percentile of a box that is '
@@ -892,7 +892,7 @@ CDict.add('LOC_BOX_PERCENTILE_HIGH', value=None,
 
 # the size of the percentile filter - should be a bit bigger than the
 # inter-order gap
-CDict.add('LOC_PERCENTILE_FILTER_SIZE', value=None,
+CDict.add('PTILE_FILTER_SIZE', value=None,
           minimum=1, dtype=int,
           source=__NAME__, group=cgroup,
           description='the size of the pecentile '
@@ -902,7 +902,7 @@ CDict.add('LOC_PERCENTILE_FILTER_SIZE', value=None,
 
 # the fiber dilation number of iterations this should only be used when
 #     we want a combined localisation solution i.e. AB from A and B
-CDict.add('LOC_FIBER_DILATE_ITERATIONS', value=None,
+CDict.add('FIBER_DILATE_ITRS', value=None,
           dtype=int, source=__NAME__, group=cgroup,
           minimum=1,
           description='the fiber dilation number of '
@@ -912,31 +912,31 @@ CDict.add('LOC_FIBER_DILATE_ITERATIONS', value=None,
                       'solution i.e. AB from A and B')
 
 # the minimum area (number of pixels) that defines an order
-CDict.add('LOC_MIN_ORDER_AREA', value=None, minimum=1,
+CDict.add('MIN_ORDER_AREA', value=None, minimum=1,
           dtype=int, source=__NAME__, group=cgroup,
           description='the minimum area (number of pixels) '
                       'that defines an order')
 
 # Order of polynomial to fit for widths
-CDict.add('LOC_WIDTH_POLY_DEG', value=None, minimum=1,
+CDict.add('WID_POLYDEG', value=None, minimum=1,
           dtype=int, source=__NAME__, group=cgroup,
           description='Order of polynomial to fit for widths')
 
 # Order of polynomial to fit for positions
-CDict.add('LOC_CENT_POLY_DEG', value=None, minimum=1,
+CDict.add('CENT_POLYDEG', value=None, minimum=1,
           dtype=int, source=__NAME__, group=cgroup,
           description='Order of polynomial to fit for '
                       'positions')
 
 # range width size (used to fit the width of the orders at certain points)
-CDict.add('LOC_RANGE_WID_SUM', value=None, minimum=1,
+CDict.add('RANGE_WID_SUM', value=None, minimum=1,
           dtype=int, source=__NAME__, group=cgroup,
           description='range width size (used to fit the width '
                       'of the orders at certain points)')
 
 # define the minimum detector position where the centers of the orders should
 #   fall (across order direction)
-CDict.add('LOC_YDET_MIN', value=None, dtype=int, source=__NAME__,
+CDict.add('YDET_MIN', value=None, dtype=int, source=__NAME__,
           group=cgroup, minimum=0,
           description='define the minimum detector position where '
                       'the centers of the orders should fall '
@@ -944,52 +944,52 @@ CDict.add('LOC_YDET_MIN', value=None, dtype=int, source=__NAME__,
 
 # define the maximum detector position where the centers of the orders should
 #   fall (across order direction)
-CDict.add('LOC_YDET_MAX', value=None, dtype=int, source=__NAME__,
+CDict.add('YDET_MAX', value=None, dtype=int, source=__NAME__,
           group=cgroup, minimum=0,
           description='define the maximum detector position where '
                       'the centers of the orders should fall '
                       '(across order direction)')
 
 # define the number of width samples to use in localisation
-CDict.add('LOC_NUM_WID_SAMPLES', value=None, dtype=int,
+CDict.add('NUM_WID_SAMPLES', value=None, dtype=int,
           source=__NAME__, group=cgroup, minimum=1,
           description='define the number of width samples to '
                       'use in localisation')
 
 # Size of the order_profile smoothed box
 #   (from pixel - size to pixel + size)
-CDict.add('LOC_ORDERP_BOX_SIZE', value=None, dtype=int,
+CDict.add('ORDERP_BOXSIZE', value=None, dtype=int,
           source=__NAME__, group=cgroup,
           description=('Size of the order_profile smoothed '
                        'box (from pixel - size to pixel '
                        '+ size)'))
 
 # row number of image to start localisation processing at
-CDict.add('LOC_START_ROW_OFFSET', value=None, dtype=int,
+CDict.add('START_ROW_OFFSET', value=None, dtype=int,
           source=__NAME__, minimum=0, group=cgroup,
           description=('row number of image to start '
                        'localisation processing at'))
 
 # Definition of the central column for use in localisation
-CDict.add('LOC_CENTRAL_COLUMN', value=None, dtype=int,
+CDict.add('MIDDLE_PIXEL_COL', value=None, dtype=int,
           source=__NAME__, minimum=0, group=cgroup,
           description=('Definition of the central column '
                        'for use in localisation'))
 
 # Half spacing between orders
-CDict.add('LOC_HALF_ORDER_SPACING', value=None,
+CDict.add('HALF_ORDER_SPACING', value=None,
           dtype=int, source=__NAME__, minimum=0,
           group=cgroup,
           description='Half spacing between orders')
 
 # Minimum amplitude to accept (in e-)
-CDict.add('LOC_MINPEAK_AMPLITUDE', value=None, dtype=float,
+CDict.add('MINPEAK_AMP', value=None, dtype=float,
           source=__NAME__, minimum=0.0, group=cgroup,
           description=('Minimum amplitude to accept '
                        '(in e-)'))
 
 # Normalised amplitude threshold to accept pixels for background calculation
-CDict.add('LOC_BKGRD_THRESHOLD', value=None, dtype=float,
+CDict.add('BKGRD_THRES', value=None, dtype=float,
           source=__NAME__, minimum=0.0, group=cgroup,
           description=('Normalised amplitude threshold to '
                        'accept pixels for background '
@@ -997,7 +997,7 @@ CDict.add('LOC_BKGRD_THRESHOLD', value=None, dtype=float,
 
 # Define the amount we drop from the centre of the order when
 #    previous order center is missed (in finding the position)
-CDict.add('LOC_ORDER_CURVE_DROP', value=None, dtype=float,
+CDict.add('ORDER_CURVE_DROP', value=None, dtype=float,
           source=__NAME__, minimum=0.0, group=cgroup,
           description=('Define the amount we drop from the '
                        'centre of the order when previous '
@@ -1005,13 +1005,13 @@ CDict.add('LOC_ORDER_CURVE_DROP', value=None, dtype=float,
                        'the position)'))
 
 # set the sigma clipping cut off value for cleaning coefficients
-CDict.add('LOC_COEFF_SIGCLIP', value=None, dtype=float,
+CDict.add('COEFF_SIGCLIP', value=None, dtype=float,
           source=__NAME__, minimum=0, group=cgroup,
           description=('set the sigma clipping cut off value '
                        'for cleaning coefficients'))
 
 #  Defines the fit degree to fit in the coefficient cleaning
-CDict.add('LOC_COEFFSIG_DEG', value=None, dtype=int,
+CDict.add('COEFFSIG_DEG', value=None, dtype=int,
           source=__NAME__, minimum=1, group=cgroup,
           description=('Defines the fit degree to fit in the '
                        'coefficient cleaning'))

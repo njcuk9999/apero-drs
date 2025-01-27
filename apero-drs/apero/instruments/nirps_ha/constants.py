@@ -132,7 +132,7 @@ CDict.set('CHECK_FP_CENT_SIZE', value=100, source=__NAME__, group=cgroup)
 # =============================================================================
 cgroup = 'CAL.FIBER'
 # Number of orders to skip at start of image
-CDict.set('FIRST_ORDER_JUMP', value=dict(A=0, B=0),
+CDict.set('FIRST_ORDER_JUMP', value=dict(A=0, B=0, group=cgroup),
           source=__NAME__, group=cgroup)
 
 # Maximum number of order to use
@@ -237,9 +237,9 @@ CDict.set('COSMIC_BOXSIZE', value=64, source=__NAME__, group=cgroup)
 CDict.set('SKIP_DONE', value=False, source=__NAME__, group=cgroup)
 
 # Define dark dprtypes for threshold quality control check (PP_DARK_THRES)
-CDict.set('PP_DARK_DPRTYPES', 
+CDict.set('DARK_DPRTYPES', 
           value=['DARK_DARK'], 
-          source=__NAME__)
+          source=__NAME__, group=cgroup)
 
 # Define the threshold for a suitable DARK_DARK (above this will not
 # be processed)
@@ -259,20 +259,20 @@ CDict.set('MEDAMP_BINSIZE', value=32, source=__NAME__, group=cgroup)
 # Define the amplitude of the flux-dependent along-readout-axis
 # derivative component
 # TODO: Add calculation to static apero-utils.general.apero_statics.corr_xtalk.py
-CDict.set('PP_CORR_XTALK_AMP_FLUX', value=1.359371e-04, source=__NAME__, 
-          author='EA')
+CDict.set('CX_AMP_FLUX', value=1.359371e-04, source=__NAME__, 
+          author='EA', group=cgroup)
 
 # Define amplitude of the flux-dependent along-readout-axis 1st
 # derivative component
 # TODO: Add calculation to static apero-utils.general.apero_statics.corr_xtalk.py
-CDict.set('PP_COR_XTALK_AMP_DFLUX', value=7.727465e-04, source=__NAME__, 
-          author='EA')
+CDict.set('CX_AMP_DFLUX', value=7.727465e-04, source=__NAME__, 
+          author='EA', group=cgroup)
 
 # Define amplitude of the flux-dependent along-readout-axis 2nd
 # derivative component
 # TODO: Add calculation to static apero-utils.general.apero_statics.corr_xtalk.py
-CDict.set('PP_COR_XTALK_AMP_D2FLUX', value=-2.601081e-04, source=__NAME__, 
-          author='EA')
+CDict.set('CX_AMP_D2FLUX', value=-2.601081e-04, source=__NAME__, 
+          author='EA', group=cgroup)
 
 # Define the partial APERO DPRTYPES which we should not do the science
 # capacitive coupling
@@ -283,114 +283,114 @@ CDict.set('NOSCI_CAPC_DPRTYPES', value=['HCONE', 'HCTWO'], source=__NAME__, grou
 # =============================================================================
 cgroup = 'CAL.DARK'
 # Min dark exposure time
-CDict.set('QC_DARK_TIME', value=1.0, source=__NAME__)
+CDict.set('QC_DARK_TIME', value=1.0, source=__NAME__, group=cgroup)
 # Max dark median level [ADU/s]
-CDict.set('QC_MAX_DARKLEVEL', value=0.07, source=__NAME__)
+CDict.set('QC_MAX_DARKLEVEL', value=0.07, source=__NAME__, group=cgroup)
 # Max fraction of dark pixels (percent)
-CDict.set('QC_MAX_DARK', value=1.0, source=__NAME__)
+CDict.set('QC_MAX_DARK', value=1.0, source=__NAME__, group=cgroup)
 # Max fraction of dead pixels
-CDict.set('QC_MAX_DEAD', value=1.0, source=__NAME__)
+CDict.set('QC_MAX_DEAD', value=1.0, source=__NAME__, group=cgroup)
 
 # Defines the blue resized image
-CDict.set('IMAGE_X_BLUE_LOW', value=100, source=__NAME__)
-CDict.set('IMAGE_X_BLUE_HIGH', value=4000, source=__NAME__)
-CDict.set('IMAGE_Y_BLUE_LOW', value=3300, source=__NAME__)
-CDict.set('IMAGE_Y_BLUE_HIGH', value=3720, source=__NAME__)
+CDict.set('X_BLUE_LOW', value=100, source=__NAME__, group=cgroup)
+CDict.set('X_BLUE_HIGH', value=4000, source=__NAME__, group=cgroup)
+CDict.set('Y_BLUE_LOW', value=3300, source=__NAME__, group=cgroup)
+CDict.set('Y_BLUE_HIGH', value=3720, source=__NAME__, group=cgroup)
 
 # Defines the red resized image
-CDict.set('IMAGE_X_RED_LOW', value=100, source=__NAME__)
-CDict.set('IMAGE_X_RED_HIGH', value=4000, source=__NAME__)
-CDict.set('IMAGE_Y_RED_LOW', value=780, source=__NAME__)
-CDict.set('IMAGE_Y_RED_HIGH', value=1200, source=__NAME__)
+CDict.set('X_RED_LOW', value=100, source=__NAME__, group=cgroup)
+CDict.set('X_RED_HIGH', value=4000, source=__NAME__, group=cgroup)
+CDict.set('Y_RED_LOW', value=780, source=__NAME__, group=cgroup)
+CDict.set('Y_RED_HIGH', value=1200, source=__NAME__, group=cgroup)
 
 # Define a bad pixel cut limit (in ADU/s)
-CDict.set('DARK_CUTLIMIT', value=5.0, source=__NAME__)
+CDict.set('CUTLIMIT', value=5.0, source=__NAME__, group=cgroup)
 # Defines the lower and upper percentiles when measuring the dark
-CDict.set('DARK_QMIN', value=5, source=__NAME__)
-CDict.set('DARK_QMAX', value=95, source=__NAME__)
+CDict.set('QMIN', value=5, source=__NAME__, group=cgroup)
+CDict.set('QMAX', value=95, source=__NAME__, group=cgroup)
 # The number of bins in dark histogram
-CDict.set('HISTO_BINS', value=200, source=__NAME__)
+CDict.set('HISTO_BINS', value=200, source=__NAME__, group=cgroup)
 # The range of the histogram in ADU/s
-CDict.set('HISTO_RANGE_LOW', value=-0.2, source=__NAME__)
-CDict.set('HISTO_RANGE_HIGH', value=0.8, source=__NAME__)
+CDict.set('HISTO_RANGE_LOW', value=-0.2, source=__NAME__, group=cgroup)
+CDict.set('HISTO_RANGE_HIGH', value=0.8, source=__NAME__, group=cgroup)
 
 # Define the allowed DPRTYPES for finding files for DARK_REF
-CDict.set('ALLOWED_DARK_TYPES', value=['DARK_DARK'], 
-          source=__NAME__)
+CDict.set('ALLOWED_TYPES', value=['DARK_DARK'], 
+          source=__NAME__, group=cgroup)
 # Define the maximum time span to combine dark files over (in hours)
-CDict.set('DARK_REF_MATCH_TIME', value=2, source=__NAME__)
+CDict.set('REF_MTIME', value=2, source=__NAME__, group=cgroup)
 # Median filter size for dark reference
-CDict.set('DARK_REF_MED_SIZE', value=4, source=__NAME__)
+CDict.set('REF_MEDSIZE', value=4, source=__NAME__, group=cgroup)
 # Define the maximum number of files to use in the dark reference
-CDict.set('DARK_REF_MAX_FILES', value=100, source=__NAME__)
+CDict.set('REF_MAXFILES', value=100, source=__NAME__, group=cgroup)
 # Define the minimum allowed exptime for dark files to be used in dark ref
-CDict.set('DARK_REF_MIN_EXPTIME', value=300, source=__NAME__)
+CDict.set('REF_MIN_EXPTIME', value=300, source=__NAME__, group=cgroup)
 
 # =============================================================================
 # CALIBRATION: BAD PIXEL MAP SETTINGS
 # =============================================================================
 cgroup = 'CAL.BPIX'
 # Defines the full detector flat file (located in the data folder)
-CDict.set('BADPIX_FULL_FLAT', value='QE_2000nm.fits', source=__NAME__)
+CDict.set('FULL_FLAT', value='QE_2000nm.fits', source=__NAME__, group=cgroup)
 
 # Percentile to normalise to when normalising and median filtering
 # image [percentage]
-CDict.set('BADPIX_NORM_PERCENTILE', value=95.0, source=__NAME__)
+CDict.set('NORM_PERCENTILE', value=95.0, source=__NAME__, group=cgroup)
 
 # Define the median image in the x dimension over a boxcar of this width
-CDict.set('BADPIX_FLAT_MED_WID', value=7, source=__NAME__)
+CDict.set('FLAT_MED_WID', value=7, source=__NAME__, group=cgroup)
 
 # Define the maximum differential pixel cut ratio
-CDict.set('BADPIX_FLAT_CUT_RATIO', value=0.5, source=__NAME__)
+CDict.set('FLAT_CUT_RATIO', value=0.5, source=__NAME__, group=cgroup)
 
 # Define the illumination cut parameter
-CDict.set('BADPIX_ILLUM_CUT', value=0.05, source=__NAME__)
+CDict.set('ILLUM_CUT', value=0.05, source=__NAME__, group=cgroup)
 
 # Define the maximum flux in ADU/s to be considered too hot to be used
-CDict.set('BADPIX_MAX_HOTPIX', value=5.0, source=__NAME__)
+CDict.set('MAX_HOTPIX', value=5.0, source=__NAME__, group=cgroup)
 
 # Defines the threshold on the full detector flat file to deem pixels as good
-CDict.set('BADPIX_FULL_THRESHOLD', value=0.3, source=__NAME__)
+CDict.set('FULL_THRES', value=0.3, source=__NAME__, group=cgroup)
 
 # Defines areas that are large/small for bad pixel erosion
-CDict.set('BADPIX_ERODE_SIZE', value=5, source=__NAME__)
+CDict.set('ERODE_SIZE', value=5, source=__NAME__, group=cgroup)
 
 # Defines how much larger to make eroded bad pixel regions
-CDict.set('BADPIX_DILATE_SIZE', value=9, source=__NAME__)
+CDict.set('DILATE_SIZE', value=9, source=__NAME__, group=cgroup)
 
 # =============================================================================
 # CALIBRATION: BACKGROUND CORRECTION SETTINGS
 # =============================================================================
 cgroup = 'CAL.BCORR'
 # Width of the box to produce the background mask
-CDict.set('BKGR_BOXSIZE', value=128, source=__NAME__)
+CDict.set('BKGR_BOXSIZE', value=128, source=__NAME__, group=cgroup)
 
 # The background percentile to compute minimum value (%)
-CDict.set('BKGR_PERCENTAGE', value=5.0, source=__NAME__)
+CDict.set('BKGR_PERCENTAGE', value=5.0, source=__NAME__, group=cgroup)
 
 # Size in pixels of to convolve tophat for the background mask
-CDict.set('BKGR_MASK_CONVOLVE_SIZE', value=7, source=__NAME__)
+CDict.set('BKGR_MASK_CSIZE', value=7, source=__NAME__, group=cgroup)
 
 # If a pixel has this or more "dark" neighbours, we consider it dark
 # regardless of its initial value
-CDict.set('BKGR_N_BAD_NEIGHBOURS', value=3, source=__NAME__)
+CDict.set('NBAD_NEIGHBOURS', value=3, source=__NAME__, group=cgroup)
 
 # Do background measurement (True or False)
-CDict.set('BKGR_NO_SUBTRACTION', value=False, source=__NAME__)
+CDict.set('NO_CORR', value=False, source=__NAME__, group=cgroup)
 
 # Background kernel amplitude. If zero the scattering is skipped
-CDict.set('BKGR_KER_AMP', value=0, source=__NAME__)
+CDict.set('KER_AMP', value=0, source=__NAME__, group=cgroup)
 
 # Background kernel width in x and y [pixels]
-CDict.set('BKGR_KER_WX', value=1, source=__NAME__)
-CDict.set('BKGR_KER_WY', value=9, source=__NAME__)
+CDict.set('KER_WX', value=1, source=__NAME__, group=cgroup)
+CDict.set('KER_WY', value=9, source=__NAME__, group=cgroup)
 
 # Construct a convolution kernel. We go from -BKGR_KER_SIG to +BKGR_KER_SIG
 # sigma in each direction.
 # It's important not to make the kernel too big as this slows down
 # the 2D convolution.
 # Do NOT make it a -10 to +10 sigma gaussian!
-CDict.set('BKGR_KER_SIG', value=3, source=__NAME__)
+CDict.set('KER_SIG', value=3, source=__NAME__, group=cgroup)
 
 # =============================================================================
 # CALIBRATION: LOCALISATION SETTINGS
@@ -398,60 +398,60 @@ CDict.set('BKGR_KER_SIG', value=3, source=__NAME__)
 cgroup = 'CAL.LOC'
 # median-binning size in the dispersion direction. This is just used to
 # get an order-of-magnitude of the order profile along a given column
-CDict.set('LOC_BINSIZE', value=25, source=__NAME__, author='EA')
+CDict.set('BINSIZE', value=25, source=__NAME__, author='EA', group=cgroup)
 
 # the zero point percentile of a box
-CDict.set('LOC_BOX_PERCENTILE_LOW', value=25, source=__NAME__, author='EA')
+CDict.set('BOX_PTILE_LOW', value=25, source=__NAME__, author='EA', group=cgroup)
 
 # the percentile of a box that is always an illuminated pixel
-CDict.set('LOC_BOX_PERCENTILE_HIGH', value=95, source=__NAME__, author='EA')
+CDict.set('BOX_PTILE_HIGH', value=95, source=__NAME__, author='EA', group=cgroup)
 
 # the size of the percentile filter - should be a bit bigger than the
 # inter-order gap
-CDict.set('LOC_PERCENTILE_FILTER_SIZE', value=100, source=__NAME__, author='EA')
+CDict.set('PTILE_FILTER_SIZE', value=100, source=__NAME__, author='EA', group=cgroup)
 
 # the fiber dilation number of iterations this should only be used when
 # we want a combined localisation solution i.e. AB from A and B
-CDict.set('LOC_FIBER_DILATE_ITERATIONS', value=3, source=__NAME__, author='EA')
+CDict.set('FIBER_DILATE_ITRS', value=3, source=__NAME__, author='EA', group=cgroup)
 
 # the minimum area (number of pixels) that defines an order
-CDict.set('LOC_MIN_ORDER_AREA', value=500, source=__NAME__, author='EA')
+CDict.set('MIN_ORDER_AREA', value=500, source=__NAME__, author='EA', group=cgroup)
 
 # Order of polynomial to fit for widths
-CDict.set('LOC_WIDTH_POLY_DEG', value=1, source=__NAME__, author='EA')
+CDict.set('WID_POLYDEG', value=1, source=__NAME__, author='EA', group=cgroup)
 
 # Order of polynomial to fit for positions
-CDict.set('LOC_CENT_POLY_DEG', value=3, source=__NAME__, author='EA')
+CDict.set('CENT_POLYDEG', value=3, source=__NAME__, author='EA', group=cgroup)
 
 # range width size (used to fit the width of the orders at certain points)
-CDict.set('LOC_RANGE_WID_SUM', value=100, source=__NAME__, author='EA')
+CDict.set('RANGE_WID_SUM', value=100, source=__NAME__, author='EA', group=cgroup)
 
 # Define the minimum detector position where the centers of the orders should
 # fall (across order direction)
-CDict.set('LOC_YDET_MIN', value=40, source=__NAME__, author='EA')
+CDict.set('YDET_MIN', value=40, source=__NAME__, author='EA', group=cgroup)
 
 # Define the maximum detector position where the centers of the orders should
 # fall (across order direction)
-CDict.set('LOC_YDET_MAX', value=4088, source=__NAME__, author='EA')
+CDict.set('YDET_MAX', value=4088, source=__NAME__, author='EA', group=cgroup)
 
 # Define the number of width samples to use in localisation
-CDict.set('LOC_NUM_WID_SAMPLES', value=10, source=__NAME__, author='EA')
+CDict.set('NUM_WID_SAMPLES', value=10, source=__NAME__, author='EA', group=cgroup)
 
 # Size of the order_profile smoothed box
 # (from pixel - size to pixel + size)
-CDict.set('LOC_ORDERP_BOX_SIZE', value=5, source=__NAME__, author='EA')
+CDict.set('ORDERP_BOXSIZE', value=5, source=__NAME__, author='EA', group=cgroup)
 
 # row number of image to start localisation processing at
-CDict.set('LOC_START_ROW_OFFSET', value=0, source=__NAME__, author='EA')
+CDict.set('START_ROW_OFFSET', value=0, source=__NAME__, author='EA', group=cgroup)
 
 # Definition of the central column for use in localisation
-CDict.set('LOC_CENTRAL_COLUMN', value=2000, source=__NAME__, author='EA')
+CDict.set('MIDDLE_PIXEL_COL', value=2000, source=__NAME__, author='EA', group=cgroup)
 
 # Half spacing between orders
-CDict.set('LOC_HALF_ORDER_SPACING', value=300, source=__NAME__)
+CDict.set('HALF_ORDER_SPACING', value=300, source=__NAME__, group=cgroup)
 
 # Minimum amplitude to accept
-CDict.set('LOC_MINPEAK_AMPLITUDE', value=10, source=__NAME__)
+CDict.set('MINPEAK_AMP', value=10, source=__NAME__, group=cgroup)
 
 # Define the jump size when finding the order position
 # (jumps in steps of this from the center outwards)
@@ -487,17 +487,17 @@ CDict.set('LOC_MAX_RMS_WID', value=5.0, source=__NAME__)
 CDict.set('LOC_MAX_PTP_WID', value=30.0, source=__NAME__)
 
 # Normalised amplitude threshold to accept pixels for background calculation
-CDict.set('LOC_BKGRD_THRESHOLD', value=0.15, source=__NAME__)
+CDict.set('BKGRD_THRES', value=0.15, source=__NAME__, group=cgroup)
 
 # Define the amount we drop from the centre of the order when
 # previous order center is missed (in finding the position)
-CDict.set('LOC_ORDER_CURVE_DROP', value=2.0, source=__NAME__)
+CDict.set('ORDER_CURVE_DROP', value=2.0, source=__NAME__, group=cgroup)
 
 # set the sigma clipping cut off value for cleaning coefficients
-CDict.set('LOC_COEFF_SIGCLIP', value=5, source=__NAME__)
+CDict.set('COEFF_SIGCLIP', value=5, source=__NAME__, group=cgroup)
 
 # Defines the fit degree to fit in the coefficient cleaning
-CDict.set('LOC_COEFFSIG_DEG', value=5, source=__NAME__)
+CDict.set('COEFFSIG_DEG', value=5, source=__NAME__, group=cgroup)
 
 # Define the maximum value allowed in the localisation (cuts reddest orders)
 CDict.set('LOC_MAX_YPIX_VALUE', value=4060, source=__NAME__)

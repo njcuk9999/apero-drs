@@ -163,7 +163,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         if exptime < params['QC_DARK_TIME']:
             # TODO: Add to language database
             emsg = 'Dark exposure time too short (< {0:.1f} s)'
-            eargs = [params['QC_DARK_TIME']]
+            eargs = [params['CAL.DARK.QC_DARK_TIME']]
             raise AperoCodedException(params, message=emsg.format(eargs),
                                       targs=eargs)
         # ------------------------------------------------------------------
@@ -173,16 +173,16 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         nanmask = ~np.isfinite(image)
         image0 = np.where(nanmask, np.zeros_like(image), image)
         # resize blue image
-        bkwargs = dict(xlow=params['IMAGE_X_BLUE_LOW'],
-                       xhigh=params['IMAGE_X_BLUE_HIGH'],
-                       ylow=params['IMAGE_Y_BLUE_LOW'],
-                       yhigh=params['IMAGE_Y_BLUE_HIGH'])
+        bkwargs = dict(xlow=params['CAL.DARK.X_BLUE_LOW'],
+                       xhigh=params['CAL.DARK.X_BLUE_HIGH'],
+                       ylow=params['CAL.DARK.Y_BLUE_LOW'],
+                       yhigh=params['CAL.DARK.Y_BLUE_HIGH'])
         imageblue = drs_image.resize(image0, **bkwargs)
         # resize red image
-        rkwargs = dict(xlow=params['IMAGE_X_RED_LOW'],
-                       xhigh=params['IMAGE_X_RED_HIGH'],
-                       ylow=params['IMAGE_Y_RED_LOW'],
-                       yhigh=params['IMAGE_Y_RED_HIGH'])
+        rkwargs = dict(xlow=params['CAL.DARK.X_RED_LOW'],
+                       xhigh=params['CAL.DARK.X_RED_HIGH'],
+                       ylow=params['CAL.DARK.Y_RED_LOW'],
+                       yhigh=params['CAL.DARK.Y_RED_HIGH'])
         imagered = drs_image.resize(image0, **rkwargs)
         # ------------------------------------------------------------------
         # Dark Measurement

@@ -81,7 +81,7 @@ def calculate_order_profile(params: ParamDict, image: np.ndarray,
     """
     func_name = __NAME__ + '.calculate_order_profile()'
     # get constants from params
-    size = pcheck(params, 'LOC_ORDERP_BOX_SIZE', func=func_name,
+    size = pcheck(params, 'CAL.LOC.ORDERP_BOXSIZE', func=func_name,
                   override=box_size)
     # -------------------------------------------------------------------------
     # log that we are creating order profile
@@ -180,23 +180,23 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
     # -------------------------------------------------------------------------
     # median-binning size in the dispersion direction. This is just used to
     #     get an order-of-magnitude of the order profile along a given column
-    binsize = pcheck(params, 'LOC_BINSIZE', func=func_name,
+    binsize = pcheck(params, 'CAL.LOC.BINSIZE', func=func_name,
                      override=binsize)
     # the percentile of a box that is always an illuminated pixel
-    box_perc_low = pcheck(params, 'LOC_BOX_PERCENTILE_LOW', func=func_name,
+    box_perc_low = pcheck(params, 'CAL.LOC.BOX_PTILE_LOW', func=func_name,
                           override=boxp_low)
-    box_perc_high = pcheck(params, 'LOC_BOX_PERCENTILE_HIGH', func=func_name,
+    box_perc_high = pcheck(params, 'CAL.LOC.BOX_PTILE_HIGH', func=func_name,
                            override=boxp_high)
     # the size of the percentile filter - should be a bit bigger than the
     # inter-order gap
-    perc_filter_size = pcheck(params, 'LOC_PERCENTILE_FILTER_SIZE',
+    perc_filter_size = pcheck(params, 'CAL.LOC.PTILE_FILTER_SIZE',
                               func=func_name, override=percentile_fsize)
     # the fiber dilation number of iterations this should only be used when
     #     we want a combined localisation solution i.e. AB from A and B
-    fiber_dilate_iterations = pcheck(params, 'LOC_FIBER_DILATE_ITERATIONS',
+    fiber_dilate_iterations = pcheck(params, 'CAL.LOC.FIBER_DILATE_ITRS',
                                      func=func_name, override=fdilate_itr)
     # the minimum area (number of pixels) that defines an order
-    min_area = pcheck(params, 'LOC_MIN_ORDER_AREA', func=func_name,
+    min_area = pcheck(params, 'CAL.LOC.MIN_ORDER_AREA', func=func_name,
                       override=min_order_area)
     # degree of polynomial to fit for positions
     cent_order_fit = pcheck(params, 'LOC_CENT_POLY_DEG', func=func_name,
@@ -205,7 +205,7 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
     wid_order_fit = pcheck(params, 'LOC_WIDTH_POLY_DEG', func=func_name,
                            override=wid_poly_deg)
     # range width size (used to fit the width of the orders at certain points)
-    range_width_sum = pcheck(params, 'LOC_RANGE_WID_SUM', func=func_name,
+    range_width_sum = pcheck(params, 'CAL.LOC.RANGE_WID_SUM', func=func_name,
                              override=range_wid_sum)
     # define the minimum and maximum detector position where the centers of
     #   the orders should fall
@@ -214,7 +214,7 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
     ydet_max = pcheck(params, 'LOC_YDET_MAX', func=func_name,
                       override=loc_ydet_max)
     # number of width samples to use
-    num_wid_samples = pcheck(params, 'LOC_NUM_WID_SAMPLES', func=func_name,
+    num_wid_samples = pcheck(params, 'CAL.LOC.NUM_WID_SAMPLES', func=func_name,
                              override=num_wsamples)
     # -------------------------------------------------------------------------
     # Fiber properties
@@ -843,19 +843,19 @@ def loc_stats(params: ParamDict, fiber: str, cent_coeffs: np.ndarray,
     func_name = display_func('loc_stats', __NAME__)
 
     # get constants from params
-    central_col = pcheck(params, 'LOC_CENTRAL_COLUMN', func=func_name,
+    central_col = pcheck(params, 'CAL.LOC.MIDDLE_PIXEL_COL', func=func_name,
                          override=central_col)
-    horder_size = pcheck(params, 'LOC_HALF_ORDER_SPACING', func=func_name,
+    horder_size = pcheck(params, 'CAL.LOC.HALF_ORDER_SPACING', func=func_name,
                          override=horder_size)
-    minpeak_amp = pcheck(params, 'LOC_MINPEAK_AMPLITUDE', func=func_name,
+    minpeak_amp = pcheck(params, 'CAL.LOC.MINPEAK_AMP', func=func_name,
                          override=minpeak_amp)
-    back_thres = pcheck(params, 'LOC_BKGRD_THRESHOLD', func=func_name,
+    back_thres = pcheck(params, 'CAL.LOC.BKGRD_THRES', func=func_name,
                         override=back_thres)
     # define the minimum and maximum detector position where the centers of
     #   the orders should fall
-    ydet_min = pcheck(params, 'LOC_YDET_MIN', func=func_name,
+    ydet_min = pcheck(params, 'CAL.LOC.YDET_MIN', func=func_name,
                       override=loc_ydet_min)
-    ydet_max = pcheck(params, 'LOC_YDET_MAX', func=func_name,
+    ydet_max = pcheck(params, 'CAL.LOC.YDET_MAX', func=func_name,
                       override=loc_ydet_max)
     # -------------------------------------------------------------------------
     # get shape of the original image
@@ -1340,8 +1340,8 @@ def loc_summary(recipe: DrsRecipe, it: int, params: ParamDict,
     recipe.plot.add_stat('KW_DPRTYPE', value=props['DPRTYPE'])
     recipe.plot.add_stat('KW_LOC_BCKGRD', value=lprops['MEAN_BACKGRD'])
     recipe.plot.add_stat('KW_LOC_NBO', value=lprops['NORDERS'])
-    recipe.plot.add_stat('KW_LOC_DEG_C', value=params['LOC_CENT_POLY_DEG'])
-    recipe.plot.add_stat('KW_LOC_DEG_W', value=params['LOC_WIDTH_POLY_DEG'])
+    recipe.plot.add_stat('KW_LOC_DEG_C', value=params['CAL.LOC.CENT_POLYDEG'])
+    recipe.plot.add_stat('KW_LOC_DEG_W', value=params['CAL.LOC.WID_POLYDEG'])
     recipe.plot.add_stat('KW_LOC_MAXFLX', value=lprops['MAX_SIGNAL'])
     recipe.plot.add_stat('KW_LOC_SMAXPTS_CTR',
                          value=params['QC_LOC_MAXFIT_REMOVED_CTR'])
