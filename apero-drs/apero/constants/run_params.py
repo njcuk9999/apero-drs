@@ -233,7 +233,9 @@ ritem.add()
 ritem = RunParam(name='RECAL_TEMPLATES',
                  value=True,
                  dtype=bool,
-                 comment='Recalculate templates if template already exists',
+                 comment='Recalculate templates if template already exists.'
+                         'If set to True will override SKIP in all template '
+                         'recipes',
                  section=section)
 ritem.add()
 # -----------------------------------------------------------------------------

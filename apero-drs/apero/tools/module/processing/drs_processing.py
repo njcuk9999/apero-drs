@@ -868,6 +868,8 @@ def generate_run_list(params: ParamDict, findexdbm: FileIndexDatabase,
 
     :return: A list of validated Run instances
     """
+    # set function name
+    func_name = display_func(__NAME__, 'generate_run_list')
     # print progress: generating run list
     WLOG(params, 'info', textentry('40-503-00011'))
     # need to update table object names to match preprocessing
@@ -900,18 +902,23 @@ def generate_run_list(params: ParamDict, findexdbm: FileIndexDatabase,
     # -------------------------------------------------------------------------
     # get whether to recalculate templates
     _recal_templates = params['RECAL_TEMPLATES']
-    # get a list of object names with templates
-    template_stars = []
+    recal_templates = True
+    # get a list of object names currently with templates
+    # (but only if we need to filter by them)
+    current_tstars = []
     if not drs_text.null_text(_recal_templates, ['', 'None']):
         if not drs_text.true_text(_recal_templates):
+            recal_templates = False
             lckwargs = dict(all_objects=all_objects)
-            template_stars = telluric.list_current_templates(params, **lckwargs)
+            current_tstars = telluric.list_current_templates(params, **lckwargs)
             # print statement that we have been told not to recalculate
             #   tempaltes and x many templates found
-            if len(template_stars) > 0:
-                wargs = [len(template_stars)]
+            if len(current_tstars) > 0:
+                wargs = [len(current_tstars)]
                 WLOG(params, 'warning', textentry('10-503-00023', args=wargs),
                      sublevel=2)
+    # need to make sure recal templates is set correctly
+    params.set('RECAL_TEMPLATES', recal_templates, source=func_name)
     # -------------------------------------------------------------------------
     # get recipe definitions module (for this instrument)
     recipemod = get_recipe_module(params)
@@ -932,7 +939,7 @@ def generate_run_list(params: ParamDict, findexdbm: FileIndexDatabase,
             newruns = generate_run_from_sequence(params, sequence,
                                                  findexdbm, tstars=tstars,
                                                  ostars=ostars,
-                                                 template_stars=template_stars,
+                                                 current_tstars=current_tstars,
                                                  ref_condition=ref_condition)
             # update runtable with sequence generation
             runtable, rlist = update_run_table(sequence, runtable, newruns,
@@ -1280,6 +1287,13 @@ def _linear_generate_id(params: ParamDict, it: int, run_key: str,
     # deal with skip
     skip, reason = skip_run_object(params, run_object, skiptable,
                                    skip_storage, input_recipe)
+    # deal with RECAL_TEMPLATES = True (don't skip if template required)
+    if skip:
+        if run_object.recipe.template_required and params['RECAL_TEMPLATES']:
+            skip = False
+            msg = 'Run {0} not skipped as RECAL_TEMPLATE=True [{1}] '
+            margs = [runid, run_object.runstring]
+            WLOG(params, '', msg.format(*margs))
     # ---------------------------------------------------------------------
     # deal with passing debug
     if params['GLOBAL.DEBUG'] > 0:
@@ -1803,7 +1817,7 @@ def generate_run_from_sequence(params: ParamDict, sequence,
                                logmsg: bool = True,
                                tstars: Union[List[str], None] = None,
                                ostars: Union[List[str], None] = None,
-                               template_stars: Union[List[str], None] = None,
+                               current_tstars: Union[List[str], None] = None,
                                ref_condition: str = ''):
     func_name = __NAME__ + '.generate_run_from_sequence()'
     # -------------------------------------------------------------------------
@@ -1811,7 +1825,7 @@ def generate_run_from_sequence(params: ParamDict, sequence,
     pconst = load_functions.load_pconfig(select.INSTRUMENTS)
     # generate sequence
     sequence[1].process_adds(params, tstars=list(tstars), ostars=list(ostars),
-                             template_stars=template_stars,
+                             current_tstars=current_tstars,
                              logmsg=logmsg)
     # get the sequence recipe list
     srecipelist = sequence[1].sequence
@@ -1886,11 +1900,11 @@ def generate_run_from_sequence(params: ParamDict, sequence,
         # only do this for recipes with flag "template_required"
         if srecipe.template_required:
             # only continue if we have objects with templates
-            if len(template_stars) > 0:
+            if len(current_tstars) > 0:
                 # store sub-conditions
                 subs = []
                 # add to global conditions
-                for objname in template_stars:
+                for objname in current_tstars:
                     # build sub-condition
                     subs += ['KW_OBJNAME="{0}"'.format(objname)]
                 # generate full subcondition

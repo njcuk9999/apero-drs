@@ -1233,7 +1233,7 @@ class DrsRecipe(object):
     def add_extra(self, arguments: Union[dict, None] = None,
                   tstars: Union[List[str], None] = None,
                   ostars: Union[List[str], None] = None,
-                  template_stars: Union[List[str], None] = None):
+                  current_tstars: Union[List[str], None] = None):
         """
         Add extra arguments to this DrsRecipe instance
         i.e. from arguments (a dictionary of arguments where each key is the
@@ -1258,7 +1258,7 @@ class DrsRecipe(object):
                        "SCIENCE_TARGETS" and SCIENCE_TARGETS
                        value = ['None', 'All', ''] to list all non-telluric
                        'science targets' currently defined
-        :param template_stars: list, list of template star object names
+        :param current_tstars: list, list of template star object names
 
         :return: None - updates DrsRecipe.extras (for later use)
         """
@@ -1320,7 +1320,7 @@ class DrsRecipe(object):
                 # only if argname is in special list keys
                 if arguments[argname] in SPECIAL_LIST_KEYS:
                     # we want to reject those in template stars
-                    value = filter_values(value, template_stars, mode='reject')
+                    value = filter_values(value, current_tstars, mode='reject')
             # check for argument in args
             if argname in self.args:
                 self.extras[argname] = value
@@ -1931,7 +1931,7 @@ class DrsRunSequence:
     def process_adds(self, params: ParamDict,
                      tstars: Union[List[str], None] = None,
                      ostars: Union[List[str], None] = None,
-                     template_stars: Union[List[str], None] = None,
+                     current_tstars: Union[List[str], None] = None,
                      logmsg: bool = True):
         """
         Process the DrsRunSequence.adds list (that have been added/defined
@@ -1943,7 +1943,7 @@ class DrsRunSequence:
                        names)
         :param ostars: list of strings, the list of non-telluric stars (OBJECT
                        names)
-        :param template_stars: list of strings, the list of stars that
+        :param current_tstars: list of strings, the list of stars that
                                currently have a template
         :param logmsg: bool, if True logs that recipe was processed
 
@@ -1997,7 +1997,7 @@ class DrsRunSequence:
             # update file definitions
             frecipe = self.update_args(frecipe, arguments=add['arguments'],
                                        rargs=add['args'], rkwargs=add['kwargs'],
-                                       template_stars=template_stars)
+                                       current_tstars=current_tstars)
             # update reference
             if add['reference'] is not None:
                 frecipe.reference = add['reference']
@@ -2064,7 +2064,7 @@ class DrsRunSequence:
                     arguments: Union[Dict[str, Any], None] = None,
                     rargs: Union[Dict[str, List[DrsInputFile]], None] = None,
                     rkwargs: Union[Dict[str, List[DrsInputFile]], None] = None,
-                    template_stars: Union[List[str], None] = None) -> DrsRecipe:
+                    current_tstars: Union[List[str], None] = None) -> DrsRecipe:
         """
         Update the recipes arguments (usually based on 'arguments' from
         DrsRunSequence.adds) - these are copied from the reference copy of
@@ -2078,7 +2078,7 @@ class DrsRunSequence:
                       are the values to assign to each argument
         :param rkwargs: dictionary, keys are optional argument names, values
                         are the values to assign to each argument
-        :param template_stars: list of strings, the list of stars that
+        :param current_tstars: list of strings, the list of stars that
                                currently have a template
 
         :return: DrsRecipe, the updated drs recipe
@@ -2089,7 +2089,7 @@ class DrsRunSequence:
         if arguments is not None:
             frecipe.add_extra(arguments, tstars=self.tstars,
                               ostars=self.ostars,
-                              template_stars=template_stars)
+                              current_tstars=current_tstars)
         # ------------------------------------------------------------------
         # update args - loop around positional arguments
         if rargs is not None:
