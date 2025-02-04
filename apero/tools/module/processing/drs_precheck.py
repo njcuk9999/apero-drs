@@ -510,6 +510,8 @@ def get_raw_seq_files(params: ParamDict, recipemod,
 
     :return: dictionary
     """
+    # set function name
+    func_name = __NAME__ + '.get_raw_seq_files'
     # print progress: Getting file types for sequence={0}
     if log:
         WLOG(params, '', textentry('40-503-00056', args=[sequence]))
@@ -519,10 +521,14 @@ def get_raw_seq_files(params: ParamDict, recipemod,
     # get whether to recalculate templates
     _recal_templates = params['RECAL_TEMPLATES']
     # get a list of object names with templates
-    template_object_list = []
+    curr_tstars = []
+    recal_templates = True
     if not drs_text.null_text(_recal_templates, ['', 'None']):
         if not drs_text.true_text(_recal_templates):
-            template_object_list = telluric.list_current_templates(params)
+            recal_templates = False
+            curr_tstars = telluric.list_current_templates(params)
+    # need to make sure recal templates is set correctly
+    params.set('RECAL_TEMPLATES', recal_templates, source=func_name)
     # get the calibration sequence
     if hasattr(recipemod, sequence):
         seq = getattr(recipemod, sequence)
@@ -530,7 +536,7 @@ def get_raw_seq_files(params: ParamDict, recipemod,
         return dict(), dict(), dict()
     # generate sequence
     seq.process_adds(params, tstars=list(tstars), ostars=list(ostars),
-                     template_stars=template_object_list, logmsg=log)
+                     curr_tstars=curr_tstars, logmsg=log)
     # storage of calib files
     seq_files = dict()
     seq_instances = dict()
