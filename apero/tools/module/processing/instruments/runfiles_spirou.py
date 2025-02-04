@@ -148,6 +148,7 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     science_run_spirou = RunIniFile(params, 'SPIROU', 'science_run')
     science_run_spirou.append_sequence('pp_seq_opt')
     science_run_spirou.append_sequence('science_seq')
+    science_run_spirou.append_sequence('lbl_seq')
     science_run_spirou.modify('RUN_PP_CAL', False)
     science_run_spirou.modify('RUN_PP_TEL', False)
     science_run_spirou.modify('RUN_PP_HC1HC1', False)
