@@ -318,7 +318,7 @@ class RunIniFile:
         findexdbm = FileIndexDatabase(self.params)
         findexdbm.load_db()
         # get a list of object names with templates
-        template_olist = []
+        curr_tstars = []
         # get a list of all objects from the file index database
         all_objects = drs_processing.get_uobjs_from_findex(self.params,
                                                            findexdbm)
@@ -343,7 +343,7 @@ class RunIniFile:
         for seq in sequences:
             # must process the adds
             seq.process_adds(self.params, tstars=list(tstars),
-                             ostars=list(ostars), template_stars=template_olist,
+                             ostars=list(ostars), curr_tstars=curr_tstars,
                              logmsg=logmsg)
             # loop around recipe in sequences
             for srecipe in seq.sequence:
