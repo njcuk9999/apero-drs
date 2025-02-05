@@ -978,7 +978,7 @@ class ConstantsDict:
         return data
 
     @staticmethod
-    def yaml_title(name: str, setup_program: str, version: str,
+    def yaml_title(name: str, setup_program: Union[str, None], version: str,
                    date: str) -> str:
         """
         Create the title for the yaml file
@@ -993,8 +993,9 @@ class ConstantsDict:
         comment = '#' * 77 + '\n' + name + '\n' + '#' * 77 + '\n'
         comment += f'    Version = {version}\n'
         comment += f'    Date    = {date}\n\n'
-        comment += (f'If using a different version it is recommended to \n'
-                    f'run {setup_program} to generate a new yaml file.\n\n')
+        if setup_program is not None:
+            comment += (f'If using a different version it is recommended to \n'
+                        f'run {setup_program} to generate a new yaml file.\n\n')
         return comment
 
     @staticmethod
