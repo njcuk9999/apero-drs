@@ -428,11 +428,10 @@ class ConstantsDict:
     Basic container for constants
     """
     # title for output yaml
-    title: str = ''
-    # groups for output yaml
-    groups: Dict[str, str] = dict()
-    
     def __init__(self, source: str):
+        # groups for output yaml
+        self.title = ' '
+        self.groups: Dict[str, str] = dict()
         self.storage: Dict[str, Const] = dict()
         self.source = source
 
@@ -750,6 +749,79 @@ class ConstantsDict:
                     kwarg_list[outkey] = kwargs
         # return the dictionary
         return kwarg_list
+
+    def get_nested(self, key: str) -> 'ConstantsDict':
+        """
+        Take this constants dictionary and make all entries nested under key
+
+        :param key: str, the key to nest under
+
+        :return: ConstantsDict, the nested constants dictionary
+        """
+        # start a new constants dictionary
+        new_constants = ConstantsDict(self.source)
+        # ---------------------------------------------------------------------
+        # deal with renaming constants
+        # ---------------------------------------------------------------------
+        # loop around all keys stored in dictionary
+        for name in self.storage:
+            # get the constant
+            const = self.storage[name]
+            # get the new name
+            new_name = '{0}.{1}'.format(key, name)
+            # add to new constants
+            new_const = const.copy(self.source)
+            # update the constants group
+            new_const.group = '{0}.{1}'.format(key, const.group)
+            # add to new constants
+            new_constants.storage[new_name] = new_const
+        # ---------------------------------------------------------------------
+        # deal with renaming groups
+        # ---------------------------------------------------------------------
+        old_group_names = list(self.groups.keys())
+        # deal with all groups
+        for group in old_group_names:
+            # update the constants group
+            new_group = '{0}.{1}'.format(key, group)
+            # add the group
+            new_constants.groups[new_group] = str(self.groups[group])
+        # ---------------------------------------------------------------------
+        # add the key as a group as well (top level)
+        # ---------------------------------------------------------------------
+        if key not in new_constants.groups:
+            new_constants.add_group(key, description=self.title)
+        # return the new constants
+        return new_constants
+
+    @staticmethod
+    def merge_configs(configlist: List['ConstantsDict']) -> 'ConstantsDict':
+        """
+        Merge the configlist Constants Dictionaries into one Constants
+        Dictionary
+
+        :param configlist: list of ConstantsDict, the list of ConstantsDict
+                           to merge
+        """
+        # start with the first config list in the list
+        new_constants = configlist[0]
+        # loop around all keys stored in dictionary
+        for cdict in configlist[1:]:
+            # loop around all keys stored in dictionary
+            for name in cdict.storage:
+                # get the constant
+                const = cdict.storage[name]
+                # add to new constants
+                new_constants.storage[name] = const
+        # merge groups
+        for cdict in configlist[1:]:
+            # loop around all keys stored in dictionary
+            for group in cdict.groups:
+                # get the constant
+                desc = cdict.groups[group]
+                # add to new constants
+                new_constants.groups[group] = desc
+        # return the new constants
+        return new_constants
 
     # -------------------------------------------------------------------------
     # yaml functionality

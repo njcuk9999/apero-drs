@@ -300,7 +300,7 @@ def load_from_yaml(files: List[str], params: ParamDict = None) -> ParamDict:
 
 
 def load_from_cmd_args(params: ParamDict, cmd_kwargs: Dict[str, Any],
-                       func_kwargs: Dict[str, Any]) -> ParamDict:
+                       func_kwargs: Dict[str, Any] = None) -> ParamDict:
     """
     Push command line arguments into the parameter dictionary
 
@@ -314,6 +314,9 @@ def load_from_cmd_args(params: ParamDict, cmd_kwargs: Dict[str, Any],
     # set up a new parameter dictionary
     if params is None:
         params = ParamDict()
+    # deal with no func_kwargs
+    if func_kwargs is None:
+        func_kwargs = dict()
     # deal with instances being None
     if params.instances is None:
         return params
@@ -372,7 +375,8 @@ def get_all_params(name: str, description: str, inputargs: List[str],
                    config_list: List[Union[ConstDict, KeywordDict]] = None,
                    from_file: bool = True,
                    param_file_path: str = None,
-                   **kwargs) -> ParamDict:
+                   external_const: Dict[str, Any] = None,
+                   kwargs: Dict[str, Any] = None) -> ParamDict:
     """
     Get the parameters (default, command line and function call)
 
@@ -388,6 +392,9 @@ def get_all_params(name: str, description: str, inputargs: List[str],
     """
     # get function name
     func_name = display_func('get_all_params', __NAME__)
+    # add the external constants to the config list
+    if external_const is not None:
+        config_list = add_ext_config_list(config_list, external_const)
     # get the default arguments
     params = load_parameters(config_list)
     # set name
@@ -408,6 +415,8 @@ def get_all_params(name: str, description: str, inputargs: List[str],
         params = load_from_yaml(*largs)
     # make sure we have the minimal log parameters from wlog
     params = WLOG.minimal_params(params)
+    # save the config list for use later
+    params.set('CONFIG_LIST', config_list, source=func_name)
     # return params
     return params
 
@@ -541,6 +550,28 @@ def ask_for_missing_args(params: ParamDict,
             params.set(key, value, source=func_name)
     # return parameters
     return params
+
+
+def add_ext_config_list(config_list: List[Union[ConstDict, KeywordDict]],
+                        external_const: Dict[str, Union[ConstDict]]
+                        ) -> List[Union[ConstDict, KeywordDict]]:
+
+    # deal with no config list
+    if config_list is None:
+        config_list = []
+    # loop around external constants
+    for key in external_const:
+        # get the external constant
+        econst = external_const[key]
+        # deal with external constants not being a ConstDict
+        if not isinstance(econst, ConstDict):
+            emsg = 'External constants entry "{0}" must be ConstDict instances'
+            eargs = [key]
+            raise AperoCodedException(None, None, message=emsg.format(*eargs))
+        # add to config list
+        config_list.append(econst.get_nested(key))
+    # return the updated config list
+    return config_list
 
 
 # =============================================================================
