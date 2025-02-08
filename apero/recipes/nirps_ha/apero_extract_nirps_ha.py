@@ -324,7 +324,18 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                                               s1dkind=s1dextfile)
             else:
                 swprops, svprops = None, None
-
+            # --------------------------------------------------------------
+            # Calculate measured SNR
+            # --------------------------------------------------------------
+            eprops['MSNR_E2DS'] = extract.measure_snr(params,
+                                                      wprops['WAVEMAP'],
+                                                      eprops['E2DS'])
+            eprops['MSNR_E2DSFF'] = extract.measure_snr(params,
+                                                        wprops['WAVEMAP'],
+                                                        eprops['E2DSFF'])
+            # set the source
+            skeys = ['MSNR_E2DS', 'MSNR_E2DSFF']
+            eprops.set_sources(skeys, mainname)
             # --------------------------------------------------------------
             # Plots
             # --------------------------------------------------------------

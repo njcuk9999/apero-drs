@@ -30,6 +30,8 @@ extract_blaze_flat = extraction.extract_blaze_flat
 
 flat_blaze_correction = extraction.flat_blaze_correction
 
+measure_snr = extraction.measure_snr
+
 get_berv = berv.get_berv
 
 order_profiles = gen_ext.order_profiles
