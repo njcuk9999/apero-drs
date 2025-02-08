@@ -4921,6 +4921,50 @@ class DrsFitsFile(DrsInputFile):
                 # add to header dictionary
                 self.hdict[keyname] = (value, comm)
 
+    def add_hkey_vals(self, prefix: str, keys: List[str], values: List[Any]):
+        # set function name
+        func_name = display_func('add_hkey_vals', __NAME__,
+                                 self.class_name)
+        # check for kwstore in params
+        self.check_params(func_name)
+        params = self.params
+        # deal with no prefix
+        if (prefix is None):
+            self.__error__(textentry('00-001-00014', args=[func_name]))
+        if isinstance(prefix, str) and (prefix in params):
+            kwstore = params[prefix]
+        elif isinstance(prefix, list):
+            kwstore = list(prefix)
+        else:
+            eargs = [prefix, func_name]
+            self.__error__(textentry('00-001-00008', args=eargs))
+            return
+        # ---------------------------------------------------------------------
+        # check that keys and values have the same length
+        if len(keys) != len(values):
+            emsg = ('Keys and values must have the same length (length: '
+                    'keys={0}, values={1})')
+            eargs = [len(keys), len(values), func_name]
+            self.__error__(emsg.format(*eargs))
+        # ---------------------------------------------------------------------
+        # extract keyword, value and comment and put it into hdict
+        okey, dvalue, comment = self.get_keywordstore(tuple(kwstore), func_name)
+        # ---------------------------------------------------------------------
+        # loop around the values and add to hdict
+        for it in range(len(keys)):
+            # construct the key name
+            keyname = okey.format(keys[it])
+            # get the value
+            value = values[it]
+            # deal with paths (should only contain filename for header)
+            if isinstance(value, str):
+                if os.path.isfile(value):
+                    value = os.path.basename(value)
+            # construct the comment name
+            comm = '{0} {1}'.format(comment, keys[it])
+            # add to header dictionary
+            self.hdict[keyname] = (value, comm)
+
     def add_core_hkeys(self, params: Optional[ParamDict] = None):
         """
         Add the core header keys to the header (every DRS fits file should

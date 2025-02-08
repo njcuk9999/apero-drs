@@ -317,7 +317,12 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         rcvprops = extract.e2ds_to_s1d(params, recipe, *rcargs,
                                        wgrid='velocity', fiber=fiber,
                                        s1dkind='recon')
-
+        # ------------------------------------------------------------------
+        # get measured SNR
+        cprops['MSNR_TCORR'] = extract.measure_snr(params, rcwprops['WAVEMAP'],
+                                                   cprops['CORRECTED_SP'])
+        # set the source
+        cprops.set_source('MSNR_TCORR', mainname)
         # ------------------------------------------------------------------
         # s1d plots
         # ------------------------------------------------------------------

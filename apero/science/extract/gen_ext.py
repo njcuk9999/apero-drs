@@ -717,6 +717,16 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     # add SNR parameters to header
     e2dsfile.add_hkey_1d('KW_EXT_SNR', values=eprops['SNR'],
                          dim1name='order')
+    e2dsfile.add_hkey('KW_EXT_NBO', value=len(eprops['SNR']))
+    # ----------------------------------------------------------------------
+    # get msnr values
+    msnr_e2ds = eprops['MSNR_E2DS']
+    # add the measured snr
+    e2dsfile.add_hkey_1d('KW_MEAS_SNR', values=msnr_e2ds['MSNR'])
+    # add the measured band snrs
+    e2dsfile.add_hkey_vals(f'KW_MEAS_BSNR',
+                           keys=list(msnr_e2ds['BSNR'].keys()),
+                           values=list(msnr_e2ds['BSNR'].values()))
     # add start and end extraction order used
     e2dsfile.add_hkey('KW_EXT_START', value=eprops['START_ORDER'])
     e2dsfile.add_hkey('KW_EXT_END', value=eprops['END_ORDER'])
@@ -790,6 +800,14 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     e2dsfffile.infiles = list(hfiles)
     # add extraction type (does not change for future files)
     e2dsfffile.add_hkey('KW_EXT_TYPE', value=e2dsfffile.name)
+    # get msnr values
+    msnr_e2ds = eprops['MSNR_E2DSFF']
+    # add the measured snr
+    e2dsfile.add_hkey_1d('KW_MEAS_SNR', values=msnr_e2ds['MSNR'])
+    # add the measured band snrs
+    e2dsfile.add_hkey_vals(f'KW_MEAS_BSNR',
+                           keys=list(msnr_e2ds['BSNR'].keys()),
+                           values=list(msnr_e2ds['BSNR'].values()))
     # set output key
     e2dsfffile.add_hkey('KW_OUTPUT', value=e2dsfffile.name)
     # need to use different thermal ratio keys if we have corrected thermal
@@ -996,6 +1014,8 @@ def write_extraction_files_ql(params, recipe, infile, rawfiles, combine, fiber,
     e2dsfile.add_hkey_1d('KW_EXT_SNR', values=eprops['SNR'],
                          dim1name='order')
     e2dsfile.add_hkey('KW_EXT_NBO', value=len(eprops['SNR']))
+    # add the measured snr
+    e2dsfile.add_hkey_1d('KW_MEAS_SNR', values=eprops['MSNR_E2DS'])
     # add start and end extraction order used
     e2dsfile.add_hkey('KW_EXT_START', value=eprops['START_ORDER'])
     e2dsfile.add_hkey('KW_EXT_END', value=eprops['END_ORDER'])
@@ -1047,6 +1067,8 @@ def write_extraction_files_ql(params, recipe, infile, rawfiles, combine, fiber,
     e2dsfffile.infiles = list(hfiles)
     # add extraction type (does not change for future files)
     e2dsfffile.add_hkey('KW_EXT_TYPE', value=e2dsfffile.name)
+    # add the measured snr
+    e2dsfffile.add_hkey_1d('KW_MEAS_SNR', values=eprops['MSNR_E2DSFF'])
     # set output key
     e2dsfffile.add_hkey('KW_OUTPUT', value=e2dsfffile.name)
     # copy data

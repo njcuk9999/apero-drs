@@ -9,7 +9,7 @@ Created on 2019-01-18 at 14:44
 """
 import string
 from pathlib import Path
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -969,6 +969,21 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         # _ = display_func('INDIVIDUAL_FIBERS', __NAME__, self.class_name)
         # list the individual fiber names
         return ['A', 'B', 'C']
+
+
+    # photometric bands for SNR calculation
+    def MEAS_SNR_PHOT_BANDS(self) -> Dict[str, List[float]]:
+        """
+        Define the photometric bands for SNR calculation
+
+        :return: list of strings, the photometric bands
+        """
+        bands = dict()
+        bands['Y'] = [938.6, 1113.4]
+        bands['J'] = [1153.6, 1354.4]
+        bands['H'] = [1462.9, 1808.5]
+        bands['K'] = [1957.8, 2343.1]
+        return bands
 
     def TELLU_FLUORESCENCE(self):
         """
