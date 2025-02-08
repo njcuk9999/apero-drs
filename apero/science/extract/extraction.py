@@ -10,7 +10,7 @@ Created on 2019-07-08 at 16:32
 @author: cook
 """
 import warnings
-from typing import Optional
+from typing import Any, Dict, Optional
 
 import numpy as np
 
@@ -402,6 +402,76 @@ def calculate_snr(e2ds, blaze_width, r1, r2, eff_ron):
     snr = flux / np.sqrt(flux + noise ** 2)
     # return snr
     return snr, flux
+
+
+def measure_snr(params: ParamDict, wavemap: np.ndarray, e2ds: np.ndarray,
+                blaze_width: Optional[int] = None) -> Dict[str, Any]:
+    """
+    Calculate an estimate of the measured SNR for a given e2ds per order and in
+    some photometric bands
+
+    this is measured from the point to point scatter inside the blaze window
+
+    :param wavemap: np.ndarray (2D)
+    :param e2ds: np.ndarray (2D), the extracted order
+    :param blaze_width: int, the width of the blaze window, if None taken from
+                        params['FF_BLAZE_HALF_WINDOW']
+
+    :return: float, the measure of the SNR in this order
+    """
+    # set up output properties
+    sprops = dict()
+    # return array
+    snrs = np.full(e2ds.shape[0], fill_value=np.nan)
+    # deal with no blaze given
+    if blaze_width is None:
+        blaze_width = params['FF_BLAZE_HALF_WINDOW']
+    # loop in order number
+    for order_num in range(e2ds.shape[0]):
+        # get the central pixel position
+        cent_pos = int(len(e2ds) / 2)
+        # get the blaze window size
+        blaze_lower = cent_pos - blaze_width
+        blaze_upper = cent_pos + blaze_width
+        # get the flux in the blaze window
+        e2ds_bw = e2ds[blaze_lower:blaze_upper]
+        # get the average flux in the blaze window
+        medflux = mp.nanmedian(e2ds_bw)
+        # get the point to point flux for the noise estimate
+        point2point  = e2ds_bw - (np.roll(e2ds_bw, 1) + np.roll(e2ds_bw, -1)) / 2
+        # work out the 1 sigma percentiles
+        p16, p84 = np.nanpercentile(point2point, [16, 84])
+        # calculate the noise
+        noise = ((p84 - p16) / 2) / np.sqrt(1.5)
+        # calculate the snr ratio
+        snr = medflux / noise
+        # add to vector
+        snrs[order_num] = snr
+    # add to sprops
+    sprops['MSNR'] = snrs
+    # -------------------------------------------------------------------------
+    # now work out per band SNRs
+    # -------------------------------------------------------------------------
+    # storage in sprops
+    sprops['BSNR'] = dict()
+    # get the mean wavelength per order
+    waveord = np.nanmean(wavemap, axis=1)
+    # get pconst
+    pconst = constants.pload()
+    # get the bands from params
+    bands = pconst.MEAS_SNR_PHOT_BANDS()
+    # loop around bands
+    for iband in bands.keys():
+        # get the band limits
+        band = bands[iband]
+        # make a mask of the orders for this band
+        band_mask = (waveord > band[0]) & (waveord < band[1])
+        # get the mean snr for this band
+        band_snr = np.nanmean(snrs[band_mask])
+        # push into sprops
+        sprops['BSNR'][iband] = band_snr
+    # return the snr
+    return snrs
 
 
 def cosmic_correction(sx, spe, fx, ic, weights, cpt, cosmic_sigcut,

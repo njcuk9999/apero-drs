@@ -76,7 +76,8 @@ __all__ = [  # input keys
     'KW_BLAZE_WID', 'KW_BLAZE_CUT', 'KW_BLAZE_DEG', 'KW_BLAZE_SCUT',
     'KW_BLAZE_SIGFIG', 'KW_BLAZE_BPRCNTL', 'KW_BLAZE_NITER',
     # extraction values
-    'KW_EXT_TYPE', 'KW_EXT_SNR', 'KW_EXT_NBO', 'KW_EXT_START', 'KW_EXT_END',
+    'KW_EXT_TYPE', 'KW_EXT_SNR', 'KW_MEAS_SNR',
+    'KW_EXT_NBO', 'KW_EXT_START', 'KW_EXT_END',
     'KW_EXT_RANGE1', 'KW_EXT_RANGE2', 'KW_COSMIC', 'KW_COSMIC_CUT',
     'KW_COSMIC_THRES', 'KW_SAT_QC', 'KW_SAT_LEVEL', 'KW_S1D_WAVESTART',
     'KW_S1D_WAVEEND', 'KW_S1D_KIND', 'KW_S1D_BWAVE', 'KW_S1D_BVELO',
@@ -1013,6 +1014,14 @@ KW_EXT_TYPE = Keyword('KW_EXT_TYPE', key='NULL', dtype=str, source=__NAME__,
 KW_EXT_SNR = Keyword('KW_EXT_SNR', key='NULL', dtype=float, source=__NAME__,
                      description=('SNR calculated in extraction process '
                                   '(per order)'))
+
+# Measured SNR calculated from an e2ds
+KW_MEAS_SNR = Keyword('KW_MEAS_SNR', key='NULL', dtype=float, source=__NAME__,
+                      description='Measured SNR calculated from an e2ds')
+
+# Measured SNR in certain bands
+KW_MEAS_SN = Keyword('KW_MEAS_BSNR', key='NULL', dtype=float, source=__NAME__,
+                     description='Measured SNR in certain bands')
 
 # Number of orders used in extraction process
 KW_EXT_NBO = Keyword('KW_EXT_NBO', key='NULL', dtype=int, source=__NAME__,

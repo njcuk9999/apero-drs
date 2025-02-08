@@ -821,6 +821,11 @@ KW_EXT_TYPE.set(key='EXT_TYPE', comment='Extract type (E2DS or E2DSFF)')
 KW_EXT_SNR = KW_EXT_SNR.copy(__NAME__)
 KW_EXT_SNR.set(key='EXTSN{0:03d}', comment='Extract: S_N order center')
 
+# Measured SNR calculated from an e2ds
+KW_MEAS_SNR = KW_MEAS_SNR.copy(__NAME__)
+KW_MEAS_SNR.set(key='MSNR{0:03d}',
+                comment='Measured SNR calculated from an e2ds')
+
 # Number of orders used in extraction process
 KW_EXT_NBO = KW_EXT_NBO.copy(__NAME__)
 KW_EXT_NBO.set(key='EXT_NBO', comment='Extract: Number of orders used')
