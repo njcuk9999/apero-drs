@@ -1058,6 +1058,25 @@ class DefaultPseudoConstants:
                                  self.class_name)
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
+    # photometric bands for SNR calculation
+    def MEAS_SNR_PHOT_BANDS(self) -> Dict[str, List[float]]:
+        """
+        Define the photometric bands for SNR calculation
+
+        :return: list of strings, the photometric bands
+        """
+        bands = dict()
+        bands['U'] = [305.511, 403.064]
+        bands['G'] = [379.764, 555.304]
+        bands['R'] = [541.823, 699.442]
+        bands['I'] = [669.241, 840.032]
+        bands['Z'] = [796.47, 1087.33]
+        bands['Y'] = [938.6, 1113.4]
+        bands['J'] = [1153.6, 1354.4]
+        bands['H'] = [1462.9, 1808.5]
+        bands['K'] = [1957.8, 2343.1]
+        return bands
+
     # tellu fudge
     def TAPAS_INST_CORR(self, mask_water: Table,
                         mask_others: Table) -> Tuple[Table, Table]:

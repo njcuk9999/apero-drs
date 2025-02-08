@@ -869,6 +869,9 @@ def correct_other_science(params, recipe, fiber, infile, cprops, rawfiles,
     # ------------------------------------------------------------------
     scorr = scorr / tpreprops['TELLU_FINITE_RES']
     # ------------------------------------------------------------------
+    # calculate SNR
+    msnr_tcorr = extract.measure_snr(params, scorr)
+    # ------------------------------------------------------------------
     # fake nprop dict
     nprops = dict()
     nprops['BLAZE_FILE'] = blaze_file
@@ -887,7 +890,7 @@ def correct_other_science(params, recipe, fiber, infile, cprops, rawfiles,
     # ------------------------------------------------------------------
     fargs = [fiber_infile, rawfiles, fiber, combine, nprops, wprops,
              trans_props, cprops, qc_params, template_props, tpreprops]
-    fkwargs = dict(CORRECTED_SP=scorr)
+    fkwargs = dict(CORRECTED_SP=scorr, msnr_tcorr=msnr_tcorr)
     corrfile = fit_tellu_write_corrected(params, recipe, *fargs, **fkwargs)
     # ------------------------------------------------------------------
     # Save 1d corrected spectra to file
@@ -995,8 +998,9 @@ def fit_tellu_summary(recipe, it, params, qc_params, tpreprops, fiber):
 def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
                               nprops, wprops, trans_props, cprops,
                               qc_params, template_props, tpreprops, **kwargs):
-    # get parameters from cprops
+    # get parameters from cprops (if not overwritten)
     sp_out = kwargs.get('CORRECTED_SP', cprops['CORRECTED_SP'])
+    msnr_tcorr = kwargs.get('MSNR_TCORR', cprops['MSNR_TCORR'])
     # ------------------------------------------------------------------
     # Set fit_tellu trans table
     # ------------------------------------------------------------------
@@ -1097,6 +1101,13 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
                           value=template_props['APPROX_RV'])
         corrfile.add_hkey('KW_FTELLU_APPROX_RV_ERR',
                           value=template_props['APPROX_RV_ERR'])
+    # ----------------------------------------------------------------------
+    # add the measured snr
+    corrfile.add_hkey_1d('KW_MEAS_SNR', values=msnr_tcorr['MSNR'])
+    # add the measured band snrs
+    corrfile.add_hkey_vals(f'KW_MEAS_BSNR',
+                           keys=list(msnr_tcorr['BSNR'].keys()),
+                           values=list(msnr_tcorr['BSNR'].values()))
     # ----------------------------------------------------------------------
     # copy data
     corrfile.data = sp_out
