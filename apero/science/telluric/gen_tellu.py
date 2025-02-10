@@ -11,7 +11,7 @@ Created on 2019-08-12 at 17:16
 """
 import os
 import warnings
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 from astropy import constants as cc
@@ -574,15 +574,17 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     res_s1d_fwhm = np.array(res_table['flux_res_fwhm'])
     res_s1d_expo = np.array(res_table['flux_res_expo'])
     # ----------------------------------------------------------------------
+    # run the snr qc without values (to push into storage)
+    sqc_value, sqc_name, sqc_logic, sqc_pass = qc_p2pscat_bands(params)
+    # ----------------------------------------------------------------------
     # define storage of quality control
     qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
     # need to add dummy values for these qc
-
     # 1. snr < snr_min_thres (pos = 0)
-    qc_values.append(np.nan)
-    qc_names.append('MED[EXTSNR]')
-    qc_logic.append('MED[EXTSNR] < {0}'.format(snr_min_thres))
-    qc_pass.append(np.nan)
+    qc_values.append(sqc_value)
+    qc_names.append(sqc_name)
+    qc_logic.append(sqc_logic)
+    qc_pass.append(qc_pass)
     # 2. ccf is NaN (pos = 1)
     qc_values.append('N.A')
     qc_names.append('APPROX_RV [PREV, NOW]')
@@ -729,19 +731,18 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
                                            database=telludbm)
     # ----------------------------------------------------------------------
     # load the snr from e2ds file
-    snr = infile.get_hkey_1d('KW_EXT_SNR', nbo, dtype=float)
-    # remove infinite / NaN snr
-    snr[~np.isfinite(snr)] = 0.0
-    # remove snr from these orders (due to thermal background)
-    for order_num in remove_orders:
-        snr[order_num] = 0.0
-    # make a mask of thermal orders above 1.8
-    wave_mask = mp.nanmedian(wave_e2ds, axis=1) < 1800
+    snr_dict = infile.get_hkey_vals('KW_P2P_BSCAT', dtype=float)
+    # ----------------------------------------------------------------------
+    # run the snr qc without values (to push into storage)
+    sqc_value, sqc_name, sqc_logic, sqc_pass = qc_p2pscat_bands(params, snr_dict)
+    # push into qc_params
+    qc_values[0] = sqc_value
+    qc_names[0] = sqc_name
+    qc_logic[0] = sqc_logic
+    qc_pass[0] = sqc_pass
     # make sure the median snr is above the min snr requirement
-    if mp.nanmedian(snr[wave_mask]) < snr_min_thres:
-        # update qc params
-        qc_values[0] = mp.nanmedian(snr)
-        qc_pass[0] = 0
+    if not bool(sqc_pass):
+        # make qc_paramsfor return
         qc_params = [qc_names, qc_values, qc_logic, qc_pass]
         # return qc_exit_tellu_preclean
         return qc_exit_tellu_preclean(params, recipe, image_e2ds,
@@ -750,9 +751,6 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
                                       res_e2ds_fwhm, res_e2ds_expo,
                                       template_props, wave_e2ds, res_s1d_fwhm,
                                       res_s1d_expo, database=telludbm)
-    else:
-        qc_values[0] = mp.nanmedian(snr[wave_mask])
-        qc_pass[0] = 1
     # mask all orders below min snr
     for order_num in range(nbo):
         # only mask if snr below threshold
@@ -1883,6 +1881,62 @@ def qc_exit_tellu_preclean(params, recipe, image, image_e2ds_ini, infile,
     # ----------------------------------------------------------------------
     # return props
     return props, template_props
+
+
+def qc_p2pscat_bands(params: ParamDict, p2p_dict: Dict[str, float] = None
+                     ) -> Tuple[float, str, str, float]:
+        """
+        Define the quality control (QC) bands for peak-to-peak scatter
+        calculation
+
+        :param params: ParamDict, the parameter dictionary of constants
+        :param p2p_dict: dict, the dictionary of peak-to-peak scatter values
+
+        :return: tuple of strings, the QC bands
+        """
+        # load pconst
+        pconst = constants.pload()
+        # get the bands
+        bands = pconst.MEAS_SNR_PHOT_BANDS()
+        # set up the combined SNR variable
+        bvariable = 'SNR{0}'.format(''.join(list(bands.keys())))
+        # get limit from params
+        p2p_min_thres = params['TELLUP_SNR_MIN_THRES']
+        # set up return
+        qc_value = np.nan
+        qc_name = bvariable
+        qc_logic = '{0} < {1}'.format(bvariable, p2p_min_thres)
+        qc_pass = np.nan
+        # if we have a snr_dict then we load the values here
+        if p2p_dict is not None:
+            # assume we fail
+            qc_pass = 0
+            tmp_value = -np.inf
+            # loop around bands
+            for band in bands:
+                p2p = p2p_dict.get(band, np.nan)
+                # try next band if p2p is NaN
+                if np.isnan(p2p):
+                    continue
+                # if one of the bands is above the threshold we pass
+                elif p2p > p2p_min_thres:
+                    qc_value = p2p
+                    qc_name = 'P2P{0}'.format(band)
+                    qc_logic =  '{0} < {1}'.format(bvariable, p2p_min_thres)
+                    qc_pass = 1
+                    break
+                elif p2p > tmp_value:
+                    qc_value = float(p2p)
+                    qc_name = 'P2P{0}'.format(band)
+                    qc_logic =  '{0} < {1}'.format(bvariable, p2p_min_thres)
+                    qc_pass = 0
+        # check if we still don't have a qc_value
+        if np.isnan(qc_value):
+            # if we get to here it means all bands were nan
+            qc_value = 'All bands are NaN'
+        # ----------------------------------------------------------------------
+        # return the qc parameters
+        return qc_value, qc_name, qc_logic, qc_pass
 
 
 def tellu_preclean_write(params, recipe, infile, rawfiles, fiber, combine,

@@ -870,7 +870,7 @@ def correct_other_science(params, recipe, fiber, infile, cprops, rawfiles,
     scorr = scorr / tpreprops['TELLU_FINITE_RES']
     # ------------------------------------------------------------------
     # calculate SNR
-    msnr_tcorr = extract.measure_snr(params, scorr)
+    msnr_tcorr = extract.measure_p2p_scat(params, scorr)
     # ------------------------------------------------------------------
     # fake nprop dict
     nprops = dict()
@@ -1000,7 +1000,7 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
                               qc_params, template_props, tpreprops, **kwargs):
     # get parameters from cprops (if not overwritten)
     sp_out = kwargs.get('CORRECTED_SP', cprops['CORRECTED_SP'])
-    msnr_tcorr = kwargs.get('MSNR_TCORR', cprops['MSNR_TCORR'])
+    msnr_tcorr = kwargs.get('MP2P_TCORR', cprops['MP2P_TCORR'])
     # ------------------------------------------------------------------
     # Set fit_tellu trans table
     # ------------------------------------------------------------------
@@ -1103,9 +1103,9 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
                           value=template_props['APPROX_RV_ERR'])
     # ----------------------------------------------------------------------
     # add the measured snr
-    corrfile.add_hkey_1d('KW_MEAS_SNR', values=msnr_tcorr['MSNR'])
+    corrfile.add_hkey_1d('KW_P2P_SCAT', values=msnr_tcorr['MSNR'])
     # add the measured band snrs
-    corrfile.add_hkey_vals(f'KW_MEAS_BSNR',
+    corrfile.add_hkey_vals(f'KW_P2P_BSCAT', name='band',
                            keys=list(msnr_tcorr['BSNR'].keys()),
                            values=list(msnr_tcorr['BSNR'].values()))
     # ----------------------------------------------------------------------
