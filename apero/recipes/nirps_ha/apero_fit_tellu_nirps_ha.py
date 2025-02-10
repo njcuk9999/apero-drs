@@ -322,10 +322,10 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                                        s1dkind='recon')
         # ------------------------------------------------------------------
         # get measured SNR
-        cprops['MSNR_TCORR'] = extract.measure_snr(params, rcwprops['WAVEMAP'],
-                                                   cprops['CORRECTED_SP'])
+        cprops['MP2P_TCORR'] = extract.measure_p2p_scat(params, rcwprops['WAVEMAP'],
+                                                        cprops['CORRECTED_SP'])
         # set the source
-        cprops.set_source('MSNR_TCORR', mainname)
+        cprops.set_source('MP2P_TCORR', mainname)
         # ------------------------------------------------------------------
         # s1d plots
         # ------------------------------------------------------------------

@@ -404,11 +404,11 @@ def calculate_snr(e2ds, blaze_width, r1, r2, eff_ron):
     return snr, flux
 
 
-def measure_snr(params: ParamDict, wavemap: np.ndarray, e2ds: np.ndarray,
-                blaze_width: Optional[int] = None) -> Dict[str, Any]:
+def measure_p2p_scat(params: ParamDict, wavemap: np.ndarray, e2ds: np.ndarray,
+                     blaze_width: Optional[int] = None) -> Dict[str, Any]:
     """
-    Calculate an estimate of the measured SNR for a given e2ds per order and in
-    some photometric bands
+    Calculate an estimate of the measured peak-to-peak scatter for a given
+    e2ds per order and in some photometric bands
 
     this is measured from the point to point scatter inside the blaze window
 
@@ -417,7 +417,7 @@ def measure_snr(params: ParamDict, wavemap: np.ndarray, e2ds: np.ndarray,
     :param blaze_width: int, the width of the blaze window, if None taken from
                         params['FF_BLAZE_HALF_WINDOW']
 
-    :return: float, the measure of the SNR in this order
+    :return: float, the measure of the peak to peak scatter in this order
     """
     # set up output properties
     sprops = dict()
@@ -429,20 +429,20 @@ def measure_snr(params: ParamDict, wavemap: np.ndarray, e2ds: np.ndarray,
     # loop in order number
     for order_num in range(e2ds.shape[0]):
         # get the central pixel position
-        cent_pos = int(len(e2ds) / 2)
+        cent_pos = int(len(e2ds[order_num]) / 2)
         # get the blaze window size
         blaze_lower = cent_pos - blaze_width
         blaze_upper = cent_pos + blaze_width
         # get the flux in the blaze window
-        e2ds_bw = e2ds[blaze_lower:blaze_upper]
+        e2ds_bw = e2ds[order_num][blaze_lower:blaze_upper]
         # get the average flux in the blaze window
-        medflux = mp.nanmedian(e2ds_bw)
+        medflux = mp.nanpercentile(e2ds_bw, 90)
         # get the point to point flux for the noise estimate
-        point2point  = e2ds_bw - (np.roll(e2ds_bw, 1) + np.roll(e2ds_bw, -1)) / 2
-        # work out the 1 sigma percentiles
-        p16, p84 = np.nanpercentile(point2point, [16, 84])
+        roll1 = (np.roll(e2ds_bw, 1) + np.roll(e2ds_bw, -1))/2
+        # TODO: kw comment:   STD of spectrum + (mean of spectrum - 1)
+        point2point = e2ds_bw - roll1
         # calculate the noise
-        noise = ((p84 - p16) / 2) / np.sqrt(1.5)
+        noise = mp.estimate_sigma(point2point) / np.sqrt(1.5)
         # calculate the snr ratio
         snr = medflux / noise
         # add to vector
@@ -471,7 +471,7 @@ def measure_snr(params: ParamDict, wavemap: np.ndarray, e2ds: np.ndarray,
         # push into sprops
         sprops['BSNR'][iband] = band_snr
     # return the snr
-    return snrs
+    return sprops
 
 
 def cosmic_correction(sx, spe, fx, ic, weights, cpt, cosmic_sigcut,

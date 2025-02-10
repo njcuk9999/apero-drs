@@ -831,10 +831,14 @@ KW_EXT_TYPE.set(key='EXT_TYPE', comment='Extract type (E2DS or E2DSFF)')
 KW_EXT_SNR = KW_EXT_SNR.copy(__NAME__)
 KW_EXT_SNR.set(key='EXTSN{0:03d}', comment='Extract: S_N order center')
 
-# Measured SNR calculated from an e2ds
-KW_MEAS_SNR = KW_MEAS_SNR.copy(__NAME__)
-KW_MEAS_SNR.set(key='MSNR{0:03d}',
-                comment='Measured SNR calculated from an e2ds')
+# Measured peak-to-peak scatter calculated from an e2ds
+KW_P2P_SCAT = KW_P2P_SCAT.copy(__NAME__)
+KW_P2P_SCAT.set(key='MP2P{0:03d}',
+                comment='Measured peak to peak scatter')
+
+# Measured peak-to-peak scatter in certain bands
+KW_P2P_BSCAT = KW_P2P_BSCAT.copy(__NAME__)
+KW_P2P_BSCAT.set(key='BP2P_{0}', comment='Measured peak to peak scatter')
 
 # Number of orders used in extraction process
 KW_EXT_NBO = KW_EXT_NBO.copy(__NAME__)
