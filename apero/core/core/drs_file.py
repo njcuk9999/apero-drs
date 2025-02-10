@@ -4276,6 +4276,46 @@ class DrsFitsFile(DrsInputFile):
         # return values
         return values
 
+    def get_hkey_vals(self, key: str, dtype: Type = float) -> Dict[str, Any]:
+        """
+        Get all header keys that match the key (i.e. key*) and return them
+        as a dictionary
+
+        :param key: str, the key to search for
+        :param dtype: type, the type to force the data to be (i.e. float, int)
+
+        :return: Dict[str, dtype], a dictionary of key values
+        """
+        # set function name
+        func_name = display_func('get_hkey_vals', __NAME__,
+                                 self.class_name)
+        # check that data is read
+        self.check_read(header_only=True)
+        # check key is valid
+        drskey = self._check_key(key)
+        # find all keys in the header with this value
+        raw_dict = self.header[drskey + '*']
+        # storage dictionary for return
+        rtn_dict = dict()
+        # loop around all keys and remove the original key from the name
+        for raw_key in raw_dict.keys():
+            # get the value
+            value = raw_dict[raw_key]
+            # remove the key from the raw key
+            keyname = raw_key.replace(drskey, '')
+            # try to set the value
+            try:
+                rtn_dict[keyname] = dtype(value)
+            except ValueError:
+                # TODO: Add to language database
+                emsg = ('Could not convert key={0} value={1} to a {2} for '
+                        'filename={3}'
+                        '\n\tFunction = {4}')
+                eargs = [keyname, value, dtype, self.basename, func_name]
+                self.__error__(emsg.format(*eargs))
+        # return the dictionary
+        return rtn_dict
+
     def get_hkey_1d(self, key: str, dim1: Union[int, None] = None,
                     dtype: Type = float, start: int = 0,
                     excludes: Union[None, List[str], str] = None,
@@ -4921,7 +4961,21 @@ class DrsFitsFile(DrsInputFile):
                 # add to header dictionary
                 self.hdict[keyname] = (value, comm)
 
-    def add_hkey_vals(self, prefix: str, keys: List[str], values: List[Any]):
+    def add_hkey_vals(self, prefix: str, keys: List[str], values: List[Any],
+                      name: str = None):
+        """
+        Add a set of new key to DrsFile.hdict from keywordstores. If kwstores
+        is None and keys and comments are defined these are used instead.
+
+        :param prefix: str, the prefix to use for the keys (or from params)
+        :param keys: list of strings, the keys to add to the header
+        :param values: list of values, the values to add to the header
+        :param name: str, the name to add to the comment (default is None)
+                     if set comment adds "name=key" to the comment otherwise
+                     "key" is just added to the comment
+
+        :return: None, updates self.hdict
+        """
         # set function name
         func_name = display_func('add_hkey_vals', __NAME__,
                                  self.class_name)
@@ -4961,7 +5015,10 @@ class DrsFitsFile(DrsInputFile):
                 if os.path.isfile(value):
                     value = os.path.basename(value)
             # construct the comment name
-            comm = '{0} {1}'.format(comment, keys[it])
+            if name is not None:
+                comm = '{0} {1}={2}'.format(comment, name, keys[it])
+            else:
+                comm = '{0} {1}'.format(comment, keys[it])
             # add to header dictionary
             self.hdict[keyname] = (value, comm)
 

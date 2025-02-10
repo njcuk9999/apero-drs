@@ -30,7 +30,7 @@ extract_blaze_flat = extraction.extract_blaze_flat
 
 flat_blaze_correction = extraction.flat_blaze_correction
 
-measure_snr = extraction.measure_snr
+measure_p2p_scat = extraction.measure_p2p_scat
 
 get_berv = berv.get_berv
 
