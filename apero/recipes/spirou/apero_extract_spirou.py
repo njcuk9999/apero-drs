@@ -334,16 +334,16 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             else:
                 swprops, svprops = None, None
             # --------------------------------------------------------------
-            # Calculate measured SNR
+            # Calculate measured peak to peak scatter
             # --------------------------------------------------------------
-            eprops['MSNR_E2DS'] = extract.measure_snr(params,
-                                                      wprops['WAVEMAP'],
-                                                      eprops['E2DS'])
-            eprops['MSNR_E2DSFF'] = extract.measure_snr(params,
-                                                        wprops['WAVEMAP'],
-                                                        eprops['E2DSFF'])
+            eprops['MP2P_E2DS'] = extract.measure_p2p_scat(params,
+                                                           wprops['WAVEMAP'],
+                                                           eprops['E2DS'])
+            eprops['MP2P_E2DSFF'] = extract.measure_p2p_scat(params,
+                                                             wprops['WAVEMAP'],
+                                                             eprops['E2DSFF'])
             # set the source
-            skeys = ['MSNR_E2DS', 'MSNR_E2DSFF']
+            skeys = ['MP2P_E2DS', 'MP2P_E2DSFF']
             eprops.set_sources(skeys, mainname)
             # --------------------------------------------------------------
             # Plots
