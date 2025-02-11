@@ -436,7 +436,8 @@ def measure_p2p_scat(params: ParamDict, wavemap: np.ndarray, e2ds: np.ndarray,
         # get the flux in the blaze window
         e2ds_bw = e2ds[order_num][blaze_lower:blaze_upper]
         # get the average flux in the blaze window
-        medflux = mp.nanpercentile(e2ds_bw, 90)
+        with warnings.catch_warnings(record=True) as _:
+            medflux = mp.nanpercentile(e2ds_bw, 90)
         # don't continue if we have no med flux (order center is empty)
         if not np.isfinite(medflux):
             continue
