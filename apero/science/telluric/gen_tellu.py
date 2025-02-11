@@ -36,7 +36,7 @@ from apero.science.calib import flat_blaze
 from apero.science.calib import gen_calib
 from apero.science.telluric.core_tellu import load_tellu_file, wave_to_wave
 from apero.science.telluric import sky_corr
-
+from apero.science import extract
 
 # =============================================================================
 # Define variables
@@ -730,11 +730,15 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     spl_others, spl_water = load_tapas_spl(params, recipe, header,
                                            database=telludbm)
     # ----------------------------------------------------------------------
-    # load the snr from e2ds file
-    snr_dict = infile.get_hkey_vals('KW_P2P_BSCAT', dtype=float)
+    # Calculate measured peak to peak scatter
+    p2p_props = extract.measure_p2p_scat(params, wave_e2ds, image_e2ds_ini)
+    p2p_dict = p2p_props['BP2P']
+
+
     # ----------------------------------------------------------------------
     # run the snr qc without values (to push into storage)
-    sqc_value, sqc_name, sqc_logic, sqc_pass = qc_p2pscat_bands(params, snr_dict)
+    sqc_value, sqc_name, sqc_logic, sqc_pass = qc_p2pscat_bands(params,
+                                                                p2p_dict)
     # push into qc_params
     qc_values[0] = sqc_value
     qc_names[0] = sqc_name
@@ -751,6 +755,11 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
                                       res_e2ds_fwhm, res_e2ds_expo,
                                       template_props, wave_e2ds, res_s1d_fwhm,
                                       res_s1d_expo, database=telludbm)
+
+    # ----------------------------------------------------------------------
+    # get SNR for each order from header
+    nbo, nbpix = infile.shape
+    snr = infile.get_hkey_1d('KW_EXT_SNR', nbo, dtype=float)
     # mask all orders below min snr
     for order_num in range(nbo):
         # only mask if snr below threshold
