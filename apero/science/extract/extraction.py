@@ -448,12 +448,12 @@ def measure_p2p_scat(params: ParamDict, wavemap: np.ndarray, e2ds: np.ndarray,
         # add to vector
         snrs[order_num] = snr
     # add to sprops
-    sprops['MSNR'] = snrs
+    sprops['MP2P'] = snrs
     # -------------------------------------------------------------------------
     # now work out per band SNRs
     # -------------------------------------------------------------------------
     # storage in sprops
-    sprops['BSNR'] = dict()
+    sprops['BP2P'] = dict()
     # get the mean wavelength per order
     waveord = np.nanmean(wavemap, axis=1)
     # get pconst
@@ -469,7 +469,7 @@ def measure_p2p_scat(params: ParamDict, wavemap: np.ndarray, e2ds: np.ndarray,
         # get the mean snr for this band
         band_snr = np.nanmean(snrs[band_mask])
         # push into sprops
-        sprops['BSNR'][iband] = band_snr
+        sprops['BP2P'][iband] = band_snr
     # return the snr
     return sprops
 

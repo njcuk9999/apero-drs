@@ -722,11 +722,11 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     # get msnr values
     msnr_e2ds = eprops['MP2P_E2DS']
     # add the measured snr
-    e2dsfile.add_hkey_1d('KW_P2P_SCAT', values=msnr_e2ds['MSNR'])
+    e2dsfile.add_hkey_1d('KW_P2P_SCAT', values=msnr_e2ds['MP2P'])
     # add the measured band snrs
     e2dsfile.add_hkey_vals(f'KW_P2P_BSCAT', name='band',
-                           keys=list(msnr_e2ds['BSNR'].keys()),
-                           values=list(msnr_e2ds['BSNR'].values()))
+                           keys=list(msnr_e2ds['BP2P'].keys()),
+                           values=list(msnr_e2ds['BP2P'].values()))
     # add start and end extraction order used
     e2dsfile.add_hkey('KW_EXT_START', value=eprops['START_ORDER'])
     e2dsfile.add_hkey('KW_EXT_END', value=eprops['END_ORDER'])
@@ -803,11 +803,11 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     # get msnr values
     msnr_e2ds = eprops['MP2P_E2DSFF']
     # add the measured snr
-    e2dsfile.add_hkey_1d('KW_P2P_SCAT', values=msnr_e2ds['MSNR'])
+    e2dsfile.add_hkey_1d('KW_P2P_SCAT', values=msnr_e2ds['MP2P'])
     # add the measured band snrs
     e2dsfile.add_hkey_vals(f'KW_P2P_BSCAT', name='band',
-                           keys=list(msnr_e2ds['BSNR'].keys()),
-                           values=list(msnr_e2ds['BSNR'].values()))
+                           keys=list(msnr_e2ds['BP2P'].keys()),
+                           values=list(msnr_e2ds['BP2P'].values()))
     # set output key
     e2dsfffile.add_hkey('KW_OUTPUT', value=e2dsfffile.name)
     # need to use different thermal ratio keys if we have corrected thermal
