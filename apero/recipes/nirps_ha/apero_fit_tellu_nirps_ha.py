@@ -322,7 +322,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                                        s1dkind='recon')
         # ------------------------------------------------------------------
         # get measured SNR
-        cprops['MP2P_TCORR'] = extract.measure_p2p_scat(params, rcwprops['WAVEMAP'],
+        cprops['MP2P_TCORR'] = extract.measure_p2p_scat(params,
+                                                        wprops['WAVEMAP'],
                                                         cprops['CORRECTED_SP'])
         # set the source
         cprops.set_source('MP2P_TCORR', mainname)
