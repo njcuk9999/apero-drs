@@ -327,7 +327,18 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                                               s1dkind=s1dextfile)
             else:
                 swprops, svprops = None, None
-
+            # --------------------------------------------------------------
+            # Calculate measured peak to peak scatter
+            # --------------------------------------------------------------
+            eprops['MP2P_E2DS'] = extract.measure_p2p_scat(params,
+                                                           wprops['WAVEMAP'],
+                                                           eprops['E2DS'])
+            eprops['MP2P_E2DSFF'] = extract.measure_p2p_scat(params,
+                                                             wprops['WAVEMAP'],
+                                                             eprops['E2DSFF'])
+            # set the source
+            skeys = ['MP2P_E2DS', 'MP2P_E2DSFF']
+            eprops.set_sources(skeys, mainname)
             # --------------------------------------------------------------
             # Plots
             # --------------------------------------------------------------

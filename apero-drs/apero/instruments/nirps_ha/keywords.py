@@ -721,6 +721,14 @@ KDict.set('KW_EXT_TYPE', key='EXT_TYPE', comment='Extract type (E2DS or E2DSFF)'
 # SNR calculated in extraction process (per order)
 KDict.set('KW_EXT_SNR', key='EXTSN{0:03d}', comment='Extract: S_N order center')
 
+# Measured  peak-to-peak scatter calculated from an e2ds
+KDict.set('KW_P2P_SCAT', key='MP2P{0:03d}',
+          comment='Measured peak to peak scatter')
+
+# Measured peak-to-peak scatter in certain bands
+KDict.set('KW_P2P_BSCAT', key='BP2P_{0}',
+          comment='Measured peak to peak scatter')
+
 # Number of orders used in extraction process
 KDict.set('KW_EXT_NBO', key='EXT_NBO', comment='Extract: Number of orders used')
 

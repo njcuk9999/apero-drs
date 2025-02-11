@@ -319,7 +319,13 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         rcvprops = extract.e2ds_to_s1d(params, recipe, *rcargs,
                                        wgrid='velocity', fiber=fiber,
                                        s1dkind='recon')
-
+        # ------------------------------------------------------------------
+        # get measured SNR
+        cprops['MP2P_TCORR'] = extract.measure_p2p_scat(params,
+                                                        wprops['WAVEMAP'],
+                                                        cprops['CORRECTED_SP'])
+        # set the source
+        cprops.set_source('MP2P_TCORR', mainname)
         # ------------------------------------------------------------------
         # s1d plots
         # ------------------------------------------------------------------

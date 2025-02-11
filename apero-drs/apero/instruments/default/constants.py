@@ -1924,6 +1924,12 @@ CDict.add('EXTRACT_S1D_PLOT_ZOOM2', value=None,
                        'string list of floats) defines '
                        'the upper wavelength in nm'))
 
+# Photometric bands to use in peak-2-peak calculation (and their definitions)
+CDict.add('MEAS_SNR_PHOT_BANDS', value=apero_base.PHOT_BANDS,
+          dtype=dict, source=__NAME__, group=cgroup,
+          description='Photometric bands to use in peak-2-peak calculation '
+                       '(and their definitions)')
+
 # =============================================================================
 # CALIBRATION: THERMAL SETTINGS
 # =============================================================================

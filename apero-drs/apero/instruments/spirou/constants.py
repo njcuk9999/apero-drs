@@ -883,6 +883,19 @@ CDict.set('EXTRACT_S1D_PLOT_ZOOM1',
 CDict.set('EXTRACT_S1D_PLOT_ZOOM2',
           value=[1050, 1285, 1670, 2100, 2500], source=__NAME__)
 
+# define custom bands
+PHOT_BANDS = dict()
+PHOT_BANDS['Y'] = apero_base.PHOT_BANDS['Y']
+PHOT_BANDS['J'] = apero_base.PHOT_BANDS['J']
+PHOT_BANDS['H'] = apero_base.PHOT_BANDS['H']
+PHOT_BANDS['K'] = apero_base.PHOT_BANDS['K']
+
+# Photometric bands to use in peak-2-peak calculation (and their definitions)
+CDict.add('MEAS_SNR_PHOT_BANDS', value=PHOT_BANDS,
+          dtype=dict, source=__NAME__, group=cgroup,
+          description='Photometric bands to use in peak-2-peak calculation '
+                       '(and their definitions)')
+
 # =============================================================================
 # CALIBRATION: THERMAL SETTINGS
 # =============================================================================

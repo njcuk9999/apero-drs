@@ -722,6 +722,17 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     # add SNR parameters to header
     e2dsfile.add_hkey_1d('KW_EXT_SNR', values=eprops['SNR'],
                          dim1name='order')
+    e2dsfile.add_hkey('KW_EXT_NBO', value=len(eprops['SNR']))
+    # ----------------------------------------------------------------------
+    # get measured peak to peak scatter values
+    mp2p_e2ds = eprops['MP2P_E2DS']
+    # add the measured snr
+    e2dsfile.add_hkey_1d('KW_P2P_SCAT', values=mp2p_e2ds['MP2P'])
+    # add the measured band snrs
+    e2dsfile.add_hkey_vals(f'KW_P2P_BSCAT', name='band',
+                           keys=list(mp2p_e2ds['BP2P'].keys()),
+                           values=list(mp2p_e2ds['BP2P'].values()))
+    # ----------------------------------------------------------------------
     # add start and end extraction order used
     e2dsfile.add_hkey('KW_EXT_START', value=eprops['START_ORDER'])
     e2dsfile.add_hkey('KW_EXT_END', value=eprops['END_ORDER'])
@@ -795,6 +806,16 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     e2dsfffile.infiles = list(hfiles)
     # add extraction type (does not change for future files)
     e2dsfffile.add_hkey('KW_EXT_TYPE', value=e2dsfffile.name)
+    # ----------------------------------------------------------------------
+    # get measured peak to peak scatter values
+    mp2p_e2dsff = eprops['MP2P_E2DSFF']
+    # add the measured snr
+    e2dsfffile.add_hkey_1d('KW_P2P_SCAT', values=mp2p_e2dsff['MP2P'])
+    # add the measured band snrs
+    e2dsfffile.add_hkey_vals(f'KW_P2P_BSCAT', name='band',
+                           keys=list(mp2p_e2dsff['BP2P'].keys()),
+                           values=list(mp2p_e2dsff['BP2P'].values()))
+    # -------------------------------------------------------------------------
     # set output key
     e2dsfffile.add_hkey('KW_OUTPUT', value=e2dsfffile.name)
     # need to use different thermal ratio keys if we have corrected thermal
@@ -1001,6 +1022,16 @@ def write_extraction_files_ql(params, recipe, infile, rawfiles, combine, fiber,
     e2dsfile.add_hkey_1d('KW_EXT_SNR', values=eprops['SNR'],
                          dim1name='order')
     e2dsfile.add_hkey('KW_EXT_NBO', value=len(eprops['SNR']))
+    # -------------------------------------------------------------------------
+    # get measured peak to peak scatter values
+    mp2p_e2ds = eprops['MP2P_E2DS']
+    # add the measured snr
+    e2dsfile.add_hkey_1d('KW_P2P_SCAT', values=mp2p_e2ds['MP2P'])
+    # add the measured band snrs
+    e2dsfile.add_hkey_vals(f'KW_P2P_BSCAT', name='band',
+                           keys=list(mp2p_e2ds['BP2P'].keys()),
+                           values=list(mp2p_e2ds['BP2P'].values()))
+    # -------------------------------------------------------------------------
     # add start and end extraction order used
     e2dsfile.add_hkey('KW_EXT_START', value=eprops['START_ORDER'])
     e2dsfile.add_hkey('KW_EXT_END', value=eprops['END_ORDER'])
@@ -1052,6 +1083,16 @@ def write_extraction_files_ql(params, recipe, infile, rawfiles, combine, fiber,
     e2dsfffile.infiles = list(hfiles)
     # add extraction type (does not change for future files)
     e2dsfffile.add_hkey('KW_EXT_TYPE', value=e2dsfffile.name)
+    # get measured peak to peak scatter values
+    mp2p_e2dsff = eprops['MP2P_E2DSFF']
+    # -------------------------------------------------------------------------
+    # add the measured snr
+    e2dsfffile.add_hkey_1d('KW_P2P_SCAT', values=mp2p_e2dsff['MP2P'])
+    # add the measured band snrs
+    e2dsfffile.add_hkey_vals(f'KW_P2P_BSCAT', name='band',
+                           keys=list(mp2p_e2dsff['BP2P'].keys()),
+                           values=list(mp2p_e2dsff['BP2P'].values()))
+    # -------------------------------------------------------------------------
     # set output key
     e2dsfffile.add_hkey('KW_OUTPUT', value=e2dsfffile.name)
     # copy data

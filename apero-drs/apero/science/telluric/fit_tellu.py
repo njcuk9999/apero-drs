@@ -878,6 +878,9 @@ def correct_other_science(params, recipe, fiber, infile, cprops, rawfiles,
     # ------------------------------------------------------------------
     scorr = scorr / tpreprops['TELLU_FINITE_RES']
     # ------------------------------------------------------------------
+    # calculate SNR
+    mp2p_tcorr = extract.measure_p2p_scat(params, wprops['WAVEMAP'], scorr)
+    # ------------------------------------------------------------------
     # fake nprop dict
     nprops = dict()
     nprops['BLAZE_FILE'] = blaze_file
@@ -896,7 +899,7 @@ def correct_other_science(params, recipe, fiber, infile, cprops, rawfiles,
     # ------------------------------------------------------------------
     fargs = [fiber_infile, rawfiles, fiber, combine, nprops, wprops,
              trans_props, cprops, qc_params, template_props, tpreprops]
-    fkwargs = dict(CORRECTED_SP=scorr)
+    fkwargs = dict(CORRECTED_SP=scorr, MP2P_TCORR=mp2p_tcorr)
     corrfile = fit_tellu_write_corrected(params, recipe, *fargs, **fkwargs)
     # ------------------------------------------------------------------
     # Save 1d corrected spectra to file
@@ -1004,8 +1007,9 @@ def fit_tellu_summary(recipe, it, params, qc_params, tpreprops, fiber):
 def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
                               nprops, wprops, trans_props, cprops,
                               qc_params, template_props, tpreprops, **kwargs):
-    # get parameters from cprops
+    # get parameters from cprops (if not overwritten)
     sp_out = kwargs.get('CORRECTED_SP', cprops['CORRECTED_SP'])
+    mp2p_tcorr = kwargs.get('MP2P_TCORR', cprops['MP2P_TCORR'])
     # ------------------------------------------------------------------
     # Set fit_tellu trans table
     # ------------------------------------------------------------------
@@ -1108,6 +1112,13 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
                           value=template_props['APPROX_RV'])
         corrfile.add_hkey('KW_FTELLU_APPROX_RV_ERR',
                           value=template_props['APPROX_RV_ERR'])
+    # ----------------------------------------------------------------------
+    # add the measured snr
+    corrfile.add_hkey_1d('KW_P2P_SCAT', values=mp2p_tcorr['MP2P'])
+    # add the measured band snrs
+    corrfile.add_hkey_vals(f'KW_P2P_BSCAT', name='band',
+                           keys=list(mp2p_tcorr['BP2P'].keys()),
+                           values=list(mp2p_tcorr['BP2P'].values()))
     # ----------------------------------------------------------------------
     # copy data
     corrfile.data = sp_out

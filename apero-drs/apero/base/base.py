@@ -148,7 +148,19 @@ CIVIL_TWILIGHT = __YAML__['CIVIL_TWILIGHT']
 NAUTICAL_TWILIGHT = __YAML__['NAUTICAL_TWILIGHT']
 # Sun's elevation at astronomical twilight (degrees)
 ASTRONOMIAL_TWILIGHT = __YAML__['ASTRONOMIAL_TWILIGHT']
-
+# -----------------------------------------------------------------------------
+# Some astrophysical constants
+# -----------------------------------------------------------------------------
+PHOT_BANDS = dict()
+PHOT_BANDS['U'] = [305.511, 403.064]
+PHOT_BANDS['G'] = [379.764, 555.304]
+PHOT_BANDS['R'] = [541.823, 699.442]
+PHOT_BANDS['I'] = [669.241, 840.032]
+PHOT_BANDS['Z'] = [796.47, 1087.33]
+PHOT_BANDS['Y'] = [938.6, 1113.4]
+PHOT_BANDS['J'] = [1153.6, 1354.4]
+PHOT_BANDS['H'] = [1462.9, 1808.5]
+PHOT_BANDS['K'] = [1957.8, 2343.1]
 
 # =============================================================================
 # Define functions

@@ -858,6 +858,15 @@ KDict.add('KW_EXT_SNR', key='NULL', dtype=float, source=__NAME__,
           description=('SNR calculated in extraction process '
                        '(per order)'))
 
+# Measured  peak-to-peak scatter calculated from an e2ds
+KDict.add('KW_P2P_SCAT', key='NULL', dtype=float, source=__NAME__,
+          description='Measured peak-to-peak scatter calculated')
+
+# Measured peak-to-peak scatter in certain bands
+
+KDict.add('KW_P2P_BSCAT', key='NULL', dtype=float, source=__NAME__,
+          description='Measured peak-to-peak scatter in certain bands')
+
 # Number of orders used in extraction process
 KDict.add('KW_EXT_NBO', key='NULL', dtype=int, source=__NAME__,
           description='Number of orders used in extraction process')
