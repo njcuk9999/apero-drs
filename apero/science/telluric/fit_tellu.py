@@ -870,7 +870,7 @@ def correct_other_science(params, recipe, fiber, infile, cprops, rawfiles,
     scorr = scorr / tpreprops['TELLU_FINITE_RES']
     # ------------------------------------------------------------------
     # calculate SNR
-    msnr_tcorr = extract.measure_p2p_scat(params, scorr)
+    msnr_tcorr = extract.measure_p2p_scat(params, wprops['WAVEMAP'], scorr)
     # ------------------------------------------------------------------
     # fake nprop dict
     nprops = dict()
