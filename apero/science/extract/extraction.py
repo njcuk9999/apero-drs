@@ -437,6 +437,9 @@ def measure_p2p_scat(params: ParamDict, wavemap: np.ndarray, e2ds: np.ndarray,
         e2ds_bw = e2ds[order_num][blaze_lower:blaze_upper]
         # get the average flux in the blaze window
         medflux = mp.nanpercentile(e2ds_bw, 90)
+        # don't continue if we have no med flux (order center is empty)
+        if not np.isfinite(medflux):
+            continue
         # get the point to point flux for the noise estimate
         roll1 = (np.roll(e2ds_bw, 1) + np.roll(e2ds_bw, -1))/2
         # TODO: kw comment:   STD of spectrum + (mean of spectrum - 1)
