@@ -1103,11 +1103,11 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
                           value=template_props['APPROX_RV_ERR'])
     # ----------------------------------------------------------------------
     # add the measured snr
-    corrfile.add_hkey_1d('KW_P2P_SCAT', values=msnr_tcorr['MSNR'])
+    corrfile.add_hkey_1d('KW_P2P_SCAT', values=msnr_tcorr['MP2P'])
     # add the measured band snrs
     corrfile.add_hkey_vals(f'KW_P2P_BSCAT', name='band',
-                           keys=list(msnr_tcorr['BSNR'].keys()),
-                           values=list(msnr_tcorr['BSNR'].values()))
+                           keys=list(msnr_tcorr['BP2P'].keys()),
+                           values=list(msnr_tcorr['BP2P'].values()))
     # ----------------------------------------------------------------------
     # copy data
     corrfile.data = sp_out
