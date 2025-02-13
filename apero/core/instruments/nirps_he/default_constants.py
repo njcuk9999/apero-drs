@@ -2232,7 +2232,7 @@ TELLUP_OTHER_BOUNDS.value = '0.8, 1.5'
 # set the lower and upper bounds (string list) for the exponent of
 #  water absorber as a ratio to the airmass i.e. value/airmass compared to bound
 TELLUP_WATER_BOUNDS = TELLUP_WATER_BOUNDS.copy(__NAME__)
-TELLUP_WATER_BOUNDS.value = '0.1, 10'
+TELLUP_WATER_BOUNDS.value = '0.1, 20'
 
 # set the plot order for the finite resolution plot (somewhere aroun 1.45 um)
 TELLU_FINITE_RES_ORDER = TELLU_FINITE_RES_ORDER.copy(__NAME__)

@@ -110,6 +110,8 @@ odd_ratio_mean = fast.odd_ratio_mean
 
 percentile_bin = gen_math.percentile_bin
 
+polyfit_odd_ratio = gen_math.polyfit_odd_ratio
+
 linear_minimization = gen_math.linear_minimization
 
 relativistic_waveshift = gen_math.relativistic_waveshift

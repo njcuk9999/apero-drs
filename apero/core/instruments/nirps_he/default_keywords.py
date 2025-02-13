@@ -381,6 +381,11 @@ KW_DRS_DDATE.set(key='PP_DDATE', unit=uu.K,
                  comment='The date of source of DRS object data',
                  group='resolve', post_exclude=True)
 
+# Calculated geometric airmass at MJDMID
+KW_DRS_AIRMASS = KW_DRS_AIRMASS.copy(__NAME__)
+KW_DRS_AIRMASS.set(key='PP_AIRM', comment='Calculated airmass at MJDMID',
+                     group='resolve', post_exclude=True)
+
 # -----------------------------------------------------------------------------
 # Define general keywords
 # -----------------------------------------------------------------------------

@@ -706,6 +706,18 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     # set whole last order to zeros (rejected)
     keep[-1] = np.zeros(nbpix).astype(bool)
     # ----------------------------------------------------------------------
+    # construct a mask of the photometric band pass
+    bands = pconst.MEAS_SNR_PHOT_BANDS()
+    # a mask of just the photometric bands
+    band_mask = np.zeros_like(wave_e2ds).astype(bool)
+    # loop around bands
+    for band in bands:
+        # get the band range
+        band_range = bands[band]
+        # construct a mask for this band
+        mask_band = (wave_e2ds > band_range[0]) & (wave_e2ds < band_range[1])
+        band_mask |= mask_band
+    # ----------------------------------------------------------------------
     # force into 1D and apply keep map
     flatkeep = keep.ravel()
     wavemap = wave_e2ds.ravel()[flatkeep]
@@ -714,6 +726,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     res_fwhm = res_e2ds_fwhm.ravel()[flatkeep]
     res_expo = res_e2ds_expo.ravel()[flatkeep]
     orders = orders.ravel()[flatkeep]
+    band_mask = band_mask.ravel()[flatkeep]
     # deal with having a template
     if template_props['HAS_TEMPLATE']:
         template1 = np.array(template_props['TEMP_S2D'])
@@ -770,8 +783,8 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
             spectrum[order_mask] = np.nan
     # for numerical stability, remove NaNs. Setting to zero biases a bit
     # the CCF, but this should be OK after we converge
-    spectrum[~np.isfinite(spectrum)] = 0.0
-    spectrum[spectrum < 0.0] = 0.0
+    # spectrum[~np.isfinite(spectrum)] = 0.0
+    # spectrum[spectrum < 0.0] = 0.0
     # ----------------------------------------------------------------------
     # we start the water at 4
     expo_water = 4.0
@@ -820,10 +833,12 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     with warnings.catch_warnings(record=True) as _:
         log_others = np.log(trans_others)
         log_water = np.log(trans_water)
+    # define a vector for the running sigma
+    running_sigma = np.full_like(log_others, np.nan)
 
-    # TODO: Add to params
-    abs_bin_size = 0.05
-    abs_bin_range = [-0.4, 0]
+    # # TODO: Add to params
+    # abs_bin_size = 0.1
+    # abs_bin_range = [-1, 0]
 
     # mask the fluorescent bands
     fluorescent_mask = np.zeros_like(wavemap, dtype=bool)
@@ -831,21 +846,28 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         reject = (wavemap > fband[0]) & (wavemap < fband[1])
         fluorescent_mask[reject] = True
 
-    # get the bins for absorption
-    abs_bins = np.arange(abs_bin_range[0], abs_bin_range[1], abs_bin_size)
-    water_bins, other_bins = [], []
-    for ibin in range(len(abs_bins)):
+    # define the mask for good regions of domain - in photometric bands
+    #   and not in regions where fluorescent is known to happen
+    emask = band_mask & ~fluorescent_mask
+    emask_water = emask & (log_water > -1) & (log_water < -0.025)
+    emask_others = emask & (log_others > -1) & (log_others < -0.025)
 
-        # get the water bins
-        water_mask = abs(log_water - abs_bins[ibin]) < abs_bin_size/2
-        water_pos = np.where(water_mask)[0]
-        water_bins.append(water_pos)
-        # get the other bins
-        other_mask = abs(log_others - abs_bins[ibin]) < abs_bin_size/2
-        # add the fluorescent mask
-        other_mask &= ~fluorescent_mask
-        other_pos = np.where(other_mask)[0]
-        other_bins.append(other_pos)
+
+    # # get the bins for absorption
+    # abs_bins = np.arange(abs_bin_range[0], abs_bin_range[1], abs_bin_size)
+    # water_bins, other_bins = [], []
+    # for ibin in range(len(abs_bins)):
+    #
+    #     # get the water bins
+    #     water_mask = abs(log_water - abs_bins[ibin]) < abs_bin_size/2
+    #     water_pos = np.where(water_mask & band_mask)[0]
+    #     water_bins.append(water_pos)
+    #     # get the other bins
+    #     other_mask = abs(log_others - abs_bins[ibin]) < abs_bin_size/2
+    #     # add the fluorescent mask
+    #     other_mask &= ~fluorescent_mask
+    #     other_pos = np.where(other_mask & band_mask)[0]
+    #     other_bins.append(other_pos)
 
     # store approx rv and approx rv err
     approx_rvs = []
@@ -878,56 +900,90 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
 
         mad = mp.lowpassfilter(abs(log_spec_tmp_lowpass))
         running_sigma = mad / mp.normal_fraction()
-
+        # to avoid suspiciously small values we set the minimum to half the
+        # median of valid log_spec_tmp_lowpass values
+        min_sigma = np.nanmedian(running_sigma[np.isfinite(spectrum_tmp_lowpass)]) / 2
+        running_sigma[running_sigma < min_sigma] = min_sigma
         # storage
-        mean_res_depth_water = np.zeros(len(abs_bins))
-        mean_res_depth_others = np.zeros(len(abs_bins))
-        err_res_depth_water = np.zeros(len(abs_bins))
-        err_res_depth_others = np.zeros(len(abs_bins))
+        # mean_res_depth_water = np.zeros(len(abs_bins))
+        # mean_res_depth_others = np.zeros(len(abs_bins))
+        # err_res_depth_water = np.zeros(len(abs_bins))
+        # err_res_depth_others = np.zeros(len(abs_bins))
+        #
+        # mean_res_depth_water1 = np.zeros(len(abs_bins))
+        # mean_res_depth_others1 = np.zeros(len(abs_bins))
+        # err_res_depth_water1 = np.zeros(len(abs_bins))
+        # err_res_depth_others1 = np.zeros(len(abs_bins))
+        #
+        # for ibin in range(len(abs_bins)):
+        #
+        #     # measure the mean residual depth in water
+        #     water_flux_in_bin = log_spec_tmp_lowpass[water_bins[ibin]]
+        #     water_err_in_bin = running_sigma[water_bins[ibin]]
+        #
+        #     odd_out = mp.odd_ratio_mean(water_flux_in_bin, water_err_in_bin)
+        #     water_in_bin_med = mp.nanmedian(water_flux_in_bin)
+        #     water_in_bin_err = mp.estimate_sigma(water_flux_in_bin)
+        #
+        #     mean_res_depth_water[ibin] = water_in_bin_med
+        #     err_res_depth_water[ibin] = water_in_bin_err
+        #
+        #     mean_res_depth_water1[ibin] = odd_out[0]
+        #     err_res_depth_water1[ibin] = odd_out[1]
+        #
+        #     # measure the mean residual depth in others
+        #     others_flux_in_bin = log_spec_tmp_lowpass[other_bins[ibin]]
+        #     others_err_in_bin = running_sigma[other_bins[ibin]]
+        #     odd_out = mp.odd_ratio_mean(others_flux_in_bin, others_err_in_bin)
+        #     others_in_bin_med = mp.nanmedian(others_flux_in_bin)
+        #     others_in_bin_err = mp.estimate_sigma(others_flux_in_bin)
+        #
+        #     mean_res_depth_others[ibin] = others_in_bin_med
+        #     err_res_depth_others[ibin] = others_in_bin_err
+        #
+        #     mean_res_depth_others1[ibin] = odd_out[0]
+        #     err_res_depth_others1[ibin] = odd_out[1]
 
-        for ibin in range(len(abs_bins)):
+        # # re-normalize to the mean
+        # mean_res_depth_water -= np.nanmean(mean_res_depth_water)
+        # mean_res_depth_others -= np.nanmean(mean_res_depth_others)
+        #
+        # mean_res_depth_water1 -= np.nanmean(mean_res_depth_water1)
+        # mean_res_depth_others1 -= np.nanmean(mean_res_depth_others1)
 
-            # measure the mean residual depth in water
-            water_flux_in_bin = log_spec_tmp_lowpass[water_bins[ibin]]
-            water_err_in_bin = running_sigma[water_bins[ibin]]
-            odd_out = mp.odd_ratio_mean(water_flux_in_bin, water_err_in_bin)
-            mean_res_depth_water[ibin] = odd_out[0]
-            err_res_depth_water[ibin] = odd_out[1]
-            # measure the mean residual depth in others
-            others_flux_in_bin = log_spec_tmp_lowpass[other_bins[ibin]]
-            others_err_in_bin = log_spec_tmp_lowpass[other_bins[ibin]]
-            odd_out = mp.odd_ratio_mean(others_flux_in_bin, others_err_in_bin)
-            mean_res_depth_others[ibin] = odd_out[0]
-            err_res_depth_others[ibin] = odd_out[1]
-
-        # re-normalize to the mean
-        mean_res_depth_water -= np.nanmean(mean_res_depth_water)
-        mean_res_depth_others -= np.nanmean(mean_res_depth_others)
 
         # fitting the slope of residual amplitude of water
-        fit_water = np.polyfit(abs_bins, mean_res_depth_water, deg=1,
-                               w=1/err_res_depth_water)
+        # fit_water = np.polyfit(abs_bins, mean_res_depth_water, deg=1,
+        #                        w=1/err_res_depth_water)
+        fit_water = mp.polyfit_odd_ratio(log_water[emask_water],
+                                         log_spec_tmp_lowpass[emask_water],
+                                         running_sigma[emask_water], 1)
         slope_water = fit_water[0]
         # append to storage
         slope_water_list.append(slope_water)
         expo_water_list.append(expo_water)
         # fitting the slope of the residual amplitude of others
-        fit_others = np.polyfit(abs_bins, mean_res_depth_others, deg=1,
-                                w=1/err_res_depth_others)
+        # fit_others = np.polyfit(abs_bins, mean_res_depth_others, deg=1,
+        #                         w=1/err_res_depth_others)
+        fit_others = mp.polyfit_odd_ratio(log_others[emask_others],
+                                          log_spec_tmp_lowpass[emask_others],
+                                          running_sigma[emask_others], 1)
         slope_others = fit_others[0]
         # append to storage
         slope_others_list.append(slope_others)
         expo_others_list.append(expo_others)
         # storage for plotting
         dexpos.append(np.array(dexpo))
-        mean_rd_water.append(np.array(mean_res_depth_water))
-        emean_rd_water.append(np.array(err_res_depth_water))
-        mean_rd_others.append(np.array(mean_res_depth_others))
-        emean_rd_others.append(np.array(err_res_depth_others))
+        # mean_rd_water.append(np.array(mean_res_depth_water))
+        # emean_rd_water.append(np.array(err_res_depth_water))
+        # mean_rd_others.append(np.array(mean_res_depth_others))
+        # emean_rd_others.append(np.array(err_res_depth_others))
         # if iteration zero we just add the slopes to the expo
+
+        expo_water += (slope_water * expo_water)
+        expo_others += (slope_others * expo_others)
+
         if iteration == 0:
-            expo_water += slope_water
-            expo_others += slope_others
             # finally add one to the iterator
             iteration += 1
             continue
@@ -935,13 +991,13 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         # only if we have more than one iteration
         # ---------------------------------------------------------------------
         # find the place where the water residuals null to zero (intercept)
-        expo_water_fit = np.polyfit(slope_water_list[-5:],
-                                    expo_water_list[-5:], deg=1)
-        expo_water = expo_water_fit[1]
+        # expo_water_fit = np.polyfit(slope_water_list,
+        #                            expo_water_list, deg=1)
+        # expo_water = expo_water_fit[1]
         # find the place where the others residuals null to zero (intercept)
-        expo_others_fit = np.polyfit(slope_others_list[-5:],
-                                     expo_others_list[-5:], deg=1)
-        expo_others = expo_others_fit[1]
+        # expo_others_fit = np.polyfit(slope_others_list,
+        #                             expo_others_list, deg=1)
+        # expo_others = expo_others_fit[1]
         # convergence check
         water_part = (expo_water_list[-1] - expo_water_list[-2])
         others_part = (expo_others_list[-1] - expo_others_list[-2])
@@ -1103,16 +1159,22 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
                                       res_s1d_expo, database=telludbm)
     # ----------------------------------------------------------------------
     # plot the slope fit mean res plot
-    recipe.plot('TELLUP_MEAN_RES', dexpos=dexpos,
-                mean_rd_water=mean_rd_water, emean_rd_water=emean_rd_water,
-                mean_rd_others=mean_rd_others, emean_rd_others=emean_rd_others,
-                abs_bins=abs_bins, n_iterations=iteration,
+    recipe.plot('TELLUP_MEAN_RES',
+                log_water=log_water, log_others=log_others,
+                log_spec_tmp_lowpass=log_spec_tmp_lowpass,
+                running_sigma=running_sigma,
+                emask_water=emask_water,
+                emask_others=emask_others,
+                n_iterations=iteration,
                 objname=infile.get_hkey('KW_OBJNAME', dtype=str),
                 dprtype=infile.get_hkey('KW_DPRTYPE', dtype=str))
-    recipe.plot('SUM_TELLUP_MEAN_RES', dexpos=dexpos,
-                mean_rd_water=mean_rd_water, emean_rd_water=emean_rd_water,
-                mean_rd_others=mean_rd_others, emean_rd_others=emean_rd_others,
-                abs_bins=abs_bins, n_iterations=iteration,
+    recipe.plot('SUM_TELLUP_MEAN_RES',
+                log_water=log_water, log_others=log_others,
+                log_spec_tmp_lowpass=log_spec_tmp_lowpass,
+                running_sigma=running_sigma,
+                emask_water=emask_water,
+                emask_others=emask_others,
+                n_iterations=iteration,
                 objname=infile.get_hkey('KW_OBJNAME', dtype=str),
                 dprtype=infile.get_hkey('KW_DPRTYPE', dtype=str))
     # plot to show absorption spectrum
