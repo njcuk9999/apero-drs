@@ -1102,6 +1102,69 @@ def get_circular_mask(width: int):
     return circle_mask
 
 
+def polyfit_odd_ratio(xvector: np.ndarray, yvector: np.ndarray,
+                      yerr: np.array,
+                      degree: int, odd_ratio=1e-3, force_sigma=False,
+                      max_iteration=50):
+    """
+    A robust polyfit function that iteratively fits a polynomial to the
+    data until the dispersion of values is accounted for by a weight vector.
+    This is equivalent to a soft-edged sigma-clipping
+
+    :param xvector: np.ndarray, the x array to pass to np.polyval
+    :param yvector: np.ndarray, the y array to pass to np.polyval
+    :param yerr: np.ndarray, the error on the y values
+    :param degree: int, the degree of polynomial fit passed to np.polyval
+    :param odd_ratio: float, the threshold sigma above which a point is
+                       considered an outlier
+    :param force_sigma: bool, if True, force that the robust sigma of
+                        the residuals/yerr is 1
+    :param max_iteration: int, the maximum number of iterations
+
+    :return: a tuple containing the polynomial fit (as a NumPy array)
+    """
+    # deal with nans in the data
+    nanmask = np.isfinite(xvector) & np.isfinite(yvector) & np.isfinite(yerr)
+    xvector = xvector[nanmask]
+    yvector = yvector[nanmask]
+    yerr = yerr[nanmask]
+    # setup the weights
+    weight_prev = np.zeros_like(xvector)
+    weight = np.ones_like(xvector)
+    # Initialize the fit
+    fit = np.polyfit(xvector, yvector, degree)
+    # Set the maximum number of iterations and initialize the iteration counter
+    ite = 0
+    # loop until the maximum difference between the current and previous weights
+    while (np.abs(np.max(weight - weight_prev)) > odd_ratio) or (ite < 2):
+        # deal with too many iterations
+        if ite > max_iteration:
+            raise ValueError('Polyfit_odd_ratio: Too many iterations')
+        # Calculate the polynomial fit using the x- and y-values, and the
+        # given degree, weighting the fit by the weights. Weights are computed
+        # from the dispersion to the fit and the sigma
+        fit = np.polyfit(xvector, yvector, degree,  w=weight/yerr)
+        # Calculate the residuals of the polynomial fit by subtracting the
+        guess = np.polyval(fit, xvector)
+        diff = yvector - guess
+        # Calculate how many sigma away we are
+        nsig = diff / yerr
+        # force that the robust sigma of the residuals/yerr is 1
+        if force_sigma:
+            nsig = nsig / robust_nanstd(nsig)
+        # get the gauss ratio
+        gauss_ratio = np.exp(-0.5 * nsig ** 2)
+        odd_bad = odd_ratio / (gauss_ratio + odd_ratio)
+        odd_good = 1 - odd_bad
+        # update the previous weights
+        weight_prev = np.array(weight)
+        weight = odd_good
+        # add to counter
+        ite += 1
+
+    # return the fit
+    return fit
+
 # =============================================================================
 # Define wave functions
 # =============================================================================
