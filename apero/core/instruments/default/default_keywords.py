@@ -34,7 +34,7 @@ __all__ = [  # input keys
     'KW_DRS_PMRA', 'KW_DRS_PMRA_S', 'KW_DRS_PMDE', 'KW_DRS_PMDE_S',
     'KW_DRS_PLX', 'KW_DRS_PLX_S', 'KW_DRS_RV', 'KW_DRS_RV_S',
     'KW_DRS_EPOCH', 'KW_DRS_TEFF', 'KW_DRS_TEFF_S', 'KW_DRS_SPTYPE',
-    'KW_DRS_SPTYPE_S', 'KW_DRS_DSOURCE', 'KW_DRS_DDATE',
+    'KW_DRS_SPTYPE_S', 'KW_DRS_DSOURCE', 'KW_DRS_DDATE', 'KW_DRS_AIRMASS',
     # general output keys
     'KW_VERSION', 'KW_PPVERSION', 'KW_DPRTYPE', 'KW_PID', 'KW_DRS_MODE',
     'KW_INFILE1', 'KW_INFILE2', 'KW_INFILE3', 'KW_DRS_MODE',
@@ -560,6 +560,11 @@ KW_DRS_DDATE = Keyword('KW_DRS_DDATE', key='NULL', dtype=str,
                        source=__NAME__,
                        description='The date of the source of the DRS object '
                                    'data (after preprocessing)')
+
+# Calculated geometric airmass at MJDMID
+KW_DRS_AIRMASS = Keyword('KW_DRS_AIRMASS', key='NULL', dtype=float,
+                         source=__NAME__,
+                         description='Calculated geometric airmass at MJDMID')
 
 # -----------------------------------------------------------------------------
 # Define general keywords
