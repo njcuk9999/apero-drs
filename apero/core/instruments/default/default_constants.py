@@ -3489,11 +3489,11 @@ WAVE_FP_PEAK_LIM = Const('WAVE_FP_PEAK_LIM', value=None,
                          description=('define the normalised limit below which '
                                       'FP peaks are not used'))
 
-#    Define peak to peak width that is too large (removed from FP peaks)
+#    Define pixel to pixel width that is too large (removed from FP peaks)
 WAVE_FP_P2P_WIDTH_CUT = Const('WAVE_FP_P2P_WIDTH_CUT', value=None,
                               dtype=float, source=__NAME__, minimum=0.0,
                               group=cgroup,
-                              description=('Define peak to peak width that is '
+                              description=('Define pixel to pixel width that is '
                                            'too large (removed from FP peaks)'))
 
 # Define the minimum instrumental error

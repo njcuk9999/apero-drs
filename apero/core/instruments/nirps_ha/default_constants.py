@@ -2007,7 +2007,7 @@ WAVE_FP_NORM_PERCENTILE.value = 95
 WAVE_FP_PEAK_LIM = WAVE_FP_PEAK_LIM.copy(__NAME__)
 WAVE_FP_PEAK_LIM.value = 0.1
 
-#    Define peak to peak width that is too large (removed from FP peaks)
+#    Define pixel to pixel width that is too large (removed from FP peaks)
 WAVE_FP_P2P_WIDTH_CUT = WAVE_FP_P2P_WIDTH_CUT.copy(__NAME__)
 WAVE_FP_P2P_WIDTH_CUT.value = 30
 

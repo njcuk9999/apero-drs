@@ -318,7 +318,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                                        wgrid='velocity', fiber=fiber,
                                        s1dkind='recon')
         # ------------------------------------------------------------------
-        # get measured peak to peak scatter
+        # get measured pixel to pixel scatter
         cprops['MP2P_TCORR'] = extract.measure_p2p_scat(params, wprops['WAVEMAP'],
                                                         cprops['CORRECTED_SP'])
         # set the source
