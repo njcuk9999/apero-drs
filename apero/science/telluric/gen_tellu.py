@@ -743,7 +743,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     spl_others, spl_water = load_tapas_spl(params, recipe, header,
                                            database=telludbm)
     # ----------------------------------------------------------------------
-    # Calculate measured peak to peak scatter
+    # Calculate measured pixel to pixel scatter
     p2p_props = extract.measure_p2p_scat(params, wave_e2ds, image_e2ds_ini)
     p2p_dict = p2p_props['BP2P']
 

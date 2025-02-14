@@ -841,11 +841,11 @@ KW_EXT_SNR.set(key='EXTSN{0:03d}', comment='Extract: S_N order center')
 # Measured peak-to-peak scatter calculated from an e2ds
 KW_P2P_SCAT = KW_P2P_SCAT.copy(__NAME__)
 KW_P2P_SCAT.set(key='MP2P{0:03d}',
-                comment='Measured peak to peak scatter')
+                comment='Measured pixel to pixel scatter')
 
 # Measured peak-to-peak scatter in certain bands
 KW_P2P_BSCAT = KW_P2P_BSCAT.copy(__NAME__)
-KW_P2P_BSCAT.set(key='BP2P_{0}', comment='Measured peak to peak scatter')
+KW_P2P_BSCAT.set(key='BP2P_{0}', comment='Measured pixel to pixel scatter')
 
 # Number of orders used in extraction process
 KW_EXT_NBO = KW_EXT_NBO.copy(__NAME__)
@@ -1463,7 +1463,7 @@ KW_WFP_CM_INDX.set(key='WFPCMIND',
 # the FP widths used for each order (1D list)
 KW_WFP_WIDUSED = KW_WFP_WIDUSED.copy(__NAME__)
 KW_WFP_WIDUSED.set(key='WFPWD{0:03d}',
-                   comment='The FP width (peak to peak) used for each order',
+                   comment='The FP width (pixel to pixel) used for each order',
                    group='wave')
 
 # the percentile to normalise the FP flux per order used
