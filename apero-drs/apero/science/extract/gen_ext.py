@@ -724,7 +724,7 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
                          dim1name='order')
     e2dsfile.add_hkey('KW_EXT_NBO', value=len(eprops['SNR']))
     # ----------------------------------------------------------------------
-    # get measured peak to peak scatter values
+    # get measured pixel to pixel scatter values
     mp2p_e2ds = eprops['MP2P_E2DS']
     # add the measured snr
     e2dsfile.add_hkey_1d('KW_P2P_SCAT', values=mp2p_e2ds['MP2P'])
@@ -807,7 +807,7 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     # add extraction type (does not change for future files)
     e2dsfffile.add_hkey('KW_EXT_TYPE', value=e2dsfffile.name)
     # ----------------------------------------------------------------------
-    # get measured peak to peak scatter values
+    # get measured pixel to pixel scatter values
     mp2p_e2dsff = eprops['MP2P_E2DSFF']
     # add the measured snr
     e2dsfffile.add_hkey_1d('KW_P2P_SCAT', values=mp2p_e2dsff['MP2P'])
@@ -1023,7 +1023,7 @@ def write_extraction_files_ql(params, recipe, infile, rawfiles, combine, fiber,
                          dim1name='order')
     e2dsfile.add_hkey('KW_EXT_NBO', value=len(eprops['SNR']))
     # -------------------------------------------------------------------------
-    # get measured peak to peak scatter values
+    # get measured pixel to pixel scatter values
     mp2p_e2ds = eprops['MP2P_E2DS']
     # add the measured snr
     e2dsfile.add_hkey_1d('KW_P2P_SCAT', values=mp2p_e2ds['MP2P'])
@@ -1083,7 +1083,7 @@ def write_extraction_files_ql(params, recipe, infile, rawfiles, combine, fiber,
     e2dsfffile.infiles = list(hfiles)
     # add extraction type (does not change for future files)
     e2dsfffile.add_hkey('KW_EXT_TYPE', value=e2dsfffile.name)
-    # get measured peak to peak scatter values
+    # get measured pixel to pixel scatter values
     mp2p_e2dsff = eprops['MP2P_E2DSFF']
     # -------------------------------------------------------------------------
     # add the measured snr

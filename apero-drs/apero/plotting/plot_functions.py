@@ -3905,51 +3905,40 @@ def plot_tellup_mean_res(plotter: Plotter, graph: Graph,
         return
     # ------------------------------------------------------------------
     # get the arguments from kwargs
-    dexpos = kwargs['dexpos']
-    mean_rd_water= kwargs['mean_rd_water']
-    emean_rd_water = kwargs['emean_rd_water']
-    mean_rd_others = kwargs['mean_rd_others']
-    emean_rd_others = kwargs['emean_rd_others']
-    abs_bins = kwargs['abs_bins']
+    log_water = kwargs['log_water']
+    log_others = kwargs['log_others']
+    log_spec_tmp_lowpass = kwargs['log_spec_tmp_lowpass']
+    running_sigma = kwargs['running_sigma']
+    emask_water = kwargs['emask_water']
+    emask_others = kwargs['emask_others']
     objname = kwargs['objname']
     dprtype = kwargs['dprtype']
     n_iterations = kwargs['n_iterations']
     # ------------------------------------------------------------------
     # set up plot
-    fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
+    fig, frames = graph.set_figure(plotter, nrows=2, ncols=1, sharex='all',
+                                  sharey='all')
     # construct the title
     targs = [objname, dprtype, n_iterations]
-    titlesup = '{0} [{1}], Total iterations={2}'.format(*targs)
-
-    for it in range(len(dexpos)):
-        dexpo = dexpos[it]
-        mean_res_depth_water = mean_rd_water[it]
-        err_res_depth_water = emean_rd_water[it]
-        mean_res_depth_others = mean_rd_others[it]
-        err_res_depth_others = emean_rd_others[it]
-
-        alpha = 1 if dexpo < 0.01 else 0.1
-
-        # label for last iteration
-        if it == len(dexpos) - 1:
-            water_label = 'Water'
-            other_label = 'Others'
-        else:
-            water_label, other_label = None, None
-
-        frame.errorbar(abs_bins, mean_res_depth_water,
-                       yerr=err_res_depth_water,
-                       ls='None', marker='o', color='b', alpha=alpha,
-                       label=water_label)
-        frame.errorbar(abs_bins, mean_res_depth_others,
-                       yerr=err_res_depth_others,
-                       ls='None', marker='o', color='orange', alpha=alpha,
-                       label=other_label)
-    # add legend
-    frame.legend(loc=0)
-    frame.set(xlabel='log(absorption)', ylabel='Average residual depth')
-    # plot super title
-    plotter.plt.suptitle(titlesup)
+    titlesup = 'Optical depth residuals [{0}, {1}] nitr={2}'.format(*targs)
+    # plot the water
+    frames[0].errorbar(log_water[emask_water],
+                       log_spec_tmp_lowpass[emask_water],
+                       yerr=running_sigma[emask_water],
+                       marker='.', ls='None', alpha=0.5)
+    frames[0].set(ylabel='Water residual')
+    # plot the others
+    frames[1].errorbar(log_others[emask_others],
+                       log_spec_tmp_lowpass[emask_others],
+                       yerr=running_sigma[emask_others],
+                       marker='.', ls='None', alpha=0.5)
+    frames[1].set(ylabel='Dry residual')
+    # add the
+    for frame in frames:
+        # set the x and y limits
+        frame.set(xlim=[-1, 0], ylim=[-0.5, 0.5], xlabel='Optical depth')
+        # add a grid
+        add_grid(frame)
     # ------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)

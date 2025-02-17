@@ -214,7 +214,7 @@ def skymodel_table(params: ParamDict, sky_files: Union[List[str], None],
         # get exptime
         exptime = infile.get_hkey('KW_EXPTIME', dtype=float)
         # get airmass
-        airmass = infile.get_hkey('KW_AIRMASS', dtype=float)
+        airmass = infile.get_hkey('KW_DRS_AIRMASS', dtype=float)
         # get sun elevation
         sun_elev = infile.get_hkey('KW_SUN_ELEV', dtype=float)
         # get mid exposure time

@@ -10,10 +10,13 @@ Created on 2019-12-12 at 09:45
 @author: cook
 """
 from typing import Any, Tuple, Union
+import warnings
 
 import numpy as np
 import pandas as pd
 from astropy import units as uu
+from astropy.coordinates import EarthLocation, AltAz, ICRS
+from astropy.coordinates import SkyCoord, Distance
 
 from aperocore.base import base
 from aperocore.constants import param_functions
@@ -271,6 +274,12 @@ def resolve_target(params: ParamDict, pconst: Instrument,
     # BERV must be in m/s [header and database values in km/s]
     rv = rv * 1000
     # -------------------------------------------------------------------------
+    # add a geometric airmass
+    airmass = get_geometric_airmass(ra_deg, dec_deg, plx, pmra, pmde, epoch,
+                                    params['OBS_LAT'], params['OBS_LONG'],
+                                    params['OBS_ALT'],
+                                    header[params['KW_MID_OBS_TIME'][0]])
+    # -------------------------------------------------------------------------
     # update header
     header = drs_fits.Header(header)
     # add object name and source
@@ -305,12 +314,94 @@ def resolve_target(params: ParamDict, pconst: Instrument,
     # add the data source / time added key
     header.set_key(params, 'KW_DRS_DSOURCE', value=data_source)
     header.set_key(params, 'KW_DRS_DDATE', value=data_date)
+    # add the geometric airmass
+    header.set_key(params, 'KW_DRS_AIRMASS', value=airmass)
     # -------------------------------------------------------------------------
     # must update DRSOBJN
     header.set_key(params, 'KW_OBJNAME', value=objname)
     # -------------------------------------------------------------------------
     # return the header
     return header
+
+
+def propagate_coords(ra: float, dec: float, plx: float, pmra: float,
+                     pmde: float, epoch: float, obs_time: Time) -> SkyCoord:
+    """
+    Propagate coordinates to the observation time (from the epoch time)
+
+    :param ra: float, right ascension in degrees
+    :param dec: float, declination in degrees
+    :param plx: float, parallax in mas
+    :param pmra: float, proper motion in RA in mas/yr
+    :param pmde: float, proper motion in Dec in mas/yr
+    :param epoch: float, the epoch of the coordinates
+    :param obs_time: astropy.time.Time, the observation time
+
+    :return: astropy.coordinates.SkyCoord, the propagated coordinates
+    """
+    # deal with distance
+    if plx <= 0:
+        distance = None
+    else:
+        distance = Distance(parallax=plx * uu.mas)
+    # need to propagate ra and dec to J2000
+    coords = SkyCoord(ra=ra * uu.deg,
+                      dec=dec * uu.deg,
+                      distance=distance,
+                      pm_ra_cosdec=pmra * uu.mas / uu.yr,
+                      pm_dec=pmde * uu.mas / uu.yr,
+                      obstime=Time(epoch, format='jd'))
+    # work out the delta time between epoch and J2000.0
+    with warnings.catch_warnings(record=True) as _:
+        jepoch = Time(epoch, format='jd')
+        delta_time = (obs_time.jd - jepoch.jd) * uu.day
+    # get the coordinates
+    with warnings.catch_warnings(record=True) as _:
+        # center the image on the current coordinates
+        curr_coords = coords.apply_space_motion(dt=delta_time)
+    # return some stuff
+    return curr_coords
+
+
+def get_geometric_airmass(ra: float, dec: float, plx: float, pmra: float,
+                          pmde: float, epoch: float,
+                          lat: float, lon: float,
+                          alt: float, mjd_mid: float) -> float:
+    """
+    Get the geometric airmass for a given object
+
+    :param ra: float, right ascension in degrees
+    :param dec: float, declination in degrees
+    :param plx: float, parallax in mas
+    :param pmra: float, proper motion in RA in mas/yr
+    :param pmde: float, proper motion in Dec in mas/yr
+    :param epoch: float, the epoch of the coordinates
+    :param lat: float, latitude in degrees
+    :param lon: float, longitude in degrees
+    :param alt: float, altitude in meters
+    :param mjd_mid: float, the mid point of the observation in MJD
+
+    :return: float, the geometric airmass
+    """
+    # deal with no ra or dec
+    if not np.isfinite(ra) or not np.isfinite(dec):
+        return np.nan
+    # get the earth location using predefined values
+    loc = EarthLocation(lat=lat * uu.deg, lon=lon * uu.deg,
+                        height=alt * uu.m)
+    time = Time(mjd_mid, format='mjd')
+    # get the AltAz frame for the telescope if looking at this object
+    aa = AltAz(location=loc, obstime=time)
+    # update the coordinates to the observation time (tiny affect)
+    skycoord = propagate_coords(ra, dec, plx, pmra, pmde, epoch, time)
+    # get the coordinates in IRCS frame
+    icrs_coord = ICRS(ra=skycoord.ra, dec=skycoord.dec)
+    # account for proper motion and parallax
+    aa_coord = icrs_coord.transform_to(aa)
+    # get the airmass from the sec(z) of the coords
+    airmass = aa_coord.secz.value
+    # return the updated airmass
+    return airmass
 
 
 def get_obj_reject_list(params: ParamDict) -> np.ndarray:

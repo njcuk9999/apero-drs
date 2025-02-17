@@ -1443,7 +1443,7 @@ CDict.set('WAVE_FP_NORM_PERCENTILE', value=95, source=__NAME__)
 # Define the normalised limit below which FP peaks are not used
 CDict.set('WAVE_FP_PEAK_LIM', value=0.1, source=__NAME__)
 
-# Define peak to peak width that is too large (removed from FP peaks)
+# Define pixel to pixel width that is too large (removed from FP peaks)
 CDict.set('WAVE_FP_P2P_WIDTH_CUT', value=15, source=__NAME__)
 
 # Define the minimum instrumental error

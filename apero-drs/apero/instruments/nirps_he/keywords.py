@@ -374,6 +374,11 @@ KDict.set('KW_DRS_DDATE', key='PP_DDATE', unit=uu.K,
           comment='The date of source of DRS object data',
           group='resolve', post_exclude=True)
 
+# Calculated geometric airmass at MJDMID
+KDict.set('KW_DRS_AIRMASS', key='PP_AIRMASS',
+          comment='Calculated airmass at MJDMID',
+          group='resolve', post_exclude=True)
+
 # -----------------------------------------------------------------------------
 # Define general keywords
 # -----------------------------------------------------------------------------
@@ -722,11 +727,11 @@ KDict.set('KW_EXT_SNR', key='EXTSN{0:03d}', comment='Extract: S_N order center')
 
 # Measured  peak-to-peak scatter calculated from an e2ds
 KDict.set('KW_P2P_SCAT', key='MP2P{0:03d}',
-          comment='Measured peak to peak scatter')
+          comment='Measured pixel to pixel scatter')
 
 # Measured peak-to-peak scatter in certain bands
 KDict.set('KW_P2P_BSCAT', key='BP2P_{0}',
-          comment='Measured peak to peak scatter')
+          comment='Measured pixel to pixel scatter')
 
 # Number of orders used in extraction process
 KDict.set('KW_EXT_NBO', key='EXT_NBO', comment='Extract: Number of orders used')

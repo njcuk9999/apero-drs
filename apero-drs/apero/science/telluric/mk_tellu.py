@@ -232,7 +232,7 @@ def calculate_tellu_res_absorption(params, recipe, image, template_props,
         eargs = [berv, func_name]
         raise AperoCodedException(params, '09-016-00004', targs=eargs)
     # get airmass from header
-    airmass = header[params['KW_AIRMASS'][0]]
+    airmass = header[params['KW_DRS_AIRMASS'][0]]
     # get reference wave map
     mwavemap = refprops['WAVEMAP']
     # get wave map

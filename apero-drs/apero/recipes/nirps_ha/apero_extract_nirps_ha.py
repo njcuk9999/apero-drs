@@ -328,7 +328,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             else:
                 swprops, svprops = None, None
             # --------------------------------------------------------------
-            # Calculate measured peak to peak scatter
+            # Calculate measured pixel to pixel scatter
             # --------------------------------------------------------------
             eprops['MP2P_E2DS'] = extract.measure_p2p_scat(params,
                                                            wprops['WAVEMAP'],

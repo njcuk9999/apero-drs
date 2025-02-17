@@ -418,7 +418,7 @@ def measure_p2p_scat(params: ParamDict, wavemap: np.ndarray, e2ds: np.ndarray,
     :param blaze_width: int, the width of the blaze window, if None taken from
                         params['FF_BLAZE_HALF_WINDOW']
 
-    :return: float, the measure of the peak to peak scatter in this order
+    :return: float, the measure of the pixel to pixel scatter in this order
     """
     # set up output properties
     sprops = dict()

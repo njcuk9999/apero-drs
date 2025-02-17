@@ -1401,7 +1401,7 @@ CDict.set('WAVE_FP_NORM_PERCENTILE', value=95, source=__NAME__)
 # Define the normalised limit below which FP peaks are not used
 CDict.set('WAVE_FP_PEAK_LIM', value=0.1, source=__NAME__)
 
-# Define peak to peak width that is too large (removed from FP peaks)
+# Define pixel to pixel width that is too large (removed from FP peaks)
 CDict.set('WAVE_FP_P2P_WIDTH_CUT', value=30, source=__NAME__)
 
 # Define the minimum instrumental error
@@ -1808,7 +1808,7 @@ CDict.set('TELLUP_OTHER_BOUNDS', value=[0.8, 1.5], source=__NAME__)
 
 # set the lower and upper bounds (string list) for the exponent of
 # water absorber as a ratio to the airmass i.e. value/airmass compared to bound
-CDict.set('TELLUP_WATER_BOUNDS', value=[0.1, 10], source=__NAME__)
+CDict.set('TELLUP_WATER_BOUNDS', value=[0.1, 20], source=__NAME__)
 
 # set the plot order for the finite resolution plot (somewhere around 1.45 um)
 CDict.set('TELLU_FINITE_RES_ORDER', value=49, source=__NAME__)

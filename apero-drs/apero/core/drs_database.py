@@ -904,7 +904,7 @@ class TelluricDatabase(DatabaseManager):
             objname = _get_hkey(self.params, 'KW_OBJNAME', hdict, header)
         # get airmass
         if airmass is None:
-            airmass = _get_hkey(self.params, 'KW_AIRMASS', hdict, header,
+            airmass = _get_hkey(self.params, 'KW_DRS_AIRMASS', hdict, header,
                                 dtype=float)
         # get tau_water
         if tau_water is None:

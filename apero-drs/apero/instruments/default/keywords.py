@@ -407,6 +407,10 @@ KDict.add('KW_DRS_DDATE', key='NULL', dtype=str,
           description='The date of the source of the DRS object '
                       'data (after preprocessing)')
 
+# Calculated geometric airmass at MJDMID
+KDict.add('KW_DRS_AIRMASS', key='NULL', dtype=float, source=__NAME__,
+          description='Calculated geometric airmass at MJDMID')
+
 # -----------------------------------------------------------------------------
 # Define general keywords
 # -----------------------------------------------------------------------------
