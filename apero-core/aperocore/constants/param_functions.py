@@ -1211,8 +1211,8 @@ class SubParamDict():
             return True
         return False
 
-    def __str__(self) -> str:
-        # temporary create a new parameter dictionary
+    def as_param_dict(self) -> ParamDict:
+        # create a new parameter dictionary
         param_dict = ParamDict()
 
         for key in self.param_dict.data.keys():
@@ -1220,8 +1220,14 @@ class SubParamDict():
                 param_dict.set(key[self.path_len:], self.param_dict[key],
                                source=self.param_dict.sources[key],
                                instance=self.param_dict.instances[key])
+        return param_dict
+
+    def __str__(self) -> str:
+        # get the data as a parameter dictionary
+        param_dict = self.as_param_dict()
+        # get the string representation of that parameter dictionary
         return_string = param_dict.__str__()
-        # tidy up
+        # we don't need to keep it - tidy up and remove the param_dict
         del param_dict
         # return return string
         return return_string
