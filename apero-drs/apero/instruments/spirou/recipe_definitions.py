@@ -652,7 +652,7 @@ apero_thermal.set_kwarg(**wavefile)
 apero_thermal.set_kwarg(**no_in_qc)
 apero_thermal.set_min_nfiles('files', 2)
 apero_thermal.set_kwarg(name='--forceext', dtype='bool',
-                        default_ref='THERMAL_ALWAYS_EXTRACT',
+                        default_ref='CAL.THERM.ALWAYS_EXTRACT',
                         helpstr=textentry('THERMAL_EXTRACT_HELP'))
 apero_thermal.group_func = grouping.group_by_dirname
 apero_thermal.group_column = 'REPROCESS_OBSDIR_COL'
@@ -792,7 +792,7 @@ apero_extract.set_kwarg(name='--leakcorr', dtype='bool', default=True,
                         default_ref='CAL.LEAK.CORRECT_LEAK')
 apero_extract.set_kwarg(name='--thermal', dtype='bool', default=True,
                         helpstr=textentry('THERMAL_HELP'),
-                        default_ref='THERMAL_CORRECT')
+                        default_ref='CAL.THERM.THERMAL_CORR')
 apero_extract.set_kwarg(**thermalfile)
 apero_extract.set_kwarg(**wavefile)
 apero_extract.set_kwarg(name='--force_ref_wave', dtype='switch',
@@ -965,7 +965,7 @@ apero_wave_night.set_kwarg(**wavefile)
 apero_wave_night.set_min_nfiles('fpfiles', 5)
 apero_wave_night.set_min_nfiles('hcfiles', 2)
 apero_wave_night.set_kwarg(name='--forceext', dtype='bool',
-                           default_ref='WAVE_ALWAYS_EXTRACT',
+                           default_ref='CAL.WAVE.GEN.ALWAYS_EXTRACT',
                            helpstr='WAVE_EXTRACT_HELP')
 apero_wave_night.set_kwarg(**no_in_qc)
 apero_wave_night.group_func = grouping.group_by_dirname

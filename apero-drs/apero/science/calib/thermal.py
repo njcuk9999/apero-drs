@@ -76,7 +76,7 @@ def apply_excess_emissivity(params: ParamDict, recipe: DrsRecipe,
     func_name = display_func('apply_excess_emissivity', __NAME__)
     # -------------------------------------------------------------------------
     # get allowed dprtypes parameter
-    dprtypes = params['THERMAL_EXCESS_DPRTYPES']
+    dprtypes = params['CAL.THERM.EXCESS_DPRTYPES']
     # get the filter width for the low pass filter
     filter_wid = params['THERMAL_FILTER_WID']
     # loop around all fibers
@@ -136,31 +136,31 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
     # get properties from parameter dictionaries / kwargs
     dprtype = pcheck(params, 'DPRTYPE', 'dprtype', kwargs, func_name,
                      paramdict=props)
-    tapas_thres = pcheck(params, 'THERMAL_THRES_TAPAS', 'tapas_thres', kwargs,
+    tapas_thres = pcheck(params, 'CAL.THERM.THRES_TAPAS', 'tapas_thres', kwargs,
                          func_name)
-    envelope = pcheck(params, 'THERMAL_ENVELOPE_PERCENTILE', 'envelope',
+    envelope = pcheck(params, 'CAL.THERM.ENVELOPE_PTILE', 'envelope',
                       kwargs, func_name)
-    filter_wid = pcheck(params, 'THERMAL_FILTER_WID', 'filter_wid', kwargs,
+    filter_wid = pcheck(params, 'CAL.THERM.FILT_WID', 'filter_wid', kwargs,
                         func_name)
-    torder = pcheck(params, 'THERMAL_ORDER', 'torder', kwargs, func_name)
-    red_limit = pcheck(params, 'THERMAL_RED_LIMIT', 'red_limit', kwargs,
+    torder = pcheck(params, 'CAL.THERM.SCALE_ORDER', 'torder', kwargs, func_name)
+    red_limit = pcheck(params, 'CAL.THERM.RED_WAVE_LIM', 'red_limit', kwargs,
                        func_name)
-    blue_limit = pcheck(params, 'THERMAL_BLUE_LIMIT', 'blue_limit', kwargs,
+    blue_limit = pcheck(params, 'CAL.THERM.BLUE_WAVE_LIM', 'blue_limit', kwargs,
                         func_name)
-    thermal_limit = pcheck(params, 'THERMAL_LIMIT', 'thermal_limit', kwargs,
+    thermal_limit = pcheck(params, 'CAL.THERM.MIN_WAVE_LIM', 'thermal_limit', kwargs,
                            func_name)
     e2ds = pcheck(params, 'E2DS', 'e2ds', kwargs, func_name, paramdict=eprops)
     e2dsff = pcheck(params, 'E2DSFF', 'e2dsff', kwargs, func_name,
                     paramdict=eprops)
     flat = pcheck(params, 'FLAT', paramdict=eprops)
 
-    corrtype1 = pcheck(params, 'THERMAL_CORRETION_TYPE1', 'corrtype1', kwargs,
+    corrtype1 = pcheck(params, 'CAL.THERM.CORR_TYPE1', 'corrtype1', kwargs,
                        func_name, dtype=str)
-    corrtype2 = pcheck(params, 'THERMAL_CORRETION_TYPE2', 'corrtype2', kwargs,
+    corrtype2 = pcheck(params, 'CAL.THERM.CORR_TYPE2', 'corrtype2', kwargs,
                        func_name, dtype=str)
 
     thermal_file = kwargs.get('thermal_file', None)
-    thermal_correct = pcheck(params, 'THERMAL_CORRECT', 'thermal_correct',
+    thermal_correct = pcheck(params, 'CAL.THERM.THERMAL_CORR', 'thermal_correct',
                              kwargs, func_name)
     # ----------------------------------------------------------------------
     # get pconstant from p

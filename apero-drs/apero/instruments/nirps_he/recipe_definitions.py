@@ -881,7 +881,7 @@ apero_wave_night.set_kwarg(**wavefile)
 apero_wave_night.set_min_nfiles('fpfiles', 1)
 apero_wave_night.set_min_nfiles('hcfiles', 1)
 apero_wave_night.set_kwarg(name='--forceext', dtype='bool',
-                           default_ref='WAVE_ALWAYS_EXTRACT',
+                           default_ref='CAL.WAVE.GEN.ALWAYS_EXTRACT',
                            helpstr='WAVE_EXTRACT_HELP')
 apero_wave_night.set_kwarg(**no_in_qc)
 apero_wave_night.group_func = grouping.group_by_dirname

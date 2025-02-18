@@ -876,26 +876,26 @@ CDict.set('BERV_IERS_AURL',
           source=__NAME__, group=cgroup)
 
 # Define barycorrpy leap directory
-CDict.set('EXT_BERV_LEAPDIR', value='./data/core/barycorrpy/', source=__NAME__)
+CDict.set('BERV_LEAPDIR', value='./data/core/barycorrpy/', source=__NAME__, group=cgroup)
 
 # Define whether to update leap seconds if older than 6 months
-CDict.set('EXT_BERV_LEAPUPDATE', value=True, source=__NAME__)
+CDict.set('BERV_LEAPUPDATE', value=True, source=__NAME__, group=cgroup)
 
 # Define the accuracy of the estimate (for logging only) [m/s]
-CDict.set('EXT_BERV_EST_ACC', value=10.0, source=__NAME__)
+CDict.set('BERV_EST_ACC', value=10.0, source=__NAME__, group=cgroup)
 
 # Define the order to plot in summary plots
-CDict.set('EXTRACT_PLOT_ORDER', value=4, source=__NAME__)
+CDict.set('PLOT_ORDER', value=4, source=__NAME__, group=cgroup)
 
 # Define the wavelength lower bounds for s1d plots
 # (must be a string list of floats) defines the lower wavelength in nm
-CDict.set('EXTRACT_S1D_PLOT_ZOOM1', value=[990, 1100, 1200, 1250, 1700],
-          source=__NAME__)
+CDict.set('S1D_PLOT_ZOOM1', value=[990, 1100, 1200, 1250, 1700],
+          source=__NAME__, group=cgroup)
 
 # Define the wavelength upper bounds for s1d plots
 # (must be a string list of floats) defines the upper wavelength in nm
-CDict.set('EXTRACT_S1D_PLOT_ZOOM2', value=[1050, 1200, 1210, 1300, 1800],
-          source=__NAME__)
+CDict.set('S1D_PLOT_ZOOM2', value=[1050, 1200, 1210, 1300, 1800],
+          source=__NAME__, group=cgroup)
 
 # define custom bands
 PHOT_BANDS = dict()
@@ -914,102 +914,99 @@ CDict.add('MEAS_SNR_PHOT_BANDS', value=PHOT_BANDS,
 # =============================================================================
 cgroup = 'CAL.WAVE.GEN'
 # Define the coefficients of the fit of 1/m vs d
-CDict.set('CAVITY_1M_FILE', value='cavity_length_m_fit.dat', source=__NAME__)
+CDict.set('CAVITY_1M_FILE', value='cavity_length_m_fit.dat', source=__NAME__, group=cgroup)
 
 # Define the coefficients of the fit of wavelength vs d
-CDict.set('CAVITY_LL_FILE', value='cavity_length_ll_fit.dat', source=__NAME__)
+CDict.set('CAVITY_LL_FILE', value='cavity_length_ll_fit.dat', source=__NAME__, group=cgroup)
 
 # Define wave reference fiber (controller fiber)
-CDict.set('WAVE_REF_FIBER', value='A', source=__NAME__)
+CDict.set('REF_FIBER', value='A', source=__NAME__, group=cgroup)
 
 # Define the initial value of FP effective cavity width 2xd in nm
-CDict.set('WAVE_GUESS_CAVITY_WIDTH', value=2.4e7, source=__NAME__, author='EA')
+CDict.set('GUESS_CAVITY_WID', value=2.4e7, source=__NAME__, author='EA', group=cgroup)
 
 # Define the wave solution polynomial fit degree
-CDict.set('WAVE_WAVESOL_FIT_DEGREE', value=5, source=__NAME__, author='EA')
+CDict.set('WAVESOL_FIT_DEG', value=5, source=__NAME__, author='EA', group=cgroup)
 
 # Define the cavity fit polynomial fit degree for wave solution
-CDict.set('WAVE_CAVITY_FIT_DEGREE', value=5, source=__NAME__, author='EA')
+CDict.set('CAVITY_FIT_DEG', value=5, source=__NAME__, author='EA', group=cgroup)
 
 # Define the number of sigmas to use in wave sol robust fits
-CDict.set('WAVE_NSIG_CUT', value=5, source=__NAME__, author='EA')
+CDict.set('NSIG_CUT', value=5, source=__NAME__, author='EA', group=cgroup)
 
 # Define the minimum number of HC lines in an order to try to find
 # absolute numbering
-CDict.set('WAVE_MIN_HC_LINES', value=5, source=__NAME__, author='EA')
+CDict.set('MIN_HC_LINES', value=5, source=__NAME__, author='EA', group=cgroup)
 
 # Define the minimum number of FP lines in an order to try to find
 # absolute numbering
-CDict.set('WAVE_MIN_FP_LINES', value=5, source=__NAME__, author='EA')
+CDict.set('MIN_FP_LINES', value=5, source=__NAME__, author='EA', group=cgroup)
 
 # Define the maximum offset in FP peaks to explore when FP peak counting
-CDict.set('WAVE_MAX_FP_COUNT_OFFSET', value=5, source=__NAME__, author='EA')
+CDict.set('MAX_FP_COUNT_OFFSET', value=5, source=__NAME__, author='EA', group=cgroup)
 
 # Define the number of iterations required to converge the FP peak counting
 # offset loop
-CDict.set('WAVE_FP_COUNT_OFFSET_ITRS', value=3, source=__NAME__, author='EA')
+CDict.set('FP_COUNT_OFFSET_ITRS', value=3, source=__NAME__, author='EA', group=cgroup)
 
 # Define the number of iterations required to converge on a cavity fit
 # (first time this is done)
-CDict.set('WAVE_CAVITY_FIT_ITRS1', value=3, source=__NAME__, author='EA')
+CDict.set('CAVITY_FIT_ITRS1', value=3, source=__NAME__, author='EA', group=cgroup)
 
 # Define the number of iterations required to check order offset
-CDict.set('WAVE_ORDER_OFFSET_ITRS', value=2, source=__NAME__, author='EA')
+CDict.set('ORDER_OFFSET_ITRS', value=2, source=__NAME__, author='EA', group=cgroup)
 
 # Define the maximum bulk offset of lines in an order can have
-CDict.set('WAVE_MAX_ORDER_BULK_OFFSET', value=10, source=__NAME__, author='EA')
+CDict.set('MAX_ORDER_BULKOFFSET', value=10, source=__NAME__, author='EA', group=cgroup)
 
 # Define the required precision that the cavity width change must converge
 # to (will be a fraction of the error)
-CDict.set('WAVE_CAVITY_CHANGE_ERR_THRES', value=1.0e-2, source=__NAME__, author='EA')
+CDict.set('DCAVITY_ERR_THRES', value=1.0e-2, source=__NAME__, author='EA', group=cgroup)
 
 # Define the number of iterations required to converge on a cavity fit
 # (second time this is done)
-CDict.set('WAVE_CAVITY_FIT_ITRS2', value=3, source=__NAME__, author='EA')
+CDict.set('CAVITY_FIT_ITRS2', value=3, source=__NAME__, author='EA', group=cgroup)
 
 # Define the odd ratio that is used in generating the weighted mean
-CDict.set('WAVE_HC_VEL_ODD_RATIO', value=1.0e-2, source=__NAME__, author='EA')
+CDict.set('HC_VEL_ODDRATIO', value=1.0e-2, source=__NAME__, author='EA', group=cgroup)
 
 # Define orders that we cannot fit HC or FP lines to (list of strings)
-CDict.set('WAVE_REMOVE_ORDERS', value=[44, 45], source=__NAME__)
+CDict.set('REMOVE_ORDERS', value=[44, 45], source=__NAME__, group=cgroup)
 
 # Define the number of iterations required to do the final fplines wave solution
-CDict.set('WAVE_FWAVESOL_ITRS', value=3, source=__NAME__, author='EA')
+CDict.set('FWAVESOL_ITRS', value=3, source=__NAME__, author='EA', group=cgroup)
 
 # Define the wave fiber comparison plot order number
-CDict.set('WAVE_FIBER_COMP_PLOT_ORD', value=53, source=__NAME__)
+CDict.set('FIBER_COMP_PLOT_ORD', value=53, source=__NAME__, group=cgroup)
 
 # Define the line list file (located in the DRS_WAVE_DATA directory)
-CDict.set('WAVE_LINELIST_FILE', value='catalogue_UNe_update230322.csv',
-          source=__NAME__, author='EA')  # 'catalogue_UNe.dat'
+CDict.set('LINELIST_FILE', value='catalogue_UNe_update230322.csv',
+          source=__NAME__, author='EA', group=cgroup)  # 'catalogue_UNe.dat'
 
 # Define the line list file format (must be astropy.table format)
-CDict.set('WAVE_LINELIST_FMT', value='ascii.csv', source=__NAME__,
-          author='EA')  # 'ascii.tab'
+CDict.set('LINELIST_FMT', value='ascii.csv', source=__NAME__,
+          author='EA', group=cgroup)  # 'ascii.tab'
 
 # Define the line list file column names
 # and must be equal to the number of columns in file)
-CDict.set('WAVE_LINELIST_COLS', value=['ll', 'amp', 'kind'], source=__NAME__,
-          author='EA')
+CDict.set('LINELIST_COLS', value=['ll', 'amp', 'kind'], source=__NAME__,
+          author='EA', group=cgroup)
 
 # Define the line list file row the data starts
-CDict.set('WAVE_LINELIST_START', value=1, source=__NAME__, author='EA')  # 0
+CDict.set('LINELIST_START', value=1, source=__NAME__, author='EA', group=cgroup)  # 0
 
 # Define the line list file wavelength column and amplitude column
 # Must be in WAVE_LINELIST_COLS
-CDict.set('WAVE_LINELIST_WAVECOL', value='ll', source=__NAME__, author='EA')
-CDict.set('WAVE_LINELIST_AMPCOL', value='amp', source=__NAME__, author='EA')
+CDict.set('LINELIST_WAVECOL', value='ll', source=__NAME__, author='EA', group=cgroup)
+CDict.set('LINELIST_AMPCOL', value='amp', source=__NAME__, author='EA', group=cgroup)
 
 # Define whether to always extract HC/FP files in the wave code (even if they
 # have already been extracted
-CDict.set('WAVE_ALWAYS_EXTRACT', value=False, source=__NAME__, author='EA')
+CDict.set('ALWAYS_EXTRACT', value=False, source=__NAME__, author='EA', group=cgroup)
 
 # Define the type of file to use for wave solution (currently allowed are
 # 'E2DS' or 'E2DSFF'
-CDict.set('WAVE_EXTRACT_TYPE', value='E2DSFF', source=__NAME__, author='EA')
-
-# Define the fit degree for the wavelength solution
-CDict.set('WAVE_FIT_DEGREE', value=5, source=__NAME__, author='EA')
+CDict.set('EXTRACT_TYPE', value='E2DSFF', source=__NAME__, author='EA', group=cgroup)
 
 # Define intercept and slope for a pixel shift
 CDict.set('WAVE_PIXEL_SHIFT_INTER', value=0.0, source=__NAME__,

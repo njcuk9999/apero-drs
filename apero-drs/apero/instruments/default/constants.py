@@ -1882,31 +1882,31 @@ CDict.add('BERV_IERS_AURL', value=None, dtype=str,
           description='Define the barycorrpy iers a url')
 
 #   Define barycorrpy leap directory
-CDict.add('EXT_BERV_LEAPDIR', value=None, dtype=str,
+CDict.add('BERV_LEAPDIR', value=None, dtype=str,
           source=__NAME__, group=cgroup,
           description='Define barycorrpy leap directory')
 
 #   Define whether to update leap seconds if older than 6 months
-CDict.add('EXT_BERV_LEAPUPDATE', value=None, dtype=bool,
+CDict.add('BERV_LEAPUPDATE', value=None, dtype=bool,
           source=__NAME__, group=cgroup,
           description=('Define whether to update leap '
                        'seconds if older than 6 months'))
 
 #    Define the accuracy of the estimate (for logging only) [m/s]
-CDict.add('EXT_BERV_EST_ACC', value=None, dtype=float,
+CDict.add('BERV_EST_ACC', value=None, dtype=float,
           source=__NAME__, group=cgroup,
           description=('Define the accuracy of the estimate '
                        '(for logging only) [m/s]'))
 
 # Define the order to plot in summary plots
-CDict.add('EXTRACT_PLOT_ORDER', value=None, dtype=int,
+CDict.add('PLOT_ORDER', value=None, dtype=int,
           source=__NAME__, group=cgroup,
           description=('Define the order to plot in '
                        'summary plots'))
 
 # Define the wavelength lower bounds for s1d plots
 #     (must be a string list of floats) defines the lower wavelength in nm
-CDict.add('EXTRACT_S1D_PLOT_ZOOM1', value=None,
+CDict.add('S1D_PLOT_ZOOM1', value=None,
           dtype=list, dtypei=float,
           source=__NAME__, group=cgroup,
           description=('Define the wavelength lower '
@@ -1916,7 +1916,7 @@ CDict.add('EXTRACT_S1D_PLOT_ZOOM1', value=None,
 
 # Define the wavelength upper bounds for s1d plots
 #     (must be a string list of floats) defines the upper wavelength in nm
-CDict.add('EXTRACT_S1D_PLOT_ZOOM2', value=None,
+CDict.add('S1D_PLOT_ZOOM2', value=None,
           dtype=list, dtypei=float,
           source=__NAME__, group=cgroup,
           description=('Define the wavelength upper '
@@ -1938,13 +1938,13 @@ CDict.add_group(cgroup, description='CALIBRATION.THERMAL: '
                                     'CALIBRATION: THERMAL SETTINGS')
 
 # whether to apply the thermal correction to extractions
-CDict.add('THERMAL_CORRECT', value=None, dtype=bool,
+CDict.add('THERMAL_CORR', value=None, dtype=bool,
           source=__NAME__, user=True, active=False, group=cgroup,
           description='whether to apply the thermal correction '
                       'to extractions')
 
 # define whether to always extract thermals (i.e. overwrite existing files)
-CDict.add('THERMAL_ALWAYS_EXTRACT', value=None,
+CDict.add('ALWAYS_EXTRACT', value=None,
           dtype=bool, source=__NAME__,
           user=True, active=False, group=cgroup,
           description='define whether to always extract '
@@ -1953,7 +1953,7 @@ CDict.add('THERMAL_ALWAYS_EXTRACT', value=None,
 
 # define the type of file to use for wave solution (currently allowed are
 #    'E2DS' or 'E2DSFF')
-CDict.add('THERMAL_EXTRACT_TYPE', value=None, dtype=str,
+CDict.add('EXTRACT_TYPE', value=None, dtype=str,
           source=__NAME__, user=True, active=False,
           group=cgroup,
           description='define the type of file to use for '
@@ -1962,7 +1962,7 @@ CDict.add('THERMAL_EXTRACT_TYPE', value=None, dtype=str,
 
 # define DPRTYPEs we need to correct thermal background using
 #  telluric absorption (TAPAS)
-CDict.add('THERMAL_CORRETION_TYPE1', value=None,
+CDict.add('CORR_TYPE1', value=None,
           dtype=list, dtypei=str,
           source=__NAME__, group=cgroup,
           description=('define DPRTYPEs we need to '
@@ -1971,7 +1971,7 @@ CDict.add('THERMAL_CORRETION_TYPE1', value=None,
 
 # define DPRTYPEs we need to correct thermal background using
 #   method 2
-CDict.add('THERMAL_CORRETION_TYPE2', value=None,
+CDict.add('CORR_TYPE2', value=None,
           dtype=list, dtypei=str,
           source=__NAME__, group=cgroup,
           description=('define DPRTYPEs we need to '
@@ -1979,20 +1979,20 @@ CDict.add('THERMAL_CORRETION_TYPE2', value=None,
                        'using method 2'))
 
 # define the order to perform the thermal background scaling on
-CDict.add('THERMAL_ORDER', value=None, dtype=int, source=__NAME__,
+CDict.add('SCALE_ORDER', value=None, dtype=int, source=__NAME__,
           group=cgroup,
           description=('define the order to perform the thermal '
                        'background scaling on'))
 
 # width of the median filter used for the background
-CDict.add('THERMAL_FILTER_WID', value=None, dtype=int,
+CDict.add('FILT_WID', value=None, dtype=int,
           source=__NAME__, group=cgroup,
           description=('width of the median filter used for '
                        'the background'))
 
 # define thermal limit - below this we do not correct thermal emission
 #   because we know from first principles that it should be too small
-CDict.add('THERMAL_LIMIT', value=None, dtype=float, source=__NAME__,
+CDict.add('MIN_WAVE_LIM', value=None, dtype=float, source=__NAME__,
           group=cgroup,
           description='define thermal limit - below this '
                       'we do not correct thermal emission '
@@ -2000,18 +2000,18 @@ CDict.add('THERMAL_LIMIT', value=None, dtype=float, source=__NAME__,
                       'that it should be too small')
 
 # define thermal red limit (in nm)
-CDict.add('THERMAL_RED_LIMIT', value=None, dtype=float,
+CDict.add('RED_WAVE_LIM', value=None, dtype=float,
           source=__NAME__, group=cgroup,
           description='define thermal red limit (in nm)')
 
 # define thermal blue limit (in nm)
-CDict.add('THERMAL_BLUE_LIMIT', value=None, dtype=float,
+CDict.add('BLUE_WAVE_LIM', value=None, dtype=float,
           source=__NAME__, group=cgroup,
           description='define thermal blue limit (in nm)')
 
 # maximum tapas transmission to be considered completely opaque for the
 # purpose of background determination in last order.
-CDict.add('THERMAL_THRES_TAPAS', value=None, dtype=float,
+CDict.add('THRES_TAPAS', value=None, dtype=float,
           source=__NAME__, group=cgroup,
           description=('maximum tapas transmission to be '
                        'considered completely opaque for '
@@ -2019,7 +2019,7 @@ CDict.add('THERMAL_THRES_TAPAS', value=None, dtype=float,
                        'determination in last order.'))
 
 # define the percentile to measure the background for correction type 2
-CDict.add('THERMAL_ENVELOPE_PERCENTILE', value=None,
+CDict.add('ENVELOPE_PTILE', value=None,
           dtype=float, source=__NAME__,
           minimum=0, maximum=100, group=cgroup,
           description=('define the percentile to '
@@ -2027,13 +2027,13 @@ CDict.add('THERMAL_ENVELOPE_PERCENTILE', value=None,
                        'correction type 2'))
 
 # define the order to plot on the thermal debug plot
-CDict.add('THERMAL_PLOT_START_ORDER', value=None,
+CDict.add('PLOT_START_ORDER', value=None,
           dtype=int, source=__NAME__, group=cgroup,
           description=('define the order to plot on the '
                        'thermal debug plot'))
 
 # define the dprtypes for which to apply the excess emissivity file
-CDict.add('THERMAL_EXCESS_DPRTYPES', value=None,
+CDict.add('EXCESS_DPRTYPES', value=None,
           dtype=list, dtypei=str,
           source=__NAME__, group=cgroup,
           description=('define the dprtypes for which '
@@ -2041,7 +2041,7 @@ CDict.add('THERMAL_EXCESS_DPRTYPES', value=None,
                        'file'))
 
 # define the thermal emissivity file
-CDict.add('THERMAL_EXCESS_EMISSIVITY_FILE',
+CDict.add('EXCESS_EMISSIVITY_FILE',
           value=None, dtype=str, source=__NAME__,
           group=cgroup,
           description='define the thermal '
@@ -2067,20 +2067,20 @@ CDict.add('CAVITY_LL_FILE', value=None, dtype=str, source=__NAME__,
                        'wavelength vs d'))
 
 # Define wave reference fiber (controller fiber)
-CDict.add('WAVE_REF_FIBER', value=None, dtype=str,
+CDict.add('REF_FIBER', value=None, dtype=str,
           source=__NAME__, group=cgroup,
           description='Define wave reference fiber (controller '
                       'fiber)')
 
 # Define the initial value of FP effective cavity width 2xd in nm
-CDict.add('WAVE_GUESS_CAVITY_WIDTH', value=None,
+CDict.add('GUESS_CAVITY_WID', value=None,
           dtype=float, minimum=0,
           source=__NAME__, group=cgroup,
           description='Define the initial value of FP '
                       'effective cavity width 2xd in nm')
 
 # Define the wave solution polynomial fit degree
-CDict.add('WAVE_WAVESOL_FIT_DEGREE', value=None,
+CDict.add('WAVESOL_FIT_DEG', value=None,
           dtype=int, source=__NAME__, group=cgroup,
           minimum=0, maximum=20,
           description='Define the wave solution '
@@ -2088,21 +2088,21 @@ CDict.add('WAVE_WAVESOL_FIT_DEGREE', value=None,
 
 # Define the cavity fit polynomial fit degree for wave solution
 #   Note default: 9 for spirou  3 for NIRPS
-CDict.add('WAVE_CAVITY_FIT_DEGREE', value=None,
+CDict.add('CAVITY_FIT_DEG', value=None,
           dtype=int, source=__NAME__, group=cgroup,
           minimum=0, maximum=20,
           description='Define the cavity fit polynomial '
                       'fit degree for wave solution')
 
 # Define the number of sigmas to use in wave sol robust fits
-CDict.add('WAVE_NSIG_CUT', value=None, dtype=int, source=__NAME__,
+CDict.add('NSIG_CUT', value=None, dtype=int, source=__NAME__,
           group=cgroup, minimum=0, maximum=20,
           description='Define the number of sigmas to use in wave '
                       'sol robust fits')
 
 # Define the minimum number of HC lines in an order to try to find
 #   absolute numbering
-CDict.add('WAVE_MIN_HC_LINES', value=None, dtype=int,
+CDict.add('MIN_HC_LINES', value=None, dtype=int,
           source=__NAME__, group=cgroup, minimum=1,
           description='Define the minimum number of HC lines '
                       'in an order to try to find absolute '
@@ -2110,14 +2110,14 @@ CDict.add('WAVE_MIN_HC_LINES', value=None, dtype=int,
 
 # Define the minimum number of FP lines in an order to try to find
 #   absolute numbering
-CDict.add('WAVE_MIN_FP_LINES', value=None, dtype=int,
+CDict.add('MIN_FP_LINES', value=None, dtype=int,
           source=__NAME__, group=cgroup, minimum=1,
           description='Define the minimum number of FP lines '
                       'in an order to try to find absolute '
                       'numbering')
 
 # Define the maximum offset in FP peaks to explore when FP peak counting
-CDict.add('WAVE_MAX_FP_COUNT_OFFSET', value=None,
+CDict.add('MAX_FP_COUNT_OFFSET', value=None,
           dtype=int, source=__NAME__, group=cgroup,
           minimum=1,
           description='Define the maximum offset in FP '
@@ -2126,7 +2126,7 @@ CDict.add('WAVE_MAX_FP_COUNT_OFFSET', value=None,
 
 # Define the number of iterations required to converge the FP peak counting
 #   offset loop
-CDict.add('WAVE_FP_COUNT_OFFSET_ITRS', value=None,
+CDict.add('FP_COUNT_OFFSET_ITRS', value=None,
           dtype=int, source=__NAME__, group=cgroup,
           minimum=1,
           description='Define the number of iterations '
@@ -2135,7 +2135,7 @@ CDict.add('WAVE_FP_COUNT_OFFSET_ITRS', value=None,
 
 # Define the number of iterations required to converge on a cavity fit
 #  (first time this is done)
-CDict.add('WAVE_CAVITY_FIT_ITRS1', value=None,
+CDict.add('CAVITY_FIT_ITRS1', value=None,
           dtype=int, source=__NAME__, group=cgroup,
           minimum=1,
           description='Define the number of iterations '
@@ -2143,14 +2143,14 @@ CDict.add('WAVE_CAVITY_FIT_ITRS1', value=None,
                       'fit (first time this is done)')
 
 # Define the number of iterations required to check order offset
-CDict.add('WAVE_ORDER_OFFSET_ITRS', value=None,
+CDict.add('ORDER_OFFSET_ITRS', value=None,
           dtype=int, source=__NAME__, group=cgroup,
           minimum=1,
           description='Define the number of iterations '
                       'required to check order offset')
 
 # Define the maximum bulk offset of lines in a order can have
-CDict.add('WAVE_MAX_ORDER_BULK_OFFSET', value=None,
+CDict.add('MAX_ORDER_BULKOFFSET', value=None,
           dtype=int, source=__NAME__, group=cgroup,
           minimum=1,
           description='Define the maximum bulk '
@@ -2159,7 +2159,7 @@ CDict.add('WAVE_MAX_ORDER_BULK_OFFSET', value=None,
 
 # Define the required precision that the cavity width change must converge
 #   to (will be a fraction of the error)
-CDict.add('WAVE_CAVITY_CHANGE_ERR_THRES', value=None,
+CDict.add('DCAVITY_ERR_THRES', value=None,
           dtype=float, source=__NAME__, group=cgroup,
           minimum=0,
           description='Define the required precision'
@@ -2169,7 +2169,7 @@ CDict.add('WAVE_CAVITY_CHANGE_ERR_THRES', value=None,
 
 # Define the number of iterations required to converge on a cavity fit
 #  (second time this is done)
-CDict.add('WAVE_CAVITY_FIT_ITRS2', value=None,
+CDict.add('CAVITY_FIT_ITRS2', value=None,
           dtype=int, source=__NAME__, group=cgroup,
           minimum=1,
           description='Define the number of iterations '
@@ -2177,14 +2177,14 @@ CDict.add('WAVE_CAVITY_FIT_ITRS2', value=None,
                       'fit (second time this is done)')
 
 # Define the odd ratio that is used in generating the weighted mean
-CDict.add('WAVE_HC_VEL_ODD_RATIO', value=None,
+CDict.add('HC_VEL_ODDRATIO', value=None,
           dtype=float, source=__NAME__, group=cgroup,
           minimum=0,
           description='Define the odd ratio that is used '
                       'in generating the weighted mean')
 
 # Define orders that we cannot fit HC or FP lines to (list of strings)
-CDict.add('WAVE_REMOVE_ORDERS', value=None,
+CDict.add('REMOVE_ORDERS', value=None,
           dtype=list, dtypei=int,
           source=__NAME__, group=cgroup,
           description='Define orders that we cannot fit HC '
@@ -2192,7 +2192,7 @@ CDict.add('WAVE_REMOVE_ORDERS', value=None,
 
 # Define the number of iterations required to do the final fplines
 #   wave solution
-CDict.add('WAVE_FWAVESOL_ITRS', value=None,
+CDict.add('FWAVESOL_ITRS', value=None,
           dtype=int, source=__NAME__, group=cgroup,
           minimum=0,
           description='Define the number of iterations '
@@ -2200,27 +2200,27 @@ CDict.add('WAVE_FWAVESOL_ITRS', value=None,
                       'wave solution')
 
 # define the wave fiber comparison plot order number
-CDict.add('WAVE_FIBER_COMP_PLOT_ORD', value=None,
+CDict.add('FIBER_COMP_PLOT_ORD', value=None,
           dtype=int, source=__NAME__, minimum=0,
           group=cgroup,
           description=('define the wave fiber '
                        'comparison plot order number'))
 
 # Define the line list file (located in the DRS_WAVE_DATA directory)
-CDict.add('WAVE_LINELIST_FILE', value=None, dtype=str,
+CDict.add('LINELIST_FILE', value=None, dtype=str,
           source=__NAME__, group=cgroup,
           description=('Define the line list file (located in '
                        'the DRS_WAVE_DATA directory)'))
 
 # Define the line list file format (must be astropy.table format)
-CDict.add('WAVE_LINELIST_FMT', value=None, dtype=str,
+CDict.add('LINELIST_FMT', value=None, dtype=str,
           source=__NAME__, group=cgroup,
           description=('Define the line list file format (must '
                        'be astropy.table format)'))
 
 # Define the line list file column names
 # and must be equal to the number of columns in file)
-CDict.add('WAVE_LINELIST_COLS', value=None,
+CDict.add('LINELIST_COLS', value=None,
           dtype=list, dtypei=str,
           source=__NAME__, group=cgroup,
           description=('Define the line list file column '
@@ -2228,25 +2228,25 @@ CDict.add('WAVE_LINELIST_COLS', value=None,
                        'of columns in file)'))
 
 # Define the line list file row the data starts
-CDict.add('WAVE_LINELIST_START', value=None, dtype=int,
+CDict.add('LINELIST_START', value=None, dtype=int,
           source=__NAME__, group=cgroup,
           description=('Define the line list file row the '
                        'data starts'))
 
 # Define the line list file wavelength column and amplitude column
 #  Must be in WAVE_LINELIST_COLS
-CDict.add('WAVE_LINELIST_WAVECOL', value=None, dtype=str,
+CDict.add('LINELIST_WAVECOL', value=None, dtype=str,
           source=__NAME__, group=cgroup,
           description=('Define the line list file '
                        'wavelength column and amplitude '
                        'column Must be in '
                        'WAVE_LINELIST_COLS'))
-CDict.add('WAVE_LINELIST_AMPCOL', value=None, dtype=str,
+CDict.add('LINELIST_AMPCOL', value=None, dtype=str,
           source=__NAME__, group=cgroup, description='')
 
 # define whether to always extract HC/FP files in the wave code (even if they
 #    have already been extracted
-CDict.add('WAVE_ALWAYS_EXTRACT', value=None, dtype=bool,
+CDict.add('ALWAYS_EXTRACT', value=None, dtype=bool,
           source=__NAME__, user=True, active=False,
           group=cgroup,
           description='define whether to always extract '
@@ -2255,18 +2255,12 @@ CDict.add('WAVE_ALWAYS_EXTRACT', value=None, dtype=bool,
 
 # define the type of file to use for wave solution (currently allowed are
 #    'E2DS' or 'E2DSFF'
-CDict.add('WAVE_EXTRACT_TYPE', value=None, dtype=str,
+CDict.add('EXTRACT_TYPE', value=None, dtype=str,
           source=__NAME__, options=['E2DS', 'E2DSFF'],
           user=True, active=False, group=cgroup,
           description='define the type of file to use for '
                       'wave solution (currently allowed '
                       'are "E2DS" or "E2DSFF"')
-
-# define the fit degree for the wavelength solution
-CDict.add('WAVE_FIT_DEGREE', value=None, dtype=int,
-          source=__NAME__, user=True, active=False, group=cgroup,
-          description='define the fit degree for the '
-                      'wavelength solution')
 
 # Define intercept and slope for a pixel shift
 CDict.add('WAVE_PIXEL_SHIFT_INTER', value=None,

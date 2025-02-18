@@ -737,8 +737,8 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     e2dsfile.add_hkey('KW_EXT_START', value=eprops['START_ORDER'])
     e2dsfile.add_hkey('KW_EXT_END', value=eprops['END_ORDER'])
     # add extraction ranges used
-    e2dsfile.add_hkey('KW_EXT_RANGE1', value=eprops['RANGE1'])
-    e2dsfile.add_hkey('KW_EXT_RANGE2', value=eprops['RANGE2'])
+    e2dsfile.add_hkey('KW_EXT_RANGE1', value=eprops['CAL.EXT.RANGE1'])
+    e2dsfile.add_hkey('KW_EXT_RANGE2', value=eprops['CAL.EXT.RANGE2'])
     # add cosmic parameters used
     e2dsfile.add_hkey('KW_COSMIC', value=eprops['COSMIC'])
     e2dsfile.add_hkey('KW_COSMIC_CUT', value=eprops['COSMIC_SIGCUT'])
@@ -1036,8 +1036,8 @@ def write_extraction_files_ql(params, recipe, infile, rawfiles, combine, fiber,
     e2dsfile.add_hkey('KW_EXT_START', value=eprops['START_ORDER'])
     e2dsfile.add_hkey('KW_EXT_END', value=eprops['END_ORDER'])
     # add extraction ranges used
-    e2dsfile.add_hkey('KW_EXT_RANGE1', value=eprops['RANGE1'])
-    e2dsfile.add_hkey('KW_EXT_RANGE2', value=eprops['RANGE2'])
+    e2dsfile.add_hkey('KW_EXT_RANGE1', value=eprops['CAL.EXT.RANGE1'])
+    e2dsfile.add_hkey('KW_EXT_RANGE2', value=eprops['CAL.EXT.RANGE2'])
     # add cosmic parameters used
     e2dsfile.add_hkey('KW_COSMIC', value=eprops['COSMIC'])
     e2dsfile.add_hkey('KW_COSMIC_CUT', value=eprops['COSMIC_SIGCUT'])
@@ -1145,9 +1145,9 @@ def extract_summary(recipe, params, qc_params, e2dsfile, sprops, eprops,
                          fiber=fiber)
     recipe.plot.add_stat('KW_EXT_END', value=eprops['END_ORDER'],
                          fiber=fiber)
-    recipe.plot.add_stat('KW_EXT_RANGE1', value=eprops['RANGE1'],
+    recipe.plot.add_stat('KW_EXT_RANGE1', value=eprops['CAL.EXT.RANGE1'],
                          fiber=fiber)
-    recipe.plot.add_stat('KW_EXT_RANGE2', value=eprops['RANGE2'],
+    recipe.plot.add_stat('KW_EXT_RANGE2', value=eprops['CAL.EXT.RANGE2'],
                          fiber=fiber)
     recipe.plot.add_stat('KW_COSMIC', value=eprops['COSMIC'],
                          fiber=fiber)

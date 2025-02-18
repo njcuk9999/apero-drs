@@ -168,7 +168,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # get the fiber types from a list parameter (or from inputs)
     fiber_types = drs_image.get_fiber_types(params)
     # get wave reference file (controller fiber)
-    ref_fiber = params['WAVE_REF_FIBER']
+    ref_fiber = params['CAL.WAVE.GEN.REF_FIBER']
     # load the calibration database
     calibdbm = drs_database.CalibrationDatabase(params)
     calibdbm.load_db()

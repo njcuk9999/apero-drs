@@ -808,7 +808,7 @@ def check_wave_consistency(params: ParamDict, props: ParamDict,
     """
     func_name = display_func('check_wave_consistency', __NAME__)
     # get constants from params/kwargs
-    required_deg = pcheck(params, 'WAVE_FIT_DEGREE', func=func_name,
+    required_deg = pcheck(params, 'CAL.WAVE.GEN.WAVESOL_FIT_DEG', func=func_name,
                           override=num_coeffs)
     # get dimension from data
     nbo, ncoeffs = props['COEFFS'].shape
@@ -864,7 +864,7 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
     # get parameters from params and kwargs
     # -------------------------------------------------------------------------
     # # Define the initial value of FP effective cavity width 2xd in nm
-    # guess_cavity_width = pcheck(params, 'WAVE_GUESS_CAVITY_WIDTH',
+    # guess_cavity_width = pcheck(params, 'CAL.WAVE.GEN.GUESS_CAVITY_WID',
     #                             func=func_name)
     # # Define the cavity fit polynomial fit degree for wave solution
     # cavity_fit_degree = pcheck(params, 'WAVE_CAVITY_FIT_DEGREE',
@@ -1356,42 +1356,42 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     # get parameters from params / inputs
     # -------------------------------------------------------------------------
     # Define the wave solution polynomial fit degree
-    wavesol_fit_degree = pcheck(params, 'WAVE_WAVESOL_FIT_DEGREE',
+    wavesol_fit_degree = pcheck(params, 'CAL.WAVE.GEN.WAVESOL_FIT_DEG',
                                 func=func_name, override=wavesol_fit_degree)
     # Define the cavity fit polynomial fit degree for wave solution
-    cavity_fit_degree = pcheck(params, 'WAVE_CAVITY_FIT_DEGREE',
+    cavity_fit_degree = pcheck(params, 'CAL.WAVE.GEN.CAVITY_FIT_DEG',
                                func=func_name, override=cavity_fit_degree)
     # Define the number of sigmas to use in wave sol robust fits
-    nsig_cut = pcheck(params, 'WAVE_NSIG_CUT', func=func_name,
+    nsig_cut = pcheck(params, 'CAL.WAVE.GEN.NSIG_CUT', func=func_name,
                       override=nsig_cut)
     # Define the minimum number of HC lines in an order to try to find
     #   absolute numbering
-    min_hc_lines = pcheck(params, 'WAVE_MIN_HC_LINES', func=func_name)
+    min_hc_lines = pcheck(params, 'CAL.WAVE.GEN.MIN_HC_LINES', func=func_name)
     # Define the minimum number of FP lines in an order to try to find
     #   absolute numbering
-    min_fp_lines = pcheck(params, 'WAVE_MIN_FP_LINES', func=func_name)
+    min_fp_lines = pcheck(params, 'CAL.WAVE.GEN.MIN_FP_LINES', func=func_name)
     # Define the maximum offset in FP peaks to explore when FP peak counting
-    max_fp_c_offset = pcheck(params, 'WAVE_MAX_FP_COUNT_OFFSET', func=func_name)
+    max_fp_c_offset = pcheck(params, 'CAL.WAVE.GEN.MAX_FP_COUNT_OFFSET', func=func_name)
     # Define the number of iterations required to converge the FP peak counting
     #   offset loop
-    fp_count_offset_iterations = pcheck(params, 'WAVE_FP_COUNT_OFFSET_ITRS',
+    fp_count_offset_iterations = pcheck(params, 'CAL.WAVE.GEN.FP_COUNT_OFFSET_ITRS',
                                         func=func_name)
     # Define the number of iterations required to converge on a cavity fit
     #  (first time this is done)
-    cavity_fit_iterations1 = pcheck(params, 'WAVE_CAVITY_FIT_ITRS1',
+    cavity_fit_iterations1 = pcheck(params, 'CAL.WAVE.GEN.CAVITY_FIT_ITRS1',
                                     func=func_name)
     # Define the required precision that the cavity width change must converge
     #   to (will be a fraction of the error)
-    cavity_change_err_thres = pcheck(params, 'WAVE_CAVITY_CHANGE_ERR_THRES',
+    cavity_change_err_thres = pcheck(params, 'CAL.WAVE.GEN.DCAVITY_ERR_THRES',
                                      func=func_name)
     # Define the number of iterations required to converge on a cavity fit
     #  (second time this is done)
-    cavity_fit_iterations2 = pcheck(params, 'WAVE_CAVITY_FIT_ITRS2',
+    cavity_fit_iterations2 = pcheck(params, 'CAL.WAVE.GEN.CAVITY_FIT_ITRS2',
                                     func=func_name)
     # Define the odd ratio that is used in generating the weighted mean
-    odd_ratio = pcheck(params, 'WAVE_HC_VEL_ODD_RATIO', func=func_name)
+    odd_ratio = pcheck(params, 'CAL.WAVE.GEN.HC_VEL_ODDRATIO', func=func_name)
     # define orders not to fit
-    remove_orders = pcheck(params, 'WAVE_REMOVE_ORDERS', func=func_name)
+    remove_orders = pcheck(params, 'CAL.WAVE.GEN.REMOVE_ORDERS', func=func_name)
     # define the bulk offset to be added to the cavity length
     cavity_pedestal = pcheck(params, 'WAVE_FP_DOPD0', func=func_name)
     # define the wavelength bounds of the instrument
@@ -2062,7 +2062,7 @@ def process_fibers(params: ParamDict, recipe: DrsRecipe,
     solutions = dict()
     # get wave reference file (controller fiber)
     ref_fiber = pcheck(params, 'WAVE_REF_FIBER', func=func_name)
-    plot_order = pcheck(params, 'WAVE_FIBER_COMP_PLOT_ORD', func=func_name)
+    plot_order = pcheck(params, 'CAL.WAVE.GEN.FIBER_COMP_PLOT_ORD', func=func_name)
     # get the scale and offset modifiers
     fiber_offset = params['WAVE_FIBER_OFFSET_MOD']
     fiber_scale = params['WAVE_FIBER_SCALE_MOD']
@@ -3096,7 +3096,7 @@ def wave_quality_control(params: ParamDict, solutions: Dict[str, ParamDict],
     # set function name
     func_name = display_func('wave_quality_control', __NAME__)
     # get parameters from params / inputs
-    ref_fiber = pcheck(params, 'WAVE_REF_FIBER', func=func_name)
+    ref_fiber = pcheck(params, 'CAL.WAVE.GEN.REF_FIBER', func=func_name)
     rv_thres = pcheck(params, 'WAVE_CCF_RV_THRES_QC', func=func_name)
     # get the fiber types from a list parameter (or from inputs)
     fiber_types = drs_image.get_fiber_types(params)

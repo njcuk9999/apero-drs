@@ -1865,7 +1865,7 @@ def plot_thermal_background(plotter: Plotter, graph: Graph,
     fiber = kwargs['fiber']
     kind = kwargs['kind']
     # get properties from params
-    startorder = params['THERMAL_PLOT_START_ORDER']
+    startorder = params['CAL.THERM.PLOT_START_ORDER']
     # correct data for graph
     rwave = np.ravel(wavemap[startorder:])
     rimage = np.ravel(image[startorder:])
@@ -2079,8 +2079,8 @@ def plot_extract_s1d_weights(plotter: Plotter, graph: Graph,
     fiber = kwargs.get('fiber', None)
     stype = kwargs['stype']
     # get zoom in parameters from params
-    zoom1 = params['EXTRACT_S1D_PLOT_ZOOM1']
-    zoom2 = params['EXTRACT_S1D_PLOT_ZOOM2']
+    zoom1 = params['CAL.EXT.S1D_PLOT_ZOOM1']
+    zoom2 = params['CAL.EXT.S1D_PLOT_ZOOM2']
     # ------------------------------------------------------------------
     # correct data for plotting
     with warnings.catch_warnings(record=True) as _:

@@ -965,7 +965,7 @@ KDict.set('KW_WAVE_EMEANHC', key='WAVEEMHC', comment='Wave error mean hc velocit
 # -----------------------------------------------------------------------------
 # the fit degree for wave solution used
 KDict.set('KW_WAVE_FITDEG', key='WAVE_DEG', comment='fit degree used for wave sol',
-          parent='WAVE_FIT_DEGREE', group='wave')
+          parent='CAL.WAVE.GEN.WAVESOL_FIT_DEG', group='wave')
 
 # the mode used to calculate the hc wave solution
 KDict.set('KW_WAVE_MODE_HC', key='WAVHCMOD', comment='mode used to calc hc wave sol',

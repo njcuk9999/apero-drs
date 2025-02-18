@@ -180,8 +180,8 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
     props['FIBER'] = fiber
     props['START_ORDER'] = start_order
     props['END_ORDER'] = end_order
-    props['RANGE1'] = range1
-    props['RANGE2'] = range2
+    props['CAL.EXT.RANGE1'] = range1
+    props['CAL.EXT.RANGE2'] = range2
     props['SKIP_ORDERS'] = skip_orders
     props['GAIN'] = gain
     props['SIGDET'] = sigdet
@@ -194,7 +194,7 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
     props['SAT_LEVEL'] = sat_level
     # add source
     keys = ['E2DS', 'E2DSLL', 'E2DSCC', 'SNR', 'N_COSMIC', 'FLUX_VAL', 'FIBER',
-            'START_ORDER', 'END_ORDER', 'RANGE1', 'RANGE2', 'SKIP_ORDERS',
+            'START_ORDER', 'END_ORDER', 'CAL.EXT.RANGE1', 'CAL.EXT.RANGE2', 'SKIP_ORDERS',
             'GAIN', 'SIGDET', 'EFF_RON', 'EFF_GAIN', 'COSMIC', 'COSMIC_SIGCUT',
             'COSMIC_THRESHOLD', 'SAT_QC', 'SAT_LEVEL']
     props.set_sources(keys, func_name)
@@ -462,7 +462,7 @@ def measure_p2p_scat(params: ParamDict, wavemap: np.ndarray, e2ds: np.ndarray,
     # get the mean wavelength per order
     waveord = np.nanmean(wavemap, axis=1)
     # get the bands from params
-    bands = params['MEAS_SNR_PHOT_BANDS']
+    bands = params['CAL.EXT.MEAS_SNR_PHOT_BANDS']
     # loop around bands
     for iband in bands.keys():
         # get the band limits

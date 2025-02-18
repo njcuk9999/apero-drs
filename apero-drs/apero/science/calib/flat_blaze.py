@@ -467,8 +467,8 @@ def flat_blaze_write(params: ParamDict, recipe: DrsRecipe, infile: DrsFitsFile,
     blazefile.add_hkey('KW_EXT_START', value=eprops['START_ORDER'])
     blazefile.add_hkey('KW_EXT_END', value=eprops['END_ORDER'])
     # add extraction ranges used
-    blazefile.add_hkey('KW_EXT_RANGE1', value=eprops['RANGE1'])
-    blazefile.add_hkey('KW_EXT_RANGE2', value=eprops['RANGE2'])
+    blazefile.add_hkey('KW_EXT_RANGE1', value=eprops['CAL.EXT.RANGE1'])
+    blazefile.add_hkey('KW_EXT_RANGE2', value=eprops['CAL.EXT.RANGE2'])
     # add cosmic parameters used
     blazefile.add_hkey('KW_COSMIC', value=eprops['COSMIC'])
     blazefile.add_hkey('KW_COSMIC_CUT', value=eprops['COSMIC_SIGCUT'])
@@ -594,9 +594,9 @@ def flat_blaze_summary(recipe: DrsRecipe, params: ParamDict,
     recipe.plot.add_stat('KW_EXT_START', value=epp['START_ORDER'],
                          fiber=fiber)
     recipe.plot.add_stat('KW_EXT_END', value=epp['END_ORDER'], fiber=fiber)
-    recipe.plot.add_stat('KW_EXT_RANGE1', value=epp['RANGE1'],
+    recipe.plot.add_stat('KW_EXT_RANGE1', value=epp['CAL.EXT.RANGE1'],
                          fiber=fiber)
-    recipe.plot.add_stat('KW_EXT_RANGE2', value=epp['RANGE2'], fiber=fiber)
+    recipe.plot.add_stat('KW_EXT_RANGE2', value=epp['CAL.EXT.RANGE2'], fiber=fiber)
     recipe.plot.add_stat('KW_COSMIC', value=epp['COSMIC'], fiber=fiber)
     recipe.plot.add_stat('KW_COSMIC_CUT', value=epp['COSMIC_SIGCUT'],
                          fiber=fiber)

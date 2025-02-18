@@ -105,17 +105,17 @@ def load_linelist(params: ParamDict,
                       override=assetsdir)
     relfolder = pcheck(params, 'IPATH.WAVE', func=func_name,
                        override=wave_dir)
-    filename = pcheck(params, 'WAVE_LINELIST_FILE', func=func_name,
+    filename = pcheck(params, 'CAL.WAVE.GEN.LINELIST_FILE', func=func_name,
                       override=filename)
-    tablefmt = pcheck(params, 'WAVE_LINELIST_FMT', func=func_name,
+    tablefmt = pcheck(params, 'CAL.WAVE.GEN.LINELIST_FMT', func=func_name,
                       override=fmt)
-    tablecols = pcheck(params, 'WAVE_LINELIST_COLS', func=func_name,
+    tablecols = pcheck(params, 'CAL.WAVE.GEN.LINELIST_COLS', func=func_name,
                        override=cols)
-    tablestart = pcheck(params, 'WAVE_LINELIST_START', func=func_name,
+    tablestart = pcheck(params, 'CAL.WAVE.GEN.LINELIST_START', func=func_name,
                         override=start)
-    wavecol = pcheck(params, 'WAVE_LINELIST_WAVECOL', func=func_name,
+    wavecol = pcheck(params, 'CAL.WAVE.GEN.LINELIST_WAVECOL', func=func_name,
                      override=wavecol)
-    ampcol = pcheck(params, 'WAVE_LINELIST_AMPCOL', func=func_name,
+    ampcol = pcheck(params, 'CAL.WAVE.GEN.LINELIST_AMPCOL', func=func_name,
                     override=ampcol)
     # deal with return_filename
     absfilename = str(os.path.join(assetdir, relfolder, filename))
@@ -216,9 +216,9 @@ def save_cavity_files(params: ParamDict, fit_1m_d: np.ndarray,
                       override=assetsdir)
     relfolder = pcheck(params, 'IPATH.CALIB', func=func_name,
                        override=cavity_dir)
-    filename_1m = pcheck(params, 'CAVITY_1M_FILE', func=func_name,
+    filename_1m = pcheck(params, 'CAL.WAVE.GEN.CAVITY_1M_FILE', func=func_name,
                          override=file1m)
-    filename_ll = pcheck(params, 'CAVITY_LL_FILE', func=func_name,
+    filename_ll = pcheck(params, 'CAL.WAVE.GEN.CAVITY_LL_FILE', func=func_name,
                          override=filell)
     absfilename_1m = str(os.path.join(assetdir, relfolder, filename_1m))
     absfilename_ll = str(os.path.join(assetdir, relfolder, filename_ll))
@@ -303,7 +303,7 @@ def load_excess_emissivity(params: ParamDict,
                       override=assetsdir)
     relfolder = pcheck(params, 'IPATH.CALIB', func=func_name,
                        override=calib_dir)
-    filename = pcheck(params, 'THERMAL_EXCESS_EMISSIVITY_FILE', func=func_name,
+    filename = pcheck(params, 'CAL.THERM.EXCESS_EMISSIVITY_FILE', func=func_name,
                       override=filename)
     # deal with return_filename
     absfilename = str(os.path.join(assetdir, relfolder, filename))

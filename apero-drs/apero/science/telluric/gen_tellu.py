@@ -561,7 +561,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     key = res_e2ds.get_dbkey()
     # define the fiber to use (this is the one that was used in the wave ref
     #   code to make the resolution map)
-    usefiber = params['WAVE_REF_FIBER']
+    usefiber = params['CAL.WAVE.GEN.REF_FIBER']
     # load loco file
     cfile = gen_calib.CalibFile()
     cfile.load_calib_file(params, key, header, database=calibdbm,
@@ -716,7 +716,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     keep[-1] = np.zeros(nbpix).astype(bool)
     # ----------------------------------------------------------------------
     # construct a mask of the photometric band pass
-    bands = params['MEAS_SNR_PHOT_BANDS']
+    bands = params['CAL.EXT.MEAS_SNR_PHOT_BANDS']
     # a mask of just the photometric bands
     band_mask = np.zeros_like(wave_e2ds).astype(bool)
     # loop around bands
@@ -1282,7 +1282,7 @@ def qc_p2pscat_bands(params: ParamDict, p2p_dict: Dict[str, float] = None
     :return: tuple of strings, the QC bands
     """
     # get the bands
-    bands = params['MEAS_SNR_PHOT_BANDS']
+    bands = params['CAL.EXT.MEAS_SNR_PHOT_BANDS']
     # set up the combined SNR variable
     bvariable = 'SNR{0}'.format(''.join(list(bands.keys())))
     # get limit from params

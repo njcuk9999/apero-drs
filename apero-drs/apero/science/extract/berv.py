@@ -535,7 +535,7 @@ def use_pyasl(params: ParamDict, times: Union[np.ndarray, list],
     # set the function name
     func_name = __NAME__ + '.use_pyasl()'
     # get estimate accuracy
-    estimate = pcheck(params, 'EXT_BERV_EST_ACC', func=func_name,
+    estimate = pcheck(params, 'CAL.EXT.BERV_EST_ACC', func=func_name,
                       override=berv_est)
     # print warning that we are using estimate
     if not quiet:

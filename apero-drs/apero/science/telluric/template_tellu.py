@@ -1117,7 +1117,7 @@ def create_deconvolved_template(params: ParamDict, recipe: DrsRecipe,
     key = res_e2ds.get_dbkey()
     # define the fiber to use (this is the one that was used in the wave ref
     #   code to make the resolution map)
-    usefiber = params['WAVE_REF_FIBER']
+    usefiber = params['CAL.WAVE.GEN.REF_FIBER']
     # load loco file
     cfile = gen_calib.CalibFile()
     cfile.load_calib_file(params, key, header, database=calibdbm,

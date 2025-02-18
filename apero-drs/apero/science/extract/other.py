@@ -57,7 +57,7 @@ def extract_thermal_files(params, recipe, extname, thermalfile,
                           logger, **kwargs):
     func_name = __NAME__ + '.extract_thermal_files()'
     # get parameters from params/kwargs
-    therm_always_extract = pcheck(params, 'THERMAL_ALWAYS_EXTRACT',
+    therm_always_extract = pcheck(params, 'CAL.THERM.ALWAYS_EXTRACT',
                                   'always_extract', kwargs, func_name)
     # find the extraction recipe
     extrecipe, _ = drs_startup.find_recipe(extname, params['OBS.INSTRUMENT'],
@@ -160,7 +160,7 @@ def extract_wave_files(params, recipe, extname, hcfile,
                        fpfile, wavefile, logger, **kwargs):
     func_name = __NAME__ + '.extract_wave_files()'
     # get parameters from params/kwargs
-    wave_always_extract = pcheck(params, 'WAVE_ALWAYS_EXTRACT',
+    wave_always_extract = pcheck(params, 'CAL.WAVE.GEN.ALWAYS_EXTRACT',
                                  'always_extract', kwargs, func_name)
     # find the extraction recipe
     extrecipe, _ = drs_startup.find_recipe(extname, params['OBS.INSTRUMENT'],
