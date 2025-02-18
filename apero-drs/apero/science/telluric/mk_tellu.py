@@ -686,23 +686,23 @@ def mk_tellu_write_trans_file(params, recipe, infile, rawfiles, fiber, combine,
     transfile.add_hkey('KW_TELLUP_DV_WATER', value=tpreprops['DV_WATER'])
     transfile.add_hkey('KW_TELLUP_DV_OTHERS', value=tpreprops['DV_OTHERS'])
     transfile.add_hkey('KW_TELLUP_DO_PRECLEAN',
-                       value=tpreprops['TELLUP_DO_PRECLEANING'])
+                       value=tpreprops['OBJ.TELL.PCLEAN.DO_PRECLEANING'])
     transfile.add_hkey('KW_TELLUP_DFLT_WATER',
-                       value=tpreprops['TELLUP_D_WATER_ABSO'])
+                       value=tpreprops['OBJ.TELL.PCLEAN.TELLUP_D_WATER_ABSO'])
     transfile.add_hkey('KW_TELLUP_CCF_SRANGE',
-                       value=tpreprops['TELLUP_CCF_SCAN_RANGE'])
+                       value=tpreprops['OBJ.TELL.PCLEAN.CCF_SCAN_RANGE'])
     transfile.add_hkey('KW_TELLUP_CLEAN_OHLINES',
-                       value=tpreprops['TELLUP_CLEAN_OH_LINES'])
-    tellu_rords = [str(x) for x in tpreprops['TELLUP_REMOVE_ORDS']]
+                       value=tpreprops['OBJ.TELL.PCLEAN.CLEAN_OHLINES'])
+    tellu_rords = [str(x) for x in tpreprops['OBJ.TELL.PCLEAN.REMOVE_ORDERS']]
     transfile.add_hkey('KW_TELLUP_REMOVE_ORDS', value=','.join(tellu_rords))
     transfile.add_hkey('KW_TELLUP_SNR_MIN_THRES',
-                       value=tpreprops['TELLUP_SNR_MIN_THRES'])
+                       value=tpreprops['OBJ.TELL.PCLEAN.SNR_MIN_THRES'])
     transfile.add_hkey('KW_TELLUP_DEXPO_CONV_THRES',
-                       value=tpreprops['TELLUP_DEXPO_CONV_THRES'])
+                       value=tpreprops['OBJ.TELL.PCLEAN.DEXPO_CONV_THRES'])
     transfile.add_hkey('KW_TELLUP_DEXPO_MAX_ITR',
-                       value=tpreprops['TELLUP_DEXPO_MAX_ITR'])
+                       value=tpreprops['OBJ.TELL.PCLEAN.DEXPO_MAX_ITR'])
     transfile.add_hkey('KW_TELLUP_ABSOEXPO_KTHRES',
-                       value=tpreprops['TELLUP_ABSO_EXPO_KTHRES'])
+                       value=tpreprops['OBJ.TELL.PCLEAN.ABSO_EXPO_KTHRES'])
     transfile.add_hkey('KW_TELLUP_WAVE_START',
                        value=tpreprops['TELLUP_WAVE_START'])
     transfile.add_hkey('KW_TELLUP_WAVE_END',
@@ -710,15 +710,15 @@ def mk_tellu_write_trans_file(params, recipe, infile, rawfiles, fiber, combine,
     transfile.add_hkey('KW_TELLUP_DVGRID',
                        value=tpreprops['TELLUP_DVGRID'])
     transfile.add_hkey('KW_TELLUP_ABSOEXPO_KWID',
-                       value=tpreprops['TELLUP_ABSO_EXPO_KWID'])
+                       value=tpreprops['OBJ.TELL.PCLEAN.ABSO_EXPO_KWID'])
     transfile.add_hkey('KW_TELLUP_ABSOEXPO_KEXP',
-                       value=tpreprops['TELLUP_ABSO_EXPO_KEXP'])
+                       value=tpreprops['OBJ.TELL.PCLEAN.ABSO_EXP_KEXP'])
     transfile.add_hkey('KW_TELLUP_TRANS_THRES',
-                       value=tpreprops['TELLUP_TRANS_THRES'])
+                       value=tpreprops['OBJ.TELL.PCLEAN.TRANS_THRES'])
     transfile.add_hkey('KW_TELLUP_TRANS_SIGL',
-                       value=tpreprops['TELLUP_TRANS_SIGLIM'])
+                       value=tpreprops['OBJ.TELL.PCLEAN.TRANS_SIGLIM'])
     transfile.add_hkey('KW_TELLUP_FORCE_AIRMASS',
-                       value=tpreprops['TELLUP_FORCE_AIRMASS'])
+                       value=tpreprops['OBJ.TELL.PCLEAN.FORCE_AIRMASS'])
     # get the other and water bounds
     obounds = [str(x) for x in tpreprops['TELLUP_OTHER_BOUNDS']]
     wbounds = [str(x) for x in tpreprops['TELLUP_WATER_BOUNDS']]

@@ -750,10 +750,10 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     # ----------------------------------------------------------------------
     # need to deal with mask coming from inputs
     if isinstance(params['INPUTS']['MASK'], list):
-        ccfmask = params['INPUTS']['MASK'][0][0]
+        ccfmask = params['INPUTS']['CAL.WAVE.CCF.MASK'][0][0]
     # else mask has come from constants
     else:
-        ccfmask = params['INPUTS']['MASK']
+        ccfmask = params['INPUTS']['CAL.WAVE.CCF.MASK']
     # get the berv
     berv = bprops['USE_BERV']
     # ----------------------------------------------------------------------
@@ -888,22 +888,22 @@ def compute_ccf_fp(params, recipe, infile, image, blaze, wavemap, fiber,
                    **kwargs):
     func_name = __NAME__ + '.compute_ccf_fp()'
     # get constants from params/kwargs
-    noise_sigdet = pcheck(params, 'WAVE_CCF_NOISE_SIGDET', 'sigdet', kwargs,
+    noise_sigdet = pcheck(params, 'CAL.WAVE.CCF.NOISE_SIGDET', 'sigdet', kwargs,
                           func_name)
-    noise_size = pcheck(params, 'WAVE_CCF_NOISE_BOXSIZE', 'boxsize', kwargs,
+    noise_size = pcheck(params, 'CAL.WAVE.CCF.NOISE_BOXSIZE', 'boxsize', kwargs,
                         func_name)
-    noise_thres = pcheck(params, 'WAVE_CCF_NOISE_THRES', 'maxflux', kwargs,
+    noise_thres = pcheck(params, 'CAL.WAVE.CCF.NOISE_THRES', 'maxflux', kwargs,
                          func_name)
-    ccfstep = pcheck(params, 'WAVE_CCF_STEP', 'ccfstep', kwargs, func_name)
-    ccfwidth = pcheck(params, 'WAVE_CCF_WIDTH', 'ccfwidth', kwargs, func_name)
-    targetrv = pcheck(params, 'WAVE_CCF_TARGET_RV', 'targetrv', kwargs,
+    ccfstep = pcheck(params, 'CAL.WAVE.CCF.WAVE_CCF_STEP', 'ccfstep', kwargs, func_name)
+    ccfwidth = pcheck(params, 'CAL.WAVE.CCF.WIDTH', 'ccfwidth', kwargs, func_name)
+    targetrv = pcheck(params, 'CAL.WAVE.CCF.TARGET_RV', 'targetrv', kwargs,
                       func_name)
-    ccfmask = pcheck(params, 'WAVE_CCF_MASK', 'ccfmask', kwargs, func_name)
-    ccfnmax = pcheck(params, 'WAVE_CCF_N_ORD_MAX', 'ccfnmax', kwargs,
+    ccfmask = pcheck(params, 'CAL.WAVE.CCF.MASK', 'ccfmask', kwargs, func_name)
+    ccfnmax = pcheck(params, 'CAL.WAVE.CCF.NORD_MAX', 'ccfnmax', kwargs,
                      func_name)
-    mask_width = pcheck(params, 'WAVE_CCF_MASK_WIDTH', 'mask_width', kwargs,
+    mask_width = pcheck(params, 'CAL.WAVE.CCF.WAVE_CCF_MASK_WIDTH', 'mask_width', kwargs,
                         func_name)
-    mask_units = pcheck(params, 'WAVE_CCF_MASK_UNITS', 'mask_units', kwargs,
+    mask_units = pcheck(params, 'CAL.WAVE.CCF.MASK_UNITS', 'mask_units', kwargs,
                         func_name)
     ccfnormmode = params['CCF_MASK_NORMALIZATION']
     # get image size
@@ -975,7 +975,7 @@ def compute_ccf_fp(params, recipe, infile, image, blaze, wavemap, fiber,
     # set source
     keys = ['TOT_SPEC_RMS', 'ORD_SPEC_RMS',
             'CCF_MASK', 'CCF_STEP', 'CCF_WIDTH', 'TARGET_RV', 'CCF_SIGDET',
-            'CCF_BOXSIZE', 'CCF_MAXFLUX', 'CCF_NMAX', 'MASK_WIDTH',
+            'CCF_BOXSIZE', 'CCF_MAXFLUX', 'CCF_NMAX', 'CAL.WAVE.CCF.MASK_WIDTH',
             'MASK_UNITS']
     props.set_sources(keys, func_name)
 
@@ -1023,7 +1023,7 @@ def ccf_calculation_per_order(params, image, blaze, wavemap, berv, targetrv,
     # get properties from params
     blaze_norm_percentile = pcheck(params, 'CCF_BLAZE_NORM_PERCENTILE',
                                    'blaze_norm_percentile', kwargs, func_name)
-    blaze_threshold = pcheck(params, 'WAVE_FP_BLAZE_THRES', 'blaze_threshold',
+    blaze_threshold = pcheck(params, 'CAL.WAVE.FP.BLAZE_THRES', 'blaze_threshold',
                              kwargs, func_name)
     # get rvmin and rvmax in km/s
     rvmin = targetrv - ccfwidth
@@ -1756,7 +1756,7 @@ def write_ccf(params: ParamDict, recipe, infile: DrsFitsFile,
     ccf_file.add_hkey('KW_CCF_BOXSIZE', value=props['CCF_BOXSIZE'])
     ccf_file.add_hkey('KW_CCF_MAXFLUX', value=props['CCF_MAXFLUX'])
     ccf_file.add_hkey('KW_CCF_NMAX', value=props['CCF_NMAX'])
-    ccf_file.add_hkey('KW_CCF_MASK_WID', value=props['MASK_WIDTH'])
+    ccf_file.add_hkey('KW_CCF_MASK_WID', value=props['CAL.WAVE.CCF.MASK_WIDTH'])
     ccf_file.add_hkey('KW_CCF_MASK_UNITS', value=props['MASK_UNITS'])
     # ----------------------------------------------------------------------
     ccf_file.add_hkey('KW_CCF_RV_WAVE_FP', value=props['RV_WAVE_FP'])

@@ -870,31 +870,31 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
     # cavity_fit_degree = pcheck(params, 'WAVE_CAVITY_FIT_DEGREE',
     #                            func=func_name)
     # min SNR to consider the line
-    nsig_min_hc = pcheck(params, 'WAVEREF_NSIG_MIN_HC', func=func_name)
-    nsig_min_fp = pcheck(params, 'WAVEREF_NSIG_MIN_FP', func=func_name)
+    nsig_min_hc = pcheck(params, 'CAL.WAVE.LL.NSIG_MIN_HC', func=func_name)
+    nsig_min_fp = pcheck(params, 'CAL.WAVE.LL.NSIG_MIN_FP', func=func_name)
     # minimum distance to the edge of the array to consider a line
-    wmax = pcheck(params, 'WAVEREF_EDGE_WMAX', func=func_name)
+    wmax = pcheck(params, 'CAL.WAVE.LL.REF_EDGE_WMAX', func=func_name)
     # value in pixel (+/-) for the box size around each HC line to perform fit
-    hcboxsize = pcheck(params, 'WAVEREF_HC_BOXSIZE', func=func_name)
+    hcboxsize = pcheck(params, 'CAL.WAVE.LL.REF_HC_BOXSIZE', func=func_name)
     # get valid hc dprtypes (string list separated by commas)
-    hcfibtypes = pcheck(params, 'WAVEREF_HC_FIBTYPES', 'hcfibtypes',
+    hcfibtypes = pcheck(params, 'CAL.WAVE.LL.REF_HC_FIBTYPES', 'hcfibtypes',
                         func=func_name,)
     # get valid fp dprtypes (string list separated by commas)
-    fpfibtypes = pcheck(params, 'WAVEREF_FP_FIBTYPES', 'fpfibtypes',
+    fpfibtypes = pcheck(params, 'CAL.WAVE.LL.REF_FP_FIBTYPES', 'fpfibtypes',
                         func=func_name)
     # get the degree to fix reference wavelength to in hc mode
-    fitdeg = pcheck(params, 'WAVEREF_FITDEG', 'fitdeg', func=func_name)
+    fitdeg = pcheck(params, 'CAL.WAVE.LL.REF_FITDEG', 'fitdeg', func=func_name)
     # cavity fit degree
-    cfitdeg = pcheck(params, 'WAVE_FP_CAVFIT_DEG', func=func_name)
+    cfitdeg = pcheck(params, 'CAL.WAVE.FP.CAVFIT_DEG', func=func_name)
     # define the lowest N for fp peaks
-    fp_nlow = pcheck(params, 'WAVEREF_FP_NLOW', 'fp_nlow', func=func_name)
+    fp_nlow = pcheck(params, 'CAL.WAVE.LL.REF_FP_NLOW', 'fp_nlow', func=func_name)
     # define the highest N for fp peaks
-    fp_nhigh = pcheck(params, 'WAVEREF_FP_NHIGH', 'fp_nhigh', func=func_name)
+    fp_nhigh = pcheck(params, 'CAL.WAVE.LL.REF_FP_NHIGH', 'fp_nhigh', func=func_name)
     # define the number of iterations required to do the FP polynomial inversion
-    fp_inv_itr = pcheck(params, 'WAVEREF_FP_POLYINV', 'fp_inv_itr',
+    fp_inv_itr = pcheck(params, 'CAL.WAVE.LL.REF_FP_POLYINV', 'fp_inv_itr',
                         func=func_name)
     # define the guess HC exponetial width [pixels]
-    guess_hc_ewid = pcheck(params, 'WAVEREF_HC_GUESS_EWID', func=func_name)
+    guess_hc_ewid = pcheck(params, 'CAL.WAVE.LL.REF_HC_GUESS_EWID', func=func_name)
     # define orders not to fit
     remove_orders = pcheck(params, 'WAVE_REMOVE_ORDERS', func=func_name)
     # define the bulk offset to be added to the cavity length
@@ -2064,8 +2064,8 @@ def process_fibers(params: ParamDict, recipe: DrsRecipe,
     ref_fiber = pcheck(params, 'WAVE_REF_FIBER', func=func_name)
     plot_order = pcheck(params, 'CAL.WAVE.GEN.FIBER_COMP_PLOT_ORD', func=func_name)
     # get the scale and offset modifiers
-    fiber_offset = params['WAVE_FIBER_OFFSET_MOD']
-    fiber_scale = params['WAVE_FIBER_SCALE_MOD']
+    fiber_offset = params['CAL.WAVE.LL.FIBER_OFFSET_MOD']
+    fiber_scale = params['CAL.WAVE.LL.FIBER_SCALE_MOD']
     # get the cavity file
     cavity = refprops['CAVITY']
     # get the reference fiber lines
@@ -2154,27 +2154,27 @@ def update_smart_fp_mask(params: ParamDict, cavity: np.ndarray, **kwargs):
     # set function name
     func_name = display_func('update_smart_fp_mask', __NAME__)
     # get constants from params
-    update_mask = pcheck(params, 'WAVE_CCF_UPDATE_MASK', 'update_mask', kwargs,
+    update_mask = pcheck(params, 'CAL.WAVE.CCF.UPDATE_MASK', 'update_mask', kwargs,
                          func_name)
     assetdir = pcheck(params, 'PATH.ASSETS', 'assetsdir', kwargs, func_name)
-    ccfpath = pcheck(params, 'WAVE_CCF_MASK_PATH', 'ccfpath', kwargs, func_name)
-    ccfmask = pcheck(params, 'WAVE_CCF_MASK', 'ccfmask', kwargs, func_name)
-    dvwidth = pcheck(params, 'WAVE_CCF_SMART_MASK_WIDTH', 'dvwidth',
+    ccfpath = pcheck(params, 'CAL.WAVE.CCF.MASK_PATH', 'ccfpath', kwargs, func_name)
+    ccfmask = pcheck(params, 'CAL.WAVE.CCF.MASK', 'ccfmask', kwargs, func_name)
+    dvwidth = pcheck(params, 'CAL.WAVE.CCF.SMART_MASK_WID', 'dvwidth',
                      kwargs, func_name)
-    mask_units = pcheck(params, 'WAVE_CCF_MASK_UNITS', 'mask_units', kwargs,
+    mask_units = pcheck(params, 'CAL.WAVE.CCF.MASK_UNITS', 'mask_units', kwargs,
                         func_name)
-    minlambda = pcheck(params, 'WAVE_CCF_SMART_MASK_MINLAM', 'minlambda',
+    minlambda = pcheck(params, 'CAL.WAVE.CCF.SMART_MASK_MINLAM', 'minlambda',
                        kwargs, func_name)
-    maxlambda = pcheck(params, 'WAVE_CCF_SMART_MASK_MAXLAM', 'maxlambda',
+    maxlambda = pcheck(params, 'CAL.WAVE.CCF.SMART_MASK_MAXLAM', 'maxlambda',
                        kwargs, func_name)
-    nmin = pcheck(params, 'WAVE_CCF_SMART_MASK_TRIAL_NMIN', 'nmin', kwargs,
+    nmin = pcheck(params, 'CAL.WAVE.CCF.SMART_MASK_TRIAL_NMIN', 'nmin', kwargs,
                   func_name)
-    nmax = pcheck(params, 'WAVE_CCF_SMART_MASK_TRIAL_NMAX', 'nmax', kwargs,
+    nmax = pcheck(params, 'CAL.WAVE.CCF.SMART_MASK_TRIAL_NMAX', 'nmax', kwargs,
                   func_name)
-    threshold = pcheck(params, 'WAVE_CCF_SMART_MASK_DWAVE_THRES', 'threshold',
+    threshold = pcheck(params, 'CAL.WAVE.CCF.SMART_MASK_DWAVE_THRES', 'threshold',
                        kwargs, func_name)
     # define the bulk offset to be added to the cavity length
-    cavity_pedestal = pcheck(params, 'WAVE_FP_DOPD0', func=func_name)
+    cavity_pedestal = pcheck(params, 'CAL.WAVE.FP.DOPD0', func=func_name)
     # define the wavelength bounds of the instrument
     inst_wavestart = pcheck(params, 'CAL.EXT.S1D_WAVESTART', func=func_name)
     inst_waveend = pcheck(params, 'CAL.EXT.S1D_WAVEEND', func=func_name)
@@ -2505,25 +2505,25 @@ def generate_resolution_map(params: ParamDict, recipe: DrsRecipe,
     # get parameters from parameter dictionary
     # -------------------------------------------------------------------------
     # get number of order bins
-    n_order_bin = pcheck(params, 'WAVE_RES_MAP_ORDER_BINS', func=func_name,
+    n_order_bin = pcheck(params, 'CAL.WAVE.RESMAP.ORDER_BINS', func=func_name,
                          override=nbin_order)
     # get number of spatial bins
-    n_spatial_bin = pcheck(params, 'WAVE_RES_MAP_ORDER_BINS', func=func_name,
+    n_spatial_bin = pcheck(params, 'CAL.WAVE.RESMAP.RESMAP_ORDER_BINS', func=func_name,
                            override=nbin_spatial)
     # get low pass filter for hc e2ds file
-    filtersize = pcheck(params, 'WAVE_RES_MAP_FILTER_SIZE', func=func_name,
+    filtersize = pcheck(params, 'CAL.WAVE.RESMAP.FILT_SIZE', func=func_name,
                         override=filtersize)
     # get the velocity cut off for keeping lines close to our reference line
-    velocity_cutoff1 = pcheck(params, 'WAVE_RES_VELO_CUTOFF1', func=func_name,
+    velocity_cutoff1 = pcheck(params, 'CAL.WAVE.RESMAP.VEL_CUTOFF1', func=func_name,
                               override=velo_cutoff1)
     # get the tight velocity cut off for keeping lines close to our
     #     reference line
-    velocity_cutoff2 = pcheck(params, 'WAVE_RES_VELO_CUTOFF2', func=func_name,
+    velocity_cutoff2 = pcheck(params, 'CAL.WAVE.RESMAP.VEL_CUTOFF2', func=func_name,
                               override=velo_cutoff2)
     # get the y limit for the res plot
-    res_ylim = pcheck(params, 'WAVE_HC_RESMAP_YLIM', func=func_name)
+    res_ylim = pcheck(params, 'CAL.WAVE.HC.RESMAP_YLIM', func=func_name)
     # define the way we fit line profiles
-    fitmode = pcheck(params, 'WAVE_HC_RESMAP_FITTYPE', func=func_name)
+    fitmode = pcheck(params, 'CAL.WAVE.HC.WAVE_HC_RESMAP_FITTYPE', func=func_name)
 
     # -------------------------------------------------------------------------
     # get parameters from wprops
@@ -2856,7 +2856,7 @@ def res_fit_gauss(params: ParamDict, mapkey: Tuple[int, int],
     # func_name = display_func('res_fit_gauss', __NAME__)
     # -----------------------------------------------------------------
     # get sigma clip
-    # sigclipthres = pcheck(params, 'WAVE_HC_RESMAP_SIGCLIP', func=func_name)
+    # sigclipthres = pcheck(params, 'CAL.WAVE.HC.RESMAP_SIGCLIP', func=func_name)
     # -----------------------------------------------------------------
     # prepare all dvs and flux for fitting
     # -----------------------------------------------------------------
@@ -3097,7 +3097,7 @@ def wave_quality_control(params: ParamDict, solutions: Dict[str, ParamDict],
     func_name = display_func('wave_quality_control', __NAME__)
     # get parameters from params / inputs
     ref_fiber = pcheck(params, 'CAL.WAVE.GEN.REF_FIBER', func=func_name)
-    rv_thres = pcheck(params, 'WAVE_CCF_RV_THRES_QC', func=func_name)
+    rv_thres = pcheck(params, 'CAL.WAVE.CCF.RV_THRES_QC', func=func_name)
     # get the fiber types from a list parameter (or from inputs)
     fiber_types = drs_image.get_fiber_types(params)
     # --------------------------------------------------------------

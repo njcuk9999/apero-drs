@@ -163,7 +163,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # if dprtype is incorrect skip
         if dprtype not in params['TELLU_ALLOWED_DPRTYPES']:
             # join allowed dprtypes
-            allowed_dprtypes = ', '.join(params['TELLU_ALLOWED_DPRTYPES'])
+            allowed_dprtypes = ', '.join(params['OBJ.TELL.GEN.ALLOWED_DPRTYPES'])
             # log that we are skipping
             wargs = [dprtype, recipe.name, allowed_dprtypes, infile.basename]
             WLOG(params, 'warning', textentry('10-019-00001', args=wargs),
@@ -246,7 +246,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         # apply sky correction
         # ------------------------------------------------------------------
-        # if dprtype in params.listp('ALLOWED_SKYCORR_DPRTYPES', dtype=str):
+        # if dprtype in params.listp('OBJ.SKY_CORR.ALLOWED_DPRTYPES', dtype=str):
         #     # correct sky using model and B fiber
         #     scprops = telluric.correct_sky_with_ref(params, recipe, infile,
         #                                             wprops, rawfiles, combine,

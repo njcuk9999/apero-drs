@@ -1048,26 +1048,26 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
     corrfile.add_hkey('KW_TELLUP_DV_WATER', value=tpreprops['DV_WATER'])
     corrfile.add_hkey('KW_TELLUP_DV_OTHERS', value=tpreprops['DV_OTHERS'])
     corrfile.add_hkey('KW_TELLUP_DO_PRECLEAN',
-                      value=tpreprops['TELLUP_DO_PRECLEANING'])
+                      value=tpreprops['OBJ.TELL.PCLEAN.DO_PRECLEANING'])
     corrfile.add_hkey('KW_TELLUP_DO_FINITE_RES',
                       value=tpreprops['FINITE_RES_CORRECTED'])
     corrfile.add_hkey('KW_TELLUP_DFLT_WATER',
                       value=tpreprops['TELLUP_D_WATER_ABSO'])
     corrfile.add_hkey('KW_TELLUP_CCF_SRANGE',
-                      value=tpreprops['TELLUP_CCF_SCAN_RANGE'])
+                      value=tpreprops['OBJ.TELL.PCLEAN.CCF_SCAN_RANGE'])
     corrfile.add_hkey('KW_TELLUP_CLEAN_OHLINES',
-                      value=tpreprops['TELLUP_CLEAN_OH_LINES'])
+                      value=tpreprops['OBJ.TELL.PCLEAN.CLEAN_OHLINES'])
     # push to strings
-    tellu_rords = [str(x) for x in tpreprops['TELLUP_REMOVE_ORDS']]
+    tellu_rords = [str(x) for x in tpreprops['OBJ.TELL.PCLEAN.REMOVE_ORDERS']]
     corrfile.add_hkey('KW_TELLUP_REMOVE_ORDS', value=','.join(tellu_rords))
     corrfile.add_hkey('KW_TELLUP_SNR_MIN_THRES',
-                      value=tpreprops['TELLUP_SNR_MIN_THRES'])
+                      value=tpreprops['OBJ.TELL.PCLEAN.SNR_MIN_THRES'])
     corrfile.add_hkey('KW_TELLUP_DEXPO_CONV_THRES',
-                      value=tpreprops['TELLUP_DEXPO_CONV_THRES'])
+                      value=tpreprops['OBJ.TELL.PCLEAN.DEXPO_CONV_THRES'])
     corrfile.add_hkey('KW_TELLUP_DEXPO_MAX_ITR',
-                      value=tpreprops['TELLUP_DEXPO_MAX_ITR'])
+                      value=tpreprops['OBJ.TELL.PCLEAN.DEXPO_MAX_ITR'])
     corrfile.add_hkey('KW_TELLUP_ABSOEXPO_KTHRES',
-                      value=tpreprops['TELLUP_ABSO_EXPO_KTHRES'])
+                      value=tpreprops['OBJ.TELL.PCLEAN.ABSO_EXPO_KTHRES'])
     corrfile.add_hkey('KW_TELLUP_WAVE_START',
                       value=tpreprops['TELLUP_WAVE_START'])
     corrfile.add_hkey('KW_TELLUP_WAVE_END',
@@ -1075,15 +1075,15 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
     corrfile.add_hkey('KW_TELLUP_DVGRID',
                       value=tpreprops['TELLUP_DVGRID'])
     corrfile.add_hkey('KW_TELLUP_ABSOEXPO_KWID',
-                      value=tpreprops['TELLUP_ABSO_EXPO_KWID'])
+                      value=tpreprops['OBJ.TELL.PCLEAN.ABSO_EXPO_KWID'])
     corrfile.add_hkey('KW_TELLUP_ABSOEXPO_KEXP',
-                      value=tpreprops['TELLUP_ABSO_EXPO_KEXP'])
+                      value=tpreprops['OBJ.TELL.PCLEAN.ABSO_EXP_KEXP'])
     corrfile.add_hkey('KW_TELLUP_TRANS_THRES',
-                      value=tpreprops['TELLUP_TRANS_THRES'])
+                      value=tpreprops['OBJ.TELL.PCLEAN.TRANS_THRES'])
     corrfile.add_hkey('KW_TELLUP_TRANS_SIGL',
-                      value=tpreprops['TELLUP_TRANS_SIGLIM'])
+                      value=tpreprops['OBJ.TELL.PCLEAN.TRANS_SIGLIM'])
     corrfile.add_hkey('KW_TELLUP_FORCE_AIRMASS',
-                      value=tpreprops['TELLUP_FORCE_AIRMASS'])
+                      value=tpreprops['OBJ.TELL.PCLEAN.FORCE_AIRMASS'])
     # get the other and water bounds
     obounds = [str(x) for x in tpreprops['TELLUP_OTHER_BOUNDS']]
     wbounds = [str(x) for x in tpreprops['TELLUP_WATER_BOUNDS']]

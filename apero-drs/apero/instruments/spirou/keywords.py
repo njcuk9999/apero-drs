@@ -952,11 +952,11 @@ KDict.set('KW_WAVE_FITDEG', key='WAVE_DEG', comment='fit degree used for wave so
 
 # the mode used to calculate the hc wave solution
 KDict.set('KW_WAVE_MODE_HC', key='WAVHCMOD', comment='mode used to calc hc wave sol',
-          parent='WAVE_MODE_HC', group='wave')
+          parent='CAL.WAVE.HC.MODE_HC', group='wave')
 
 # the mode used to calculate the fp wave solution
 KDict.set('KW_WAVE_MODE_FP', key='WAVFPMOD', comment='mode used to calc fp wave sol',
-          parent='WAVE_MODE_FP', group='wave')
+          parent='CAL.WAVE.FP.MODE', group='wave')
 
 # the echelle number of the first order used
 KDict.set('KW_WAVE_ECHELLE_START', key='WAV_ECH0', comment='Echelle no. of first order',
@@ -969,30 +969,30 @@ KDict.set('KW_WAVE_HCG_WSIZE', key='WAVHGSIZ', comment='HC Gauss peak fit box wi
 # the sigma above local rms for fitting hc lines used
 KDict.set('KW_WAVE_HCG_SIGPEAK', key='WAVHGSPK',
           comment='HC Gauss peak fit rms sig peak',
-          parent='WAVE_HC_FITBOX_SIGMA', group='wave')
+          parent='CAL.WAVE.HC.FITBOX_SIGMA', group='wave')
 
 # the fit degree for the gaussian peak fitting used
 KDict.set('KW_WAVE_HCG_GFITMODE', key='WAVHGGFM',
           comment='HC Gauss peak fit, fit degree',
-          parent='WAVE_HC_FITBOX_GFIT_DEG', group='wave')
+          parent='CAL.WAVE.HC.FITBOX_GFIT_DEG', group='wave')
 
 # the min rms for gaussian peak fitting used
 KDict.set('KW_WAVE_HCG_FB_RMSMIN', key='WAVHGRMN',
           comment='HC Gauss peak fit, min rms for peak',
-          parent='WAVE_HC_FITBOX_RMS_DEVMIN', group='wave')
+          parent='CAL.WAVE.HC.FITBOX_RMS_DEVMIN', group='wave')
 
 # the max rms for gaussian peak fitting used
 KDict.set('KW_WAVE_HCG_FB_RMSMAX', key='WAVHGRMX',
           comment='HC Gauss peak fit, max rms for peak',
-          parent='WAVE_HC_FITBOX_RMS_DEVMAX', group='wave')
+          parent='CAL.WAVE.HC.FITBOX_RMS_DEVMAX', group='wave')
 
 # the min e-width of the line for gaussian peak fitting used
 KDict.set('KW_WAVE_HCG_EWMIN', key='WAVHGEW0', comment='HC Gauss peak fit, e-width min',
-          parent='WAVE_HC_FITBOX_EWMIN', group='wave')
+          parent='CAL.WAVE.HC.FITBOX_EWMIN', group='wave')
 
 # the min e-width of the line for gaussian peak fitting used
 KDict.set('KW_WAVE_HCG_EWMAX', key='WAVHGEW1', comment='HC Gauss peak fit, e-width max',
-          parent='WAVE_HC_FITBOX_EWMAX', group='wave')
+          parent='CAL.WAVE.HC.FITBOX_EWMAX', group='wave')
 
 # the filename for the HC line list generated
 KDict.set('KW_WAVE_HCLL_FILE', key='WAVEHCLL', comment='HC line list file generated',
@@ -1001,87 +1001,87 @@ KDict.set('KW_WAVE_HCLL_FILE', key='WAVEHCLL', comment='HC line list file genera
 # the number of bright lines to used in triplet fit
 KDict.set('KW_WAVE_TRP_NBRIGHT', key='WAVTNBRI',
           comment='Triplet fit - no. bright lines used',
-          parent='WAVE_HC_NMAX_BRIGHT', group='wave')
+          parent='CAL.WAVE.HC.NMAX_BRIGHT', group='wave')
 
 # the number of iterations done in triplet fit
 KDict.set('KW_WAVE_TRP_NITER', key='WAVTNITR',
           comment='Triplet fit - no. iterations used',
-          parent='WAVE_HC_NITER_FIT_TRIPLET', group='wave')
+          parent='CAL.WAVE.HC.NITER_FIT_TRIPLET', group='wave')
 
 # the max distance between catalog line and initial guess line in triplet fit
 KDict.set('KW_WAVE_TRP_CATGDIST', key='WAVTCATD',
           comment='Triplet fit - max dist btwn line cat & guess',
-          parent='WAVE_HC_MAX_DV_CAT_GUESS', group='wave')
+          parent='CAL.WAVE.HC.MAX_DV_CATLL_GUESS', group='wave')
 
 # the fit degree for triplet fit
 KDict.set('KW_WAVE_TRP_FITDEG', key='WAVTFDEG', comment='Triplet fit - fit degree',
-          parent='WAVE_HC_TFIT_DEG', group='wave')
+          parent='CAL.WAVE.HC.TFIT_DEG', group='wave')
 
 # the minimum number of lines required per order in triplet fit
 KDict.set('KW_WAVE_TRP_MIN_NLINES', key='WAVTMINL',
           comment='Triplet fit - min no. lines req. per order',
-          parent='WAVE_HC_TFIT_MINNUM_LINES', group='wave')
+          parent='CAL.WAVE.HC.TFIT_MIN_NLINES', group='wave')
 
 # the total number of lines required in triplet fit
 KDict.set('KW_WAVE_TRP_TOT_NLINES', key='WAVTTOTL',
           comment='Triplet fit - total no. lines required',
-          parent='WAVE_HC_TFIT_MINTOT_LINES', group='wave')
+          parent='CAL.WAVE.HC.TFIT_MIN_TLINES', group='wave')
 
 # the degree(s) of fit to ensure continuity in triplet fit
 KDict.set('KW_WAVE_TRP_ORDER_FITCONT', key='WAVTO{0:03d}',
           comment='Triplet fit - order continuity fit',
-          parent='WAVE_HC_TFIT_ORDER_FIT_CONT', group='wave')
+          parent='CAL.WAVE.HC.TFIT_ORDER_FIT_CONT', group='wave')
 
 # the iteration number for sigma clip in triplet fit
 KDict.set('KW_WAVE_TRP_SCLIPNUM', key='WAVT_SCN',
           comment='Triplet fit - iter no. for sig clip',
-          parent='WAVE_HC_TFIT_SIGCLIP_NUM', group='wave')
+          parent='CAL.WAVE.HC.TFIT_SIGCLIP_NUM', group='wave')
 
 # the sigma clip threshold in triplet fit
 KDict.set('KW_WAVE_TRP_SCLIPTHRES', key='WAVT_SCT',
           comment='Triplet fit - sig clip threshold',
-          parent='WAVE_HC_TFIT_SIGCLIP_THRES', group='wave')
+          parent='CAL.WAVE.HC.TFIT_SIGCLIP_THRES', group='wave')
 
 # the distance away in dv to reject order triplet in triplet fit
 KDict.set('KW_WAVE_TRP_DVCUTORD', key='WAVT_DVO',
           comment='Triplet fit - dist in dv per order to reject',
-          parent='WAVE_HC_TFIT_DVCUT_ORDER', group='wave')
+          parent='CAL.WAVE.HC.TFIT_DVCUT_ORDER', group='wave')
 
 # the distance away in dv to reject all triplet in triplet fit
 KDict.set('KW_WAVE_TRP_DVCUTALL', key='WAVT_DVA',
           comment='Triplet fit - dist in dv all to reject',
-          parent='WAVE_HC_TFIT_DVCUT_ALL', group='wave')
+          parent='CAL.WAVE.HC.TFIT_DVCUT_ALL', group='wave')
 
 # the wave resolution map dimensions
 KDict.set('KW_WAVE_RES_MAPSIZE', key='WAVRE{0:03d}',
           comment='Wave res map - map dimensions',
-          parent='WAVE_HC_RESMAP_SIZE', group='wave')
+          parent='CAL.WAVE.HC.RESMAP_SIZE', group='wave')
 
 # the width of the box for wave resolution map
 KDict.set('KW_WAVE_RES_WSIZE', key='WAVRSIZE',
           comment='Wave res map - width of box',
-          parent='WAVE_HC_FITBOX_SIZE', group='wave')
+          parent='CAL.WAVE.HC.HC_FITBOX_SIZE', group='wave')
 
 # the max deviation in rms allowed in wave resolution map
 KDict.set('KW_WAVE_RES_MAXDEVTHRES', key='WAVRDEV',
           comment='Wave res map - max dev in rms allowed',
-          parent='WAVE_HC_RES_MAXDEV_THRES', group='wave')
+          parent='CAL.WAVE.HC.RES_MAXDEV_THRES', group='wave')
 
 # the littrow start order used for HC
 KDict.set('KW_WAVE_LIT_START_1', key='WAVL1_ST', comment='Littrow HC - start value',
           parent=['WAVE_LITTROW_ORDER_INIT_1',
-                  'WAVE_LITTROW_ORDER_INIT_2'],
+                  'CAL.WAVE.LIT.ORDER_INIT2'],
           group='wave')
 
 # the littrow end order used for HC
 KDict.set('KW_WAVE_LIT_END_1', key='WAVL1_EN', comment='Littrow HC - end value',
-          parent=['WAVE_LITTROW_ORDER_FINAL_1',
-                  'WAVE_LITTROW_ORDER_FINAL_2'],
+          parent=['CAL.WAVE.LIT.ORDER_FINAL1',
+                  'CAL.WAVE.LIT.ORDER_FINAL2'],
           group='wave')
 
 # the orders removed from the littrow test
 KDict.set('KW_WAVE_LIT_RORDERS', key='WAVLR{0:03d}', comment='Littrow - removed orders',
-          parent='WAVE_LITTROW_REMOVE_ORDERS', group='wave')
+          parent='CAL.WAVE.LIT.REMOVE_ORDERS', group='wave')
 
 # the littrow order initial value used for HC
 KDict.set('KW_WAVE_LIT_ORDER_INIT_1', key='WAVL1OIN',
@@ -1101,119 +1101,119 @@ KDict.set('KW_WAVE_LIT_ORDER_END_1', key='WAVL1OEN',
 # the littrow x cut step value used for HC
 KDict.set('KW_WAVE_LITT_XCUTSTEP_1', key='WAVL1XCT',
           comment='Littrow HC - x cut step value',
-          parent='WAVE_LITTROW_CUT_STEP_1', group='wave')
+          parent='CAL.WAVE.LIT.CUT_STEP1', group='wave')
 
 # the littrow fit degree value used for HC
 KDict.set('KW_WAVE_LITT_FITDEG_1', key='WAVL1FDG',
           comment='Littrow HC - littrow fit degree',
-          parent='WAVE_LITTROW_FIG_DEG_1', group='wave')
+          parent='CAL.WAVE.LIT.FIG_DEG1', group='wave')
 
 # the littrow extrapolation fit degree value used for HC
 KDict.set('KW_WAVE_LITT_EXT_FITDEG_1', key='WAVL1EDG',
           comment='Littrow HC - extrapolation fit degree',
-          parent='WAVE_LITTROW_EXT_ORDER_FIT_DEG',
+          parent='CAL.WAVE.LIT.EXT_ORDER_FIT_DEG',
           group='wave')
 
 # the littrow extrapolation start order value used for HC
 KDict.set('KW_WAVE_LITT_EXT_ORD_START_1', key='WAVL1EST',
           comment='Littrow HC - extrap start order',
-          parent='WAVE_LITTROW_ORDER_INIT_1',
+          parent='CAL.WAVE.LIT.ORDER_INIT1',
           group='wave')
 
 # the first order used for FP wave sol improvement
 KDict.set('KW_WFP_ORD_START', key='WFP_ORD0',
           comment='First order used for FP wave sol.',
-          parent='WAVE_N_ORD_START', group='wave')
+          parent='CAL.WAVE.GEN.NORD_START', group='wave')
 
 # the last order used for FP wave sol improvement
 KDict.set('KW_WFP_ORD_FINAL', key='WFP_ORD1',
           comment='Last order used for FP wave sol.',
-          parent='WAVE_N_ORD_FINAL', group='wave')
+          parent='CAL.WAVE.GEN.NORD_FINAL', group='wave')
 
 # the blaze threshold used for FP wave sol improvement
 KDict.set('KW_WFP_BLZ_THRES', key='WFPBLZTH',
           comment='Blaze threshold used for FP wave sol.',
-          parent='WAVE_FP_BLAZE_THRES', group='wave')
+          parent='CAL.WAVE.FP.BLAZE_THRES', group='wave')
 
 # the minimum fp peak pixel sep used for FP wave sol improvement
 KDict.set('KW_WFP_XDIFF_MIN', key='WFPXDIF0',
           comment='Min fp peak pixel sep for FP wave sol.',
-          parent='WAVE_FP_XDIF_MIN', group='wave')
+          parent='CAL.WAVE.FP.XDIF_MIN', group='wave')
 
 # the maximum fp peak pixel sep used for FP wave sol improvement
 KDict.set('KW_WFP_XDIFF_MAX', key='WFPXDIF1',
           comment='Max fp peak pixel sep for FP wave sol.',
-          parent='WAVE_FP_XDIF_MAX', group='wave')
+          parent='CAL.WAVE.FP.XDIF_MAX', group='wave')
 
 # the initial value of the FP effective cavity width used
 KDict.set('KW_WFP_DOPD0', key='WFPDOPD0',
           comment='initial value of Fp effective cavity width',
-          parent='WAVE_FP_DOPD0', group='wave')
+          parent='CAL.WAVE.FP.DOPD0', group='wave')
 
 # the  maximum fraction wavelength offset btwn xmatch fp peaks used
 KDict.set('KW_WFP_LL_OFFSET', key='WFPLLOFF',
           comment='max frac. wavelength offset btwn fp peaks',
-          parent='WAVE_FP_LL_OFFSET', group='wave')
+          parent='CAL.WAVE.FP.LL_OFFSET', group='wave')
 
 # the max dv to keep hc lines used
 KDict.set('KW_WFP_DVMAX', key='WFPDVMAX',
           comment='max dv to kee[ hc lines for fp wave sol.',
-          parent='WAVE_FP_DV_MAX', group='wave')
+          parent='CAL.WAVE.FP.DV_MAX', group='wave')
 
 # the used polynomial fit degree (to fit wave solution)
 KDict.set('KW_WFP_LLFITDEG', key='WFPLLDEG',
           comment='Used poly fit degree for fp wave sol.',
-          parent='WAVE_FP_LL_DEGR_FIT', group='wave')
+          parent='CAL.WAVE.FP.LL_DEGR_FIT', group='wave')
 
 # whether the cavity file was updated
 KDict.set('KW_WFP_UPDATECAV', key='WFPUPCAV',
           comment='Whether wave sol. was used to update cav file',
-          parent='WAVE_FP_UPDATE_CAVITY', group='wave')
+          parent='CAL.WAVE.FP.UPDATE_CAVITY', group='wave')
 
 # the mode used to fit the FP cavity
 KDict.set('KW_WFP_FPCAV_MODE', key='WFPCAVMO',
           comment='The mode used to fit the FP cavity',
-          parent='WAVE_FP_CAVFIT_MODE', group='wave')
+          parent='CAL.WAVE.FP.CAVFIT_MODE', group='wave')
 
 # the mode used to fit the wavelength
 KDict.set('KW_WFP_LLFIT_MODE', key='WFPLLFMO',
           comment='The mode used to fit the wavelength sol.',
-          parent='WAVE_FP_LLFIT_MODE', group='wave')
+          parent='CAL.WAVE.FP.LLFIT_MODE', group='wave')
 
 # the minimum instrumental error used
 KDict.set('KW_WFP_ERRX_MIN', key='WFPERRXM',
           comment='The minimum instrumental error used for wave sol.',
-          parent='WAVE_FP_ERRX_MIN', group='wave')
+          parent='CAL.WAVE.FP.ERR_XMIN', group='wave')
 
 # the max rms for the wave sol sig clip
 KDict.set('KW_WFP_MAXLL_FIT_RMS', key='WFPMAXLL',
           comment='The max rms for the FP wave sol sig cut',
-          parent='WAVE_FP_MAX_LLFIT_RMS', group='wave')
+          parent='CAL.WAVE.FP.MAX_LLFIT_RMS', group='wave')
 
 # the echelle number used for the first order
 KDict.set('KW_WFP_T_ORD_START', key='WFPTORD',
           comment='The echelle number of order 0 (fp wave sol.)',
-          parent='WAVE_T_ORDER_START', group='wave')
+          parent='CAL.WAVE.GEN.TORDER_START', group='wave')
 
 # the weight below which fp lines are rejected
 KDict.set('KW_WFP_WEI_THRES', key='WFPWTHRE',
           comment='The weight below which FP lines are rejected',
-          parent='WAVE_FP_WEIGHT_THRES', group='wave')
+          parent='CAL.WAVE.FP.WEIGHT_THRES', group='wave')
 
 # the polynomial degree fit order used for fitting the fp cavity
 KDict.set('KW_WFP_CAVFIT_DEG', key='WFPCVFIT',
           comment='The fit degree used for fitting the fp cavity',
-          parent='WAVE_FP_CAVFIT_DEG', group='wave')
+          parent='CAL.WAVE.FP.CAVFIT_DEG', group='wave')
 
 # the largest jump in fp that was allowed
 KDict.set('KW_WFP_LARGE_JUMP', key='WFPLJUMP',
           comment='The largest jump in fp that is allowed',
-          parent='WAVE_FP_LARGE_JUMP', group='wave')
+          parent='CAL.WAVE.FP.LARGE_JUMP', group='wave')
 
 # the index to start crossmatching fps at
 KDict.set('KW_WFP_CM_INDX', key='WFPCMIND',
           comment='The index to start crossmatch at',
-          parent='WAVE_FP_CM_IND', group='wave')
+          parent='CAL.WAVE.FP.CROSSM_INDEX', group='wave')
 
 # the FP widths used for each order (1D list)
 KDict.set('KW_WFP_WIDUSED', key='WFPWD{0:03d}',
@@ -1223,17 +1223,17 @@ KDict.set('KW_WFP_WIDUSED', key='WFPWD{0:03d}',
 # the percentile to normalise the FP flux per order used
 KDict.set('KW_WFP_NPERCENT', key='WFPNPRCT',
           comment='WAVE FP percentile thres to norm FP flux used',
-          parent='WAVE_FP_NORM_PERCENTILE', group='wave')
+          parent='CAL.WAVE.FP.NORM_PTILE', group='wave')
 
 # the normalised limited used to detect FP peaks
 KDict.set('KW_WFP_LIMIT', key='WFPNLIMT',
           comment='WAVE FP norm limit to detect FP peaks used',
-          parent='WAVE_FP_PEAK_LIM', group='wave')
+          parent='CAL.WAVE.FP.PEAK_LIM', group='wave')
 
 # the normalised cut width for large peaks used
 KDict.set('KW_WFP_CUTWIDTH', key='WFPCUTWD',
           comment='Normalised cut width used for large FP peaks',
-          parent='WAVE_FP_P2P_WIDTH_CUT', group='wave')
+          parent='CAL.WAVE.FP.P2P_WID_CUT', group='wave')
 
 # Wavelength solution for fiber C that is is source of the WFP keys
 KDict.set('KW_WFP_FILE', key='WFP_FILE', comment='WFP source file',
@@ -1254,7 +1254,7 @@ KDict.set('KW_WFP_CONTRAST', key='WFPCONT', comment='wave sol FP Contrast of CCF
 
 # Mask for the wave FP file CCF
 KDict.set('KW_WFP_MASK', key='WFPMASK', comment='wave sol FP Mask filename',
-          parent='WAVE_CCF_MASK', group='wave')
+          parent='CAL.WAVE.CCF.MASK', group='wave')
 
 # Number of lines for the wave FP file CCF
 KDict.set('KW_WFP_LINES', key='WFPLINE', comment='wave sol FP nbr of lines used',
@@ -1262,23 +1262,23 @@ KDict.set('KW_WFP_LINES', key='WFPLINE', comment='wave sol FP nbr of lines used'
 
 # Target RV for the wave FP file CCF
 KDict.set('KW_WFP_TARG_RV', key='WFPTRV', comment='wave sol FP target RV [km/s]',
-          parent='WAVE_CCF_TARGET_RV', group='wave')
+          parent='CAL.WAVE.CCF.TARGET_RV', group='wave')
 
 # Width for the wave FP file CCF
 KDict.set('KW_WFP_WIDTH', key='WFPWIDTH', comment='wave sol FP CCF width [km/s]',
-          parent='WAVE_CCF_WIDTH', group='wave')
+          parent='CAL.WAVE.CCF.WIDTH', group='wave')
 
 # Step for the wave FP file CCF
 KDict.set('KW_WFP_STEP', key='WFPSTEP', comment='wave sol FP CCF step [km/s]',
-          parent='WAVE_CCF_STEP', group='wave')
+          parent='CAL.WAVE.CCF.STEP', group='wave')
 
 # The sigdet used for FP file CCF
 KDict.set('KW_WFP_SIGDET', key='WFPCSDET', comment='wave sol FP CCF sigdet used',
-          parent='WAVE_CCF_NOISE_SIGDET', group='wave')
+          parent='CAL.WAVE.CCF.NOISE_SIGDET', group='wave')
 
 # The boxsize used for FP file CCF
 KDict.set('KW_WFP_BOXSIZE', key='WFPCBSZ', comment='wave sol FP CCF boxsize used',
-          parent='WAVE_CCF_NOISE_BOXSIZE', group='wave')
+          parent='CAL.WAVE.CCF.NOISE_BOXSIZE', group='wave')
 
 # The max flux used for the FP file CCF
 KDict.set('KW_WFP_MAXFLUX', key='WFPCMFLX', comment='wave sol FP CCF max flux used',
@@ -1286,37 +1286,37 @@ KDict.set('KW_WFP_MAXFLUX', key='WFPCMFLX', comment='wave sol FP CCF max flux us
 
 # The det noise used for the FP file CCF
 KDict.set('KW_WFP_DETNOISE', key='WFPCDETN', comment='wave sol FP CCF det noise used',
-          parent='WAVE_CCF_DETNOISE', group='wave')
+          parent='CAL.WAVE.CCF.DETNOISE', group='wave')
 
 # the highest order used for the FP file CCF
 KDict.set('KW_WFP_NMAX', key='WFPCNMAX', comment='wave sol FP CCF highest order used',
-          parent='WAVE_CCF_N_ORD_MAX', group='wave')
+          parent='CAL.WAVE.CCF.NORD_MAX', group='wave')
 
 # The weight of the CCF mask (if 1 force all weights equal) used for FP CCF
 KDict.set('KW_WFP_MASKMIN', key='WFPCMMIN', comment='wave sol FP CCF mask weight used',
-          parent='WAVE_CCF_MASK_MIN_WEIGHT', group='wave')
+          parent='CAL.WAVE.CCF.MASK_MIN_WEIGHT', group='wave')
 
 # The width of the CCF mask template line (if 0 use natural) used for FP CCF
 KDict.set('KW_WFP_MASKWID', key='WFPCMWID', comment='wave sol FP CCF mask width used',
-          parent='WAVE_CCF_MASK_WIDTH', group='wave')
+          parent='CAL.WAVE.CCF.MASK_WIDTH', group='wave')
 
 # The units of the input CCF mask (converted to nm in code)
 KDict.set('KW_WFP_MASKUNITS', key='WFPCMUNT', comment='wave sol FP CCF mask units used',
-          parent='WAVE_CCF_MASK_UNITS', group='wave')
+          parent='CAL.WAVE.CCF.MASK_UNITS', group='wave')
 
 # number of iterations for convergence used in wave night (hc)
 KDict.set('KW_WNT_NITER1', key='WNTNITER', comment='wave night hc n iterations used',
-          parent='WAVE_NIGHT_NITERATIONS1', group='wave')
+          parent='CAL.WAVE.NIGHT.NIGHT_NITER1', group='wave')
 
 # number of iterations for convergence used in wave night (fp)
 KDict.set('KW_WNT_NITER2', key='WNTNITER',
           comment='wave night fp n iterations used',
-          parent='WAVE_NIGHT_NITERATIONS2', group='wave')
+          parent='CAL.WAVE.NIGHT.NIGHT_NITER2', group='wave')
 
 # starting point for the cavity corrections used in wave night
 KDict.set('KW_WNT_DCAVITY', key='WNTDCVTY',
           comment='wave night starting point for cavity corr used',
-          parent='WAVE_NIGHT_DCAVITY', group='wave')
+          parent='CAL.WAVE.NIGHT.DCAVITY', group='wave')
 
 # source fiber for the cavity correction
 KDict.set('KW_WNT_DCAVSRCE', key='WNTDCVSR',
@@ -1325,16 +1325,16 @@ KDict.set('KW_WNT_DCAVSRCE', key='WNTDCVSR',
 
 # define the sigma clip value to remove bad hc lines used
 KDict.set('KW_WNT_HCSIGCLIP', key='WNTHCSIG', comment='wave night hc sig clip used',
-          group='wave', parent='WAVE_NIGHT_HC_SIGCLIP')
+          group='wave', parent='CAL.WAVE.NIGHT.HC_SIGCLIP')
 
 # median absolute deviation cut off used
 KDict.set('KW_WNT_MADLIMIT', key='WNT_MADL',
           comment='wave night med abs dev cut off used',
-          group='wave', parent='WAVE_NIGHT_MED_ABS_DEV')
+          group='wave', parent='CAL.WAVE.NIGHT.MED_ABSDEV')
 
 # sigma clipping for the fit used in wave night
 KDict.set('KW_WNT_NSIG_FIT', key='WNTNSIGF', comment='wave night sig clip fit cut used',
-          parent='WAVE_NIGHT_NSIG_FIT_CUT', group='wave')
+          parent='CAL.WAVE.NIGHT.NSIG_FIT_CUT', group='wave')
 
 # -----------------------------------------------------------------------------
 # Define wave res (new) variables
@@ -1441,7 +1441,7 @@ KDict.set('KW_TELLUP_CCFP_OTHERS', key='TLPCPOTR', comment='CCF power of other s
 
 # Define whether precleaning was done (tellu pre-cleaning)
 KDict.set('KW_TELLUP_DO_PRECLEAN', key='TLPDOCLN', comment='tellu preclean done',
-          parent='TELLUP_DO_PRECLEANING')
+          parent='OBJ.TELL.PCLEAN.DO_PRECLEANING')
 
 # Define default water absorption used (tellu pre-cleaning)
 KDict.set('KW_TELLUP_DFLT_WATER', key='TLPDFH2O',
@@ -1456,37 +1456,37 @@ KDict.set('KW_TELLUP_DFLT_WATER', key='TLPDFH2O',
 # Define ccf scan range that was used (tellu pre-cleaning)
 KDict.set('KW_TELLUP_CCF_SRANGE', key='TLPSCRNG',
           comment='tellu preclean ccf scan range km/s',
-          parent='TELLUP_CCF_SCAN_RANGE')
+          parent='OBJ.TELL.PCLEAN.CCF_SCAN_RANGE')
 
 # Define whether we cleaned OH lines
 KDict.set('KW_TELLUP_CLEAN_OHLINES', key='TLPCLORD',
           comment='tellu preclean were OH lines were cleaned',
-          parent='TELLUP_CLEAN_OH_LINES')
+          parent='OBJ.TELL.PCLEAN.CLEAN_OHLINES')
 
 # Define which orders were removed from tellu pre-cleaning
 KDict.set('KW_TELLUP_REMOVE_ORDS', key='TLPRORDS',
           comment='tellu preclean which orders were removed',
-          parent='TELLUP_REMOVE_ORDS')
+          parent='OBJ.TELL.PCLEAN.REMOVE_ORDERS')
 
 # Define which min snr threshold was used for tellu pre-cleaning
 KDict.set('KW_TELLUP_SNR_MIN_THRES', key='TLPSNRMT',
           comment='tellu preclean snr min threshold',
-          parent='TELLUP_SNR_MIN_THRES')
+          parent='OBJ.TELL.PCLEAN.SNR_MIN_THRES')
 
 # Define dexpo convergence threshold used
 KDict.set('KW_TELLUP_DEXPO_CONV_THRES', key='TLPDEXCT',
           comment='tellu preclean dexpo conv thres used',
-          parent='TELLUP_DEXPO_CONV_THRES')
+          parent='OBJ.TELL.PCLEAN.DEXPO_CONV_THRES')
 
 # Define the maximum number of oterations used to get dexpo convergence
 KDict.set('KW_TELLUP_DEXPO_MAX_ITR', key='TLPMXITR',
           comment='tellu preclean max iterations used',
-          parent='TELLUP_DEXPO_MAX_ITR')
+          parent='OBJ.TELL.PCLEAN.DEXPO_MAX_ITR')
 
 # Define the kernel threshold in abso_expo used in tellu pre-cleaning
 KDict.set('KW_TELLUP_ABSOEXPO_KTHRES', key='TLPAEKTH',
           comment='tellu preclean abso expo kernel thres',
-          parent='TELLUP_ABSO_EXPO_KTHRES')
+          parent='OBJ.TELL.PCLEAN.ABSO_EXPO_KTHRES')
 
 # Define the wave start (same as s1d) in nm used
 KDict.set('KW_TELLUP_WAVE_START', key='TLPWAVES',
@@ -1506,27 +1506,27 @@ KDict.set('KW_TELLUP_DVGRID', key='TLPDVGRD',
 # Define the gauss width of the kernel used in abso_expo for tellu pre-cleaning
 KDict.set('KW_TELLUP_ABSOEXPO_KWID', key='TLPAEKWD',
           comment='tellu preclean gauss width kernel used',
-          parent='TELLUP_ABSO_EXPO_KWID')
+          parent='OBJ.TELL.PCLEAN.ABSO_EXPO_KWID')
 
 # Define the gauss shape of the kernel used in abso_expo for tellu pre-cleaning
 KDict.set('KW_TELLUP_ABSOEXPO_KEXP', key='TLPAEKEX',
           comment='tellu preclean gauss shape kernel used',
-          parent='TELLUP_ABSO_EXPO_KEXP')
+          parent='OBJ.TELL.PCLEAN.ABSO_EXP_KEXP')
 
 # Define the exponent of the transmission threshold used for tellu pre-cleaning
 KDict.set('KW_TELLUP_TRANS_THRES', key='TLPTRSTH',
           comment='tellu preclean transmission thres used',
-          parent='TELLUP_TRANS_THRES')
+          parent='OBJ.TELL.PCLEAN.TRANS_THRES')
 
 # Define the threshold for discrepant tramission used for tellu pre-cleaning
 KDict.set('KW_TELLUP_TRANS_SIGL', key='TLPTRSLM',
           comment='tellu preclean transmission sig limit used',
-          parent='TELLUP_TRANS_SIGLIM')
+          parent='OBJ.TELL.PCLEAN.TRANS_SIGLIM')
 
 # Define the whether to force fit to header airmass used for tellu pre-cleaning
 KDict.set('KW_TELLUP_FORCE_AIRMASS', key='TLPFCARM',
           comment='tellu preclean force airmass from hdr',
-          parent='TELLUP_FORCE_AIRMASS')
+          parent='OBJ.TELL.PCLEAN.FORCE_AIRMASS')
 
 # Define the bounds of the exponent of other species used for tellu pre-cleaning
 KDict.set('KW_TELLUP_OTHER_BOUNDS', key='TLP_OTHB',

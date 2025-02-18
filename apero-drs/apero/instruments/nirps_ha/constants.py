@@ -1009,86 +1009,86 @@ CDict.set('ALWAYS_EXTRACT', value=False, source=__NAME__, author='EA', group=cgr
 CDict.set('EXTRACT_TYPE', value='E2DSFF', source=__NAME__, author='EA', group=cgroup)
 
 # Define intercept and slope for a pixel shift
-CDict.set('WAVE_PIXEL_SHIFT_INTER', value=0.0, source=__NAME__,
-          author='EA')  # 6.26637214e+00
+CDict.set('PIXEL_SHIFT_INTER', value=0.0, source=__NAME__,
+          author='EA', group=cgroup)  # 6.26637214e+00
 
-CDict.set('WAVE_PIXEL_SHIFT_SLOPE', value=0.0, source=__NAME__,
-          author='EA')  # 4.22131253e-04
+CDict.set('PIXEL_SHIFT_SLOPE', value=0.0, source=__NAME__,
+          author='EA', group=cgroup)  # 4.22131253e-04
 
 # Defines echelle number of first extracted order
-CDict.set('WAVE_T_ORDER_START', value=147, source=__NAME__, author='EA')
+CDict.set('TORDER_START', value=147, source=__NAME__, author='EA', group=cgroup)
 
 # Defines order from which the solution is calculated (first order)
-CDict.set('WAVE_N_ORD_START', value=0, source=__NAME__, author='EA')
+CDict.set('NORD_START', value=0, source=__NAME__, author='EA', group=cgroup)
 
 # Defines order to which the solution is calculated (last order)
-CDict.set('WAVE_N_ORD_FINAL', value=75, source=__NAME__, author='EA')
+CDict.set('NORD_FINAL', value=75, source=__NAME__, author='EA', group=cgroup)
 
 # =============================================================================
 # CALIBRATION: WAVE LINES REFERENCE SETTINGS
 # =============================================================================
 cgroup = 'CAL.WAVE.LL'
 # min SNR to consider the line (for HC)
-CDict.set('WAVEREF_NSIG_MIN_HC', value=3, source=__NAME__, author='EA')
+CDict.set('NSIG_MIN_HC', value=3, source=__NAME__, author='EA', group=cgroup)
 
 # min SNR to consider the line (for FP)
-CDict.set('WAVEREF_NSIG_MIN_FP', value=3, source=__NAME__, author='EA')
+CDict.set('NSIG_MIN_FP', value=3, source=__NAME__, author='EA', group=cgroup)
 
 # minimum distance to the edge of the array to consider a line
-CDict.set('WAVEREF_EDGE_WMAX', value=20, source=__NAME__, author='EA')
+CDict.set('REF_EDGE_WMAX', value=20, source=__NAME__, author='EA', group=cgroup)
 
 # value in pixel (+/-) for the box size around each HC line to perform fit
-CDict.set('WAVEREF_HC_BOXSIZE', value=13, source=__NAME__, author='EA')
+CDict.set('REF_HC_BOXSIZE', value=13, source=__NAME__, author='EA', group=cgroup)
 
 # get valid hc dprtypes
-CDict.set('WAVEREF_HC_FIBTYPES', value=['HCONE', 'HCTWO'], source=__NAME__)
+CDict.set('REF_HC_FIBTYPES', value=['HCONE', 'HCTWO'], source=__NAME__, group=cgroup)
 
 # get valid fp dprtypes
-CDict.set('WAVEREF_FP_FIBTYPES', value=['FP'], source=__NAME__)
+CDict.set('REF_FP_FIBTYPES', value=['FP'], source=__NAME__, group=cgroup)
 
 # get the degree to fix reference wavelength to in hc mode
-CDict.set('WAVEREF_FITDEG', value=5, source=__NAME__, author='EA')
+CDict.set('REF_FITDEG', value=5, source=__NAME__, author='EA', group=cgroup)
 
 # Define the lowest N for fp peaks
-CDict.set('WAVEREF_FP_NLOW', value=7500, source=__NAME__, author='EA')
+CDict.set('REF_FP_NLOW', value=7500, source=__NAME__, author='EA', group=cgroup)
 
 # Define the highest N for fp peaks
-CDict.set('WAVEREF_FP_NHIGH', value=30000, source=__NAME__, author='EA')
+CDict.set('REF_FP_NHIGH', value=30000, source=__NAME__, author='EA', group=cgroup)
 
 # Define the number of iterations required to do the FP polynomial inversion
-CDict.set('WAVEREF_FP_POLYINV', value=4, source=__NAME__, author='EA')
+CDict.set('REF_FP_POLYINV', value=4, source=__NAME__, author='EA', group=cgroup)
 
 # Define the guess HC exponential width [pixels]
-CDict.set('WAVEREF_HC_GUESS_EWID', value=1, source=__NAME__, author='EA')
+CDict.set('REF_HC_GUESS_EWID', value=1, source=__NAME__, author='EA', group=cgroup)
 
 # Define the fiber offset (in pixels) away from reference fiber
-CDict.set('WAVE_FIBER_OFFSET_MOD',
+CDict.set('FIBER_OFFSET_MOD',
           value={"A": 0.0, "B": 0.0},
-          source=__NAME__, author='EA')
+          source=__NAME__, author='EA', group=cgroup)
 
 # Define the fiber scale factor from reference fiber
-CDict.set('WAVE_FIBER_SCALE_MOD',
+CDict.set('FIBER_SCALE_MOD',
           value={"A": 1.0, "B": 1.0},
-          source=__NAME__, author='EA')
+          source=__NAME__, author='EA', group=cgroup)
 
 # =============================================================================
 # CALIBRATION: WAVE RESOLUTION MAP SETTINGS
 # =============================================================================
 cgroup = 'CAL.WAVE.RESMAP'
 # Define the number of bins in order direction to use in the resolution map
-CDict.set('WAVE_RES_MAP_ORDER_BINS', value=4, source=__NAME__, author='EA')
+CDict.set('ORDER_BINS', value=4, source=__NAME__, author='EA', group=cgroup)
 
 # Define the number of bins in spatial direction to use in the resolution map
-CDict.set('WAVE_RES_MAP_SPATIAL_BINS', value=4, source=__NAME__, author='EA')
+CDict.set('SPATIAL_BINS', value=4, source=__NAME__, author='EA', group=cgroup)
 
 # Define the low pass filter size for the HC E2DS file in the resolution map
-CDict.set('WAVE_RES_MAP_FILTER_SIZE', value=101, source=__NAME__, author='EA')
+CDict.set('FILT_SIZE', value=101, source=__NAME__, author='EA', group=cgroup)
 
 # Define the broad resolution map velocity cut off (in km/s)
-CDict.set('WAVE_RES_VELO_CUTOFF1', value=20, source=__NAME__, author='EA')
+CDict.set('VEL_CUTOFF1', value=20, source=__NAME__, author='EA', group=cgroup)
 
 # Define the tight resolution map velocity cut off (in km/s)
-CDict.set('WAVE_RES_VELO_CUTOFF2', value=5, source=__NAME__, author='EA')
+CDict.set('VEL_CUTOFF2', value=5, source=__NAME__, author='EA', group=cgroup)
 
 # =============================================================================
 # CALIBRATION: WAVE CCF SETTINGS
@@ -1096,100 +1096,100 @@ CDict.set('WAVE_RES_VELO_CUTOFF2', value=5, source=__NAME__, author='EA')
 cgroup = 'CAL.WAVE.CCF'
 # The value of the noise for wave dv rms calculation
 # snr = flux/sqrt(flux + noise^2)
-CDict.set('WAVE_CCF_NOISE_SIGDET', value=8.0, source=__NAME__, author='EA')
+CDict.set('NOISE_SIGDET', value=8.0, source=__NAME__, author='EA', group=cgroup)
 
 # The size around a saturated pixel to flag as unusable for wave dv rms
 # calculation
-CDict.set('WAVE_CCF_NOISE_BOXSIZE', value=12, source=__NAME__, author='EA')
+CDict.set('NOISE_BOXSIZE', value=12, source=__NAME__, author='EA', group=cgroup)
 
 # The maximum flux for a good (unsaturated) pixel for wave dv rms calculation
-CDict.set('WAVE_CCF_NOISE_THRES', value=1.0e9, source=__NAME__, author='EA')
+CDict.set('NOISE_THRES', value=1.0e9, source=__NAME__, author='EA', group=cgroup)
 
 # The CCF step size to use for the FP CCF
-CDict.set('WAVE_CCF_STEP', value=0.5, source=__NAME__, author='EA')
+CDict.set('STEP', value=0.5, source=__NAME__, author='EA', group=cgroup)
 
 # The CCF width size to use for the FP CCF
-CDict.set('WAVE_CCF_WIDTH', value=7.5, source=__NAME__, author='EA')
+CDict.set('WIDTH', value=7.5, source=__NAME__, author='EA', group=cgroup)
 
 # The target RV (CCF center) to use for the FP CCF
-CDict.set('WAVE_CCF_TARGET_RV', value=0.0, source=__NAME__, author='EA')
+CDict.set('TARGET_RV', value=0.0, source=__NAME__, author='EA', group=cgroup)
 
 # The detector noise to use for the FP CCF
-CDict.set('WAVE_CCF_DETNOISE', value=100.0, source=__NAME__, author='EA')
+CDict.set('DETNOISE', value=100.0, source=__NAME__, author='EA', group=cgroup)
 
 # The filename of the CCF Mask to use for the FP CCF
 # Note this file is copied over if WAVE_CCF_UPDATE_MASK = True
-CDict.set('WAVE_CCF_MASK', value='smart_fp_mask.mas', source=__NAME__,
-          author='EA')
+CDict.set('MASK', value='smart_fp_mask.mas', source=__NAME__,
+          author='EA', group=cgroup)
 
 # Define the default CCF MASK normalisation mode for FP CCF
 # options are:
 # 'None'         for no normalization
 # 'all'          for normalization across all orders
 # 'order'        for normalization for each order
-CDict.set('WAVE_CCF_MASK_NORMALIZATION', value='order', source=__NAME__,
-          author='EA')
+CDict.set('MASK_NORM', value='order', source=__NAME__,
+          author='EA', group=cgroup)
 
 # Define the wavelength units for the mask for the FP CCF
-CDict.set('WAVE_CCF_MASK_UNITS', value='nm', source=__NAME__, author='EA')
+CDict.set('MASK_UNITS', value='nm', source=__NAME__, author='EA', group=cgroup)
 
 # Define the ccf mask path the FP CCF
-CDict.set('WAVE_CCF_MASK_PATH', value='ccf_masks/', source=__NAME__,
-          author='EA')
+CDict.set('MASK_PATH', value='ccf_masks/', source=__NAME__,
+          author='EA', group=cgroup)
 
 # Define the CCF mask format (must be an astropy.table format)
-CDict.set('WAVE_CCF_MASK_FMT', value='ascii', source=__NAME__,
-          author='EA')
+CDict.set('MASK_FMT', value='ascii', source=__NAME__,
+          author='EA', group=cgroup)
 
 # Define the weight of the CCF mask (if 1 force all weights equal)
-CDict.set('WAVE_CCF_MASK_MIN_WEIGHT', value=0.0, source=__NAME__,
-          author='EA')
+CDict.set('MASK_MIN_WEIGHT', value=0.0, source=__NAME__,
+          author='EA', group=cgroup)
 
 # Define the width of the template line (if 0 use natural)
-CDict.set('WAVE_CCF_MASK_WIDTH', value=1.7, source=__NAME__,
-          author='EA')
+CDict.set('MASK_WIDTH', value=1.7, source=__NAME__,
+          author='EA', group=cgroup)
 
 # Define the number of orders (from zero to ccf_num_orders_max) to use
 # to calculate the FP CCF
-CDict.set('WAVE_CCF_N_ORD_MAX', value=48, source=__NAME__,
-          author='EA')
+CDict.set('NORD_MAX', value=48, source=__NAME__,
+          author='EA', group=cgroup)
 
 # Define whether to regenerate the fp mask (WAVE_CCF_MASK) when we
 # update the cavity width in the reference wave solution recipe
-CDict.set('WAVE_CCF_UPDATE_MASK', value=True, source=__NAME__,
-          author='EA')
+CDict.set('UPDATE_MASK', value=True, source=__NAME__,
+          author='EA', group=cgroup)
 
 # Define the width of the lines in the smart mask [km/s]
-CDict.set('WAVE_CCF_SMART_MASK_WIDTH', value=1.0, source=__NAME__,
-          author='EA')
+CDict.set('SMART_MASK_WID', value=1.0, source=__NAME__,
+          author='EA', group=cgroup)
 
 # Define the minimum wavelength for the smart mask [nm]
-CDict.set('WAVE_CCF_SMART_MASK_MINLAM', value=950, source=__NAME__,
-          author='EA')
+CDict.set('SMART_MASK_MINLAM', value=950, source=__NAME__,
+          author='EA', group=cgroup)
 
 # Define the maximum wavelength for the smart mask [nm]
-CDict.set('WAVE_CCF_SMART_MASK_MAXLAM', value=2500, source=__NAME__,
-          author='EA')
+CDict.set('SMART_MASK_MAXLAM', value=2500, source=__NAME__,
+          author='EA', group=cgroup)
 
 # Define a trial minimum FP N value (should be lower than true
 # minimum FP N value)
-CDict.set('WAVE_CCF_SMART_MASK_TRIAL_NMIN', value=9000, source=__NAME__,
-          author='EA')
+CDict.set('SMART_MASK_TRIAL_NMIN', value=9000, source=__NAME__,
+          author='EA', group=cgroup)
 
 # Define a trial maximum FP N value (should be higher than true
 # maximum FP N value)
-CDict.set('WAVE_CCF_SMART_MASK_TRIAL_NMAX', value=27000, source=__NAME__,
-          author='EA')
+CDict.set('SMART_MASK_TRIAL_NMAX', value=27000, source=__NAME__,
+          author='EA', group=cgroup)
 
 # Define the converges parameter for dwave in smart mask generation
-CDict.set('WAVE_CCF_SMART_MASK_DWAVE_THRES', value=1.0e-9, source=__NAME__,
-          author='EA')
+CDict.set('SMART_MASK_DWAVE_THRES', value=1.0e-9, source=__NAME__,
+          author='EA', group=cgroup)
 
 # Define the quality control threshold from RV of CCF FP between reference
 # fiber and other fibers, above this limit fails QC [m/s]
 # For HE there is an offset between A and B - this will be a high value
 # TODO: We should really think about this a bit more
-CDict.set('WAVE_CCF_RV_THRES_QC', value=20.0, source=__NAME__)
+CDict.set('RV_THRES_QC', value=20.0, source=__NAME__, group=cgroup)
 # TODO: address this later - should be much lower
 
 
@@ -1204,61 +1204,61 @@ CDict.set('WAVE_MODE_HC', value=0, source=__NAME__, author='EA')
 
 # width of the box for fitting HC lines. Lines will be fitted from -W to +W,
 # so a 2*W+1 window
-CDict.set('WAVE_HC_FITBOX_SIZE', value=6, source=__NAME__, author='EA')
+CDict.set('HC_FITBOX_SIZE', value=6, source=__NAME__, author='EA', group=cgroup)
 
 # number of sigma above local RMS for a line to be flagged as such
-CDict.set('WAVE_HC_FITBOX_SIGMA', value=2.0, source=__NAME__, author='EA')
+CDict.set('FITBOX_SIGMA', value=2.0, source=__NAME__, author='EA', group=cgroup)
 
 # the fit degree for the wave hc gaussian peaks fit
-CDict.set('WAVE_HC_FITBOX_GFIT_DEG', value=5, source=__NAME__, author='EA')
+CDict.set('FITBOX_GFIT_DEG', value=5, source=__NAME__, author='EA', group=cgroup)
 
 # the RMS of line-fitted line must be between DEVMIN and DEVMAX of the peak
 # value must be SNR>5 (or 1/SNR<0.2)
-CDict.set('WAVE_HC_FITBOX_RMS_DEVMIN', value=0.0, source=__NAME__,
-          author='EA')
-CDict.set('WAVE_HC_FITBOX_RMS_DEVMAX', value=0.2, source=__NAME__,
-          author='EA')
+CDict.set('FITBOX_RMS_DEVMIN', value=0.0, source=__NAME__,
+          author='EA', group=cgroup)
+CDict.set('FITBOX_RMS_DEVMAX', value=0.2, source=__NAME__,
+          author='EA', group=cgroup)
 
 # the e-width of the line expressed in pixels.
-CDict.set('WAVE_HC_FITBOX_EWMIN', value=1.0, source=__NAME__,
-          author='EA')  # 0.7
-CDict.set('WAVE_HC_FITBOX_EWMAX', value=3.0, source=__NAME__,
-          author='EA')  # 1.1
+CDict.set('FITBOX_EWMIN', value=1.0, source=__NAME__,
+          author='EA', group=cgroup)  # 0.7
+CDict.set('FITBOX_EWMAX', value=3.0, source=__NAME__,
+          author='EA', group=cgroup)  # 1.1
 
 # Define the file type for saving the initial guess at the hc peak list
-CDict.set('WAVE_HCLL_FILE_FMT', value='ascii.rst', source=__NAME__,
-          author='EA')
+CDict.set('LL_FILEFMT', value='ascii.rst', source=__NAME__,
+          author='EA', group=cgroup)
 
 # number of bright lines kept per order
 # avoid >25 as it takes super long
 # avoid <12 as some orders are ill-defined and we need >10 valid
 # lines anyway
 # 20 is a good number, and I see no reason to change it
-CDict.set('WAVE_HC_NMAX_BRIGHT', value=20, source=__NAME__, author='EA')
+CDict.set('NMAX_BRIGHT', value=20, source=__NAME__, author='EA', group=cgroup)
 
 # Number of times to run the fit triplet algorithm
-CDict.set('WAVE_HC_NITER_FIT_TRIPLET', value=3, source=__NAME__,
-          author='EA')
+CDict.set('NITER_FIT_TRIPLET', value=3, source=__NAME__,
+          author='EA', group=cgroup)
 
 # Maximum distance between catalog line and init guess line to accept
 # line in m/s
-CDict.set('WAVE_HC_MAX_DV_CAT_GUESS', value=60000, source=__NAME__,
-          author='EA')
+CDict.set('MAX_DV_CATLL_GUESS', value=60000, source=__NAME__,
+          author='EA', group=cgroup)
 
 # The fit degree between triplets
-CDict.set('WAVE_HC_TFIT_DEG', value=2, source=__NAME__, author='EA')
+CDict.set('TFIT_DEG', value=2, source=__NAME__, author='EA', group=cgroup)
 
 # Cut threshold for the triplet line fit [in km/s]
-CDict.set('WAVE_HC_TFIT_CUT_THRES', value=1.0, source=__NAME__,
-          author='EA')
+CDict.set('TFIT_CUT_THRES', value=1.0, source=__NAME__,
+          author='EA', group=cgroup)
 
 # Minimum number of lines required per order
-CDict.set('WAVE_HC_TFIT_MINNUM_LINES', value=10, source=__NAME__,
-          author='EA')
+CDict.set('TFIT_MIN_NLINES', value=10, source=__NAME__,
+          author='EA', group=cgroup)
 
 # Minimum total number of lines required
-CDict.set('WAVE_HC_TFIT_MINTOT_LINES', value=200, source=__NAME__,
-          author='EA')
+CDict.set('TFIT_MIN_TLINES', value=200, source=__NAME__,
+          author='EA', group=cgroup)
 
 # this sets the order of the polynomial used to ensure continuity
 #     in the  xpix vs wave solutions by setting the first term = 12,
@@ -1268,103 +1268,103 @@ CDict.set('WAVE_HC_TFIT_MINTOT_LINES', value=200, source=__NAME__,
 # these values are too high and lead to stability problems in the fit
 # WAVE_HC_TFIT_ORDER_FIT_CONT.value = '12, 9, 6, 2, 2'
 
-CDict.set('WAVE_HC_TFIT_ORDER_FIT_CONT', value=[12, 8, 4, 1, 1, 1],
-          source=__NAME__, author='EA')
+CDict.set('TFIT_ORDER_FIT_CONT', value=[12, 8, 4, 1, 1, 1],
+          source=__NAME__, author='EA', group=cgroup)
 
 # Number of times to loop through the sigma clip for triplet fit
-CDict.set('WAVE_HC_TFIT_SIGCLIP_NUM', value=20, source=__NAME__,
-          author='EA')
+CDict.set('TFIT_SIGCLIP_NUM', value=20, source=__NAME__,
+          author='EA', group=cgroup)
 
 # Sigma clip threshold for triplet fit
-CDict.set('WAVE_HC_TFIT_SIGCLIP_THRES', value=3.5, source=__NAME__,
-          author='EA')
+CDict.set('TFIT_SIGCLIP_THRES', value=3.5, source=__NAME__,
+          author='EA', group=cgroup)
 
 # Define the distance in m/s away from the center of dv hist points
 # outside will be rejected [m/s]
-CDict.set('WAVE_HC_TFIT_DVCUT_ORDER', value=2000, source=__NAME__,
-          author='EA')
-CDict.set('WAVE_HC_TFIT_DVCUT_ALL', value=5000, source=__NAME__,
-          author='EA')
+CDict.set('TFIT_DVCUT_ORDER', value=2000, source=__NAME__,
+          author='EA', group=cgroup)
+CDict.set('TFIT_DVCUT_ALL', value=5000, source=__NAME__,
+          author='EA', group=cgroup)
 
 # Define the resolution and line profile map size (y-axis by x-axis)
-CDict.set('WAVE_HC_RESMAP_SIZE', value=[5, 4], source=__NAME__,
-          author='EA')
+CDict.set('RESMAP_SIZE', value=[5, 4], source=__NAME__,
+          author='EA', group=cgroup)
 
 # Define the maximum allowed deviation in the RMS line spread function
-CDict.set('WAVE_HC_RES_MAXDEV_THRES', value=8, source=__NAME__,
-          author='EA')
+CDict.set('RES_MAXDEV_THRES', value=8, source=__NAME__,
+          author='EA', group=cgroup)
 
 # Quality control criteria if sigma greater than this many sigma fails
-CDict.set('WAVE_HC_QC_SIGMA_MAX', value=8, source=__NAME__,
-          author='EA')
+CDict.set('QC_SIG_MAX', value=8, source=__NAME__,
+          author='EA', group=cgroup)
 
 # Defines the dv span for PLOT_WAVE_HC_RESMAP debug plot, should be a
 # string list containing a min and max dv value
-CDict.set('WAVE_HC_RESMAP_DV_SPAN', value=[-15, 15], source=__NAME__,
-          author='EA')
+CDict.set('RESMAP_DVSPAN', value=[-15, 15], source=__NAME__,
+          author='EA', group=cgroup)
 
 # Defines the x limits for PLOT_WAVE_HC_RESMAP debug plot, should be a
 # string list containing a min and max x value
-CDict.set('WAVE_HC_RESMAP_XLIM', value=[-8.0, 8.0], source=__NAME__,
-          author='EA')
+CDict.set('RESMAP_XLIM', value=[-8.0, 8.0], source=__NAME__,
+          author='EA', group=cgroup)
 
 # Defines the y limits for PLOT_WAVE_HC_RESMAP debug plot, should be a
 # string list containing a min and max y value
-CDict.set('WAVE_HC_RESMAP_YLIM', value=[-0.05, 0.7], source=__NAME__,
-          author='EA')
+CDict.set('RESMAP_YLIM', value=[-0.05, 0.7], source=__NAME__,
+          author='EA', group=cgroup)
 
 # Define whether to fit line profiles with "gaussian" or "super-gaussian"
 CDict.set('WAVE_HC_RESMAP_FITTYPE', value='super-gaussian', source=__NAME__,
           author='EA')
 
 # Define the sigma clip for line profiles for the resolution map
-CDict.set('WAVE_HC_RESMAP_SIGCLIP', value=0.2, source=__NAME__,
-          author='EA')
+CDict.set('RESMAP_SIGCLIP', value=0.2, source=__NAME__,
+          author='EA', group=cgroup)
 
 # =============================================================================
 # CALIBRATION: WAVE LITTROW SETTINGS
 # =============================================================================
 cgroup = 'CAL.WAVE.LIT'
 # Define the order to start the Littrow fit from for the HC wave solution
-CDict.set('WAVE_LITTROW_ORDER_INIT_1', value=0, source=__NAME__)
+CDict.set('ORDER_INIT1', value=0, source=__NAME__, group=cgroup)
 
 # Define the order to start the Littrow fit from for the FP wave solution
 # TODO: Note currently used
-CDict.set('WAVE_LITTROW_ORDER_INIT_2', value=0, source=__NAME__)
+CDict.set('ORDER_INIT2', value=0, source=__NAME__, group=cgroup)
 
 # Define the order to end the Littrow fit at for the HC wave solution
-CDict.set('WAVE_LITTROW_ORDER_FINAL_1', value=75, source=__NAME__)
+CDict.set('ORDER_FINAL1', value=75, source=__NAME__, group=cgroup)
 
 # Define the order to end the Littrow fit at for the FP wave solution
 # TODO: Note currently used
-CDict.set('WAVE_LITTROW_ORDER_FINAL_2', value=75, source=__NAME__)
+CDict.set('ORDER_FINAL2', value=75, source=__NAME__, group=cgroup)
 
 # Define orders to ignore in Littrow fit
-CDict.set('WAVE_LITTROW_REMOVE_ORDERS', value=[], source=__NAME__)
+CDict.set('REMOVE_ORDERS', value=[], source=__NAME__, group=cgroup)
 
 # Define the littrow cut steps for the HC wave solution
-CDict.set('WAVE_LITTROW_CUT_STEP_1', value=250, source=__NAME__)
+CDict.set('CUT_STEP1', value=250, source=__NAME__, group=cgroup)
 
 # Define the littrow cut steps for the FP wave solution
-CDict.set('WAVE_LITTROW_CUT_STEP_2', value=500, source=__NAME__)
+CDict.set('CUT_STEP2', value=500, source=__NAME__, group=cgroup)
 
 # Define the fit polynomial order for the Littrow fit (fit across the orders)
 # for the HC wave solution
-CDict.set('WAVE_LITTROW_FIG_DEG_1', value=8, source=__NAME__)  # 5  # 4
+CDict.set('FIG_DEG1', value=8, source=__NAME__, group=cgroup)  # 5  # 4
 
 # Define the fit polynomial order for the Littrow fit (fit across the orders)
 # for the FP wave solution
-CDict.set('WAVE_LITTROW_FIG_DEG_2', value=8, source=__NAME__)  # 4
+CDict.set('FIG_DEG2', value=8, source=__NAME__, group=cgroup)  # 4
 
 # Define the order fit for the Littrow solution (fit along the orders)
 # TODO needs to be the same as ic_ll_degr_fit
-CDict.set('WAVE_LITTROW_EXT_ORDER_FIT_DEG', value=4, source=__NAME__)  # 5  # 4
+CDict.set('EXT_ORDER_FIT_DEG', value=4, source=__NAME__, group=cgroup)  # 5  # 4
 
 # Maximum littrow RMS value
-CDict.set('WAVE_LITTROW_QC_RMS_MAX', value=0.3, source=__NAME__)
+CDict.set('QC_RMS_MAX', value=0.3, source=__NAME__, group=cgroup)
 
 # Maximum littrow Deviation from wave solution (at x cut points)
-CDict.set('WAVE_LITTROW_QC_DEV_MAX', value=0.9, source=__NAME__)
+CDict.set('QC_DEV_MAX', value=0.9, source=__NAME__, group=cgroup)
 
 # =============================================================================
 # CALIBRATION: WAVE FP SETTINGS
@@ -1374,157 +1374,157 @@ cgroup = 'CAL.WAVE.FP'
 # Should be one of the following:
 # 0 - following Bauer et al 15 (previously WAVE_E2DS_EA)
 # 1 - following C Lovis (previously WAVE_NEW)
-CDict.set('WAVE_MODE_FP', value=1, source=__NAME__)
+CDict.set('MODE', value=1, source=__NAME__, group=cgroup)
 
 # Define the initial value of FP effective cavity width 2xd in nm
 # 2xd = 24.5 mm = 24.5e6 nm for SPIRou
-CDict.set('WAVE_FP_DOPD0', value=2.4e7, source=__NAME__)
+CDict.set('DOPD0', value=2.4e7, source=__NAME__, group=cgroup)
 
 # Define the polynomial fit degree between FP line numbers and the
 # measured cavity width for each line
-CDict.set('WAVE_FP_CAVFIT_DEG', value=9, source=__NAME__)
+CDict.set('CAVFIT_DEG', value=9, source=__NAME__, group=cgroup)
 
 # Define the FP jump size that is too large
-CDict.set('WAVE_FP_LARGE_JUMP', value=250, source=__NAME__)
+CDict.set('LARGE_JUMP', value=250, source=__NAME__, group=cgroup)
 
 # Index of FP line to start order cross-matching from
-CDict.set('WAVE_FP_CM_IND', value=-2, source=__NAME__)
+CDict.set('CROSSM_INDEX', value=-2, source=__NAME__, group=cgroup)
 
 # Define the percentile to normalize the spectrum to (per order)
 # used to determine FP peaks (peaks must be above a normalised limit
 # Defined in WAVE_FP_PEAK_LIM
-CDict.set('WAVE_FP_NORM_PERCENTILE', value=95, source=__NAME__)
+CDict.set('NORM_PTILE', value=95, source=__NAME__, group=cgroup)
 
 # Define the normalised limit below which FP peaks are not used
-CDict.set('WAVE_FP_PEAK_LIM', value=0.1, source=__NAME__)
+CDict.set('PEAK_LIM', value=0.1, source=__NAME__, group=cgroup)
 
 # Define pixel to pixel width that is too large (removed from FP peaks)
-CDict.set('WAVE_FP_P2P_WIDTH_CUT', value=30, source=__NAME__)
+CDict.set('P2P_WID_CUT', value=30, source=__NAME__, group=cgroup)
 
 # Define the minimum instrumental error
-CDict.set('WAVE_FP_ERRX_MIN', value=0.01, source=__NAME__,
-          author='EA')  # 0.03
+CDict.set('ERR_XMIN', value=0.01, source=__NAME__,
+          author='EA', group=cgroup)  # 0.03
 
 # Define the wavelength fit polynomial order
-CDict.set('WAVE_FP_LL_DEGR_FIT', value=4, source=__NAME__,
-          author='EA')  # 5   #4  # 4
+CDict.set('LL_DEGR_FIT', value=4, source=__NAME__,
+          author='EA', group=cgroup)  # 5   #4  # 4
 
 # Define the max rms for the wavelength sigma-clip fit
-CDict.set('WAVE_FP_MAX_LLFIT_RMS', value=3.0, source=__NAME__,
-          author='EA')
+CDict.set('MAX_LLFIT_RMS', value=3.0, source=__NAME__,
+          author='EA', group=cgroup)
 
 # Define the weight threshold (small number) below which we do not keep fp
 # lines
-CDict.set('WAVE_FP_WEIGHT_THRES', value=1.0e-30, source=__NAME__,
-          author='EA')
+CDict.set('WEIGHT_THRES', value=1.0e-30, source=__NAME__,
+          author='EA', group=cgroup)
 
 # Minimum blaze threshold to keep FP peaks
-CDict.set('WAVE_FP_BLAZE_THRES', value=0.3, source=__NAME__,
-          author='EA')
+CDict.set('BLAZE_THRES', value=0.3, source=__NAME__,
+          author='EA', group=cgroup)
 
 # Minimum FP peaks pixel separation fraction diff. from median
-CDict.set('WAVE_FP_XDIF_MIN', value=0.75, source=__NAME__,
-          author='EA')
+CDict.set('XDIF_MIN', value=0.75, source=__NAME__,
+          author='EA', group=cgroup)
 
 # Maximum FP peaks pixel separation fraction diff. from median
-CDict.set('WAVE_FP_XDIF_MAX', value=1.25, source=__NAME__,
-          author='EA')
+CDict.set('XDIF_MAX', value=1.25, source=__NAME__,
+          author='EA', group=cgroup)
 
 # Maximum fractional wavelength offset between cross-matched FP peaks
-CDict.set('WAVE_FP_LL_OFFSET', value=0.25, source=__NAME__,
-          author='EA')
+CDict.set('LL_OFFSET', value=0.25, source=__NAME__,
+          author='EA', group=cgroup)
 
 # Maximum DV to keep HC lines in combined (WAVE_NEW) solution
-CDict.set('WAVE_FP_DV_MAX', value=0.25, source=__NAME__,
-          author='EA')
+CDict.set('DV_MAX', value=0.25, source=__NAME__,
+          author='EA', group=cgroup)
 
 # Decide whether to refit the cavity width (will update if files do not
 # exist)
-CDict.set('WAVE_FP_UPDATE_CAVITY', value=True, source=__NAME__,
-          author='EA')
+CDict.set('UPDATE_CAVITY', value=True, source=__NAME__,
+          author='EA', group=cgroup)
 
 # Select the FP cavity fitting (WAVE_MODE_FP = 1 only)
 # Should be one of the following:
 # 0 - derive using the 1/m vs d fit from HC lines
 # 1 - derive using the ll vs d fit from HC lines
-CDict.set('WAVE_FP_CAVFIT_MODE', value=1, source=__NAME__,
-          author='EA')
+CDict.set('CAVFIT_MODE', value=1, source=__NAME__,
+          author='EA', group=cgroup)
 
 # Select the FP wavelength fitting (WAVE_MODE_FP = 1 only)
 # Should be one of the following:
 # 0 - use fit_1d_solution function
 # 1 - fit with sigma-clipping and mod 1 pixel correction
-CDict.set('WAVE_FP_LLFIT_MODE', value=1, source=__NAME__,
-          author='EA')
+CDict.set('LLFIT_MODE', value=1, source=__NAME__,
+          author='EA', group=cgroup)
 
 # Minimum FP peaks wavelength separation fraction diff. from median
-CDict.set('WAVE_FP_LLDIF_MIN', value=0.75, source=__NAME__,
-          author='EA')
+CDict.set('LLDIF_MIN', value=0.75, source=__NAME__,
+          author='EA', group=cgroup)
 
 # Maximum FP peaks wavelength separation fraction diff. from median
 CDict.set('WAVE_FP_LLDIF_MAX', value=1.25, source=__NAME__,
           author='EA')
 
 # Sigma-clip value for sigclip_polyfit
-CDict.set('WAVE_FP_SIGCLIP', value=7, source=__NAME__,
-          author='EA')
+CDict.set('SIGCLIP', value=7, source=__NAME__,
+          author='EA', group=cgroup)
 
 # First order for multi-order wave fp plot
-CDict.set('WAVE_FP_PLOT_MULTI_INIT', value=20, source=__NAME__,
-          author='EA')
+CDict.set('PLOT_MULTI_INIT', value=20, source=__NAME__,
+          author='EA', group=cgroup)
 
 # Number of orders in multi-order wave fp plot
-CDict.set('WAVE_FP_PLOT_MULTI_NBO', value=5, source=__NAME__,
-          author='EA')
+CDict.set('PLOT_MULTI_NBO', value=5, source=__NAME__,
+          author='EA', group=cgroup)
 
 # Define the dprtype for generating FPLINES (string list)
-CDict.set('WAVE_FP_DPRLIST', value=['OBJ_FP'], source=__NAME__,
-          author='EA')
+CDict.set('DPRLIST', value=['OBJ_FP'], source=__NAME__,
+          author='EA', group=cgroup)
 
 # Define the override for reference fiber for generating FPLINES
 # None for no override
-CDict.set('WAVE_FP_FIBERTYPES', value=[], source=__NAME__,
-          author='EA')
+CDict.set('FIBER_TYPES', value=[], source=__NAME__,
+          author='EA', group=cgroup)
 
 # =============================================================================
 # CALIBRATION: WAVE NIGHT SETTINGS
 # =============================================================================
 cgroup = 'CAL.WAVE.NIGHT'
 # number of iterations for hc convergence
-CDict.set('WAVE_NIGHT_NITERATIONS1', value=4, source=__NAME__)
+CDict.set('NIGHT_NITER1', value=4, source=__NAME__, group=cgroup)
 
 # number of iterations for fp convergence
-CDict.set('WAVE_NIGHT_NITERATIONS2', value=3, source=__NAME__)
+CDict.set('NIGHT_NITER2', value=3, source=__NAME__, group=cgroup)
 
 # starting points for the cavity corrections
-CDict.set('WAVE_NIGHT_DCAVITY', value=0, source=__NAME__)
+CDict.set('DCAVITY', value=0, source=__NAME__, group=cgroup)
 
 # Define the sigma clip value to remove bad hc lines
-CDict.set('WAVE_NIGHT_HC_SIGCLIP', value=50, source=__NAME__)
+CDict.set('HC_SIGCLIP', value=50, source=__NAME__, group=cgroup)
 
 # median absolute deviation cut off
-CDict.set('WAVE_NIGHT_MED_ABS_DEV', value=5, source=__NAME__)
+CDict.set('MED_ABSDEV', value=5, source=__NAME__, group=cgroup)
 
 # sigma clipping for the fit
-CDict.set('WAVE_NIGHT_NSIG_FIT_CUT', value=7, source=__NAME__)
+CDict.set('NSIG_FIT_CUT', value=7, source=__NAME__, group=cgroup)
 
 # wave night plot hist number of bins
-CDict.set('WAVENIGHT_PLT_NBINS', value=51, source=__NAME__)
+CDict.set('PLT_NBINS', value=51, source=__NAME__, group=cgroup)
 
 # wave night plot hc bin lower bound in multiples of rms
 CDict.set('WAVENIGHT_PLT_BINL', value=-20, source=__NAME__)
 
 # wave night plot hc bin upper bound in multiples of rms
-CDict.set('WAVENIGHT_PLT_BINU', value=20, source=__NAME__)
+CDict.set('PLT_BINU', value=20, source=__NAME__, group=cgroup)
 
 # =============================================================================
 # OBJ.LIST: OBJECT LIST SETTINGS
 # =============================================================================
 cgroup = 'OBJ.LIST'
 # Define the SIMBAD TAP url
-CDict.set('SIMBAD_TAP_URL',
+CDict.set('SIMBAD_TAPURL',
           value='http://simbad.cds.unistra.fr/simbad/sim-tap',
-          source=__NAME__)
+          source=__NAME__, group=cgroup)
 
 # Define the TAP Gaia URL (for use in crossmatching to Gaia via astroquery)
 CDict.set('OBJ_LIST_GAIA_URL',
@@ -1533,51 +1533,51 @@ CDict.set('OBJ_LIST_GAIA_URL',
 
 # Define the google sheet to use for crossmatch (may be set to a directory for
 # completely offline reduction)
-CDict.set('OBJ_LIST_GOOGLE_SHEET_URL',
-          value='1dOogfEwC7wAagjVFdouB1Y1JdF9Eva4uDW6CTZ8x2FM', source=__NAME__)
+CDict.set('GSHEET_URL',
+          value='1dOogfEwC7wAagjVFdouB1Y1JdF9Eva4uDW6CTZ8x2FM', source=__NAME__, group=cgroup)
 
 # Define the google sheet objname list main list id number (may be set to a
 # csv file for completely offline reduction)
-CDict.set('OBJ_LIST_GSHEET_MAIN_LIST_ID', value='0', source=__NAME__)
+CDict.set('GSHEET_MAINLIST_ID', value='0', source=__NAME__, group=cgroup)
 
 # Define the google sheet objname list pending list id number (may be set to a
 # csv file for completely offline reduction)
-CDict.set('OBJ_LIST_GSHEET_PEND_LIST_ID', value='623506317', source=__NAME__)
+CDict.set('GSHEET_PENDLIST_ID', value='623506317', source=__NAME__, group=cgroup)
 
 # Define the google sheet objname list reject list id number
-CDict.set('OBJ_LIST_GSHEET_REJECT_LIST_ID', value='2006484513', source=__NAME__)
+CDict.set('GSHEET_REJECTLIST_ID', value='2006484513', source=__NAME__, group=cgroup)
 
 # Define the bad list header key
-CDict.set('REJECT_DRS_HKEY', value=None, source=__NAME__)
+CDict.set('REJECT_DRS_HKEY', value=None, source=__NAME__, group=cgroup)
 
 # Define the bad list google spreadsheet value column
-CDict.set('REJECT_VALCOL', value='IDENTIFIER', source=__NAME__)
+CDict.set('REJECT_VALCOL', value='IDENTIFIER', source=__NAME__, group=cgroup)
 
 # Define the bad list google spreadsheet mask column for preprocessing
-CDict.set('REJECT_MASKCOL', value='PP', source=__NAME__)
+CDict.set('REJECT_MASKCOL', value='PP', source=__NAME__, group=cgroup)
 
 # Define the google sheet bibcode id number
-CDict.set('OBJ_LIST_GSHEET_BIBCODE_ID', value='956956617', source=__NAME__)
+CDict.set('GSHEET_BIBCODE_UD', value='956956617', source=__NAME__, group=cgroup)
 
 # Define the google sheet user url object list (None for no user list)
 # (may be set to a directory for completely offline reduction)
-CDict.set('OBJ_LIST_GSHEET_USER_URL', value='None', source=__NAME__)
+CDict.set('GSHEET_USER_URL', value='None', source=__NAME__, group=cgroup)
 
 # Define the google sheet user id object list id number (may be set to a
 # csv file for completely offline reduction)
-CDict.set('OBJ_LIST_GSHEET_USER_ID', value='0', source=__NAME__)
+CDict.set('GSHEET_USER_ID', value='0', source=__NAME__, group=cgroup)
 
 # Define whether to resolve from local database (via drs_database / drs_db)
-CDict.set('OBJ_LIST_RESOLVE_FROM_DATABASE', value=True, source=__NAME__)
+CDict.set('RESOLVE_FROM_DB', value=True, source=__NAME__, group=cgroup)
 
 # Define whether to resolve from gaia id (via TapPlus to Gaia) if False
 # ra/dec/pmra/pmde/plx will always come from header
-CDict.set('OBJ_LIST_RESOLVE_FROM_GAIAID', value=True, source=__NAME__)
+CDict.set('RESOLVE_FROM_GAIAID', value=True, source=__NAME__, group=cgroup)
 
 # Define whether to get Gaia ID / Teff / RV from google sheets if False
 # will try to resolve if gaia ID given otherwise will use ra/dec if
 # OBJ_LIST_RESOLVE_FROM_COORDS = True else will default to header values
-CDict.set('OBJ_LIST_RESOLVE_FROM_GLIST', value=True, source=__NAME__)
+CDict.set('RESOLVE_FROM_GLIST', value=True, source=__NAME__, group=cgroup)
 
 # Define whether to get Gaia ID from header RA and Dec (basically if all other
 # option fails) - WARNING - this is a crossmatch so may lead to a bad
@@ -1585,48 +1585,48 @@ CDict.set('OBJ_LIST_RESOLVE_FROM_GLIST', value=True, source=__NAME__)
 CDict.set('OBJ_LIST_RESOLVE_FROM_COORDS', value=False, source=__NAME__)
 
 # Define the gaia epoch to use in the gaia query
-CDict.set('OBJ_LIST_GAIA_EPOCH', value=2015.5, source=__NAME__)
+CDict.set('GAIA_EPOCH', value=2015.5, source=__NAME__, group=cgroup)
 
 # Define the radius for crossmatching objects (in both lookup table and query)
 # measured in arc sec (only used if OBJ_LIST_RESOLVE_FROM_COORDS = True)
-CDict.set('OBJ_LIST_CROSS_MATCH_RADIUS', value=180.0, source=__NAME__)
+CDict.set('CM_RADIUS', value=180.0, source=__NAME__, group=cgroup)
 
 # Define the gaia parallax limit for using gaia point meansure in mas
 # (only used if OBJ_LIST_RESOLVE_FROM_COORDS = True)
-CDict.set('OBJ_LIST_GAIA_PLX_LIM', value=0.5, source=__NAME__)
+CDict.set('GAIA_PLX_LIM', value=0.5, source=__NAME__, group=cgroup)
 
 # Define the gaia magnitude cut (rp mag) to use in the gaia query
 # (only used if OBJ_LIST_RESOLVE_FROM_COORDS = True)
-CDict.set('OBJ_LIST_GAIA_MAG_CUT', value=15.0, source=__NAME__)
+CDict.set('GAIA_MAGCUT', value=15.0, source=__NAME__, group=cgroup)
 
 # Define the google sheet to use for update the reject list
-CDict.set('REJECT_LIST_GOOGLE_SHEET_URL',
+CDict.set('RLIST_GSHEET_URL',
           value='1gvMp1nHmEcKCUpxsTxkx-5m115mLuQIGHhxJCyVoZCM',
-          source=__NAME__)
+          source=__NAME__, group=cgroup)
 
 # Define the google sheet id to use for update the reject list
-CDict.set('REJECT_LIST_GSHEET_MAIN_LIST_ID', value='768446388',
-          source=__NAME__)
+CDict.set('RLIST_GSHEET_MAINLIST_ID', value='768446388',
+          source=__NAME__, group=cgroup)
 
 # Define the google sheet name to use for the reject list
-CDict.set('REJECT_LIST_GSHEET_SHEET_NAME', value='NIRPS_HA', source=__NAME__)
+CDict.set('RLIST_GSHEET_SHEETNAME', value='NIRPS_HA', source=__NAME__, group=cgroup)
 
 # gaia col name in google sheet
-CDict.set('GL_GAIA_COL_NAME', value='GAIADR2ID', source=__NAME__)
+CDict.set('GAIA_COLNAME', value='GAIADR2ID', source=__NAME__, group=cgroup)
 # object col name in google sheet
-CDict.set('GL_OBJ_COL_NAME', value='OBJNAME', source=__NAME__)
+CDict.set('OBJ_COLNAME', value='OBJNAME', source=__NAME__, group=cgroup)
 # alias col name in google sheet
-CDict.set('GL_ALIAS_COL_NAME', value='ALIASES', source=__NAME__)
+CDict.set('ALIAS_COLNAME', value='ALIASES', source=__NAME__, group=cgroup)
 # rv col name in google sheet
-CDict.set('GL_RV_COL_NAME', value='RV', source=__NAME__)
-CDict.set('GL_RVREF_COL_NAME', value='RV_REF', source=__NAME__)
+CDict.set('RV_COLNAME', value='RV', source=__NAME__, group=cgroup)
+CDict.set('RVREF_COLNAME', value='RV_REF', source=__NAME__, group=cgroup)
 # teff col name in google sheet
-CDict.set('GL_TEFF_COL_NAME', value='TEFF', source=__NAME__)
-CDict.set('GL_TEFFREF_COL_NAME', value='TEFF_REF', source=__NAME__)
+CDict.set('TEFF_COLNAME', value='TEFF', source=__NAME__, group=cgroup)
+CDict.set('TEFFREFF_COLNAME', value='TEFF_REF', source=__NAME__, group=cgroup)
 # Reject like google columns
-CDict.set('GL_R_ODO_COL', value='ODOMETER', source=__NAME__)
-CDict.set('GL_R_PP_COL', value='PP', source=__NAME__)
-CDict.set('GL_R_RV_COL', value='RV', source=__NAME__)
+CDict.set('REJECT_IDENT_COLNAME', value='ODOMETER', source=__NAME__, group=cgroup)
+CDict.set('REJECT_PP_COLNAME', value='PP', source=__NAME__, group=cgroup)
+CDict.set('REJECT_RV_COLNAME', value='RV', source=__NAME__, group=cgroup)
 
 # =============================================================================
 # OBJECT: SKY CORR SETTINGS
@@ -1637,68 +1637,68 @@ cgroup = 'OBJ.SKY_CORR'
 CDict.set('SKYMODEL_FILETYPE', value='EXT_E2DS_FF', source=__NAME__)
 
 # Define the order to get the snr from (for input data qc check)
-CDict.set('SKYMODEL_EXT_SNR_ORDERNUM', value=59, source=__NAME__, author='EA')
+CDict.set('MODEL_EXT_SNR_ORDER', value=59, source=__NAME__, author='EA', group=cgroup)
 
 # Define the minimum exptime to use a sky in the model [s]
-CDict.set('SKYMODEL_MIN_EXPTIME', value=300, source=__NAME__, author='EA')
+CDict.set('MODEL_MIN_EXPTIME', value=300, source=__NAME__, author='EA', group=cgroup)
 
 # Define the maximum number of files to have open simultaneously
-CDict.set('SKYMODEL_MAX_OPEN_FILES', value=10, source=__NAME__)
+CDict.set('MODEL_MAX_OPEN_FILES', value=10, source=__NAME__, group=cgroup)
 
 # Define the sigma that positive excursions need to have to be identified
 # as lines
-CDict.set('SKYMODEL_LINE_SIGMA', value=5, source=__NAME__, author='EA')
+CDict.set('MODEL_LINE_SIG', value=5, source=__NAME__, author='EA', group=cgroup)
 
 # Define the erosion size to use on a line
-CDict.set('SKYMODEL_LINE_ERODE_SIZE', value=5, source=__NAME__, author='EA')
+CDict.set('MODEL_LINE_ERODE_SIZE', value=5, source=__NAME__, author='EA', group=cgroup)
 
 # Define the dilatation size to use on a line
-CDict.set('SKYMODEL_LINE_DILATE_SIZE', value=27, source=__NAME__, author='EA')
+CDict.set('MODEL_LINE_DILATE_SIZE', value=27, source=__NAME__, author='EA', group=cgroup)
 
 # Define the number of weight iterations to use when constructing sky model
 # weight vector
-CDict.set('SKYMODEL_WEIGHT_ITERS', value=5, source=__NAME__, author='EA')
+CDict.set('MODEL_WEIGHT_ITERS', value=5, source=__NAME__, author='EA', group=cgroup)
 
 # Define the erosion size for the sky model line weight calculation
-CDict.set('SKYMODEL_WEIGHT_ERODE_SIZE', value=3, source=__NAME__, author='EA')
+CDict.set('MODEL_WEIGHT_ERODE_SIZE', value=3, source=__NAME__, author='EA', group=cgroup)
 
 # Define the allowed DPRTYPEs for sky correction
-CDict.set('ALLOWED_SKYCORR_DPRTYPES',
+CDict.set('ALLOWED_DPRTYPES',
           value=[],
-          source=__NAME__)
+          source=__NAME__, group=cgroup)
 
 # Define the number of iterations used to create sky correction weights
-CDict.set('SKYCORR_WEIGHT_ITERATIONS', value=5, source=__NAME__, author='EA')
+CDict.set('WEIGHT_ITERS', value=5, source=__NAME__, author='EA', group=cgroup)
 
 # Define the size of the fine low pass filter (must be an odd integer)
-CDict.set('SKYCORR_LOWPASS_SIZE1', value=51, source=__NAME__, author='EA')
+CDict.set('LOWPASS_SIZE1', value=51, source=__NAME__, author='EA', group=cgroup)
 
 # Define the size of the coarse low pass filter (must be an odd integer)
-CDict.set('SKYCORR_LOWPASS_SIZE2', value=101, source=__NAME__, author='EA')
+CDict.set('LOWPASS_SIZE2', value=101, source=__NAME__, author='EA', group=cgroup)
 
 # Define the number of iterations to use for the coarse low pass filter
-CDict.set('SKYCORR_LOWPASS_ITERATIONS', value=2, source=__NAME__, author='EA')
+CDict.set('LOWPASS_ITRS', value=2, source=__NAME__, author='EA', group=cgroup)
 
 # Define the number of sigma threshold for sky corr sigma clipping
-CDict.set('SKYCORR_NSIG_THRES', value=5, source=__NAME__, author='EA')
+CDict.set('NSIG_THRES', value=5, source=__NAME__, author='EA', group=cgroup)
 
 # Define the flux ratio of sky lines that can not be corrected for
-CDict.set('SKYCORR_RATIO_THRES', value=4, source=__NAME__, author='EA')
+CDict.set('RATIO_THRES', value=4, source=__NAME__, author='EA', group=cgroup)
 
 # =============================================================================
 # OBJECT: TELLURIC SETTINGS
 # =============================================================================
 cgroup = 'OBJ.TELL.GEN'
 # Define the name of the tapas file used
-CDict.set('TAPAS_FILE', value='tapas_all_sp.fits.gz', source=__NAME__)
+CDict.set('TAPAS_FILE', value='tapas_all_sp.fits.gz', source=__NAME__, group=cgroup)
 
 # Define the format (astropy format) of the tapas file "TAPAS_FILE"
-CDict.set('TAPAS_FILE_FMT', value='fits', source=__NAME__)
+CDict.set('TAPAS_FILE_FMT', value='fits', source=__NAME__, group=cgroup)
 
 # The allowed input DPRTYPES for input telluric files
-CDict.set('TELLU_ALLOWED_DPRTYPES',
+CDict.set('ALLOWED_DPRTYPES',
           value=['OBJ_DARK', 'OBJ_FP', 'OBJ_SKY', 'TELLU_SKY', 'FLUXSTD_SKY'],
-          source=__NAME__)
+          source=__NAME__, group=cgroup)
 
 # the INPUT type (KW_OUTPUT header key) and DrsFitsFile name required for
 # input telluric files
@@ -1709,90 +1709,90 @@ CDict.set('TELLURIC_FIBER_TYPE', value='A', source=__NAME__)
 
 # Define level above which the blaze is high enough to accurately
 # measure telluric
-CDict.set('TELLU_CUT_BLAZE_NORM', value=0.2, source=__NAME__)
+CDict.set('CUT_BLAZE_NORM', value=0.2, source=__NAME__, group=cgroup)
 
 # Define telluric include/exclude list directory
-CDict.set('TELLU_LIST_DIRECTORY', value='telluric/', source=__NAME__)
+CDict.set('LIST_DIR', value='telluric/', source=__NAME__, group=cgroup)
 
 # Define telluric white list name
-CDict.set('TELLU_WHITELIST_NAME', value='tellu_whitelist.txt', source=__NAME__)
+CDict.set('ALLOWLIST_NAME', value='tellu_whitelist.txt', source=__NAME__, group=cgroup)
 
 # Define telluric black list name
-CDict.set('TELLU_BLACKLIST_NAME', value='tellu_blacklist.txt', source=__NAME__)
+CDict.set('REJECTLIST_NAME', value='tellu_blacklist.txt', source=__NAME__, group=cgroup)
 
 # Force only pre-cleaning (not recommended - only for debugging)
-CDict.set('TELLU_ONLY_PRECLEAN', value=False, source=__NAME__)
+CDict.set('ONLY_PRECLEAN', value=False, source=__NAME__, group=cgroup)
 
 # Whether to fit line of sight velocity in telluric pre-cleaning
-CDict.set('TELLU_ABSO_FIT_LOS_VELO', value=False, source=__NAME__)
+CDict.set('ABSO_FIT_LOSVEL', value=False, source=__NAME__, group=cgroup)
 
 # Define bad wavelength regions to mask before correcting tellurics
 bad_regions = [(1370, 1410), (1850, 2000)]
-CDict.set('TELLU_BAD_WAVEREGIONS', value=bad_regions, source=__NAME__)
+CDict.set('BAD_WAVE_REGIONS', value=bad_regions, source=__NAME__, group=cgroup)
 
 # =============================================================================
 # OBJECT: TELLURIC PRE-CLEANING SETTINGS
 # =============================================================================
 cgroup = 'OBJ.TELL.PCLEAN'
 # Define whether we do pre-cleaning
-CDict.set('TELLUP_DO_PRECLEANING', value=True, source=__NAME__)
+CDict.set('DO_PRECLEANING', value=True, source=__NAME__, group=cgroup)
 
 # Define whether we do finite resolution correct (if we have a template)
-CDict.set('TELLUP_DO_FINITE_RES_CORR', value=True, source=__NAME__)
+CDict.set('DO_FINITE_RES_CORR', value=True, source=__NAME__, group=cgroup)
 
 # width in km/s for the ccf scan to determine the abso in pre-cleaning
-CDict.set('TELLUP_CCF_SCAN_RANGE', value=25, source=__NAME__)
+CDict.set('CCF_SCAN_RANGE', value=25, source=__NAME__, group=cgroup)
 
 # Define whether to clean OH lines
-CDict.set('TELLUP_CLEAN_OH_LINES', value=False, source=__NAME__)
+CDict.set('CLEAN_OHLINES', value=False, source=__NAME__, group=cgroup)
 
 # Define the number of bright OH lines that will be individually adjusted
 # in amplitude. Done only on lines that are at an SNR > 1
-CDict.set('TELLUP_OHLINE_NBRIGHT', value=300, source=__NAME__)
+CDict.set('OHLINE_N_BRIGHT', value=300, source=__NAME__, group=cgroup)
 
 # Define the OH line pca file
-CDict.set('TELLUP_OHLINE_PCA_FILE', value='sky_PCs.fits', source=__NAME__)
+CDict.set('OHLINE_PCA_FILE', value='sky_PCs.fits', source=__NAME__, group=cgroup)
 
 # Define the orders not to use in pre-cleaning fit (due to thermal
 # background)
-CDict.set('TELLUP_REMOVE_ORDS', value=[43, 44, 45], source=__NAME__)
+CDict.set('REMOVE_ORDERS', value=[43, 44, 45], source=__NAME__, group=cgroup)
 
 # Define the minimum snr to accept orders for pre-cleaning fit
-CDict.set('TELLUP_SNR_MIN_THRES', value=3.0, source=__NAME__)
+CDict.set('SNR_MIN_THRES', value=3.0, source=__NAME__, group=cgroup)
 
 # Define the telluric trans other abso CCF file
-CDict.set('TELLUP_OTHERS_CCF_FILE', value='trans_others_abso_ccf.mas',
-          source=__NAME__)
+CDict.set('OTHERS_CCF_FILE', value='trans_others_abso_ccf.mas',
+          source=__NAME__, group=cgroup)
 
 # Define the telluric trans water abso CCF file
-CDict.set('TELLUP_H2O_CCF_FILE', value='trans_h2o_abso_ccf.mas', source=__NAME__)
+CDict.set('WATER_CCF_FILE', value='trans_h2o_abso_ccf.mas', source=__NAME__, group=cgroup)
 
 # Define dexpo convergence threshold
-CDict.set('TELLUP_DEXPO_CONV_THRES', value=1.0e-3, source=__NAME__)
+CDict.set('DEXPO_CONV_THRES', value=1.0e-3, source=__NAME__, group=cgroup)
 
 # Define the maximum number of iterations to try to get dexpo
 # convergence
-CDict.set('TELLUP_DEXPO_MAX_ITR', value=40, source=__NAME__)
+CDict.set('DEXPO_MAX_ITR', value=40, source=__NAME__, group=cgroup)
 
 # Define the kernel threshold in abso_expo
-CDict.set('TELLUP_ABSO_EXPO_KTHRES', value=1.0e-6, source=__NAME__)
+CDict.set('ABSO_EXPO_KTHRES', value=1.0e-6, source=__NAME__, group=cgroup)
 
 # Define the gaussian width of the kernel used in abso_expo
-CDict.set('TELLUP_ABSO_EXPO_KWID', value=4.0, source=__NAME__)
+CDict.set('ABSO_EXPO_KWID', value=4.0, source=__NAME__, group=cgroup)
 
 # Define the gaussian exponent of the kernel used in abso_expo
 # a value of 2 is gaussian, a value >2 is boxy
-CDict.set('TELLUP_ABSO_EXPO_KEXP', value=2.20, source=__NAME__)
+CDict.set('ABSO_EXP_KEXP', value=2.20, source=__NAME__, group=cgroup)
 
 # Define the transmission threshold (in exponential form) for keeping
 # valid transmission
-CDict.set('TELLUP_TRANS_THRES', value=-1, source=__NAME__)
+CDict.set('TRANS_THRES', value=-1, source=__NAME__, group=cgroup)
 
 # Define the threshold for discrepant transmission (in sigma)
-CDict.set('TELLUP_TRANS_SIGLIM', value=10, source=__NAME__)
+CDict.set('TRANS_SIGLIM', value=10, source=__NAME__, group=cgroup)
 
 # Define whether to force airmass fit to header airmass value
-CDict.set('TELLUP_FORCE_AIRMASS', value=False, source=__NAME__)
+CDict.set('FORCE_AIRMASS', value=False, source=__NAME__, group=cgroup)
 
 # set the typical water abso exponent. Compare to values in header for
 # high-snr targets later

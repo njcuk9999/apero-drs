@@ -663,7 +663,7 @@ class AstroObj:
         # get preferred bibcode list
         bibcodes = get_bibcode_list(params)
         # simbad tap url
-        simbad_tap_url = params['SIMBAD_TAP_URL']
+        simbad_tap_url = params['OBJ.LIST.SIMBAD_TAPURL']
         # deal with no simbad query
         if propname not in PROPERTY_QUERIES:
             wmsg = ('Skipping property simbad check for {0} '
@@ -1941,7 +1941,7 @@ def get_bibcode_list(params: ParamDict) -> List[str]:
     """
     # get properties from parameters
     gsheet_url = params['OBJ_LIST_GOOGLE_SHEET_URL']
-    bibsheet_id = params['OBJ_LIST_GSHEET_BIBCODE_ID']
+    bibsheet_id = params['OBJ.LIST.GSHEET_BIBCODE_UD']
     # get google sheets
     bibsheet = drs_database.get_google_sheet(params, gsheet_url, bibsheet_id)
     # get a unique list of bibcodes
@@ -1973,7 +1973,7 @@ def add_object_reject(params: ParamDict, raw_objname: str):
     # check whether we have an auto fill
     autofill = params['INPUTS']['autofill']
     # define the sheet id and sheet name
-    sheet_id = params['OBJ_LIST_GOOGLE_SHEET_URL']
+    sheet_id = params['OBJ.LIST.GSHEET_URL']
     # get the google sheet name
     sheet_name = 'reject_list'
     # load google sheet instance

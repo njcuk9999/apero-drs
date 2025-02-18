@@ -178,11 +178,11 @@ def skymodel_table(params: ParamDict, sky_files: Union[List[str], None],
         return None, None, 0
     # -------------------------------------------------------------------------
     # get parameters from parameter dictionary
-    snr_order = pcheck(params, 'SKYMODEL_EXT_SNR_ORDERNUM', func=func_name,
+    snr_order = pcheck(params, 'OBJ.SKY_CORR.MODEL_EXT_SNR_ORDER', func=func_name,
                        override=snr_order)
-    min_exptime = pcheck(params, 'SKYMODEL_MIN_EXPTIME', func=func_name,
+    min_exptime = pcheck(params, 'OBJ.SKY_CORR.MODEL_MIN_EXPTIME', func=func_name,
                          override=min_exptime)
-    max_files = pcheck(params, 'SKYMODEL_MAX_OPEN_FILES', func=func_name,
+    max_files = pcheck(params, 'OBJ.SKY_CORR.MODEL_MAX_OPEN_FILES', func=func_name,
                        override=max_files)
     # get fiber from ref file
     fiber = reffile.fiber
@@ -386,11 +386,11 @@ def identify_sky_line_regions(params: ParamDict, sky_props: ParamDict,
     # set function name
     func_name = display_func('identify_sky_line_regions', __NAME__)
     # get parameters from parameter dictionary
-    line_sigma = pcheck(params, 'SKYMODEL_LINE_SIGMA', func=func_name,
+    line_sigma = pcheck(params, 'OBJ.SKY_CORR.MODEL_LINE_SIG', func=func_name,
                         override=line_sigma)
-    erode_size = pcheck(params, 'SKYMODEL_LINE_ERODE_SIZE', func=func_name,
+    erode_size = pcheck(params, 'OBJ.SKY_CORR.MODEL_LINE_ERODE_SIZE', func=func_name,
                         override=erode_size)
-    dilate_size = pcheck(params, 'SKYMODEL_LINE_DILATE_SIZE', func=func_name,
+    dilate_size = pcheck(params, 'OBJ.SKY_CORR.MODEL_LINE_DILATE_SIZE', func=func_name,
                          override=dilate_size)
     wavestart = pcheck(params, 'CAL.EXT.S1D_WAVESTART', func=func_name,
                        override=wavestart)
@@ -470,9 +470,9 @@ def calc_skymodel(params: ParamDict, sky_props_sci: ParamDict,
     func_name = display_func('calc_skymodel', __NAME__)
     # -------------------------------------------------------------------------
     # get values from parameters
-    weight_iterations = pcheck(params, 'SKYMODEL_WEIGHT_ITERS', func=func_name,
+    weight_iterations = pcheck(params, 'OBJ.SKY_CORR.MODEL_WEIGHT_ITERS', func=func_name,
                                override=witerations)
-    erode_size = pcheck(params, 'SKYMODEL_WEIGHT_ERODE_SIZE', func=func_name,
+    erode_size = pcheck(params, 'OBJ.SKY_CORR.MODEL_WEIGHT_ERODE_SIZE', func=func_name,
                         override=erode_size)
     # get cubes
     sci_cube = sky_props_sci['CUBE']
@@ -744,11 +744,11 @@ def correct_sky_with_ref(params: ParamDict, recipe: DrsRecipe,
     # set function name
     func_name = display_func('correct_sky', __NAME__)
     # get parameters from Params
-    # weight_iters = pcheck(params, 'SKYCORR_WEIGHT_ITERATIONS')  # = 5
-    lowpass_size1 = pcheck(params, 'SKYCORR_LOWPASS_SIZE1')  # = 51
-    lowpass_size2 = pcheck(params, 'SKYCORR_LOWPASS_SIZE2')  # = 101
-    lowpass_itrs = pcheck(params, 'SKYCORR_LOWPASS_ITERATIONS')  # = 2
-    nsig_thres = pcheck(params, 'SKYCORR_NSIG_THRES')  # = 3
+    # weight_iters = pcheck(params, 'OBJ.SKY_CORR.WEIGHT_ITERS')  # = 5
+    lowpass_size1 = pcheck(params, 'OBJ.SKY_CORR.LOWPASS_SIZE1')  # = 51
+    lowpass_size2 = pcheck(params, 'OBJ.SKY_CORR.LOWPASS_SIZE2')  # = 101
+    lowpass_itrs = pcheck(params, 'OBJ.SKY_CORR.LOWPASS_ITRS')  # = 2
+    nsig_thres = pcheck(params, 'OBJ.SKY_CORR.NSIG_THRES')  # = 3
     # get the sky correction ratio for not correction a line
     #  (too large to correct)
     sky_corr_ratio_thres = params['SKYCORR_RATIO_THRES']
@@ -928,7 +928,7 @@ def correct_sky_no_ref(params: ParamDict, recipe: DrsRecipe,
     # -------------------------------------------------------------------------
     # get the sky correction ratio for not correction a line
     #  (too large to correct)
-    sky_corr_ratio_thres = params['SKYCORR_RATIO_THRES']
+    sky_corr_ratio_thres = params['OBJ.SKY_CORR.RATIO_THRES']
     # -------------------------------------------------------------------------
     # deal with no calibration database
     if calibdbm is None:

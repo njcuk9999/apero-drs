@@ -111,7 +111,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     if 'ONLYPRECLEAN' in params['INPUTS']:
         onlypreclean = params['INPUTS']['ONLYPRECLEAN']
     # force only preclean from params
-    if params['TELLU_ONLY_PRECLEAN']:
+    if params['OBJ.TELL.GEN.ONLY_PRECLEAN']:
         onlypreclean = True
     # get list of filenames (for output)
     rawfiles = []
@@ -164,7 +164,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # if dprtype is incorrect skip
         if dprtype not in params['TELLU_ALLOWED_DPRTYPES']:
             # join allowed dprtypes
-            allowed_dprtypes = ', '.join(params['TELLU_ALLOWED_DPRTYPES'])
+            allowed_dprtypes = ', '.join(params['OBJ.TELL.GEN.ALLOWED_DPRTYPES'])
             # log that we are skipping
             wargs = [dprtype, recipe.name, allowed_dprtypes, infile.basename]
             WLOG(params, 'warning', textentry('10-019-00001', args=wargs),
@@ -252,7 +252,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         # apply sky correction
         # ------------------------------------------------------------------
-        if dprtype in params['ALLOWED_SKYCORR_DPRTYPES']:
+        if dprtype in params['OBJ.SKY_CORR.ALLOWED_DPRTYPES']:
             # correct sky using model and B fiber
             scprops = telluric.correct_sky_with_ref(params, recipe, infile,
                                                     wprops, rawfiles, combine,

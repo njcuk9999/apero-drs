@@ -997,7 +997,7 @@ mktellu_dict = dict()
 mktellu_dict['fibers'] = ref_fiber
 mktellu_dict['OBJNAME'] = 'HOTSTAR'
 mktellu_dict['EXCLUDE'] = 'TELLU_BLACKLIST_NAME'
-mktellu_dict['INCLUDE'] = 'TELLU_WHITELIST_NAME'
+mktellu_dict['INCLUDE'] = 'OBJ.TELL.GEN.ALLOWLIST_NAME'
 apero_mk_tellu.set_output_data(TELLU_CONV=mktellu_dict,
                                TELLU_TRANS=mktellu_dict,
                                TELLU_SCLEAN=mktellu_dict,
@@ -1097,7 +1097,7 @@ fit_tellu_ref_dict['EXCLUDE'] = 'TELLU_BLACKLIST_NAME'
 fit_tellu_dict = dict()
 fit_tellu_dict['fibers'] = sci_fibers
 fit_tellu_dict['DPRTYPE'] = dict()
-fit_tellu_dict['DPRTYPE']['ALL'] = 'TELLU_ALLOWED_DPRTYPES'
+fit_tellu_dict['DPRTYPE']['ALL'] = 'OBJ.TELL.GEN.ALLOWED_DPRTYPES'
 fit_tellu_dict['LOG_FLAG'] = dict()
 fit_tellu_dict['LOG_FLAG']['None'] = ['ONLYPRECLEAN']
 fit_tellu_dict['EXCLUDE'] = 'TELLU_BLACKLIST_NAME'
@@ -1110,8 +1110,8 @@ fit_tellu_pc_dict['EXCLUDE'] = 'TELLU_BLACKLIST_NAME'
 fit_tellu_sky_dict = dict()
 fit_tellu_sky_dict['fibers'] = ref_fiber
 fit_tellu_sky_dict['DPRTYPE'] = dict()
-fit_tellu_sky_dict['DPRTYPE'][ref_fiber] = 'ALLOWED_SKYCORR_DPRTYPES'
-fit_tellu_sky_dict['EXCLUDE'] = 'TELLU_BLACKLIST_NAME'
+fit_tellu_sky_dict['DPRTYPE'][ref_fiber] = 'OBJ.SKY_CORR.ALLOWED_DPRTYPES'
+fit_tellu_sky_dict['EXCLUDE'] = 'OBJ.TELL.GEN.REJECTLIST_NAME'
 apero_fit_tellu.set_output_data(ABSO_NPY=fit_tellu_ref_dict,
                                 ABSO1_NPY=fit_tellu_ref_dict,
                                 TELLU_OBJ=fit_tellu_dict,
@@ -1149,7 +1149,7 @@ apero_fit_tellu.set_kwarg(name='--template', dtype='file', default='None',
                           files=[files.out_tellu_template],
                           helpstr=textentry('TEMPLATE_FILE_HELP'))
 apero_fit_tellu.set_kwarg(name='--finiteres', dtype='bool',
-                          default_ref='TELLUP_DO_FINITE_RES_CORR',
+                          default_ref='OBJ.TELL.PCLEAN.DO_FINITE_RES_CORR',
                           helpstr='Whether to do the finite resolution '
                                   'correction (Always false if no template)')
 apero_fit_tellu.set_kwarg(name='--onlypreclean', dtype='switch',

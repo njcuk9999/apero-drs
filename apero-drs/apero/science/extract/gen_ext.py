@@ -298,9 +298,9 @@ def ref_fplines(params, recipe, e2dsfile, wavemap, fiber, database=None,
     # set up function name
     func_name = display_func('ref_fplines', __NAME__)
     # get constant from params
-    allowtypes = pcheck(params, 'WAVE_FP_DPRLIST', 'fptypes', kwargs, func_name)
+    allowtypes = pcheck(params, 'CAL.WAVE.FP.DPRLIST', 'fptypes', kwargs, func_name)
 
-    allowfibers = pcheck(params, 'WAVE_FP_FIBERTYPES', 'fpfibers', kwargs)
+    allowfibers = pcheck(params, 'CAL.WAVE.FP.FIBER_TYPES', 'fpfibers', kwargs)
     # get dprtype
     dprtype = e2dsfile.get_hkey('KW_DPRTYPE', dtype=str)
     # get psuedo constants
@@ -365,7 +365,7 @@ def e2ds_to_s1d(params: ParamDict, recipe: DrsRecipe,  wavemap: np.ndarray,
                      func_name)
     smooth_size = pcheck(params, 'CAL.EXT.S1D_EDGE_SSIZE', 'smooth_size',
                          kwargs, func_name)
-    blazethres = pcheck(params, 'TELLU_CUT_BLAZE_NORM', 'blazethres', kwargs,
+    blazethres = pcheck(params, 'OBJ.TELL.GEN.CUT_BLAZE_NORM', 'blazethres', kwargs,
                         func_name)
     # -------------------------------------------------------------------------
     # get size from e2ds

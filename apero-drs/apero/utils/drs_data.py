@@ -448,11 +448,11 @@ def load_tapas(params: ParamDict,
     # get parameters from params/kwargs
     assetdir = pcheck(params, 'PATH.ASSETS', func=func_name,
                       override=assetsdir)
-    relfolder = pcheck(params, 'TELLU_LIST_DIRECTORY', func=func_name,
+    relfolder = pcheck(params, 'OBJ.TELL.GEN.LIST_DIR', func=func_name,
                        override=tellu_dir)
-    filename = pcheck(params, 'TAPAS_FILE', func=func_name,
+    filename = pcheck(params, 'OBJ.TELL.GEN.TAPAS_FILE', func=func_name,
                       override=filename)
-    fmt = pcheck(params, 'TAPAS_FILE_FMT', func=func_name, override=fmt)
+    fmt = pcheck(params, 'OBJ.TELL.GEN.TAPAS_FILE_FMT', func=func_name, override=fmt)
     # deal with return_filename
     absfilename = str(os.path.join(assetdir, relfolder, filename))
     if return_filename:

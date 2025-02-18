@@ -566,13 +566,13 @@ def get_object_database(params: ParamDict, log: bool = True) -> Table:
     # set function name
     func_name = __NAME__ + '.get_object_database()'
     # get parameters from params
-    gsheet_url = params['OBJ_LIST_GOOGLE_SHEET_URL']
-    main_id = params['OBJ_LIST_GSHEET_MAIN_LIST_ID']
-    pending_id = params['OBJ_LIST_GSHEET_PEND_LIST_ID']
-    user_url = params['OBJ_LIST_GSHEET_USER_URL']
-    user_id = params['OBJ_LIST_GSHEET_USER_ID']
+    gsheet_url = params['OBJ.LIST.GSHEET_URL']
+    main_id = params['OBJ.LIST.GSHEET_MAINLIST_ID']
+    pending_id = params['OBJ.LIST.GSHEET_PENDLIST_ID']
+    user_url = params['OBJ.LIST.GSHEET_USER_URL']
+    user_id = params['OBJ.LIST.GSHEET_USER_ID']
     # object col name in google sheet
-    gl_objcol = params['GL_OBJ_COL_NAME']
+    gl_objcol = params['OBJ.LIST.OBJ_COLNAME']
     # -------------------------------------------------------------------------
     # load pseudo constants
     pconst = load_functions.load_pconfig(select.INSTRUMENTS)
@@ -822,8 +822,8 @@ def get_reject_database(params: ParamDict, log: bool = True) -> Table:
     # set function name
     func_name = __NAME__ + '.get_reject_database()'
     # get parameters from params
-    gsheet_url = params['REJECT_LIST_GOOGLE_SHEET_URL']
-    main_id = params['REJECT_LIST_GSHEET_MAIN_LIST_ID']
+    gsheet_url = params['OBJ.LIST.RLIST_GSHEET_URL']
+    main_id = params['OBJ.LIST.RLIST_GSHEET_MAINLIST_ID']
     # print that we are updating object database
     if log:
         WLOG(params, 'info', textentry('40-503-00046'))

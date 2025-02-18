@@ -783,7 +783,7 @@ def ref_fplines(params: ParamDict, recipe: DrsRecipe, e2dsfile: DrsFitsFile,
     # set up function name
     func_name = display_func('ref_fplines', __NAME__)
     # get constant from params
-    allowtypes = pcheck(params, 'WAVE_FP_DPRLIST', func=func_name,
+    allowtypes = pcheck(params, 'CAL.WAVE.FP.DPRLIST', func=func_name,
                         override=fptypes)
     # get dprtype
     dprtype = e2dsfile.get_hkey('KW_DPRTYPE', dtype=str)

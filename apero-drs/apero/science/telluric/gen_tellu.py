@@ -104,7 +104,7 @@ def get_tellu_include_list(params: ParamDict,
                       override=assets_dir)
     relfolder = pcheck(params, 'TELLU_LIST_DIRECTORY', func=func_name,
                        override=tellu_dir)
-    tfilename = pcheck(params, 'TELLU_WHITELIST_NAME', func=func_name,
+    tfilename = pcheck(params, 'OBJ.TELL.GEN.ALLOWLIST_NAME', func=func_name,
                        override=tellu_include_file)
     # get absolulte filename
     whitelistfile = str(os.path.join(assetdir, relfolder, tfilename))
@@ -138,7 +138,7 @@ def get_tellu_exclude_list(params: ParamDict,
                       override=assets_dir)
     relfolder = pcheck(params, 'TELLU_LIST_DIRECTORY', func=func_name,
                        override=tellu_dir)
-    tfilename = pcheck(params, 'TELLU_BLACKLIST_NAME', func=func_name,
+    tfilename = pcheck(params, 'OBJ.TELL.GEN.REJECTLIST_NAME', func=func_name,
                        override=tellu_exclude_file)
     # get absolulte filename
     blacklistfile = str(os.path.join(assetdir, relfolder, tfilename))
@@ -350,9 +350,9 @@ def get_sp_linelists(params, **kwargs):
     # get parameters from params/kwargs
     relfolder = pcheck(params, 'TELLU_LIST_DIRECTORY', 'directory', kwargs,
                        func_name)
-    othersfile = pcheck(params, 'TELLUP_OTHERS_CCF_FILE', 'filename', kwargs,
+    othersfile = pcheck(params, 'OBJ.TELL.PCLEAN.OTHERS_CCF_FILE', 'filename', kwargs,
                         func_name)
-    waterfile = pcheck(params, 'TELLUP_H2O_CCF_FILE', 'filename', kwargs,
+    waterfile = pcheck(params, 'OBJ.TELL.PCLEAN.WATER_CCF_FILE', 'filename', kwargs,
                        func_name)
     # load the others file list
     mask_others, _ = drs_data.load_ccf_mask(params, mask_dir=relfolder,
@@ -1330,11 +1330,11 @@ def clean_ohline_pca(params, recipe, image, wavemap, **kwargs):
     # -------------------------------------------------------------------------
     # get parameters from params/kwargs
     assetdir = pcheck(params, 'PATH.ASSETS', 'assetsdir', kwargs, func_name)
-    relfolder = pcheck(params, 'TELLU_LIST_DIRECTORY', 'directory', kwargs,
+    relfolder = pcheck(params, 'OBJ.TELL.GEN.LIST_DIR', 'directory', kwargs,
                        func_name)
-    filename = pcheck(params, 'TELLUP_OHLINE_PCA_FILE', 'filename', kwargs,
+    filename = pcheck(params, 'OBJ.TELL.PCLEAN.OHLINE_PCA_FILE', 'filename', kwargs,
                       func_name)
-    nbright = pcheck(params, 'TELLUP_OHLINE_NBRIGHT', 'nbright', kwargs,
+    nbright = pcheck(params, 'OBJ.TELL.PCLEAN.OHLINE_N_BRIGHT', 'nbright', kwargs,
                      func_name)
     # -------------------------------------------------------------------------
     # log progress
@@ -1855,7 +1855,7 @@ def qc_exit_tellu_preclean(params, recipe, image, image_e2ds_ini, infile,
     if not drs_text.null_text(params['INPUTS']['FINITERES']):
         do_finite_res_corr = params['INPUTS']['FINITERES']
     else:
-        do_finite_res_corr = params['TELLUP_DO_FINITE_RES_CORR']
+        do_finite_res_corr = params['OBJ.TELL.PCLEAN.DO_FINITE_RES_CORR']
     # correct if conditions are met
     if template_props['HAS_TEMPLATE'] and do_finite_res_corr:
         # copy the original corrected e2ds
@@ -2240,15 +2240,15 @@ def read_tellu_preclean(params, recipe, infile, fiber, database=None):
     props['TELLUP_WATER_BOUNDS'] = tpclfile.get_hkey('KW_TELLUP_WATER_BOUNDS',
                                                      dtype=list, listtype=float)
     # set the source from header
-    keys = ['TELLUP_D_WATER_ABSO', 'TELLUP_CCF_SCAN_RANGE',
-            'TELLUP_CLEAN_OH_LINES', 'TELLUP_REMOVE_ORDS',
-            'TELLUP_SNR_MIN_THRES', 'TELLUP_DEXPO_CONV_THRES',
-            'TELLUP_DEXPO_MAX_ITR', 'TELLUP_ABSO_EXPO_KWID',
-            'TELLUP_ABSO_EXPO_KEXP', 'TELLUP_TRANS_THRES',
-            'TELLUP_TRANS_SIGLIM', 'TELLUP_FORCE_AIRMASS',
+    keys = ['TELLUP_D_WATER_ABSO', 'OBJ.TELL.PCLEAN.CCF_SCAN_RANGE',
+            'OBJ.TELL.PCLEAN.CLEAN_OHLINES', 'OBJ.TELL.PCLEAN.REMOVE_ORDERS',
+            'OBJ.TELL.PCLEAN.SNR_MIN_THRES', 'OBJ.TELL.PCLEAN.DEXPO_CONV_THRES',
+            'OBJ.TELL.PCLEAN.DEXPO_MAX_ITR', 'OBJ.TELL.PCLEAN.ABSO_EXPO_KWID',
+            'OBJ.TELL.PCLEAN.ABSO_EXP_KEXP', 'OBJ.TELL.PCLEAN.TRANS_THRES',
+            'OBJ.TELL.PCLEAN.TRANS_SIGLIM', 'OBJ.TELL.PCLEAN.FORCE_AIRMASS',
             'TELLUP_OTHER_BOUNDS', 'TELLUP_WATER_BOUNDS',
-            'TELLUP_ABSO_EXPO_KTHRES', 'TELLUP_WAVE_START',
-            'TELLUP_WAVE_END', 'TELLUP_DVGRID', 'TELLUP_DO_PRECLEANING']
+            'OBJ.TELL.PCLEAN.ABSO_EXPO_KTHRES', 'TELLUP_WAVE_START',
+            'TELLUP_WAVE_END', 'TELLUP_DVGRID', 'OBJ.TELL.PCLEAN.DO_PRECLEANING']
     props.set_sources(keys, 'header')
     # ----------------------------------------------------------------------
     # return props
@@ -2627,7 +2627,7 @@ def load_conv_tapas(params, recipe, header, refprops, fiber, database=None,
     tapas_props['FWHM_PIXEL_LSF'] = fwhm_pixel_lsf
     # set source
     keys = ['TAPAS_ALL_SPECIES', 'TAPAS_WATER', 'TAPAS_OTHER',
-            'TAPAS_FILE', 'TELLU_ABSORBERS', 'FWHM_PIXEL_LSF']
+            'OBJ.TELL.GEN.TAPAS_FILE', 'TELLU_ABSORBERS', 'FWHM_PIXEL_LSF']
     tapas_props.set_sources(keys, func_name)
     # return tapas props
     return tapas_props

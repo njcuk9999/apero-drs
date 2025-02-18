@@ -415,8 +415,8 @@ def get_obj_reject_list(params: ParamDict) -> np.ndarray:
     # get psuedo constants
     pconst = load_functions.load_pconfig(select.INSTRUMENTS)
     # get parameters from params
-    gsheet_url = params['OBJ_LIST_GOOGLE_SHEET_URL']
-    reject_id = params['OBJ_LIST_GSHEET_REJECT_LIST_ID']
+    gsheet_url = params['OBJ.LIST.GSHEET_URL']
+    reject_id = params['OBJ.LIST.GSHEET_REJECTLIST_ID']
     # get reject list google sheets
     try:
         rejecttable = drs_database.get_google_sheet(params, gsheet_url,
@@ -474,9 +474,9 @@ def reject_infile(params: ParamDict, header: drs_fits.Header,
         value_col = params['REJECT_VALCOL']
         mask_col = params['REJECT_MASKCOL']
     else:
-        header_col = params['REJECT_DRS_HKEY']
-        value_col = params['REJECT_VALCOL']
-        mask_col = params['REJECT_MASKCOL']
+        header_col = params['OBJ.LIST.REJECT_DRS_HKEY']
+        value_col = params['OBJ.LIST.REJECT_VALCOL']
+        mask_col = params['OBJ.LIST.REJECT_MASKCOL']
     # -------------------------------------------------------------------------
     # deal with no bad list
     cond1 = drs_text.null_text(header_col, ['None', ''])

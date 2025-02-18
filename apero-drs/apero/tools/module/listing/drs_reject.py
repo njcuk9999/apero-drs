@@ -78,9 +78,9 @@ def add_file_reject(params: ParamDict, recipe: DrsRecipe, raw_identifier: str):
     # check whether we have an auto fill
     autofill = params['INPUTS']['autofill']
     # define the sheet id and sheet name
-    sheet_id = params['REJECT_LIST_GOOGLE_SHEET_URL']
+    sheet_id = params['OBJ.LIST.RLIST_GSHEET_URL']
     # get the google sheet name
-    sheet_name = params['REJECT_LIST_GSHEET_SHEET_NAME']
+    sheet_name = params['OBJ.LIST.RLIST_GSHEET_SHEETNAME']
     # load google sheet instance
     google_sheet = gspd.spread.Spread(sheet_id)
     # convert google sheet to pandas dataframe

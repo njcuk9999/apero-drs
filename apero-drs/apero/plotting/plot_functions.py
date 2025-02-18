@@ -2196,7 +2196,7 @@ def plot_wave_wl_vs_cavity(plotter: Plotter, graph: Graph,
     iteration = kwargs.get('iteration', 0)
     # get values from params
     # define the bulk offset to be added to the cavity length
-    cavity_pedestal = params['WAVE_FP_DOPD0']
+    cavity_pedestal = params['CAL.WAVE.FP.DOPD0']
     # define the wavelength bounds of the instrument
     inst_wavestart = params['CAL.EXT.S1D_WAVESTART']
     inst_waveend = params['CAL.EXT.S1D_WAVEEND']
@@ -2728,9 +2728,9 @@ def plot_wave_hc_resmap_old(plotter: Plotter, graph: Graph,
     nbo = kwargs['nbo']
     nbpix = kwargs['nbpix']
     # get parameters from params
-    fit_span = params['WAVE_HC_RESMAP_DV_SPAN']
-    xlim = params['WAVE_HC_RESMAP_XLIM']
-    ylim = params['WAVE_HC_RESMAP_YLIM']
+    fit_span = params['CAL.WAVE.HC.RESMAP_DVSPAN']
+    xlim = params['CAL.WAVE.HC.RESMAP_XLIM']
+    ylim = params['CAL.WAVE.HC.RESMAP_YLIM']
     # ------------------------------------------------------------------
     # bin size in order direction
     bin_order = int(np.ceil(nbo / resmap_size[0]))
@@ -2830,7 +2830,7 @@ def plot_wave_littrow_check(plotter: Plotter, graph: Graph,
     fiber = kwargs['fiber']
     # get values from params
     ylower = -params['WAVE_LITTROW_QC_DEV_MAX']
-    yupper = params['WAVE_LITTROW_QC_DEV_MAX']
+    yupper = params['CAL.WAVE.LIT.QC_DEV_MAX']
     # ------------------------------------------------------------------
     # get data from llprops
     x_cut_points = llprops['X_CUT_POINTS_{0}'.format(iteration)]
