@@ -355,15 +355,15 @@ def e2ds_to_s1d(params: ParamDict, recipe: DrsRecipe,  wavemap: np.ndarray,
                 **kwargs):
     func_name = __NAME__ + '.e2ds_to_s1d()'
     # get parameters from p
-    wavestart = pcheck(params, 'EXT_S1D_WAVESTART', 'wavestart', kwargs,
+    wavestart = pcheck(params, 'CAL.EXT.S1D_WAVESTART', 'wavestart', kwargs,
                        func_name)
-    waveend = pcheck(params, 'EXT_S1D_WAVEEND', 'waveend', kwargs,
+    waveend = pcheck(params, 'CAL.EXT.S1D_WAVEEND', 'waveend', kwargs,
                      func_name)
-    binwave = pcheck(params, 'EXT_S1D_BIN_UWAVE', 'binwave', kwargs,
+    binwave = pcheck(params, 'CAL.EXT.S1D_BIN_UWAVE', 'binwave', kwargs,
                      func_name)
-    binvelo = pcheck(params, 'EXT_S1D_BIN_UVELO', 'binvelo', kwargs,
+    binvelo = pcheck(params, 'CAL.EXT.S1D_BIN_UVEL', 'binvelo', kwargs,
                      func_name)
-    smooth_size = pcheck(params, 'EXT_S1D_EDGE_SMOOTH_SIZE', 'smooth_size',
+    smooth_size = pcheck(params, 'CAL.EXT.S1D_EDGE_SSIZE', 'smooth_size',
                          kwargs, func_name)
     blazethres = pcheck(params, 'TELLU_CUT_BLAZE_NORM', 'blazethres', kwargs,
                         func_name)

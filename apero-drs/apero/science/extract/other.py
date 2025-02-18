@@ -133,7 +133,7 @@ def extract_leak_files(params, recipe, extname, darkfpfile, logger,
                        **kwargs):
     func_name = __NAME__ + '.extract_leak_files()'
     # get parameters from params/kwargs
-    leak_always_extract = pcheck(params, 'LEAKREF_ALWAYS_EXTRACT',
+    leak_always_extract = pcheck(params, 'CAL.LEAK.ALWAYS_EXTRACT',
                                  'always_extract', kwargs, func_name)
     # find the extraction recipe
     extrecipe, _ = drs_startup.find_recipe(extname, params['OBS.INSTRUMENT'],

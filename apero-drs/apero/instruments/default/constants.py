@@ -1017,14 +1017,14 @@ CDict.add('COEFFSIG_DEG', value=None, dtype=int,
                        'coefficient cleaning'))
 
 #  Define the maximum value allowed in the localisation (cuts bluest orders)
-CDict.add('LOC_MAX_YPIX_VALUE', value=None, dtype=int,
+CDict.add('MAX_YPIX_VAL', value=None, dtype=int,
           source=__NAME__, minimum=0, group=cgroup,
           description='Define the maximum value allowed in '
                       'the localisation (cuts bluest orders)')
 
 #   Define the jump size when finding the order position
 #       (jumps in steps of this from the center outwards)
-CDict.add('LOC_COLUMN_SEP_FITTING', value=None, dtype=int,
+CDict.add('COL_SEP_FITTING', value=None, dtype=int,
           source=__NAME__, minimum=1, group=cgroup,
           description=('Define the jump size when finding '
                        'the order position (jumps in '
@@ -1032,19 +1032,19 @@ CDict.add('LOC_COLUMN_SEP_FITTING', value=None, dtype=int,
                        'outwards)'))
 
 # Definition of the extraction window size (half size)
-CDict.add('LOC_EXT_WINDOW_SIZE', value=None, dtype=int,
+CDict.add('EXT_WIN_SIZE', value=None, dtype=int,
           source=__NAME__, minimum=1, group=cgroup,
           description=('Definition of the extraction window '
                        'size (half size)'))
 
 # Definition of the gap index in the selected area
-CDict.add('LOC_IMAGE_GAP', value=None, dtype=int, source=__NAME__,
+CDict.add('IMAGE_GAP', value=None, dtype=int, source=__NAME__,
           minimum=0, group=cgroup,
           description=('Definition of the gap index in the '
                        'selected area'))
 
 # Define minimum width of order to be accepted
-CDict.add('LOC_ORDER_WIDTH_MIN', value=None, dtype=float,
+CDict.add('ORDER_WID_MIN', value=None, dtype=float,
           source=__NAME__, minimum=0.0, group=cgroup,
           description=('Define minimum width of order to be '
                        'accepted'))
@@ -1052,7 +1052,7 @@ CDict.add('LOC_ORDER_WIDTH_MIN', value=None, dtype=float,
 # Define the noise multiplier threshold in order to accept an
 #     order center as usable i.e.
 #     max(pixel value) - min(pixel value) > THRES * RDNOISE
-CDict.add('LOC_NOISE_MULTIPLIER_THRES', value=None,
+CDict.add('NOISE_MULT_THRES', value=None,
           dtype=float, source=__NAME__, minimum=0.0,
           group=cgroup,
           description=('Define the noise multiplier '
@@ -1063,95 +1063,95 @@ CDict.add('LOC_NOISE_MULTIPLIER_THRES', value=None,
                        'THRES * RDNOISE'))
 
 # Maximum rms for sigma-clip order fit (center positions)
-CDict.add('LOC_MAX_RMS_CENT', value=None, dtype=float,
+CDict.add('MAX_RMS_CENT', value=None, dtype=float,
           source=__NAME__, minimum=0.0, group=cgroup,
           description=('Maximum rms for sigma-clip order fit '
                        '(center positions)'))
 
 # Maximum peak-to-peak for sigma-clip order fit (center positions)
-CDict.add('LOC_MAX_PTP_CENT', value=None, dtype=float,
+CDict.add('MAX_PTP_CENT', value=None, dtype=float,
           source=__NAME__, minimum=0.0, group=cgroup,
           description=('Maximum peak-to-peak for sigma-clip '
                        'order fit (center positions)'))
 
 # Maximum frac ptp/rms for sigma-clip order fit (center positions)
-CDict.add('LOC_PTPORMS_CENT', value=None, dtype=float,
+CDict.add('PTP_RMS_CENT', value=None, dtype=float,
           source=__NAME__, minimum=0.0, group=cgroup,
           description=('Maximum frac ptp/rms for sigma-clip '
                        'order fit (center positions)'))
 
 # Maximum rms for sigma-clip order fit (width)
-CDict.add('LOC_MAX_RMS_WID', value=None, dtype=float,
+CDict.add('MAX_RMS_WID', value=None, dtype=float,
           source=__NAME__, minimum=0.0, group=cgroup,
           description=('Maximum rms for sigma-clip order fit '
                        '(width)'))
 
 # Maximum fractional peak-to-peak for sigma-clip order fit (width)
-CDict.add('LOC_MAX_PTP_WID', value=None, dtype=float,
+CDict.add('MAX_PTP_WID', value=None, dtype=float,
           source=__NAME__, minimum=0.0, group=cgroup,
           description=('Maximum fractional peak-to-peak for '
                        'sigma-clip order fit (width)'))
 
 # Saturation threshold for localisation
-CDict.add('LOC_SAT_THRES', value=None, dtype=float, source=__NAME__,
+CDict.add('SAT_THRES', value=None, dtype=float, source=__NAME__,
           minimum=0.0, group=cgroup,
           description='Saturation threshold for localisation')
 
 # Maximum points removed in location fit
-CDict.add('QC_LOC_MAXFIT_REMOVED_CTR', value=None,
+CDict.add('QL_MAXFIT_RM_CTR', value=None,
           dtype=int, source=__NAME__, minimum=0,
           group=cgroup,
           description=('Maximum points removed in '
                        'location fit'))
 
 # Maximum points removed in width fit
-CDict.add('QC_LOC_MAXFIT_REMOVED_WID', value=None,
+CDict.add('QL_MAXFIT_RM_WID', value=None,
           dtype=int, source=__NAME__, minimum=0,
           group=cgroup,
           description=('Maximum points removed '
                        'in width fit'))
 
 # Maximum rms allowed in fitting location
-CDict.add('QC_LOC_RMSMAX_CTR', value=None, dtype=float,
+CDict.add('QC_RMSMAX_CTR', value=None, dtype=float,
           source=__NAME__, minimum=0.0, group=cgroup,
           description=('Maximum rms allowed in fitting '
                        'location'))
 
 # Maximum rms allowed in fitting width
-CDict.add('QC_LOC_RMSMAX_WID', value=None, dtype=float,
+CDict.add('QC_RMSMAX_WID', value=None, dtype=float,
           source=__NAME__, minimum=0.0, group=cgroup,
           description=('Maximum rms allowed in fitting '
                        'width'))
 
 # Option for archiving the location image
-CDict.add('LOC_SAVE_SUPERIMP_FILE', value=None,
+CDict.add('SAVE_SUPERIM_FILE', value=None,
           dtype=bool, source=__NAME__, group=cgroup,
           description=('Option for archiving the '
                        'location image'))
 
 # set the zoom in levels for the plots (xmin values)
-CDict.add('LOC_PLOT_CORNER_XZOOM1', value=None,
+CDict.add('PLOT_CX_ZOOM1', value=None,
           dtype=list, dtypei=int,
           source=__NAME__, group=cgroup,
           description=('set the zoom in levels for '
                        'the plots (xmin values)'))
 
 # set the zoom in levels for the plots (xmax values)
-CDict.add('LOC_PLOT_CORNER_XZOOM2', value=None,
+CDict.add('PLOT_CX_ZOOM2', value=None,
           dtype=list, dtypei=int,
           source=__NAME__, group=cgroup,
           description=('set the zoom in levels for the '
                        'plots (xmax values)'))
 
 # set the zoom in levels for the plots (ymin values)
-CDict.add('LOC_PLOT_CORNER_YZOOM1', value=None,
+CDict.add('PLOT_CY_ZOOM1', value=None,
           dtype=list, dtypei=int,
           source=__NAME__, group=cgroup,
           description=('set the zoom in levels for the '
                        'plots (ymin values)'))
 
 # set the zoom in levels for the plots (ymax values)
-CDict.add('LOC_PLOT_CORNER_YZOOM2', value=None,
+CDict.add('PLOT_CY_ZOOM2', value=None,
           dtype=list, dtypei=int,
           source=__NAME__, group=cgroup,
           description=('set the zoom in levels for the '
@@ -1193,7 +1193,7 @@ CDict.add('FP_REF_PERCENT_THRES', value=None,
 
 #  Define the largest standard deviation allowed for the shift in
 #   x or y when doing the shape reference fp linear transform
-CDict.add('SHAPE_QC_LTRANS_RES_THRES', value=None,
+CDict.add('QC_LTRANS_RTHRES', value=None,
           dtype=float, source=__NAME__, group=cgroup,
           description=('Define the largest standard '
                        'deviation allowed for the '
@@ -1202,14 +1202,14 @@ CDict.add('SHAPE_QC_LTRANS_RES_THRES', value=None,
                        'transform'))
 
 # define the maximum number of files to use in the shape reference recipe
-CDict.add('SHAPE_REF_MAX_FILES', value=None,
+CDict.add('REF_MAX_FILES', value=None,
           dtype=int, source=__NAME__, group=cgroup,
           description=('define the maximum number of '
                        'files to use in the shape '
                        'reference recipe'))
 
 #  Define the percentile which defines a true FP peak [0-100]
-CDict.add('SHAPE_REF_VALIDFP_PERCENTILE',
+CDict.add('REF_VALIDFP_PTILE',
           value=None, dtype=float, minimum=0,
           maximum=100, source=__NAME__,
           group=cgroup,
@@ -1218,7 +1218,7 @@ CDict.add('SHAPE_REF_VALIDFP_PERCENTILE',
                        'peak [0-100]'))
 
 #  Define the fractional flux an FP much have compared to its neighbours
-CDict.add('SHAPE_REF_VALIDFP_THRESHOLD',
+CDict.add('REF_VALIDFP_THRES',
           value=None, dtype=float, minimum=0,
           source=__NAME__, group=cgroup,
           description=('Define the fractional '
@@ -1226,7 +1226,7 @@ CDict.add('SHAPE_REF_VALIDFP_THRESHOLD',
                        'compared to its neighbours'))
 
 #  Define the number of iterations used to get the linear transform params
-CDict.add('SHAPE_REF_LINTRANS_NITER', value=None,
+CDict.add('REF_LINTRANS_NITER', value=None,
           dtype=int, minimum=1, source=__NAME__,
           group=cgroup,
           description=('Define the number of '
@@ -1234,7 +1234,7 @@ CDict.add('SHAPE_REF_LINTRANS_NITER', value=None,
                        'linear transform params'))
 
 #  Define the initial search box size (in pixels) around the fp peaks
-CDict.add('SHAPE_REF_FP_INI_BOXSIZE', value=None,
+CDict.add('REF_FP_IBOXSIZE', value=None,
           dtype=int, minimum=1, source=__NAME__,
           group=cgroup,
           description=('Define the initial search '
@@ -1242,7 +1242,7 @@ CDict.add('SHAPE_REF_FP_INI_BOXSIZE', value=None,
                        'the fp peaks'))
 
 #  Define the small search box size (in pixels) around the fp peaks
-CDict.add('SHAPE_REF_FP_SMALL_BOXSIZE',
+CDict.add('REF_FP_SBOXSIZE',
           value=None, dtype=int, minimum=1,
           source=__NAME__, group=cgroup,
           description=('Define the small search '
@@ -1250,7 +1250,7 @@ CDict.add('SHAPE_REF_FP_SMALL_BOXSIZE',
                        'around the fp peaks'))
 
 #  Define the minimum number of FP files in a group to mean group is valid
-CDict.add('SHAPE_FP_REF_MIN_IN_GROUP', value=None,
+CDict.add('FP_REF_MIN_INGROUP', value=None,
           dtype=int, minimum=1, source=__NAME__,
           group=cgroup,
           description=('Define the minimum number '
@@ -1259,47 +1259,47 @@ CDict.add('SHAPE_FP_REF_MIN_IN_GROUP', value=None,
 
 #  Define which fiber should be used for fiber-dependent calibrations in
 #   shape reference recipe
-CDict.add('SHAPE_REF_FIBER', value=None, dtype=str,
+CDict.add('REF_FIBER', value=None, dtype=str,
           source=__NAME__, group=cgroup,
           description=('Define which fiber should be used '
                        'for fiber-dependent calibrations '
                        'in shape reference'))
 
 #  Define the shape reference dx rms quality control criteria (per order)
-CDict.add('SHAPE_REF_DX_RMS_QC', value=None, dtype=float,
+CDict.add('REF_DX_RMS_QC', value=None, dtype=float,
           source=__NAME__, group=cgroup,
           description='Define the shape reference dx rms'
                       'quality control criteria (per '
                       'order)')
 
 # The number of iterations to run the shape finding out to
-CDict.add('SHAPE_NUM_ITERATIONS', value=None, dtype=int,
+CDict.add('NUM_ITER', value=None, dtype=int,
           minimum=1, source=__NAME__, group=cgroup,
           description=('The number of iterations to run '
                        'the shape finding out to'))
 
 # The order to use on the shape plot
-CDict.add('SHAPE_PLOT_SELECTED_ORDER', value=None,
+CDict.add('PLOT_SORDER', value=None,
           dtype=int, minimum=0, source=__NAME__,
           group=cgroup,
           description=('The order to use on the '
                        'shape plot'))
 
 # width of the ABC fibers (in pixels)
-CDict.add('SHAPE_ORDER_WIDTH', value=None,
+CDict.add('ORDER_WID', value=None,
           dtype=dict, dtypei=int,
           source=__NAME__, group=cgroup,
           description='width of the ABC fibers (in pixels)')
 
 # number of sections per order to split the order into
-CDict.add('SHAPE_NSECTIONS', value=None, dtype=int,
+CDict.add('NSECTIONS', value=None, dtype=int,
           minimum=1, source=__NAME__, group=cgroup,
           description=('number of sections per order to split '
                        'the order into'))
 
 # the range of angles (in degrees) for the first iteration (large)
 # and subsequent iterations (small)
-CDict.add('SHAPE_LARGE_ANGLE_MIN', value=None,
+CDict.add('LANGLE_MIN', value=None,
           dtype=float, source=__NAME__, group=cgroup,
           description=('the range of angles (in degrees) '
                        'for the first iteration (large) '
@@ -1307,7 +1307,7 @@ CDict.add('SHAPE_LARGE_ANGLE_MIN', value=None,
 
 # the range of angles (in degrees) for the first iteration (large)
 # and subsequent iterations (small)
-CDict.add('SHAPE_LARGE_ANGLE_MAX', value=None,
+CDict.add('LANGLE_MAX', value=None,
           dtype=float, source=__NAME__, group=cgroup,
           description=('the range of angles (in degrees) '
                        'for the first iteration (large) '
@@ -1315,7 +1315,7 @@ CDict.add('SHAPE_LARGE_ANGLE_MAX', value=None,
 
 # the range of angles (in degrees) for the first iteration (large)
 # and subsequent iterations (small)
-CDict.add('SHAPE_SMALL_ANGLE_MIN', value=None,
+CDict.add('SANGLE_MIN', value=None,
           dtype=float, source=__NAME__, group=cgroup,
           description=('the range of angles (in degrees) '
                        'for the first iteration (large) '
@@ -1323,20 +1323,20 @@ CDict.add('SHAPE_SMALL_ANGLE_MIN', value=None,
 
 # the range of angles (in degrees) for the first iteration (large)
 # and subsequent iterations (small)
-CDict.add('SHAPE_SMALL_ANGLE_MAX', value=None,
+CDict.add('SANGLE_MAX', value=None,
           dtype=float, source=__NAME__, group=cgroup,
           description=('the range of angles (in degrees) '
                        'for the first iteration (large) '
                        'and subsequent iterations (small)'))
 
 # max sigma clip (in sigma) on points within a section
-CDict.add('SHAPE_SIGMACLIP_MAX', value=None, dtype=float,
+CDict.add('SIGCLIP_MAX', value=None, dtype=float,
           minimum=0.0, source=__NAME__, group=cgroup,
           description=('max sigma clip (in sigma) on points '
                        'within a section'))
 
 # the size of the median filter to apply along the order (in pixels)
-CDict.add('SHAPE_MEDIAN_FILTER_SIZE', value=None,
+CDict.add('MED_FILT_SIZE', value=None,
           dtype=int, minimum=0, source=__NAME__,
           group=cgroup,
           description=('the size of the median filter '
@@ -1344,7 +1344,7 @@ CDict.add('SHAPE_MEDIAN_FILTER_SIZE', value=None,
                        '(in pixels)'))
 
 # The minimum value for the cross-correlation to be deemed good
-CDict.add('SHAPE_MIN_GOOD_CORRELATION', value=None,
+CDict.add('MIN_GOOD_CORR', value=None,
           dtype=float, minimum=0.0, source=__NAME__,
           group=cgroup,
           description=('The minimum value for the '
@@ -1352,46 +1352,46 @@ CDict.add('SHAPE_MIN_GOOD_CORRELATION', value=None,
                        'deemed good'))
 
 # Define the first pass (short) median filter width for dx
-CDict.add('SHAPE_SHORT_DX_MEDFILT_WID', value=None,
+CDict.add('SHORT_DX_MEDFILT_WID', value=None,
           dtype=int, source=__NAME__, group=cgroup,
           description=('Define the first pass (short) '
                        'median filter width for dx'))
 
 # Define the second pass (long) median filter width for dx.
 #  Used to fill NaN positions in dx that are not covered by short pass
-CDict.add('SHAPE_LONG_DX_MEDFILT_WID', value=None,
+CDict.add('LONG_DX_MEDFILT_WID', value=None,
           dtype=int, source=__NAME__, group=cgroup)
 
 #  Defines the largest allowed standard deviation for a given
 #  per-order and per-x-pixel shift of the FP peaks
-CDict.add('SHAPE_QC_DXMAP_STD', value=None, dtype=int,
+CDict.add('QC_DXMAP_STD', value=None, dtype=int,
           source=__NAME__, group=cgroup,
           description=('Defines the largest allowed standard '
                        'deviation for a given per-order and '
                        'per-x-pixel shift of the FP peaks'))
 
 # defines the shape offset xoffset (before and after) fp peaks
-CDict.add('SHAPEOFFSET_XOFFSET', value=None, dtype=int,
+CDict.add('XOFFSET', value=None, dtype=int,
           source=__NAME__, group=cgroup,
           description=('defines the shape offset xoffset '
                        '(before and after) fp peaks'))
 
 # defines the bottom percentile for fp peak
-CDict.add('SHAPEOFFSET_BOTTOM_PERCENTILE',
+CDict.add('OFF_BTM_PTILE',
           value=None, dtype=float, source=__NAME__,
           group=cgroup,
           description=('defines the bottom '
                        'percentile for fp peak'))
 
 # defines the top percentile for fp peak
-CDict.add('SHAPEOFFSET_TOP_PERCENTILE', value=None,
+CDict.add('OFF_TOP_PTILE', value=None,
           dtype=float, source=__NAME__, group=cgroup,
           description=('defines the top percentile '
                        'for fp peak'))
 
 # defines the floor below which top values should be set to
 # this fraction away from the max top value
-CDict.add('SHAPEOFFSET_TOP_FLOOR_FRAC', value=None,
+CDict.add('OFF_TOP_FLOOR_FRAC', value=None,
           dtype=float, source=__NAME__, group=cgroup,
           description=('defines the floor below which '
                        'top values should be set to '
@@ -1399,7 +1399,7 @@ CDict.add('SHAPEOFFSET_TOP_FLOOR_FRAC', value=None,
                        'max top value'))
 
 # define the median filter to apply to the hc (high pass filter)]
-CDict.add('SHAPEOFFSET_MED_FILTER_WIDTH',
+CDict.add('OFF_MED_FILT_WID',
           value=None, dtype=int, source=__NAME__,
           group=cgroup,
           description=('define the median filter to '
@@ -1408,7 +1408,7 @@ CDict.add('SHAPEOFFSET_MED_FILTER_WIDTH',
 
 # Maximum number of FP (larger than expected number
 #    (~10000 to ~25000)
-CDict.add('SHAPEOFFSET_FPINDEX_MAX', value=None,
+CDict.add('OFF_FPINDEX_MAX', value=None,
           dtype=int, source=__NAME__,
           minimum=10000, maximum=25000, group=cgroup,
           description=('Maximum number of FP (larger '
@@ -1416,14 +1416,14 @@ CDict.add('SHAPEOFFSET_FPINDEX_MAX', value=None,
                        '~25000)'))
 
 # Define the valid length of a FP peak
-CDict.add('SHAPEOFFSET_VALID_FP_LENGTH', value=None,
+CDict.add('OFF_VALID_FP_LEN', value=None,
           dtype=int, source=__NAME__, group=cgroup,
           description=('Define the valid length of a'
                        ' FP peak'))
 
 # Define the maximum allowed offset (in nm) that we allow for
 #   the detector)
-CDict.add('SHAPEOFFSET_DRIFT_MARGIN', value=None,
+CDict.add('OFF_DRIFT_MARGIN', value=None,
           dtype=float, source=__NAME__, group=cgroup,
           description=('Define the maximum allowed '
                        'offset (in nm) that we allow '
@@ -1431,7 +1431,7 @@ CDict.add('SHAPEOFFSET_DRIFT_MARGIN', value=None,
 
 # Define the number of iterations to do for the wave_fp
 #   inversion trick
-CDict.add('SHAPEOFFSET_WAVEFP_INV_IT',
+CDict.add('OFF_WAVEFP_INV_IT',
           value=None, dtype=int, source=__NAME__,
           group=cgroup,
           description=('Define the number of '
@@ -1439,38 +1439,38 @@ CDict.add('SHAPEOFFSET_WAVEFP_INV_IT',
                        'wave_fp inversion trick'))
 
 # Define the border in pixels at the edge of the detector
-CDict.add('SHAPEOFFSET_MASK_BORDER', value=None,
+CDict.add('OFF_MASK_BORDER', value=None,
           dtype=int, source=__NAME__, group=cgroup,
           description=('Define the border in pixels at '
                        'the edge of the detector'))
 
 # Define the minimum maxpeak value as a fraction of the
 #  maximum maxpeak
-CDict.add('SHAPEOFFSET_MIN_MAXPEAK_FRAC', value=None,
+CDict.add('OFF_MM_PEAK_FRAC', value=None,
           dtype=float, source=__NAME__, group=cgroup,
           description=('Define the minimum maxpeak '
                        'value as a fraction of the '
                        'maximum maxpeak'))
 
 # Define the width of the FP mask (+/- the center)
-CDict.add('SHAPEOFFSET_MASK_PIXWIDTH', value=None,
+CDict.add('OFF_MASK_PWIDTH', value=None,
           dtype=int, source=__NAME__, group=cgroup,
           description=('Define the width of the FP '
                        'mask (+/- the center)'))
 
 # Define the width of the FP to extract (+/- the center)
-CDict.add('SHAPEOFFSET_MASK_EXTWIDTH', value=None,
+CDict.add('OFF_MASK_EXTWID', value=None,
           dtype=int, source=__NAME__, group=cgroup,
           description=('Define the width of the FP to '
                        'extract (+/- the center)'))
 
 # Define the most deviant peaks - percentile from [min to max]
-CDict.add('SHAPEOFFSET_DEVIANT_PMIN', value=None,
+CDict.add('OFF_DEV_PMIN', value=None,
           dtype=float, minimum=0, maximum=100,
           source=__NAME__, group=cgroup,
           description=('Define the most deviant peaks - '
                        'percentile from [min to max]'))
-CDict.add('SHAPEOFFSET_DEVIANT_PMAX', value=None,
+CDict.add('OFF_DEV_PMAX', value=None,
           dtype=float, minimum=0, maximum=100,
           source=__NAME__, group=cgroup,
           description='')
@@ -1479,7 +1479,7 @@ CDict.add('SHAPEOFFSET_DEVIANT_PMAX', value=None,
 #  we assume that the error in FP order assignment could range
 #  from -50 to +50 in practice, it is -1, 0 or +1 for the cases we've
 #  tested to date
-CDict.add('SHAPEOFFSET_FPMAX_NUM_ERROR', value=None,
+CDict.add('OFF_FPMAX_NUMERR', value=None,
           dtype=int, source=__NAME__, group=cgroup,
           description=('Define the maximum error in '
                        'FP order assignment we '
@@ -1491,7 +1491,7 @@ CDict.add('SHAPEOFFSET_FPMAX_NUM_ERROR', value=None,
 
 # The number of sigmas that the HC spectrum is allowed to be
 #   away from the predicted (from FP) position
-CDict.add('SHAPEOFFSET_FIT_HC_SIGMA', value=None,
+CDict.add('OFF_FIT_HC_SIG', value=None,
           dtype=float, source=__NAME__, group=cgroup,
           description=('The number of sigmas that the '
                        'HC spectrum is allowed to be '
@@ -1500,14 +1500,14 @@ CDict.add('SHAPEOFFSET_FIT_HC_SIGMA', value=None,
 
 # Define the maximum allowed maximum absolute deviation away
 #   from the error fit
-CDict.add('SHAPEOFFSET_MAXDEV_THRESHOLD', value=None,
+CDict.add('OFF_MAXDEV_THRES', value=None,
           dtype=float, source=__NAME__, group=cgroup,
           description=('Define the maximum allowed '
                        'maximum absolute deviation '
                        'away from the error fit'))
 
 # very low thresholding values tend to clip valid points
-CDict.add('SHAPEOFFSET_ABSDEV_THRESHOLD', value=None,
+CDict.add('OFF_ABSDEV_THRES', value=None,
           dtype=float, source=__NAME__, group=cgroup,
           description=('very low thresholding '
                        'values tend to clip valid '
@@ -1515,7 +1515,7 @@ CDict.add('SHAPEOFFSET_ABSDEV_THRESHOLD', value=None,
 
 # define the names of the unique fibers (i.e. not AB) for use in
 #   getting the localisation coefficients for dymap
-CDict.add('SHAPE_UNIQUE_FIBERS', value=None, dtype=str,
+CDict.add('UFIBERS', value=None, dtype=str,
           source=__NAME__, group=cgroup,
           description=('define the names of the unique '
                        'fibers (i.e. not AB) for use in '
@@ -1524,7 +1524,7 @@ CDict.add('SHAPE_UNIQUE_FIBERS', value=None, dtype=str,
 
 #  Define first zoom plot for shape local zoom debug plot
 #     should be a string list (xmin, xmax, ymin, ymax)
-CDict.add('SHAPEL_PLOT_ZOOM1', value=None,
+CDict.add('LOCAL_PZOOM1', value=None,
           dtype=list, dtypei=int,
           source=__NAME__, group=cgroup,
           description=('Define first zoom plot for shape local '
@@ -1533,7 +1533,7 @@ CDict.add('SHAPEL_PLOT_ZOOM1', value=None,
 
 #  Define second zoom plot for shape local zoom debug plot
 #     should be a string list (xmin, xmax, ymin, ymax)
-CDict.add('SHAPEL_PLOT_ZOOM2', value=None,
+CDict.add('LOCAL_PZOOM2', value=None,
           dtype=list, dtypei=int,
           source=__NAME__, group=cgroup,
           description=('Define second zoom plot for shape '
@@ -1549,26 +1549,26 @@ CDict.add_group(cgroup, description='CALIBRATION.FLAT: '
 
 # TODO: is blaze_size needed with sinc function?
 # Half size blaze smoothing window
-CDict.add('FF_BLAZE_HALF_WINDOW', value=None, dtype=int,
+CDict.add('HALF_WINDOW', value=None, dtype=int,
           source=__NAME__, group=cgroup,
           description='Half size blaze smoothing window')
 
 # TODO: is blaze_cut needed with sinc function?
 # Minimum relative e2ds flux for the blaze computation
-CDict.add('FF_BLAZE_THRESHOLD', value=None, dtype=float,
+CDict.add('BLAZE_THRES', value=None, dtype=float,
           source=__NAME__, group=cgroup,
           description=('Minimum relative e2ds flux for the '
                        'blaze computation'))
 
 # TODO: is blaze_deg needed with sinc function?
 # The blaze polynomial fit degree
-CDict.add('FF_BLAZE_DEGREE', value=None, dtype=int,
+CDict.add('BLAZE_DEG', value=None, dtype=int,
           source=__NAME__, group=cgroup,
           description='The blaze polynomial fit degree')
 
 # Define the threshold, expressed as the fraction of the maximum peak, below
 #    this threshold the blaze (and e2ds) is set to NaN
-CDict.add('FF_BLAZE_SCUT', value=None, dtype=float,
+CDict.add('BLAZE_SCUT', value=None, dtype=float,
           source=__NAME__, group=cgroup,
           description=('Define the threshold, expressed as the '
                        'fraction of the maximum peak, below this '
@@ -1576,29 +1576,29 @@ CDict.add('FF_BLAZE_SCUT', value=None, dtype=float,
                        'NaN'))
 
 # Define the rejection threshold for the blaze sinc fit
-CDict.add('FF_BLAZE_SIGFIT', value=None, dtype=float,
+CDict.add('BLAZE_SIGFIT', value=None, dtype=float,
           source=__NAME__, group=cgroup,
           description=('Define the rejection threshold for the '
                        'blaze sinc fit'))
 
 # Define the hot bad pixel percentile level (using in blaze sinc fit)
-CDict.add('FF_BLAZE_BPERCENTILE', value=None, dtype=float,
+CDict.add('BLAZE_BPTILE', value=None, dtype=float,
           source=__NAME__, group=cgroup,
           description=('Define the hot bad pixel percentile '
                        'level (using in blaze sinc fit)'))
 
 # Define the number of times to iterate around blaze sinc fit
-CDict.add('FF_BLAZE_NITER', value=None, dtype=int,
+CDict.add('BLAZE_NITER', value=None, dtype=int,
           source=__NAME__, minimum=0, group=cgroup)
 
 # Define the sinc fit median filter width (we want to fit the shape of the
 #   order not line structures)
-CDict.add('FF_BLAZE_SINC_MED_SIZE', value=None, dtype=int,
+CDict.add('BLAZE_SINC_MED_SIZE', value=None, dtype=int,
           source=__NAME__, minimum=0, group=cgroup)
 
 # Define the orders not to plot on the RMS plot should be a string
 #     containing a list of integers
-CDict.add('FF_RMS_SKIP_ORDERS', value=None,
+CDict.add('RMS_SKIP_ORDERS', value=None,
           dtype=list, dtypei=int,
           source=__NAME__, group=cgroup,
           description=('Define the orders not to plot on the '
@@ -1606,17 +1606,17 @@ CDict.add('FF_RMS_SKIP_ORDERS', value=None,
                        'containing a list of integers'))
 
 # Maximum allowed RMS of flat field
-CDict.add('QC_FF_MAX_RMS', value=None, dtype=float, source=__NAME__,
+CDict.add('QC_MAX_RMS', value=None, dtype=float, source=__NAME__,
           group=cgroup,
           description='Maximum allowed RMS of flat field')
 
 # Define the order to plot in summary plots
-CDict.add('FF_PLOT_ORDER', value=None, dtype=int, source=__NAME__,
+CDict.add('PLOT_ORDER', value=None, dtype=int, source=__NAME__,
           group=cgroup,
           description='Define the order to plot in summary plots')
 
 # Define the high pass filter size in km/s
-CDict.add('FF_HIGH_PASS_SIZE', value=None, dtype=int,
+CDict.add('HIGHPASS_SIZE', value=None, dtype=int,
           source=__NAME__, group=cgroup,
           description='Define the high pass filter size in '
                       'km/s')
@@ -1626,7 +1626,7 @@ CDict.add('FF_HIGH_PASS_SIZE', value=None, dtype=int,
 # =============================================================================
 cgroup = 'CAL.LEAK'
 # Define the types of input file allowed by the leakage reference recipe
-CDict.add('ALLOWED_LEAKREF_TYPES', value=None,
+CDict.add('ALLOWED_REF_TYPES', value=None,
           dtype=list, dtypei=str,
           source=__NAME__, group=cgroup,
           description=('Define the types of input file '
@@ -1635,7 +1635,7 @@ CDict.add('ALLOWED_LEAKREF_TYPES', value=None,
 
 # define whether to always extract leak reference files
 #      (i.e. overwrite existing files)
-CDict.add('LEAKREF_ALWAYS_EXTRACT', value=None, dtype=bool,
+CDict.add('ALWAYS_EXTRACT', value=None, dtype=bool,
           source=__NAME__, group=cgroup,
           description=('define whether to always extract '
                        'leak reference files (i.e. overwrite '
@@ -1643,7 +1643,7 @@ CDict.add('LEAKREF_ALWAYS_EXTRACT', value=None, dtype=bool,
 
 # define the type of file to use for leak reference solution
 #    (currently allowed are 'E2DSFF') - must match with LEAK_EXTRACT_FILE
-CDict.add('LEAKREF_EXTRACT_TYPE', value=None, dtype=str,
+CDict.add('REF_EXT_TYPES', value=None, dtype=str,
           source=__NAME__, group=cgroup,
           description=('define the type of file to use for '
                        'leak reference solution (currently '
@@ -1651,20 +1651,20 @@ CDict.add('LEAKREF_EXTRACT_TYPE', value=None, dtype=str,
                        'LEAK_EXTRACT_FILE'))
 
 # Define whether we want to correct leakage by default
-CDict.add('CORRECT_LEAKAGE', value=None, dtype=str,
+CDict.add('CORRECT_LEAK', value=None, dtype=str,
           source=__NAME__, group=cgroup,
           description='Define whether we want to correct '
                       'leakage by default')
 
 # Define DPRTYPE in reference fiber to do correction
-CDict.add('LEAKAGE_REF_TYPES', value=None,
+CDict.add('REF_TYPES', value=None,
           dtype=list, dtypei=str,
           source=__NAME__, group=cgroup,
           description='Define DPRTYPE in reference fiber to do '
                       'correction')
 
 # define the maximum number of files to use in the leak reference
-CDict.add('LEAK_REF_MAX_FILES', value=None, dtype=int,
+CDict.add('REF_MAX_FILES', value=None, dtype=int,
           source=__NAME__, group=cgroup, minimum=0,
           description='define the maximum number of files to '
                       'use in the leak reference')
@@ -1672,7 +1672,7 @@ CDict.add('LEAK_REF_MAX_FILES', value=None, dtype=int,
 # define the type of file to use for the leak correction (currently allowed are
 #     'E2DS_FILE' or 'E2DSFF_FILE' (linked to recipe definition outputs)
 #     must match with LEAKREF_EXTRACT_TYPE
-CDict.add('LEAK_EXTRACT_FILE', value=None, dtype=str,
+CDict.add('EXT_FILE', value=None, dtype=str,
           source=__NAME__, group=cgroup,
           description=('define the type of file to use for the '
                        'leak correction (currently allowed are '
@@ -1681,7 +1681,7 @@ CDict.add('LEAK_EXTRACT_FILE', value=None, dtype=str,
                        'with LEAKREF_EXTRACT_TYPE'))
 
 # define the extraction files which are 2D images (i.e. order num x nbpix)
-CDict.add('LEAK_2D_EXTRACT_FILES', value=None,
+CDict.add('EXT2D_FILES', value=None,
           dtype=list, dtypei=str,
           source=__NAME__, group=cgroup,
           description=('define the extraction files which '
@@ -1689,50 +1689,50 @@ CDict.add('LEAK_2D_EXTRACT_FILES', value=None,
                        'nbpix)'))
 
 # define the extraction files which are 1D spectra
-CDict.add('LEAK_1D_EXTRACT_FILES', value=None,
+CDict.add('EXT1D_FILES', value=None,
           dtype=list, dtypei=str,
           source=__NAME__, group=cgroup,
           description=('define the extraction files which '
                        'are 1D spectra'))
 
 # define the thermal background percentile for the leak and leak reference
-CDict.add('LEAK_BCKGRD_PERCENTILE', value=None, dtype=float,
+CDict.add('BCKGRD_PTILE', value=None, dtype=float,
           source=__NAME__, group=cgroup,
           description=('define the thermal background '
                        'percentile for the leak and '
                        'leak reference'))
 
 # define the normalisation percentile for the leak and leak reference
-CDict.add('LEAK_NORM_PERCENTILE', value=None, dtype=float,
+CDict.add('NORM_PTILE', value=None, dtype=float,
           source=__NAME__, group=cgroup,
           description=('define the normalisation percentile '
                        'for the leak and leak reference'))
 
 # define the e-width of the smoothing kernel for leak reference
-CDict.add('LEAKREF_WSMOOTH', value=None, dtype=int,
+CDict.add('REF_WSMOOTH', value=None, dtype=int,
           source=__NAME__, minimum=0, group=cgroup,
           description=('define the e-width of the smoothing kernel '
                        'for leak reference'))
 
 # define the kernel size for leak reference
-CDict.add('LEAKREF_KERSIZE', value=None, dtype=float,
+CDict.add('REF_KERSIZE', value=None, dtype=float,
           source=__NAME__, minimum=0.0, group=cgroup,
           description='define the kernel size for leak reference')
 
 # define the lower bound percentile for leak correction
-CDict.add('LEAK_LOW_PERCENTILE', value=None, dtype=float,
+CDict.add('LOW_PTILE', value=None, dtype=float,
           source=__NAME__, minimum=0.0, maximum=100.0,
           group=cgroup,
           description=('define the lower bound percentile '
                        'for leak correction'))
 
 # define the upper bound percentile for leak correction
-CDict.add('LEAK_HIGH_PERCENTILE', value=None, dtype=float,
+CDict.add('HIGH_PTILE', value=None, dtype=float,
           source=__NAME__, minimum=0.0, maximum=100.0,
           group=cgroup)
 
 # define the limit on surpious FP ratio (1 +/- limit)
-CDict.add('LEAK_BAD_RATIO_OFFSET', value=None, dtype=float,
+CDict.add('BAD_RATIO_OFFSET', value=None, dtype=float,
           source=__NAME__, minimum=0.0, group=cgroup,
           description=('define the limit on surpious FP '
                        'ratio (1 +/- limit)'))
@@ -1746,33 +1746,33 @@ CDict.add_group(cgroup, description='CALIBRATION.EXTRACTION: '
 
 #    Whether extraction code is done in quick look mode (do not use for
 #       final products)
-CDict.add('EXT_QUICK_LOOK', value=None, dtype=bool,
+CDict.add('QUICKLOOK', value=None, dtype=bool,
           source=__NAME__, group=cgroup,
           description=('Whether extraction code is done in quick '
                        'look mode (do not use for final '
                        'products)'))
 
 #  Start order of the extraction in apero_flat if None starts from 0
-CDict.add('EXT_START_ORDER', value=None, dtype=int,
+CDict.add('START_ORDER', value=None, dtype=int,
           source=__NAME__, group=cgroup,
           description=('Start order of the extraction in apero_flat '
                        'if None starts from 0'))
 
 #  End order of the extraction in apero_flat if None ends at last order
-CDict.add('EXT_END_ORDER', value=None, dtype=int,
+CDict.add('END_ORDER', value=None, dtype=int,
           source=__NAME__, group=cgroup,
           description=('End order of the extraction in apero_flat if '
                        'None ends at last order'))
 
 # Half-zone extraction width left side (formally plage1)
-CDict.add('EXT_RANGE1', value=None,
+CDict.add('RANGE1', value=None,
           dtype=dict, dtypei=int,
           source=__NAME__, group=cgroup,
           description=('Half-zone extraction width left side '
                        '(formally plage1)'))
 
 # Half-zone extraction width right side (formally plage2)
-CDict.add('EXT_RANGE2', value=None,
+CDict.add('RANGE2', value=None,
           dtype=dict, dtypei=int,
           source=__NAME__, group=cgroup,
           description=('Half-zone extraction width right side '
@@ -1781,7 +1781,7 @@ CDict.add('EXT_RANGE2', value=None,
 # Define the orders to skip extraction on (will set all order values
 #    to NaN. If None no orders are skipped. If Not None should be a
 #    string (valid python list)
-CDict.add('EXT_SKIP_ORDERS', value=None,
+CDict.add('SKIP_ORDERS', value=None,
           dtype=list, dtypei=int,
           source=__NAME__, group=cgroup,
           description=('Define the orders to skip extraction on '
@@ -1790,13 +1790,13 @@ CDict.add('EXT_SKIP_ORDERS', value=None,
                        'should be a string (valid python list)'))
 
 #  Defines whether to run extraction with cosmic correction
-CDict.add('EXT_COSMIC_CORRETION', value=None, dtype=bool,
+CDict.add('COSMIC_CORR', value=None, dtype=bool,
           source=__NAME__, group=cgroup,
           description=('Defines whether to run extraction '
                        'with cosmic correction'))
 
 #  Define the percentage of flux above which we use to cut
-CDict.add('EXT_COSMIC_SIGCUT', value=None, dtype=float,
+CDict.add('COSMIC_SIGCUT', value=None, dtype=float,
           source=__NAME__, group=cgroup,
           description=('Define the number of sigmas away from '
                        'the median flux which we use to cut '
@@ -1804,55 +1804,55 @@ CDict.add('EXT_COSMIC_SIGCUT', value=None, dtype=float,
 
 #  Defines the maximum number of iterations we use to check for cosmics
 #      (for each pixel)
-CDict.add('EXT_COSMIC_THRESHOLD', value=None, dtype=int,
+CDict.add('COSMIC_THRES', value=None, dtype=int,
           source=__NAME__, group=cgroup,
           description=('Defines the maximum number of '
                        'iterations we use to check for '
                        'cosmics (for each pixel)'))
 
 # Saturation level reached warning
-CDict.add('QC_EXT_FLUX_MAX', value=None, dtype=float,
+CDict.add('QC_FLUX_MAX', value=None, dtype=float,
           source=__NAME__, group=cgroup,
           description='Saturation level reached warning')
 
 # Define which extraction file to use for s1d creation
-CDict.add('EXT_S1D_INTYPE', value=None, dtype=str,
+CDict.add('S1D_INTYPE', value=None, dtype=str,
           source=__NAME__, group=cgroup,
           description=('Define which extraction file to use for '
                        's1d creation'))
 # Define which extraction file (recipe definitons) linked to EXT_S1D_INTYPE
-CDict.add('EXT_S1D_INFILE', value=None, dtype=str,
+CDict.add('S1D_INFILE', value=None, dtype=str,
           source=__NAME__, group=cgroup,
           description=('Define which extraction file (recipe '
                        'definitons) linked to EXT_S1D_INTYPE'))
 
 # Define the start s1d wavelength (in nm)
-CDict.add('EXT_S1D_WAVESTART', value=None, dtype=float,
+CDict.add('S1D_WAVESTART', value=None, dtype=float,
           source=__NAME__, minimum=0.0, group=cgroup,
           description=('Define the start s1d wavelength '
                        '(in nm)'))
 
 # Define the end s1d wavelength (in nm)
-CDict.add('EXT_S1D_WAVEEND', value=None, dtype=float,
+CDict.add('S1D_WAVEEND', value=None, dtype=float,
           source=__NAME__, minimum=0.0, group=cgroup,
           description='Define the end s1d wavelength (in nm)')
 
 #  Define the s1d spectral bin for S1D spectra (nm) when uniform in wavelength
-CDict.add('EXT_S1D_BIN_UWAVE', value=None, dtype=float,
+CDict.add('S1D_BIN_UWAVE', value=None, dtype=float,
           source=__NAME__, minimum=0.0, group=cgroup,
           description=('Define the s1d spectral bin for S1D '
                        'spectra (nm) when uniform in '
                        'wavelength'))
 
 #  Define the s1d spectral bin for S1D spectra (km/s) when uniform in velocity
-CDict.add('EXT_S1D_BIN_UVELO', value=None, dtype=float,
+CDict.add('S1D_BIN_UVEL', value=None, dtype=float,
           source=__NAME__, minimum=0.0, group=cgroup,
           description=('Define the s1d spectral bin for '
                        'S1D spectra (km/s) when uniform in '
                        'velocity'))
 
 #  Define the s1d smoothing kernel for the transition between orders in pixels
-CDict.add('EXT_S1D_EDGE_SMOOTH_SIZE', value=None,
+CDict.add('S1D_EDGE_SSIZE', value=None,
           dtype=int, source=__NAME__, minimum=0,
           group=cgroup,
           description=('Define the s1d smoothing kernel '
@@ -1860,24 +1860,24 @@ CDict.add('EXT_S1D_EDGE_SMOOTH_SIZE', value=None,
                        'orders in pixels'))
 
 #    Define dprtypes to calculate berv for
-CDict.add('EXT_ALLOWED_BERV_DPRTYPES', value=None,
+CDict.add('ALLOWED_BERV_DPRTYPES', value=None,
           dtype=str, source=__NAME__, group=cgroup,
           description=('Define dprtypes to calculate '
                        'berv for'))
 
 #    Define which BERV calculation to use ('barycorrpy' or 'estimate' or 'None')
-CDict.add('EXT_BERV_KIND', value=None, dtype=str, source=__NAME__,
+CDict.add('BERV_KIND', value=None, dtype=str, source=__NAME__,
           options=['barycorrpy', 'estimate', 'None'], group=cgroup,
           description=('Define which BERV calculation to use '
                        '(barycorrpy or estimate or None)'))
 
 #   Define the barycorrpy iers file
-CDict.add('EXT_BERV_IERSFILE', value=None, dtype=str,
+CDict.add('BERV_IERS_FILE', value=None, dtype=str,
           source=__NAME__, group=cgroup,
           description='Define the barycorrpy iers file')
 
 #   Define the barycorrpy iers a url
-CDict.add('EXT_BERV_IERS_A_URL', value=None, dtype=str,
+CDict.add('BERV_IERS_AURL', value=None, dtype=str,
           source=__NAME__, group=cgroup,
           description='Define the barycorrpy iers a url')
 

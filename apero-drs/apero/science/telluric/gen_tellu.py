@@ -1803,10 +1803,10 @@ def qc_exit_tellu_preclean(params, recipe, image, image_e2ds_ini, infile,
                           func_name)
     ker_thres = pcheck(params, 'TELLUP_ABSO_EXPO_KTHRES', 'ker_thres', kwargs,
                        func_name)
-    wavestart = pcheck(params, 'EXT_S1D_WAVESTART', 'wavestart', kwargs,
+    wavestart = pcheck(params, 'CAL.EXT.S1D_WAVESTART', 'wavestart', kwargs,
                        func_name)
-    waveend = pcheck(params, 'EXT_S1D_WAVEEND', 'waveend', kwargs, func_name)
-    dvgrid = pcheck(params, 'EXT_S1D_BIN_UVELO', 'dvgrid', kwargs, func_name)
+    waveend = pcheck(params, 'CAL.EXT.S1D_WAVEEND', 'waveend', kwargs, func_name)
+    dvgrid = pcheck(params, 'CAL.EXT.S1D_BIN_UVEL', 'dvgrid', kwargs, func_name)
     # ----------------------------------------------------------------------
     # get image and header from infile
     image_e2ds = np.array(image)

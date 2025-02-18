@@ -1077,10 +1077,10 @@ def plot_loc_im_corner(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     # get xpix
     xpix = np.arange(image.shape[1])
     # get zoom values
-    xzoom1 = params['LOC_PLOT_CORNER_XZOOM1']
-    xzoom2 = params['LOC_PLOT_CORNER_XZOOM2']
-    yzoom1 = params['LOC_PLOT_CORNER_YZOOM1']
-    yzoom2 = params['LOC_PLOT_CORNER_YZOOM2']
+    xzoom1 = params['CAL.LOC.PLOT_CX_ZOOM1']
+    xzoom2 = params['CAL.LOC.PLOT_CX_ZOOM2']
+    yzoom1 = params['CAL.LOC.PLOT_CY_ZOOM1']
+    yzoom2 = params['CAL.LOC.PLOT_CY_ZOOM2']
     # get number of zooms required
     length = len(xzoom1)
     # get the number of columns
@@ -1428,10 +1428,10 @@ def plot_shape_angle_offset(plotter: Plotter, graph: Graph,
     ckeep_arr = kwargs['ckeep']
     fiber = kwargs['fiber']
     # get parameters from params
-    sorder = params['SHAPE_PLOT_SELECTED_ORDER']
-    nbanana = params['SHAPE_NUM_ITERATIONS']
+    sorder = params['CAL.SHAPE.PLOT_SORDER']
+    nbanana = params['CAL.SHAPE.NUM_ITER']
     # get width for fiber
-    width = params['SHAPE_ORDER_WIDTH'][fiber]
+    width = params['CAL.SHAPE.ORDER_WID'][fiber]
     # ------------------------------------------------------------------
     # if we have a bnum set get the plot loop generator (around orders)
     if bnum is not None:
@@ -1519,8 +1519,8 @@ def plot_shape_local_zoom_shift(plotter: Plotter, graph: Graph,
     image = kwargs['image']
     simage = kwargs['simage']
     # get zoom values
-    zoom1 = params['SHAPEL_PLOT_ZOOM1']
-    zoom2 = params['SHAPEL_PLOT_ZOOM2']
+    zoom1 = params['CAL.SHAPE.LOCAL_PZOOM1']
+    zoom2 = params['CAL.SHAPE.LOCAL_PZOOM2']
     # ------------------------------------------------------------------
     # get limits for zooms
     xmin1, xmax1, ymin1, ymax1 = zoom1
@@ -1631,8 +1631,8 @@ def plot_flat_order_fit_edges(plotter: Plotter, graph: Graph,
     # get dimensions from coeffs
     nbo = coeffs1.shape[0]
     # get parameters from params
-    range1_dict = params['EXT_RANGE1']
-    range2_dict = params['EXT_RANGE2']
+    range1_dict = params['CAL.EXT.RANGE1']
+    range2_dict = params['CAL.EXT.RANGE2']
     range1 = float(range1_dict[fiber])
     range2 = float(range2_dict[fiber])
     # ------------------------------------------------------------------
@@ -2198,8 +2198,8 @@ def plot_wave_wl_vs_cavity(plotter: Plotter, graph: Graph,
     # define the bulk offset to be added to the cavity length
     cavity_pedestal = params['WAVE_FP_DOPD0']
     # define the wavelength bounds of the instrument
-    inst_wavestart = params['EXT_S1D_WAVESTART']
-    inst_waveend = params['EXT_S1D_WAVEEND']
+    inst_wavestart = params['CAL.EXT.S1D_WAVESTART']
+    inst_waveend = params['CAL.EXT.S1D_WAVEEND']
     # work out residuals (when compared to the model)
     tmp_cavity = mp.val_cheby(cavity, kwargs['fp_wave_ref_2'],
                               domain=[inst_wavestart, inst_waveend])

@@ -687,7 +687,7 @@ apero_extract.set_arg(name='files', dtype='files', pos='1+',
                       limit=1)
 apero_extract.set_kwarg(name='--quicklook', dtype='bool',
                         helpstr=textentry('QUICK_LOOK_EXT_HELP'),
-                        default_ref='EXT_QUICK_LOOK')
+                        default_ref='CAL.EXT.QUICKLOOK')
 apero_extract.set_kwarg(**badfile)
 apero_extract.set_kwarg(**dobad)
 apero_extract.set_kwarg(**backsub)
@@ -714,7 +714,7 @@ apero_extract.set_kwarg(**shapeyfile)
 apero_extract.set_kwarg(**shapelfile)
 apero_extract.set_kwarg(name='--leakcorr', dtype='bool', default=True,
                         helpstr=textentry('LEAKCORR_HELP'),
-                        default_ref='CORRECT_LEAKAGE')
+                        default_ref='CAL.LEAK.CORRECT_LEAK')
 apero_extract.set_kwarg(**wavefile)
 apero_extract.set_kwarg(name='--force_ref_wave', dtype='switch',
                         helpstr='Force using the reference wave solution')

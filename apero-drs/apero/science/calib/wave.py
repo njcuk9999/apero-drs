@@ -2176,8 +2176,8 @@ def update_smart_fp_mask(params: ParamDict, cavity: np.ndarray, **kwargs):
     # define the bulk offset to be added to the cavity length
     cavity_pedestal = pcheck(params, 'WAVE_FP_DOPD0', func=func_name)
     # define the wavelength bounds of the instrument
-    inst_wavestart = pcheck(params, 'EXT_S1D_WAVESTART', func=func_name)
-    inst_waveend = pcheck(params, 'EXT_S1D_WAVEEND', func=func_name)
+    inst_wavestart = pcheck(params, 'CAL.EXT.S1D_WAVESTART', func=func_name)
+    inst_waveend = pcheck(params, 'CAL.EXT.S1D_WAVEEND', func=func_name)
     # if we don't want to update the mask then don't
     if not update_mask:
         return

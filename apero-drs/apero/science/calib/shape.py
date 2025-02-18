@@ -83,7 +83,7 @@ def construct_fp_table(params: ParamDict,
     # set function name
     func_name = display_func('construct_fp_table', __NAME__)
     # get parameters from params
-    max_num_files = pcheck(params, 'SHAPE_REF_MAX_FILES', func=func_name,
+    max_num_files = pcheck(params, 'CAL.SHAPE.REF_MAX_FILES', func=func_name,
                            override=max_nfiles)
     # define storage for table columns
     fp_time, fp_exp, fp_pp_version = [], [], []
@@ -194,9 +194,9 @@ def construct_ref_fp(params: ParamDict, recipe: DrsRecipe, dprtype: str,
     # set function name
     func_name = display_func('construct_ref_fp', __NAME__)
     # get constants from params/kwargs
-    time_thres = pcheck(params, 'FP_REF_MATCH_TIME', 'time_thres',
+    time_thres = pcheck(params, 'CAL.SHAPE.FP_REF_MATCH_TIME', 'time_thres',
                         func=func_name, override=time_thres)
-    percent_thres = pcheck(params, 'FP_REF_PERCENT_THRES', 'percent_thres',
+    percent_thres = pcheck(params, 'CAL.SHAPE.FP_REF_PERCENT_THRES', 'percent_thres',
                            func=func_name, override=percent_thres)
     qc_res = pcheck(params, 'SHAPE_QC_LTRANS_RES_THRES', 'qc_res',
                     func=func_name, override=qc_res)
@@ -347,15 +347,15 @@ def get_linear_transform_params(params: ParamDict, recipe: DrsRecipe,
     # set function name
     func_name = display_func('get_linear_transform_params', __NAME__)
     # get parameters from params/kwargs
-    maxn_percent = pcheck(params, 'SHAPE_REF_VALIDFP_PERCENTILE',
+    maxn_percent = pcheck(params, 'CAL.SHAPE.REF_VALIDFP_PTILE',
                           func=func_name, override=maxn_percent)
-    maxn_thres = pcheck(params, 'SHAPE_REF_VALIDFP_THRESHOLD',
+    maxn_thres = pcheck(params, 'CAL.SHAPE.REF_VALIDFP_THRES',
                         func=func_name, override=maxn_thres)
-    niterations = pcheck(params, 'SHAPE_REF_LINTRANS_NITER',
+    niterations = pcheck(params, 'CAL.SHAPE.REF_LINTRANS_NITER',
                          func=func_name, override=niterations)
-    ini_boxsize = pcheck(params, 'SHAPE_REF_FP_INI_BOXSIZE',
+    ini_boxsize = pcheck(params, 'CAL.SHAPE.REF_FP_IBOXSIZE',
                          func=func_name, override=ini_boxsize)
-    small_boxsize = pcheck(params, 'SHAPE_REF_FP_SMALL_BOXSIZE',
+    small_boxsize = pcheck(params, 'CAL.SHAPE.REF_FP_SBOXSIZE',
                            func=func_name, override=small_boxsize)
     # get the shape of the image
     dim1, dim2 = image1.shape
@@ -648,7 +648,7 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, lprops, fiber, **kwargs):
                        func_name)
     large_angle_min = pcheck(params, 'SHAPE_LARGE_ANGLE_MIN',
                              'large_angle_min', kwargs, func_name)
-    large_angle_max = pcheck(params, 'SHAPE_LARGE_ANGLE_MAX',
+    large_angle_max = pcheck(params, 'CAL.SHAPE.LANGLE_MAX',
                              'large_angle_max', kwargs, func_name)
     large_angle_range = [large_angle_min, large_angle_max]
     small_angle_min = pcheck(params, 'SHAPE_SMALL_ANGLE_MIN',
@@ -1172,34 +1172,34 @@ def calculate_dxmap_nirps(params, recipe, fpdata, lprops, fiber, **kwargs):
     func_name = __NAME__ + '.calculate_dxmap_nirps()'
 
     # get parameters from params/kwargs
-    nbanana = pcheck(params, 'SHAPE_NUM_ITERATIONS', 'nbanana', kwargs,
+    nbanana = pcheck(params, 'CAL.SHAPE.NUM_ITER', 'nbanana', kwargs,
                      func_name)
 
-    nsections = pcheck(params, 'SHAPE_NSECTIONS', 'nsections', kwargs,
+    nsections = pcheck(params, 'CAL.SHAPE.NSECTIONS', 'nsections', kwargs,
                        func_name)
-    large_angle_min = pcheck(params, 'SHAPE_LARGE_ANGLE_MIN',
+    large_angle_min = pcheck(params, 'CAL.SHAPE.LANGLE_MIN',
                              'large_angle_min', kwargs, func_name)
-    large_angle_max = pcheck(params, 'SHAPE_LARGE_ANGLE_MAX',
+    large_angle_max = pcheck(params, 'CAL.SHAPE.LANGLE_MAX',
                              'large_angle_max', kwargs, func_name)
     large_angle_range = [large_angle_min, large_angle_max]
-    small_angle_min = pcheck(params, 'SHAPE_SMALL_ANGLE_MIN',
+    small_angle_min = pcheck(params, 'CAL.SHAPE.SANGLE_MIN',
                              'small_angle_min', kwargs, func_name)
-    small_angle_max = pcheck(params, 'SHAPE_SMALL_ANGLE_MAX',
+    small_angle_max = pcheck(params, 'CAL.SHAPE.SANGLE_MAX',
                              'small_angle_max', kwargs, func_name)
     small_angle_range = [small_angle_min, small_angle_max]
-    sigclipmax = pcheck(params, 'SHAPE_SIGMACLIP_MAX', 'sigclipmax',
+    sigclipmax = pcheck(params, 'CAL.SHAPE.SIGCLIP_MAX', 'sigclipmax',
                         kwargs, func_name)
-    med_filter_size = pcheck(params, 'SHAPE_MEDIAN_FILTER_SIZE',
+    med_filter_size = pcheck(params, 'CAL.SHAPE.MED_FILT_SIZE',
                              'med_filter_size', kwargs, func_name)
-    min_good_corr = pcheck(params, 'SHAPE_MIN_GOOD_CORRELATION',
+    min_good_corr = pcheck(params, 'CAL.SHAPE.MIN_GOOD_CORR',
                            'min_good_corr', kwargs, func_name)
-    short_medfilt_wid = pcheck(params, 'SHAPE_SHORT_DX_MEDFILT_WID',
+    short_medfilt_wid = pcheck(params, 'CAL.SHAPE.SHORT_DX_MEDFILT_WID',
                                'short_medfilt_width', kwargs, func_name)
-    long_medfilt_wid = pcheck(params, 'SHAPE_LONG_DX_MEDFILT_WID',
+    long_medfilt_wid = pcheck(params, 'CAL.SHAPE.LONG_DX_MEDFILT_WID',
                               'long_medfilt_width', kwargs, func_name)
-    std_qc = pcheck(params, 'SHAPE_QC_DXMAP_STD', 'std_qc', kwargs, func_name)
+    std_qc = pcheck(params, 'CAL.SHAPE.QC_DXMAP_STD', 'std_qc', kwargs, func_name)
     # get width for fiber
-    width = params['SHAPE_ORDER_WIDTH'][fiber]
+    width = params['CAL.SHAPE.ORDER_WID'][fiber]
     # get properties from property dictionaries
     nbo = lprops['NBO']
     acc = lprops['CENT_COEFFS']
@@ -1681,7 +1681,7 @@ def calculate_dxmap_nirps(params, recipe, fpdata, lprops, fiber, **kwargs):
 def calculate_dymap(params, fpimage, fpheader, **kwargs):
     func_name = __NAME__ + '.calculate_dymap()'
     # get properties from property dictionaries
-    fibers = pcheck(params, 'SHAPE_UNIQUE_FIBERS', 'fibers', kwargs, func_name)
+    fibers = pcheck(params, 'CAL.SHAPE.UFIBERS', 'fibers', kwargs, func_name)
     # get the dimensions
     dim1, dim2 = fpimage.shape
     # make fibers a list
@@ -2165,7 +2165,7 @@ def shape_ref_qc(params, dxrms=None, qc_params=None, **kwargs):
     else:
         qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
     # get dxrms criteria
-    dxrmscut = pcheck(params, 'SHAPE_REF_DX_RMS_QC', 'dxrmscut', kwargs,
+    dxrmscut = pcheck(params, 'CAL.SHAPE.REF_DX_RMS_QC', 'dxrmscut', kwargs,
                       func_name)
     # ------------------------------------------------------------------
     # dxmap and dxrms can be None
@@ -2233,7 +2233,7 @@ def shape_local_qc(params, transform, xres, yres):
     qc_logic.append('Image too poor')
     # ------------------------------------------------------------------
     # check that the x and y residuals are low enough
-    qc_res = params['SHAPE_QC_LTRANS_RES_THRES']
+    qc_res = params['CAL.SHAPE.QC_LTRANS_RTHRES']
     # assess quality of x residuals
     if xres > qc_res:
         fail_msg.append(textentry('40-014-00035', args=[xres, qc_res]))

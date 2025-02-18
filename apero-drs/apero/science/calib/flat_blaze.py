@@ -82,7 +82,7 @@ def calculate_blaze_flat_sinc(params: ParamDict, e2ds_ini: np.ndarray,
     # get function name
     func_name = __NAME__ + '.calculate_blaze_flat_sinc()'
     # get med filt parameter
-    med_size = pcheck(params, 'FF_BLAZE_SINC_MED_SIZE', func=func_name,
+    med_size = pcheck(params, 'CAL.FLAT.BLAZE_SINC_MED_SIZE', func=func_name,
                       override=sinc_med_size)
     # ----------------------------------------------------------------------
     # defnie the x positions
@@ -362,7 +362,7 @@ def flat_blaze_qc(params: ParamDict, eprops: ParamDict, fiber: str
     # check that rms values in required orders are below threshold
 
     # get mask for removing certain values
-    remove_orders = params['FF_RMS_SKIP_ORDERS']
+    remove_orders = params['CAL.FLAT.RMS_SKIP_ORDERS']
     remove_orders = np.array(remove_orders)
     remove_mask = np.in1d(np.arange(len(eprops['RMS'])), remove_orders)
     # apply max and calculate the maximum of the rms values
@@ -378,7 +378,7 @@ def flat_blaze_qc(params: ParamDict, eprops: ParamDict, fiber: str
     # add to qc header lists
     qc_values.append(max_rms)
     qc_names.append('max_rms')
-    qc_logic.append('max_rms < {0:.2f}'.format(params['QC_FF_MAX_RMS']))
+    qc_logic.append('max_rms < {0:.2f}'.format(params['CAL.FLAT.QC_MAX_RMS']))
     # --------------------------------------------------------------
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control

@@ -134,7 +134,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     num_files = len(infiles)
     # ----------------------------------------------------------------------
     # get quick look mode
-    quicklook = params['EXT_QUICK_LOOK']
+    quicklook = params['CAL.EXT.QUICKLOOK']
     # deal with leak corr
     if 'leakcorr' in params['DATA_DICT']:
         # add leak corr to params from data dict (passed in)
@@ -316,7 +316,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                                                    fbprops['BLAZE'])
             # --------------------------------------------------------------
             if not quicklook:
-                s1dextfile = params['EXT_S1D_INTYPE']
+                s1dextfile = params['CAL.EXT.S1D_INTYPE']
                 # create 1d spectra (s1d) of the e2ds file
                 sargs = [wprops['WAVEMAP'], eprops[s1dextfile], eprops['BLAZE']]
                 swprops = extract.e2ds_to_s1d(params, recipe, *sargs,

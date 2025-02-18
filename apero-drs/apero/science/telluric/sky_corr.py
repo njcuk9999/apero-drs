@@ -392,11 +392,11 @@ def identify_sky_line_regions(params: ParamDict, sky_props: ParamDict,
                         override=erode_size)
     dilate_size = pcheck(params, 'SKYMODEL_LINE_DILATE_SIZE', func=func_name,
                          override=dilate_size)
-    wavestart = pcheck(params, 'EXT_S1D_WAVESTART', func=func_name,
+    wavestart = pcheck(params, 'CAL.EXT.S1D_WAVESTART', func=func_name,
                        override=wavestart)
-    waveend = pcheck(params, 'EXT_S1D_WAVEEND', 'waveend', func=func_name,
+    waveend = pcheck(params, 'CAL.EXT.S1D_WAVEEND', 'waveend', func=func_name,
                      override=waveend)
-    binvelo = pcheck(params, 'EXT_S1D_BIN_UVELO', func=func_name,
+    binvelo = pcheck(params, 'CAL.EXT.S1D_BIN_UVEL', func=func_name,
                      override=binvelo)
     # ravel e2ds wavemap (for dilation stuff later)
     wave1d = sky_props['WAVEMAPR']

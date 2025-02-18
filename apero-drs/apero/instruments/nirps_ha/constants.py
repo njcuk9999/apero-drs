@@ -455,36 +455,36 @@ CDict.set('MINPEAK_AMP', value=10, source=__NAME__, group=cgroup)
 
 # Define the jump size when finding the order position
 # (jumps in steps of this from the center outwards)
-CDict.set('LOC_COLUMN_SEP_FITTING', value=5, source=__NAME__)
+CDict.set('COL_SEP_FITTING', value=5, source=__NAME__, group=cgroup)
 
 # Definition of the extraction window size (half size)
-CDict.set('LOC_EXT_WINDOW_SIZE', value=10, source=__NAME__)
+CDict.set('EXT_WIN_SIZE', value=10, source=__NAME__, group=cgroup)
 
 # Definition of the gap index in the selected area
-CDict.set('LOC_IMAGE_GAP', value=0, source=__NAME__)
+CDict.set('IMAGE_GAP', value=0, source=__NAME__, group=cgroup)
 
 # Define minimum width of order to be accepted
-CDict.set('LOC_ORDER_WIDTH_MIN', value=2, source=__NAME__)
+CDict.set('ORDER_WID_MIN', value=2, source=__NAME__, group=cgroup)
 
 # Define the noise multiplier threshold in order to accept an
 # order center as usable i.e.
 # max(pixel value) - min(pixel value) > THRES * RDNOISE
-CDict.set('LOC_NOISE_MULTIPLIER_THRES', value=50, source=__NAME__)
+CDict.set('NOISE_MULT_THRES', value=50, source=__NAME__, group=cgroup)
 
 # Maximum rms for sigma-clip order fit (center positions)
-CDict.set('LOC_MAX_RMS_CENT', value=0.1, source=__NAME__)
+CDict.set('MAX_RMS_CENT', value=0.1, source=__NAME__, group=cgroup)
 
 # Maximum peak-to-peak for sigma-clip order fit (center positions)
-CDict.set('LOC_MAX_PTP_CENT', value=0.300, source=__NAME__)
+CDict.set('MAX_PTP_CENT', value=0.300, source=__NAME__, group=cgroup)
 
 # Maximum frac ptp/rms for sigma-clip order fit (center positions)
-CDict.set('LOC_PTPORMS_CENT', value=8.0, source=__NAME__)
+CDict.set('PTP_RMS_CENT', value=8.0, source=__NAME__, group=cgroup)
 
 # Maximum rms for sigma-clip order fit (width)
-CDict.set('LOC_MAX_RMS_WID', value=5.0, source=__NAME__)
+CDict.set('MAX_RMS_WID', value=5.0, source=__NAME__, group=cgroup)
 
 # Maximum fractional peak-to-peak for sigma-clip order fit (width)
-CDict.set('LOC_MAX_PTP_WID', value=30.0, source=__NAME__)
+CDict.set('MAX_PTP_WID', value=30.0, source=__NAME__, group=cgroup)
 
 # Normalised amplitude threshold to accept pixels for background calculation
 CDict.set('BKGRD_THRES', value=0.15, source=__NAME__, group=cgroup)
@@ -500,39 +500,39 @@ CDict.set('COEFF_SIGCLIP', value=5, source=__NAME__, group=cgroup)
 CDict.set('COEFFSIG_DEG', value=5, source=__NAME__, group=cgroup)
 
 # Define the maximum value allowed in the localisation (cuts reddest orders)
-CDict.set('LOC_MAX_YPIX_VALUE', value=4060, source=__NAME__)
+CDict.set('MAX_YPIX_VAL', value=4060, source=__NAME__, group=cgroup)
 
 # Saturation threshold for localisation
-CDict.set('LOC_SAT_THRES', value=1000, source=__NAME__)
+CDict.set('SAT_THRES', value=1000, source=__NAME__, group=cgroup)
 
 # Maximum points removed in location fit
-CDict.set('QC_LOC_MAXFIT_REMOVED_CTR', value=1500, source=__NAME__)
+CDict.set('QL_MAXFIT_RM_CTR', value=1500, source=__NAME__, group=cgroup)
 
 # Maximum points removed in width fit
-CDict.set('QC_LOC_MAXFIT_REMOVED_WID', value=105, source=__NAME__)
+CDict.set('QL_MAXFIT_RM_WID', value=105, source=__NAME__, group=cgroup)
 
 # Maximum rms allowed in fitting location
-CDict.set('QC_LOC_RMSMAX_CTR', value=100, source=__NAME__)
+CDict.set('QC_RMSMAX_CTR', value=100, source=__NAME__, group=cgroup)
 
 # Maximum rms allowed in fitting width
-CDict.set('QC_LOC_RMSMAX_WID', value=500, source=__NAME__)
+CDict.set('QC_RMSMAX_WID', value=500, source=__NAME__, group=cgroup)
 
 # Option for archiving the location image
-CDict.set('LOC_SAVE_SUPERIMP_FILE', value=True, source=__NAME__)
+CDict.set('SAVE_SUPERIM_FILE', value=True, source=__NAME__, group=cgroup)
 
 # set the zoom in levels for the plots (x min value)
-CDict.set('LOC_PLOT_CORNER_XZOOM1', value=[0, 2044, 0, 2044], source=__NAME__)
+CDict.set('PLOT_CX_ZOOM1', value=[0, 2044, 0, 2044], source=__NAME__, group=cgroup)
 
 # set the zoom in levels for the plots (x max value)
-CDict.set('LOC_PLOT_CORNER_XZOOM2', value=[2044, 4088, 2044, 4088],
-          source=__NAME__)
+CDict.set('PLOT_CX_ZOOM2', value=[2044, 4088, 2044, 4088],
+          source=__NAME__, group=cgroup)
 
 # set the zoom in levels for the plots (top left corners)
-CDict.set('LOC_PLOT_CORNER_YZOOM1', value=[0, 0, 2500, 2500], source=__NAME__)
+CDict.set('PLOT_CY_ZOOM1', value=[0, 0, 2500, 2500], source=__NAME__, group=cgroup)
 
 # set the zoom in levels for the plots (top right corners)
-CDict.set('LOC_PLOT_CORNER_YZOOM2', value=[600, 600, 3100, 3100],
-          source=__NAME__)
+CDict.set('PLOT_CY_ZOOM2', value=[600, 600, 3100, 3100],
+          source=__NAME__, group=cgroup)
 
 # =============================================================================
 # CALIBRATION: SHAPE SETTINGS
@@ -541,203 +541,203 @@ cgroup = 'CAL.SHAPE'
 # Define the allowed DPRTYPES for finding files for DARK_REF will
 # only find those types define by 'filetype' but 'filetype' must
 # be one of theses
-CDict.set('ALLOWED_FP_TYPES', value=['FP_FP'], source=__NAME__)
+CDict.set('ALLOWED_FP_TYPES', value=['FP_FP'], source=__NAME__, group=cgroup)
 
 # Define the maximum time span to combine fp files over (in hours)
-CDict.set('FP_REF_MATCH_TIME', value=2, source=__NAME__)
+CDict.set('FP_REF_MATCH_TIME', value=2, source=__NAME__, group=cgroup)
 
 # Define the percentile at which the FPs are normalised when getting the
 # fp reference in shape reference
-CDict.set('FP_REF_PERCENT_THRES', value=95.0, source=__NAME__)
+CDict.set('FP_REF_PERCENT_THRES', value=95.0, source=__NAME__, group=cgroup)
 
 # Define the largest standard deviation allowed for the shift in
 # x or y when doing the shape reference fp linear transform
-CDict.set('SHAPE_QC_LTRANS_RES_THRES', value=0.22, source=__NAME__)
+CDict.set('QC_LTRANS_RTHRES', value=0.22, source=__NAME__, group=cgroup)
 
 # Define the maximum number of files to use in the shape reference
-CDict.set('SHAPE_REF_MAX_FILES', value=100, source=__NAME__)
+CDict.set('REF_MAX_FILES', value=100, source=__NAME__, group=cgroup)
 
 # Define the percentile which defines a true FP peak [0-100]
-CDict.set('SHAPE_REF_VALIDFP_PERCENTILE', value=95, source=__NAME__)
+CDict.set('REF_VALIDFP_PTILE', value=95, source=__NAME__, group=cgroup)
 
 # Define the fractional flux an FP must have compared to its neighbours
-CDict.set('SHAPE_REF_VALIDFP_THRESHOLD', value=1.5, source=__NAME__)
+CDict.set('REF_VALIDFP_THRES', value=1.5, source=__NAME__, group=cgroup)
 
 # Define the number of iterations used to get the linear transform params
-CDict.set('SHAPE_REF_LINTRANS_NITER', value=5, source=__NAME__)
+CDict.set('REF_LINTRANS_NITER', value=5, source=__NAME__, group=cgroup)
 
 # Define the initial search box size (in pixels) around the fp peaks
-CDict.set('SHAPE_REF_FP_INI_BOXSIZE', value=11, source=__NAME__)
+CDict.set('REF_FP_IBOXSIZE', value=11, source=__NAME__, group=cgroup)
 
 # Define the small search box size (in pixels) around the fp peaks
-CDict.set('SHAPE_REF_FP_SMALL_BOXSIZE', value=2, source=__NAME__)
+CDict.set('REF_FP_SBOXSIZE', value=2, source=__NAME__, group=cgroup)
 
 # Define the minimum number of FP files in a group to mean group is valid
-CDict.set('SHAPE_FP_REF_MIN_IN_GROUP', value=3, source=__NAME__)
+CDict.set('FP_REF_MIN_INGROUP', value=3, source=__NAME__, group=cgroup)
 
 # Define which fiber should be used for fiber-dependent calibrations in
 # shape reference
-CDict.set('SHAPE_REF_FIBER', value='A', source=__NAME__)
+CDict.set('REF_FIBER', value='A', source=__NAME__, group=cgroup)
 
 # Define the shape reference dx rms quality control criteria (per order)
-CDict.set('SHAPE_REF_DX_RMS_QC', value=0.3, source=__NAME__)
+CDict.set('REF_DX_RMS_QC', value=0.3, source=__NAME__, group=cgroup)
 
 # Define the number of iterations to run the shape finding out to
-CDict.set('SHAPE_NUM_ITERATIONS', value=4, source=__NAME__)
+CDict.set('NUM_ITER', value=4, source=__NAME__, group=cgroup)
 
 # Define the order to use on the shape plot
-CDict.set('SHAPE_PLOT_SELECTED_ORDER', value=64, source=__NAME__)
+CDict.set('PLOT_SORDER', value=64, source=__NAME__, group=cgroup)
 
 # Define the total width of the order (combined fibers) in pixels
-CDict.set('SHAPE_ORDER_WIDTH',
+CDict.set('ORDER_WID',
           value={"A": 60, "B": 60, "C": 60},
-          source=__NAME__)
+          source=__NAME__, group=cgroup)
 
 # Define the number of sections per order to split the order into
-CDict.set('SHAPE_NSECTIONS', value=32, source=__NAME__)
+CDict.set('NSECTIONS', value=32, source=__NAME__, group=cgroup)
 
 # Define the range of angles (in degrees) for the first iteration (large)
-CDict.set('SHAPE_LARGE_ANGLE_MIN', value=-12.0, source=__NAME__)
-CDict.set('SHAPE_LARGE_ANGLE_MAX', value=0.0, source=__NAME__)
+CDict.set('LANGLE_MIN', value=-12.0, source=__NAME__, group=cgroup)
+CDict.set('LANGLE_MAX', value=0.0, source=__NAME__, group=cgroup)
 
 # Define the range of angles (in degrees) for subsequent iterations (small)
-CDict.set('SHAPE_SMALL_ANGLE_MIN', value=-1.0, source=__NAME__)
-CDict.set('SHAPE_SMALL_ANGLE_MAX', value=1.0, source=__NAME__)
+CDict.set('SANGLE_MIN', value=-1.0, source=__NAME__, group=cgroup)
+CDict.set('SANGLE_MAX', value=1.0, source=__NAME__, group=cgroup)
 
 # Define the max sigma clip (in sigma) on points within a section
-CDict.set('SHAPE_SIGMACLIP_MAX', value=4, source=__NAME__)
+CDict.set('SIGCLIP_MAX', value=4, source=__NAME__, group=cgroup)
 
 # Define the size of the median filter to apply along the order (in pixels)
-CDict.set('SHAPE_MEDIAN_FILTER_SIZE', value=51, source=__NAME__)
+CDict.set('MED_FILT_SIZE', value=51, source=__NAME__, group=cgroup)
 
 # Define the minimum value for the cross-correlation to be deemed good
-CDict.set('SHAPE_MIN_GOOD_CORRELATION', value=0.5, source=__NAME__)
+CDict.set('MIN_GOOD_CORR', value=0.5, source=__NAME__, group=cgroup)
 
 # Define the first pass (short) median filter width for dx
-CDict.set('SHAPE_SHORT_DX_MEDFILT_WID', value=9, source=__NAME__)
+CDict.set('SHORT_DX_MEDFILT_WID', value=9, source=__NAME__, group=cgroup)
 
 # Define the second pass (long) median filter width for dx.
 # Used to fill NaN positions in dx that are not covered by short pass
-CDict.set('SHAPE_LONG_DX_MEDFILT_WID', value=9, source=__NAME__)
+CDict.set('LONG_DX_MEDFILT_WID', value=9, source=__NAME__, group=cgroup)
 
 # Defines the largest allowed standard deviation for a given
 # per-order and per-x-pixel shift of the FP peaks
-CDict.set('SHAPE_QC_DXMAP_STD', value=5, source=__NAME__)
+CDict.set('QC_DXMAP_STD', value=5, source=__NAME__, group=cgroup)
 
 # Define the shape offset xoffset (before and after) fp peaks
-CDict.set('SHAPEOFFSET_XOFFSET', value=30, source=__NAME__)
+CDict.set('XOFFSET', value=30, source=__NAME__, group=cgroup)
 
 # Define the bottom percentile for fp peak
-CDict.set('SHAPEOFFSET_BOTTOM_PERCENTILE', value=10, source=__NAME__)
+CDict.set('OFF_BTM_PTILE', value=10, source=__NAME__, group=cgroup)
 
 # Define the top percentile for fp peak
-CDict.set('SHAPEOFFSET_TOP_PERCENTILE', value=95, source=__NAME__)
+CDict.set('OFF_TOP_PTILE', value=95, source=__NAME__, group=cgroup)
 
 # Define the floor below which top values should be set to this fraction
 # away from the max top value
-CDict.set('SHAPEOFFSET_TOP_FLOOR_FRAC', value=0.1, source=__NAME__)
+CDict.set('OFF_TOP_FLOOR_FRAC', value=0.1, source=__NAME__, group=cgroup)
 
 # Define the median filter to apply to the hc (high pass filter)
-CDict.set('SHAPEOFFSET_MED_FILTER_WIDTH', value=15, source=__NAME__)
+CDict.set('OFF_MED_FILT_WID', value=15, source=__NAME__, group=cgroup)
 
 # Define the maximum number of FP (larger than expected number)
-CDict.set('SHAPEOFFSET_FPINDEX_MAX', value=30000, source=__NAME__)
+CDict.set('OFF_FPINDEX_MAX', value=30000, source=__NAME__, group=cgroup)
 
 # Define the valid length of a FP peak
-CDict.set('SHAPEOFFSET_VALID_FP_LENGTH', value=5, source=__NAME__)
+CDict.set('OFF_VALID_FP_LEN', value=5, source=__NAME__, group=cgroup)
 
 # Define the maximum allowed offset (in nm) that we allow for the detector
-CDict.set('SHAPEOFFSET_DRIFT_MARGIN', value=20, source=__NAME__)
+CDict.set('OFF_DRIFT_MARGIN', value=20, source=__NAME__, group=cgroup)
 
 # Define the number of iterations to do for the wave_fp inversion trick
-CDict.set('SHAPEOFFSET_WAVEFP_INV_IT', value=5, source=__NAME__)
+CDict.set('OFF_WAVEFP_INV_IT', value=5, source=__NAME__, group=cgroup)
 
 # Define the border in pixels at the edge of the detector
-CDict.set('SHAPEOFFSET_MASK_BORDER', value=30, source=__NAME__)
+CDict.set('OFF_MASK_BORDER', value=30, source=__NAME__, group=cgroup)
 
 # Define the minimum maxpeak value as a fraction of the maximum maxpeak
-CDict.set('SHAPEOFFSET_MIN_MAXPEAK_FRAC', value=0.4, source=__NAME__)
+CDict.set('OFF_MM_PEAK_FRAC', value=0.4, source=__NAME__, group=cgroup)
 
 # Define the width of the FP mask (+/- the center)
-CDict.set('SHAPEOFFSET_MASK_PIXWIDTH', value=3, source=__NAME__)
+CDict.set('OFF_MASK_PWIDTH', value=3, source=__NAME__, group=cgroup)
 
 # Define the width of the FP to extract (+/- the center)
-CDict.set('SHAPEOFFSET_MASK_EXTWIDTH', value=5, source=__NAME__)
+CDict.set('OFF_MASK_EXTWID', value=5, source=__NAME__, group=cgroup)
 
 # Define the most deviant peaks - percentile from [min to max]
-CDict.set('SHAPEOFFSET_DEVIANT_PMIN', value=5, source=__NAME__)
-CDict.set('SHAPEOFFSET_DEVIANT_PMAX', value=95, source=__NAME__)
+CDict.set('OFF_DEV_PMIN', value=5, source=__NAME__, group=cgroup)
+CDict.set('OFF_DEV_PMAX', value=95, source=__NAME__, group=cgroup)
 
 # Define the maximum error in FP order assignment
 # we assume that the error in FP order assignment could range
 # from -50 to +50 in practice, it is -1, 0 or +1 for the cases we've
 # tested to date
-CDict.set('SHAPEOFFSET_FPMAX_NUM_ERROR', value=50, source=__NAME__)
+CDict.set('OFF_FPMAX_NUMERR', value=50, source=__NAME__, group=cgroup)
 
 # Define the number of sigmas that the HC spectrum is allowed to be away from
 # the predicted (from FP) position
-CDict.set('SHAPEOFFSET_FIT_HC_SIGMA', value=3, source=__NAME__)
+CDict.set('OFF_FIT_HC_SIG', value=3, source=__NAME__, group=cgroup)
 
 # Define the maximum allowed maximum absolute deviation away from the error fit
-CDict.set('SHAPEOFFSET_MAXDEV_THRESHOLD', value=5, source=__NAME__)
+CDict.set('OFF_MAXDEV_THRES', value=5, source=__NAME__, group=cgroup)
 
 # Define the very low thresholding values tend to clip valid points
-CDict.set('SHAPEOFFSET_ABSDEV_THRESHOLD', value=0.2, source=__NAME__)
+CDict.set('OFF_ABSDEV_THRES', value=0.2, source=__NAME__, group=cgroup)
 
 # Define the names of the unique fibers for use in getting the localisation
 # coefficients for dymap
-CDict.set('SHAPE_UNIQUE_FIBERS', value='A, B', source=__NAME__)
+CDict.set('UFIBERS', value='A, B', source=__NAME__, group=cgroup)
 
 # Define first zoom plot for shape local zoom debug plot
 # should be a string list (xmin, xmax, ymin, ymax)
-CDict.set('SHAPEL_PLOT_ZOOM1', value=[1844, 2244, 0, 400], source=__NAME__)
+CDict.set('LOCAL_PZOOM1', value=[1844, 2244, 0, 400], source=__NAME__, group=cgroup)
 
 # Define second zoom plot for shape local zoom debug plot
 # should be a string list (xmin, xmax, ymin, ymax)
-CDict.set('SHAPEL_PLOT_ZOOM2', value=[1844, 2244, 2700, 3100], source=__NAME__)
+CDict.set('LOCAL_PZOOM2', value=[1844, 2244, 2700, 3100], source=__NAME__, group=cgroup)
 
 # =============================================================================
 # CALIBRATION: FLAT SETTINGS
 # =============================================================================
 cgroup = 'CAL.FLAT'
 # Half size blaze smoothing window
-CDict.set('FF_BLAZE_HALF_WINDOW', value=50, source=__NAME__)
+CDict.set('HALF_WINDOW', value=50, source=__NAME__, group=cgroup)
 
 # Minimum relative e2ds flux for the blaze computation
-CDict.set('FF_BLAZE_THRESHOLD', value=16.0, source=__NAME__)
+CDict.set('BLAZE_THRES', value=16.0, source=__NAME__, group=cgroup)
 
 # The blaze polynomial fit degree
-CDict.set('FF_BLAZE_DEGREE', value=10, source=__NAME__)
+CDict.set('BLAZE_DEG', value=10, source=__NAME__, group=cgroup)
 
 # Define the threshold, expressed as the fraction of the maximum peak,
 # below this threshold the blaze (and e2ds) is set to NaN
-CDict.set('FF_BLAZE_SCUT', value=0.1, source=__NAME__)
+CDict.set('BLAZE_SCUT', value=0.1, source=__NAME__, group=cgroup)
 
 # Define the rejection threshold for the blaze sinc fit
-CDict.set('FF_BLAZE_SIGFIT', value=4.0, source=__NAME__)
+CDict.set('BLAZE_SIGFIT', value=4.0, source=__NAME__, group=cgroup)
 
 # Define the hot bad pixel percentile level (using in blaze sinc fit)
-CDict.set('FF_BLAZE_BPERCENTILE', value=95, source=__NAME__)
+CDict.set('BLAZE_BPTILE', value=95, source=__NAME__, group=cgroup)
 
 # Define the number of times to iterate around blaze sinc fit
-CDict.set('FF_BLAZE_NITER', value=2, source=__NAME__)
+CDict.set('BLAZE_NITER', value=2, source=__NAME__, group=cgroup)
 
 # Define the sinc fit median filter width (we want to fit the shape of
 # the order not line structures)
-CDict.set('FF_BLAZE_SINC_MED_SIZE', value=50, source=__NAME__)
+CDict.set('BLAZE_SINC_MED_SIZE', value=50, source=__NAME__, group=cgroup)
 
 # Define the orders not to plot on the RMS plot should be a string
 # containing a list of integers
-CDict.set('FF_RMS_SKIP_ORDERS', value=[0, 22, 23, 24, 25, 48], source=__NAME__)
+CDict.set('RMS_SKIP_ORDERS', value=[0, 22, 23, 24, 25, 48], source=__NAME__, group=cgroup)
 
 # Maximum allowed RMS of flat field
-CDict.set('QC_FF_MAX_RMS', value=1.0, source=__NAME__)
+CDict.set('QC_MAX_RMS', value=1.0, source=__NAME__, group=cgroup)
 
 # Define the order to plot in summary plots
-CDict.set('FF_PLOT_ORDER', value=4, source=__NAME__)
+CDict.set('PLOT_ORDER', value=4, source=__NAME__, group=cgroup)
 
 # Define the high pass filter size in pixels
-CDict.set('FF_HIGH_PASS_SIZE', value=501, source=__NAME__, author='EA')
+CDict.set('HIGHPASS_SIZE', value=501, source=__NAME__, author='EA', group=cgroup)
 
 
 # =============================================================================
@@ -745,58 +745,58 @@ CDict.set('FF_HIGH_PASS_SIZE', value=501, source=__NAME__, author='EA')
 # =============================================================================
 cgroup = 'CAL.LEAK'
 # Define the types of input file allowed by the leakage reference recipe
-CDict.set('ALLOWED_LEAKREF_TYPES', value=['DARK_FP'], source=__NAME__)
+CDict.set('ALLOWED_REF_TYPES', value=['DARK_FP'], source=__NAME__, group=cgroup)
 
 # Define whether to always extract leak reference files (i.e. overwrite
 # existing files)
-CDict.set('LEAKREF_ALWAYS_EXTRACT', value=False, source=__NAME__)
+CDict.set('ALWAYS_EXTRACT', value=False, source=__NAME__, group=cgroup)
 
 # Define the type of file to use for leak reference solution
 # (currently allowed are 'E2DSFF') - must match with LEAK_EXTRACT_FILE
-CDict.set('LEAKREF_EXTRACT_TYPE', value='E2DSFF', source=__NAME__)
+CDict.set('REF_EXT_TYPES', value='E2DSFF', source=__NAME__, group=cgroup)
 
 # Define whether we want to correct leakage by default
-CDict.set('CORRECT_LEAKAGE', value=True, source=__NAME__)
+CDict.set('CORRECT_LEAK', value=True, source=__NAME__, group=cgroup)
 
 # Define DPRTYPE in reference fiber to do correction
-CDict.set('LEAKAGE_REF_TYPES', value=['FP'], source=__NAME__)
+CDict.set('REF_TYPES', value=['FP'], source=__NAME__, group=cgroup)
 
 # Define the maximum number of files to use in the leak reference
-CDict.set('LEAK_REF_MAX_FILES', value=20, source=__NAME__)
+CDict.set('REF_MAX_FILES', value=20, source=__NAME__, group=cgroup)
 
 # Define the type of file to use for the leak correction (currently allowed are
 # 'E2DS_FILE' or 'E2DSFF_FILE' (linked to recipe definition outputs)
 # must match with LEAKREF_EXTRACT_TYPE
-CDict.set('LEAK_EXTRACT_FILE', value='E2DSFF_FILE', source=__NAME__)
+CDict.set('EXT_FILE', value='E2DSFF_FILE', source=__NAME__, group=cgroup)
 
 # Define the extraction files which are 2D images (i.e. order num x nbpix)
-CDict.set('LEAK_2D_EXTRACT_FILES', value=['E2DS_FILE', 'E2DSFF_FILE'],
-          source=__NAME__)
+CDict.set('EXT2D_FILES', value=['E2DS_FILE', 'E2DSFF_FILE'],
+          source=__NAME__, group=cgroup)
 
 # Define the extraction files which are 1D spectra
-CDict.set('LEAK_1D_EXTRACT_FILES', value=['S1D_W_FILE', 'S1D_V_FILE'],
-          source=__NAME__)
+CDict.set('EXT1D_FILES', value=['S1D_W_FILE', 'S1D_V_FILE'],
+          source=__NAME__, group=cgroup)
 
 # Define the thermal background percentile for the leak and leak reference
-CDict.set('LEAK_BCKGRD_PERCENTILE', value=5, source=__NAME__)
+CDict.set('BCKGRD_PTILE', value=5, source=__NAME__, group=cgroup)
 
 # Define the normalisation percentile for the leak and leak reference
-CDict.set('LEAK_NORM_PERCENTILE', value=90, source=__NAME__)
+CDict.set('NORM_PTILE', value=90, source=__NAME__, group=cgroup)
 
 # Define the e-width of the smoothing kernel for leak reference
-CDict.set('LEAKREF_WSMOOTH', value=15, source=__NAME__)
+CDict.set('REF_WSMOOTH', value=15, source=__NAME__, group=cgroup)
 
 # Define the kernel size for leak reference
-CDict.set('LEAKREF_KERSIZE', value=3, source=__NAME__)
+CDict.set('REF_KERSIZE', value=3, source=__NAME__, group=cgroup)
 
 # Define the lower bound percentile for leak correction
-CDict.set('LEAK_LOW_PERCENTILE', value=1, source=__NAME__)
+CDict.set('LOW_PTILE', value=1, source=__NAME__, group=cgroup)
 
 # Define the upper bound percentile for leak correction
-CDict.set('LEAK_HIGH_PERCENTILE', value=99, source=__NAME__)
+CDict.set('HIGH_PTILE', value=99, source=__NAME__, group=cgroup)
 
 # Define the limit on spurious FP ratio (1 +/- limit)
-CDict.set('LEAK_BAD_RATIO_OFFSET', value=0.1, source=__NAME__)
+CDict.set('BAD_RATIO_OFFSET', value=0.1, source=__NAME__, group=cgroup)
 
 # =============================================================================
 # CALIBRATION: EXTRACTION SETTINGS
@@ -804,76 +804,76 @@ CDict.set('LEAK_BAD_RATIO_OFFSET', value=0.1, source=__NAME__)
 cgroup = 'CAL.EXT'
 # Whether extraction code is done in quick look mode (do not use for
 # final products)
-CDict.set('EXT_QUICK_LOOK', value=False, source=__NAME__)
+CDict.set('QUICKLOOK', value=False, source=__NAME__, group=cgroup)
 
 # Start order of the extraction in apero_flat if None starts from 0
-CDict.set('EXT_START_ORDER', value=None, source=__NAME__)
+CDict.set('START_ORDER', value=None, source=__NAME__, group=cgroup)
 
 # End order of the extraction in apero_flat if None ends at last order
-CDict.set('EXT_END_ORDER', value=None, source=__NAME__)
+CDict.set('END_ORDER', value=None, source=__NAME__, group=cgroup)
 
 # Half-zone extraction width left side (formally plage1)
-CDict.set('EXT_RANGE1', value={"A": 2, "B": 2}, 
-          source=__NAME__)
+CDict.set('RANGE1', value={"A": 2, "B": 2}, 
+          source=__NAME__, group=cgroup)
 
 # Half-zone extraction width right side (formally plage2)
-CDict.set('EXT_RANGE2', value={"A": 2, "B": 2}, 
-          source=__NAME__)
+CDict.set('RANGE2', value={"A": 2, "B": 2}, 
+          source=__NAME__, group=cgroup)
 
 # Define the orders to skip extraction on (will set all order values
 # to NaN. If empty list no orders are skipped. Should be a string
 # containing a valid python list
-CDict.set('EXT_SKIP_ORDERS', value=[], source=__NAME__)
+CDict.set('SKIP_ORDERS', value=[], source=__NAME__, group=cgroup)
 
 # Defines whether to run extraction with cosmic correction
-CDict.set('EXT_COSMIC_CORRETION', value=True, source=__NAME__)
+CDict.set('COSMIC_CORR', value=True, source=__NAME__, group=cgroup)
 
 # Define the number of sigmas away from the median flux which we use to
 # cut cosmic rays
-CDict.set('EXT_COSMIC_SIGCUT', value=10, source=__NAME__)
+CDict.set('COSMIC_SIGCUT', value=10, source=__NAME__, group=cgroup)
 
 # Defines the maximum number of iterations we use to check for cosmics
 # (for each pixel)
-CDict.set('EXT_COSMIC_THRESHOLD', value=5, source=__NAME__)
+CDict.set('COSMIC_THRES', value=5, source=__NAME__, group=cgroup)
 
 # Saturation level reached warning
-CDict.set('QC_EXT_FLUX_MAX', value=50000, source=__NAME__)
+CDict.set('QC_FLUX_MAX', value=50000, source=__NAME__, group=cgroup)
 
 # Define which extraction file to use for s1d creation
-CDict.set('EXT_S1D_INTYPE', value='E2DSFF', source=__NAME__)
+CDict.set('S1D_INTYPE', value='E2DSFF', source=__NAME__, group=cgroup)
 # Define which extraction file (recipe definitions) linked to EXT_S1D_INTYPE
-CDict.set('EXT_S1D_INFILE', value='E2DSFF_FILE', source=__NAME__)
+CDict.set('S1D_INFILE', value='E2DSFF_FILE', source=__NAME__, group=cgroup)
 
 # Define the start s1d wavelength (in nm)
-CDict.set('EXT_S1D_WAVESTART', value=965, source=__NAME__)
+CDict.set('S1D_WAVESTART', value=965, source=__NAME__, group=cgroup)
 
 # Define the end s1d wavelength (in nm)
-CDict.set('EXT_S1D_WAVEEND', value=1950, source=__NAME__)
+CDict.set('S1D_WAVEEND', value=1950, source=__NAME__, group=cgroup)
 
 # Define the s1d spectral bin for S1D spectra (nm) when uniform in wavelength
-CDict.set('EXT_S1D_BIN_UWAVE', value=0.005, source=__NAME__)
+CDict.set('S1D_BIN_UWAVE', value=0.005, source=__NAME__, group=cgroup)
 
 # Define the s1d spectral bin for S1D spectra (km/s) when uniform in velocity
-CDict.set('EXT_S1D_BIN_UVELO', value=0.5, source=__NAME__)
+CDict.set('S1D_BIN_UVEL', value=0.5, source=__NAME__, group=cgroup)
 
 # Define the s1d smoothing kernel for the transition between orders in pixels
-CDict.set('EXT_S1D_EDGE_SMOOTH_SIZE', value=20, source=__NAME__)
+CDict.set('S1D_EDGE_SSIZE', value=20, source=__NAME__, group=cgroup)
 
 # Define dprtypes to calculate berv for (should be a string list)
-CDict.set('EXT_ALLOWED_BERV_DPRTYPES',
+CDict.set('ALLOWED_BERV_DPRTYPES',
           value=['OBJ_FP', 'OBJ_DARK', 'OBJ_SKY', 'TELLU_SKY', 'FLUXSTD_SKY'],
-          source=__NAME__)
+          source=__NAME__, group=cgroup)
 
 # Define which BERV calculation to use ('barycorrpy' or 'estimate' or 'None')
-CDict.set('EXT_BERV_KIND', value='barycorrpy', source=__NAME__)
+CDict.set('BERV_KIND', value='barycorrpy', source=__NAME__, group=cgroup)
 
 # Define the barycorrpy iers file
-CDict.set('EXT_BERV_IERSFILE', value='finals2000A.all', source=__NAME__)
+CDict.set('BERV_IERS_FILE', value='finals2000A.all', source=__NAME__, group=cgroup)
 
 # Define the barycorrpy iers a url
-CDict.set('EXT_BERV_IERS_A_URL',
+CDict.set('BERV_IERS_AURL',
           value='ftp://cddis.gsfc.nasa.gov/pub/products/iers/finals2000A.all',
-          source=__NAME__)
+          source=__NAME__, group=cgroup)
 
 # Define barycorrpy leap directory
 CDict.set('EXT_BERV_LEAPDIR', value='./data/core/barycorrpy/', source=__NAME__)

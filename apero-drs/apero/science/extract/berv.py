@@ -93,9 +93,9 @@ def get_berv(params: ParamDict, infile: Union[DrsFitsFile, None] = None,
     if log:
         WLOG(params, 'info', textentry('40-016-00017'))
     # get parameters from params and kwargs
-    dprtypes = pcheck(params, 'EXT_ALLOWED_BERV_DPRTYPES', func=func_name,
+    dprtypes = pcheck(params, 'CAL.EXT.ALLOWED_BERV_DPRTYPES', func=func_name,
                       override=dprtypes)
-    kind = pcheck(params, 'EXT_BERV_KIND', func=func_name, override=kind)
+    kind = pcheck(params, 'CAL.EXT.BERV_KIND', func=func_name, override=kind)
     # -------------------------------------------------------------------------
     # get header
     # -------------------------------------------------------------------------
@@ -437,7 +437,7 @@ def use_barycorrpy(params: ParamDict, times: np.ndarray, props: ParamDict,
     estimate = pcheck(params, 'EXT_BERV_EST_ACC', func=func_name,
                       override=berv_est)
     # get barycorrpy directory
-    iersfile = pcheck(params, 'EXT_BERV_IERSFILE', func=func_name,
+    iersfile = pcheck(params, 'CAL.EXT.BERV_IERS_FILE', func=func_name,
                       override=iersfile)
     # make barycorrpy directory an absolute path
     bc_dir = os.path.join(params['PATH.ASSETS'], 'core', 'barycorrpy')

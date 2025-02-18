@@ -1280,7 +1280,7 @@ def write_localisation_files(params: ParamDict, recipe: DrsRecipe,
     # ------------------------------------------------------------------
     # Save and Record of image of localization
     # ------------------------------------------------------------------
-    if params['LOC_SAVE_SUPERIMP_FILE']:
+    if params['CAL.LOC.SAVE_SUPERIM_FILE']:
         # --------------------------------------------------------------
         # super impose zeros over the fit in the image
         image5 = image_superimp(image, cent_coeffs)
@@ -1344,13 +1344,13 @@ def loc_summary(recipe: DrsRecipe, it: int, params: ParamDict,
     recipe.plot.add_stat('KW_LOC_DEG_W', value=params['CAL.LOC.WID_POLYDEG'])
     recipe.plot.add_stat('KW_LOC_MAXFLX', value=lprops['MAX_SIGNAL'])
     recipe.plot.add_stat('KW_LOC_SMAXPTS_CTR',
-                         value=params['QC_LOC_MAXFIT_REMOVED_CTR'])
+                         value=params['CAL.LOC.QL_MAXFIT_RM_CTR'])
     recipe.plot.add_stat('KW_LOC_SMAXPTS_WID',
-                         value=params['QC_LOC_MAXFIT_REMOVED_WID'])
+                         value=params['CAL.LOC.QL_MAXFIT_RM_WID'])
     recipe.plot.add_stat('KW_LOC_RMS_CTR',
-                         value=params['QC_LOC_RMSMAX_CTR'])
+                         value=params['CAL.LOC.QC_RMSMAX_CTR'])
     recipe.plot.add_stat('KW_LOC_RMS_WID',
-                         value=params['QC_LOC_RMSMAX_WID'])
+                         value=params['CAL.LOC.QC_RMSMAX_WID'])
     # construct summary
     recipe.plot.summary_document(it, qc_params)
 

@@ -54,28 +54,28 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
     func_name = __NAME__ + '.extraction_twod()'
     # ----------------------------------------------------------------------
     # get number of orders from params/kwargs
-    start_order = pcheck(params, 'EXT_START_ORDER', 'start', kwargs, func_name)
-    end_order = pcheck(params, 'EXT_END_ORDER', 'end', kwargs, func_name)
+    start_order = pcheck(params, 'CAL.EXT.START_ORDER', 'start', kwargs, func_name)
+    end_order = pcheck(params, 'CAL.EXT.END_ORDER', 'end', kwargs, func_name)
     range1 = pcheck(params, 'EXT_RANGE1', 'range1', kwargs, func_name)
     range2 = pcheck(params, 'EXT_RANGE2', 'range2', kwargs, func_name)
-    skip_orders = pcheck(params, 'EXT_SKIP_ORDERS', 'skip', kwargs, func_name)
+    skip_orders = pcheck(params, 'CAL.EXT.SKIP_ORDERS', 'skip', kwargs, func_name)
     sigdet = pcheck(props, 'SIGDET', 'sigdet', kwargs, func_name)
     eff_ron = pcheck(props, 'EFF_RON', 'eff_ron', kwargs, func_name)
     gain = pcheck(props, 'EFF_GAIN', 'gain', kwargs, func_name)
-    cosmic = pcheck(params, 'EXT_COSMIC_CORRETION', 'cosmic', kwargs, func_name)
-    cosmic_sigcut = pcheck(params, 'EXT_COSMIC_SIGCUT', 'cosmic_sigcuit',
+    cosmic = pcheck(params, 'CAL.EXT.COSMIC_CORR', 'cosmic', kwargs, func_name)
+    cosmic_sigcut = pcheck(params, 'CAL.EXT.COSMIC_SIGCUT', 'cosmic_sigcuit',
                            kwargs, func_name)
-    cosmic_thres = pcheck(params, 'EXT_COSMIC_THRESHOLD', 'cosmic_thres',
+    cosmic_thres = pcheck(params, 'CAL.EXT.COSMIC_THRES', 'cosmic_thres',
                           kwargs, func_name)
     blaze_size = pcheck(params, 'FF_BLAZE_HALF_WINDOW', 'blaze_size',
                         kwargs, func_name)
 
-    qc_ext_flux_max = pcheck(params, 'QC_EXT_FLUX_MAX', 'qc_ext_flux_max',
+    qc_ext_flux_max = pcheck(params, 'CAL.EXT.QC_FLUX_MAX', 'qc_ext_flux_max',
                              kwargs, func_name)
     # ----------------------------------------------------------------------
     # deal with ranges
-    range1 = _get_range(params, range1, fiber, keys=['EXT_RANGE1', 'range1'])
-    range2 = _get_range(params, range2, fiber, keys=['EXT_RANGE2', 'range2'])
+    range1 = _get_range(params, range1, fiber, keys=['CAL.EXT.RANGE1', 'range1'])
+    range2 = _get_range(params, range2, fiber, keys=['CAL.EXT.RANGE2', 'range2'])
     # ----------------------------------------------------------------------
     # calculate saturation level
     sat_level = qc_ext_flux_max * nframes
@@ -207,11 +207,11 @@ def extract_blaze_flat(params: ParamDict, eprops: ParamDict, fiber: str,
     func_name = __NAME__ + '.extraction_twod()'
     # ----------------------------------------------------------------------
     # get number of orders from params/kwargs
-    blaze_scut = pcheck(params, 'FF_BLAZE_SCUT', 'blaze_scut', kwargs,
+    blaze_scut = pcheck(params, 'CAL.FLAT.BLAZE_SCUT', 'blaze_scut', kwargs,
                         func_name)
-    blaze_bpercentile = pcheck(params, 'FF_BLAZE_BPERCENTILE',
+    blaze_bpercentile = pcheck(params, 'CAL.FLAT.BLAZE_BPTILE',
                                'blaze_bpercentile', kwargs, func_name)
-    flat_highpass_size = pcheck(params, 'FF_HIGH_PASS_SIZE',
+    flat_highpass_size = pcheck(params, 'CAL.FLAT.HIGHPASS_SIZE',
                                 'flat_highpass_size', kwargs, func_name)
     # ----------------------------------------------------------------------
     # get arrays from eprops
@@ -426,7 +426,7 @@ def measure_p2p_scat(params: ParamDict, wavemap: np.ndarray, e2ds: np.ndarray,
     snrs = np.full(e2ds.shape[0], fill_value=np.nan)
     # deal with no blaze given
     if blaze_width is None:
-        blaze_width = params['FF_BLAZE_HALF_WINDOW']
+        blaze_width = params['CAL.FLAT.HALF_WINDOW']
     # loop in order number
     for order_num in range(e2ds.shape[0]):
         # get the central pixel position

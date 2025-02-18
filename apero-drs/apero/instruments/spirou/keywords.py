@@ -1491,17 +1491,17 @@ KDict.set('KW_TELLUP_ABSOEXPO_KTHRES', key='TLPAEKTH',
 # Define the wave start (same as s1d) in nm used
 KDict.set('KW_TELLUP_WAVE_START', key='TLPWAVES',
           comment='tellu preclean wave start used [nm]',
-          parent='EXT_S1D_WAVESTART')
+          parent='CAL.EXT.S1D_WAVESTART')
 
 # Define the wave end (same as s1d) in nm used
 KDict.set('KW_TELLUP_WAVE_END', key='TLPWAVEF',
           comment='tellu preclean wave end used [nm]',
-          parent='EXT_S1D_WAVEEND')
+          parent='CAL.EXT.S1D_WAVEEND')
 
 # Define the dv wave grid (same as s1d) in km/s used
 KDict.set('KW_TELLUP_DVGRID', key='TLPDVGRD',
           comment='tellu preclean dv wave grid used [km/s]',
-          parent='EXT_S1D_BIN_UVELO')
+          parent='CAL.EXT.S1D_BIN_UVEL')
 
 # Define the gauss width of the kernel used in abso_expo for tellu pre-cleaning
 KDict.set('KW_TELLUP_ABSOEXPO_KWID', key='TLPAEKWD',

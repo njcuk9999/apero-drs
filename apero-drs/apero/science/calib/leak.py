@@ -91,9 +91,9 @@ def get_dark_fps(params: ParamDict, recipe: DrsRecipe,
     # extract file type from inputs
     filetypes = params['INPUTS']['FILETYPE']
     # get allowed dark types
-    allowedtypes = params['ALLOWED_LEAKREF_TYPES']
+    allowedtypes = params['CAL.LEAK.ALLOWED_REF_TYPES']
     # get max number of files
-    max_num_files = pcheck(params, 'LEAK_REF_MAX_FILES', func=func_name,
+    max_num_files = pcheck(params, 'CAL.LEAK.REF_MAX_FILES', func=func_name,
                            override=max_files)
     # storage for return
     infiles, rawfiles = [], []
@@ -329,7 +329,7 @@ def manage_leak_correction(params: ParamDict, recipe: DrsRecipe,
     # set reason not corrected
     reason = ''
     # deal with quick look
-    quicklook = params['EXT_QUICK_LOOK']
+    quicklook = params['CAL.EXT.QUICKLOOK']
     # add to reason
     if quicklook:
         reason += 'QUICKLOOK=True '
@@ -337,7 +337,7 @@ def manage_leak_correction(params: ParamDict, recipe: DrsRecipe,
     cond1 = not params['INPUTS']['LEAKCORR']
     # add to reason
     if cond1:
-        if params['CORRECT_LEAKAGE']:
+        if params['CAL.LEAK.CORRECT_LEAK']:
             reason += '--leakcorr=False '
         else:
             reason += 'CORRECT_LEAKAGE=False '
@@ -347,7 +347,7 @@ def manage_leak_correction(params: ParamDict, recipe: DrsRecipe,
     if cond2:
         reason += 'FIBER={0} '.format(fiber)
     # make sure reference fiber is an FP
-    cond3 = ref_type not in params['LEAKAGE_REF_TYPES']
+    cond3 = ref_type not in params['CAL.LEAK.REF_TYPES']
     # add to reason
     if cond3:
         reason += 'REFTYPE={0} '.format(ref_type)
@@ -458,7 +458,7 @@ def correct_ext_dark_fp(params: ParamDict, sciimage: np.ndarray,
     # set the function name
     func_name = __NAME__ + '.correct_ext_dark_fp()'
     # get properties from parameters
-    leak2dext = pcheck(params, 'LEAK_2D_EXTRACT_FILES', func=func_name,
+    leak2dext = pcheck(params, 'CAL.LEAK.EXT2D_FILES', func=func_name,
                        override=leak2dext)
     extfiletype = pcheck(params, 'LEAK_EXTRACT_FILE', func=func_name,
                          override=extfiletype)
@@ -466,11 +466,11 @@ def correct_ext_dark_fp(params: ParamDict, sciimage: np.ndarray,
                                override=bckgrd_percentile)
     norm_percentile = pcheck(params, 'LEAK_NORM_PERCENTILE', func=func_name,
                              override=norm_percentile)
-    low_percentile = pcheck(params, 'LEAK_LOW_PERCENTILE', func=func_name,
+    low_percentile = pcheck(params, 'CAL.LEAK.LOW_PTILE', func=func_name,
                             override=low_percentile)
-    high_percentile = pcheck(params, 'LEAK_HIGH_PERCENTILE', func=func_name,
+    high_percentile = pcheck(params, 'CAL.LEAK.HIGH_PTILE', func=func_name,
                              override=high_percentile)
-    bad_ratio = pcheck(params, 'LEAK_BAD_RATIO_OFFSET', func=func_name,
+    bad_ratio = pcheck(params, 'CAL.LEAK.BAD_RATIO_OFFSET', func=func_name,
                        override=bad_ratio)
     # group bounding percentiles
     bpercents = [low_percentile, high_percentile]
@@ -884,7 +884,7 @@ def qc_leak(params: ParamDict, props: ParamDict, extname: Optional[str] = None
     # get outputs from props
     outputs = props['OUTPUTS']
     # get leak extract file
-    extname = pcheck(params, 'LEAK_EXTRACT_FILE', func=func_name,
+    extname = pcheck(params, 'CAL.LEAK.EXT_FILE', func=func_name,
                      override=extname)
     # output storage
     qc_params = dict()
@@ -963,11 +963,11 @@ def write_leak_ref(params: ParamDict, recipe: DrsRecipe, rawfiles: List[str],
         # add leak parameters from props (if set)
         if props is not None:
             outfile.add_hkey('KW_LEAK_BP_U',
-                             value=props['LEAK_BCKGRD_PERCENTILE'])
+                             value=props['CAL.LEAK.BCKGRD_PTILE'])
             outfile.add_hkey('KW_LEAK_NP_U',
-                             value=props['LEAK_NORM_PERCENTILE'])
-            outfile.add_hkey('KW_LEAK_WSMOOTH', value=props['LEAKREF_WSMOOTH'])
-            outfile.add_hkey('KW_LEAK_KERSIZE', value=props['LEAKREF_KERSIZE'])
+                             value=props['CAL.LEAK.NORM_PTILE'])
+            outfile.add_hkey('KW_LEAK_WSMOOTH', value=props['CAL.LEAK.REF_WSMOOTH'])
+            outfile.add_hkey('KW_LEAK_KERSIZE', value=props['CAL.LEAK.REF_KERSIZE'])
         # log that we are saving rotated image
         wargs = [fiber, outfile.filename]
         WLOG(params, '', textentry('40-016-00025', args=wargs))
@@ -1066,7 +1066,7 @@ def write_leak(params: ParamDict, recipe: DrsRecipe,
     # S1D files
     # ----------------------------------------------------------------------
     # get the leak extract file type
-    s1dextfile = pcheck(params, 'EXT_S1D_INFILE',
+    s1dextfile = pcheck(params, 'CAL.EXT.S1D_INFILE',
                         func=func_name, override=s1dextfile)
     # loop around fibers
     for fiber in outputs:

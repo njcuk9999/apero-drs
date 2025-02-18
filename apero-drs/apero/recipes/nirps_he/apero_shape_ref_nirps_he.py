@@ -121,7 +121,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         rawfpfiles.append(infile.basename)
 
     # set fiber we should use
-    fiber = pcheck(params, 'SHAPE_REF_FIBER', func=mainname)
+    fiber = pcheck(params, 'CAL.SHAPE.REF_FIBER', func=mainname)
     # get science and reference fiber
     sci_fibers, ref_fiber = pconst.FIBER_KINDS()
 
@@ -166,7 +166,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     filetype = fpprops['DPRTYPE']
     if filetype not in params['ALLOWED_FP_TYPES']:
         emsg = textentry('01-001-00020', args=[filetype, mainname])
-        for allowedtype in params['ALLOWED_FP_TYPES']:
+        for allowedtype in params['CAL.SHAPE.ALLOWED_FP_TYPES']:
             emsg += '\n\t - "{0}"'.format(allowedtype)
         raise AperoCodedException(params, '01-001-00020', 
                                   targs=[filetype, mainname], message=emsg)
