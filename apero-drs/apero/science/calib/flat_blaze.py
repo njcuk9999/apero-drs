@@ -534,7 +534,7 @@ def flat_blaze_write(params: ParamDict, recipe: DrsRecipe, infile: DrsFitsFile,
     # --------------------------------------------------------------
     # Store E2DSLL in file
     # --------------------------------------------------------------
-    if params['DEBUG_E2DSLL_FILE']:
+    if params['DEBUG.OUTFILE.E2DSLL_FILE']:
         # get a new copy of the blaze file
         e2dsllfile = recipe.outputs['E2DSLL_FILE'].newcopy(params=params,
                                                            fiber=fiber)

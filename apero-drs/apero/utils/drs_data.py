@@ -544,11 +544,11 @@ def load_ccf_mask(params: ParamDict,
     # get parameters from params/kwargs
     assetdir = pcheck(params, 'PATH.ASSETS', func=func_name,
                       override=assetsdir)
-    relfolder = pcheck(params, 'CCF_MASK_PATH', func=func_name,
+    relfolder = pcheck(params, 'OBJ.CCF.MASK_PATH', func=func_name,
                        override=mask_dir)
     filename = pcheck(params, 'CCF_MASK', func=func_name,
                       override=filename)
-    fmt = pcheck(params, 'CCF_MASK_FMT', func=func_name, override=fmt)
+    fmt = pcheck(params, 'OBJ.CCF.MASK_FMT', func=func_name, override=fmt)
     # deal with return_filename
     absfilename = str(os.path.join(assetdir, relfolder, filename))
     if return_filename:
@@ -584,7 +584,7 @@ def load_sp_mask_lsd(params: ParamDict, temperature: float,
     :param func: str, the function name calling this function
     :param filekey: str, Define the file regular expression key to lsd mask
                     files wildcard key used in form filekey={prefix}*{suffix}
-                    -- overrides params['POLAR_LSD_FILE_KEY']
+                    -- overrides params['OBJ.POL.LSD.LSD_FILE_KEY']
 
                     i.e.
                     -   for "marcs_t3000g50_all" this should be:
@@ -610,9 +610,9 @@ def load_sp_mask_lsd(params: ParamDict, temperature: float,
     # get parameters from params/kwargs
     assetdir = pcheck(params, 'PATH.ASSETS', func=func_name,
                       override=assetsdir)
-    relfolder = pcheck(params, 'POLAR_LSD_DIR', func=func_name,
+    relfolder = pcheck(params, 'OBJ.POL.LSD.LSD_DIR', func=func_name,
                        override=lsd_dir)
-    filekey = pcheck(params, 'POLAR_LSD_FILE_KEY', func=func_name,
+    filekey = pcheck(params, 'OBJ.POL.LSD.LSD_FILE_KEY', func=func_name,
                      override=filekey)
     # ------------------------------------------------------------------
     # get filename if None

@@ -995,8 +995,8 @@ ccf_dict = dict()
 ccf_dict['fibers'] = ref_fibers + cal_fibers
 ccf_dict['DPRTYPE'] = dict()
 for fiber in ref_fibers:
-    ccf_dict['DPRTYPE'][fiber] = 'CCF_ALLOWED_DPRTYPES'
-ccf_dict['DPRTYPE'][cal_fiber] = 'CCF_VALID_FP_DPRTYPES'
+    ccf_dict['DPRTYPE'][fiber] = 'OBJ.CCF.ALLOWED_DPRTYPES'
+ccf_dict['DPRTYPE'][cal_fiber] = 'OBJ.CCF.VALID_FP_DPRTYPES'
 ccf_dict['ARG'] = dict()
 ccf_dict['ARG'][ref_fiber] = 'mask'
 ccf_dict['ARG'][cal_fiber] = 'mask_fp'
@@ -1010,17 +1010,17 @@ apero_ccf.set_arg(name='files', dtype='files', pos='1+',
                          files.out_tellu_obj], filelogic='exclusive',
                   helpstr=textentry('FILES_HELP') + textentry('CCF_FILES_HELP'),
                   limit=1)
-apero_ccf.set_kwarg(name='--mask', dtype='file', default_ref='CCF_DEFAULT_MASK',
+apero_ccf.set_kwarg(name='--mask', dtype='file', default_ref='OBJ.CCF.DEFAULT_MASK',
                     helpstr=textentry('CCF_MASK_HELP'),
                     files=files.other_ccf_mask_file)
-apero_ccf.set_kwarg(name='--rv', dtype=float, default_ref='CCF_NO_RV_VAL',
+apero_ccf.set_kwarg(name='--rv', dtype=float, default_ref='OBJ.CCF.NO_RV_VAL',
                     helpstr=textentry('CCF_RV_HELP'))
-apero_ccf.set_kwarg(name='--width', dtype=float, default_ref='CCF_DEFAULT_WIDTH',
+apero_ccf.set_kwarg(name='--width', dtype=float, default_ref='OBJ.CCF.DEFAULT_WID',
                     helpstr=textentry('CCF_WIDTH_HELP'))
-apero_ccf.set_kwarg(name='--step', dtype=float, default_ref='CCF_DEFAULT_STEP',
+apero_ccf.set_kwarg(name='--step', dtype=float, default_ref='OBJ.CCF.DEFAULT_STEP',
                     helpstr=textentry('CCF_STEP_HELP'))
 apero_ccf.set_kwarg(name='--masknormmode', dtype='options',
-                    default_ref='CCF_MASK_NORMALIZATION',
+                    default_ref='OBJ.CCF.MASK_NORM',
                     options=['None', 'all', 'order'],
                     helpstr=textentry('CCF_MASK_NORM_HELP'))
 apero_ccf.set_kwarg(**add_db)
@@ -1290,11 +1290,11 @@ apero_mk_template.set_summary_plots('SUM_EXTRACT_S1D', 'SUM_MKTEMP_BERV_COV')
 apero_mk_template.set_arg(name='objname', pos=0, dtype=str,
                           helpstr=textentry('MKTEMP_OBJNAME_HELP'))
 apero_mk_template.set_kwarg(name='--filetype', dtype='options',
-                            default_ref='MKTEMPLATE_FILETYPE',
+                            default_ref='OBJ.TELLU.TEMPLATE.FILETYPE',
                             helpstr=textentry('MKTEMP_FILETYPE'),
                             options=['EXT_E2DS', 'EXT_E2DS_FF', 'TELLU_OBJ'])
 apero_mk_template.set_kwarg(name='--fiber', dtype='options',
-                            default_ref='MKTEMPLATE_FIBER_TYPE',
+                            default_ref='OBJ.TELLU.TEMPLATE.FIBER_TYPE',
                             helpstr=textentry('MKTEMP_FIBER'),
                             options=sci_fibers + cal_fibers)
 apero_mk_template.set_kwarg(**add_db)
@@ -1512,10 +1512,10 @@ apero_postprocess.set_arg(name='files', dtype='files', pos='1+',
                           helpstr=(textentry('FILES_HELP')),
                           limit=1)
 apero_postprocess.set_kwarg(name='--skip', dtype='bool',
-                            default_ref='POST_OVERWRITE',
+                            default_ref='OBJ.POST.OVERWRITE',
                             helpstr=textentry('OUT_OVERWRITE_HELP'))
 apero_postprocess.set_kwarg(name='--clear', dtype='bool',
-                            default_ref='POST_CLEAR_REDUCED',
+                            default_ref='OBJ.POST.CLEAR_RED',
                             helpstr=textentry('OUT_CLEAR_HELP'))
 apero_postprocess.set_kwarg(**no_in_qc)
 apero_postprocess.group_func = grouping.group_individually

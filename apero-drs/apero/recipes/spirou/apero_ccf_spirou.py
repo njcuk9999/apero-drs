@@ -152,7 +152,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         dprtype = infile.get_hkey('KW_DPRTYPE', dtype=str)
         # if dprtype is incorrect skip
-        if dprtype not in params['CCF_ALLOWED_DPRTYPES']:
+        if dprtype not in params['OBJ.CCF.ALLOWED_DPRTYPES']:
             # join allowed dprtypes
             allowed_dprtypes = ', '.join(params['ALLOW]ED_DPRTYPES'])
             # log that we are skipping
@@ -162,7 +162,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             # continue
             continue
         # flag whether calibration fiber is FP
-        if dprtype in params['CCF_VALID_FP_DPRTYPES']:
+        if dprtype in params['OBJ.CCF.VALID_FP_DPRTYPES']:
             has_fp = True
         else:
             has_fp = False
@@ -202,7 +202,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # get ccf fibers
         recon_sfiber, recon_rfiber = params['CAL.FIBER.CCF']
         # correct tellurics
-        if outtype in params['CCF_CORRECT_TELLU_TYPES']:
+        if outtype in params['OBJ.CCF.CORRECT_TELLU_TYPES']:
             # remove telluric domain below a defined threshold
             #    and return the infile (with infile.data updated)
             targs = [infile, fiber]

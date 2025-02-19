@@ -1299,7 +1299,7 @@ KDict.set('KW_WFP_BOXSIZE', key='WFPCBSZ', comment='wave sol FP CCF boxsize used
 
 # The max flux used for the FP file CCF
 KDict.set('KW_WFP_MAXFLUX', key='WFPCMFLX', comment='wave sol FP CCF max flux used',
-          parent='CCF_N_ORD_MAX', group='wave')
+          parent='OBJ.CCF.N_ORD_MAX', group='wave')
 
 # The det noise used for the FP file CCF
 KDict.set('KW_WFP_DETNOISE', key='WFPCDETN', comment='wave sol FP CCF det noise used',
@@ -1467,7 +1467,7 @@ KDict.set('KW_TELLUP_DO_PRECLEAN', key='TLPDOFRC', comment='tellu finite res cor
 # Define default water absorption used (tellu pre-cleaning)
 KDict.set('KW_TELLUP_DFLT_WATER', key='TLPDFH2O',
           comment='tellu preclean default H2O abso used',
-          parent='TELLUP_D_WATER_ABSO')
+          parent='OBJ.TELL.PCLEAN.DWATER_ABSO')
 
 # Define ccf scan range that was used (tellu pre-cleaning)
 KDict.set('KW_TELLUP_CCF_SRANGE', key='TLPSCRNG',
@@ -1547,12 +1547,12 @@ KDict.set('KW_TELLUP_FORCE_AIRMASS', key='TLPFCARM',
 # Define the bounds of the exponent of other species used for tellu pre-cleaning
 KDict.set('KW_TELLUP_OTHER_BOUNDS', key='TLP_OTHB',
           comment='tellu preclean lower/upper bounds others',
-          parent='TELLUP_OTHER_BOUNDS')
+          parent='OBJ.TELL.PCLEAN.OTHER_BOUNDS')
 
 # Define the bounds of the exponent of water used for tellu pre-cleaning
 KDict.set('KW_TELLUP_WATER_BOUNDS', key='TLP_H2OB',
           comment='tellu preclean lower/upper bounds water',
-          parent='TELLUP_WATER_BOUNDS')
+          parent='OBJ.TELL.PCLEAN.WATER_BOUNDS')
 
 # -----------------------------------------------------------------------------
 # Define make telluric variables
@@ -1603,12 +1603,12 @@ KDict.set('KW_MKTELL_WATER', key='MTAUH2O',
 # The min transmission requirement used for mktellu/ftellu
 KDict.set('KW_MKTELL_THRES_TFIT', key='MKTTTFIT',
           comment='mktellu min transmission used',
-          parent='MKTELLU_THRES_TRANSFIT')
+          parent='OBJ.TELL.MAKE.THRES_TRANSFIT')
 
 # The upper limit for trans fit used in mktellu/ftellu
 KDict.set('KW_MKTELL_TRANS_FIT_UPPER_BAD', key='MKTTTMAX',
           comment='mktellu max transmission used',
-          parent='MKTELLU_TRANS_FIT_UPPER_BAD')
+          parent='OBJ.TELL.MAKE.TRANS_FIT_UBAD')
 
 # The number of files used in the trans file model
 KDict.set('KW_MKMODEL_NFILES', key='MKMNFILE',

@@ -118,7 +118,7 @@ def make_trans_model(params: ParamDict, transcube: np.ndarray,
     # set function name
     func_name = display_func('make_trans_model', __NAME__)
     # get values from params
-    sigma_cut = params['TELLU_TRANS_MODEL_SIG']
+    sigma_cut = params['OBJ.TELL.MAKE.TRANSMODEL_SIG']
     # get the minimum number of trans files required
     min_trans_files = np.max([3, len(transtable) // 5])
     # get vectors from table
@@ -216,11 +216,11 @@ def calculate_tellu_res_absorption(params, recipe, image, template_props,
                                    bprops, tpreprops, **kwargs):
     func_name = __NAME__ + '.calculate_telluric_absoprtion()'
     # get constatns from params/kwargs
-    default_conv_width = pcheck(params, 'MKTELLU_DEFAULT_CONV_WIDTH',
+    default_conv_width = pcheck(params, 'OBJ.TELL.MAKE.DEF_CONV_WID',
                                 'default_conv_width', kwargs, func_name)
-    med_filt1 = pcheck(params, 'MKTELLU_TEMP_MED_FILT', 'med_filt', kwargs,
+    med_filt1 = pcheck(params, 'OBJ.TELL.MAKE.TEMP_MED_FILT', 'med_filt', kwargs,
                        func_name)
-    plot_order_nums = pcheck(params, 'MKTELLU_PLOT_ORDER_NUMS',
+    plot_order_nums = pcheck(params, 'OBJ.TELL.MAKE.PLOT_ORDER_NUM',
                              'plot_order_nums', kwargs, func_name)
     # ------------------------------------------------------------------
     # copy image
@@ -449,15 +449,15 @@ def calculate_tellu_res_absorption(params, recipe, image, template_props,
 def mk_tellu_quality_control(params, tprops, infile, tpreprops, **kwargs):
     func_name = __NAME__ + '.mk_tellu_quality_control()'
     # get parameters from params/kwargs
-    snr_order = pcheck(params, 'MKTELLU_QC_SNR_ORDER', 'snr_order', kwargs,
+    snr_order = pcheck(params, 'OBJ.TELL.MAKE.QC_SNR_ORDER', 'snr_order', kwargs,
                        func_name)
-    qc_snr_min = pcheck(params, 'MKTELLU_QC_SNR_MIN', 'qc_snr_min', kwargs,
+    qc_snr_min = pcheck(params, 'OBJ.TELL.MAKE.QC_SNR_MIN', 'qc_snr_min', kwargs,
                         func_name)
-    qc_airmass_diff = pcheck(params, 'MKTELLU_QC_AIRMASS_DIFF',
+    qc_airmass_diff = pcheck(params, 'OBJ.TELL.MAKE.QC_AIRMASS_DIFF',
                              'qc_airmass_diff', kwargs, func_name)
-    qc_min_watercol = pcheck(params, 'MKTELLU_TRANS_MIN_WATERCOL',
+    qc_min_watercol = pcheck(params, 'OBJ.TELL.MAKE.TRANS_MIN_WATERCOL',
                              'qc_min_watercol', kwargs, func_name)
-    qc_max_watercol = pcheck(params, 'MKTELLU_TRANS_MAX_WATERCOL',
+    qc_max_watercol = pcheck(params, 'OBJ.TELL.MAKE.TRANS_MAX_WATERCOL',
                              'qc_min_watercol', kwargs, func_name)
     # get data from tprops
     transmission_map = tprops['TRANMISSION_MAP']
@@ -720,8 +720,8 @@ def mk_tellu_write_trans_file(params, recipe, infile, rawfiles, fiber, combine,
     transfile.add_hkey('KW_TELLUP_FORCE_AIRMASS',
                        value=tpreprops['OBJ.TELL.PCLEAN.FORCE_AIRMASS'])
     # get the other and water bounds
-    obounds = [str(x) for x in tpreprops['TELLUP_OTHER_BOUNDS']]
-    wbounds = [str(x) for x in tpreprops['TELLUP_WATER_BOUNDS']]
+    obounds = [str(x) for x in tpreprops['OBJ.TELL.PCLEAN.OTHER_BOUNDS']]
+    wbounds = [str(x) for x in tpreprops['OBJ.TELL.PCLEAN.WATER_BOUNDS']]
     # push into the header
     transfile.add_hkey('KW_TELLUP_OTHER_BOUNDS', value=','.join(obounds))
     transfile.add_hkey('KW_TELLUP_WATER_BOUNDS', value=','.join(wbounds))

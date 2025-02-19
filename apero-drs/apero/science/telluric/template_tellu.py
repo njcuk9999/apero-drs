@@ -87,16 +87,16 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
     # get parameters from params/kwargs
     qc_snr_order = pcheck(params, 'MKTEMPLATE_SNR_ORDER', 'qc_snr_order',
                           kwargs, func_name)
-    e2ds_iterations = pcheck(params, 'MKTEMPLATE_E2DS_ITNUM', 's1d_iterations',
+    e2ds_iterations = pcheck(params, 'OBJ.TELLU.TEMPLATE.E2DS_ITNUM', 's1d_iterations',
                              kwargs, func_name)
-    e2ds_lowf_size = pcheck(params, 'MKTEMPLATE_E2DS_LOWF_SIZE',
+    e2ds_lowf_size = pcheck(params, 'OBJ.TELLU.TEMPLATE.E2DS_LOWF_SIZE',
                             's1d_lowf_size',
                             kwargs, func_name)
-    min_berv_cov = pcheck(params, 'MKTEMPLATE_BERVCOR_QCMIN', 'min_berv_cov',
+    min_berv_cov = pcheck(params, 'OBJ.TELLU.TEMPLATE.BERVCOR_QCMIN', 'min_berv_cov',
                           kwargs, func_name)
-    core_snr = pcheck(params, 'MKTEMPLATE_BERVCOV_CSNR', 'core_snr', kwargs,
+    core_snr = pcheck(params, 'OBJ.TELLU.TEMPLATE.BERVCOV_CSNR', 'core_snr', kwargs,
                       func_name)
-    resolution = pcheck(params, 'MKTEMPLATE_BERVCOV_RES', 'resolution', kwargs,
+    resolution = pcheck(params, 'OBJ.TELLU.TEMPLATE.BERVCOV_RES', 'resolution', kwargs,
                         func_name)
     debug_mode = pcheck(params, 'MKTEMPLATE_DEBUG_MODE', 'debug_mode', kwargs,
                         func_name)
@@ -586,17 +586,17 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
     # set function mame
     func_name = display_func('make_1d_template_cube', __NAME__)
     # get parameters from params/kwargs
-    qc_snr_order = pcheck(params, 'MKTEMPLATE_SNR_ORDER', 'qc_snr_order',
+    qc_snr_order = pcheck(params, 'OBJ.TELLU.TEMPLATE.SNR_ORDER', 'qc_snr_order',
                           kwargs, func_name)
-    s1d_iterations = pcheck(params, 'MKTEMPLATE_S1D_ITNUM', 's1d_iterations',
+    s1d_iterations = pcheck(params, 'OBJ.TELLU.TEMPLATE.S1D_ITNUM', 's1d_iterations',
                             kwargs, func_name)
-    s1d_lowf_size = pcheck(params, 'MKTEMPLATE_S1D_LOWF_SIZE', 's1d_lowf_size',
+    s1d_lowf_size = pcheck(params, 'OBJ.TELLU.TEMPLATE.S1D_LOWF_SIZE', 's1d_lowf_size',
                            kwargs, func_name)
-    debug_mode = pcheck(params, 'MKTEMPLATE_DEBUG_MODE', 'debug_mode', kwargs,
+    debug_mode = pcheck(params, 'OBJ.TELLU.TEMPLATE.DEBUG_MODE', 'debug_mode', kwargs,
                         func_name)
-    max_files = pcheck(params, 'MKTEMPLATE_MAX_OPEN_FILES', 'max_files',
+    max_files = pcheck(params, 'OBJ.TELLU.TEMPLATE.MAX_OPEN_FILES', 'max_files',
                        kwargs, func_name)
-    hotstar_kernel_velocity = pcheck(params, 'MKTEMPLATE_HOTSTAR_KER_VEL',
+    hotstar_kernel_velocity = pcheck(params, 'OBJ.TELLU.TEMPLATE.HOTSTAR_KER_VEL',
                                      'hotstar_ker_vel', kwargs, func_name)
     # log that we are constructing the cubes
     WLOG(params, 'info', textentry('40-019-00027'))
@@ -1088,10 +1088,10 @@ def create_deconvolved_template(params: ParamDict, recipe: DrsRecipe,
     # -------------------------------------------------------------------------
     # Threshold for the Lucy-Richardson deconvolution steps. This is the maximum
     #    value of the 99th percentile of the feed-back term
-    p99_iteration_threshold = pcheck(params, 'MKTEMPLATE_DECONV_ITR_THRES',
+    p99_iteration_threshold = pcheck(params, 'OBJ.TELLU.TEMPLATE.DECONV_ITR_THRES',
                                      func=func_name, override=p99_itr_thres)
     # Max number of iterations to run if the iteration threshold is not met
-    niterations_max = pcheck(params, 'MKTEMPLATE_DECONV_ITR_MAX',
+    niterations_max = pcheck(params, 'OBJ.TELLU.TEMPLATE.DECONV_ITR_MAX',
                              func=func_name, override=p99_itr_max)
     # -------------------------------------------------------------------------
     # get database if none

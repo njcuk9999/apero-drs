@@ -150,8 +150,8 @@ def __main__(recipe, params):
     # get all allowed fibers
     allowed_fibers = params['CAL.FIBER.INDIVIDUAL']
     # get fibers
-    if params['INPUTS']['FIBERS'] not in ['None', '']:
-        fibers = params['INPUTS']['FIBERS']
+    if params['INPUTS']['OBJ.POL.GEN.FIBERS'] not in ['None', '']:
+        fibers = params['INPUTS']['OBJ.POL.GEN.FIBERS']
         # check that all fibers are valid
         for fiber in fibers:
             if fiber not in allowed_fibers:

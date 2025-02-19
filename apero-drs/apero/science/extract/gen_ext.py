@@ -844,7 +844,7 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     # ----------------------------------------------------------------------
     # Store E2DSLL in file
     # ----------------------------------------------------------------------
-    if params['DEBUG_E2DSLL_FILE']:
+    if params['DEBUG.OUTFILE.E2DSLL_FILE']:
         # get a new copy of the e2dsll file
         e2dsllfile = recipe.outputs['E2DSLL_FILE'].newcopy(params=params,
                                                            fiber=fiber)

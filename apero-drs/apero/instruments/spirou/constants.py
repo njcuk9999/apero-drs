@@ -1504,8 +1504,8 @@ CDict.set('LLDIF_MIN', value=0.75, source=__NAME__,
           author='EA', group=cgroup)
 
 # Maximum FP peaks wavelength separation fraction diff. from median
-CDict.set('WAVE_FP_LLDIF_MAX', value=1.25, source=__NAME__,
-          author='EA')
+CDict.set('LLDIF_MAX', value=1.25, source=__NAME__,
+          author='EA', group=cgroup)
 
 # Sigma-clip value for sigclip_polyfit
 CDict.set('SIGCLIP', value=7, source=__NAME__,
@@ -1554,7 +1554,7 @@ CDict.set('NSIG_FIT_CUT', value=7, source=__NAME__, group=cgroup)
 CDict.set('PLT_NBINS', value=51, source=__NAME__, group=cgroup)
 
 # wave night plot hc bin lower bound in multiples of rms
-CDict.set('WAVENIGHT_PLT_BINL', value=-20, source=__NAME__)
+CDict.set('PLT_BINL', value=-20, source=__NAME__, group=cgroup)
 
 # wave night plot hc bin upper bound in multiples of rms
 CDict.set('PLT_BINU', value=20, source=__NAME__, group=cgroup)
@@ -1569,9 +1569,9 @@ CDict.set('SIMBAD_TAPURL',
           source=__NAME__, group=cgroup)
 
 # Define the TAP Gaia URL (for use in crossmatching to Gaia via astroquery)
-CDict.set('OBJ_LIST_GAIA_URL',
+CDict.set('GAIA_URL',
           value='https://gea.esac.esa.int/tap-server/tap',
-          source=__NAME__)
+          source=__NAME__, group=cgroup)
 
 # Define the google sheet to use for crossmatch (may be set to a directory for
 # completely offline reduction)
@@ -1624,7 +1624,7 @@ CDict.set('RESOLVE_FROM_GLIST', value=True, source=__NAME__, group=cgroup)
 # Define whether to get Gaia ID from header RA and Dec (basically if all other
 # option fails) - WARNING - this is a crossmatch so may lead to a bad
 # identification of the gaia id - not recommended
-CDict.set('OBJ_LIST_RESOLVE_FROM_COORDS', value=False, source=__NAME__)
+CDict.set('RESOLVE_FROM_COORDS', value=False, source=__NAME__, group=cgroup)
 
 # Define the gaia epoch to use in the gaia query
 CDict.set('GAIA_EPOCH', value=2015.5, source=__NAME__, group=cgroup)
@@ -1742,10 +1742,10 @@ CDict.set('ALLOWED_DPRTYPES',
 
 # the INPUT type (KW_OUTPUT header key) and DrsFitsFile name required for
 # input telluric files
-CDict.set('TELLURIC_FILETYPE', value='EXT_E2DS_FF', source=__NAME__)
+CDict.set('FILETYPE', value='EXT_E2DS_FF', source=__NAME__, group=cgroup)
 
 # the fiber required for input template files
-CDict.set('TELLURIC_FIBER_TYPE', value='AB', source=__NAME__)
+CDict.set('FIBER_TYPE', value='AB', source=__NAME__, group=cgroup)
 
 # Define level above which the blaze is high enough to accurately
 # measure telluric
@@ -1836,19 +1836,19 @@ CDict.set('FORCE_AIRMASS', value=False, source=__NAME__, group=cgroup)
 
 # set the typical water abso exponent. Compare to values in header for
 # high-snr targets later
-CDict.set('TELLUP_D_WATER_ABSO', value=4.0, source=__NAME__)
+CDict.set('DWATER_ABSO', value=4.0, source=__NAME__, group=cgroup)
 
 # set the lower and upper bounds (String list) for the exponent of
 # the other species of absorbers as a ratio to the airmass
 # i.e. value/airmass compared to bound
-CDict.set('TELLUP_OTHER_BOUNDS', value=[0.8, 1.5], source=__NAME__)
+CDict.set('OTHER_BOUNDS', value=[0.8, 1.5], source=__NAME__, group=cgroup)
 
 # set the lower and upper bounds (string list) for the exponent of
 # water absorber as a ratio to the airmass i.e. value/airmass compared to bound
-CDict.set('TELLUP_WATER_BOUNDS', value=[0.1, 10], source=__NAME__)
+CDict.set('WATER_BOUNDS', value=[0.1, 10], source=__NAME__, group=cgroup)
 
 # set the plot order for the finite resolution plot (somewhere around 1.45 um)
-CDict.set('TELLU_FINITE_RES_ORDER', value=26, source=__NAME__, author='EA')
+CDict.set('FINITE_RES_ORDER', value=26, source=__NAME__, author='EA', group=cgroup)
 
 # =============================================================================
 # OBJECT: MAKE TELLURIC SETTINGS
@@ -1858,54 +1858,54 @@ cgroup = 'OBJ.TELL.MAKE'
 # for all blaze profiles, we normalize to the 95th percentile.
 # That's pretty much the peak value, but it is resistent to
 # eventual outliers
-CDict.set('MKTELLU_BLAZE_PERCENTILE', value=95, source=__NAME__)
-CDict.set('MKTELLU_CUT_BLAZE_NORM', value=0.1, source=__NAME__)
+CDict.set('BLAZE_PTILE', value=95, source=__NAME__, group=cgroup)
+CDict.set('CUT_BLAZE_NORM', value=0.1, source=__NAME__, group=cgroup)
 
 # Define list of absorbers in the tapas fits table
-CDict.set('TELLU_ABSORBERS',
+CDict.set('ABSORBERS',
           value=['combined', 'h2o', 'o3', 'n2o', 'o2', 'co2', 'ch4'],
-          source=__NAME__)
+          source=__NAME__, group=cgroup)
 
 # Define the default convolution width [in pixels]
-CDict.set('MKTELLU_DEFAULT_CONV_WIDTH', value=100, source=__NAME__)
+CDict.set('DEF_CONV_WID', value=100, source=__NAME__, group=cgroup)
 
 # median-filter the template. we know that stellar features
 # are very broad. this avoids having spurious noise in our
 # templates [pixel]
-CDict.set('MKTELLU_TEMP_MED_FILT', value=15, source=__NAME__)
+CDict.set('TEMP_MED_FILT', value=15, source=__NAME__, group=cgroup)
 
 # Define the orders to plot (not too many)
-CDict.set('MKTELLU_PLOT_ORDER_NUMS', value=[19, 26, 35], source=__NAME__)
+CDict.set('PLOT_ORDER_NUM', value=[19, 26, 35], source=__NAME__, group=cgroup)
 
 # Define the order to use for SNR check when accepting tellu files
 # to the telluDB
-CDict.set('MKTELLU_QC_SNR_ORDER', value=33, source=__NAME__)
+CDict.set('QC_SNR_ORDER', value=33, source=__NAME__, group=cgroup)
 
 # Defines the minimum allowed value for the recovered water vapor optical
 # depth (should not be able 1)
-CDict.set('MKTELLU_TRANS_MIN_WATERCOL', value=0.2, source=__NAME__)
+CDict.set('TRANS_MIN_WATERCOL', value=0.2, source=__NAME__, group=cgroup)
 
 # Defines the maximum allowed value for the recovered water vapor optical
 # depth
-CDict.set('MKTELLU_TRANS_MAX_WATERCOL', value=99, source=__NAME__)
+CDict.set('TRANS_MAX_WATERCOL', value=99, source=__NAME__, group=cgroup)
 
 # minimum transmission required for use of a given pixel in the TAPAS
 # and SED fitting
-CDict.set('MKTELLU_THRES_TRANSFIT', value=0.3, source=__NAME__)
+CDict.set('THRES_TRANSFIT', value=0.3, source=__NAME__, group=cgroup)
 
 # Defines the bad pixels if the spectrum is larger than this value.
 # These values are likely an OH line or a cosmic ray
-CDict.set('MKTELLU_TRANS_FIT_UPPER_BAD', value=1.1, source=__NAME__)
+CDict.set('TRANS_FIT_UBAD', value=1.1, source=__NAME__, group=cgroup)
 
 # Define the minimum SNR for order "QC_TELLU_SNR_ORDER" that will be
 # accepted to the telluDB
-CDict.set('MKTELLU_QC_SNR_MIN', value=100, source=__NAME__)
+CDict.set('QC_SNR_MIN', value=100, source=__NAME__, group=cgroup)
 
 # Define the allowed difference between recovered and input airmass
-CDict.set('MKTELLU_QC_AIRMASS_DIFF', value=0.3, source=__NAME__)
+CDict.set('QC_AIRMASS_DIFF', value=0.3, source=__NAME__, group=cgroup)
 
 # Define the sigma cut for tellu transmission model
-CDict.set('TELLU_TRANS_MODEL_SIG', value=5.0, source=__NAME__, author='EA')
+CDict.set('TRANSMODEL_SIG', value=5.0, source=__NAME__, author='EA', group=cgroup)
 
 # =============================================================================
 # OBJECT: FIT TELLURIC SETTINGS
@@ -1913,59 +1913,59 @@ CDict.set('TELLU_TRANS_MODEL_SIG', value=5.0, source=__NAME__, author='EA')
 cgroup = 'OBJ.TELLU.FIT'
 # Define the order to use for SNR check when accepting tellu files
 # to the telluDB
-CDict.set('FTELLU_QC_SNR_ORDER', value=33, source=__NAME__)
+CDict.set('QC_SNR_ORDER', value=33, source=__NAME__, group=cgroup)
 
 # Define the minimum SNR for order "QC_TELLU_SNR_ORDER" that will be
 # accepted to the telluDB
-CDict.set('FTELLU_QC_SNR_MIN', value=3, source=__NAME__)
+CDict.set('QC_SNR_MIN', value=3, source=__NAME__, group=cgroup)
 
 # The number of principle components to use in PCA fit
-CDict.set('FTELLU_NUM_PRINCIPLE_COMP', value=5, source=__NAME__)
+CDict.set('NUM_PCA', value=5, source=__NAME__, group=cgroup)
 
 # The number of transmission files to use in the PCA fit (use this number of
 # trans files closest in expo_H2O and expo_water
-CDict.set('FTELLU_NUM_TRANS', value=50, source=__NAME__)
+CDict.set('NUM_TRANS', value=50, source=__NAME__, group=cgroup)
 
 # Define whether to add the first derivative and broadening factor to the
 # principal components this allows a variable resolution and velocity
 # offset of the PCs this is performed in the pixel space and NOT the
 # velocity space as this is should be due to an instrument shift
-CDict.set('FTELLU_ADD_DERIV_PC', value=True, source=__NAME__)
+CDict.set('ADD_DERIV_PCA', value=True, source=__NAME__, group=cgroup)
 
 # Define whether to fit the derivatives instead of the principal components
-CDict.set('FTELLU_FIT_DERIV_PC', value=True, source=__NAME__)
+CDict.set('FIT_DERIV_PCA', value=True, source=__NAME__, group=cgroup)
 
 # The number of pixels required (per order) to be able to interpolate the
 # template on to a berv shifted wavelength grid
-CDict.set('FTELLU_FIT_KEEP_NUM', value=20, source=__NAME__)
+CDict.set('FIT_KEEP_NUM', value=20, source=__NAME__, group=cgroup)
 
 # The minimium transmission allowed to define good pixels (for reconstructed
 # absorption calculation)
-CDict.set('FTELLU_FIT_MIN_TRANS', value=0.2, source=__NAME__)
+CDict.set('FIT_MIN_TRANS', value=0.2, source=__NAME__, group=cgroup)
 
 # The minimum wavelength constraint (in nm) to calculate reconstructed
 # absorption
-CDict.set('FTELLU_LAMBDA_MIN', value=1000.0, source=__NAME__)
+CDict.set('LAMBDA_MIN', value=1000.0, source=__NAME__, group=cgroup)
 
 # The maximum wavelength constraint (in nm) to calculate reconstructed
 # absorption
-CDict.set('FTELLU_LAMBDA_MAX', value=2100.0, source=__NAME__)
+CDict.set('LAMBDA_MAX', value=2100.0, source=__NAME__, group=cgroup)
 
 # The gaussian kernel used to smooth the template and residual spectrum [km/s]
-CDict.set('FTELLU_KERNEL_VSINI', value=30.0, source=__NAME__)
+CDict.set('KERNEL_VSINI', value=30.0, source=__NAME__, group=cgroup)
 
 # The number of iterations to use in the reconstructed absorption calculation
-CDict.set('FTELLU_FIT_ITERS', value=4, source=__NAME__)
+CDict.set('FIT_ITERS', value=4, source=__NAME__, group=cgroup)
 
 # The minimum log absorption the is allowed in the molecular absorption
 # calculation
-CDict.set('FTELLU_FIT_RECON_LIMIT', value=-0.5, source=__NAME__)
+CDict.set('FIT_RECON_LIM', value=-0.5, source=__NAME__, group=cgroup)
 
 # Define the orders to plot (not too many) for recon abso plot
-CDict.set('FTELLU_PLOT_ORDER_NUMS', value=[19, 26, 35], source=__NAME__)
+CDict.set('PLOT_ORDER_NUMS', value=[19, 26, 35], source=__NAME__, group=cgroup)
 
 # Define the selected fit telluric order for debug plots (when not in loop)
-CDict.set('FTELLU_SPLOT_ORDER', value=30, source=__NAME__)
+CDict.set('SPLOT_ORDER', value=30, source=__NAME__, group=cgroup)
 
 # =============================================================================
 # OBJECT: MAKE TEMPLATE SETTINGS
@@ -1973,229 +1973,229 @@ CDict.set('FTELLU_SPLOT_ORDER', value=30, source=__NAME__)
 cgroup = 'OBJ.TELLU.TEMPLATE'
 # the OUTPUT type (KW_OUTPUT header key) and DrsFitsFile name required for
 # input template files
-CDict.set('MKTEMPLATE_FILETYPE', value='TELLU_OBJ', source=__NAME__)
+CDict.set('FILETYPE', value='TELLU_OBJ', source=__NAME__, group=cgroup)
 
 # the fiber required for input template files
-CDict.set('MKTEMPLATE_FIBER_TYPE', value='AB', source=__NAME__)
+CDict.set('FIBER_TYPE', value='AB', source=__NAME__, group=cgroup)
 
 # the source of the input files (either "disk" or "telludb")
-CDict.set('MKTEMPLATE_FILESOURCE', value='telludb', source=__NAME__)
+CDict.set('FILESOURCE', value='telludb', source=__NAME__, group=cgroup)
 
 # the order to use for signal to noise cut requirement
-CDict.set('MKTEMPLATE_SNR_ORDER', value=33, source=__NAME__)
+CDict.set('SNR_ORDER', value=33, source=__NAME__, group=cgroup)
 
 # The number of iterations to filter low frequency noise before medianing
 # the template "big cube" to the final template spectrum
-CDict.set('MKTEMPLATE_E2DS_ITNUM', value=5, source=__NAME__)
+CDict.set('E2DS_ITNUM', value=5, source=__NAME__, group=cgroup)
 
 # The size (in pixels) to filter low frequency noise before medianing
 # the template "big cube" to the final template spectrum
-CDict.set('MKTEMPLATE_E2DS_LOWF_SIZE', value=501, source=__NAME__)
+CDict.set('E2DS_LOWF_SIZE', value=501, source=__NAME__, group=cgroup)
 
 # The number of iterations to filter low frequency noise before medianing
 # the s1d template "big cube" to the final template spectrum
-CDict.set('MKTEMPLATE_S1D_ITNUM', value=5, source=__NAME__)
+CDict.set('S1D_ITNUM', value=5, source=__NAME__, group=cgroup)
 
 # The size (in pixels) to filter low frequency noise before medianing
 # the s1d template "big cube" to the final template spectrum
-CDict.set('MKTEMPLATE_S1D_LOWF_SIZE', value=501, source=__NAME__)
+CDict.set('S1D_LOWF_SIZE', value=501, source=__NAME__, group=cgroup)
 
 # Define the minimum allowed berv coverage to construct a template
 # in km/s  (default is double the resolution in km/s)
-CDict.set('MKTEMPLATE_BERVCOR_QCMIN', value=8.0, source=__NAME__)
+CDict.set('BERVCOR_QCMIN', value=8.0, source=__NAME__, group=cgroup)
 
 # Define the core SNR in order to calculate required BERV coverage
-CDict.set('MKTEMPLATE_BERVCOV_CSNR', value=100.0, source=__NAME__)
+CDict.set('BERVCOV_CSNR', value=100.0, source=__NAME__, group=cgroup)
 
 # Defome the resolution in km/s for calculating BERV coverage
-CDict.set('MKTEMPLATE_BERVCOV_RES', value=4.0, source=__NAME__)
+CDict.set('BERVCOV_RES', value=4.0, source=__NAME__, group=cgroup)
 
 # Define whether to run template making in debug mode (do not bin the
 # data when medianing)
-CDict.set('MKTEMPLATE_DEBUG_MODE', value=False, source=__NAME__)
+CDict.set('DEBUG_MODE', value=False, source=__NAME__, group=cgroup)
 
 # Define the max number of files to be allowed into a bin (if not in debug
 # mode)
-CDict.set('MKTEMPLATE_MAX_OPEN_FILES', value=50, source=__NAME__)
+CDict.set('MAX_OPEN_FILES', value=50, source=__NAME__, group=cgroup)
 
 # Define the fwhm of hot star convolution kernel size in km/s so it is half
 # the minimum v sin i of our hot stars
-CDict.set('MKTEMPLATE_HOTSTAR_KER_VEL', value=100, source=__NAME__)
+CDict.set('HOTSTAR_KER_VEL', value=100, source=__NAME__, group=cgroup)
 
 # Define the threshold for the Lucy-Richardson deconvolution steps. This is
 # the maximum  value of the 99th percentile of the feed-back term
-CDict.set('MKTEMPLATE_DECONV_ITR_THRES', value=1.0e-3, source=__NAME__, author='EA')
+CDict.set('DECONV_ITR_THRES', value=1.0e-3, source=__NAME__, author='EA', group=cgroup)
 
 # Define the max number of iterations to run if the iteration threshold
 # is not met
-CDict.set('MKTEMPLATE_DECONV_ITR_MAX', value=100, source=__NAME__, author='EA')
+CDict.set('DECONV_ITR_MAX', value=100, source=__NAME__, author='EA', group=cgroup)
 
 # =============================================================================
 # CALIBRATION: CCF SETTINGS
 # =============================================================================
 cgroup = 'OBJ.CCF'
 # Define the ccf mask path
-CDict.set('CCF_MASK_PATH', value='ccf_masks/', source=__NAME__)
+CDict.set('MASK_PATH', value='ccf_masks/', source=__NAME__, group=cgroup)
 
 # Define the TEFF mask table for when CCF_DEFAULT_MASK is TEFF
-CDict.set('CCF_TEFF_MASK_TABLE', value='teff_masks.csv', source=__NAME__,
-          datatype='csv')
+CDict.set('TEFF_MASK_TABLE', value='teff_masks.csv', source=__NAME__,
+          datatype='csv', group=cgroup)
 
 # Define the default CCF MASK to use (filename or TEFF to decide based on
 # object temperature) - for TEFF setup see CCF_TEFF_MASK_TABLE file
-CDict.set('CCF_DEFAULT_MASK', value='TEFF', source=__NAME__)
+CDict.set('DEFAULT_MASK', value='TEFF', source=__NAME__, group=cgroup)
 
 # Define the default CCF MASK normalisation mode
 # options are:
 # 'None'         for no normalization
 # 'all'          for normalization across all orders
 # 'order'        for normalization for each order
-CDict.set('CCF_MASK_NORMALIZATION', value='order', source=__NAME__)
+CDict.set('MASK_NORM', value='order', source=__NAME__, group=cgroup)
 
 # Define the wavelength units for the mask
-CDict.set('CCF_MASK_UNITS', value='nm', source=__NAME__)
+CDict.set('MASK_UNITS', value='nm', source=__NAME__, group=cgroup)
 
 # Define the CCF mask format (must be an astropy.table format)
-CDict.set('CCF_MASK_FMT', value='ascii', source=__NAME__)
+CDict.set('MASK_FMT', value='ascii', source=__NAME__, group=cgroup)
 
 # Define the weight of the CCF mask (if 1 force all weights equal)
-CDict.set('CCF_MASK_MIN_WEIGHT', value=0.0, source=__NAME__)
+CDict.set('MASK_MIN_WEIGHT', value=0.0, source=__NAME__, group=cgroup)
 
 # Define the width of the template line (if 0 use natural)
-CDict.set('CCF_MASK_WIDTH', value=1.7, source=__NAME__)
+CDict.set('MASK_WID', value=1.7, source=__NAME__, group=cgroup)
 
 # Define target rv header null value
 # (values greater than absolute value are set to zero)
-CDict.set('OBJRV_NULL_VAL', value=1000, source=__NAME__)
+CDict.set('RV_NULL_VAL', value=1000, source=__NAME__, group=cgroup)
 
 # Define the maximum allowed ratio between input CCF STEP and CCF WIDTH
 # i.e. error will be generated if CCF_STEP > (CCF_WIDTH / RATIO)
-CDict.set('CCF_MAX_CCF_WID_STEP_RATIO', value=10.0, source=__NAME__)
+CDict.set('WID_STEP_RATIO', value=10.0, source=__NAME__, group=cgroup)
 
 # Define the width of the CCF range [km/s]
-CDict.set('CCF_DEFAULT_WIDTH', value=300.0, source=__NAME__)
+CDict.set('DEFAULT_WID', value=300.0, source=__NAME__, group=cgroup)
 
 # Define the computations steps of the CCF [km/s]
-CDict.set('CCF_DEFAULT_STEP', value=0.5, source=__NAME__)
+CDict.set('DEFAULT_STEP', value=0.5, source=__NAME__, group=cgroup)
 
 # The value of the noise for wave dv rms calculation
 # snr = flux/sqrt(flux + noise^2)
-CDict.set('CCF_NOISE_SIGDET', value=8.0, source=__NAME__)
+CDict.set('NOISE_SIGDET', value=8.0, source=__NAME__, group=cgroup)
 
 # The size around a saturated pixel to flag as unusable for wave dv rms
 # calculation
-CDict.set('CCF_NOISE_BOXSIZE', value=12, source=__NAME__)
+CDict.set('NOISE_BOXSIZE', value=12, source=__NAME__, group=cgroup)
 
 # The maximum flux for a good (unsaturated) pixel for wave dv rms calculation
-CDict.set('CCF_NOISE_THRES', value=1.0e9, source=__NAME__)
+CDict.set('NOISE_THRES', value=1.0e9, source=__NAME__, group=cgroup)
 
 # Define the number of orders (from zero to ccf_num_orders_max) to use
 # to calculate the CCF and RV
-CDict.set('CCF_N_ORD_MAX', value=48, source=__NAME__)
+CDict.set('N_ORD_MAX', value=48, source=__NAME__, group=cgroup)
 
 # Allowed input DPRTYPES for input for CCF recipe
-CDict.set('CCF_ALLOWED_DPRTYPES',
+CDict.set('ALLOWED_DPRTYPES',
           value=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK', 'POLAR_FP'],
-          source=__NAME__)
+          source=__NAME__, group=cgroup)
 
 # Valid DPRTYPES for FP in calibration fiber
-CDict.set('CCF_VALID_FP_DPRTYPES',
+CDict.set('VALID_FP_DPRTYPES',
           value=['OBJ_FP', 'POLAR_FP'],
-          source=__NAME__)
+          source=__NAME__, group=cgroup)
 
 # Define the KW_OUTPUT types that are valid telluric corrected spectra
-CDict.set('CCF_CORRECT_TELLU_TYPES', value='TELLU_OBJ', source=__NAME__)
+CDict.set('CORRECT_TELLU_TYPES', value='TELLU_OBJ', source=__NAME__, group=cgroup)
 
 # The transmission threshold for removing telluric domain (if and only if
 # we have a telluric corrected input file
-CDict.set('CCF_TELLU_THRES', value=0.5, source=__NAME__)
+CDict.set('TELLU_THRES', value=0.5, source=__NAME__, group=cgroup)
 
 # The half size (in pixels) of the smoothing box used to calculate what value
 # should replace the NaNs in the E2ds before CCF is calculated
-CDict.set('CCF_FILL_NAN_KERN_SIZE', value=10, source=__NAME__)
+CDict.set('FILL_NAN_KERN_SIZE', value=10, source=__NAME__, group=cgroup)
 
 # The step size (in pixels) of the smoothing box used to calculate what value
 # should replace the NaNs in the E2ds before CCF is calculated
-CDict.set('CCF_FILL_NAN_KERN_RES', value=0.1, source=__NAME__)
+CDict.set('FILL_NAN_KERN_RES', value=0.1, source=__NAME__, group=cgroup)
 
 # Define the detector noise to use in the ccf
-CDict.set('CCF_DET_NOISE', value=100.0, source=__NAME__)
+CDict.set('DET_NOISE', value=100.0, source=__NAME__, group=cgroup)
 
 # Define the fit type for the CCF fit
 # if 0 then we have an absorption line
 # if 1 then we have an emission line
-CDict.set('CCF_FIT_TYPE', value=0, source=__NAME__)
+CDict.set('FIT_TYPE', value=0, source=__NAME__, group=cgroup)
 
 # Define the percentile the blaze is normalised by before using in CCF calc
-CDict.set('CCF_BLAZE_NORM_PERCENTILE', value=90, source=__NAME__)
+CDict.set('BLAZE_NORM_PTILE', value=90, source=__NAME__, group=cgroup)
 
 # Define the minimum number of sigma the peak CCF must have to be acceptable
-CDict.set('CCF_NSIG_THRESHOLD', value=5, source=__NAME__, author='EA')
+CDict.set('NSIG_THRES', value=5, source=__NAME__, author='EA', group=cgroup)
 
 # Define the minimum number of sigma the FWHM of CCF must have to be acceptable
-CDict.set('CCF_FWHM_SIGCUT', value=8, source=__NAME__, author='EA')
+CDict.set('FWHM_SIGCUT', value=8, source=__NAME__, author='EA', group=cgroup)
 
 # Define the top cut of the bisector cut (percent)
-CDict.set('CCF_BIS_CUT_TOP', value=80, source=__NAME__, author='EA')
+CDict.set('BIS_CUT_TOP', value=80, source=__NAME__, author='EA', group=cgroup)
 
 # Define the bottom cut of the bisector cut (percent)
-CDict.set('CCF_BIS_CUT_BOTTOM', value=30, source=__NAME__, author='EA')
+CDict.set('BIS_CUT_BOTTOM', value=30, source=__NAME__, author='EA', group=cgroup)
 
 # =============================================================================
 # GENERAL POLARISATION SETTINGS
 # =============================================================================
 cgroup = 'OBJ.POL.GEN'
 # Define all possible fibers used for polarimetry
-CDict.set('POLAR_FIBERS', value=['A', 'B'], source=__NAME__,
-          author=base.AUTHORS['EM'])
+CDict.set('FIBERS', value=['A', 'B'], source=__NAME__,
+          author=base.AUTHORS['EM'], group=cgroup)
 
 # Define all possible stokes parameters
-CDict.set('POLAR_STOKES_PARAMS', value=['V', 'Q', 'U'], source=__NAME__,
-          author=base.AUTHORS['EM'])
+CDict.set('STOKES_PARAMS', value=['V', 'Q', 'U'], source=__NAME__,
+          author=base.AUTHORS['EM'], group=cgroup)
 
 # Whether or not to correct for BERV shift before calculate polarimetry
-CDict.set('POLAR_BERV_CORRECT', value=True, source=__NAME__,
-          author=base.AUTHORS['EM'])
+CDict.set('BERV_CORRECT', value=True, source=__NAME__,
+          author=base.AUTHORS['EM'], group=cgroup)
 
 # Whether or not to correct for SOURCE RV shift before calculate polarimetry
-CDict.set('POLAR_SOURCE_RV_CORRECT', value=False, source=__NAME__,
-          author=base.AUTHORS['EM'])
+CDict.set('SOURCE_RV_CORRECT', value=False, source=__NAME__,
+          author=base.AUTHORS['EM'], group=cgroup)
 
 # Define the polarimetry method
-CDict.set('POLAR_METHOD', value='Ratio', source=__NAME__,
-          author=base.AUTHORS['EM'])
+CDict.set('METHOD', value='Ratio', source=__NAME__,
+          author=base.AUTHORS['EM'], group=cgroup)
 
 # Whether or not to interpolate flux values to correct for wavelength shifts between exposures
-CDict.set('POLAR_INTERPOLATE_FLUX', value=True, source=__NAME__,
-          author=base.AUTHORS['EM'])
+CDict.set('INTERPOLATE_FLUX', value=True, source=__NAME__,
+          author=base.AUTHORS['EM'], group=cgroup)
 
 # Select stokes I continuum detection algorithm
-CDict.set('STOKESI_CONTINUUM_DET_ALG', value='IRAF', source=__NAME__,
-          author=base.AUTHORS['EM'])
+CDict.set('STOKESI_CONT_DET_ALG', value='IRAF', source=__NAME__,
+          author=base.AUTHORS['EM'], group=cgroup)
 
 # Select polar continuum detection algorithm
-CDict.set('POLAR_CONTINUUM_DET_ALG', value='IRAF', source=__NAME__,
-          author=base.AUTHORS['EM'])
+CDict.set('CONT_DEL_ALG', value='IRAF', source=__NAME__,
+          author=base.AUTHORS['EM'], group=cgroup)
 
 # Normalize Stokes I (True or False)
-CDict.set('POLAR_NORMALIZE_STOKES_I', value=True, source=__NAME__,
-          author=base.AUTHORS['EM'])
+CDict.set('NORM_STOKES_I', value=True, source=__NAME__,
+          author=base.AUTHORS['EM'], group=cgroup)
 
 # Remove continuum polarization
-CDict.set('POLAR_REMOVE_CONTINUUM', value=True, source=__NAME__,
-          author=base.AUTHORS['EM'])
+CDict.set('REMOVE_CONT', value=True, source=__NAME__,
+          author=base.AUTHORS['EM'], group=cgroup)
 
 # Apply polarimetric sigma-clip cleaning (Works better if continuum is removed)
-CDict.set('POLAR_CLEAN_BY_SIGMA_CLIPPING', value=True, source=__NAME__,
-          author=base.AUTHORS['EM'])
+CDict.set('CLEAN_BY_SIGCLIP', value=True, source=__NAME__,
+          author=base.AUTHORS['EM'], group=cgroup)
 
 # Define number of sigmas within which apply clipping
-CDict.set('POLAR_NSIGMA_CLIPPING', value=4, source=__NAME__,
-          author=base.AUTHORS['EM'])
+CDict.set('NSIGCLIP', value=4, source=__NAME__,
+          author=base.AUTHORS['EM'], group=cgroup)
 
 # Define the reddest wavelength to use throughout polar code
-CDict.set('POLAR_REDDEST_THRESHOLD', value=2450, source=__NAME__,
-          author=base.AUTHORS['EM'])
+CDict.set('REDDEST_THRES', value=2450, source=__NAME__,
+          author=base.AUTHORS['EM'], group=cgroup)
 
 # -----------------------------------------------------------------------------
 # Define regions where telluric absorption is high
@@ -2211,8 +2211,8 @@ bands = []
 # bands.append([1997, 2027])
 # bands.append([2047, 2076])
 # set value
-CDict.set('GET_POLAR_TELLURIC_BANDS', value=bands, source=__NAME__,
-          author=base.AUTHORS['EM'])
+CDict.set('TELLU_BANDS', value=bands, source=__NAME__,
+          author=base.AUTHORS['EM'], group=cgroup)
 
 # -----------------------------------------------------------------------------
 # Define regions to select lines in the LSD analysis
@@ -2230,7 +2230,7 @@ bands = []
 bands.append([960.0, 2430.0])
 # set value
 CDict.set('GET_LSD_LINE_REGIONS', value=bands, source=__NAME__,
-          author=base.AUTHORS['EM'])
+          author=base.AUTHORS['EM'], group=cgroup)
 
 # -----------------------------------------------------------------------------
 # Define the valid wavelength ranges for each order in SPIrou.
@@ -2290,160 +2290,160 @@ orders.append([2362, 2430])
 orders.append([2440, 2510])
 # set value
 CDict.set('GET_LSD_ORDER_RANGES', value=orders, source=__NAME__,
-          author=base.AUTHORS['EM'])
+          author=base.AUTHORS['EM'], group=cgroup)
 
 # =============================================================================
 # POLAR POLY MOVING MEDIAN SETTINGS
 # =============================================================================
 cgroup = 'OBJ.POL.MMED'
 # Define the polarimetry continuum bin size
-CDict.set('POLAR_CONT_BINSIZE', value=900, source=__NAME__,
-          author=base.AUTHORS['EM'])
+CDict.set('CONT_BINSIZE', value=900, source=__NAME__,
+          author=base.AUTHORS['EM'], group=cgroup)
 
 # Define the polarimetry continuum overlap size
-CDict.set('POLAR_CONT_OVERLAP', value=200, source=__NAME__,
-          author=base.AUTHORS['EM'])
+CDict.set('CONT_OVERLAP', value=200, source=__NAME__,
+          author=base.AUTHORS['EM'], group=cgroup)
 
 # Fit polynomial to continuum polarization?
 # If False it will use a cubic interpolation instead of polynomial fit
-CDict.set('POLAR_CONT_POLYNOMIAL_FIT', value=False, source=__NAME__,
-          author=base.AUTHORS['EM'])
+CDict.set('CONT_POLYFIT', value=False, source=__NAME__,
+          author=base.AUTHORS['EM'], group=cgroup)
 
 # Define degree of polynomial to fit continuum polarization
-CDict.set('POLAR_CONT_DEG_POLYNOMIAL', value=20, source=__NAME__,
-          author=base.AUTHORS['EM'])
+CDict.set('CONT_POLY_DEG', value=20, source=__NAME__,
+          author=base.AUTHORS['EM'], group=cgroup)
 # =============================================================================
 # POLAR IRAF SETTINGS
 # =============================================================================
 cgroup = 'OBJ.POL.IRAF'
 # function to fit to the stokes I continuum: must be 'polynomial' or
 # 'spline3'
-CDict.set('STOKESI_IRAF_CONT_FIT_FUNC', value='spline3', source=__NAME__,
-          author=base.AUTHORS['EM'])
+CDict.set('CONT_FITFUNC_STOKESI', value='spline3', source=__NAME__,
+          author=base.AUTHORS['EM'], group=cgroup)
 
 # function to fit to the polar continuum: must be 'polynomial' or 'spline3'
-CDict.set('POLAR_IRAF_CONT_FIT_FUNC', value='spline3', source=__NAME__,
-          author=base.AUTHORS['EM'])
+CDict.set('CONT_FITFUNC_POLAR', value='spline3', source=__NAME__,
+          author=base.AUTHORS['EM'], group=cgroup)
 
 # stokes i continuum fit function order: 'polynomial': degree or 'spline3':
 # number of knots
-CDict.set('STOKESI_IRAF_CONT_FUNC_ORDER', value=60, source=__NAME__,
-          author=base.AUTHORS['EM'])
+CDict.set('CONT_FUNC_ORDER_STOKESI', value=60, source=__NAME__,
+          author=base.AUTHORS['EM'], group=cgroup)
 
 # polar continuum fit function order: 'polynomial': degree or 'spline3':
 # number of knots
-CDict.set('POLAR_IRAF_CONT_FUNC_ORDER', value=20, source=__NAME__,
-          author=base.AUTHORS['EM'])
+CDict.set('CONT_FUNC_ORDER_POLAR', value=20, source=__NAME__,
+          author=base.AUTHORS['EM'], group=cgroup)
 
 # =============================================================================
 # POLAR LSD SETTINGS
 # =============================================================================
 cgroup = 'OBJ.POL.LSD'
 # Define the spectral lsd mask directory for lsd polar calculations
-CDict.set('POLAR_LSD_DIR', value='lsd', source=__NAME__,
-          author=base.AUTHORS['EM'])
+CDict.set('LSD_DIR', value='lsd', source=__NAME__,
+          author=base.AUTHORS['EM'], group=cgroup)
 
 # Define the file regular expression key to lsd mask files
 # for "marcs_t3000g50_all" this should be:
 # - filekey = 'marcs_t*g
 # for "t4000_g4.0_m0.00" it should be:
 # - filekey = 't*_g'
-CDict.set('POLAR_LSD_FILE_KEY', value='marcs_t*g50_all', source=__NAME__,
-          author=base.AUTHORS['EM'])
+CDict.set('LSD_FILE_KEY', value='marcs_t*g50_all', source=__NAME__,
+          author=base.AUTHORS['EM'], group=cgroup)
 
 # Define minimum lande of lines to be used in the LSD analyis
-CDict.set('POLAR_LSD_MIN_LANDE', value=0.0, source=__NAME__,
-          author=base.AUTHORS['EM'])
+CDict.set('LSD_MIN_LANDE', value=0.0, source=__NAME__,
+          author=base.AUTHORS['EM'], group=cgroup)
 
 # Define maximum lande of lines to be used in the LSD analyis
-CDict.set('POLAR_LSD_MAX_LANDE', value=10.0, source=__NAME__,
-          author=base.AUTHORS['EM'])
+CDict.set('LSD_MAX_LANDE', value=10.0, source=__NAME__,
+          author=base.AUTHORS['EM'], group=cgroup)
 
 # If mask lines are in air-wavelength then they will have to be
 # converted from air to vacuum
-CDict.set('POLAR_LSD_CCFLINES_AIR_WAVE', value=False, source=__NAME__,
-          author=base.AUTHORS['EM'])
+CDict.set('LSD_CCFLINES_AIRWAVE', value=False, source=__NAME__,
+          author=base.AUTHORS['EM'], group=cgroup)
 
 # Define minimum line depth to be used in the LSD analyis
-CDict.set('POLAR_LSD_MIN_LINEDEPTH', value=0.03, source=__NAME__,
-          author=base.AUTHORS['EM'])
+CDict.set('LSD_MIN_LINEDEPTH', value=0.03, source=__NAME__,
+          author=base.AUTHORS['EM'], group=cgroup)
 
 # Define maximum line depth to be used in the LSD analyis
-CDict.set('POLAR_LSD_MAX_LINEDEPTH', value=1, source=__NAME__,
-          author=base.AUTHORS['EM'])
+CDict.set('LSD_MAX_LINEDEPTH', value=1, source=__NAME__,
+          author=base.AUTHORS['EM'], group=cgroup)
 
 # Define initial velocity (km/s) for output LSD profile
-CDict.set('POLAR_LSD_V0', value=-150.0, source=__NAME__,
-          author=base.AUTHORS['EM'])
+CDict.set('V0', value=-150.0, source=__NAME__,
+          author=base.AUTHORS['EM'], group=cgroup)
 
 # Define final velocity (km/s) for output LSD profile
-CDict.set('POLAR_LSD_VF', value=150.0, source=__NAME__,
-          author=base.AUTHORS['EM'])
+CDict.set('VF', value=150.0, source=__NAME__,
+          author=base.AUTHORS['EM'], group=cgroup)
 
 # Define number of points for output LSD profile
-CDict.set('POLAR_LSD_NP', value=151, source=__NAME__,
-          author=base.AUTHORS['EM'])
+CDict.set('NP', value=151, source=__NAME__,
+          author=base.AUTHORS['EM'], group=cgroup)
 
 # Renormalize data before LSD analysis
-CDict.set('POLAR_LSD_NORMALIZE', value=False, source=__NAME__,
-          author=base.AUTHORS['EM'])
+CDict.set('NORMALIZE', value=False, source=__NAME__,
+          author=base.AUTHORS['EM'], group=cgroup)
 
 # Remove edges of LSD profile
-CDict.set('POLAR_LSD_REMOVE_EDGES', value=True, source=__NAME__,
-          author=base.AUTHORS['EM'])
+CDict.set('REMOVE_EDGES', value=True, source=__NAME__,
+          author=base.AUTHORS['EM'], group=cgroup)
 
 # Define the guess at the resolving power for lsd profile fit
-CDict.set('POLAR_LSD_RES_POWER_GUESS', value=50000.0, source=__NAME__,
-          author=base.AUTHORS['EM'])
+CDict.set('RES_POWER_GUESS', value=50000.0, source=__NAME__,
+          author=base.AUTHORS['EM'], group=cgroup)
 
 # =============================================================================
 # LBL SETTINGS
 # =============================================================================
 cgroup = 'OBJ.LBL'
 # Define the file definition type (DRSOUTID) for LBL input files
-CDict.set('LBL_FILE_DEFS', value='TELLU_OBJ', source=__NAME__)
+CDict.set('FILE_DEFS', value='TELLU_OBJ', source=__NAME__, group=cgroup)
 
 # Define the dprtype for science files for LBL
-CDict.set('LBL_DPRTYPES',
+CDict.set('DPRTYPES',
           value=['OBJ_FP', 'OBJ_DARK', 'POLAR_FP', 'POLAR_DARK'],
           source=__NAME__, group=cgroup)
 
 # Define the file definition type (DRSOUTID) for lbl input template
-CDict.set('LBL_TEMPLATE_FILE_DEFS',
+CDict.set('TEMPLATE_FILE_DEFS',
           value=['TELLU_TEMP', 'TELLU_TEMP_S1DV'],
           source=__NAME__, group=cgroup)
 
 # Define the DPRTYPE for simultaneous FP files for lbl input
-CDict.set('LBL_SIM_FP_DPRTYPES',
+CDict.set('SIM_FP_DPRTYPES',
           value=['OBJ_FP', 'POLAR_FP'],
           source=__NAME__, group=cgroup)
 
 # Define whether the LBL directory should use symlinks
-CDict.set('LBL_SYMLINKS', value=True, source=__NAME__, group=cgroup)
+CDict.set('SYMLINKS', value=True, source=__NAME__, group=cgroup)
 
 # Define the dictionary of friend and friend teffs for LBL
-CDict.set('LBL_FRIENDS',
+CDict.set('FRIENDS',
           value={"GL846": 3900, "GL699": 3200, "GL905": 2900},
-          source=__NAME__)
+          source=__NAME__, group=cgroup)
 
 # Define the specific data types (where objname is the data type) for LBL
-CDict.set('LBL_SPECIFIC_DATATYPES', value=['FP', 'LFC'], source=__NAME__,
+CDict.set('SPECIFIC_DTYPES', value=['FP', 'LFC'], source=__NAME__,
           group=cgroup)
 
 # Define objnames for which we should recalculate template if it doesn't
 # exist (must include FP)
-CDict.set('LBL_RECAL_TEMPLATE', value=['FP', 'LFC'], source=__NAME__,
+CDict.set('RECAL_TEMPLATES', value=['FP', 'LFC'], source=__NAME__,
           group=cgroup)
 
 # Define which recipes should skip done files
-CDict.set('LBL_SKIP_DONE', value=['LBL_COMPUTE', 'LBL_MASK'], source=__NAME__,
+CDict.set('SKIP_DONE', value=['LBL_COMPUTE', 'LBL_MASK'], source=__NAME__,
           group=cgroup)
 
 # Define which object names should be run through LBL compute in parallel
 CDict.set('LBL_MULTI_OBJLIST', value=['FP'], source=__NAME__, group=cgroup)
 
 # Define the DTEMP gradient files
-CDict.set('LBL_DTEMP',
+CDict.set('DTEMP',
           value={"DTEMP3000": "temperature_gradient_3000.fits",
                  "DTEMP3500": "temperature_gradient_3500.fits",
                  "DTEMP4000": "temperature_gradient_4000.fits",
@@ -2458,13 +2458,13 @@ CDict.set('LBL_DTEMP',
 # =============================================================================
 cgroup = 'OBJ.POST'
 # Define whether (by default) to clear reduced directory
-CDict.set('POST_CLEAR_REDUCED', value=False, source=__NAME__)
+CDict.set('CLEAR_RED', value=False, source=__NAME__, group=cgroup)
 
 # Define whether (by default) to overwrite post processed files
-CDict.set('POST_OVERWRITE', value=False, source=__NAME__)
+CDict.set('OVERWRITE', value=False, source=__NAME__, group=cgroup)
 
 # Define the header keyword store to insert extension comment after
-CDict.set('POST_HDREXT_COMMENT_KEY', value='KW_IDENTIFIER', source=__NAME__)
+CDict.set('HDREXT_COMMKEY', value='KW_IDENTIFIER', source=__NAME__, group=cgroup)
 
 # =============================================================================
 # DEBUG OUTPUT FILE SETTINGS
@@ -2472,104 +2472,104 @@ CDict.set('POST_HDREXT_COMMENT_KEY', value='KW_IDENTIFIER', source=__NAME__)
 cgroup = 'DEBUG.OUTFILE'
 # Whether to save background debug file (large 0.5 GB per file)
 # one of these per extraction (lots)
-CDict.set('DEBUG_BACKGROUND_FILE', value=False, source=__NAME__)
+CDict.set('BCKGRD_FILE', value=False, source=__NAME__, group=cgroup)
 
 # Whether to save the E2DSLL file (around 0.05 to 0.1 GB per file)
 # one of these per fiber (lots)
-CDict.set('DEBUG_E2DSLL_FILE', value=True, source=__NAME__)
+CDict.set('E2DSLL_FILE', value=True, source=__NAME__, group=cgroup)
 
 # Whether to save the shape in and out debug files (around 0.1 GB per file)
 # but only one set of these per night
-CDict.set('DEBUG_SHAPE_FILES', value=False, source=__NAME__)
+CDict.set('SHAPE_FILES', value=False, source=__NAME__, group=cgroup)
 
 # Whether to save the uncorrected for FP C fiber leak files
 # (around 0.01 GB per file) one of these per fiber
-CDict.set('DEBUG_UNCORR_EXT_FILES', value=False, source=__NAME__)
+CDict.set('UNCORR_EXT_FILES', value=False, source=__NAME__, group=cgroup)
 
 # =============================================================================
 # DEBUG PLOT SETTINGS
 # =============================================================================
 cgroup = 'DEBUG.PLOT'
 # turn on dark image region debug plot
-CDict.set('PLOT_DARK_IMAGE_REGIONS', value=True, source=__NAME__)
+CDict.set('DARK_IMAGE_REGIONS', value=True, source=__NAME__, group=cgroup)
 
 # turn on dark histogram debug plot
-CDict.set('PLOT_DARK_HISTOGRAM', value=True, source=__NAME__)
+CDict.set('DARK_HISTOGRAM', value=True, source=__NAME__, group=cgroup)
 
 # turn on badpix map debug plot
-CDict.set('PLOT_BADPIX_MAP', value=True, source=__NAME__)
+CDict.set('BADPIX_MAP', value=True, source=__NAME__, group=cgroup)
 
 # turn on localisation the width regions plot
-CDict.set('PLOT_LOC_WIDTH_REGIONS', value=True, source=__NAME__)
+CDict.set('LOC_WIDTH_REGIONS', value=True, source=__NAME__, group=cgroup)
 
 # turn on localisation fiber doublet paroty plot
-CDict.set('PLOT_LOC_FIBER_DOUBLET_PARITY', value=True, source=__NAME__)
+CDict.set('LOC_FIBER_DOUBLET_PARITY', value=True, source=__NAME__, group=cgroup)
 
 # turn on localisation gap in orders plot
-CDict.set('PLOT_LOC_GAP_ORDERS', value=True, source=__NAME__)
+CDict.set('LOC_GAP_ORDERS', value=True, source=__NAME__, group=cgroup)
 
 # turn on localisation image fit plot
-CDict.set('PLOT_LOC_IMAGE_FIT', value=True, source=__NAME__)
+CDict.set('LOC_IMAGE_FIT', value=True, source=__NAME__, group=cgroup)
 
 # turn on localisation image corners plot
-CDict.set('PLOT_LOC_IM_CORNER', value=True, source=__NAME__)
+CDict.set('LOG_IM_CORNER', value=True, source=__NAME__, group=cgroup)
 
 # turn on localisation image regions plot
-CDict.set('PLOT_LOC_IM_REGIONS', value=True, source=__NAME__)
+CDict.set('LOC_IM_REGIONS', value=True, source=__NAME__, group=cgroup)
 
 # turn on the shape dx debug plot
-CDict.set('PLOT_SHAPE_DX', value=True, source=__NAME__)
+CDict.set('SHAPE_DX', value=True, source=__NAME__, group=cgroup)
 
 # turn on the shape linear transform params plot
-CDict.set('PLOT_SHAPE_LINEAR_TPARAMS', value=True, source=__NAME__)
+CDict.set('SHAPE_LINEAR_TPARAMS', value=True, source=__NAME__, group=cgroup)
 
 # turn on the shape angle offset (all orders in loop) debug plot
-CDict.set('PLOT_SHAPE_ANGLE_OFFSET_ALL', value=True, source=__NAME__)
+CDict.set('SHAPE_ANGLE_OFFSET_ALL', value=True, source=__NAME__, group=cgroup)
 
 # turn on the shape angle offset (one selected order) debug plot
-CDict.set('PLOT_SHAPE_ANGLE_OFFSET', value=True, source=__NAME__)
+CDict.set('SHAPE_ANGLE_OFFSET', value=True, source=__NAME__, group=cgroup)
 
 # turn on the shape local zoom debug plot
-CDict.set('PLOT_SHAPEL_ZOOM_SHIFT', value=True, source=__NAME__)
+CDict.set('SHAPEL_ZOOM_SHIFT', value=True, source=__NAME__, group=cgroup)
 
 # turn on the flat order fit edges debug plot (loop)
-CDict.set('PLOT_FLAT_ORDER_FIT_EDGES1', value=False, source=__NAME__)
+CDict.set('FLAT_ORDER_FIT_EDGES1', value=False, source=__NAME__, group=cgroup)
 
 # turn on the flat order fit edges debug plot (selected order)
-CDict.set('PLOT_FLAT_ORDER_FIT_EDGES2', value=True, source=__NAME__)
+CDict.set('FLAT_ORDER_FIT_EDGES2', value=True, source=__NAME__, group=cgroup)
 
 # turn on the flat blaze order debug plot (loop)
-CDict.set('PLOT_FLAT_BLAZE_ORDER1', value=False, source=__NAME__)
+CDict.set('FLAT_BLAZE_ORDER1', value=False, source=__NAME__, group=cgroup)
 
 # turn on the flat blaze order debug plot (selected order)
-CDict.set('PLOT_FLAT_BLAZE_ORDER2', value=True, source=__NAME__)
+CDict.set('FLAT_BLAZE_ORDER2', value=True, source=__NAME__, group=cgroup)
 
 # turn on thermal background (in extract) debug plot
-CDict.set('PLOT_THERMAL_BACKGROUND', value=True, source=__NAME__)
+CDict.set('THERMAL_BACKGROUND', value=True, source=__NAME__, group=cgroup)
 
 # turn on the extraction spectral order debug plot (loop)
-CDict.set('PLOT_EXTRACT_SPECTRAL_ORDER1', value=True, source=__NAME__)
+CDict.set('EXTRACT_SPECTRAL_ORDER1', value=True, source=__NAME__, group=cgroup)
 
 # turn on the extraction spectral order debug plot (selected order)
-CDict.set('PLOT_EXTRACT_SPECTRAL_ORDER2', value=True, source=__NAME__)
+CDict.set('EXTRACT_SPECTRAL_ORDER2', value=True, source=__NAME__, group=cgroup)
 
 # turn on the extraction 1d spectrum debug plot
-CDict.set('PLOT_EXTRACT_S1D', value=True, source=__NAME__)
+CDict.set('EXTRACT_S1D', value=True, source=__NAME__, group=cgroup)
 
 # turn on the extraction 1d spectrum weight (before/after) debug plot
-CDict.set('PLOT_EXTRACT_S1D_WEIGHT', value=True, source=__NAME__)
+CDict.set('EXTRACT_S1D_WEIGHT', value=True, source=__NAME__, group=cgroup)
 
 # turn on the wave line fiber comparison plot
-CDict.set('PLOT_WAVE_FIBER_COMPARISON', value=True, source=__NAME__)
+CDict.set('WAVE_FIBER_COMPARISON', value=True, source=__NAME__, group=cgroup)
 
 # turn on the wave line fiber comparison plot
-CDict.set('PLOT_WAVE_FIBER_COMP', value=True, source=__NAME__)
+CDict.set('WAVE_FIBER_COMP', value=True, source=__NAME__, group=cgroup)
 
 # turn on the wave length vs cavity width plot
-CDict.set('PLOT_WAVE_WL_CAV', value=True, source=__NAME__)
+CDict.set('WAVE_WL_CAV', value=True, source=__NAME__, group=cgroup)
 
 # turn on the wave diff HC histograms plot
-CDict.set('PLOT_WAVE_HC_DIFF_HIST', value=True, source=__NAME__)
+CDict.set('WAVE_HC_DIFF_HIST', value=True, source=__NAME__, group=cgroup)
 
 # turn on the wave lines hc/fp expected vs measured debug plot
 # (will plot once for hc once for fp)
@@ -2578,37 +2578,37 @@ CDict.set('PLOT_WAVEREF_EXPECTED', value=True, source=__NAME__)
 # TODO: WAVE plots need sorting
 
 # turn on the wave solution hc guess debug plot (in loop)
-CDict.set('PLOT_WAVE_HC_GUESS', value=True, source=__NAME__)
+CDict.set('WAVE_HC_GUESS', value=True, source=__NAME__, group=cgroup)
 
 # turn on the wave solution hc brightest lines debug plot
-CDict.set('PLOT_WAVE_HC_BRIGHTEST_LINES', value=True, source=__NAME__)
+CDict.set('WAVE_HC_BRIGHTEST_LINES', value=True, source=__NAME__, group=cgroup)
 
 # turn on the wave solution hc triplet fit grid debug plot
-CDict.set('PLOT_WAVE_HC_TFIT_GRID', value=True, source=__NAME__)
+CDict.set('WAVE_HC_TFIT_GRID', value=True, source=__NAME__, group=cgroup)
 
 # turn on the wave solution hc resolution map debug plot
-CDict.set('PLOT_WAVE_HC_RESMAP', value=True, source=__NAME__)
+CDict.set('WAVE_HC_RESMAP', value=True, source=__NAME__, group=cgroup)
 
 # turn on the wave solution hc resolution map debug plot
-CDict.set('PLOT_WAVE_RESMAP', value=True, source=__NAME__)
+CDict.set('WAVE_RESMAP', value=True, source=__NAME__, group=cgroup)
 
 # turn on the wave solution littrow check debug plot
-CDict.set('PLOT_WAVE_LITTROW_CHECK1', value=True, source=__NAME__)
+CDict.set('WAVE_LITTROW_CHECK1', value=True, source=__NAME__, group=cgroup)
 
 # turn on the wave solution littrow extrapolation debug plot
-CDict.set('PLOT_WAVE_LITTROW_EXTRAP1', value=True, source=__NAME__)
+CDict.set('WAVE_LITTROW_EXTRAP1', value=True, source=__NAME__, group=cgroup)
 
 # turn on the wave solution littrow check debug plot
-CDict.set('PLOT_WAVE_LITTROW_CHECK2', value=True, source=__NAME__)
+CDict.set('WAVE_LITTROW_CHECK2', value=True, source=__NAME__, group=cgroup)
 
 # turn on the wave solution littrow extrapolation debug plot
-CDict.set('PLOT_WAVE_LITTROW_EXTRAP2', value=True, source=__NAME__)
+CDict.set('WAVE_LITTROW_EXTRAP2', value=True, source=__NAME__, group=cgroup)
 
 # turn on the wave solution final fp order debug plot
-CDict.set('PLOT_WAVE_FP_FINAL_ORDER', value=True, source=__NAME__)
+CDict.set('WAVE_FP_FINAL_ORDER', value=True, source=__NAME__, group=cgroup)
 
 # turn on the wave solution fp local width offset debug plot
-CDict.set('PLOT_WAVE_FP_LWID_OFFSET', value=True, source=__NAME__)
+CDict.set('WAVE_FP_LWID_OFFSET', value=True, source=__NAME__, group=cgroup)
 
 # turn on the wave solution fp wave residual debug plot
 CDict.set('PLOT_WAVE_FP_WAVE_RES', value=True, source=__NAME__)

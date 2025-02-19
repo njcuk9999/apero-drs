@@ -173,9 +173,9 @@ def get_blaze_props(params, header, fiber) -> ParamDict:
 def normalise_by_pblaze(params, image, header, fiber, **kwargs):
     func_name = __NAME__ + '.normalise_by_pblaze()'
     # get properties from params/kwargs
-    blaze_p = pcheck(params, 'MKTELLU_BLAZE_PERCENTILE', 'blaze_p', kwargs,
+    blaze_p = pcheck(params, 'OBJ.TELL.MAKE.BLAZE_PTILE', 'blaze_p', kwargs,
                      func_name)
-    cut_blaze_norm = pcheck(params, 'MKTELLU_CUT_BLAZE_NORM', 'cut_blaze_norm',
+    cut_blaze_norm = pcheck(params, 'OBJ.TELL.MAKE.CUT_BLAZE_NORM', 'cut_blaze_norm',
                             kwargs, func_name)
     # ----------------------------------------------------------------------
     # copy the image
@@ -2240,13 +2240,13 @@ def read_tellu_preclean(params, recipe, infile, fiber, database=None):
     props['TELLUP_WATER_BOUNDS'] = tpclfile.get_hkey('KW_TELLUP_WATER_BOUNDS',
                                                      dtype=list, listtype=float)
     # set the source from header
-    keys = ['TELLUP_D_WATER_ABSO', 'OBJ.TELL.PCLEAN.CCF_SCAN_RANGE',
+    keys = ['OBJ.TELL.PCLEAN.DWATER_ABSO', 'OBJ.TELL.PCLEAN.CCF_SCAN_RANGE',
             'OBJ.TELL.PCLEAN.CLEAN_OHLINES', 'OBJ.TELL.PCLEAN.REMOVE_ORDERS',
             'OBJ.TELL.PCLEAN.SNR_MIN_THRES', 'OBJ.TELL.PCLEAN.DEXPO_CONV_THRES',
             'OBJ.TELL.PCLEAN.DEXPO_MAX_ITR', 'OBJ.TELL.PCLEAN.ABSO_EXPO_KWID',
             'OBJ.TELL.PCLEAN.ABSO_EXP_KEXP', 'OBJ.TELL.PCLEAN.TRANS_THRES',
             'OBJ.TELL.PCLEAN.TRANS_SIGLIM', 'OBJ.TELL.PCLEAN.FORCE_AIRMASS',
-            'TELLUP_OTHER_BOUNDS', 'TELLUP_WATER_BOUNDS',
+            'OBJ.TELL.PCLEAN.OTHER_BOUNDS', 'OBJ.TELL.PCLEAN.WATER_BOUNDS',
             'OBJ.TELL.PCLEAN.ABSO_EXPO_KTHRES', 'TELLUP_WAVE_START',
             'TELLUP_WAVE_END', 'TELLUP_DVGRID', 'OBJ.TELL.PCLEAN.DO_PRECLEANING']
     props.set_sources(keys, 'header')
@@ -2459,7 +2459,7 @@ def shift_template(params: ParamDict, recipe: DrsRecipe,
     # debug plot - reconstructed spline (selected order)
     recipe.plot('FTELLU_RECON_SPLINE2', image=image, wavemap=wavemap,
                 template=template_e2ds.ravel(),
-                order=params['FTELLU_SPLOT_ORDER'])
+                order=params['OBJ.TELLU.FIT.SPLOT_ORDER'])
     # -------------------------------------------------------------------------
     # push back into template props
     template_props['TEMP_S2D'] = template_e2ds
@@ -2627,7 +2627,7 @@ def load_conv_tapas(params, recipe, header, refprops, fiber, database=None,
     tapas_props['FWHM_PIXEL_LSF'] = fwhm_pixel_lsf
     # set source
     keys = ['TAPAS_ALL_SPECIES', 'TAPAS_WATER', 'TAPAS_OTHER',
-            'OBJ.TELL.GEN.TAPAS_FILE', 'TELLU_ABSORBERS', 'FWHM_PIXEL_LSF']
+            'OBJ.TELL.GEN.TAPAS_FILE', 'OBJ.TELL.MAKE.ABSORBERS', 'FWHM_PIXEL_LSF']
     tapas_props.set_sources(keys, func_name)
     # return tapas props
     return tapas_props

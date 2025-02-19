@@ -116,7 +116,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     kwargs['program'] = program
     kwargs['RESPROJ_TABLES'] = gen_lbl.dtemp(params)
     # deal with data type
-    if objname in params['LBL_SPECIFIC_DATATYPES']:
+    if objname in params['OBJ.LBL.SPECIFIC_DTYPES']:
         data_type = objname
     else:
         data_type = 'SCIENCE'

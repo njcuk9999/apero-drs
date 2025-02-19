@@ -102,7 +102,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     if 'FIBER' in params['INPUTS']:
         fiber = params['INPUTS']['FIBER']
     else:
-        fiber = params['TELLURIC_FIBER_TYPE']
+        fiber = params['OBJ.TELLU.TEMPLATE.FIBER_TYPE']
     # load the telluric database
     telludbm = drs_database.TelluricDatabase(params)
     telludbm.load_db()

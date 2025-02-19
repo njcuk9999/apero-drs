@@ -240,8 +240,8 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
     pconst = load_functions.load_pconfig(select.INSTRUMENTS)
     # -------------------------------------------------------------------------
     # get from parameters
-    polar_fibers = params['POLAR_FIBERS']
-    stokesparams = params['POLAR_STOKES_PARAMS']
+    polar_fibers = params['OBJ.POL.GEN.FIBERS']
+    stokesparams = params['OBJ.POL.GEN.STOKES_PARAMS']
     berv_correct = params['POLAR_BERV_CORRECT']
     source_rv_correct = params['POLAR_SOURCE_RV_CORRECT']
     # whether we need to check qc
@@ -890,13 +890,13 @@ def polarimetry_diff_method(params: ParamDict, props: ParamDict,
     # add to props (for output)
     # -------------------------------------------------------------------------
     # set the method
-    props['METHOD'] = 'Difference'
+    props['OBJ.POL.GEN.METHOD'] = 'Difference'
     props['POL'] = pol_arr
     props['POLERR'] = pol_err_arr
     props['NULL1'] = null1_arr
     props['NULL2'] = null2_arr
     # set sources
-    props.set_sources(['METHOD', 'POL', 'POLERR', 'NULL1', 'NULL2'], func_name)
+    props.set_sources(['OBJ.POL.GEN.METHOD', 'POL', 'POLERR', 'NULL1', 'NULL2'], func_name)
     # log end of polarimetry calculations
     WLOG(params, 'info', textentry('40-021-00023', args=[name]))
     # -------------------------------------------------------------------------
@@ -1085,13 +1085,13 @@ def polarimetry_ratio_method(params: ParamDict, props: ParamDict,
         eargs = [nexp, func_name]
         raise AperoCodedException(params, '09-021-00008', targs=eargs)
     # set the method
-    props['METHOD'] = 'Ratio'
+    props['OBJ.POL.GEN.METHOD'] = 'Ratio'
     props['POL'] = pol_arr
     props['POLERR'] = pol_err_arr
     props['NULL1'] = null1_arr
     props['NULL2'] = null2_arr
     # set sources
-    props.set_sources(['METHOD', 'POL', 'POLERR', 'NULL1', 'NULL2'], func_name)
+    props.set_sources(['OBJ.POL.GEN.METHOD', 'POL', 'POLERR', 'NULL1', 'NULL2'], func_name)
     # log end of polarimetry calculations
     WLOG(params, 'info', textentry('40-021-00023', args=[name]))
     # return loc
@@ -1348,11 +1348,11 @@ def calculate_continuum(params: ParamDict, recipe: DrsRecipe, props: ParamDict
     # stokes fit parameters
     stokesi_detection_alg = params['STOKESI_CONTINUUM_DET_ALG']
     stokei_iraf_cont_fit_func = params['STOKESI_IRAF_CONT_FIT_FUNC']
-    stokes_iraf_cont_func_ord = params['STOKESI_IRAF_CONT_FUNC_ORDER']
+    stokes_iraf_cont_func_ord = params['OBJ.POL.IRAF.CONT_FUNC_ORDER_STOKESI']
     # polar fit parameters
     polar_detection_alg = params['POLAR_CONTINUUM_DET_ALG']
     polar_iraf_cont_fit_func = params['POLAR_IRAF_CONT_FIT_FUNC']
-    polar_iraf_cont_func_ord = params['POLAR_IRAF_CONT_FUNC_ORDER']
+    polar_iraf_cont_func_ord = params['OBJ.POL.IRAF.CONT_FUNC_ORDER_POLAR']
     # other parameters
     norm_stokes_i = params['POLAR_NORMALIZE_STOKES_I']
     cont_poly_fit = params['POLAR_CONT_POLYNOMIAL_FIT']
@@ -1611,7 +1611,7 @@ def normalize_stokes_i(params: ParamDict, props: ParamDict) -> ParamDict:
     # loop around order data
     for order_num in range(ydim):
         # remove the reddest pixels
-        ordkeep = wavemap[order_num] < params['POLAR_REDDEST_THRESHOLD']
+        ordkeep = wavemap[order_num] < params['OBJ.POL.GEN.REDDEST_THRES']
         ordkeep &= np.isfinite(pol[order_num])
         ordkeep &= np.isfinite(stokesi[order_num])
         ordkeep &= stokesi[order_num] > 0
@@ -2190,7 +2190,7 @@ def add_polar_keywords(params: ParamDict, props: ParamDict,
     """
     # -------------------------------------------------------------------------
     # get the telluric bands
-    telluric_bands = params['GET_POLAR_TELLURIC_BANDS']
+    telluric_bands = params['OBJ.POL.GEN.TELLU_BANDS']
     # load the telluric bands into a 1D list of strings '{LOW},{HIGH}
     str_telluric_bands = []
     for band in telluric_bands:
@@ -2224,53 +2224,55 @@ def add_polar_keywords(params: ParamDict, props: ParamDict,
     # add properties / switches from constants
     # -------------------------------------------------------------------------
     # add the polarimetry method
-    outfile.add_hkey('KW_POL_METHOD', value=params['POLAR_METHOD'])
+    outfile.add_hkey('KW_POL_METHOD', value=params['OBJ.POL.GEN.METHOD'])
     # define whether we corrected for BERV
-    outfile.add_hkey('KW_POL_CORR_BERV', value=params['POLAR_BERV_CORRECT'])
+    outfile.add_hkey('KW_POL_CORR_BERV', value=params['OBJ.POL.GEN.BERV_CORRECT'])
     # define whether we corrected for source RV
-    outfile.add_hkey('KW_POL_CORR_SRV', value=params['POLAR_SOURCE_RV_CORRECT'])
+    outfile.add_hkey('KW_POL_CORR_SRV', value=params['OBJ.POL.GEN.SOURCE_RV_CORRECT'])
     # define whether we normalized stokes I by continuum
     outfile.add_hkey('KW_POL_NORM_STOKESI',
-                     value=params['POLAR_NORMALIZE_STOKES_I'])
+                     value=params['OBJ.POL.GEN.NORM_STOKES_I'])
     # define whether we interp flux to correct for shifts between exposures
     outfile.add_hkey('KW_POL_INTERP_FLUX',
-                     value=params['POLAR_INTERPOLATE_FLUX'])
+                     value=params['OBJ.POL.GEN.INTERPOLATE_FLUX'])
     # define whether we apply polarimetric sigma-clip cleaning
     outfile.add_hkey('KW_POL_SIGCLIP',
-                     value=params['POLAR_CLEAN_BY_SIGMA_CLIPPING'])
+                     value=params['OBJ.POL.GEN.CLEAN_BY_SIGCLIP'])
     # define the number of sigma swithin which to apply sigma clipping
-    outfile.add_hkey('KW_POL_NSIGMA', value=params['POLAR_NSIGMA_CLIPPING'])
+    outfile.add_hkey('KW_POL_NSIGMA', value=params['OBJ.POL.GEN.NSIGCLIP'])
     # define whether we removed continuum polarization
     outfile.add_hkey('KW_POL_REMOVE_CONT',
-                     value=params['POLAR_REMOVE_CONTINUUM'])
+                     value=params['OBJ.POL.GEN.REMOVE_CONT'])
     # define the stokes I continuum detection algorithm
     outfile.add_hkey('KW_POL_SCONT_DET_ALG',
-                     value=params['STOKESI_CONTINUUM_DET_ALG'])
+                     value=params['OBJ.POL.GEN.STOKESI_CONT_DET_ALG'])
     # define the polar continuum detection algorithm
     outfile.add_hkey('KW_POL_PCONT_DET_ALG',
-                     value=params['POLAR_CONTINUUM_DET_ALG'])
+                     value=params['OBJ.POL.GEN.CONT_DEL_ALG'])
     # define whether we used polynomial fit for continuum polarization
     outfile.add_hkey('KW_POL_CONT_POLYFIT',
-                     value=params['POLAR_CONT_POLYNOMIAL_FIT'])
+                     value=params['OBJ.POL.MMED.CONT_POLYFIT'])
     # define polynomial degree of fit continuum polarization
     outfile.add_hkey('KW_POL_CONT_DEG_POLY',
-                     value=params['POLAR_CONT_DEG_POLYNOMIAL'])
+                     value=params['OBJ.POL.MMED.CONT_POLY_DEG'])
     # define the iraf function that was used to fit stokes I continuum
     outfile.add_hkey('KW_POL_S_IRAF_FUNC',
-                     value=params['STOKESI_IRAF_CONT_FIT_FUNC'])
+                     value=params['OBJ.POL.IRAF.CONT_FITFUNC_STOKESI'])
     # define the iraf function that was used to fit polar continuum
     outfile.add_hkey('KW_POL_P_IRAF_FUNC',
-                     value=params['POLAR_IRAF_CONT_FIT_FUNC'])
+                     value=params['OBJ.POL.IRAF.CONT_FITFUNC_POLAR'])
     # define the degree of the polynomial used to fit stokes I continuum
     outfile.add_hkey('KW_POL_S_IRAF_DEGREE',
-                     value=params['STOKESI_IRAF_CONT_FUNC_ORDER'])
+                     value=params['OBJ.POL.IRAF.STOKESI_IRAF_CONT_FUNC_ORDER'])
     # define the degree of the polynomial used to fit polar continuum
     outfile.add_hkey('KW_POL_P_IRAF_DEGREE',
-                     value=params['POLAR_IRAF_CONT_FUNC_ORDER'])
+                     value=params['OBJ.POL.IRAF.CONT_FUNC_ORDER_POLAR'])
     # define the polar continuum bin size used
-    outfile.add_hkey('KW_POL_CONT_BINSIZE', value=params['POLAR_CONT_BINSIZE'])
+    outfile.add_hkey('KW_POL_CONT_BINSIZE',
+                     value=params['OBJ.POL.MMED.CONT_BINSIZE'])
     # define the polar continuum overlap size used
-    outfile.add_hkey('KW_POL_CONT_OVERLAP', value=params['POLAR_CONT_OVERLAP'])
+    outfile.add_hkey('KW_POL_CONT_OVERLAP',
+                     value=params['OBJ.POL.MMED.CONT_OVERLAP'])
     # define the telluric mask parameters (1D list)
     outfile.add_hkey_1d('KW_POL_CONT_TELLMASK', values=str_telluric_bands,
                         dim1name='wave range')

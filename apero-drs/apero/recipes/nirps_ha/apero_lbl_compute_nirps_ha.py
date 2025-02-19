@@ -114,7 +114,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     kwargs['data_source'] = 'APERO'
     kwargs['skip_done'] = gen_lbl.do_skip(params, 'LBL_COMPUTE')
     # deal with data type
-    if objname in params['LBL_SPECIFIC_DATATYPES']:
+    if objname in params['OBJ.LBL.SPECIFIC_DTYPES']:
         data_type = objname
     else:
         data_type = 'SCIENCE'

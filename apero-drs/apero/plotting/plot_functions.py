@@ -4692,7 +4692,7 @@ def plot_tellu_finite_res_corr(plotter: Plotter, graph: Graph,
     corr = kwargs['corr']
     abso_e2ds = kwargs['abso_e2ds']
     # get sample order from parameters
-    sample_order = params['TELLU_FINITE_RES_ORDER']
+    sample_order = params['OBJ.TELL.PCLEAN.FINITE_RES_ORDER']
     # ------------------------------------------------------------------
     # set up plot
     fig, frames = graph.set_figure(plotter, nrows=3, ncols=1,
@@ -5173,7 +5173,7 @@ def plot_polar_continuum(plotter: Plotter, graph: Graph,
     contpol = 100.0 * props['CONT_POL']
     contxbin = props['CONT_POL_XBIN']
     stokes = props['STOKES']['A_1']
-    method = props['METHOD']
+    method = props['OBJ.POL.GEN.METHOD']
     nexp = props['N_EXPOSURES']
     # ------------------------------------------------------------------
     # set up plot
@@ -5232,7 +5232,7 @@ def plot_polar_results(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     null1 = 100.0 * props['FLAT_NULL1']
     null2 = 100.0 * props['FLAT_NULL2']
     stokes = props['STOKES']['A_1']
-    method = props['METHOD']
+    method = props['OBJ.POL.GEN.METHOD']
     nexp = props['N_EXPOSURES']
     # ------------------------------------------------------------------
     # set up plot
@@ -5284,7 +5284,7 @@ def plot_polar_stoke_i(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     stokes_ierr = props['FLAT_STOKESIERR'] * props['CONT_FLUX']
     contxbin = props['CONT_FLUX_XBIN']
     stokes = props['STOKES']['A_1']
-    method = props['METHOD']
+    method = props['OBJ.POL.GEN.METHOD']
     nexp = props['N_EXPOSURES']
     cont_flux = props['CONT_FLUX']
     # ------------------------------------------------------------------

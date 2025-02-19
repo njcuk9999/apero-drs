@@ -93,7 +93,7 @@ def resolve_target(params: ParamDict, pconst: Instrument,
     :return: None - updates object database
     """
     # get the null rv criteria
-    null_rv = params['OBJRV_NULL_VAL']
+    null_rv = params['OBJ.CCF.RV_NULL_VAL']
     # get object name in header keyword
     hdr_objname = params['KW_OBJNAME'][0]
     # load database

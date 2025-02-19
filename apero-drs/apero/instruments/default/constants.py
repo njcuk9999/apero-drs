@@ -3089,7 +3089,7 @@ CDict.add('LLDIF_MIN', value=None, dtype=float,
                        'fraction diff. from median'))
 
 # Maximum FP peaks wavelength separation fraction diff. from median
-CDict.add('WAVE_FP_LLDIF_MAX', value=None, dtype=float,
+CDict.add('LLDIF_MAX', value=None, dtype=float,
           source=__NAME__, minimum=0.0, group=cgroup,
           description=('Maximum FP peaks wavelength separation '
                        'fraction diff. from median'))
@@ -3181,7 +3181,7 @@ CDict.add('PLT_NBINS', value=None, dtype=int,
                        'bins'))
 
 # wave night plot hc bin lower bound in multiples of rms
-CDict.add('WAVENIGHT_PLT_BINL', value=None, dtype=float,
+CDict.add('PLT_BINL', value=None, dtype=float,
           source=__NAME__, minimum=0, group=cgroup,
           description=('wave night plot hc bin lower bound '
                        'in multiples of rms'))
@@ -3206,7 +3206,7 @@ CDict.add('SIMBAD_TAPURL', value=None, dtype=str, source=__NAME__,
           description='Define the SIMBAD TAP url')
 
 # Define the TAP Gaia URL (for use in crossmatching to Gaia via astroquery)
-CDict.add('OBJ_LIST_GAIA_URL', value=None, dtype=str,
+CDict.add('GAIA_URL', value=None, dtype=str,
           source=__NAME__, group=cgroup,
           description=('Define the TAP Gaia URL (for use in '
                        'crossmatching to Gaia via astroquery)'))
@@ -3320,7 +3320,7 @@ CDict.add('RESOLVE_FROM_GLIST',
 # Define whether to get Gaia ID from header RA and Dec (basically if all other
 #    option fails) - WARNING - this is a crossmatch so may lead to a bad
 #    identification of the gaia id - not recommended
-CDict.add('OBJ_LIST_RESOLVE_FROM_COORDS',
+CDict.add('RESOLVE_FROM_COORDS',
           value=None, dtype=bool, source=__NAME__,
           group=cgroup,
           description=('Define whether to get '
@@ -3755,7 +3755,7 @@ CDict.add('FORCE_AIRMASS', value=None, dtype=bool,
 
 # set the typical water abso exponent. Compare to values in header for
 #    high-snr targets later
-CDict.add('TELLUP_D_WATER_ABSO', value=None,
+CDict.add('DWATER_ABSO', value=None,
           dtype=float, source=__NAME__, group=cgroup,
           minimum=0.0,
           description=('set the typical water abso exponent. '
@@ -3765,7 +3765,7 @@ CDict.add('TELLUP_D_WATER_ABSO', value=None,
 # set the lower and upper bounds (String list) for the exponent of
 #  the other species of absorbers as a ratio to the airmass
 #  i.e. value/airmass compared to bound
-CDict.add('TELLUP_OTHER_BOUNDS', value=None,
+CDict.add('OTHER_BOUNDS', value=None,
           dtype=list, dtypei=float,
           source=__NAME__, group=cgroup,
           description='set the lower and upper bounds '
@@ -3776,7 +3776,7 @@ CDict.add('TELLUP_OTHER_BOUNDS', value=None,
 
 # set the lower and upper bounds (string list) for the exponent of
 #  water absorber as a ratio to the airmass i.e. value/airmass compared to bound
-CDict.add('TELLUP_WATER_BOUNDS', value=None,
+CDict.add('WATER_BOUNDS', value=None,
           dtype=list, dtypei=float,
           source=__NAME__, group=cgroup,
           description='set the lower and upper bounds '
@@ -3786,7 +3786,7 @@ CDict.add('TELLUP_WATER_BOUNDS', value=None,
                       'to bound')
 
 # set the plot order for the finite resolution plot
-CDict.add('TELLU_FINITE_RES_ORDER', value=None, dtype=int,
+CDict.add('FINITE_RES_ORDER', value=None, dtype=int,
           minimum=0, source=__NAME__, group=cgroup,
           description='set the plot order for the finite '
                       'resolution plot')
@@ -3802,7 +3802,7 @@ CDict.add_group(cgroup, description='OBJECT.MAKE_TELLURIC: '
 #     for all blaze profiles, we normalize to the 95th percentile.
 #     That's pretty much the peak value, but it is resistent to
 #     eventual outliers
-CDict.add('MKTELLU_BLAZE_PERCENTILE', value=None,
+CDict.add('BLAZE_PTILE', value=None,
           dtype=float, source=__NAME__, group=cgroup,
           description=('value below which the blaze in '
                        'considered too low to be useful '
@@ -3811,19 +3811,19 @@ CDict.add('MKTELLU_BLAZE_PERCENTILE', value=None,
                        'percentile. Thats pretty much '
                        'the peak value, but it is '
                        'resistent to eventual outliers'))
-CDict.add('MKTELLU_CUT_BLAZE_NORM', value=None,
+CDict.add('CUT_BLAZE_NORM', value=None,
           dtype=float, source=__NAME__, group=cgroup,
           description='')
 
 # Define list of absorbers in the tapas fits table
-CDict.add('TELLU_ABSORBERS', value=None,
+CDict.add('ABSORBERS', value=None,
           dtype=list, dtypei=str,
           source=__NAME__, group=cgroup,
           description=('Define list of absorbers in the tapas '
                        'fits table'))
 
 # define the default convolution width [in pixels]
-CDict.add('MKTELLU_DEFAULT_CONV_WIDTH', value=None,
+CDict.add('DEF_CONV_WID', value=None,
           dtype=int, source=__NAME__, group=cgroup,
           description=('define the default convolution'
                        ' width [in pixels]'))
@@ -3831,7 +3831,7 @@ CDict.add('MKTELLU_DEFAULT_CONV_WIDTH', value=None,
 # median-filter the template. we know that stellar features
 #    are very broad. this avoids having spurious noise in our
 #    templates [pixel]
-CDict.add('MKTELLU_TEMP_MED_FILT', value=None, dtype=int,
+CDict.add('TEMP_MED_FILT', value=None, dtype=int,
           source=__NAME__, group=cgroup,
           description=('median-filter the template. we '
                        'know that stellar features are '
@@ -3840,14 +3840,14 @@ CDict.add('MKTELLU_TEMP_MED_FILT', value=None, dtype=int,
                        '[pixel]'))
 
 # Define the orders to plot (not too many)
-CDict.add('MKTELLU_PLOT_ORDER_NUMS', value=None,
+CDict.add('PLOT_ORDER_NUM', value=None,
           dtype=list, dtypei=int,
           source=__NAME__, group=cgroup,
           description=('Define the orders to plot '
                        '(not too many)'))
 
 # Set an upper limit for the allowed line-of-sight optical depth of water
-CDict.add('MKTELLU_TAU_WATER_ULIMIT', value=None,
+CDict.add('TAU_WATER_ULIMIT', value=None,
           dtype=float, source=__NAME__, group=cgroup,
           description=('Set an upper limit for the '
                        'allowed line-of-sight optical '
@@ -3855,7 +3855,7 @@ CDict.add('MKTELLU_TAU_WATER_ULIMIT', value=None,
 
 #   Define the order to use for SNR check when accepting tellu files
 #      to the telluDB
-CDict.add('MKTELLU_QC_SNR_ORDER', value=None, dtype=int,
+CDict.add('QC_SNR_ORDER', value=None, dtype=int,
           source=__NAME__, minimum=0, group=cgroup,
           description=('Define the order to use for SNR '
                        'check when accepting tellu files '
@@ -3863,7 +3863,7 @@ CDict.add('MKTELLU_QC_SNR_ORDER', value=None, dtype=int,
 
 # Defines the maximum allowed value for the recovered water vapor optical
 #    depth
-CDict.add('MKTELLU_TRANS_MAX_WATERCOL', value=None,
+CDict.add('TRANS_MAX_WATERCOL', value=None,
           dtype=float, source=__NAME__, group=cgroup,
           description=('Defines the maximum allowed '
                        'value for the recovered water '
@@ -3871,7 +3871,7 @@ CDict.add('MKTELLU_TRANS_MAX_WATERCOL', value=None,
 
 # Defines the minimum allowed value for the recovered water vapor optical
 #    depth (should not be able 1)
-CDict.add('MKTELLU_TRANS_MIN_WATERCOL', value=None,
+CDict.add('TRANS_MIN_WATERCOL', value=None,
           dtype=float, source=__NAME__, group=cgroup,
           description=('Defines the minimum allowed '
                        'value for the recovered water '
@@ -3880,7 +3880,7 @@ CDict.add('MKTELLU_TRANS_MIN_WATERCOL', value=None,
 
 # minimum transmission required for use of a given pixel in the TAPAS
 #    and SED fitting
-CDict.add('MKTELLU_THRES_TRANSFIT', value=None,
+CDict.add('THRES_TRANSFIT', value=None,
           dtype=float, source=__NAME__, group=cgroup,
           description=('minimum transmission required '
                        'for use of a given pixel in the '
@@ -3888,7 +3888,7 @@ CDict.add('MKTELLU_THRES_TRANSFIT', value=None,
 
 # Defines the bad pixels if the spectrum is larger than this value.
 #    These values are likely an OH line or a cosmic ray
-CDict.add('MKTELLU_TRANS_FIT_UPPER_BAD', value=None,
+CDict.add('TRANS_FIT_UBAD', value=None,
           dtype=float, source=__NAME__, group=cgroup,
           description=('Defines the bad pixels if '
                        'the spectrum is larger '
@@ -3898,21 +3898,21 @@ CDict.add('MKTELLU_TRANS_FIT_UPPER_BAD', value=None,
 
 #  Define the minimum SNR for order "QC_TELLU_SNR_ORDER" that will be
 #      accepted to the telluDB
-CDict.add('MKTELLU_QC_SNR_MIN', value=None, dtype=float,
+CDict.add('QC_SNR_MIN', value=None, dtype=float,
           source=__NAME__, minimum=0.0, group=cgroup,
           description=('Define the minimum SNR for order '
                        '"QC_TELLU_SNR_ORDER" that will be '
                        'accepted to the telluDB'))
 
 # Define the allowed difference between recovered and input airmass
-CDict.add('MKTELLU_QC_AIRMASS_DIFF', value=None,
+CDict.add('QC_AIRMASS_DIFF', value=None,
           dtype=float, source=__NAME__, group=cgroup,
           description=('Define the allowed difference '
                        'between recovered and input '
                        'airmass'))
 
 # define the sigma cut for tellu transmission model
-CDict.add('TELLU_TRANS_MODEL_SIG', value=None,
+CDict.add('TRANSMODEL_SIG', value=None,
           dtype=float, source=__NAME__, group=cgroup,
           description=('define the sigma cut for tellu '
                        'transmission model'))
@@ -3926,7 +3926,7 @@ CDict.add_group(cgroup, description='OBJECT.FIT_TELLURIC: '
 
 #   Define the order to use for SNR check when accepting tellu files
 #      to the telluDB
-CDict.add('FTELLU_QC_SNR_ORDER', value=None, dtype=int,
+CDict.add('QC_SNR_ORDER', value=None, dtype=int,
           source=__NAME__, minimum=0, group=cgroup,
           description=('Define the order to use for SNR '
                        'check when accepting tellu files '
@@ -3934,14 +3934,14 @@ CDict.add('FTELLU_QC_SNR_ORDER', value=None, dtype=int,
 
 #  Define the minimum SNR for order "QC_TELLU_SNR_ORDER" that will be
 #      accepted to the telluDB
-CDict.add('FTELLU_QC_SNR_MIN', value=None, dtype=float,
+CDict.add('QC_SNR_MIN', value=None, dtype=float,
           source=__NAME__, minimum=0.0, group=cgroup,
           description=('Define the minimum SNR for order '
                        '"QC_TELLU_SNR_ORDER" that will be '
                        'accepted to the telluDB'))
 
 # The number of principle components to use in PCA fit
-CDict.add('FTELLU_NUM_PRINCIPLE_COMP', value=None,
+CDict.add('NUM_PCA', value=None,
           dtype=int, source=__NAME__, minimum=1,
           user=True, active=False, group=cgroup,
           description='The number of principle '
@@ -3949,7 +3949,7 @@ CDict.add('FTELLU_NUM_PRINCIPLE_COMP', value=None,
 
 # The number of transmission files to use in the PCA fit (use this number of
 #    trans files closest in expo_H2O and expo_water
-CDict.add('FTELLU_NUM_TRANS', value=None, dtype=int,
+CDict.add('NUM_TRANS', value=None, dtype=int,
           source=__NAME__, minimum=1,
           user=True, active=False, group=cgroup,
           description='The number of transmission files to use '
@@ -3961,7 +3961,7 @@ CDict.add('FTELLU_NUM_TRANS', value=None, dtype=int,
 #     principal components this allows a variable resolution and velocity
 #     offset of the PCs this is performed in the pixel space and NOT the
 #     velocity space as this is should be due to an instrument shift
-CDict.add('FTELLU_ADD_DERIV_PC', value=None, dtype=bool,
+CDict.add('ADD_DERIV_PCA', value=None, dtype=bool,
           source=__NAME__, user=True, active=False,
           group=cgroup,
           description='Define whether to add the first '
@@ -3974,7 +3974,7 @@ CDict.add('FTELLU_ADD_DERIV_PC', value=None, dtype=bool,
                       'due to an instrument shift')
 
 # Define whether to fit the derivatives instead of the principal components
-CDict.add('FTELLU_FIT_DERIV_PC', value=None, dtype=bool,
+CDict.add('FIT_DERIV_PCA', value=None, dtype=bool,
           source=__NAME__, user=True, active=False,
           group=cgroup,
           description='Define whether to fit the derivatives '
@@ -3982,7 +3982,7 @@ CDict.add('FTELLU_FIT_DERIV_PC', value=None, dtype=bool,
 
 # The number of pixels required (per order) to be able to interpolate the
 #    template on to a berv shifted wavelength grid
-CDict.add('FTELLU_FIT_KEEP_NUM', value=None, dtype=int,
+CDict.add('FIT_KEEP_NUM', value=None, dtype=int,
           source=__NAME__, group=cgroup,
           description=('The number of pixels required (per '
                        'order) to be able to interpolate the '
@@ -3991,7 +3991,7 @@ CDict.add('FTELLU_FIT_KEEP_NUM', value=None, dtype=int,
 
 # The minimium transmission allowed to define good pixels (for reconstructed
 #    absorption calculation)
-CDict.add('FTELLU_FIT_MIN_TRANS', value=None, dtype=float,
+CDict.add('FIT_MIN_TRANS', value=None, dtype=float,
           source=__NAME__, group=cgroup,
           description=('The minimium transmission allowed '
                        'to define good pixels (for '
@@ -4000,7 +4000,7 @@ CDict.add('FTELLU_FIT_MIN_TRANS', value=None, dtype=float,
 
 # The minimum wavelength constraint (in nm) to calculate reconstructed
 #     absorption
-CDict.add('FTELLU_LAMBDA_MIN', value=None, dtype=float,
+CDict.add('LAMBDA_MIN', value=None, dtype=float,
           source=__NAME__, group=cgroup,
           description=('The minimum wavelength constraint '
                        '(in nm) to calculate reconstructed '
@@ -4008,42 +4008,42 @@ CDict.add('FTELLU_LAMBDA_MIN', value=None, dtype=float,
 
 # The maximum wavelength constraint (in nm) to calculate reconstructed
 #     absorption
-CDict.add('FTELLU_LAMBDA_MAX', value=None, dtype=float,
+CDict.add('LAMBDA_MAX', value=None, dtype=float,
           source=__NAME__, group=cgroup,
           description=('The maximum wavelength constraint '
                        '(in nm) to calculate reconstructed '
                        'absorption'))
 
 # The gaussian kernel used to smooth the template and residual spectrum [km/s]
-CDict.add('FTELLU_KERNEL_VSINI', value=None, dtype=float,
+CDict.add('KERNEL_VSINI', value=None, dtype=float,
           source=__NAME__, group=cgroup,
           description=('The gaussian kernel used to smooth '
                        'the template and residual spectrum '
                        '[km/s]'))
 
 # The number of iterations to use in the reconstructed absorption calculation
-CDict.add('FTELLU_FIT_ITERS', value=None, dtype=int,
+CDict.add('FIT_ITERS', value=None, dtype=int,
           source=__NAME__, group=cgroup,
           description=('The number of iterations to use in the '
                        'reconstructed absorption calculation'))
 
 # The minimum log absorption the is allowed in the molecular absorption
 #     calculation
-CDict.add('FTELLU_FIT_RECON_LIMIT', value=None,
+CDict.add('FIT_RECON_LIM', value=None,
           dtype=float, source=__NAME__, group=cgroup,
           description=('The minimum log absorption the is '
                        'allowed in the molecular '
                        'absorption calculation'))
 
 # Define the orders to plot (not too many) for recon abso plot
-CDict.add('FTELLU_PLOT_ORDER_NUMS', value=None,
+CDict.add('PLOT_ORDER_NUMS', value=None,
           dtype=list, dtypei=int,
           source=__NAME__, group=cgroup,
           description=('Define the orders to plot (not '
                        'too many) for recon abso plot '))
 
 # Define the selected fit telluric order for debug plots (when not in loop)
-CDict.add('FTELLU_SPLOT_ORDER', value=None,
+CDict.add('SPLOT_ORDER', value=None,
           dtype=int, source=__NAME__, group=cgroup,
           description=('Define the selected fit telluric '
                        'order for debug plots (when not in '
@@ -4058,7 +4058,7 @@ CDict.add_group(cgroup, description='OBJECT.MAKE_TEMPLATE: '
 
 # the OUTPUT type (KW_OUTPUT header key) and DrsFitsFile name required for
 #   input template files
-CDict.add('TELLURIC_FILETYPE', value=None, dtype=str,
+CDict.add('FILETYPE', value=None, dtype=str,
           source=__NAME__, user=True, active=False,
           group=cgroup,
           description='the OUTPUT type (KW_OUTPUT header key) '
@@ -4066,7 +4066,7 @@ CDict.add('TELLURIC_FILETYPE', value=None, dtype=str,
                       'template files')
 
 # the fiber required for input template files
-CDict.add('TELLURIC_FIBER_TYPE', value=None, dtype=str,
+CDict.add('FIBER_TYPE', value=None, dtype=str,
           source=__NAME__, user=True, active=False,
           group=cgroup,
           description='the fiber required for input '
@@ -4074,7 +4074,7 @@ CDict.add('TELLURIC_FIBER_TYPE', value=None, dtype=str,
 
 # the OUTPUT type (KW_OUTPUT header key) and DrsFitsFile name required for
 #   input template files
-CDict.add('MKTEMPLATE_FILETYPE', value=None, dtype=str,
+CDict.add('FILETYPE', value=None, dtype=str,
           source=__NAME__, user=True, active=False,
           group=cgroup,
           description='the OUTPUT type (KW_OUTPUT header '
@@ -4082,28 +4082,28 @@ CDict.add('MKTEMPLATE_FILETYPE', value=None, dtype=str,
                       'for input template files')
 
 # the fiber required for input template files
-CDict.add('MKTEMPLATE_FIBER_TYPE', value=None, dtype=str,
+CDict.add('FIBER_TYPE', value=None, dtype=str,
           source=__NAME__, user=True, active=False,
           group=cgroup,
           description='the fiber required for input '
                       'template files')
 
 # the order to use for signal to noise cut requirement
-CDict.add('MKTEMPLATE_FILESOURCE', value=None, dtype=str,
+CDict.add('FILESOURCE', value=None, dtype=str,
           source=__NAME__, group=cgroup,
           options=['telludb', 'disk'],
           description=('the order to use for signal to '
                        'noise cut requirement'))
 
 # the order to use for signal to noise cut requirement
-CDict.add('MKTEMPLATE_SNR_ORDER', value=None, dtype=int,
+CDict.add('SNR_ORDER', value=None, dtype=int,
           source=__NAME__, minimum=0, group=cgroup,
           description=('the order to use for signal to '
                        'noise cut requirement'))
 
 # The number of iterations to filter low frequency noise before medianing
 #   the template "big cube" to the final template spectrum
-CDict.add('MKTEMPLATE_E2DS_ITNUM', value=None, dtype=int,
+CDict.add('E2DS_ITNUM', value=None, dtype=int,
           source=__NAME__, minimum=1, group=cgroup,
           description=('The number of iterations to filter '
                        'low frequency noise before '
@@ -4112,7 +4112,7 @@ CDict.add('MKTEMPLATE_E2DS_ITNUM', value=None, dtype=int,
 
 # The size (in pixels) to filter low frequency noise before medianing
 #   the template "big cube" to the final template spectrum
-CDict.add('MKTEMPLATE_E2DS_LOWF_SIZE', value=None,
+CDict.add('E2DS_LOWF_SIZE', value=None,
           dtype=int, source=__NAME__, minimum=1,
           group=cgroup,
           description=('The size (in pixels) to filter '
@@ -4123,7 +4123,7 @@ CDict.add('MKTEMPLATE_E2DS_LOWF_SIZE', value=None,
 
 # The number of iterations to filter low frequency noise before medianing
 #   the s1d template "big cube" to the final template spectrum
-CDict.add('MKTEMPLATE_S1D_ITNUM', value=None, dtype=int,
+CDict.add('S1D_ITNUM', value=None, dtype=int,
           source=__NAME__, minimum=1, group=cgroup,
           description=('The number of iterations to filter '
                        'low frequency noise before '
@@ -4133,7 +4133,7 @@ CDict.add('MKTEMPLATE_S1D_ITNUM', value=None, dtype=int,
 
 # The size (in pixels) to filter low frequency noise before medianing
 #   the s1d template "big cube" to the final template spectrum
-CDict.add('MKTEMPLATE_S1D_LOWF_SIZE', value=None,
+CDict.add('S1D_LOWF_SIZE', value=None,
           dtype=int, source=__NAME__, minimum=1,
           group=cgroup,
           description=('The size (in pixels) to filter '
@@ -4144,7 +4144,7 @@ CDict.add('MKTEMPLATE_S1D_LOWF_SIZE', value=None,
 
 # Define the minimum allowed berv coverage to construct a template
 #   in km/s  (default is double the resolution in km/s)
-CDict.add('MKTEMPLATE_BERVCOR_QCMIN', value=None,
+CDict.add('BERVCOR_QCMIN', value=None,
           dtype=float, source=__NAME__, minimum=0.0,
           group=cgroup,
           description=('Define the minimum allowed berv '
@@ -4154,7 +4154,7 @@ CDict.add('MKTEMPLATE_BERVCOR_QCMIN', value=None,
                        'km/s)'))
 
 # Define the core SNR in order to calculate required BERV coverage
-CDict.add('MKTEMPLATE_BERVCOV_CSNR', value=None,
+CDict.add('BERVCOV_CSNR', value=None,
           dtype=float, source=__NAME__, minimum=0.0,
           group=cgroup,
           description=('Define the core SNR in order to '
@@ -4162,7 +4162,7 @@ CDict.add('MKTEMPLATE_BERVCOV_CSNR', value=None,
                        'coverage'))
 
 # Define the resolution in km/s for calculating BERV coverage
-CDict.add('MKTEMPLATE_BERVCOV_RES', value=None,
+CDict.add('BERVCOV_RES', value=None,
           dtype=float, source=__NAME__, minimum=0.0,
           group=cgroup,
           description=('Defome the resolution in km/s for '
@@ -4170,7 +4170,7 @@ CDict.add('MKTEMPLATE_BERVCOV_RES', value=None,
 
 # Define whether to run template making in debug mode (do not bin the
 #   data when medianing)
-CDict.add('MKTEMPLATE_DEBUG_MODE', value=False,
+CDict.add('DEBUG_MODE', value=False,
           dtype=bool, source=__NAME__,
           group=cgroup,
           description='Define whether to run template '
@@ -4179,7 +4179,7 @@ CDict.add('MKTEMPLATE_DEBUG_MODE', value=False,
 
 # Define the max number of files to be allowed into a bin (if not in debug
 #   mode)
-CDict.add('MKTEMPLATE_MAX_OPEN_FILES', value=50,
+CDict.add('MAX_OPEN_FILES', value=50,
           dtype=int, source=__NAME__, minimum=1,
           group=cgroup,
           description='Define the max number of files '
@@ -4188,7 +4188,7 @@ CDict.add('MKTEMPLATE_MAX_OPEN_FILES', value=50,
 
 # Define the fwhm of hot star convolution kernel size in km/s so it is half
 #     the minimum v sin i of our hot stars
-CDict.add('MKTEMPLATE_HOTSTAR_KER_VEL', value=None,
+CDict.add('HOTSTAR_KER_VEL', value=None,
           dtype=float, source=__NAME__, group=cgroup,
           description='Define the fwhm of hot star '
                       'convolution kernel size in '
@@ -4198,7 +4198,7 @@ CDict.add('MKTEMPLATE_HOTSTAR_KER_VEL', value=None,
 
 # Define the threshold for the Lucy-Richardson deconvolution steps. This is
 #    the maximum  value of the 99th percentile of the feed-back term
-CDict.add('MKTEMPLATE_DECONV_ITR_THRES', value=None,
+CDict.add('DECONV_ITR_THRES', value=None,
           dtype=float, source=__NAME__, minimum=0,
           group=cgroup,
           description='Define the threshold for the '
@@ -4209,7 +4209,7 @@ CDict.add('MKTEMPLATE_DECONV_ITR_THRES', value=None,
 
 # Define the max number of iterations to run if the iteration threshold
 #     is not met
-CDict.add('MKTEMPLATE_DECONV_ITR_MAX', value=None,
+CDict.add('DECONV_ITR_MAX', value=None,
           dtype=float, source=__NAME__, minimum=0,
           group=cgroup,
           description='Define the max number of '
@@ -4225,24 +4225,24 @@ CDict.add_group(cgroup, description='OBJECT.CCF: '
                                     'OBJECT: CCF SETTINGS')
 
 # Define the ccf mask path
-CDict.add('CCF_MASK_PATH', value=None, dtype=str, source=__NAME__,
+CDict.add('MASK_PATH', value=None, dtype=str, source=__NAME__,
           group=cgroup, description='Define the ccf mask path')
 
 # Define the TEFF mask table for when CCF_DEFAULT_MASK is TEFF
-CDict.add('CCF_TEFF_MASK_TABLE', value=None, dtype=str,
+CDict.add('TEFF_MASK_TABLE', value=None, dtype=str,
           source=__NAME__, group=cgroup,
           description='# Define the TEFF mask table for '
                       'when CCF_DEFAULT_MASK is TEFF')
 
 # Define target rv the null value for CCF (only change if changing code)
-CDict.add('CCF_NO_RV_VAL', value=np.nan, dtype=float,
+CDict.add('NO_RV_VAL', value=np.nan, dtype=float,
           source=__NAME__, group=cgroup,
           description=('Define target rv the null value for CCF'
                        ' (only change if changing code)'))
 
 # Define target rv header null value
 #     (values greater than absolute value are set to zero)
-CDict.add('OBJRV_NULL_VAL', value=1000, dtype=float,
+CDict.add('RV_NULL_VAL', value=1000, dtype=float,
           source=__NAME__, group=cgroup,
           description=('Define target rv header null value '
                        '(values greater than absolute value '
@@ -4250,7 +4250,7 @@ CDict.add('OBJRV_NULL_VAL', value=1000, dtype=float,
 
 # Define the default CCF MASK to use (filename or TEFF to decide based on
 #    object temperature) - for TEFF setup see CCF_TEFF_MASK_TABLE file
-CDict.add('CCF_DEFAULT_MASK', value=None, dtype=str,
+CDict.add('DEFAULT_MASK', value=None, dtype=str,
           source=__NAME__, user=True, active=False,
           group=cgroup,
           description='Define the default CCF MASK to use '
@@ -4263,12 +4263,12 @@ CDict.add('CCF_DEFAULT_MASK', value=None, dtype=str,
 #     'None'         for no normalization
 #     'all'          for normalization across all orders
 #     'order'        for normalization for each order
-CDict.add('CCF_MASK_NORMALIZATION', value=None,
+CDict.add('MASK_NORM', value=None,
           dtype=str, options=['None', 'all', 'order'],
           source=__NAME__, group=cgroup)
 
 # Define the wavelength units for the mask
-CDict.add('CCF_MASK_UNITS', value=None, dtype=str,
+CDict.add('MASK_UNITS', value=None, dtype=str,
           source=__NAME__,
           options=['AA', 'Angstrom', 'nm', 'nanometer', 'um',
                    'micron', 'mm', 'millimeter', 'cm',
@@ -4277,20 +4277,20 @@ CDict.add('CCF_MASK_UNITS', value=None, dtype=str,
           description='Define the wavelength units for the mask')
 
 # Define the CCF mask format (must be an astropy.table format)
-CDict.add('CCF_MASK_FMT', value=None, dtype=str, source=__NAME__,
+CDict.add('MASK_FMT', value=None, dtype=str, source=__NAME__,
           group=cgroup)
 
 #  Define the weight of the CCF mask (if 1 force all weights equal)
-CDict.add('CCF_MASK_MIN_WEIGHT', value=None, dtype=float,
+CDict.add('MASK_MIN_WEIGHT', value=None, dtype=float,
           source=__NAME__, minimum=0.0, group=cgroup)
 
 #  Define the width of the template line (if 0 use natural)
-CDict.add('CCF_MASK_WIDTH', value=None, dtype=float,
+CDict.add('MASK_WID', value=None, dtype=float,
           source=__NAME__, minimum=0.0, group=cgroup)
 
 #  Define the maximum allowed ratio between input CCF STEP and CCF WIDTH
 #     i.e. error will be generated if CCF_STEP > (CCF_WIDTH / RATIO)
-CDict.add('CCF_MAX_CCF_WID_STEP_RATIO', value=None,
+CDict.add('WID_STEP_RATIO', value=None,
           dtype=float, source=__NAME__, minimum=1.0,
           group=cgroup,
           description=('Define the maximum allowed '
@@ -4300,14 +4300,14 @@ CDict.add('CCF_MAX_CCF_WID_STEP_RATIO', value=None,
                        '(CCF_WIDTH / RATIO)'))
 
 # Define the width of the CCF range [km/s]
-CDict.add('CCF_DEFAULT_WIDTH', value=None, dtype=float,
+CDict.add('DEFAULT_WID', value=None, dtype=float,
           source=__NAME__, minimum=0.0,
           user=True, active=False, group=cgroup,
           description='Define the width of the CCF '
                       'range [km/s]')
 
 # Define the computations steps of the CCF [km/s]
-CDict.add('CCF_DEFAULT_STEP', value=None, dtype=float,
+CDict.add('DEFAULT_STEP', value=None, dtype=float,
           source=__NAME__, minimum=0.0,
           user=True, active=False, group=cgroup,
           description='Define the computations steps of'
@@ -4315,25 +4315,25 @@ CDict.add('CCF_DEFAULT_STEP', value=None, dtype=float,
 
 #   The value of the noise for wave dv rms calculation
 #       snr = flux/sqrt(flux + noise^2)
-CDict.add('CCF_NOISE_SIGDET', value=None, dtype=float,
+CDict.add('NOISE_SIGDET', value=None, dtype=float,
           source=__NAME__, minimum=0.0, group=cgroup)
 
 #   The size around a saturated pixel to flag as unusable for wave dv rms
 #      calculation
-CDict.add('CCF_NOISE_BOXSIZE', value=None, dtype=int,
+CDict.add('NOISE_BOXSIZE', value=None, dtype=int,
           source=__NAME__, minimum=0.0, group=cgroup)
 
 #   The maximum flux for a good (unsaturated) pixel for wave dv rms calculation
-CDict.add('CCF_NOISE_THRES', value=None, dtype=float,
+CDict.add('NOISE_THRES', value=None, dtype=float,
           source=__NAME__, minimum=0.0, group=cgroup)
 
 #  Define the number of orders (from zero to ccf_num_orders_max) to use
 #      to calculate the CCF and RV
-CDict.add('CCF_N_ORD_MAX', value=None, dtype=int, source=__NAME__,
+CDict.add('N_ORD_MAX', value=None, dtype=int, source=__NAME__,
           minimum=1, group=cgroup)
 
 # Allowed input DPRTYPES for input for CCF recipe
-CDict.add('CCF_ALLOWED_DPRTYPES', value=None,
+CDict.add('ALLOWED_DPRTYPES', value=None,
           dtype=list, dtypei=str,
           source=__NAME__, user=True, active=False,
           group=cgroup,
@@ -4341,7 +4341,7 @@ CDict.add('CCF_ALLOWED_DPRTYPES', value=None,
                       'for CCF recipe')
 
 # Valid DPRTYPES for FP in calibration fiber
-CDict.add('CCF_VALID_FP_DPRTYPES', value=None,
+CDict.add('VALID_FP_DPRTYPES', value=None,
           dtype=list, dtypei=str,
           source=__NAME__, user=True, active=False,
           group=cgroup,
@@ -4349,7 +4349,7 @@ CDict.add('CCF_VALID_FP_DPRTYPES', value=None,
                       'fiber')
 
 # Define the KW_OUTPUT types that are valid telluric corrected spectra
-CDict.add('CCF_CORRECT_TELLU_TYPES', value=None,
+CDict.add('CORRECT_TELLU_TYPES', value=None,
           dtype=str, source=__NAME__, group=cgroup,
           description=('Define the KW_OUTPUT types that '
                        'are valid telluric corrected '
@@ -4357,7 +4357,7 @@ CDict.add('CCF_CORRECT_TELLU_TYPES', value=None,
 
 # The transmission threshold for removing telluric domain (if and only if
 #     we have a telluric corrected input file
-CDict.add('CCF_TELLU_THRES', value=None, dtype=float,
+CDict.add('TELLU_THRES', value=None, dtype=float,
           source=__NAME__, group=cgroup,
           description=('The transmission threshold for removing '
                        'telluric domain (if and only if we have'
@@ -4365,7 +4365,7 @@ CDict.add('CCF_TELLU_THRES', value=None, dtype=float,
 
 # The half size (in pixels) of the smoothing box used to calculate what value
 #    should replace the NaNs in the E2ds before CCF is calculated
-CDict.add('CCF_FILL_NAN_KERN_SIZE', value=None,
+CDict.add('FILL_NAN_KERN_SIZE', value=None,
           dtype=float, source=__NAME__, group=cgroup,
           description=('The half size (in pixels) of the '
                        'smoothing box used to calculate '
@@ -4375,7 +4375,7 @@ CDict.add('CCF_FILL_NAN_KERN_SIZE', value=None,
 
 # the step size (in pixels) of the smoothing box used to calculate what value
 #   should replace the NaNs in the E2ds before CCF is calculated
-CDict.add('CCF_FILL_NAN_KERN_RES', value=None,
+CDict.add('FILL_NAN_KERN_RES', value=None,
           dtype=float, source=__NAME__, group=cgroup,
           description=('the step size (in pixels) of the '
                        'smoothing box used to calculate '
@@ -4384,7 +4384,7 @@ CDict.add('CCF_FILL_NAN_KERN_RES', value=None,
                        'calculated'))
 
 #  Define the detector noise to use in the ccf
-CDict.add('CCF_DET_NOISE', value=None, dtype=float, source=__NAME__,
+CDict.add('DET_NOISE', value=None, dtype=float, source=__NAME__,
           group=cgroup,
           description=('Define the detector noise to use in '
                        'the ccf'))
@@ -4392,14 +4392,14 @@ CDict.add('CCF_DET_NOISE', value=None, dtype=float, source=__NAME__,
 # Define the fit type for the CCF fit
 #     if 0 then we have an absorption line
 #     if 1 then we have an emission line
-CDict.add('CCF_FIT_TYPE', value=None, dtype=int, source=__NAME__,
+CDict.add('FIT_TYPE', value=None, dtype=int, source=__NAME__,
           options=[0, 1], group=cgroup,
           description=('Define the fit type for the CCF fit if 0 '
                        'then we have an absorption line if 1 then '
                        'we have an emission line'))
 
 # Define the percentile the blaze is normalised by before using in CCF calc
-CDict.add('CCF_BLAZE_NORM_PERCENTILE', value=None,
+CDict.add('BLAZE_NORM_PTILE', value=None,
           dtype=float, source=__NAME__, minimum=0,
           maximum=100, group=cgroup,
           description=('Define the percentile the '
@@ -4407,25 +4407,25 @@ CDict.add('CCF_BLAZE_NORM_PERCENTILE', value=None,
                        'using in CCF calc'))
 
 # Define the minimum number of sigma the peak CCF must have to be acceptable
-CDict.add('CCF_NSIG_THRESHOLD', value=None, dtype=float,
+CDict.add('NSIG_THRES', value=None, dtype=float,
           source=__NAME__, minimum=0, group=cgroup,
           description='Define the minimum number of sigma the '
                       'peak CCF must have to be acceptable')
 
 # Define the minimum number of sigma the FWHM of CCF must have to be acceptable
-CDict.add('CCF_FWHM_SIGCUT', value=None, dtype=float,
+CDict.add('FWHM_SIGCUT', value=None, dtype=float,
           source=__NAME__, minimum=0, group=cgroup,
           description='Define the minimum number of sigma the '
                       'FWHM of CCF must have to be acceptable')
 
 # Define the top cut of the bisector cut (percent)
-CDict.add('CCF_BIS_CUT_TOP', value=None, dtype=float,
+CDict.add('BIS_CUT_TOP', value=None, dtype=float,
           source=__NAME__, minimum=0, group=cgroup,
           description='Define the top cut of the bisector cut '
                       '(percent)')
 
 # Define the bottom cut of the bisector cut (percent)
-CDict.add('CCF_BIS_CUT_BOTTOM', value=None, dtype=float,
+CDict.add('BIS_CUT_BOTTOM', value=None, dtype=float,
           source=__NAME__, minimum=0, group=cgroup,
           description='Define the bottom cut of the bisector'
                       ' cut (percent)')
@@ -4438,26 +4438,26 @@ CDict.add_group(cgroup, description='OBJECT.POLARISATION: '
                                     'OBJECT: POLARISATION SETTINGS')
 
 # Define all possible fibers used for polarimetry
-CDict.add('POLAR_FIBERS', value=None,
+CDict.add('FIBERS', value=None,
           dtype=list, dtypei=str,
           source=__NAME__, group=cgroup,
           description='Define all possible fibers used for '
                       'polarimetry')
 
 # Define all possible stokes parameters
-CDict.add('POLAR_STOKES_PARAMS', value=None,
+CDict.add('STOKES_PARAMS', value=None,
           dtype=list, dtypei=str,
           source=__NAME__, group=cgroup,
           description='Define all possible stokes parameters')
 
 # Whether or not to correct for BERV shift before calculate polarimetry
-CDict.add('POLAR_BERV_CORRECT', value=None, dtype=bool,
+CDict.add('BERV_CORRECT', value=None, dtype=bool,
           source=__NAME__, group=cgroup,
           description='Whether or not to correct for BERV '
                       'shift before calculate polarimetry')
 
 # Whether or not to correct for SOURCE RV shift before calculate polarimetry
-CDict.add('POLAR_SOURCE_RV_CORRECT', value=None,
+CDict.add('SOURCE_RV_CORRECT', value=None,
           dtype=bool, source=__NAME__, group=cgroup,
           description='Whether or not to correct for '
                       'SOURCE RV shift before calculate '
@@ -4467,14 +4467,14 @@ CDict.add('POLAR_SOURCE_RV_CORRECT', value=None,
 #    currently must be either:
 #         - Ratio
 #         - Difference
-CDict.add('POLAR_METHOD', value=None, dtype=str, source=__NAME__,
+CDict.add('METHOD', value=None, dtype=str, source=__NAME__,
           group=cgroup,
           description='Define the polarimetry method currently '
                       'must be either: - Ratio - Difference')
 
 # Whether or not to interpolate flux values to correct for wavelength
 #   shifts between exposures
-CDict.add('POLAR_INTERPOLATE_FLUX', value=None,
+CDict.add('INTERPOLATE_FLUX', value=None,
           dtype=bool, source=__NAME__, group=cgroup,
           description='Whether or not to interpolate flux '
                       'values to correct for wavelength '
@@ -4482,7 +4482,7 @@ CDict.add('POLAR_INTERPOLATE_FLUX', value=None,
 
 # Select stokes I continuum detection algorithm:
 #     'IRAF' or 'MOVING_MEDIAN'
-CDict.add('STOKESI_CONTINUUM_DET_ALG', value=None,
+CDict.add('STOKESI_CONT_DET_ALG', value=None,
           dtype=str, source=__NAME__, group=cgroup,
           options=['IRAF', 'MOVING_MEDIAN'],
           description='Select stokes I continuum '
@@ -4491,7 +4491,7 @@ CDict.add('STOKESI_CONTINUUM_DET_ALG', value=None,
 
 # Select stokes I continuum detection algorithm:
 #     'IRAF' or 'MOVING_MEDIAN'
-CDict.add('POLAR_CONTINUUM_DET_ALG', value=None,
+CDict.add('CONT_DEL_ALG', value=None,
           dtype=str, source=__NAME__, group=cgroup,
           options=['IRAF', 'MOVING_MEDIAN'],
           description='Select stokes I continuum '
@@ -4499,19 +4499,19 @@ CDict.add('POLAR_CONTINUUM_DET_ALG', value=None,
                       'IRAF or MOVING_MEDIAN')
 
 # Normalize Stokes I (True or False)
-CDict.add('POLAR_NORMALIZE_STOKES_I', value=None,
+CDict.add('NORM_STOKES_I', value=None,
           dtype=bool, source=__NAME__, group=cgroup,
           description='Normalize Stokes I (True or '
                       'False)')
 
 # Remove continuum polarization
-CDict.add('POLAR_REMOVE_CONTINUUM', value=None,
+CDict.add('REMOVE_CONT', value=None,
           dtype=bool, source=__NAME__, group=cgroup,
           description='Remove continuum polarization')
 
 # Apply polarimetric sigma-clip cleanning (Works better if continuum
 #     is removed)
-CDict.add('POLAR_CLEAN_BY_SIGMA_CLIPPING',
+CDict.add('CLEAN_BY_SIGCLIP',
           value=None, dtype=bool, source=__NAME__,
           group=cgroup,
           description='Apply polarimetric sigma-'
@@ -4520,19 +4520,19 @@ CDict.add('POLAR_CLEAN_BY_SIGMA_CLIPPING',
                       'removed)')
 
 # Define number of sigmas within which apply clipping
-CDict.add('POLAR_NSIGMA_CLIPPING', value=None, dtype=float,
+CDict.add('NSIGCLIP', value=None, dtype=float,
           source=__NAME__, group=cgroup,
           description='Define number of sigmas within '
                       'which apply clipping')
 
 # Define the reddest wavelength to use throughout polar code
-CDict.add('POLAR_REDDEST_THRESHOLD', value=None,
+CDict.add('REDDEST_THRES', value=None,
           dtype=float, source=__NAME__, group=cgroup,
           description='Define the reddest wavelength to '
                       'use throughout polar code')
 
 # Define regions where telluric absorption is high
-CDict.add('GET_POLAR_TELLURIC_BANDS', value=None,
+CDict.add('TELLU_BANDS', value=None,
           dtype=list, dtypei=float,
           source=__NAME__, group=cgroup,
           description='Define regions where telluric '
@@ -4560,19 +4560,19 @@ CDict.add_group(cgroup, description='OBJECT.POLAR_POLY_MOVING_MEDIAN: '
                                     'OBJECT: POLAR POLY MOVING MEDIAN SETTINGS')
 
 # Define the polarimetry continuum bin size
-CDict.add('POLAR_CONT_BINSIZE', value=None, dtype=int,
+CDict.add('CONT_BINSIZE', value=None, dtype=int,
           source=__NAME__, group=cgroup,
           description='Define the polarimetry continuum bin '
                       'size')
 # Define the polarimetry continuum overlap size
-CDict.add('POLAR_CONT_OVERLAP', value=None, dtype=int,
+CDict.add('CONT_OVERLAP', value=None, dtype=int,
           source=__NAME__, group=cgroup,
           description='Define the polarimetry continuum '
                       'overlap size')
 
 # Fit polynomial to continuum polarization?
 #    If False it will use a cubic interpolation instead of polynomial fit
-CDict.add('POLAR_CONT_POLYNOMIAL_FIT', value=None,
+CDict.add('CONT_POLYFIT', value=None,
           dtype=bool, source=__NAME__, group=cgroup,
           description='Fit polynomial to continuum '
                       'polarization? If False it will '
@@ -4580,7 +4580,7 @@ CDict.add('POLAR_CONT_POLYNOMIAL_FIT', value=None,
                       'instead of polynomial fit')
 
 # Define degree of polynomial to fit continuum polarization
-CDict.add('POLAR_CONT_DEG_POLYNOMIAL', value=None,
+CDict.add('CONT_POLY_DEG', value=None,
           dtype=int, source=__NAME__, group=cgroup,
           description='Define degree of polynomial to '
                       'fit continuum polarization')
@@ -4594,7 +4594,7 @@ CDict.add_group(cgroup, description='OBJECT.POLAR_IRAF: '
 
 # function to fit to the stokes I continuum: must be 'polynomial' or
 #    'spline3'
-CDict.add('STOKESI_IRAF_CONT_FIT_FUNC', value=None,
+CDict.add('CONT_FITFUNC_STOKESI', value=None,
           dtype=str, options=['polynomial', 'spline3'],
           source=__NAME__, group=cgroup,
           description='function to fit to the stokes '
@@ -4602,7 +4602,7 @@ CDict.add('STOKESI_IRAF_CONT_FIT_FUNC', value=None,
                       'or spline3')
 
 # function to fit to the polar continuum: must be 'polynomial' or 'spline3'
-CDict.add('POLAR_IRAF_CONT_FIT_FUNC', value=None,
+CDict.add('CONT_FITFUNC_POLAR', value=None,
           dtype=str, options=['polynomial', 'spline3'],
           source=__NAME__, group=cgroup,
           description='function to fit to the polar '
@@ -4611,7 +4611,7 @@ CDict.add('POLAR_IRAF_CONT_FIT_FUNC', value=None,
 
 # stokes i continuum fit function order: 'polynomial': degree or 'spline3':
 #    number of knots
-CDict.add('STOKESI_IRAF_CONT_FUNC_ORDER',
+CDict.add('CONT_FUNC_ORDER_STOKESI',
           value=None, dtype=int,
           source=__NAME__, group=cgroup,
           description='polar continuum fit function '
@@ -4620,7 +4620,7 @@ CDict.add('STOKESI_IRAF_CONT_FUNC_ORDER',
 
 # polar continuum fit function order: 'polynomial': degree or 'spline3':
 #    number of knots
-CDict.add('POLAR_IRAF_CONT_FUNC_ORDER',
+CDict.add('CONT_FUNC_ORDER_POLAR',
           value=None, dtype=int,
           source=__NAME__, group=cgroup,
           description='stokes i continuum fit function'
@@ -4635,7 +4635,7 @@ CDict.add_group(cgroup, description='OBJECT.POLAR_LSD: '
                                     'OBJECT: POLAR LSD SETTINGS')
 
 #  Define the spectral lsd mask directory for lsd polar calculations
-CDict.add('POLAR_LSD_DIR', value=None, dtype=str, source=__NAME__,
+CDict.add('LSD_DIR', value=None, dtype=str, source=__NAME__,
           group=cgroup,
           description='Define the spectral lsd mask directory for '
                       'lsd polar calculations')
@@ -4645,7 +4645,7 @@ CDict.add('POLAR_LSD_DIR', value=None, dtype=str, source=__NAME__,
 #     - filekey = 'marcs_t*g
 #  for "t4000_g4.0_m0.00" it should be:
 #     - filekey = 't*_g'
-CDict.add('POLAR_LSD_FILE_KEY',
+CDict.add('LSD_FILE_KEY',
           value=None, dtype=str,
           source=__NAME__, group=cgroup,
           description='Define the file regular expression key '
@@ -4656,20 +4656,20 @@ CDict.add('POLAR_LSD_FILE_KEY',
                       '= t*_g')
 
 # Define minimum lande of lines to be used in the LSD analyis
-CDict.add('POLAR_LSD_MIN_LANDE', value=None, dtype=float,
+CDict.add('LSD_MIN_LANDE', value=None, dtype=float,
           source=__NAME__, group=cgroup,
           description='Define minimum lande of lines to be '
                       'used in the LSD analyis')
 
 # Define maximum lande of lines to be used in the LSD analyis
-CDict.add('POLAR_LSD_MAX_LANDE', value=None, dtype=float,
+CDict.add('LSD_MAX_LANDE', value=None, dtype=float,
           source=__NAME__, group=cgroup,
           description='Define maximum lande of lines to be '
                       'used in the LSD analyis')
 
 # If mask lines are in air-wavelength then they will have to be
 #     converted from air to vacuum
-CDict.add('POLAR_LSD_CCFLINES_AIR_WAVE', value=None,
+CDict.add('LSD_CCFLINES_AIRWAVE', value=None,
           dtype=bool, source=__NAME__, group=cgroup,
           description='If mask lines are in air-'
                       'wavelength then they will '
@@ -4677,47 +4677,47 @@ CDict.add('POLAR_LSD_CCFLINES_AIR_WAVE', value=None,
                       'to vacuum')
 
 # Define minimum line depth to be used in the LSD analyis
-CDict.add('POLAR_LSD_MIN_LINEDEPTH', value=None,
+CDict.add('LSD_MIN_LINEDEPTH', value=None,
           dtype=float, source=__NAME__, group=cgroup,
           description='Define minimum line depth to be '
                       'used in the LSD analyis')
 
 # Define maximum line depth to be used in the LSD analyis
-CDict.add('POLAR_LSD_MAX_LINEDEPTH', value=None,
+CDict.add('LSD_MAX_LINEDEPTH', value=None,
           dtype=float, source=__NAME__, group=cgroup,
           description='Define maximum line depth to be '
                       'used in the LSD analyis')
 
 # Define initial velocity (km/s) for output LSD profile
-CDict.add('POLAR_LSD_V0', value=None, dtype=float, source=__NAME__,
+CDict.add('V0', value=None, dtype=float, source=__NAME__,
           group=cgroup,
           description='Define initial velocity (km/s) for output '
                       'LSD profile')
 
 #  Define final velocity (km/s) for output LSD profile
-CDict.add('POLAR_LSD_VF', value=None, dtype=float, source=__NAME__,
+CDict.add('VF', value=None, dtype=float, source=__NAME__,
           group=cgroup,
           description='Define final velocity (km/s) for output LSD '
                       'profile')
 
 # Define number of points for output LSD profile
-CDict.add('POLAR_LSD_NP', value=None, dtype=int, source=__NAME__,
+CDict.add('NP', value=None, dtype=int, source=__NAME__,
           group=cgroup,
           description='Define number of points for output '
                       'LSD profile')
 
 # Renormalize data before LSD analysis
-CDict.add('POLAR_LSD_NORMALIZE', value=None, dtype=bool,
+CDict.add('NORMALIZE', value=None, dtype=bool,
           source=__NAME__, group=cgroup,
           description='Renormalize data before LSD analysis')
 
 # Remove edges of LSD profile
-CDict.add('POLAR_LSD_REMOVE_EDGES', value=None,
+CDict.add('REMOVE_EDGES', value=None,
           dtype=bool, source=__NAME__, group=cgroup,
           description='Remove edges of LSD profile')
 
 # Define the guess at the resolving power for lsd profile fit
-CDict.add('POLAR_LSD_RES_POWER_GUESS', value=None,
+CDict.add('RES_POWER_GUESS', value=None,
           dtype=float, source=__NAME__, group=cgroup,
           description='Define the guess at the '
                       'resolving power for lsd profile '
@@ -4730,19 +4730,19 @@ cgroup = 'OBJ.LBL'
 CDict.add_group(cgroup, description='OBJECT.LBL: LBL SETTINGS')
 
 # Define the file definition type (DRSOUTID) for LBL input files
-CDict.add('LBL_FILE_DEFS', value=None, dtype=str, source=__NAME__,
+CDict.add('FILE_DEFS', value=None, dtype=str, source=__NAME__,
           user=False, active=True, group=cgroup,
           description='Define the file definition type (DRSOUTID) '
                       'for LBL input files')
 
 # Define the dprtype for science files for LBL
-CDict.add('LBL_DPRTYPES', value=None, dtype=list, dtypei=str,
+CDict.add('DPRTYPES', value=None, dtype=list, dtypei=str,
           source=__NAME__,
           user=False, active=True, group=cgroup,
           description='Define the dprtype for science files for LBL')
 
 # Define the file definition type (DRSOUTID) for lbl input template
-CDict.add('LBL_TEMPLATE_FILE_DEFS', value=None,
+CDict.add('TEMPLATE_FILE_DEFS', value=None,
           dtype=list, dtypei=str,
           source=__NAME__, user=False,
           active=True, group=cgroup,
@@ -4750,7 +4750,7 @@ CDict.add('LBL_TEMPLATE_FILE_DEFS', value=None,
                       '(DRSOUTID) for lbl input template')
 
 # Define the DPRTYPE for simultaneous FP files for lbl input
-CDict.add('LBL_SIM_FP_DPRTYPES', value=None,
+CDict.add('SIM_FP_DPRTYPES', value=None,
           dtype=list, dtypei=str,
           source=__NAME__, user=False, active=True,
           group=cgroup,
@@ -4758,13 +4758,13 @@ CDict.add('LBL_SIM_FP_DPRTYPES', value=None,
                       'FP files for lbl input')
 
 # Define whether the LBL directory should use symlinks
-CDict.add('LBL_SYMLINKS', value=False, dtype=bool, source=__NAME__,
+CDict.add('SYMLINKS', value=False, dtype=bool, source=__NAME__,
           user=True, active=True, group=cgroup,
           description='Define whether the LBL directory should use '
                       'symlinks')
 
 # Define the dictionary of friend and friend teffs for LBL
-CDict.add('LBL_FRIENDS', value=None,
+CDict.add('FRIENDS', value=None,
           dtype=dict, dtypei=int,
           source=__NAME__,
           user=False, active=True, group=cgroup,
@@ -4772,7 +4772,7 @@ CDict.add('LBL_FRIENDS', value=None,
                       'teffs for LBL')
 
 # Define the specific data types (where objname is the data type) for LBL
-CDict.add('LBL_SPECIFIC_DATATYPES', value=None,
+CDict.add('SPECIFIC_DTYPES', value=None,
           dtype=list, dtypei=str,
           source=__NAME__, user=False,
           active=True, group=cgroup,
@@ -4782,7 +4782,7 @@ CDict.add('LBL_SPECIFIC_DATATYPES', value=None,
 
 # Define objnames for which we should recalculate template if it doesn't
 #   exist (must include FP)
-CDict.add('LBL_RECAL_TEMPLATE', value=None,
+CDict.add('RECAL_TEMPLATES', value=None,
           dtype=list, dtypei=str,
           source=__NAME__, user=False, active=True,
           group=cgroup,
@@ -4792,7 +4792,7 @@ CDict.add('LBL_RECAL_TEMPLATE', value=None,
 
 # Define which recipes should skip done files
 #   e.g. LBL_COMPUTE,LBL_COMPILE,LBL_MASK
-CDict.add('LBL_SKIP_DONE', value=None,
+CDict.add('SKIP_DONE', value=None,
           dtype=list, dtypei=str,
           source=__NAME__,
           user=False, active=True, group=cgroup,
@@ -4810,7 +4810,7 @@ CDict.add('LBL_MULTI_OBJLIST', value=None,
                       ' i.e. break in to Ncore chunks ')
 
 # Define the DTEMP gradient files
-CDict.add('LBL_DTEMP', value=None,
+CDict.add('DTEMP', value=None,
           dtype=dict, dtypei=str,
           source=__NAME__, user=False, active=True, group=cgroup,
           description='Define the DTEMP gradient files')
@@ -4822,21 +4822,21 @@ cgroup = 'OBJ.POST'
 CDict.add_group(cgroup, description='OBJECT.POST_PROCESS: POST PROCESS SETTINGS')
 
 # Define whether (by deafult) to clear reduced directory
-CDict.add('POST_CLEAR_REDUCED', value=False,
+CDict.add('CLEAR_RED', value=False,
           dtype=bool, source=__NAME__, user=True, active=True,
           group=cgroup,
           description='Define whether (by deafult) to '
                       'clear reduced directory')
 
 # Define whether (by default) to overwrite post processed files
-CDict.add('POST_OVERWRITE', value=False,
+CDict.add('OVERWRITE', value=False,
           dtype=bool, source=__NAME__, user=True, active=True,
           group=cgroup,
           description='Define whether (by default) to '
                       'overwrite post processed files')
 
 # Define the header keyword store to insert extension comment after
-CDict.add('POST_HDREXT_COMMENT_KEY', value=None,
+CDict.add('HDREXT_COMMKEY', value=None,
           dtype=str, source=__NAME__, user=False,
           active=False, group=cgroup,
           description='Define the header keyword store '
@@ -4852,7 +4852,7 @@ CDict.add_group(cgroup, description='DEBUG.OUTPUT_FILE: '
 
 # Whether to save background debug file (large 0.5 GB per file)
 #   one of these per extraction (lots)
-CDict.add('DEBUG_BACKGROUND_FILE', value=True,
+CDict.add('BCKGRD_FILE', value=True,
           dtype=bool, source=__NAME__,
           user=True, active=False, group=cgroup,
           description='Whether to save background debug '
@@ -4861,7 +4861,7 @@ CDict.add('DEBUG_BACKGROUND_FILE', value=True,
 
 # Whether to save the E2DSLL file (around 0.05 to 0.1 GB per file)
 #   one of these per fiber (lots)
-CDict.add('DEBUG_E2DSLL_FILE', value=True,
+CDict.add('E2DSLL_FILE', value=True,
           dtype=bool, source=__NAME__,
           user=True, active=False, group=cgroup,
           description='Whether to save the E2DSLL file '
@@ -4870,7 +4870,7 @@ CDict.add('DEBUG_E2DSLL_FILE', value=True,
 
 # Whether to save the shape in and out debug files (around 0.1 GB per file)
 #   but only one set of these per night
-CDict.add('DEBUG_SHAPE_FILES', value=True,
+CDict.add('SHAPE_FILES', value=True,
           dtype=bool, source=__NAME__,
           user=True, active=False, group=cgroup,
           description='Whether to save the shape in and '
@@ -4880,7 +4880,7 @@ CDict.add('DEBUG_SHAPE_FILES', value=True,
 
 # Whether to save the uncorrected for FP C fiber leak files
 #      (around 0.01 GB per file) one of these per fiber
-CDict.add('DEBUG_UNCORR_EXT_FILES', value=True,
+CDict.add('UNCORR_EXT_FILES', value=True,
           dtype=bool, source=__NAME__,
           user=True, active=False, group=cgroup,
           description='Whether to save the uncorrected '
@@ -4895,72 +4895,72 @@ cgroup = 'DEBUG.PLOT'
 CDict.add_group(cgroup, description='DEBUG.PLOT: DEBUG PLOT SETTINGS')
 
 # turn on dark image region debug plot
-CDict.add('PLOT_DARK_IMAGE_REGIONS', value=False,
+CDict.add('DARK_IMAGE_REGIONS', value=False,
           dtype=bool, source=__NAME__,
           user=True, active=False, group=cgroup,
           description='turn on dark image region '
                       'debug plot')
 
 # turn on dark histogram debug plot
-CDict.add('PLOT_DARK_HISTOGRAM', value=False, dtype=bool,
+CDict.add('DARK_HISTOGRAM', value=False, dtype=bool,
           source=__NAME__, user=True, active=False,
           group=cgroup,
           description='turn on dark histogram debug plot')
 
 # turn on badpix map debug plot
-CDict.add('PLOT_BADPIX_MAP', value=False, dtype=bool,
+CDict.add('BADPIX_MAP', value=False, dtype=bool,
           source=__NAME__, user=True, active=False,
           group=cgroup,
           description='turn on badpix map debug plot')
 
 # turn on localisation the width regions plot
-CDict.add('PLOT_LOC_WIDTH_REGIONS', value=False,
+CDict.add('LOC_WIDTH_REGIONS', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on localisation the width '
                       'regions plot')
 
 # turn on localisation fiber doublet paroty plot
-CDict.add('PLOT_LOC_FIBER_DOUBLET_PARITY',
+CDict.add('LOC_FIBER_DOUBLET_PARITY',
           value=False, dtype=bool, source=__NAME__,
           user=True, active=False, group=cgroup,
           description='turn on localisation fiber '
                       'doublet paroty plot')
 
 # turn on localisation gap in orders plot
-CDict.add('PLOT_LOC_GAP_ORDERS', value=False, dtype=bool,
+CDict.add('LOC_GAP_ORDERS', value=False, dtype=bool,
           source=__NAME__, user=True, active=False,
           group=cgroup,
           description='turn on localisation gap in orders '
                       'plot')
 
 # turn on localisation image fit plot
-CDict.add('PLOT_LOC_IMAGE_FIT', value=False, dtype=bool,
+CDict.add('LOC_IMAGE_FIT', value=False, dtype=bool,
           source=__NAME__, user=True, active=False,
           group=cgroup,
           description='turn on localisation image fit plot')
 
 # turn on localisation image corners plot
-CDict.add('PLOT_LOC_IM_CORNER', value=False, dtype=bool,
+CDict.add('LOG_IM_CORNER', value=False, dtype=bool,
           source=__NAME__, user=True, active=False,
           group=cgroup,
           description='turn on localisation image corners '
                       'plot')
 
 # turn on localisation image regions plot
-CDict.add('PLOT_LOC_IM_REGIONS', value=False, dtype=bool,
+CDict.add('LOC_IM_REGIONS', value=False, dtype=bool,
           source=__NAME__, user=True, active=False,
           group=cgroup,
           description='turn on localisation image regions '
                       'plot')
 
 # turn on the shape dx debug plot
-CDict.add('PLOT_SHAPE_DX', value=False, dtype=bool, source=__NAME__,
+CDict.add('SHAPE_DX', value=False, dtype=bool, source=__NAME__,
           user=True, active=False, group=cgroup,
           description='turn on the shape dx debug plot')
 
 # turn on the shape angle offset (all orders in loop) debug plot
-CDict.add('PLOT_SHAPE_ANGLE_OFFSET_ALL', value=False,
+CDict.add('SHAPE_ANGLE_OFFSET_ALL', value=False,
           dtype=bool, source=__NAME__,
           user=True, active=False, group=cgroup,
           description='turn on the shape angle '
@@ -4968,34 +4968,34 @@ CDict.add('PLOT_SHAPE_ANGLE_OFFSET_ALL', value=False,
                       'debug plot')
 
 # turn on the shape angle offset (one selected order) debug plot
-CDict.add('PLOT_SHAPE_ANGLE_OFFSET', value=False,
+CDict.add('SHAPE_ANGLE_OFFSET', value=False,
           dtype=bool, source=__NAME__,
           user=True, active=False, group=cgroup,
           description='turn on the shape angle offset '
                       '(one selected order) debug plot')
 
 # turn on the shape local zoom plot
-CDict.add('PLOT_SHAPEL_ZOOM_SHIFT', value=False,
+CDict.add('SHAPEL_ZOOM_SHIFT', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the shape local zoom plot')
 
 # turn on the shape linear transform params plot
-CDict.add('PLOT_SHAPE_LINEAR_TPARAMS', value=False,
+CDict.add('SHAPE_LINEAR_TPARAMS', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the shape linear '
                       'transform params plot')
 
 # turn on the flat order fit edges debug plot (loop)
-CDict.add('PLOT_FLAT_ORDER_FIT_EDGES1', value=False,
+CDict.add('FLAT_ORDER_FIT_EDGES1', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the flat order fit '
                       'edges debug plot (loop)')
 
 # turn on the flat order fit edges debug plot (selected order)
-CDict.add('PLOT_FLAT_ORDER_FIT_EDGES2', value=False,
+CDict.add('FLAT_ORDER_FIT_EDGES2', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the flat order fit '
@@ -5003,28 +5003,28 @@ CDict.add('PLOT_FLAT_ORDER_FIT_EDGES2', value=False,
                       'order)')
 
 # turn on the flat blaze order debug plot (loop)
-CDict.add('PLOT_FLAT_BLAZE_ORDER1', value=False,
+CDict.add('FLAT_BLAZE_ORDER1', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the flat blaze order '
                       'debug plot (loop)')
 
 # turn on the flat blaze order debug plot (selected order)
-CDict.add('PLOT_FLAT_BLAZE_ORDER2', value=False,
+CDict.add('FLAT_BLAZE_ORDER2', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the flat blaze order debug '
                       'plot (selected order)')
 
 # turn on thermal background (in extract) debug plot
-CDict.add('PLOT_THERMAL_BACKGROUND', value=False,
+CDict.add('THERMAL_BACKGROUND', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on thermal background '
                       '(in extract) debug plot')
 
 # turn on the extraction spectral order debug plot (loop)
-CDict.add('PLOT_EXTRACT_SPECTRAL_ORDER1',
+CDict.add('EXTRACT_SPECTRAL_ORDER1',
           value=False, dtype=bool, source=__NAME__,
           user=True, active=False, group=cgroup,
           description='turn on the extraction '
@@ -5032,7 +5032,7 @@ CDict.add('PLOT_EXTRACT_SPECTRAL_ORDER1',
                       '(loop)')
 
 # turn on the extraction spectral order debug plot (selected order)
-CDict.add('PLOT_EXTRACT_SPECTRAL_ORDER2',
+CDict.add('EXTRACT_SPECTRAL_ORDER2',
           value=False, dtype=bool, source=__NAME__,
           user=True, active=False, group=cgroup,
           description='turn on the extraction '
@@ -5040,46 +5040,46 @@ CDict.add('PLOT_EXTRACT_SPECTRAL_ORDER2',
                       '(selected order)')
 
 # turn on the extraction 1d spectrum debug plot
-CDict.add('PLOT_EXTRACT_S1D', value=False, dtype=bool,
+CDict.add('EXTRACT_S1D', value=False, dtype=bool,
           source=__NAME__, user=True, active=False, group=cgroup,
           description='turn on the extraction 1d spectrum'
                       ' debug plot')
 
 # turn on the extraction 1d spectrum weight (before/after) debug plot
-CDict.add('PLOT_EXTRACT_S1D_WEIGHT', value=False,
+CDict.add('EXTRACT_S1D_WEIGHT', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the extraction 1d spectrum'
                       ' weight (before/after) debug plot')
 
 # turn on the wave line fiber comparison plot
-CDict.add('PLOT_WAVE_FIBER_COMPARISON', value=False,
+CDict.add('WAVE_FIBER_COMPARISON', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the wave line fiber '
                       'comparison plot')
 
 # turn on the wave line fiber comparison plot
-CDict.add('PLOT_WAVE_FIBER_COMP', value=False,
+CDict.add('WAVE_FIBER_COMP', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the wave line fiber comparison plot')
 
 # turn on the wave length vs cavity width plot
-CDict.add('PLOT_WAVE_WL_CAV', value=False,
+CDict.add('WAVE_WL_CAV', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the wave length vs cavity width plot')
 
 # turn on the wave length vs cavity width plot
-CDict.add('PLOT_WAVE_WL_CAV_PLOT', value=False,
+CDict.add('WL_CAV_PLOT', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the wave length vs cavity '
                       'width plot')
 
 # turn on the wave diff HC histograms plot
-CDict.add('PLOT_WAVE_HC_DIFF_HIST', value=False,
+CDict.add('WAVE_HC_DIFF_HIST', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the wave diff HC histograms plot')
@@ -5087,49 +5087,49 @@ CDict.add('PLOT_WAVE_HC_DIFF_HIST', value=False,
 # TODO: WAVE plots need sorting
 
 # turn on the wave solution hc guess debug plot (in loop)
-CDict.add('PLOT_WAVE_HC_GUESS', value=False,
+CDict.add('WAVE_HC_GUESS', value=False,
           dtype=bool, source=__NAME__, user=True, active=False,
           group=cgroup,
           description='turn on the wave solution hc guess '
                       'debug plot (in loop)')
 
 # turn on the wave solution hc brightest lines debug plot
-CDict.add('PLOT_WAVE_HC_BRIGHTEST_LINES',
+CDict.add('WAVE_HC_BRIGHTEST_LINES',
           value=False, dtype=bool, source=__NAME__,
           user=True, active=False, group=cgroup,
           description='turn on the wave solution hc '
                       'brightest lines debug plot')
 
 # turn on the wave solution hc triplet fit grid debug plot
-CDict.add('PLOT_WAVE_HC_TFIT_GRID', value=False,
+CDict.add('WAVE_HC_TFIT_GRID', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the wave solution hc '
                       'triplet fit grid debug plot')
 
 # turn on the wave solution hc resolution map debug plot
-CDict.add('PLOT_WAVE_RESMAP', value=False,
+CDict.add('WAVE_RESMAP', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the wave solution hc '
                       'resolution map debug plot')
 
 # turn on the wave solution hc resolution map debug plot
-CDict.add('PLOT_WAVE_HC_RESMAP', value=False,
+CDict.add('WAVE_HC_RESMAP', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the wave solution hc '
                       'resolution map debug plot')
 
 # turn on the wave solution littrow check debug plot
-CDict.add('PLOT_WAVE_LITTROW_CHECK1', value=False,
+CDict.add('WAVE_LITTROW_CHECK1', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the wave solution littrow'
                       ' check debug plot')
 
 # turn on the wave solution littrow extrapolation debug plot
-CDict.add('PLOT_WAVE_LITTROW_EXTRAP1', value=False,
+CDict.add('WAVE_LITTROW_EXTRAP1', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the wave solution '
@@ -5137,14 +5137,14 @@ CDict.add('PLOT_WAVE_LITTROW_EXTRAP1', value=False,
                       'debug plot')
 
 # turn on the wave solution littrow check debug plot
-CDict.add('PLOT_WAVE_LITTROW_CHECK2', value=False,
+CDict.add('WAVE_LITTROW_CHECK2', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the wave solution '
                       'littrow check debug plot')
 
 # turn on the wave solution littrow extrapolation debug plot
-CDict.add('PLOT_WAVE_LITTROW_EXTRAP2', value=False,
+CDict.add('WAVE_LITTROW_EXTRAP2', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the wave solution '
@@ -5152,14 +5152,14 @@ CDict.add('PLOT_WAVE_LITTROW_EXTRAP2', value=False,
                       'plot')
 
 # turn on the wave solution final fp order debug plot
-CDict.add('PLOT_WAVE_FP_FINAL_ORDER', value=False,
+CDict.add('WAVE_FP_FINAL_ORDER', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the wave solution final '
                       'fp order debug plot')
 
 # turn on the wave solution fp local width offset debug plot
-CDict.add('PLOT_WAVE_FP_LWID_OFFSET', value=False,
+CDict.add('WAVE_FP_LWID_OFFSET', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the wave solution fp '

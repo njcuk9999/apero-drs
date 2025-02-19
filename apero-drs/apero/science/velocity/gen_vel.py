@@ -470,14 +470,14 @@ def get_ccf_teff_mask(params: ParamDict,
     # get parameters from params/kwargs
     assetdir = pcheck(params, 'PATH.ASSETS', func=func_name,
                       override=assetsdir)
-    relfolder = pcheck(params, 'CCF_MASK_PATH', func=func_name,
+    relfolder = pcheck(params, 'OBJ.CCF.MASK_PATH', func=func_name,
                        override=mask_dir)
     # get temperature header key
     teff_key = params['KW_DRS_TEFF'][0]
     # get teff mask file
     teff_masks_file = params['CCF_TEFF_MASK_TABLE']
     # get teff mask datatype
-    teff_masks_fmt = params.instances['CCF_TEFF_MASK_TABLE'].datatype
+    teff_masks_fmt = params.instances['OBJ.CCF.TEFF_MASK_TABLE'].datatype
     # get temperature from header
     if teff_key in header:
         teff = float(header[teff_key])
@@ -618,7 +618,7 @@ def delta_v_rms_2d(spe, wave, sigdet, threshold, size):
 def remove_telluric_domain(params, infile, fiber, **kwargs):
     func_name = __NAME__ + '.remove_telluric_domain()'
     # get parameters from params/kwargs
-    ccf_tellu_thres = pcheck(params, 'CCF_TELLU_THRES', 'ccf_tellu_thres',
+    ccf_tellu_thres = pcheck(params, 'OBJ.CCF.TELLU_THRES', 'ccf_tellu_thres',
                              kwargs, func_name)
     # get the image
     image = infile.get_data(copy=True)
@@ -663,9 +663,9 @@ def remove_telluric_domain(params, infile, fiber, **kwargs):
 def fill_e2ds_nans(params, image, **kwargs):
     func_name = __NAME__ + '.fill_e2ds_nans()'
     # get parameters from params/kwargs
-    kernel_size = pcheck(params, 'CCF_FILL_NAN_KERN_SIZE', 'kernel_size',
+    kernel_size = pcheck(params, 'OBJ.CCF.FILL_NAN_KERN_SIZE', 'kernel_size',
                          kwargs, func_name)
-    kernel_res = pcheck(params, 'CCF_FILL_NAN_KERN_RES', 'kernel_res',
+    kernel_res = pcheck(params, 'OBJ.CCF.FILL_NAN_KERN_RES', 'kernel_res',
                         kwargs, func_name)
     # check whether we have NaNs
     if np.sum(np.isnan(image)) == 0:
@@ -707,22 +707,22 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
                         fiber, **kwargs):
     func_name = __NAME__ + '.compute_ccf()'
     # get parameters from params/kwargs
-    noise_sigdet = pcheck(params, 'CCF_NOISE_SIGDET', 'noise_sigdet', kwargs,
+    noise_sigdet = pcheck(params, 'OBJ.CCF.NOISE_SIGDET', 'noise_sigdet', kwargs,
                           func_name)
-    noise_size = pcheck(params, 'CCF_NOISE_BOXSIZE', 'noise_size', kwargs,
+    noise_size = pcheck(params, 'OBJ.CCF.NOISE_BOXSIZE', 'noise_size', kwargs,
                         func_name)
-    noise_thres = pcheck(params, 'CCF_NOISE_THRES', 'noise_thres', kwargs,
+    noise_thres = pcheck(params, 'OBJ.CCF.NOISE_THRES', 'noise_thres', kwargs,
                          func_name)
-    mask_width = pcheck(params, 'CCF_MASK_WIDTH', 'mask_width', kwargs,
+    mask_width = pcheck(params, 'OBJ.CCF.MASK_WID', 'mask_width', kwargs,
                         func_name)
-    mask_units = pcheck(params, 'CCF_MASK_UNITS', 'mask_units', kwargs,
+    mask_units = pcheck(params, 'OBJ.CCF.MASK_UNITS', 'mask_units', kwargs,
                         func_name)
-    fit_type = pcheck(params, 'CCF_FIT_TYPE', 'fit_type', kwargs, func_name)
-    ccfnmax = pcheck(params, 'CCF_N_ORD_MAX', 'ccfnmax', kwargs,
+    fit_type = pcheck(params, 'OBJ.CCF.FIT_TYPE', 'fit_type', kwargs, func_name)
+    ccfnmax = pcheck(params, 'OBJ.CCF.N_ORD_MAX', 'ccfnmax', kwargs,
                      func_name)
-    null_targetrv = pcheck(params, 'OBJRV_NULL_VAL', 'null_targetrv',
+    null_targetrv = pcheck(params, 'OBJ.CCF.RV_NULL_VAL', 'null_targetrv',
                            kwargs, func_name)
-    maxwsr = pcheck(params, 'CCF_MAX_CCF_WID_STEP_RATIO', 'maxwsr', kwargs,
+    maxwsr = pcheck(params, 'OBJ.CCF.WID_STEP_RATIO', 'maxwsr', kwargs,
                     func_name)
     # get image size
     nbo, nbpix = image.shape
@@ -749,7 +749,7 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
             targetrv = 0.0
     # ----------------------------------------------------------------------
     # need to deal with mask coming from inputs
-    if isinstance(params['INPUTS']['MASK'], list):
+    if isinstance(params['INPUTS']['CAL.WAVE.CCF.MASK'], list):
         ccfmask = params['INPUTS']['CAL.WAVE.CCF.MASK'][0][0]
     # else mask has come from constants
     else:
@@ -762,7 +762,7 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
         # load ccf mask using infile header (i.e. from Teff consideration)
         ccfmask, ccf_fmt = get_ccf_teff_mask(params, infile.header)
     else:
-        ccf_fmt = params['CCF_MASK_FMT']
+        ccf_fmt = params['OBJ.CCF.MASK_FMT']
     # ----------------------------------------------------------------------
     # need to get ccf normalization mode
     if 'MASKNORMMODE' in params['INPUTS']:
@@ -839,12 +839,12 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     props['CCF_BOXSIZE'] = noise_size
     props['CCF_MAXFLUX'] = noise_thres
     props['CCF_NMAX'] = ccfnmax
-    props['MASK_WIDTH'] = mask_width
+    props['CAL.WAVE.CCF.MASK_WIDTH'] = mask_width
     props['MASK_UNITS'] = mask_units
     # set source
     keys = ['TOT_SPEC_RMS', 'ORD_SPEC_RMS',
             'CCF_MASK', 'CCF_STEP', 'CCF_WIDTH', 'TARGET_RV', 'CCF_SIGDET',
-            'CCF_BOXSIZE', 'CCF_MAXFLUX', 'CCF_NMAX', 'MASK_WIDTH',
+            'CCF_BOXSIZE', 'CCF_MAXFLUX', 'CCF_NMAX', 'CAL.WAVE.CCF.MASK_WIDTH',
             'MASK_UNITS']
     props.set_sources(keys, func_name)
 
@@ -905,7 +905,7 @@ def compute_ccf_fp(params, recipe, infile, image, blaze, wavemap, fiber,
                         func_name)
     mask_units = pcheck(params, 'CAL.WAVE.CCF.MASK_UNITS', 'mask_units', kwargs,
                         func_name)
-    ccfnormmode = params['CCF_MASK_NORMALIZATION']
+    ccfnormmode = params['OBJ.CCF.MASK_NORM']
     # get image size
     nbo, nbpix = image.shape
     # we do not use infile
@@ -970,7 +970,7 @@ def compute_ccf_fp(params, recipe, infile, image, blaze, wavemap, fiber,
     props['CCF_BOXSIZE'] = noise_size
     props['CCF_MAXFLUX'] = noise_thres
     props['CCF_NMAX'] = ccfnmax
-    props['MASK_WIDTH'] = mask_width
+    props['CAL.WAVE.CCF.MASK_WIDTH'] = mask_width
     props['MASK_UNITS'] = mask_units
     # set source
     keys = ['TOT_SPEC_RMS', 'ORD_SPEC_RMS',
@@ -1021,7 +1021,7 @@ def ccf_calculation_per_order(params, image, blaze, wavemap, berv, targetrv,
     # set function name
     func_name = display_func('ccf_calculation_per_order', __NAME__)
     # get properties from params
-    blaze_norm_percentile = pcheck(params, 'CCF_BLAZE_NORM_PERCENTILE',
+    blaze_norm_percentile = pcheck(params, 'OBJ.CCF.BLAZE_NORM_PTILE',
                                    'blaze_norm_percentile', kwargs, func_name)
     blaze_threshold = pcheck(params, 'CAL.WAVE.FP.BLAZE_THRES', 'blaze_threshold',
                              kwargs, func_name)
@@ -1733,8 +1733,8 @@ def write_ccf(params: ParamDict, recipe, infile: DrsFitsFile,
     # ----------------------------------------------------------------------
     # add bisector values
     ccf_file.add_hkey('KW_CCF_BISECTOR', value=props['BISSPAN_STACK'])
-    bs_cut_top = params['CCF_BIS_CUT_TOP']
-    bs_cut_bottom = params['CCF_BIS_CUT_BOTTOM']
+    bs_cut_top = params['OBJ.CCF.BIS_CUT_TOP']
+    bs_cut_bottom = params['OBJ.CCF.BIS_CUT_BOTTOM']
     bs_span = f'{bs_cut_top}%-{bs_cut_bottom}%'
     ccf_file.add_hkey('KW_CCF_BIS_SPAN', value=bs_span)
     # ----------------------------------------------------------------------

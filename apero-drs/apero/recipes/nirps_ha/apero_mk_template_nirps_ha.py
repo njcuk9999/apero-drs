@@ -158,7 +158,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     infile.read_file()
     # Need to deal with how we set the observation directory
     #     (depending on location)
-    if params['MKTEMPLATE_FILESOURCE'].upper() == 'DISK':
+    if params['OBJ.TELLU.TEMPLATE.FILESOURCE'].upper() == 'DISK':
         # set observation directory
         infile_inst = drs_file.DrsPath(params, abspath=infile.filename)
         obs_dir = infile_inst.obs_dir

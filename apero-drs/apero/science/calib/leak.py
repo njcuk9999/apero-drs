@@ -710,7 +710,7 @@ def save_uncorrected_ext_fp(params: ParamDict, recipe: DrsRecipe,
     func_name = display_func('save_uncorrected_ext_fp', __NAME__)
     # ------------------------------------------------------------------------
     # get parameters from params
-    debug_uncorr_ext_files = pcheck(params, 'DEBUG_UNCORR_EXT_FILES',
+    debug_uncorr_ext_files = pcheck(params, 'DEBUG.OUTFILE.UNCORR_EXT_FILES',
                                     func=func_name, override=debug_uncorr)
     # -------------------------------------------------------------------------
     # check we want to save uncorrected

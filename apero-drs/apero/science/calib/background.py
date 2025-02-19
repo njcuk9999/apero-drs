@@ -420,7 +420,7 @@ def correction(recipe: DrsRecipe, params: ParamDict, infile: DrsFitsFile,
                    local_background_correction, background_image_full,
                    background_image]
         # save debug file
-        if params['DEBUG_BACKGROUND_FILE']:
+        if params['DEBUG.OUTFILE.BCKGRD_FILE']:
             debug_file(recipe, params, infile, dimages)
         # ------------------------------------------------------------------
         # if return map just return the bad pixel map

@@ -246,14 +246,14 @@ def load_lsd_mask(params: ParamDict, props: ParamDict) -> ParamDict:
     func_name = display_func('load_lsd_mask', __NAME__)
     # get parameters from params
     lsdmaskinput = params['INPUTS']['LSDMASK']
-    min_lande = params['POLAR_LSD_MIN_LANDE']
-    max_lande = params['POLAR_LSD_MAX_LANDE']
-    ccflines_air_wave = params['POLAR_LSD_CCFLINES_AIR_WAVE']
-    min_linedepth = params['POLAR_LSD_MIN_LINEDEPTH']
-    max_linedepth = params['POLAR_LSD_MAX_LINEDEPTH']
+    min_lande = params['OBJ.POL.LSD.LSD_MIN_LANDE']
+    max_lande = params['OBJ.POL.LSD.LSD_MAX_LANDE']
+    ccflines_air_wave = params['OBJ.POL.LSD.LSD_CCFLINES_AIRWAVE']
+    min_linedepth = params['OBJ.POL.LSD.LSD_MIN_LINEDEPTH']
+    max_linedepth = params['OBJ.POL.LSD.LSD_MAX_LINEDEPTH']
     # -------------------------------------------------------------------------
     # get lsd regions
-    wl_regions = params['GET_LSD_LINE_REGIONS']
+    wl_regions = params['OBJ.POL.GEN.GET_LSD_LINE_REGIONS']
     # -------------------------------------------------------------------------
     # get temperature
     temperature = props['OBJECT_TEMPERATURE']
@@ -382,8 +382,8 @@ def get_wl_ranges(params: ParamDict, props: ParamDict) -> ParamDict:
     func_name = display_func('get_wl_ranges', __NAME__)
     # -------------------------------------------------------------------------
     # set initial and final velocity
-    vinit = params['POLAR_LSD_V0']
-    vfinal = params['POLAR_LSD_VF']
+    vinit = params['OBJ.POL.LSD.LSD_V0']
+    vfinal = params['OBJ.POL.LSD.VF']
     # get parameters from props
     wavec = props['LSD_LINES_WLC']
     # -------------------------------------------------------------------------
@@ -462,7 +462,7 @@ def prepare_polarimetry_data(params: ParamDict, props: ParamDict) -> ParamDict:
     # set function name
     func_name = display_func('prepare_polarimetry_data', __NAME__)
     # get parameters from params
-    normalize = params['POLAR_LSD_NORMALIZE']
+    normalize = params['OBJ.POL.LSD.NORMALIZE']
     # get input arrays
     wavemap = props['GLOBAL_WAVEMAP']
     stokesi, stokesierr = props['STOKESI'], props['STOKESIERR']
@@ -473,7 +473,7 @@ def prepare_polarimetry_data(params: ParamDict, props: ParamDict) -> ParamDict:
     ydim, xdim = pol.shape
     # -------------------------------------------------------------------------
     # get wavelength ranges to be considered in each spectral order
-    ordermask = params['GET_LSD_ORDER_RANGES']
+    ordermask = params['OBJ.POL.GEN.GET_LSD_ORDER_RANGES']
     # -------------------------------------------------------------------------
     # initialize output data vectors
     lsd_wave, lsd_flux, lsd_fluxerr = [], [], []
@@ -589,10 +589,10 @@ def lsd_analysis(params: ParamDict, props: ParamDict) -> ParamDict:
     # set function name
     func_name = display_func('lsd_analysis', __NAME__)
     # initialize variables to define velocity vector of output LSD profile
-    vinit = params['POLAR_LSD_V0']
-    vfinal = params['POLAR_LSD_VF']
-    npoints = params['POLAR_LSD_NP']
-    remove_edges = params['POLAR_LSD_REMOVE_EDGES']
+    vinit = params['OBJ.POL.LSD.LSD_V0']
+    vfinal = params['OBJ.POL.LSD.VF']
+    npoints = params['OBJ.POL.LSD.NP']
+    remove_edges = params['OBJ.POL.LSD.REMOVE_EDGES']
     # get parameters from props
     lsd_wave = props['LSD_WAVE']
     lsd_lines_wlc = props['LSD_LINES_WLC']
@@ -942,7 +942,7 @@ def fit_gaussian_to_lsd_profile(params: ParamDict, velocities: np.ndarray,
     # set function name
     func_name = display_func('fit_gaussian_to_lsd_profile', __NAME__)
     # get guess at resolving power from params
-    resolving_power_guess = params['POLAR_LSD_RES_POWER_GUESS']
+    resolving_power_guess = params['OBJ.POL.LSD.RES_POWER_GUESS']
     # get the position of minimum profile
     pos = np.argmin(profile)
     # obtain velocity at minimum

@@ -901,7 +901,7 @@ def generate_run_list(params: ParamDict, findexdbm: FileIndexDatabase,
     # get template list (if required)
     # -------------------------------------------------------------------------
     # get whether to recalculate templates
-    _recal_templates = params['RECAL_TEMPLATES']
+    _recal_templates = params['OBJ.LBL.RECAL_TEMPLATES']
     recal_templates = True
     # get a list of object names currently with templates
     # (but only if we need to filter by them)
@@ -918,7 +918,7 @@ def generate_run_list(params: ParamDict, findexdbm: FileIndexDatabase,
                 WLOG(params, 'warning', textentry('10-503-00023', args=wargs),
                      sublevel=2)
     # need to make sure recal templates is set correctly
-    params.set('RECAL_TEMPLATES', recal_templates, source=func_name)
+    params.set('OBJ.LBL.RECAL_TEMPLATES', recal_templates, source=func_name)
     # -------------------------------------------------------------------------
     # get recipe definitions module (for this instrument)
     recipemod = get_recipe_module(params)
@@ -1289,7 +1289,7 @@ def _linear_generate_id(params: ParamDict, it: int, run_key: str,
                                    skip_storage, input_recipe)
     # deal with RECAL_TEMPLATES = True (don't skip if template required)
     if skip:
-        if run_object.recipe.template_required and params['RECAL_TEMPLATES']:
+        if run_object.recipe.template_required and params['OBJ.LBL.RECAL_TEMPLATES']:
             skip = False
             msg = 'Run {0} not skipped as RECAL_TEMPLATE=True [{1}] '
             margs = [runid, run_object.runstring]

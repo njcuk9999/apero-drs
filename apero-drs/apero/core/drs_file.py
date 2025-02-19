@@ -7436,7 +7436,7 @@ class DrsOutFile(DrsInputFile):
         # get primary header
         header = self.extensions[0].header
         # get key to add comment near
-        hdrkey = params['POST_HDREXT_COMMENT_KEY']
+        hdrkey = params['OBJ.POST.HDREXT_COMMKEY']
         # if hdrkey is in params then we have a keyword store and need just to
         #   get the keyword store name
         if hdrkey in params:

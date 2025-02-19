@@ -99,10 +99,10 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # set up plotting (no plotting before this)
     recipe.plot.set_location()
     # get constants from params
-    remove_continuum = params['POLAR_REMOVE_CONTINUUM']
-    normalize_stokesi = params['POLAR_NORMALIZE_STOKES_I']
-    clean_by_sigmaclip = params['POLAR_CLEAN_BY_SIGMA_CLIPPING']
-    clean_nsig = params['POLAR_NSIGMA_CLIPPING']
+    remove_continuum = params['OBJ.POL.GEN.REMOVE_CONT']
+    normalize_stokesi = params['OBJ.POL.GEN.NORM_STOKES_I']
+    clean_by_sigmaclip = params['OBJ.POL.GEN.CLEAN_BY_SIGCLIP']
+    clean_nsig = params['OBJ.POL.GEN.NSIGCLIP']
     do_lsd_analysis = params['INPUTS']['LSD']
     drs_header = params['LOG.HEADER']
     # -------------------------------------------------------------------------

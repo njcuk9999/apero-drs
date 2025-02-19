@@ -65,7 +65,7 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, refprops,
     # ----------------------------------------------------------------------
     # get constants from params/kwargs
     npc = pcheck(params, 'FTELLU_NUM_PRINCIPLE_COMP', 'npc', kwargs, func_name)
-    add_deriv_pc = pcheck(params, 'FTELLU_ADD_DERIV_PC', 'add_deriv_pc',
+    add_deriv_pc = pcheck(params, 'OBJ.TELLU.FIT.ADD_DERIV_PCA', 'add_deriv_pc',
                           kwargs, func_name)
     fit_deriv_pc = pcheck(params, 'FTELLU_FIT_DERIV_PC', 'fit_deriv_pc',
                           kwargs, func_name)
@@ -73,7 +73,7 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, refprops,
                                 'thres_transfit_low', kwargs, func_name)
     thres_transfit_upper = pcheck(params, 'MKTELLU_TRANS_FIT_UPPER_BAD',
                                   'thres_transfit_upper', kwargs, func_name)
-    num_trans = pcheck(params, 'FTELLU_NUM_TRANS', 'num_trans', kwargs,
+    num_trans = pcheck(params, 'OBJ.TELLU.FIT.NUM_TRANS', 'num_trans', kwargs,
                        func_name)
     # ------------------------------------------------------------------
     # get the transmission map key
@@ -88,7 +88,7 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, refprops,
     # ----------------------------------------------------------------------
     if len(transfiles) <= npc:
         # log and raise error: not enough tranmission maps to run pca analysis
-        wargs = [trans_key, len(transfiles), npc, 'FTELLU_NUM_PRINCIPLE_COMP',
+        wargs = [trans_key, len(transfiles), npc, 'OBJ.TELLU.FIT.NUM_PCA',
                  func_name]
         raise AperoCodedException(params, '09-019-00003', targs=wargs)
     # ----------------------------------------------------------------------
@@ -307,7 +307,7 @@ def shift_all_to_frame(params, recipe, image, template, bprops, refprops, wprops
     # ------------------------------------------------------------------
     # get constants from params/kwargs
     # ------------------------------------------------------------------
-    fit_keep_num = pcheck(params, 'FTELLU_FIT_KEEP_NUM', 'fit_keep_num',
+    fit_keep_num = pcheck(params, 'OBJ.TELLU.FIT.FIT_KEEP_NUM', 'fit_keep_num',
                           kwargs, func_name)
     # ------------------------------------------------------------------
     # get data from property dictionaries
@@ -451,25 +451,25 @@ def calc_recon_and_correct(params, recipe, image, wprops, pca_props, sprops,
     # ------------------------------------------------------------------
     fit_min_trans = pcheck(params, 'FTELLU_FIT_MIN_TRANS', 'fit_min_trans',
                            kwargs, func_name)
-    lambda_min = pcheck(params, 'FTELLU_LAMBDA_MIN', 'lambda_min', kwargs,
+    lambda_min = pcheck(params, 'OBJ.TELLU.FIT.LAMBDA_MIN', 'lambda_min', kwargs,
                         func_name)
-    lambda_max = pcheck(params, 'FTELLU_LAMBDA_MAX', 'lambda_max', kwargs,
+    lambda_max = pcheck(params, 'OBJ.TELLU.FIT.LAMBDA_MAX', 'lambda_max', kwargs,
                         func_name)
-    kernel_vsini = pcheck(params, 'FTELLU_KERNEL_VSINI', 'kernel_vsini',
+    kernel_vsini = pcheck(params, 'OBJ.TELLU.FIT.KERNEL_VSINI', 'kernel_vsini',
                           kwargs, func_name)
     image_pixel_size = pcheck(params, 'IMAGE.PIXEL_SIZE', 'image_pixel_size',
                               kwargs, func_name)
-    fit_iterations = pcheck(params, 'FTELLU_FIT_ITERS', 'fit_iterations',
+    fit_iterations = pcheck(params, 'OBJ.TELLU.FIT.FIT_ITERS', 'fit_iterations',
                             kwargs, func_name)
-    fit_deriv_pc = pcheck(params, 'FTELLU_FIT_DERIV_PC', 'fit_deriv_pc',
+    fit_deriv_pc = pcheck(params, 'OBJ.TELLU.FIT.FIT_DERIV_PCA', 'fit_deriv_pc',
                           kwargs, func_name)
-    recon_limit = pcheck(params, 'FTELLU_FIT_RECON_LIMIT', 'recon_limit',
+    recon_limit = pcheck(params, 'OBJ.TELLU.FIT.FIT_RECON_LIM', 'recon_limit',
                          kwargs, func_name)
     tellu_absorbers = pcheck(params, 'TELLU_ABSORBERS', 'absorbers', kwargs,
                              func_name)
-    thres_transfit_low = pcheck(params, 'MKTELLU_THRES_TRANSFIT',
+    thres_transfit_low = pcheck(params, 'OBJ.TELL.MAKE.THRES_TRANSFIT',
                                 'thres_transfit_low', kwargs, func_name)
-    thres_transfit_upper = pcheck(params, 'MKTELLU_TRANS_FIT_UPPER_BAD',
+    thres_transfit_upper = pcheck(params, 'OBJ.TELL.MAKE.TRANS_FIT_UBAD',
                                   'thres_transfit_upper', kwargs, func_name)
     # ------------------------------------------------------------------
     # get data from property dictionaries
@@ -638,11 +638,11 @@ def calc_recon_and_correct(params, recipe, image, wprops, pca_props, sprops,
     # plot recon abso (single order)
     recipe.plot('FTELLU_RECON_ABSO2', params=params, image=image,
                 wavemap=wavemap, sp2=sp2, template=template2, recon=recon_abso,
-                order=params['FTELLU_SPLOT_ORDER'])
+                order=params['OBJ.TELLU.FIT.SPLOT_ORDER'])
     # plot recon abso (summary plot)
     recipe.plot('SUM_FTELLU_RECON_ABSO', params=params, image=image,
                 wavemap=wavemap, sp2=sp2, template=template2, recon=recon_abso,
-                orders=params['FTELLU_PLOT_ORDER_NUMS'])
+                orders=params['OBJ.TELLU.FIT.PLOT_ORDER_NUMS'])
 
     # ------------------------------------------------------------------
     # copy the residual recon for use below
@@ -739,7 +739,7 @@ def calc_recon_and_correct(params, recipe, image, wprops, pca_props, sprops,
     # set sources
     keys = ['FIT_MIN_TRANS', 'LAMBDA_MIN', 'LAMBDA_MAX', 'KERNEL_VSINI',
             'PIXEL_SIZE', 'FIT_ITERATIONS', 'FIT_DERIV_PC', 'RECON_LIMIT',
-            'TELLU_ABSORBERS']
+            'OBJ.TELL.MAKE.ABSORBERS']
     props.set_sources(keys, func_name)
     # return props
     return props
@@ -767,7 +767,7 @@ def calc_res_model(params, recipe, image, image1, trans_props, tpreprops,
     # set function name
     func_name = display_func('calc_res_model', __NAME__)
     # get the minimum allowed transmission
-    min_trans = pcheck(params, 'FTELLU_FIT_MIN_TRANS', func=func_name,
+    min_trans = pcheck(params, 'OBJ.TELLU.FIT.FIT_MIN_TRANS', func=func_name,
                        override=min_trans)
     # get vectors from transmission model
     zero_res = trans_props['ZERO_RES']
@@ -931,9 +931,9 @@ def pclean_only(tpreprops: ParamDict) -> ParamDict:
 def fit_tellu_quality_control(params, infile, tpreprops, **kwargs):
     func_name = __NAME__ + '.fit_tellu_quality_control()'
     # get parameters from params/kwargs
-    snr_order = pcheck(params, 'FTELLU_QC_SNR_ORDER', 'snr_order', kwargs,
+    snr_order = pcheck(params, 'OBJ.TELLU.FIT.QC_SNR_ORDER', 'snr_order', kwargs,
                        func_name)
-    qc_snr_min = pcheck(params, 'FTELLU_QC_SNR_MIN', 'qc_snr_min', kwargs,
+    qc_snr_min = pcheck(params, 'OBJ.TELLU.FIT.QC_SNR_MIN', 'qc_snr_min', kwargs,
                         func_name)
     # set passed variable and fail message list
     fail_msg = []
@@ -1052,7 +1052,7 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
     corrfile.add_hkey('KW_TELLUP_DO_FINITE_RES',
                       value=tpreprops['FINITE_RES_CORRECTED'])
     corrfile.add_hkey('KW_TELLUP_DFLT_WATER',
-                      value=tpreprops['TELLUP_D_WATER_ABSO'])
+                      value=tpreprops['OBJ.TELL.PCLEAN.DWATER_ABSO'])
     corrfile.add_hkey('KW_TELLUP_CCF_SRANGE',
                       value=tpreprops['OBJ.TELL.PCLEAN.CCF_SCAN_RANGE'])
     corrfile.add_hkey('KW_TELLUP_CLEAN_OHLINES',
@@ -1085,8 +1085,8 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
     corrfile.add_hkey('KW_TELLUP_FORCE_AIRMASS',
                       value=tpreprops['OBJ.TELL.PCLEAN.FORCE_AIRMASS'])
     # get the other and water bounds
-    obounds = [str(x) for x in tpreprops['TELLUP_OTHER_BOUNDS']]
-    wbounds = [str(x) for x in tpreprops['TELLUP_WATER_BOUNDS']]
+    obounds = [str(x) for x in tpreprops['OBJ.TELL.PCLEAN.OTHER_BOUNDS']]
+    wbounds = [str(x) for x in tpreprops['OBJ.TELL.PCLEAN.WATER_BOUNDS']]
     # push into the header
     corrfile.add_hkey('KW_TELLUP_OTHER_BOUNDS', value=','.join(obounds))
     corrfile.add_hkey('KW_TELLUP_WATER_BOUNDS', value=','.join(wbounds))

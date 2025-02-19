@@ -70,7 +70,7 @@ def do_skip(params: ParamDict, recipe_test: str) -> bool:
     :return: bool, whether to skip this recipe
     """
     # get skip done from parameters
-    if recipe_test in params['LBL_SKIP_DONE']:
+    if recipe_test in params['OBJ.LBL.SKIP_DONE']:
         skip_done = True
     else:
         skip_done = False
@@ -105,15 +105,15 @@ def run_apero_get(params: ParamDict):
     # get the lbl path
     lbl_in_path = params['PATH.LBL']
     # APERO file definition out types
-    lbl_outtypes = params['LBL_FILE_DEFS']
+    lbl_outtypes = params['OBJ.LBL.FILE_DEFS']
     # APERO DPRTYPE for lbl science files
-    lbl_dprtypes = params['LBL_DPRTYPES']
+    lbl_dprtypes = params['OBJ.LBL.DPRTYPES']
     # APERO DPRTYPE for lbl template files
-    lbl_template_outtypes = params['LBL_TEMPLATE_FILE_DEFS']
+    lbl_template_outtypes = params['OBJ.LBL.TEMPLATE_FILE_DEFS']
     # APERO DPRTYPE for lbl simultaneous FP files
-    simfp_dprtypes = params['LBL_SIM_FP_DPRTYPES']
+    simfp_dprtypes = params['OBJ.LBL.SIM_FP_DPRTYPES']
     # whether we are copying with symlinks
-    lbl_symlinks = params['LBL_SYMLINKS']
+    lbl_symlinks = params['OBJ.LBL.SYMLINKS']
     # whether we are in test mode
     testmode = params['INPUTS']['TEST']
     # do not use since
@@ -184,7 +184,7 @@ def find_friend(params: ParamDict, objname: str) -> str:
     # TODO: v0.8 change this to use the astrometric database
     #       with a FRIEND column
     # get dictionary of friends (key = objname, value = friend teff)
-    friends = params['LBL_FRIENDS']
+    friends = params['OBJ.LBL.FRIENDS']
     friend_names = np.array(list(friends.keys()))
     friend_teffs = np.array(list(friends.values()))
     # get the teff of this object
@@ -484,7 +484,7 @@ def dtemp(params: ParamDict) -> Union[Dict[str, str], None]:
     :return:
     """
     # get the dictionary of dtemp files
-    dtemp_keys = params['LBL_DTEMP']
+    dtemp_keys = params['OBJ.LBL.DTEMP']
     # get the model directory
     models_dir = os.path.join(params['PATH.LBL'], 'models')
 

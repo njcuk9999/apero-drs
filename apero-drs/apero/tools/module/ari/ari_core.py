@@ -82,7 +82,7 @@ YAML_TO_PARAM['headers'] = 'ARI_HEADER_PROPS'
 OBJ_TO_YAML = dict()
 OBJ_TO_YAML['objname'] = 'OBJNAME'
 OBJ_TO_YAML['exists'] = 'EXISTS'
-OBJ_TO_YAML['dprtypes'] = 'DPRTYPES'
+OBJ_TO_YAML['dprtypes'] = 'OBJ.LBL.DPRTYPES'
 OBJ_TO_YAML['last_processed'] = 'LAST_PROCESSED'
 OBJ_TO_YAML['lbl_templates'] = 'LBL_TEMPLATES'
 OBJ_TO_YAML['lbl_select'] = 'LBL_SELECT'
@@ -223,7 +223,7 @@ PREFILLED_RDICT['STARTDATE'] = 'entry.293060210'
 PREFILLED_RDICT['ENDDATE'] = 'entry.299959352'
 PREFILLED_RDICT['APERO_MODE'] = 'entry.923271952'
 PREFILLED_RDICT['FIBER'] = 'entry.1651377065'
-PREFILLED_RDICT['DPRTYPES'] = 'entry.298205572'
+PREFILLED_RDICT['OBJ.LBL.DPRTYPES'] = 'entry.298205572'
 PREFILLED_RDICT['DRSOUTID'] = 'entry.459458944'
 # define the request form fiber types
 RDICT_FIBERS = ['Science fiber', 'Reference fiber', 'All fibers']
@@ -860,8 +860,8 @@ class AriObject:
         # set up the object page
         obj_save_path = os.path.join(params['ARI_OBJ_PAGES'], self.objname)
         ari_user = params['ARI_USER']
-        core_snr = params['MKTEMPLATE_BERVCOV_CSNR']
-        resolution = params['MKTEMPLATE_BERVCOV_RES']
+        core_snr = params['OBJ.TELLU.TEMPLATE.BERVCOV_CSNR']
+        resolution = params['OBJ.TELLU.TEMPLATE.BERVCOV_RES']
         # get the extracted files
         ext_files = self.filetypes['ext'].get_files()
         # don't go here if ext files are not present
@@ -877,7 +877,7 @@ class AriObject:
         spec_props['S1D'] = self.filetypes['s1d']
         spec_props['SC1D'] = self.filetypes['sc1d']
         # ---------------------------------------------------------------------
-        spec_props['DPRTYPES'] = self.dprtypes
+        spec_props['OBJ.LBL.DPRTYPES'] = self.dprtypes
         # ---------------------------------------------------------------------
         # header dict alias
         hdict = self.header_dict
@@ -1953,11 +1953,11 @@ class AriObject:
             url += _url_addp(PREFILLED_RDICT['FIBER'], fiber)
         # add the dprtypes
         if dprtypes is not None:
-            url += _url_addp(PREFILLED_RDICT['DPRTYPES'], dprtypes)
+            url += _url_addp(PREFILLED_RDICT['OBJ.LBL.DPRTYPES'], dprtypes)
         else:
             dprtypes = np.char.array(SCIENCE_DPRTYPES)
             dprtypes = list(dprtypes.strip())
-            url += _url_addp(PREFILLED_RDICT['DPRTYPES'], dprtypes)
+            url += _url_addp(PREFILLED_RDICT['OBJ.LBL.DPRTYPES'], dprtypes)
         # add the drsoutids using filetype
         if filetype in self.filetypes:
             # get the file instance class
@@ -2176,7 +2176,7 @@ def spec_stats_table(spec_props: Dict[str, Any], stat_path: str, title: str):
     version_pp = spec_props['PP_VERSION']
     version_ext = spec_props['EXT_VERSION']
     version_tcorr = spec_props['TCORR_VERSION']
-    dprtypes = spec_props['DPRTYPES']
+    dprtypes = spec_props['OBJ.LBL.DPRTYPES']
     # --------------------------------------------------------------------------
     # Calculate stats
     # --------------------------------------------------------------------------
@@ -2192,7 +2192,7 @@ def spec_stats_table(spec_props: Dict[str, Any], stat_path: str, title: str):
     # start with a stats dictionary
     stat_dict = dict(Description=[], Value=[])
     # Add dprtypes
-    stat_dict['Description'].append('DPRTYPES')
+    stat_dict['Description'].append('OBJ.LBL.DPRTYPES')
     stat_dict['Value'].append(dprtypes)
     # -------------------------------------------------------------------------
     # add number of raw files
