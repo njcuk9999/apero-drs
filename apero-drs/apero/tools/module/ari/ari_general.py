@@ -154,14 +154,14 @@ def load_ari_params(params: ParamDict) -> ParamDict:
     # ----------------------------------------------------------------------
     # clean user profile
     for char in string.punctuation:
-        params.set('ARI_USER', value=params['ARI_USER'].replace(char, '_'),
+        params.set('TOOLS.ARI.USER', value=params['TOOLS.ARI.USER'].replace(char, '_'),
                    source=func_name)
     # ----------------------------------------------------------------------
     # build some ARI paths for use throughout
     # ----------------------------------------------------------------------
     # over all ari directory
     ari_dir = os.path.join(params['PATH.OTHER'], 'ari',
-                           str(params['ARI_USER']))
+                           str(params['TOOLS.ARI.USER']))
     # ARI object yaml directory
     ari_obj_yamls = os.path.join(ari_dir, 'object_yamls')
     # ARI recipe yaml directory
@@ -194,13 +194,13 @@ def load_ari_params(params: ParamDict) -> ParamDict:
     # ----------------------------------------------------------------------
     # deal with command line reset
     if params['INPUTS']['reset']:
-        params.set('ARI_RESET', value=True, source=func_name)
+        params.set('TOOLS.ARI.RESET', value=True, source=func_name)
     # ----------------------------------------------------------------------
     # deal with finder argument
     if params['INPUTS']['finder_create']:
-        params['ARI_FINDING_CHARTS']['create'] = True
+        params['TOOLS.ARI.FINDING_CHARTS']['create'] = True
     if params['INPUTS']['finder_reset']:
-        params['ARI_FINDING_CHARTS']['reset'] = True
+        params['TOOLS.ARI.FINDING_CHARTS']['reset'] = True
     # ----------------------------------------------------------------------
     # return the ari parameters
     return params
@@ -269,8 +269,8 @@ def load_previous_objects(params: ParamDict) -> Dict[str, AriObject]:
     # loop around objects in astrometric table
     for row, objname in enumerate(astrometric_obj_list[ari_core.OBJECT_COLUMN]):
         # if we are filtering skip other objects
-        if params['ARI_FILTER_OBJECTS']:
-            if objname not in params['ARI_FILTER_OBJECTS_LIST']:
+        if params['TOOLS.ARI.FILTER_OBJECTS']:
+            if objname not in params['TOOLS.ARI.FILTER_OBJECTS_LIST']:
                 continue
         # create object class
         obj_class = AriObject(objname, filetypes=filetypes)
@@ -325,8 +325,8 @@ def find_new_objects(params: ParamDict, object_classes: Dict[str, AriObject]
     # loop around objects in the object table
     for objname in tqdm(list(object_classes.keys())):
         # if we are filtering skip other objects
-        if params['ARI_FILTER_OBJECTS']:
-            if objname not in params['ARI_FILTER_OBJECTS_LIST']:
+        if params['TOOLS.ARI.FILTER_OBJECTS']:
+            if objname not in params['TOOLS.ARI.FILTER_OBJECTS_LIST']:
                 continue
         # get object class
         obj_class = object_classes[objname]
@@ -438,10 +438,10 @@ def upload(params: ParamDict) -> None:
     base_path = str(os.path.join(params['PATH.OTHER'], 'ari',
                                  '_build', 'html'))
     # get the ssh directory
-    ssh_directory = params['ARI_SSH_COPY']['directory']
+    ssh_directory = params['TOOLS.ARI.SSH_COPY']['directory']
     # download the userlist.txt file and copy it over userlist_yaml
     remote_path = str(os.path.join(ssh_directory,
-                                   params['ARI_INSTRUMENT'].lower()))
+                                   params['TOOLS.ARI.INSTRUMENT'].lower()))
     # change permission of all files and directories
     os.system(f'chmod 777 -R {base_path}')
     # make sure we copy contents not directory
@@ -476,10 +476,10 @@ def _get_object_table(params: ParamDict) -> pd.DataFrame:
     # set up condition for filtering
     condition = None
     # deal with filtering by object
-    if params['ARI_FILTER_OBJECTS']:
-        if isinstance(params['ARI_FILTER_OBJECTS_LIST'], list):
+    if params['TOOLS.ARI.FILTER_OBJECTS']:
+        if isinstance(params['TOOLS.ARI.FILTER_OBJECTS_LIST'], list):
             subconditions = []
-            for objname in params['ARI_FILTER_OBJECTS_LIST']:
+            for objname in params['TOOLS.ARI.FILTER_OBJECTS_LIST']:
                 subconditions.append(f'OBJNAME="{objname}"')
             condition = ' OR '.join(subconditions)
             condition = f'({condition})'

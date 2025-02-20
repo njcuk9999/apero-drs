@@ -316,9 +316,9 @@ def __main__(recipe, params):
     # Make the exposure time mask
     # ----------------------------------------------------------------------
     # get limits for the mask
-    min_lambda = params['EXPMETER_MIN_LAMBDA']
-    max_lambda = params['EXPMETER_MAX_LAMBDA']
-    tell_thres = params['EXPMETER_TELLU_THRES']
+    min_lambda = params['TOOLS.GEN.EXPMETER_MIN_LAMBDA']
+    max_lambda = params['TOOLS.GEN.EXPMETER_MAX_LAMBDA']
+    tell_thres = params['TOOLS.GEN.EXPMETER_TELLU_THRES']
     # create masks
     with warnings.catch_warnings(record=True) as _:
         mask1 = pwave_map > min_lambda

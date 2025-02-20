@@ -181,9 +181,9 @@ def __main__(recipe, params):
     if 'dprtype' in params['INPUTS']:
         if not drs_text.null_text(params['INPUTS']['dprtype'], ['None', '']):
             dprtype = params['INPUTS']['dprtype']
-    if dprtype not in params['DRIFT_DPRTYPES']:
+    if dprtype not in params['TOOLS.GEN.DRIFT_DPRTYPES']:
         emsg = textentry('01-001-00020', args=[dprtype, mainname])
-        for allowedtype in params['DRIFT_DPRTYPES']:
+        for allowedtype in params['TOOLS.GEN.DRIFT_DPRTYPES']:
             emsg += '\n\t - "{0}"'.format(allowedtype)
         raise AperoCodedException(params, '01-001-00020',
                                   targs=[dprtype, mainname], message=emsg)
@@ -206,8 +206,8 @@ def __main__(recipe, params):
         # get this fibers dprtype
         fiberdpr = pconst.FIBER_DPR_POS(dprtype, fiber)
         # skip if dprtype in this fiber does not match FP
-        if fiberdpr != params['DRIFT_DPR_FIBER_TYPE']:
-            eargs = [fiber, fiberdpr, params['DRIFT_DPR_FIBER_TYPE']]
+        if fiberdpr != params['TOOLS.GEN.DRIFT_DPR_FIBER_TYPE']:
+            eargs = [fiber, fiberdpr, params['TOOLS.GEN.DRIFT_DPR_FIBER_TYPE']]
             WLOG(params, 'warning', textentry('10-018-00001', args=eargs))
 
         # ---------------------------------------------------------------------

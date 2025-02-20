@@ -1163,7 +1163,7 @@ def read_runfile_ini(params: ParamDict, recipe: Union[DrsRecipe, None],
     func_name = __NAME__ + '.read_runfile_ini()'
     # ----------------------------------------------------------------------
     # get properties from params
-    run_key = params['REPROCESS_RUN_KEY']
+    run_key = params['TOOLS.REPROCESS.RUN_KEY']
     run_dir = params['PATH.RUN']
     # ----------------------------------------------------------------------
     # check if run file exists

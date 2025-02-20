@@ -576,8 +576,8 @@ class Plotter:
         # set latex doc to None
         latexdoc = None
         # only do this is user requires it
-        if 'SUMMARY_LATEX_PDF' in self.params:
-            if self.params['SUMMARY_LATEX_PDF']:
+        if 'TOOLS.GEN.SUMMARY_LATEX_PDF' in self.params:
+            if self.params['TOOLS.GEN.SUMMARY_LATEX_PDF']:
                 try:
                     # log progress
                     WLOG(self.params, 'info', textentry('40-100-00004'))

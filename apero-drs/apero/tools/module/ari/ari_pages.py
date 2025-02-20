@@ -70,7 +70,7 @@ class TableFile:
             return
         self.null = False
         self.name = name.lower()
-        self.user = params['ARI_USER']
+        self.user = params['TOOLS.ARI.USER']
         self.title = f'{name.lower()} ({self.user})'
         self.machinename = self.name.replace(' ', '_').upper()
         self.params = params
@@ -105,7 +105,7 @@ class TableFile:
         title = f'{self.name} ({self.user})'
         table_page.add_title(title)
         # add page access
-        table_page.add_html(add_page_access(self.params['ARI_GROUP']))
+        table_page.add_html(add_page_access(self.params['TOOLS.ARI.GROUP']))
         # -----------------------------------------------------------------
         # Add basic text
         # construct text to add
@@ -154,7 +154,7 @@ class TableFile:
 def make_obj_table(params: ParamDict, object_classes: Dict
                    ) -> TableFile:
     # get the ari user
-    ari_user = params['ARI_USER']
+    ari_user = params['TOOLS.ARI.USER']
     # storage dictionary for conversion to table
     table_dict = dict()
     # deal with no entries
@@ -249,7 +249,7 @@ def make_obj_table(params: ParamDict, object_classes: Dict
 # =============================================================================
 def make_obs_table(params: ParamDict, object_classes: Dict) -> TableFile:
     # get the ari user
-    ari_user = params['ARI_USER']
+    ari_user = params['TOOLS.ARI.USER']
     # -------------------------------------------------------------------------
     # create a dictionary to store table data
     table_dict = dict()
@@ -349,7 +349,7 @@ def _add_obj_page(it: int, key: str, rdict: dict, params: ParamDict,
             # update rdict
             rdict[objname] = (True, 'No object update')
         # get the ari user
-        ari_user = params['ARI_USER']
+        ari_user = params['TOOLS.ARI.USER']
         # get the page reference
         page_ref = f'{ari_user}_object_page_{objname}'
         # get the table reference
@@ -385,7 +385,7 @@ def _add_obj_page(it: int, key: str, rdict: dict, params: ParamDict,
         # add title
         object_page.add_title(f'{objname} ({ari_user})')
         # add page access
-        object_page.add_html(add_page_access(params['ARI_GROUP']))
+        object_page.add_html(add_page_access(params['TOOLS.ARI.GROUP']))
         # ---------------------------------------------------------------------
         # Add basic text
         # construct text to add
@@ -489,7 +489,7 @@ def add_obj_pages(params: ParamDict, object_classes: Dict[str, AriObject]):
     # set up the arguments for the multiprocessing
     args = [0, '', params, object_classes]
     # get the number of cores
-    n_cores = params['ARI_NCORES']
+    n_cores = params['TOOLS.ARI.NCORES']
     if n_cores is None:
         raise ValueError('Must define N_CORES in settings or profile')
     # -------------------------------------------------------------------------
@@ -914,7 +914,7 @@ def add_finder_table(params: ParamDict, data_dict: Dict[str, Any]):
     # set function name
     funcname = __NAME__ + '.add_recipe_tables()'
     # get the ari user
-    ari_user = params['ARI_USER']
+    ari_user = params['TOOLS.ARI.USER']
     # get nav html
     nav_html = html_page_nav()
     # set html body
@@ -1040,7 +1040,7 @@ def add_recipe_tables(params: ParamDict, table: Table, machine_name: str):
     # set function name
     funcname = __NAME__ + '.add_recipe_tables()'
     # get the ari user
-    ari_user = params['ARI_USER']
+    ari_user = params['TOOLS.ARI.USER']
     # get nav html
     nav_html = html_page_nav()
     # set html body
@@ -1294,7 +1294,7 @@ def make_finder_page(params: ParamDict):
 # =============================================================================
 def make_index_page(params: ParamDict):
     # get ari user
-    ari_user = params['ARI_USER']
+    ari_user = params['TOOLS.ARI.USER']
     # get path to save index to (above ari_dir level)
     index_path = os.path.dirname(params['ARI_DIR'])
     # create ARI index page
@@ -1305,7 +1305,7 @@ def make_index_page(params: ParamDict):
     profile_files = [os.path.join(ari_user, 'profile.rst')]
     # -------------------------------------------------------------------------
     # add page access
-    index_page.add_html(add_page_access(params['ARI_GROUP']))
+    index_page.add_html(add_page_access(params['TOOLS.ARI.GROUP']))
     # -------------------------------------------------------------------------
     # Add basic text
     # construct text to add
@@ -1343,7 +1343,7 @@ def make_index_page(params: ParamDict):
 
 def make_profile_page(params: ParamDict, tables: List[TableFile]):
     # get ari user
-    ari_user = params['ARI_USER']
+    ari_user = params['TOOLS.ARI.USER']
     # get path to save
     profile_path = params['ARI_DIR']
     # construct the profile name
@@ -1353,7 +1353,7 @@ def make_profile_page(params: ParamDict, tables: List[TableFile]):
     # add title
     profile_page.add_title(ari_user)
     # add page access
-    profile_page.add_html(add_page_access(params['ARI_GROUP']))
+    profile_page.add_html(add_page_access(params['TOOLS.ARI.GROUP']))
     # -----------------------------------------------------------------
     # Add basic text
     # construct text to add
@@ -1460,10 +1460,10 @@ def add_other_reductions(params: ParamDict):
     userlist_file = 'user.yaml'
     userlist_yaml = os.path.join(base_path, userlist_file)
     # get the ssh directory
-    ssh_directory = params['ARI_SSH_COPY']['directory']
+    ssh_directory = params['TOOLS.ARI.SSH_COPY']['directory']
     # download the userlist.txt file and copy it over userlist_yaml
     remote_path = str(os.path.join(ssh_directory,
-                                   params['ARI_INSTRUMENT'].lower(),
+                                   params['TOOLS.ARI.INSTRUMENT'].lower(),
                                    userlist_file))
     # get file
     ari_core.do_rsync(params, mode='get', path_in=remote_path,
@@ -1476,12 +1476,12 @@ def add_other_reductions(params: ParamDict):
         userlist = dict()
     # -------------------------------------------------------------------------
     # get the usernames for this instrument
-    if params['ARI_INSTRUMENT'] not in userlist:
+    if params['TOOLS.ARI.INSTRUMENT'] not in userlist:
         usernames = set()
     else:
-        usernames = set(userlist[params['ARI_INSTRUMENT']])
+        usernames = set(userlist[params['TOOLS.ARI.INSTRUMENT']])
     # add the current ari username to the list
-    usernames.add(params['ARI_USER'])
+    usernames.add(params['TOOLS.ARI.USER'])
     # turn usernames into a list and sort it
     usernames = list(usernames)
     usernames.sort()
@@ -1519,7 +1519,7 @@ def add_other_reductions(params: ParamDict):
         wfile.write(str(soup))
     # -------------------------------------------------------------------------
     # add the username to the userlist
-    userlist[params['ARI_INSTRUMENT']] = list(usernames)
+    userlist[params['TOOLS.ARI.INSTRUMENT']] = list(usernames)
     # save the userlist
     base.write_yaml(userlist, userlist_yaml)
 

@@ -148,7 +148,7 @@ class RawPath(BlockPath):
 class TmpPath(BlockPath):
     description: drs_lang.Text = textentry('DATA_TMP_DESC')
     name: str = 'tmp'
-    key: str = 'PP'
+    key: str = 'PATH.PP'
     argname: str = 'tmpdir'
 
     def __init__(self, params, check: bool = True):

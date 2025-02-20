@@ -818,7 +818,7 @@ def update_index_db(params: ParamDict,
     # get exclude list
     excludelist = params['EXCLUDE_OBS_DIRS']
     # get re-index list
-    reindexlist = params['REPROCESS_REINDEX_BLOCKS']
+    reindexlist = params['TOOLS.REPROCESS.REPROCESS_REINDEX_BLOCKS']
     # -------------------------------------------------------------------------
     # get the user defined databases to update
     if 'UPDATE_IDATABASE_NAMES' in params:
@@ -961,7 +961,7 @@ def process_run_list(params: ParamDict, runlist, group=None,
     test_run = params['TEST_RUN']
     # pipe to correct module
     # do not use parallelization
-    if cores == 1 or params['REPROCESS_MP_TYPE'].lower() == 'linear':
+    if cores == 1 or params['TOOLS.REPROCESS.MP_TYPE'].lower() == 'linear':
         # log process: Running with 1 core
         WLOG(params, 'info', textentry('40-503-00016'))
         # run as linear process
@@ -969,21 +969,21 @@ def process_run_list(params: ParamDict, runlist, group=None,
                                 stop_at_exception=stop_at_exception,
                                 test_run=test_run)
     # use pathos to multiprocess
-    elif params['REPROCESS_MP_TYPE'].lower() == 'pathos':
+    elif params['TOOLS.REPROCESS.MP_TYPE'].lower() == 'pathos':
         # log process: Running with N cores
         WLOG(params, 'info', textentry('40-503-00017', args=[cores]))
         # run as multiple processes
         rdict = _multi_process_pathos(params, runlist, cores=cores,
                                       groupname=group, findexdbm=findexdbm)
     # use pool to continue parallelization
-    elif params['REPROCESS_MP_TYPE'].lower() == 'pool':
+    elif params['TOOLS.REPROCESS.MP_TYPE'].lower() == 'pool':
         # log process: Running with N cores
         WLOG(params, 'info', textentry('40-503-00017', args=[cores]))
         # run as multiple processes
         rdict = _multi_process_pool(params, runlist, cores=cores,
                                     groupname=group, findexdbm=findexdbm)
     # use Process to continue parallelization
-    elif params['REPROCESS_MP_TYPE'].lower() == 'process':
+    elif params['TOOLS.REPROCESS.MP_TYPE'].lower() == 'process':
         # log process: Running with N cores
         WLOG(params, 'info', textentry('40-503-00017', args=[cores]))
         # run as multiple processes
@@ -1367,7 +1367,7 @@ def generate_ids(params: ParamDict, indexdb: FileIndexDatabase,
     """
     func_name = __NAME__ + '.generate_ids()'
     # get keys from params
-    run_key = pcheck(params, 'REPROCESS_RUN_KEY', func_name, override=run_key)
+    run_key = pcheck(params, 'TOOLS.REPROCESS.RUN_KEY', func_name, override=run_key)
     # get number of cores
     cores = _get_cores(params)
     # should just need to sort these
@@ -1391,7 +1391,7 @@ def generate_ids(params: ParamDict, indexdb: FileIndexDatabase,
     WLOG(params, 'info', textentry('40-503-00015', args=[len(runlist)]))
     # -------------------------------------------------------------------------
     # deal with a single core (no multiprocessing)
-    if cores == 1 or params['REPROCESS_MP_TYPE_VAL'].lower() == 'linear':
+    if cores == 1 or params['TOOLS.REPROCESS.MP_TYPE_VAL'].lower() == 'linear':
         # get debug mode
         debug = params['GLOBAL.DEBUG']
         # get run file (if its given)
@@ -1419,19 +1419,19 @@ def generate_ids(params: ParamDict, indexdb: FileIndexDatabase,
         # loop around groups (recipes)
         for group in groups:
             # use pathos to multiprocess
-            if params['REPROCESS_MP_TYPE_VAL'].lower() == 'pathos':
+            if params['TOOLS.REPROCESS.MP_TYPE_VAL'].lower() == 'pathos':
                 _multi_process_gen_ids_pathos(params, groups[group],
                                               run_key, runlist, cores,
                                               keylist, inrecipelist,
                                               skiptable)
             # use pool to continue parallelization
-            elif params['REPROCESS_MP_TYPE_VAL'].lower() == 'pool':
+            elif params['TOOLS.REPROCESS.MP_TYPE_VAL'].lower() == 'pool':
                 _multi_process_gen_ids_pool(params, groups[group],
                                             run_key, runlist, cores,
                                             keylist, inrecipelist,
                                             skiptable)
             # use Process to continue parallelization
-            elif params['REPROCESS_MP_TYPE_VAL'].lower() == 'process':
+            elif params['TOOLS.REPROCESS.MP_TYPE_VAL'].lower() == 'process':
                 # run as multiple processes
                 _multi_process_gen_ids_process(params, groups[group],
                                                run_key, runlist, cores,
@@ -1440,7 +1440,7 @@ def generate_ids(params: ParamDict, indexdb: FileIndexDatabase,
             else:
                 # TODO: Move to language database
                 emsg = 'Unknown multiprocessing type: {0}'
-                eargs = [params['REPROCESS_MP_TYPE_VAL']]
+                eargs = [params['TOOLS.REPROCESS.MP_TYPE_VAL']]
                 WLOG(params, 'error', emsg.format(*eargs))
                 continue
         # ---------------------------------------------------------------------
@@ -2298,7 +2298,7 @@ def gen_global_condition(params: ParamDict, findexdbm: FileIndexDatabase,
     # only continue if we have odocodes to reject
     if len(reject_list) > 0:
         # get reject criteria
-        reject_criteria = params['REPROCESS_REJECT_SQL']
+        reject_criteria = params['TOOLS.REPROCESS.REJECT_SQL']
 
         if not drs_text.null_text(reject_criteria, ['None', '', 'Null']):
             # log progress
@@ -3138,7 +3138,7 @@ def group_run_files(params: ParamDict, recipe: DrsRecipe,
                     recipe and sub-dict key is a DrsFitsFile instance i.e.:
                     kwargdict[argument][drsfile] = Table
     :param obs_dir_col: str or None, if set overrides
-                         params['REPROCESS_OBSDIR_COL']
+                         params['TOOLS.REPROCESS.OBSDIR_COL']
 
     :return: a list of dictionaries, each dictionary is a different run.
              each 'run' is a dictionary of arguments each with the values that
@@ -3147,7 +3147,7 @@ def group_run_files(params: ParamDict, recipe: DrsRecipe,
     # set function name
     func_name = display_func('group_run_files', __NAME__)
     # get parameters from params
-    obs_dir_col = pcheck(params, 'REPROCESS_OBSDIR_COL', func=func_name,
+    obs_dir_col = pcheck(params, 'TOOLS.REPROCESS.OBSDIR_COL', func=func_name,
                          override=obs_dir_col)
     # flag for having no file arguments
     has_file_args = False
@@ -3552,7 +3552,7 @@ def get_uobjs_from_findex(params: ParamDict, indexdb: FileIndexDatabase,
         condition += f' AND ({(" OR ".join(subcond))}) '
     # ----------------------------------------------------------------------
     # obstype must be OBJECT
-    condition += params['REPROCESS_OBJ_SCI_SQL']
+    condition += params['TOOLS.REPROCESS.OBJ_SCI_SQL']
     # get columns from index database
     raw_objects = indexdb.get_entries(OBJNAMECOL, block_kind='raw',
                                       condition=condition)
@@ -4155,7 +4155,7 @@ def _remove_engineering(params, indexdb, condition):
     u_obs_dirs = np.unique(obs_dirs)
     # get the object mask (i.e. we want to know that we have objects for this
     #   night
-    allowed_objtypes = params['REPROCESS_OBJECT_TYPES']
+    allowed_objtypes = params['TOOLS.REPROCESS.OBJECT_TYPES']
     objmask = np.in1d(obstypes, np.array(allowed_objtypes))
     # define empty keep mask
     reject_obs_dirs = ''
@@ -4205,14 +4205,14 @@ def _group_drs_files(params: ParamDict, drstable: Table,
                      rows should be files of the same DrsFitsFile type
                      i.e. all FLAT_FLAT
     :param obs_dir_col: str or None, if set overrides
-                      params['REPROCESS_OBSDIR_COL']
+                      params['TOOLS.REPROCESS.OBSDIR_COL']
                       - which sets which column in drstable has the obs_dir
                       sub-directory information
-    :param seq_col: str or None, if set overrides params['REPROCESS_SEQCOL']
+    :param seq_col: str or None, if set overrides params['TOOLS.REPROCESS.SEQ_COL']
                     - which sets the sequence number column i.e.
                     1,2,3,4,1,2,3,1,2,3,4  is 3 groups of objects (4,3,4)
                     when sorted in time (by 'time_col')
-    :param time_col: str or None, if set overrides params['REPROCESS_TIMECOL']
+    :param time_col: str or None, if set overrides params['TOOLS.REPROCESS.TIME_COL']
                     - which is the column to sort the drstable by (and thus
                     put sequences in time order) - must be a float time
                     (i.e. MJD) in order to be sortable
@@ -4230,11 +4230,11 @@ def _group_drs_files(params: ParamDict, drstable: Table,
     # set function name
     func_name = display_func('_group_drs_files', __NAME__)
     # get properties from params
-    night_col = pcheck(params, 'REPROCESS_OBSDIR_COL', func=func_name,
+    night_col = pcheck(params, 'TOOLS.REPROCESS.OBSDIR_COL', func=func_name,
                        override=obs_dir_col)
-    seq_colname = pcheck(params, 'REPROCESS_SEQCOL', func=func_name,
+    seq_colname = pcheck(params, 'TOOLS.REPROCESS.SEQ_COL', func=func_name,
                          override=seq_col)
-    time_colname = pcheck(params, 'REPROCESS_TIMECOL', func=func_name,
+    time_colname = pcheck(params, 'TOOLS.REPROCESS.TIME_COL', func=func_name,
                           override=time_col)
     # deal with limit unset
     if limit is None:
@@ -4624,7 +4624,7 @@ def _match_group(params: ParamDict, argname: str,
     """
     Find the best group  of files from 'argname' (table of files taken from
     rundict) to a specific obs_dir + mean time (night name matched on
-    column night_col or params['REPROCESS_OBSDIR_COL'], mean time matched on
+    column night_col or params['TOOLS.REPROCESS.OBSDIR_COL'], mean time matched on
     MEANDATE column)
 
     :param params: ParamDict, parameter dictionary of constnats
@@ -4637,18 +4637,18 @@ def _match_group(params: ParamDict, argname: str,
     :param obs_dir: str or None, if set the night name to match to
                      (do not consider any files not from the night name) -
                      obs_dir controlled by table in rundict[argname][*] column
-                     'nightcol' or params['REPROCESS_OBSDIR_COL']
+                     'nightcol' or params['TOOLS.REPROCESS.OBSDIR_COL']
     :param meantime: float, the time to match (with time in column 'MEANDATE'
                      from table in rundict[argname][*])
     :param nightcol: str or None, if set the column name in rundict[argname][*]
-                     table, if not set uses params['REPROCESS_OBSDIR_COL']
+                     table, if not set uses params['TOOLS.REPROCESS.OBSDIR_COL']
     :return: list of strings, the filenames that match the argument with
              obs_dir and meantime
     """
     # set function name
     func_name = display_func('_match_groups', __NAME__)
     # get parmaeters from params/kwargs
-    night_col = pcheck(params, 'REPROCESS_OBSDIR_COL', func=func_name,
+    night_col = pcheck(params, 'TOOLS.REPROCESS.OBSDIR_COL', func=func_name,
                        override=nightcol)
     # get drsfiles
     drsfiles1 = list(rundict[argname].keys())

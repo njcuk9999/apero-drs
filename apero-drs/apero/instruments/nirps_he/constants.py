@@ -2280,7 +2280,7 @@ CDict.set('WAVE_HC_DIFF_HIST', value=True, source=__NAME__, group=cgroup)
 
 # turn on the wave lines hc/fp expected vs measured debug plot
 # (will plot once for hc once for fp)
-CDict.set('PLOT_WAVEREF_EXPECTED', value=True, source=__NAME__)
+CDict.set('WAVEREF_EXPECTED', value=True, source=__NAME__, group=cgroup)
 
 # turn on the wave solution hc guess debug plot (in loop)
 CDict.set('WAVE_HC_GUESS', value=True, source=__NAME__, group=cgroup)
@@ -2316,109 +2316,109 @@ CDict.set('WAVE_FP_FINAL_ORDER', value=True, source=__NAME__, group=cgroup)
 CDict.set('WAVE_FP_LWID_OFFSET', value=True, source=__NAME__, group=cgroup)
 
 # turn on the wave solution fp wave residual debug plot
-CDict.set('PLOT_WAVE_FP_WAVE_RES', value=True, source=__NAME__)
+CDict.set('WAVE_FP_WAVE_RES', value=True, source=__NAME__, group=cgroup)
 
 # turn on the wave solution fp fp_m_x residual debug plot
-CDict.set('PLOT_WAVE_FP_M_X_RES', value=True, source=__NAME__)
+CDict.set('WAVE_FP_M_X_RES', value=True, source=__NAME__, group=cgroup)
 
 # turn on the wave solution fp interp cavity width 1/m_d hc debug plot
-CDict.set('PLOT_WAVE_FP_IPT_CWID_1MHC', value=True, source=__NAME__)
+CDict.set('WAVE_FP_IPT_CWID_1MHC', value=True, source=__NAME__, group=cgroup)
 
 # turn on the wave solution fp interp cavity width ll hc and fp debug plot
-CDict.set('PLOT_WAVE_FP_IPT_CWID_LLHC', value=True, source=__NAME__)
+CDict.set('WAVE_FP_IPT_CWID_LLHC', value=True, source=__NAME__, group=cgroup)
 
 # turn on the wave solution old vs new wavelength difference debug plot
-CDict.set('PLOT_WAVE_FP_LL_DIFF', value=True, source=__NAME__)
+CDict.set('WAVE_FP_LL_DIFF', value=True, source=__NAME__, group=cgroup)
 
 # turn on the wave solution fp multi order debug plot
-CDict.set('PLOT_WAVE_FP_MULTI_ORDER', value=True, source=__NAME__)
+CDict.set('WAVE_FP_MULTI_ORDER', value=True, source=__NAME__, group=cgroup)
 
 # turn on the wave solution fp single order debug plot
-CDict.set('PLOT_WAVE_FP_SINGLE_ORDER', value=True, source=__NAME__)
+CDict.set('WAVE_FP_SINGLE_ORDER', value=True, source=__NAME__, group=cgroup)
 
 # turn on the wave per night iteration debug plot
-CDict.set('PLOT_WAVENIGHT_ITERPLOT', value=True, source=__NAME__)
+CDict.set('WAVENIGHT_ITERPLOT', value=True, source=__NAME__, group=cgroup)
 
 # turn on the wave per night hist debug plot
-CDict.set('PLOT_WAVENIGHT_HISTPLOT', value=True, source=__NAME__)
+CDict.set('WAVENIGHT_HISTPLOT', value=True, source=__NAME__, group=cgroup)
 
 # turn on the sky model region plot
-CDict.set('PLOT_TELLU_SKYMODEL_REGION_PLOT', value=True, source=__NAME__)
+CDict.set('TELLU_SKYMODEL_REGION_PLOT', value=True, source=__NAME__, group=cgroup)
 
 # turn on the sky model median plot
-CDict.set('PLOT_TELLU_SKYMODEL_MED', value=True, source=__NAME__)
+CDict.set('TELLU_SKYMODEL_MED', value=True, source=__NAME__, group=cgroup)
 
 # turn on the sky model median plot
-CDict.set('PLOT_TELLU_SKYMODEL_LINEFIT', value=True, source=__NAME__)
+CDict.set('TELLU_SKYMODEL_LINEFIT', value=True, source=__NAME__, group=cgroup)
 
 # turn on the sky correction debug plot
-CDict.set('PLOT_TELLU_SKY_CORR_PLOT', value=True, source=__NAME__)
+CDict.set('TELLU_SKY_CORR_PLOT', value=True, source=__NAME__, group=cgroup)
 
 # turn on the sky correction debug plot
-CDict.set('PLOT_TELLUP_MEAN_RES', value=True, source=__NAME__)
+CDict.set('TELLUP_MEAN_RES', value=True, source=__NAME__, group=cgroup)
 
 # turn on the telluric pre-cleaning result debug plot
-CDict.set('PLOT_TELLUP_ABSO_SPEC', value=True, source=__NAME__)
+CDict.set('TELLUP_ABSO_SPEC', value=True, source=__NAME__, group=cgroup)
 
 # turn on the telluric OH cleaning debug plot
-CDict.set('PLOT_TELLUP_CLEAN_OH', value=True, source=__NAME__)
+CDict.set('TELLUP_CLEAN_OH', value=True, source=__NAME__, group=cgroup)
 
 # turn on the make tellu wave flux debug plot (in loop)
-CDict.set('PLOT_MKTELLU_WAVE_FLUX1', value=False, source=__NAME__)
+CDict.set('MKTELLU_WAVE_FLUX1', value=False, source=__NAME__, group=cgroup)
 
 # turn on the make tellu wave flux debug plot (single order)
-CDict.set('PLOT_MKTELLU_WAVE_FLUX2', value=True, source=__NAME__)
+CDict.set('MKTELLU_WAVE_FLUX2', value=True, source=__NAME__, group=cgroup)
 
 # turn on the make tellu model plot
-CDict.set('PLOT_MKTELLU_MODEL', value=True, source=__NAME__)
+CDict.set('MKTELLU_MODEL', value=True, source=__NAME__, group=cgroup)
 
 # turn on the fit tellu pca component debug plot (in loop)
-CDict.set('PLOT_FTELLU_PCA_COMP1', value=False, source=__NAME__)
+CDict.set('FTELLU_PCA_COMP1', value=False, source=__NAME__, group=cgroup)
 
 # turn on the fit tellu pca component debug plot (single order)
-CDict.set('PLOT_FTELLU_PCA_COMP2', value=True, source=__NAME__)
+CDict.set('FTELLU_PCA_COMP2', value=True, source=__NAME__, group=cgroup)
 
 # turn on the fit tellu reconstructed spline debug plot (in loop)
-CDict.set('PLOT_FTELLU_RECON_SPLINE1', value=False, source=__NAME__)
+CDict.set('FTELLU_RECON_SPLINE1', value=False, source=__NAME__, group=cgroup)
 
 # turn on the fit tellu reconstructed spline debug plot (single order)
-CDict.set('PLOT_FTELLU_RECON_SPLINE2', value=True, source=__NAME__)
+CDict.set('FTELLU_RECON_SPLINE2', value=True, source=__NAME__, group=cgroup)
 
 # turn on the fit tellu wave shift debug plot (in loop)
-CDict.set('PLOT_FTELLU_WAVE_SHIFT1', value=False, source=__NAME__)
+CDict.set('FTELLU_WAVE_SHIFT1', value=False, source=__NAME__, group=cgroup)
 
 # turn on the fit tellu wave shift debug plot (single order)
-CDict.set('PLOT_FTELLU_WAVE_SHIFT2', value=True, source=__NAME__)
+CDict.set('FTELLU_WAVE_SHIFT1', value=True, source=__NAME__, group=cgroup)
 
 # turn on the fit tellu reconstructed absorption debug plot (in loop)
-CDict.set('PLOT_FTELLU_RECON_ABSO1', value=True, source=__NAME__)
+CDict.set('FTELLU_RECON_ABSO1', value=True, source=__NAME__, group=cgroup)
 
 # turn on the fit tellu reconstructed absorption debug plot (single order)
-CDict.set('PLOT_FTELLU_RECON_ABSO2', value=True, source=__NAME__)
+CDict.set('FTELLU_RECON_ABSO2', value=True, source=__NAME__, group=cgroup)
 
 # turn on the fit tellu res model debug plot
-CDict.set('PLOT_FTELLU_RES_MODEL', value=True, source=__NAME__)
+CDict.set('FTELLU_RES_MODEL', value=True, source=__NAME__, group=cgroup)
 
 # turn on the finite resolution correction debug plot
-CDict.set('PLOT_TELLU_FINITE_RES_CORR', value=True, source=__NAME__)
+CDict.set('TELLU_FINITE_RES_CORR', value=True, source=__NAME__, group=cgroup)
 
 # turn on the berv coverage debug plot
-CDict.set('PLOT_MKTEMP_BERV_COV', value=True, source=__NAME__)
+CDict.set('MKTEMP_BERV_COV', value=True, source=__NAME__, group=cgroup)
 
 # turn on the template s1d deconvolution plot
-CDict.set('PLOT_MKTEMP_S1D_DECONV', value=True, source=__NAME__)
+CDict.set('MKTEMP_S1D_DECONV', value=True, source=__NAME__, group=cgroup)
 
 # turn on the ccf rv fit debug plot (in a loop around orders)
-CDict.set('PLOT_CCF_RV_FIT_LOOP', value=True, source=__NAME__)
+CDict.set('CCF_RV_FIT_LOOP', value=True, source=__NAME__, group=cgroup)
 
 # turn on the ccf rv fit debug plot (for the mean order value)
-CDict.set('PLOT_CCF_RV_FIT', value=True, source=__NAME__)
+CDict.set('CCF_RV_FIT', value=True, source=__NAME__, group=cgroup)
 
 # turn on the ccf spectral order vs wavelength debug plot
-CDict.set('PLOT_CCF_SWAVE_REF', value=False, source=__NAME__)
+CDict.set('CCF_SWAVE_REF', value=False, source=__NAME__, group=cgroup)
 
 # turn on the ccf photon uncertainty debug plot
-CDict.set('PLOT_CCF_PHOTON_UNCERT', value=True, source=__NAME__)
+CDict.set('CCF_PHOTON_UNCERT', value=True, source=__NAME__, group=cgroup)
 
 # =============================================================================
 # TOOLS SETTINGS
@@ -2430,52 +2430,52 @@ CDict.set('REPROCESS_REINDEX_BLOCKS', value=['raw', 'tmp', 'red', 'out'],
 
 # Define whether to use multiprocess "pool" or "process" or use
 # "linear" mode when parallelising recipes
-CDict.set('REPROCESS_MP_TYPE', value='process', source=__NAME__)
+CDict.set('MP_TYPE', value='process', source=__NAME__, group=cgroup)
 
 # Define whether to use multiprocess "pool" or "process" or use
 # "linear" mode when validating recipes
-CDict.set('REPROCESS_MP_TYPE_VAL', value='linear', source=__NAME__)
+CDict.set('MP_TYPE_VAL', value='linear', source=__NAME__, group=cgroup)
 
 # Key for use in run files
-CDict.set('REPROCESS_RUN_KEY', value='ID', source=__NAME__)
+CDict.set('RUN_KEY', value='ID', source=__NAME__, group=cgroup)
 
 # Define the obs_dir column name for raw file table
-CDict.set('REPROCESS_OBSDIR_COL', value='OBS_DIR', source=__NAME__)
+CDict.set('OBSDIR_COL', value='OBS_DIR', source=__NAME__, group=cgroup)
 
 # Define the KW_OBJTYPE allowed for a science target
-CDict.set('REPROCESS_OBJECT_TYPES',
+CDict.set('OBJECT_TYPES',
           value=['OBJECT', 'OBJECT,SKY', 'OBJECT,FP', 'OBJECT,DARK'],
-          source=__NAME__)
+          source=__NAME__, group=cgroup)
 
 # Define the pi name column name for raw file table
-CDict.set('REPROCESS_PINAMECOL', value='KW_PI_NAME', source=__NAME__)
+CDict.set('PI_NAME_COL', value='KW_PI_NAME', source=__NAME__, group=cgroup)
 
 # Define the absolute file column name for raw file table
-CDict.set('REPROCESS_ABSFILECOL', value='ABSPATH', source=__NAME__)
+CDict.set('ABS_FILE_COL', value='ABSPATH', source=__NAME__, group=cgroup)
 
 # Define the modified file column name for raw file table
-CDict.set('REPROCESS_MODIFIEDCOL', value='LAST_MODIFIED', source=__NAME__)
+CDict.set('MODIFIED_COL', value='LAST_MODIFIED', source=__NAME__, group=cgroup)
 
 # Define the sort column (from header keywords) for raw file table
-CDict.set('REPROCESS_SORTCOL_HDRKEY', value='KW_ACQTIME', source=__NAME__)
+CDict.set('SORTCOL_HDRKEY', value='KW_ACQTIME', source=__NAME__, group=cgroup)
 
 # Define the raw index filename
-CDict.set('REPROCESS_RAWINDEXFILE', value='rawindex.fits', source=__NAME__)
+CDict.set('RAW_INDEX_FILE', value='rawindex.fits', source=__NAME__, group=cgroup)
 
 # Define the sequence (1 of 5, 2 of 5 etc) col for raw file table
-CDict.set('REPROCESS_SEQCOL', value='KW_CMPLTEXP', source=__NAME__)
+CDict.set('SEQ_COL', value='KW_CMPLTEXP', source=__NAME__, group=cgroup)
 
 # Define the time col for raw file table
-CDict.set('REPROCESS_TIMECOL', value='KW_ACQTIME', source=__NAME__)
+CDict.set('TIME_COL', value='KW_ACQTIME', source=__NAME__, group=cgroup)
 
 # Define the rejection sql query (between identifier and reject list col)
 # must use a valid reject database column and use {identifier} in query
-CDict.set('REPROCESS_REJECT_SQL', value='FILENAME="{identifier}"',
-          source=__NAME__)
+CDict.set('REJECT_SQL', value='FILENAME="{identifier}"',
+          source=__NAME__, group=cgroup)
 
 # Define the extra SQL science object select criteria
-CDict.set('REPROCESS_OBJ_SCI_SQL', value=' AND KW_OBSTYPE LIKE "OBJECT%"',
-          source=__NAME__)
+CDict.set('OBJ_SCI_SQL', value=' AND KW_OBSTYPE LIKE "OBJECT%"',
+          source=__NAME__, group=cgroup)
 
 # =============================================================================
 # TOOLS: GENERAL SETTINGS
@@ -2483,24 +2483,24 @@ CDict.set('REPROCESS_OBJ_SCI_SQL', value=' AND KW_OBSTYPE LIKE "OBJECT%"',
 cgroup = 'TOOLS.GEN'
 # Define whether we try to create a latex summary pdf
 # (turn this off if you have any problems with latex/pdflatex)
-CDict.set('SUMMARY_LATEX_PDF', value=True, source=__NAME__)
+CDict.set('SUMMARY_LATEX_PDF', value=True, source=__NAME__, group=cgroup)
 
 # Define exposure meter minimum wavelength for mask
-CDict.set('EXPMETER_MIN_LAMBDA', value=1478.7, source=__NAME__)
+CDict.set('EXPMETER_MIN_LAMBDA', value=1478.7, source=__NAME__, group=cgroup)
 
 # Define exposure meter maximum wavelength for mask
 CDict.set('EXPMETER_MAX_LAMBDA', value=1823.1, source=__NAME__)
 
 # Define exposure meter telluric threshold (minimum tapas transmission)
-CDict.set('EXPMETER_TELLU_THRES', value=0.95, source=__NAME__)
+CDict.set('EXPMETER_TELLU_THRES', value=0.95, source=__NAME__, group=cgroup)
 
 # Define the types of file allowed for drift measurement
 CDict.set('DRIFT_DPRTYPES',
           value=['FP_FP', 'OBJ_FP', 'DARK_FP'],
-          source=__NAME__)
+          source=__NAME__, group=cgroup)
 
 # Define the fiber dprtype allowed for drift measurement (only FP)
-CDict.set('DRIFT_DPR_FIBER_TYPE', value='FP', source=__NAME__)
+CDict.set('DRIFT_DPR_FIBER_TYPE', value='FP', source=__NAME__, group=cgroup)
 
 # =============================================================================
 # End of configuration file

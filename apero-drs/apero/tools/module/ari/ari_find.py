@@ -108,9 +108,9 @@ def load_params(params: ParamDict) -> ParamDict:
         if params['ARI_FINDER']['loaded']:
             return params
     # get finding chart parameters
-    finder_yaml = params['ARI_FINDING_CHARTS']['yaml']
-    finder_create = params['ARI_FINDING_CHARTS']['create']
-    finder_reset = params['ARI_FINDING_CHARTS']['reset']
+    finder_yaml = params['TOOLS.ARI.FINDING_CHARTS']['yaml']
+    finder_create = params['TOOLS.ARI.FINDING_CHARTS']['create']
+    finder_reset = params['TOOLS.ARI.FINDING_CHARTS']['reset']
     # storage for finder dict
     finder_dict = dict(loaded=True)
     # ----------------------------------------------------------------------
@@ -147,7 +147,7 @@ def load_params(params: ParamDict) -> ParamDict:
     raw_dict = base.load_yaml(finder_path)
     # look for the instrument -if it doesn't exist we do not run finding
     #   charts
-    if params['ARI_INSTRUMENT'] not in raw_dict:
+    if params['TOOLS.ARI.INSTRUMENT'] not in raw_dict:
         finder_dict['create'] = False
         # push the directory into params
         params.set('ARI_FINDER', value=finder_dict, source=func_name)
@@ -155,8 +155,8 @@ def load_params(params: ParamDict) -> ParamDict:
         return params
 
     # now push all other values into finder_dict
-    for key in raw_dict[params['ARI_INSTRUMENT']]:
-        finder_dict[key] = raw_dict[params['ARI_INSTRUMENT']][key]
+    for key in raw_dict[params['TOOLS.ARI.INSTRUMENT']]:
+        finder_dict[key] = raw_dict[params['TOOLS.ARI.INSTRUMENT']][key]
     # ----------------------------------------------------------------------
     # convert FOV to a numpy array and add astropy units (arcsec)
     for band in finder_dict['FIELD_OF_VIEW']:
@@ -212,10 +212,10 @@ def copy_finder_charts(params: ParamDict):
     # get the finder directory
     finder_dir = params['ARI_FINDER']['directory']
     # get the ssh directory
-    ssh_directory = params['ARI_SSH_COPY']['directory']
+    ssh_directory = params['TOOLS.ARI.SSH_COPY']['directory']
     # get the remote finder directory
     remote_path = str(os.path.join(ssh_directory,
-                                   params['ARI_INSTRUMENT'].lower(),
+                                   params['TOOLS.ARI.INSTRUMENT'].lower(),
                                    'finder'))
     # make sure we copy contents not directory
     if not remote_path.endswith(os.sep):

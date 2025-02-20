@@ -5166,21 +5166,21 @@ CDict.add('WAVE_FP_LWID_OFFSET', value=False,
                       'local width offset debug plot')
 
 # turn on the wave solution fp wave residual debug plot
-CDict.add('PLOT_WAVE_FP_WAVE_RES', value=False,
+CDict.add('WAVE_FP_WAVE_RES', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the wave solution fp wave '
                       'residual debug plot')
 
 # turn on the wave solution fp fp_m_x residual debug plot
-CDict.add('PLOT_WAVE_FP_M_X_RES', value=False,
+CDict.add('WAVE_FP_M_X_RES', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the wave solution fp '
                       'fp_m_x residual debug plot')
 
 # turn on the wave solution fp interp cavity width 1/m_d hc debug plot
-CDict.add('PLOT_WAVE_FP_IPT_CWID_1MHC', value=False,
+CDict.add('WAVE_FP_IPT_CWID_1MHC', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the wave solution fp '
@@ -5188,7 +5188,7 @@ CDict.add('PLOT_WAVE_FP_IPT_CWID_1MHC', value=False,
                       'debug plot')
 
 # turn on the wave solution fp interp cavity width ll hc and fp debug plot
-CDict.add('PLOT_WAVE_FP_IPT_CWID_LLHC', value=False,
+CDict.add('WAVE_FP_IPT_CWID_LLHC', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the wave solution fp '
@@ -5196,21 +5196,21 @@ CDict.add('PLOT_WAVE_FP_IPT_CWID_LLHC', value=False,
                       'fp debug plot')
 
 # turn on the wave solution old vs new wavelength difference debug plot
-CDict.add('PLOT_WAVE_FP_LL_DIFF', value=False, dtype=bool,
+CDict.add('WAVE_FP_LL_DIFF', value=False, dtype=bool,
           source=__NAME__, user=True, active=False,
           group=cgroup,
           description='turn on the wave solution old vs '
                       'new wavelength difference debug plot')
 
 # turn on the wave solution fp multi order debug plot
-CDict.add('PLOT_WAVE_FP_MULTI_ORDER', value=False,
+CDict.add('WAVE_FP_MULTI_ORDER', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the wave solution fp '
                       'multi order debug plot')
 
 # turn on the wave solution fp single order debug plot
-CDict.add('PLOT_WAVE_FP_SINGLE_ORDER', value=False,
+CDict.add('WAVE_FP_SINGLE_ORDER', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the wave solution fp '
@@ -5218,7 +5218,7 @@ CDict.add('PLOT_WAVE_FP_SINGLE_ORDER', value=False,
 
 # turn on the wave lines hc/fp expected vs measured debug plot
 #  (will plot once for hc once for fp)
-CDict.add('PLOT_WAVEREF_EXPECTED', value=False,
+CDict.add('WAVEREF_EXPECTED', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the wave lines hc/fp '
@@ -5226,20 +5226,20 @@ CDict.add('PLOT_WAVEREF_EXPECTED', value=False,
                       '(will plot once for hc once for fp)')
 
 # turn on the wave per night iteration debug plot
-CDict.add('PLOT_WAVENIGHT_ITERPLOT', value=False,
+CDict.add('WAVENIGHT_ITERPLOT', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the wave per night '
                       'iteration debug plot')
 
 # turn on the wave per night hist debug plot
-CDict.add('PLOT_WAVENIGHT_HISTPLOT', value=False,
+CDict.add('WAVENIGHT_HISTPLOT', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the wave per night '
                       'hist debug plot')
 # turn on the sky model region plot
-CDict.add('PLOT_TELLU_SKYMODEL_REGION_PLOT',
+CDict.add('TELLU_SKYMODEL_REGION_PLOT',
           value=False, dtype=bool,
           source=__NAME__, user=True,
           active=False, group=cgroup,
@@ -5247,7 +5247,7 @@ CDict.add('PLOT_TELLU_SKYMODEL_REGION_PLOT',
                       'region plot')
 
 # turn on the sky model median plot
-CDict.add('PLOT_TELLU_SKYMODEL_MED',
+CDict.add('TELLU_SKYMODEL_MED',
           value=False, dtype=bool,
           source=__NAME__, user=True,
           active=False, group=cgroup,
@@ -5255,7 +5255,7 @@ CDict.add('PLOT_TELLU_SKYMODEL_MED',
                       'median plot')
 
 # turn on the sky model median plot
-CDict.add('PLOT_TELLU_SKYMODEL_LINEFIT',
+CDict.add('TELLU_SKYMODEL_LINEFIT',
           value=False, dtype=bool,
           source=__NAME__, user=True,
           active=False, group=cgroup,
@@ -5263,76 +5263,76 @@ CDict.add('PLOT_TELLU_SKYMODEL_LINEFIT',
                       'median plot')
 
 # turn on the sky correction debug plot
-CDict.add('PLOT_TELLU_SKY_CORR_PLOT', value=False,
+CDict.add('TELLU_SKY_CORR_PLOT', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the sky correction '
                       'debug plot')
 
 # turn on the telluric pre-cleaning ccf debug plot
-CDict.add('PLOT_TELLUP_MEAN_RES', value=False,
+CDict.add('TELLUP_MEAN_RES', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the telluric pre-cleaning '
                       'slope mean res debug plot')
 
 # turn on the telluric pre-cleaning ccf debug plot
-CDict.add('PLOT_TELLUP_WAVE_TRANS', value=False,
+CDict.add('TELLUP_WAVE_TRANS', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the telluric pre-cleaning '
                       'ccf debug plot')
 
 # turn on the telluric pre-cleaning result debug plot
-CDict.add('PLOT_TELLUP_ABSO_SPEC', value=False,
+CDict.add('TELLUP_ABSO_SPEC', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the telluric pre-cleaning '
                       'result debug plot')
 
 # turn on the telluric OH cleaning debug plot
-CDict.add('PLOT_TELLUP_CLEAN_OH', value=False,
+CDict.add('TELLUP_CLEAN_OH', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the telluric OH cleaning '
                       'debug plot')
 
 # turn on the make tellu wave flux debug plot (in loop)
-CDict.add('PLOT_MKTELLU_WAVE_FLUX1', value=False,
+CDict.add('MKTELLU_WAVE_FLUX1', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the make tellu wave flux '
                       'debug plot (in loop)')
 
 # turn on the make tellu wave flux debug plot (single order)
-CDict.add('PLOT_MKTELLU_WAVE_FLUX2', value=False,
+CDict.add('MKTELLU_WAVE_FLUX2', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the make tellu wave flux '
                       'debug plot (single order)')
 
 # turn on the make tellu model plot
-CDict.add('PLOT_MKTELLU_MODEL', value=False,
+CDict.add('MKTELLU_MODEL', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the make tellu model plot')
 
 # turn on the fit tellu pca component debug plot (in loop)
-CDict.add('PLOT_FTELLU_PCA_COMP1', value=False,
+CDict.add('FTELLU_PCA_COMP1', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the fit tellu pca component'
                       ' debug plot (in loop)')
 
 # turn on the fit tellu pca component debug plot (single order)
-CDict.add('PLOT_FTELLU_PCA_COMP2', value=False,
+CDict.add('FTELLU_PCA_COMP2', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the fit tellu pca component '
                       'debug plot (single order)')
 
 # turn on the fit tellu reconstructed spline debug plot (in loop)
-CDict.add('PLOT_FTELLU_RECON_SPLINE1', value=False,
+CDict.add('FTELLU_RECON_SPLINE1', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the fit tellu '
@@ -5340,7 +5340,7 @@ CDict.add('PLOT_FTELLU_RECON_SPLINE1', value=False,
                       'plot (in loop)')
 
 # turn on the fit tellu reconstructed spline debug plot (single order)
-CDict.add('PLOT_FTELLU_RECON_SPLINE2', value=False,
+CDict.add('FTELLU_RECON_SPLINE2', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the fit tellu '
@@ -5348,21 +5348,21 @@ CDict.add('PLOT_FTELLU_RECON_SPLINE2', value=False,
                       'plot (single order)')
 
 # turn on the fit tellu wave shift debug plot (in loop)
-CDict.add('PLOT_FTELLU_WAVE_SHIFT1', value=False,
+CDict.add('FTELLU_WAVE_SHIFT1', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the fit tellu wave shift'
                       ' debug plot (in loop)')
 
 # turn on the fit tellu wave shift debug plot (single order)
-CDict.add('PLOT_FTELLU_WAVE_SHIFT2', value=False,
+CDict.add('FTELLU_WAVE_SHIFT1', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the fit tellu wave shift '
                       'debug plot (single order)')
 
 # turn on the fit tellu reconstructed absorption debug plot (in loop)
-CDict.add('PLOT_FTELLU_RECON_ABSO1', value=False,
+CDict.add('FTELLU_RECON_ABSO1', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the fit tellu '
@@ -5370,7 +5370,7 @@ CDict.add('PLOT_FTELLU_RECON_ABSO1', value=False,
                       'plot (in loop)')
 
 # turn on the fit tellu reconstructed absorption debug plot (single order)
-CDict.add('PLOT_FTELLU_RECON_ABSO2', value=False,
+CDict.add('FTELLU_RECON_ABSO2', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the fit tellu '
@@ -5378,89 +5378,89 @@ CDict.add('PLOT_FTELLU_RECON_ABSO2', value=False,
                       'plot (single order)')
 
 # turn on the fit tellu res model debug plot
-CDict.add('PLOT_FTELLU_RES_MODEL', value=False,
+CDict.add('FTELLU_RES_MODEL', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the fit tellu res model '
                       'debug plot')
 
 # turn on the finite resolution correction debug plot
-CDict.add('PLOT_TELLU_FINITE_RES_CORR', value=False,
+CDict.add('TELLU_FINITE_RES_CORR', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the finite resolution '
                       'correction debug plot')
 
 # turn on the berv coverage debug plot
-CDict.add('PLOT_MKTEMP_BERV_COV', value=False,
+CDict.add('MKTEMP_BERV_COV', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the berv coverage '
                       'debug plot')
 
 # turn on the template s1d deconvolution plot
-CDict.add('PLOT_MKTEMP_S1D_DECONV', value=False,
+CDict.add('MKTEMP_S1D_DECONV', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the template s1d '
                       'deconvolution plot')
 
 # turn on the ccf rv fit debug plot (in a loop around orders)
-CDict.add('PLOT_CCF_RV_FIT_LOOP', value=False,
+CDict.add('CCF_RV_FIT_LOOP', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the ccf rv fit debug '
                       'plot (in a loop around orders)')
 
 # turn on the ccf rv fit debug plot (for the mean order value)
-CDict.add('PLOT_CCF_RV_FIT', value=False,
+CDict.add('CCF_RV_FIT', value=False,
           dtype=bool, source=__NAME__, user=True, active=False,
           group=cgroup,
           description='turn on the ccf rv fit debug plot '
                       '(for the mean order value)')
 
 # turn on the ccf spectral order vs wavelength debug plot
-CDict.add('PLOT_CCF_SWAVE_REF', value=False,
+CDict.add('CCF_SWAVE_REF', value=False,
           dtype=bool, source=__NAME__, user=True, active=False,
           group=cgroup,
           description='turn on the ccf spectral order vs '
                       'wavelength debug plot')
 
 # turn on the ccf photon uncertainty debug plot
-CDict.add('PLOT_CCF_PHOTON_UNCERT', value=False,
+CDict.add('CCF_PHOTON_UNCERT', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the ccf photon uncertainty '
                       'debug plot')
 
 # turn on the polar fit continuum plot
-CDict.add('PLOT_POLAR_FIT_CONT', value=False,
+CDict.add('POLAR_FIT_CONT', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the polar fit continuum '
                       'plot')
 
 # turn on the polar continuum debug plot
-CDict.add('PLOT_POLAR_CONTINUUM', value=False,
+CDict.add('POLAR_CONTINUUM', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the polar continuum '
                       'debug plot')
 
 # turn on the polar results debug plot
-CDict.add('PLOT_POLAR_RESULTS', value=False,
+CDict.add('POLAR_RESULTS', value=False,
           dtype=bool, source=__NAME__, user=True, active=False,
           group=cgroup,
           description='turn on the polar results debug plot')
 
 # turn on the polar stokes i debug plot
-CDict.add('PLOT_POLAR_STOKES_I', value=False,
+CDict.add('POLAR_STOKES_I', value=False,
           dtype=bool, source=__NAME__, user=True,
           active=False, group=cgroup,
           description='turn on the polar stokes i debug plot')
 
 # turn on the polar lsd debug plot
-CDict.add('PLOT_POLAR_LSD', value=False,
+CDict.add('POLAR_LSD', value=False,
           dtype=bool, source=__NAME__, user=True, active=False,
           group=cgroup,
           description='turn on the polar lsd debug plot')
@@ -5486,7 +5486,7 @@ CDict.add('REPROCESS_REINDEX_BLOCKS', value=None,
 
 # Define whether to use multiprocess "pool" or "process" or use "linear"
 #     mode when parallelising recipes
-CDict.add('REPROCESS_MP_TYPE', value=None, dtype=str,
+CDict.add('MP_TYPE', value=None, dtype=str,
           source=__NAME__, group=cgroup,
           user=True, active=True,
           options=['pool', 'process'],
@@ -5496,7 +5496,7 @@ CDict.add('REPROCESS_MP_TYPE', value=None, dtype=str,
 
 # Define whether to use multiprocess "pool" or "process" or use "linear"
 #     mode when validating recipes
-CDict.add('REPROCESS_MP_TYPE_VAL', value=None, dtype=str,
+CDict.add('MP_TYPE_VAL', value=None, dtype=str,
           source=__NAME__, group=cgroup,
           user=True, active=True,
           options=['linear', 'pool', 'process', 'pathos'],
@@ -5505,68 +5505,68 @@ CDict.add('REPROCESS_MP_TYPE_VAL', value=None, dtype=str,
                       'mode when validating recipes')
 
 # Key for use in run files
-CDict.add('REPROCESS_RUN_KEY', value=None, dtype=str,
+CDict.add('RUN_KEY', value=None, dtype=str,
           source=__NAME__, group=cgroup,
           description='Key for use in run files')
 
 # Define the obs_dir column name for raw file table
-CDict.add('REPROCESS_OBSDIR_COL', value=None, dtype=str,
+CDict.add('OBSDIR_COL', value=None, dtype=str,
           source=__NAME__, group=cgroup,
           description=('Define the obs_dir column name '
                        'for raw file table'))
 
 # Define the KW_OBJTYPE allowed for a science target
-CDict.add('REPROCESS_OBJECT_TYPES', value=None,
+CDict.add('OBJECT_TYPES', value=None,
           dtype=list, dtypei=str,
           source=__NAME__, group=cgroup,
           description=('Define the KW_OBJTYPE allowed for '
                        'a science target'))
 
 # Define the pi name column name for raw file table
-CDict.add('REPROCESS_PINAMECOL', value=None, dtype=str,
+CDict.add('PI_NAME_COL', value=None, dtype=str,
           source=__NAME__, group=cgroup,
           description=('Define the pi name column name for '
                        'raw file table'))
 
 # Define the absolute file column name for raw file table
-CDict.add('REPROCESS_ABSFILECOL', value=None, dtype=str,
+CDict.add('ABS_FILE_COL', value=None, dtype=str,
           source=__NAME__, group=cgroup,
           description=('Define the absolute file column '
                        'name for raw file table'))
 
 # Define the modified file column name for raw file table
-CDict.add('REPROCESS_MODIFIEDCOL', value=None, dtype=str,
+CDict.add('MODIFIED_COL', value=None, dtype=str,
           source=__NAME__, group=cgroup,
           description=('Define the modified file column '
                        'name for raw file table'))
 
 # Define the sort column (from header keywords) for raw file table
-CDict.add('REPROCESS_SORTCOL_HDRKEY', value=None,
+CDict.add('SORTCOL_HDRKEY', value=None,
           dtype=str, source=__NAME__, group=cgroup,
           description=('Define the sort column (from '
                        'header keywords) for raw file '
                        'table'))
 
 # Define the raw index filename
-CDict.add('REPROCESS_RAWINDEXFILE', value=None, dtype=str,
+CDict.add('RAW_INDEX_FILE', value=None, dtype=str,
           source=__NAME__, group=cgroup,
           description='Define the raw index filename')
 
 # define the sequence (1 of 5, 2 of 5 etc) col for raw file table
-CDict.add('REPROCESS_SEQCOL', value=None, dtype=str,
+CDict.add('SEQ_COL', value=None, dtype=str,
           source=__NAME__, group=cgroup,
           description=('define the sequence (1 of 5, 2 of 5 '
                        'etc) col for raw file table'))
 
 # define the time col for raw file table
-CDict.add('REPROCESS_TIMECOL', value=None, dtype=str,
+CDict.add('TIME_COL', value=None, dtype=str,
           source=__NAME__, group=cgroup,
           description=('define the time col for raw file '
                        'table'))
 
 # Define the rejection sql query (between identifier and reject list col)
 #    must use a valid reject database column and use {identifier} in query
-CDict.add('REPROCESS_REJECT_SQL', value=None, dtype=str,
+CDict.add('REJECT_SQL', value=None, dtype=str,
           source=__NAME__, group=cgroup,
           description='Define the rejection sql query '
                       '(between identifier and reject '
@@ -5575,7 +5575,7 @@ CDict.add('REPROCESS_REJECT_SQL', value=None, dtype=str,
                       'in query')
 
 # Define the extra SQL science object select critera
-CDict.add('REPROCESS_OBJ_SCI_SQL', value='', dtype=str,
+CDict.add('OBJ_SCI_SQL', value='', dtype=str,
           source=__NAME__, group=cgroup,
           description='Define the extra SQL science '
                       'object select critera')
@@ -5587,7 +5587,7 @@ cgroup = 'TOOLS.GEN'
 CDict.add_group(cgroup, description='TOOLS.GENERAL: GENERAL TOOL SETTINGS')
 
 # define the default database to remake
-CDict.add('REMAKE_DATABASE_DEFAULT', value='calibration',
+CDict.add('REMAKE_DB_DEFALUT', value='calibration',
           dtype=str, source=__NAME__, group=cgroup,
           description=('define the default database to '
                        'remake'))
@@ -5640,22 +5640,22 @@ cgroup = 'TOOLS.ARI'
 CDict.add_group(cgroup, description='TOOLS.ARI: ARI SETTINGS')
 
 # Define the ari instrument (may be different from the apero instrument)
-CDict.add('ARI_INSTRUMENT', value=None, dtype=str,
+CDict.add('INSTRUMENT', value=None, dtype=str,
           source=__NAME__, group=cgroup,
           description='Define the ari instrument (may be different'
                       ' from the apero instrument)')
 # Define the ari user name
-CDict.add('ARI_USER', value=None, dtype=str, source=__NAME__,
+CDict.add('USER', value=None, dtype=str, source=__NAME__,
           group=cgroup,
           description='Define the ari user name')
 
 # Define the ari number of cores
-CDict.add('ARI_NCORES', value=None, dtype=int, source=__NAME__,
+CDict.add('NCORES', value=None, dtype=int, source=__NAME__,
           group=cgroup,
           description='Define the ari number of cores')
 
 # Define the ari spectrum wavelength ranges in nm
-CDict.add('ARI_WAVE_RANGES', value=None, dtype=dict,
+CDict.add('WAVE_RANGES', value=None, dtype=dict,
           source=__NAME__, group=cgroup,
           description='Define the ari spectrum wavelength '
                       'ranges in nm')
@@ -5667,41 +5667,41 @@ ARI_TCORR_MAP_WAVE_RANGE = Const('ARI_TCORR_MAP_WAVE_RANGE', value=None,
                                              'debug telluric correction map')
 
 # Define the ari ssh properties to copy the website to
-CDict.add('ARI_SSH_COPY', value=None, dtype=dict, source=__NAME__,
+CDict.add('SSH_COPY', value=None, dtype=dict, source=__NAME__,
           group=cgroup,
           description='Define the ari ssh properties to copy the '
                       'website to')
 
 # Define the ari group (For login access to pages)
-CDict.add('ARI_GROUP', value=None, dtype=str, source=__NAME__,
+CDict.add('GROUP', value=None, dtype=str, source=__NAME__,
           group=cgroup,
           description='Define the ari group (For login access to '
                       'pages)')
 
 # Define whether to reset the ari working directory
-CDict.add('ARI_RESET', value=False, dtype=bool, source=__NAME__,
+CDict.add('RESET', value=False, dtype=bool, source=__NAME__,
           group=cgroup,
           description='Define whether to reset the ari working '
                       'directory')
 
 # Define whether to filter by objects
-CDict.add('ARI_FILTER_OBJECTS', value=None, dtype=str,
+CDict.add('FILTER_OBJECTS', value=None, dtype=str,
           source=__NAME__, group=cgroup,
           description='Define whether to filter by objects')
 
 # Define the list of objects to filter in ari
-CDict.add('ARI_FILTER_OBJECTS_LIST', value=None,
+CDict.add('FILTER_OBJECTS_LIST', value=None,
           dtype=list, source=__NAME__, group=cgroup,
           description='Define the list of objects to '
                       'filter in ari')
 
 # Define the header key props for ari
-CDict.add('ARI_HEADER_PROPS', value=None, dtype=dict,
+CDict.add('HEADER_PROPS', value=None, dtype=dict,
           source=__NAME__, group=cgroup,
           description='Define the header key props for ari')
 
 # Define the finding charts dictionary for ari
-CDict.add('ARI_FINDING_CHARTS', value=None, dtype=dict,
+CDict.add('FINDING_CHARTS', value=None, dtype=dict,
           source=__NAME__, group=cgroup,
           description='Define the finding charts dictionary '
                       'for ari')
@@ -5714,7 +5714,7 @@ ari_reset_dict['sphinx-setup'] = ('tools/resources/ari/working',
 ari_reset_dict['ari-setup'] = ('tools/resources/ari/ari-config',
                                'ari-config')
 ari_reset_dict['ari-home'] = ('tools/resources/ari/ari-home', 'ari-home')
-CDict.add('ARI_RESET_DICT', value=ari_reset_dict,
+CDict.add('RESET_DICT', value=ari_reset_dict,
           dtype=dict, source=__NAME__, group=cgroup,
           description='Define the ARI reset directory (relative '
                       'paths to copy into the "other" directory '

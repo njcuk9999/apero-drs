@@ -66,18 +66,18 @@ AperoCodedException = drs_log.AperoCodedException
 # -----------------------------------------------------------------------------
 # mapping of yaml keys to param dict keys
 YAML_TO_PARAM = dict()
-YAML_TO_PARAM['settings.instrument'] = 'ARI_INSTRUMENT'
-YAML_TO_PARAM['settings.username'] = 'ARI_USER'
-YAML_TO_PARAM['settings.N_CORES'] = 'ARI_NCORES'
-YAML_TO_PARAM['settings.SpecWave'] = 'ARI_WAVE_RANGES'
+YAML_TO_PARAM['settings.instrument'] = 'TOOLS.ARI.INSTRUMENT'
+YAML_TO_PARAM['settings.username'] = 'TOOLS.ARI.USER'
+YAML_TO_PARAM['settings.N_CORES'] = 'TOOLS.ARI.NCORES'
+YAML_TO_PARAM['settings.SpecWave'] = 'TOOLS.ARI.WAVE_RANGES'
 YAML_TO_PARAM['settings.TcorrMapWave'] = 'ARI_TCORR_MAP_WAVE_RANGE'
-YAML_TO_PARAM['settings.ssh'] = 'ARI_SSH_COPY'
-YAML_TO_PARAM['settings.group'] = 'ARI_GROUP'
-YAML_TO_PARAM['settings.reset'] = 'ARI_RESET'
-YAML_TO_PARAM['settings.filter objects'] = 'ARI_FILTER_OBJECTS'
-YAML_TO_PARAM['settings.objects'] = 'ARI_FILTER_OBJECTS_LIST'
-YAML_TO_PARAM['settings.finding charts'] = 'ARI_FINDING_CHARTS'
-YAML_TO_PARAM['headers'] = 'ARI_HEADER_PROPS'
+YAML_TO_PARAM['settings.ssh'] = 'TOOLS.ARI.SSH_COPY'
+YAML_TO_PARAM['settings.group'] = 'TOOLS.ARI.GROUP'
+YAML_TO_PARAM['settings.reset'] = 'TOOLS.ARI.RESET'
+YAML_TO_PARAM['settings.filter objects'] = 'TOOLS.ARI.FILTER_OBJECTS'
+YAML_TO_PARAM['settings.objects'] = 'TOOLS.ARI.FILTER_OBJECTS_LIST'
+YAML_TO_PARAM['settings.finding charts'] = 'TOOLS.ARI.FINDING_CHARTS'
+YAML_TO_PARAM['headers'] = 'TOOLS.ARI.HEADER_PROPS'
 # mapping of AriObject keys to yaml dump
 OBJ_TO_YAML = dict()
 OBJ_TO_YAML['objname'] = 'OBJNAME'
@@ -699,7 +699,7 @@ class AriObject:
         :return:
         """
         # push the header properites into self
-        self.headers = params['ARI_HEADER_PROPS']
+        self.headers = params['TOOLS.ARI.HEADER_PROPS']
         # loop around COUNT COLS and populate header dict
         for key in self.filetypes:
             # check file kind in headers
@@ -786,7 +786,7 @@ class AriObject:
         yaml_abs_path = os.path.join(yaml_path, self.yaml_filename)
         # ---------------------------------------------------------------------
         # deal with a reset
-        if params['ARI_RESET']:
+        if params['TOOLS.ARI.RESET']:
             if os.path.exists(yaml_abs_path):
                 os.remove(yaml_abs_path)
             return
@@ -822,7 +822,7 @@ class AriObject:
     def get_target_parameters(self, params: ParamDict):
         # set up the object page
         obj_save_path = os.path.join(params['ARI_OBJ_PAGES'], self.objname)
-        ari_user = params['ARI_USER']
+        ari_user = params['TOOLS.ARI.USER']
         # ---------------------------------------------------------------------
         # storage for spectrum values
         target_props = dict()
@@ -859,7 +859,7 @@ class AriObject:
     def get_spec_parameters(self, params: ParamDict):
         # set up the object page
         obj_save_path = os.path.join(params['ARI_OBJ_PAGES'], self.objname)
-        ari_user = params['ARI_USER']
+        ari_user = params['TOOLS.ARI.USER']
         core_snr = params['OBJ.TELLU.TEMPLATE.BERVCOV_CSNR']
         resolution = params['OBJ.TELLU.TEMPLATE.BERVCOV_RES']
         # get the extracted files
@@ -948,7 +948,7 @@ class AriObject:
         # standard request keyword args
         rkwargs = dict(fiber='Science fiber',
                        dprtypes=SCIENCE_DPRTYPES,
-                       apero_mode=params['ARI_USER'])
+                       apero_mode=params['TOOLS.ARI.USER'])
         # add the links to request data
         spec_props['RLINK_EXT_E2DSFF'] = self.rlink(filetype='ext', **rkwargs)
         spec_props['RLINK_EXT_S1D_V'] = self.rlink(filetype='s1d', **rkwargs)
@@ -1018,7 +1018,7 @@ class AriObject:
         ext_table = drs_table.read_table(params, ext_file, fmt='fits', hdu=1)
         # get wavelength masks for plotting
         wavemap = ext_table['wavelength']
-        limits = params['ARI_WAVE_RANGES']
+        limits = params['TOOLS.ARI.WAVE_RANGES']
         wavemask0 = (wavemap > limits['limit0'][0])
         wavemask0 &= (wavemap < limits['limit0'][1])
         wavemask1 = (wavemap > limits['limit1'][0])
@@ -1234,7 +1234,7 @@ class AriObject:
         """
         # set up the object page
         obj_save_path = os.path.join(params['ARI_OBJ_PAGES'], self.objname)
-        ari_user = params['ARI_USER']
+        ari_user = params['TOOLS.ARI.USER']
         # get lbl rdb files
         lbl_files = dict()
         for filetype in LBL_FILETYPES:
@@ -1335,7 +1335,7 @@ class AriObject:
             # standard request keyword args
             rkwargs = dict(fiber='Science fiber',
                            dprtypes=SCIENCE_DPRTYPES,
-                           apero_mode=params['ARI_USER'])
+                           apero_mode=params['TOOLS.ARI.USER'])
             # add the links to request data
             lbl_props['RLINK_LBL_FITS'] = self.rlink(filetype='lbl.fits',
                                                      **rkwargs)
@@ -1437,7 +1437,7 @@ class AriObject:
     def get_ccf_parameters(self, params: ParamDict):
         # set up the object page
         obj_save_path = os.path.join(params['ARI_OBJ_PAGES'], self.objname)
-        ari_user = params['ARI_USER']
+        ari_user = params['TOOLS.ARI.USER']
         # get ccf files
         ccf_files = self.filetypes['ccf'].get_files(qc=True)
         # don't go here is lbl rdb files are not present
@@ -1471,7 +1471,7 @@ class AriObject:
         # standard request keyword args
         rkwargs = dict(fiber='Science fiber',
                        dprtypes=SCIENCE_DPRTYPES,
-                       apero_mode=params['ARI_USER'])
+                       apero_mode=params['TOOLS.ARI.USER'])
         # add the links to request data
         ccf_props['RLINK_CCF'] = self.rlink(filetype='ccf', **rkwargs)
         # -----------------------------------------------------------------
@@ -1583,7 +1583,7 @@ class AriObject:
     def get_time_series_parameters(self, params: ParamDict):
         # set up the object page
         obj_save_path = os.path.join(params['ARI_OBJ_PAGES'], self.objname)
-        ari_user = params['ARI_USER']
+        ari_user = params['TOOLS.ARI.USER']
         # get ext files
         ftypes = self.filetypes
         ext_files_all = ftypes['ext'].get_files(qc=True)
@@ -1716,7 +1716,7 @@ class AriObject:
             # standard request keyword args
             rkwargs = dict(fiber='Science fiber',
                            dprtypes=SCIENCE_DPRTYPES,
-                           apero_mode=params['ARI_USER'])
+                           apero_mode=params['TOOLS.ARI.USER'])
             # get the date YYYY-MM-DD format
             rlink_start = first_time.strftime('%Y-%m-%d')
             rlink_end = last_time.strftime('%Y-%m-%d')
@@ -1764,7 +1764,7 @@ class AriObject:
     def get_debug_parameters(self, params: ParamDict):
         # set up the object page
         obj_save_path = os.path.join(params['ARI_OBJ_PAGES'], self.objname)
-        ari_user = params['ARI_USER']
+        ari_user = params['TOOLS.ARI.USER']
         # get the extracted files
         ext_files = self.filetypes['ext'].get_files()
         # don't go here if ext files are not present
@@ -2997,9 +2997,9 @@ def do_rsync(params: ParamDict, mode: str, path_in: str, path_out: str,
     # --------------------------------------------------------------------------
     # get the ssh command
     ssh_dict = dict()
-    ssh_dict['SSH'] = params['ARI_SSH_COPY']['options']
-    ssh_dict['USER'] = params['ARI_SSH_COPY']['user']
-    ssh_dict['HOST'] = params['ARI_SSH_COPY']['host']
+    ssh_dict['SSH'] = params['TOOLS.ARI.SSH_COPY']['options']
+    ssh_dict['USER'] = params['TOOLS.ARI.SSH_COPY']['user']
+    ssh_dict['HOST'] = params['TOOLS.ARI.SSH_COPY']['host']
     ssh_dict['INPATH'] = path_in
     ssh_dict['OUTPATH'] = path_out
     # --------------------------------------------------------------------------

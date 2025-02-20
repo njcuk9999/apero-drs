@@ -238,7 +238,7 @@ apero_preprocess.set_kwarg(name='--skip', dtype='bool',
                            helpstr=textentry('PPSKIP_HELP'),
                            default_ref='PP.SKIP_DONE')
 apero_preprocess.group_func = grouping.group_individually
-apero_preprocess.group_column = 'REPROCESS_OBSDIR_COL'
+apero_preprocess.group_column = 'TOOLS.REPROCESS.OBSDIR_COL'
 # documentation
 apero_preprocess.schematic = apero_preprocess.default_sfile()
 apero_preprocess.description_file = apero_preprocess.default_rfile()
@@ -282,7 +282,7 @@ apero_badpix.set_kwarg(**no_in_qc)
 apero_badpix.set_min_nfiles('flatfiles', 5)
 apero_badpix.set_min_nfiles('darkfiles', 2)
 apero_badpix.group_func = grouping.group_by_dirname
-apero_badpix.group_column = 'REPROCESS_OBSDIR_COL'
+apero_badpix.group_column = 'TOOLS.REPROCESS.OBSDIR_COL'
 # documentation
 apero_badpix.schematic = apero_badpix.default_sfile()
 apero_badpix.description_file = apero_badpix.default_rfile()
@@ -321,7 +321,7 @@ apero_dark.set_kwarg(**plot)
 apero_dark.set_kwarg(**no_in_qc)
 apero_dark.set_min_nfiles('files', 2)
 apero_dark.group_func = grouping.group_by_dirname
-apero_dark.group_column = 'REPROCESS_OBSDIR_COL'
+apero_dark.group_column = 'TOOLS.REPROCESS.OBSDIR_COL'
 # add to recipe
 recipes.append(apero_dark)
 
@@ -410,7 +410,7 @@ apero_loc.set_min_nfiles('files', 5)
 apero_loc.limit = 50
 # define grouping functions
 apero_loc.group_func = grouping.group_by_dirname
-apero_loc.group_column = 'REPROCESS_OBSDIR_COL'
+apero_loc.group_column = 'TOOLS.REPROCESS.OBSDIR_COL'
 # documentation
 apero_loc.schematic = apero_loc.default_sfile()
 apero_loc.description_file = apero_loc.default_rfile()
@@ -471,7 +471,7 @@ apero_shape_ref.set_min_nfiles('fpfiles', 5)
 apero_shape_ref.set_min_nfiles('hcfiles', 2)
 apero_shape_ref.set_kwarg(**fpref)
 apero_shape_ref.group_func = grouping.group_by_dirname
-apero_shape_ref.group_column = 'REPROCESS_OBSDIR_COL'
+apero_shape_ref.group_column = 'TOOLS.REPROCESS.OBSDIR_COL'
 # documentation
 apero_shape_ref.schematic = apero_shape_ref.default_sfile()
 apero_shape_ref.description_file = apero_shape_ref.default_rfile()
@@ -520,7 +520,7 @@ apero_shape.set_kwarg(**no_in_qc)
 apero_shape.set_min_nfiles('fpfiles', 5)
 apero_shape.set_min_nfiles('hcfiles', 2)
 apero_shape.group_func = grouping.group_by_dirname
-apero_shape.group_column = 'REPROCESS_OBSDIR_COL'
+apero_shape.group_column = 'TOOLS.REPROCESS.OBSDIR_COL'
 # documentation
 apero_shape.schematic = apero_shape.default_sfile()
 apero_shape.description_file = apero_shape.default_rfile()
@@ -590,7 +590,7 @@ apero_flat.file_model['FLAT_FLAT'] = [files.pp_flat_flat, files.pp_dark_flat,
                                       files.pp_flat_dark]
 # define grouping functions
 apero_flat.group_func = grouping.group_by_dirname
-apero_flat.group_column = 'REPROCESS_OBSDIR_COL'
+apero_flat.group_column = 'TOOLS.REPROCESS.OBSDIR_COL'
 # documentation
 apero_flat.schematic = apero_flat.default_sfile()
 apero_flat.description_file = apero_flat.default_rfile()
@@ -655,7 +655,7 @@ apero_thermal.set_kwarg(name='--forceext', dtype='bool',
                         default_ref='CAL.THERM.ALWAYS_EXTRACT',
                         helpstr=textentry('THERMAL_EXTRACT_HELP'))
 apero_thermal.group_func = grouping.group_by_dirname
-apero_thermal.group_column = 'REPROCESS_OBSDIR_COL'
+apero_thermal.group_column = 'TOOLS.REPROCESS.OBSDIR_COL'
 # documentation
 apero_thermal.schematic = apero_thermal.default_sfile()
 apero_thermal.description_file = apero_thermal.default_rfile()
@@ -799,7 +799,7 @@ apero_extract.set_kwarg(name='--force_ref_wave', dtype='switch',
                         helpstr='Force using the reference wave solution')
 apero_extract.set_kwarg(**no_in_qc)
 apero_extract.group_func = grouping.group_individually
-apero_extract.group_column = 'REPROCESS_OBSDIR_COL'
+apero_extract.group_column = 'TOOLS.REPROCESS.OBSDIR_COL'
 # documentation
 # apero_extract.schematic = apero_extract.default_sfile()
 apero_extract.description_file = apero_extract.default_rfile()
@@ -890,7 +890,7 @@ apero_wave_ref.set_kwarg(name='--cavityfile', dtype='file', default='None',
                          helpstr=textentry('WAVEREF_CAVFILE_HELP'))
 apero_wave_ref.set_kwarg(**no_in_qc)
 apero_wave_ref.group_func = grouping.group_by_dirname
-apero_wave_ref.group_column = 'REPROCESS_OBSDIR_COL'
+apero_wave_ref.group_column = 'TOOLS.REPROCESS.OBSDIR_COL'
 # documentation
 apero_wave_ref.schematic = apero_wave_ref.default_sfile()
 apero_wave_ref.description_file = apero_wave_ref.default_rfile()
@@ -969,7 +969,7 @@ apero_wave_night.set_kwarg(name='--forceext', dtype='bool',
                            helpstr='WAVE_EXTRACT_HELP')
 apero_wave_night.set_kwarg(**no_in_qc)
 apero_wave_night.group_func = grouping.group_by_dirname
-apero_wave_night.group_column = 'REPROCESS_OBSDIR_COL'
+apero_wave_night.group_column = 'TOOLS.REPROCESS.OBSDIR_COL'
 # documentation
 # apero_wave_night.schematic = apero_wave_night.default_sfile()
 apero_wave_night.description_file = apero_wave_night.default_rfile()
@@ -1028,7 +1028,7 @@ apero_ccf.set_kwarg(**blazefile)
 apero_ccf.set_kwarg(**plot)
 apero_ccf.set_kwarg(**no_in_qc)
 apero_ccf.group_func = grouping.group_individually
-apero_ccf.group_column = 'REPROCESS_OBSDIR_COL'
+apero_ccf.group_column = 'TOOLS.REPROCESS.OBSDIR_COL'
 # documentation
 # apero_ccf.schematic = apero_ccf.default_sfile()
 apero_ccf.description_file = apero_ccf.default_rfile()
@@ -1113,7 +1113,7 @@ apero_mk_tellu.set_kwarg(name='--finiteres', dtype='bool',
                                  'correction (Always false if no template)')
 apero_mk_tellu.set_kwarg(**no_in_qc)
 apero_mk_tellu.group_func = grouping.group_individually
-apero_mk_tellu.group_column = 'REPROCESS_OBSDIR_COL'
+apero_mk_tellu.group_column = 'TOOLS.REPROCESS.OBSDIR_COL'
 # documentation
 # apero_mk_tellu.schematic = apero_mk_tellu.default_sfile()
 apero_mk_tellu.description_file = apero_mk_tellu.default_rfile()
@@ -1249,7 +1249,7 @@ apero_fit_tellu.set_kwarg(**plot)
 apero_fit_tellu.set_kwarg(**wavefile)
 apero_fit_tellu.set_kwarg(**no_in_qc)
 apero_fit_tellu.group_func = grouping.group_individually
-apero_fit_tellu.group_column = 'REPROCESS_OBSDIR_COL'
+apero_fit_tellu.group_column = 'TOOLS.REPROCESS.OBSDIR_COL'
 # documentation
 # apero_fit_tellu.schematic = apero_fit_tellu.default_sfile()
 apero_fit_tellu.description_file = apero_fit_tellu.default_rfile()
@@ -1384,7 +1384,7 @@ apero_pol.set_kwarg(**plot)
 apero_pol.set_kwarg(**wavefile)
 apero_pol.set_kwarg(**no_in_qc)
 apero_pol.group_func = grouping.group_by_polar_sequence
-apero_pol.group_column = 'REPROCESS_OBSDIR_COL'
+apero_pol.group_column = 'TOOLS.REPROCESS.OBSDIR_COL'
 # documentation
 # apero_pol.schematic = apero_pol.default_sfile()
 apero_pol.description_file = apero_pol.default_rfile()
@@ -1519,7 +1519,7 @@ apero_postprocess.set_kwarg(name='--clear', dtype='bool',
                             helpstr=textentry('OUT_CLEAR_HELP'))
 apero_postprocess.set_kwarg(**no_in_qc)
 apero_postprocess.group_func = grouping.group_individually
-apero_postprocess.group_column = 'REPROCESS_OBSDIR_COL'
+apero_postprocess.group_column = 'TOOLS.REPROCESS.OBSDIR_COL'
 # documentation
 # apero_postprocess.schematic = apero_postprocess.default_sfile()
 apero_postprocess.description_file = apero_postprocess.default_rfile()

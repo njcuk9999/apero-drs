@@ -723,7 +723,7 @@ def reset_other_folder(params: ParamDict, log: bool = True):
     #    key = tuple
     #    1: relative (to APERO) in directory
     #    2: out file/dir name to add to other_path
-    reset_dict = params['ARI_RESET_DICT']
+    reset_dict = params['TOOLS.ARI.RESET_DICT']
     # copy over files/directories to the other directory
     for path_name in list(reset_dict.keys()):
         # get original path
