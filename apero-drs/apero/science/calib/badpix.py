@@ -60,7 +60,7 @@ def normalise_median_flat(params: ParamDict, image: np.ndarray,
                           ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Applies a median filter and normalises. Median filter is applied with width
-    "wmed" or p["BADPIX_FLAT_MED_WID"] if wmed is None) and then normalising by
+    "wmed" or p["CAL.BPIX.FLAT_MED_WID"] if wmed is None) and then normalising by
     the 90th percentile
 
     :param params: parameter dictionary, ParamDict containing constants
@@ -81,7 +81,7 @@ def normalise_median_flat(params: ParamDict, image: np.ndarray,
                  scipy.ndimage.filters.median_filter "size" for more details
     :param percentile: float or None, if not None degines the percentile to
                        normalise the image at, if None used from
-                       p["BADPIX_NORM_PERCENTILE"]
+                       p["CAL.BPIX.NORM_PERCENTILE"]
 
     :returns: tuple, 1. norm_med_image: numpy array (2D), the median filtered
                         and normalised image
@@ -101,7 +101,7 @@ def normalise_median_flat(params: ParamDict, image: np.ndarray,
     # a small amount over wmed pixels and that the badpixels are
     # isolated enough that the median along that box will be representative
     # of the flux they should have if they were not bad
-    wmed = pcheck(params, 'BADPIX_FLAT_MED_WID', func=func_name,
+    wmed = pcheck(params, 'CAL.BPIX.FLAT_MED_WID', func=func_name,
                   override=wmed)
 
     # create storage for median-filtered flat image
@@ -152,12 +152,12 @@ def locate_bad_pixels(params: ParamDict, fimage: np.ndarray,
                  if None uses p["BADPIX_MED_WID", see
                  scipy.ndimage.filters.median_filter "size" for more details
     :param cut_ratio: float or None, optional, the maximum differential pixel
-                      cut ratio, overrides params['BADPIX_FLAT_CUT_RATIO']
+                      cut ratio, overrides params['CAL.BPIX.FLAT_CUT_RATIO']
     :param illum_cut: float or None, optional, the illumination cut parameter,
-                      overrides params['BADPIX_ILLUM_CUT']
+                      overrides params['CAL.BPIX.ILLUM_CUT']
     :param max_hotpix: float or None, optional, the maximum flux in ADU/s to
                        be considered too hot to be used, overrides
-                       params['BADPIX_MAX_HOTPIX']
+                       params['CAL.BPIX.MAX_HOTPIX']
 
     :returns: tuple, 1. bad_pix_mask: numpy array (2D), the bad pixel mask
                         image
@@ -259,7 +259,7 @@ def locate_bad_pixels_full(params: ParamDict, image: np.ndarray,
                            ) -> Tuple[np.ndarray, List[float]]:
     """
     Locate the bad pixels identified from the full engineering flat image
-    (location defined from p['BADPIX_FULL_FLAT'])
+    (location defined from p['CAL.BPIX.FULL_FLAT'])
 
     :param params: parameter dictionary, ParamDict containing constants
         Must contain at least:
@@ -277,7 +277,7 @@ def locate_bad_pixels_full(params: ParamDict, image: np.ndarray,
     :param badpix_dir: str, where the badpix file is stored (within assets
                       directory) -- overrides params['IPATH.BADPIX']
     :param filename: str, the badpix file name
-                     -- overrides params['BADPIX_FULL_FLAT']
+                     -- overrides params['CAL.BPIX.FULL_FLAT']
 
     :returns: tuple, 1. newimage: numpy array (2D), the mask of the bad pixels
                      2. stats: float, the fraction of un-illuminated pixels

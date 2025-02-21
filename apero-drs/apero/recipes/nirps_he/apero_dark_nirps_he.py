@@ -159,7 +159,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         WLOG(params, 'info', 'Dark Time = {0:.3f} s'.format(exptime))
         # Quality control: make sure the exposure time is longer than
         #                  qc_dark_time
-        if exptime < params['QC_DARK_TIME']:
+        if exptime < params['CAL.DARK.QC_DARK_TIME']:
             # TODO: Add to language database
             emsg = 'Dark exposure time too short (< {0:.1f} s)'
             eargs = [params['CAL.DARK.QC_DARK_TIME']]

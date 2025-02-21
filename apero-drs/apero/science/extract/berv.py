@@ -434,7 +434,7 @@ def use_barycorrpy(params: ParamDict, times: np.ndarray, props: ParamDict,
     # set function name
     func_name = __NAME__ + '.use_barycorrpy()'
     # get estimate accuracy
-    estimate = pcheck(params, 'EXT_BERV_EST_ACC', func=func_name,
+    estimate = pcheck(params, 'CAL.EXT.BERV_EST_ACC', func=func_name,
                       override=berv_est)
     # get barycorrpy directory
     iersfile = pcheck(params, 'CAL.EXT.BERV_IERS_FILE', func=func_name,

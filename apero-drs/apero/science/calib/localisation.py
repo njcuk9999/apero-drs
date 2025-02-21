@@ -74,7 +74,7 @@ def calculate_order_profile(params: ParamDict, image: np.ndarray,
     :param params: ParamDict, the parameter dictionary of constants
     :param image: numpy array (2D), the image
     :param box_size: int, the number of pixels to mask before and after pixel
-                     (for every row), if set overrides "LOC_ORDERP_BOX_SIZE"
+                     (for every row), if set overrides "CAL.LOC.ORDERP_BOXSIZE"
                      from params
 
     :return newimage: numpy array (2D), the smoothed image
@@ -137,38 +137,38 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
     :param image: np.array (2D), the image to fit the orders on
     :param fiber: str, the fiber name (i.e. 'A', 'B' or 'C')
     :param binsize: int or None, median-binning size in the dispersion
-                    direction, if set overrides "LOC_BINSIZE" from params
+                    direction, if set overrides "CAL.LOC.BINSIZE" from params
     :param boxp_low: float or None, the percentile of a box that is always an
                      illuminated pixel, if set overrides
-                     "LOC_BOX_PERCENTILE_LOW" from  params
+                     "CAL.LOC.BOX_PTILE_LOW" from  params
     :param boxp_high: float or None, the percentile of a box that is always an
                       illuminated pixel, if set overrides
-                      "LOC_BOX_PERCENTILE_HIGH" from params
+                      "CAL.LOC.BOX_PTILE_HIGH" from params
     :param percentile_fsize: float or None, the size of the percentile filter,
-                             if set overrides "LOC_PERCENTILE_FILTER_SIZE"
+                             if set overrides "CAL.LOC.PTILE_FILTER_SIZE"
                              from params
     :param fdilate_itr: int or None, the fiber dilation number of iterations,
-                        if set overrides "LOC_FIBER_DILATE_ITERATIONS" from
+                        if set overrides "CAL.LOC.FIBER_DILATE_ITRS" from
                         params
     :param min_order_area: int or None, the minimum area (number of pixels)
                            that defines an order, if set overrides
-                           "LOC_MIN_ORDER_AREA" from params
+                           "CAL.LOC.MIN_ORDER_AREA" from params
     :param cent_poly_deg: int or None, degree of polynomial to fit for
-                          positions, if set overrides "LOC_CENT_POLY_DEG"
+                          positions, if set overrides "CAL.LOC.CENT_POLYDEG"
                           from params
     :param wid_poly_deg: int or None, degree of polynomial to fit the widths,
-                         if set overrides "LOC_WIDTH_POLY_DEG" from params
+                         if set overrides "CAL.LOC.WID_POLYDEG" from params
     :param range_wid_sum: int or None, range width size (used to fit the width
                           of the orders at certain points), if set overrides
-                          "LOC_RANGE_WID_SUM" from params
+                          "CAL.LOC.RANGE_WID_SUM" from params
     :param loc_ydet_min: int or None, the minimum detector position where the
                          centers of the bottom most order should fall, if set
-                         overrides "LOC_YDET_MIN" from params
+                         overrides "CAL.LOC.YDET_MIN" from params
     :param loc_ydet_max: int or None, the maximum detector position where the
                          centers of the top most order should fall, if set
-                         overrides "LOC_YDET_MAX" from params
+                         overrides "CAL.LOC.YDET_MAX" from params
     :param num_wsamples: int or None, the number of width samples to use, if
-                         set overrides "LOC_NUM_WID_SAMPLES" from params
+                         set overrides "CAL.LOC.NUM_WID_SAMPLES" from params
 
     :return: tuple, 1. the central position coefficients for each order, 2. the
              width coefficients for each order
@@ -199,19 +199,19 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
     min_area = pcheck(params, 'CAL.LOC.MIN_ORDER_AREA', func=func_name,
                       override=min_order_area)
     # degree of polynomial to fit for positions
-    cent_order_fit = pcheck(params, 'LOC_CENT_POLY_DEG', func=func_name,
+    cent_order_fit = pcheck(params, 'CAL.LOC.CENT_POLYDEG', func=func_name,
                             override=cent_poly_deg)
     # degree of polynomial to fit the widths
-    wid_order_fit = pcheck(params, 'LOC_WIDTH_POLY_DEG', func=func_name,
+    wid_order_fit = pcheck(params, 'CAL.LOC.WID_POLYDEG', func=func_name,
                            override=wid_poly_deg)
     # range width size (used to fit the width of the orders at certain points)
     range_width_sum = pcheck(params, 'CAL.LOC.RANGE_WID_SUM', func=func_name,
                              override=range_wid_sum)
     # define the minimum and maximum detector position where the centers of
     #   the orders should fall
-    ydet_min = pcheck(params, 'LOC_YDET_MIN', func=func_name,
+    ydet_min = pcheck(params, 'CAL.LOC.YDET_MIN', func=func_name,
                       override=loc_ydet_min)
-    ydet_max = pcheck(params, 'LOC_YDET_MAX', func=func_name,
+    ydet_max = pcheck(params, 'CAL.LOC.YDET_MAX', func=func_name,
                       override=loc_ydet_max)
     # number of width samples to use
     num_wid_samples = pcheck(params, 'CAL.LOC.NUM_WID_SAMPLES', func=func_name,
@@ -821,20 +821,20 @@ def loc_stats(params: ParamDict, fiber: str, cent_coeffs: np.ndarray,
     :param wid_coeffs: numpy 2D array of width coefficients
     :param image: numpy 2D array, the original input image
     :param central_col: int or None, the central column for use in localisation,
-                        if set overrides "LOC_CENTRAL_COLUMN" from params
+                        if set overrides "CAL.LOC.MIDDLE_PIXEL_COL" from params
     :param horder_size: int or None, Half spacing between orders, if set
-                        overrides "LOC_HALF_ORDER_SPACING" from params
+                        overrides "CAL.LOC.HALF_ORDER_SPACING" from params
     :param minpeak_amp: float or None, Minimum amplitude to accept (in e-),
-                        if set overrides "LOC_MINPEAK_AMPLITUDE" from params
+                        if set overrides "CAL.LOC.MINPEAK_AMP" from params
     :param back_thres: float or None, Normalised amplitude threshold to accept
                        pixels for background calculation, if set overrides
-                       "LOC_BKGRD_THRESHOLD" from params
+                       "CAL.LOC.BKGRD_THRES" from params
     :param loc_ydet_min: int or None, the minimum detector position where the
                          centers of the bottom most order should fall, if set
-                         overrides "LOC_YDET_MIN" from params
+                         overrides "CAL.LOC.YDET_MIN" from params
     :param loc_ydet_max: int or None, the maximum detector position where the
                          centers of the top most order should fall, if set
-                         overrides "LOC_YDET_MAX" from params
+                         overrides "CAL.LOC.YDET_MAX" from params
 
     :return: ParamDict, the localisation parameter dictionary
     """
@@ -951,12 +951,12 @@ def loc_quality_control(params: ParamDict, lprops: ParamDict
     # set passed variable and fail message list
     fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
     # get qc parameters
-    # max_removed_cent = pcheck(params, 'QC_LOC_MAXFIT_REMOVED_CTR',
+    # max_removed_cent = pcheck(params, 'CAL.LOC.QL_MAXFIT_RM_CTR',
     #                           func=func_name)
-    # max_removed_wid = pcheck(params, 'QC_LOC_MAXFIT_REMOVED_WID',
+    # max_removed_wid = pcheck(params, 'CAL.LOC.QL_MAXFIT_RM_WID',
     #                          func=func_name)
-    # rmsmax_cent = pcheck(params, 'QC_LOC_RMSMAX_CTR', func=func_name)
-    # rmsmax_wid = pcheck(params, 'QC_LOC_RMSMAX_WID', func=func_name)
+    # rmsmax_cent = pcheck(params, 'CAL.LOC.QC_RMSMAX_CTR', func=func_name)
+    # rmsmax_wid = pcheck(params, 'CAL.LOC.QC_RMSMAX_WID', func=func_name)
     # get constants from stats
     fiber = lprops['FIBER']
     rorder_num = lprops['NORDERS']
@@ -1211,8 +1211,8 @@ def write_localisation_files(params: ParamDict, recipe: DrsRecipe,
     # add localisation parameters
     loco1file.add_hkey('KW_LOC_BCKGRD', value=mean_backgrd)
     loco1file.add_hkey('KW_LOC_NBO', value=rorder_num)
-    loco1file.add_hkey('KW_LOC_DEG_C', value=params['LOC_CENT_POLY_DEG'])
-    loco1file.add_hkey('KW_LOC_DEG_W', value=params['LOC_WIDTH_POLY_DEG'])
+    loco1file.add_hkey('KW_LOC_DEG_C', value=params['CAL.LOC.CENT_POLYDEG'])
+    loco1file.add_hkey('KW_LOC_DEG_W', value=params['CAL.LOC.WID_POLYDEG'])
     loco1file.add_hkey('KW_LOC_MAXFLX', value=max_signal)
     # write 2D list of position fit coefficients
     loco1file.add_hkey_2d('KW_LOC_CTR_COEFF', values=cent_coeffs,

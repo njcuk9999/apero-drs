@@ -123,7 +123,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     telludbm.load_db()
     # ----------------------------------------------------------------------
     # get objects that match this object name
-    if params['MKTEMPLATE_FILESOURCE'].upper() == 'DISK':
+    if params['OBJ.TELLU.TEMPLATE.FILESOURCE'].upper() == 'DISK':
         object_filenames = drs_utils.find_files(params, block_kind='red',
                                                 filters=dict(KW_OBJNAME=objname,
                                                              KW_OUTPUT=filetype,

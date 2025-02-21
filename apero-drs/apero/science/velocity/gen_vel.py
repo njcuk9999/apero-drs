@@ -475,7 +475,7 @@ def get_ccf_teff_mask(params: ParamDict,
     # get temperature header key
     teff_key = params['KW_DRS_TEFF'][0]
     # get teff mask file
-    teff_masks_file = params['CCF_TEFF_MASK_TABLE']
+    teff_masks_file = params['OBJ.CCF.TEFF_MASK_TABLE']
     # get teff mask datatype
     teff_masks_fmt = params.instances['OBJ.CCF.TEFF_MASK_TABLE'].datatype
     # get temperature from header
@@ -768,7 +768,7 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     if 'MASKNORMMODE' in params['INPUTS']:
         ccfnormmode = params['INPUTS']['MASKNORMMODE']
     else:
-        ccfnormmode = params['CCF_MASK_NORMALIZATION']
+        ccfnormmode = params['OBJ.CCF.MASK_NORM']
     # ----------------------------------------------------------------------
     # Need some sanity checking on width and step
     # ----------------------------------------------------------------------
@@ -1572,8 +1572,8 @@ def bisector(params: ParamDict, rv: np.ndarray, ccf: np.ndarray,
     :return: float, the bisector span
     """
     # get min and max depth for the bisector
-    bs_cut_top = params['CCF_BIS_CUT_TOP'] / 100.0
-    bs_cut_bottom = params['CCF_BIS_CUT_BOTTOM'] / 100.0
+    bs_cut_top = params['OBJ.CCF.BIS_CUT_TOP'] / 100.0
+    bs_cut_bottom = params['OBJ.CCF.BIS_CUT_BOTTOM'] / 100.0
     # take the gaussian fit without a depth
     ccf_coeffs2 = np.array(ccf_coeffs)
     # set the depth to 0 (i.e. no depth)

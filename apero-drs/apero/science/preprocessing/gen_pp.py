@@ -276,8 +276,8 @@ def resolve_target(params: ParamDict, pconst: Instrument,
     # -------------------------------------------------------------------------
     # add a geometric airmass
     airmass = get_geometric_airmass(ra_deg, dec_deg, plx, pmra, pmde, epoch,
-                                    params['OBS_LAT'], params['OBS_LONG'],
-                                    params['OBS_ALT'],
+                                    params['OBS.LAT'], params['OBS.LONG'],
+                                    params['OBS.ALT'],
                                     header[params['KW_MID_OBS_TIME'][0]])
     # -------------------------------------------------------------------------
     # update header

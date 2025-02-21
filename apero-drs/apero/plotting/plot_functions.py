@@ -2000,8 +2000,8 @@ def plot_extract_s1d(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     fiber = kwargs['fiber']
     kind = kwargs.get('kind', None)
     # get zoom in parameters from params
-    zoom1 = params['EXTRACT_S1D_PLOT_ZOOM1']
-    zoom2 = params['EXTRACT_S1D_PLOT_ZOOM2']
+    zoom1 = params['CAL.EXT.S1D_PLOT_ZOOM1']
+    zoom2 = params['CAL.EXT.S1D_PLOT_ZOOM2']
     # get data from s1d table
     wavemap = stable['wavelength']
     flux = stable['flux']
@@ -2829,7 +2829,7 @@ def plot_wave_littrow_check(plotter: Plotter, graph: Graph,
     iteration = kwargs['iteration']
     fiber = kwargs['fiber']
     # get values from params
-    ylower = -params['WAVE_LITTROW_QC_DEV_MAX']
+    ylower = -params['CAL.WAVE.LIT.QC_DEV_MAX']
     yupper = params['CAL.WAVE.LIT.QC_DEV_MAX']
     # ------------------------------------------------------------------
     # get data from llprops

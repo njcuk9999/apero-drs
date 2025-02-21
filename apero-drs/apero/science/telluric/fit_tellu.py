@@ -64,14 +64,14 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, refprops,
     func_name = __NAME__ + '.gen_abso_pca_calc()'
     # ----------------------------------------------------------------------
     # get constants from params/kwargs
-    npc = pcheck(params, 'FTELLU_NUM_PRINCIPLE_COMP', 'npc', kwargs, func_name)
+    npc = pcheck(params, 'OBJ.TELLU.FIT.NUM_PCA', 'npc', kwargs, func_name)
     add_deriv_pc = pcheck(params, 'OBJ.TELLU.FIT.ADD_DERIV_PCA', 'add_deriv_pc',
                           kwargs, func_name)
-    fit_deriv_pc = pcheck(params, 'FTELLU_FIT_DERIV_PC', 'fit_deriv_pc',
+    fit_deriv_pc = pcheck(params, 'OBJ.TELLU.FIT.FIT_DERIV_PCA', 'fit_deriv_pc',
                           kwargs, func_name)
-    thres_transfit_low = pcheck(params, 'MKTELLU_THRES_TRANSFIT',
+    thres_transfit_low = pcheck(params, 'OBJ.TELL.MAKE.THRES_TRANSFIT',
                                 'thres_transfit_low', kwargs, func_name)
-    thres_transfit_upper = pcheck(params, 'MKTELLU_TRANS_FIT_UPPER_BAD',
+    thres_transfit_upper = pcheck(params, 'OBJ.TELL.MAKE.TRANS_FIT_UBAD',
                                   'thres_transfit_upper', kwargs, func_name)
     num_trans = pcheck(params, 'OBJ.TELLU.FIT.NUM_TRANS', 'num_trans', kwargs,
                        func_name)
@@ -274,7 +274,7 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, refprops,
     # pca components plot (single order)
     recipe.plot('FTELLU_PCA_COMP2', image=image, wavemap=refprops['WAVEMAP'],
                 pc=pc, add_deriv_pc=add_deriv_pc, npc=npc,
-                order=params['FTELLU_SPLOT_ORDER'])
+                order=params['OBJ.TELLU.FIT.SPLOT_ORDER'])
     # ----------------------------------------------------------------------
     # set up properties
     # ----------------------------------------------------------------------
@@ -380,7 +380,7 @@ def shift_all_to_frame(params, recipe, image, template, bprops, refprops, wprops
                     template=template2, order=None)
         # debug plot - reconstructed spline (selected order)
         recipe.plot('FTELLU_RECON_SPLINE2', image=image, wavemap=wavemap,
-                    template=template2, order=params['FTELLU_SPLOT_ORDER'])
+                    template=template2, order=params['OBJ.TELLU.FIT.SPLOT_ORDER'])
 
     else:
         template2 = None
@@ -424,7 +424,7 @@ def shift_all_to_frame(params, recipe, image, template, bprops, refprops, wprops
     # Debug plot to test shifting (single order)
     recipe.plot('FTELLU_WAVE_SHIFT2', image=image, tapas0=tapas_all_species,
                 tapas1=tapas_all_species2, pc0=pc, pc1=pc2,
-                order=params['FTELLU_SPLOT_ORDER'])
+                order=params['OBJ.TELLU.FIT.SPLOT_ORDER'])
     # ------------------------------------------------------------------
     # Save shifted props
     # ------------------------------------------------------------------
@@ -449,7 +449,7 @@ def calc_recon_and_correct(params, recipe, image, wprops, pca_props, sprops,
     # ------------------------------------------------------------------
     # get constants from params/kwargs
     # ------------------------------------------------------------------
-    fit_min_trans = pcheck(params, 'FTELLU_FIT_MIN_TRANS', 'fit_min_trans',
+    fit_min_trans = pcheck(params, 'OBJ.TELLU.FIT.FIT_MIN_TRANS', 'fit_min_trans',
                            kwargs, func_name)
     lambda_min = pcheck(params, 'OBJ.TELLU.FIT.LAMBDA_MIN', 'lambda_min', kwargs,
                         func_name)
@@ -465,7 +465,7 @@ def calc_recon_and_correct(params, recipe, image, wprops, pca_props, sprops,
                           kwargs, func_name)
     recon_limit = pcheck(params, 'OBJ.TELLU.FIT.FIT_RECON_LIM', 'recon_limit',
                          kwargs, func_name)
-    tellu_absorbers = pcheck(params, 'TELLU_ABSORBERS', 'absorbers', kwargs,
+    tellu_absorbers = pcheck(params, 'OBJ.TELL.MAKE.ABSORBERS', 'absorbers', kwargs,
                              func_name)
     thres_transfit_low = pcheck(params, 'OBJ.TELL.MAKE.THRES_TRANSFIT',
                                 'thres_transfit_low', kwargs, func_name)
@@ -733,7 +733,7 @@ def calc_recon_and_correct(params, recipe, image, wprops, pca_props, sprops,
     props['FIT_ITERATIONS'] = fit_iterations
     props['FIT_DERIV_PC'] = fit_deriv_pc
     props['RECON_LIMIT'] = recon_limit
-    props['TELLU_ABSORBERS'] = tellu_absorbers
+    props['OBJ.TELL.MAKE.ABSORBERS'] = tellu_absorbers
     props['THRES_TRANSFIT'] = thres_transfit_low
     props['TRANS_FIT_UPPER_BAD'] = thres_transfit_upper
     # set sources

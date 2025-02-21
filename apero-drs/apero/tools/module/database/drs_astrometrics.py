@@ -1703,7 +1703,7 @@ def add_obj_to_sheet(params: ParamDict, astro_objs: List[AstroObj]):
     # add gspread directory and afiles
     drs_misc.gsp_setup()
     # define the sheet id and sheet name (pending)
-    sheet_id = params['OBJ_LIST_GOOGLE_SHEET_URL']
+    sheet_id = params['OBJ.LIST.GSHEET_URL']
     # load google sheet instance
     google_sheet = gspd.spread.Spread(sheet_id)
     # convert google sheet to pandas dataframe
@@ -1940,7 +1940,7 @@ def get_bibcode_list(params: ParamDict) -> List[str]:
     :return: list of strings, the unique list of bibcodes
     """
     # get properties from parameters
-    gsheet_url = params['OBJ_LIST_GOOGLE_SHEET_URL']
+    gsheet_url = params['OBJ.LIST.GSHEET_URL']
     bibsheet_id = params['OBJ.LIST.GSHEET_BIBCODE_UD']
     # get google sheets
     bibsheet = drs_database.get_google_sheet(params, gsheet_url, bibsheet_id)

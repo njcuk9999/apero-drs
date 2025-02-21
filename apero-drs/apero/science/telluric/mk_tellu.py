@@ -61,7 +61,7 @@ def make_trans_cube(params: ParamDict, transfiles: List[str]
     # print progress: Making Transmission cube
     WLOG(params, '', textentry('40-019-00054'))
     # get parameters from params
-    snr_order = params['MKTELLU_QC_SNR_ORDER']
+    snr_order = params['OBJ.TELL.MAKE.QC_SNR_ORDER']
     water_key = params['KW_TELLUP_EXPO_WATER'][0]
     others_key = params['KW_TELLUP_EXPO_OTHERS'][0]
     snr_key = params['KW_EXT_SNR'][0].format(snr_order)

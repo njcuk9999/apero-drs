@@ -81,13 +81,13 @@ def measure_dark(params: ParamDict, image: np.ndarray, entry_key: str,
     :param image: numpy array (2D), the image
     :param entry_key: string, the entry key (for logging)
     :param dark_qmin: int, optional, the lower percentile when measuring the
-                      dark, overrides params['DARK_QMIN']
+                      dark, overrides params['CAL.DARK.QMIN']
     :param dark_qmax: int, optional, the upper percentile when measuring the
-                      dark, overrides params['DARK_QMAX']
+                      dark, overrides params['CAL.DARK.QMAX']
     :param histo_bins: int, optional, the numberof bins in dark histogram,
-                       overrides params['HISTO_BINS']
+                       overrides params['CAL.DARK.HISTO_BINS']
     :param histo_low: int, optional, the lower range of the histogram in ADU/s,
-                      overrides params['HISTO_RANGE_LOW']
+                      overrides params['CAL.DARK.HISTO_RANGE_LOW']
     :param histo_high: int, optional, the upper range of the histogram in ADU/s,
                        overrides params['HIST_RANGE_HIGH']
 
@@ -153,14 +153,14 @@ def measure_dark_badpix(params: ParamDict, image: np.ndarray,
     :param image: numpy array (2D), the image
     :param nanmask: numpy array (2D), the make of non-finite values
     :param dark_cutlimit: float, optional, define the bad pixel cut limit in
-                          ADU/s, overrides params['DARK_CUTLIMIT']
+                          ADU/s, overrides params['CAL.DARK.CUTLIMIT']
 
     :return: tuple, 1. the percentage of bad dark pixels
              2. the percentage of bad dark pixels abouve cut limit
     """
     func_name = __NAME__ + '.measure_dark_badpix()'
     # get constants from params/kwargs
-    darkcutlimit = pcheck(params, 'DARK_CUTLIMIT', func=func_name,
+    darkcutlimit = pcheck(params, 'CAL.DARK.CUTLIMIT', func=func_name,
                           override=dark_cutlimit)
     # get number of bad dark pixels (as a fraction of total pixels)
     with warnings.catch_warnings(record=True) as _:
@@ -233,7 +233,7 @@ def construct_dark_table(params: ParamDict, filenames: List[str],
     :param filenames: list of strings, all dark files possible to use
     :param match_time: float or None, optional, the maximum time (in hours)
                        to group files by, overrides
-                       params['DARK_REF_MATCH_TIME']
+                       params['CAL.DARK.REF_MTIME']
     :param max_files: int or None, optional, the maximum number of files to use
                       in the dark reference calibration
     :param min_exptime: float or None, optional, the minimum exposure time to
@@ -563,9 +563,9 @@ def dark_qc(params: ParamDict, med_full: float, dadeadall: float,
     fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
     # ------------------------------------------------------------------
     # check that med < qc_max_darklevel
-    if med_full > params['QC_MAX_DARKLEVEL']:
+    if med_full > params['CAL.DARK.QC_MAX_DARKLEVEL']:
         # add failed message to fail message list
-        fargs = [med_full, params['QC_MAX_DARKLEVEL']]
+        fargs = [med_full, params['CAL.DARK.QC_MAX_DARKLEVEL']]
         fail_msg.append(textentry('40-011-00008', args=fargs))
         qc_pass.append(0)
     else:
@@ -576,9 +576,9 @@ def dark_qc(params: ParamDict, med_full: float, dadeadall: float,
     qc_logic.append('MED_FULL > {0:.2f}'.format(params['CAL.DARK.QC_MAX_DARKLEVEL']))
     # ------------------------------------------------------------------
     # check that fraction of dead pixels < qc_max_dead
-    if dadeadall > params['QC_MAX_DEAD']:
+    if dadeadall > params['CAL.DARK.QC_MAX_DEAD']:
         # add failed message to fail message list
-        fargs = [dadeadall, params['QC_MAX_DEAD']]
+        fargs = [dadeadall, params['CAL.DARK.QC_MAX_DEAD']]
         fail_msg.append(textentry('40-011-00009', args=fargs))
         qc_pass.append(0)
     else:
@@ -589,8 +589,8 @@ def dark_qc(params: ParamDict, med_full: float, dadeadall: float,
     qc_logic.append('DADEADALL > {0:.2f}'.format(params['CAL.DARK.QC_MAX_DEAD']))
     # ----------------------------------------------------------------------
     # checl that the precentage of dark pixels < qc_max_dark
-    if baddark > params['QC_MAX_DARK']:
-        fargs = [params['DARK_CUTLIMIT'], baddark, params['QC_MAX_DARK']]
+    if baddark > params['CAL.DARK.QC_MAX_DARK']:
+        fargs = [params['CAL.DARK.CUTLIMIT'], baddark, params['CAL.DARK.QC_MAX_DARK']]
         fail_msg.append(textentry('40-011-00010', args=fargs))
         qc_pass.append(0)
     else:
@@ -680,10 +680,10 @@ def dark_write_files(params: ParamDict, recipe: DrsRecipe, dprtype: str,
     outfile.add_hkey('KW_DARK_R_DEAD', value=dadead_red)
     outfile.add_hkey('KW_DARK_R_MED', value=med_red)
     # add the cut limit
-    outfile.add_hkey('KW_DARK_CUT', value=params['DARK_CUTLIMIT'])
+    outfile.add_hkey('KW_DARK_CUT', value=params['CAL.DARK.CUTLIMIT'])
     # ------------------------------------------------------------------
     # Set to zero dark value > dark_cutlimit
-    cutmask = image0 > params['DARK_CUTLIMIT']
+    cutmask = image0 > params['CAL.DARK.CUTLIMIT']
     image0c = np.where(cutmask, np.zeros_like(image0), image0)
     # copy data
     outfile.data = image0c

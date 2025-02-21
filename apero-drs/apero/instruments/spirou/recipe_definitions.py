@@ -76,7 +76,7 @@ fiber = dict(name='--fiber', dtype='options', default='ALL',
 flipimage = dict(name='--flipimage', dtype='options',
                  helpstr=textentry('FLIPIMAGE_HELP'),
                  options=['None', 'x', 'y', 'both'],
-                 default_ref='FLIP_INPUT')
+                 default_ref='IMAGE.FLIP_INPUT')
 # -----------------------------------------------------------------------------
 fluxunits = dict(name='--fluxunits', dtype='options', default='e-',
                  helpstr=textentry('FLUXUNITS_HELP'), options=['ADU/s', 'e-'])
@@ -883,7 +883,7 @@ apero_wave_ref.set_kwarg(**wavefile)
 apero_wave_ref.set_min_nfiles('fpfiles', 5)
 apero_wave_ref.set_min_nfiles('hcfiles', 2)
 apero_wave_ref.set_kwarg(name='--forceext', dtype='bool',
-                         default_ref='WAVE_ALWAYS_EXTRACT',
+                         default_ref='CAL.WAVE.GEN.ALWAYS_EXTRACT',
                          helpstr='WAVE_EXTRACT_HELP')
 apero_wave_ref.set_kwarg(name='--cavityfile', dtype='file', default='None',
                          files=[files.out_waveref_cavity],
@@ -1078,7 +1078,7 @@ apero_mk_tellu.set_outputs(TELLU_CONV=files.out_tellu_conv,
                            TELLU_PCLEAN=files.out_tellu_pclean)
 mktellu_dict = dict()
 mktellu_dict['fibers'] = ref_fiber
-mktellu_dict['EXCLUDE'] = 'TELLU_BLACKLIST_NAME'
+mktellu_dict['EXCLUDE'] = 'OBJ.TELL.GEN.REJECTLIST_NAME'
 mktellu_dict['INCLUDE'] = 'OBJ.TELL.GEN.ALLOWLIST_NAME'
 apero_mk_tellu.set_output_data(TELLU_CONV=mktellu_dict,
                                TELLU_TRANS=mktellu_dict,
@@ -1108,7 +1108,7 @@ apero_mk_tellu.set_kwarg(name='--template', dtype='file', default='None',
                          files=[files.out_tellu_template],
                          helpstr=textentry('TEMPLATE_FILE_HELP'))
 apero_mk_tellu.set_kwarg(name='--finiteres', dtype='bool',
-                         default_ref='TELLUP_DO_FINITE_RES_CORR',
+                         default_ref='OBJ.TELL.PCLEAN.DO_FINITE_RES_CORR',
                          helpstr='Whether to do the finite resolution '
                                  'correction (Always false if no template)')
 apero_mk_tellu.set_kwarg(**no_in_qc)
@@ -1178,23 +1178,23 @@ apero_fit_tellu.set_outputs(ABSO_NPY=files.out_tellu_abso_npy,
 fit_tellu_ref_dict = dict()
 fit_tellu_ref_dict['fibers'] = ref_fiber
 fit_tellu_ref_dict['DPRTYPE'] = dict()
-fit_tellu_ref_dict['DPRTYPE'][ref_fiber] = 'TELLU_ALLOWED_DPRTYPES'
+fit_tellu_ref_dict['DPRTYPE'][ref_fiber] = 'OBJ.TELL.GEN.ALLOWED_DPRTYPES'
 fit_tellu_ref_dict['LOG_FLAG'] = dict()
 fit_tellu_ref_dict['LOG_FLAG']['None'] = ['ONLYPRECLEAN']
-fit_tellu_ref_dict['EXCLUDE'] = 'TELLU_BLACKLIST_NAME'
+fit_tellu_ref_dict['EXCLUDE'] = 'OBJ.TELL.GEN.REJECTLIST_NAME'
 fit_tellu_dict = dict()
 fit_tellu_dict['fibers'] = sci_fibers
 fit_tellu_dict['DPRTYPE'] = dict()
 fit_tellu_dict['DPRTYPE']['ALL'] = 'OBJ.TELL.GEN.ALLOWED_DPRTYPES'
 fit_tellu_dict['LOG_FLAG'] = dict()
 fit_tellu_dict['LOG_FLAG']['None'] = ['ONLYPRECLEAN']
-fit_tellu_dict['EXCLUDE'] = 'TELLU_BLACKLIST_NAME'
+fit_tellu_dict['EXCLUDE'] = 'OBJ.TELL.GEN.REJECTLIST_NAME'
 fit_tellu_dict = dict()
 fit_tellu_pc_dict = dict()
 fit_tellu_pc_dict['fibers'] = ref_fiber
 fit_tellu_pc_dict['LOG_FLAG'] = dict()
 fit_tellu_pc_dict['LOG_FLAG'][ref_fiber] = ['ONLYPRECLEAN']
-fit_tellu_pc_dict['EXCLUDE'] = 'TELLU_BLACKLIST_NAME'
+fit_tellu_pc_dict['EXCLUDE'] = 'OBJ.TELL.GEN.REJECTLIST_NAME'
 fit_tellu_sky_dict = dict()
 fit_tellu_sky_dict['fibers'] = ref_fiber
 fit_tellu_sky_dict['DPRTYPE'] = dict()

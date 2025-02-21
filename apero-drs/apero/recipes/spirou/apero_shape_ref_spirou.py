@@ -176,7 +176,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # ----------------------------------------------------------------------
     # check file type
     filetype = fpprops['DPRTYPE']
-    if filetype not in params['ALLOWED_FP_TYPES']:
+    if filetype not in params['CAL.SHAPE.ALLOWED_FP_TYPES']:
         emsg = textentry('01-001-00020', args=[filetype, mainname])
         for allowedtype in params['CAL.SHAPE.ALLOWED_FP_TYPES']:
             emsg += '\n\t - "{0}"'.format(allowedtype)

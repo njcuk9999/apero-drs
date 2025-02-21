@@ -217,7 +217,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             # --------------------------------------------------------------
             # Plots
             # --------------------------------------------------------------
-            sorder = params['FF_PLOT_ORDER']
+            sorder = params['CAL.FLAT.PLOT_ORDER']
             # plot (in a loop) order fit + e2ds (on original image)
             recipe.plot('FLAT_ORDER_FIT_EDGES1', params=params, image1=image,
                         image2=image2, order=None, coeffs1=lcoeffs,

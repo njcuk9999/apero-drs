@@ -162,13 +162,13 @@ def correct_ref_dark_fp(params: ParamDict, extractdict: ParamDict,
     :param extractdict: ParamDict, the extraction parameter dictionary
     :param bckgrd_percentile: int or None, optional, the thermal background
                               percentile, overrides
-                              params['LEAK_BCKGRD_PERCENTILE']
+                              params['CAL.LEAK.BCKGRD_PTILE']
     :param norm_percentile: int or None, optional, the normalisation percentile
-                            overrides params['LEAK_NORM_PERCENTILE']
+                            overrides params['CAL.LEAK.NORM_PTILE']
     :param wsmooth: int or None, optional, the e-width of the smoothing kernel,
-                    overrides params['LEAKREF_WSMOOTH']
+                    overrides params['CAL.LEAK.REF_WSMOOTH']
     :param kersize: int or None, optional, the kernel size, overrides
-                    params['LEAKREF_KERSIZE']
+                    params['CAL.LEAK.REF_KERSIZE']
 
     :return: tuple, 1. the output diction of corrected fits file classes
                        (keys are for each fiber)
@@ -177,13 +177,13 @@ def correct_ref_dark_fp(params: ParamDict, extractdict: ParamDict,
     # set function name
     func_name = __NAME__ + '.correct_ref_dark_fp'
     # load parameters from params/kwargs
-    bckgrd_percentile = pcheck(params, 'LEAK_BCKGRD_PERCENTILE', func=func_name,
+    bckgrd_percentile = pcheck(params, 'CAL.LEAK.BCKGRD_PTILE', func=func_name,
                                override=bckgrd_percentile)
-    norm_percentile = pcheck(params, 'LEAK_NORM_PERCENTILE', func=func_name,
+    norm_percentile = pcheck(params, 'CAL.LEAK.NORM_PTILE', func=func_name,
                              override=norm_percentile)
-    w_smooth = pcheck(params, 'LEAKREF_WSMOOTH', func=func_name,
+    w_smooth = pcheck(params, 'CAL.LEAK.REF_WSMOOTH', func=func_name,
                       override=wsmooth)
-    ker_size = pcheck(params, 'LEAKREF_KERSIZE', func=func_name,
+    ker_size = pcheck(params, 'CAL.LEAK.REF_KERSIZE', func=func_name,
                       override=kersize)
     # define a gaussian kernel that goes from +/- ker_size * w_smooth
     xkernel = np.arange(-ker_size * w_smooth, ker_size * w_smooth)
@@ -280,13 +280,13 @@ def correct_ref_dark_fp(params: ParamDict, extractdict: ParamDict,
     # ----------------------------------------------------------------------
     # Make properties dictionary
     props = ParamDict()
-    props['LEAK_BCKGRD_PERCENTILE'] = bckgrd_percentile
-    props['LEAK_NORM_PERCENTILE'] = norm_percentile
-    props['LEAKREF_WSMOOTH'] = w_smooth
-    props['LEAKREF_KERSIZE'] = ker_size
+    props['CAL.LEAK.BCKGRD_PTILE'] = bckgrd_percentile
+    props['CAL.LEAK.NORM_PTILE'] = norm_percentile
+    props['CAL.LEAK.REF_WSMOOTH'] = w_smooth
+    props['CAL.LEAK.REF_KERSIZE'] = ker_size
     # set sources
-    keys = ['LEAK_BCKGRD_PERCENTILE', 'LEAK_NORM_PERCENTILE',
-            'LEAKREF_WSMOOTH', 'LEAKREF_KERSIZE']
+    keys = ['CAL.LEAK.BCKGRD_PTILE', 'CAL.LEAK.NORM_PTILE',
+            'CAL.LEAK.REF_WSMOOTH', 'CAL.LEAK.REF_KERSIZE']
     props.set_sources(keys, func_name)
     # ----------------------------------------------------------------------
     # return output dictionary with corrected extracted files
@@ -460,11 +460,11 @@ def correct_ext_dark_fp(params: ParamDict, sciimage: np.ndarray,
     # get properties from parameters
     leak2dext = pcheck(params, 'CAL.LEAK.EXT2D_FILES', func=func_name,
                        override=leak2dext)
-    extfiletype = pcheck(params, 'LEAK_EXTRACT_FILE', func=func_name,
+    extfiletype = pcheck(params, 'CAL.LEAK.EXT_FILE', func=func_name,
                          override=extfiletype)
-    bckgrd_percentile = pcheck(params, 'LEAK_BCKGRD_PERCENTILE', func=func_name,
+    bckgrd_percentile = pcheck(params, 'CAL.LEAK.BCKGRD_PTILE', func=func_name,
                                override=bckgrd_percentile)
-    norm_percentile = pcheck(params, 'LEAK_NORM_PERCENTILE', func=func_name,
+    norm_percentile = pcheck(params, 'CAL.LEAK.NORM_PTILE', func=func_name,
                              override=norm_percentile)
     low_percentile = pcheck(params, 'CAL.LEAK.LOW_PTILE', func=func_name,
                             override=low_percentile)
@@ -1008,7 +1008,7 @@ def write_leak(params: ParamDict, recipe: DrsRecipe,
     :param props: ParamDict, the leak parameter dictionary
     :param qc_params: dictionary key per fiber, the quality control lists
     :param s1dextfile: str or None, this is the s1d file instance name to use,
-                       if set overrides "EXT_S1D_INFILE" from params
+                       if set overrides "CAL.EXT.S1D_INFILE" from params
 
     :return: None, writes leak files to disk
     """

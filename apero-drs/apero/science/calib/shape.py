@@ -76,7 +76,7 @@ def construct_fp_table(params: ParamDict,
     :param filenames: list of strs, the list of FP filenames
     :param max_nfiles: int or None, the maximum number of files to use in
                        shape reference file, if set overrides
-                       "SHAPE_REF_MAX_FILES" from params
+                       "CAL.SHAPE.REF_MAX_FILES" from params
 
     :return: astropy table, the FP table
     """
@@ -178,14 +178,14 @@ def construct_ref_fp(params: ParamDict, recipe: DrsRecipe, dprtype: str,
     :param image_ref: numpy 2D array, the reference FP image (FP_FP from
                       reference observation directory)
     :param time_thres: float or None, maximum time span to combine fp files
-                       over in hours, if set overrides "FP_REF_MATCH_TIME"
+                       over in hours, if set overrides "CAL.SHAPE.FP_REF_MATCH_TIME"
                        in params
     :param percent_thres: float or None, the percentile at which the FPs are
                           normalised when getting the fp reference, if set
-                          overrides "FP_REF_PERCENT_THRES" in params
+                          overrides "CAL.SHAPE.FP_REF_PERCENT_THRES" in params
     :param qc_res: float or None, the largest standard deviation allowed for
                    the shift in x or y when doing the shape reference fp linear
-                   transform, if set overrides "SHAPE_QC_LTRANS_RES_THRES"
+                   transform, if set overrides "CAL.SHAPE.QC_LTRANS_RTHRES"
                    in params
 
     :return: tuple, 1. numpy 2D array, the reference FP, 2. astropy Table: the
@@ -198,7 +198,7 @@ def construct_ref_fp(params: ParamDict, recipe: DrsRecipe, dprtype: str,
                         func=func_name, override=time_thres)
     percent_thres = pcheck(params, 'CAL.SHAPE.FP_REF_PERCENT_THRES', 'percent_thres',
                            func=func_name, override=percent_thres)
-    qc_res = pcheck(params, 'SHAPE_QC_LTRANS_RES_THRES', 'qc_res',
+    qc_res = pcheck(params, 'CAL.SHAPE.QC_LTRANS_RTHRES', 'qc_res',
                     func=func_name, override=qc_res)
     # get temporary output dir
     out_obs_dir = params['INPUTS']['OBS_DIR']
@@ -642,33 +642,33 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, lprops, fiber, **kwargs):
     func_name = __NAME__ + '.calculate_dxmap()'
 
     # get parameters from params/kwargs
-    nbanana = pcheck(params, 'SHAPE_NUM_ITERATIONS', 'nbanana', kwargs,
+    nbanana = pcheck(params, 'CAL.SHAPE.NUM_ITER', 'nbanana', kwargs,
                      func_name)
-    nsections = pcheck(params, 'SHAPE_NSECTIONS', 'nsections', kwargs,
+    nsections = pcheck(params, 'CAL.SHAPE.NSECTIONS', 'nsections', kwargs,
                        func_name)
-    large_angle_min = pcheck(params, 'SHAPE_LARGE_ANGLE_MIN',
+    large_angle_min = pcheck(params, 'CAL.SHAPE.LANGLE_MIN',
                              'large_angle_min', kwargs, func_name)
     large_angle_max = pcheck(params, 'CAL.SHAPE.LANGLE_MAX',
                              'large_angle_max', kwargs, func_name)
     large_angle_range = [large_angle_min, large_angle_max]
-    small_angle_min = pcheck(params, 'SHAPE_SMALL_ANGLE_MIN',
+    small_angle_min = pcheck(params, 'CAL.SHAPE.SANGLE_MIN',
                              'small_angle_min', kwargs, func_name)
-    small_angle_max = pcheck(params, 'SHAPE_SMALL_ANGLE_MAX',
+    small_angle_max = pcheck(params, 'CAL.SHAPE.SANGLE_MAX',
                              'small_angle_max', kwargs, func_name)
     small_angle_range = [small_angle_min, small_angle_max]
-    sigclipmax = pcheck(params, 'SHAPE_SIGMACLIP_MAX', 'sigclipmax',
+    sigclipmax = pcheck(params, 'CAL.SHAPE.SIGCLIP_MAX', 'sigclipmax',
                         kwargs, func_name)
-    med_filter_size = pcheck(params, 'SHAPE_MEDIAN_FILTER_SIZE',
+    med_filter_size = pcheck(params, 'CAL.SHAPE.MED_FILT_SIZE',
                              'med_filter_size', kwargs, func_name)
-    min_good_corr = pcheck(params, 'SHAPE_MIN_GOOD_CORRELATION',
+    min_good_corr = pcheck(params, 'CAL.SHAPE.MIN_GOOD_CORR',
                            'min_good_corr', kwargs, func_name)
-    short_medfilt_wid = pcheck(params, 'SHAPE_SHORT_DX_MEDFILT_WID',
+    short_medfilt_wid = pcheck(params, 'CAL.SHAPE.SHORT_DX_MEDFILT_WID',
                                'short_medfilt_width', kwargs, func_name)
-    long_medfilt_wid = pcheck(params, 'SHAPE_LONG_DX_MEDFILT_WID',
+    long_medfilt_wid = pcheck(params, 'CAL.SHAPE.LONG_DX_MEDFILT_WID',
                               'long_medfilt_width', kwargs, func_name)
-    std_qc = pcheck(params, 'SHAPE_QC_DXMAP_STD', 'std_qc', kwargs, func_name)
+    std_qc = pcheck(params, 'CAL.SHAPE.QC_DXMAP_STD', 'std_qc', kwargs, func_name)
     # get width for fiber
-    width = params['SHAPE_ORDER_WIDTH'][fiber]
+    width = params['CAL.SHAPE.ORDER_WID'][fiber]
     # get properties from property dictionaries
     nbo = lprops['NBO']
     acc = lprops['CENT_COEFFS']

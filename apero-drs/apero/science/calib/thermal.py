@@ -78,7 +78,7 @@ def apply_excess_emissivity(params: ParamDict, recipe: DrsRecipe,
     # get allowed dprtypes parameter
     dprtypes = params['CAL.THERM.EXCESS_DPRTYPES']
     # get the filter width for the low pass filter
-    filter_wid = params['THERMAL_FILTER_WID']
+    filter_wid = params['CAL.THERM.FILT_WID']
     # loop around all fibers
     # if any file has the wrong dprtype skip this step
     for fiber in fiber_types:

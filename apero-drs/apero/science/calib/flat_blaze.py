@@ -72,7 +72,7 @@ def calculate_blaze_flat_sinc(params: ParamDict, e2ds_ini: np.ndarray,
     :param order_num: int, the order number we are dealing with
     :param fiber: str, the fiber name we are dealing with
     :param sinc_med_size: int or None, optional, the sinc fit median filter
-                          width, overrides params['FF_BLAZE_SINC_MED_SIZE']
+                          width, overrides params['CAL.FLAT.BLAZE_SINC_MED_SIZE']
 
     :return: tuple, 1. the updated extracted flux for this order
              2. the flat profile for this order
@@ -368,9 +368,9 @@ def flat_blaze_qc(params: ParamDict, eprops: ParamDict, fiber: str
     # apply max and calculate the maximum of the rms values
     max_rms = mp.nanmax(eprops['RMS'][~remove_mask])
     # apply the quality control based on the maximum rms
-    if max_rms > params['QC_FF_MAX_RMS']:
+    if max_rms > params['CAL.FLAT.QC_MAX_RMS']:
         # add failed message to fail message list
-        fargs = [fiber, max_rms, params['QC_FF_MAX_RMS']]
+        fargs = [fiber, max_rms, params['CAL.FLAT.QC_MAX_RMS']]
         fail_msg.append(textentry('40-015-00008', args=fargs))
         qc_pass.append(0)
     else:

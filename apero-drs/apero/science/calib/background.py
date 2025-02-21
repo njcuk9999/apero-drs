@@ -66,24 +66,24 @@ def create_background_map(params: ParamDict, image: np.ndarray,
     :param badpixmask: numpy (2D) array, a map of bad pixels
     :param bkgr_boxsize: int or None, optional, Width of the box to produce the
                          background mask, if provided overrides
-                         params['BKGR_BOXSIZE']
+                         params['CAL.BCORR.BKGR_BOXSIZE']
     :param bkgr_percentage: float or None, optional, the background percentile
                             to compute minimum value (%), if provided overrides
-                            params['BKGR_PERCENTAGE']
+                            params['CAL.BCORR.BKGR_PERCENTAGE']
     :param bkgr_mask_conv_size: int or None, optional, size in pixels of to
                                 convolve tophat for the background mask, if
                                 provided overrides
-                                params['BKGR_MASK_CONVOLVE_SIZE']
+                                params['CAL.BCORR.BKGR_MASK_CSIZE']
     :param bkgr_n_bad: int or None, optional, If a pixel has this or more
                        "dark" neighbours, we consider it dark regardless of
                        its initial value, overrides
-                       params['BKGR_N_BAD_NEIGHBOURS']
+                       params['CAL.BCORR.NBAD_NEIGHBOURS']
 
     :return: numpy (2D) array, the background map (same shape as input image)
     """
     func_name = __NAME__ + '.create_background_map()'
     # get constants
-    width = pcheck(params, 'BKGR_BOXSIZE', func=func_name,
+    width = pcheck(params, 'CAL.BCORR.BKGR_BOXSIZE', func=func_name,
                    override=bkgr_boxsize)
     percent = pcheck(params, 'CAL.BCORR.BKGR_PERCENTAGE', func=func_name,
                      override=bkgr_percentage)
@@ -153,11 +153,11 @@ def correct_local_background(params: ParamDict, image: np.ndarray,
     :param params: ParamDict, parameter dictionary of constants
     :param image: np.array, image to correct local background
     :param bkgr_ker_wx: int or None, optional, Background kernel width in
-                        x [pixels], overrides params['BKGR_KER_WX']
+                        x [pixels], overrides params['CAL.BCORR.KER_WX']
     :param bkgr_ker_wy: int or None, optional, Background kernel width in
-                        y [pixels], overrides params['BKGR_KER_WX']
+                        y [pixels], overrides params['CAL.BCORR.KER_WX']
     :param bkgr_ker_sig: int or None, optional, convolution kernel sigma range
-                        overrides params['BKGR_KER_SIG']
+                        overrides params['CAL.BCORR.KER_SIG']
 
     Logical (slow) steps -->
 
@@ -255,9 +255,9 @@ def correction(recipe: DrsRecipe, params: ParamDict, infile: DrsFitsFile,
                         measurement (True or False), overrides
                         params['BKGR_NO_SUBTRACTION']
     :param bkgr_boxsize: int, optional, width of the box to produce the
-                         background mask, overrides params['BKGR_BOXSIZE']
+                         background mask, overrides params['CAL.BCORR.BKGR_BOXSIZE']
     :param bkgr_ker_amp: int, optional, kernel amplitude , overrides
-                         params['BKGR_KER_AMP']
+                         params['CAL.BCORR.KER_AMP']
 
     :return: numpy array, either the corrected image, or the full background
              map (if return_map is True)

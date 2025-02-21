@@ -495,9 +495,9 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
     cav_pedestal = wavefile.get_hkey('KW_CAV_PEDESTAL', required=False)
     # deal with no cavity key (i.e. the default reference file)
     if cavdeg is None or cav_pedestal is None:
-        cavdeg = params['WAVE_CAVITY_FIT_DEGREE']
+        cavdeg = params['CAL.WAVE.GEN.CAVITY_FIT_DEG']
         cav_coeffs = np.full(cavdeg + 1, np.nan)
-        cav_pedestal = params['WAVE_FP_DOPD0']
+        cav_pedestal = params['CAL.WAVE.FP.DOPD0']
     else:
         cavdeg = int(cavdeg)
         cav_coeffs = wavefile.get_hkey_1d('KW_CAVITY_WIDTH', cavdeg + 1)
@@ -677,7 +677,7 @@ def get_cavity_file(params: ParamDict, header: HeaderType = None,
     cavity_pedestal = chdr[params['KW_CAV_PEDESTAL'][0]]
     # ---------------------------------------------------------------------
     # update cavity pedestal in params
-    params.set('WAVE_FP_DOPD0', value=cavity_pedestal, source=func_name)
+    params.set('CAL.WAVE.FP.DOPD0', value=cavity_pedestal, source=func_name)
     # ---------------------------------------------------------------------
     # return cavity image
     return params, np.array(cimage)
@@ -802,7 +802,7 @@ def check_wave_consistency(params: ParamDict, props: ParamDict,
 
     :param params: ParamDict, the parameter dictionary of constants
     :param props: ParamDict, the parameter dictionary of wave data
-    :param num_coeffs: int or None, if set overrides params['WAVE_FIT_DEGREE']
+    :param num_coeffs: int or None, if set overrides params['CAL.WAVE.GEN.WAVESOL_FIT_DEG']
 
     :return: ParamDict, the updated parameter dictionary of wave data
     """
@@ -867,7 +867,7 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
     # guess_cavity_width = pcheck(params, 'CAL.WAVE.GEN.GUESS_CAVITY_WID',
     #                             func=func_name)
     # # Define the cavity fit polynomial fit degree for wave solution
-    # cavity_fit_degree = pcheck(params, 'WAVE_CAVITY_FIT_DEGREE',
+    # cavity_fit_degree = pcheck(params, 'CAL.WAVE.GEN.CAVITY_FIT_DEG',
     #                            func=func_name)
     # min SNR to consider the line
     nsig_min_hc = pcheck(params, 'CAL.WAVE.LL.NSIG_MIN_HC', func=func_name)
@@ -896,12 +896,12 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
     # define the guess HC exponetial width [pixels]
     guess_hc_ewid = pcheck(params, 'CAL.WAVE.LL.REF_HC_GUESS_EWID', func=func_name)
     # define orders not to fit
-    remove_orders = pcheck(params, 'WAVE_REMOVE_ORDERS', func=func_name)
+    remove_orders = pcheck(params, 'CAL.WAVE.GEN.REMOVE_ORDERS', func=func_name)
     # define the bulk offset to be added to the cavity length
-    cavity_pedestal = pcheck(params, 'WAVE_FP_DOPD0', func=func_name)
+    cavity_pedestal = pcheck(params, 'CAL.WAVE.FP.DOPD0', func=func_name)
     # define the wavelength bounds of the instrument
-    inst_wavestart = pcheck(params, 'EXT_S1D_WAVESTART', func=func_name)
-    inst_waveend = pcheck(params, 'EXT_S1D_WAVEEND', func=func_name)
+    inst_wavestart = pcheck(params, 'CAL.EXT.S1D_WAVESTART', func=func_name)
+    inst_waveend = pcheck(params, 'CAL.EXT.S1D_WAVEEND', func=func_name)
     # ------------------------------------------------------------------
     # get psuedo constants
     pconst = load_functions.load_pconfig(select.INSTRUMENTS, 
@@ -1393,10 +1393,10 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     # define orders not to fit
     remove_orders = pcheck(params, 'CAL.WAVE.GEN.REMOVE_ORDERS', func=func_name)
     # define the bulk offset to be added to the cavity length
-    cavity_pedestal = pcheck(params, 'WAVE_FP_DOPD0', func=func_name)
+    cavity_pedestal = pcheck(params, 'CAL.WAVE.FP.DOPD0', func=func_name)
     # define the wavelength bounds of the instrument
-    inst_wavestart = pcheck(params, 'EXT_S1D_WAVESTART', func=func_name)
-    inst_waveend = pcheck(params, 'EXT_S1D_WAVEEND', func=func_name)
+    inst_wavestart = pcheck(params, 'CAL.EXT.S1D_WAVESTART', func=func_name)
+    inst_waveend = pcheck(params, 'CAL.EXT.S1D_WAVEEND', func=func_name)
     # -------------------------------------------------------------------------
     # setup parameters
     # -------------------------------------------------------------------------
@@ -1601,7 +1601,7 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
             # We only update the cavity length for a given order if the RMS
             #    of HC lines within that other is small
             #    (i.e., equivalent to <1/2 pixel)
-            # if sigma_hc_res_kms < params['IMAGE_PIXEL_SIZE']/2:
+            # if sigma_hc_res_kms < params['IMAGE.PIXEL_SIZE']/2:
 
             # update the cavity per order by 1 - the median of the res
             cavity_per_order = cavity_per_order * (1 - med_hc_res)
@@ -1617,7 +1617,7 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
         # print msg: Velocity RMS of HC lines relative to catalog: {0:.3f} km/s
         WLOG(params, '', textentry('40-017-00069', args=[sigma_hc_res_kms]))
         # do not continue if RMS of HC lines is bad
-        # if sigma_hc_res_kms >= params['IMAGE_PIXEL_SIZE']/2:
+        # if sigma_hc_res_kms >= params['IMAGE.PIXEL_SIZE']/2:
         #     # print msg: Skipping Order {0} velocity RMS of HC lines too high
         #     WLOG(params, '', textentry('40-017-00070', args=[order_num])
         #     continue
@@ -2061,7 +2061,7 @@ def process_fibers(params: ParamDict, recipe: DrsRecipe,
     # set up storage
     solutions = dict()
     # get wave reference file (controller fiber)
-    ref_fiber = pcheck(params, 'WAVE_REF_FIBER', func=func_name)
+    ref_fiber = pcheck(params, 'CAL.WAVE.GEN.REF_FIBER', func=func_name)
     plot_order = pcheck(params, 'CAL.WAVE.GEN.FIBER_COMP_PLOT_ORD', func=func_name)
     # get the scale and offset modifiers
     fiber_offset = params['CAL.WAVE.LL.FIBER_OFFSET_MOD']

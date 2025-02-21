@@ -242,8 +242,8 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
     # get from parameters
     polar_fibers = params['OBJ.POL.GEN.FIBERS']
     stokesparams = params['OBJ.POL.GEN.STOKES_PARAMS']
-    berv_correct = params['POLAR_BERV_CORRECT']
-    source_rv_correct = params['POLAR_SOURCE_RV_CORRECT']
+    berv_correct = params['OBJ.POL.GEN.BERV_CORRECT']
+    source_rv_correct = params['OBJ.POL.GEN.SOURCE_RV_CORRECT']
     # whether we need to check qc
     if params['INPUTS']['NOQCCHECK']:
         check_qc = False
@@ -723,7 +723,7 @@ def calculate_polarimetry(params: ParamDict, pprops: ParamDict,
     # set function name
     func_name = display_func('calculate_polarimetry', __NAME__)
     # get parameters from params
-    method = pcheck(params, 'POLAR_METHOD', func_name, override=polar_method)
+    method = pcheck(params, 'OBJ.POL.GEN.METHOD', func_name, override=polar_method)
     # decide which method to use
     if method == 'Difference':
         return polarimetry_diff_method(params, pprops)
@@ -772,7 +772,7 @@ def polarimetry_diff_method(params: ParamDict, props: ParamDict,
     name = 'polarimetry_diff_method'
     func_name = display_func(name, __NAME__)
     # get variables from params
-    polar_interpolate_flux = pcheck(params, 'POLAR_INTERPOLATE_FLUX',
+    polar_interpolate_flux = pcheck(params, 'OBJ.POL.GEN.INTERPOLATE_FLUX',
                                     func=func_name, override=interp_flux)
     # get parameters from loc
     if polar_interpolate_flux:
@@ -943,7 +943,7 @@ def polarimetry_ratio_method(params: ParamDict, props: ParamDict,
     name = 'polarimetry_ratio_method'
     func_name = display_func(name, __NAME__)
     # get variables from params
-    polar_interpolate_flux = pcheck(params, 'POLAR_INTERPOLATE_FLUX',
+    polar_interpolate_flux = pcheck(params, 'OBJ.POL.GEN.INTERPOLATE_FLUX',
                                     func=func_name, override=interp_flux)
     # log start of polarimetry calculations
     WLOG(params, '', textentry('40-021-00002', args=[name]))
@@ -1130,7 +1130,7 @@ def calculate_stokes_i(params: ParamDict, props: ParamDict,
     wmsg = 'Running function {0} to calculate Stokes I total flux'
     WLOG(params, '', wmsg.format(name))
     # get parameters from params
-    polar_interpolate_flux = pcheck(params, 'POLAR_INTERPOLATE_FLUX',
+    polar_interpolate_flux = pcheck(params, 'OBJ.POL.GEN.INTERPOLATE_FLUX',
                                     func=func_name, override=interp_flux)
     # get parameters from props
     if polar_interpolate_flux:
@@ -1346,26 +1346,26 @@ def calculate_continuum(params: ParamDict, recipe: DrsRecipe, props: ParamDict
     pol_binsize = params['POLAR_CONT_BINSIZE']
     pol_overlap = params['POLAR_CONT_OVERLAP']
     # stokes fit parameters
-    stokesi_detection_alg = params['STOKESI_CONTINUUM_DET_ALG']
-    stokei_iraf_cont_fit_func = params['STOKESI_IRAF_CONT_FIT_FUNC']
+    stokesi_detection_alg = params['OBJ.POL.GEN.STOKESI_CONT_DET_ALG']
+    stokei_iraf_cont_fit_func = params['OBJ.POL.IRAF.CONT_FITFUNC_STOKESI']
     stokes_iraf_cont_func_ord = params['OBJ.POL.IRAF.CONT_FUNC_ORDER_STOKESI']
     # polar fit parameters
-    polar_detection_alg = params['POLAR_CONTINUUM_DET_ALG']
-    polar_iraf_cont_fit_func = params['POLAR_IRAF_CONT_FIT_FUNC']
+    polar_detection_alg = params['OBJ.POL.GEN.CONT_DEL_ALG']
+    polar_iraf_cont_fit_func = params['OBJ.POL.IRAF.CONT_FITFUNC_POLAR']
     polar_iraf_cont_func_ord = params['OBJ.POL.IRAF.CONT_FUNC_ORDER_POLAR']
     # other parameters
-    norm_stokes_i = params['POLAR_NORMALIZE_STOKES_I']
-    cont_poly_fit = params['POLAR_CONT_POLYNOMIAL_FIT']
-    cont_deg_poly = params['POLAR_CONT_DEG_POLYNOMIAL']
-    remove_continuum = params['POLAR_REMOVE_CONTINUUM']
+    norm_stokes_i = params['OBJ.POL.GEN.NORM_STOKES_I']
+    cont_poly_fit = params['OBJ.POL.MMED.CONT_POLYFIT']
+    cont_deg_poly = params['OBJ.POL.MMED.CONT_POLY_DEG']
+    remove_continuum = params['OBJ.POL.GEN.REMOVE_CONT']
     # -------------------------------------------------------------------------
     # get pconst
-    telluric_bands = params['GET_POLAR_TELLURIC_BANDS']
+    telluric_bands = params['OBJ.POL.GEN.TELLU_BANDS']
     # -------------------------------------------------------------------------
     # get wavelength data if require
     wldata = props['GLOBAL_WAVEMAP'].ravel()
     # remove the reddest pixels
-    keep = wldata < params['POLAR_REDDEST_THRESHOLD']
+    keep = wldata < params['OBJ.POL.GEN.REDDEST_THRES']
     # -------------------------------------------------------------------------
     # flatten data (across orders)
     pol = props['POL'].ravel()
@@ -1531,7 +1531,7 @@ def remove_continuum_polarization(params: ParamDict, props: ParamDict
     # loop around order data
     for order_num in range(ydim):
         # remove the reddest pixels
-        ordkeep = wavemap[order_num] < params['POLAR_REDDEST_THRESHOLD']
+        ordkeep = wavemap[order_num] < params['OBJ.POL.GEN.REDDEST_THRES']
         ordkeep &= np.isfinite(pol[order_num])
         ordkeep &= np.isfinite(stokesi[order_num])
         ordkeep &= stokesi[order_num] > 0

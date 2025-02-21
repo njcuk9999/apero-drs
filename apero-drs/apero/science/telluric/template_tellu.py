@@ -85,7 +85,7 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
     # set function mame
     func_name = display_func('make_template_cubes', __NAME__)
     # get parameters from params/kwargs
-    qc_snr_order = pcheck(params, 'MKTEMPLATE_SNR_ORDER', 'qc_snr_order',
+    qc_snr_order = pcheck(params, 'OBJ.TELLU.TEMPLATE.SNR_ORDER', 'qc_snr_order',
                           kwargs, func_name)
     e2ds_iterations = pcheck(params, 'OBJ.TELLU.TEMPLATE.E2DS_ITNUM', 's1d_iterations',
                              kwargs, func_name)
@@ -98,11 +98,11 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
                       func_name)
     resolution = pcheck(params, 'OBJ.TELLU.TEMPLATE.BERVCOV_RES', 'resolution', kwargs,
                         func_name)
-    debug_mode = pcheck(params, 'MKTEMPLATE_DEBUG_MODE', 'debug_mode', kwargs,
+    debug_mode = pcheck(params, 'OBJ.TELLU.TEMPLATE.DEBUG_MODE', 'debug_mode', kwargs,
                         func_name)
-    max_files = pcheck(params, 'MKTEMPLATE_MAX_OPEN_FILES', 'max_files',
+    max_files = pcheck(params, 'OBJ.TELLU.TEMPLATE.MAX_OPEN_FILES', 'max_files',
                        kwargs, func_name)
-    hotstar_kernel_velocity = pcheck(params, 'MKTEMPLATE_HOTSTAR_KER_VEL',
+    hotstar_kernel_velocity = pcheck(params, 'OBJ.TELLU.TEMPLATE.HOTSTAR_KER_VEL',
                                      'hotstar_ker_vel', kwargs, func_name)
     # get reference wave map
     mwavemap = refprops['WAVEMAP']
@@ -461,7 +461,7 @@ def template_bcols0(params: ParamDict):
     :return:
     """
     # get parameters from params/kwargs
-    snr_order = params['MKTEMPLATE_SNR_ORDER']
+    snr_order = params['OBJ.TELLU.TEMPLATE.SNR_ORDER']
     b_cols = OrderedDict()
     b_cols['RowNum'] = []
     b_cols['Filename'], b_cols['OBJNAME'] = [], []
@@ -507,7 +507,7 @@ def template_bcols(params: ParamDict, b_cols: Dict[str, list],
              observation
     """
     # get parameters from params/kwargs
-    snr_order = params['MKTEMPLATE_SNR_ORDER']
+    snr_order = params['OBJ.TELLU.TEMPLATE.SNR_ORDER']
     # get berv from bprops
     berv = bprops['USE_BERV']
     bjd = bprops['USE_BJD']

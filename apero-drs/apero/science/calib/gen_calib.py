@@ -447,10 +447,10 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
     :param header: Header instance, if set does not get the header from the
                    "infile" argument buts sets it from this
     :param correctdark: bool, if True corrects dark using calibrations
-    :param flip_image: bool or None, if True overrides "INPUT_FLIP_IMAGE" and
+    :param flip_image: bool or None, if True overrides "IMAGE.FLIP_INPUT" and
                        flips the image based on configuration params
     :param converte: bool, if True converts from ADU/s to electrons
-    :param resize_image: bool or None, if True overrides "INPUT_RESIZE_IMAGE"
+    :param resize_image: bool or None, if True overrides "IMAGE.RESIZE_IMAGE"
                          and resizes the image based on configruation params
     :param correctbad: bool, if True replaces bad pixels with NaNs
     :param correctback: bool, if True corrects background

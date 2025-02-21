@@ -152,7 +152,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         dprtype = infile.get_hkey('KW_DPRTYPE', dtype=str)
         # if dprtype is incorrect skip
-        if dprtype not in params['TELLU_ALLOWED_DPRTYPES']:
+        if dprtype not in params['OBJ.TELL.GEN.ALLOWED_DPRTYPES']:
             # join allowed dprtypes
             allowed_dprtypes = ', '.join(params['OBJ.TELL.GEN.ALLOWED_DPRTYPES'])
             # log that we are skipping

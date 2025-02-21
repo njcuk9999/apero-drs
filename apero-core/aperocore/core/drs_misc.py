@@ -408,7 +408,7 @@ def python_git_stats(params: Any) -> Any:
     try:
         # noinspection PyUnresolvedReferences
         from git import Repo
-        drs_root = Path(params['DRS_ROOT'])
+        drs_root = Path(params['PATH.ROOT'])
         repo = Repo(drs_root.parent.parent)
         branch_name = str(repo.active_branch.name)
         branch_hash = str(repo.head.object.hexsha)

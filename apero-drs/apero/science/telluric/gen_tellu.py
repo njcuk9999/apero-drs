@@ -102,7 +102,7 @@ def get_tellu_include_list(params: ParamDict,
     # get parameters from params/kwargs
     assetdir = pcheck(params, 'PATH.ASSETS', 'assetsdir', func=func_name,
                       override=assets_dir)
-    relfolder = pcheck(params, 'TELLU_LIST_DIRECTORY', func=func_name,
+    relfolder = pcheck(params, 'OBJ.TELL.GEN.LIST_DIR', func=func_name,
                        override=tellu_dir)
     tfilename = pcheck(params, 'OBJ.TELL.GEN.ALLOWLIST_NAME', func=func_name,
                        override=tellu_include_file)
@@ -136,7 +136,7 @@ def get_tellu_exclude_list(params: ParamDict,
     # get parameters from params/kwargs
     assetdir = pcheck(params, 'PATH.ASSETS', 'assetsdir', func=func_name,
                       override=assets_dir)
-    relfolder = pcheck(params, 'TELLU_LIST_DIRECTORY', func=func_name,
+    relfolder = pcheck(params, 'OBJ.TELL.GEN.LIST_DIR', func=func_name,
                        override=tellu_dir)
     tfilename = pcheck(params, 'OBJ.TELL.GEN.REJECTLIST_NAME', func=func_name,
                        override=tellu_exclude_file)
@@ -348,7 +348,7 @@ def get_tellu_objs(params: ParamDict, key: str,
 def get_sp_linelists(params, **kwargs):
     func_name = __NAME__ + '.get_sp_linelists()'
     # get parameters from params/kwargs
-    relfolder = pcheck(params, 'TELLU_LIST_DIRECTORY', 'directory', kwargs,
+    relfolder = pcheck(params, 'OBJ.TELL.GEN.LIST_DIR', 'directory', kwargs,
                        func_name)
     othersfile = pcheck(params, 'OBJ.TELL.PCLEAN.OTHERS_CCF_FILE', 'filename', kwargs,
                         func_name)
@@ -496,42 +496,42 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     func_name = __NAME__ + '.tellu_preclean()'
     # ----------------------------------------------------------------------
     # get parameters from parameter dictionary
-    do_precleaning = pcheck(params, 'TELLUP_DO_PRECLEANING', 'do_precleaning',
+    do_precleaning = pcheck(params, 'OBJ.TELL.PCLEAN.DO_PRECLEANING', 'do_precleaning',
                             kwargs, func_name)
-    default_water_abso = pcheck(params, 'TELLUP_D_WATER_ABSO',
+    default_water_abso = pcheck(params, 'OBJ.TELL.PCLEAN.DWATER_ABSO',
                                 'default_water_abso', kwargs, func_name)
-    ccf_scan_range = pcheck(params, 'TELLUP_CCF_SCAN_RANGE', 'ccf_scan_range',
+    ccf_scan_range = pcheck(params, 'OBJ.TELL.PCLEAN.CCF_SCAN_RANGE', 'ccf_scan_range',
                             kwargs, func_name)
-    clean_ohlines = pcheck(params, 'TELLUP_CLEAN_OH_LINES', 'clean_ohlines',
+    clean_ohlines = pcheck(params, 'OBJ.TELL.PCLEAN.CLEAN_OHLINES', 'clean_ohlines',
                            kwargs, func_name)
-    remove_orders = pcheck(params, 'TELLUP_REMOVE_ORDS', 'remove_orders',
+    remove_orders = pcheck(params, 'OBJ.TELL.PCLEAN.REMOVE_ORDERS', 'remove_orders',
                            kwargs, func_name)
-    snr_min_thres = pcheck(params, 'TELLUP_SNR_MIN_THRES', 'snr_min_thres',
+    snr_min_thres = pcheck(params, 'OBJ.TELL.PCLEAN.SNR_MIN_THRES', 'snr_min_thres',
                            kwargs, func_name)
-    dexpo_thres = pcheck(params, 'TELLUP_DEXPO_CONV_THRES', 'dexpo_thres',
+    dexpo_thres = pcheck(params, 'OBJ.TELL.PCLEAN.DEXPO_CONV_THRES', 'dexpo_thres',
                          kwargs, func_name)
-    max_iterations = pcheck(params, 'TELLUP_DEXPO_MAX_ITR', 'max_iterations',
+    max_iterations = pcheck(params, 'OBJ.TELL.PCLEAN.DEXPO_MAX_ITR', 'max_iterations',
                             kwargs, func_name)
-    ker_width = pcheck(params, 'TELLUP_ABSO_EXPO_KWID', 'ker_width', kwargs,
+    ker_width = pcheck(params, 'OBJ.TELL.PCLEAN.ABSO_EXPO_KWID', 'ker_width', kwargs,
                        func_name)
-    ker_shape = pcheck(params, 'TELLUP_ABSO_EXPO_KEXP', 'ker_shape', kwargs,
+    ker_shape = pcheck(params, 'OBJ.TELL.PCLEAN.ABSO_EXP_KEXP', 'ker_shape', kwargs,
                        func_name)
-    trans_thres = pcheck(params, 'TELLUP_TRANS_THRES', 'trans_thres', kwargs,
+    trans_thres = pcheck(params, 'OBJ.TELL.PCLEAN.TRANS_THRES', 'trans_thres', kwargs,
                          func_name)
-    trans_siglim = pcheck(params, 'TELLUP_TRANS_SIGLIM', 'trans_siglim', kwargs,
+    trans_siglim = pcheck(params, 'OBJ.TELL.PCLEAN.TRANS_SIGLIM', 'trans_siglim', kwargs,
                           func_name)
-    force_airmass = pcheck(params, 'TELLUP_FORCE_AIRMASS', 'force_airmass',
+    force_airmass = pcheck(params, 'OBJ.TELL.PCLEAN.FORCE_AIRMASS', 'force_airmass',
                            kwargs, func_name)
-    others_bounds = pcheck(params, 'TELLUP_OTHER_BOUNDS', 'others_bounds',
+    others_bounds = pcheck(params, 'OBJ.TELL.PCLEAN.OTHER_BOUNDS', 'others_bounds',
                            kwargs, func_name)
-    water_bounds = pcheck(params, 'TELLUP_WATER_BOUNDS', 'water_bounds', kwargs,
+    water_bounds = pcheck(params, 'OBJ.TELL.PCLEAN.WATER_BOUNDS', 'water_bounds', kwargs,
                           func_name)
-    ker_thres = pcheck(params, 'TELLUP_ABSO_EXPO_KTHRES', 'ker_thres', kwargs,
+    ker_thres = pcheck(params, 'OBJ.TELL.PCLEAN.ABSO_EXPO_KTHRES', 'ker_thres', kwargs,
                        func_name)
-    wavestart = pcheck(params, 'EXT_S1D_WAVESTART', 'wavestart', kwargs,
+    wavestart = pcheck(params, 'CAL.EXT.S1D_WAVESTART', 'wavestart', kwargs,
                        func_name)
-    waveend = pcheck(params, 'EXT_S1D_WAVEEND', 'waveend', kwargs, func_name)
-    dvgrid = pcheck(params, 'EXT_S1D_BIN_UVELO', 'dvgrid', kwargs, func_name)
+    waveend = pcheck(params, 'CAL.EXT.S1D_WAVEEND', 'waveend', kwargs, func_name)
+    dvgrid = pcheck(params, 'CAL.EXT.S1D_BIN_UVEL', 'dvgrid', kwargs, func_name)
     # ----------------------------------------------------------------------
     # load database
     if calibdbm is None:
@@ -663,35 +663,35 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         props.set_sources(keys, func_name)
         # ------------------------------------------------------------------
         # add constants used (can come from kwargs)
-        props['TELLUP_DO_PRECLEANING'] = do_precleaning
-        props['TELLUP_D_WATER_ABSO'] = default_water_abso
-        props['TELLUP_CCF_SCAN_RANGE'] = ccf_scan_range
-        props['TELLUP_CLEAN_OH_LINES'] = clean_ohlines
-        props['TELLUP_REMOVE_ORDS'] = remove_orders
-        props['TELLUP_SNR_MIN_THRES'] = snr_min_thres
-        props['TELLUP_DEXPO_CONV_THRES'] = dexpo_thres
-        props['TELLUP_DEXPO_MAX_ITR'] = max_iterations
-        props['TELLUP_ABSO_EXPO_KWID'] = ker_width
-        props['TELLUP_ABSO_EXPO_KEXP'] = ker_shape
-        props['TELLUP_TRANS_THRES'] = trans_thres
-        props['TELLUP_TRANS_SIGLIM'] = trans_siglim
-        props['TELLUP_FORCE_AIRMASS'] = force_airmass
-        props['TELLUP_OTHER_BOUNDS'] = others_bounds
-        props['TELLUP_WATER_BOUNDS'] = water_bounds
-        props['TELLUP_ABSO_EXPO_KTHRES'] = ker_thres
+        props['OBJ.TELL.PCLEAN.DO_PRECLEANING'] = do_precleaning
+        props['OBJ.TELL.PCLEAN.DWATER_ABSO'] = default_water_abso
+        props['OBJ.TELL.PCLEAN.CCF_SCAN_RANGE'] = ccf_scan_range
+        props['OBJ.TELL.PCLEAN.CLEAN_OHLINES'] = clean_ohlines
+        props['OBJ.TELL.PCLEAN.REMOVE_ORDERS'] = remove_orders
+        props['OBJ.TELL.PCLEAN.SNR_MIN_THRES'] = snr_min_thres
+        props['OBJ.TELL.PCLEAN.DEXPO_CONV_THRES'] = dexpo_thres
+        props['OBJ.TELL.PCLEAN.DEXPO_MAX_ITR'] = max_iterations
+        props['OBJ.TELL.PCLEAN.ABSO_EXPO_KWID'] = ker_width
+        props['OBJ.TELL.PCLEAN.ABSO_EXP_KEXP'] = ker_shape
+        props['OBJ.TELL.PCLEAN.TRANS_THRES'] = trans_thres
+        props['OBJ.TELL.PCLEAN.TRANS_SIGLIM'] = trans_siglim
+        props['OBJ.TELL.PCLEAN.FORCE_AIRMASS'] = force_airmass
+        props['OBJ.TELL.PCLEAN.OTHER_BOUNDS'] = others_bounds
+        props['OBJ.TELL.PCLEAN.WATER_BOUNDS'] = water_bounds
+        props['OBJ.TELL.PCLEAN.ABSO_EXPO_KTHRES'] = ker_thres
         props['TELLUP_WAVE_START'] = wavestart
         props['TELLUP_WAVE_END'] = waveend
         props['TELLUP_DVGRID'] = dvgrid
         # set sources
-        keys = ['TELLUP_D_WATER_ABSO', 'TELLUP_CCF_SCAN_RANGE',
-                'TELLUP_CLEAN_OH_LINES', 'TELLUP_REMOVE_ORDS',
-                'TELLUP_SNR_MIN_THRES', 'TELLUP_DEXPO_CONV_THRES',
-                'TELLUP_DEXPO_MAX_ITR', 'TELLUP_ABSO_EXPO_KWID',
-                'TELLUP_ABSO_EXPO_KEXP', 'TELLUP_TRANS_THRES',
-                'TELLUP_TRANS_SIGLIM', 'TELLUP_FORCE_AIRMASS',
-                'TELLUP_OTHER_BOUNDS', 'TELLUP_WATER_BOUNDS',
-                'TELLUP_ABSO_EXPO_KTHRES', 'TELLUP_WAVE_START',
-                'TELLUP_WAVE_END', 'TELLUP_DVGRID', 'TELLUP_DO_PRECLEANING']
+        keys = ['OBJ.TELL.PCLEAN.DWATER_ABSO', 'OBJ.TELL.PCLEAN.CCF_SCAN_RANGE',
+                'OBJ.TELL.PCLEAN.CLEAN_OHLINES', 'OBJ.TELL.PCLEAN.REMOVE_ORDERS',
+                'OBJ.TELL.PCLEAN.SNR_MIN_THRES', 'OBJ.TELL.PCLEAN.DEXPO_CONV_THRES',
+                'OBJ.TELL.PCLEAN.DEXPO_MAX_ITR', 'OBJ.TELL.PCLEAN.ABSO_EXPO_KWID',
+                'OBJ.TELL.PCLEAN.ABSO_EXP_KEXP', 'OBJ.TELL.PCLEAN.TRANS_THRES',
+                'OBJ.TELL.PCLEAN.TRANS_SIGLIM', 'OBJ.TELL.PCLEAN.FORCE_AIRMASS',
+                'OBJ.TELL.PCLEAN.OTHER_BOUNDS', 'OBJ.TELL.PCLEAN.WATER_BOUNDS',
+                'OBJ.TELL.PCLEAN.ABSO_EXPO_KTHRES', 'TELLUP_WAVE_START',
+                'TELLUP_WAVE_END', 'TELLUP_DVGRID', 'OBJ.TELL.PCLEAN.DO_PRECLEANING']
         props.set_sources(keys, func_name)
         # ------------------------------------------------------------------
         # return props
@@ -1182,7 +1182,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     if not drs_text.null_text(params['INPUTS']['FINITERES']):
         do_finite_res_corr = params['INPUTS']['FINITERES']
     else:
-        do_finite_res_corr = params['TELLUP_DO_FINITE_RES_CORR']
+        do_finite_res_corr = params['OBJ.TELL.PCLEAN.DO_FINITE_RES_CORR']
     # correct if conditions are met
     if template_props['HAS_TEMPLATE'] and do_finite_res_corr:
         # copy the original corrected e2ds
@@ -1229,36 +1229,36 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     props.set_sources(keys, func_name)
     # ----------------------------------------------------------------------
     # add constants used (can come from kwargs)
-    props['TELLUP_DO_PRECLEANING'] = do_precleaning
-    props['TELLUP_D_WATER_ABSO'] = default_water_abso
-    props['TELLUP_CCF_SCAN_RANGE'] = ccf_scan_range
-    props['TELLUP_CLEAN_OH_LINES'] = clean_ohlines
-    props['TELLUP_REMOVE_ORDS'] = remove_orders
-    props['TELLUP_SNR_MIN_THRES'] = snr_min_thres
-    props['TELLUP_DEXPO_CONV_THRES'] = dexpo_thres
-    props['TELLUP_DEXPO_MAX_ITR'] = max_iterations
-    props['TELLUP_ABSO_EXPO_KWID'] = ker_width
-    props['TELLUP_ABSO_EXPO_KEXP'] = ker_shape
-    props['TELLUP_TRANS_THRES'] = trans_thres
-    props['TELLUP_TRANS_SIGLIM'] = trans_siglim
-    props['TELLUP_FORCE_AIRMASS'] = force_airmass
-    props['TELLUP_OTHER_BOUNDS'] = others_bounds
-    props['TELLUP_WATER_BOUNDS'] = water_bounds
-    props['TELLUP_ABSO_EXPO_KTHRES'] = ker_thres
+    props['OBJ.TELL.PCLEAN.DO_PRECLEANING'] = do_precleaning
+    props['OBJ.TELL.PCLEAN.DWATER_ABSO'] = default_water_abso
+    props['OBJ.TELL.PCLEAN.CCF_SCAN_RANGE'] = ccf_scan_range
+    props['OBJ.TELL.PCLEAN.CLEAN_OHLINES'] = clean_ohlines
+    props['OBJ.TELL.PCLEAN.REMOVE_ORDERS'] = remove_orders
+    props['OBJ.TELL.PCLEAN.SNR_MIN_THRES'] = snr_min_thres
+    props['OBJ.TELL.PCLEAN.DEXPO_CONV_THRES'] = dexpo_thres
+    props['OBJ.TELL.PCLEAN.DEXPO_MAX_ITR'] = max_iterations
+    props['OBJ.TELL.PCLEAN.ABSO_EXPO_KWID'] = ker_width
+    props['OBJ.TELL.PCLEAN.ABSO_EXP_KEXP'] = ker_shape
+    props['OBJ.TELL.PCLEAN.TRANS_THRES'] = trans_thres
+    props['OBJ.TELL.PCLEAN.TRANS_SIGLIM'] = trans_siglim
+    props['OBJ.TELL.PCLEAN.FORCE_AIRMASS'] = force_airmass
+    props['OBJ.TELL.PCLEAN.OTHER_BOUNDS'] = others_bounds
+    props['OBJ.TELL.PCLEAN.WATER_BOUNDS'] = water_bounds
+    props['OBJ.TELL.PCLEAN.ABSO_EXPO_KTHRES'] = ker_thres
     props['TELLUP_WAVE_START'] = wavestart
     props['TELLUP_WAVE_END'] = waveend
     props['TELLUP_DVGRID'] = dvgrid
     props['TELLU_FINITE_RES'] = finite_res_e2ds
     # set sources
-    keys = ['TELLUP_D_WATER_ABSO', 'TELLUP_CCF_SCAN_RANGE',
-            'TELLUP_CLEAN_OH_LINES', 'TELLUP_REMOVE_ORDS',
-            'TELLUP_SNR_MIN_THRES', 'TELLUP_DEXPO_CONV_THRES',
-            'TELLUP_DEXPO_MAX_ITR', 'TELLUP_ABSO_EXPO_KWID',
-            'TELLUP_ABSO_EXPO_KEXP', 'TELLUP_TRANS_THRES',
-            'TELLUP_TRANS_SIGLIM', 'TELLUP_FORCE_AIRMASS',
-            'TELLUP_OTHER_BOUNDS', 'TELLUP_WATER_BOUNDS',
-            'TELLUP_ABSO_EXPO_KTHRES', 'TELLUP_WAVE_START',
-            'TELLUP_WAVE_END', 'TELLUP_DVGRID', 'TELLUP_DO_PRECLEANING',
+    keys = ['OBJ.TELL.PCLEAN.DWATER_ABSO', 'OBJ.TELL.PCLEAN.CCF_SCAN_RANGE',
+            'OBJ.TELL.PCLEAN.CLEAN_OHLINES', 'OBJ.TELL.PCLEAN.REMOVE_ORDERS',
+            'OBJ.TELL.PCLEAN.SNR_MIN_THRES', 'OBJ.TELL.PCLEAN.DEXPO_CONV_THRES',
+            'OBJ.TELL.PCLEAN.DEXPO_MAX_ITR', 'OBJ.TELL.PCLEAN.ABSO_EXPO_KWID',
+            'OBJ.TELL.PCLEAN.ABSO_EXP_KEXP', 'OBJ.TELL.PCLEAN.TRANS_THRES',
+            'OBJ.TELL.PCLEAN.TRANS_SIGLIM', 'OBJ.TELL.PCLEAN.FORCE_AIRMASS',
+            'OBJ.TELL.PCLEAN.OTHER_BOUNDS', 'OBJ.TELL.PCLEAN.WATER_BOUNDS',
+            'OBJ.TELL.PCLEAN.ABSO_EXPO_KTHRES', 'TELLUP_WAVE_START',
+            'TELLUP_WAVE_END', 'TELLUP_DVGRID', 'OBJ.TELL.PCLEAN.DO_PRECLEANING',
             'TELLU_FINITE_RES']
     props.set_sources(keys, func_name)
     # ----------------------------------------------------------------------
@@ -1286,7 +1286,7 @@ def qc_p2pscat_bands(params: ParamDict, p2p_dict: Dict[str, float] = None
     # set up the combined SNR variable
     bvariable = 'SNR{0}'.format(''.join(list(bands.keys())))
     # get limit from params
-    p2p_min_thres = params['TELLUP_SNR_MIN_THRES']
+    p2p_min_thres = params['OBJ.TELL.PCLEAN.SNR_MIN_THRES']
     # set up return
     qc_value = np.nan
     qc_name = bvariable
@@ -1666,7 +1666,7 @@ def finite_res_correction(params: ParamDict, template_props: ParamDict,
     # set function name
     func_name = display_func('finite_res_correction', __NAME__)
     # get threshold
-    thres = pcheck(params, 'TELLUP_TRANS_THRES', func=func_name,
+    thres = pcheck(params, 'OBJ.TELL.PCLEAN.TRANS_THRES', func=func_name,
                    override=threshold)
     # -------------------------------------------------------------------------
     # spline with slopes in domains that are not defined. We cannot have a NaN
@@ -1770,38 +1770,38 @@ def qc_exit_tellu_preclean(params, recipe, image, image_e2ds_ini, infile,
     func_name = __NAME__ + '.qc_exit_tellu_preclean()'
     # ----------------------------------------------------------------------
     # get parameters from parameter dictionary
-    do_precleaning = pcheck(params, 'TELLUP_DO_PRECLEANING', 'do_precleaning',
+    do_precleaning = pcheck(params, 'OBJ.TELL.PCLEAN.DO_PRECLEANING', 'do_precleaning',
                             kwargs, func_name)
-    default_water_abso = pcheck(params, 'TELLUP_D_WATER_ABSO',
+    default_water_abso = pcheck(params, 'OBJ.TELL.PCLEAN.DWATER_ABSO',
                                 'default_water_abso', kwargs, func_name)
-    ccf_scan_range = pcheck(params, 'TELLUP_CCF_SCAN_RANGE', 'ccf_scan_range',
+    ccf_scan_range = pcheck(params, 'OBJ.TELL.PCLEAN.CCF_SCAN_RANGE', 'ccf_scan_range',
                             kwargs, func_name)
-    clean_ohlines = pcheck(params, 'TELLUP_CLEAN_OH_LINES', 'clean_ohlines',
+    clean_ohlines = pcheck(params, 'OBJ.TELL.PCLEAN.CLEAN_OHLINES', 'clean_ohlines',
                            kwargs, func_name)
 
-    remove_orders = pcheck(params, 'TELLUP_REMOVE_ORDS', 'remove_orders',
+    remove_orders = pcheck(params, 'OBJ.TELL.PCLEAN.REMOVE_ORDERS', 'remove_orders',
                            kwargs, func_name)
-    snr_min_thres = pcheck(params, 'TELLUP_SNR_MIN_THRES', 'snr_min_thres',
+    snr_min_thres = pcheck(params, 'OBJ.TELL.PCLEAN.SNR_MIN_THRES', 'snr_min_thres',
                            kwargs, func_name)
-    dexpo_thres = pcheck(params, 'TELLUP_DEXPO_CONV_THRES', 'dexpo_thres',
+    dexpo_thres = pcheck(params, 'OBJ.TELL.PCLEAN.DEXPO_CONV_THRES', 'dexpo_thres',
                          kwargs, func_name)
-    max_iterations = pcheck(params, 'TELLUP_DEXPO_MAX_ITR', 'max_iterations',
+    max_iterations = pcheck(params, 'OBJ.TELL.PCLEAN.DEXPO_MAX_ITR', 'max_iterations',
                             kwargs, func_name)
-    ker_width = pcheck(params, 'TELLUP_ABSO_EXPO_KWID', 'ker_width', kwargs,
+    ker_width = pcheck(params, 'OBJ.TELL.PCLEAN.ABSO_EXPO_KWID', 'ker_width', kwargs,
                        func_name)
-    ker_shape = pcheck(params, 'TELLUP_ABSO_EXPO_KEXP', 'ker_shape', kwargs,
+    ker_shape = pcheck(params, 'OBJ.TELL.PCLEAN.ABSO_EXP_KEXP', 'ker_shape', kwargs,
                        func_name)
-    trans_thres = pcheck(params, 'TELLUP_TRANS_THRES', 'trans_thres', kwargs,
+    trans_thres = pcheck(params, 'OBJ.TELL.PCLEAN.TRANS_THRES', 'trans_thres', kwargs,
                          func_name)
-    trans_siglim = pcheck(params, 'TELLUP_TRANS_SIGLIM', 'trans_siglim', kwargs,
+    trans_siglim = pcheck(params, 'OBJ.TELL.PCLEAN.TRANS_SIGLIM', 'trans_siglim', kwargs,
                           func_name)
-    force_airmass = pcheck(params, 'TELLUP_FORCE_AIRMASS', 'force_airmass',
+    force_airmass = pcheck(params, 'OBJ.TELL.PCLEAN.FORCE_AIRMASS', 'force_airmass',
                            kwargs, func_name)
-    others_bounds = pcheck(params, 'TELLUP_OTHER_BOUNDS', 'others_bounds',
+    others_bounds = pcheck(params, 'OBJ.TELL.PCLEAN.OTHER_BOUNDS', 'others_bounds',
                            kwargs, func_name)
-    water_bounds = pcheck(params, 'TELLUP_WATER_BOUNDS', 'water_bounds', kwargs,
+    water_bounds = pcheck(params, 'OBJ.TELL.PCLEAN.WATER_BOUNDS', 'water_bounds', kwargs,
                           func_name)
-    ker_thres = pcheck(params, 'TELLUP_ABSO_EXPO_KTHRES', 'ker_thres', kwargs,
+    ker_thres = pcheck(params, 'OBJ.TELL.PCLEAN.ABSO_EXPO_KTHRES', 'ker_thres', kwargs,
                        func_name)
     wavestart = pcheck(params, 'CAL.EXT.S1D_WAVESTART', 'wavestart', kwargs,
                        func_name)
@@ -1902,36 +1902,36 @@ def qc_exit_tellu_preclean(params, recipe, image, image_e2ds_ini, infile,
     props.set_sources(keys, func_name)
     # ----------------------------------------------------------------------
     # add constants used (can come from kwargs)
-    props['TELLUP_DO_PRECLEANING'] = do_precleaning
-    props['TELLUP_D_WATER_ABSO'] = default_water_abso
-    props['TELLUP_CCF_SCAN_RANGE'] = ccf_scan_range
-    props['TELLUP_CLEAN_OH_LINES'] = clean_ohlines
-    props['TELLUP_REMOVE_ORDS'] = remove_orders
-    props['TELLUP_SNR_MIN_THRES'] = snr_min_thres
-    props['TELLUP_DEXPO_CONV_THRES'] = dexpo_thres
-    props['TELLUP_DEXPO_MAX_ITR'] = max_iterations
-    props['TELLUP_ABSO_EXPO_KWID'] = ker_width
-    props['TELLUP_ABSO_EXPO_KEXP'] = ker_shape
-    props['TELLUP_TRANS_THRES'] = trans_thres
-    props['TELLUP_TRANS_SIGLIM'] = trans_siglim
-    props['TELLUP_FORCE_AIRMASS'] = force_airmass
-    props['TELLUP_OTHER_BOUNDS'] = others_bounds
-    props['TELLUP_WATER_BOUNDS'] = water_bounds
-    props['TELLUP_ABSO_EXPO_KTHRES'] = ker_thres
+    props['OBJ.TELL.PCLEAN.DO_PRECLEANING'] = do_precleaning
+    props['OBJ.TELL.PCLEAN.DWATER_ABSO'] = default_water_abso
+    props['OBJ.TELL.PCLEAN.CCF_SCAN_RANGE'] = ccf_scan_range
+    props['OBJ.TELL.PCLEAN.CLEAN_OHLINES'] = clean_ohlines
+    props['OBJ.TELL.PCLEAN.REMOVE_ORDERS'] = remove_orders
+    props['OBJ.TELL.PCLEAN.SNR_MIN_THRES'] = snr_min_thres
+    props['OBJ.TELL.PCLEAN.DEXPO_CONV_THRES'] = dexpo_thres
+    props['OBJ.TELL.PCLEAN.DEXPO_MAX_ITR'] = max_iterations
+    props['OBJ.TELL.PCLEAN.ABSO_EXPO_KWID'] = ker_width
+    props['OBJ.TELL.PCLEAN.ABSO_EXP_KEXP'] = ker_shape
+    props['OBJ.TELL.PCLEAN.TRANS_THRES'] = trans_thres
+    props['OBJ.TELL.PCLEAN.TRANS_SIGLIM'] = trans_siglim
+    props['OBJ.TELL.PCLEAN.FORCE_AIRMASS'] = force_airmass
+    props['OBJ.TELL.PCLEAN.OTHER_BOUNDS'] = others_bounds
+    props['OBJ.TELL.PCLEAN.WATER_BOUNDS'] = water_bounds
+    props['OBJ.TELL.PCLEAN.ABSO_EXPO_KTHRES'] = ker_thres
     props['TELLUP_WAVE_START'] = wavestart
     props['TELLUP_WAVE_END'] = waveend
     props['TELLUP_DVGRID'] = dvgrid
     props['TELLU_FINITE_RES'] = finite_res_e2ds
     # set sources
-    keys = ['TELLUP_D_WATER_ABSO', 'TELLUP_CCF_SCAN_RANGE',
-            'TELLUP_CLEAN_OH_LINES', 'TELLUP_REMOVE_ORDS',
-            'TELLUP_SNR_MIN_THRES', 'TELLUP_DEXPO_CONV_THRES',
-            'TELLUP_DEXPO_MAX_ITR', 'TELLUP_ABSO_EXPO_KWID',
-            'TELLUP_ABSO_EXPO_KEXP', 'TELLUP_TRANS_THRES',
-            'TELLUP_TRANS_SIGLIM', 'TELLUP_FORCE_AIRMASS',
-            'TELLUP_OTHER_BOUNDS', 'TELLUP_WATER_BOUNDS',
-            'TELLUP_ABSO_EXPO_KTHRES', 'TELLUP_WAVE_START',
-            'TELLUP_WAVE_END', 'TELLUP_DVGRID', 'TELLUP_DO_PRECLEANING',
+    keys = ['OBJ.TELL.PCLEAN.DWATER_ABSO', 'OBJ.TELL.PCLEAN.CCF_SCAN_RANGE',
+            'OBJ.TELL.PCLEAN.CLEAN_OHLINES', 'OBJ.TELL.PCLEAN.REMOVE_ORDERS',
+            'OBJ.TELL.PCLEAN.SNR_MIN_THRES', 'OBJ.TELL.PCLEAN.DEXPO_CONV_THRES',
+            'OBJ.TELL.PCLEAN.DEXPO_MAX_ITR', 'OBJ.TELL.PCLEAN.ABSO_EXPO_KWID',
+            'OBJ.TELL.PCLEAN.ABSO_EXP_KEXP', 'OBJ.TELL.PCLEAN.TRANS_THRES',
+            'OBJ.TELL.PCLEAN.TRANS_SIGLIM', 'OBJ.TELL.PCLEAN.FORCE_AIRMASS',
+            'OBJ.TELL.PCLEAN.OTHER_BOUNDS', 'OBJ.TELL.PCLEAN.WATER_BOUNDS',
+            'OBJ.TELL.PCLEAN.ABSO_EXPO_KTHRES', 'TELLUP_WAVE_START',
+            'TELLUP_WAVE_END', 'TELLUP_DVGRID', 'OBJ.TELL.PCLEAN.DO_PRECLEANING',
             'TELLU_FINITE_RES']
     props.set_sources(keys, func_name)
     # ----------------------------------------------------------------------
@@ -2031,40 +2031,40 @@ def tellu_preclean_write(params, recipe, infile, rawfiles, fiber, combine,
     # ----------------------------------------------------------------------
     # add constants used (can come from kwargs)
     tpclfile.add_hkey('KW_TELLUP_DO_PRECLEAN',
-                      value=props['TELLUP_DO_PRECLEANING'])
+                      value=props['OBJ.TELL.PCLEAN.DO_PRECLEANING'])
     tpclfile.add_hkey('KW_TELLUP_DFLT_WATER',
-                      value=props['TELLUP_D_WATER_ABSO'])
+                      value=props['OBJ.TELL.PCLEAN.DWATER_ABSO'])
     tpclfile.add_hkey('KW_TELLUP_CCF_SRANGE',
-                      value=props['TELLUP_CCF_SCAN_RANGE'])
+                      value=props['OBJ.TELL.PCLEAN.CCF_SCAN_RANGE'])
     tpclfile.add_hkey('KW_TELLUP_CLEAN_OHLINES',
-                      value=props['TELLUP_CLEAN_OH_LINES'])
+                      value=props['OBJ.TELL.PCLEAN.CLEAN_OHLINES'])
     # push to strings
-    tellu_rords = [str(x) for x in props['TELLUP_REMOVE_ORDS']]
+    tellu_rords = [str(x) for x in props['OBJ.TELL.PCLEAN.REMOVE_ORDERS']]
     tpclfile.add_hkey('KW_TELLUP_REMOVE_ORDS', value=','.join(tellu_rords))
     tpclfile.add_hkey('KW_TELLUP_SNR_MIN_THRES',
-                      value=props['TELLUP_SNR_MIN_THRES'])
+                      value=props['OBJ.TELL.PCLEAN.SNR_MIN_THRES'])
     tpclfile.add_hkey('KW_TELLUP_DEXPO_CONV_THRES',
-                      value=props['TELLUP_DEXPO_CONV_THRES'])
+                      value=props['OBJ.TELL.PCLEAN.DEXPO_CONV_THRES'])
     tpclfile.add_hkey('KW_TELLUP_DEXPO_MAX_ITR',
-                      value=props['TELLUP_DEXPO_MAX_ITR'])
+                      value=props['OBJ.TELL.PCLEAN.DEXPO_MAX_ITR'])
     tpclfile.add_hkey('KW_TELLUP_ABSOEXPO_KTHRES',
-                      value=props['TELLUP_ABSO_EXPO_KTHRES'])
+                      value=props['OBJ.TELL.PCLEAN.ABSO_EXPO_KTHRES'])
     tpclfile.add_hkey('KW_TELLUP_WAVE_START', value=props['TELLUP_WAVE_START'])
     tpclfile.add_hkey('KW_TELLUP_WAVE_END', value=props['TELLUP_WAVE_END'])
     tpclfile.add_hkey('KW_TELLUP_DVGRID', value=props['TELLUP_DVGRID'])
     tpclfile.add_hkey('KW_TELLUP_ABSOEXPO_KWID',
-                      value=props['TELLUP_ABSO_EXPO_KWID'])
+                      value=props['OBJ.TELL.PCLEAN.ABSO_EXPO_KWID'])
     tpclfile.add_hkey('KW_TELLUP_ABSOEXPO_KEXP',
-                      value=props['TELLUP_ABSO_EXPO_KEXP'])
+                      value=props['OBJ.TELL.PCLEAN.ABSO_EXP_KEXP'])
     tpclfile.add_hkey('KW_TELLUP_TRANS_THRES',
-                      value=props['TELLUP_TRANS_THRES'])
+                      value=props['OBJ.TELL.PCLEAN.TRANS_THRES'])
     tpclfile.add_hkey('KW_TELLUP_TRANS_SIGL',
-                      value=props['TELLUP_TRANS_SIGLIM'])
+                      value=props['OBJ.TELL.PCLEAN.TRANS_SIGLIM'])
     tpclfile.add_hkey('KW_TELLUP_FORCE_AIRMASS',
-                      value=props['TELLUP_FORCE_AIRMASS'])
+                      value=props['OBJ.TELL.PCLEAN.FORCE_AIRMASS'])
     # get the other and water bounds
-    obounds = [str(x) for x in props['TELLUP_OTHER_BOUNDS']]
-    wbounds = [str(x) for x in props['TELLUP_WATER_BOUNDS']]
+    obounds = [str(x) for x in props['OBJ.TELL.PCLEAN.OTHER_BOUNDS']]
+    wbounds = [str(x) for x in props['OBJ.TELL.PCLEAN.WATER_BOUNDS']]
     # push into the header
     tpclfile.add_hkey('KW_TELLUP_OTHER_BOUNDS', value=','.join(obounds))
     tpclfile.add_hkey('KW_TELLUP_WATER_BOUNDS', value=','.join(wbounds))
@@ -2202,42 +2202,42 @@ def read_tellu_preclean(params, recipe, infile, fiber, database=None):
     props.set_sources(keys, 'header')
     # ----------------------------------------------------------------------
     # add constants used (can come from kwargs)
-    props['TELLUP_DO_PRECLEANING'] = tpclfile.get_hkey('KW_TELLUP_DO_PRECLEAN',
+    props['OBJ.TELL.PCLEAN.DO_PRECLEANING'] = tpclfile.get_hkey('KW_TELLUP_DO_PRECLEAN',
                                                        dtype=bool)
-    props['TELLUP_D_WATER_ABSO'] = tpclfile.get_hkey('KW_TELLUP_DFLT_WATER',
+    props['OBJ.TELL.PCLEAN.DWATER_ABSO'] = tpclfile.get_hkey('KW_TELLUP_DFLT_WATER',
                                                      dtype=float)
-    props['TELLUP_CCF_SCAN_RANGE'] = tpclfile.get_hkey('KW_TELLUP_CCF_SRANGE',
+    props['OBJ.TELL.PCLEAN.CCF_SCAN_RANGE'] = tpclfile.get_hkey('KW_TELLUP_CCF_SRANGE',
                                                        dtype=float)
     kw_clean_oh = 'KW_TELLUP_CLEAN_OHLINES'
-    props['TELLUP_CLEAN_OH_LINES'] = tpclfile.get_hkey(kw_clean_oh, dtype=bool)
-    props['TELLUP_REMOVE_ORDS'] = tpclfile.get_hkey('KW_TELLUP_REMOVE_ORDS',
+    props['OBJ.TELL.PCLEAN.CLEAN_OHLINES'] = tpclfile.get_hkey(kw_clean_oh, dtype=bool)
+    props['OBJ.TELL.PCLEAN.REMOVE_ORDERS'] = tpclfile.get_hkey('KW_TELLUP_REMOVE_ORDS',
                                                     dtype=list, listtype=int)
-    props['TELLUP_SNR_MIN_THRES'] = tpclfile.get_hkey('KW_TELLUP_SNR_MIN_THRES',
+    props['OBJ.TELL.PCLEAN.SNR_MIN_THRES'] = tpclfile.get_hkey('KW_TELLUP_SNR_MIN_THRES',
                                                       dtype=float)
     kw_dexpo = 'KW_TELLUP_DEXPO_CONV_THRES'
-    props['TELLUP_DEXPO_CONV_THRES'] = tpclfile.get_hkey(kw_dexpo, dtype=float)
-    props['TELLUP_DEXPO_MAX_ITR'] = tpclfile.get_hkey('KW_TELLUP_DEXPO_MAX_ITR',
+    props['OBJ.TELL.PCLEAN.DEXPO_CONV_THRES'] = tpclfile.get_hkey(kw_dexpo, dtype=float)
+    props['OBJ.TELL.PCLEAN.DEXPO_MAX_ITR'] = tpclfile.get_hkey('KW_TELLUP_DEXPO_MAX_ITR',
                                                       dtype=int)
     kw_kthres = 'KW_TELLUP_ABSOEXPO_KTHRES'
-    props['TELLUP_ABSO_EXPO_KTHRES'] = tpclfile.get_hkey(kw_kthres, dtype=float)
+    props['OBJ.TELL.PCLEAN.ABSO_EXPO_KTHRES'] = tpclfile.get_hkey(kw_kthres, dtype=float)
     props['TELLUP_WAVE_START'] = tpclfile.get_hkey('KW_TELLUP_WAVE_START',
                                                    dtype=float)
     props['TELLUP_WAVE_END'] = tpclfile.get_hkey('KW_TELLUP_WAVE_END',
                                                  dtype=float)
     props['TELLUP_DVGRID'] = tpclfile.get_hkey('KW_TELLUP_DVGRID', dtype=float)
     kw_ae_kwid = 'KW_TELLUP_ABSOEXPO_KWID'
-    props['TELLUP_ABSO_EXPO_KWID'] = tpclfile.get_hkey(kw_ae_kwid, dtype=float)
+    props['OBJ.TELL.PCLEAN.ABSO_EXPO_KWID'] = tpclfile.get_hkey(kw_ae_kwid, dtype=float)
     kw_ae_kexp = 'KW_TELLUP_ABSOEXPO_KEXP'
-    props['TELLUP_ABSO_EXPO_KEXP'] = tpclfile.get_hkey(kw_ae_kexp, dtype=float)
-    props['TELLUP_TRANS_THRES'] = tpclfile.get_hkey('KW_TELLUP_TRANS_THRES',
+    props['OBJ.TELL.PCLEAN.ABSO_EXP_KEXP'] = tpclfile.get_hkey(kw_ae_kexp, dtype=float)
+    props['OBJ.TELL.PCLEAN.TRANS_THRES'] = tpclfile.get_hkey('KW_TELLUP_TRANS_THRES',
                                                     dtype=float)
-    props['TELLUP_TRANS_SIGLIM'] = tpclfile.get_hkey('KW_TELLUP_TRANS_SIGL',
+    props['OBJ.TELL.PCLEAN.TRANS_SIGLIM'] = tpclfile.get_hkey('KW_TELLUP_TRANS_SIGL',
                                                      dtype=float)
-    props['TELLUP_FORCE_AIRMASS'] = tpclfile.get_hkey('KW_TELLUP_FORCE_AIRMASS',
+    props['OBJ.TELL.PCLEAN.FORCE_AIRMASS'] = tpclfile.get_hkey('KW_TELLUP_FORCE_AIRMASS',
                                                       dtype=bool)
-    props['TELLUP_OTHER_BOUNDS'] = tpclfile.get_hkey('KW_TELLUP_OTHER_BOUNDS',
+    props['OBJ.TELL.PCLEAN.OTHER_BOUNDS'] = tpclfile.get_hkey('KW_TELLUP_OTHER_BOUNDS',
                                                      dtype=list, listtype=float)
-    props['TELLUP_WATER_BOUNDS'] = tpclfile.get_hkey('KW_TELLUP_WATER_BOUNDS',
+    props['OBJ.TELL.PCLEAN.WATER_BOUNDS'] = tpclfile.get_hkey('KW_TELLUP_WATER_BOUNDS',
                                                      dtype=list, listtype=float)
     # set the source from header
     keys = ['OBJ.TELL.PCLEAN.DWATER_ABSO', 'OBJ.TELL.PCLEAN.CCF_SCAN_RANGE',
@@ -2528,7 +2528,7 @@ def load_conv_tapas(params, recipe, header, refprops, fiber, database=None,
                     fwhm_lsf: Union[float, None] = None):
     func_name = __NAME__ + '.load_conv_tapas()'
     # get parameters from params/kwargs
-    tellu_absorbers = pcheck(params, 'TELLU_ABSORBERS', func=func_name,
+    tellu_absorbers = pcheck(params, 'OBJ.TELL.MAKE.ABSORBERS', func=func_name,
                              override=absorbers)
     fwhm_pixel_lsf = pcheck(params, 'IMAGE.FWHM_PIXEL_LSF', func=func_name,
                             override=fwhm_lsf)
@@ -2622,12 +2622,12 @@ def load_conv_tapas(params, recipe, header, refprops, fiber, database=None,
     tapas_props['TAPAS_ALL_SPECIES'] = tapas_all_species
     tapas_props['TAPAS_WATER'] = tapas_water
     tapas_props['TAPAS_OTHER'] = tapas_other
-    tapas_props['TAPAS_FILE'] = out_tellu_conv.filename
-    tapas_props['TELLU_ABSORBERS'] = tellu_absorbers
-    tapas_props['FWHM_PIXEL_LSF'] = fwhm_pixel_lsf
+    tapas_props['OBJ.TELL.GEN.TAPAS_FILE'] = out_tellu_conv.filename
+    tapas_props['OBJ.TELL.MAKE.ABSORBERS'] = tellu_absorbers
+    tapas_props['IMAGE.FWHM_PIXEL_LSF'] = fwhm_pixel_lsf
     # set source
     keys = ['TAPAS_ALL_SPECIES', 'TAPAS_WATER', 'TAPAS_OTHER',
-            'OBJ.TELL.GEN.TAPAS_FILE', 'OBJ.TELL.MAKE.ABSORBERS', 'FWHM_PIXEL_LSF']
+            'OBJ.TELL.GEN.TAPAS_FILE', 'OBJ.TELL.MAKE.ABSORBERS', 'IMAGE.FWHM_PIXEL_LSF']
     tapas_props.set_sources(keys, func_name)
     # return tapas props
     return tapas_props

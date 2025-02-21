@@ -78,18 +78,18 @@ def load_linelist(params: ParamDict,
                       directory) -- overrides params['IPATH.WAVE']
     :param filename: str, Define the line list file (located in the
                        DRS_WAVE_DATA directory) -- overrides
-                       params['WAVE_LINELIST_FILE']
+                       params['CAL.WAVE.GEN.LINELIST_FILE']
     :param fmt: str, Define the line list file format (must be astropy.table
-                  format) -- overrides params['WAVE_LINELIST_FMT']
+                  format) -- overrides params['CAL.WAVE.GEN.LINELIST_FMT']
     :param cols: str, Define the line list file column names (must be
                    separated by commas and must be equal to the number of
-                   columns in file) -- overrides params['WAVE_LINELIST_COLS']
+                   columns in file) -- overrides params['CAL.WAVE.GEN.LINELIST_COLS']
     :param start: int, Define the line list file row the data starts
-                    -- overrides params['WAVE_LINELIST_START']
+                    -- overrides params['CAL.WAVE.GEN.LINELIST_START']
     :param wavecol: str, Define the line list file wavelength column name
-                      -- overrides params['WAVE_LINELIST_WAVECOL']
+                      -- overrides params['CAL.WAVE.GEN.LINELIST_WAVECOL']
     :param ampcol: str,  Define the line list file amplitude column name
-                     -- overrides params['WAVE_LINELIST_AMPCOL']
+                     -- overrides params['CAL.WAVE.GEN.LINELIST_AMPCOL']
     :param return_filename: bool, whether to return filename
     :param func: str, the function where load_linelist was called
 
@@ -154,9 +154,9 @@ def load_cavity_files(params: ParamDict,
     :param cavity_dir: str, where the wave data are stored (within assets
                       directory) -- overrides params['IPATH.WAVE']
     :param file1m: str, Define the coefficients of the fit of 1/m vs d
-                   -- overrides params['CAVITY_1M_FILE']
+                   -- overrides params['CAL.WAVE.GEN.CAVITY_1M_FILE']
     :param filell: str, Define the coefficients of the fit of wavelength vs d
-                   -- overrides params['CAVITY_LL_FILE']
+                   -- overrides params['CAL.WAVE.GEN.CAVITY_LL_FILE']
     :return:
     """
     # set function name
@@ -166,9 +166,9 @@ def load_cavity_files(params: ParamDict,
                       override=assetsdir)
     relfolder = pcheck(params, 'IPATH.CALIB', func=func_name,
                        override=cavity_dir)
-    filename_1m = pcheck(params, 'CAVITY_1M_FILE', func=func_name,
+    filename_1m = pcheck(params, 'CAL.WAVE.GEN.CAVITY_1M_FILE', func=func_name,
                          override=file1m)
-    filename_ll = pcheck(params, 'CAVITY_LL_FILE', func=func_name,
+    filename_ll = pcheck(params, 'CAL.WAVE.GEN.CAVITY_LL_FILE', func=func_name,
                          override=filell)
     # construct absolute filenames
     absfilename_1m = str(os.path.join(assetdir, relfolder, filename_1m))
@@ -204,9 +204,9 @@ def save_cavity_files(params: ParamDict, fit_1m_d: np.ndarray,
     :param cavity_dir: str, where the wave data are stored (within assets
                        directory) -- overrides params['IPATH.WAVE']
     :param file1m: str, Define the coefficients of the fit of 1/m vs d
-                   -- overrides params['CAVITY_1M_FILE']
+                   -- overrides params['CAL.WAVE.GEN.CAVITY_1M_FILE']
     :param filell: str, Define the coefficients of the fit of wavelength vs d
-                   -- overrides params['CAVITY_LL_FILE']
+                   -- overrides params['CAL.WAVE.GEN.CAVITY_LL_FILE']
     :return:
     """
     # set function name
@@ -430,9 +430,9 @@ def load_tapas(params: ParamDict,
     :param assetsdir: str, Define the assets directory -- overrides
                       params['PATH.ASSETS']
     :param tellu_dir: str, where the tapas file is stored (within assets
-                      directory) -- overrides params['TELLU_LIST_DIRECTORY']
+                      directory) -- overrides params['OBJ.TELL.GEN.LIST_DIR']
     :param filename: str, the tapas file name
-                     -- overrides params['TAPAS_FILE']
+                     -- overrides params['OBJ.TELL.GEN.TAPAS_FILE']
     :param func: str, the function name calling this function
     :param fmt: str, the data format (astropy.table format)
     :param return_filename: bool, if True returns filename else returns image
@@ -526,7 +526,7 @@ def load_ccf_mask(params: ParamDict,
     :param assetsdir: str, Define the assets directory -- overrides
                       params['PATH.ASSETS']
     :param mask_dir: str, where the ccf mask file is stored (within assets
-                      directory) -- overrides params['CCF_MASK_PATH']
+                      directory) -- overrides params['OBJ.CCF.MASK_PATH']
     :param filename: str, the ccf mask  file name
                      -- overrides params['CCF_MASK']
     :param func: str, the function name calling this function

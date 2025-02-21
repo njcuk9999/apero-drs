@@ -56,8 +56,8 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
     # get number of orders from params/kwargs
     start_order = pcheck(params, 'CAL.EXT.START_ORDER', 'start', kwargs, func_name)
     end_order = pcheck(params, 'CAL.EXT.END_ORDER', 'end', kwargs, func_name)
-    range1 = pcheck(params, 'EXT_RANGE1', 'range1', kwargs, func_name)
-    range2 = pcheck(params, 'EXT_RANGE2', 'range2', kwargs, func_name)
+    range1 = pcheck(params, 'CAL.EXT.RANGE1', 'range1', kwargs, func_name)
+    range2 = pcheck(params, 'CAL.EXT.RANGE2', 'range2', kwargs, func_name)
     skip_orders = pcheck(params, 'CAL.EXT.SKIP_ORDERS', 'skip', kwargs, func_name)
     sigdet = pcheck(props, 'SIGDET', 'sigdet', kwargs, func_name)
     eff_ron = pcheck(props, 'EFF_RON', 'eff_ron', kwargs, func_name)

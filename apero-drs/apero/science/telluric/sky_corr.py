@@ -751,7 +751,7 @@ def correct_sky_with_ref(params: ParamDict, recipe: DrsRecipe,
     nsig_thres = pcheck(params, 'OBJ.SKY_CORR.NSIG_THRES')  # = 3
     # get the sky correction ratio for not correction a line
     #  (too large to correct)
-    sky_corr_ratio_thres = params['SKYCORR_RATIO_THRES']
+    sky_corr_ratio_thres = params['OBJ.SKY_CORR.RATIO_THRES']
     # -------------------------------------------------------------------------
     # deal with no calibration database
     if calibdbm is None:
