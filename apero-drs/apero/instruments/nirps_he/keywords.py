@@ -968,7 +968,7 @@ KDict.set('KW_WAVE_FITDEG', key='WAVE_DEG', comment='fit degree used for wave so
 
 # the mode used to calculate the hc wave solution
 KDict.set('KW_WAVE_MODE_HC', key='WAVHCMOD', comment='mode used to calc hc wave sol',
-          parent='CAL.WAVE.HC.MODE_HC', group='wave')
+          parent='CAL.WAVE.HC.MODE', group='wave')
 
 # the mode used to calculate the fp wave solution
 KDict.set('KW_WAVE_MODE_FP', key='WAVFPMOD', comment='mode used to calc fp wave sol',

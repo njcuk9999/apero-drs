@@ -52,7 +52,7 @@ AstropyTimeDelta = TimeDelta
 AUTHORS = dict()
 AUTHORS['NJC'] = 'Neil James Cook'
 AUTHORS['EA'] = 'Etienne Artigau'
-
+AUTHORS['EM'] = 'Eder Martioli'
 
 # Define yaml files
 INSTALL_YAML = 'install.yaml'

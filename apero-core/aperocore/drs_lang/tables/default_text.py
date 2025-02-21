@@ -4554,7 +4554,7 @@ langlist.add(item)
 item = langlist.create('09-017-00001', kind='error-code')
 item.value['ENG'] = 'Wave mode = \'{0}\' is currently unsupported (for HC)'
 item.arguments = 'None'
-item.comment = 'Means that \'WAVE_MODE_HC\' was incorrect'
+item.comment = 'Means that \'CAL.WAVE.HC.MODE\' was incorrect'
 langlist.add(item)
 
 # =============================================================================

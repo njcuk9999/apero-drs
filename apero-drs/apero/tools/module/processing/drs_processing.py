@@ -818,7 +818,7 @@ def update_index_db(params: ParamDict,
     # get exclude list
     excludelist = params['EXCLUDE_OBS_DIRS']
     # get re-index list
-    reindexlist = params['TOOLS.REPROCESS.REPROCESS_REINDEX_BLOCKS']
+    reindexlist = params['TOOLS.REPROCESS.REINDEX_BLOCKS']
     # -------------------------------------------------------------------------
     # get the user defined databases to update
     if 'UPDATE_IDATABASE_NAMES' in params:

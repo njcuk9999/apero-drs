@@ -125,7 +125,8 @@ CDict.set('LBL', value='/drs/spirou/data/lbl', source=__NAME__,
 # =============================================================================
 cgroup = 'DB'
 # Define database directory (relative to assets directory)
-CDict.set('DIR', value='databases/', source=__NAME__, author='NJC')
+CDict.set('DIR', value='databases/', source=__NAME__, author='NJC',
+          group=cgroup)
 
 #   Define the match type for calibDB files
 #         match = 'older'  only select calibration files that are older in

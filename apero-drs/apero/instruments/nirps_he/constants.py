@@ -1200,7 +1200,7 @@ cgroup = 'CAL.WAVE.HC'
 # Define the mode to calculate the hc wave solution
 # Should be one of the following:
 # 0 - Etienne method
-CDict.set('WAVE_MODE_HC', value=0, source=__NAME__, author='EA')
+CDict.set('MODE', value=0, source=__NAME__, author='EA')
 
 # width of the box for fitting HC lines. Lines will be fitted from -W to +W,
 # so a 2*W+1 window
@@ -1314,8 +1314,8 @@ CDict.set('RESMAP_YLIM', value=[-0.05, 0.7], source=__NAME__,
           author='EA', group=cgroup)
 
 # Define whether to fit line profiles with "gaussian" or "super-gaussian"
-CDict.set('WAVE_HC_RESMAP_FITTYPE', value='super-gaussian', source=__NAME__,
-          author='EA')
+CDict.set('RESMAP_FITTYPE', value='super-gaussian', source=__NAME__,
+          author='EA', group=cgroup)
 
 # Define the sigma clip for line profiles for the resolution map
 CDict.set('RESMAP_SIGCLIP', value=0.2, source=__NAME__,
@@ -2425,8 +2425,8 @@ CDict.set('CCF_PHOTON_UNCERT', value=True, source=__NAME__, group=cgroup)
 # =============================================================================
 cgroup = 'TOOLS.REPROCESS'
 # Define which block kinds to reindex (warning can take a long time)
-CDict.set('REPROCESS_REINDEX_BLOCKS', value=['raw', 'tmp', 'red', 'out'],
-          source=__NAME__)
+CDict.set('REINDEX_BLOCKS', value=['raw', 'tmp', 'red', 'out'],
+          source=__NAME__, group=cgroup)
 
 # Define whether to use multiprocess "pool" or "process" or use
 # "linear" mode when parallelising recipes
@@ -2489,7 +2489,7 @@ CDict.set('SUMMARY_LATEX_PDF', value=True, source=__NAME__, group=cgroup)
 CDict.set('EXPMETER_MIN_LAMBDA', value=1478.7, source=__NAME__, group=cgroup)
 
 # Define exposure meter maximum wavelength for mask
-CDict.set('EXPMETER_MAX_LAMBDA', value=1823.1, source=__NAME__)
+CDict.set('EXPMETER_MAX_LAMBDA', value=1823.1, source=__NAME__, group=cgroup)
 
 # Define exposure meter telluric threshold (minimum tapas transmission)
 CDict.set('EXPMETER_TELLU_THRES', value=0.95, source=__NAME__, group=cgroup)

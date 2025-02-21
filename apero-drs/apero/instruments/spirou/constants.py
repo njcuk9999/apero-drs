@@ -1241,17 +1241,21 @@ cgroup = 'CAL.WAVE.HC'
 # Define the mode to calculate the hc wave solution
 # Should be one of the following:
 # 0 - Etienne method
-CDict.set('WAVE_MODE_HC', value=0, source=__NAME__, author='EA')
+CDict.set('MODE', value=0, source=__NAME__, author='EA',
+          group=cgroup)
 
 # width of the box for fitting HC lines. Lines will be fitted from -W to +W,
 # so a 2*W+1 window
-CDict.set('HC_FITBOX_SIZE', value=6, source=__NAME__, author='EA', group=cgroup)
+CDict.set('HC_FITBOX_SIZE', value=6, source=__NAME__, author='EA',
+          group=cgroup)
 
 # number of sigma above local RMS for a line to be flagged as such
-CDict.set('FITBOX_SIGMA', value=2.0, source=__NAME__, author='EA', group=cgroup)
+CDict.set('FITBOX_SIGMA', value=2.0, source=__NAME__, author='EA',
+          group=cgroup)
 
 # the fit degree for the wave hc gaussian peaks fit
-CDict.set('FITBOX_GFIT_DEG', value=5, source=__NAME__, author='EA', group=cgroup)
+CDict.set('FITBOX_GFIT_DEG', value=5, source=__NAME__, author='EA',
+          group=cgroup)
 
 # the RMS of line-fitted line must be between DEVMIN and DEVMAX of the peak
 # value must be SNR>5 (or 1/SNR<0.2)
@@ -1355,8 +1359,8 @@ CDict.set('RESMAP_YLIM', value=[-0.05, 0.7], source=__NAME__,
           author='EA', group=cgroup)
 
 # Define whether to fit line profiles with "gaussian" or "super-gaussian"
-CDict.set('WAVE_HC_RESMAP_FITTYPE', value='super-gaussian', source=__NAME__,
-          author='EA')
+CDict.set('RESMAP_FITTYPE', value='super-gaussian', source=__NAME__,
+          author='EA', group=cgroup)
 
 # Define the sigma clip for line profiles for the resolution map
 CDict.set('RESMAP_SIGCLIP', value=0.2, source=__NAME__,
@@ -2146,8 +2150,8 @@ CDict.set('BIS_CUT_BOTTOM', value=30, source=__NAME__, author='EA', group=cgroup
 # =============================================================================
 cgroup = 'OBJ.POL.GEN'
 # Define all possible fibers used for polarimetry
-CDict.set('FIBERS', value=['A', 'B'], source=__NAME__,
-          author=base.AUTHORS['EM'], group=cgroup)
+CDict.set('FIBERS', value=['A', 'B'], source=__NAME__, group=cgroup,
+          author=base.AUTHORS['EM'])
 
 # Define all possible stokes parameters
 CDict.set('STOKES_PARAMS', value=['V', 'Q', 'U'], source=__NAME__,
@@ -2735,8 +2739,8 @@ CDict.set('POLAR_LSD', value=True, source=__NAME__, group=cgroup)
 # =============================================================================
 cgroup = 'TOOLS.REPROCESS'
 # Define which block kinds to reindex (warning can take a long time)
-CDict.set('REPROCESS_REINDEX_BLOCKS', value=['raw', 'tmp', 'red', 'out'],
-          source=__NAME__)
+CDict.set('REINDEX_BLOCKS', value=['raw', 'tmp', 'red', 'out'],
+          source=__NAME__, group=cgroup)
 
 # Define whether to use multiprocess "pool" or "process" or use
 # "linear" mode when parallelising recipes
@@ -2797,7 +2801,7 @@ CDict.set('SUMMARY_LATEX_PDF', value=True, source=__NAME__, group=cgroup)
 CDict.set('EXPMETER_MIN_LAMBDA', value=1478.7, source=__NAME__, group=cgroup)
 
 # Define exposure meter maximum wavelength for mask
-CDict.set('EXPMETER_MAX_LAMBDA', value=1823.1, source=__NAME__)
+CDict.set('EXPMETER_MAX_LAMBDA', value=1823.1, source=__NAME__, group=cgroup)
 
 # Define exposure meter telluric threshold (minimum tapas transmission)
 CDict.set('EXPMETER_TELLU_THRES', value=0.95, source=__NAME__, group=cgroup)

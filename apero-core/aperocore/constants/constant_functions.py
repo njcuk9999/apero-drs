@@ -579,8 +579,9 @@ class ConstantsDict:
         # ---------------------------------------------------------------------
         if name not in self.storage:
             emsg = ('Constant "{0}" not found in storage. '
-                    'Please add Cdict.add("{0}") to defaults.').format(name)
-            eargs = [name]
+                    'Please add Cdict.add("{0}") to defaults.'
+                    ' Group={1}')
+            eargs = [name, str(group)]
             raise AperoCodedException(None, targs=eargs,
                                       message=emsg.format(*eargs))
         # ---------------------------------------------------------------------

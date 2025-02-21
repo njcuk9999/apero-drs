@@ -2382,8 +2382,7 @@ CDict.add_group(cgroup, description='CALIBRATION.WAVE_RES_MAP: '
                                     'CALIBRATION: WAVE RESOLUTION MAP SETTINGS')
 
 # define the number of bins in order direction to use in the resolution map
-CDict.add('RESMAP_ORDER_BINS', value=None,
-          dtype=int, source=__NAME__, minimum=1,
+CDict.add('ORDER_BINS', value=None, dtype=int, source=__NAME__, minimum=1,
           group=cgroup,
           description='define the number of bins in '
                       'order direction to use in the '
@@ -2611,7 +2610,7 @@ CDict.add_group(cgroup, description='CALIBRATION.WAVE_HC: '
                                     'CALIBRATION: WAVE HC SETTINGS')
 
 # Define the mode to calculate the hc wave solution
-CDict.add('MODE_HC', value=None, dtype=int, source=__NAME__,
+CDict.add('MODE', value=None, dtype=int, source=__NAME__,
           options=[0], user=True, active=False, group=cgroup,
           description='Define the mode to calculate the hc '
                       'wave solution')
@@ -2820,7 +2819,7 @@ CDict.add('RESMAP_YLIM', value=None,
                        'min and max y value'))
 
 # Define whether to fit line profiles with "gaussian" or "super-gaussian"
-CDict.add('WAVE_HC_RESMAP_FITTYPE', value=None, dtype=str,
+CDict.add('RESMAP_FITTYPE', value=None, dtype=str,
           source=__NAME__, group=cgroup,
           description='Define whether to fit line '
                       'profiles with "gaussian" or '
@@ -3566,6 +3565,16 @@ CDict.add('ALLOWED_DPRTYPES', value=None,
           source=__NAME__, group=cgroup,
           description=('The allowed input DPRTYPES for '
                        'input telluric files'))
+
+# the INPUT type (KW_OUTPUT header key) and DrsFitsFile name required for
+# input telluric files
+CDict.add('FILETYPE', value=None, dtype=str, source=__NAME__, group=cgroup,
+          description='the INPUT type (KW_OUTPUT header key) and '
+                      'DrsFitsFile name required for input telluric files')
+
+# the fiber required for input template files
+CDict.add('FIBER_TYPE', value=None, dtype=str, source=__NAME__, group=cgroup,
+          description='the fiber required for input template files')
 
 # Define level above which the blaze is high enough to accurately
 #    measure telluric
@@ -5474,7 +5483,7 @@ CDict.add_group(cgroup, description='TOOLS.REPROCESS: REPROCESS SETTINGS')
 
 # Define which block kinds to reindex (warning can take a long time)
 #    only select block kinds that have (or could be) manually changed
-CDict.add('REPROCESS_REINDEX_BLOCKS', value=None,
+CDict.add('REINDEX_BLOCKS', value=None,
           dtype=list, dtypei=str,
           source=__NAME__, group=cgroup,
           user=True, active=True,
