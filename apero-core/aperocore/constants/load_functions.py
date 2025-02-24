@@ -179,7 +179,7 @@ def load_parameters(config_list: List[Union[ConstDict, KeywordDict]] = None,
 
 def load_config(instruments: Dict[str, Any],
                 instrument: Union[str, None] = None,
-                from_file: bool = True,
+                from_file: bool = True, check: bool = True,
                 cache: bool = True) -> ParamDict:
     """
     Load an instruments configuration into a Parameter Dictionary (ParamDict)
@@ -209,7 +209,8 @@ def load_config(instruments: Dict[str, Any],
     # get constants from modules
     clist = instrument_instance.get_clists()
     # push into params
-    params = load_parameters(clist, check=not from_file)
+    param_check = check and (not from_file)
+    params = load_parameters(clist, check=param_check)
     # get constants from user config files
     if from_file:
         # get instrument user config files

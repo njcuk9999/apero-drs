@@ -17,5 +17,7 @@ set MKL_NUM_THREADS=1
 set VECLIB_MAXIMUM_THREADS=1
 set NUMEXPR_NUM_THREADS=1
 
+:: Echo command complete
+echo "Successfully activated {APERO_PROFILE}"
 :: Set the CMD prompt
 prompt [{NAME}] $P$G

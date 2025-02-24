@@ -5,7 +5,12 @@ PROFILE_FILE="$HOME/.apero/profiles.ini"
 
 # Check if profile name is provided as an argument
 if [ -z "$1" ]; then
-  echo "Usage: $0 <profile_name>"
+  echo "Usage: apero_profile.sh <profile_name>"
+  echo ""
+  echo "Available profiles are:"
+  grep -o '^[^=]*' $PROFILE_FILE
+  echo ""
+  echo "Or run apero_setup.py to create a new profile"
   exit 1
 fi
 
@@ -26,6 +31,7 @@ if [ -z "$PROFILE_PATH" ]; then
   echo "Available profiles are:"
   grep -o '^[^=]*' $PROFILE_FILE
   echo "Or run apero_setup.py to create a new profile"
+  echo ""
   exit 1
 fi
 
@@ -33,8 +39,10 @@ fi
 SETUP_SCRIPT=""
 if [[ "$OSTYPE" == "linux-gnu"* || "$OSTYPE" == "darwin"* ]]; then
   SETUP_SCRIPT="${PROFILE_PATH}/setup.sh"
+  echo "Activating $1 [$OSTYPE]"
 elif [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
   SETUP_SCRIPT="${PROFILE_PATH}/setup.bat"
+  echo "Activating $1 [$OSTYPE]"
 else
   echo "Unsupported OS type: $OSTYPE"
   exit 1

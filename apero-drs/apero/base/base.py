@@ -53,7 +53,7 @@ USER_ENV = base.USER_ENV
 # switch for no db in args
 NO_DB = False
 # Define instruments (last one should be 'None')
-INSTRUMENTS = __YAML__['INSTRUMENTS']
+INSTRUMENTS = __YAML__['DRS.INSTRUMENTS']
 # -----------------------------------------------------------------------------
 # constants/parameter settings
 # -----------------------------------------------------------------------------

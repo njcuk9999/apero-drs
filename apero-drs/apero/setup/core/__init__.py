@@ -10,15 +10,6 @@ Created on 2024-11-19 at 14:34
 @author: cook
 """
 
-import numpy as np
-import matplotlib.pyplot as plt
-from astropy.io import fits
-from astropy.table import Table
-from astropy import units as u
-from tqdm import tqdm
-import warnings
-
-
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -28,8 +19,6 @@ import warnings
 # =============================================================================
 # Define functions
 # =============================================================================
-def function1():
-    return 0
 
 
 # =============================================================================

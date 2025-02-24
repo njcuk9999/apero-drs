@@ -13,7 +13,7 @@ from pathlib import Path
 import string
 
 from aperocore.base import base
-from apero.setup import drs_setup
+from apero.setup.core import drs_setup
 
 # =============================================================================
 # Define variables
@@ -51,6 +51,7 @@ SARGS['language'] = SetupArgument(name='language', argname='--language',
                                   options=base.LANGUAGES,
                                   default_value=base.DEFAULT_LANG,
                                   dtype='str', ask=False,
+                                  aperoname='GLOBAL.LANGUAGE',
                                   helpstr='which lanugage to install apero in')
 
 # the path where the user config files for this apero profile will be stored

@@ -17,5 +17,7 @@ export MKL_NUM_THREADS=1
 export VECLIB_MAXIMUM_THREADS=1
 export NUMEXPR_NUM_THREADS=1
 
+# Echo command complete
+echo "Successfully activated {APERO_PROFILE}"
 # Set the command prompt
 export PS1="[{NAME}] $PS1"

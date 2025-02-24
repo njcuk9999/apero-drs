@@ -65,6 +65,74 @@ Please see the documentation:
 ## 3 Installation
 [Back to top](#apero---a-pipeline-to-reduce-observations)
 
+New instructions:
+
+#### Step 1: Download the GitHub repository
+
+```bash
+git clone git@github.com:njcuk9999/apero-drs.git
+```
+
+or if this doesn't work try:
+
+```bash
+git clone https://github.com/njcuk9999/apero-drs.git
+```
+
+#### Step 2: Make a new environment (recommended)
+
+Using conda, create a new environment and activate it.
+
+Note one can also use venv (instead of conda) or use a current environment but
+we recommend a new clean environment to avoid module conflicts.
+
+
+```bash
+conda create --name apero-env python=3.10
+```
+
+```bash
+conda activate apero-env
+```
+
+Note you need to activate `apero-env` each time before running any sosssise command.
+
+#### Step 3: Install apero with pip 
+
+##### Full mode
+
+Make sure you are in `apero-env` conda environment (or equivalent) and then run:
+
+```
+cd {APERO_ROOT}
+
+pip install -U -e ./apero-drs[full]
+```
+
+Note `{APERO_ROOT}` is the path to the cloned GitHub repository (i.e. `/path/to/apero`)
+if you are in the directory where you did your `git clone` then you need to 
+change directory into the `apero` directory (You are in the right place if there 
+are directories: apero-core, apero-data, apero-drs, apero-test)
+
+
+##### Dev mode
+
+If you are developing apero-core you will want to do the following to have
+both apero-drs and apero-core in editable mode:
+
+```bash
+
+pip install -U -e ./apero-core
+pip install -U -e ./apero-drs[dev]
+``` 
+
+#### Step 4: Run apero_setup
+
+```bash
+
+apero_setup.py --name {apero profile name}
+```
+
 
 Please see the documentation:
 - [ONLINE] https://www.astro.umontreal.ca/~cook/apero-drs/main/general/installation.html#setup

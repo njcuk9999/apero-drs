@@ -964,9 +964,12 @@ class ConstantsDict:
                         # get group key
                         group_key = '.'.join(nested_levels[:n_it + 1])
                         # get group description
-                        group_desc = self.groups[group_key]
-                        # modify the comment
-                        gcomment = self.add_yaml_section(group_desc)
+                        if group_key in self.groups:
+                            group_desc = self.groups[group_key]
+                            # modify the comment
+                            gcomment = self.add_yaml_section(group_desc)
+                        else:
+                            gcomment = None
 
                         gkwargs = dict(key=nested_key,
                                        before=_comment_wrap(gcomment),
@@ -2107,9 +2110,17 @@ def _validate_text_file(filename: Union[str, Path],
             raise AperoCodedException(None, '00-003-00020', message=emsg)
 
 
-def _comment_wrap(comment, width=80):
+def _comment_wrap(comment: str, width: int = 80):
+    """
+    Wrap the comment to the width provided
+    """
+    # deal with no comment
+    if comment is None:
+        return ''
+    # wrap the text
     wrapped = textwrap.wrap(comment, width=width,
                             replace_whitespace=False)
+    # return the wrapped text (on new lines)
     return '\n'.join(wrapped)
 
 

@@ -271,10 +271,10 @@ def command_line_args(sargs: Dict[str, SetupArgument]) -> ParamDict:
         arg = sargs[argname]
         # get value
         value = raw_params[argname]
-
+        # ---------------------------------------------------------------------
         # if command line argument is None we use the default value
         if value is None:
-            params.set(argname, arg.default_value, source='default')
+            params.set(arg.name, arg.default_value, source='default')
         # if value is different from default source is the command line
         else:
             if arg.restricted_chars:
@@ -286,13 +286,13 @@ def command_line_args(sargs: Dict[str, SetupArgument]) -> ParamDict:
                         raise drs_log.AperoCodedException(None, message=emsg,
                                                           targs=eargs)
             if arg.argname in remaining:
-                params.set(argname, value, source='default')
+                params.set(arg.name, value, source='default')
             else:
-                params.set(argname, value, source='command_line')
+                params.set(arg.name, value, source='command_line')
         # keep track of processed argnames
-        used.append(argname)
+        used.append(arg.name)
         # deal with set
-        if params.sources[argname] == 'command_line' and arg.sets is not None:
+        if params.sources[arg.name] == 'command_line' and arg.sets is not None:
             # loop around sets
             for key in arg.sets:
                 # get the value
@@ -301,12 +301,9 @@ def command_line_args(sargs: Dict[str, SetupArgument]) -> ParamDict:
                 params.set(key, value, source=f'set[{arg.name}]')
                 # keep track of processed argnames
                 used.append(key)
-
     # -------------------------------------------------------------------------
     # specific arguments
     params = fix_config_path(params)
-
-
     # return params
     return params
 
@@ -350,31 +347,40 @@ def ask_user(params: ParamDict, sargs: Dict[str, SetupArgument]) -> ParamDict:
         else:
             dtype = arg.dtype
         # ---------------------------------------------------------------------
+        # construct arg string name (name and cmd arg)
+        argstr = f'{argname.upper()}'
+        if arg.argname is not None:
+            argstr += f', {arg.argname}'
+        # ---------------------------------------------------------------------
         # construct the question for the user
         if arg.question_string is not None:
-            qargs = [arg.question_string, argname.upper()]
+            qargs = [arg.question_string, argstr]
             question = '{0} [{1}]'.format(*qargs)
         else:
             # get the help string
             qhelpstr = arg.helpstr.lower()
             # deal with starting with "the"
             if qhelpstr.startswith('the'):
-                qargs = [qhelpstr, argname.upper()]
+                qargs = [qhelpstr, argstr]
                 question = 'Define {0} [{1}]'.format(*qargs)
             # deal with starting with "set"
             elif qhelpstr.startswith('set'):
                 qhelpstr = qhelpstr[3:]
-                qargs = [qhelpstr, argname.upper()]
+                qargs = [qhelpstr, argstr]
                 question = 'Set {0} [{1}]'.format(*qargs)
             # deal with starting with "edit"
             elif qhelpstr.startswith('edit'):
                 qhelpstr = qhelpstr[4:]
-                qargs = [qhelpstr, argname.upper()]
+                qargs = [qhelpstr, argstr]
                 question = 'Edit {0} [{1}]'.format(*qargs)
             # deal with all other cases
             else:
-                qargs = [qhelpstr, argname.upper()]
+                qargs = [qhelpstr, argstr]
                 question = 'Define the {0} [{1}]'.format(*qargs)
+        # ---------------------------------------------------------------------
+        # make sure the questions starts with a new line
+        if not question.startswith('\n'):
+            question = '\n' + question
         # ---------------------------------------------------------------------
         # get the user input
         uinput = user_input(question, dtype=dtype.lower(),
@@ -493,6 +499,11 @@ def run_setup(params: ParamDict, sargs: Dict[str, SetupArgument]):
         raise drs_log.AperoCodedException(None, message=emsg.format(*eargs))
     else:
         os.environ[base.USER_ENV] = str(params['CONFIG_PATH'])
+    # -------------------------------------------------------------------------
+    # fix constants to use their apero name if they have one
+    for argname in sargs:
+        if sargs[argname].apero_name is not None:
+            params[sargs[argname].apero_name] = params[argname]
     # -------------------------------------------------------------------------
     # check profile name in .apero
     # -------------------------------------------------------------------------
@@ -743,14 +754,14 @@ def create_user_configs(params: ParamDict, sargs: Dict[str, SetupArgument]):
     from apero.instruments import select
     # -------------------------------------------------------------------------
     # get the user scripts
-    user_scripts = config.CDict['USER_SCRIPTS']
+    user_scripts = config.CDict['DRS.USER_SCRIPTS']
     # get the modules for CDicts (config, constants)
     mod_scripts = [config, constants, None]
     # -------------------------------------------------------------------------
     # temporary load constants for this instrument
     apero_params = load_functions.load_config(select.INSTRUMENTS,
                                               params['OBS.INSTRUMENT'],
-                                              from_file=False,
+                                              from_file=False, check=False,
                                               cache=False)
     # -------------------------------------------------------------------------
     # push the required parameters into apero_params
@@ -790,6 +801,7 @@ def create_setup_files(params: ParamDict):
     kwargs['USER_CONFIG'] = str(userconfig)
     kwargs['USER_NAME'] = params['NAME']
     kwargs['NAME'] = str(params['NAME'])
+    kwargs['APERO_PROFILE'] = params['NAME']
     # -------------------------------------------------------------------------
     # loop around setup files
     for setup_file in SETUP_FILES:
