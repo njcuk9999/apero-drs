@@ -171,7 +171,9 @@ For dev mode (editable install of both apero-core and sossisse please run the fo
 ```bash
 
 git clone git@github.com:njcuk9999/apero-drs.git
+git clone git@github.com:njcuk9999/lbl.git
 
 pip install -U -e ./apero-drs/apero-core
+pip install -U -e ./lbl
 pip install -U -e ./apero-drs/apero-drs[dev]
 ```
