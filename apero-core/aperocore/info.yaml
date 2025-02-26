@@ -17,6 +17,20 @@ DEFAULT_LANG: ENG
 LANGUAGES:
     - ENG
     - FR
+# Define the language modules for each instrument
+LANGUAGE_MODULES:
+    DEFAULT:
+        - aperocore.drs_lang.tables.default_help
+        - aperocore.drs_lang.tables.default_text
+    SPIROU:
+        - aperocore.drs_lang.tables.spirou_help
+        - aperocore.drs_lang.tables.spirou_text
+    NIRPS_HA:
+        - aperocore.drs_lang.tables.nirps_ha_help
+        - aperocore.drs_lang.tables.nirps_ha_text
+    NIRPS_HE:
+        - aperocore.drs_lang.tables.nirps_he_help
+        - aperocore.drs_lang.tables.nirps_he_text
 # -----------------------------------------------------------------------------
 # Minimal log settings
 # -----------------------------------------------------------------------------

@@ -157,6 +157,38 @@ Please see the documentation:
 ## 5 Using APERO
 [Back to top](#apero---a-pipeline-to-reduce-observations)
 
+
+You must always activate two things before starting:
+
+1. The conda environment you installed apero into (e.g. `apero-env`)
+2. The apero profile you want to use (e.g. `SPIROU`)
+
+---
+
+In Linux/Mac this is done as follows:
+
+```bash
+source apero_profile.sh {apero profile name}
+```
+
+
+Where `{apero profile name}` is the name of the profile you want to
+use (e.g. `spirou_offline`, `spirou_xxs`, `nirps_he_online`)
+
+---
+
+In Windows this is done as follows:
+
+```
+apero_profile.bat {apero profile name}
+```
+
+Where `{apero profile name}` is the name of the profile you want to
+use (e.g. `spirou_offline`, `spirou_xxs`, `nirps_he_online`)
+
+
+---
+
 Please see the documentation:
 - [ONLINE] https://www.astro.umontreal.ca/~cook/apero-drs/main/default/using_apero.html
 - [LOCAL HTML] documentation/output/auto/tool_definitions/default/tools.html

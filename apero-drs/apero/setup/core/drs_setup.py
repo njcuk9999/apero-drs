@@ -666,14 +666,25 @@ def create_yamls(params: Any):
     # -------------------------------------------------------------------------
     # create install yaml
     # -------------------------------------------------------------------------
+    # get instrument
+    instrument = params['OBS.INSTRUMENT'].upper()
     # get save path
     install_path = userconfig.joinpath(base.INSTALL_YAML)
     # populate dictionary
     install_dict = dict()
     install_dict[base.USER_ENV] = str(userconfig)
-    install_dict['OBS.INSTRUMENT'] = params['OBS.INSTRUMENT']
+    install_dict['OBS.INSTRUMENT'] = instrument
     install_dict['GLOBAL.LANGUAGE'] = params['GLOBAL.LANGUAGE']
     install_dict['USE_TQDM'] = True
+    # -------------------------------------------------------------------------
+    # add the language modules
+    lang_modules = base.__YAML__['LANGUAGE_MODULES']
+    # add the default modules
+    install_dict['DRS_LANG_MODULES'] = lang_modules['DEFAULT']
+    # add the instruments language module
+    if instrument in lang_modules and instrument != 'DEFAULT':
+        install_dict['DRS_LANG_MODULES'] += lang_modules[instrument]
+    # -------------------------------------------------------------------------
     # print writing
     msg = '\tWriting install.yaml: {0}'.format(install_path)
     WLOG(None, '', msg, wrap=False)

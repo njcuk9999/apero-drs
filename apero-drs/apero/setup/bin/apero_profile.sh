@@ -11,14 +11,14 @@ if [ -z "$1" ]; then
   grep -o '^[^=]*' $PROFILE_FILE
   echo ""
   echo "Or run apero_setup.py to create a new profile"
-  exit 1
+  return 1
 fi
 
 
 # Check if profiles.ini exists
 if [ ! -f "$PROFILE_FILE" ]; then
   echo "Error: $PROFILE_FILE file not found. Please run apero_setup.py"
-  exit 1
+  return 1
 fi
 
 # Read profiles.ini and find the path for the provided profile
@@ -32,7 +32,7 @@ if [ -z "$PROFILE_PATH" ]; then
   grep -o '^[^=]*' $PROFILE_FILE
   echo "Or run apero_setup.py to create a new profile"
   echo ""
-  exit 1
+  return 1
 fi
 
 # Determine the setup script to run based on OS
@@ -45,7 +45,7 @@ elif [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
   echo "Activating $1 [$OSTYPE]"
 else
   echo "Unsupported OS type: $OSTYPE"
-  exit 1
+  return 1
 fi
 
 # Run the setup script if it exists
@@ -53,5 +53,5 @@ if [ -f "$SETUP_SCRIPT" ]; then
   bash "$SETUP_SCRIPT"
 else
   echo "Setup script not found: $SETUP_SCRIPT"
-  exit 1
+  return 1
 fi

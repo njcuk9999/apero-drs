@@ -7,6 +7,8 @@ set GOSETUP=cd {USER_CONFIG}
 
 :: setup drs config path
 set DRS_UCONFIG={USER_CONFIG}
+:: Check if DRS_PS1 is undefined (and set if not)
+if not defined DRS_PS1 set DRS_PS1=%PROMPT%
 
 :: force numpy to only use 1 core max
 set MKL_DYNAMIC=FALSE
@@ -20,4 +22,7 @@ set NUMEXPR_NUM_THREADS=1
 :: Echo command complete
 echo "Successfully activated {APERO_PROFILE}"
 :: Set the CMD prompt
-prompt [{NAME}] $P$G
+prompt [{NAME}] $DRS_PS1
+
+:: run apero validate
+python apero_validate.py

@@ -146,8 +146,7 @@ COLOURS['UNDERLINE'] = '\033[4m'
 
 # Default IPARAMS
 D_IPARAMS = dict()
-D_IPARAMS['DRS_LANG_MODULES'] = ['aperocore.drs_lang.tables.default_help',
-                                 'aperocore.drs_lang.tables.default_text']
+D_IPARAMS['DRS_LANG_MODULES'] = __YAML__['LANGUAGE_MODULES']['DEFAULT']
 D_IPARAMS[USER_ENV] = None
 D_IPARAMS['OBS.INSTRUMENT'] = 'None'
 D_IPARAMS['GLOBAL.LANGUAGE'] = 'ENG'
