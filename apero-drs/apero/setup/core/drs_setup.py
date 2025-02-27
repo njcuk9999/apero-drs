@@ -813,6 +813,7 @@ def create_setup_files(params: ParamDict):
     kwargs['USER_NAME'] = params['NAME']
     kwargs['NAME'] = str(params['NAME'])
     kwargs['APERO_PROFILE'] = params['NAME']
+    kwargs['DRS_PS1+x'] = '{DRS_PS1+x}'
     # -------------------------------------------------------------------------
     # loop around setup files
     for setup_file in SETUP_FILES:

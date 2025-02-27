@@ -25,6 +25,7 @@ from apero.instruments.default import instrument as instrument_mod
 from apero.utils import drs_recipe
 from apero.io import drs_fits
 from apero.base import base as apero_base
+from apero.instruments import select
 
 # =============================================================================
 # Define variables

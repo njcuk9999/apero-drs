@@ -10,11 +10,10 @@ Created on 2019-07-08 at 16:32
 @author: cook
 """
 import warnings
-from typing import Optional
+from typing import Any, Dict, Optional
 
 import numpy as np
 
-from aperocore.base import base
 from aperocore.constants import param_functions
 from aperocore import drs_lang
 from aperocore import math as mp

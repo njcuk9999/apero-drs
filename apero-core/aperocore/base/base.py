@@ -21,7 +21,7 @@ import sys
 import warnings
 from collections import OrderedDict
 from pathlib import Path
-from typing import Any, Union
+from typing import Any, Dict, Union
 
 import numpy as np
 import yaml
@@ -209,7 +209,7 @@ def load_install_yaml(required: bool = True) -> Union[dict, None]:
         # check that path exists
         if os.path.exists(path):
             # load yaml file
-            return load_yaml(path)
+            return load_yaml(path, default=D_IPARAMS)
         else:
             # raise an error
             emsg = '{0}={1} does not exist'
@@ -218,7 +218,7 @@ def load_install_yaml(required: bool = True) -> Union[dict, None]:
     path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     path = os.path.join(path, 'data', 'default_install.yaml')
     if os.path.exists(path):
-        return load_yaml(path)
+        return load_yaml(path, default=D_IPARAMS)
     elif required:
         # raise an error
         emsg = 'Default install.py={0} does not exist. Please run APERO setup.'
@@ -233,7 +233,7 @@ def load_install_yaml(required: bool = True) -> Union[dict, None]:
         return D_IPARAMS
 
 
-def load_yaml(filename: str) -> dict:
+def load_yaml(filename: str, default: Dict[str, Any] = None) -> dict:
     """
     Load a yaml file as a dictionary
 
@@ -243,6 +243,13 @@ def load_yaml(filename: str) -> dict:
     """
     with open(filename, 'r') as yfile:
         dictionary = yaml.load(yfile, Loader=yaml.FullLoader)
+
+    # fill in any missing with default (in case of missing keys)
+    if default is not None:
+        for key in default:
+            if key not in dictionary:
+                dictionary[key] = default[key]
+    # return the dictionary
     return dictionary
 
 

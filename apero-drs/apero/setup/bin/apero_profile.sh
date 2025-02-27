@@ -5,12 +5,14 @@ PROFILE_FILE="$HOME/.apero/profiles.ini"
 
 # Check if profile name is provided as an argument
 if [ -z "$1" ]; then
+  echo ""
   echo "Usage: apero_profile.sh <profile_name>"
   echo ""
   echo "Available profiles are:"
   grep -o '^[^=]*' $PROFILE_FILE
   echo ""
   echo "Or run apero_setup.py to create a new profile"
+  echo ""
   return 1
 fi
 
@@ -26,10 +28,12 @@ PROFILE_PATH=$(grep "^$1=" $PROFILE_FILE | cut -d'=' -f2)
 
 # Check if profile path exists
 if [ -z "$PROFILE_PATH" ]; then
+  echo ""
   echo "Profile $1 not found in $PROFILE_FILE."
   echo ""
   echo "Available profiles are:"
   grep -o '^[^=]*' $PROFILE_FILE
+  echo ""
   echo "Or run apero_setup.py to create a new profile"
   echo ""
   return 1
@@ -50,7 +54,7 @@ fi
 
 # Run the setup script if it exists
 if [ -f "$SETUP_SCRIPT" ]; then
-  bash "$SETUP_SCRIPT"
+  source "$SETUP_SCRIPT"
 else
   echo "Setup script not found: $SETUP_SCRIPT"
   return 1

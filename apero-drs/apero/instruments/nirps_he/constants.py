@@ -2147,7 +2147,7 @@ CDict.set('SKIP_DONE', value=['LBL_COMPUTE', 'LBL_MASK'], source=__NAME__,
           group=cgroup)
 
 # Define which object names should be run through LBL compute in parallel
-CDict.set('LBL_MULTI_OBJLIST', value=['FP'], source=__NAME__, group=cgroup)
+CDict.set('MULTI_OBJLIST', value=['FP'], source=__NAME__, group=cgroup)
 
 # Define the DTEMP gradient files
 CDict.set('DTEMP',

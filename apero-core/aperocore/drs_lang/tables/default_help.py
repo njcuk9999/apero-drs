@@ -55,8 +55,8 @@ langlist.add(item)
 # ADD_CAL_HELP 
 # =============================================================================
 item = langlist.create('ADD_CAL_HELP', kind='HELP')
-item.value['ENG'] = '[BOOLEAN] Whether to add outputs to calibration database'
-item.value['FR'] = '[BOOLEAN] S\'il faut ajouter des sorties à la base de données d\'étalonnage '
+item.value['ENG'] = '[BOOLEAN] Whether to add outputs to calibration/telluric databases'
+item.value['FR'] = '[BOOLEAN] S\'il faut ajouter des sorties à la base de données d\'étalonnage/telluriques'
 item.arguments = 'None'
 item.comment = ''
 langlist.add(item)

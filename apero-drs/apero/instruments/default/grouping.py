@@ -713,7 +713,7 @@ def lbl_compute_group(rargs: Dict[str, DrsArgument],
     params = kwargs['params']
     # get values from params
     cores = kwargs['cores']
-    objlist = params['LBL_MULTI_OBJLIST']
+    objlist = params['OBJ.LBL.MULTI_OBJLIST']
 
     # make sure this is not used for recipes that do not have the correct
     #  arguments

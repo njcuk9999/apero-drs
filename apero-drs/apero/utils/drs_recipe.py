@@ -89,7 +89,8 @@ class DrsRecipe(object):
     def __init__(self, instrument: str = 'None',
                  name: Union[str, None] = None,
                  filemod: Union[Any] = None,
-                 params: Union[ParamDict, None] = None):
+                 params: Union[ParamDict, None] = None,
+                 path: Union[str, None] = None):
         """
         Create a DRS Recipe object (one of these for each top 'user' level
         script (or recipe)
@@ -118,7 +119,7 @@ class DrsRecipe(object):
         else:
             self.name = str(name)
         # set the recipe path
-        self.path = None
+        self.path = path
         # set drs file module related to this recipe
         if filemod is None:
             pconst = load_functions.load_pconfig(select.INSTRUMENTS)
@@ -999,6 +1000,7 @@ class DrsRecipe(object):
         # next check in parameters for path to module
         if (self.module is None) and (self.params is not None):
             if self.path is None:
+                # TODO: Add to language database
                 emsg = 'No path to module set for recipe {0}. Please set.'
                 WLOG(self.params, 'error', emsg.format(self.name))
             else:

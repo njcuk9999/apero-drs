@@ -27,6 +27,8 @@ __date__ = apero_base.__date__
 __release__ = apero_base.__release__
 # Define instrument alias
 INSTRUMENT_ALIAS = 'nirps_he'
+# Define recipe path
+RECIPE_PATH = 'apero.recipes.{0}'.format(INSTRUMENT_ALIAS)
 # Get Help
 textentry = drs_lang.textentry
 # import file definitions in import module class
@@ -185,7 +187,7 @@ pp_recipe = DrsRecipe(__INSTRUMENT__, filemod=sf)
 # -----------------------------------------------------------------------------
 # apero_pp_ref
 # -----------------------------------------------------------------------------
-apero_pp_ref = DrsRecipe(__INSTRUMENT__)
+apero_pp_ref = DrsRecipe(__INSTRUMENT__, path=RECIPE_PATH)
 apero_pp_ref.name = 'apero_pp_ref_{0}.py'.format(INSTRUMENT_ALIAS)
 apero_pp_ref.shortname = 'PPREF'
 apero_pp_ref.instrument = __INSTRUMENT__
@@ -211,7 +213,7 @@ recipes.append(apero_pp_ref)
 # -----------------------------------------------------------------------------
 # apero_preprocess
 # -----------------------------------------------------------------------------
-apero_preprocess = DrsRecipe(__INSTRUMENT__)
+apero_preprocess = DrsRecipe(__INSTRUMENT__, path=RECIPE_PATH)
 apero_preprocess.name = 'apero_preprocess_{0}.py'.format(INSTRUMENT_ALIAS)
 apero_preprocess.shortname = 'PP'
 apero_preprocess.instrument = __INSTRUMENT__
@@ -242,7 +244,7 @@ recipes.append(apero_preprocess)
 # -----------------------------------------------------------------------------
 # apero_badpix
 # -----------------------------------------------------------------------------
-apero_badpix = DrsRecipe(__INSTRUMENT__)
+apero_badpix = DrsRecipe(__INSTRUMENT__, path=RECIPE_PATH)
 apero_badpix.name = 'apero_badpix_{0}.py'.format(INSTRUMENT_ALIAS)
 apero_badpix.shortname = 'BAD'
 apero_badpix.instrument = __INSTRUMENT__
@@ -285,7 +287,7 @@ recipes.append(apero_badpix)
 # -----------------------------------------------------------------------------
 # apero_dark
 # -----------------------------------------------------------------------------
-apero_dark = DrsRecipe(__INSTRUMENT__)
+apero_dark = DrsRecipe(__INSTRUMENT__, path=RECIPE_PATH)
 apero_dark.name = 'apero_dark_{0}.py'.format(INSTRUMENT_ALIAS)
 apero_dark.shortname = 'DARK'
 apero_dark.instrument = __INSTRUMENT__
@@ -320,7 +322,7 @@ recipes.append(apero_dark)
 # -----------------------------------------------------------------------------
 # apero_dark_ref
 # -----------------------------------------------------------------------------
-apero_dark_ref = DrsRecipe(__INSTRUMENT__)
+apero_dark_ref = DrsRecipe(__INSTRUMENT__, path=RECIPE_PATH)
 apero_dark_ref.name = 'apero_dark_ref_{0}.py'.format(INSTRUMENT_ALIAS)
 apero_dark_ref.shortname = 'DARKREF'
 apero_dark_ref.reference = True
@@ -350,7 +352,7 @@ recipes.append(apero_dark_ref)
 # -----------------------------------------------------------------------------
 # apero_loc
 # -----------------------------------------------------------------------------
-apero_loc = DrsRecipe(__INSTRUMENT__)
+apero_loc = DrsRecipe(__INSTRUMENT__, path=RECIPE_PATH)
 apero_loc.name = 'apero_loc_{0}.py'.format(INSTRUMENT_ALIAS)
 apero_loc.shortname = 'LOC'
 apero_loc.instrument = __INSTRUMENT__
@@ -415,7 +417,7 @@ recipes.append(apero_loc)
 # -----------------------------------------------------------------------------
 # apero_shape_ref
 # -----------------------------------------------------------------------------
-apero_shape_ref = DrsRecipe(__INSTRUMENT__)
+apero_shape_ref = DrsRecipe(__INSTRUMENT__, path=RECIPE_PATH)
 apero_shape_ref.name = 'apero_shape_ref_{0}.py'.format(INSTRUMENT_ALIAS)
 apero_shape_ref.shortname = 'SHAPEREF'
 apero_shape_ref.reference = True
@@ -473,7 +475,7 @@ recipes.append(apero_shape_ref)
 # -----------------------------------------------------------------------------
 # apero_shape
 # -----------------------------------------------------------------------------
-apero_shape = DrsRecipe(__INSTRUMENT__)
+apero_shape = DrsRecipe(__INSTRUMENT__, path=RECIPE_PATH)
 apero_shape.name = 'apero_shape_{0}.py'.format(INSTRUMENT_ALIAS)
 apero_shape.shortname = 'SHAPE'
 apero_shape.instrument = __INSTRUMENT__
@@ -521,7 +523,7 @@ recipes.append(apero_shape)
 # -----------------------------------------------------------------------------
 # apero_flat
 # -----------------------------------------------------------------------------
-apero_flat = DrsRecipe(__INSTRUMENT__)
+apero_flat = DrsRecipe(__INSTRUMENT__, path=RECIPE_PATH)
 apero_flat.name = 'apero_flat_{0}.py'.format(INSTRUMENT_ALIAS)
 apero_flat.shortname = 'FF'
 apero_flat.instrument = __INSTRUMENT__
@@ -592,7 +594,7 @@ recipes.append(apero_flat)
 # -----------------------------------------------------------------------------
 # apero_leak_ref
 # -----------------------------------------------------------------------------
-apero_leak_ref = DrsRecipe(__INSTRUMENT__)
+apero_leak_ref = DrsRecipe(__INSTRUMENT__, path=RECIPE_PATH)
 apero_leak_ref.name = 'apero_leak_ref_{0}.py'.format(INSTRUMENT_ALIAS)
 apero_leak_ref.shortname = 'LEAKREF'
 apero_leak_ref.reference = True
@@ -627,7 +629,7 @@ recipes.append(apero_leak_ref)
 # -----------------------------------------------------------------------------
 # apero_extract
 # -----------------------------------------------------------------------------
-apero_extract = DrsRecipe(__INSTRUMENT__)
+apero_extract = DrsRecipe(__INSTRUMENT__, path=RECIPE_PATH)
 apero_extract.name = 'apero_extract_{0}.py'.format(INSTRUMENT_ALIAS)
 apero_extract.shortname = 'EXT'
 apero_extract.instrument = __INSTRUMENT__
@@ -726,7 +728,7 @@ recipes.append(apero_extract)
 # -----------------------------------------------------------------------------
 # apero_wave_ref
 # -----------------------------------------------------------------------------
-apero_wave_ref = DrsRecipe(__INSTRUMENT__)
+apero_wave_ref = DrsRecipe(__INSTRUMENT__, path=RECIPE_PATH)
 apero_wave_ref.name = 'apero_wave_ref_{0}.py'.format(INSTRUMENT_ALIAS)
 apero_wave_ref.shortname = 'WAVEREF'
 apero_wave_ref.reference = True
@@ -816,7 +818,7 @@ recipes.append(apero_wave_ref)
 # -----------------------------------------------------------------------------
 # cal wave night
 # -----------------------------------------------------------------------------
-apero_wave_night = DrsRecipe(__INSTRUMENT__)
+apero_wave_night = DrsRecipe(__INSTRUMENT__, path=RECIPE_PATH)
 apero_wave_night.name = 'apero_wave_night_{0}.py'.format(INSTRUMENT_ALIAS)
 apero_wave_night.shortname = 'WAVE'
 apero_wave_night.instrument = __INSTRUMENT__
@@ -892,7 +894,7 @@ recipes.append(apero_wave_night)
 # -----------------------------------------------------------------------------
 # apero_ccf
 # -----------------------------------------------------------------------------
-apero_ccf = DrsRecipe(__INSTRUMENT__)
+apero_ccf = DrsRecipe(__INSTRUMENT__, path=RECIPE_PATH)
 apero_ccf.name = 'apero_ccf_{0}.py'.format(INSTRUMENT_ALIAS)
 apero_ccf.shortname = 'CCF'
 apero_ccf.instrument = __INSTRUMENT__
@@ -948,7 +950,7 @@ recipes.append(apero_ccf)
 # -----------------------------------------------------------------------------
 # apero_mk_skymodel
 # -----------------------------------------------------------------------------
-apero_mk_skymodel = DrsRecipe(__INSTRUMENT__)
+apero_mk_skymodel = DrsRecipe(__INSTRUMENT__, path=RECIPE_PATH)
 apero_mk_skymodel.name = 'apero_mk_skymodel_{0}.py'.format(INSTRUMENT_ALIAS)
 apero_mk_skymodel.shortname = 'MKSKY'
 apero_mk_skymodel.instrument = __INSTRUMENT__
@@ -971,7 +973,7 @@ recipes.append(apero_mk_skymodel)
 # -----------------------------------------------------------------------------
 # apero_mk_tellu
 # -----------------------------------------------------------------------------
-apero_mk_tellu = DrsRecipe(__INSTRUMENT__)
+apero_mk_tellu = DrsRecipe(__INSTRUMENT__, path=RECIPE_PATH)
 apero_mk_tellu.name = 'apero_mk_tellu_{0}.py'.format(INSTRUMENT_ALIAS)
 apero_mk_tellu.shortname = 'MKTELL'
 apero_mk_tellu.instrument = __INSTRUMENT__
@@ -1031,7 +1033,7 @@ recipes.append(apero_mk_tellu)
 # -----------------------------------------------------------------------------
 # apero_mk_model
 # -----------------------------------------------------------------------------
-apero_mk_model = DrsRecipe(__INSTRUMENT__)
+apero_mk_model = DrsRecipe(__INSTRUMENT__, path=RECIPE_PATH)
 apero_mk_model.name = 'apero_mk_model_{0}.py'.format(INSTRUMENT_ALIAS)
 apero_mk_model.shortname = 'MKMODEL'
 apero_mk_model.instrument = __INSTRUMENT__
@@ -1059,7 +1061,7 @@ recipes.append(apero_mk_model)
 # -----------------------------------------------------------------------------
 # apero_fit_tellu
 # -----------------------------------------------------------------------------
-apero_fit_tellu = DrsRecipe(__INSTRUMENT__)
+apero_fit_tellu = DrsRecipe(__INSTRUMENT__, path=RECIPE_PATH)
 apero_fit_tellu.name = 'apero_fit_tellu_{0}.py'.format(INSTRUMENT_ALIAS)
 apero_fit_tellu.shortname = 'FTELLU'
 apero_fit_tellu.instrument = __INSTRUMENT__
@@ -1161,7 +1163,7 @@ recipes.append(apero_fit_tellu)
 # -----------------------------------------------------------------------------
 # apero_mk_template
 # -----------------------------------------------------------------------------
-apero_mk_template = DrsRecipe(__INSTRUMENT__)
+apero_mk_template = DrsRecipe(__INSTRUMENT__, path=RECIPE_PATH)
 apero_mk_template.name = 'apero_mk_template_{0}.py'.format(INSTRUMENT_ALIAS)
 apero_mk_template.shortname = 'MKTEMP'
 apero_mk_template.instrument = __INSTRUMENT__
@@ -1214,7 +1216,7 @@ recipes.append(apero_mk_template)
 # -----------------------------------------------------------------------------
 # apero_lbl_ref
 # -----------------------------------------------------------------------------
-apero_lbl_ref = DrsRecipe(__INSTRUMENT__)
+apero_lbl_ref = DrsRecipe(__INSTRUMENT__, path=RECIPE_PATH)
 apero_lbl_ref.name = 'apero_lbl_ref_{0}.py'.format(INSTRUMENT_ALIAS)
 apero_lbl_ref.shortname = 'LBLREF'
 apero_lbl_ref.instrument = __INSTRUMENT__
@@ -1235,7 +1237,7 @@ recipes.append(apero_lbl_ref)
 # -----------------------------------------------------------------------------
 # apero_lbl_mask
 # -----------------------------------------------------------------------------
-apero_lbl_mask = DrsRecipe(__INSTRUMENT__)
+apero_lbl_mask = DrsRecipe(__INSTRUMENT__, path=RECIPE_PATH)
 apero_lbl_mask.name = 'apero_lbl_mask_{0}.py'.format(INSTRUMENT_ALIAS)
 apero_lbl_mask.shortname = 'LBLMASK'
 apero_lbl_mask.instrument = __INSTRUMENT__
@@ -1258,7 +1260,7 @@ recipes.append(apero_lbl_mask)
 # -----------------------------------------------------------------------------
 # apero_lbl_compute
 # -----------------------------------------------------------------------------
-apero_lbl_compute = DrsRecipe(__INSTRUMENT__)
+apero_lbl_compute = DrsRecipe(__INSTRUMENT__, path=RECIPE_PATH)
 apero_lbl_compute.name = 'apero_lbl_compute_{0}.py'.format(INSTRUMENT_ALIAS)
 apero_lbl_compute.shortname = 'LBLCOMPUTE'
 apero_lbl_compute.instrument = __INSTRUMENT__
@@ -1287,7 +1289,7 @@ recipes.append(apero_lbl_compute)
 # -----------------------------------------------------------------------------
 # apero_lbl_compile
 # -----------------------------------------------------------------------------
-apero_lbl_compile = DrsRecipe(__INSTRUMENT__)
+apero_lbl_compile = DrsRecipe(__INSTRUMENT__, path=RECIPE_PATH)
 apero_lbl_compile.name = 'apero_lbl_compile_{0}.py'.format(INSTRUMENT_ALIAS)
 apero_lbl_compile.shortname = 'LBLCOMPILE'
 apero_lbl_compile.instrument = __INSTRUMENT__
@@ -1314,7 +1316,7 @@ recipes.append(apero_lbl_compile)
 # -----------------------------------------------------------------------------
 # apero_postprocess
 # -----------------------------------------------------------------------------
-apero_postprocess = DrsRecipe(__INSTRUMENT__)
+apero_postprocess = DrsRecipe(__INSTRUMENT__, path=RECIPE_PATH)
 apero_postprocess.name = 'apero_postprocess_{0}.py'.format(INSTRUMENT_ALIAS)
 apero_postprocess.shortname = 'OBJPOST'
 apero_postprocess.instrument = __INSTRUMENT__

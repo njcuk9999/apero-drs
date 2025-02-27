@@ -18,14 +18,14 @@ from typing import Any, Optional
 import numpy as np
 
 from apero.base import base
-from apero.core import constants
-from apero.core.core import drs_log
+from aperocore.constants import param_functions
+from aperocore.core import drs_log
 
 # =============================================================================
 # Define variables
 # =============================================================================
 # get param dict
-ParamDict = constants.ParamDict
+ParamDict = param_functions.ParamDict
 # get tqdm
 tqdm = base.TQDM
 # Get Logging function

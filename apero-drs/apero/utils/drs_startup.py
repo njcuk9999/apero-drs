@@ -25,7 +25,6 @@ from lbl.core.base_classes import LblException
 
 from apero import plotting
 from apero.base import base as apero_base
-from aperocore.core import drs_db
 from apero.constants import run_params
 from apero.core import drs_argument
 from apero.core import drs_database
@@ -40,12 +39,12 @@ from aperocore.base import drs_base
 from aperocore.constants import load_functions
 from aperocore.constants import param_functions
 from aperocore.core import drs_base_classes as base_class
+from aperocore.core import drs_db
 from aperocore.core import drs_exceptions
 from aperocore.core import drs_log
 from aperocore.core import drs_misc
 from aperocore.core import drs_text
 from aperocore.core.drs_base_classes import Printer
-from apero.base import base as apero_base
 
 # =============================================================================
 # Define variables

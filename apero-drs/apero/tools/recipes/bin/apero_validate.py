@@ -9,7 +9,6 @@ Created on 2019-11-26 at 18:10
 
 @author: cook
 """
-from aperocore.base import base
 from aperocore.core import drs_log
 from apero.utils import drs_startup
 from apero.base import base as apero_base

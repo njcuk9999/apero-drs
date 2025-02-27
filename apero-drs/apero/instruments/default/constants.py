@@ -4810,7 +4810,7 @@ CDict.add('SKIP_DONE', value=None,
 
 # Define which object names should be run through LBL compute in parellel
 #   i.e. break in to Ncore chunks
-CDict.add('LBL_MULTI_OBJLIST', value=None,
+CDict.add('MULTI_OBJLIST', value=None,
           dtype=list, dtypei=str,
           source=__NAME__, user=False, active=True,
           group=cgroup,
