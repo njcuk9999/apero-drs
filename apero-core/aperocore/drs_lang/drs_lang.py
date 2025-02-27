@@ -211,6 +211,12 @@ def get_instrument_args() -> Dict[str, Any]:
     # load the install yaml
     iparams = base.load_install_yaml(required=False)
     # get module names for instrument
+    if 'DRS_LANG_MODULES' not in iparams:
+        # TODO: Add to language database
+        emsg = ('DRS_LANG_MODULES not in install.yaml please run '
+                'apero_setup.py to create a new profile or update this '
+                'one.')
+        raise DrsLanguageError(emsg)
     lang_mod_names = iparams['DRS_LANG_MODULES']
     # storage of language lists for instrument
     lang_lists = []
