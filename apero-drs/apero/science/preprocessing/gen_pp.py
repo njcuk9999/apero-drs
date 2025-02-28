@@ -470,9 +470,9 @@ def reject_infile(params: ParamDict, header: drs_fits.Header,
     # -------------------------------------------------------------------------
     # get parameters from params
     if bad_kind == 'pp':
-        header_col = params['REJECT_DRS_HKEY']
-        value_col = params['REJECT_VALCOL']
-        mask_col = params['REJECT_MASKCOL']
+        header_col = params['OBJ.LIST.REJECT_DRS_HKEY']
+        value_col = params['OBJ.LIST.REJECT_VALCOL']
+        mask_col = params['OBJ.LIST.REJECT_MASKCOL']
     else:
         header_col = params['OBJ.LIST.REJECT_DRS_HKEY']
         value_col = params['OBJ.LIST.REJECT_VALCOL']

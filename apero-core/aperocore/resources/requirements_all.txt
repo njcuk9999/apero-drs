@@ -1,9 +1,9 @@
 # requirements for apero-core,apero-drs,lbl,pogos,sossisse,scarvs,sorbet,tsovore
 # requires-python = "==3.11.*"
 
-radvel                          # must be first if dependency # Current version: 1.4.11
+# radvel                        # must be installed before this if dependency # Current version: 1.4.11
 juliet                          # must be first (but after radvel) # Current version: 2.2.7
-jwst                            # Current version: 1.16.1
+jwst                            # Current version: 1.17.1
 
 arviz                           # Current version: 0.20.0
 astropy                         # Current version: 7.0.1
@@ -23,17 +23,17 @@ gitchangelog                    # Current version: 3.0.4
 gspread-pandas                  # Current version: 3.3.0
 gspread                         # Current version: 5.12.4
 h5py                            # Current version: 3.13.0
-ipython                         # Current version: 8.32.0
+ipython                         # Current version: 9.0.0
 ipdb                            # Current version: 0.13.13
 jax                             # Current version: 0.4.31
 jaxoplanet                      # Current version: 0.0.3
 kepmodel                        # Current version: 1.0.8
 lightkurve                      # Current version: 2.5.0
-matplotlib                      # Current version: 3.10.0
+matplotlib                      # Current version: 3.10.1
 notebook                        # Current version: 7.3.2
 numba                           # Current version: 0.61.0
 numexpr                         # Current version: 2.10.2
-numpy                           # Current version: 1.24.3
+numpy                           # Current version: 1.26.4
 numpyro                         # Current version: 0.17.0
 pandas                          # Current version: 2.2.3
 pandastable                     # Current version: 0.13.1
@@ -44,11 +44,11 @@ PyYAML                          # Current version: 6.0.2
 PyMySQL                         # Current version: 1.1.1
 requests                        # Current version: 2.32.3
 ruamel.yaml                     # Current version: 0.18.10
-scikit-image                    # Current version: 0.24.0
+scikit-image                    # Current version: 0.25.2
 scikit-learn                    # Current version: 1.6.1
-scipy                           # Current version: 1.10.1
+scipy                           # Current version: 1.15.2
 Sphinx                          # Current version: 8.2.1
-sphinx-toolbox                  # Current version: 3.8.3
+sphinx-toolbox                  # Current version: 3.9.0
 spleaf                          # Current version: 2.1.13
 SQLAlchemy                      # Current version: 2.0.38
 sqlalchemy_utils                # Current version: 0.41.2

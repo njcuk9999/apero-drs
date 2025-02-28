@@ -1403,11 +1403,13 @@ def generate_ids(params: ParamDict, indexdb: FileIndexDatabase,
         rdict = dict()
         for it, run_item in enumerate(runlist):
             # set up the arguments
-            args = [params, it, run_key, run_item, runlist, keylist,
-                    inrecipelist[it], skiptable,
-                    skip_storage, runfile, debug]
+            lkwargs = dict(params=params, it=it, run_key=run_key,
+                           run_item=run_item, runlist=runlist, keylist=keylist,
+                           input_recipe=inrecipelist[it], skiptable=skiptable,
+                           skip_storage=skip_storage, cores=cores,
+                           runfile=runfile, debug=debug, return_run=True)
             # run as a single process
-            run_it = _linear_generate_id(*args, return_run=True)
+            run_it = _linear_generate_id(**lkwargs)
             if run_it is not None:
                 rdict[it] = run_it
     # -------------------------------------------------------------------------
@@ -1555,9 +1557,11 @@ def _multi_generate_id(params: ParamDict, subgroup: np.ndarray,
     # loop around keys
     for it in subgroup:
         # generate results for this iteration
-        _linear_generate_id(params, it, run_key, runlist[it], runlist,
-                            keylist, inrecipelist[it],
-                            skiptable, skip_storage, cores, runfile, debug)
+        _linear_generate_id(params=params, it=it, run_key=run_key,
+                            run_item=runlist[it], runlist=runlist,
+                            keylist=keylist, input_recipe=inrecipelist[it],
+                            skiptable=skiptable, skip_storage=skip_storage,
+                            cores=cores, runfile=runfile, debug=debug)
 
 
 def _multi_process_gen_ids_pathos(params: ParamDict,

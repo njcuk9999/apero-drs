@@ -22,6 +22,7 @@ Import rules:
     do not import from core.utils.drs_recipe
     do not import from core.core.drs_argument
 """
+import ast
 import os
 import string
 import textwrap
@@ -4172,7 +4173,7 @@ class DrsFitsFile(DrsInputFile):
     # fits file header methods
     # -------------------------------------------------------------------------
     def get_hkey(self, key, has_default=False, default=None,
-                 required=True, dtype: Type = float,
+                 required=True, dtype: Type = None,
                  listtype: Union[Type, None] = None) -> Any:
         """
         Looks for a key in DrsFitsFile.header, if has_default is
@@ -4230,18 +4231,21 @@ class DrsFitsFile(DrsInputFile):
                         emsg = textentry('09-000-00007', args=eargs)
                     self.__error__(emsg)
                     value = None
+        # ---------------------------------------------------------------------
+        # if we have a string try to guess the stype
+        if dtype is None and isinstance(value, str):
+            dtype = drs_text.string_type(value)
+        elif dtype is None:
+            dtype = type(value)
+        # ---------------------------------------------------------------------
         # deal with booleans
-        if isinstance(value, str):
-            # if dtype is a bool try to push to a boolean
-            if dtype == bool or dtype == 'bool':
+        if isinstance(value, str) and (dtype == bool or dtype == 'bool'):
                 if value.upper() in ['1', 'TRUE', 'T']:
                     value = True
                 else:
                     value = False
         # deal with input lists
-        if isinstance(value, str):
-            # if dtype is a list
-            if dtype == list:
+        elif isinstance(value, str) and dtype == list:
                 # try to split the value as a list
                 value = value.split(',')
                 value = list(np.char.array(value).strip())

@@ -15,16 +15,16 @@ only from:
 - apero.core.core.drs_exceptions
 """
 import os
+import string
 import warnings
 from pathlib import Path
-from typing import Any, Union, List, Optional
+from typing import Any, Union, List, Optional, Type
 
 import numpy as np
 
 from aperocore import drs_lang
 from aperocore.base import base
 from aperocore.base import drs_base
-from aperocore.core import drs_exceptions
 from aperocore.core import drs_misc
 from aperocore.core import drs_log
 
@@ -786,6 +786,69 @@ def user_input(question: str, dtype: Union[str, type, None] = None,
         # return uinput
         return uinput
 
+
+def string_type(value: str) -> Type:
+    """
+    Determine the type of the value (str)
+
+    Checks for boolean, list, dictionary, float, integer
+    returns string otherwise
+
+    :param value: str, the value to check the type of
+
+    :return: the type of the value (bool, list, dict, float, int, str)
+    """
+    if not isinstance(value, str):
+        value = str(value)
+    # -------------------------------------------------------------------------
+    # handle None
+    if value.upper() in ['NONE', 'NULL']:
+        return type(None)
+    # -------------------------------------------------------------------------
+    # Handle booleans first (case-sensitive check)
+    if value.upper() in ['TRUE', 'T']:
+        return bool
+    if value.upper() in ['FALSE', 'F']:
+        return bool
+    # -------------------------------------------------------------------------
+    # Check for list
+    if value.startswith("[") and value.endswith("]"):
+        return list
+    # -------------------------------------------------------------------------
+    # check for dictionary
+    if value.startswith("{") and value.endswith("}"):
+        return dict
+    elif value.startswith('dict(') and value.endswith(')'):
+        return dict
+    # -------------------------------------------------------------------------
+    # if there is any punctuation, it is a string (except ., -, +)
+    for char in string.punctuation:
+        if char in ['.', '-', '+']:
+            continue
+        if char in value:
+            return str
+    # -------------------------------------------------------------------------
+    # Check for float
+    if value.strip('-').upper() in ['NAN', 'NP.NAN', 'INF', 'NP.INF']:
+        return float
+    if value.count(".") == 1:
+        # split the value
+        left, right = value.split(".")
+        # calculate float conditions
+        cond1 = left.isdigit()
+        cond2 = left.startswith('-') or left.startswith('+')
+        cond3 = left[1:].isdigit()
+        cond4 = right.isdigit() or len(right) == 0
+        # conditions to be a float
+        if (cond1 or (cond2 and cond3)) and cond4:
+            return float
+    # -------------------------------------------------------------------------
+    # Check for integer
+    if value.isdigit() or (value.startswith("-") and value[1:].isdigit()):
+        return int
+    # -------------------------------------------------------------------------
+    # return a string
+    return str
 
 
 # =============================================================================

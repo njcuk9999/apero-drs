@@ -12,7 +12,7 @@ argon2-cffi==23.1.0
 argon2-cffi-bindings==21.2.0
 arrow==1.3.0
 arviz==0.20.0
-asdf==3.5.0
+asdf==4.1.0
 asdf-astropy==0.7.1
 asdf_coordinates_schemas==0.3.0
 asdf_standard==1.1.1
@@ -35,7 +35,7 @@ batman-package==2.5.2
 BayesicFitting==3.2.3
 beautifulsoup4==4.13.3
 bleach==6.2.0
-blosc2==2.7.1
+blosc2==3.2.0
 bokeh==3.6.3
 botocore==1.36.23
 Bottleneck==1.4.2
@@ -53,7 +53,7 @@ contourpy==1.3.1
 corner==2.2.3
 coverage==5.5
 coveralls==3.2.0
-crds==12.0.9
+crds==12.1.1
 cryptography==44.0.1
 cssselect==1.2.0
 cssutils==2.11.1
@@ -96,7 +96,7 @@ google-auth-oauthlib==1.2.1
 greenlet==3.1.1
 gspread==5.12.4
 gspread-pandas==3.3.0
-gwcs==0.21.0
+gwcs==0.22.1
 h11==0.14.0
 h5netcdf==1.5.0
 h5py==3.13.0
@@ -109,7 +109,8 @@ imagesize==1.4.1
 importlib_metadata==8.6.1
 ipdb==0.13.13
 ipykernel==6.29.5
-ipython==8.32.0
+ipython==9.0.0
+ipython_pygments_lexers==1.1.1
 isoduration==20.11.0
 jaraco.classes==3.4.0
 jaraco.context==6.0.1
@@ -119,7 +120,7 @@ jaxlib==0.4.31
 jaxoplanet==0.0.3
 jaxtyping==0.2.38
 jedi==0.19.2
-jeepney==0.8.0
+jeepney==0.9.0
 Jinja2==3.1.5
 jmespath==1.0.1
 joblib==1.4.2
@@ -139,7 +140,7 @@ jupyter_server_terminals==0.5.3
 jupyterlab==4.3.5
 jupyterlab_pygments==0.3.0
 jupyterlab_server==2.27.3
-jwst==1.16.1
+jwst==1.17.1
 kepderiv==1.0.8
 kepmodel==1.0.8
 keyring==25.6.0
@@ -150,7 +151,7 @@ llvmlite==0.44.0
 locket==1.0.0
 lxml==5.3.1
 MarkupSafe==3.0.2
-matplotlib==3.10.0
+matplotlib==3.10.1
 matplotlib-inline==0.1.7
 memoization==0.4.0
 mistune==3.1.2
@@ -172,7 +173,7 @@ notebook==7.3.2
 notebook_shim==0.2.4
 numba==0.61.0
 numexpr==2.10.2
-numpy==1.24.3
+numpy==1.26.4
 numpyro==0.17.0
 oauthlib==3.2.2
 oktopus==0.1.2
@@ -217,7 +218,7 @@ pytz==2025.1
 pyvo==1.6.1
 PyYAML==6.0.2
 pyzmq==26.2.1
-radvel==1.4.11
+radvel==1.4.9
 referencing==0.36.2
 requests==2.32.3
 requests-oauthlib==2.0.0
@@ -229,9 +230,9 @@ rsa==4.9
 ruamel.yaml==0.18.10
 ruamel.yaml.clib==0.2.12
 s3fs==2025.2.0
-scikit-image==0.24.0
+scikit-image==0.25.2
 scikit-learn==1.6.1
-scipy==1.10.1
+scipy==1.15.2
 SecretStorage==3.3.3
 semantic-version==2.10.0
 semver==3.0.4
@@ -242,13 +243,13 @@ smmap==5.0.2
 sniffio==1.3.1
 snowballstemmer==2.2.0
 soupsieve==2.6
-spherical_geometry==1.3.2
+spherical_geometry==1.3.3
 Sphinx==8.2.1
 sphinx-autodoc-typehints==3.1.0
 sphinx-jinja2-compat==0.3.0
 sphinx-prompt==1.9.0
 sphinx-tabs==3.4.5
-sphinx-toolbox==3.8.3
+sphinx-toolbox==3.9.0
 sphinxcontrib-applehelp==2.0.0
 sphinxcontrib-devhelp==2.0.0
 sphinxcontrib-htmlhelp==2.1.0
@@ -261,9 +262,9 @@ SQLAlchemy-Utils==0.41.2
 stack-data==0.6.3
 starry==1.2.0
 statsmodels==0.14.4
-stcal==1.9.0
-stdatamodels==2.1.2
-stpipe==0.7.0
+stcal==1.11.1
+stdatamodels==2.2.0
+stpipe==0.8.0
 stsci.imagestats==1.8.3
 stsci.stimage==0.2.10
 synphot==1.5.0

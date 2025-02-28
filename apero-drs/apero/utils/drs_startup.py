@@ -129,9 +129,9 @@ def setup(name: str = 'None', instrument: str = 'None',
 
 
 def __setup__(name: str = 'None', instrument: str = 'None',
-          fkwargs: Union[Dict[str, Any], None] = None, quiet: bool = False,
-          threaded: bool = False, enable_plotter: bool = True,
-          rmod: Any = None) -> Tuple[DrsRecipe, ParamDict]:
+              fkwargs: Union[Dict[str, Any], None] = None, quiet: bool = False,
+              threaded: bool = False, enable_plotter: bool = True,
+              rmod: Any = None) -> Tuple[DrsRecipe, ParamDict]:
     """
     Recipe setup script for recipe "name" and "instrument"
 
@@ -1570,7 +1570,7 @@ def _display_drs_title(params: ParamDict, group: Union[str, None] = None,
     title = title.format(params['OBS.INSTRUMENT'], params['PID'],
                          params['DRS.VERSION'])
     title += '\n' + '* '
-    title += colors.BLUE1 + ' '*len(params['OBS.INSTRUMENT'])
+    title += colors.BLUE1 + ' ' * len(params['OBS.INSTRUMENT'])
     title += '  py' + params['PYVERSION']
     if params['GIT_BRANCH'] != 'Unknown':
         title += '  git:' + params['GIT_BRANCH']
@@ -2675,6 +2675,7 @@ def _make_dirs(params: ParamDict, path: str):
             emsg += '\n\n' + textentry(string_trackback)
             raise drs_log.AperoCodedException(params, '01-000-00001',
                                               message=emsg)
+
     # -------------------------------------------------------------------------
     # try to run locked makedirs
     try:
