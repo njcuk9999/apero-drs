@@ -100,6 +100,16 @@ raw_night_sky_sky = drs_finput('RAW_NIGHT_SKY_SKY', filetype='.fits',
                              description='Raw sci=SKY calib=SKY file (night)')
 raw_file.addset(raw_night_sky_sky)
 
+
+raw_day_sky_sky = drs_finput('RAW_DAY_SKY_SKY', filetype='.fits',
+                             suffix='', inext='.fits', outclass=blank_ofile,
+                             hkeys=dict(KW_RAW_DPRTYPE='OBJECT,SKY',
+                                        KW_TARGET_TYPE='SKY',
+                                        KW_INST_MODE=INSTRUMENT_MODE,
+                                        KW_INSTRUMENT=INSTRUMENT_NAME),
+                             description='Raw sci=SKY calib=SKY file (day)')
+raw_file.addset(raw_day_sky_sky)
+
 # -----------------------------------------------------------------------------
 # raw flat files
 raw_dark_flat = drs_finput('RAW_DARK_FLAT', outclass=blank_ofile, filetype='.fits',
@@ -613,6 +623,14 @@ pp_night_sky_sky = drs_finput('NIGHT_SKY_SKY', filetype='.fits',
                             hkeys=dict(KW_DPRTYPE='NIGHT_SKY_SKY'),
                             description='Preprocessed sci=SKY calib=SKY file')
 pp_file.addset(pp_night_sky_sky)
+
+
+pp_day_sky_sky = drs_finput('DAY_SKY_SKY', filetype='.fits',
+                            suffix='_pp', intype=raw_day_sky_sky,
+                            inext='.fits', outclass=general_ofile,
+                            hkeys=dict(KW_DPRTYPE='DAY_SKY_SKY'),
+                            description='Preprocessed sci=SKY calib=SKY file')
+pp_file.addset(pp_day_sky_sky)
 
 # -----------------------------------------------------------------------------
 # flat
