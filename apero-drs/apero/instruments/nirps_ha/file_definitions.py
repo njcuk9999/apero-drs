@@ -67,13 +67,6 @@ raw_file = drs_finput('DRS_RAW', filetype='.fits', suffix='',
                       outclass=blank_ofile, instrument=__INSTRUMENT__,
                       description='Generic raw file')
 # -----------------------------------------------------------------------------
-# raw dark files
-# raw_dark_dark = drs_finput('RAW_DARK_DARK', KW_CCAS='pos_pk', KW_CREF='pos_pk',
-#                            KW_OBSTYPE='DARK',
-#                            filetype='.fits', suffix='', inext='d.fits',
-#                            outclass=blank_ofile)
-# raw_file.addset(raw_dark_dark)
-
 # raw dark
 raw_dark_dark = drs_finput('RAW_DARK_DARK', filetype='.fits',
                            suffix='', inext='.fits', outclass=blank_ofile,
@@ -103,6 +96,15 @@ raw_night_sky_sky = drs_finput('RAW_NIGHT_SKY_SKY', filetype='.fits',
                                         KW_INSTRUMENT=INSTRUMENT_NAME),
                              description='Raw sci=SKY calib=SKY file (night)')
 raw_file.addset(raw_night_sky_sky)
+
+raw_day_sky_sky = drs_finput('RAW_DAY_SKY_SKY', filetype='.fits',
+                             suffix='', inext='.fits', outclass=blank_ofile,
+                             hkeys=dict(KW_RAW_DPRTYPE='OBJECT,SKY',
+                                        KW_TARGET_TYPE='SKY',
+                                        KW_INST_MODE=INSTRUMENT_MODE,
+                                        KW_INSTRUMENT=INSTRUMENT_NAME),
+                             description='Raw sci=SKY calib=SKY file (day)')
+raw_file.addset(raw_day_sky_sky)
 
 # -----------------------------------------------------------------------------
 # raw flat files
@@ -347,7 +349,6 @@ raw_hc1_dark = drs_finput('RAW_HCONE_DARK', filetype='.fits', suffix='',
                                       ' Uranium Neon lamp')
 raw_file.addset(raw_hc1_dark)
 
-
 # raw comparison files (UN2)
 raw_dark_hc2 = drs_finput('RAW_DARK_HCTWO', outclass=blank_ofile,
                           filetype='.fits', suffix='',
@@ -536,7 +537,6 @@ raw_test_hc2_fp = drs_finput('RAW_TEST_HCTWO_FP', outclass=blank_ofile,
                                          ' file')
 raw_file.addset(raw_test_hc2_fp)
 
-
 raw_test_eff_sky_sky = drs_finput('RAW_TEST_EFF_SKY_SKY', outclass=blank_ofile,
                                   filetype='.fits', suffix='',
                                   hkeys=dict(KW_RAW_DPRTYPE='EFF,SKY,SKY',
@@ -610,6 +610,13 @@ pp_night_sky_sky = drs_finput('NIGHT_SKY_SKY', filetype='.fits',
                             hkeys=dict(KW_DPRTYPE='NIGHT_SKY_SKY'),
                             description='Preprocessed sci=SKY calib=SKY file')
 pp_file.addset(pp_night_sky_sky)
+
+pp_day_sky_sky = drs_finput('DAY_SKY_SKY', filetype='.fits',
+                            suffix='_pp', intype=raw_day_sky_sky,
+                            inext='.fits', outclass=general_ofile,
+                            hkeys=dict(KW_DPRTYPE='DAY_SKY_SKY'),
+                            description='Preprocessed sci=SKY calib=SKY file')
+pp_file.addset(pp_day_sky_sky)
 
 # -----------------------------------------------------------------------------
 # flat
@@ -844,7 +851,6 @@ pp_hc2_dark = drs_finput('HCTWO_DARK', hkeys=dict(KW_DPRTYPE='HCTWO_DARK'),
                          suffix='_pp', intype=raw_hc2_dark,
                          inext='.fits', outclass=general_ofile)
 pp_file.addset(pp_hc2_dark)
-
 
 # -----------------------------------------------------------------------------
 # test pp files
@@ -2018,6 +2024,14 @@ post_s_file.add_column('S1D_W', out_tellu_sc1d_w,
                        block_kind='red', clear_file=True)
 # TODO: from telluric database?
 post_s_file.add_column('S1D_W', out_tellu_rc1d_w, fiber='A',
+                       incol='RECON_flux', outcol='Recon',
+                       required=False, block_kind='red', clear_file=True)
+# TODO: from telluric database?
+post_s_file.add_column('S1D_W', out_tellu_rc1d_w, fiber='A',
+                       incol='RECON_eflux', outcol='ReconErr',
+                       required=False, block_kind='red', clear_file=True)
+# TODO: from telluric database?
+post_s_file.add_column('S1D_W', out_tellu_rc1d_w, fiber='A',
                        incol='SKYC_flux', outcol='SkyCorr',
                        required=False, block_kind='red', clear_file=True)
 # TODO: from telluric database?
@@ -2066,6 +2080,14 @@ post_s_file.add_column('S1D_V', out_tellu_sc1d_v,
                        incol='eflux', outcol='FluxErrATelluCorrected',
                        fiber='A', required=False,
                        block_kind='red', clear_file=True)
+# TODO: from telluric database?
+post_s_file.add_column('S1D_W', out_tellu_rc1d_v, fiber='A',
+                       incol='RECON_flux', outcol='Recon',
+                       required=False, block_kind='red', clear_file=True)
+# TODO: from telluric database?
+post_s_file.add_column('S1D_W', out_tellu_rc1d_v, fiber='A',
+                       incol='RECON_eflux', outcol='ReconErr',
+                       required=False, block_kind='red', clear_file=True)
 # TODO: from telluric database?
 post_s_file.add_column('S1D_V', out_tellu_rc1d_v, fiber='A',
                        incol='SKYC_flux', outcol='SkyCorr',

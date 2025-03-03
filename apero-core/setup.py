@@ -39,29 +39,6 @@ def get_version() -> str:
     return vtext[1].split(':')[-1].strip()
 
 
-def load_requirements() -> list:
-    """
-    Load requirements from file
-    :return:
-    """
-    requirements = 'requirements.txt'
-    # storage for list of modules
-    modules = []
-    # open requirements file
-    with open(requirements, 'r') as rfile:
-        lines = rfile.readlines()
-    # get modules from lines in requirements file
-    for line in lines:
-        if len(line) == '':
-            continue
-        if line.startswith('#'):
-            continue
-        else:
-            modules.append(line)
-    # return modules
-    return modules
-
-
 # =============================================================================
 # Start of code
 # =============================================================================
@@ -79,7 +56,6 @@ if __name__ == "__main__":
           author='Neil Cook',
           author_email='neil.james.cook@gmail.com',
           description=('Core functionality of APERO projects'),
-          install_requires=load_requirements(),
           include_package_data=True)
 
 

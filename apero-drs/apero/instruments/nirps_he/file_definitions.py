@@ -87,6 +87,7 @@ raw_eff_sky_sky = drs_finput('RAW_EFF_SKY_SKY', filetype='.fits',
                              description='Raw sci=SKY calib=SKY file (eff)')
 raw_file.addset(raw_eff_sky_sky)
 
+# night sky sky observation
 raw_night_sky_sky = drs_finput('RAW_NIGHT_SKY_SKY', filetype='.fits',
                              suffix='', inext='.fits', outclass=blank_ofile,
                              hkeys=dict(KW_RAW_DPRTYPE='OBJECT,SKY',
@@ -95,6 +96,15 @@ raw_night_sky_sky = drs_finput('RAW_NIGHT_SKY_SKY', filetype='.fits',
                                         KW_INSTRUMENT=INSTRUMENT_NAME),
                              description='Raw sci=SKY calib=SKY file (night)')
 raw_file.addset(raw_night_sky_sky)
+
+raw_day_sky_sky = drs_finput('RAW_DAY_SKY_SKY', filetype='.fits',
+                             suffix='', inext='.fits', outclass=blank_ofile,
+                             hkeys=dict(KW_RAW_DPRTYPE='OBJECT,SKY',
+                                        KW_TARGET_TYPE='SKY',
+                                        KW_INST_MODE=INSTRUMENT_MODE,
+                                        KW_INSTRUMENT=INSTRUMENT_NAME),
+                             description='Raw sci=SKY calib=SKY file (day)')
+raw_file.addset(raw_day_sky_sky)
 
 # -----------------------------------------------------------------------------
 # raw flat files
@@ -580,12 +590,6 @@ pp_file = drs_finput('DRS_PP', filetype='.fits', suffix='_pp',
 
 # -----------------------------------------------------------------------------
 # dark
-# pp_dark_dark = drs_finput('DARK_DARK', KW_DPRTYPE='DARK_DARK',
-#                           filetype='.fits',
-#                           suffix='_pp', intype=raw_dark_dark,
-#                           inext='.fits', outclass=general_ofile)
-# pp_file.addset(pp_dark_dark)
-
 pp_dark_dark = drs_finput('DARK_DARK', filetype='.fits',
                           suffix='_pp', intype=raw_dark_dark,
                           inext='.fits', outclass=general_ofile,
@@ -606,6 +610,13 @@ pp_night_sky_sky = drs_finput('NIGHT_SKY_SKY', filetype='.fits',
                             hkeys=dict(KW_DPRTYPE='NIGHT_SKY_SKY'),
                             description='Preprocessed sci=SKY calib=SKY file')
 pp_file.addset(pp_night_sky_sky)
+
+pp_day_sky_sky = drs_finput('DAY_SKY_SKY', filetype='.fits',
+                            suffix='_pp', intype=raw_day_sky_sky,
+                            inext='.fits', outclass=general_ofile,
+                            hkeys=dict(KW_DPRTYPE='DAY_SKY_SKY'),
+                            description='Preprocessed sci=SKY calib=SKY file')
+pp_file.addset(pp_day_sky_sky)
 
 # -----------------------------------------------------------------------------
 # flat
@@ -1590,7 +1601,7 @@ out_tellu_sclean = drs_finput('TELLU_SCLEAN',
                               hkeys=dict(KW_OUTPUT='TELLU_SCLEAN'),
                               fibers=valid_tfibers,
                               filetype='.fits', intype=out_ext_e2dsff,
-                              suffix='_tellu_sclean.fits', outclass=debug_ofile,
+                              suffix='_tellu_sclean', outclass=debug_ofile,
                               description='Sky-cleaning file')
 
 # telluric cleaned spectrum
