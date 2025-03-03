@@ -10422,7 +10422,7 @@ langlist.add(item)
 # 40-018-00007 
 # =============================================================================
 item = langlist.create('40-018-00007', kind='all-code')
-item.value['ENG'] = 'Processing file {0} o f{1}'
+item.value['ENG'] = 'Processing file {0} of {1}'
 item.arguments = 'None'
 item.comment = 'prints that we are processing file'
 langlist.add(item)
