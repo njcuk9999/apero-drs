@@ -303,6 +303,8 @@ def __main__(recipe, params):
                         wavetimes, wavefiles, wavesrces, paths]
         # make table
         table = drs_table.make_table(columnnames, columnvalues)
+        # sort table by MJDMID
+        table = table[np.argsort(table['MJDMID'])]
         # ---------------------------------------------------------------------
         # construct filename
         cargs = [params['PATH.RED'], params['OBS_DIR'],
