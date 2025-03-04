@@ -297,6 +297,8 @@ def __main__(recipe, params):
                         wavetimes, wavefiles, wavesrces, paths]
         # make table
         table = drs_table.make_table(params, columnnames, columnvalues)
+        # sort table by MJDMID
+        table = table[np.argsort(table['MJDMID'])]
         # ---------------------------------------------------------------------
         # construct filename
         cargs = [params['DRS_DATA_REDUC'], params['OBS_DIR'],
