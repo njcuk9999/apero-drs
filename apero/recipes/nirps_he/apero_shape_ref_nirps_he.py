@@ -133,10 +133,15 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # ----------------------------------------------------------------------
     # Get localisation coefficients for fp file
     # ----------------------------------------------------------------------
-    lprops_sci = localisation.get_coefficients(params, fpheader, sci_fibers[0],
-                                               database=calibdbm)
-    lprops_ref = localisation.get_coefficients(params, fpheader, ref_fiber,
-                                               database=calibdbm)
+    # load pseudo constants
+    pconst = constants.pload()
+    # storage for localisation properties
+    lprops_all = dict()
+    # loop around fibers and get all individual fiber coefficients
+    for _fiber in pconst.INDIVIDUAL_FIBERS():
+        lprops_all[_fiber] = localisation.get_coefficients(params, fpheader,
+                                                           _fiber,
+                                                           database=calibdbm)
 
     # ----------------------------------------------------------------------
     # Get wave coefficients from reference wavefile
@@ -210,16 +215,13 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # Calculate dx shape map
     # ----------------------------------------------------------------------
     # calculate the dx map for fiber A
-    cargs_a = [ref_fp, lprops_sci]
-    dout = shape.calculate_dxmap_nirps(params, recipe, *cargs_a, fiber='A')
-    # TODO use max_dxmap_std, max_dxmap_info, dxrms as in spirou (QC?)
+    cargs_a = [ref_fp, dict(A=lprops_all[sci_fibers[0]])]
+    dout = shape.calculate_dxmap(params, recipe, *cargs_a, fiber=sci_fibers[0])
     dxmap_a, max_dxmap_std_a, max_dxmap_info_a, dxrms_a = dout
     # calculate the dx map for fiber B
-    cargs_b = [ref_fp, lprops_ref]
-    dout = shape.calculate_dxmap_nirps(params, recipe, *cargs_b, fiber='B')
-    # TODO use max_dxmap_std, max_dxmap_info, dxrms as in spirou (QC?)
+    cargs_b = [ref_fp, dict(A=lprops_all[ref_fiber])]
+    dout = shape.calculate_dxmap(params, recipe, *cargs_b, fiber=ref_fiber)
     dxmap_b, max_dxmap_std_b, max_dxmap_info_b, dxrms_b = dout
-    # TODO: Question do we just sum dxmap_a and dxmap_b?
     dxmap = dxmap_a + dxmap_b
 
     # ----------------------------------------------------------------------

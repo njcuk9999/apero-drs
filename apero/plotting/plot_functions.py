@@ -1416,11 +1416,10 @@ def plot_shape_angle_offset(plotter: Plotter, graph: Graph,
     dypix_arr = kwargs['dypix']
     ckeep_arr = kwargs['ckeep']
     fiber = kwargs['fiber']
+    width = kwargs['width']
     # get parameters from params
     sorder = params['SHAPE_PLOT_SELECTED_ORDER']
     nbanana = params['SHAPE_NUM_ITERATIONS']
-    # get width for fiber
-    width = params.dictp('SHAPE_ORDER_WIDTH', dtype=int)[fiber]
     # ------------------------------------------------------------------
     # if we have a bnum set get the plot loop generator (around orders)
     if bnum is not None:

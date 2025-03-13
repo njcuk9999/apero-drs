@@ -116,7 +116,7 @@ __all__ = [
     'SHAPE_REF_LINTRANS_NITER', 'SHAPE_REF_FP_INI_BOXSIZE',
     'SHAPE_REF_FP_SMALL_BOXSIZE', 'SHAPE_FP_REF_MIN_IN_GROUP',
     'SHAPE_REF_FIBER', 'SHAPE_REF_MAX_FILES',
-    'SHAPE_NUM_ITERATIONS', 'SHAPE_ORDER_WIDTH',
+    'SHAPE_NUM_ITERATIONS', 'SHAPE_FIT_SLOPE_DEG',
     'SHAPE_NSECTIONS', 'SHAPE_SIGMACLIP_MAX', 'SHAPE_REF_DX_RMS_QC',
     'SHAPE_LARGE_ANGLE_MIN', 'SHAPE_LARGE_ANGLE_MAX',
     'SHAPE_SMALL_ANGLE_MIN', 'SHAPE_SMALL_ANGLE_MAX',
@@ -1838,10 +1838,11 @@ SHAPE_PLOT_SELECTED_ORDER = Const('SHAPE_PLOT_SELECTED_ORDER', value=None,
                                   description=('The order to use on the '
                                                'shape plot'))
 
-# width of the ABC fibers (in pixels)
-SHAPE_ORDER_WIDTH = Const('SHAPE_ORDER_WIDTH', value=None, dtype=str,
-                          source=__NAME__, group=cgroup,
-                          description='width of the ABC fibers (in pixels)')
+# The fit order to fit to the slope of the shape of the fibers
+SHAPE_FIT_SLOPE_DEG = Const('SHAPE_FIT_SLOPE_DEG', value=None, dtype=int,
+                            source=__NAME__, group=cgroup,
+                            description='The fit order to fit to the slope of '
+                                        'the shape of the fibers')
 
 # number of sections per order to split the order into
 SHAPE_NSECTIONS = Const('SHAPE_NSECTIONS', value=None, dtype=int,
