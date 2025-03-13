@@ -140,8 +140,15 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # ----------------------------------------------------------------------
     # Get localisation coefficients for fp file
     # ----------------------------------------------------------------------
-    lprops = localisation.get_coefficients(params, fpheader, fiber,
-                                           database=calibdbm)
+    # load pseudo constants
+    pconst = constants.pload()
+    # storage for localisation properties
+    lprops_all = dict()
+    # loop around fibers and get all individual fiber coefficients
+    for _fiber in pconst.INDIVIDUAL_FIBERS():
+        lprops_all[_fiber] = localisation.get_coefficients(params, fpheader,
+                                                           _fiber, merge=True,
+                                                           database=calibdbm)
 
     # ----------------------------------------------------------------------
     # Get wave coefficients from reference wavefile
@@ -223,8 +230,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # ----------------------------------------------------------------------
     # Calculate dx shape map
     # ----------------------------------------------------------------------
-    cargs = [hcimage, ref_fp, lprops, fiber]
-    dout = shape.calculate_dxmap(params, recipe, *cargs)
+    dout = shape.calculate_dxmap(params, recipe, ref_fp, lprops_all, fiber)
     dxmap, max_dxmap_std, max_dxmap_info, dxrms = dout
     # if dxmap is None we shouldn't continue as quality control have failed
     if dxmap is None:
