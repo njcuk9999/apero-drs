@@ -927,9 +927,9 @@ SHAPE_NUM_ITERATIONS.value = 4
 SHAPE_PLOT_SELECTED_ORDER = SHAPE_PLOT_SELECTED_ORDER.copy(__NAME__)
 SHAPE_PLOT_SELECTED_ORDER.value = 33
 
-# total width of the order (combined fibers) in pixels
-SHAPE_ORDER_WIDTH = SHAPE_ORDER_WIDTH.copy(__NAME__)
-SHAPE_ORDER_WIDTH.value = '{"AB": 60, "A": 60, "B": 60, "C": 60}'
+# The fit order to fit to the slope of the shape of the fibers
+SHAPE_FIT_SLOPE_DEG = SHAPE_FIT_SLOPE_DEG.copy(__NAME__)
+SHAPE_FIT_SLOPE_DEG.value = 2
 
 # number of sections per order to split the order into
 SHAPE_NSECTIONS = SHAPE_NSECTIONS.copy(__NAME__)
