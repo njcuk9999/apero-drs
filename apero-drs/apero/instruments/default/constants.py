@@ -1285,17 +1285,16 @@ CDict.add('PLOT_SORDER', value=None,
           description=('The order to use on the '
                        'shape plot'))
 
-# width of the ABC fibers (in pixels)
-CDict.add('ORDER_WID', value=None,
-          dtype=dict, dtypei=int,
-          source=__NAME__, group=cgroup,
+# The fit order to fit to the slope of the shape of the fibers
+CDict.add('FIT_SLOPE_DEG', value=None,
+          dtype=int, source=__NAME__, group=cgroup,
           description='width of the ABC fibers (in pixels)')
 
 # number of sections per order to split the order into
 CDict.add('NSECTIONS', value=None, dtype=int,
           minimum=1, source=__NAME__, group=cgroup,
-          description=('number of sections per order to split '
-                       'the order into'))
+          description='The fit order to fit to the slope of the shape '
+                      'of the fibers')
 
 # the range of angles (in degrees) for the first iteration (large)
 # and subsequent iterations (small)

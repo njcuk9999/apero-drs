@@ -137,17 +137,13 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # ----------------------------------------------------------------------
     # Get localisation coefficients for fp file
     # ----------------------------------------------------------------------
-    lprops_sci = localisation.get_coefficients(params, fpheader, sci_fibers[0],
-                                               database=calibdbm)
-    lprops_ref = localisation.get_coefficients(params, fpheader, ref_fiber,
-                                               database=calibdbm)
-
-    # ----------------------------------------------------------------------
-    # Get wave coefficients from reference wavefile
-    # ----------------------------------------------------------------------
-    # get reference wave map
-    # wprops = wave.get_wavesolution(params, recipe, fiber=fiber, reference=True,
-    #                                database=calibdbm)
+    # storage for localisation properties
+    lprops_all = dict()
+    # loop around fibers and get all individual fiber coefficients
+    for _fiber in params['CAL.FIBER.INDIVIDUAL']:
+        lprops_all[_fiber] = localisation.get_coefficients(params, fpheader,
+                                                           _fiber,
+                                                           database=calibdbm)
 
     # ------------------------------------------------------------------
     # Correction of fp file
@@ -205,26 +201,19 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         cargs = [params, recipe, fpprops['DPRTYPE'], fp_table, fpimage]
         # fpcube, fp_table = shape.construct_REF_FP(*cargs)
         ref_fp, fp_table = shape.construct_ref_fp(*cargs)
-        # log process (reference construction complete + number of groups added)
-        # wargs = [len(fpcube)]
-        # WLOG(params, 'info', textentry('40-014-00011', args=wargs))
-        # sum the cube to make fp data
-        # ref_fp = np.sum(fpcube, axis=0)
 
     # ----------------------------------------------------------------------
     # Calculate dx shape map
     # ----------------------------------------------------------------------
     # calculate the dx map for fiber A
-    cargs_a = [ref_fp, lprops_sci]
-    dout = shape.calculate_dxmap_nirps(params, recipe, *cargs_a, fiber='A')
-    # TODO use max_dxmap_std, max_dxmap_info, dxrms as in spirou (QC?)
+    cargs_a = [ref_fp, dict(A=lprops_all[sci_fibers[0]])]
+    dout = shape.calculate_dxmap(params, recipe, *cargs_a, fiber=sci_fibers[0])
     dxmap_a, max_dxmap_std_a, max_dxmap_info_a, dxrms_a = dout
     # calculate the dx map for fiber B
-    cargs_b = [ref_fp, lprops_ref]
-    dout = shape.calculate_dxmap_nirps(params, recipe, *cargs_b, fiber='B')
-    # TODO use max_dxmap_std, max_dxmap_info, dxrms as in spirou (QC?)
+    cargs_b = [ref_fp, dict(A=lprops_all[ref_fiber])]
+    dout = shape.calculate_dxmap(params, recipe, *cargs_b, fiber=ref_fiber)
     dxmap_b, max_dxmap_std_b, max_dxmap_info_b, dxrms_b = dout
-    # TODO: Question do we just sum dxmap_a and dxmap_b?
+    # we sum dxmap_a and dxmap_b
     dxmap = dxmap_a + dxmap_b
 
     # ----------------------------------------------------------------------

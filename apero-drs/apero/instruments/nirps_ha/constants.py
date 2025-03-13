@@ -588,9 +588,8 @@ CDict.set('NUM_ITER', value=4, source=__NAME__, group=cgroup)
 # Define the order to use on the shape plot
 CDict.set('PLOT_SORDER', value=64, source=__NAME__, group=cgroup)
 
-# Define the total width of the order (combined fibers) in pixels
-CDict.set('ORDER_WID',
-          value={"A": 60, "B": 60, "C": 60},
+# The fit order to fit to the slope of the shape of the fibers
+CDict.set('FIT_SLOPE_DEG', value=1,
           source=__NAME__, group=cgroup)
 
 # Define the number of sections per order to split the order into

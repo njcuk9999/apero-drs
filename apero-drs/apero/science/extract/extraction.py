@@ -236,8 +236,8 @@ def extract_blaze_flat(params: ParamDict, eprops: ParamDict, fiber: str,
                  order_num, fiber]
         fout = flat_blaze.calculate_blaze_flat_sinc(params, *fargs)
         e2dsi, flati, blazei, rmsi = fout
-        # log process (for fiber # and order # S/N = , FF rms = )
-        wargs = [fiber, order_num, snri, rmsi]
+        # log process (for fiber # and order # S/N = , FF rms = %)
+        wargs = [fiber, order_num, snri, 100 * rmsi]
         WLOG(params, '', textentry('40-015-00001', args=wargs))
         # ---------------------------------------------------------------------
         # add to vectors
