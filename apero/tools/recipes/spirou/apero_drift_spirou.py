@@ -162,8 +162,8 @@ def __main__(recipe, params):
     # get nights from user (or set to None)
     obs_dirs = [None]
     if 'obs_dirs' in params['INPUTS']:
-        if not drs_text.null_text(params['INPUTS']['nights'], ['None', '']):
-            obs_dirs = params['INPUTS']['obs_dirs'].split(',')
+        if not drs_text.null_text(params['INPUTS']['OBS_DIRS'], ['None', '']):
+            obs_dirs = params['INPUTS']['OBS_DIRS'].split(',')
             # set night name to the last night
             params.set(key='OBS_DIR', value=obs_dirs[-1], source=mainname)
     # deal with no night name set
@@ -256,8 +256,9 @@ def __main__(recipe, params):
             header = infile.get_header()
             # -----------------------------------------------------------------
             # load wavelength solution for this fiber
-            wprops = wave.get_wavesolution(params, recipe, header, fiber=fiber,
-                                           database=calibdbm)
+            wprops = wave.get_wavesolution(params, recipe, header,
+                                           fiber=fiber, database=calibdbm,
+                                           nbpix=infile.data.shape[1])
             # -----------------------------------------------------------------
             # load the blaze file for this fiber
             bout = flat_blaze.get_blaze(params, header, fiber)
@@ -296,6 +297,8 @@ def __main__(recipe, params):
                         wavetimes, wavefiles, wavesrces, paths]
         # make table
         table = drs_table.make_table(params, columnnames, columnvalues)
+        # sort table by MJDMID
+        table = table[np.argsort(table['MJDMID'])]
         # ---------------------------------------------------------------------
         # construct filename
         cargs = [params['DRS_DATA_REDUC'], params['OBS_DIR'],
