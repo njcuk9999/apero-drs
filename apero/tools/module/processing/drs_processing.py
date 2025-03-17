@@ -715,6 +715,10 @@ def processing_email(params: ParamDict, position: str, name: str,
     drs_misc.send_email(params, subject, messages)
 
 
+def write_to_file(params):
+    pass
+
+
 def reset_files(params):
     """
     Resets based on reset parameters
