@@ -484,6 +484,11 @@ processing.set_kwarg(name='--telluric_targets', dtype=str, default='None',
                      helpstr=textentry('PROCESS_TELLU_TARGETS'))
 processing.set_kwarg(name='--update_objdb', dtype=str, default='None',
                      helpstr=textentry('PROCESS_UPDATE_OBJDB'))
+processing.set_kwarg(name='--to_file', dtype=str, default='None',
+                     helpstr='Output recipes to run to text file '
+                             '(sets --test=True)')
+processing.set_kwarg(name='--verify', dtype='switch', default=False,
+                     helpstr='Verify input run file (but do not run)')
 processing.description_file = 'apero_processing.rst'
 
 # -----------------------------------------------------------------------------

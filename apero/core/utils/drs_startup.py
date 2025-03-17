@@ -1200,6 +1200,15 @@ def read_runfile(params: ParamDict, recipe: Union[DrsRecipe, None],
                 _update_objdb = drs_text.true_text(_update_objdb)
                 # set value
                 params['UPDATE_OBJ_DATABASE'] = _update_objdb
+        # ---------------------------------------------------------------------
+        # deal with to file being set (should force test mode)
+        if 'TO_FILE' in params['INPUTS']:
+            # get value of file file
+            to_file = params['INPUTS']['TO_FILE']
+            if not drs_text.null_text(to_file, ['None', '', 'Null']):
+                params['INPUTS']['TEST'] = True
+            else:
+                params['INPUTS']['TO_FILE'] = None
     # -------------------------------------------------------------------------
     # deal with recipe arguments
     if recipe is not None:
