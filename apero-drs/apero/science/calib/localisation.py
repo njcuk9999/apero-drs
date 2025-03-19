@@ -757,7 +757,10 @@ def get_coefficients(params: ParamDict, header: drs_file.Header,
     deg_w = locofile.get_hkey('KW_LOC_DEG_W', dtype=int)
     # TODO: Should be required v0.8
     poly_type = locofile.get_hkey('KW_LOC_POLYT', dtype=str, required=False)
-    nset = params['FIBER_SET_NUM_FIBERS_{0}'.format(fiber)]
+
+    fiberparams = pconst.FIBER_SETTINGS(params, fiber)
+
+    nset = fiberparams['CAl.FIBER.SET_NUM_FIBERS']
     # extract coefficients from header
     cent_coeffs = locofile.get_hkey_2d('KW_LOC_CTR_COEFF',
                                        dim1=nbo, dim2=deg_c + 1)
@@ -965,8 +968,8 @@ def loc_quality_control(params: ParamDict, lprops: ParamDict
     pconst = load_functions.load_pconfig(select.INSTRUMENTS)
     fiberparams = pconst.FIBER_SETTINGS(params, fiber)
 
-    required_norders = pcheck(params, 'FIBER.MAX_NUM_ORDERS', func=func_name,
-                              paramdict=fiberparams)
+    required_norders = pcheck(params, 'CAL.FIBER.MAX_NUM_ORDERS',
+                              func=func_name, paramdict=fiberparams)
     # ----------------------------------------------------------------------
     # # check that max number of points rejected in center fit is below
     # #    threshold

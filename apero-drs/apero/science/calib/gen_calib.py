@@ -782,7 +782,7 @@ def calib_delta_time_check(params: ParamDict, inheader: DrsHeader,
     # ---------------------------------------------------------------------
     # get parameters from params
     do_check = params['CAL.GEN.DTIME_CHECK']
-    max_dtime = params['CAL.GEN.MAX_CALIB_DTIME']
+    max_dtime = params['CAL.GEN.MAX_DTIME']
     timekey = params['KW_MID_OBS_TIME'][0]
     # extra skip if we are in quick look mode
     quicklook = params['CAL.EXT.QUICKLOOK']

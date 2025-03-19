@@ -95,6 +95,9 @@ SKIP_REMOVE_ARGS = ['--skip', '--program', '--prog', '--debug',
                     '--crunfile', '--nosave']
 # keep a global copy of plt
 PLT_MOD = None
+# juut for verification we use all keys that start with RUN_ except
+#   the following:
+RUN_NAME_EXCEPTIONS = ['RUN_NAME', 'RUN_OBS_DIR', 'RUN_RECIPES']
 
 
 # =============================================================================
@@ -708,6 +711,43 @@ def processing_email(params: ParamDict, position: str, name: str,
     drs_misc.send_email(params, subject, messages)
 
 
+def write_to_file(params: ParamDict, outlist: Dict[int, dict]):
+    """
+    Write a file to disk with the runs given in test mode
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param outlist: dictionary, the run dictionary
+
+    :return: None, writes to --to_file file or if not specified writes to
+             {pid}_apero_processing_ids.txt
+    """
+    # storage for output lines
+    lines = []
+    # deal with length of outlist
+    nzero = int(np.ceil(np.log10(max(list(outlist.keys())))) + 1)
+    # loop around full outlist
+    for key in outlist:
+        # get the zero-filled string
+        strkey = str(key).zfill(nzero)
+        # get the run string
+        runstring = outlist[key]['RUNSTRING']
+        # push into lines
+        lines.append(f'id{strkey} = {runstring}')
+
+    # if we don't have a file just use the pid
+    if params['INPUTS']['TO_FILE'] is None:
+        filename = params['PID'] + '_apero_processing_ids.txt'
+    else:
+        filename = params['INPUTS']['TO_FILE']
+    # print that we are writing file
+    msg = 'Writing run strings to file {0}'
+    margs = [os.path.abspath(filename)]
+    WLOG(params, 'info', msg.format(*margs))
+    # write to disk
+    with open(filename, 'w') as fout:
+        fout.write('\n'.join(lines))
+
+
 def reset_files(params):
     """
     Resets based on reset parameters
@@ -872,9 +912,10 @@ def generate_run_list(params: ParamDict, findexdbm: FileIndexDatabase,
     func_name = display_func(__NAME__, 'generate_run_list')
     # print progress: generating run list
     WLOG(params, 'info', textentry('40-503-00011'))
+    # find out whether we are in verification mode
+    verify = params['INPUTS']['VERIFY']
     # need to update table object names to match preprocessing
     #   table can be None if coming from e.g fit_tellu_db
-
     # -------------------------------------------------------------------------
     # get odometer reject list (if required)
     # -------------------------------------------------------------------------
@@ -928,6 +969,8 @@ def generate_run_list(params: ParamDict, findexdbm: FileIndexDatabase,
     sequencelist = check_for_sequences(rvalues, recipemod)
     # set rlist to None (for no sequences)
     rlist = None
+    # storage for verification
+    vdicts = dict()
     # if we have found sequences need to deal with them
     #   also table cannot be None at this point
     if (sequencelist is not None) and (FileIndexDatabase is not None):
@@ -936,18 +979,79 @@ def generate_run_list(params: ParamDict, findexdbm: FileIndexDatabase,
             # log progress
             WLOG(params, 'info', textentry('40-503-00009', args=[sequence[0]]))
             # generate new runs for sequence
-            newruns = generate_run_from_sequence(params, sequence,
-                                                 findexdbm, tstars=tstars,
-                                                 ostars=ostars,
-                                                 current_tstars=current_tstars,
-                                                 ref_condition=ref_condition)
+            newruns, vdict = gen_run_from_seq(params, sequence,
+                                              findexdbm, tstars=tstars,
+                                              ostars=ostars,
+                                              current_tstars=current_tstars,
+                                              ref_condition=ref_condition)
+            # deal with verification mode
+            if verify:
+                vdicts[sequence[1].name] = vdict
+                continue
             # update runtable with sequence generation
             runtable, rlist = update_run_table(sequence, runtable, newruns,
                                                rlist)
+    # -------------------------------------------------------------------------
+    # deal with verification
+    if verify:
+        # print out of verification
+        process_verification(params, vdicts)
+        # we don't return the run list in the verification case
+        return []
+    # -------------------------------------------------------------------------
     # all runtable elements should now be in recipe list
     _check_runtable(params, runtable, recipemod)
     # return Run instances for each runtable element
-    return generate_ids(params, findexdbm, runtable, skiptable, rlist)
+    run_list = generate_ids(params, findexdbm, runtable, skiptable, rlist)
+    # return the run list
+    return run_list
+
+
+def process_verification(params: ParamDict, vdicts: Dict[str, dict]):
+    """
+    In validation mode (--verify) add a print out to display what was and
+    wasn't used (in terms of RUN_XXXX
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param vdicts: Dict[str, dict], dictionary of run-specific variables
+
+    :return None: prints to screen
+    """
+    # get path of the run directory
+    run_dir = params['PATH.RUN']
+    run_file = params['INPUTS']['RUNFILE']
+    # print progress
+    msg = 'Verification of {0}'
+    margs = [os.path.abspath(os.path.join(run_dir, run_file))]
+    WLOG(params, '', params['LOG.HEADER'], colour='magenta')
+    WLOG(params, 'info', msg.format(*margs), colour='magenta')
+    WLOG(params, '', params['LOG.HEADER'], colour='magenta')
+    # -------------------------------------------------------------------------
+    # loop around sequences
+    for sequence in vdicts.keys():
+        # print sequence name
+        msg = '\t Sequence = {0}'
+        margs = [sequence]
+        WLOG(params, '', msg.format(*margs))
+        WLOG(params, '', params['LOG.HEADER'])
+        # print out the used/unused sequences
+        for shortname in vdicts[sequence]['used']:
+            # get the counts
+            count = vdicts[sequence]['counts'][shortname]
+
+            if not vdicts[sequence]['used'][shortname]:
+                msg = '\t\t {0:30s} not used'
+                margs = [shortname]
+                WLOG(params, 'warning', msg.format(*margs))
+
+            elif count == 0:
+                msg = '\t\t {0:30s} used but no recipes found to be run'
+                margs = [shortname]
+                WLOG(params, 'warning', msg.format(*margs))
+            else:
+                msg = '\t\t {0:30s} used (count = {1})'
+                margs = [shortname, count]
+                WLOG(params, '', msg.format(*margs))
 
 
 def process_run_list(params: ParamDict, runlist, group=None,
@@ -1815,18 +1919,25 @@ def check_for_sequences(rvalues, mod):
         return sequencelist
 
 
-def generate_run_from_sequence(params: ParamDict, sequence,
-                               indexdb: FileIndexDatabase,
-                               return_recipes: bool = False,
-                               logmsg: bool = True,
-                               tstars: Union[List[str], None] = None,
-                               ostars: Union[List[str], None] = None,
-                               current_tstars: Union[List[str], None] = None,
-                               ref_condition: str = ''):
-    func_name = __NAME__ + '.generate_run_from_sequence()'
+RunSeqReturn = Union[Tuple[List[List[Union[str, DrsRecipe]]], Dict[str, dict]],
+                     List[DrsRecipe]]
+
+
+def gen_run_from_seq(params: ParamDict, sequence,
+                     indexdb: FileIndexDatabase,
+                     return_recipes: bool = False,
+                     logmsg: bool = True,
+                     tstars: Union[List[str], None] = None,
+                     ostars: Union[List[str], None] = None,
+                     current_tstars: Union[List[str], None] = None,
+                     ref_condition: str = '') -> RunSeqReturn:
+    func_name = __NAME__ + '.gen_run_from_seq()'
     # -------------------------------------------------------------------------
-    # get filemod and recipe mod
-    pconst = load_functions.load_pconfig(select.INSTRUMENTS)
+    # deal with verification
+    verify = params['INPUTS']['VERIFY']
+    # don't log if we are verifying
+    if verify:
+        logmsg = False
     # generate sequence
     sequence[1].process_adds(params, tstars=list(tstars), ostars=list(ostars),
                              current_tstars=current_tstars,
@@ -1838,6 +1949,8 @@ def generate_run_from_sequence(params: ParamDict, sequence,
         return srecipelist
     # storage for new runs to add
     newruns = []
+    # store verification dictionaries
+    vdicts = dict(counts=dict(), used=dict())
     # ------------------------------------------------------------------
     # check we have rows left
     # ------------------------------------------------------------------
@@ -1868,15 +1981,34 @@ def generate_run_from_sequence(params: ParamDict, sequence,
     if logmsg:
         WLOG(params, 'info', textentry('40-503-00037', args=[idb_len]))
     # ------------------------------------------------------------------
+    # if in verification mode add all RUN
+    if verify:
+        run_from_params = params.startswith('RUN_')
+        for runname in run_from_params:
+            # don't add all keys that start with RUN_
+            if runname in RUN_NAME_EXCEPTIONS:
+                continue
+            # set used/counts to the default value
+            vdicts['used'][runname] = False
+            vdicts['counts'][runname] = 0
+    # ------------------------------------------------------------------
     # loop around recipes in new list
     for srecipe in srecipelist:
+        # deal with skip
+        runname = 'RUN_{0}'.format(srecipe.shortname)
         # skip if run name is not True
         if srecipe.shortname in params['RUN_RECIPES']:
             if not params['RUN_RECIPES'][srecipe.shortname]:
-                wargs = [srecipe.name, srecipe.shortname]
-                WLOG(params, '', textentry('40-503-00021', args=wargs),
-                     colour='yellow')
+
+                if not verify:
+                    wargs = [srecipe.name, srecipe.shortname]
+                    WLOG(params, '', textentry('40-503-00021', args=wargs),
+                         colour='yellow')
+                # store that we are not using this runname
+                vdicts['used'][runname] = False
                 continue
+            else:
+                vdicts['used'][runname] = True
         # deal with run name not in params (means not selected)
         if srecipe.shortname not in params['RUN_RECIPES']:
             wargs = [srecipe.name, srecipe.shortname]
@@ -1987,8 +2119,14 @@ def generate_run_from_sequence(params: ParamDict, sequence,
         # ------------------------------------------------------------------
         # print how many runs we are adding
         # ------------------------------------------------------------------
+        # Get the number of runs we are adding
+        n_runs = len(sruns)
         # Log message: Added {0} runs
         WLOG(params, '', textentry('40-503-00042', args=[len(sruns)]))
+        if not verify:
+            WLOG(params, '', textentry('40-503-00042', args=[n_runs]))
+        # store for verification
+        vdicts['counts'][runname] = n_runs
         # ------------------------------------------------------------------
         # deal with trigger and no runs left to do
         # ------------------------------------------------------------------
@@ -2009,8 +2147,9 @@ def generate_run_from_sequence(params: ParamDict, sequence,
         # append runs to new runs list
         for srun in sruns:
             newruns.append([srun, srecipe])
+    # -------------------------------------------------------------------------
     # return all new runs
-    return newruns
+    return newruns, vdicts
 
 
 def generate_runs(params: ParamDict, recipe: DrsRecipe,

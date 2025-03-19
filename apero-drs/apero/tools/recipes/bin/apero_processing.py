@@ -111,6 +111,9 @@ def __main__(recipe, params):
     # -------------------------------------------------------------------------
     # send email if configured
     drs_processing.processing_email(params, 'start', __NAME__)
+    # outlist storage
+    outlist = dict()
+
     # -------------------------------------------------------------------------
     # everything else in a try (to log end email even with exception)
     try:
@@ -165,6 +168,10 @@ def __main__(recipe, params):
         # ----------------------------------------------------------------------
         rlist = drs_processing.generate_run_list(params, findexdbm, runtable,
                                                  skiptable)
+        # deal with verification (end here)
+        if params['INPUTS']['VERIFY']:
+            # End of main code
+            return locals()
 
         # ----------------------------------------------------------------------
         # Process run list
@@ -228,6 +235,10 @@ def __main__(recipe, params):
                                         tb=string_trackback)
         # raise exception
         raise e
+
+    # ----------------------------------------------------------------------
+    # write output to file
+    drs_processing.write_to_file(params, outlist)
 
     # ----------------------------------------------------------------------
     # End of main code

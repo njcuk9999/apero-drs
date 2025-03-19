@@ -28,6 +28,7 @@ CDict.set('PLOT_MODE', value=0, source=__NAME__, author='NJC', group=cgroup)
 
 # Whether to run in debug mode
 #      0: no debug
+#      0: no debug
 #      1: basic debugging on errors
 #      2: recipes specific (plots and some code runs)
 CDict.set('DEBUG', value=0, source=__NAME__, author='NJC', group=cgroup)

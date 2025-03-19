@@ -1416,6 +1416,15 @@ def _deal_with_run_file_cmd_args(params: ParamDict) -> ParamDict:
             # set value
             params['UPDATE_OBJ_DATABASE'] = _update_objdb
     # ---------------------------------------------------------------------
+    # deal with to file being set (should force test mode)
+    if 'TO_FILE' in params['INPUTS']:
+        # get value of file file
+        to_file = params['INPUTS']['TO_FILE']
+        if not drs_text.null_text(to_file, [None, 'None', '', 'Null']):
+            params['INPUTS']['TEST'] = True
+        else:
+            params['INPUTS']['TO_FILE'] = None
+    # ---------------------------------------------------------------------
     # return params
     return params
 

@@ -459,7 +459,7 @@ def get_recipes(params: ParamDict, runfile: str,
         for sequence in sequencelist:
             # generate new runs for sequence
             gargs = [iparams, sequence, findexdbm, True, False]
-            srecipes = drs_processing.generate_run_from_sequence(*gargs)
+            srecipes = drs_processing.gen_run_from_seq(*gargs)
             # loop around recipes in sequence
             for srecipe in srecipes:
                 # get the run name (that should be in params from runfile)

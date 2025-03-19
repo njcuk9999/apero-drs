@@ -465,21 +465,19 @@ class NirpsHe(instrument_mod.Instrument):
         func_name = display_func('FIBER_SETTINGS', __NAME__,
                                  self.class_name)
         # list fiber keys
-        keys = ['FIBER_FIRST_ORDER_JUMP', 'FIBER_MAX_NUM_ORDERS',
-                'FIBER_SET_NUM_FIBERS']
+        keys = ['CAL.FIBER.FIRST_ORDER_JUMP', 'CAL.FIBER.MAX_NUM_ORDERS',
+                'CAL.FIBER.SET_NUM_FIBERS']
         # set up new param dict
         fiberparams = ParamDict()
         # loop around all fiber keys and add to params
         for key in keys:
-            # get fiber key
-            key1 = '{0}_{1}'.format(key, fiber)
             # deal with key not existing
-            if key1 not in params:
-                eargs = [key1]
+            if key not in params:
+                eargs = [key]
                 raise AperoCodedException(params, '00-001-00052', targs=eargs)
             # if key exists add it for this fiber
             else:
-                fiberparams[key] = params[key1]
+                fiberparams[key] = params[key][fiber]
                 fiberparams.set_source(key, func_name)
         # return params
         return fiberparams

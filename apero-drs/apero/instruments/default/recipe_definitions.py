@@ -517,6 +517,10 @@ processing.set_kwarg(name='--telluric_targets', dtype='List[str]', default='None
                      helpstr=textentry('PROCESS_TELLU_TARGETS'))
 processing.set_kwarg(name='--update_objdb', dtype='switch',
                      helpstr=textentry('PROCESS_UPDATE_OBJDB'))
+processing.set_kwarg(name='--to_file', dtype=str, default='None',
+                     helpstr=textentry('PROCESS_TO_FILE_HELP'))
+processing.set_kwarg(name='--verify', dtype='switch',
+                     helpstr=textentry('PROCESS_VERIFY_HELP'))
 processing.description_file = 'apero_processing.rst'
 
 # -----------------------------------------------------------------------------

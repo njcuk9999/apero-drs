@@ -639,6 +639,25 @@ item.comment = ''
 langlist.add(item)
 
 # =============================================================================
+# PROCESS_WNIGHTNAMES_HELP
+# =============================================================================
+item = langlist.create('PROCESS_TO_FILE_HELP', kind='HELP')
+item.value['ENG'] = ('[STRING] Output recipes to run to text file '
+                     '(sets --test=True)')
+item.arguments = 'None'
+item.comment = ''
+langlist.add(item)
+
+# =============================================================================
+# PROCESS_WNIGHTNAMES_HELP
+# =============================================================================
+item = langlist.create('PROCESS_VERIFY_HELP', kind='HELP')
+item.value['ENG'] = ('[SWITCH] Verify input run file (but do not run)')
+item.arguments = 'None'
+item.comment = ''
+langlist.add(item)
+
+# =============================================================================
 # Q_NO 
 # =============================================================================
 item = langlist.create('Q_NO', kind='TEXT')
