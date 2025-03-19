@@ -441,9 +441,9 @@ class RunIniFile:
             WLOG(sparams, 'info', textentry('40-503-00009',
                                             args=[sequence[0]]))
             # generate new runs for sequence
-            newruns = drs_processing._generate_run_from_sequence(sparams,
-                                                                 sequence,
-                                                                 findexdbm)
+            newruns, _ = drs_processing.gen_run_from_seq(sparams,
+                                                         sequence,
+                                                         findexdbm)
             for newrun in newruns:
                 self.ids.append(newrun[0])
 
