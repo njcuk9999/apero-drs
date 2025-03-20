@@ -661,7 +661,7 @@ def calculate_dxmap(params, recipe, fpdata, lprops, fiber, **kwargs):
     fit_slope_deg = pcheck(params, 'SHAPE_FIT_SLOPE_DEG', 'fit_slope_deg',
                            kwargs, func_name)
     # get properties from property dictionaries
-    acc, awid = dict(), dict()
+    acc, awid, nbo = dict(), dict(), 0
     for _fiber in lprops:
         nbo = lprops[_fiber]['NBO']
         acc[_fiber] = lprops[_fiber]['CENT_COEFFS']
