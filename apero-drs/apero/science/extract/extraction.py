@@ -66,7 +66,7 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
                            kwargs, func_name)
     cosmic_thres = pcheck(params, 'CAL.EXT.COSMIC_THRES', 'cosmic_thres',
                           kwargs, func_name)
-    blaze_size = pcheck(params, 'FF_BLAZE_HALF_WINDOW', 'blaze_size',
+    blaze_size = pcheck(params, 'CAL.FLAT.HALF_WINDOW', 'blaze_size',
                         kwargs, func_name)
 
     qc_ext_flux_max = pcheck(params, 'CAL.EXT.QC_FLUX_MAX', 'qc_ext_flux_max',

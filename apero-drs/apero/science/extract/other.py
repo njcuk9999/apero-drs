@@ -359,7 +359,8 @@ def extract_files(params: ParamDict, recipe: DrsRecipe,
                 errormsg += error[1]
                 # append to logger error storage for this PID
                 WLOG.logger_storage(params, 'error', ttime=error[0],
-                                    mess=errormsg, program=extrecipe.shortname)
+                                    message=errormsg,
+                                    program=extrecipe.shortname)
         for warn in llout['params']['LOGGER_WARNING']:
             # make sure we have a warning listed
             if len(warn) > 0:
@@ -368,7 +369,8 @@ def extract_files(params: ParamDict, recipe: DrsRecipe,
                 warnmsg += warn[1]
                 # append to logger warning storage for this PID
                 WLOG.logger_storage(params, 'warning', ttime=warn[0],
-                                    mess=warnmsg, program=extrecipe.shortname)
+                                    message=warnmsg,
+                                    program=extrecipe.shortname)
         # check success
         if not llout['success']:
             eargs = [recipe.name, func_name]

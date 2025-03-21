@@ -870,7 +870,7 @@ def check_fp(params: ParamDict, image: np.ndarray, filename: str,
     # get properties from params
     percentile = pcheck(params, 'CAL.GEN.CHECKFP_PERCENTILE', func=func_name,
                         override=percentile)
-    fp_qc = pcheck(params, 'CALIB_CHECK_FP_THRES', 'fp_qc', func=func_name,
+    fp_qc = pcheck(params, 'CAL.GEN.CHECK_FP_THRES', 'fp_qc', func=func_name,
                    override=fp_qc_thres)
     centersize = pcheck(params, 'CAL.GEN.CHECK_FP_CENT_SIZE', func=func_name,
                         override=centersize)

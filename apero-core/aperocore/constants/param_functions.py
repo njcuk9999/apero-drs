@@ -1207,7 +1207,7 @@ class SubParamDict():
         return False
 
     def __contains__(self, key):
-        if f'{self.path}.{key}' in self.param_dict.data:
+        if f'{self.path}{key}' in self.param_dict.data:
             return True
         return False
 

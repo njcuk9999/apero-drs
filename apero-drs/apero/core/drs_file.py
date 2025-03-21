@@ -413,14 +413,25 @@ class DrsPath:
         else abspath is not updated
         :return:
         """
-        if self.obs_dir is not None or self.basename is not None:
-            if self.obs_dir is None:
-                return
-            elif self.basename is None and self.block_path is not None:
-                self.abspath = os.path.join(self.block_path, self.obs_dir)
-            elif self.block_path is not None:
-                self.abspath = os.path.join(self.block_path, self.obs_dir,
-                                            self.basename)
+        # we need either obs_dir or basename to continue
+        if self.obs_dir is None and self.basename is None:
+            return
+        # block_path + basename + no obs dir
+        if self.obs_dir is None and self.block_path is not None:
+            self.abspath = os.path.join(self.block_path, self.basename)
+            return
+        # basename + no obs dir and no block path
+        if self.obs_dir is None:
+            self.abspath = os.path.abspath(self.basename)
+            return
+        # block path + no basename
+        if self.basename is None and self.block_path is not None:
+            self.abspath = os.path.join(self.block_path, self.obs_dir)
+            return
+        # block path + obs dir + basename
+        if self.block_path is not None:
+            self.abspath = os.path.join(self.block_path, self.obs_dir,
+                                        self.basename)
 
     def _from_abspath(self):
         """

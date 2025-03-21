@@ -63,7 +63,7 @@ CDict.set('FIBER_TYPES', value=['AB', 'A', 'B', 'C'], source=__NAME__,
 CDict.set('COMBINE_INPUT', value=True, source=__NAME__, group=cgroup)
 
 # Defines whether to, by default, flip images that are inputted
-CDict.set('FLIP_INPUT', value=True, source=__NAME__, group=cgroup)
+CDict.set('FLIP_INPUT', value='both', source=__NAME__, group=cgroup)
 
 # Defines whether to, by default, resize images that are inputted
 CDict.set('RESIZE_IMAGE', value=True, source=__NAME__, group=cgroup)
@@ -120,10 +120,14 @@ CDict.set('CMETRIC1_TYPES',
 CDict.set('CHECKFP_PERCENTILE', value=95, source=__NAME__, group=cgroup)
 
 # Define the check FP threshold qc parameter
-CDict.set('CALIB_CHECK_FP_THRES', value=100, source=__NAME__, group=cgroup)
+CDict.set('CHECK_FP_THRES', value=100, source=__NAME__, group=cgroup)
 
 # Define the check FP center image size [px]
 CDict.set('CHECK_FP_CENT_SIZE', value=100, source=__NAME__, group=cgroup)
+
+# Define whether to force wave solution from calibration database (instead of
+#  using header wave solution if available)
+CDict.set('FORCE_WAVESOL', value=False, source=__NAME__, group=cgroup)
 
 # =============================================================================
 # CALIBRATION: FIBER SETTINGS

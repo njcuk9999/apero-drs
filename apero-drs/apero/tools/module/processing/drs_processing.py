@@ -721,10 +721,16 @@ def write_to_file(params: ParamDict, outlist: Dict[int, dict]):
     :return: None, writes to --to_file file or if not specified writes to
              {pid}_apero_processing_ids.txt
     """
+
     # storage for output lines
     lines = []
-    # deal with length of outlist
-    nzero = int(np.ceil(np.log10(max(list(outlist.keys())))) + 1)
+    # deal with no runs in outlist
+    if len(outlist) == 0:
+        nzero = 0
+        lines.append('No runs generated')
+    # otherwise figure out the number of leading zeros we need
+    else:
+        nzero = int(np.ceil(np.log10(max(list(outlist.keys())))) + 1)
     # loop around full outlist
     for key in outlist:
         # get the zero-filled string
@@ -733,10 +739,16 @@ def write_to_file(params: ParamDict, outlist: Dict[int, dict]):
         runstring = outlist[key]['RUNSTRING']
         # push into lines
         lines.append(f'id{strkey} = {runstring}')
-
+    # -------------------------------------------------------------------------
+    # generate msg dir
+    message_dir = os.path.join(params['PATH.LOG'], 'report', 'processing')
+    if not os.path.exists(message_dir):
+        os.makedirs(message_dir)
+    # -------------------------------------------------------------------------
     # if we don't have a file just use the pid
     if params['INPUTS']['TO_FILE'] is None:
-        filename = params['PID'] + '_apero_processing_ids.txt'
+        basename = params['PID'] + '_apero_processing_ids.txt'
+        filename = os.path.join(message_dir, basename)
     else:
         filename = params['INPUTS']['TO_FILE']
     # print that we are writing file

@@ -119,7 +119,8 @@ CDict.add('COMBINE_INPUT', dtype=bool, value=True,
                       'same time')
 
 # Defines whether to, by default, flip images that are inputted
-CDict.add('FLIP_INPUT', dtype=bool, value=True,
+CDict.add('FLIP_INPUT', dtype=str, value='both',
+          options=['None', 'x', 'y', 'both'],
           source=__NAME__, group=cgroup,
           description=('Defines whether to, by default, '
                        'flip images that are inputted'))
@@ -301,7 +302,7 @@ CDict.add('CHECKFP_PERCENTILE', value=None,
                        'level'))
 
 # define the check FP threshold qc parameter
-CDict.add('CALIB_CHECK_FP_THRES', value=None,
+CDict.add('CHECK_FP_THRES', value=None,
           dtype=float, minimum=0.0, source=__NAME__,
           group=cgroup,
           description='define the check FP threshold qc parameter')
@@ -311,6 +312,14 @@ CDict.add('CHECK_FP_CENT_SIZE', value=None,
           dtype=int, minimum=0, source=__NAME__,
           group=cgroup,
           description='define the check FP center image size [px]')
+
+# Define whether to force wave solution from calibration database (instead of
+#  using header wave solution if available)
+CDict.add('FORCE_WAVESOL', value=None, dtype=bool, source=__NAME__, user=True,
+          active=False, group=cgroup,
+          description='Define whether to force wave solution from '
+                      'calibration database (instead of using header wave '
+                      'solution if available)')
 
 # =============================================================================
 # CALIBRATION: FIBER SETTINGS

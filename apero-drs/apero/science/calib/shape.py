@@ -668,13 +668,13 @@ def calculate_dxmap(params, recipe, fpdata, lprops, fiber, **kwargs):
     long_medfilt_wid = pcheck(params, 'CAL.SHAPE.LONG_DX_MEDFILT_WID',
                               'long_medfilt_width', kwargs, func_name)
     std_qc = pcheck(params, 'CAL.SHAPE.QC_DXMAP_STD', 'std_qc', kwargs, func_name)
-    fit_slope_deg = pcheck(params, 'SHAPE_FIT_SLOPE_DEG', 'fit_slope_deg',
+    fit_slope_deg = pcheck(params, 'CAl.SHAPE.FIT_SLOPE_DEG', 'fit_slope_deg',
                            kwargs, func_name)
     # get properties from property dictionaries
-    acc, awid = dict(), dict()
-    nbo = lprops[fiber]['NBO']
+    acc, awid, nbo = dict(), dict(), 0
     # loop around fibers
     for _fiber in lprops:
+        nbo = lprops[_fiber]['NBO']
         acc[_fiber] = lprops[_fiber]['CENT_COEFFS']
         awid[_fiber] = lprops[_fiber]['WID_COEFFS']
     # get the dimensions
@@ -702,8 +702,7 @@ def calculate_dxmap(params, recipe, fpdata, lprops, fiber, **kwargs):
     # loop around order number
     for order_num in range(nbo):
         # x pixel vector that is used with polynomials to
-        # find the order center y order center and the width
-        ypix[order_num] = mp.val_cheby(acc[order_num], xpix, domain=[0, dim2])
+        # find the order center y order center
         tmp_ypix = np.zeros([len(acc.keys()), len(xpix)])
         tmp_wid = np.zeros([len(awid.keys()), len(xpix)])
         # loop around all fibers

@@ -148,7 +148,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
 
     for _fiber in params['CAL.FIBER.INDIVIDUAL']:
         lprops_all[_fiber] = localisation.get_coefficients(params, fpheader,
-                                                           fiber, merge=True,
+                                                           _fiber, merge=True,
                                                            database=calibdbm)
 
     # ------------------------------------------------------------------

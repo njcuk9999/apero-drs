@@ -557,15 +557,21 @@ class _CheckFiles(DrsAction):
             obs_dir = drs_file.DrsPath(self.recipe.params,
                                        block_kind=self.recipe.in_block_str,
                                        obs_dir=dirname)
+        # ---------------------------------------------------------------------
         # get the argument name
         argname = self.dest
         # get the params from recipe
         params = self.recipe.params
-        # debug checking output
-        WLOG(params, 'debug', textentry('90-001-00019', args=[argname]))
         # get recipe args and kwargs
         rargs = self.recipe.args
         rkwargs = self.recipe.kwargs
+        # get argument
+        arg = _get_arg(rargs, rkwargs, argname)
+        # deal with arg.path set
+        obs_dir = _check_arg_path(params, arg, obs_dir)
+        # ---------------------------------------------------------------------
+        # debug checking output
+        WLOG(params, 'debug', textentry('90-001-00019', args=[argname]))
         # check whether we are updating the index
         update_index = True
         if 'INPUTS' in params:
@@ -4612,7 +4618,8 @@ def _check_arg_path(params: ParamDict, arg: DrsArgument,
     if arg.path in params:
         return drs_file.DrsPath(params, params['arg.path'])
     elif arg.path in block_names:
-        return drs_file.DrsPath(params, block_kind=arg.path)
+        return drs_file.DrsPath(params, block_kind=arg.path,
+                                obs_dir=obs_dir.obs_dir)
     else:
         return drs_file.DrsPath(params, arg.path)
 

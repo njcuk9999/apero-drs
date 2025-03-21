@@ -426,6 +426,14 @@ class Plotter:
             else:
                 # get user input
                 userinput = input(message)
+                # deal with no input
+                if len(userinput) == 0:
+                    # must set the mode back to original (if changed)
+                    if current_mode is not None:
+                        self.plotoption = current_mode
+                        self.plt.ion()
+                    # break out of while
+                    break
                 # try to cast into a integer
                 # noinspection PyBroadException
                 try:
@@ -1147,16 +1155,18 @@ class Plotter:
             debug_plots = []
         else:
             debug_plots = self.recipe.debug_plots
+        # get the plot parameters
+        plot_params = self.params.get('DEBUG.PLOT')
         # loop around keys in parameter dictionary
         for name in self.names:
             # get kind
             kind = self.names[name].kind
             # only deal with keys that start with 'PLOT_'
-            key = 'PLOT_{0}'.format(name.upper())
+            key = name.upper()
             # check if in params
-            if key in self.params:
+            if key in plot_params:
                 # load into switch dictionary
-                self.plot_switches[name] = self.params[key]
+                self.plot_switches[name] = plot_params[key]
             else:
                 self.plot_switches[name] = False
             # if recipe is allowed to use plot (in recipe.set_plots)
