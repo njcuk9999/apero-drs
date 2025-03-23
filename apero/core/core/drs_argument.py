@@ -4078,7 +4078,8 @@ def _check_arg_path(params: ParamDict, arg: DrsArgument,
     if arg.path in params:
         return drs_file.DrsPath(params, params['arg.path'])
     elif arg.path in block_names:
-        return drs_file.DrsPath(params, block_kind=arg.path)
+        return drs_file.DrsPath(params, block_kind=arg.path,
+                                obs_dir=obs_dir.obs_dir)
     else:
         return drs_file.DrsPath(params, arg.path)
 
