@@ -3631,7 +3631,7 @@ CDict.add('BAD_WAVE_REGIONS', value=[],
 # Define regions where fluorescence of oxygen lines that biases the
 # telluric absorption calculation (when observation are taken early in the
 # night)
-CDict.add('TELLU_FLUORESCENCE', value=[[1240, 1290]],
+CDict.add('FLUORESCENCE', value=[],
           dtype=list, dtypei=list, source=__NAME__, group=cgroup,
           description='Define regions where fluorescence of oxygen '
                       'lines that biases the telluric absorption '

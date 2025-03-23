@@ -280,8 +280,13 @@ def fwhm_fp_airy(popt: np.ndarray) -> float:
     #   done in mp.ea_airy_function
     # get the parameters
     amp, x0, w, beta, zp = popt
+
+    part1 = 2 * ((0.5 ** (1 / beta)) - 1)
+    # deal with out of bounds
+    if abs(part1) > 1:
+        return np.nan
     # calculate the half width (inverse of beta)
-    half_width = w * np.arccos(2 * ((0.5 ** (1 / beta)) - 1)) / (2 * np.pi)
+    half_width = w * np.arccos(part1) / (2 * np.pi)
     # calculate the full width
     full_width = 2 * half_width
     # return the FWHM and error on the FWHM
@@ -749,11 +754,11 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
             targetrv = 0.0
     # ----------------------------------------------------------------------
     # need to deal with mask coming from inputs
-    if isinstance(params['INPUTS']['CAL.WAVE.CCF.MASK'], list):
-        ccfmask = params['INPUTS']['CAL.WAVE.CCF.MASK'][0][0]
+    if isinstance(params['INPUTS']['MASK'], list):
+        ccfmask = params['INPUTS']['MASK'][0][0]
     # else mask has come from constants
     else:
-        ccfmask = params['INPUTS']['CAL.WAVE.CCF.MASK']
+        ccfmask = params['INPUTS']['MASK']
     # get the berv
     berv = bprops['USE_BERV']
     # ----------------------------------------------------------------------
@@ -894,14 +899,14 @@ def compute_ccf_fp(params, recipe, infile, image, blaze, wavemap, fiber,
                         func_name)
     noise_thres = pcheck(params, 'CAL.WAVE.CCF.NOISE_THRES', 'maxflux', kwargs,
                          func_name)
-    ccfstep = pcheck(params, 'CAL.WAVE.CCF.WAVE_CCF_STEP', 'ccfstep', kwargs, func_name)
+    ccfstep = pcheck(params, 'CAL.WAVE.CCF.STEP', 'ccfstep', kwargs, func_name)
     ccfwidth = pcheck(params, 'CAL.WAVE.CCF.WIDTH', 'ccfwidth', kwargs, func_name)
     targetrv = pcheck(params, 'CAL.WAVE.CCF.TARGET_RV', 'targetrv', kwargs,
                       func_name)
     ccfmask = pcheck(params, 'CAL.WAVE.CCF.MASK', 'ccfmask', kwargs, func_name)
     ccfnmax = pcheck(params, 'CAL.WAVE.CCF.NORD_MAX', 'ccfnmax', kwargs,
                      func_name)
-    mask_width = pcheck(params, 'CAL.WAVE.CCF.WAVE_CCF_MASK_WIDTH', 'mask_width', kwargs,
+    mask_width = pcheck(params, 'CAL.WAVE.CCF.MASK_WIDTH', 'mask_width', kwargs,
                         func_name)
     mask_units = pcheck(params, 'CAL.WAVE.CCF.MASK_UNITS', 'mask_units', kwargs,
                         func_name)

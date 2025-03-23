@@ -2508,7 +2508,7 @@ def generate_resolution_map(params: ParamDict, recipe: DrsRecipe,
     n_order_bin = pcheck(params, 'CAL.WAVE.RESMAP.ORDER_BINS', func=func_name,
                          override=nbin_order)
     # get number of spatial bins
-    n_spatial_bin = pcheck(params, 'CAL.WAVE.RESMAP.RESMAP_ORDER_BINS', func=func_name,
+    n_spatial_bin = pcheck(params, 'CAL.WAVE.RESMAP.ORDER_BINS', func=func_name,
                            override=nbin_spatial)
     # get low pass filter for hc e2ds file
     filtersize = pcheck(params, 'CAL.WAVE.RESMAP.FILT_SIZE', func=func_name,
@@ -2523,7 +2523,7 @@ def generate_resolution_map(params: ParamDict, recipe: DrsRecipe,
     # get the y limit for the res plot
     res_ylim = pcheck(params, 'CAL.WAVE.HC.RESMAP_YLIM', func=func_name)
     # define the way we fit line profiles
-    fitmode = pcheck(params, 'CAL.WAVE.HC.WAVE_HC_RESMAP_FITTYPE', func=func_name)
+    fitmode = pcheck(params, 'CAL.WAVE.HC.RESMAP_FITTYPE', func=func_name)
 
     # -------------------------------------------------------------------------
     # get parameters from wprops

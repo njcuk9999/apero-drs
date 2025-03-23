@@ -1462,7 +1462,7 @@ KDict.set('KW_TELLUP_DO_PRECLEAN', key='TLPDOCLN', comment='tellu preclean done'
 # Define default water absorption used (tellu pre-cleaning)
 KDict.set('KW_TELLUP_DFLT_WATER', key='TLPDFH2O',
           comment='tellu preclean default H2O abso used',
-          parent='TELLUP_D_WATER_ABSO')
+          parent='OBJ.TELL.PCLEAN.DWATER_ABSO')
 
 # Define default water absorption used (tellu pre-cleaning)
 KDict.set('KW_TELLUP_DFLT_WATER', key='TLPDFH2O',

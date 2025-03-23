@@ -847,7 +847,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     # -------------------------------------------------------------------------
     # mask the fluorescent bands
     fluorescent_mask = np.zeros_like(wavemap, dtype=bool)
-    for fband in pconst.TELLU_FLUORESCENCE():
+    for fband in params['OBJ.TELL.GEN.FLUORESCENCE']:
         reject = (wavemap > fband[0]) & (wavemap < fband[1])
         fluorescent_mask[reject] = True
     # -------------------------------------------------------------------------
@@ -2401,24 +2401,30 @@ def load_templates(params: ParamDict,
 
 def shift_template(params: ParamDict, recipe: DrsRecipe,
                    image: Optional[np.ndarray],
-                   template_props: ParamDict,
+                   tprops: ParamDict,
                    refprops: ParamDict, wprops: ParamDict,
-                   bprops: ParamDict) -> ParamDict:
+                   bprops: ParamDict, rvoffset: float = 0.0,
+                   rvoffseterr: float = 0.0, log: bool = True) -> ParamDict:
     # set function name
     func_name = display_func('shift_template', __NAME__)
     # ------------------------------------------------------------------
     # no template - do nothing
-    if not template_props['HAS_TEMPLATE']:
-        return template_props
+    if not tprops['HAS_TEMPLATE']:
+        return tprops
+    # ------------------------------------------------------------------
+    # reset the 2d and 1d templates (to their pre-shifted values)
+    tprops['TEMP_S2D'] = np.array(tprops['ORIG_TEMP_S2D'])
+    tprops['TEMP_S1D_TABLE'] = np.array(tprops['ORIG_TEMP_S1D_TABLE'])
     # ------------------------------------------------------------------
     # get data from property dictionaries
     # ------------------------------------------------------------------
     # Get the Barycentric correction from berv props
-    dv = bprops['USE_BERV']
+    dv = bprops['USE_BERV'] - (rvoffset / 1000.0)
     # deal with bad berv (nan or None)
     if dv in [np.nan, None] or not isinstance(dv, (int, float)):
         eargs = [dv, func_name]
-        raise AperoCodedException(params, '09-016-00004', targs=eargs)
+        if log:
+            raise AperoCodedException(params, '09-016-00004', targs=eargs)
     # Get the reference wavemap from reference wave props
     wavemap_ref = refprops['WAVEMAP']
     wavefile_ref = os.path.basename(refprops['WAVEFILE'])
@@ -2429,23 +2435,25 @@ def shift_template(params: ParamDict, recipe: DrsRecipe,
     # Interpolate at shifted wavelengths (if we have a e2dsimage)
     # ------------------------------------------------------------------
     # Log that we are shifting the template
-    WLOG(params, '', textentry('40-019-00017'))
+    if log:
+        WLOG(params, '', textentry('40-019-00017'))
     # interpolate at shifted values
     dvshift = mp.relativistic_waveshift(dv, units='km/s')
     # ------------------------------------------------------------------
     # Shift the e2ds to correct wave frame
     # ------------------------------------------------------------------
     # log the shifting of PCA components
-    wargs = [wavefile_ref, wavefile]
-    WLOG(params, '', textentry('40-019-00021', args=wargs))
+    if log:
+        wargs = [wavefile_ref, wavefile]
+        WLOG(params, '', textentry('40-019-00021', args=wargs))
     # shift template e2ds
-    template_e2ds = wave_to_wave(params, template_props['TEMP_S2D'],
-                                           wavemap_ref / dvshift,
-                                           wavemap, reshape=True)
+    template_e2ds = wave_to_wave(params, tprops['TEMP_S2D'],
+                                 wavemap_ref / dvshift,
+                                 wavemap, reshape=True)
     # push into 2D vector shape = 1 by len(s1d_table)
-    tmp_wave = np.array([template_props['TEMP_S1D_TABLE']['wavelength']])
-    tmp_s1d = np.array([template_props['TEMP_S1D_TABLE']['flux']])
-    tmp_s1d_deconv = np.array([template_props['TEMP_S1D_TABLE']['deconv']])
+    tmp_wave = np.array([tprops['TEMP_S1D_TABLE']['wavelength']])
+    tmp_s1d = np.array([tprops['TEMP_S1D_TABLE']['flux']])
+    tmp_s1d_deconv = np.array([tprops['TEMP_S1D_TABLE']['deconv']])
     # shift template s1d
     template_s1d = wave_to_wave(params, tmp_s1d,
                                           tmp_wave / dvshift,
@@ -2454,20 +2462,24 @@ def shift_template(params: ParamDict, recipe: DrsRecipe,
                                                  tmp_wave / dvshift,
                                                  tmp_wave, reshape=False)
     # debug plot - reconstructed spline (in loop)
-    recipe.plot('FTELLU_RECON_SPLINE1', image=image, wavemap=wavemap,
-                template=template_e2ds.ravel(), order=None)
-    # debug plot - reconstructed spline (selected order)
-    recipe.plot('FTELLU_RECON_SPLINE2', image=image, wavemap=wavemap,
-                template=template_e2ds.ravel(),
-                order=params['OBJ.TELLU.FIT.SPLOT_ORDER'])
+    if image is not None:
+        recipe.plot('FTELLU_RECON_SPLINE1', image=image, wavemap=wavemap,
+                    template=template_e2ds.ravel(), order=None)
+        # debug plot - reconstructed spline (selected order)
+        recipe.plot('FTELLU_RECON_SPLINE2', image=image, wavemap=wavemap,
+                    template=template_e2ds.ravel(),
+                    order=params['OBJ.TELLU.FIT.SPLOT_ORDER'])
     # -------------------------------------------------------------------------
     # push back into template props
-    template_props['TEMP_S2D'] = template_e2ds
-    template_props['TEMP_S1D_TABLE']['flux'] = template_s1d
-    template_props['TEMP_S1D_TABLE']['deconv'] = template_s1d_deconv
+    tprops['TEMP_S2D'] = template_e2ds
+    tprops['TEMP_S1D_TABLE']['flux'] = template_s1d
+    tprops['TEMP_S1D_TABLE']['deconv'] = template_s1d_deconv
+    # deal with rv offset
+    tprops['APPROX_RV'] = rvoffset
+    tprops['APPROX_RV_ERR'] = rvoffseterr
     # -------------------------------------------------------------------------
     # return the updated e2ds (if present)
-    return template_props
+    return tprops
 
 
 def get_transmission_files(params, header, fiber, database=None):

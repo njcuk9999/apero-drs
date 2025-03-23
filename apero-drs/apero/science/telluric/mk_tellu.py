@@ -688,7 +688,7 @@ def mk_tellu_write_trans_file(params, recipe, infile, rawfiles, fiber, combine,
     transfile.add_hkey('KW_TELLUP_DO_PRECLEAN',
                        value=tpreprops['OBJ.TELL.PCLEAN.DO_PRECLEANING'])
     transfile.add_hkey('KW_TELLUP_DFLT_WATER',
-                       value=tpreprops['OBJ.TELL.PCLEAN.TELLUP_D_WATER_ABSO'])
+                       value=tpreprops['OBJ.TELL.PCLEAN.DWATER_ABSO'])
     transfile.add_hkey('KW_TELLUP_CCF_SRANGE',
                        value=tpreprops['OBJ.TELL.PCLEAN.CCF_SCAN_RANGE'])
     transfile.add_hkey('KW_TELLUP_CLEAN_OHLINES',

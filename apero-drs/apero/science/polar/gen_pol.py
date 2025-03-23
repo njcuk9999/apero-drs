@@ -1343,8 +1343,8 @@ def calculate_continuum(params: ParamDict, recipe: DrsRecipe, props: ParamDict
     func_name = __NAME__ + '.calculate_continuum()'
     # -------------------------------------------------------------------------
     # get constants from p
-    pol_binsize = params['POLAR_CONT_BINSIZE']
-    pol_overlap = params['POLAR_CONT_OVERLAP']
+    pol_binsize = params['OBJ.POL.MMED.CONT_BINSIZE']
+    pol_overlap = params['OBJ.POL.MMED.CONT_OVERLAP']
     # stokes fit parameters
     stokesi_detection_alg = params['OBJ.POL.GEN.STOKESI_CONT_DET_ALG']
     stokei_iraf_cont_fit_func = params['OBJ.POL.IRAF.CONT_FITFUNC_STOKESI']
@@ -2263,7 +2263,7 @@ def add_polar_keywords(params: ParamDict, props: ParamDict,
                      value=params['OBJ.POL.IRAF.CONT_FITFUNC_POLAR'])
     # define the degree of the polynomial used to fit stokes I continuum
     outfile.add_hkey('KW_POL_S_IRAF_DEGREE',
-                     value=params['OBJ.POL.IRAF.STOKESI_IRAF_CONT_FUNC_ORDER'])
+                     value=params['OBJ.POL.IRAF.CONT_FUNC_ORDER_STOKESI'])
     # define the degree of the polynomial used to fit polar continuum
     outfile.add_hkey('KW_POL_P_IRAF_DEGREE',
                      value=params['OBJ.POL.IRAF.CONT_FUNC_ORDER_POLAR'])

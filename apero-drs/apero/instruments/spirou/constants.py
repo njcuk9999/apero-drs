@@ -1775,6 +1775,11 @@ CDict.set('ABSO_FIT_LOSVEL', value=False, source=__NAME__, group=cgroup)
 # Define bad wavelength regions to mask before correcting tellurics
 CDict.set('BAD_WAVE_REGIONS', value=[], source=__NAME__, group=cgroup)
 
+# Define regions where fluorescence of oxygen lines that biases the
+# telluric absorption calculation (when observation are taken early in the
+# night)
+CDict.set('FLUORESCENCE', value=[[1240, 1290]], source=__NAME__, group=cgroup)
+
 # =============================================================================
 # OBJECT: TELLURIC PRE-CLEANING SETTINGS
 # =============================================================================
