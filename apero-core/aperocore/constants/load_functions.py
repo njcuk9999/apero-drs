@@ -11,17 +11,17 @@ Created on 2024-09-06 at 16:30
 """
 import argparse
 import os
-from typing import Any, Dict, List, Optional, Tuple, Union
+import time
+from typing import Any, Dict, List, Union
 
-from aperocore.base import base
-from aperocore.core import drs_base_classes as base_class
-from aperocore.constants.param_functions import ParamDict
-from aperocore.constants import constant_functions
 from aperocore import drs_lang
-from aperocore.core import drs_exceptions
+from aperocore.base import base
+from aperocore.constants import constant_functions
+from aperocore.constants.param_functions import ParamDict
+from aperocore.constants.param_functions import SubParamDict
+from aperocore.core import drs_log
 from aperocore.core import drs_misc
 from aperocore.core import drs_text
-from aperocore.core import drs_log
 
 # =============================================================================
 # Define variables
@@ -573,6 +573,168 @@ def add_ext_config_list(config_list: List[Union[ConstDict, KeywordDict]],
         config_list.append(econst.get_nested(key))
     # return the updated config list
     return config_list
+
+
+# =============================================================================
+# Define starting point functions
+# =============================================================================
+def starting_point(params: ParamDict, imode_key: str,
+                   demo_module) -> ParamDict:
+    """
+    Modify the parameters by a specific starting point (i.e. a demo)
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param imode_key: str, the key of the instrument mode (in params)
+    :param demo_module: the module for demos (needs dict DEMOS)
+
+    :return: ParamDict, the updated parameter dictionary of constants
+    """
+    # deal with instrument mode not set
+    params = ask_for_missing_args(params, include_keys=[imode_key])
+    # section start
+    msg = ('\nPlease choose a demo mode or press enter '
+           'to start from default values')
+    drs_text.cprint(msg, 'g')
+    # get user selected instrument mode
+    imode = params[imode_key]
+    # deal with no demos for this mode
+    if imode not in demo_module.DEMOS:
+        wmsg = (f'No demos available for {imode} '
+                f'-- starting from default values.')
+        WLOG(params, 'warning', wmsg)
+        return params
+    # get the demos for this instrument
+    idemos = demo_module.DEMOS[imode]
+    # display the possible starting points for this instrument mode
+    counters = dict()
+    # loop through demos
+    for it, demo_mode in enumerate(idemos):
+        # get the demo class
+        demo_inst = idemos[demo_mode]
+        # get the info dictionary
+        info_dict = demo_inst.INFO
+        # push the name of the demo for debugging purposes
+        info_dict['__NAME__'] = demo_inst.__NAME__
+        # display info for mode
+        _print_info(params, it + 1, info_dict)
+        # add to counter
+        counters[str(it + 1)] = demo_mode
+
+    # ask user to select mode
+    while True:
+        userinput = str(input('\nEnter a number or press enter:\t'))
+        # clean user input
+        userinput = userinput.lower().strip()
+        # deal with user options
+        if userinput in ['', 'none', '0', 'null']:
+            return params
+        elif userinput in counters.keys():
+            return _load_info(params, idemos[counters[userinput]])
+        else:
+            msg = f'Invalid input: {0}'
+            margs = [userinput]
+            WLOG(params, 'warning', msg.format(*margs))
+
+
+def _print_info(params: ParamDict, it: int, info_dict: Dict[str, str]):
+    """
+    Print info about a demo mode
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param it: int, index of the demo mode (for user selectiong)
+    :param info_dict: Dict[str, str], the info about a demo mode
+
+    :return: str, the info about a demo mode
+    """
+    # add header bar
+    drs_text.cprint('\n' + '*' * 50, 'b')
+    # deal with no title in info (required)
+    if 'title' not in info_dict:
+        emsg = 'Demo {0} INFO does not have a title'
+        eargs = [info_dict['__NAME__']]
+        raise AperoCodedException(params, None, message=emsg.format(*eargs))
+    # add title text
+    drs_text.cprint('* {0}: {1}'.format(it, info_dict['title']), 'b')
+    # add header bar
+    drs_text.cprint('*' * 50, 'b')
+    # add rest of the info
+    for info_key in info_dict:
+        # already dealt with title
+        if info_key in ['title', '__NAME__']:
+            continue
+        # print other info
+        msg = '\t{0}: {1}'
+        margs = [info_key, info_dict[info_key]]
+        print(msg.format(*margs))
+
+
+def _load_info(params: ParamDict, demo_inst) -> ParamDict:
+    """
+    Load the info from a demo
+
+    :param params: ParamDict
+    :param demo_inst: module - the demo python code selected
+
+    :return: The updated parameter dictionary
+    """
+    # get the cdict
+    cdict = demo_inst.Cdict
+    # get the title
+    title = demo_inst.INFO['title']
+    # print overriding
+    msg = 'Starting from DEMO: "{0}"'
+    margs = [title]
+    WLOG(params, 'info', msg.format(*margs))
+    # log that we are overriding the following values
+    msg = 'Overriding the following values:'
+    WLOG(params, '', msg)
+    # add a pause here
+    time.sleep(0.1)
+    # loop around keys in storage
+    for key in cdict.storage:
+        # only deal with keys already defined in parameters
+        if key in params:
+            # don't override values from the command line
+            if 'command' in params.sources[key]:
+                continue
+            # get new value
+            new_value = cdict.storage[key].value
+            # get old value
+            old_value = params[key]
+            # only update keys that have changed
+            if new_value != old_value:
+                # print the value we are starting with
+                _print_parameters(key, new_value)
+                # set the value
+                params.set(key, new_value, source=demo_inst.__NAME__,
+                           instance=params.instances[key])
+    # return parameters
+    return params
+
+
+def _print_parameters(key: str, value: Any):
+    """
+    Print a parameter similar to how it would appear in a yaml dict
+    
+    :param key: str, the name of the parameter in the ParamDict
+    :param value: Any, the value of the parameter
+
+    :return: None, prints to standard output
+    """
+    # ignore param dicts
+    if isinstance(value, (ParamDict, SubParamDict, ConstDict)):
+        return
+    if isinstance(value, list):
+        drs_text.cprint(f'|| {key}:', 'g')
+        for val in value:
+            drs_text.cprint(f'|| \t - {val}')
+    elif isinstance(value, dict):
+        drs_text.cprint(f'|| {key}:', 'g')
+        for subkey in value:
+            drs_text.cprint(f'|| \t {subkey}: {value[subkey]}', 'g')
+    else:
+        drs_text.cprint(f'|| {key}: {value}', 'g')
+
 
 
 # =============================================================================
