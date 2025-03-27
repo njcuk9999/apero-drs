@@ -133,37 +133,34 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         WLOG(params, 'error', emsg)
         return locals()
     # -------------------------------------------------------------------------
-    if objname in recal_template:
-        # setup object and template names
-        object_science = str(objname)
-        object_template = str(objname)
-        # run lbl template for self
-        try:
-            # print progress
-            # TODO: Add to language database
-            msg = 'Running LBL template for {0}_{1}'
-            margs = [object_science, object_template]
-            WLOG(params, 'info', msg.format(*margs))
-            # run compute
-            lblrtn = lbl_template.main(object_science=object_science,
-                                       object_template=object_template,
-                                       overwrite=False, data_type=data_type,
-                                       **kwargs)
-            # log messages from lbl
-            gen_lbl.add_log(params, lblrtn)
-            # add output file(s) to database (no tempname used as
-            # template=objname)
-            gen_lbl.add_output(params, recipe, header_fits_file=None,
-                               drsfile=files.lbl_template_file,
-                               objname=object_science, tempname='')
+    # setup object and template names
+    object_science = str(objname)
+    object_template = str(objname)
+    # run lbl template for self
+    try:
+        # print progress
+        # TODO: Add to language database
+        msg = 'Running LBL template for {0}_{1}'
+        margs = [object_science, object_template]
+        WLOG(params, 'info', msg.format(*margs))
+        # run compute
+        lblrtn = lbl_template.main(object_science=object_science,
+                                   object_template=object_template,
+                                   overwrite=False, data_type=data_type,
+                                   **kwargs)
+        # log messages from lbl
+        gen_lbl.add_log(params, lblrtn)
+        # add output file(s) to database (no tempname used as
+        # template=objname)
+        gen_lbl.add_output(params, recipe, header_fits_file=None,
+                           drsfile=files.lbl_template_file,
+                           objname=object_science, tempname='')
 
-        except Exception as e:
-            # TODO: Add to language database
-            emsg = 'LBL Template Exception [{0}_{1}] {2}: {3}'
-            eargs = [object_science, object_template, type(e), str(e)]
-            WLOG(params, 'error', emsg.format(*eargs))
-    else:
-        lbltemp = None
+    except Exception as e:
+        # TODO: Add to language database
+        emsg = 'LBL Template Exception [{0}_{1}] {2}: {3}'
+        eargs = [object_science, object_template, type(e), str(e)]
+        WLOG(params, 'error', emsg.format(*eargs))
     # -------------------------------------------------------------------------
     # setup object and template names
     object_science = str(objname)
