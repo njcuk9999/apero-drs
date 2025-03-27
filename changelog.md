@@ -2,6 +2,186 @@ Changelog
 =========
 
 
+0.7.293 (2025-03-27)
+--------------------
+- [APERO] do not use apero templates for LBL + add some extra info for
+  ARI. [Neil Cook]
+- [APERO] fix a bug with --fpref setting path. [Neil Cook]
+- [APERO] print runstring. [Neil Cook]
+- [APERO] Add --to_file + --verify to apero processing. [Neil Cook]
+- [APERO] Add a --to_file and --verify options to processing [UNFINISHED
+  & UNTESTED] [Neil Cook]
+- Merge branch 'refs/heads/v0.7.291-stable-test' into v0.7.293-live.
+  [Neil Cook]
+- [APERO] Fix support for old LBL requirements (get LBL from a specific
+  branch) [Neil Cook]
+- [APERO] Fix support for old LBL requirements (get LBL from a specific
+  branch) [Neil Cook]
+- Merge branch 'refs/heads/v0.7.291-stable-test' into v0.7.293-live.
+  [Neil Cook]
+- [APERO] Update how we define the fibers in shape_ref (for SPIP) now
+  generic across NIRPS/SPIROU/SPIP. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.292-stable-test' into
+  v0.7.292-stable-test. [Neil Cook]
+
+  # Conflicts:
+  #	apero/core/instruments/nirps_ha/file_definitions.py
+  #	apero/core/instruments/nirps_he/file_definitions.py
+- [NIRPS] Fix problems with DAY-SKY-SKY. [Neil Cook]
+- [APERO] Add offline/online run.inis. [Neil Cook]
+- [APERO] correct peak2peak to pixel2pixel. [Neil Cook]
+- [APERO] Add UN2 file definitions. [Neil Cook]
+- [APERO] Telluric fixes (EA) [Neil Cook]
+- [APERO] P2P apply change to nirps fit_tellu. [Neil Cook]
+- [APERO] P2P apply change to nirps fit_tellu. [Neil Cook]
+- [APERO] P2P apply change to nirps fit_tellu. [Neil Cook]
+- [APERO] P2P apply change to nirps fit_tellu. [Neil Cook]
+- [APERO] Add measured P2P + P2P in bands (for QC in tellu) [Neil Cook]
+- [APERO] Add measured P2P + P2P in bands (for QC in tellu) [Neil Cook]
+- [APERO] Add measured SNR + SNR in bands (for QC in tellu) [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.292-experimental' into
+  v0.7.292-experimental. [Neil Cook]
+- [APERO-DRS] Update run.ini files and don't skip when
+  RECAL_TEMPLATES=True. [Neil Cook]
+- [APERO] HClines and FPlines should match ref wave HClines and FPlines
+  [EA] [Neil Cook]
+- [ARI] update spirou hashes. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.292-experimental' into
+  v0.7.292-experimental. [Neil Cook]
+- [APERO] Fix time col key (KW_MID_OBS_TIME) [Neil Cook]
+- [APERO] fix the path that is given when loading database.yaml. [Neil
+  Cook]
+- Merge branch 'v0.7.291-stable-test' into v0.7.292-experimental. [Neil
+  Cook]
+- [APERO] Fix tellu_preclean so it has sky_props passed. [Neil Cook]
+- [APERO] Fix mk_tellu error where lowpassfilter fails (require 2*smooth
+  width of pixels to be valid) [Neil Cook]
+- [APERO] Fix edge cases where expo_water or expo_other goes crazy.
+  [Neil Cook]
+- [APERO] Nirps needs sky_model_he and spirou needs to still use
+  sky_pcas (until we have a sky model) [Neil Cook]
+- [APERO] Nirps needs sky_model_he and spirou needs to still use
+  sky_pcas (until we have a sky model) [Neil Cook]
+- [ARI] Fix bug with vsys (put BERV in km/s not m/s) + fix graph labels.
+  [Neil Cook]
+- [ARI] Fix bug with vsys (put BERV in km/s not m/s) + fix graph labels.
+  [Neil Cook]
+- [APERO] fix the VSYS parameter. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.292-experimental' into
+  v0.7.292-experimental. [Neil Cook]
+- [ARI] Fix for None in all_names. [Neil Cook]
+- [ARI] Fix for None in all_names. [Neil Cook]
+- [ARI] Fix for None in all_names. [Neil Cook]
+- [APERO] Do not pickle for linear run. [Neil Cook]
+- [APERO] Fix error in nirps_ha and spirou SKYCORR_RATIO_THRES.author.
+  [Neil Cook]
+- [APERO] Try to fix multi-processing in the apero processing validation
+  step. [Neil Cook]
+- [APERO] Set REPROCESS_MP_TYPE_VAL default to linear (until fixed
+  memory issue) [Neil Cook]
+- [APERO] Correct TRG_TYPE (after sun_altitude) [Neil Cook]
+- [APERO] Correct spirou keywords (KW_NIGHT_OBS) [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.292-experimental' into
+  v0.7.292-experimental. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.292-experimental' into
+  v0.7.292-experimental. [Neil Cook]
+- [APERO] Fix LazyList (no pickle-able from pytz.all_timezones) [Neil
+  Cook]
+- [APERO]  If the blaze is below 0.25 we consider that the blaze and
+  flat correction are not reliable. [Neil Cook]
+- [ARI] Fix for having no ext files (crashes debugging) [Neil Cook]
+- [APERO] add twilight from v0.8. [Neil Cook]
+- [APERO] add twilight from v0.8. [Neil Cook]
+- [APERO] update version+changelog. [Neil Cook]
+- [APERO] correct peak2peak to pixel2pixel. [Neil Cook]
+- [APERO] Add UN2 file definitions. [Neil Cook]
+- [APERO] Telluric fixes (EA) [Neil Cook]
+- [APERO] P2P apply change to nirps fit_tellu. [Neil Cook]
+- [APERO] P2P apply change to nirps fit_tellu. [Neil Cook]
+- [APERO] P2P apply change to nirps fit_tellu. [Neil Cook]
+- [APERO] P2P apply change to nirps fit_tellu. [Neil Cook]
+- [APERO] Add measured P2P + P2P in bands (for QC in tellu) [Neil Cook]
+- [APERO] Add measured P2P + P2P in bands (for QC in tellu) [Neil Cook]
+- [APERO] Add measured SNR + SNR in bands (for QC in tellu) [Neil Cook]
+- [APERO-DRS] Update run.ini files and don't skip when
+  RECAL_TEMPLATES=True. [Neil Cook]
+- [APERO] HClines and FPlines should match ref wave HClines and FPlines
+  [EA] [Neil Cook]
+- [ARI] update spirou hashes. [Neil Cook]
+- [APERO] Fix time col key (KW_MID_OBS_TIME) [Neil Cook]
+- [APERO] fix the path that is given when loading database.yaml. [Neil
+  Cook]
+- [APERO] Fix tellu_preclean so it has sky_props passed. [Neil Cook]
+- [APERO] Fix mk_tellu error where lowpassfilter fails (require 2*smooth
+  width of pixels to be valid) [Neil Cook]
+- [APERO] Fix edge cases where expo_water or expo_other goes crazy.
+  [Neil Cook]
+- [APERO] Nirps needs sky_model_he and spirou needs to still use
+  sky_pcas (until we have a sky model) [Neil Cook]
+- [APERO] Nirps needs sky_model_he and spirou needs to still use
+  sky_pcas (until we have a sky model) [Neil Cook]
+- [ARI] Fix bug with vsys (put BERV in km/s not m/s) + fix graph labels.
+  [Neil Cook]
+- [ARI] Fix bug with vsys (put BERV in km/s not m/s) + fix graph labels.
+  [Neil Cook]
+- [APERO] fix the VSYS parameter. [Neil Cook]
+- [ARI] Fix for None in all_names. [Neil Cook]
+- [ARI] Fix for None in all_names. [Neil Cook]
+- [ARI] Fix for None in all_names. [Neil Cook]
+- [APERO] Do not pickle for linear run. [Neil Cook]
+- [APERO] Fix error in nirps_ha and spirou SKYCORR_RATIO_THRES.author.
+  [Neil Cook]
+- [APERO] Try to fix multi-processing in the apero processing validation
+  step. [Neil Cook]
+- [APERO] Set REPROCESS_MP_TYPE_VAL default to linear (until fixed
+  memory issue) [Neil Cook]
+- [APERO] Correct TRG_TYPE (after sun_altitude) [Neil Cook]
+- [APERO] Correct spirou keywords (KW_NIGHT_OBS) [Neil Cook]
+- [APERO] Fix LazyList (no pickle-able from pytz.all_timezones) [Neil
+  Cook]
+- [APERO]  If the blaze is below 0.25 we consider that the blaze and
+  flat correction are not reliable. [Neil Cook]
+- [ARI] Fix for having no ext files (crashes debugging) [Neil Cook]
+- [APERO] add twilight from v0.8. [Neil Cook]
+- [APERO] add twilight from v0.8. [Neil Cook]
+- [APERO] update version+changelog. [Neil Cook]
+- [APERO] Update run.ini files. [Neil Cook]
+- [ARI] correct yaml files CDTBACK BADPIX-->BACKGROUND. [Neil Cook]
+- [ARI] update ARI plots (LBL RV plot) + add ARI plot (BERV coverage) +
+  fix duckdb problem with pandas 2.2.3. [Neil Cook]
+- [ARI] update ARI plots (LBL RV plot) + add ARI plot (BERV coverage) +
+  fix duckdb problem with pandas 2.2.3. [Neil Cook]
+- [ARI] update ARI plots (LBL RV plot) + add ARI plot (BERV coverage) +
+  fix duckdb problem with pandas 2.2.3. [Neil Cook]
+- [ARI] add a traceback when ARI objects cause an error. [Neil Cook]
+- [ARI] ari obs page + ari plot adjustments. [Neil Cook]
+- [ARI] ari obs page + ari plot adjustments. [Neil Cook]
+- [ARI] ari obs page + ari plot adjustments. [Neil Cook]
+- [ARI] update debug plots. [Neil Cook]
+- [APERO] update requirements to match lbl. [Neil Cook]
+- [APERO] update sky_model_ha.fits. [Neil Cook]
+- [ARI] Continue add debug plots. [Neil Cook]
+- [APERO] telluric fixes with EA. [Neil Cook]
+- [APERO] telluric correction - sky corr. [Neil Cook]
+- [ARI] Add Etiennes lbl plot. [Neil Cook]
+- [ARI] Add Etiennes lbl plot. [Neil Cook]
+- [ARI] Add Etiennes lbl plot. [Neil Cook]
+- [NIRPS] change DARK_DARK_SKY to EFF_SKY_SKY and add NIGHT_SKY_SKY.
+  [Neil Cook]
+- [NIRPS] change DARK_DARK_SKY to EFF_SKY_SKY and add NIGHT_SKY_SKY.
+  [Neil Cook]
+- [APERO] change trans threshold to exp(-1) (was exp(-2)) [Neil Cook]
+- [NIRPS] do not correct sky with ref fiber. [Neil Cook]
+- [APERO] Fix bad thermal correction below 1900 nm [EA] [Neil Cook]
+- [APERO] Etienne telluric fixes. [Neil Cook]
+- [APERO] Etienne telluric fixes. [Neil Cook]
+- [APERO] Etienne telluric fixes. [Neil Cook]
+- [APERO] Sort output drift table by MJDMID (Issue #803) [Neil Cook]
+- [APERO] Fix drift code (Issue #803) [Neil Cook]
+- [APERO] Update modules to LBL version requirements. [Neil Cook]
+- [APERO] Add lbl recipes to science_seq. [Neil Cook]
+
+
 0.7.292 (2024-12-01)
 --------------------
 - [APERO] Update run.ini files. [Neil Cook]
@@ -105,6 +285,10 @@ Changelog
 - [APERO] Add doc string for _find_special_targets. [Neil Cook]
 - [APERO] Deal with SCIENCE_TARGETS not being in astrometric database
   [Issue #780] [Neil Cook]
+
+
+0.7.290 (2024-08-06)
+--------------------
 - [NIRPS] Fix the orders remove in telluric pre-cleaning (was 47-48 now
   43-45) [Neil Cook]
 - [APERO] Add columns to reject (USED for file, and BAD_ASTROMETRICS for
@@ -134,6 +318,14 @@ Changelog
 - [APERO] fix for database updating raw files. [Neil Cook]
 - Merge branch 'v0.7.289-stable-test' into v0.7.290-stable-test. [Neil
   Cook]
+- [APERO] tapas_all_sp.fits.gz - fix column name (duplicate ch_4 -->
+  o_3) [Neil Cook]
+- [APERO] apero_astrometrics.py - add a check for objects in database
+  that all files match DRSOBJN to that expected by database. (Issue
+  #756) [Neil Cook]
+- [APERO] apero_astrometrics.py - add a check for objects in database
+  that all files match DRSOBJN to that expected by database. (Issue
+  #756) [Neil Cook]
 - [APERO] Correct problem with ARI finder chart (path not existing)
   [Neil Cook]
 - [APERO] Give ARI an argument that allows displaying available
@@ -203,18 +395,6 @@ Changelog
 - [APERO] apero_ri.py - fix problems with finding charts. [Neil Cook]
 - [APERO] background fixes (both at the badpix calibration level and in
   the extraction code [from EA] [Neil Cook]
-
-
-0.7.290 (2024-03-28)
---------------------
-- [APERO] tapas_all_sp.fits.gz - fix column name (duplicate ch_4 -->
-  o_3) [Neil Cook]
-- [APERO] apero_astrometrics.py - add a check for objects in database
-  that all files match DRSOBJN to that expected by database. (Issue
-  #756) [Neil Cook]
-- [APERO] apero_astrometrics.py - add a check for objects in database
-  that all files match DRSOBJN to that expected by database. (Issue
-  #756) [Neil Cook]
 - [APERO] apero_astrometrics.py - add a check for objects in database
   that all files match DRSOBJN to that expected by database. (Issue
   #756) [Neil Cook]
@@ -262,6 +442,10 @@ Changelog
 - [ARI] Remove ARI sidebar. [Neil Cook]
 - [ARI] Add BERV to extracted 2D header file. [Neil Cook]
 - [APERO] update date/changelog. [Neil Cook]
+
+
+0.7.289 (2024-03-12)
+--------------------
 - [APERO] correct typo. [Neil Cook]
 - [APERO] Add --objname to reject code (Issue https://github.com/users/n
   jcuk9999/projects/7/views/5?pane=issue&itemId=54972211) [Neil Cook]
@@ -322,10 +506,6 @@ Changelog
 - [APERO] update version/changelog/documentation. [Neil Cook]
 - [APERO-ARI] fix when we have no data adding dprtypes to object. [Neil
   Cook]
-
-
-0.7.289 (2024-02-13)
---------------------
 - [APERO] apero_ri.py - Fix for unique values containing None. [Neil
   Cook]
 - [APERO] apero_ri.py - Fix for unique values containing None. [Neil
@@ -619,12 +799,12 @@ Changelog
 - Continue work on running lbl from APERO. [Neil Cook]
 - Allow LBL to be run from APERO [UNFINISHED & UNTESTED] [Neil Cook]
 - Update date/version/changelog/readme. [Neil Cook]
+
+
+0.7.287 (2023-08-08)
+--------------------
 - [APERO] Correct that ribbon cannot load in raw file path. [Neil Cook]
 - [APERO] Correct that ribbon cannot save in raw file path. [Neil Cook]
-
-
-0.7.287 (2023-08-07)
---------------------
 - [APERO] fix apero_get and null/nan passed_all_qc column. [Neil Cook]
 - [APERO] apero_get if PASSED_ALL_QC is Null we should accept it as
   passed QC (as we don't know otherwise) [Neil Cook]
@@ -667,6 +847,10 @@ Changelog
   Cook]
 - [APERO] drs_astrometrics.py - fix using dataframe.append (should be
   pd.concat) [Neil Cook]
+
+
+0.7.286 (2023-07-12)
+--------------------
 - Merge remote-tracking branch 'origin/v0.7.286-live' into
   v0.7.286-live. [Neil Cook]
 - Merge branch 'v0.7.285-live' into v0.7.286-live. [Neil Cook]
@@ -674,10 +858,6 @@ Changelog
   replace the current name (and that name must be 3 characters long at
   least). [Neil Cook]
 - [APERO] update date/version/changelog/notes. [Neil Cook]
-
-
-0.7.286 (2023-07-12)
---------------------
 - Merge branch 'v0.7.285-live' into v0.7.286-live. [Neil Cook]
 - Drs_processing.py - add change to return of _linear_generate_id. [Neil
   Cook]
