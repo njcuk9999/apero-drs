@@ -142,10 +142,10 @@ def run_apero_get(params: ParamDict):
                    symlinks=lbl_symlinks,
                    test=testmode, since=since)
     # run apero get for templates (no DPRTYPE as they could be different)
-    apero_get.main(objnames='*', outtypes=lbl_template_outtypes,
-                   outpath=outpath_templates, fibers=lbl_scifibers,
-                   symlinks=False, nosubdir=True,
-                   test=testmode, since=since)
+    # apero_get.main(objnames='*', outtypes=lbl_template_outtypes,
+    #                outpath=outpath_templates, fibers=lbl_scifibers,
+    #                symlinks=False, nosubdir=True,
+    #                test=testmode, since=since)
     # run apero get for simultaneous FP
     apero_get.main(objnames='None', dprtypes=simfp_dprtypes,
                    outtypes='EXT_E2DS_FF', nosubdir=True,
