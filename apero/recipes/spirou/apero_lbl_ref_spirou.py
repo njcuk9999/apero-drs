@@ -111,7 +111,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         return locals()
     # -------------------------------------------------------------------------
     # deal with reset
-    if params['RUN_LBL_RESET']:
+    if params['LBL_RESET']:
         # get program name
         if params['INPUTS']['PROGRAM'] not in ['None', None, '']:
             program = params['INPUTS']['PROGRAM']
