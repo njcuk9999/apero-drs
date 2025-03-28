@@ -730,20 +730,41 @@ def write_to_file(params: ParamDict, outlist: Dict[int, dict]):
     """
     # storage for output lines
     lines = []
-    # deal with length of outlist
-    nzero = int(np.ceil(np.log10(max(list(outlist.keys())))) + 1)
+    # get the max value
+    maxval = max(list(outlist.keys()))
+    nzero = max([4, len(str(maxval)) + 1])
+    # sort keys
+    keys = list(outlist.keys())
+    keys = np.sort(keys)
+
+    prev_groupnum = None
     # loop around full outlist
     for key in outlist:
-        # get the zero-filled string
-        strkey = str(key).zfill(nzero)
-        # get the run string
+        # get parameters out of outlist
         runstring = outlist[key]['RUNSTRING']
+        priority = outlist[key]['PNUM']
+        groupnum = outlist[key]['PGROUP']
+        groupname = outlist[key]['PGROUPNAME']
+        # add a comment to split up groups
+        if groupnum != prev_groupnum:
+            lines.append(f'# Group {groupnum} | {groupname}')
+            prev_groupnum = groupnum
+        # get the zero-filled string
+        strkey = str(priority).zfill(nzero)
         # push into lines
         lines.append(f'id{strkey} = {runstring}')
 
     # if we don't have a file just use the pid
     if params['INPUTS']['TO_FILE'] is None:
-        filename = params['PID'] + '_apero_processing_ids.txt'
+        # define the path to the processing files
+        path = os.path.join(params['DRS_DATA_MSG'], 'report', 'processing')
+        # deal with path not existing
+        if not os.path.exists(path):
+            os.makedirs(path)
+        # get the basename for this processing log
+        basename = params['PID'] + '_apero_processing_ids.txt'
+        # get the filename
+        filename = os.path.join(path, basename)
     else:
         filename = params['INPUTS']['TO_FILE']
     # print that we are writing file
@@ -2454,7 +2475,7 @@ def gen_global_condition(params: ParamDict, findexdbm: FileIndexDatabase,
 # Define processing functions
 # =============================================================================
 def _linear_process(params, runlist, number=0, cores=1, event=None,
-                    group=None, return_dict=None):
+                    group=None, return_dict=None, groupnum=-1, groupname='None'):
     # deal with empty return_dict
     if return_dict is None:
         return_dict = dict()
@@ -2482,6 +2503,9 @@ def _linear_process(params, runlist, number=0, cores=1, event=None,
         pp['CORETOT'] = cores
         pp['GROUP'] = group
         pp['STATE'] = 'None'
+        pp['PNUM'] = priority
+        pp['PGROUP'] = groupnum
+        pp['PGROUPNAME'] = groupname
         # ------------------------------------------------------------------
         # add drs group to keyword arguments
         pp['ARGS']['DRS_GROUP'] = group
@@ -2735,7 +2759,8 @@ def _multi_process_process(params, runlist, cores, groupname=None,
         for r_it, runlist_group in enumerate(group):
             # get args
             args = (params, runlist_group, r_it + 1,
-                    cores, event, groupname, return_dict)
+                    cores, event, groupname, return_dict, g_it,
+                    groupnames[g_it])
             # get parallel process
             process = Process(target=_linear_process, args=args)
             process.start()
@@ -2793,7 +2818,7 @@ def _multi_process_pool(params, runlist, cores, groupname=None,
         # populate params for each sub group
         for r_it, runlist_group in enumerate(group):
             args = [params, [runlist_group], r_it + 1,
-                    cores, event, groupname]
+                    cores, event, groupname, None, g_it, groupnames[g_it]]
             params_per_process.append(args)
         # start parellel jobs
         with get_context('spawn').Pool(cores, maxtasksperchild=1) as pool:
@@ -2843,7 +2868,7 @@ def _multi_process_pathos(params, runlist, cores, groupname=None,
         # populate params for each sub group
         for r_it, runlist_group in enumerate(group):
             args = [params, [runlist_group], r_it + 1,
-                    cores, None, groupname]
+                    cores, None, groupname, None, g_it, groupnames[g_it]]
             params_per_process.append(args)
         # transpose the params axis
         params_per_process2 = list(zip(*params_per_process))
