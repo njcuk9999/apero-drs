@@ -11,6 +11,7 @@ Created on 2023-08-09 at 11:14
 
 @author: cook
 """
+import sys
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from apero import lang
@@ -93,6 +94,45 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # Main Code
     # ----------------------------------------------------------------------
     mainname = __NAME__ + '._main()'
+    # step 1: make all directories (lbl is bad at multiprocessing and
+    #         creating directories
+    gen_lbl.run_mkdirs(params)
+
+    # -------------------------------------------------------------------------
+    # try to import lbl (may not exist)
+    try:
+        from lbl.recipes import lbl_reset
+        # remove any current arguments from sys.argv
+        sys.argv = [__NAME__]
+    except ImportError:
+        # TODO: Add to language database
+        emsg = 'Cannot run LBL (not installed) please install LBL'
+        WLOG(params, 'error', emsg)
+        return locals()
+    # -------------------------------------------------------------------------
+    # deal with reset
+    if params['RUN_LBL_RESET']:
+        # get program name
+        if params['INPUTS']['PROGRAM'] not in ['None', None, '']:
+            program = params['INPUTS']['PROGRAM']
+        else:
+            program = None
+        # set up arguments for lbl
+        kwargs = dict()
+        kwargs['instrument'] = params['INSTRUMENT']
+        kwargs['data_dir'] = params['LBL_PATH']
+        kwargs['data_source'] = 'APERO'
+        skip_done = params['INPUTS'].get('SKIP_DONE', True)
+        kwargs['program'] = program
+        # print progress
+        # TODO: Add to language database
+        msg = 'Running LBL reset'
+        WLOG(params, 'info', msg)
+        # run compute
+        lblrtn = lbl_reset.main(**kwargs)
+        # log messages from lbl
+        gen_lbl.add_log(params, lblrtn)
+    # -------------------------------------------------------------------------
 
     # step 1: use apero get to copy files to lbl directory
     #          symlink blaze to calib

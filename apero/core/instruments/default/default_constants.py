@@ -367,7 +367,7 @@ __all__ = [
     'PLOT_POLAR_FIT_CONT', 'PLOT_POLAR_CONTINUUM', 'PLOT_POLAR_RESULTS',
     'PLOT_POLAR_STOKES_I', 'PLOT_POLAR_LSD',
     # LBL settings
-    'LBL_FILE_DEFS', 'LBL_DPRTYPES', 'LBL_TEMPLATE_FILE_DEFS',
+    'RUN_LBL_RESET', 'LBL_FILE_DEFS', 'LBL_DPRTYPES', 'LBL_TEMPLATE_FILE_DEFS',
     'LBL_SIM_FP_DPRTYPES', 'LBL_SYMLINKS', 'LBL_FRIENDS',
     'LBL_SPECIFIC_DATATYPES', 'LBL_RECAL_TEMPLATE', 'LBL_MULTI_OBJLIST',
     'LBL_DTEMP',
@@ -5442,6 +5442,13 @@ PLOT_POLAR_LSD = Const('PLOT_POLAR_LSD', value=False,
 # LBL SETTINGS
 # =============================================================================
 cgroup = 'LBL SETTINGS'
+
+# Whether to reset the whole of LBL before processing
+RUN_LBL_RESET = Const('RUN_LBL_RESET', value=False, dtype=bool,
+                      source=__NAME__, user=True, active=True, group=cgroup,
+                      description='Whether to completely reset the whole of '
+                                  'LBL before processing')
+
 # Define the file definition type (DRSOUTID) for LBL input files
 LBL_FILE_DEFS = Const('LBL_FILE_DEFS', value=None, dtype=str, source=__NAME__,
                       user=False, active=True, group=cgroup,
