@@ -2157,15 +2157,15 @@ def target_stats_table(target_props: Dict[str, Any], stat_path: str,
     # Add objnames header
     if obnames_header is not None:
         target_dict['Description'].append('OB Name(s) in headers')
-        target_dict['Value'].append(objnames_header)
+        target_dict['Value'].append(obnames_header)
     # Add objnames header
     if pinames_header is not None:
         target_dict['Description'].append('PI name(s) in headers')
-        target_dict['Value'].append(objnames_header)
+        target_dict['Value'].append(pinames_header)
     # Add objnames header
     if progid_header is not None:
         target_dict['Description'].append('Project/Run name(s) in headers')
-        target_dict['Value'].append(objnames_header)
+        target_dict['Value'].append(progid_header)
     # --------------------------------------------------------------------------
     # change the columns names
     target_dict2 = dict()
