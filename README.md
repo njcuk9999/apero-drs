@@ -95,7 +95,7 @@ conda create --name apero-env python=3.10
 conda activate apero-env
 ```
 
-Note you need to activate `apero-env` each time before running any sosssise command.
+Note you need to activate `apero-env` each time before running any SOSSISSE command.
 
 #### Step 3: Install apero with pip 
 

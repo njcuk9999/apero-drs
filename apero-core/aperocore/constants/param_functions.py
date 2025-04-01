@@ -1181,6 +1181,19 @@ class SubParamDict():
     def __setitem__(self, key, value):
         self.param_dict.data[f'{self.path}{key}'] = value
 
+    def __contains__(self, key):
+        return f'{self.path}{key}' in self.param_dict.data.keys()
+
+    def keys(self):
+        _keys = self.param_dict.data.keys()
+        keys = []
+        for key in _keys:
+            keys.append(key[self.path_len:])
+        return keys
+
+    def values(self):
+        return self.param_dict.data.values()
+
     def set(self, key: str, value: Any, source: str, instance: Any):
         self.param_dict.set(f'{self.path}{key}', value, source, instance)
 

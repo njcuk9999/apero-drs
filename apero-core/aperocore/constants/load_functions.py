@@ -623,6 +623,8 @@ def starting_point(params: ParamDict, imode_key: str,
     # ask user to select mode
     while True:
         userinput = str(input('\nEnter a number or press enter:\t'))
+        # New line for clarity
+        print()
         # clean user input
         userinput = userinput.lower().strip()
         # deal with user options
@@ -701,6 +703,9 @@ def _load_info(params: ParamDict, demo_inst) -> ParamDict:
             new_value = cdict.storage[key].value
             # get old value
             old_value = params[key]
+            # do not update values that are None
+            if new_value is None:
+                continue
             # only update keys that have changed
             if new_value != old_value:
                 # print the value we are starting with

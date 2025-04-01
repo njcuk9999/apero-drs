@@ -824,6 +824,26 @@ class ConstantsDict:
         # return the new constants
         return new_constants
 
+    def add_sub_cdict(self, key: str, cdict: 'ConstantsDict',
+                      source: str):
+        """
+        Take one constants dictionary and push it into this one
+        (as a sub-dictionary)
+
+        :param key: str, the key to add as a sub-dictionary
+        :param cdict: ConstantsDict, the ConstantsDict to add as a sub-dictionary
+        :param source: str, the source to add as a sub-dictionary
+
+        :return: None, updates self.storage
+        """
+        # loop around all keys in supplied cdict
+        for old_key in cdict.storage.keys():
+            # define a new key
+            new_key = f'{key}.{old_key}'
+            # push into storage
+            self.storage[new_key] = cdict.storage[old_key].copy(source)
+
+
     # -------------------------------------------------------------------------
     # yaml functionality
     # -------------------------------------------------------------------------
