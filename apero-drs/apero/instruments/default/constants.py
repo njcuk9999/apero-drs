@@ -4746,6 +4746,12 @@ CDict.add('RES_POWER_GUESS', value=None,
 cgroup = 'OBJ.LBL'
 CDict.add_group(cgroup, description='OBJECT.LBL: LBL SETTINGS')
 
+# Whether to reset the whole of LBL before processing
+CDict.add('RESET', value=False, dtype=bool, source=__NAME__, user=True,
+          active=True, group=cgroup,
+          description='Whether to completely reset the whole of LBL before '
+                      'processing')
+
 # Define the file definition type (DRSOUTID) for LBL input files
 CDict.add('FILE_DEFS', value=None, dtype=str, source=__NAME__,
           user=False, active=True, group=cgroup,
