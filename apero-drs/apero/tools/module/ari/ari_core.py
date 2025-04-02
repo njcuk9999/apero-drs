@@ -838,7 +838,9 @@ class AriObject:
         target_props['RV'] = f'{self.rv} [mas/yr] ({self.rv_source})'
         target_props['Aliases'] = self.aliases
         target_props['OBJNAMES_HEADER'] = f'{self.objnames_header}'
-        
+        target_props['OB Name(s)'] = self._all_header_info('PP_OBNAME')
+        target_props['PI Name(s)'] = self._all_header_info('PP_PI_NAME')
+        target_props['Program ID(s)'] = self._all_header_info('PP_PROG_ID')
         # -----------------------------------------------------------------
         # construct the stats
         # -----------------------------------------------------------------
@@ -852,6 +854,30 @@ class AriObject:
         # -----------------------------------------------------------------
         # update the paths
         self.target_stats_table = target_base_name
+
+    def _all_header_info(self, key: str) -> Union[str, None]:
+        """
+        Return a string list of all unique header values for this header key
+
+        :param key: str, the header key
+
+        :return: str, the header values as a string comma-separated list
+        """
+        # deal with no key defined in header dictionary
+        if key not in self.header_dict:
+            return None
+        # get all values
+        all_values = self.header_dict[key]
+        # get unique values (as strings)
+        unique_value = []
+        for value in all_values:
+            if str(value) not in unique_value:
+                unique_value.append(str(value))
+        # deal with no values (shouldn't be possible)
+        if len(unique_value) > 1:
+            return None
+        # return this as a comma separated list
+        return ', '.join(unique_value)
 
     # -------------------------------------------------------------------------
     # Spectrum functions
@@ -2094,7 +2120,9 @@ def target_stats_table(target_props: Dict[str, Any], stat_path: str,
     rv = target_props['RV']
     aliases = target_props['Aliases']
     objnames_header = target_props['OBJNAMES_HEADER']
-
+    obnames_header = target_props['OB Name(s)']
+    pinames_header = target_props['PI Name(s)']
+    progid_header = target_props['Program ID(s)']
     # --------------------------------------------------------------------------
     # construct the stats table
     # --------------------------------------------------------------------------
@@ -2133,6 +2161,18 @@ def target_stats_table(target_props: Dict[str, Any], stat_path: str,
     # Add objnames header
     target_dict['Description'].append('OBJECT name(s) in headers')
     target_dict['Value'].append(objnames_header)
+    # Add objnames header
+    if obnames_header is not None:
+        target_dict['Description'].append('OB Name(s) in headers')
+        target_dict['Value'].append(obnames_header)
+    # Add objnames header
+    if pinames_header is not None:
+        target_dict['Description'].append('PI name(s) in headers')
+        target_dict['Value'].append(pinames_header)
+    # Add objnames header
+    if progid_header is not None:
+        target_dict['Description'].append('Project/Run name(s) in headers')
+        target_dict['Value'].append(progid_header)
     # --------------------------------------------------------------------------
     # change the columns names
     target_dict2 = dict()

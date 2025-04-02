@@ -70,6 +70,18 @@ headers:
       key: PVERSION
       label: APERO PP Version
       dtype: str
+    PP_OBNAME:
+      key: HIERARCH ESO OBS NAME
+      label: OB Name
+      dtype: str
+    PP_PI_NAME:
+      key: HIERARCH ESO OBS PI-COI NAME
+      label: OB Name
+      dtype: str
+    PP_PROG_ID:
+      key: HIERARCH ESO OBS PROG ID
+      label: Program ID
+      dtype: str
   ext:
     EXT_MJDMID:
       key: MJDMID

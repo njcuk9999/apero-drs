@@ -73,6 +73,14 @@ headers:
       key: PVERSION
       label: APERO PP Version
       dtype: str
+    PP_PI_NAME:
+      key: PI_NAME
+      label: OB Name
+      dtype: str
+    PP_PROG_ID:
+      key: RUNID
+      label: Program ID
+      dtype: str
   ext:
     EXT_MJDMID:
       key: MJDMID

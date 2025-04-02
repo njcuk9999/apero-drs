@@ -721,22 +721,29 @@ def write_to_file(params: ParamDict, outlist: Dict[int, dict]):
     :return: None, writes to --to_file file or if not specified writes to
              {pid}_apero_processing_ids.txt
     """
-
     # storage for output lines
     lines = []
-    # deal with no runs in outlist
-    if len(outlist) == 0:
-        nzero = 0
-        lines.append('No runs generated')
-    # otherwise figure out the number of leading zeros we need
-    else:
-        nzero = int(np.ceil(np.log10(max(list(outlist.keys())))) + 1)
+    # get the max value
+    maxval = max(list(outlist.keys()))
+    nzero = max([4, len(str(maxval)) + 1])
+    # sort keys
+    keys = list(outlist.keys())
+    keys = np.sort(keys)
+
+    prev_groupnum = None
     # loop around full outlist
     for key in outlist:
-        # get the zero-filled string
-        strkey = str(key).zfill(nzero)
-        # get the run string
+        # get parameters out of outlist
         runstring = outlist[key]['RUNSTRING']
+        priority = outlist[key]['PNUM']
+        groupnum = outlist[key]['PGROUP']
+        groupname = outlist[key]['PGROUPNAME']
+        # add a comment to split up groups
+        if groupnum != prev_groupnum:
+            lines.append(f'# Group {groupnum} | {groupname}')
+            prev_groupnum = groupnum
+        # get the zero-filled string
+        strkey = str(priority).zfill(nzero)
         # push into lines
         lines.append(f'id{strkey} = {runstring}')
     # -------------------------------------------------------------------------
@@ -2494,7 +2501,7 @@ def _linear_process(params: ParamDict, runlist: List[Run],
                     number=0, cores=1, event=None,
                     group=None, return_dict=None,
                     stop_at_exception: bool = False,
-                    test_run: bool = False):
+                    test_run: bool = False, groupnum=-1, groupname='None'):
     # deal with empty return_dict
     if return_dict is None:
         return_dict = dict()
@@ -2520,6 +2527,9 @@ def _linear_process(params: ParamDict, runlist: List[Run],
         pp['CORETOT'] = cores
         pp['GROUP'] = group
         pp['STATE'] = 'None'
+        pp['PNUM'] = priority
+        pp['PGROUP'] = groupnum
+        pp['PGROUPNAME'] = groupname
         # ------------------------------------------------------------------
         # add drs group to keyword arguments
         pp['ARGS']['DRS.GROUP'] = group
@@ -2777,7 +2787,7 @@ def _multi_process_process(params, runlist, cores, groupname=None,
             # get args
             args = (params, runlist_group, r_it + 1,
                     cores, event, groupname, return_dict,
-                    stop_at_exception, test_run)
+                    stop_at_exception, test_run, g_it, groupnames[g_it])
             # get parallel process
             process = Process(target=_linear_process, args=args)
             process.start()
@@ -2838,7 +2848,7 @@ def _multi_process_pool(params, runlist, cores, groupname=None,
         for r_it, runlist_group in enumerate(group):
             args = [params, [runlist_group], r_it + 1,
                     cores, event, groupname, None,
-                    stop_at_exception, test_run]
+                    stop_at_exception, test_run, g_it, groupnames[g_it]]
             params_per_process.append(args)
         # start parellel jobs
         with get_context('spawn').Pool(cores, maxtasksperchild=1) as pool:
@@ -2891,7 +2901,7 @@ def _multi_process_pathos(params, runlist, cores, groupname=None,
         # populate params for each sub group
         for r_it, runlist_group in enumerate(group):
             args = [params, [runlist_group], r_it + 1, cores, None, groupname,
-                    None, stop_at_exception, test_run]
+                    None, stop_at_exception, test_run, g_it, groupnames[g_it]]
             params_per_process.append(args)
         # transpose the params axis
         params_per_process2 = list(zip(*params_per_process))
