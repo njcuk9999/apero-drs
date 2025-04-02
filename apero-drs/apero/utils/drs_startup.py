@@ -1869,7 +1869,8 @@ def _display_run_time_arguments(recipe, fkwargs=None, printonly=False,
     # get parameters
     params = recipe.params
     # display the run string
-    WLOG(params, 'info', '\n' + recipe.runstring, wrap=False)
+    WLOG(params, 'info', '\n' + recipe.runstring, wrap=False,
+         printonly=printonly, logonly=logonly, no_timestamp=True)
     # get special keys
     skeys = _get_recipe_keys(recipe.specialargs, remove_prefix='-',
                              add=['--help', '-h'])

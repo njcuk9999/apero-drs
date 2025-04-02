@@ -142,7 +142,7 @@ class Log:
                                     program=program, colour=colour,
                                     counter=counter)
         self.filefmt = FileFormat(theme='OFF', code=code, program=program,
-                                  rmessage=rmessage)
+                                  rmessage=rmessage, counter=counter)
         # clean any handlers in logging currently
         self.logger.handlers = []
         # deal with console
@@ -481,13 +481,18 @@ class ConsoleFormat(logging.Formatter):
         if code is None:
             code = ' '
         # coounter changes how we display to the console
-        if counter == 0:
+        if counter < 0:
+            self.fmt = '%(message)s'
+        elif counter == 0:
             self.fmt = '%(asctime)s.%(msecs)03d|'
             self.fmt += f'{code}|{program}| %(message)s'
         else:
             self.fmt = '  L %(message)s'
         # set this as the default logging format
-        self.default = logging.Formatter(self.fmt, datefmt='%Y-%m-%d %H:%M:%S')
+        if counter < 0:
+            self.default = logging.Formatter(self.fmt, style='%')
+        else:
+            self.default = logging.Formatter(self.fmt, datefmt='%Y-%m-%d %H:%M:%S')
         # define empty format
         self.empty_fmt = '%(message)s'
         # define debug format
@@ -504,7 +509,10 @@ class ConsoleFormat(logging.Formatter):
         # define critical format
         self.critial_fmt = self.cprint.fail + self.fmt + self.cprint.endc
         # initialize parent
-        logging.Formatter.__init__(self, fmt, datefmt='%Y-%m-%d %H:%M:%S')
+        if counter < 0:
+            logging.Formatter.__init__(self, fmt, style='%')
+        else:
+            logging.Formatter.__init__(self, fmt, datefmt='%Y-%m-%d %H:%M:%S')
 
     def format(self, record):
         """
@@ -546,7 +554,8 @@ class FileFormat(logging.Formatter):
     def __init__(self, fmt: str = "%(levelno)s: %(msg)s", theme=None,
                  code: Union[str, None] = None,
                  program: Union[str, None] = None,
-                 rmessage: Union[str, None] = None):
+                 rmessage: Union[str, None] = None,
+                 counter: int = 0):
         """
         Initialize the formatter for log file output
 
@@ -565,14 +574,27 @@ class FileFormat(logging.Formatter):
             program = ''
         if code is None:
             code = ' '
-        self.fmt = '%(asctime)s.%(msecs)03d|'
+        # deal with time stamp formatting
+        if counter < 0:
+            self.fmt = ''
+        else:
+            self.fmt = '%(asctime)s.%(msecs)03d|'
         # push code/program/re
         if rmessage is not None and len(rmessage) > 0:
-            self.fmt += f'{code}|{program}| {rmessage}'
+            if counter < 0:
+                self.fmt += f'%(message)s {rmessage}'
+            else:
+                self.fmt += f'{code}|{program}| {rmessage}'
         else:
-            self.fmt += f'{code}|{program}| %(message)s'
+            if counter < 0:
+                self.fmt = '%(message)s'
+            else:
+                self.fmt += f'{code}|{program}| %(message)s'
         # set this as the default logging format
-        self.default = logging.Formatter(self.fmt, datefmt='%Y-%m-%d %H:%M:%S')
+        if counter < 0:
+            self.default = logging.Formatter(self.fmt, style='%')
+        else:
+            self.default = logging.Formatter(self.fmt, datefmt='%Y-%m-%d %H:%M:%S')
         # define empty format
         self.empty_fmt = '%(message)s'
         # define debug format
@@ -589,7 +611,10 @@ class FileFormat(logging.Formatter):
         # define critical format
         self.critial_fmt = self.fmt
         # initialize parent
-        logging.Formatter.__init__(self, fmt, datefmt='%Y-%m-%d %H:%M:%S')
+        if counter < 0:
+            logging.Formatter.__init__(self, fmt, style='%')
+        else:
+            logging.Formatter.__init__(self, fmt, datefmt='%Y-%m-%d %H:%M:%S')
 
     def format(self, record):
         """
@@ -769,7 +794,8 @@ class Wlog:
                  message: Union[drs_lang.Text, str, None] = None,
                  printonly: bool = False, logonly: bool = False,
                  wrap: bool = True, option: str = None, colour: str = None,
-                 raise_exception: bool = True, sublevel: Optional[int] = None):
+                 raise_exception: bool = True, sublevel: Optional[int] = None,
+                 no_timestamp: bool = False):
         """
         Main function to log messages from the code
         """
@@ -803,6 +829,10 @@ class Wlog:
         counter = 0
         # loop around message and log them
         for message1, message2 in zip(messages1, messages2):
+            # override counter if no timestamp required
+            if no_timestamp:
+                counter = -1
+            # generate the log kwargs
             log_kwargs = dict(message=message1, code=code, program=option,
                               to_console=to_console, to_file=to_file,
                               rmessage=message2, colour=colour, key=key,
