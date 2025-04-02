@@ -12,6 +12,7 @@ Created on 2024-10-18 at 12:05
 import argparse
 import os
 import sys
+import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -188,14 +189,18 @@ class SetupArgument:
         # set the help string
         kwargs['help'] = self.helpstr
         # set the parser action
-        if self.dtype in [bool, 'bool'] and self.default_value is None:
-            kwargs['action'] = 'store_true'
+        if self.dtype in [bool, 'bool']:
+            kwargs['nargs'] = '?'
+            kwargs['type'] = drs_text.true_text
             return kwargs
         else:
             kwargs['action'] = 'store'
+        # ---------------------------------------------------------------------
         # deal with type
-        typetrans = dict(zip(base.SIMPLE_STYPES, base.SIMPLE_TYPES))
-        if self.dtype is not None:
+        if self.dtype is not None and 'type' not in kwargs:
+            # get type translator
+            typetrans = dict(zip(base.SIMPLE_STYPES, base.SIMPLE_TYPES))
+            # deal with having type
             if self.dtype in typetrans:
                 kwargs['type'] = typetrans[self.dtype]
             else:
@@ -554,6 +559,24 @@ def run_setup(params: ParamDict, sargs: Dict[str, SetupArgument]):
     # ----------------------------------------------------------------------
     clean_install(params)
 
+    # ----------------------------------------------------------------------
+    # print out instructions on what to do next
+    # ----------------------------------------------------------------------
+    msg = 'Installation complete.'
+    msg += '\n\n To launch any apero recipe you must activate your APERO profile'
+    msg += '\n\n To do this type the follow (or add to your aliases): '
+    msg += '\n\n For Linux/Mac:'
+    msg += '\n\t source apero_profile.sh {0}'
+    msg += '\n\n For Windows:'
+    msg += '\n\t aprero_profile.bat {0}'
+    msg += '\n\n To see all available apero profiles currently installed:'
+    msg += '\n\n For Linux/Mac:'
+    msg += '\n\t source apero_profile.sh'
+    msg += '\n\n For Windows:'
+    msg += '\n\t aprero_profile.bat'
+
+    WLOG(params, 'info', msg.format(params['NAME']), colour='magenta')
+
 
 # =============================================================================
 # Define other functions
@@ -562,6 +585,9 @@ def display_title():
     """
     Print the title of the script
     """
+    global PROG_START
+    # set clock running
+    PROG_START = time.time()
     # set function name
     # _ = display_func('_display_drs_title', __NAME__)
     # get colours
@@ -588,6 +614,24 @@ def display_title():
              printonly=True)
     # print and log
     WLOG(None, '', drs_header)
+
+
+def end_all(params, recipename='apero_setup.py'):
+    """
+    Quick end script
+    """
+    if params is None:
+        params = drs_log.MPARAMS
+    # get the time now
+    duration = time.time() - PROG_START
+    # log the success
+    iargs = [str(params.get('RECIPE', recipename))]
+    WLOG(params, 'info', params['LOG.HEADER'])
+    msg = textentry('40-003-00001', args=iargs)
+    if duration is not None:
+        msg += f'\t({duration:.3f} seconds)'
+    WLOG(params, 'info', msg)
+    WLOG(params, 'info', params['LOG.HEADER'])
 
 
 def fix_config_path(params: ParamDict) -> ParamDict:

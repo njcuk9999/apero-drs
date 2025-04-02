@@ -21,7 +21,6 @@ from signal import signal, SIGINT
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
-from lbl.core.base_classes import LblException
 
 from apero import plotting
 from apero.base import base as apero_base
@@ -45,6 +44,13 @@ from aperocore.core import drs_log
 from aperocore.core import drs_misc
 from aperocore.core import drs_text
 from aperocore.core.drs_base_classes import Printer
+
+# deal with not having LBL installed
+try:
+    from lbl.core.base_classes import LblException
+except:
+    LblException = drs_log.AperoCodedException
+    warnings.warn('LBL is not installed.')
 
 # =============================================================================
 # Define variables

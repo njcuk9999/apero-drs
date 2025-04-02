@@ -53,6 +53,9 @@ def main() -> ParamDict:
     # run setup
     drs_setup.run_setup(params, sargs)
     # -------------------------------------------------------------------------
+    # end splash
+    drs_setup.end_all(params)
+    # -------------------------------------------------------------------------
     # return params
     return params
 
