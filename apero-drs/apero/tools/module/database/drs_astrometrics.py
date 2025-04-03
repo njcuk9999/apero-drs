@@ -35,6 +35,7 @@ from aperocore.core import drs_log
 from apero.instruments.default import instrument as instrument_mod
 from apero.utils import drs_startup
 from apero.io import drs_fits
+from apero.core import drs_file
 from apero.science import preprocessing as prep
 from apero.tools.module.database import manage_databases
 from apero.tools.module.setup import drs_installation
@@ -595,8 +596,13 @@ class AstroObj:
         # ---------------------------------------------------------------------
         # get paths from database
         otable = findexdbm.get_entries('ABSPATH, OBS_DIR', condition=condition)
-        # get the absolute path column
-        paths = np.array(otable['ABSPATH'])
+        # get the absolute paths
+        paths = drs_file.DrsPath.get_abs_paths(params,
+                                               block_kinds=otable['BLOCK_KIND'],
+                                               obs_dirs=otable['OBS_DIRS'],
+                                               basenames=otable['FILENAME'])
+        paths = np.array(paths)
+        # get observation directories
         obs_dirs = np.array(otable['OBS_DIR'])
         # ---------------------------------------------------------------------
         # deal with no paths

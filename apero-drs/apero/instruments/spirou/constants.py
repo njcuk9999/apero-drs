@@ -2769,9 +2769,6 @@ CDict.set('OBJECT_TYPES', value=['OBJECT'], source=__NAME__, group=cgroup)
 # Define the pi name column name for raw file table
 CDict.set('PI_NAME_COL', value='KW_PI_NAME', source=__NAME__, group=cgroup)
 
-# Define the absolute file column name for raw file table
-CDict.set('ABS_FILE_COL', value='ABSPATH', source=__NAME__, group=cgroup)
-
 # Define the modified file column name for raw file table
 CDict.set('MODIFIED_COL', value='LAST_MODIFIED', source=__NAME__, group=cgroup)
 

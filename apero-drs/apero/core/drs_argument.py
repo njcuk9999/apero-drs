@@ -4091,7 +4091,10 @@ def _fits_database_query(params: ParamDict, drsfiles: List[DrsInputFile],
             header[drs_key] = table[key].iloc[row]
         # ---------------------------------------------------------------------
         # get filename
-        filename_it = table['ABSPATH'].iloc[row]
+        filename_it = drs_file.DrsPath.get_abs_paths(params,
+                                   block_kinds=table['BLOCK_KIND'].iloc[row],
+                                   obs_dirs=table['OBS_DIR'].iloc[row],
+                                   basenames=table['FILENAME'].iloc[row])
         # load header
         header = drs_fits.read_header(params, filename_it)
         # ---------------------------------------------------------------------

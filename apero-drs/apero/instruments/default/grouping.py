@@ -22,6 +22,7 @@ Created on 2020-12-2020-12-01 11:28
 @author: cook
 """
 import itertools
+import os
 from collections import OrderedDict
 from typing import Any, Dict, Iterable, List, Tuple, Union
 
@@ -556,13 +557,24 @@ def group_by_polar_sequence(rargs: Dict[str, DrsArgument],
         """
         # define some specific columns for polar recipe - these will need to
         #   change if column definitions change
-        path_col = 'ABSPATH'
+        block_col = 'BLOCK_KIND'
         obs_dir_col = 'OBS_DIR'
+        file_col = 'FILENAME'
         num_col = 'KW_NEXP'
         seq_col = 'KW_CMPLTEXP'
         obj_col = 'KW_OBJNAME'
+        # ---------------------------------------------------------------------
+        # storage for psuedo abspaths
+        paths = []
+        for row in range(len(table)):
+            # get psuedo abspath
+            abspath = os.path.join(table[block_col], table[obs_dir_col],
+                                   table[file_col])
+            # append to list
+            paths.append(str(abspath))
+        # ---------------------------------------------------------------------
         # sort by filename (assume filename should put files in order)
-        sort = np.argsort(table[path_col])
+        sort = np.argsort(paths)
         table1 = Table(table[sort])
         # remove masked values (if table has masks)
         if hasattr(table1, 'mask'):

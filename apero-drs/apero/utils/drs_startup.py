@@ -800,7 +800,6 @@ def index_files(params: ParamDict, recipe: DrsRecipe):
         # set up drs path
         outfile = recipe.output_block.copy()
         # update parameters
-        outfile.abspath = str(output['ABSPATH'])
         outfile.obs_dir = str(output['OBS_DIR'])
         outfile.basename = str(output['FILENAME'])
         # get parameters for add entry

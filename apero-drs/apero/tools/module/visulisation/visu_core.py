@@ -24,6 +24,7 @@ from aperocore.core import drs_log
 from apero.instruments.default import instrument as instrument_mod
 from apero.utils import drs_recipe
 from apero.io import drs_fits
+from apero.core import drs_file
 from apero.base import base as apero_base
 from apero.instruments import select
 
@@ -178,12 +179,16 @@ def get_file(block_kind: str,  obs_dir: str, identifier: str,
     condition = condition.format(block_kind, obs_dir, identifier, output,
                                  fiber)
     # query database
-    table = findexdbm.get_entries('ABSPATH, OBS_DIR', condition=condition)
+    table = findexdbm.get_entries('BLOCK_KIND, OBS_DIR, FILENAME',
+                                  condition=condition)
     # deal with no entries
     if table is None or len(table) == 0:
         return None, None
     # use the first entry as the filename
-    filename = table['ABSPATH'].iloc[0]
+    filename =  drs_file.DrsPath.get_abs_paths(findexdbm.params,
+                                               block_kinds=table['BLOCK_KIND'].iloc[0],
+                                               obs_dirs=table['OBS_DIRS'].iloc[0],
+                                               basenames=table['FILENAME'].iloc[0])
     # load file with correct extension
     if get_data:
         data = drs_fits.readfits(PARAMS, filename, ext=hdu)

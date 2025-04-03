@@ -729,8 +729,6 @@ class NirpsHa(instrument_mod.Instrument):
             return self.index_cols
         # column definitions
         index_cols = DatabaseColumns()
-        index_cols.add(name='ABSPATH', is_unique=True,
-                       datatype=sqlalchemy.String(base.DEFAULT_PATH_MAXC))
         index_cols.add(name='OBS_DIR', datatype=sqlalchemy.String(200),
                        is_index=True)
         index_cols.add(name='FILENAME', is_index=True,
@@ -758,7 +756,7 @@ class NirpsHa(instrument_mod.Instrument):
                                                    'BLOCK_KIND', 'OBS_DIR',
                                                    'FILENAME'))
         # manage unique groups
-        index_cols.uniques.append('ABSPATH')
+        index_cols.uniques += ['BLOCK_KIND', 'OBS_DIR', 'FILENAME']
         # return column object
         return index_cols
 

@@ -260,10 +260,16 @@ def get_non_tellu_objs(params: ParamDict, fiber, filetype=None,
         fkwargs['KW_FIBER'] = fiber
     # find files (and return pandas dataframe of all columns
     dataframe = drs_utils.find_files(params, block_kind='red', filters=fkwargs,
-                                     columns='*', findexdbm=findexdbm)
+                                     columns='BLOCK_KIND,OBS_DIRS,'
+                                             'FILENAME,KW_OBJNAME',
+                                     findexdbm=findexdbm)
     # convert data frame to table
     obj_table = Table.from_pandas(dataframe)
-    obj_filenames = obj_table['ABSPATH']
+    # get absolute paths to files
+    obj_filenames = drs_file.DrsPath.get_abs_paths(params,
+                                                   block_kinds=obj_table['BLOCK_KIND'],
+                                                   obs_dirs=obj_table['OBS_DIRS'],
+                                                   basenames=obj_table['FILENAME'])
     # filter out telluric stars
     obj_stars, obj_names = [], []
     # loop around object table and only keep non-telluric stars

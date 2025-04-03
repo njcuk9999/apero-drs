@@ -19,7 +19,7 @@ from aperocore.base import base
 from aperocore.constants import param_functions
 from aperocore.constants import load_functions
 from apero.core import drs_database
-from aperocore.core import drs_exceptions
+from apero.core import drs_file
 from aperocore.core import drs_base_classes as base_class
 from aperocore.core import drs_misc
 from aperocore.core import drs_text
@@ -884,8 +884,20 @@ def find_files(params: ParamDict, block_kind: str, filters: Dict[str, str],
             # add subconditions to condition
             condition += ' AND ({0})'.format(' OR '.join(subconditions))
     # get columns for this condition
-    return findexdbm.get_entries(columns, block_kind=block_kind,
-                                 condition=condition)
+    if columns == 'ABSPATH':
+        
+        ftable = findexdbm.get_entries('BLOCK_KIND,OBS_DIR,FILENAME', 
+                                       block_kind=block_kind,
+                                       condition=condition)
+        absfiles =  drs_file.DrsPath.get_abs_paths(params, 
+                                                   block_kinds=ftable['BLOCK_KIND'],
+                                                   obs_dirs=ftable['OBS_DIRS'],
+                                                   basenames=ftable['FILENAME'])
+        return absfiles
+    
+    else:
+        return findexdbm.get_entries(columns, block_kind=block_kind,
+                                     condition=condition)
 
 
 def uniform_time_list(times: Union[List[float], np.ndarray], number: int

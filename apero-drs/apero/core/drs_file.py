@@ -50,7 +50,6 @@ from apero.instruments.default import instrument as instrument_mod
 from aperocore import drs_lang
 from aperocore import math as mp
 from apero.constants import path_definitions as pathdef
-from aperocore.core import drs_exceptions
 from aperocore.core import drs_base_classes as base_class
 from aperocore.core import drs_text
 from aperocore.core import drs_misc
@@ -118,6 +117,8 @@ out.RefCalibOutFile, out.SetOutFile, out.LBLOutFile,
 out.PostOutFile, None]
 # get printable characters
 printable = set(string.printable)
+# cache of block+obsdirs
+PATH_CACHE = dict()
 
 
 # =============================================================================
@@ -176,6 +177,70 @@ class DrsPath:
         if _update:
             self.update()
 
+    @staticmethod
+    def get_abs_paths(params: ParamDict, 
+                      block_kinds: Union[List[str], np.ndarray, str, None],
+                      obs_dirs: Union[List[str], np.ndarray, str, None],
+                      basenames: Union[List[str], np.ndarray, str, None]
+                      ) -> Union[List[str], str, None]:
+        """
+        Get the aboslute path for every entry given.
+        If block_kind, obs_dirs and basenames are a string one string is 
+        returned
+        
+        :param params: ParamDict, parameter dictionary of constants
+        :param block_kinds: Union[List[str], np.ndarray, str], the block kinds
+        :param obs_dirs: Union[List[str], np.ndarray, str], the observation directories
+        :param basenames: Union[List[str], np.ndarray, str], the basenames
+        
+        :return: Absolute paths for every entry given
+        """
+        # cached so we don't do this lots of times
+        global PATH_CACHE
+        # flag single entry
+        single_entry = False
+        # deal with only one block kind/obs_dir
+        if (isinstance(block_kinds, str) and isinstance(obs_dirs, str)
+            and isinstance(basenames, str)):
+            block_kinds = [block_kinds]
+            obs_dirs = [obs_dirs]
+            basenames = [basenames]
+            single_entry = True
+        elif len(block_kinds) != len(obs_dirs) != len(basenames):
+            msg = 'block_kinds and obs_dirs must have the same length'
+            raise AperoCodedException(params, None, msg)
+        # loop around block kinds
+        for it in range(len(block_kinds)):
+            # don't add empty block kinds
+            if block_kinds[it] is None:
+                continue
+            # get a unique block_kind + obs_dir path
+            upath = f'{block_kinds[it]}:{obs_dirs[it]}'
+            # if upath isn't in PATH_CACHE we make it
+            if upath not in PATH_CACHE.keys():
+                # use the DrsPath class to make it
+                path_it = DrsPath(params, block_kind=block_kinds[it],
+                                  obs_dir=obs_dirs[it])
+                # update the cache with this path
+                PATH_CACHE[upath] = path_it.abspath
+        # storage for basenames
+        abspaths = []
+        # add basenames
+        for it, basename in enumerate(basenames):
+            # if block kind is None, assume basename is absolute
+            if block_kinds[it] is None:
+                abspaths.append(basename)
+            # get a unique block_kind + obs_dir path
+            upath = f'{block_kinds[it]}:{obs_dirs[it]}'
+            # add absolute path
+            abspaths.append(os.path.join(upath, basename))
+        # if in single entry mode return just the first entry
+        if single_entry:
+            return abspaths[0]
+        else:
+            return abspaths
+            
+            
     @staticmethod
     def get_blocks(params: ParamDict, check: bool = True) -> List[BlockPath]:
         """
@@ -1903,8 +1968,6 @@ class DrsInputFile:
         iheader_cols = pconst.FILEINDEX_HEADER_COLS()
         hkeys = list(iheader_cols.names)
         # htypes = list(iheader_cols.dtypes)
-        # deal with absolute path of file
-        self.output_dict['ABSPATH'] = str(self.filename)
         # deal with night name of file
         self.output_dict['OBS_DIR'] = str(self.params['OBS_DIR'])
         # deal with basename of file
@@ -3890,8 +3953,6 @@ class DrsFitsFile(DrsInputFile):
         for col in hkeys:
             htypes.append(iheader_cols.get_datatype(col))
         # ---------------------------------------------------------------------
-        # deal with absolute path of file
-        self.output_dict['ABSPATH'] = str(self.filename)
         # deal with night name of file
         self.output_dict['OBS_DIR'] = str(self.params['OBS_DIR'])
         # deal with basename of file
@@ -6201,7 +6262,10 @@ class DrsOutFileExtension:
         if filename is not None:
             self.filename = filename
         else:
-            self.filename = table['ABSPATH'][row]
+            self.filename = DrsPath.get_abs_paths(params, 
+                                           block_kinds=table['BLOCK_KIND'][row],
+                                           obs_dirs=table['OBS_DIR'][row],
+                                           basenames=table['FILENAME'][row])
         # deal with setting data type (unless already set which overrides)
         if self.drsfile == 'table':
             self.datatype = 'table'
@@ -6372,7 +6436,10 @@ class DrsOutFileExtension:
                 return False, reason
             else:
                 # else take the first entry
-                filename = entries['ABSPATH'][0]
+                filename = DrsPath.get_abs_paths(params,
+                                            block_kinds=entries['BLOCK_KIND'][0],
+                                            obs_dirs=entries['OBS_DIR'][0],
+                                            basenames=entries['FILENAME'][0])
                 # append filenames
                 filenames.append(filename)
             # -----------------------------------------------------------------
@@ -6971,9 +7038,11 @@ class DrsOutFile(DrsInputFile):
                 criteria = str(cfilename)
                 # set link kind
                 linkkind = None
-                # add table
+                # add table (calib file has no block kind / obs dir)
                 exttable = Table()
-                exttable['ABSPATH'] = [cfilename]
+                exttable['BLOCK_KIND'] = None
+                exttable['OBS_DIR'] = None
+                exttable['FILENAME'] = [cfilename]
             # -----------------------------------------------------------------
             elif mode == 'telluric':
                 # try to find the telluric entry that matches the link header
@@ -6990,9 +7059,12 @@ class DrsOutFile(DrsInputFile):
                 criteria = str(tfilename)
                 # set link kind
                 linkkind = None
-                # add table
+                # add table (tellu file has no block kind / obs dir)
                 exttable = Table()
-                exttable['ABSPATH'] = [tfilename]
+                exttable['BLOCK_KIND'] = None
+                exttable['OBS_DIR'] = None
+                exttable['FILENAME'] = [tfilename]
+
             # -----------------------------------------------------------------
             # if in science mode we query the index database (or ptable from
             #   index database) and return a row (or rows) associated with
@@ -7572,8 +7644,6 @@ class DrsOutFile(DrsInputFile):
         # get required keys for index database
         iheader_cols = pconst.FILEINDEX_HEADER_COLS()
         hkeys = list(iheader_cols.names)
-        # deal with absolute path of file
-        self.output_dict['ABSPATH'] = str(self.filename)
         # deal with night name of file
         self.output_dict['OBS_DIR'] = str(self.params['OBS_DIR'])
         # deal with basename of file

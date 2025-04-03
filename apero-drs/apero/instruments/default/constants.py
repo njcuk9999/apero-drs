@@ -5551,12 +5551,6 @@ CDict.add('PI_NAME_COL', value=None, dtype=str,
           description=('Define the pi name column name for '
                        'raw file table'))
 
-# Define the absolute file column name for raw file table
-CDict.add('ABS_FILE_COL', value=None, dtype=str,
-          source=__NAME__, group=cgroup,
-          description=('Define the absolute file column '
-                       'name for raw file table'))
-
 # Define the modified file column name for raw file table
 CDict.add('MODIFIED_COL', value=None, dtype=str,
           source=__NAME__, group=cgroup,

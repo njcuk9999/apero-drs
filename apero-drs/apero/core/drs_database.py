@@ -1658,7 +1658,6 @@ class FileIndexDatabase(DatabaseManager):
         # ------------------------------------------------------------------
         # create insert dictionary
         insert_dict = dict()
-        insert_dict['ABSPATH'] = str(basefile.abspath)
         insert_dict['OBS_DIR'] = str(basefile.obs_dir)
         insert_dict['FILENAME'] = str(basefile.basename)
         insert_dict['BLOCK_KIND'] = block_kind
@@ -1912,7 +1911,10 @@ class FileIndexDatabase(DatabaseManager):
         # deal with files we don't need (already have)
         etable = self.get_entries('ABSPATH, OBS_DIR, LAST_MODIFIED',
                                   block_kind=block_kind)
-        raw_exclude_files = list(etable['ABSPATH'])
+        raw_exclude_files = drs_file.DrsPath.get_abs_paths(self.params,
+                                            block_kinds=etable['BLOCK_KIND'],
+                                            obs_dirs=etable['OBS_DIR'],
+                                            basenames=etable['FILENAME'])
         raw_exclude_obs_dirs = list(etable['OBS_DIR'])
         # ---------------------------------------------------------------------
         # only check last modified for raw files (we assume that any other
@@ -2089,7 +2091,7 @@ class FileIndexDatabase(DatabaseManager):
         iheader_cols = self.pconst.FILEINDEX_HEADER_COLS()
         rkeys = list(iheader_cols.names)
         # get columns
-        columns = ['BLOCK_KIND', 'ABSPATH', 'OBS_DIR', 'FILENAME', 'RAWFIX']
+        columns = ['BLOCK_KIND', 'OBS_DIR', 'FILENAME', 'RAWFIX']
         columns += rkeys
         # get data for columns
         table = self.get_entries(', '.join(columns), block_kind='raw')
@@ -2125,7 +2127,7 @@ class FileIndexDatabase(DatabaseManager):
             # condition is that full path is the same
             ctxt = 'BLOCK_KIND="{0}" AND OBS_DIR="{2}" AND FILENAME="{3}"'
             # cargs must match "columns" above
-            cargs = [table['BLOCK_KIND'].iloc[row], table['ABSPATH'].iloc[row],
+            cargs = [table['BLOCK_KIND'].iloc[row],
                      table['OBS_DIR'].iloc[row], table['FILENAME'].iloc[row]]
             condition = ctxt.format(*cargs)
             # get values

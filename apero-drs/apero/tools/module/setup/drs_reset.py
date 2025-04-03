@@ -30,6 +30,7 @@ from apero.instruments.default import instrument as instrument_mod
 from apero.utils import drs_data
 from apero.io import drs_lock
 from apero.io import drs_path
+from apero.core import drs_file
 from apero.tools.module.database import manage_databases
 from apero.tools.module.setup import drs_assets
 from apero.instruments import select
@@ -1054,7 +1055,10 @@ def remove_files_from_disk(params: ParamDict, filetable: Table) -> int:
     # deal with tqdm and print outs
     tqdm = base.tqdm_module(use=not test)
     # get absolute file list from table
-    absfilelist = filetable['ABSPATH']
+    absfilelist =  drs_file.DrsPath.get_abs_paths(params, 
+                                                 block_kinds=filetable['BLOCK_KIND'],
+                                                 obs_dirs=filetable['OBS_DIRS'],
+                                                 basenames=filetable['FILENAME'])
     # file count
     filecount = 0
     # loop around each file

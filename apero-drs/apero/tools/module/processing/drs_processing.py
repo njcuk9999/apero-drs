@@ -3060,7 +3060,13 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
         # ------------------------------------------------------------------
         # lets apply the filters here
         dataframe = indexdb.get_entries('*', condition=argcondition)
-        absfilenames = np.array(dataframe['ABSPATH']).astype(str)
+        # get absolute filenames
+        absfilenames = drs_file.DrsPath.get_abs_paths(params,
+                                                      block_kinds=dataframe['BLOCK_KIND'],
+                                                      obs_dirs=dataframe['OBS_DIRS'],
+                                                      basenames=dataframe['FILENAME'])
+        absfilenames = np.array(absfilenames).astype(str)
+
         # load pconst
         pconst = load_functions.load_pconfig(select.INSTRUMENTS)
         icols = pconst.FILEINDEX_DB_COLUMNS()

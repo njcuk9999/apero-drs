@@ -24,6 +24,7 @@ from aperocore import drs_lang
 from apero.core import drs_database
 from aperocore.core import drs_log
 from aperocore.core import drs_text
+from apero.core import drs_file
 from apero.utils import drs_recipe
 from apero.instruments import select
 from apero.base import base as apero_base
@@ -206,8 +207,15 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
         if len(condition) == 0:
             condition = None
         # get inpaths
-        itable = findexdb.get_entries('ABSPATH, KW_PID', condition=condition)
-        inpaths = np.array(itable['ABSPATH'])
+        itable = findexdb.get_entries('BLOCK_KIND, OBS_DIR, FILENAME, KW_PID',
+                                      condition=condition)
+        # get absolute paths
+        inpaths = drs_file.DrsPath.get_abs_paths(params,
+                                                 block_kinds=itable['BLOCK_KIND'],
+                                                 obs_dirs=itable['OBS_DIRS'],
+                                                 basenames=itable['FILENAME'])
+        inpaths = np.array(inpaths)
+        # get APERO process ids
         ipids = np.array(itable['KW_PID'])
         # ---------------------------------------------------------------------
         # need to filter by pid in log database

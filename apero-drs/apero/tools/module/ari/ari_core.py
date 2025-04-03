@@ -39,6 +39,7 @@ from apero.tools.module.documentation import drs_markdown
 from apero.base.base import TQDM as tqdm
 from apero.instruments import select
 from apero.base import base as apero_base
+from apero.core import drs_file
 from apero.science.extract import berv as berv_mod
 from apero.science.telluric import template_tellu
 from apero.tools.module.ari import ari_plot
@@ -461,8 +462,15 @@ class FileType:
         # get a mask of rows that passed QC (based on PID)
         if self.name != 'raw':
             mask = _filter_pids(findex_table, logdbm)
-            files = np.array(findex_table['ABSPATH'])
+            # get absolute file list
+            files = drs_file.DrsPath.get_abs_paths(indexdbm.params,
+                                                   block_kinds=findex_table['BLOCK_KIND'],
+                                                   obs_dirs=findex_table['OBS_DIRS'],
+                                                   basenames=findex_table['FILENAME'])
+            files = np.array(files)
+            # get mask
             qc_mask = mask
+            # get observation directories
             obsdirs = np.array(findex_table['OBS_DIR'])
             # add last processed time of all files for this object
             pdates = np.array(findex_table['KW_DRS_DATE_NOW']).astype(str)
@@ -470,8 +478,15 @@ class FileType:
                 times_it = np.max(Time(pdates, format='iso'))
                 processed_times.append(times_it)
         else:
-            files = np.array(findex_table['ABSPATH'])
+            # get absolute file list
+            files = drs_file.DrsPath.get_abs_paths(indexdbm.params,
+                                                   block_kinds=findex_table['BLOCK_KIND'],
+                                                   obs_dirs=findex_table['OBS_DIRS'],
+                                                   basenames=findex_table['FILENAME'])
+            files = np.array(files)
+            # set mask to all ones
             qc_mask = np.ones(len(files)).astype(bool)
+            # get observation directories
             obsdirs = np.array(findex_table['OBS_DIR'])
         # get the first and last files in time
         mjdmids = np.array(findex_table['KW_MID_OBS_TIME']).astype(float)
