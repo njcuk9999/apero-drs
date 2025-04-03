@@ -891,7 +891,7 @@ def find_files(params: ParamDict, block_kind: str, filters: Dict[str, str],
                                        condition=condition)
         absfiles =  drs_file.DrsPath.get_abs_paths(params, 
                                                    block_kinds=ftable['BLOCK_KIND'],
-                                                   obs_dirs=ftable['OBS_DIRS'],
+                                                   obs_dirs=ftable['OBS_DIR'],
                                                    basenames=ftable['FILENAME'])
         return absfiles
     

@@ -212,7 +212,7 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
         # get absolute paths
         inpaths = drs_file.DrsPath.get_abs_paths(params,
                                                  block_kinds=itable['BLOCK_KIND'],
-                                                 obs_dirs=itable['OBS_DIRS'],
+                                                 obs_dirs=itable['OBS_DIR'],
                                                  basenames=itable['FILENAME'])
         inpaths = np.array(inpaths)
         # get APERO process ids

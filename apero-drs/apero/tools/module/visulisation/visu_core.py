@@ -187,7 +187,7 @@ def get_file(block_kind: str,  obs_dir: str, identifier: str,
     # use the first entry as the filename
     filename =  drs_file.DrsPath.get_abs_paths(findexdbm.params,
                                                block_kinds=table['BLOCK_KIND'].iloc[0],
-                                               obs_dirs=table['OBS_DIRS'].iloc[0],
+                                               obs_dirs=table['OBS_DIR'].iloc[0],
                                                basenames=table['FILENAME'].iloc[0])
     # load file with correct extension
     if get_data:

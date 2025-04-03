@@ -595,11 +595,12 @@ class AstroObj:
         condition = mcondition + ' AND ({0})'.format(' OR '.join(subcondition))
         # ---------------------------------------------------------------------
         # get paths from database
-        otable = findexdbm.get_entries('ABSPATH, OBS_DIR', condition=condition)
+        ocols = 'BLOCK_KIND, OBS_DIR, FILENAME'
+        otable = findexdbm.get_entries(ocols, condition=condition)
         # get the absolute paths
         paths = drs_file.DrsPath.get_abs_paths(params,
                                                block_kinds=otable['BLOCK_KIND'],
-                                               obs_dirs=otable['OBS_DIRS'],
+                                               obs_dirs=otable['OBS_DIR'],
                                                basenames=otable['FILENAME'])
         paths = np.array(paths)
         # get observation directories

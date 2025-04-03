@@ -1037,7 +1037,7 @@ def get_filelist(params: ParamDict,
     msg = 'Querying index database for files with condition: \n\t{0}'
     WLOG(params, '', msg.format(condition))
     # columns required
-    columns = 'ABSPATH, FILENAME, KW_PID'
+    columns = 'BLOCK_KIND, OBS_DIR, FILENAME, KW_PID'
     # run query
     findex_table = indexdbm.get_entries(columns, condition=condition)
     # print how many files found that match condition
@@ -1057,7 +1057,7 @@ def remove_files_from_disk(params: ParamDict, filetable: Table) -> int:
     # get absolute file list from table
     absfilelist =  drs_file.DrsPath.get_abs_paths(params, 
                                                  block_kinds=filetable['BLOCK_KIND'],
-                                                 obs_dirs=filetable['OBS_DIRS'],
+                                                 obs_dirs=filetable['OBS_DIR'],
                                                  basenames=filetable['FILENAME'])
     # file count
     filecount = 0

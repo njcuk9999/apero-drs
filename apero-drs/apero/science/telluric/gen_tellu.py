@@ -268,7 +268,7 @@ def get_non_tellu_objs(params: ParamDict, fiber, filetype=None,
     # get absolute paths to files
     obj_filenames = drs_file.DrsPath.get_abs_paths(params,
                                                    block_kinds=obj_table['BLOCK_KIND'],
-                                                   obs_dirs=obj_table['OBS_DIRS'],
+                                                   obs_dirs=obj_table['OBS_DIR'],
                                                    basenames=obj_table['FILENAME'])
     # filter out telluric stars
     obj_stars, obj_names = [], []

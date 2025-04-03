@@ -1909,7 +1909,7 @@ class FileIndexDatabase(DatabaseManager):
             include_files = []
         # ---------------------------------------------------------------------
         # deal with files we don't need (already have)
-        etable = self.get_entries('ABSPATH, OBS_DIR, LAST_MODIFIED',
+        etable = self.get_entries('BLOCK_KIND, OBS_DIR, FILENAME, LAST_MODIFIED',
                                   block_kind=block_kind)
         raw_exclude_files = drs_file.DrsPath.get_abs_paths(self.params,
                                             block_kinds=etable['BLOCK_KIND'],

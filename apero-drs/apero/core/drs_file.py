@@ -6250,7 +6250,7 @@ class DrsOutFileExtension:
                    filename: Union[str, None] = None):
         """
         Set infile name from "filename" or from "row" in table (note table
-        must have column "ABSPATH"
+        must have column "BLOCK_KIND", "OBS_DIR", "FILENAME"
 
         :param params: ParamDict, the parameter dictionary of constants
         :param row: int or None, the row in "table" to set the filename

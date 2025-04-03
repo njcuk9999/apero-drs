@@ -457,7 +457,7 @@ class FileType:
                 if filetypes[self.chain].num:
                     return
         # get the files
-        dbcols = 'ABSPATH,OBS_DIR,KW_PID,KW_MID_OBS_TIME,KW_DRS_DATE_NOW'
+        dbcols = 'BLOCK_KIND,OBS_DIR,FILENAME,KW_PID,KW_MID_OBS_TIME,KW_DRS_DATE_NOW'
         findex_table = indexdbm.get_entries(dbcols, condition=cond)
         # get a mask of rows that passed QC (based on PID)
         if self.name != 'raw':
@@ -465,7 +465,7 @@ class FileType:
             # get absolute file list
             files = drs_file.DrsPath.get_abs_paths(indexdbm.params,
                                                    block_kinds=findex_table['BLOCK_KIND'],
-                                                   obs_dirs=findex_table['OBS_DIRS'],
+                                                   obs_dirs=findex_table['OBS_DIR'],
                                                    basenames=findex_table['FILENAME'])
             files = np.array(files)
             # get mask
@@ -481,7 +481,7 @@ class FileType:
             # get absolute file list
             files = drs_file.DrsPath.get_abs_paths(indexdbm.params,
                                                    block_kinds=findex_table['BLOCK_KIND'],
-                                                   obs_dirs=findex_table['OBS_DIRS'],
+                                                   obs_dirs=findex_table['OBS_DIR'],
                                                    basenames=findex_table['FILENAME'])
             files = np.array(files)
             # set mask to all ones

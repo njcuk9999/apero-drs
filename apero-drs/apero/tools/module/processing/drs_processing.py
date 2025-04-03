@@ -3063,7 +3063,7 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
         # get absolute filenames
         absfilenames = drs_file.DrsPath.get_abs_paths(params,
                                                       block_kinds=dataframe['BLOCK_KIND'],
-                                                      obs_dirs=dataframe['OBS_DIRS'],
+                                                      obs_dirs=dataframe['OBS_DIR'],
                                                       basenames=dataframe['FILENAME'])
         absfilenames = np.array(absfilenames).astype(str)
 
