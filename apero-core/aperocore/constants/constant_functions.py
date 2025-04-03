@@ -843,7 +843,6 @@ class ConstantsDict:
             # push into storage
             self.storage[new_key] = cdict.storage[old_key].copy(source)
 
-
     # -------------------------------------------------------------------------
     # yaml functionality
     # -------------------------------------------------------------------------
