@@ -1935,7 +1935,7 @@ def _test_dtype(name: str, invalue: Any, dtype: Union[str, type],
     # set function name (cannot break here --> no access to inputs)
     func_name = str(__NAME__) + '._test_dtype()'
     # if we don't have a value (i.e. it is None) don't test
-    if invalue in [None, 'None']:
+    if invalue is None:
         return None
     # check paths (must be strings and must exist)
     if dtype == 'path':
