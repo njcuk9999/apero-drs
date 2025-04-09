@@ -275,7 +275,7 @@ def load_previous_objects(params: ParamDict) -> Dict[str, AriObject]:
     WLOG(params, '', msg)
     # -------------------------------------------------------------------------
     # for each object we load from disk
-    for objname in list(obj_classes.keys()):
+    for objname in tqdm(list(obj_classes.keys())):
         # we don't want to load objects that we've set to redo
         if objname in redo_objs:
             continue
@@ -374,7 +374,7 @@ def make_recipe_pages(params: ParamDict) -> TableFile:
     # ------------------------------------------------------------------
     # sort columns based on LOG_COLUMNS (not sql order) and as a table
     out_log_table = Table()
-    for c_it, col in enumerate(ari_core.LOG_COLUMNS):
+    for c_it, col in tqdm(enumerate(ari_core.LOG_COLUMNS)):
         # deal with bools
         if ari_core.LOG_TYPES[c_it] == 'bool':
             # convert log table to string (may be mixed null + floats)
