@@ -25,6 +25,7 @@ from aperocore.core import drs_misc
 from aperocore.core import drs_text
 from aperocore.core import drs_log
 from apero.io import drs_fits
+from apero.constants import path_definitions
 from apero.instruments import select
 from apero.base import base as apero_base
 
@@ -56,6 +57,8 @@ LogDatabase = drs_database.LogDatabase
 # get header classes from io.drs_fits
 Header = drs_fits.Header
 FitsHeader = drs_fits.fits.Header
+# in/out path cache
+PATH_CACHE = dict()
 
 
 # =============================================================================
@@ -97,12 +100,12 @@ class RecipeLog:
         self.defaultpath = str(params['PATH.LOG_FULL'])
         # the log fits file name (log.fits)
         self.logfitsfile = str(params['LOG.FITS_NAME'])
-        # the recipe input directory from recipe.inputdir
-        self.inputdir = str(params['INPATH'])
-        # the recipe output directory from recipe.outputdir
-        self.outputdir = str(params['OUTPATH'])
         # the parameter dictionary of constants
         self.params = params
+        # the recipe input directory from recipe.inputdir
+        self.inputdir = self.return_block(params['INPATH'])
+        # the recipe output directory from recipe.outputdir
+        self.outputdir = self.return_block(params['OUTPATH'])
         # ---------------------------------------------------------------------
         self.no_log = False
         # deal with no save --> no log
@@ -277,8 +280,12 @@ class RecipeLog:
         # set function name
         _ = drs_misc.display_func('set_log_file', __NAME__,
                                   self.class_name)
+        # get the log path
+        log_path = self.params['PATH.LOG']
+        # get the relative path to PATH.LOG
+        rel_log_file = drs_misc.get_uncommon_path(log_path, logfile)
         # set the log file
-        self.log_file = str(logfile)
+        self.log_file = str(rel_log_file)
 
     def set_plot_dir(self, params: ParamDict,
                      location: Union[str, Path, None] = None,
@@ -296,7 +303,12 @@ class RecipeLog:
                                   self.class_name)
         # deal with location being set
         if location is not None:
-            self.plot_dir = str(location)
+            # remove directory
+            plot_path = self.params['PATH.PLOT']
+            # get relative location
+            rel_location = drs_misc.get_uncommon_path(plot_path, location)
+            # set the plot directory
+            self.plot_dir = str(rel_location)
             # update children
             if len(self.set) != 0:
                 for child in self.set:
@@ -673,6 +685,30 @@ class RecipeLog:
                 rows += child.get_rows()
         # return rows
         return rows
+
+    def return_block(self, path: str):
+        """
+        Return the block name from a path that matches the block path
+
+        :param path: str, the path to check for the block
+
+        :return: str, the block name
+        """
+        global PATH_CACHE
+        # deal with already having found this block
+        if path in PATH_CACHE:
+            return f'BLOCK:{PATH_CACHE[path]}'
+        else:
+            # get all blocks
+            blocks = path_definitions.BLOCKS
+            # loop around blocks
+            for block in blocks:
+                block_inst = block(self.params)
+                if path == block_inst.path:
+                    PATH_CACHE[path] = block_inst.name
+                    return f'BLOCK:{PATH_CACHE[path]}'
+        # if we get here then return None
+        return 'Unknown'
 
     # complex param table return
     ParamTableReturn = Tuple[List[str], List[str], list, List[str], List[str],

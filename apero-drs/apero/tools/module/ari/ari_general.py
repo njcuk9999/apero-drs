@@ -382,6 +382,8 @@ def make_recipe_pages(params: ParamDict) -> TableFile:
                                     sort_by='START_TIME',
                                     sort_descending=False,
                                     return_table=True)
+    # get the log path
+    log_path = params['PATH.LOG']
     # ------------------------------------------------------------------
     # sort columns based on LOG_COLUMNS (not sql order) and as a table
     out_log_table = Table()
@@ -402,6 +404,12 @@ def make_recipe_pages(params: ParamDict) -> TableFile:
             vector = np.array(vector).astype(str)
             vector[~mask] = ''
             out_log_table[col] = vector
+        # deal with log file (add path back)
+        elif col == 'LOGFILE':
+            # char array
+            logfiles = np.char.array(np.array(log_table[col]).astype(str))
+            # push into array
+            out_log_table[col] = np.array(log_path + logfiles)
         else:
             out_log_table[col] = np.array(log_table[col]).astype(str)
     # ------------------------------------------------------------------

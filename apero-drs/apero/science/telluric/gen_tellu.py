@@ -10,7 +10,9 @@ Created on 2019-08-12 at 17:16
 @author: cook
 """
 import os
+import time
 import warnings
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
@@ -2645,7 +2647,8 @@ def load_conv_tapas(params, recipe, header, refprops, fiber, database=None,
     tapas_props['IMAGE.FWHM_PIXEL_LSF'] = fwhm_pixel_lsf
     # set source
     keys = ['TAPAS_ALL_SPECIES', 'TAPAS_WATER', 'TAPAS_OTHER',
-            'OBJ.TELL.GEN.TAPAS_FILE', 'OBJ.TELL.MAKE.ABSORBERS', 'IMAGE.FWHM_PIXEL_LSF']
+            'OBJ.TELL.GEN.TAPAS_FILE', 'OBJ.TELL.MAKE.ABSORBERS',
+            'IMAGE.FWHM_PIXEL_LSF']
     tapas_props.set_sources(keys, func_name)
     # return tapas props
     return tapas_props
@@ -2663,8 +2666,31 @@ def load_tapas_spl(params, recipe, header, database=None):
     conv_paths = load_tellu_file(params, conv_key, n_entries='*',
                                  get_image=False, required=False,
                                  return_filename=True)
+    # construct path to tapas file
+    tapas_path = Path(params['PATH.TELLU']).joinpath(conv_key, 'OTHER')
+    # -------------------------------------------------------------------------
+    # counter to exist
+    counter = 0
+    # Try to create the directory - do this carefully incase we are doing this
+    #   multiple times at once
+    while not tapas_path.exists():
+        try:
+            tapas_path.mkdir(parents=True, exist_ok=True)
+            break
+        except Exception as e:
+            # deal with counter out of bounds
+            if counter > 60:
+                emsg = ('Cannot create directory {0} times: {1}\n\t{2}:{3}')
+                eargs = [counter, str(tapas_path), type(e), str(e)]
+                raise AperoCodedException(params, None,
+                                          message=emsg.format(*eargs))
+            # weait for 1 second and try again
+            time.sleep(1)
+            counter += 1
+            continue
+    # -------------------------------------------------------------------------
     # construct the filename from file instance
-    out_tellu_tapas.construct_filename(path=params['PATH.TELLU'])
+    out_tellu_tapas.construct_filename(path=str(tapas_path))
     # ----------------------------------------------------------------------
     # if our npy file already exists then we just need to read it
     if (conv_paths is not None) and (out_tellu_tapas.filename in conv_paths):

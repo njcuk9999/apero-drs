@@ -941,12 +941,12 @@ class Instrument:
             return self.index_cols
         # column definitions
         index_cols = DatabaseColumns()
+        index_cols.add(name='BLOCK_KIND', is_index=True,
+                       datatype=sqlalchemy.String(20))
         index_cols.add(name='OBS_DIR', datatype=sqlalchemy.String(200),
                        is_index=True)
         index_cols.add(name='FILENAME', is_index=True,
                        datatype=sqlalchemy.String(200))
-        index_cols.add(name='BLOCK_KIND', is_index=True,
-                       datatype=sqlalchemy.String(20))
         index_cols.add(name='LAST_MODIFIED', datatype=LONG_FLOAT)
         index_cols.add(name='RECIPE', datatype=sqlalchemy.String(200))
         index_cols.add(name='RUNSTRING',

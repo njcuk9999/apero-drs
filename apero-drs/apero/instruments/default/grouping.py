@@ -568,8 +568,9 @@ def group_by_polar_sequence(rargs: Dict[str, DrsArgument],
         paths = []
         for row in range(len(table)):
             # get psuedo abspath
-            abspath = os.path.join(table[block_col], table[obs_dir_col],
-                                   table[file_col])
+            abspath = os.path.join(table[block_col][row],
+                                   table[obs_dir_col][row],
+                                   table[file_col][row])
             # append to list
             paths.append(str(abspath))
         # ---------------------------------------------------------------------

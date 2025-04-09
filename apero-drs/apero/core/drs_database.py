@@ -508,7 +508,16 @@ class CalibrationDatabase(DatabaseManager):
         # ------------------------------------------------------------------
         # copy file to database directory
         if copy_files:
-            _copy_db_file(self.params, drsfile, self.filedir, self.name,
+            # get time dir
+            timedir = header_time.fits.split('T')[0]
+            # get outpath for reference calibrations
+            if is_super:
+                outpath = Path(self.filedir).joinpath('REF')
+            # otherwise we go into DBKEY/TIMEDIR
+            else:
+                outpath = Path(self.filedir).joinpath(dbkey, timedir)
+            # copy file to calib directory
+            _copy_db_file(self.params, drsfile, outpath, self.name,
                           verbose=verbose)
         # ------------------------------------------------------------------
         # get entries in correct format
@@ -735,10 +744,11 @@ class CalibrationDatabase(DatabaseManager):
         ctable = self.get_calib_entry('FILENAME, REFCAL, UNIXTIME', key,
                                       fiber, filetime, timemode, nentries)
         # deal with return of two columns (tulpe or pandas table)
-        if ctable is None:
+        if ctable is None or len(ctable) == 0:
             filenames = None
             filetimes = np.nan
             reference = False
+            timedirs = None
         elif isinstance(ctable, (tuple, list)):
             # get filename
             filenames = str(ctable[0])
@@ -746,17 +756,27 @@ class CalibrationDatabase(DatabaseManager):
             utimes = float(ctable[2])
             # get whether calibration is a reference
             reference = drs_text.true_text(ctable[1])
+            # get time instances
+            time_insts = Time(utimes, format='unix')
             # get file times in MJD
-            filetimes = float(Time(utimes, format='unix').mjd)
+            filetimes = float(time_insts.mjd)
+            # get time dirs
+            timedirs = time_insts.fits.split('T')[0]
         else:
             # get filenames
             filenames = np.array(ctable['FILENAME'])
             # get file times (unix)
             utimes = np.array(ctable['UNIXTIME'])
+            # get time instances
+            time_insts = Time(utimes, format='unix')
             # get whether calibrations are references
             reference = np.array(ctable['REFCAL']).astype(bool)
             # get file times in MJD
-            filetimes = np.array(Time(utimes, format='unix').mjd).astype(float)
+            filetimes = np.array(time_insts.mjd).astype(float)
+            # get time dirs
+            timedirs = []
+            for time_inst in time_insts:
+                timedirs.append(time_inst.fits.split('T')[0])
         # ---------------------------------------------------------------------
         # return absolute paths
         # ---------------------------------------------------------------------
@@ -784,8 +804,21 @@ class CalibrationDatabase(DatabaseManager):
             raise AperoCodedException(self.params, '00-002-00015', targs=eargs)
         # make all files absolute paths
         if isinstance(filenames, str):
+            # construct file directory
+            if reference:
+                filedir = self.filedir.joinpath('REF')
+            else:
+                filedir = self.filedir.joinpath(key, str(timedirs))
             # set output
-            outfilename = Path(self.filedir).joinpath(filenames).absolute()
+            outfilename = Path(filedir).joinpath(filenames).absolute()
+            # check that outfile name exists
+            if not outfilename.exists():
+                # TODO: Add to language database
+                emsg = ('Calib file {0} [{1}]: does not exist'
+                        '\n\tFilename={2}')
+                eargs = [key, str(timedirs), outfilename]
+                raise AperoCodedException(self.params, None,
+                                          message=emsg.format(*eargs))
             # return outfilenames
             return outfilename, float(filetimes), bool(reference)
         # else loop around them (assume they are iterable)
@@ -794,7 +827,22 @@ class CalibrationDatabase(DatabaseManager):
             outfilenames = []
             # loop around filenames
             for it, filename in enumerate(filenames):
-                outfilename = Path(self.filedir).joinpath(filename).absolute()
+                # construct file directory
+                # construct file directory
+                if reference[it]:
+                    filedir = self.filedir.joinpath('REF')
+                else:
+                    filedir = self.filedir.joinpath(key, str(timedirs[it]))
+                # get out file name
+                outfilename = Path(filedir).joinpath(filename).absolute()
+                # check that outfile name exists
+                if not outfilename.exists():
+                    # TODO: Add to language database
+                    emsg = ('Calib file {0} [{1}]: does not exist'
+                            '\n\tFilename={2}')
+                    eargs = [key, str(timedirs[it]), outfilename]
+                    raise AperoCodedException(self.params, None,
+                                              message=emsg.format(*eargs))
                 # append to storage
                 outfilenames.append(outfilename)
             # return outfilenames
@@ -928,7 +976,13 @@ class TelluricDatabase(DatabaseManager):
         # ------------------------------------------------------------------
         # copy file to database directory
         if copy_files:
-            _copy_db_file(self.params, drsfile, self.filedir, self.name,
+            # get outpath
+            if objname is None:
+                outpath = Path(self.filedir).joinpath('OTHER')
+            else:
+                outpath = Path(self.filedir).joinpath(dbkey, objname)
+            # copy file to telluric directory
+            _copy_db_file(self.params, drsfile, outpath, self.name,
                           verbose=verbose)
         # ------------------------------------------------------------------
         # get entries in correct format
@@ -1180,11 +1234,23 @@ class TelluricDatabase(DatabaseManager):
         # get calibration database entries --> FILENAME
         #   if nentries = 1 : str or None
         #   if nentries > 1 : 1d numpy array
-        filenames = self.get_tellu_entry('FILENAME', key, fiber, filetime,
-                                         timemode, nentries, objname,
-                                         tau_water, tau_others)
-        # deal with filename being pandas dataframe (i.e.
-
+        ttable = self.get_tellu_entry('FILENAME, OBJECT', key, fiber,
+                                      filetime, timemode, nentries, objname,
+                                      tau_water, tau_others)
+        # get parameters from ttable
+        if ttable is None:
+            filenames = None
+            objnames = None
+        elif isinstance(ttable, list):
+            filenames, objnames = ttable
+        else:
+            filenames = ttable['FILENAME']
+            objnames = ttable['OBJECT']
+        # set object name(s) if still None
+        if objnames is not None:
+            for o_it, objname in enumerate(objnames):
+                if objname in [None, 'None', 'Null', '']:
+                    objnames[o_it] = 'OTHER'
         # ---------------------------------------------------------------------
         # return absolute paths
         # ---------------------------------------------------------------------
@@ -1216,14 +1282,59 @@ class TelluricDatabase(DatabaseManager):
             raise AperoCodedException(self.params, '00-002-00015', targs=eargs)
         # make all files absolute paths
         if isinstance(filenames, str):
-            return Path(self.filedir).joinpath(filenames).absolute()
+            # construct file directory
+            filedir = self.filedir.joinpath(key, objnames)
+            # get out file name
+            outfilename = Path(filedir).joinpath(filenames).absolute()
+            # check that outfile name exists
+            if not outfilename.exists():
+                # TODO: Add to language database
+                emsg = 'Telluric file {0} [{1}]: does not exist\n\tFilename={2}'
+                eargs = [key, objname, outfilename]
+                raise AperoCodedException(self.params, None,
+                                          message=emsg.format(*eargs))
+            # return the single path
+            return outfilename
         # else loop around them (assume they are iterable)
         else:
             # set output storage
             outfilenames = []
             # loop around filenames
-            for filename in filenames:
-                outfilename = Path(self.filedir).joinpath(filename).absolute()
+            for f_it, filename in enumerate(filenames):
+                # construct file directory
+                filedir = self.filedir.joinpath(key, str(objnames[f_it]))
+                # -------------------------------------------------------------
+                # counter to exist
+                counter = 0
+                # Try to create the directory - do this carefully incase we
+                # are doing this
+                #   multiple times at once
+                while not filedir.exists():
+                    try:
+                        filedir.mkdir(parents=True, exist_ok=True)
+                        break
+                    except Exception as e:
+                        # deal with counter out of bounds
+                        if counter > 60:
+                            emsg = ('Cannot create directory {0} times: {1}\n\t{2}:{3}')
+                            eargs = [counter, str(filedir), type(e), str(e)]
+                            raise AperoCodedException(None, None,
+                                                      message=emsg.format(*eargs))
+                        # weait for 1 second and try again
+                        time.sleep(1)
+                        counter += 1
+                        continue
+                # -------------------------------------------------------------
+                # get out file name
+                outfilename = Path(filedir).joinpath(str(filename)).absolute()
+                # check that outfile name exists
+                if not outfilename.exists():
+                    # TODO: Add to language database
+                    emsg = ('Telluric file {0} [{1}]: does not exist'
+                            '\n\tFilename={2}')
+                    eargs = [key, objname, outfilename]
+                    raise AperoCodedException(self.params, None,
+                                              message=emsg.format(*eargs))
                 # append to storage
                 outfilenames.append(outfilename)
             # return outfilenames
@@ -1387,8 +1498,31 @@ def _copy_db_file(params: ParamDict, drsfile: DrsFileTypes,
     func_name = display_func('_copy_db_file', __NAME__)
     # construct in path
     inpath = drsfile.filename
+    # make out directory
+    outdir = Path(outpath)
+    # -------------------------------------------------------------------------
+    # counter to exist
+    counter = 0
+    # Try to create the directory - do this carefully incase we are doing this
+    #   multiple times at once
+    while not outdir.exists():
+        try:
+            outdir.mkdir(parents=True, exist_ok=True)
+            break
+        except Exception as e:
+            # deal with counter out of bounds
+            if counter > 60:
+                emsg = ('Cannot create directory {0} times: {1}\n\t{2}:{3}')
+                eargs = [counter, str(outdir), type(e), str(e)]
+                raise AperoCodedException(params, None,
+                                          message=emsg.format(*eargs))
+            # weait for 1 second and try again
+            time.sleep(1)
+            counter += 1
+            continue
+    # -------------------------------------------------------------------------
     # construct out path
-    outpath = Path(outpath).joinpath(drsfile.basename)
+    outpath = outdir.joinpath(drsfile.basename)
     # skip if inpath and outpath are the same
     if str(inpath) == str(outpath):
         return
@@ -2125,7 +2259,7 @@ class FileIndexDatabase(DatabaseManager):
             header, _ = drs_file.fix_header(self.params, recipe, header=header,
                                             check_aliases=True, objdbm=objdbm)
             # condition is that full path is the same
-            ctxt = 'BLOCK_KIND="{0}" AND OBS_DIR="{2}" AND FILENAME="{3}"'
+            ctxt = 'BLOCK_KIND="{0}" AND OBS_DIR="{1}" AND FILENAME="{2}"'
             # cargs must match "columns" above
             cargs = [table['BLOCK_KIND'].iloc[row],
                      table['OBS_DIR'].iloc[row], table['FILENAME'].iloc[row]]

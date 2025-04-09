@@ -96,7 +96,7 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
     # get whether to filter by passing qc
     filter_qc = not params['INPUTS']['failedqc']
     # -------------------------------------------------------------------------
-    # load index database
+    # load "get" database
     WLOG(params, '', textentry('40-509-00001', args='file index'))
     findexdb = drs_database.FileIndexDatabase(params)
     findexdb.load_db()
@@ -190,6 +190,7 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
         if drs_text.null_text(kw_objname, ['None', '', 'Null']):
             obj_condition = None
         else:
+            # add the object name condition
             obj_condition = '(KW_OBJNAME="{0}")'.format(clean_obj_name)
         # deal with having an object condition
         condition = ''
@@ -206,7 +207,7 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
         # deal with no condition still (set condition to None)
         if len(condition) == 0:
             condition = None
-        # get inpaths
+        # get the entries from the database
         itable = findexdb.get_entries('BLOCK_KIND, OBS_DIR, FILENAME, KW_PID',
                                       condition=condition)
         # get absolute paths
@@ -245,11 +246,26 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
     # -------------------------------------------------------------------------
     # Now get outpaths (if infile exists)
     # -------------------------------------------------------------------------
+    all_inpaths, all_outpaths = manage_outputs(params, database_inpaths,
+                                               nosubdir, user_outdir, tarpath,
+                                               do_copy, do_symlink, sizelimit)
+
+    return all_inpaths, all_outpaths
+
+
+
+def manage_outputs(params: ParamDict, inpaths: Dict[str, List[str]],
+                   nosubdir: bool, user_outdir: str, tarpath: str = None,
+                   do_copy: bool = True, do_symlink: bool = False,
+                   sizelimit: int = None):
+    """
+    Manage the outputs from apero get
+    """
     # storage of inpaths/outpaths
     all_inpaths = dict()
     all_outpaths = dict()
     # loop around objects with files
-    for objname in database_inpaths:
+    for objname in inpaths:
         # output directory for objname
         if nosubdir:
             outdir = str(user_outdir)
@@ -261,7 +277,7 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
         all_inpaths[objname] = []
         all_outpaths[objname] = []
         # loop around all files for this object
-        for filename in database_inpaths[objname]:
+        for filename in inpaths[objname]:
             # if object exists
             if os.path.exists(filename):
                 # get paths
@@ -358,6 +374,203 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
                 remove_previous(outpath)
                 shutil.copy(inpath, outpath)
 
+    return all_inpaths, all_outpaths
+
+
+def calib_filter(params: ParamDict, filters: Dict[str, List[str]],
+                 user_outdir: str,
+                 do_copy: bool = True, do_symlink: bool = False,
+                 tarfilename: Optional[str] = None,
+                 since: Optional[Time] = None, latest: Optional[Time] = None,
+                 sizelimit: int = None
+                 ) -> Tuple[Dict[str, List[str]], Dict[str, List[str]]]:
+    # -------------------------------------------------------------------------
+    # get pconst
+    pconst = load_functions.load_pconfig(select.INSTRUMENTS)
+    # -------------------------------------------------------------------------
+    # load index database
+    WLOG(params, '', textentry('40-509-00001', args='file index'))
+    calibdb = drs_database.CalibrationDatabase(params)
+    calibdb.load_db()
+    # load object database
+    WLOG(params, '', textentry('40-509-00001', args='astrometric'))
+    objdbm = drs_database.AstrometricDatabase(params)
+    objdbm.load_db()
+    # load log database
+    WLOG(params, '', textentry('40-509-00001', args='log'))
+    logdbm = drs_database.LogDatabase(params)
+    logdbm.load_db()
+    # -------------------------------------------------------------------------
+    # deal with tar file name
+    if tarfilename is not None:
+        tarpath = os.path.join(user_outdir, tarfilename)
+    else:
+        tarpath = None
+    # -------------------------------------------------------------------------
+    # deal with since
+    if since is not None:
+        # convert to mjd
+        since = since.mjd
+    # deal with latest
+    if latest is not None:
+        # convert to mjd
+        latest = latest.mjd
+
+
+    # -------------------------------------------------------------------------
+    # get parameters from filters
+
+    keys = filters['KEYNAME']
+    fibers = filters['KW_FIBER']
+
+    inpaths = []
+    # loop around keys
+    for key in keys:
+        # loop around fibers
+        for fiber in fibers:
+            # use standard way to get calibration filenames
+            cout = calibdb.get_calib_file(key=key, header=None,
+                                              filetime = None,
+                                              required=False,
+                                              nentries='*',
+                                              no_times=True,
+                                              fiber=fiber)
+            # get return from get_calib_file
+            infilenames, filetimes, _ = cout
+            # deal with no files
+            if len(infilenames) == 0:
+                continue
+            # make numpy arrays (so we can mask)
+            infilenames = np.array(infilenames)
+            filetimes = np.array(filetimes)
+            # set up mask
+            mask = np.ones(len(infilenames), dtype=bool)
+            # deal with since and latest
+            if since is not None:
+                mask &= since > filetimes
+            if latest is not None:
+                mask &= latest < filetimes
+            # apply mask and convert to strings
+            _infilenames = []
+            for infilename in infilenames[mask]:
+                _infilenames.append(str(infilename))
+            inpaths += _infilenames
+
+    # storage of inpaths
+    database_inpaths = dict()
+    database_inpaths['None'] = inpaths
+
+    # -------------------------------------------------------------------------
+    # Now get outpaths (if infile exists)
+    # -------------------------------------------------------------------------
+    all_inpaths, all_outpaths = manage_outputs(params, database_inpaths,
+                                               nosubdir=True,
+                                               user_outdir=user_outdir,
+                                               tarpath=tarpath,
+                                               do_copy=do_copy,
+                                               do_symlink=do_symlink,
+                                               sizelimit=sizelimit)
+    # return these inpaths and outpaths
+    return all_inpaths, all_outpaths
+
+
+def tellu_filter(params: ParamDict,  kw_objnames: List[str],
+                 filters: Dict[str, List[str]],
+                 user_outdir: str,
+                 do_copy: bool = True, do_symlink: bool = False,
+                 tarfilename: Optional[str] = None,
+                 since: Optional[Time] = None, latest: Optional[Time] = None,
+                 sizelimit: int = None
+                 ) -> Tuple[Dict[str, List[str]], Dict[str, List[str]]]:
+    # -------------------------------------------------------------------------
+    # get pconst
+    pconst = load_functions.load_pconfig(select.INSTRUMENTS)
+    # -------------------------------------------------------------------------
+    # load index database
+    WLOG(params, '', textentry('40-509-00001', args='file index'))
+    telludb = drs_database.TelluricDatabase(params)
+    telludb.load_db()
+    # load object database
+    WLOG(params, '', textentry('40-509-00001', args='astrometric'))
+    objdbm = drs_database.AstrometricDatabase(params)
+    objdbm.load_db()
+    # load log database
+    WLOG(params, '', textentry('40-509-00001', args='log'))
+    logdbm = drs_database.LogDatabase(params)
+    logdbm.load_db()
+    # -------------------------------------------------------------------------
+    # deal with tar file name
+    if tarfilename is not None:
+        tarpath = os.path.join(user_outdir, tarfilename)
+    else:
+        tarpath = None
+    # -------------------------------------------------------------------------
+    # deal with since
+    if since is not None:
+        # convert to mjd
+        since = since.mjd
+    # deal with latest
+    if latest is not None:
+        # convert to mjd
+        latest = latest.mjd
+    # -------------------------------------------------------------------------
+    # get parameters from filters
+    keys = filters['KEYNAME']
+    fibers = filters['KW_FIBER']
+    # storage of inpaths
+    database_inpaths = dict()
+    # loop around objects
+    for objname in kw_objnames:
+        # storage for inpaths
+        inpaths = []
+        # loop around keys
+        for key in keys:
+            # loop around fibers
+            for fiber in fibers:
+                # get the table for this objname/key/fiber
+                ttable = telludb.get_tellu_entry(columns='FILENAME,UNIXTIME',
+                                                 key=key,
+                                                 fiber=fiber, objname=objname)
+                # get variables from table
+                infilenames = ttable['FILENAME']
+                filetimes = ttable['UNIXTIME']
+                # deal with no files
+                if len(infilenames) == 0:
+                    continue
+                # make numpy arrays (so we can mask)
+                infilenames = np.array(infilenames)
+                filetimes = np.array(Time(filetimes, format='unix').mjd)
+                # set up mask
+                mask = np.ones(len(infilenames), dtype=bool)
+                # deal with since and latest
+                if since is not None:
+                    mask &= since > filetimes
+                if latest is not None:
+                    mask &= latest < filetimes
+                # apply mask and convert to strings
+                _infilenames = []
+                for infilename in infilenames[mask]:
+                    # get full path
+                    _infilename = os.path.join(params['PATH.TELLU'], key,
+                                               objname, infilename)
+                    # push into storage
+                    if os.path.exists(_infilename):
+                        _infilenames.append(str(_infilename))
+                inpaths += _infilenames
+        # push into object name dictionary
+        database_inpaths[objname] = inpaths
+
+    # -------------------------------------------------------------------------
+    # Now get outpaths (if infile exists)
+    # -------------------------------------------------------------------------
+    all_inpaths, all_outpaths = manage_outputs(params, database_inpaths,
+                                               nosubdir=True,
+                                               user_outdir=user_outdir,
+                                               tarpath=tarpath,
+                                               do_copy=do_copy,
+                                               do_symlink=do_symlink,
+                                               sizelimit=sizelimit)
+    # return these inpaths and outpaths
     return all_inpaths, all_outpaths
 
 

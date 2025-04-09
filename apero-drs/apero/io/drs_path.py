@@ -232,6 +232,12 @@ def copytree(src: Union[str, Path], dst: Union[str, Path]):
     """
     # set function name
     # _ = display_func('makedirs', __NAME__)
+    # make sure source ends with os.sep
+    if not src.endswith(os.sep) and dst.endswith(os.sep):
+        src += os.sep
+    # make sure destination ends with os.sep
+    if not dst.endswith(os.sep) and src.endswith(os.sep):
+        dst += os.sep
     # loop around src path and go to every directory/sub-directory/file
     for root, dirs, files in os.walk(src, followlinks=True):
         # out root

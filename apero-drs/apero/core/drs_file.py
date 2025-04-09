@@ -199,8 +199,19 @@ class DrsPath:
         global PATH_CACHE
         # flag single entry
         single_entry = False
+        # deal with no block_kinds/obs_dirs
+        if block_kinds is None and obs_dirs is None:
+            # deal with single entry
+            if isinstance(basenames, (str, Path)):
+                return os.path.realpath(str(basenames))
+            # deal with multiple entries
+            else:
+                abspaths = []
+                for basename in basenames:
+                    abspaths.append(os.path.realpath(str(basename)))
+            return basenames
         # deal with only one block kind/obs_dir
-        if (isinstance(block_kinds, str) and isinstance(obs_dirs, str)
+        elif (isinstance(block_kinds, str) and isinstance(obs_dirs, str)
             and isinstance(basenames, str)):
             block_kinds = [block_kinds]
             obs_dirs = [obs_dirs]
@@ -233,7 +244,7 @@ class DrsPath:
             # get a unique block_kind + obs_dir path
             upath = f'{block_kinds[it]}:{obs_dirs[it]}'
             # add absolute path
-            abspaths.append(os.path.join(upath, basename))
+            abspaths.append(os.path.join(PATH_CACHE[upath], basename))
         # if in single entry mode return just the first entry
         if single_entry:
             return abspaths[0]
@@ -7040,8 +7051,8 @@ class DrsOutFile(DrsInputFile):
                 linkkind = None
                 # add table (calib file has no block kind / obs dir)
                 exttable = Table()
-                exttable['BLOCK_KIND'] = None
-                exttable['OBS_DIR'] = None
+                exttable['BLOCK_KIND'] = [None]
+                exttable['OBS_DIR'] = [None]
                 exttable['FILENAME'] = [cfilename]
             # -----------------------------------------------------------------
             elif mode == 'telluric':
@@ -7061,8 +7072,8 @@ class DrsOutFile(DrsInputFile):
                 linkkind = None
                 # add table (tellu file has no block kind / obs dir)
                 exttable = Table()
-                exttable['BLOCK_KIND'] = None
-                exttable['OBS_DIR'] = None
+                exttable['BLOCK_KIND'] = [None]
+                exttable['OBS_DIR'] = [None]
                 exttable['FILENAME'] = [tfilename]
 
             # -----------------------------------------------------------------

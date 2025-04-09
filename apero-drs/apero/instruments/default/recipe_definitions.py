@@ -291,6 +291,8 @@ get_files.set_kwarg(name='--assets', dtype='switch',
                     helpstr='Download the assets to the github directory')
 get_files.set_kwarg(name='--gui', dtype='switch',
                     helpstr=textentry('GET_GUI_HELP'))
+get_files.set_kwarg(name='--dbkind', dtype='options', default='findex',
+                    options=['findex', 'calib', 'tellu'])
 get_files.set_kwarg(name='--outpath', dtype=str, default='None',
                     helpstr=textentry('GET_OUTPATH_HELP'))
 get_files.set_kwarg(name='--symlinks', dtype='switch',
@@ -310,7 +312,10 @@ get_files.set_kwarg(name='--outtypes', dtype='List[str]', default='None',
                     helpstr=textentry('GET_OUTTYPES_HELP'))
 get_files.set_kwarg(name='--fibers', dtype='List[str]', default='None',
                     helpstr=textentry('GET_FIBERS_HELP'))
-
+get_files.set_kwarg(name='--keynames', dtype='List[str]', default='None',
+                    helpstr='For dbkind=calib or dbkind=tellu this is required,'
+                            ' and sets the type of calibration/telluric '
+                            'required (used instead of --outtypes)')
 get_files.set_kwarg(name='--since', default='None', dtype=str,
                     helpstr='Only get files processed since a certain date '
                             'YYYY-MM-DD hh:mm:ss')

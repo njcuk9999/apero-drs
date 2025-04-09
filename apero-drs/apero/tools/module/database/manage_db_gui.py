@@ -38,7 +38,7 @@ ParamDict = param_functions.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
 # get instrument names
-INSTRUMENTS = base.INSTRUMENTS
+INSTRUMENTS = apero_base.INSTRUMENTS
 # Get start page
 StartPage = gen_gui.StartPage
 

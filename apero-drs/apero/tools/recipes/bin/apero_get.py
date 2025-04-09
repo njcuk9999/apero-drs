@@ -110,6 +110,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     else:
         tarfilename = None
     # -------------------------------------------------------------------------
+    # get the database type (usually findex)
+    dbkind = params['INPUTS']['DBKIND']
+    # -------------------------------------------------------------------------
     # get inputs from user
     inputs = params['INPUTS']
     use_gui = params['INPUTS']['GUI']
@@ -139,6 +142,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     kw_pi_name = inputs['PI_NAME']
     kw_runids = inputs['RUNID']
     sizelimit = inputs.get('SIZELIMIT', None)
+    keyname = inputs['keynames']
     # -------------------------------------------------------------------------
     # test that since value is a valid time
     if not drs_text.null_text(since, ['None', '', 'Null']):
@@ -189,6 +193,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         kw_pi_name = None
     if drs_text.null_text(kw_runids, ['None', '', 'Null', '*']):
         kw_runids = None
+    if drs_text.null_text(keyname, ['None', '', 'Null', '*']):
+        keyname = None
     # -------------------------------------------------------------------------
     # deal with some Kw_outputs not using fibers (fibers will be set to None)
     kw_fibers = drs_get.fiber_by_output(kw_fibers, kw_outputs)
@@ -197,18 +203,32 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     filters = dict()
     filters['KW_DPRTYPE'] = kw_dprtypes
     filters['KW_OUTPUT'] = kw_outputs
+    filters['KEYNAME'] = keyname
     filters['KW_FIBER'] = kw_fibers
     filters['OBS_DIR'] = kw_obsdir
     filters['KW_PI_NAME'] = kw_pi_name
     filters['KW_RUN_ID'] = kw_runids
+    # -------------------------------------------------------------------------
     # run basic filter
-    indict, outdict = drs_get.basic_filter(params, kw_objnames, filters,
-                                           user_outdir, do_copy, do_symlink,
-                                           tarfilename=tarfilename,
-                                           since=since, latest=latest,
-                                           nosubdir=nosubdir,
-                                           sizelimit=sizelimit)
-
+    if dbkind == 'calib':
+        indict, outdict = drs_get.calib_filter(params, filters,
+                                               user_outdir, do_copy, do_symlink,
+                                               tarfilename=tarfilename,
+                                               since=since, latest=latest,
+                                               sizelimit=sizelimit)
+    elif dbkind == 'tellu':
+        indict, outdict = drs_get.tellu_filter(params, kw_objnames, filters,
+                                               user_outdir, do_copy, do_symlink,
+                                               tarfilename=tarfilename,
+                                               since=since, latest=latest,
+                                               sizelimit=sizelimit)
+    else:
+        indict, outdict = drs_get.basic_filter(params, kw_objnames, filters,
+                                               user_outdir, do_copy, do_symlink,
+                                               tarfilename=tarfilename,
+                                               since=since, latest=latest,
+                                               nosubdir=nosubdir,
+                                               sizelimit=sizelimit)
     # -------------------------------------------------------------------------
     # push some variables to params
     params.set('INDICT', indict)

@@ -141,6 +141,7 @@ def run_apero_get(params: ParamDict):
                    outpath=outpath_objects, fibers=lbl_scifibers,
                    symlinks=lbl_symlinks,
                    test=testmode, since=since)
+    # TODO: Put this back in once using better templates in APERO
     # run apero get for templates (no DPRTYPE as they could be different)
     # apero_get.main(objnames='*', outtypes=lbl_template_outtypes,
     #                outpath=outpath_templates, fibers=lbl_scifibers,
@@ -159,13 +160,14 @@ def run_apero_get(params: ParamDict):
                    symlinks=lbl_symlinks, nosubdir=True,
                    test=testmode, since=since)
     # run apero get for calibs (wave + blaze) science fiber
-    apero_get.main(objnames='None', outtypes='FF_BLAZE,WAVE_NIGHT',
+    apero_get.main(dbkind='calib',
+                   keynames='BLAZE,WAVE',
                    outpath=outpath_calib, fibers=lbl_scifibers,
                    symlinks=lbl_symlinks, nosubdir=True,
                    test=testmode, since=since)
     # run apero get for calibs (wave + blaze) science fiber
-    apero_get.main(objnames='None',
-                   outtypes='FF_BLAZE,WAVE_NIGHT',
+    apero_get.main(dbkind='calib',
+                   keynames='BLAZE,WAVE',
                    outpath=outpath_calib, fibers=lbl_calfibers,
                    symlinks=lbl_symlinks, nosubdir=True,
                    test=testmode, since=since)
