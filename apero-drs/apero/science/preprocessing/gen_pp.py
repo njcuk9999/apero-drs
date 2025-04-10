@@ -9,6 +9,7 @@ Created on 2019-12-12 at 09:45
 
 @author: cook
 """
+import os
 from typing import Any, Tuple, Union
 import warnings
 
@@ -555,9 +556,20 @@ def get_file_reject_list(params: ParamDict, column: str = 'PP') -> np.ndarray:
         # get the reject mask for the column
         idmask = np.array(rtable[column], dtype=bool)
         # get the reject list
-        reject_list = np.array(rtable['IDENTIFIER'], dtype=str)[idmask]
+        _reject_list = np.array(rtable['IDENTIFIER'], dtype=str)[idmask]
+        # storage for return
+        reject_list = []
+        # clean reject list
+        for _reject_item in _reject_list:
+            # remove path
+            _reject_item = os.path.basename(_reject_item)
+            # remove .fits from reject item
+            if _reject_item.endswith('.fits'):
+                _reject_item = _reject_item[:-4]
+            # add to reject list
+            reject_list.append(_reject_item)
         # return rejection list
-        return reject_list
+        return np.array(reject_list)
 
 
 # =============================================================================

@@ -291,15 +291,19 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                       cavity_poly=wprops['CAVITY'], iteration=4)
         fplines = wave.calc_wave_lines(params, recipe, **fpargs)
         # ---------------------------------------------------------------------
+        # get wave file
+        wavetime = fp_e2ds_file.get_hkey('MJDMID', dtype=float)
         # add lines to wave properties
         wprops['HCLINES'] = hclines
         wprops['FPLINES'] = fplines
-        # add wave time and file
-        wprops['WAVETIME'] = fp_e2ds_file.get_hkey('MJDMID', dtype=float)
+        # add wave time, file, path and source
+        wprops['WAVETIME'] = wavetime
         wprops['WAVEFILE'] = 'None'
+        wprops['WAVEPATH'] = 'REF'
         wprops['WAVESOURCE'] = __NAME__
         # set sources
-        skeys = ['HCLINES', 'FPLINES', 'WAVETIME', 'WAVEFILE']
+        skeys = ['HCLINES', 'FPLINES', 'WAVETIME', 'WAVEFILE',
+                 'WAVEPATH', 'WAVESOURCE']
         wprops.set_sources(skeys, mainname)
 
         # =================================================================

@@ -21,6 +21,7 @@ from astropy.table import Table
 from scipy.ndimage import zoom
 from scipy.optimize import curve_fit
 
+from aperocore.base import base
 from apero.base import base as apero_base
 from aperocore.constants import param_functions
 from aperocore.constants import load_functions
@@ -71,6 +72,8 @@ AperoCodedException = drs_log.AperoCodedException
 pcheck = param_functions.PCheck(wlog=WLOG)
 # Get the text types
 textentry = drs_lang.textentry
+# get Time
+Time = base.Time
 # Speed of light
 # noinspection PyUnresolvedReferences
 speed_of_light_ms = cc.c.to(uu.m / uu.s).value
@@ -147,7 +150,7 @@ def get_waveref_filename(params: ParamDict, fiber: str,
         return str(filename), out_wave
 
 
-WaveReturn = Tuple[DrsFitsFile, Union[np.ndarray, None], str, float]
+WaveReturn = Tuple[DrsFitsFile, Union[np.ndarray, None], str, str, float]
 
 
 def get_wave_solution_from_wavefile(params: ParamDict, usefiber: str,
@@ -233,13 +236,16 @@ def get_wave_solution_from_wavefile(params: ParamDict, usefiber: str,
     wavefile.read_file()
     # get wave map
     wavemap = wavefile.get_data(copy=True)
-    # set wave source of wave file
-    wavesource = source
     # get wave time
     wavetime = wavefile.get_hkey('KW_MID_OBS_TIME', dtype=float,
                                  has_default=True, default=0.0)
+    # get wave path
+    wavetimedir = drs_database.calib_dir_time(Time(wavetime, format='mjd'))
+    wavepath = str(os.path.join(wavefile.dbkey, wavetimedir))
+    # set wave source of wave file
+    wavesource = source
     # return to main get_wave function
-    return wavefile, wavemap, wavesource, wavetime
+    return wavefile, wavemap, wavepath, wavesource, wavetime
 
 
 def get_wave_solution_from_inheader(params: ParamDict, recipe: DrsRecipe,
@@ -267,7 +273,6 @@ def get_wave_solution_from_inheader(params: ParamDict, recipe: DrsRecipe,
             # log error
             eargs = [outputkey, dprtypekey, filetype, func_name]
             raise AperoCodedException(params, '00-017-00008', targs=eargs)
-            kind = None
         # get wave file instance
         wavefile = drs_file.get_file_definition(params, filetype,
                                                 block_kind=kind, fiber=usefiber)
@@ -280,6 +285,9 @@ def get_wave_solution_from_inheader(params: ParamDict, recipe: DrsRecipe,
             wavetime = header[params['KW_WAVETIME'][0]]
         else:
             wavetime = header[params['KW_MID_OBS_TIME'][0]]
+        # get wave path
+        wavetimedir = drs_database.calib_dir_time(Time(wavetime, format='mjd'))
+        wavepath = str(os.path.join(wavefile.dbkey, wavetimedir))
         # set the wave file data
         nbo = header[params['KW_WAVE_NBO'][0]]
         nbpix = params['IMAGE.X_HIGH'] - params['IMAGE.X_LOW']
@@ -294,12 +302,17 @@ def get_wave_solution_from_inheader(params: ParamDict, recipe: DrsRecipe,
         wavefile = infile.completecopy(infile)
         # set the file name to the wave file
         wavefile.filename = wavefile.get_hkey('KW_WAVEFILE', dtype=str)
+        # get path
+        wavefile.path = wavefile.get_hkey('KW_WAVEPATH', dtype=str)
         # if we have a wave time use it
         if params['KW_WAVETIME'][0] in header:
             wavetime = wavefile.get_hkey('KW_WAVETIME')
         else:
             wavetime = wavefile.get_hkey('KW_MID_OBS_TIME', dtype=float,
                                          has_default=True, default=0.0)
+        # get wave path
+        wavetimedir = drs_database.calib_dir_time(Time(wavetime, format='mjd'))
+        wavepath = str(os.path.join(wavefile.dbkey, wavetimedir))
         # wave source is the infile
         wavesource = 'infile'
         # get wave map
@@ -307,7 +320,7 @@ def get_wave_solution_from_inheader(params: ParamDict, recipe: DrsRecipe,
 
     assert isinstance(wavefile, DrsFitsFile)
     # ------------------------------------------------------------------------
-    return wavefile, wavemap, wavesource, wavetime
+    return wavefile, wavemap, wavepath, wavesource, wavetime
 
 
 def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
@@ -411,14 +424,14 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
     if force:
         wargs = [usefiber, inwavefile, header, database, ref]
         wout = get_wave_solution_from_wavefile(params, *wargs)
-        wavefile, wavemap, wavesource, wavetime = wout
+        wavefile, wavemap, wavepath, wavesource, wavetime = wout
     # ------------------------------------------------------------------------
     # Mode 2: using header or infile only i.e. from the input files header
     # ------------------------------------------------------------------------
     else:
         wargs = [infile, header, usefiber]
         wout = get_wave_solution_from_inheader(params, recipe, *wargs)
-        wavefile, wavemap, wavesource, wavetime = wout
+        wavefile, wavemap, wavepath, wavesource, wavetime = wout
     # ------------------------------------------------------------------------
     # Log progress
     # -------------------------------------------------------------------------
@@ -466,7 +479,6 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
         # otherwise we cannot make wavemap so log error
         else:
             raise AperoCodedException(params, '09-017-00008', targs=[func_name])
-            nbx = 0
         # get the wave map
         wavemap = get_wavemap_from_coeffs(wave_coeffs, nbo, nbx)
     # -------------------------------------------------------------------------
@@ -476,8 +488,10 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
     # -------------------------------------------------------------------------
     # store wave properties in parameter dictionary
     wprops = ParamDict()
+    wprops['WAVEPATH'] = wavefile.path
     wprops['WAVEFILE'] = wavefile.filename
     wprops['WAVEINIT'] = wavefile.filename
+    wprops['WAVEPATH'] =  wavepath
     wprops['WAVESOURCE'] = wavesource
     wprops['NBO'] = nbo
     wprops['WAVE_POLY_TYPE'] = 'Chebyshev'
@@ -519,8 +533,9 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
         else:
             wprops[wfp_keys[wfpi]] = wfp_values[wfpi]
     # set the source
-    keys = ['WAVEMAP', 'WAVEFILE', 'WAVEINIT', 'WAVESOURCE', 'NBO', 'DEG',
-            'WAVE_POLY_TYPE', 'COEFFS', 'WAVETIME', 'WAVEINST', 'NBPIX',
+    keys = ['WAVEMAP', 'WAVEFILE', 'WAVEINIT', 'WAVESOURCE', 'WAVEPATH' 
+            'NBO', 'DEG', 'WAVE_POLY_TYPE', 'COEFFS',
+            'WAVETIME', 'WAVEINST', 'NBPIX',
             'CAVITY', 'CAVITY_DEG', 'CAVITY_PEDESTAL', 'MEAN_HC_VEL',
             'ERR_HC_VEL'] + wfp_keys
     wprops.set_sources(keys, func_name)
@@ -602,7 +617,7 @@ def shift_wavesolution(wprops: ParamDict, dvshift: float) -> ParamDict:
     wprops1 = ParamDict()
     # -------------------------------------------------------------------------
     # update wave props we have to change
-    wprops1['WAVEFILE'] = str(wprops['WAVEFILE']) + '[SHIFTED]'
+    wprops1['WAVEFILE'] = str(wprops['WAVEFILE'])
     wprops1['WAVEINIT'] = str(wprops['WAVEINIT']) + '[SHIFTED]'
     wprops1['WAVESOURCE'] = 'SHIFT={0} km/s'.format(dvshift)
     wprops1['COEFFS'] = wavecoeffs1
@@ -2129,6 +2144,7 @@ def process_fibers(params: ParamDict, recipe: DrsRecipe,
         # add wave time and file
         wprops['WAVETIME'] = fp_e2ds_file.get_hkey('MJDMID', dtype=float)
         wprops['WAVEFILE'] = 'None'
+        wprops['WAVEPATH'] = refprops['WAVEPATH']
         wprops['WAVESOURCE'] = func_name
         # set sources
         skeys = ['HCLINES', 'FPLINES', 'WAVETIME', 'WAVEFILE']
@@ -3349,7 +3365,9 @@ def add_wave_keys(infile: DrsFitsFile, props: ParamDict) -> DrsFitsFile:
     # add wave parameters
     infile.add_hkey('KW_WAVEFILE', value=props['WAVEFILE'])
     infile.add_hkey('KW_WAVETIME', value=props['WAVETIME'])
+    infile.add_hkey('KW_WAVEPATH', value=props['WAVEPATH'])
     infile.add_hkey('KW_WAVESOURCE', value=props['WAVESOURCE'])
+    infile.add_hkey('KW_WAVEPATH', value=props['WAVEPATH'])
     infile.add_hkey('KW_WAVE_NBO', value=props['NBO'])
     infile.add_hkey('KW_WAVE_DEG', value=props['DEG'])
     infile.add_hkey_2d('KW_WAVECOEFFS', values=props['COEFFS'],
@@ -3876,6 +3894,7 @@ def wave_summary(recipe, params, props, fiber, qc_params):
     # add constants used (for reproduction)
     recipe.plot.add_stat('KW_WAVEFILE', value=props['WAVEFILE'])
     recipe.plot.add_stat('KW_WAVETIME', value=props['WAVETIME'])
+    recipe.plot.add_stat('KW_WAVEPATH', value=props['WAVEPATH'])
     recipe.plot.add_stat('KW_WAVESOURCE', value=props['WAVESOURCE'])
     recipe.plot.add_stat('KW_WAVE_NBO', value=props['NBO'])
     recipe.plot.add_stat('KW_WAVE_DEG', value=props['DEG'])

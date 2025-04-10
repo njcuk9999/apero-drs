@@ -509,7 +509,7 @@ class CalibrationDatabase(DatabaseManager):
         # copy file to database directory
         if copy_files:
             # get time dir
-            timedir = header_time.fits.split('T')[0]
+            timedir = calib_dir_time(header_time)
             # get outpath for reference calibrations
             if is_super:
                 outpath = Path(self.filedir).joinpath('REF')
@@ -761,7 +761,7 @@ class CalibrationDatabase(DatabaseManager):
             # get file times in MJD
             filetimes = float(time_insts.mjd)
             # get time dirs
-            timedirs = time_insts.fits.split('T')[0]
+            timedirs = calib_dir_time(time_insts)
         else:
             # get filenames
             filenames = np.array(ctable['FILENAME'])
@@ -776,7 +776,7 @@ class CalibrationDatabase(DatabaseManager):
             # get time dirs
             timedirs = []
             for time_inst in time_insts:
-                timedirs.append(time_inst.fits.split('T')[0])
+                timedirs.append(calib_dir_time(time_inst))
         # ---------------------------------------------------------------------
         # return absolute paths
         # ---------------------------------------------------------------------
@@ -3267,6 +3267,13 @@ def get_google_sheet(params: ParamDict, sheet_id: str, worksheet: int = 0,
     GOOGLE_TABLES[url] = table
     # return table
     return table
+
+
+def calib_dir_time(time_inst: Time) -> str:
+    """
+    Return the time to use in the calibration file
+    """
+    return time_inst.fits.split('T')[0]
 
 
 # =============================================================================

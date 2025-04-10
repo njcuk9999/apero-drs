@@ -928,6 +928,10 @@ KDict.set('KW_WAVEFILE', key='WAVEFILE', comment='Wavelength solution file used'
 KDict.set('KW_WAVETIME', key='WAVETIME', comment='Wavelength solution mid exptime',
           parent=None, group='wave')
 
+# the wave path of the wave file used
+KDict.set('KW_WAVEPATH', key='WAVEPATH', comment='Calib path for wave file',
+          parent=None, group='wave')
+
 # the wave source of the wave file used
 KDict.set('KW_WAVESOURCE', key='WAVESOUR', comment='Source of the wave solution used.',
           parent=None, group='wave')

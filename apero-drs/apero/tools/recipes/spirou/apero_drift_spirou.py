@@ -244,7 +244,7 @@ def __main__(recipe, params):
         # storage for table
         basenames, mjdmids, rv_stack, contrasts_stack = [], [], [], []
         fwhms_stack, mean_tot_lines, dvrms_sps, dv_rms_ccs = [], [], [], []
-        wavetimes, wavefiles, wavesrces, paths = [], [], [], []
+        wavetimes, wavefiles, wavepaths, wavesrces, paths = [], [], [], [], []
         # ---------------------------------------------------------------------
         # loop around files
         for f_it, filename in enumerate(filenames):
@@ -291,16 +291,17 @@ def __main__(recipe, params):
             dv_rms_ccs.append(rvprops['CCF_PHOT_NOISE'])
             wavetimes.append(wprops['WAVETIME'])
             wavefiles.append(wprops['WAVEFILE'])
+            wavepaths.append(wprops['WAVEPATH'])
             wavesrces.append(wprops['WAVESOURCE'])
             paths.append(infile.filename)
         # ---------------------------------------------------------------------
         # convert storage to table
         columnnames = ['FILENAME', 'MJDMID', 'RV', 'CONTRAST', 'FWHM',
                        'TOTLINES', 'DVRMS_SP', 'DVRMS_CC', 'WAVETIME',
-                       'WAVEFILE', 'WAVESOURCE', 'PATH']
+                       'WAVEFILE', 'WAVEPATH', 'WAVESOURCE', 'PATH']
         columnvalues = [basenames, mjdmids, rv_stack, contrasts_stack,
                         fwhms_stack, mean_tot_lines, dvrms_sps, dv_rms_ccs,
-                        wavetimes, wavefiles, wavesrces, paths]
+                        wavetimes, wavefiles, wavepaths, wavesrces, paths]
         # make table
         table = drs_table.make_table(columnnames, columnvalues)
         # sort table by MJDMID

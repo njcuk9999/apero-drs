@@ -9,12 +9,14 @@ Created on 2019-08-16 at 09:23
 
 @author: cook
 """
+import os
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 from astropy import constants as cc
 from astropy import units as uu
 
+from aperocore.base import base
 from aperocore.constants import param_functions
 from aperocore import drs_lang
 from apero.core import drs_database
@@ -52,6 +54,8 @@ ParamDict = param_functions.ParamDict
 textentry = drs_lang.textentry
 # define extraction code to use
 EXTRACT_NAME = 'apero_extract_nirps_ha.py'
+# get Time
+Time = base.Time
 # Speed of light
 # noinspection PyUnresolvedReferences
 speed_of_light_ms = cc.c.to(uu.m / uu.s).value
@@ -280,15 +284,22 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                       cavity_poly=wprops['CAVITY'], iteration=2,
                       fplines=mfplines)
         fplines = wave.calc_wave_lines(params, recipe, **fpargs)
+        # get wave file
+        wavefile = recipe.outputs['WAVEMAP_NIGHT'].newcopy(params=params,
+                                                         fiber=ref_fiber)
+        wavetime = fp_e2ds_file.get_hkey('MJDMID', dtype=float)
+        wavetimedir = drs_database.calib_dir_time(Time(wavetime, format='mjd'))
         # add lines to wave properties
         wprops['HCLINES'] = hclines
         wprops['FPLINES'] = fplines
-        # add wave time and file
-        wprops['WAVETIME'] = fp_e2ds_file.get_hkey('MJDMID', dtype=float)
+        # add wave time, file, path and source
+        wprops['WAVETIME'] = wavetime
         wprops['WAVEFILE'] = 'None'
+        wprops['WAVEPATH'] = os.path.join(wavefile.dbkey, wavetimedir)
         wprops['WAVESOURCE'] = __NAME__
         # set sources
-        skeys = ['HCLINES', 'FPLINES', 'WAVETIME', 'WAVEFILE']
+        skeys = ['HCLINES', 'FPLINES', 'WAVETIME', 'WAVEFILE',
+                 'WAVEPATH', 'WAVESOURCE']
         wprops.set_sources(skeys, mainname)
 
         # =================================================================

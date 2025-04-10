@@ -2470,8 +2470,13 @@ def gen_global_condition(params: ParamDict, findexdbm: FileIndexDatabase,
             subs = []
             # add to global conditions
             for identifier in reject_list:
+                # remove path
+                _identifier = os.path.basename(identifier)
+                # remove .fits
+                if _identifier.endswith('.fits'):
+                    _identifier = _identifier[:-4]
                 # get fkwargs
-                fkwargs = dict(identifier=identifier)
+                fkwargs = dict(identifier=_identifier)
                 # build sub-condition
                 subs += [reject_criteria.format(**fkwargs)]
             # generate full subcondition

@@ -2475,7 +2475,7 @@ CDict.set('TIME_COL', value='KW_ACQTIME', source=__NAME__, group=cgroup)
 
 # Define the rejection sql query (between identifier and reject list col)
 # must use a valid reject database column and use {identifier} in query
-CDict.set('REJECT_SQL', value='FILENAME="{identifier}"',
+CDict.set('REJECT_SQL', value='FILENAME LIKE "{identifier}%.fits"',
           source=__NAME__, group=cgroup)
 
 # Define the extra SQL science object select criteria

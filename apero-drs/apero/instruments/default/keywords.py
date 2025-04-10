@@ -1115,6 +1115,10 @@ KDict.add('KW_WAVEFILE', key='NULL', dtype=str, source=__NAME__,
 KDict.add('KW_WAVETIME', key='NULL', dtype=float, source=__NAME__,
           description='the wave file mid exptime [mjd]')
 
+# the wave path of the wave file used
+KDict.add('KW_WAVEPATH', key='NULL', dtype=str, source=__NAME__,
+          description='the wave path of the wave file used')
+
 # the wave source of the wave file used
 KDict.add('KW_WAVESOURCE', key='NULL', dtype=str, source=__NAME__,
           description='the wave source of the wave file used')
