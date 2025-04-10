@@ -486,6 +486,8 @@ class ConsoleFormat(logging.Formatter):
         elif counter == 0:
             self.fmt = '%(asctime)s.%(msecs)03d|'
             self.fmt += f'{code}|{program}| %(message)s'
+        elif '!' in code:
+            self.fmt = '%(message)s'
         else:
             self.fmt = '  L %(message)s'
         # set this as the default logging format

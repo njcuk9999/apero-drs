@@ -533,7 +533,7 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
         else:
             wprops[wfp_keys[wfpi]] = wfp_values[wfpi]
     # set the source
-    keys = ['WAVEMAP', 'WAVEFILE', 'WAVEINIT', 'WAVESOURCE', 'WAVEPATH' 
+    keys = ['WAVEMAP', 'WAVEFILE', 'WAVEINIT', 'WAVESOURCE', 'WAVEPATH',
             'NBO', 'DEG', 'WAVE_POLY_TYPE', 'COEFFS',
             'WAVETIME', 'WAVEINST', 'NBPIX',
             'CAVITY', 'CAVITY_DEG', 'CAVITY_PEDESTAL', 'MEAN_HC_VEL',
