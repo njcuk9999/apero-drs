@@ -818,6 +818,9 @@ def download_data(params: ParamDict):
             purl = f'{url}/{value_it}'
             # construct the local file name
             localpath = str(os.path.join(params[dparameter], value_it))
+            # deal with files already existing -- don't re-download
+            if os.path.exists(localpath):
+                continue
             # print progress
             msg = '\tDownloading: {0}'
             margs = [localpath]

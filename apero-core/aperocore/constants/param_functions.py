@@ -1188,7 +1188,8 @@ class SubParamDict():
         _keys = self.param_dict.data.keys()
         keys = []
         for key in _keys:
-            keys.append(key[self.path_len:])
+            if key.startswith(self.path):
+                keys.append(key[self.path_len:])
         return keys
 
     def values(self):
