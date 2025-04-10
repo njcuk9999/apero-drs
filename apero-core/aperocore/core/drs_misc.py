@@ -17,6 +17,7 @@ only from
 """
 import os
 import random
+import requests
 import string
 import sys
 import time
@@ -430,6 +431,37 @@ def python_git_stats(params: Any) -> Any:
         params.lock()
 
     return params
+
+
+def download_file(url: str, local_filename: str) -> bool:
+    """
+    Simple file download function
+
+    :param url: str, the URL to download
+
+    :param local_filename: str, the local filename to save it to
+
+    :return: bool, True if the file was downloaded, False otherwise
+    """
+    try:
+        # Send a HEAD request to check if the file exists
+        head = requests.head(url, allow_redirects=True)
+        if head.status_code != 200:
+            print(f"File not found at URL: {url}")
+            return False
+
+        # Download the file if it exists
+        with requests.get(url, stream=True) as r:
+            r.raise_for_status()
+            with open(local_filename, 'wb') as f:
+                for chunk in r.iter_content(chunk_size=8192):
+                    f.write(chunk)
+        print(f"File downloaded: {local_filename}")
+        return True
+
+    except requests.RequestException as e:
+        print(f"Error accessing URL: {e}")
+        return False
 
 
 # =============================================================================

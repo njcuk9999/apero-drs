@@ -589,6 +589,8 @@ def starting_point(params: ParamDict, imode_key: str,
 
     :return: ParamDict, the updated parameter dictionary of constants
     """
+    # set function name
+    func_name = display_func('starting_point', __NAME__)
     # deal with instrument mode not set
     params = ask_for_missing_args(params, include_keys=[imode_key])
     # section start
@@ -597,11 +599,17 @@ def starting_point(params: ParamDict, imode_key: str,
     drs_text.cprint(msg, 'g')
     # get user selected instrument mode
     imode = params[imode_key]
+    # create storage for the demo download data
+    demo_params = dict(ACTIVE=False, URL=None, DOWNLOAD=dict())
     # deal with no demos for this mode
     if imode not in demo_module.DEMOS:
+        # print that no demos are avaiable
         wmsg = (f'No demos available for {imode} '
                 f'-- starting from default values.')
         WLOG(params, 'warning', wmsg)
+        # set demo params
+        params.set('DEMO_PARAMS', demo_params, source=func_name)
+        # return parameters
         return params
     # get the demos for this instrument
     idemos = demo_module.DEMOS[imode]
@@ -629,13 +637,25 @@ def starting_point(params: ParamDict, imode_key: str,
         userinput = userinput.lower().strip()
         # deal with user options
         if userinput in ['', 'none', '0', 'null']:
-            return params
+            break
         elif userinput in counters.keys():
-            return _load_info(params, idemos[counters[userinput]])
+            # push demo parameters into params
+            params = _load_info(params, idemos[counters[userinput]])
+            # update the demo_params
+            demo_params['ACTIVE'] = True
+            demo_params['URL'] = idemos[counters[userinput]].URL
+            demo_params['DOWNLOAD'] = idemos[counters[userinput]].DOWNLOAD
+            # break out of the while loop here
+            break
         else:
             msg = f'Invalid input: {0}'
             margs = [userinput]
             WLOG(params, 'warning', msg.format(*margs))
+
+    # set demo params
+    params.set('DEMO_PARAMS', demo_params, source=func_name)
+    # return parameters
+    return params
 
 
 def _print_info(params: ParamDict, it: int, info_dict: Dict[str, str]):
@@ -715,6 +735,95 @@ def _load_info(params: ParamDict, demo_inst) -> ParamDict:
                            instance=params.instances[key])
     # return parameters
     return params
+
+
+def download_data(params: ParamDict):
+    """
+    Download the data from a demo
+
+    Note you must have DEMO_PARAMS in params for this function to work
+
+    DEMO_PARAMS: dict, the demo parameters dictionary
+
+    DEMO_PARAMS['ACTIVE']: bool: if True try to download data, else return
+    DEMO_PARAMS['URL']: str: the url of the demo
+    DEMO_PARAMS['DOWNLOAD']: Dict[str, str]
+          - key = str: the parameters to look for files
+          - value = str: the parameter description the path to save locally
+
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: None, downloads data from URL to local file(S)
+    """
+    # set function name
+    func_name = display_func('download_data', __NAME__)
+    # deal with params not set up properly
+    if 'DEMO_PARAMS' not in params:
+        # display error about using this function without DEMO_PARAMS
+        # TODO: Add to language database
+        emsg = 'params does not contain DEMO_PARAMS cannot use function {0}'
+        eargs = [func_name]
+        raise AperoCodedException(params, None, message=emsg.format(*eargs))
+    # get the parameters from demo parameters
+    active = params['DEMO_PARAMS']['ACTIVE']
+    url = params['DEMO_PARAMS']['URL']
+    download = params['DEMO_PARAMS']['DOWNLOAD']
+    # -------------------------------------------------------------------------
+    # deal with not being active
+    if not active:
+        return
+    # -------------------------------------------------------------------------
+    # ask the user if they want to download demo data
+    userinput = str(input('\nDownload all demo data? [Y]es or [N]o\t'))
+    # any other response other than Y or YES is rejected
+    if not (userinput.upper().strip() in ['Y', 'YES']):
+        return
+    # -------------------------------------------------------------------------
+    # loop around downloadable parameters
+    for parameter in download:
+        # get download parameter
+        dparameter = download[parameter]
+        # deal with parameter not in params
+        if parameter not in params:
+            WLOG(params, 'warning', f'Parameter "{parameter}" not defined')
+            continue
+        # deal with value of DOWNLOAD[parameter] not in params
+        if dparameter not in params:
+            WLOG(params, 'warning', f'Parameter "{dparameter} not defined')
+            continue
+        # deal with parameter being None
+        if params[parameter] is None:
+            continue
+        # deal with dparameter being None
+        if params[dparameter] is None:
+            continue
+        # get the filename
+        value = params[parameter]
+        # force into a list (if string)
+        if isinstance(value, str):
+            value = [value]
+        # deal with bad parameter (should now be a list)
+        if not isinstance(value, list):
+            WLOG(params, 'warning', f'Cannot get parameter: "{parameter}"')
+            continue
+        # create path if it doesn't exist
+        if not os.path.exists(params[dparameter]):
+            os.makedirs(params[dparameter])
+
+        # print progress
+        WLOG(params, 'info', f'Downloading data. Please wait...')
+        # loop around values and try to download
+        for value_it in value:
+            # get the url
+            purl = f'{url}/{value_it}'
+            # construct the local file name
+            localpath = str(os.path.join(params[dparameter], value_it))
+            # print progress
+            msg = '\tDownloading: {0}'
+            margs = [localpath]
+            WLOG(params, '', msg.format(*margs))
+            # try to get the data
+            drs_misc.download_file(purl, localpath)
 
 
 def _print_parameters(key: str, value: Any):
