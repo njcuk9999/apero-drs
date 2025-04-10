@@ -779,6 +779,9 @@ def download_data(params: ParamDict):
     if not (userinput.upper().strip() in ['Y', 'YES']):
         return
     # -------------------------------------------------------------------------
+    # print progress
+    WLOG(params, 'info', f'Downloading data. Please wait...')
+    # -------------------------------------------------------------------------
     # loop around downloadable parameters
     for parameter in download:
         # get download parameter
@@ -809,9 +812,6 @@ def download_data(params: ParamDict):
         # create path if it doesn't exist
         if not os.path.exists(params[dparameter]):
             os.makedirs(params[dparameter])
-
-        # print progress
-        WLOG(params, 'info', f'Downloading data. Please wait...')
         # loop around values and try to download
         for value_it in value:
             # get the url
