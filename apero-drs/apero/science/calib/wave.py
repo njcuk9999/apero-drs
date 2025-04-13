@@ -286,8 +286,7 @@ def get_wave_solution_from_inheader(params: ParamDict, recipe: DrsRecipe,
         else:
             wavetime = header[params['KW_MID_OBS_TIME'][0]]
         # get wave path
-        wavetimedir = drs_database.calib_dir_time(Time(wavetime, format='mjd'))
-        wavepath = str(os.path.join(wavefile.dbkey, wavetimedir))
+        wavepath = header[params['KW_WAVEPATH'][0]]
         # set the wave file data
         nbo = header[params['KW_WAVE_NBO'][0]]
         nbpix = params['IMAGE.X_HIGH'] - params['IMAGE.X_LOW']
@@ -311,8 +310,7 @@ def get_wave_solution_from_inheader(params: ParamDict, recipe: DrsRecipe,
             wavetime = wavefile.get_hkey('KW_MID_OBS_TIME', dtype=float,
                                          has_default=True, default=0.0)
         # get wave path
-        wavetimedir = drs_database.calib_dir_time(Time(wavetime, format='mjd'))
-        wavepath = str(os.path.join(wavefile.dbkey, wavetimedir))
+        wavepath = wavefile.get_hkey('KW_WAVEPATH', dtype=str)
         # wave source is the infile
         wavesource = 'infile'
         # get wave map
@@ -3422,6 +3420,9 @@ def add_wave_keys_hdr(params: ParamDict, header: drs_fits.Header,
     infile = add_wave_keys(infile, props)
     # push hdict keys into input header
     for key in infile.hdict:
+        # deal with no header
+        if header is None:
+            continue
         # only update keys - do not add them
         if key not in header:
             continue
