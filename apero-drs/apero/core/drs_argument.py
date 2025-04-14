@@ -3114,7 +3114,7 @@ class DrsArgument(object):
                  filelogic: str = 'inclusive', default: Union[Any, None] = None,
                  default_ref: Union[str, None] = None,
                  required: bool = None, reprocess: bool = False,
-                 optional: bool = False):
+                 optional: bool = False, single_call: bool = False):
         """
         Create a DRS Argument object
 
@@ -3182,6 +3182,11 @@ class DrsArgument(object):
         :param reprocess: bool, if True this argument will be used in processing
                           script as a required argument (but does not raise an
                           exception when recipe used individually)
+
+        :param single_call: bool, if True this and add options are used it
+                            will merge options into a single string
+                            i.e. "objnames=A,B,C" instead of the normal
+                            objnames=A  objnames=B  objnames=C
 
         """
         # set class name
@@ -3330,6 +3335,8 @@ class DrsArgument(object):
             self.reprocess = reprocess
         # whether positional argument is optional
         self.optional = optional
+        # whether to force to a single call (when add is used)
+        self.single_call = single_call
         # set empty
         self.props = OrderedDict()
         self.value = None
@@ -3558,6 +3565,8 @@ class DrsArgument(object):
         # get required
         self.required = bool(argument.required)
         self.reprocess = bool(argument.reprocess)
+        # copy the single call
+        self.single_call = bool(argument.single_call)
         # set empty
         self.props = copy.deepcopy(argument.props)
         self.value = copy.deepcopy(argument.value)

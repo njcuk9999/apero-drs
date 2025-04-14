@@ -575,7 +575,7 @@ class DrsRecipe(object):
                 filelogic: str = 'inclusive', default: Union[Any, None] = None,
                 default_ref: Union[Any, None] = None,
                 required: bool = None, reprocess: bool = False,
-                optional: bool = False):
+                optional: bool = False, single_call: bool = False):
         """
         Add an argument to the recipe
 
@@ -661,7 +661,7 @@ class DrsRecipe(object):
                                maximum=maximum, filelogic=filelogic,
                                default=default, default_ref=default_ref,
                                required=required, reprocess=reprocess,
-                               optional=optional)
+                               optional=optional, single_call=single_call)
         # make arg parser properties
         argument.make_properties()
         # recast name
@@ -691,7 +691,8 @@ class DrsRecipe(object):
                   filelogic: str = 'inclusive',
                   default: Union[Any, None] = None,
                   default_ref: Union[Any, None] = None,
-                  required: bool = None, reprocess: bool = False):
+                  required: bool = None, reprocess: bool = False,
+                  single_call: bool = False):
         """
         Add a keyword argument to the recipe
 
@@ -795,7 +796,8 @@ class DrsRecipe(object):
                                           default=default,
                                           default_ref=default_ref,
                                           required=required,
-                                          reprocess=reprocess)
+                                          reprocess=reprocess,
+                                          single_call=single_call)
         except AperoCodedException as e:
             WLOG(None, 'error', e.get_text())
             raise SystemExit()
@@ -1278,6 +1280,17 @@ class DrsRecipe(object):
         for argname in arguments:
             # get value
             value = copy.deepcopy(arguments[argname])
+            # get argument (from recipe)
+            arg = None
+            if argname in self.args:
+                arg = self.args[argname]
+            elif argname in self.kwargs:
+                arg = self.kwargs[argname]
+            # skip any argument not in the recipe
+            if arg is None:
+                eargs = [argname, value, func_name]
+                raise drs_log.AperoCodedException(params, '00-503-00012',
+                                                  targs=eargs)
             # check if value is a reference to a params value
             if isinstance(value, str):
                 # see if value is in parameter dictionary already
@@ -1323,17 +1336,17 @@ class DrsRecipe(object):
                 if arguments[argname] in SPECIAL_LIST_KEYS:
                     # we want to reject those in template stars
                     value = filter_values(value, current_tstars, mode='reject')
-            # check for argument in args
-            if argname in self.args:
-                self.extras[argname] = value
-            # check for argument in kwargs
-            elif argname in self.kwargs:
-                self.extras[argname] = value
-            # else raise an error
-            else:
-                eargs = [argname, value, func_name]
-                raise drs_log.AperoCodedException(params, '00-503-00012',
-                                                  targs=eargs)
+            # -----------------------------------------------------------------
+            # deal with requiring only one call (for example this can push
+            # all values into a single call to the recipe)
+            if arg.single_call:
+                value = ','.join(value)
+            # -----------------------------------------------------------------
+            # push argument into the respective extracts
+            # -----------------------------------------------------------------
+            self.extras[argname] = value
+
+
 
     # =========================================================================
     # Private Methods (Not to be used externally to drs_recipe.py)

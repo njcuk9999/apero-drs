@@ -1233,7 +1233,8 @@ apero_lbl_ref.set_kwarg(name='--test', dtype='switch',
                         helpstr='Run in test mode')
 apero_lbl_ref.set_kwarg(name='--objnames', dtype=str, default='None',
                         helpstr='Name of the objects to copy, if None copies '
-                                'all objects available.')
+                                'all objects available.',
+                        single_call=True)
 apero_lbl_ref.group_func = grouping.no_group
 apero_lbl_ref.group_column = None
 # add to recipe
