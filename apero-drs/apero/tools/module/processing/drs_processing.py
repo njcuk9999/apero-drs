@@ -21,6 +21,7 @@ from copy import deepcopy
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
+import pandas as pd
 from astropy.table import Table
 
 from aperocore.base import base
@@ -941,13 +942,12 @@ def generate_run_list(params: ParamDict, findexdbm: FileIndexDatabase,
     # get whether the user wants to use reject list
     _use_reject = params['USE_REJECTLIST']
     # get the odometer reject list
-    reject_list = []
+    reject_list = np.array([])
     if not drs_text.null_text(_use_reject, ['', 'None']):
         if drs_text.true_text(_use_reject):
             reject_list = prep.get_file_reject_list(params)
     # define the reference conditions (that affect all recipes)
-    ref_condition, req_obs_dirs = gen_global_condition(params, findexdbm,
-                                                       reject_list)
+    ref_condition, req_obs_dirs = gen_global_condition(params, findexdbm)
     # -------------------------------------------------------------------------
     # get telluric stars and non-telluric stars
     # -------------------------------------------------------------------------
@@ -1002,6 +1002,7 @@ def generate_run_list(params: ParamDict, findexdbm: FileIndexDatabase,
                                               findexdbm, tstars=tstars,
                                               ostars=ostars,
                                               current_tstars=current_tstars,
+                                              reject_list=reject_list,
                                               ref_condition=ref_condition)
             # deal with verification mode
             if verify:
@@ -1949,6 +1950,7 @@ def gen_run_from_seq(params: ParamDict, sequence,
                      tstars: Union[List[str], None] = None,
                      ostars: Union[List[str], None] = None,
                      current_tstars: Union[List[str], None] = None,
+                     reject_list: Union[np.ndarray, List[str], None] = None,
                      ref_condition: str = '') -> RunSeqReturn:
     func_name = __NAME__ + '.gen_run_from_seq()'
     # -------------------------------------------------------------------------
@@ -1961,6 +1963,8 @@ def gen_run_from_seq(params: ParamDict, sequence,
     sequence[1].process_adds(params, tstars=list(tstars), ostars=list(ostars),
                              current_tstars=current_tstars,
                              logmsg=logmsg)
+    # load the pseudo constants
+    pconst = load_functions.load_pconfig(select.INSTRUMENTS)
     # get the sequence recipe list
     srecipelist = sequence[1].sequence
     # deal with returning recipes
@@ -2010,11 +2014,35 @@ def gen_run_from_seq(params: ParamDict, sequence,
             # set used/counts to the default value
             vdicts['used'][runname] = False
             vdicts['counts'][runname] = 0
-    # ------------------------------------------------------------------
+    # -------------------------------------------------------------------------
+    # get dataframe
+    dataframe = indexdb.get_entries(columns='*', condition=ref_condition)
+    # skip if table is empty
+    if len(dataframe) == 0:
+        return newruns, vdicts
+    # -------------------------------------------------------------------------
+    # Deal with rejecting stars (don't need to do this per recipe)
+    # -------------------------------------------------------------------------
+    rmask, creject_list = pconst.REJECTION(reject_list,
+                                           dataframe['KW_IDENTIFIER'])
+    # print how many files were rejected
+    msg = 'Rejected {0}/{1} files [using rejection database len={2}]'
+    margs = [np.sum(rmask), len(dataframe), len(creject_list)]
+    WLOG(params, 'info', msg.format(*margs))
+    # apply the rmask to dataframe - we don't want any of these files from this
+    # point on
+    dataframe = dataframe[~rmask]
+
+    # skip if table is empty
+    if len(dataframe) == 0:
+        return newruns, vdicts
+    # -------------------------------------------------------------------------
     # loop around recipes in new list
     for srecipe in srecipelist:
         # deal with skip
         runname = 'RUN_{0}'.format(srecipe.shortname)
+        # copy the dataframe so we can re-use the original
+        sdataframe = dataframe.copy()
         # skip if run name is not True
         if srecipe.shortname in params['RUN_RECIPES']:
             if not params['RUN_RECIPES'][srecipe.shortname]:
@@ -2039,16 +2067,6 @@ def gen_run_from_seq(params: ParamDict, sequence,
         WLOG(params, '', textentry('40-503-00012', args=wargs))
         # add params to srecipe
         srecipe.params = params
-        # copy reference condition
-        condition = str(ref_condition)
-        # ------------------------------------------------------------------
-        # Deal with no rows in table
-        # ------------------------------------------------------------------
-        # get length of database at this point
-        idb_len = indexdb.database.count(condition=condition)
-        # skip if table is empty
-        if idb_len == 0:
-            continue
         # ------------------------------------------------------------------
         # Deal with recalculation of templates
         # ------------------------------------------------------------------
@@ -2056,16 +2074,10 @@ def gen_run_from_seq(params: ParamDict, sequence,
         if srecipe.template_required:
             # only continue if we have objects with templates
             if len(current_tstars) > 0:
-                # store sub-conditions
-                subs = []
-                # add to global conditions
-                for objname in current_tstars:
-                    # build sub-condition
-                    subs += ['KW_OBJNAME="{0}"'.format(objname)]
-                # generate full subcondition
-                subcondition = ' OR '.join(subs)
-                # add to global condition (in reverse - we don't want these)
-                condition += ' AND NOT ({0})'.format(subcondition)
+                # get dataframe mask
+                dmask = sdataframe['KW_OBJNAME'].isin(current_tstars)
+                # cut down the dataframe
+                sdataframe = sdataframe[~dmask]
                 # print that this recipe is skipping templates
                 wargs = [srecipe.shortname]
                 WLOG(params, 'warning', textentry('10-503-00024', args=wargs))
@@ -2078,8 +2090,8 @@ def gen_run_from_seq(params: ParamDict, sequence,
         if srecipe.reference:
             # get reference observation directory
             obs_dir = params['REF_OBS_DIR']
-            # get observation directory
-            obs_dirs = indexdb.database.unique('OBS_DIR', condition=condition)
+            # get unique observation directories
+            obs_dirs = sdataframe['OBS_DIR'].unique()
             # check if reference observation directory is valid (in table)
             if obs_dir not in obs_dirs:
                 wargs = [obs_dir]
@@ -2094,21 +2106,26 @@ def gen_run_from_seq(params: ParamDict, sequence,
                     WLOG(params, 'error', 'User chose to exit',
                          raise_exception=False)
                     raise SystemExit()
-            # mask table by observation directory
-            condition += ' AND OBS_DIR="{0}"'.format(obs_dir)
+            # get dataframe mask
+            dmask = sdataframe['OBS_DIR'] == obs_dir
+            # cut down the dataframe
+            sdataframe = sdataframe[dmask]
+
         # ------------------------------------------------------------------
         # deal with setting 1 night
         # ------------------------------------------------------------------
         elif not drs_text.null_text(params['RUN_OBS_DIR'], ['', 'All', 'None']):
             # get observation directory
             obs_dir = params['RUN_OBS_DIR']
-            # mask table by observation directory
-            condition += ' AND OBS_DIR="{0}"'.format(obs_dir)
+            # get dataframe mask
+            dmask = sdataframe['OBS_DIR'] == obs_dir
+            # cut down the dataframe
+            sdataframe = sdataframe[dmask]
         else:
             obs_dir = 'all'
         # ------------------------------------------------------------------
         # get length of database at this point
-        idb_len = indexdb.database.count(condition=condition)
+        idb_len = len(sdataframe)
         # deal with empty database (after conditions)
         if idb_len == 0:
             wargs = [obs_dir]
@@ -2132,9 +2149,8 @@ def gen_run_from_seq(params: ParamDict, sequence,
         # ------------------------------------------------------------------
         # get runs for this recipe
         # ------------------------------------------------------------------
-        sruns = generate_runs(params, srecipe, indexdb, condition=condition,
-                              filters=filters,
-                              allowedfibers=allowedfibers)
+        sruns = generate_runs(params, srecipe, sdataframe,
+                              filters=filters, allowedfibers=allowedfibers)
         # ------------------------------------------------------------------
         # print how many runs we are adding
         # ------------------------------------------------------------------
@@ -2172,7 +2188,7 @@ def gen_run_from_seq(params: ParamDict, sequence,
 
 
 def generate_runs(params: ParamDict, recipe: DrsRecipe,
-                  indexdb: FileIndexDatabase, condition: str,
+                  sdataframe: pd.DataFrame,
                   filters: Union[Dict[str, Any], None] = None,
                   allowedfibers: Union[List[str], str, None] = None
                   ) -> List[str]:
@@ -2183,9 +2199,7 @@ def generate_runs(params: ParamDict, recipe: DrsRecipe,
 
     :param params: ParamDict, the parameter dictionary of constants
     :param recipe: DrsRecipe instance, the recipe this run is associated with
-    :param indexdb: index database instance, the file database to use to
-                    generate runs
-    :param condition: str, the condition to apply to the database
+    :param sdataframe: Pandas Dataframe: the database table (cut down)
     :param filters: None or dict - dictionary of filters where keys are
                     KW_XXX names (in params) and values are the values to
                     test in the header(s)
@@ -2203,11 +2217,11 @@ def generate_runs(params: ParamDict, recipe: DrsRecipe,
     #       i.e. filedict[argname][drsfile]
     #    else all drsfiles go to 'all'
     #       i.e. filedict[argname]['all']
-    argdict = find_run_files(params, recipe, indexdb, condition, recipe.args,
+    argdict = find_run_files(params, recipe, sdataframe, recipe.args,
                              filters=filters, allowedfibers=allowedfibers)
     # same for keyword args but this time we need to check only if
     #   keyword is required, else skip (don't add optionals)
-    kwargdict = find_run_files(params, recipe, indexdb, condition,
+    kwargdict = find_run_files(params, recipe, sdataframe,
                                recipe.kwargs, filters=filters,
                                allowedfibers=allowedfibers,
                                check_required=True)
@@ -2320,7 +2334,7 @@ def conditional_list(strlist: List[str], key: str, logic: str,
 
 
 def gen_global_condition(params: ParamDict, findexdbm: FileIndexDatabase,
-                         reject_list: List[str], log: bool = True
+                         log: bool = True
                          ) -> Tuple[str, List[str]]:
     """
     Generate the global conditions (based on run.ini) that will affect the
@@ -2333,8 +2347,6 @@ def gen_global_condition(params: ParamDict, findexdbm: FileIndexDatabase,
 
     :param params: ParamDict, the parameter dictionary of constants
     :param findexdbm: IndexDatabase instance, the index database instance
-    :param reject_list: list or strings, the list of rejected odometer
-                            codes
     :param log: bool, whether to log progress
 
     :return: str, the sql global condition to apply to all recipes
@@ -2457,32 +2469,32 @@ def gen_global_condition(params: ParamDict, findexdbm: FileIndexDatabase,
     # ------------------------------------------------------------------
     # Deal with reject list
     # ------------------------------------------------------------------
-    # only continue if we have odocodes to reject
-    if len(reject_list) > 0:
-        # get reject criteria
-        reject_criteria = params['TOOLS.REPROCESS.REJECT_SQL']
-
-        if not drs_text.null_text(reject_criteria, ['None', '', 'Null']):
-            # log progress
-            if log:
-                WLOG(params, '', textentry('40-503-00036'))
-            # store sub-conditions
-            subs = []
-            # add to global conditions
-            for identifier in reject_list:
-                # remove path
-                _identifier = os.path.basename(identifier)
-                # remove .fits
-                if _identifier.endswith('.fits'):
-                    _identifier = _identifier[:-4]
-                # get fkwargs
-                fkwargs = dict(identifier=_identifier)
-                # build sub-condition
-                subs += [reject_criteria.format(**fkwargs)]
-            # generate full subcondition
-            subcondition = ' OR '.join(subs)
-            # add to global condition (in reverse - we don't want these)
-            condition += ' AND NOT ({0})'.format(subcondition)
+    # # only continue if we have odocodes to reject
+    # if len(reject_list) > 0:
+    #     # get reject criteria
+    #     reject_criteria = params['TOOLS.REPROCESS.REJECT_SQL']
+    #
+    #     if not drs_text.null_text(reject_criteria, ['None', '', 'Null']):
+    #         # log progress
+    #         if log:
+    #             WLOG(params, '', textentry('40-503-00036'))
+    #         # store sub-conditions
+    #         subs = []
+    #         # add to global conditions
+    #         for identifier in reject_list:
+    #             # remove path
+    #             _identifier = os.path.basename(identifier)
+    #             # remove .fits
+    #             if _identifier.endswith('.fits'):
+    #                 _identifier = _identifier[:-4]
+    #             # get fkwargs
+    #             fkwargs = dict(identifier=_identifier)
+    #             # build sub-condition
+    #             subs += [reject_criteria.format(**fkwargs)]
+    #         # generate full subcondition
+    #         subcondition = ' OR '.join(subs)
+    #         # add to global condition (in reverse - we don't want these)
+    #         condition += ' AND NOT ({0})'.format(subcondition)
     # ------------------------------------------------------------------
     # deal with RUN_OBS_DIR being set
     if not drs_text.null_text(params['RUN_OBS_DIR'], ['', 'All', 'None']):
@@ -2960,7 +2972,7 @@ ArgDictType = Union[Dict[str, Table], OrderedDict, None]
 
 
 def find_run_files(params: ParamDict, recipe: DrsRecipe,
-                   indexdb: FileIndexDatabase, condition: str,
+                   sdataframe: pd.DataFrame,
                    args: Dict[str, DrsArgument],
                    filters: Union[Dict[str, Any], None] = None,
                    allowedfibers: Union[List[str], str, None] = None,
@@ -2974,9 +2986,7 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
     :param params: ParamDict, parameter dictionary of constants
     :param recipe: DrsRecipe, the recipe for which to find files (uses some
                    properties (i.e. extras and reference) already set previously
-    :param indexdb: index database instance, the file database to use to
-                    generate runs
-    :param condition: str, the condition to apply to the database
+    :param sdataframe: Pandas Dataframe: the database table (cut down)
     :param args: dict, either args or kwargs - the DrsRecipe.args or
                  DrsRecipe.kwargs to use - produces a table for each key in
                  this dict
@@ -2996,12 +3006,8 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
     func_name = display_func('find_run_files', __NAME__)
     # storage for valid files for each argument
     filedict = OrderedDict()
-    # copy condition
-    ref_condition = str(condition)
-    # get valid database column names
-    index_colnames = indexdb.database.colnames('*')
     # debug log the number of files found
-    idb_len = indexdb.database.count(condition=condition)
+    idb_len = len(sdataframe)
     dargs = [func_name, idb_len]
     WLOG(params, 'debug', textentry('90-503-00011', args=dargs))
     # loop around arguments
@@ -3032,12 +3038,12 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
         if drsfiles is None:
             continue
         # ------------------------------------------------------------------
-        # copy the condition string for this argument
-        argcondition = str(ref_condition)
+        # create a mask to filter data
+        amask = np.ones(len(sdataframe)).astype(bool)
         # loop around filters
         for tfilter in filters:
             # check if filter is valid
-            if tfilter in index_colnames:
+            if tfilter in sdataframe.columns:
                 # -------------------------------------------------------------
                 # deal with filter values being list/str
                 if isinstance(filters[tfilter], str):
@@ -3047,29 +3053,24 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
                 else:
                     continue
                 # -------------------------------------------------------------
-                # have multiple values to test --> store these
-                sub_cond = []
-                # loop around test values with OR (could be any value)
+                # clean test values
+                clean_test_values = []
                 for testvalue in testvalues:
                     # check if value is string
                     if isinstance(testvalue, str):
                         testvalue = testvalue.strip().upper()
-                    # construct sub condition based on this filter
-                    sargs = [tfilter, testvalue]
-                    sub_cond += ['({0}="{1}")'.format(*sargs)]
-                # create  full sub condition (with OR)
-                subcondition = ' OR '.join(sub_cond)
-                # -------------------------------------------------------------
-                # add filter to argument condition
-                argcondition += ' AND ({0})'.format(subcondition)
+                    clean_test_values.append(testvalue)
+                # add to mask
+                amask &= sdataframe[tfilter].isin(clean_test_values)
         # ------------------------------------------------------------------
         # lets apply the filters here
-        dataframe = indexdb.get_entries('*', condition=argcondition)
+        dataframe = sdataframe[amask]
+        # get absolute filename args
+        akwargs = dict(block_kinds=np.array(dataframe['BLOCK_KIND']),
+                       obs_dirs=np.array(dataframe['OBS_DIR']),
+                       basenames=np.array(dataframe['FILENAME']))
         # get absolute filenames
-        absfilenames = drs_file.DrsPath.get_abs_paths(params,
-                                                      block_kinds=dataframe['BLOCK_KIND'],
-                                                      obs_dirs=dataframe['OBS_DIR'],
-                                                      basenames=dataframe['FILENAME'])
+        absfilenames = drs_file.DrsPath.get_abs_paths(params, **akwargs)
         absfilenames = np.array(absfilenames).astype(str)
 
         # load pconst

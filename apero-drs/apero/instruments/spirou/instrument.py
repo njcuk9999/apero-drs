@@ -8,6 +8,7 @@ Created on 2019-01-18 at 14:44
 @author: cook
 """
 import string
+import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -870,6 +871,24 @@ class Spirou(instrument_mod.Instrument):
         # return the combined filename
         else:
             return suffix
+
+    def REJECT_CLEAN(self, reject_item: str) -> str:
+        """
+        How to clean the reject column / reject list
+
+        :param reject_item: str, the item to reject
+
+        :return: str, the cleaned string
+        """
+        # remove path
+        reject_item = os.path.basename(reject_item)
+        # remove .fits
+        while reject_item.endswith('.fits'):
+            reject_item = reject_item[:-len('.fits')]
+        # make sure the string is only 7 characters long (odometer code)
+        reject_item = reject_item[:7]
+
+        return reject_item
 
 
 # =============================================================================

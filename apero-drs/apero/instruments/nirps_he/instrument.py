@@ -7,8 +7,9 @@ Created on 2019-01-18 at 14:44
 
 @author: cook
 """
+import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
 
 import numpy as np
 import sqlalchemy
@@ -16,8 +17,6 @@ import sqlalchemy
 from aperocore.base import base
 from aperocore.core import drs_db
 from aperocore.constants.param_functions import ParamDict
-from aperocore.constants import load_functions
-from aperocore.core import drs_exceptions
 from aperocore.core import drs_base_classes as base_class
 from aperocore.core import drs_misc
 from aperocore.core import drs_text
@@ -785,6 +784,21 @@ class NirpsHe(instrument_mod.Instrument):
         _ = basenames
         # return the combined filename
         return suffix
+
+    def REJECT_CLEAN(self, reject_item: str) -> str:
+        """
+        How to clean the reject column / reject list
+
+        :param reject_item: str, the item to reject
+
+        :return: str, the cleaned string
+        """
+        # remove path
+        reject_item = os.path.basename(reject_item)
+        # remove .fits
+        while reject_item.endswith('.fits'):
+            reject_item = reject_item[:-len('.fits')]
+        return reject_item
 
 
 # =============================================================================

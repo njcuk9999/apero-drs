@@ -1411,6 +1411,9 @@ apero_lbl_ref.recipe_type = 'recipe'
 apero_lbl_ref.recipe_kind = 'lbl'
 apero_lbl_ref.set_kwarg(name='--test', dtype='switch',
                         helpstr='Run in test mode')
+apero_lbl_ref.set_kwarg(name='--objnames', dtype=str, default='None',
+                        helpstr='Name of the objects to copy, if None copies '
+                                'all objects available.')
 apero_lbl_ref.group_func = grouping.no_group
 apero_lbl_ref.group_column = None
 # add to recipe
@@ -1684,7 +1687,8 @@ full_seq.add(apero_pol, rkwargs=dict(exposures=[files.out_tellu_obj]),
              fiber=ref_fiber, recipe_kind='polar-tcorr',
              filters=dict(KW_DPRTYPE=['POLAR_FP', 'POLAR_DARK']))
 # lbl ref
-full_seq.add(apero_lbl_ref, name='LBLREF', recipe_kind='lbl-ref')
+full_seq.add(apero_lbl_ref, name='LBLREF', recipe_kind='lbl-ref',
+             arguments=dict(objnames='SCIENCE_TARGETS'))
 
 # lbl mask (FP)
 full_seq.add(apero_lbl_mask, name='LBLMASK_FP', recipe_kind='lbl-mask-fp',
@@ -1848,7 +1852,8 @@ limited_seq.add(apero_pol, rkwargs=dict(exposures=[files.out_tellu_obj]),
                              KW_OBJNAME='SCIENCE_TARGETS'))
 
 # lbl ref
-limited_seq.add(apero_lbl_ref, name='LBLREF', recipe_kind='lbl-ref')
+limited_seq.add(apero_lbl_ref, name='LBLREF', recipe_kind='lbl-ref',
+                arguments=dict(objnames='SCIENCE_TARGETS'))
 
 # lbl mask (FP)
 limited_seq.add(apero_lbl_mask, name='LBLMASK_FP', recipe_kind='lbl-mask-fp',
@@ -2092,7 +2097,8 @@ science_seq.add(apero_pol, rkwargs=dict(exposures=[files.out_tellu_obj]),
                              KW_OBJNAME='SCIENCE_TARGETS'))
 
 # lbl ref
-science_seq.add(apero_lbl_ref, name='LBLREF', recipe_kind='lbl-ref')
+science_seq.add(apero_lbl_ref, name='LBLREF', recipe_kind='lbl-ref',
+                arguments=dict(objnames='SCIENCE_TARGETS'))
 
 # lbl mask (FP)
 science_seq.add(apero_lbl_mask, name='LBLMASK_FP', recipe_kind='lbl-mask-fp',
@@ -2191,7 +2197,8 @@ lbl_seq = drs_recipe.DrsRunSequence('lbl_seq', __INSTRUMENT__)
 lbl_seq.schematic = None
 lbl_seq.description_file = 'lbl_seq_{0}.rst'.format(__INSTRUMENT__.lower())
 # lbl ref
-lbl_seq.add(apero_lbl_ref, name='LBLREF', recipe_kind='lbl-ref')
+lbl_seq.add(apero_lbl_ref, name='LBLREF', recipe_kind='lbl-ref',
+            arguments=dict(objnames='SCIENCE_TARGETS'))
 
 # lbl mask (FP)
 lbl_seq.add(apero_lbl_mask, name='LBLMASK_FP', recipe_kind='lbl-mask-fp',

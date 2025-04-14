@@ -22,6 +22,7 @@ from aperocore import drs_lang
 from apero.core import drs_database
 from apero.core import drs_file
 from aperocore.core import drs_log
+from aperocore.core import drs_text
 from apero.utils import drs_recipe
 from apero.io import drs_fits
 from apero.tools.recipes.bin import apero_get
@@ -125,6 +126,13 @@ def run_apero_get(params: ParamDict):
     outpath_templates = os.path.join(lbl_in_path, 'templates')
     outpath_calib = os.path.join(lbl_in_path, 'calib')
     outpath_fp = os.path.join(lbl_in_path, 'science/FP')
+    # -------------------------------------------------------------------------
+    # deal with object names
+    # -------------------------------------------------------------------------
+    objnames = 'None'
+    if 'OBJNAMES' in params['INPUTS']:
+        if drs_text.null_text(params['INPUTS]'], ['None', '', 'Null']):
+            objnames = params['INPUTS']['OBJNAMES']
     # ----------------------------------------------------------
     # check directories exist - try to make them if they don't
     # ----------------------------------------------------------
@@ -136,7 +144,7 @@ def run_apero_get(params: ParamDict):
     # Copy to LBL directory
     # --------------------------------------------------------------
     # run apero get for objects for lbl
-    apero_get.main(objnames='*', dprtypes=lbl_dprtypes,
+    apero_get.main(objnames=objnames, dprtypes=lbl_dprtypes,
                    outtypes=lbl_outtypes,
                    outpath=outpath_objects, fibers=lbl_scifibers,
                    symlinks=lbl_symlinks,
@@ -149,7 +157,8 @@ def run_apero_get(params: ParamDict):
     #                test=testmode, since=since)
     # run apero get for simultaneous FP
     apero_get.main(objnames='None', dprtypes=simfp_dprtypes,
-                   outtypes='EXT_E2DS_FF', nosubdir=True,
+                   outtypes='EXT_E2DS_FF',
+                   nosubdir=True,
                    outpath=outpath_fp, fibers=lbl_calfibers,
                    symlinks=lbl_symlinks,
                    test=testmode, since=since)

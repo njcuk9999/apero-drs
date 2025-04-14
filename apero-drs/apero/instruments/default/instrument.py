@@ -1222,6 +1222,60 @@ class Instrument:
         # raise implementation error
         self._not_implemented('COMBINE_FILE_SUFFIX')
 
+    def REJECT_CLEAN(self, reject_item: str) -> str:
+        """
+        How to clean the reject column / reject list
+
+        :param reject_item: str, the item to reject
+
+        :return: str, the cleaned string
+        """
+        # remove path
+        reject_item = os.path.basename(reject_item)
+        # remove .fits
+        while reject_item.endswith('.fits'):
+            reject_item = reject_item[:-len('.fits')]
+        return reject_item
+
+    def REJECTION(self, reject_list: np.ndarray,
+                  reject_names: np.ndarray,
+                  clean: bool = True) -> Tuple[np.ndarray, List[str]]:
+        """
+        Reject an array based on a rejection list
+
+        :param reject_list: np.ndarray, the rejection list
+        :param reject_names: np.ndarray, the rejection names
+        :param clean: bool, whether to clean the rejection list
+
+        :return: np.ndarray, a mask, True where we want to reject
+        """
+        # storage for clean reject list
+        clean_reject_list = []
+        # storage for clean reject names
+        clean_reject_names = []
+        # ---------------------------------------------------------------------
+        # we need to clean up the rejection list
+        for reject_item in reject_list:
+            # clean (can be different per instrument)
+            if clean:
+                reject_item = self.REJECT_CLEAN(reject_item)
+            # push into clean reject list
+            if reject_item not in clean_reject_list:
+                clean_reject_list.append(reject_item)
+        # ---------------------------------------------------------------------
+        # we need to clean up the rejection names
+        for reject_name in reject_names:
+            if clean:
+                reject_name = self.REJECT_CLEAN(reject_name)
+            # push into clean_reject_names
+            clean_reject_names.append(reject_name)
+        # ---------------------------------------------------------------------
+        reject_mask = np.in1d(np.array(clean_reject_names),
+                              np.array(clean_reject_list))
+        # return the reject mask
+        return reject_mask, clean_reject_list
+
+
     # =========================================================================
     # CROSSMATCHING
     # =========================================================================
