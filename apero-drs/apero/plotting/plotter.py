@@ -8,6 +8,7 @@ Created on 2019-01-19 at 13:45
 @author: cook
 """
 import os
+import importlib
 import platform
 from collections import OrderedDict
 from collections.abc import Iterable
@@ -98,10 +99,11 @@ class Plotter:
             self.plotoption = params['GLOBAL.PLOT_MODE']
         else:
             self.plotoption = mode
-        # load yaml
-        self.yaml = base.load_yaml(definitions)
-        # set up names of the plots that have been used
-        self.names = list(self.yaml.keys())
+        # yaml and names are not to start with
+        self.yaml = None
+        self.names = []
+        # flag to run get plot switches
+        self.has_plot_switches = False
         # set up the plot switches
         self.plot_switches = OrderedDict()
         # flag whether we have debug plots
@@ -135,11 +137,6 @@ class Plotter:
         self.plt = None
         self.matplotlib = None
         self.axes_grid1 = None
-        # ------------------------------------------------------------------
-        # set self.plot_switches via _get_plot_switches()
-        self._get_plot_switches()
-        # set matplotlib via _get_matplotlib()
-        self._get_matplotlib()
 
     def set_location(self, iteration: int = 0):
         """
@@ -199,6 +196,11 @@ class Plotter:
         :return: Returns 1 if plot or 0 elsewise
         :rtype: int
         """
+        # ------------------------------------------------------------------
+        # set self.plot_switches via _get_plot_switches()
+        self._get_plot_switches()
+        # set matplotlib via _get_matplotlib()
+        self._get_matplotlib()
         # ------------------------------------------------------------------
         # deal with location not set
         if self.recipe is None:
@@ -1125,6 +1127,12 @@ class Plotter:
     # ------------------------------------------------------------------
     # internal methods
     # ------------------------------------------------------------------
+    def _get_names(self):
+        # load yaml
+        self.yaml = base.load_yaml(definitions)
+        # set up names of the plots that have been used
+        self.names = list(self.yaml.keys())
+
     def _get_func(self, name: str) -> Graph:
         """
         Internal function to return the plot object defined by "name"
@@ -1136,9 +1144,44 @@ class Plotter:
         """
         # set function name
         func_name = display_func('_get_func', __NAME__, 'Plotter')
+        # get names
+        if self.yaml is None:
+            self._get_names()
         # check if name is in plot names
         if name.upper() in self.names:
-            return self.names[name].copy()
+            # get the function name
+            yaml_func = self.yaml[name]['func']
+            # get the module path (within apero.plotting)
+            mod_path = 'apero.plotting.' + '.'.join(yaml_func.split('.')[:-1])
+            mod_file = yaml_func.split('.')[-1]
+            # try to load the plotting module
+            try:
+                # load module
+                module = importlib.import_module(mod_path)
+            except Exception as e:
+                # TODO: Add to language database
+                emsg = 'Error importing module {0}: {1}'
+                eargs = [mod_path, str(e)]
+                raise AperoCodedException(self.params, None,
+                                          message=emsg.format(*eargs))
+            try:
+                func = getattr(module, mod_file)
+            except Exception as e:
+                # TODO: Add to language database
+                emsg = 'No plotting function named {0}'
+                eargs = [yaml_func]
+                raise AperoCodedException(self.params, None,
+                                          message=emsg.format(*eargs))
+            # if we get here we have a graph class - use it
+            graph = Graph.from_yaml(name, func, self.yaml)
+            if graph is None:
+                # TODO: Add to lan
+                emsg = 'Unable to create Graph for {0}'
+                eargs = [yaml_func]
+                raise AperoCodedException(self.params, None,
+                                          message=emsg.format(*eargs))
+            # return the graph instance
+            return graph
         # else return an error
         else:
             # log error: Plotter error: graph name was not found in plotting
@@ -1153,6 +1196,15 @@ class Plotter:
 
         :return: None, updates self.plot_switches and self.has_debugs
         """
+        # we only run this bit once
+        if self.has_plot_switches:
+            return
+        else:
+            self.has_plot_switches = True
+        # get names
+        if self.yaml is None:
+            self._get_names()
+        # deal with no recipe
         if self.recipe is None:
             debug_plots = []
         else:
@@ -1162,7 +1214,7 @@ class Plotter:
         # loop around keys in parameter dictionary
         for name in self.names:
             # get kind
-            kind = self.names[name].kind
+            kind = self.yaml[name]['kind']
             # only deal with keys that start with 'PLOT_'
             key = name.upper()
             # check if in params

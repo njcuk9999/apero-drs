@@ -106,6 +106,28 @@ class Graph:
         else:
             self.dpi = dpi
 
+    @staticmethod
+    def from_yaml(name: str, func: Any, yaml_dict: Dict[str, Any]
+                  ) -> Union['Graph', None]:
+        """
+        Create a graph instance from a YAML dictionary
+        """
+        # deal with no name in yaml dict
+        if name not in yaml_dict:
+            return None
+        # get the yaml entry for this name
+        yaml_entry = yaml_dict[name]
+        # create a graph instances from the yaml dict
+        graph = Graph(name=name,
+                      kind=yaml_entry.get('kind', 'debug'),
+                      func=func,
+                      filename=yaml_entry.get('filename', None),
+                      description=yaml_entry.get('description', None),
+                      figsize=yaml_entry.get('figsize', None),
+                      dpi=yaml_entry.get('dpi', None))
+        # return the graph instance
+        return graph
+
     def copy(self) -> 'Graph':
         """
         Make a copy of the Graph instance (don't ever want to set values to
