@@ -41,14 +41,12 @@ DrsRecipe = drs_recipe.DrsRecipe
 # get astropy time module
 Time = base.Time
 # set up definition storage
-definitions = dict()
+definitions = os.path.join(os.path.dirname(__file__), 'definitions.yaml')
 # Speed of light
 # noinspection PyUnresolvedReferences
 speed_of_light_ms = cc.c.to(uu.m / uu.s).value
 # noinspection PyUnresolvedReferences
 speed_of_light = cc.c.to(uu.km / uu.s).value
-
-
 # -----------------------------------------------------------------------------
 
 
@@ -610,19 +608,6 @@ def graph_test_plot_2(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
         plotter.plotend(graph)
 
 
-# defined graphing instances
-test_plot1 = Graph('TEST1', kind='summary', func=graph_test_plot_1,
-                   description='This is a test plot',
-                   figsize=(10, 10), dpi=150)
-test_plot2 = Graph('TEST2', kind='debug', func=graph_test_plot_1)
-test_plot3 = Graph('TEST3', kind='debug', func=graph_test_plot_2)
-test_plot4 = Graph('TEST4', kind='summary', func=graph_test_plot_2)
-# add to definitions
-definitions['TEST1'] = test_plot1
-definitions['TEST2'] = test_plot2
-definitions['TEST3'] = test_plot3
-definitions['TEST4'] = test_plot4
-
 # =============================================================================
 # Define dark plotting functions
 # =============================================================================
@@ -738,26 +723,6 @@ def plot_dark_histogram(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     plotter.plotend(graph)
 
 
-# defined graphing instances
-dark_image_regions = Graph('DARK_IMAGE_REGIONS', kind='debug',
-                           func=plot_dark_image_regions)
-dark_histogram = Graph('DARK_HISTOGRAM', kind='debug',
-                       func=plot_dark_histogram)
-sum_desc = 'Plot to show dark image regions (blue, red and full)'
-summary_dark_image_regions = Graph('SUM_DARK_IMAGE_REGIONS', kind='summary',
-                                   func=plot_dark_image_regions, dpi=150,
-                                   description=sum_desc, figsize=(10, 10))
-sum_desc = 'Plot to show the dark image regions as histograms'
-summary_dark_histogram = Graph('SUM_DARK_HISTOGRAM', kind='summary',
-                               func=plot_dark_histogram, dpi=150,
-                               description=sum_desc, figsize=(10, 10))
-# add to definitions
-definitions['DARK_IMAGE_REGIONS'] = dark_image_regions
-definitions['DARK_HISTOGRAM'] = dark_histogram
-definitions['SUM_DARK_IMAGE_REGIONS'] = summary_dark_image_regions
-definitions['SUM_DARK_HISTOGRAM'] = summary_dark_histogram
-
-
 # =============================================================================
 # Define badpix plotting functions
 # =============================================================================
@@ -794,17 +759,6 @@ def plot_badpix_map(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     # ------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)
-
-
-# defined graphing instances
-badpix_map = Graph('BADPIX_MAP', kind='debug', func=plot_badpix_map)
-sum_desc = 'Bad pixel map'
-summary_badpix_map = Graph('SUM_BADPIX_MAP', kind='summary',
-                           func=plot_badpix_map, description=sum_desc,
-                           figsize=(10, 10), dpi=150)
-# add to definitions
-definitions['BADPIX_MAP'] = badpix_map
-definitions['SUM_BADPIX_MAP'] = summary_badpix_map
 
 
 # =============================================================================
@@ -1170,37 +1124,6 @@ def plot_loc_im_regions(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     # ------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)
-
-
-loc_width_regions = Graph('LOC_WIDTH_REGIONS', kind='debug',
-                          func=plot_loc_width_regions)
-loc_fiber_doublet_parity = Graph('LOC_FIBER_DOUBLET_PARITY', kind='debug',
-                                 func=plot_loc_fiber_doublet_parity)
-loc_gap_orders = Graph('LOC_GAP_ORDERS', kind='debug',
-                       func=plot_loc_gap_orders)
-loc_image_fit = Graph('LOC_IMAGE_FIT', kind='debug', func=plot_loc_image_fit)
-loc_im_corner = Graph('LOC_IM_CORNER', kind='debug', func=plot_loc_im_corner)
-loc_im_regions = Graph('LOC_IM_REGIONS', kind='debug', func=plot_loc_im_regions)
-sum_desc = ('Polynomial fits for localisation (overplotted on '
-            'pre-processed image)')
-sum_plot_loc_im_fit = Graph('SUM_LOC_IM_FIT', kind='summary',
-                            func=plot_loc_image_fit, figsize=(12, 8),
-                            dpi=300, description=sum_desc)
-sum_desc = ('Zoom in polynomial fits for localisation (overplotted on '
-            'pre-processed image)')
-sum_plot_loc_im_corner = Graph('SUM_LOC_IM_CORNER', kind='summary',
-                               func=plot_loc_im_corner, figsize=(16, 10),
-                               dpi=150, description=sum_desc)
-
-# add to definitions
-definitions['LOC_WIDTH_REGIONS'] = loc_width_regions
-definitions['LOC_FIBER_DOUBLET_PARITY'] = loc_fiber_doublet_parity
-definitions['LOC_GAP_ORDERS'] = loc_gap_orders
-definitions['LOC_IMAGE_FIT'] = loc_image_fit
-definitions['LOC_IM_CORNER'] = loc_im_corner
-definitions['LOC_IM_REGIONS'] = loc_im_regions
-definitions['SUM_LOC_IM_FIT'] = sum_plot_loc_im_fit
-definitions['SUM_LOC_IM_CORNER'] = sum_plot_loc_im_corner
 
 
 # =============================================================================
@@ -1569,34 +1492,6 @@ def plot_shape_local_zoom_shift(plotter: Plotter, graph: Graph,
     plotter.plotend(graph)
 
 
-shape_dx = Graph('SHAPE_DX', kind='debug', func=plot_shape_dx)
-shape_linear_tparams = Graph('SHAPE_LINEAR_TPARAMS', kind='debug',
-                             func=plot_shape_linear_tparams)
-shape_angle_offset_all = Graph('SHAPE_ANGLE_OFFSET_ALL', kind='debug',
-                               func=plot_shape_angle_offset)
-shape_angle_offset = Graph('SHAPE_ANGLE_OFFSET', kind='debug',
-                           func=plot_shape_angle_offset)
-shape_local_zoom_shift = Graph('SHAPEL_ZOOM_SHIFT', kind='debug',
-                               func=plot_shape_local_zoom_shift)
-sum_desc = 'Plot to show angle and offset for each iteration'
-sum_shape_angle_offset = Graph('SUM_SHAPE_ANGLE_OFFSET', kind='summary',
-                               func=plot_shape_angle_offset,
-                               figsize=(16, 10), dpi=150, description=sum_desc)
-sum_desc = 'Zoom in to show before and after shape corrections.'
-sum_shape_local_zoom_shift = Graph('SUM_SHAPEL_ZOOM_SHIFT', kind='summary',
-                                   func=plot_shape_local_zoom_shift,
-                                   figsize=(16, 10), dpi=150,
-                                   description=sum_desc)
-# add to definitions
-definitions['SHAPE_DX'] = shape_dx
-definitions['SHAPE_LINEAR_TPARAMS'] = shape_linear_tparams
-definitions['SHAPE_ANGLE_OFFSET_ALL'] = shape_angle_offset_all
-definitions['SHAPE_ANGLE_OFFSET'] = shape_angle_offset
-definitions['SHAPEL_ZOOM_SHIFT'] = shape_local_zoom_shift
-definitions['SUM_SHAPE_ANGLE_OFFSET'] = sum_shape_angle_offset
-definitions['SUM_SHAPEL_ZOOM_SHIFT'] = sum_shape_local_zoom_shift
-
-
 # =============================================================================
 # Define flat plotting functions
 # =============================================================================
@@ -1810,31 +1705,6 @@ def plot_flat_blaze_order(plotter: Plotter, graph: Graph,
         plotter.plotend(graph)
 
 
-flat_order_fit_edges1 = Graph('FLAT_ORDER_FIT_EDGES1', kind='debug',
-                              func=plot_flat_order_fit_edges)
-flat_blaze_order1 = Graph('FLAT_BLAZE_ORDER1', kind='debug',
-                          func=plot_flat_blaze_order)
-flat_order_fit_edges2 = Graph('FLAT_ORDER_FIT_EDGES2', kind='debug',
-                              func=plot_flat_order_fit_edges)
-flat_blaze_order2 = Graph('FLAT_BLAZE_ORDER2', kind='debug',
-                          func=plot_flat_blaze_order)
-sum_desc = 'Image fit (before and after straightening)'
-sum_flat_order_fit_edges = Graph('SUM_FLAT_ORDER_FIT_EDGES', kind='summary',
-                                 func=plot_flat_order_fit_edges, dpi=150,
-                                 figsize=(16, 10), description=sum_desc)
-sum_desc = 'Blaze fit and e2ds (top) and resulting flat (bottom)'
-sum_flat_blaze_order = Graph('SUM_FLAT_BLAZE_ORDER', kind='summary',
-                             func=plot_flat_blaze_order,
-                             figsize=(16, 10), dpi=150, description=sum_desc)
-# add to definitions
-definitions['FLAT_ORDER_FIT_EDGES1'] = flat_order_fit_edges1
-definitions['FLAT_BLAZE_ORDER1'] = flat_blaze_order1
-definitions['FLAT_ORDER_FIT_EDGES2'] = flat_order_fit_edges2
-definitions['FLAT_BLAZE_ORDER2'] = flat_blaze_order2
-definitions['SUM_FLAT_ORDER_FIT_EDGES'] = sum_flat_order_fit_edges
-definitions['SUM_FLAT_BLAZE_ORDER'] = sum_flat_blaze_order
-
-
 # =============================================================================
 # Define thermal plotting functions
 # =============================================================================
@@ -1890,12 +1760,6 @@ def plot_thermal_background(plotter: Plotter, graph: Graph,
     # ------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)
-
-
-thermal_background = Graph('THERMAL_BACKGROUND', kind='debug',
-                           func=plot_thermal_background)
-# add to definitions
-definitions['THERMAL_BACKGROUND'] = thermal_background
 
 
 # =============================================================================
@@ -2137,31 +2001,6 @@ def plot_extract_s1d_weights(plotter: Plotter, graph: Graph,
     plotter.plotend(graph)
 
 
-extract_spectral_order1 = Graph('EXTRACT_SPECTRAL_ORDER1', kind='debug',
-                                func=plot_extract_spectral_order)
-extract_spectral_order2 = Graph('EXTRACT_SPECTRAL_ORDER2', kind='debug',
-                                func=plot_extract_spectral_order)
-extract_s1d = Graph('EXTRACT_S1D', kind='debug', func=plot_extract_s1d)
-extract_s1d_weights = Graph('EXTRACT_S1D_WEIGHT', kind='debug',
-                            func=plot_extract_s1d_weights)
-sum_desc = ('Wavelength against spectrum top: non blaze-corrected, '
-            'bottom: blaze corrected')
-sum_extract_sp_order = Graph('SUM_EXTRACT_SP_ORDER', kind='summary',
-                             func=plot_extract_spectral_order,
-                             figsize=(16, 10), dpi=150, description=sum_desc)
-sum_desc = '1D spectrum after blaze weighting (S1D)'
-sum_extract_s1d = Graph('SUM_EXTRACT_S1D', kind='summary',
-                        func=plot_extract_s1d,
-                        figsize=(16, 10), dpi=150, description=sum_desc)
-# add to definitions
-definitions['EXTRACT_SPECTRAL_ORDER1'] = extract_spectral_order1
-definitions['EXTRACT_SPECTRAL_ORDER2'] = extract_spectral_order2
-definitions['EXTRACT_S1D'] = extract_s1d
-definitions['EXTRACT_S1D_WEIGHT'] = extract_s1d_weights
-definitions['SUM_EXTRACT_SP_ORDER'] = sum_extract_sp_order
-definitions['SUM_EXTRACT_S1D'] = sum_extract_s1d
-
-
 # =============================================================================
 # Define wave ea plotting functions
 # =============================================================================
@@ -2368,28 +2207,6 @@ def plot_wave_fiber_comparison(plotter: Plotter, graph: Graph,
         # ------------------------------------------------------------------
         # wrap up using plotter
         plotter.plotend(graph)
-
-
-wave_wl_vs_cavity = Graph('WAVE_WL_CAV', kind='debug',
-                          func=plot_wave_wl_vs_cavity)
-wave_hc_diff_hist = Graph('WAVE_HC_DIFF_HIST', kind='debug',
-                          func=plot_wave_hc_diff_hist)
-wave_fiber_comparison = Graph('WAVE_FIBER_COMPARISON', kind='debug',
-                              func=plot_wave_fiber_comparison)
-wave_fiber_comp = Graph('WAVE_FIBER_COMP', kind='debug',
-                        func=plot_wave_fiber_comparison)
-sum_desc = 'Fiber comparison plot'
-sum_wave_fiber_comp = Graph('SUM_WAVE_FIBER_COMP', kind='summary',
-                            func=plot_wave_fiber_comparison,
-                            figsize=(16, 10), dpi=150,
-                            description=sum_desc)
-
-# add to definitions
-definitions['WAVE_WL_CAV'] = wave_wl_vs_cavity
-definitions['WAVE_HC_DIFF_HIST'] = wave_hc_diff_hist
-definitions['WAVE_FIBER_COMPARISON'] = wave_fiber_comparison
-definitions['WAVE_FIBER_COMP'] = wave_fiber_comp
-definitions['SUM_WAVE_FIBER_COMP'] = sum_wave_fiber_comp
 
 
 # =============================================================================
@@ -3582,104 +3399,6 @@ def plot_wavenight_histplot(plotter: Plotter, graph: Graph,
     plotter.plotend(graph)
 
 
-wave_hc_guess = Graph('WAVE_HC_GUESS', kind='debug',
-                      func=plot_wave_hc_guess)
-wave_hc_brightest_lines = Graph('WAVE_HC_BRIGHTEST_LINES', kind='debug',
-                                func=plot_wave_hc_brightest_lines)
-wave_hc_tfit_grid = Graph('WAVE_HC_TFIT_GRID', kind='debug',
-                          func=plot_wave_hc_tfit_grid)
-wave_resmap = Graph('WAVE_RESMAP', kind='debug',
-                    func=plot_wave_hc_resmap,
-                    figsize=(20, 16))
-wave_hc_resmap = Graph('WAVE_HC_RESMAP', kind='debug',
-                       func=plot_wave_hc_resmap_old,
-                       figsize=(20, 16))
-
-wave_littrow_check1 = Graph('WAVE_LITTROW_CHECK1', kind='debug',
-                            func=plot_wave_littrow_check)
-wave_littrow_extrap1 = Graph('WAVE_LITTROW_EXTRAP1', kind='debug',
-                             func=plot_wave_littrow_extrap)
-wave_littrow_check2 = Graph('WAVE_LITTROW_CHECK2', kind='debug',
-                            func=plot_wave_littrow_check)
-sum_desc = 'Littrow check for the final solution'
-sum_wave_littrow_check = Graph('SUM_WAVE_LITTROW_CHECK', kind='summary',
-                               func=plot_wave_littrow_check,
-                               figsize=(16, 10), dpi=150, description=sum_desc)
-wave_littrow_extrap2 = Graph('WAVE_LITTROW_EXTRAP2', kind='debug',
-                             func=plot_wave_littrow_extrap)
-sum_desc = 'Littrow extrapolation for the final solution'
-sum_wave_littrow_extrap = Graph('SUM_WAVE_LITTROW_EXTRAP', kind='summary',
-                                func=plot_wave_littrow_extrap,
-                                figsize=(16, 10), dpi=150, description=sum_desc)
-wave_fp_final_order = Graph('WAVE_FP_FINAL_ORDER', kind='debug',
-                            func=plot_wave_fp_final_order)
-wave_fp_lwid_offset = Graph('WAVE_FP_LWID_OFFSET', kind='debug',
-                            func=plot_wave_fp_lwid_offset)
-wave_fp_wave_res = Graph('WAVE_FP_WAVE_RES', kind='debug',
-                         func=plot_wave_fp_wave_res)
-wave_fp_m_x_res = Graph('WAVE_FP_M_X_RES', kind='debug',
-                        func=plot_wave_fp_m_x_res)
-wave_fp_ipt_cwid_1mhc = Graph('WAVE_FP_IPT_CWID_1MHC', kind='debug',
-                              func=plot_wave_fp_ipt_cwid_1mhc)
-wave_fp_ipt_cwid_llhc = Graph('WAVE_FP_IPT_CWID_LLHC', kind='debug',
-                              func=plot_wave_fp_ipt_cwid_llhc)
-sum_desc = 'FP peak number against cavity width offset'
-sum_wave_fp_ipt_cwid_1mhc = Graph('SUM_WAVE_FP_IPT_CWID_LLHC', kind='summary',
-                                  func=plot_wave_fp_ipt_cwid_llhc,
-                                  figsize=(16, 10), dpi=150,
-                                  description=sum_desc)
-wave_fp_ll_diff = Graph('WAVE_FP_LL_DIFF', kind='debug',
-                        func=plot_wave_fp_ll_diff)
-wave_fp_multi_order = Graph('WAVE_FP_MULTI_ORDER', kind='debug',
-                            func=plot_wave_fp_multi_order)
-wave_fp_single_order = Graph('WAVE_FP_SINGLE_ORDER', kind='debug',
-                             func=plot_wave_fp_single_order)
-waveref_expected = Graph('WAVEREF_EXPECTED', kind='debug',
-                         func=plot_waveref_expected)
-
-wavenight_iterplot = Graph('WAVENIGHT_ITERPLOT', kind='debug',
-                           func=plot_wavenight_iterplot)
-sum_desc = 'Wave night iteration plot'
-sum_wavenight_iterplot = Graph('SUM_WAVENIGHT_ITERPLOT', kind='summary',
-                               func=plot_wavenight_iterplot,
-                               figsize=(16, 10), dpi=150,
-                               description=sum_desc)
-wavenight_histplot = Graph('WAVENIGHT_HISTPLOT', kind='debug',
-                           func=plot_wavenight_histplot)
-sum_desc = 'Wave night histogram plot'
-sum_wavenight_histplot = Graph('SUM_WAVENIGHT_HISTPLOT', kind='summary',
-                               func=plot_wavenight_histplot,
-                               figsize=(16, 10), dpi=150,
-                               description=sum_desc)
-# add to definitions
-definitions['WAVE_HC_GUESS'] = wave_hc_guess
-definitions['WAVE_HC_BRIGHTEST_LINES'] = wave_hc_brightest_lines
-definitions['WAVE_HC_TFIT_GRID'] = wave_hc_tfit_grid
-definitions['WAVE_HC_RESMAP'] = wave_hc_resmap
-definitions['WAVE_RESMAP'] = wave_resmap
-definitions['WAVE_LITTROW_CHECK1'] = wave_littrow_check1
-definitions['WAVE_LITTROW_EXTRAP1'] = wave_littrow_extrap1
-definitions['WAVE_LITTROW_CHECK2'] = wave_littrow_check2
-definitions['WAVE_LITTROW_EXTRAP2'] = wave_littrow_extrap2
-definitions['WAVE_FP_FINAL_ORDER'] = wave_fp_final_order
-definitions['WAVE_FP_LWID_OFFSET'] = wave_fp_lwid_offset
-definitions['WAVE_FP_WAVE_RES'] = wave_fp_wave_res
-definitions['WAVE_FP_M_X_RES'] = wave_fp_m_x_res
-definitions['WAVE_FP_IPT_CWID_1MHC'] = wave_fp_ipt_cwid_1mhc
-definitions['WAVE_FP_IPT_CWID_LLHC'] = wave_fp_ipt_cwid_llhc
-definitions['SUM_WAVE_FP_IPT_CWID_LLHC'] = sum_wave_fp_ipt_cwid_1mhc
-definitions['WAVE_FP_LL_DIFF'] = wave_fp_ll_diff
-definitions['WAVE_FP_MULTI_ORDER'] = wave_fp_multi_order
-definitions['WAVE_FP_SINGLE_ORDER'] = wave_fp_single_order
-definitions['WAVEREF_EXPECTED'] = waveref_expected
-definitions['WAVENIGHT_ITERPLOT'] = wavenight_iterplot
-definitions['SUM_WAVENIGHT_ITERPLOT'] = sum_wavenight_iterplot
-definitions['WAVENIGHT_HISTPLOT'] = wavenight_histplot
-definitions['SUM_WAVENIGHT_HISTPLOT'] = sum_wavenight_histplot
-definitions['SUM_WAVE_LITTROW_CHECK'] = sum_wave_littrow_check
-definitions['SUM_WAVE_LITTROW_EXTRAP'] = sum_wave_littrow_extrap
-
-
 # =============================================================================
 # Define telluric plotting functions
 # =============================================================================
@@ -4718,128 +4437,6 @@ def plot_tellu_finite_res_corr(plotter: Plotter, graph: Graph,
     plotter.plotend(graph)
 
 
-# sky model region graph instance
-tellu_skymodel_region = Graph('TELLU_SKYMODEL_REGION_PLOT', kind='debug',
-                              func=plot_regions_sky_model)
-
-tellu_skymodel_med = Graph('TELLU_SKYMODEL_MED', kind='debug',
-                           func=plot_sky_model_med)
-
-tellu_skymodel_linefit = Graph('TELLU_SKYMODEL_LINEFIT', kind='debug',
-                               func=plot_sky_model_line_fits)
-
-# sky correction graph instance
-tellu_sky_corr = Graph('TELLU_SKY_CORR_PLOT', kind='debug',
-                       func=plot_tellu_sky_corr)
-# telluric pre clean graph instances
-tellup_mean_res = Graph('TELLUP_MEAN_RES', kind='debug',
-                          func=plot_tellup_mean_res)
-sum_desc = ('Plot to show the measured exponents of water and other species '
-            'calculated during the telluric pre-cleaning')
-sum_tellup_mean_res = Graph('SUM_TELLUP_MEAN_RES', kind='summary',
-                              func=plot_tellup_mean_res,
-                              figsize=(16, 10), dpi=150, description=sum_desc)
-tellup_abso_spec = Graph('TELLUP_ABSO_SPEC', kind='debug',
-                         func=plot_tellup_abso_spec)
-sum_desc = 'Plot to the result of the telluric pre-cleaning'
-sum_tellup_abso_spec = Graph('SUM_TELLUP_ABSO_SPEC', kind='summary',
-                             func=plot_tellup_abso_spec,
-                             figsize=(16, 10), dpi=150, description=sum_desc)
-# telluric oh clean plot
-tellup_clean_oh = Graph('TELLUP_CLEAN_OH', kind='debug',
-                        func=plot_tellup_clean_oh)
-
-# make telluric graph instances
-mktellu_wave_flux1 = Graph('MKTELLU_WAVE_FLUX1', kind='debug',
-                           func=plot_mktellu_wave_flux)
-mktellu_wave_flux2 = Graph('MKTELLU_WAVE_FLUX2', kind='debug',
-                           func=plot_mktellu_wave_flux)
-sum_desc = ('Plot to show the measured transmission (and calcaulted SED) for'
-            ' input rapidly rotating hot star')
-sum_mktellu_wave_flux = Graph('SUM_MKTELLU_WAVE_FLUX', kind='summary',
-                              func=plot_mktellu_wave_flux,
-                              figsize=(16, 10), dpi=150, description=sum_desc)
-# make telluric model graph instances
-mktellu_model = Graph('MKTELLU_MODEL', kind='debug', func=plot_mktellu_model)
-
-sum_desc = 'Plot to show the linearized vectors for the transmission model'
-sum_mktellu_model = Graph('SUM_MKTELLU_MODEL', kind='summary',
-                          func=plot_mktellu_model,
-                          figsize=(16, 10), dpi=150, description=sum_desc)
-
-# fit tellu grpah instances
-ftellu_pca_comp1 = Graph('FTELLU_PCA_COMP1', kind='debug',
-                         func=plot_ftellu_pca_comp)
-ftellu_pca_comp2 = Graph('FTELLU_PCA_COMP2', kind='debug',
-                         func=plot_ftellu_pca_comp)
-ftellu_recon_spline1 = Graph('FTELLU_RECON_SPLINE1', kind='debug',
-                             func=plot_ftellu_recon_spline)
-ftellu_recon_spline2 = Graph('FTELLU_RECON_SPLINE2', kind='debug',
-                             func=plot_ftellu_recon_spline)
-ftellu_wave_shift1 = Graph('FTELLU_WAVE_SHIFT1', kind='debug',
-                           func=plot_ftellu_wave_shift)
-ftellu_wave_shift2 = Graph('FTELLU_WAVE_SHIFT2', kind='debug',
-                           func=plot_ftellu_wave_shift)
-ftellu_recon_abso1 = Graph('FTELLU_RECON_ABSO1', kind='debug',
-                           func=plot_ftellu_recon_abso)
-ftellu_recon_abso2 = Graph('FTELLU_RECON_ABSO2', kind='debug',
-                           func=plot_ftellu_recon_abso)
-sum_desc = 'Results from the telluric fit'
-sum_ftellu_recon_abso = Graph('SUM_FTELLU_RECON_ABSO', kind='summary',
-                              func=plot_ftellu_recon_abso, figsize=(16, 10),
-                              dpi=150, description=sum_desc)
-ftellu_res_model = Graph('FTELLU_RES_MODEL', kind='debug',
-                         func=plot_ftellu_res_model)
-sum_desc = 'Results from the telluric residual model fit'
-sum_ftellu_res_model = Graph('SUM_FTELLU_RES_MODEL', kind='summary',
-                             func=plot_ftellu_res_model, figsize=(16, 10),
-                             dpi=150, description=sum_desc)
-
-mktemp_berv_cov = Graph('MKTEMP_BERV_COV', kind='debug',
-                        func=plot_mktemp_berv_cov)
-sum_desc = 'Template coverage'
-sum_mktemp_berv_cov = Graph('SUM_MKTEMP_BERV_COV', kind='summary',
-                            func=plot_mktemp_berv_cov, figsize=(16, 10),
-                            dpi=150, description=sum_desc)
-
-mktemp_deconv = Graph('MKTEMP_S1D_DECONV', kind='debug',
-                      func=plot_mktemp_deconv)
-
-tellu_finite_res_cor = Graph('TELLU_FINITE_RES_CORR', kind='debug',
-                             func=plot_tellu_finite_res_corr)
-
-# add to definitions
-definitions['TELLU_SKYMODEL_REGION_PLOT'] = tellu_skymodel_region
-definitions['TELLU_SKYMODEL_MED'] = tellu_skymodel_med
-definitions['TELLU_SKYMODEL_LINEFIT'] = tellu_skymodel_linefit
-definitions['TELLU_SKY_CORR_PLOT'] = tellu_sky_corr
-definitions['TELLUP_WAVE_TRANS'] = mktellu_wave_flux1
-definitions['MKTELLU_WAVE_FLUX2'] = mktellu_wave_flux2
-definitions['SUM_MKTELLU_WAVE_FLUX'] = sum_mktellu_wave_flux
-definitions['MKTELLU_MODEL'] = mktellu_model
-definitions['SUM_MKTELLU_MODEL'] = sum_mktellu_model
-definitions['FTELLU_PCA_COMP1'] = ftellu_pca_comp1
-definitions['FTELLU_PCA_COMP2'] = ftellu_pca_comp2
-definitions['FTELLU_RECON_SPLINE1'] = ftellu_recon_spline1
-definitions['FTELLU_RECON_SPLINE2'] = ftellu_recon_spline2
-definitions['FTELLU_WAVE_SHIFT1'] = ftellu_wave_shift1
-definitions['FTELLU_WAVE_SHIFT2'] = ftellu_wave_shift2
-definitions['FTELLU_RECON_ABSO1'] = ftellu_recon_abso1
-definitions['FTELLU_RECON_ABSO2'] = ftellu_recon_abso2
-definitions['SUM_FTELLU_RECON_ABSO'] = sum_ftellu_recon_abso
-definitions['TELLUP_MEAN_RES'] = tellup_mean_res
-definitions['SUM_TELLUP_MEAN_RES'] = sum_tellup_mean_res
-definitions['TELLUP_ABSO_SPEC'] = tellup_abso_spec
-definitions['SUM_TELLUP_ABSO_SPEC'] = sum_tellup_abso_spec
-definitions['TELLUP_CLEAN_OH'] = tellup_clean_oh
-definitions['MKTEMP_BERV_COV'] = mktemp_berv_cov
-definitions['SUM_MKTEMP_BERV_COV'] = sum_mktemp_berv_cov
-definitions['MKTEMP_S1D_DECONV'] = mktemp_deconv
-definitions['TELLU_FINITE_RES_CORR'] = tellu_finite_res_cor
-definitions['FTELLU_RES_MODEL'] = ftellu_res_model
-definitions['SUM_FTELLU_RES_MODEL'] = sum_ftellu_res_model
-
-
 # =============================================================================
 # Define velocity plotting functions
 # =============================================================================
@@ -5032,23 +4629,6 @@ def plot_ccf_photon_uncert(plotter: Plotter, graph: Graph,
     # wrap up using plotter
     plotter.plotend(graph)
 
-
-ccf_rv_fit_loop = Graph('CCF_RV_FIT_LOOP', kind='debug', func=plot_ccf_rv_fit)
-ccf_rv_fit = Graph('CCF_RV_FIT', kind='debug', func=plot_ccf_rv_fit)
-ccf_swave_ref = Graph('CCF_SWAVE_REF', kind='debug', func=plot_ccf_swave_ref)
-ccf_photon_uncert = Graph('CCF_PHOTON_UNCERT', kind='debug',
-                          func=plot_ccf_photon_uncert)
-sum_ccf_rv_fit = Graph('SUM_CCF_RV_FIT', kind='summary', func=plot_ccf_rv_fit)
-sum_ccf_photon_uncert = Graph('SUM_CCF_PHOTON_UNCERT', kind='summary',
-                              func=plot_ccf_photon_uncert)
-
-# add to definitions
-definitions['CCF_RV_FIT_LOOP'] = ccf_rv_fit_loop
-definitions['CCF_RV_FIT'] = ccf_rv_fit
-definitions['CCF_SWAVE_REF'] = ccf_swave_ref
-definitions['CCF_PHOTON_UNCERT'] = ccf_photon_uncert
-definitions['SUM_CCF_RV_FIT'] = sum_ccf_rv_fit
-definitions['SUM_CCF_PHOTON_UNCERT'] = sum_ccf_photon_uncert
 
 
 # =============================================================================
@@ -5382,21 +4962,6 @@ def plot_polar_lsd(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     # ------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)
-
-
-polar_fit_cont = Graph('POLAR_FIT_CONT', kind='debug', func=plot_polar_fit_cont)
-polar_continuum = Graph('POLAR_CONTINUUM', kind='debug',
-                        func=plot_polar_continuum)
-polar_results = Graph('POLAR_RESULTS', kind='debug', func=plot_polar_results)
-polar_stokes_i = Graph('POLAR_STOKES_I', kind='debug', func=plot_polar_stoke_i)
-polar_lsd = Graph('POLAR_LSD', kind='debug', func=plot_polar_lsd)
-
-# add to definitions
-definitions['POLAR_FIT_CONT'] = polar_fit_cont
-definitions['POLAR_CONTINUUM'] = polar_continuum
-definitions['POLAR_RESULTS'] = polar_results
-definitions['POLAR_STOKES_I'] = polar_stokes_i
-definitions['POLAR_LSD'] = polar_lsd
 
 
 # =============================================================================
@@ -5778,24 +5343,6 @@ def plot_stats_ram_plot(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     plotter.plotend(graph)
 
 
-logstats_bar = Graph('LOGSTATS_BAR', kind='show', func=plot_logstats_bar)
-
-stats_timing = Graph('STATS_TIMING_PLOT', kind='show',
-                     func=plot_stats_timing_plot)
-
-stats_qc_recipe = Graph('STAT_QC_RECIPE_PLOT', kind='show',
-                        func=plot_stats_qc_recipe_plot)
-
-stats_ram_plot = Graph('STAT_RAM_PLOT', kind='show',
-                       func=plot_stats_ram_plot)
-
-# add to definitions
-definitions['LOGSTATS_BAR'] = logstats_bar
-definitions['STATS_TIMING_PLOT'] = stats_timing
-definitions['STAT_QC_RECIPE_PLOT'] = stats_qc_recipe
-definitions['STAT_RAM_PLOT'] = stats_ram_plot
-
-
 # =============================================================================
 # Define other plotting functions
 # =============================================================================
@@ -5908,13 +5455,6 @@ def plot_plot(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     # wrap up using plotter
     plotter.plotend(graph)
 
-
-general_image = Graph('IMAGE', kind='show', func=plot_image)
-general_plot = Graph('PLOT', kind='show', func=plot_plot)
-
-# add to definitions
-definitions['IMAGE'] = general_image
-definitions['PLOT'] = general_plot
 
 # =============================================================================
 # Start of code

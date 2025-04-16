@@ -459,14 +459,11 @@ def capitalise_key(key: str) -> str:
 
     :return key: capitalized string (or unchanged object)
     """
-    # capitalise string keys
-    if isinstance(key, str):
-        if key.isupper():
-            return key
-        else:
-            return key.upper()
-    else:
-        return key
+    if type(key) is str:
+        return key if key.isupper() else key.upper()
+    elif isinstance(key, str):
+        return key if key.isupper() else key.upper()
+    return key
 
 
 def test_format(fmt: str) -> bool:

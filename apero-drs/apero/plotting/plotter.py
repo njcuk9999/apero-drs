@@ -98,8 +98,10 @@ class Plotter:
             self.plotoption = params['GLOBAL.PLOT_MODE']
         else:
             self.plotoption = mode
+        # load yaml
+        self.yaml = base.load_yaml(definitions)
         # set up names of the plots that have been used
-        self.names = definitions
+        self.names = list(self.yaml.keys())
         # set up the plot switches
         self.plot_switches = OrderedDict()
         # flag whether we have debug plots

@@ -144,8 +144,7 @@ def run_apero_get(params: ParamDict):
     # Copy to LBL directory
     # --------------------------------------------------------------
     # run apero get for objects for lbl
-    apero_get.main(objnames=objnames, dprtypes=lbl_dprtypes,
-                   outtypes=lbl_outtypes,
+    apero_get.main(dbkind='tellu', keynames='TELLU_OBJ',
                    outpath=outpath_objects, fibers=lbl_scifibers,
                    symlinks=lbl_symlinks,
                    test=testmode, since=since)
@@ -160,12 +159,12 @@ def run_apero_get(params: ParamDict):
                    outtypes='EXT_E2DS_FF',
                    nosubdir=True,
                    outpath=outpath_fp, fibers=lbl_calfibers,
-                   symlinks=lbl_symlinks,
+                   symlinks=False,
                    test=testmode, since=since)
     # run apero get for extracted FP_FP
     apero_get.main(objnames='None', dprtypes='FP_FP',
                    outtypes='EXT_E2DS_FF',
-                   outpath=outpath_fp, fibers=lbl_calfibers,
+                   outpath=False, fibers=lbl_calfibers,
                    symlinks=lbl_symlinks, nosubdir=True,
                    test=testmode, since=since)
     # run apero get for calibs (wave + blaze) science fiber
