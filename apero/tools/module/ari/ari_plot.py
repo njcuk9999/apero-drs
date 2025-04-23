@@ -646,6 +646,35 @@ def shape_qc_plot_plot(debug_props: Dict[str, Any], plot_path: str,
     plt.close()
 
 
+def calib_mjd_plot(prop_name: str, calib_props: Dict[str, Any],
+                   plot_title: str, plot_path: str, ykind: str = 'ext',
+                   mjd_key: str = 'EXT_MJD'):
+    # get hdict and header yaml descriptions
+    hdict = calib_props['HDICT']
+    ext_headers = debug_props['HYAML'][ykind]
+    # get mjd date
+    mjd = calib_props[mjd_key]
+    # get variable
+    variable = hdict[prop_name]
+    variable_name = ext_headers[prop_name]['label']
+    # --------------------------------------------------------------------------
+    # setup the figure
+    fig, frame = plt.subplots(nrows=1, ncols=1, figsize=(12, 4))
+    # set background color
+    frame.set_facecolor(PLOT_BACKGROUND_COLOR)
+    frame.grid(which='both', color='lightgray', ls='--')
+    # plot shape dx
+    frame.plot_date(mjd.plot_date, variable, fmt='.', alpha=0.5)
+    frame.set(xlabel='Date', ylabel=variable_name)
+    # --------------------------------------------------------------------------
+    plt.subplots_adjust(hspace=0, left=0.1, right=0.99, bottom=0.15, top=0.9)
+    # add title
+    plt.suptitle(plot_title)
+    # save figure and close the plot
+    plt.savefig(plot_path)
+    plt.close()
+
+
 def debug_mjd_wfpdrift_plot(debug_props: Dict[str, Any], plot_path: str,
                             plot_title: str):
     debug_mjd_plot('EXT_WFPDRIFT', debug_props, plot_title, plot_path)

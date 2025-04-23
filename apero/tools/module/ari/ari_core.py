@@ -200,7 +200,7 @@ TIME_SERIES_COLS = ['Obs Dir', 'First obs mid',
 # Which tables are Contents tables (linked to via .rst)
 CONTENTS_TABLES = ['OBJECT_TABLE', 'OBSERVATION_TABLE']
 # Which tables are Other tables (linked to via .html)
-OTHER_TABLES = ['RECIPE_TABLE']
+OTHER_TABLES = ['RECIPE_TABLE', 'CALIB_PAGE']
 
 # -----------------------------------------------------------------------------
 # Google variables
@@ -1825,42 +1825,6 @@ class AriObject:
         debug_tcorr_map.active = True
         self.debug_plots.append(debug_tcorr_map)
         # ---------------------------------------------------------------------
-        # add shape plot
-        debug_shape = ari_plot.DebugPlot()
-        debug_shape.name = 'Shape QC plot'
-        debug_shape.basename = f'debug_shape_plot_{self.objname}_{ari_user}.png'
-        debug_shape.plot = ari_plot.shape_qc_plot_plot
-        debug_shape.description = ('Shape parameters varying in time.'
-                                   'dx is a shift along the order, dy is a '
-                                   'shift across orders, [[A,B],[C,D]] is an '
-                                   'affine transformation matrix.')
-        debug_shape.active = True
-        self.debug_plots.append(debug_shape)
-
-        # ---------------------------------------------------------------------
-        # add wfpdrift plot
-        debug_wfpdrift = ari_plot.DebugPlot()
-        debug_wfpdrift.name = 'wfpdrift plot'
-        debug_wfpdrift.basename = (f'debug_wfpdrift_plot_{self.objname}_'
-                                   f'{ari_user}.png')
-        debug_wfpdrift.plot = ari_plot.debug_mjd_wfpdrift_plot
-        debug_wfpdrift.description = ('Wavelength solution absolute CCF FP '
-                                      'Drift [km/s]')
-        debug_wfpdrift.active = True
-        self.debug_plots.append(debug_wfpdrift)
-
-        # ---------------------------------------------------------------------
-        # add wcav000 plot
-        debug_wcav000 = ari_plot.DebugPlot()
-        debug_wcav000.name = 'Wave cavity (c0) plot'
-        debug_wcav000.basename = (f'debug_wcav000_plot_{self.objname}_'
-                                  f'{ari_user}.png')
-        debug_wcav000.plot = ari_plot.debug_mjd_wcav000_plot
-        debug_wcav000.description = 'Wave cavity polynomial coeffs=0'
-        debug_wcav000.active = True
-        self.debug_plots.append(debug_wcav000)
-
-        # ---------------------------------------------------------------------
         # add extsmax plot
         debug_extsmax = ari_plot.DebugPlot()
         debug_extsmax.name = 'Maximum Saturation level plot'
@@ -1871,7 +1835,6 @@ class AriObject:
                                      'of extraction')
         debug_extsmax.active = True
         self.debug_plots.append(debug_extsmax)
-
         # ---------------------------------------------------------------------
         # add effron plot
         debug_effron = ari_plot.DebugPlot()
@@ -1916,7 +1879,6 @@ class AriObject:
                                      'have been used.')
         debug_mjd_cdt.active = True
         self.debug_plots.append(debug_mjd_cdt)
-
         # ---------------------------------------------------------------------
         # plot the debug plots
         # ---------------------------------------------------------------------

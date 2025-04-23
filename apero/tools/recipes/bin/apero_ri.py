@@ -149,6 +149,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict):
     night_table = ari.make_observation_page(params, object_classes)
     # make recipe pages
     recipe_table = ari.make_recipe_pages(params)
+    # make calibration page
+    calib_table = ari.make_calib_page(params)
 
     # ----------------------------------------------------------------------
     # step 5: make top level pages and compile
@@ -159,7 +161,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict):
     arip.make_index_page(params)
     # make profile page
     arip.make_profile_page(params, tables=[object_table, recipe_table,
-                                           night_table])
+                                           night_table, calib_table])
     # make finder page
     arip.make_finder_page(params)
     # print progress
