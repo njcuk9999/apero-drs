@@ -208,7 +208,7 @@ TIME_SERIES_COLS = ['Obs Dir', 'First obs mid',
 # Which tables are Contents tables (linked to via .rst)
 CONTENTS_TABLES = ['OBJECT_TABLE', 'OBSERVATION_TABLE']
 # Which tables are Other tables (linked to via .html)
-OTHER_TABLES = ['RECIPE_TABLE']
+OTHER_TABLES = ['RECIPE_TABLE', 'CALIB_PAGE']
 
 # -----------------------------------------------------------------------------
 # Google variables
@@ -762,7 +762,7 @@ class AriObject:
 
     def save_to_disk(self, params: ParamDict):
         # make full yaml path
-        yaml_path = params['ARI_OBJ_YAMLS']
+        yaml_path = params['TOOLS.ARI.OBJ_YAMLS']
         # check if yaml file exists
         yaml_abs_path = os.path.join(yaml_path, self.yaml_filename)
         # return if yaml file does not exist and remove if it does
@@ -796,7 +796,7 @@ class AriObject:
 
     def load_from_disk(self, params: ParamDict):
         # make full yaml path
-        yaml_path = params['ARI_OBJ_YAMLS']
+        yaml_path = params['TOOLS.ARI.OBJ_YAMLS']
         # check if yaml file exists
         yaml_abs_path = os.path.join(yaml_path, self.yaml_filename)
         # ---------------------------------------------------------------------
@@ -836,7 +836,7 @@ class AriObject:
     # -------------------------------------------------------------------------
     def get_target_parameters(self, params: ParamDict):
         # set up the object page
-        obj_save_path = os.path.join(params['ARI_OBJ_PAGES'], self.objname)
+        obj_save_path = os.path.join(params['TOOLS.ARI.OBJ_PAGES'], self.objname)
         ari_user = params['TOOLS.ARI.USER']
         # ---------------------------------------------------------------------
         # storage for spectrum values
@@ -899,7 +899,7 @@ class AriObject:
     # -------------------------------------------------------------------------
     def get_spec_parameters(self, params: ParamDict):
         # set up the object page
-        obj_save_path = os.path.join(params['ARI_OBJ_PAGES'], self.objname)
+        obj_save_path = os.path.join(params['TOOLS.ARI.OBJ_PAGES'], self.objname)
         ari_user = params['TOOLS.ARI.USER']
         core_snr = params['OBJ.TELLU.TEMPLATE.BERVCOV_CSNR']
         resolution = params['OBJ.TELLU.TEMPLATE.BERVCOV_RES']
@@ -1274,7 +1274,8 @@ class AriObject:
         :return:
         """
         # set up the object page
-        obj_save_path = os.path.join(params['ARI_OBJ_PAGES'], self.objname)
+        obj_save_path = os.path.join(params['TOOLS.ARI.OBJ_PAGES'],
+                                     self.objname)
         ari_user = params['TOOLS.ARI.USER']
         # get lbl rdb files
         lbl_files = dict()
@@ -1477,7 +1478,8 @@ class AriObject:
     # -------------------------------------------------------------------------
     def get_ccf_parameters(self, params: ParamDict):
         # set up the object page
-        obj_save_path = os.path.join(params['ARI_OBJ_PAGES'], self.objname)
+        obj_save_path = os.path.join(params['TOOLS.ARI.OBJ_PAGES'],
+                                     self.objname)
         ari_user = params['TOOLS.ARI.USER']
         # get ccf files
         ccf_files = self.filetypes['ccf'].get_files(qc=True)
@@ -1623,7 +1625,8 @@ class AriObject:
     # -------------------------------------------------------------------------
     def get_time_series_parameters(self, params: ParamDict):
         # set up the object page
-        obj_save_path = os.path.join(params['ARI_OBJ_PAGES'], self.objname)
+        obj_save_path = os.path.join(params['TOOLS.ARI.OBJ_PAGES'],
+                                     self.objname)
         ari_user = params['TOOLS.ARI.USER']
         # get ext files
         ftypes = self.filetypes
@@ -1804,7 +1807,8 @@ class AriObject:
     # -------------------------------------------------------------------------
     def get_debug_parameters(self, params: ParamDict):
         # set up the object page
-        obj_save_path = os.path.join(params['ARI_OBJ_PAGES'], self.objname)
+        obj_save_path = os.path.join(params['TOOLS.ARI.OBJ_PAGES'],
+                                     self.objname)
         ari_user = params['TOOLS.ARI.USER']
         # get the extracted files
         ext_files = self.filetypes['ext'].get_files()
@@ -1847,42 +1851,6 @@ class AriObject:
         debug_tcorr_map.active = True
         self.debug_plots.append(debug_tcorr_map)
         # ---------------------------------------------------------------------
-        # add shape plot
-        debug_shape = ari_plot.DebugPlot()
-        debug_shape.name = 'Shape QC plot'
-        debug_shape.basename = f'debug_shape_plot_{self.objname}_{ari_user}.png'
-        debug_shape.plot = ari_plot.shape_qc_plot_plot
-        debug_shape.description = ('Shape parameters varying in time.'
-                                   'dx is a shift along the order, dy is a '
-                                   'shift across orders, [[A,B],[C,D]] is an '
-                                   'affine transformation matrix.')
-        debug_shape.active = True
-        self.debug_plots.append(debug_shape)
-
-        # ---------------------------------------------------------------------
-        # add wfpdrift plot
-        debug_wfpdrift = ari_plot.DebugPlot()
-        debug_wfpdrift.name = 'wfpdrift plot'
-        debug_wfpdrift.basename = (f'debug_wfpdrift_plot_{self.objname}_'
-                                   f'{ari_user}.png')
-        debug_wfpdrift.plot = ari_plot.debug_mjd_wfpdrift_plot
-        debug_wfpdrift.description = ('Wavelength solution absolute CCF FP '
-                                      'Drift [km/s]')
-        debug_wfpdrift.active = True
-        self.debug_plots.append(debug_wfpdrift)
-
-        # ---------------------------------------------------------------------
-        # add wcav000 plot
-        debug_wcav000 = ari_plot.DebugPlot()
-        debug_wcav000.name = 'Wave cavity (c0) plot'
-        debug_wcav000.basename = (f'debug_wcav000_plot_{self.objname}_'
-                                  f'{ari_user}.png')
-        debug_wcav000.plot = ari_plot.debug_mjd_wcav000_plot
-        debug_wcav000.description = 'Wave cavity polynomial coeffs=0'
-        debug_wcav000.active = True
-        self.debug_plots.append(debug_wcav000)
-
-        # ---------------------------------------------------------------------
         # add extsmax plot
         debug_extsmax = ari_plot.DebugPlot()
         debug_extsmax.name = 'Maximum Saturation level plot'
@@ -1893,7 +1861,6 @@ class AriObject:
                                      'of extraction')
         debug_extsmax.active = True
         self.debug_plots.append(debug_extsmax)
-
         # ---------------------------------------------------------------------
         # add effron plot
         debug_effron = ari_plot.DebugPlot()
@@ -1938,7 +1905,6 @@ class AriObject:
                                      'have been used.')
         debug_mjd_cdt.active = True
         self.debug_plots.append(debug_mjd_cdt)
-
         # ---------------------------------------------------------------------
         # plot the debug plots
         # ---------------------------------------------------------------------
@@ -2042,7 +2008,7 @@ class AriRecipe:
 
     def save_yaml(self, params: ParamDict):
         # get the recipe yaml directory
-        yaml_path = params['ARI_RECIPE_YAMLS']
+        yaml_path = params['TOOLS.ARI.RECIPE_YAMLS']
         # construct the filename
         self.yamlfile = str(os.path.join(yaml_path, self.obsdir + '.yaml'))
         # ----------------------------------------------------------------------

@@ -2819,5 +2819,13 @@ CDict.set('DRIFT_DPRTYPES',
 CDict.set('DRIFT_DPR_FIBER_TYPE', value='FP', source=__NAME__, group=cgroup)
 
 # =============================================================================
+# ARI SETTINGS
+# =============================================================================
+cgroup = 'TOOLS.ARI'
+
+# Define the ARI orders for calib plot
+CDict.set('CAL_ORDERS', value=[8, 35], source=__NAME__, group=cgroup)
+
+# =============================================================================
 # End of configuration file
 # =============================================================================

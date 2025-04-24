@@ -87,8 +87,8 @@ class TableFile:
         else:
             self.html_path = os.path.join(self.html_filename)
 
-        self.csv_path = os.path.join(params['ARI_DIR'], self.csv_filename)
-        self.rst_path = os.path.join(params['ARI_DIR'], self.rst_filename)
+        self.csv_path = os.path.join(params['TOOLS.ARI.DIR'], self.csv_filename)
+        self.rst_path = os.path.join(params['TOOLS.ARI.DIR'], self.rst_filename)
         self.rst_ref_path = self.rst_filename
         self.csv_ref_path = self.csv_filename
 
@@ -269,7 +269,8 @@ def make_obs_table(params: ParamDict, object_classes: Dict) -> TableFile:
     # loop around object classes and make
     for objname in tqdm(object_classes):
         # get the save path for this object name
-        obj_save_path = str(os.path.join(params['ARI_OBJ_PAGES'], objname))
+        obj_save_path = str(os.path.join(params['TOOLS.ARI.OBJ_PAGES'],
+                                         objname))
         # get the time
         ts_tablename = f'time_series_stat_{objname}_{ari_user}.txt'
         # get full table path
@@ -368,7 +369,7 @@ def _add_obj_page(it: int, key: str, rdict: dict, params: ParamDict,
         WLOG(params, '', msg.format(*margs))
         # ---------------------------------------------------------------------
         # construct path for object
-        obj_save_path = os.path.join(params['ARI_OBJ_PAGES'], objname)
+        obj_save_path = os.path.join(params['TOOLS.ARI.OBJ_PAGES'], objname)
         # Make sure directory exists
         if not os.path.exists(obj_save_path):
             os.makedirs(obj_save_path)
@@ -448,7 +449,7 @@ def _add_obj_page(it: int, key: str, rdict: dict, params: ParamDict,
         # write object page
         # ---------------------------------------------------------------------
         # construct the rst path
-        object_page_path = os.path.join(params['ARI_OBJ_PAGES'], objname)
+        object_page_path = os.path.join(params['TOOLS.ARI.OBJ_PAGES'], objname)
         # construct the rst filename
         rst_filename = f'{objname}.rst'
         # save object page
@@ -499,7 +500,7 @@ def add_obj_pages(params: ParamDict, object_classes: Dict[str, AriObject]):
     # loop around object classes
     for objname in object_classes:
         # get object page path
-        obj_save_path = os.path.join(params['ARI_OBJ_PAGES'], objname)
+        obj_save_path = os.path.join(params['TOOLS.ARI.OBJ_PAGES'], objname)
         # construct the rst filename
         rst_filename = f'{objname}.rst'
         # process if we are updating
@@ -1030,10 +1031,10 @@ def add_finder_table(params: ParamDict, data_dict: Dict[str, Any]):
     # add recipe pages html directory store
     added_html_files.append([table_path, html_table_path])
     # update ari_extras with these html files
-    ari_extras = list(params['ARI_EXTRAS'])
+    ari_extras = list(params['TOOLS.ARI.EXTRAS'])
     ari_extras += added_html_files
     # push by into params extras (to add whole directory)
-    params.set('ARI_EXTRAS', ari_extras, source=funcname)
+    params.set('TOOLS.ARI.EXTRAS', ari_extras, source=funcname)
 
 
 def add_recipe_tables(params: ParamDict, table: Table, machine_name: str):
@@ -1121,7 +1122,7 @@ def add_recipe_tables(params: ParamDict, table: Table, machine_name: str):
                  '../../_static/images/fonta/css/font-awesome.css',
                  '../../_static/apero.css']
     # make path
-    table_path = params['ARI_RECIPE_PAGES']
+    table_path = params['TOOLS.ARI.RECIPE_PAGES']
     # get table name
     table_filename = machine_name.lower()
     # construct the html paths to copy to after compiling
@@ -1211,10 +1212,10 @@ def add_recipe_tables(params: ParamDict, table: Table, machine_name: str):
     # add recipe pages html directory store
     added_html_files.append([table_path, html_table_path2])
     # update ari_extras with these html files
-    ari_extras = list(params['ARI_EXTRAS'])
+    ari_extras = list(params['TOOLS.ARI.EXTRAS'])
     ari_extras += added_html_files
     # push by into params
-    params.set('ARI_EXTRAS', ari_extras, source=funcname)
+    params.set('TOOLS.ARI.EXTRAS', ari_extras, source=funcname)
 
 
 # =============================================================================
@@ -1296,7 +1297,7 @@ def make_index_page(params: ParamDict):
     # get ari user
     ari_user = params['TOOLS.ARI.USER']
     # get path to save index to (above ari_dir level)
-    index_path = os.path.dirname(params['ARI_DIR'])
+    index_path = os.path.dirname(params['TOOLS.ARI.DIR'])
     # create ARI index page
     index_page = drs_markdown.MarkDownPage('ari_index')
     # add title
@@ -1345,7 +1346,7 @@ def make_profile_page(params: ParamDict, tables: List[TableFile]):
     # get ari user
     ari_user = params['TOOLS.ARI.USER']
     # get path to save
-    profile_path = params['ARI_DIR']
+    profile_path = params['TOOLS.ARI.DIR']
     # construct the profile name
     profile_name = f'profile.rst'
     # create a page
@@ -1410,9 +1411,9 @@ def make_profile_page(params: ParamDict, tables: List[TableFile]):
 
 def sphinx_compile(params: ParamDict):
     # get the working directory path
-    working_dir = os.path.dirname(params['ARI_DIR'])
+    working_dir = os.path.dirname(params['TOOLS.ARI.DIR'])
     # get the resources default working directory path
-    resources_dir = params['ARI_DWORKING_DIR']
+    resources_dir = params['TOOLS.ARI.DWORKING_DIR']
     # copy over working directory from resources
     content = glob.glob(os.path.join(resources_dir, '*'))
     for element in content:
@@ -1442,7 +1443,7 @@ def sphinx_compile(params: ParamDict):
     os.system('make html')
     # ------------------------------------------------------------------
     # copy extras (directory generated html files - not by sphinx)
-    for extra in params['ARI_EXTRAS']:
+    for extra in params['TOOLS.ARI.EXTRAS']:
         old_path, new_path = extra
         drs_path.copy_element(old_path, new_path)
     # ------------------------------------------------------------------

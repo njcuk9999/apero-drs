@@ -5723,6 +5723,11 @@ CDict.add('FINDING_CHARTS', value=None, dtype=dict,
           description='Define the finding charts dictionary '
                       'for ari')
 
+# Define the ARI orders for calib plot
+CDict.add('CAL_ORDERS', value=None, dtype=list, dtypei=int,
+          source=__NAME__, group=cgroup,
+          description='Define the ARI orders for calib plot')
+
 # Define the ARI reset directory (relative paths to copy into the "other"
 #   directory on installation/reset)
 ari_reset_dict = dict()
