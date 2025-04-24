@@ -94,7 +94,7 @@ CALIB_KEYS['ABSPATH'] = CalibKey('ABSPATH', kind='key')
 
 # set required calibrations
 REQ_CALS = ['SHAPEL', 'WAVE_NIGHT']
-
+REQ_FIBER = [False, True]
 
 # =============================================================================
 # Define functions
@@ -234,7 +234,7 @@ def get_calib_props(params):
     calib_data = get_calib_hkeys(params, calib_data, calib_files)
     # -------------------------------------------------------------------------
     # add wave centers (WAVE_CENT_X)
-    calib_data = get_wave_cent_x(calib_data)
+    calib_data = get_wave_cent_x(params, calib_data)
     # -------------------------------------------------------------------------
     # save calib data to disk
     WLOG(params, '', 'Writing file {0}'.format(calib_key_file))
@@ -250,7 +250,6 @@ def get_calib_props(params):
         mask = calib_data['KW_OUTPUT'] == cal
         # add each column into our sub-dictionary
         for key in CALIB_KEYS:
-
             calib_props[cal]['HDICT'][key] = calib_data[key][mask]
             calib_props[cal]['LABEL'][key] = CALIB_KEYS[key].label
 
@@ -295,15 +294,21 @@ def get_prev_data(calib_key_file) -> Dict[str, Any]:
 
 
 def get_calib_files(params) -> List[str]:
+    # load pconst
+    pconst = constants.pload()
+    sci_fibers, _ = pconst.FIBER_KINDS()
     # storage for output
     calib_files = []
     # get and load the file index database
     findexdb = drs_database.FileIndexDatabase(params)
     findexdb.load_db()
     # get required calibration files
-    for cal in REQ_CALS:
+    for it, cal in enumerate(REQ_CALS):
         # set up condition
         condition = f'BLOCK_KIND="red" AND KW_OUTPUT="{cal}"'
+        # deal with requiring fiber
+        if REQ_FIBER[it]:
+            condition += f' AND KW_FIBER="{sci_fibers[0]}"'
         # get absolute file path for file
         abspath = list(findexdb.get_entries('ABSPATH', condition=condition))
         calib_files += abspath
@@ -349,8 +354,12 @@ def get_calib_hkeys(params, calib_data, calib_files) -> Dict[str, Any]:
     return calib_data
 
 
-def get_wave_cent_x(calib_data: Dict[str, np.ndarray]):
+def get_wave_cent_x(params: ParamDict, calib_data: Dict[str, np.ndarray]):
 
+    # deal with no wave data
+    if np.sum(np.isfinite(calib_data['KW_EXT_NBO'])) == 0:
+        WLOG(params, 'warning', 'No WAVE_NIGHT files. Skipping WAVE_CENT_X')
+        return calib_data
     # get the nbo
     nbo = int(np.nanmean(calib_data['KW_EXT_NBO']))
     # loop around
