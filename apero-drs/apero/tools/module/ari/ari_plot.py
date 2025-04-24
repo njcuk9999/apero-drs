@@ -9,11 +9,13 @@ Created on 2024-01-23 at 10:56
 
 @author: cook
 """
+import warnings
 from typing import Any, Dict
 
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from matplotlib.colors import ListedColormap
+from matplotlib.ticker import MaxNLocator
 import numpy as np
 from astropy.io import fits
 from astropy.table import Table
@@ -60,6 +62,40 @@ class DebugPlot:
         self.plot = None
         self.description = None
         self.active = False
+
+
+def add_zoom_inset(main_frame, zoom_frame, xvector, yvector, plotfunc,
+                   zoom_frac=0.05, **kwargs):
+    """
+    Add an inset zoom to the last `zoom_frac` of the data.
+
+    Parameters:
+        ax : matplotlib.axes.Axes
+            Main axis to which inset is added.
+        x, y : array-like
+            Data arrays.
+        zoom_frac : float
+            Fraction of data to zoom into (from the end).
+        inset_position : list of float
+            Position of the inset [x0, y0, width, height] in axis coordinates.
+    """
+    num = len(xvector)
+    start_idx = int((1 - zoom_frac) * num)
+    # deal with small number of points
+    if (num - start_idx) < 10:
+        start_idx = num - 10
+    # sort by xvector
+    sort = np.argsort(xvector)
+    xvector = xvector[sort]
+    yvector = yvector[sort]
+    # get zoom vectors
+    x_zoom, y_zoom = xvector[start_idx:], yvector[start_idx:]
+    # plot the plot func under axins
+    getattr(main_frame, plotfunc)(xvector, yvector, **kwargs)
+    # plot the plot func under axins
+    getattr(zoom_frame, plotfunc)(x_zoom, y_zoom, **kwargs)
+    # restrict the xaxis locator to 5 ticks
+    zoom_frame.xaxis.set_major_locator(MaxNLocator(nbins=5))
 
 
 # =============================================================================
@@ -682,33 +718,49 @@ def calib_mjd_wcent_plot(calib_props: Dict[str, Any], plot_path: str,
     mjdmid_diff = np.diff(mjdmid.mjd)
     # we need dv not wavelength
     dv = np.log(wave_cents / np.nanmedian(wave_cents, axis=0)) * cc.c.value
-    # set up figure
-    fig, frames = plt.subplots(nrows=2, ncols=1, figsize=(12, 8))
-    # set background color
-    for frame in frames:
-        frame.set_facecolor(PLOT_BACKGROUND_COLOR)
-        frame.grid(which='both', color='lightgray', ls='--')
+    # setup the figure
+    fig = plt.figure(figsize=(24, 12))
+    gs = gridspec.GridSpec(2, 2, width_ratios=[4, 1])
+    # Main plots (80%)
+    frame1 = fig.add_subplot(gs[0, 0])
+    frame2 = fig.add_subplot(gs[1, 0])
+    # Zoom plots (20%)
+    zoom1 = fig.add_subplot(gs[0, 1])
+    zoom2 = fig.add_subplot(gs[1, 1])
     # loop around orders and plot
     for order_num in cal_orders:
         # get a mean across a few orders (if possible)
         start = np.max([0, order_num-5])
         end = np.min([wave_cents.shape[1], order_num+5])
         dv_ord = np.nanmean(dv[:, start:end], axis=1)
-        dv_ord_ratio = np.diff(dv_ord) / mjdmid_diff
-
-        frames[0].plot_date(mjdmid.plot_date, dv_ord,
-                            label=f'Order {order_num}', ls='None',
-                            marker='o')
-        frames[1].plot_date(mjdmid.plot_date[1:], dv_ord_ratio,
-                            label=f'Order {order_num}', ls='None',
-                            marker='o')
+        with warnings.catch_warnings(record=True) as _:
+            dv_ord_ratio = np.diff(dv_ord) / mjdmid_diff
+        # plot arguments
+        pkwargs = dict(fmt='.', alpha=0.5, label=f'Order {order_num}')
+        # zoom frame
+        add_zoom_inset(frame1, zoom1, mjdmid.plot_date, dv_ord,
+                       plotfunc='plot_date', **pkwargs)
+        add_zoom_inset(frame2, zoom2, mjdmid.plot_date[1:], dv_ord_ratio,
+                       plotfunc='plot_date', **pkwargs)
+    # set background color
+    for frame in [frame1, zoom1]:
+        frame.set_facecolor(PLOT_BACKGROUND_COLOR)
+        frame.grid(which='both', color='lightgray', ls='--')
+        frame.set(xlabel='Date', ylabel='Central pixel offset [m/s]')
+        frame.tick_params(axis='x', rotation=45)
+    # set background color
+    for frame in [frame2, zoom2]:
+        frame.set_facecolor(PLOT_BACKGROUND_COLOR)
+        frame.grid(which='both', color='lightgray', ls='--')
+        frame.set(xlabel='Date', ylabel='Central pixel offset [m/s/day]')
+        frame.tick_params(axis='x', rotation=45)
     # set labels
-    frames[0].set(xlabel='Date', ylabel='Central pixel offset [m/s]')
-    frames[0].legend(loc=0)
-    frames[1].set(xlabel='Date', ylabel='Central pixel offset [m/s/day]')
-    frames[1].legend(loc=0)
+    frame1.legend(loc=0)
+    frame2.legend(loc=0)
     # add title
     plt.suptitle(plot_title)
+    plt.subplots_adjust(left=0.05, right=0.975,
+                        top=0.95, bottom=0.1, wspace=0.15, hspace=0.3)
     # save figure and close the plot
     plt.savefig(plot_path)
     plt.close()
@@ -727,13 +779,27 @@ def calib_mjd_plot(prop_name: str, cal_props: Dict[str, Any],
     variable_name = label[prop_name]
     # --------------------------------------------------------------------------
     # setup the figure
-    fig, frame = plt.subplots(nrows=1, ncols=1, figsize=(12, 4))
+    fig = plt.figure(figsize=(12, 6))
+    gs = gridspec.GridSpec(1, 2, width_ratios=[4, 1], hspace=0.3)
+    # Main plots (80%)
+    frame1 = fig.add_subplot(gs[0, 0])
+    # Zoom plots (20%)
+    zoom1 = fig.add_subplot(gs[0, 1])
     # set background color
-    frame.set_facecolor(PLOT_BACKGROUND_COLOR)
-    frame.grid(which='both', color='lightgray', ls='--')
+    frame1.set_facecolor(PLOT_BACKGROUND_COLOR)
+    frame1.grid(which='both', color='lightgray', ls='--')
+    frame1.set(xlabel='Date', ylabel=variable_name)
     # plot shape dx
-    frame.plot_date(mjd.plot_date, variable, fmt='.', alpha=0.5)
-    frame.set(xlabel='Date', ylabel=variable_name)
+    pkwargs = dict(fmt='.', alpha=0.5)
+    # zoom frame
+    add_zoom_inset(frame1, zoom1, mjd.plot_date, variable,
+                   plotfunc='plot_date', **pkwargs)
+    # set background color
+    for frame in [frame1, zoom1]:
+        frame.set_facecolor(PLOT_BACKGROUND_COLOR)
+        frame.grid(which='both', color='lightgray', ls='--')
+        frame.set(xlabel='Date', ylabel=variable_name)
+        frame.tick_params(axis='x', rotation=45)
     # --------------------------------------------------------------------------
     plt.subplots_adjust(hspace=0, left=0.1, right=0.99, bottom=0.15, top=0.9)
     # add title

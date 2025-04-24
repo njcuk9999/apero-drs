@@ -17,13 +17,14 @@ from astropy.table import Table
 from astropy.time import Time
 from astropy.io import fits
 
+from aperocore.constants import load_functions
+from apero.instruments import select
 from apero.base import base as apero_base
 from aperocore.constants import param_functions
 from apero.core import drs_database
 from aperocore.core import drs_log
 from apero.tools.module.documentation import drs_markdown
 from apero.base.base import TQDM as tqdm
-from apero.tools.module.ari import ari_core
 from apero.tools.module.ari import ari_pages
 from apero.tools.module.ari import ari_plot
 
@@ -100,7 +101,7 @@ CALIB_KEYS['ABSPATH'] = CalibKey('ABSPATH', kind='key')
 
 # set required calibrations
 REQ_CALS = ['SHAPEL', 'WAVE_NIGHT']
-
+REQ_FIBER = [False, True]
 
 # =============================================================================
 # Define functions
@@ -263,9 +264,10 @@ def get_calib_props(params: ParamDict) -> Dict[str, Dict[str, Any]]:
     calib_data = get_calib_hkeys(params, calib_data, calib_files)
     # -------------------------------------------------------------------------
     # add wave centers (WAVE_CENT_X)
-    calib_data = get_wave_cent_x(calib_data)
+    calib_data = get_wave_cent_x(params, calib_data)
     # -------------------------------------------------------------------------
     # save calib data to disk
+    WLOG(params, '', 'Writing file {0}'.format(calib_key_file))
     Table(calib_data).write(calib_key_file, overwrite=True)
     # -------------------------------------------------------------------------
     # sort into a more usable form for plotting
@@ -337,15 +339,21 @@ def get_calib_files(params: ParamDict) -> List[str]:
 
     :return: list of calibration files
     """
+    # load pconst
+    pconst = load_functions.load_pconfig(select.INSTRUMENTS)
+    sci_fibers, _ = pconst.FIBER_KINDS()
     # storage for output
     calib_files = []
     # get and load the file index database
     findexdb = drs_database.FileIndexDatabase(params)
     findexdb.load_db()
     # get required calibration files
-    for cal in REQ_CALS:
+    for it, cal in enumerate(REQ_CALS):
         # set up condition
         condition = f'BLOCK_KIND="red" AND KW_OUTPUT="{cal}"'
+        # deal with requiring fiber
+        if REQ_FIBER[it]:
+            condition += f' AND KW_FIBER="{sci_fibers[0]}"'
         # get absolute file path for file
         abspath = list(findexdb.get_entries('ABSPATH', condition=condition))
         calib_files += abspath
@@ -400,16 +408,21 @@ def get_calib_hkeys(params: ParamDict, calib_data: Dict[str, Any],
     return calib_data
 
 
-def get_wave_cent_x(calib_data: Dict[str, np.ndarray]):
+def get_wave_cent_x(params: ParamDict, calib_data: Dict[str, np.ndarray]):
     """
     Add a special column (for WAVE_NIGHT files) which is the wavelength for the
     central pixel of every order - either loaded from file or remembered
     from previous loading
 
+    :param params: ParamDict, parameter dictionary of constants
     :param calib_data: dict, calibration data
 
     :return: dict, calibration properties
     """
+    # deal with no wave data
+    if np.sum(np.isfinite(calib_data['KW_EXT_NBO'])) == 0:
+        WLOG(params, 'warning', 'No WAVE_NIGHT files. Skipping WAVE_CENT_X')
+        return calib_data
     # get the nbo
     nbo = int(np.nanmean(calib_data['KW_EXT_NBO']))
     # loop around

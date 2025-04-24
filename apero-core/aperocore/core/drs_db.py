@@ -53,6 +53,8 @@ DATABASE_NAMES = ['calib', 'tellu', 'findex', 'log', 'astrom', 'lang',
                   'reject']
 # sqlalchemy definitions to use elsewhere
 SA_TEXT = sqlalchemy.text
+# set max string size
+MAX_STR_SIZE = 1024
 
 
 # =============================================================================
@@ -1457,6 +1459,10 @@ def deal_with_null(value: Any = None):
     # deal with other nulls
     if value in ['None', 'Null', '']:
         return 'None'
+    # deal with strings that are way too long
+    if isinstance(value, str):
+        if len(value) > MAX_STR_SIZE:
+            value = value[:MAX_STR_SIZE] + '...'
     # otherwise return value
     return value
 
