@@ -24,6 +24,11 @@ settings:
     limit3:
       - 2164
       - 2169
+  # calibration settings
+  calib:
+    wavecent_orders:
+      - 8
+      - 35
   # Wavelength range of interest for debug telluric correction map
   TcorrMapWave:
     - 1716
@@ -81,10 +86,6 @@ headers:
       key: RUNID
       label: Program ID
       dtype: str
-
-  calib:
-    SAH
-
   ext:
     EXT_MJDMID:
       key: MJDMID

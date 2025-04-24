@@ -3051,6 +3051,10 @@ DRIFT_DPRTYPES.value = 'FP_FP, OBJ_FP, DARK_FP'
 DRIFT_DPR_FIBER_TYPE = DRIFT_DPR_FIBER_TYPE.copy(__NAME__)
 DRIFT_DPR_FIBER_TYPE.value = 'FP'
 
+# Define the ARI orders for calib plot
+ARI_CAL_ORDERS = ARI_CAL_ORDERS.copy(__NAME__)
+ARI_CAL_ORDERS.value = '15, 60'
+
 # =============================================================================
 #  End of configuration file
 # =============================================================================

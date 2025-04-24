@@ -84,6 +84,7 @@ CALIB_KEYS['KW_SHAPE_B'] = CalibKey('KW_SHAPE_B', kind='hdr', label='Shape B')
 CALIB_KEYS['KW_SHAPE_C'] = CalibKey('KW_SHAPE_C', kind='hdr', label='Shape C')
 CALIB_KEYS['KW_SHAPE_D'] = CalibKey('KW_SHAPE_D', kind='hdr', label='Shape D')
 
+CALIB_KEYS['KW_EXT_NBO'] = CalibKey('KW_EXT_NBO', kind='hdr')
 CALIB_KEYS['KW_WFP_DRIFT'] = CalibKey('KW_WFP_DRIFT', kind='hdr',
                                       label='Wavesol abs CCF FP drift [km/s]')
 CALIB_KEYS['KW_CAVITY_WIDTH'] = CalibKey('KW_CAVITY_WIDTH', kind='hdr',
@@ -137,7 +138,7 @@ def add_calib_page(params, recipe_table):
         # make a sub section for this debug plot
         calib_page.add_sub_section(calib_plot.name)
         # add the snr plot to the page
-        calib_page.add_image(calib_plot.basename, align='left')
+        calib_page.add_image('calib_page/' + calib_plot.basename, align='left')
         # add debug plot description
         calib_page.add_text(calib_plot.description)
         # add a new line
@@ -159,7 +160,7 @@ def create_plots(params, calib_props) -> List[ari_plot.DebugPlot]:
     # add shape plot
     calib_shape = ari_plot.DebugPlot()
     calib_shape.name = 'Shape QC plot'
-    calib_shape.basename = f'debug_shape_plot_{ari_user}.png'
+    calib_shape.basename = f'calib_shape_plot_{ari_user}.png'
     calib_shape.plot = ari_plot.shape_qc_plot_plot
     calib_shape.description = ('Shape parameters varying in time.'
                                'dx is a shift along the order, dy is a '
@@ -171,8 +172,8 @@ def create_plots(params, calib_props) -> List[ari_plot.DebugPlot]:
     # add wfpdrift plot
     calib_wfpdrift = ari_plot.DebugPlot()
     calib_wfpdrift.name = 'wfpdrift plot'
-    calib_wfpdrift.basename = (f'debug_wfpdrift_plot_{ari_user}.png')
-    calib_wfpdrift.plot = ari_plot.debug_mjd_wfpdrift_plot
+    calib_wfpdrift.basename = (f'calib_wfpdrift_plot_{ari_user}.png')
+    calib_wfpdrift.plot = ari_plot.calib_mjd_wfpdrift_plot
     calib_wfpdrift.description = ('Wavelength solution absolute CCF FP '
                                   'Drift [km/s]')
     calib_wfpdrift.active = True
@@ -181,11 +182,20 @@ def create_plots(params, calib_props) -> List[ari_plot.DebugPlot]:
     # add wcav000 plot
     calib_wcav000 = ari_plot.DebugPlot()
     calib_wcav000.name = 'Wave cavity (c0) plot'
-    calib_wcav000.basename = (f'debug_wcav000_plot_{ari_user}.png')
-    calib_wcav000.plot = ari_plot.debug_mjd_wcav000_plot
+    calib_wcav000.basename = (f'calib_wcav000_plot_{ari_user}.png')
+    calib_wcav000.plot = ari_plot.calib_mjd_wcav000_plot
     calib_wcav000.description = 'Wave cavity polynomial coeffs=0'
     calib_wcav000.active = True
     calib_plots.append(calib_wcav000)
+    # ---------------------------------------------------------------------
+    # add wave cent plot
+    calib_wcent = ari_plot.DebugPlot()
+    calib_wcent.name = 'Wave centroid plot'
+    calib_wcent.basename = (f'calib_wcentplot_{ari_user}.png')
+    calib_wcent.plot = ari_plot.calib_mjd_wcent_plot
+    calib_wcent.description = 'Wave centroid plot'
+    calib_wcent.active = True
+    calib_plots.append(calib_wcent)
     # ---------------------------------------------------------------------
     # plot the debug plots
     # ---------------------------------------------------------------------
@@ -210,7 +220,9 @@ def get_calib_props(params):
     # get previous files
     calib_save_path = params['ARI_CALIB_PAGE']
     ari_user = params['ARI_USER']
-    calib_key_file = os.path.join(calib_save_path, f'calib_keys_{ari_user}.csv')
+    calib_key_file = os.path.join(calib_save_path, f'calib_keys_{ari_user}.fits')
+    # get orders
+    cal_orders = params.listp('ARI_CAL_ORDERS', dtype=int)
     # -------------------------------------------------------------------------
     # get the previous calib files (from storage) or create empty
     calib_data = get_prev_data(calib_key_file)
@@ -232,6 +244,7 @@ def get_calib_props(params):
         calib_props[cal] = dict()
         calib_props[cal]['HDICT'] = dict()
         calib_props[cal]['LABEL'] = dict()
+        calib_props[cal]['OTHER'] = dict(ORDERS=cal_orders)
         # get a mask for this calibration type
         mask = calib_data['KW_OUTPUT'] == cal
         # add each column into our sub-dictionary
@@ -322,24 +335,32 @@ def get_calib_hkeys(params, calib_data, calib_files) -> Dict[str, Any]:
                     calib_data[key].append(basename)
                 elif key == 'ABSPATH':
                     calib_data[key].append(filename)
+                elif key == 'WAVE_CENT_X':
+                    calib_data[key].append(None)
                 else:
                     calib_data[key].append(np.nan)
 
     # convert to numpy arrays
     for key in CALIB_KEYS:
-        calib_data[key] = np.array(calib_data[key])
+        if key != 'WAVE_CENT_X':
+            calib_data[key] = np.array(calib_data[key])
 
     return calib_data
 
 
 def get_wave_cent_x(calib_data: Dict[str, np.ndarray]):
+
+    # get the nbo
+    nbo = int(np.nanmean(calib_data['KW_EXT_NBO']))
     # loop around
-    for it in tqdm(range(len(calib_data))):
+    for it in tqdm(range(len(calib_data['BASENAME']))):
         # only do the rest for wave night files
         if calib_data['KW_OUTPUT'][it] != 'WAVE_NIGHT':
+            # fill with nans (to have correct shape)
+            calib_data['WAVE_CENT_X'][it] = np.full(nbo, np.nan)
             continue
-        # if data isn't nan we already have this data
-        if np.isfinite(calib_data['WAVE_CENT_X'][it]):
+        # if data isn't None we already have this data
+        if calib_data['WAVE_CENT_X'][it] is not None:
             continue
         # load the file
         wavemap = np.array(fits.getdata(calib_data['ABSPATH'][it]))
@@ -347,12 +368,11 @@ def get_wave_cent_x(calib_data: Dict[str, np.ndarray]):
         cent_x = wavemap.shape[1] // 2
         # get the central pixels of every order
         wave_cents = wavemap[:, cent_x]
+        # push into calib_data
+        calib_data['WAVE_CENT_X'][it] = wave_cents
 
-        dv = np.log(wave_cents / np.nanmedian(wave_cents, axis=0)) * constants.c.value
-
-        dv_15 = np.nanmean(dv[:, 10:20], axis=1)
-        dv_60 = np.nanmean(dv[:, 55:65], axis=1)
-
+    # push into a single numpy array
+    calib_data['WAVE_CENT_X'] = np.array(calib_data['WAVE_CENT_X'])
     # return the updated calib_data
     return calib_data
 
