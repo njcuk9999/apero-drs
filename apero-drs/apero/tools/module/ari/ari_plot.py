@@ -799,7 +799,7 @@ def calib_mjd_plot(prop_name: str, cal_props: Dict[str, Any],
     variable_name = label[prop_name]
     # --------------------------------------------------------------------------
     # setup the figure
-    fig = plt.figure(figsize=(12, 6))
+    fig = plt.figure(figsize=(24, 6))
     gs = gridspec.GridSpec(1, 2, width_ratios=[4, 1], hspace=0.3)
     # Main plots (80%)
     frame1 = fig.add_subplot(gs[0, 0])
