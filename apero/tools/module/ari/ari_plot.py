@@ -18,6 +18,7 @@ import numpy as np
 from astropy.io import fits
 from astropy.table import Table
 from astropy.time import Time
+from astropy import constants as cc
 
 import apero.core.math as mp
 from apero.base import base
@@ -595,21 +596,26 @@ def ccf_plot(ccf_props: Dict[str, Any], plot_path: str, plot_title: str):
     plt.savefig(plot_path)
     plt.close()
 
-
-def shape_qc_plot_plot(debug_props: Dict[str, Any], plot_path: str,
+# =============================================================================
+# Calibration plots
+# =============================================================================
+def shape_qc_plot_plot(calib_props: Dict[str, Any], plot_path: str,
                        plot_title: str):
+
+    # get shape props
+    shape_props = calib_props['SHAPEL']
     # get hdict and header yaml descriptions
-    hdict = debug_props['HDICT']
-    ext_headers = debug_props['HYAML']['ext']
+    hdict = shape_props['HDICT']
+    labels = shape_props['LABEL']
     # get mjd date
-    mjd = debug_props['EXT_MJD']
+    mjd = Time(hdict['KW_MID_OBS_TIME'], format='mjd')
     # get dx, dy, A, B, C, d
-    shape_dx = np.array(hdict['EXT_SHAPE_DX'])
-    shape_dy = np.array(hdict['EXT_SHAPE_DY'])
-    shape_a = 1 - np.array(hdict['EXT_SHAPE_A'])
-    shape_b = np.array(hdict['EXT_SHAPE_B'])
-    shape_c = np.array(hdict['EXT_SHAPE_C'])
-    shape_d = 1 - np.array(hdict['EXT_SHAPE_D'])
+    shape_dx = np.array(hdict['KW_SHAPE_DX'])
+    shape_dy = np.array(hdict['KW_SHAPE_DY'])
+    shape_a = 1 - np.array(hdict['KW_SHAPE_A'])
+    shape_b = np.array(hdict['KW_SHAPE_B'])
+    shape_c = np.array(hdict['KW_SHAPE_C'])
+    shape_d = 1 - np.array(hdict['KW_SHAPE_D'])
     # --------------------------------------------------------------------------
     # setup the figure
     fig, frames = plt.subplots(nrows=6, ncols=1, figsize=(12, 12),
@@ -620,24 +626,24 @@ def shape_qc_plot_plot(debug_props: Dict[str, Any], plot_path: str,
         frame.grid(which='both', color='lightgray', ls='--')
     # plot shape dx
     frames[0].plot_date(mjd.plot_date, shape_dx, fmt='.', alpha=0.5)
-    frames[0].set(xlabel='Date', ylabel=ext_headers['EXT_SHAPE_DX']['label'])
+    frames[0].set(xlabel='Date', ylabel=labels['KW_SHAPE_DX'])
     frames[0].xaxis.set_ticks_position('top')
     frames[0].xaxis.set_label_position('top')
     # plot shape dy
     frames[1].plot_date(mjd.plot_date, shape_dy, fmt='.', alpha=0.5)
-    frames[1].set(ylabel=ext_headers['EXT_SHAPE_DY']['label'])
+    frames[1].set(ylabel=labels['KW_SHAPE_DY'])
     # plot shape a
     frames[2].plot_date(mjd.plot_date, shape_a, fmt='.', alpha=0.5)
-    frames[2].set(ylabel=ext_headers['EXT_SHAPE_A']['label'])
+    frames[2].set(ylabel=labels['KW_SHAPE_A'])
     # plot shape b
     frames[3].plot_date(mjd.plot_date, shape_b, fmt='.', alpha=0.5)
-    frames[3].set(ylabel=ext_headers['EXT_SHAPE_B']['label'])
+    frames[3].set(ylabel=labels['KW_SHAPE_B'])
     # plot shape c
     frames[4].plot_date(mjd.plot_date, shape_c, fmt='.', alpha=0.5)
-    frames[4].set(ylabel=ext_headers['EXT_SHAPE_C']['label'])
+    frames[4].set(ylabel=labels['KW_SHAPE_C'])
     # plot shape d
     frames[5].plot_date(mjd.plot_date, shape_d, fmt='.', alpha=0.5)
-    frames[5].set(xlabel='Date', ylabel=ext_headers['EXT_SHAPE_D']['label'])
+    frames[5].set(xlabel='Date', ylabel=labels['KW_SHAPE_D'])
     # --------------------------------------------------------------------------
     # add title
     plt.suptitle(plot_title)
@@ -646,17 +652,79 @@ def shape_qc_plot_plot(debug_props: Dict[str, Any], plot_path: str,
     plt.close()
 
 
-def calib_mjd_plot(prop_name: str, calib_props: Dict[str, Any],
-                   plot_title: str, plot_path: str, ykind: str = 'ext',
-                   mjd_key: str = 'EXT_MJD'):
-    # get hdict and header yaml descriptions
-    hdict = calib_props['HDICT']
-    ext_headers = debug_props['HYAML'][ykind]
+def calib_mjd_wfpdrift_plot(calib_props: Dict[str, Any], plot_path: str,
+                            plot_title: str):
+
+    wave_props = calib_props['WAVE_NIGHT']
+
+    calib_mjd_plot('KW_WFP_DRIFT', wave_props, plot_title, plot_path)
+
+
+def calib_mjd_wcav000_plot(calib_props: Dict[str, Any], plot_path: str,
+                           plot_title: str):
+    # get the wave night props
+    wave_props = calib_props['WAVE_NIGHT']
+
+    calib_mjd_plot('KW_CAVITY_WIDTH', wave_props, plot_title, plot_path)
+
+
+def calib_mjd_wcent_plot(calib_props: Dict[str, Any], plot_path: str,
+                         plot_title: str):
+    # get the wave night props
+    wave_props = calib_props['WAVE_NIGHT']
+    # get hdict and label descriptions
+    hdict = wave_props['HDICT']
+    cal_orders = wave_props['OTHER']['ORDERS']
+    # get the wave cents
+    wave_cents = hdict['WAVE_CENT_X']
     # get mjd date
-    mjd = calib_props[mjd_key]
+    mjdmid = Time(hdict['KW_MID_OBS_TIME'], format='mjd')
+    mjdmid_diff = np.diff(mjdmid.mjd)
+    # we need dv not wavelength
+    dv = np.log(wave_cents / np.nanmedian(wave_cents, axis=0)) * cc.c.value
+    # set up figure
+    fig, frames = plt.subplots(nrows=2, ncols=1, figsize=(12, 8))
+    # set background color
+    for frame in frames:
+        frame.set_facecolor(PLOT_BACKGROUND_COLOR)
+        frame.grid(which='both', color='lightgray', ls='--')
+    # loop around orders and plot
+    for order_num in cal_orders:
+        # get a mean across a few orders (if possible)
+        start = np.max([0, order_num-5])
+        end = np.min([wave_cents.shape[1], order_num+5])
+        dv_ord = np.nanmean(dv[:, start:end], axis=1)
+        dv_ord_ratio = np.diff(dv_ord) / mjdmid_diff
+
+        frames[0].plot_date(mjdmid.plot_date, dv_ord,
+                            label=f'Order {order_num}', ls='None',
+                            marker='o')
+        frames[1].plot_date(mjdmid.plot_date[1:], dv_ord_ratio,
+                            label=f'Order {order_num}', ls='None',
+                            marker='o')
+    # set labels
+    frames[0].set(xlabel='Date', ylabel='Central pixel offset [m/s]')
+    frames[0].legend(loc=0)
+    frames[1].set(xlabel='Date', ylabel='Central pixel offset [m/s/day]')
+    frames[1].legend(loc=0)
+    # add title
+    plt.suptitle(plot_title)
+    # save figure and close the plot
+    plt.savefig(plot_path)
+    plt.close()
+
+
+def calib_mjd_plot(prop_name: str, cal_props: Dict[str, Any],
+                   plot_title: str, plot_path: str,
+                   mjd_key: str = 'KW_MID_OBS_TIME'):
+    # get hdict and header yaml descriptions
+    hdict = cal_props['HDICT']
+    label = cal_props['LABEL']
+    # get mjd date
+    mjd = Time(cal_props['HDICT'][mjd_key], format='mjd')
     # get variable
     variable = hdict[prop_name]
-    variable_name = ext_headers[prop_name]['label']
+    variable_name = label[prop_name]
     # --------------------------------------------------------------------------
     # setup the figure
     fig, frame = plt.subplots(nrows=1, ncols=1, figsize=(12, 4))
@@ -674,17 +742,9 @@ def calib_mjd_plot(prop_name: str, calib_props: Dict[str, Any],
     plt.savefig(plot_path)
     plt.close()
 
-
-def debug_mjd_wfpdrift_plot(debug_props: Dict[str, Any], plot_path: str,
-                            plot_title: str):
-    debug_mjd_plot('EXT_WFPDRIFT', debug_props, plot_title, plot_path)
-
-
-def debug_mjd_wcav000_plot(debug_props: Dict[str, Any], plot_path: str,
-                           plot_title: str):
-    debug_mjd_plot('EXT_WCAV000', debug_props, plot_title, plot_path)
-
-
+# =============================================================================
+# Debug plots
+# =============================================================================
 def debug_mjd_extsmax_plot(debug_props: Dict[str, Any], plot_path: str,
                            plot_title: str):
     debug_mjd_plot('EXT_EXTSMAX', debug_props, plot_title, plot_path)

@@ -386,7 +386,7 @@ __all__ = [
     'ARI_INSTRUMENT', 'ARI_USER', 'ARI_NCORES', 'ARI_WAVE_RANGES',
     'ARI_TCORR_MAP_WAVE_RANGE', 'ARI_SSH_COPY', 'ARI_GROUP', 'ARI_RESET',
     'ARI_FILTER_OBJECTS', 'ARI_FILTER_OBJECTS_LIST', 'ARI_HEADER_PROPS',
-    'ARI_FINDING_CHARTS', 'ARI_RESET_DICT',
+    'ARI_FINDING_CHARTS', 'ARI_CAL_ORDERS', 'ARI_RESET_DICT',
 ]
 
 # set name
@@ -5768,6 +5768,11 @@ ARI_FINDING_CHARTS = Const('ARI_FINDING_CHARTS', value=None, dtype=dict,
                            source=__NAME__, group=cgroup,
                            description='Define the finding charts dictionary '
                                        'for ari')
+
+# Define the ARI orders for calib plot
+ARI_CAL_ORDERS = Const('ARI_CAL_ORDERS', value=None, dtype=str,
+                       source=__NAME__, group=cgroup,
+                       description='Define the ARI orders for calib plot')
 
 # Define the ARI reset directory (relative paths to copy into the "other"
 #   directory on installation/reset)
