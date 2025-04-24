@@ -98,6 +98,8 @@ GOOGLE_TABLES = dict()
 # define standard google base url
 GOOGLE_BASE_URL = ('https://docs.google.com/spreadsheets/d/{}/gviz/'
                    'tq?tqx=out:csv&gid={}')
+# Set max string size
+MAX_STR_SIZE = 1024
 
 
 # =============================================================================
@@ -2735,7 +2737,13 @@ class LogDatabase(DatabaseManager):
                     # get data type
                     dtype = coltypes[it]
                     # append forcing data type
-                    values.append(dtype(keys[it]))
+                    value = dtype(keys[it])
+                    # make sure strings don't get too long
+                    if isinstance(value, str):
+                        if len(value) > MAX_STR_SIZE:
+                            value = value[:MAX_STR_SIZE] + '...'
+                    # push into database
+                    values.append(value)
                 except Exception as _:
                     values.append('None')
         # add row to database
