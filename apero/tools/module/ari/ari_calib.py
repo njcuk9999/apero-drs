@@ -237,6 +237,7 @@ def get_calib_props(params):
     calib_data = get_wave_cent_x(calib_data)
     # -------------------------------------------------------------------------
     # save calib data to disk
+    WLOG(params, '', 'Writing file {0}'.format(calib_key_file))
     Table(calib_data).write(calib_key_file, overwrite=True)
     # -------------------------------------------------------------------------
     # sort into a more usable form for plotting
