@@ -373,28 +373,26 @@ def make_recipe_pages(params: ParamDict) -> TableFile:
     log_table = logdbm.database.get(columns=','.join(ari_core.LOG_COLUMNS),
                                     sort_by='START_TIME',
                                     sort_descending=False,
-                                    return_table=True)
+                                    return_pandas=True)
     # ------------------------------------------------------------------
     # sort columns based on LOG_COLUMNS (not sql order) and as a table
+    columns = list(ari_core.LOG_COLUMNS)
     out_log_table = Table()
-    for c_it, col in tqdm(enumerate(ari_core.LOG_COLUMNS)):
+
+    for c_it in tqdm(range(len(columns))):
+        # get column name
+        col = columns[c_it]
         # deal with bools
         if ari_core.LOG_TYPES[c_it] == 'bool':
-            # convert log table to string (may be mixed null + floats)
-            str_log_table = log_table[col].astype(str)
-            # find real integers (nulls should now be False - everything else
-            #   should be True)
-            mask = np.in1d(str_log_table, ['0.0', '1.0', '0', '1'])
-            # convert log_table column to bools replacing
-            #   null values with 0 and then convert to string and fill
-            #   null values with blanks
-            vector = log_table[col]
-            vector[~mask] = 0
-            # convert log table column to bools then strings
-            vector = np.array(vector).astype(bool)
-            vector = np.array(vector).astype(str)
-            vector[~mask] = ''
-            out_log_table[col] = vector
+            # get column
+            # values = log_table[col].astype(str).str.strip().map({
+            #     '0': False, '0.0': False, 'False': False, 'false': False,
+            #     '1': True, '1.0': True, 'True': True, 'true': True
+            # })
+            values = log_table[col].astype(bool)
+            # fill unmapped values with False
+            values = values.fillna(False)
+            out_log_table[col] = np.array(values).astype(bool)
         else:
             out_log_table[col] = np.array(log_table[col]).astype(str)
     # ------------------------------------------------------------------
