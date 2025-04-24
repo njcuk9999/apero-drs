@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from matplotlib.colors import ListedColormap
 from matplotlib.ticker import MaxNLocator
+from matplotlib.ticker import FormatStrFormatter
 import numpy as np
 from astropy.io import fits
 from astropy.table import Table
@@ -649,37 +650,54 @@ def shape_qc_plot_plot(calib_props: Dict[str, Any], plot_path: str,
     shape_b = np.array(hdict['KW_SHAPE_B'])
     shape_c = np.array(hdict['KW_SHAPE_C'])
     shape_d = 1 - np.array(hdict['KW_SHAPE_D'])
+    # -------------------------------------------------------------------------
+    # push into list for plotting in loop
+    variables = [shape_dx, shape_dy, shape_a, shape_b, shape_c, shape_d]
+    names = ['KW_SHAPE_DX', 'KW_SHAPE_DY', 'KW_SHAPE_A', 'KW_SHAPE_B',
+             'KW_SHAPE_C', 'KW_SHAPE_D']
     # --------------------------------------------------------------------------
     # setup the figure
-    fig, frames = plt.subplots(nrows=6, ncols=1, figsize=(12, 12),
-                               sharex='all')
-    # set background color
-    for frame in frames:
-        frame.set_facecolor(PLOT_BACKGROUND_COLOR)
-        frame.grid(which='both', color='lightgray', ls='--')
-    # plot shape dx
-    frames[0].plot_date(mjd.plot_date, shape_dx, fmt='.', alpha=0.5)
-    frames[0].set(xlabel='Date', ylabel=labels['KW_SHAPE_DX'])
-    frames[0].xaxis.set_ticks_position('top')
-    frames[0].xaxis.set_label_position('top')
-    # plot shape dy
-    frames[1].plot_date(mjd.plot_date, shape_dy, fmt='.', alpha=0.5)
-    frames[1].set(ylabel=labels['KW_SHAPE_DY'])
-    # plot shape a
-    frames[2].plot_date(mjd.plot_date, shape_a, fmt='.', alpha=0.5)
-    frames[2].set(ylabel=labels['KW_SHAPE_A'])
-    # plot shape b
-    frames[3].plot_date(mjd.plot_date, shape_b, fmt='.', alpha=0.5)
-    frames[3].set(ylabel=labels['KW_SHAPE_B'])
-    # plot shape c
-    frames[4].plot_date(mjd.plot_date, shape_c, fmt='.', alpha=0.5)
-    frames[4].set(ylabel=labels['KW_SHAPE_C'])
-    # plot shape d
-    frames[5].plot_date(mjd.plot_date, shape_d, fmt='.', alpha=0.5)
-    frames[5].set(xlabel='Date', ylabel=labels['KW_SHAPE_D'])
+    fig = plt.figure(figsize=(18, 12))
+    gs = gridspec.GridSpec(len(variables), 2, width_ratios=[4, 1])
+    main_frames, zoom_frames = [], []
+
+    formatter = FormatStrFormatter('%0.2e')
+    # loop around variables
+    for it, variable in enumerate(variables):
+        # Main plots (80%)
+        main_frame = fig.add_subplot(gs[it, 0])
+        main_frames.append(main_frame)
+        # Zoom plots (20%)
+        zoom_frame = fig.add_subplot(gs[it, 1])
+        zoom_frames.append(zoom_frame)
+        # set background color
+        for frame in [main_frame, zoom_frame]:
+            frame.set_facecolor(PLOT_BACKGROUND_COLOR)
+            frame.grid(which='both', color='lightgray', ls='--')
+            frame.set(ylabel=labels[names[it]])
+            frame.yaxis.set_major_formatter(formatter)
+            frame.yaxis.offsetText.set_visible(False)  # hide offset label above axis
+        # set plot args
+        pkwargs = dict(fmt='.', alpha=0.5)
+        # zoom frame
+        add_zoom_inset(main_frame, zoom_frame, mjd.plot_date, variable,
+                       plotfunc='plot_date', **pkwargs)
+    # --------------------------------------------------------------------------
+    # clean up the frames
+    for frame_set in [main_frames, zoom_frames]:
+        frame_set[0].xaxis.set_ticks_position('top')
+        frame_set[0].xaxis.set_label_position('top')
+        frame_set[0].set(xlabel='Date')
+        frame_set[0].tick_params(axis='x', rotation=45)
+        frame_set[-1].set(xlabel='Date')
+        frame_set[-1].tick_params(axis='x', rotation=45)
+        for frame in frame_set[1:-1]:
+            frame.tick_params(axis='x', bottom=False, labelbottom=False)
     # --------------------------------------------------------------------------
     # add title
     plt.suptitle(plot_title)
+    plt.subplots_adjust(left=0.075, right=0.975,
+                        top=0.9, bottom=0.1, wspace=0.15, hspace=0.1)
     # save figure and close the plot
     plt.savefig(plot_path)
     plt.close()
