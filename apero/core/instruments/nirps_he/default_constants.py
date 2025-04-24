@@ -3018,7 +3018,7 @@ REPROCESS_TIMECOL.value = 'KW_ACQTIME'
 # Define the rejection sql query (between identifier and reject list col)
 #    must use a valid reject database column and use {identifier} in query
 REPROCESS_REJECT_SQL = REPROCESS_REJECT_SQL.copy(__NAME__)
-REPROCESS_REJECT_SQL.value = 'FILENAME="{identifier}"'
+REPROCESS_REJECT_SQL.value = 'FILENAME LIKE "{identifier}%.fits"'
 
 # Define the extra SQL science object select critera
 REPROCESS_OBJ_SCI_SQL = REPROCESS_OBJ_SCI_SQL.copy(__NAME__)

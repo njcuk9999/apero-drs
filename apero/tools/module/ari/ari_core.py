@@ -861,13 +861,16 @@ class AriObject:
             return None
         # get all values
         all_values = self.header_dict[key]
+        # deal with no files (i.e. all_values is None)
+        if all_values is None:
+            return None
         # get unique values (as strings)
         unique_value = []
         for value in all_values:
             if str(value) not in unique_value:
                 unique_value.append(str(value))
         # deal with no values (shouldn't be possible)
-        if len(unique_value) > 1:
+        if len(unique_value) < 1:
             return None
         # return this as a comma separated list
         return ', '.join(unique_value)
@@ -2952,6 +2955,9 @@ def download_table(files: List[str], descriptions: List[str],
     for basename in in_paths:
         # make the sphinx reference
         down_ref = drs_markdown.make_download(basename, ref_paths[basename])
+        # deal with file not existing (skip)
+        if not os.path.exists(in_paths[basename]):
+            continue
         # add the rdb file
         down_dict['Description'].append(descs[basename])
         down_dict['Value'].append(down_ref)
