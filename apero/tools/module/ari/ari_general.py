@@ -378,7 +378,7 @@ def make_recipe_pages(params: ParamDict) -> TableFile:
     # sort columns based on LOG_COLUMNS (not sql order) and as a table
     columns = list(ari_core.LOG_COLUMNS)
     out_log_table = Table()
-
+    # loop around columns
     for c_it in tqdm(range(len(columns))):
         # get column name
         col = columns[c_it]
