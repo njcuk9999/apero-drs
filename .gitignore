@@ -194,6 +194,7 @@ fabric.properties
 
 # Ignore instrument data files
 apero-drs/apero/apero-assets/*
+!apero-drs/apero/apero-assets/README.md
 
 # Ignore lock file
 lock.lock
