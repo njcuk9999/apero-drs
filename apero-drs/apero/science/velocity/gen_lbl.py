@@ -165,7 +165,7 @@ def run_apero_get(params: ParamDict):
     # run apero get for extracted FP_FP
     apero_get.main(objnames='None', dprtypes='FP_FP',
                    outtypes='EXT_E2DS_FF',
-                   outpath=False, fibers=lbl_calfibers,
+                   outpath=outpath_fp, fibers=lbl_calfibers,
                    symlinks=lbl_symlinks, nosubdir=True,
                    test=testmode, since=since)
     # run apero get for calibs (wave + blaze) science fiber

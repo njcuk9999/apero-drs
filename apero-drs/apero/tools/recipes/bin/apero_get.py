@@ -221,6 +221,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                                                user_outdir, do_copy, do_symlink,
                                                tarfilename=tarfilename,
                                                since=since, latest=latest,
+                                               nosubdir=nosubdir,
                                                sizelimit=sizelimit)
     else:
         indict, outdict = drs_get.basic_filter(params, kw_objnames, filters,
