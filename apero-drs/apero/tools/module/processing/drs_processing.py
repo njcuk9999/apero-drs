@@ -3826,11 +3826,16 @@ def _find_special_targets(params: ParamDict, pconst,
     :return: List[str], the list of objects that should be used (found + user
              added that were missing)
     """
+    global FOUND_LIST
     # note we need to update this list to match
     # the cleaning that is done in preprocessing
-    found_list, missing_list = objdbm.find_objnames(pconst, object_list,
-                                                    allow_empty=False,
-                                                    listname=special_name)
+    if len(FOUND_LIST[special_name]) == 0:
+        found_list, missing_list = objdbm.find_objnames(pconst, object_list,
+                                                        allow_empty=False,
+                                                        listname=special_name)
+    else:
+        return FOUND_LIST[special_name]
+    # -------------------------------------------------------------------------
     # deal with different length than when we started
     if len(found_list) != len(object_list):
         # flag for stopping here
@@ -3867,7 +3872,10 @@ def _find_special_targets(params: ParamDict, pconst,
             eargs = [special_name]
             raise AperoCodedException(params, message=emsg.format(*eargs),
                                       targs=eargs)
-
+    # -------------------------------------------------------------------------
+    # update found list
+    FOUND_LIST[special_name] = found_list
+    # return found list
     return found_list
 
 
