@@ -90,6 +90,8 @@ PLT_MOD = None
 # juut for verification we use all keys that start with RUN_ except
 #   the following:
 RUN_NAME_EXCEPTIONS = ['RUN_NAME', 'RUN_OBS_DIR']
+# Store found objects (only need to do this once)
+FOUND_LIST = dict()
 
 
 # =============================================================================
@@ -3801,11 +3803,16 @@ def _find_special_targets(params: ParamDict, pconst,
     :return: List[str], the list of objects that should be used (found + user
              added that were missing)
     """
+    global FOUND_LIST
     # note we need to update this list to match
     # the cleaning that is done in preprocessing
-    found_list, missing_list = objdbm.find_objnames(pconst, object_list,
-                                                    allow_empty=False,
-                                                    listname=special_name)
+    if len(FOUND_LIST[special_name]) == 0:
+        found_list, missing_list = objdbm.find_objnames(pconst, object_list,
+                                                        allow_empty=False,
+                                                        listname=special_name)
+    else:
+        return FOUND_LIST[special_name]
+    # -------------------------------------------------------------------------
     # deal with different length than when we started
     if len(found_list) != len(object_list):
         # flag for stopping here
@@ -3840,7 +3847,10 @@ def _find_special_targets(params: ParamDict, pconst,
             # log error
             eargs = [special_name]
             WLOG(params, 'error', emsg.format(*eargs))
-
+    # -------------------------------------------------------------------------
+    # update found list
+    FOUND_LIST[special_name] = found_list
+    # return found list
     return found_list
 
 
