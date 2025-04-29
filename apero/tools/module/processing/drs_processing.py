@@ -3817,8 +3817,8 @@ def _find_special_targets(params: ParamDict, pconst,
         # Ask the user for each missing target whether they wish to use it
         for missing_obj in missing_list:
             # ask user whether they wish to use this object
-            question = ('Do you wish to use object?')
-            question = question.format(special_name)
+            question = ('\nMissing object = "{0}"'
+                        '\nDo you wish to use object? [Y]es or [N]o:\t')
             # get user input
             answer = input(question.format(missing_obj))
 
