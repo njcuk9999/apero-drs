@@ -3829,12 +3829,13 @@ def _find_special_targets(params: ParamDict, pconst,
     global FOUND_LIST
     # note we need to update this list to match
     # the cleaning that is done in preprocessing
-    if len(FOUND_LIST[special_name]) == 0:
-        found_list, missing_list = objdbm.find_objnames(pconst, object_list,
-                                                        allow_empty=False,
-                                                        listname=special_name)
-    else:
-        return FOUND_LIST[special_name]
+    if special_name in FOUND_LIST:
+        if len(FOUND_LIST[special_name]) > 0:
+            return FOUND_LIST[special_name]
+    # Other wise make found / missing list
+    found_list, missing_list = objdbm.find_objnames(pconst, object_list,
+                                                    allow_empty=False,
+                                                    listname=special_name)
     # -------------------------------------------------------------------------
     # deal with different length than when we started
     if len(found_list) != len(object_list):
