@@ -1304,6 +1304,17 @@ class Instrument:
                   '{epoch} as epoch FROM {cat} WHERE {id}=\'{idnum}\'')
 
         # ---------------------------------------------------------------------
+        # Gaia DR3
+        # ---------------------------------------------------------------------
+        qkargs = dict(ra='ra', dec='dec', pmra='pmra', pmde='pmdec',
+                      plx='parallax', epoch='ref_epoch',
+                      cat='gaiadr3.gaia_source', id='source_id', idnum='{0}')
+        params.set('TAP_GAIA_DR3_URL',
+                   'https://gea.esac.esa.int/tap-server/tap')
+        tap_dict['Gaia DR3 '] = dict()
+        tap_dict['Gaia DR3 ']['QUERY'] = QUERY1.format(**qkargs)
+        tap_dict['Gaia DR3 ']['URL'] = str(params['TAP_GAIA_EDR3_URL'])
+        # ---------------------------------------------------------------------
         # Gaia EDR3
         # ---------------------------------------------------------------------
         qkargs = dict(ra='ra', dec='dec', pmra='pmra', pmde='pmdec',

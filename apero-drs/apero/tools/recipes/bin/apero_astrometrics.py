@@ -102,7 +102,8 @@ def __main__(recipe, params):
     if len(found_objs) > 0:
         # check that object doesn't currently have problems
         drs_astrometrics.check_object(params, found_objs)
-
+    # if we have no unfound object stop here
+    if len(unfound_objs) == 0:
         msg = 'All objects found in database'
         WLOG(params, 'info', msg)
         return locals()
