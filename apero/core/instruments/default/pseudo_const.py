@@ -1530,7 +1530,7 @@ class DefaultPseudoConstants:
                    'https://gea.esac.esa.int/tap-server/tap')
         tap_dict['Gaia DR3 '] = dict()
         tap_dict['Gaia DR3 ']['QUERY'] = QUERY1.format(**qkargs)
-        tap_dict['Gaia DR3 ']['URL'] = str(params['TAP_GAIA_EDR3_URL'])
+        tap_dict['Gaia DR3 ']['URL'] = str(params['TAP_GAIA_DR3_URL'])
         # ---------------------------------------------------------------------
         # Gaia EDR3
         # ---------------------------------------------------------------------
