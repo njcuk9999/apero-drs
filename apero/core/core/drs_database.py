@@ -2155,24 +2155,37 @@ class FileIndexDatabase(DatabaseManager):
                     remove_obs_dirs.append(raw_exclude_obs_dirs[r_it])
             # remove entries from database where file does not exist
             rm_condition_all = 'BLOCK_KIND="{0}" AND '.format(block_kind)
-            rm_conditions = []
-            # loop around files to remove
-            for r_it, remove_file in enumerate(remove_files):
-                # add remove file condition with obs_dir + filename
-                rm_cond = '(OBS_DIR="{0}" AND FILENAME="{1}")'
-                rm_args = [remove_obs_dirs[r_it], os.path.basename(remove_file)]
-                rm_conditions.append(rm_cond.format(*rm_args))
-                # print removing file: File no longer on disk - removing from
-                #                file index database: {0}
-                wmsg = textentry('10-002-00008', args=[remove_file])
-                WLOG(self.params, 'warning', wmsg)
+            count = 0
+            # get number in remove group
+            num_in_remove_group = self.params['REPROCESS_REMOVE_NGROUP']
+            # split remove files in to chunks
+            while count < len(remove_files):
+                for it in range(num_in_remove_group):
+                    rm_condition_loop = str(rm_condition_all)
+                    # cut down remove files to this loops values
+                    rm_start = count
+                    rm_end = count + num_in_remove_group
+                    remove_files_loop = remove_files[rm_start:rm_end]
+                    rm_conditions_loop = []
+                    # loop around files to remove
+                    for r_it, remove_file in enumerate(remove_files_loop):
+                        # update the count
+                        count += 1
+                        # add remove file condition with obs_dir + filename
+                        rm_cond = '(OBS_DIR="{0}" AND FILENAME="{1}")'
+                        rm_args = [remove_obs_dirs[r_it], os.path.basename(remove_file)]
+                        rm_conditions_loop.append(rm_cond.format(*rm_args))
+                        # print removing file: File no longer on disk - removing from
+                        #                file index database: {0}
+                        wmsg = textentry('10-002-00008', args=[remove_file])
+                        WLOG(self.params, 'warning', wmsg)
 
-            # remove entries which no longer exist on disk
-            if len(rm_conditions) > 0:
-                # add all remove conditions with the OR criteria
-                rm_condition_all += ' OR '.join(rm_conditions)
-                # use database to remove entries
-                self.remove_entries(condition=rm_condition_all)
+                    # remove entries which no longer exist on disk
+                    if len(rm_conditions_loop) > 0:
+                        # add all remove conditions with the OR criteria
+                        rm_condition_loop += ' OR '.join(rm_conditions_loop)
+                        # use database to remove entries
+                        self.remove_entries(condition=rm_condition_loop)
         # else we just use the raw list
         else:
             exclude_files = list(raw_exclude_files)
