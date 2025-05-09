@@ -5591,6 +5591,11 @@ CDict.add('REJECT_SQL', value=None, dtype=str,
                       'database column and use {identifier} '
                       'in query')
 
+# Define the number of targets to remove (max) per query
+CDict.add('REMOVE_NGROUP', value=20, dtype=int,
+          source=__NAME__, group=cgroup,
+          description='Define the number of targets to remove (max) per query')
+
 # Define the extra SQL science object select critera
 CDict.add('OBJ_SCI_SQL', value='', dtype=str,
           source=__NAME__, group=cgroup,
