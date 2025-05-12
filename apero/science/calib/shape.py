@@ -832,8 +832,8 @@ def calculate_dxmap(params, recipe, fpdata, lprops, fiber, **kwargs):
             # -------------------------------------------------------------
             # we find the peak of RV content and fit a parabola to that peak
             for nsection in range(nsections):
-                # we must have some RV content (i.e., !=0)
-                if mp.nanmax(rvcontent[:, nsection]) != 0:
+                # we must have some RV content (i.e., non-zero)
+                if mp.nanmax(rvcontent[:, nsection]) > 1e-10:
                     vec = np.ones_like(slopes)
                     vec[0], vec[-1] = 0, 0
                     # get the max pixel
