@@ -1270,7 +1270,7 @@ class Instrument:
         for reject_name in reject_names:
             # skip None's and other things that shouldn't be in this list
             if not isinstance(reject_name, str):
-                continue
+                reject_name = 'None'
             # clean (can be different per instrument)
             if clean:
                 reject_name = self.REJECT_CLEAN(reject_name)
