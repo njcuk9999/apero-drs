@@ -553,7 +553,7 @@ def run_setup(params: ParamDict, sargs: Dict[str, SetupArgument]):
     # now check whether we need to download the assets
     update_assets = drs_assets.check_local_assets(aparams)
     if update_assets:
-        drs_assets.update_local_assets(aparams, tarfile=params['TARFILE'])
+        drs_assets.update_local_assets(aparams, tarfile=params.get('TARFILE', None))
     # ----------------------------------------------------------------------
     # clean install
     # ----------------------------------------------------------------------
