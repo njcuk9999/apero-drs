@@ -131,8 +131,8 @@ def run_apero_get(params: ParamDict):
     # -------------------------------------------------------------------------
     objnames = 'None'
     if 'OBJNAMES' in params['INPUTS']:
-        if drs_text.null_text(params['INPUTS]'], ['None', '', 'Null']):
-            objnames = params['INPUTS']['OBJNAMES']
+        if not drs_text.null_text(params['INPUTS'], ['None', '', 'Null']):
+            objnames = params['INPUTS']['OBJNAMES'].split(',')
     # ----------------------------------------------------------
     # check directories exist - try to make them if they don't
     # ----------------------------------------------------------
@@ -144,7 +144,8 @@ def run_apero_get(params: ParamDict):
     # Copy to LBL directory
     # --------------------------------------------------------------
     # run apero get for objects for lbl
-    apero_get.main(dbkind='tellu', keynames='TELLU_OBJ',
+    apero_get.main(objnames=objnames,
+                   dbkind='tellu', keynames='TELLU_OBJ',
                    outpath=outpath_objects, fibers=lbl_scifibers,
                    symlinks=lbl_symlinks,
                    test=testmode, since=since)
@@ -155,7 +156,7 @@ def run_apero_get(params: ParamDict):
     #                symlinks=False, nosubdir=True,
     #                test=testmode, since=since)
     # run apero get for simultaneous FP
-    apero_get.main(objnames='None', dprtypes=simfp_dprtypes,
+    apero_get.main(objnames=objnames, dprtypes=simfp_dprtypes,
                    outtypes='EXT_E2DS_FF',
                    nosubdir=True,
                    outpath=outpath_fp, fibers=lbl_calfibers,
@@ -164,7 +165,7 @@ def run_apero_get(params: ParamDict):
     # run apero get for extracted FP_FP
     apero_get.main(objnames='None', dprtypes='FP_FP',
                    outtypes='EXT_E2DS_FF',
-                   outpath=False, fibers=lbl_calfibers,
+                   outpath=outpath_fp, fibers=lbl_calfibers,
                    symlinks=lbl_symlinks, nosubdir=True,
                    test=testmode, since=since)
     # run apero get for calibs (wave + blaze) science fiber

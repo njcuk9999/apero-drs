@@ -480,7 +480,7 @@ def tellu_filter(params: ParamDict,  kw_objnames: List[str],
                  do_copy: bool = True, do_symlink: bool = False,
                  tarfilename: Optional[str] = None,
                  since: Optional[Time] = None, latest: Optional[Time] = None,
-                 sizelimit: int = None
+                 nosubdir: bool = False, sizelimit: int = None
                  ) -> Tuple[Dict[str, List[str]], Dict[str, List[str]]]:
     # -------------------------------------------------------------------------
     # get pconst
@@ -564,7 +564,7 @@ def tellu_filter(params: ParamDict,  kw_objnames: List[str],
     # Now get outpaths (if infile exists)
     # -------------------------------------------------------------------------
     all_inpaths, all_outpaths = manage_outputs(params, database_inpaths,
-                                               nosubdir=True,
+                                               nosubdir=nosubdir,
                                                user_outdir=user_outdir,
                                                tarpath=tarpath,
                                                do_copy=do_copy,

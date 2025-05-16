@@ -1256,6 +1256,9 @@ class Instrument:
         # ---------------------------------------------------------------------
         # we need to clean up the rejection list
         for reject_item in reject_list:
+            # skip None's and other things that shouldn't be in this list
+            if not isinstance(reject_item, str):
+                continue
             # clean (can be different per instrument)
             if clean:
                 reject_item = self.REJECT_CLEAN(reject_item)
@@ -1265,6 +1268,10 @@ class Instrument:
         # ---------------------------------------------------------------------
         # we need to clean up the rejection names
         for reject_name in reject_names:
+            # skip None's and other things that shouldn't be in this list
+            if not isinstance(reject_name, str):
+                continue
+            # clean (can be different per instrument)
             if clean:
                 reject_name = self.REJECT_CLEAN(reject_name)
             # push into clean_reject_names
@@ -1303,6 +1310,17 @@ class Instrument:
                   '{pmra} as pmra, {pmde} as pmde, {plx} as plx, '
                   '{epoch} as epoch FROM {cat} WHERE {id}=\'{idnum}\'')
 
+        # ---------------------------------------------------------------------
+        # Gaia DR3
+        # ---------------------------------------------------------------------
+        qkargs = dict(ra='ra', dec='dec', pmra='pmra', pmde='pmdec',
+                      plx='parallax', epoch='ref_epoch',
+                      cat='gaiadr3.gaia_source', id='source_id', idnum='{0}')
+        params.set('TAP_GAIA_DR3_URL',
+                   'https://gea.esac.esa.int/tap-server/tap')
+        tap_dict['Gaia DR3 '] = dict()
+        tap_dict['Gaia DR3 ']['QUERY'] = QUERY1.format(**qkargs)
+        tap_dict['Gaia DR3 ']['URL'] = str(params['TAP_GAIA_DR3_URL'])
         # ---------------------------------------------------------------------
         # Gaia EDR3
         # ---------------------------------------------------------------------

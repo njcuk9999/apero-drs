@@ -3826,11 +3826,17 @@ def _find_special_targets(params: ParamDict, pconst,
     :return: List[str], the list of objects that should be used (found + user
              added that were missing)
     """
+    global FOUND_LIST
     # note we need to update this list to match
     # the cleaning that is done in preprocessing
+    if special_name in FOUND_LIST:
+        if len(FOUND_LIST[special_name]) > 0:
+            return FOUND_LIST[special_name]
+    # Other wise make found / missing list
     found_list, missing_list = objdbm.find_objnames(pconst, object_list,
                                                     allow_empty=False,
                                                     listname=special_name)
+    # -------------------------------------------------------------------------
     # deal with different length than when we started
     if len(found_list) != len(object_list):
         # flag for stopping here
@@ -3842,8 +3848,8 @@ def _find_special_targets(params: ParamDict, pconst,
         # Ask the user for each missing target whether they wish to use it
         for missing_obj in missing_list:
             # ask user whether they wish to use this object
-            question = 'Do you wish to use object?'
-            question = question.format(special_name)
+            question = ('\nMissing object = "{0}"'
+                        '\nDo you wish to use object? [Y]es or [N]o:\t')
             # get user input
             answer = input(question.format(missing_obj))
 
@@ -3867,7 +3873,10 @@ def _find_special_targets(params: ParamDict, pconst,
             eargs = [special_name]
             raise AperoCodedException(params, message=emsg.format(*eargs),
                                       targs=eargs)
-
+    # -------------------------------------------------------------------------
+    # update found list
+    FOUND_LIST[special_name] = found_list
+    # return found list
     return found_list
 
 
