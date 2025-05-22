@@ -836,6 +836,7 @@ apero_wave_ref.set_debug_plots('WAVE_WL_CAV', 'WAVE_FIBER_COMPARISON',
                                'WAVE_FIBER_COMP', 'WAVE_HC_DIFF_HIST',
                                'WAVEREF_EXPECTED', 'EXTRACT_S1D',
                                'EXTRACT_S1D_WEIGHT', 'WAVE_RESMAP',
+                               'CCF_PHOTON_UNCERT',
                                'CCF_RV_FIT', 'CCF_RV_FIT_LOOP')
 apero_wave_ref.set_summary_plots('SUM_WAVE_FIBER_COMP', 'SUM_CCF_RV_FIT')
 apero_wave_ref.set_arg(pos=0, **obs_dir)
@@ -917,6 +918,7 @@ apero_wave_night.set_debug_plots('WAVE_WL_CAV', 'WAVE_FIBER_COMPARISON',
                                  'WAVE_FIBER_COMP', 'WAVE_HC_DIFF_HIST',
                                  'WAVEREF_EXPECTED', 'EXTRACT_S1D',
                                  'EXTRACT_S1D_WEIGHT', 'WAVE_RESMAP',
+                                 'CCF_PHOTON_UNCERT',
                                  'CCF_RV_FIT', 'CCF_RV_FIT_LOOP')
 apero_wave_night.set_summary_plots('SUM_WAVE_FIBER_COMP', 'SUM_CCF_RV_FIT')
 apero_wave_night.set_arg(pos=0, **obs_dir)
