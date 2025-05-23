@@ -1,7 +1,7 @@
 # Define version
-DRS.VERSION: 0.8.105
+DRS.VERSION: 0.8.106
 # Define date of release
-DRS.DATE: 2025-03-19
+DRS.DATE: 2025-05-23
 # Define release type
 DRS.RELEASE: beta
 # Define authors

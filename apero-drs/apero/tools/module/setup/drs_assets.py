@@ -53,6 +53,17 @@ def update_remote_assets(params: ParamDict):
     """
     # get input directory
     indir = params['INPUTS']['INDIR']
+
+    # check that indir is correct
+    if not indir.endswith(os.sep):
+        indir += os.sep
+    # lets make sure we have one correct file - getting this wrong can lead
+    # to a lot of problems for everyone
+    if not os.path.exists(os.path.join(indir, 'apero-assets.txt')):
+        emsg = 'indir={0} is not correct (should have "apero-assets.txt" file)'
+        eargs = [indir]
+        raise AperoCodedException(params, None, message=emsg.format(*eargs),
+                                  targs=eargs)
     # -------------------------------------------------------------------------
     # Step 1: get a list of all files in indir
     # -------------------------------------------------------------------------
