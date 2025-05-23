@@ -287,7 +287,7 @@ def update_local_assets(params: ParamDict, tarfile: str = None):
     # Extract the tar file
     # -------------------------------------------------------------------------
     # get the assets path
-    extract_path = os.path.dirname(abs_asset_path.rstrip(os.sep))
+    extract_path = str(abs_asset_path)
     # print progress
     WLOG(params, '', f'Extracting tar file: {tarfile} to {extract_path}')
     # extract tar file

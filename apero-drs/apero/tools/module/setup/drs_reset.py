@@ -428,6 +428,9 @@ def reset_dbdir(params: ParamDict, name: str, db_dir: str,
         reset_path = os.path.join(params['PATH.ASSETS'], reset_path)
     else:
         reset_path = os.path.abspath(reset_path)
+    # remake path
+    if not os.path.exists(db_dir):
+        os.makedirs(db_dir)
     # loop around files and folders in calib_dir
     if backup:
         # find files that aren't common between reset_path we backup
@@ -436,9 +439,6 @@ def reset_dbdir(params: ParamDict, name: str, db_dir: str,
 
     elif empty_first:
         remove_all(params, db_dir, log)
-    # remake path
-    if not os.path.exists(db_dir):
-        os.makedirs(db_dir)
     # copy default data back
     copy_default_db(params, name, db_dir, reset_path)
 
