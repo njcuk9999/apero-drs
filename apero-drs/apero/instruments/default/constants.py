@@ -2062,12 +2062,6 @@ cgroup = 'CAL.WAVE.GEN'
 CDict.add_group(cgroup, description='CALIBRATION.WAVE_GENERAL: '
                                     'CALIBRATION: WAVE EA GENERAL SETTINGS')
 
-# Define the coefficients of the fit of 1/m vs d
-CDict.add('CAVITY_1M_FILE', value=None, dtype=str, source=__NAME__,
-          group=cgroup,
-          description=('Define the coefficients of the fit of '
-                       '1/m vs d'))
-
 # Define the coefficients of the fit of wavelength vs d
 CDict.add('CAVITY_LL_FILE', value=None, dtype=str, source=__NAME__,
           group=cgroup,

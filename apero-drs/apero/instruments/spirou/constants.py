@@ -959,8 +959,6 @@ CDict.set('EXCESS_EMISSIVITY_FILE', value='excess_emissivity.csv',
 # CALIBRATION: WAVE EA GENERAL SETTINGS
 # =============================================================================
 cgroup = 'CAL.WAVE.GEN'
-# Define the coefficients of the fit of 1/m vs d
-CDict.set('CAVITY_1M_FILE', value='cavity_length_m_fit.dat', source=__NAME__, group=cgroup)
 
 # Define the coefficients of the fit of wavelength vs d
 CDict.set('CAVITY_LL_FILE', value='cavity_length_ll_fit.dat', source=__NAME__, group=cgroup)

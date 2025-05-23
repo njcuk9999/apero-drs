@@ -916,17 +916,17 @@ CDict.add('MEAS_SNR_PHOT_BANDS', value=PHOT_BANDS,
 # CALIBRATION: WAVE GENERAL SETTINGS
 # =============================================================================
 cgroup = 'CAL.WAVE.GEN'
-# Define the coefficients of the fit of 1/m vs d
-CDict.set('CAVITY_1M_FILE', value='cavity_length_m_fit.dat', source=__NAME__, group=cgroup)
 
 # Define the coefficients of the fit of wavelength vs d
-CDict.set('CAVITY_LL_FILE', value='cavity_length_ll_fit.dat', source=__NAME__, group=cgroup)
+CDict.set('CAVITY_LL_FILE', value='cavity_length_ll_fit.dat', source=__NAME__,
+          group=cgroup)
 
 # Define wave reference fiber (controller fiber)
 CDict.set('REF_FIBER', value='A', source=__NAME__, group=cgroup)
 
 # Define the initial value of FP effective cavity width 2xd in nm
-CDict.set('GUESS_CAVITY_WID', value=2.4e7, source=__NAME__, author='EA', group=cgroup)
+CDict.set('GUESS_CAVITY_WID', value=2.4e7, source=__NAME__, author='EA',
+          group=cgroup)
 
 # Define the wave solution polynomial fit degree
 CDict.set('WAVESOL_FIT_DEG', value=5, source=__NAME__, author='EA', group=cgroup)
