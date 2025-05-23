@@ -1,0 +1,342 @@
+# ==============================================================================
+# Static codes required
+# ==============================================================================
+
+
+# ------------------------------------------------------------------------------
+# Engineering
+# ------------------------------------------------------------------------------
+amplifier_bias_model:
+  path: {instrument}/engineering/amplifier_bias_model_{instrument}      
+  instruments:
+    - spirou
+    - nirps_he
+    - nirps_ha
+    - spip    
+  used:
+    CONSTANT: AMP_ERROR_MODEL
+  format:
+    FORMAT:
+      - fits
+    EXT:
+      PRIMARY: None
+      slope: (128, 4096)
+      intercept: (128, 4096)
+
+  code: @Etienne
+
+detector_flat_full:
+  path: 
+    - {instrument}/engineering/detector_flat_full.fits
+    - {instrument}/engineering/QC_2000nm.fits
+  instruments:
+    - spirou
+    - nirps_he
+    - nirps_ha
+    - spip
+  used:
+    CONSTANT: FULL_FLAT
+  format:
+    FORMAT:
+      - fits
+    EXT:
+      PRIMARY: (4096x4096)
+  code: @Etienne
+  comment: Did we generate this differently for spirou and nirps?
+
+hotpix_pp:
+  path: {instrument}/engineering/hotpix_pp.csv
+  instruments:
+  - spirou
+  - nirps_he
+  - nirps_ha
+  - spip
+  used:
+    CONSTANT: HOTPIX_FILE
+  format:
+    FORMAT:
+      - csv
+    COLUMNS:
+      nsig:
+        dtype: float
+      xpix:
+        dtype: int
+      ypix:
+        dtype: int
+  code: @Etienne
+
+# ------------------------------------------------------------------------------
+# Thermal
+# ------------------------------------------------------------------------------
+excess_emissivity:
+  path: {instrument}/calib/excess_emissivity
+  instruments:
+  - spirou
+  - spip
+  used:
+    CONSTANT: EXCESS_EMISSIVITY_FILE
+  format:
+    FORMAT:
+      - csv
+    COLUMNS:
+      wavelength:        # access in drs_data.load_excess_emissivity
+        dtype: float
+        unit: nm
+      emissivity:        # access in drs_data.load_excess_emissivity
+        dtype: float
+  comment: part of thermal correction (thermal.apply_excess_emissivity)
+  code: @Etienne
+
+
+# ------------------------------------------------------------------------------
+# Leak
+# ------------------------------------------------------------------------------
+ref_leak:
+  instruments:
+  - spirou
+  - spip  
+  path: {instrument}/reset/calib/REF_LEAK_{fiber}.fits
+  used:
+    DATABASE: 
+      CALIB: reset.calib.csv
+  format:
+    FORMAT:
+      - fits
+    EXT:
+      PRIMARY: (4088 x order_num)
+  code: @Etienne
+
+# ------------------------------------------------------------------------------
+# Wavelength
+# ------------------------------------------------------------------------------
+catalog_UNe:
+  path: {instrument}/calib/catalog_UNe_{suffix}.csv
+  instruments:
+  - spirou
+  - nirps_he
+  - nirps_ha
+  - spip  
+  code: @Etienne
+  comment: Where do we get this from. Suffix is normally an update?
+  used:
+    CONSTANT: LINELIST_FILE
+  format:
+    FORMAT:
+      - ascii.csv         # defined in LINELIST_FMT
+    COLUMNS:
+      wavelength:         # defined in LINELIST_COLS[0], LINELIST_WAVECOL
+        dtype: float
+        unit: nm
+      strength:           # defined in LINELIST_COLS[1], LINELIST_AMPCOL
+        dtype: float
+      ID:                 # defined in LINELIST_COLS[2]
+        dtype: str
+
+cavity_length_ll_fit:
+  path: {instrument}/calib/cavity_length_ll_fit.dat
+  instruments:
+  - spirou
+  - nirps_he
+  - nirps_ha
+  - spip  
+  code: apero-utils/updates_to_drs/apero_static_tools/coarse_wavelength.py
+  used:
+    CONSTANT: CAVITY_LL_FILE
+  format:
+    FORMAT:
+      - txt
+    COMMENT: list of polynomial coefficients from N to 0
+  requires: What does the code require as input?
+
+ref_wave:
+  path: {instrument}/reset/calib/REF_WAVE_{INSTRUMENT}_{fiber}
+  instruments:
+  - spirou
+  - nirps_he
+  - nirps_ha
+  - spip  
+  code: apero-utils/updates_to_drs/apero_static_tools/coarse_wavelength.py
+  requires: What does this code require as input?
+  used:
+    DATABASE: 
+      CALIB: reset.calib.csv
+  format:
+    FORMAT:
+      - fits
+    EXT:
+      PRIMARY: (4088 x order_num)
+
+# ------------------------------------------------------------------------------
+# Telluric
+# ------------------------------------------------------------------------------
+tapas_all_sp:
+  path: 
+    - {instrument}/reset/telludb/OTHER/tapas_all_sp.fits.gz
+    - {instrument}/telluric/tapas_all_sp.fits.gz
+  code: @Etienne
+  comment: Can we generate this? Or give instructions to do so?
+  used:
+    CONSTANT: TAPAS_FILE
+  format:
+    FORMAT:
+      - fits            # controlled by TAPAS_FILE_FMT
+    COLUMNS:
+      wavelength:
+        dtype: float
+        unit: nm
+      trans_h2o:
+        dtype: float
+      trans_o3:
+        dtype: float
+      trans_n2o:
+        dtype: float
+      trans_o2:
+        dtype: float
+      trans_co2:
+        dtype: float
+      trans_ch4:
+        dtype: float
+      trans_combined:
+        dtype: float
+
+
+tellu_blacklist:
+  path: {instrument}/telluric/tellu_blacklist.txt
+  used:
+    CONSTANT: REJECTLIST_NAME
+  code: None
+  comment: Defines list of telluric stars not to use. Could we get this from the astrometric database?
+  format:
+    FORMAT:
+      - txt
+
+
+tellu_whitelist:
+  path: {instrument}/telluric/tellu_whitelist.txt
+  used:
+    CONSTANT: ALLOWLIST_NAME
+  code: None
+  comment: Defines list of telluric stars to use. Could we get this from the astrometric database?
+  format:
+    FORMAT:
+      - txt
+
+
+# ------------------------------------------------------------------------------
+# CCF
+# ------------------------------------------------------------------------------
+ccf_obj_mask:
+  path: {instrument}/ccf_masks/{OBJNAME}_neg.fits
+  instruments:
+  - spirou
+  - nirps_he
+  - nirps_ha
+  - spip  
+  code: lbl (how to run?)
+  used:
+    CONSTANT: MASK_PATH # plus name from teff_masks
+  format:
+    FORMAT:
+      - fits
+    COLUMNS:
+      ll_mask_s:        # used in gen_vel.get_ccf_mask.py
+        dtype: float  
+        unit: nm
+      ll_mask_e:        # used in gen_vel.get_ccf_mask.py
+        dtype: float  
+        unit: nm
+      w_mask:        # used in gen_vel.get_ccf_mask.py
+        dtype: float
+      value:
+        dtype: float
+      dpeth:
+        dtype: float
+
+teff_masks:
+  path: {instrument}/ccf_masks/teff_masks.csv
+  instruments:
+  - spirou
+  - nirps_he
+  - nirps_ha
+  - spip  
+  code: None
+  comment: list of ccf_obj_mask and assoicated Teff
+  USED:
+    constant: TEFF_MASK_TABLE
+  format:
+    FORMAT:
+      - csv
+    COLUMNS:
+      mask:
+        dtype: str
+      kind:
+        dtype: str
+        options:
+          - default
+          - range
+      datatype:
+        dtype: str
+        options: fits
+      teff_min:
+        dtype: float
+        unit: K
+      teff_max:
+        dtype: float
+        unit: K
+
+
+# ------------------------------------------------------------------------------
+# Database
+# ------------------------------------------------------------------------------
+reset_astrom:
+  path: {instrument}/databases/reset.astrom.csv 
+  format:
+    FORMAT:
+      - csv
+    COLUMNS: # Same as astrom database
+  code:
+  comment: Can update from web
+  used:
+    CODE: setup.core.drs_setup.py ASTROM_RESET
+
+reset_calib:
+  path: {instrument}/databases/reset.calib.csv 
+  insturments:
+  - spirou
+  - nirps_he
+  - nirps_ha
+  - spip
+  code: None
+  comment: Controls REF_WAVE and REF_LEAK, could we remove this?
+  format:
+    FORMAT:
+      - csv
+    COLUMNS: # Same as calibration database
+  used:
+    CODE: setup.core.drs_setup.py CALIB_RESET
+
+reset_tellu:
+  path: {instrument}/databases/reset.calib.csv 
+  insturments:
+  - spirou   # future
+  - nirps_he
+  - nirps_ha
+  - spip     # future
+  code: None
+  comment: Controls SKY_MODEL could we remove this?
+  format:
+    FORMAT:
+      - csv
+    COLUMNS: # Same as telluric database
+  used:
+    CODE: setup.core.drs_setup.py TELLU_RESET
+
+# ------------------------------------------------------------------------------
+# Runs
+# ------------------------------------------------------------------------------
+reset_runs:
+  path: {instrument}/reset/runs/{run_file}.yaml
+  code: apero.tools.recipes.dev.apero_run.ini.py
+  comment: generated with apero_run_ini.py (using recipe definitions) and
+           apero.tools.resources.run_ini file for instrument
+
