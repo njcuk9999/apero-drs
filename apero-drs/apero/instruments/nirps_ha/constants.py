@@ -1768,13 +1768,6 @@ CDict.set('REMOVE_ORDERS', value=[43, 44, 45], source=__NAME__, group=cgroup)
 # Define the minimum snr to accept orders for pre-cleaning fit
 CDict.set('SNR_MIN_THRES', value=3.0, source=__NAME__, group=cgroup)
 
-# Define the telluric trans other abso CCF file
-CDict.set('OTHERS_CCF_FILE', value='trans_others_abso_ccf.mas',
-          source=__NAME__, group=cgroup)
-
-# Define the telluric trans water abso CCF file
-CDict.set('WATER_CCF_FILE', value='trans_h2o_abso_ccf.mas', source=__NAME__, group=cgroup)
-
 # Define dexpo convergence threshold
 CDict.set('DEXPO_CONV_THRES', value=1.0e-3, source=__NAME__, group=cgroup)
 

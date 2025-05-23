@@ -353,29 +353,6 @@ def get_tellu_objs(params: ParamDict, key: str,
     return absfilenames
 
 
-def get_sp_linelists(params, **kwargs):
-    func_name = __NAME__ + '.get_sp_linelists()'
-    # get parameters from params/kwargs
-    relfolder = pcheck(params, 'OBJ.TELL.GEN.LIST_DIR', 'directory', kwargs,
-                       func_name)
-    othersfile = pcheck(params, 'OBJ.TELL.PCLEAN.OTHERS_CCF_FILE', 'filename', kwargs,
-                        func_name)
-    waterfile = pcheck(params, 'OBJ.TELL.PCLEAN.WATER_CCF_FILE', 'filename', kwargs,
-                       func_name)
-    # load the others file list
-    mask_others, _ = drs_data.load_ccf_mask(params, mask_dir=relfolder,
-                                            filename=othersfile)
-    mask_water, _ = drs_data.load_ccf_mask(params, mask_dir=relfolder,
-                                           filename=waterfile)
-    # load pseudo constants
-    pconst = load_functions.load_pconfig(select.INSTRUMENTS)
-    # mask out some regions based on instrument
-    # TODO: remove once tapas always comes from specific instrument
-    mask_water, mask_others = pconst.TAPAS_INST_CORR(mask_water, mask_others)
-    # return masks
-    return mask_others, mask_water
-
-
 def mask_bad_regions(params: ParamDict,
                      image: np.ndarray, wavemap: np.ndarray,
                      pconst: Optional[DPseudoConsts] = None,

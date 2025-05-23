@@ -3692,18 +3692,6 @@ CDict.add('SNR_MIN_THRES', value=None, dtype=float,
           description=('define the minimum snr to accept '
                        'orders for pre-cleaning fit'))
 
-# define the telluric trans other abso CCF file
-CDict.add('OTHERS_CCF_FILE', value=None, dtype=str,
-          source=__NAME__, group=cgroup,
-          description=('define the telluric trans other '
-                       'abso CCF file'))
-
-# define the telluric trans water abso CCF file
-CDict.add('WATER_CCF_FILE', value=None, dtype=str,
-          source=__NAME__, group=cgroup,
-          description=('define the telluric trans water abso '
-                       'CCF file'))
-
 # define dexpo convergence threshold
 CDict.add('DEXPO_CONV_THRES', value=None,
           dtype=float, source=__NAME__, group=cgroup,

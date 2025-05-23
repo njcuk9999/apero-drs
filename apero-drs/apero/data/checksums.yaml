@@ -6,13 +6,9 @@ data:
   core/barycorrpy/finals2000A.all: 490dfe47d34c047dd9ba18b3b1bffca1
   core/pdbrc_full: 18c6ccdf993db533944bf78971604b2c
   nirps_ha/README.md: 1b8707f45ea5bfd039339973c1914d1d
-  nirps_ha/calib/catalogue_ThAr.dat: 3cee7e97fbcbb513e68b3d870686ebfd
   nirps_ha/calib/catalogue_UNe.csv: 3b9947633b151b5d95559088a19c614c
-  nirps_ha/calib/catalogue_UNe_old.csv: a60ee67707eeeb23326033e767381685
-  nirps_ha/calib/catalogue_UNe_update210915.csv: f3d6a70fec916599f10f4363dc3245f9
   nirps_ha/calib/catalogue_UNe_update230322.csv: 6fca7ca4b83561d290c587bf52ac2e13
   nirps_ha/calib/cavity_length_ll_fit.dat: e6a0e55ca9a6d6a6a456be5cae8a1d7d
-  nirps_ha/calib/cavity_length_m_fit.dat: 246f81d50d22ae8410d6a52869c0b103
   nirps_ha/ccf_masks/GJ1_neg.fits: 70b027ec1c3ef90ed998377c01f52863
   nirps_ha/ccf_masks/GJ9425_neg.fits: 077fdd883b1383dc706c2b5482620d27
   nirps_ha/ccf_masks/GL514_neg.fits: 045b14d7cbe4f04b2225fa57ea48c38b
@@ -22,7 +18,6 @@ data:
   nirps_ha/ccf_masks/HD85512_neg.fits: e524f002a7826cd57b47af2a6a41f8df
   nirps_ha/ccf_masks/PROXIMA_neg.fits: 8e554857c427831b380e26de83a094e4
   nirps_ha/ccf_masks/README.md: 881e095b31a8736bbe6560ba44e2395e
-  nirps_ha/ccf_masks/masque_sept18_andres_trans50.mas: 8b58b4cbd37a5d3d81f5167f528767b0
   nirps_ha/ccf_masks/teff_masks.csv: 1328b94a5528e8f903abd99d64b1a904
   nirps_ha/databases/README.md: 39f4a4eb81c75a1ee9011fcb158292b5
   nirps_ha/databases/reset.astrom.csv: 1d0c6a0059d259abcabeb435b42ccc60
@@ -32,7 +27,6 @@ data:
   nirps_ha/engineering/amplifier_bias_model_nirps.fits: f4e79fca6e565ae7e7adb168cfb66e07
   nirps_ha/engineering/hotpix_pp.csv: 53ec24b52b6e60bacce3447bb94492f4
   nirps_ha/reset/calibdb/REF/REF_WAVE_NIRPS_HA_CUT_75.fits: c282f4238d7b7117d3111bc6785c2d3b
-  nirps_ha/reset/calibdb/REF/tapas_all_sp.fits.gz: 06f8b2cc920f9c954dba574071891500
   nirps_ha/reset/runs/README.md: d67e72e286f03b8460c7d6deb4b50c9d
   nirps_ha/reset/runs/blank_run.yaml: eaecf4d70ef68b368c986a6624e1b481
   nirps_ha/reset/runs/calib_run.yaml: 088be272b449cc885f69052e4348149d
@@ -53,17 +47,10 @@ data:
   nirps_ha/telluric/tapas_all_sp.fits.gz: 128ecb9b9cb2180c5d452d1370269e3d
   nirps_ha/telluric/tellu_blacklist.txt: 611adccf40280cc2d2f0a6eb1319528a
   nirps_ha/telluric/tellu_whitelist.txt: 4ba4debe3f1ad4c2ba24d48956cf7c99
-  nirps_ha/telluric/trans_h2o_abso_ccf.mas: 3467d02a8ea1ea056980bcbd1e86d30b
-  nirps_ha/telluric/trans_others_abso_ccf.mas: ed6f602b746534c5018bde1b952631ff
   nirps_he/README.md: 8846dfe7a4f8c286704758ef40d2234c
-  nirps_he/calib/catalogue_ThAr.dat: 3cee7e97fbcbb513e68b3d870686ebfd
   nirps_he/calib/catalogue_UNe.csv: 3b9947633b151b5d95559088a19c614c
-  nirps_he/calib/catalogue_UNe_old.csv: a60ee67707eeeb23326033e767381685
-  nirps_he/calib/catalogue_UNe_update210915.csv: f3d6a70fec916599f10f4363dc3245f9
-  nirps_he/calib/catalogue_UNe_update221114.csv: c01cbf204073a2c5f5247127fea9744c
   nirps_he/calib/catalogue_UNe_update230322.csv: 6fca7ca4b83561d290c587bf52ac2e13
   nirps_he/calib/cavity_length_ll_fit.dat: e6a0e55ca9a6d6a6a456be5cae8a1d7d
-  nirps_he/calib/cavity_length_m_fit.dat: 246f81d50d22ae8410d6a52869c0b103
   nirps_he/ccf_masks/GJ1_neg.fits: 70b027ec1c3ef90ed998377c01f52863
   nirps_he/ccf_masks/GJ9425_neg.fits: 077fdd883b1383dc706c2b5482620d27
   nirps_he/ccf_masks/GL514_neg.fits: 045b14d7cbe4f04b2225fa57ea48c38b
@@ -73,7 +60,6 @@ data:
   nirps_he/ccf_masks/HD85512_neg.fits: e524f002a7826cd57b47af2a6a41f8df
   nirps_he/ccf_masks/PROXIMA_neg.fits: 8e554857c427831b380e26de83a094e4
   nirps_he/ccf_masks/README.md: 881e095b31a8736bbe6560ba44e2395e
-  nirps_he/ccf_masks/masque_sept18_andres_trans50.mas: 8b58b4cbd37a5d3d81f5167f528767b0
   nirps_he/ccf_masks/teff_masks.csv: 1328b94a5528e8f903abd99d64b1a904
   nirps_he/databases/README.md: 39f4a4eb81c75a1ee9011fcb158292b5
   nirps_he/databases/reset.astrom.csv: 1d0c6a0059d259abcabeb435b42ccc60
@@ -83,7 +69,6 @@ data:
   nirps_he/engineering/amplifier_bias_model_nirps.fits: f4e79fca6e565ae7e7adb168cfb66e07
   nirps_he/engineering/hotpix_pp.csv: 53ec24b52b6e60bacce3447bb94492f4
   nirps_he/reset/calibdb/REF/REF_WAVE_NIRPS_HE_CUT_75.fits: fce13f9fbd3af343372a4f2e75dc0faa
-  nirps_he/reset/calibdb/REF/tapas_all_sp.fits.gz: 06f8b2cc920f9c954dba574071891500
   nirps_he/reset/runs/README.md: d67e72e286f03b8460c7d6deb4b50c9d
   nirps_he/reset/runs/blank_run.yaml: eaecf4d70ef68b368c986a6624e1b481
   nirps_he/reset/runs/calib_run.yaml: b187dc9c2251bd5c7fbce233720bc76b
@@ -104,23 +89,15 @@ data:
   nirps_he/telluric/tapas_all_sp.fits.gz: 128ecb9b9cb2180c5d452d1370269e3d
   nirps_he/telluric/tellu_blacklist.txt: 611adccf40280cc2d2f0a6eb1319528a
   nirps_he/telluric/tellu_whitelist.txt: 2740c9baf40f1a2d715e4a29df63c329
-  nirps_he/telluric/trans_h2o_abso_ccf.mas: 3467d02a8ea1ea056980bcbd1e86d30b
-  nirps_he/telluric/trans_others_abso_ccf.mas: ed6f602b746534c5018bde1b952631ff
   spirou/README.md: 508d5400db17d7d16524903a442b434e
-  spirou/calib/catalogue_ThAr.dat: 3cee7e97fbcbb513e68b3d870686ebfd
   spirou/calib/catalogue_UNe.csv: 7146eae79d524dd45da7049d5d14a466
-  spirou/calib/catalogue_UNe_0.5_long.csv: 203964e6351be6c82dfb62e60b916a74
-  spirou/calib/catalogue_UNe_0.5_short.csv: a60ee67707eeeb23326033e767381685
-  spirou/calib/catalogue_UNe_update210915.csv: f3d6a70fec916599f10f4363dc3245f9
   spirou/calib/catalogue_UNe_update230322.csv: 6fca7ca4b83561d290c587bf52ac2e13
   spirou/calib/cavity_length_ll_fit.dat: 9ae5391083459e3fa376644244b436e6
-  spirou/calib/cavity_length_m_fit.dat: 8fb7dd4ac57586171201ffd49e0fb0ac
   spirou/calib/excess_emissivity.csv: a2edb3adee6a9f4911273558a41ed55a
   spirou/ccf_masks/GL699_neg.fits: dd1be88fae8a81316c0c38962bb91620
   spirou/ccf_masks/GL846_neg.fits: b1946289fcbf041f76bbf26cec123b2c
   spirou/ccf_masks/GL905_neg.fits: a279cb5131c0047b52c17ca905ad6e90
   spirou/ccf_masks/README.md: 881e095b31a8736bbe6560ba44e2395e
-  spirou/ccf_masks/masque_sept18_andres_trans50.mas: 8b58b4cbd37a5d3d81f5167f528767b0
   spirou/ccf_masks/teff_masks.csv: 1328b94a5528e8f903abd99d64b1a904
   spirou/databases/README.md: 39f4a4eb81c75a1ee9011fcb158292b5
   spirou/databases/reset.astrom.csv: 1d0c6a0059d259abcabeb435b42ccc60
@@ -166,7 +143,6 @@ data:
   spirou/reset/calibdb/REF/REF_WAVE_2400416c_AB.fits: debfaa57b0605120ffd80da50045f53b
   spirou/reset/calibdb/REF/REF_WAVE_2400416c_B.fits: d5cc3ffa4315c025500dbf30a4b45e39
   spirou/reset/calibdb/REF/REF_WAVE_2400416c_C.fits: 8e28afbfd3078a653910394ee4201d85
-  spirou/reset/calibdb/REF/tapas_all_sp.fits.gz: 06f8b2cc920f9c954dba574071891500
   spirou/reset/runs/README.md: d67e72e286f03b8460c7d6deb4b50c9d
   spirou/reset/runs/blank_run.yaml: 0bb7e13a7507aaf411bbe4143e96c0ea
   spirou/reset/runs/calib_run.yaml: 485dbc8b1ae76d80ffded14c9ec0e9bd
@@ -186,13 +162,11 @@ data:
   spirou/telluric/tapas_all_sp.fits.gz: 128ecb9b9cb2180c5d452d1370269e3d
   spirou/telluric/tellu_blacklist.txt: 611adccf40280cc2d2f0a6eb1319528a
   spirou/telluric/tellu_whitelist.txt: 275707c63a34519d925a3f49283a6ecf
-  spirou/telluric/trans_h2o_abso_ccf.mas: 3467d02a8ea1ea056980bcbd1e86d30b
-  spirou/telluric/trans_others_abso_ccf.mas: ed6f602b746534c5018bde1b952631ff
 setup:
-  humantime: '2025-05-23 13:29:56.375'
+  humantime: '2025-05-23 15:00:36.070'
   servers:
   - http://apero.exoplanets.ca/assets/
-  tarfile: 1748006996_37537_assets.tar.gz
-  unixtime: 1748006996.37537
+  tarfile: 1748012436_069969_assets.tar.gz
+  unixtime: 1748012436.069969
   vdate: 2025-03-03
   version: 0.8.105
