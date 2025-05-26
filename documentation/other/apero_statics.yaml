@@ -24,6 +24,7 @@ amplifier_bias_model:
       intercept: (128, 4096)
 
   code: @Etienne
+  comment: used in detector.correct_capacitive_coupling
 
 detector_flat_full:
   path: 

@@ -2064,6 +2064,15 @@ def add_object_reject(params: ParamDict, raw_objname: str):
             qargs = [objname, apero_objname]
             notes = drs_installation.ask(question.format(*qargs), dtype=str)
         # ----------------------------------------------------------------------
+        # must have aliases
+        while aliases in ['None', '', ' ']:
+            WLOG(params, 'warning', 'Aliases are blank. Must have aliases')
+            # get the aliases
+            question = ('Enter aliases for object={0} (APERO={1}) separate '
+                        'aliases by a "|"  e.g. GL699 | Barnard Star | GL 699')
+            qargs = [objname, apero_objname]
+            aliases = drs_installation.ask(question.format(*qargs), dtype=str)
+        # ----------------------------------------------------------------------
         # now we can add to the dataframe
         new_row = dict(OBJNAME=[apero_objname], ORIGINAL_NAME=[objname],
                        ALIASES=[aliases], NOTES=[notes],

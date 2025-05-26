@@ -112,7 +112,8 @@ def apply_excess_emissivity(params: ParamDict, recipe: DrsRecipe,
         excess_correction = espline(wprops['WAVEMAP'])
         # low pass the image before applying the excess correction
         for order_num in range(image.shape[0]):
-            image[order_num] = mp.lowpassfilter(image[order_num], filter_wid)
+            image[order_num] = mp.lowpassfilter(image[order_num], filter_wid,
+                                                trim_valid=True)
         # correct data and push back to thermal file
         thermal_file.data = image * excess_correction
         # add thermal file back to dictionary
@@ -478,7 +479,8 @@ def tcorrect2(params: ParamDict, recipe: DrsRecipe,
     # --------------------------------------------------------------------------
     # median filter the thermal (loop around orders)
     for order_num in range(thermal.shape[0]):
-        thermal[order_num] = mp.lowpassfilter(thermal[order_num], filter_wid)
+        thermal[order_num] = mp.lowpassfilter(thermal[order_num], filter_wid,
+                                              trim_valid=True)
     # ----------------------------------------------------------------------
     # only keep wavelength in range of thermal limits
     wavemask = (wavemap[torder] > blue_limit) & (wavemap[torder] < red_limit)

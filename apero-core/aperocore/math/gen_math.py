@@ -976,7 +976,8 @@ def square_medbin(image: np.ndarray, binexpo: int = 8) -> np.ndarray:
 
 
 def lowpassfilter(input_vect: np.ndarray, width: int = 101,
-                  k=1, frac_valid_min=0) -> np.ndarray:
+                  k=1, frac_valid_min=0, trim_valid: bool = False
+                  ) -> np.ndarray:
     """
     Computes a low-pass filter of an input vector.
 
@@ -1004,6 +1005,8 @@ def lowpassfilter(input_vect: np.ndarray, width: int = 101,
                            If the fraction of valid pixels is below this value,
                            the low pass filter is not computed and the value
                            is interpolated over.
+    :param trim_valid: bool, trim groups of NaNs from the start/end of the
+                       input vector before computing the low pass filter.
 
     :return: np.array, the low-pass of the input_vector
     """
@@ -1059,6 +1062,18 @@ def lowpassfilter(input_vect: np.ndarray, width: int = 101,
     # splining the vector
     spline = InterpolatedUnivariateSpline(xmed, ymed, k=k, ext=3)
     lowpass = spline(np.arange(len(input_vect)))
+
+    # deal with trimming to valid domain
+    if trim_valid:
+        # get the valid regions of this order
+        valid_pos = np.where(np.isfinite(input_vect))[0]
+        # get the start and end of the valid region (so we don't over
+        # interpolate the edges)
+        min_valid, max_valid = np.min(valid_pos), np.max(valid_pos)
+        # fill the invalid regions with nans
+        lowpass[0:min_valid] = np.nan
+        lowpass[max_valid:] = np.nan
+
     # return the low pass filtered input vector
     return lowpass
 
