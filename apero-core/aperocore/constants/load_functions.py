@@ -377,7 +377,8 @@ def get_all_params(name: str, description: str, inputargs: List[str],
                    from_file: bool = True,
                    param_file_path: str = None,
                    external_const: Dict[str, Any] = None,
-                   kwargs: Dict[str, Any] = None) -> ParamDict:
+                   kwargs: Dict[str, Any] = None,
+                   cmd_kwargs: Dict[str, Any] = None) -> ParamDict:
     """
     Get the parameters (default, command line and function call)
 
@@ -388,6 +389,9 @@ def get_all_params(name: str, description: str, inputargs: List[str],
     :param from_file: bool, if True loads from user files (else loads from
                         module only
     :param kwargs: any additional keywords to be passed to the recipe
+    :param cmd_kwargs: Dict[str, Any] - override command line (does not call
+                       command line - required for note books) must have all
+                       keys contained in "inputargs"
 
     :return: ParamDict containing the constants
     """
@@ -402,8 +406,12 @@ def get_all_params(name: str, description: str, inputargs: List[str],
     if name is not None:
         params.set('RECIPE_SHORT', value=name.split('.')[-1],
                    source=func_name)
-    # get the yaml file
-    args = cmd_args_from_clist(description, config_list, inputargs)
+    # deal with overriding the command line arguments (i.e. in notebooks)
+    if len(cmd_kwargs) > 0:
+        args = dict(cmd_kwargs)
+    # otherwise get the command line arguments
+    else:
+        args = cmd_args_from_clist(description, config_list, inputargs)
     # push in from command line arguments
     params = load_from_cmd_args(params, args, kwargs)
     # get constants from user config files
