@@ -2270,7 +2270,10 @@ class FileIndexDatabase(DatabaseManager):
                 if value is None:
                     header[drs_key] = 'Null'
                 else:
-                    header[drs_key] = dtype(value)
+                    try:
+                        header[drs_key] = dtype(value)
+                    except Exception as _:
+                        header[drs_key] = 'Null'
             # fix header (with new keys in)
             header, _ = drs_file.fix_header(self.params, recipe, header=header,
                                             check_aliases=True, objdbm=objdbm)
