@@ -2,6 +2,52 @@ Changelog
 =========
 
 
+0.7.294 (2025-05-26)
+--------------------
+- [APERO] reject - deal with having no alises - must have aliases. [Neil
+  Cook]
+- [APERO] Fix wave ref recipe defintions. [Neil Cook]
+- Citation + database test + poster plots. [Neil Cook]
+- [APERO] MAke sure very small rv's don't count - skip nsection if less
+  than 1e-10. [Neil Cook]
+- [APERO] Do not remove more than 20 files per query when removing many
+  files [Issue #804] [Neil Cook]
+- [APERO] Update astrometrics to have DR3 + deal with bug with found and
+  unfound objects. [cook]
+- [APERO] Update astrometrics to have DR3 + deal with bug with found and
+  unfound objects. [cook]
+- [APERO] Update processing warning for missing targets in
+  SCIENCE_TARGETS. [Neil Cook]
+- [APERO] Update processing warning for missing targets in
+  SCIENCE_TARGETS. [Neil Cook]
+- [APERO] Update processing warning for missing targets in
+  SCIENCE_TARGETS. [Neil Cook]
+- [ARI] Update nirps password. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.293-stable-test' into
+  v0.7.293-stable-test. [Neil Cook]
+- [ARI] max text size for text entries in database. [Neil Cook]
+- [ARI] calib page - x cent plot update. [Neil Cook]
+- [ARI] calib page - x cent plot update. [Neil Cook]
+- [ARI] calib page - x cent plot update. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.293-stable-test' into
+  v0.7.293-stable-test. [Neil Cook]
+- [ARI] Modifications for calib wave cent plot. [Neil Cook]
+- [ARI] calib page - x cent plot update. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.293-stable-test' into
+  v0.7.293-stable-test. [Neil Cook]
+- [NIRPS] Fix problems with rejecting files. [Neil Cook]
+- [NIRPS] Fix problems with rejecting files. [Neil Cook]
+- [ARI] calib page. [Neil Cook]
+- [ARI] calib page. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.293-stable-test' into
+  v0.7.293-stable-test. [Neil Cook]
+- [APERO] fix writing run string to file. [Neil Cook]
+- [ARI] fix new target info values. [Neil Cook]
+- [APERO] Allow an LBL full reset in parameters. [Neil Cook]
+- [APERO] Allow an LBL full reset in parameters. [Neil Cook]
+- [APERO] Update date/version/changelog. [Neil Cook]
+
+
 0.7.293 (2025-03-27)
 --------------------
 - [APERO] do not use apero templates for LBL + add some extra info for
