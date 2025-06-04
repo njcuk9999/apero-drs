@@ -34,30 +34,20 @@ detector:
   # Threshold (in e-/s) for dark current to consider a pixel "hot"
   dark_threshold: 1
 
-  # outfiles created
-  outfiles:
-    amplifier_bias_model: amplifier_bias_model.fits
-    detector_flat_full: detector_flat_full.fits
-    hotpix_pp: hotpix_pp.csv
-
-
 
 # ------------------------------------------------------------------------------
 # Wavelength
 # ------------------------------------------------------------------------------
-hollow_cathode_catalog:
-
 # For cavity_length_ll_fit and ref_wave
-wave_sol_guess:
-  # outfiles created
-  outfiles:
-    cavity: cavity_length_ll_fit.dat
-    ref_wave: REF_WAVE.fits
+wavelength:
   # Input Hollow Cathode file (e.g. UNe, ThAr etc) both fibers (HC_HC)
   #   note must be in the raw directory
   raw_hc_file: HC_HC_file.fits
   # Input Fabry Perot file both fibers (FP_FP)
   raw_fp_file: FP_FP_file.fits
+
+  input_catalogue: J_ApJS_195_24_table2.dat.fits
+
    # Initial guess for cavity length (in nm)
   cavity0: 23990000.0
   # First to last orders (nm)
@@ -100,9 +90,6 @@ wave_sol_guess:
   robust_polyfit_deg: 7
   # Sigma cut for robust_polyfit on Chebyshev coeffs
   robust_polyfit_sigma: 5
-
-
-
 
 # ------------------------------------------------------------------------------
 # Telluric

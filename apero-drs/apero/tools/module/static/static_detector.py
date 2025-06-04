@@ -58,6 +58,7 @@ def main(params: ParamDict, recipe, sparams: Dict[str, Any]):
     engineering_flat_file = sparams['detector']['engineering_flat']
     flat_bin_size = sparams['detector']['binsize']
     frac_flat_bad = sparams['detector']['frac_flat_bad']
+    dark_threshold = sparams['detector']['dark_threshold']
     # -------------------------------------------------------------------------
     # check that in path exists
     if not os.path.exists(in_path):
@@ -95,7 +96,13 @@ def main(params: ParamDict, recipe, sparams: Dict[str, Any]):
     # -------------------------------------------------------------------------
     # Step 5: Create hot pixel reference file
     # -------------------------------------------------------------------------
-    create_hotpix_map(params, recipe, dark0, static_flat)
+    create_hotpix_map(params, recipe, dark0, static_flat, dark_threshold)
+
+
+    # -------------------------------------------------------------------------
+    # Plots
+    # -------------------------------------------------------------------------
+
 
     return 0
 
