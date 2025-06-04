@@ -1534,6 +1534,32 @@ apero_postprocess.description_file = apero_postprocess.default_rfile()
 # add to recipe
 recipes.append(apero_postprocess)
 
+
+# -----------------------------------------------------------------------------
+# apero_static.py
+# -----------------------------------------------------------------------------
+apero_static = DrsRecipe(__INSTRUMENT__, path=RECIPE_PATH)
+apero_static.name = 'apero_static_{0}.py'.format(INSTRUMENT_ALIAS)
+apero_static.path = 'apero.tools.recipes.{0}'.format(INSTRUMENT_ALIAS)
+apero_static.shortname = 'STATIC'
+apero_static.instrument = __INSTRUMENT__
+apero_static.description = textentry('STATIC_DESCRIPTION')
+apero_static.recipe_type = 'nolog-tool'
+apero_static.recipe_kind = 'admin'
+
+apero_static.set_outputs(STATIC_DARK=files.static_dark,
+                         STATIC_FLAT=files.static_flat,
+                         STATIC_DARK_CURR=files.static_dark_curr,
+                         STATIC_HOTPIX=files.static_hotpix)
+
+apero_static.set_arg(pos=0, name='yamlfile', dtype=str,
+                   helpstr='Static YAML definition file')
+apero_static.set_kwarg(name='--mode', dtype='options', default='None',
+                 options=['LED_FLAT'],
+                 helpstr=textentry('STATIC_MODE_HELP'), required=True)
+apero_static.description_file = 'apero_static.rst'
+
+
 # =============================================================================
 # Run order
 # =============================================================================

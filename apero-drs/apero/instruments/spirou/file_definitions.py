@@ -53,6 +53,7 @@ refcalib_ofile = out.RefCalibOutFile()
 tellu_ofile = out.TelluOutFile()
 reftellu_ofile = out.RefTelluOutFile()
 tellu_set_ofile = out.TelluSetOutFile()
+static_ofile = out.StaticFile()
 
 # =============================================================================
 # Raw Files
@@ -2206,6 +2207,60 @@ post_p_file.add_hkey('KW_DRS_DATE_NOW', inheader='POL', outheader='PP')
 
 # add to post processed file set
 post_file.addset(post_p_file)
+
+# =============================================================================
+# Static files
+# =============================================================================
+# -----------------------------------------------------------------------------
+# Static detector calibrations
+# -----------------------------------------------------------------------------
+static_dark = drs_finput('STATIC_DARK', filetype='.fits',
+                         outclass=static_ofile,
+                         basename='static_dark_spirou.fits',
+                         description='Median dark frame produced in static '
+                                     'detector recipe')
+
+static_led = drs_finput('STATIC_LED', filetype='.fits',
+                         outclass=static_ofile,
+                         basename='static_led_spirou.fits',
+                         description='Median LED frame produced in static '
+                                     'detector recipe')
+
+static_flat = drs_finput('STATIC_FLAT', filetype='.fits',
+                         outclass=static_ofile,
+                         basename='static_flat_spirou.fits',
+                         description='detector high-passed flat field')
+
+static_dark_curr = drs_finput('STATIC_DARK_CURR', filetype='.fits',
+                              outclass=static_ofile,
+                              basename='static_dark_curr_spirou.fits',
+                              description='Amplifier folded dark current '
+                                          'intercept and slope maps')
+
+static_hotpix = drs_finput('STATIC_HOTPIX', filetype='.fits',
+                           outclass=static_ofile,
+                           basename='static_hotpix_spirou.fits',
+                           description='Hotpixels identified in dark and flat')
+
+# -----------------------------------------------------------------------------
+# Static telluric calibrations
+# -----------------------------------------------------------------------------
+static_excess_em = None
+
+static_tapas = None
+
+static_tellu_allow = None
+
+static_tellu_disallow = None
+
+# -----------------------------------------------------------------------------
+# Static wave calibrations
+# -----------------------------------------------------------------------------
+static_hc_cat = None
+
+static_cavity = None
+
+static_wave_ref = None
 
 # =============================================================================
 # Other Files

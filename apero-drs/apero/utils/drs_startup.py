@@ -22,7 +22,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
-from apero import plotting
+
 from apero.base import base as apero_base
 from apero.constants import run_params
 from apero.core import drs_argument
@@ -44,6 +44,7 @@ from aperocore.core import drs_log
 from aperocore.core import drs_misc
 from aperocore.core import drs_text
 from aperocore.core.drs_base_classes import Printer
+from apero.plotting import plotter
 
 # deal with not having LBL installed
 try:
@@ -88,6 +89,8 @@ PDB_RC_FILE = apero_base.PDB_RC_FILE
 CURRENT_PATH = ''
 
 RUN_KEYS = dict()
+# cache for package strings (don't read multiple times)
+PACKAGE_CACHE = dict()
 
 
 # =============================================================================
@@ -410,10 +413,10 @@ def __setup__(name: str = 'None', instrument: str = 'None',
     # deal with plot mode = 4 (special mode that prompts user to select
     #    which plots to plot)
     if params['GLOBAL.PLOT_MODE'] == 4:
-        params, recipe = plotting.plot_selection(params, recipe)
+        params, recipe = plotter.plot_selection(params, recipe)
     # add in the plotter
     if enable_plotter:
-        recipe.plot = plotting.Plotter(params, recipe)
+        recipe.plot = plotter.Plotter(params, recipe)
     # -------------------------------------------------------------------------
     # add the recipe log
     cond1 = not drs_text.null_text(instrument, ['None', ''])
@@ -1918,6 +1921,7 @@ def _display_python_modules() -> str:
 
     :return: string, a string representation of the python modules
     """
+    global PACKAGE_CACHE
     # load user requirements
     packages, versions, sources = [], [], []
 
@@ -1929,33 +1933,41 @@ def _display_python_modules() -> str:
                     packages.append(package)
                     versions.append(version)
                     sources.append(source)
-
     # storage
     storage = textentry('40-000-00017')
     # loop around packages and get versions
     for p_it, package in enumerate(packages):
-        # noinspection PyBroadException
-        try:
-            with warnings.catch_warnings(record=True) as _:
-                mod = importlib.import_module(package)
-            # if we have version for module
-            if hasattr(mod, '__version__'):
-                # get current version
-                version = mod.__version__
-                # get required version
-                rversion = versions[p_it]
-                roperator = sources[p_it]
-                # deal with requirements using the @ operator
-                if roperator == '@':
-                    pargs = [package, version, versions[p_it]]
-                    storage += '\n\t{0}: {1} ({2})'.format(*pargs)
-                # otherwise deal with other operators
-                else:
-                    # add to string storage (for return)
-                    pargs = [package, version, roperator, rversion]
-                    storage += '\n\t{0}: {1}  (req{2}{3})'.format(*pargs)
-        except Exception as _:
+        # get package string from cache if available
+        if package in PACKAGE_CACHE:
+            storage += PACKAGE_CACHE[package]
             continue
+        # try to get module from sys.modules first
+        mod = sys.modules.get(package)
+        if mod is None:
+            try:
+                with warnings.catch_warnings(record=True):
+                    mod = importlib.import_module(package)
+            except Exception:
+                continue
+
+        version = getattr(mod, '__version__', None)
+        if version is None:
+            continue
+        # get required version
+        rversion = versions[p_it]
+        roperator = sources[p_it]
+        # deal with requirements using the @ operator
+        if roperator == '@':
+            pargs = [package, version, versions[p_it]]
+            pstring = '\n\t{0}: {1} ({2})'.format(*pargs)
+        # otherwise deal with other operators
+        else:
+            # add to string storage (for return)
+            pargs = [package, version, roperator, rversion]
+            pstring = '\n\t{0}: {1}  (req{2}{3})'.format(*pargs)
+        # add to cache and storage
+        PACKAGE_CACHE[package] = pstring
+        storage += pstring
 
     # return string
     return storage

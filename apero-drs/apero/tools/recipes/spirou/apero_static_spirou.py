@@ -10,17 +10,17 @@ Created on 2019-07-26 at 09:40
 @author: cook
 """
 from aperocore import drs_lang
-from aperocore.base import base
 from aperocore.core import drs_log
 from apero.utils import drs_startup
-from apero.tools.module.utils import drs_static
+from apero.tools.module.static import static_detector
+from apero.tools.module.static import static_wavelength
 from apero.base import base as apero_base
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'apero_static.py'
-__INSTRUMENT__ = 'None'
+__INSTRUMENT__ = 'spirou'
 __PACKAGE__ = apero_base.__PACKAGE__
 __version__ = apero_base.__version__
 __authors__ = apero_base.__authors__
@@ -62,9 +62,45 @@ def main(**kwargs):
 
 
 def __main__(recipe, params):
-    # switch between static files here
-    if params['INPUTS']['MODE'] == 'LED_FLAT':
-        drs_static.led_flat_static_calib(params)
+
+    # get mode from inputs
+    mode = params['INPUTS']['MODE']
+
+    # get static parmaeters from yaml file
+    sparams = dict()
+    # -------------------------------------------------------------------------
+    # detector static files
+    # -------------------------------------------------------------------------
+    #    amplifier bias model
+    #    detector flat full
+    #    hotpix_pp
+    if params['INPUTS']['MODE'] in ['detector', 'All']:
+        static_detector.main(params, recipe, sparams)
+    # --------------------------------------------------------------------------
+    # telluric static files
+    # --------------------------------------------------------------------------
+    #    excess_emissivity
+    #    tapas_all_sp
+    if params['INPUTS']['MODE'] in ['telluric', 'All']:
+        pass
+
+    # --------------------------------------------------------------------------
+    # wavelength calibrations
+    # --------------------------------------------------------------------------
+    #   hollow cathode catalogue
+    #   cavity length ll fit
+    #   initial wave ref
+    if params['INPUTS']['MODE'] in ['wave', 'All']:
+        static_wavelength.main(params, recipe, sparams)
+
+
+    # --------------------------------------------------------------------------
+    # Update remote files?
+    # --------------------------------------------------------------------------
+
+    # --------------------------------------------------------------------------
+    # perform a reset to copy files to correct places?
+    # --------------------------------------------------------------------------
 
     # ----------------------------------------------------------------------
     # End of main code

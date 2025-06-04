@@ -582,6 +582,89 @@ class SetOutFile(OutFile):
         return abspath
 
 
+class StaticFile(OutFile):
+    """
+    Output file where output filename is set manually
+    """
+    def __init__(self):
+        """
+        Construct the output file where output filename is set manually
+        """
+        super().__init__()
+        self.classname = 'StaticFile'
+
+    def copy(self) -> 'StaticFile':
+        """
+        Copy the output file where output filename is set manually
+        :return:
+        """
+        new = StaticFile()
+        return new
+
+    def construct(self, params: ParamDict, infile: Any, outfile: Any,
+                  fiber: Union[str, None] = None, path: Union[str, None] = None,
+                  func: Union[str, None] = None,
+                  remove_insuffix: Union[bool, None] = None,
+                  prefix: Union[str, None] = None,
+                  suffix: Union[str, None] = None,
+                  filename: Union[str, None] = None) -> str:
+        """
+        Construct an absolute filename based on the filename, can replace
+        suffix
+
+        :param params: ParamDict, paremeter dictionary of constants
+        :param infile: DrsFitsFile, input file - must be defined
+        :param outfile: DrsFitsFile, output file - must be defined
+        :param path: str, the path the file should have
+        :param func: str, the function name if set (for errors)
+        :param suffix: str, if set the suffix of the file (defaults to
+                       outfile.suffix)
+        :param filename: str, the filename to give the file
+        :param fiber: not used for set_file
+        :param remove_insuffix: not used for set_file
+        :param prefix: not used for set file
+
+        :return: the aboslute path to the file
+        """
+        # set function name
+        func_name = display_func('set_file', __NAME__)
+        # deal with not used
+        _ = remove_insuffix, prefix
+        # set function name from args
+        if func is None:
+            func_name = '{0} [{1}]'.format(func, func_name)
+        # deal with no outfile set
+        if outfile is None:
+            _ = infile
+            raise AperoCodedException(params, '00-001-00018', targs=[func_name])
+        # get filename from outfile if None
+        if filename is None:
+            filename = outfile.basename
+        # deal with no file name set and filename must be a basename (no path)
+        if filename is None:
+            raise AperoCodedException(params, '00-001-00041', targs=[func_name])
+        else:
+            filename = os.path.basename(filename)
+        # get extension
+        if suffix is None:
+            outext = outfile.filetype
+        else:
+            outext = suffix + outfile.filetype
+        # check for extension and set filename
+        if filename.endswith(outext):
+            outfilename = str(filename)
+        else:
+            outfilename = filename + outext
+        # deal with no given path (default)
+        if path is None:
+            raise AperoCodedException(params, '01-001-00023',
+                                          targs=[func_name])
+        else:
+            abspath = str(os.path.join(path, outfilename))
+        # return absolute path
+        return abspath
+
+
 class LBLOutFile(OutFile):
     """
     LBL output file class

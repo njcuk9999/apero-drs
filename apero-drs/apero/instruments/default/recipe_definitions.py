@@ -665,21 +665,6 @@ run_ini.set_kwarg(name='--instrument', dtype='options', default='None',
 run_ini.description_file = 'apero_run_ini.rst'
 
 # -----------------------------------------------------------------------------
-# apero_static.py
-# -----------------------------------------------------------------------------
-static.name = 'apero_static.py'
-static.path = 'apero.tools.recipes.dev'
-static.shortname = 'STATIC'
-static.instrument = __INSTRUMENT__
-static.description = textentry('STATIC_DESCRIPTION')
-static.recipe_type = 'nolog-tool'
-static.recipe_kind = 'admin'
-static.set_kwarg(name='--mode', dtype='options', default='None',
-                 options=['LED_FLAT'],
-                 helpstr=textentry('STATIC_MODE_HELP'), required=True)
-static.description_file = 'apero_static.rst'
-
-# -----------------------------------------------------------------------------
 # apero_validate.py
 # -----------------------------------------------------------------------------
 validate.name = 'apero_validate.py'

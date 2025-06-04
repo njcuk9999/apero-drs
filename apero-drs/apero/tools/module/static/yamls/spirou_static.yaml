@@ -1,0 +1,137 @@
+# ------------------------------------------------------------------------------
+# Global settings
+# ------------------------------------------------------------------------------
+inpath: /scratch2/spirou/drs-data/static/
+
+
+# ------------------------------------------------------------------------------
+# Engineering
+# ------------------------------------------------------------------------------
+detector:
+
+  # DARKs of different e.g. 60s, 600s
+  # These exposure times should be representative of short and long
+  # science exposures, there should be multiple of each specific DARK exptime
+  raw_dark_files:
+    - dark1
+    - dark2
+    - dark3
+
+  # LED in all fibers, good SNR, not saturated
+  #  files should be dominated by systematics i.e. SNR ~ 300 when combined
+  raw_led_files:
+    - lamp1
+    - lamp2
+    - lamp3
+
+  # Engineering flat from the manufacturer (Only if no LED files available)
+  engineering_flat: None
+
+  # number of bins in each direction for large scale flat fielding
+  binsize: 32
+  # Fractional threshold for flat field bad pixels (relative deviation from 1)
+  frac_flat_bad: 0.2
+  # Threshold (in e-/s) for dark current to consider a pixel "hot"
+  dark_threshold: 1
+
+  # outfiles created
+  outfiles:
+    amplifier_bias_model: amplifier_bias_model.fits
+    detector_flat_full: detector_flat_full.fits
+    hotpix_pp: hotpix_pp.csv
+
+
+
+# ------------------------------------------------------------------------------
+# Wavelength
+# ------------------------------------------------------------------------------
+hollow_cathode_catalog:
+
+# For cavity_length_ll_fit and ref_wave
+wave_sol_guess:
+  # outfiles created
+  outfiles:
+    cavity: cavity_length_ll_fit.dat
+    ref_wave: REF_WAVE.fits
+  # Input Hollow Cathode file (e.g. UNe, ThAr etc) both fibers (HC_HC)
+  #   note must be in the raw directory
+  raw_hc_file: HC_HC_file.fits
+  # Input Fabry Perot file both fibers (FP_FP)
+  raw_fp_file: FP_FP_file.fits
+   # Initial guess for cavity length (in nm)
+  cavity0: 23990000.0
+  # First to last orders (nm)
+  wave_domain:
+    - 965
+    - 2400
+  # Fractional range for approximate wavelength
+  wave_approx: 0.05
+  # Number of lines to use per order
+  n_lines: 200
+  # Degree for robust_polyfit of FP peak step
+  fp_peak_step_poly_deg: 1
+  # Degree for robust_polyfit of FP peak count
+  fp_peak_poly_deg: 3
+  # Percentile for FP peak amplitude threshold
+  fp_peak_keep_percentile: 90
+  # Factor for FP peak amplitude threshold
+  fp_peak_keep_factor: 0.3
+  # Step for polyfit in wave_guess/fp_pix
+  fp_peak_step_window: 5
+  # Degree for polyfit in wave_guess/fp_pix
+  fp_poly_deg: 5
+  # Range for integer offset search
+  fp_step_offs_range: 20
+  # Step for integer offset search
+  fp_step_offs_step: 1
+  # Number of bins for histogram in mini
+  fp_step_mad_bins: 40
+  # Range for histogram in mini
+  fp_step_mad_range:
+    - -10
+    - 10
+  # Threshold for mini selection
+  fp_step_mad_thresold: 2.0
+  # Minimum number of valid points for fit
+  fp_step_valid_min: 5
+  # Degree for Chebyshev fit
+  cheby_fit_deg: 5
+  # Degree for robust_polyfit on Chebyshev coeffs
+  robust_polyfit_deg: 7
+  # Sigma cut for robust_polyfit on Chebyshev coeffs
+  robust_polyfit_sigma: 5
+
+
+
+
+# ------------------------------------------------------------------------------
+# Telluric
+# ------------------------------------------------------------------------------
+excess_emissivity:
+
+tapas_all_sp:
+
+tellu_blacklist:
+
+tellu_whitelist:
+
+# ------------------------------------------------------------------------------
+# CCF
+# ------------------------------------------------------------------------------
+ccf_obj_mask:
+
+teff_masks:
+
+# ------------------------------------------------------------------------------
+# Database
+# ------------------------------------------------------------------------------
+reset_astrom:
+
+reset_calib:
+
+reset_tellu:
+
+# ------------------------------------------------------------------------------
+# Runs
+# ------------------------------------------------------------------------------
+reset_runs:

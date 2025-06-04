@@ -34,7 +34,6 @@ from astropy.table import Table
 from aperocore.base import base
 from aperocore import drs_lang
 from aperocore.core import drs_exceptions
-from aperocore.core import drs_base_classes
 from aperocore.core import drs_misc
 from aperocore.constants import load_functions
 from aperocore.core import drs_log

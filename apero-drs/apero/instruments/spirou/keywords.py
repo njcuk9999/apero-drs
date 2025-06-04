@@ -127,7 +127,8 @@ KDict.set('KW_PI_NAME', key='PI_NAME', comment='The PI of the program', group='r
 KDict.set('KW_RUN_ID', key='RUNID', comment='queue run id', group='raw')
 
 # define the instrument HEADER key
-KDict.set('KW_INSTRUMENT', key='INSTRUME', comment='Instrument Name', group='raw')
+KDict.set('KW_INSTRUMENT', key='INSTRUME', comment='Instrument Name',
+          group='raw')
 
 # -----------------------------------------------------------------------------
 # Required header keys (related to science object)

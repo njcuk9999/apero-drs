@@ -39,6 +39,7 @@ blank_ofile = out.BlankOutFile()
 general_ofile = out.GeneralOutFile()
 debug_ofile = out.DebugOutFile()
 set_ofile = out.SetOutFile()
+static_ofile = out.StaticFile()
 post_ofile = out.PostOutFile()
 calib_ofile = out.CalibOutFile()
 mcalib_ofile = out.RefCalibOutFile()
@@ -84,6 +85,12 @@ tellu_file = drs_finput('DRS_OUTPUT', filetype='.fits', suffix='',
 post_file = drs_oinput('DRS_POST', filetype='.fits', suffix='',
                        outclass=post_ofile,
                        description='Generic post process file')
+
+# =============================================================================
+# Raw Files
+# =============================================================================
+static_file = drs_finput('STATIC', filetype='.fits',
+                         outclass=static_ofile, basename='static_file.fits')
 
 # =============================================================================
 # End of code
