@@ -9,18 +9,20 @@ Created on 2019-07-26 at 09:40
 
 @author: cook
 """
+from aperocore import base
 from aperocore import drs_lang
 from aperocore.core import drs_log
 from apero.utils import drs_startup
 from apero.tools.module.static import static_detector
 from apero.tools.module.static import static_wavelength
 from apero.base import base as apero_base
+from apero.tools.module.static import drs_static
 
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero_static.py'
-__INSTRUMENT__ = 'spirou'
+__NAME__ = 'apero_static_spirou.py'
+__INSTRUMENT__ = 'SPIROU'
 __PACKAGE__ = apero_base.__PACKAGE__
 __version__ = apero_base.__version__
 __authors__ = apero_base.__authors__
@@ -62,26 +64,26 @@ def main(**kwargs):
 
 
 def __main__(recipe, params):
-
     # get mode from inputs
     mode = params['INPUTS']['MODE']
-
     # get static parmaeters from yaml file
-    sparams = dict()
+    sparams = drs_static.load(params)
+    # set up plotting (no plotting before this)
+    recipe.plot.set_location()
     # -------------------------------------------------------------------------
     # detector static files
     # -------------------------------------------------------------------------
     #    amplifier bias model
     #    detector flat full
     #    hotpix_pp
-    if params['INPUTS']['MODE'] in ['detector', 'All']:
+    if mode in ['detector', 'All']:
         static_detector.main(params, recipe, sparams)
     # --------------------------------------------------------------------------
     # telluric static files
     # --------------------------------------------------------------------------
     #    excess_emissivity
     #    tapas_all_sp
-    if params['INPUTS']['MODE'] in ['telluric', 'All']:
+    if mode in ['telluric', 'All']:
         pass
 
     # --------------------------------------------------------------------------
@@ -90,17 +92,8 @@ def __main__(recipe, params):
     #   hollow cathode catalogue
     #   cavity length ll fit
     #   initial wave ref
-    if params['INPUTS']['MODE'] in ['wave', 'All']:
+    if mode in ['wavelength', 'All']:
         static_wavelength.main(params, recipe, sparams)
-
-
-    # --------------------------------------------------------------------------
-    # Update remote files?
-    # --------------------------------------------------------------------------
-
-    # --------------------------------------------------------------------------
-    # perform a reset to copy files to correct places?
-    # --------------------------------------------------------------------------
 
     # ----------------------------------------------------------------------
     # End of main code

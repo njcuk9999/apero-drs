@@ -4987,7 +4987,7 @@ def plot_polar_lsd(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
 
 
 # =============================================================================
-# Define tool functions
+# Define tool plotting functions
 # =============================================================================
 def plot_logstats_bar(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     """
@@ -5360,6 +5360,58 @@ def plot_stats_ram_plot(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     plt.subplots_adjust(hspace=0, left=0.05, right=0.99, top=0.95,
                         bottom=0.05)
 
+    # -------------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+# =============================================================================
+# Define static file plotting functions
+# =============================================================================
+def plot_static_det_plot(plotter: Plotter, graph: Graph,
+                         kwargs: Dict[str, Any]):
+    # -------------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # get plt
+    plt = plotter.plt
+    # -------------------------------------------------------------------------
+    # get values from kwargs
+    dark0 = kwargs['dark0']
+    recon_amp = kwargs['recon_amp']
+    n_amp = kwargs['n_amp']
+    # work out values
+    amps = np.arange(n_amp).astype(int)
+    size = dark0.shape
+    # plotting kwargs
+    pkwargs = dict(origin='lower', cmap='gray', vmin=-0.1, vmax=0.1,
+                   aspect='auto')
+    # ------------------------------------------------------------------
+    # get the plot generator
+    generator = plotter.plotloop(amps)
+    # prompt to start looper
+    plotter.close_plots(loop=True)
+    # loop aroun the orders
+    for amp in generator:
+        fig, frames = graph.set_figure(plotter, nrows=1, ncols=3,
+                                       sharex='all', sharey='all')
+        # Plot the amplifier region, reconstructed amp, and their
+        # difference for visual inspection
+        start = amp * (size[1] // n_amp)
+        end = (amp + 1) * (size[1] // n_amp)
+        # plot the dark, the reconstructed amps and the residual
+        frames[0].imshow(dark0[:, start:end], **pkwargs)
+        frames[1].imshow(recon_amp, **pkwargs)
+        frames[2].imshow(dark0[:, start:end] - recon_amp, **pkwargs)
+        # force a tight layout
+        plt.tight_layout()
+        # update filename (adding order_num to end)
+        suffix = 'amp{0}'.format(amp)
+        graph.set_filename(plotter.params, plotter.location, suffix=suffix)
+        # ------------------------------------------------------------------
+        # wrap up using plotter
+        plotter.plotend(graph)
     # -------------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)

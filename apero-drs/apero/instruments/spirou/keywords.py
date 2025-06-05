@@ -2041,6 +2041,17 @@ KDict.set('KW_LSD_NORM_DEPTH', key='DEPTNORM',
 KDict.set('KW_LSD_NORM_WEIGHT', key='WEIGNORM',
           comment='Normalization weight = wl * d * g used in LSD')
 
+# -----------------------------------------------------------------------------
+# Define static file variables
+# -----------------------------------------------------------------------------
+# define the source of the flat (LED or engineering flat)
+KDict.set('KW_STATIC_FLAT_SOURCE', key='FLATSRCE',
+          comment='Source of the static flat [LED or engineering]')
+
+# define the source of the flat (LED or engineering flat)
+KDict.set('KW_STATIC_DARKCURR_CMODE', key='CMETHOD',
+          comment='Method to determine intecept/slope')
+
 # =============================================================================
 #  End of configuration file
 # =============================================================================

@@ -5470,6 +5470,11 @@ CDict.add('POLAR_LSD', value=False,
           group=cgroup,
           description='turn on the polar lsd debug plot')
 
+# turn on the static detector debug plot
+CDict.add('STATIC_DET', value=False,
+          dtype=bool, source=__NAME__, user=True, active=False,
+          group=cgroup,
+          description='turn on the static detector debug plot')
 
 # =============================================================================
 # TOOLS REPROCESS SETTINGS
@@ -5728,6 +5733,25 @@ CDict.add('RESET_DICT', value=ari_reset_dict,
           description='Define the ARI reset directory (relative '
                       'paths to copy into the "other" directory '
                       'on installation/reset)')
+
+# =============================================================================
+# STATIC SETTINGS
+# =============================================================================
+cgroup = 'TOOLS.STATIC'
+CDict.add_group(cgroup, description='TOOLS.STATIC: STATIC SETTINGS')
+
+# Define the ari instrument (may be different from the apero instrument)
+CDict.add('DET_PATH', value='engineering', dtype=str,
+          source=__NAME__, group=cgroup,
+          description='Define the sub-directory in PATH.ASSETS to put new '
+                      'static calibrations in')
+
+# Define the shortest allowed longest exposure time for the DARKs provided
+#    [in s]
+CDict.add('SHORTEST_LONG_DARK_EXPTIME', value=600, dtype=float,
+          source=__NAME__, group=cgroup,
+          description='Define the shortest allowed longest exposure time '
+                      'for the DARKs provided [in s]')
 
 # =============================================================================
 #  End of configuration file

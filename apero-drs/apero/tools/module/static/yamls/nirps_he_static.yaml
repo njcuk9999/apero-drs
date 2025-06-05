@@ -1,8 +1,7 @@
 # ------------------------------------------------------------------------------
 # Global settings
 # ------------------------------------------------------------------------------
-inpath: /scratch2/spirou/drs-data/static/
-
+inpath: /scratch2/nirps/drs-data/static/nirps_he/
 
 # ------------------------------------------------------------------------------
 # Engineering
@@ -12,15 +11,13 @@ detector:
   # DARKs of different e.g. 60s, 600s
   # These exposure times should be representative of short and long
   # science exposures, there should be multiple of each specific DARK exptime
-  # exceptionally we can use just one set of exposure times (but they should
-  # be long darks ~>600s
   raw_dark_files:
-    - 2488223d.fits
-    - 2488382d.fits
-    - 2503164d.fits
-    - 2503324d.fits
-    - 2518936d.fits
-    - 2519126d.fits
+    - 2488223d.fits           # From 2020-05-14
+    - 2488382d.fits           # From 2020-05-14
+    - 2503164d.fits           # From 2020-07-30
+    - 2503324d.fits           # From 2020-07-30
+    - 2518936d.fits           # From 2020-10-07
+    - 2519126d.fits           # From 2020-10-07
 
   # LED in all fibers, good SNR, not saturated
   #  files should be dominated by systematics i.e. SNR ~ 300 when combined

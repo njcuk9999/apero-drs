@@ -1534,7 +1534,6 @@ apero_postprocess.description_file = apero_postprocess.default_rfile()
 # add to recipe
 recipes.append(apero_postprocess)
 
-
 # -----------------------------------------------------------------------------
 # apero_static.py
 # -----------------------------------------------------------------------------
@@ -1548,17 +1547,25 @@ apero_static.recipe_type = 'nolog-tool'
 apero_static.recipe_kind = 'admin'
 
 apero_static.set_outputs(STATIC_DARK=files.static_dark,
+                         STATIC_LED=files.static_led,
                          STATIC_FLAT=files.static_flat,
                          STATIC_DARK_CURR=files.static_dark_curr,
                          STATIC_HOTPIX=files.static_hotpix)
 
 apero_static.set_arg(pos=0, name='yamlfile', dtype=str,
                    helpstr='Static YAML definition file')
-apero_static.set_kwarg(name='--mode', dtype='options', default='None',
-                 options=['LED_FLAT'],
+apero_static.set_kwarg(name='--mode', dtype='options', default='All',
+                 options=['detector', 'wavelength', 'All'],
                  helpstr=textentry('STATIC_MODE_HELP'), required=True)
-apero_static.description_file = 'apero_static.rst'
+apero_static.set_kwarg(**plot)
 
+apero_static.set_debug_plots('STATIC_DET')
+apero_static.set_summary_plots('SUM_STATIC_DET')
+
+
+apero_static.description_file = 'apero_static.rst'
+# add to recipe
+recipes.append(apero_static)
 
 # =============================================================================
 # Run order

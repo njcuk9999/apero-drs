@@ -10,7 +10,8 @@ Created on 2025-06-02 at 11:37
 @author: cook
 """
 import os
-from typing import Any, Dict, List, Union
+import warnings
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
 from astropy.table import Table
@@ -22,6 +23,7 @@ from aperocore.core import drs_log
 
 from apero.base import base as apero_base
 from apero.io import drs_fits
+from apero.tools.module.static import drs_static
 
 
 # =============================================================================
@@ -47,10 +49,6 @@ AperoCodedException = drs_log.AperoCodedException
 # Define functions
 # =============================================================================
 def main(params: ParamDict, recipe, sparams: Dict[str, Any]):
-
-    # TODO: Move to constants
-    params.set('STATIC.DET_PATH', value='engineering')
-
     # get input file definitions
     in_path = sparams['inpath']
     dark_files = sparams['detector']['raw_dark_files']
@@ -69,7 +67,7 @@ def main(params: ParamDict, recipe, sparams: Dict[str, Any]):
     # -------------------------------------------------------------------------
     # sort out detector path (this is where we are saving things to)
     det_path = str(os.path.join(params['PATH.ASSETS'], 
-                                params['STATIC.DET_PATH']))
+                                params['TOOLS.STATIC.DET_PATH']))
     if not os.path.exists(det_path):
         os.makedirs(det_path)
     # -------------------------------------------------------------------------
@@ -86,75 +84,32 @@ def main(params: ParamDict, recipe, sparams: Dict[str, Any]):
     static_flat = create_high_pass_flat(params, recipe, det_path,
                                         static_led, flat_bin_size,
                                         frac_flat_bad)
-    
     # -------------------------------------------------------------------------
     # Step 4: Create amplifier bias model
     # -------------------------------------------------------------------------
     recon_amp, dark0 = create_dark_curr(params, recipe, in_path, det_path,
                                         dark_files)
-
     # -------------------------------------------------------------------------
     # Step 5: Create hot pixel reference file
     # -------------------------------------------------------------------------
-    create_hotpix_map(params, recipe, dark0, static_flat, dark_threshold)
-
-
+    create_hotpix_map(params, recipe, det_path, dark0, static_flat,
+                      dark_threshold)
     # -------------------------------------------------------------------------
     # Plots
     # -------------------------------------------------------------------------
+    recipe.plot('STATIC_DET', dark0=dark0,
+                n_amp=params['PP.TOTAL_AMP_NUM'], recon_amp=recon_amp)
+    recipe.plot('SUM_STATIC_DET', dark0=dark0,
+                n_amp=params['PP.TOTAL_AMP_NUM'], recon_amp=recon_amp)
+    # -------------------------------------------------------------------------
+    # Update repo
+    # -------------------------------------------------------------------------
+    drs_static.update_repo(params, recipe, det_path)
 
 
-    return 0
-
-
-def save_static_file(params: ParamDict, recipe, det_path: str,
-                     static_file_name: str, desc: str,
-                     data_list: List[Union[np.ndarray, Table]],
-                     datatype_list: List[str],
-                     name_list: List[str],
-                     hdr_kwargs: Dict[str, Any] = None):
-    """
-    Save a static file using the standard apero file instance
-
-    :param params: ParamDict, parameter dictionary of constants
-    :param recipe: Apero recipe object
-    :param det_path: str, path to save the static file
-    :param static_file_name: str, name of the static file
-                             (must be in recipe.outputs)
-    :param desc: str, description from writing status
-    :param data_list: list, list of data to be saved [np.ndarray and/or Table]
-    :param datatype_list: list, list of datatypes to be saved "image" or "table"
-    :param name_list: list, list of names to be saved (the EXTNAME in a fits
-                      file)
-    :param hdr_kwargs: dict, keyword arguments (in params) i.e. KW_XXX
-                       to push into the headers
-
-    :return None - writes to disk
-    """
-    # get dark file
-    static_file = recipe.outputs[static_file_name].newcopy(params=params)
-    # construct the filename from file instance
-    static_file.construct_filename(path=det_path)
-    # print progress
-    msg = 'Writing {0}: {1}'
-    margs = [desc, static_file.filename]
-    WLOG(params, '', msg.format(*margs))
-    # add core values (that should be in all headers)
-    static_file.add_core_hkeys(params)
-    # add instrument
-    static_file.add_hkey('KW_INSTRUMENT', params['INSTRUMENT'])
-    # add any other header keywords
-    if hdr_kwargs is not None:
-        for key in hdr_kwargs:
-            static_file.add_hkey(key, hdr_kwargs[key])
-    # save to disk
-    static_file.write_multi(data_list=data_list,
-                            datatype_list=datatype_list,
-                            name_list=name_list,
-                            block_kind='static',
-                            runstring='None')
-
-
+# =============================================================================
+# Define create functions
+# =============================================================================
 def create_median_dark(params: ParamDict, recipe, in_path: str,  det_path: str,
                        in_dark_files: List[str]) -> np.ndarray:
     """
@@ -233,15 +188,16 @@ def create_median_dark(params: ParamDict, recipe, in_path: str,  det_path: str,
         cube_dict['MJD'].append(long_mjds[it])
     # -------------------------------------------------------------------------
     # Take the median across the stack
-    dark = np.nanmedian(cube_dark, axis=0)
+    with warnings.catch_warnings(record=True) as _:
+        dark = np.nanmedian(cube_dark, axis=0)
     # convert cube_dict to astropy table
     dark_table = Table(cube_dict)
     # -------------------------------------------------------------------------
-    save_static_file(params, recipe, det_path, 'STATIC_DARK',
-                     desc='median dark frame',
-                     data_list=[dark, dark_table],
-                     datatype_list=['image', 'table'],
-                     name_list=['STATIC_DARK', 'STATIC_DARK_TABLE'])
+    drs_static.save_static_file(params, recipe, det_path, 'STATIC_DARK',
+                                desc='median dark frame',
+                                data_list=[dark, dark_table],
+                                datatype_list=['image', 'table'],
+                                name_list=['STATIC_DARK', 'STATIC_DARK_TABLE'])
     # -------------------------------------------------------------------------
     # return dark
     return dark
@@ -279,7 +235,7 @@ def create_median_led(params: ParamDict, recipe,
     # deal with no led files
     if in_led_files in [None, '', 'None', 'Null']:
         no_leds = True
-        wmsg = 'No LED files provided'
+        wmsg = 'No LED files provided - Attempting to use Engineering flat'
         WLOG(params, 'warning', wmsg, sublevel=6)
     elif isinstance(in_led_files, list):
         if len(in_led_files) < 3:
@@ -316,16 +272,16 @@ def create_median_led(params: ParamDict, recipe,
         # read the engineering flat file
         eng_flat = drs_fits.readfits(params, eng_flat_file)
         # create a flat table
-        flat_table = Table([engineering_flat], names=['FILENAME'])
+        flat_table = Table([[engineering_flat]], names=['FILENAME'])
         # add a header key for satif flat mode
         hdr_kwargs = dict(KW_STATIC_FLAT_SOURCE='ENGINEERING FLAT')
         # save static file
-        save_static_file(params, recipe, det_path, 'STATIC_LED',
-                         desc='engineering flat',
-                         data_list=[eng_flat, flat_table],
-                         datatype_list=['image', 'table'],
-                         name_list=['STATIC_LED', 'STATIC_LED_TABLE'],
-                         hdr_kwargs=hdr_kwargs)
+        drs_static.save_static_file(params, recipe, det_path, 'STATIC_LED',
+                                    desc='engineering flat',
+                                    data_list=[eng_flat, flat_table],
+                                    datatype_list=['image', 'table'],
+                                    name_list=['STATIC_LED', 'STATIC_LED_TABLE'],
+                                    hdr_kwargs=hdr_kwargs)
         # return the engineering flat
         return eng_flat
     # -------------------------------------------------------------------------
@@ -366,12 +322,12 @@ def create_median_led(params: ParamDict, recipe,
     # add a header key for satif flat mode
     hdr_kwargs = dict(KW_STATIC_FLAT_SOURCE='LED FILES')
     # save static file and return flat
-    save_static_file(params, recipe, det_path, 'STATIC_LED',
-                     desc='led frame',
-                     data_list=[led, led_table],
-                     datatype_list=['image', 'table'],
-                     name_list=['STATIC_LED', 'STATIC_LED_TABLE'],
-                     hdr_kwargs=hdr_kwargs)
+    drs_static.save_static_file(params, recipe, det_path, 'STATIC_LED',
+                                desc='led frame',
+                                data_list=[led, led_table],
+                                datatype_list=['image', 'table'],
+                                name_list=['STATIC_LED', 'STATIC_LED_TABLE'],
+                                hdr_kwargs=hdr_kwargs)
     # -------------------------------------------------------------------------
     # return the led image
     return led
@@ -428,7 +384,8 @@ def create_high_pass_flat(params: ParamDict, recipe,
         margs = [iteration, sig_step]
         WLOG(params, '', msg.format(*margs))
         # median bin the image
-        binned_image = mp.medbin(flat, binsize, binsize)
+        binned_image = mp.medbin(flat, flat.shape[0] // binsize,
+                                 flat.shape[1] // binsize)
         # Upsample binned image
         recon = scizoom(binned_image, binsize, order=1)
         # Divide by smoothed image
@@ -444,18 +401,18 @@ def create_high_pass_flat(params: ParamDict, recipe,
     # mask bad pixels
     flat[bad_pix] = np.nan
     # save static file and return flat
-    save_static_file(params, recipe, det_path, 'STATIC_LED',
-                     desc='led frame',
-                     data_list=[flat],
-                     datatype_list=['image'],
-                     name_list=['STATIC_FLAT'])
+    drs_static.save_static_file(params, recipe, det_path, 'STATIC_LED',
+                                desc='led frame',
+                                data_list=[flat],
+                                datatype_list=['image'],
+                                name_list=['STATIC_FLAT'])
     # return the flat
     return flat
 
 
 
 def create_dark_curr(params: ParamDict, recipe, in_path: str,  det_path: str,
-                     in_dark_files: List[str]) -> np.ndarray:
+                     in_dark_files: List[str]) -> Tuple[np.ndarray, np.ndarray]:
     """
     Create amplifier dark current model
 
@@ -491,7 +448,7 @@ def create_dark_curr(params: ParamDict, recipe, in_path: str,  det_path: str,
     # get basic properties of the first file
     size = dark0.shape
     # get the number of amplifiers from parameters
-    n_amp = params['TOTAL_AMP_NUM']
+    n_amp = params['PP.TOTAL_AMP_NUM']
     # set up the storage vectors
     cube_amps = np.zeros((len(dark_files), size[0], size[1] // n_amp),
                          dtype=float)
@@ -532,35 +489,76 @@ def create_dark_curr(params: ParamDict, recipe, in_path: str,  det_path: str,
         # fold into amplifier regions and store in cube
         cube_amps[it] = mp.nanmedian(cubeamp, axis=0)
     # -------------------------------------------------------------------------
-    # For each pixel in the amplifier-folded image, fit a line
-    #    (dark current vs. exposure time)
-    for x_it in range(size[1] // n_amp):
-        # print progress
-        msg = '\tFitting dark frames Amplifier pixel {0}/{1}'
-        margs = [x_it + 1, size[1] // n_amp]
-        WLOG(params, '', msg.format(*margs))
-        # loop around all y-pixels
-        for y_it in range(size[0]):
-            # linear fit exposure times vs the amplitudes
-            coeffs = np.polyval(exptimes, cube_amps[:, y_it, x_it], 1)
-            # push into the offset (bias)
-            intercept[y_it, x_it] = coeffs[1]
-            # push into the slop (dark current rate)
-            slope[y_it, x_it] = coeffs[0]
+    # we need to fit across exptime time so we need at least two different
+    # exposure times
+    uexptimes = np.unique(exptimes)
+    min_exp = np.min(uexptimes)
+    max_exp = np.max(uexptimes)
+    # get the shortest allowed longest exposure time
+    shortest_long = params['TOOLS.STATIC.SHORTEST_LONG_DARK_EXPTIME']
+    # deal with the longest exposure being too short
+    if max_exp < shortest_long:
+        emsg = ('Max DARK exposure time found = {0} s. '
+                'Must have EXPTIME >= {1} s')
+        eargs = [max_exp, shortest_long]
+        raise AperoCodedException(params, None, emsg.format(*eargs),
+                                  targs=eargs)
+    # deal with only one unique exposure time
+    if uexptimes.size < 2:
+        # print warning
+        wmsg = ('Single DARK exposure time found. Using fall back method to '
+                'calculate intercept and setting slope=0')
+        WLOG(params, 'warning', wmsg, sublevel=2)
+        # intercept is the median of the cube
+        intercept = mp.nanmedian(cube_amps, axis=0)
+        # slope is zero
+        slope = np.zeros_like(intercept)
+        # set the combine mode
+        combine_mode = 'INT[MED] SLOPE[0]'
+    # check that there is at least a factor of 2 between min and max
+    #    unique exposure times
+    elif max_exp / min_exp < 2:
+        emsg = ('Multiple DARK exposure times given but they do not differ '
+                'by at least a factor of two:\n\tmin={0} s\n\tmax={1} s')
+        eargs = [min_exp, max_exp]
+        raise AperoCodedException(params, None, emsg.format(*eargs),
+                                  targs=eargs)
+    else:
+        # For each pixel in the amplifier-folded image, fit a line
+        #    (dark current vs. exposure time)
+        for x_it in range(size[1] // n_amp):
+            # print progress
+            msg = '\tFitting dark frames Amplifier pixel {0}/{1}'
+            margs = [x_it + 1, size[1] // n_amp]
+            WLOG(params, '', msg.format(*margs))
+            # loop around all y-pixels
+            for y_it in range(size[0]):
+                # linear fit exposure times vs the amplitudes
+                coeffs = np.polyfit(exptimes, cube_amps[:, y_it, x_it], 1)
+                # push into the offset (bias)
+                intercept[y_it, x_it] = coeffs[1]
+                # push into the slop (dark current rate)
+                slope[y_it, x_it] = coeffs[0]
+        # set the combine mode
+        combine_mode = 'FIT[EXPTIME]'
     # -------------------------------------------------------------------------
     # convert cube_dict to astropy table
     flat_table = Table([dark_files, exptimes, mjdtimes],
                        names=['FILENAME', 'EXPTIME', 'MJD'])
+    # make header dictionary
+    hdr_kwargs = dict(KW_STATIC_DARKCURR_CMODE=combine_mode)
     # -------------------------------------------------------------------------
     # write static flat
-    save_static_file(params, recipe, det_path, 'STATIC_DARK_CURR',
-                     desc='dark current slope and intercept',
-                     data_list=[slope, intercept, flat_table],
-                     datatype_list=['image', 'image', 'table'],
-                     name_list=['slope', 'intercept', 'static_flat_table'])
+    drs_static.save_static_file(params, recipe, det_path, 'STATIC_DARK_CURR',
+                                desc='dark current slope and intercept',
+                                data_list=[slope, intercept, flat_table],
+                                datatype_list=['image', 'image', 'table'],
+                                name_list=['slope', 'intercept',
+                                           'static_flat_table'],
+                                hdr_kwargs=hdr_kwargs)
     # -------------------------------------------------------------------------
     # Reconstruct amplifier dark current map for the
-    recon_amp = intercept + slope * dhdr0[params['EXPTIME'][0]]
+    recon_amp = intercept + slope * dhdr0[params['KW_EXPTIME'][0]]
     # # Prepare full-size reconstructed dark map
     # recon_map = np.zeros_like(dark0)
     # # loop around amplifiers and fill in the recon map
@@ -575,7 +573,7 @@ def create_dark_curr(params: ParamDict, recipe, in_path: str,  det_path: str,
     #     end = (amp + 1) * (size[1] // n_amp)
     #     recon_map[:, start:end] = recon_amp[:, ::flip]
     # return the recon amplifier drak current map
-    return recon_amp
+    return recon_amp, dark0
 
 
 def create_hotpix_map(params: ParamDict, recipe, det_path: str,
@@ -609,11 +607,11 @@ def create_hotpix_map(params: ParamDict, recipe, det_path: str,
     hotpix = Table([nsig, xpix, ypix], names=['nsig', 'xpix', 'ypix'])
     # -------------------------------------------------------------------------
     # write static flat
-    save_static_file(params, recipe, det_path, 'STATIC_HOTPIX',
-                     desc='hotpix',
-                     data_list=[hotpix],
-                     datatype_list=['table'],
-                     name_list=['hotpix'])
+    drs_static.save_static_file(params, recipe, det_path, 'STATIC_HOTPIX',
+                                desc='hotpix',
+                                data_list=[hotpix],
+                                datatype_list=['table'],
+                                name_list=['hotpix'])
 
 
 

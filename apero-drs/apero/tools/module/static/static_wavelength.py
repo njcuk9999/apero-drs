@@ -72,7 +72,7 @@ ParamDict = param_functions.ParamDict
 # =============================================================================
 # Define functions
 # =============================================================================
-def main(params: ParamDict, sparams: Dict[str, Any]):
+def main(params: ParamDict, recipe, sparams: Dict[str, Any]):
 
     hc_raw_file = sparams['hc_raw_file']
     fp_raw_file = sparams['fp_raw_file']

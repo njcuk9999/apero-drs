@@ -2732,6 +2732,9 @@ CDict.set('POLAR_STOKES_I', value=True, source=__NAME__, group=cgroup)
 # turn on the polar lsd debug plot
 CDict.set('POLAR_LSD', value=True, source=__NAME__, group=cgroup)
 
+# turn on the static detector debug plot
+CDict.add('STATIC_DET', value=True, source=__NAME__, group=cgroup)
+
 # =============================================================================
 # TOOLS SETTINGS
 # =============================================================================

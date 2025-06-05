@@ -2418,6 +2418,9 @@ CDict.set('CCF_SWAVE_REF', value=False, source=__NAME__, group=cgroup)
 # turn on the ccf photon uncertainty debug plot
 CDict.set('CCF_PHOTON_UNCERT', value=True, source=__NAME__, group=cgroup)
 
+# turn on the static detector debug plot
+CDict.add('STATIC_DET', value=True, source=__NAME__, group=cgroup)
+
 # =============================================================================
 # TOOLS SETTINGS
 # =============================================================================
