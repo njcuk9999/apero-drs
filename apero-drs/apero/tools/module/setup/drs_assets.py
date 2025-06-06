@@ -43,17 +43,16 @@ AperoCodedException = drs_log.AperoCodedException
 # =============================================================================
 # functions
 # =============================================================================
-def update_remote_assets(params: ParamDict):
+def update_remote_assets(params: ParamDict, indir: str):
     """
     Create a yaml file containing all checksums and create a tar file of the
     assets directory and upload to the server
 
-    :param params: ParamDict
+    :param params: ParamDict, parameter dictionary of constants
+    :param indir: the input directory for local assets to be uploaded
+
     :return:
     """
-    # get input directory
-    indir = params['INPUTS']['INDIR']
-
     # check that indir is correct
     if not indir.endswith(os.sep):
         indir += os.sep

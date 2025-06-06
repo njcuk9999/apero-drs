@@ -43,17 +43,18 @@ Code Steps (matches main code steps):
     16. Plot the final wavelength solution for all orders.
 ===============================================================================
 """
-
+import os
 from typing import Dict, Any
 
 from aperocore.constants import param_functions
 from apero.base import base as apero_base
 from apero.utils import drs_data
+from apero.tools.module.static import drs_static
 
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'tools.module.static.static_wave.py'
+__NAME__ = 'tools.module.static.static_wavelength.py'
 __INSTRUMENT__ = 'None'
 # Get version and author
 __PACKAGE__ = apero_base.__PACKAGE__
@@ -65,28 +66,64 @@ __release__ = apero_base.__release__
 ParamDict = param_functions.ParamDict
 
 
-# -----------------------------------------------------------------------------
-# TODO: Need to load line list
+# TODO:
+#    1.  Fill in + test this code
+#    2.  Remove REF_LEAK from usage
+#    3.  Get wave guess from assets
+#    4.  Add HC update part (from apero-utils.updates_to_drs.apero_Static_tools.hollow_cathode_update.py
+#    5.  remove "reset" directory from assets (move assets/reset/runs to assets/runs)
+#    6.  when resetting copy assets/runs to runs
 
 
 # =============================================================================
 # Define functions
 # =============================================================================
 def main(params: ParamDict, recipe, sparams: Dict[str, Any]):
+    # -------------------------------------------------------------------------
+    # sort out detector path (this is where we are saving things to)
+    cal_path = str(os.path.join(params['PATH.ASSETS'],
+                                params['TOOLS.STATIC.CAL_PATH']))
+    if not os.path.exists(cal_path):
+        os.makedirs(cal_path)
+    # -------------------------------------------------------------------------
+    # Step 1: Create HC catalogue
+    # -------------------------------------------------------------------------
+    if sparams['wavelength']['run_generate_hc_catalogue']:
+        generate_hc_catagloue(params, recipe, sparams, cal_path)
 
-    hc_raw_file = sparams['hc_raw_file']
-    fp_raw_file = sparams['fp_raw_file']
-    line_list = sparams['line_list']
+    # -------------------------------------------------------------------------
+    # Step 2: Run reduction for given night
+    # -------------------------------------------------------------------------
+    if sparams['wavelength']['run_generate_night']:
+        generate_night(params, recipe, sparams)
 
-    cavity0 = sparams['cavity0']
+    # -------------------------------------------------------------------------
+    # Step 3: Extract HC and FP
+    # -------------------------------------------------------------------------
+    if sparams['wavelength']['run_generate_wave_guess']:
+        generate_wave_guess(params, recipe, sparams, cal_path)
 
-    cavity_ll_file = params['CAL.WAVE.GEN.CAVITY_LL_FILE']
+    # -------------------------------------------------------------------------
+    # Update repo
+    # -------------------------------------------------------------------------
+    drs_static.update_repo(params, recipe, save_path=cal_path)
 
+
+def generate_hc_catagloue(params: ParamDict, recipe, sparams: Dict[str, Any],
+                          cal_path: str):
+    pass
+
+
+def generate_night(params: ParamDict, recipe, sparams: Dict[str, Any]):
+    pass
+
+
+def generate_wave_guess(params: ParamDict, recipe, sparams: Dict[str, Any],
+                        cal_path: str):
     # load the line list
     wavell, ampll = drs_data.load_linelist(params)
 
-
-    return 0
+    pass
 
 
 # =============================================================================

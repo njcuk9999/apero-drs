@@ -5381,6 +5381,7 @@ def plot_static_det_plot(plotter: Plotter, graph: Graph,
     dark0 = kwargs['dark0']
     recon_amp = kwargs['recon_amp']
     n_amp = kwargs['n_amp']
+    amp = kwargs.get('amp', None)
     # work out values
     amps = np.arange(n_amp).astype(int)
     size = dark0.shape
@@ -5389,9 +5390,13 @@ def plot_static_det_plot(plotter: Plotter, graph: Graph,
                    aspect='auto')
     # ------------------------------------------------------------------
     # get the plot generator
-    generator = plotter.plotloop(amps)
-    # prompt to start looper
-    plotter.close_plots(loop=True)
+    if amp is None:
+        generator = plotter.plotloop(amps)
+        # prompt to start looper
+        plotter.close_plots(loop=True)
+    else:
+        # just plot this one
+        generator = [amp]
     # loop aroun the orders
     for amp in generator:
         fig, frames = graph.set_figure(plotter, nrows=1, ncols=3,

@@ -1554,8 +1554,8 @@ apero_static.set_outputs(STATIC_DARK=files.static_dark,
 
 apero_static.set_arg(pos=0, name='yamlfile', dtype=str,
                    helpstr='Static YAML definition file')
-apero_static.set_kwarg(name='--mode', dtype='options', default='All',
-                 options=['detector', 'wavelength', 'All'],
+apero_static.set_kwarg(name='--mode', dtype='options', default='None',
+                 options=['detector', 'wavelength', 'All', 'None'],
                  helpstr=textentry('STATIC_MODE_HELP'), required=True)
 apero_static.set_kwarg(**plot)
 

@@ -10,6 +10,7 @@ Created on 2019-07-26 at 09:40
 @author: cook
 """
 import os
+import shutil
 from typing import Any, Dict, List, Union
 
 import numpy as np
@@ -18,9 +19,11 @@ from astropy.table import Table
 from aperocore import base
 from aperocore.constants import param_functions
 from aperocore.core import drs_log
+from aperocore.core import drs_text
 
 from apero.base import base as apero_base
 from apero.utils import drs_data
+from apero.tools.module.setup import drs_assets
 
 # =============================================================================
 # Define variables
@@ -111,15 +114,21 @@ def save_static_file(params: ParamDict, recipe, det_path: str,
     recipe.add_output_file(static_file)
 
 
-def update_repo(params: ParamDict, recipe, det_path: str, ):
+def update_repo(params: ParamDict, recipe, save_path: str):
+    """
+    Update the local github repository for APERO with the new version of the
+    files (up to now they have been saved to the installation path not the
+    python module path)
 
+    :param params: ParamDict, parameter dictionary of constants
+    :param recipe: Apero recipe object
+    :param save_path: str, path the static files were saved to
 
+    :return None - copies writen files
+    """
     # Step 1. use recipe.output_files and change det_path to assets path
-    # Step 2. run update assets
+    # Step 2. copy files to APERO local python module directory
     # Step 3. remove files from recipe.output_files (don't want to index)
-
-    # ask user if they want to update repo
-
     # get path to yaml file
     _asset_path = params['IPATH.RESET_ASSETS']
     # get the absolute path to the assets dir
@@ -127,14 +136,55 @@ def update_repo(params: ParamDict, recipe, det_path: str, ):
 
     # loop around files
     for key in recipe.output_files:
+        # get the basename
+        basename = recipe.output_files[key]['FILENAME']
         # get the in path
-        in_path = recipe.output_files[key]
+        in_path = recipe.output_files[key]['PATH']
+        in_file = str(os.path.join(in_path, basename))
         # skip anything that does not exist (shouldn't happen, but just in case)
         if not os.path.exists(in_path):
             continue
         # get the out path
-        out_path = in_path.replac(det_path, abs_asset_path)
-        # print progress
+        out_path = in_path.replace(save_path, abs_asset_path)
+        out_file = str(os.path.join(out_path, basename))
+        # Get user to confirm removal of file
+        question = 'Update and replace {0}?'.format(out_file)
+        uinput = drs_text.user_input(question, dtype='YN')
+        # only if user confirms removal of this file
+        if uinput:
+            # remove old file
+            if os.path.exists(out_file):
+                os.remove(out_file)
+            # print progress
+            msg = 'Replacing {0}'
+            margs = [out_file]
+            WLOG(params, '', msg.format(*margs))
+            # copy file
+            shutil.copy(in_file, out_file)
+        # remove from recipe outputs (we don't want to index this file)
+        del recipe.output_files[key]
+
+
+def update_assets(params: ParamDict):
+    """
+    Update the assets to the remote repo
+
+    :param params: ParamDict, parameter dictionary of constants
+
+    :return None - updates remote assets
+    """
+    # Ask user if they wish to update the remote assets
+    question = 'Update remote assets with all changes?'
+    uinput = drs_text.user_input(question, dtype='YN')
+    # deal with no --> return
+    if not uinput:
+        return
+    # get path to yaml file
+    _asset_path = params['IPATH.RESET_ASSETS']
+    # get the absolute path to the assets dir
+    abs_asset_path = drs_data.construct_path(params, '', _asset_path)
+    # upload assets
+    drs_assets.update_remote_assets(params, abs_asset_path)
 
 
 # =============================================================================

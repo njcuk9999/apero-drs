@@ -100,11 +100,12 @@ def main(params: ParamDict, recipe, sparams: Dict[str, Any]):
     recipe.plot('STATIC_DET', dark0=dark0,
                 n_amp=params['PP.TOTAL_AMP_NUM'], recon_amp=recon_amp)
     recipe.plot('SUM_STATIC_DET', dark0=dark0,
-                n_amp=params['PP.TOTAL_AMP_NUM'], recon_amp=recon_amp)
+                n_amp=params['PP.TOTAL_AMP_NUM'], recon_amp=recon_amp,
+                amp=0)
     # -------------------------------------------------------------------------
     # Update repo
     # -------------------------------------------------------------------------
-    drs_static.update_repo(params, recipe, det_path)
+    drs_static.update_repo(params, recipe, save_path=det_path)
 
 
 # =============================================================================
@@ -401,7 +402,7 @@ def create_high_pass_flat(params: ParamDict, recipe,
     # mask bad pixels
     flat[bad_pix] = np.nan
     # save static file and return flat
-    drs_static.save_static_file(params, recipe, det_path, 'STATIC_LED',
+    drs_static.save_static_file(params, recipe, det_path, 'STATIC_FLAT',
                                 desc='led frame',
                                 data_list=[flat],
                                 datatype_list=['image'],

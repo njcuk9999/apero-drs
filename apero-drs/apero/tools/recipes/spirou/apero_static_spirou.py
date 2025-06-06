@@ -17,6 +17,8 @@ from apero.tools.module.static import static_detector
 from apero.tools.module.static import static_wavelength
 from apero.base import base as apero_base
 from apero.tools.module.static import drs_static
+from apero.tools.module.setup import drs_assets
+from aperocore.core import drs_text
 
 # =============================================================================
 # Define variables
@@ -64,12 +66,26 @@ def main(**kwargs):
 
 
 def __main__(recipe, params):
-    # get mode from inputs
-    mode = params['INPUTS']['MODE']
     # get static parmaeters from yaml file
     sparams = drs_static.load(params)
+    # get mode from yaml file
+    mode = sparams['mode']
+    # override mode with inputs (if set)
+    if not drs_text.null_text(params['INPUTS']['MODE'], ['None', '', 'Null']):
+        mode = params['INPUTS']['MODE']
     # set up plotting (no plotting before this)
     recipe.plot.set_location()
+    # -------------------------------------------------------------------------
+    # first we must make sure our assets are up-to-date
+    # -------------------------------------------------------------------------
+    # now check whether we need to download the assets
+    update_assets = drs_assets.check_local_assets(params)
+    # if they need updating, update them now
+    if update_assets:
+        msg = 'Updating APERO assets'
+        WLOG(None, 'info', msg)
+        drs_assets.update_local_assets(params,
+                                       tarfile=params.get('TARFILE', None))
     # -------------------------------------------------------------------------
     # detector static files
     # -------------------------------------------------------------------------
@@ -94,6 +110,12 @@ def __main__(recipe, params):
     #   initial wave ref
     if mode in ['wavelength', 'All']:
         static_wavelength.main(params, recipe, sparams)
+
+
+    # --------------------------------------------------------------------------
+    # Update remote files based on changes here (if user agrees)
+    # --------------------------------------------------------------------------
+    drs_static.update_assets(params)
 
     # ----------------------------------------------------------------------
     # End of main code
