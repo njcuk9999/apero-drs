@@ -21,6 +21,7 @@ from aperocore.core import drs_log
 from apero.utils import drs_recipe
 from apero.utils import drs_startup
 from apero.science.velocity import gen_lbl
+from apero.io import drs_path
 from apero.base import base as apero_base
 
 # =============================================================================
@@ -133,6 +134,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         lblrtn = lbl_reset.main(**kwargs)
         # log messages from lbl
         gen_lbl.add_log(params, lblrtn)
+    # -------------------------------------------------------------------------
+    # deal with bad symlinks
+    drs_path.remove_broken_symlinks(params, params['LBL_PATH'])
     # -------------------------------------------------------------------------
     # step 3: use apero get to copy files to lbl directory
     #          symlink blaze to calib
