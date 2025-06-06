@@ -527,6 +527,39 @@ def recursive_path_glob(params: ParamDict,
     return valid_files
 
 
+def remove_broken_symlinks(params: ParamDict, path: str):
+    """
+    Removes broken symlinks recusively from the given directory
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param path: str, path to remove all symlinks from
+    :return:
+    """
+    # if we don't have this directory just return - it will be created later
+    if not os.path.exists(path):
+        return
+    # convert to Path
+    rootpath = Path(path)
+    # save a counter
+    count = 0
+    # loop around all sub-directories
+    for path in rootpath.rglob('*'):
+        # test for symlink and for path existing
+        if path.is_symlink() and not path.exists():
+            try:
+                path.unlink()
+                count += 1
+            except Exception as e:
+                emsg = 'Failed to remove path {0}\n\tError {1}: {2}'
+                eargs = [path, type(e), str(e)]
+                WLOG(params, 'error', emsg.format(*eargs))
+                return
+    # print how many broken symlinks we removed (as a warning)
+    wmsg = 'Remove {0} broken symlinks'
+    wargs = [count]
+    WLOG(params, 'warning', wmsg.format(*wargs), sublevel=8)
+
+
 # =============================================================================
 # Start of code
 # =============================================================================
