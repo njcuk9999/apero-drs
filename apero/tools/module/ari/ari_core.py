@@ -500,6 +500,15 @@ class FileType:
     def get_files(self, qc: Optional[bool] = None, attr='files'):
         # get the value of the attribute
         vector = getattr(self, attr)
+
+        if not isinstance(vector, np.ndarray):
+            if isinstance(vector, list):
+                vector = np.array(vector).astype(str)
+            else:
+                emsg = 'Cannot get_files for {0}. vector={1}'
+                eargs = [self.name, vector]
+                raise ValueError(emsg.format(*eargs))
+
         # deal with no qc --> all files
         if qc is None:
             return vector
@@ -2875,6 +2884,10 @@ def create_file_list(files: List[str], path: str):
     files = np.sort(files)
     # open file
     with open(path, 'w') as filelist:
+        # deal with no files
+        if len(files) == 0:
+            filelist.write('')
+            return
         # loop around files
         for filename in files:
             # write to file
