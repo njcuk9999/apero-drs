@@ -603,16 +603,25 @@ def create_hotpix_map(params: ParamDict, recipe, det_path: str,
     cube = []
     for ddx in [-1,0,1]:
         for ddy in [-1,0,1]:
-            cube.append(np.roll(dark0,ddx,ddy))
+            cube.append(np.roll(dark0, (ddx, ddy), axis=(0, 1)))
     cube = np.array(cube).astype(float)
     # get the median value of each pixel and its neighbours
-    med_neighbours = np.nanmedian(cube,axis=0)
+    med_neighbours = np.nanmedian(cube, axis=0)
 
     # Identify hot pixels: those with dark current above threshold and
     #    not NaN in the flat
     hot_mask = dark0 > dark_threshold
     hot_mask &= (np.isnan(flat) == False)
     hot_mask &= (dark0 > (3 * med_neighbours))
+
+    # Only keep hot pixels with no neighbours
+    n_bad_neighbours = np.zeros_like(dark0)
+    for ddx in [-1,0,1]:
+        for ddy in [-1,0,1]:
+            n_bad_neighbours += np.roll(hot_mask, (ddx, ddy), axis=(0, 1))
+    hot_mask &= (n_bad_neighbours == 1)
+
+    # convert mask into x and y positions
     hot_pixels = np.where(hot_mask)
 
     # get the y and x pixel positions of the hot_pixels
