@@ -43,7 +43,7 @@ detector:
   #   (saved in the in_path directory)
   engineering_flat:
   # number of bins in each direction for large scale flat fielding
-  binsize: 32
+  flat_bin_size: 32
   # Fractional threshold for flat field bad pixels (relative deviation from 1)
   frac_flat_bad: 0.2
   # Threshold (in e-/s) for dark current to consider a pixel "hot"
