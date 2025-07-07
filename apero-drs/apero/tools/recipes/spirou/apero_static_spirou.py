@@ -86,6 +86,13 @@ def __main__(recipe, params):
         WLOG(None, 'info', msg)
         drs_assets.update_local_assets(params,
                                        tarfile=params.get('TARFILE', None))
+
+    # -------------------------------------------------------------------------
+    # Ask for APERO constants that are required for new instrument
+    # -------------------------------------------------------------------------
+    # TODO: From sparams or other instrument
+    #       How do we list these?
+
     # -------------------------------------------------------------------------
     # detector static files
     # -------------------------------------------------------------------------

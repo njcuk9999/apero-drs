@@ -35,7 +35,16 @@ detector:
   frac_flat_bad: 0.2
   # Threshold (in e-/s) for dark current to consider a pixel "hot"
   dark_threshold: 1
-
+  # Threshold for setting pixels to NaN in the LED image prior to
+  #     high-passing. This is used to flag areas that are masked in SPIRou and
+  #     SPIP data and future instruments that have a part of the detector that
+  #     are not illuminated when arriving from the pupil. For  instruments
+  #     that do not have a focal-plane mask (e.g., NIRPS), you set to zero
+  #     to simply only accept pixels that are light-sensitive. The default
+  #     is 0 and adjusted for instruments with masks. This is expressed in
+  #     fraction of the median flux. Reasonable values would be between
+  #     0.4-0.6 depending on the amount of scattered lights
+  led_threshold: 0.5
 
 # ------------------------------------------------------------------------------
 # Wavelength

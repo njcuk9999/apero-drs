@@ -134,8 +134,11 @@ def update_repo(params: ParamDict, recipe, save_path: str):
     # get the absolute path to the assets dir
     abs_asset_path = drs_data.construct_path(params, '', _asset_path)
 
+    # output files
+    output_keys = list(recipe.output_files.keys())
+
     # loop around files
-    for key in recipe.output_files:
+    for key in output_keys:
         # get the basename
         basename = recipe.output_files[key]['FILENAME']
         # get the in path

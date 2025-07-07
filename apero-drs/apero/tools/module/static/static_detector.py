@@ -57,6 +57,7 @@ def main(params: ParamDict, recipe, sparams: Dict[str, Any]):
     flat_bin_size = sparams['detector']['binsize']
     frac_flat_bad = sparams['detector']['frac_flat_bad']
     dark_threshold = sparams['detector']['dark_threshold']
+    led_thres = sparams['detector']['led_threshold']
     # -------------------------------------------------------------------------
     # check that in path exists
     if not os.path.exists(in_path):
@@ -83,7 +84,7 @@ def main(params: ParamDict, recipe, sparams: Dict[str, Any]):
     # Step 3: Create detector high-passed flat field
     static_flat = create_high_pass_flat(params, recipe, det_path,
                                         static_led, flat_bin_size,
-                                        frac_flat_bad)
+                                        led_thres, frac_flat_bad)
     # -------------------------------------------------------------------------
     # Step 4: Create amplifier bias model
     # -------------------------------------------------------------------------
@@ -307,8 +308,12 @@ def create_median_led(params: ParamDict, recipe,
     # -------------------------------------------------------------------------
     # Allocate cube for stacking
     cube_led = np.zeros((len(led_files), size[0], size[1]), dtype=float)
+    # save the led basenames
+    led_basenames = []
     # Read each dark frame into the cube
     for it, led_file in enumerate(led_files):
+        # get the led basenames
+        led_basenames.append(os.path.basename(led_file))
         # get dark file
         led_data, led_hdr = drs_fits.readfits(params, str(led_file), 
                                               getdata=True,  gethdr=True)
@@ -319,7 +324,7 @@ def create_median_led(params: ParamDict, recipe,
     # Take median across all LED frames
     led = np.nanmedian(cube_led, axis=0)
     # create a flat table
-    led_table = Table([engineering_flat], names=['FILENAME'])
+    led_table = Table([led_basenames], names=['FILENAME'])
     # add a header key for satif flat mode
     hdr_kwargs = dict(KW_STATIC_FLAT_SOURCE='LED FILES')
     # save static file and return flat
@@ -336,7 +341,7 @@ def create_median_led(params: ParamDict, recipe,
 
 def create_high_pass_flat(params: ParamDict, recipe,
                           det_path: str, led: np.ndarray,
-                          binsize: int,
+                          binsize: int, led_thres: float,
                           frac_flat_bad: float) -> np.ndarray:
     """
     Creates high pass of the LED frame
@@ -362,7 +367,7 @@ def create_high_pass_flat(params: ParamDict, recipe,
     # get robust standard deviation
     sig = (p84 - p16) / 2
     # Identify bad pixels in the flat field (outliers and negatives)
-    bad_pix = (flat < p16 - 3*sig) | (flat > p84 + 3*sig) | (flat < 0)
+    bad_pix = (flat < p16 - 3*sig) | (flat > p84 + 3*sig) | (flat < led_thres)
     # set bad pixels to nan
     flat[bad_pix] = np.nan
     # normalize by the median
