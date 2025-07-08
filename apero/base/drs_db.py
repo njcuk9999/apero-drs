@@ -1937,7 +1937,7 @@ class MySQLDatabase(Database):
         ecode = '00-002-00045'
         emsg = drs_base.BETEXT[ecode]
         # extra error info
-        connkind = ('CONNECT: {0} || MySQL {1}@{2}:{3}.{4} || {5}:{6} '
+        connkind = ('CONNECT: {0} || MySQL {2}@{1}:{3}.{4} || {5}:{6} '
                     '|| Tries {7}')
         connkind = connkind.format(connect_kind, host, user, dbname, tname,
                                    func, kind, count)
