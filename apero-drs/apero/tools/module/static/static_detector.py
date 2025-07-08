@@ -54,7 +54,7 @@ def main(params: ParamDict, recipe, sparams: Dict[str, Any]):
     dark_files = sparams['detector']['raw_dark_files']
     led_files = sparams['detector']['raw_led_files']
     engineering_flat_file = sparams['detector']['engineering_flat']
-    flat_bin_size = sparams['detector']['binsize']
+    flat_bin_size = sparams['detector']['flat_bin_size']
     frac_flat_bad = sparams['detector']['frac_flat_bad']
     dark_threshold = sparams['detector']['dark_threshold']
     led_thres = sparams['detector']['led_threshold']
@@ -591,13 +591,38 @@ def create_hotpix_map(params: ParamDict, recipe, det_path: str,
     :param params: Parameter dictionary of constants
     :param recipe: Recipe object
     :param det_path: str, directory to save files to
-    :param dark_files: List of dark image files
+    :param dark0: np.ndarray, dark image
+    :param flat: np.ndarray, flat image
+    :param binsize: int, size to bin by
+    :param dark_threshold: float, threshold to consider too dark to be
+                           hot pixel
 
     :return np.ndarray - median dark image
     """
+    # find nearest neighbours for each pixel
+    cube = []
+    for ddx in [-1,0,1]:
+        for ddy in [-1,0,1]:
+            cube.append(np.roll(dark0, (ddx, ddy), axis=(0, 1)))
+    cube = np.array(cube).astype(float)
+    # get the median value of each pixel and its neighbours
+    med_neighbours = np.nanmedian(cube, axis=0)
+
     # Identify hot pixels: those with dark current above threshold and
     #    not NaN in the flat
-    hot_pixels = np.where((dark0 > dark_threshold) & (np.isnan(flat) == False))
+    hot_mask = dark0 > dark_threshold
+    hot_mask &= (np.isnan(flat) == False)
+    hot_mask &= (dark0 > (3 * med_neighbours))
+
+    # Only keep hot pixels with no neighbours
+    n_bad_neighbours = np.zeros_like(dark0)
+    for ddx in [-1,0,1]:
+        for ddy in [-1,0,1]:
+            n_bad_neighbours += np.roll(hot_mask, (ddx, ddy), axis=(0, 1))
+    hot_mask &= (n_bad_neighbours == 1)
+
+    # convert mask into x and y positions
+    hot_pixels = np.where(hot_mask)
 
     # get the y and x pixel positions of the hot_pixels
     ypix, xpix = hot_pixels

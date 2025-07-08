@@ -3860,6 +3860,12 @@ class DrsFitsFile(DrsInputFile):
             for it in range(len(data_list)):
                 header_list.append(None)
         # ---------------------------------------------------------------------
+        # deal with self.data being empty
+        if self.data is None:
+            self.data = data_list[0]
+            data_list = data_list[1:]
+            datatype_list = datatype_list[1:]
+        # ---------------------------------------------------------------------
         # deal with datatype_list being empty
         if datatype_list is None:
             datatype_list = []
