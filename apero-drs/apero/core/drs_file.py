@@ -1826,6 +1826,7 @@ class DrsInputFile:
                                         
             self.filename = abspath
             self.basename = os.path.basename(abspath)
+            self.path = os.path.dirname(abspath)
         # else raise an error
         else:
             eargs = [self.__repr__(), func_name]
@@ -3859,6 +3860,12 @@ class DrsFitsFile(DrsInputFile):
             for it in range(len(data_list)):
                 header_list.append(None)
         # ---------------------------------------------------------------------
+        # deal with self.data being empty
+        if self.data is None:
+            self.data = data_list[0]
+            data_list = data_list[1:]
+            datatype_list = datatype_list[1:]
+        # ---------------------------------------------------------------------
         # deal with datatype_list being empty
         if datatype_list is None:
             datatype_list = []
@@ -3965,11 +3972,16 @@ class DrsFitsFile(DrsInputFile):
             htypes.append(iheader_cols.get_datatype(col))
         # ---------------------------------------------------------------------
         # deal with night name of file
-        self.output_dict['OBS_DIR'] = str(self.params['OBS_DIR'])
+        if 'OBS_DIR' not in self.params:
+            self.output_dict['OBS_DIR'] = 'None'
+        else:
+            self.output_dict['OBS_DIR'] = str(self.params['OBS_DIR'])
         # deal with basename of file
         self.output_dict['FILENAME'] = str(self.basename)
         # deal with kind
         self.output_dict['BLOCK_KIND'] = str(block_kind)
+        # deal with path
+        self.output_dict['PATH'] = self.path
         # deal with last modified time for file
         if Path(self.filename).exists():
             last_mod = Path(self.filename).lstat().st_mtime

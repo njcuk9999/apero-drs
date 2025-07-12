@@ -127,7 +127,8 @@ KDict.set('KW_PI_NAME', key='PI_NAME', comment='The PI of the program', group='r
 KDict.set('KW_RUN_ID', key='RUNID', comment='queue run id', group='raw')
 
 # define the instrument HEADER key
-KDict.set('KW_INSTRUMENT', key='INSTRUME', comment='Instrument Name', group='raw')
+KDict.set('KW_INSTRUMENT', key='INSTRUME', comment='Instrument Name',
+          group='raw')
 
 # -----------------------------------------------------------------------------
 # Required header keys (related to science object)
@@ -2039,6 +2040,17 @@ KDict.set('KW_LSD_NORM_DEPTH', key='DEPTNORM',
 # define the calculate normalisation of the weights used in the lsd analysis
 KDict.set('KW_LSD_NORM_WEIGHT', key='WEIGNORM',
           comment='Normalization weight = wl * d * g used in LSD')
+
+# -----------------------------------------------------------------------------
+# Define static file variables
+# -----------------------------------------------------------------------------
+# define the source of the flat (LED or engineering flat)
+KDict.set('KW_STATIC_FLAT_SOURCE', key='FLATSRCE',
+          comment='Source of the static flat [LED or engineering]')
+
+# define the source of the flat (LED or engineering flat)
+KDict.set('KW_STATIC_DARKCURR_CMODE', key='CMETHOD',
+          comment='Method to determine intecept/slope')
 
 # =============================================================================
 #  End of configuration file

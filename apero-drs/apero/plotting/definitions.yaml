@@ -906,6 +906,22 @@ STAT_RAM_PLOT:
   figsize:
   - 6.4
   - 4.8
+STATIC_DET:
+  kind: debug
+  func: plot_functions.plot_static_det_plot
+  dpi: 100
+  description: STATIC_DET
+  figsize:
+    - 10
+    - 8
+SUM_STATIC_DET:
+  kind: summary
+  func: plot_functions.plot_static_det_plot
+  dpi: 100
+  description: SUM_STATIC_DET
+  figsize:
+    - 10
+    - 8
 IMAGE:
   kind: show
   func: plot_functions.plot_image

@@ -2673,6 +2673,21 @@ KDict.add('KW_LSD_NORM_WEIGHT', key='NULL',
                       'of the weights used in the lsd '
                       'analysis')
 
+# -----------------------------------------------------------------------------
+# Define static file variables
+# -----------------------------------------------------------------------------
+# define the source of the flat (LED or engineering flat)
+KDict.add('KW_STATIC_FLAT_SOURCE', key='NULL', dtype=float,
+          source=__NAME__,
+          description='define the source of the flat (LED or '
+                      'engineering flat)')
+
+# define the way we got the intecept/slope for the dark current
+KDict.add('KW_STATIC_DARKCURR_CMODE', key='NULL', dtype=float,
+          source=__NAME__,
+          description='define the way we got the intecept/slope for the '
+                      'dark current')
+
 # =============================================================================
 #  End of configuration file
 # =============================================================================

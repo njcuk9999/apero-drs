@@ -10,9 +10,7 @@ Created on 2019-01-17 at 14:31
 @author: cook
 """
 from pathlib import Path
-
 import yaml
-from aperocore.base import base
 
 # =============================================================================
 # Define variables

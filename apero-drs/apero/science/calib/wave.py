@@ -1021,7 +1021,7 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
             cavity_length_poly = np.array(cavity_poly)
         else:
             # load the first guess cavity polynomial from file
-            _, fit_ll = drs_data.load_cavity_files(params)
+            fit_ll = drs_data.load_cavity_files(params)
             cavity_length_poly = fit_ll * 2
             # get a temporary cavity
             tmp_x = np.arange(inst_wavestart, inst_waveend)

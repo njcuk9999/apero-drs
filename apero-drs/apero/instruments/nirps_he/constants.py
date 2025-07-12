@@ -915,9 +915,6 @@ CDict.add('MEAS_SNR_PHOT_BANDS', value=PHOT_BANDS,
 # CALIBRATION: WAVE EA GENERAL SETTINGS
 # =============================================================================
 cgroup = 'CAL.WAVE.GEN'
-# Define the coefficients of the fit of 1/m vs d
-CDict.set('CAVITY_1M_FILE', value='cavity_length_m_fit.dat', source=__NAME__, group=cgroup)
-
 # Define the coefficients of the fit of wavelength vs d
 CDict.set('CAVITY_LL_FILE', value='cavity_length_ll_fit.dat', source=__NAME__, group=cgroup)
 
@@ -1768,13 +1765,6 @@ CDict.set('REMOVE_ORDERS', value=[43, 44, 45], source=__NAME__, group=cgroup)
 # Define the minimum snr to accept orders for pre-cleaning fit
 CDict.set('SNR_MIN_THRES', value=3.0, source=__NAME__, group=cgroup)
 
-# Define the telluric trans other abso CCF file
-CDict.set('OTHERS_CCF_FILE', value='trans_others_abso_ccf.mas',
-          source=__NAME__, group=cgroup)
-
-# Define the telluric trans water abso CCF file
-CDict.set('WATER_CCF_FILE', value='trans_h2o_abso_ccf.mas', source=__NAME__, group=cgroup)
-
 # Define dexpo convergence threshold
 CDict.set('DEXPO_CONV_THRES', value=1.0e-3, source=__NAME__, group=cgroup)
 
@@ -2427,6 +2417,9 @@ CDict.set('CCF_SWAVE_REF', value=False, source=__NAME__, group=cgroup)
 
 # turn on the ccf photon uncertainty debug plot
 CDict.set('CCF_PHOTON_UNCERT', value=True, source=__NAME__, group=cgroup)
+
+# turn on the static detector debug plot
+CDict.add('STATIC_DET', value=True, source=__NAME__, group=cgroup)
 
 # =============================================================================
 # TOOLS SETTINGS

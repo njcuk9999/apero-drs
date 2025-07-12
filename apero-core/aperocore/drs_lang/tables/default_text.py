@@ -11571,6 +11571,15 @@ item.comment = 'text for no quality controls'
 langlist.add(item)
 
 # =============================================================================
+# 40-100-01013
+# =============================================================================
+item = langlist.create('40-100-01013', kind='all-code')
+item.value['ENG'] = 'Plotting: plotting skipped (DEBUG.PLOT.{0} = False)'
+item.arguments = 'None'
+item.comment = 'Means that plotting was skipped due to plot switch set to False'
+langlist.add(item)
+
+# =============================================================================
 # 40-101-00001 
 # =============================================================================
 item = langlist.create('40-101-00001', kind='all-code')
@@ -13470,13 +13479,8 @@ item.comment = 'Means that plotting was skipped due to drs_plot = 0'
 langlist.add(item)
 
 # =============================================================================
-# 90-100-00003 
+# 90-100-00003
 # =============================================================================
-item = langlist.create('90-100-00003', kind='debug-code')
-item.value['ENG'] = 'Plotting: plotting skipped (PLOT_{0} = False)'
-item.arguments = 'None'
-item.comment = 'Means that plotting was skipped due to plot switch set to False'
-langlist.add(item)
 
 # =============================================================================
 # 90-100-00004 

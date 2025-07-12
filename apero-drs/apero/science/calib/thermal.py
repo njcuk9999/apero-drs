@@ -112,7 +112,8 @@ def apply_excess_emissivity(params: ParamDict, recipe: DrsRecipe,
         excess_correction = espline(wprops['WAVEMAP'])
         # low pass the image before applying the excess correction
         for order_num in range(image.shape[0]):
-            image[order_num] = mp.lowpassfilter(image[order_num], filter_wid)
+            image[order_num] = mp.lowpassfilter(image[order_num], filter_wid,
+                                                trim_valid=True)
         # correct data and push back to thermal file
         thermal_file.data = image * excess_correction
         # add thermal file back to dictionary
@@ -369,6 +370,17 @@ def tcorrect1(params: ParamDict, recipe: DrsRecipe,
     torder_mask = np.zeros_like(wavemap[torder, :], dtype=bool)
     # get the wave mask
     wavemask = wavemap[torder] < red_limit
+    # ----------------------------------------------------------------------
+    # deal with rare case that thermal is all zeros
+    if mp.nansum(wavemask) == 0:
+        wmsg = ('No valid pixels in wavemask.'
+                '\n\tBlue limit = {0}; Red limit = {1}'
+                '\n\tWave[{2}] = [{3:.3f}: {4:.3f}]\n\tFunction={5}')
+        wargs = [np.nanmin(wavemap[torder]), red_limit, torder,
+                 np.nanmax(wavemap[torder]), np.nanmin(wavemap[torder]),
+                 func_name]
+        WLOG(params, 'warning', wmsg.format(*wargs))
+    # ----------------------------------------------------------------------
     # get the tapas data for these wavelengths
     torder_tapas = sptapas(wavemap[torder, wavemask])
     # find those pixels lower than threshold in tapas
@@ -478,10 +490,22 @@ def tcorrect2(params: ParamDict, recipe: DrsRecipe,
     # --------------------------------------------------------------------------
     # median filter the thermal (loop around orders)
     for order_num in range(thermal.shape[0]):
-        thermal[order_num] = mp.lowpassfilter(thermal[order_num], filter_wid)
+        thermal[order_num] = mp.lowpassfilter(thermal[order_num], filter_wid,
+                                              trim_valid=True)
     # ----------------------------------------------------------------------
     # only keep wavelength in range of thermal limits
     wavemask = (wavemap[torder] > blue_limit) & (wavemap[torder] < red_limit)
+    # ----------------------------------------------------------------------
+    # deal with rare case that thermal is all zeros
+    if mp.nansum(wavemask) == 0:
+        wmsg = ('No valid pixels in wavemask.'
+                '\n\tBlue limit = {0}; Red limit = {1}'
+                '\n\tWave[{2}] = [{3:.3f}: {4:.3f}]\n\tFunction={5}')
+        wargs = [blue_limit, red_limit, torder,
+                 np.nanmax(wavemap[torder]), np.nanmin(wavemap[torder]),
+                 func_name]
+        WLOG(params, 'warning', wmsg.format(*wargs))
+    # ----------------------------------------------------------------------
     # we find the median scale between the observation and the thermal
     #    background in domains where there is no transmission
     thermal_torder = thermal[torder, wavemask]

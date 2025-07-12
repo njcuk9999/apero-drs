@@ -236,8 +236,8 @@ class Plotter:
                 pass
             # if it is check whether it is set to False
             elif not self.plot_switches[name]:
-                dmsg = textentry('90-100-00003', args=[name.upper()])
-                WLOG(self.params, 'debug', dmsg)
+                dmsg = textentry('40-100-01013', args=[name.upper()])
+                WLOG(self.params, '', dmsg)
                 # if it is check whether it is set to False
                 return 0
         # do not plot if we are in debug mode and plot = 0 or 1

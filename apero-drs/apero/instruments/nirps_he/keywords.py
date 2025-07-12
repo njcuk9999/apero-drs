@@ -1874,6 +1874,17 @@ KDict.set('KW_CCF_RV_TIMEDIFF', key='RV_WAVTD',
 KDict.set('KW_CCF_RV_WAVESRCE', key='RV_WAVSR',
           comment='RV wave file source used')
 
+# -----------------------------------------------------------------------------
+# Define static file variables
+# -----------------------------------------------------------------------------
+# define the source of the flat (LED or engineering flat)
+KDict.set('KW_STATIC_FLAT_SOURCE', key='FLATSRCE',
+          comment='Source of the static flat [LED or engineering]')
+
+# define the source of the flat (LED or engineering flat)
+KDict.set('KW_STATIC_DARKCURR_CMODE', key='CMETHOD',
+          comment='Method to determine intecept/slope')
+
 # =============================================================================
 #  End of configuration file
 # =============================================================================

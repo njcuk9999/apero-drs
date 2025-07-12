@@ -862,6 +862,10 @@ def debug_tcorr_map_plot(debug_props: Dict[str, Any], plot_path: str,
     wave_min, wave_max = debug_props['TCORR_WAVE_RANGE']
     wave_diff = wave_max - wave_min
     # -------------------------------------------------------------------------
+    # deal with having no sc1d files
+    if len(sc1d_files) == 0:
+        return
+    # -------------------------------------------------------------------------
     # deal with having no template
     if len(tmp_s1d) == 0:
         cal_med = True

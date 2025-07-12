@@ -554,11 +554,33 @@ def test_for_corrupt_files(params: ParamDict, image: np.ndarray,
     # only keep the darkest 25% of the pixels
     mask = cube_hotpix[0][0].ravel() < mp.nanpercentile(cube_hotpix[0][0], 25)
     cube_hotpix = cube_hotpix[:, :, mask]
-    # remove the dc from background
+    # -------------------------------------------------------------------------
+    # remove the dc and slope (in x and y) from background
+    ypix, xpix = np.indices([2*med_size+1,2*med_size+1])
     for ibox in range(np.sum(mask)):
-        cube_hotpix[:, :, ibox] -= mp.nanmedian(cube_hotpix[:, :, ibox])
+        # cut out this hotpixel
+        box = cube_hotpix[:, :, ibox]
+        # get the slope in the x and y direction
+        gx = mp.nanmedian(np.diff(box,axis=1))
+        gy = mp.nanmedian(np.diff(box,axis=0))
+        # subtracting off the median gradient in x and y
+        box -= (gx * xpix + gy * ypix)
+        # subtract off the median of the image (the dc)
+        med = mp.nanmedian(box)
+        box -= med
+        # push this back in to the cube of hot pixels
+        cube_hotpix[:, :, ibox] = box
+    # -------------------------------------------------------------------------
     # combine each of the hotpixel boxes back into one box
     med_hotpix = mp.nanmedian(cube_hotpix, axis=2)
+    # remove the per column offset in gradient
+    medx = np.nanmedian(med_hotpix,axis=1)
+    for i in range(med_size*2+1):
+        med_hotpix[:,i] -= medx
+    # remove the per row offset in gradient
+    medy = np.nanmedian(med_hotpix,axis=0)
+    for i in range(med_size*2+1):
+        med_hotpix[i,:] -= medy
     # -------------------------------------------------------------------------
     # get dark ribbon
     dark_ribbon = image[:, 0:dark_size]

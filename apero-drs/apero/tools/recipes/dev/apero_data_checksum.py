@@ -148,7 +148,7 @@ def __main__(recipe, params):
             margs = [indir]
             raise AperoCodedException(params, message=emsg)
         # upload assets
-        drs_assets.update_remote_assets(params)
+        drs_assets.update_remote_assets(params, indir)
     # deal with checking local assets
     elif mode == 'check-local':
         # check the assets and download / update if necessary

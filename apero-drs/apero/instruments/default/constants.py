@@ -2062,12 +2062,6 @@ cgroup = 'CAL.WAVE.GEN'
 CDict.add_group(cgroup, description='CALIBRATION.WAVE_GENERAL: '
                                     'CALIBRATION: WAVE EA GENERAL SETTINGS')
 
-# Define the coefficients of the fit of 1/m vs d
-CDict.add('CAVITY_1M_FILE', value=None, dtype=str, source=__NAME__,
-          group=cgroup,
-          description=('Define the coefficients of the fit of '
-                       '1/m vs d'))
-
 # Define the coefficients of the fit of wavelength vs d
 CDict.add('CAVITY_LL_FILE', value=None, dtype=str, source=__NAME__,
           group=cgroup,
@@ -3697,18 +3691,6 @@ CDict.add('SNR_MIN_THRES', value=None, dtype=float,
           source=__NAME__, group=cgroup, minimum=0.0,
           description=('define the minimum snr to accept '
                        'orders for pre-cleaning fit'))
-
-# define the telluric trans other abso CCF file
-CDict.add('OTHERS_CCF_FILE', value=None, dtype=str,
-          source=__NAME__, group=cgroup,
-          description=('define the telluric trans other '
-                       'abso CCF file'))
-
-# define the telluric trans water abso CCF file
-CDict.add('WATER_CCF_FILE', value=None, dtype=str,
-          source=__NAME__, group=cgroup,
-          description=('define the telluric trans water abso '
-                       'CCF file'))
 
 # define dexpo convergence threshold
 CDict.add('DEXPO_CONV_THRES', value=None,
@@ -5488,6 +5470,11 @@ CDict.add('POLAR_LSD', value=False,
           group=cgroup,
           description='turn on the polar lsd debug plot')
 
+# turn on the static detector debug plot
+CDict.add('STATIC_DET', value=False,
+          dtype=bool, source=__NAME__, user=True, active=False,
+          group=cgroup,
+          description='turn on the static detector debug plot')
 
 # =============================================================================
 # TOOLS REPROCESS SETTINGS
@@ -5746,6 +5733,25 @@ CDict.add('RESET_DICT', value=ari_reset_dict,
           description='Define the ARI reset directory (relative '
                       'paths to copy into the "other" directory '
                       'on installation/reset)')
+
+# =============================================================================
+# STATIC SETTINGS
+# =============================================================================
+cgroup = 'TOOLS.STATIC'
+CDict.add_group(cgroup, description='TOOLS.STATIC: STATIC SETTINGS')
+
+# Define the ari instrument (may be different from the apero instrument)
+CDict.add('DET_PATH', value='engineering', dtype=str,
+          source=__NAME__, group=cgroup,
+          description='Define the sub-directory in PATH.ASSETS to put new '
+                      'static calibrations in')
+
+# Define the shortest allowed longest exposure time for the DARKs provided
+#    [in s]
+CDict.add('SHORTEST_LONG_DARK_EXPTIME', value=600, dtype=float,
+          source=__NAME__, group=cgroup,
+          description='Define the shortest allowed longest exposure time '
+                      'for the DARKs provided [in s]')
 
 # =============================================================================
 #  End of configuration file

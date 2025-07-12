@@ -854,7 +854,7 @@ apero_wave_ref.set_debug_plots('WAVE_WL_CAV', 'WAVE_FIBER_COMPARISON',
                                'WAVEREF_EXPECTED', 'EXTRACT_S1D',
                                'EXTRACT_S1D_WEIGHT', 'WAVE_RESMAP',
                                'CCF_RV_FIT', 'CCF_RV_FIT_LOOP',
-                               'CCF_PHOTON_UNCERT')
+                               'CCF_PHOTON_UNCERT', 'CCF_PHOTON_UNCERT')
 apero_wave_ref.set_summary_plots('SUM_WAVE_FIBER_COMP', 'SUM_CCF_RV_FIT',
                                  'SUM_CCF_PHOTON_UNCERT')
 apero_wave_ref.set_arg(pos=0, **obs_dir)
@@ -937,6 +937,7 @@ apero_wave_night.set_debug_plots('WAVE_WL_CAV', 'WAVE_FIBER_COMPARISON',
                                  'WAVE_FIBER_COMP', 'WAVE_HC_DIFF_HIST',
                                  'WAVEREF_EXPECTED', 'EXTRACT_S1D',
                                  'EXTRACT_S1D_WEIGHT', 'WAVE_RESMAP',
+                                 'CCF_PHOTON_UNCERT',
                                  'CCF_RV_FIT', 'CCF_RV_FIT_LOOP')
 apero_wave_night.set_summary_plots('SUM_WAVE_FIBER_COMP', 'SUM_CCF_RV_FIT')
 apero_wave_night.set_arg(pos=0, **obs_dir)
@@ -1532,6 +1533,39 @@ apero_postprocess.group_column = 'TOOLS.REPROCESS.OBSDIR_COL'
 apero_postprocess.description_file = apero_postprocess.default_rfile()
 # add to recipe
 recipes.append(apero_postprocess)
+
+# -----------------------------------------------------------------------------
+# apero_static.py
+# -----------------------------------------------------------------------------
+apero_static = DrsRecipe(__INSTRUMENT__, path=RECIPE_PATH)
+apero_static.name = 'apero_static_{0}.py'.format(INSTRUMENT_ALIAS)
+apero_static.path = 'apero.tools.recipes.{0}'.format(INSTRUMENT_ALIAS)
+apero_static.shortname = 'STATIC'
+apero_static.instrument = __INSTRUMENT__
+apero_static.description = textentry('STATIC_DESCRIPTION')
+apero_static.recipe_type = 'nolog-tool'
+apero_static.recipe_kind = 'admin'
+
+apero_static.set_outputs(STATIC_DARK=files.static_dark,
+                         STATIC_LED=files.static_led,
+                         STATIC_FLAT=files.static_flat,
+                         STATIC_DARK_CURR=files.static_dark_curr,
+                         STATIC_HOTPIX=files.static_hotpix)
+
+apero_static.set_arg(pos=0, name='yamlfile', dtype=str,
+                   helpstr='Static YAML definition file')
+apero_static.set_kwarg(name='--mode', dtype='options', default='None',
+                 options=['detector', 'wavelength', 'All', 'None'],
+                 helpstr=textentry('STATIC_MODE_HELP'), required=True)
+apero_static.set_kwarg(**plot)
+
+apero_static.set_debug_plots('STATIC_DET')
+apero_static.set_summary_plots('SUM_STATIC_DET')
+
+
+apero_static.description_file = 'apero_static.rst'
+# add to recipe
+recipes.append(apero_static)
 
 # =============================================================================
 # Run order

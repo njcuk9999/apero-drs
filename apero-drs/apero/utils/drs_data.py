@@ -141,11 +141,10 @@ def load_cavity_files(params: ParamDict,
                       required: bool = True,
                       assetsdir: Union[str, None] = None,
                       cavity_dir: Union[str, None] = None,
-                      file1m: Union[str, None] = None,
                       filell: Union[str, None] = None
-                      ) -> Union[Tuple[None, None], Tuple[np.ndarray, np.ndarray]]:
+                      ) -> Union[None, np.ndarray]:
     """
-    Load the 1/m file and ll wavelength cavity files
+    Load wavelength cavity file
 
     :param params: ParamDict, parameter dictionary of constants
     :param required: bool, if True raises an exception when files don't exist
@@ -166,25 +165,18 @@ def load_cavity_files(params: ParamDict,
                       override=assetsdir)
     relfolder = pcheck(params, 'IPATH.CALIB', func=func_name,
                        override=cavity_dir)
-    filename_1m = pcheck(params, 'CAL.WAVE.GEN.CAVITY_1M_FILE', func=func_name,
-                         override=file1m)
     filename_ll = pcheck(params, 'CAL.WAVE.GEN.CAVITY_LL_FILE', func=func_name,
                          override=filell)
     # construct absolute filenames
-    absfilename_1m = str(os.path.join(assetdir, relfolder, filename_1m))
     absfilename_ll = str(os.path.join(assetdir, relfolder, filename_ll))
-    # check for absolute path existence
-    exists1 = os.path.exists(absfilename_1m)
-    exists2 = os.path.exists(absfilename_ll)
     # deal with not required
     if not required:
-        if not exists1 or not exists2:
-            return None, None
+        if not os.path.exists(absfilename_ll):
+            return None
     # load text files
-    fit_1m = load_text_file(params, absfilename_1m, func_name, dtype=float)
     fit_ll = load_text_file(params, absfilename_ll, func_name, dtype=float)
     # return arrays from text files
-    return np.array(fit_1m), np.array(fit_ll)
+    return np.array(fit_ll)
 
 
 def save_cavity_files(params: ParamDict, fit_1m_d: np.ndarray,

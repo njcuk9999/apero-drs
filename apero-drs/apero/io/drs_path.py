@@ -55,7 +55,7 @@ display_func = drs_misc.display_func
 # Get exceptions
 AperoCodedException = drs_log.AperoCodedException
 # Get Logging function
-TLOG = Printer
+WLOG = drs_log.wlog
 # Get the text types
 textentry = drs_lang.textentry
 
@@ -220,6 +220,7 @@ def makedirs(path: str):
         except Exception as e:
             eargs = [path, type(e), e, func_name]
             raise AperoCodedException(None, '01-010-00002', targs=eargs)
+
 
 def copytree(src: Union[str, Path], dst: Union[str, Path]):
     """
@@ -510,10 +511,10 @@ def recursive_path_glob(params: ParamDict,
     check_suffix = suffix is not None
 
     # loading message
-    TLOG(params, '', 'Analying path: {0}'.format(path))
+    WLOG(params, '', 'Analying path: {0}'.format(path))
     # use os walk to loop around files
     for root, dirs, files in os.walk(str(path)):
-        TLOG(params, '', 'Analying path: {0}'.format(root))
+        WLOG(params, '', 'Analying path: {0}'.format(root))
         # get the root as a Pathlib instance
         root_instant = Path(root)
         # loop around all files
@@ -529,11 +530,45 @@ def recursive_path_glob(params: ParamDict,
             # if we get to here file is valid
             valid_files.append(root_instant.joinpath(filename))
     # clear message
-    TLOG(params, '', '')
+    WLOG(params, '', '')
     # sort valid files
     valid_files = sorted(valid_files)
     # return valid files
     return valid_files
+
+
+def remove_broken_symlinks(params: ParamDict, path: str):
+    """
+    Removes broken symlinks recusively from the given directory
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param path: str, path to remove all symlinks from
+
+    :return:
+    """
+    # if we don't have this directory just return - it will be created later
+    if not os.path.exists(path):
+        return
+    # convert to Path
+    rootpath = Path(path)
+    # save a counter
+    count = 0
+    # loop around all sub-directories
+    for path in rootpath.rglob('*'):
+        # test for symlink and for path existing
+        if path.is_symlink() and not path.exists():
+            try:
+                path.unlink()
+                count += 1
+            except Exception as e:
+                emsg = 'Failed to remove path {0}\n\tError {1}: {2}'
+                eargs = [path, type(e), str(e)]
+                WLOG(params, 'error', emsg.format(*eargs))
+                return
+    # print how many broken symlinks we removed (as a warning)
+    wmsg = 'Remove {0} broken symlinks'
+    wargs = [count]
+    WLOG(params, 'warning', wmsg.format(*wargs), sublevel=8)
 
 
 def calculate_checksum(filename: str) -> str:
