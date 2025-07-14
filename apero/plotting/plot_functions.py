@@ -1795,6 +1795,72 @@ def plot_flat_blaze_order(plotter: Plotter, graph: Graph,
         plotter.plotend(graph)
 
 
+def plot_flat_edge_orders(plotter: Plotter, graph: Graph,
+                          kwargs: Dict[str, Any]):
+    """
+    Graph: Plot for the flat edge of orders (qc) plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
+    # -------------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # get plt
+    plt = plotter.plt
+    # -------------------------------------------------------------------------
+    # get the arguments from kwargs
+    med = kwargs['med']
+    flux_edge = kwargs['flux_edge']
+    flux_left = kwargs['flux_left']
+    flux_right = kwargs['flux_right']
+    norders = kwargs['norders']
+    flux_edge_limit = kwargs['flux_edge_limit']
+    fiber = kwargs['fiber']
+    # -------------------------------------------------------------------------
+    # set up plot
+    fig, frames = graph.set_figure(plotter, ncols=2, nrows=1)
+    # -------------------------------------------------------------------------
+    # plot median
+    frames[0].imshow(med.T, aspect='auto', cmap='inferno',
+                     interpolation='nearest', origin='lower',
+                     extent=[0, norders, 0, med.shape[1]])
+    # -------------------------------------------------------------------------
+    # add title and labels (frame 1)
+    frames[0].set(title='Line list image', xlabel='Order number',
+                  ylabel='Pixel position')
+    # -------------------------------------------------------------------------
+    # plot the flux limits
+    frames[1].plot(flux_edge, label='Total edge flux')
+    frames[1].plot(flux_left, label='Left edge flux', alpha=0.5)
+    frames[1].plot(flux_right, label='Right edge flux', alpha=0.5)
+    # -------------------------------------------------------------------------
+    # add the limit for QC
+    frames[1].axhline(y=flux_edge_limit, linestyle='--', color='r',
+                      label='{0}% QC limit'.format(flux_edge_limit * 100))
+    # -------------------------------------------------------------------------
+    # add title and labels (frame 2)
+    frames[1].set(title='Edge flux of each order in the line list',
+                  xlabel='Order Number', ylabel='Edge flux')
+    frames[1].grid()
+    frames[1].legend(loc=0)
+    # -------------------------------------------------------------------------
+    # full plot changes
+    plt.suptitle('Edge flux for fiber = {0}'.format(fiber))
+    plt.tight_layout()
+    # -------------------------------------------------------------------------
+    # update filename (adding order_num to end)
+    suffix = '_{0}'.format(fiber)
+    graph.set_filename(plotter.params, plotter.location, suffix=suffix)
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
 flat_order_fit_edges1 = Graph('FLAT_ORDER_FIT_EDGES1', kind='debug',
                               func=plot_flat_order_fit_edges)
 flat_blaze_order1 = Graph('FLAT_BLAZE_ORDER1', kind='debug',
@@ -1803,6 +1869,9 @@ flat_order_fit_edges2 = Graph('FLAT_ORDER_FIT_EDGES2', kind='debug',
                               func=plot_flat_order_fit_edges)
 flat_blaze_order2 = Graph('FLAT_BLAZE_ORDER2', kind='debug',
                           func=plot_flat_blaze_order)
+flat_edge_orders = Graph('FLAT_EDGE_ORDERS', kind='debug',
+                         func=plot_flat_edge_orders)
+
 sum_desc = 'Image fit (before and after straightening)'
 sum_flat_order_fit_edges = Graph('SUM_FLAT_ORDER_FIT_EDGES', kind='summary',
                                  func=plot_flat_order_fit_edges, dpi=150,
@@ -1811,10 +1880,19 @@ sum_desc = 'Blaze fit and e2ds (top) and resulting flat (bottom)'
 sum_flat_blaze_order = Graph('SUM_FLAT_BLAZE_ORDER', kind='summary',
                              func=plot_flat_blaze_order,
                              figsize=(16, 10), dpi=150, description=sum_desc)
+
+sum_desc = ('Flat check for flux on edge of orders '
+            '(to monitor flux lost due to cutting off the top/bottom of '
+            'orders during extraction)')
+sum_flat_edge_orders = Graph('SUM_FLAT_EDGE_ORDERS', kind='summary',
+                             func=plot_flat_edge_orders,
+                             figsize=(12, 6), dpi=150, description=sum_desc)
+
 # add to definitions
 definitions += [flat_order_fit_edges1, flat_order_fit_edges2,
-                flat_blaze_order1, flat_blaze_order2,
-                sum_flat_order_fit_edges, sum_flat_blaze_order]
+                flat_blaze_order1, flat_blaze_order2, flat_edge_orders,
+                sum_flat_order_fit_edges, sum_flat_blaze_order,
+                sum_flat_edge_orders]
 
 
 # =============================================================================

@@ -1136,6 +1136,20 @@ FF_HIGH_PASS_SIZE = FF_HIGH_PASS_SIZE.copy(__NAME__)
 FF_HIGH_PASS_SIZE.value = 501
 FF_HIGH_PASS_SIZE.author = base.AUTHORS['EA']
 
+# Define the number of pixels left and right of the center of the image to
+# look at the flux at the edge of the orders
+FF_FLUX_EDGE_MID_SIZE = FF_FLUX_EDGE_MID_SIZE.copy(__NAME__)
+FF_FLUX_EDGE_MID_SIZE.value = 100
+
+# Define the fraction of flux allowed to be rejected from the combined left
+# and right edges of an order (QC parameter in flat recipe)
+FF_QC_FLUX_EDGE_LIMIT = FF_QC_FLUX_EDGE_LIMIT.copy(__NAME__)
+FF_QC_FLUX_EDGE_LIMIT.value = 0.01
+
+# Define orders not to include in flux edge limit check
+FF_QC_FLUX_EDGE_IGNORE = FF_QC_FLUX_EDGE_IGNORE.copy(__NAME__)
+FF_QC_FLUX_EDGE_IGNORE.value = '[]'
+
 # =============================================================================
 # CALIBRATION: LEAKAGE SETTINGS
 # =============================================================================
@@ -1221,11 +1235,11 @@ EXT_END_ORDER.value = None
 
 #   Half-zone extraction width left side (formally plage1)
 EXT_RANGE1 = EXT_RANGE1.copy(__NAME__)
-EXT_RANGE1.value = '{"AB":16, "A":8, "B":8, "C": 7}'
+EXT_RANGE1.value = '{"AB":18, "A":8, "B":8, "C": 8}'
 
 #   Half-zone extraction width right side (formally plage2)
 EXT_RANGE2 = EXT_RANGE2.copy(__NAME__)
-EXT_RANGE2.value = '{"AB":16, "A":8, "B":8, "C": 7}'
+EXT_RANGE2.value = '{"AB":18, "A":8, "B":8, "C": 8}'
 
 #   Define the orders to skip extraction on (will set all order values
 #      to NaN. If empty list no orders are skipped. Should be a string
@@ -2969,6 +2983,10 @@ PLOT_FLAT_BLAZE_ORDER1.value = False
 # turn on the flat blaze order debug plot (selected order)
 PLOT_FLAT_BLAZE_ORDER2 = PLOT_FLAT_BLAZE_ORDER2.copy(__NAME__)
 PLOT_FLAT_BLAZE_ORDER2.value = True
+
+# turn on the flat edge plot
+PLOT_FLAT_EDGE_ORDERS = PLOT_FLAT_EDGE_ORDERS.copy(__NAME__)
+PLOT_FLAT_EDGE_ORDERS.value = True
 
 # turn on thermal background (in extract) debug plot
 PLOT_THERMAL_BACKGROUND = PLOT_THERMAL_BACKGROUND.copy(__NAME__)

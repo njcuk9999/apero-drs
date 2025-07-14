@@ -1136,6 +1136,20 @@ FF_HIGH_PASS_SIZE = FF_HIGH_PASS_SIZE.copy(__NAME__)
 FF_HIGH_PASS_SIZE.value = 501
 FF_HIGH_PASS_SIZE.author = base.AUTHORS['EA']
 
+# Define the number of pixels left and right of the center of the image to
+# look at the flux at the edge of the orders
+FF_FLUX_EDGE_MID_SIZE = FF_FLUX_EDGE_MID_SIZE.copy(__NAME__)
+FF_FLUX_EDGE_MID_SIZE.value = 100
+
+# Define the fraction of flux allowed to be rejected from the combined left
+# and right edges of an order (QC parameter in flat recipe)
+FF_QC_FLUX_EDGE_LIMIT = FF_QC_FLUX_EDGE_LIMIT.copy(__NAME__)
+FF_QC_FLUX_EDGE_LIMIT.value = 0.01
+
+# Define orders not to include in flux edge limit check
+FF_QC_FLUX_EDGE_IGNORE = FF_QC_FLUX_EDGE_IGNORE.copy(__NAME__)
+FF_QC_FLUX_EDGE_IGNORE.value = '[43, 44, 45, 46]'
+
 # =============================================================================
 # CALIBRATION: LEAKAGE SETTINGS
 # =============================================================================
@@ -2681,6 +2695,10 @@ PLOT_FLAT_BLAZE_ORDER1.value = False
 # turn on the flat blaze order debug plot (selected order)
 PLOT_FLAT_BLAZE_ORDER2 = PLOT_FLAT_BLAZE_ORDER2.copy(__NAME__)
 PLOT_FLAT_BLAZE_ORDER2.value = True
+
+# turn on the flat edge plot
+PLOT_FLAT_EDGE_ORDERS = PLOT_FLAT_EDGE_ORDERS.copy(__NAME__)
+PLOT_FLAT_EDGE_ORDERS.value = True
 
 # turn on thermal background (in extract) debug plot
 PLOT_THERMAL_BACKGROUND = PLOT_THERMAL_BACKGROUND.copy(__NAME__)
