@@ -139,7 +139,8 @@ __all__ = [
     # flat constants
     'FF_BLAZE_HALF_WINDOW', 'FF_BLAZE_THRESHOLD', 'FF_BLAZE_DEGREE',
     'FF_RMS_SKIP_ORDERS', 'QC_FF_MAX_RMS', 'FF_PLOT_ORDER',
-    'FF_HIGH_PASS_SIZE', 'FF_BLAZE_SCUT', 'FF_BLAZE_SIGFIT',
+    'FF_HIGH_PASS_SIZE', 'FF_FLUX_EDGE_MID_SIZE', 'FF_QC_FLUX_EDGE_LIMIT',
+    'FF_QC_FLUX_EDGE_IGNORE', 'FF_BLAZE_SCUT', 'FF_BLAZE_SIGFIT',
     'FF_BLAZE_BPERCENTILE', 'FF_BLAZE_NITER', 'FF_BLAZE_SINC_MED_SIZE',
     # leakage constants
     'ALLOWED_LEAKREF_TYPES', 'LEAKREF_ALWAYS_EXTRACT', 'LEAKREF_EXTRACT_TYPE',
@@ -327,7 +328,7 @@ __all__ = [
     'PLOT_SHAPEL_ZOOM_SHIFT', 'PLOT_SHAPE_LINEAR_TPARAMS',
     # debug flat plot settings
     'PLOT_FLAT_ORDER_FIT_EDGES1', 'PLOT_FLAT_ORDER_FIT_EDGES2',
-    'PLOT_FLAT_BLAZE_ORDER1', 'PLOT_FLAT_BLAZE_ORDER2',
+    'PLOT_FLAT_BLAZE_ORDER1', 'PLOT_FLAT_BLAZE_ORDER2', 'PLOT_FLAT_EDGE_ORDERS',
     # debug thermal plot settings
     'PLOT_THERMAL_BACKGROUND',
     # debug extract plot settings
@@ -2179,6 +2180,31 @@ FF_HIGH_PASS_SIZE = Const('FF_HIGH_PASS_SIZE', value=None, dtype=int,
                           source=__NAME__, group=cgroup,
                           description='Define the high pass filter size in '
                                       'km/s')
+
+# Define the number of pixels left and right of the center of the image to
+# look at the flux at the edge of the orders
+FF_FLUX_EDGE_MID_SIZE = Const('FF_FLUX_EDGE_MID_SIZE', value=None, dtype=int,
+                              source=__NAME__, group=cgroup,
+                              description='Define the number of pixels  left '
+                                          'and right of the center of the '
+                                          'image to look at the flux at the '
+                                          'edge of the orders')
+
+# Define the fraction of flux allowed to be rejected from the combined left
+# and right edges of an order (QC parameter in flat recipe)
+FF_QC_FLUX_EDGE_LIMIT = Const('FF_QC_FLUX_EDGE_LIMIT', value=None, dtype=float,
+                              source=__NAME__, group=cgroup,
+                              description='Define the fraction of flux allowed '
+                                          'to be rejected from the combined '
+                                          'left and right edges of an order '
+                                          '(QC parameter in flat recipe)')
+
+# Define orders not to include in flux edge limit check
+FF_QC_FLUX_EDGE_IGNORE = Const('FF_QC_FLUX_EDGE_IGNORE', value=None,
+                               dtype=str,
+                               source=__NAME__, group=cgroup,
+                               description='Define orders not to include in '
+                                           'flux edge limit check')
 
 # =============================================================================
 # CALIBRATION: LEAKAGE SETTINGS
@@ -5023,6 +5049,12 @@ PLOT_FLAT_BLAZE_ORDER2 = Const('PLOT_FLAT_BLAZE_ORDER2', value=False,
                                active=False, group=cgroup,
                                description='turn on the flat blaze order debug '
                                            'plot (selected order)')
+
+# turn on the flat edge plot
+PLOT_FLAT_EDGE_ORDERS = Const('PLOT_FLAT_EDGE_ORDERS', value=False,
+                              dtype=bool, source=__NAME__, user=True,
+                              active=False, group=cgroup,
+                              description='turn on the flat edge plot')
 
 # turn on thermal background (in extract) debug plot
 PLOT_THERMAL_BACKGROUND = Const('PLOT_THERMAL_BACKGROUND', value=False,
