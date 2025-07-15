@@ -1795,7 +1795,7 @@ class MySQLDatabase(Database):
                  database: str, tablename: Union[str, None],
                  verbose: bool = False,
                  absolute_table_name: bool = False,
-                 tries: int = 20):
+                 tries: int = 20, use_ssl: bool = False):
         """
         Create an object for reading and writing to a SQLite database.
 
@@ -1844,6 +1844,7 @@ class MySQLDatabase(Database):
         self.user = user
         self.passwd = passwd
         self.dbname = database
+        self.use_ssl = use_ssl
         # deal with setting table name (we only have one per manager hence
         #   why this is set)
         if absolute_table_name:
@@ -1865,7 +1866,8 @@ class MySQLDatabase(Database):
                    dbname: Union[str, None] = None,
                    connect_kind: str = 'mysql.connect',
                    func: Union[str, None] = None,
-                   kind: Union[str, None] = None):
+                   kind: Union[str, None] = None,
+                   use_ssl: bool = None):
         """
         Connect to the mysql database
         Only use within with statement (so connection is closed afterwards)
@@ -1900,6 +1902,10 @@ class MySQLDatabase(Database):
             dbname = None
         elif dbname is None:
             dbname = self.dbname
+
+        # deal with using ssl
+        if use_ssl is None:
+            use_ssl = self.use_ssl
         # delay processes
         count = 0
         error = None
@@ -2572,7 +2578,7 @@ def database_wrapper(kind: str, path: Union[Path, str, None],
                              database=sparams['DATABASE'],
                              tablename=tablename,
                              verbose=verbose, absolute_table_name=abs_tname,
-                             tries=tries)
+                             tries=tries, use_ssl=sparams.get('USE_SSL', False))
     # else default to sqlite3
     else:
         sparams = dparams['SQLITE3']
@@ -3123,7 +3129,7 @@ def _unignore_warnings():
 
 
 def _mysql_connect(host: str, user: str, passwd: str,
-                   dbname: str) -> Any:
+                   dbname: str, use_ssl: bool = False) -> Any:
     """
     Connect to mysql with a connection timeout set
 
@@ -3134,6 +3140,8 @@ def _mysql_connect(host: str, user: str, passwd: str,
 
     :return: the MySQL connection object
     """
+    # deal with use ssl
+    ssl_disabled = not use_ssl
     # catch all warnings at this point
     with warnings.catch_warnings():
         try:
@@ -3141,7 +3149,7 @@ def _mysql_connect(host: str, user: str, passwd: str,
             _ignore_warnings()
             # connect and create a MySQL connection object
             conn = mysql.connect(host=host, user=user, passwd=passwd,
-                                 database=dbname,
+                                 database=dbname, ssl_disabled=ssl_disabled,
                                  connection_timeout=3600)
             # turn all warnings back on
             _unignore_warnings()
@@ -3161,7 +3169,7 @@ def _mysql_connect(host: str, user: str, passwd: str,
 
 
 def _mysql_sqlalchemy_connect(host: str, user: str, passwd: str,
-                              dbname: str) -> Any:
+                              dbname: str, use_ssl: bool = False) -> Any:
     """
     Connect to MySQL using sqlalchemy
 
@@ -3172,6 +3180,13 @@ def _mysql_sqlalchemy_connect(host: str, user: str, passwd: str,
 
     :return: mysql sqlalchemy connection
     """
+    # set up connection arguments
+    connect_args = dict()
+    # deal with use ssl
+    ssl_disabled = not use_ssl
+    # push into connect args
+    connect_args['ssl_disabled'] = ssl_disabled
+    # -------------------------------------------------------------------------
     # catch all warnings at this point
     with warnings.catch_warnings():
         # ignore all warnings
@@ -3182,7 +3197,8 @@ def _mysql_sqlalchemy_connect(host: str, user: str, passwd: str,
         dpath = 'mysql+mysqlconnector://{0}:{1}@{2}/{3}'
         dargs = [user, passwd, host, dbname]
         db = sqlalchemy.create_engine(dpath.format(*dargs),
-                                      pool_pre_ping=True)
+                                      pool_pre_ping=True,
+                                      connect_args=connect_args)
         # create a connection to the database
         conn = db.connect()
     # turn all warnings back on

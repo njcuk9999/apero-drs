@@ -392,6 +392,9 @@ def get_args() -> argparse.Namespace:
                         help=lang['INSTALL_DB_PASS_HELP'])
     parser.add_argument('--database_name', action='store', dest='database_name',
                         help=lang['INSTALL_DB_NAME_HELP'])
+    parser.add_argument('--database_use_ssl', action='store_true',
+                        dest='database_use_ssl', default=False,
+                        help='Use --ssl to connect to database')
     parser.add_argument('--calibtable', action='store', dest='calibtable',
                         help=lang['INSTALL_CALIBTABLE_HELP'])
     parser.add_argument('--tellutable', action='store', dest='tellutable',
