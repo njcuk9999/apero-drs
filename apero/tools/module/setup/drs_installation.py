@@ -733,9 +733,10 @@ def get_mysql_settings(all_params: ParamDict,
         response = bool(use_ssl)
     # if not set from command line ask user for value
     else:
-        response = ask(textentry('40-001-00056', args='USE_SSL'), dtype=str)
+        question = 'Enable ssl connection to database?'
+        response = ask(question, dtype='YN')
     # add if response given or set to False if not
-    if response not in ['None', '', None]:
+    if response:
         all_params['MYSQL']['USE_SSL'] = response
         args.database_use_ssl = response
     else:
