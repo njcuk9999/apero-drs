@@ -278,7 +278,7 @@ def write_yaml(dictionary: dict, filename: str):
 def create_yamls(allparams: Any):
     """
     Create the yaml files from allparams
-
+USE_SSL
     :param allparams: ParamDict, the parameter dictionary of installation
 
     :return: None - writes install.yaml and database.yaml
@@ -380,6 +380,7 @@ def create_yamls(allparams: Any):
     mysql['USER'] = mdict.get('USER', 'None')
     mysql['PASSWD'] = mdict.get('PASSWD', 'None')
     mysql['DATABASE'] = mdict.get('DATABASE', 'None')
+    mysql['USE_SSL'] = mdict.get('USE_SSL', False)
     # add calib database
     calibdb = dict()
     calibdb['PATH'] = mdict.get('CALIB_PATH', 'NULL')

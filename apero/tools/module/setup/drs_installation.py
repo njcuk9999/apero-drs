@@ -647,6 +647,7 @@ def get_mysql_settings(all_params: ParamDict,
     # ----------------------------------------------------------------------
     # set values to None
     host, username, password, name, profile = None, None, None, None, None
+    use_ssl = None
     # check for parameters in args
     # check host
     if hasattr(args, 'database_host'):
@@ -664,6 +665,10 @@ def get_mysql_settings(all_params: ParamDict,
     if hasattr(args, 'database_name'):
         if args.database_name is not None:
             name = str(args.database_name)
+    # check use ssl
+    if hasattr(args, 'database_use_ssl'):
+        if args.database_use_ssl:
+            use_ssl = args.database_use_ssl
     # check apero profile
     if hasattr(args, 'database_pro'):
         if args.database_pro is not None:
@@ -722,6 +727,20 @@ def get_mysql_settings(all_params: ParamDict,
     if response not in ['None', '', None]:
         all_params['MYSQL']['DATABASE'] = response
         args.database_name = response
+    # ----------------------------------------------------------------------
+    # ask for the use ssl
+    if use_ssl is not None:
+        response = bool(use_ssl)
+    # if not set from command line ask user for value
+    else:
+        response = ask(textentry('40-001-00056', args='USE_SSL'), dtype=str)
+    # add if response given or set to False if not
+    if response not in ['None', '', None]:
+        all_params['MYSQL']['USE_SSL'] = response
+        args.database_use_ssl = response
+    else:
+        all_params['MYSQL']['USE_SSL'] = False
+        args.database_use_ssl = False
     # ----------------------------------------------------------------------
     # Individual database table settings
     all_params, args = mysql_database_tables(args, all_params)
@@ -1749,6 +1768,7 @@ def update_db_settings(aparams: ParamDict) -> ParamDict:
     aparams['MYSQL']['USER'] = dparams['MYSQL']['USER']
     aparams['MYSQL']['PASSWD'] = dparams['MYSQL']['PASSWD']
     aparams['MYSQL']['DATABASE'] = dparams['MYSQL']['DATABASE']
+    aparams['MYSQL']['USE_SSL'] = dparams['MYSQL'].get('USE_SSL', False)
     # add database parameters
     # loop around databases
     for dbname in base.DATABASE_NAMES:

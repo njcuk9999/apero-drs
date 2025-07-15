@@ -104,6 +104,7 @@ def kill(params: ParamDict, timeout: int = 60):
         user = dparams['MYSQL']['USER']
         userdb = dparams['MYSQL']['DATABASE']
         passwd = dparams['MYSQL']['PASSWD']
+        use_ssl = dparams['MYSQL'].get('USE_SSL', False)
         databasename = 'information_schema'
         tablename = 'processlist'
         # wrap in a try (this may not always work
@@ -114,7 +115,8 @@ def kill(params: ParamDict, timeout: int = 60):
                                           passwd=passwd,
                                           database=databasename,
                                           tablename=tablename,
-                                          absolute_table_name=True)
+                                          absolute_table_name=True,
+                                          use_ssl=use_ssl)
             # set up condition: only this users processes and only from the
             #   required database and that have been active for more than
             #   60 seconds
