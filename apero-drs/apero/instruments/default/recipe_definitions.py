@@ -137,6 +137,10 @@ ari.set_kwarg(name='--profiles', dtype='switch',
 ari.set_kwarg(name='--cores', dtype=int, default=0,
               helpstr='Number of cores to use (default is 0, which uses '
                       'value from yaml file)')
+ari.set_kwarg(name='--filterobjs', dtype=str, default='None',
+              helpstr='Only process these objects (should only be used for '
+                      'debugging). List of comma separated objects (named as '
+                      'in astrometric database) ')
 ari.description_file = 'apero_ri.rst'
 
 # -----------------------------------------------------------------------------

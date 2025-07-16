@@ -45,11 +45,18 @@ Code Steps (matches main code steps):
 """
 import os
 from typing import Dict, Any
+import numpy as np
 
+from astropy.table import Table
+from astroquery.vizier import Vizier
+
+from aperocore.core import drs_log
 from aperocore.constants import param_functions
+
 from apero.base import base as apero_base
 from apero.utils import drs_data
 from apero.tools.module.static import drs_static
+
 
 # =============================================================================
 # Define variables
@@ -64,7 +71,10 @@ __date__ = apero_base.__date__
 __release__ = apero_base.__release__
 # get param dict
 ParamDict = param_functions.ParamDict
-
+# Get Logging function
+WLOG = drs_log.wlog
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 
 # TODO:
 #    1.  Fill in + test this code
@@ -111,6 +121,12 @@ def main(params: ParamDict, recipe, sparams: Dict[str, Any]):
 
 def generate_hc_catagloue(params: ParamDict, recipe, sparams: Dict[str, Any],
                           cal_path: str):
+    # get the wavelength sparams for input hc cat
+    wparams = sparams['waelength']['input_hc_cat']
+    # download the hc model
+    hc_model = get_hc_model(params, sparams)
+
+
     pass
 
 
@@ -124,6 +140,90 @@ def generate_wave_guess(params: ParamDict, recipe, sparams: Dict[str, Any],
     wavell, ampll = drs_data.load_linelist(params)
 
     pass
+
+
+
+# =============================================================================
+# Define worker functions
+# =============================================================================
+def get_hc_model(params: ParamDict, sparams: Dict[str, Any]) -> Table:
+    """
+    Get the HC mode using the wavelength.input_hc_cat.vizier-ref keyword
+    from Vizier and save to input + wavelength.input_hc_cat.filename
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param sparams: dict, parameters from yaml file
+    """
+    # get the wavelength sparams for input hc cat
+    wparams = sparams['wavelength']['input_hc_cat']
+    # get the vizier reference
+    vizier_ref = wparams['vizier-ref']
+    # construct the name for the downloaded hc model
+    hc_model_file = os.path.join(sparams['inpath'], wparams['filename'])
+    # -------------------------------------------------------------------------
+    # if we already have the file don't download again
+    if os.path.exists(hc_model_file):
+        return Table.read(hc_model_file)
+    # -------------------------------------------------------------------------
+    # deal with vizier-ref being a file on disk
+    if os.path.exists(vizier_ref):
+        table = Table.read(vizier_ref)
+    else:
+        # No row limit: get all rows
+        Vizier.ROW_LIMIT = -1
+        # Query the entire table
+        try:
+            tables = Vizier.get_catalogs(vizier_ref)
+            # get the first table
+            table = tables[0]
+        except Exception as e:
+            # TODO: Move to language database
+            emsg = 'Failed to load model: {0} from Vizier\n\t{1}: {2}'
+            eargs = [vizier_ref, type(e), str(e)]
+            # raise an APERO exception
+            raise AperoCodedException(params, None, message=emsg.format(*eargs),
+                                      targs=eargs)
+    # -------------------------------------------------------------------------
+    # try to save the HC model to file
+    try:
+        # print that we are writing hc model file
+        msg = 'Saving HC model file to: {0}'
+        margs = [hc_model_file]
+        WLOG(params, '', msg.format(*margs))
+        # write to file
+        table.write(hc_model_file, overwrite=True)
+        # return tables[0]
+        return table
+    except Exception as e:
+        # TODO: Move to language database
+        emsg = 'Failed to save model: {0} to: {1}\n\t{2}: {3}'
+        eargs = [vizier_ref, hc_model_file, (e), str(e)]
+        # raise an APERO exception
+        raise AperoCodedException(params, None, message=emsg.format(*eargs),
+                                  targs=eargs)
+
+
+def get_hc_lines(params: ParamDict, sparams: Dict[str, Any], table: Table):
+    # get the wavelength sparams for input hc cat
+    wparams = sparams['wavelength']['input_hc_cat']
+    # get the species we want
+    species_keep = wparams['species_keep']
+    # get the species column
+    hc_species_col = wparams['species_col']
+
+
+    # assume we don't want any lines at first
+    smask = np.zeros_like(len(table))
+
+    for species in species_keep:
+        # get a mask just for this species
+        smask |= table[hc_species_col] == species
+
+    # deal with no lines
+    if np.sum(smask) == 0:
+        return None
+    else:
+        return table[smask]
 
 
 # =============================================================================

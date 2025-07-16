@@ -64,11 +64,13 @@ wavelength:
   raw_fp_file: FP_FP_file.fits
   # Input catalogue for the HC lines
   #   Must be in format
-  input_hc_catalogue:
+  input_hc_cat:
     # Input hollow cathode catalogue (saved in the inpath directory)
     #   Our defaut comes from Redman et al 2011: https://iopscience.iop.org/article/10.1088/0067-0049/195/2/24
     #   via Vizier: https://vizier.cds.unistra.fr/viz-bin/VizieR-3?-source=J/ApJS/195/24/table2
-    #   Note if downloading from Vizier - select FITS (binary) Table and set max rows to unlimited!
+    #   This should be a vizier reference OR a absolute path to a file
+    vizier-ref: J/ApJS/195/24/table2
+    # file name this catalogue should have on disk
     filename: redman_2011.fits
     # format to load in astropy.table.Table.read
     format: fits
