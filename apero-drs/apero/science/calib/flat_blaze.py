@@ -341,15 +341,84 @@ def get_blaze(params: ParamDict, header: Union[drs_file.Header, None],
     return blaze_file, blaze_time, blaze
 
 
+def flux_edge_trace(params: ParamDict, recipe: DrsRecipe,
+                    eprops: ParamDict, fiber: str
+                    ) -> Tuple[float, List[str]]:
+    """
+    Calculate the flux at the edges of the trace
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param recipe: DrsRecipe, the drs recipe object
+    :param eprops: dictionary, the extraction dictionary
+    :param fiber: str, the fiber name
+
+    :return: float, the value of the total flux at the edge of the e2dsll
+    """
+    # get the width of the center of the trace
+    mid_size = params['CAL.FLAT.QC_FLUX_EDGE_MID_SIZE']
+    # get limit
+    flux_edge_limit = params['CAL.FLAT.QC_FLUX_EDGE_LIMIT']
+    # get orders to ignore
+    ignore_orders = params['CAL.FLAT.QC_FLUX_EDGE_IGNORE']
+    # get the number of orders
+    norders = eprops['E2DS'].shape[0]
+    # get the e2dsll
+    image = eprops['E2DSLL']
+    # find the middle of the array
+    mid = image.shape[1] // 2
+    # -------------------------------------------------------------------------
+    # median trace profile of the center of the image
+    med = np.nanmedian(image[:, mid-mid_size:mid+mid_size], axis=1)
+    # reshape the median profile to have the number of orders
+    med = med.reshape(norders, med.shape[0]//norders)
+    # -------------------------------------------------------------------------
+    # normalize each order to a mean of 1
+    for order_num in range(norders):
+        segment = med[order_num]
+        med[order_num] /= np.nansum(segment)
+    # -------------------------------------------------------------------------
+    # we find the flux at the edges of the trace for each order. The total
+    # edge flux should be small and account for <1% of the total flux.
+    flux_left = med[:, 0]
+    flux_right = med[:, -1]
+    # set ignore orders to nans
+    cut_mask = np.in1d(np.arange(norders), ignore_orders)
+    # set these orders to NaN
+    flux_left[cut_mask] = np.nan
+    flux_right[cut_mask] = np.nan
+    # get the total edge flux
+    flux_edge = flux_left + flux_right
+    # -------------------------------------------------------------------------
+    # plot edge plot
+    recipe.plot('FLAT_EDGE_ORDERS', med=med, flux_edge=flux_edge,
+                flux_left=flux_left, flux_right=flux_right,
+                norders=norders, flux_edge_limit=flux_edge_limit, fiber=fiber)
+    recipe.plot('SUM_FLAT_EDGE_ORDERS', med=med, flux_edge=flux_edge,
+                flux_left=flux_left, flux_right=flux_right,
+                norders=norders, flux_edge_limit=flux_edge_limit, fiber=fiber)
+    # -------------------------------------------------------------------------
+    # store the orders with flux greater than limit
+    failed = (flux_edge > flux_edge_limit) & np.isfinite(flux_edge)
+    failed_orders = list(np.where(failed)[0])
+    failed_orders_str = [str(order_num) for order_num in failed_orders]
+    # get the maximum edge flux across all orders
+    max_edge_flux = np.nanmax(flux_edge)
+    # -------------------------------------------------------------------------
+    # return max edge flux and list failed orders
+    return max_edge_flux, failed_orders_str
+
+
 # =============================================================================
 # Define write and qc functions
 # =============================================================================
-def flat_blaze_qc(params: ParamDict, eprops: ParamDict, fiber: str
+def flat_blaze_qc(params: ParamDict, recipe: DrsRecipe,
+                  eprops: ParamDict, fiber: str
                   ) -> Tuple[List[list], int]:
     """
     Calculate the flat and blaze quality control criteria
 
     :param params: ParamDict, the parameter dictionary of constants
+    :param recipe: DrsRecipe, the drs recipe object
     :param eprops: dictionary, the extraction dictionary
     :param fiber: str, the fiber name
 
@@ -358,6 +427,38 @@ def flat_blaze_qc(params: ParamDict, eprops: ParamDict, fiber: str
     # set passed variable and fail message list
     fail_msg, qc_values, qc_names = [], [], [],
     qc_logic, qc_pass = [], []
+    # -------------------------------------------------------------------------
+    # qc on the edges of the order
+    flux_edge, edge_bad_orders = flux_edge_trace(params, recipe, eprops, fiber)
+    # get limit
+    flux_edge_limit = params['CAl.FLAT.QC_FLUX_EDGE_LIMIT']
+    # if flux edge value is above limit we fail QC
+    if flux_edge > flux_edge_limit:
+        # add failed message to fail message list
+        fargs = [fiber, flux_edge, flux_edge_limit]
+        ftext = 'Fiber {0}: Edge flux too high ({1} > {2})'
+        fail_msg.append(ftext.format(*fargs))
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
+        # add to qc header lists
+    qc_values.append(flux_edge)
+    qc_names.append('flux_edge')
+    qc_logic.append('flux_edge < {0:.2e}'.format(flux_edge_limit))
+    # -------------------------------------------------------------------------
+    # report failed orders as QC
+    if len(edge_bad_orders) > 0:
+        # add failed message to fail message list
+        fargs = [fiber, ','.join(edge_bad_orders)]
+        ftext = 'Fiber {0}: Flux edge bad orders = {1}'
+        fail_msg.append(ftext.format(*fargs))
+        qc_pass.append(0)
+        qc_values.append(','.join(edge_bad_orders))
+    else:
+        qc_pass.append(1)
+        qc_values.append('None')
+    qc_names.append('flux_edge_orders')
+    qc_logic.append('len(flux_edge_orders) > 0')
     # --------------------------------------------------------------
     # check that rms values in required orders are below threshold
 

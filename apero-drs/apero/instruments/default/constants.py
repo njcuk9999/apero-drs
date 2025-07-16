@@ -1629,6 +1629,27 @@ CDict.add('HIGHPASS_SIZE', value=None, dtype=int,
           description='Define the high pass filter size in '
                       'km/s')
 
+# Define the number of pixels left and right of the center of the image to
+# look at the flux at the edge of the orders
+CDict.add('QC_FLUX_EDGE_MIDSIZE', value=None, dtype=int,
+          source=__NAME__, group=cgroup,
+          description='Define the number of pixels  left and right of the '
+                      'center of the image to look at the flux at the edge of '
+                      'the orders')
+
+# Define the fraction of flux allowed to be rejected from the combined left
+# and right edges of an order (QC parameter in flat recipe)
+CDict.add('QC_FLUX_EDGE_LIMIT', value=None, dtype=float, source=__NAME__,
+          group=cgroup,
+          description='Define the fraction of flux allowed to be rejected from '
+                      'the combined left and right edges of an order '
+                      '(QC parameter in flat recipe)')
+
+# Define orders not to include in flux edge limit check
+CDict.add('QC_FLUX_EDGE_IGNORE', value=None,  dtype=list, dtypei=int,
+          source=__NAME__, group=cgroup,
+          description='Define orders not to include in flux edge limit check')
+
 # =============================================================================
 # CALIBRATION: LEAKAGE SETTINGS
 # =============================================================================
@@ -5020,6 +5041,11 @@ CDict.add('FLAT_BLAZE_ORDER2', value=False,
           active=False, group=cgroup,
           description='turn on the flat blaze order debug '
                       'plot (selected order)')
+
+# turn on the flat edge plot
+CDict.add('FLAT_EDGE_ORDERS', value=False, dtype=bool, source=__NAME__,
+          user=True, active=False, group=cgroup,
+          description='turn on the flat edge plot')
 
 # turn on thermal background (in extract) debug plot
 CDict.add('THERMAL_BACKGROUND', value=False,

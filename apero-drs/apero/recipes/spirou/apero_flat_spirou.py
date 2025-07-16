@@ -237,7 +237,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             # --------------------------------------------------------------
             # Quality control
             # --------------------------------------------------------------
-            qc_params, passed = flat_blaze.flat_blaze_qc(params, eprops, fiber)
+            qc_params, passed = flat_blaze.flat_blaze_qc(params, recipe,
+                                                         eprops, fiber)
             # update recipe log
             log2.add_qc(qc_params, passed)
             # --------------------------------------------------------------

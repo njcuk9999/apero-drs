@@ -207,19 +207,19 @@ FLAT_ORDER_FIT_EDGES1:
   figsize:
   - 6.4
   - 4.8
-FLAT_BLAZE_ORDER1:
-  kind: debug
-  func: plot_functions.plot_flat_blaze_order
-  dpi: 100
-  description: FLAT_BLAZE_ORDER1
-  figsize:
-  - 6.4
-  - 4.8
 FLAT_ORDER_FIT_EDGES2:
   kind: debug
   func: plot_functions.plot_flat_order_fit_edges
   dpi: 100
   description: FLAT_ORDER_FIT_EDGES2
+  figsize:
+  - 6.4
+  - 4.8
+FLAT_BLAZE_ORDER1:
+  kind: debug
+  func: plot_functions.plot_flat_blaze_order
+  dpi: 100
+  description: FLAT_BLAZE_ORDER1
   figsize:
   - 6.4
   - 4.8
@@ -231,6 +231,14 @@ FLAT_BLAZE_ORDER2:
   figsize:
   - 6.4
   - 4.8
+FLAT_EDGE_ORDERS:
+  kind: debug
+  func: plot_functions.plot_flat_edge_orders
+  dpi: 100
+  description: FLAT_EDGE_ORDERS
+  figsize:
+  - 12
+  - 6
 SUM_FLAT_ORDER_FIT_EDGES:
   kind: summary
   func: plot_functions.plot_flat_order_fit_edges
@@ -247,6 +255,14 @@ SUM_FLAT_BLAZE_ORDER:
   figsize:
   - 16
   - 10
+SUM_FLAT_EDGE_ORDERS:
+  kind: summary
+  func: plot_functions.plot_flat_edge_orders
+  dpi: 150
+  description: Flat check for flux on edge of orders (to monitor flux lost due to cutting off the top/bottom of orders during extraction)
+  figsize:
+  - 12
+  - 6
 THERMAL_BACKGROUND:
   kind: debug
   func: plot_functions.plot_thermal_background
