@@ -215,6 +215,8 @@ def load_ari_params(params: ParamDict) -> ParamDict:
     if not drs_text.null_text(filterobjs, ['None', 'Null', '']):
         params.set('ARI_FILTER_OBJECTS_LIST', value=filterobjs.split(','),
                    source='PARAMS.INPUTS.FILTEROBJS')
+        params.set('ARI_FILTER_OBJECTS', value=True,
+                   source='PARAMS.INPUTS.FILTEROBJS')
     # ----------------------------------------------------------------------
     # return the ari parameters
     return params
