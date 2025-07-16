@@ -38,7 +38,6 @@ __authors__ = apero_base.__authors__
 __date__ = apero_base.__date__
 __release__ = apero_base.__release__
 
-Database = drs_db.AperoDatabase
 # Define an empty table
 EMPTY_DATABASE = pd.DataFrame()
 EMPTY_DATABASE['NONE'] = ['No data found']

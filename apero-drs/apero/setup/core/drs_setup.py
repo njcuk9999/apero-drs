@@ -751,6 +751,7 @@ def create_yamls(params: Any):
     database_dict['USER'] = params.get('DATABASE_USER', 'NULL')
     database_dict['PASSWD'] = params.get('DATABASE_PASS', 'NULL')
     database_dict['DATABASE'] = params.get('DATABASE_NAME', 'NULL')
+    database_dict['USE_SSL'] = params.get('DATABASE_USE_SSL', False)
     # add calib database
     calibdb = dict()
     calibdb['NAME'] = params.get('CALIB_NAME', 'calib')
