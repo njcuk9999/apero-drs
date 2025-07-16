@@ -133,6 +133,9 @@ ari.set_kwarg(name='--profiles', dtype='switch', default=False,
               helpstr='List allowed profiles (and path to profiles), as profile '
                       'is usually required any invalid profile yaml also '
                       'displays this and exits.')
+ari.set_kwarg(name='--cores', dtype='int', default=0,
+              helpstr='Number of cores to use (default is 0, which uses '
+                      'value from yaml file)')
 ari.description_file = 'apero_ri.rst'
 
 # -----------------------------------------------------------------------------

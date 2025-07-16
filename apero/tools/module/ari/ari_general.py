@@ -195,6 +195,10 @@ def load_ari_params(params: ParamDict) -> ParamDict:
     if params['INPUTS']['finder_reset']:
         params['ARI_FINDING_CHARTS']['reset'] = True
     # ----------------------------------------------------------------------
+    # deal with overriding cores
+    if params['INPUTS'].get('cores', 0)['cores'] > 0:
+        params['ARI_NCORES'] = params['INPUTS']['cores']
+    # ----------------------------------------------------------------------
     # return the ari parameters
     return params
 
