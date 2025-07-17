@@ -2078,7 +2078,7 @@ def ari_filetypes(params: ParamDict) -> Dict[str, FileType]:
     filetypes['temp1d'] = FileType('temp1d', block_kind='red', chain='tcorr',
                                    kw_output='TELLU_TEMP_S1DV',
                                    fiber=science_fiber)
-    # lbl files added as filetype but don't count in same was as other files
+    # lbl files added as filetype but don't count in same way as other files
     filetypes['lbl.fits'] = FileType('lbl.fits', count=False)
     for filetype in LBL_FILETYPES:
         filetypes[filetype] = FileType(filetype, count=False)
@@ -2371,7 +2371,14 @@ def add_lbl_count(params: ParamDict, object_classes: Dict[str, AriObject]
         # in files)
         if _count != object_class.filetypes['lbl.fits'].num:
             object_class.update = True
+        # check that all files match
         else:
+            for filename in _lbl_rv_files:
+                if filename not in object_class.filetypes['lbl.fits'].files:
+                    object_class.update = True
+        # ---------------------------------------------------------------------
+        # don't update if everything matched
+        if not object_class.update:
             continue
         # --------------------------------------------------------------------
         # add the counts to the object class

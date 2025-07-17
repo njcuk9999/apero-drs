@@ -207,8 +207,8 @@ def load_ari_params(params: ParamDict) -> ParamDict:
         params['TOOLS.ARI.FINDING_CHARTS']['reset'] = True
     # ----------------------------------------------------------------------
     # deal with overriding cores
-    if params['INPUTS'].get('cores', 0)['cores'] > 0:
-        params['ARI_NCORES'] = params['INPUTS']['cores']
+    if params['INPUTS'].get('CORES', 0) > 0:
+        params['ARI_NCORES'] = params['INPUTS']['CORES']
     # ----------------------------------------------------------------------
     # deal with overridding filter
     filterobjs = params['INPUTS']['filterobjs']

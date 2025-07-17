@@ -9,6 +9,7 @@ Created on 2024-01-23 at 10:56
 
 @author: cook
 """
+import os
 import warnings
 from typing import Any, Dict
 
@@ -891,6 +892,11 @@ def debug_tcorr_map_plot(debug_props: Dict[str, Any], plot_path: str,
     # -------------------------------------------------------------------------
     # loop through each file and process each spectra (and add to maps)
     for it, sc1d_file in enumerate(sc1d_files):
+        # deal with rare conditions that will break the code below
+        if sc1d_file is None:
+            continue
+        if not os.path.exists(sc1d_file):
+            continue
         # open the sc1d file
         it_table = Table.read(sc1d_file, 'SC1D_V_FILE')
         # get the header
