@@ -855,6 +855,8 @@ def debug_mjd_plot(prop_name: str, debug_props: Dict[str, Any],
 
 def debug_tcorr_map_plot(debug_props: Dict[str, Any], plot_path: str,
                          plot_title: str):
+    # set function name
+    func_name = f'{__NAME__}.debug_tcorr_map_plot'
     # get pconstants
     sc1d_files = debug_props['SC1D_FILES']
     tmp_s1d = debug_props['TEMP_S1D']
@@ -872,7 +874,14 @@ def debug_tcorr_map_plot(debug_props: Dict[str, Any], plot_path: str,
         cal_med = False
     # -------------------------------------------------------------------------
     # load the first file as reference
-    ref_table = Table.read(sc1d_files[0], 'SC1D_V_FILE')
+    # open the sc1d file
+    try:
+        ref_table = Table.read(sc1d_files[0], 'SC1D_V_FILE')
+    except Exception as e:
+        emsg = 'Cannot open ref_table: {0}\n\tFunc = {1}\n\t{2}:{3}'
+        eargs = [sc1d_files[0], func_name, type(e), str(e)]
+        raise ValueError(emsg.format(*eargs))
+    # get wave grid
     ref_wave = np.array(ref_table['wavelength'])
     # Find the order with the most data points within the wavelength range
     # of interest
@@ -896,9 +905,14 @@ def debug_tcorr_map_plot(debug_props: Dict[str, Any], plot_path: str,
         if not os.path.exists(sc1d_file):
             continue
         # open the sc1d file
-        it_table = Table.read(sc1d_file, 'SC1D_V_FILE')
-        # get the header
-        it_hdr = fits.getheader(sc1d_file)
+        try:
+            it_table = Table.read(sc1d_file, 'SC1D_V_FILE')
+            # get the header
+            it_hdr = fits.getheader(sc1d_file)
+        except Exception as e:
+            emsg = 'Cannot open sc1d_files[{0}]: {1}\n\tFunc = {2}\n\t{3}:{4}'
+            eargs = [it, sc1d_file, func_name, type(e), str(e)]
+            raise ValueError(emsg.format(*eargs))
         # ---------------------------------------------------------------------
         # get the berv
         bervs[it] = float(it_hdr['BERV'])
@@ -938,7 +952,14 @@ def debug_tcorr_map_plot(debug_props: Dict[str, Any], plot_path: str,
     if cal_med:
         med = mp.nanmedian(map2d_star, axis=0)
     else:
-        tmp_table = Table.read(tmp_s1d[-1], 'TELLU_TEMP_S1DV')
+        # get last s1d
+        try:
+            tmp_table = Table.read(tmp_s1d[-1], 'TELLU_TEMP_S1DV')
+        except Exception as e:
+            emsg = 'Cannot open tmp_s1d[-1]: {0}\n\tFunc = {1}\n\t{2}:{3}'
+            eargs = [tmp_s1d[-1], func_name, type(e), str(e)]
+            raise ValueError(emsg.format(*eargs))
+        # calculate median
         med = np.array(tmp_table['flux'][wave_mask]).astype(float)
         med = med / mp.lowpassfilter(med, 501)
     # Copy the original map2d to map2d_star
