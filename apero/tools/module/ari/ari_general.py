@@ -24,6 +24,7 @@ from apero.core import constants
 from apero.core.core import drs_database
 from apero.core.core import drs_log
 from apero.core.core import drs_misc
+from apero.core.core import drs_text
 from apero.tools.module.ari import ari_core
 from apero.tools.module.ari import ari_pages
 from apero.tools.module.ari import ari_calib
@@ -196,8 +197,17 @@ def load_ari_params(params: ParamDict) -> ParamDict:
         params['ARI_FINDING_CHARTS']['reset'] = True
     # ----------------------------------------------------------------------
     # deal with overriding cores
-    if params['INPUTS'].get('cores', 0)['cores'] > 0:
-        params['ARI_NCORES'] = params['INPUTS']['cores']
+    if params['INPUTS'].get('CORES', 0) > 0:
+        params.set('ARI_NCORES', value=params['INPUTS']['CORES'],
+                   source='PARAMS.INPUTS.CORES')
+    # ----------------------------------------------------------------------
+    # deal with overridding filter
+    filterobjs = params['INPUTS']['filterobjs']
+    if not drs_text.null_text(filterobjs, ['None', 'Null', '']):
+        params.set('ARI_FILTER_OBJECTS_LIST', value=filterobjs.split(','),
+                   source='PARAMS.INPUTS.FILTEROBJS')
+        params.set('ARI_FILTER_OBJECTS', value=True,
+                   source='PARAMS.INPUTS.FILTEROBJS')
     # ----------------------------------------------------------------------
     # return the ari parameters
     return params
