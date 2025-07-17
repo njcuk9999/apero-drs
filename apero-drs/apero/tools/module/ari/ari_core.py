@@ -1828,6 +1828,7 @@ class AriObject:
         # ---------------------------------------------------------------------
         # parameters used for plotting
         debug_props = dict()
+        debug_props['params'] = params
         debug_props['HDICT'] = self.header_dict
         debug_props['HYAML'] = self.headers
         debug_props['EXT_MJD'] = Time(np.array(hdict['EXT_MJDMID']))

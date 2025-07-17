@@ -64,20 +64,17 @@ def load(params: ParamDict) -> Dict[str, Any]:
     return sparams
 
 
-def save_static_file(params: ParamDict, recipe, det_path: str,
-                     static_file_name: str, desc: str,
+def save_static_file(params: ParamDict, recipe, static_file, desc: str,
                      data_list: List[Union[np.ndarray, Table]],
-                     datatype_list: List[str],
-                     name_list: List[str],
+                     datatype_list: List[str] = None,
+                     name_list: List[str] = None,
                      hdr_kwargs: Dict[str, Any] = None):
     """
     Save a static file using the standard apero file instance
 
     :param params: ParamDict, parameter dictionary of constants
-    :param recipe: Apero recipe object
-    :param det_path: str, path to save the static file
-    :param static_file_name: str, name of the static file
-                             (must be in recipe.outputs)
+    :param recipe: DrsRecipe, the apero recipe instance
+    :param static_file: DrsInputFile, the apero static file
     :param desc: str, description from writing status
     :param data_list: list, list of data to be saved [np.ndarray and/or Table]
     :param datatype_list: list, list of datatypes to be saved "image" or "table"
@@ -88,10 +85,14 @@ def save_static_file(params: ParamDict, recipe, det_path: str,
 
     :return None - writes to disk
     """
-    # get dark file
-    static_file = recipe.outputs[static_file_name].newcopy(params=params)
-    # construct the filename from file instance
-    static_file.construct_filename(path=det_path)
+    # -------------------------------------------------------------------------
+    # if names_list is None get from static_file definition
+    if name_list is None:
+        name_list = static_file.get_hdulist_names()
+    # if datatype_list is None get from static_file definition
+    if datatype_list is None:
+        datatype_list = static_file.get_hdulist_datatypes()
+    # -------------------------------------------------------------------------
     # print progress
     msg = 'Writing {0}: {1}'
     margs = [desc, static_file.filename]

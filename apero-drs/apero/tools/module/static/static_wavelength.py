@@ -48,6 +48,8 @@ from typing import Dict, Any
 import numpy as np
 
 from astropy.table import Table
+from astropy import units as uu
+from astropy import constants as cc
 from astroquery.vizier import Vizier
 
 from aperocore.core import drs_log
@@ -75,7 +77,11 @@ ParamDict = param_functions.ParamDict
 WLOG = drs_log.wlog
 # get exceptions
 AperoCodedException = drs_log.AperoCodedException
-
+# Speed of light
+# noinspection PyUnresolvedReferences
+speed_of_light_ms = cc.c.to(uu.m / uu.s).value
+# noinspection PyUnresolvedReferences
+speed_of_light = cc.c.to(uu.km / uu.s).value
 # TODO:
 #    1.  Fill in + test this code
 #    2.  Remove REF_LEAK from usage
@@ -125,19 +131,92 @@ def generate_hc_catagloue(params: ParamDict, recipe, sparams: Dict[str, Any],
     wparams = sparams['waelength']['input_hc_cat']
     # download the hc model
     hc_model = get_hc_model(params, sparams)
-
-
-    pass
+    # only keep lines
+    hc_table = get_hc_lines(params, recipe, sparams, hc_model)
+    # -------------------------------------------------------------------------
+    # remove duplicated lines (keep brightest within certain velocity range)
+    # -------------------------------------------------------------------------
+    # get the hc window
+    hc_window = wparams['window_size']
+    # get the vectors for convience
+    wavemap = hc_table['wavemap']
+    flux = hc_table['wavemap']
+    # lines to keep
+    keep = np.zeros_like(wavemap, dtype=bool)
+    # loop around table
+    for it in range(len(hc_table)):
+        # work out the velocity of every line compared to this iteration
+        dv = (1 - wavemap[it]/wavemap) * speed_of_light
+        # find all lines within our velocity window
+        good = np.abs(dv) < hc_window
+        # if the flux of this peak is the max in itself velocity window keep it
+        if flux[it] == np.nanmax(flux[good]):
+            keep[it] = True
+    # cut down out hc_table
+    hc_table = hc_table[keep]
+    # -------------------------------------------------------------------------
+    # get static file
+    static_file = recipe.outputs['STATIC_HC_CAT'].newcopy(params=params)
+    # construct the filename from file instance
+    static_file.construct_filename(path=cal_path)
+    # save static file
+    drs_static.save_static_file(params, recipe, static_file,
+                                desc='hotpix', data_list=[hc_table])
 
 
 def generate_night(params: ParamDict, recipe, sparams: Dict[str, Any]):
+    # TODO: How do you generate a night without a wavelength solution?
+    # TODO: How do we do this without adding to the database?
+
+    # step 1: preprocess
+
+    # step 2: dark ref
+
+    # step 3: bad ref
+
+    # step 4: locrefsci
+
+    # step 5: extract (no shape/no flat/no thermal, just one fiber)
+
+
     pass
 
 
 def generate_wave_guess(params: ParamDict, recipe, sparams: Dict[str, Any],
                         cal_path: str):
-    # load the line list
-    wavell, ampll = drs_data.load_linelist(params)
+
+    # get static hc e2ds file
+    hc_file = recipe.outputs['STATIC_HC_E2DS'].newcopy(params=params)
+    # construct the filename from file instance
+    hc_file.construct_filename(path=cal_path)
+    # load the hc file
+    hc_image = hc_file.hdulist_load('HC_E2DS')
+
+    # get static fp e2ds file
+    fp_file = recipe.outputs['STATIC_FP_E2DS'].newcopy(params=params)
+    # construct the filename from file instance
+    fp_file.construct_filename(path=cal_path)
+    # load the hc file
+    fp_image = fp_file.hdulist_load('FP_E2DS')
+
+    # get static file
+    hc_cat_file = recipe.outputs['STATIC_HC_CAT'].newcopy(params=params)
+    # construct the filename from file instance
+    hc_cat_file.construct_filename(path=cal_path)
+    # load the hc catalogue
+    hc_cat_table = hc_cat_file.hdulist_load('HC_CAT')
+
+
+    # get the number of orders
+    norders, nxpix = hc_image.shape
+
+    # get the orders starting from the middle and alternating outwards
+    orders = np.arange(norders)
+    orders = orders[np.argsort(np.abs(orders - (norders / 2)))]
+
+
+
+
 
     pass
 
@@ -203,27 +282,115 @@ def get_hc_model(params: ParamDict, sparams: Dict[str, Any]) -> Table:
                                   targs=eargs)
 
 
-def get_hc_lines(params: ParamDict, sparams: Dict[str, Any], table: Table):
+def get_hc_lines(params: ParamDict, recipe, sparams: Dict[str, Any],
+                 table: Table) -> Table:
+    """
+    Cut down the HC model to only keep species and wavelength we are
+    interested in.
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param sparams: dict, parameters from yaml file
+    :param table: Table, table containing HC model
+
+    :return: Table, table containing the cut down HC model for lines we
+             are interested in
+    """
     # get the wavelength sparams for input hc cat
     wparams = sparams['wavelength']['input_hc_cat']
+    # get the required wavelength domain
+    wavemin, wavemax = wparams['wave_domain']
     # get the species we want
     species_keep = wparams['species_keep']
     # get the species column
     hc_species_col = wparams['species_col']
-
-
+    # get the flux column
+    hc_flux_col = wparams['hc_flux_col']
+    # get the wavelength column
+    hc_wave_col = wparams['wave_col']
+    # get wavelength units and convert to astropy unit
+    hc_wave_unit = wparams['wave_units']
+    # get the vizier reference
+    vizier_ref = wparams['vizier-ref']
+    # -------------------------------------------------------------------------
+    try:
+        wave_unit = uu.Unit(hc_wave_unit)
+    except Exception as e:
+        emsg = 'wavelength.input_hc_Cat.wave_units={0} invalid.\n\t{1}: {2}'
+        eargs = [hc_wave_unit, type(e), str(e)]
+        raise AperoCodedException(params, None, message=emsg.format(*eargs),
+                                  targs=eargs)
+    # make sure wavelength is in nm
+    try:
+        wavemap = ((table[hc_wave_col] * wave_unit).to(uu.nm)).value
+    except Exception as e:
+        # TODO: Add to language database
+        emsg = ('wavelength.input_hc_Cat.wave_units={0} [astropy={1}] invalid.'
+                '\n\t{2}: {3}')
+        eargs = [hc_wave_unit, str(wave_unit), type(e), str(e)]
+        raise AperoCodedException(params, None, message=emsg.format(*eargs),
+                                  targs=eargs)
+    # -------------------------------------------------------------------------
     # assume we don't want any lines at first
     smask = np.zeros_like(len(table))
-
+    # loop around species to keep from hc model
     for species in species_keep:
         # get a mask just for this species
-        smask |= table[hc_species_col] == species
-
+        sp_mask = table[hc_species_col] == species
+        # get wavelength constraints
+        sp_mask &= wavemap > wavemin
+        sp_mask &= wavemap < wavemax
+        # combine to full mask
+        smask |= sp_mask
     # deal with no lines
     if np.sum(smask) == 0:
-        return None
+        # TODO: Add to language database
+        emsg = ('No lines left in HC model after cut\n\tSpecies: {0}'
+                '\n\tWavemin: {1} nm\n\tWavemax: {2} nm')
+        eargs = [','.join(species_keep), wavemin, wavemax]
+        raise AperoCodedException(params, None, message=emsg.format(*eargs),
+                                  targs=eargs)
     else:
-        return table[smask]
+        # get static file
+        hccat = recipe.outputs['STATIC_HC_CAT'].newcopy(params=params)
+        stbl = hccat.hdulist['HC_CAT']
+        # lets make a new table, cut down to smask, and cleaned ready for use
+        outtable = stbl.create_table(wavelength=wavemap[smask],
+                                     flux=table[hc_flux_col][smask],
+                                     species=table[hc_species_col][smask],
+                                     source=[vizier_ref] * np.sum(smask))
+        # return the new, cleaned, cut down table
+        return outtable
+
+
+def get_approx_wavesol(sparams: Dict[str, Any], order_num: int,
+                       norders: int) -> Tuple[float, float, float]:
+    """
+    Calculate a very rough approximation of the wave solution
+    (center and start and end) for an order - based on a linear fit
+    in wavenumber
+
+    :param sparams: dict, parameters from yaml file
+    :param order_num: int, order of approximation
+    :param norders: int, number of orders in total
+
+    :return: Tuple, Guess for this order: 1. wave center, 2. start, 3. end
+    """
+    # get the wavelength sparams for input hc cat
+    wparams = sparams['wavelength']['input_hc_cat']
+    # get the required wavelength domain
+    wavemin, wavemax = wparams['wave_domain']
+    # get the fractional range for approximate wavelength
+    wave_approx = wparams['wave_approx']
+
+    # linear fit across orders in wavenumber
+    lfit = np.polyfit([0, norders], [1/wavemin, 1/wavemax], 1)
+    # the wave guess it the inverse of this fit in wavenumber
+    waveguess = 1 / np.polyval(lfit, order_num)
+    # start and end points given the wave_approx size (and waveguess as center)
+    wavestart = waveguess * (1 - wave_approx)
+    waveend = waveguess * (1 + wave_approx)
+
+    return waveguess, wavestart, waveend
 
 
 # =============================================================================

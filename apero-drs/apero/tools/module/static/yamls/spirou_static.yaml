@@ -87,6 +87,9 @@ wavelength:
     species_keep:
       - UI
       - UII
+    # window size for HC lines (in km/s) - keep only brightest line within this
+    # window
+    window_size: 50
 
    # Initial guess for cavity length (in nm)
   cavity0: 23990000.0
