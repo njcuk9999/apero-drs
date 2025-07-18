@@ -2233,22 +2233,6 @@ CDict.add('FIBER_COMP_PLOT_ORD', value=None,
 CDict.add('HC_CAT_FILE', value=None, dtype=str, source=__NAME__, group=cgroup,
           description='Define the HC catalogue file')
 
-# Define the HC catalogue format
-CDict.add('HC_CAT_FMT', value=None, dtype=str, source=__NAME__, group=cgroup,
-          description='Define the HC catalogue format')
-
-# Define the HC catalogue wave col
-CDict.add('HC_CAT_WAVECOL', value=None, dtype=str, source=__NAME__,
-          group=cgroup, description='Define the HC catalogue wave col')
-
-# Define the HC catalogue flux col
-CDict.add('HC_CAT_FLUXCOL', value=None, dtype=str, source=__NAME__,
-          group=cgroup, description='Define the HC catalogue flux col')
-
-# Define the HC catalogue species col
-CDict.add('HC_CAT_')
-
-
 # Define the line list file (located in the DRS_WAVE_DATA directory)
 CDict.add('LINELIST_FILE', value=None, dtype=str,
           source=__NAME__, group=cgroup,
