@@ -44,16 +44,17 @@ Code Steps (matches main code steps):
 ===============================================================================
 """
 import os
-from typing import Dict, Any
+from typing import Any, Dict, Tuple
 import numpy as np
 
 from astropy.table import Table
 from astropy import units as uu
-from astropy import constants as cc
+
 from astroquery.vizier import Vizier
 
 from aperocore.core import drs_log
 from aperocore.constants import param_functions
+from aperocore.base import physics
 
 from apero.base import base as apero_base
 from apero.utils import drs_data
@@ -75,13 +76,12 @@ __release__ = apero_base.__release__
 ParamDict = param_functions.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
+# speed of light
+speed_of_light_kms = physics.speed_of_light_kms
+speed_of_light_ms = physics.speed_of_light_ms
 # get exceptions
 AperoCodedException = drs_log.AperoCodedException
-# Speed of light
-# noinspection PyUnresolvedReferences
-speed_of_light_ms = cc.c.to(uu.m / uu.s).value
-# noinspection PyUnresolvedReferences
-speed_of_light = cc.c.to(uu.km / uu.s).value
+
 # TODO:
 #    1.  Fill in + test this code
 #    2.  Remove REF_LEAK from usage
@@ -139,8 +139,8 @@ def generate_hc_catagloue(params: ParamDict, recipe, sparams: Dict[str, Any],
     # get the hc window
     hc_window = wparams['window_size']
     # get the vectors for convience
-    wavemap = hc_table['wavemap']
-    flux = hc_table['wavemap']
+    wavemap = np.array(hc_table['wavemap'])
+    flux = np.array(hc_table['wavemap'])
     # lines to keep
     keep = np.zeros_like(wavemap, dtype=bool)
     # loop around table
@@ -153,7 +153,7 @@ def generate_hc_catagloue(params: ParamDict, recipe, sparams: Dict[str, Any],
         if flux[it] == np.nanmax(flux[good]):
             keep[it] = True
     # cut down out hc_table
-    hc_table = hc_table[keep]
+    hc_table = Table(hc_table[keep])
     # -------------------------------------------------------------------------
     # get static file
     static_file = recipe.outputs['STATIC_HC_CAT'].newcopy(params=params)
@@ -252,7 +252,7 @@ def get_hc_model(params: ParamDict, sparams: Dict[str, Any]) -> Table:
         Vizier.ROW_LIMIT = -1
         # Query the entire table
         try:
-            tables = Vizier.get_catalogs(vizier_ref)
+            tables = Vizier.get_catalogs(vizier_ref) # type: ignore
             # get the first table
             table = tables[0]
         except Exception as e:
@@ -321,7 +321,7 @@ def get_hc_lines(params: ParamDict, recipe, sparams: Dict[str, Any],
                                   targs=eargs)
     # make sure wavelength is in nm
     try:
-        wavemap = ((table[hc_wave_col] * wave_unit).to(uu.nm)).value
+        wavemap = ((table[hc_wave_col] * wave_unit).to(uu.nm)).value # type: ignore
     except Exception as e:
         # TODO: Add to language database
         emsg = ('wavelength.input_hc_Cat.wave_units={0} [astropy={1}] invalid.'
@@ -385,7 +385,7 @@ def get_approx_wavesol(sparams: Dict[str, Any], order_num: int,
     # linear fit across orders in wavenumber
     lfit = np.polyfit([0, norders], [1/wavemin, 1/wavemax], 1)
     # the wave guess it the inverse of this fit in wavenumber
-    waveguess = 1 / np.polyval(lfit, order_num)
+    waveguess = float(1 / np.polyval(lfit, order_num))
     # start and end points given the wave_approx size (and waveguess as center)
     wavestart = waveguess * (1 - wave_approx)
     waveend = waveguess * (1 + wave_approx)
