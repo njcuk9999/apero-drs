@@ -99,7 +99,7 @@ class AperoDataModel:
     def load_data(self, params: ParamDict, filename: str,
                   **kwargs) -> Any:
         emsg = 'AperoDataModel.load_data not implemented'
-        raise NotImplemented(emsg)
+        raise NotImplementedError(emsg)
 
 
 class AperoTableModel(AperoDataModel):
@@ -123,8 +123,8 @@ class AperoTableModel(AperoDataModel):
         self.units = [] if units is None else units
         self.descriptions = [] if descriptions is None else descriptions
 
-    def add_column(self, column: str, units: uu.Unit = None,
-                   description: str = None):
+    def add_column(self, column: str, units: Optional[uu.Quantity] = None,
+                   description:  Optional[str] = None):
         """
         Add a column to this AperoTable model
 
@@ -190,14 +190,23 @@ class AperoTableModel(AperoDataModel):
 class AperoImageModel(AperoDataModel):
     classname = 'AperoImageModel'
 
-    def __init__(self, name: str, shape: List[Union[str, int]] = None):
+    def __init__(self, name: str, 
+                 shape: Optional[List[Union[str, int]]] = None):
+        """
+        Construct the AperoImageModel
+
+        :param name: str, name of the image model
+        :param shape: List, the shape of the image (e.g. [2048, 2048])
+                      or None for any shape
+        """
         # some info
         super().__init__(name)
         self.datatype = 'image'
         self.shape = shape
 
     def load_data(self, params: ParamDict, filename: str,
-                  **kwargs) -> drs_fits.DataHdrType:
+                  **kwargs) -> Union[drs_fits.DataHdrType, np.ndarray, 
+                                     drs_fits.fits.Header, None]:
         """
         Load a fits image from 'filename'
 

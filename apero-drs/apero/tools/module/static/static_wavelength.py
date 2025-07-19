@@ -146,7 +146,7 @@ def generate_hc_catagloue(params: ParamDict, recipe, sparams: Dict[str, Any],
     # loop around table
     for it in range(len(hc_table)):
         # work out the velocity of every line compared to this iteration
-        dv = (1 - wavemap[it]/wavemap) * speed_of_light
+        dv = (1 - wavemap[it]/wavemap) * speed_of_light_kms
         # find all lines within our velocity window
         good = np.abs(dv) < hc_window
         # if the flux of this peak is the max in itself velocity window keep it
