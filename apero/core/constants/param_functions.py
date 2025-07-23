@@ -2003,7 +2003,7 @@ def _map_listparameter(value: Union[str, list], separator: str = ',',
     # noinspection PyBroadException
     try:
         # evaluate value
-        rawvalue = eval(value)
+        rawvalue = eval(value)              #@IgnoreException
         # if it is a list return as a list
         if isinstance(rawvalue, list):
             return list(rawvalue)

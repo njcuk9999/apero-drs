@@ -12,7 +12,7 @@ Created on 2024-01-23 at 15:52
 import glob
 import os
 import traceback
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 from astropy.table import Table
@@ -103,7 +103,7 @@ class TableFile:
         title = f'{self.name} ({self.user})'
         table_page.add_title(title)
         # add page access
-        table_page.add_html(add_page_access(self.params['ARI_GROUP']))
+        table_page.add_html(add_page_access(self.params))
         # -----------------------------------------------------------------
         # Add basic text
         # construct text to add
@@ -382,7 +382,7 @@ def _add_obj_page(it: int, key: str, rdict: dict, params: ParamDict,
         # add title
         object_page.add_title(f'{objname} ({ari_user})')
         # add page access
-        object_page.add_html(add_page_access(params['ARI_GROUP']))
+        object_page.add_html(add_page_access(params))
         # ---------------------------------------------------------------------
         # Add basic text
         # construct text to add
@@ -958,8 +958,7 @@ def add_finder_table(params: ParamDict, data_dict: Dict[str, Any]):
       """
 
     html_body2 += """
-    <script src="/ari/home/login.js"></script>
-    <script>EnableContent()</script>
+    <script>document.body.style.display = 'block';</script>
     
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
@@ -1093,9 +1092,7 @@ def add_recipe_tables(params: ParamDict, table: Table, machine_name: str):
       </div>
       """
     html_body2 += """
-    <script src="/ari/home/login.js"></script>
-    <script>EnableContent()</script>
-    
+    <script>document.body.style.display = 'block';</script>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
@@ -1304,7 +1301,7 @@ def make_index_page(params: ParamDict):
     profile_files = [os.path.join(ari_user, 'profile.rst')]
     # -------------------------------------------------------------------------
     # add page access
-    index_page.add_html(add_page_access(params['ARI_GROUP']))
+    index_page.add_html(add_page_access(params))
     # -------------------------------------------------------------------------
     # Add basic text
     # construct text to add
@@ -1352,7 +1349,7 @@ def make_profile_page(params: ParamDict, tables: List[TableFile]):
     # add title
     profile_page.add_title(ari_user)
     # add page access
-    profile_page.add_html(add_page_access(params['ARI_GROUP']))
+    profile_page.add_html(add_page_access(params))
     # -----------------------------------------------------------------
     # Add basic text
     # construct text to add
@@ -1412,6 +1409,8 @@ def sphinx_compile(params: ParamDict):
     working_dir = os.path.dirname(params['ARI_DIR'])
     # get the resources default working directory path
     resources_dir = params['ARI_DWORKING_DIR']
+    # storage for conf.py file
+    conf_py = None
     # copy over working directory from resources
     content = glob.glob(os.path.join(resources_dir, '*'))
     for element in content:
@@ -1419,6 +1418,26 @@ def sphinx_compile(params: ParamDict):
         new_element = element.replace(resources_dir, working_dir)
         # copy
         drs_path.copy_element(element, new_element)
+        # check for conf.py file
+        if conf_py is None and os.path.basename(element) == 'conf.py':
+            # set conf_py to this element
+            conf_py = new_element
+    # ------------------------------------------------------------------
+    # Update version in conf.py file
+    msg = 'Updating version in conf.py file'
+    WLOG(params, '', msg)
+    # add version to the conf.py file
+    if conf_py is not None:
+        # read the conf.py file
+        with open(conf_py, 'r') as rfile:
+            conf_content = rfile.read()
+        # replace the version string
+        version = base.__version__
+        conf_content = conf_content.replace('release = \'0.0.0\'',
+                                                 f'release = \'{version}\'')
+        # write the conf.py file back
+        with open(conf_py, 'w') as wfile:
+            wfile.write(conf_content)
     # ------------------------------------------------------------------
     # get current directory
     cwd = os.getcwd()
@@ -1523,7 +1542,8 @@ def add_other_reductions(params: ParamDict):
     base.write_yaml(userlist, userlist_yaml)
 
 
-def add_page_access(group_name: str) -> List[str]:
+def add_page_access(params: ParamDict, 
+                    group_name: Optional[str] = None) -> List[str]:
     """
     This locks the page to only be accessible by the group name
     i.e. via log in
@@ -1532,6 +1552,16 @@ def add_page_access(group_name: str) -> List[str]:
 
     :return: str, the html code to add
     """
+    # do not protect page if ARI_PROTECT is False
+    if not params['ARI_PROTECT']:
+        htmllines = []
+        htmllines += [f'<script>document.body.style.display = "block";</script>']
+        return htmllines
+
+    # deal with group name from params (if group_name is not defined)
+    if group_name is None:
+        group_name = params['ARI_GROUP']
+
     htmllines = []
     htmllines += ['<script src="/ari/home/login.js"></script>']
     htmllines += [f'<script>pageAccess("{group_name}", "/ari/home/index.html")</script>']
