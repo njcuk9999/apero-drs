@@ -109,7 +109,7 @@ def add_calib_page(params, recipe_table):
     title = f'{recipe_table.name} ({recipe_table.user})'
     calib_page.add_title(title)
     # add page access
-    calib_page.add_html(ari_pages.add_page_access(recipe_table.params['ARI_GROUP']))
+    calib_page.add_html(ari_pages.add_page_access(recipe_table.params))
     # -----------------------------------------------------------------
     # Add basic text
     # construct text to add

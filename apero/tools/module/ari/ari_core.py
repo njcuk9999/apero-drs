@@ -65,6 +65,7 @@ YAML_TO_PARAM['settings.N_CORES'] = 'ARI_NCORES'
 YAML_TO_PARAM['settings.SpecWave'] = 'ARI_WAVE_RANGES'
 YAML_TO_PARAM['settings.TcorrMapWave'] = 'ARI_TCORR_MAP_WAVE_RANGE'
 YAML_TO_PARAM['settings.ssh'] = 'ARI_SSH_COPY'
+YAML_TO_PARAM['settings.protect'] = 'ARI_PROTECT'
 YAML_TO_PARAM['settings.group'] = 'ARI_GROUP'
 YAML_TO_PARAM['settings.reset'] = 'ARI_RESET'
 YAML_TO_PARAM['settings.filter objects'] = 'ARI_FILTER_OBJECTS'
@@ -897,9 +898,10 @@ class AriObject:
         core_snr = params['MKTEMPLATE_BERVCOV_CSNR']
         resolution = params['MKTEMPLATE_BERVCOV_RES']
         # get the extracted files
+        pp_files = self.filetypes['pp'].get_files()
         ext_files = self.filetypes['ext'].get_files()
         # don't go here if ext files are not present
-        if len(ext_files) == 0:
+        if len(pp_files) == 0 or len(ext_files) == 0:
             return
         # ---------------------------------------------------------------------
         # storage for spectrum values

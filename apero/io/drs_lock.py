@@ -195,7 +195,7 @@ class Lock:
                     # write filename
                     with open(abspath, 'w') as f:
                         msg = 'File={0} Timer={1}'
-                        f.write(msg.format([filename, timer]))
+                        f.write(msg.format([filename, timer])) #@IgnoreException
                     break
                 except Exception as _:
                     # whatever the problem sleep for a second

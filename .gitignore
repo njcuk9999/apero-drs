@@ -171,6 +171,7 @@ fabric.properties
 # ignore whole .idea folder
 .idea
 .run/*.xml
+.vscode/*
 
 # Ignore config.py
 #/INTROOT/misc/
