@@ -91,6 +91,10 @@ wavelength:
     # window
     window_size: 50
 
+  # How many iterations to run to guess the wavelength solution
+  #   Minimum is 2, recommended is at least 3
+  number_iterations: 3
+
    # Initial guess for cavity length (in nm)
   cavity0: 23990000.0
   # First to last orders (nm)
@@ -133,6 +137,10 @@ wavelength:
   robust_polyfit_deg: 7
   # Sigma cut for robust_polyfit on Chebyshev coeffs
   robust_polyfit_sigma: 5
+  # define the cavity refinement polyfit degree
+  cavity_refine_poly_deg: 3
+  # define the cavity refinement sigma for robust_polyfit
+  cavity_refine_sigma: 8
 
 # ------------------------------------------------------------------------------
 # Telluric

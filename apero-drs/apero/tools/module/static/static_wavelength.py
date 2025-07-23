@@ -44,7 +44,9 @@ Code Steps (matches main code steps):
 ===============================================================================
 """
 import os
-from typing import Any, Dict, Tuple
+import glob
+import pickle
+from typing import Any, Dict, List, Tuple
 import numpy as np
 
 from astropy.table import Table
@@ -55,6 +57,7 @@ from astroquery.vizier import Vizier
 from aperocore.core import drs_log
 from aperocore.constants import param_functions
 from aperocore.base import physics
+from aperocore import math as mp
 
 from apero.base import base as apero_base
 from apero.utils import drs_data
@@ -153,7 +156,7 @@ def generate_hc_catagloue(params: ParamDict, recipe, sparams: Dict[str, Any],
         if flux[it] == np.nanmax(flux[good]):
             keep[it] = True
     # cut down out hc_table
-    hc_table = Table(hc_table[keep])
+    hc_table = hc_table[keep]
     # -------------------------------------------------------------------------
     # get static file
     static_file = recipe.outputs['STATIC_HC_CAT'].newcopy(params=params)
@@ -215,10 +218,30 @@ def generate_wave_guess(params: ParamDict, recipe, sparams: Dict[str, Any],
     orders = orders[np.argsort(np.abs(orders - (norders / 2)))]
 
 
+    # now we iterate several times to build the wavelength solution
+    # first time we use the initial guess from the yaml file
+    # then we use the previous solution to robustly fit the cavity
 
+    for iteration in range(sparams['wavelength']['number_iterations']):
 
+        # initialize storage arrays
+        fit_cavity = [sparams['wavelength']['cavity0']]
+        known_orders = []
 
-    pass
+        # Step 1: Check if we have enough previous solutions to
+        #         robustly fit the cavity
+        n_pickles = count_wave_pickles(sparams)
+        # if we have more than 5 pickles, we can refine the cavity fit
+        if n_pickles > 5:
+            rout = refine_cavity_fit(params, recipe, sparams, orders,
+                                     known_orders=known_orders)
+            fit_cavity, known_orders = rout
+
+        # Step 2: Build the wavelength solution
+        build_wavesol(params, recipe, sparams, fit_cavity)
+
+        # Step 3: compile into packaged wavelength solution and cavity fit file
+        package_wavesol(params, recipe, sparams, fit_cavity)
 
 
 
@@ -391,6 +414,203 @@ def get_approx_wavesol(sparams: Dict[str, Any], order_num: int,
     waveend = waveguess * (1 + wave_approx)
 
     return waveguess, wavestart, waveend
+
+
+def count_wave_pickles(sparams: Dict[str, Any]) -> int:
+    """
+    Count the number of wavelength solution pickles available in the
+    wavelength directory.
+
+    :param sparams: dict, parameters from yaml file
+
+    :return: int, number of wavelength solution pickles available
+    """
+    # get the input path
+    inpath = sparams['inpath'] 
+    # get the wave pickle path
+    wave_pickle_path = os.path.join(inpath, 'wave_pickles')
+    # check if the path exists
+    if not os.path.exists(wave_pickle_path):
+        # if not, return 0
+        return 0
+    # list all files in the wave pickle path
+    files = glob.glob(os.path.join(wave_pickle_path, 'wave_order_*.pkl'))
+    # return the number of files    
+    return len(files)
+
+
+def refine_cavity_fit(params: ParamDict, recipe, sparams: Dict[str, Any],
+                      orders: np.ndarray):
+    """
+    Refine the cavity fit using all previous wavelength solutions.
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param recipe: Recipe, recipe instance
+    :param sparams: dict, parameters from yaml file
+
+    :return: list, refined cavity fit coefficients
+    """
+
+    # get the wavelength fit degree from params
+    wavedegn = params['CAL.WAVE.GEN.WAVESOL_FIT_DEG']
+    # get the cavity refine polyfit degree
+    cavity_deg = sparams['wavelength']['cavity_refine_poly_deg']
+    # get the cavity refine sigma for robust_polyfit
+    cavity_sigma = sparams['wavelength']['cavity_refine_sigma']
+    # get the input path
+    inpath = sparams['inpath'] 
+    # set the cavity fit to None initially
+    fit_cavity = None
+    # get the wave pickle path
+    wave_pickle_path = os.path.join(inpath, 'wave_pickles')
+    # store the mid-wavelength for each order
+    mid_wavelengths = []
+    # store the known orders
+    known_orders = []
+    # store the wavelength center for each order (calculated)
+    ord_wave_center = np.full(len(orders), np.nan)
+    # store the cavity center for each order (calculated)
+    ord_cavity_center = np.full(len(orders), np.nan)
+
+    # store all fp peaks wavelength
+    all_fp_wave = []
+    # store all fp peaks count
+    all_fp_int = []
+    # store all fp peaks order number
+    all_fp_order = []
+
+    # loop around orders
+    for it, order_num in enumerate(orders):
+        # construct wave filenames
+        wave_order_basename = f'wave_order_{order_num}.pkl'
+        wave_order_csvfile = os.path.join(wave_pickle_path, wave_order_basename)
+        wave_order_pklfile = wave_order_csvfile.replace('.csv', '.pkl')
+        # ---------------------------------------------------------------------
+        # if the file does not exist, skip this order
+        if not os.path.exists(wave_order_csvfile):
+            msg = 'Skipping order {0} - no pickle file found'
+            margs = [order_num]
+            WLOG(params, '', msg.format(*margs))
+            continue
+        # ---------------------------------------------------------------------
+        # Register that we known this order
+        known_orders.append(order_num)
+        # ---------------------------------------------------------------------
+        # read the csv file
+        wtbl = Table.read(wave_order_csvfile, format='ascii.csv')
+        # get the mid-wavelength for this order
+        mid_wavelengths.append(np.mean(wtbl['wavelength']))
+        # load the pickle file
+        dict_fp = load_wave_pickle(params, wave_order_pklfile)
+        # get the vectors from the dictionary
+        fp_wave = dict_fp['fp_wave']
+        fp_int = dict_fp['fp_int']
+        # deal with initial cavity fit (for first order)
+        if fit_cavity is None:
+            # rough guess for the cavity fit 
+            fit_cavity = [np.nanmedian(fp_wave * fp_int)]
+            # update fp orders storage
+            all_fp_wave += list(fp_wave)            
+            all_fp_int += list(fp_int)
+            all_fp_order += [order_num] * len(fp_wave)
+        # if we have a fit cavity we can update fit with subsequent orders
+        else:
+            # get the updated cavity fit
+            cavity = np.polyval(fit_cavity, fp_wave)
+            # store the previous fp count
+            prev_fp_int = np.copy(fp_int)
+            # get the new fp count
+            new_fp_int = np.round(cavity / fp_wave).astype(int)
+            # if any values have been updated compared to previously display
+            #   a warning
+            if not np.array_equal(prev_fp_int, new_fp_int):
+                # log a warning message
+                wmsg = 'Intensity values have changed for order {0}'
+                wargs = [order_num]
+                WLOG(params, 'warning', wmsg.format(*wargs))
+                # set fp_int to the new values
+                fp_int = new_fp_int
+                # update the fp_int for this order
+                dict_fp['fp_int'] = fp_int
+                # -------------------------------------------------------------
+                # save the updated pickle file
+                save_wave_pickle(params, dict_fp, wave_order_pklfile)
+
+            # update all orders storage
+            all_fp_wave += list(fp_wave)
+            all_fp_int += list(fp_int)
+            all_fp_order += [order_num] * len(fp_wave)
+            # convert all_fp_wave and all_fp_int to numpy arrays
+            all_fp_wave_arr = np.array(all_fp_wave)
+            all_fp_int_arr = np.array(all_fp_int)
+            # -----------------------------------------------------------------
+            # re-fit the cavity using all fp peaks
+            fit_cavity, _ = mp.robust_polyfit(all_fp_wave_arr, 
+                                              all_fp_wave_arr * all_fp_int_arr,
+                                              cavity_deg, cavity_sigma)
+            # update the order center and cavity for this order
+            ord_wave_center[it] = np.median(fp_wave)
+            ord_cavity_center[it] = np.median(fp_wave * fp_int)
+    # -------------------------------------------------------------------------
+    # fill in missing order values and robustly  filter orders for cavity fit
+    # -------------------------------------------------------------------------
+    # convert known and mid to numpy arrays
+    known_orders = np.array(known_orders)
+    mid_wavelengths = np.array(mid_wavelengths)
+    # convert all fp orders to numpy array
+    all_fp_order = np.array(all_fp_order)
+    # find orders that are missing
+    invalid = ~np.isfinite(ord_wave_center)
+    # fill in missing orders with the polyfit of the known orders
+    ofits = np.polyfit(known_orders, mid_wavelengths, 2)
+    ord_wave_center[invalid] = np.polyval(ofits, orders[invalid])
+    ord_cavity_center[invalid] = np.polyval(fit_cavity, ord_wave_center[invalid])
+    # -------------------------------------------------------------------------
+    # robustly fit the known orders
+    kfit, keep_orders = mp.robust_polyfit(known_orders, 1 / mid_wavelengths, 1, 3)
+    # get the valid orders to keep
+    valid_orders = np.in1d(all_fp_order, known_orders[keep_orders])
+    # update ord wave and cavity centers
+    ord_wave_center = ord_wave_center[valid_orders]
+    ord_cavity_center = ord_cavity_center[valid_orders]
+
+
+def load_wave_pickle(params: ParamDict, pickle_file: str) -> Dict[str, Any]:
+    """
+    Load a wavelength solution pickle file.
+
+    :param pickle_file: str, path to the pickle file
+
+    :return: dict, dictionary containing the wavelength solution data
+    """
+
+    # check if the file exists
+    if not os.path.exists(pickle_file):
+        emsg = 'Pickle file not found: {0}'
+        eargs = [pickle_file]
+        raise AperoCodedException(params, None, message=emsg.format(*eargs),
+                                  targs=eargs)
+    # load the pickle file
+    with open(pickle_file, 'rb') as f:
+        return pickle.load(f)
+
+
+
+def save_wave_pickle(params, data: Dict[str, Any], pickle_file: str):
+    """
+    Save a wavelength solution dictionary to a pickle file.
+
+    :param data: dict, dictionary containing the wavelength solution data
+    :param pickle_file: str, path to the pickle file
+    """
+    # save the pickle file
+    with open(pickle_file, 'wb') as f:
+        pickle.dump(data, f)
+    # log that we saved the file
+    msg = 'Saved wavelength solution pickle to: {0}'
+    margs = [pickle_file]
+    WLOG(params, '', msg.format(*margs))
+
 
 
 # =============================================================================

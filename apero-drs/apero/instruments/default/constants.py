@@ -5711,6 +5711,11 @@ CDict.add('SSH_COPY', value=None, dtype=dict, source=__NAME__,
           description='Define the ari ssh properties to copy the '
                       'website to')
 
+# Define whether to protect the ari pages with a password
+CDict.add('PROTECT', value=True, dtype=bool, source=__NAME__,
+          group=cgroup,
+          description='Whether to protect the ari pages with a password')
+
 # Define the ari group (For login access to pages)
 CDict.add('GROUP', value=None, dtype=str, source=__NAME__,
           group=cgroup,

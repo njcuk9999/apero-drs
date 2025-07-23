@@ -13,18 +13,17 @@
 # import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
-from astropy.time import Time
-from aperocore.base import base
+from datetime import datetime
 
 
 # -- Project information -----------------------------------------------------
 
 project = 'APERO Reduction Interface'
-copyright = '{0}, Neil Cook'.format(Time.now().datetime.year)
+copyright = '{0}, Neil Cook'.format(datetime.now().year)
 author = 'Neil Cook'
 
 # The full version, including alpha/beta/rc tags
-release = base.__version__
+release = '0.0.0'
 
 # -- General configuration ---------------------------------------------------
 

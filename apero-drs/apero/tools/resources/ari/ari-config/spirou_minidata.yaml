@@ -35,6 +35,8 @@ settings:
     user: cook
     host: venus.astro.umontreal.ca
     options: ssh -oport=5822
+  # protect the pages with a password
+  protect: True
   # html group for login
   group: spiroulocal
   # whether to reset the working directory
