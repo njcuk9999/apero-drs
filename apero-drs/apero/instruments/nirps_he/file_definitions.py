@@ -911,7 +911,7 @@ pp_hc2_hc1 = drs_finput('HCTWO_HCONE', hkeys=dict(KW_DPRTYPE='HCTWO_HCONE'),
                                     'lamp')
 pp_file.addset(pp_hc2_hc1)
 
-pp_hc1_lfc = drs_finput('HCTWO_LFC', hkeys=dict(KW_DPRTYPE='HCONE_LFC'),
+pp_hc1_lfc = drs_finput('HCONE_LFC', hkeys=dict(KW_DPRTYPE='HCONE_LFC'),
                         filetype='.fits',
                         suffix='_pp', intype=raw_hc1_lfc,
                         inext='.fits', outclass=general_ofile,
