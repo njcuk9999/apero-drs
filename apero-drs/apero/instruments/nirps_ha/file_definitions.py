@@ -197,6 +197,26 @@ raw_fp_lfc = drs_finput('RAW_FP_LFC',
                         description='Raw sci=FP calib=LFC file')
 raw_file.addset(raw_fp_lfc)
 
+# NIRPS: HCONE1 - LFC
+raw_hc1_lfc = drs_finput('RAW_HC1_LFC', filetype='.fits', suffix='',
+                         outclass=blank_ofile,
+                         hkeys=dict(KW_RAW_DPRTYPE='WAVE,UN1,LFC',
+                                    KW_RAW_DPRCATG='CALIB',
+                                    KW_INST_MODE=INSTRUMENT_MODE,
+                                    KW_INSTRUMENT=INSTRUMENT_NAME),
+                         description='Raw sci=UN1 calib=LFC file')
+raw_file.addset(raw_hc1_lfc)
+
+# NIRPS: HCONE2 - LFC
+raw_hc2_lfc = drs_finput('RAW_HC2_LFC', filetype='.fits', suffix='',
+                         outclass=blank_ofile,
+                         hkeys=dict(KW_RAW_DPRTYPE='WAVE,UN2,LFC',
+                                    KW_RAW_DPRCATG='CALIB',
+                                    KW_INST_MODE=INSTRUMENT_MODE,
+                                    KW_INSTRUMENT=INSTRUMENT_NAME),
+                         description='Raw sci=UN2 calib=LFC file')
+raw_file.addset(raw_hc2_lfc)
+
 # -----------------------------------------------------------------------------
 # raw LED LED file
 raw_led_led = drs_finput('RAW_LED_LED', filetype='.fits', suffix='',
