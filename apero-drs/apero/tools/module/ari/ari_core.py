@@ -73,6 +73,7 @@ YAML_TO_PARAM['settings.N_CORES'] = 'TOOLS.ARI.NCORES'
 YAML_TO_PARAM['settings.SpecWave'] = 'TOOLS.ARI.WAVE_RANGES'
 YAML_TO_PARAM['settings.TcorrMapWave'] = 'ARI_TCORR_MAP_WAVE_RANGE'
 YAML_TO_PARAM['settings.ssh'] = 'TOOLS.ARI.SSH_COPY'
+YAML_TO_PARAM['settings.protect'] = 'TOOLS.ARI.PROTECT'
 YAML_TO_PARAM['settings.group'] = 'TOOLS.ARI.GROUP'
 YAML_TO_PARAM['settings.reset'] = 'TOOLS.ARI.RESET'
 YAML_TO_PARAM['settings.filter objects'] = 'TOOLS.ARI.FILTER_OBJECTS'
@@ -912,9 +913,10 @@ class AriObject:
         core_snr = params['OBJ.TELLU.TEMPLATE.BERVCOV_CSNR']
         resolution = params['OBJ.TELLU.TEMPLATE.BERVCOV_RES']
         # get the extracted files
+        pp_files = self.filetypes['pp'].get_files()
         ext_files = self.filetypes['ext'].get_files()
         # don't go here if ext files are not present
-        if len(ext_files) == 0:
+        if len(pp_files) == 0 or len(ext_files) == 0:
             return
         # ---------------------------------------------------------------------
         # storage for spectrum values
@@ -1828,6 +1830,7 @@ class AriObject:
         # ---------------------------------------------------------------------
         # parameters used for plotting
         debug_props = dict()
+        debug_props['params'] = params
         debug_props['HDICT'] = self.header_dict
         debug_props['HYAML'] = self.headers
         debug_props['EXT_MJD'] = Time(np.array(hdict['EXT_MJDMID']))
@@ -2078,7 +2081,7 @@ def ari_filetypes(params: ParamDict) -> Dict[str, FileType]:
     filetypes['temp1d'] = FileType('temp1d', block_kind='red', chain='tcorr',
                                    kw_output='TELLU_TEMP_S1DV',
                                    fiber=science_fiber)
-    # lbl files added as filetype but don't count in same was as other files
+    # lbl files added as filetype but don't count in same way as other files
     filetypes['lbl.fits'] = FileType('lbl.fits', count=False)
     for filetype in LBL_FILETYPES:
         filetypes[filetype] = FileType(filetype, count=False)
@@ -2371,7 +2374,14 @@ def add_lbl_count(params: ParamDict, object_classes: Dict[str, AriObject]
         # in files)
         if _count != object_class.filetypes['lbl.fits'].num:
             object_class.update = True
+        # check that all files match
         else:
+            for filename in _lbl_rv_files:
+                if filename not in object_class.filetypes['lbl.fits'].files:
+                    object_class.update = True
+        # ---------------------------------------------------------------------
+        # don't update if everything matched
+        if not object_class.update:
             continue
         # --------------------------------------------------------------------
         # add the counts to the object class

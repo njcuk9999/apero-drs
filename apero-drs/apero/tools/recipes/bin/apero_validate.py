@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+Validation code for APERO
 
-# CODE DESCRIPTION HERE
+if this runs APERO should work (at the top level)
 
 Created on 2019-11-26 at 18:10
 

@@ -192,14 +192,18 @@ def create_median_dark(params: ParamDict, recipe, in_path: str,  det_path: str,
     # Take the median across the stack
     with warnings.catch_warnings(record=True) as _:
         dark = np.nanmedian(cube_dark, axis=0)
-    # convert cube_dict to astropy table
-    dark_table = Table(cube_dict)
     # -------------------------------------------------------------------------
-    drs_static.save_static_file(params, recipe, det_path, 'STATIC_DARK',
+    # get static file
+    static_file = recipe.outputs['STATIC_DARK'].newcopy(params=params)
+    stbl = static_file.hdulist['STATIC_DARK_TABLE']
+    # construct the filename from file instance
+    static_file.construct_filename(path=det_path)
+    # convert cube_dict to astropy table
+    dark_table = stbl.create_table(**cube_dict)
+    # -------------------------------------------------------------------------
+    drs_static.save_static_file(params, recipe, static_file,
                                 desc='median dark frame',
-                                data_list=[dark, dark_table],
-                                datatype_list=['image', 'table'],
-                                name_list=['STATIC_DARK', 'STATIC_DARK_TABLE'])
+                                data_list=[dark, dark_table])
     # -------------------------------------------------------------------------
     # return dark
     return dark
@@ -273,16 +277,20 @@ def create_median_led(params: ParamDict, recipe,
                                       targs=eargs)
         # read the engineering flat file
         eng_flat = drs_fits.readfits(params, eng_flat_file)
-        # create a flat table
-        flat_table = Table([[engineering_flat]], names=['FILENAME'])
         # add a header key for satif flat mode
         hdr_kwargs = dict(KW_STATIC_FLAT_SOURCE='ENGINEERING FLAT')
-        # save static file
-        drs_static.save_static_file(params, recipe, det_path, 'STATIC_LED',
+
+        # get static file
+        static_file = recipe.outputs['STATIC_LED'].newcopy(params=params)
+        stbl = static_file.hdulist['STATIC_LED_TABLE']
+        # construct the filename from file instance
+        static_file.construct_filename(path=det_path)
+        # create flat table
+        flat_table = stbl.create_table(FILENAME=[engineering_flat])
+        # -------------------------------------------------------------------------
+        drs_static.save_static_file(params, recipe, static_file,
                                     desc='engineering flat',
-                                    data_list=[eng_flat, flat_table],
-                                    datatype_list=['image', 'table'],
-                                    name_list=['STATIC_LED', 'STATIC_LED_TABLE'],
+                                    data_list=[dark, flat_table],
                                     hdr_kwargs=hdr_kwargs)
         # return the engineering flat
         return eng_flat
@@ -323,16 +331,20 @@ def create_median_led(params: ParamDict, recipe,
         cube_led[it] = led_corr / mp.nanmedian(led_corr)
     # Take median across all LED frames
     led = np.nanmedian(cube_led, axis=0)
-    # create a flat table
-    led_table = Table([led_basenames], names=['FILENAME'])
     # add a header key for satif flat mode
     hdr_kwargs = dict(KW_STATIC_FLAT_SOURCE='LED FILES')
-    # save static file and return flat
-    drs_static.save_static_file(params, recipe, det_path, 'STATIC_LED',
+    # -------------------------------------------------------------------------
+    # get static file
+    static_file = recipe.outputs['STATIC_LED'].newcopy(params=params)
+    stbl = static_file.hdulist['STATIC_LED_TABLE']
+    # construct the filename from file instance
+    static_file.construct_filename(path=det_path)
+    # create flat table
+    led_table = stbl.create_table(FILENAME=led_basenames)
+    # -------------------------------------------------------------------------
+    drs_static.save_static_file(params, recipe, static_file,
                                 desc='led frame',
-                                data_list=[led, led_table],
-                                datatype_list=['image', 'table'],
-                                name_list=['STATIC_LED', 'STATIC_LED_TABLE'],
+                                data_list=[dark, led_table],
                                 hdr_kwargs=hdr_kwargs)
     # -------------------------------------------------------------------------
     # return the led image
@@ -406,12 +418,15 @@ def create_high_pass_flat(params: ParamDict, recipe,
     bad_pix = np.abs(flat - 1) > frac_flat_bad
     # mask bad pixels
     flat[bad_pix] = np.nan
-    # save static file and return flat
-    drs_static.save_static_file(params, recipe, det_path, 'STATIC_FLAT',
-                                desc='led frame',
-                                data_list=[flat],
-                                datatype_list=['image'],
-                                name_list=['STATIC_FLAT'])
+    # -------------------------------------------------------------------------
+    # get static file
+    static_file = recipe.outputs['STATIC_LED'].newcopy(params=params)
+    # construct the filename from file instance
+    static_file.construct_filename(path=det_path)
+    # -------------------------------------------------------------------------
+    drs_static.save_static_file(params, recipe, static_file,
+                                desc='high pass flat frame',
+                                data_list=[flat])
     # return the flat
     return flat
 
@@ -548,19 +563,22 @@ def create_dark_curr(params: ParamDict, recipe, in_path: str,  det_path: str,
         # set the combine mode
         combine_mode = 'FIT[EXPTIME]'
     # -------------------------------------------------------------------------
-    # convert cube_dict to astropy table
-    flat_table = Table([dark_files, exptimes, mjdtimes],
-                       names=['FILENAME', 'EXPTIME', 'MJD'])
     # make header dictionary
     hdr_kwargs = dict(KW_STATIC_DARKCURR_CMODE=combine_mode)
     # -------------------------------------------------------------------------
-    # write static flat
-    drs_static.save_static_file(params, recipe, det_path, 'STATIC_DARK_CURR',
+    # get static file
+    static_file = recipe.outputs['STATIC_DARK_CURRC_LED'].newcopy(params=params)
+    # construct the filename from file instance
+    static_file.construct_filename(path=det_path)
+    stbl = static_file.hdulist['STATIC_FLAT_TABLE']
+    # create the static file table
+    flat_table = stbl.create_table(FILENAME=dark_files,
+                                   EXPTIME=exptimes,
+                                   MJD=mjdtimes)
+    # -------------------------------------------------------------------------
+    drs_static.save_static_file(params, recipe, static_file,
                                 desc='dark current slope and intercept',
                                 data_list=[slope, intercept, flat_table],
-                                datatype_list=['image', 'image', 'table'],
-                                name_list=['slope', 'intercept',
-                                           'static_flat_table'],
                                 hdr_kwargs=hdr_kwargs)
     # -------------------------------------------------------------------------
     # Reconstruct amplifier dark current map for the
@@ -633,17 +651,17 @@ def create_hotpix_map(params: ParamDict, recipe, det_path: str,
 
     # Normalize hot pixel values by standard deviation
     nsig = dark0[hot_pixels] / sigma
-
-    # Create table of hot pixel coordinates
-    hotpix = Table([nsig, xpix, ypix], names=['nsig', 'xpix', 'ypix'])
     # -------------------------------------------------------------------------
-    # write static flat
-    drs_static.save_static_file(params, recipe, det_path, 'STATIC_HOTPIX',
-                                desc='hotpix',
-                                data_list=[hotpix],
-                                datatype_list=['table'],
-                                name_list=['hotpix'])
-
+    # get static file
+    static_file = recipe.outputs['STATIC_DARK_CURRC_LED'].newcopy(params=params)
+    # construct the filename from file instance
+    static_file.construct_filename(path=det_path)
+    stbl = static_file.hdulist['STATIC_FLAT_TABLE']
+    # Create table of hot pixel coordinates
+    hotpix = stbl.create_table(nsig=nsig, xpix=xpix, ypix=ypix)
+    # -------------------------------------------------------------------------
+    drs_static.save_static_file(params, recipe, static_file,
+                                desc='hotpix', data_list=[hotpix])
 
 
 # =============================================================================

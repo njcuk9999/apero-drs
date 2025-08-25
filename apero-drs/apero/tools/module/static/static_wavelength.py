@@ -44,12 +44,25 @@ Code Steps (matches main code steps):
 ===============================================================================
 """
 import os
-from typing import Dict, Any
+import glob
+import pickle
+from typing import Any, Dict, List, Tuple
+import numpy as np
 
+from astropy.table import Table
+from astropy import units as uu
+
+from astroquery.vizier import Vizier
+
+from aperocore.core import drs_log
 from aperocore.constants import param_functions
+from aperocore.base import physics
+from aperocore import math as mp
+
 from apero.base import base as apero_base
 from apero.utils import drs_data
 from apero.tools.module.static import drs_static
+
 
 # =============================================================================
 # Define variables
@@ -64,7 +77,13 @@ __date__ = apero_base.__date__
 __release__ = apero_base.__release__
 # get param dict
 ParamDict = param_functions.ParamDict
-
+# Get Logging function
+WLOG = drs_log.wlog
+# speed of light
+speed_of_light_kms = physics.speed_of_light_kms
+speed_of_light_ms = physics.speed_of_light_ms
+# get exceptions
+AperoCodedException = drs_log.AperoCodedException
 
 # TODO:
 #    1.  Fill in + test this code
@@ -111,19 +130,487 @@ def main(params: ParamDict, recipe, sparams: Dict[str, Any]):
 
 def generate_hc_catagloue(params: ParamDict, recipe, sparams: Dict[str, Any],
                           cal_path: str):
-    pass
+    # get the wavelength sparams for input hc cat
+    wparams = sparams['waelength']['input_hc_cat']
+    # download the hc model
+    hc_model = get_hc_model(params, sparams)
+    # only keep lines
+    hc_table = get_hc_lines(params, recipe, sparams, hc_model)
+    # -------------------------------------------------------------------------
+    # remove duplicated lines (keep brightest within certain velocity range)
+    # -------------------------------------------------------------------------
+    # get the hc window
+    hc_window = wparams['window_size']
+    # get the vectors for convience
+    wavemap = np.array(hc_table['wavemap'])
+    flux = np.array(hc_table['wavemap'])
+    # lines to keep
+    keep = np.zeros_like(wavemap, dtype=bool)
+    # loop around table
+    for it in range(len(hc_table)):
+        # work out the velocity of every line compared to this iteration
+        dv = (1 - wavemap[it]/wavemap) * speed_of_light_kms
+        # find all lines within our velocity window
+        good = np.abs(dv) < hc_window
+        # if the flux of this peak is the max in itself velocity window keep it
+        if flux[it] == np.nanmax(flux[good]):
+            keep[it] = True
+    # cut down out hc_table
+    hc_table = hc_table[keep]
+    # -------------------------------------------------------------------------
+    # get static file
+    static_file = recipe.outputs['STATIC_HC_CAT'].newcopy(params=params)
+    # construct the filename from file instance
+    static_file.construct_filename(path=cal_path)
+    # save static file
+    drs_static.save_static_file(params, recipe, static_file,
+                                desc='hotpix', data_list=[hc_table])
 
 
 def generate_night(params: ParamDict, recipe, sparams: Dict[str, Any]):
+    # TODO: How do you generate a night without a wavelength solution?
+    # TODO: How do we do this without adding to the database?
+
+    # step 1: preprocess
+
+    # step 2: dark ref
+
+    # step 3: bad ref
+
+    # step 4: locrefsci
+
+    # step 5: extract (no shape/no flat/no thermal, just one fiber)
+
+
     pass
 
 
 def generate_wave_guess(params: ParamDict, recipe, sparams: Dict[str, Any],
                         cal_path: str):
-    # load the line list
-    wavell, ampll = drs_data.load_linelist(params)
 
-    pass
+    # get static hc e2ds file
+    hc_file = recipe.outputs['STATIC_HC_E2DS'].newcopy(params=params)
+    # construct the filename from file instance
+    hc_file.construct_filename(path=cal_path)
+    # load the hc file
+    hc_image = hc_file.hdulist_load('HC_E2DS')
+
+    # get static fp e2ds file
+    fp_file = recipe.outputs['STATIC_FP_E2DS'].newcopy(params=params)
+    # construct the filename from file instance
+    fp_file.construct_filename(path=cal_path)
+    # load the hc file
+    fp_image = fp_file.hdulist_load('FP_E2DS')
+
+    # get static file
+    hc_cat_file = recipe.outputs['STATIC_HC_CAT'].newcopy(params=params)
+    # construct the filename from file instance
+    hc_cat_file.construct_filename(path=cal_path)
+    # load the hc catalogue
+    hc_cat_table = hc_cat_file.hdulist_load('HC_CAT')
+
+
+    # get the number of orders
+    norders, nxpix = hc_image.shape
+
+    # get the orders starting from the middle and alternating outwards
+    orders = np.arange(norders)
+    orders = orders[np.argsort(np.abs(orders - (norders / 2)))]
+
+
+    # now we iterate several times to build the wavelength solution
+    # first time we use the initial guess from the yaml file
+    # then we use the previous solution to robustly fit the cavity
+
+    for iteration in range(sparams['wavelength']['number_iterations']):
+
+        # initialize storage arrays
+        fit_cavity = [sparams['wavelength']['cavity0']]
+        known_orders = []
+
+        # Step 1: Check if we have enough previous solutions to
+        #         robustly fit the cavity
+        n_pickles = count_wave_pickles(sparams)
+        # if we have more than 5 pickles, we can refine the cavity fit
+        if n_pickles > 5:
+            rout = refine_cavity_fit(params, recipe, sparams, orders,
+                                     known_orders=known_orders)
+            fit_cavity, known_orders = rout
+
+        # Step 2: Build the wavelength solution
+        build_wavesol(params, recipe, sparams, fit_cavity)
+
+        # Step 3: compile into packaged wavelength solution and cavity fit file
+        package_wavesol(params, recipe, sparams, fit_cavity)
+
+
+
+# =============================================================================
+# Define worker functions
+# =============================================================================
+def get_hc_model(params: ParamDict, sparams: Dict[str, Any]) -> Table:
+    """
+    Get the HC mode using the wavelength.input_hc_cat.vizier-ref keyword
+    from Vizier and save to input + wavelength.input_hc_cat.filename
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param sparams: dict, parameters from yaml file
+    """
+    # get the wavelength sparams for input hc cat
+    wparams = sparams['wavelength']['input_hc_cat']
+    # get the vizier reference
+    vizier_ref = wparams['vizier-ref']
+    # construct the name for the downloaded hc model
+    hc_model_file = os.path.join(sparams['inpath'], wparams['filename'])
+    # -------------------------------------------------------------------------
+    # if we already have the file don't download again
+    if os.path.exists(hc_model_file):
+        return Table.read(hc_model_file)
+    # -------------------------------------------------------------------------
+    # deal with vizier-ref being a file on disk
+    if os.path.exists(vizier_ref):
+        table = Table.read(vizier_ref)
+    else:
+        # No row limit: get all rows
+        Vizier.ROW_LIMIT = -1
+        # Query the entire table
+        try:
+            tables = Vizier.get_catalogs(vizier_ref) # type: ignore
+            # get the first table
+            table = tables[0]
+        except Exception as e:
+            # TODO: Move to language database
+            emsg = 'Failed to load model: {0} from Vizier\n\t{1}: {2}'
+            eargs = [vizier_ref, type(e), str(e)]
+            # raise an APERO exception
+            raise AperoCodedException(params, None, message=emsg.format(*eargs),
+                                      targs=eargs)
+    # -------------------------------------------------------------------------
+    # try to save the HC model to file
+    try:
+        # print that we are writing hc model file
+        msg = 'Saving HC model file to: {0}'
+        margs = [hc_model_file]
+        WLOG(params, '', msg.format(*margs))
+        # write to file
+        table.write(hc_model_file, overwrite=True)
+        # return tables[0]
+        return table
+    except Exception as e:
+        # TODO: Move to language database
+        emsg = 'Failed to save model: {0} to: {1}\n\t{2}: {3}'
+        eargs = [vizier_ref, hc_model_file, (e), str(e)]
+        # raise an APERO exception
+        raise AperoCodedException(params, None, message=emsg.format(*eargs),
+                                  targs=eargs)
+
+
+def get_hc_lines(params: ParamDict, recipe, sparams: Dict[str, Any],
+                 table: Table) -> Table:
+    """
+    Cut down the HC model to only keep species and wavelength we are
+    interested in.
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param sparams: dict, parameters from yaml file
+    :param table: Table, table containing HC model
+
+    :return: Table, table containing the cut down HC model for lines we
+             are interested in
+    """
+    # get the wavelength sparams for input hc cat
+    wparams = sparams['wavelength']['input_hc_cat']
+    # get the required wavelength domain
+    wavemin, wavemax = wparams['wave_domain']
+    # get the species we want
+    species_keep = wparams['species_keep']
+    # get the species column
+    hc_species_col = wparams['species_col']
+    # get the flux column
+    hc_flux_col = wparams['hc_flux_col']
+    # get the wavelength column
+    hc_wave_col = wparams['wave_col']
+    # get wavelength units and convert to astropy unit
+    hc_wave_unit = wparams['wave_units']
+    # get the vizier reference
+    vizier_ref = wparams['vizier-ref']
+    # -------------------------------------------------------------------------
+    try:
+        wave_unit = uu.Unit(hc_wave_unit)
+    except Exception as e:
+        emsg = 'wavelength.input_hc_Cat.wave_units={0} invalid.\n\t{1}: {2}'
+        eargs = [hc_wave_unit, type(e), str(e)]
+        raise AperoCodedException(params, None, message=emsg.format(*eargs),
+                                  targs=eargs)
+    # make sure wavelength is in nm
+    try:
+        wavemap = ((table[hc_wave_col] * wave_unit).to(uu.nm)).value # type: ignore
+    except Exception as e:
+        # TODO: Add to language database
+        emsg = ('wavelength.input_hc_Cat.wave_units={0} [astropy={1}] invalid.'
+                '\n\t{2}: {3}')
+        eargs = [hc_wave_unit, str(wave_unit), type(e), str(e)]
+        raise AperoCodedException(params, None, message=emsg.format(*eargs),
+                                  targs=eargs)
+    # -------------------------------------------------------------------------
+    # assume we don't want any lines at first
+    smask = np.zeros_like(len(table))
+    # loop around species to keep from hc model
+    for species in species_keep:
+        # get a mask just for this species
+        sp_mask = table[hc_species_col] == species
+        # get wavelength constraints
+        sp_mask &= wavemap > wavemin
+        sp_mask &= wavemap < wavemax
+        # combine to full mask
+        smask |= sp_mask
+    # deal with no lines
+    if np.sum(smask) == 0:
+        # TODO: Add to language database
+        emsg = ('No lines left in HC model after cut\n\tSpecies: {0}'
+                '\n\tWavemin: {1} nm\n\tWavemax: {2} nm')
+        eargs = [','.join(species_keep), wavemin, wavemax]
+        raise AperoCodedException(params, None, message=emsg.format(*eargs),
+                                  targs=eargs)
+    else:
+        # get static file
+        hccat = recipe.outputs['STATIC_HC_CAT'].newcopy(params=params)
+        stbl = hccat.hdulist['HC_CAT']
+        # lets make a new table, cut down to smask, and cleaned ready for use
+        outtable = stbl.create_table(wavelength=wavemap[smask],
+                                     flux=table[hc_flux_col][smask],
+                                     species=table[hc_species_col][smask],
+                                     source=[vizier_ref] * np.sum(smask))
+        # return the new, cleaned, cut down table
+        return outtable
+
+
+def get_approx_wavesol(sparams: Dict[str, Any], order_num: int,
+                       norders: int) -> Tuple[float, float, float]:
+    """
+    Calculate a very rough approximation of the wave solution
+    (center and start and end) for an order - based on a linear fit
+    in wavenumber
+
+    :param sparams: dict, parameters from yaml file
+    :param order_num: int, order of approximation
+    :param norders: int, number of orders in total
+
+    :return: Tuple, Guess for this order: 1. wave center, 2. start, 3. end
+    """
+    # get the wavelength sparams for input hc cat
+    wparams = sparams['wavelength']['input_hc_cat']
+    # get the required wavelength domain
+    wavemin, wavemax = wparams['wave_domain']
+    # get the fractional range for approximate wavelength
+    wave_approx = wparams['wave_approx']
+
+    # linear fit across orders in wavenumber
+    lfit = np.polyfit([0, norders], [1/wavemin, 1/wavemax], 1)
+    # the wave guess it the inverse of this fit in wavenumber
+    waveguess = float(1 / np.polyval(lfit, order_num))
+    # start and end points given the wave_approx size (and waveguess as center)
+    wavestart = waveguess * (1 - wave_approx)
+    waveend = waveguess * (1 + wave_approx)
+
+    return waveguess, wavestart, waveend
+
+
+def count_wave_pickles(sparams: Dict[str, Any]) -> int:
+    """
+    Count the number of wavelength solution pickles available in the
+    wavelength directory.
+
+    :param sparams: dict, parameters from yaml file
+
+    :return: int, number of wavelength solution pickles available
+    """
+    # get the input path
+    inpath = sparams['inpath'] 
+    # get the wave pickle path
+    wave_pickle_path = os.path.join(inpath, 'wave_pickles')
+    # check if the path exists
+    if not os.path.exists(wave_pickle_path):
+        # if not, return 0
+        return 0
+    # list all files in the wave pickle path
+    files = glob.glob(os.path.join(wave_pickle_path, 'wave_order_*.pkl'))
+    # return the number of files    
+    return len(files)
+
+
+def refine_cavity_fit(params: ParamDict, recipe, sparams: Dict[str, Any],
+                      orders: np.ndarray):
+    """
+    Refine the cavity fit using all previous wavelength solutions.
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param recipe: Recipe, recipe instance
+    :param sparams: dict, parameters from yaml file
+
+    :return: list, refined cavity fit coefficients
+    """
+
+    # get the wavelength fit degree from params
+    wavedegn = params['CAL.WAVE.GEN.WAVESOL_FIT_DEG']
+    # get the cavity refine polyfit degree
+    cavity_deg = sparams['wavelength']['cavity_refine_poly_deg']
+    # get the cavity refine sigma for robust_polyfit
+    cavity_sigma = sparams['wavelength']['cavity_refine_sigma']
+    # get the input path
+    inpath = sparams['inpath'] 
+    # set the cavity fit to None initially
+    fit_cavity = None
+    # get the wave pickle path
+    wave_pickle_path = os.path.join(inpath, 'wave_pickles')
+    # store the mid-wavelength for each order
+    mid_wavelengths = []
+    # store the known orders
+    known_orders = []
+    # store the wavelength center for each order (calculated)
+    ord_wave_center = np.full(len(orders), np.nan)
+    # store the cavity center for each order (calculated)
+    ord_cavity_center = np.full(len(orders), np.nan)
+
+    # store all fp peaks wavelength
+    all_fp_wave = []
+    # store all fp peaks count
+    all_fp_int = []
+    # store all fp peaks order number
+    all_fp_order = []
+
+    # loop around orders
+    for it, order_num in enumerate(orders):
+        # construct wave filenames
+        wave_order_basename = f'wave_order_{order_num}.pkl'
+        wave_order_csvfile = os.path.join(wave_pickle_path, wave_order_basename)
+        wave_order_pklfile = wave_order_csvfile.replace('.csv', '.pkl')
+        # ---------------------------------------------------------------------
+        # if the file does not exist, skip this order
+        if not os.path.exists(wave_order_csvfile):
+            msg = 'Skipping order {0} - no pickle file found'
+            margs = [order_num]
+            WLOG(params, '', msg.format(*margs))
+            continue
+        # ---------------------------------------------------------------------
+        # Register that we known this order
+        known_orders.append(order_num)
+        # ---------------------------------------------------------------------
+        # read the csv file
+        wtbl = Table.read(wave_order_csvfile, format='ascii.csv')
+        # get the mid-wavelength for this order
+        mid_wavelengths.append(np.mean(wtbl['wavelength']))
+        # load the pickle file
+        dict_fp = load_wave_pickle(params, wave_order_pklfile)
+        # get the vectors from the dictionary
+        fp_wave = dict_fp['fp_wave']
+        fp_int = dict_fp['fp_int']
+        # deal with initial cavity fit (for first order)
+        if fit_cavity is None:
+            # rough guess for the cavity fit 
+            fit_cavity = [np.nanmedian(fp_wave * fp_int)]
+            # update fp orders storage
+            all_fp_wave += list(fp_wave)            
+            all_fp_int += list(fp_int)
+            all_fp_order += [order_num] * len(fp_wave)
+        # if we have a fit cavity we can update fit with subsequent orders
+        else:
+            # get the updated cavity fit
+            cavity = np.polyval(fit_cavity, fp_wave)
+            # store the previous fp count
+            prev_fp_int = np.copy(fp_int)
+            # get the new fp count
+            new_fp_int = np.round(cavity / fp_wave).astype(int)
+            # if any values have been updated compared to previously display
+            #   a warning
+            if not np.array_equal(prev_fp_int, new_fp_int):
+                # log a warning message
+                wmsg = 'Intensity values have changed for order {0}'
+                wargs = [order_num]
+                WLOG(params, 'warning', wmsg.format(*wargs))
+                # set fp_int to the new values
+                fp_int = new_fp_int
+                # update the fp_int for this order
+                dict_fp['fp_int'] = fp_int
+                # -------------------------------------------------------------
+                # save the updated pickle file
+                save_wave_pickle(params, dict_fp, wave_order_pklfile)
+
+            # update all orders storage
+            all_fp_wave += list(fp_wave)
+            all_fp_int += list(fp_int)
+            all_fp_order += [order_num] * len(fp_wave)
+            # convert all_fp_wave and all_fp_int to numpy arrays
+            all_fp_wave_arr = np.array(all_fp_wave)
+            all_fp_int_arr = np.array(all_fp_int)
+            # -----------------------------------------------------------------
+            # re-fit the cavity using all fp peaks
+            fit_cavity, _ = mp.robust_polyfit(all_fp_wave_arr, 
+                                              all_fp_wave_arr * all_fp_int_arr,
+                                              cavity_deg, cavity_sigma)
+            # update the order center and cavity for this order
+            ord_wave_center[it] = np.median(fp_wave)
+            ord_cavity_center[it] = np.median(fp_wave * fp_int)
+    # -------------------------------------------------------------------------
+    # fill in missing order values and robustly  filter orders for cavity fit
+    # -------------------------------------------------------------------------
+    # convert known and mid to numpy arrays
+    known_orders = np.array(known_orders)
+    mid_wavelengths = np.array(mid_wavelengths)
+    # convert all fp orders to numpy array
+    all_fp_order = np.array(all_fp_order)
+    # find orders that are missing
+    invalid = ~np.isfinite(ord_wave_center)
+    # fill in missing orders with the polyfit of the known orders
+    ofits = np.polyfit(known_orders, mid_wavelengths, 2)
+    ord_wave_center[invalid] = np.polyval(ofits, orders[invalid])
+    ord_cavity_center[invalid] = np.polyval(fit_cavity, ord_wave_center[invalid])
+    # -------------------------------------------------------------------------
+    # robustly fit the known orders
+    kfit, keep_orders = mp.robust_polyfit(known_orders, 1 / mid_wavelengths, 1, 3)
+    # get the valid orders to keep
+    valid_orders = np.in1d(all_fp_order, known_orders[keep_orders])
+    # update ord wave and cavity centers
+    ord_wave_center = ord_wave_center[valid_orders]
+    ord_cavity_center = ord_cavity_center[valid_orders]
+
+
+def load_wave_pickle(params: ParamDict, pickle_file: str) -> Dict[str, Any]:
+    """
+    Load a wavelength solution pickle file.
+
+    :param pickle_file: str, path to the pickle file
+
+    :return: dict, dictionary containing the wavelength solution data
+    """
+
+    # check if the file exists
+    if not os.path.exists(pickle_file):
+        emsg = 'Pickle file not found: {0}'
+        eargs = [pickle_file]
+        raise AperoCodedException(params, None, message=emsg.format(*eargs),
+                                  targs=eargs)
+    # load the pickle file
+    with open(pickle_file, 'rb') as f:
+        return pickle.load(f)
+
+
+
+def save_wave_pickle(params, data: Dict[str, Any], pickle_file: str):
+    """
+    Save a wavelength solution dictionary to a pickle file.
+
+    :param data: dict, dictionary containing the wavelength solution data
+    :param pickle_file: str, path to the pickle file
+    """
+    # save the pickle file
+    with open(pickle_file, 'wb') as f:
+        pickle.dump(data, f)
+    # log that we saved the file
+    msg = 'Saved wavelength solution pickle to: {0}'
+    margs = [pickle_file]
+    WLOG(params, '', msg.format(*margs))
+
 
 
 # =============================================================================

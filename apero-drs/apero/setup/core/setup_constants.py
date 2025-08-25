@@ -209,6 +209,14 @@ SARGS['DATABASE_NAME'] = SetupArgument(name='DATABASE_NAME',
                                        dtype='str',
                                        helpstr='The database name',
                                        databasename='DATABASE')
+# whether to use SSL for database connection
+SARGS['DATABASE_USE_SSL'] = SetupArgument(name='DATABASE_USE_SSL',
+                                          argname='--database_use_ssl',
+                                          default_value=False,
+                                          dtype='bool',
+                                          helpstr='Use --ssl when connecting',
+                                          databasename='USE_SSL')
+
 # the sets dictionary for edit_dbtables
 edt_sets = dict()
 edt_sets['CALIB_DBTABLE'] = 'calib_{NAME}_db'

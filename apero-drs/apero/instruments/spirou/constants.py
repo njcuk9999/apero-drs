@@ -727,6 +727,17 @@ CDict.set('PLOT_ORDER', value=4, source=__NAME__, group=cgroup)
 # Define the high pass filter size in pixels
 CDict.set('HIGHPASS_SIZE', value=501, source=__NAME__, author='EA', group=cgroup)
 
+# Define the number of pixels left and right of the center of the image to
+# look at the flux at the edge of the orders
+CDict.set('QC_FLUX_EDGE_MIDSIZE', value=100, source=__NAME__, group=cgroup)
+
+# Define the fraction of flux allowed to be rejected from the combined left
+# and right edges of an order (QC parameter in flat recipe)
+CDict.set('QC_FLUX_EDGE_LIMIT', value=0.01, source=__NAME__, group=cgroup)
+
+# Define orders not to include in flux edge limit check
+CDict.set('QC_FLUX_EDGE_IGNORE', value=[], source=__NAME__,
+          group=cgroup)
 
 # =============================================================================
 # CALIBRATION: LEAKAGE SETTINGS
@@ -801,11 +812,11 @@ CDict.set('START_ORDER', value=None, source=__NAME__, group=cgroup)
 CDict.set('END_ORDER', value=None, source=__NAME__, group=cgroup)
 
 # Half-zone extraction width left side (formally plage1)
-CDict.set('RANGE1', value={"AB": 16, "A": 8, "B": 8, "C": 7},
+CDict.set('RANGE1', value={"AB": 18, "A": 8, "B": 8, "C": 8},
           source=__NAME__, group=cgroup)
 
 # Half-zone extraction width right side (formally plage2)
-CDict.set('RANGE2', value={"AB": 16, "A": 8, "B": 8, "C": 7},
+CDict.set('RANGE2', value={"AB": 18, "A": 8, "B": 8, "C": 8},
           source=__NAME__, group=cgroup)
 
 # Define the orders to skip extraction on (will set all order values
@@ -1043,6 +1054,9 @@ CDict.set('LINELIST_START', value=1, source=__NAME__, author='EA', group=cgroup)
 # Must be in WAVE_LINELIST_COLS
 CDict.set('LINELIST_WAVECOL', value='ll', source=__NAME__, author='EA', group=cgroup)
 CDict.set('LINELIST_AMPCOL', value='amp', source=__NAME__, author='EA', group=cgroup)
+
+
+
 
 # Define whether to always extract HC/FP files in the wave code (even if they
 # have already been extracted
@@ -2545,6 +2559,9 @@ CDict.set('FLAT_BLAZE_ORDER1', value=False, source=__NAME__, group=cgroup)
 
 # turn on the flat blaze order debug plot (selected order)
 CDict.set('FLAT_BLAZE_ORDER2', value=True, source=__NAME__, group=cgroup)
+
+# turn on the flat edge plot
+CDict.set('FLAT_EDGE_ORDERS', value=True, source=__NAME__, group=cgroup)
 
 # turn on thermal background (in extract) debug plot
 CDict.set('THERMAL_BACKGROUND', value=True, source=__NAME__, group=cgroup)

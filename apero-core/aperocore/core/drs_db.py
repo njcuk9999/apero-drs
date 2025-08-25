@@ -140,7 +140,8 @@ class AperoFloat(sqlalchemy.types.TypeDecorator):
 
 class AperoDatabase:
     def __init__(self, url, tablename: Union[str, None],
-                 verbose: bool = False,):
+                 verbose: bool = False,
+                 connect_args: Optional[Dict[str, Any]] = None):
         """
         APERO Database class
         """
@@ -153,7 +154,8 @@ class AperoDatabase:
         # define the engine to use
         self.engine = sqlalchemy.create_engine(url, echo=verbose,
                                                pool_pre_ping=True,
-                                               pool_recycle=1200)
+                                               pool_recycle=1200,
+                                               connect_args=connect_args)
         # define the table name
         self.tablename = tablename
         # define backup path
@@ -1188,6 +1190,7 @@ class DatabaseManager:
         self.dbpass = None
         self.dbname = None
         self.dbport = None
+        self.connect_args = dict()
         # sqlalchemy URL
         self.dburl = None
         # set unloaded database
@@ -1281,6 +1284,13 @@ class DatabaseManager:
         self.dbuser = ddict['USER']
         self.dbpass = ddict['PASSWD']
         self.dbname = ddict['DATABASE']
+        # ---------------------------------------------------------------------
+        # deal with advance connection parameters
+        if 'USE_SSL' in ddict:
+            self.connect_args['ssl_disabled'] = not ddict['USE_SSL']
+
+
+        # ---------------------------------------------------------------------
         if 'PORT' in ddict:
             self.dbport = ddict['PORT']
         else:
@@ -1493,7 +1503,8 @@ if __name__ == "__main__":
 
     _db_uri = 'mysql+pymysql://spirou:Covid19!@rali:3306/test'
 
-    _database = AperoDatabase(_db_uri, verbose=DEBUG, tablename=None)
+    _database = AperoDatabase(_db_uri, verbose=DEBUG, tablename=None,
+                              connect_args=dict())
 
     _database.add_database()
 

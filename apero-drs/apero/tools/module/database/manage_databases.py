@@ -330,7 +330,8 @@ def create_calibration_database(params: ParamDict, pconst: Instrument,
     calibdbm = databases['calib']
     # -------------------------------------------------------------------------
     # make database
-    calibdb = drs_db.AperoDatabase(calibdbm.dburl, tablename=calibdbm.dbtable)
+    calibdb = drs_db.AperoDatabase(calibdbm.dburl, tablename=calibdbm.dbtable,
+                                   connect_args=calibdbm.connect_args)
     # -------------------------------------------------------------------------
     # remove table if it already exists
     if calibdb.tablename in calibdb.get_tables():
@@ -382,7 +383,8 @@ def create_telluric_database(params: ParamDict, pconst: Instrument,
     telludbm = databases['tellu']
     # -------------------------------------------------------------------------
     # make database
-    telludb = drs_db.AperoDatabase(telludbm.dburl, tablename=telludbm.dbtable)
+    telludb = drs_db.AperoDatabase(telludbm.dburl, tablename=telludbm.dbtable,
+                                    connect_args=telludbm.connect_args)
     # -------------------------------------------------------------------------
     # remove table if it already exists
     if telludb.tablename in telludb.get_tables():
@@ -433,7 +435,8 @@ def create_fileindex_database(params: ParamDict, pconst: Instrument,
     findexdbm = databases['findex']
     # -------------------------------------------------------------------------
     # make database
-    indexdb = drs_db.AperoDatabase(findexdbm.dburl, tablename=findexdbm.dbtable)
+    indexdb = drs_db.AperoDatabase(findexdbm.dburl, tablename=findexdbm.dbtable,
+                                   connect_args=findexdbm.connect_args)
     # -------------------------------------------------------------------------
     # remove table if it already exists
     if indexdb.tablename in indexdb.get_tables():
@@ -475,7 +478,8 @@ def create_log_database(params: ParamDict, pconst: Instrument,
     logdbm = databases['log']
     # -------------------------------------------------------------------------
     # make database
-    logdb = drs_db.AperoDatabase(logdbm.dburl, tablename=logdbm.dbtable)
+    logdb = drs_db.AperoDatabase(logdbm.dburl, tablename=logdbm.dbtable,
+                                 connect_args=logdbm.connect_args)
     # -------------------------------------------------------------------------
     # remove table if it already exists
     if logdb.tablename in logdb.get_tables():
@@ -518,7 +522,8 @@ def create_object_database(params: ParamDict, pconst: Instrument,
     # -------------------------------------------------------------------------
     # make database
     objectdb = drs_db.AperoDatabase(objectdbm.dburl,
-                                    tablename=objectdbm.dbtable)
+                                    tablename=objectdbm.dbtable,
+                                    connect_args=objectdbm.connect_args)
     # -------------------------------------------------------------------------
     # remove table if it already exists
     if objectdb.tablename in objectdb.get_tables():
@@ -685,7 +690,8 @@ def update_object_database(params: ParamDict, log: bool = True):
     # -------------------------------------------------------------------------
     # make database
     objectdb = drs_db.AperoDatabase(objectdbm.dburl,
-                                    tablename=objectdbm.dbtable)
+                                    tablename=objectdbm.dbtable,
+                                    connect_args=objectdbm.connect_args)
     # -------------------------------------------------------------------------
     # remove table if it already exists
     if objectdb.tablename in objectdb.get_tables():
@@ -725,7 +731,8 @@ def create_reject_database(params: ParamDict, pconst: Instrument,
     # -------------------------------------------------------------------------
     # make database
     rejectdb = drs_db.AperoDatabase(rejectdbm.dburl,
-                                    tablename=rejectdbm.dbtable)
+                                    tablename=rejectdbm.dbtable,
+                                    connect_args=rejectdbm.connect_args)
     # -------------------------------------------------------------------------
     # remove table if it already exists
     if rejectdb.tablename in rejectdb.get_tables():

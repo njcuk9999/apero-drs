@@ -430,14 +430,34 @@ def readfits(params: ParamDict, filename: Union[str, Path],
         name = None
     elif fmt == 'fits-multi':
         mout = _read_fitsmulti(params, filename, getdata, gethdr, log=log)
+        # deal with returning data and header
         if getdata and gethdr:
-            data, header, name = mout
+            if len(mout) == 3:
+                data, header, name = mout
+            elif len(mout) == 2:
+                data, header = mout
+                name = None
+            else:
+                raise AperoCodedException(params, '00-008-00020', 
+                                          targs=[filename, func_name])
+        # deal with return just the data
         elif getdata:
-            data, name = mout
-            header = None
+            if len(mout) == 2:
+                data, name = mout
+                header = None
+            else:
+                data = mout[0]
+                name = None
+                header = None
+        # otherwise just the header
         else:
-            data = None
-            header, name = mout
+            if len(mout) == 2:
+                header, name = mout
+                data = None
+            else:
+                header = mout[0]
+                name = None
+                data = None
     else:
         cfmts = ', '.join(allowed_formats)
         eargs = [filename, fmt, cfmts, func_name]
@@ -501,8 +521,9 @@ DataHdrListType = Union[Tuple[List[np.ndarray], List[fits.Header], List[str]],
                         Tuple[List[fits.Header], List[str]]]
 
 
-def _read_fitsmulti(params: ParamDict, filename: str, getdata: bool,
-                    gethdr: bool, log: bool = True) -> DataHdrListType:
+def _read_fitsmulti(params: ParamDict, filename: Union[Path, str], 
+                    getdata: bool, gethdr: bool, 
+                    log: bool = True) -> DataHdrListType:
     """
     Read all extensions from a multi-extension fits file 'filename'
     returns data if getdata is True, returns header if gethdr is True
@@ -592,14 +613,10 @@ def _read_fitsmulti(params: ParamDict, filename: str, getdata: bool,
         return headerarr, names
 
 
-# define complex typing for _read_fitsimage
-ImageFitsType = Tuple[Union[np.ndarray, None], Union[fits.Header, None]]
-
-
-def _read_fitsimage(params: ParamDict, filename: str, getdata: bool,
-                    gethdr: bool, ext: Union[int, None] = None,
+def _read_fitsimage(params: ParamDict, filename: Union[Path, str], 
+                    getdata: bool, gethdr: bool, ext: Union[int, None] = None,
                     extname: Union[str, None] = None,
-                    log: bool = True) -> ImageFitsType:
+                    log: bool = True) -> Any:
     """
     Read a fits image in extension 'ext' for fits file 'filename'
     returns data if getdata is True, returns header if gethdr is True
@@ -732,8 +749,8 @@ def _read_fitsimage(params: ParamDict, filename: str, getdata: bool,
 TableFitsType = Tuple[Union[Table, None], Union[fits.Header, None]]
 
 
-def _read_fitstable(params: ParamDict, filename: str, getdata: bool,
-                    gethdr: bool, ext: Union[int, None] = None,
+def _read_fitstable(params: ParamDict, filename: Union[Path, str], 
+                    getdata: bool, gethdr: bool, ext: Union[int, None] = None,
                     extname: Union[str, None] = None,
                     log: bool = True) -> TableFitsType:
     """
@@ -913,7 +930,7 @@ def _write_fits(params: ParamDict, filename: str, data: ListImageTable,
     # ----------------------------------------------------------------------
     # check if file exists and remove it if it does
     # done in a while loop
-    tries, success, store_error = 0, False, None
+    tries, success, store_error = 0, False, [None, None]
     while tries <= 5:
         # test if file exists
         if os.path.exists(filename):
@@ -934,7 +951,7 @@ def _write_fits(params: ParamDict, filename: str, data: ListImageTable,
                 time.sleep(0.1)
                 # store the error for eventual reporting (if fails more than
                 #   5 times)
-                store_error = (type(e), str(e))
+                store_error = [type(e), str(e)]
         # if file does not exist we can break out of loop
         else:
             # success is True we don't need to report an error
@@ -1138,7 +1155,7 @@ BadHdrType = Tuple[List[np.ndarray], List[fits.Header], List[str]]
 
 
 def deal_with_bad_header(params: ParamDict, hdu: fits.HDUList,
-                         filename: str) -> BadHdrType:
+                         filename: Union[Path, str]) -> BadHdrType:
     """
     Deal with bad headers by iterating through good hdu's until we hit a
     problem
@@ -1240,7 +1257,8 @@ def check_dtype_for_header(value: Any) -> Any:
     return newvalue
 
 
-def deal_with_bad_file_single(filename: str, ext: Optional[int] = None,
+def deal_with_bad_file_single(filename: Union[Path, str], 
+                              ext: Optional[int] = None,
                               extname: Optional[str] = None,
                               flavour: str = 'data'
                               ) -> Union[np.ndarray, fits.Header]:

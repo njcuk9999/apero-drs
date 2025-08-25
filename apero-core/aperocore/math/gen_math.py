@@ -24,6 +24,7 @@ import statsmodels.api as statsmodels
 from aperocore.base import base
 from aperocore.math import fast
 from aperocore.core import drs_log
+from aperocore.base import physics
 
 # =============================================================================
 # Define variables
@@ -39,9 +40,9 @@ __release__ = base.__release__
 AperoCodedException = drs_log.AperoCodedException
 # Speed of light
 # noinspection PyUnresolvedReferences
-speed_of_light_ms = cc.c.to(uu.m / uu.s).value
+speed_of_light_ms = physics.speed_of_light_ms
 # noinspection PyUnresolvedReferences
-speed_of_light = cc.c.to(uu.km / uu.s).value
+speed_of_light_kms = physics.speed_of_light_kms
 
 
 # =============================================================================
@@ -1387,7 +1388,7 @@ def relativistic_waveshift(dv: Union[float, np.ndarray],
     # get c in correct units
     # noinspection PyUnresolvedReferences
     if units == 'km/s' or units == uu.km / uu.s:
-        c = speed_of_light
+        c = speed_of_light_kms
     # noinspection PyUnresolvedReferences
     elif units == 'm/s' or units == uu.m / uu.s:
         c = speed_of_light_ms

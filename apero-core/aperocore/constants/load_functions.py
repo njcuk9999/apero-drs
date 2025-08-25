@@ -407,7 +407,7 @@ def get_all_params(name: str, description: str, inputargs: List[str],
         params.set('RECIPE_SHORT', value=name.split('.')[-1],
                    source=func_name)
     # deal with overriding the command line arguments (i.e. in notebooks)
-    if len(cmd_kwargs) > 0:
+    if cmd_kwargs is not None and len(cmd_kwargs) > 0:
         args = dict(cmd_kwargs)
     # otherwise get the command line arguments
     else:

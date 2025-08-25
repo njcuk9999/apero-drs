@@ -22,7 +22,6 @@ Import rules:
     do not import from core.utils.drs_recipe
     do not import from core.core.drs_argument
 """
-import ast
 import os
 import string
 import textwrap
@@ -39,26 +38,26 @@ import pandas as pd
 from astropy.table import Table, vstack
 from scipy.stats import pearsonr
 
-from aperocore.base import base
-from aperocore.base import drs_base
-from aperocore.constants import param_functions
-from aperocore.constants import constant_functions
-from aperocore.constants import load_functions
-
 from apero.base import base as apero_base
-from apero.instruments.default import instrument as instrument_mod
-from aperocore import drs_lang
-from aperocore import math as mp
 from apero.constants import path_definitions as pathdef
-from aperocore.core import drs_base_classes as base_class
-from aperocore.core import drs_text
-from aperocore.core import drs_misc
+from apero.core import drs_data_models
 from apero.core import drs_out_file as out
-from aperocore.core import drs_log
+from apero.instruments import select
+from apero.instruments.default import instrument as instrument_mod
 from apero.io import drs_fits
 from apero.io import drs_path
 from apero.io import drs_table
-from apero.instruments import select
+from aperocore import drs_lang
+from aperocore import math as mp
+from aperocore.base import base
+from aperocore.base import drs_base
+from aperocore.constants import constant_functions
+from aperocore.constants import load_functions
+from aperocore.constants import param_functions
+from aperocore.core import drs_base_classes as base_class
+from aperocore.core import drs_log
+from aperocore.core import drs_misc
+from aperocore.core import drs_text
 
 # =============================================================================
 # Define variables
@@ -95,6 +94,8 @@ Keyword = constant_functions.Keyword
 # get exceptions
 AperoCodedException = drs_log.AperoCodedException
 AperoCodedWarning = drs_log.AperoCodedWarning
+# get Apero Data Model classes
+AperoDataModel = drs_data_models.AperoDataModel
 # get header comment card from drs_fits
 HCC = drs_fits.HeaderCommentCards
 # get default psuedo constants class
@@ -178,7 +179,7 @@ class DrsPath:
             self.update()
 
     @staticmethod
-    def get_abs_paths(params: ParamDict, 
+    def get_abs_paths(params: ParamDict,
                       block_kinds: Union[List[str], np.ndarray, str, None],
                       obs_dirs: Union[List[str], np.ndarray, str, None],
                       basenames: Union[List[str], np.ndarray, str, None]
@@ -212,7 +213,7 @@ class DrsPath:
             return basenames
         # deal with only one block kind/obs_dir
         elif (isinstance(block_kinds, str) and isinstance(obs_dirs, str)
-            and isinstance(basenames, str)):
+              and isinstance(basenames, str)):
             block_kinds = [block_kinds]
             obs_dirs = [obs_dirs]
             basenames = [basenames]
@@ -250,8 +251,7 @@ class DrsPath:
             return abspaths[0]
         else:
             return abspaths
-            
-            
+
     @staticmethod
     def get_blocks(params: ParamDict, check: bool = True) -> List[BlockPath]:
         """
@@ -750,7 +750,8 @@ class DrsInputFile:
                  nosave: Optional[bool] = False,
                  description: Union[str, None] = None,
                  inpath: Union[str, None] = None,
-                 required: Union[bool, None] = None):
+                 required: Union[bool, None] = None,
+                 hdulist: Dict[str, AperoDataModel] = None):
         """
         Create a DRS Input File object
 
@@ -825,6 +826,8 @@ class DrsInputFile:
                        functionality
         :param required: bool, if True this file is always expectedt to exist
                          if recipe ran correctly
+        :param hdulist: Dict[str, AperoDataModel] - defined datatype(s) of 
+                        file or extensions (if fits file)
 
         - Parent class for Drs Fits File object (DrsFitsFile)
         """
@@ -834,6 +837,11 @@ class DrsInputFile:
         # _ = display_func('__init__', __NAME__, self.class_name)
         # define a name
         self.name = name
+        # store a model of the hdulist
+        if hdulist is None:
+            self.hdulist: Dict[str, AperoDataModel] = dict()
+        else:
+            self.hdulist = hdulist
         # define the extension
         self.filetype = filetype
         self.suffix = suffix
@@ -1164,7 +1172,9 @@ class DrsInputFile:
                 instrument: Optional[str] = None,
                 nosave: Optional[bool] = None,
                 description: Optional[str] = None,
-                inpath: Union[str, None] = None):
+                inpath: Union[str, None] = None,
+                required: Union[bool, None] = None,
+                hdulist: Dict[str, AperoDataModel] = None):
         """
         Create a new copy of DRS Input File object - unset parameters come
         from current instance of Drs Input File
@@ -1241,6 +1251,10 @@ class DrsInputFile:
         :param inpath: str or None, if set is a directory to look for the file
                        in - this is in exceptional cases and overrides normal
                        functionality
+        :param required: bool, if True this file is always expectedt to exist
+                         if recipe ran correctly
+        :param hdulist: Dict[str, AperoDataModel] - defined datatype(s) of 
+                        file or extensions (if fits file)
 
         - Parent class for Drs Fits File object (DrsFitsFile)
         """
@@ -1254,7 +1268,8 @@ class DrsInputFile:
                             outclass, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, infiles, s1d, hkeys,
-                            instrument, nosave, description, inpath)
+                            instrument, nosave, description, inpath, required,
+                            hdulist)
 
     def check_params(self, func):
         """
@@ -1378,7 +1393,9 @@ class DrsInputFile:
                   instrument: Optional[str] = None,
                   nosave: Optional[bool] = None,
                   description: Union[str, None] = None,
-                  inpath: Union[str, None] = None):
+                  inpath: Union[str, None] = None,
+                  required: Union[bool, None] = None,
+                  hdulist: Dict[str, AperoDataModel] = None):
         """
         Copy most keys from drsfile (other arguments override attributes coming
         from drfile (or self)
@@ -1457,6 +1474,10 @@ class DrsInputFile:
                 :param inpath: str or None, if set is a directory to look for the file
                        in - this is in exceptional cases and overrides normal
                        functionality
+        :param required: bool, if True this file is always expectedt to exist
+                         if recipe ran correctly
+        :param hdulist: Dict[str, AperoDataModel] - defined datatype(s) of 
+                        file or extensions (if fits file)
         """
         # set function name
         # _ = display_func('copyother', __NAME__, self.class_name)
@@ -1468,7 +1489,7 @@ class DrsInputFile:
                             outclass, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, infiles, s1d, hkeys,
-                            instrument, nosave, description, inpath)
+                            instrument, nosave, description, inpath, hdulist)
 
     def completecopy(self, drsfile,
                      name: Union[str, None] = None,
@@ -1508,7 +1529,9 @@ class DrsInputFile:
                      instrument: Optional[str] = None,
                      nosave: Optional[bool] = None,
                      description: Union[str, None] = None,
-                     inpath: Union[str, None] = None):
+                     inpath: Union[str, None] = None,
+                     required: Union[bool, None] = None,
+                     hdulist: Dict[str, AperoDataModel] = None):
         """
         Copy all keys from drsfile (unless other arguments set - these override
         copy from drsfile)
@@ -1586,6 +1609,10 @@ class DrsInputFile:
         :param inpath: str or None, if set is a directory to look for the file
                in - this is in exceptional cases and overrides normal
                functionality
+        :param required: bool, if True this file is always expectedt to exist
+                         if recipe ran correctly
+        :param hdulist: Dict[str, AperoDataModel] - defined datatype(s) of 
+                        file or extensions (if fits file)
         """
         # set function name
         # _ = display_func('completecopy', __NAME__, self.class_name)
@@ -1597,7 +1624,8 @@ class DrsInputFile:
                             outclass, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, infiles, s1d, hkeys,
-                            instrument, nosave, description, inpath)
+                            instrument, nosave, description, inpath, required,
+                            hdulist)
 
     # -------------------------------------------------------------------------
     # file checking
@@ -1823,7 +1851,7 @@ class DrsInputFile:
                 emsg = textentry(e.codeid, args=eargs)
                 raise AperoCodedException(None, e.codeit, targs=eargs,
                                           message=emsg.format(*eargs))
-                                        
+
             self.filename = abspath
             self.basename = os.path.basename(abspath)
             self.path = os.path.dirname(abspath)
@@ -2056,7 +2084,8 @@ class DrsFitsFile(DrsInputFile):
                  nosave: Optional[bool] = False,
                  description: Union[str, None] = None,
                  inpath: Union[str, None] = None,
-                 required: Union[bool, None] = None):
+                 required: Union[bool, None] = None,
+                 hdulist: Dict[str, AperoDataModel] = None):
         """
         Create a DRS Input File object
 
@@ -2124,8 +2153,8 @@ class DrsFitsFile(DrsInputFile):
         :param inpath: str or None, if set is a directory to look for the file
                        in - this is in exceptional cases and overrides normal
                        functionality
-        :param required: bool, if True this file is always expectedt to exist
-                         if recipe ran correctly
+        :param hdulist: Dict[str, AperoDataModel] - defined datatype(s) of 
+                        file or extensions (if fits file)
 
         - Parent class for Drs Fits File object (DrsFitsFile)
         """
@@ -2143,7 +2172,7 @@ class DrsFitsFile(DrsInputFile):
                               dbkey, rkeys, numfiles, shape, hdict,
                               output_dict, datatype, dtype, is_combined,
                               combined_list, infiles, s1d, hkeys, instrument,
-                              nosave, description, inpath, required)
+                              nosave, description, inpath, required, hdulist)
         # if ext in kwargs then we have a file extension to check
         self.filetype = filetype
         # set the input extension type
@@ -2230,6 +2259,11 @@ class DrsFitsFile(DrsInputFile):
             self.s1d = s1d
         # set the required flag
         self.required = required
+        # set the hdulist
+        if hdulist is None:
+            self.hdulist: Dict[str, AperoDataModel] = dict()
+        else:
+            self.hdulist = hdulist
 
     def __getstate__(self) -> dict:
         """
@@ -2334,7 +2368,8 @@ class DrsFitsFile(DrsInputFile):
                 nosave: Optional[bool] = None,
                 description: Optional[str] = None,
                 inpath: Union[str, None] = None,
-                required: Union[bool, None] = None):
+                required: Union[bool, None] = None,
+                hdulist: Dict[str, AperoDataModel] = None):
         """
         Create a new copy of DRS Input File object - unset parameters come
         from current instance of Drs Input File
@@ -2413,6 +2448,8 @@ class DrsFitsFile(DrsInputFile):
                        functionality
         :param required: bool, if True this file is always expectedt to exist
                          if recipe ran correctly
+        :param hdulist: Dict[str, AperoDataModel] - defined datatype(s) of 
+                        file or extensions (if fits file)
 
         - Parent class for Drs Fits File object (DrsFitsFile)
         """
@@ -2426,7 +2463,8 @@ class DrsFitsFile(DrsInputFile):
                             outclass, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, infiles, s1d, hkeys,
-                            instrument, nosave, description, inpath, required)
+                            instrument, nosave, description, inpath, required,
+                            hdulist)
 
     def string_output(self) -> str:
         """
@@ -2499,7 +2537,8 @@ class DrsFitsFile(DrsInputFile):
                   nosave: Optional[bool] = None,
                   description: Union[str, None] = None,
                   inpath: Union[str, None] = None,
-                  required: Union[bool, None] = None):
+                  required: Union[bool, None] = None,
+                  hdulist: Dict[str, AperoDataModel] = None):
         """
         Copy most keys from drsfile (other arguments override attributes coming
         from drfile (or self)
@@ -2579,6 +2618,8 @@ class DrsFitsFile(DrsInputFile):
                functionality
         :param required: bool, if True this file is always expectedt to exist
                          if recipe ran correctly
+        :param hdulist: Dict[str, AperoDataModel] - defined datatype(s) of 
+                        file or extensions (if fits file)
         """
         # set function name
         func_name = display_func('copyother', __NAME__,
@@ -2593,7 +2634,8 @@ class DrsFitsFile(DrsInputFile):
                             outclass, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, infiles, s1d, hkeys,
-                            instrument, nosave, description, inpath, required)
+                            instrument, nosave, description, inpath, required,
+                            hdulist)
 
     def completecopy(self, drsfile,
                      name: Union[str, None] = None,
@@ -2634,7 +2676,8 @@ class DrsFitsFile(DrsInputFile):
                      nosave: Optional[bool] = None,
                      description: Union[str, None] = None,
                      inpath: Union[str, None] = None,
-                     required: Union[bool, None] = None):
+                     required: Union[bool, None] = None,
+                     hdulist: Dict[str, AperoDataModel] = None):
         """
         Copy all keys from drsfile (unless other arguments set - these override
         copy from drsfile)
@@ -2714,6 +2757,8 @@ class DrsFitsFile(DrsInputFile):
                functionality
         :param required: bool, if True this file is always expectedt to exist
                          if recipe ran correctly
+        :param hdulist: Dict[str, AperoDataModel] - defined datatype(s) of 
+                        file or extensions (if fits file)
         """
         # set function name
         # _ = display_func('completecopy', __NAME__, self.class_name)
@@ -2725,7 +2770,8 @@ class DrsFitsFile(DrsInputFile):
                             outclass, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, infiles, s1d, hkeys,
-                            instrument, nosave, description, inpath, required)
+                            instrument, nosave, description, inpath, required,
+                            hdulist)
 
     # -------------------------------------------------------------------------
     # file checking
@@ -3206,8 +3252,8 @@ class DrsFitsFile(DrsInputFile):
                     raise AperoCodedException(None, e.codeid,
                                               message=emsg.format(*eargs),
                                               targs=eargs)
-                
-                                            
+
+
             else:
                 eargs = [self.name, recipename, func_name]
                 raise AperoCodedException(None, '09-503-00009', targs=eargs)
@@ -4335,18 +4381,18 @@ class DrsFitsFile(DrsInputFile):
         # ---------------------------------------------------------------------
         # deal with booleans
         if isinstance(value, str) and (dtype == bool or dtype == 'bool'):
-                if value.upper() in ['1', 'TRUE', 'T']:
-                    value = True
-                else:
-                    value = False
+            if value.upper() in ['1', 'TRUE', 'T']:
+                value = True
+            else:
+                value = False
         # deal with input lists
         elif isinstance(value, str) and dtype == list:
-                # try to split the value as a list
-                value = value.split(',')
-                value = list(np.char.array(value).strip())
-                # cast to required list type
-                if listtype is not None and isinstance(listtype, type):
-                    value = list(map(lambda x: listtype(x), value))
+            # try to split the value as a list
+            value = value.split(',')
+            value = list(np.char.array(value).strip())
+            # cast to required list type
+            if listtype is not None and isinstance(listtype, type):
+                value = list(map(lambda x: listtype(x), value))
         # try to convert to dtype else just return as string
         try:
             value = dtype(value)
@@ -5348,6 +5394,61 @@ class DrsFitsFile(DrsInputFile):
             self.header = header.copy()
 
     # -------------------------------------------------------------------------
+    # hdu list functionality
+    # -------------------------------------------------------------------------
+    def get_hdulist_attribute(self, attribute: str):
+        if len(self.hdulist) == 0:
+            return []
+        else:
+            outlist = []
+            for entry in self.hdulist:
+                outlist.append(getattr(self.hdulist[entry], attribute))
+            return outlist
+
+    def get_hdulist_names(self):
+        return self.get_hdulist_attribute('name')
+
+    def get_hdulist_datatypes(self):
+        return self.get_hdulist_attribute('datatype')
+
+    def hdulist_load(self, params: ParamDict, name: str,
+                     **kwargs) -> Union[Table, np.ndarray]:
+        """
+        Load a Apero Data Model
+
+        :param params: ParamDict, parameter dictionary of constants
+        :param filename: str, name of the fits file
+        :param kwargs: keyword arguments to send to drs_table.read_table
+
+        return: Table, the fits table
+        """
+        # we require the filename to be able to load a hdulist entry
+        if self.filename is None:
+            emsg = ('No filename for DrsFitsFile[{0}], please run '
+                    'DrsFitsFile.constuct_filename()')
+            eargs = [self.name]
+            raise AperoCodedException(self.params, None,
+                                      emsg.format(*eargs), targs=eargs)
+        # if we have the name in hdulist try to load
+        if name in self.hdulist:
+            # get this entry
+            hdu_entry = self.hdulist[name]
+            # check that we have an Apero Data Model
+            if not hasattr(hdu_entry, 'load_data'):
+                emsg = '"{0}" not a valid Apero Data Model for DrsFitsFile[{1}]'
+                eargs = [name, self.name]
+                raise AperoCodedException(self.params, None,
+                                          emsg.format(*eargs), targs=eargs)
+            return hdu_entry.load_data(params, self.filename, **kwargs)
+        # else we raise an exception
+        else:
+            emsg = ('"{0}" not a valid HDUList for DrsFitsFile[{1}]. '
+                    'Please check file_definitions')
+            eargs = [name, self.name]
+            raise AperoCodedException(self.params, None, emsg.format(*eargs),
+                                      targs=eargs)
+
+    # -------------------------------------------------------------------------
     # database methods
     # -------------------------------------------------------------------------
     def get_dbkey(self) -> Union[str, None]:
@@ -5453,7 +5554,8 @@ class DrsNpyFile(DrsInputFile):
                  nosave: Optional[bool] = False,
                  description: Union[str, None] = None,
                  inpath: Union[str, None] = None,
-                 required: Union[bool, None] = None):
+                 required: Union[bool, None] = None,
+                 hdulist: Dict[str, AperoDataModel] = None):
         """
         Create a DRS Npy File Input object
 
@@ -5504,7 +5606,9 @@ class DrsNpyFile(DrsInputFile):
                        in - this is in exceptional cases and overrides normal
                        functionality
         :param required: bool, if True this file is always expectedt to exist
-                 if recipe ran correctly
+                         if recipe ran correctly
+        :param hdulist: Dict[str, AperoDataModel] - defined datatype(s) of 
+                        file or extensions (if fits file)
         """
         # set class name
         self.class_name = 'DrsNpyFile'
@@ -5521,7 +5625,7 @@ class DrsNpyFile(DrsInputFile):
                               dbkey, rkeys, numfiles, shape, hdict,
                               output_dict, datatype, dtype, is_combined,
                               combined_list, infiles, s1d, hkeys, instrument,
-                              nosave, description, inpath, required)
+                              nosave, description, inpath, required, hdulist)
         # these keys are not set in DrsInputFile
         self.inext = inext
         # get tag
@@ -5783,7 +5887,9 @@ class DrsNpyFile(DrsInputFile):
                 instrument: Optional[str] = None,
                 nosave: Optional[bool] = None,
                 description: Optional[str] = None,
-                inpath: Union[str, None] = None):
+                inpath: Union[str, None] = None,
+                required: Union[bool, None] = None,
+                hdulist: Dict[str, AperoDataModel] = None):
         """
         Create a new copy of DRS Npy File object - unset parameters come
         from current instance of Drs Input File
@@ -5849,7 +5955,7 @@ class DrsNpyFile(DrsInputFile):
                             outclass, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, s1d, hkeys, instrument,
-                            nosave, description)
+                            nosave, description, inpath, required, hdulist)
 
     def completecopy(self, drsfile: 'DrsNpyFile',
                      name: Union[str, None] = None,
@@ -5889,7 +5995,9 @@ class DrsNpyFile(DrsInputFile):
                      instrument: Optional[str] = None,
                      nosave: Optional[bool] = None,
                      description: Optional[str] = None,
-                     inpath: Union[str, None] = None):
+                     inpath: Union[str, None] = None,
+                     required: Union[bool, None] = None,
+                     hdulist: Dict[str, AperoDataModel] = None):
         """
         Copy all keys from drsfile (unless other arguments set - these override
         copy from drsfile)
@@ -5946,6 +6054,10 @@ class DrsNpyFile(DrsInputFile):
         :param inpath: str or None, if set is a directory to look for the file
                        in - this is in exceptional cases and overrides normal
                        functionality
+        :param required: bool, if True this file is always expectedt to exist
+                         if recipe ran correctly
+        :param hdulist: Dict[str, AperoDataModel] - defined datatype(s) of 
+                        file or extensions (if fits file)
         """
         # set function name
         # _ = display_func('completecopy', __NAME__, self.class_name)
@@ -5957,7 +6069,8 @@ class DrsNpyFile(DrsInputFile):
                             outclass, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, infiles, s1d, hkeys,
-                            instrument, nosave, description, inpath)
+                            instrument, nosave, description, inpath, required,
+                            hdulist)
 
     # -------------------------------------------------------------------------
     # database methods
@@ -6285,10 +6398,10 @@ class DrsOutFileExtension:
         if filename is not None:
             self.filename = filename
         else:
-            self.filename = DrsPath.get_abs_paths(params, 
-                                           block_kinds=table['BLOCK_KIND'][row],
-                                           obs_dirs=table['OBS_DIR'][row],
-                                           basenames=table['FILENAME'][row])
+            self.filename = DrsPath.get_abs_paths(params,
+                                                  block_kinds=table['BLOCK_KIND'][row],
+                                                  obs_dirs=table['OBS_DIR'][row],
+                                                  basenames=table['FILENAME'][row])
         # deal with setting data type (unless already set which overrides)
         if self.drsfile == 'table':
             self.datatype = 'table'
@@ -6460,9 +6573,9 @@ class DrsOutFileExtension:
             else:
                 # else take the first entry
                 filename = DrsPath.get_abs_paths(params,
-                                            block_kinds=entries['BLOCK_KIND'][0],
-                                            obs_dirs=entries['OBS_DIR'][0],
-                                            basenames=entries['FILENAME'][0])
+                                                 block_kinds=entries['BLOCK_KIND'][0],
+                                                 obs_dirs=entries['OBS_DIR'][0],
+                                                 basenames=entries['FILENAME'][0])
                 # append filenames
                 filenames.append(filename)
             # -----------------------------------------------------------------
@@ -9024,7 +9137,8 @@ def _copydrsfile(drsfileclass,
                  nosave: Optional[bool] = None,
                  description: Union[str, None] = None,
                  inpath: Union[str, None] = None,
-                 required: Union[bool, None] = None):
+                 required: Union[bool, None] = None,
+                 hdulist: Dict[str, AperoDataModel] = None):
     """
     Global copier of file instance
 
@@ -9108,6 +9222,8 @@ def _copydrsfile(drsfileclass,
                    functionality
     :param required: bool, if True this file is always expectedt to exist
                      if recipe ran correctly
+    :param hdulist: Dict[str, AperoDataModel] - defined datatype(s) of
+                    file or extensions (if fits file)
 
     - Parent class for Drs Fits File object (DrsFitsFile)
     """
@@ -9265,6 +9381,9 @@ def _copydrsfile(drsfileclass,
     # copy required
     if required is None:
         required = deepcopy(instance2.required)
+    # copy hdu list
+    if hdulist is None:
+        hdulist = deepcopy(instance2.required)
     # return new instance
     return drsfileclass(name, filetype, suffix, remove_insuffix, prefix,
                         fibers, fiber, params, filename, intype, path,
@@ -9273,7 +9392,7 @@ def _copydrsfile(drsfileclass,
                         dbkey, rkeys, numfiles, shape, hdict,
                         output_dict, datatype, dtype, is_combined,
                         combined_list, infiles, s1d, new_hkeys, instrument,
-                        nosave, description, inpath, required)
+                        nosave, description, inpath, required, hdulist)
 
 # =============================================================================
 # End of code

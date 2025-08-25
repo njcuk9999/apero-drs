@@ -547,8 +547,10 @@ flat_dict['ARG'] = dict(zip(flat_dict['fibers'],
 apero_flat.set_output_data(FLAT_FILE=flat_dict, BLAZE_FILE=flat_dict,
                            E2DSLL_FILE=flat_dict)
 apero_flat.set_debug_plots('FLAT_ORDER_FIT_EDGES1', 'FLAT_ORDER_FIT_EDGES2',
-                           'FLAT_BLAZE_ORDER1', 'FLAT_BLAZE_ORDER2')
-apero_flat.set_summary_plots('SUM_FLAT_ORDER_FIT_EDGES', 'SUM_FLAT_BLAZE_ORDER')
+                           'FLAT_BLAZE_ORDER1', 'FLAT_BLAZE_ORDER2',
+                           'FLAT_EDGE_ORDERS')
+apero_flat.set_summary_plots('SUM_FLAT_ORDER_FIT_EDGES', 'SUM_FLAT_BLAZE_ORDER',
+                             'SUM_FLAT_EDGE_ORDERS')
 apero_flat.set_arg(pos=0, **obs_dir)
 apero_flat.set_arg(name='files', dtype='files',
                    files=[files.pp_flat_flat, files.pp_dark_flat,

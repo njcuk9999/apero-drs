@@ -13,10 +13,10 @@ Created on 2018-10-31 at 18:06
 
 @author: cook
 """
-import os
+from astropy import units as uu
 
-from aperocore.base import base
 from apero.core import drs_file
+from apero.core import drs_data_models
 from apero.core import drs_out_file as out
 from apero.base import base as apero_base
 
@@ -41,6 +41,9 @@ drs_finput = drs_file.DrsFitsFile
 drs_ninput = drs_file.DrsNpyFile
 drs_oinput = drs_file.DrsOutFile
 DrsFileGroup = drs_file.DrsFileGroup
+# get Apero Data Model classes
+AperoTableModel = drs_data_models.AperoTableModel
+AperoImageModel = drs_data_models.AperoImageModel
 # define out file classes
 blank_ofile = out.BlankOutFile()
 general_ofile = out.GeneralOutFile()
@@ -2211,6 +2214,9 @@ post_file.addset(post_p_file)
 # =============================================================================
 # Static files
 # =============================================================================
+# static files
+static_file = drs_finput('DRS_STATIC', filetype='.fits')
+
 # -----------------------------------------------------------------------------
 # Static detector calibrations
 # -----------------------------------------------------------------------------
@@ -2219,29 +2225,65 @@ static_dark = drs_finput('STATIC_DARK', filetype='.fits',
                          basename='static_dark_spirou.fits',
                          description='Median dark frame produced in static '
                                      'detector recipe')
-
+ext1 = AperoImageModel('STATIC_DARK', shape=[4096, 4096])
+ext2 = AperoTableModel('STATIC_DARK_TABLE')
+ext2.add_column('FILENAME', description='The input dark file')
+ext2.add_column('EXPTIME', units=uu.s,
+                description='The exposure time in [seconds]')
+ext2.add_column('MJD', units=uu.day, description='The mid exposure time [days]')
+static_dark.hdulist['STATIC_DARK'] = ext1
+static_dark.hdulist['STATIC_DARK_TABLE'] = ext2
+static_file.addset(static_dark)
+# ------------------------------------------------------------------------------
 static_led = drs_finput('STATIC_LED', filetype='.fits',
                          outclass=static_ofile,
                          basename='static_led_spirou.fits',
                          description='Median LED frame produced in static '
                                      'detector recipe')
-
+ext1 = AperoImageModel('STATIC_LED', shape=[4096, 4096])
+ext2 = AperoTableModel('STATIC_LED_TABLE')
+ext2.add_column('FILENAME',
+                description='Input files used to create median LED frame')
+static_led.hdulist['STATIC_LED'] = ext1
+static_led.hdulist['STATIC_LED_TABLE'] = ext2
+static_file.addset(static_led)
+# ------------------------------------------------------------------------------
 static_flat = drs_finput('STATIC_FLAT', filetype='.fits',
                          outclass=static_ofile,
                          basename='static_flat_spirou.fits',
                          description='detector high-passed flat field')
-
+ext1 = AperoImageModel('STATIC_FLAT', shape=[4096, 4096])
+static_flat.hdulist['STATIC_FLAT'] = ext1
+static_file.addset(static_flat)
+# ------------------------------------------------------------------------------
 static_dark_curr = drs_finput('STATIC_DARK_CURR', filetype='.fits',
                               outclass=static_ofile,
                               basename='static_dark_curr_spirou.fits',
                               description='Amplifier folded dark current '
                                           'intercept and slope maps')
-
+ext1 = AperoImageModel('slope', shape=[128, 4096])
+ext2 = AperoImageModel('intercept', shape=[128, 4096])
+ext3 = AperoTableModel('STATIC_FLAT_TABLE')
+ext3.add_column('FILENAME', description='Input Dark file')
+ext3.add_column('EXPTIME', units=uu.s,
+                description='The exposure time in [seconds]')
+ext3.add_column('MJD', units=uu.day, description='The mid exposure time [days]')
+static_dark_curr.hdulist['slope'] = ext1
+static_dark_curr.hdulist['intercept'] = ext2
+static_dark_curr.hdulist['STATIC_FLAT_TABLE'] = ext3
+static_file.addset(static_dark_curr)
+# ------------------------------------------------------------------------------
 static_hotpix = drs_finput('STATIC_HOTPIX', filetype='.fits',
                            outclass=static_ofile,
                            basename='static_hotpix_spirou.fits',
                            description='Hotpixels identified in dark and flat')
-
+ext1 = AperoTableModel('hotpix')
+ext1.add_column('nsig',
+                description='Number of sigma away from dark frame median')
+ext1.add_column('xpix', description='The x pixel location of the hot pixel')
+ext1.add_column('ypix', description='The y pixel location of the hot pixel')
+static_hotpix.hdulist['hotpix'] = ext1
+static_file.addset(static_hotpix)
 # -----------------------------------------------------------------------------
 # Static telluric calibrations
 # -----------------------------------------------------------------------------
@@ -2256,7 +2298,37 @@ static_tellu_disallow = None
 # -----------------------------------------------------------------------------
 # Static wave calibrations
 # -----------------------------------------------------------------------------
-static_hc_cat = None
+static_hc_cat = drs_finput('STATIC_HC_CAT', filetype='.fits',
+                           outclass=static_ofile,
+                           basename='static_hc_cat_spirou.fits',
+                           description='HC catalogue')
+ext1 = AperoTableModel('HC_CAT')
+ext1.add_column('wavelength', units=uu.nm,
+                description='Wavelength of the HC catalogue line')
+ext1.add_column('flux', description='Flux of the HC catalogue line')
+ext1.add_column('species', description='Which species is this line associated '
+                                       'with')
+ext1.add_column('source', description='Where the information for this line '
+                                      'came from')
+static_hc_cat.hdulist['STATIC_HC_CAT'] = ext1
+static_file.addset(static_hc_cat)
+# ------------------------------------------------------------------------------
+static_hc_e2ds = drs_finput('STATIC_HC_E2DS', filetype='.fits',
+                            outclass=static_ofile,
+                            basename='static_hc_e2ds_spirou.fits',
+                            description='Extracted HC e2ds file')
+ext1 = AperoImageModel('HC_E2DS', shape=[49, 4088])
+static_hc_e2ds.hdulist['HC_E2DS'] = ext1
+static_file.addset(static_hc_e2ds)
+# ------------------------------------------------------------------------------
+static_fp_e2ds = drs_finput('STATIC_FP_E2DS', filetype='.fits',
+                            outclass=static_ofile,
+                            basename='static_fp_e2ds_spirou.fits',
+                            description='Extracted FP e2ds file')
+ext1 = AperoImageModel('FP_E2DS', shape=[49, 4088])
+static_fp_e2ds.hdulist['FP_E2DS'] = ext1
+static_file.addset(static_fp_e2ds)
+# ------------------------------------------------------------------------------
 
 static_cavity = None
 
