@@ -2330,9 +2330,32 @@ static_fp_e2ds.hdulist['FP_E2DS'] = ext1
 static_file.addset(static_fp_e2ds)
 # ------------------------------------------------------------------------------
 
-static_cavity = None
+static_pp = drs_finput('STATIC_PP', filetype='.fits',
+                       outclass=static_ofile,
+                       basename='static_pp_spirou.fits',
+                       description='Static pre-processed file')
+ext1 = AperoImageModel('PP_DARK', shape=[4096, 4096])
+ext2 = AperoImageModel('PP_DARK_FLAT', shape=[4096, 4096])
+ext3 = AperoImageModel('PP_FLAT_DARK', shape=[4096, 4096])
+ext4 = AperoImageModel('PP_HCONE_HCONE', shape=[4096, 4096])
+ext5 = AperoImageModel('PP_FP_FP', shape=[4096, 4096])
 
-static_wave_ref = None
+static_pp.hdulist['PP_DARK'] = ext1
+static_pp.hdulist['PP_DARK_FLAT'] = ext2
+static_pp.hdulist['PP_FLAT_DARK'] = ext3
+static_pp.hdulist['HCONE_HCONE'] = ext4
+static_pp.hdulist['FP_FP'] = ext5
+static_file.addset(static_pp)
+
+# ------------------------------------------------------------------------------
+static_wave_ref = drs_finput('STATIC_WAVE_REF', filetype='.fits',
+                             fibers=valid_efibers,
+                             prefix='static_wave_ref',
+                             outclass=static_ofile,
+                             description='Static wavelength solution file')
+ext1 = AperoImageModel('WAVE', shape=[49, 4088])
+static_wave_ref.hdulist['WAVE'] = ext1
+static_file.addset(static_wave_ref)
 
 # =============================================================================
 # Other Files

@@ -639,7 +639,31 @@ class StaticFile(OutFile):
             raise AperoCodedException(params, '00-001-00018', targs=[func_name])
         # get filename from outfile if None
         if filename is None:
-            filename = outfile.basename
+            if fiber is not None:
+                # deal with no prefix set
+                if outfile.prefix is None:
+
+                    emsg = ('Fiber was given as argument (fiber={0}), '
+                            'prefix must be set in file definitions. '
+                            'Function={1}')
+                    eargs = [fiber, func_name]
+                    raise AperoCodedException(params, None, 
+                                              message=emsg.format(*eargs),
+                                              targs=eargs)
+                # set filename from prefix and fiber
+                filename = outfile.prefix + '_' + fiber 
+            else:
+                # deal with no basename set
+                if outfile.basename is None:
+                    emsg = ('No filename was given as argument, '
+                            'and no basename set in file definitions. '
+                            'Function={0}')
+                    eargs = [func_name]
+                    raise AperoCodedException(params, None, 
+                                              message=emsg.format(*eargs),
+                                              targs=eargs)
+                # otherwise set from the basename
+                filename = outfile.basename
         # deal with no file name set and filename must be a basename (no path)
         if filename is None:
             raise AperoCodedException(params, '00-001-00041', targs=[func_name])

@@ -88,12 +88,6 @@ def __main__(recipe, params):
                                        tarfile=params.get('TARFILE', None))
 
     # -------------------------------------------------------------------------
-    # Ask for APERO constants that are required for new instrument
-    # -------------------------------------------------------------------------
-    # TODO: From sparams or other instrument
-    #       How do we list these?
-
-    # -------------------------------------------------------------------------
     # detector static files
     # -------------------------------------------------------------------------
     #    amplifier bias model

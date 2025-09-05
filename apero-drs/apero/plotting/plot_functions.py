@@ -381,6 +381,49 @@ class ClickCursor(object):
         print('PLOT x={0:.2f}, y={1:.2f}'.format(x, y))
 
 
+class YesNoButtonGraph:
+    def __init__(self, fig, matplotlib):
+        self.matplotlib = matplotlib
+        self.plt = matplotlib.pyplot
+        self.fig = fig
+        self.response = 'n'
+        self.question = ''
+        self.yes_button = None
+        self.no_button = None
+
+    def add(self, question):
+
+        # get the button widget
+        Button = self.matplotlib.widgets.Button
+        # copy the question
+        self.question = str(question)
+        # Add question text centered above the buttons
+        self.fig.text(0.5, 0.20, question, ha='center', va='center',
+                      fontsize=12)
+        # Move subplots up to leave room for buttons/text
+        self.plt.subplots_adjust(bottom=0.4)
+        # Define button positions (x, y, width, height)
+        yes_ax = self.fig.add_axes([0.42, 0.08, 0.08, 0.05])
+        no_ax = self.fig.add_axes([0.52, 0.08, 0.08, 0.05])
+        # Create buttons
+        self.yes_button = Button(yes_ax, 'Yes', color='lightgreen',  
+                                 hovercolor='green')
+        self.no_button = Button(no_ax, 'No', color='lightcoral', 
+                                hovercolor='red')
+        self.yes_button.on_clicked(self.on_yes)
+        self.no_button.on_clicked(self.on_no)
+
+    def on_yes(self, event):
+        print(f'{self.question}: yes')
+        self.response = 'y'
+        self.plt.close(self.fig)
+
+    def on_no(self, event):
+        print(f'{self.question}: no')
+        self.response = 'n'
+        self.plt.close(self.fig)
+
+
 # =============================================================================
 # Define user graph functions
 # =============================================================================
@@ -5483,6 +5526,198 @@ def plot_static_det_plot(plotter: Plotter, graph: Graph,
         # ------------------------------------------------------------------
         # wrap up using plotter
         plotter.plotend(graph)
+    # -------------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+def plot_static_cav_check_plot(plotter: Plotter, kwargs: Dict[str, Any]) -> bool:
+    """
+    Ask the user (interactively to check the cavity fit)
+
+    Interactive graph: does not use Graph as inline online and requires
+    return
+    """
+
+    # get plt from plotter (for matplotlib set up)
+    plt = plotter.plt
+    # get values from kwargs
+    fit_cavity_tmp = kwargs['fit_cavity_tmp']
+    all_fp_wave = kwargs['all_fp_wave']
+    all_fp_int = kwargs['all_fp_int']
+    all_fp_order = kwargs['all_fp_order']
+    # sort the all fp waves
+    sort = np.argsort(all_fp_wave)
+    # fit the all fp waves using the cavity fit polynomial
+    cavity_fit = np.polyval(fit_cavity_tmp, all_fp_wave[sort])
+    # get the cavity measure from 
+    all_fp_cav = all_fp_wave * all_fp_int
+
+    # -------------------------------------------------------------------------
+    # set up plot
+    fig, frame = plt.subplots(ncols=1, nrows=1)
+    # plot the orders
+    unique_orders = np.unique(all_fp_order)
+    # loop order unique orders
+    for order_num in unique_orders:
+        # mask the order
+        order_mask = (all_fp_order == order_num)
+        # plot this order
+        frame.plot(all_fp_wave[order_mask], all_fp_cav[order_mask],
+                   marker='.', ls='None', alpha=0.3)
+        # Add the order number at the median wave/cavity position
+        med_wave = mp.nanmedian(all_fp_wave[order_mask])
+        med_cav = mp.nanmedian(all_fp_cav[order_mask])
+        frame.text(med_wave, med_cav, '\n\n\n' + str(order_num), fontsize=8)
+    # -------------------------------------------------------------------------
+    # plot the cavity fit on top of the orders
+    frame.plot(all_fp_wave[sort], cavity_fit, 'k-', label='cavity fit')
+    # make this an interactive graph (with a question button)
+    yninst = YesNoButtonGraph(fig, plotter.matplotlib)
+    yninst.add('Is this cavity valid and to be used as input?')
+    # show the graph
+    plt.show(block=True)
+    # -------------------------------------------------------------------------
+    # return the users response
+    if 'y' in yninst.response:
+        return True
+    else:
+        return False
+
+
+def plot_static_wave_check_plot(plotter: Plotter, kwargs: Dict[str, Any]
+                                ) -> bool:
+    """
+    Ask the user (interactively to check the wave solution fit)
+
+    Interactive graph: does not use Graph as inline online and requires
+    return
+    """
+
+    # get plt from plotter (for matplotlib set up)
+    plt = plotter.plt
+    # get values from kwargs
+    order_num = kwargs['order_num']
+    peak0_guesses = kwargs['peak0_guesses']
+    nvalid2 = kwargs['nvalid2']
+    best_wave = kwargs['best_wave']
+    hc_spectrum = kwargs['hc_spectrum']
+    wave_ref = kwargs['wave_ref']
+    # work out which regions to keep
+    keep = (wave_ref > np.min(best_wave))
+    keep &= (wave_ref < np.max(best_wave))
+    wave_ref2 = wave_ref[keep] 
+    # -------------------------------------------------------------------------
+    # set up plot
+    fig, frames = plt.subplots(ncols=1, nrows=2)
+    # plot the orders
+    frames[0].plot(peak0_guesses, nvalid2, color='g', marker='-', ls='None')
+    frames[0].set(xlabel='Peak0 guess', 
+                  ylabel='Number of valid lines',
+                  title=('Number of valid lines as a function of peak0 '
+                         'guess for order {0}'.format(order_num)))
+    # plot the spectrum and mark reference wavelengths
+    frames[1].plot(best_wave, hc_spectrum, color='b')
+    # plot reference lines
+    for line_it in range(len(wave_ref2)):
+        frames[1].axvline(wave_ref2[line_it], color='0.5', ls='--', alpha=0.5)
+    
+    frames[1].set_yscale('log')
+    frames[1].set(xlabel='Wavelength [nm]',
+                  ylabel='Extracted Hollow cathode spectrum',
+                  title='Extracted spectrum for order {0}'.format(order_num))
+    # -------------------------------------------------------------------------
+    # make this an interactive graph (with a question button)
+    yninst = YesNoButtonGraph(fig, plotter.matplotlib)
+    yninst.add('Is this cavity valid and to be used as input?')
+    # show the graph
+    plt.show(block=True)
+    # -------------------------------------------------------------------------
+    # return the users response
+    if 'y' in yninst.response:
+        return True
+    else:
+        return False
+
+
+def plot_static_wave_middle_plot(plotter: Plotter, graph: Graph,
+                                 kwargs: Dict[str, Any]):
+    # -------------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # get plt
+    plt = plotter.plt
+    # -------------------------------------------------------------------------
+    # get values from kwargs
+    orders = kwargs['orders']
+    middle_pixel_fp_peak = kwargs['middle_pixel_fp_peak']
+    middle_res = kwargs['middle_res']
+    keep = kwargs['keep']
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frames = graph.set_figure(plotter, nrows=2, ncols=1)
+    # plot the middle peak position as a function or order
+    frames[0].plot(orders, middle_pixel_fp_peak, color='k', marker='.', 
+                   ls='None')
+    frames[0].set(xlabel='Order', ylabel='Cavity length')
+    # plot the residuals
+    frames[1].plot(orders, middle_res[~keep], color='r', marker='.', ls='None')
+    frames[1].plot(orders, middle_res[keep], color='g', marker='.', ls='None')
+    frames[1].set(xlabel='Order', ylabel='Cavity length - fit')
+    frames[1].grid()
+    # -------------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+def plot_static_wave_final_plot(plotter: Plotter, graph: Graph,
+                                 kwargs: Dict[str, Any]):
+    # -------------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # get plt
+    plt = plotter.plt
+    # -------------------------------------------------------------------------
+    # get values from kwargs
+    final_wave_sol = kwargs['final_wave_sol']
+    hc_image = kwargs['hc_image']
+    fp_image = kwargs['fp_image']
+    # -------------------------------------------------------------------------
+    # set up plot
+    fig, frames = graph.set_figure(plotter, nrows=2, ncols=1)
+    # loop around each order
+    for order_num in range(final_wave_sol.shape[0]):
+        # get the mean wavelength for this order
+        mean_wave = np.mean(final_wave_sol[order_num])
+        # get the mean log flux for HC and FP
+        hc_ord = hc_image[order_num]
+        hc_mean_log_flux = np.log10(np.nanmedian(hc_ord[hc_ord > 0]))
+        fp_ord = fp_image[order_num]
+        fp_mean_log_flux = np.log10(np.nanmedian(fp_ord[fp_ord > 0]))
+        # colour based on odd/even
+        if order_num % 2 == 0:
+            color = 'orange'
+        else:
+            color = 'purple'
+        # plot the HC spectrum
+        frames[0].plot(final_wave_sol[order_num, :], hc_image[order_num, :],
+                       alpha=0.3, color=color)
+        frames[0].text(mean_wave, 0, str(order_num), fontsize=8, color=color)
+        # plot the FP spectrum
+        frames[1].plot(final_wave_sol[order_num, :], fp_image[order_num, :],
+                       alpha=0.3, color=color)
+        frames[1].text(mean_wave, 0, str(order_num), fontsize=8, color=color)
+        # log scale both axis
+        frames[0].set_yscale('log')
+        frames[1].set_yscale('log')
+        # add the order number at the median wave/log flux position
+        frames[0].text(mean_wave, hc_mean_log_flux, str(order_num), 
+                       fontsize=8, color=color)
+        frames[1].text(mean_wave, fp_mean_log_flux, str(order_num), 
+                       fontsize=8, color=color)
+
     # -------------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)

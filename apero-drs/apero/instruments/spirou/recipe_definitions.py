@@ -1561,8 +1561,10 @@ apero_static.set_kwarg(name='--mode', dtype='options', default='None',
                  helpstr=textentry('STATIC_MODE_HELP'), required=True)
 apero_static.set_kwarg(**plot)
 
-apero_static.set_debug_plots('STATIC_DET')
-apero_static.set_summary_plots('SUM_STATIC_DET')
+apero_static.set_debug_plots('STATIC_DET', 'STATIC_WAVE_MIDDLE', 
+                             'STATIC_WAVE_FINAL')
+apero_static.set_summary_plots('SUM_STATIC_DET', 'SUM_STATIC_WAVE_MIDDLE',
+                               'SUM_STATIC_WAVE_FINAL')
 
 
 apero_static.description_file = 'apero_static.rst'

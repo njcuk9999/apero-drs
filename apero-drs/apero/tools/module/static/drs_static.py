@@ -22,6 +22,8 @@ from aperocore.core import drs_log
 from aperocore.core import drs_text
 
 from apero.base import base as apero_base
+from apero.core.drs_file import DrsFitsFile
+from apero.io import drs_fits
 from apero.utils import drs_data
 from apero.tools.module.setup import drs_assets
 
@@ -64,11 +66,13 @@ def load(params: ParamDict) -> Dict[str, Any]:
     return sparams
 
 
-def save_static_file(params: ParamDict, recipe, static_file, desc: str,
+def save_static_file(params: ParamDict, recipe, static_file: DrsFitsFile, 
+                     desc: str,
                      data_list: List[Union[np.ndarray, Table]],
                      datatype_list: List[str] = None,
                      name_list: List[str] = None,
-                     hdr_kwargs: Dict[str, Any] = None):
+                     hdr_kwargs: Dict[str, Any] = None,
+                     header_list: List[Dict[str, Any]] = None):
     """
     Save a static file using the standard apero file instance
 
@@ -82,9 +86,12 @@ def save_static_file(params: ParamDict, recipe, static_file, desc: str,
                       file)
     :param hdr_kwargs: dict, keyword arguments (in params) i.e. KW_XXX
                        to push into the headers
+    :param header_list: list, list of headers to be saved to each extension
 
     :return None - writes to disk
     """
+    # set function name
+    func_name = __NAME__ + '.save_static_file()'
     # -------------------------------------------------------------------------
     # if names_list is None get from static_file definition
     if name_list is None:
@@ -104,13 +111,39 @@ def save_static_file(params: ParamDict, recipe, static_file, desc: str,
     # add any other header keywords
     if hdr_kwargs is not None:
         for key in hdr_kwargs:
-            static_file.add_hkey(key, hdr_kwargs[key])
+            # get the value
+            value = hdr_kwargs[key]
+            # if value is a dictionary we assume it is 1D or 2D (and follows
+            # the correct format)
+            if isinstance(value, dict):
+                # deal with keys
+                for rkey in ['DIM', 'VALUES']:
+                    # deal with key not in value
+                    if rkey not in value:
+                        emsg = ('If hdr_kwargs[{0}] is a dict it must '
+                                'have a {1} key \n\t Function: {2}')
+                        eargs = [key, rkey, func_name]
+                        raise AperoCodedException(params, None,
+                                                message=emsg.format(*eargs),
+                                                targs=eargs)
+                # deal with the 1D case
+                if value['DIM'] == 1:
+                    static_file.add_hkey_1d(key, values=value['VALUES'],
+                                            dim1name=value.get('DIM1', None))
+                # deal with the 2D case
+                elif value['DIM'] == 2:
+                    static_file.add_hkey_2d(key, values=value['VALUES'],
+                                            dim1name=value.get('DIM1', None),
+                                            dim2name=value.get('DIM2', None))    
+            else:
+                # add single value
+                static_file.add_hkey(key, hdr_kwargs[key])
     # save to disk
     static_file.write_multi(data_list=data_list,
                             datatype_list=datatype_list,
                             name_list=name_list,
                             block_kind='static',
-                            runstring='None')
+                            runstring='None', header_list=hdr_list)
     # add to output files (for indexing)
     recipe.add_output_file(static_file)
 
@@ -189,6 +222,122 @@ def update_assets(params: ParamDict):
     abs_asset_path = drs_data.construct_path(params, '', _asset_path)
     # upload assets
     drs_assets.update_remote_assets(params, abs_asset_path)
+
+
+
+# =============================================================================
+# Define proxy night functions
+# =============================================================================
+def proxy_preprocess(params: ParamDict, recipe, sparams: Dict[str, Any],
+                     cal_path: str):
+    """
+    Proxy preprocess function for static wavelength calibration
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param recipe: DrsRecipe, the apero recipe instance
+    :param sparams: dict, static parameters from yaml file
+
+    :return None - writes to disk
+    """
+
+    # get the raw files
+    raw_files = dict()
+    raw_files['DARK'] = sparams['files']['raw_dark_files']
+    raw_files['DARK_FLAT'] = sparams['files']['raw_dark_flat_files']
+    raw_files['FLAT_DARK'] = sparams['files']['raw_flat_dark_files']
+    raw_files['HCONE_HCONE'] = [sparams['files']['raw_hc_file']]
+    raw_files['FP_FP'] = [sparams['files']['raw_fp_file']]
+
+    # storage for output pp files
+    pp_images = dict()
+    pp_hdr_dict = dict()
+    pp_hdrs = dict()
+
+    # loop around raw files
+    for key in raw_files:
+        # store images
+        images = []
+        # storage for keys in headers
+        pp_keys = dict()
+        # loop around files
+        for it, filename in enumerate(raw_files[key]):
+            # load image     
+            image = drs_fits.readfits(params, filename, getdata=True,
+                                      gethdr=False)
+            # rotation to match HARPS orientation (expected by DRS)
+            image = drs_image.rotate_image(image, params['IMAGE.RAW_PP_ROT'])
+
+            # get basename of file
+            basename = os.path.basename(filename)
+            # add header key for this file
+            pp_keys[f'INFILE{it+1:03d}'] = basename
+
+        # store image (sum of images)
+        pp_images[f'PP_{key}'] = np.nansum(images, axis=0)
+        # convert pp_keys to header
+        pp_hdrs[f'PP_{key}'] = drs_fits.Header(pp_keys)
+    # -------------------------------------------------------------------------
+    # save all to a single static file
+    # -------------------------------------------------------------------------
+    # get static file
+    static_file = recipe.outputs['STATIC_PP'].newcopy(params=params)
+    # construct the filename from file instance
+    static_file.construct_filename(path=cal_path)
+    # -------------------------------------------------------------------------
+    # set up data list
+    data_list = [pp_images['PP_DARK'], pp_images['PP_DARK_FLAT'], 
+                 pp_images['PP_FLAT_DARK'], pp_images['PP_HCONE_HCONE'],
+                 pp_images['PP_FP_FP']]
+    # set up header list
+    header_list = [pp_hdrs['PP_DARK'], pp_hdrs['PP_DARK_FLAT'], 
+                   pp_hdrs['PP_FLAT_DARK'], pp_hdrs['PP_HCONE_HCONE'],
+                   pp_hdrs['PP_FP_FP']]
+    # -------------------------------------------------------------------------
+    save_static_file(params, recipe, static_file,
+                                desc='pp frame',
+                                data_list=data_list,
+                                header_list=header_list)
+
+
+
+def proxy_dark(params: ParamDict, recipe, sparams: Dict[str, Any]):
+    """
+    Proxy dark function for static wavelength calibration
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param recipe: DrsRecipe, the apero recipe instance
+    :param sparams: dict, static parameters from yaml file
+
+    :return None - writes to disk
+    """
+    pass
+
+
+def proxy_badpix(params: ParamDict, recipe, sparams: Dict[str, Any]):
+    """
+    Proxy bad pixel function for static wavelength calibration
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param recipe: DrsRecipe, the apero recipe instance
+    :param sparams: dict, static parameters from yaml file
+
+    :return None - writes to disk
+    """
+    pass
+
+
+def proxy_extract(params: ParamDict, recipe, sparams: Dict[str, Any]):
+    """
+    Proxy extract function for static wavelength calibration
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param recipe: DrsRecipe, the apero recipe instance
+    :param sparams: dict, static parameters from yaml file
+
+    :return None - writes to disk
+    """
+    pass
+
 
 
 # =============================================================================

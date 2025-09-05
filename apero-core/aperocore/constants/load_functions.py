@@ -562,7 +562,7 @@ def ask_for_missing_args(params: ParamDict,
 
 
 def add_ext_config_list(config_list: List[Union[ConstDict, KeywordDict]],
-                        external_const: Dict[str, Union[ConstDict]]
+                        external_const: Dict[str, Union[ConstDict, KeywordDict]]
                         ) -> List[Union[ConstDict, KeywordDict]]:
 
     # deal with no config list

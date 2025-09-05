@@ -162,6 +162,22 @@ def fit2dpoly(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
     return coeff
 
 
+def cal_med_abs_dev(data: np.ndarray) -> np.ndarray:
+    """
+    Calculate the median absolute deviation of a dataset.
+
+    :param data: np.ndarray, input data array
+
+    :return: float, median absolute deviation of the data
+    """
+    # calculate the median of the data
+    median = fast.nanmedian(data)
+    # calculate the absolute deviations from the median
+    abs_devs = np.abs(data - median)
+    # return the median of the absolute deviations
+    return fast.nanmedian(abs_devs)
+
+
 def normal_fraction(sigma: Union[float, np.ndarray] = 1.0
                     ) -> Union[float, np.ndarray]:
     """
@@ -177,9 +193,9 @@ def normal_fraction(sigma: Union[float, np.ndarray] = 1.0
     return erf(sigma / np.sqrt(2.0))
 
 
-def median_absolute_deviation(sigma: float = 1.0) -> float:
+def inv_normal_fraction(sigma: float = 1.0) -> float:
     """
-    Calculate the median absolute deviation
+    Calculate the inverse normal fraction
     (From: https://en.wikipedia.org/wiki/Median_absolute_deviation)
 
     :param sigma: the number of sigma away from the median to be

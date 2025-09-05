@@ -7,15 +7,18 @@ inpath: /scratch2/spirou/drs-data/static/
 #    This can be overridden at run time with --mode
 mode: All
 
-# ------------------------------------------------------------------------------
-# Engineering
-# ------------------------------------------------------------------------------
-detector:
+# -----------------------------------------------------------------------------
+# Files
+# -----------------------------------------------------------------------------
+# All files should be placed in the inpath directory
+# -----------------------------------------------------------------------------
+files:
   # DARKs of different e.g. 60s, 600s (saved in the inpath directory)
   # These exposure times should be representative of short and long
   # science exposures, there should be multiple of each specific DARK exptime
   # exceptionally we can use just one set of exposure times (but they should
   # be long darks ~>600s
+  # REQUIRED FOR: static detector, static wavelength
   raw_dark_files:
     - 2488223d.fits
     - 2488382d.fits
@@ -23,12 +26,36 @@ detector:
     - 2503324d.fits
     - 2518936d.fits
     - 2519126d.fits
+
   # LED in all fibers, good SNR, not saturated (saved in the inpath directory)
   #  files should be dominated by systematics i.e. SNR ~ 300 when combined
+  # REQUIRED FOR: detector (or provide engineering flat)
   raw_led_files:
+  
   # Engineering flat from the manufacturer - Only set if no LED files available
   #   (saved in the in_path directory)
+  #  REQUIRED FOR: detector (if no LED files)
   engineering_flat: engineering_flat.fits
+
+  # DARK_FLAT (i.e. DARK in science fiber(s) and FLAT in reference fiber)
+  # REQUIRED FOR: static wavelength
+  raw_dark_flat_files:
+
+  # FLAT_DARK (i.e. FLAT in science fiber(s) and DARK in reference fiber)
+  raw_flat_dark_files:
+
+  # Input Hollow Cathode file (e.g. UNe, ThAr etc) both fibers (HC_HC)
+  #   note must be in the raw directory
+  # REQUIRED FOR: static wavelength
+  raw_hc_file: HC_HC_file.fits
+  # Input Fabry Perot file both fibers (FP_FP)
+  # REQUIRED FOR: static wavelength
+  raw_fp_file: FP_FP_file.fits
+
+# ------------------------------------------------------------------------------
+# Engineering
+# ------------------------------------------------------------------------------
+detector:
   # number of bins in each direction for large scale flat fielding
   flat_bin_size: 32
   # Fractional threshold for flat field bad pixels (relative deviation from 1)
@@ -57,11 +84,7 @@ wavelength:
   run_generate_night: True
   run_generate_wave_guess: True
 
-  # Input Hollow Cathode file (e.g. UNe, ThAr etc) both fibers (HC_HC)
-  #   note must be in the raw directory
-  raw_hc_file: HC_HC_file.fits
-  # Input Fabry Perot file both fibers (FP_FP)
-  raw_fp_file: FP_FP_file.fits
+
   # Input catalogue for the HC lines
   #   Must be in format
   input_hc_cat:
@@ -117,6 +140,8 @@ wavelength:
   fp_peak_step_window: 5
   # Degree for polyfit in wave_guess/fp_pix
   fp_poly_deg: 5
+  # Number of sigma to blindy accept an order as valid
+  nsig_accept_fp: 15
   # Range for integer offset search
   fp_step_offs_range: 20
   # Step for integer offset search
@@ -131,16 +156,15 @@ wavelength:
   fp_step_mad_thresold: 2.0
   # Minimum number of valid points for fit
   fp_step_valid_min: 5
-  # Degree for Chebyshev fit
-  cheby_fit_deg: 5
-  # Degree for robust_polyfit on Chebyshev coeffs
-  robust_polyfit_deg: 7
-  # Sigma cut for robust_polyfit on Chebyshev coeffs
-  robust_polyfit_sigma: 5
   # define the cavity refinement polyfit degree
   cavity_refine_poly_deg: 3
   # define the cavity refinement sigma for robust_polyfit
   cavity_refine_sigma: 8
+  # Degree for robust_polyfit on Chebyshev coeffs
+  robust_polyfit_deg: 7
+  # Sigma cut for robust_polyfit on Chebyshev coeffs
+  robust_polyfit_sigma: 3
+
 
 # ------------------------------------------------------------------------------
 # Telluric

@@ -22,6 +22,8 @@ calculate_polyvals = gen_math.calculate_polyvals
 
 centered_super_gauss = gauss.centered_super_gauss
 
+cal_med_abs_dev = gen_math.cal_med_abs_dev
+
 ea_airy_function = gen_math.ea_airy_function
 
 estimate_sigma = gen_math.estimate_sigma
@@ -64,6 +66,8 @@ get_ll_from_coefficients_cheb = gen_math.get_ll_from_coefficients_cheb
 
 iuv_spline = gen_math.iuv_spline
 
+inv_normal_fraction = gen_math.inv_normal_fraction
+
 killnan = nan.killnan
 
 largest_divisor_below = gen_math.largest_divisor_below
@@ -71,8 +75,6 @@ largest_divisor_below = gen_math.largest_divisor_below
 lowpassfilter = gen_math.lowpassfilter
 
 measure_box_min_max = gen_math.measure_box_min_max
-
-median_absolute_deviation = gen_math.median_absolute_deviation
 
 medbin = gen_math.medbin
 

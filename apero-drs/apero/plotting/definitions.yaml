@@ -938,6 +938,38 @@ SUM_STATIC_DET:
   figsize:
     - 10
     - 8
+STATIC_WAVE_MIDDLE:
+  kind: debug
+  func: plot_static_wave_middle_plot
+  dpi: 100
+  description: STATIC_WAVE_MIDDLE
+  figsize:
+    - 10
+    - 8
+SUM_STATIC_WAVE_MIDDLE:
+  kind: summary
+  func: plot_static_wave_middle_plot
+  dpi: 100
+  description: SUM_STATIC_WAVE_MIDDLE
+  figsize:
+    - 10
+    - 8
+STATIC_WAVE_FINAL:
+  kind: debug
+  func: plot_static_wave_final_plot
+  dpi: 100
+  description: STATIC_WAVE_FINAL
+  figsize:
+    - 10
+    - 8
+SUM_STATIC_WAVE_FINAL:
+  kind: summary
+  func: plot_static_wave_final_plot
+  dpi: 100
+  description: SUM_STATIC_WAVE_FINAL
+  figsize:
+    - 10
+    - 8
 IMAGE:
   kind: show
   func: plot_functions.plot_image

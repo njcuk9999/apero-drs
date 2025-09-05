@@ -126,7 +126,7 @@ PATH_CACHE = dict()
 # Define DrsPath class
 # =============================================================================
 class DrsPath:
-    blocks: List[BlockPath] = None
+    blocks: Optional[List[BlockPath]] = None
     classname: str = 'DrsPath'
 
     def __init__(self, params: ParamDict,
@@ -5185,18 +5185,18 @@ class DrsFitsFile(DrsInputFile):
             # add to header dictionary
             self.hdict[keyname] = (value, comm)
 
-    def add_core_hkeys(self, params: Optional[ParamDict] = None):
+    def add_core_hkeys(self, _params: Optional[ParamDict] = None):
         """
         Add the core header keys to the header (every DRS fits file should
         have at least these)
 
-        :param params: Optional ParamDict, if we have the parameter dictionary
+        :param _params: Optional ParamDict, if we have the parameter dictionary
                        use it to get the parameters, otherwise guess them
 
         :return: None, updates the header
         """
-        if params is None:
-            params = dict()
+        # deal with _params being None (in a type-safe way)
+        params = _params if _params is not None else dict()
         # ----------------------------------------------------------------------
         # add version
         version = params.get('DRS.VERSION', __version__)
