@@ -95,12 +95,13 @@ Time = apero_base.Time
 
 
 # TODO:
-#    1.  Fill in + test this code
-#    2.  Remove REF_LEAK from usage
-#    3.  Get wave guess from assets
-#    4.  Add HC update part (from apero-utils.updates_to_drs.apero_Static_tools.hollow_cathode_update.py
-#    5.  remove "reset" directory from assets (move assets/reset/runs to assets/runs)
-#    6.  when resetting copy assets/runs to runs
+#    - Fill in + test this code
+#    - Remove REF_LEAK from usage
+#    - Get wave guess from assets (need to deal with no wave guess)
+#    - Get cavity from wave guess
+#    - Add HC update part (from apero-utils.updates_to_drs.apero_Static_tools.hollow_cathode_update.py
+#    - remove "reset" directory from assets (move assets/reset/runs to assets/runs)
+#    - when resetting copy assets/runs to runs
 
 
 # =============================================================================
@@ -123,7 +124,7 @@ def main(params: ParamDict, recipe, sparams: Dict[str, Any]):
     # Step 2: Run reduction for given night
     # -------------------------------------------------------------------------
     if sparams['wavelength']['run_generate_night']:
-        generate_night(params, recipe, sparams)
+        drs_static.proxy_processing(params, recipe, sparams, cal_path)
 
     # -------------------------------------------------------------------------
     # Step 3: Extract HC and FP
@@ -174,28 +175,6 @@ def generate_hc_catagloue(params: ParamDict, recipe, sparams: Dict[str, Any],
     # save static file
     drs_static.save_static_file(params, recipe, static_file,
                                 desc='hotpix', data_list=[hc_table])
-
-
-def generate_night(params: ParamDict, recipe, sparams: Dict[str, Any]):
-    # TODO: How do you generate a night without a wavelength solution?
-    # TODO: How do we do this without adding to the database?
-
-    # step 1: preprocess
-    drs_static.proxy_preprocess(params, recipe, sparams)
-
-    # step 2: dark
-    drs_static.proxy_dark(params, recipe, sparams)
-
-    # step 3: bad ref
-    drs_static.proxy_badpix(params, recipe, sparams)
-
-    # step 4: locrefsci
-    drs_static.proxy_loc(params, recipe, sparams)
-
-    # step 5: extract (no shape/no flat/no thermal, just one fiber)
-    drs_static.extract(params, recipe, sparams)
-
-    pass
 
 
 def generate_wave_guess(params: ParamDict, recipe, sparams: Dict[str, Any],
@@ -272,7 +251,6 @@ def generate_wave_guess(params: ParamDict, recipe, sparams: Dict[str, Any],
         package_wavesol(params, recipe, sparams, cal_path, 
                         hc_file, fp_file,
                         final_wave_sol, final_wave_coeffs, final_fit_cavity)
-
 
 
 # =============================================================================

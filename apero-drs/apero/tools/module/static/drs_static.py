@@ -1,11 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+Static calibration general functionality
 
-# CODE DESCRIPTION HERE
+Deal with:
+- loading static calibration yaml file
+- saving the static files
+- updating the assets repository (with static calibrations)
+- processing a static night (for wave calibration we require extracted HC/FP)
 
-Created on 2019-07-26 at 09:40
+Created on 2025-05-26 at 09:40
 
 @author: cook
 """
@@ -26,6 +30,11 @@ from apero.core.drs_file import DrsFitsFile
 from apero.io import drs_fits
 from apero.utils import drs_data
 from apero.tools.module.setup import drs_assets
+
+from apero.tools.recipes.bin import apero_processing
+from apero.tools.recipes.bin import apero_remove
+from apero.utils.drs_startup import find_recipe
+
 
 # =============================================================================
 # Define variables
@@ -143,7 +152,7 @@ def save_static_file(params: ParamDict, recipe, static_file: DrsFitsFile,
                             datatype_list=datatype_list,
                             name_list=name_list,
                             block_kind='static',
-                            runstring='None', header_list=hdr_list)
+                            runstring='None', header_list=header_list)
     # add to output files (for indexing)
     recipe.add_output_file(static_file)
 
@@ -228,7 +237,7 @@ def update_assets(params: ParamDict):
 # =============================================================================
 # Define proxy night functions
 # =============================================================================
-def proxy_preprocess(params: ParamDict, recipe, sparams: Dict[str, Any],
+def proxy_processing(params: ParamDict, recipe, sparams: Dict[str, Any],
                      cal_path: str):
     """
     Proxy preprocess function for static wavelength calibration
@@ -247,98 +256,92 @@ def proxy_preprocess(params: ParamDict, recipe, sparams: Dict[str, Any],
     raw_files['FLAT_DARK'] = sparams['files']['raw_flat_dark_files']
     raw_files['HCONE_HCONE'] = [sparams['files']['raw_hc_file']]
     raw_files['FP_FP'] = [sparams['files']['raw_fp_file']]
-
-    # storage for output pp files
-    pp_images = dict()
-    pp_hdr_dict = dict()
-    pp_hdrs = dict()
-
-    # loop around raw files
+    # get the instrument name
+    instrument = params['OBS.INSTRUMENT'].lower()
+    # ------------------------------------------------------------------------
+    # get the input directory from sparams
+    input_dir = os.path.dirname(sparams['inpath'])
+    # create fake night directory
+    night_dir = os.path.join(params['PATH.RAW'], 'STATIC')
+    # ------------------------------------------------------------------------
+    # delete night directory if it exists
+    if os.path.exists(night_dir):
+        shutil.rmtree(night_dir)
+    os.makedirs(night_dir)
+    # ------------------------------------------------------------------------
+    # copy raw files to night directory (as symbolic links)
     for key in raw_files:
-        # store images
-        images = []
-        # storage for keys in headers
-        pp_keys = dict()
-        # loop around files
-        for it, filename in enumerate(raw_files[key]):
-            # load image     
-            image = drs_fits.readfits(params, filename, getdata=True,
-                                      gethdr=False)
-            # rotation to match HARPS orientation (expected by DRS)
-            image = drs_image.rotate_image(image, params['IMAGE.RAW_PP_ROT'])
+        for raw_file in raw_files[key]:
+            # get the in file
+            in_file = os.path.join(input_dir, raw_file)
 
-            # get basename of file
-            basename = os.path.basename(filename)
-            # add header key for this file
-            pp_keys[f'INFILE{it+1:03d}'] = basename
+            # deal with file not found
+            if not os.path.exists(in_file):
+                emsg = 'Raw {0} file not found: {1}'
+                eargs = [key, in_file]
+                raise AperoCodedException(params, None,
+                                          message=emsg.format(eargs),
+                                          targs=eargs)
 
-        # store image (sum of images)
-        pp_images[f'PP_{key}'] = np.nansum(images, axis=0)
-        # convert pp_keys to header
-        pp_hdrs[f'PP_{key}'] = drs_fits.Header(pp_keys)
-    # -------------------------------------------------------------------------
-    # save all to a single static file
-    # -------------------------------------------------------------------------
-    # get static file
-    static_file = recipe.outputs['STATIC_PP'].newcopy(params=params)
-    # construct the filename from file instance
-    static_file.construct_filename(path=cal_path)
-    # -------------------------------------------------------------------------
-    # set up data list
-    data_list = [pp_images['PP_DARK'], pp_images['PP_DARK_FLAT'], 
-                 pp_images['PP_FLAT_DARK'], pp_images['PP_HCONE_HCONE'],
-                 pp_images['PP_FP_FP']]
-    # set up header list
-    header_list = [pp_hdrs['PP_DARK'], pp_hdrs['PP_DARK_FLAT'], 
-                   pp_hdrs['PP_FLAT_DARK'], pp_hdrs['PP_HCONE_HCONE'],
-                   pp_hdrs['PP_FP_FP']]
-    # -------------------------------------------------------------------------
-    save_static_file(params, recipe, static_file,
-                                desc='pp frame',
-                                data_list=data_list,
-                                header_list=header_list)
+            # get the out file
+            out_file = os.path.join(night_dir, raw_file)
+            # create symbolic link
+            os.symlink(in_file, out_file)
+    # ------------------------------------------------------------------------
+    # run the static run yaml file
+    _ = apero_processing.main('static_run.yaml')
+    # ------------------------------------------------------------------------
+    # copy out the data we require (for HC and FP)
+    # ------------------------------------------------------------------------
+    e2ds_files = dict()
+    # we require the HCONE_HCONE and FP_FP files
+    # we rename the .fits to _e2dsff_{sci_fiber}.fits
+    for key in ['HCONE_HCONE', 'FP_FP']:
+        # get the raw file
+        raw_file = raw_files[key][0]
 
-
-
-def proxy_dark(params: ParamDict, recipe, sparams: Dict[str, Any]):
-    """
-    Proxy dark function for static wavelength calibration
-
-    :param params: ParamDict, parameter dictionary of constants
-    :param recipe: DrsRecipe, the apero recipe instance
-    :param sparams: dict, static parameters from yaml file
-
-    :return None - writes to disk
-    """
-    pass
-
-
-def proxy_badpix(params: ParamDict, recipe, sparams: Dict[str, Any]):
-    """
-    Proxy bad pixel function for static wavelength calibration
-
-    :param params: ParamDict, parameter dictionary of constants
-    :param recipe: DrsRecipe, the apero recipe instance
-    :param sparams: dict, static parameters from yaml file
-
-    :return None - writes to disk
-    """
-    pass
-
-
-def proxy_extract(params: ParamDict, recipe, sparams: Dict[str, Any]):
-    """
-    Proxy extract function for static wavelength calibration
-
-    :param params: ParamDict, parameter dictionary of constants
-    :param recipe: DrsRecipe, the apero recipe instance
-    :param sparams: dict, static parameters from yaml file
-
-    :return None - writes to disk
-    """
-    pass
-
-
+        # replace .fits with _e2dsff_{sci_fiber}.fits
+        sci_fiber = sparams['wavelength']['wave_fiber']
+        # get basename e2dsff file (including fiber)
+        sci_basename = raw_file.replace('.fits',
+                                        '_e2dsff_{0}.fits'.format(sci_fiber))
+        # get the in file
+        in_file = os.path.join(night_dir, sci_basename)
+        # deal with file not found
+        if not os.path.exists(in_file):
+            emsg = '{0} file not found: {1}'
+            eargs = [key, in_file]
+            raise AperoCodedException(params, None,
+                                      message=emsg.format(eargs),
+                                      targs=eargs)
+        # get the out file
+        out_file = os.path.join(cal_path, sci_basename)
+        # copy file
+        shutil.copy(in_file, out_file)
+        # add to storage
+        e2ds_files[key] = out_file
+    # ------------------------------------------------------------------------
+    # get the recipe defintion for apero_extract
+    ext_recipe = find_recipe(f'apero_extract_{instrument}.py', instrument,
+                             recipe.recipemod)
+    e2dsff_files = getattr(ext_recipe, 'outputs')['E2DSFF_FILE']
+    # ------------------------------------------------------------------------
+    # construct the DrsFitsFile instances for HC and FP
+    hc_e2ds = e2dsff_files.newcopy(filename=e2ds_files['HCONE_HCONE'], 
+                                   params=params, fiber=sci_fiber)
+    fp_e2ds = e2dsff_files.newcopy(filename=e2ds_files['FP_FP'], 
+                                   params=params, fiber=sci_fiber)
+    # ------------------------------------------------------------------------
+    # store the HCONE_HCONE and FP_FP files in recipe output files
+    recipe.output_files['STATIC_HC_E2DS'] = hc_e2ds
+    recipe.output_files['STATIC_FP_E2DS'] = fp_e2ds
+    # ------------------------------------------------------------------------
+    # remove all mentions of the static night directory using apero remove
+    apero_remove.main(obsdir='STATIC', rawdb=True, nowarn=True)
+    # remove the raw data too
+    if os.path.exists(night_dir):
+        shutil.rmtree(night_dir)
+ 
 
 # =============================================================================
 # Start of code

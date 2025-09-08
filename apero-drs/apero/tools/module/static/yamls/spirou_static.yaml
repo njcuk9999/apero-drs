@@ -84,6 +84,8 @@ wavelength:
   run_generate_night: True
   run_generate_wave_guess: True
 
+  # Fiber to use for wavelength solution (of all fibers)
+  wave_fiber: AB
 
   # Input catalogue for the HC lines
   #   Must be in format

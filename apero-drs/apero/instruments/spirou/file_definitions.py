@@ -2313,41 +2313,6 @@ ext1.add_column('source', description='Where the information for this line '
 static_hc_cat.hdulist['STATIC_HC_CAT'] = ext1
 static_file.addset(static_hc_cat)
 # ------------------------------------------------------------------------------
-static_hc_e2ds = drs_finput('STATIC_HC_E2DS', filetype='.fits',
-                            outclass=static_ofile,
-                            basename='static_hc_e2ds_spirou.fits',
-                            description='Extracted HC e2ds file')
-ext1 = AperoImageModel('HC_E2DS', shape=[49, 4088])
-static_hc_e2ds.hdulist['HC_E2DS'] = ext1
-static_file.addset(static_hc_e2ds)
-# ------------------------------------------------------------------------------
-static_fp_e2ds = drs_finput('STATIC_FP_E2DS', filetype='.fits',
-                            outclass=static_ofile,
-                            basename='static_fp_e2ds_spirou.fits',
-                            description='Extracted FP e2ds file')
-ext1 = AperoImageModel('FP_E2DS', shape=[49, 4088])
-static_fp_e2ds.hdulist['FP_E2DS'] = ext1
-static_file.addset(static_fp_e2ds)
-# ------------------------------------------------------------------------------
-
-static_pp = drs_finput('STATIC_PP', filetype='.fits',
-                       outclass=static_ofile,
-                       basename='static_pp_spirou.fits',
-                       description='Static pre-processed file')
-ext1 = AperoImageModel('PP_DARK', shape=[4096, 4096])
-ext2 = AperoImageModel('PP_DARK_FLAT', shape=[4096, 4096])
-ext3 = AperoImageModel('PP_FLAT_DARK', shape=[4096, 4096])
-ext4 = AperoImageModel('PP_HCONE_HCONE', shape=[4096, 4096])
-ext5 = AperoImageModel('PP_FP_FP', shape=[4096, 4096])
-
-static_pp.hdulist['PP_DARK'] = ext1
-static_pp.hdulist['PP_DARK_FLAT'] = ext2
-static_pp.hdulist['PP_FLAT_DARK'] = ext3
-static_pp.hdulist['HCONE_HCONE'] = ext4
-static_pp.hdulist['FP_FP'] = ext5
-static_file.addset(static_pp)
-
-# ------------------------------------------------------------------------------
 static_wave_ref = drs_finput('STATIC_WAVE_REF', filetype='.fits',
                              fibers=valid_efibers,
                              prefix='static_wave_ref',
