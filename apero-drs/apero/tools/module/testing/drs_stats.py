@@ -1651,7 +1651,7 @@ class FileStat:
             # save to storage
             self.disk_counts['disk_' + self.names[it]] = count
 
-    def count_in_db(self, database: drs_database.drs_db.Database):
+    def count_in_db(self, database: drs_database.drs_db.AperoDatabase):
         """
         Count files in database
 
