@@ -321,6 +321,14 @@ CDict.add('FORCE_WAVESOL', value=None, dtype=bool, source=__NAME__, user=True,
                       'calibration database (instead of using header wave '
                       'solution if available)')
 
+# Define whether we should skip all steps requiring a valid wave solution
+#   (Only to be used for static calibrations)
+CDict.add('NO_WAVE_SOL', value=False, dtype=bool, source=__NAME__, user=False,
+          active=False, group=cgroup,
+          description='Define whether we should skip all steps requiring a '
+                      'valid wave solution (Only to be used for static '
+                      'calibrations)')
+
 # =============================================================================
 # CALIBRATION: FIBER SETTINGS
 # =============================================================================
@@ -5618,6 +5626,7 @@ CDict.add('OBJ_SCI_SQL', value='', dtype=str,
           source=__NAME__, group=cgroup,
           description='Define the extra SQL science '
                       'object select critera')
+
 
 # =============================================================================
 # TOOLS: GENERAL SETTINGS

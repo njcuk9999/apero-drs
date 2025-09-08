@@ -16,7 +16,7 @@ import os
 import shutil
 from collections import OrderedDict
 from pathlib import Path
-from typing import Any, List, Tuple, Type, Union
+from typing import Any, Dict, List, Tuple, Type, Union
 
 import numpy as np
 from astropy.io import fits
@@ -94,7 +94,7 @@ class ParamDict(CaseInDict):
         # storage for the source history
         self.source_history = base_class.ListCaseINSDict()
         # storage for the Const/Keyword instances
-        self.instances = constant_functions.CKCaseINSDict()
+        self.instances: Dict[str, Union[Const, Keyword]] = constant_functions.CKCaseINSDict()
         # storage for used constants (get or set)
         self.used = CaseInDict()
         # the print format

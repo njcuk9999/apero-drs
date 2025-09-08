@@ -151,6 +151,9 @@ class AperoDatabase:
         self.url = url
         # store verboseness
         self.verbose = verbose
+        # deal with no connect args
+        if connect_args is None:
+            connect_args = dict()
         # define the engine to use
         self.engine = sqlalchemy.create_engine(url, echo=verbose,
                                                pool_pre_ping=True,

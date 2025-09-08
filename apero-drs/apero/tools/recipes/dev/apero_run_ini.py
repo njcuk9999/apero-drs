@@ -67,7 +67,7 @@ def main(**kwargs):
 
 def __main__(recipe, params):
     # get instrument variable
-    instruments = list(base.INSTRUMENTS)
+    instruments = list(apero_base.INSTRUMENTS)
     if 'INSTRUMENT' in params['INPUTS']:
         if not drs_text.null_text(params['INPUTS']['INSTRUMENT'], ['None', '']):
             instruments = params['INPUTS']['INSTRUMENT'].split(',')

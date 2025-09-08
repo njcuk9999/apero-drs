@@ -96,7 +96,7 @@ class RunIniFile:
         self.pconst = load_functions.load_pconfig(select.INSTRUMENTS,
                                                   instrument)
         # import the recipe module
-        self.recipemod = self.pconst.RECIPEMOD().get()
+        self.recipemod = self.pconst.RECIPEMOD()
         # get run keys (from startup)
         self.run_keys = dict()
         # deep copy all parameters (so we can use them multiple times)
@@ -117,6 +117,7 @@ class RunIniFile:
         self.run_keys_user_update = dict()
         self.run_extras = dict()
         self.skip_extras = dict()
+        self.extra_params = dict()
         self.run_default = True
         self.skip_default = True
         # storage of lines in the output file
@@ -229,6 +230,17 @@ class RunIniFile:
         # else push into run keys user update
         else:
             self.run_keys_user_update[key] = value
+
+    def add_extra(self, key: str, value: Any):
+        """
+        Add an extra run key (not in the standard set)
+
+        :param key: str, the run_key to add
+        :param value: Any, the value to push into run_key
+
+        :return: None, updates run key
+        """
+        self.extra_params[key] = value
 
     def write_yaml_file(self, params: ParamDict):
         # ---------------------------------------------------------------------
@@ -368,7 +380,6 @@ class RunIniFile:
         with open(self.outpath, 'w') as y_file:
             yaml_inst.dump(data, y_file)
 
-
     def populate_text_file(self, params: ParamDict):
         """
         Populate the text file
@@ -403,7 +414,7 @@ class RunIniFile:
             raise AperoCodedException(params, message=emsg.format(*eargs),
                                       targs=eargs)
         # ---------------------------------------------------------------------
-        # step 3: generate run text and skip text
+        # step 3: generate run text, skip text and extra text
         # ---------------------------------------------------------------------
         # get list of recipe groups for this set of sequences
         #   based on recipe_kind and GROUPS defined above
@@ -432,10 +443,30 @@ class RunIniFile:
         if len(run_text) == 0:
             run_text = '# No sequence recipes to run\n'
             skip_text = '# No sequence recipes to skip\n'
-
         # push into run_keys
         self.rkey('RUN_TEXT', run_text)
         self.rkey('SKIP_TEXT', skip_text)
+        # ---------------------------------------------------------------------
+        extra_text = ''
+        # deal with extra params
+        for key in self.extra_params:
+            # key must be in params
+            if key not in params:
+                continue
+            # get description from params (instances)
+            description = params.instances[key].description
+            # deal with description being None
+            if description is None:
+                description = 'Param: {0}'.format(key)
+            # get the value of the extra parameter
+            value = self.extra_params[key]
+            # add comment
+            extra_text += '\n# {0}\n'.format(description)
+            # add the key value pair
+            extra_text += '{0} = {1}\n'.format(key, value)
+        # push into run_keys
+        self.rkey('EXTRA_TEXT', extra_text)
+        
         # ---------------------------------------------------------------------
         # step 4: populate the lines
         # ---------------------------------------------------------------------
@@ -506,7 +537,7 @@ class RunIniFile:
         for seq in sequences:
             # must process the adds
             seq.process_adds(self.params, tstars=list(tstars),
-                             ostars=list(ostars), curr_tstars=curr_tstars,
+                             ostars=list(ostars), current_tstars=curr_tstars,
                              logmsg=logmsg)
             # loop around recipe in sequences
             for srecipe in seq.sequence:

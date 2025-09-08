@@ -201,7 +201,7 @@ class DrsRecipe(object):
         # set the file model
         self.file_model: Dict[str, List[DrsInputFile]] = dict()
         # the plotter class
-        self.plot = None
+        self.plot: Any = None
         # set the log class
         self.log = None
         # set up the input validation (should be True to check arguments)
