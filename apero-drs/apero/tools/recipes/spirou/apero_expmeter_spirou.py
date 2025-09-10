@@ -60,10 +60,25 @@ exposuremeter.out_block_str = 'red'
 exposuremeter.extension = 'fits'
 exposuremeter.description = 'Produces an exposuremeter map'
 exposuremeter.kind = 'misc'
-exposuremeter.set_arg(pos=0, **RMOD.mod.obs_dir)
+exposuremeter.set_arg(pos=0, **RMOD.recipemod.obs_dir)
 exposuremeter.set_kwarg(name='--fibers', dtype=str, default='None',
                         helpstr='Choose the fibers to populate in the mask')
-
+exposuremeter.set_kwarg(name='--minwave', dtype=float,
+                        default_ref='TOOLS.GEN.EXPMETER_MIN_LAMBDA'',
+                        helpstr='Set the minimum wavelength for the '
+                                'exposuremeter (None defaults to '
+                                'TOOLS.GEN.EXPMETER_MIN_LAMBDA')')
+exposuremeter.set_kwarg(name='--maxwave', dtype=float,
+                        default_ref='TOOLS.GEN.EXPMETER_MAX_LAMBDA',
+                        helpstr='Set the maximum wavelength for the '
+                                'exposuremeter (None defaults to '
+                                'TOOLS.GEN.EXPMETER_MAX_LAMBDA)')
+exposuremeter.set_kwarg(name='--tellu_thres', dtype=float,
+                        default_ref='TOOLS.GEN.EXPMETER_TELLU_THRES',
+                        helpstr='Set the telluric threshold below which we'
+                                ' mask out the lines from the exposuremeter.'
+                                '(None defaults to ' \
+                                'TOOLS.GEN.EXPMETER_TELLU_THRES)')
 # add recipe to recipe definition
 RMOD.add(exposuremeter)
 
@@ -221,7 +236,8 @@ def __main__(recipe, params):
         #   reference wave solution (1D spectrum)
         # ------------------------------------------------------------------
         largs = [header, wprops, fiber]
-        tapas_props = telluric.load_conv_tapas(params, recipe, *largs)
+        tapas_props = telluric.load_conv_tapas(params, recipe, *largs,
+                                               only_load=True)
         # get the combined tapas absorption
         tapas_comb = tapas_props['TAPAS_ALL_SPECIES'][0].reshape(ishape)
         # add to storage
@@ -316,9 +332,9 @@ def __main__(recipe, params):
     # Make the exposure time mask
     # ----------------------------------------------------------------------
     # get limits for the mask
-    min_lambda = params['TOOLS.GEN.EXPMETER_MIN_LAMBDA']
-    max_lambda = params['TOOLS.GEN.EXPMETER_MAX_LAMBDA']
-    tell_thres = params['TOOLS.GEN.EXPMETER_TELLU_THRES']
+    min_lambda = params['INPUTS']['MINWAVE']
+    max_lambda = params['INPUTS']['MAXWAVE']
+    tell_thres = params['INPUTS']['TELLU_THRES']
     # create masks
     with warnings.catch_warnings(record=True) as _:
         mask1 = pwave_map > min_lambda

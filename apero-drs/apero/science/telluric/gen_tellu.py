@@ -2522,7 +2522,8 @@ def get_trans_model(params: ParamDict, header: drs_fits.Header, fiber: str,
 # =============================================================================
 def load_conv_tapas(params, recipe, header, refprops, fiber, database=None,
                     absorbers: Union[List[str], None] = None,
-                    fwhm_lsf: Union[float, None] = None):
+                    fwhm_lsf: Union[float, None] = None,
+                    only_load: bool = False):
     func_name = __NAME__ + '.load_conv_tapas()'
     # get parameters from params/kwargs
     tellu_absorbers = pcheck(params, 'OBJ.TELL.MAKE.ABSORBERS', func=func_name,
@@ -2600,11 +2601,12 @@ def load_conv_tapas(params, recipe, header, refprops, fiber, database=None,
         # ------------------------------------------------------------------
         # Move to telluDB and update telluDB
         # ------------------------------------------------------------------
-        # npy file must set header/hdict (to update)
-        out_tellu_conv.header = header
-        out_tellu_conv.hdict = header
-        # copy the order profile to the calibDB
-        database.add_tellu_file(out_tellu_conv)
+        if not only_load:
+            # npy file must set header/hdict (to update)
+            out_tellu_conv.header = header
+            out_tellu_conv.hdict = header
+            # copy the order profile to the calibDB
+            database.add_tellu_file(out_tellu_conv)
 
     # ------------------------------------------------------------------
     # get the tapas_water and tapas_others data
