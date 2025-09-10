@@ -9,6 +9,7 @@ Created on 2021-11-08
 
 @author: cook
 """
+import io
 import os
 from collections import OrderedDict
 from typing import Any, Dict, List, Optional, Union
@@ -62,7 +63,7 @@ DEFAULT_REF_OBSDIR = dict()
 DEFAULT_REF_OBSDIR['SPIROU'] = '2020-08-31'
 DEFAULT_REF_OBSDIR['NIRPS_HA'] = '2022-11-24'
 DEFAULT_REF_OBSDIR['NIRPS_HE'] = '2022-11-24'
-# define default number of cores
+# Define the default number of cores
 DEFAULT_CORES = 5
 # define relative output path
 OUTPATH = 'apero-assets/{instrument}/reset/runs/'
@@ -80,7 +81,6 @@ GROUPS['radial velocity'] = ['rv']
 GROUPS['polar'] = ['polar']
 GROUPS['lbl'] = ['lbl']
 GROUPS['postprocessing'] = ['post']
-
 
 
 # =============================================================================
@@ -103,8 +103,6 @@ class RunIniFile:
         for key in run_params.RUN_KEYS:
             self.run_keys[key] = run_params.RUN_KEYS[key].copy()
         # modify/add some values
-        self.rkey('VERSION', __version__)
-        self.rkey('DATE', __date__)
         self.rkey('RUN_NAME', 'Run {0}'.format(self.name))
         self.rkey('REF_OBS_DIR', DEFAULT_REF_OBSDIR[self.instrument])
         self.rkey('CORES', DEFAULT_CORES)
@@ -273,7 +271,7 @@ class RunIniFile:
             if len(group) == 0:
                 continue
             # loop around entries in group and add these rows
-            for srecipe in group:
+            for s_it, srecipe in enumerate(group):
                 # get run and skip values
                 run_value = self.run_extras.get(srecipe, self.run_default)
                 skip_value = self.skip_extras.get(srecipe, self.skip_default)
@@ -290,10 +288,12 @@ class RunIniFile:
                 # push into instances
                 run_inst = run_params.RunParam(name=srecipe, value=run_value,
                                                section=run_text,
-                                               after=run_comment)
+                                               after=run_comment,
+                                               position=s_it + 1)
                 skip_inst = run_params.RunParam(name=srecipe, value=skip_value,
                                                 section=skip_text,
-                                                after=skip_comment)
+                                                after=skip_comment,
+                                                position=s_it + 1)
                 # add to run_text and skip_text
                 run_dict[srecipe] = run_inst
                 skip_dict[srecipe] = skip_inst
@@ -311,6 +311,35 @@ class RunIniFile:
         else:
             self.run_keys['SKIP_RECIPES'].value = skip_dict
         # ---------------------------------------------------------------------
+        if len(self.extra_params) > 0:
+            # get the current position 
+            pos = int(run_params.POS)
+            # deal with extra params
+            for key in self.extra_params:
+                # key must be in params
+                if key not in params:
+                    continue
+                # get description from params (instances)
+                description = params.instances[key].description
+                # deal with description being None
+                if description is None:
+                    description = 'Param: {0}'.format(key)
+                # get dtype from params (instances)
+                dtype = params.instances[key].dtype
+                # deal with dtype being None
+                if dtype is None:
+                    dtype = str
+                # create the run param item
+                ritem = run_params.RunParam(name=key,
+                                            value=self.extra_params[key],
+                                            dtype=dtype,
+                                            comment=description,
+                                            section=run_params.extra_section,
+                                            position=pos + 1)
+                self.run_keys[key] = ritem
+                # add to the run params position
+                pos += 1
+        # ---------------------------------------------------------------------
         # add the ids to the id section
         self.run_keys['IDS'].value = self.ids
         # ---------------------------------------------------------------------
@@ -320,10 +349,16 @@ class RunIniFile:
         title = run_params.RUN_YAML_TITLE.format(__version__, __date__)
         data.yaml_set_start_comment(title)
         # ---------------------------------------------------------------------
+        # sort run keys by position
+        run_keynames = list(self.run_keys.keys())
+        run_keynames.sort(key=lambda rkey: self.run_keys[rkey].position)
+        # ---------------------------------------------------------------------
         # set section title
         section_title = None
+        # store disabled keys (and deal with them afterwards)
+        disabled_blocks = dict()
         # loop around run string
-        for key in self.run_keys:
+        for key in run_keynames:
             # deal with keys that aren't run keys
             # TODO: remove this once we are only using yaml
             if not isinstance(self.run_keys[key], run_params.RunParam):
@@ -366,9 +401,15 @@ class RunIniFile:
             # add comment before the key
             ckwargs = dict(key=key, before=comment, indent=0)
             data.yaml_set_comment_before_after_key(**ckwargs)
-
-
-
+            # deal with disabled keys
+            if self.run_keys[key].disabled:
+                # get this key as a string
+                with io.StringIO() as stream:
+                    yaml_inst = YAML()
+                    yaml_inst.default_flow_style = False
+                    yaml_inst.dump({key: data[key]}, stream)
+                    disabled_blocks[key] = stream.getvalue()
+        
         # ---------------------------------------------------------------------
         # print message
         msg = '\tWriting yaml file: {0}'
@@ -379,131 +420,42 @@ class RunIniFile:
         # write files
         with open(self.outpath, 'w') as y_file:
             yaml_inst.dump(data, y_file)
+        # ---------------------------------------------------------------------
+        # if we have disabled blocks we reopen the file and comment them out
+        if len(disabled_blocks) > 0:
+            # read in the file
+            with open(self.outpath, 'r') as y_file:
+                lines = y_file.readlines()
+            # loop around the lines and look for disabled blocks
+            newlines = []
+            for line in lines:
+                if line.strip().startswith('#'):
+                    newlines.append(line)
+                    continue
 
-    def populate_text_file(self, params: ParamDict):
-        """
-        Populate the text file
+                found = False
 
-        :param params: ParamDict, parameter dictionary of constants
+                for key in disabled_blocks:
+                    # get first portion of disabled block
+                    firstline = disabled_blocks[key].split('\n')[0]
+                    # if we have found the start of a disabled block comment it out
+                    if line.strip() == firstline.strip():
+                        # we found the commented line
+                        found = True
+                        # split the disabled block into lines
+                        dlines = disabled_blocks[key].split('\n')
+                        # loop around lines and comment them out
+                        for dline in dlines:
+                            newlines.append('# {0}\n'.format(dline))
+                        break
+                # if we got to here we just add the original line back
+                if not found:
+                    newlines.append(line)
+            # write out the new lines
+            with open(self.outpath, 'w') as y_file:
+                y_file.writelines(newlines)
 
-        :return:
-        """
-        # ---------------------------------------------------------------------
-        # step 1: construct output filename for this instrument
-        # ---------------------------------------------------------------------
-        # push in instrument name
-        outpath = OUTPATH.format(instrument=self.instrument.lower())
-        # get absolute outpath path
-        outpath = drs_path.get_relative_folder(__PACKAGE__, outpath)
-        # store in class
-        self.outpath = os.path.join(outpath, self.name + '.ini')
-        # ---------------------------------------------------------------------
-        # step 2: load the template run.ini file for this instrument
-        # ---------------------------------------------------------------------
-        # push in instrument name
-        template = TEMPLATE.format(instrument=self.instrument.lower())
-        # get absolute template path
-        template = drs_path.get_relative_folder(__PACKAGE__, template)
-        # load template
-        if os.path.exists(template):
-            with open(template, 'r') as tfile:
-                self.lines = tfile.readlines()
-        else:
-            emsg = 'Template file does not exist: {0}'
-            eargs = [template]
-            raise AperoCodedException(params, message=emsg.format(*eargs),
-                                      targs=eargs)
-        # ---------------------------------------------------------------------
-        # step 3: generate run text, skip text and extra text
-        # ---------------------------------------------------------------------
-        # get list of recipe groups for this set of sequences
-        #   based on recipe_kind and GROUPS defined above
-        groups = self._generate_recipe_list(mode='group')
-        # storage for the run and skip text
-        run_text, skip_text = '', ''
-        # loop around recipes in sequence
-        for group_name in groups:
-            # get group
-            group = groups[group_name]
-            # deal with no entries
-            if len(group) == 0:
-                continue
-            # add group comment
-            run_text += '\n# Run the {0} recipes\n'.format(group_name)
-            skip_text += '\n# Skip the {0} recipes\n'.format(group_name)
-            # loop around entries in group and add these rows
-            for srecipe in group:
-                # get run and skip values
-                run_value = self.run_extras.get(srecipe, self.run_default)
-                skip_value = self.skip_extras.get(srecipe, self.skip_default)
-                # add to run_text and skip_text
-                run_text += 'RUN_{0} = {1}\n'.format(srecipe, run_value)
-                skip_text += 'SKIP_{0} = {1}\n'.format(srecipe, skip_value)
-        # deal with blank
-        if len(run_text) == 0:
-            run_text = '# No sequence recipes to run\n'
-            skip_text = '# No sequence recipes to skip\n'
-        # push into run_keys
-        self.rkey('RUN_TEXT', run_text)
-        self.rkey('SKIP_TEXT', skip_text)
-        # ---------------------------------------------------------------------
-        extra_text = ''
-        # deal with extra params
-        for key in self.extra_params:
-            # key must be in params
-            if key not in params:
-                continue
-            # get description from params (instances)
-            description = params.instances[key].description
-            # deal with description being None
-            if description is None:
-                description = 'Param: {0}'.format(key)
-            # get the value of the extra parameter
-            value = self.extra_params[key]
-            # add comment
-            extra_text += '\n# {0}\n'.format(description)
-            # add the key value pair
-            extra_text += '{0} = {1}\n'.format(key, value)
-        # push into run_keys
-        self.rkey('EXTRA_TEXT', extra_text)
-        
-        # ---------------------------------------------------------------------
-        # step 4: populate the lines
-        # ---------------------------------------------------------------------
-        # update run keys from user input (forced)
-        for key in self.run_keys_user_update:
-            self.run_keys[key].value = self.run_keys_user_update[key]
-        # ---------------------------------------------------------------------
-        # step 5: deal with sequences to command line ids
-        # ---------------------------------------------------------------------
-        if len(self.cmd_sequences) > 0:
-            self._add_command_sequences()
-        # ---------------------------------------------------------------------
-        # step 6: generate sequence / command text (via ids)
-        # ---------------------------------------------------------------------
-        # storage for id text
-        id_text = '\n'
-        # loop around ids
-        for it in range(len(self.ids)):
-            # add ids (be it sequence or command
-            id_text += 'id{0:05d} = {1}\n'.format(it, self.ids[it])
-        # push into run_keys
-        self.rkey('SEQUENCE_TEXT', id_text)
 
-        # ---------------------------------------------------------------------
-        # step 7: populate the lines
-        # ---------------------------------------------------------------------
-        # map run key values into run key dict
-        run_key_dict = dict()
-        for key in self.run_keys:
-            if isinstance(self.run_keys[key], run_params.RunParam):
-                run_key_dict[key] = self.run_keys[key].value
-            else:
-                run_key_dict[key] = self.run_keys[key]
-        # loop around lines
-        for row in range(len(self.lines)):
-            # update lines
-            self.lines[row] = self.lines[row].format(**run_key_dict)
 
     def _generate_recipe_list(self, mode='group',
                               sequences: Optional[List[DrsSequence]] = None

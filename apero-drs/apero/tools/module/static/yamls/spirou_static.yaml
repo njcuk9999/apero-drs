@@ -40,10 +40,18 @@ files:
   # DARK_FLAT (i.e. DARK in science fiber(s) and FLAT in reference fiber)
   # REQUIRED FOR: static wavelength
   raw_dark_flat_files:
+   - 2488227f_pp.fits
+   - 2488389f_pp.fits
 
   # FLAT_DARK (i.e. FLAT in science fiber(s) and DARK in reference fiber)
   raw_flat_dark_files:
+    - 2488232f_pp.fits
+    - 2488394f_pp.fits
 
+  # FLAT_FLAT (i.e. FLAT in science fiber(s) and FLAT in reference fiber)
+  raw_flat_files:
+    - 2488237f_pp.fits
+    - 2488399f_pp.fits
   # Input Hollow Cathode file (e.g. UNe, ThAr etc) both fibers (HC_HC)
   #   note must be in the raw directory
   # REQUIRED FOR: static wavelength
@@ -112,6 +120,11 @@ wavelength:
     species_keep:
       - UI
       - UII
+    # Rough wavelength domain for the instrument (i.e. wavelength of first 
+    # extracted pixel in bluest order and last pixel in reddest order) in nm
+    wave_domain:
+      - 955
+      - 2450
     # window size for HC lines (in km/s) - keep only brightest line within this
     # window
     window_size: 50

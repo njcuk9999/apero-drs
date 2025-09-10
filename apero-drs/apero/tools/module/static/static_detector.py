@@ -51,9 +51,9 @@ AperoCodedException = drs_log.AperoCodedException
 def main(params: ParamDict, recipe, sparams: Dict[str, Any]):
     # get input file definitions
     in_path = sparams['inpath']
-    dark_files = sparams['detector']['raw_dark_files']
-    led_files = sparams['detector']['raw_led_files']
-    engineering_flat_file = sparams['detector']['engineering_flat']
+    dark_files = sparams['files']['raw_dark_files']
+    led_files = sparams['files']['raw_led_files']
+    engineering_flat_file = sparams['files']['engineering_flat']
     flat_bin_size = sparams['detector']['flat_bin_size']
     frac_flat_bad = sparams['detector']['frac_flat_bad']
     dark_threshold = sparams['detector']['dark_threshold']

@@ -65,10 +65,18 @@ def load(params: ParamDict) -> Dict[str, Any]:
     yamlfile = params['INPUTS']['yamlfile']
     # deal with bad yaml file
     if not os.path.exists(yamlfile):
-        emsg = 'yamlfile not found: {0}'
-        eargs = [yamlfile]
-        raise AperoCodedException(params, None, message=emsg.format(eargs),
-                                  targs=eargs)
+        # try to add the default path
+        default_path = os.path.join(params['PATH.OTHER'], 'static')
+        # if path exists try the yaml file there
+        if os.path.exists(default_path):
+            yamlfile = os.path.join(default_path, os.path.basename(yamlfile))
+        # if still doesn't exist raise error
+        if not os.path.exists(yamlfile):
+            # Raise an error that we cannot find the yaml file
+            emsg = 'yamlfile not found. Tried \n\t{0}\n\t{1}'
+            eargs = [params['INPUTS']['yamlfile'], yamlfile]
+            raise AperoCodedException(params, None, message=emsg.format(*eargs),
+                                      targs=eargs)
     # load parameters
     sparams = base.load_yaml(yamlfile)
     # return sparams
@@ -254,6 +262,7 @@ def proxy_processing(params: ParamDict, recipe, sparams: Dict[str, Any],
     raw_files['DARK'] = sparams['files']['raw_dark_files']
     raw_files['DARK_FLAT'] = sparams['files']['raw_dark_flat_files']
     raw_files['FLAT_DARK'] = sparams['files']['raw_flat_dark_files']
+    raw_files['FLAT_FLAT'] = sparams['files']['raw_flat_files']
     raw_files['HCONE_HCONE'] = [sparams['files']['raw_hc_file']]
     raw_files['FP_FP'] = [sparams['files']['raw_fp_file']]
     # get the instrument name

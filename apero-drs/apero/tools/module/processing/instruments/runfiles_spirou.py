@@ -88,6 +88,8 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     quick_run_spirou.modify('RUN_PP_LFC', False)
     quick_run_spirou.modify('RUN_PP_LFCFP', False)
     quick_run_spirou.modify('RUN_PP_FPLFC', False)
+    quick_run_spirou.modify('RUN_PP_HC1FP', False)
+    quick_run_spirou.modify('RUN_PP_EVERY', False)
     run_files.append(quick_run_spirou)
     # calib run
     calib_run_spirou = RunIniFile(params, 'SPIROU', 'calib_run')
@@ -103,6 +105,8 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     calib_run_spirou.modify('RUN_PP_LFC', False)
     calib_run_spirou.modify('RUN_PP_LFCFP', False)
     calib_run_spirou.modify('RUN_PP_FPLFC', False)
+    calib_run_spirou.modify('RUN_PP_HC1FP', False)
+    calib_run_spirou.modify('RUN_PP_EVERY', False)
     run_files.append(calib_run_spirou)
     # complete run
     complete_run_spirou = RunIniFile(params, 'SPIROU', 'complete_run')
@@ -124,6 +128,8 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     mcalib_run_spirou.modify('RUN_PP_LFC', False)
     mcalib_run_spirou.modify('RUN_PP_LFCFP', False)
     mcalib_run_spirou.modify('RUN_PP_FPLFC', False)
+    mcalib_run_spirou.modify('RUN_PP_HC1FP', False)
+    mcalib_run_spirou.modify('RUN_PP_EVERY', False)
     run_files.append(mcalib_run_spirou)
 
     # static calib run (for static wavelength calibration)
@@ -141,11 +147,13 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     static_run_spirou.modify('RUN_PP_LFC', False)
     static_run_spirou.modify('RUN_PP_LFCFP', False)
     static_run_spirou.modify('RUN_PP_FPLFC', False)
-    static_run_spirou.modify('RUN_LEAK_REF', False)
-    static_run_spirou.modify('RUN_WAVE_REF', False)
+    static_run_spirou.modify('RUN_PP_HC1FP', False)
+    static_run_spirou.modify('RUN_PP_EVERY', False)
+    static_run_spirou.modify('RUN_LEAKREF', False)
+    static_run_spirou.modify('RUN_WAVEREF', False)
     static_run_spirou.modify('RUN_THERM_REFI', False)
     static_run_spirou.modify('RUN_THERM_REFT', False)
-    static_run_spirou.add_extra('NO_WAVE_SOL', True)
+    static_run_spirou.add_extra('CAL.GEN.NO_WAVE_SOL', True)
     run_files.append(static_run_spirou)
 
     # other run

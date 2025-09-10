@@ -77,18 +77,19 @@ def __main__(recipe, params):
     # get default run file instances
     run_files = []
     for instrument in instruments:
-        if instruments == 'None':
+        # skip none instruments
+        if instrument in [None, 'None', '']:
             continue
-        modname = f'runfile_{instrument.lower()}'
+        modname = f'runfiles_{instrument.lower()}'
         modpath = RUNDEF_PATH.format(instrument.lower())
         # try to load run def
         # noinspection PyBroadException
         try:
             rundef = constant_functions.import_module(modname, modpath,
                                                       quiet=True)
-        except Exception as _:
-            wmsg = 'Cannot load: {0} skipping'
-            wargs = [modname]
+        except Exception as e:
+            wmsg = 'Cannot load: {0} skipping \n\t{1}:{2}'
+            wargs = [modpath, type(e), str(e)]
             WLOG(params, 'warning', wmsg.format(*wargs))
             continue
         run_files += rundef.get().get_runfiles(params)
@@ -100,6 +101,10 @@ def __main__(recipe, params):
         # skip invalid instruments
         if run_file.instrument not in instruments:
             continue
+        # skip if we only want a single run file
+        if params['INPUTS']['RUNFILE'] not in [None, 'None', '']:
+            if run_file.name != params['INPUTS']['RUNFILE']:
+                continue
         # progress report
         msg = 'Processing file {0} of {1}: {2} [{3}]'
         margs = [it + 1, len(run_files), run_file.name, run_file.instrument]

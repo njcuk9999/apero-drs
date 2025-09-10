@@ -91,7 +91,7 @@ AperoCodedException = drs_log.AperoCodedException
 # Get the TQDM functionality
 tqdm = apero_base.TQDM
 # get astropy.time
-Time = apero_base.Time
+Time = apero_base.AstropyTime
 
 
 # TODO:
@@ -141,7 +141,7 @@ def main(params: ParamDict, recipe, sparams: Dict[str, Any]):
 def generate_hc_catagloue(params: ParamDict, recipe, sparams: Dict[str, Any],
                           cal_path: str):
     # get the wavelength sparams for input hc cat
-    wparams = sparams['waelength']['input_hc_cat']
+    wparams = sparams['wavelength']
     # download the hc model
     hc_model = get_hc_model(params, sparams)
     # only keep lines
@@ -927,7 +927,7 @@ def get_hc_lines(params: ParamDict, recipe, sparams: Dict[str, Any],
     # get the species column
     hc_species_col = wparams['species_col']
     # get the flux column
-    hc_flux_col = wparams['hc_flux_col']
+    hc_flux_col = wparams['flux_col']
     # get the wavelength column
     hc_wave_col = wparams['wave_col']
     # get wavelength units and convert to astropy unit
@@ -944,7 +944,10 @@ def get_hc_lines(params: ParamDict, recipe, sparams: Dict[str, Any],
                                   targs=eargs)
     # make sure wavelength is in nm
     try:
-        wavemap = ((table[hc_wave_col] * wave_unit).to(uu.nm)).value # type: ignore
+        if table[hc_wave_col].unit is None:
+            wavemap = (table[hc_wave_col] * wave_unit).to(uu.nm).value
+        else:
+            wavemap = (table[hc_wave_col].to(uu.nm)).value # type: ignore
     except Exception as e:
         # TODO: Add to language database
         emsg = ('wavelength.input_hc_Cat.wave_units={0} [astropy={1}] invalid.'
@@ -954,11 +957,15 @@ def get_hc_lines(params: ParamDict, recipe, sparams: Dict[str, Any],
                                   targs=eargs)
     # -------------------------------------------------------------------------
     # assume we don't want any lines at first
-    smask = np.zeros_like(len(table))
+    smask = np.zeros(len(table), dtype=bool)
     # loop around species to keep from hc model
     for species in species_keep:
+        # get the species as a character array
+        species_arr = np.char.array(table[hc_species_col], unicode=True)
+        # strip white space around species arr
+        species_arr = np.char.strip(species_arr)
         # get a mask just for this species
-        sp_mask = table[hc_species_col] == species
+        sp_mask = species_arr == species
         # get wavelength constraints
         sp_mask &= wavemap > wavemin
         sp_mask &= wavemap < wavemax
@@ -981,6 +988,8 @@ def get_hc_lines(params: ParamDict, recipe, sparams: Dict[str, Any],
                                      flux=table[hc_flux_col][smask],
                                      species=table[hc_species_col][smask],
                                      source=[vizier_ref] * np.sum(smask))
+        # lets sort the table by wavelength column
+        outtable.sort('wavelength')
         # return the new, cleaned, cut down table
         return outtable
 

@@ -29,6 +29,8 @@ __date__ = apero_base.__date__
 __release__ = apero_base.__release__
 # define the run keys
 RUN_KEYS: Dict[str, 'RunParam'] = dict()
+# counter of how many run keys we have currently
+POS = 0
 # define keys which should not be found as recipe RUN_ keys
 EXCLUDE_RUN_KEYS = ['RUN_NAME', 'RUN_OBS_DIR', 'RUN_RECIPES']
 # Max width of comments
@@ -45,7 +47,8 @@ RUN_YAML_TITLE = """
 # =============================================================================
 class RunParam:
     def __init__(self, name: str, value=None, dtype=None, comment=None,
-                 dtypei=None, section: str = None, after: str = None):
+                 dtypei=None, section: str = None, after: str = None,
+                 disabled: bool = False, position: int = 0):
         self.name = name
         self.value = value
         self.dtype = dtype
@@ -53,12 +56,20 @@ class RunParam:
         self.comment = comment
         self.section = section
         self.after = after
+        self.disabled = disabled
+        self.position = position
 
     def add(self):
         """
         Add to the global RUN_KEYS dictionary
         """
         global RUN_KEYS
+        global POS
+        # update the position
+        if self.position == 0:
+            POS = POS + 1
+            self.position = int(POS)
+        # add to the dictionary
         RUN_KEYS[self.name] = self
 
     def create_comment(self, current_section_title: str,
@@ -92,9 +103,11 @@ class RunParam:
         dtypei = copy.deepcopy(self.dtypei)
         section = copy.deepcopy(self.section)
         after = copy.deepcopy(self.after)
+        disabled = copy.deepcopy(self.disabled)
+        position = copy.deepcopy(self.position)
         # create new run parameter
         return RunParam(name, value, dtype, comment,
-                        dtypei, section, after)
+                        dtypei, section, after, disabled, position)
 
 
 # -----------------------------------------------------------------------------
@@ -346,6 +359,21 @@ ritem = RunParam(name='SCIENCE_TARGETS',
 ritem.add()
 
 # -----------------------------------------------------------------------------
+# Define extras
+# -----------------------------------------------------------------------------
+extra_section = """
+Extra parameters
+"""
+# set an example parameter to override
+ritem = RunParam(name='KEY',
+                 value='VALUE',
+                 dtype=bool,
+                 disabled=True,
+                 comment='An example parameter to override',
+                 section=extra_section)
+ritem.add()
+
+# -----------------------------------------------------------------------------
 # Run order
 # -----------------------------------------------------------------------------
 section = """
@@ -364,11 +392,13 @@ Run information
           limited_seq, ref_seq, calib_seq,
           tellu_seq, science_seq, eng_seq
 """
+# we want this to be last so set position to a high number
 ritem = RunParam(name='IDS',
                  value=[],
                  dtype=list, dtypei=str,
                  comment=None,
-                 section=section)
+                 section=section, 
+                 position=99999)   
 ritem.add()
 
 

@@ -5784,8 +5784,14 @@ CDict.add('RESET_DICT', value=ari_reset_dict,
 cgroup = 'TOOLS.STATIC'
 CDict.add_group(cgroup, description='TOOLS.STATIC: STATIC SETTINGS')
 
-# Define the ari instrument (may be different from the apero instrument)
+# Define the sub-directory in PATH.ASSETS to put new static calibrations in
 CDict.add('DET_PATH', value='engineering', dtype=str,
+          source=__NAME__, group=cgroup,
+          description='Define the sub-directory in PATH.ASSETS to put new '
+                      'static calibrations in')
+
+# Define the sub-directory in PATH.ASSETS to put new static calibrations in
+CDict.add('CAL_PATH', value='calib', dtype=str,
           source=__NAME__, group=cgroup,
           description='Define the sub-directory in PATH.ASSETS to put new '
                       'static calibrations in')

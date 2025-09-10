@@ -669,6 +669,8 @@ run_ini.recipe_kind = 'admin'
 run_ini.set_kwarg(name='--instrument', dtype='options', default='None',
                   options=apero_base.INSTRUMENTS,
                   helpstr=textentry('RUN_INI_INSTRUMENT_HELP'))
+run_ini.set_kwarg(name='--runfile', dtype=str, default='None',
+                  helpstr='Only create a single run file (for debugging)')
 run_ini.description_file = 'apero_run_ini.rst'
 
 # -----------------------------------------------------------------------------
