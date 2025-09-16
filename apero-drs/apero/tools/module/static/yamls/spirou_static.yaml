@@ -55,10 +55,10 @@ files:
   # Input Hollow Cathode file (e.g. UNe, ThAr etc) both fibers (HC_HC)
   #   note must be in the raw directory
   # REQUIRED FOR: static wavelength
-  raw_hc_file: HC_HC_file.fits
+  raw_hc_file: 2488251c.fits
   # Input Fabry Perot file both fibers (FP_FP)
   # REQUIRED FOR: static wavelength
-  raw_fp_file: FP_FP_file.fits
+  raw_fp_file: 2488244a.fits
 
 # ------------------------------------------------------------------------------
 # Engineering

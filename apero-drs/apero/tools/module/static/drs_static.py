@@ -79,6 +79,9 @@ def load(params: ParamDict) -> Dict[str, Any]:
                                       targs=eargs)
     # load parameters
     sparams = base.load_yaml(yamlfile)
+    # print progress
+    msg = 'Loaded static parameters from {0}'
+    WLOG(params, '', msg.format(yamlfile))
     # return sparams
     return sparams
 
@@ -246,7 +249,7 @@ def update_assets(params: ParamDict):
 # Define proxy night functions
 # =============================================================================
 def proxy_processing(params: ParamDict, recipe, sparams: Dict[str, Any],
-                     cal_path: str):
+                     cal_path: str, ofiles: Dict[str, Any]) -> Dict[str, Any]:
     """
     Proxy preprocess function for static wavelength calibration
 
@@ -271,12 +274,13 @@ def proxy_processing(params: ParamDict, recipe, sparams: Dict[str, Any],
     # get the input directory from sparams
     input_dir = os.path.dirname(sparams['inpath'])
     # create fake night directory
-    night_dir = os.path.join(params['PATH.RAW'], 'STATIC')
+    raw_night_dir = os.path.join(params['PATH.RAW'], 'STATIC')
+    red_night_dir = os.path.join(params['PATH.RED'], 'STATIC')
     # ------------------------------------------------------------------------
     # delete night directory if it exists
-    if os.path.exists(night_dir):
-        shutil.rmtree(night_dir)
-    os.makedirs(night_dir)
+    if os.path.exists(raw_night_dir):
+        shutil.rmtree(raw_night_dir)
+    os.makedirs(raw_night_dir)
     # ------------------------------------------------------------------------
     # copy raw files to night directory (as symbolic links)
     for key in raw_files:
@@ -293,7 +297,7 @@ def proxy_processing(params: ParamDict, recipe, sparams: Dict[str, Any],
                                           targs=eargs)
 
             # get the out file
-            out_file = os.path.join(night_dir, raw_file)
+            out_file = os.path.join(raw_night_dir, raw_file)
             # create symbolic link
             os.symlink(in_file, out_file)
     # ------------------------------------------------------------------------
@@ -308,31 +312,34 @@ def proxy_processing(params: ParamDict, recipe, sparams: Dict[str, Any],
     for key in ['HCONE_HCONE', 'FP_FP']:
         # get the raw file
         raw_file = raw_files[key][0]
-
         # replace .fits with _e2dsff_{sci_fiber}.fits
         sci_fiber = sparams['wavelength']['wave_fiber']
         # get basename e2dsff file (including fiber)
         sci_basename = raw_file.replace('.fits',
-                                        '_e2dsff_{0}.fits'.format(sci_fiber))
+                                        '_pp_e2dsff_{0}.fits'.format(sci_fiber))
         # get the in file
-        in_file = os.path.join(night_dir, sci_basename)
+        in_file = os.path.join(red_night_dir, sci_basename)
         # deal with file not found
         if not os.path.exists(in_file):
             emsg = '{0} file not found: {1}'
             eargs = [key, in_file]
             raise AperoCodedException(params, None,
-                                      message=emsg.format(eargs),
+                                      message=emsg.format(*eargs),
                                       targs=eargs)
         # get the out file
         out_file = os.path.join(cal_path, sci_basename)
+        # print that we are copying
+        msg = 'Copying {0} file: {1} to {2}'
+        margs = [key, in_file, out_file]
+        WLOG(params, '', msg.format(*margs))
         # copy file
         shutil.copy(in_file, out_file)
         # add to storage
         e2ds_files[key] = out_file
     # ------------------------------------------------------------------------
     # get the recipe defintion for apero_extract
-    ext_recipe = find_recipe(f'apero_extract_{instrument}.py', instrument,
-                             recipe.recipemod)
+    ext_recipe, _ = find_recipe(f'apero_extract_{instrument}.py', instrument,
+                                recipe.recipemod)
     e2dsff_files = getattr(ext_recipe, 'outputs')['E2DSFF_FILE']
     # ------------------------------------------------------------------------
     # construct the DrsFitsFile instances for HC and FP
@@ -342,14 +349,19 @@ def proxy_processing(params: ParamDict, recipe, sparams: Dict[str, Any],
                                    params=params, fiber=sci_fiber)
     # ------------------------------------------------------------------------
     # store the HCONE_HCONE and FP_FP files in recipe output files
-    recipe.output_files['STATIC_HC_E2DS'] = hc_e2ds
-    recipe.output_files['STATIC_FP_E2DS'] = fp_e2ds
+    ofiles['STATIC_HC_E2DS'] = hc_e2ds
+    ofiles['STATIC_FP_E2DS'] = fp_e2ds
     # ------------------------------------------------------------------------
     # remove all mentions of the static night directory using apero remove
     apero_remove.main(obsdir='STATIC', rawdb=True, nowarn=True)
     # remove the raw data too
-    if os.path.exists(night_dir):
-        shutil.rmtree(night_dir)
+    if os.path.exists(raw_night_dir):
+        shutil.rmtree(raw_night_dir)
+    # remove the reduced data too
+    if os.path.exists(red_night_dir):
+        shutil.rmtree(red_night_dir)
+    # return the output files
+    return ofiles
  
 
 # =============================================================================

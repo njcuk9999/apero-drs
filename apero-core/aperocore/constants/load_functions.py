@@ -677,7 +677,7 @@ def _print_info(params: ParamDict, it: int, info_dict: Dict[str, str]):
     :return: str, the info about a demo mode
     """
     # add header bar
-    drs_text.cprint('\n' + '*' * 50, 'b')
+    drs_text.cprint('\n' + '*' * 70, 'b')
     # deal with no title in info (required)
     if 'title' not in info_dict:
         emsg = 'Demo {0} INFO does not have a title'
@@ -686,7 +686,7 @@ def _print_info(params: ParamDict, it: int, info_dict: Dict[str, str]):
     # add title text
     drs_text.cprint('* {0}: {1}'.format(it, info_dict['title']), 'b')
     # add header bar
-    drs_text.cprint('*' * 50, 'b')
+    drs_text.cprint('*' * 70, 'b')
     # add rest of the info
     for info_key in info_dict:
         # already dealt with title

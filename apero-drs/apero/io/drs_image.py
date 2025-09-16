@@ -614,6 +614,18 @@ def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
     # create subdir
     if not os.path.exists(subfilepath):
         os.makedirs(subfilepath)
+    # -------------------------------------------------------------------------
+    # remove any duplicate base filenames - we assume any files with exactly the
+    # same name have been duplicated (on purpose or by accident) we don't want
+    # to count these twice
+    ufilelist, ubaselist = [], []
+    for filename in files:
+        if os.path.basename(filename) not in ubaselist:
+            ufilelist.append(filename)
+            ubaselist.append(os.path.basename(filename))
+    # update the original files
+    files = list(ufilelist)
+    # -------------------------------------------------------------------------
     # get the number of files
     numfiles = len(files)
     # ----------------------------------------------------------------------

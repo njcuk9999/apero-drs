@@ -1552,7 +1552,9 @@ apero_static.set_outputs(STATIC_DARK=files.static_dark,
                          STATIC_LED=files.static_led,
                          STATIC_FLAT=files.static_flat,
                          STATIC_DARK_CURR=files.static_dark_curr,
-                         STATIC_HOTPIX=files.static_hotpix)
+                         STATIC_HOTPIX=files.static_hotpix,
+                         STATIC_HC_CAT=files.static_hc_cat,
+                         STATIC_WAVE_REF=files.static_wave_ref)
 
 apero_static.set_arg(pos=0, name='yamlfile', dtype=str,
                    helpstr='Static YAML definition file')

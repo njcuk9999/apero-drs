@@ -114,23 +114,27 @@ def main(params: ParamDict, recipe, sparams: Dict[str, Any]):
                                 params['TOOLS.STATIC.CAL_PATH']))
     if not os.path.exists(cal_path):
         os.makedirs(cal_path)
+    # storage for created files
+    ofiles: Dict[str, Any] = dict()
     # -------------------------------------------------------------------------
     # Step 1: Create HC catalogue
     # -------------------------------------------------------------------------
     if sparams['wavelength']['run_generate_hc_catalogue']:
-        generate_hc_catagloue(params, recipe, sparams, cal_path)
+        ofiles = generate_hc_catagloue(params, recipe, sparams, 
+                                       cal_path, ofiles)
 
     # -------------------------------------------------------------------------
     # Step 2: Run reduction for given night
     # -------------------------------------------------------------------------
     if sparams['wavelength']['run_generate_night']:
-        drs_static.proxy_processing(params, recipe, sparams, cal_path)
+        ofiles = drs_static.proxy_processing(params, recipe, sparams, cal_path,
+                                             ofiles)
 
     # -------------------------------------------------------------------------
     # Step 3: Extract HC and FP
     # -------------------------------------------------------------------------
     if sparams['wavelength']['run_generate_wave_guess']:
-        generate_wave_guess(params, recipe, sparams, cal_path)
+        generate_wave_guess(params, recipe, sparams, cal_path, ofiles)
 
     # -------------------------------------------------------------------------
     # Update repo
@@ -138,8 +142,9 @@ def main(params: ParamDict, recipe, sparams: Dict[str, Any]):
     drs_static.update_repo(params, recipe, save_path=cal_path)
 
 
-def generate_hc_catagloue(params: ParamDict, recipe, sparams: Dict[str, Any],
-                          cal_path: str):
+def generate_hc_catagloue(params: ParamDict, recipe, 
+                          sparams: Dict[str, Any], cal_path: str, 
+                          ofiles: Dict[str, Any]) -> Dict[str, Any]:
     # get the wavelength sparams for input hc cat
     wparams = sparams['wavelength']
     # download the hc model
@@ -150,10 +155,10 @@ def generate_hc_catagloue(params: ParamDict, recipe, sparams: Dict[str, Any],
     # remove duplicated lines (keep brightest within certain velocity range)
     # -------------------------------------------------------------------------
     # get the hc window
-    hc_window = wparams['window_size']
+    hc_window = wparams['input_hc_cat']['window_size']
     # get the vectors for convience
-    wavemap = np.array(hc_table['wavemap'])
-    flux = np.array(hc_table['wavemap'])
+    wavemap = np.array(hc_table['wavelength'])
+    flux = np.array(hc_table['flux'])
     # lines to keep
     keep = np.zeros_like(wavemap, dtype=bool)
     # loop around table
@@ -175,27 +180,30 @@ def generate_hc_catagloue(params: ParamDict, recipe, sparams: Dict[str, Any],
     # save static file
     drs_static.save_static_file(params, recipe, static_file,
                                 desc='hotpix', data_list=[hc_table])
+    # return the output files
+    ofiles['STATIC_HC_CAT'] = static_file
+    return ofiles
 
 
 def generate_wave_guess(params: ParamDict, recipe, sparams: Dict[str, Any],
-                        cal_path: str):
+                        cal_path: str, ofiles: Dict[str, Any]):
 
     # get static hc e2ds file
-    hc_file = recipe.outputs['STATIC_HC_E2DS'].newcopy(params=params)
+    hc_file = ofiles['STATIC_HC_E2DS'].newcopy(params=params)
     # construct the filename from file instance
     hc_file.construct_filename(path=cal_path)
     # load the hc file
     hc_image = hc_file.hdulist_load('HC_E2DS')
     # -------------------------------------------------------------------------
     # get static fp e2ds file
-    fp_file = recipe.outputs['STATIC_FP_E2DS'].newcopy(params=params)
+    fp_file = ofiles['STATIC_FP_E2DS'].newcopy(params=params)
     # construct the filename from file instance
     fp_file.construct_filename(path=cal_path)
     # load the hc file
     fp_image = fp_file.hdulist_load('FP_E2DS')
     # -------------------------------------------------------------------------
     # get static file
-    hc_cat_file = recipe.outputs['STATIC_HC_CAT'].newcopy(params=params)
+    hc_cat_file = ofiles['STATIC_HC_CAT'].newcopy(params=params)
     # construct the filename from file instance
     hc_cat_file.construct_filename(path=cal_path)
     # load the hc catalogue

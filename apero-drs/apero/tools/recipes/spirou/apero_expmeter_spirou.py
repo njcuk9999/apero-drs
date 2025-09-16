@@ -64,10 +64,10 @@ exposuremeter.set_arg(pos=0, **RMOD.recipemod.obs_dir)
 exposuremeter.set_kwarg(name='--fibers', dtype=str, default='None',
                         helpstr='Choose the fibers to populate in the mask')
 exposuremeter.set_kwarg(name='--minwave', dtype=float,
-                        default_ref='TOOLS.GEN.EXPMETER_MIN_LAMBDA'',
+                        default_ref='TOOLS.GEN.EXPMETER_MIN_LAMBDA',
                         helpstr='Set the minimum wavelength for the '
                                 'exposuremeter (None defaults to '
-                                'TOOLS.GEN.EXPMETER_MIN_LAMBDA')')
+                                'TOOLS.GEN.EXPMETER_MIN_LAMBDA)')
 exposuremeter.set_kwarg(name='--maxwave', dtype=float,
                         default_ref='TOOLS.GEN.EXPMETER_MAX_LAMBDA',
                         helpstr='Set the maximum wavelength for the '
@@ -77,7 +77,7 @@ exposuremeter.set_kwarg(name='--tellu_thres', dtype=float,
                         default_ref='TOOLS.GEN.EXPMETER_TELLU_THRES',
                         helpstr='Set the telluric threshold below which we'
                                 ' mask out the lines from the exposuremeter.'
-                                '(None defaults to ' \
+                                '(None defaults to '
                                 'TOOLS.GEN.EXPMETER_TELLU_THRES)')
 # add recipe to recipe definition
 RMOD.add(exposuremeter)

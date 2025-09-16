@@ -355,7 +355,7 @@ def flux_edge_trace(params: ParamDict, recipe: DrsRecipe,
     :return: float, the value of the total flux at the edge of the e2dsll
     """
     # get the width of the center of the trace
-    mid_size = params['CAL.FLAT.QC_FLUX_EDGE_MID_SIZE']
+    mid_size = params['CAL.FLAT.QC_FLUX_EDGE_MIDSIZE']
     # get limit
     flux_edge_limit = params['CAL.FLAT.QC_FLUX_EDGE_LIMIT']
     # get orders to ignore

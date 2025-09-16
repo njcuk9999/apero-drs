@@ -2310,7 +2310,7 @@ ext1.add_column('species', description='Which species is this line associated '
                                        'with')
 ext1.add_column('source', description='Where the information for this line '
                                       'came from')
-static_hc_cat.hdulist['STATIC_HC_CAT'] = ext1
+static_hc_cat.hdulist['HC_CAT'] = ext1
 static_file.addset(static_hc_cat)
 # ------------------------------------------------------------------------------
 static_wave_ref = drs_finput('STATIC_WAVE_REF', filetype='.fits',

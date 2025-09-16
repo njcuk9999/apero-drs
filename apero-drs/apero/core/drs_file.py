@@ -9383,7 +9383,7 @@ def _copydrsfile(drsfileclass,
         required = deepcopy(instance2.required)
     # copy hdu list
     if hdulist is None:
-        hdulist = deepcopy(instance2.required)
+        hdulist = deepcopy(instance2.hdulist)
     # return new instance
     return drsfileclass(name, filetype, suffix, remove_insuffix, prefix,
                         fibers, fiber, params, filename, intype, path,

@@ -112,7 +112,6 @@ class RunIniFile:
         self.cmd_sequences = []
         self.ids = []
         # storage for user modified values
-        self.run_keys_user_update = dict()
         self.run_extras = dict()
         self.skip_extras = dict()
         self.extra_params = dict()
@@ -227,7 +226,7 @@ class RunIniFile:
             self.skip_extras[srecipe] = value
         # else push into run keys user update
         else:
-            self.run_keys_user_update[key] = value
+            self.rkey(key, value)
 
     def add_extra(self, key: str, value: Any):
         """

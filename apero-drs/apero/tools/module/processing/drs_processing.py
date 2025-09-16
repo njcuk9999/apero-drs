@@ -724,30 +724,6 @@ def write_to_file(params: ParamDict, outlist: Dict[int, dict]):
     """
     # storage for output lines
     lines = []
-    # get the max value
-    maxval = max(list(outlist.keys()))
-    nzero = max([4, len(str(maxval)) + 1])
-    # sort keys
-    keys = list(outlist.keys())
-    keys = np.sort(keys)
-
-    prev_groupnum = None
-    # loop around full outlist
-    for key in outlist:
-        # get parameters out of outlist
-        runstring = outlist[key]['RUNSTRING']
-        priority = outlist[key]['PNUM']
-        groupnum = outlist[key]['PGROUP']
-        groupname = outlist[key]['PGROUPNAME']
-        # add a comment to split up groups
-        if groupnum != prev_groupnum:
-            lines.append(f'# Group {groupnum} | {groupname}')
-            prev_groupnum = groupnum
-        # get the zero-filled string
-        strkey = str(priority).zfill(nzero)
-        # push into lines
-        lines.append(f'id{strkey} = {runstring}')
-    # -------------------------------------------------------------------------
     # generate msg dir
     message_dir = os.path.join(params['PATH.LOG'], 'report', 'processing')
     if not os.path.exists(message_dir):
@@ -759,10 +735,44 @@ def write_to_file(params: ParamDict, outlist: Dict[int, dict]):
         filename = os.path.join(message_dir, basename)
     else:
         filename = params['INPUTS']['TO_FILE']
-    # print that we are writing file
-    msg = 'Writing run strings to file {0}'
-    margs = [os.path.abspath(filename)]
-    WLOG(params, 'info', msg.format(*margs))
+
+    if len(outlist) > 0:
+        # get the max value
+        maxval = max(list(outlist.keys()))
+        nzero = max([4, len(str(maxval)) + 1])
+        # sort keys
+        keys = list(outlist.keys())
+        keys = np.sort(keys)
+
+        prev_groupnum = None
+        # loop around full outlist
+        for key in outlist:
+            # get parameters out of outlist
+            runstring = outlist[key]['RUNSTRING']
+            priority = outlist[key]['PNUM']
+            groupnum = outlist[key]['PGROUP']
+            groupname = outlist[key]['PGROUPNAME']
+            # add a comment to split up groups
+            if groupnum != prev_groupnum:
+                lines.append(f'# Group {groupnum} | {groupname}')
+                prev_groupnum = groupnum
+            # get the zero-filled string
+            strkey = str(priority).zfill(nzero)
+            # push into lines
+            lines.append(f'id{strkey} = {runstring}')
+        # -------------------------------------------------------------------------
+        # print that we are writing file
+        msg = 'Writing run strings to file {0}'
+        margs = [os.path.abspath(filename)]
+        WLOG(params, 'info', msg.format(*margs))
+    else:
+        # print that we are writing file
+        msg = 'Writing no run strings to file {0}'
+        margs = [os.path.abspath(filename)]
+        WLOG(params, 'info', msg.format(*margs))
+        # push a comment saying no runs processed
+        lines.append('# No runs processed')
+
     # write to disk
     with open(filename, 'w') as fout:
         fout.write('\n'.join(lines))
@@ -961,7 +971,7 @@ def generate_run_list(params: ParamDict, findexdbm: FileIndexDatabase,
     # get template list (if required)
     # -------------------------------------------------------------------------
     # get whether to recalculate templates
-    _recal_templates = params['OBJ.LBL.RECAL_TEMPLATES']
+    _recal_templates = params['RECAL_TEMPLATE_IF_EXISTS']
     recal_templates = True
     # get a list of object names currently with templates
     # (but only if we need to filter by them)
@@ -978,7 +988,7 @@ def generate_run_list(params: ParamDict, findexdbm: FileIndexDatabase,
                 WLOG(params, 'warning', textentry('10-503-00023', args=wargs),
                      sublevel=2)
     # need to make sure recal templates is set correctly
-    params.set('OBJ.LBL.RECAL_TEMPLATES', recal_templates, source=func_name)
+    params.set('RECAL_TEMPLATE_IF_EXISTS', recal_templates, source=func_name)
     # -------------------------------------------------------------------------
     # get recipe definitions module (for this instrument)
     recipemod = get_recipe_module(params)
@@ -1413,9 +1423,14 @@ def _linear_generate_id(params: ParamDict, it: int, run_key: str,
                                    skip_storage, input_recipe)
     # deal with RECAL_TEMPLATES = True (don't skip if template required)
     if skip:
-        if run_object.recipe.template_required and params['OBJ.LBL.RECAL_TEMPLATES']:
+        # run condition is based on 1. template flagged as required
+        # 2. that user has flagged to recalculate template if it exists
+        run_cond = run_object.recipe.template_required
+        run_cond = run_cond and params['RECAL_TEMPLATE_IF_EXISTS']
+        # warn user that we wont skip target
+        if run_cond:
             skip = False
-            msg = 'Run {0} not skipped as RECAL_TEMPLATE=True [{1}] '
+            msg = 'Run {0} not skipped as RECAL_TEMPLATE_IF_EXISTS=True [{1}] '
             margs = [runid, run_object.runstring]
             WLOG(params, '', msg.format(*margs))
     # ---------------------------------------------------------------------

@@ -524,7 +524,7 @@ def get_raw_seq_files(params: ParamDict, recipemod,
     # get template list (if required)
     # -------------------------------------------------------------------------
     # get whether to recalculate templates
-    _recal_templates = params['OBJ.LBL.RECAL_TEMPLATES']
+    _recal_templates = params['RECAL_TEMPLATE_IF_EXISTS']
     # get a list of object names with templates
     curr_tstars = []
     recal_templates = True
@@ -533,7 +533,7 @@ def get_raw_seq_files(params: ParamDict, recipemod,
             recal_templates = False
             curr_tstars = telluric.list_current_templates(params)
     # need to make sure recal templates is set correctly
-    params.set('OBJ.LBL.RECAL_TEMPLATES', recal_templates, source=func_name)
+    params.set('RECAL_TEMPLATE_IF_EXISTS', recal_templates, source=func_name)
     # get the calibration sequence
     if hasattr(recipemod, sequence):
         seq = getattr(recipemod, sequence)

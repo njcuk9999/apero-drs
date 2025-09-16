@@ -243,7 +243,7 @@ ritem.add()
 # -----------------------------------------------------------------------------
 # Recalculate templates if template already exists
 # -----------------------------------------------------------------------------
-ritem = RunParam(name='OBJ.LBL.RECAL_TEMPLATES',
+ritem = RunParam(name='RECAL_TEMPLATE_IF_EXISTS',
                  value=True,
                  dtype=bool,
                  comment='Recalculate templates if template already exists.'
