@@ -20,10 +20,10 @@ import numpy as np
 from astropy import units as uu
 from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap
+from ruamel.yaml.scalarstring import PreservedScalarString as PSS
 
 from aperocore.base import base
 from aperocore import drs_lang
-from aperocore.core import drs_exceptions
 from aperocore.core import drs_base_classes as base_class
 from aperocore.core import drs_text
 from aperocore.core import drs_misc
@@ -888,6 +888,8 @@ class ConstantsDict:
             drs_text.cprint(msg.format(*margs), colour='g')
         # initialize YAML object
         yaml_inst = YAML()
+        # set the yaml width to a large number so we don't get line breaks
+        yaml_inst.width = 4096
         # remove the yaml if it already exists
         if os.path.exists(outpath):
             os.remove(outpath)
@@ -2129,7 +2131,7 @@ def _validate_text_file(filename: Union[str, Path],
             raise AperoCodedException(None, '00-003-00020', message=emsg)
 
 
-def _comment_wrap(comment: str, width: int = 80):
+def _comment_wrap(comment: str, width: int = 4096):
     """
     Wrap the comment to the width provided
     """

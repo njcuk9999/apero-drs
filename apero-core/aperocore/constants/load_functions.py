@@ -80,8 +80,13 @@ def load_into_params(values: Dict[str, Any], sources: Dict[str, str],
     # deal with instances being None
     if instances is None:
         return params
+    # ignore list (used already)
+    ignore_list = []
     # loop around keys
     for key in instances:
+        # ignore keys already dealt with
+        if key in ignore_list:
+            continue
         # deal with no key in value
         if key not in values:
             values[key] = None
@@ -110,8 +115,30 @@ def load_into_params(values: Dict[str, Any], sources: Dict[str, str],
                     params.instances[key] = params[key].instances
                     params.sources[key] = params[key].sources
 
-
                 continue
+        # ---------------------------------------------------------------------
+        # special case - we have a dictionary (that has been flattened in
+        # values)
+        if values[key] is None and key in instances:
+            # only do this if the instance dtype is a dictionary
+            if hasattr(instances[key], 'dtype'):
+                if instances[key].dtype is dict:
+                    # start a new sub-dictionary
+                    dict_values = dict()
+                    # loop around all values
+                    for dkey in values:
+                        # if the key starts with key + '.' it is part of this
+                        # dictionary
+                        if dkey.startswith(key + '.'):
+                            subkey = dkey[len(key) + 1:]
+                            dict_values[subkey] = values[dkey]
+                            # append to ignore list
+                            ignore_list.append(dkey)
+                    # if we have values change the value of this key from None
+                    # to the dictionary we populated
+                    if len(dict_values) > 0:
+                        values[key] = dict_values
+        # ---------------------------------------------------------------------
         # if we don't have an instance this is a new constants - which shouldn't
         #   really be allowed - we'll display a warning and hope the
         #   developer adds the constant to instances
