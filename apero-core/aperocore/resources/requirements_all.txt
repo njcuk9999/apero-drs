@@ -35,6 +35,7 @@ numba                           # Current version: 0.61.0
 numexpr                         # Current version: 2.10.2
 numpy                           # Current version: 1.26.4
 numpyro                         # Current version: 0.17.0
+pastasoss                       # Current version: 1.2.2
 pandas                          # Current version: 2.2.3
 pandastable                     # Current version: 0.13.1
 pandasql                        # Current version: 0.7.3
