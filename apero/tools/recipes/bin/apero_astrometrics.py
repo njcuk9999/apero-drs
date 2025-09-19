@@ -82,6 +82,8 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Main Code
     # ----------------------------------------------------------------------
+    # get the filename parameter (and modify inputs if required)
+    params = drs_astrometrics.identify_from_file(params)
     # get the raw objects
     rawobjs = params['INPUTS'].listp('OBJECTS', dtype=str)
     # get the overwrite parameter
