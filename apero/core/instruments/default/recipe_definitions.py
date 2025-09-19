@@ -163,6 +163,15 @@ astrometric.set_kwarg(name='--test', dtype='switch', default=False,
                       helpstr=textentry('ASTROMETRIC_TEST_HELP'))
 astrometric.set_kwarg(name='--check', dtype='switch', default=False,
                       helpstr='Check object database for basic errors')
+astrometric.set_kwarg(name='--fileoption', dtype=str, default='None',
+                      helpstr='Use a absolute filepath to identy an object '
+                              '(i.e. from RA/Dec). Note this overrides '
+                              '"OBJECTS", however OBJECT must be set to '
+                              'something to run astrometrics.')
+astrometric.set_kwarg(name='--aliases', dtype=str, default='None',
+                      helpstr='Aliases to add to the database for this object. '
+                              'Note this should only be used with a single '
+                              'object name.')
 astrometric.description_file = 'apero_astrometrics.rst'
 
 # -----------------------------------------------------------------------------
