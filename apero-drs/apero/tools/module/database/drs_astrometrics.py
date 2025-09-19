@@ -23,6 +23,7 @@ import pandas as pd
 from astropy import units as uu
 from astropy.coordinates import SkyCoord
 from astropy.table import Row
+from astropy.io import fits
 from astroquery.simbad import Simbad
 
 from aperocore.base import base
@@ -1329,6 +1330,114 @@ def _check_objname(params: ParamDict, bad_objs: Dict[str, List[str]],
     return bad_objs
 
 
+def identify_from_file(params: ParamDict) -> ParamDict:
+    """
+    Identify the object from a file by looking up the RA/DEC in Simbad
+    
+    :param params: ParamDict, parameter dictionary of constants
+
+    :return: ParamDict, updated parameter dictionary of constants
+    """
+    # set function name
+    func_name = f'{__NAME__}.identify_from_file()'
+    # get file option from inputs
+    fileoption = params['INPUTS']['fileoption']
+    # if file option is None return
+    if fileoption == 'None':
+        return params
+
+    # try to open the header of given file
+    try:
+        header = fits.getheader(fileoption)
+    except Exception as _:
+        print('File: {0} invalid [cannot read header]')
+        return params
+    # get objname1
+    kwrawobjname1 = params['KW_OBJECTNAME2'][0]
+    kwrawobjname = params['KW_OBJECTNAME'][0]
+    # Get RA from header
+    ra = header[params['KW_OBJRA'][0]]
+    # Get DEC from header
+    dec = header[params['KW_OBJDEC'][0]]
+    # start raw object name as None
+    rawobjname = None
+    # check target name
+    if kwrawobjname1 in header:
+        rawobjname = header[kwrawobjname1]
+    # get raw object name
+    if rawobjname is None and kwrawobjname not in header:
+        eargs = [kwrawobjname, fileoption]
+        raise AperoCodedException(params, '01-001-00027',
+                                  targs=eargs)
+
+    # print that we found object
+    msg = ('Trying to identify from file: {0}'
+           '\n\t NAME = {1}'
+           '\n\t RA = {2}'
+           '\n\t DEC = {3}'
+           '\n\n Note "NAME" should be added as an alias later!')
+    margs = [fileoption, rawobjname, ra, dec]
+    WLOG(params, '', msg.format(*margs))
+
+    # set up a astropy sky coordinate
+    coord = SkyCoord(ra, dec, unit="deg")  # Create SkyCoord object
+
+    # Query Simbad for H and V magnitudes in a small region around the coordinates
+    # get results
+    with warnings.catch_warnings(record=True) as _:
+        # add just H and V band mags
+        Simbad.add_votable_fields('flux(H)', 'flux(V)')
+        # query region around coordinate
+        result = Simbad.query_region(coord, radius='0d1m0s')
+
+    # Set masked values to 99 for H and V bands
+    masked = False
+    if 'FLUX_H' in result.colnames:
+        h_mask = result['FLUX_H'].mask
+        result['FLUX_H'][h_mask] = 99
+        if np.sum(h_mask) > 0:
+            masked = True
+    if 'FLUX_V' in result.colnames:
+        v_mask = result['FLUX_V'].mask
+        result['FLUX_V'][v_mask] = 99
+        if np.sum(v_mask) > 0:
+            masked = True
+    # -------------------------------------------------------------------------
+    # sort values by H flux and only keep brightest 10
+    sortmask = np.argsort(result['FLUX_H'])
+    names = result['MAIN_ID'][sortmask][:10]
+    hmags = result['FLUX_H'][sortmask][:10]
+    vmags = result['FLUX_V'][sortmask][:10]
+    options = list(np.arange(1, len(names)+1).astype(int))
+    # -------------------------------------------------------------------------
+    # Find max width of the first column (names)
+    max_name_len = max(len(name) for name in names)
+    # Give user the top 10 results sorted by H mag
+    optionsstr = []
+    for it, name in enumerate(names):
+        msg_it = f'{it+1}: {name:<{max_name_len}}  H={hmags[it]:.2f}  V={vmags[it]:.2f}'
+        optionsstr.append(msg_it)
+    # construct the object correction question
+    question = (f'Closest {len(names)} nearest objects sorted by H mag. ')
+    if masked:
+        question += (f'\n(A value of 99 means there was no flux present)')
+    question += (f'\n\nPick a number from 1 to {len(names)}')
+    uinput = drs_installation.ask(question, dtype=int,
+                                  options=options,
+                                  optiondesc=optionsstr, color='m')
+    # uinput was between 1 and len(names) we need between 0 and len(names)-1
+    uinput = uinput - 1
+    # update input parameters
+    params['INPUTS'].set('OBJECTS', value=names[uinput])
+    params['INPUTS'].set('ALIASES', value=rawobjname)
+    # tell user we updated inputs
+    msg = 'Updated the following inputs: \n\t OBJECTS = {0} \n\t ALIASES = {1}'
+    margs = [names[uinput], rawobjname]
+    WLOG(params, '', msg.format(*margs))
+    # return parameters
+    return params
+
+
 def _check_crossmatch(params: ParamDict, bad_objs: Dict[str, List[str]],
                       objname: str, row: int, skycoords: SkyCoord,
                       atable: pd.DataFrame) -> Dict[str, List[str]]:
@@ -1619,9 +1728,18 @@ def ask_for_aliases(params: ParamDict, astro_obj: AstroObj) -> AstroObj:
     aliaslist = ''
     # get original aliases
     aliases0 = astro_obj.aliases.split('|')
+    aliases0_source = ['SIMBAD'] * len(aliases0)
+    # add any aliases given by user
+    aliases_user = params['INPUTS']['ALIASES']
+    if aliases_user.upper() not in ['NULL', 'NONE', '']:
+        aliases0 += aliases_user.split(',')
+        aliases0_source.append('USER')
+    # find max length of alias for formatting
+    max_alias_len = max([len(alias) for alias in aliases0])
     # loop around alias list
-    for alias in aliases0:
-        aliaslist += f'\n\t - {alias}'
+    for a_it, alias in enumerate(aliases0):
+        aliaslist += (f'\n\t - {alias:{max_alias_len}}'    
+                      f'    // Added via {aliases0_source[a_it]}')
     # but first check whether main name
     question1 = f'\nAdd to aliases?\n\tCurrent aliases:{aliaslist}'
     cond = drs_installation.ask(question1, dtype='YN', color='m')
