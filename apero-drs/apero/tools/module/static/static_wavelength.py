@@ -46,12 +46,12 @@ Code Steps (matches main code steps):
 import os
 import glob
 import pickle
+import warnings
 from typing import Any, Dict, Literal, List, Tuple
-import numpy as np
 
+import numpy as np
 from astropy.table import Table
 from astropy import units as uu
-
 from astroquery.vizier import Vizier
 
 from aperocore.core import drs_log
@@ -122,13 +122,18 @@ def main(params: ParamDict, recipe, sparams: Dict[str, Any]):
     if sparams['wavelength']['run_generate_hc_catalogue']:
         ofiles = generate_hc_catagloue(params, recipe, sparams, 
                                        cal_path, ofiles)
-
+    else:
+        ofiles = drs_static.get_hc_cat_file(params, recipe, sparams,
+                                            cal_path, ofiles)
     # -------------------------------------------------------------------------
     # Step 2: Run reduction for given night
     # -------------------------------------------------------------------------
     if sparams['wavelength']['run_generate_night']:
         ofiles = drs_static.proxy_processing(params, recipe, sparams, cal_path,
                                              ofiles)
+    else:
+        ofiles = drs_static.get_e2ds_files(params, recipe, sparams, cal_path,
+                                           ofiles)
 
     # -------------------------------------------------------------------------
     # Step 3: Extract HC and FP
@@ -189,25 +194,21 @@ def generate_wave_guess(params: ParamDict, recipe, sparams: Dict[str, Any],
                         cal_path: str, ofiles: Dict[str, Any]):
 
     # get static hc e2ds file
-    hc_file = ofiles['STATIC_HC_E2DS'].newcopy(params=params)
-    # construct the filename from file instance
-    hc_file.construct_filename(path=cal_path)
+    hc_file = ofiles['STATIC_HC_E2DS']
     # load the hc file
-    hc_image = hc_file.hdulist_load('HC_E2DS')
+    hc_image = hc_file.hdulist_load(params, 'EXT_E2DS_FF')
     # -------------------------------------------------------------------------
     # get static fp e2ds file
-    fp_file = ofiles['STATIC_FP_E2DS'].newcopy(params=params)
-    # construct the filename from file instance
-    fp_file.construct_filename(path=cal_path)
+    fp_file = ofiles['STATIC_FP_E2DS']
     # load the hc file
-    fp_image = fp_file.hdulist_load('FP_E2DS')
+    fp_image = fp_file.hdulist_load(params, 'EXT_E2DS_FF')
     # -------------------------------------------------------------------------
     # get static file
     hc_cat_file = ofiles['STATIC_HC_CAT'].newcopy(params=params)
     # construct the filename from file instance
     hc_cat_file.construct_filename(path=cal_path)
     # load the hc catalogue
-    hc_cat_table = hc_cat_file.hdulist_load('HC_CAT')
+    hc_cat_table = hc_cat_file.hdulist_load(params, 'HC_CAT')
     # -------------------------------------------------------------------------
     # get the number of orders
     norders, nxpix = hc_image.shape
@@ -468,7 +469,7 @@ def build_wavesol(params: ParamDict, recipe, sparams: Dict[str, Any],
     # get wavelength parameters
     wsparams = sparams['wavelength']
     # get the number of lines to use (maximum)
-    nlines = wsparams['nlines']
+    nlines = wsparams['n_lines']
     # get the initial guess for the cavity length
     cavity0 = wsparams['cavity0']
     # get the fp peak step window size
@@ -609,15 +610,15 @@ def build_wavesol(params: ParamDict, recipe, sparams: Dict[str, Any],
                 continue
 
             # compute pixel offsets betwen HC and FP lines
-            mini = np.zeros(len(fp_pix))
-            mini_wave = np.zeros(len(fp_pix))
+            mini = np.zeros(len(hc_pix))
+            mini_wave = np.zeros(len(hc_pix))
             # loop around each fp line
-            for jt in range(len(fp_pix)):
+            for jt in range(len(hc_pix)):
                 # find the closest reference line to this FP line
-                imin = np.argmin(np.abs(pix_ref - fp_pix[jt]))
+                imin = np.argmin(np.abs(pix_ref - hc_pix[jt]))
                 # push into the storage
-                mini[jt] = pix_ref[imin] - fp_pix[jt]
-                mini_wave[jt] = waveord[imin] - wave_guess[fp_index[jt]]
+                mini[jt] = pix_ref[imin] - hc_pix[jt]
+                mini_wave[jt] = waveord[keep][imin]
             # histogram the offsets to find the best alginment cluster
             hist_count, hist_bins = np.histogram(mini, bins=fp_step_mad_bins,
                                                   range=fp_step_mad_range)
@@ -690,7 +691,13 @@ def build_wavesol(params: ParamDict, recipe, sparams: Dict[str, Any],
 
         # set up the plotting kwargs
         pkwargs = dict()
-
+        # get values from kwargs
+        pkwargs['order_num'] = order_num
+        pkwargs['peak0_guesses'] = peak0_guesses
+        pkwargs['nvalid2'] = nvalid2
+        pkwargs['best_wave'] = best_wave
+        pkwargs['hc_spectrum'] = hc_spectrum
+        pkwargs['wave_ref'] = waveord
         # ask user for validation about this order
         accept = plot_functions.plot_static_wave_check_plot(recipe.plot,
                                                             **pkwargs)
@@ -1016,7 +1023,7 @@ def get_approx_wavesol(sparams: Dict[str, Any], order_num: int,
     :return: Tuple, Guess for this order: 1. wave center, 2. start, 3. end
     """
     # get the wavelength sparams for input hc cat
-    wparams = sparams['wavelength']['input_hc_cat']
+    wparams = sparams['wavelength']
     # get the required wavelength domain
     wavemin, wavemax = wparams['wave_domain']
     # get the fractional range for approximate wavelength
@@ -1107,7 +1114,7 @@ def detect_spectral_lines(params: ParamDict, sparams: Dict[str, Any],
     # storage for loop
     peak_pixels, peaks_max, fwhm_pixels = [], [], []
     # loop around peaks
-    for ipeak in peak_indices:
+    for ipeak in range(len(peak_indices)):
         # get the peak index value
         peak_index = peak_indices[ipeak]
         # for hollow cathode we fit a quadratic to the peak
@@ -1119,14 +1126,16 @@ def detect_spectral_lines(params: ParamDict, sparams: Dict[str, Any],
             bit_start = peak_index - 1
             bit_end = peak_index + 2
             # get the flux in this peak (normalixed to the peak value)
-            pix_bit = spec[bit_start:bit_end] / spec[peak_index]
+            with warnings.catch_warnings(record=True) as _:
+                pix_bit = spec[bit_start:bit_end] / spec[peak_index]
             # if any values are negative we skip this peak
             if np.min(pix_bit) < 0:
                 continue
             # we fit a qualdratic to the peak
             pfit = np.polyfit(pix_id_bit, pix_bit, 2)
             # calculate the fwhm of the peak from the fit
-            pfwhm = 2 * np.sqrt(-0.5 / pfit[0])
+            with warnings.catch_warnings(record=True) as _:
+                pfwhm = 2 * np.sqrt(-0.5 / pfit[0])
             # if the fwhm is too small (<1) or too large (>5) we skip
             if pfwhm < 1 or pfwhm > 5:
                 continue
@@ -1309,10 +1318,13 @@ def get_peak0_guess(params: ParamDict, sparams: Dict[str, Any],
     peak0_guesses = peak0_guesses[sort_order]
     # -------------------------------------------------------------------------
     # fit a linear polynomial to the peak0 guesses
-    pfit = mp.robust_polyfit(orders, peak0_guesses, 1, 3)
+    with warnings.catch_warnings(record=True) as _:
+        pfit = mp.robust_polyfit(orders, peak0_guesses, 1, 3)
+        # fit these value (for this order)
+        pvalue = float(np.polyval(pfit, order_num))
     # -------------------------------------------------------------------------
-    # return the fit to these values (for this order)
-    return np.polyval(pfit, order_num)
+    # return the fit to these value (for this order)
+    return pvalue
 
 
 def package_wavesol(params: ParamDict, recipe, sparams: Dict[str, Any],

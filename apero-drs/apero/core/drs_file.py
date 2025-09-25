@@ -1339,7 +1339,7 @@ class DrsInputFile:
         # print and log via wlogger
         drs_base.base_printer('None', message=messages, level=kind)
 
-    def addset(self, drsfile: Any):
+    def addset(self, drsfile: Any, optional: bool = False):
         """
         For generic Input files only
         Add to a list of associated drs files (fileset) and the names to
@@ -1355,6 +1355,9 @@ class DrsInputFile:
         self.fileset.append(drsfile)
         # apeend drs file name to file set name list
         self.filesetnames.append(drsfile.name)
+        # store a list of optional filesets
+        if optional:
+            self.optional_fileset.append(drsfile.name)
 
     def copyother(self, drsfile, name: Union[str, None] = None,
                   filetype: Union[str, None] = None,
@@ -1849,7 +1852,7 @@ class DrsInputFile:
             except AperoCodedException as e:
                 eargs = e.get('targs', None)
                 emsg = textentry(e.codeid, args=eargs)
-                raise AperoCodedException(None, e.codeit, targs=eargs,
+                raise AperoCodedException(None, e.code, targs=eargs,
                                           message=emsg.format(*eargs))
 
             self.filename = abspath

@@ -40,18 +40,18 @@ files:
   # DARK_FLAT (i.e. DARK in science fiber(s) and FLAT in reference fiber)
   # REQUIRED FOR: static wavelength
   raw_dark_flat_files:
-   - 2488227f_pp.fits
-   - 2488389f_pp.fits
+   - 2488227f.fits
+   - 2488389f.fits
 
   # FLAT_DARK (i.e. FLAT in science fiber(s) and DARK in reference fiber)
   raw_flat_dark_files:
-    - 2488232f_pp.fits
-    - 2488394f_pp.fits
+    - 2488232f.fits
+    - 2488394f.fits
 
   # FLAT_FLAT (i.e. FLAT in science fiber(s) and FLAT in reference fiber)
   raw_flat_files:
-    - 2488237f_pp.fits
-    - 2488399f_pp.fits
+    - 2488237f.fits
+    - 2488399f.fits
   # Input Hollow Cathode file (e.g. UNe, ThAr etc) both fibers (HC_HC)
   #   note must be in the raw directory
   # REQUIRED FOR: static wavelength
@@ -94,6 +94,8 @@ wavelength:
 
   # Fiber to use for wavelength solution (of all fibers)
   wave_fiber: AB
+  # remove processed static data
+  remove_processed: False
 
   # Input catalogue for the HC lines
   #   Must be in format
@@ -168,7 +170,7 @@ wavelength:
     - -10
     - 10
   # Threshold for mini selection
-  fp_step_mad_thresold: 2.0
+  fp_step_mad_threshold: 2.0
   # Minimum number of valid points for fit
   fp_step_valid_min: 5
   # define the cavity refinement polyfit degree

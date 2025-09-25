@@ -299,6 +299,13 @@ class Plotter:
         """
         _ = self.plt, loop
 
+    def _get_matplotlib(self, force: bool = False):
+        """
+        Proxy for core.plotting.Plotter._get_matplotlib
+        """
+        _ = force
+        return self.matplotlib
+
 
 class CrossCursor(object):
     def __init__(self, frame: Any, color: str = 'r', alpha: float = 0.5):
@@ -391,17 +398,20 @@ class YesNoButtonGraph:
         self.yes_button = None
         self.no_button = None
 
-    def add(self, question):
+    def add(self, question, adjust: Dict[str, float] = None):
 
         # get the button widget
         Button = self.matplotlib.widgets.Button
         # copy the question
         self.question = str(question)
         # Add question text centered above the buttons
-        self.fig.text(0.5, 0.20, question, ha='center', va='center',
+        self.fig.text(0.1, 0.08, question, ha='center', va='center',
                       fontsize=12)
         # Move subplots up to leave room for buttons/text
-        self.plt.subplots_adjust(bottom=0.4)
+        if adjust is None:
+            self.plt.subplots_adjust(bottom=0.4)
+        else:
+            self.plt.subplots_adjust(**adjust)
         # Define button positions (x, y, width, height)
         yes_ax = self.fig.add_axes([0.42, 0.08, 0.08, 0.05])
         no_ax = self.fig.add_axes([0.52, 0.08, 0.08, 0.05])
@@ -5531,14 +5541,16 @@ def plot_static_det_plot(plotter: Plotter, graph: Graph,
     plotter.plotend(graph)
 
 
-def plot_static_cav_check_plot(plotter: Plotter, kwargs: Dict[str, Any]) -> bool:
+def plot_static_cav_check_plot(plotter: Plotter, **kwargs) -> bool:
     """
     Ask the user (interactively to check the cavity fit)
 
     Interactive graph: does not use Graph as inline online and requires
     return
     """
-
+    # force interactive mode if this graph is being used
+    plotter.plotoption = 3
+    plotter._get_matplotlib(force=True)
     # get plt from plotter (for matplotlib set up)
     plt = plotter.plt
     # get values from kwargs
@@ -5585,15 +5597,16 @@ def plot_static_cav_check_plot(plotter: Plotter, kwargs: Dict[str, Any]) -> bool
         return False
 
 
-def plot_static_wave_check_plot(plotter: Plotter, kwargs: Dict[str, Any]
-                                ) -> bool:
+def plot_static_wave_check_plot(plotter: Plotter, **kwargs) -> bool:
     """
     Ask the user (interactively to check the wave solution fit)
 
     Interactive graph: does not use Graph as inline online and requires
     return
     """
-
+    # force interactive mode if this graph is being used
+    plotter.plotoption = 3
+    plotter._get_matplotlib(force=True)
     # get plt from plotter (for matplotlib set up)
     plt = plotter.plt
     # get values from kwargs
@@ -5611,7 +5624,7 @@ def plot_static_wave_check_plot(plotter: Plotter, kwargs: Dict[str, Any]
     # set up plot
     fig, frames = plt.subplots(ncols=1, nrows=2)
     # plot the orders
-    frames[0].plot(peak0_guesses, nvalid2, color='g', marker='-', ls='None')
+    frames[0].plot(peak0_guesses, nvalid2, color='g', marker='+', ls='None')
     frames[0].set(xlabel='Peak0 guess', 
                   ylabel='Number of valid lines',
                   title=('Number of valid lines as a function of peak0 '
@@ -5629,7 +5642,8 @@ def plot_static_wave_check_plot(plotter: Plotter, kwargs: Dict[str, Any]
     # -------------------------------------------------------------------------
     # make this an interactive graph (with a question button)
     yninst = YesNoButtonGraph(fig, plotter.matplotlib)
-    yninst.add('Is this cavity valid and to be used as input?')
+    yninst.add('Is this cavity valid and to be used as input?',
+               adjust=dict(bottom=0.2))
     # show the graph
     plt.show(block=True)
     # -------------------------------------------------------------------------

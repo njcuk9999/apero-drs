@@ -954,6 +954,22 @@ out_ext_e2dsff = drs_finput('EXT_E2DS_FF', hkeys=dict(KW_OUTPUT='EXT_E2DS_FF'),
                             suffix='_e2dsff', outclass=general_ofile,
                             s1d=['EXT_S1D_W', 'EXT_S1D_V'],
                             description='Extracted + flat-fielded 2D spectrum')
+ext1 = AperoImageModel('EXT_E2DS_FF')
+ext2 = AperoTableModel('ORDER_TABLE')
+ext2.add_column('order_num', description='Extraction order number')
+ext2.add_column('echelle_num', description='Echelle order number')
+ext2.add_column('wave_min', units=uu.nm, description='Minimum wavelength')
+ext2.add_column('wave_med', units=uu.nm, description='Median wavelength')
+ext2.add_column('wave_mean', units=uu.nm, description='Mean wavelength')
+ext2.add_column('wave_max', units=uu.nm, description='Maximum wavelength')
+ext2.add_column('ypix_cent', description='Central pixel in y direction')
+ext2.add_column('snr', description='Signal-to-noise ratio of order')
+ext2.add_column('ncosmic', description='Number of cosmic rays in order')
+ext2.add_column('fluxval', description='Total flux in order')
+out_ext_e2dsff.hdulist['EXT_E2DS_FF'] = ext1
+out_ext_e2dsff.hdulist['ORDER_TABLE'] = ext2
+
+
 # pre-extract debug file
 out_ext_e2dsll = drs_finput('EXT_E2DS_LL', hkeys=dict(KW_OUTPUT='EXT_E2DS_LL'),
                             fibers=valid_efibers,

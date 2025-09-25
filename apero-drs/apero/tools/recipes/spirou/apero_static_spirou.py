@@ -73,6 +73,8 @@ def __main__(recipe, params):
     # override mode with inputs (if set)
     if not drs_text.null_text(params['INPUTS']['MODE'], ['None', '', 'Null']):
         mode = params['INPUTS']['MODE']
+    # force plots to be in interactive mode
+    params.set('GLOBAL.PLOT_MODE', value=3, source=__NAME__)
     # set up plotting (no plotting before this)
     recipe.plot.set_location()
     # -------------------------------------------------------------------------

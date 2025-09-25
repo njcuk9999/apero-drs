@@ -268,14 +268,11 @@ def proxy_processing(params: ParamDict, recipe, sparams: Dict[str, Any],
     raw_files['FLAT_FLAT'] = sparams['files']['raw_flat_files']
     raw_files['HCONE_HCONE'] = [sparams['files']['raw_hc_file']]
     raw_files['FP_FP'] = [sparams['files']['raw_fp_file']]
-    # get the instrument name
-    instrument = params['OBS.INSTRUMENT'].lower()
     # ------------------------------------------------------------------------
     # get the input directory from sparams
     input_dir = os.path.dirname(sparams['inpath'])
     # create fake night directory
     raw_night_dir = os.path.join(params['PATH.RAW'], 'STATIC')
-    red_night_dir = os.path.join(params['PATH.RED'], 'STATIC')
     # ------------------------------------------------------------------------
     # delete night directory if it exists
     if os.path.exists(raw_night_dir):
@@ -306,6 +303,31 @@ def proxy_processing(params: ParamDict, recipe, sparams: Dict[str, Any],
     # ------------------------------------------------------------------------
     # copy out the data we require (for HC and FP)
     # ------------------------------------------------------------------------
+    ofiles = get_e2ds_files(params, recipe, sparams, cal_path, ofiles)
+    # return the output files
+    return ofiles
+
+
+def get_e2ds_files(params: ParamDict, recipe, sparams: Dict[str, Any],
+                    cal_path: str, ofiles: Dict[str, Any]) -> Dict[str, Any]:
+    
+    # get the raw files
+    raw_files = dict()
+    raw_files['DARK'] = sparams['files']['raw_dark_files']
+    raw_files['DARK_FLAT'] = sparams['files']['raw_dark_flat_files']
+    raw_files['FLAT_DARK'] = sparams['files']['raw_flat_dark_files']
+    raw_files['FLAT_FLAT'] = sparams['files']['raw_flat_files']
+    raw_files['HCONE_HCONE'] = [sparams['files']['raw_hc_file']]
+    raw_files['FP_FP'] = [sparams['files']['raw_fp_file']]
+        # get the instrument name
+    instrument = params['OBS.INSTRUMENT'].lower()
+    # ------------------------------------------------------------------------
+    # create fake night directory
+    raw_night_dir = os.path.join(params['PATH.RAW'], 'STATIC')
+    red_night_dir = os.path.join(params['PATH.RED'], 'STATIC')
+    # ------------------------------------------------------------------------
+    # copy out the data we require (for HC and FP)
+    # ------------------------------------------------------------------------
     e2ds_files = dict()
     # we require the HCONE_HCONE and FP_FP files
     # we rename the .fits to _e2dsff_{sci_fiber}.fits
@@ -321,7 +343,9 @@ def proxy_processing(params: ParamDict, recipe, sparams: Dict[str, Any],
         in_file = os.path.join(red_night_dir, sci_basename)
         # deal with file not found
         if not os.path.exists(in_file):
-            emsg = '{0} file not found: {1}'
+            emsg = ('{0} file not found: {1}. Please make sure that '
+                    'apero_processing (via wavelength.run_generate_night) '
+                    'has been run successfully')
             eargs = [key, in_file]
             raise AperoCodedException(params, None,
                                       message=emsg.format(*eargs),
@@ -352,17 +376,42 @@ def proxy_processing(params: ParamDict, recipe, sparams: Dict[str, Any],
     ofiles['STATIC_HC_E2DS'] = hc_e2ds
     ofiles['STATIC_FP_E2DS'] = fp_e2ds
     # ------------------------------------------------------------------------
-    # remove all mentions of the static night directory using apero remove
-    apero_remove.main(obsdir='STATIC', rawdb=True, nowarn=True)
-    # remove the raw data too
-    if os.path.exists(raw_night_dir):
-        shutil.rmtree(raw_night_dir)
-    # remove the reduced data too
-    if os.path.exists(red_night_dir):
-        shutil.rmtree(red_night_dir)
+    # deal with user wanting to remove the processed static data
+    if sparams['wavelength']['remove_processed']:
+        # remove all mentions of the static night directory using apero remove
+        apero_remove.main(obsdir='STATIC', rawdb=True, nowarn=True)
+        # remove the raw data too
+        if os.path.exists(raw_night_dir):
+            shutil.rmtree(raw_night_dir)
+        # remove the reduced data too
+        if os.path.exists(red_night_dir):
+            shutil.rmtree(red_night_dir)
     # return the output files
     return ofiles
- 
+
+
+def get_hc_cat_file(params: ParamDict, recipe, sparams: Dict[str, Any],
+                    cal_path: str, ofiles: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Get the static HC catalogue file
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param recipe: DrsRecipe, the apero recipe instance
+    :param sparams: dict, static parameters from yaml file
+    :param cal_path: str, path to save the static files to
+    :param ofiles: dict, dictionary of output files
+
+    :return ofiles: dict, updated dictionary of output files
+    """
+    # get static file
+    static_file = recipe.outputs['STATIC_HC_CAT'].newcopy(params=params)
+    # construct the filename from file instance
+    static_file.construct_filename(path=cal_path)
+    # return the output files
+    ofiles['STATIC_HC_CAT'] = static_file
+    # return the output files
+    return ofiles
+
 
 # =============================================================================
 # Start of code
