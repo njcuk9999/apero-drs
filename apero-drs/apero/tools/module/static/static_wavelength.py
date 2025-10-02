@@ -492,6 +492,9 @@ def build_wavesol(params: ParamDict, recipe, sparams: Dict[str, Any],
     nsig_accept_fp = wsparams['nsig_accept_fp']
     # get the wave pickle path
     wave_pickle_path = os.path.join(inpath, 'wave_pickles')
+    # deal with wave pickle path not existing
+    if not os.path.exists(wave_pickle_path):
+        os.makedirs(wave_pickle_path)
     # set the number of orders (from the HC E2DS file)
     norders, nbxpix = hc_image.shape
 
@@ -934,21 +937,23 @@ def get_hc_lines(params: ParamDict, recipe, sparams: Dict[str, Any],
              are interested in
     """
     # get the wavelength sparams for input hc cat
-    wparams = sparams['wavelength']['input_hc_cat']
+    wparams = sparams['wavelength']
     # get the required wavelength domain
     wavemin, wavemax = wparams['wave_domain']
+    # get the wave approximation
+    wave_approx = wparams['wave_approx']
     # get the species we want
-    species_keep = wparams['species_keep']
+    species_keep = wparams['input_hc_cat']['species_keep']
     # get the species column
-    hc_species_col = wparams['species_col']
+    hc_species_col = wparams['input_hc_cat']['species_col']
     # get the flux column
-    hc_flux_col = wparams['flux_col']
+    hc_flux_col = wparams['input_hc_cat']['flux_col']
     # get the wavelength column
-    hc_wave_col = wparams['wave_col']
+    hc_wave_col = wparams['input_hc_cat']['wave_col']
     # get wavelength units and convert to astropy unit
-    hc_wave_unit = wparams['wave_units']
+    hc_wave_unit = wparams['input_hc_cat']['wave_units']
     # get the vizier reference
-    vizier_ref = wparams['vizier-ref']
+    vizier_ref = wparams['input_hc_cat']['vizier-ref']
     # -------------------------------------------------------------------------
     try:
         wave_unit = uu.Unit(hc_wave_unit)
@@ -982,8 +987,8 @@ def get_hc_lines(params: ParamDict, recipe, sparams: Dict[str, Any],
         # get a mask just for this species
         sp_mask = species_arr == species
         # get wavelength constraints
-        sp_mask &= wavemap > wavemin
-        sp_mask &= wavemap < wavemax
+        sp_mask &= wavemap > wavemin * (1 - wave_approx)
+        sp_mask &= wavemap < wavemax * (1 + wave_approx)
         # combine to full mask
         smask |= sp_mask
     # deal with no lines
@@ -1198,7 +1203,7 @@ def detect_spectral_lines(params: ParamDict, sparams: Dict[str, Any],
     sigmas = sigmas[valid]
     flux = flux[valid]
     # sort by pixel position
-    sort_order = np.argsort(mus)[::-1]
+    sort_order = np.argsort(mus)
     mus = mus[sort_order]
     sigmas = sigmas[sort_order]
     flux = flux[sort_order]

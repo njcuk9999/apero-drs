@@ -21,6 +21,7 @@ from astropy import units as uu
 from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap
 from ruamel.yaml.scalarstring import PreservedScalarString as PSS
+from ruamel.yaml.resolver import Resolver
 
 from aperocore.base import base
 from aperocore import drs_lang
@@ -887,7 +888,8 @@ class ConstantsDict:
             margs = [outpath]
             drs_text.cprint(msg.format(*margs), colour='g')
         # initialize YAML object
-        yaml_inst = YAML()
+        yaml_inst = YAML(typ='rt')
+        base.enable_scientific_floats(yaml_inst)
         # set the yaml width to a large number so we don't get line breaks
         yaml_inst.width = 4096
         # remove the yaml if it already exists

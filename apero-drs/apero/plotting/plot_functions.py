@@ -405,7 +405,7 @@ class YesNoButtonGraph:
         # copy the question
         self.question = str(question)
         # Add question text centered above the buttons
-        self.fig.text(0.1, 0.08, question, ha='center', va='center',
+        self.fig.text(0.4, 0.08, question, ha='right', va='center',
                       fontsize=12)
         # Move subplots up to leave room for buttons/text
         if adjust is None:
@@ -5567,7 +5567,7 @@ def plot_static_cav_check_plot(plotter: Plotter, **kwargs) -> bool:
 
     # -------------------------------------------------------------------------
     # set up plot
-    fig, frame = plt.subplots(ncols=1, nrows=1)
+    fig, frame = plt.subplots(ncols=1, nrows=1, figsize=(20, 20))
     # plot the orders
     unique_orders = np.unique(all_fp_order)
     # loop order unique orders
@@ -5622,7 +5622,7 @@ def plot_static_wave_check_plot(plotter: Plotter, **kwargs) -> bool:
     wave_ref2 = wave_ref[keep] 
     # -------------------------------------------------------------------------
     # set up plot
-    fig, frames = plt.subplots(ncols=1, nrows=2)
+    fig, frames = plt.subplots(ncols=1, nrows=2, figsize=(20, 20))
     # plot the orders
     frames[0].plot(peak0_guesses, nvalid2, color='g', marker='+', ls='None')
     frames[0].set(xlabel='Peak0 guess', 

@@ -15,13 +15,18 @@ import rules:
 - no imports from apero
 
 """
+import re
 import os
 import string
 import sys
 import warnings
 from collections import OrderedDict
 from pathlib import Path
-from typing import Any, Dict, Union
+from typing import Any, Dict, Optional, Union
+
+from ruamel.yaml import YAML
+from ruamel.yaml.comments import CommentedMap
+from ruamel.yaml.resolver import Resolver
 
 import numpy as np
 import yaml
@@ -233,7 +238,7 @@ def load_install_yaml(required: bool = True) -> Union[dict, None]:
         return D_IPARAMS
 
 
-def load_yaml(filename: str, default: Dict[str, Any] = None) -> dict:
+def load_yaml(filename: str, default: Optional[Dict[str, Any]] = None) -> dict:
     """
     Load a yaml file as a dictionary
 
@@ -241,9 +246,12 @@ def load_yaml(filename: str, default: Dict[str, Any] = None) -> dict:
 
     :returns: dictionary dict, the dictionary loaded from yaml file
     """
+    # initialize YAML object
+    yaml_inst = YAML(typ='rt')
+    enable_scientific_floats(yaml_inst)
+    #open filename
     with open(filename, 'r') as yfile:
-        dictionary = yaml.load(yfile, Loader=yaml.FullLoader)
-
+        dictionary = yaml_inst.load(yfile)
     # fill in any missing with default (in case of missing keys)
     if default is not None:
         for key in default:
@@ -251,6 +259,26 @@ def load_yaml(filename: str, default: Dict[str, Any] = None) -> dict:
                 dictionary[key] = default[key]
     # return the dictionary
     return dictionary
+
+
+def enable_scientific_floats(yaml: YAML) -> None:
+    """
+    Enable parsing of scientific notation floats (e.g. 1.23e6)
+    for a ruamel.yaml YAML(typ='rt') instance.
+    """
+    float_re = re.compile(
+        r'''^(?:[-+]?(?:[0-9][0-9_]*)?\.[0-9_]*   # 1.23
+             (?:[eE][-+]?[0-9]+)?                 # 1.23e10
+           | [-+]?[0-9][0-9_]*(?:[eE][-+]?[0-9]+) # 1e6
+           | \.inf | \.Inf | \.INF
+           | \.nan | \.NaN | \.NAN)$''', re.X
+    )
+
+    yaml.Resolver.add_implicit_resolver(
+        'tag:yaml.org,2002:float',
+        float_re,
+        list('-+0123456789.')
+    )
 
 
 def write_yaml(dictionary: dict, filename: str):

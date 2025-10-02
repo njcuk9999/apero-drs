@@ -16,6 +16,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap
+from ruamel.yaml.resolver import Resolver
 
 from aperocore.base import base
 from aperocore.constants import param_functions
@@ -81,6 +82,11 @@ GROUPS['radial velocity'] = ['rv']
 GROUPS['polar'] = ['polar']
 GROUPS['lbl'] = ['lbl']
 GROUPS['postprocessing'] = ['post']
+# Define the ruamel yaml float resolver args
+ryaml_tag = 'tag:yaml.org,2002:float'
+RYAML_RARGS = [ryaml_tag,
+               Resolver.yaml_implicit_resolvers[ryaml_tag][0][1],
+               Resolver.yaml_implicit_resolvers[ryaml_tag][0][2]]
 
 
 # =============================================================================
@@ -404,7 +410,9 @@ class RunIniFile:
             if self.run_keys[key].disabled:
                 # get this key as a string
                 with io.StringIO() as stream:
-                    yaml_inst = YAML()
+                    # initialize YAML object
+                    yaml_inst = YAML(typ='rt')
+                    base.enable_scientific_floats(yaml_inst)
                     yaml_inst.default_flow_style = False
                     yaml_inst.dump({key: data[key]}, stream)
                     disabled_blocks[key] = stream.getvalue()
@@ -415,7 +423,8 @@ class RunIniFile:
         margs = [self.outpath]
         WLOG(params, '', msg.format(*margs))
         # initialize YAML object
-        yaml_inst = YAML()
+        yaml_inst = YAML(typ='rt')
+        base.enable_scientific_floats(yaml_inst)
         # write files
         with open(self.outpath, 'w') as y_file:
             yaml_inst.dump(data, y_file)

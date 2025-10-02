@@ -21,6 +21,7 @@ import numpy as np
 import yaml
 from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap
+from ruamel.yaml.resolver import Resolver
 
 from aperocore.base import base
 from aperocore.constants import param_functions
@@ -1736,7 +1737,8 @@ def ufile_write(aparams: ParamDict, lines: List[str], upath: Path,
 def yfile_write(data: CommentedMap, upath: Path, ufile: Union[Path, str],
                 ckind: str) -> Path:
     # initialize YAML object
-    yaml_inst = YAML()
+    yaml_inst = YAML(typ='rt')
+    base.enable_scientific_floats(yaml_inst)
     # make directory if it doesn't exist
     if not upath.exists():
         os.makedirs(upath)
