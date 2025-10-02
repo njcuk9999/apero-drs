@@ -19,7 +19,7 @@ from datetime import datetime
 # -- Project information -----------------------------------------------------
 
 project = 'APERO Reduction Interface'
-copyright = '{0}, Neil Cook'.format(datetime.now().year)
+copyright = '2017 - {0}, Neil Cook'.format(datetime.now().year)
 author = 'Neil Cook'
 
 # The full version, including alpha/beta/rc tags
