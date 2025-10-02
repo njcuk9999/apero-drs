@@ -19,12 +19,12 @@ Import rules:
 - only from apero.base.base.py
 
 """
+import importlib.resources as resources
 import os
 from hashlib import blake2b
 from pathlib import Path
 from typing import Any, List, Union
 
-import pkg_resources
 
 from aperocore.base import base
 
@@ -120,18 +120,19 @@ def _rel_folder(package: str, folder: str) -> str:
 
     :return: str, the absolute path of the relative 'folder'
     """
-    # change to this files location
-    init = pkg_resources.resource_filename(package, '__init__.py')
-    # Get the config_folder from relative path
-    current = os.getcwd()
-    # get directory name of folder
-    dirname = os.path.dirname(init)
-    # change to directory in init
-    os.chdir(dirname)
-    # get the absolute path of the folder
-    absfolder = os.path.abspath(folder)
-    # change back to current dir
-    os.chdir(current)
+    # get the path to __init__.py inside the package
+    with resources.path(package, "__init__.py") as init_path:
+        init = str(init_path)
+        # Get the config_folder from relative path
+        current = os.getcwd()
+        # get directory name of folder
+        dirname = os.path.dirname(init)
+        # change to directory in init
+        os.chdir(dirname)
+        # get the absolute path of the folder
+        absfolder = os.path.abspath(folder)
+        # change back to current dir
+        os.chdir(current)
     # return the absfolder
     return absfolder
 
