@@ -2,6 +2,46 @@ Changelog
 =========
 
 
+0.7.295 (2025-10-06)
+--------------------
+- Add link to APERO requirements document in README.md. [Neil Cook]
+- Update copyright year in conf.py to reflect current year. [Neil Cook]
+- Replace ARI icon with an image in layout.html for improved visual
+  representation. [Neil Cook]
+- Add file option and aliases handling to astrometric parameters,
+  implement object identification from file. [Neil Cook]
+- Enhance exposuremeter recipe with additional wavelength and threshold
+  parameters; update load_conv_tapas call to support only loading
+  option. [Neil Cook]
+- Remove HCONE1 and HCONE2 LFC file definitions from NIRPS HA and HE;
+  update related references. [Neil Cook]
+- Add raw HCONE1 and HCONE2 LFC file definitions for NIRPS. [Neil Cook]
+- Add ARI_PROTECT constant and update page access logic; enhance
+  .gitignore for VSCode. [Neil Cook]
+- [ARI] catch bad plots in debug_tcorr_map plot. [Neil Cook]
+- [ARI] add argument --filterobjs + fix a few bugs with lbl files. [Neil
+  Cook]
+- [ARI] add argument --cores to apero_ri.py. [Neil Cook]
+- [ARI] add argument --cores to apero_ri.py. [Neil Cook]
+- [APERO] Change nirps_ha range1,range2 limits (after flat qc) [Neil
+  Cook]
+- [APERO] Add an option to use --ssl in mysql connections
+  (install/setup.py) [Neil Cook]
+- [APERO] Add an option to use --ssl in mysql connections. [Neil Cook]
+- [APERO] Add new flat QC. [Neil Cook]
+- [APERO] Give error if thermal blue/red limit out-of-bounds. [cook]
+- [APERO] Remove slopes from image before median hotpix created
+  (detectors.test_for_corrupt_files) [cook]
+- [APERO] fix bug with having no tcorr files in ARI. [Neil Cook]
+- [APERO] Add new file combinations for nirps HCTWO_HCONE, HCONE_HCTWO,
+  HCONE_LFC, HCTWO_LFC. [Neil Cook]
+- [APERO] fix bug that removes broken symlinks from lbl directory prior
+  to making new symlinks. [Neil Cook]
+- [APERO] fix bug that removes broken symlinks from lbl directory prior
+  to making new symlinks. [Neil Cook]
+- [APERO] update date/version/changelog. [Neil Cook]
+
+
 0.7.294 (2025-05-26)
 --------------------
 - [APERO] reject - deal with having no alises - must have aliases. [Neil
@@ -331,10 +371,6 @@ Changelog
 - [APERO] Add doc string for _find_special_targets. [Neil Cook]
 - [APERO] Deal with SCIENCE_TARGETS not being in astrometric database
   [Issue #780] [Neil Cook]
-
-
-0.7.290 (2024-08-06)
---------------------
 - [NIRPS] Fix the orders remove in telluric pre-cleaning (was 47-48 now
   43-45) [Neil Cook]
 - [APERO] Add columns to reject (USED for file, and BAD_ASTROMETRICS for
@@ -364,14 +400,6 @@ Changelog
 - [APERO] fix for database updating raw files. [Neil Cook]
 - Merge branch 'v0.7.289-stable-test' into v0.7.290-stable-test. [Neil
   Cook]
-- [APERO] tapas_all_sp.fits.gz - fix column name (duplicate ch_4 -->
-  o_3) [Neil Cook]
-- [APERO] apero_astrometrics.py - add a check for objects in database
-  that all files match DRSOBJN to that expected by database. (Issue
-  #756) [Neil Cook]
-- [APERO] apero_astrometrics.py - add a check for objects in database
-  that all files match DRSOBJN to that expected by database. (Issue
-  #756) [Neil Cook]
 - [APERO] Correct problem with ARI finder chart (path not existing)
   [Neil Cook]
 - [APERO] Give ARI an argument that allows displaying available
@@ -441,6 +469,18 @@ Changelog
 - [APERO] apero_ri.py - fix problems with finding charts. [Neil Cook]
 - [APERO] background fixes (both at the badpix calibration level and in
   the extraction code [from EA] [Neil Cook]
+
+
+0.7.290 (2024-03-28)
+--------------------
+- [APERO] tapas_all_sp.fits.gz - fix column name (duplicate ch_4 -->
+  o_3) [Neil Cook]
+- [APERO] apero_astrometrics.py - add a check for objects in database
+  that all files match DRSOBJN to that expected by database. (Issue
+  #756) [Neil Cook]
+- [APERO] apero_astrometrics.py - add a check for objects in database
+  that all files match DRSOBJN to that expected by database. (Issue
+  #756) [Neil Cook]
 - [APERO] apero_astrometrics.py - add a check for objects in database
   that all files match DRSOBJN to that expected by database. (Issue
   #756) [Neil Cook]
@@ -488,10 +528,6 @@ Changelog
 - [ARI] Remove ARI sidebar. [Neil Cook]
 - [ARI] Add BERV to extracted 2D header file. [Neil Cook]
 - [APERO] update date/changelog. [Neil Cook]
-
-
-0.7.289 (2024-03-12)
---------------------
 - [APERO] correct typo. [Neil Cook]
 - [APERO] Add --objname to reject code (Issue https://github.com/users/n
   jcuk9999/projects/7/views/5?pane=issue&itemId=54972211) [Neil Cook]
@@ -552,6 +588,10 @@ Changelog
 - [APERO] update version/changelog/documentation. [Neil Cook]
 - [APERO-ARI] fix when we have no data adding dprtypes to object. [Neil
   Cook]
+
+
+0.7.289 (2024-02-13)
+--------------------
 - [APERO] apero_ri.py - Fix for unique values containing None. [Neil
   Cook]
 - [APERO] apero_ri.py - Fix for unique values containing None. [Neil
@@ -845,12 +885,12 @@ Changelog
 - Continue work on running lbl from APERO. [Neil Cook]
 - Allow LBL to be run from APERO [UNFINISHED & UNTESTED] [Neil Cook]
 - Update date/version/changelog/readme. [Neil Cook]
-
-
-0.7.287 (2023-08-08)
---------------------
 - [APERO] Correct that ribbon cannot load in raw file path. [Neil Cook]
 - [APERO] Correct that ribbon cannot save in raw file path. [Neil Cook]
+
+
+0.7.287 (2023-08-07)
+--------------------
 - [APERO] fix apero_get and null/nan passed_all_qc column. [Neil Cook]
 - [APERO] apero_get if PASSED_ALL_QC is Null we should accept it as
   passed QC (as we don't know otherwise) [Neil Cook]
@@ -893,10 +933,6 @@ Changelog
   Cook]
 - [APERO] drs_astrometrics.py - fix using dataframe.append (should be
   pd.concat) [Neil Cook]
-
-
-0.7.286 (2023-07-12)
---------------------
 - Merge remote-tracking branch 'origin/v0.7.286-live' into
   v0.7.286-live. [Neil Cook]
 - Merge branch 'v0.7.285-live' into v0.7.286-live. [Neil Cook]
@@ -904,6 +940,10 @@ Changelog
   replace the current name (and that name must be 3 characters long at
   least). [Neil Cook]
 - [APERO] update date/version/changelog/notes. [Neil Cook]
+
+
+0.7.286 (2023-07-12)
+--------------------
 - Merge branch 'v0.7.285-live' into v0.7.286-live. [Neil Cook]
 - Drs_processing.py - add change to return of _linear_generate_id. [Neil
   Cook]
