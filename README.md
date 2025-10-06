@@ -193,7 +193,7 @@ Please see the documentation:
 - [ONLINE] https://www.astro.umontreal.ca/~cook/apero-drs/main/default/using_apero.html
 - [LOCAL HTML] documentation/output/auto/tool_definitions/default/tools.html
 - [LOCAL PDF] documentation/output/apero-docs.pdf 
-
+- [APERO requirements (dev)] https://www.overleaf.com/project/681502d99cb7fde13a598227
 
 ## 6 Dev mode
 [Back to top](#apero---a-pipeline-to-reduce-observations)
